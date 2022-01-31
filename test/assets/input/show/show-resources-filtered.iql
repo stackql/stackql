@@ -1,0 +1,4 @@
+SHOW RESOURCES 
+in google.compute 
+like '%instances%'
+;

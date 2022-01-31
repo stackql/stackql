@@ -1,0 +1,3 @@
+name,zone
+demo-vm-tt2,https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b
+demo-vm-tt1,https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b

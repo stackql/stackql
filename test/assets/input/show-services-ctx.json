@@ -1,0 +1,17 @@
+{
+  "service": {
+    "description": "Provides natural language%",
+    "version": "v1"
+  },
+  "trivial_nonsense": {
+    "some-key": true,
+    "arr-key": [
+      {
+        "1": 1
+      },
+      {
+        "1": 2
+      }
+    ]
+  }
+}

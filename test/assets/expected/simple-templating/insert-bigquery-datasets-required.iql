@@ -1,0 +1,8 @@
+INSERT INTO google.bigquery.datasets(
+  projectId,
+  data__datasetReference
+)
+SELECT
+  '{{ .values.projectId }}',
+  '{ "datasetId": "{{ .values.data__datasetReference.datasetId }}", "projectId": "{{ .values.data__datasetReference.projectId }}" }'
+;

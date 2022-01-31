@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "etag": "BwXLxNx6fFw=",
+  "bindings": [
+    {
+      "role": "roles/billing.admin",
+      "members": [
+        "user:joeblow@myoutfit.com"
+      ]
+    },
+    {
+      "role": "roles/compute.networkUser",
+      "members": [
+        "user:joeblow@myoutfit.com"
+      ]
+    },
+    {
+      "role": "roles/compute.xpnAdmin",
+      "members": [
+        "user:joeblow@myoutfit.com"
+      ]
+    },
+    {
+      "role": "roles/container.clusterAdmin",
+      "members": [
+        "user:joeblow@myoutfit.com"
+      ]
+    },
+    {
+      "role": "roles/orgpolicy.policyAdmin",
+      "members": [
+        "user:joeblow@myoutfit.com"
+      ]
+    },
+    {
+      "role": "roles/owner",
+      "members": [
+        "user:joeblow@myoutfit.com",
+        "user:somejimbo@gmail.com"
+      ]
+    },
+    {
+      "role": "roles/resourcemanager.folderAdmin",
+      "members": [
+        "user:joeblow@myoutfit.com",
+        "user:somejimbo@gmail.com"
+      ]
+    },
+    {
+      "role": "roles/resourcemanager.organizationAdmin",
+      "members": [
+        "user:joeblow@myoutfit.com",
+        "user:somejimbo@gmail.com"
+      ]
+    },
+    {
+      "role": "roles/resourcemanager.projectCreator",
+      "members": [
+        "user:joeblow@myoutfit.com"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "files.associations": {
+    "*.iql": "sql"
+  },
+  "cmake.configureOnOpen": false,
+  "go.testFlags": ["-tags", "json1"]
+}

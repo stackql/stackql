@@ -1,0 +1,4 @@
+show extended insert 
+into 
+google.bigquery.datasets
+;

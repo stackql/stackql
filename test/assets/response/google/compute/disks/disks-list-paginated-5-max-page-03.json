@@ -1,0 +1,73 @@
+{
+  "id": "projects/testing-project/zones/australia-southeast1-b/disks",
+  "items": [
+    {
+      "id": "7957941705271944342",
+      "creationTimestamp": "2021-06-20T15:25:45.892-08:00",
+      "name": "p3-demo-disk-qq1",
+      "sizeGb": "10",
+      "zone": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b",
+      "status": "READY",
+      "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b/disks/demo-disk-qq1",
+      "type": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b/diskTypes/pd-standard",
+      "lastAttachTimestamp": "2021-02-20T15:55:46.911-08:00",
+      "users": [
+        "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b/instances/demo-vm-tt1"
+      ],
+      "labelFingerprint": "42WmSpB8rSM=",
+      "physicalBlockSizeBytes": "4096",
+      "kind": "compute#disk"
+    },
+    {
+      "id": "2624656788334582894",
+      "creationTimestamp": "2021-06-20T16:00:01.646-08:00",
+      "name": "p3-demo-disk-qq2",
+      "sizeGb": "10",
+      "zone": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b",
+      "status": "READY",
+      "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b/disks/demo-disk-qq2",
+      "type": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b/diskTypes/pd-standard",
+      "lastAttachTimestamp": "2021-02-20T16:00:27.125-08:00",
+      "users": [
+        "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b/instances/demo-vm-tt2"
+      ],
+      "labelFingerprint": "42WmSpB8rSM=",
+      "physicalBlockSizeBytes": "4096",
+      "kind": "compute#disk"
+    },
+    {
+      "id": "4236826943903762397",
+      "creationTimestamp": "2021-07-29T04:25:38.809-07:00",
+      "name": "p3-demo-disk-xx2",
+      "sizeGb": "10",
+      "zone": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b",
+      "status": "READY",
+      "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b/disks/demo-disk-xx2",
+      "type": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b/diskTypes/pd-standard",
+      "labels": {
+        "k1": "v1"
+      },
+      "labelFingerprint": "LZMBw4IuNFk=",
+      "physicalBlockSizeBytes": "4096",
+      "kind": "compute#disk"
+    },
+    {
+      "id": "4236826943903762398",
+      "creationTimestamp": "2021-07-29T04:25:38.810-07:00",
+      "name": "p3-demo-disk-xx3",
+      "sizeGb": "20",
+      "zone": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b",
+      "status": "READY",
+      "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b/disks/demo-disk-xx3",
+      "type": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b/diskTypes/pd-standard",
+      "labels": {
+        "k1": "v1"
+      },
+      "labelFingerprint": "LZMBw4IuNFk=",
+      "physicalBlockSizeBytes": "4096",
+      "kind": "compute#disk"
+    }
+  ],
+  "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b/disks",
+  "kind": "compute#diskList"
+}

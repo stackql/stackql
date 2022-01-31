@@ -1,0 +1,32 @@
+{
+  "kind": "bigquery#dataset",
+  "etag": "88M8o9wUXv7byDnM7jppXQ==",
+  "id": "testing-project:test_dataset_zz",
+  "selfLink": "https://content-bigquery.googleapis.com/bigquery/v2/projects/testing-project/datasets/test_dataset_zz",
+  "datasetReference": {
+    "datasetId": "test_dataset_zz",
+    "projectId": "testing-project"
+  },
+  "access": [
+    {
+      "role": "WRITER",
+      "specialGroup": "projectWriters"
+    },
+    {
+      "role": "OWNER",
+      "specialGroup": "projectOwners"
+    },
+    {
+      "role": "OWNER",
+      "userByEmail": "somejimbo@gmail.com"
+    },
+    {
+      "role": "READER",
+      "specialGroup": "projectReaders"
+    }
+  ],
+  "creationTime": "1631531431840",
+  "lastModifiedTime": "1631531431840",
+  "location": "US",
+  "type": "DEFAULT"
+}

@@ -1,0 +1,3 @@
+members,roles
+"[""user:joeblow@myoutfit.com"",""user:somejimbo@gmail.com""]","roles/owner,roles/resourcemanager.folderAdmin,roles/resourcemanager.organizationAdmin"
+"[""user:joeblow@myoutfit.com""]","roles/billing.admin,roles/compute.networkUser,roles/compute.xpnAdmin,roles/container.clusterAdmin,roles/orgpolicy.policyAdmin,roles/resourcemanager.projectCreator"

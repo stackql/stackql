@@ -1,0 +1,34 @@
+{
+  "projects": [
+    {
+      "name": "projects/123456789013",
+      "parent": "organizations/123456789012",
+      "projectId": "testing-project",
+      "state": "ACTIVE",
+      "displayName": "testing-project",
+      "createTime": "2018-01-26T09:00:18.190Z",
+      "updateTime": "2018-01-26T09:00:21.130Z",
+      "etag": "IS1yLzzxf+fcDQxEmOO46Q=="
+    },
+    {
+      "name": "projects/123456789014",
+      "parent": "organizations/123456789012",
+      "projectId": "testing-dummy-project",
+      "state": "ACTIVE",
+      "displayName": "dummy-project",
+      "createTime": "2019-01-26T09:00:18.190Z",
+      "updateTime": "2019-01-26T09:00:21.130Z",
+      "etag": "smPMOUNzi6qhow7suY9rUg=="
+    },
+    {
+      "name": "projects/123456789015",
+      "parent": "organizations/123456789012",
+      "projectId": "demo-project",
+      "state": "ACTIVE",
+      "displayName": "demo-project",
+      "createTime": "2020-01-26T09:00:18.190Z",
+      "updateTime": "2020-01-26T09:00:21.130Z",
+      "etag": "YSBzql6WxtA6UnsXKOtVSw=="
+    }
+  ]
+}

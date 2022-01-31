@@ -1,0 +1,3 @@
+SHOW METHODS 
+from google.storage.buckets
+;

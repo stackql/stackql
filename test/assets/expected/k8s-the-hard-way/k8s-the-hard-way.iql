@@ -1,0 +1,272 @@
+--
+-- create VPC 
+--
+use google;
+
+INSERT /*+ AWAIT  */ INTO compute.networks
+(
+ project,
+ data__name,
+ data__autoCreateSubnetworks,
+ data__routingConfig
+) 
+SELECT
+'stackql-demo',
+'kubernetes-the-hard-way-vpc',
+false,
+'{"routingMode":"REGIONAL"}';
+
+--
+-- create subnetwork
+--
+INSERT /*+ AWAIT  */ INTO compute.subnetworks
+(
+ project,
+ region,
+ data__name,
+ data__network,
+ data__ipCidrRange,
+ data__privateIpGoogleAccess
+) 
+SELECT
+'stackql-demo',
+'australia-southeast1',
+'kubernetes-the-hard-way-subnet',
+'https://compute.googleapis.com/compute/v1/projects/stackql-demo/global/networks/kubernetes-the-hard-way-vpc',
+'10.240.0.0/24',
+ false;
+
+--
+-- create public IP address
+--
+INSERT /*+ AWAIT  */ INTO compute.addresses
+(
+ project,
+ region,
+ data__name
+) 
+SELECT
+'stackql-demo',
+'australia-southeast1',
+'kubernetes-the-hard-way-ip';
+--
+-- create firewall rules
+--
+
+INSERT /*+ AWAIT  */ INTO compute.firewalls
+(
+ project,
+ data__name,
+ data__network,
+ data__direction,
+ data__sourceRanges,
+ data__allowed
+) 
+SELECT
+'stackql-demo',
+'kubernetes-the-hard-way-allow-internal-fw',
+'https://compute.googleapis.com/compute/v1/projects/stackql-demo/global/networks/kubernetes-the-hard-way-vpc',
+'INGRESS',
+'["10.240.0.0/24","10.200.0.0/16"]',
+'[{"IPProtocol":"tcp"},{"IPProtocol":"udp"},{"IPProtocol":"icmp"}]';
+
+INSERT /*+ AWAIT  */ INTO compute.firewalls
+(
+ project,
+ data__name,
+ data__network,
+ data__direction,
+ data__sourceRanges,
+ data__allowed
+) 
+SELECT
+'stackql-demo',
+'kubernetes-the-hard-way-allow-external-fw',
+'https://compute.googleapis.com/compute/v1/projects/stackql-demo/global/networks/kubernetes-the-hard-way-vpc',
+'INGRESS',
+'["0.0.0.0/0"]',
+'[{"IPProtocol":"tcp","ports":["22"]},{"IPProtocol":"tcp","ports":["6443"]},{"IPProtocol":"icmp"}]';
+
+
+--
+-- create instances
+--
+
+
+
+ INSERT /*+ AWAIT  */ INTO compute.instances 
+ (
+  zone,
+  project,
+  data__name,
+  data__machineType,
+  data__canIpForward,
+  data__deletionProtection,
+  data__scheduling,
+  data__networkInterfaces,
+  data__disks,
+  data__serviceAccounts,
+  data__tags
+ ) 
+ SELECT
+'australia-southeast1-a',
+'stackql-demo',
+'controller-0',
+'https://compute.googleapis.com/compute/v1/projects/stackql-demo/zones/australia-southeast1-a/machineTypes/f1-micro',
+ true,
+ false,
+'{"automaticRestart":true}',
+'[{"network":"projects/stackql-demo/global/networks/kubernetes-the-hard-way-vpc","networkIP":"10.240.0.10","subnetwork":"regions/australia-southeast1/subnetworks/kubernetes-the-hard-way-subnet"}]',
+'[{"autoDelete":true,"boot":true,"initializeParams":{"diskSizeGb":"10","sourceImage":"https://compute.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts"},"mode":"READ_WRITE","type":"PERSISTENT"}]',
+'[{"email":"default","scopes":["https://www.googleapis.com/auth/compute","https://www.googleapis.com/auth/devstorage.read_only","https://www.googleapis.com/auth/logging.write","https://www.googleapis.com/auth/monitoring","https://www.googleapis.com/auth/service.management.readonly","https://www.googleapis.com/auth/servicecontrol"]}]',
+'{"items":["kubernetes-the-hard-way","controller"]}';
+
+
+
+
+ INSERT /*+ AWAIT  */ INTO compute.instances 
+ (
+  zone,
+  project,
+  data__name,
+  data__machineType,
+  data__canIpForward,
+  data__deletionProtection,
+  data__scheduling,
+  data__networkInterfaces,
+  data__disks,
+  data__serviceAccounts,
+  data__tags
+ ) 
+ SELECT
+'australia-southeast1-a',
+'stackql-demo',
+'controller-1',
+'https://compute.googleapis.com/compute/v1/projects/stackql-demo/zones/australia-southeast1-a/machineTypes/f1-micro',
+ true,
+ false,
+'{"automaticRestart":true}',
+'[{"network":"projects/stackql-demo/global/networks/kubernetes-the-hard-way-vpc","networkIP":"10.240.0.11","subnetwork":"regions/australia-southeast1/subnetworks/kubernetes-the-hard-way-subnet"}]',
+'[{"autoDelete":true,"boot":true,"initializeParams":{"diskSizeGb":"10","sourceImage":"https://compute.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts"},"mode":"READ_WRITE","type":"PERSISTENT"}]',
+'[{"email":"default","scopes":["https://www.googleapis.com/auth/compute","https://www.googleapis.com/auth/devstorage.read_only","https://www.googleapis.com/auth/logging.write","https://www.googleapis.com/auth/monitoring","https://www.googleapis.com/auth/service.management.readonly","https://www.googleapis.com/auth/servicecontrol"]}]',
+'{"items":["kubernetes-the-hard-way","controller"]}';
+
+
+
+
+ INSERT /*+ AWAIT  */ INTO compute.instances 
+ (
+  zone,
+  project,
+  data__name,
+  data__machineType,
+  data__canIpForward,
+  data__deletionProtection,
+  data__scheduling,
+  data__networkInterfaces,
+  data__disks,
+  data__serviceAccounts,
+  data__tags
+ ) 
+ SELECT
+'australia-southeast1-a',
+'stackql-demo',
+'controller-2',
+'https://compute.googleapis.com/compute/v1/projects/stackql-demo/zones/australia-southeast1-a/machineTypes/f1-micro',
+ true,
+ false,
+'{"automaticRestart":true}',
+'[{"network":"projects/stackql-demo/global/networks/kubernetes-the-hard-way-vpc","networkIP":"10.240.0.12","subnetwork":"regions/australia-southeast1/subnetworks/kubernetes-the-hard-way-subnet"}]',
+'[{"autoDelete":true,"boot":true,"initializeParams":{"diskSizeGb":"10","sourceImage":"https://compute.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts"},"mode":"READ_WRITE","type":"PERSISTENT"}]',
+'[{"email":"default","scopes":["https://www.googleapis.com/auth/compute","https://www.googleapis.com/auth/devstorage.read_only","https://www.googleapis.com/auth/logging.write","https://www.googleapis.com/auth/monitoring","https://www.googleapis.com/auth/service.management.readonly","https://www.googleapis.com/auth/servicecontrol"]}]',
+'{"items":["kubernetes-the-hard-way","controller"]}';
+
+
+
+
+ INSERT /*+ AWAIT  */ INTO compute.instances 
+ (
+  zone,
+  project,
+  data__name,
+  data__machineType,
+  data__canIpForward,
+  data__deletionProtection,
+  data__scheduling,
+  data__networkInterfaces,
+  data__disks,
+  data__serviceAccounts,
+  data__tags
+ ) 
+ SELECT
+'australia-southeast1-a',
+'stackql-demo',
+'worker-0',
+'https://compute.googleapis.com/compute/v1/projects/stackql-demo/zones/australia-southeast1-a/machineTypes/f1-micro',
+ true,
+ false,
+'{"automaticRestart":true}',
+'[{"network":"projects/stackql-demo/global/networks/kubernetes-the-hard-way-vpc","networkIP":"10.240.0.20","subnetwork":"regions/australia-southeast1/subnetworks/kubernetes-the-hard-way-subnet"}]',
+'[{"autoDelete":true,"boot":true,"initializeParams":{"diskSizeGb":"10","sourceImage":"https://compute.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts"},"mode":"READ_WRITE","type":"PERSISTENT"}]',
+'[{"email":"default","scopes":["https://www.googleapis.com/auth/compute","https://www.googleapis.com/auth/devstorage.read_only","https://www.googleapis.com/auth/logging.write","https://www.googleapis.com/auth/monitoring","https://www.googleapis.com/auth/service.management.readonly","https://www.googleapis.com/auth/servicecontrol"]}]',
+'{"items":["kubernetes-the-hard-way","worker"]}';
+
+
+
+
+ INSERT /*+ AWAIT  */ INTO compute.instances 
+ (
+  zone,
+  project,
+  data__name,
+  data__machineType,
+  data__canIpForward,
+  data__deletionProtection,
+  data__scheduling,
+  data__networkInterfaces,
+  data__disks,
+  data__serviceAccounts,
+  data__tags
+ ) 
+ SELECT
+'australia-southeast1-a',
+'stackql-demo',
+'worker-1',
+'https://compute.googleapis.com/compute/v1/projects/stackql-demo/zones/australia-southeast1-a/machineTypes/f1-micro',
+ true,
+ false,
+'{"automaticRestart":true}',
+'[{"network":"projects/stackql-demo/global/networks/kubernetes-the-hard-way-vpc","networkIP":"10.240.0.21","subnetwork":"regions/australia-southeast1/subnetworks/kubernetes-the-hard-way-subnet"}]',
+'[{"autoDelete":true,"boot":true,"initializeParams":{"diskSizeGb":"10","sourceImage":"https://compute.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts"},"mode":"READ_WRITE","type":"PERSISTENT"}]',
+'[{"email":"default","scopes":["https://www.googleapis.com/auth/compute","https://www.googleapis.com/auth/devstorage.read_only","https://www.googleapis.com/auth/logging.write","https://www.googleapis.com/auth/monitoring","https://www.googleapis.com/auth/service.management.readonly","https://www.googleapis.com/auth/servicecontrol"]}]',
+'{"items":["kubernetes-the-hard-way","worker"]}';
+
+
+
+
+ INSERT /*+ AWAIT  */ INTO compute.instances 
+ (
+  zone,
+  project,
+  data__name,
+  data__machineType,
+  data__canIpForward,
+  data__deletionProtection,
+  data__scheduling,
+  data__networkInterfaces,
+  data__disks,
+  data__serviceAccounts,
+  data__tags
+ ) 
+ SELECT
+'australia-southeast1-a',
+'stackql-demo',
+'worker-2',
+'https://compute.googleapis.com/compute/v1/projects/stackql-demo/zones/australia-southeast1-a/machineTypes/f1-micro',
+ true,
+ false,
+'{"automaticRestart":true}',
+'[{"network":"projects/stackql-demo/global/networks/kubernetes-the-hard-way-vpc","networkIP":"10.240.0.22","subnetwork":"regions/australia-southeast1/subnetworks/kubernetes-the-hard-way-subnet"}]',
+'[{"autoDelete":true,"boot":true,"initializeParams":{"diskSizeGb":"10","sourceImage":"https://compute.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/family/ubuntu-2004-lts"},"mode":"READ_WRITE","type":"PERSISTENT"}]',
+'[{"email":"default","scopes":["https://www.googleapis.com/auth/compute","https://www.googleapis.com/auth/devstorage.read_only","https://www.googleapis.com/auth/logging.write","https://www.googleapis.com/auth/monitoring","https://www.googleapis.com/auth/service.management.readonly","https://www.googleapis.com/auth/servicecontrol"]}]',
+'{"items":["kubernetes-the-hard-way","worker"]}';

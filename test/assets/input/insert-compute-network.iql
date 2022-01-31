@@ -1,0 +1,15 @@
+
+
+INSERT /*+ AWAIT  */ INTO google.compute.networks
+(
+ project,
+ data__name,
+ data__autoCreateSubnetworks,
+ data__routingConfig
+) 
+SELECT  
+'lab-kr-network-01',
+'another-silly-network',
+false,
+'{ "routingMode": "REGIONAL" }'
+;

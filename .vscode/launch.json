@@ -1,0 +1,448 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    
+    {
+      "name": "Launch help -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "exec",
+      "program": "${workspaceFolder}/build/stackql",
+      "args": [
+        "help"
+      ]
+    },
+    {
+      "name": "Launch exec \"show services from google where name = 'abusiveexperiencereport';\" -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "exec",
+      "program": "${workspaceFolder}/build/stackql",
+      "args": [
+        "exec",
+        "show services from google where name = 'abusiveexperiencereport';"
+      ],
+    },
+    {
+      "name": "okta -- Launch exec \"show resources from okta.group;\" -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "exec",
+      "program": "${workspaceFolder}/build/stackql",
+      "args": [
+        "exec",
+        "show resources from okta.group;"
+      ],
+    },
+    {
+      "name": "Launch exec \"DESCRIBE compute.instances;\" -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "exec",
+      "program": "${workspaceFolder}/build/stackql",
+      "args": [
+        "exec",
+        "DESCRIBE compute.instances;", // "--offline"
+      ],
+    },
+    {
+      "name": "Launch exec \"DESCRIBE compute.disks;\" -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "exec",
+      "program": "${workspaceFolder}/build/stackql",
+      "args": [
+        "exec",
+        "DESCRIBE compute.disks;", // "--offline"
+      ],
+    },
+    {
+      "name": "Launch exec \"SHOW... google.compute;\" -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "exec",
+      "program": "${workspaceFolder}/build/stackql",
+      "args": [
+        "exec",
+        "SHOW resources from google.compute WHERE name = '';", // "--offline"
+      ],
+    },
+    // select * from compute.networks cp inner join compute.networks cp2 on cp.name = cp2.name  where cp.project = 'lab-kr-network-01';
+    {
+      "name": "Launch JOIN exec \"SELECT projects.logs ... ;\" -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "exec",
+      "program": "${workspaceFolder}/build/stackql",
+      "args": [
+        "exec",
+        "--keyfilepath=${workspaceFolder}/keys/sa-key.json",
+        "select * from google.logging.`projects.logs` WHERE parent = 'projects/lab-kr-network-01';",
+        "-o",
+        "json"
+      ],
+    },
+    // select name from google.compute.disks where project = 'lab-kr-network-01' and zone = 'australia-southeast1-a';
+    {
+      "name": "DEBUG select compute.disks ... ;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--auth={ \"google\": { \"keyfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"keyfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"keyfiletype\": \"api_key\" } }",
+        "select name from google.compute.disks where project = 'lab-kr-network-01' and zone = 'australia-southeast1-a';",
+        "-o",
+        "json"
+      ],
+    },
+    // show extended resources from okta.group
+    {
+      "name": "DEBUG show resources from okta.group ... ;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--auth={ \"google\": { \"keyfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"keyfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"keyfiletype\": \"api_key\" } }",
+        "show extended resources from okta.group;",
+        "-o",
+        "json"
+      ],
+    },
+    {
+      "name": "Launch exec \"INSERT /*+ AWAIT */ logging...buckets ... ;\" -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--keyfilepath=${workspaceFolder}/keys/sa-key.json",
+        "insert /*+ AWAIT */ into google.logging.`organizations.locations.buckets`(parent, bucketId) values('projects/lab-kr-network-01/locations/australia-southeast1', 'kr-lab-network-01-logging-bucket-03');",
+        "-o",
+        "json"
+      ],
+    },
+    // DELETE FROM google.bigquery.datasets WHERE projectId='lab-kr-network-01' and datasetId='DEMO_DATASET';
+    {
+      "name": "Intractible \"SELECT BQ jobs ... ;\" -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "exec",
+      "program": "${workspaceFolder}/build/stackql",
+      "args": [
+        "exec",
+        "--keyfilepath=${workspaceFolder}/keys/sa-key.json",
+        "select * from google.bigquery.jobs where projectId='lab-kr-network-01';",
+        "-o",
+        "json"
+      ],
+    },
+    {
+      "name": "Intractible \"select from exec ... ;\" -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "exec",
+      "program": "${workspaceFolder}/build/stackql",
+      "args": [
+        "exec",
+        "--keyfilepath=${workspaceFolder}/keys/sa-key.json",
+        "select * from ( exec /*+ SHOWRESULTS */ google.bigquery.jobs.getQueryResults @projectId='lab-kr-network-01', @jobId='bquxjob_19abc6d_17c14bbcb9e' ) ;",
+        "-o",
+        "json"
+      ],
+    },
+    {
+      "name": "EXPAND \"select from exec ... ;\" -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--auth={ \"google\": { \"keyfilepath\": \"${workspaceFolder}/keys/sa-key.json\" } }",
+        "--cpuprofile=${workspaceFolder}/build/prof1.prof",
+        "select name from (EXEC /*+ SHOWRESULTS */ google.compute.disks.get @disk = 'my-disk-01-indeed',  @project = 'lab-kr-network-01', @zone = 'australia-southeast1-a');",
+        "-o",
+        "json"
+      ],
+    },
+    {
+      "name": "okta debug \"insert into apps ... ;\" -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--keyfilepath=${workspaceFolder}/keys/okta-token.txt",
+        "--keyfiletype=api_key",
+        "insert into okta.application.apps(subdomain, data__name, data__label, data__signOnMode, data__settings) SELECT 'dev-79923018-admin', 'template_basic_auth', 'some new app again', 'BASIC_AUTH', '{ \"app\": { \"authURL\": \"https://example.com/auth.html\", \"url\": \"https://example.com/bookmark.htm\" } }' ;",
+        "-o",
+        "json"
+      ],
+    },
+    // 
+    {
+      "name": "debug \"SHOW RESOURCES ;\" -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "show extended resources from google.compute where name = 'resourcePolicies';",
+        "-o",
+        "json"
+      ],
+    }, 
+    {
+      "name": "exec \"SHOW RESOURCES ;\" -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "exec",
+      "program": "${workspaceFolder}/build/stackql",
+      "args": [
+        "exec",
+        "show extended resources from google.compute where name = 'resourcePolicies';",
+        "-o",
+        "json"
+      ],
+    },
+    {
+      "name": "okta \"DELETE from okta.application.apps ;\" -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--keyfilepath=${workspaceFolder}/keys/okta-token.txt",
+        "--keyfiletype=api_key",
+        "delete from okta.application.apps where appId = '0oa3fvey86qdXch1g5d7' and subdomain = 'dev-79923018-admin';",
+        "-o",
+        "json"
+      ],
+    },
+    {
+      "name": "okta deactivate \"okta.application.apps.deactivate ;\" -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--keyfilepath=${workspaceFolder}/keys/okta-token.txt",
+        "--keyfiletype=api_key",
+        "exec okta.application.apps.deactivate @appId = '0oa3gvv2cruvhWBXU5d7',  @subdomain = 'dev-79923018-admin';",
+        "-o",
+        "json"
+      ],
+    },
+    {
+      "name": "okta \"show resources from okta.group ;\" -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--keyfilepath=${workspaceFolder}/keys/okta-token.txt",
+        "--keyfiletype=api_key",
+        "show resources from okta.group;",
+        "-o",
+        "json"
+      ],
+    },
+    {
+      "name": "\"AWAIT exec ... ;\" -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "exec",
+      "program": "${workspaceFolder}/build/stackql",
+      "args": [
+        "exec",
+        "--keyfilepath=${workspaceFolder}/keys/sa-key.json",
+        // "exec /*+ some AWAIT */ google.compute.disks.list  @zone = 'australia-southeast1-a', /* */ @project = 'lab-kr-network-01';",
+        "EXEC /*+ some AWAIT */ compute.disks.insert @project='lab-kr-network-01', @zone= 'australia-southeast1-a' @@json='{ \"name\": \"test-disk9\", \"sizeGb\": 10 }';",
+        // "select name, region from google.compute.subnetworks where region = 'australia-southeast1' AND /* */ project = 'lab-kr-network-01';",
+        // "select * from compute.instances WHERE `google.compute.project` = 'lab-kr-network-01' ;",
+        // "select canIpForward from compute.instances WHERE zone = 2 AND project = 'lab-kr-network-01' ;",
+        "-o",
+        "json"
+      ],
+    },
+    {
+      "name": "Launch exec \"COMPLEX INSERT ... ;\" -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "exec",
+      "program": "${workspaceFolder}/build/stackql",
+      "args": [
+        "exec",
+        "--keyfilepath=${workspaceFolder}/keys/sa-key.json",
+        "insert into google.compute.disks(project, zone, data__name) SELECT 'lab-kr-network-01', 'australia-southeast1-a', name || '-newzy2' as name from google.compute.disks where project = 'lab-kr-network-01' and zone =  'australia-southeast1-a' limit 2;",
+        "-o",
+        "json"
+      ],
+    },
+    {
+      "name": "SHOW INSERT bq.datasets ;\" -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "exec",
+      "program": "${workspaceFolder}/build/stackql",
+      "args": [
+        "exec",
+        "--keyfilepath=${workspaceFolder}/keys/sa-key.json",
+        "SHOW EXTENDED INSERT INTO google.bigquery.datasets;",
+        "-o",
+        "pptext"
+      ],
+    },
+    {
+      "name": "SHOW INSERT...instances( project...) ;\" -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "exec",
+      "program": "${workspaceFolder}/build/stackql",
+      "args": [
+        "exec",
+        "--keyfilepath=${workspaceFolder}/keys/sa-key.json",
+        "show insert into google.compute.instances( project, data__sourceSnapshotId );",
+        "-o",
+        "pptext"
+      ],
+    },
+    {
+      "name": "SHOW INSERT /*+ REQUIRED */... ;\" -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "exec",
+      "program": "${workspaceFolder}/build/stackql",
+      "args": [
+        "exec",
+        "--keyfilepath=${workspaceFolder}/keys/sa-key.json",
+        "show insert /*+ REQUIRED */ into google.compute.addresses;",
+        "-o",
+        "pptext"
+      ],
+    },
+    {
+      "name": "SHOW PROVIDERS... ;\" -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "exec",
+      "program": "${workspaceFolder}/build/stackql",
+      "args": [
+        "exec",
+        "--keyfilepath=${workspaceFolder}/keys/sa-key.json",
+        "show providers;",
+        "-o",
+        "table"
+      ],
+    },
+    {
+      "name": "SHOW RESOURCES... ;\" -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "exec",
+      "program": "${workspaceFolder}/build/stackql",
+      "args": [
+        "exec",
+        "--keyfilepath=${workspaceFolder}/keys/sa-key.json",
+        "show resources from google.container;",
+        "-o",
+        "table"
+      ],
+    },
+    {
+      "name": "RUN test iql file... ;\" -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "exec",
+      "program": "${workspaceFolder}/build/stackql",
+      "args": [
+        "exec",
+        "--keyfilepath=${workspaceFolder}/keys/sa-key.json",
+        "-i=${workspaceFolder}/test/assets/input/show-services-extended-filtered.iql",
+        "-o",
+        "table"
+      ],
+    },
+    {
+      "name": "RUN insert complex iql file... ;\" -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "exec",
+      "program": "${workspaceFolder}/build/stackql",
+      "args": [
+        "exec",
+        "--keyfilepath=${workspaceFolder}/keys/sa-key.json",
+        "-i=${workspaceFolder}/test/assets/input/insert-compute-network.iql",
+        "-o",
+        "table"
+      ],
+    },
+    // select * from google.container.`projects.aggregated.usableSubnetworks` where parent = '"'paojects/kr-lab-network-01'"';
+    {
+      "name": "Launch exec \"SELECT container agg ... ;\" -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "exec",
+      "program": "${workspaceFolder}/build/stackql",
+      "args": [
+        "exec",
+        "--keyfilepath=${workspaceFolder}/keys/sa-key.json",
+        "select * from google.container.`projects.aggregated.usableSubnetworks` where parent = 'projects/kr-lab-network-01'",
+        "-o",
+        "json"
+      ],
+    },
+    {
+      "name": "Launch exec \"SELECT bq.datasets ... ;\" -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "exec",
+      "program": "${workspaceFolder}/build/stackql",
+      "args": [
+        "exec",
+        "--keyfilepath=${workspaceFolder}/keys/sa-key.json",
+        "select * from google.bigquery.datasets where projectId = 'lab-kr-network-01';",
+        "-o",
+        "json"
+      ],
+    },
+
+    {
+      "name": "DEBUG exec \"SELECT name FROM google.storage.buckets WHERE project = 'lab-kr-network-01';\" -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--keyfilepath=${workspaceFolder}/keys/sa-key.json",
+        "SELECT name FROM google.storage.buckets WHERE project = 'lab-kr-network-01';",
+        "-o",
+        "json"
+      ],
+    },
+    // ;
+    // ./stackql --verbose --providerroot=./.stackql   --keyfilepath=../keys/sa-key.json exec    "select canIpForward from compute.instances WHERE zone = 'australia-southeast1-b' AND project = 'lab-kr-network-01' ;" -o json | jq
+    {
+      // need to edit processId as appropriate
+      "name": "Attach to local process -- eg shell -- amend processId as required",
+      "type": "go",
+      "request": "attach",
+      "mode": "local",
+      "processId": 8745
+    }
+  ]
+}

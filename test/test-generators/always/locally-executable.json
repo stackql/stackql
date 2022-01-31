@@ -1,0 +1,259 @@
+{
+  "integration_tests": [
+    {
+      "name": "Verbose output, filtered, alt-deimited CSV file based SHOW EXTENDED RESOURCES test + assertion",
+      "output": "csv",
+      "delimiter": ";",
+      "instruction": "exec",
+      "query": "show extended resources from google.compute where name = 'resourcePolicies' and id like '%.resourcePol%';",
+      "expected": [ 
+        "name;id;description",
+        "resourcePolicies;.*"
+      ],
+      "output_file": "output/filtered_resources_semicolon.csv",
+      "verbose": true
+    },
+    {
+      "name": "Verbose output, filtered, alt-deimited CSV file based SHOW EXTENDED SERVICES test + assertion",
+      "output": "csv",
+      "delimiter": ";",
+      "instruction": "exec",
+      "query": "show extended services where description like 'Provides natural language%' and version = 'v1';",
+      "expected": [ 
+        "id;name;title;description;version;preferred",
+        "language:v1;.*" 
+      ],
+      "output_file": "output/filtered_services_semicolon.csv",
+      "verbose": true
+    },
+    {
+      "name": "Verbose output, filtered, alt-deimited CSV file based SHOW EXTENDED SERVICES test + assertion",
+      "output": "csv",
+      "delimiter": ";",
+      "instruction": "exec",
+      "query": "show extended services where description like 'Provides natural language%' and version = 'v1';",
+      "expected": [ 
+        "id;name;title;description;version;preferred",
+        "language:v1;.*" 
+      ],
+      "output_file": "output/filtered_services_semicolon.csv",
+      "verbose": true
+    },
+    {
+      "name": "Verbose output, filtered, alt-deimited CSV stdout based SHOW EXTENDED SERVICES test + assertion",
+      "output": "csv",
+      "delimiter": ";",
+      "instruction": "exec",
+      "query": "show extended services where description like 'Provides natural language%' and version = 'v1';",
+      "expected": [ 
+        "id;name;title;description;version;preferred",
+        "language:v1;.*" 
+      ],
+      "output_file": "output/stdout",
+      "verbose": true
+    },
+    {
+      "name": "Tabular stdout based SHOW EXTENDED SERVICES test + assertion",
+      "output": "table",
+      "instruction": "exec",
+      "query": "show extended services where description like 'Provides natural language%' and version = 'v1';",
+      "expected": [ 
+        "\\|[\\|\\-]*\\|$",
+        "\\|[\\W]+id",
+        "\\|[\\|\\-]*\\|$",
+        "\\|[\\W]+language\\:v1.*"
+      ],
+      "output_file": "output/stdout",
+      "verbose": true
+    },
+    {
+      "name": "Tabular stdout based SHOW PROVIDERS",
+      "output": "table",
+      "instruction": "exec",
+      "query": "show providers;",
+      "expected": [ 
+        "\\|[\\|\\-]*\\|$",
+        "\\|[\\W]+name[\\W]+\\|",
+        "\\|[\\|\\-]*\\|$",
+        "\\|.*google",
+        "\\|[\\|\\-]*\\|$"
+      ],
+      "output_file": "output/stdout",
+      "verbose": true
+    },
+    {
+      "name": "Tabular stdout based DESCRIBE google.compute.instances",
+      "output": "table",
+      "instruction": "exec",
+      "query": "DESCRIBE google.compute.instances;",
+      "expected": [ 
+        "\\|[\\|\\-]*\\|$",
+        "\\|[\\W]+name[\\W]+\\|",
+        "\\|[\\|\\-]*\\|$",
+        "\\|[\\W]+id[\\W]+\\|",
+        "\\|[\\|\\-]*\\|$",
+        "\\|[\\W]+name[\\W]+\\|",
+        "\\|[\\|\\-]*\\|$",
+        "\\|[\\W]+description[\\W]+\\|",
+        "\\|[\\|\\-]*\\|$",
+        "\\|[\\W]+[\\w]+[\\W]+\\|"
+      ],
+      "output_file": "output/stdout",
+      "verbose": true
+    },
+    {
+      "name": "Tabular stdout based SHOW INSERT test + assertion",
+      "output": "table",
+      "instruction": "exec",
+      "query": "show insert into google.compute.instances;",
+      "expected": [ 
+        "\\|[\\|\\-]*\\|$",
+        "\\|[\\W]+insert_statement",
+        "\\|[\\|\\-]*\\|$",
+        "\\|[\\W]+INSERT\\ INTO"
+      ],
+      "output_file": "output/stdout",
+      "verbose": true
+    },
+    {
+      "name": "Tabular stdout based SHOW METHODS test + assertion",
+      "output": "table",
+      "instruction": "exec",
+      "query": "show methods in google.compute.instances;",
+      "expected": [ 
+        "\\|[\\|\\-]*\\|$",
+        "\\|[\\W]+MethodName"
+      ],
+      "output_file": "output/stdout",
+      "verbose": true
+    },
+    {
+      "name": "From json templated file, filtered, alt-deimited CSV file based SHOW EXTENDED SERVICES test + assertion",
+      "output": "csv",
+      "delimiter": ";",
+      "instruction": "exec",
+      "input_file": "input/json-templated-show-services-extended-filtered.iql",
+      "expected": [ 
+        "id;name;title;description;version;preferred",
+        "language:v1;.*" 
+      ],
+      "output_file": "output/from_file_json_templated_filtered_services_semicolon.csv",
+      "verbose": true
+    },
+    {
+      "name": "From jsonnet templated file, filtered, alt-deimited CSV file based SHOW EXTENDED SERVICES test + assertion",
+      "output": "csv",
+      "delimiter": ";",
+      "instruction": "exec",
+      "input_file": "input/jsonnet-templated-show-services-extended-filtered.iql",
+      "expected": [ 
+        "id;name;title;description;version;preferred",
+        "language:v1;.*" 
+      ],
+      "output_file": "output/from_file_jsonnet_templated_filtered_services_semicolon.csv",
+      "verbose": true
+    },
+    {
+      "name": "From externally json templated file, filtered, alt-deimited CSV file based SHOW EXTENDED SERVICES test + assertion",
+      "output": "csv",
+      "delimiter": ";",
+      "instruction": "exec",
+      "input_file": "input/empty-templated-show-services-extended-filtered.iql",
+      "external_tmpl_ctx_file": "input/show-services-ctx.json",
+      "expected": [ 
+        "id;name;title;description;version;preferred",
+        "language:v1;.*" 
+      ],
+      "output_file": "output/from_file_external_jsonnet_templated_filtered_services_semicolon.csv",
+      "verbose": true
+    },
+    {
+      "name": "From externally jsonnet templated file, filtered, alt-deimited CSV file based SHOW EXTENDED SERVICES test + assertion",
+      "output": "csv",
+      "delimiter": ";",
+      "instruction": "exec",
+      "input_file": "input/empty-templated-show-services-extended-filtered.iql",
+      "external_tmpl_ctx_file": "input/show-services-ctx.jsonnet",
+      "expected": [ 
+        "id;name;title;description;version;preferred",
+        "language:v1;.*" 
+      ],
+      "output_file": "output/from_file_external_jsonnet_templated_filtered_services_semicolon.csv",
+      "verbose": true
+    },
+    {
+      "name": "k8s the hard way From externally jsonnet templated file, filtered, alt-deimited CSV file based SHOW EXTENDED SERVICES test + assertion",
+      "output": "text",
+      "delimiter": ";",
+      "instruction": "exec",
+      "headless": true,
+      "dry_run": true,
+      "input_file": "input/templated-insert-compute-network.iql",
+      "output_file": "output/templated-insert-compute-network.iql",
+      "verbose": true,
+      "expected": [
+        "INSERT",   
+        "\\(",
+        "\\ \\ project,",
+        "\\ \\ data__name,",
+        "\\ \\ data__autoCreateSubnetworks,",
+        "\\ \\ data__routingConfig",
+        "\\)\\ ",
+        "SELECT",
+        "\\ \\ 'dummy-project',",
+        "\\ \\ 'another-silly-network',",
+        "\\ \\ \\ false,",
+        "\\ \\ '{\\\"routingMode\\\":\\\"REGIONAL\\\"}'"
+      ]
+    },
+    {
+      "name": "k8s the hard way From externally jsonnet templated file, test + assertion",
+      "output": "text",
+      "delimiter": ";",
+      "instruction": "exec",
+      "headless": true,
+      "dry_run": true,
+      "input_file": "input/k8s-the-hard-way/k8s-the-hard-way.iql",
+      "external_tmpl_ctx_file": "input/k8s-the-hard-way/vars.jsonnet",
+      "output_file": "output/k8s-the-hard-way.iql",
+      "verbose": true,
+      "expected": [ 
+        "--",
+        "-- create VPC", 
+        "--",
+        "INSERT",   
+        "\\(",
+        "\\ project,",
+        "\\ data__name,",
+        "\\ data__autoCreateSubnetworks,",
+        "\\ data__routingConfig",
+        "\\)\\ ",
+        "SELECT",
+        "'stackql-demo',",
+        "'kubernetes-the-hard-way-vpc',",
+        "false,",
+        "'{\\\"routingMode\\\":\\\"REGIONAL\\\"}';"
+      ]
+    },
+    {
+      "name": "show insert with column selection, test + assertion",
+      "output": "text",
+      "delimiter": ";",
+      "instruction": "exec",
+      "headless": true,
+      "query": "show insert into google.compute.disks(zone, data__resourcePolicies);",
+      "output_file": "output/col-selected-show-insert-google-compute-disks.iql",
+      "verbose": true,
+      "expected": [ 
+        "INSERT",
+        "\\ \\ zone,",
+        "\\ \\ data__resourcePolicies",
+        "\\)",
+        "SELECT",
+        "\\ \\ '{{\\ .values.zone\\ }}',",
+        "\\ \\ '\\[\\ \\\"{{\\ .values.data__resourcePolicies\\[0\\]\\ }}\\\"\\ \\]'",
+        ";"
+      ]
+    }
+  ]
+}

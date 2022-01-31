@@ -1,0 +1,137 @@
+--
+-- create VPC 
+--
+use google;
+
+INSERT /*+ AWAIT  */ INTO compute.networks
+(
+ project,
+ data__name,
+ data__autoCreateSubnetworks,
+ data__routingConfig
+) 
+SELECT
+'{{ .global.project }}',
+'{{ .network.name }}',
+{{ .network.autoCreateSubnetworks }},
+'{{ .network.routingConfig }}';
+
+--
+-- create subnetwork
+--
+INSERT /*+ AWAIT  */ INTO compute.subnetworks
+(
+ project,
+ region,
+ data__name,
+ data__network,
+ data__ipCidrRange,
+ data__privateIpGoogleAccess
+) 
+SELECT
+'{{ .global.project }}',
+'{{ .global.region }}',
+'{{ .subnetwork.name }}',
+'{{ .subnetwork.network }}',
+'{{ .subnetwork.ipCidrRange }}',
+ {{ .subnetwork.privateIpGoogleAccess }};
+
+--
+-- create public IP address
+--
+INSERT /*+ AWAIT  */ INTO compute.addresses
+(
+ project,
+ region,
+ data__name
+) 
+SELECT
+'{{ .global.project }}',
+'{{ .global.region }}',
+'{{ .address.name }}';
+
+{{- $root := .}}
+--
+-- create firewall rules
+--
+{{range .firewalls}}
+INSERT /*+ AWAIT  */ INTO compute.firewalls
+(
+ project,
+ data__name,
+ data__network,
+ data__direction,
+ data__sourceRanges,
+ data__allowed
+) 
+SELECT
+'{{ $root.global.project }}',
+'{{.name}}',
+'{{.network}}',
+'{{.direction}}',
+'{{.sourceRanges}}',
+'{{.allowed}}';
+{{end}}
+
+--
+-- create instances
+--
+{{range .instances }}
+{{ if .controller_instance }}
+{{ $ci := index . "controller_instance"}}
+ INSERT /*+ AWAIT  */ INTO compute.instances 
+ (
+  zone,
+  project,
+  data__name,
+  data__machineType,
+  data__canIpForward,
+  data__deletionProtection,
+  data__scheduling,
+  data__networkInterfaces,
+  data__disks,
+  data__serviceAccounts,
+  data__tags
+ ) 
+ SELECT
+'{{ $root.global.zone }}',
+'{{ $root.global.project }}',
+'{{ $ci.name}}',
+'{{ $root.instance.machineType}}',
+ {{ $root.instance.canIpForward}},
+ {{ $root.instance.deletionProtection}},
+'{{ $root.instance.scheduling}}',
+'{{ $ci.networkInterfaces}}',
+'{{ $root.instance.disks}}',
+'{{ $root.instance.serviceAccounts}}',
+'{{ $root.controller_instance.instance.tags}}';
+{{ else if .worker_instance }}
+{{ $ci := index . "worker_instance"}}
+ INSERT /*+ AWAIT  */ INTO compute.instances 
+ (
+  zone,
+  project,
+  data__name,
+  data__machineType,
+  data__canIpForward,
+  data__deletionProtection,
+  data__scheduling,
+  data__networkInterfaces,
+  data__disks,
+  data__serviceAccounts,
+  data__tags
+ ) 
+ SELECT
+'{{ $root.global.zone }}',
+'{{ $root.global.project }}',
+'{{ $ci.name}}',
+'{{ $root.instance.machineType}}',
+ {{ $root.instance.canIpForward}},
+ {{ $root.instance.deletionProtection}},
+'{{ $root.instance.scheduling}}',
+'{{ $ci.networkInterfaces}}',
+'{{ $root.instance.disks}}',
+'{{ $root.instance.serviceAccounts}}',
+'{{ $root.worker_instance.instance.tags}}';
+{{end}}
+{{end}}

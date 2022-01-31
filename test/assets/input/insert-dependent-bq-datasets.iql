@@ -1,0 +1,18 @@
+
+INSERT INTO google.bigquery.datasets(
+  projectId,
+  data__location,
+  data__datasetReference
+)
+SELECT
+  projectId,
+  'US' as location,
+  JSON('{ "datasetId": "test_dataset_zz", "projectId": "' || projectId || '" }') as datasetReference
+FROM google.cloudresourcemanager.projects
+WHERE 
+  parent = 'organizations/123456789012'
+  AND 
+  projectId like 'testing-%'
+ORDER BY projectId ASC
+LIMIT 2
+;

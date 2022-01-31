@@ -1,0 +1,4 @@
+show insert /*+ REQUIRED */ 
+into 
+google.compute.addresses
+;

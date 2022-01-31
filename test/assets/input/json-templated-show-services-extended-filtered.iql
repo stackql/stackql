@@ -1,0 +1,25 @@
+
+<<<json
+
+{
+  "service": {
+    "description": "Provides natural language%",
+    "version": "v1"
+  },
+  "trivial_nonsense": {
+    "some-key": true,
+    "arr-key": [
+      {
+        "1": 1
+      },
+      {
+        "1": 2
+      }
+    ]
+  }
+}
+
+>>>
+
+show extended services where description like '{{ .service.description }}' and version = '{{ .service.version }}';
+

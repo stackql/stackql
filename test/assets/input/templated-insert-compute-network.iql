@@ -1,0 +1,46 @@
+
+
+<<<jsonnet
+
+// a comment
+
+local provider_version = 'v1';
+
+
+{
+  // some comment
+  values: {
+    provider: {
+      project: "dummy-project",
+      version: provider_version
+    },
+    data_particulars: {
+      "routingConfig": { "routingMode": "REGIONAL" },
+      autoCreateSubnetworks: false,
+      names: [
+        {
+          "machineReadable": "another-silly-network"
+        },
+        {
+          "machineReadable": "who-knows"
+        }
+      ]
+    }
+  }
+}
+
+>>>
+
+INSERT /*+ AWAIT  */ INTO google.compute.networks
+(
+  project,
+  data__name,
+  data__autoCreateSubnetworks,
+  data__routingConfig
+) 
+SELECT  
+  '{{ .values.provider.project }}',
+  '{{ (index .values.data_particulars.names 0).machineReadable }}',
+   {{ .values.data_particulars.autoCreateSubnetworks }},
+  '{{ .values.data_particulars.routingConfig }}'
+;

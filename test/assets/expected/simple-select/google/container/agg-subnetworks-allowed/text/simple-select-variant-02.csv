@@ -1,0 +1,3 @@
+subnetwork,ipCidrRange
+projects/testing-project/regions/australia-southeast1/subnetworks/sn-02,10.0.1.0/24
+projects/testing-project/regions/australia-southeast1/subnetworks/sn-01,10.0.0.0/24

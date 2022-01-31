@@ -1,0 +1,26 @@
+INSERT INTO google.bigquery.datasets(
+  projectId,
+  data__access,
+  data__datasetReference,
+  data__defaultEncryptionConfiguration,
+  data__defaultPartitionExpirationMs,
+  data__defaultTableExpirationMs,
+  data__description,
+  data__friendlyName,
+  data__isCaseInsensitive,
+  data__labels,
+  data__location
+)
+SELECT
+  '{{ .values.projectId }}',
+  '[ { "dataset": { "dataset": { "datasetId": "{{ .values.data__access[0].dataset.dataset.datasetId }}", "projectId": "{{ .values.data__access[0].dataset.dataset.projectId }}" } }, "domain": "{{ .values.data__access[0].domain }}", "groupByEmail": "{{ .values.data__access[0].groupByEmail }}", "iamMember": "{{ .values.data__access[0].iamMember }}", "role": "{{ .values.data__access[0].role }}", "routine": { "datasetId": "{{ .values.data__access[0].routine.datasetId }}", "projectId": "{{ .values.data__access[0].routine.projectId }}", "routineId": "{{ .values.data__access[0].routine.routineId }}" }, "specialGroup": "{{ .values.data__access[0].specialGroup }}", "userByEmail": "{{ .values.data__access[0].userByEmail }}", "view": { "datasetId": "{{ .values.data__access[0].view.datasetId }}", "projectId": "{{ .values.data__access[0].view.projectId }}", "tableId": "{{ .values.data__access[0].view.tableId }}" } } ]',
+  '{ "datasetId": "{{ .values.data__datasetReference.datasetId }}", "projectId": "{{ .values.data__datasetReference.projectId }}" }',
+  '{ "kmsKeyName": "{{ .values.data__defaultEncryptionConfiguration.kmsKeyName }}" }',
+  '{{ .values.data__defaultPartitionExpirationMs }}',
+  '{{ .values.data__defaultTableExpirationMs }}',
+  '{{ .values.data__description }}',
+  '{{ .values.data__friendlyName }}',
+   {{ .values.data__isCaseInsensitive }},
+  '{ "{{ .values.data__labels[0].key }}": "{{ .values.data__labels[0].val }}" }',
+  '{{ .values.data__location }}'
+;

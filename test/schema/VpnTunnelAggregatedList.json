@@ -1,0 +1,123 @@
+{
+  "id": "VpnTunnelAggregatedList",
+  "properties": {
+    "id": {
+      "description": "[Output Only] Unique identifier for the resource; defined by the server.",
+      "type": "string"
+    },
+    "items": {
+      "additionalProperties": {
+        "$ref": "VpnTunnelsScopedList",
+        "description": "Name of the scope containing this set of VPN tunnels."
+      },
+      "description": "A list of VpnTunnelsScopedList resources.",
+      "type": "object"
+    },
+    "kind": {
+      "default": "compute#vpnTunnelAggregatedList",
+      "description": "[Output Only] Type of resource. Always compute#vpnTunnel for VPN tunnels.",
+      "type": "string"
+    },
+    "nextPageToken": {
+      "description": "[Output Only] This token allows you to get the next page of results for list requests. If the number of results is larger than maxResults, use the nextPageToken as a value for the query parameter pageToken in the next list request. Subsequent list requests will have their own nextPageToken to continue paging through the results.",
+      "type": "string"
+    },
+    "selfLink": {
+      "description": "[Output Only] Server-defined URL for this resource.",
+      "type": "string"
+    },
+    "unreachables": {
+      "description": "[Output Only] Unreachable resources.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "warning": {
+      "description": "[Output Only] Informational warning message.",
+      "properties": {
+        "code": {
+          "description": "[Output Only] A warning code, if applicable. For example, Compute Engine returns NO_RESULTS_ON_PAGE if there are no results in the response.",
+          "enum": [
+            "CLEANUP_FAILED",
+            "DEPRECATED_RESOURCE_USED",
+            "DEPRECATED_TYPE_USED",
+            "DISK_SIZE_LARGER_THAN_IMAGE_SIZE",
+            "EXPERIMENTAL_TYPE_USED",
+            "EXTERNAL_API_WARNING",
+            "FIELD_VALUE_OVERRIDEN",
+            "INJECTED_KERNELS_DEPRECATED",
+            "LARGE_DEPLOYMENT_WARNING",
+            "MISSING_TYPE_DEPENDENCY",
+            "NEXT_HOP_ADDRESS_NOT_ASSIGNED",
+            "NEXT_HOP_CANNOT_IP_FORWARD",
+            "NEXT_HOP_INSTANCE_NOT_FOUND",
+            "NEXT_HOP_INSTANCE_NOT_ON_NETWORK",
+            "NEXT_HOP_NOT_RUNNING",
+            "NOT_CRITICAL_ERROR",
+            "NO_RESULTS_ON_PAGE",
+            "PARTIAL_SUCCESS",
+            "REQUIRED_TOS_AGREEMENT",
+            "RESOURCE_IN_USE_BY_OTHER_RESOURCE_WARNING",
+            "RESOURCE_NOT_DELETED",
+            "SCHEMA_VALIDATION_IGNORED",
+            "SINGLE_INSTANCE_PROPERTY_TEMPLATE",
+            "UNDECLARED_PROPERTIES",
+            "UNREACHABLE"
+          ],
+          "enumDescriptions": [
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          "type": "string"
+        },
+        "data": {
+          "description": "[Output Only] Metadata about this warning in key: value format. For example:\n\"data\": [ { \"key\": \"scope\", \"value\": \"zones/us-east1-d\" }",
+          "items": {
+            "properties": {
+              "key": {
+                "description": "[Output Only] A key that provides more detail on the warning being returned. For example, for warnings where there are no results in a list request for a particular zone, this key might be scope and the key value might be the zone name. Other examples might be a key indicating a deprecated resource and a suggested replacement, or a warning about invalid network settings (for example, if an instance attempts to perform IP forwarding but is not enabled for IP forwarding).",
+                "type": "string"
+              },
+              "value": {
+                "description": "[Output Only] A warning data value corresponding to the key.",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "message": {
+          "description": "[Output Only] A human-readable description of the warning code.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "type": "object"
+}

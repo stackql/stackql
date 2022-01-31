@@ -1,0 +1,155 @@
+
+cmake_minimum_required(VERSION 3.0)
+project(stackql)
+
+set(TARGET stackql_build)
+set(EXECUTABLE stackql)
+
+set(GOLANG_SRC_PATH_STR stackql)
+set(GOLANG_BUILD_PATH_STR build)
+
+set(OS_STR_MAC darwin)
+set(OS_STR_LINUX linux)
+set(OS_STR_WINDOWS windows)
+
+set(EXE_SUFFIX_MAC _${OS_STR_MAC})
+set(EXE_SUFFIX_LINUX _${OS_STR_LINUX})
+set(EXE_SUFFIX_WINDOWS .exe)
+
+set(BUILDMAJORVERSION 0)
+set(BUILDMINORVERSION 0)
+set(BUILDPATCHVERSION 1)
+set(BUILDCOMMITSHA local-dev)
+set(BUILDSHORTCOMMITSHA local-dev)
+set(BUILDDATE 1900-01-01)
+
+set(PLANCACHEENABLED true)
+
+set(WINCOMPILER "CC=x86_64-w64-mingw32-gcc")
+set(LINUXCOMPILER "CC=x86_64-linux-musl-gcc")
+
+set(INT_TEST_DB_SRC_FILE "test/db/db.sqlite")
+set(INT_TEST_DB_DEST_FILE "test/db/tmp/python-tests-tmp-db.sqlite")
+
+enable_testing()
+
+set(TEST_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/test/python/main.py)
+
+add_custom_target(${TARGET} ALL)
+
+add_custom_command(TARGET ${TARGET}
+  PRE_BUILD
+  DEPENDS ${SRCS}
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  COMMAND go test -timeout 2400s -p 2 --tags "json1" ./...
+  COMMENT "Running Go Unit Tests"
+)
+
+add_custom_command(TARGET ${TARGET}
+  PRE_BUILD
+  DEPENDS ${SRCS}
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  COMMAND ${CMAKE_COMMAND} -E copy ${INT_TEST_DB_SRC_FILE} ${INT_TEST_DB_DEST_FILE}
+  COMMENT "Preparing for integration tests; copy db starting point file"
+)
+
+add_custom_command(TARGET ${TARGET}
+  PRE_BUILD
+  DEPENDS ${SRCS}
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  COMMAND go build  --tags "json1" -ldflags
+  "-X stackql/internal/stackql/cmd.BuildMajorVersion=${BUILDMAJORVERSION} \
+  -X stackql/internal/stackql/cmd.BuildMinorVersion=${BUILDMINORVERSION} \
+  -X stackql/internal/stackql/cmd.BuildPatchVersion=${BUILDPATCHVERSION} \
+  -X stackql/internal/stackql/cmd.BuildCommitSHA=${BUILDCOMMITSHA} \
+  -X stackql/internal/stackql/cmd.BuildShortCommitSHA=${BUILDSHORTCOMMITSHA} \
+  -X \"stackql/internal/stackql/cmd.BuildDate=${BUILDDATE}\" \
+  -X \"stackql/internal/stackql/planbuilder.PlanCacheEnabled=${PLANCACHEENABLED}\" \
+  -X stackql/internal/stackql/cmd.BuildPlatform=$ENV{GOOS}"
+  -o "${CMAKE_CURRENT_SOURCE_DIR}/${GOLANG_BUILD_PATH_STR}/${EXECUTABLE}"
+  "${CMAKE_CURRENT_SOURCE_DIR}/${GOLANG_SRC_PATH_STR}"
+  COMMENT "Building Go executable for local platform: $ENV{GOOS}"
+)
+
+add_custom_command(TARGET ${TARGET}
+  PRE_BUILD
+  DEPENDS ${SRCS}
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  COMMAND ${CMAKE_COMMAND} -E env GOOS=${OS_STR_MAC} go build --tags "json1" -ldflags
+  "-X stackql/internal/stackql/cmd.BuildMajorVersion=${BUILDMAJORVERSION} \
+  -X stackql/internal/stackql/cmd.BuildMinorVersion=${BUILDMINORVERSION} \
+  -X stackql/internal/stackql/cmd.BuildPatchVersion=${BUILDPATCHVERSION} \
+  -X stackql/internal/stackql/cmd.BuildCommitSHA=${BUILDCOMMITSHA} \
+  -X stackql/internal/stackql/cmd.BuildShortCommitSHA=${BUILDSHORTCOMMITSHA} \
+  -X \"stackql/internal/stackql/cmd.BuildDate=${BUILDDATE}\" \
+  -X \"stackql/internal/stackql/planbuilder.PlanCacheEnabled=${PLANCACHEENABLED}\" \
+  -X stackql/internal/stackql/cmd.BuildPlatform=${OS_STR_MAC}"
+  -o "${CMAKE_CURRENT_SOURCE_DIR}/${GOLANG_BUILD_PATH_STR}/${EXECUTABLE}${EXE_SUFFIX_MAC}"
+  "${CMAKE_CURRENT_SOURCE_DIR}/${GOLANG_SRC_PATH_STR}"
+  COMMENT "Building Go executable for ${OS_STR_MAC}"
+)
+
+add_custom_command(TARGET ${TARGET}
+  PRE_BUILD
+  DEPENDS ${SRCS}
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  COMMAND ${CMAKE_COMMAND} -E env GOOS=${OS_STR_WINDOWS} ${WINCOMPILER} go build --tags "json1" -ldflags
+  "-X stackql/internal/stackql/cmd.BuildMajorVersion=${BUILDMAJORVERSION} \
+  -X stackql/internal/stackql/cmd.BuildMinorVersion=${BUILDMINORVERSION} \
+  -X stackql/internal/stackql/cmd.BuildPatchVersion=${BUILDPATCHVERSION} \
+  -X stackql/internal/stackql/cmd.BuildCommitSHA=${BUILDCOMMITSHA} \
+  -X stackql/internal/stackql/cmd.BuildShortCommitSHA=${BUILDSHORTCOMMITSHA} \
+  -X \"stackql/internal/stackql/cmd.BuildDate=${BUILDDATE}\" \
+  -X \"stackql/internal/stackql/planbuilder.PlanCacheEnabled=${PLANCACHEENABLED}\" \
+  -X stackql/internal/stackql/cmd.BuildPlatform=${OS_STR_WINDOWS}"
+  -o "${CMAKE_CURRENT_SOURCE_DIR}/${GOLANG_BUILD_PATH_STR}/${EXECUTABLE}${EXE_SUFFIX_WINDOWS}"
+  "${CMAKE_CURRENT_SOURCE_DIR}/${GOLANG_SRC_PATH_STR}"
+  COMMENT "Building Go executable for ${OS_STR_WINDOWS}"
+)
+
+add_custom_command(TARGET ${TARGET}
+  PRE_BUILD
+  DEPENDS ${SRCS}
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  COMMAND ${CMAKE_COMMAND} -E env GOOS=${OS_STR_LINUX} ${LINUXCOMPILER} go build -ldflags
+  "-X stackql/internal/stackql/cmd.BuildMajorVersion=${BUILDMAJORVERSION} \
+  -X stackql/internal/stackql/cmd.BuildMinorVersion=${BUILDMINORVERSION} \
+  -X stackql/internal/stackql/cmd.BuildPatchVersion=${BUILDPATCHVERSION} \
+  -X stackql/internal/stackql/cmd.BuildCommitSHA=${BUILDCOMMITSHA} \
+  -X stackql/internal/stackql/cmd.BuildShortCommitSHA=${BUILDSHORTCOMMITSHA} \
+  -X \"stackql/internal/stackql/cmd.BuildDate=${BUILDDATE}\" \
+  -X \"stackql/internal/stackql/planbuilder.PlanCacheEnabled=${PLANCACHEENABLED}\" \
+  -X stackql/internal/stackql/cmd.BuildPlatform=${OS_STR_LINUX}"
+  -o "${CMAKE_CURRENT_SOURCE_DIR}/${GOLANG_BUILD_PATH_STR}/${EXECUTABLE}${EXE_SUFFIX_LINUX}"
+  "${CMAKE_CURRENT_SOURCE_DIR}/${GOLANG_SRC_PATH_STR}"
+  COMMENT "Building Go executable for ${OS_STR_LINUX}"
+)
+
+find_program(Python_EXECUTABLE python3)
+
+
+if(DEFINED ENV{STACKQL_TEST_LOG_LEVEL})
+  set(STACKQL_TEST_LOG_LEVEL $ENV{STACKQL_TEST_LOG_LEVEL})
+else()
+  set(STACKQL_TEST_LOG_LEVEL warn)
+endif()
+
+if(DEFINED LIVE_INTEGRATION_TESTS)
+  message(STATUS "LIVE_INTEGRATION_TESTS cmake variable = '${LIVE_INTEGRATION_TESTS}'")
+else()
+  set(LIVE_INTEGRATION_TESTS "")
+  message(STATUS "LIVE_INTEGRATION_TESTS cmake variable is empty, only 'always' tests will be run")
+endif()
+
+if(NOT Python_EXECUTABLE)
+    message(FATAL_ERROR "Cannot find the python3 executable!")
+endif()
+add_test(NAME int-tests
+    COMMAND ${Python_EXECUTABLE} ${TEST_SCRIPT} --additionalintegrationtestdir=${LIVE_INTEGRATION_TESTS} --loglevel=${STACKQL_TEST_LOG_LEVEL}
+)
+
+add_custom_command(TARGET ${TARGET}
+  POST_BUILD
+  COMMAND ctest --verbose)
+
+

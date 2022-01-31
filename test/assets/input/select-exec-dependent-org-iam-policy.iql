@@ -1,0 +1,11 @@
+select 
+  members,
+  GROUP_CONCAT(role) as roles 
+from 
+  ( 
+    exec /*+ SHOWRESULTS */ 
+    google.cloudresourcemanager.organizations.getIamPolicy 
+    @organizationsId = '123456789012' 
+  ) 
+GROUP BY members
+;

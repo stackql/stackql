@@ -1,0 +1,3 @@
+
+show extended services where description like '{{ .service.description }}' and version = '{{ .service.version }}';
+

@@ -1,0 +1,2 @@
+compute#operation: insert in progress, 2 seconds elapsed
+compute#operation: insert complete

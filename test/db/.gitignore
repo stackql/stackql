@@ -1,0 +1,7 @@
+*
+!.gitignore
+!db.sqlite
+!localized-db.sqlite
+!setup.sql
+!*.json
+!tmp/

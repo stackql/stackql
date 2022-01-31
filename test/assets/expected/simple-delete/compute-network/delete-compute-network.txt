@@ -1,0 +1,2 @@
+compute#operation: delete in progress, 2 seconds elapsed
+compute#operation: delete complete

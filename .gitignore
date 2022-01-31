@@ -1,0 +1,27 @@
+
+# Windows
+*.exe
+
+# Mac
+.DS_Store
+
+# IDEs
+.idea
+
+# vim
+*.sw
+*.sw[A-Za-z0-9]
+
+# cmake
+CMakeCache.txt
+CMakeFiles
+[Mm]akefile
+!vitess.io/**/[Mm]akefile
+cmake_install.cmake
+install_manifest.txt
+CTestTestfile.cmake
+Testing/
+dist/
+
+## Parser debug output
+y.output

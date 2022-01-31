@@ -1,0 +1,18 @@
+
+INSERT /*+ AWAIT  */ INTO google.compute.disks(
+  project, 
+  zone, 
+  data__name
+  ) 
+SELECT 
+  'testing-project', 
+  'australia-southeast1-b', 
+  name || '-new16'
+FROM google.compute.disks 
+WHERE 
+  project = 'testing-project' 
+  AND 
+  zone =  'australia-southeast1-b' 
+ORDER BY name asc
+limit 2
+;

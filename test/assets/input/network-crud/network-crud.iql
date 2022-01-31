@@ -1,0 +1,31 @@
+--
+-- create VPC 
+--
+INSERT /*+ AWAIT  */ INTO google.compute.networks
+(
+ project,
+ data__name,
+ data__autoCreateSubnetworks,
+ data__routingConfig
+) 
+SELECT
+'{{ .global.project }}',
+'{{ .network.name }}',
+{{ .network.autoCreateSubnetworks }},
+'{{ .network.routingConfig }}'
+;
+
+SELECT 
+  name 
+FROM 
+  google.compute.networks 
+WHERE 
+  project = '{{ .global.project }}'
+;
+
+DELETE /*+ AWAIT  */ FROM google.compute.networks
+WHERE 
+  project = '{{ .global.project }}'
+  AND
+  network = '{{ .network.name }}'
+;
