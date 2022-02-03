@@ -56,7 +56,7 @@ func OpenapiStackQLServiceDiscoveryDocPersistor(prov *openapistackql.Provider, s
 		switch v.Type {
 		case "object":
 			tabulation := v.Tabulate(false)
-			annTab := util.NewAnnotatedTabulation(tabulation, dto.NewHeirarchyIdentifiers(prov.Name, svc.GetName(), tabulation.GetName(), ""))
+			annTab := util.NewAnnotatedTabulation(tabulation, dto.NewHeirarchyIdentifiers(prov.Name, svc.GetName(), tabulation.GetName(), ""), "")
 			tabluationsAnnotated = append(tabluationsAnnotated, annTab)
 			if version == "v2" {
 				for pr, prVal := range v.Properties {
@@ -67,7 +67,7 @@ func OpenapiStackQLServiceDiscoveryDocPersistor(prov *openapistackql.Provider, s
 							tb := iSc.Tabulate(false)
 							log.Infoln(fmt.Sprintf("tb = %v", tb))
 							if tb != nil {
-								annTab := util.NewAnnotatedTabulation(tb, dto.NewHeirarchyIdentifiers(prov.Name, svc.GetName(), tb.GetName(), ""))
+								annTab := util.NewAnnotatedTabulation(tb, dto.NewHeirarchyIdentifiers(prov.Name, svc.GetName(), tb.GetName(), ""), "")
 								tabluationsAnnotated = append(tabluationsAnnotated, annTab)
 							}
 						}
@@ -80,7 +80,7 @@ func OpenapiStackQLServiceDiscoveryDocPersistor(prov *openapistackql.Provider, s
 			if len(itemsSchema.Properties) > 0 {
 				// create "inline" table
 				tabulation := v.Tabulate(false)
-				annTab := util.NewAnnotatedTabulation(tabulation, dto.NewHeirarchyIdentifiers(prov.Name, svc.GetName(), tabulation.GetName(), ""))
+				annTab := util.NewAnnotatedTabulation(tabulation, dto.NewHeirarchyIdentifiers(prov.Name, svc.GetName(), tabulation.GetName(), ""), "")
 				tabluationsAnnotated = append(tabluationsAnnotated, annTab)
 			}
 		}

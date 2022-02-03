@@ -27,7 +27,7 @@ func (p *primitiveGenerator) assembleUnarySelectionBuilder(
 	insertTabulation *openapistackql.Tabulation,
 	cols []parserutil.ColumnHandle,
 ) error {
-	annotatedInsertTabulation := util.NewAnnotatedTabulation(insertTabulation, hIds)
+	annotatedInsertTabulation := util.NewAnnotatedTabulation(insertTabulation, hIds, "")
 
 	prov, err := tbl.GetProviderObject()
 	if err != nil {
@@ -71,7 +71,7 @@ func (p *primitiveGenerator) assembleUnarySelectionBuilder(
 		log.Infoln(fmt.Sprintf("schema type = %T", schema))
 	}
 
-	selPsc, err := p.PrimitiveBuilder.GetDRMConfig().GenerateSelectDML(util.NewAnnotatedTabulation(selectTabulation, hIds), insPsc.TxnCtrlCtrs, node, rewrittenWhere)
+	selPsc, err := p.PrimitiveBuilder.GetDRMConfig().GenerateSelectDML(util.NewAnnotatedTabulation(selectTabulation, hIds, tbl.GetAlias()), insPsc.TxnCtrlCtrs, node, rewrittenWhere)
 	if err != nil {
 		return err
 	}
