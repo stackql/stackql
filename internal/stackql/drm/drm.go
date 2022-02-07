@@ -358,7 +358,11 @@ func (dc *StaticDRMConfig) GenerateSelectDML(tabAnnotated util.AnnotatedTabulati
 	quotedWhereColNames = append(quotedWhereColNames, `"`+genIdColName+`" `)
 	quotedWhereColNames = append(quotedWhereColNames, `"`+txnIdColName+`" `)
 	quotedWhereColNames = append(quotedWhereColNames, `"`+insIdColName+`" `)
-	q.WriteString(fmt.Sprintf(`SELECT %s FROM "%s" WHERE `, strings.Join(quotedColNames, ", "), dc.getTableName(tabAnnotated.GetHeirarchyIdentifiers(), txnCtrlCtrs.DiscoveryGenerationId)))
+	aliasStr := ""
+	if tabAnnotated.GetAlias() != "" {
+		aliasStr = fmt.Sprintf(` AS "%s" `, tabAnnotated.GetAlias())
+	}
+	q.WriteString(fmt.Sprintf(`SELECT %s FROM "%s"%s WHERE `, strings.Join(quotedColNames, ", "), dc.getTableName(tabAnnotated.GetHeirarchyIdentifiers(), txnCtrlCtrs.DiscoveryGenerationId), aliasStr))
 	q.WriteString(fmt.Sprintf(`( "%s" = ? AND "%s" = ? AND "%s" = ? AND "%s" = ? ) `, genIdColName, sessionIDColName, txnIdColName, insIdColName))
 	if rewrittenWhere != nil {
 		q.WriteString(fmt.Sprintf(" AND ( %s ) ", astvisit.GenerateModifiedWhereClause(rewrittenWhere)))

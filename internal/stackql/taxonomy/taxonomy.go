@@ -90,6 +90,11 @@ type ExtendedTableMetadata struct {
 	IsLocallyExecutable bool
 	HttpArmoury         *httpbuild.HTTPArmoury
 	SelectItemsKey      string
+	Alias               string
+}
+
+func (ex ExtendedTableMetadata) GetAlias() string {
+	return ex.Alias
 }
 
 func (ex ExtendedTableMetadata) GetProvider() (provider.IProvider, error) {
@@ -198,11 +203,12 @@ func (ex ExtendedTableMetadata) GetSelectableObjectSchema() (*openapistackql.Sch
 	return ex.HeirarchyObjects.GetSelectableObjectSchema()
 }
 
-func NewExtendedTableMetadata(heirarchyObjects *HeirarchyObjects) ExtendedTableMetadata {
+func NewExtendedTableMetadata(heirarchyObjects *HeirarchyObjects, alias string) ExtendedTableMetadata {
 	return ExtendedTableMetadata{
 		ColsVisited:        make(map[string]bool),
 		RequiredParameters: make(map[string]openapistackql.Parameter),
 		HeirarchyObjects:   heirarchyObjects,
+		Alias:              alias,
 	}
 }
 
@@ -288,6 +294,15 @@ func getHids(handlerCtx *handler.HandlerContext, node sqlparser.SQLNode) (*dto.H
 		hIds.ProviderStr = handlerCtx.CurrentProvider
 	}
 	return hIds, nil
+}
+
+func GetAliasFromStatement(node sqlparser.SQLNode) string {
+	switch n := node.(type) {
+	case *sqlparser.AliasedTableExpr:
+		return n.As.GetRawVal()
+	default:
+		return ""
+	}
 }
 
 func GetHeirarchyFromStatement(handlerCtx *handler.HandlerContext, node sqlparser.SQLNode) (*HeirarchyObjects, error) {

@@ -164,6 +164,9 @@ func (gp *GenericProvider) ShowAuth(authCtx *dto.AuthCtx) (*openapistackql.AuthM
 	var err error
 	var retVal *openapistackql.AuthMetadata
 	var authObj openapistackql.AuthMetadata
+	if authCtx == nil {
+		return nil, errors.New(constants.NotAuthenticatedShowStr)
+	}
 	switch gp.inferAuthType(*authCtx, authCtx.Type) {
 	case dto.AuthServiceAccountStr:
 		var sa serviceAccount

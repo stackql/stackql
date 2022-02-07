@@ -115,6 +115,21 @@
         "json"
       ],
     },
+    // 
+    {
+      "name": "SELECT using alias... ;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--auth={ \"google\": { \"keyfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"keyfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"keyfiletype\": \"api_key\" } }",
+        "select apps.id from okta.application.apps apps where subdomain = 'dev-79923018-admin';",
+        "-o",
+        "json"
+      ],
+    },
     {
       "name": "Launch exec \"INSERT /*+ AWAIT */ logging...buckets ... ;\" -- prebuilt with cmake",
       "type": "go",
