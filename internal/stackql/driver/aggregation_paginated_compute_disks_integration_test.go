@@ -5,7 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stackql/stackql/internal/stackql/config"
 	. "github.com/stackql/stackql/internal/stackql/driver"
 	"github.com/stackql/stackql/internal/stackql/entryutil"
 	"github.com/stackql/stackql/internal/stackql/querysubmit"
@@ -18,7 +17,7 @@ import (
 
 func TestSelectComputeDisksOrderByCrtTmstpAscPaginated(t *testing.T) {
 
-	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(config.GetGoogleProviderString(), "text", "TestSelectComputeDisksOrderByCrtTmstpAscPaginated")
+	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSelectComputeDisksOrderByCrtTmstpAscPaginated")
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
@@ -61,7 +60,7 @@ func TestSelectComputeDisksOrderByCrtTmstpAscPaginated(t *testing.T) {
 
 func TestSelectComputeDisksAggOrderBySizeAscPaginated(t *testing.T) {
 
-	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(config.GetGoogleProviderString(), "text", "TestSelectComputeDisksAggOrderBySizeAscPaginated")
+	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSelectComputeDisksAggOrderBySizeAscPaginated")
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
@@ -104,7 +103,7 @@ func TestSelectComputeDisksAggOrderBySizeAscPaginated(t *testing.T) {
 
 func TestSelectComputeDisksAggOrderBySizeDescPaginated(t *testing.T) {
 
-	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(config.GetGoogleProviderString(), "text", "TestSelectComputeDisksAggOrderBySizeDescPaginated")
+	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSelectComputeDisksAggOrderBySizeDescPaginated")
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
@@ -147,7 +146,7 @@ func TestSelectComputeDisksAggOrderBySizeDescPaginated(t *testing.T) {
 
 func TestSelectComputeDisksAggTotalSizePaginated(t *testing.T) {
 
-	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(config.GetGoogleProviderString(), "text", "TestSelectComputeDisksAggTotalSizePaginated")
+	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSelectComputeDisksAggTotalSizePaginated")
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
@@ -190,7 +189,7 @@ func TestSelectComputeDisksAggTotalSizePaginated(t *testing.T) {
 
 func TestSelectComputeDisksAggTotalStringPaginated(t *testing.T) {
 
-	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(config.GetGoogleProviderString(), "text", "TestSelectComputeDisksAggTotalStringPaginated")
+	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSelectComputeDisksAggTotalStringPaginated")
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}

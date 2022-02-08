@@ -70,7 +70,7 @@ func BuildHTTPRequestCtx(handlerCtx *handler.HandlerContext, node sqlparser.SQLN
 		requestSchema = m.Request.Schema
 	}
 	if m.Response != nil && m.Response.Schema != nil {
-		requestSchema = m.Response.Schema
+		responseSchema = m.Response.Schema
 	}
 	httpArmoury.RequestSchema = requestSchema
 	httpArmoury.ResponseSchema = responseSchema
@@ -93,10 +93,6 @@ func BuildHTTPRequestCtx(handlerCtx *handler.HandlerContext, node sqlparser.SQLN
 			for j, v := range execContext.ExecPayload.Header {
 				pm.Header[j] = v
 			}
-			// rb := make(map[string]interface{})
-			// for k, v := range execContext.ExecPayload.PayloadMap {
-			// 	rb[k] = v
-			// }
 			params.RequestBody = execContext.ExecPayload.PayloadMap
 		} else if params.RequestBody != nil && len(params.RequestBody) != 0 {
 			b, err := json.Marshal(params.RequestBody)
@@ -105,6 +101,11 @@ func BuildHTTPRequestCtx(handlerCtx *handler.HandlerContext, node sqlparser.SQLN
 			}
 			pm.BodyBytes = b
 			pm.Header["Content-Type"] = []string{m.Request.BodyMediaType}
+		}
+		if m.Response != nil {
+			if m.Response.BodyMediaType != "" {
+				pm.Header["Accept"] = []string{m.Response.BodyMediaType}
+			}
 		}
 		pm.Parameters = params
 		httpArmoury.RequestParams = append(httpArmoury.RequestParams, pm)
@@ -118,6 +119,11 @@ func BuildHTTPRequestCtx(handlerCtx *handler.HandlerContext, node sqlparser.SQLN
 		switch node := node.(type) {
 		case *sqlparser.Delete, *sqlparser.Exec, *sqlparser.Insert, *sqlparser.Select:
 			baseRequestCtx, err = getRequest(svc, m, p.Parameters)
+			for k, v := range p.Header {
+				for _, vi := range v {
+					baseRequestCtx.Header.Set(k, vi)
+				}
+			}
 			p.Request = baseRequestCtx
 		default:
 			return nil, fmt.Errorf("cannot create http primitive for sql node of type %T", node)
@@ -128,7 +134,6 @@ func BuildHTTPRequestCtx(handlerCtx *handler.HandlerContext, node sqlparser.SQLN
 		log.Infoln(fmt.Sprintf("pre transform: httpArmoury.RequestParams[%d] = %s", i, string(p.BodyBytes)))
 		if handlerCtx.RuntimeContext.HTTPLogEnabled {
 			url, _ := p.Context.GetUrl()
-			// fmt.Printf("url for request = %s\n", url)
 			handlerCtx.OutErrFile.Write([]byte(fmt.Sprintln(fmt.Sprintf("http request url: %s", url))))
 		}
 		log.Infoln(fmt.Sprintf("post transform: httpArmoury.RequestParams[%d] = %s", i, string(p.BodyBytes)))

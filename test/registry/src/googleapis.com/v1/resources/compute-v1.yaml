@@ -1,0 +1,5722 @@
+serviceDoc:
+  $ref: googleapis.com/v1/services-split/compute/compute-v1.yaml
+resources:
+    acceleratorTypes:
+      id: google.compute.acceleratorTypes
+      methods:
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/acceleratorTypes
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/acceleratorTypes/{acceleratorType}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/acceleratorTypes
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: acceleratorTypes
+      title: acceleratorTypes
+    addresses:
+      id: google.compute.addresses
+      methods:
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/addresses
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/regions/{region}/addresses/{address}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/addresses/{address}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/addresses
+          request:
+            mediaType: application/json
+            required:
+              - name
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/addresses
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: addresses
+      title: addresses
+    autoscalers:
+      id: google.compute.autoscalers
+      methods:
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/autoscalers
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/zones/{zone}/autoscalers/{autoscaler}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/autoscalers/{autoscaler}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/autoscalers
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/autoscalers
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/zones/{zone}/autoscalers
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        update:
+          operation:
+            $ref: put
+          path:
+            $ref: /projects/{project}/zones/{zone}/autoscalers
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: autoscalers
+      title: autoscalers
+    backendBuckets:
+      id: google.compute.backendBuckets
+      methods:
+        addSignedUrlKey:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/backendBuckets/{backendBucket}/addSignedUrlKey
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/global/backendBuckets/{backendBucket}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        deleteSignedUrlKey:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/backendBuckets/{backendBucket}/deleteSignedUrlKey
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/backendBuckets/{backendBucket}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/backendBuckets
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/backendBuckets
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/global/backendBuckets/{backendBucket}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        update:
+          operation:
+            $ref: put
+          path:
+            $ref: /projects/{project}/global/backendBuckets/{backendBucket}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: backendBuckets
+      title: backendBuckets
+    backendServices:
+      id: google.compute.backendServices
+      methods:
+        addSignedUrlKey:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/backendServices/{backendService}/addSignedUrlKey
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/backendServices
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/global/backendServices/{backendService}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        deleteSignedUrlKey:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/backendServices/{backendService}/deleteSignedUrlKey
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/backendServices/{backendService}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getHealth:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/backendServices/{backendService}/getHealth
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/backendServices
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/backendServices
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/global/backendServices/{backendService}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setSecurityPolicy:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/backendServices/{backendService}/setSecurityPolicy
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        update:
+          operation:
+            $ref: put
+          path:
+            $ref: /projects/{project}/global/backendServices/{backendService}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: backendServices
+      title: backendServices
+    diskTypes:
+      id: google.compute.diskTypes
+      methods:
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/diskTypes
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/diskTypes/{diskType}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/diskTypes
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: diskTypes
+      title: diskTypes
+    disks:
+      id: google.compute.disks
+      serviceDoc:
+        $ref: googleapis.com/v1/services-split/compute/compute-disks-v1.yaml
+      methods:
+        addResourcePolicies:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/disks/{disk}/addResourcePolicies
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/disks
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        createSnapshot:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/disks/{disk}/createSnapshot
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/zones/{zone}/disks/{disk}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/disks/{disk}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getIamPolicy:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/disks/{resource}/getIamPolicy
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/disks
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/disks
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        removeResourcePolicies:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/disks/{disk}/removeResourcePolicies
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        resize:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/disks/{disk}/resize
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setIamPolicy:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/disks/{resource}/setIamPolicy
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setLabels:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/disks/{resource}/setLabels
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        testIamPermissions:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/disks/{resource}/testIamPermissions
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: disks
+      title: disks
+    externalVpnGateways:
+      id: google.compute.externalVpnGateways
+      methods:
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/global/externalVpnGateways/{externalVpnGateway}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/externalVpnGateways/{externalVpnGateway}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/externalVpnGateways
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/externalVpnGateways
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setLabels:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/externalVpnGateways/{resource}/setLabels
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        testIamPermissions:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/externalVpnGateways/{resource}/testIamPermissions
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: externalVpnGateways
+      title: externalVpnGateways
+    firewallPolicies:
+      id: google.compute.firewallPolicies
+      methods:
+        addAssociation:
+          operation:
+            $ref: post
+          path:
+            $ref: /locations/global/firewallPolicies/{firewallPolicy}/addAssociation
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        addRule:
+          operation:
+            $ref: post
+          path:
+            $ref: /locations/global/firewallPolicies/{firewallPolicy}/addRule
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        cloneRules:
+          operation:
+            $ref: post
+          path:
+            $ref: /locations/global/firewallPolicies/{firewallPolicy}/cloneRules
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /locations/global/firewallPolicies/{firewallPolicy}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /locations/global/firewallPolicies/{firewallPolicy}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getAssociation:
+          operation:
+            $ref: get
+          path:
+            $ref: /locations/global/firewallPolicies/{firewallPolicy}/getAssociation
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getIamPolicy:
+          operation:
+            $ref: get
+          path:
+            $ref: /locations/global/firewallPolicies/{resource}/getIamPolicy
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getRule:
+          operation:
+            $ref: get
+          path:
+            $ref: /locations/global/firewallPolicies/{firewallPolicy}/getRule
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /locations/global/firewallPolicies
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /locations/global/firewallPolicies
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        listAssociations:
+          operation:
+            $ref: get
+          path:
+            $ref: /locations/global/firewallPolicies/listAssociations
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        move:
+          operation:
+            $ref: post
+          path:
+            $ref: /locations/global/firewallPolicies/{firewallPolicy}/move
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /locations/global/firewallPolicies/{firewallPolicy}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patchRule:
+          operation:
+            $ref: post
+          path:
+            $ref: /locations/global/firewallPolicies/{firewallPolicy}/patchRule
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        removeAssociation:
+          operation:
+            $ref: post
+          path:
+            $ref: /locations/global/firewallPolicies/{firewallPolicy}/removeAssociation
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        removeRule:
+          operation:
+            $ref: post
+          path:
+            $ref: /locations/global/firewallPolicies/{firewallPolicy}/removeRule
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setIamPolicy:
+          operation:
+            $ref: post
+          path:
+            $ref: /locations/global/firewallPolicies/{resource}/setIamPolicy
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        testIamPermissions:
+          operation:
+            $ref: post
+          path:
+            $ref: /locations/global/firewallPolicies/{resource}/testIamPermissions
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: firewallPolicies
+      title: firewallPolicies
+    firewalls:
+      id: google.compute.firewalls
+      methods:
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/global/firewalls/{firewall}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/firewalls/{firewall}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/firewalls
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/firewalls
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/global/firewalls/{firewall}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        update:
+          operation:
+            $ref: put
+          path:
+            $ref: /projects/{project}/global/firewalls/{firewall}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: firewalls
+      title: firewalls
+    forwardingRules:
+      id: google.compute.forwardingRules
+      methods:
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/forwardingRules
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/regions/{region}/forwardingRules/{forwardingRule}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/forwardingRules/{forwardingRule}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/forwardingRules
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/forwardingRules
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/regions/{region}/forwardingRules/{forwardingRule}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setLabels:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/forwardingRules/{resource}/setLabels
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setTarget:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/forwardingRules/{forwardingRule}/setTarget
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: forwardingRules
+      title: forwardingRules
+    globalAddresses:
+      id: google.compute.globalAddresses
+      methods:
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/global/addresses/{address}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/addresses/{address}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/addresses
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/addresses
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: globalAddresses
+      title: globalAddresses
+    globalForwardingRules:
+      id: google.compute.globalForwardingRules
+      methods:
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/global/forwardingRules/{forwardingRule}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/forwardingRules/{forwardingRule}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/forwardingRules
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/forwardingRules
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/global/forwardingRules/{forwardingRule}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setLabels:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/forwardingRules/{resource}/setLabels
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setTarget:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/forwardingRules/{forwardingRule}/setTarget
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: globalForwardingRules
+      title: globalForwardingRules
+    globalNetworkEndpointGroups:
+      id: google.compute.globalNetworkEndpointGroups
+      methods:
+        attachNetworkEndpoints:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/networkEndpointGroups/{networkEndpointGroup}/attachNetworkEndpoints
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/global/networkEndpointGroups/{networkEndpointGroup}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        detachNetworkEndpoints:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/networkEndpointGroups/{networkEndpointGroup}/detachNetworkEndpoints
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/networkEndpointGroups/{networkEndpointGroup}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/networkEndpointGroups
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/networkEndpointGroups
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        listNetworkEndpoints:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/networkEndpointGroups/{networkEndpointGroup}/listNetworkEndpoints
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: globalNetworkEndpointGroups
+      title: globalNetworkEndpointGroups
+    globalOperations:
+      id: google.compute.globalOperations
+      methods:
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/operations
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/global/operations/{operation}
+          response:
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/operations/{operation}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/operations
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        wait:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/operations/{operation}/wait
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: globalOperations
+      title: globalOperations
+    globalOrganizationOperations:
+      id: google.compute.globalOrganizationOperations
+      methods:
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /locations/global/operations/{operation}
+          response:
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /locations/global/operations/{operation}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /locations/global/operations
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: globalOrganizationOperations
+      title: globalOrganizationOperations
+    globalPublicDelegatedPrefixes:
+      id: google.compute.globalPublicDelegatedPrefixes
+      methods:
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/global/publicDelegatedPrefixes/{publicDelegatedPrefix}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/publicDelegatedPrefixes/{publicDelegatedPrefix}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/publicDelegatedPrefixes
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/publicDelegatedPrefixes
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/global/publicDelegatedPrefixes/{publicDelegatedPrefix}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: globalPublicDelegatedPrefixes
+      title: globalPublicDelegatedPrefixes
+    healthChecks:
+      id: google.compute.healthChecks
+      methods:
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/healthChecks
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/global/healthChecks/{healthCheck}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/healthChecks/{healthCheck}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/healthChecks
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/healthChecks
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/global/healthChecks/{healthCheck}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        update:
+          operation:
+            $ref: put
+          path:
+            $ref: /projects/{project}/global/healthChecks/{healthCheck}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: healthChecks
+      title: healthChecks
+    httpHealthChecks:
+      id: google.compute.httpHealthChecks
+      methods:
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/global/httpHealthChecks/{httpHealthCheck}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/httpHealthChecks/{httpHealthCheck}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/httpHealthChecks
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/httpHealthChecks
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/global/httpHealthChecks/{httpHealthCheck}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        update:
+          operation:
+            $ref: put
+          path:
+            $ref: /projects/{project}/global/httpHealthChecks/{httpHealthCheck}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: httpHealthChecks
+      title: httpHealthChecks
+    httpsHealthChecks:
+      id: google.compute.httpsHealthChecks
+      methods:
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/global/httpsHealthChecks/{httpsHealthCheck}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/httpsHealthChecks/{httpsHealthCheck}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/httpsHealthChecks
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/httpsHealthChecks
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/global/httpsHealthChecks/{httpsHealthCheck}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        update:
+          operation:
+            $ref: put
+          path:
+            $ref: /projects/{project}/global/httpsHealthChecks/{httpsHealthCheck}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: httpsHealthChecks
+      title: httpsHealthChecks
+    imageFamilyViews:
+      id: google.compute.imageFamilyViews
+      methods:
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/imageFamilyViews/{family}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: imageFamilyViews
+      title: imageFamilyViews
+    images:
+      id: google.compute.images
+      methods:
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/global/images/{image}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        deprecate:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/images/{image}/deprecate
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/images/{image}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getFromFamily:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/images/family/{family}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getIamPolicy:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/images/{resource}/getIamPolicy
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/images
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/images
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/global/images/{image}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setIamPolicy:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/images/{resource}/setIamPolicy
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setLabels:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/images/{resource}/setLabels
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        testIamPermissions:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/images/{resource}/testIamPermissions
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: images
+      title: images
+    instanceGroupManagers:
+      id: google.compute.instanceGroupManagers
+      methods:
+        abandonInstances:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instanceGroupManagers/{instanceGroupManager}/abandonInstances
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/instanceGroupManagers
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        applyUpdatesToInstances:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instanceGroupManagers/{instanceGroupManager}/applyUpdatesToInstances
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        createInstances:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instanceGroupManagers/{instanceGroupManager}/createInstances
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/zones/{zone}/instanceGroupManagers/{instanceGroupManager}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        deleteInstances:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instanceGroupManagers/{instanceGroupManager}/deleteInstances
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        deletePerInstanceConfigs:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instanceGroupManagers/{instanceGroupManager}/deletePerInstanceConfigs
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/instanceGroupManagers/{instanceGroupManager}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instanceGroupManagers
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/instanceGroupManagers
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        listErrors:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/instanceGroupManagers/{instanceGroupManager}/listErrors
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        listManagedInstances:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instanceGroupManagers/{instanceGroupManager}/listManagedInstances
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        listPerInstanceConfigs:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instanceGroupManagers/{instanceGroupManager}/listPerInstanceConfigs
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/zones/{zone}/instanceGroupManagers/{instanceGroupManager}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patchPerInstanceConfigs:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instanceGroupManagers/{instanceGroupManager}/patchPerInstanceConfigs
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        recreateInstances:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instanceGroupManagers/{instanceGroupManager}/recreateInstances
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        resize:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instanceGroupManagers/{instanceGroupManager}/resize
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setInstanceTemplate:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instanceGroupManagers/{instanceGroupManager}/setInstanceTemplate
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setTargetPools:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instanceGroupManagers/{instanceGroupManager}/setTargetPools
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        updatePerInstanceConfigs:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instanceGroupManagers/{instanceGroupManager}/updatePerInstanceConfigs
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: instanceGroupManagers
+      title: instanceGroupManagers
+    instanceGroups:
+      id: google.compute.instanceGroups
+      methods:
+        addInstances:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instanceGroups/{instanceGroup}/addInstances
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/instanceGroups
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/zones/{zone}/instanceGroups/{instanceGroup}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/instanceGroups/{instanceGroup}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instanceGroups
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/instanceGroups
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        listInstances:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instanceGroups/{instanceGroup}/listInstances
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        removeInstances:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instanceGroups/{instanceGroup}/removeInstances
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setNamedPorts:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instanceGroups/{instanceGroup}/setNamedPorts
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: instanceGroups
+      title: instanceGroups
+    instanceTemplates:
+      id: google.compute.instanceTemplates
+      methods:
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/global/instanceTemplates/{instanceTemplate}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/instanceTemplates/{instanceTemplate}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getIamPolicy:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/instanceTemplates/{resource}/getIamPolicy
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/instanceTemplates
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/instanceTemplates
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setIamPolicy:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/instanceTemplates/{resource}/setIamPolicy
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        testIamPermissions:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/instanceTemplates/{resource}/testIamPermissions
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: instanceTemplates
+      title: instanceTemplates
+    instances:
+      id: google.compute.instances
+      methods:
+        addAccessConfig:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/addAccessConfig
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        addResourcePolicies:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/addResourcePolicies
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/instances
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        attachDisk:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/attachDisk
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        bulkInsert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/bulkInsert
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        deleteAccessConfig:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/deleteAccessConfig
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        detachDisk:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/detachDisk
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getEffectiveFirewalls:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/getEffectiveFirewalls
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getGuestAttributes:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/getGuestAttributes
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getIamPolicy:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{resource}/getIamPolicy
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getScreenshot:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/screenshot
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getSerialPortOutput:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/serialPort
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getShieldedInstanceIdentity:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/getShieldedInstanceIdentity
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        listReferrers:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/referrers
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        removeResourcePolicies:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/removeResourcePolicies
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        reset:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/reset
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        sendDiagnosticInterrupt:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/sendDiagnosticInterrupt
+          response:
+            openAPIDocKey: '200'
+        setDeletionProtection:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{resource}/setDeletionProtection
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setDiskAutoDelete:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/setDiskAutoDelete
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setIamPolicy:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{resource}/setIamPolicy
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setLabels:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/setLabels
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setMachineResources:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/setMachineResources
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setMachineType:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/setMachineType
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setMetadata:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/setMetadata
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setMinCpuPlatform:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/setMinCpuPlatform
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setScheduling:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/setScheduling
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setServiceAccount:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/setServiceAccount
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setShieldedInstanceIntegrityPolicy:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/setShieldedInstanceIntegrityPolicy
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setTags:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/setTags
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        simulateMaintenanceEvent:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/simulateMaintenanceEvent
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        start:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/start
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        startWithEncryptionKey:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/startWithEncryptionKey
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        stop:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/stop
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        testIamPermissions:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{resource}/testIamPermissions
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        update:
+          operation:
+            $ref: put
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        updateAccessConfig:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/updateAccessConfig
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        updateDisplayDevice:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/updateDisplayDevice
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        updateNetworkInterface:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/updateNetworkInterface
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        updateShieldedInstanceConfig:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/zones/{zone}/instances/{instance}/updateShieldedInstanceConfig
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: instances
+      title: instances
+    interconnectAttachments:
+      id: google.compute.interconnectAttachments
+      methods:
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/interconnectAttachments
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/regions/{region}/interconnectAttachments/{interconnectAttachment}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/interconnectAttachments/{interconnectAttachment}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/interconnectAttachments
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/interconnectAttachments
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/regions/{region}/interconnectAttachments/{interconnectAttachment}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: interconnectAttachments
+      title: interconnectAttachments
+    interconnectLocations:
+      id: google.compute.interconnectLocations
+      methods:
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/interconnectLocations/{interconnectLocation}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/interconnectLocations
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: interconnectLocations
+      title: interconnectLocations
+    interconnects:
+      id: google.compute.interconnects
+      methods:
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/global/interconnects/{interconnect}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/interconnects/{interconnect}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getDiagnostics:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/interconnects/{interconnect}/getDiagnostics
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/interconnects
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/interconnects
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/global/interconnects/{interconnect}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: interconnects
+      title: interconnects
+    licenseCodes:
+      id: google.compute.licenseCodes
+      methods:
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/licenseCodes/{licenseCode}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        testIamPermissions:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/licenseCodes/{resource}/testIamPermissions
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: licenseCodes
+      title: licenseCodes
+    licenses:
+      id: google.compute.licenses
+      methods:
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/global/licenses/{license}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/licenses/{license}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getIamPolicy:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/licenses/{resource}/getIamPolicy
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/licenses
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/licenses
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setIamPolicy:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/licenses/{resource}/setIamPolicy
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        testIamPermissions:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/licenses/{resource}/testIamPermissions
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: licenses
+      title: licenses
+    machineTypes:
+      id: google.compute.machineTypes
+      methods:
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/machineTypes
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/machineTypes/{machineType}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/machineTypes
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: machineTypes
+      title: machineTypes
+    networkEndpointGroups:
+      id: google.compute.networkEndpointGroups
+      methods:
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/networkEndpointGroups
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        attachNetworkEndpoints:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/networkEndpointGroups/{networkEndpointGroup}/attachNetworkEndpoints
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/zones/{zone}/networkEndpointGroups/{networkEndpointGroup}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        detachNetworkEndpoints:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/networkEndpointGroups/{networkEndpointGroup}/detachNetworkEndpoints
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/networkEndpointGroups/{networkEndpointGroup}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/networkEndpointGroups
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/networkEndpointGroups
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        listNetworkEndpoints:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/networkEndpointGroups/{networkEndpointGroup}/listNetworkEndpoints
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        testIamPermissions:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/networkEndpointGroups/{resource}/testIamPermissions
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: networkEndpointGroups
+      title: networkEndpointGroups
+    networks:
+      id: google.compute.networks
+      methods:
+        addPeering:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/networks/{network}/addPeering
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/global/networks/{network}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/networks/{network}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getEffectiveFirewalls:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/networks/{network}/getEffectiveFirewalls
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/networks
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/networks
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        listPeeringRoutes:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/networks/{network}/listPeeringRoutes
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/global/networks/{network}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        removePeering:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/networks/{network}/removePeering
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        switchToCustomMode:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/networks/{network}/switchToCustomMode
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        updatePeering:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/global/networks/{network}/updatePeering
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: networks
+      title: networks
+    nodeGroups:
+      id: google.compute.nodeGroups
+      methods:
+        addNodes:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/nodeGroups/{nodeGroup}/addNodes
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/nodeGroups
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/zones/{zone}/nodeGroups/{nodeGroup}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        deleteNodes:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/nodeGroups/{nodeGroup}/deleteNodes
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/nodeGroups/{nodeGroup}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getIamPolicy:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/nodeGroups/{resource}/getIamPolicy
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/nodeGroups
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/nodeGroups
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        listNodes:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/nodeGroups/{nodeGroup}/listNodes
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/zones/{zone}/nodeGroups/{nodeGroup}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setIamPolicy:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/nodeGroups/{resource}/setIamPolicy
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setNodeTemplate:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/nodeGroups/{nodeGroup}/setNodeTemplate
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        testIamPermissions:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/nodeGroups/{resource}/testIamPermissions
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: nodeGroups
+      title: nodeGroups
+    nodeTemplates:
+      id: google.compute.nodeTemplates
+      methods:
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/nodeTemplates
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/regions/{region}/nodeTemplates/{nodeTemplate}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/nodeTemplates/{nodeTemplate}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getIamPolicy:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/nodeTemplates/{resource}/getIamPolicy
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/nodeTemplates
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/nodeTemplates
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setIamPolicy:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/nodeTemplates/{resource}/setIamPolicy
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        testIamPermissions:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/nodeTemplates/{resource}/testIamPermissions
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: nodeTemplates
+      title: nodeTemplates
+    nodeTypes:
+      id: google.compute.nodeTypes
+      methods:
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/nodeTypes
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/nodeTypes/{nodeType}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/nodeTypes
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: nodeTypes
+      title: nodeTypes
+    packetMirrorings:
+      id: google.compute.packetMirrorings
+      methods:
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/packetMirrorings
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/regions/{region}/packetMirrorings/{packetMirroring}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/packetMirrorings/{packetMirroring}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/packetMirrorings
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/packetMirrorings
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/regions/{region}/packetMirrorings/{packetMirroring}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        testIamPermissions:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/packetMirrorings/{resource}/testIamPermissions
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: packetMirrorings
+      title: packetMirrorings
+    projects:
+      id: google.compute.projects
+      methods:
+        disableXpnHost:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/disableXpnHost
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        disableXpnResource:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/disableXpnResource
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        enableXpnHost:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/enableXpnHost
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        enableXpnResource:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/enableXpnResource
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getXpnHost:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/getXpnHost
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getXpnResources:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/getXpnResources
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        listXpnHosts:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/listXpnHosts
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        moveDisk:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/moveDisk
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        moveInstance:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/moveInstance
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setCommonInstanceMetadata:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/setCommonInstanceMetadata
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setDefaultNetworkTier:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/setDefaultNetworkTier
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setUsageExportBucket:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/setUsageExportBucket
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: projects
+      title: projects
+    publicAdvertisedPrefixes:
+      id: google.compute.publicAdvertisedPrefixes
+      methods:
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/global/publicAdvertisedPrefixes/{publicAdvertisedPrefix}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/publicAdvertisedPrefixes/{publicAdvertisedPrefix}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/publicAdvertisedPrefixes
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/publicAdvertisedPrefixes
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/global/publicAdvertisedPrefixes/{publicAdvertisedPrefix}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: publicAdvertisedPrefixes
+      title: publicAdvertisedPrefixes
+    publicDelegatedPrefixes:
+      id: google.compute.publicDelegatedPrefixes
+      methods:
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/publicDelegatedPrefixes
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/regions/{region}/publicDelegatedPrefixes/{publicDelegatedPrefix}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/publicDelegatedPrefixes/{publicDelegatedPrefix}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/publicDelegatedPrefixes
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/publicDelegatedPrefixes
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/regions/{region}/publicDelegatedPrefixes/{publicDelegatedPrefix}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: publicDelegatedPrefixes
+      title: publicDelegatedPrefixes
+    regionAutoscalers:
+      id: google.compute.regionAutoscalers
+      methods:
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/regions/{region}/autoscalers/{autoscaler}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/autoscalers/{autoscaler}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/autoscalers
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/autoscalers
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/regions/{region}/autoscalers
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        update:
+          operation:
+            $ref: put
+          path:
+            $ref: /projects/{project}/regions/{region}/autoscalers
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: regionAutoscalers
+      title: regionAutoscalers
+    regionBackendServices:
+      id: google.compute.regionBackendServices
+      methods:
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/regions/{region}/backendServices/{backendService}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/backendServices/{backendService}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getHealth:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/backendServices/{backendService}/getHealth
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/backendServices
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/backendServices
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/regions/{region}/backendServices/{backendService}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        update:
+          operation:
+            $ref: put
+          path:
+            $ref: /projects/{project}/regions/{region}/backendServices/{backendService}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: regionBackendServices
+      title: regionBackendServices
+    regionCommitments:
+      id: google.compute.regionCommitments
+      methods:
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/commitments
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/commitments/{commitment}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/commitments
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/commitments
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: regionCommitments
+      title: regionCommitments
+    regionDiskTypes:
+      id: google.compute.regionDiskTypes
+      methods:
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/diskTypes/{diskType}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/diskTypes
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: regionDiskTypes
+      title: regionDiskTypes
+    regionDisks:
+      id: google.compute.regionDisks
+      methods:
+        addResourcePolicies:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/disks/{disk}/addResourcePolicies
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        createSnapshot:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/disks/{disk}/createSnapshot
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/regions/{region}/disks/{disk}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/disks/{disk}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getIamPolicy:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/disks/{resource}/getIamPolicy
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/disks
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/disks
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        removeResourcePolicies:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/disks/{disk}/removeResourcePolicies
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        resize:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/disks/{disk}/resize
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setIamPolicy:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/disks/{resource}/setIamPolicy
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setLabels:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/disks/{resource}/setLabels
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        testIamPermissions:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/disks/{resource}/testIamPermissions
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: regionDisks
+      title: regionDisks
+    regionHealthCheckServices:
+      id: google.compute.regionHealthCheckServices
+      methods:
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/regions/{region}/healthCheckServices/{healthCheckService}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/healthCheckServices/{healthCheckService}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/healthCheckServices
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/healthCheckServices
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/regions/{region}/healthCheckServices/{healthCheckService}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: regionHealthCheckServices
+      title: regionHealthCheckServices
+    regionHealthChecks:
+      id: google.compute.regionHealthChecks
+      methods:
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/regions/{region}/healthChecks/{healthCheck}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/healthChecks/{healthCheck}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/healthChecks
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/healthChecks
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/regions/{region}/healthChecks/{healthCheck}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        update:
+          operation:
+            $ref: put
+          path:
+            $ref: /projects/{project}/regions/{region}/healthChecks/{healthCheck}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: regionHealthChecks
+      title: regionHealthChecks
+    regionInstanceGroupManagers:
+      id: google.compute.regionInstanceGroupManagers
+      methods:
+        abandonInstances:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/instanceGroupManagers/{instanceGroupManager}/abandonInstances
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        applyUpdatesToInstances:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/instanceGroupManagers/{instanceGroupManager}/applyUpdatesToInstances
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        createInstances:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/instanceGroupManagers/{instanceGroupManager}/createInstances
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/regions/{region}/instanceGroupManagers/{instanceGroupManager}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        deleteInstances:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/instanceGroupManagers/{instanceGroupManager}/deleteInstances
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        deletePerInstanceConfigs:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/instanceGroupManagers/{instanceGroupManager}/deletePerInstanceConfigs
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/instanceGroupManagers/{instanceGroupManager}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/instanceGroupManagers
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/instanceGroupManagers
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        listErrors:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/instanceGroupManagers/{instanceGroupManager}/listErrors
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        listManagedInstances:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/instanceGroupManagers/{instanceGroupManager}/listManagedInstances
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        listPerInstanceConfigs:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/instanceGroupManagers/{instanceGroupManager}/listPerInstanceConfigs
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/regions/{region}/instanceGroupManagers/{instanceGroupManager}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patchPerInstanceConfigs:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/instanceGroupManagers/{instanceGroupManager}/patchPerInstanceConfigs
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        recreateInstances:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/instanceGroupManagers/{instanceGroupManager}/recreateInstances
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        resize:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/instanceGroupManagers/{instanceGroupManager}/resize
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setInstanceTemplate:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/instanceGroupManagers/{instanceGroupManager}/setInstanceTemplate
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setTargetPools:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/instanceGroupManagers/{instanceGroupManager}/setTargetPools
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        updatePerInstanceConfigs:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/instanceGroupManagers/{instanceGroupManager}/updatePerInstanceConfigs
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: regionInstanceGroupManagers
+      title: regionInstanceGroupManagers
+    regionInstanceGroups:
+      id: google.compute.regionInstanceGroups
+      methods:
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/instanceGroups/{instanceGroup}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/instanceGroups
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        listInstances:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/instanceGroups/{instanceGroup}/listInstances
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setNamedPorts:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/instanceGroups/{instanceGroup}/setNamedPorts
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: regionInstanceGroups
+      title: regionInstanceGroups
+    regionInstances:
+      id: google.compute.regionInstances
+      methods:
+        bulkInsert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/instances/bulkInsert
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: regionInstances
+      title: regionInstances
+    regionNetworkEndpointGroups:
+      id: google.compute.regionNetworkEndpointGroups
+      methods:
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/regions/{region}/networkEndpointGroups/{networkEndpointGroup}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/networkEndpointGroups/{networkEndpointGroup}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/networkEndpointGroups
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/networkEndpointGroups
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: regionNetworkEndpointGroups
+      title: regionNetworkEndpointGroups
+    regionNotificationEndpoints:
+      id: google.compute.regionNotificationEndpoints
+      methods:
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/regions/{region}/notificationEndpoints/{notificationEndpoint}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/notificationEndpoints/{notificationEndpoint}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/notificationEndpoints
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/notificationEndpoints
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: regionNotificationEndpoints
+      title: regionNotificationEndpoints
+    regionOperations:
+      id: google.compute.regionOperations
+      methods:
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/regions/{region}/operations/{operation}
+          response:
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/operations/{operation}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/operations
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        wait:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/operations/{operation}/wait
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: regionOperations
+      title: regionOperations
+    regionSslCertificates:
+      id: google.compute.regionSslCertificates
+      methods:
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/regions/{region}/sslCertificates/{sslCertificate}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/sslCertificates/{sslCertificate}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/sslCertificates
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/sslCertificates
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: regionSslCertificates
+      title: regionSslCertificates
+    regionTargetHttpProxies:
+      id: google.compute.regionTargetHttpProxies
+      methods:
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/regions/{region}/targetHttpProxies/{targetHttpProxy}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/targetHttpProxies/{targetHttpProxy}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/targetHttpProxies
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/targetHttpProxies
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setUrlMap:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/targetHttpProxies/{targetHttpProxy}/setUrlMap
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: regionTargetHttpProxies
+      title: regionTargetHttpProxies
+    regionTargetHttpsProxies:
+      id: google.compute.regionTargetHttpsProxies
+      methods:
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/regions/{region}/targetHttpsProxies/{targetHttpsProxy}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/targetHttpsProxies/{targetHttpsProxy}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/targetHttpsProxies
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/targetHttpsProxies
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setSslCertificates:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/targetHttpsProxies/{targetHttpsProxy}/setSslCertificates
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setUrlMap:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/targetHttpsProxies/{targetHttpsProxy}/setUrlMap
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: regionTargetHttpsProxies
+      title: regionTargetHttpsProxies
+    regionUrlMaps:
+      id: google.compute.regionUrlMaps
+      methods:
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/regions/{region}/urlMaps/{urlMap}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/urlMaps/{urlMap}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/urlMaps
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/urlMaps
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/regions/{region}/urlMaps/{urlMap}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        update:
+          operation:
+            $ref: put
+          path:
+            $ref: /projects/{project}/regions/{region}/urlMaps/{urlMap}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        validate:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/urlMaps/{urlMap}/validate
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: regionUrlMaps
+      title: regionUrlMaps
+    regions:
+      id: google.compute.regions
+      methods:
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: regions
+      title: regions
+    reservations:
+      id: google.compute.reservations
+      methods:
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/reservations
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/zones/{zone}/reservations/{reservation}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/reservations/{reservation}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getIamPolicy:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/reservations/{resource}/getIamPolicy
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/reservations
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/reservations
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        resize:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/reservations/{reservation}/resize
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setIamPolicy:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/reservations/{resource}/setIamPolicy
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        testIamPermissions:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/reservations/{resource}/testIamPermissions
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: reservations
+      title: reservations
+    resourcePolicies:
+      id: google.compute.resourcePolicies
+      methods:
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/resourcePolicies
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/regions/{region}/resourcePolicies/{resourcePolicy}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/resourcePolicies/{resourcePolicy}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getIamPolicy:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/resourcePolicies/{resource}/getIamPolicy
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/resourcePolicies
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/resourcePolicies
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setIamPolicy:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/resourcePolicies/{resource}/setIamPolicy
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        testIamPermissions:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/resourcePolicies/{resource}/testIamPermissions
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: resourcePolicies
+      title: resourcePolicies
+    routers:
+      id: google.compute.routers
+      methods:
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/routers
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/regions/{region}/routers/{router}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/routers/{router}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getNatMappingInfo:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/routers/{router}/getNatMappingInfo
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getRouterStatus:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/routers/{router}/getRouterStatus
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/routers
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/routers
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/regions/{region}/routers/{router}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        preview:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/routers/{router}/preview
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        update:
+          operation:
+            $ref: put
+          path:
+            $ref: /projects/{project}/regions/{region}/routers/{router}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: routers
+      title: routers
+    routes:
+      id: google.compute.routes
+      methods:
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/global/routes/{route}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/routes/{route}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/routes
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/routes
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: routes
+      title: routes
+    securityPolicies:
+      id: google.compute.securityPolicies
+      methods:
+        addRule:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/securityPolicies/{securityPolicy}/addRule
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/global/securityPolicies/{securityPolicy}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/securityPolicies/{securityPolicy}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getRule:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/securityPolicies/{securityPolicy}/getRule
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/securityPolicies
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/securityPolicies
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        listPreconfiguredExpressionSets:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/securityPolicies/listPreconfiguredExpressionSets
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/global/securityPolicies/{securityPolicy}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patchRule:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/securityPolicies/{securityPolicy}/patchRule
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        removeRule:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/securityPolicies/{securityPolicy}/removeRule
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: securityPolicies
+      title: securityPolicies
+    serviceAttachments:
+      id: google.compute.serviceAttachments
+      methods:
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/serviceAttachments
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/regions/{region}/serviceAttachments/{serviceAttachment}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/serviceAttachments/{serviceAttachment}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getIamPolicy:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/serviceAttachments/{resource}/getIamPolicy
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/serviceAttachments
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/serviceAttachments
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/regions/{region}/serviceAttachments/{serviceAttachment}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setIamPolicy:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/serviceAttachments/{resource}/setIamPolicy
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        testIamPermissions:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/serviceAttachments/{resource}/testIamPermissions
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: serviceAttachments
+      title: serviceAttachments
+    snapshots:
+      id: google.compute.snapshots
+      methods:
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/global/snapshots/{snapshot}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/snapshots/{snapshot}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getIamPolicy:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/snapshots/{resource}/getIamPolicy
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/snapshots
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setIamPolicy:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/snapshots/{resource}/setIamPolicy
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setLabels:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/snapshots/{resource}/setLabels
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        testIamPermissions:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/snapshots/{resource}/testIamPermissions
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: snapshots
+      title: snapshots
+    sslCertificates:
+      id: google.compute.sslCertificates
+      methods:
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/sslCertificates
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/global/sslCertificates/{sslCertificate}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/sslCertificates/{sslCertificate}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/sslCertificates
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/sslCertificates
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: sslCertificates
+      title: sslCertificates
+    sslPolicies:
+      id: google.compute.sslPolicies
+      methods:
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/global/sslPolicies/{sslPolicy}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/sslPolicies/{sslPolicy}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/sslPolicies
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/sslPolicies
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        listAvailableFeatures:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/sslPolicies/listAvailableFeatures
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/global/sslPolicies/{sslPolicy}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: sslPolicies
+      title: sslPolicies
+    subnetworks:
+      id: google.compute.subnetworks
+      methods:
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/subnetworks
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/regions/{region}/subnetworks/{subnetwork}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        expandIpCidrRange:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/subnetworks/{subnetwork}/expandIpCidrRange
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/subnetworks/{subnetwork}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getIamPolicy:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/subnetworks/{resource}/getIamPolicy
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/subnetworks
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/subnetworks
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        listUsable:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/subnetworks/listUsable
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/regions/{region}/subnetworks/{subnetwork}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setIamPolicy:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/subnetworks/{resource}/setIamPolicy
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setPrivateIpGoogleAccess:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/subnetworks/{subnetwork}/setPrivateIpGoogleAccess
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        testIamPermissions:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/subnetworks/{resource}/testIamPermissions
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: subnetworks
+      title: subnetworks
+    targetGrpcProxies:
+      id: google.compute.targetGrpcProxies
+      methods:
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/global/targetGrpcProxies/{targetGrpcProxy}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/targetGrpcProxies/{targetGrpcProxy}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/targetGrpcProxies
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/targetGrpcProxies
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/global/targetGrpcProxies/{targetGrpcProxy}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: targetGrpcProxies
+      title: targetGrpcProxies
+    targetHttpProxies:
+      id: google.compute.targetHttpProxies
+      methods:
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/targetHttpProxies
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/global/targetHttpProxies/{targetHttpProxy}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/targetHttpProxies/{targetHttpProxy}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/targetHttpProxies
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/targetHttpProxies
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/global/targetHttpProxies/{targetHttpProxy}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setUrlMap:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/targetHttpProxies/{targetHttpProxy}/setUrlMap
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: targetHttpProxies
+      title: targetHttpProxies
+    targetHttpsProxies:
+      id: google.compute.targetHttpsProxies
+      methods:
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/targetHttpsProxies
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/global/targetHttpsProxies/{targetHttpsProxy}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/targetHttpsProxies/{targetHttpsProxy}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/targetHttpsProxies
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/targetHttpsProxies
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/global/targetHttpsProxies/{targetHttpsProxy}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setQuicOverride:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/targetHttpsProxies/{targetHttpsProxy}/setQuicOverride
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setSslCertificates:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/targetHttpsProxies/{targetHttpsProxy}/setSslCertificates
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setSslPolicy:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/targetHttpsProxies/{targetHttpsProxy}/setSslPolicy
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setUrlMap:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/targetHttpsProxies/{targetHttpsProxy}/setUrlMap
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: targetHttpsProxies
+      title: targetHttpsProxies
+    targetInstances:
+      id: google.compute.targetInstances
+      methods:
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/targetInstances
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/zones/{zone}/targetInstances/{targetInstance}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/targetInstances/{targetInstance}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/targetInstances
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/targetInstances
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: targetInstances
+      title: targetInstances
+    targetPools:
+      id: google.compute.targetPools
+      methods:
+        addHealthCheck:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/targetPools/{targetPool}/addHealthCheck
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        addInstance:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/targetPools/{targetPool}/addInstance
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/targetPools
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/regions/{region}/targetPools/{targetPool}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/targetPools/{targetPool}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getHealth:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/targetPools/{targetPool}/getHealth
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/targetPools
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/targetPools
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        removeHealthCheck:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/targetPools/{targetPool}/removeHealthCheck
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        removeInstance:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/targetPools/{targetPool}/removeInstance
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setBackup:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/targetPools/{targetPool}/setBackup
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: targetPools
+      title: targetPools
+    targetSslProxies:
+      id: google.compute.targetSslProxies
+      methods:
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/global/targetSslProxies/{targetSslProxy}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/targetSslProxies/{targetSslProxy}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/targetSslProxies
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/targetSslProxies
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setBackendService:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/targetSslProxies/{targetSslProxy}/setBackendService
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setProxyHeader:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/targetSslProxies/{targetSslProxy}/setProxyHeader
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setSslCertificates:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/targetSslProxies/{targetSslProxy}/setSslCertificates
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setSslPolicy:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/targetSslProxies/{targetSslProxy}/setSslPolicy
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: targetSslProxies
+      title: targetSslProxies
+    targetTcpProxies:
+      id: google.compute.targetTcpProxies
+      methods:
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/global/targetTcpProxies/{targetTcpProxy}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/targetTcpProxies/{targetTcpProxy}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/targetTcpProxies
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/targetTcpProxies
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setBackendService:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/targetTcpProxies/{targetTcpProxy}/setBackendService
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setProxyHeader:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/targetTcpProxies/{targetTcpProxy}/setProxyHeader
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: targetTcpProxies
+      title: targetTcpProxies
+    targetVpnGateways:
+      id: google.compute.targetVpnGateways
+      methods:
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/targetVpnGateways
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/regions/{region}/targetVpnGateways/{targetVpnGateway}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/targetVpnGateways/{targetVpnGateway}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/targetVpnGateways
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/targetVpnGateways
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: targetVpnGateways
+      title: targetVpnGateways
+    urlMaps:
+      id: google.compute.urlMaps
+      methods:
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/urlMaps
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/global/urlMaps/{urlMap}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/urlMaps/{urlMap}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/urlMaps
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        invalidateCache:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/urlMaps/{urlMap}/invalidateCache
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/global/urlMaps
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        patch:
+          operation:
+            $ref: patch
+          path:
+            $ref: /projects/{project}/global/urlMaps/{urlMap}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        update:
+          operation:
+            $ref: put
+          path:
+            $ref: /projects/{project}/global/urlMaps/{urlMap}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        validate:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/global/urlMaps/{urlMap}/validate
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: urlMaps
+      title: urlMaps
+    vpnGateways:
+      id: google.compute.vpnGateways
+      methods:
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/vpnGateways
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/regions/{region}/vpnGateways/{vpnGateway}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/vpnGateways/{vpnGateway}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getStatus:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/vpnGateways/{vpnGateway}/getStatus
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/vpnGateways
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/vpnGateways
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        setLabels:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/vpnGateways/{resource}/setLabels
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        testIamPermissions:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/vpnGateways/{resource}/testIamPermissions
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: vpnGateways
+      title: vpnGateways
+    vpnTunnels:
+      id: google.compute.vpnTunnels
+      methods:
+        aggregatedList:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/aggregated/vpnTunnels
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/regions/{region}/vpnTunnels/{vpnTunnel}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/vpnTunnels/{vpnTunnel}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/regions/{region}/vpnTunnels
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/regions/{region}/vpnTunnels
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: vpnTunnels
+      title: vpnTunnels
+    zoneOperations:
+      id: google.compute.zoneOperations
+      methods:
+        delete:
+          operation:
+            $ref: delete
+          path:
+            $ref: /projects/{project}/zones/{zone}/operations/{operation}
+          response:
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/operations/{operation}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}/operations
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        wait:
+          operation:
+            $ref: post
+          path:
+            $ref: /projects/{project}/zones/{zone}/operations/{operation}/wait
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: zoneOperations
+      title: zoneOperations
+    zones:
+      id: google.compute.zones
+      methods:
+        get:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones/{zone}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: get
+          path:
+            $ref: /projects/{project}/zones
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: zones
+      title: zones

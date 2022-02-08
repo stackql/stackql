@@ -25,13 +25,15 @@ class TestStatus(Enum):
 CURDIR :str = os.path.dirname(os.path.realpath(__file__))
 TEST_ROOT_DIR :str = os.path.abspath(os.path.join(CURDIR, '..'))
 REPOSITORY_ROOT_DIR :str = os.path.abspath(os.path.join(CURDIR, '../..'))
+PROVIDER_REGISTRY_ROOT_DIR :str = os.path.abspath(os.path.join(TEST_ROOT_DIR, 'registry')).replace(os.sep, '/')
 TEST_GENERATOR_DEFINITIONS_ROOT :str = os.path.join(TEST_ROOT_DIR, 'test-generators')
 TEST_GENERATOR_ALWAYS_ROOT :str = os.path.join(TEST_GENERATOR_DEFINITIONS_ROOT, 'always')
 TEST_GENERATOR_ASSETS_ROOT :str = os.path.join(TEST_ROOT_DIR, 'assets')
 DEFAULT_RUN_DIR :str = os.path.abspath(os.path.join(REPOSITORY_ROOT_DIR, 'build'))
-DEFAULT_PROVIDER_DIR :str = os.path.abspath(os.path.join(TEST_ROOT_DIR, '.stackql'))
-DEFAULT_CONFIG_FILE :str = os.path.abspath(os.path.join(TEST_ROOT_DIR, '.iqlrc'))
+DEFAULT_APP_DIR :str = os.path.abspath(os.path.join(TEST_ROOT_DIR, '.stackql'))
+DEFAULT_CONFIG_FILE :str = os.path.abspath(os.path.join(TEST_ROOT_DIR, '.stackqlrc'))
 DEFAULT_DB_FILE :str = os.path.abspath(os.path.join(TEST_ROOT_DIR, 'db/tmp/python-tests-tmp-db.sqlite'))
+DEFAULT_REGISTRY_CFG :str = f'{{ "url": "file://{PROVIDER_REGISTRY_ROOT_DIR}", "localDocRoot": "{PROVIDER_REGISTRY_ROOT_DIR}",  "useEmbedded": false }}'
 DEFAULT_EXECUTABLE :str = 'stackql'
 
 TEST_COUNT :int = 0
@@ -51,9 +53,9 @@ parser.add_argument(
     help='directory containing executable'
 )
 parser.add_argument(
-    '--providerdir',
+    '--appdir',
     type=str,
-    default=DEFAULT_PROVIDER_DIR,
+    default=DEFAULT_APP_DIR,
     help='directory containing config and cache'
 )
 parser.add_argument(
@@ -104,6 +106,12 @@ parser.add_argument(
     default=DEFAULT_DB_FILE,
     help='db file to use as starting point'
 )
+parser.add_argument(
+    '--registry',
+    type=str,
+    default=DEFAULT_REGISTRY_CFG,
+    help='registry config'
+)
 
 args = parser.parse_args()
 executable_path = f'{args.rundir}/{args.executable}'
@@ -112,9 +120,11 @@ INVOCATION_BASE_ARGS = [
     executable_path,
     f'--configfile={args.configfile}',
     '--offline',
-    f'--providerroot={args.providerdir}',
+    # '--provider=google',
+    f'--approot={args.appdir}',
     f'--loglevel={args.loglevel}',
-    f'--dbfilepath={args.dbfilepath}'
+    f'--dbfilepath={args.dbfilepath}',
+    f'--registry={args.registry}'
 ]
 
 INVOCATION_SIMPLE_ARGS = INVOCATION_BASE_ARGS + [ 'exec' ]
@@ -225,7 +235,7 @@ def test_presentation(test_callable):
 
 
 @test_presentation
-def integration_test(*args, **kwargs) -> (TestStatus, Iterable[StringOrBytes], int):
+def integration_test(*args, **kwargs) -> Tuple[TestStatus, Iterable[StringOrBytes], int]:
     try:
         child = subprocess.Popen([
                 *args
@@ -409,7 +419,7 @@ def simple_test_suite():
         '-d=;',
         '-f={}'.format(_SHOW_EXTENDED_SERVICES_OUTPUT_FILE_ALT_CSV),
         'exec',
-        "show extended services where description like 'Provides natural language%' and version = 'v1'",
+        "show extended services from google where description like 'Provides natural language%' and version = 'v1'",
         expected = [ 'id;name;title;description;version;preferred', 'language:v1;.*' ],
         test_output_file = _SHOW_EXTENDED_SERVICES_OUTPUT_FILE_ALT_CSV,
         verbose = args.verbosetesting,
@@ -434,9 +444,9 @@ def run_integration_test_generator(generator :dict, parent_test_file_path :str, 
     invocation_base_args = copy.deepcopy(INVOCATION_BASE_ARGS)
     if generator.get("testwitoutapicalls"):
       invocation_base_args.append(f'--testwitoutapicalls={generator.get("testwitoutapicalls")}')
-    if generator.get("keyfilepath"):
-      kp :str = generator.get("keyfilepath") if generator.get("keyfilepath").startswith("/") else os.path.abspath(os.path.join(TEST_GENERATOR_ASSETS_ROOT, generator.get("keyfilepath")))
-      invocation_base_args.append(f'--keyfilepath={kp}')
+    if generator.get("credentialsfilepath"):
+      kp :str = generator.get("credentialsfilepath") if generator.get("credentialsfilepath").startswith("/") else os.path.abspath(os.path.join(TEST_GENERATOR_ASSETS_ROOT, generator.get("credentialsfilepath")))
+      invocation_base_args.append(f'--credentialsfilepath={kp}')
     if generator.get("iqldata"):
       idt :str = generator.get("iqldata") if generator.get("iqldata").startswith("/") else os.path.abspath(os.path.join(TEST_GENERATOR_ASSETS_ROOT, generator.get("iqldata")))
       invocation_base_args.append(f'--iqldata={idt}')

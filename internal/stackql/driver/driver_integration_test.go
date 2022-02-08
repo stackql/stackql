@@ -12,7 +12,6 @@ import (
 	. "github.com/stackql/stackql/internal/stackql/driver"
 	"github.com/stackql/stackql/internal/stackql/util"
 
-	"github.com/stackql/stackql/internal/stackql/config"
 	"github.com/stackql/stackql/internal/stackql/entryutil"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/provider"
@@ -27,7 +26,7 @@ import (
 )
 
 func TestSimpleSelectGoogleComputeInstanceDriver(t *testing.T) {
-	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(config.GetGoogleProviderString(), "text", "TestSimpleSelectGoogleComputeInstanceDriver")
+	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSimpleSelectGoogleComputeInstanceDriver")
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
@@ -71,7 +70,7 @@ func TestSimpleSelectGoogleComputeInstanceDriver(t *testing.T) {
 }
 
 func TestSimpleSelectGoogleComputeInstanceDriverOutput(t *testing.T) {
-	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(config.GetGoogleProviderString(), "text", "TestSimpleSelectGoogleComputeInstanceDriverOutput")
+	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSimpleSelectGoogleComputeInstanceDriverOutput")
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
@@ -112,7 +111,7 @@ func TestSimpleSelectGoogleComputeInstanceDriverOutput(t *testing.T) {
 }
 
 func TestSimpleSelectGoogleComputeInstanceDriverOutputRepeated(t *testing.T) {
-	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(config.GetGoogleProviderString(), "text", "TestSimpleSelectGoogleComputeInstanceDriverOutputRepeated")
+	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSimpleSelectGoogleComputeInstanceDriverOutputRepeated")
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
@@ -153,7 +152,7 @@ func TestSimpleSelectGoogleComputeInstanceDriverOutputRepeated(t *testing.T) {
 }
 
 func TestSimpleSelectGoogleContainerSubnetworksAllowedDriverOutput(t *testing.T) {
-	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(config.GetGoogleProviderString(), "text", "TestSimpleSelectGoogleContainerSubnetworksAllowedDriverOutput")
+	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSimpleSelectGoogleContainerSubnetworksAllowedDriverOutput")
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
@@ -194,7 +193,7 @@ func TestSimpleSelectGoogleContainerSubnetworksAllowedDriverOutput(t *testing.T)
 }
 
 func TestSimpleInsertGoogleComputeNetworkAsync(t *testing.T) {
-	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(config.GetGoogleProviderString(), "text", "TestSimpleInsertGoogleComputeNetworkAsync")
+	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSimpleInsertGoogleComputeNetworkAsync")
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
@@ -236,7 +235,7 @@ func TestSimpleInsertGoogleComputeNetworkAsync(t *testing.T) {
 
 func TestK8sTheHardWayAsync(t *testing.T) {
 
-	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(config.GetGoogleProviderString(), "text", "TestK8sTheHardWayAsync")
+	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestK8sTheHardWayAsync")
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
@@ -288,7 +287,7 @@ func TestSimpleDryRunK8sTheHardWayDriver(t *testing.T) {
 
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
-		runtimeCtx, err := stackqltestutil.GetRuntimeCtx(config.GetGoogleProviderString(), "text", "TestSimpleDryRunK8sTheHardWayDriver")
+		runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSimpleDryRunK8sTheHardWayDriver")
 		if err != nil {
 			t.Fatalf("TestSimpleDryRunDriver failed: %v", err)
 		}

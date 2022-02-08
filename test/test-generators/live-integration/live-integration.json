@@ -7,7 +7,7 @@
       "delimiter": ",",
       "instruction": "exec",
       "input_file": "input/network-crud/network-crud.iql",
-      "keyfilepath": "secrets/google/sa-key.json",
+      "credentialsfilepath": "secrets/google/sa-key.json",
       "iqldata": "input/live-integration/template-context/local/network-crud/network-crud.jsonnet",
       "output_file": "output/live-integration-simple-output.txt",
       "verbose": true,

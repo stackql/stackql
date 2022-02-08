@@ -55,3 +55,7 @@ const (
 	SelectGoogleComputeDisksAggSizeTotal                              string = `select sum(cast(sizeGb as unsigned)) - 10 as cc from google.compute.disks where zone = 'australia-southeast1-b' AND /* */ project = 'testing-project';`
 	SelectGoogleComputeDisksAggStringTotal                            string = `select group_concat(substr(name, 0, 5)) || ' lalala' as cc from google.compute.disks where zone = 'australia-southeast1-b' AND /* */ project = 'testing-project';`
 )
+
+func GetGoogleProviderString() string {
+	return "google"
+}

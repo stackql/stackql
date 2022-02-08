@@ -1,0 +1,2582 @@
+components:
+  schemas:
+    AppAndInstanceConditionEvaluatorAppOrInstance:
+      properties:
+        id:
+          readOnly: true
+          type: string
+        name:
+          type: string
+        type:
+          enum:
+          - APP_TYPE
+          - APP
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    AppAndInstancePolicyRuleCondition:
+      properties:
+        exclude:
+          items:
+            $ref: '#/components/schemas/AppAndInstanceConditionEvaluatorAppOrInstance'
+          type: array
+        include:
+          items:
+            $ref: '#/components/schemas/AppAndInstanceConditionEvaluatorAppOrInstance'
+          type: array
+      type: object
+      x-okta-tags:
+      - Policy
+    AppInstancePolicyRuleCondition:
+      properties:
+        exclude:
+          items:
+            type: string
+          type: array
+        include:
+          items:
+            type: string
+          type: array
+      type: object
+      x-okta-tags:
+      - Policy
+    ApplicationCredentialsSigningUse:
+      enum:
+      - sig
+      type: string
+      x-okta-tags:
+      - AuthorizationServer
+    AuthorizationServer:
+      properties:
+        _links:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        audiences:
+          items:
+            type: string
+          type: array
+        created:
+          format: date-time
+          readOnly: true
+          type: string
+        credentials:
+          $ref: '#/components/schemas/AuthorizationServerCredentials'
+        description:
+          type: string
+        id:
+          readOnly: true
+          type: string
+        issuer:
+          type: string
+        issuerMode:
+          enum:
+          - ORG_URL
+          - CUSTOM_URL
+          type: string
+        lastUpdated:
+          format: date-time
+          readOnly: true
+          type: string
+        name:
+          type: string
+        status:
+          enum:
+          - ACTIVE
+          - INACTIVE
+          type: string
+      type: object
+      x-okta-crud:
+      - alias: create
+        arguments:
+        - dest: authorizationServer
+          self: true
+        operationId: createAuthorizationServer
+      - alias: read
+        arguments: []
+        operationId: getAuthorizationServer
+      - alias: update
+        arguments:
+        - dest: authServerId
+          src: id
+        - dest: authorizationServer
+          self: true
+        operationId: updateAuthorizationServer
+      - alias: delete
+        arguments:
+        - dest: authServerId
+          src: id
+        - dest: authorizationServer
+          self: true
+        operationId: deleteAuthorizationServer
+      x-okta-operations:
+      - alias: listOAuth2Claims
+        arguments:
+        - dest: authServerId
+          src: id
+        operationId: listOAuth2Claims
+      - alias: createOAuth2Claim
+        arguments:
+        - dest: authServerId
+          src: id
+        operationId: createOAuth2Claim
+      - alias: deleteOAuth2Claim
+        arguments:
+        - dest: authServerId
+          src: id
+        operationId: deleteOAuth2Claim
+      - alias: getOAuth2Claim
+        arguments:
+        - dest: authServerId
+          src: id
+        operationId: getOAuth2Claim
+      - alias: updateOAuth2Claim
+        arguments:
+        - dest: authServerId
+          src: id
+        operationId: updateOAuth2Claim
+      - alias: listOAuth2Clients
+        arguments:
+        - dest: authServerId
+          src: id
+        operationId: listOAuth2ClientsForAuthorizationServer
+      - alias: revokeRefreshTokensForClient
+        arguments:
+        - dest: authServerId
+          src: id
+        operationId: revokeRefreshTokensForAuthorizationServerAndClient
+      - alias: listRefreshTokensForClient
+        arguments:
+        - dest: authServerId
+          src: id
+        operationId: listRefreshTokensForAuthorizationServerAndClient
+      - alias: getRefreshTokenForClient
+        arguments:
+        - dest: authServerId
+          src: id
+        operationId: getRefreshTokenForAuthorizationServerAndClient
+      - alias: revokeRefreshTokenForClient
+        arguments:
+        - dest: authServerId
+          src: id
+        operationId: revokeRefreshTokenForAuthorizationServerAndClient
+      - alias: listKeys
+        arguments:
+        - dest: authServerId
+          src: id
+        operationId: listAuthorizationServerKeys
+      - alias: rotateKeys
+        arguments:
+        - dest: authServerId
+          src: id
+        operationId: rotateAuthorizationServerKeys
+      - alias: activate
+        arguments:
+        - dest: authServerId
+          src: id
+        operationId: activateAuthorizationServer
+      - alias: deactivate
+        arguments:
+        - dest: authServerId
+          src: id
+        operationId: deactivateAuthorizationServer
+      - alias: listPolicies
+        arguments:
+        - dest: authServerId
+          src: id
+        operationId: listAuthorizationServerPolicies
+      - alias: createPolicy
+        arguments:
+        - dest: authServerId
+          src: id
+        operationId: createAuthorizationServerPolicy
+      - alias: deletePolicy
+        arguments:
+        - dest: authServerId
+          src: id
+        operationId: deleteAuthorizationServerPolicy
+      - alias: getPolicy
+        arguments:
+        - dest: authServerId
+          src: id
+        operationId: getAuthorizationServerPolicy
+      - alias: updatePolicy
+        arguments:
+        - dest: authServerId
+          src: id
+        operationId: updateAuthorizationServerPolicy
+      - alias: listOAuth2Scopes
+        arguments:
+        - dest: authServerId
+          src: id
+        operationId: listOAuth2Scopes
+      - alias: createOAuth2Scope
+        arguments:
+        - dest: authServerId
+          src: id
+        operationId: createOAuth2Scope
+      - alias: deleteOAuth2Scope
+        arguments:
+        - dest: authServerId
+          src: id
+        operationId: deleteOAuth2Scope
+      - alias: getOAuth2Scope
+        arguments:
+        - dest: authServerId
+          src: id
+        operationId: getOAuth2Scope
+      - alias: updateOAuth2Scope
+        arguments:
+        - dest: authServerId
+          src: id
+        operationId: updateOAuth2Scope
+      x-okta-tags:
+      - AuthorizationServer
+    AuthorizationServerCredentials:
+      properties:
+        signing:
+          $ref: '#/components/schemas/AuthorizationServerCredentialsSigningConfig'
+      type: object
+      x-okta-tags:
+      - Application
+    AuthorizationServerCredentialsRotationMode:
+      enum:
+      - AUTO
+      - MANUAL
+      type: string
+      x-okta-tags:
+      - AuthorizationServer
+    AuthorizationServerCredentialsSigningConfig:
+      properties:
+        kid:
+          type: string
+        lastRotated:
+          format: date-time
+          readOnly: true
+          type: string
+        nextRotation:
+          format: date-time
+          readOnly: true
+          type: string
+        rotationMode:
+          $ref: '#/components/schemas/AuthorizationServerCredentialsRotationMode'
+        use:
+          $ref: '#/components/schemas/AuthorizationServerCredentialsUse'
+      type: object
+      x-okta-tags:
+      - AuthorizationServer
+    AuthorizationServerCredentialsUse:
+      enum:
+      - sig
+      type: string
+      x-okta-tags:
+      - AuthorizationServer
+    AuthorizationServerPolicy:
+      properties:
+        _embedded:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        _links:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        conditions:
+          $ref: '#/components/schemas/PolicyRuleConditions'
+        created:
+          format: date-time
+          readOnly: true
+          type: string
+        description:
+          type: string
+        id:
+          readOnly: true
+          type: string
+        lastUpdated:
+          format: date-time
+          readOnly: true
+          type: string
+        name:
+          type: string
+        priority:
+          type: integer
+        status:
+          enum:
+          - ACTIVE
+          - INACTIVE
+          type: string
+        system:
+          type: boolean
+        type:
+          $ref: '#/components/schemas/PolicyType'
+      type: object
+      x-okta-crud:
+      - alias: read
+        arguments:
+        - dest: policyId
+          src: id
+        operationId: getAuthorizationServerPolicy
+      - alias: update
+        arguments:
+        - dest: policyId
+          src: id
+        - dest: policy
+          self: true
+        operationId: updateAuthorizationServerPolicy
+      - alias: delete
+        arguments:
+        - dest: policyId
+          src: id
+        operationId: deleteAuthorizationServerPolicy
+      x-okta-operations:
+      - alias: listPolicyRules
+        arguments:
+        - dest: policyId
+          src: id
+        operationId: listAuthorizationServerPolicyRules
+      - alias: createPolicyRule
+        arguments:
+        - dest: policyId
+          src: id
+        operationId: createAuthorizationServerPolicyRule
+      - alias: getPolicyRule
+        arguments:
+        - dest: policyId
+          src: id
+        operationId: getAuthorizationServerPolicyRule
+      - alias: deletePolicyRule
+        arguments:
+        - dest: policyId
+          src: id
+        operationId: deleteAuthorizationServerPolicyRule
+      - alias: activate
+        arguments:
+        - dest: policyId
+          src: id
+        operationId: activateAuthorizationServerPolicy
+      - alias: deactivate
+        arguments:
+        - dest: policyId
+          src: id
+        operationId: deactivateAuthorizationServerPolicy
+      x-okta-tags:
+      - AuthorizationServer
+    AuthorizationServerPolicyRule:
+      properties:
+        actions:
+          $ref: '#/components/schemas/AuthorizationServerPolicyRuleActions'
+        conditions:
+          $ref: '#/components/schemas/AuthorizationServerPolicyRuleConditions'
+        created:
+          format: date-time
+          readOnly: true
+          type: string
+        id:
+          readOnly: true
+          type: string
+        lastUpdated:
+          format: date-time
+          readOnly: true
+          type: string
+        name:
+          type: string
+        priority:
+          type: integer
+        status:
+          default: ACTIVE
+          enum:
+          - ACTIVE
+          - INACTIVE
+          type: string
+        system:
+          default: false
+          type: boolean
+        type:
+          enum:
+          - RESOURCE_ACCESS
+          type: string
+      type: object
+      x-okta-crud:
+      - alias: update
+        arguments:
+        - dest: ruleId
+          src: id
+        - dest: policyRule
+          self: true
+        - dest: policyId
+          parentSrc: id
+        operationId: updateAuthorizationServerPolicyRule
+      - alias: delete
+        arguments:
+        - dest: ruleId
+          src: id
+        - dest: policyId
+          parentSrc: policyId
+        operationId: deleteAuthorizationServerPolicyRule
+      x-okta-operations:
+      - alias: activate
+        arguments:
+        - dest: ruleId
+          src: id
+        - dest: policyId
+          parentSrc: policyId
+        operationId: activateAuthorizationServerPolicyRule
+      - alias: deactivate
+        arguments:
+        - dest: ruleId
+          src: id
+        - dest: policyId
+          parentSrc: policyId
+        operationId: deactivateAuthorizationServerPolicyRule
+      x-okta-tags:
+      - AuthorizationServerPolicy
+    AuthorizationServerPolicyRuleActions:
+      properties:
+        token:
+          $ref: '#/components/schemas/TokenAuthorizationServerPolicyRuleAction'
+      type: object
+      x-okta-tags:
+      - AuthorizationServerPolicy
+    AuthorizationServerPolicyRuleConditions:
+      properties:
+        clients:
+          $ref: '#/components/schemas/ClientPolicyCondition'
+        grantTypes:
+          $ref: '#/components/schemas/GrantTypePolicyRuleCondition'
+        people:
+          $ref: '#/components/schemas/PolicyPeopleCondition'
+        scopes:
+          $ref: '#/components/schemas/OAuth2ScopesMediationPolicyRuleCondition'
+      type: object
+      x-okta-tags:
+      - AuthorizationServerPolicy
+    BeforeScheduledActionPolicyRuleCondition:
+      properties:
+        duration:
+          $ref: '#/components/schemas/Duration'
+        lifecycleAction:
+          $ref: '#/components/schemas/ScheduledUserLifecycleAction'
+      type: object
+      x-okta-tags:
+      - Policy
+    ClientPolicyCondition:
+      properties:
+        include:
+          items:
+            type: string
+          type: array
+      type: object
+      x-okta-tags:
+      - Policy
+    ContextPolicyRuleCondition:
+      properties:
+        expression:
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    DevicePolicyRuleCondition:
+      properties:
+        migrated:
+          type: boolean
+        platform:
+          $ref: '#/components/schemas/DevicePolicyRuleConditionPlatform'
+        rooted:
+          type: boolean
+        trustLevel:
+          enum:
+          - ANY
+          - TRUSTED
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    DevicePolicyRuleConditionPlatform:
+      properties:
+        supportedMDMFrameworks:
+          items:
+            enum:
+            - AFW
+            - SAFE
+            - NATIVE
+            type: string
+          type: array
+        types:
+          items:
+            enum:
+            - IOS
+            - ANDROID
+            - OSX
+            - WINDOWS
+            type: string
+          type: array
+      type: object
+      x-okta-tags:
+      - Policy
+    Duration:
+      properties:
+        number:
+          type: integer
+        unit:
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    GrantTypePolicyRuleCondition:
+      properties:
+        include:
+          items:
+            type: string
+          type: array
+      type: object
+      x-okta-tags:
+      - Policy
+    GroupCondition:
+      properties:
+        exclude:
+          items:
+            type: string
+          type: array
+        include:
+          items:
+            type: string
+          type: array
+      type: object
+      x-okta-tags:
+      - Policy
+    GroupPolicyRuleCondition:
+      properties:
+        exclude:
+          items:
+            type: string
+          type: array
+        include:
+          items:
+            type: string
+          type: array
+      type: object
+      x-okta-tags:
+      - Policy
+    IdentityProviderPolicyRuleCondition:
+      properties:
+        idpIds:
+          items:
+            type: string
+          type: array
+        provider:
+          enum:
+          - ANY
+          - OKTA
+          - SPECIFIC_IDP
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    InactivityPolicyRuleCondition:
+      properties:
+        number:
+          type: integer
+        unit:
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    JsonWebKey:
+      properties:
+        _links:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        alg:
+          type: string
+        created:
+          format: date-time
+          type: string
+        e:
+          type: string
+        expiresAt:
+          format: date-time
+          type: string
+        key_ops:
+          items:
+            type: string
+          type: array
+        kid:
+          type: string
+        kty:
+          type: string
+        lastUpdated:
+          format: date-time
+          type: string
+        n:
+          type: string
+        status:
+          type: string
+        use:
+          type: string
+        x5c:
+          items:
+            type: string
+          type: array
+        x5t:
+          type: string
+        x5t#S256:
+          type: string
+        x5u:
+          type: string
+      type: object
+      x-okta-tags:
+      - Application
+    JwkUse:
+      properties:
+        use:
+          enum:
+          - sig
+          type: string
+      type: object
+      x-okta-tags:
+      - Application
+    LifecycleExpirationPolicyRuleCondition:
+      properties:
+        lifecycleStatus:
+          type: string
+        number:
+          type: integer
+        unit:
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    MDMEnrollmentPolicyRuleCondition:
+      properties:
+        blockNonSafeAndroid:
+          type: boolean
+        enrollment:
+          enum:
+          - OMM
+          - ANY_OR_NONE
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    OAuth2Actor:
+      properties:
+        id:
+          readOnly: true
+          type: string
+        type:
+          type: string
+      type: object
+      x-okta-tags:
+      - Application
+    OAuth2Claim:
+      properties:
+        _links:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        alwaysIncludeInToken:
+          type: boolean
+        claimType:
+          enum:
+          - IDENTITY
+          - RESOURCE
+          type: string
+        conditions:
+          $ref: '#/components/schemas/OAuth2ClaimConditions'
+        group_filter_type:
+          enum:
+          - STARTS_WITH
+          - EQUALS
+          - CONTAINS
+          - REGEX
+          type: string
+        id:
+          readOnly: true
+          type: string
+        name:
+          type: string
+        status:
+          enum:
+          - ACTIVE
+          - INACTIVE
+          type: string
+        system:
+          type: boolean
+        value:
+          type: string
+        valueType:
+          enum:
+          - EXPRESSION
+          - GROUPS
+          - SYSTEM
+          type: string
+      type: object
+      x-okta-tags:
+      - Application
+    OAuth2ClaimConditions:
+      properties:
+        scopes:
+          items:
+            type: string
+          type: array
+      type: object
+      x-okta-tags:
+      - Application
+    OAuth2Client:
+      properties:
+        _links:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        client_id:
+          readOnly: true
+          type: string
+        client_name:
+          readOnly: true
+          type: string
+        client_uri:
+          readOnly: true
+          type: string
+        logo_uri:
+          readOnly: true
+          type: string
+      type: object
+      x-okta-tags:
+      - Application
+    OAuth2RefreshToken:
+      properties:
+        _embedded:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        _links:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        clientId:
+          type: string
+        created:
+          format: date-time
+          readOnly: true
+          type: string
+        createdBy:
+          $ref: '#/components/schemas/OAuth2Actor'
+        expiresAt:
+          format: date-time
+          readOnly: true
+          type: string
+        id:
+          readOnly: true
+          type: string
+        issuer:
+          type: string
+        lastUpdated:
+          format: date-time
+          readOnly: true
+          type: string
+        scopes:
+          items:
+            type: string
+          type: array
+        status:
+          enum:
+          - ACTIVE
+          - REVOKED
+          type: string
+        userId:
+          type: string
+      type: object
+      x-okta-tags:
+      - Application
+    OAuth2Scope:
+      properties:
+        consent:
+          enum:
+          - REQUIRED
+          - IMPLICIT
+          - ADMIN
+          type: string
+        default:
+          type: boolean
+        description:
+          type: string
+        displayName:
+          type: string
+        id:
+          readOnly: true
+          type: string
+        metadataPublish:
+          enum:
+          - ALL_CLIENTS
+          - NO_CLIENTS
+          type: string
+        name:
+          type: string
+        system:
+          type: boolean
+      type: object
+      x-okta-tags:
+      - Application
+    OAuth2ScopesMediationPolicyRuleCondition:
+      properties:
+        include:
+          items:
+            type: string
+          type: array
+      type: object
+      x-okta-tags:
+      - Application
+    PasswordExpirationPolicyRuleCondition:
+      properties:
+        number:
+          type: integer
+        unit:
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    PasswordPolicyAuthenticationProviderCondition:
+      properties:
+        include:
+          items:
+            type: string
+          type: array
+        provider:
+          enum:
+          - ACTIVE_DIRECTORY
+          - ANY
+          - LDAP
+          - OKTA
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    PlatformConditionEvaluatorPlatform:
+      properties:
+        os:
+          $ref: '#/components/schemas/PlatformConditionEvaluatorPlatformOperatingSystem'
+        type:
+          enum:
+          - DESKTOP
+          - MOBILE
+          - OTHER
+          - ANY
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    PlatformConditionEvaluatorPlatformOperatingSystem:
+      properties:
+        expression:
+          type: string
+        type:
+          enum:
+          - ANDROID
+          - IOS
+          - WINDOWS
+          - OSX
+          - OTHER
+          - ANY
+          type: string
+        version:
+          $ref: '#/components/schemas/PlatformConditionEvaluatorPlatformOperatingSystemVersion'
+      type: object
+      x-okta-tags:
+      - Policy
+    PlatformConditionEvaluatorPlatformOperatingSystemVersion:
+      properties:
+        matchType:
+          enum:
+          - EXPRESSION
+          - SEMVER
+          type: string
+        value:
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    PlatformPolicyRuleCondition:
+      properties:
+        exclude:
+          items:
+            $ref: '#/components/schemas/PlatformConditionEvaluatorPlatform'
+          type: array
+        include:
+          items:
+            $ref: '#/components/schemas/PlatformConditionEvaluatorPlatform'
+          type: array
+      type: object
+      x-okta-tags:
+      - Policy
+    PolicyNetworkCondition:
+      properties:
+        connection:
+          enum:
+          - ANYWHERE
+          - ZONE
+          type: string
+        exclude:
+          items:
+            type: string
+          type: array
+        include:
+          items:
+            type: string
+          type: array
+      type: object
+      x-okta-tags:
+      - Policy
+    PolicyPeopleCondition:
+      properties:
+        groups:
+          $ref: '#/components/schemas/GroupCondition'
+        users:
+          $ref: '#/components/schemas/UserCondition'
+      type: object
+      x-okta-tags:
+      - Policy
+    PolicyRuleAuthContextCondition:
+      properties:
+        authType:
+          enum:
+          - ANY
+          - RADIUS
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    PolicyRuleConditions:
+      properties:
+        app:
+          $ref: '#/components/schemas/AppAndInstancePolicyRuleCondition'
+        apps:
+          $ref: '#/components/schemas/AppInstancePolicyRuleCondition'
+        authContext:
+          $ref: '#/components/schemas/PolicyRuleAuthContextCondition'
+        authProvider:
+          $ref: '#/components/schemas/PasswordPolicyAuthenticationProviderCondition'
+        beforeScheduledAction:
+          $ref: '#/components/schemas/BeforeScheduledActionPolicyRuleCondition'
+        clients:
+          $ref: '#/components/schemas/ClientPolicyCondition'
+        context:
+          $ref: '#/components/schemas/ContextPolicyRuleCondition'
+        device:
+          $ref: '#/components/schemas/DevicePolicyRuleCondition'
+        grantTypes:
+          $ref: '#/components/schemas/GrantTypePolicyRuleCondition'
+        groups:
+          $ref: '#/components/schemas/GroupPolicyRuleCondition'
+        identityProvider:
+          $ref: '#/components/schemas/IdentityProviderPolicyRuleCondition'
+        mdmEnrollment:
+          $ref: '#/components/schemas/MDMEnrollmentPolicyRuleCondition'
+        network:
+          $ref: '#/components/schemas/PolicyNetworkCondition'
+        people:
+          $ref: '#/components/schemas/PolicyPeopleCondition'
+        platform:
+          $ref: '#/components/schemas/PlatformPolicyRuleCondition'
+        risk:
+          $ref: '#/components/schemas/RiskPolicyRuleCondition'
+        riskScore:
+          $ref: '#/components/schemas/RiskScorePolicyRuleCondition'
+        scopes:
+          $ref: '#/components/schemas/OAuth2ScopesMediationPolicyRuleCondition'
+        userIdentifier:
+          $ref: '#/components/schemas/UserIdentifierPolicyRuleCondition'
+        userStatus:
+          $ref: '#/components/schemas/UserStatusPolicyRuleCondition'
+        users:
+          $ref: '#/components/schemas/UserPolicyRuleCondition'
+      type: object
+      x-okta-tags:
+      - Policy
+    PolicyType:
+      enum:
+      - OAUTH_AUTHORIZATION_POLICY
+      - OKTA_SIGN_ON
+      - PASSWORD
+      - IDP_DISCOVERY
+      type: string
+      x-okta-tags:
+      - Policy
+    RiskPolicyRuleCondition:
+      properties:
+        behaviors:
+          items:
+            type: string
+          type: array
+          uniqueItems: true
+      type: object
+      x-okta-tags:
+      - Policy
+    RiskScorePolicyRuleCondition:
+      properties:
+        level:
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    ScheduledUserLifecycleAction:
+      properties:
+        status:
+          enum:
+          - ACTIVE
+          - INACTIVE
+          - PENDING
+          - DELETED
+          - EXPIRED_PASSWORD
+          - ACTIVATING
+          - SUSPENDED
+          - DELETING
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    TokenAuthorizationServerPolicyRuleAction:
+      properties:
+        accessTokenLifetimeMinutes:
+          type: integer
+        inlineHook:
+          $ref: '#/components/schemas/TokenAuthorizationServerPolicyRuleActionInlineHook'
+        refreshTokenLifetimeMinutes:
+          type: integer
+        refreshTokenWindowMinutes:
+          type: integer
+      type: object
+      x-okta-tags:
+      - AuthorizationServerPolicy
+    TokenAuthorizationServerPolicyRuleActionInlineHook:
+      properties:
+        id:
+          type: string
+      type: object
+      x-okta-tags:
+      - AuthorizationServerPolicy
+    UserCondition:
+      properties:
+        exclude:
+          items:
+            type: string
+          type: array
+        include:
+          items:
+            type: string
+          type: array
+      type: object
+      x-okta-tags:
+      - Policy
+    UserIdentifierConditionEvaluatorPattern:
+      properties:
+        matchType:
+          enum:
+          - SUFFIX
+          - EXPRESSION
+          - STARTS_WITH
+          - EQUALS
+          - CONTAINS
+          type: string
+        value:
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    UserIdentifierPolicyRuleCondition:
+      properties:
+        attribute:
+          type: string
+        patterns:
+          items:
+            $ref: '#/components/schemas/UserIdentifierConditionEvaluatorPattern'
+          type: array
+        type:
+          enum:
+          - IDENTIFIER
+          - ATTRIBUTE
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    UserLifecycleAttributePolicyRuleCondition:
+      properties:
+        attributeName:
+          type: string
+        matchingValue:
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    UserPolicyRuleCondition:
+      properties:
+        exclude:
+          items:
+            type: string
+          type: array
+        inactivity:
+          $ref: '#/components/schemas/InactivityPolicyRuleCondition'
+        include:
+          items:
+            type: string
+          type: array
+        lifecycleExpiration:
+          $ref: '#/components/schemas/LifecycleExpirationPolicyRuleCondition'
+        passwordExpiration:
+          $ref: '#/components/schemas/PasswordExpirationPolicyRuleCondition'
+        userLifecycleAttribute:
+          $ref: '#/components/schemas/UserLifecycleAttributePolicyRuleCondition'
+      type: object
+      x-okta-tags:
+      - Policy
+    UserStatusPolicyRuleCondition:
+      properties:
+        value:
+          enum:
+          - ACTIVE
+          - INACTIVE
+          - PENDING
+          - DELETED
+          - EXPIRED_PASSWORD
+          - ACTIVATING
+          - SUSPENDED
+          - DELETING
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+  securitySchemes:
+    api_token:
+      description: SSWS {API Token}
+      in: header
+      name: Authorization
+      type: apiKey
+  x-stackQL-resources:
+    authorizationservers:
+      id: okta.authorizationserver.authorizationservers
+      methods:
+        activate:
+          operation:
+            $ref: POST
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/lifecycle/activate
+          response:
+            openAPIDocKey: '200'
+        deactivate:
+          operation:
+            $ref: POST
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/lifecycle/deactivate
+          response:
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: DELETE
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}
+          response:
+            openAPIDocKey: '204'
+        get:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: POST
+          path:
+            $ref: /api/v1/authorizationServers
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/authorizationServers
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        update:
+          operation:
+            $ref: PUT
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: authorizationservers
+      title: authorizationservers
+    claims:
+      id: okta.authorizationserver.claims
+      methods:
+        delete:
+          operation:
+            $ref: DELETE
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/claims/{claimId}
+          response:
+            openAPIDocKey: '204'
+        get:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/claims/{claimId}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: POST
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/claims
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/claims
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        update:
+          operation:
+            $ref: PUT
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/claims/{claimId}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: claims
+      title: claims
+    clients:
+      id: okta.authorizationserver.clients
+      methods:
+        list:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/clients
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: clients
+      title: clients
+    keys:
+      id: okta.authorizationserver.keys
+      methods:
+        list:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/credentials/keys
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        rotate:
+          operation:
+            $ref: POST
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/credentials/lifecycle/keyRotate
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: keys
+      title: keys
+    policies:
+      id: okta.authorizationserver.policies
+      methods:
+        activate:
+          operation:
+            $ref: POST
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/policies/{policyId}/lifecycle/activate
+          response:
+            openAPIDocKey: '200'
+        deactivate:
+          operation:
+            $ref: POST
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/policies/{policyId}/lifecycle/deactivate
+          response:
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: DELETE
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/policies/{policyId}
+          response:
+            openAPIDocKey: '204'
+        get:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/policies/{policyId}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: POST
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/policies
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/policies
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        update:
+          operation:
+            $ref: PUT
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/policies/{policyId}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: policies
+      title: policies
+    rules:
+      id: okta.authorizationserver.rules
+      methods:
+        activate:
+          operation:
+            $ref: POST
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/policies/{policyId}/rules/{ruleId}/lifecycle/activate
+          response:
+            openAPIDocKey: '200'
+        deactivate:
+          operation:
+            $ref: POST
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/policies/{policyId}/rules/{ruleId}/lifecycle/deactivate
+          response:
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: DELETE
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/policies/{policyId}/rules/{ruleId}
+          response:
+            openAPIDocKey: '204'
+        get:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/policies/{policyId}/rules/{ruleId}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: POST
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/policies/{policyId}/rules
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/policies/{policyId}/rules
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        update:
+          operation:
+            $ref: PUT
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/policies/{policyId}/rules/{ruleId}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: rules
+      title: rules
+    scopes:
+      id: okta.authorizationserver.scopes
+      methods:
+        delete:
+          operation:
+            $ref: DELETE
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/scopes/{scopeId}
+          response:
+            openAPIDocKey: '204'
+        get:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/scopes/{scopeId}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: POST
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/scopes
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/scopes
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        update:
+          operation:
+            $ref: PUT
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/scopes/{scopeId}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: scopes
+      title: scopes
+    tokens:
+      id: okta.authorizationserver.tokens
+      methods:
+        delete:
+          operation:
+            $ref: DELETE
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/clients/{clientId}/tokens/{tokenId}
+          response:
+            openAPIDocKey: '204'
+        deleteall:
+          operation:
+            $ref: DELETE
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/clients/{clientId}/tokens
+          response:
+            openAPIDocKey: '204'
+        get:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/clients/{clientId}/tokens/{tokenId}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/authorizationServers/{authServerId}/clients/{clientId}/tokens
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: tokens
+      title: tokens
+externalDocs:
+  description: Find more info here
+  url: https://developer.okta.com/docs/api/getting_started/design_principles.html
+info:
+  contact:
+    email: devex-public@okta.com
+    name: Okta Developer Team
+    url: https://developer.okta.com/
+  description: Allows customers to easily access the Okta API
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: https://developer.okta.com/terms/
+  title: Okta API
+  version: 2.8.0
+openapi: 3.0.1
+paths:
+  /api/v1/authorizationServers:
+    get:
+      description: Success
+      operationId: listAuthorizationServers
+      parameters:
+      - in: query
+        name: q
+        schema:
+          type: string
+      - in: query
+        name: limit
+        schema:
+          type: string
+      - in: query
+        name: after
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/AuthorizationServer'
+                type: array
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+    post:
+      description: Success
+      operationId: createAuthorizationServer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthorizationServer'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationServer'
+          description: Success
+        '201':
+          content: {}
+          description: Created
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+      x-codegen-request-body-name: authorizationServer
+  /api/v1/authorizationServers/{authServerId}:
+    delete:
+      description: Success
+      operationId: deleteAuthorizationServer
+      parameters:
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          content: {}
+          description: No Content
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+    get:
+      description: Success
+      operationId: getAuthorizationServer
+      parameters:
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationServer'
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+    put:
+      description: Success
+      operationId: updateAuthorizationServer
+      parameters:
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthorizationServer'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationServer'
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+      x-codegen-request-body-name: authorizationServer
+  /api/v1/authorizationServers/{authServerId}/claims:
+    get:
+      description: Success
+      operationId: listOAuth2Claims
+      parameters:
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/OAuth2Claim'
+                type: array
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+    post:
+      description: Success
+      operationId: createOAuth2Claim
+      parameters:
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OAuth2Claim'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuth2Claim'
+          description: Created
+        '201':
+          content: {}
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+      x-codegen-request-body-name: oAuth2Claim
+  /api/v1/authorizationServers/{authServerId}/claims/{claimId}:
+    delete:
+      description: Success
+      operationId: deleteOAuth2Claim
+      parameters:
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: claimId
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          content: {}
+          description: No Content
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+    get:
+      description: Success
+      operationId: getOAuth2Claim
+      parameters:
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: claimId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuth2Claim'
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+    put:
+      description: Success
+      operationId: updateOAuth2Claim
+      parameters:
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: claimId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OAuth2Claim'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuth2Claim'
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+      x-codegen-request-body-name: oAuth2Claim
+  /api/v1/authorizationServers/{authServerId}/clients:
+    get:
+      description: Success
+      operationId: listOAuth2ClientsForAuthorizationServer
+      parameters:
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/OAuth2Client'
+                type: array
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+  /api/v1/authorizationServers/{authServerId}/clients/{clientId}/tokens:
+    delete:
+      description: Success
+      operationId: revokeRefreshTokensForAuthorizationServerAndClient
+      parameters:
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: clientId
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          content: {}
+          description: No Content
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+    get:
+      description: Success
+      operationId: listRefreshTokensForAuthorizationServerAndClient
+      parameters:
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: clientId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: expand
+        schema:
+          type: string
+      - in: query
+        name: after
+        schema:
+          type: string
+      - in: query
+        name: limit
+        schema:
+          default: -1
+          format: int32
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/OAuth2RefreshToken'
+                type: array
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+  /api/v1/authorizationServers/{authServerId}/clients/{clientId}/tokens/{tokenId}:
+    delete:
+      description: Success
+      operationId: revokeRefreshTokenForAuthorizationServerAndClient
+      parameters:
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: clientId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: tokenId
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          content: {}
+          description: No Content
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+    get:
+      description: Success
+      operationId: getRefreshTokenForAuthorizationServerAndClient
+      parameters:
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: clientId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: tokenId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: expand
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuth2RefreshToken'
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+  /api/v1/authorizationServers/{authServerId}/credentials/keys:
+    get:
+      description: Success
+      operationId: listAuthorizationServerKeys
+      parameters:
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/JsonWebKey'
+                type: array
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+  /api/v1/authorizationServers/{authServerId}/credentials/lifecycle/keyRotate:
+    post:
+      description: Success
+      operationId: rotateAuthorizationServerKeys
+      parameters:
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JwkUse'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/JsonWebKey'
+                type: array
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+      x-codegen-request-body-name: use
+  /api/v1/authorizationServers/{authServerId}/lifecycle/activate:
+    post:
+      description: Success
+      operationId: activateAuthorizationServer
+      parameters:
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content: {}
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+  /api/v1/authorizationServers/{authServerId}/lifecycle/deactivate:
+    post:
+      description: Success
+      operationId: deactivateAuthorizationServer
+      parameters:
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content: {}
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+  /api/v1/authorizationServers/{authServerId}/policies:
+    get:
+      description: Success
+      operationId: listAuthorizationServerPolicies
+      parameters:
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/AuthorizationServerPolicy'
+                type: array
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+    post:
+      description: Success
+      operationId: createAuthorizationServerPolicy
+      parameters:
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthorizationServerPolicy'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationServerPolicy'
+          description: Success
+        '201':
+          content: {}
+          description: Created
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+      x-codegen-request-body-name: policy
+  /api/v1/authorizationServers/{authServerId}/policies/{policyId}:
+    delete:
+      description: Success
+      operationId: deleteAuthorizationServerPolicy
+      parameters:
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: policyId
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          content: {}
+          description: No Content
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+    get:
+      description: Success
+      operationId: getAuthorizationServerPolicy
+      parameters:
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: policyId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationServerPolicy'
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+    put:
+      description: Success
+      operationId: updateAuthorizationServerPolicy
+      parameters:
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: policyId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthorizationServerPolicy'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationServerPolicy'
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+      x-codegen-request-body-name: policy
+  /api/v1/authorizationServers/{authServerId}/policies/{policyId}/lifecycle/activate:
+    post:
+      description: Activate Authorization Server Policy
+      operationId: activateAuthorizationServerPolicy
+      parameters:
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: policyId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content: {}
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+  /api/v1/authorizationServers/{authServerId}/policies/{policyId}/lifecycle/deactivate:
+    post:
+      description: Deactivate Authorization Server Policy
+      operationId: deactivateAuthorizationServerPolicy
+      parameters:
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: policyId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content: {}
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+  /api/v1/authorizationServers/{authServerId}/policies/{policyId}/rules:
+    get:
+      description: Enumerates all policy rules for the specified Custom Authorization
+        Server and Policy.
+      operationId: listAuthorizationServerPolicyRules
+      parameters:
+      - in: path
+        name: policyId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/AuthorizationServerPolicyRule'
+                type: array
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+    post:
+      description: Creates a policy rule for the specified Custom Authorization Server
+        and Policy.
+      operationId: createAuthorizationServerPolicyRule
+      parameters:
+      - in: path
+        name: policyId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthorizationServerPolicyRule'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationServerPolicyRule'
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+      x-codegen-request-body-name: policyRule
+  /api/v1/authorizationServers/{authServerId}/policies/{policyId}/rules/{ruleId}:
+    delete:
+      description: Deletes a Policy Rule defined in the specified Custom Authorization
+        Server and Policy.
+      operationId: deleteAuthorizationServerPolicyRule
+      parameters:
+      - in: path
+        name: policyId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: ruleId
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          content: {}
+          description: No Content
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+    get:
+      description: Returns a Policy Rule by ID that is defined in the specified Custom
+        Authorization Server and Policy.
+      operationId: getAuthorizationServerPolicyRule
+      parameters:
+      - in: path
+        name: policyId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: ruleId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationServerPolicyRule'
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+    put:
+      description: Updates the configuration of the Policy Rule defined in the specified
+        Custom Authorization Server and Policy.
+      operationId: updateAuthorizationServerPolicyRule
+      parameters:
+      - in: path
+        name: policyId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: ruleId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthorizationServerPolicyRule'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationServerPolicyRule'
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+      x-codegen-request-body-name: policyRule
+  /api/v1/authorizationServers/{authServerId}/policies/{policyId}/rules/{ruleId}/lifecycle/activate:
+    post:
+      description: Activate Authorization Server Policy Rule
+      operationId: activateAuthorizationServerPolicyRule
+      parameters:
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: policyId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: ruleId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content: {}
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+  /api/v1/authorizationServers/{authServerId}/policies/{policyId}/rules/{ruleId}/lifecycle/deactivate:
+    post:
+      description: Deactivate Authorization Server Policy Rule
+      operationId: deactivateAuthorizationServerPolicyRule
+      parameters:
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: policyId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: ruleId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content: {}
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+  /api/v1/authorizationServers/{authServerId}/scopes:
+    get:
+      description: Success
+      operationId: listOAuth2Scopes
+      parameters:
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: q
+        schema:
+          type: string
+      - in: query
+        name: filter
+        schema:
+          type: string
+      - in: query
+        name: cursor
+        schema:
+          type: string
+      - in: query
+        name: limit
+        schema:
+          default: -1
+          format: int32
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/OAuth2Scope'
+                type: array
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+    post:
+      description: Success
+      operationId: createOAuth2Scope
+      parameters:
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OAuth2Scope'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuth2Scope'
+          description: Success
+        '201':
+          content: {}
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+      x-codegen-request-body-name: oAuth2Scope
+  /api/v1/authorizationServers/{authServerId}/scopes/{scopeId}:
+    delete:
+      description: Success
+      operationId: deleteOAuth2Scope
+      parameters:
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: scopeId
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          content: {}
+          description: No Content
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+    get:
+      description: Success
+      operationId: getOAuth2Scope
+      parameters:
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: scopeId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuth2Scope'
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+    put:
+      description: Success
+      operationId: updateOAuth2Scope
+      parameters:
+      - in: path
+        name: authServerId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: scopeId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OAuth2Scope'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuth2Scope'
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - AuthorizationServer
+      x-codegen-request-body-name: oAuth2Scope
+servers:
+- url: https://{subdomain}.okta.com/
+  variables:
+    subdomain:
+      default: my-domain

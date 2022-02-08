@@ -1,0 +1,247 @@
+id: okta
+name: okta
+version: v1
+description: Identity Provider Services for org, user and app lifecycles
+title: Okta Identity Provider
+providerServices:
+  application:
+    description: Okta application
+      management.
+    id: application:v1
+    name: application
+    preferred: true
+    service:
+      $ref: okta/v1/services/Application.yaml
+    title: Application API
+    version: v1
+  authenticator:
+    description: Okta authenticator
+      management.
+    id: authenticator:v1
+    name: authenticator
+    preferred: true
+    service:
+      $ref: okta/v1/services/Authenticator.yaml
+    title: Authenticator API
+    version: v1
+  authorizationserver:
+    description: Okta authorization server
+      management.
+    id: authorizationserver:v1
+    name: authorizationserver
+    preferred: true
+    service:
+      $ref: okta/v1/services/AuthorizationServer.yaml
+    title: Authorization Server API
+    version: v1
+  domain:
+    description: Okta domain
+      management.
+    id: domain:v1
+    name: domain
+    preferred: true
+    service:
+      $ref: okta/v1/services/Domain.yaml
+    title: Domain API
+    version: v1
+  eventhook:
+    description: Okta event hook
+      management.
+    id: eventhook:v1
+    name: eventhook
+    preferred: true
+    service:
+      $ref: okta/v1/services/EventHook.yaml
+    title: Event Hook API
+    version: v1
+  feature:
+    description: Okta feature
+      management.
+    id: feature:v1
+    name: feature
+    preferred: true
+    service:
+      $ref: okta/v1/services/Feature.yaml
+    title: Feature API
+    version: v1
+  group:
+    description: Okta group
+      management.
+    id: group:v1
+    name: group
+    preferred: true
+    service:
+      $ref: okta/v1/services/Group.yaml
+    title: Group API
+    version: v1
+  groupschema:
+    description: Okta group schema
+      management.
+    id: groupschema:v1
+    name: groupschema
+    preferred: true
+    service:
+      $ref: okta/v1/services/GroupSchema.yaml
+    title: Group Schema API
+    version: v1
+  identityprovider:
+    description: Okta user
+      management.
+    id: identityprovider:v1
+    name: identityprovider
+    preferred: true
+    service:
+      $ref: okta/v1/services/IdentityProvider.yaml
+    title: IDP API
+    version: v1
+  inlinehook:
+    description: Okta inline hook
+      management.
+    id: inlinehook:v1
+    name: inlinehook
+    preferred: true
+    service:
+      $ref: okta/v1/services/InlineHook.yaml
+    title: Inline Hook API
+    version: v1
+  linkedobject:
+    description: Okta linked object
+      management.
+    id: linkedobject:v1
+    name: linkedobject
+    preferred: true
+    service:
+      $ref: okta/v1/services/LinkedObject.yaml
+    title: Linked Object API
+    version: v1
+  log:
+    description: Okta log
+      management.
+    id: log:v1
+    name: log
+    preferred: true
+    service:
+      $ref: okta/v1/services/Log.yaml
+    title: Log API
+    version: v1
+  networkzone:
+    description: Okta network zone
+      management.
+    id: networkzone:v1
+    name: networkzone
+    preferred: true
+    service:
+      $ref: okta/v1/services/NetworkZone.yaml
+    title: Network Zone API
+    version: v1
+  org:
+    description: Okta org
+      management.
+    id: org:v1
+    name: org
+    preferred: true
+    service:
+      $ref: okta/v1/services/Org.yaml
+    title: Org API
+    version: v1
+  policy:
+    description: Okta policy
+      management.
+    id: policy:v1
+    name: policy
+    preferred: true
+    service:
+      $ref: okta/v1/services/Policy.yaml
+    title: Policy API
+    version: v1
+  profilemapping:
+    description: Okta profile mapping
+      management.
+    id: profilemapping:v1
+    name: profilemapping
+    preferred: true
+    service:
+      $ref: okta/v1/services/ProfileMapping.yaml
+    title: Profile Mapping API
+    version: v1
+  session:
+    description: Okta session
+      management.
+    id: session:v1
+    name: session
+    preferred: true
+    service:
+      $ref: okta/v1/services/Session.yaml
+    title: Session API
+    version: v1
+  template:
+    description: Okta template
+      management.
+    id: template:v1
+    name: template
+    preferred: true
+    service:
+      $ref: okta/v1/services/Template.yaml
+    title: Template API
+    version: v1
+  threatinsight:
+    description: Okta threat insight
+      management.
+    id: threatinsight:v1
+    name: threatinsight
+    preferred: true
+    service:
+      $ref: okta/v1/services/ThreatInsight.yaml
+    title: Threat Insight API
+    version: v1
+  trustedorigin:
+    description: Okta threat insight
+      management.
+    id: trustedorigin:v1
+    name: trustedorigin
+    preferred: true
+    service:
+      $ref: okta/v1/services/TrustedOrigin.yaml
+    title: Trusted Origin API
+    version: v1
+  user:
+    description: Okta user
+      management.
+    id: user:v1
+    name: user
+    preferred: true
+    service:
+      $ref: okta/v1/services/User.yaml
+    title: User API
+    version: v1
+  userfactor:
+    description: Okta user factor
+      management.
+    id: userfactor:v1
+    name: userfactor
+    preferred: true
+    service:
+      $ref: okta/v1/services/UserFactor.yaml
+    title: User Factor API
+    version: v1
+  userschema:
+    description: Okta user schema
+      management.
+    id: userschema:v1
+    name: userschema
+    preferred: true
+    service:
+      $ref: okta/v1/services/UserSchema.yaml
+    title: User Schema API
+    version: v1
+  usertype:
+    description: Okta user type
+      management.
+    id: usertype:v1
+    name: usertype
+    preferred: true
+    service:
+      $ref: okta/v1/services/UserType.yaml
+    title: User Type API
+    version: v1
+

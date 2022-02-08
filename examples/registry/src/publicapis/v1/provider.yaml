@@ -1,0 +1,16 @@
+id: publicapis
+name: publicapis
+version: v1
+description: Catalogue of public http APIs.
+title: Public APIs
+providerServices:
+  api:
+    description: Public API
+      Catalogue of known public APIs.
+    id: api:v1
+    name: api
+    preferred: true
+    service:
+      $ref: publicapis/v1/services/api-v1.yaml
+    title: API catalogue
+    version: v1

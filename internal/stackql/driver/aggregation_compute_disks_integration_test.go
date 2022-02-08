@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stackql/stackql/internal/stackql/config"
 	. "github.com/stackql/stackql/internal/stackql/driver"
 	"github.com/stackql/stackql/internal/stackql/entryutil"
 	"github.com/stackql/stackql/internal/stackql/querysubmit"
@@ -27,7 +26,7 @@ func TestMain(m *testing.M) {
 
 func TestSelectComputeDisksOrderByCrtTmstpAsc(t *testing.T) {
 
-	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(config.GetGoogleProviderString(), "text", "TestSelectComputeDisksOrderByCrtTmstpAsc")
+	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSelectComputeDisksOrderByCrtTmstpAsc")
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
@@ -69,7 +68,7 @@ func TestSelectComputeDisksOrderByCrtTmstpAsc(t *testing.T) {
 
 func TestSelectComputeDisksAggOrderBySizeAsc(t *testing.T) {
 
-	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(config.GetGoogleProviderString(), "text", "TestSelectComputeDisksAggOrderBySizeAsc")
+	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSelectComputeDisksAggOrderBySizeAsc")
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
@@ -111,7 +110,7 @@ func TestSelectComputeDisksAggOrderBySizeAsc(t *testing.T) {
 
 func TestSelectComputeDisksAggOrderBySizeDesc(t *testing.T) {
 
-	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(config.GetGoogleProviderString(), "text", "TestSelectComputeDisksAggOrderBySizeDesc")
+	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSelectComputeDisksAggOrderBySizeDesc")
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
@@ -153,7 +152,7 @@ func TestSelectComputeDisksAggOrderBySizeDesc(t *testing.T) {
 
 func TestSelectComputeDisksAggTotalSize(t *testing.T) {
 
-	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(config.GetGoogleProviderString(), "text", "TestSelectComputeDisksAggTotalSize")
+	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSelectComputeDisksAggTotalSize")
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
@@ -195,7 +194,7 @@ func TestSelectComputeDisksAggTotalSize(t *testing.T) {
 
 func TestSelectComputeDisksAggTotalString(t *testing.T) {
 
-	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(config.GetGoogleProviderString(), "text", "TestSelectComputeDisksAggTotalString")
+	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSelectComputeDisksAggTotalString")
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}

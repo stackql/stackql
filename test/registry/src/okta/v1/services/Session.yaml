@@ -1,0 +1,266 @@
+components:
+  schemas:
+    CreateSessionRequest:
+      properties:
+        sessionToken:
+          type: string
+      type: object
+      x-okta-tags:
+      - Session
+    Session:
+      properties:
+        _links:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        amr:
+          items:
+            $ref: '#/components/schemas/SessionAuthenticationMethod'
+          readOnly: true
+          type: array
+        createdAt:
+          format: date-time
+          readOnly: true
+          type: string
+        expiresAt:
+          format: date-time
+          readOnly: true
+          type: string
+        id:
+          readOnly: true
+          type: string
+        idp:
+          $ref: '#/components/schemas/SessionIdentityProvider'
+        lastFactorVerification:
+          format: date-time
+          readOnly: true
+          type: string
+        lastPasswordVerification:
+          format: date-time
+          readOnly: true
+          type: string
+        login:
+          readOnly: true
+          type: string
+        status:
+          $ref: '#/components/schemas/SessionStatus'
+        userId:
+          readOnly: true
+          type: string
+      type: object
+      x-okta-crud:
+      - alias: read
+        arguments:
+        - dest: sessionId
+          src: id
+        operationId: getSession
+      - alias: delete
+        arguments:
+        - dest: sessionId
+          src: id
+        operationId: endSession
+      x-okta-operations:
+      - alias: refresh
+        arguments:
+        - dest: sessionId
+          src: id
+        operationId: refreshSession
+      x-okta-tags:
+      - Session
+    SessionAuthenticationMethod:
+      enum:
+      - pwd
+      - swk
+      - hwk
+      - otp
+      - sms
+      - tel
+      - geo
+      - fpt
+      - kba
+      - mfa
+      type: string
+      x-okta-tags:
+      - Session
+    SessionIdentityProvider:
+      properties:
+        id:
+          readOnly: true
+          type: string
+        type:
+          $ref: '#/components/schemas/SessionIdentityProviderType'
+      type: object
+      x-okta-tags:
+      - Session
+    SessionIdentityProviderType:
+      enum:
+      - ACTIVE_DIRECTORY
+      - LDAP
+      - OKTA
+      - FEDERATION
+      - SOCIAL
+      type: string
+      x-okta-tags:
+      - Session
+    SessionStatus:
+      enum:
+      - ACTIVE
+      - MFA_ENROLL
+      - MFA_REQUIRED
+      type: string
+      x-okta-tags:
+      - Session
+  securitySchemes:
+    api_token:
+      description: SSWS {API Token}
+      in: header
+      name: Authorization
+      type: apiKey
+  x-stackQL-resources:
+    sessions:
+      id: okta.session.sessions
+      methods:
+        delete:
+          operation:
+            $ref: DELETE
+          path:
+            $ref: /api/v1/sessions/{sessionId}
+          response:
+            openAPIDocKey: '204'
+        get:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/sessions/{sessionId}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: POST
+          path:
+            $ref: /api/v1/sessions
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        refresh:
+          operation:
+            $ref: POST
+          path:
+            $ref: /api/v1/sessions/{sessionId}/lifecycle/refresh
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: sessions
+      title: sessions
+externalDocs:
+  description: Find more info here
+  url: https://developer.okta.com/docs/api/getting_started/design_principles.html
+info:
+  contact:
+    email: devex-public@okta.com
+    name: Okta Developer Team
+    url: https://developer.okta.com/
+  description: Allows customers to easily access the Okta API
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: https://developer.okta.com/terms/
+  title: Okta API
+  version: 2.8.0
+openapi: 3.0.1
+paths:
+  /api/v1/sessions:
+    post:
+      description: Creates a new session for a user with a valid session token. Use
+        this API if, for example, you want to set the session cookie yourself instead
+        of allowing Okta to set it, or want to hold the session ID in order to delete
+        a session via the API instead of visiting the logout URL.
+      operationId: createSession
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+          description: Success
+      security:
+      - api_token: []
+      summary: Create Session with Session Token
+      tags:
+      - Session
+      x-codegen-request-body-name: createSessionRequest
+  /api/v1/sessions/{sessionId}:
+    delete:
+      operationId: endSession
+      parameters:
+      - in: path
+        name: sessionId
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          content: {}
+          description: No Content
+      security:
+      - api_token: []
+      summary: Close Session
+      tags:
+      - Session
+    get:
+      description: Get details about a session.
+      operationId: getSession
+      parameters:
+      - in: path
+        name: sessionId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - Session
+  /api/v1/sessions/{sessionId}/lifecycle/refresh:
+    post:
+      operationId: refreshSession
+      parameters:
+      - in: path
+        name: sessionId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+          description: Success
+      security:
+      - api_token: []
+      summary: Refresh Session
+      tags:
+      - Session
+servers:
+- url: https://{subdomain}.okta.com/
+  variables:
+    subdomain:
+      default: my-domain

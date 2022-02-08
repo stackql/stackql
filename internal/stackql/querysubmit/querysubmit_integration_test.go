@@ -8,7 +8,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/entryutil"
 	. "github.com/stackql/stackql/internal/stackql/querysubmit"
 
-	"github.com/stackql/stackql/internal/stackql/config"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/provider"
 
@@ -20,7 +19,7 @@ import (
 )
 
 func TestSimpleSelectGoogleComputeInstanceQuerySubmit(t *testing.T) {
-	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(config.GetGoogleProviderString(), "text", "TestSimpleSelectGoogleComputeInstanceQuerySubmit")
+	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSimpleSelectGoogleComputeInstanceQuerySubmit")
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}

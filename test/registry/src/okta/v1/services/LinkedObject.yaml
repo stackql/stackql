@@ -1,0 +1,193 @@
+components:
+  schemas:
+    LinkedObject:
+      properties:
+        _links:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        associated:
+          $ref: '#/components/schemas/LinkedObjectDetails'
+        primary:
+          $ref: '#/components/schemas/LinkedObjectDetails'
+      type: object
+      x-okta-crud:
+      - alias: create
+        arguments:
+        - dest: linkedObjectDefinition
+          self: true
+        operationId: addLinkedObjectDefinition
+      - alias: read
+        arguments: []
+        operationId: getLinkedObjectDefinition
+      - alias: delete
+        arguments:
+        - dest: linkedObjectName
+          self: true
+        operationId: deleteLinkedObjectDefinition
+      x-okta-tags:
+      - LinkedObject
+    LinkedObjectDetails:
+      properties:
+        description:
+          type: string
+        name:
+          type: string
+        title:
+          type: string
+        type:
+          $ref: '#/components/schemas/LinkedObjectDetailsType'
+      type: object
+      x-okta-tags:
+      - LinkedObject
+    LinkedObjectDetailsType:
+      enum:
+      - USER
+      type: string
+      x-okta-tags:
+      - LinkedObject
+  securitySchemes:
+    api_token:
+      description: SSWS {API Token}
+      in: header
+      name: Authorization
+      type: apiKey
+  x-stackQL-resources:
+    idps:
+      id: okta.linkedobject.idps
+      methods:
+        delete:
+          operation:
+            $ref: DELETE
+          path:
+            $ref: /api/v1/meta/schemas/user/linkedObjects/{linkedObjectName}
+          response:
+            openAPIDocKey: '204'
+        get:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/meta/schemas/user/linkedObjects/{linkedObjectName}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: POST
+          path:
+            $ref: /api/v1/meta/schemas/user/linkedObjects
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '201'
+        list:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/meta/schemas/user/linkedObjects
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: idps
+      title: idps
+externalDocs:
+  description: Find more info here
+  url: https://developer.okta.com/docs/api/getting_started/design_principles.html
+info:
+  contact:
+    email: devex-public@okta.com
+    name: Okta Developer Team
+    url: https://developer.okta.com/
+  description: Allows customers to easily access the Okta API
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: https://developer.okta.com/terms/
+  title: Okta API
+  version: 2.8.0
+openapi: 3.0.1
+paths:
+  /api/v1/meta/schemas/user/linkedObjects:
+    get:
+      description: Success
+      operationId: listLinkedObjectDefinitions
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/LinkedObject'
+                type: array
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - LinkedObject
+    post:
+      description: Success
+      operationId: addLinkedObjectDefinition
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LinkedObject'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkedObject'
+          description: Created
+      security:
+      - api_token: []
+      tags:
+      - LinkedObject
+      x-codegen-request-body-name: linkedObject
+  /api/v1/meta/schemas/user/linkedObjects/{linkedObjectName}:
+    delete:
+      description: Success
+      operationId: deleteLinkedObjectDefinition
+      parameters:
+      - in: path
+        name: linkedObjectName
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          content: {}
+          description: No Content
+      security:
+      - api_token: []
+      tags:
+      - LinkedObject
+    get:
+      description: Success
+      operationId: getLinkedObjectDefinition
+      parameters:
+      - in: path
+        name: linkedObjectName
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkedObject'
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - LinkedObject
+servers:
+- url: https://{subdomain}.okta.com/
+  variables:
+    subdomain:
+      default: my-domain

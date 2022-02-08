@@ -33,9 +33,41 @@ set(INT_TEST_DB_DEST_FILE "test/db/tmp/python-tests-tmp-db.sqlite")
 
 enable_testing()
 
+find_program(Python_EXECUTABLE python3)
+find_program(Java_EXECUTABLE java)
+find_program(Robot_EXECUTABLE robot)
+find_program(Maven_EXECUTABLE mvn)
+
 set(TEST_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/test/python/main.py)
+set(REG_RW_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/test/python/registry-rewrite.py)
+set(ROBOT_TEST_DIR_PATH ${CMAKE_CURRENT_SOURCE_DIR}/test/functional)
 
 add_custom_target(${TARGET} ALL)
+
+
+if(NOT Maven_EXECUTABLE)
+    message(FATAL_ERROR "Cannot find the mvn executable!")
+endif()
+
+if(NOT Python_EXECUTABLE)
+    message(FATAL_ERROR "Cannot find the python3 executable!")
+endif()
+
+add_custom_command(TARGET ${TARGET}
+  PRE_BUILD
+  DEPENDS ${SRCS}
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  COMMAND mvn org.apache.maven.plugins:maven-dependency-plugin:3.2.0:copy -Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded -DoutputDirectory=${CMAKE_CURRENT_SOURCE_DIR}/test/downloads -DdestFileName=mockserver-netty.jar -DoverWrite=true
+  COMMENT "maven copy mock server artifact"
+)
+
+add_custom_command(TARGET ${TARGET}
+  PRE_BUILD
+  DEPENDS ${SRCS}
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  COMMAND ${Python_EXECUTABLE} ${REG_RW_SCRIPT}
+  COMMENT "set up dummy regsitry for server simulations"
+)
 
 add_custom_command(TARGET ${TARGET}
   PRE_BUILD
@@ -125,8 +157,6 @@ add_custom_command(TARGET ${TARGET}
   COMMENT "Building Go executable for ${OS_STR_LINUX}"
 )
 
-find_program(Python_EXECUTABLE python3)
-
 
 if(DEFINED ENV{STACKQL_TEST_LOG_LEVEL})
   set(STACKQL_TEST_LOG_LEVEL $ENV{STACKQL_TEST_LOG_LEVEL})
@@ -141,11 +171,18 @@ else()
   message(STATUS "LIVE_INTEGRATION_TESTS cmake variable is empty, only 'always' tests will be run")
 endif()
 
-if(NOT Python_EXECUTABLE)
-    message(FATAL_ERROR "Cannot find the python3 executable!")
-endif()
 add_test(NAME int-tests
     COMMAND ${Python_EXECUTABLE} ${TEST_SCRIPT} --additionalintegrationtestdir=${LIVE_INTEGRATION_TESTS} --loglevel=${STACKQL_TEST_LOG_LEVEL}
+)
+
+if(NOT Java_EXECUTABLE)
+    message(FATAL_ERROR "Cannot find the java executable!")
+endif()
+if(NOT Robot_EXECUTABLE)
+    message(FATAL_ERROR "Cannot find the robot executable!")
+endif()
+add_test(NAME robot-tests
+    COMMAND ${Robot_EXECUTABLE} ${ROBOT_TEST_DIR_PATH}
 )
 
 add_custom_command(TARGET ${TARGET}

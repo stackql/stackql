@@ -15,24 +15,22 @@ type IMethodSelector interface {
 
 func NewMethodSelector(provider string, version string) (IMethodSelector, error) {
 	switch provider {
-	case "google", "okta":
+	default:
 		return newGoogleMethodSelector(version)
 	}
-	return nil, fmt.Errorf("method selector for provider = '%s', api version = '%s' currently not supported", provider, version)
 }
 
 func newGoogleMethodSelector(version string) (IMethodSelector, error) {
 	switch version {
-	case "v1":
-		return &DefaultGoogleMethodSelector{}, nil
+	default:
+		return &DefaultMethodSelector{}, nil
 	}
-	return nil, fmt.Errorf("method selector for google, api version = '%s' currently not supported", version)
 }
 
-type DefaultGoogleMethodSelector struct {
+type DefaultMethodSelector struct {
 }
 
-func (sel *DefaultGoogleMethodSelector) GetMethodForAction(resource *openapistackql.Resource, iqlAction string) (*openapistackql.OperationStore, string, error) {
+func (sel *DefaultMethodSelector) GetMethodForAction(resource *openapistackql.Resource, iqlAction string) (*openapistackql.OperationStore, string, error) {
 	var methodName string
 	switch strings.ToLower(iqlAction) {
 	case "select":
@@ -58,11 +56,11 @@ func (sel *DefaultGoogleMethodSelector) GetMethodForAction(resource *openapistac
 	return m, methodName, err
 }
 
-func (sel *DefaultGoogleMethodSelector) GetMethod(resource *openapistackql.Resource, methodName string) (*openapistackql.OperationStore, error) {
+func (sel *DefaultMethodSelector) GetMethod(resource *openapistackql.Resource, methodName string) (*openapistackql.OperationStore, error) {
 	return sel.getMethodByName(resource, methodName)
 }
 
-func (sel *DefaultGoogleMethodSelector) getMethodByName(resource *openapistackql.Resource, methodName string) (*openapistackql.OperationStore, error) {
+func (sel *DefaultMethodSelector) getMethodByName(resource *openapistackql.Resource, methodName string) (*openapistackql.OperationStore, error) {
 	m, err := resource.FindMethod(methodName)
 	if err != nil {
 		return nil, fmt.Errorf("no method = '%s' for resource = '%s'", methodName, resource.Name)

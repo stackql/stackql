@@ -792,7 +792,6 @@ func (p *primitiveGenerator) analyzeSelect(handlerCtx *handler.HandlerContext, n
 		case *sqlparser.ExecSubquery:
 			log.Infoln(fmt.Sprintf("from = %v", from))
 			tbl, err = pChild.analyzeTableExpr(handlerCtx, from)
-			// return fmt.Errorf("from clause of type - '%T' currently not supported", from)
 		default:
 			tbl, err = pChild.analyzeTableExpr(handlerCtx, from)
 		}
@@ -823,6 +822,9 @@ func (p *primitiveGenerator) analyzeSelect(handlerCtx *handler.HandlerContext, n
 		cols, err := responseSchema.GetProperties()
 		if err != nil {
 			return err
+		}
+		if len(cols) == 0 {
+			cols = openapistackql.Schemas{openapistackql.AnonymousColumnName: responseSchema}
 		}
 		for colName, colSchema := range cols {
 			if colSchema == nil {
@@ -1160,11 +1162,13 @@ func (p *primitiveGenerator) analyzeDelete(handlerCtx *handler.HandlerContext, n
 	}
 	schema, err := method.GetResponseBodySchema()
 	if err != nil {
-		return err
+		log.Infof("no response schema for delete: %s \n", err.Error())
 	}
-	whereErr := p.analyzeSingleTableWhere(node.Where, schema)
-	if whereErr != nil {
-		return whereErr
+	if schema != nil {
+		whereErr := p.analyzeSingleTableWhere(node.Where, schema)
+		if whereErr != nil {
+			return whereErr
+		}
 	}
 	colPrefix := prov.GetDefaultKeyForDeleteItems() + "[]."
 	whereNames, err := parserutil.ExtractWhereColNames(node.Where)
@@ -1175,6 +1179,9 @@ func (p *primitiveGenerator) analyzeDelete(handlerCtx *handler.HandlerContext, n
 		ok := method.KeyExists(w)
 		if ok {
 			continue
+		}
+		if schema == nil {
+			return fmt.Errorf("cannot locate parameter '%s'", w)
 		}
 		log.Infoln(fmt.Sprintf("w = '%s'", w))
 		foundSchemaPrefixed := schema.FindByPath(colPrefix+w, nil)

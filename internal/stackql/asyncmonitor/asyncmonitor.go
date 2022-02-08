@@ -90,12 +90,11 @@ func NewAsyncMonitor(prov provider.IProvider) (IAsyncMonitor, error) {
 
 func newGoogleAsyncMonitor(prov provider.IProvider, version string) (IAsyncMonitor, error) {
 	switch version {
-	case "v1":
+	default:
 		return &DefaultGoogleAsyncMonitor{
 			provider: prov,
 		}, nil
 	}
-	return nil, fmt.Errorf("async operation monitor for google, api version = '%s' currently not supported", version)
 }
 
 type DefaultGoogleAsyncMonitor struct {
@@ -105,10 +104,9 @@ type DefaultGoogleAsyncMonitor struct {
 
 func (gm *DefaultGoogleAsyncMonitor) GetMonitorPrimitive(heirarchy *taxonomy.HeirarchyObjects, precursor primitive.IPrimitive, initialCtx primitive.IPrimitiveCtx, comments sqlparser.CommentDirectives) (primitive.IPrimitive, error) {
 	switch strings.ToLower(heirarchy.Provider.GetVersion()) {
-	case "v1":
+	default:
 		return gm.getV1Monitor(heirarchy, precursor, initialCtx, comments)
 	}
-	return nil, fmt.Errorf("monitor primitive unavailable for service = '%s', resource = '%s', method = '%s'", heirarchy.HeirarchyIds.ServiceStr, heirarchy.HeirarchyIds.ResourceStr, heirarchy.HeirarchyIds.MethodStr)
 }
 
 func getOperationDescriptor(body map[string]interface{}) string {
