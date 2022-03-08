@@ -1,0 +1,478 @@
+components:
+  schemas:
+    UserSchema:
+      properties:
+        $schema:
+          readOnly: true
+          type: string
+        _links:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        created:
+          readOnly: true
+          type: string
+        definitions:
+          $ref: '#/components/schemas/UserSchemaDefinitions'
+        id:
+          readOnly: true
+          type: string
+        lastUpdated:
+          readOnly: true
+          type: string
+        name:
+          readOnly: true
+          type: string
+        properties:
+          $ref: '#/components/schemas/UserSchemaProperties'
+        title:
+          type: string
+        type:
+          readOnly: true
+          type: string
+      type: object
+      x-okta-tags:
+      - UserSchema
+    UserSchemaAttribute:
+      properties:
+        description:
+          type: string
+        enum:
+          items:
+            type: string
+          type: array
+        externalName:
+          type: string
+        externalNamespace:
+          type: string
+        items:
+          $ref: '#/components/schemas/UserSchemaAttributeItems'
+        master:
+          $ref: '#/components/schemas/UserSchemaAttributeMaster'
+        maxLength:
+          type: integer
+        minLength:
+          type: integer
+        mutability:
+          type: string
+        oneOf:
+          items:
+            $ref: '#/components/schemas/UserSchemaAttributeEnum'
+          type: array
+        pattern:
+          type: string
+        permissions:
+          items:
+            $ref: '#/components/schemas/UserSchemaAttributePermission'
+          type: array
+        required:
+          type: boolean
+        scope:
+          $ref: '#/components/schemas/UserSchemaAttributeScope'
+        title:
+          type: string
+        type:
+          $ref: '#/components/schemas/UserSchemaAttributeType'
+        union:
+          $ref: '#/components/schemas/UserSchemaAttributeUnion'
+        unique:
+          type: string
+      type: object
+      x-okta-tags:
+      - UserSchema
+    UserSchemaAttributeEnum:
+      properties:
+        const:
+          type: string
+        title:
+          type: string
+      type: object
+      x-okta-tags:
+      - UserSchema
+    UserSchemaAttributeItems:
+      properties:
+        enum:
+          items:
+            type: string
+          type: array
+        oneOf:
+          items:
+            $ref: '#/components/schemas/UserSchemaAttributeEnum'
+          type: array
+        type:
+          type: string
+      type: object
+      x-okta-tags:
+      - UserSchema
+    UserSchemaAttributeMaster:
+      properties:
+        priority:
+          items:
+            $ref: '#/components/schemas/UserSchemaAttributeMasterPriority'
+          type: array
+        type:
+          $ref: '#/components/schemas/UserSchemaAttributeMasterType'
+      type: object
+      x-okta-tags:
+      - UserSchema
+    UserSchemaAttributeMasterPriority:
+      properties:
+        type:
+          type: string
+        value:
+          type: string
+      type: object
+      x-okta-tags:
+      - UserSchema
+    UserSchemaAttributeMasterType:
+      enum:
+      - PROFILE_MASTER
+      - OKTA
+      - OVERRIDE
+      type: string
+      x-okta-tags:
+      - UserSchema
+    UserSchemaAttributePermission:
+      properties:
+        action:
+          type: string
+        principal:
+          type: string
+      type: object
+      x-okta-tags:
+      - UserSchema
+    UserSchemaAttributeScope:
+      enum:
+      - SELF
+      - NONE
+      type: object
+      x-okta-tags:
+      - UserSchema
+    UserSchemaAttributeType:
+      enum:
+      - string
+      - boolean
+      - number
+      - integer
+      - array
+      type: string
+      x-okta-tags:
+      - UserSchema
+    UserSchemaAttributeUnion:
+      enum:
+      - DISABLE
+      - ENABLE
+      type: object
+      x-okta-tags:
+      - UserSchema
+    UserSchemaBase:
+      properties:
+        id:
+          readOnly: true
+          type: string
+        properties:
+          $ref: '#/components/schemas/UserSchemaBaseProperties'
+        required:
+          items:
+            type: string
+          type: array
+        type:
+          type: string
+      type: object
+      x-okta-tags:
+      - UserSchema
+    UserSchemaBaseProperties:
+      properties:
+        city:
+          $ref: '#/components/schemas/UserSchemaAttribute'
+        costCenter:
+          $ref: '#/components/schemas/UserSchemaAttribute'
+        countryCode:
+          $ref: '#/components/schemas/UserSchemaAttribute'
+        department:
+          $ref: '#/components/schemas/UserSchemaAttribute'
+        displayName:
+          $ref: '#/components/schemas/UserSchemaAttribute'
+        division:
+          $ref: '#/components/schemas/UserSchemaAttribute'
+        email:
+          $ref: '#/components/schemas/UserSchemaAttribute'
+        employeeNumber:
+          $ref: '#/components/schemas/UserSchemaAttribute'
+        firstName:
+          $ref: '#/components/schemas/UserSchemaAttribute'
+        honorificPrefix:
+          $ref: '#/components/schemas/UserSchemaAttribute'
+        honorificSuffix:
+          $ref: '#/components/schemas/UserSchemaAttribute'
+        lastName:
+          $ref: '#/components/schemas/UserSchemaAttribute'
+        locale:
+          $ref: '#/components/schemas/UserSchemaAttribute'
+        login:
+          $ref: '#/components/schemas/UserSchemaAttribute'
+        manager:
+          $ref: '#/components/schemas/UserSchemaAttribute'
+        managerId:
+          $ref: '#/components/schemas/UserSchemaAttribute'
+        middleName:
+          $ref: '#/components/schemas/UserSchemaAttribute'
+        mobilePhone:
+          $ref: '#/components/schemas/UserSchemaAttribute'
+        nickName:
+          $ref: '#/components/schemas/UserSchemaAttribute'
+        organization:
+          $ref: '#/components/schemas/UserSchemaAttribute'
+        postalAddress:
+          $ref: '#/components/schemas/UserSchemaAttribute'
+        preferredLanguage:
+          $ref: '#/components/schemas/UserSchemaAttribute'
+        primaryPhone:
+          $ref: '#/components/schemas/UserSchemaAttribute'
+        profileUrl:
+          $ref: '#/components/schemas/UserSchemaAttribute'
+        secondEmail:
+          $ref: '#/components/schemas/UserSchemaAttribute'
+        state:
+          $ref: '#/components/schemas/UserSchemaAttribute'
+        streetAddress:
+          $ref: '#/components/schemas/UserSchemaAttribute'
+        timezone:
+          $ref: '#/components/schemas/UserSchemaAttribute'
+        title:
+          $ref: '#/components/schemas/UserSchemaAttribute'
+        userType:
+          $ref: '#/components/schemas/UserSchemaAttribute'
+        zipCode:
+          $ref: '#/components/schemas/UserSchemaAttribute'
+      type: object
+      x-okta-tags:
+      - UserSchema
+    UserSchemaDefinitions:
+      properties:
+        base:
+          $ref: '#/components/schemas/UserSchemaBase'
+        custom:
+          $ref: '#/components/schemas/UserSchemaPublic'
+      type: object
+      x-okta-tags:
+      - UserSchema
+    UserSchemaProperties:
+      properties:
+        profile:
+          $ref: '#/components/schemas/UserSchemaPropertiesProfile'
+      type: object
+      x-okta-tags:
+      - UserSchema
+    UserSchemaPropertiesProfile:
+      properties:
+        allOf:
+          items:
+            $ref: '#/components/schemas/UserSchemaPropertiesProfileItem'
+          type: array
+      type: object
+      x-okta-tags:
+      - UserSchema
+    UserSchemaPropertiesProfileItem:
+      properties:
+        $ref:
+          type: string
+      type: object
+      x-okta-tags:
+      - UserSchema
+    UserSchemaPublic:
+      properties:
+        id:
+          readOnly: true
+          type: string
+        properties:
+          additionalProperties:
+            $ref: '#/components/schemas/UserSchemaAttribute'
+          type: object
+        required:
+          items:
+            type: string
+          type: array
+        type:
+          type: string
+      type: object
+      x-okta-tags:
+      - UserSchema
+  securitySchemes:
+    api_token:
+      description: SSWS {API Token}
+      in: header
+      name: Authorization
+      type: apiKey
+  x-stackQL-resources:
+    default:
+      id: okta.userschema.default
+      methods:
+        insert:
+          operation:
+            $ref: POST
+          path:
+            $ref: /api/v1/meta/schemas/apps/{appInstanceId}/default
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/meta/schemas/apps/{appInstanceId}/default
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: default
+      title: default
+    schemas:
+      id: okta.userschema.schemas
+      methods:
+        get:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/meta/schemas/user/{schemaId}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        partialUpdate:
+          operation:
+            $ref: POST
+          path:
+            $ref: /api/v1/meta/schemas/user/{schemaId}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: schemas
+      title: schemas
+externalDocs:
+  description: Find more info here
+  url: https://developer.okta.com/docs/api/getting_started/design_principles.html
+info:
+  contact:
+    email: devex-public@okta.com
+    name: Okta Developer Team
+    url: https://developer.okta.com/
+  description: Allows customers to easily access the Okta API
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: https://developer.okta.com/terms/
+  title: Okta API
+  version: 2.8.0
+openapi: 3.0.1
+paths:
+  /api/v1/meta/schemas/apps/{appInstanceId}/default:
+    get:
+      description: Fetches the Schema for an App User
+      operationId: getApplicationUserSchema
+      parameters:
+      - in: path
+        name: appInstanceId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSchema'
+          description: successful operation
+      security:
+      - api_token: []
+      summary: Fetches the Schema for an App User
+      tags:
+      - UserSchema
+    post:
+      description: Partial updates on the User Profile properties of the Application
+        User Schema.
+      operationId: updateApplicationUserProfile
+      parameters:
+      - in: path
+        name: appInstanceId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSchema'
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSchema'
+          description: successful operation
+      security:
+      - api_token: []
+      summary: Partial updates on the User Profile properties of the Application User
+        Schema.
+      tags:
+      - UserSchema
+      x-codegen-request-body-name: body
+  /api/v1/meta/schemas/user/{schemaId}:
+    get:
+      description: Fetches the schema for a Schema Id.
+      operationId: getUserSchema
+      parameters:
+      - in: path
+        name: schemaId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSchema'
+          description: Success
+      security:
+      - api_token: []
+      summary: Fetches the schema for a Schema Id.
+      tags:
+      - UserSchema
+    post:
+      description: Partial updates on the User Profile properties of the user schema.
+      operationId: updateUserProfile
+      parameters:
+      - in: path
+        name: schemaId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSchema'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSchema'
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - UserSchema
+      x-codegen-request-body-name: userSchema
+servers:
+- url: https://{subdomain}.okta.com/
+  variables:
+    subdomain:
+      default: my-domain

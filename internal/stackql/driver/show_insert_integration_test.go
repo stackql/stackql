@@ -9,7 +9,6 @@ import (
 	. "github.com/stackql/stackql/internal/stackql/driver"
 	"github.com/stackql/stackql/internal/stackql/util"
 
-	"github.com/stackql/stackql/internal/stackql/config"
 	"github.com/stackql/stackql/internal/stackql/entryutil"
 
 	"github.com/stackql/stackql/internal/test/stackqltestutil"
@@ -22,7 +21,7 @@ func TestSimpleShowInsertComputeAddressesRequired(t *testing.T) {
 
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
-		runtimeCtx, err := stackqltestutil.GetRuntimeCtx(config.GetGoogleProviderString(), "text", "TestSimpleShowInsertComputeAddressesRequired")
+		runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSimpleShowInsertComputeAddressesRequired")
 		if err != nil {
 			t.Fatalf("TestSimpleTemplateComputeAddressesRequired failed: %v", err)
 		}
@@ -67,7 +66,7 @@ func TestSimpleShowInsertBiqueryDatasets(t *testing.T) {
 
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
-		runtimeCtx, err := stackqltestutil.GetRuntimeCtx(config.GetGoogleProviderString(), "text", "TestSimpleShowInsertBiqueryDatasets")
+		runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSimpleShowInsertBiqueryDatasets")
 		if err != nil {
 			t.Fatalf("TestSimpleShowInsertBiqueryDatasets failed: %v", err)
 		}
@@ -112,7 +111,7 @@ func TestSimpleShowInsertBiqueryDatasetsRequired(t *testing.T) {
 
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
-		runtimeCtx, err := stackqltestutil.GetRuntimeCtx(config.GetGoogleProviderString(), "text", "TestSimpleShowInsertBiqueryDatasetsRequired")
+		runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSimpleShowInsertBiqueryDatasetsRequired")
 		if err != nil {
 			t.Fatalf("TestSimpleShowInsertBiqueryDatasetsRequired failed: %v", err)
 		}

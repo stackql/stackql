@@ -9,7 +9,6 @@ import (
 	. "github.com/stackql/stackql/internal/stackql/driver"
 	"github.com/stackql/stackql/internal/stackql/util"
 
-	"github.com/stackql/stackql/internal/stackql/config"
 	"github.com/stackql/stackql/internal/stackql/entryutil"
 
 	"github.com/stackql/stackql/internal/test/stackqltestutil"
@@ -19,7 +18,7 @@ import (
 )
 
 func TestSimpleInsertDependentGoogleComputeDiskAsync(t *testing.T) {
-	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(config.GetGoogleProviderString(), "text", "TestSimpleInsertDependentGoogleComputeDiskAsync")
+	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSimpleInsertDependentGoogleComputeDiskAsync")
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
@@ -66,7 +65,7 @@ func TestSimpleInsertDependentGoogleComputeDiskAsync(t *testing.T) {
 }
 
 func TestSimpleInsertDependentGoogleComputeDiskAsyncReversed(t *testing.T) {
-	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(config.GetGoogleProviderString(), "text", "TestSimpleInsertDependentGoogleComputeDiskAsyncReversed")
+	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSimpleInsertDependentGoogleComputeDiskAsyncReversed")
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
@@ -113,7 +112,7 @@ func TestSimpleInsertDependentGoogleComputeDiskAsyncReversed(t *testing.T) {
 }
 
 func TestSimpleInsertDependentGoogleBQDatasetAsync(t *testing.T) {
-	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(config.GetGoogleProviderString(), "text", "TestSimpleInsertDependentGoogleBQDatasetAsync")
+	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSimpleInsertDependentGoogleBQDatasetAsync")
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
@@ -160,7 +159,7 @@ func TestSimpleInsertDependentGoogleBQDatasetAsync(t *testing.T) {
 }
 
 func TestSimpleSelectExecDependentGoogleOrganizationsGetIamPolicy(t *testing.T) {
-	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(config.GetGoogleProviderString(), "csv", "TestSimpleSelectExecDependentGoogleOrganizationsGetIamPolicy")
+	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "csv", "TestSimpleSelectExecDependentGoogleOrganizationsGetIamPolicy")
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}

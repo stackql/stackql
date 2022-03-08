@@ -39,11 +39,11 @@ input file. For example:
 
 stackql exec \
 "select id, name from compute.instances where project = 'stackql-demo' and zone = 'australia-southeast1-a'" \
---keyfilepath /mnt/c/tmp/stackql-demo.json --output csv
+--credentialsfilepath /mnt/c/tmp/stackql-demo.json --output csv
 
-stackql exec -i iqlscripts/listinstances.iql --keyfilepath /mnt/c/tmp/stackql-demo.json --output json
+stackql exec -i iqlscripts/listinstances.iql --credentialsfilepath /mnt/c/tmp/stackql-demo.json --output json
 
-stackql exec -i iqlscripts/create-disk.iql --keyfilepath /mnt/c/tmp/stackql-demo.json
+stackql exec -i iqlscripts/create-disk.iql --credentialsfilepath /mnt/c/tmp/stackql-demo.json
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 

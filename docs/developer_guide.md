@@ -70,6 +70,8 @@ Building locally or in cloud will automatically:
 2. Build the executable.
 3. Run integration tests.
 
+[This article](https://medium.com/cbi-engineering/mocking-techniques-for-go-805c10f1676b) gives a nice overview of mocking in golang.
+
 ### gotest
 
 Test coverage is sparse.  Regressions are mitigated by `gotest` integration testing in the [driver](/internal/stackql/driver/driver_integration_test.go) and [stackql](/stackql/main_integration_test.go) packages.  Some testing functionality is supported through convenience functionality inside the [test](/internal/test) packages.
@@ -133,7 +135,7 @@ Then, on OSX > 10, you will need to whitelist the executable for execution even 
 
 Then, run test commands, such as:
 ```
-~/Downloads/stackql --keyfilepath=$HOME/stackql/stackql-devel/keys/sa-key.json exec "select group_concat(substr(name, 0, 5)) || ' lalala' as cc from google.compute.disks where project = 'lab-kr-network-01' and zone = 'australia-southeast1-b';" -o text
+~/Downloads/stackql --credentialsfilepath=$HOME/stackql/stackql-devel/keys/sa-key.json exec "select group_concat(substr(name, 0, 5)) || ' lalala' as cc from google.compute.disks where project = 'lab-kr-network-01' and zone = 'australia-southeast1-b';" -o text
 ```
 
 ## Notes on vitess
@@ -180,5 +182,5 @@ is the guts of query processing.
 
 
 ```
-time ./stackql exec --cpuprofile=./select-disks-improved-05.profile --auth='{ "google": { "keyfilepath": "'${HOME}'/stackql/stackql-devel/keys/sa-key.json" }, "okta": { "keyfilepath": "'${HOME}'/stackql/stackql-devel/keys/okta-token.txt", "keyfiletype": "api_key" } } ' "select name from google.compute.disks where project = 'lab-kr-network-01' and zone = 'australia-southeast1-a';"
+time ./stackql exec --cpuprofile=./select-disks-improved-05.profile --auth='{ "google": { "credentialsfilepath": "'${HOME}'/stackql/stackql-devel/keys/sa-key.json" }, "okta": { "credentialsfilepath": "'${HOME}'/stackql/stackql-devel/keys/okta-token.txt", "type": "api_key" } } ' "select name from google.compute.disks where project = 'lab-kr-network-01' and zone = 'australia-southeast1-a';"
 ```

@@ -76,7 +76,7 @@ func getShellPRompt(authCtx *dto.AuthCtx, cd *color.ColorDriver) string {
 	return cd.ShellColorPrint("stackql  >>")
 }
 
-func getIntroAuthMsg(authCtx *dto.AuthCtx, provider provider.IProvider) string {
+func getIntroAuthMsg(authCtx *dto.AuthCtx, prov provider.IProvider) string {
 	if authCtx != nil {
 		if authCtx.Active {
 			switch authCtx.Type {
@@ -85,8 +85,10 @@ func getIntroAuthMsg(authCtx *dto.AuthCtx, provider provider.IProvider) string {
 			case dto.AuthServiceAccountStr, dto.AuthApiKeyStr:
 				return fmt.Sprintf(saSuccessMsgTmpl, authCtx.GetCredentialsSourceDescriptorString(), authCtx.Type)
 			}
-		} else if err := provider.CheckCredentialFile(authCtx); authCtx.HasKey() && err != nil {
-			return fmt.Sprintf(saFileErrorMsgTmpl, authCtx.GetCredentialsSourceDescriptorString())
+		} else if prov != nil {
+			if err := prov.CheckCredentialFile(authCtx); authCtx.HasKey() && err != nil {
+				return fmt.Sprintf(saFileErrorMsgTmpl, authCtx.GetCredentialsSourceDescriptorString())
+			}
 		}
 		switch authCtx.Type {
 		case dto.AuthServiceAccountStr, dto.AuthApiKeyStr:
@@ -124,15 +126,20 @@ var shellCmd = &cobra.Command{
 		if handlerrErr != nil {
 			fmt.Fprintln(outErrFile, fmt.Sprintf("Error setting up handler context for provider '%s'", runtimeCtx.ProviderStr))
 		}
-		provider, pErr := handlerCtx.GetProvider(handlerCtx.RuntimeContext.ProviderStr)
-		authCtx, authErr := handlerCtx.GetAuthContext(provider.GetProviderString())
-		if authErr != nil {
-			fmt.Fprintln(outErrFile, fmt.Sprintf("Error setting up AUTH for provider '%s'", handlerCtx.RuntimeContext.ProviderStr))
-		}
-		if pErr == nil {
-			provider.ShowAuth(authCtx)
-		} else {
-			fmt.Fprintln(outErrFile, fmt.Sprintf("Error setting up API for provider '%s'", handlerCtx.RuntimeContext.ProviderStr))
+		var authCtx *dto.AuthCtx
+		var prov provider.IProvider
+		var pErr, authErr error
+		if handlerCtx.RuntimeContext.ProviderStr != "" {
+			prov, pErr = handlerCtx.GetProvider(handlerCtx.RuntimeContext.ProviderStr)
+			authCtx, authErr = handlerCtx.GetAuthContext(prov.GetProviderString())
+			if authErr != nil {
+				fmt.Fprintln(outErrFile, fmt.Sprintf("Error setting up AUTH for provider '%s'", handlerCtx.RuntimeContext.ProviderStr))
+			}
+			if pErr == nil {
+				prov.ShowAuth(authCtx)
+			} else {
+				fmt.Fprintln(outErrFile, fmt.Sprintf("Error setting up API for provider '%s'", handlerCtx.RuntimeContext.ProviderStr))
+			}
 		}
 
 		var readlineCfg *readline.Config
@@ -167,7 +174,7 @@ var shellCmd = &cobra.Command{
 
 		fmt.Fprintln(
 			outErrFile,
-			getIntroAuthMsg(authCtx, provider),
+			getIntroAuthMsg(authCtx, prov),
 		)
 
 		for {

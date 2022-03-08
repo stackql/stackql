@@ -423,6 +423,12 @@ func (ss *SingleSelectAcquire) Build() error {
 
 						for i := range iArr {
 							item, ok := iArr[i].(map[string]interface{})
+							if !ok {
+								if iArr[i] != nil {
+									item = map[string]interface{}{openapistackql.AnonymousColumnName: iArr[i]}
+									ok = true
+								}
+							}
 							if ok {
 
 								log.Infoln(fmt.Sprintf("running insert with control parameters: %v", ss.insertPreparedStatementCtx.TxnCtrlCtrs))

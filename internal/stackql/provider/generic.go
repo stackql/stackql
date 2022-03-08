@@ -36,13 +36,6 @@ type GenericProvider struct {
 	methodSelector   methodselect.IMethodSelector
 }
 
-func (gp *GenericProvider) getDefaultKeyForSelectItems(sc *openapistackql.Schema) string {
-	if gp.provider.SelectItemsKey != "" {
-		return gp.provider.SelectItemsKey
-	}
-	return "items"
-}
-
 func (gp *GenericProvider) GetDiscoveryGeneration(dbEngine sqlengine.SQLEngine) (int, error) {
 	return dbEngine.GetCurrentDiscoveryGenerationId(gp.GetProviderString())
 }
@@ -75,23 +68,30 @@ func (gp *GenericProvider) inferAuthType(authCtx dto.AuthCtx, authTypeRequested 
 		return dto.AuthServiceAccountStr
 	case dto.AuthInteractiveStr:
 		return dto.AuthInteractiveStr
+	case dto.AuthNullStr:
+		return dto.AuthNullStr
 	}
 	if authCtx.KeyFilePath != "" || authCtx.KeyEnvVar != "" {
 		return dto.AuthServiceAccountStr
 	}
-	return dto.AuthInteractiveStr
+	return dto.AuthNullStr
 }
 
 func (gp *GenericProvider) Auth(authCtx *dto.AuthCtx, authTypeRequested string, enforceRevokeFirst bool) (*http.Client, error) {
-	switch gp.inferAuthType(*authCtx, authTypeRequested) {
+	at := gp.inferAuthType(*authCtx, authTypeRequested)
+	switch at {
 	case dto.AuthApiKeyStr:
 		return gp.apiTokenFileAuth(authCtx)
 	case dto.AuthServiceAccountStr:
 		return gp.keyFileAuth(authCtx)
+	case dto.AuthBasicStr:
+		return gp.basicAuth(authCtx)
 	case dto.AuthInteractiveStr:
 		return gp.oAuth(authCtx, enforceRevokeFirst)
+	case dto.AuthNullStr:
+		return netutils.GetHttpClient(gp.runtimeCtx, http.DefaultClient), nil
 	}
-	return nil, fmt.Errorf("Could not infer auth type")
+	return nil, fmt.Errorf("could not infer auth type")
 }
 
 func (gp *GenericProvider) AuthRevoke(authCtx *dto.AuthCtx) error {
@@ -223,11 +223,11 @@ func (gp *GenericProvider) oAuth(authCtx *dto.AuthCtx, enforceRevokeFirst bool) 
 	}
 	activateAuth(authCtx, "", dto.AuthInteractiveStr)
 	client := netutils.GetHttpClient(gp.runtimeCtx, nil)
-	client.Transport = &transport{
-		token:               tokenBytes,
-		authType:            "Bearer",
-		underlyingTransport: client.Transport,
+	tr, err := newTransport(tokenBytes, authTypeBearer, locationHeader, "", client.Transport)
+	if err != nil {
+		return nil, err
 	}
+	client.Transport = tr
 	return client, nil
 }
 
@@ -238,11 +238,15 @@ func (gp *GenericProvider) keyFileAuth(authCtx *dto.AuthCtx) (*http.Client, erro
 			"https://www.googleapis.com/auth/cloud-platform",
 		}
 	}
-	return oauthServiceAccount(authCtx, scopes, gp.runtimeCtx)
+	return oauthServiceAccount(gp.GetProviderString(), authCtx, scopes, gp.runtimeCtx)
 }
 
 func (gp *GenericProvider) apiTokenFileAuth(authCtx *dto.AuthCtx) (*http.Client, error) {
 	return apiTokenAuth(authCtx, gp.runtimeCtx)
+}
+
+func (gp *GenericProvider) basicAuth(authCtx *dto.AuthCtx) (*http.Client, error) {
+	return basicAuth(authCtx, gp.runtimeCtx)
 }
 
 func (gp *GenericProvider) getServiceType(service *openapistackql.Service) string {

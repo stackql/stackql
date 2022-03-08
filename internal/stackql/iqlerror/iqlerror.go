@@ -17,6 +17,11 @@ func PrintErrorAndExitOneIfNil(subject interface{}, msg string) {
 	}
 }
 
+func PrintErrorAndExitOneWithMessage(msg string) {
+	fmt.Fprintln(os.Stderr, fmt.Sprintln(msg))
+	os.Exit(1)
+}
+
 func PrintErrorAndExitOneIfError(err error) {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, fmt.Sprintln(err.Error()))

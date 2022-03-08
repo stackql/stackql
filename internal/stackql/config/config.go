@@ -16,31 +16,17 @@ const defaultNixConfigCacheDirFileMode uint32 = 0755
 
 const defaultWindowsConfigCacheDirFileMode uint32 = 0777
 
-const defaultConfigFileName = ".iqlrc"
-
-const defaultKeyFileName = "sa-key.json"
+const defaultConfigFileName = ".stackqlrc"
 
 const defaltLogLevel = "warn"
 
 const defaltErrorPresentation = "stderr"
-
-const googleProvider = "google"
-
-const oktaProvider = "okta"
 
 const readlineDir = "readline"
 
 const readlineTmpFile = "readline.tmp"
 
 const defaultDbEngine = "sqlite3"
-
-func GetGoogleProviderString() string {
-	return googleProvider
-}
-
-func GetOktaProviderString() string {
-	return oktaProvider
-}
 
 func GetDefaultLogLevelString() string {
 	return defaltLogLevel
@@ -58,7 +44,7 @@ func GetWorkingDir() string {
 	return dir
 }
 
-func GetDefaultProviderCacheRoot() string {
+func GetDefaultApplicationFilesRoot() string {
 	return path.Join(GetWorkingDir(), defaultConfigCacheDir)
 }
 
@@ -74,11 +60,11 @@ func GetDefaultColorScheme() string {
 }
 
 func GetReadlineDirPath(runtimeCtx dto.RuntimeCtx) string {
-	return path.Join(runtimeCtx.ProviderRootPath, readlineDir)
+	return path.Join(runtimeCtx.ApplicationFilesRootPath, readlineDir)
 }
 
 func GetReadlineFilePath(runtimeCtx dto.RuntimeCtx) string {
-	return path.Join(runtimeCtx.ProviderRootPath, readlineDir, readlineTmpFile)
+	return path.Join(runtimeCtx.ApplicationFilesRootPath, readlineDir, readlineTmpFile)
 }
 
 func GetDefaultViperConfigFileName() string {

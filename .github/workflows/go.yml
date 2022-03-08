@@ -36,8 +36,21 @@ jobs:
       uses: egor-tensin/setup-mingw@v2
       id: gccsetup
 
+    - name: Get rid of disruptive line endings before checkout
+      run: |
+        git config --global core.autocrlf false
+
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
+
+    - name: Install Python dependencies
+      run: |
+        pip3 install PyYaml
+        pip3 install robotframework
+    
+    - name: Generate rewritten registry for simulations
+      run: |
+        python3 test\python\registry-rewrite.py
 
     - name: Get dependencies
       run: |
@@ -97,6 +110,17 @@ jobs:
     - name: Test
       if: success()
       run: go test -timeout 1200s --tags "json1" -v ./...
+
+    - name: Mock Server Download
+      run: |
+        mvn org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy `
+        '-Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded' `
+        '-DoutputDirectory=test/downloads'
+
+    - name: Run robot tests
+      if: success()
+      run: |
+        cmd /c "robot test\functional"
     
     - name: Prepare Test DB
       if: success()
@@ -132,6 +156,15 @@ jobs:
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
+
+    - name: Install Python dependencies
+      run: |
+        pip3 install PyYaml
+        pip3 install robotframework
+    
+    - name: Generate rewritten registry for simulations
+      run: |
+        python3 test/python/registry-rewrite.py
       
     - name: Get dependencies
       run: |
@@ -180,6 +213,18 @@ jobs:
     - name: Test
       if: success()
       run: go test -timeout 1200s --tags "json1" -v ./...
+
+    - name: Mock Server Download
+      run: |
+        mvn \
+        org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy \
+        -Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded \
+        -DoutputDirectory=test/downloads
+
+    - name: Run robot tests
+      if: success()
+      run: |
+        robot test/functional
     
     - name: Prepare Test DB
       if: success()
@@ -211,6 +256,15 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
 
+    - name: Install Python dependencies
+      run: |
+        pip3 install PyYaml
+        pip3 install robotframework
+    
+    - name: Generate rewritten registry for simulations
+      run: |
+        python3 test/python/registry-rewrite.py
+
     - name: Get dependencies
       run: |
         git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
@@ -260,6 +314,18 @@ jobs:
     - name: Test
       if: success()
       run: go test -timeout 1200s --tags "json1" -v ./...
+
+    - name: Mock Server Download
+      run: |
+        mvn \
+        org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy \
+        -Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded \
+        -DoutputDirectory=test/downloads
+
+    - name: Run robot tests
+      if: success()
+      run: |
+        robot test/functional
     
     - name: Prepare Test DB
       if: success()

@@ -19,7 +19,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivebuilder"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
-	"github.com/stackql/stackql/internal/stackql/provider"
 	"github.com/stackql/stackql/internal/stackql/relational"
 	"github.com/stackql/stackql/internal/stackql/symtab"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
@@ -343,7 +342,7 @@ func (pb *primitiveGenerator) showInstructionExecutor(node *sqlparser.Show, hand
 		}
 		keys = methodKeys
 	case "PROVIDERS":
-		keys = provider.GetSupportedProviders(extended)
+		keys = handlerCtx.GetSupportedProviders(extended)
 	case "RESOURCES":
 		svcName := node.OnTable.Name.GetRawVal()
 		if svcName == "" {

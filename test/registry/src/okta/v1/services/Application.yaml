@@ -1,0 +1,2933 @@
+components:
+  schemas:
+    AcsEndpoint:
+      properties:
+        index:
+          type: integer
+        url:
+          type: string
+      type: object
+      x-okta-tags:
+      - Application
+    AppUser:
+      properties:
+        _embedded:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        _links:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        created:
+          format: date-time
+          readOnly: true
+          type: string
+        credentials:
+          $ref: '#/components/schemas/AppUserCredentials'
+        externalId:
+          readOnly: true
+          type: string
+        id:
+          type: string
+        lastSync:
+          format: date-time
+          readOnly: true
+          type: string
+        lastUpdated:
+          format: date-time
+          readOnly: true
+          type: string
+        passwordChanged:
+          format: date-time
+          readOnly: true
+          type: string
+        profile:
+          additionalProperties:
+            properties: {}
+            type: object
+          type: object
+        scope:
+          type: string
+        status:
+          readOnly: true
+          type: string
+        statusChanged:
+          format: date-time
+          readOnly: true
+          type: string
+        syncState:
+          readOnly: true
+          type: string
+      type: object
+      x-okta-crud:
+      - alias: update
+        arguments:
+        - dest: appId
+          parentSrc: appId
+        - dest: userId
+          src: id
+        - dest: appUser
+          self: true
+        operationId: updateApplicationUser
+      - alias: delete
+        arguments:
+        - dest: appId
+          parentSrc: appId
+        - dest: userId
+          src: id
+        operationId: deleteApplicationUser
+      x-okta-tags:
+      - Application
+    AppUserCredentials:
+      properties:
+        password:
+          $ref: '#/components/schemas/AppUserPasswordCredential'
+        userName:
+          type: string
+      type: object
+      x-okta-tags:
+      - Application
+    AppUserPasswordCredential:
+      properties:
+        value:
+          format: password
+          type: string
+      type: object
+      x-okta-tags:
+      - Application
+    Application:
+      properties:
+        _embedded:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        _links:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        accessibility:
+          $ref: '#/components/schemas/ApplicationAccessibility'
+        created:
+          format: date-time
+          readOnly: true
+          type: string
+        credentials:
+          $ref: '#/components/schemas/ApplicationCredentials'
+        features:
+          items:
+            type: string
+          type: array
+        id:
+          readOnly: true
+          type: string
+        label:
+          type: string
+        lastUpdated:
+          format: date-time
+          readOnly: true
+          type: string
+        licensing:
+          $ref: '#/components/schemas/ApplicationLicensing'
+        name:
+          type: string
+        profile:
+          additionalProperties:
+            properties: {}
+            type: object
+          type: object
+        settings:
+          $ref: '#/components/schemas/ApplicationSettings'
+        signOnMode:
+          $ref: '#/components/schemas/ApplicationSignOnMode'
+        status:
+          enum:
+          - ACTIVE
+          - INACTIVE
+          - DELETED
+          readOnly: true
+          type: string
+        visibility:
+          $ref: '#/components/schemas/ApplicationVisibility'
+      type: object
+      x-okta-crud:
+      - alias: read
+        arguments:
+        - dest: appId
+          src: id
+        operationId: getApplication
+      - alias: update
+        arguments:
+        - dest: appId
+          src: id
+        - dest: application
+          self: true
+        operationId: updateApplication
+      - alias: delete
+        arguments:
+        - dest: appId
+          src: id
+        operationId: deleteApplication
+      x-okta-operations:
+      - alias: activate
+        arguments:
+        - dest: appId
+          src: id
+        operationId: activateApplication
+      - alias: deactivate
+        arguments:
+        - dest: appId
+          src: id
+        operationId: deactivateApplication
+      - alias: listApplicationUsers
+        arguments:
+        - dest: appId
+          src: id
+        operationId: listApplicationUsers
+      - alias: assignUserToApplication
+        arguments:
+        - dest: appId
+          src: id
+        operationId: assignUserToApplication
+      - alias: getApplicationUser
+        arguments:
+        - dest: appId
+          src: id
+        operationId: getApplicationUser
+      - alias: createApplicationGroupAssignment
+        arguments:
+        - dest: appId
+          src: id
+        operationId: createApplicationGroupAssignment
+      - alias: getApplicationGroupAssignment
+        arguments:
+        - dest: appId
+          src: id
+        operationId: getApplicationGroupAssignment
+      - alias: cloneApplicationKey
+        arguments:
+        - dest: appId
+          src: id
+        operationId: cloneApplicationKey
+      - alias: getApplicationKey
+        arguments:
+        - dest: appId
+          src: id
+        operationId: getApplicationKey
+      - alias: listGroupAssignments
+        arguments:
+        - dest: appId
+          src: id
+        operationId: listApplicationGroupAssignments
+      - alias: listKeys
+        arguments:
+        - dest: appId
+          src: id
+        operationId: listApplicationKeys
+      - alias: generateKey
+        arguments:
+        - dest: appId
+          src: id
+        operationId: generateApplicationKey
+      - alias: generateCsr
+        arguments:
+        - dest: appId
+          src: id
+        operationId: generateCsrForApplication
+      - alias: getCsr
+        arguments:
+        - dest: appId
+          src: id
+        operationId: getCsrForApplication
+      - alias: revokeCsr
+        arguments:
+        - dest: appId
+          src: id
+        operationId: revokeCsrFromApplication
+      - alias: listCsrs
+        arguments:
+        - dest: appId
+          src: id
+        operationId: listCsrsForApplication
+      - alias: publishCerCert
+        arguments:
+        - dest: appId
+          src: id
+        operationId: publishCerCert
+      - alias: publishBinaryCerCert
+        arguments:
+        - dest: appId
+          src: id
+        operationId: publishBinaryCerCert
+      - alias: publishDerCert
+        arguments:
+        - dest: appId
+          src: id
+        operationId: publishDerCert
+      - alias: publishBinaryDerCert
+        arguments:
+        - dest: appId
+          src: id
+        operationId: publishBinaryDerCert
+      - alias: publishBinaryPemCert
+        arguments:
+        - dest: appId
+          src: id
+        operationId: publishBinaryPemCert
+      - alias: listOAuth2Tokens
+        arguments:
+        - dest: appId
+          src: id
+        operationId: listOAuth2TokensForApplication
+      - alias: revokeOAuth2TokenForApplication
+        arguments:
+        - dest: appId
+          src: id
+        operationId: revokeOAuth2TokenForApplication
+      - alias: getOAuth2Token
+        arguments:
+        - dest: appId
+          src: id
+        operationId: getOAuth2TokenForApplication
+      - alias: revokeOAuth2Tokens
+        arguments:
+        - dest: appId
+          src: id
+        operationId: revokeOAuth2TokensForApplication
+      - alias: listScopeConsentGrants
+        arguments:
+        - dest: appId
+          src: id
+        operationId: listScopeConsentGrants
+      - alias: grantConsentToScope
+        arguments:
+        - dest: appId
+          src: id
+        operationId: grantConsentToScope
+      - alias: revokeScopeConsentGrant
+        arguments:
+        - dest: appId
+          src: id
+        operationId: revokeScopeConsentGrant
+      - alias: getScopeConsentGrant
+        arguments:
+        - dest: appId
+          src: id
+        operationId: getScopeConsentGrant
+      x-okta-tags:
+      - Application
+      x-openapi-v3-discriminator:
+        mapping:
+          AUTO_LOGIN: '#/components/schemas/AutoLoginApplication'
+          BASIC_AUTH: '#/components/schemas/BasicAuthApplication'
+          BOOKMARK: '#/components/schemas/BookmarkApplication'
+          BROWSER_PLUGIN: '#/components/schemas/BrowserPluginApplication'
+          OPENID_CONNECT: '#/components/schemas/OpenIdConnectApplication'
+          SAML_1_1: '#/components/schemas/SamlApplication'
+          SAML_2_0: '#/components/schemas/SamlApplication'
+          SECURE_PASSWORD_STORE: '#/components/schemas/SecurePasswordStoreApplication'
+          WS_FEDERATION: '#/components/schemas/WsFederationApplication'
+        propertyName: signOnMode
+    ApplicationAccessibility:
+      properties:
+        errorRedirectUrl:
+          type: string
+        loginRedirectUrl:
+          type: string
+        selfService:
+          type: boolean
+      type: object
+      x-okta-tags:
+      - Application
+    ApplicationCredentials:
+      properties:
+        signing:
+          $ref: '#/components/schemas/ApplicationCredentialsSigning'
+        userNameTemplate:
+          $ref: '#/components/schemas/ApplicationCredentialsUsernameTemplate'
+      type: object
+      x-okta-tags:
+      - Application
+    ApplicationCredentialsOAuthClient:
+      properties:
+        autoKeyRotation:
+          type: boolean
+        client_id:
+          type: string
+        client_secret:
+          type: string
+        token_endpoint_auth_method:
+          $ref: '#/components/schemas/OAuthEndpointAuthenticationMethod'
+      type: object
+      x-okta-tags:
+      - Application
+    ApplicationCredentialsScheme:
+      enum:
+      - SHARED_USERNAME_AND_PASSWORD
+      - EXTERNAL_PASSWORD_SYNC
+      - EDIT_USERNAME_AND_PASSWORD
+      - EDIT_PASSWORD_ONLY
+      - ADMIN_SETS_CREDENTIALS
+      type: string
+      x-okta-tags:
+      - Application
+    ApplicationCredentialsSigning:
+      properties:
+        kid:
+          type: string
+        lastRotated:
+          format: date-time
+          readOnly: true
+          type: string
+        nextRotation:
+          format: date-time
+          readOnly: true
+          type: string
+        rotationMode:
+          type: string
+        use:
+          $ref: '#/components/schemas/ApplicationCredentialsSigningUse'
+      type: object
+      x-okta-tags:
+      - Application
+    ApplicationCredentialsSigningUse:
+      enum:
+      - sig
+      type: string
+      x-okta-tags:
+      - AuthorizationServer
+    ApplicationCredentialsUsernameTemplate:
+      properties:
+        suffix:
+          type: string
+        template:
+          type: string
+        type:
+          type: string
+      type: object
+      x-okta-tags:
+      - Application
+    ApplicationGroupAssignment:
+      properties:
+        _embedded:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        _links:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        id:
+          readOnly: true
+          type: string
+        lastUpdated:
+          format: date-time
+          readOnly: true
+          type: string
+        priority:
+          type: integer
+        profile:
+          additionalProperties:
+            properties: {}
+            type: object
+          type: object
+      type: object
+      x-okta-crud:
+      - alias: delete
+        arguments:
+        - dest: appId
+          parentSrc: appId
+        - dest: groupId
+          src: id
+        operationId: deleteApplicationGroupAssignment
+      x-okta-tags:
+      - Application
+    ApplicationLicensing:
+      properties:
+        seatCount:
+          type: integer
+      type: object
+      x-okta-tags:
+      - Application
+    ApplicationSettings:
+      properties:
+        app:
+          $ref: '#/components/schemas/ApplicationSettingsApplication'
+        implicitAssignment:
+          type: boolean
+        inlineHookId:
+          type: string
+        notes:
+          $ref: '#/components/schemas/ApplicationSettingsNotes'
+        notifications:
+          $ref: '#/components/schemas/ApplicationSettingsNotifications'
+      type: object
+      x-okta-tags:
+      - Application
+    ApplicationSettingsApplication:
+      type: object
+      x-okta-tags:
+      - Application
+    ApplicationSettingsNotes:
+      properties:
+        admin:
+          type: string
+        enduser:
+          type: string
+      type: object
+      x-okta-tags:
+      - Application
+    ApplicationSettingsNotifications:
+      properties:
+        vpn:
+          $ref: '#/components/schemas/ApplicationSettingsNotificationsVpn'
+      type: object
+      x-okta-tags:
+      - Application
+    ApplicationSettingsNotificationsVpn:
+      properties:
+        helpUrl:
+          type: string
+        message:
+          type: string
+        network:
+          $ref: '#/components/schemas/ApplicationSettingsNotificationsVpnNetwork'
+      type: object
+      x-okta-tags:
+      - Application
+    ApplicationSettingsNotificationsVpnNetwork:
+      properties:
+        connection:
+          type: string
+        exclude:
+          items:
+            type: string
+          type: array
+        include:
+          items:
+            type: string
+          type: array
+      type: object
+      x-okta-tags:
+      - Application
+    ApplicationSignOnMode:
+      enum:
+      - BOOKMARK
+      - BASIC_AUTH
+      - BROWSER_PLUGIN
+      - SECURE_PASSWORD_STORE
+      - AUTO_LOGIN
+      - WS_FEDERATION
+      - SAML_2_0
+      - OPENID_CONNECT
+      - SAML_1_1
+      type: string
+      x-okta-tags:
+      - Application
+    ApplicationVisibility:
+      properties:
+        appLinks:
+          additionalProperties:
+            type: boolean
+          type: object
+        autoLaunch:
+          type: boolean
+        autoSubmitToolbar:
+          type: boolean
+        hide:
+          $ref: '#/components/schemas/ApplicationVisibilityHide'
+      type: object
+      x-okta-tags:
+      - Application
+    ApplicationVisibilityHide:
+      properties:
+        iOS:
+          type: boolean
+        web:
+          type: boolean
+      type: object
+      x-okta-tags:
+      - Application
+    AuthorizationServerCredentials:
+      properties:
+        signing:
+          $ref: '#/components/schemas/AuthorizationServerCredentialsSigningConfig'
+      type: object
+      x-okta-tags:
+      - Application
+    AuthorizationServerCredentialsRotationMode:
+      enum:
+      - AUTO
+      - MANUAL
+      type: string
+      x-okta-tags:
+      - AuthorizationServer
+    AuthorizationServerCredentialsSigningConfig:
+      properties:
+        kid:
+          type: string
+        lastRotated:
+          format: date-time
+          readOnly: true
+          type: string
+        nextRotation:
+          format: date-time
+          readOnly: true
+          type: string
+        rotationMode:
+          $ref: '#/components/schemas/AuthorizationServerCredentialsRotationMode'
+        use:
+          $ref: '#/components/schemas/AuthorizationServerCredentialsUse'
+      type: object
+      x-okta-tags:
+      - AuthorizationServer
+    AuthorizationServerCredentialsUse:
+      enum:
+      - sig
+      type: string
+      x-okta-tags:
+      - AuthorizationServer
+    AutoLoginApplication:
+      properties:
+        credentials:
+          $ref: '#/components/schemas/SchemeApplicationCredentials'
+        settings:
+          $ref: '#/components/schemas/AutoLoginApplicationSettings'
+      type: object
+      x-okta-parent: '#/components/schemas/Application'
+      x-okta-tags:
+      - Application
+    AutoLoginApplicationSettings:
+      properties:
+        signOn:
+          $ref: '#/components/schemas/AutoLoginApplicationSettingsSignOn'
+      type: object
+      x-okta-parent: '#/components/schemas/ApplicationSettings'
+      x-okta-tags:
+      - Application
+    AutoLoginApplicationSettingsSignOn:
+      properties:
+        loginUrl:
+          type: string
+        redirectUrl:
+          type: string
+      type: object
+      x-okta-tags:
+      - Application
+    BasicApplicationSettings:
+      properties:
+        app:
+          $ref: '#/components/schemas/BasicApplicationSettingsApplication'
+      type: object
+      x-okta-parent: '#/components/schemas/ApplicationSettings'
+      x-okta-tags:
+      - Application
+    BasicApplicationSettingsApplication:
+      properties:
+        authURL:
+          type: string
+        url:
+          type: string
+      type: object
+      x-okta-parent: '#/components/schemas/ApplicationSettingsApplication'
+      x-okta-tags:
+      - Application
+    BasicAuthApplication:
+      properties:
+        credentials:
+          $ref: '#/components/schemas/SchemeApplicationCredentials'
+        name:
+          type: object
+        settings:
+          $ref: '#/components/schemas/BasicApplicationSettings'
+      type: object
+      x-okta-defined-as:
+        name: template_basic_auth
+      x-okta-parent: '#/components/schemas/Application'
+      x-okta-tags:
+      - Application
+    BookmarkApplication:
+      properties:
+        name:
+          type: object
+        settings:
+          $ref: '#/components/schemas/BookmarkApplicationSettings'
+      type: object
+      x-okta-defined-as:
+        name: bookmark
+      x-okta-parent: '#/components/schemas/Application'
+      x-okta-tags:
+      - Application
+    BookmarkApplicationSettings:
+      properties:
+        app:
+          $ref: '#/components/schemas/BookmarkApplicationSettingsApplication'
+      type: object
+      x-okta-parent: '#/components/schemas/ApplicationSettings'
+      x-okta-tags:
+      - Application
+    BookmarkApplicationSettingsApplication:
+      properties:
+        requestIntegration:
+          type: boolean
+        url:
+          type: string
+      type: object
+      x-okta-parent: '#/components/schemas/ApplicationSettingsApplication'
+      x-okta-tags:
+      - Application
+    BrowserPluginApplication:
+      properties:
+        credentials:
+          $ref: '#/components/schemas/SchemeApplicationCredentials'
+      type: object
+      x-okta-parent: '#/components/schemas/Application'
+      x-okta-tags:
+      - Application
+      x-openapi-v3-discriminator:
+        mapping:
+          template_swa: '#/components/schemas/SwaApplication'
+          template_swa3field: '#/components/schemas/SwaThreeFieldApplication'
+        propertyName: name
+    Csr:
+      properties:
+        created:
+          format: date-time
+          readOnly: true
+          type: string
+        csr:
+          readOnly: true
+          type: string
+        id:
+          readOnly: true
+          type: string
+        kty:
+          readOnly: true
+          type: string
+      type: object
+      x-okta-tags:
+      - Application
+    CsrMetadata:
+      properties:
+        subject:
+          $ref: '#/components/schemas/CsrMetadataSubject'
+        subjectAltNames:
+          $ref: '#/components/schemas/CsrMetadataSubjectAltNames'
+      type: object
+      x-okta-tags:
+      - Application
+    CsrMetadataSubject:
+      properties:
+        commonName:
+          type: string
+        countryName:
+          type: string
+        localityName:
+          type: string
+        organizationName:
+          type: string
+        organizationalUnitName:
+          type: string
+        stateOrProvinceName:
+          type: string
+      type: object
+      x-okta-tags:
+      - Application
+    CsrMetadataSubjectAltNames:
+      properties:
+        dnsNames:
+          items:
+            type: string
+          type: array
+      type: object
+      x-okta-tags:
+      - Application
+    JsonWebKey:
+      properties:
+        _links:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        alg:
+          type: string
+        created:
+          format: date-time
+          type: string
+        e:
+          type: string
+        expiresAt:
+          format: date-time
+          type: string
+        key_ops:
+          items:
+            type: string
+          type: array
+        kid:
+          type: string
+        kty:
+          type: string
+        lastUpdated:
+          format: date-time
+          type: string
+        n:
+          type: string
+        status:
+          type: string
+        use:
+          type: string
+        x5c:
+          items:
+            type: string
+          type: array
+        x5t:
+          type: string
+        x5t#S256:
+          type: string
+        x5u:
+          type: string
+      type: object
+      x-okta-tags:
+      - Application
+    JwkUse:
+      properties:
+        use:
+          enum:
+          - sig
+          type: string
+      type: object
+      x-okta-tags:
+      - Application
+    OAuth2Actor:
+      properties:
+        id:
+          readOnly: true
+          type: string
+        type:
+          type: string
+      type: object
+      x-okta-tags:
+      - Application
+    OAuth2Claim:
+      properties:
+        _links:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        alwaysIncludeInToken:
+          type: boolean
+        claimType:
+          enum:
+          - IDENTITY
+          - RESOURCE
+          type: string
+        conditions:
+          $ref: '#/components/schemas/OAuth2ClaimConditions'
+        group_filter_type:
+          enum:
+          - STARTS_WITH
+          - EQUALS
+          - CONTAINS
+          - REGEX
+          type: string
+        id:
+          readOnly: true
+          type: string
+        name:
+          type: string
+        status:
+          enum:
+          - ACTIVE
+          - INACTIVE
+          type: string
+        system:
+          type: boolean
+        value:
+          type: string
+        valueType:
+          enum:
+          - EXPRESSION
+          - GROUPS
+          - SYSTEM
+          type: string
+      type: object
+      x-okta-tags:
+      - Application
+    OAuth2ClaimConditions:
+      properties:
+        scopes:
+          items:
+            type: string
+          type: array
+      type: object
+      x-okta-tags:
+      - Application
+    OAuth2Client:
+      properties:
+        _links:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        client_id:
+          readOnly: true
+          type: string
+        client_name:
+          readOnly: true
+          type: string
+        client_uri:
+          readOnly: true
+          type: string
+        logo_uri:
+          readOnly: true
+          type: string
+      type: object
+      x-okta-tags:
+      - Application
+    OAuth2RefreshToken:
+      properties:
+        _embedded:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        _links:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        clientId:
+          type: string
+        created:
+          format: date-time
+          readOnly: true
+          type: string
+        createdBy:
+          $ref: '#/components/schemas/OAuth2Actor'
+        expiresAt:
+          format: date-time
+          readOnly: true
+          type: string
+        id:
+          readOnly: true
+          type: string
+        issuer:
+          type: string
+        lastUpdated:
+          format: date-time
+          readOnly: true
+          type: string
+        scopes:
+          items:
+            type: string
+          type: array
+        status:
+          enum:
+          - ACTIVE
+          - REVOKED
+          type: string
+        userId:
+          type: string
+      type: object
+      x-okta-tags:
+      - Application
+    OAuth2Scope:
+      properties:
+        consent:
+          enum:
+          - REQUIRED
+          - IMPLICIT
+          - ADMIN
+          type: string
+        default:
+          type: boolean
+        description:
+          type: string
+        displayName:
+          type: string
+        id:
+          readOnly: true
+          type: string
+        metadataPublish:
+          enum:
+          - ALL_CLIENTS
+          - NO_CLIENTS
+          type: string
+        name:
+          type: string
+        system:
+          type: boolean
+      type: object
+      x-okta-tags:
+      - Application
+    OAuth2ScopeConsentGrant:
+      properties:
+        _embedded:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        _links:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        clientId:
+          type: string
+        created:
+          format: date-time
+          readOnly: true
+          type: string
+        createdBy:
+          $ref: '#/components/schemas/OAuth2Actor'
+        id:
+          readOnly: true
+          type: string
+        issuer:
+          type: string
+        lastUpdated:
+          format: date-time
+          readOnly: true
+          type: string
+        scopeId:
+          type: string
+        source:
+          $ref: '#/components/schemas/OAuth2ScopeConsentGrantSource'
+        status:
+          $ref: '#/components/schemas/OAuth2ScopeConsentGrantStatus'
+        userId:
+          type: string
+      type: object
+      x-okta-tags:
+      - Application
+    OAuth2ScopeConsentGrantSource:
+      enum:
+      - END_USER
+      - ADMIN
+      type: string
+      x-okta-tags:
+      - Application
+    OAuth2ScopeConsentGrantStatus:
+      enum:
+      - ACTIVE
+      - REVOKED
+      type: string
+      x-okta-tags:
+      - Application
+    OAuth2ScopesMediationPolicyRuleCondition:
+      properties:
+        include:
+          items:
+            type: string
+          type: array
+      type: object
+      x-okta-tags:
+      - Application
+    OAuth2Token:
+      properties:
+        _embedded:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        _links:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        clientId:
+          type: string
+        created:
+          format: date-time
+          readOnly: true
+          type: string
+        expiresAt:
+          format: date-time
+          readOnly: true
+          type: string
+        id:
+          readOnly: true
+          type: string
+        issuer:
+          type: string
+        lastUpdated:
+          format: date-time
+          readOnly: true
+          type: string
+        scopes:
+          items:
+            type: string
+          type: array
+        status:
+          enum:
+          - ACTIVE
+          - REVOKED
+          type: string
+        userId:
+          type: string
+      type: object
+      x-okta-tags:
+      - Application
+    OAuthApplicationCredentials:
+      properties:
+        oauthClient:
+          $ref: '#/components/schemas/ApplicationCredentialsOAuthClient'
+      type: object
+      x-okta-parent: '#/components/schemas/ApplicationCredentials'
+      x-okta-tags:
+      - Application
+    OAuthEndpointAuthenticationMethod:
+      enum:
+      - none
+      - client_secret_post
+      - client_secret_basic
+      - client_secret_jwt
+      - private_key_jwt
+      type: string
+      x-okta-tags:
+      - Application
+    OAuthGrantType:
+      enum:
+      - authorization_code
+      - implicit
+      - password
+      - refresh_token
+      - client_credentials
+      type: string
+      x-okta-tags:
+      - Application
+    OAuthResponseType:
+      enum:
+      - code
+      - token
+      - id_token
+      type: string
+      x-okta-tags:
+      - Application
+    OpenIdConnectApplication:
+      properties:
+        credentials:
+          $ref: '#/components/schemas/OAuthApplicationCredentials'
+        name:
+          type: object
+        settings:
+          $ref: '#/components/schemas/OpenIdConnectApplicationSettings'
+      type: object
+      x-okta-defined-as:
+        name: oidc_client
+      x-okta-parent: '#/components/schemas/Application'
+      x-okta-tags:
+      - Application
+    OpenIdConnectApplicationConsentMethod:
+      enum:
+      - REQUIRED
+      - TRUSTED
+      type: string
+      x-okta-tags:
+      - Application
+    OpenIdConnectApplicationIdpInitiatedLogin:
+      properties:
+        default_scope:
+          items:
+            type: string
+          type: array
+        mode:
+          type: string
+      type: object
+      x-okta-tags:
+      - Application
+    OpenIdConnectApplicationIssuerMode:
+      enum:
+      - CUSTOM_URL
+      - ORG_URL
+      type: string
+      x-okta-tags:
+      - Application
+    OpenIdConnectApplicationSettings:
+      properties:
+        oauthClient:
+          $ref: '#/components/schemas/OpenIdConnectApplicationSettingsClient'
+      type: object
+      x-okta-parent: '#/components/schemas/ApplicationSettings'
+      x-okta-tags:
+      - Application
+    OpenIdConnectApplicationSettingsClient:
+      properties:
+        application_type:
+          $ref: '#/components/schemas/OpenIdConnectApplicationType'
+        client_uri:
+          type: string
+        consent_method:
+          $ref: '#/components/schemas/OpenIdConnectApplicationConsentMethod'
+        grant_types:
+          items:
+            $ref: '#/components/schemas/OAuthGrantType'
+          type: array
+        idp_initiated_login:
+          $ref: '#/components/schemas/OpenIdConnectApplicationIdpInitiatedLogin'
+        initiate_login_uri:
+          type: string
+        issuer_mode:
+          $ref: '#/components/schemas/OpenIdConnectApplicationIssuerMode'
+        jwks:
+          $ref: '#/components/schemas/OpenIdConnectApplicationSettingsClientKeys'
+        logo_uri:
+          type: string
+        policy_uri:
+          type: string
+        post_logout_redirect_uris:
+          items:
+            type: string
+          type: array
+        redirect_uris:
+          items:
+            type: string
+          type: array
+        refresh_token:
+          $ref: '#/components/schemas/OpenIdConnectApplicationSettingsRefreshToken'
+        response_types:
+          items:
+            $ref: '#/components/schemas/OAuthResponseType'
+          type: array
+        tos_uri:
+          type: string
+        wildcard_redirect:
+          type: string
+      type: object
+      x-okta-tags:
+      - Application
+    OpenIdConnectApplicationSettingsClientKeys:
+      properties:
+        keys:
+          items:
+            $ref: '#/components/schemas/JsonWebKey'
+          type: array
+      type: object
+      x-okta-tags:
+      - Application
+    OpenIdConnectApplicationSettingsRefreshToken:
+      properties:
+        leeway:
+          type: integer
+        rotation_type:
+          $ref: '#/components/schemas/OpenIdConnectRefreshTokenRotationType'
+      type: object
+      x-okta-tags:
+      - Application
+    OpenIdConnectApplicationType:
+      enum:
+      - web
+      - native
+      - browser
+      - service
+      type: string
+      x-okta-tags:
+      - Application
+    OpenIdConnectRefreshTokenRotationType:
+      enum:
+      - rotate
+      - static
+      type: string
+      x-okta-tags:
+      - Application
+    PasswordCredential:
+      properties:
+        hash:
+          $ref: '#/components/schemas/PasswordCredentialHash'
+        hook:
+          $ref: '#/components/schemas/PasswordCredentialHook'
+        value:
+          format: password
+          type: string
+      type: object
+      x-okta-tags:
+      - User
+    PasswordCredentialHash:
+      properties:
+        algorithm:
+          $ref: '#/components/schemas/PasswordCredentialHashAlgorithm'
+        salt:
+          type: string
+        saltOrder:
+          type: string
+        value:
+          type: string
+        workFactor:
+          type: integer
+      type: object
+      x-okta-tags:
+      - User
+    PasswordCredentialHashAlgorithm:
+      enum:
+      - BCRYPT
+      - SHA-512
+      - SHA-256
+      - SHA-1
+      - MD5
+      type: string
+      x-okta-tags:
+      - User
+    PasswordCredentialHook:
+      properties:
+        type:
+          type: string
+      type: object
+      x-okta-tags:
+      - User
+    SamlApplication:
+      properties:
+        settings:
+          $ref: '#/components/schemas/SamlApplicationSettings'
+      type: object
+      x-okta-parent: '#/components/schemas/Application'
+      x-okta-tags:
+      - Application
+    SamlApplicationSettings:
+      properties:
+        signOn:
+          $ref: '#/components/schemas/SamlApplicationSettingsSignOn'
+      type: object
+      x-okta-parent: '#/components/schemas/ApplicationSettings'
+      x-okta-tags:
+      - Application
+    SamlApplicationSettingsSignOn:
+      properties:
+        acsEndpoints:
+          items:
+            $ref: '#/components/schemas/AcsEndpoint'
+          type: array
+        allowMultipleAcsEndpoints:
+          type: boolean
+        assertionSigned:
+          type: boolean
+        attributeStatements:
+          items:
+            $ref: '#/components/schemas/SamlAttributeStatement'
+          type: array
+        audience:
+          type: string
+        audienceOverride:
+          type: string
+        authnContextClassRef:
+          type: string
+        defaultRelayState:
+          type: string
+        destination:
+          type: string
+        destinationOverride:
+          type: string
+        digestAlgorithm:
+          type: string
+        honorForceAuthn:
+          type: boolean
+        idpIssuer:
+          type: string
+        inlineHooks:
+          items:
+            $ref: '#/components/schemas/SignOnInlineHook'
+          type: array
+        recipient:
+          type: string
+        recipientOverride:
+          type: string
+        requestCompressed:
+          type: boolean
+        responseSigned:
+          type: boolean
+        signatureAlgorithm:
+          type: string
+        slo:
+          $ref: '#/components/schemas/SingleLogout'
+        spCertificate:
+          $ref: '#/components/schemas/SpCertificate'
+        spIssuer:
+          type: string
+        ssoAcsUrl:
+          type: string
+        ssoAcsUrlOverride:
+          type: string
+        subjectNameIdFormat:
+          type: string
+        subjectNameIdTemplate:
+          type: string
+      type: object
+      x-okta-tags:
+      - Application
+    SamlAttributeStatement:
+      properties:
+        filterType:
+          type: string
+        filterValue:
+          type: string
+        name:
+          type: string
+        namespace:
+          type: string
+        type:
+          type: string
+        values:
+          items:
+            type: string
+          type: array
+      type: object
+      x-okta-tags:
+      - Application
+    SchemeApplicationCredentials:
+      properties:
+        password:
+          $ref: '#/components/schemas/PasswordCredential'
+        revealPassword:
+          type: boolean
+        scheme:
+          $ref: '#/components/schemas/ApplicationCredentialsScheme'
+        signing:
+          $ref: '#/components/schemas/ApplicationCredentialsSigning'
+        userName:
+          type: string
+      type: object
+      x-okta-parent: '#/components/schemas/ApplicationCredentials'
+      x-okta-tags:
+      - Application
+    SecurePasswordStoreApplication:
+      properties:
+        credentials:
+          $ref: '#/components/schemas/SchemeApplicationCredentials'
+        name:
+          type: object
+        settings:
+          $ref: '#/components/schemas/SecurePasswordStoreApplicationSettings'
+      type: object
+      x-okta-defined-as:
+        name: template_sps
+      x-okta-parent: '#/components/schemas/Application'
+      x-okta-tags:
+      - Application
+    SecurePasswordStoreApplicationSettings:
+      properties:
+        app:
+          $ref: '#/components/schemas/SecurePasswordStoreApplicationSettingsApplication'
+      type: object
+      x-okta-parent: '#/components/schemas/ApplicationSettings'
+      x-okta-tags:
+      - Application
+    SecurePasswordStoreApplicationSettingsApplication:
+      properties:
+        optionalField1:
+          type: string
+        optionalField1Value:
+          type: string
+        optionalField2:
+          type: string
+        optionalField2Value:
+          type: string
+        optionalField3:
+          type: string
+        optionalField3Value:
+          type: string
+        passwordField:
+          type: string
+        url:
+          type: string
+        usernameField:
+          type: string
+      type: object
+      x-okta-parent: '#/components/schemas/ApplicationSettingsApplication'
+      x-okta-tags:
+      - Application
+    SignOnInlineHook:
+      properties:
+        id:
+          type: string
+      type: object
+      x-okta-tags:
+      - Application
+    SingleLogout:
+      properties:
+        enabled:
+          type: boolean
+        issuer:
+          type: string
+        logoutUrl:
+          type: string
+      type: object
+      x-okta-tags:
+      - Application
+    SpCertificate:
+      properties:
+        x5c:
+          items:
+            type: string
+          type: array
+      type: object
+      x-okta-tags:
+      - Application
+    SwaApplication:
+      properties:
+        name:
+          type: object
+        settings:
+          $ref: '#/components/schemas/SwaApplicationSettings'
+      type: object
+      x-okta-defined-as:
+        name: template_swa
+      x-okta-parent: '#/components/schemas/BrowserPluginApplication'
+      x-okta-tags:
+      - Application
+    SwaApplicationSettings:
+      properties:
+        app:
+          $ref: '#/components/schemas/SwaApplicationSettingsApplication'
+      type: object
+      x-okta-parent: '#/components/schemas/ApplicationSettings'
+      x-okta-tags:
+      - Application
+    SwaApplicationSettingsApplication:
+      properties:
+        buttonField:
+          type: string
+        loginUrlRegex:
+          type: string
+        passwordField:
+          type: string
+        url:
+          type: string
+        usernameField:
+          type: string
+      type: object
+      x-okta-parent: '#/components/schemas/ApplicationSettingsApplication'
+      x-okta-tags:
+      - Application
+    SwaThreeFieldApplication:
+      properties:
+        name:
+          type: object
+        settings:
+          $ref: '#/components/schemas/SwaThreeFieldApplicationSettings'
+      type: object
+      x-okta-defined-as:
+        name: template_swa3field
+      x-okta-parent: '#/components/schemas/BrowserPluginApplication'
+      x-okta-tags:
+      - Application
+    SwaThreeFieldApplicationSettings:
+      properties:
+        app:
+          $ref: '#/components/schemas/SwaThreeFieldApplicationSettingsApplication'
+      type: object
+      x-okta-parent: '#/components/schemas/ApplicationSettings'
+      x-okta-tags:
+      - Application
+    SwaThreeFieldApplicationSettingsApplication:
+      properties:
+        buttonSelector:
+          type: string
+        extraFieldSelector:
+          type: string
+        extraFieldValue:
+          type: string
+        loginUrlRegex:
+          type: string
+        passwordSelector:
+          type: string
+        targetURL:
+          type: string
+        userNameSelector:
+          type: string
+      type: object
+      x-okta-parent: '#/components/schemas/ApplicationSettingsApplication'
+      x-okta-tags:
+      - Application
+    WsFederationApplication:
+      properties:
+        name:
+          type: object
+        settings:
+          $ref: '#/components/schemas/WsFederationApplicationSettings'
+      type: object
+      x-okta-defined-as:
+        name: template_wsfed
+      x-okta-parent: '#/components/schemas/Application'
+      x-okta-tags:
+      - Application
+    WsFederationApplicationSettings:
+      properties:
+        app:
+          $ref: '#/components/schemas/WsFederationApplicationSettingsApplication'
+      type: object
+      x-okta-parent: '#/components/schemas/ApplicationSettings'
+      x-okta-tags:
+      - Application
+    WsFederationApplicationSettingsApplication:
+      properties:
+        attributeStatements:
+          type: string
+        audienceRestriction:
+          type: string
+        authnContextClassRef:
+          type: string
+        groupFilter:
+          type: string
+        groupName:
+          type: string
+        groupValueFormat:
+          type: string
+        nameIDFormat:
+          type: string
+        realm:
+          type: string
+        siteURL:
+          type: string
+        usernameAttribute:
+          type: string
+        wReplyOverride:
+          type: boolean
+        wReplyURL:
+          type: string
+      type: object
+      x-okta-parent: '#/components/schemas/ApplicationSettingsApplication'
+      x-okta-tags:
+      - Application
+  securitySchemes:
+    api_token:
+      description: SSWS {API Token}
+      in: header
+      name: Authorization
+      type: apiKey
+  x-stackQL-resources:
+    apps:
+      id: okta.application.apps
+      methods:
+        activate:
+          operation:
+            $ref: POST
+          path:
+            $ref: /api/v1/apps/{appId}/lifecycle/activate
+          response:
+            openAPIDocKey: '200'
+        deactivate:
+          operation:
+            $ref: POST
+          path:
+            $ref: /api/v1/apps/{appId}/lifecycle/deactivate
+          response:
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: DELETE
+          path:
+            $ref: /api/v1/apps/{appId}
+          response:
+            openAPIDocKey: '200'
+        deleteall:
+          operation:
+            $ref: DELETE
+          path:
+            $ref: /api/v1/apps/{appId}/tokens
+          response:
+            openAPIDocKey: '204'
+        get:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/apps/{appId}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: POST
+          path:
+            $ref: /api/v1/apps
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/apps
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        update:
+          operation:
+            $ref: PUT
+          path:
+            $ref: /api/v1/apps/{appId}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: apps
+      title: apps
+    csrs:
+      id: okta.application.csrs
+      methods:
+        delete:
+          operation:
+            $ref: DELETE
+          path:
+            $ref: /api/v1/apps/{appId}/credentials/csrs/{csrId}
+          response:
+            openAPIDocKey: '204'
+        get:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/apps/{appId}/credentials/csrs/{csrId}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: POST
+          path:
+            $ref: /api/v1/apps/{appId}/credentials/csrs
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '201'
+        list:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/apps/{appId}/credentials/csrs
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: csrs
+      title: csrs
+    grants:
+      id: okta.application.grants
+      methods:
+        delete:
+          operation:
+            $ref: DELETE
+          path:
+            $ref: /api/v1/apps/{appId}/grants/{grantId}
+          response:
+            openAPIDocKey: '204'
+        get:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/apps/{appId}/grants/{grantId}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: POST
+          path:
+            $ref: /api/v1/apps/{appId}/grants
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '201'
+        list:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/apps/{appId}/grants
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: grants
+      title: grants
+    groups:
+      id: okta.application.groups
+      methods:
+        delete:
+          operation:
+            $ref: DELETE
+          path:
+            $ref: /api/v1/apps/{appId}/groups/{groupId}
+          response:
+            openAPIDocKey: '204'
+        get:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/apps/{appId}/groups/{groupId}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/apps/{appId}/groups
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        update:
+          operation:
+            $ref: PUT
+          path:
+            $ref: /api/v1/apps/{appId}/groups/{groupId}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: groups
+      title: groups
+    keys:
+      id: okta.application.keys
+      methods:
+        delete:
+          operation:
+            $ref: DELETE
+          path:
+            $ref: /api/v1/apps/{appId}/credentials/csrs/{csrId}
+          response:
+            openAPIDocKey: '204'
+        get:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/apps/{appId}/credentials/keys/{keyId}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: POST
+          path:
+            $ref: /api/v1/apps/{appId}/credentials/keys/generate
+          response:
+            mediaType: application/json
+            openAPIDocKey: '201'
+        list:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/apps/{appId}/credentials/keys
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: keys
+      title: keys
+    tokens:
+      id: okta.application.tokens
+      methods:
+        delete:
+          operation:
+            $ref: DELETE
+          path:
+            $ref: /api/v1/apps/{appId}/tokens/{tokenId}
+          response:
+            openAPIDocKey: '204'
+        get:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/apps/{appId}/tokens/{tokenId}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/apps/{appId}/tokens
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: tokens
+      title: tokens
+    users:
+      id: okta.application.users
+      methods:
+        delete:
+          operation:
+            $ref: DELETE
+          path:
+            $ref: /api/v1/apps/{appId}/users/{userId}
+          response:
+            openAPIDocKey: '204'
+        get:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/apps/{appId}/users/{userId}
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: POST
+          path:
+            $ref: /api/v1/apps/{appId}/users
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: GET
+          path:
+            $ref: /api/v1/apps/{appId}/users
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        update:
+          operation:
+            $ref: POST
+          path:
+            $ref: /api/v1/apps/{appId}/users/{userId}
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: users
+      title: users
+externalDocs:
+  description: Find more info here
+  url: https://developer.okta.com/docs/api/getting_started/design_principles.html
+info:
+  contact:
+    email: devex-public@okta.com
+    name: Okta Developer Team
+    url: https://developer.okta.com/
+  description: Allows customers to easily access the Okta API
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: https://developer.okta.com/terms/
+  title: Okta API
+  version: 2.8.0
+  x-serviceName: application
+openapi: 3.0.1
+paths:
+  /api/v1/apps:
+    get:
+      description: Enumerates apps added to your organization with pagination. A subset
+        of apps can be returned that match a supported filter expression or query.
+      operationId: listApplications
+      parameters:
+      - in: query
+        name: q
+        schema:
+          type: string
+      - description: Specifies the pagination cursor for the next page of apps
+        in: query
+        name: after
+        schema:
+          type: string
+      - description: Specifies the number of results for a page
+        in: query
+        name: limit
+        schema:
+          default: -1
+          format: int32
+          type: integer
+      - description: Filters apps by status, user.id, group.id or credentials.signing.kid
+          expression
+        in: query
+        name: filter
+        schema:
+          type: string
+      - description: Traverses users link relationship and optionally embeds Application
+          User resource
+        in: query
+        name: expand
+        schema:
+          type: string
+      - in: query
+        name: includeNonDeleted
+        schema:
+          default: false
+          type: boolean
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Application'
+                type: array
+          description: Success
+      security:
+      - api_token: []
+      summary: List Applications
+      tags:
+      - Application
+    post:
+      description: Adds a new application to your Okta organization.
+      operationId: createApplication
+      parameters:
+      - description: Executes activation lifecycle operation when creating the app
+        in: query
+        name: activate
+        schema:
+          default: true
+          type: boolean
+      - in: header
+        name: OktaAccessGateway-Agent
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Application'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+          description: Success
+      security:
+      - api_token: []
+      summary: Add Application
+      tags:
+      - Application
+      x-codegen-request-body-name: application
+  /api/v1/apps/{appId}:
+    delete:
+      description: Removes an inactive application.
+      operationId: deleteApplication
+      parameters:
+      - in: path
+        name: appId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content: {}
+          description: Success
+      security:
+      - api_token: []
+      summary: Delete Application
+      tags:
+      - Application
+    get:
+      description: Fetches an application from your Okta organization by `id`.
+      operationId: getApplication
+      parameters:
+      - in: path
+        name: appId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: expand
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+          description: Success
+      security:
+      - api_token: []
+      summary: Get Application
+      tags:
+      - Application
+    put:
+      description: Updates an application in your organization.
+      operationId: updateApplication
+      parameters:
+      - in: path
+        name: appId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Application'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+          description: Success
+      security:
+      - api_token: []
+      summary: Update Application
+      tags:
+      - Application
+      x-codegen-request-body-name: application
+  /api/v1/apps/{appId}/credentials/csrs:
+    get:
+      description: Enumerates Certificate Signing Requests for an application
+      operationId: listCsrsForApplication
+      parameters:
+      - in: path
+        name: appId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Csr'
+                type: array
+          description: Success
+      security:
+      - api_token: []
+      summary: List Certificate Signing Requests for Application
+      tags:
+      - Application
+    post:
+      description: Generates a new key pair and returns the Certificate Signing Request
+        for it.
+      operationId: generateCsrForApplication
+      parameters:
+      - in: path
+        name: appId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CsrMetadata'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Csr'
+          description: Created
+      security:
+      - api_token: []
+      summary: Generate Certificate Signing Request for Application
+      tags:
+      - Application
+      x-codegen-request-body-name: metadata
+  /api/v1/apps/{appId}/credentials/csrs/{csrId}:
+    delete:
+      operationId: revokeCsrFromApplication
+      parameters:
+      - in: path
+        name: appId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: csrId
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          content: {}
+          description: No Content
+      security:
+      - api_token: []
+      tags:
+      - Application
+    get:
+      operationId: getCsrForApplication
+      parameters:
+      - in: path
+        name: appId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: csrId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Csr'
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - Application
+  /api/v1/apps/{appId}/credentials/csrs/{csrId}/lifecycle/publish:
+    post:
+      parameters:
+      - in: path
+        name: appId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: csrId
+        required: true
+        schema:
+          type: string
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonWebKey'
+          description: Created
+      security:
+      - api_token: []
+      tags:
+      - Application
+      x-okta-multi-operation:
+      - consumes:
+        - application/x-x509-ca-cert
+        encoding: base64
+        operationId: publishCerCert
+        parameters:
+        - in: body
+          name: certificate
+          required: true
+          type: string
+      - consumes:
+        - application/x-x509-ca-cert
+        operationId: publishBinaryCerCert
+        parameters:
+        - format: binary
+          in: body
+          name: certificate
+          required: true
+          type: string
+      - consumes:
+        - application/pkix-cert
+        encoding: base64
+        operationId: publishDerCert
+        parameters:
+        - in: body
+          name: certificate
+          required: true
+          type: string
+      - consumes:
+        - application/pkix-cert
+        operationId: publishBinaryDerCert
+        parameters:
+        - format: binary
+          in: body
+          name: certificate
+          required: true
+          type: string
+      - consumes:
+        - application/x-pem-file
+        operationId: publishBinaryPemCert
+        parameters:
+        - format: binary
+          in: body
+          name: certificate
+          required: true
+          type: string
+  /api/v1/apps/{appId}/credentials/keys:
+    get:
+      description: Enumerates key credentials for an application
+      operationId: listApplicationKeys
+      parameters:
+      - in: path
+        name: appId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/JsonWebKey'
+                type: array
+          description: Success
+      security:
+      - api_token: []
+      summary: List Key Credentials for Application
+      tags:
+      - Application
+  /api/v1/apps/{appId}/credentials/keys/generate:
+    post:
+      description: Generates a new X.509 certificate for an application key credential
+      operationId: generateApplicationKey
+      parameters:
+      - in: path
+        name: appId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: validityYears
+        schema:
+          type: integer
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonWebKey'
+          description: Created
+      security:
+      - api_token: []
+      tags:
+      - Application
+  /api/v1/apps/{appId}/credentials/keys/{keyId}:
+    get:
+      description: Gets a specific application key credential by kid
+      operationId: getApplicationKey
+      parameters:
+      - in: path
+        name: appId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: keyId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonWebKey'
+          description: Success
+      security:
+      - api_token: []
+      summary: Get Key Credential for Application
+      tags:
+      - Application
+  /api/v1/apps/{appId}/credentials/keys/{keyId}/clone:
+    post:
+      description: Clones a X.509 certificate for an application key credential from
+        a source application to target application.
+      operationId: cloneApplicationKey
+      parameters:
+      - in: path
+        name: appId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: keyId
+        required: true
+        schema:
+          type: string
+      - description: Unique key of the target Application
+        in: query
+        name: targetAid
+        required: true
+        schema:
+          type: string
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JsonWebKey'
+          description: Created
+      security:
+      - api_token: []
+      summary: Clone Application Key Credential
+      tags:
+      - Application
+  /api/v1/apps/{appId}/grants:
+    get:
+      description: Lists all scope consent grants for the application
+      operationId: listScopeConsentGrants
+      parameters:
+      - in: path
+        name: appId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: expand
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/OAuth2ScopeConsentGrant'
+                type: array
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - Application
+    post:
+      description: Grants consent for the application to request an OAuth 2.0 Okta
+        scope
+      operationId: grantConsentToScope
+      parameters:
+      - in: path
+        name: appId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OAuth2ScopeConsentGrant'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuth2ScopeConsentGrant'
+          description: Created
+      security:
+      - api_token: []
+      tags:
+      - Application
+      x-codegen-request-body-name: oAuth2ScopeConsentGrant
+  /api/v1/apps/{appId}/grants/{grantId}:
+    delete:
+      description: Revokes permission for the application to request the given scope
+      operationId: revokeScopeConsentGrant
+      parameters:
+      - in: path
+        name: appId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: grantId
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          content: {}
+          description: No Content
+      security:
+      - api_token: []
+      tags:
+      - Application
+    get:
+      description: Fetches a single scope consent grant for the application
+      operationId: getScopeConsentGrant
+      parameters:
+      - in: path
+        name: appId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: grantId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: expand
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuth2ScopeConsentGrant'
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - Application
+  /api/v1/apps/{appId}/groups:
+    get:
+      description: Enumerates group assignments for an application.
+      operationId: listApplicationGroupAssignments
+      parameters:
+      - in: path
+        name: appId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: q
+        schema:
+          type: string
+      - description: Specifies the pagination cursor for the next page of assignments
+        in: query
+        name: after
+        schema:
+          type: string
+      - description: Specifies the number of results for a page
+        in: query
+        name: limit
+        schema:
+          default: -1
+          format: int32
+          type: integer
+      - in: query
+        name: expand
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ApplicationGroupAssignment'
+                type: array
+          description: Success
+      security:
+      - api_token: []
+      summary: List Groups Assigned to Application
+      tags:
+      - Application
+  /api/v1/apps/{appId}/groups/{groupId}:
+    delete:
+      description: Removes a group assignment from an application.
+      operationId: deleteApplicationGroupAssignment
+      parameters:
+      - in: path
+        name: appId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: groupId
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          content: {}
+          description: No Content
+      security:
+      - api_token: []
+      summary: Remove Group from Application
+      tags:
+      - Application
+    get:
+      description: Fetches an application group assignment
+      operationId: getApplicationGroupAssignment
+      parameters:
+      - in: path
+        name: appId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: groupId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: expand
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationGroupAssignment'
+          description: Success
+      security:
+      - api_token: []
+      summary: Get Assigned Group for Application
+      tags:
+      - Application
+    put:
+      description: Assigns a group to an application
+      operationId: createApplicationGroupAssignment
+      parameters:
+      - in: path
+        name: appId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: groupId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationGroupAssignment'
+        required: false
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationGroupAssignment'
+          description: Success
+      security:
+      - api_token: []
+      summary: Assign Group to Application
+      tags:
+      - Application
+      x-codegen-request-body-name: applicationGroupAssignment
+  /api/v1/apps/{appId}/lifecycle/activate:
+    post:
+      description: Activates an inactive application.
+      operationId: activateApplication
+      parameters:
+      - in: path
+        name: appId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content: {}
+          description: Success
+      security:
+      - api_token: []
+      summary: Activate Application
+      tags:
+      - Application
+  /api/v1/apps/{appId}/lifecycle/deactivate:
+    post:
+      description: Deactivates an active application.
+      operationId: deactivateApplication
+      parameters:
+      - in: path
+        name: appId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content: {}
+          description: Success
+      security:
+      - api_token: []
+      summary: Deactivate Application
+      tags:
+      - Application
+  /api/v1/apps/{appId}/tokens:
+    delete:
+      description: Revokes all tokens for the specified application
+      operationId: revokeOAuth2TokensForApplication
+      parameters:
+      - in: path
+        name: appId
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          content: {}
+          description: No Content
+      security:
+      - api_token: []
+      tags:
+      - Application
+    get:
+      description: Lists all tokens for the application
+      operationId: listOAuth2TokensForApplication
+      parameters:
+      - in: path
+        name: appId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: expand
+        schema:
+          type: string
+      - in: query
+        name: after
+        schema:
+          type: string
+      - in: query
+        name: limit
+        schema:
+          default: 20
+          format: int32
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/OAuth2Token'
+                type: array
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - Application
+  /api/v1/apps/{appId}/tokens/{tokenId}:
+    delete:
+      description: Revokes the specified token for the specified application
+      operationId: revokeOAuth2TokenForApplication
+      parameters:
+      - in: path
+        name: appId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: tokenId
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          content: {}
+          description: No Content
+      security:
+      - api_token: []
+      tags:
+      - Application
+    get:
+      description: Gets a token for the specified application
+      operationId: getOAuth2TokenForApplication
+      parameters:
+      - in: path
+        name: appId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: tokenId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: expand
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuth2Token'
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - Application
+  /api/v1/apps/{appId}/users:
+    get:
+      description: Enumerates all assigned [application users](#application-user-model)
+        for an application.
+      operationId: listApplicationUsers
+      parameters:
+      - in: path
+        name: appId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: q
+        schema:
+          type: string
+      - in: query
+        name: query_scope
+        schema:
+          type: string
+      - description: specifies the pagination cursor for the next page of assignments
+        in: query
+        name: after
+        schema:
+          type: string
+      - description: specifies the number of results for a page
+        in: query
+        name: limit
+        schema:
+          default: -1
+          format: int32
+          type: integer
+      - in: query
+        name: filter
+        schema:
+          type: string
+      - in: query
+        name: expand
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/AppUser'
+                type: array
+          description: Success
+      security:
+      - api_token: []
+      summary: List Users Assigned to Application
+      tags:
+      - Application
+    post:
+      description: Assigns an user to an application with [credentials](#application-user-credentials-object)
+        and an app-specific [profile](#application-user-profile-object). Profile mappings
+        defined for the application are first applied before applying any profile
+        properties specified in the request.
+      operationId: assignUserToApplication
+      parameters:
+      - in: path
+        name: appId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppUser'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppUser'
+          description: Success
+      security:
+      - api_token: []
+      summary: Assign User to Application for SSO & Provisioning
+      tags:
+      - Application
+      x-codegen-request-body-name: appUser
+  /api/v1/apps/{appId}/users/{userId}:
+    delete:
+      description: Removes an assignment for a user from an application.
+      operationId: deleteApplicationUser
+      parameters:
+      - in: path
+        name: appId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: sendEmail
+        schema:
+          default: false
+          type: boolean
+          x-okta-added-version: 1.5.0
+        x-okta-added-version: 1.5.0
+      responses:
+        '204':
+          content: {}
+          description: No Content
+      security:
+      - api_token: []
+      summary: Remove User from Application
+      tags:
+      - Application
+    get:
+      description: Fetches a specific user assignment for application by `id`.
+      operationId: getApplicationUser
+      parameters:
+      - in: path
+        name: appId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: expand
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppUser'
+          description: Success
+      security:
+      - api_token: []
+      summary: Get Assigned User for Application
+      tags:
+      - Application
+    post:
+      description: Updates a user's profile for an application
+      operationId: updateApplicationUser
+      parameters:
+      - in: path
+        name: appId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppUser'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppUser'
+          description: Success
+      security:
+      - api_token: []
+      summary: Update Application Profile for Assigned User
+      tags:
+      - Application
+      x-codegen-request-body-name: appUser
+servers:
+- url: https://{subdomain}.okta.com/
+  variables:
+    subdomain:
+      default: my-domain

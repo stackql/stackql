@@ -1,11 +1,8 @@
 package provider
 
 import (
-	"fmt"
-
 	"net/http"
 
-	"github.com/stackql/stackql/internal/stackql/config"
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/discovery"
 	"github.com/stackql/stackql/internal/stackql/docparser"
@@ -19,8 +16,6 @@ import (
 
 const (
 	ambiguousServiceErrorMessage string = "More than one service exists with this name, please use the id in the object name, or unset the --usenonpreferredapis flag"
-	googleProviderName           string = "google"
-	oktaProviderName             string = "okta"
 	SchemaDelimiter              string = docparser.SchemaDelimiter
 )
 
@@ -30,18 +25,6 @@ type ProviderParam struct {
 	Id     string
 	Type   string
 	Format string
-}
-
-func GetSupportedProviders(extended bool) map[string]map[string]interface{} {
-	retVal := make(map[string]map[string]interface{})
-	if extended {
-		retVal[googleProviderName] = getProviderMapExtended(googleProviderName)
-		retVal[oktaProviderName] = getProviderMapExtended(oktaProviderName)
-	} else {
-		retVal[googleProviderName] = getProviderMap(googleProviderName)
-		retVal[oktaProviderName] = getProviderMap(oktaProviderName)
-	}
-	return retVal
 }
 
 type IProvider interface {
@@ -100,30 +83,23 @@ type IProvider interface {
 	GetDiscoveryGeneration(sqlengine.SQLEngine) (int, error)
 }
 
-func GetProviderFromRuntimeCtx(runtimeCtx dto.RuntimeCtx, dbEngine sqlengine.SQLEngine) (IProvider, error) {
-	providerStr := runtimeCtx.ProviderStr
-	return GetProvider(runtimeCtx, providerStr, "v1", dbEngine)
-}
-
-func GetProvider(runtimeCtx dto.RuntimeCtx, providerStr, providerVersion string, dbEngine sqlengine.SQLEngine) (IProvider, error) {
+func GetProvider(runtimeCtx dto.RuntimeCtx, providerStr, providerVersion string, reg openapistackql.RegistryAPI, dbEngine sqlengine.SQLEngine) (IProvider, error) {
 	switch providerStr {
-	case config.GetGoogleProviderString(), config.GetOktaProviderString():
-		return newGenericProvider(runtimeCtx, providerStr, providerVersion, dbEngine)
+	default:
+		return newGenericProvider(runtimeCtx, providerStr, providerVersion, reg, dbEngine)
 	}
-	return nil, fmt.Errorf("provider %s not supported", providerStr)
 }
 
 func getUrl(prov string) (string, error) {
 	switch prov {
 	case "google":
 		return constants.GoogleV1DiscoveryDoc, nil
-	case "okta":
-		return "okta", nil
+	default:
+		return prov, nil
 	}
-	return "", fmt.Errorf("cannot find root doc for provider = '%s'", prov)
 }
 
-func newGenericProvider(rtCtx dto.RuntimeCtx, providerStr, versionStr string, dbEngine sqlengine.SQLEngine) (IProvider, error) {
+func newGenericProvider(rtCtx dto.RuntimeCtx, providerStr, versionStr string, reg openapistackql.RegistryAPI, dbEngine sqlengine.SQLEngine) (IProvider, error) {
 	methSel, err := methodselect.NewMethodSelector(providerStr, versionStr)
 	if err != nil {
 		return nil, err
@@ -139,9 +115,11 @@ func newGenericProvider(rtCtx dto.RuntimeCtx, providerStr, versionStr string, db
 		rootUrl,
 		discovery.NewTTLDiscoveryStore(
 			dbEngine,
+			reg,
 			rtCtx,
 		),
 		&rtCtx,
+		reg,
 	)
 
 	p, err := da.GetProvider(rtCtx.ProviderStr)

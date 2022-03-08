@@ -19,7 +19,7 @@ func GetRuntimeCtx(providerStr string, outputFmtStr string, testName string) (*d
 	if err != nil {
 		return nil, fmt.Errorf("test failed on %s: %v", saKeyPath, err)
 	}
-	providerDir, err := util.GetFilePathFromRepositoryRoot("test/.stackql")
+	appRoot, err := util.GetFilePathFromRepositoryRoot("test/.stackql")
 	if err != nil {
 		return nil, fmt.Errorf("test failed: %v", err)
 	}
@@ -27,15 +27,20 @@ func GetRuntimeCtx(providerStr string, outputFmtStr string, testName string) (*d
 	if err != nil {
 		return nil, fmt.Errorf("test failed on %s: %v", dbInitFilePath, err)
 	}
+	registryRoot, err := util.GetForwardSlashFilePathFromRepositoryRoot("test/registry")
+	if err != nil {
+		return nil, fmt.Errorf("test failed on %s: %v", dbInitFilePath, err)
+	}
 	return &dto.RuntimeCtx{
-		Delimiter:        ",",
-		ProviderStr:      providerStr,
-		LogLevelStr:      "warn",
-		AuthRaw:          fmt.Sprintf(`{ "google": { "keyfilepath": "%s" }, "okta": { "keyfilepath": "%s", "keyfiletype": "api_key" } }`, saKeyPath, oktaSaKeyPath),
-		ProviderRootPath: providerDir,
-		OutputFormat:     outputFmtStr,
-		DbFilePath:       fmt.Sprintf("file:%s?mode=memory&cache=shared", testName),
-		DbInitFilePath:   dbInitFilePath,
+		Delimiter:                ",",
+		ProviderStr:              providerStr,
+		LogLevelStr:              "warn",
+		ApplicationFilesRootPath: appRoot,
+		AuthRaw:                  fmt.Sprintf(`{ "google": { "credentialsfilepath": "%s" }, "okta": { "credentialsfilepath": "%s", "type": "api_key" } }`, saKeyPath, oktaSaKeyPath),
+		RegistryRaw:              fmt.Sprintf(`{ "url": "file://%s",  "useEmbedded": false }`, registryRoot),
+		OutputFormat:             outputFmtStr,
+		DbFilePath:               fmt.Sprintf("file:%s?mode=memory&cache=shared", testName),
+		DbInitFilePath:           dbInitFilePath,
 	}, nil
 }
 

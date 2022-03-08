@@ -13,7 +13,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/responsehandler"
 	"github.com/stackql/stackql/internal/stackql/util"
 
-	"github.com/stackql/stackql/internal/stackql/config"
 	"github.com/stackql/stackql/internal/stackql/entryutil"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/provider"
@@ -37,7 +36,7 @@ func TestSelectOktaApplicationAppsDriver(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 
-	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(config.GetGoogleProviderString(), "text", "TestSelectOktaApplicationAppsDriver")
+	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSelectOktaApplicationAppsDriver")
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
@@ -81,7 +80,7 @@ func TestSelectOktaApplicationAppsDriver(t *testing.T) {
 }
 
 func TestSimpleSelectOktaApplicationAppsDriverOutput(t *testing.T) {
-	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(config.GetGoogleProviderString(), "text", "TestSimpleSelectOktaApplicationAppsDriverOutput")
+	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSimpleSelectOktaApplicationAppsDriverOutput")
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}

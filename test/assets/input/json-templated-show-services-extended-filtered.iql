@@ -21,5 +21,5 @@
 
 >>>
 
-show extended services where description like '{{ .service.description }}' and version = '{{ .service.version }}';
+show extended services from google where description like '{{ .service.description }}' and version = '{{ .service.version }}';
 

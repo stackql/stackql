@@ -14,6 +14,7 @@ import (
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
+	"golang.org/x/oauth2/jwt"
 )
 
 var (
@@ -28,14 +29,70 @@ type serviceAccount struct {
 type transport struct {
 	token               []byte
 	authType            string
+	tokenLocation       string
+	key                 string
 	underlyingTransport http.RoundTripper
 }
 
+func newTransport(token []byte, authType, tokenLocation, key string, underlyingTransport http.RoundTripper) (*transport, error) {
+	switch authType {
+	case authTypeBasic, authTypeBearer, authTypeSSWS:
+		if len(token) < 1 {
+			return nil, fmt.Errorf("no credentials provided for auth type = '%s'", authType)
+		}
+		if tokenLocation != locationHeader {
+			return nil, fmt.Errorf("improper location provided for auth type = '%s', provided = '%s', expected = '%s'", authType, tokenLocation, locationHeader)
+		}
+	default:
+		switch tokenLocation {
+		case locationHeader:
+		case locationQuery:
+			if key == "" {
+				return nil, fmt.Errorf("key required for query param based auth")
+			}
+		default:
+			return nil, fmt.Errorf("token location not supported: '%s'", tokenLocation)
+		}
+	}
+	return &transport{
+		token:               token,
+		authType:            authType,
+		tokenLocation:       tokenLocation,
+		key:                 key,
+		underlyingTransport: underlyingTransport,
+	}, nil
+}
+
+const (
+	locationHeader string = "header"
+	locationQuery  string = "query"
+	authTypeBasic  string = "BASIC"
+	authTypeBearer string = "Bearer"
+	authTypeSSWS   string = "SSWS"
+)
+
 func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.Header.Set(
-		"Authorization",
-		fmt.Sprintf("%s %s", t.authType, string(t.token)),
-	)
+	switch t.tokenLocation {
+	case locationHeader:
+		switch t.authType {
+		case authTypeBasic, authTypeBearer, authTypeSSWS:
+			req.Header.Set(
+				"Authorization",
+				fmt.Sprintf("%s %s", t.authType, string(t.token)),
+			)
+		default:
+			req.Header.Set(
+				t.key,
+				string(t.token),
+			)
+		}
+	case locationQuery:
+		qv := req.URL.Query()
+		qv.Set(
+			t.key, string(t.token),
+		)
+		req.URL.RawQuery = qv.Encode()
+	}
 	return t.underlyingTransport.RoundTrip(req)
 }
 
@@ -60,12 +117,21 @@ func parseServiceAccountFile(ac *dto.AuthCtx) (serviceAccount, error) {
 	return c, json.Unmarshal(b, &c)
 }
 
-func oauthServiceAccount(authCtx *dto.AuthCtx, scopes []string, runtimeCtx dto.RuntimeCtx) (*http.Client, error) {
+func getJWTConfig(provider string, credentialsBytes []byte, scopes []string) (*jwt.Config, error) {
+	switch provider {
+	case "google":
+		return google.JWTConfigFromJSON(credentialsBytes, scopes...)
+	default:
+		return nil, fmt.Errorf("service account auth for provider = '%s' currently not supported", provider)
+	}
+}
+
+func oauthServiceAccount(provider string, authCtx *dto.AuthCtx, scopes []string, runtimeCtx dto.RuntimeCtx) (*http.Client, error) {
 	b, err := authCtx.GetCredentialsBytes()
 	if err != nil {
 		return nil, fmt.Errorf("service account credentials error: %v", err)
 	}
-	config, errToken := google.JWTConfigFromJSON(b, scopes...)
+	config, errToken := getJWTConfig(provider, b, scopes)
 	if errToken != nil {
 		return nil, errToken
 	}
@@ -84,10 +150,25 @@ func apiTokenAuth(authCtx *dto.AuthCtx, runtimeCtx dto.RuntimeCtx) (*http.Client
 	}
 	activateAuth(authCtx, "", "api_key")
 	httpClient := netutils.GetHttpClient(runtimeCtx, http.DefaultClient)
-	httpClient.Transport = &transport{
-		token:               b,
-		authType:            "SSWS",
-		underlyingTransport: httpClient.Transport,
+	tr, err := newTransport(b, authTypeSSWS, locationHeader, "", httpClient.Transport)
+	if err != nil {
+		return nil, err
 	}
+	httpClient.Transport = tr
+	return httpClient, nil
+}
+
+func basicAuth(authCtx *dto.AuthCtx, runtimeCtx dto.RuntimeCtx) (*http.Client, error) {
+	b, err := authCtx.GetCredentialsBytes()
+	if err != nil {
+		return nil, fmt.Errorf("credentials error: %v", err)
+	}
+	activateAuth(authCtx, "", "basic")
+	httpClient := netutils.GetHttpClient(runtimeCtx, http.DefaultClient)
+	tr, err := newTransport(b, authTypeBasic, locationHeader, "", httpClient.Transport)
+	if err != nil {
+		return nil, err
+	}
+	httpClient.Transport = tr
 	return httpClient, nil
 }

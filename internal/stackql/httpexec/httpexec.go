@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/stackql/go-openapistackql/openapistackql"
 	"github.com/stackql/stackql/internal/stackql/util"
 
 	log "github.com/sirupsen/logrus"
@@ -194,16 +195,16 @@ func marshalResponse(r *http.Response) (interface{}, error) {
 		return nil, err
 	}
 	switch mediaType {
-	case "application/json":
+	case openapistackql.MediaTypeJson:
 		err = json.NewDecoder(body).Decode(&target)
-	case "application/xml":
+	case openapistackql.MediaTypeXML:
 		err = xml.NewDecoder(body).Decode(&target)
-	case "application/octet-stream":
+	case openapistackql.MediaTypeOctetStream:
 		target, err = io.ReadAll(body)
-	case "text/plain", "text/html":
+	case openapistackql.MediaTypeTextPlain, openapistackql.MediaTypeHTML:
 		var b []byte
 		b, err = io.ReadAll(body)
-		if err != nil {
+		if err == nil {
 			target = string(b)
 		}
 	default:
@@ -222,6 +223,10 @@ func ProcessHttpResponse(response *http.Response) (interface{}, error) {
 			return map[string]interface{}{"result": "The Operation Completed Successfully"}, nil
 		}
 	}
+	switch rv := target.(type) {
+	case string, int:
+		return map[string]interface{}{openapistackql.AnonymousColumnName: []interface{}{rv}}, nil
+	}
 	return target, err
 }
 
@@ -235,6 +240,10 @@ func DeprecatedProcessHttpResponse(response *http.Response) (map[string]interfac
 		return rv, nil
 	case nil:
 		return nil, nil
+	case string:
+		return map[string]interface{}{openapistackql.AnonymousColumnName: rv}, nil
+	case []byte:
+		return map[string]interface{}{openapistackql.AnonymousColumnName: string(rv)}, nil
 	default:
 		return nil, fmt.Errorf("DeprecatedProcessHttpResponse() cannot acccept response of type %T", rv)
 	}

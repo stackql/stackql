@@ -18,7 +18,7 @@
       "output": "csv",
       "delimiter": ";",
       "instruction": "exec",
-      "query": "show extended services where description like 'Provides natural language%' and version = 'v1';",
+      "query": "show extended services from google where description like 'Provides natural language%' and version = 'v1';",
       "expected": [ 
         "id;name;title;description;version;preferred",
         "language:v1;.*" 
@@ -31,7 +31,7 @@
       "output": "csv",
       "delimiter": ";",
       "instruction": "exec",
-      "query": "show extended services where description like 'Provides natural language%' and version = 'v1';",
+      "query": "show extended services from google where description like 'Provides natural language%' and version = 'v1';",
       "expected": [ 
         "id;name;title;description;version;preferred",
         "language:v1;.*" 
@@ -44,7 +44,7 @@
       "output": "csv",
       "delimiter": ";",
       "instruction": "exec",
-      "query": "show extended services where description like 'Provides natural language%' and version = 'v1';",
+      "query": "show extended services from google where description like 'Provides natural language%' and version = 'v1';",
       "expected": [ 
         "id;name;title;description;version;preferred",
         "language:v1;.*" 
@@ -56,7 +56,7 @@
       "name": "Tabular stdout based SHOW EXTENDED SERVICES test + assertion",
       "output": "table",
       "instruction": "exec",
-      "query": "show extended services where description like 'Provides natural language%' and version = 'v1';",
+      "query": "show extended services from google where description like 'Provides natural language%' and version = 'v1';",
       "expected": [ 
         "\\|[\\|\\-]*\\|$",
         "\\|[\\W]+id",

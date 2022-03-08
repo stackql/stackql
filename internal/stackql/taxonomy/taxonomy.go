@@ -35,7 +35,17 @@ func (ho *HeirarchyObjects) LookupSelectItemsKey() string {
 	if method == nil {
 		return defaultSelectItemsKEy
 	}
-	responseSchema, _ := method.GetResponseBodySchema()
+	if sk := method.GetSelectItemsKey(); sk != "" {
+		return sk
+	}
+	responseSchema, err := method.GetResponseBodySchema()
+	if responseSchema == nil || err != nil {
+		return ""
+	}
+	switch responseSchema.Type {
+	case "string", "integer":
+		return openapistackql.AnonymousColumnName
+	}
 	if prov.GetProviderString() == "google" {
 		sn := svcHdl.GetName()
 		if sn == "bigquery" && svcHdl.Info.Version == "v2" {
@@ -237,7 +247,11 @@ func (ho *HeirarchyObjects) GetSelectableObjectSchema() (*openapistackql.Schema,
 	if err != nil {
 		return nil, err
 	}
-	itemObjS, _, err := responseObj.GetSelectSchema(ho.LookupSelectItemsKey())
+	itemsKey := ho.Method.Response.ObjectKey
+	if itemsKey == "" {
+		itemsKey = ho.LookupSelectItemsKey()
+	}
+	itemObjS, _, err := responseObj.GetSelectSchema(itemsKey)
 	if itemObjS == nil || err != nil {
 		return nil, fmt.Errorf("could not locate dml object for response type '%v'", ho.Method.Response.ObjectKey)
 	}
@@ -318,7 +332,6 @@ func GetHeirarchyFromStatement(handlerCtx *handler.HandlerContext, node sqlparse
 	case *sqlparser.Select:
 		methodAction = "select"
 	case *sqlparser.DescribeTable:
-
 	case sqlparser.TableName:
 	case *sqlparser.AliasedTableExpr:
 		return GetHeirarchyFromStatement(handlerCtx, n.Expr)
