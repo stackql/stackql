@@ -45,7 +45,7 @@ Run StackQL Exec Command
     Set Environment Variable    OKTA_SECRET_KEY    ${OKTA_SECRET_STR}
     ${result} =     Run Process    
                     ...  ${STACKQL_EXE}
-                    ...  exec    \-\-registry\=${REGISTRY_CFG_STR}
+                    ...  exec    \-\-registry\=${REGISTRY_NO_VERIFY_CFG_STR}
                     ...  \-\-auth\=${AUTH_CFG_STR}
                     ...  \-\-tls.allowInsecure\=true
                     ...  ${_EXEC_CMD_STR}    @{varargs}

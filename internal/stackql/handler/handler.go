@@ -3,6 +3,8 @@ package handler
 import (
 	"fmt"
 	"io"
+	"path"
+	"strings"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
 	"github.com/stackql/go-openapistackql/pkg/nomenclature"
@@ -108,7 +110,11 @@ func getRegistry(runtimeCtx dto.RuntimeCtx) (openapistackql.RegistryAPI, error) 
 		return nil, err
 	}
 	if rc.LocalDocRoot == "" {
-		rc.LocalDocRoot = runtimeCtx.ApplicationFilesRootPath
+		if strings.HasPrefix(rc.RegistryURL, "file:") {
+			rc.LocalDocRoot = path.Clean(path.Join(strings.TrimPrefix(rc.RegistryURL, "file:"), ".."))
+		} else {
+			rc.LocalDocRoot = runtimeCtx.ApplicationFilesRootPath
+		}
 	}
 	rt := netutils.GetRoundTripper(runtimeCtx, nil)
 	return openapistackql.NewRegistry(rc, rt)

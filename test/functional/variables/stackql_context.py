@@ -18,14 +18,23 @@ def get_unix_path(pathStr :str) -> str:
 
 
 REPOSITORY_ROOT_UNIX = get_unix_path(REPOSITORY_ROOT)
-REGISTRY_ROOT   = get_unix_path(os.path.join(REPOSITORY_ROOT, 'test', 'registry-mocked'))
+REGISTRY_ROOT_MOCKED   = get_unix_path(os.path.join(REPOSITORY_ROOT, 'test', 'registry-mocked'))
+REGISTRY_ROOT_EMBEDDED   = get_unix_path(os.path.join(REPOSITORY_ROOT, 'test', 'registry-embedded-decompressed'))
 STACKQL_EXE     = get_unix_path(os.path.join(REPOSITORY_ROOT, 'build', _exe_name))
-_REGISTRY_CFG    = { 
-  "url": f"file://{get_unix_path(REGISTRY_ROOT)}",
-  "localDocRoot": f"{get_unix_path(REGISTRY_ROOT)}",
+_REGISTRY_NO_VERIFY_CFG    = { 
+  "url": f"file://{get_unix_path(REGISTRY_ROOT_MOCKED)}",
+  "localDocRoot": f"{get_unix_path(REGISTRY_ROOT_MOCKED)}",
   "useEmbedded": False,
   "verifyConfig": {
     "nopVerify": True 
+  } 
+}
+_REGISTRY_EMBEDDED_CFG    = { 
+  "url": f"file://{get_unix_path(REGISTRY_ROOT_EMBEDDED)}",
+  "localDocRoot": f"{get_unix_path(REGISTRY_ROOT_EMBEDDED)}",
+  "useEmbedded": True,
+  "verifyConfig": {
+    "nopVerify": False 
   } 
 }
 _AUTH_CFG={ 
@@ -42,7 +51,8 @@ _AUTH_CFG={
 with open(os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'credentials', 'dummy', 'okta', 'api-key.txt'), 'r') as f:
     OKTA_SECRET_STR = f.read()
 
-REGISTRY_CFG_STR = json.dumps(_REGISTRY_CFG)
+REGISTRY_NO_VERIFY_CFG_STR = json.dumps(_REGISTRY_NO_VERIFY_CFG)
+REGISTRY_EMBEDDED_CFG_STR = json.dumps(_REGISTRY_EMBEDDED_CFG)
 AUTH_CFG_STR = json.dumps(_AUTH_CFG)
 SHOW_PROVIDERS_STR = "show providers;"
 SHOW_OKTA_SERVICES_FILTERED_STR  = "show services from okta like 'app%';"
