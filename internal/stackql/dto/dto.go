@@ -96,11 +96,6 @@ type AuthCtx struct {
 	Active      bool     `json:"-" yaml:"-"`
 }
 
-type RegistryCtx struct {
-	Url         string `json:"url" yaml:"url"`
-	UseEmbedded bool   `json:"useEmbedded" yaml:"useEmbedded"`
-}
-
 func (ac *AuthCtx) HasKey() bool {
 	if ac.KeyFilePath != "" || ac.KeyEnvVar != "" {
 		return true

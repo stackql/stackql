@@ -428,11 +428,11 @@
       ],
     },
     {
-      "name": "SHOW PROVIDERS... ;\" -- prebuilt with cmake",
+      "name": "SHOW PROVIDERS... ;\" ",
       "type": "go",
       "request": "launch",
-      "mode": "exec",
-      "program": "${workspaceFolder}/build/stackql",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
         "--auth={ \"publicapis\": { \"type\": \"null_auth\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
