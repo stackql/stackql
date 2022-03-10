@@ -343,6 +343,14 @@ func (pb *primitiveGenerator) showInstructionExecutor(node *sqlparser.Show, hand
 		keys = methodKeys
 	case "PROVIDERS":
 		keys = handlerCtx.GetSupportedProviders(extended)
+		rv := util.PrepareResultSet(dto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, err, nil))
+		if len(keys) == 0 {
+			rv = util.EmptyProtectResultSet(
+				rv,
+				[]string{"name"},
+			)
+		}
+		return rv
 	case "RESOURCES":
 		svcName := node.OnTable.Name.GetRawVal()
 		if svcName == "" {

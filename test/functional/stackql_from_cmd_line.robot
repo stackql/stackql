@@ -11,15 +11,12 @@ Positive Control
 
 Get Providers
     Should StackQL Exec Contain    ${SHOW_PROVIDERS_STR}   okta
-    Should StackQL Embedded Exec Contain    ${SHOW_PROVIDERS_STR}   okta
 
 Get Okta Services
     Should StackQL Exec Contain    ${SHOW_OKTA_SERVICES_FILTERED_STR}    Application${SPACE}API
-    Should StackQL Embedded Exec Contain    ${SHOW_OKTA_SERVICES_FILTERED_STR}    Application${SPACE}API
 
 Get Okta Application Resources
     Should StackQL Exec Contain    ${SHOW_OKTA_APPLICATION_RESOURCES_FILTERED_STR}    grants    groups
-    Should StackQL Embedded Exec Contain    ${SHOW_OKTA_APPLICATION_RESOURCES_FILTERED_STR}    grants    groups
 
 *** Keywords ***
 Run StackQL Exec Command
@@ -54,18 +51,9 @@ Should StackQL Exec Equal
     ${result} =    Run StackQL Exec Command    ${_EXEC_CMD_STR}    @{varargs}
     Should Be Equal    ${result.stdout}    ${_EXEC_CMD_EXPECTED_OUTPUT}
 
-Should StackQL Embedded Exec Equal
-    [Arguments]    ${_EXEC_CMD_STR}    ${_EXEC_CMD_EXPECTED_OUTPUT}    @{varargs}
-    ${result} =    Run StackQL Embedded Exec Command    ${_EXEC_CMD_STR}    @{varargs}
-    Should Be Equal    ${result.stdout}    ${_EXEC_CMD_EXPECTED_OUTPUT}
-
 Should StackQL Exec Contain
     [Arguments]    ${_EXEC_CMD_STR}    ${_EXEC_CMD_EXPECTED_OUTPUT}    @{varargs}
     ${result} =    Run StackQL Exec Command    ${_EXEC_CMD_STR}
     Should contain    ${result.stdout}    ${_EXEC_CMD_EXPECTED_OUTPUT}    @{varargs}
 
-Should StackQL Embedded Exec Contain
-    [Arguments]    ${_EXEC_CMD_STR}    ${_EXEC_CMD_EXPECTED_OUTPUT}    @{varargs}
-    ${result} =    Run StackQL Embedded Exec Command    ${_EXEC_CMD_STR}
-    Should contain    ${result.stdout}    ${_EXEC_CMD_EXPECTED_OUTPUT}    @{varargs}
 

@@ -290,6 +290,21 @@ func PrepareResultSet(payload dto.PrepareResultSetDTO) dto.ExecutorOutput {
 	)
 }
 
+func EmptyProtectResultSet(rv dto.ExecutorOutput, columns []string) dto.ExecutorOutput {
+	if len(rv.GetRawResult()) == 0 {
+		resVal := &sqltypes.Result{
+			Fields: make([]*querypb.Field, len(columns)),
+		}
+		for f := range resVal.Fields {
+			resVal.Fields[f] = &querypb.Field{
+				Name: columns[f],
+			}
+		}
+		rv.GetSQLResult = func() *sqltypes.Result { return resVal }
+	}
+	return rv
+}
+
 func DescribeRowSort(rows map[string]map[string]interface{}) []string {
 	return describeRowSortArr
 }

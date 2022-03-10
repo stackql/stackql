@@ -16,35 +16,47 @@ limitations under the License.
 package cmd
 
 import (
+	"bytes"
+	"fmt"
+	"io"
+	"strings"
+
 	"github.com/spf13/cobra"
 
-	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/entryutil"
 	"github.com/stackql/stackql/internal/stackql/iqlerror"
+)
+
+const (
+	forbiddenRegistryCharacters string = ` ;\`
 )
 
 // execCmd represents the exec command
 var registryCmd = &cobra.Command{
 	Use:   "registry",
-	Short: "Interaction with the provider registry, as configured at initialisation time.  Usage: stackql registry {subcommand} [{arg}]",
+	Short: "Interaction with the stackql provider registry, as configured at initialisation time.  Usage: stackql registry {subcommand} [{arg}]",
 	Long: `
 	Interaction with the provider registry, as configured at initialisation time. Usage: stackql registry {subcommand}
 	Currently supported subcommands:
 	  - pull {provider} {version}
-    
+	  - list
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
+
+		var rdr io.Reader
+
 		usagemsg := cmd.Long + "\n\n" + cmd.UsageString()
 		if len(args) < 1 {
 			iqlerror.PrintErrorAndExitOneWithMessage(usagemsg)
 		}
-		reg, err := handler.GetRegistry(runtimeCtx)
-		if err != nil {
-			iqlerror.PrintErrorAndExitOneWithMessage(err.Error())
-		}
+		// reg, err := handler.GetRegistry(runtimeCtx)
+		// if err != nil {
+		// 	iqlerror.PrintErrorAndExitOneWithMessage(err.Error())
+		// }
 		if len(args) == 0 {
 			iqlerror.PrintErrorAndExitOneWithMessage(usagemsg)
 		}
-		subCommand := args[0]
+		subCommand := strings.ToLower(args[0])
 		switch subCommand {
 		case "pull":
 			if len(args) != 3 {
@@ -52,12 +64,35 @@ var registryCmd = &cobra.Command{
 			}
 			providerName := args[1]
 			providerVersion := args[2]
-			err := reg.PullAndPersistProviderArchive(providerName, providerVersion)
-			if err != nil {
-				iqlerror.PrintErrorAndExitOneWithMessage(err.Error())
+
+			if strings.ContainsAny(providerName, forbiddenRegistryCharacters) || strings.ContainsAny(providerVersion, forbiddenRegistryCharacters) {
+				iqlerror.PrintErrorAndExitOneWithMessage("forbidden characters detected")
 			}
-			return
+			// err := reg.PullAndPersistProviderArchive(
+			// 	providerName,
+			// 	providerVersion,
+			// )
+			rdr = bytes.NewReader([]byte(fmt.Sprintf("registry pull %s %s;", providerName, providerVersion)))
+			// if err != nil {
+			// 	iqlerror.PrintErrorAndExitOneWithMessage(err.Error())
+			// }
+			// return
+		case "list":
+			rdr = bytes.NewReader([]byte("registry list;"))
+			// _, err := reg.ListAllAvailableProviders()
+			// if err != nil {
+			// 	iqlerror.PrintErrorAndExitOneWithMessage(err.Error())
+			// }
+
 		}
-		iqlerror.PrintErrorAndExitOneWithMessage(usagemsg)
+		// iqlerror.PrintErrorAndExitOneWithMessage(usagemsg)
+
+		sqlEngine, err := entryutil.BuildSQLEngine(runtimeCtx)
+		iqlerror.PrintErrorAndExitOneIfError(err)
+		handlerCtx, err := entryutil.BuildHandlerContext(runtimeCtx, rdr, queryCache, sqlEngine)
+		iqlerror.PrintErrorAndExitOneIfError(err)
+		iqlerror.PrintErrorAndExitOneIfNil(&handlerCtx, "Handler context error")
+		RunCommand(&handlerCtx, nil, nil)
+
 	},
 }
