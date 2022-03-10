@@ -2,6 +2,7 @@ package planbuilder
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/stackql/stackql/internal/stackql/astvisit"
@@ -66,6 +67,8 @@ func (pgb *planGraphBuilder) createInstructionFor(handlerCtx *handler.HandlerCon
 		return pgb.handleInsert(handlerCtx, stmt)
 	case *sqlparser.OtherRead, *sqlparser.OtherAdmin:
 		return iqlerror.GetStatementNotSupportedError("OTHER")
+	case *sqlparser.Registry:
+		return pgb.handleRegistry(handlerCtx, stmt)
 	case *sqlparser.Rollback:
 		return iqlerror.GetStatementNotSupportedError("TRANSACTION: ROLLBACK")
 	case *sqlparser.Savepoint:
@@ -255,6 +258,53 @@ func (pgb *planGraphBuilder) handleDelete(handlerCtx *handler.HandlerContext, no
 		pgb.planGraph.CreatePrimitiveNode(pr)
 		return nil
 	}
+	return nil
+}
+
+func (pgb *planGraphBuilder) handleRegistry(handlerCtx *handler.HandlerContext, node *sqlparser.Registry) error {
+	primitiveGenerator := newRootPrimitiveGenerator(node, handlerCtx, pgb.planGraph)
+	err := primitiveGenerator.analyzeRegistry(handlerCtx, node)
+	if err != nil {
+		return err
+	}
+	reg, err := handler.GetRegistry(handlerCtx.RuntimeContext)
+	if err != nil {
+		return err
+	}
+	pr := primitivebuilder.NewLocalPrimitive(
+		func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput {
+			switch at := strings.ToLower(node.ActionType); at {
+			case "pull":
+				err := reg.PullAndPersistProviderArchive(node.ProviderId, node.ProviderVersion)
+				if err != nil {
+					return dto.NewErroneousExecutorOutput(err)
+				}
+				return util.PrepareResultSet(dto.NewPrepareResultSetPlusRawDTO(nil, nil, nil, nil, nil, &dto.BackendMessages{WorkingMessages: []string{fmt.Sprintf("%s provider, version '%s' successfully installed", node.ProviderId, node.ProviderVersion)}}, nil))
+			case "list":
+				provz, err := reg.ListAllAvailableProviders()
+				if err != nil {
+					return dto.NewErroneousExecutorOutput(err)
+				}
+				colz := []string{"provider", "version"}
+				keys := make(map[string]map[string]interface{})
+				i := 0
+				for k, v := range provz {
+					for _, ver := range v.Versions {
+						keys[strconv.Itoa(i)] = map[string]interface{}{
+							"provider": k,
+							"version":  ver,
+						}
+						i++
+					}
+				}
+				return util.PrepareResultSet(dto.NewPrepareResultSetPlusRawDTO(nil, keys, colz, nil, nil, nil, nil))
+			default:
+				return dto.NewErroneousExecutorOutput(fmt.Errorf("registry action '%s' no supported", at))
+			}
+		},
+	)
+	pgb.planGraph.CreatePrimitiveNode(pr)
+
 	return nil
 }
 

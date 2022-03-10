@@ -19,14 +19,16 @@ The following are potentially multi threaded:
 
 ## Rebuilding Parser
 
+First, go to the root of the vitess repository.
+
 ```bash
-make -C vitess.io/vitess/go/vt/sqlparser
+make -C go/vt/sqlparser
 ```
 
 If you need to add new AST node types, make sure to add them to [go/vt/sqlparser/ast.go](https://github.com/stackql/vitess/blob/feature/stackql-develop/go/vt/sqlparser/ast.go) and then regenerate the file [go/vt/sqlparser/rewriter.go](https://github.com/stackql/vitess/blob/feature/stackql-develop/go/vt/sqlparser/rewriter.go) as follows:
 
 ```
-cd vitess.io/vitess/go/vt/sqlparser
+cd go/vt/sqlparser
 
 go run ./visitorgen/main -input=ast.go -output=rewriter.go
 ```
