@@ -10,6 +10,10 @@
 
 If using `service account` auth against the `google` provider, then no ancillary information is required.  If howevere, you are using another key type / provider, then more runtime information is required, eg:
 
+## Running stackql
+
+Simplest example is using the interactive shell.
+
 Google:
 
 ```sh
@@ -22,6 +26,41 @@ export AUTH_STR='{ "google": { "credentialsfilepath": "'${HOME}'/stackql/stackql
 
 
 ```
+
+## Running in server mode
+
+**Note that this feature is in alpha**, as discussed in [the developer guide](/docs/developer_guide.md#server-mode).
+
+
+To run a `stackql` server over the `postgres` wire protocol (without client authentication), from the `build` directory.
+
+```bash
+./stackql --auth="${AUTH_STR}" --registry="${REG_STR}" srv
+```
+
+And then, using the `psql` client:
+
+```bash
+psql -d "host=127.0.0.1 port=5466 user=silly dbname=silly"
+```
+
+To run using mTLS auth, first prepare collateral as per [the mTLS setup README](/test/server/mtls/README.md).  Important to define the env var `CLIENT_CERT` in the shell session you will use to run the server.
+
+Then:
+
+```bash
+STACKQL_SRV_TLS_CFG='{ "keyFilePath": "../test/server/mtls/credentials/pg_server_key.pem", "certFilePath": "../test/server/mtls/credentials/pg_server_cert.pem", "clientCAs": [ "'${CLIENT_CERT}'" ] }'
+
+./stackql --auth="${AUTH_STR}" --registry="${REG_STR}"  --pg.tls="${STACKQL_SRV_TLS_CFG}" 
+```
+
+And then, using the `psql` client (from same directory; `build`):
+
+```bash
+psql -d "host=127.0.0.1 port=5466 user=silly dbname=silly sslmode=verify-full sslcert=../test/server/mtls/credentials/pg_client_cert.pem sslkey=../test/server/mtls/credentials/pg_client_key.pem sslrootcert=../test/server/mtls/credentials/pg_server_cert.pem"
+```
+
+## Queries
 
 ### SELECT
 

@@ -85,3 +85,7 @@ func BuildHandlerContext(runtimeCtx dto.RuntimeCtx, rdr io.Reader, lruCache *lru
 	iqlerror.PrintErrorAndExitOneIfError(err)
 	return handler.GetHandlerCtx(strings.TrimSpace(string(bb)), runtimeCtx, lruCache, sqlEngine)
 }
+
+func BuildHandlerContextNoPreProcess(runtimeCtx dto.RuntimeCtx, lruCache *lrucache.LRUCache, sqlEngine sqlengine.SQLEngine) (handler.HandlerContext, error) {
+	return handler.GetHandlerCtx("", runtimeCtx, lruCache, sqlEngine)
+}

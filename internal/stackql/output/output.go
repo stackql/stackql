@@ -9,13 +9,15 @@ import (
 	"os"
 	"strings"
 
+	"github.com/jackc/pgtype"
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/iqlutil"
+	"github.com/stackql/stackql/internal/stackql/psqlwire"
 
+	"github.com/jeroenrinzema/psql-wire/pkg/sqldata"
 	"github.com/olekukonko/tablewriter"
 	log "github.com/sirupsen/logrus"
-	"vitess.io/vitess/go/sqltypes"
 )
 
 const (
@@ -24,7 +26,7 @@ const (
 )
 
 type IOutputWriter interface {
-	Write(*sqltypes.Result) error
+	Write(sqldata.ISQLResultStream) error
 	WriteError(error, string) error
 }
 
@@ -50,9 +52,11 @@ func GetOutputWriter(writer io.Writer, errWriter io.Writer, outputCtx dto.Output
 	if errWriter == nil {
 		errWriter = os.Stdout
 	}
+	ci := pgtype.NewConnInfo()
 	switch outputCtx.RuntimeContext.OutputFormat {
 	case constants.JsonStr:
 		jsonWriter := JsonWriter{
+			ci:        ci,
 			writer:    writer,
 			errWriter: errWriter,
 			outputCtx: outputCtx,
@@ -61,6 +65,7 @@ func GetOutputWriter(writer io.Writer, errWriter io.Writer, outputCtx dto.Output
 	case constants.TableStr:
 		tablewriter := TableWriter{
 			AbstractTabularWriter{
+				ci:        ci,
 				outputCtx: outputCtx,
 			},
 			writer,
@@ -70,6 +75,7 @@ func GetOutputWriter(writer io.Writer, errWriter io.Writer, outputCtx dto.Output
 	case constants.CSVStr:
 		csvwriter := CSVWriter{
 			AbstractTabularWriter{
+				ci:        ci,
 				outputCtx: outputCtx,
 			},
 			writer,
@@ -79,6 +85,7 @@ func GetOutputWriter(writer io.Writer, errWriter io.Writer, outputCtx dto.Output
 	case constants.TextStr:
 		rawWriter := RawWriter{
 			AbstractTabularWriter{
+				ci:        ci,
 				outputCtx: outputCtx,
 			},
 			writer,
@@ -88,6 +95,7 @@ func GetOutputWriter(writer io.Writer, errWriter io.Writer, outputCtx dto.Output
 	case constants.PrettyTextStr:
 		prettyWriter := PrettyWriter{
 			AbstractTabularWriter{
+				ci:        ci,
 				outputCtx: outputCtx,
 			},
 			writer,
@@ -99,12 +107,14 @@ func GetOutputWriter(writer io.Writer, errWriter io.Writer, outputCtx dto.Output
 }
 
 type JsonWriter struct {
+	ci        *pgtype.ConnInfo
 	writer    io.Writer
 	errWriter io.Writer
 	outputCtx dto.OutputContext
 }
 
 type AbstractTabularWriter struct {
+	ci        *pgtype.ConnInfo
 	outputCtx dto.OutputContext
 }
 
@@ -132,16 +142,38 @@ type PrettyWriter struct {
 	errWriter io.Writer
 }
 
-func (jw *JsonWriter) writeRowsFromResult(res *sqltypes.Result) error {
-	rows := make([]map[string]interface{}, len(res.Rows))
-	for i, row := range res.Rows {
-		rowMap := make(map[string]interface{})
-		for j, s := range res.Fields {
-			rowMap[s.Name] = row[j].ToString()
-		}
-		rows[i] = rowMap
+func resToArr(res sqldata.ISQLResult) []map[string]interface{} {
+	var keys []string
+	for _, col := range res.GetColumns() {
+		keys = append(keys, col.GetName())
 	}
-	return jw.writeRows(rows)
+	var retVal []map[string]interface{}
+	for _, r := range res.GetRows() {
+		rowArr := r.GetRowDataNaive()
+		rm := make(map[string]interface{})
+		for i, c := range keys {
+			rm[c] = rowArr[i]
+		}
+		retVal = append(retVal, rm)
+	}
+	return retVal
+}
+
+func (jw *JsonWriter) writeRowsFromResult(res sqldata.ISQLResultStream) error {
+	for {
+		r, err := res.Read()
+		log.Debugln(fmt.Sprintf("result from stream: %v", r))
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				rowsArr := resToArr(r)
+				jw.writeRows(rowsArr)
+				return nil
+			}
+			return err
+		}
+		rowsArr := resToArr(r)
+		jw.writeRows(rowsArr)
+	}
 }
 
 func (jw *JsonWriter) writeRows(rows []map[string]interface{}) error {
@@ -158,7 +190,7 @@ func (jw *JsonWriter) writeRows(rows []map[string]interface{}) error {
 	return retVal
 }
 
-func (jw *JsonWriter) Write(res *sqltypes.Result) error {
+func (jw *JsonWriter) Write(res sqldata.ISQLResultStream) error {
 	return jw.writeRowsFromResult(res)
 }
 
@@ -175,10 +207,10 @@ func (jw *JsonWriter) WriteError(err error, errorPresentation string) error {
 	return jw.writeRows(rows)
 }
 
-func (tw *AbstractTabularWriter) getHeader(res *sqltypes.Result) []string {
-	headers := make([]string, len(res.Fields))
-	for i, s := range res.Fields {
-		headers[i] = s.Name
+func (tw *AbstractTabularWriter) getHeader(res sqldata.ISQLResult) []string {
+	var headers []string
+	for _, col := range res.GetColumns() {
+		headers = append(headers, col.GetName())
 	}
 	return headers
 }
@@ -203,84 +235,244 @@ func (tw *TableWriter) configureTable(table *tablewriter.Table) {
 	table.SetAutoFormatHeaders(false)
 }
 
-func (tw *TableWriter) Write(res *sqltypes.Result) error {
-	var err error = nil
-	header := tw.getHeader(res)
-	table := tablewriter.NewWriter(tw.writer)
-	table.SetHeader(header)
-
-	for _, v := range res.Rows {
-		log.Debugln(fmt.Sprintf(`tableWriter row: %v`, v))
-		rowSlice := make([]string, len(v))
-		for i, c := range v {
-			rowSlice[i] = c.ToString()
+func (tw *TableWriter) Write(res sqldata.ISQLResultStream) error {
+	var isHeaderRead bool
+	var table *tablewriter.Table
+	for {
+		var rowsArr [][]string
+		r, err := res.Read()
+		log.Debugln(fmt.Sprintf("result from stream: %v", r))
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				if !isHeaderRead {
+					header := tw.getHeader(r)
+					table = tablewriter.NewWriter(tw.writer)
+					table.SetHeader(header)
+					isHeaderRead = true
+				}
+				rowsArr, err = tabulateResults(r, tw.ci)
+				if err != nil {
+					return err
+				}
+				for _, rs := range rowsArr {
+					table.Append(rs)
+				}
+				tw.configureTable(table)
+				table.Render()
+				return nil
+			}
+			return err
 		}
-		table.Append(rowSlice)
+		if !isHeaderRead {
+			header := tw.getHeader(r)
+			table = tablewriter.NewWriter(tw.writer)
+			table.SetHeader(header)
+			isHeaderRead = true
+		}
+		rowsArr, err = tabulateResults(r, tw.ci)
+		for _, rs := range rowsArr {
+			table.Append(rs)
+		}
+		if err != nil {
+			return err
+		}
 	}
-	tw.configureTable(table)
-	table.Render()
-
-	return err
 }
 
-func (csvw *CSVWriter) Write(res *sqltypes.Result) error {
-	header := csvw.getHeader(res)
-	w := csv.NewWriter(csvw.writer)
-	w.Comma = rune(csvw.outputCtx.RuntimeContext.Delimiter[0])
-	if !csvw.outputCtx.RuntimeContext.CSVHeadersDisable {
-		w.Write(header)
+func decodeRow(colz []sqldata.ISQLColumn, row sqldata.ISQLRow, ci *pgtype.ConnInfo) ([][]byte, error) {
+	var retVal [][]byte
+	rawRow := row.GetRowDataNaive()
+	if len(rawRow) != len(colz) {
+		return nil, fmt.Errorf("row length != column count (%d != %d)", len(rawRow), len(colz))
 	}
-
-	for _, v := range res.Rows {
-		log.Debugln(fmt.Sprintf(`tableWriter row: %v`, v))
-		rowSlice := make([]string, len(v))
-		for i, c := range v {
-			rowSlice[i] = c.ToString()
+	for i, col := range colz {
+		b, err := psqlwire.ExtractRowElement(col, rawRow[i], ci)
+		if err != nil {
+			return nil, err
 		}
-		w.Write(rowSlice)
+		retVal = append(retVal, b)
 	}
-	w.Flush()
-	return w.Error()
+	return retVal, nil
 }
 
-func (rw *RawWriter) Write(res *sqltypes.Result) error {
-	header := rw.getHeader(res)
-	w := rw.writer
-	if !rw.outputCtx.RuntimeContext.CSVHeadersDisable {
-		w.Write([]byte(fmt.Sprintf("%s%s", strings.Join(header, ","), fmt.Sprintln(""))))
-	}
-
-	for _, v := range res.Rows {
-		log.Debugln(fmt.Sprintf(`tableWriter row: %v`, v))
-		rowSlice := make([]string, len(v))
-		for i, c := range v {
-			rowSlice[i] = c.ToString()
+func tabulateResults(r sqldata.ISQLResult, ci *pgtype.ConnInfo) ([][]string, error) {
+	var retVal [][]string
+	colz := r.GetColumns()
+	for _, v := range r.GetRows() {
+		rd, err := decodeRow(colz, v, ci)
+		if err != nil {
+			return nil, err
 		}
-		w.Write([]byte(fmt.Sprintf("%s%s", strings.Join(rowSlice, ","), fmt.Sprintln(""))))
+		var rs []string
+		for _, b := range rd {
+			rs = append(rs, string(b))
+		}
+		retVal = append(retVal, rs)
+	}
+	return retVal, nil
+}
+
+func (csvw *CSVWriter) Write(res sqldata.ISQLResultStream) error {
+	var isHeaderRead bool
+	var w *csv.Writer
+	for {
+		var rowsArr [][]string
+		r, err := res.Read()
+		log.Debugln(fmt.Sprintf("result from stream: %v", r))
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				if !isHeaderRead {
+					header := csvw.getHeader(r)
+					w = csv.NewWriter(csvw.writer)
+					w.Comma = rune(csvw.outputCtx.RuntimeContext.Delimiter[0])
+					if !csvw.outputCtx.RuntimeContext.CSVHeadersDisable {
+						w.Write(header)
+					}
+					isHeaderRead = true
+				}
+				rowsArr, err = tabulateResults(r, csvw.ci)
+				if err != nil {
+					return err
+				}
+				for _, rs := range rowsArr {
+					w.Write(rs)
+				}
+				w.Flush()
+				return w.Error()
+			}
+			return err
+		}
+		if !isHeaderRead {
+			header := csvw.getHeader(r)
+			w = csv.NewWriter(csvw.writer)
+			w.Comma = rune(csvw.outputCtx.RuntimeContext.Delimiter[0])
+			if !csvw.outputCtx.RuntimeContext.CSVHeadersDisable {
+				w.Write(header)
+			}
+			isHeaderRead = true
+		}
+		rowsArr, err = tabulateResults(r, csvw.ci)
+		if err != nil {
+			return err
+		}
+		for _, rs := range rowsArr {
+			w.Write(rs)
+		}
 	}
 	return nil
 }
 
-func (rw *PrettyWriter) Write(res *sqltypes.Result) error {
-	header := rw.getHeader(res)
-	w := rw.writer
-	if !rw.outputCtx.RuntimeContext.CSVHeadersDisable {
-		w.Write([]byte(fmt.Sprintf("%s%s", strings.Join(header, ","), fmt.Sprintln(""))))
-	}
-
-	for _, v := range res.Rows {
-		log.Debugln(fmt.Sprintf(`tableWriter row: %v`, v))
-		rowSlice := make([]string, len(v))
-		for i, c := range v {
-			s := c.ToString()
-			b, err := iqlutil.PrettyPrintSomeJson([]byte(s))
-			if err != nil {
-				rowSlice[i] = s
-				continue
+func (rw *RawWriter) Write(res sqldata.ISQLResultStream) error {
+	var isHeaderRead bool
+	var w io.Writer
+	for {
+		var rowsArr [][]string
+		r, err := res.Read()
+		log.Debugln(fmt.Sprintf("result from stream: %v", r))
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				if !isHeaderRead {
+					header := rw.getHeader(r)
+					w = rw.writer
+					if !rw.outputCtx.RuntimeContext.CSVHeadersDisable {
+						w.Write([]byte(fmt.Sprintf("%s%s", strings.Join(header, ","), fmt.Sprintln(""))))
+					}
+					isHeaderRead = true
+				}
+				rowsArr, err = tabulateResults(r, rw.ci)
+				if err != nil {
+					return err
+				}
+				for _, rs := range rowsArr {
+					w.Write([]byte(fmt.Sprintf("%s%s", strings.Join(rs, ","), fmt.Sprintln(""))))
+				}
+				return nil
 			}
-			rowSlice[i] = string(b)
+			return err
 		}
-		w.Write([]byte(fmt.Sprintf("%s%s", strings.Join(rowSlice, ","), fmt.Sprintln(""))))
+		if !isHeaderRead {
+			header := rw.getHeader(r)
+			w = rw.writer
+			if !rw.outputCtx.RuntimeContext.CSVHeadersDisable {
+				w.Write([]byte(fmt.Sprintf("%s%s", strings.Join(header, ","), fmt.Sprintln(""))))
+			}
+			isHeaderRead = true
+		}
+		rowsArr, err = tabulateResults(r, rw.ci)
+		if err != nil {
+			return err
+		}
+		for _, rs := range rowsArr {
+			w.Write([]byte(fmt.Sprintf("%s%s", strings.Join(rs, ","), fmt.Sprintln(""))))
+		}
+	}
+	return nil
+}
+
+func (rw *PrettyWriter) Write(res sqldata.ISQLResultStream) error {
+
+	var isHeaderRead bool
+	var w io.Writer
+	for {
+		var rowsArr [][]string
+		r, err := res.Read()
+		log.Debugln(fmt.Sprintf("result from stream: %v", r))
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				if !isHeaderRead {
+					header := rw.getHeader(r)
+					w = rw.writer
+					if !rw.outputCtx.RuntimeContext.CSVHeadersDisable {
+						w.Write([]byte(fmt.Sprintf("%s%s", strings.Join(header, ","), fmt.Sprintln(""))))
+					}
+					isHeaderRead = true
+				}
+				rowsArr, err = tabulateResults(r, rw.ci)
+				if err != nil {
+					return err
+				}
+				for _, rs := range rowsArr {
+					rowSlice := make([]string, len(rs))
+					for i, c := range rs {
+						s := c
+						b, err := iqlutil.PrettyPrintSomeJson([]byte(s))
+						if err != nil {
+							rowSlice[i] = s
+							continue
+						}
+						rowSlice[i] = string(b)
+					}
+					w.Write([]byte(fmt.Sprintf("%s%s", strings.Join(rowSlice, ","), fmt.Sprintln(""))))
+				}
+				return nil
+			}
+			return err
+		}
+		if !isHeaderRead {
+			header := rw.getHeader(r)
+			w = rw.writer
+			if !rw.outputCtx.RuntimeContext.CSVHeadersDisable {
+				w.Write([]byte(fmt.Sprintf("%s%s", strings.Join(header, ","), fmt.Sprintln(""))))
+			}
+			isHeaderRead = true
+		}
+		rowsArr, err = tabulateResults(r, rw.ci)
+		if err != nil {
+			return err
+		}
+		for _, rs := range rowsArr {
+			rowSlice := make([]string, len(rs))
+			for i, c := range rs {
+				s := c
+				b, err := iqlutil.PrettyPrintSomeJson([]byte(s))
+				if err != nil {
+					rowSlice[i] = s
+					continue
+				}
+				rowSlice[i] = string(b)
+			}
+			w.Write([]byte(fmt.Sprintf("%s%s", strings.Join(rowSlice, ","), fmt.Sprintln(""))))
+		}
 	}
 	return nil
 }

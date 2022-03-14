@@ -36,6 +36,11 @@ jobs:
       uses: egor-tensin/setup-mingw@v2
       id: gccsetup
 
+    - name: Choco install postgres
+      uses: crazy-max/ghaction-chocolatey@v1
+      with:
+        args: "install --force postgresql13 openssl"
+
     - name: Get rid of disruptive line endings before checkout
       run: |
         git config --global core.autocrlf false
@@ -117,8 +122,16 @@ jobs:
         '-Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded' `
         '-DoutputDirectory=test/downloads'
 
+    - name: Create certificates for robot tests
+      run: |
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_server_key.pem -out test/server/mtls/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365 
+
     - name: Run robot tests
       if: success()
+      env:
+        PSQL_EXE: C:\Program Files\PostgreSQL\13\bin\psql
       run: |
         cmd /c "robot test\functional"
     
@@ -153,6 +166,11 @@ jobs:
       with:
         platform: x64
         cygwin: 0
+    
+    - name: Install psql
+      run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends postgresql-client
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
@@ -220,6 +238,12 @@ jobs:
         org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy \
         -Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded \
         -DoutputDirectory=test/downloads
+
+    - name: Create certificates for robot tests
+      run: |
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_server_key.pem -out test/server/mtls/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365 
 
     - name: Run robot tests
       if: success()
@@ -321,6 +345,12 @@ jobs:
         org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy \
         -Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded \
         -DoutputDirectory=test/downloads
+
+    - name: Create certificates for robot tests
+      run: |
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_server_key.pem -out test/server/mtls/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365 
 
     - name: Run robot tests
       if: success()

@@ -21,6 +21,16 @@ If you want further auth types or discover bugs, please raise an issue.
 
 Examples are present [here](/docs/examples.md).
 
+## Server mode
+
+**Note that this feature is in alpha**.  We will update timelines for General Availability after a period of analysis and testing.  At the time of writing, server mode is most useful for R&D purposes: 
+- experimentation.
+- tooling / system integrations and design thereof.
+- development of `stackql` itself.
+- development of use cases for the product.
+
+The `stackql` server leverages the `postgres` wire protocol and can be used with the `psql` client, including mTLS auth / encryption in transit.  Please see [the relevant examples](/docs/examples.md#running-in-server-mode) for further details.
+
 ## Concurrency considerations
 
 In server mode, a thread pool issues one thread to handle each connection.
@@ -206,3 +216,11 @@ is the guts of query processing.
 ```
 time ./stackql exec --cpuprofile=./select-disks-improved-05.profile --auth='{ "google": { "credentialsfilepath": "'${HOME}'/stackql/stackql-devel/keys/sa-key.json" }, "okta": { "credentialsfilepath": "'${HOME}'/stackql/stackql-devel/keys/okta-token.txt", "type": "api_key" } } ' "select name from google.compute.disks where project = 'lab-kr-network-01' and zone = 'australia-southeast1-a';"
 ```
+
+## Postgres Server Implementation
+
+1. Heavy duty option as per cockroachdb:
+    - https://github.com/cockroachdb/cockroach/tree/e6a0d23d516203bf5e8d1c8b3c3c26ddfaddc388/pkg/sql/pgwire
+2. Light touch option can be based upon:
+    - https://github.com/jeroenrinzema/psql-wire
+
