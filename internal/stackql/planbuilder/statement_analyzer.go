@@ -58,6 +58,8 @@ func (p *primitiveGenerator) analyzeStatement(handlerCtx *handler.HandlerContext
 		return p.analyzeInsert(handlerCtx, stmt)
 	case *sqlparser.OtherRead, *sqlparser.OtherAdmin:
 		return iqlerror.GetStatementNotSupportedError("OTHER")
+	case *sqlparser.Registry:
+		return p.analyzeRegistry(handlerCtx, stmt)
 	case *sqlparser.Rollback:
 		return iqlerror.GetStatementNotSupportedError("TRANSACTION: ROLLBACK")
 	case *sqlparser.Savepoint:
@@ -1254,6 +1256,11 @@ func (p *primitiveGenerator) analyzeSleep(handlerCtx *handler.HandlerContext, no
 			),
 		),
 	)
+	return err
+}
+
+func (p *primitiveGenerator) analyzeRegistry(handlerCtx *handler.HandlerContext, node *sqlparser.Registry) error {
+	var err error
 	return err
 }
 
