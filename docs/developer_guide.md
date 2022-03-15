@@ -1,6 +1,26 @@
 
 # StackQL Developer Guide
 
+## Provider development
+
+Keen to expose some new functionality though `stackql`?  We are very keen on this!  
+
+Please see [registry_contribution.md](/docs/registry_contribution.md).
+
+## Provider Authentication
+
+At this stage, authentication config must be specified for each provider, even for unauthorized ones.  Supported auth types are:
+
+- `api_key`.
+- `basic`.
+- `interactive` for interactive oAuth, thus far only google supported via `gcloud` command line tool.
+- `service_account` for json style private keys (eg: google service accounts).
+- `null_auth` for unauthenticated providers.
+
+If you want further auth types or discover bugs, please raise an issue.
+
+Examples are present [here](/docs/examples.md).
+
 ## Concurrency considerations
 
 In server mode, a thread pool issues one thread to handle each connection.
