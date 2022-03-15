@@ -9,7 +9,7 @@
 
 # Deploy, Manage and Query Cloud Infrastructure using SQL
 
-[Documentation](https://docs.stackql.io/)]  [Developer Guide](/docs/developer_guide.md)]
+[[Documentation](https://docs.stackql.io/)]  [[Developer Guide](/docs/developer_guide.md)] [[BYO Providers](/docs/registry_contribution.md)]
 
 ## Cloud infrastructure coding using SQL
 
@@ -20,6 +20,14 @@
     use google; SELECT * FROM compute.instance WHERE zone = 'australia-southeast1-b' AND project = 'my-project' ;
 
 ----
+
+## Provider development
+
+Keen to expose some new functionality though `stackql`?  We are very keen on this!  
+
+Please see [registry_contribution.md](/docs/registry_contribution.md).
+
+---
 
 ## Design
 
