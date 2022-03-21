@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"vitess.io/vitess/go/sqltypes"
+	"github.com/jeroenrinzema/psql-wire/pkg/sqldata"
 )
 
 const (
@@ -52,6 +52,10 @@ const (
 	OutputFormatKey                 string = "output"
 	ApplicationFilesRootPathKey     string = "approot"
 	ApplicationFilesRootPathModeKey string = "approotfilemode"
+	PgSrvAddressKey                 string = "pgsrv.address"
+	PgSrvLogLevelKey                string = "pgsrv.loglevel"
+	PgSrvPortKey                    string = "pgsrv.port"
+	PgSrvRawTLSCfgKey               string = "pgsrv.tls"
 	ProviderStrKey                  string = "provider"
 	QueryCacheSizeKey               string = "querycachesize"
 	RegistryRawKey                  string = "registry"
@@ -197,6 +201,10 @@ type RuntimeCtx struct {
 	OutputFormat                 string
 	ApplicationFilesRootPath     string
 	ApplicationFilesRootPathMode uint32
+	PGSrvAddress                 string
+	PGSrvLogLevel                string
+	PGSrvPort                    int
+	PGSrvRawTLSCfg               string
 	ProviderStr                  string
 	RegistryRaw                  string
 	Reinit                       bool
@@ -294,6 +302,14 @@ func (rc *RuntimeCtx) Set(key string, val string) error {
 		rc.ApplicationFilesRootPath = val
 	case ApplicationFilesRootPathModeKey:
 		retVal = setUint32(&rc.ApplicationFilesRootPathMode, val)
+	case PgSrvAddressKey:
+		rc.PGSrvAddress = val
+	case PgSrvLogLevelKey:
+		rc.PGSrvLogLevel = val
+	case PgSrvPortKey:
+		retVal = setInt(&rc.PGSrvPort, val)
+	case PgSrvRawTLSCfgKey:
+		rc.PGSrvRawTLSCfg = val
 	case QueryCacheSizeKey:
 		retVal = setInt(&rc.QueryCacheSize, val)
 	case RegistryRawKey:
@@ -325,7 +341,7 @@ type RowsDTO struct {
 
 type OutputContext struct {
 	RuntimeContext RuntimeCtx
-	Result         *sqltypes.Result
+	Result         sqldata.ISQLResultStream
 }
 
 type PrepareResultSetDTO struct {
@@ -378,7 +394,7 @@ func NewPrepareResultSetPlusRawDTO(
 }
 
 type ExecutorOutput struct {
-	GetSQLResult  func() *sqltypes.Result
+	GetSQLResult  func() sqldata.ISQLResultStream
 	GetRawResult  func() map[int]map[int]interface{}
 	GetOutputBody func() map[string]interface{}
 	Msg           *BackendMessages
@@ -389,13 +405,13 @@ func (ex ExecutorOutput) ResultToMap() (map[int]map[int]interface{}, error) {
 	return ex.GetRawResult(), nil
 }
 
-func NewExecutorOutput(result *sqltypes.Result, body map[string]interface{}, rawResult map[int]map[int]interface{}, msg *BackendMessages, err error) ExecutorOutput {
+func NewExecutorOutput(result sqldata.ISQLResultStream, body map[string]interface{}, rawResult map[int]map[int]interface{}, msg *BackendMessages, err error) ExecutorOutput {
 	return newExecutorOutput(result, body, rawResult, msg, err)
 }
 
-func newExecutorOutput(result *sqltypes.Result, body map[string]interface{}, rawResult map[int]map[int]interface{}, msg *BackendMessages, err error) ExecutorOutput {
+func newExecutorOutput(result sqldata.ISQLResultStream, body map[string]interface{}, rawResult map[int]map[int]interface{}, msg *BackendMessages, err error) ExecutorOutput {
 	return ExecutorOutput{
-		GetSQLResult: func() *sqltypes.Result { return result },
+		GetSQLResult: func() sqldata.ISQLResultStream { return result },
 		GetRawResult: func() map[int]map[int]interface{} {
 			if rawResult == nil {
 				return make(map[int]map[int]interface{})

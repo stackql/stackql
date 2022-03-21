@@ -46,6 +46,10 @@ func (cd ColumnMetadata) GetName() string {
 	return cd.Column.Name
 }
 
+func (cd ColumnMetadata) GetIdentifier() string {
+	return cd.Column.GetIdentifier()
+}
+
 func (cd ColumnMetadata) GetType() string {
 	if cd.Column.Schema != nil {
 		return cd.Column.Schema.Type

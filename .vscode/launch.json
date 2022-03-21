@@ -116,6 +116,18 @@
       ],
     },
     {
+      "name": "DEBUG run server;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "srv",
+        "--auth={ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
+        "{ \"url\": \"file://${workspaceFolder}/examples/registry\", \"localDocRoot\": \"${workspaceFolder}/examples/registry\", \"verifyConfig\": {\"nopVerify\": true } }"
+      ],
+    },
+    {
       "name": "DEBUG delete from google.storage.buckets ... ;",
       "type": "go",
       "request": "launch",

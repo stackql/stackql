@@ -95,7 +95,7 @@ func getIntroAuthMsg(authCtx *dto.AuthCtx, prov provider.IProvider) string {
 			return fmt.Sprintf(credentialProvidedMsgTmpl, authCtx.GetCredentialsSourceDescriptorString(), authCtx.Type)
 		}
 	}
-	return notAuthenticatedMsg
+	return "" // notAuthenticatedMsg
 }
 
 func colorIsNull(runtimeCtx dto.RuntimeCtx) bool {

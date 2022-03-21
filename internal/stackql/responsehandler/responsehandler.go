@@ -31,7 +31,7 @@ func HandleResponse(handlerCtx *handler.HandlerContext, response dto.ExecutorOut
 			handlerCtx.Outfile.Write([]byte(msg + fmt.Sprintln("")))
 		}
 	}
-	if response.GetSQLResult() != nil && response.GetSQLResult().Fields != nil && response.Err == nil {
+	if response.GetSQLResult() != nil && response.GetSQLResult() != nil && response.Err == nil {
 		outputWriter, err = output.GetOutputWriter(
 			handlerCtx.Outfile,
 			handlerCtx.OutErrFile,

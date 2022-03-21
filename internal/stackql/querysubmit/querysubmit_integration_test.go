@@ -1,12 +1,15 @@
 package querysubmit_test
 
 import (
+	"errors"
+	"io"
 	"net/url"
 	"os"
 	"testing"
 
 	"github.com/stackql/stackql/internal/stackql/entryutil"
 	. "github.com/stackql/stackql/internal/stackql/querysubmit"
+	"gotest.tools/assert"
 
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/provider"
@@ -59,9 +62,11 @@ func TestSimpleSelectGoogleComputeInstanceQuerySubmit(t *testing.T) {
 		t.Fatalf("response is unexpectedly nil")
 	}
 
-	if len(response.GetSQLResult().Rows) != 2 {
-		t.Fatalf("response size not as expected, actual != expected: %d != %d", len(response.GetSQLResult().Rows), 2)
-	}
+	r, err := response.GetSQLResult().Read()
+
+	assert.Assert(t, errors.Is(err, io.EOF))
+
+	assert.Assert(t, len(r.GetRows()) == 2)
 
 	t.Logf("simple select driver integration test passed")
 }

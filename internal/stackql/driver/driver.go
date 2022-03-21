@@ -1,8 +1,11 @@
 package driver
 
 import (
+	"context"
+	"fmt"
 	"strings"
 
+	"github.com/jeroenrinzema/psql-wire/pkg/sqldata"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/entryutil"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -30,11 +33,47 @@ func throwErr(err error, handlerCtx *handler.HandlerContext) {
 }
 
 func ProcessQuery(handlerCtx *handler.HandlerContext) {
+	responses, ok := processQueryOrQueries(handlerCtx)
+	if ok {
+		for _, r := range responses {
+			responsehandler.HandleResponse(handlerCtx, r)
+		}
+	}
+}
+
+type StackQLBackend struct {
+	handlerCtx *handler.HandlerContext
+}
+
+func (sbs *StackQLBackend) HandleSimpleQuery(ctx context.Context, query string) (sqldata.ISQLResultStream, error) {
+	sbs.handlerCtx.RawQuery = query
+	if strings.Count(query, ";") > 1 {
+		return nil, fmt.Errorf("only support single queries in server mode at this time")
+	}
+	res, ok := processQueryOrQueries(sbs.handlerCtx)
+	if !ok {
+		return nil, fmt.Errorf("no SQLresults available")
+	}
+	r := res[0]
+	if r.Err != nil {
+		return nil, r.Err
+	}
+	return r.GetSQLResult(), nil
+}
+
+func NewStackQLBackend(handlerCtx *handler.HandlerContext) (*StackQLBackend, error) {
+	return &StackQLBackend{
+		handlerCtx: handlerCtx,
+	}, nil
+}
+
+func processQueryOrQueries(handlerCtx *handler.HandlerContext) ([]dto.ExecutorOutput, bool) {
+	var retVal []dto.ExecutorOutput
 	cmdString := handlerCtx.RawQuery
 	tc, err := entryutil.GetTxnCounterManager(*handlerCtx)
 	if err != nil {
 		throwErr(err, handlerCtx)
-		return
+		return nil, false
 	}
 	handlerCtx.TxnCounterMgr = tc
 	for _, s := range strings.Split(cmdString, ";") {
@@ -42,7 +81,7 @@ func ProcessQuery(handlerCtx *handler.HandlerContext) {
 			continue
 		}
 		handlerCtx.Query = s
-		response := querysubmit.SubmitQuery(handlerCtx)
-		responsehandler.HandleResponse(handlerCtx, response)
+		retVal = append(retVal, querysubmit.SubmitQuery(handlerCtx))
 	}
+	return retVal, true
 }

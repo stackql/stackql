@@ -1,0 +1,24 @@
+[ req ]
+default_bits       = 4096
+default_md         = sha256
+prompt             = no
+encrypt_key        = no
+distinguished_name = pg_server
+# stackql_ca
+[ pg_ca ]
+countryName            = "AU"                   # C=
+stateOrProvinceName    = "VIC"                  # ST=
+localityName           = "Melbourne"            # L=
+organizationName       = "StackQL"              # O=
+organizationalUnitName = "Core Functions"       # OU=
+commonName             = "pg_ca"           # CN=
+emailAddress           = "krimmer@stackql.io"   # CN/emailAddress=
+# stackql_server
+[ pg_server ]
+countryName            = "AU"                   # C=
+stateOrProvinceName    = "VIC"                  # ST=
+localityName           = "Melbourne"            # L=
+organizationName       = "StackQL"              # O=
+organizationalUnitName = "Core Functions"       # OU=
+commonName             = "127.0.0.1"       # CN=
+emailAddress           = "krimmer@stackql.io"   # CN/emailAddress=

@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/jeroenrinzema/psql-wire/pkg/sqldata"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -345,12 +346,17 @@ func prepareGolangResult(sqlEngine sqlengine.SQLEngine, stmtCtx drm.PreparedStat
 			Fields: make([]*querypb.Field, len(nonControlColumns)),
 		}
 
+		var colz []string
+		for _, col := range nonControlColumns {
+			colz = append(colz, col.GetIdentifier())
+		}
+
 		for f := range resVal.Fields {
 			resVal.Fields[f] = &querypb.Field{
 				Name: cNames[f],
 			}
 		}
-		rv.GetSQLResult = func() *sqltypes.Result { return resVal }
+		rv.GetSQLResult = func() sqldata.ISQLResultStream { return util.GetHeaderOnlyResultStream(colz) }
 	}
 	return rv
 }

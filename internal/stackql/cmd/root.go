@@ -137,6 +137,11 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.LogLevelStr, dto.LogLevelStrKey, config.GetDefaultLogLevelString(), fmt.Sprintf(`Log level`))
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.ErrorPresentation, dto.ErrorPresentationKey, config.GetDefaultErrorPresentationString(), fmt.Sprintf(`Error presentation, options are: {"stderr", "record"}`))
 
+	rootCmd.PersistentFlags().StringVar(&runtimeCtx.PGSrvAddress, dto.PgSrvAddressKey, "0.0.0.0", "server address, for server mode only")
+	rootCmd.PersistentFlags().StringVar(&runtimeCtx.PGSrvLogLevel, dto.PgSrvLogLevelKey, "WARN", "Log level, for server mode only")
+	rootCmd.PersistentFlags().StringVar(&runtimeCtx.PGSrvRawTLSCfg, dto.PgSrvRawTLSCfgKey, "", "tls config for server, for server mode only")
+	rootCmd.PersistentFlags().IntVar(&runtimeCtx.PGSrvPort, dto.PgSrvPortKey, 5466, "TCP server port, for server mode only")
+
 	rootCmd.PersistentFlags().MarkHidden(dto.TestWithoutApiCallsKey)
 	rootCmd.PersistentFlags().MarkHidden(dto.ViperCfgFileNameKey)
 	rootCmd.PersistentFlags().MarkHidden(dto.ErrorPresentationKey)
@@ -151,7 +156,7 @@ func init() {
 	rootCmd.AddCommand(execCmd)
 	rootCmd.AddCommand(shellCmd)
 	rootCmd.AddCommand(registryCmd)
-	// rootCmd.AddCommand(srvCmd)
+	rootCmd.AddCommand(srvCmd)
 
 }
 

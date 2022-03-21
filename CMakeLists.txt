@@ -73,6 +73,33 @@ add_custom_command(TARGET ${TARGET}
   PRE_BUILD
   DEPENDS ${SRCS}
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  COMMAND
+    openssl req -x509 -keyout test/server/mtls/credentials/pg_server_key.pem -out test/server/mtls/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
+  COMMENT "set up server TLS credentials for robot tests"
+)
+
+add_custom_command(TARGET ${TARGET}
+  PRE_BUILD
+  DEPENDS ${SRCS}
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  COMMAND
+    openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
+  COMMENT "set up client TLS credentials for robot tests"
+)
+
+add_custom_command(TARGET ${TARGET}
+  PRE_BUILD
+  DEPENDS ${SRCS}
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  COMMAND
+    openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365 
+  COMMENT "set up rubbish TLS credentials for robot tests"
+)
+
+add_custom_command(TARGET ${TARGET}
+  PRE_BUILD
+  DEPENDS ${SRCS}
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   COMMAND go test -timeout 2400s -p 2 --tags "json1" ./...
   COMMENT "Running Go Unit Tests"
 )
