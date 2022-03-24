@@ -44,7 +44,7 @@ type IProvider interface {
 
 	GetLikeableColumns(string) []string
 
-	GetMethodForAction(serviceName string, resourceName string, iqlAction string, runtimeCtx dto.RuntimeCtx) (*openapistackql.OperationStore, string, error)
+	GetMethodForAction(serviceName string, resourceName string, iqlAction string, parameters map[string]interface{}, runtimeCtx dto.RuntimeCtx) (*openapistackql.OperationStore, string, error)
 
 	GetMethodSelector() methodselect.IMethodSelector
 

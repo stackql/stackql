@@ -1044,22 +1044,6 @@ providerServices:
       $ref: googleapis.com/v1/services/cloudprofiler-v2.yaml
     title: Stackdriver Profiler API
     version: v2
-  cloudresourcemanager:v2:
-    description: Creates, reads, and updates metadata for Google Cloud Platform resource
-      containers.
-    discoveryRestUrl: https://cloudresourcemanager.googleapis.com/services/$discovery-rest?version=v2
-    documentationLink: https://cloud.google.com/resource-manager
-    icons:
-      x16: https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png
-      x32: https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png
-    id: cloudresourcemanager:v2
-    kind: discovery#directoryItem
-    name: cloudresourcemanager
-    preferred: false
-    service:
-      $ref: googleapis.com/v1/services/cloudresourcemanager-v2.yaml
-    title: Cloud Resource Manager API
-    version: v2
   cloudresourcemanager:
     description: Creates, reads, and updates metadata for Google Cloud Platform resource
       containers.
@@ -1104,6 +1088,22 @@ providerServices:
     preferred: false
     title: Cloud Resource Manager API
     version: v1beta1
+  cloudresourcemanager:v2:
+    description: Creates, reads, and updates metadata for Google Cloud Platform resource
+      containers.
+    discoveryRestUrl: https://cloudresourcemanager.googleapis.com/services/$discovery-rest?version=v2
+    documentationLink: https://cloud.google.com/resource-manager
+    icons:
+      x16: https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png
+      x32: https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png
+    id: cloudresourcemanager:v2
+    kind: discovery#directoryItem
+    name: cloudresourcemanager
+    preferred: false
+    service:
+      $ref: googleapis.com/v1/services/cloudresourcemanager-v2.yaml
+    title: Cloud Resource Manager API
+    version: v2
   cloudresourcemanager:v2beta1:
     description: Creates, reads, and updates metadata for Google Cloud Platform resource
       containers.
@@ -1326,10 +1326,10 @@ providerServices:
     kind: discovery#directoryItem
     name: compute
     preferred: true
-    service:
-      $ref: googleapis.com/v1/services/compute-v1.yaml
     resources:
       $ref: googleapis.com/v1/resources/compute-v1.yaml
+    service:
+      $ref: googleapis.com/v1/services/compute-v1.yaml
     title: Compute Engine API
     version: v1
   compute:alpha:

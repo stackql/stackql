@@ -30,7 +30,7 @@ Example as per [examples/registry/src/publicapis/v1/services/api-v1.yaml](/examp
 
 ### 3. Run `stackql` with config to support local Provider development.
 
-Configure `stackql` to use your docs, bia the `--registry` command line argument.  The [example integration section](#Configuring-StackQL-to-consume-a-local-development-registry) expands upon this.
+Configure `stackql` to use your docs, via the `--registry` command line argument.  The [example integration section](#Configuring-StackQL-to-consume-a-local-development-registry) expands upon this.
 
 ### 4. Iterate and verify that `stackql` works as expected against your new provider.
 

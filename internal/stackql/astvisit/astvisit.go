@@ -19,6 +19,7 @@ type DRMAstVisitor struct {
 	rewrittenQuery      string
 	gcQueries           []string
 	tablesCited         map[*sqlparser.AliasedTableExpr]sqlparser.TableName
+	params              map[sqlparser.SQLNode]interface{}
 	shouldCollectTables bool
 }
 
@@ -26,6 +27,7 @@ func NewDRMAstVisitor(iDColumnName string, shouldCollectTables bool) *DRMAstVisi
 	return &DRMAstVisitor{
 		iDColumnName:        iDColumnName,
 		tablesCited:         make(map[*sqlparser.AliasedTableExpr]sqlparser.TableName),
+		params:              make(map[sqlparser.SQLNode]interface{}),
 		shouldCollectTables: shouldCollectTables,
 	}
 }
@@ -47,6 +49,21 @@ func (v *DRMAstVisitor) GetRewrittenQuery() string {
 
 func (v *DRMAstVisitor) GetGCQueries() []string {
 	return v.gcQueries
+}
+
+func (v *DRMAstVisitor) GetParameters() map[sqlparser.SQLNode]interface{} {
+	return v.params
+}
+
+func (v *DRMAstVisitor) GetStringifiedParameters() map[string]interface{} {
+	rv := make(map[string]interface{})
+	for k, v := range v.params {
+		switch k := k.(type) {
+		case *sqlparser.ColName:
+			rv[k.Name.GetRawVal()] = v
+		}
+	}
+	return rv
 }
 
 func (v *DRMAstVisitor) generateQIDComparison(ta sqlparser.TableIdent) *sqlparser.ComparisonExpr {
@@ -775,6 +792,8 @@ func (v *DRMAstVisitor) Visit(node sqlparser.SQLNode) error {
 		v.rewrittenQuery = buf.String()
 
 	case *sqlparser.JoinTableExpr:
+		node.LeftExpr.Accept(v)
+		node.LeftExpr.Accept(v)
 		buf.AstPrintf(node, "%v %s %v%v", node.LeftExpr, node.Join, node.RightExpr, node.Condition)
 		v.rewrittenQuery = buf.String()
 
@@ -824,6 +843,20 @@ func (v *DRMAstVisitor) Visit(node sqlparser.SQLNode) error {
 		v.rewrittenQuery = buf.String()
 
 	case *sqlparser.ComparisonExpr:
+		switch lt := node.Left.(type) {
+		case *sqlparser.ColName:
+			switch rt := node.Right.(type) {
+			case *sqlparser.SQLVal:
+				v.params[lt] = rt
+			default:
+			}
+		default:
+			switch rt := node.Right.(type) {
+			case *sqlparser.SQLVal:
+			default:
+				v.params[lt] = rt
+			}
+		}
 		buf.AstPrintf(node, "%v %s %v", node.Left, node.Operator, node.Right)
 		if node.Escape != nil {
 			buf.AstPrintf(node, " escape %v", node.Escape)

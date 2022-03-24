@@ -383,6 +383,53 @@ func (pr *PassThroughPrimitive) Optimise() error {
 	return nil
 }
 
+func (pr *HTTPRestPrimitive) GetInputFromAlias(alias string) (dto.ExecutorOutput, bool) {
+	var rv dto.ExecutorOutput
+	key, keyExists := pr.InputAliases[alias]
+	if !keyExists {
+		return rv, false
+	}
+	input, inputExists := pr.Inputs[key]
+	if !inputExists {
+		return rv, false
+	}
+	return input, true
+}
+
+func (pr *MetaDataPrimitive) GetInputFromAlias(string) (dto.ExecutorOutput, bool) {
+	var rv dto.ExecutorOutput
+	return rv, false
+}
+
+func (pr *LocalPrimitive) GetInputFromAlias(string) (dto.ExecutorOutput, bool) {
+	var rv dto.ExecutorOutput
+	return rv, false
+}
+
+func (pr *PassThroughPrimitive) GetInputFromAlias(string) (dto.ExecutorOutput, bool) {
+	var rv dto.ExecutorOutput
+	return rv, false
+}
+
+func (pr *HTTPRestPrimitive) SetExecutor(ex func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput) error {
+	pr.Executor = ex
+	return nil
+}
+
+func (pr *MetaDataPrimitive) SetExecutor(ex func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput) error {
+	pr.Executor = ex
+	return nil
+}
+
+func (pr *LocalPrimitive) SetExecutor(ex func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput) error {
+	pr.Executor = ex
+	return nil
+}
+
+func (pr *PassThroughPrimitive) SetExecutor(func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput) error {
+	return fmt.Errorf("pass through primitive does not support SetExecutor()")
+}
+
 func (pr *HTTPRestPrimitive) Execute(pc primitive.IPrimitiveCtx) dto.ExecutorOutput {
 	if pr.Executor != nil {
 		op := pr.Executor(pc)
@@ -417,14 +464,14 @@ func (pr *LocalPrimitive) Execute(pc primitive.IPrimitiveCtx) dto.ExecutorOutput
 	return dto.NewExecutorOutput(nil, nil, nil, nil, nil)
 }
 
-func NewMetaDataPrimitive(provider provider.IProvider, executor func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput) *MetaDataPrimitive {
+func NewMetaDataPrimitive(provider provider.IProvider, executor func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput) primitive.IPrimitive {
 	return &MetaDataPrimitive{
 		Provider: provider,
 		Executor: executor,
 	}
 }
 
-func NewHTTPRestPrimitive(provider provider.IProvider, executor func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput, preparator func() *drm.PreparedStatementCtx, txnCtrlCtr *dto.TxnControlCounters) *HTTPRestPrimitive {
+func NewHTTPRestPrimitive(provider provider.IProvider, executor func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput, preparator func() *drm.PreparedStatementCtx, txnCtrlCtr *dto.TxnControlCounters) primitive.IPrimitive {
 	return &HTTPRestPrimitive{
 		Provider:      provider,
 		Executor:      executor,
@@ -435,14 +482,14 @@ func NewHTTPRestPrimitive(provider provider.IProvider, executor func(pc primitiv
 	}
 }
 
-func NewLocalPrimitive(executor func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput) *LocalPrimitive {
+func NewLocalPrimitive(executor func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput) primitive.IPrimitive {
 	return &LocalPrimitive{
 		Executor: executor,
 		Inputs:   make(map[int64]dto.ExecutorOutput),
 	}
 }
 
-func NewPassThroughPrimitive(sqlEngine sqlengine.SQLEngine, txnControlCounterSlice []dto.TxnControlCounters, shouldCollectGarbage bool) *PassThroughPrimitive {
+func NewPassThroughPrimitive(sqlEngine sqlengine.SQLEngine, txnControlCounterSlice []dto.TxnControlCounters, shouldCollectGarbage bool) primitive.IPrimitive {
 	return &PassThroughPrimitive{
 		Inputs:                 make(map[int64]dto.ExecutorOutput),
 		sqlEngine:              sqlEngine,

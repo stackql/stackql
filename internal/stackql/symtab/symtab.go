@@ -6,6 +6,7 @@ import (
 	"vitess.io/vitess/go/vt/sqlparser"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/stackql/go-suffix-map/pkg/suffixmap"
 )
 
 type SymTabEntry struct {
@@ -49,6 +50,17 @@ func (st *HashMapTreeSymTab) GetSymbol(k interface{}) (SymTabEntry, error) {
 	v, ok := st.tab[k]
 	if ok {
 		return v, nil
+	}
+	switch key := k.(type) {
+	case string:
+		for ki, vi := range st.tab {
+			switch ki := ki.(type) {
+			case string:
+				if suffixmap.SuffixMatches(ki, key) {
+					return vi, nil
+				}
+			}
+		}
 	}
 	for _, v := range st.leaves {
 		lv, err := v.GetSymbol(k)

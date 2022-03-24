@@ -4867,24 +4867,18 @@ components:
       methods:
         delete:
           operation:
-            $ref: delete
-          path:
-            $ref: /projects/{projectId}/datasets/{datasetId}
+            $ref: '#/paths/~1projects~1{projectId}~1datasets~1{datasetId}/delete'
           response:
             openAPIDocKey: '200'
         get:
           operation:
-            $ref: get
-          path:
-            $ref: /projects/{projectId}/datasets/{datasetId}
+            $ref: '#/paths/~1projects~1{projectId}~1datasets~1{datasetId}/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         insert:
           operation:
-            $ref: post
-          path:
-            $ref: /projects/{projectId}/datasets
+            $ref: '#/paths/~1projects~1{projectId}~1datasets/post'
           request:
             mediaType: application/json
           response:
@@ -4892,17 +4886,13 @@ components:
             openAPIDocKey: '200'
         list:
           operation:
-            $ref: get
-          path:
-            $ref: /projects/{projectId}/datasets
+            $ref: '#/paths/~1projects~1{projectId}~1datasets/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         patch:
           operation:
-            $ref: patch
-          path:
-            $ref: /projects/{projectId}/datasets/{datasetId}
+            $ref: '#/paths/~1projects~1{projectId}~1datasets~1{datasetId}/patch'
           request:
             mediaType: application/json
           response:
@@ -4910,9 +4900,7 @@ components:
             openAPIDocKey: '200'
         update:
           operation:
-            $ref: put
-          path:
-            $ref: /projects/{projectId}/datasets/{datasetId}
+            $ref: '#/paths/~1projects~1{projectId}~1datasets~1{datasetId}/put'
           request:
             mediaType: application/json
           response:
@@ -4925,40 +4913,30 @@ components:
       methods:
         cancel:
           operation:
-            $ref: post
-          path:
-            $ref: /projects/{projectId}/jobs/{jobId}/cancel
+            $ref: '#/paths/~1projects~1{projectId}~1jobs~1{jobId}~1cancel/post'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         delete:
           operation:
-            $ref: delete
-          path:
-            $ref: /projects/{projectsId}/jobs/{jobsId}/delete
+            $ref: '#/paths/~1projects~1{projectsId}~1jobs~1{jobsId}~1delete/delete'
           response:
             openAPIDocKey: '200'
         get:
           operation:
-            $ref: get
-          path:
-            $ref: /projects/{projectId}/jobs/{jobId}
+            $ref: '#/paths/~1projects~1{projectId}~1jobs~1{jobId}/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         getQueryResults:
           operation:
-            $ref: get
-          path:
-            $ref: /projects/{projectId}/queries/{jobId}
+            $ref: '#/paths/~1projects~1{projectId}~1queries~1{jobId}/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         insert:
           operation:
-            $ref: post
-          path:
-            $ref: /projects/{projectId}/jobs
+            $ref: '#/paths/~1projects~1{projectId}~1jobs/post'
           request:
             mediaType: application/octet-stream
           response:
@@ -4966,17 +4944,13 @@ components:
             openAPIDocKey: '200'
         list:
           operation:
-            $ref: get
-          path:
-            $ref: /projects/{projectId}/jobs
+            $ref: '#/paths/~1projects~1{projectId}~1jobs/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         query:
           operation:
-            $ref: post
-          path:
-            $ref: /projects/{projectId}/queries
+            $ref: '#/paths/~1projects~1{projectId}~1queries/post'
           request:
             mediaType: application/json
           response:
@@ -4989,32 +4963,24 @@ components:
       methods:
         delete:
           operation:
-            $ref: delete
-          path:
-            $ref: /projects/{projectsId}/datasets/{datasetsId}/models/{modelsId}
+            $ref: '#/paths/~1projects~1{projectsId}~1datasets~1{datasetsId}~1models~1{modelsId}/delete'
           response:
             openAPIDocKey: '200'
         get:
           operation:
-            $ref: get
-          path:
-            $ref: /projects/{projectsId}/datasets/{datasetsId}/models/{modelsId}
+            $ref: '#/paths/~1projects~1{projectsId}~1datasets~1{datasetsId}~1models~1{modelsId}/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         list:
           operation:
-            $ref: get
-          path:
-            $ref: /projects/{projectsId}/datasets/{datasetsId}/models
+            $ref: '#/paths/~1projects~1{projectsId}~1datasets~1{datasetsId}~1models/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         patch:
           operation:
-            $ref: patch
-          path:
-            $ref: /projects/{projectsId}/datasets/{datasetsId}/models/{modelsId}
+            $ref: '#/paths/~1projects~1{projectsId}~1datasets~1{datasetsId}~1models~1{modelsId}/patch'
           request:
             mediaType: application/json
           response:
@@ -5027,17 +4993,13 @@ components:
       methods:
         getServiceAccount:
           operation:
-            $ref: get
-          path:
-            $ref: /projects/{projectId}/serviceAccount
+            $ref: '#/paths/~1projects~1{projectId}~1serviceAccount/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         list:
           operation:
-            $ref: get
-          path:
-            $ref: /projects
+            $ref: '#/paths/~1projects/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
@@ -5048,24 +5010,18 @@ components:
       methods:
         delete:
           operation:
-            $ref: delete
-          path:
-            $ref: /projects/{projectsId}/datasets/{datasetsId}/routines/{routinesId}
+            $ref: '#/paths/~1projects~1{projectsId}~1datasets~1{datasetsId}~1routines~1{routinesId}/delete'
           response:
             openAPIDocKey: '200'
         get:
           operation:
-            $ref: get
-          path:
-            $ref: /projects/{projectsId}/datasets/{datasetsId}/routines/{routinesId}
+            $ref: '#/paths/~1projects~1{projectsId}~1datasets~1{datasetsId}~1routines~1{routinesId}/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         insert:
           operation:
-            $ref: post
-          path:
-            $ref: /projects/{projectsId}/datasets/{datasetsId}/routines
+            $ref: '#/paths/~1projects~1{projectsId}~1datasets~1{datasetsId}~1routines/post'
           request:
             mediaType: application/json
           response:
@@ -5073,17 +5029,13 @@ components:
             openAPIDocKey: '200'
         list:
           operation:
-            $ref: get
-          path:
-            $ref: /projects/{projectsId}/datasets/{datasetsId}/routines
+            $ref: '#/paths/~1projects~1{projectsId}~1datasets~1{datasetsId}~1routines/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         update:
           operation:
-            $ref: put
-          path:
-            $ref: /projects/{projectsId}/datasets/{datasetsId}/routines/{routinesId}
+            $ref: '#/paths/~1projects~1{projectsId}~1datasets~1{datasetsId}~1routines~1{routinesId}/put'
           request:
             mediaType: application/json
           response:
@@ -5096,9 +5048,7 @@ components:
       methods:
         getIamPolicy:
           operation:
-            $ref: post
-          path:
-            $ref: /projects/{projectsId}/datasets/{datasetsId}/tables/{tablesId}/rowAccessPolicies/{rowAccessPoliciesId}:getIamPolicy
+            $ref: '#/paths/~1projects~1{projectsId}~1datasets~1{datasetsId}~1tables~1{tablesId}~1rowAccessPolicies~1{rowAccessPoliciesId}:getIamPolicy/post'
           request:
             mediaType: application/json
           response:
@@ -5106,17 +5056,13 @@ components:
             openAPIDocKey: '200'
         list:
           operation:
-            $ref: get
-          path:
-            $ref: /projects/{projectsId}/datasets/{datasetsId}/tables/{tablesId}/rowAccessPolicies
+            $ref: '#/paths/~1projects~1{projectsId}~1datasets~1{datasetsId}~1tables~1{tablesId}~1rowAccessPolicies/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         setIamPolicy:
           operation:
-            $ref: post
-          path:
-            $ref: /projects/{projectsId}/datasets/{datasetsId}/tables/{tablesId}/rowAccessPolicies/{rowAccessPoliciesId}:setIamPolicy
+            $ref: '#/paths/~1projects~1{projectsId}~1datasets~1{datasetsId}~1tables~1{tablesId}~1rowAccessPolicies~1{rowAccessPoliciesId}:setIamPolicy/post'
           request:
             mediaType: application/json
           response:
@@ -5124,9 +5070,7 @@ components:
             openAPIDocKey: '200'
         testIamPermissions:
           operation:
-            $ref: post
-          path:
-            $ref: /projects/{projectsId}/datasets/{datasetsId}/tables/{tablesId}/rowAccessPolicies/{rowAccessPoliciesId}:testIamPermissions
+            $ref: '#/paths/~1projects~1{projectsId}~1datasets~1{datasetsId}~1tables~1{tablesId}~1rowAccessPolicies~1{rowAccessPoliciesId}:testIamPermissions/post'
           request:
             mediaType: application/json
           response:
@@ -5139,9 +5083,7 @@ components:
       methods:
         insertAll:
           operation:
-            $ref: post
-          path:
-            $ref: /projects/{projectId}/datasets/{datasetId}/tables/{tableId}/insertAll
+            $ref: '#/paths/~1projects~1{projectId}~1datasets~1{datasetId}~1tables~1{tableId}~1insertAll/post'
           request:
             mediaType: application/json
           response:
@@ -5149,9 +5091,7 @@ components:
             openAPIDocKey: '200'
         list:
           operation:
-            $ref: get
-          path:
-            $ref: /projects/{projectId}/datasets/{datasetId}/tables/{tableId}/data
+            $ref: '#/paths/~1projects~1{projectId}~1datasets~1{datasetId}~1tables~1{tableId}~1data/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
@@ -5162,24 +5102,18 @@ components:
       methods:
         delete:
           operation:
-            $ref: delete
-          path:
-            $ref: /projects/{projectId}/datasets/{datasetId}/tables/{tableId}
+            $ref: '#/paths/~1projects~1{projectId}~1datasets~1{datasetId}~1tables~1{tableId}/delete'
           response:
             openAPIDocKey: '200'
         get:
           operation:
-            $ref: get
-          path:
-            $ref: /projects/{projectId}/datasets/{datasetId}/tables/{tableId}
+            $ref: '#/paths/~1projects~1{projectId}~1datasets~1{datasetId}~1tables~1{tableId}/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         getIamPolicy:
           operation:
-            $ref: post
-          path:
-            $ref: /projects/{projectsId}/datasets/{datasetsId}/tables/{tablesId}:getIamPolicy
+            $ref: '#/paths/~1projects~1{projectsId}~1datasets~1{datasetsId}~1tables~1{tablesId}:getIamPolicy/post'
           request:
             mediaType: application/json
           response:
@@ -5187,9 +5121,7 @@ components:
             openAPIDocKey: '200'
         insert:
           operation:
-            $ref: post
-          path:
-            $ref: /projects/{projectId}/datasets/{datasetId}/tables
+            $ref: '#/paths/~1projects~1{projectId}~1datasets~1{datasetId}~1tables/post'
           request:
             mediaType: application/json
           response:
@@ -5197,17 +5129,13 @@ components:
             openAPIDocKey: '200'
         list:
           operation:
-            $ref: get
-          path:
-            $ref: /projects/{projectId}/datasets/{datasetId}/tables
+            $ref: '#/paths/~1projects~1{projectId}~1datasets~1{datasetId}~1tables/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         patch:
           operation:
-            $ref: patch
-          path:
-            $ref: /projects/{projectId}/datasets/{datasetId}/tables/{tableId}
+            $ref: '#/paths/~1projects~1{projectId}~1datasets~1{datasetId}~1tables~1{tableId}/patch'
           request:
             mediaType: application/json
           response:
@@ -5215,9 +5143,7 @@ components:
             openAPIDocKey: '200'
         setIamPolicy:
           operation:
-            $ref: post
-          path:
-            $ref: /projects/{projectsId}/datasets/{datasetsId}/tables/{tablesId}:setIamPolicy
+            $ref: '#/paths/~1projects~1{projectsId}~1datasets~1{datasetsId}~1tables~1{tablesId}:setIamPolicy/post'
           request:
             mediaType: application/json
           response:
@@ -5225,9 +5151,7 @@ components:
             openAPIDocKey: '200'
         testIamPermissions:
           operation:
-            $ref: post
-          path:
-            $ref: /projects/{projectsId}/datasets/{datasetsId}/tables/{tablesId}:testIamPermissions
+            $ref: '#/paths/~1projects~1{projectsId}~1datasets~1{datasetsId}~1tables~1{tablesId}:testIamPermissions/post'
           request:
             mediaType: application/json
           response:
@@ -5235,9 +5159,7 @@ components:
             openAPIDocKey: '200'
         update:
           operation:
-            $ref: put
-          path:
-            $ref: /projects/{projectId}/datasets/{datasetId}/tables/{tableId}
+            $ref: '#/paths/~1projects~1{projectId}~1datasets~1{datasetId}~1tables~1{tableId}/put'
           request:
             mediaType: application/json
           response:

@@ -463,13 +463,9 @@ func (pb *primitiveGenerator) insertExecutor(handlerCtx *handler.HandlerContext,
 		nil,
 	)
 	ex := func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput {
-		key, keyExists := insertPrimitive.InputAliases[""]
-		if !keyExists {
-			return dto.NewErroneousExecutorOutput(fmt.Errorf("input for insert key does not exist"))
-		}
-		input, inputExists := insertPrimitive.Inputs[key]
+		input, inputExists := insertPrimitive.GetInputFromAlias("")
 		if !inputExists {
-			return dto.NewErroneousExecutorOutput(fmt.Errorf("input for insert does not exist"))
+			return dto.NewErroneousExecutorOutput(fmt.Errorf("input does not exist"))
 		}
 		inputMap, err := input.ResultToMap()
 		if err != nil {
@@ -549,8 +545,11 @@ func (pb *primitiveGenerator) insertExecutor(handlerCtx *handler.HandlerContext,
 				nil,
 				nil,
 			)
-			dependentInsertPrimitive.Executor = func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput {
+			err = dependentInsertPrimitive.SetExecutor(func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput {
 				return execInstance()
+			})
+			if err != nil {
+				return dto.NewErroneousExecutorOutput(err)
 			}
 			execPrim, err := pb.composeAsyncMonitor(handlerCtx, dependentInsertPrimitive, tbl)
 			if err != nil {
@@ -563,7 +562,10 @@ func (pb *primitiveGenerator) insertExecutor(handlerCtx *handler.HandlerContext,
 		}
 		return resultSet
 	}
-	insertPrimitive.Executor = ex
+	err = insertPrimitive.SetExecutor(ex)
+	if err != nil {
+		return nil, err
+	}
 	return insertPrimitive, nil
 }
 
@@ -695,7 +697,7 @@ func generateSuccessMessagesFromHeirarchy(meta taxonomy.ExtendedTableMetadata) [
 	m, methodErr := meta.GetMethod()
 	prov, err := meta.GetProvider()
 	if methodErr == nil && err == nil && m != nil && prov != nil && prov.GetProviderString() == "google" {
-		if m.APIMethod == "get" || m.APIMethod == "list" || m.APIMethod == "aggregatedList" {
+		if m.APIMethod == "select" || m.APIMethod == "get" || m.APIMethod == "list" || m.APIMethod == "aggregatedList" {
 			successMsgs = []string{
 				"The operation completed successfully, consider using a SELECT statement if you are performing an operation that returns data, see https://docs.stackql.io/language-spec/select for more information",
 			}

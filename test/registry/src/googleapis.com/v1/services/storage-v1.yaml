@@ -1208,24 +1208,18 @@ components:
       methods:
         delete:
           operation:
-            $ref: delete
-          path:
-            $ref: /b/{bucket}/acl/{entity}
+            $ref: '#/paths/~1b~1{bucket}~1acl~1{entity}/delete'
           response:
             openAPIDocKey: '200'
         get:
           operation:
-            $ref: get
-          path:
-            $ref: /b/{bucket}/acl/{entity}
+            $ref: '#/paths/~1b~1{bucket}~1acl~1{entity}/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         insert:
           operation:
-            $ref: post
-          path:
-            $ref: /b/{bucket}/acl
+            $ref: '#/paths/~1b~1{bucket}~1acl/post'
           request:
             mediaType: application/json
           response:
@@ -1233,17 +1227,13 @@ components:
             openAPIDocKey: '200'
         list:
           operation:
-            $ref: get
-          path:
-            $ref: /b/{bucket}/acl
+            $ref: '#/paths/~1b~1{bucket}~1acl/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         patch:
           operation:
-            $ref: patch
-          path:
-            $ref: /b/{bucket}/acl/{entity}
+            $ref: '#/paths/~1b~1{bucket}~1acl~1{entity}/patch'
           request:
             mediaType: application/json
           response:
@@ -1251,9 +1241,7 @@ components:
             openAPIDocKey: '200'
         update:
           operation:
-            $ref: put
-          path:
-            $ref: /b/{bucket}/acl/{entity}
+            $ref: '#/paths/~1b~1{bucket}~1acl~1{entity}/put'
           request:
             mediaType: application/json
           response:
@@ -1266,60 +1254,46 @@ components:
       methods:
         delete:
           operation:
-            $ref: delete
-          path:
-            $ref: /b/{bucket}
+            $ref: '#/paths/~1b~1{bucket}/delete'
           response:
             openAPIDocKey: '200'
         get:
           operation:
-            $ref: get
-          path:
-            $ref: /b/{bucket}
+            $ref: '#/paths/~1b~1{bucket}/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         getIamPolicy:
           operation:
-            $ref: get
-          path:
-            $ref: /b/{bucket}/iam
+            $ref: '#/paths/~1b~1{bucket}~1iam/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         insert:
           operation:
-            $ref: post
-          path:
-            $ref: /b
+            $ref: '#/paths/~1b/post'
           request:
             mediaType: application/json
             required:
-              - name
+            - name
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         list:
           operation:
-            $ref: get
-          path:
-            $ref: /b
+            $ref: '#/paths/~1b/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         lockRetentionPolicy:
           operation:
-            $ref: post
-          path:
-            $ref: /b/{bucket}/lockRetentionPolicy
+            $ref: '#/paths/~1b~1{bucket}~1lockRetentionPolicy/post'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         patch:
           operation:
-            $ref: patch
-          path:
-            $ref: /b/{bucket}
+            $ref: '#/paths/~1b~1{bucket}/patch'
           request:
             mediaType: application/json
           response:
@@ -1327,33 +1301,27 @@ components:
             openAPIDocKey: '200'
         setIamPolicy:
           operation:
-            $ref: put
-          path:
-            $ref: /b/{bucket}/iam
+            $ref: '#/paths/~1b~1{bucket}~1iam/put'
           request:
             mediaType: application/json
             required:
-              - bindings
+            - bindings
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         testIamPermissions:
           operation:
-            $ref: get
-          path:
-            $ref: /b/{bucket}/iam/testPermissions
+            $ref: '#/paths/~1b~1{bucket}~1iam~1testPermissions/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         update:
           operation:
-            $ref: put
-          path:
-            $ref: /b/{bucket}
+            $ref: '#/paths/~1b~1{bucket}/put'
           request:
             mediaType: application/json
             required:
-              - acl
+            - acl
           response:
             mediaType: application/json
             openAPIDocKey: '200'
@@ -1364,9 +1332,7 @@ components:
       methods:
         stop:
           operation:
-            $ref: post
-          path:
-            $ref: /channels/stop
+            $ref: '#/paths/~1channels~1stop/post'
           request:
             mediaType: application/json
           response:
@@ -1378,24 +1344,18 @@ components:
       methods:
         delete:
           operation:
-            $ref: delete
-          path:
-            $ref: /b/{bucket}/defaultObjectAcl/{entity}
+            $ref: '#/paths/~1b~1{bucket}~1defaultObjectAcl~1{entity}/delete'
           response:
             openAPIDocKey: '200'
         get:
           operation:
-            $ref: get
-          path:
-            $ref: /b/{bucket}/defaultObjectAcl/{entity}
+            $ref: '#/paths/~1b~1{bucket}~1defaultObjectAcl~1{entity}/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         insert:
           operation:
-            $ref: post
-          path:
-            $ref: /b/{bucket}/defaultObjectAcl
+            $ref: '#/paths/~1b~1{bucket}~1defaultObjectAcl/post'
           request:
             mediaType: application/json
           response:
@@ -1403,17 +1363,13 @@ components:
             openAPIDocKey: '200'
         list:
           operation:
-            $ref: get
-          path:
-            $ref: /b/{bucket}/defaultObjectAcl
+            $ref: '#/paths/~1b~1{bucket}~1defaultObjectAcl/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         patch:
           operation:
-            $ref: patch
-          path:
-            $ref: /b/{bucket}/defaultObjectAcl/{entity}
+            $ref: '#/paths/~1b~1{bucket}~1defaultObjectAcl~1{entity}/patch'
           request:
             mediaType: application/json
           response:
@@ -1421,9 +1377,7 @@ components:
             openAPIDocKey: '200'
         update:
           operation:
-            $ref: put
-          path:
-            $ref: /b/{bucket}/defaultObjectAcl/{entity}
+            $ref: '#/paths/~1b~1{bucket}~1defaultObjectAcl~1{entity}/put'
           request:
             mediaType: application/json
           response:
@@ -1436,24 +1390,18 @@ components:
       methods:
         delete:
           operation:
-            $ref: delete
-          path:
-            $ref: /b/{bucket}/notificationConfigs/{notification}
+            $ref: '#/paths/~1b~1{bucket}~1notificationConfigs~1{notification}/delete'
           response:
             openAPIDocKey: '200'
         get:
           operation:
-            $ref: get
-          path:
-            $ref: /b/{bucket}/notificationConfigs/{notification}
+            $ref: '#/paths/~1b~1{bucket}~1notificationConfigs~1{notification}/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         insert:
           operation:
-            $ref: post
-          path:
-            $ref: /b/{bucket}/notificationConfigs
+            $ref: '#/paths/~1b~1{bucket}~1notificationConfigs/post'
           request:
             mediaType: application/json
           response:
@@ -1461,9 +1409,7 @@ components:
             openAPIDocKey: '200'
         list:
           operation:
-            $ref: get
-          path:
-            $ref: /b/{bucket}/notificationConfigs
+            $ref: '#/paths/~1b~1{bucket}~1notificationConfigs/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
@@ -1474,24 +1420,18 @@ components:
       methods:
         delete:
           operation:
-            $ref: delete
-          path:
-            $ref: /b/{bucket}/o/{object}/acl/{entity}
+            $ref: '#/paths/~1b~1{bucket}~1o~1{object}~1acl~1{entity}/delete'
           response:
             openAPIDocKey: '200'
         get:
           operation:
-            $ref: get
-          path:
-            $ref: /b/{bucket}/o/{object}/acl/{entity}
+            $ref: '#/paths/~1b~1{bucket}~1o~1{object}~1acl~1{entity}/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         insert:
           operation:
-            $ref: post
-          path:
-            $ref: /b/{bucket}/o/{object}/acl
+            $ref: '#/paths/~1b~1{bucket}~1o~1{object}~1acl/post'
           request:
             mediaType: application/json
           response:
@@ -1499,17 +1439,13 @@ components:
             openAPIDocKey: '200'
         list:
           operation:
-            $ref: get
-          path:
-            $ref: /b/{bucket}/o/{object}/acl
+            $ref: '#/paths/~1b~1{bucket}~1o~1{object}~1acl/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         patch:
           operation:
-            $ref: patch
-          path:
-            $ref: /b/{bucket}/o/{object}/acl/{entity}
+            $ref: '#/paths/~1b~1{bucket}~1o~1{object}~1acl~1{entity}/patch'
           request:
             mediaType: application/json
           response:
@@ -1517,9 +1453,7 @@ components:
             openAPIDocKey: '200'
         update:
           operation:
-            $ref: put
-          path:
-            $ref: /b/{bucket}/o/{object}/acl/{entity}
+            $ref: '#/paths/~1b~1{bucket}~1o~1{object}~1acl~1{entity}/put'
           request:
             mediaType: application/json
           response:
@@ -1532,9 +1466,7 @@ components:
       methods:
         compose:
           operation:
-            $ref: post
-          path:
-            $ref: /b/{destinationBucket}/o/{destinationObject}/compose
+            $ref: '#/paths/~1b~1{destinationBucket}~1o~1{destinationObject}~1compose/post'
           request:
             mediaType: application/json
           response:
@@ -1542,9 +1474,7 @@ components:
             openAPIDocKey: '200'
         copy:
           operation:
-            $ref: post
-          path:
-            $ref: /b/{sourceBucket}/o/{sourceObject}/copyTo/b/{destinationBucket}/o/{destinationObject}
+            $ref: '#/paths/~1b~1{sourceBucket}~1o~1{sourceObject}~1copyTo~1b~1{destinationBucket}~1o~1{destinationObject}/post'
           request:
             mediaType: application/json
           response:
@@ -1552,32 +1482,24 @@ components:
             openAPIDocKey: '200'
         delete:
           operation:
-            $ref: delete
-          path:
-            $ref: /b/{bucket}/o/{object}
+            $ref: '#/paths/~1b~1{bucket}~1o~1{object}/delete'
           response:
             openAPIDocKey: '200'
         get:
           operation:
-            $ref: get
-          path:
-            $ref: /b/{bucket}/o/{object}
+            $ref: '#/paths/~1b~1{bucket}~1o~1{object}/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         getIamPolicy:
           operation:
-            $ref: get
-          path:
-            $ref: /b/{bucket}/o/{object}/iam
+            $ref: '#/paths/~1b~1{bucket}~1o~1{object}~1iam/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         insert:
           operation:
-            $ref: post
-          path:
-            $ref: /b/{bucket}/o
+            $ref: '#/paths/~1b~1{bucket}~1o/post'
           request:
             mediaType: application/octet-stream
           response:
@@ -1585,17 +1507,13 @@ components:
             openAPIDocKey: '200'
         list:
           operation:
-            $ref: get
-          path:
-            $ref: /b/{bucket}/o
+            $ref: '#/paths/~1b~1{bucket}~1o/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         patch:
           operation:
-            $ref: patch
-          path:
-            $ref: /b/{bucket}/o/{object}
+            $ref: '#/paths/~1b~1{bucket}~1o~1{object}/patch'
           request:
             mediaType: application/json
           response:
@@ -1603,9 +1521,7 @@ components:
             openAPIDocKey: '200'
         rewrite:
           operation:
-            $ref: post
-          path:
-            $ref: /b/{sourceBucket}/o/{sourceObject}/rewriteTo/b/{destinationBucket}/o/{destinationObject}
+            $ref: '#/paths/~1b~1{sourceBucket}~1o~1{sourceObject}~1rewriteTo~1b~1{destinationBucket}~1o~1{destinationObject}/post'
           request:
             mediaType: application/json
           response:
@@ -1613,9 +1529,7 @@ components:
             openAPIDocKey: '200'
         setIamPolicy:
           operation:
-            $ref: put
-          path:
-            $ref: /b/{bucket}/o/{object}/iam
+            $ref: '#/paths/~1b~1{bucket}~1o~1{object}~1iam/put'
           request:
             mediaType: application/json
           response:
@@ -1623,17 +1537,13 @@ components:
             openAPIDocKey: '200'
         testIamPermissions:
           operation:
-            $ref: get
-          path:
-            $ref: /b/{bucket}/o/{object}/iam/testPermissions
+            $ref: '#/paths/~1b~1{bucket}~1o~1{object}~1iam~1testPermissions/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         update:
           operation:
-            $ref: put
-          path:
-            $ref: /b/{bucket}/o/{object}
+            $ref: '#/paths/~1b~1{bucket}~1o~1{object}/put'
           request:
             mediaType: application/json
           response:
@@ -1641,9 +1551,7 @@ components:
             openAPIDocKey: '200'
         watchAll:
           operation:
-            $ref: post
-          path:
-            $ref: /b/{bucket}/o/watch
+            $ref: '#/paths/~1b~1{bucket}~1o~1watch/post'
           request:
             mediaType: application/json
           response:
@@ -1656,40 +1564,30 @@ components:
       methods:
         create:
           operation:
-            $ref: post
-          path:
-            $ref: /projects/{projectId}/hmacKeys
+            $ref: '#/paths/~1projects~1{projectId}~1hmacKeys/post'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         delete:
           operation:
-            $ref: delete
-          path:
-            $ref: /projects/{projectId}/hmacKeys/{accessId}
+            $ref: '#/paths/~1projects~1{projectId}~1hmacKeys~1{accessId}/delete'
           response:
             openAPIDocKey: '200'
         get:
           operation:
-            $ref: get
-          path:
-            $ref: /projects/{projectId}/hmacKeys/{accessId}
+            $ref: '#/paths/~1projects~1{projectId}~1hmacKeys~1{accessId}/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         list:
           operation:
-            $ref: get
-          path:
-            $ref: /projects/{projectId}/hmacKeys
+            $ref: '#/paths/~1projects~1{projectId}~1hmacKeys/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         update:
           operation:
-            $ref: put
-          path:
-            $ref: /projects/{projectId}/hmacKeys/{accessId}
+            $ref: '#/paths/~1projects~1{projectId}~1hmacKeys~1{accessId}/put'
           request:
             mediaType: application/json
           response:
@@ -1702,9 +1600,7 @@ components:
       methods:
         get:
           operation:
-            $ref: get
-          path:
-            $ref: /projects/{projectId}/serviceAccount
+            $ref: '#/paths/~1projects~1{projectId}~1serviceAccount/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'

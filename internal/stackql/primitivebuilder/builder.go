@@ -36,15 +36,15 @@ type Builder interface {
 	GetTail() primitivegraph.PrimitiveNode
 }
 
+// SingleSelectAcquire represents the action of acquiring data from an endpoint
+// and then persisting that data into a table.
+// This data would then subsequently be queried by later execution phases.
 type SingleSelectAcquire struct {
 	primitiveBuilder           *PrimitiveBuilder
-	query                      string
 	handlerCtx                 *handler.HandlerContext
 	tableMeta                  taxonomy.ExtendedTableMetadata
-	tabulation                 openapistackql.Tabulation
 	drmCfg                     drm.DRMConfig
 	insertPreparedStatementCtx *drm.PreparedStatementCtx
-	selectPreparedStatementCtx *drm.PreparedStatementCtx
 	txnCtrlCtr                 *dto.TxnControlCounters
 	rowSort                    func(map[string]map[string]interface{}) []string
 	root                       primitivegraph.PrimitiveNode
@@ -63,12 +63,8 @@ type NullaryAction struct {
 
 type SingleSelect struct {
 	primitiveBuilder           *PrimitiveBuilder
-	query                      string
 	handlerCtx                 *handler.HandlerContext
-	tableMeta                  taxonomy.ExtendedTableMetadata
-	tabulation                 openapistackql.Tabulation
 	drmCfg                     drm.DRMConfig
-	insertPreparedStatementCtx *drm.PreparedStatementCtx
 	selectPreparedStatementCtx *drm.PreparedStatementCtx
 	txnCtrlCtr                 *dto.TxnControlCounters
 	rowSort                    func(map[string]map[string]interface{}) []string
@@ -89,13 +85,13 @@ type DiamondBuilder struct {
 	txnControlCounterSlice   []dto.TxnControlCounters
 }
 
-func NewSubTreeBuilder(children []Builder) *SubTreeBuilder {
+func NewSubTreeBuilder(children []Builder) Builder {
 	return &SubTreeBuilder{
 		children: children,
 	}
 }
 
-func NewDiamondBuilder(parent Builder, children []Builder, graph *primitivegraph.PrimitiveGraph, sqlEngine sqlengine.SQLEngine, shouldCollectGarbage bool) *DiamondBuilder {
+func NewDiamondBuilder(parent Builder, children []Builder, graph *primitivegraph.PrimitiveGraph, sqlEngine sqlengine.SQLEngine, shouldCollectGarbage bool) Builder {
 	return &DiamondBuilder{
 		SubTreeBuilder:       SubTreeBuilder{children: children},
 		parentBuilder:        parent,
@@ -162,8 +158,14 @@ func (db *DiamondBuilder) GetTail() primitivegraph.PrimitiveNode {
 
 type SingleAcquireAndSelect struct {
 	primitiveBuilder *PrimitiveBuilder
-	acquireBuilder   *SingleSelectAcquire
-	selectBuilder    *SingleSelect
+	acquireBuilder   Builder
+	selectBuilder    Builder
+}
+
+type MultipleAcquireAndSelect struct {
+	primitiveBuilder *PrimitiveBuilder
+	acquireBuilders  []Builder
+	selectBuilder    Builder
 }
 
 type Join struct {
@@ -173,10 +175,10 @@ type Join struct {
 	rowSort      func(map[string]map[string]interface{}) []string
 }
 
-func NewSingleSelectAcquire(pb *PrimitiveBuilder, handlerCtx *handler.HandlerContext, tableMeta taxonomy.ExtendedTableMetadata, insertCtx *drm.PreparedStatementCtx, selectCtx *drm.PreparedStatementCtx, rowSort func(map[string]map[string]interface{}) []string) *SingleSelectAcquire {
+func NewSingleSelectAcquire(pb *PrimitiveBuilder, handlerCtx *handler.HandlerContext, tableMeta taxonomy.ExtendedTableMetadata, insertCtx *drm.PreparedStatementCtx, rowSort func(map[string]map[string]interface{}) []string) Builder {
 	var tcc *dto.TxnControlCounters
-	if selectCtx != nil {
-		tcc = selectCtx.TxnCtrlCtrs
+	if insertCtx != nil {
+		tcc = insertCtx.TxnCtrlCtrs
 	}
 	return &SingleSelectAcquire{
 		primitiveBuilder:           pb,
@@ -185,19 +187,16 @@ func NewSingleSelectAcquire(pb *PrimitiveBuilder, handlerCtx *handler.HandlerCon
 		rowSort:                    rowSort,
 		drmCfg:                     handlerCtx.DrmConfig,
 		insertPreparedStatementCtx: insertCtx,
-		selectPreparedStatementCtx: selectCtx,
 		txnCtrlCtr:                 tcc,
 	}
 }
 
-func NewSingleSelect(pb *PrimitiveBuilder, handlerCtx *handler.HandlerContext, tableMeta taxonomy.ExtendedTableMetadata, insertCtx *drm.PreparedStatementCtx, selectCtx *drm.PreparedStatementCtx, rowSort func(map[string]map[string]interface{}) []string) *SingleSelect {
+func NewSingleSelect(pb *PrimitiveBuilder, handlerCtx *handler.HandlerContext, selectCtx *drm.PreparedStatementCtx, rowSort func(map[string]map[string]interface{}) []string) Builder {
 	return &SingleSelect{
 		primitiveBuilder:           pb,
 		handlerCtx:                 handlerCtx,
-		tableMeta:                  tableMeta,
 		rowSort:                    rowSort,
 		drmCfg:                     handlerCtx.DrmConfig,
-		insertPreparedStatementCtx: insertCtx,
 		selectPreparedStatementCtx: selectCtx,
 		txnCtrlCtr:                 selectCtx.TxnCtrlCtrs,
 	}
@@ -230,7 +229,7 @@ func (un *Union) Build() error {
 	return nil
 }
 
-func NewUnion(pb *PrimitiveBuilder, handlerCtx *handler.HandlerContext, unionCtx *drm.PreparedStatementCtx, lhs *drm.PreparedStatementCtx, rhs []*drm.PreparedStatementCtx) *Union {
+func NewUnion(pb *PrimitiveBuilder, handlerCtx *handler.HandlerContext, unionCtx *drm.PreparedStatementCtx, lhs *drm.PreparedStatementCtx, rhs []*drm.PreparedStatementCtx) Builder {
 	return &Union{
 		primitiveBuilder: pb,
 		handlerCtx:       handlerCtx,
@@ -241,11 +240,19 @@ func NewUnion(pb *PrimitiveBuilder, handlerCtx *handler.HandlerContext, unionCtx
 	}
 }
 
-func NewSingleAcquireAndSelect(pb *PrimitiveBuilder, handlerCtx *handler.HandlerContext, tableMeta taxonomy.ExtendedTableMetadata, insertCtx *drm.PreparedStatementCtx, selectCtx *drm.PreparedStatementCtx, rowSort func(map[string]map[string]interface{}) []string) *SingleAcquireAndSelect {
+func NewSingleAcquireAndSelect(pb *PrimitiveBuilder, handlerCtx *handler.HandlerContext, tableMeta taxonomy.ExtendedTableMetadata, insertCtx *drm.PreparedStatementCtx, selectCtx *drm.PreparedStatementCtx, rowSort func(map[string]map[string]interface{}) []string) Builder {
 	return &SingleAcquireAndSelect{
 		primitiveBuilder: pb,
-		acquireBuilder:   NewSingleSelectAcquire(pb, handlerCtx, tableMeta, insertCtx, selectCtx, rowSort),
-		selectBuilder:    NewSingleSelect(pb, handlerCtx, tableMeta, insertCtx, selectCtx, rowSort),
+		acquireBuilder:   NewSingleSelectAcquire(pb, handlerCtx, tableMeta, insertCtx, rowSort),
+		selectBuilder:    NewSingleSelect(pb, handlerCtx, selectCtx, rowSort),
+	}
+}
+
+func NewMultipleAcquireAndSelect(pb *PrimitiveBuilder, handlerCtx *handler.HandlerContext, tableMeta taxonomy.ExtendedTableMetadata, insertCtx *drm.PreparedStatementCtx, selectCtx *drm.PreparedStatementCtx, rowSort func(map[string]map[string]interface{}) []string) Builder {
+	return &MultipleAcquireAndSelect{
+		primitiveBuilder: pb,
+		acquireBuilders:  []Builder{NewSingleSelectAcquire(pb, handlerCtx, tableMeta, insertCtx, rowSort)},
+		selectBuilder:    NewSingleSelect(pb, handlerCtx, selectCtx, rowSort),
 	}
 }
 
@@ -470,7 +477,7 @@ func (ss *SingleSelectAcquire) Build() error {
 	}
 
 	prep := func() *drm.PreparedStatementCtx {
-		return ss.selectPreparedStatementCtx
+		return ss.insertPreparedStatementCtx
 	}
 	insertPrim := NewHTTPRestPrimitive(
 		prov,
@@ -521,7 +528,31 @@ func (ss *SingleAcquireAndSelect) Build() error {
 		return err
 	}
 	graph := ss.primitiveBuilder.GetGraph()
-	graph.NewDependency(ss.acquireBuilder.root, ss.selectBuilder.root, 1.0)
+	graph.NewDependency(ss.acquireBuilder.GetRoot(), ss.selectBuilder.GetRoot(), 1.0)
+	return nil
+}
+
+func (ss *MultipleAcquireAndSelect) GetRoot() primitivegraph.PrimitiveNode {
+	return ss.acquireBuilders[0].GetRoot()
+}
+
+func (ss *MultipleAcquireAndSelect) GetTail() primitivegraph.PrimitiveNode {
+	return ss.selectBuilder.GetTail()
+}
+
+func (ss *MultipleAcquireAndSelect) Build() error {
+	err := ss.selectBuilder.Build()
+	if err != nil {
+		return err
+	}
+	for _, acbBld := range ss.acquireBuilders {
+		err = acbBld.Build()
+		if err != nil {
+			return err
+		}
+		graph := ss.primitiveBuilder.GetGraph()
+		graph.NewDependency(acbBld.GetRoot(), ss.selectBuilder.GetRoot(), 1.0)
+	}
 	return nil
 }
 

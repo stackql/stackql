@@ -16,7 +16,7 @@
       ]
     },
     {
-      "name": "Debug exec \"show services from google where name = 'abusiveexperiencereport';\" -- prebuilt with cmake",
+      "name": "Debug exec \"show services from google where name = 'abusiveexperiencereport';\" ",
       "type": "go",
       "request": "launch",
       "mode": "debug",
@@ -143,17 +143,18 @@
     },
     // ' registry pull okta
     {
-      "name": "DEBUG pull okta ... ;",
+      "name": "DEBUG pull okta v2.0.1 ;",
       "type": "go",
       "request": "launch",
       "mode": "debug",
       "program": "${workspaceFolder}/stackql",
       "args": [
         "registry",
-        "--registry={ \"useEmbedded\": false, \"url\": \"https://raw.githubusercontent.com/stackql/stackql-provider-registry/intial-devel/providers\" }",
+        "--registry={ \"useEmbedded\": false, \"url\": \"https://cdn.statically.io/gh/stackql/stackql-provider-registry/feature/provider-pointer-changes/providers\" }",
         "--auth={ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
         "pull",
-        "okta"
+        "okta",
+        "v2.0.1"
       ],
     },
     // { "url": "file://${workspaceFolder}/examples/registry'${PROVIDER_REGISTRY_ROOT_DIR}'", "localDocRoot": "'${PROVIDER_REGISTRY_ROOT_DIR}'",  "useEmbedded": false, "verifyConfig": {"nopVerify": true } }
@@ -181,6 +182,19 @@
         "--registry={ \"useEmbedded\": false, \"url\": \"file://${workspaceFolder}/examples/registry\", \"localDocRoot\": \"${workspaceFolder}/examples/registry\", \"verifyConfig\": { \"nopVerify\": true } }",
         "--auth={ \"publicapis\": { \"type\": \"null_auth\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
         "select column_anon as f from publicapis.api.categories where column_anon like 'B%' limit 10;"
+      ],
+    },
+    {
+      "name": "DEBUG join #1 ... ;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry={ \"useEmbedded\": false, \"url\": \"file://${workspaceFolder}/test/registry\", \"localDocRoot\": \"${workspaceFolder}/test/registry\", \"verifyConfig\": { \"nopVerify\": true } }",
+        "--auth={ \"publicapis\": { \"type\": \"null_auth\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
+        "select d1.name, d1.id from google.compute.disks d1 inner join google.compute.disks d2 on d1.id = d2.id where d1.project = 'lab-kr-network-01' and d1.zone = 'australia-southeast1-a' and d2.project = 'lab-kr-network-01' and d2.zone = 'australia-southeast1-a';"
       ],
     },
     {

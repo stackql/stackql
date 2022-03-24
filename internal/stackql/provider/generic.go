@@ -108,12 +108,12 @@ func (gp *GenericProvider) AuthRevoke(authCtx *dto.AuthCtx) error {
 	return fmt.Errorf(`Auth revoke for Google Failed; improper auth method: "%s" speciied`, authCtx.Type)
 }
 
-func (gp *GenericProvider) GetMethodForAction(serviceName string, resourceName string, iqlAction string, runtimeCtx dto.RuntimeCtx) (*openapistackql.OperationStore, string, error) {
+func (gp *GenericProvider) GetMethodForAction(serviceName string, resourceName string, iqlAction string, parameters map[string]interface{}, runtimeCtx dto.RuntimeCtx) (*openapistackql.OperationStore, string, error) {
 	rsc, err := gp.GetResource(serviceName, resourceName, runtimeCtx)
 	if err != nil {
 		return nil, "", err
 	}
-	return gp.methodSelector.GetMethodForAction(rsc, iqlAction)
+	return gp.methodSelector.GetMethodForAction(rsc, iqlAction, parameters)
 }
 
 func (gp *GenericProvider) InferDescribeMethod(rsc *openapistackql.Resource) (*openapistackql.OperationStore, string, error) {
@@ -121,7 +121,11 @@ func (gp *GenericProvider) InferDescribeMethod(rsc *openapistackql.Resource) (*o
 		return nil, "", fmt.Errorf("cannot infer describe method from nil resource")
 	}
 	var method *openapistackql.OperationStore
-	m, methodErr := rsc.FindMethod("list")
+	m, methodErr := rsc.FindMethod("select")
+	if methodErr == nil && m != nil {
+		return m, "select", nil
+	}
+	m, methodErr = rsc.FindMethod("list")
 	if methodErr == nil && m != nil {
 		return m, "list", nil
 	}
