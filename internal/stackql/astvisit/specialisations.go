@@ -95,6 +95,16 @@ func GenerateModifiedWhereClause(node *sqlparser.Where) string {
 	return v.GetRewrittenQuery()
 }
 
+func ExtractParamsFromWhereClause(node *sqlparser.Where) map[string]interface{} {
+	v := NewParamAstVisitor("", false)
+	if node != nil && node.Expr != nil {
+		node.Expr.Accept(v)
+	} else {
+		return map[string]interface{}{}
+	}
+	return v.GetStringifiedParameters()
+}
+
 func ExtractProviderStrings(node sqlparser.SQLNode) []string {
 	v := NewDRMAstVisitor("", true)
 	node.Accept(v)

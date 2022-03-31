@@ -89,8 +89,11 @@ func ExtractSQLNodeParams(statement sqlparser.SQLNode, insertValOnlyRows map[int
 					case *sqlparser.SQLVal:
 						val := string(r.Val)
 						paramMap[key] = val
+					case *sqlparser.ColName:
+						kr := r.Name.GetRawVal()
+						paramMap[key] = kr
 					default:
-						err = fmt.Errorf("failed to analyse left node of comparison")
+						err = fmt.Errorf("unsupported type on RHS of comparison '%T', FYI LHS type is '%T'", node.Right, l)
 						return true, err
 					}
 				case *sqlparser.FuncExpr:

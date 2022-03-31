@@ -20,6 +20,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/primitivebuilder"
 	"github.com/stackql/stackql/internal/stackql/provider"
 	"github.com/stackql/stackql/internal/stackql/relational"
+	"github.com/stackql/stackql/internal/stackql/suffix"
 	"github.com/stackql/stackql/internal/stackql/symtab"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 	"github.com/stackql/stackql/internal/stackql/util"
@@ -243,99 +244,70 @@ func (pb *primitiveGenerator) traverseShowFilter(table openapistackql.ITable, no
 	return retVal, nil
 }
 
-// DEPRECATED
-func (pb *primitiveGenerator) traverseWhereFilterDeprecated(table *openapistackql.OperationStore, node sqlparser.Expr, schema *openapistackql.Schema, requiredParameters map[string]*openapistackql.Parameter) (func(openapistackql.ITable) (openapistackql.ITable, error), error) {
-	var retVal func(openapistackql.ITable) (openapistackql.ITable, error)
+func (pb *primitiveGenerator) traverseWhereFilter(node sqlparser.SQLNode, requiredParameters, optionalParameters *suffix.ParameterSuffixMap) (sqlparser.Expr, []string, error) {
 	switch node := node.(type) {
 	case *sqlparser.ComparisonExpr:
-		return pb.whereComparisonExprToFilterFunc(node, table, schema, requiredParameters)
+		exp, cn, err := pb.whereComparisonExprCopyAndReWrite(node, requiredParameters, optionalParameters)
+		return exp, []string{cn}, err
 	case *sqlparser.AndExpr:
 		log.Infoln("complex AND expr detected")
-		lhs, lhErr := pb.traverseWhereFilterDeprecated(table, node.Left, schema, requiredParameters)
-		rhs, rhErr := pb.traverseWhereFilterDeprecated(table, node.Right, schema, requiredParameters)
+		lhs, lParams, lhErr := pb.traverseWhereFilter(node.Left, requiredParameters, optionalParameters)
+		rhs, rParams, rhErr := pb.traverseWhereFilter(node.Right, requiredParameters, optionalParameters)
 		if lhErr != nil {
-			return nil, lhErr
+			return nil, nil, lhErr
 		}
 		if rhErr != nil {
-			return nil, rhErr
+			return nil, nil, rhErr
 		}
-		return relational.AndTableFilters(lhs, rhs), nil
+		for _, v := range rParams {
+			lParams = append(lParams, v)
+		}
+		return &sqlparser.AndExpr{Left: lhs, Right: rhs}, lParams, nil
 	case *sqlparser.OrExpr:
 		log.Infoln("complex OR expr detected")
-		lhs, lhErr := pb.traverseWhereFilterDeprecated(table, node.Left, schema, requiredParameters)
-		rhs, rhErr := pb.traverseWhereFilterDeprecated(table, node.Right, schema, requiredParameters)
+		lhs, lParams, lhErr := pb.traverseWhereFilter(node.Left, requiredParameters, optionalParameters)
+		rhs, rParams, rhErr := pb.traverseWhereFilter(node.Right, requiredParameters, optionalParameters)
 		if lhErr != nil {
-			return nil, lhErr
+			return nil, nil, lhErr
 		}
 		if rhErr != nil {
-			return nil, rhErr
+			return nil, nil, rhErr
 		}
-		return relational.OrTableFilters(lhs, rhs), nil
+		for _, v := range rParams {
+			lParams = append(lParams, v)
+		}
+		return &sqlparser.OrExpr{Left: lhs, Right: rhs}, lParams, nil
 	case *sqlparser.FuncExpr:
-		return nil, fmt.Errorf("unsupported constraint in openapistackql filter: %v", sqlparser.String(node))
-	default:
-		return nil, fmt.Errorf("unsupported constraint in openapistackql filter: %v", sqlparser.String(node))
-	}
-	return retVal, nil
-}
-
-func (pb *primitiveGenerator) traverseWhereFilter(node sqlparser.SQLNode, requiredParameters, optionalParameters map[string]*openapistackql.Parameter) (sqlparser.Expr, error) {
-	switch node := node.(type) {
-	case *sqlparser.ComparisonExpr:
-		return pb.whereComparisonExprCopyAndReWrite(node, requiredParameters, optionalParameters)
-	case *sqlparser.AndExpr:
-		log.Infoln("complex AND expr detected")
-		lhs, lhErr := pb.traverseWhereFilter(node.Left, requiredParameters, optionalParameters)
-		rhs, rhErr := pb.traverseWhereFilter(node.Right, requiredParameters, optionalParameters)
-		if lhErr != nil {
-			return nil, lhErr
-		}
-		if rhErr != nil {
-			return nil, rhErr
-		}
-		return &sqlparser.AndExpr{Left: lhs, Right: rhs}, nil
-	case *sqlparser.OrExpr:
-		log.Infoln("complex OR expr detected")
-		lhs, lhErr := pb.traverseWhereFilter(node.Left, requiredParameters, optionalParameters)
-		rhs, rhErr := pb.traverseWhereFilter(node.Right, requiredParameters, optionalParameters)
-		if lhErr != nil {
-			return nil, lhErr
-		}
-		if rhErr != nil {
-			return nil, rhErr
-		}
-		return &sqlparser.OrExpr{Left: lhs, Right: rhs}, nil
-	case *sqlparser.FuncExpr:
-		return nil, fmt.Errorf("unsupported constraint in openapistackql filter: %v", sqlparser.String(node))
+		return nil, nil, fmt.Errorf("unsupported constraint in openapistackql filter: %v", sqlparser.String(node))
 	case *sqlparser.IsExpr:
 		return &sqlparser.IsExpr{
 			Operator: node.Operator,
 			Expr:     node.Expr,
-		}, nil
+		}, nil, nil
 	default:
-		return nil, fmt.Errorf("unsupported constraint in openapistackql filter: %v", sqlparser.String(node))
+		return nil, nil, fmt.Errorf("unsupported constraint in openapistackql filter: %v", sqlparser.String(node))
 	}
-	return nil, fmt.Errorf("unsupported constraint in openapistackql filter: %v", sqlparser.String(node))
+	return nil, nil, fmt.Errorf("unsupported constraint in openapistackql filter: %v", sqlparser.String(node))
 }
 
-func (pb *primitiveGenerator) whereComparisonExprCopyAndReWrite(expr *sqlparser.ComparisonExpr, requiredParameters, optionalParameters map[string]*openapistackql.Parameter) (sqlparser.Expr, error) {
+func (pb *primitiveGenerator) whereComparisonExprCopyAndReWrite(expr *sqlparser.ComparisonExpr, requiredParameters, optionalParameters *suffix.ParameterSuffixMap) (sqlparser.Expr, string, error) {
 	qualifiedName, ok := expr.Left.(*sqlparser.ColName)
 	if !ok {
-		return nil, fmt.Errorf("unexpected: %v", sqlparser.String(expr))
+		return nil, "", fmt.Errorf("unexpected: %v", sqlparser.String(expr))
 	}
-	colName := qualifiedName.Name.GetRawVal()
+	colName := dto.GeneratePutativelyUniqueColumnID(qualifiedName.Qualifier, qualifiedName.Name.GetRawVal())
 	symTabEntry, symTabErr := pb.PrimitiveBuilder.GetSymbol(colName)
-	_, requiredParamPresent := requiredParameters[colName]
-	_, optionalParamPresent := optionalParameters[colName]
+	_, requiredParamPresent := requiredParameters.Get(colName)
+	_, optionalParamPresent := optionalParameters.Get(colName)
 	log.Infoln(fmt.Sprintf("symTabEntry = %v", symTabEntry))
 	if symTabErr != nil && !(requiredParamPresent || optionalParamPresent) {
-		return nil, symTabErr
+		return nil, colName, symTabErr
 	}
 	if requiredParamPresent {
-		delete(requiredParameters, colName)
+		requiredParameters.Delete(colName)
 	}
 	if optionalParamPresent {
-		delete(optionalParameters, colName)
+		optionalParameters.Delete(colName)
 	}
 	if symTabErr == nil && symTabEntry.In != "server" {
 		if !(requiredParamPresent || optionalParamPresent) {
@@ -344,7 +316,7 @@ func (pb *primitiveGenerator) whereComparisonExprCopyAndReWrite(expr *sqlparser.
 				Right:    expr.Right,
 				Operator: expr.Operator,
 				Escape:   expr.Escape,
-			}, nil
+			}, colName, nil
 		}
 		paramMAtchStr := ""
 		switch rhs := expr.Right.(type) {
@@ -386,145 +358,108 @@ func (pb *primitiveGenerator) whereComparisonExprCopyAndReWrite(expr *sqlparser.
 				Operator: sqlparser.LikeStr,
 				Escape:   nil,
 			},
-		}, nil
+		}, colName, nil
 	}
 	return &sqlparser.ComparisonExpr{
 		Left:     &sqlparser.SQLVal{Type: sqlparser.IntVal, Val: []byte("1")},
 		Right:    &sqlparser.SQLVal{Type: sqlparser.IntVal, Val: []byte("1")},
 		Operator: expr.Operator,
 		Escape:   expr.Escape,
-	}, nil
+	}, colName, nil
 }
 
-// DEPRECATED
-func (pb *primitiveGenerator) whereComparisonExprToFilterFunc(expr *sqlparser.ComparisonExpr, table *openapistackql.OperationStore, schema *openapistackql.Schema, requiredParameters map[string]*openapistackql.Parameter) (func(openapistackql.ITable) (openapistackql.ITable, error), error) {
-	qualifiedName, ok := expr.Left.(*sqlparser.ColName)
-	if !ok {
-		return nil, fmt.Errorf("unexpected: %v", sqlparser.String(expr))
-	}
-	colName := qualifiedName.Name.GetRawVal()
-	tableContainsKey := table.KeyExists(colName)
-	var subSchema *openapistackql.Schema
-	if schema != nil {
-		subSchema = schema.FindByPath(colName, nil)
-	}
-	if !tableContainsKey && subSchema == nil {
-		return nil, fmt.Errorf("col name = '%s' not found in resource name = '%s'", colName, table.GetName())
-	}
-	delete(requiredParameters, colName)
-	if tableContainsKey && subSchema != nil && !subSchema.ReadOnly {
-		log.Infoln(fmt.Sprintf("tableContainsKey && subSchema = %v", subSchema))
-		return nil, fmt.Errorf("col name = '%s' ambiguous for resource name = '%s'", colName, table.GetName())
-	}
-	val, ok := expr.Right.(*sqlparser.SQLVal)
-	if !ok {
-		return nil, fmt.Errorf("unexpected: %v", sqlparser.String(expr))
-	}
-	//StrVal is varbinary, we do not support varchar since we would have to implement all collation types
-	if val.Type != sqlparser.IntVal && val.Type != sqlparser.StrVal {
-		return nil, fmt.Errorf("unexpected: %v", sqlparser.String(expr))
-	}
-	pv, err := sqlparser.NewPlanValue(val)
-	if err != nil {
-		return nil, err
-	}
-	resolved, err := pv.ResolveValue(nil)
-	log.Debugln(fmt.Sprintf("resolved = %v", resolved))
-	if err != nil {
-		return nil, err
-	}
-	return nil, nil
-}
-
-// DEPRECATED
-func (pb *primitiveGenerator) analyzeSingleTableWhere(where *sqlparser.Where, schema *openapistackql.Schema) error {
-	remainingRequiredParameters := make(map[string]*openapistackql.Parameter)
-	for _, v := range pb.PrimitiveBuilder.GetTables() {
-		method, err := v.GetMethod()
+func (pb *primitiveGenerator) resolveMethods(where *sqlparser.Where) error {
+	requiredParameters := suffix.NewParameterSuffixMap()
+	// remainingRequiredParameters := suffix.NewParameterSuffixMap()
+	optionalParameters := suffix.NewParameterSuffixMap()
+	for _, tb := range pb.PrimitiveBuilder.GetTables() {
+		tbID := tb.GetUniqueId()
+		method, err := tb.GetMethod()
 		if err != nil {
 			return err
 		}
-		requiredParameters := method.GetRequiredParameters()
-		if where != nil {
-			pb.traverseWhereFilterDeprecated(method, where.Expr, schema, requiredParameters)
+		for k, v := range method.GetRequiredParameters() {
+			key := fmt.Sprintf("%s.%s", tbID, k)
+			_, keyExists := requiredParameters.Get(key)
+			if keyExists {
+				return fmt.Errorf("key already is required: %s", k)
+			}
+			requiredParameters.Put(key, v)
 		}
-		for l, w := range requiredParameters {
-			rscStr, _ := v.GetResourceStr()
-			remainingRequiredParameters[fmt.Sprintf("%s.%s", rscStr, l)] = w
+		for k, vOpt := range method.GetOptionalParameters() {
+			key := fmt.Sprintf("%s.%s", tbID, k)
+			_, keyExists := optionalParameters.Get(key)
+			if keyExists {
+				return fmt.Errorf("key already is optional: %s", k)
+			}
+			optionalParameters.Put(key, vOpt)
 		}
-		var colUsages []parserutil.ColumnUsageMetadata
-		if where != nil {
-			colUsages, err = parserutil.GetColumnUsageTypes(where.Expr)
-		}
-		if err != nil {
-			return err
-		}
-		err = parserutil.CheckColUsagesAgainstTable(colUsages, method)
-		if err != nil {
-			return err
-		}
-	}
-	if len(remainingRequiredParameters) > 0 {
-		var keys []string
-		for k := range remainingRequiredParameters {
-			keys = append(keys, k)
-		}
-		return fmt.Errorf("Query cannot be executed, missing required parameters: { %s }", strings.Join(keys, ", "))
 	}
 	return nil
 }
 
-func (pb *primitiveGenerator) analyzeWhere(where *sqlparser.Where, schema *openapistackql.Schema) (*sqlparser.Where, error) {
-	requiredParameters := make(map[string]*openapistackql.Parameter)
-	remainingRequiredParameters := make(map[string]*openapistackql.Parameter)
-	optionalParameters := make(map[string]*openapistackql.Parameter)
-	for _, v := range pb.PrimitiveBuilder.GetTables() {
-		method, err := v.GetMethod()
+func (pb *primitiveGenerator) extractParamsFromWhere(where *sqlparser.Where) (map[string]interface{}, error) {
+	if where == nil {
+		return map[string]interface{}{}, nil
+	}
+	return map[string]interface{}{}, nil
+}
+
+func (pb *primitiveGenerator) analyzeWhere(where *sqlparser.Where) (*sqlparser.Where, []string, error) {
+	requiredParameters := suffix.NewParameterSuffixMap()
+	remainingRequiredParameters := suffix.NewParameterSuffixMap()
+	optionalParameters := suffix.NewParameterSuffixMap()
+	for _, tb := range pb.PrimitiveBuilder.GetTables() {
+		tbID := tb.GetUniqueId()
+		method, err := tb.GetMethod()
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		for k, v := range method.GetRequiredParameters() {
-			_, keyExists := requiredParameters[k]
+			key := fmt.Sprintf("%s.%s", tbID, k)
+			_, keyExists := requiredParameters.Get(key)
 			if keyExists {
-				return nil, fmt.Errorf("key already is required: %s", k)
+				return nil, nil, fmt.Errorf("key already is required: %s", k)
 			}
-			requiredParameters[k] = v
+			requiredParameters.Put(key, v)
 		}
-		for k, v := range method.GetOptionalParameters() {
-			_, keyExists := optionalParameters[k]
+		for k, vOpt := range method.GetOptionalParameters() {
+			key := fmt.Sprintf("%s.%s", tbID, k)
+			_, keyExists := optionalParameters.Get(key)
 			if keyExists {
-				return nil, fmt.Errorf("key already is optional: %s", k)
+				return nil, nil, fmt.Errorf("key already is optional: %s", k)
 			}
-			optionalParameters[k] = v
+			optionalParameters.Put(key, vOpt)
 		}
 	}
 	var retVal sqlparser.Expr
+	var paramsSupplied []string
 	var err error
 	if where != nil {
-		retVal, err = pb.traverseWhereFilter(where.Expr, requiredParameters, optionalParameters)
+		retVal, paramsSupplied, err = pb.traverseWhereFilter(where.Expr, requiredParameters, optionalParameters)
 		if err != nil {
-			return nil, err
+			return nil, paramsSupplied, err
 		}
 	}
 
-	for l, w := range requiredParameters {
-		remainingRequiredParameters[fmt.Sprintf("%s", l)] = w
+	for l, w := range requiredParameters.GetAll() {
+		remainingRequiredParameters.Put(l, w)
 	}
 
-	if len(remainingRequiredParameters) > 0 {
+	if remainingRequiredParameters.Size() > 0 {
 		if where == nil {
-			return nil, fmt.Errorf("WHERE clause not supplied, run DESCRIBE EXTENDED for the resource to see required parameters")
+			return nil, paramsSupplied, fmt.Errorf("WHERE clause not supplied, run DESCRIBE EXTENDED for the resource to see required parameters")
 		}
 		var keys []string
-		for k := range remainingRequiredParameters {
+		for k := range remainingRequiredParameters.GetAll() {
 			keys = append(keys, k)
 		}
-		return nil, fmt.Errorf("Query cannot be executed, missing required parameters: { %s }", strings.Join(keys, ", "))
+		return nil, paramsSupplied, fmt.Errorf("query cannot be executed, missing required parameters: { %s }", strings.Join(keys, ", "))
 	}
 	if where == nil {
-		return nil, nil
+		return nil, paramsSupplied, nil
 	}
-	return &sqlparser.Where{Type: where.Type, Expr: retVal}, nil
+	return &sqlparser.Where{Type: where.Type, Expr: retVal}, paramsSupplied, nil
 }
 
 func extractVarDefFromExec(node *sqlparser.Exec, argName string) (*sqlparser.ExecVarDef, error) {
@@ -548,7 +483,7 @@ func (p *primitiveGenerator) persistHerarchyToBuilder(heirarchy *taxonomy.Heirar
 }
 
 func (p *primitiveGenerator) analyzeUnaryExec(handlerCtx *handler.HandlerContext, node *sqlparser.Exec, selectNode *sqlparser.Select, cols []parserutil.ColumnHandle) (*taxonomy.ExtendedTableMetadata, error) {
-	err := p.inferHeirarchyAndPersist(handlerCtx, node)
+	err := p.inferHeirarchyAndPersist(handlerCtx, node, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -644,7 +579,7 @@ func (p *primitiveGenerator) analyzeExec(handlerCtx *handler.HandlerContext, nod
 			return err
 		}
 		if m.IsNullary() && !p.PrimitiveBuilder.IsAwait() {
-			p.PrimitiveBuilder.SetBuilder(primitivebuilder.NewSingleSelectAcquire(p.PrimitiveBuilder, handlerCtx, *tbl, p.PrimitiveBuilder.GetInsertPreparedStatementCtx(), p.PrimitiveBuilder.GetSelectPreparedStatementCtx(), nil))
+			p.PrimitiveBuilder.SetBuilder(primitivebuilder.NewSingleSelectAcquire(p.PrimitiveBuilder, handlerCtx, *tbl, p.PrimitiveBuilder.GetInsertPreparedStatementCtx(), nil))
 			return nil
 		}
 		p.PrimitiveBuilder.SetBuilder(primitivebuilder.NewSingleAcquireAndSelect(p.PrimitiveBuilder, handlerCtx, *tbl, p.PrimitiveBuilder.GetInsertPreparedStatementCtx(), p.PrimitiveBuilder.GetSelectPreparedStatementCtx(), nil))
@@ -776,36 +711,57 @@ func (p *primitiveGenerator) analyzeSchemaVsMap(handlerCtx *handler.HandlerConte
 
 func (p *primitiveGenerator) analyzeSelect(handlerCtx *handler.HandlerContext, node *sqlparser.Select) error {
 
+	var tblMeta *taxonomy.ExtendedTableMetadata
+	var pChild *primitiveGenerator
+	var err error
+
+	paramMap := astvisit.ExtractParamsFromWhereClause(node.Where)
+
 	for i, fromExpr := range node.From {
 		var leafKey interface{} = i
-		switch tbl := fromExpr.(type) {
+		switch from := fromExpr.(type) {
 		case *sqlparser.AliasedTableExpr:
-			if tbl.As.GetRawVal() != "" {
-				leafKey = tbl.As.GetRawVal()
+			if from.As.GetRawVal() != "" {
+				leafKey = from.As.GetRawVal()
 			}
 		}
+
 		leaf, err := p.PrimitiveBuilder.GetSymTab().NewLeaf(leafKey)
 		if err != nil {
 			return err
 		}
-		pChild := p.addChildPrimitiveGenerator(fromExpr, leaf)
-		var tbl *taxonomy.ExtendedTableMetadata
+		pChild = p.addChildPrimitiveGenerator(fromExpr, leaf)
+		var tblz []*taxonomy.ExtendedTableMetadata
 		switch from := fromExpr.(type) {
 		case *sqlparser.ExecSubquery:
 			log.Infoln(fmt.Sprintf("from = %v", from))
-			tbl, err = pChild.analyzeTableExpr(handlerCtx, from)
+			tblMeta, err = pChild.analyzeTableExpr(handlerCtx, from, nil)
+			if err != nil {
+				return err
+			}
+			tblz = append(tblz, tblMeta)
+		case *sqlparser.JoinTableExpr:
+			tblMeta, err = pChild.analyzeTableExpr(handlerCtx, from.LeftExpr, paramMap)
+			if err != nil {
+				return err
+			}
+			tblz = append(tblz, tblMeta)
+			tblMeta, err = pChild.analyzeTableExpr(handlerCtx, from.RightExpr, paramMap)
+			if err != nil {
+				return err
+			}
+			tblz = append(tblz, tblMeta)
 		default:
-			tbl, err = pChild.analyzeTableExpr(handlerCtx, from)
+			tblMeta, err = pChild.analyzeTableExpr(handlerCtx, from, paramMap)
+			if err != nil {
+				return err
+			}
+			tblz = append(tblz, tblMeta)
 		}
-
+		svc, err := tblMeta.GetService()
 		if err != nil {
 			return err
 		}
-		svc, err := tbl.GetService()
-		if err != nil {
-			return err
-		}
-		// svc.Servers
 		for _, sv := range svc.Servers {
 			for k := range sv.Variables {
 				colEntry := symtab.NewSymTabEntry(
@@ -817,81 +773,108 @@ func (p *primitiveGenerator) analyzeSelect(handlerCtx *handler.HandlerContext, n
 			}
 			break
 		}
-		responseSchema, err := tbl.GetSelectableObjectSchema()
-		if err != nil {
-			return err
-		}
-		cols, err := responseSchema.GetProperties()
-		if err != nil {
-			return err
-		}
-		if len(cols) == 0 {
-			cols = openapistackql.Schemas{openapistackql.AnonymousColumnName: responseSchema}
-		}
-		for colName, colSchema := range cols {
-			if colSchema == nil {
-				return fmt.Errorf("could not infer column information")
-			}
-			colEntry := symtab.NewSymTabEntry(
-				pChild.PrimitiveBuilder.GetDRMConfig().GetRelationalType(colSchema.Type),
-				colSchema,
-				"",
-			)
-			pChild.PrimitiveBuilder.SetSymbol(colName, colEntry)
-		}
-		if len(node.From) == 1 {
-			switch ft := node.From[0].(type) {
-			case *sqlparser.JoinTableExpr:
-				tbl, err := pChild.analyzeTableExpr(handlerCtx, ft.LeftExpr)
-				if err != nil {
-					return err
-				}
-				err = pChild.analyzeSelectDetail(handlerCtx, node, tbl)
-				if err != nil {
-					return err
-				}
-				rhsPb := newRootPrimitiveGenerator(pChild.PrimitiveBuilder.GetAst(), handlerCtx, pChild.PrimitiveBuilder.GetGraph())
-				tbl, err = rhsPb.analyzeTableExpr(handlerCtx, ft.RightExpr)
-				if err != nil {
-					return err
-				}
-				err = rhsPb.analyzeSelectDetail(handlerCtx, node, tbl)
-				if err != nil {
-					return err
-				}
-				pChild.PrimitiveBuilder.SetBuilder(primitivebuilder.NewJoin(pChild.PrimitiveBuilder, rhsPb.PrimitiveBuilder, handlerCtx, nil))
-				return nil
-			case *sqlparser.AliasedTableExpr:
-				tbl, err := pChild.analyzeTableExpr(handlerCtx, node.From[0])
-				if err != nil {
-					return err
-				}
-				err = pChild.analyzeSelectDetail(handlerCtx, node, tbl)
-				if err != nil {
-					return err
-				}
-				pChild.PrimitiveBuilder.SetBuilder(primitivebuilder.NewSingleAcquireAndSelect(pChild.PrimitiveBuilder, handlerCtx, *tbl, pChild.PrimitiveBuilder.GetInsertPreparedStatementCtx(), pChild.PrimitiveBuilder.GetSelectPreparedStatementCtx(), nil))
-				p.PrimitiveBuilder.SetSelectPreparedStatementCtx(pChild.PrimitiveBuilder.GetSelectPreparedStatementCtx())
-				return nil
-			case *sqlparser.ExecSubquery:
-				cols, err := parserutil.ExtractSelectColumnNames(node)
-				if err != nil {
-					return err
-				}
-				tbl, err := pChild.analyzeUnaryExec(handlerCtx, ft.Exec, node, cols)
-				if err != nil {
-					return err
-				}
 
-				pChild.PrimitiveBuilder.SetBuilder(primitivebuilder.NewSingleAcquireAndSelect(pChild.PrimitiveBuilder, handlerCtx, *tbl, pChild.PrimitiveBuilder.GetInsertPreparedStatementCtx(), pChild.PrimitiveBuilder.GetSelectPreparedStatementCtx(), nil))
-				return nil
+		if err != nil {
+			return err
+		}
+
+		for _, tbl := range tblz {
+			//
+			responseSchema, err := tbl.GetSelectableObjectSchema()
+			if err != nil {
+				return err
+			}
+			cols, err := responseSchema.GetProperties()
+			if err != nil {
+				return err
+			}
+			if len(cols) == 0 {
+				cols = openapistackql.Schemas{openapistackql.AnonymousColumnName: responseSchema}
+			}
+			for colName, colSchema := range cols {
+				if colSchema == nil {
+					return fmt.Errorf("could not infer column information")
+				}
+				colEntry := symtab.NewSymTabEntry(
+					pChild.PrimitiveBuilder.GetDRMConfig().GetRelationalType(colSchema.Type),
+					colSchema,
+					"",
+				)
+				uid := fmt.Sprintf("%s.%s", tbl.GetUniqueId(), colName)
+				pChild.PrimitiveBuilder.SetSymbol(uid, colEntry)
 			}
 		}
+	}
+	// TODO: fix this hack
+	var rewrittenWhere *sqlparser.Where
+	var paramsPresent []string
+	if len(node.From) == 1 {
+		switch ft := node.From[0].(type) {
+		case *sqlparser.ExecSubquery:
+			log.Infoln(fmt.Sprintf("%v", ft))
+		default:
+			rewrittenWhere, paramsPresent, err = p.analyzeWhere(node.Where)
+			if err != nil {
+				return err
+			}
+			p.PrimitiveBuilder.SetWhere(rewrittenWhere)
+		}
+	}
+	log.Debugf("len(paramsPresent) = %d\n", len(paramsPresent))
+
+	// END TODO
+	if len(node.From) == 1 {
+		switch ft := node.From[0].(type) {
+		case *sqlparser.JoinTableExpr:
+			tbl, err := pChild.analyzeTableExpr(handlerCtx, ft.LeftExpr, paramMap)
+			if err != nil {
+				return err
+			}
+			err = pChild.analyzeSelectDetail(handlerCtx, node, tbl, rewrittenWhere)
+			if err != nil {
+				return err
+			}
+			rhsPb := newRootPrimitiveGenerator(pChild.PrimitiveBuilder.GetAst(), handlerCtx, pChild.PrimitiveBuilder.GetGraph())
+			tbl, err = rhsPb.analyzeTableExpr(handlerCtx, ft.RightExpr, paramMap)
+			if err != nil {
+				return err
+			}
+			err = rhsPb.analyzeSelectDetail(handlerCtx, node, tbl, rewrittenWhere)
+			if err != nil {
+				return err
+			}
+			pChild.PrimitiveBuilder.SetBuilder(primitivebuilder.NewJoin(pChild.PrimitiveBuilder, rhsPb.PrimitiveBuilder, handlerCtx, nil))
+			return nil
+		case *sqlparser.AliasedTableExpr:
+			tbl, err := pChild.analyzeTableExpr(handlerCtx, node.From[0], paramMap)
+			if err != nil {
+				return err
+			}
+			err = pChild.analyzeSelectDetail(handlerCtx, node, tbl, rewrittenWhere)
+			if err != nil {
+				return err
+			}
+			pChild.PrimitiveBuilder.SetBuilder(primitivebuilder.NewSingleAcquireAndSelect(pChild.PrimitiveBuilder, handlerCtx, *tbl, pChild.PrimitiveBuilder.GetInsertPreparedStatementCtx(), pChild.PrimitiveBuilder.GetSelectPreparedStatementCtx(), nil))
+			p.PrimitiveBuilder.SetSelectPreparedStatementCtx(pChild.PrimitiveBuilder.GetSelectPreparedStatementCtx())
+			return nil
+		case *sqlparser.ExecSubquery:
+			cols, err := parserutil.ExtractSelectColumnNames(node)
+			if err != nil {
+				return err
+			}
+			tbl, err := pChild.analyzeUnaryExec(handlerCtx, ft.Exec, node, cols)
+			if err != nil {
+				return err
+			}
+			pChild.PrimitiveBuilder.SetBuilder(primitivebuilder.NewSingleAcquireAndSelect(pChild.PrimitiveBuilder, handlerCtx, *tbl, pChild.PrimitiveBuilder.GetInsertPreparedStatementCtx(), pChild.PrimitiveBuilder.GetSelectPreparedStatementCtx(), nil))
+			return nil
+		}
+
 	}
 	return fmt.Errorf("cannot process complex select just yet")
 }
 
-func (p *primitiveGenerator) analyzeSelectDetail(handlerCtx *handler.HandlerContext, node *sqlparser.Select, tbl *taxonomy.ExtendedTableMetadata) error {
+func (p *primitiveGenerator) analyzeSelectDetail(handlerCtx *handler.HandlerContext, node *sqlparser.Select, tbl *taxonomy.ExtendedTableMetadata, rewrittenWhere *sqlparser.Where) error {
 	var err error
 	valOnlyCols, nonValCols := parserutil.ExtractSelectValColumns(node)
 	p.PrimitiveBuilder.SetValOnlyCols(valOnlyCols)
@@ -917,12 +900,6 @@ func (p *primitiveGenerator) analyzeSelectDetail(handlerCtx *handler.HandlerCont
 	if err != nil {
 		return err
 	}
-
-	rewrittenWhere, whereErr := p.analyzeWhere(node.Where, responseSchema)
-	if whereErr != nil {
-		return whereErr
-	}
-	p.PrimitiveBuilder.SetWhere(rewrittenWhere)
 
 	err = p.analyzeUnarySelection(handlerCtx, node, rewrittenWhere, tbl, cols)
 	if err != nil {
@@ -986,13 +963,13 @@ func (p *primitiveGenerator) analyzeSelectDetail(handlerCtx *handler.HandlerCont
 	return nil
 }
 
-func (p *primitiveGenerator) analyzeTableExpr(handlerCtx *handler.HandlerContext, node sqlparser.TableExpr) (*taxonomy.ExtendedTableMetadata, error) {
+func (p *primitiveGenerator) analyzeTableExpr(handlerCtx *handler.HandlerContext, node sqlparser.TableExpr, parameters map[string]interface{}) (*taxonomy.ExtendedTableMetadata, error) {
 	var nodeToPersist sqlparser.SQLNode = node
 	switch node := node.(type) {
 	case *sqlparser.ExecSubquery:
 		nodeToPersist = node.Exec
 	}
-	err := p.inferHeirarchyAndPersist(handlerCtx, nodeToPersist)
+	err := p.inferHeirarchyAndPersist(handlerCtx, nodeToPersist, parameters)
 	if err != nil {
 		return nil, err
 	}
@@ -1051,7 +1028,7 @@ func (p *primitiveGenerator) buildRequestContext(handlerCtx *handler.HandlerCont
 }
 
 func (p *primitiveGenerator) analyzeInsert(handlerCtx *handler.HandlerContext, node *sqlparser.Insert) error {
-	err := p.inferHeirarchyAndPersist(handlerCtx, node)
+	err := p.inferHeirarchyAndPersist(handlerCtx, node, nil)
 	if err != nil {
 		return err
 	}
@@ -1116,8 +1093,8 @@ func (p *primitiveGenerator) analyzeInsert(handlerCtx *handler.HandlerContext, n
 	return nil
 }
 
-func (p *primitiveGenerator) inferHeirarchyAndPersist(handlerCtx *handler.HandlerContext, node sqlparser.SQLNode) error {
-	heirarchy, err := taxonomy.GetHeirarchyFromStatement(handlerCtx, node)
+func (p *primitiveGenerator) inferHeirarchyAndPersist(handlerCtx *handler.HandlerContext, node sqlparser.SQLNode, parameters map[string]interface{}) error {
+	heirarchy, err := taxonomy.GetHeirarchyFromStatement(handlerCtx, node, parameters)
 	if err != nil {
 		return err
 	}
@@ -1127,7 +1104,8 @@ func (p *primitiveGenerator) inferHeirarchyAndPersist(handlerCtx *handler.Handle
 
 func (p *primitiveGenerator) analyzeDelete(handlerCtx *handler.HandlerContext, node *sqlparser.Delete) error {
 	p.parseComments(node.Comments)
-	err := p.inferHeirarchyAndPersist(handlerCtx, node)
+	paramMap := astvisit.ExtractParamsFromWhereClause(node.Where)
+	err := p.inferHeirarchyAndPersist(handlerCtx, node, paramMap)
 	if err != nil {
 		return err
 	}
@@ -1167,7 +1145,7 @@ func (p *primitiveGenerator) analyzeDelete(handlerCtx *handler.HandlerContext, n
 		log.Infof("no response schema for delete: %s \n", err.Error())
 	}
 	if schema != nil {
-		whereErr := p.analyzeSingleTableWhere(node.Where, schema)
+		_, _, whereErr := p.analyzeWhere(node.Where)
 		if whereErr != nil {
 			return whereErr
 		}
@@ -1205,7 +1183,7 @@ func (p *primitiveGenerator) analyzeDelete(handlerCtx *handler.HandlerContext, n
 
 func (p *primitiveGenerator) analyzeDescribe(handlerCtx *handler.HandlerContext, node *sqlparser.DescribeTable) error {
 	var err error
-	err = p.inferHeirarchyAndPersist(handlerCtx, node)
+	err = p.inferHeirarchyAndPersist(handlerCtx, node, nil)
 	if err != nil {
 		return err
 	}
@@ -1287,12 +1265,12 @@ func (p *primitiveGenerator) analyzeShow(handlerCtx *handler.HandlerContext, nod
 	case "AUTH":
 		// TODO
 	case "INSERT":
-		err = p.inferHeirarchyAndPersist(handlerCtx, node)
+		err = p.inferHeirarchyAndPersist(handlerCtx, node, nil)
 		if err != nil {
 			return err
 		}
 	case "METHODS":
-		err = p.inferHeirarchyAndPersist(handlerCtx, node)
+		err = p.inferHeirarchyAndPersist(handlerCtx, node, nil)
 		if err != nil {
 			return err
 		}

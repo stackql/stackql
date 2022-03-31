@@ -125,13 +125,21 @@ func NewTTLDiscoveryStore(sqlengine sqlengine.SQLEngine, registry openapistackql
 func (store *TTLDiscoveryStore) ProcessProviderDiscoveryDoc(url string, alias string) (*openapistackql.Provider, error) {
 	switch url {
 	case "https://www.googleapis.com/discovery/v1/apis":
-		return store.registry.LoadProviderByName("google", "v1")
+		ver, err := store.registry.GetLatestAvailableVersion("google")
+		if err != nil {
+			return nil, fmt.Errorf("locally stored providers not viable. Please try a pull from the registry.  Error: %s", err.Error())
+		}
+		return store.registry.LoadProviderByName("google", ver)
 	default:
 		ds, err := nomenclature.ExtractProviderDesignation(url)
 		if err != nil {
 			return nil, err
 		}
-		return store.registry.LoadProviderByName(ds.Name, ds.Tag)
+		ver, err := store.registry.GetLatestAvailableVersion(ds.Name)
+		if err != nil {
+			return nil, fmt.Errorf("locally stored providers not viable. Please try a pull from the registry.  Error: %s", err.Error())
+		}
+		return store.registry.LoadProviderByName(ds.Name, ver)
 	}
 }
 

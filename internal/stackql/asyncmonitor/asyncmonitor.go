@@ -80,6 +80,15 @@ func (pr *AsyncHttpMonitorPrimitive) ID() int64 {
 	return pr.id
 }
 
+func (pr *AsyncHttpMonitorPrimitive) GetInputFromAlias(string) (dto.ExecutorOutput, bool) {
+	var rv dto.ExecutorOutput
+	return rv, false
+}
+
+func (pr *AsyncHttpMonitorPrimitive) SetExecutor(ex func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput) error {
+	return fmt.Errorf("AsyncHttpMonitorPrimitive does not support SetExecutor()")
+}
+
 func NewAsyncMonitor(prov provider.IProvider) (IAsyncMonitor, error) {
 	switch prov.GetProviderString() {
 	case "google":

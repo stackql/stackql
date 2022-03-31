@@ -27,6 +27,15 @@ func (pg *PrimitiveGraph) GetTxnControlCounterSlice() []dto.TxnControlCounters {
 	return pg.txnControlCounterSlice
 }
 
+func (pg *PrimitiveGraph) SetExecutor(func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput) error {
+	return fmt.Errorf("pass through primitive does not support SetExecutor()")
+}
+
+func (pr *PrimitiveGraph) GetInputFromAlias(string) (dto.ExecutorOutput, bool) {
+	var rv dto.ExecutorOutput
+	return rv, false
+}
+
 func (pg *PrimitiveGraph) Execute(ctx primitive.IPrimitiveCtx) dto.ExecutorOutput {
 	var output dto.ExecutorOutput = dto.NewExecutorOutput(nil, nil, nil, nil, fmt.Errorf("empty execution graph"))
 	for _, node := range pg.sorted {

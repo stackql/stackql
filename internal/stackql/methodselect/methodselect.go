@@ -10,7 +10,7 @@ import (
 type IMethodSelector interface {
 	GetMethod(resource *openapistackql.Resource, methodName string) (*openapistackql.OperationStore, error)
 
-	GetMethodForAction(resource *openapistackql.Resource, iqlAction string) (*openapistackql.OperationStore, string, error)
+	GetMethodForAction(resource *openapistackql.Resource, iqlAction string, parameters map[string]interface{}) (*openapistackql.OperationStore, string, error)
 }
 
 func NewMethodSelector(provider string, version string) (IMethodSelector, error) {
@@ -30,11 +30,11 @@ func newGoogleMethodSelector(version string) (IMethodSelector, error) {
 type DefaultMethodSelector struct {
 }
 
-func (sel *DefaultMethodSelector) GetMethodForAction(resource *openapistackql.Resource, iqlAction string) (*openapistackql.OperationStore, string, error) {
+func (sel *DefaultMethodSelector) GetMethodForAction(resource *openapistackql.Resource, iqlAction string, parameters map[string]interface{}) (*openapistackql.OperationStore, string, error) {
 	var methodName string
 	switch strings.ToLower(iqlAction) {
 	case "select":
-		methodName = "list"
+		methodName = "select"
 	case "delete":
 		methodName = "delete"
 	case "insert":
@@ -52,7 +52,7 @@ func (sel *DefaultMethodSelector) GetMethodForAction(resource *openapistackql.Re
 	default:
 		return nil, "", fmt.Errorf("iql action = '%s' curently not supported, there is no method mapping possible for any resource", iqlAction)
 	}
-	m, err := sel.getMethodByName(resource, methodName)
+	m, err := sel.getMethodByNameAndParameters(resource, methodName, parameters)
 	return m, methodName, err
 }
 
@@ -64,6 +64,14 @@ func (sel *DefaultMethodSelector) getMethodByName(resource *openapistackql.Resou
 	m, err := resource.FindMethod(methodName)
 	if err != nil {
 		return nil, fmt.Errorf("no method = '%s' for resource = '%s'", methodName, resource.Name)
+	}
+	return m, nil
+}
+
+func (sel *DefaultMethodSelector) getMethodByNameAndParameters(resource *openapistackql.Resource, methodName string, parameters map[string]interface{}) (*openapistackql.OperationStore, error) {
+	m, ok := resource.GetFirstMethodMatchFromSQLVerb(methodName, parameters)
+	if !ok {
+		return nil, fmt.Errorf("no appropriate method = '%s' for resource = '%s'", methodName, resource.Name)
 	}
 	return m, nil
 }

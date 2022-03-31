@@ -19,8 +19,9 @@ def get_unix_path(pathStr :str) -> str:
 
 
 REPOSITORY_ROOT_UNIX = get_unix_path(REPOSITORY_ROOT)
+REGISTRY_ROOT_CANONICAL   = get_unix_path(os.path.join(REPOSITORY_ROOT, 'test', 'registry'))
 REGISTRY_ROOT_MOCKED   = get_unix_path(os.path.join(REPOSITORY_ROOT, 'test', 'registry-mocked'))
-REGISTRY_ROOT_EMBEDDED   = get_unix_path(os.path.join(REPOSITORY_ROOT, 'test', 'registry-embedded-decompressed'))
+REGISTRY_ROOT_DEPRECATED   = get_unix_path(os.path.join(REPOSITORY_ROOT, 'test', 'registry-deprecated'))
 STACKQL_EXE     = get_unix_path(os.path.join(REPOSITORY_ROOT, 'build', _exe_name))
 _REGISTRY_NO_VERIFY_CFG    = { 
   "url": f"file://{get_unix_path(REGISTRY_ROOT_MOCKED)}",
@@ -30,10 +31,16 @@ _REGISTRY_NO_VERIFY_CFG    = {
     "nopVerify": True 
   } 
 }
-_REGISTRY_EMBEDDED_CFG    = { 
-  "url": f"file://{get_unix_path(REGISTRY_ROOT_EMBEDDED)}",
-  "localDocRoot": f"{get_unix_path(REGISTRY_ROOT_EMBEDDED)}",
-  "useEmbedded": True,
+_REGISTRY_CANONICAL_CFG    = { 
+  "url": f"file://{get_unix_path(REGISTRY_ROOT_CANONICAL)}",
+  "localDocRoot": f"{get_unix_path(REGISTRY_ROOT_CANONICAL)}",
+  "verifyConfig": {
+    "nopVerify": False 
+  } 
+}
+_REGISTRY_DEPRECATED_CFG    = { 
+  "url": f"file://{get_unix_path(REGISTRY_ROOT_DEPRECATED)}",
+  "localDocRoot": f"{get_unix_path(REGISTRY_ROOT_DEPRECATED)}",
   "verifyConfig": {
     "nopVerify": False 
   } 
@@ -72,7 +79,8 @@ with open(os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'credentials', 'dummy'
     OKTA_SECRET_STR = f.read()
 
 REGISTRY_NO_VERIFY_CFG_STR = json.dumps(_REGISTRY_NO_VERIFY_CFG)
-REGISTRY_EMBEDDED_CFG_STR = json.dumps(_REGISTRY_EMBEDDED_CFG)
+REGISTRY_CANONICAL_CFG_STR = json.dumps(_REGISTRY_CANONICAL_CFG)
+REGISTRY_DEPRECATED_CFG_STR = json.dumps(_REGISTRY_DEPRECATED_CFG)
 AUTH_CFG_STR = json.dumps(_AUTH_CFG)
 SHOW_PROVIDERS_STR = "show providers;"
 SHOW_OKTA_SERVICES_FILTERED_STR  = "show services from okta like 'app%';"

@@ -40,8 +40,9 @@ require (
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.1
-	github.com/stackql/go-openapistackql v0.0.5-rc02
+	github.com/stackql/go-openapistackql v0.0.6-alpha12
 	github.com/stackql/go-sqlite3 v0.0.1-stackqlrc01
+	github.com/stackql/go-suffix-map v0.0.1-alpha01
 	go.uber.org/zap v1.21.0
 	golang.org/x/crypto v0.0.0-20220214200702-86341886e292
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
@@ -49,13 +50,13 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	gotest.tools v2.2.0+incompatible
 	readline v0.0.0-00010101000000-000000000000
-	vitess.io/vitess v0.0.10-rc01
+	vitess.io/vitess v0.0.11-alpha04
 )
 
 replace readline => github.com/stackql/readline v0.0.1-rc01
 
 replace github.com/fatih/color => github.com/stackql/color v0.0.1-rc01
 
-replace vitess.io/vitess => github.com/stackql/vitess v0.0.10-rc01
+replace vitess.io/vitess => github.com/stackql/vitess v0.0.11-alpha04
 
 replace github.com/jeroenrinzema/psql-wire => github.com/stackql/psql-wire v0.0.1-stackqlrc01

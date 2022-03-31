@@ -41,6 +41,32 @@ func ResolveMethodTerminalHeirarchyIdentifiers(node sqlparser.TableName) *Heirar
 	return &retVal
 }
 
+func generatePutativelyUniqueTableName(node sqlparser.TableName) string {
+	if node.IsEmpty() {
+		return ""
+	}
+	retVal := ""
+	if !node.QualifierThird.IsEmpty() {
+		retVal += fmt.Sprintf("%s.", node.QualifierThird.GetRawVal())
+	}
+	if !node.QualifierSecond.IsEmpty() {
+		retVal += fmt.Sprintf("%s.", node.QualifierSecond.GetRawVal())
+	}
+	if !node.Qualifier.IsEmpty() {
+		retVal += fmt.Sprintf("%s.", node.Qualifier.GetRawVal())
+	}
+	retVal += node.Name.GetRawVal()
+	return retVal
+}
+
+func GeneratePutativelyUniqueColumnID(node sqlparser.TableName, colName string) string {
+	tableID := generatePutativelyUniqueTableName(node)
+	if tableID == "" {
+		return colName
+	}
+	return fmt.Sprintf("%s.%s", tableID, colName)
+}
+
 func ResolveResourceTerminalHeirarchyIdentifiers(node sqlparser.TableName) *HeirarchyIdentifiers {
 	var retVal HeirarchyIdentifiers
 	// all will default to empty string

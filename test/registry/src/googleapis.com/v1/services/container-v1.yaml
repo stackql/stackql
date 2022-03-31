@@ -3042,9 +3042,7 @@ components:
       methods:
         list:
           operation:
-            $ref: get
-          path:
-            $ref: /v1/projects/{projectsId}/aggregated/usableSubnetworks
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1aggregated~1usableSubnetworks/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
@@ -3055,9 +3053,7 @@ components:
       methods:
         getServerConfig:
           operation:
-            $ref: get
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/serverConfig
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1serverConfig/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
@@ -3068,9 +3064,7 @@ components:
       methods:
         completeIpRotation:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:completeIpRotation
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1clusters~1{clustersId}:completeIpRotation/post'
           request:
             mediaType: application/json
           response:
@@ -3078,9 +3072,7 @@ components:
             openAPIDocKey: '200'
         create:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/clusters
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1clusters/post'
           request:
             mediaType: application/json
           response:
@@ -3088,41 +3080,31 @@ components:
             openAPIDocKey: '200'
         delete:
           operation:
-            $ref: delete
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1clusters~1{clustersId}/delete'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         get:
           operation:
-            $ref: get
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1clusters~1{clustersId}/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         getJwks:
           operation:
-            $ref: get
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}/jwks
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1clusters~1{clustersId}~1jwks/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         list:
           operation:
-            $ref: get
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/clusters
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1clusters/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         setAddons:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:setAddons
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1clusters~1{clustersId}:setAddons/post'
           request:
             mediaType: application/json
           response:
@@ -3130,9 +3112,7 @@ components:
             openAPIDocKey: '200'
         setLegacyAbac:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:setLegacyAbac
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1clusters~1{clustersId}:setLegacyAbac/post'
           request:
             mediaType: application/json
           response:
@@ -3140,9 +3120,7 @@ components:
             openAPIDocKey: '200'
         setLocations:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:setLocations
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1clusters~1{clustersId}:setLocations/post'
           request:
             mediaType: application/json
           response:
@@ -3150,9 +3128,7 @@ components:
             openAPIDocKey: '200'
         setLogging:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:setLogging
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1clusters~1{clustersId}:setLogging/post'
           request:
             mediaType: application/json
           response:
@@ -3160,9 +3136,7 @@ components:
             openAPIDocKey: '200'
         setMaintenancePolicy:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:setMaintenancePolicy
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1clusters~1{clustersId}:setMaintenancePolicy/post'
           request:
             mediaType: application/json
           response:
@@ -3170,9 +3144,7 @@ components:
             openAPIDocKey: '200'
         setMasterAuth:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:setMasterAuth
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1clusters~1{clustersId}:setMasterAuth/post'
           request:
             mediaType: application/json
           response:
@@ -3180,9 +3152,7 @@ components:
             openAPIDocKey: '200'
         setMonitoring:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:setMonitoring
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1clusters~1{clustersId}:setMonitoring/post'
           request:
             mediaType: application/json
           response:
@@ -3190,9 +3160,7 @@ components:
             openAPIDocKey: '200'
         setNetworkPolicy:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:setNetworkPolicy
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1clusters~1{clustersId}:setNetworkPolicy/post'
           request:
             mediaType: application/json
           response:
@@ -3200,9 +3168,7 @@ components:
             openAPIDocKey: '200'
         setResourceLabels:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:setResourceLabels
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1clusters~1{clustersId}:setResourceLabels/post'
           request:
             mediaType: application/json
           response:
@@ -3210,9 +3176,7 @@ components:
             openAPIDocKey: '200'
         startIpRotation:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:startIpRotation
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1clusters~1{clustersId}:startIpRotation/post'
           request:
             mediaType: application/json
           response:
@@ -3220,9 +3184,7 @@ components:
             openAPIDocKey: '200'
         update:
           operation:
-            $ref: put
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1clusters~1{clustersId}/put'
           request:
             mediaType: application/json
           response:
@@ -3230,9 +3192,7 @@ components:
             openAPIDocKey: '200'
         updateMaster:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:updateMaster
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1clusters~1{clustersId}:updateMaster/post'
           request:
             mediaType: application/json
           response:
@@ -3245,9 +3205,7 @@ components:
       methods:
         create:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}/nodePools
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1clusters~1{clustersId}~1nodePools/post'
           request:
             mediaType: application/json
           response:
@@ -3255,33 +3213,25 @@ components:
             openAPIDocKey: '200'
         delete:
           operation:
-            $ref: delete
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}/nodePools/{nodePoolsId}
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1clusters~1{clustersId}~1nodePools~1{nodePoolsId}/delete'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         get:
           operation:
-            $ref: get
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}/nodePools/{nodePoolsId}
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1clusters~1{clustersId}~1nodePools~1{nodePoolsId}/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         list:
           operation:
-            $ref: get
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}/nodePools
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1clusters~1{clustersId}~1nodePools/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         rollback:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}/nodePools/{nodePoolsId}:rollback
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1clusters~1{clustersId}~1nodePools~1{nodePoolsId}:rollback/post'
           request:
             mediaType: application/json
           response:
@@ -3289,9 +3239,7 @@ components:
             openAPIDocKey: '200'
         setAutoscaling:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}/nodePools/{nodePoolsId}:setAutoscaling
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1clusters~1{clustersId}~1nodePools~1{nodePoolsId}:setAutoscaling/post'
           request:
             mediaType: application/json
           response:
@@ -3299,9 +3247,7 @@ components:
             openAPIDocKey: '200'
         setManagement:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}/nodePools/{nodePoolsId}:setManagement
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1clusters~1{clustersId}~1nodePools~1{nodePoolsId}:setManagement/post'
           request:
             mediaType: application/json
           response:
@@ -3309,9 +3255,7 @@ components:
             openAPIDocKey: '200'
         setSize:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}/nodePools/{nodePoolsId}:setSize
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1clusters~1{clustersId}~1nodePools~1{nodePoolsId}:setSize/post'
           request:
             mediaType: application/json
           response:
@@ -3319,9 +3263,7 @@ components:
             openAPIDocKey: '200'
         update:
           operation:
-            $ref: put
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}/nodePools/{nodePoolsId}
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1clusters~1{clustersId}~1nodePools~1{nodePoolsId}/put'
           request:
             mediaType: application/json
           response:
@@ -3334,9 +3276,7 @@ components:
       methods:
         getOpenid-configuration:
           operation:
-            $ref: get
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}/.well-known/openid-configuration
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1clusters~1{clustersId}~1.well-known~1openid-configuration/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
@@ -3347,9 +3287,7 @@ components:
       methods:
         cancel:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/operations/{operationsId}:cancel
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1operations~1{operationsId}:cancel/post'
           request:
             mediaType: application/json
           response:
@@ -3357,17 +3295,13 @@ components:
             openAPIDocKey: '200'
         get:
           operation:
-            $ref: get
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/operations/{operationsId}
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1operations~1{operationsId}/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         list:
           operation:
-            $ref: get
-          path:
-            $ref: /v1/projects/{projectsId}/locations/{locationsId}/operations
+            $ref: '#/paths/~1v1~1projects~1{projectsId}~1locations~1{locationsId}~1operations/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
@@ -3378,9 +3312,7 @@ components:
       methods:
         getServerconfig:
           operation:
-            $ref: get
-          path:
-            $ref: /v1/projects/{projectId}/zones/{zone}/serverconfig
+            $ref: '#/paths/~1v1~1projects~1{projectId}~1zones~1{zone}~1serverconfig/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
@@ -3391,9 +3323,7 @@ components:
       methods:
         addons:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/addons
+            $ref: '#/paths/~1v1~1projects~1{projectId}~1zones~1{zone}~1clusters~1{clusterId}~1addons/post'
           request:
             mediaType: application/json
           response:
@@ -3401,9 +3331,7 @@ components:
             openAPIDocKey: '200'
         completeIpRotation:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:completeIpRotation
+            $ref: '#/paths/~1v1~1projects~1{projectId}~1zones~1{zone}~1clusters~1{clusterId}:completeIpRotation/post'
           request:
             mediaType: application/json
           response:
@@ -3411,9 +3339,7 @@ components:
             openAPIDocKey: '200'
         create:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectId}/zones/{zone}/clusters
+            $ref: '#/paths/~1v1~1projects~1{projectId}~1zones~1{zone}~1clusters/post'
           request:
             mediaType: application/json
           response:
@@ -3421,25 +3347,19 @@ components:
             openAPIDocKey: '200'
         delete:
           operation:
-            $ref: delete
-          path:
-            $ref: /v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}
+            $ref: '#/paths/~1v1~1projects~1{projectId}~1zones~1{zone}~1clusters~1{clusterId}/delete'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         get:
           operation:
-            $ref: get
-          path:
-            $ref: /v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}
+            $ref: '#/paths/~1v1~1projects~1{projectId}~1zones~1{zone}~1clusters~1{clusterId}/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         legacyAbac:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/legacyAbac
+            $ref: '#/paths/~1v1~1projects~1{projectId}~1zones~1{zone}~1clusters~1{clusterId}~1legacyAbac/post'
           request:
             mediaType: application/json
           response:
@@ -3447,17 +3367,13 @@ components:
             openAPIDocKey: '200'
         list:
           operation:
-            $ref: get
-          path:
-            $ref: /v1/projects/{projectId}/zones/{zone}/clusters
+            $ref: '#/paths/~1v1~1projects~1{projectId}~1zones~1{zone}~1clusters/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         locations:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/locations
+            $ref: '#/paths/~1v1~1projects~1{projectId}~1zones~1{zone}~1clusters~1{clusterId}~1locations/post'
           request:
             mediaType: application/json
           response:
@@ -3465,9 +3381,7 @@ components:
             openAPIDocKey: '200'
         logging:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/logging
+            $ref: '#/paths/~1v1~1projects~1{projectId}~1zones~1{zone}~1clusters~1{clusterId}~1logging/post'
           request:
             mediaType: application/json
           response:
@@ -3475,9 +3389,7 @@ components:
             openAPIDocKey: '200'
         master:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/master
+            $ref: '#/paths/~1v1~1projects~1{projectId}~1zones~1{zone}~1clusters~1{clusterId}~1master/post'
           request:
             mediaType: application/json
           response:
@@ -3485,9 +3397,7 @@ components:
             openAPIDocKey: '200'
         monitoring:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/monitoring
+            $ref: '#/paths/~1v1~1projects~1{projectId}~1zones~1{zone}~1clusters~1{clusterId}~1monitoring/post'
           request:
             mediaType: application/json
           response:
@@ -3495,9 +3405,7 @@ components:
             openAPIDocKey: '200'
         resourceLabels:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/resourceLabels
+            $ref: '#/paths/~1v1~1projects~1{projectId}~1zones~1{zone}~1clusters~1{clusterId}~1resourceLabels/post'
           request:
             mediaType: application/json
           response:
@@ -3505,9 +3413,7 @@ components:
             openAPIDocKey: '200'
         setMaintenancePolicy:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:setMaintenancePolicy
+            $ref: '#/paths/~1v1~1projects~1{projectId}~1zones~1{zone}~1clusters~1{clusterId}:setMaintenancePolicy/post'
           request:
             mediaType: application/json
           response:
@@ -3515,9 +3421,7 @@ components:
             openAPIDocKey: '200'
         setMasterAuth:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:setMasterAuth
+            $ref: '#/paths/~1v1~1projects~1{projectId}~1zones~1{zone}~1clusters~1{clusterId}:setMasterAuth/post'
           request:
             mediaType: application/json
           response:
@@ -3525,9 +3429,7 @@ components:
             openAPIDocKey: '200'
         setNetworkPolicy:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:setNetworkPolicy
+            $ref: '#/paths/~1v1~1projects~1{projectId}~1zones~1{zone}~1clusters~1{clusterId}:setNetworkPolicy/post'
           request:
             mediaType: application/json
           response:
@@ -3535,9 +3437,7 @@ components:
             openAPIDocKey: '200'
         startIpRotation:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:startIpRotation
+            $ref: '#/paths/~1v1~1projects~1{projectId}~1zones~1{zone}~1clusters~1{clusterId}:startIpRotation/post'
           request:
             mediaType: application/json
           response:
@@ -3545,9 +3445,7 @@ components:
             openAPIDocKey: '200'
         update:
           operation:
-            $ref: put
-          path:
-            $ref: /v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}
+            $ref: '#/paths/~1v1~1projects~1{projectId}~1zones~1{zone}~1clusters~1{clusterId}/put'
           request:
             mediaType: application/json
           response:
@@ -3560,9 +3458,7 @@ components:
       methods:
         autoscaling:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools/{nodePoolId}/autoscaling
+            $ref: '#/paths/~1v1~1projects~1{projectId}~1zones~1{zone}~1clusters~1{clusterId}~1nodePools~1{nodePoolId}~1autoscaling/post'
           request:
             mediaType: application/json
           response:
@@ -3570,9 +3466,7 @@ components:
             openAPIDocKey: '200'
         create:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools
+            $ref: '#/paths/~1v1~1projects~1{projectId}~1zones~1{zone}~1clusters~1{clusterId}~1nodePools/post'
           request:
             mediaType: application/json
           response:
@@ -3580,33 +3474,25 @@ components:
             openAPIDocKey: '200'
         delete:
           operation:
-            $ref: delete
-          path:
-            $ref: /v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools/{nodePoolId}
+            $ref: '#/paths/~1v1~1projects~1{projectId}~1zones~1{zone}~1clusters~1{clusterId}~1nodePools~1{nodePoolId}/delete'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         get:
           operation:
-            $ref: get
-          path:
-            $ref: /v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools/{nodePoolId}
+            $ref: '#/paths/~1v1~1projects~1{projectId}~1zones~1{zone}~1clusters~1{clusterId}~1nodePools~1{nodePoolId}/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         list:
           operation:
-            $ref: get
-          path:
-            $ref: /v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools
+            $ref: '#/paths/~1v1~1projects~1{projectId}~1zones~1{zone}~1clusters~1{clusterId}~1nodePools/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         rollback:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools/{nodePoolId}:rollback
+            $ref: '#/paths/~1v1~1projects~1{projectId}~1zones~1{zone}~1clusters~1{clusterId}~1nodePools~1{nodePoolId}:rollback/post'
           request:
             mediaType: application/json
           response:
@@ -3614,9 +3500,7 @@ components:
             openAPIDocKey: '200'
         setManagement:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools/{nodePoolId}/setManagement
+            $ref: '#/paths/~1v1~1projects~1{projectId}~1zones~1{zone}~1clusters~1{clusterId}~1nodePools~1{nodePoolId}~1setManagement/post'
           request:
             mediaType: application/json
           response:
@@ -3624,9 +3508,7 @@ components:
             openAPIDocKey: '200'
         setSize:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools/{nodePoolId}/setSize
+            $ref: '#/paths/~1v1~1projects~1{projectId}~1zones~1{zone}~1clusters~1{clusterId}~1nodePools~1{nodePoolId}~1setSize/post'
           request:
             mediaType: application/json
           response:
@@ -3634,9 +3516,7 @@ components:
             openAPIDocKey: '200'
         update:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools/{nodePoolId}/update
+            $ref: '#/paths/~1v1~1projects~1{projectId}~1zones~1{zone}~1clusters~1{clusterId}~1nodePools~1{nodePoolId}~1update/post'
           request:
             mediaType: application/json
           response:
@@ -3649,9 +3529,7 @@ components:
       methods:
         cancel:
           operation:
-            $ref: post
-          path:
-            $ref: /v1/projects/{projectId}/zones/{zone}/operations/{operationId}:cancel
+            $ref: '#/paths/~1v1~1projects~1{projectId}~1zones~1{zone}~1operations~1{operationId}:cancel/post'
           request:
             mediaType: application/json
           response:
@@ -3659,17 +3537,13 @@ components:
             openAPIDocKey: '200'
         get:
           operation:
-            $ref: get
-          path:
-            $ref: /v1/projects/{projectId}/zones/{zone}/operations/{operationId}
+            $ref: '#/paths/~1v1~1projects~1{projectId}~1zones~1{zone}~1operations~1{operationId}/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
         list:
           operation:
-            $ref: get
-          path:
-            $ref: /v1/projects/{projectId}/zones/{zone}/operations
+            $ref: '#/paths/~1v1~1projects~1{projectId}~1zones~1{zone}~1operations/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
