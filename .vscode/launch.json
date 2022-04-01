@@ -87,7 +87,7 @@
     },
     // select name from google.compute.disks where project = 'lab-kr-network-01' and zone = 'australia-southeast1-a';
     {
-      "name": "DEBUG select compute.disks ... ;",
+      "name": "DEBUG select compute.acceleratorTypes ... ;",
       "type": "go",
       "request": "launch",
       "mode": "debug",
@@ -95,9 +95,7 @@
       "args": [
         "exec",
         "--auth={ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
-        "select name from google.compute.disks where project = 'lab-kr-network-01' and zone = 'australia-southeast1-a';",
-        "-o",
-        "json"
+        "select  kind, name  from  google.compute.acceleratorTypes where project = 'lab-kr-network-01' and zone = 'australia-southeast1-a' order by name desc;"
       ],
     },
     // show extended resources from okta.group
