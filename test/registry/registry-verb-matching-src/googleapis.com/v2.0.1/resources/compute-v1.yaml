@@ -1,0 +1,70 @@
+serviceDoc:
+  $ref: googleapis.com/v2.0.1/services-split/compute/compute-v1.yaml
+resources:
+    acceleratorTypes:
+      sqlVerbs:
+        select:
+          - $ref: '#/resources/acceleratorTypes/methods/getLost'
+          - $ref: '#/resources/acceleratorTypes/methods/crazyList'
+          - $ref: '#/resources/acceleratorTypes/methods/crazyAggregatedList'
+      id: google.compute.acceleratorTypes
+      methods:
+        crazyAggregatedList:
+          operation:
+            $ref: 'googleapis.com/v2.0.1/services-split/compute/compute-v1.yaml#/paths/~1projects~1{project}~1aggregated~1acceleratorTypes/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getLost:
+          operation:
+            $ref: 'googleapis.com/v2.0.1/services-split/compute/compute-v1.yaml#/paths/~1projects~1{project}~1zones~1{zone}~1acceleratorTypes~1{acceleratorType}/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        crazyList:
+          operation:
+            $ref: 'googleapis.com/v2.0.1/services-split/compute/compute-v1.yaml#/paths/~1projects~1{project}~1zones~1{zone}~1acceleratorTypes/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: acceleratorTypes
+      title: acceleratorTypes
+    addresses:
+      id: google.compute.addresses
+      methods:
+        aggregatedList:
+          operation:
+            $ref: 'googleapis.com/v2.0.1/services-split/compute/compute-v1.yaml#/paths/~1projects~1{project}~1aggregated~1addresses/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: 'googleapis.com/v2.0.1/services-split/compute/compute-v1.yaml#/paths/~1projects~1{project}~1regions~1{region}~1addresses~1{address}/delete'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: 'googleapis.com/v2.0.1/services-split/compute/compute-v1.yaml#/paths/~1projects~1{project}~1regions~1{region}~1addresses~1{address}/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: 'googleapis.com/v2.0.1/services-split/compute/compute-v1.yaml#/paths/~1projects~1{project}~1regions~1{region}~1addresses/post'
+          request:
+            mediaType: application/json
+            required:
+              - name
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: 'googleapis.com/v2.0.1/services-split/compute/compute-v1.yaml#/paths/~1projects~1{project}~1regions~1{region}~1addresses/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: addresses
+      title: addresses

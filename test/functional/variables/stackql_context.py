@@ -31,6 +31,15 @@ _REGISTRY_NO_VERIFY_CFG    = {
     "nopVerify": True 
   } 
 }
+_REGISTRY_SQL_VERB_CONTRIVED_NO_VERIFY_CFG    = { 
+  "url": f"file://{get_unix_path(REGISTRY_ROOT_CANONICAL)}",
+  "localDocRoot": f"{get_unix_path(REGISTRY_ROOT_CANONICAL)}",
+  "srcPrefix": "registry-verb-matching-src",
+  "useEmbedded": False,
+  "verifyConfig": {
+    "nopVerify": True 
+  } 
+}
 _REGISTRY_CANONICAL_CFG    = { 
   "url": f"file://{get_unix_path(REGISTRY_ROOT_CANONICAL)}",
   "localDocRoot": f"{get_unix_path(REGISTRY_ROOT_CANONICAL)}",
@@ -79,6 +88,7 @@ with open(os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'credentials', 'dummy'
     OKTA_SECRET_STR = f.read()
 
 REGISTRY_NO_VERIFY_CFG_STR = json.dumps(_REGISTRY_NO_VERIFY_CFG)
+REGISTRY_SQL_VERB_CONTRIVED_NO_VERIFY_CFG_STR = json.dumps(_REGISTRY_SQL_VERB_CONTRIVED_NO_VERIFY_CFG)
 REGISTRY_CANONICAL_CFG_STR = json.dumps(_REGISTRY_CANONICAL_CFG)
 REGISTRY_DEPRECATED_CFG_STR = json.dumps(_REGISTRY_DEPRECATED_CFG)
 AUTH_CFG_STR = json.dumps(_AUTH_CFG)
@@ -104,10 +114,13 @@ PSQL_UNENCRYPTED_CONN_STR :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_UNE
 
 SELECT_CONTAINER_SUBNET_AGG_DESC = "select ipCidrRange, sum(5) cc  from  google.container.`projects.aggregated.usableSubnetworks` where projectsId = 'testing-project' group by \"ipCidrRange\" having sum(5) >= 5 order by ipCidrRange desc;"
 SELECT_CONTAINER_SUBNET_AGG_ASC = "select ipCidrRange, sum(5) cc  from  google.container.`projects.aggregated.usableSubnetworks` where projectsId = 'testing-project' group by \"ipCidrRange\" having sum(5) >= 5 order by ipCidrRange asc;"
+SELECT_ACCELERATOR_TYPES_DESC = "select  kind, name  from  google.compute.acceleratorTypes where project = 'testing-project' and zone = 'australia-southeast1-a' order by name desc;"
 
 SELECT_CONTAINER_SUBNET_AGG_DESC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aggregated-select', 'google', 'container', 'agg-subnetworks-allowed', 'table', 'simple-count-grouped-variant-desc.txt'))
 
 SELECT_CONTAINER_SUBNET_AGG_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aggregated-select', 'google', 'container', 'agg-subnetworks-allowed', 'table', 'simple-count-grouped-variant-asc.txt'))
+
+SELECT_ACCELERATOR_TYPES_DESC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'simple-select', 'compute-accelerator-type', 'select-zone-list-desc.txt'))
 
 GET_IAM_POLICY_AGG_ASC_INPUT_FILE = os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'input', 'select-exec-dependent-org-iam-policy.iql')
 
