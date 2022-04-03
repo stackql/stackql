@@ -98,6 +98,20 @@
         "select  kind, name  from  google.compute.acceleratorTypes where project = 'lab-kr-network-01' and zone = 'australia-southeast1-a' order by name desc;"
       ],
     },
+    // 
+    {
+      "name": "DEBUG select github.repos.repos ... ;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry={ \"useEmbedded\": false, \"url\": \"file://${workspaceFolder}/test/registry\", \"localDocRoot\": \"${workspaceFolder}/test/registry\", \"verifyConfig\": { \"nopVerify\": true } }",
+        "--auth={ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" }, \"github\": { \"type\": \"null_auth\" } }",
+        "select name, ssh_url from github.repos.repos where org = 'stackql' ;"
+      ],
+    },
     // show extended resources from okta.group
     {
       "name": "DEBUG show resources from okta.group ... ;",
