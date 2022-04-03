@@ -83,7 +83,7 @@ type TblMap map[sqlparser.SQLNode]ExtendedTableMetadata
 func (tm TblMap) GetTable(node sqlparser.SQLNode) (ExtendedTableMetadata, error) {
 	tbl, ok := tm[node]
 	if !ok {
-		return ExtendedTableMetadata{}, fmt.Errorf("could not locate table openapistackql for AST node: %v", node)
+		return ExtendedTableMetadata{}, fmt.Errorf("could not locate table for AST node: %v", node)
 	}
 	return tbl, nil
 }
