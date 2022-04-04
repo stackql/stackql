@@ -107,6 +107,14 @@ func (ex ExtendedTableMetadata) GetAlias() string {
 	return ex.Alias
 }
 
+func (ex ExtendedTableMetadata) IsSimple() bool {
+	return ex.isSimple()
+}
+
+func (ex ExtendedTableMetadata) isSimple() bool {
+	return ex.HeirarchyObjects != nil && (len(ex.HeirarchyObjects.MethodSet) > 0 || ex.HeirarchyObjects.Method != nil)
+}
+
 func (ex ExtendedTableMetadata) GetUniqueId() string {
 	if ex.Alias != "" {
 		return ex.Alias
@@ -154,7 +162,10 @@ func (ex ExtendedTableMetadata) getMethod() (*openapistackql.OperationStore, err
 }
 
 func (ex ExtendedTableMetadata) GetResponseSchema() (*openapistackql.Schema, error) {
-	return ex.HeirarchyObjects.GetResponseSchema()
+	if ex.isSimple() {
+		return ex.HeirarchyObjects.GetResponseSchema()
+	}
+	return nil, fmt.Errorf("subqueries currently not supported")
 }
 
 func (ho *HeirarchyObjects) GetResponseSchema() (*openapistackql.Schema, error) {
@@ -327,11 +338,15 @@ func GetAliasFromStatement(node sqlparser.SQLNode) string {
 	}
 }
 
-func GetHeirarchyFromStatement(handlerCtx *handler.HandlerContext, node sqlparser.SQLNode, parameters map[string]interface{}) (*HeirarchyObjects, error) {
+func GetHeirarchyFromStatement(handlerCtx *handler.HandlerContext, node sqlparser.SQLNode, parameters map[string]interface{}) (*HeirarchyObjects, map[string]interface{}, error) {
 	var hIds *dto.HeirarchyIdentifiers
+	remainingParams := make(map[string]interface{})
+	for k, v := range parameters {
+		remainingParams[k] = v
+	}
 	hIds, err := getHids(handlerCtx, node)
 	if err != nil {
-		return nil, err
+		return nil, remainingParams, err
 	}
 	methodRequired := true
 	var methodAction string
@@ -342,7 +357,7 @@ func GetHeirarchyFromStatement(handlerCtx *handler.HandlerContext, node sqlparse
 	case *sqlparser.DescribeTable:
 	case sqlparser.TableName:
 	case *sqlparser.AliasedTableExpr:
-		return GetHeirarchyFromStatement(handlerCtx, n.Expr, parameters)
+		return GetHeirarchyFromStatement(handlerCtx, n.Expr, remainingParams)
 	case *sqlparser.Show:
 		switch strings.ToUpper(n.Type) {
 		case "INSERT":
@@ -350,14 +365,14 @@ func GetHeirarchyFromStatement(handlerCtx *handler.HandlerContext, node sqlparse
 		case "METHODS":
 			methodRequired = false
 		default:
-			return nil, fmt.Errorf("cannot resolve taxonomy for SHOW statement of type = '%s'", strings.ToUpper(n.Type))
+			return nil, remainingParams, fmt.Errorf("cannot resolve taxonomy for SHOW statement of type = '%s'", strings.ToUpper(n.Type))
 		}
 	case *sqlparser.Insert:
 		methodAction = "insert"
 	case *sqlparser.Delete:
 		methodAction = "delete"
 	default:
-		return nil, fmt.Errorf("cannot resolve taxonomy")
+		return nil, remainingParams, fmt.Errorf("cannot resolve taxonomy")
 	}
 	retVal := HeirarchyObjects{
 		HeirarchyIds: *hIds,
@@ -365,36 +380,47 @@ func GetHeirarchyFromStatement(handlerCtx *handler.HandlerContext, node sqlparse
 	prov, err := handlerCtx.GetProvider(hIds.ProviderStr)
 	retVal.Provider = prov
 	if err != nil {
-		return nil, err
+		return nil, remainingParams, err
 	}
 	svcHdl, err := prov.GetServiceShard(hIds.ServiceStr, hIds.ResourceStr, handlerCtx.RuntimeContext)
 	if err != nil {
-		return nil, err
+		return nil, remainingParams, err
 	}
 	retVal.ServiceHdl = svcHdl
 	rsc, err := prov.GetResource(hIds.ServiceStr, hIds.ResourceStr, handlerCtx.RuntimeContext)
 	if err != nil {
-		return nil, err
+		return nil, remainingParams, err
 	}
 	retVal.Resource = rsc
-	method, methodErr := rsc.FindMethod(hIds.MethodStr) // rsc.Methods[hIds.MethodStr]
-	if methodErr != nil && methodRequired {
+	var method *openapistackql.OperationStore
+	switch node.(type) {
+	case *sqlparser.Exec, *sqlparser.ExecSubquery:
+		method, err = rsc.FindMethod(hIds.MethodStr)
+		if err != nil {
+			return nil, remainingParams, err
+		}
+		retVal.Method = method
+		return &retVal, remainingParams, nil
+	}
+	if methodRequired {
 		switch node.(type) {
 		case *sqlparser.DescribeTable:
 			m, mStr, err := prov.InferDescribeMethod(rsc)
 			if err != nil {
-				return nil, err
+				return nil, remainingParams, err
 			}
 			retVal.Method = m
 			retVal.HeirarchyIds.MethodStr = mStr
-			return &retVal, nil
+			return &retVal, remainingParams, nil
 		}
 		if methodAction == "" {
 			methodAction = "select"
 		}
-		meth, methStr, err := prov.GetMethodForAction(retVal.HeirarchyIds.ServiceStr, retVal.HeirarchyIds.ResourceStr, methodAction, parameters, handlerCtx.RuntimeContext)
+		var meth *openapistackql.OperationStore
+		var methStr string
+		meth, methStr, remainingParams, err = prov.GetMethodForAction(retVal.HeirarchyIds.ServiceStr, retVal.HeirarchyIds.ResourceStr, methodAction, remainingParams, handlerCtx.RuntimeContext)
 		if err != nil {
-			return nil, fmt.Errorf("could not find method in taxonomy: %s", err.Error())
+			return nil, remainingParams, fmt.Errorf("could not find method in taxonomy: %s", err.Error())
 		}
 		method = meth
 		retVal.HeirarchyIds.MethodStr = methStr
@@ -402,5 +428,5 @@ func GetHeirarchyFromStatement(handlerCtx *handler.HandlerContext, node sqlparse
 	if methodRequired {
 		retVal.Method = method
 	}
-	return &retVal, nil
+	return &retVal, remainingParams, nil
 }

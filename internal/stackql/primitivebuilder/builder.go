@@ -10,7 +10,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
-	"github.com/stackql/stackql/internal/stackql/httpexec"
 	"github.com/stackql/stackql/internal/stackql/httpmiddleware"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
@@ -40,7 +39,7 @@ type Builder interface {
 // and then persisting that data into a table.
 // This data would then subsequently be queried by later execution phases.
 type SingleSelectAcquire struct {
-	primitiveBuilder           *PrimitiveBuilder
+	graph                      *primitivegraph.PrimitiveGraph
 	handlerCtx                 *handler.HandlerContext
 	tableMeta                  taxonomy.ExtendedTableMetadata
 	drmCfg                     drm.DRMConfig
@@ -51,18 +50,17 @@ type SingleSelectAcquire struct {
 }
 
 type NullaryAction struct {
-	primitiveBuilder *PrimitiveBuilder
-	query            string
-	handlerCtx       *handler.HandlerContext
-	tableMeta        taxonomy.ExtendedTableMetadata
-	tabulation       openapistackql.Tabulation
-	drmCfg           drm.DRMConfig
-	txnCtrlCtr       *dto.TxnControlCounters
-	root             primitivegraph.PrimitiveNode
+	query      string
+	handlerCtx *handler.HandlerContext
+	tableMeta  taxonomy.ExtendedTableMetadata
+	tabulation openapistackql.Tabulation
+	drmCfg     drm.DRMConfig
+	txnCtrlCtr *dto.TxnControlCounters
+	root       primitivegraph.PrimitiveNode
 }
 
 type SingleSelect struct {
-	primitiveBuilder           *PrimitiveBuilder
+	graph                      *primitivegraph.PrimitiveGraph
 	handlerCtx                 *handler.HandlerContext
 	drmCfg                     drm.DRMConfig
 	selectPreparedStatementCtx *drm.PreparedStatementCtx
@@ -157,15 +155,15 @@ func (db *DiamondBuilder) GetTail() primitivegraph.PrimitiveNode {
 }
 
 type SingleAcquireAndSelect struct {
-	primitiveBuilder *PrimitiveBuilder
-	acquireBuilder   Builder
-	selectBuilder    Builder
+	graph          *primitivegraph.PrimitiveGraph
+	acquireBuilder Builder
+	selectBuilder  Builder
 }
 
 type MultipleAcquireAndSelect struct {
-	primitiveBuilder *PrimitiveBuilder
-	acquireBuilders  []Builder
-	selectBuilder    Builder
+	graph           *primitivegraph.PrimitiveGraph
+	acquireBuilders []Builder
+	selectBuilder   Builder
 }
 
 type Join struct {
@@ -175,13 +173,13 @@ type Join struct {
 	rowSort      func(map[string]map[string]interface{}) []string
 }
 
-func NewSingleSelectAcquire(pb *PrimitiveBuilder, handlerCtx *handler.HandlerContext, tableMeta taxonomy.ExtendedTableMetadata, insertCtx *drm.PreparedStatementCtx, rowSort func(map[string]map[string]interface{}) []string) Builder {
+func NewSingleSelectAcquire(graph *primitivegraph.PrimitiveGraph, handlerCtx *handler.HandlerContext, tableMeta taxonomy.ExtendedTableMetadata, insertCtx *drm.PreparedStatementCtx, rowSort func(map[string]map[string]interface{}) []string) Builder {
 	var tcc *dto.TxnControlCounters
 	if insertCtx != nil {
 		tcc = insertCtx.TxnCtrlCtrs
 	}
 	return &SingleSelectAcquire{
-		primitiveBuilder:           pb,
+		graph:                      graph,
 		handlerCtx:                 handlerCtx,
 		tableMeta:                  tableMeta,
 		rowSort:                    rowSort,
@@ -191,9 +189,9 @@ func NewSingleSelectAcquire(pb *PrimitiveBuilder, handlerCtx *handler.HandlerCon
 	}
 }
 
-func NewSingleSelect(pb *PrimitiveBuilder, handlerCtx *handler.HandlerContext, selectCtx *drm.PreparedStatementCtx, rowSort func(map[string]map[string]interface{}) []string) Builder {
+func NewSingleSelect(graph *primitivegraph.PrimitiveGraph, handlerCtx *handler.HandlerContext, selectCtx *drm.PreparedStatementCtx, rowSort func(map[string]map[string]interface{}) []string) Builder {
 	return &SingleSelect{
-		primitiveBuilder:           pb,
+		graph:                      graph,
 		handlerCtx:                 handlerCtx,
 		rowSort:                    rowSort,
 		drmCfg:                     handlerCtx.DrmConfig,
@@ -203,13 +201,13 @@ func NewSingleSelect(pb *PrimitiveBuilder, handlerCtx *handler.HandlerContext, s
 }
 
 type Union struct {
-	unionCtx         *drm.PreparedStatementCtx
-	primitiveBuilder *PrimitiveBuilder
-	handlerCtx       *handler.HandlerContext
-	drmCfg           drm.DRMConfig
-	lhs              *drm.PreparedStatementCtx
-	rhs              []*drm.PreparedStatementCtx
-	root, tail       primitivegraph.PrimitiveNode
+	graph      *primitivegraph.PrimitiveGraph
+	unionCtx   *drm.PreparedStatementCtx
+	handlerCtx *handler.HandlerContext
+	drmCfg     drm.DRMConfig
+	lhs        *drm.PreparedStatementCtx
+	rhs        []*drm.PreparedStatementCtx
+	root, tail primitivegraph.PrimitiveNode
 }
 
 func (un *Union) Build() error {
@@ -223,36 +221,36 @@ func (un *Union) Build() error {
 		}
 		return prepareGolangResult(un.handlerCtx.SQLEngine, us, un.lhs.NonControlColumns, un.drmCfg)
 	}
-	graph := un.primitiveBuilder.GetGraph()
+	graph := un.graph
 	unionNode := graph.CreatePrimitiveNode(NewLocalPrimitive(unionEx))
 	un.root = unionNode
 	return nil
 }
 
-func NewUnion(pb *PrimitiveBuilder, handlerCtx *handler.HandlerContext, unionCtx *drm.PreparedStatementCtx, lhs *drm.PreparedStatementCtx, rhs []*drm.PreparedStatementCtx) Builder {
+func NewUnion(graph *primitivegraph.PrimitiveGraph, handlerCtx *handler.HandlerContext, unionCtx *drm.PreparedStatementCtx, lhs *drm.PreparedStatementCtx, rhs []*drm.PreparedStatementCtx) Builder {
 	return &Union{
-		primitiveBuilder: pb,
-		handlerCtx:       handlerCtx,
-		drmCfg:           handlerCtx.DrmConfig,
-		unionCtx:         unionCtx,
-		lhs:              lhs,
-		rhs:              rhs,
+		graph:      graph,
+		handlerCtx: handlerCtx,
+		drmCfg:     handlerCtx.DrmConfig,
+		unionCtx:   unionCtx,
+		lhs:        lhs,
+		rhs:        rhs,
 	}
 }
 
-func NewSingleAcquireAndSelect(pb *PrimitiveBuilder, handlerCtx *handler.HandlerContext, tableMeta taxonomy.ExtendedTableMetadata, insertCtx *drm.PreparedStatementCtx, selectCtx *drm.PreparedStatementCtx, rowSort func(map[string]map[string]interface{}) []string) Builder {
+func NewSingleAcquireAndSelect(graph *primitivegraph.PrimitiveGraph, txnControlCounters *dto.TxnControlCounters, handlerCtx *handler.HandlerContext, tableMeta taxonomy.ExtendedTableMetadata, insertCtx *drm.PreparedStatementCtx, selectCtx *drm.PreparedStatementCtx, rowSort func(map[string]map[string]interface{}) []string) Builder {
 	return &SingleAcquireAndSelect{
-		primitiveBuilder: pb,
-		acquireBuilder:   NewSingleSelectAcquire(pb, handlerCtx, tableMeta, insertCtx, rowSort),
-		selectBuilder:    NewSingleSelect(pb, handlerCtx, selectCtx, rowSort),
+		graph:          graph,
+		acquireBuilder: NewSingleSelectAcquire(graph, handlerCtx, tableMeta, insertCtx, rowSort),
+		selectBuilder:  NewSingleSelect(graph, handlerCtx, selectCtx, rowSort),
 	}
 }
 
-func NewMultipleAcquireAndSelect(pb *PrimitiveBuilder, handlerCtx *handler.HandlerContext, tableMeta taxonomy.ExtendedTableMetadata, insertCtx *drm.PreparedStatementCtx, selectCtx *drm.PreparedStatementCtx, rowSort func(map[string]map[string]interface{}) []string) Builder {
+func NewMultipleAcquireAndSelect(graph *primitivegraph.PrimitiveGraph, txnControlCounters *dto.TxnControlCounters, handlerCtx *handler.HandlerContext, tableMeta taxonomy.ExtendedTableMetadata, insertCtx *drm.PreparedStatementCtx, selectCtx *drm.PreparedStatementCtx, rowSort func(map[string]map[string]interface{}) []string) Builder {
 	return &MultipleAcquireAndSelect{
-		primitiveBuilder: pb,
-		acquireBuilders:  []Builder{NewSingleSelectAcquire(pb, handlerCtx, tableMeta, insertCtx, rowSort)},
-		selectBuilder:    NewSingleSelect(pb, handlerCtx, selectCtx, rowSort),
+		graph:           graph,
+		acquireBuilders: []Builder{NewSingleSelectAcquire(graph, handlerCtx, tableMeta, insertCtx, rowSort)},
+		selectBuilder:   NewSingleSelect(graph, handlerCtx, selectCtx, rowSort),
 	}
 }
 
@@ -274,7 +272,7 @@ func (ss *SingleSelect) Build() error {
 
 		return prepareGolangResult(ss.handlerCtx.SQLEngine, drm.NewPreparedStatementParameterized(ss.selectPreparedStatementCtx, nil, true), ss.selectPreparedStatementCtx.NonControlColumns, ss.drmCfg)
 	}
-	graph := ss.primitiveBuilder.GetGraph()
+	graph := ss.graph
 	selectNode := graph.CreatePrimitiveNode(NewLocalPrimitive(selectEx))
 	ss.root = selectNode
 
@@ -373,9 +371,13 @@ func (ss *SingleSelectAcquire) Build() error {
 	if err != nil {
 		return err
 	}
+	m, err := ss.tableMeta.GetMethod()
+	if err != nil {
+		return err
+	}
 	ex := func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput {
-		ss.primitiveBuilder.graph.AddTxnControlCounters(*ss.primitiveBuilder.txnCtrlCtrs)
-		mr := prov.InferMaxResultsElement(ss.tableMeta.HeirarchyObjects.Method)
+		ss.graph.AddTxnControlCounters(*ss.insertPreparedStatementCtx.TxnCtrlCtrs)
+		mr := prov.InferMaxResultsElement(m)
 		if mr != nil {
 			// TODO: infer param position and act accordingly
 			ok := true
@@ -398,7 +400,7 @@ func (ss *SingleSelectAcquire) Build() error {
 				if apiErr != nil {
 					return util.PrepareResultSet(dto.NewPrepareResultSetDTO(nil, nil, nil, ss.rowSort, apiErr, nil))
 				}
-				target, err := httpexec.ProcessHttpResponse(response)
+				target, err := m.ProcessResponse(response)
 				if err != nil {
 					return dto.NewErroneousExecutorOutput(err)
 				}
@@ -485,7 +487,7 @@ func (ss *SingleSelectAcquire) Build() error {
 		prep,
 		ss.txnCtrlCtr,
 	)
-	graph := ss.primitiveBuilder.GetGraph()
+	graph := ss.graph
 	insertNode := graph.CreatePrimitiveNode(insertPrim)
 	ss.root = insertNode
 
@@ -527,8 +529,8 @@ func (ss *SingleAcquireAndSelect) Build() error {
 	if err != nil {
 		return err
 	}
-	graph := ss.primitiveBuilder.GetGraph()
-	graph.NewDependency(ss.acquireBuilder.GetRoot(), ss.selectBuilder.GetRoot(), 1.0)
+	graph := ss.graph
+	graph.NewDependency(ss.acquireBuilder.GetTail(), ss.selectBuilder.GetRoot(), 1.0)
 	return nil
 }
 
@@ -550,8 +552,8 @@ func (ss *MultipleAcquireAndSelect) Build() error {
 		if err != nil {
 			return err
 		}
-		graph := ss.primitiveBuilder.GetGraph()
-		graph.NewDependency(acbBld.GetRoot(), ss.selectBuilder.GetRoot(), 1.0)
+		graph := ss.graph
+		graph.NewDependency(acbBld.GetTail(), ss.selectBuilder.GetRoot(), 1.0)
 	}
 	return nil
 }

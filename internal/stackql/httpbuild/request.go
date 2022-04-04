@@ -7,7 +7,6 @@ import (
 
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
-	"github.com/stackql/stackql/internal/stackql/httpexec"
 	"github.com/stackql/stackql/internal/stackql/provider"
 	"github.com/stackql/stackql/internal/stackql/requests"
 	"github.com/stackql/stackql/internal/stackql/util"
@@ -35,7 +34,6 @@ type HTTPArmouryParameters struct {
 	Header     http.Header
 	Parameters *dto.HttpParameters
 	Request    *http.Request
-	Context    httpexec.IHttpContext
 	BodyBytes  []byte
 }
 
@@ -133,8 +131,8 @@ func BuildHTTPRequestCtx(handlerCtx *handler.HandlerContext, node sqlparser.SQLN
 		}
 		log.Infoln(fmt.Sprintf("pre transform: httpArmoury.RequestParams[%d] = %s", i, string(p.BodyBytes)))
 		if handlerCtx.RuntimeContext.HTTPLogEnabled {
-			url, _ := p.Context.GetUrl()
-			handlerCtx.OutErrFile.Write([]byte(fmt.Sprintln(fmt.Sprintf("http request url: %s", url))))
+			// url, _ := p.Context.GetUrl()
+			// handlerCtx.OutErrFile.Write([]byte(fmt.Sprintln(fmt.Sprintf("http request url: %s", url))))
 		}
 		log.Infoln(fmt.Sprintf("post transform: httpArmoury.RequestParams[%d] = %s", i, string(p.BodyBytes)))
 		httpArmoury.RequestParams[i] = p

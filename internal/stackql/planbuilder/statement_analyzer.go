@@ -32,13 +32,14 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (p *primitiveGenerator) analyzeStatement(handlerCtx *handler.HandlerContext, statement sqlparser.SQLNode) error {
+func (p *primitiveGenerator) analyzeStatement(pbi PlanBuilderInput) error {
 	var err error
+	statement := pbi.GetStatement()
 	switch stmt := statement.(type) {
 	case *sqlparser.Auth:
-		return p.analyzeAuth(handlerCtx, stmt)
+		return p.analyzeAuth(pbi)
 	case *sqlparser.AuthRevoke:
-		return p.analyzeAuthRevoke(handlerCtx, stmt)
+		return p.analyzeAuthRevoke(pbi)
 	case *sqlparser.Begin:
 		return iqlerror.GetStatementNotSupportedError("TRANSACTION: BEGIN")
 	case *sqlparser.Commit:
@@ -48,48 +49,53 @@ func (p *primitiveGenerator) analyzeStatement(handlerCtx *handler.HandlerContext
 	case *sqlparser.DDL:
 		return iqlerror.GetStatementNotSupportedError("DDL")
 	case *sqlparser.Delete:
-		return p.analyzeDelete(handlerCtx, stmt)
+		return p.analyzeDelete(pbi)
 	case *sqlparser.DescribeTable:
-		return p.analyzeDescribe(handlerCtx, stmt)
+		return p.analyzeDescribe(pbi)
 	case *sqlparser.Exec:
-		return p.analyzeExec(handlerCtx, stmt)
+		return p.analyzeExec(pbi)
 	case *sqlparser.Explain:
 		return iqlerror.GetStatementNotSupportedError("EXPLAIN")
 	case *sqlparser.Insert:
-		return p.analyzeInsert(handlerCtx, stmt)
+		return p.analyzeInsert(pbi)
 	case *sqlparser.OtherRead, *sqlparser.OtherAdmin:
 		return iqlerror.GetStatementNotSupportedError("OTHER")
 	case *sqlparser.Registry:
-		return p.analyzeRegistry(handlerCtx, stmt)
+		return p.analyzeRegistry(pbi)
 	case *sqlparser.Rollback:
 		return iqlerror.GetStatementNotSupportedError("TRANSACTION: ROLLBACK")
 	case *sqlparser.Savepoint:
 		return iqlerror.GetStatementNotSupportedError("TRANSACTION: SAVEPOINT")
 	case *sqlparser.Select:
-		return p.analyzeSelect(handlerCtx, stmt)
+		return p.analyzeSelect(pbi)
 	case *sqlparser.Set:
 		return iqlerror.GetStatementNotSupportedError("SET")
 	case *sqlparser.SetTransaction:
 		return iqlerror.GetStatementNotSupportedError("SET TRANSACTION")
 	case *sqlparser.Show:
-		return p.analyzeShow(handlerCtx, stmt)
+		return p.analyzeShow(pbi)
 	case *sqlparser.Sleep:
-		return p.analyzeSleep(handlerCtx, stmt)
+		return p.analyzeSleep(pbi)
 	case *sqlparser.SRollback:
 		return iqlerror.GetStatementNotSupportedError("TRANSACTION: SROLLBACK")
 	case *sqlparser.Release:
 		return iqlerror.GetStatementNotSupportedError("TRANSACTION: RELEASE")
 	case *sqlparser.Union:
-		return p.analyzeUnion(handlerCtx, stmt)
+		return p.analyzeUnion(pbi)
 	case *sqlparser.Update:
 		return iqlerror.GetStatementNotSupportedError("UPDATE")
 	case *sqlparser.Use:
-		return p.analyzeUse(handlerCtx, stmt)
+		return p.analyzeUse(pbi)
 	}
 	return err
 }
 
-func (p *primitiveGenerator) analyzeUse(handlerCtx *handler.HandlerContext, node *sqlparser.Use) error {
+func (p *primitiveGenerator) analyzeUse(pbi PlanBuilderInput) error {
+	handlerCtx := pbi.GetHandlerCtx()
+	node, ok := pbi.GetUse()
+	if !ok {
+		return fmt.Errorf("could not cast node of type '%T' to required Use", pbi.GetStatement())
+	}
 	prov, pErr := handlerCtx.GetProvider(node.DBName.GetRawVal())
 	if pErr != nil {
 		return pErr
@@ -98,7 +104,12 @@ func (p *primitiveGenerator) analyzeUse(handlerCtx *handler.HandlerContext, node
 	return nil
 }
 
-func (p *primitiveGenerator) analyzeUnion(handlerCtx *handler.HandlerContext, node *sqlparser.Union) error {
+func (p *primitiveGenerator) analyzeUnion(pbi PlanBuilderInput) error {
+	handlerCtx := pbi.GetHandlerCtx()
+	node, ok := pbi.GetUnion()
+	if !ok {
+		return fmt.Errorf("could not cast statement of type '%T' to required Union", pbi.GetStatement())
+	}
 	unionQuery := astvisit.GenerateUnionTemplateQuery(node)
 	i := 0
 	leaf, err := p.PrimitiveBuilder.GetSymTab().NewLeaf(i)
@@ -106,7 +117,7 @@ func (p *primitiveGenerator) analyzeUnion(handlerCtx *handler.HandlerContext, no
 		return err
 	}
 	pChild := p.addChildPrimitiveGenerator(node.FirstStatement, leaf)
-	err = pChild.analyzeSelectStatement(handlerCtx, node.FirstStatement)
+	err = pChild.analyzeSelectStatement(NewPlanBuilderInput(handlerCtx, node.FirstStatement, nil, nil))
 	if err != nil {
 		return err
 	}
@@ -118,7 +129,7 @@ func (p *primitiveGenerator) analyzeUnion(handlerCtx *handler.HandlerContext, no
 			return err
 		}
 		pChild := p.addChildPrimitiveGenerator(rhsStmt.Statement, leaf)
-		err = pChild.analyzeSelectStatement(handlerCtx, rhsStmt.Statement)
+		err = pChild.analyzeSelectStatement(NewPlanBuilderInput(handlerCtx, rhsStmt.Statement, nil, nil))
 		if err != nil {
 			return err
 		}
@@ -128,7 +139,7 @@ func (p *primitiveGenerator) analyzeUnion(handlerCtx *handler.HandlerContext, no
 	}
 
 	bldr := primitivebuilder.NewUnion(
-		p.PrimitiveBuilder,
+		p.PrimitiveBuilder.GetGraph(),
 		handlerCtx,
 		drm.NewQueryOnlyPreparedStatementCtx(unionQuery),
 		pChild.PrimitiveBuilder.GetSelectPreparedStatementCtx(),
@@ -139,20 +150,26 @@ func (p *primitiveGenerator) analyzeUnion(handlerCtx *handler.HandlerContext, no
 	return nil
 }
 
-func (p *primitiveGenerator) analyzeSelectStatement(handlerCtx *handler.HandlerContext, node sqlparser.SelectStatement) error {
-	switch node := node.(type) {
+func (p *primitiveGenerator) analyzeSelectStatement(pbi PlanBuilderInput) error {
+	node := pbi.GetStatement()
+	switch node.(type) {
 	case *sqlparser.Select:
-		return p.analyzeSelect(handlerCtx, node)
+		return p.analyzeSelect(pbi)
 	case *sqlparser.ParenSelect:
-		return p.analyzeSelectStatement(handlerCtx, node.Select)
+		return p.analyzeSelectStatement(pbi)
 	case *sqlparser.Union:
-		return p.analyzeUnion(handlerCtx, node)
+		return p.analyzeUnion(pbi)
 	}
 	return nil
 }
 
-func (p *primitiveGenerator) analyzeAuth(handlerCtx *handler.HandlerContext, node *sqlparser.Auth) error {
-	provider, pErr := handlerCtx.GetProvider(node.Provider)
+func (p *primitiveGenerator) analyzeAuth(pbi PlanBuilderInput) error {
+	handlerCtx := pbi.GetHandlerCtx()
+	authNode, ok := pbi.GetAuth()
+	if !ok {
+		return fmt.Errorf("could not cast node of type '%T' to required Auth", pbi.GetStatement())
+	}
+	provider, pErr := handlerCtx.GetProvider(authNode.Provider)
 	if pErr != nil {
 		return pErr
 	}
@@ -160,8 +177,13 @@ func (p *primitiveGenerator) analyzeAuth(handlerCtx *handler.HandlerContext, nod
 	return nil
 }
 
-func (p *primitiveGenerator) analyzeAuthRevoke(handlerCtx *handler.HandlerContext, node *sqlparser.AuthRevoke) error {
-	authCtx, authErr := handlerCtx.GetAuthContext(node.Provider)
+func (p *primitiveGenerator) analyzeAuthRevoke(pbi PlanBuilderInput) error {
+	handlerCtx := pbi.GetHandlerCtx()
+	authNode, ok := pbi.GetAuthRevoke()
+	if !ok {
+		return fmt.Errorf("could not cast node of type '%T' to required AuthRevoke", pbi.GetStatement())
+	}
+	authCtx, authErr := handlerCtx.GetAuthContext(authNode.Provider)
 	if authErr != nil {
 		return authErr
 	}
@@ -540,7 +562,11 @@ func (p *primitiveGenerator) analyzeUnaryExec(handlerCtx *handler.HandlerContext
 	}
 	var execPayload *dto.ExecPayload
 	if node.OptExecPayload != nil {
-		execPayload, err = p.parseExecPayload(node.OptExecPayload, method.Request.BodyMediaType)
+		mediaType := "application/json"
+		if method.Request != nil && method.Request.BodyMediaType != "" {
+			mediaType = method.Request.BodyMediaType
+		}
+		execPayload, err = p.parseExecPayload(node.OptExecPayload, mediaType)
 		if err != nil {
 			return nil, err
 		}
@@ -569,7 +595,12 @@ func (p *primitiveGenerator) analyzeUnaryExec(handlerCtx *handler.HandlerContext
 	return &meta, p.analyzeUnarySelection(handlerCtx, node, nil, &meta, cols)
 }
 
-func (p *primitiveGenerator) analyzeExec(handlerCtx *handler.HandlerContext, node *sqlparser.Exec) error {
+func (p *primitiveGenerator) analyzeExec(pbi PlanBuilderInput) error {
+	handlerCtx := pbi.GetHandlerCtx()
+	node, ok := pbi.GetExec()
+	if !ok {
+		return fmt.Errorf("could not cast node of type '%T' to required Exec", pbi.GetStatement())
+	}
 	tbl, err := p.analyzeUnaryExec(handlerCtx, node, nil, nil)
 	if err != nil {
 		log.Infoln(fmt.Sprintf("error analyzing EXEC as selection: '%s'", err.Error()))
@@ -579,10 +610,10 @@ func (p *primitiveGenerator) analyzeExec(handlerCtx *handler.HandlerContext, nod
 			return err
 		}
 		if m.IsNullary() && !p.PrimitiveBuilder.IsAwait() {
-			p.PrimitiveBuilder.SetBuilder(primitivebuilder.NewSingleSelectAcquire(p.PrimitiveBuilder, handlerCtx, *tbl, p.PrimitiveBuilder.GetInsertPreparedStatementCtx(), nil))
+			p.PrimitiveBuilder.SetBuilder(primitivebuilder.NewSingleSelectAcquire(p.PrimitiveBuilder.GetGraph(), handlerCtx, *tbl, p.PrimitiveBuilder.GetInsertPreparedStatementCtx(), nil))
 			return nil
 		}
-		p.PrimitiveBuilder.SetBuilder(primitivebuilder.NewSingleAcquireAndSelect(p.PrimitiveBuilder, handlerCtx, *tbl, p.PrimitiveBuilder.GetInsertPreparedStatementCtx(), p.PrimitiveBuilder.GetSelectPreparedStatementCtx(), nil))
+		p.PrimitiveBuilder.SetBuilder(primitivebuilder.NewSingleAcquireAndSelect(p.PrimitiveBuilder.GetGraph(), p.PrimitiveBuilder.GetTxnCtrlCtrs(), handlerCtx, *tbl, p.PrimitiveBuilder.GetInsertPreparedStatementCtx(), p.PrimitiveBuilder.GetSelectPreparedStatementCtx(), nil))
 	}
 	return nil
 }
@@ -709,13 +740,34 @@ func (p *primitiveGenerator) analyzeSchemaVsMap(handlerCtx *handler.HandlerConte
 	return nil
 }
 
-func (p *primitiveGenerator) analyzeSelect(handlerCtx *handler.HandlerContext, node *sqlparser.Select) error {
+func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 
-	var tblMeta *taxonomy.ExtendedTableMetadata
+	handlerCtx := pbi.GetHandlerCtx()
+	node, ok := pbi.GetSelect()
+	if !ok {
+		return fmt.Errorf("could not cast statement of type '%T' to required Select", pbi.GetStatement())
+	}
+
 	var pChild *primitiveGenerator
 	var err error
 
 	paramMap := astvisit.ExtractParamsFromWhereClause(node.Where)
+
+	router := parserutil.NewParameterRouter(pbi.GetAssignedAliases(), paramMap)
+
+	v := astvisit.NewTableRouteAstVisitor(pbi.handlerCtx, router)
+
+	err = v.Visit(pbi.GetStatement())
+
+	if err != nil {
+		return err
+	}
+
+	tblz := v.GetTableMap()
+
+	for k, v := range tblz {
+		p.PrimitiveBuilder.SetTable(k, v)
+	}
 
 	for i, fromExpr := range node.From {
 		var leafKey interface{} = i
@@ -731,54 +783,28 @@ func (p *primitiveGenerator) analyzeSelect(handlerCtx *handler.HandlerContext, n
 			return err
 		}
 		pChild = p.addChildPrimitiveGenerator(fromExpr, leaf)
-		var tblz []*taxonomy.ExtendedTableMetadata
-		switch from := fromExpr.(type) {
-		case *sqlparser.ExecSubquery:
-			log.Infoln(fmt.Sprintf("from = %v", from))
-			tblMeta, err = pChild.analyzeTableExpr(handlerCtx, from, nil)
-			if err != nil {
-				return err
-			}
-			tblz = append(tblz, tblMeta)
-		case *sqlparser.JoinTableExpr:
-			tblMeta, err = pChild.analyzeTableExpr(handlerCtx, from.LeftExpr, paramMap)
-			if err != nil {
-				return err
-			}
-			tblz = append(tblz, tblMeta)
-			tblMeta, err = pChild.analyzeTableExpr(handlerCtx, from.RightExpr, paramMap)
-			if err != nil {
-				return err
-			}
-			tblz = append(tblz, tblMeta)
-		default:
-			tblMeta, err = pChild.analyzeTableExpr(handlerCtx, from, paramMap)
-			if err != nil {
-				return err
-			}
-			tblz = append(tblz, tblMeta)
-		}
-		svc, err := tblMeta.GetService()
-		if err != nil {
-			return err
-		}
-		for _, sv := range svc.Servers {
-			for k := range sv.Variables {
-				colEntry := symtab.NewSymTabEntry(
-					pChild.PrimitiveBuilder.GetDRMConfig().GetRelationalType("string"),
-					"",
-					"server",
-				)
-				pChild.PrimitiveBuilder.SetSymbol(k, colEntry)
-			}
-			break
-		}
-
-		if err != nil {
-			return err
-		}
 
 		for _, tbl := range tblz {
+			//
+			svc, err := tbl.GetService()
+			if err != nil {
+				return err
+			}
+			for _, sv := range svc.Servers {
+				for k := range sv.Variables {
+					colEntry := symtab.NewSymTabEntry(
+						pChild.PrimitiveBuilder.GetDRMConfig().GetRelationalType("string"),
+						"",
+						"server",
+					)
+					pChild.PrimitiveBuilder.SetSymbol(k, colEntry)
+				}
+				break
+			}
+
+			if err != nil {
+				return err
+			}
 			//
 			responseSchema, err := tbl.GetSelectableObjectSchema()
 			if err != nil {
@@ -826,35 +852,45 @@ func (p *primitiveGenerator) analyzeSelect(handlerCtx *handler.HandlerContext, n
 	if len(node.From) == 1 {
 		switch ft := node.From[0].(type) {
 		case *sqlparser.JoinTableExpr:
-			tbl, err := pChild.analyzeTableExpr(handlerCtx, ft.LeftExpr, paramMap)
+			var execSlice []primitivebuilder.Builder
+			for k, v := range tblz {
+				err = pChild.analyzeSelectDetail(handlerCtx, node, &v, rewrittenWhere)
+				if err != nil {
+					return err
+				}
+				_, err = p.buildRequestContext(handlerCtx, k, &v, nil, nil)
+				if err != nil {
+					return err
+				}
+				builder := primitivebuilder.NewSingleSelectAcquire(p.PrimitiveBuilder.GetGraph(), handlerCtx, v, p.PrimitiveBuilder.GetInsertPreparedStatementCtx(), nil)
+				execSlice = append(execSlice, builder)
+			}
+			tbl, err := tblz.GetTable(ft.LeftExpr)
 			if err != nil {
 				return err
 			}
-			err = pChild.analyzeSelectDetail(handlerCtx, node, tbl, rewrittenWhere)
+			err = pChild.analyzeSelectDetail(handlerCtx, node, &tbl, rewrittenWhere)
 			if err != nil {
 				return err
 			}
 			rhsPb := newRootPrimitiveGenerator(pChild.PrimitiveBuilder.GetAst(), handlerCtx, pChild.PrimitiveBuilder.GetGraph())
-			tbl, err = rhsPb.analyzeTableExpr(handlerCtx, ft.RightExpr, paramMap)
+			tbl, err = tblz.GetTable(ft.RightExpr)
 			if err != nil {
 				return err
 			}
-			err = rhsPb.analyzeSelectDetail(handlerCtx, node, tbl, rewrittenWhere)
+			err = rhsPb.analyzeSelectDetail(handlerCtx, node, &tbl, rewrittenWhere)
 			if err != nil {
 				return err
 			}
 			pChild.PrimitiveBuilder.SetBuilder(primitivebuilder.NewJoin(pChild.PrimitiveBuilder, rhsPb.PrimitiveBuilder, handlerCtx, nil))
 			return nil
 		case *sqlparser.AliasedTableExpr:
-			tbl, err := pChild.analyzeTableExpr(handlerCtx, node.From[0], paramMap)
+			tbl, err := tblz.GetTable(ft)
+			err = pChild.analyzeSelectDetail(handlerCtx, node, &tbl, rewrittenWhere)
 			if err != nil {
 				return err
 			}
-			err = pChild.analyzeSelectDetail(handlerCtx, node, tbl, rewrittenWhere)
-			if err != nil {
-				return err
-			}
-			pChild.PrimitiveBuilder.SetBuilder(primitivebuilder.NewSingleAcquireAndSelect(pChild.PrimitiveBuilder, handlerCtx, *tbl, pChild.PrimitiveBuilder.GetInsertPreparedStatementCtx(), pChild.PrimitiveBuilder.GetSelectPreparedStatementCtx(), nil))
+			pChild.PrimitiveBuilder.SetBuilder(primitivebuilder.NewSingleAcquireAndSelect(pChild.PrimitiveBuilder.GetGraph(), p.PrimitiveBuilder.GetTxnCtrlCtrs(), handlerCtx, tbl, pChild.PrimitiveBuilder.GetInsertPreparedStatementCtx(), pChild.PrimitiveBuilder.GetSelectPreparedStatementCtx(), nil))
 			p.PrimitiveBuilder.SetSelectPreparedStatementCtx(pChild.PrimitiveBuilder.GetSelectPreparedStatementCtx())
 			return nil
 		case *sqlparser.ExecSubquery:
@@ -866,7 +902,7 @@ func (p *primitiveGenerator) analyzeSelect(handlerCtx *handler.HandlerContext, n
 			if err != nil {
 				return err
 			}
-			pChild.PrimitiveBuilder.SetBuilder(primitivebuilder.NewSingleAcquireAndSelect(pChild.PrimitiveBuilder, handlerCtx, *tbl, pChild.PrimitiveBuilder.GetInsertPreparedStatementCtx(), pChild.PrimitiveBuilder.GetSelectPreparedStatementCtx(), nil))
+			pChild.PrimitiveBuilder.SetBuilder(primitivebuilder.NewSingleAcquireAndSelect(pChild.PrimitiveBuilder.GetGraph(), pChild.PrimitiveBuilder.GetTxnCtrlCtrs(), handlerCtx, *tbl, pChild.PrimitiveBuilder.GetInsertPreparedStatementCtx(), pChild.PrimitiveBuilder.GetSelectPreparedStatementCtx(), nil))
 			return nil
 		}
 
@@ -1027,7 +1063,12 @@ func (p *primitiveGenerator) buildRequestContext(handlerCtx *handler.HandlerCont
 	return httpArmoury, err
 }
 
-func (p *primitiveGenerator) analyzeInsert(handlerCtx *handler.HandlerContext, node *sqlparser.Insert) error {
+func (p *primitiveGenerator) analyzeInsert(pbi PlanBuilderInput) error {
+	handlerCtx := pbi.GetHandlerCtx()
+	node, ok := pbi.GetInsert()
+	if !ok {
+		return fmt.Errorf("could not cast node of type '%T' to required Insert", pbi.GetStatement())
+	}
 	err := p.inferHeirarchyAndPersist(handlerCtx, node, nil)
 	if err != nil {
 		return err
@@ -1094,7 +1135,7 @@ func (p *primitiveGenerator) analyzeInsert(handlerCtx *handler.HandlerContext, n
 }
 
 func (p *primitiveGenerator) inferHeirarchyAndPersist(handlerCtx *handler.HandlerContext, node sqlparser.SQLNode, parameters map[string]interface{}) error {
-	heirarchy, err := taxonomy.GetHeirarchyFromStatement(handlerCtx, node, parameters)
+	heirarchy, _, err := taxonomy.GetHeirarchyFromStatement(handlerCtx, node, parameters)
 	if err != nil {
 		return err
 	}
@@ -1102,10 +1143,16 @@ func (p *primitiveGenerator) inferHeirarchyAndPersist(handlerCtx *handler.Handle
 	return err
 }
 
-func (p *primitiveGenerator) analyzeDelete(handlerCtx *handler.HandlerContext, node *sqlparser.Delete) error {
+func (p *primitiveGenerator) analyzeDelete(pbi PlanBuilderInput) error {
+	handlerCtx := pbi.GetHandlerCtx()
+	node, ok := pbi.GetDelete()
+	if !ok {
+		return fmt.Errorf("could not cast node of type '%T' to required Delete", pbi.GetStatement())
+	}
 	p.parseComments(node.Comments)
 	paramMap := astvisit.ExtractParamsFromWhereClause(node.Where)
-	err := p.inferHeirarchyAndPersist(handlerCtx, node, paramMap)
+
+	err := p.inferHeirarchyAndPersist(handlerCtx, node, paramMap.ToStringMap())
 	if err != nil {
 		return err
 	}
@@ -1181,7 +1228,12 @@ func (p *primitiveGenerator) analyzeDelete(handlerCtx *handler.HandlerContext, n
 	return err
 }
 
-func (p *primitiveGenerator) analyzeDescribe(handlerCtx *handler.HandlerContext, node *sqlparser.DescribeTable) error {
+func (p *primitiveGenerator) analyzeDescribe(pbi PlanBuilderInput) error {
+	handlerCtx := pbi.GetHandlerCtx()
+	node, ok := pbi.GetDescribeTable()
+	if !ok {
+		return fmt.Errorf("could not cast node of type '%T' to required Describe", pbi.GetStatement())
+	}
 	var err error
 	err = p.inferHeirarchyAndPersist(handlerCtx, node, nil)
 	if err != nil {
@@ -1210,7 +1262,12 @@ func (p *primitiveGenerator) analyzeDescribe(handlerCtx *handler.HandlerContext,
 	return nil
 }
 
-func (p *primitiveGenerator) analyzeSleep(handlerCtx *handler.HandlerContext, node *sqlparser.Sleep) error {
+func (p *primitiveGenerator) analyzeSleep(pbi PlanBuilderInput) error {
+	// handlerCtx := pbi.GetHandlerCtx()
+	node, ok := pbi.GetSleep()
+	if !ok {
+		return fmt.Errorf("could not cast node of type '%T' to required Sleep", pbi.GetStatement())
+	}
 	sleepDuration, err := parserutil.ExtractSleepDuration(node)
 	if err != nil {
 		return err
@@ -1237,13 +1294,21 @@ func (p *primitiveGenerator) analyzeSleep(handlerCtx *handler.HandlerContext, no
 	return err
 }
 
-func (p *primitiveGenerator) analyzeRegistry(handlerCtx *handler.HandlerContext, node *sqlparser.Registry) error {
-	var err error
-	return err
+func (p *primitiveGenerator) analyzeRegistry(pbi PlanBuilderInput) error {
+	_, ok := pbi.GetRegistry()
+	if !ok {
+		return fmt.Errorf("could not cast node of type '%T' to required Registry", pbi.GetStatement())
+	}
+	return nil
 }
 
-func (p *primitiveGenerator) analyzeShow(handlerCtx *handler.HandlerContext, node *sqlparser.Show) error {
+func (p *primitiveGenerator) analyzeShow(pbi PlanBuilderInput) error {
 	var err error
+	handlerCtx := pbi.GetHandlerCtx()
+	node, ok := pbi.GetShow()
+	if !ok {
+		return fmt.Errorf("could not cast node of type '%T' to required Show", pbi.GetStatement())
+	}
 	p.parseComments(node.Comments)
 	err = p.inferProviderForShow(node, handlerCtx)
 	if err != nil {

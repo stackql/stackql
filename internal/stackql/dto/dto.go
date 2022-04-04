@@ -94,6 +94,7 @@ type HTTPElement struct {
 type AuthCtx struct {
 	Scopes      []string `json:"scopes,omitempty" yaml:"scopes,omitempty"`
 	Type        string   `json:"type" yaml:"type"`
+	ValuePrefix string   `json:"valuePrefix" yaml:"valuePrefix"`
 	ID          string   `json:"-" yaml:"-"`
 	KeyFilePath string   `json:"credentialsfilepath" yaml:"credentialsfilepath"`
 	KeyEnvVar   string   `json:"credentialsenvvar" yaml:"credentialsenvvar"`

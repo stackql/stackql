@@ -461,3 +461,114 @@ func TableFromSelectNode(sel *sqlparser.Select) (sqlparser.TableName, error) {
 	}
 	return tableName, nil
 }
+
+type TableExprMap map[sqlparser.TableName]sqlparser.TableExpr
+
+func (tem TableExprMap) GetByAlias(alias string) (sqlparser.TableExpr, bool) {
+	for k, v := range tem {
+		if k.GetRawVal() == alias {
+			return v, true
+		}
+	}
+	return nil, false
+}
+
+type ParameterMap map[*sqlparser.ColName]interface{}
+
+func (tm ParameterMap) ToStringMap() map[string]interface{} {
+	rv := make(map[string]interface{})
+	for k, v := range tm {
+		rv[k.GetRawVal()] = v
+	}
+	return rv
+}
+
+func (tm TableExprMap) SingleTableMap(filterTable sqlparser.TableName) TableExprMap {
+	rv := make(TableExprMap)
+	for k, v := range tm {
+		if k == filterTable {
+			rv[k] = v
+		}
+	}
+	return rv
+}
+
+func (tm TableExprMap) ToStringMap() map[string]interface{} {
+	rv := make(map[string]interface{})
+	for k, v := range tm {
+		rv[k.GetRawVal()] = v
+	}
+	return rv
+}
+
+type ParameterRouter struct {
+	tableMap          TableExprMap
+	paramMap          ParameterMap
+	invalidatedParams map[string]interface{}
+}
+
+func NewParameterRouter(tableMap TableExprMap, paramMap ParameterMap) *ParameterRouter {
+	return &ParameterRouter{
+		tableMap:          tableMap,
+		paramMap:          paramMap,
+		invalidatedParams: make(map[string]interface{}),
+	}
+}
+
+func (pr *ParameterRouter) GetAvailableParameters(tb sqlparser.TableExpr) map[string]interface{} {
+	rv := make(map[string]interface{})
+	for k, v := range pr.paramMap {
+		key := k.GetRawVal()
+		if pr.isInvalidated(key) {
+			continue
+		}
+		if k.Metadata != nil && k.Metadata != tb {
+			continue
+		}
+		rv[key] = v
+	}
+	return rv
+}
+
+func (pr *ParameterRouter) InvalidateParams(params map[string]interface{}) error {
+	for k, v := range params {
+		err := pr.invalidate(k, v)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (pr *ParameterRouter) isInvalidated(key string) bool {
+	_, ok := pr.invalidatedParams[key]
+	return ok
+}
+
+func (pr *ParameterRouter) invalidate(key string, val interface{}) error {
+	if pr.isInvalidated(key) {
+		return fmt.Errorf("parameter '%s' already invalidated", key)
+	}
+	pr.invalidatedParams[key] = val
+	return nil
+}
+
+func (pr *ParameterRouter) Route(tb sqlparser.TableExpr) error {
+	for k, _ := range pr.paramMap {
+		alias := k.Qualifier.GetRawVal()
+		if alias == "" {
+			continue
+		}
+		t, ok := pr.tableMap.GetByAlias(alias)
+		if !ok {
+			return fmt.Errorf("alias '%s' does not map to any table expression", alias)
+		}
+		if t == tb {
+			if k.Metadata != nil && k.Metadata != t {
+				return fmt.Errorf("failed parameter routing, cannot re-assign")
+			}
+			k.Metadata = t
+		}
+	}
+	return nil
+}

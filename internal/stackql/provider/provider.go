@@ -7,7 +7,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/discovery"
 	"github.com/stackql/stackql/internal/stackql/docparser"
 	"github.com/stackql/stackql/internal/stackql/dto"
-	"github.com/stackql/stackql/internal/stackql/httpexec"
 	"github.com/stackql/stackql/internal/stackql/methodselect"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 
@@ -36,15 +35,13 @@ type IProvider interface {
 
 	EnhanceMetadataFilter(string, func(openapistackql.ITable) (openapistackql.ITable, error), map[string]bool) (func(openapistackql.ITable) (openapistackql.ITable, error), error)
 
-	GenerateHTTPRestInstruction(httpContext httpexec.IHttpContext) (httpexec.IHttpContext, error)
-
 	GetCurrentService() string
 
 	GetDefaultKeyForDeleteItems() string
 
 	GetLikeableColumns(string) []string
 
-	GetMethodForAction(serviceName string, resourceName string, iqlAction string, parameters map[string]interface{}, runtimeCtx dto.RuntimeCtx) (*openapistackql.OperationStore, string, error)
+	GetMethodForAction(serviceName string, resourceName string, iqlAction string, parameters map[string]interface{}, runtimeCtx dto.RuntimeCtx) (*openapistackql.OperationStore, string, map[string]interface{}, error)
 
 	GetMethodSelector() methodselect.IMethodSelector
 
@@ -73,8 +70,6 @@ type IProvider interface {
 	InferNextPageRequestElement(*openapistackql.OperationStore) *dto.HTTPElement
 
 	InferNextPageResponseElement(*openapistackql.OperationStore) *dto.HTTPElement
-
-	Parameterise(httpContext httpexec.IHttpContext, method *openapistackql.OperationStore, parameters *dto.HttpParameters, requestSchema *openapistackql.Schema) (httpexec.IHttpContext, error)
 
 	SetCurrentService(serviceKey string)
 

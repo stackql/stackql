@@ -3,7 +3,14 @@
 
 ## Contrived local integration testing
 
-Offline invocations of `stackql` are assessed against expected responses, through the functionality of [/test/python/main.py](/test/python/main.py).  These are backed by data stored in cache files in [/test/.stackql/ttl_cache](/test/.stackql/ttl_cache).  These scripts are run during the build process:
+Offline invocations of `stackql` are assessed against expected responses, through:
+
+1. the functionality of [/test/python/main.py](/test/python/main.py).
+2. [robot tests in /test/functional](/test/functional)  
+
+(1) is deprecated and will be entirely migrated to (2).
+
+These tests are run during the build process:
   - locally through cmake as per [/README.md#build](/README.md#build)
   - in github actions based CICD as per [/.github/workflows/go.yml](/.github/workflows/go.yml).
 

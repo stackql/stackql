@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/stackql/stackql/internal/pkg/txncounter"
-	"github.com/stackql/stackql/internal/stackql/astvisit"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
@@ -142,7 +141,7 @@ type DRMConfig interface {
 	GenerateDDL(util.AnnotatedTabulation, int, bool) []string
 	GetGolangValue(string) interface{}
 	GenerateInsertDML(util.AnnotatedTabulation, *txncounter.TxnCounterManager, int) (PreparedStatementCtx, error)
-	GenerateSelectDML(util.AnnotatedTabulation, *dto.TxnControlCounters, sqlparser.SQLNode, *sqlparser.Where) (PreparedStatementCtx, error)
+	GenerateSelectDML(util.AnnotatedTabulation, *dto.TxnControlCounters, string, string) (PreparedStatementCtx, error)
 	ExecuteInsertDML(sqlengine.SQLEngine, *PreparedStatementCtx, map[string]interface{}) (sql.Result, error)
 	QueryDML(sqlengine.SQLEngine, PreparedStatementParameterized) (*sql.Rows, error)
 }
@@ -326,7 +325,7 @@ func (dc *StaticDRMConfig) GenerateInsertDML(tabAnnotated util.AnnotatedTabulati
 		nil
 }
 
-func (dc *StaticDRMConfig) GenerateSelectDML(tabAnnotated util.AnnotatedTabulation, txnCtrlCtrs *dto.TxnControlCounters, node sqlparser.SQLNode, rewrittenWhere *sqlparser.Where) (PreparedStatementCtx, error) {
+func (dc *StaticDRMConfig) GenerateSelectDML(tabAnnotated util.AnnotatedTabulation, txnCtrlCtrs *dto.TxnControlCounters, selectSuffix, rewrittenWhere string) (PreparedStatementCtx, error) {
 	var q strings.Builder
 	var quotedColNames, quotedWhereColNames []string
 	var columns []ColumnMetadata
@@ -368,10 +367,10 @@ func (dc *StaticDRMConfig) GenerateSelectDML(tabAnnotated util.AnnotatedTabulati
 	}
 	q.WriteString(fmt.Sprintf(`SELECT %s FROM "%s"%s WHERE `, strings.Join(quotedColNames, ", "), dc.getTableName(tabAnnotated.GetHeirarchyIdentifiers(), txnCtrlCtrs.DiscoveryGenerationId), aliasStr))
 	q.WriteString(fmt.Sprintf(`( "%s" = ? AND "%s" = ? AND "%s" = ? AND "%s" = ? ) `, genIdColName, sessionIDColName, txnIdColName, insIdColName))
-	if rewrittenWhere != nil {
-		q.WriteString(fmt.Sprintf(" AND ( %s ) ", astvisit.GenerateModifiedWhereClause(rewrittenWhere)))
+	if strings.TrimSpace(rewrittenWhere) != "" {
+		q.WriteString(fmt.Sprintf(" AND ( %s ) ", rewrittenWhere))
 	}
-	q.WriteString(astvisit.GenerateModifiedSelectSuffix(node))
+	q.WriteString(selectSuffix)
 
 	return PreparedStatementCtx{
 		Query:                   q.String(),

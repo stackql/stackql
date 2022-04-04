@@ -10,7 +10,7 @@ import (
 type IMethodSelector interface {
 	GetMethod(resource *openapistackql.Resource, methodName string) (*openapistackql.OperationStore, error)
 
-	GetMethodForAction(resource *openapistackql.Resource, iqlAction string, parameters map[string]interface{}) (*openapistackql.OperationStore, string, error)
+	GetMethodForAction(resource *openapistackql.Resource, iqlAction string, parameters map[string]interface{}) (*openapistackql.OperationStore, string, map[string]interface{}, error)
 }
 
 func NewMethodSelector(provider string, version string) (IMethodSelector, error) {
@@ -30,7 +30,7 @@ func newGoogleMethodSelector(version string) (IMethodSelector, error) {
 type DefaultMethodSelector struct {
 }
 
-func (sel *DefaultMethodSelector) GetMethodForAction(resource *openapistackql.Resource, iqlAction string, parameters map[string]interface{}) (*openapistackql.OperationStore, string, error) {
+func (sel *DefaultMethodSelector) GetMethodForAction(resource *openapistackql.Resource, iqlAction string, parameters map[string]interface{}) (*openapistackql.OperationStore, string, map[string]interface{}, error) {
 	var methodName string
 	switch strings.ToLower(iqlAction) {
 	case "select":
@@ -41,19 +41,19 @@ func (sel *DefaultMethodSelector) GetMethodForAction(resource *openapistackql.Re
 		methodName = "insert"
 		m, err := resource.FindMethod(methodName)
 		if err == nil {
-			return m, methodName, nil
+			return m, methodName, parameters, nil
 		}
 		methodName = "create"
 		m, err = resource.FindMethod(methodName)
 		if err == nil {
-			return m, methodName, nil
+			return m, methodName, parameters, nil
 		}
-		return nil, "", fmt.Errorf("iql action = '%s' curently not supported, there is no method mapping possible for any resource", iqlAction)
+		return nil, "", parameters, fmt.Errorf("iql action = '%s' curently not supported, there is no method mapping possible for any resource", iqlAction)
 	default:
-		return nil, "", fmt.Errorf("iql action = '%s' curently not supported, there is no method mapping possible for any resource", iqlAction)
+		return nil, "", parameters, fmt.Errorf("iql action = '%s' curently not supported, there is no method mapping possible for any resource", iqlAction)
 	}
-	m, err := sel.getMethodByNameAndParameters(resource, methodName, parameters)
-	return m, methodName, err
+	m, remainingParams, err := sel.getMethodByNameAndParameters(resource, methodName, parameters)
+	return m, methodName, remainingParams, err
 }
 
 func (sel *DefaultMethodSelector) GetMethod(resource *openapistackql.Resource, methodName string) (*openapistackql.OperationStore, error) {
@@ -68,10 +68,10 @@ func (sel *DefaultMethodSelector) getMethodByName(resource *openapistackql.Resou
 	return m, nil
 }
 
-func (sel *DefaultMethodSelector) getMethodByNameAndParameters(resource *openapistackql.Resource, methodName string, parameters map[string]interface{}) (*openapistackql.OperationStore, error) {
-	m, ok := resource.GetFirstMethodMatchFromSQLVerb(methodName, parameters)
+func (sel *DefaultMethodSelector) getMethodByNameAndParameters(resource *openapistackql.Resource, methodName string, parameters map[string]interface{}) (*openapistackql.OperationStore, map[string]interface{}, error) {
+	m, remainingParams, ok := resource.GetFirstMethodMatchFromSQLVerb(methodName, parameters)
 	if !ok {
-		return nil, fmt.Errorf("no appropriate method = '%s' for resource = '%s'", methodName, resource.Name)
+		return nil, parameters, fmt.Errorf("no appropriate method = '%s' for resource = '%s'", methodName, resource.Name)
 	}
-	return m, nil
+	return m, remainingParams, nil
 }
