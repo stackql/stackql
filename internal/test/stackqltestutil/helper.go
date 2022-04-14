@@ -66,7 +66,7 @@ func RunCaptureTestAgainstFiles(t *testing.T, testSubject func(*testing.T, *bufi
 
 	outFile.Flush()
 	outStr := b.String()
-	t.Logf("outStr = '%s'", outStr)
+	t.Logf("outStr = '%s'\n", outStr)
 
 	checkPossibleMatchFiles(t, outStr, possibleExpectedOutputFiles)
 }

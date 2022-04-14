@@ -29,12 +29,13 @@ type serviceAccount struct {
 type transport struct {
 	token               []byte
 	authType            string
+	authValuePrefix     string
 	tokenLocation       string
 	key                 string
 	underlyingTransport http.RoundTripper
 }
 
-func newTransport(token []byte, authType, tokenLocation, key string, underlyingTransport http.RoundTripper) (*transport, error) {
+func newTransport(token []byte, authType, authValuePrefix, tokenLocation, key string, underlyingTransport http.RoundTripper) (*transport, error) {
 	switch authType {
 	case authTypeBasic, authTypeBearer, authTypeSSWS:
 		if len(token) < 1 {
@@ -57,6 +58,7 @@ func newTransport(token []byte, authType, tokenLocation, key string, underlyingT
 	return &transport{
 		token:               token,
 		authType:            authType,
+		authValuePrefix:     authValuePrefix,
 		tokenLocation:       tokenLocation,
 		key:                 key,
 		underlyingTransport: underlyingTransport,
@@ -76,9 +78,13 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	case locationHeader:
 		switch t.authType {
 		case authTypeBasic, authTypeBearer, authTypeSSWS:
+			authValuePrefix := t.authValuePrefix
+			if t.authValuePrefix == "" {
+				authValuePrefix = fmt.Sprintf("%s ", t.authType)
+			}
 			req.Header.Set(
 				"Authorization",
-				fmt.Sprintf("%s %s", t.authType, string(t.token)),
+				fmt.Sprintf("%s%s", authValuePrefix, string(t.token)),
 			)
 		default:
 			req.Header.Set(
@@ -150,7 +156,7 @@ func apiTokenAuth(authCtx *dto.AuthCtx, runtimeCtx dto.RuntimeCtx) (*http.Client
 	}
 	activateAuth(authCtx, "", "api_key")
 	httpClient := netutils.GetHttpClient(runtimeCtx, http.DefaultClient)
-	tr, err := newTransport(b, authTypeSSWS, locationHeader, "", httpClient.Transport)
+	tr, err := newTransport(b, authTypeSSWS, authCtx.ValuePrefix, locationHeader, "", httpClient.Transport)
 	if err != nil {
 		return nil, err
 	}
@@ -165,7 +171,7 @@ func basicAuth(authCtx *dto.AuthCtx, runtimeCtx dto.RuntimeCtx) (*http.Client, e
 	}
 	activateAuth(authCtx, "", "basic")
 	httpClient := netutils.GetHttpClient(runtimeCtx, http.DefaultClient)
-	tr, err := newTransport(b, authTypeBasic, locationHeader, "", httpClient.Transport)
+	tr, err := newTransport(b, authTypeBasic, authCtx.ValuePrefix, locationHeader, "", httpClient.Transport)
 	if err != nil {
 		return nil, err
 	}

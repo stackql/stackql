@@ -4,31 +4,29 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"vitess.io/vitess/go/sqltypes"
 	"vitess.io/vitess/go/vt/sqlparser"
 )
 
 type ParamAstVisitor struct {
-	params map[sqlparser.SQLNode]interface{}
+	params parserutil.ParameterMap
 }
 
 func NewParamAstVisitor(iDColumnName string, shouldCollectTables bool) *ParamAstVisitor {
 	return &ParamAstVisitor{
-		params: make(map[sqlparser.SQLNode]interface{}),
+		params: make(parserutil.ParameterMap),
 	}
 }
 
-func (v *ParamAstVisitor) GetParameters() map[sqlparser.SQLNode]interface{} {
+func (v *ParamAstVisitor) GetParameters() parserutil.ParameterMap {
 	return v.params
 }
 
 func (v *ParamAstVisitor) GetStringifiedParameters() map[string]interface{} {
 	rv := make(map[string]interface{})
 	for k, v := range v.params {
-		switch k := k.(type) {
-		case *sqlparser.ColName:
-			rv[k.Name.GetRawVal()] = v
-		}
+		rv[k.GetRawVal()] = v
 	}
 	return rv
 }
@@ -691,8 +689,9 @@ func (v *ParamAstVisitor) Visit(node sqlparser.SQLNode) error {
 		default:
 			switch rt := node.Right.(type) {
 			case *sqlparser.SQLVal:
+			case *sqlparser.ColName:
+				v.params[rt] = lt
 			default:
-				v.params[lt] = rt
 			}
 		}
 		return nil

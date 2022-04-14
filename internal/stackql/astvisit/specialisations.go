@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"vitess.io/vitess/go/vt/sqlparser"
 )
 
@@ -95,14 +96,14 @@ func GenerateModifiedWhereClause(node *sqlparser.Where) string {
 	return v.GetRewrittenQuery()
 }
 
-func ExtractParamsFromWhereClause(node *sqlparser.Where) map[string]interface{} {
+func ExtractParamsFromWhereClause(node *sqlparser.Where) parserutil.ParameterMap {
 	v := NewParamAstVisitor("", false)
 	if node != nil && node.Expr != nil {
 		node.Expr.Accept(v)
 	} else {
-		return map[string]interface{}{}
+		return parserutil.ParameterMap{}
 	}
-	return v.GetStringifiedParameters()
+	return v.GetParameters()
 }
 
 func ExtractProviderStrings(node sqlparser.SQLNode) []string {

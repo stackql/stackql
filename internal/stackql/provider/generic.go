@@ -9,7 +9,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/docparser"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	sdk "github.com/stackql/stackql/internal/stackql/google_sdk"
-	"github.com/stackql/stackql/internal/stackql/httpexec"
 	"github.com/stackql/stackql/internal/stackql/methodselect"
 	"github.com/stackql/stackql/internal/stackql/netutils"
 	"github.com/stackql/stackql/internal/stackql/relational"
@@ -64,6 +63,8 @@ func (gp *GenericProvider) inferAuthType(authCtx dto.AuthCtx, authTypeRequested 
 	switch ft {
 	case dto.AuthApiKeyStr:
 		return dto.AuthApiKeyStr
+	case dto.AuthBasicStr:
+		return dto.AuthBasicStr
 	case dto.AuthServiceAccountStr:
 		return dto.AuthServiceAccountStr
 	case dto.AuthInteractiveStr:
@@ -108,10 +109,10 @@ func (gp *GenericProvider) AuthRevoke(authCtx *dto.AuthCtx) error {
 	return fmt.Errorf(`Auth revoke for Google Failed; improper auth method: "%s" speciied`, authCtx.Type)
 }
 
-func (gp *GenericProvider) GetMethodForAction(serviceName string, resourceName string, iqlAction string, parameters map[string]interface{}, runtimeCtx dto.RuntimeCtx) (*openapistackql.OperationStore, string, error) {
+func (gp *GenericProvider) GetMethodForAction(serviceName string, resourceName string, iqlAction string, parameters map[string]interface{}, runtimeCtx dto.RuntimeCtx) (*openapistackql.OperationStore, string, map[string]interface{}, error) {
 	rsc, err := gp.GetResource(serviceName, resourceName, runtimeCtx)
 	if err != nil {
-		return nil, "", err
+		return nil, "", parameters, err
 	}
 	return gp.methodSelector.GetMethodForAction(rsc, iqlAction, parameters)
 }
@@ -120,38 +121,9 @@ func (gp *GenericProvider) InferDescribeMethod(rsc *openapistackql.Resource) (*o
 	if rsc == nil {
 		return nil, "", fmt.Errorf("cannot infer describe method from nil resource")
 	}
-	var method *openapistackql.OperationStore
-	m, methodErr := rsc.FindMethod("select")
-	if methodErr == nil && m != nil {
-		return m, "select", nil
-	}
-	m, methodErr = rsc.FindMethod("list")
-	if methodErr == nil && m != nil {
-		return m, "list", nil
-	}
-	m, methodErr = rsc.FindMethod("aggregatedList")
-	if methodErr == nil && m != nil {
-		return m, "aggregatedList", nil
-	}
-	m, methodErr = rsc.FindMethod("get")
-	if methodErr == nil && m != nil {
-		return m, "get", nil
-	}
-	var ms []string
-	for _, v := range rsc.Methods {
-		vp := &v
-		ms = append(ms, v.GetName())
-		if strings.HasPrefix(v.GetName(), "get") {
-			method = vp
-			return method, v.GetName(), nil
-		}
-	}
-	for _, v := range rsc.Methods {
-		vp := &v
-		if strings.HasPrefix(v.GetName(), "list") {
-			method = vp
-			return method, v.GetName(), nil
-		}
+	m, mk, ok := rsc.GetFirstMethodFromSQLVerb("select")
+	if ok {
+		return m, mk, nil
 	}
 	return nil, "", fmt.Errorf("SELECT not supported for this resource, use SHOW METHODS to view available operations for the resource and then invoke a supported method using the EXEC command")
 }
@@ -227,7 +199,7 @@ func (gp *GenericProvider) oAuth(authCtx *dto.AuthCtx, enforceRevokeFirst bool) 
 	}
 	activateAuth(authCtx, "", dto.AuthInteractiveStr)
 	client := netutils.GetHttpClient(gp.runtimeCtx, nil)
-	tr, err := newTransport(tokenBytes, authTypeBearer, locationHeader, "", client.Transport)
+	tr, err := newTransport(tokenBytes, authTypeBearer, authCtx.ValuePrefix, locationHeader, "", client.Transport)
 	if err != nil {
 		return nil, err
 	}
@@ -364,52 +336,11 @@ func (gp *GenericProvider) CheckCredentialFile(authCtx *dto.AuthCtx) error {
 	return fmt.Errorf("auth type = '%s' not supported", authCtx.Type)
 }
 
-func (gp *GenericProvider) GenerateHTTPRestInstruction(httpContext httpexec.IHttpContext) (httpexec.IHttpContext, error) {
-	return httpContext, nil
-}
-
 func (gp *GenericProvider) escapeUrlParameter(k string, v string, method *openapistackql.OperationStore) string {
 	if storageObjectsRegex.MatchString(method.GetName()) {
 		return url.QueryEscape(v)
 	}
 	return v
-}
-
-func (gp *GenericProvider) Parameterise(httpContext httpexec.IHttpContext, method *openapistackql.OperationStore, parameters *dto.HttpParameters, requestSchema *openapistackql.Schema) (httpexec.IHttpContext, error) {
-	visited := make(map[string]bool)
-	args := make([]string, len(parameters.PathParams)*2)
-	var sb strings.Builder
-	var queryParams []string
-	i := 0
-	for k, v := range parameters.PathParams {
-		if strings.Contains(httpContext.GetTemplateUrl(), "{"+k+"}") {
-			args[i] = "{" + k + "}"
-			args[i+1] = gp.escapeUrlParameter(k, fmt.Sprint(v), method)
-			i += 2
-			visited[k] = true
-			continue
-		}
-		if strings.Contains(httpContext.GetTemplateUrl(), "{+"+k+"}") {
-			args[i] = "{+" + k + "}"
-			args[i+1] = gp.escapeUrlParameter(k, fmt.Sprint(v), method)
-			i += 2
-			visited[k] = true
-			continue
-		}
-	}
-	if len(parameters.QueryParams) > 0 {
-		sb.WriteString("?")
-	}
-	for k, v := range parameters.QueryParams {
-		vStr, vOk := v.Val.(string)
-		if isVisited, kExists := visited[k]; !kExists || (!isVisited && vOk) {
-			queryParams = append(queryParams, k+"="+url.QueryEscape(vStr))
-			visited[k] = true
-		}
-	}
-	sb.WriteString(strings.Join(queryParams, "&"))
-	httpContext.SetUrl(strings.NewReplacer(args...).Replace(httpContext.GetTemplateUrl()) + sb.String())
-	return httpContext, nil
 }
 
 func (gp *GenericProvider) SetCurrentService(serviceKey string) {
@@ -419,16 +350,6 @@ func (gp *GenericProvider) SetCurrentService(serviceKey string) {
 
 func (gp *GenericProvider) GetCurrentService() string {
 	return gp.currentService
-}
-
-func (gp *GenericProvider) getPathParams(httpContext httpexec.IHttpContext) map[string]bool {
-	re := regexp.MustCompile(`\{([^\{\}]+)\}`)
-	keys := re.FindAllString(httpContext.GetTemplateUrl(), -1)
-	retVal := make(map[string]bool, len(keys))
-	for _, k := range keys {
-		retVal[strings.Trim(k, "{}")] = true
-	}
-	return retVal
 }
 
 func (gp *GenericProvider) GetResourcesMap(serviceKey string, runtimeCtx dto.RuntimeCtx) (map[string]*openapistackql.Resource, error) {

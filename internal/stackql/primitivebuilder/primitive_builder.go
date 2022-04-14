@@ -74,6 +74,10 @@ func (pb *PrimitiveBuilder) SetTxnCtrlCtrs(tc *dto.TxnControlCounters) {
 	pb.txnCtrlCtrs = tc
 }
 
+func (pb *PrimitiveBuilder) GetTxnCtrlCtrs() *dto.TxnControlCounters {
+	return pb.txnCtrlCtrs
+}
+
 func (pb *PrimitiveBuilder) GetGraph() *primitivegraph.PrimitiveGraph {
 	return pb.graph
 }

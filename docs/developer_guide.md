@@ -1,6 +1,16 @@
 
 # StackQL Developer Guide
 
+## Quick walkthrough
+
+### Running unit tests standalone
+
+Some pretty hefty things, also the `json1` tag is a must.
+
+```
+go test -timeout 2400s -p 2 --tags "json1" ./...
+```
+
 ## Provider development
 
 Keen to expose some new functionality though `stackql`?  We are very keen on this!  
@@ -96,15 +106,19 @@ Really high level stuff:
 
 ## Tests
 
+See also:
+
+- [standalone unit tests](#running-unit-tests-standalone).
+
 Building locally or in cloud will automatically:
 
-1. Run `gotest` tests.
+1. Run `go test` tests.
 2. Build the executable.
 3. Run integration tests.
 
 [This article](https://medium.com/cbi-engineering/mocking-techniques-for-go-805c10f1676b) gives a nice overview of mocking in golang.
 
-### gotest
+### go test
 
 Test coverage is sparse.  Regressions are mitigated by `gotest` integration testing in the [driver](/internal/stackql/driver/driver_integration_test.go) and [stackql](/stackql/main_integration_test.go) packages.  Some testing functionality is supported through convenience functionality inside the [test](/internal/test) packages.
 

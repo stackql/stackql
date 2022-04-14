@@ -12,7 +12,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/httpbuild"
-	"github.com/stackql/stackql/internal/stackql/httpexec"
 	"github.com/stackql/stackql/internal/stackql/httpmiddleware"
 	"github.com/stackql/stackql/internal/stackql/iqlutil"
 	"github.com/stackql/stackql/internal/stackql/metadatavisitors"
@@ -137,8 +136,7 @@ func (pb *primitiveGenerator) comparisonExprToFilterFunc(table openapistackql.IT
 }
 
 func getProviderServiceMap(item openapistackql.ProviderService, extended bool) map[string]interface{} {
-	var retVal map[string]interface{}
-	retVal = map[string]interface{}{
+	retVal := map[string]interface{}{
 		"id":    item.ID,
 		"name":  item.Name,
 		"title": item.Title,
@@ -423,18 +421,6 @@ func (pb *primitiveGenerator) describeInstructionExecutor(handlerCtx *handler.Ha
 	return util.PrepareResultSet(dto.NewPrepareResultSetDTO(nil, keys, columnOrder, util.DescribeRowSort, err, nil))
 }
 
-func extractStringFromMap(m map[string]interface{}, k string) string {
-	var retVal string
-	p, ok := m[k]
-	if ok {
-		s, ok := p.(string)
-		if ok {
-			retVal = s
-		}
-	}
-	return retVal
-}
-
 func (pb *primitiveGenerator) insertExecutor(handlerCtx *handler.HandlerContext, node *sqlparser.Insert, rowSort func(map[string]map[string]interface{}) []string) (primitive.IPrimitive, error) {
 	tbl, err := pb.PrimitiveBuilder.GetTable(node)
 	if err != nil {
@@ -489,7 +475,10 @@ func (pb *primitiveGenerator) insertExecutor(handlerCtx *handler.HandlerContext,
 					return dto.NewErroneousExecutorOutput(apiErr)
 				}
 
-				target, err = httpexec.DeprecatedProcessHttpResponse(response)
+				target, err = m.DeprecatedProcessResponse(response)
+				if err != nil {
+					return dto.NewErroneousExecutorOutput(err)
+				}
 				pb.composeAsyncMonitor(handlerCtx, insertPrimitive, tbl)
 				if err != nil {
 					return dto.NewErroneousExecutorOutput(err)
@@ -638,6 +627,10 @@ func (pb *primitiveGenerator) deleteExecutor(handlerCtx *handler.HandlerContext,
 	if err != nil {
 		return nil, err
 	}
+	m, err := tbl.GetMethod()
+	if err != nil {
+		return nil, err
+	}
 	ex := func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput {
 		var target map[string]interface{}
 		var err error
@@ -647,7 +640,9 @@ func (pb *primitiveGenerator) deleteExecutor(handlerCtx *handler.HandlerContext,
 			if apiErr != nil {
 				return util.PrepareResultSet(dto.NewPrepareResultSetDTO(nil, nil, nil, nil, apiErr, nil))
 			}
-			target, err = httpexec.DeprecatedProcessHttpResponse(response)
+			target, err = m.DeprecatedProcessResponse(response)
+
+			log.Infoln(fmt.Sprintf("deleteExecutor() target = %v", target))
 			if err != nil {
 				return util.PrepareResultSet(dto.NewPrepareResultSetDTO(
 					nil,
@@ -734,6 +729,10 @@ func (pb *primitiveGenerator) execExecutor(handlerCtx *handler.HandlerContext, n
 	if err != nil {
 		return primitivegraph.PrimitiveNode{}, err
 	}
+	m, err := tbl.GetMethod()
+	if err != nil {
+		return primitivegraph.PrimitiveNode{}, err
+	}
 	ex := func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput {
 		var err error
 		var columnOrder []string
@@ -743,7 +742,7 @@ func (pb *primitiveGenerator) execExecutor(handlerCtx *handler.HandlerContext, n
 			if apiErr != nil {
 				return util.PrepareResultSet(dto.NewPrepareResultSetDTO(nil, nil, nil, nil, apiErr, nil))
 			}
-			target, err = httpexec.DeprecatedProcessHttpResponse(response)
+			target, err = m.DeprecatedProcessResponse(response)
 			if err != nil {
 				return util.PrepareResultSet(dto.NewPrepareResultSetDTO(
 					nil,
@@ -802,7 +801,7 @@ func (pb *primitiveGenerator) composeAsyncMonitor(handlerCtx *handler.HandlerCon
 	if err != nil {
 		return nil, err
 	}
-	asm, err := asyncmonitor.NewAsyncMonitor(prov)
+	asm, err := asyncmonitor.NewAsyncMonitor(handlerCtx, prov)
 	if err != nil {
 		return nil, err
 	}

@@ -3,6 +3,7 @@ package planbuilder
 import (
 	"fmt"
 
+	"github.com/stackql/stackql/internal/stackql/astvisit"
 	"github.com/stackql/stackql/internal/stackql/docparser"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -71,7 +72,7 @@ func (p *primitiveGenerator) assembleUnarySelectionBuilder(
 		log.Infoln(fmt.Sprintf("schema type = %T", schema))
 	}
 
-	selPsc, err := p.PrimitiveBuilder.GetDRMConfig().GenerateSelectDML(util.NewAnnotatedTabulation(selectTabulation, hIds, tbl.GetAlias()), insPsc.TxnCtrlCtrs, node, rewrittenWhere)
+	selPsc, err := p.PrimitiveBuilder.GetDRMConfig().GenerateSelectDML(util.NewAnnotatedTabulation(selectTabulation, hIds, tbl.GetAlias()), insPsc.TxnCtrlCtrs, astvisit.GenerateModifiedSelectSuffix(node), astvisit.GenerateModifiedWhereClause(rewrittenWhere))
 	if err != nil {
 		return err
 	}
