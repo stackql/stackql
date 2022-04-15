@@ -159,5 +159,300 @@
         ]
       }
     }
+  },
+  {
+    "httpRequest": {
+      "path": "/projects/testing-project/zones/australia-southeast1-b/disks"
+    },
+    "httpResponse": {
+      "body": {
+        "id": "projects/testing-project/zones/australia-southeast1-b/disks",
+        "items": [
+          {
+            "id": "6957941705271944342",
+            "creationTimestamp": "2021-02-20T15:25:45.892-08:00",
+            "name": "demo-disk-qq1",
+            "sizeGb": "10",
+            "zone": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b",
+            "status": "READY",
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b/disks/demo-disk-qq1",
+            "type": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b/diskTypes/pd-standard",
+            "lastAttachTimestamp": "2021-02-20T15:55:46.911-08:00",
+            "users": [
+              "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b/instances/demo-vm-tt1"
+            ],
+            "labelFingerprint": "42WmSpB8rSM=",
+            "physicalBlockSizeBytes": "4096",
+            "kind": "compute#disk"
+          },
+          {
+            "id": "1624656788334582894",
+            "creationTimestamp": "2021-02-20T16:00:01.646-08:00",
+            "name": "demo-disk-qq2",
+            "sizeGb": "10",
+            "zone": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b",
+            "status": "READY",
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b/disks/demo-disk-qq2",
+            "type": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b/diskTypes/pd-standard",
+            "lastAttachTimestamp": "2021-02-20T16:00:27.125-08:00",
+            "users": [
+              "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b/instances/demo-vm-tt2"
+            ],
+            "labelFingerprint": "42WmSpB8rSM=",
+            "physicalBlockSizeBytes": "4096",
+            "kind": "compute#disk"
+          },
+          {
+            "id": "3236826943903762397",
+            "creationTimestamp": "2021-03-29T04:25:38.809-07:00",
+            "name": "demo-disk-xx2",
+            "sizeGb": "10",
+            "zone": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b",
+            "status": "READY",
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b/disks/demo-disk-xx2",
+            "type": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b/diskTypes/pd-standard",
+            "labels": {
+              "k1": "v1"
+            },
+            "labelFingerprint": "LZMBw4IuNFk=",
+            "physicalBlockSizeBytes": "4096",
+            "kind": "compute#disk"
+          },
+          {
+            "id": "3236826943903762398",
+            "creationTimestamp": "2021-03-29T04:25:38.810-07:00",
+            "name": "demo-disk-xx3",
+            "sizeGb": "20",
+            "zone": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b",
+            "status": "READY",
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b/disks/demo-disk-xx3",
+            "type": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b/diskTypes/pd-standard",
+            "labels": {
+              "k1": "v1"
+            },
+            "labelFingerprint": "LZMBw4IuNFk=",
+            "physicalBlockSizeBytes": "4096",
+            "kind": "compute#disk"
+          },
+          {
+            "id": "3236826943903762399",
+            "creationTimestamp": "2021-03-29T04:25:38.811-07:00",
+            "name": "demo-disk-xx4",
+            "sizeGb": "30",
+            "zone": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b",
+            "status": "READY",
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b/disks/demo-disk-xx4",
+            "type": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b/diskTypes/pd-standard",
+            "labels": {
+              "k1": "v1"
+            },
+            "labelFingerprint": "LZMBw4IuNFk=",
+            "physicalBlockSizeBytes": "4096",
+            "kind": "compute#disk"
+          },
+          {
+            "id": "3236826943903762400",
+            "creationTimestamp": "2021-03-29T04:25:38.812-07:00",
+            "name": "demo-disk-xx5",
+            "sizeGb": "40",
+            "zone": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b",
+            "status": "READY",
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b/disks/demo-disk-xx5",
+            "type": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b/diskTypes/pd-standard",
+            "labels": {
+              "k1": "v1"
+            },
+            "labelFingerprint": "LZMBw4IuNFk=",
+            "physicalBlockSizeBytes": "4096",
+            "kind": "compute#disk"
+          }
+        ],
+        "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b/disks",
+        "kind": "compute#diskList"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "GET",
+      "path": "/projects/testing-project/global/networks"
+    },
+    "httpResponse": {
+      "body": {
+        "kind": "compute#networkList",
+        "id": "projects/testing-project/global/networks",
+        "items": [
+          {
+            "kind": "compute#network",
+            "id": "8588306527720695833",
+            "creationTimestamp": "2021-03-22T01:36:06.563-07:00",
+            "name": "k8s-01-vpc",
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/k8s-01-vpc",
+            "selfLinkWithId": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/8588306527720695833",
+            "autoCreateSubnetworks": false,
+            "routingConfig": {
+              "routingMode": "REGIONAL"
+            },
+            "mtu": 1460,
+            "networkFirewallPolicyEnforcementOrder": "AFTER_CLASSIC_FIREWALL"
+          },
+          {
+            "kind": "compute#network",
+            "id": "7485409936384317385",
+            "creationTimestamp": "2020-06-22T01:17:42.886-07:00",
+            "name": "kr-vpc-01",
+            "description": "",
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/kr-vpc-01",
+            "selfLinkWithId": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/7485409936384317385",
+            "autoCreateSubnetworks": false,
+            "subnetworks": [
+              "https://www.googleapis.com/compute/v1/projects/testing-project/regions/australia-southeast1/subnetworks/aus-sn-02",
+              "https://www.googleapis.com/compute/v1/projects/testing-project/regions/australia-southeast1/subnetworks/aus-sn-01"
+            ],
+            "routingConfig": {
+              "routingMode": "REGIONAL"
+            },
+            "networkFirewallPolicyEnforcementOrder": "AFTER_CLASSIC_FIREWALL"
+          },
+          {
+            "kind": "compute#network",
+            "id": "6038828054077414542",
+            "creationTimestamp": "2021-03-27T05:17:37.377-07:00",
+            "name": "kubernetes-the-hard-way-vpc2",
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/kubernetes-the-hard-way-vpc2",
+            "selfLinkWithId": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/6038828054077414542",
+            "autoCreateSubnetworks": false,
+            "routingConfig": {
+              "routingMode": "REGIONAL"
+            },
+            "networkFirewallPolicyEnforcementOrder": "AFTER_CLASSIC_FIREWALL"
+          },
+          {
+            "kind": "compute#network",
+            "id": "3809679799090968205",
+            "creationTimestamp": "2022-04-21T14:10:58.899-07:00",
+            "name": "demo-disk-xx5",
+            "description": "matchable network",
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/demo-disk-xx5",
+            "selfLinkWithId": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/3809679799090968205",
+            "autoCreateSubnetworks": false,
+            "subnetworks": [
+              "https://www.googleapis.com/compute/v1/projects/testing-project/regions/australia-southeast1/subnetworks/demo-disk-xx5"
+            ],
+            "routingConfig": {
+              "routingMode": "REGIONAL"
+            },
+            "mtu": 1460,
+            "networkFirewallPolicyEnforcementOrder": "AFTER_CLASSIC_FIREWALL"
+          },
+          {
+            "kind": "compute#network",
+            "id": "8912734694931449472",
+            "creationTimestamp": "2022-03-01T02:41:51.571-08:00",
+            "name": "testing-network-01",
+            "description": "some-description",
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/testing-network-01",
+            "selfLinkWithId": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/8912734694931449472",
+            "autoCreateSubnetworks": false,
+            "subnetworks": [
+              "https://www.googleapis.com/compute/v1/projects/testing-project/regions/australia-southeast2/subnetworks/ts-01"
+            ],
+            "routingConfig": {
+              "routingMode": "REGIONAL"
+            },
+            "mtu": 1460,
+            "networkFirewallPolicyEnforcementOrder": "AFTER_CLASSIC_FIREWALL"
+          }
+        ],
+        "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks"      
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "GET",
+      "path": "/projects/testing-project/regions/australia-southeast1/subnetworks"
+    },
+    "httpResponse": {
+      "body": {
+        "kind": "compute#subnetworkList",
+        "id": "projects/testing-project/regions/australia-southeast1/subnetworks",
+        "items": [
+          {
+            "kind": "compute#subnetwork",
+            "id": "1291870789777086425",
+            "creationTimestamp": "2020-06-22T01:17:58.324-07:00",
+            "name": "aus-sn-01",
+            "description": "",
+            "network": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/kr-vpc-01",
+            "ipCidrRange": "10.0.0.0/24",
+            "gatewayAddress": "10.0.0.1",
+            "region": "https://www.googleapis.com/compute/v1/projects/testing-project/regions/australia-southeast1",
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/regions/australia-southeast1/subnetworks/aus-sn-01",
+            "privateIpGoogleAccess": true,
+            "fingerprint": "4bvbccOE26o=",
+            "enableFlowLogs": false,
+            "privateIpv6GoogleAccess": "DISABLE_GOOGLE_ACCESS",
+            "purpose": "PRIVATE",
+            "logConfig": {
+              "enable": false,
+              "aggregationInterval": "INTERVAL_5_SEC",
+              "flowSampling": 0.5,
+              "metadata": "INCLUDE_ALL_METADATA"
+            },
+            "stackType": "IPV4_ONLY"
+          },
+          {
+            "kind": "compute#subnetwork",
+            "id": "4010558545247197144",
+            "creationTimestamp": "2020-06-22T01:17:59.303-07:00",
+            "name": "aus-sn-02",
+            "description": "",
+            "network": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/kr-vpc-01",
+            "ipCidrRange": "10.0.1.0/24",
+            "gatewayAddress": "10.0.1.1",
+            "region": "https://www.googleapis.com/compute/v1/projects/testing-project/regions/australia-southeast1",
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/regions/australia-southeast1/subnetworks/aus-sn-02",
+            "privateIpGoogleAccess": true,
+            "fingerprint": "gVVUMelTKSY=",
+            "enableFlowLogs": true,
+            "privateIpv6GoogleAccess": "DISABLE_GOOGLE_ACCESS",
+            "purpose": "PRIVATE",
+            "logConfig": {
+              "enable": true,
+              "aggregationInterval": "INTERVAL_5_SEC",
+              "flowSampling": 0.5,
+              "metadata": "INCLUDE_ALL_METADATA"
+            },
+            "stackType": "IPV4_ONLY"
+          },
+          {
+            "kind": "compute#subnetwork",
+            "id": "6595214855052752540",
+            "creationTimestamp": "2022-04-21T14:11:15.882-07:00",
+            "name": "demo-disk-xx5",
+            "description": "matchable subnet",
+            "network": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/demo-disk-xx5",
+            "ipCidrRange": "10.0.0.0/24",
+            "gatewayAddress": "10.0.0.1",
+            "region": "https://www.googleapis.com/compute/v1/projects/testing-project/regions/australia-southeast1",
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/regions/australia-southeast1/subnetworks/demo-disk-xx5",
+            "privateIpGoogleAccess": false,
+            "fingerprint": "4EGffKc5JN0=",
+            "enableFlowLogs": false,
+            "privateIpv6GoogleAccess": "DISABLE_GOOGLE_ACCESS",
+            "purpose": "PRIVATE",
+            "logConfig": {
+              "enable": false,
+              "aggregationInterval": "INTERVAL_5_SEC",
+              "flowSampling": 0.5,
+              "metadata": "INCLUDE_ALL_METADATA"
+            },
+            "stackType": "IPV4_ONLY"
+          }
+        ],
+        "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/regions/australia-southeast1/subnetworks"
+      }      
+    }
   }
 ]

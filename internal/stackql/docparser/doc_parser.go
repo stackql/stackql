@@ -113,22 +113,22 @@ func OpenapiStackQLServiceDiscoveryDocPersistor(prov *openapistackql.Provider, s
 	return nil
 }
 
-func OpenapiStackQLTabulationsPersistor(prov *openapistackql.Provider, svc *openapistackql.Service, tabluationsAnnotated []util.AnnotatedTabulation, dbEngine sqlengine.SQLEngine, prefix string) error {
+func OpenapiStackQLTabulationsPersistor(prov *openapistackql.Provider, svc *openapistackql.Service, tabluationsAnnotated []util.AnnotatedTabulation, dbEngine sqlengine.SQLEngine, prefix string) (int, error) {
 	// replace := false
 	discoveryGenerationId, err := dbEngine.GetCurrentDiscoveryGenerationId(prefix)
 	if err != nil {
 		discoveryGenerationId, err = dbEngine.GetNextDiscoveryGenerationId(prefix)
 		if err != nil {
-			return err
+			return discoveryGenerationId, err
 		}
 	}
 	db, err := dbEngine.GetDB()
 	if err != nil {
-		return err
+		return discoveryGenerationId, err
 	}
 	txn, err := db.Begin()
 	if err != nil {
-		return err
+		return discoveryGenerationId, err
 	}
 	for _, tblt := range tabluationsAnnotated {
 		ddl := drmConfig.GenerateDDL(tblt, discoveryGenerationId, false)
@@ -139,15 +139,15 @@ func OpenapiStackQLTabulationsPersistor(prov *openapistackql.Provider, svc *open
 				errStr := fmt.Sprintf("aborting DDL run on query = %s, err = %v", q, err)
 				log.Infoln(errStr)
 				txn.Rollback()
-				return err
+				return discoveryGenerationId, err
 			}
 		}
 	}
 	err = txn.Commit()
 	if err != nil {
-		return err
+		return discoveryGenerationId, err
 	}
-	return nil
+	return discoveryGenerationId, nil
 }
 
 func isAlwaysRequired(item interface{}) bool {

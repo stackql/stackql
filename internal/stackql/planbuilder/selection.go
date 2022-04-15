@@ -45,7 +45,7 @@ func (p *primitiveGenerator) assembleUnarySelectionBuilder(
 		return err
 	}
 
-	err = docparser.OpenapiStackQLTabulationsPersistor(prov, svc, []util.AnnotatedTabulation{annotatedInsertTabulation}, p.PrimitiveBuilder.GetSQLEngine(), prov.Name)
+	_, err = docparser.OpenapiStackQLTabulationsPersistor(prov, svc, []util.AnnotatedTabulation{annotatedInsertTabulation}, p.PrimitiveBuilder.GetSQLEngine(), prov.Name)
 	if err != nil {
 		return err
 	}
@@ -53,11 +53,11 @@ func (p *primitiveGenerator) assembleUnarySelectionBuilder(
 	if err != nil {
 		return err
 	}
-	insPsc, err := p.PrimitiveBuilder.GetDRMConfig().GenerateInsertDML(annotatedInsertTabulation, p.PrimitiveBuilder.GetTxnCounterManager(), tableDTO.GetDiscoveryID())
+	insPsc, err := p.PrimitiveBuilder.GetDRMConfig().GenerateInsertDML(annotatedInsertTabulation, dto.NewTxnControlCounters(p.PrimitiveBuilder.GetTxnCounterManager(), tableDTO.GetDiscoveryID()))
 	if err != nil {
 		return err
 	}
-	p.PrimitiveBuilder.SetTxnCtrlCtrs(insPsc.TxnCtrlCtrs)
+	p.PrimitiveBuilder.SetTxnCtrlCtrs(insPsc.GetGCCtrlCtrs())
 	for _, col := range cols {
 		foundSchema := schema.FindByPath(col.Name, nil)
 		cc, ok := method.GetParameter(col.Name)
@@ -72,12 +72,12 @@ func (p *primitiveGenerator) assembleUnarySelectionBuilder(
 		log.Infoln(fmt.Sprintf("schema type = %T", schema))
 	}
 
-	selPsc, err := p.PrimitiveBuilder.GetDRMConfig().GenerateSelectDML(util.NewAnnotatedTabulation(selectTabulation, hIds, tbl.GetAlias()), insPsc.TxnCtrlCtrs, astvisit.GenerateModifiedSelectSuffix(node), astvisit.GenerateModifiedWhereClause(rewrittenWhere))
+	selPsc, err := p.PrimitiveBuilder.GetDRMConfig().GenerateSelectDML(util.NewAnnotatedTabulation(selectTabulation, hIds, tbl.GetAlias()), insPsc.GetGCCtrlCtrs(), astvisit.GenerateModifiedSelectSuffix(node), astvisit.GenerateModifiedWhereClause(rewrittenWhere))
 	if err != nil {
 		return err
 	}
-	p.PrimitiveBuilder.SetInsertPreparedStatementCtx(&insPsc)
-	p.PrimitiveBuilder.SetSelectPreparedStatementCtx(&selPsc)
+	p.PrimitiveBuilder.SetInsertPreparedStatementCtx(insPsc)
+	p.PrimitiveBuilder.SetSelectPreparedStatementCtx(selPsc)
 	p.PrimitiveBuilder.SetColumnOrder(cols)
 	return nil
 }

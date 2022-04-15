@@ -8,124 +8,231 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/stackql/go-openapistackql/openapistackql"
+	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
+	"github.com/stackql/stackql/internal/stackql/util"
 )
 
-type TableRouteAstVisitor struct {
-	handlerCtx      *handler.HandlerContext
-	router          *parserutil.ParameterRouter
-	tableMetaSlice  []*taxonomy.ExtendedTableMetadata
-	tables          taxonomy.TblMap
-	annotations     taxonomy.AnnotationCtxMap
-	annotationSlice []taxonomy.AnnotationCtx
-}
-
-func NewTableRouteAstVisitor(handlerCtx *handler.HandlerContext, router *parserutil.ParameterRouter) *TableRouteAstVisitor {
-	return &TableRouteAstVisitor{
-		handlerCtx:  handlerCtx,
-		router:      router,
-		tables:      make(taxonomy.TblMap),
-		annotations: make(taxonomy.AnnotationCtxMap),
+func (v *QueryRewriteAstVisitor) getSelectExprString(dc *drm.StaticDRMConfig, tabAnnotated util.AnnotatedTabulation, txnCtrlCtrs *dto.TxnControlCounters) string {
+	aliasStr := ""
+	if tabAnnotated.GetAlias() != "" {
+		aliasStr = fmt.Sprintf(` AS "%s" `, tabAnnotated.GetAlias())
 	}
+	return fmt.Sprintf(`"%s" %s`, dc.GetTableName(tabAnnotated.GetHeirarchyIdentifiers(), txnCtrlCtrs.DiscoveryGenerationId), aliasStr)
 }
 
-func obtainAnnotationCtx(
+func (v *QueryRewriteAstVisitor) buildAcquireQueryCtx(
 	sqlEngine sqlengine.SQLEngine,
+	ac taxonomy.AnnotationCtx,
+	dc drm.DRMConfig,
+) (*drm.PreparedStatementCtx, error) {
+	insertTabulation := ac.Schema.Tabulate(false)
+
+	hIds := ac.HIDs
+	log.Infof("%v %v", insertTabulation, hIds)
+
+	annotatedInsertTabulation := util.NewAnnotatedTabulation(insertTabulation, hIds, "")
+	tableDTO, err := dc.GetCurrentTable(hIds, sqlEngine)
+	if err != nil {
+		return nil, err
+	}
+	insPsc, err := dc.GenerateInsertDML(annotatedInsertTabulation, v.getCtrlCounters(tableDTO.GetDiscoveryID()))
+	if err != nil {
+		return nil, err
+	}
+	return insPsc, nil
+}
+
+func (v *QueryRewriteAstVisitor) getStarColumns(
 	tbl *taxonomy.ExtendedTableMetadata,
-	parameters map[string]interface{},
-) (taxonomy.AnnotationCtx, error) {
+) ([]openapistackql.ColumnDescriptor, error) {
 	schema, err := tbl.GetResponseSchema()
 	if err != nil {
-		return taxonomy.AnnotationCtx{}, err
+		return nil, err
 	}
-	provStr, _ := tbl.GetProviderStr()
-	svcStr, _ := tbl.GetServiceStr()
 	unsuitableSchemaMsg := "schema unsuitable for select query"
 	log.Infoln(fmt.Sprintf("schema.Items = %v", schema.Items))
 	log.Infoln(fmt.Sprintf("schema.Properties = %v", schema.Properties))
 	var itemObjS *openapistackql.Schema
 	itemObjS, tbl.SelectItemsKey, err = schema.GetSelectSchema(tbl.LookupSelectItemsKey())
 	if err != nil {
-		return taxonomy.AnnotationCtx{}, fmt.Errorf(unsuitableSchemaMsg)
+		return nil, fmt.Errorf(unsuitableSchemaMsg)
 	}
 	if itemObjS == nil {
-		return taxonomy.AnnotationCtx{}, fmt.Errorf(unsuitableSchemaMsg)
+		return nil, fmt.Errorf(unsuitableSchemaMsg)
 	}
-	hIds := dto.NewHeirarchyIdentifiers(provStr, svcStr, itemObjS.GetName(), "")
-	return taxonomy.AnnotationCtx{Schema: itemObjS, HIDs: hIds, TableMeta: tbl, Parameters: parameters}, nil
-}
-
-func (v *TableRouteAstVisitor) addAnnotationCtx(
-	node sqlparser.SQLNode,
-	tbl *taxonomy.ExtendedTableMetadata,
-	parameters map[string]interface{},
-) error {
-	ac, err := obtainAnnotationCtx(v.handlerCtx.SQLEngine, tbl, parameters)
-	if err != nil {
-		return err
+	var cols []parserutil.ColumnHandle
+	colNames := itemObjS.GetAllColumns()
+	for _, v := range colNames {
+		cols = append(cols, parserutil.NewUnaliasedColumnHandle(v))
 	}
-	v.annotations[node] = ac
-	v.annotationSlice = append(v.annotationSlice, ac)
-	return nil
-}
-
-func (v *TableRouteAstVisitor) analyzeAliasedTable(tb *sqlparser.AliasedTableExpr) (*taxonomy.ExtendedTableMetadata, map[string]interface{}, error) {
-	switch ex := tb.Expr.(type) {
-	case sqlparser.TableName:
-		err := v.router.Route(tb)
-		if err != nil {
-			return nil, nil, err
-		}
-		tpc := v.router.GetAvailableParameters(tb)
-		hr, remainingParams, err := taxonomy.GetHeirarchyFromStatement(v.handlerCtx, tb, tpc.GetStringified())
-		if err != nil {
-			return nil, nil, err
-		}
-		reconstitutedConsumedParams, err := tpc.ReconstituteConsumedParams(remainingParams)
-		if err != nil {
-			return nil, nil, err
-		}
-		err = v.router.InvalidateParams(reconstitutedConsumedParams)
-		if err != nil {
-			return nil, nil, err
-		}
-		abbreviatedConsumedMap, err := tpc.AbbreviateMap(reconstitutedConsumedParams)
-		if err != nil {
-			return nil, nil, err
-		}
-		m := taxonomy.NewExtendedTableMetadata(hr, taxonomy.GetAliasFromStatement(tb))
-		v.tables[ex] = m
-		return m, abbreviatedConsumedMap, nil
-	default:
-		return nil, nil, fmt.Errorf("table of type '%T' not curently supported", ex)
+	var columnDescriptors []openapistackql.ColumnDescriptor
+	for _, col := range cols {
+		columnDescriptors = append(columnDescriptors, openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.DecoratedColumn, schema, col.Val))
 	}
+	return columnDescriptors, nil
 }
 
-func (v *TableRouteAstVisitor) GetTableMetaArray() []*taxonomy.ExtendedTableMetadata {
-	return v.tableMetaSlice
+func (v *QueryRewriteAstVisitor) GenerateSelectDML() (*drm.PreparedStatementCtx, error) {
+	dc := v.dc
+	cols := v.columnDescriptors
+	txnCtrlCtrs := v.baseCtrlCounters
+	selectSuffix := v.selectSuffix
+	rewrittenWhere := v.whereExprsStr
+	var q strings.Builder
+	var quotedColNames []string
+	var columns []drm.ColumnMetadata
+	for _, col := range cols {
+		var typeStr string
+		if col.Schema != nil {
+			typeStr = dc.GetRelationalType(col.Schema.Type)
+		} else {
+			if col.Val != nil {
+				switch col.Val.Type {
+				case sqlparser.BitVal:
+				}
+			}
+		}
+		columns = append(columns, drm.NewColDescriptor(col, typeStr))
+		var colEntry strings.Builder
+		if col.DecoratedCol == "" {
+			colEntry.WriteString(fmt.Sprintf(`"%s" `, col.Name))
+			if col.Alias != "" {
+				colEntry.WriteString(fmt.Sprintf(` AS "%s"`, col.Alias))
+			}
+		} else {
+			colEntry.WriteString(fmt.Sprintf("%s ", col.DecoratedCol))
+		}
+		quotedColNames = append(quotedColNames, fmt.Sprintf("%s ", colEntry.String()))
+
+	}
+	genIdColName := dc.GetGenerationControlColumn()
+	sessionIDColName := dc.GetSessionControlColumn()
+	txnIdColName := dc.GetTxnControlColumn()
+	insIdColName := dc.GetInsControlColumn()
+	var wq strings.Builder
+	var controlWhereComparisons []string
+	for _, v := range v.tableSlice {
+		gIDcn := fmt.Sprintf(`"%s"."%s"`, v.GetUniqueId(), genIdColName)
+		sIDcn := fmt.Sprintf(`"%s"."%s"`, v.GetUniqueId(), sessionIDColName)
+		tIDcn := fmt.Sprintf(`"%s"."%s"`, v.GetUniqueId(), txnIdColName)
+		iIDcn := fmt.Sprintf(`"%s"."%s"`, v.GetUniqueId(), insIdColName)
+		controlWhereComparisons = append(controlWhereComparisons, fmt.Sprintf(`%s = ? AND %s = ? AND %s = ? AND %s = ?`, gIDcn, sIDcn, tIDcn, iIDcn))
+	}
+	controlWhereSubClause := fmt.Sprintf("( %s )", strings.Join(controlWhereComparisons, " AND "))
+	wq.WriteString(controlWhereSubClause)
+	if strings.TrimSpace(rewrittenWhere) != "" {
+		wq.WriteString(fmt.Sprintf(" AND ( %s ) ", rewrittenWhere))
+	}
+	v.whereExprsStr = wq.String()
+
+	// write select expressions to execute
+	v.selectExprsStr = strings.Join(quotedColNames, ", ")
+
+	q.WriteString(fmt.Sprintf(`SELECT %s FROM `, strings.Join(quotedColNames, ", ")))
+	q.WriteString(v.fromStr)
+	if v.whereExprsStr != "" {
+		q.WriteString(" WHERE ")
+		q.WriteString(v.whereExprsStr)
+	}
+	q.WriteString(selectSuffix)
+
+	query := q.String()
+
+	return drm.NewPreparedStatementCtx(
+		query,
+		"",
+		genIdColName,
+		sessionIDColName,
+		nil,
+		txnIdColName,
+		insIdColName,
+		columns,
+		len(v.tables),
+		txnCtrlCtrs,
+		v.secondaryCtrlCounters,
+	), nil
 }
 
-func (v *TableRouteAstVisitor) GetTableMap() taxonomy.TblMap {
+type QueryRewriteAstVisitor struct {
+	handlerCtx            *handler.HandlerContext
+	dc                    drm.DRMConfig
+	tables                taxonomy.TblMap
+	annotations           taxonomy.AnnotationCtxMap
+	discoGenIDs           map[sqlparser.SQLNode]int
+	annotatedTabulations  taxonomy.AnnotatedTabulationMap
+	selectCtx             *drm.PreparedStatementCtx
+	baseCtrlCounters      *dto.TxnControlCounters
+	secondaryCtrlCounters []*dto.TxnControlCounters
+	colRefs               parserutil.ColTableMap
+	columnNames           []parserutil.ColumnHandle
+	columnDescriptors     []openapistackql.ColumnDescriptor
+	tableSlice            []*taxonomy.ExtendedTableMetadata
+	//
+	selectExprsStr string
+	fromStr        string
+	whereExprsStr  string
+	selectSuffix   string
+}
+
+func (v *QueryRewriteAstVisitor) getCtrlCounters(discoveryGenerationID int) *dto.TxnControlCounters {
+	if v.baseCtrlCounters == nil {
+		return dto.NewTxnControlCounters(v.handlerCtx.TxnCounterMgr, discoveryGenerationID)
+	}
+	return v.baseCtrlCounters.CloneWithDiscoGenID(discoveryGenerationID)
+}
+
+func NewQueryRewriteAstVisitor(
+	handlerCtx *handler.HandlerContext,
+	tables taxonomy.TblMap,
+	tableSlice []*taxonomy.ExtendedTableMetadata,
+	annotations taxonomy.AnnotationCtxMap,
+	discoGenIDs map[sqlparser.SQLNode]int,
+	colRefs parserutil.ColTableMap,
+	dc drm.DRMConfig,
+	txnCtrlCtrs *dto.TxnControlCounters,
+	secondaryTccs []*dto.TxnControlCounters,
+) *QueryRewriteAstVisitor {
+	rv := &QueryRewriteAstVisitor{
+		handlerCtx:            handlerCtx,
+		tables:                tables,
+		tableSlice:            tableSlice,
+		annotations:           annotations,
+		discoGenIDs:           discoGenIDs,
+		annotatedTabulations:  make(taxonomy.AnnotatedTabulationMap),
+		colRefs:               colRefs,
+		dc:                    dc,
+		baseCtrlCounters:      txnCtrlCtrs,
+		secondaryCtrlCounters: secondaryTccs,
+	}
+	return rv
+}
+
+func (v *QueryRewriteAstVisitor) GetTableMap() taxonomy.TblMap {
 	return v.tables
 }
 
-func (v *TableRouteAstVisitor) GetAnnotations() taxonomy.AnnotationCtxMap {
-	return v.annotations
+func (v *QueryRewriteAstVisitor) GetColumnDescriptors() []openapistackql.ColumnDescriptor {
+	return v.columnDescriptors
 }
 
-func (v *TableRouteAstVisitor) GetAnnotationSlice() []taxonomy.AnnotationCtx {
-	return v.annotationSlice
+func (v *QueryRewriteAstVisitor) GetSelectContext() (*drm.PreparedStatementCtx, bool) {
+	if v.selectCtx != nil {
+		return v.selectCtx, true
+	}
+	return nil, false
 }
 
-func (v *TableRouteAstVisitor) Visit(node sqlparser.SQLNode) error {
+func (v *QueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 	var err error
 
 	switch node := node.(type) {
 	case *sqlparser.Select:
+		v.selectSuffix = GenerateModifiedSelectSuffix(node)
 		var options string
 		addIf := func(b bool, s string) {
 			if b {
@@ -147,12 +254,20 @@ func (v *TableRouteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			node.Comments.Accept(v)
 		}
 		if node.SelectExprs != nil {
-			node.SelectExprs.Accept(v)
+			err = node.SelectExprs.Accept(v)
+			if err != nil {
+				return err
+			}
 		}
 		if node.From != nil {
 			err := node.From.Accept(v)
 			if err != nil {
 				return err
+			}
+			fromVis := NewDRMAstVisitor("", true)
+			if node.From != nil {
+				node.From.Accept(fromVis)
+				v.fromStr = fromVis.GetRewrittenQuery()
 			}
 		}
 		if node.Where != nil {
@@ -442,12 +557,49 @@ func (v *TableRouteAstVisitor) Visit(node sqlparser.SQLNode) error {
 	case sqlparser.Comments:
 
 	case sqlparser.SelectExprs:
-
-	case *sqlparser.StarExpr:
-		if !node.TableName.IsEmpty() {
+		for _, n := range node {
+			err = v.Visit(n)
+			if err != nil {
+				return err
+			}
 		}
 
+	case *sqlparser.StarExpr:
+		var tbl *taxonomy.ExtendedTableMetadata
+		if node.TableName.IsEmpty() {
+			if len(v.tables) != 1 {
+				return fmt.Errorf("unaliased star expr not permitted for table count = %d", len(v.tables))
+			}
+			for _, v := range v.tables {
+				tbl = v
+				break
+			}
+		} else {
+			var ok bool
+			tbl, ok = v.tables[node.TableName]
+			if !ok {
+				return fmt.Errorf("could not locate table for expr '%v'", node.TableName)
+			}
+		}
+		cols, err := v.getStarColumns(tbl)
+		if err != nil {
+			return err
+		}
+		v.columnDescriptors = append(v.columnDescriptors, cols...)
+
 	case *sqlparser.AliasedExpr:
+		tbl, err := v.tables.GetTableLoose(node)
+		if err != nil {
+			return err
+		}
+		schema, err := tbl.GetResponseSchema()
+		if err != nil {
+			return err
+		}
+		col := parserutil.InferColNameFromExpr(node)
+		v.columnNames = append(v.columnNames, col)
+		cd := openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.DecoratedColumn, schema, col.Val)
+		v.columnDescriptors = append(v.columnDescriptors, cd)
 		if !node.As.IsEmpty() {
 		}
 
@@ -476,21 +628,20 @@ func (v *TableRouteAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 	case *sqlparser.AliasedTableExpr:
 		if node.Expr != nil {
-			t, params, err := v.analyzeAliasedTable(node)
-			if err != nil {
-				return err
-			}
-			if t == nil {
-				return fmt.Errorf("nil table returned")
-			}
-			v.tableMetaSlice = append(v.tableMetaSlice, t)
-			v.tables[node] = t
-			err = v.addAnnotationCtx(node, t, params)
-			if err != nil {
-				return err
-			}
+			switch node.Expr.(type) {
+			case sqlparser.TableName:
+				t, ok := v.annotations[node]
+				if !ok {
+					return fmt.Errorf("could not infer annotated table")
+				}
+				dID, ok := v.discoGenIDs[node]
+				if !ok {
+					return fmt.Errorf("could not infer discovery generation ID")
+				}
+				replacementExpr := v.dc.GetParserTableName(t.HIDs, dID)
+				node.Expr = replacementExpr
 
-			// node.Expr.Accept(v)
+			}
 		}
 		if node.Partitions != nil {
 			node.Partitions.Accept(v)
@@ -621,6 +772,7 @@ func (v *TableRouteAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 	case *sqlparser.UnaryExpr:
 		if _, unary := node.Expr.(*sqlparser.UnaryExpr); unary {
+			// They have same precedence so parenthesis is not required.
 			return nil
 		}
 

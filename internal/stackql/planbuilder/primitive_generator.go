@@ -41,7 +41,7 @@ type primitiveGenerator struct {
 }
 
 func newRootPrimitiveGenerator(ast sqlparser.SQLNode, handlerCtx *handler.HandlerContext, graph *primitivegraph.PrimitiveGraph) *primitiveGenerator {
-	tblMap := make(map[sqlparser.SQLNode]taxonomy.ExtendedTableMetadata)
+	tblMap := make(taxonomy.TblMap)
 	symTab := symtab.NewHashMapTreeSymTab()
 	return &primitiveGenerator{
 		PrimitiveBuilder: primitivebuilder.NewPrimitiveBuilder(nil, ast, handlerCtx.DrmConfig, handlerCtx.TxnCounterMgr, graph, tblMap, symTab, handlerCtx.SQLEngine),
@@ -404,7 +404,7 @@ func prepareErroneousResultSet(rowMap map[string]map[string]interface{}, columnO
 	)
 }
 
-func (pb *primitiveGenerator) describeInstructionExecutor(handlerCtx *handler.HandlerContext, tbl taxonomy.ExtendedTableMetadata, extended bool, full bool) dto.ExecutorOutput {
+func (pb *primitiveGenerator) describeInstructionExecutor(handlerCtx *handler.HandlerContext, tbl *taxonomy.ExtendedTableMetadata, extended bool, full bool) dto.ExecutorOutput {
 	schema, err := tbl.GetSelectableObjectSchema()
 	if err != nil {
 		return dto.NewErroneousExecutorOutput(err)
@@ -685,7 +685,7 @@ func (pb *primitiveGenerator) deleteExecutor(handlerCtx *handler.HandlerContext,
 	return pb.composeAsyncMonitor(handlerCtx, deletePrimitive, tbl)
 }
 
-func generateSuccessMessagesFromHeirarchy(meta taxonomy.ExtendedTableMetadata) []string {
+func generateSuccessMessagesFromHeirarchy(meta *taxonomy.ExtendedTableMetadata) []string {
 	successMsgs := []string{
 		"The operation completed successfully",
 	}
@@ -796,7 +796,7 @@ func (pb *primitiveGenerator) execExecutor(handlerCtx *handler.HandlerContext, n
 	return graph.CreatePrimitiveNode(pr), nil
 }
 
-func (pb *primitiveGenerator) composeAsyncMonitor(handlerCtx *handler.HandlerContext, precursor primitive.IPrimitive, meta taxonomy.ExtendedTableMetadata) (primitive.IPrimitive, error) {
+func (pb *primitiveGenerator) composeAsyncMonitor(handlerCtx *handler.HandlerContext, precursor primitive.IPrimitive, meta *taxonomy.ExtendedTableMetadata) (primitive.IPrimitive, error) {
 	prov, err := meta.GetProvider()
 	if err != nil {
 		return nil, err

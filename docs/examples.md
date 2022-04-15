@@ -80,6 +80,46 @@ stackql \
 
 ```
 
+### Joins
+
+Only inner joins suported for now.
+
+
+Self join:
+```sql
+select d1.name as n, d1.id, d2.id as d2_id from google.compute.disks d1 inner join google.compute.disks d2 on d1.id = d2.id where d1.project = 'testing-project' and d1.zone = 'australia-southeast1-b' and d2.project = 'testing-project' and d2.zone = 'australia-southeast1-b';
+```
+
+Three way join:
+```sql
+select 
+  d1.name as n, 
+  d1.id, 
+  n1.description, 
+  s1.description as s1_description 
+from 
+  google.compute.disks d1 
+  inner join google.compute.networks n1 
+  on 
+    d1.name = n1.name 
+  inner join 
+  google.compute.subnetworks s1 
+  on 
+    d1.name = s1.name  
+where 
+  d1.project = 'testing-project' and 
+  d1.zone = 'australia-southeast1-b' and 
+  n1.project = 'testing-project' 
+  and s1.project = 'testing-project' 
+  and s1.region = 'australia-southeast1'
+;
+```
+
+Cross-provider join:
+```sql
+select d1.name, d1.id, d2.name as d2_name, d2.status, d2.label, d2.id as d2_id from google.compute.disks d1 inner join okta.application.apps d2 on d1.name = d2.label where d1.project = 'testing-project' and d1.zone = 'australia-southeast1-b' and d2.subdomain = 'my-subdomain' order by d1.name;
+```
+
 ### SHOW SERVICES
 
 ```

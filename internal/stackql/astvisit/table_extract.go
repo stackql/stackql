@@ -6,18 +6,26 @@ import (
 	"vitess.io/vitess/go/vt/sqlparser"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/stackql/stackql/internal/stackql/parserutil"
 )
 
 type TableExtractAstVisitor struct {
-	tables sqlparser.TableExprs
+	tables      sqlparser.TableExprs
+	tableAiases parserutil.TableAliasMap
 }
 
 func NewTableExtractAstVisitor() *TableExtractAstVisitor {
-	return &TableExtractAstVisitor{}
+	return &TableExtractAstVisitor{
+		tableAiases: make(parserutil.TableAliasMap),
+	}
 }
 
 func (v *TableExtractAstVisitor) GetTables() sqlparser.TableExprs {
 	return v.tables
+}
+
+func (v *TableExtractAstVisitor) GetAliasMap() parserutil.TableAliasMap {
+	return v.tableAiases
 }
 
 func (v *TableExtractAstVisitor) MergeTableExprs() sqlparser.TableExprs {
@@ -370,32 +378,41 @@ func (v *TableExtractAstVisitor) Visit(node sqlparser.SQLNode) error {
 		for _, n := range node {
 			switch n := n.(type) {
 			case *sqlparser.AliasedTableExpr:
-				v.tables = append(v.tables, n)
+				err = v.Visit(n)
+				if err != nil {
+					return err
+				}
 			case *sqlparser.ParenTableExpr:
 				v.tables = append(v.tables, n)
 			case *sqlparser.JoinTableExpr:
-				v.Visit(n)
+				err = v.Visit(n)
+				if err != nil {
+					return err
+				}
 			case *sqlparser.ExecSubquery:
-				v.Visit(n)
+				err = v.Visit(n)
+				if err != nil {
+					return err
+				}
 			case *sqlparser.Union:
-				v.Visit(n)
+				err = v.Visit(n)
+				if err != nil {
+					return err
+				}
 			default:
-				n.Accept(v)
+				err = n.Accept(v)
+				err = v.Visit(n)
+				if err != nil {
+					return err
+				}
 			}
 		}
 
 	case *sqlparser.AliasedTableExpr:
-		if node.Expr != nil {
-			node.Expr.Accept(v)
-		}
-		if node.Partitions != nil {
-			node.Partitions.Accept(v)
-		}
-		if !node.As.IsEmpty() {
-			node.As.Accept(v)
-		}
-		if node.Hints != nil {
-			node.Hints.Accept(v)
+		v.tables = append(v.tables, node)
+		aliasStr := node.As.GetRawVal()
+		if aliasStr != "" {
+			v.tableAiases[aliasStr] = node
 		}
 
 	case sqlparser.TableNames:
@@ -423,8 +440,14 @@ func (v *TableExtractAstVisitor) Visit(node sqlparser.SQLNode) error {
 		}
 
 	case *sqlparser.JoinTableExpr:
-		node.LeftExpr.Accept(v)
-		node.LeftExpr.Accept(v)
+		err = node.LeftExpr.Accept(v)
+		if err != nil {
+			return err
+		}
+		err = node.RightExpr.Accept(v)
+		if err != nil {
+			return err
+		}
 
 	case *sqlparser.IndexHints:
 		if len(node.Indexes) == 0 {

@@ -108,6 +108,25 @@ func ExtractSQLNodeParams(statement sqlparser.SQLNode, insertValOnlyRows map[int
 	return map[int]map[string]interface{}{0: paramMap}, err
 }
 
+func TransformSQLRawParameters(input map[string]interface{}) (map[string]interface{}, error) {
+	rv := make(map[string]interface{})
+	var err error
+	for k, v := range input {
+		switch r := v.(type) {
+		case *sqlparser.SQLVal:
+			val := string(r.Val)
+			rv[k] = val
+		case *sqlparser.ColName:
+			kr := r.Name.GetRawVal()
+			rv[k] = kr
+		default:
+			err = fmt.Errorf("unsupported type on RHS of comparison '%T'", r)
+			return nil, err
+		}
+	}
+	return rv, nil
+}
+
 func InterfaceToBytes(subject interface{}, isErrorCol bool) []byte {
 	switch sub := subject.(type) {
 	case bool, sqlparser.BoolVal:
