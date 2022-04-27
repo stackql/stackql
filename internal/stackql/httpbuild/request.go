@@ -151,3 +151,79 @@ func getRequest(svc *openapistackql.Service, method *openapistackql.OperationSto
 	}
 	return validationParams.Request, nil
 }
+
+func BuildHTTPRequestCtxFromAnnotation(handlerCtx *handler.HandlerContext, parameters map[string]interface{}, prov provider.IProvider, m *openapistackql.OperationStore, svc *openapistackql.Service, insertValOnlyRows map[int]map[int]interface{}, execContext *ExecContext) (*HTTPArmoury, error) {
+	var err error
+	httpArmoury := NewHTTPArmoury()
+	var requestSchema, responseSchema *openapistackql.Schema
+	if m.Request != nil && m.Request.Schema != nil {
+		requestSchema = m.Request.Schema
+	}
+	if m.Response != nil && m.Response.Schema != nil {
+		responseSchema = m.Response.Schema
+	}
+	httpArmoury.RequestSchema = requestSchema
+	httpArmoury.ResponseSchema = responseSchema
+	paramMap := map[int]map[string]interface{}{0: parameters}
+	paramList, err := requests.SplitHttpParameters(prov, paramMap, m)
+	if err != nil {
+		return nil, err
+	}
+	for _, prms := range paramList {
+		params := prms
+		pm := NewHTTPArmouryParameters()
+		if err != nil {
+			return nil, err
+		}
+		if execContext != nil && execContext.ExecPayload != nil {
+			pm.BodyBytes = execContext.ExecPayload.Payload
+			for j, v := range execContext.ExecPayload.Header {
+				pm.Header[j] = v
+			}
+			params.RequestBody = execContext.ExecPayload.PayloadMap
+		} else if params.RequestBody != nil && len(params.RequestBody) != 0 {
+			b, err := json.Marshal(params.RequestBody)
+			if err != nil {
+				return nil, err
+			}
+			pm.BodyBytes = b
+			pm.Header["Content-Type"] = []string{m.Request.BodyMediaType}
+		}
+		if m.Response != nil {
+			if m.Response.BodyMediaType != "" {
+				pm.Header["Accept"] = []string{m.Response.BodyMediaType}
+			}
+		}
+		pm.Parameters = params
+		httpArmoury.RequestParams = append(httpArmoury.RequestParams, pm)
+	}
+	for i, param := range httpArmoury.RequestParams {
+		p := param
+		if len(p.Parameters.RequestBody) == 0 {
+			p.Parameters.RequestBody = nil
+		}
+		var baseRequestCtx *http.Request
+		baseRequestCtx, err = getRequest(svc, m, p.Parameters)
+		for k, v := range p.Header {
+			for _, vi := range v {
+				baseRequestCtx.Header.Set(k, vi)
+			}
+		}
+
+		p.Request = baseRequestCtx
+		if err != nil {
+			return nil, err
+		}
+		log.Infoln(fmt.Sprintf("pre transform: httpArmoury.RequestParams[%d] = %s", i, string(p.BodyBytes)))
+		if handlerCtx.RuntimeContext.HTTPLogEnabled {
+			// url, _ := p.Context.GetUrl()
+			// handlerCtx.OutErrFile.Write([]byte(fmt.Sprintln(fmt.Sprintf("http request url: %s", url))))
+		}
+		log.Infoln(fmt.Sprintf("post transform: httpArmoury.RequestParams[%d] = %s", i, string(p.BodyBytes)))
+		httpArmoury.RequestParams[i] = p
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &httpArmoury, nil
+}

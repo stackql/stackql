@@ -8,7 +8,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/stackql/stackql/internal/pkg/txncounter"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
@@ -77,26 +76,85 @@ func NewColDescriptor(col openapistackql.ColumnDescriptor, relTypeStr string) Co
 }
 
 type PreparedStatementCtx struct {
-	Query                   string
-	Kind                    string // string annotation applicale only in some cases eg UNION [ALL]
-	GenIdControlColName     string
-	SessionIdControlColName string
+	query                   string
+	kind                    string // string annotation applicale only in some cases eg UNION [ALL]
+	genIdControlColName     string
+	sessionIdControlColName string
 	TableNames              []string
-	TxnIdControlColName     string
-	InsIdControlColName     string
-	NonControlColumns       []ColumnMetadata
-	TxnCtrlCtrs             *dto.TxnControlCounters
+	txnIdControlColName     string
+	insIdControlColName     string
+	nonControlColumns       []ColumnMetadata
+	ctrlColumnRepeats       int
+	txnCtrlCtrs             *dto.TxnControlCounters
+	selectTxnCtrlCtrs       []*dto.TxnControlCounters
+}
+
+func (ps *PreparedStatementCtx) SetKind(kind string) {
+	ps.kind = kind
+}
+
+func (ps *PreparedStatementCtx) GetQuery() string {
+	return ps.query
+}
+
+func (ps *PreparedStatementCtx) GetGCCtrlCtrs() *dto.TxnControlCounters {
+	return ps.txnCtrlCtrs
+}
+
+func (ps *PreparedStatementCtx) GetNonControlColumns() []ColumnMetadata {
+	return ps.nonControlColumns
+}
+
+func (ps *PreparedStatementCtx) GetAllCtrlCtrs() []*dto.TxnControlCounters {
+	var rv []*dto.TxnControlCounters
+	rv = append(rv, ps.txnCtrlCtrs)
+	rv = append(rv, ps.selectTxnCtrlCtrs...)
+	return rv
+}
+
+func NewPreparedStatementCtx(
+	query string,
+	kind string,
+	genIdControlColName string,
+	sessionIdControlColName string,
+	tableNames []string,
+	txnIdControlColName string,
+	insIdControlColName string,
+	nonControlColumns []ColumnMetadata,
+	ctrlColumnRepeats int,
+	txnCtrlCtrs *dto.TxnControlCounters,
+	secondaryCtrs []*dto.TxnControlCounters,
+) *PreparedStatementCtx {
+	return &PreparedStatementCtx{
+		query:                   query,
+		kind:                    kind,
+		genIdControlColName:     genIdControlColName,
+		sessionIdControlColName: sessionIdControlColName,
+		TableNames:              tableNames,
+		txnIdControlColName:     txnIdControlColName,
+		insIdControlColName:     insIdControlColName,
+		nonControlColumns:       nonControlColumns,
+		ctrlColumnRepeats:       ctrlColumnRepeats,
+		txnCtrlCtrs:             txnCtrlCtrs,
+		selectTxnCtrlCtrs:       secondaryCtrs,
+	}
 }
 
 func NewQueryOnlyPreparedStatementCtx(query string) *PreparedStatementCtx {
-	return &PreparedStatementCtx{Query: query}
+	return &PreparedStatementCtx{query: query, ctrlColumnRepeats: 0}
 }
 
 func (ps PreparedStatementCtx) GetGCHousekeepingQueries() string {
-	templateQuery := `INSERT INTO "__iql__.control.gc.txn_table_x_ref" (iql_generation_id, iql_session_id, iql_transaction_id, table_name) values(%d, %d, %d, '%s')`
+	templateQuery := `INSERT OR IGNORE INTO 
+	  "__iql__.control.gc.txn_table_x_ref" (
+			iql_generation_id, 
+			iql_session_id, 
+			iql_transaction_id, 
+			table_name
+		) values(%d, %d, %d, '%s')`
 	var housekeepingQueries []string
 	for _, table := range ps.TableNames {
-		housekeepingQueries = append(housekeepingQueries, fmt.Sprintf(templateQuery, ps.TxnCtrlCtrs.GenId, ps.TxnCtrlCtrs.SessionId, ps.TxnCtrlCtrs.TxnId, table))
+		housekeepingQueries = append(housekeepingQueries, fmt.Sprintf(templateQuery, ps.txnCtrlCtrs.GenId, ps.txnCtrlCtrs.SessionId, ps.txnCtrlCtrs.TxnId, table))
 	}
 	return strings.Join(housekeepingQueries, "; ")
 }
@@ -140,8 +198,14 @@ type DRMConfig interface {
 	GetRelationalType(string) string
 	GenerateDDL(util.AnnotatedTabulation, int, bool) []string
 	GetGolangValue(string) interface{}
-	GenerateInsertDML(util.AnnotatedTabulation, *txncounter.TxnCounterManager, int) (PreparedStatementCtx, error)
-	GenerateSelectDML(util.AnnotatedTabulation, *dto.TxnControlCounters, string, string) (PreparedStatementCtx, error)
+	GetInsControlColumn() string
+	GetParserTableName(*dto.HeirarchyIdentifiers, int) sqlparser.TableName
+	GetSessionControlColumn() string
+	GetTableName(*dto.HeirarchyIdentifiers, int) string
+	GetTxnControlColumn() string
+	GetGenerationControlColumn() string
+	GenerateInsertDML(util.AnnotatedTabulation, *dto.TxnControlCounters) (*PreparedStatementCtx, error)
+	GenerateSelectDML(util.AnnotatedTabulation, *dto.TxnControlCounters, string, string) (*PreparedStatementCtx, error)
 	ExecuteInsertDML(sqlengine.SQLEngine, *PreparedStatementCtx, map[string]interface{}) (sql.Result, error)
 	QueryDML(sqlengine.SQLEngine, PreparedStatementParameterized) (*sql.Rows, error)
 }
@@ -213,18 +277,32 @@ func (dc *StaticDRMConfig) GetGolangKind(discoType string) reflect.Kind {
 	return rv.GolangKind
 }
 
-// switch v := reflect.ValueOf(v); v.Kind()
+func (dc *StaticDRMConfig) GetGenerationControlColumn() string {
+	return dc.getGenerationControlColumn()
+}
 
 func (dc *StaticDRMConfig) getGenerationControlColumn() string {
 	return gen_id_col_name
+}
+
+func (dc *StaticDRMConfig) GetSessionControlColumn() string {
+	return dc.getSessionControlColumn()
 }
 
 func (dc *StaticDRMConfig) getSessionControlColumn() string {
 	return ssn_id_col_name
 }
 
+func (dc *StaticDRMConfig) GetTxnControlColumn() string {
+	return dc.getTxnControlColumn()
+}
+
 func (dc *StaticDRMConfig) getTxnControlColumn() string {
 	return txn_id_col_name
+}
+
+func (dc *StaticDRMConfig) GetInsControlColumn() string {
+	return dc.getInsControlColumn()
 }
 
 func (dc *StaticDRMConfig) getInsControlColumn() string {
@@ -235,8 +313,25 @@ func (dc *StaticDRMConfig) GetCurrentTable(tableHeirarchyIDs *dto.HeirarchyIdent
 	return dbEngine.GetCurrentTable(tableHeirarchyIDs)
 }
 
+func (dc *StaticDRMConfig) GetTableName(hIds *dto.HeirarchyIdentifiers, discoveryGenerationID int) string {
+	return dc.getTableName(hIds, discoveryGenerationID)
+}
+
 func (dc *StaticDRMConfig) getTableName(hIds *dto.HeirarchyIdentifiers, discoveryGenerationID int) string {
 	return fmt.Sprintf("%s.generation_%d", hIds.GetTableName(), discoveryGenerationID)
+}
+
+func (dc *StaticDRMConfig) GetParserTableName(hIds *dto.HeirarchyIdentifiers, discoveryGenerationID int) sqlparser.TableName {
+	return dc.getParserTableName(hIds, discoveryGenerationID)
+}
+
+func (dc *StaticDRMConfig) getParserTableName(hIds *dto.HeirarchyIdentifiers, discoveryGenerationID int) sqlparser.TableName {
+	return sqlparser.TableName{
+		Name:            sqlparser.NewTableIdent(fmt.Sprintf("generation_%d", discoveryGenerationID)),
+		Qualifier:       sqlparser.NewTableIdent(hIds.ResourceStr),
+		QualifierSecond: sqlparser.NewTableIdent(hIds.ServiceStr),
+		QualifierThird:  sqlparser.NewTableIdent(hIds.ProviderStr),
+	}
 }
 
 func (dc *StaticDRMConfig) inferTableName(hIds *dto.HeirarchyIdentifiers, discoveryGenerationID int) string {
@@ -280,12 +375,12 @@ func (dc *StaticDRMConfig) GenerateDDL(tabAnn util.AnnotatedTabulation, discover
 	return retVal
 }
 
-func (dc *StaticDRMConfig) GenerateInsertDML(tabAnnotated util.AnnotatedTabulation, txnCtrMgr *txncounter.TxnCounterManager, discoveryGenerationID int) (PreparedStatementCtx, error) {
+func (dc *StaticDRMConfig) GenerateInsertDML(tabAnnotated util.AnnotatedTabulation, tcc *dto.TxnControlCounters) (*PreparedStatementCtx, error) {
 	// log.Infoln(fmt.Sprintf("%v", tabulation))
 	var q strings.Builder
 	var quotedColNames, vals []string
 	var columns []ColumnMetadata
-	tableName := dc.inferTableName(tabAnnotated.GetHeirarchyIdentifiers(), discoveryGenerationID)
+	tableName := dc.inferTableName(tabAnnotated.GetHeirarchyIdentifiers(), tcc.DiscoveryGenerationId)
 	q.WriteString(fmt.Sprintf(`INSERT INTO "%s" `, tableName))
 	genIdColName := dc.getGenerationControlColumn()
 	sessionIdColName := dc.getSessionControlColumn()
@@ -306,26 +401,23 @@ func (dc *StaticDRMConfig) GenerateInsertDML(tabAnnotated util.AnnotatedTabulati
 	}
 	q.WriteString(fmt.Sprintf(" (%s) ", strings.Join(quotedColNames, ", ")))
 	q.WriteString(fmt.Sprintf(" VALUES (%s) ", strings.Join(vals, ", ")))
-	return PreparedStatementCtx{
-			Query:                   q.String(),
-			GenIdControlColName:     genIdColName,
-			SessionIdControlColName: sessionIdColName,
-			TableNames:              []string{tableName},
-			TxnIdControlColName:     txnIdColName,
-			InsIdControlColName:     insIdColName,
-			NonControlColumns:       columns,
-			TxnCtrlCtrs: &dto.TxnControlCounters{
-				GenId:                 txnCtrMgr.GetCurrentGenerationId(),
-				SessionId:             txnCtrMgr.GetCurrentSessionId(),
-				TxnId:                 txnCtrMgr.GetNextTxnId(),
-				InsertId:              txnCtrMgr.GetNextInsertId(),
-				DiscoveryGenerationId: discoveryGenerationID,
-			},
-		},
+	return NewPreparedStatementCtx(
+			q.String(),
+			"",
+			genIdColName,
+			sessionIdColName,
+			[]string{tableName},
+			txnIdColName,
+			insIdColName,
+			columns,
+			1,
+			tcc,
+			nil,
+		),
 		nil
 }
 
-func (dc *StaticDRMConfig) GenerateSelectDML(tabAnnotated util.AnnotatedTabulation, txnCtrlCtrs *dto.TxnControlCounters, selectSuffix, rewrittenWhere string) (PreparedStatementCtx, error) {
+func (dc *StaticDRMConfig) GenerateSelectDML(tabAnnotated util.AnnotatedTabulation, txnCtrlCtrs *dto.TxnControlCounters, selectSuffix, rewrittenWhere string) (*PreparedStatementCtx, error) {
 	var q strings.Builder
 	var quotedColNames, quotedWhereColNames []string
 	var columns []ColumnMetadata
@@ -365,38 +457,45 @@ func (dc *StaticDRMConfig) GenerateSelectDML(tabAnnotated util.AnnotatedTabulati
 	if tabAnnotated.GetAlias() != "" {
 		aliasStr = fmt.Sprintf(` AS "%s" `, tabAnnotated.GetAlias())
 	}
-	q.WriteString(fmt.Sprintf(`SELECT %s FROM "%s"%s WHERE `, strings.Join(quotedColNames, ", "), dc.getTableName(tabAnnotated.GetHeirarchyIdentifiers(), txnCtrlCtrs.DiscoveryGenerationId), aliasStr))
+	q.WriteString(fmt.Sprintf(`SELECT %s FROM "%s" %s WHERE `, strings.Join(quotedColNames, ", "), dc.getTableName(tabAnnotated.GetHeirarchyIdentifiers(), txnCtrlCtrs.DiscoveryGenerationId), aliasStr))
 	q.WriteString(fmt.Sprintf(`( "%s" = ? AND "%s" = ? AND "%s" = ? AND "%s" = ? ) `, genIdColName, sessionIDColName, txnIdColName, insIdColName))
 	if strings.TrimSpace(rewrittenWhere) != "" {
 		q.WriteString(fmt.Sprintf(" AND ( %s ) ", rewrittenWhere))
 	}
 	q.WriteString(selectSuffix)
 
-	return PreparedStatementCtx{
-		Query:                   q.String(),
-		GenIdControlColName:     genIdColName,
-		SessionIdControlColName: sessionIDColName,
-		TxnIdControlColName:     txnIdColName,
-		InsIdControlColName:     insIdColName,
-		NonControlColumns:       columns,
-		TxnCtrlCtrs:             txnCtrlCtrs,
-	}, nil
+	return NewPreparedStatementCtx(
+		q.String(),
+		"",
+		genIdColName,
+		sessionIDColName,
+		nil,
+		txnIdColName,
+		insIdColName,
+		columns,
+		1,
+		txnCtrlCtrs,
+		nil,
+	), nil
 }
 
 func (dc *StaticDRMConfig) generateControlVarArgs(cp PreparedStatementParameterized) ([]interface{}, error) {
 	// log.Infoln(fmt.Sprintf("%v", ctx))
 	var varArgs []interface{}
 	if cp.controlArgsRequired {
-		varArgs = append(varArgs, cp.Ctx.TxnCtrlCtrs.GenId)
-		varArgs = append(varArgs, cp.Ctx.TxnCtrlCtrs.SessionId)
-		varArgs = append(varArgs, cp.Ctx.TxnCtrlCtrs.TxnId)
-		varArgs = append(varArgs, cp.Ctx.TxnCtrlCtrs.InsertId)
+		ctrSlice := cp.Ctx.GetAllCtrlCtrs()
+		for _, ctrs := range ctrSlice {
+			varArgs = append(varArgs, ctrs.GenId)
+			varArgs = append(varArgs, ctrs.SessionId)
+			varArgs = append(varArgs, ctrs.TxnId)
+			varArgs = append(varArgs, ctrs.InsertId)
+		}
 	}
 	return varArgs, nil
 }
 
 func (dc *StaticDRMConfig) generateVarArgs(cp PreparedStatementParameterized) (PreparedStatementArgs, error) {
-	retVal := NewPreparedStatementArgs(cp.Ctx.Query)
+	retVal := NewPreparedStatementArgs(cp.Ctx.GetQuery())
 	for i, child := range cp.children {
 		chidRv, err := dc.generateVarArgs(child)
 		if err != nil {
@@ -406,7 +505,7 @@ func (dc *StaticDRMConfig) generateVarArgs(cp PreparedStatementParameterized) (P
 	}
 	varArgs, _ := dc.generateControlVarArgs(cp)
 	if cp.args != nil && len(cp.args) > 0 {
-		for _, col := range cp.Ctx.NonControlColumns {
+		for _, col := range cp.Ctx.GetNonControlColumns() {
 			va, ok := cp.args[col.GetName()]
 			if !ok {
 				varArgs = append(varArgs, nil)
@@ -441,7 +540,7 @@ func (dc *StaticDRMConfig) ExecuteInsertDML(dbEngine sqlengine.SQLEngine, ctx *P
 
 func (dc *StaticDRMConfig) QueryDML(dbEngine sqlengine.SQLEngine, ctxParameterized PreparedStatementParameterized) (*sql.Rows, error) {
 	if ctxParameterized.Ctx == nil {
-		return nil, fmt.Errorf("cannot execute on nil PreparedStatementContext")
+		return nil, fmt.Errorf("cannot execute based upon nil PreparedStatementContext")
 	}
 	rootArgs, err := dc.generateVarArgs(ctxParameterized)
 	if err != nil {

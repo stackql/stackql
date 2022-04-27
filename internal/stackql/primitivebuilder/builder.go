@@ -41,7 +41,7 @@ type Builder interface {
 type SingleSelectAcquire struct {
 	graph                      *primitivegraph.PrimitiveGraph
 	handlerCtx                 *handler.HandlerContext
-	tableMeta                  taxonomy.ExtendedTableMetadata
+	tableMeta                  *taxonomy.ExtendedTableMetadata
 	drmCfg                     drm.DRMConfig
 	insertPreparedStatementCtx *drm.PreparedStatementCtx
 	txnCtrlCtr                 *dto.TxnControlCounters
@@ -173,10 +173,10 @@ type Join struct {
 	rowSort      func(map[string]map[string]interface{}) []string
 }
 
-func NewSingleSelectAcquire(graph *primitivegraph.PrimitiveGraph, handlerCtx *handler.HandlerContext, tableMeta taxonomy.ExtendedTableMetadata, insertCtx *drm.PreparedStatementCtx, rowSort func(map[string]map[string]interface{}) []string) Builder {
+func NewSingleSelectAcquire(graph *primitivegraph.PrimitiveGraph, handlerCtx *handler.HandlerContext, tableMeta *taxonomy.ExtendedTableMetadata, insertCtx *drm.PreparedStatementCtx, rowSort func(map[string]map[string]interface{}) []string) Builder {
 	var tcc *dto.TxnControlCounters
 	if insertCtx != nil {
-		tcc = insertCtx.TxnCtrlCtrs
+		tcc = insertCtx.GetGCCtrlCtrs()
 	}
 	return &SingleSelectAcquire{
 		graph:                      graph,
@@ -196,7 +196,7 @@ func NewSingleSelect(graph *primitivegraph.PrimitiveGraph, handlerCtx *handler.H
 		rowSort:                    rowSort,
 		drmCfg:                     handlerCtx.DrmConfig,
 		selectPreparedStatementCtx: selectCtx,
-		txnCtrlCtr:                 selectCtx.TxnCtrlCtrs,
+		txnCtrlCtr:                 selectCtx.GetGCCtrlCtrs(),
 	}
 }
 
@@ -219,7 +219,7 @@ func (un *Union) Build() error {
 			i++
 			us.AddChild(i, drm.NewPreparedStatementParameterized(rhsElement, nil, true))
 		}
-		return prepareGolangResult(un.handlerCtx.SQLEngine, us, un.lhs.NonControlColumns, un.drmCfg)
+		return prepareGolangResult(un.handlerCtx.SQLEngine, us, un.lhs.GetNonControlColumns(), un.drmCfg)
 	}
 	graph := un.graph
 	unionNode := graph.CreatePrimitiveNode(NewLocalPrimitive(unionEx))
@@ -238,7 +238,7 @@ func NewUnion(graph *primitivegraph.PrimitiveGraph, handlerCtx *handler.HandlerC
 	}
 }
 
-func NewSingleAcquireAndSelect(graph *primitivegraph.PrimitiveGraph, txnControlCounters *dto.TxnControlCounters, handlerCtx *handler.HandlerContext, tableMeta taxonomy.ExtendedTableMetadata, insertCtx *drm.PreparedStatementCtx, selectCtx *drm.PreparedStatementCtx, rowSort func(map[string]map[string]interface{}) []string) Builder {
+func NewSingleAcquireAndSelect(graph *primitivegraph.PrimitiveGraph, txnControlCounters *dto.TxnControlCounters, handlerCtx *handler.HandlerContext, tableMeta *taxonomy.ExtendedTableMetadata, insertCtx *drm.PreparedStatementCtx, selectCtx *drm.PreparedStatementCtx, rowSort func(map[string]map[string]interface{}) []string) Builder {
 	return &SingleAcquireAndSelect{
 		graph:          graph,
 		acquireBuilder: NewSingleSelectAcquire(graph, handlerCtx, tableMeta, insertCtx, rowSort),
@@ -246,11 +246,11 @@ func NewSingleAcquireAndSelect(graph *primitivegraph.PrimitiveGraph, txnControlC
 	}
 }
 
-func NewMultipleAcquireAndSelect(graph *primitivegraph.PrimitiveGraph, txnControlCounters *dto.TxnControlCounters, handlerCtx *handler.HandlerContext, tableMeta taxonomy.ExtendedTableMetadata, insertCtx *drm.PreparedStatementCtx, selectCtx *drm.PreparedStatementCtx, rowSort func(map[string]map[string]interface{}) []string) Builder {
+func NewMultipleAcquireAndSelect(graph *primitivegraph.PrimitiveGraph, acquireBuilders []Builder, selectBuilder Builder) Builder {
 	return &MultipleAcquireAndSelect{
 		graph:           graph,
-		acquireBuilders: []Builder{NewSingleSelectAcquire(graph, handlerCtx, tableMeta, insertCtx, rowSort)},
-		selectBuilder:   NewSingleSelect(graph, handlerCtx, selectCtx, rowSort),
+		acquireBuilders: acquireBuilders,
+		selectBuilder:   selectBuilder,
 	}
 }
 
@@ -268,9 +268,9 @@ func (ss *SingleSelect) Build() error {
 	selectEx := func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput {
 
 		// select phase
-		log.Infoln(fmt.Sprintf("running select with control parameters: %v", ss.selectPreparedStatementCtx.TxnCtrlCtrs))
+		log.Infoln(fmt.Sprintf("running select with control parameters: %v", ss.selectPreparedStatementCtx.GetGCCtrlCtrs()))
 
-		return prepareGolangResult(ss.handlerCtx.SQLEngine, drm.NewPreparedStatementParameterized(ss.selectPreparedStatementCtx, nil, true), ss.selectPreparedStatementCtx.NonControlColumns, ss.drmCfg)
+		return prepareGolangResult(ss.handlerCtx.SQLEngine, drm.NewPreparedStatementParameterized(ss.selectPreparedStatementCtx, nil, true), ss.selectPreparedStatementCtx.GetNonControlColumns(), ss.drmCfg)
 	}
 	graph := ss.graph
 	selectNode := graph.CreatePrimitiveNode(NewLocalPrimitive(selectEx))
@@ -285,6 +285,9 @@ func prepareGolangResult(sqlEngine sqlengine.SQLEngine, stmtCtx drm.PreparedStat
 		stmtCtx,
 	)
 	log.Infoln(fmt.Sprintf("select result = %v, error = %v", r, sqlErr))
+	if sqlErr != nil {
+		log.Errorf("select result = %v, error = %s", r, sqlErr.Error())
+	}
 	altKeys := make(map[string]map[string]interface{})
 	rawRows := make(map[int]map[int]interface{})
 	var ks []int
@@ -376,7 +379,7 @@ func (ss *SingleSelectAcquire) Build() error {
 		return err
 	}
 	ex := func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput {
-		ss.graph.AddTxnControlCounters(*ss.insertPreparedStatementCtx.TxnCtrlCtrs)
+		ss.graph.AddTxnControlCounters(*ss.insertPreparedStatementCtx.GetGCCtrlCtrs())
 		mr := prov.InferMaxResultsElement(m)
 		if mr != nil {
 			// TODO: infer param position and act accordingly
@@ -446,7 +449,7 @@ func (ss *SingleSelectAcquire) Build() error {
 							}
 							if ok {
 
-								log.Infoln(fmt.Sprintf("running insert with control parameters: %v", ss.insertPreparedStatementCtx.TxnCtrlCtrs))
+								log.Infoln(fmt.Sprintf("running insert with control parameters: %v", ss.insertPreparedStatementCtx.GetGCCtrlCtrs()))
 								r, err := ss.drmCfg.ExecuteInsertDML(ss.handlerCtx.SQLEngine, ss.insertPreparedStatementCtx, item)
 								log.Infoln(fmt.Sprintf("insert result = %v, error = %v", r, err))
 								if err != nil {

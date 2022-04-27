@@ -11,14 +11,18 @@ import (
 )
 
 type TableAliasAstVisitor struct {
-	aliases parserutil.TableExprMap
-	tables  sqlparser.TableExprs
+	aliasedColumns parserutil.TableExprMap
+	aliasMap       parserutil.TableAliasMap
+	colRefs        parserutil.ColTableMap
+	tables         sqlparser.TableExprs
 }
 
 func NewTableAliasAstVisitor(tables sqlparser.TableExprs) *TableAliasAstVisitor {
 	return &TableAliasAstVisitor{
-		aliases: make(parserutil.TableExprMap),
-		tables:  tables,
+		aliasedColumns: make(parserutil.TableExprMap),
+		aliasMap:       make(parserutil.TableAliasMap),
+		colRefs:        make(parserutil.ColTableMap),
+		tables:         tables,
 	}
 }
 
@@ -44,15 +48,23 @@ func tableExprMatchesQualifier(expr sqlparser.TableExpr, qualifier sqlparser.Tab
 func (v *TableAliasAstVisitor) findTableFromQualifier(qualifier sqlparser.TableName) (sqlparser.TableExpr, error) {
 	for _, tb := range v.tables {
 		if tableExprMatchesQualifier(tb, qualifier) {
-			v.aliases[qualifier] = tb
+			v.aliasedColumns[qualifier] = tb
 			return tb, nil
 		}
 	}
 	return nil, fmt.Errorf("could not locate table corresponding to expression '%s'", qualifier.GetRawVal())
 }
 
-func (v *TableAliasAstVisitor) GetAliases() parserutil.TableExprMap {
-	return v.aliases
+func (v *TableAliasAstVisitor) GetAliasedColumns() parserutil.TableExprMap {
+	return v.aliasedColumns
+}
+
+func (v *TableAliasAstVisitor) GetAliasMap() parserutil.TableAliasMap {
+	return v.aliasMap
+}
+
+func (v *TableAliasAstVisitor) GetColRefs() parserutil.ColTableMap {
+	return v.colRefs
 }
 
 func (v *TableAliasAstVisitor) Visit(node sqlparser.SQLNode) error {
@@ -373,12 +385,22 @@ func (v *TableAliasAstVisitor) Visit(node sqlparser.SQLNode) error {
 	case sqlparser.Comments:
 
 	case sqlparser.SelectExprs:
+		for _, n := range node {
+			err = v.Visit(n)
+			if err != nil {
+				return err
+			}
+		}
 
 	case *sqlparser.StarExpr:
 		if !node.TableName.IsEmpty() {
 		}
 
 	case *sqlparser.AliasedExpr:
+		err = v.Visit(node.Expr)
+		if err != nil {
+			return err
+		}
 		if !node.As.IsEmpty() {
 		}
 
@@ -403,6 +425,10 @@ func (v *TableAliasAstVisitor) Visit(node sqlparser.SQLNode) error {
 		}
 
 	case *sqlparser.AliasedTableExpr:
+		aliasStr := node.As.GetRawVal()
+		if aliasStr != "" {
+			v.aliasMap[aliasStr] = node
+		}
 		if node.Expr != nil {
 			node.Expr.Accept(v)
 		}
@@ -536,7 +562,7 @@ func (v *TableAliasAstVisitor) Visit(node sqlparser.SQLNode) error {
 			if err != nil {
 				return err
 			}
-			node.Metadata = t
+			v.colRefs[node] = t
 		}
 
 	case sqlparser.ValTuple:

@@ -8,6 +8,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/httpbuild"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/provider"
+	"github.com/stackql/stackql/internal/stackql/util"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
 
@@ -19,6 +20,13 @@ import (
 const (
 	defaultSelectItemsKEy = "items"
 )
+
+type AnnotationCtx struct {
+	Schema     *openapistackql.Schema
+	HIDs       *dto.HeirarchyIdentifiers
+	TableMeta  *ExtendedTableMetadata
+	Parameters map[string]interface{}
+}
 
 func (ex ExtendedTableMetadata) LookupSelectItemsKey() string {
 	if ex.HeirarchyObjects == nil {
@@ -78,17 +86,49 @@ func (ho *HeirarchyObjects) LookupSelectItemsKey() string {
 	return "items"
 }
 
-type TblMap map[sqlparser.SQLNode]ExtendedTableMetadata
+type TblMap map[sqlparser.SQLNode]*ExtendedTableMetadata
 
-func (tm TblMap) GetTable(node sqlparser.SQLNode) (ExtendedTableMetadata, error) {
+type AnnotationCtxMap map[sqlparser.SQLNode]AnnotationCtx
+
+type AnnotatedTabulationMap map[sqlparser.SQLNode]util.AnnotatedTabulation
+
+func (tm TblMap) GetTable(node sqlparser.SQLNode) (*ExtendedTableMetadata, error) {
 	tbl, ok := tm[node]
 	if !ok {
-		return ExtendedTableMetadata{}, fmt.Errorf("could not locate table for AST node: %v", node)
+		return nil, fmt.Errorf("could not locate table for AST node: %v", node)
 	}
 	return tbl, nil
 }
 
-func (tm TblMap) SetTable(node sqlparser.SQLNode, table ExtendedTableMetadata) {
+func (tm TblMap) GetTableLoose(node sqlparser.SQLNode) (*ExtendedTableMetadata, error) {
+	tbl, ok := tm[node]
+	if ok {
+		return tbl, nil
+	}
+	searchAlias := ""
+	switch node := node.(type) {
+	case *sqlparser.AliasedExpr:
+		switch expr := node.Expr.(type) {
+		case *sqlparser.ColName:
+			searchAlias = expr.Qualifier.GetRawVal()
+		}
+	}
+	if searchAlias != "" {
+		for k, v := range tm {
+			switch k := k.(type) {
+			case *sqlparser.AliasedTableExpr:
+				alias := k.As.GetRawVal()
+				if searchAlias == alias {
+					return v, nil
+				}
+			}
+		}
+	}
+	return nil, fmt.Errorf("could not locate table for AST node: %v", node)
+
+}
+
+func (tm TblMap) SetTable(node sqlparser.SQLNode, table *ExtendedTableMetadata) {
 	tm[node] = table
 }
 
@@ -231,8 +271,8 @@ func (ex ExtendedTableMetadata) GetSelectableObjectSchema() (*openapistackql.Sch
 	return ex.HeirarchyObjects.GetSelectableObjectSchema()
 }
 
-func NewExtendedTableMetadata(heirarchyObjects *HeirarchyObjects, alias string) ExtendedTableMetadata {
-	return ExtendedTableMetadata{
+func NewExtendedTableMetadata(heirarchyObjects *HeirarchyObjects, alias string) *ExtendedTableMetadata {
+	return &ExtendedTableMetadata{
 		ColsVisited:        make(map[string]bool),
 		RequiredParameters: make(map[string]openapistackql.Parameter),
 		HeirarchyObjects:   heirarchyObjects,
@@ -421,6 +461,14 @@ func GetHeirarchyFromStatement(handlerCtx *handler.HandlerContext, node sqlparse
 		meth, methStr, remainingParams, err = prov.GetMethodForAction(retVal.HeirarchyIds.ServiceStr, retVal.HeirarchyIds.ResourceStr, methodAction, remainingParams, handlerCtx.RuntimeContext)
 		if err != nil {
 			return nil, remainingParams, fmt.Errorf("could not find method in taxonomy: %s", err.Error())
+		}
+		for _, srv := range svcHdl.Servers {
+			for k, _ := range srv.Variables {
+				_, ok := remainingParams[k]
+				if ok {
+					delete(remainingParams, k)
+				}
+			}
 		}
 		method = meth
 		retVal.HeirarchyIds.MethodStr = methStr

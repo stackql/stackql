@@ -314,6 +314,10 @@ func GetColumnUsageTypesForExec(exec *sqlparser.Exec) ([]ColumnUsageMetadata, er
 	return colMetaSlice, nil
 }
 
+func InferColNameFromExpr(node *sqlparser.AliasedExpr) ColumnHandle {
+	return inferColNameFromExpr(node)
+}
+
 func inferColNameFromExpr(node *sqlparser.AliasedExpr) ColumnHandle {
 	alias := node.As.GetRawVal()
 	retVal := ColumnHandle{
@@ -464,6 +468,8 @@ func TableFromSelectNode(sel *sqlparser.Select) (sqlparser.TableName, error) {
 
 type TableExprMap map[sqlparser.TableName]sqlparser.TableExpr
 
+type TableAliasMap map[string]sqlparser.TableExpr
+
 func (tem TableExprMap) GetByAlias(alias string) (sqlparser.TableExpr, bool) {
 	for k, v := range tem {
 		if k.GetRawVal() == alias {
@@ -474,6 +480,8 @@ func (tem TableExprMap) GetByAlias(alias string) (sqlparser.TableExpr, bool) {
 }
 
 type ParameterMap map[*sqlparser.ColName]interface{}
+
+type ColTableMap map[*sqlparser.ColName]sqlparser.TableExpr
 
 func (tm ParameterMap) ToStringMap() map[string]interface{} {
 	rv := make(map[string]interface{})
@@ -502,30 +510,102 @@ func (tm TableExprMap) ToStringMap() map[string]interface{} {
 }
 
 type ParameterRouter struct {
+	tablesAliasMap    TableAliasMap
 	tableMap          TableExprMap
 	paramMap          ParameterMap
+	colRefs           ColTableMap
 	invalidatedParams map[string]interface{}
 }
 
-func NewParameterRouter(tableMap TableExprMap, paramMap ParameterMap) *ParameterRouter {
+func NewParameterRouter(tablesAliasMap TableAliasMap, tableMap TableExprMap, paramMap ParameterMap, colRefs ColTableMap) *ParameterRouter {
 	return &ParameterRouter{
+		tablesAliasMap:    tablesAliasMap,
 		tableMap:          tableMap,
 		paramMap:          paramMap,
+		colRefs:           colRefs,
 		invalidatedParams: make(map[string]interface{}),
 	}
 }
 
-func (pr *ParameterRouter) GetAvailableParameters(tb sqlparser.TableExpr) map[string]interface{} {
+type TableParameterCoupling struct {
+	paramMap    ParameterMap
+	colMappings map[string]*sqlparser.ColName
+}
+
+func NewTableParameterCoupling() *TableParameterCoupling {
+	return &TableParameterCoupling{
+		paramMap:    make(ParameterMap),
+		colMappings: make(map[string]*sqlparser.ColName),
+	}
+}
+
+func (tpc *TableParameterCoupling) Add(col *sqlparser.ColName, val interface{}) error {
+	tpc.paramMap[col] = val
+	_, ok := tpc.colMappings[col.Name.GetRawVal()]
+	if ok {
+		return fmt.Errorf("parameter '%s' already present", col.Name.GetRawVal())
+	}
+	tpc.colMappings[col.Name.GetRawVal()] = col
+	return nil
+}
+
+func (tpc *TableParameterCoupling) GetStringified() map[string]interface{} {
 	rv := make(map[string]interface{})
+	for k, v := range tpc.paramMap {
+		rv[k.Name.GetRawVal()] = v
+	}
+	return rv
+}
+
+func (tpc *TableParameterCoupling) AbbreviateMap(verboseMap map[string]interface{}) (map[string]interface{}, error) {
+	rv := make(map[string]interface{})
+	for k, v := range tpc.paramMap {
+		_, ok := verboseMap[k.GetRawVal()]
+		if !ok || v == nil {
+			continue
+		}
+		rv[k.Name.GetRawVal()] = v
+	}
+	return rv, nil
+}
+
+func (tpc *TableParameterCoupling) ReconstituteConsumedParams(returnedMap map[string]interface{}) (map[string]interface{}, error) {
+	rv := make(map[string]interface{})
+	for k, v := range tpc.paramMap {
+		rv[k.GetRawVal()] = v
+	}
+	for k, v := range returnedMap {
+		key, ok := tpc.colMappings[k]
+		if !ok || v == nil {
+			return nil, fmt.Errorf("no reconstitution mapping for key = '%s'", k)
+		}
+		keyToDelete := key.GetRawVal()
+		_, ok = rv[keyToDelete]
+		if !ok {
+			return nil, fmt.Errorf("cannot process consumed params: attempt to delete non existing key")
+		}
+		delete(rv, keyToDelete)
+	}
+	return rv, nil
+}
+
+func (pr *ParameterRouter) GetAvailableParameters(tb sqlparser.TableExpr) *TableParameterCoupling {
+	rv := NewTableParameterCoupling()
 	for k, v := range pr.paramMap {
 		key := k.GetRawVal()
+		tableAlias := k.Qualifier.GetRawVal()
+		foundTable, ok := pr.tablesAliasMap[tableAlias]
+		if ok && foundTable != tb {
+			continue
+		}
 		if pr.isInvalidated(key) {
 			continue
 		}
-		if k.Metadata != nil && k.Metadata != tb {
+		ref, ok := pr.colRefs[k]
+		if ok && ref != tb {
 			continue
 		}
-		rv[key] = v
+		rv.Add(k, v)
 	}
 	return rv
 }
@@ -559,15 +639,16 @@ func (pr *ParameterRouter) Route(tb sqlparser.TableExpr) error {
 		if alias == "" {
 			continue
 		}
-		t, ok := pr.tableMap.GetByAlias(alias)
+		t, ok := pr.tablesAliasMap[alias]
 		if !ok {
 			return fmt.Errorf("alias '%s' does not map to any table expression", alias)
 		}
 		if t == tb {
-			if k.Metadata != nil && k.Metadata != t {
+			ref, ok := pr.colRefs[k]
+			if ok && ref != t {
 				return fmt.Errorf("failed parameter routing, cannot re-assign")
 			}
-			k.Metadata = t
+			pr.colRefs[k] = t
 		}
 	}
 	return nil

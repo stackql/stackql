@@ -252,11 +252,11 @@ func (pb *PrimitiveBuilder) SetAwait(await bool) {
 	pb.await = await
 }
 
-func (pb PrimitiveBuilder) GetTable(node sqlparser.SQLNode) (taxonomy.ExtendedTableMetadata, error) {
+func (pb PrimitiveBuilder) GetTable(node sqlparser.SQLNode) (*taxonomy.ExtendedTableMetadata, error) {
 	return pb.tables.GetTable(node)
 }
 
-func (pb PrimitiveBuilder) SetTable(node sqlparser.SQLNode, table taxonomy.ExtendedTableMetadata) {
+func (pb PrimitiveBuilder) SetTable(node sqlparser.SQLNode, table *taxonomy.ExtendedTableMetadata) {
 	pb.tables.SetTable(node, table)
 }
 
@@ -502,7 +502,7 @@ func NewPassThroughPrimitive(sqlEngine sqlengine.SQLEngine, txnControlCounterSli
 	}
 }
 
-func NewPrimitiveBuilder(parent *PrimitiveBuilder, ast sqlparser.SQLNode, drmConfig drm.DRMConfig, txnCtrMgr *txncounter.TxnCounterManager, graph *primitivegraph.PrimitiveGraph, tblMap map[sqlparser.SQLNode]taxonomy.ExtendedTableMetadata, symTab symtab.SymTab, sqlEngine sqlengine.SQLEngine) *PrimitiveBuilder {
+func NewPrimitiveBuilder(parent *PrimitiveBuilder, ast sqlparser.SQLNode, drmConfig drm.DRMConfig, txnCtrMgr *txncounter.TxnCounterManager, graph *primitivegraph.PrimitiveGraph, tblMap taxonomy.TblMap, symTab symtab.SymTab, sqlEngine sqlengine.SQLEngine) *PrimitiveBuilder {
 	return &PrimitiveBuilder{
 		parent:            parent,
 		ast:               ast,

@@ -41,6 +41,30 @@ Google AcceleratorTypes SQL verb post changeover
     ...    ${SELECT_ACCELERATOR_TYPES_DESC}
     ...    ${SELECT_ACCELERATOR_TYPES_DESC_EXPECTED}
 
+Okta Apps Select Simple
+    Should StackQL Exec Equal
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${SELECT_OKTA_APPS}
+    ...    ${SELECT_OKTA_APPS_ASC_EXPECTED}
+
+Join GCP Okta Cross Provider
+    Should StackQL Exec Equal
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${SELECT_CONTRIVED_GCP_OKTA_JOIN}
+    ...    ${SELECT_CONTRIVED_GCP_OKTA_JOIN_EXPECTED}
+
+Join GCP Three Way
+    Should StackQL Exec Equal
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${SELECT_CONTRIVED_GCP_THREE_WAY_JOIN}
+    ...    ${SELECT_CONTRIVED_GCP_THREE_WAY_JOIN_EXPECTED}
+
+Join GCP Self
+    Should StackQL Exec Equal
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${SELECT_CONTRIVED_GCP_SELF_JOIN}
+    ...    ${SELECT_CONTRIVED_GCP_SELF_JOIN_EXPECTED}
+
 Basic Query mTLS Returns OK
     Should PG Client Inline Contain
     ...    ${PSQL_MTLS_CONN_STR}
@@ -72,7 +96,8 @@ Start Mock Server
 
 Prepare StackQL Environment
     Set Environment Variable    OKTA_SECRET_KEY    ${OKTA_SECRET_STR}
-    Start Mock Server    ${JSON_INIT_FILE_PATH}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT}
+    Start Mock Server    ${JSON_INIT_FILE_PATH_GOOGLE}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_GOOGLE}
+    Start Mock Server    ${JSON_INIT_FILE_PATH_OKTA}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_OKTA}
     Start StackQL PG Server mTLS    ${PG_SRV_PORT_MTLS}    ${PG_SRV_MTLS_CFG_STR}
     Start StackQL PG Server unencrypted    ${PG_SRV_PORT_UNENCRYPTED}
 

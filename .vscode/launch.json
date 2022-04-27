@@ -3,6 +3,31 @@
   // Hover to view descriptions of existing attributes.
   // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
+  "inputs": [
+    {
+      "type": "pickString",
+      "id": "registryString",
+      "description": "Registry Configuration",
+      "options": [
+        "{ \"useEmbedded\": false, \"url\": \"file://${workspaceFolder}/test/registry\", \"localDocRoot\": \"${workspaceFolder}/test/registry\", \"verifyConfig\": { \"nopVerify\": true } }",
+        "{ \"useEmbedded\": false, \"url\": \"https://cdn.statically.io/gh/stackql/stackql-provider-registry/feature/provider-pointer-changes-01/providers\" }",
+        "{ \"useEmbedded\": false, \"url\": \"https://cdn.statically.io/gh/stackql/stackql-provider-registry/feature/add-github-provider-published-05/providers\" }"
+      ],
+      "default": "{ \"useEmbedded\": false, \"url\": \"file://${workspaceFolder}/test/registry\", \"localDocRoot\": \"${workspaceFolder}/test/registry\", \"verifyConfig\": { \"nopVerify\": true } }"
+    },
+    {
+      "type": "promptString",
+      "id": "authString",
+      "description": "Auth Input arg String",
+      "default": "{ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" }, \"github\": { \"type\": \"basic\", \"credentialsfilepath\": \"${workspaceFolder}/keys/github-user-token.txt\" } }"
+    },
+    {
+      "type": "promptString",
+      "id": "gcpProject",
+      "description": "GCP Project arg String",
+      "default": "lab-kr-network-01"
+    }
+  ],
   "configurations": [
     
     {
@@ -70,7 +95,6 @@
         "SHOW resources from google.compute WHERE name = '';", // "--offline"
       ],
     },
-    // select * from compute.networks cp inner join compute.networks cp2 on cp.name = cp2.name  where cp.project = 'lab-kr-network-01';
     {
       "name": "Launch JOIN exec \"SELECT projects.logs ... ;\" -- prebuilt with cmake",
       "type": "go",
@@ -79,13 +103,13 @@
       "program": "${workspaceFolder}/build/stackql",
       "args": [
         "exec",
-        "--auth={ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
-        "select * from google.logging.`projects.logs` WHERE parent = 'projects/lab-kr-network-01';",
+        "--auth=${input:authString}",
+        "select * from google.logging.`projects.logs` WHERE parent = 'projects/${input:gcpProject}';",
         "-o",
         "json"
       ],
     },
-    // select name from google.compute.disks where project = 'lab-kr-network-01' and zone = 'australia-southeast1-a';
+    // select name from google.compute.disks where project = '${input:gcpProject}' and zone = 'australia-southeast1-a';
     {
       "name": "DEBUG select compute.acceleratorTypes ... ;",
       "type": "go",
@@ -94,8 +118,9 @@
       "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
-        "--auth={ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
-        "select  kind, name  from  google.compute.acceleratorTypes where project = 'lab-kr-network-01' and zone = 'australia-southeast1-a' order by name desc;"
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "select  kind, name  from  google.compute.acceleratorTypes where project = '${input:gcpProject}' and zone = 'australia-southeast1-a' order by name desc;"
       ],
     },
     // 
@@ -107,8 +132,8 @@
       "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
-        "--registry={ \"useEmbedded\": false, \"url\": \"file://${workspaceFolder}/test/registry\", \"localDocRoot\": \"${workspaceFolder}/test/registry\", \"verifyConfig\": { \"nopVerify\": true } }",
-        "--auth={ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" }, \"github\": { \"type\": \"null_auth\" } }",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
         "select name, ssh_url from github.repos.repos where org = 'stackql' ;"
       ],
     }, 
@@ -120,8 +145,8 @@
       "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
-        "--registry={ \"useEmbedded\": false, \"url\": \"file://${workspaceFolder}/test/registry\", \"localDocRoot\": \"${workspaceFolder}/test/registry\", \"verifyConfig\": { \"nopVerify\": true } }",
-        "--auth={ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" }, \"github\": { \"type\": \"basic\", \"credentialsfilepath\": \"${workspaceFolder}/keys/github-user-token.txt\" } }",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
         "select name, ssh_url from github.repos.repos where org = 'stackql' ;"
       ],
     },
@@ -134,8 +159,8 @@
       "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
-        "--registry={ \"useEmbedded\": false, \"url\": \"file://${workspaceFolder}/test/registry\", \"localDocRoot\": \"${workspaceFolder}/test/registry\", \"verifyConfig\": { \"nopVerify\": true } }",
-        "--auth={ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" }, \"github\": { \"type\": \"basic\", \"credentialsfilepath\": \"${workspaceFolder}/keys/github-user-token.txt\" } }",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
         "select id from github.activity.starring where owner = 'stackql' and repo = 'stackql' limit 1;"
       ],
     },
@@ -148,8 +173,8 @@
       "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
-        "--registry={ \"useEmbedded\": false, \"url\": \"file://${workspaceFolder}/test/registry\", \"localDocRoot\": \"${workspaceFolder}/test/registry\", \"verifyConfig\": { \"nopVerify\": true } }",
-        "--auth={ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" }, \"github\": { \"type\": \"basic\", \"credentialsfilepath\": \"${workspaceFolder}/keys/github-user-token.txt\" } }",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
         "describe github.activity.starring;"
       ],
     },
@@ -161,8 +186,8 @@
       "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
-        "--registry={ \"useEmbedded\": false, \"url\": \"file://${workspaceFolder}/test/registry\", \"localDocRoot\": \"${workspaceFolder}/test/registry\", \"verifyConfig\": { \"nopVerify\": true } }",
-        "--auth={ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" }, \"github\": { \"type\": \"basic\", \"credentialsfilepath\": \"${workspaceFolder}/keys/github-user-token.txt\" } }",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
         "select login, url from github.users.users;"
       ],
     },
@@ -175,8 +200,8 @@
       "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
-        "--registry={ \"useEmbedded\": false, \"url\": \"file://${workspaceFolder}/test/registry\", \"localDocRoot\": \"${workspaceFolder}/test/registry\", \"verifyConfig\": { \"nopVerify\": true } }",
-        "--auth={ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" }, \"github\": { \"type\": \"basic\", \"credentialsfilepath\": \"${workspaceFolder}/keys/github-user-token.txt\" } }",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
         "EXEC github.repos.repos.create_in_org @org='stackql' @@json='{\"name\":\"test-r2\"}';"
       ],
     },
@@ -189,7 +214,7 @@
       "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
-        "--auth={ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
+        "--auth=${input:authString}",
         "show extended resources from okta.group;",
         "-o",
         "json"
@@ -203,7 +228,7 @@
       "program": "${workspaceFolder}/stackql",
       "args": [
         "srv",
-        "--auth={ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
+        "--auth=${input:authString}",
         "{ \"url\": \"file://${workspaceFolder}/examples/registry\", \"localDocRoot\": \"${workspaceFolder}/examples/registry\", \"verifyConfig\": {\"nopVerify\": true } }"
       ],
     },
@@ -215,7 +240,7 @@
       "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
-        "--auth={ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
+        "--auth=${input:authString}",
         "delete from google.storage.buckets WHERE bucket = 'lab-kr-network-03-trial-bucket';",
         "-o",
         "json"
@@ -230,10 +255,25 @@
       "program": "${workspaceFolder}/stackql",
       "args": [
         "registry",
-        "--registry={ \"useEmbedded\": false, \"url\": \"https://cdn.statically.io/gh/stackql/stackql-provider-registry/feature/provider-pointer-changes/providers\" }",
-        "--auth={ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
         "pull",
         "okta",
+        "v2.0.1"
+      ],
+    },
+    {
+      "name": "DEBUG pull github v2.0.1 ;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "registry",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "pull",
+        "github",
         "v2.0.1"
       ],
     },
@@ -246,8 +286,8 @@
       "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
-        "--registry={ \"useEmbedded\": false, \"url\": \"file://${workspaceFolder}/examples/registry\", \"localDocRoot\": \"${workspaceFolder}/examples/registry\", \"verifyConfig\": { \"nopVerify\": true } }",
-        "--auth={ \"publicapis\": { \"type\": \"null_auth\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
         "describe publicapis.api.categories;"
       ],
     },
@@ -259,8 +299,8 @@
       "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
-        "--registry={ \"useEmbedded\": false, \"url\": \"file://${workspaceFolder}/examples/registry\", \"localDocRoot\": \"${workspaceFolder}/examples/registry\", \"verifyConfig\": { \"nopVerify\": true } }",
-        "--auth={ \"publicapis\": { \"type\": \"null_auth\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
         "select column_anon as f from publicapis.api.categories where column_anon like 'B%' limit 10;"
       ],
     },
@@ -272,9 +312,48 @@
       "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
-        "--registry={ \"useEmbedded\": false, \"url\": \"file://${workspaceFolder}/test/registry\", \"localDocRoot\": \"${workspaceFolder}/test/registry\", \"verifyConfig\": { \"nopVerify\": true } }",
-        "--auth={ \"publicapis\": { \"type\": \"null_auth\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
-        "select d1.name, d1.id from google.compute.disks d1 inner join google.compute.disks d2 on d1.id = d2.id where d1.project = 'lab-kr-network-01' and d1.zone = 'australia-southeast1-a' and d2.project = 'lab-kr-network-01' and d2.zone = 'australia-southeast1-a';"
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "select d1.name, d1.id from google.compute.disks d1 inner join google.compute.disks d2 on d1.id = d2.id where d1.project = '${input:gcpProject}' and d1.zone = 'australia-southeast1-a' and d2.project = '${input:gcpProject}' and d2.zone = 'australia-southeast1-a';"
+      ],
+    },
+    {
+      "name": "DEBUG equaivalent NON join #1 ... ;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "select d1.name, d1.id from google.compute.disks d1 where d1.project = '${input:gcpProject}' and d1.zone = 'australia-southeast1-a';"
+      ],
+    },
+    {
+      "name": "DEBUG join #2 ... ;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "select d1.name, d1.id, d2.label as d2_id from google.compute.disks d1 inner join okta.application.apps d2 on d1.name = d2.label where d1.project = '${input:gcpProject}' and d1.zone = 'australia-southeast1-a' and d2.subdomain = 'dev-79923018-admin';"
+      ],
+    },
+    {
+      "name": "DEBUG equivalent NON join #2 ... ;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "select apps.label from okta.application.apps apps where apps.subdomain = 'dev-79923018-admin';"
       ],
     },
     {
@@ -285,8 +364,8 @@
       "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
-        "--registry={ \"useEmbedded\": false, \"url\": \"file://${workspaceFolder}/examples/registry\", \"localDocRoot\": \"${workspaceFolder}/examples/registry\", \"verifyConfig\": { \"nopVerify\": true } }",
-        "--auth={ \"publicapis\": { \"type\": \"null_auth\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
         "select API from publicapis.api.apis limit 10;"
       ],
     },
@@ -299,8 +378,8 @@
       "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
-        "--registry={ \"useEmbedded\": false, \"url\": \"file://${workspaceFolder}/examples/registry\", \"localDocRoot\": \"${workspaceFolder}/examples/registry\", \"verifyConfig\": { \"nopVerify\": true } }",
-        "--auth={ \"publicapis\": { \"type\": \"null_auth\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
         "select * from (exec /*+ SHOWRESULTS */ publicapis.api.health.get);"
       ],
     },
@@ -312,7 +391,7 @@
       "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
-        "--auth={ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
+        "--auth=${input:authString}",
         "select apps.id from okta.application.apps apps where subdomain = 'dev-79923018-admin';",
         "-o",
         "json"
@@ -326,13 +405,13 @@
       "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
-        "--auth={ \"publicapis\": { \"type\": \"null_auth\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
-        "insert /*+ AWAIT */ into google.logging.`organizations.locations.buckets`(parent, bucketId) values('projects/lab-kr-network-01/locations/australia-southeast1', 'kr-lab-network-01-logging-bucket-03');",
+        "--auth=${input:authString}",
+        "insert /*+ AWAIT */ into google.logging.`organizations.locations.buckets`(parent, bucketId) values('projects/${input:gcpProject}/locations/australia-southeast1', 'kr-lab-network-01-logging-bucket-03');",
         "-o",
         "json"
       ],
     },
-    // DELETE FROM google.bigquery.datasets WHERE projectId='lab-kr-network-01' and datasetId='DEMO_DATASET';
+    // DELETE FROM google.bigquery.datasets WHERE projectId='${input:gcpProject}' and datasetId='DEMO_DATASET';
     {
       "name": "Intractible \"SELECT BQ jobs ... ;\" -- prebuilt with cmake",
       "type": "go",
@@ -341,8 +420,8 @@
       "program": "${workspaceFolder}/build/stackql",
       "args": [
         "exec",
-        "--auth={ \"publicapis\": { \"type\": \"null_auth\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
-        "select * from google.bigquery.jobs where projectId='lab-kr-network-01';",
+        "--auth=${input:authString}",
+        "select * from google.bigquery.jobs where projectId='${input:gcpProject}';",
         "-o",
         "json"
       ],
@@ -356,7 +435,7 @@
       "args": [
         "exec",
         "--credentialsfilepath=${workspaceFolder}/keys/sa-key.json",
-        "select * from ( exec /*+ SHOWRESULTS */ google.bigquery.jobs.getQueryResults @projectId='lab-kr-network-01', @jobId='bquxjob_19abc6d_17c14bbcb9e' ) ;",
+        "select * from ( exec /*+ SHOWRESULTS */ google.bigquery.jobs.getQueryResults @projectId='${input:gcpProject}', @jobId='bquxjob_19abc6d_17c14bbcb9e' ) ;",
         "-o",
         "json"
       ],
@@ -369,9 +448,9 @@
       "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
-        "--auth={ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" } }",
+        "--auth=${input:authString}",
         "--cpuprofile=${workspaceFolder}/build/prof1.prof",
-        "select name from (EXEC /*+ SHOWRESULTS */ google.compute.disks.get @disk = 'my-disk-01-indeed',  @project = 'lab-kr-network-01', @zone = 'australia-southeast1-a');",
+        "select name from (EXEC /*+ SHOWRESULTS */ google.compute.disks.get @disk = 'my-disk-01-indeed',  @project = '${input:gcpProject}', @zone = 'australia-southeast1-a');",
         "-o",
         "json"
       ],
@@ -384,7 +463,7 @@
       "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
-        "--auth={ \"publicapis\": { \"type\": \"null_auth\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
+        "--auth=${input:authString}",
         "insert into okta.application.apps(subdomain, data__name, data__label, data__signOnMode, data__settings) SELECT 'dev-79923018-admin', 'template_basic_auth', 'some new app again', 'BASIC_AUTH', '{ \"app\": { \"authURL\": \"https://example.com/auth.html\", \"url\": \"https://example.com/bookmark.htm\" } }' ;",
         "-o",
         "json"
@@ -425,7 +504,7 @@
       "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
-        "--auth={ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
+        "--auth=${input:authString}",
         "delete from okta.application.apps where appId = '0oa3fvey86qdXch1g5d7' and subdomain = 'dev-79923018-admin';",
         "-o",
         "json"
@@ -439,7 +518,7 @@
       "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
-        "--auth={ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
+        "--auth=${input:authString}",
         "exec okta.application.apps.deactivate @appId = '0oa3pssr5jYavmnNF5d7',  @subdomain = 'dev-79923018-admin';",
         "-o",
         "json"
@@ -453,7 +532,7 @@
       "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
-        "--auth={ \"publicapis\": { \"type\": \"null_auth\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
+        "--auth=${input:authString}",
         "show resources from okta.group;",
         "-o",
         "json"
@@ -467,12 +546,12 @@
       "program": "${workspaceFolder}/build/stackql",
       "args": [
         "exec",
-        "--auth={ \"publicapis\": { \"type\": \"null_auth\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
-        // "exec /*+ some AWAIT */ google.compute.disks.list  @zone = 'australia-southeast1-a', /* */ @project = 'lab-kr-network-01';",
-        "EXEC /*+ some AWAIT */ compute.disks.insert @project='lab-kr-network-01', @zone= 'australia-southeast1-a' @@json='{ \"name\": \"test-disk9\", \"sizeGb\": 10 }';",
-        // "select name, region from google.compute.subnetworks where region = 'australia-southeast1' AND /* */ project = 'lab-kr-network-01';",
-        // "select * from compute.instances WHERE `google.compute.project` = 'lab-kr-network-01' ;",
-        // "select canIpForward from compute.instances WHERE zone = 2 AND project = 'lab-kr-network-01' ;",
+        "--auth=${input:authString}",
+        // "exec /*+ some AWAIT */ google.compute.disks.list  @zone = 'australia-southeast1-a', /* */ @project = '${input:gcpProject}';",
+        "EXEC /*+ some AWAIT */ compute.disks.insert @project='${input:gcpProject}', @zone= 'australia-southeast1-a' @@json='{ \"name\": \"test-disk9\", \"sizeGb\": 10 }';",
+        // "select name, region from google.compute.subnetworks where region = 'australia-southeast1' AND /* */ project = '${input:gcpProject}';",
+        // "select * from compute.instances WHERE `google.compute.project` = '${input:gcpProject}' ;",
+        // "select canIpForward from compute.instances WHERE zone = 2 AND project = '${input:gcpProject}' ;",
         "-o",
         "json"
       ],
@@ -485,8 +564,8 @@
       "program": "${workspaceFolder}/build/stackql",
       "args": [
         "exec",
-        "--auth={ \"publicapis\": { \"type\": \"null_auth\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
-        "insert into google.compute.disks(project, zone, data__name) SELECT 'lab-kr-network-01', 'australia-southeast1-a', name || '-newzy2' as name from google.compute.disks where project = 'lab-kr-network-01' and zone =  'australia-southeast1-a' limit 2;",
+        "--auth=${input:authString}",
+        "insert into google.compute.disks(project, zone, data__name) SELECT '${input:gcpProject}', 'australia-southeast1-a', name || '-newzy2' as name from google.compute.disks where project = '${input:gcpProject}' and zone =  'australia-southeast1-a' limit 2;",
         "-o",
         "json"
       ],
@@ -499,7 +578,7 @@
       "program": "${workspaceFolder}/build/stackql",
       "args": [
         "exec",
-        "--auth={ \"publicapis\": { \"type\": \"null_auth\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
+        "--auth=${input:authString}",
         "SHOW EXTENDED INSERT INTO google.bigquery.datasets;",
         "-o",
         "pptext"
@@ -513,7 +592,7 @@
       "program": "${workspaceFolder}/build/stackql",
       "args": [
         "exec",
-        "--auth={ \"publicapis\": { \"type\": \"null_auth\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
+        "--auth=${input:authString}",
         "show insert into google.compute.instances( project, data__sourceSnapshotId );",
         "-o",
         "pptext"
@@ -527,7 +606,7 @@
       "program": "${workspaceFolder}/build/stackql",
       "args": [
         "exec",
-        "--auth={ \"publicapis\": { \"type\": \"null_auth\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
+        "--auth=${input:authString}",
         "show insert /*+ REQUIRED */ into google.compute.addresses;",
         "-o",
         "pptext"
@@ -541,7 +620,7 @@
       "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
-        "--auth={ \"publicapis\": { \"type\": \"null_auth\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
+        "--auth=${input:authString}",
         "show providers;",
         "-o",
         "table"
@@ -555,7 +634,7 @@
       "program": "${workspaceFolder}/build/stackql",
       "args": [
         "exec",
-        "--auth={ \"publicapis\": { \"type\": \"null_auth\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
+        "--auth=${input:authString}",
         "show resources from google.container;",
         "-o",
         "table"
@@ -569,7 +648,7 @@
       "program": "${workspaceFolder}/build/stackql",
       "args": [
         "exec",
-        "--auth={ \"publicapis\": { \"type\": \"null_auth\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
+        "--auth=${input:authString}",
         "-i=${workspaceFolder}/test/assets/input/show-services-extended-filtered.iql",
         "-o",
         "table"
@@ -583,7 +662,7 @@
       "program": "${workspaceFolder}/build/stackql",
       "args": [
         "exec",
-        "--auth={ \"publicapis\": { \"type\": \"null_auth\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
+        "--auth=${input:authString}",
         "-i=${workspaceFolder}/test/assets/input/insert-compute-network.iql",
         "-o",
         "table"
@@ -598,7 +677,7 @@
       "program": "${workspaceFolder}/build/stackql",
       "args": [
         "exec",
-        "--auth={ \"publicapis\": { \"type\": \"null_auth\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
+        "--auth=${input:authString}",
         "select * from google.container.`projects.aggregated.usableSubnetworks` where parent = 'projects/kr-lab-network-01'",
         "-o",
         "json"
@@ -612,29 +691,29 @@
       "program": "${workspaceFolder}/build/stackql",
       "args": [
         "exec",
-        "--auth={ \"publicapis\": { \"type\": \"null_auth\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
-        "select * from google.bigquery.datasets where projectId = 'lab-kr-network-01';",
+        "--auth=${input:authString}",
+        "select * from google.bigquery.datasets where projectId = '${input:gcpProject}';",
         "-o",
         "json"
       ],
     },
 
     {
-      "name": "DEBUG exec \"SELECT name FROM google.storage.buckets WHERE project = 'lab-kr-network-01';\" -- prebuilt with cmake",
+      "name": "DEBUG exec \"SELECT name FROM google.storage.buckets WHERE project = '${input:gcpProject}';\" -- prebuilt with cmake",
       "type": "go",
       "request": "launch",
       "mode": "debug",
       "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
-        "--auth={ \"publicapis\": { \"type\": \"null_auth\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" } }",
-        "SELECT name FROM google.storage.buckets WHERE project = 'lab-kr-network-01';",
+        "--auth=${input:authString}",
+        "SELECT name FROM google.storage.buckets WHERE project = '${input:gcpProject}';",
         "-o",
         "json"
       ],
     },
     // ;
-    // ./stackql --verbose --approot=./.stackql   --credentialsfilepath=../keys/sa-key.json exec    "select canIpForward from compute.instances WHERE zone = 'australia-southeast1-b' AND project = 'lab-kr-network-01' ;" -o json | jq
+    // ./stackql --verbose --approot=./.stackql   --credentialsfilepath=../keys/sa-key.json exec    "select canIpForward from compute.instances WHERE zone = 'australia-southeast1-b' AND project = '${input:gcpProject}' ;" -o json | jq
     {
       // need to edit processId as appropriate
       "name": "Attach to local process -- eg shell -- amend processId as required",

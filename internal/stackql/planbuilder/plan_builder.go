@@ -32,25 +32,31 @@ func isPlanCacheEnabled() bool {
 }
 
 type PlanBuilderInput struct {
-	handlerCtx      *handler.HandlerContext
-	stmt            sqlparser.SQLNode
-	assignedAliases parserutil.TableExprMap
-	tables          sqlparser.TableExprs
+	handlerCtx             *handler.HandlerContext
+	stmt                   sqlparser.SQLNode
+	colRefs                parserutil.ColTableMap
+	aliasedTables          parserutil.TableAliasMap
+	assignedAliasedColumns parserutil.TableExprMap
+	tables                 sqlparser.TableExprs
 }
 
 func NewPlanBuilderInput(
 	handlerCtx *handler.HandlerContext,
 	stmt sqlparser.SQLNode,
 	tables sqlparser.TableExprs,
-	assignedAliases parserutil.TableExprMap) PlanBuilderInput {
+	assignedAliasedColumns parserutil.TableExprMap,
+	aliasedTables parserutil.TableAliasMap,
+	colRefs parserutil.ColTableMap) PlanBuilderInput {
 	rv := PlanBuilderInput{
-		handlerCtx:      handlerCtx,
-		stmt:            stmt,
-		tables:          tables,
-		assignedAliases: assignedAliases,
+		handlerCtx:             handlerCtx,
+		stmt:                   stmt,
+		tables:                 tables,
+		aliasedTables:          aliasedTables,
+		assignedAliasedColumns: assignedAliasedColumns,
+		colRefs:                colRefs,
 	}
-	if rv.assignedAliases == nil {
-		rv.assignedAliases = make(map[sqlparser.TableName]sqlparser.TableExpr)
+	if rv.assignedAliasedColumns == nil {
+		rv.assignedAliasedColumns = make(map[sqlparser.TableName]sqlparser.TableExpr)
 	}
 	return rv
 }
@@ -59,8 +65,16 @@ func (pbi PlanBuilderInput) GetStatement() sqlparser.SQLNode {
 	return pbi.stmt
 }
 
-func (pbi PlanBuilderInput) GetAssignedAliases() map[sqlparser.TableName]sqlparser.TableExpr {
-	return pbi.assignedAliases
+func (pbi PlanBuilderInput) GetAssignedAliasedColumns() map[sqlparser.TableName]sqlparser.TableExpr {
+	return pbi.assignedAliasedColumns
+}
+
+func (pbi PlanBuilderInput) GetAliasedTables() parserutil.TableAliasMap {
+	return pbi.aliasedTables
+}
+
+func (pbi PlanBuilderInput) GetColRefs() parserutil.ColTableMap {
+	return pbi.colRefs
 }
 
 func (pbi PlanBuilderInput) GetTableExprs() sqlparser.TableExprs {
@@ -466,7 +480,7 @@ func (pgb *planGraphBuilder) handleInsert(pbi PlanBuilderInput) error {
 		if nonValCols > 0 {
 			switch rowsNode := node.Rows.(type) {
 			case *sqlparser.Select:
-				selPbi := NewPlanBuilderInput(pbi.GetHandlerCtx(), rowsNode, pbi.GetTableExprs(), pbi.GetAssignedAliases())
+				selPbi := NewPlanBuilderInput(pbi.GetHandlerCtx(), rowsNode, pbi.GetTableExprs(), pbi.GetAssignedAliasedColumns(), pbi.GetAliasedTables(), pbi.GetColRefs())
 				_, selectPrimitiveNode, err = pgb.handleSelect(selPbi)
 				if err != nil {
 					return err
@@ -650,7 +664,7 @@ func BuildPlanFromContext(handlerCtx *handler.HandlerContext) (*plan.Plan, error
 	aVis := astvisit.NewTableAliasAstVisitor(tVis.GetTables())
 	aVis.Visit(ast)
 
-	pbi := NewPlanBuilderInput(handlerCtx, ast, tVis.GetTables(), aVis.GetAliases())
+	pbi := NewPlanBuilderInput(handlerCtx, ast, tVis.GetTables(), aVis.GetAliasedColumns(), tVis.GetAliasMap(), aVis.GetColRefs())
 
 	createInstructionError := pGBuilder.createInstructionFor(pbi)
 	if createInstructionError != nil {
