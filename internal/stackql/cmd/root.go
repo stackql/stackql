@@ -20,10 +20,10 @@ import (
 	"os"
 	"path"
 
-	"github.com/stackql/stackql/internal/pkg/txncounter"
 	"github.com/stackql/stackql/internal/stackql/config"
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/pkg/txncounter"
 
 	"github.com/magiconair/properties"
 	"github.com/spf13/cobra"

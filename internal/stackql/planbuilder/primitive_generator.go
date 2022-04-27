@@ -23,8 +23,8 @@ import (
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 	"github.com/stackql/stackql/internal/stackql/util"
 
-	"github.com/stackql/stackql/internal/pkg/prettyprint"
-	"github.com/stackql/stackql/internal/pkg/sqltypeutil"
+	"github.com/stackql/stackql/pkg/prettyprint"
+	"github.com/stackql/stackql/pkg/sqltypeutil"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
 

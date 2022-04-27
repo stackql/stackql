@@ -13,8 +13,8 @@ import (
 	"github.com/stackql/stackql/internal/stackql/iqlerror"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 
-	"github.com/stackql/stackql/internal/pkg/preprocessor"
-	"github.com/stackql/stackql/internal/pkg/txncounter"
+	"github.com/stackql/stackql/pkg/preprocessor"
+	"github.com/stackql/stackql/pkg/txncounter"
 
 	lrucache "vitess.io/vitess/go/cache"
 )
