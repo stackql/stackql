@@ -15,7 +15,7 @@ import (
 
 	"github.com/stackql/go-openapistackql/openapistackql"
 
-	"github.com/stackql/stackql/internal/pkg/txncounter"
+	"github.com/stackql/stackql/pkg/txncounter"
 
 	"vitess.io/vitess/go/vt/sqlparser"
 )

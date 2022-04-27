@@ -17,7 +17,7 @@
 
 ----
 ## Its as easy as...
-    use google; SELECT * FROM compute.instance WHERE zone = 'australia-southeast1-b' AND project = 'my-project' ;
+    SELECT * FROM google.compute.instance WHERE zone = 'australia-southeast1-b' AND project = 'my-project' ;
 
 ----
 

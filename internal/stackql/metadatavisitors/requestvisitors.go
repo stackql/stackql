@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/stackql/stackql/internal/pkg/prettyprint"
+	"github.com/stackql/stackql/pkg/prettyprint"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
 

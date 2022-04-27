@@ -8,12 +8,12 @@ import (
 
 	"github.com/stackql/go-openapistackql/openapistackql"
 	"github.com/stackql/go-openapistackql/pkg/nomenclature"
-	"github.com/stackql/stackql/internal/pkg/txncounter"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/netutils"
 	"github.com/stackql/stackql/internal/stackql/provider"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
+	"github.com/stackql/stackql/pkg/txncounter"
 
 	"gopkg.in/yaml.v2"
 	lrucache "vitess.io/vitess/go/cache"

@@ -14,7 +14,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/relational"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 
-	"github.com/stackql/stackql/internal/pkg/sqltypeutil"
+	"github.com/stackql/stackql/pkg/sqltypeutil"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
 

@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"github.com/stackql/stackql/internal/pkg/txncounter"
+	"github.com/stackql/stackql/pkg/txncounter"
 )
 
 type TxnControlCounters struct {
