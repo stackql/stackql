@@ -1,7 +1,11 @@
+*** Variables ***
+${LOCAL_LIB_HOME}    ../lib
+
 *** Settings ***
 Library    Process
 Library    OperatingSystem
 Library    String
+Library    ${LOCAL_LIB_HOME}/CloudIntegration.py
 
 
 # ROBOT_OKTA_SECRET_KEY="$(cat /path/to/okta/credentials)" \
@@ -15,79 +19,64 @@ Suite Setup       Prepare StackQL Environment
 Suite Teardown    Terminate All Processes
 
 *** Test Cases *** 
-Google Container Agg Desc
-    Should StackQL Exec Equal
-    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
-    ...    ${SELECT_CONTAINER_SUBNET_AGG_DESC}
-    ...    ${SELECT_CONTAINER_SUBNET_AGG_DESC_EXPECTED}
-
-Google Container Agg Asc
-    Should StackQL Exec Equal
-    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
-    ...    ${SELECT_CONTAINER_SUBNET_AGG_ASC}
-    ...    ${SELECT_CONTAINER_SUBNET_AGG_ASC_EXPECTED}
-
-Google IAM Policy Agg
-    Should StackQL Exec Equal
-    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
-    ...    \-\-infile\=${GET_IAM_POLICY_AGG_ASC_INPUT_FILE}
-    ...    ${GET_IAM_POLICY_AGG_ASC_EXPECTED}
-    ...    \-o\=csv
+Nop From Lib
+    ${result} =     Nop Cloud Integration Keyword
+    Should Be Equal    ${result}    PASS
 
 
-Google AcceleratorTypes SQL verb pre changeover
-    Should StackQL Exec Equal
-    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
-    ...    ${SELECT_ACCELERATOR_TYPES_DESC}
-    ...    ${SELECT_ACCELERATOR_TYPES_DESC_EXPECTED}
+# Google AcceleratorTypes SQL verb pre changeover
+#     Should StackQL Exec Equal
+#     ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+#     ...    ${SELECT_ACCELERATOR_TYPES_DESC}
+#     ...    ${SELECT_ACCELERATOR_TYPES_DESC_EXPECTED}
 
-Google AcceleratorTypes SQL verb post changeover
-    Should StackQL Exec Equal
-    ...    ${REGISTRY_SQL_VERB_CONTRIVED_NO_VERIFY_CFG_STR}
-    ...    ${SELECT_ACCELERATOR_TYPES_DESC}
-    ...    ${SELECT_ACCELERATOR_TYPES_DESC_EXPECTED}
+# Google AcceleratorTypes SQL verb post changeover
+#     Should StackQL Exec Equal
+#     ...    ${REGISTRY_SQL_VERB_CONTRIVED_NO_VERIFY_CFG_STR}
+#     ...    ${SELECT_ACCELERATOR_TYPES_DESC}
+#     ...    ${SELECT_ACCELERATOR_TYPES_DESC_EXPECTED}
 
-Okta Apps Select Simple
-    Should StackQL Exec Equal
-    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
-    ...    ${SELECT_OKTA_APPS}
-    ...    ${SELECT_OKTA_APPS_ASC_EXPECTED}
+# Okta Apps Select Simple
+#     Should StackQL Exec Equal
+#     ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+#     ...    ${SELECT_OKTA_APPS}
+#     ...    ${SELECT_OKTA_APPS_ASC_EXPECTED}
 
-Join GCP Okta Cross Provider
-    Should StackQL Exec Equal
-    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
-    ...    ${SELECT_CONTRIVED_GCP_OKTA_JOIN}
-    ...    ${SELECT_CONTRIVED_GCP_OKTA_JOIN_EXPECTED}
+# Join GCP Okta Cross Provider
+#     Should StackQL Exec Equal
+#     ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+#     ...    ${SELECT_CONTRIVED_GCP_OKTA_JOIN}
+#     ...    ${SELECT_CONTRIVED_GCP_OKTA_JOIN_EXPECTED}
 
-Join GCP Three Way
-    Should StackQL Exec Equal
-    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
-    ...    ${SELECT_CONTRIVED_GCP_THREE_WAY_JOIN}
-    ...    ${SELECT_CONTRIVED_GCP_THREE_WAY_JOIN_EXPECTED}
+# Join GCP Three Way
+#     Should StackQL Exec Equal
+#     ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+#     ...    ${SELECT_CONTRIVED_GCP_THREE_WAY_JOIN}
+#     ...    ${SELECT_CONTRIVED_GCP_THREE_WAY_JOIN_EXPECTED}
 
-Join GCP Self
-    Should StackQL Exec Equal
-    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
-    ...    ${SELECT_CONTRIVED_GCP_SELF_JOIN}
-    ...    ${SELECT_CONTRIVED_GCP_SELF_JOIN_EXPECTED}
+# Join GCP Self
+#     Should StackQL Exec Equal
+#     ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+#     ...    ${SELECT_CONTRIVED_GCP_SELF_JOIN}
+#     ...    ${SELECT_CONTRIVED_GCP_SELF_JOIN_EXPECTED}
 
-Basic Query mTLS Returns OK
-    Should PG Client Inline Contain
-    ...    ${PSQL_MTLS_CONN_STR}
-    ...    ${SELECT_CONTAINER_SUBNET_AGG_ASC}
-    ...    ipCidrRange
+# Basic Query mTLS Returns OK
+#     Should PG Client Inline Contain
+#     ...    ${PSQL_MTLS_CONN_STR}
+#     ...    ${SELECT_CONTAINER_SUBNET_AGG_ASC}
+#     ...    ipCidrRange
 
-Basic Query unencrypted Returns OK
-    Should PG Client Inline Contain
-    ...    ${PSQL_UNENCRYPTED_CONN_STR}
-    ...    ${SELECT_CONTAINER_SUBNET_AGG_ASC}
-    ...    ipCidrRange
+# Basic Query unencrypted Returns OK
+#     Should PG Client Inline Contain
+#     ...    ${PSQL_UNENCRYPTED_CONN_STR}
+#     ...    ${SELECT_CONTAINER_SUBNET_AGG_ASC}
+#     ...    ipCidrRange
 
-Erroneous mTLS Config Plus Basic Query Returns Error
-    Should PG Client Error Inline Contain
-    ...    ${PSQL_MTLS_INVALID_CONN_STR}
-    ...    ${SELECT_CONTAINER_SUBNET_AGG_ASC}
-    ...    error
+# Erroneous mTLS Config Plus Basic Query Returns Error
+#     Should PG Client Error Inline Contain
+#     ...    ${PSQL_MTLS_INVALID_CONN_STR}
+#     ...    ${SELECT_CONTAINER_SUBNET_AGG_ASC}
+#     ...    error
 
 *** Keywords ***
 Start Mock Server
