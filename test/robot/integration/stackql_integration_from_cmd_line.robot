@@ -3,8 +3,14 @@ Library    Process
 Library    OperatingSystem
 Library    String
 
+
+# ROBOT_OKTA_SECRET_KEY="$(cat /path/to/okta/credentials)" \
+# ROBOT_GCP_SECRET_KEY="$(cat /path/to/gcp/credentials)" \
+# ROBOT_AWS_SECRET_KEY="$(cat /path/to/aws/credentials)" \
+# ROBOT_AZURE_SECRET_KEY="$(cat /path/to/azure/credentials)" \
+
 *** Settings ***
-Variables         ${CURDIR}/variables/stackql_context.py
+Variables         ${CURDIR}/../variables/stackql_context.py
 Suite Setup       Prepare StackQL Environment
 Suite Teardown    Terminate All Processes
 

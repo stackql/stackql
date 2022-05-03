@@ -192,7 +192,8 @@ func (pgb *planGraphBuilder) createInstructionFor(pbi PlanBuilderInput) error {
 		_, _, err := pgb.handleSelect(pbi)
 		return err
 	case *sqlparser.Set:
-		return iqlerror.GetStatementNotSupportedError("SET")
+		// return iqlerror.GetStatementNotSupportedError("SET")
+		return nil
 	case *sqlparser.SetTransaction:
 		return iqlerror.GetStatementNotSupportedError("SET TRANSACTION")
 	case *sqlparser.Show:

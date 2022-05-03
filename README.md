@@ -21,6 +21,10 @@
 
 ----
 
+```
+select d1.name, d1.id, d2.name as d2_name, d2.status, d2.label, d2.id as d2_id from google.compute.disks d1 inner join okta.application.apps d2 on d1.name = d2.label where d1.project = 'lab-kr-network-01' and d1.zone = 'australia-southeast1-a' and d2.subdomain = 'dev-79923018-admin';
+```
+
 ## Provider development
 
 Keen to expose some new functionality though `stackql`?  We are very keen on this!  

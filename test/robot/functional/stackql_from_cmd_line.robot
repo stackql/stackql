@@ -3,7 +3,7 @@ Library    Process
 Library    OperatingSystem   
 
 *** Settings ***
-Variables    ${CURDIR}/variables/stackql_context.py
+Variables    ${CURDIR}/../variables/stackql_context.py
 
 *** Test Cases *** 
 Positive Control

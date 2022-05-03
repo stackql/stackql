@@ -80,6 +80,11 @@ stackql \
 
 ```
 
+For example:
+```sql
+select d1.name, d1.id from google.compute.disks d1 where d1.project = 'lab-kr-network-01' and d1.zone = 'australia-southeast1-a' ;
+```
+
 ### Joins
 
 Only inner joins suported for now.

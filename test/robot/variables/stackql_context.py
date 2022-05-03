@@ -10,6 +10,13 @@ if os.name == 'nt':
 
 REPOSITORY_ROOT = os.path.abspath(os.path.join(__file__, '..', '..', '..', '..'))
 
+ROBOT_TEST_ROOT = os.path.abspath(os.path.join(__file__, '..'))
+
+ROBOT_PROD_REG_DIR = os.path.abspath(os.path.join(ROBOT_TEST_ROOT, 'registry', 'prod'))
+ROBOT_DEV_REG_DIR = os.path.abspath(os.path.join(ROBOT_TEST_ROOT, 'registry', 'dev'))
+
+ROBOT_INTEGRATION_TEST_ROOT = os.path.abspath(os.path.join(__file__, '..', 'integration'))
+
 def get_output_from_local_file(fp :str) -> str:
   with open(os.path.join(REPOSITORY_ROOT, fp), 'r') as f:
     return f.read().strip()
@@ -17,6 +24,9 @@ def get_output_from_local_file(fp :str) -> str:
 def get_unix_path(pathStr :str) -> str:
   return pathStr.replace('\\', '/')
 
+
+_PROD_REGISTRY_URL :str = "https://cdn.statically.io/gh/stackql/stackql-provider-registry/main/providers"
+_DEV_REGISTRY_URL :str = "https://cdn.statically.io/gh/stackql/stackql-provider-registry/dev/providers"
 
 REPOSITORY_ROOT_UNIX = get_unix_path(REPOSITORY_ROOT)
 REGISTRY_ROOT_CANONICAL   = get_unix_path(os.path.join(REPOSITORY_ROOT, 'test', 'registry'))
@@ -82,10 +92,25 @@ _mTLS_CFG :dict = {
   ] 
 }
 
+def get_registry_cfg(url :str, local_root :str, nop_verify :bool) -> dict:
+  registry   = { 
+    "url": url,
+    "verifyConfig": {
+      "nopVerify": nop_verify 
+    } 
+  }
+  if local_root != "":
+    registry["localDocRoot"] = local_root
+  return registry
+
 PG_SRV_MTLS_CFG_STR :str = json.dumps(_mTLS_CFG)
 
 with open(os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'credentials', 'dummy', 'okta', 'api-key.txt'), 'r') as f:
     OKTA_SECRET_STR = f.read()
+
+
+REGISTRY_PROD_CFG_STR = json.dumps(get_registry_cfg(_PROD_REGISTRY_URL, ROBOT_PROD_REG_DIR, False))
+REGISTRY_DEV_CFG_STR = json.dumps(get_registry_cfg(_DEV_REGISTRY_URL, ROBOT_DEV_REG_DIR, False))
 
 REGISTRY_NO_VERIFY_CFG_STR = json.dumps(_REGISTRY_NO_VERIFY_CFG)
 REGISTRY_SQL_VERB_CONTRIVED_NO_VERIFY_CFG_STR = json.dumps(_REGISTRY_SQL_VERB_CONTRIVED_NO_VERIFY_CFG)
