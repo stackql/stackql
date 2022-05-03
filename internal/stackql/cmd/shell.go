@@ -124,7 +124,7 @@ var shellCmd = &cobra.Command{
 
 		handlerCtx, handlerrErr := handler.GetHandlerCtx("", runtimeCtx, queryCache, sqlEngine)
 		if handlerrErr != nil {
-			fmt.Fprintln(outErrFile, fmt.Sprintf("Error setting up handler context for provider '%s'", runtimeCtx.ProviderStr))
+			fmt.Fprintln(outErrFile, fmt.Sprintf("Error setting up handler context for provider '%s': \"%s\"", runtimeCtx.ProviderStr, handlerrErr))
 		}
 		var authCtx *dto.AuthCtx
 		var prov provider.IProvider
