@@ -1,6 +1,10 @@
+*** Variables ***
+${LOCAL_LIB_HOME}    ${CURDIR}/../lib
+
 *** Settings ***
 Library    Process
-Library    OperatingSystem   
+Library    OperatingSystem 
+Library    ${LOCAL_LIB_HOME}/StackQLInterfaces.py  
 
 *** Settings ***
 Variables    ${CURDIR}/../variables/stackql_context.py

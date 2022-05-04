@@ -1,7 +1,11 @@
+*** Variables ***
+${LOCAL_LIB_HOME}    ../lib
+
 *** Settings ***
 Library    Process
 Library    OperatingSystem
 Library    String
+Library    ${LOCAL_LIB_HOME}/StackQLInterfaces.py
 
 *** Settings ***
 Variables         ${CURDIR}/../variables/stackql_context.py
@@ -67,18 +71,24 @@ Join GCP Self
 
 Basic Query mTLS Returns OK
     Should PG Client Inline Contain
+    ...    ${CURDIR}
+    ...    ${PSQL_EXE}
     ...    ${PSQL_MTLS_CONN_STR}
     ...    ${SELECT_CONTAINER_SUBNET_AGG_ASC}
     ...    ipCidrRange
 
 Basic Query unencrypted Returns OK
     Should PG Client Inline Contain
+    ...    ${CURDIR}
+    ...    ${PSQL_EXE}
     ...    ${PSQL_UNENCRYPTED_CONN_STR}
     ...    ${SELECT_CONTAINER_SUBNET_AGG_ASC}
     ...    ipCidrRange
 
 Erroneous mTLS Config Plus Basic Query Returns Error
     Should PG Client Error Inline Contain
+    ...    ${CURDIR}
+    ...    ${PSQL_EXE}
     ...    ${PSQL_MTLS_INVALID_CONN_STR}
     ...    ${SELECT_CONTAINER_SUBNET_AGG_ASC}
     ...    error
@@ -146,31 +156,6 @@ Start StackQL PG Server unencrypted
     [Return]    ${process}
 
 
-Run PG Client Command
-    [Arguments]    ${_PSQL_CONN_STR}    ${_QUERY}
-    ${_MOD_CONN} =    Replace String    ${_PSQL_CONN_STR}    \\    /
-    Log To Console    CURDIR = '${CURDIR}'
-    Log To Console    PSQL_EXE = '${PSQL_EXE}'
-    ${result} =     Run Process    
-                    ...  ${PSQL_EXE}
-                    ...  -d    ${_MOD_CONN}
-                    ...  -c    ${_QUERY}
-    Log             ${result.stdout}
-    Log             ${result.stderr}
-    [Return]    ${result}
 
 
-Should PG Client Inline Equal
-    [Arguments]    ${_CONN_STR}   ${_QUERY}    ${_EXPECTED_OUTPUT}
-    ${result} =    Run PG Client Command    ${_CONN_STR}    ${_QUERY}
-    Should Be Equal    ${result.stdout}    ${_EXPECTED_OUTPUT}
 
-Should PG Client Inline Contain
-    [Arguments]    ${_CONN_STR}   ${_QUERY}    ${_EXPECTED_OUTPUT}
-    ${result} =    Run PG Client Command    ${_CONN_STR}    ${_QUERY}
-    Should Contain    ${result.stdout}    ${_EXPECTED_OUTPUT}
-
-Should PG Client Error Inline Contain
-    [Arguments]    ${_CONN_STR}   ${_QUERY}    ${_EXPECTED_OUTPUT}
-    ${result} =    Run PG Client Command    ${_CONN_STR}    ${_QUERY}
-    Should Contain    ${result.stderr}    ${_EXPECTED_OUTPUT}
