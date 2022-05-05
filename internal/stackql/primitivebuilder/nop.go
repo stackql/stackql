@@ -9,6 +9,13 @@ import (
 	"github.com/stackql/stackql/internal/stackql/util"
 )
 
+type NopBuilder struct {
+	graph      *primitivegraph.PrimitiveGraph
+	handlerCtx *handler.HandlerContext
+	root       primitivegraph.PrimitiveNode
+	sqlEngine  sqlengine.SQLEngine
+}
+
 func NewNopBuilder(graph *primitivegraph.PrimitiveGraph, txnControlCounters *dto.TxnControlCounters, handlerCtx *handler.HandlerContext, sqlEngine sqlengine.SQLEngine) Builder {
 	return &NopBuilder{
 		graph:      graph,

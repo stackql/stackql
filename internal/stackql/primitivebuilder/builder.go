@@ -89,13 +89,6 @@ func NewSubTreeBuilder(children []Builder) Builder {
 	}
 }
 
-type NopBuilder struct {
-	graph      *primitivegraph.PrimitiveGraph
-	handlerCtx *handler.HandlerContext
-	root       primitivegraph.PrimitiveNode
-	sqlEngine  sqlengine.SQLEngine
-}
-
 func NewDiamondBuilder(parent Builder, children []Builder, graph *primitivegraph.PrimitiveGraph, sqlEngine sqlengine.SQLEngine, shouldCollectGarbage bool) Builder {
 	return &DiamondBuilder{
 		SubTreeBuilder:       SubTreeBuilder{children: children},

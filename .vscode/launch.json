@@ -9,11 +9,12 @@
       "id": "registryString",
       "description": "Registry Configuration",
       "options": [
+        "{ \"url\": \"file://${workspaceFolder}/test/registry-sandbox\", \"localDocRoot\": \"${workspaceFolder}/test/registry-sandbox\", \"verifyConfig\": { \"nopVerify\": true } }",
         "{ \"url\": \"file://${workspaceFolder}/test/registry\", \"localDocRoot\": \"${workspaceFolder}/test/registry\", \"verifyConfig\": { \"nopVerify\": true } }",
         "{ \"url\": \"https://cdn.statically.io/gh/stackql/stackql-provider-registry/feature/reset-provider-versions-02/providers\" }",
         "{ \"url\": \"https://cdn.statically.io/gh/stackql/stackql-provider-registry/feature/add-github-provider-published-05/providers\" }"
       ],
-      "default": "{ \"url\": \"file://${workspaceFolder}/test/registry\", \"localDocRoot\": \"${workspaceFolder}/test/registry\", \"verifyConfig\": { \"nopVerify\": true } }"
+      "default": "{ \"url\": \"file://${workspaceFolder}/test/registry-sandbox\", \"localDocRoot\": \"${workspaceFolder}/test/registry-sandbox\", \"verifyConfig\": { \"nopVerify\": true } }"
     },
     {
       "type": "promptString",
@@ -71,6 +72,18 @@
       "args": [
         "exec",
         "DESCRIBE google.compute.instances;", // "--offline"
+      ],
+    },
+    {
+      "name": "Debug \"DESCRIBE k8s.core_v1.Node ;\" ",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "DESCRIBE k8s.core_v1.Node ;", // "--offline"
       ],
     },
     {
