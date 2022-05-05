@@ -7,12 +7,13 @@ from robot.libraries.Process import Process
 
 
 @library(scope='SUITE', version='0.1.0', doc_format='reST')
-class StackQLInterfaces(BuiltIn, Process):
+class StackQLInterfaces(Process, BuiltIn):
   ROBOT_LISTENER_API_VERSION = 2
 
   def __init__(self):
     self._counter = 0
     self.ROBOT_LIBRARY_LISTENER = self
+    Process.__init__(self)
 
   def _end_suite(self, name, attrs):
     print('Suite %s (%s) ending.' % (name, attrs['id']))
@@ -30,7 +31,7 @@ class StackQLInterfaces(BuiltIn, Process):
     # bi = BuiltIn().get_library_instance('Builtin')
     self.log_to_console(f"curdir = '{curdir}'")
     self.log_to_console(f"psql_exe = '{psql_exe}'")
-    result = self.run_process(
+    result = super().run_process(
       psql_exe, 
       '-d', _mod_conn, 
       '-c', query
