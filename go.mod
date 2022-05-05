@@ -78,4 +78,4 @@ replace github.com/fatih/color => github.com/stackql/color v0.0.1-rc01
 
 replace vitess.io/vitess => github.com/stackql/vitess v0.0.11-alpha08
 
-replace github.com/jeroenrinzema/psql-wire => github.com/stackql/psql-wire v0.0.2-stackqlalpha3
+replace github.com/jeroenrinzema/psql-wire => github.com/stackql/psql-wire v0.0.2-stackqlalpha4

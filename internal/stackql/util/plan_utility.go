@@ -197,7 +197,7 @@ func GenerateSimpleErroneousOutput(err error) dto.ExecutorOutput {
 func PrepareResultSet(payload dto.PrepareResultSetDTO) dto.ExecutorOutput {
 	if payload.Err != nil {
 		return dto.NewExecutorOutput(
-			sqldata.NewSimpleSQLResultStream(nil),
+			nil,
 			payload.OutputBody,
 			nil,
 			payload.Msg,
@@ -206,7 +206,7 @@ func PrepareResultSet(payload dto.PrepareResultSetDTO) dto.ExecutorOutput {
 	}
 	if payload.RowMap == nil || len(payload.RowMap) == 0 {
 		return dto.NewExecutorOutput(
-			sqldata.NewSimpleSQLResultStream(nil),
+			nil,
 			payload.OutputBody,
 			nil,
 			payload.Msg,
