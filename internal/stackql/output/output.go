@@ -243,6 +243,9 @@ func (tw *TableWriter) Write(res sqldata.ISQLResultStream) error {
 		r, err := res.Read()
 		log.Debugln(fmt.Sprintf("result from stream: %v", r))
 		if err != nil {
+			if r == nil {
+				return nil
+			}
 			if errors.Is(err, io.EOF) {
 				if !isHeaderRead {
 					header := tw.getHeader(r)
