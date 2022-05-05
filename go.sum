@@ -648,6 +648,14 @@ github.com/stackql/go-suffix-map v0.0.1-alpha01 h1:TDUDS8bySu41Oo9p0eniUeCm43mnR
 github.com/stackql/go-suffix-map v0.0.1-alpha01/go.mod h1:QAi+SKukOyf4dBtWy8UMy+hsXXV+yyEE4vmBkji2V7g=
 github.com/stackql/psql-wire v0.0.1-stackqlrc01 h1:oYm8EuiABpn9BHddYMSru8LCPaefQbOPiIYIlVb8mCc=
 github.com/stackql/psql-wire v0.0.1-stackqlrc01/go.mod h1:p4SxaTS4m9mLiq08GSOaatXSiai8REL5XPMlcVJxSwE=
+github.com/stackql/psql-wire v0.0.2-stackqlalpha1 h1:3fUDhCixcBsTR42cghu30mQXZbvG5XkD5Ty2eS0P+SQ=
+github.com/stackql/psql-wire v0.0.2-stackqlalpha1/go.mod h1:p4SxaTS4m9mLiq08GSOaatXSiai8REL5XPMlcVJxSwE=
+github.com/stackql/psql-wire v0.0.2-stackqlalpha2 h1:4+CsuT9J1BC32X+cEYKAt4/tie5abSTudvabuwAf4BE=
+github.com/stackql/psql-wire v0.0.2-stackqlalpha2/go.mod h1:p4SxaTS4m9mLiq08GSOaatXSiai8REL5XPMlcVJxSwE=
+github.com/stackql/psql-wire v0.0.2-stackqlalpha3 h1:YKEcJoMpzU16ODCxzcD5Xc6PYmB+VKJhDT4fYO6Wxvs=
+github.com/stackql/psql-wire v0.0.2-stackqlalpha3/go.mod h1:p4SxaTS4m9mLiq08GSOaatXSiai8REL5XPMlcVJxSwE=
+github.com/stackql/psql-wire v0.0.2-stackqlalpha4 h1:eoQkQFduLXIMXmd/krARPOfPcyUjjxdT7ZplKfkqkeA=
+github.com/stackql/psql-wire v0.0.2-stackqlalpha4/go.mod h1:p4SxaTS4m9mLiq08GSOaatXSiai8REL5XPMlcVJxSwE=
 github.com/stackql/readline v0.0.1-rc01 h1:E5Sxe8vB/dZzGlJTJuVYKTYL9EHG0xNrepg8vev5YP0=
 github.com/stackql/readline v0.0.1-rc01/go.mod h1:GsQot9cgbH0B1/8pwoQKJ3KAAXaE+8BjFD2RvJOGs1Y=
 github.com/stackql/stackql-provider-registry v0.0.1-rc01 h1:3XorfaYEhGpuvEeQK04EmpZUCr42hZ/a4Nh3wE25LF0=
@@ -656,6 +664,8 @@ github.com/stackql/vitess v0.0.11-alpha05 h1:h+FczKcSE6k0tm/O/UyaCzNjzlrHof2FcG1
 github.com/stackql/vitess v0.0.11-alpha05/go.mod h1:6aOZHbgHclTasEGZvrdoWfca6Y4XJfemKMqwnDL/klI=
 github.com/stackql/vitess v0.0.11-alpha07 h1:YWTiJ9thQ0d4p24wkfobHOEsM7Z1NzsHkS8SdCq8NM0=
 github.com/stackql/vitess v0.0.11-alpha07/go.mod h1:6aOZHbgHclTasEGZvrdoWfca6Y4XJfemKMqwnDL/klI=
+github.com/stackql/vitess v0.0.11-alpha08 h1:B0M9djqTnDzmEoI+Pvt6UIxFY3dJVfKqjB7TV9k490E=
+github.com/stackql/vitess v0.0.11-alpha08/go.mod h1:6aOZHbgHclTasEGZvrdoWfca6Y4XJfemKMqwnDL/klI=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/objx v0.1.1/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/objx v0.2.0/go.mod h1:qt09Ya8vawLte6SNmTgCsAVtYtaKzEcn8ATUoHMkEqE=

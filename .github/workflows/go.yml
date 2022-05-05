@@ -29,8 +29,15 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v2
       with:
-        go-version: ^1.13
+        go-version: ^1.18
       id: go
+    
+    - name: Git Ref Parse
+      id: git_ref_parse
+      run: |
+          echo ::set-output name=SOURCE_NAME::${GITHUB_REF#refs/*/}
+          echo ::set-output name=SOURCE_BRANCH::${GITHUB_REF#refs/heads/}
+          echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
     
     - name: Set up mingw
       uses: egor-tensin/setup-mingw@v2
@@ -128,12 +135,17 @@ jobs:
         openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
         openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365 
 
-    - name: Run robot tests
+    - name: Run robot mocked functional tests
       if: success()
       env:
         PSQL_EXE: C:\Program Files\PostgreSQL\13\bin\psql
       run: |
-        cmd /c "robot test\functional"
+        cmd /c "robot test\robot\functional"
+    
+    - name: Run robot integration tests
+      if: success() && startsWith(${{ steps.git_ref_parse.outputs.SOURCE_TAG }}, 'build-release')
+      run: |
+        robot test/robot/integration
     
     - name: Prepare Test DB
       if: success()
@@ -157,8 +169,15 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v2
       with:
-        go-version: ^1.13
+        go-version: ^1.18
       id: go
+    
+    - name: Git Ref Parse
+      id: git_ref_parse
+      run: |
+          echo ::set-output name=SOURCE_NAME::${GITHUB_REF#refs/*/}
+          echo ::set-output name=SOURCE_BRANCH::${GITHUB_REF#refs/heads/}
+          echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
     
     - name: Set up GCC
       uses: egor-tensin/setup-gcc@v1
@@ -245,10 +264,15 @@ jobs:
         openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
         openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365 
 
-    - name: Run robot tests
+    - name: Run robot mocked functional tests
       if: success()
       run: |
-        robot test/functional
+        robot test/robot/functional
+    
+    - name: Run robot integration tests
+      if: success() && startsWith(${{ steps.git_ref_parse.outputs.SOURCE_TAG }}, 'build-release')
+      run: |
+        robot test/robot/integration
     
     - name: Prepare Test DB
       if: success()
@@ -274,8 +298,15 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v2
       with:
-        go-version: ^1.13
+        go-version: ^1.18
       id: go
+    
+    - name: Git Ref Parse
+      id: git_ref_parse
+      run: |
+          echo ::set-output name=SOURCE_NAME::${GITHUB_REF#refs/*/}
+          echo ::set-output name=SOURCE_BRANCH::${GITHUB_REF#refs/heads/}
+          echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
@@ -352,10 +383,15 @@ jobs:
         openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
         openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365 
 
-    - name: Run robot tests
+    - name: Run robot mocked functional tests
       if: success()
       run: |
-        robot test/functional
+        robot test/robot/functional
+    
+    - name: Run robot integration tests
+      if: success() && startsWith(${{ steps.git_ref_parse.outputs.SOURCE_TAG }}, 'build-release')
+      run: |
+        robot test/robot/integration
     
     - name: Prepare Test DB
       if: success()

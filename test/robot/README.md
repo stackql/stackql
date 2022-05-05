@@ -8,6 +8,41 @@
 - [ ] integration tests for different registry configurations.
 
 
+## Running yourself
+
+### Running mocked provider tests
+
+From the repository root:
+
+```sh
+robot -d test/robot/functional test/robot/functional
+```
+
+### Running actual integration tests
+
+From the repository root:
+
+```sh
+robot -d test/robot/integration \ 
+  -v OKTA_CREDENTIALS:"$(cat /path/to/okta/credentials)" \
+  -v GCP_CREDENTIALS:"$(cat /path/to/gcp/credentials)" \
+  -v AWS_CREDENTIALS:"$(cat /path/to/aws/credentials)" \
+  -v AZURE_CREDENTIALS:"$(cat /path/to/azure/credentials)" \
+  test/robot/integration
+```
+
+For example:
+
+```sh
+robot -d test/robot/integration \ 
+  -v OKTA_CREDENTIALS:"$(cat /path/to/okta/credentials)" \
+  -v GCP_CREDENTIALS:"$(cat ${HOME}/stack/stackql-devel/keys/integration/stackql-dev-01-07d91f4abacf.json)" \
+  -v AWS_CREDENTIALS:"$(cat ${HOME}/stack/stackql-devel/keys/integration/aws-auth-val.txt)" \
+  -v AZURE_CREDENTIALS:"$(cat /path/to/azure/credentials)" \
+  test/robot/integration
+```
+
+
 ### Known Queries to add to functional tests
 
 ```sql

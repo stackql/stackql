@@ -192,7 +192,7 @@ func (pgb *planGraphBuilder) createInstructionFor(pbi PlanBuilderInput) error {
 		_, _, err := pgb.handleSelect(pbi)
 		return err
 	case *sqlparser.Set:
-		return iqlerror.GetStatementNotSupportedError("SET")
+		return pgb.nop(pbi)
 	case *sqlparser.SetTransaction:
 		return iqlerror.GetStatementNotSupportedError("SET TRANSACTION")
 	case *sqlparser.Show:
@@ -212,6 +212,12 @@ func (pgb *planGraphBuilder) createInstructionFor(pbi PlanBuilderInput) error {
 		return pgb.handleUse(pbi)
 	}
 	return iqlerror.GetStatementNotSupportedError(fmt.Sprintf("BUG: unexpected statement type: %T", stmt))
+}
+
+func (pgb *planGraphBuilder) nop(pbi PlanBuilderInput) error {
+	primitiveGenerator := newRootPrimitiveGenerator(nil, pbi.GetHandlerCtx(), pgb.planGraph)
+	err := primitiveGenerator.analyzeNop(pbi)
+	return err
 }
 
 func (pgb *planGraphBuilder) handleAuth(pbi PlanBuilderInput) error {
@@ -630,22 +636,8 @@ func BuildPlanFromContext(handlerCtx *handler.HandlerContext) (*plan.Plan, error
 	if err != nil {
 		return createErroneousPlan(handlerCtx, qPlan, rowSort, err)
 	}
-	s := sqlparser.String(statement)
+	// s := sqlparser.String(statement)
 	result, err := sqlparser.RewriteAST(statement)
-	if err != nil {
-		return createErroneousPlan(handlerCtx, qPlan, rowSort, err)
-	}
-	vis := astvisit.NewDRMAstVisitor("iql_query_id", false)
-	statement.Accept(vis)
-	provStrSlice := astvisit.ExtractProviderStrings(result.AST)
-	for _, p := range provStrSlice {
-		_, err := handlerCtx.GetProvider(p)
-		if err != nil {
-			return nil, err
-		}
-	}
-	log.Infoln("Recovered query: " + s)
-	log.Infoln("Recovered query from vis: " + vis.GetRewrittenQuery())
 	if err != nil {
 		return createErroneousPlan(handlerCtx, qPlan, rowSort, err)
 	}
@@ -657,18 +649,37 @@ func BuildPlanFromContext(handlerCtx *handler.HandlerContext) (*plan.Plan, error
 
 	pGBuilder := newPlanGraphBuilder()
 
-	ast := result.AST
-	tVis := astvisit.NewTableExtractAstVisitor()
-	tVis.Visit(ast)
+	if isPGSetupQuery(handlerCtx.RawQuery) {
+		pbi := NewPlanBuilderInput(handlerCtx, nil, nil, nil, nil, nil)
+		createInstructionError := pGBuilder.nop(pbi)
+		if createInstructionError != nil {
+			return nil, createInstructionError
+		}
+	} else {
+		provStrSlice := astvisit.ExtractProviderStrings(result.AST)
+		for _, p := range provStrSlice {
+			_, err := handlerCtx.GetProvider(p)
+			if err != nil {
+				return nil, err
+			}
+		}
+		if err != nil {
+			return createErroneousPlan(handlerCtx, qPlan, rowSort, err)
+		}
 
-	aVis := astvisit.NewTableAliasAstVisitor(tVis.GetTables())
-	aVis.Visit(ast)
+		ast := result.AST
+		tVis := astvisit.NewTableExtractAstVisitor()
+		tVis.Visit(ast)
 
-	pbi := NewPlanBuilderInput(handlerCtx, ast, tVis.GetTables(), aVis.GetAliasedColumns(), tVis.GetAliasMap(), aVis.GetColRefs())
+		aVis := astvisit.NewTableAliasAstVisitor(tVis.GetTables())
+		aVis.Visit(ast)
 
-	createInstructionError := pGBuilder.createInstructionFor(pbi)
-	if createInstructionError != nil {
-		return nil, createInstructionError
+		pbi := NewPlanBuilderInput(handlerCtx, ast, tVis.GetTables(), aVis.GetAliasedColumns(), tVis.GetAliasMap(), aVis.GetColRefs())
+
+		createInstructionError := pGBuilder.createInstructionFor(pbi)
+		if createInstructionError != nil {
+			return nil, createInstructionError
+		}
 	}
 
 	qPlan.Instructions = pGBuilder.planGraph

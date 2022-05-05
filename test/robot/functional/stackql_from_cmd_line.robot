@@ -1,9 +1,13 @@
-*** Settings ***
-Library    Process
-Library    OperatingSystem   
+*** Variables ***
+${LOCAL_LIB_HOME}    ${CURDIR}/../lib
 
 *** Settings ***
-Variables    ${CURDIR}/variables/stackql_context.py
+Library    Process
+Library    OperatingSystem 
+Library    ${LOCAL_LIB_HOME}/StackQLInterfaces.py  
+
+*** Settings ***
+Variables    ${CURDIR}/../variables/stackql_context.py
 
 *** Test Cases *** 
 Positive Control

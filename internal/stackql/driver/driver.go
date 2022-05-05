@@ -47,9 +47,9 @@ type StackQLBackend struct {
 
 func (sbs *StackQLBackend) HandleSimpleQuery(ctx context.Context, query string) (sqldata.ISQLResultStream, error) {
 	sbs.handlerCtx.RawQuery = query
-	if strings.Count(query, ";") > 1 {
-		return nil, fmt.Errorf("only support single queries in server mode at this time")
-	}
+	// if strings.Count(query, ";") > 1 {
+	// 	return nil, fmt.Errorf("only support single queries in server mode at this time")
+	// }
 	res, ok := processQueryOrQueries(sbs.handlerCtx)
 	if !ok {
 		return nil, fmt.Errorf("no SQLresults available")
@@ -59,6 +59,26 @@ func (sbs *StackQLBackend) HandleSimpleQuery(ctx context.Context, query string) 
 		return nil, r.Err
 	}
 	return r.GetSQLResult(), nil
+}
+
+func (sb *StackQLBackend) SplitCompoundQuery(s string) ([]string, error) {
+	res := []string{}
+	var beg int
+	var inDoubleQuotes bool
+
+	for i := 0; i < len(s); i++ {
+		if s[i] == ';' && !inDoubleQuotes {
+			res = append(res, s[beg:i])
+			beg = i + 1
+		} else if s[i] == '"' {
+			if !inDoubleQuotes {
+				inDoubleQuotes = true
+			} else if i > 0 && s[i-1] != '\\' {
+				inDoubleQuotes = false
+			}
+		}
+	}
+	return append(res, s[beg:]), nil
 }
 
 func NewStackQLBackend(handlerCtx *handler.HandlerContext) (*StackQLBackend, error) {
