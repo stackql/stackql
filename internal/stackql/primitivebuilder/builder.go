@@ -73,9 +73,6 @@ type SubTreeBuilder struct {
 	children []Builder
 }
 
-type NopBuilder struct {
-}
-
 type DiamondBuilder struct {
 	SubTreeBuilder
 	parentBuilder            Builder
@@ -92,8 +89,11 @@ func NewSubTreeBuilder(children []Builder) Builder {
 	}
 }
 
-func NewNopBuilder(children []Builder) Builder {
-	return &SubTreeBuilder{}
+type NopBuilder struct {
+	graph      *primitivegraph.PrimitiveGraph
+	handlerCtx *handler.HandlerContext
+	root       primitivegraph.PrimitiveNode
+	sqlEngine  sqlengine.SQLEngine
 }
 
 func NewDiamondBuilder(parent Builder, children []Builder, graph *primitivegraph.PrimitiveGraph, sqlEngine sqlengine.SQLEngine, shouldCollectGarbage bool) Builder {

@@ -602,6 +602,20 @@ func (p *primitiveGenerator) analyzeUnaryExec(handlerCtx *handler.HandlerContext
 	return meta, p.analyzeUnarySelection(handlerCtx, node, nil, meta, cols)
 }
 
+func (p *primitiveGenerator) analyzeNop(pbi PlanBuilderInput) error {
+	handlerCtx := pbi.GetHandlerCtx()
+	p.PrimitiveBuilder.SetBuilder(
+		primitivebuilder.NewNopBuilder(
+			p.PrimitiveBuilder.GetGraph(),
+			p.PrimitiveBuilder.GetTxnCtrlCtrs(),
+			handlerCtx,
+			handlerCtx.SQLEngine,
+		),
+	)
+	err := p.PrimitiveBuilder.GetBuilder().Build()
+	return err
+}
+
 func (p *primitiveGenerator) analyzeExec(pbi PlanBuilderInput) error {
 	handlerCtx := pbi.GetHandlerCtx()
 	node, ok := pbi.GetExec()
@@ -747,12 +761,26 @@ func (p *primitiveGenerator) analyzeSchemaVsMap(handlerCtx *handler.HandlerConte
 	return nil
 }
 
+func isPGSetupQuery(q string) bool {
+	if q == "select relname, nspname, relkind from pg_catalog.pg_class c, pg_catalog.pg_namespace n where relkind in ('r', 'v', 'm', 'f') and nspname not in ('pg_catalog', 'information_schema', 'pg_toast', 'pg_temp_1') and n.oid = relnamespace order by nspname, relname" {
+		return true
+	}
+	if q == "select oid, typbasetype from pg_type where typname = 'lo'" {
+		return true
+	}
+	return false
+}
+
 func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 
 	handlerCtx := pbi.GetHandlerCtx()
 	node, ok := pbi.GetSelect()
 	if !ok {
 		return fmt.Errorf("could not cast statement of type '%T' to required Select", pbi.GetStatement())
+	}
+
+	if isPGSetupQuery(handlerCtx.RawQuery) {
+		return p.analyzeNop(pbi)
 	}
 
 	var pChild *primitiveGenerator
