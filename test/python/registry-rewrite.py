@@ -15,6 +15,7 @@ DEFAULT_SRC_DIR = os.path.join(TEST_ROOT_DIR, 'registry', 'src')
 DEFAULT_DST_DIR = os.path.join(TEST_ROOT_DIR, 'registry-mocked', 'src')
 DEFAULT_PORT = 1080
 OKTA_DEFAULT_PORT = 1090
+AWS_DEFAULT_PORT = 1091
 
 
 
@@ -35,13 +36,19 @@ parser.add_argument(
     '--default-port',
     type=int,
     default=DEFAULT_PORT,
-    help='directory containing config and cache'
+    help='port for default mock service'
 )
 parser.add_argument(
     '--okta-port',
     type=int,
     default=OKTA_DEFAULT_PORT,
-    help='directory containing config and cache'
+    help='port for okta mock service'
+)
+parser.add_argument(
+    '--aws-port',
+    type=int,
+    default=AWS_DEFAULT_PORT,
+    help='port for aws mock service'
 )
 
 class ProviderArgs:
@@ -82,7 +89,7 @@ if __name__ == '__main__':
       prov_args = ProviderArgs(
         prov_dir.path,
         os.path.join(args.destdir, prov_dir.name),
-        args.okta_port if prov_dir.name == 'okta' else args.default_port,
+        args.okta_port if prov_dir.name == 'okta' else args.aws_port if prov_dir.name == 'aws' else args.default_port,
       ) 
       print(f'{prov_args.srcdir}, {prov_args.destdir}, {prov_args.port}')
       rewrite_provider(prov_args)

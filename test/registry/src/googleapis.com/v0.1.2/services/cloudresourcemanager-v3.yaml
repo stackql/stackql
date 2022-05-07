@@ -1186,6 +1186,7 @@ components:
           response:
             mediaType: application/json
             openAPIDocKey: '200'
+            objectKey: bindings
         list:
           operation:
             $ref: '#/paths/~1v3~1folders/get'
@@ -1222,6 +1223,7 @@ components:
           response:
             mediaType: application/json
             openAPIDocKey: '200'
+            objectKey: bindings
         testIamPermissions:
           operation:
             $ref: '#/paths/~1v3~1folders~1{foldersId}:testIamPermissions/post'
@@ -1299,6 +1301,7 @@ components:
           response:
             mediaType: application/json
             openAPIDocKey: '200'
+            objectKey: bindings
         search:
           operation:
             $ref: '#/paths/~1v3~1organizations:search/get'
@@ -1313,6 +1316,7 @@ components:
           response:
             mediaType: application/json
             openAPIDocKey: '200'
+            objectKey: bindings
         testIamPermissions:
           operation:
             $ref: '#/paths/~1v3~1organizations~1{organizationsId}:testIamPermissions/post'
@@ -1354,12 +1358,14 @@ components:
           response:
             mediaType: application/json
             openAPIDocKey: '200'
+            objectKey: bindings
         list:
           operation:
             $ref: '#/paths/~1v3~1projects/get'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
+            objectKey: projects
         move:
           operation:
             $ref: '#/paths/~1v3~1projects~1{projectsId}:move/post'
@@ -1390,6 +1396,7 @@ components:
           response:
             mediaType: application/json
             openAPIDocKey: '200'
+            objectKey: bindings
         testIamPermissions:
           operation:
             $ref: '#/paths/~1v3~1projects~1{projectsId}:testIamPermissions/post'
@@ -1464,6 +1471,7 @@ components:
           response:
             mediaType: application/json
             openAPIDocKey: '200'
+            objectKey: bindings
         list:
           operation:
             $ref: '#/paths/~1v3~1tagKeys/get'
@@ -1486,6 +1494,7 @@ components:
           response:
             mediaType: application/json
             openAPIDocKey: '200'
+            objectKey: bindings
         testIamPermissions:
           operation:
             $ref: '#/paths/~1v3~1tagKeys~1{tagKeysId}:testIamPermissions/post'
@@ -1527,6 +1536,7 @@ components:
           response:
             mediaType: application/json
             openAPIDocKey: '200'
+            objectKey: bindings
         list:
           operation:
             $ref: '#/paths/~1v3~1tagValues/get'
@@ -1549,6 +1559,7 @@ components:
           response:
             mediaType: application/json
             openAPIDocKey: '200'
+            objectKey: bindings
         testIamPermissions:
           operation:
             $ref: '#/paths/~1v3~1tagValues~1{tagValuesId}:testIamPermissions/post'

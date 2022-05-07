@@ -776,7 +776,8 @@ func (v *DRMAstVisitor) Visit(node sqlparser.SQLNode) error {
 		}
 		buf.AstPrintf(node, "%v", node.Name)
 		buf.AstPrintf(node, `"`)
-		v.rewrittenQuery = buf.String()
+		rq := buf.String()
+		v.rewrittenQuery = rq
 
 	case *sqlparser.ParenTableExpr:
 		buf.AstPrintf(node, "(%v)", node.Exprs)

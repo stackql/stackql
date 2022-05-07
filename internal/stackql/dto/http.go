@@ -29,6 +29,7 @@ type HttpParameters struct {
 	ResponseBody map[string]interface{}
 	ServerParams map[string]ParameterBinding
 	Unassigned   map[string]ParameterBinding
+	Region       string
 }
 
 func NewHttpParameters() *HttpParameters {

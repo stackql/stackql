@@ -238,3 +238,7 @@ time ./stackql exec --cpuprofile=./select-disks-improved-05.profile --auth='{ "g
 2. Light touch option can be based upon:
     - https://github.com/jeroenrinzema/psql-wire
 
+
+## AWS HTTP request signing
+
+https://docs.aws.amazon.com/sdk-for-go/api/aws/signer/v4/

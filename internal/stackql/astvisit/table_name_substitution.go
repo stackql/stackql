@@ -63,20 +63,17 @@ func (v *TableNameSubstitutionAstVisitor) addAcquireQuery(
 func (v *TableNameSubstitutionAstVisitor) getStarColumns(
 	tbl *taxonomy.ExtendedTableMetadata,
 ) ([]openapistackql.ColumnDescriptor, error) {
-	schema, err := tbl.GetResponseSchema()
+	schema, _, err := tbl.GetResponseSchemaAndMediaType()
 	if err != nil {
 		return nil, err
 	}
+	itemObjS, selectItemsKey, err := tbl.GetSelectSchemaAndObjectPath()
 	// rscStr, _ := tbl.GetResourceStr()
 	unsuitableSchemaMsg := "schema unsuitable for select query"
-	// log.Infoln(fmt.Sprintf("schema.ID = %v", schema.ID))
-	log.Infoln(fmt.Sprintf("schema.Items = %v", schema.Items))
-	log.Infoln(fmt.Sprintf("schema.Properties = %v", schema.Properties))
-	var itemObjS *openapistackql.Schema
-	itemObjS, tbl.SelectItemsKey, err = schema.GetSelectSchema(tbl.LookupSelectItemsKey())
 	if err != nil {
 		return nil, fmt.Errorf(unsuitableSchemaMsg)
 	}
+	tbl.SelectItemsKey = selectItemsKey
 	if itemObjS == nil {
 		return nil, fmt.Errorf(unsuitableSchemaMsg)
 	}
@@ -99,22 +96,15 @@ func (v *TableNameSubstitutionAstVisitor) buildSelectQuery(
 	cols []parserutil.ColumnHandle,
 	dc drm.DRMConfig,
 ) error {
-	schema, err := tbl.GetResponseSchema()
-	if err != nil {
-		return err
-	}
-	provStr, _ := tbl.GetProviderStr()
-	svcStr, _ := tbl.GetServiceStr()
+	itemObjS, selectItemsKey, err := tbl.GetSelectSchemaAndObjectPath()
 	// rscStr, _ := tbl.GetResourceStr()
 	unsuitableSchemaMsg := "schema unsuitable for select query"
-	// log.Infoln(fmt.Sprintf("schema.ID = %v", schema.ID))
-	log.Infoln(fmt.Sprintf("schema.Items = %v", schema.Items))
-	log.Infoln(fmt.Sprintf("schema.Properties = %v", schema.Properties))
-	var itemObjS *openapistackql.Schema
-	itemObjS, tbl.SelectItemsKey, err = schema.GetSelectSchema(tbl.LookupSelectItemsKey())
 	if err != nil {
 		return fmt.Errorf(unsuitableSchemaMsg)
 	}
+	tbl.SelectItemsKey = selectItemsKey
+	provStr, _ := tbl.GetProviderStr()
+	svcStr, _ := tbl.GetServiceStr()
 	if itemObjS == nil {
 		return fmt.Errorf(unsuitableSchemaMsg)
 	}
@@ -564,7 +554,7 @@ func (v *TableNameSubstitutionAstVisitor) Visit(node sqlparser.SQLNode) error {
 		if !ok {
 			return fmt.Errorf("could not locate table for expr '%v'", node)
 		}
-		schema, err := tbl.GetResponseSchema()
+		schema, _, err := tbl.GetResponseSchemaAndMediaType()
 		if err != nil {
 			return err
 		}

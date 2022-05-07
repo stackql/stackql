@@ -50,15 +50,13 @@ func (v *QueryRewriteAstVisitor) buildAcquireQueryCtx(
 func (v *QueryRewriteAstVisitor) getStarColumns(
 	tbl *taxonomy.ExtendedTableMetadata,
 ) ([]openapistackql.ColumnDescriptor, error) {
-	schema, err := tbl.GetResponseSchema()
+	schema, _, err := tbl.GetResponseSchemaAndMediaType()
 	if err != nil {
 		return nil, err
 	}
+	itemObjS, selectItemsKey, err := tbl.GetSelectSchemaAndObjectPath()
+	tbl.SelectItemsKey = selectItemsKey
 	unsuitableSchemaMsg := "schema unsuitable for select query"
-	log.Infoln(fmt.Sprintf("schema.Items = %v", schema.Items))
-	log.Infoln(fmt.Sprintf("schema.Properties = %v", schema.Properties))
-	var itemObjS *openapistackql.Schema
-	itemObjS, tbl.SelectItemsKey, err = schema.GetSelectSchema(tbl.LookupSelectItemsKey())
 	if err != nil {
 		return nil, fmt.Errorf(unsuitableSchemaMsg)
 	}
@@ -117,11 +115,20 @@ func (v *QueryRewriteAstVisitor) GenerateSelectDML() (*drm.PreparedStatementCtx,
 	var wq strings.Builder
 	var controlWhereComparisons []string
 	for _, v := range v.tableSlice {
-		gIDcn := fmt.Sprintf(`"%s"."%s"`, v.GetUniqueId(), genIdColName)
-		sIDcn := fmt.Sprintf(`"%s"."%s"`, v.GetUniqueId(), sessionIDColName)
-		tIDcn := fmt.Sprintf(`"%s"."%s"`, v.GetUniqueId(), txnIdColName)
-		iIDcn := fmt.Sprintf(`"%s"."%s"`, v.GetUniqueId(), insIdColName)
-		controlWhereComparisons = append(controlWhereComparisons, fmt.Sprintf(`%s = ? AND %s = ? AND %s = ? AND %s = ?`, gIDcn, sIDcn, tIDcn, iIDcn))
+		alias := v.Alias
+		if alias != "" {
+			gIDcn := fmt.Sprintf(`"%s"."%s"`, alias, genIdColName)
+			sIDcn := fmt.Sprintf(`"%s"."%s"`, alias, sessionIDColName)
+			tIDcn := fmt.Sprintf(`"%s"."%s"`, alias, txnIdColName)
+			iIDcn := fmt.Sprintf(`"%s"."%s"`, alias, insIdColName)
+			controlWhereComparisons = append(controlWhereComparisons, fmt.Sprintf(`%s = ? AND %s = ? AND %s = ? AND %s = ?`, gIDcn, sIDcn, tIDcn, iIDcn))
+		} else {
+			gIDcn := fmt.Sprintf(`"%s"`, genIdColName)
+			sIDcn := fmt.Sprintf(`"%s"`, sessionIDColName)
+			tIDcn := fmt.Sprintf(`"%s"`, txnIdColName)
+			iIDcn := fmt.Sprintf(`"%s"`, insIdColName)
+			controlWhereComparisons = append(controlWhereComparisons, fmt.Sprintf(`%s = ? AND %s = ? AND %s = ? AND %s = ?`, gIDcn, sIDcn, tIDcn, iIDcn))
+		}
 	}
 	controlWhereSubClause := fmt.Sprintf("( %s )", strings.Join(controlWhereComparisons, " AND "))
 	wq.WriteString(controlWhereSubClause)
@@ -142,7 +149,6 @@ func (v *QueryRewriteAstVisitor) GenerateSelectDML() (*drm.PreparedStatementCtx,
 	q.WriteString(selectSuffix)
 
 	query := q.String()
-
 	return drm.NewPreparedStatementCtx(
 		query,
 		"",
@@ -592,7 +598,7 @@ func (v *QueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		if err != nil {
 			return err
 		}
-		schema, err := tbl.GetResponseSchema()
+		schema, _, err := tbl.GetResponseSchemaAndMediaType()
 		if err != nil {
 			return err
 		}

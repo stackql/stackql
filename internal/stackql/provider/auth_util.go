@@ -8,6 +8,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/netutils"
+	"github.com/stackql/stackql/pkg/awssign"
 
 	"net/http"
 	"regexp"
@@ -160,6 +161,23 @@ func apiTokenAuth(authCtx *dto.AuthCtx, runtimeCtx dto.RuntimeCtx) (*http.Client
 	if err != nil {
 		return nil, err
 	}
+	httpClient.Transport = tr
+	return httpClient, nil
+}
+
+func awsSigningAuth(authCtx *dto.AuthCtx, runtimeCtx dto.RuntimeCtx) (*http.Client, error) {
+	b, err := authCtx.GetCredentialsBytes()
+	if err != nil {
+		return nil, fmt.Errorf("credentials error: %v", err)
+	}
+	keyStr := string(b)
+	keyID := authCtx.KeyID
+	if keyStr == "" || keyID == "" {
+		return nil, fmt.Errorf("cannot compose AWS signing credentials")
+	}
+	activateAuth(authCtx, "", dto.AuthAWSSigningv4Str)
+	httpClient := netutils.GetHttpClient(runtimeCtx, http.DefaultClient)
+	tr := awssign.NewAwsSignTransport(httpClient.Transport, keyID, keyStr, "")
 	httpClient.Transport = tr
 	return httpClient, nil
 }
