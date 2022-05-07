@@ -438,7 +438,7 @@ func (pb *primitiveGenerator) insertExecutor(handlerCtx *handler.HandlerContext,
 	if err != nil {
 		return nil, err
 	}
-	_, err = tbl.GetResponseSchema()
+	_, _, err = tbl.GetResponseSchemaAndMediaType()
 	if err != nil {
 		return nil, err
 	}

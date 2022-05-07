@@ -92,22 +92,20 @@ func (p *primitiveGenerator) analyzeUnarySelection(
 	if err != nil {
 		return err
 	}
-	schema, err := tbl.GetResponseSchema()
+	schema, mediaType, err := tbl.GetResponseSchemaAndMediaType()
 	if err != nil {
 		return err
 	}
-	provStr, _ := tbl.GetProviderStr()
-	svcStr, _ := tbl.GetServiceStr()
+	itemObjS, selectItemsKey, err := schema.GetSelectSchema(tbl.LookupSelectItemsKey(), mediaType)
 	// rscStr, _ := tbl.GetResourceStr()
 	unsuitableSchemaMsg := "schema unsuitable for select query"
-	// log.Infoln(fmt.Sprintf("schema.ID = %v", schema.ID))
-	log.Infoln(fmt.Sprintf("schema.Items = %v", schema.Items))
-	log.Infoln(fmt.Sprintf("schema.Properties = %v", schema.Properties))
-	var itemObjS *openapistackql.Schema
-	itemObjS, tbl.SelectItemsKey, err = schema.GetSelectSchema(tbl.LookupSelectItemsKey())
 	if err != nil {
 		return fmt.Errorf(unsuitableSchemaMsg)
 	}
+	tbl.SelectItemsKey = selectItemsKey
+	provStr, _ := tbl.GetProviderStr()
+	svcStr, _ := tbl.GetServiceStr()
+	// rscStr, _ := tbl.GetResourceStr()
 	if itemObjS == nil {
 		return fmt.Errorf(unsuitableSchemaMsg)
 	}

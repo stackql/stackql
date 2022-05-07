@@ -4934,6 +4934,7 @@ components:
           response:
             mediaType: application/json
             openAPIDocKey: '200'
+            objectKey: rows
         insert:
           operation:
             $ref: '#/paths/~1projects~1{projectId}~1jobs/post'

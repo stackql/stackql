@@ -3046,6 +3046,7 @@ components:
           response:
             mediaType: application/json
             openAPIDocKey: '200'
+            objectKey: subnetworks
       name: projects.aggregated.usableSubnetworks
       title: projects.aggregated.usableSubnetworks
     projects.locations:

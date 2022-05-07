@@ -28019,6 +28019,833 @@ paths:
         - https://www.googleapis.com/auth/compute.readonly
       tags:
       - disks
+  /projects/{project}/regions/{region}/disks:
+    get:
+      description: Retrieves the list of persistent disks contained within the specified
+        region.
+      operationId: compute.regionDisks.list
+      parameters:
+      - description: Project ID for this request.
+        in: path
+        name: project
+        required: true
+        schema:
+          type: string
+      - description: Name of the region for this request.
+        in: path
+        name: region
+        required: true
+        schema:
+          type: string
+      - description: 'A filter expression that filters resources listed in the response.
+          The expression must specify the field name, a comparison operator, and the
+          value that you want to use for filtering. The value must be a string, a
+          number, or a boolean. The comparison operator must be either `=`, `!=`,
+          `>`, or `<`. For example, if you are filtering Compute Engine instances,
+          you can exclude instances named `example-instance` by specifying `name !=
+          example-instance`. You can also filter nested fields. For example, you could
+          specify `scheduling.automaticRestart = false` to include instances only
+          if they are not scheduled for automatic restarts. You can use filtering
+          on nested fields to filter based on resource labels. To filter on multiple
+          expressions, provide each separate expression within parentheses. For example:
+          ``` (scheduling.automaticRestart = true) (cpuPlatform = "Intel Skylake")
+          ``` By default, each expression is an `AND` expression. However, you can
+          include `AND` and `OR` expressions explicitly. For example: ``` (cpuPlatform
+          = "Intel Skylake") OR (cpuPlatform = "Intel Broadwell") AND (scheduling.automaticRestart
+          = true) ```'
+        in: query
+        name: filter
+        schema:
+          type: string
+      - description: 'The maximum number of results per page that should be returned.
+          If the number of available results is larger than `maxResults`, Compute
+          Engine returns a `nextPageToken` that can be used to get the next page of
+          results in subsequent list requests. Acceptable values are `0` to `500`,
+          inclusive. (Default: `500`)'
+        in: query
+        name: maxResults
+        schema:
+          minimum: 0
+          type: integer
+      - description: Sorts list results by a certain order. By default, results are
+          returned in alphanumerical order based on the resource name. You can also
+          sort results in descending order based on the creation timestamp using `orderBy="creationTimestamp
+          desc"`. This sorts results based on the `creationTimestamp` field in reverse
+          chronological order (newest result first). Use this to sort resources like
+          operations so that the newest operation is returned first. Currently, only
+          sorting by `name` or `creationTimestamp desc` is supported.
+        in: query
+        name: orderBy
+        schema:
+          type: string
+      - description: Specifies a page token to use. Set `pageToken` to the `nextPageToken`
+          returned by a previous list request to get the next page of results.
+        in: query
+        name: pageToken
+        schema:
+          type: string
+      - description: Opt-in for partial success behavior which provides partial results
+          in case of failure. The default value is false.
+        in: query
+        name: returnPartialSuccess
+        schema:
+          type: boolean
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiskList'
+          description: Successful response
+      security:
+      - Oauth2:
+        - https://www.googleapis.com/auth/cloud-platform
+        Oauth2c:
+        - https://www.googleapis.com/auth/cloud-platform
+      - Oauth2:
+        - https://www.googleapis.com/auth/compute
+        Oauth2c:
+        - https://www.googleapis.com/auth/compute
+      - Oauth2:
+        - https://www.googleapis.com/auth/compute.readonly
+        Oauth2c:
+        - https://www.googleapis.com/auth/compute.readonly
+      tags:
+      - regionDisks
+    parameters:
+    - $ref: '#/components/parameters/_.xgafv'
+    - $ref: '#/components/parameters/access_token'
+    - $ref: '#/components/parameters/alt'
+    - $ref: '#/components/parameters/callback'
+    - $ref: '#/components/parameters/fields'
+    - $ref: '#/components/parameters/key'
+    - $ref: '#/components/parameters/oauth_token'
+    - $ref: '#/components/parameters/prettyPrint'
+    - $ref: '#/components/parameters/quotaUser'
+    - $ref: '#/components/parameters/upload_protocol'
+    - $ref: '#/components/parameters/uploadType'
+    - $ref: '#/components/parameters/userIp'
+    post:
+      description: Creates a persistent regional disk in the specified project using
+        the data included in the request.
+      operationId: compute.regionDisks.insert
+      parameters:
+      - description: Project ID for this request.
+        in: path
+        name: project
+        required: true
+        schema:
+          type: string
+      - description: Name of the region for this request.
+        in: path
+        name: region
+        required: true
+        schema:
+          type: string
+      - description: An optional request ID to identify requests. Specify a unique
+          request ID so that if you must retry your request, the server will know
+          to ignore the request if it has already been completed. For example, consider
+          a situation where you make an initial request and the request times out.
+          If you make the request again with the same request ID, the server can check
+          if original operation with the same request ID was received, and if so,
+          will ignore the second request. This prevents clients from accidentally
+          creating duplicate commitments. The request ID must be a valid UUID with
+          the exception that zero UUID is not supported ( 00000000-0000-0000-0000-000000000000).
+        in: query
+        name: requestId
+        schema:
+          type: string
+      - description: Source image to restore onto a disk. This field is optional.
+        in: query
+        name: sourceImage
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Disk'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+          description: Successful response
+      security:
+      - Oauth2:
+        - https://www.googleapis.com/auth/cloud-platform
+        Oauth2c:
+        - https://www.googleapis.com/auth/cloud-platform
+      - Oauth2:
+        - https://www.googleapis.com/auth/compute
+        Oauth2c:
+        - https://www.googleapis.com/auth/compute
+      tags:
+      - regionDisks
+  /projects/{project}/regions/{region}/disks/{disk}:
+    delete:
+      description: Deletes the specified regional persistent disk. Deleting a regional
+        disk removes all the replicas of its data permanently and is irreversible.
+        However, deleting a disk does not delete any snapshots previously made from
+        the disk. You must separately delete snapshots.
+      operationId: compute.regionDisks.delete
+      parameters:
+      - description: Project ID for this request.
+        in: path
+        name: project
+        required: true
+        schema:
+          type: string
+      - description: Name of the region for this request.
+        in: path
+        name: region
+        required: true
+        schema:
+          type: string
+      - description: Name of the regional persistent disk to delete.
+        in: path
+        name: disk
+        required: true
+        schema:
+          type: string
+      - description: An optional request ID to identify requests. Specify a unique
+          request ID so that if you must retry your request, the server will know
+          to ignore the request if it has already been completed. For example, consider
+          a situation where you make an initial request and the request times out.
+          If you make the request again with the same request ID, the server can check
+          if original operation with the same request ID was received, and if so,
+          will ignore the second request. This prevents clients from accidentally
+          creating duplicate commitments. The request ID must be a valid UUID with
+          the exception that zero UUID is not supported ( 00000000-0000-0000-0000-000000000000).
+        in: query
+        name: requestId
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+          description: Successful response
+      security:
+      - Oauth2:
+        - https://www.googleapis.com/auth/cloud-platform
+        Oauth2c:
+        - https://www.googleapis.com/auth/cloud-platform
+      - Oauth2:
+        - https://www.googleapis.com/auth/compute
+        Oauth2c:
+        - https://www.googleapis.com/auth/compute
+      tags:
+      - regionDisks
+    get:
+      description: Returns a specified regional persistent disk.
+      operationId: compute.regionDisks.get
+      parameters:
+      - description: Project ID for this request.
+        in: path
+        name: project
+        required: true
+        schema:
+          type: string
+      - description: Name of the region for this request.
+        in: path
+        name: region
+        required: true
+        schema:
+          type: string
+      - description: Name of the regional persistent disk to return.
+        in: path
+        name: disk
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Disk'
+          description: Successful response
+      security:
+      - Oauth2:
+        - https://www.googleapis.com/auth/cloud-platform
+        Oauth2c:
+        - https://www.googleapis.com/auth/cloud-platform
+      - Oauth2:
+        - https://www.googleapis.com/auth/compute
+        Oauth2c:
+        - https://www.googleapis.com/auth/compute
+      - Oauth2:
+        - https://www.googleapis.com/auth/compute.readonly
+        Oauth2c:
+        - https://www.googleapis.com/auth/compute.readonly
+      tags:
+      - regionDisks
+    parameters:
+    - $ref: '#/components/parameters/_.xgafv'
+    - $ref: '#/components/parameters/access_token'
+    - $ref: '#/components/parameters/alt'
+    - $ref: '#/components/parameters/callback'
+    - $ref: '#/components/parameters/fields'
+    - $ref: '#/components/parameters/key'
+    - $ref: '#/components/parameters/oauth_token'
+    - $ref: '#/components/parameters/prettyPrint'
+    - $ref: '#/components/parameters/quotaUser'
+    - $ref: '#/components/parameters/upload_protocol'
+    - $ref: '#/components/parameters/uploadType'
+    - $ref: '#/components/parameters/userIp'
+  /projects/{project}/regions/{region}/disks/{disk}/addResourcePolicies:
+    parameters:
+    - $ref: '#/components/parameters/_.xgafv'
+    - $ref: '#/components/parameters/access_token'
+    - $ref: '#/components/parameters/alt'
+    - $ref: '#/components/parameters/callback'
+    - $ref: '#/components/parameters/fields'
+    - $ref: '#/components/parameters/key'
+    - $ref: '#/components/parameters/oauth_token'
+    - $ref: '#/components/parameters/prettyPrint'
+    - $ref: '#/components/parameters/quotaUser'
+    - $ref: '#/components/parameters/upload_protocol'
+    - $ref: '#/components/parameters/uploadType'
+    - $ref: '#/components/parameters/userIp'
+    post:
+      description: Adds existing resource policies to a regional disk. You can only
+        add one policy which will be applied to this disk for scheduling snapshot
+        creation.
+      operationId: compute.regionDisks.addResourcePolicies
+      parameters:
+      - description: Project ID for this request.
+        in: path
+        name: project
+        required: true
+        schema:
+          type: string
+      - description: The name of the region for this request.
+        in: path
+        name: region
+        required: true
+        schema:
+          type: string
+      - description: The disk name for this request.
+        in: path
+        name: disk
+        required: true
+        schema:
+          type: string
+      - description: An optional request ID to identify requests. Specify a unique
+          request ID so that if you must retry your request, the server will know
+          to ignore the request if it has already been completed. For example, consider
+          a situation where you make an initial request and the request times out.
+          If you make the request again with the same request ID, the server can check
+          if original operation with the same request ID was received, and if so,
+          will ignore the second request. This prevents clients from accidentally
+          creating duplicate commitments. The request ID must be a valid UUID with
+          the exception that zero UUID is not supported ( 00000000-0000-0000-0000-000000000000).
+        in: query
+        name: requestId
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegionDisksAddResourcePoliciesRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+          description: Successful response
+      security:
+      - Oauth2:
+        - https://www.googleapis.com/auth/cloud-platform
+        Oauth2c:
+        - https://www.googleapis.com/auth/cloud-platform
+      - Oauth2:
+        - https://www.googleapis.com/auth/compute
+        Oauth2c:
+        - https://www.googleapis.com/auth/compute
+      tags:
+      - regionDisks
+  /projects/{project}/regions/{region}/disks/{disk}/createSnapshot:
+    parameters:
+    - $ref: '#/components/parameters/_.xgafv'
+    - $ref: '#/components/parameters/access_token'
+    - $ref: '#/components/parameters/alt'
+    - $ref: '#/components/parameters/callback'
+    - $ref: '#/components/parameters/fields'
+    - $ref: '#/components/parameters/key'
+    - $ref: '#/components/parameters/oauth_token'
+    - $ref: '#/components/parameters/prettyPrint'
+    - $ref: '#/components/parameters/quotaUser'
+    - $ref: '#/components/parameters/upload_protocol'
+    - $ref: '#/components/parameters/uploadType'
+    - $ref: '#/components/parameters/userIp'
+    post:
+      description: Creates a snapshot of this regional disk.
+      operationId: compute.regionDisks.createSnapshot
+      parameters:
+      - description: Project ID for this request.
+        in: path
+        name: project
+        required: true
+        schema:
+          type: string
+      - description: Name of the region for this request.
+        in: path
+        name: region
+        required: true
+        schema:
+          type: string
+      - description: Name of the regional persistent disk to snapshot.
+        in: path
+        name: disk
+        required: true
+        schema:
+          type: string
+      - description: An optional request ID to identify requests. Specify a unique
+          request ID so that if you must retry your request, the server will know
+          to ignore the request if it has already been completed. For example, consider
+          a situation where you make an initial request and the request times out.
+          If you make the request again with the same request ID, the server can check
+          if original operation with the same request ID was received, and if so,
+          will ignore the second request. This prevents clients from accidentally
+          creating duplicate commitments. The request ID must be a valid UUID with
+          the exception that zero UUID is not supported ( 00000000-0000-0000-0000-000000000000).
+        in: query
+        name: requestId
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Snapshot'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+          description: Successful response
+      security:
+      - Oauth2:
+        - https://www.googleapis.com/auth/cloud-platform
+        Oauth2c:
+        - https://www.googleapis.com/auth/cloud-platform
+      - Oauth2:
+        - https://www.googleapis.com/auth/compute
+        Oauth2c:
+        - https://www.googleapis.com/auth/compute
+      tags:
+      - regionDisks
+  /projects/{project}/regions/{region}/disks/{disk}/removeResourcePolicies:
+    parameters:
+    - $ref: '#/components/parameters/_.xgafv'
+    - $ref: '#/components/parameters/access_token'
+    - $ref: '#/components/parameters/alt'
+    - $ref: '#/components/parameters/callback'
+    - $ref: '#/components/parameters/fields'
+    - $ref: '#/components/parameters/key'
+    - $ref: '#/components/parameters/oauth_token'
+    - $ref: '#/components/parameters/prettyPrint'
+    - $ref: '#/components/parameters/quotaUser'
+    - $ref: '#/components/parameters/upload_protocol'
+    - $ref: '#/components/parameters/uploadType'
+    - $ref: '#/components/parameters/userIp'
+    post:
+      description: Removes resource policies from a regional disk.
+      operationId: compute.regionDisks.removeResourcePolicies
+      parameters:
+      - description: Project ID for this request.
+        in: path
+        name: project
+        required: true
+        schema:
+          type: string
+      - description: The name of the region for this request.
+        in: path
+        name: region
+        required: true
+        schema:
+          type: string
+      - description: The disk name for this request.
+        in: path
+        name: disk
+        required: true
+        schema:
+          type: string
+      - description: An optional request ID to identify requests. Specify a unique
+          request ID so that if you must retry your request, the server will know
+          to ignore the request if it has already been completed. For example, consider
+          a situation where you make an initial request and the request times out.
+          If you make the request again with the same request ID, the server can check
+          if original operation with the same request ID was received, and if so,
+          will ignore the second request. This prevents clients from accidentally
+          creating duplicate commitments. The request ID must be a valid UUID with
+          the exception that zero UUID is not supported ( 00000000-0000-0000-0000-000000000000).
+        in: query
+        name: requestId
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegionDisksRemoveResourcePoliciesRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+          description: Successful response
+      security:
+      - Oauth2:
+        - https://www.googleapis.com/auth/cloud-platform
+        Oauth2c:
+        - https://www.googleapis.com/auth/cloud-platform
+      - Oauth2:
+        - https://www.googleapis.com/auth/compute
+        Oauth2c:
+        - https://www.googleapis.com/auth/compute
+      tags:
+      - regionDisks
+  /projects/{project}/regions/{region}/disks/{disk}/resize:
+    parameters:
+    - $ref: '#/components/parameters/_.xgafv'
+    - $ref: '#/components/parameters/access_token'
+    - $ref: '#/components/parameters/alt'
+    - $ref: '#/components/parameters/callback'
+    - $ref: '#/components/parameters/fields'
+    - $ref: '#/components/parameters/key'
+    - $ref: '#/components/parameters/oauth_token'
+    - $ref: '#/components/parameters/prettyPrint'
+    - $ref: '#/components/parameters/quotaUser'
+    - $ref: '#/components/parameters/upload_protocol'
+    - $ref: '#/components/parameters/uploadType'
+    - $ref: '#/components/parameters/userIp'
+    post:
+      description: Resizes the specified regional persistent disk.
+      operationId: compute.regionDisks.resize
+      parameters:
+      - description: The project ID for this request.
+        in: path
+        name: project
+        required: true
+        schema:
+          type: string
+      - description: Name of the region for this request.
+        in: path
+        name: region
+        required: true
+        schema:
+          type: string
+      - description: Name of the regional persistent disk.
+        in: path
+        name: disk
+        required: true
+        schema:
+          type: string
+      - description: An optional request ID to identify requests. Specify a unique
+          request ID so that if you must retry your request, the server will know
+          to ignore the request if it has already been completed. For example, consider
+          a situation where you make an initial request and the request times out.
+          If you make the request again with the same request ID, the server can check
+          if original operation with the same request ID was received, and if so,
+          will ignore the second request. This prevents clients from accidentally
+          creating duplicate commitments. The request ID must be a valid UUID with
+          the exception that zero UUID is not supported ( 00000000-0000-0000-0000-000000000000).
+        in: query
+        name: requestId
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegionDisksResizeRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+          description: Successful response
+      security:
+      - Oauth2:
+        - https://www.googleapis.com/auth/cloud-platform
+        Oauth2c:
+        - https://www.googleapis.com/auth/cloud-platform
+      - Oauth2:
+        - https://www.googleapis.com/auth/compute
+        Oauth2c:
+        - https://www.googleapis.com/auth/compute
+      tags:
+      - regionDisks
+  /projects/{project}/regions/{region}/disks/{resource}/getIamPolicy:
+    get:
+      description: Gets the access control policy for a resource. May be empty if
+        no such policy or resource exists.
+      operationId: compute.regionDisks.getIamPolicy
+      parameters:
+      - description: Project ID for this request.
+        in: path
+        name: project
+        required: true
+        schema:
+          type: string
+      - description: The name of the region for this request.
+        in: path
+        name: region
+        required: true
+        schema:
+          type: string
+      - description: Name or id of the resource for this request.
+        in: path
+        name: resource
+        required: true
+        schema:
+          type: string
+      - description: Requested IAM Policy version.
+        in: query
+        name: optionsRequestedPolicyVersion
+        schema:
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Policy'
+          description: Successful response
+      security:
+      - Oauth2:
+        - https://www.googleapis.com/auth/cloud-platform
+        Oauth2c:
+        - https://www.googleapis.com/auth/cloud-platform
+      - Oauth2:
+        - https://www.googleapis.com/auth/compute
+        Oauth2c:
+        - https://www.googleapis.com/auth/compute
+      - Oauth2:
+        - https://www.googleapis.com/auth/compute.readonly
+        Oauth2c:
+        - https://www.googleapis.com/auth/compute.readonly
+      tags:
+      - regionDisks
+    parameters:
+    - $ref: '#/components/parameters/_.xgafv'
+    - $ref: '#/components/parameters/access_token'
+    - $ref: '#/components/parameters/alt'
+    - $ref: '#/components/parameters/callback'
+    - $ref: '#/components/parameters/fields'
+    - $ref: '#/components/parameters/key'
+    - $ref: '#/components/parameters/oauth_token'
+    - $ref: '#/components/parameters/prettyPrint'
+    - $ref: '#/components/parameters/quotaUser'
+    - $ref: '#/components/parameters/upload_protocol'
+    - $ref: '#/components/parameters/uploadType'
+    - $ref: '#/components/parameters/userIp'
+  /projects/{project}/regions/{region}/disks/{resource}/setIamPolicy:
+    parameters:
+    - $ref: '#/components/parameters/_.xgafv'
+    - $ref: '#/components/parameters/access_token'
+    - $ref: '#/components/parameters/alt'
+    - $ref: '#/components/parameters/callback'
+    - $ref: '#/components/parameters/fields'
+    - $ref: '#/components/parameters/key'
+    - $ref: '#/components/parameters/oauth_token'
+    - $ref: '#/components/parameters/prettyPrint'
+    - $ref: '#/components/parameters/quotaUser'
+    - $ref: '#/components/parameters/upload_protocol'
+    - $ref: '#/components/parameters/uploadType'
+    - $ref: '#/components/parameters/userIp'
+    post:
+      description: Sets the access control policy on the specified resource. Replaces
+        any existing policy.
+      operationId: compute.regionDisks.setIamPolicy
+      parameters:
+      - description: Project ID for this request.
+        in: path
+        name: project
+        required: true
+        schema:
+          type: string
+      - description: The name of the region for this request.
+        in: path
+        name: region
+        required: true
+        schema:
+          type: string
+      - description: Name or id of the resource for this request.
+        in: path
+        name: resource
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegionSetPolicyRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Policy'
+          description: Successful response
+      security:
+      - Oauth2:
+        - https://www.googleapis.com/auth/cloud-platform
+        Oauth2c:
+        - https://www.googleapis.com/auth/cloud-platform
+      - Oauth2:
+        - https://www.googleapis.com/auth/compute
+        Oauth2c:
+        - https://www.googleapis.com/auth/compute
+      tags:
+      - regionDisks
+  /projects/{project}/regions/{region}/disks/{resource}/setLabels:
+    parameters:
+    - $ref: '#/components/parameters/_.xgafv'
+    - $ref: '#/components/parameters/access_token'
+    - $ref: '#/components/parameters/alt'
+    - $ref: '#/components/parameters/callback'
+    - $ref: '#/components/parameters/fields'
+    - $ref: '#/components/parameters/key'
+    - $ref: '#/components/parameters/oauth_token'
+    - $ref: '#/components/parameters/prettyPrint'
+    - $ref: '#/components/parameters/quotaUser'
+    - $ref: '#/components/parameters/upload_protocol'
+    - $ref: '#/components/parameters/uploadType'
+    - $ref: '#/components/parameters/userIp'
+    post:
+      description: Sets the labels on the target regional disk.
+      operationId: compute.regionDisks.setLabels
+      parameters:
+      - description: Project ID for this request.
+        in: path
+        name: project
+        required: true
+        schema:
+          type: string
+      - description: The region for this request.
+        in: path
+        name: region
+        required: true
+        schema:
+          type: string
+      - description: Name or id of the resource for this request.
+        in: path
+        name: resource
+        required: true
+        schema:
+          type: string
+      - description: An optional request ID to identify requests. Specify a unique
+          request ID so that if you must retry your request, the server will know
+          to ignore the request if it has already been completed. For example, consider
+          a situation where you make an initial request and the request times out.
+          If you make the request again with the same request ID, the server can check
+          if original operation with the same request ID was received, and if so,
+          will ignore the second request. This prevents clients from accidentally
+          creating duplicate commitments. The request ID must be a valid UUID with
+          the exception that zero UUID is not supported ( 00000000-0000-0000-0000-000000000000).
+        in: query
+        name: requestId
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegionSetLabelsRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+          description: Successful response
+      security:
+      - Oauth2:
+        - https://www.googleapis.com/auth/cloud-platform
+        Oauth2c:
+        - https://www.googleapis.com/auth/cloud-platform
+      - Oauth2:
+        - https://www.googleapis.com/auth/compute
+        Oauth2c:
+        - https://www.googleapis.com/auth/compute
+      tags:
+      - regionDisks
+  /projects/{project}/regions/{region}/disks/{resource}/testIamPermissions:
+    parameters:
+    - $ref: '#/components/parameters/_.xgafv'
+    - $ref: '#/components/parameters/access_token'
+    - $ref: '#/components/parameters/alt'
+    - $ref: '#/components/parameters/callback'
+    - $ref: '#/components/parameters/fields'
+    - $ref: '#/components/parameters/key'
+    - $ref: '#/components/parameters/oauth_token'
+    - $ref: '#/components/parameters/prettyPrint'
+    - $ref: '#/components/parameters/quotaUser'
+    - $ref: '#/components/parameters/upload_protocol'
+    - $ref: '#/components/parameters/uploadType'
+    - $ref: '#/components/parameters/userIp'
+    post:
+      description: Returns permissions that a caller has on the specified resource.
+      operationId: compute.regionDisks.testIamPermissions
+      parameters:
+      - description: Project ID for this request.
+        in: path
+        name: project
+        required: true
+        schema:
+          type: string
+      - description: The name of the region for this request.
+        in: path
+        name: region
+        required: true
+        schema:
+          type: string
+      - description: Name or id of the resource for this request.
+        in: path
+        name: resource
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestPermissionsRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestPermissionsResponse'
+          description: Successful response
+      security:
+      - Oauth2:
+        - https://www.googleapis.com/auth/cloud-platform
+        Oauth2c:
+        - https://www.googleapis.com/auth/cloud-platform
+      - Oauth2:
+        - https://www.googleapis.com/auth/compute
+        Oauth2c:
+        - https://www.googleapis.com/auth/compute
+      - Oauth2:
+        - https://www.googleapis.com/auth/compute.readonly
+        Oauth2c:
+        - https://www.googleapis.com/auth/compute.readonly
+      tags:
+      - regionDisks
 servers:
 - url: https://compute.googleapis.com/compute/v1
 tags:

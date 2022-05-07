@@ -13,6 +13,7 @@ import (
 
 const (
 	AuthApiKeyStr                   string = "api_key"
+	AuthAWSSigningv4Str             string = "aws_signing_v4"
 	AuthBasicStr                    string = "basic"
 	AuthInteractiveStr              string = "interactive"
 	AuthServiceAccountStr           string = "service_account"
@@ -96,6 +97,7 @@ type AuthCtx struct {
 	Type        string   `json:"type" yaml:"type"`
 	ValuePrefix string   `json:"valuePrefix" yaml:"valuePrefix"`
 	ID          string   `json:"-" yaml:"-"`
+	KeyID       string   `json:"keyID" yaml:"keyID"`
 	KeyFilePath string   `json:"credentialsfilepath" yaml:"credentialsfilepath"`
 	KeyEnvVar   string   `json:"credentialsenvvar" yaml:"credentialsenvvar"`
 	Active      bool     `json:"-" yaml:"-"`
