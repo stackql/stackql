@@ -4,7 +4,7 @@
 ![Go](https://github.com/stackql/stackql/workflows/Go/badge.svg)
 ![License](https://img.shields.io/github/license/stackql/stackql)
 ![Lines](https://img.shields.io/tokei/lines/github/stackql/stackql)  
-[![StackQL](https://docs.stackql.io/img/stackql-banner.png)](https://stackql.io/)  
+[![StackQL](https://stackql.io/img/stackql-banner.png)](https://stackql.io/)  
 
 
 # Deploy, Manage and Query Cloud Infrastructure using SQL
