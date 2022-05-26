@@ -1,7 +1,6 @@
 package primitivebuilder
 
 import (
-	"context"
 	"fmt"
 	"sort"
 	"strconv"
@@ -369,6 +368,29 @@ func prepareGolangResult(sqlEngine sqlengine.SQLEngine, stmtCtx drm.PreparedStat
 	return rv
 }
 
+func castItemsArray(iArr interface{}) ([]map[string]interface{}, error) {
+	switch iArr := iArr.(type) {
+	case []map[string]interface{}:
+		return iArr, nil
+	case []interface{}:
+		var rv []map[string]interface{}
+		for i := range iArr {
+			item, ok := iArr[i].(map[string]interface{})
+			if !ok {
+				if iArr[i] != nil {
+					item = map[string]interface{}{openapistackql.AnonymousColumnName: iArr[i]}
+				} else {
+					item = nil
+				}
+			}
+			rv = append(rv, item)
+		}
+		return rv, nil
+	default:
+		return nil, fmt.Errorf("cannot accept items array of type = '%T'", iArr)
+	}
+}
+
 func (ss *SingleSelectAcquire) Build() error {
 	prov, err := ss.tableMeta.GetProvider()
 	if err != nil {
@@ -395,7 +417,7 @@ func (ss *SingleSelectAcquire) Build() error {
 			}
 		}
 		for _, reqCtx := range ss.tableMeta.HttpArmoury.RequestParams {
-			response, apiErr := httpmiddleware.HttpApiCallFromRequest(*(ss.handlerCtx), prov, reqCtx.Request.Clone(context.Background()))
+			response, apiErr := httpmiddleware.HttpApiCallFromRequest(*(ss.handlerCtx), prov, reqCtx.Request.Clone(reqCtx.Request.Context()))
 			housekeepingDone := false
 			npt := prov.InferNextPageResponseElement(ss.tableMeta.HeirarchyObjects.Method)
 			nptKey := prov.InferNextPageRequestElement(ss.tableMeta.HeirarchyObjects.Method)
@@ -411,6 +433,7 @@ func (ss *SingleSelectAcquire) Build() error {
 				var items interface{}
 				var ok bool
 				switch pl := target.(type) {
+				// add case for xml object,
 				case map[string]interface{}:
 					if ss.tableMeta.SelectItemsKey != "" {
 						items, ok = pl[ss.tableMeta.SelectItemsKey]
@@ -423,13 +446,19 @@ func (ss *SingleSelectAcquire) Build() error {
 				case []interface{}:
 					items = pl
 					ok = true
+				case []map[string]interface{}:
+					items = pl
+					ok = true
 				case nil:
 					return dto.ExecutorOutput{}
 				}
 				keys := make(map[string]map[string]interface{})
 
 				if ok {
-					iArr, ok := items.([]interface{})
+					iArr, err := castItemsArray(items)
+					if err != nil {
+						return dto.NewErroneousExecutorOutput(err)
+					}
 					if ok && len(iArr) > 0 {
 						if !housekeepingDone && ss.insertPreparedStatementCtx != nil {
 							_, err = ss.handlerCtx.SQLEngine.Exec(ss.insertPreparedStatementCtx.GetGCHousekeepingQueries())
@@ -439,15 +468,8 @@ func (ss *SingleSelectAcquire) Build() error {
 							return dto.NewErroneousExecutorOutput(err)
 						}
 
-						for i := range iArr {
-							item, ok := iArr[i].(map[string]interface{})
-							if !ok {
-								if iArr[i] != nil {
-									item = map[string]interface{}{openapistackql.AnonymousColumnName: iArr[i]}
-									ok = true
-								}
-							}
-							if ok {
+						for i, item := range iArr {
+							if item != nil {
 
 								log.Infoln(fmt.Sprintf("running insert with control parameters: %v", ss.insertPreparedStatementCtx.GetGCCtrlCtrs()))
 								r, err := ss.drmCfg.ExecuteInsertDML(ss.handlerCtx.SQLEngine, ss.insertPreparedStatementCtx, item)

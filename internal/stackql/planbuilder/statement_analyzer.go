@@ -625,6 +625,7 @@ func (p *primitiveGenerator) analyzeExec(pbi PlanBuilderInput) error {
 	tbl, err := p.analyzeUnaryExec(handlerCtx, node, nil, nil)
 	if err != nil {
 		log.Infoln(fmt.Sprintf("error analyzing EXEC as selection: '%s'", err.Error()))
+		return err
 	} else {
 		m, err := tbl.GetMethod()
 		if err != nil {
@@ -889,7 +890,7 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 	// END TODO
 	if len(node.From) == 1 {
 		switch ft := node.From[0].(type) {
-		case *sqlparser.JoinTableExpr:
+		case *sqlparser.JoinTableExpr, *sqlparser.AliasedTableExpr:
 			var execSlice []primitivebuilder.Builder
 			var primaryTcc, tcc *dto.TxnControlCounters
 			var secondaryTccs []*dto.TxnControlCounters
@@ -912,7 +913,17 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 				if err != nil {
 					return err
 				}
-				anTab := util.NewAnnotatedTabulation(v.Schema.Tabulate(false), v.HIDs, v.TableMeta.Alias)
+				tab := v.Schema.Tabulate(false)
+				_, mediaType, err := m.GetResponseBodySchemaAndMediaType()
+				if err != nil {
+					return err
+				}
+				switch mediaType {
+				case openapistackql.MediaTypeTextXML, openapistackql.MediaTypeXML:
+					tab = tab.RenameColumnsToXml()
+				}
+				anTab := util.NewAnnotatedTabulation(tab, v.HIDs, v.TableMeta.Alias)
+
 				discoGenId, err := docparser.OpenapiStackQLTabulationsPersistor(prov, svc, []util.AnnotatedTabulation{anTab}, p.PrimitiveBuilder.GetSQLEngine(), prov.Name)
 				if err != nil {
 					return err
@@ -972,18 +983,7 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 			selBld := primitivebuilder.NewSingleSelect(p.PrimitiveBuilder.GetGraph(), handlerCtx, selCtx, nil)
 			bld := primitivebuilder.NewMultipleAcquireAndSelect(p.PrimitiveBuilder.GetGraph(), execSlice, selBld)
 			pChild.PrimitiveBuilder.SetBuilder(bld)
-			return nil
-		case *sqlparser.AliasedTableExpr:
-			tbl, err := tblz.GetTable(ft)
-			if err != nil {
-				return err
-			}
-			err = pChild.analyzeSelectDetail(handlerCtx, node, tbl, rewrittenWhere)
-			if err != nil {
-				return err
-			}
-			pChild.PrimitiveBuilder.SetBuilder(primitivebuilder.NewSingleAcquireAndSelect(pChild.PrimitiveBuilder.GetGraph(), p.PrimitiveBuilder.GetTxnCtrlCtrs(), handlerCtx, tbl, pChild.PrimitiveBuilder.GetInsertPreparedStatementCtx(), pChild.PrimitiveBuilder.GetSelectPreparedStatementCtx(), nil))
-			p.PrimitiveBuilder.SetSelectPreparedStatementCtx(pChild.PrimitiveBuilder.GetSelectPreparedStatementCtx())
+			p.PrimitiveBuilder.SetSelectPreparedStatementCtx(selCtx)
 			return nil
 		case *sqlparser.ExecSubquery:
 			cols, err := parserutil.ExtractSelectColumnNames(node)
@@ -1000,138 +1000,6 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 
 	}
 	return fmt.Errorf("cannot process complex select just yet")
-}
-
-func (p *primitiveGenerator) analyzeSelectDetail(handlerCtx *handler.HandlerContext, node *sqlparser.Select, tbl *taxonomy.ExtendedTableMetadata, rewrittenWhere *sqlparser.Where) error {
-	var err error
-	valOnlyCols, nonValCols := parserutil.ExtractSelectValColumns(node)
-	p.PrimitiveBuilder.SetValOnlyCols(valOnlyCols)
-	svcStr, _ := tbl.GetServiceStr()
-	rStr, _ := tbl.GetResourceStr()
-	if rStr == "dual" { // some bizarre artifact of vitess.io, indicates no table supplied
-		tbl.IsLocallyExecutable = true
-		if svcStr == "" {
-			if nonValCols == 0 && node.Where == nil {
-				log.Infoln("val only select looks ok")
-				return nil
-			}
-			err = fmt.Errorf("select values inadequate: expected 0 non-val columns but got %d", nonValCols)
-		}
-		return err
-	}
-	cols, err := parserutil.ExtractSelectColumnNames(node)
-	if err != nil {
-		return err
-	}
-
-	responseSchema, err := tbl.GetResponseSchema()
-	if err != nil {
-		return err
-	}
-
-	err = p.analyzeUnarySelection(handlerCtx, node, rewrittenWhere, tbl, cols)
-	if err != nil {
-		return err
-	}
-
-	_, err = tbl.GetProvider()
-	if err != nil {
-		return err
-	}
-	method, err := tbl.GetMethod()
-	if err != nil {
-		return err
-	}
-
-	// TODO: get rid of prefix garbage
-	colPrefix := tbl.SelectItemsKey + "[]."
-
-	whereNames, err := parserutil.ExtractWhereColNames(node.Where)
-	if err != nil {
-		return err
-	}
-	for _, w := range whereNames {
-		_, ok := method.Parameters[w]
-		if ok {
-			continue
-		}
-		log.Infoln(fmt.Sprintf("w = '%s'", w))
-		foundSchemaPrefixed := responseSchema.FindByPath(colPrefix+w, nil)
-		foundSchema := responseSchema.FindByPath(w, nil)
-		if foundSchemaPrefixed == nil && foundSchema == nil {
-			return fmt.Errorf("SELECT Where element = '%s' is NOT present in data returned from provider", w)
-		}
-	}
-	if err != nil {
-		return err
-	}
-	havingNames, err := parserutil.ExtractWhereColNames(node.Having)
-	if err != nil {
-		return err
-	}
-	for _, w := range havingNames {
-		_, ok := method.Parameters[w]
-		if ok {
-			continue
-		}
-		log.Infoln(fmt.Sprintf("w = '%s'", w))
-		foundSchemaPrefixed := responseSchema.FindByPath(colPrefix+w, nil)
-		foundSchema := responseSchema.FindByPath(w, nil)
-		if foundSchemaPrefixed == nil && foundSchema == nil {
-			return fmt.Errorf("SELECT HAVING element = '%s' is NOT present in data returned from provider", w)
-		}
-	}
-	if err != nil {
-		return err
-	}
-	_, err = p.buildRequestContext(handlerCtx, node, tbl, nil, nil)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (p *primitiveGenerator) analyzeTableExpr(handlerCtx *handler.HandlerContext, node sqlparser.TableExpr, parameters map[string]interface{}) (*taxonomy.ExtendedTableMetadata, error) {
-	var nodeToPersist sqlparser.SQLNode = node
-	switch node := node.(type) {
-	case *sqlparser.ExecSubquery:
-		nodeToPersist = node.Exec
-	}
-	err := p.inferHeirarchyAndPersist(handlerCtx, nodeToPersist, parameters)
-	if err != nil {
-		return nil, err
-	}
-	tbl, err := p.PrimitiveBuilder.GetTable(nodeToPersist)
-	if err != nil {
-		return nil, err
-	}
-	_, err = tbl.GetProvider()
-	if err != nil {
-		return nil, err
-	}
-	method, err := tbl.GetMethod()
-	if err != nil {
-		return nil, err
-	}
-	_, err = tbl.GetServiceStr()
-	if err != nil {
-		return nil, err
-	}
-	_, err = tbl.GetResourceStr()
-	if err != nil {
-		return nil, err
-	}
-	schema := method.Response.Schema
-	unsuitableSchemaMsg := "schema unsuitable for select query"
-	// log.Infoln(fmt.Sprintf("schema.ID = %v", schema.ID))
-	log.Infoln(fmt.Sprintf("schema.Items = %v", schema.Items))
-	log.Infoln(fmt.Sprintf("schema.Properties = %v", schema.Properties))
-	var itemObjS *openapistackql.Schema
-	itemObjS, tbl.SelectItemsKey, err = schema.GetSelectSchema(tbl.LookupSelectItemsKey())
-	if itemObjS == nil || err != nil {
-		return nil, fmt.Errorf(unsuitableSchemaMsg)
-	}
-	return tbl, nil
 }
 
 func (p *primitiveGenerator) buildRequestContext(handlerCtx *handler.HandlerContext, node sqlparser.SQLNode, meta *taxonomy.ExtendedTableMetadata, execContext *httpbuild.ExecContext, rowsToInsert map[int]map[int]interface{}) (*httpbuild.HTTPArmoury, error) {
@@ -1279,7 +1147,7 @@ func (p *primitiveGenerator) analyzeDelete(pbi PlanBuilderInput) error {
 	if err != nil {
 		return err
 	}
-	schema, err := method.GetResponseBodySchema()
+	schema, _, err := method.GetResponseBodySchemaAndMediaType()
 	if err != nil {
 		log.Infof("no response schema for delete: %s \n", err.Error())
 	}

@@ -72,7 +72,12 @@ _AUTH_CFG={
   "okta": { 
     "credentialsenvvar": "OKTA_SECRET_KEY",
     "type": "api_key" 
-  } 
+  }, 
+  "aws": { 
+    "type": "aws_signing_v4",
+    "credentialsfilepath": get_unix_path(os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'credentials', 'dummy', 'aws', 'functional-test-dummy-aws-key.txt')),
+     "keyID": "NON_SECRET" 
+  }
 }
 STACKQL_PG_SERVER_KEY_PATH   :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "test", "server", "mtls", "credentials", "pg_server_key.pem"))
 STACKQL_PG_SERVER_CERT_PATH  :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "test", "server", "mtls", "credentials", "pg_server_cert.pem"))
@@ -128,6 +133,9 @@ MOCKSERVER_PORT_GOOGLE = 1080
 JSON_INIT_FILE_PATH_OKTA = os.path.join(REPOSITORY_ROOT, 'test', 'mockserver', 'expectations', 'static-okta-expectations.json')
 MOCKSERVER_PORT_OKTA = 1090
 
+JSON_INIT_FILE_PATH_AWS = os.path.join(REPOSITORY_ROOT, 'test', 'mockserver', 'expectations', 'static-aws-expectations.json')
+MOCKSERVER_PORT_AWS = 1091
+
 PG_SRV_PORT_MTLS = 5476
 PG_SRV_PORT_UNENCRYPTED = 5477
 
@@ -144,6 +152,8 @@ PSQL_UNENCRYPTED_CONN_STR :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_UNE
 SELECT_CONTAINER_SUBNET_AGG_DESC = "select ipCidrRange, sum(5) cc  from  google.container.`projects.aggregated.usableSubnetworks` where projectsId = 'testing-project' group by \"ipCidrRange\" having sum(5) >= 5 order by ipCidrRange desc;"
 SELECT_CONTAINER_SUBNET_AGG_ASC = "select ipCidrRange, sum(5) cc  from  google.container.`projects.aggregated.usableSubnetworks` where projectsId = 'testing-project' group by \"ipCidrRange\" having sum(5) >= 5 order by ipCidrRange asc;"
 SELECT_ACCELERATOR_TYPES_DESC = "select  kind, name  from  google.compute.acceleratorTypes where project = 'testing-project' and zone = 'australia-southeast1-a' order by name desc;"
+
+SELECT_AWS_VOLUMES = "select VolumeId, Encrypted, Size from aws.ec2.volumes where region = 'ap-southeast-1' order by VolumeId asc;"
 
 SELECT_OKTA_APPS = "select name, status, label, id from okta.application.apps apps where apps.subdomain = 'example-subdomain' order by name asc;"
 
@@ -166,6 +176,8 @@ SELECT_CONTRIVED_GCP_SELF_JOIN_EXPECTED = get_output_from_local_file(os.path.joi
 SELECT_ACCELERATOR_TYPES_DESC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'simple-select', 'compute-accelerator-type', 'select-zone-list-desc.txt'))
 
 SELECT_OKTA_APPS_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'simple-select', 'okta', 'apps', 'select-apps-asc.txt'))
+
+SELECT_AWS_VOLUMES_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'volumes', 'select-volumes-asc.txt'))
 
 GET_IAM_POLICY_AGG_ASC_INPUT_FILE = os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'input', 'select-exec-dependent-org-iam-policy.iql')
 

@@ -51,6 +51,12 @@ Okta Apps Select Simple
     ...    ${SELECT_OKTA_APPS}
     ...    ${SELECT_OKTA_APPS_ASC_EXPECTED}
 
+AWS Volumes Select Simple
+    Should StackQL Exec Equal
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${SELECT_AWS_VOLUMES}
+    ...    ${SELECT_AWS_VOLUMES_ASC_EXPECTED}
+
 Join GCP Okta Cross Provider
     Should StackQL Exec Equal
     ...    ${REGISTRY_NO_VERIFY_CFG_STR}
@@ -108,6 +114,9 @@ Prepare StackQL Environment
     Set Environment Variable    OKTA_SECRET_KEY    ${OKTA_SECRET_STR}
     Start Mock Server    ${JSON_INIT_FILE_PATH_GOOGLE}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_GOOGLE}
     Start Mock Server    ${JSON_INIT_FILE_PATH_OKTA}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_OKTA}
+    ${result} =    Start Mock Server    ${JSON_INIT_FILE_PATH_AWS}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_AWS}
+    Log             ${result.stdout}
+    Log             ${result.stderr}
     Start StackQL PG Server mTLS    ${PG_SRV_PORT_MTLS}    ${PG_SRV_MTLS_CFG_STR}
     Start StackQL PG Server unencrypted    ${PG_SRV_PORT_UNENCRYPTED}
 
@@ -129,6 +138,8 @@ Run StackQL Exec Command
 Should StackQL Exec Equal
     [Arguments]    ${_REGISTRY_CFG_STR}    ${_EXEC_CMD_STR}    ${_EXEC_CMD_EXPECTED_OUTPUT}    @{varargs}
     ${result} =    Run StackQL Exec Command    ${_REGISTRY_CFG_STR}    ${_EXEC_CMD_STR}    @{varargs}
+    Log             ${result.stdout}
+    Log             ${result.stderr}
     Should Be Equal    ${result.stdout}    ${_EXEC_CMD_EXPECTED_OUTPUT}
 
 Start StackQL PG Server mTLS

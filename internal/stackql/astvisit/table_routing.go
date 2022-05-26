@@ -7,7 +7,6 @@ import (
 	"vitess.io/vitess/go/vt/sqlparser"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/stackql/go-openapistackql/openapistackql"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
@@ -38,20 +37,18 @@ func obtainAnnotationCtx(
 	tbl *taxonomy.ExtendedTableMetadata,
 	parameters map[string]interface{},
 ) (taxonomy.AnnotationCtx, error) {
-	schema, err := tbl.GetResponseSchema()
+	schema, mediaType, err := tbl.GetResponseSchemaAndMediaType()
 	if err != nil {
 		return taxonomy.AnnotationCtx{}, err
 	}
-	provStr, _ := tbl.GetProviderStr()
-	svcStr, _ := tbl.GetServiceStr()
+	itemObjS, selectItemsKey, err := schema.GetSelectSchema(tbl.LookupSelectItemsKey(), mediaType)
 	unsuitableSchemaMsg := "schema unsuitable for select query"
-	log.Infoln(fmt.Sprintf("schema.Items = %v", schema.Items))
-	log.Infoln(fmt.Sprintf("schema.Properties = %v", schema.Properties))
-	var itemObjS *openapistackql.Schema
-	itemObjS, tbl.SelectItemsKey, err = schema.GetSelectSchema(tbl.LookupSelectItemsKey())
 	if err != nil {
 		return taxonomy.AnnotationCtx{}, fmt.Errorf(unsuitableSchemaMsg)
 	}
+	tbl.SelectItemsKey = selectItemsKey
+	provStr, _ := tbl.GetProviderStr()
+	svcStr, _ := tbl.GetServiceStr()
 	if itemObjS == nil {
 		return taxonomy.AnnotationCtx{}, fmt.Errorf(unsuitableSchemaMsg)
 	}
@@ -98,7 +95,7 @@ func (v *TableRouteAstVisitor) analyzeAliasedTable(tb *sqlparser.AliasedTableExp
 			return nil, nil, err
 		}
 		m := taxonomy.NewExtendedTableMetadata(hr, taxonomy.GetAliasFromStatement(tb))
-		v.tables[ex] = m
+		// v.tables[ex] = m
 		return m, abbreviatedConsumedMap, nil
 	default:
 		return nil, nil, fmt.Errorf("table of type '%T' not curently supported", ex)

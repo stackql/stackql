@@ -71,6 +71,8 @@ func (gp *GenericProvider) inferAuthType(authCtx dto.AuthCtx, authTypeRequested 
 		return dto.AuthInteractiveStr
 	case dto.AuthNullStr:
 		return dto.AuthNullStr
+	case dto.AuthAWSSigningv4Str:
+		return dto.AuthAWSSigningv4Str
 	}
 	if authCtx.KeyFilePath != "" || authCtx.KeyEnvVar != "" {
 		return dto.AuthServiceAccountStr
@@ -89,6 +91,8 @@ func (gp *GenericProvider) Auth(authCtx *dto.AuthCtx, authTypeRequested string, 
 		return gp.basicAuth(authCtx)
 	case dto.AuthInteractiveStr:
 		return gp.oAuth(authCtx, enforceRevokeFirst)
+	case dto.AuthAWSSigningv4Str:
+		return gp.awsSigningAuth(authCtx)
 	case dto.AuthNullStr:
 		return netutils.GetHttpClient(gp.runtimeCtx, http.DefaultClient), nil
 	}
@@ -219,6 +223,10 @@ func (gp *GenericProvider) keyFileAuth(authCtx *dto.AuthCtx) (*http.Client, erro
 
 func (gp *GenericProvider) apiTokenFileAuth(authCtx *dto.AuthCtx) (*http.Client, error) {
 	return apiTokenAuth(authCtx, gp.runtimeCtx)
+}
+
+func (gp *GenericProvider) awsSigningAuth(authCtx *dto.AuthCtx) (*http.Client, error) {
+	return awsSigningAuth(authCtx, gp.runtimeCtx)
 }
 
 func (gp *GenericProvider) basicAuth(authCtx *dto.AuthCtx) (*http.Client, error) {

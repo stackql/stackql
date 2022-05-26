@@ -40,7 +40,7 @@ find_program(Maven_EXECUTABLE mvn)
 
 set(TEST_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/test/python/main.py)
 set(REG_RW_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/test/python/registry-rewrite.py)
-set(ROBOT_TEST_DIR_PATH ${CMAKE_CURRENT_SOURCE_DIR}/test/functional)
+set(ROBOT_TEST_DIR_PATH ${CMAKE_CURRENT_SOURCE_DIR}/test/robot/functional)
 
 add_custom_target(${TARGET} ALL)
 

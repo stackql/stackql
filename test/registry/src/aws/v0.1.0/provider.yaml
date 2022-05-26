@@ -1,0 +1,14 @@
+id: aws
+name: aws
+version: v0.1.0
+providerServices:
+  ec2:
+    description: ec2
+    id: ec2:v0.1.0
+    name: ec2
+    preferred: true
+    service:
+      $ref: aws/v0.1.0/services/ec2.yaml
+    title: EC2
+    version: v0.1.0
+openapi: 3.0.0

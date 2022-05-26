@@ -14,7 +14,7 @@ providerServices:
     name: abusiveexperiencereport
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/abusiveexperiencereport-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/abusiveexperiencereport-v1.yaml
     title: Abusive Experience Report API
     version: v1
   acceleratedmobilepageurl:
@@ -30,7 +30,7 @@ providerServices:
     name: acceleratedmobilepageurl
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/acceleratedmobilepageurl-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/acceleratedmobilepageurl-v1.yaml
     title: Accelerated Mobile Pages (AMP) URL API
     version: v1
   accessapproval:
@@ -45,7 +45,7 @@ providerServices:
     name: accessapproval
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/accessapproval-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/accessapproval-v1.yaml
     title: Access Approval API
     version: v1
   accessapproval:v1beta1:
@@ -74,7 +74,7 @@ providerServices:
     name: accesscontextmanager
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/accesscontextmanager-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/accesscontextmanager-v1.yaml
     title: Access Context Manager API
     version: v1
   accesscontextmanager:v1beta:
@@ -105,7 +105,7 @@ providerServices:
     name: adexchangebuyer
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/adexchangebuyer-v1.4.yaml
+      $ref: googleapis.com/v0.1.2/services/adexchangebuyer-v1.4.yaml
     title: Ad Exchange Buyer API
     version: v1.4
   adexchangebuyer2:
@@ -122,7 +122,7 @@ providerServices:
     name: adexchangebuyer2
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/adexchangebuyer2-v2beta1.yaml
+      $ref: googleapis.com/v0.1.2/services/adexchangebuyer2-v2beta1.yaml
     title: Ad Exchange Buyer API II
     version: v2beta1
   adexchangebuyer:v1.2:
@@ -168,7 +168,7 @@ providerServices:
     name: adexperiencereport
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/adexperiencereport-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/adexperiencereport-v1.yaml
     title: Ad Experience Report API
     version: v1
   admin:
@@ -185,7 +185,7 @@ providerServices:
     name: admin
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/admin-reports_v1.yaml
+      $ref: googleapis.com/v0.1.2/services/admin-reports_v1.yaml
     title: Admin Reports API
     version: reports_v1
   admin:datatransfer_v1:
@@ -229,7 +229,7 @@ providerServices:
     name: admob
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/admob-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/admob-v1.yaml
     title: AdMob API
     version: v1
   adsense:
@@ -245,7 +245,7 @@ providerServices:
     name: adsense
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/adsense-v1.4.yaml
+      $ref: googleapis.com/v0.1.2/services/adsense-v1.4.yaml
     title: AdSense Management API
     version: v1.4
   adsensehost:
@@ -261,7 +261,7 @@ providerServices:
     name: adsensehost
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/adsensehost-v4.1.yaml
+      $ref: googleapis.com/v0.1.2/services/adsensehost-v4.1.yaml
     title: AdSense Host API
     version: v4.1
   alertcenter:
@@ -276,7 +276,7 @@ providerServices:
     name: alertcenter
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/alertcenter-v1beta1.yaml
+      $ref: googleapis.com/v0.1.2/services/alertcenter-v1beta1.yaml
     title: G Suite Alert Center API
     version: v1beta1
   analytics:
@@ -292,7 +292,7 @@ providerServices:
     name: analytics
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/analytics-v3.yaml
+      $ref: googleapis.com/v0.1.2/services/analytics-v3.yaml
     title: Google Analytics API
     version: v3
   analyticsreporting:
@@ -307,7 +307,7 @@ providerServices:
     name: analyticsreporting
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/analyticsreporting-v4.yaml
+      $ref: googleapis.com/v0.1.2/services/analyticsreporting-v4.yaml
     title: Analytics Reporting API
     version: v4
   androiddeviceprovisioning:
@@ -323,7 +323,7 @@ providerServices:
     name: androiddeviceprovisioning
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/androiddeviceprovisioning-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/androiddeviceprovisioning-v1.yaml
     title: Android Device Provisioning Partner API
     version: v1
   androidenterprise:
@@ -339,7 +339,7 @@ providerServices:
     name: androidenterprise
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/androidenterprise-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/androidenterprise-v1.yaml
     title: Google Play EMM API
     version: v1
   androidmanagement:
@@ -355,7 +355,7 @@ providerServices:
     name: androidmanagement
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/androidmanagement-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/androidmanagement-v1.yaml
     title: Android Management API
     version: v1
   androidpublisher:
@@ -371,7 +371,7 @@ providerServices:
     name: androidpublisher
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/androidpublisher-v3.yaml
+      $ref: googleapis.com/v0.1.2/services/androidpublisher-v3.yaml
     title: Google Play Developer API
     version: v3
   apigee:
@@ -391,7 +391,7 @@ providerServices:
     name: apigee
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/apigee-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/apigee-v1.yaml
     title: Apigee API
     version: v1
   appengine:
@@ -406,7 +406,7 @@ providerServices:
     name: appengine
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/appengine-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/appengine-v1.yaml
     title: App Engine Admin API
     version: v1
   appengine:v1alpha:
@@ -474,7 +474,7 @@ providerServices:
     name: appsactivity
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/appsactivity-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/appsactivity-v1.yaml
     title: Drive Activity API
     version: v1
   artifactregistry:
@@ -490,7 +490,7 @@ providerServices:
     name: artifactregistry
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/artifactregistry-v1beta1.yaml
+      $ref: googleapis.com/v0.1.2/services/artifactregistry-v1beta1.yaml
     title: Artifact Registry API
     version: v1beta1
   bigquery:
@@ -507,7 +507,7 @@ providerServices:
     name: bigquery
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/bigquery-v2.yaml
+      $ref: googleapis.com/v0.1.2/services/bigquery-v2.yaml
     title: BigQuery API
     version: v2
   bigqueryconnection:
@@ -522,7 +522,7 @@ providerServices:
     name: bigqueryconnection
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/bigqueryconnection-v1beta1.yaml
+      $ref: googleapis.com/v0.1.2/services/bigqueryconnection-v1beta1.yaml
     title: BigQuery Connection API
     version: v1beta1
   bigquerydatatransfer:
@@ -538,7 +538,7 @@ providerServices:
     name: bigquerydatatransfer
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/bigquerydatatransfer-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/bigquerydatatransfer-v1.yaml
     title: BigQuery Data Transfer API
     version: v1
   bigqueryreservation:
@@ -553,7 +553,7 @@ providerServices:
     name: bigqueryreservation
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/bigqueryreservation-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/bigqueryreservation-v1.yaml
     title: BigQuery Reservation API
     version: v1
   bigqueryreservation:v1alpha2:
@@ -594,7 +594,7 @@ providerServices:
     name: bigtableadmin
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/bigtableadmin-v2.yaml
+      $ref: googleapis.com/v0.1.2/services/bigtableadmin-v2.yaml
     title: Cloud Bigtable Admin API
     version: v2
   bigtableadmin:v1:
@@ -624,7 +624,7 @@ providerServices:
     name: billingbudgets
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/billingbudgets-v1beta1.yaml
+      $ref: googleapis.com/v0.1.2/services/billingbudgets-v1beta1.yaml
     title: Cloud Billing Budget API
     version: v1beta1
   binaryauthorization:
@@ -640,7 +640,7 @@ providerServices:
     name: binaryauthorization
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/binaryauthorization-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/binaryauthorization-v1.yaml
     title: Binary Authorization API
     version: v1
   binaryauthorization:v1beta1:
@@ -670,7 +670,7 @@ providerServices:
     name: blogger
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/blogger-v3.yaml
+      $ref: googleapis.com/v0.1.2/services/blogger-v3.yaml
     title: Blogger API v3
     version: v3
   blogger:v2:
@@ -700,7 +700,7 @@ providerServices:
     name: books
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/books-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/books-v1.yaml
     title: Books API
     version: v1
   calendar:
@@ -716,7 +716,7 @@ providerServices:
     name: calendar
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/calendar-v3.yaml
+      $ref: googleapis.com/v0.1.2/services/calendar-v3.yaml
     title: Calendar API
     version: v3
   chat:
@@ -732,7 +732,7 @@ providerServices:
     name: chat
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/chat-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/chat-v1.yaml
     title: Hangouts Chat API
     version: v1
   chromeuxreport:
@@ -748,7 +748,7 @@ providerServices:
     name: chromeuxreport
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/chromeuxreport-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/chromeuxreport-v1.yaml
     title: Chrome UX Report API
     version: v1
   civicinfo:
@@ -764,7 +764,7 @@ providerServices:
     name: civicinfo
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/civicinfo-v2.yaml
+      $ref: googleapis.com/v0.1.2/services/civicinfo-v2.yaml
     title: Google Civic Information API
     version: v2
   classroom:
@@ -779,7 +779,7 @@ providerServices:
     name: classroom
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/classroom-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/classroom-v1.yaml
     title: Google Classroom API
     version: v1
   cloudasset:
@@ -794,7 +794,7 @@ providerServices:
     name: cloudasset
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/cloudasset-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/cloudasset-v1.yaml
     title: Cloud Asset API
     version: v1
   cloudasset:v1beta1:
@@ -862,7 +862,7 @@ providerServices:
     name: cloudbilling
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/cloudbilling-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/cloudbilling-v1.yaml
     title: Cloud Billing API
     version: v1
   cloudbuild:
@@ -877,7 +877,7 @@ providerServices:
     name: cloudbuild
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/cloudbuild-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/cloudbuild-v1.yaml
     title: Cloud Build API
     version: v1
   cloudbuild:v1alpha1:
@@ -919,7 +919,7 @@ providerServices:
     name: clouddebugger
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/clouddebugger-v2.yaml
+      $ref: googleapis.com/v0.1.2/services/clouddebugger-v2.yaml
     title: Cloud Debugger API
     version: v2
   clouderrorreporting:
@@ -936,7 +936,7 @@ providerServices:
     name: clouderrorreporting
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/clouderrorreporting-v1beta1.yaml
+      $ref: googleapis.com/v0.1.2/services/clouderrorreporting-v1beta1.yaml
     title: Error Reporting API
     version: v1beta1
   cloudfunctions:
@@ -952,7 +952,7 @@ providerServices:
     name: cloudfunctions
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/cloudfunctions-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/cloudfunctions-v1.yaml
     title: Cloud Functions API
     version: v1
   cloudidentity:
@@ -967,7 +967,7 @@ providerServices:
     name: cloudidentity
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/cloudidentity-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/cloudidentity-v1.yaml
     title: Cloud Identity API
     version: v1
   cloudidentity:v1beta1:
@@ -996,7 +996,7 @@ providerServices:
     name: cloudiot
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/cloudiot-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/cloudiot-v1.yaml
     title: Cloud IoT API
     version: v1
   cloudiot:v1alpha1:
@@ -1026,7 +1026,7 @@ providerServices:
     name: cloudkms
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/cloudkms-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/cloudkms-v1.yaml
     title: Cloud Key Management Service (KMS) API
     version: v1
   cloudprofiler:
@@ -1041,7 +1041,7 @@ providerServices:
     name: cloudprofiler
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/cloudprofiler-v2.yaml
+      $ref: googleapis.com/v0.1.2/services/cloudprofiler-v2.yaml
     title: Stackdriver Profiler API
     version: v2
   cloudresourcemanager:
@@ -1057,7 +1057,7 @@ providerServices:
     name: cloudresourcemanager
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/cloudresourcemanager-v3.yaml
+      $ref: googleapis.com/v0.1.2/services/cloudresourcemanager-v3.yaml
     title: Cloud Resource Manager API
     version: v3
   cloudresourcemanager:v1:
@@ -1101,7 +1101,7 @@ providerServices:
     name: cloudresourcemanager
     preferred: false
     service:
-      $ref: googleapis.com/v1/services/cloudresourcemanager-v2.yaml
+      $ref: googleapis.com/v0.1.2/services/cloudresourcemanager-v2.yaml
     title: Cloud Resource Manager API
     version: v2
   cloudresourcemanager:v2beta1:
@@ -1130,7 +1130,7 @@ providerServices:
     name: cloudscheduler
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/cloudscheduler-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/cloudscheduler-v1.yaml
     title: Cloud Scheduler API
     version: v1
   cloudscheduler:v1beta1:
@@ -1159,7 +1159,7 @@ providerServices:
     name: cloudsearch
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/cloudsearch-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/cloudsearch-v1.yaml
     title: Cloud Search API
     version: v1
   cloudshell:
@@ -1175,7 +1175,7 @@ providerServices:
     name: cloudshell
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/cloudshell-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/cloudshell-v1.yaml
     title: Cloud Shell API
     version: v1
   cloudshell:v1alpha1:
@@ -1204,7 +1204,7 @@ providerServices:
     name: cloudtasks
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/cloudtasks-v2.yaml
+      $ref: googleapis.com/v0.1.2/services/cloudtasks-v2.yaml
     title: Cloud Tasks API
     version: v2
   cloudtasks:v2beta2:
@@ -1249,7 +1249,7 @@ providerServices:
     name: cloudtrace
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/cloudtrace-v2.yaml
+      $ref: googleapis.com/v0.1.2/services/cloudtrace-v2.yaml
     title: Cloud Trace API
     version: v2
   cloudtrace:v1:
@@ -1298,7 +1298,7 @@ providerServices:
     name: composer
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/composer-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/composer-v1.yaml
     title: Cloud Composer API
     version: v1
   composer:v1beta1:
@@ -1327,9 +1327,9 @@ providerServices:
     name: compute
     preferred: true
     resources:
-      $ref: googleapis.com/v1/resources/compute-v1.yaml
+      $ref: googleapis.com/v0.1.2/resources/compute-v1.yaml
     service:
-      $ref: googleapis.com/v1/services/compute-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/compute-v1.yaml
     title: Compute Engine API
     version: v1
   compute:alpha:
@@ -1373,7 +1373,7 @@ providerServices:
     name: container
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/container-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/container-v1.yaml
     title: Kubernetes Engine API
     version: v1
   container:v1beta1:
@@ -1403,7 +1403,7 @@ providerServices:
     name: containeranalysis
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/containeranalysis-v1alpha1.yaml
+      $ref: googleapis.com/v0.1.2/services/containeranalysis-v1alpha1.yaml
     title: Container Analysis API
     version: v1alpha1
   containeranalysis:v1beta1:
@@ -1434,7 +1434,7 @@ providerServices:
     name: content
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/content-v2.1.yaml
+      $ref: googleapis.com/v0.1.2/services/content-v2.1.yaml
     title: Content API for Shopping
     version: v2.1
   content:v2:
@@ -1464,7 +1464,7 @@ providerServices:
     name: customsearch
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/customsearch-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/customsearch-v1.yaml
     title: Custom Search API
     version: v1
   datacatalog:
@@ -1480,7 +1480,7 @@ providerServices:
     name: datacatalog
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/datacatalog-v1beta1.yaml
+      $ref: googleapis.com/v0.1.2/services/datacatalog-v1beta1.yaml
     title: Google Cloud Data Catalog API
     version: v1beta1
   dataflow:
@@ -1495,7 +1495,7 @@ providerServices:
     name: dataflow
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/dataflow-v1b3.yaml
+      $ref: googleapis.com/v0.1.2/services/dataflow-v1b3.yaml
     title: Dataflow API
     version: v1b3
   datafusion:
@@ -1515,7 +1515,7 @@ providerServices:
     name: datafusion
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/datafusion-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/datafusion-v1.yaml
     title: Cloud Data Fusion API
     version: v1
   datafusion:v1beta1:
@@ -1548,7 +1548,7 @@ providerServices:
     name: dataproc
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/dataproc-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/dataproc-v1.yaml
     title: Cloud Dataproc API
     version: v1
   dataproc:v1beta2:
@@ -1577,7 +1577,7 @@ providerServices:
     name: datastore
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/datastore-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/datastore-v1.yaml
     title: Cloud Datastore API
     version: v1
   datastore:v1beta1:
@@ -1622,7 +1622,7 @@ providerServices:
     name: deploymentmanager
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/deploymentmanager-v2.yaml
+      $ref: googleapis.com/v0.1.2/services/deploymentmanager-v2.yaml
     title: Google Cloud Deployment Manager API
     version: v2
   deploymentmanager:alpha:
@@ -1668,7 +1668,7 @@ providerServices:
     name: dfareporting
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/dfareporting-v3.4.yaml
+      $ref: googleapis.com/v0.1.2/services/dfareporting-v3.4.yaml
     title: DCM/DFA Reporting And Trafficking API
     version: v3.4
   dfareporting:v3.3:
@@ -1698,7 +1698,7 @@ providerServices:
     name: dialogflow
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/dialogflow-v2.yaml
+      $ref: googleapis.com/v0.1.2/services/dialogflow-v2.yaml
     title: Dialogflow API
     version: v2
   dialogflow:v2beta1:
@@ -1728,7 +1728,7 @@ providerServices:
     name: digitalassetlinks
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/digitalassetlinks-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/digitalassetlinks-v1.yaml
     title: Digital Asset Links API
     version: v1
   discovery:
@@ -1745,7 +1745,7 @@ providerServices:
     name: discovery
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/discovery-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/discovery-v1.yaml
     title: API Discovery Service
     version: v1
   displayvideo:
@@ -1761,7 +1761,7 @@ providerServices:
     name: displayvideo
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/displayvideo-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/displayvideo-v1.yaml
     title: Display & Video 360 API
     version: v1
   dlp:
@@ -1778,7 +1778,7 @@ providerServices:
     name: dlp
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/dlp-v2.yaml
+      $ref: googleapis.com/v0.1.2/services/dlp-v2.yaml
     title: Cloud Data Loss Prevention (DLP) API
     version: v2
   dns:
@@ -1794,7 +1794,7 @@ providerServices:
     name: dns
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/dns-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/dns-v1.yaml
     title: Google Cloud DNS API
     version: v1
   dns:v1beta2:
@@ -1837,7 +1837,7 @@ providerServices:
     name: docs
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/docs-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/docs-v1.yaml
     title: Google Docs API
     version: v1
   documentai:
@@ -1854,7 +1854,7 @@ providerServices:
     name: documentai
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/documentai-v1beta2.yaml
+      $ref: googleapis.com/v0.1.2/services/documentai-v1beta2.yaml
     title: Cloud Document AI API
     version: v1beta2
   domainsrdap:
@@ -1870,7 +1870,7 @@ providerServices:
     name: domainsrdap
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/domainsrdap-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/domainsrdap-v1.yaml
     title: Domains RDAP API
     version: v1
   doubleclickbidmanager:
@@ -1888,7 +1888,7 @@ providerServices:
     name: doubleclickbidmanager
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/doubleclickbidmanager-v1.1.yaml
+      $ref: googleapis.com/v0.1.2/services/doubleclickbidmanager-v1.1.yaml
     title: DoubleClick Bid Manager API
     version: v1.1
   doubleclickbidmanager:v1:
@@ -1921,7 +1921,7 @@ providerServices:
     name: doubleclicksearch
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/doubleclicksearch-v2.yaml
+      $ref: googleapis.com/v0.1.2/services/doubleclicksearch-v2.yaml
     title: Search Ads 360 API
     version: v2
   drive:
@@ -1938,7 +1938,7 @@ providerServices:
     name: drive
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/drive-v3.yaml
+      $ref: googleapis.com/v0.1.2/services/drive-v3.yaml
     title: Drive API
     version: v3
   drive:v2:
@@ -1968,7 +1968,7 @@ providerServices:
     name: driveactivity
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/driveactivity-v2.yaml
+      $ref: googleapis.com/v0.1.2/services/driveactivity-v2.yaml
     title: Drive Activity API
     version: v2
   factchecktools:
@@ -1983,7 +1983,7 @@ providerServices:
     name: factchecktools
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/factchecktools-v1alpha1.yaml
+      $ref: googleapis.com/v0.1.2/services/factchecktools-v1alpha1.yaml
     title: Fact Check Tools API
     version: v1alpha1
   fcm:
@@ -1999,7 +1999,7 @@ providerServices:
     name: fcm
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/fcm-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/fcm-v1.yaml
     title: Firebase Cloud Messaging API
     version: v1
   file:
@@ -2015,7 +2015,7 @@ providerServices:
     name: file
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/file-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/file-v1.yaml
     title: Cloud Filestore API
     version: v1
   file:v1beta1:
@@ -2046,7 +2046,7 @@ providerServices:
     name: firebase
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/firebase-v1beta1.yaml
+      $ref: googleapis.com/v0.1.2/services/firebase-v1beta1.yaml
     title: Firebase Management API
     version: v1beta1
   firebasedynamiclinks:
@@ -2061,7 +2061,7 @@ providerServices:
     name: firebasedynamiclinks
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/firebasedynamiclinks-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/firebasedynamiclinks-v1.yaml
     title: Firebase Dynamic Links API
     version: v1
   firebasehosting:
@@ -2078,7 +2078,7 @@ providerServices:
     name: firebasehosting
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/firebasehosting-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/firebasehosting-v1.yaml
     title: Firebase Hosting API
     version: v1
   firebasehosting:v1beta1:
@@ -2108,7 +2108,7 @@ providerServices:
     name: firebaseml
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/firebaseml-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/firebaseml-v1.yaml
     title: Firebase ML API
     version: v1
   firebaseml:v1beta2:
@@ -2137,7 +2137,7 @@ providerServices:
     name: firebaserules
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/firebaserules-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/firebaserules-v1.yaml
     title: Firebase Rules API
     version: v1
   firestore:
@@ -2153,7 +2153,7 @@ providerServices:
     name: firestore
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/firestore-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/firestore-v1.yaml
     title: Cloud Firestore API
     version: v1
   firestore:v1beta1:
@@ -2198,7 +2198,7 @@ providerServices:
     name: games
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/games-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/games-v1.yaml
     title: Google Play Game Services
     version: v1
   gamesConfiguration:
@@ -2214,7 +2214,7 @@ providerServices:
     name: gamesConfiguration
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/gamesConfiguration-v1configuration.yaml
+      $ref: googleapis.com/v0.1.2/services/gamesConfiguration-v1configuration.yaml
     title: Google Play Game Services Publishing API
     version: v1configuration
   gamesManagement:
@@ -2230,7 +2230,7 @@ providerServices:
     name: gamesManagement
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/gamesManagement-v1management.yaml
+      $ref: googleapis.com/v0.1.2/services/gamesManagement-v1management.yaml
     title: Google Play Game Management
     version: v1management
   gameservices:
@@ -2245,7 +2245,7 @@ providerServices:
     name: gameservices
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/gameservices-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/gameservices-v1.yaml
     title: Game Services API
     version: v1
   gameservices:v1beta:
@@ -2273,7 +2273,7 @@ providerServices:
     name: genomics
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/genomics-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/genomics-v1.yaml
     title: Genomics API
     version: v1
   genomics:v1alpha2:
@@ -2315,7 +2315,7 @@ providerServices:
     name: gmail
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/gmail-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/gmail-v1.yaml
     title: Gmail API
     version: v1
   gmailpostmastertools:
@@ -2332,7 +2332,7 @@ providerServices:
     name: gmailpostmastertools
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/gmailpostmastertools-v1beta1.yaml
+      $ref: googleapis.com/v0.1.2/services/gmailpostmastertools-v1beta1.yaml
     title: Gmail Postmaster Tools API
     version: v1beta1
   groupssettings:
@@ -2348,7 +2348,7 @@ providerServices:
     name: groupssettings
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/groupssettings-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/groupssettings-v1.yaml
     title: Groups Settings API
     version: v1
   healthcare:
@@ -2363,7 +2363,7 @@ providerServices:
     name: healthcare
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/healthcare-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/healthcare-v1.yaml
     title: Cloud Healthcare API
     version: v1
   healthcare:v1beta1:
@@ -2391,7 +2391,7 @@ providerServices:
     name: homegraph
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/homegraph-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/homegraph-v1.yaml
     title: HomeGraph API
     version: v1
   iam:
@@ -2408,7 +2408,7 @@ providerServices:
     name: iam
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/iam-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/iam-v1.yaml
     title: Identity and Access Management (IAM) API
     version: v1
   iamcredentials:
@@ -2423,7 +2423,7 @@ providerServices:
     name: iamcredentials
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/iamcredentials-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/iamcredentials-v1.yaml
     title: IAM Service Account Credentials API
     version: v1
   iap:
@@ -2438,7 +2438,7 @@ providerServices:
     name: iap
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/iap-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/iap-v1.yaml
     title: Cloud Identity-Aware Proxy API
     version: v1
   iap:v1beta1:
@@ -2467,7 +2467,7 @@ providerServices:
     name: identitytoolkit
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/identitytoolkit-v3.yaml
+      $ref: googleapis.com/v0.1.2/services/identitytoolkit-v3.yaml
     title: Identity Toolkit API
     version: v3
   indexing:
@@ -2482,7 +2482,7 @@ providerServices:
     name: indexing
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/indexing-v3.yaml
+      $ref: googleapis.com/v0.1.2/services/indexing-v3.yaml
     title: Indexing API
     version: v3
   jobs:
@@ -2498,7 +2498,7 @@ providerServices:
     name: jobs
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/jobs-v3.yaml
+      $ref: googleapis.com/v0.1.2/services/jobs-v3.yaml
     title: Cloud Talent Solution API
     version: v3
   jobs:v2:
@@ -2541,7 +2541,7 @@ providerServices:
     name: kgsearch
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/kgsearch-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/kgsearch-v1.yaml
     title: Knowledge Graph Search API
     version: v1
   language:
@@ -2558,7 +2558,7 @@ providerServices:
     name: language
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/language-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/language-v1.yaml
     title: Cloud Natural Language API
     version: v1
   language:v1beta1:
@@ -2603,7 +2603,7 @@ providerServices:
     name: libraryagent
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/libraryagent-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/libraryagent-v1.yaml
     title: Library Agent API
     version: v1
   licensing:
@@ -2619,7 +2619,7 @@ providerServices:
     name: licensing
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/licensing-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/licensing-v1.yaml
     title: Licensing API
     version: v1
   lifesciences:
@@ -2635,7 +2635,7 @@ providerServices:
     name: lifesciences
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/lifesciences-v2beta.yaml
+      $ref: googleapis.com/v0.1.2/services/lifesciences-v2beta.yaml
     title: Cloud Life Sciences API
     version: v2beta
   logging:
@@ -2653,7 +2653,7 @@ providerServices:
     name: logging
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/logging-v2.yaml
+      $ref: googleapis.com/v0.1.2/services/logging-v2.yaml
     title: Cloud Logging API
     version: v2
   managedidentities:
@@ -2670,7 +2670,7 @@ providerServices:
     name: managedidentities
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/managedidentities-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/managedidentities-v1.yaml
     title: Managed Service for Microsoft Active Directory API
     version: v1
   managedidentities:v1alpha1:
@@ -2715,7 +2715,7 @@ providerServices:
     name: manufacturers
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/manufacturers-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/manufacturers-v1.yaml
     title: Manufacturer Center API
     version: v1
   memcache:
@@ -2731,7 +2731,7 @@ providerServices:
     name: memcache
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/memcache-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/memcache-v1.yaml
     title: Cloud Memorystore for Memcached API
     version: v1
   memcache:v1beta2:
@@ -2760,7 +2760,7 @@ providerServices:
     name: ml
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/ml-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/ml-v1.yaml
     title: AI Platform Training & Prediction API
     version: v1
   monitoring:
@@ -2779,7 +2779,7 @@ providerServices:
     name: monitoring
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/monitoring-v3.yaml
+      $ref: googleapis.com/v0.1.2/services/monitoring-v3.yaml
     title: Cloud Monitoring API
     version: v3
   monitoring:v1:
@@ -2829,7 +2829,7 @@ providerServices:
     name: networkmanagement
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/networkmanagement-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/networkmanagement-v1.yaml
     title: Network Management API
     version: v1
   networkmanagement:v1beta1:
@@ -2859,7 +2859,7 @@ providerServices:
     name: oauth2
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/oauth2-v2.yaml
+      $ref: googleapis.com/v0.1.2/services/oauth2-v2.yaml
     title: Google OAuth2 API
     version: v2
   osconfig:
@@ -2875,7 +2875,7 @@ providerServices:
     name: osconfig
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/osconfig-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/osconfig-v1.yaml
     title: Cloud OS Config API
     version: v1
   osconfig:v1alpha2:
@@ -2919,7 +2919,7 @@ providerServices:
     name: oslogin
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/oslogin-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/oslogin-v1.yaml
     title: Cloud OS Login API
     version: v1
   oslogin:v1alpha:
@@ -2965,7 +2965,7 @@ providerServices:
     name: pagespeedonline
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/pagespeedonline-v5.yaml
+      $ref: googleapis.com/v0.1.2/services/pagespeedonline-v5.yaml
     title: PageSpeed Insights API
     version: v5
   people:
@@ -2980,7 +2980,7 @@ providerServices:
     name: people
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/people-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/people-v1.yaml
     title: People API
     version: v1
   playablelocations:
@@ -2995,7 +2995,7 @@ providerServices:
     name: playablelocations
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/playablelocations-v3.yaml
+      $ref: googleapis.com/v0.1.2/services/playablelocations-v3.yaml
     title: Playable Locations API
     version: v3
   playcustomapp:
@@ -3011,7 +3011,7 @@ providerServices:
     name: playcustomapp
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/playcustomapp-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/playcustomapp-v1.yaml
     title: Google Play Custom App Publishing API
     version: v1
   plus:
@@ -3027,7 +3027,7 @@ providerServices:
     name: plus
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/plus-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/plus-v1.yaml
     title: Google+ API
     version: v1
   policytroubleshooter:
@@ -3042,7 +3042,7 @@ providerServices:
     name: policytroubleshooter
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/policytroubleshooter-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/policytroubleshooter-v1.yaml
     title: Policy Troubleshooter API
     version: v1
   policytroubleshooter:v1beta:
@@ -3071,7 +3071,7 @@ providerServices:
     name: poly
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/poly-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/poly-v1.yaml
     title: Poly API
     version: v1
   prod_tt_sasportal:
@@ -3086,7 +3086,7 @@ providerServices:
     name: prod_tt_sasportal
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/prod_tt_sasportal-v1alpha1.yaml
+      $ref: googleapis.com/v0.1.2/services/prod_tt_sasportal-v1alpha1.yaml
     title: SAS Portal API (Testing)
     version: v1alpha1
   pubsub:
@@ -3101,7 +3101,7 @@ providerServices:
     name: pubsub
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/pubsub-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/pubsub-v1.yaml
     title: Cloud Pub/Sub API
     version: v1
   pubsub:v1beta1a:
@@ -3142,7 +3142,7 @@ providerServices:
     name: pubsublite
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/pubsublite-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/pubsublite-v1.yaml
     title: Pub/Sub Lite API
     version: v1
   realtimebidding:
@@ -3160,7 +3160,7 @@ providerServices:
     name: realtimebidding
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/realtimebidding-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/realtimebidding-v1.yaml
     title: Real-time Bidding API
     version: v1
   recommendationengine:
@@ -3177,7 +3177,7 @@ providerServices:
     name: recommendationengine
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/recommendationengine-v1beta1.yaml
+      $ref: googleapis.com/v0.1.2/services/recommendationengine-v1beta1.yaml
     title: Recommendations AI
     version: v1beta1
   recommender:
@@ -3192,7 +3192,7 @@ providerServices:
     name: recommender
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/recommender-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/recommender-v1.yaml
     title: Recommender API
     version: v1
   recommender:v1beta1:
@@ -3220,7 +3220,7 @@ providerServices:
     name: redis
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/redis-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/redis-v1.yaml
     title: Google Cloud Memorystore for Redis API
     version: v1
   redis:v1beta1:
@@ -3248,7 +3248,7 @@ providerServices:
     name: remotebuildexecution
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/remotebuildexecution-v2.yaml
+      $ref: googleapis.com/v0.1.2/services/remotebuildexecution-v2.yaml
     title: Remote Build Execution API
     version: v2
   remotebuildexecution:v1:
@@ -3292,7 +3292,7 @@ providerServices:
     name: reseller
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/reseller-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/reseller-v1.yaml
     title: Enterprise Apps Reseller API
     version: v1
   run:
@@ -3308,7 +3308,7 @@ providerServices:
     name: run
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/run-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/run-v1.yaml
     title: Cloud Run Admin API
     version: v1
   run:v1alpha1:
@@ -3354,7 +3354,7 @@ providerServices:
     name: runtimeconfig
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/runtimeconfig-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/runtimeconfig-v1.yaml
     title: Cloud Runtime Configuration API
     version: v1
   runtimeconfig:v1beta1:
@@ -3389,7 +3389,7 @@ providerServices:
     name: safebrowsing
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/safebrowsing-v4.yaml
+      $ref: googleapis.com/v0.1.2/services/safebrowsing-v4.yaml
     title: Safe Browsing API
     version: v4
   sasportal:
@@ -3404,7 +3404,7 @@ providerServices:
     name: sasportal
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/sasportal-v1alpha1.yaml
+      $ref: googleapis.com/v0.1.2/services/sasportal-v1alpha1.yaml
     title: SAS Portal API
     version: v1alpha1
   script:
@@ -3419,7 +3419,7 @@ providerServices:
     name: script
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/script-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/script-v1.yaml
     title: Apps Script API
     version: v1
   searchconsole:
@@ -3435,7 +3435,7 @@ providerServices:
     name: searchconsole
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/searchconsole-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/searchconsole-v1.yaml
     title: Google Search Console API
     version: v1
   secretmanager:
@@ -3451,7 +3451,7 @@ providerServices:
     name: secretmanager
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/secretmanager-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/secretmanager-v1.yaml
     title: Secret Manager API
     version: v1
   secretmanager:v1beta1:
@@ -3481,7 +3481,7 @@ providerServices:
     name: securitycenter
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/securitycenter-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/securitycenter-v1.yaml
     title: Security Command Center API
     version: v1
   securitycenter:v1beta1:
@@ -3552,7 +3552,7 @@ providerServices:
     name: serviceconsumermanagement
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/serviceconsumermanagement-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/serviceconsumermanagement-v1.yaml
     title: Service Consumer Management API
     version: v1
   serviceconsumermanagement:v1beta1:
@@ -3581,7 +3581,7 @@ providerServices:
     name: servicecontrol
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/servicecontrol-v2.yaml
+      $ref: googleapis.com/v0.1.2/services/servicecontrol-v2.yaml
     title: Service Control API
     version: v2
   servicecontrol:v1:
@@ -3611,7 +3611,7 @@ providerServices:
     name: servicedirectory
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/servicedirectory-v1beta1.yaml
+      $ref: googleapis.com/v0.1.2/services/servicedirectory-v1beta1.yaml
     title: Service Directory API
     version: v1beta1
   servicemanagement:
@@ -3628,7 +3628,7 @@ providerServices:
     name: servicemanagement
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/servicemanagement-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/servicemanagement-v1.yaml
     title: Service Management API
     version: v1
   servicenetworking:
@@ -3644,7 +3644,7 @@ providerServices:
     name: servicenetworking
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/servicenetworking-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/servicenetworking-v1.yaml
     title: Service Networking API
     version: v1
   servicenetworking:v1beta:
@@ -3675,7 +3675,7 @@ providerServices:
     name: serviceusage
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/serviceusage-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/serviceusage-v1.yaml
     title: Service Usage API
     version: v1
   serviceusage:v1beta1:
@@ -3705,7 +3705,7 @@ providerServices:
     name: sheets
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/sheets-v4.yaml
+      $ref: googleapis.com/v0.1.2/services/sheets-v4.yaml
     title: Google Sheets API
     version: v4
   siteVerification:
@@ -3721,7 +3721,7 @@ providerServices:
     name: siteVerification
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/siteVerification-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/siteVerification-v1.yaml
     title: Google Site Verification API
     version: v1
   slides:
@@ -3736,7 +3736,7 @@ providerServices:
     name: slides
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/slides-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/slides-v1.yaml
     title: Google Slides API
     version: v1
   sourcerepo:
@@ -3751,7 +3751,7 @@ providerServices:
     name: sourcerepo
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/sourcerepo-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/sourcerepo-v1.yaml
     title: Cloud Source Repositories API
     version: v1
   spanner:
@@ -3767,7 +3767,7 @@ providerServices:
     name: spanner
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/spanner-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/spanner-v1.yaml
     title: Cloud Spanner API
     version: v1
   speech:
@@ -3782,7 +3782,7 @@ providerServices:
     name: speech
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/speech-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/speech-v1.yaml
     title: Cloud Speech-to-Text API
     version: v1
   speech:v1p1beta1:
@@ -3823,7 +3823,7 @@ providerServices:
     name: sql
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/sql-v1beta4.yaml
+      $ref: googleapis.com/v0.1.2/services/sql-v1beta4.yaml
     title: Cloud SQL Admin API
     version: v1beta4
   storage:
@@ -3841,7 +3841,7 @@ providerServices:
     name: storage
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/storage-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/storage-v1.yaml
     title: Cloud Storage JSON API
     version: v1
   storage:v1beta2:
@@ -3873,7 +3873,7 @@ providerServices:
     name: storagetransfer
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/storagetransfer-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/storagetransfer-v1.yaml
     title: Storage Transfer API
     version: v1
   streetviewpublish:
@@ -3890,7 +3890,7 @@ providerServices:
     name: streetviewpublish
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/streetviewpublish-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/streetviewpublish-v1.yaml
     title: Street View Publish API
     version: v1
   tagmanager:
@@ -3906,7 +3906,7 @@ providerServices:
     name: tagmanager
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/tagmanager-v2.yaml
+      $ref: googleapis.com/v0.1.2/services/tagmanager-v2.yaml
     title: Tag Manager API
     version: v2
   tagmanager:v1:
@@ -3936,7 +3936,7 @@ providerServices:
     name: tasks
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/tasks-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/tasks-v1.yaml
     title: Tasks API
     version: v1
   testing:
@@ -3952,7 +3952,7 @@ providerServices:
     name: testing
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/testing-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/testing-v1.yaml
     title: Cloud Testing API
     version: v1
   texttospeech:
@@ -3968,7 +3968,7 @@ providerServices:
     name: texttospeech
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/texttospeech-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/texttospeech-v1.yaml
     title: Cloud Text-to-Speech API
     version: v1
   texttospeech:v1beta1:
@@ -3997,7 +3997,7 @@ providerServices:
     name: toolresults
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/toolresults-v1beta3.yaml
+      $ref: googleapis.com/v0.1.2/services/toolresults-v1beta3.yaml
     title: Cloud Tool Results API
     version: v1beta3
   tpu:
@@ -4012,7 +4012,7 @@ providerServices:
     name: tpu
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/tpu-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/tpu-v1.yaml
     title: Cloud TPU API
     version: v1
   tpu:v1alpha1:
@@ -4040,7 +4040,7 @@ providerServices:
     name: trafficdirector
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/trafficdirector-v2.yaml
+      $ref: googleapis.com/v0.1.2/services/trafficdirector-v2.yaml
     title: Traffic Director API
     version: v2
   translate:
@@ -4055,7 +4055,7 @@ providerServices:
     name: translate
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/translate-v3.yaml
+      $ref: googleapis.com/v0.1.2/services/translate-v3.yaml
     title: Cloud Translation API
     version: v3
   translate:v2:
@@ -4096,7 +4096,7 @@ providerServices:
     name: vault
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/vault-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/vault-v1.yaml
     title: G Suite Vault API
     version: v1
   vectortile:
@@ -4111,7 +4111,7 @@ providerServices:
     name: vectortile
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/vectortile-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/vectortile-v1.yaml
     title: Semantic Tile API
     version: v1
   verifiedaccess:
@@ -4127,7 +4127,7 @@ providerServices:
     name: verifiedaccess
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/verifiedaccess-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/verifiedaccess-v1.yaml
     title: Chrome Verified Access API
     version: v1
   videointelligence:
@@ -4144,7 +4144,7 @@ providerServices:
     name: videointelligence
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/videointelligence-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/videointelligence-v1.yaml
     title: Cloud Video Intelligence API
     version: v1
   videointelligence:v1beta2:
@@ -4221,7 +4221,7 @@ providerServices:
     name: vision
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/vision-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/vision-v1.yaml
     title: Cloud Vision API
     version: v1
   vision:v1p1beta1:
@@ -4267,7 +4267,7 @@ providerServices:
     name: webmasters
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/webmasters-v3.yaml
+      $ref: googleapis.com/v0.1.2/services/webmasters-v3.yaml
     title: Search Console API
     version: v3
   websecurityscanner:
@@ -4282,7 +4282,7 @@ providerServices:
     name: websecurityscanner
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/websecurityscanner-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/websecurityscanner-v1.yaml
     title: Web Security Scanner API
     version: v1
   websecurityscanner:v1alpha:
@@ -4325,7 +4325,7 @@ providerServices:
     name: youtube
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/youtube-v3.yaml
+      $ref: googleapis.com/v0.1.2/services/youtube-v3.yaml
     title: YouTube Data API
     version: v3
   youtubeAnalytics:
@@ -4340,7 +4340,7 @@ providerServices:
     name: youtubeAnalytics
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/youtubeAnalytics-v2.yaml
+      $ref: googleapis.com/v0.1.2/services/youtubeAnalytics-v2.yaml
     title: YouTube Analytics API
     version: v2
   youtubeAnalytics:v1:
@@ -4369,7 +4369,7 @@ providerServices:
     name: youtubereporting
     preferred: true
     service:
-      $ref: googleapis.com/v1/services/youtubereporting-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/youtubereporting-v1.yaml
     title: YouTube Reporting API
     version: v1
 title: google
