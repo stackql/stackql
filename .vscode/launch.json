@@ -11,7 +11,7 @@
       "options": [
         "{ \"url\": \"file://${workspaceFolder}/test/registry-sandbox\", \"localDocRoot\": \"${workspaceFolder}/test/registry-sandbox\", \"verifyConfig\": { \"nopVerify\": true } }",
         "{ \"url\": \"file://${workspaceFolder}/test/registry\", \"localDocRoot\": \"${workspaceFolder}/test/registry\", \"verifyConfig\": { \"nopVerify\": true } }",
-        "{ \"url\": \"https://cdn.statically.io/gh/stackql/stackql-provider-registry/feature/reset-provider-versions-02/providers\" }",
+        "{ \"url\": \"https://cdn.statically.io/gh/stackql/stackql-provider-registry/feature/github-v-0-3-0/providers\" }",
         "{ \"url\": \"https://cdn.statically.io/gh/stackql/stackql-provider-registry/feature/add-github-provider-published-05/providers\" }"
       ],
       "default": "{ \"url\": \"file://${workspaceFolder}/test/registry-sandbox\", \"localDocRoot\": \"${workspaceFolder}/test/registry-sandbox\", \"verifyConfig\": { \"nopVerify\": true } }"
@@ -192,7 +192,7 @@
     },
     // describe github.activity.starring;
     {
-      "name": "DEBUG describe github.activity.starring;",
+      "name": "DEBUG describe github.repos.pages;",
       "type": "go",
       "request": "launch",
       "mode": "debug",
@@ -201,7 +201,48 @@
         "exec",
         "--registry=${input:registryString}",
         "--auth=${input:authString}",
-        "describe github.activity.starring;"
+        "describe github.repos.pages;"
+      ],
+    },
+    // describe github.repos.statistics_code_frequency;
+    {
+      "name": "DEBUG describe github.repos.statistics_code_frequency;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "describe github.repos.statistics_code_frequency;"
+      ],
+    },
+    // select id from  github.repos.repos where org = 'stackql';
+    {
+      "name": "DEBUG select id from  github.repos.repos where org = 'stackql';",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "select id from  github.repos.repos where org = 'stackql';"
+      ],
+    },
+    {
+      "name": "DEBUG select url from github.repos.pages where owner = 'stackql' and repo = 'fullstackchronicles.io';",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "select url from github.repos.pages where owner = 'stackql' and repo = 'fullstackchronicles.io';"
       ],
     },
     {
@@ -274,7 +315,7 @@
     },
     // ' registry pull okta
     {
-      "name": "DEBUG pull okta v0.1.0 ;",
+      "name": "DEBUG pull github v0.3.0 ;",
       "type": "go",
       "request": "launch",
       "mode": "debug",
@@ -284,8 +325,8 @@
         "--registry=${input:registryString}",
         "--auth=${input:authString}",
         "pull",
-        "okta",
-        "v0.1.0"
+        "github",
+        "v0.3.0"
       ],
     },
     {

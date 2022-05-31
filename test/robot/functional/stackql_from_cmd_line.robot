@@ -25,10 +25,14 @@ Get Okta Services
 Get Okta Application Resources
     Should StackQL Exec Contain    ${SHOW_OKTA_APPLICATION_RESOURCES_FILTERED_STR}    grants    groups
 
+Describe GitHub Repos Pages
+    Should StackQL Novel Exec Contain    ${DESCRIBE_GITHUB_REPOS_PAGES}    https_certificate    url
+
 *** Keywords ***
 Run StackQL Exec Command
     [Arguments]    ${_EXEC_CMD_STR}    @{varargs}
     Set Environment Variable    OKTA_SECRET_KEY    ${OKTA_SECRET_STR}
+    Set Environment Variable    GITHUB_SECRET_KEY    ${GITHUB_SECRET_STR}
     ${result} =     Run Process    
                     ...  ${STACKQL_EXE}
                     ...  exec    \-\-registry\=${REGISTRY_NO_VERIFY_CFG_STR}
@@ -42,6 +46,7 @@ Run StackQL Exec Command
 Run StackQL Canonical Exec Command
     [Arguments]    ${_EXEC_CMD_STR}    @{varargs}
     Set Environment Variable    OKTA_SECRET_KEY    ${OKTA_SECRET_STR}
+    Set Environment Variable    GITHUB_SECRET_KEY    ${GITHUB_SECRET_STR}
     ${result} =     Run Process    
                     ...  ${STACKQL_EXE}
                     ...  exec    \-\-registry\=${REGISTRY_CANONICAL_CFG_STR}
@@ -55,6 +60,7 @@ Run StackQL Canonical Exec Command
 Run StackQL Canonical No Cfg Exec Command
     [Arguments]    ${_EXEC_CMD_STR}    @{varargs}
     Set Environment Variable    OKTA_SECRET_KEY    ${OKTA_SECRET_STR}
+    Set Environment Variable    GITHUB_SECRET_KEY    ${GITHUB_SECRET_STR}
     ${result} =     Run Process    
                     ...  ${STACKQL_EXE}
                     ...  exec    ${_EXEC_CMD_STR}    @{varargs}
@@ -65,6 +71,7 @@ Run StackQL Canonical No Cfg Exec Command
 Run StackQL Deprecated Exec Command
     [Arguments]    ${_EXEC_CMD_STR}    @{varargs}
     Set Environment Variable    OKTA_SECRET_KEY    ${OKTA_SECRET_STR}
+    Set Environment Variable    GITHUB_SECRET_KEY    ${GITHUB_SECRET_STR}
     ${result} =     Run Process    
                     ...  ${STACKQL_EXE}
                     ...  exec    \-\-registry\=${REGISTRY_DEPRECATED_CFG_STR}
@@ -92,6 +99,13 @@ Should StackQL Exec Contain
     ${result} =    Run StackQL Canonical Exec Command    ${_EXEC_CMD_STR}
     Should contain    ${result.stdout}    ${_EXEC_CMD_EXPECTED_OUTPUT}    @{varargs}
     ${result} =    Run StackQL Deprecated Exec Command    ${_EXEC_CMD_STR}
+    Should contain    ${result.stdout}    ${_EXEC_CMD_EXPECTED_OUTPUT}    @{varargs}
+
+Should StackQL Novel Exec Contain
+    [Arguments]    ${_EXEC_CMD_STR}    ${_EXEC_CMD_EXPECTED_OUTPUT}    @{varargs}
+    ${result} =    Run StackQL Exec Command    ${_EXEC_CMD_STR}
+    Should contain    ${result.stdout}    ${_EXEC_CMD_EXPECTED_OUTPUT}    @{varargs}
+    ${result} =    Run StackQL Canonical Exec Command    ${_EXEC_CMD_STR}
     Should contain    ${result.stdout}    ${_EXEC_CMD_EXPECTED_OUTPUT}    @{varargs}
 
 Should StackQL No Cfg Exec Contain

@@ -57,6 +57,18 @@ AWS Volumes Select Simple
     ...    ${SELECT_AWS_VOLUMES}
     ...    ${SELECT_AWS_VOLUMES_ASC_EXPECTED}
 
+GitHub Pages Select Top Level Object
+    Should StackQL Exec Equal
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${SELECT_GITHUB_REPOS_PAGES_SINGLE}
+    ...    ${SELECT_GITHUB_REPOS_PAGES_SINGLE_EXPECTED}
+
+GitHub Repository IDs Select
+    Should StackQL Exec Equal
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${SELECT_GITHUB_REPOS_IDS_ASC}
+    ...    ${SELECT_GITHUB_REPOS_IDS_ASC_EXPECTED}
+
 Join GCP Okta Cross Provider
     Should StackQL Exec Equal
     ...    ${REGISTRY_NO_VERIFY_CFG_STR}
@@ -112,11 +124,11 @@ Start Mock Server
 
 Prepare StackQL Environment
     Set Environment Variable    OKTA_SECRET_KEY    ${OKTA_SECRET_STR}
+    Set Environment Variable    GITHUB_SECRET_KEY    ${GITHUB_SECRET_STR}
     Start Mock Server    ${JSON_INIT_FILE_PATH_GOOGLE}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_GOOGLE}
     Start Mock Server    ${JSON_INIT_FILE_PATH_OKTA}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_OKTA}
-    ${result} =    Start Mock Server    ${JSON_INIT_FILE_PATH_AWS}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_AWS}
-    Log             ${result.stdout}
-    Log             ${result.stderr}
+    Start Mock Server    ${JSON_INIT_FILE_PATH_GITHUB}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_GITHUB}
+    Start Mock Server    ${JSON_INIT_FILE_PATH_AWS}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_AWS}
     Start StackQL PG Server mTLS    ${PG_SRV_PORT_MTLS}    ${PG_SRV_MTLS_CFG_STR}
     Start StackQL PG Server unencrypted    ${PG_SRV_PORT_UNENCRYPTED}
 
@@ -124,6 +136,7 @@ Prepare StackQL Environment
 Run StackQL Exec Command
     [Arguments]    ${_REGISTRY_CFG_STR}    ${_EXEC_CMD_STR}    @{varargs}
     Set Environment Variable    OKTA_SECRET_KEY    ${OKTA_SECRET_STR}
+    Set Environment Variable    GITHUB_SECRET_KEY    ${GITHUB_SECRET_STR}
     ${result} =     Run Process    
                     ...  ${STACKQL_EXE}
                     ...  exec    \-\-registry\=${_REGISTRY_CFG_STR}
