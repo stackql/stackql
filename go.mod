@@ -16,7 +16,7 @@ require (
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.1
-	github.com/stackql/go-openapistackql v0.0.7-gamma25
+	github.com/stackql/go-openapistackql v0.0.8-alpha05
 	github.com/stackql/go-sqlite3 v0.0.1-stackqlrc01
 	github.com/stackql/go-suffix-map v0.0.1-alpha01
 	go.uber.org/zap v1.21.0
@@ -31,6 +31,8 @@ require (
 require (
 	cloud.google.com/go v0.99.0 // indirect
 	github.com/Masterminds/semver v1.4.2 // indirect
+	github.com/PaesslerAG/gval v1.0.0 // indirect
+	github.com/PaesslerAG/jsonpath v0.1.1 // indirect
 	github.com/antchfx/xmlquery v1.3.10 // indirect
 	github.com/antchfx/xpath v1.2.0 // indirect
 	github.com/clbanning/mxj/v2 v2.5.5 // indirect
@@ -76,6 +78,7 @@ require (
 	google.golang.org/grpc v1.44.0 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
+	gopkg.in/yaml.v3 v3.0.0 // indirect
 )
 
 replace readline => github.com/stackql/readline v0.0.1-rc01

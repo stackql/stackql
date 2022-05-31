@@ -38,6 +38,7 @@ Run StackQL Exec Command
     [Arguments]    ${_EXEC_CMD_STR}    @{varargs}
     Set Environment Variable    OKTA_SECRET_KEY    ${OKTA_SECRET_STR}
     Set Environment Variable    GITHUB_SECRET_KEY    ${GITHUB_SECRET_STR}
+    Set Environment Variable    K8S_SECRET_KEY    ${K8S_SECRET_STR}
     ${result} =     Run Process    
                     ...  ${STACKQL_EXE}
                     ...  exec    \-\-registry\=${REGISTRY_NO_VERIFY_CFG_STR}
@@ -52,6 +53,7 @@ Run StackQL Canonical Exec Command
     [Arguments]    ${_EXEC_CMD_STR}    @{varargs}
     Set Environment Variable    OKTA_SECRET_KEY    ${OKTA_SECRET_STR}
     Set Environment Variable    GITHUB_SECRET_KEY    ${GITHUB_SECRET_STR}
+    Set Environment Variable    K8S_SECRET_KEY    ${K8S_SECRET_STR}
     ${result} =     Run Process    
                     ...  ${STACKQL_EXE}
                     ...  exec    \-\-registry\=${REGISTRY_CANONICAL_CFG_STR}
@@ -66,6 +68,7 @@ Run StackQL Canonical No Cfg Exec Command
     [Arguments]    ${_EXEC_CMD_STR}    @{varargs}
     Set Environment Variable    OKTA_SECRET_KEY    ${OKTA_SECRET_STR}
     Set Environment Variable    GITHUB_SECRET_KEY    ${GITHUB_SECRET_STR}
+    Set Environment Variable    K8S_SECRET_KEY    ${K8S_SECRET_STR}
     ${result} =     Run Process    
                     ...  ${STACKQL_EXE}
                     ...  exec    ${_EXEC_CMD_STR}    @{varargs}
@@ -77,6 +80,7 @@ Run StackQL Deprecated Exec Command
     [Arguments]    ${_EXEC_CMD_STR}    @{varargs}
     Set Environment Variable    OKTA_SECRET_KEY    ${OKTA_SECRET_STR}
     Set Environment Variable    GITHUB_SECRET_KEY    ${GITHUB_SECRET_STR}
+    Set Environment Variable    K8S_SECRET_KEY    ${K8S_SECRET_STR}
     ${result} =     Run Process    
                     ...  ${STACKQL_EXE}
                     ...  exec    \-\-registry\=${REGISTRY_DEPRECATED_CFG_STR}

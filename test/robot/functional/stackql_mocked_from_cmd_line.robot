@@ -94,6 +94,12 @@ Join GCP Self
     ...    ${SELECT_CONTRIVED_GCP_SELF_JOIN}
     ...    ${SELECT_CONTRIVED_GCP_SELF_JOIN_EXPECTED}
 
+K8S Nodes Select Leveraging JSON Path
+    Should StackQL Exec Equal
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${SELECT_K8S_NODES_ASC}
+    ...    ${SELECT_K8S_NODES_ASC_EXPECTED}
+
 Registry List All
     Should StackQL Exec Equal
     ...    ${REGISTRY_MOCKED_CFG_STR}
@@ -144,10 +150,12 @@ Start Mock Server
 Prepare StackQL Environment
     Set Environment Variable    OKTA_SECRET_KEY    ${OKTA_SECRET_STR}
     Set Environment Variable    GITHUB_SECRET_KEY    ${GITHUB_SECRET_STR}
+    Set Environment Variable    K8S_SECRET_KEY    ${K8S_SECRET_STR}
     Start Mock Server    ${JSON_INIT_FILE_PATH_GOOGLE}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_GOOGLE}
     Start Mock Server    ${JSON_INIT_FILE_PATH_OKTA}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_OKTA}
     Start Mock Server    ${JSON_INIT_FILE_PATH_GITHUB}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_GITHUB}
     Start Mock Server    ${JSON_INIT_FILE_PATH_AWS}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_AWS}
+    Start Mock Server    ${JSON_INIT_FILE_PATH_K8S}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_K8S}
     Start Mock Server    ${JSON_INIT_FILE_PATH_REGISTRY}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_REGISTRY}
     Start StackQL PG Server mTLS    ${PG_SRV_PORT_MTLS}    ${PG_SRV_MTLS_CFG_STR}
     Start StackQL PG Server unencrypted    ${PG_SRV_PORT_UNENCRYPTED}
@@ -157,6 +165,7 @@ Run StackQL Exec Command
     [Arguments]    ${_REGISTRY_CFG_STR}    ${_EXEC_CMD_STR}    @{varargs}
     Set Environment Variable    OKTA_SECRET_KEY    ${OKTA_SECRET_STR}
     Set Environment Variable    GITHUB_SECRET_KEY    ${GITHUB_SECRET_STR}
+    Set Environment Variable    K8S_SECRET_KEY    ${K8S_SECRET_STR}
     ${result} =     Run Process    
                     ...  ${STACKQL_EXE}
                     ...  exec    \-\-registry\=${_REGISTRY_CFG_STR}

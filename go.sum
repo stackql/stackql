@@ -73,6 +73,11 @@ github.com/Masterminds/semver/v3 v3.1.1/go.mod h1:VPu/7SZ7ePZ3QOrcuXROw5FAcLl4a0
 github.com/Masterminds/vcs v1.13.0/go.mod h1:N09YCmOQr6RLxC6UNHzuVwAdodYbbnycGHSmwVJjcKA=
 github.com/NYTimes/gziphandler v0.0.0-20170623195520-56545f4a5d46/go.mod h1:3wb06e3pkSAbeQ52E9H9iFoQsEEwGN64994WTCIhntQ=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
+github.com/PaesslerAG/gval v1.0.0 h1:GEKnRwkWDdf9dOmKcNrar9EA1bz1z9DqPIO1+iLzhd8=
+github.com/PaesslerAG/gval v1.0.0/go.mod h1:y/nm5yEyTeX6av0OfKJNp9rBNj2XrGhAf5+v24IBN1I=
+github.com/PaesslerAG/jsonpath v0.1.0/go.mod h1:4BzmtoM/PI8fPO4aQGIusjGxGir2BzcV0grWtFzq1Y8=
+github.com/PaesslerAG/jsonpath v0.1.1 h1:c1/AToHQMVsduPAa4Vh6xp2U0evy4t8SWp8imEsylIk=
+github.com/PaesslerAG/jsonpath v0.1.1/go.mod h1:lVboNxFGal/VwW6d9JzIy56bUsYAP6tH/x80vjnCseY=
 github.com/PuerkitoBio/goquery v1.5.1/go.mod h1:GsLWisAFVj4WgDibEWF4pvYnkVQBpKBKeU+7zCJoLcc=
 github.com/PuerkitoBio/purell v1.0.0/go.mod h1:c11w/QuzBsJSee3cPx9rAFu61PvFxuPbtSwDGJws/X0=
 github.com/PuerkitoBio/purell v1.1.0/go.mod h1:c11w/QuzBsJSee3cPx9rAFu61PvFxuPbtSwDGJws/X0=
@@ -690,6 +695,16 @@ github.com/stackql/go-openapistackql v0.0.7-gamma24 h1:ryIAeqCT55wg39/mAKyl5PCfq
 github.com/stackql/go-openapistackql v0.0.7-gamma24/go.mod h1:eh1rztQzASRLNc4lhGEsPcGQdMUA6N0zzUyQ21djjzY=
 github.com/stackql/go-openapistackql v0.0.7-gamma25 h1:kUj5OqdkxaYNMKugEk4qXoV3VZ1ZS+izmG/3OP/7+Ik=
 github.com/stackql/go-openapistackql v0.0.7-gamma25/go.mod h1:eh1rztQzASRLNc4lhGEsPcGQdMUA6N0zzUyQ21djjzY=
+github.com/stackql/go-openapistackql v0.0.8-alpha01 h1:Fy6UmZn2r+ZReUR+GDzvjhdgNCEDh66dBvF0PxuNVMU=
+github.com/stackql/go-openapistackql v0.0.8-alpha01/go.mod h1:EmwsXQRcFKKJ+9rHpyLq73k62U5LC+9PCdPTZg3cEBg=
+github.com/stackql/go-openapistackql v0.0.8-alpha02 h1:JfcK2JMzzdo7mFra4/Mh4AqIa7i0pUtxL3dVIIH95uI=
+github.com/stackql/go-openapistackql v0.0.8-alpha02/go.mod h1:EmwsXQRcFKKJ+9rHpyLq73k62U5LC+9PCdPTZg3cEBg=
+github.com/stackql/go-openapistackql v0.0.8-alpha03 h1:btyE2jSGehjPLcVRawo8aX1DtxNoVGVtRvIjCdI8rYY=
+github.com/stackql/go-openapistackql v0.0.8-alpha03/go.mod h1:EmwsXQRcFKKJ+9rHpyLq73k62U5LC+9PCdPTZg3cEBg=
+github.com/stackql/go-openapistackql v0.0.8-alpha04 h1:3cYMmcYNqFXKeLh6cTs+SdIg0lk43qr9xI9nnJDcg90=
+github.com/stackql/go-openapistackql v0.0.8-alpha04/go.mod h1:EmwsXQRcFKKJ+9rHpyLq73k62U5LC+9PCdPTZg3cEBg=
+github.com/stackql/go-openapistackql v0.0.8-alpha05 h1:MItSqZuTZn3EXKJq0vagwLqDIzkEMOsDARumctwK7Lw=
+github.com/stackql/go-openapistackql v0.0.8-alpha05/go.mod h1:EmwsXQRcFKKJ+9rHpyLq73k62U5LC+9PCdPTZg3cEBg=
 github.com/stackql/go-spew v1.1.3-alpha24 h1:yNmgWU+OKU8SvlQ0umiQWWgWS6C5U1GuRMlYfQgbmJA=
 github.com/stackql/go-spew v1.1.3-alpha24/go.mod h1:o2MPqg2ee1PN4SxAh9zQSJJmKKFJjpro9pejdK7dXWk=
 github.com/stackql/go-sqlite3 v0.0.1-stackqlrc01 h1:q+LfCfPrIqqG5+v9T5xjyYzOEBB4i77Ek10Lzwyd0D4=
@@ -1276,6 +1291,8 @@ gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c/go.mod h1:K4uyk7z7BCEPqu6E+C
 gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
 gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b h1:h8qDotaEPuJATrMmW04NCwg7v22aHH28wwpauUhK9Oo=
 gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
+gopkg.in/yaml.v3 v3.0.0 h1:hjy8E9ON/egN1tAYqKb61G10WtihqetD4sz2H+8nIeA=
+gopkg.in/yaml.v3 v3.0.0/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
 gotest.tools v2.2.0+incompatible h1:VsBPFP1AI068pPrMxtb/S8Zkgf9xEmTLJjfM+P5UIEo=
 gotest.tools v2.2.0+incompatible/go.mod h1:DsYFclhRJ6vuDpmuTbkuFWG+y2sxOXAzmJt81HFBacw=
 honnef.co/go/tools v0.0.0-20190102054323-c2f93a96b099/go.mod h1:rf3lG4BRIbNafJWhAfAdb/ePZxsR/4RtNHQocxwk9r4=

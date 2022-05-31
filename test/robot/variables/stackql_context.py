@@ -94,6 +94,11 @@ _AUTH_CFG={
   "github": { 
     "type": "basic", 
     "credentialsenvvar": "GITHUB_SECRET_KEY" 
+  },
+  "k8s": { 
+    "credentialsenvvar": "K8S_SECRET_KEY",
+    "type": "api_key",
+    "valuePrefix": "Bearer " 
   }
 }
 STACKQL_PG_SERVER_KEY_PATH   :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "test", "server", "mtls", "credentials", "pg_server_key.pem"))
@@ -133,6 +138,9 @@ with open(os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'credentials', 'dummy'
 with open(os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'credentials', 'dummy', 'github', 'github-key.txt'), 'r') as f:
     GITHUB_SECRET_STR = f.read()
 
+with open(os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'credentials', 'dummy', 'k8s', 'k8s-token.txt'), 'r') as f:
+    K8S_SECRET_STR = f.read()
+
 
 REGISTRY_PROD_CFG_STR = json.dumps(get_registry_cfg(_PROD_REGISTRY_URL, ROBOT_PROD_REG_DIR, False))
 REGISTRY_DEV_CFG_STR = json.dumps(get_registry_cfg(_DEV_REGISTRY_URL, ROBOT_DEV_REG_DIR, False))
@@ -160,6 +168,9 @@ MOCKSERVER_PORT_OKTA = 1090
 
 JSON_INIT_FILE_PATH_AWS = os.path.join(REPOSITORY_ROOT, 'test', 'mockserver', 'expectations', 'static-aws-expectations.json')
 MOCKSERVER_PORT_AWS = 1091
+
+JSON_INIT_FILE_PATH_K8S = os.path.join(REPOSITORY_ROOT, 'test', 'mockserver', 'expectations', 'static-k8s-expectations.json')
+MOCKSERVER_PORT_K8S = 1092
 
 JSON_INIT_FILE_PATH_GITHUB = os.path.join(REPOSITORY_ROOT, 'test', 'mockserver', 'expectations', 'static-github-expectations.json')
 MOCKSERVER_PORT_GITHUB = 1093
@@ -224,6 +235,9 @@ SHOW_METHODS_GITHUB_REPOS_REPOS_EXPECTED = get_output_from_local_file(os.path.jo
 SELECT_GOOGLE_CLOUDRESOURCEMANAGER_IAMPOLICY = "SELECT role, members, condition from google.cloudresourcemanager.project_iam_policies where projectsId = 'testproject' order by role asc;"
 
 SELECT_GOOGLE_CLOUDRESOURCEMANAGER_IAMPOLICY_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'google', 'cloudresourcemanager', 'projects-getiampolicy-roles-asc.txt'))
+
+SELECT_K8S_NODES_ASC = "select name, uid, creationTimestamp from k8s.core_v1.node where cluster_addr = 'k8shost' order by name asc;"
+SELECT_K8S_NODES_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'k8s', 'select-nodes-asc.txt'))
 
 REGISTRY_LIST = "registry list;"
 REGISTRY_GOOGLE_PROVIDER_LIST = "registry list google;"
