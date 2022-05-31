@@ -1,0 +1,302 @@
+id: github
+name: github
+version: v0.3.1
+providerServices:
+  actions:
+    description: Endpoints to manage GitHub Actions using the REST API.
+    id: actions:v0.3.1
+    name: actions
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/actions.yaml
+    title: GitHub v3 REST API - actions
+    version: v0.3.1
+  activity:
+    description: Activity APIs provide access to notifications, subscriptions, and timelines.
+    id: activity:v0.3.1
+    name: activity
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/activity.yaml
+    title: GitHub v3 REST API - activity
+    version: v0.3.1
+  apps:
+    description: Information for integrations and installations.
+    id: apps:v0.3.1
+    name: apps
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/apps.yaml
+    title: GitHub v3 REST API - apps
+    version: v0.3.1
+  billing:
+    description: Monitor charges and usage from Actions and Packages.
+    id: billing:v0.3.1
+    name: billing
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/billing.yaml
+    title: GitHub v3 REST API - billing
+    version: v0.3.1
+  checks:
+    description: Rich interactions with checks run by your integrations.
+    id: checks:v0.3.1
+    name: checks
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/checks.yaml
+    title: GitHub v3 REST API - checks
+    version: v0.3.1
+  code_scanning:
+    description: code_scanning
+    id: code_scanning:v0.3.1
+    name: code_scanning
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/code_scanning.yaml
+    title: GitHub v3 REST API - code_scanning
+    version: v0.3.1
+  codes_of_conduct:
+    description: codes_of_conduct
+    id: codes_of_conduct:v0.3.1
+    name: codes_of_conduct
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/codes_of_conduct.yaml
+    title: GitHub v3 REST API - codes_of_conduct
+    version: v0.3.1
+  codespaces:
+    description: Endpoints to manage Codespaces using the REST API.
+    id: codespaces:v0.3.1
+    name: codespaces
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/codespaces.yaml
+    title: GitHub v3 REST API - codespaces
+    version: v0.3.1
+  dependabot:
+    description: Endpoints to manage Dependabot.
+    id: dependabot:v0.3.1
+    name: dependabot
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/dependabot.yaml
+    title: GitHub v3 REST API - dependabot
+    version: v0.3.1
+  emojis:
+    description: List emojis available to use on GitHub.
+    id: emojis:v0.3.1
+    name: emojis
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/emojis.yaml
+    title: GitHub v3 REST API - emojis
+    version: v0.3.1
+  enterprise_admin:
+    description: enterprise_admin
+    id: enterprise_admin:v0.3.1
+    name: enterprise_admin
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/enterprise_admin.yaml
+    title: GitHub v3 REST API - enterprise_admin
+    version: v0.3.1
+  gists:
+    description: View, modify your gists.
+    id: gists:v0.3.1
+    name: gists
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/gists.yaml
+    title: GitHub v3 REST API - gists
+    version: v0.3.1
+  git:
+    description: Raw Git functionality.
+    id: git:v0.3.1
+    name: git
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/git.yaml
+    title: GitHub v3 REST API - git
+    version: v0.3.1
+  gitignore:
+    description: View gitignore templates
+    id: gitignore:v0.3.1
+    name: gitignore
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/gitignore.yaml
+    title: GitHub v3 REST API - gitignore
+    version: v0.3.1
+  interactions:
+    description: Owner or admin management of users interactions.
+    id: interactions:v0.3.1
+    name: interactions
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/interactions.yaml
+    title: GitHub v3 REST API - interactions
+    version: v0.3.1
+  issues:
+    description: Interact with GitHub Issues.
+    id: issues:v0.3.1
+    name: issues
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/issues.yaml
+    title: GitHub v3 REST API - issues
+    version: v0.3.1
+  licenses:
+    description: View various OSS licenses.
+    id: licenses:v0.3.1
+    name: licenses
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/licenses.yaml
+    title: GitHub v3 REST API - licenses
+    version: v0.3.1
+  markdown:
+    description: Render GitHub flavored markdown
+    id: markdown:v0.3.1
+    name: markdown
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/markdown.yaml
+    title: GitHub v3 REST API - markdown
+    version: v0.3.1
+  meta:
+    description: Endpoints that give information about the API.
+    id: meta:v0.3.1
+    name: meta
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/meta.yaml
+    title: GitHub v3 REST API - meta
+    version: v0.3.1
+  migrations:
+    description: Move projects to or from GitHub.
+    id: migrations:v0.3.1
+    name: migrations
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/migrations.yaml
+    title: GitHub v3 REST API - migrations
+    version: v0.3.1
+  oauth_authorizations:
+    description: oauth_authorizations
+    id: oauth_authorizations:v0.3.1
+    name: oauth_authorizations
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/oauth_authorizations.yaml
+    title: GitHub v3 REST API - oauth_authorizations
+    version: v0.3.1
+  orgs:
+    description: Interact with GitHub Orgs.
+    id: orgs:v0.3.1
+    name: orgs
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/orgs.yaml
+    title: GitHub v3 REST API - orgs
+    version: v0.3.1
+  packages:
+    description: Manage packages for authenticated users and organizations.
+    id: packages:v0.3.1
+    name: packages
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/packages.yaml
+    title: GitHub v3 REST API - packages
+    version: v0.3.1
+  projects:
+    description: Interact with GitHub Projects.
+    id: projects:v0.3.1
+    name: projects
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/projects.yaml
+    title: GitHub v3 REST API - projects
+    version: v0.3.1
+  pulls:
+    description: Interact with GitHub Pull Requests.
+    id: pulls:v0.3.1
+    name: pulls
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/pulls.yaml
+    title: GitHub v3 REST API - pulls
+    version: v0.3.1
+  rate_limit:
+    description: rate_limit
+    id: rate_limit:v0.3.1
+    name: rate_limit
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/rate_limit.yaml
+    title: GitHub v3 REST API - rate_limit
+    version: v0.3.1
+  reactions:
+    description: Interact with reactions to various GitHub entities.
+    id: reactions:v0.3.1
+    name: reactions
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/reactions.yaml
+    title: GitHub v3 REST API - reactions
+    version: v0.3.1
+  repos:
+    description: Interact with GitHub Repos.
+    id: repos:v0.3.1
+    name: repos
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/repos.yaml
+    title: GitHub v3 REST API - repos
+    version: v0.3.1
+  scim:
+    description: Provisioning of GitHub organization membership for SCIM-enabled providers.
+    id: scim:v0.3.1
+    name: scim
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/scim.yaml
+    title: GitHub v3 REST API - scim
+    version: v0.3.1
+  search:
+    description: Look for stuff on GitHub.
+    id: search:v0.3.1
+    name: search
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/search.yaml
+    title: GitHub v3 REST API - search
+    version: v0.3.1
+  secret_scanning:
+    description: secret_scanning
+    id: secret_scanning:v0.3.1
+    name: secret_scanning
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/secret_scanning.yaml
+    title: GitHub v3 REST API - secret_scanning
+    version: v0.3.1
+  teams:
+    description: Interact with GitHub Teams.
+    id: teams:v0.3.1
+    name: teams
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/teams.yaml
+    title: GitHub v3 REST API - teams
+    version: v0.3.1
+  users:
+    description: Interact with and view information about users and also current user.
+    id: users:v0.3.1
+    name: users
+    preferred: true
+    service:
+      $ref: github/v0.3.1/services/users.yaml
+    title: GitHub v3 REST API - users
+    version: v0.3.1
+openapi: 3.0.3
