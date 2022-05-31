@@ -1,0 +1,23 @@
+id: k8s
+name: k8s
+version: v0.1.0
+providerServices:
+  core:
+    description: core
+    id: core:v0.1.0
+    name: core
+    preferred: true
+    service:
+      $ref: k8s/v0.1.0/services/core.yaml
+    title: Kubernetes - core
+    version: v0.1.0
+  core_v1:
+    description: core_v1
+    id: core_v1:v0.1.0
+    name: core_v1
+    preferred: true
+    service:
+      $ref: k8s/v0.1.0/services/core_v1.yaml
+    title: Kubernetes - core_v1
+    version: v0.1.0
+openapi: 3.0.0

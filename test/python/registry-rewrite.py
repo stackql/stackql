@@ -13,9 +13,12 @@ REPOSITORY_ROOT_DIR :str = os.path.abspath(os.path.join(CURDIR, '../..'))
 
 DEFAULT_SRC_DIR = os.path.join(TEST_ROOT_DIR, 'registry', 'src')
 DEFAULT_DST_DIR = os.path.join(TEST_ROOT_DIR, 'registry-mocked', 'src')
-DEFAULT_PORT = 1080
+DEFAULT_PORT = 1070
+GOOGLE_DEFAULT_PORT = 1080
 OKTA_DEFAULT_PORT = 1090
 AWS_DEFAULT_PORT = 1091
+K8S_DEFAULT_PORT = 1092
+GITHUB_DEFAULT_PORT = 1093
 
 
 
@@ -36,7 +39,13 @@ parser.add_argument(
     '--default-port',
     type=int,
     default=DEFAULT_PORT,
-    help='port for default mock service'
+    help='fallback port for default mock service'
+)
+parser.add_argument(
+    '--google-port',
+    type=int,
+    default=GOOGLE_DEFAULT_PORT,
+    help='port for google mock service'
 )
 parser.add_argument(
     '--okta-port',
@@ -49,6 +58,18 @@ parser.add_argument(
     type=int,
     default=AWS_DEFAULT_PORT,
     help='port for aws mock service'
+)
+parser.add_argument(
+    '--k8s-port',
+    type=int,
+    default=K8S_DEFAULT_PORT,
+    help='port for k8s mock service'
+)
+parser.add_argument(
+    '--github-port',
+    type=int,
+    default=GITHUB_DEFAULT_PORT,
+    help='port for github mock service'
 )
 
 class ProviderArgs:
@@ -80,16 +101,43 @@ def rewrite_provider(args :ProviderArgs):
           )
 
 
+class ProviderCfgMapping:
+
+  def __init__(self, processed_args :argparse.Namespace) -> None:
+    self._provider_lookup :dict = {
+      "aws": {
+        "port": processed_args.aws_port
+      },
+      "github": {
+        "port": processed_args.github_port
+      },
+      "googleapis.com": {
+        "port": processed_args.google_port
+      },
+      "okta": {
+        "port": processed_args.okta_port
+      },
+      "k8s": {
+        "port": processed_args.k8s_port
+      },
+      "__default__": {
+        "port": processed_args.default_port
+      }
+    }
+
+  def get_port(self, provider_name :str) -> int:
+    return self._provider_lookup.get(provider_name, self._provider_lookup.get("__default__")).get("port", DEFAULT_PORT)
 
 
 if __name__ == '__main__':
     args = parser.parse_args()
+    ppm = ProviderCfgMapping(args)
     provider_dirs = [f for f in os.scandir(args.srcdir) if f.is_dir()]
     for prov_dir in provider_dirs:
       prov_args = ProviderArgs(
         prov_dir.path,
         os.path.join(args.destdir, prov_dir.name),
-        args.okta_port if prov_dir.name == 'okta' else args.aws_port if prov_dir.name == 'aws' else args.default_port,
+        ppm.get_port(prov_dir.name),
       ) 
       print(f'{prov_args.srcdir}, {prov_args.destdir}, {prov_args.port}')
       rewrite_provider(prov_args)

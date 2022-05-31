@@ -764,20 +764,8 @@ func (v *DRMAstVisitor) Visit(node sqlparser.SQLNode) error {
 		if node.IsEmpty() {
 			return nil
 		}
-		buf.AstPrintf(node, `"`)
-		if !node.QualifierThird.IsEmpty() {
-			buf.AstPrintf(node, "%v.", node.QualifierThird)
-		}
-		if !node.QualifierSecond.IsEmpty() {
-			buf.AstPrintf(node, "%v.", node.QualifierSecond)
-		}
-		if !node.Qualifier.IsEmpty() {
-			buf.AstPrintf(node, "%v.", node.Qualifier)
-		}
-		buf.AstPrintf(node, "%v", node.Name)
-		buf.AstPrintf(node, `"`)
-		rq := buf.String()
-		v.rewrittenQuery = rq
+		str := fmt.Sprintf(`"%s"`, node.GetRawVal())
+		v.rewrittenQuery = str
 
 	case *sqlparser.ParenTableExpr:
 		buf.AstPrintf(node, "(%v)", node.Exprs)
@@ -1151,8 +1139,8 @@ func (v *DRMAstVisitor) Visit(node sqlparser.SQLNode) error {
 		v.rewrittenQuery = buf.String()
 
 	case sqlparser.TableIdent:
-		sqlparser.FormatID(buf, node.GetRawVal(), strings.ToLower(node.GetRawVal()), sqlparser.NoAt)
-		v.rewrittenQuery = buf.String()
+		tn := node.GetRawVal()
+		v.rewrittenQuery = tn
 
 	case *sqlparser.IsolationLevel:
 		buf.WriteString("isolation level " + node.Level)
