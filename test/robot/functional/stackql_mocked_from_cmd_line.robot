@@ -63,7 +63,7 @@ GitHub Pages Select Top Level Object
     ...    ${SELECT_GITHUB_REPOS_PAGES_SINGLE}
     ...    ${SELECT_GITHUB_REPOS_PAGES_SINGLE_EXPECTED}
 
-GitHub Pages Select Top Level Object
+GitHub Repository IDs Select
     Should StackQL Exec Equal
     ...    ${REGISTRY_NO_VERIFY_CFG_STR}
     ...    ${SELECT_GITHUB_REPOS_IDS_ASC}
