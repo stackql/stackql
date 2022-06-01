@@ -152,7 +152,12 @@ func resToArr(res sqldata.ISQLResult) []map[string]interface{} {
 		rowArr := r.GetRowDataNaive()
 		rm := make(map[string]interface{})
 		for i, c := range keys {
-			rm[c] = rowArr[i]
+			switch tp := rowArr[i].(type) {
+			case []byte:
+				rm[c] = string(tp)
+			default:
+				rm[c] = tp
+			}
 		}
 		retVal = append(retVal, rm)
 	}

@@ -729,7 +729,7 @@
         "--auth=${input:authString}",
         "show providers;",
         "-o",
-        "table"
+        "json"
       ],
     },
     {
