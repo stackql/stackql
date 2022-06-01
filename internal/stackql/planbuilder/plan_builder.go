@@ -2,9 +2,11 @@ package planbuilder
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
+	"github.com/stackql/go-openapistackql/openapistackql"
 	"github.com/stackql/stackql/internal/stackql/astvisit"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -438,18 +440,40 @@ func (pgb *planGraphBuilder) handleRegistry(pbi PlanBuilderInput) error {
 				}
 				return util.PrepareResultSet(dto.NewPrepareResultSetPlusRawDTO(nil, nil, nil, nil, nil, &dto.BackendMessages{WorkingMessages: []string{fmt.Sprintf("%s provider, version '%s' successfully installed", node.ProviderId, node.ProviderVersion)}}, nil))
 			case "list":
-				provz, err := reg.ListAllAvailableProviders()
-				if err != nil {
-					return dto.NewErroneousExecutorOutput(err)
-				}
-				colz := []string{"provider", "version"}
+				var colz []string
+				var provz map[string]openapistackql.ProviderDescription
 				keys := make(map[string]map[string]interface{})
-				i := 0
-				for k, v := range provz {
-					for _, ver := range v.Versions {
+				if node.ProviderId == "" {
+					provz, err = reg.ListAllAvailableProviders()
+					if err != nil {
+						return dto.NewErroneousExecutorOutput(err)
+					}
+					colz = []string{"provider", "version"}
+					var dks []string
+					for k, _ := range provz {
+						dks = append(dks, k)
+					}
+					sort.Strings(dks)
+					for i, k := range dks {
+						v := provz[k]
+						for _, ver := range v.Versions {
+							keys[strconv.Itoa(i)] = map[string]interface{}{
+								"provider": k,
+								"version":  ver,
+							}
+						}
+					}
+				} else {
+					provz, err = reg.ListAllProviderVersions(node.ProviderId)
+					if err != nil {
+						return dto.NewErroneousExecutorOutput(err)
+					}
+					colz = []string{"provider", "versions"}
+					i := 0
+					for k, v := range provz {
 						keys[strconv.Itoa(i)] = map[string]interface{}{
 							"provider": k,
-							"version":  ver,
+							"versions": strings.Join(v.Versions, ", "),
 						}
 						i++
 					}

@@ -14,8 +14,11 @@ ROBOT_TEST_ROOT = os.path.abspath(os.path.join(__file__, '..'))
 
 ROBOT_PROD_REG_DIR = os.path.abspath(os.path.join(ROBOT_TEST_ROOT, 'registry', 'prod'))
 ROBOT_DEV_REG_DIR = os.path.abspath(os.path.join(ROBOT_TEST_ROOT, 'registry', 'dev'))
+ROBOT_MOCKED_REG_DIR = os.path.abspath(os.path.join(ROBOT_TEST_ROOT, 'registry', 'mocked'))
 
 ROBOT_INTEGRATION_TEST_ROOT = os.path.abspath(os.path.join(__file__, '..', 'integration'))
+
+MOCKSERVER_PORT_REGISTRY = 1094
 
 def get_output_from_local_file(fp :str) -> str:
   with open(os.path.join(REPOSITORY_ROOT, fp), 'r') as f:
@@ -27,6 +30,7 @@ def get_unix_path(pathStr :str) -> str:
 
 _PROD_REGISTRY_URL :str = "https://cdn.statically.io/gh/stackql/stackql-provider-registry/main/providers"
 _DEV_REGISTRY_URL :str = "https://cdn.statically.io/gh/stackql/stackql-provider-registry/dev/providers"
+_MOCKED_REGISTRY_URL :str = f"http://localhost:{MOCKSERVER_PORT_REGISTRY}/gh/stackql/stackql-provider-registry/main/providers"
 
 REPOSITORY_ROOT_UNIX = get_unix_path(REPOSITORY_ROOT)
 REGISTRY_ROOT_CANONICAL   = get_unix_path(os.path.join(REPOSITORY_ROOT, 'test', 'registry'))
@@ -124,6 +128,8 @@ with open(os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'credentials', 'dummy'
 REGISTRY_PROD_CFG_STR = json.dumps(get_registry_cfg(_PROD_REGISTRY_URL, ROBOT_PROD_REG_DIR, False))
 REGISTRY_DEV_CFG_STR = json.dumps(get_registry_cfg(_DEV_REGISTRY_URL, ROBOT_DEV_REG_DIR, False))
 
+REGISTRY_MOCKED_CFG_STR = json.dumps(get_registry_cfg(_MOCKED_REGISTRY_URL, ROBOT_MOCKED_REG_DIR, False))
+
 REGISTRY_NO_VERIFY_CFG_STR = json.dumps(_REGISTRY_NO_VERIFY_CFG)
 REGISTRY_SQL_VERB_CONTRIVED_NO_VERIFY_CFG_STR = json.dumps(_REGISTRY_SQL_VERB_CONTRIVED_NO_VERIFY_CFG)
 REGISTRY_CANONICAL_CFG_STR = json.dumps(_REGISTRY_CANONICAL_CFG)
@@ -146,6 +152,8 @@ MOCKSERVER_PORT_AWS = 1091
 
 JSON_INIT_FILE_PATH_GITHUB = os.path.join(REPOSITORY_ROOT, 'test', 'mockserver', 'expectations', 'static-github-expectations.json')
 MOCKSERVER_PORT_GITHUB = 1093
+
+JSON_INIT_FILE_PATH_REGISTRY = os.path.join(REPOSITORY_ROOT, 'test', 'mockserver', 'expectations', 'static-registry-expectations.json')
 
 PG_SRV_PORT_MTLS = 5476
 PG_SRV_PORT_UNENCRYPTED = 5477
@@ -199,3 +207,8 @@ SELECT_GITHUB_REPOS_IDS_ASC_EXPECTED = get_output_from_local_file(os.path.join('
 GET_IAM_POLICY_AGG_ASC_INPUT_FILE = os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'input', 'select-exec-dependent-org-iam-policy.iql')
 
 GET_IAM_POLICY_AGG_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aggregated-select', 'google', 'cloudresourcemanager', 'select-exec-getiampolicy-agg.csv'))
+
+REGISTRY_LIST = "registry list;"
+REGISTRY_GOOGLE_PROVIDER_LIST = "registry list google;"
+REGISTRY_LIST_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'registry', 'all-providers-list.txt'))
+REGISTRY_GOOGLE_PROVIDER_LIST_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'registry', 'google-list.txt'))

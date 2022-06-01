@@ -87,6 +87,18 @@ Join GCP Self
     ...    ${SELECT_CONTRIVED_GCP_SELF_JOIN}
     ...    ${SELECT_CONTRIVED_GCP_SELF_JOIN_EXPECTED}
 
+Registry List All
+    Should StackQL Exec Equal
+    ...    ${REGISTRY_MOCKED_CFG_STR}
+    ...    ${REGISTRY_LIST} 
+    ...    ${REGISTRY_LIST_EXPECTED}
+
+Registry List Google Provider
+    Should StackQL Exec Equal
+    ...    ${REGISTRY_MOCKED_CFG_STR}
+    ...    ${REGISTRY_GOOGLE_PROVIDER_LIST} 
+    ...    ${REGISTRY_GOOGLE_PROVIDER_LIST_EXPECTED}
+
 Basic Query mTLS Returns OK
     Should PG Client Inline Contain
     ...    ${CURDIR}
@@ -129,6 +141,7 @@ Prepare StackQL Environment
     Start Mock Server    ${JSON_INIT_FILE_PATH_OKTA}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_OKTA}
     Start Mock Server    ${JSON_INIT_FILE_PATH_GITHUB}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_GITHUB}
     Start Mock Server    ${JSON_INIT_FILE_PATH_AWS}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_AWS}
+    Start Mock Server    ${JSON_INIT_FILE_PATH_REGISTRY}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_REGISTRY}
     Start StackQL PG Server mTLS    ${PG_SRV_PORT_MTLS}    ${PG_SRV_MTLS_CFG_STR}
     Start StackQL PG Server unencrypted    ${PG_SRV_PORT_UNENCRYPTED}
 

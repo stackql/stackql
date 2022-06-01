@@ -65,7 +65,14 @@ var registryCmd = &cobra.Command{
 			}
 			rdr = bytes.NewReader([]byte(fmt.Sprintf("registry pull %s %s;", providerName, providerVersion)))
 		case "list":
-			rdr = bytes.NewReader([]byte("registry list;"))
+			switch len(args) {
+			case 1:
+				rdr = bytes.NewReader([]byte("registry list;"))
+			case 2:
+				rdr = bytes.NewReader([]byte(fmt.Sprintf("registry list %s;", args[1])))
+			default:
+				iqlerror.PrintErrorAndExitOneWithMessage(fmt.Sprintf("invalid arg count = %d for registry list commmand", len(args)))
+			}
 		}
 
 		sqlEngine, err := entryutil.BuildSQLEngine(runtimeCtx)

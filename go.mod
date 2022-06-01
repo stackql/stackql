@@ -16,7 +16,7 @@ require (
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.1
-	github.com/stackql/go-openapistackql v0.0.7-beta04
+	github.com/stackql/go-openapistackql v0.0.7-gamma04
 	github.com/stackql/go-sqlite3 v0.0.1-stackqlrc01
 	github.com/stackql/go-suffix-map v0.0.1-alpha01
 	go.uber.org/zap v1.21.0
@@ -82,6 +82,6 @@ replace readline => github.com/stackql/readline v0.0.1-rc01
 
 replace github.com/fatih/color => github.com/stackql/color v0.0.1-rc01
 
-replace vitess.io/vitess => github.com/stackql/vitess v0.0.11-alpha08
+replace vitess.io/vitess => github.com/stackql/vitess v0.0.11-alpha09
 
 replace github.com/jeroenrinzema/psql-wire => github.com/stackql/psql-wire v0.0.2-stackqlalpha4
