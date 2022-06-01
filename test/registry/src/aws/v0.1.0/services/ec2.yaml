@@ -1,239 +1,419 @@
+openapi: 3.0.0
+security:
+  - hmac: []
+info:
+  version: 2016-11-15
+  x-release: v4
+  title: Amazon Elastic Compute Cloud
+  description: "<fullname>Amazon Elastic Compute Cloud</fullname> <p>Amazon Elastic Compute Cloud (Amazon EC2) provides secure and resizable computing capacity in the AWS Cloud. Using Amazon EC2 eliminates the need to invest in hardware up front, so you can develop and deploy applications faster. Amazon Virtual Private Cloud (Amazon VPC) enables you to provision a logically isolated section of the AWS Cloud where you can launch AWS resources in a virtual network that you've defined. Amazon Elastic Block Store (Amazon EBS) provides block level storage volumes for use with EC2 instances. EBS volumes are highly available and reliable storage volumes that can be attached to any running instance and used like a hard drive.</p> <p>To learn more, see the following resources:</p> <ul> <li> <p>Amazon EC2: <a href=\"http://aws.amazon.com/ec2\">AmazonEC2 product page</a>, <a href=\"http://aws.amazon.com/documentation/ec2\">Amazon EC2 documentation</a> </p> </li> <li> <p>Amazon EBS: <a href=\"http://aws.amazon.com/ebs\">Amazon EBS product page</a>, <a href=\"http://aws.amazon.com/documentation/ebs\">Amazon EBS documentation</a> </p> </li> <li> <p>Amazon VPC: <a href=\"http://aws.amazon.com/vpc\">Amazon VPC product page</a>, <a href=\"http://aws.amazon.com/documentation/vpc\">Amazon VPC documentation</a> </p> </li> <li> <p>AWS VPN: <a href=\"http://aws.amazon.com/vpn\">AWS VPN product page</a>, <a href=\"http://aws.amazon.com/documentation/vpn\">AWS VPN documentation</a> </p> </li> </ul>"
+  x-logo:
+    url: https://api.apis.guru/v2/cache/logo/https_twitter.com_awscloud_profile_image.png
+    backgroundColor: "#FFFFFF"
+  termsOfService: https://aws.amazon.com/service-terms/
+  contact:
+    name: Mike Ralphson
+    email: mike.ralphson@gmail.com
+    url: https://github.com/mermade/aws2openapi
+    x-twitter: PermittedSoc
+  license:
+    name: Apache 2.0 License
+    url: http://www.apache.org/licenses/
+  x-providerName: amazonaws.com
+  x-serviceName: ec2
+  x-origin:
+    - contentType: application/json
+      url: https://raw.githubusercontent.com/aws/aws-sdk-js/master/apis/ec2-2016-11-15.normal.json
+      converter:
+        url: https://github.com/mermade/aws2openapi
+        version: 1.0.0
+      x-apisguru-driver: external
+  x-apiClientRegistration:
+    url: https://portal.aws.amazon.com/gp/aws/developer/registration/index.html?nc2=h_ct
+  x-apisguru-categories:
+    - cloud
+  x-preferred: true
+externalDocs:
+  description: Amazon Web Services documentation
+  url: https://docs.aws.amazon.com/ec2/
+servers:
+  - url: https://ec2.{region}.amazonaws.com
+    variables:
+      region:
+        description: The AWS region
+        enum:
+          - us-east-1
+          - us-east-2
+          - us-west-1
+          - us-west-2
+          - us-gov-west-1
+          - us-gov-east-1
+          - ca-central-1
+          - eu-north-1
+          - eu-west-1
+          - eu-west-2
+          - eu-west-3
+          - eu-central-1
+          - eu-south-1
+          - af-south-1
+          - ap-northeast-1
+          - ap-northeast-2
+          - ap-northeast-3
+          - ap-southeast-1
+          - ap-southeast-2
+          - ap-east-1
+          - ap-south-1
+          - sa-east-1
+          - me-south-1
+        default: us-east-1
+    description: The Amazon EC2 multi-region endpoint
+  - url: http://ec2.amazonaws.com
+    variables: {}
+    description: The general Amazon EC2 endpoint for US East (N. Virginia)
+  - url: https://ec2.amazonaws.com
+    variables: {}
+    description: The general Amazon EC2 endpoint for US East (N. Virginia)
+  - url: http://ec2.{region}.amazonaws.com.cn
+    variables:
+      region:
+        description: The AWS region
+        enum:
+          - cn-north-1
+          - cn-northwest-1
+        default: cn-north-1
+    description: The Amazon EC2 endpoint for China (Beijing) and China (Ningxia)
+  - url: https://ec2.{region}.amazonaws.com.cn
+    variables:
+      region:
+        description: The AWS region
+        enum:
+          - cn-north-1
+          - cn-northwest-1
+        default: cn-north-1
+    description: The Amazon EC2 endpoint for China (Beijing) and China (Ningxia)
+x-hasEquivalentPaths: true
+paths:
+  /?Action=DescribeVolumes&Version=2016-11-15:
+    get:
+      x-aws-operation-name: DescribeVolumes
+      operationId: GET_DescribeVolumes
+      description: <p>Describes the specified EBS volumes or all of your EBS volumes.</p> <p>If you are describing a long list of volumes, we recommend that you paginate the output to make the list more manageable. The <code>MaxResults</code> parameter sets the maximum number of results returned in a single page. If the list of results exceeds your <code>MaxResults</code> value, then that number of results is returned along with a <code>NextToken</code> value that can be passed to a subsequent <code>DescribeVolumes</code> request to retrieve the remaining results.</p> <p>For more information about EBS volumes, see <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSVolumes.html">Amazon EBS volumes</a> in the <i>Amazon Elastic Compute Cloud User Guide</i>.</p>
+      responses:
+        "200":
+          description: Success
+          content:
+            application/xml:
+              schema:
+                $ref: "#/components/schemas/DescribeVolumesResult"
+      parameters:
+        - name: Filter
+          in: query
+          required: false
+          description: <p>The filters.</p> <ul> <li> <p> <code>attachment.attach-time</code> - The time stamp when the attachment initiated.</p> </li> <li> <p> <code>attachment.delete-on-termination</code> - Whether the volume is deleted on instance termination.</p> </li> <li> <p> <code>attachment.device</code> - The device name specified in the block device mapping (for example, <code>/dev/sda1</code>).</p> </li> <li> <p> <code>attachment.instance-id</code> - The ID of the instance the volume is attached to.</p> </li> <li> <p> <code>attachment.status</code> - The attachment state (<code>attaching</code> | <code>attached</code> | <code>detaching</code>).</p> </li> <li> <p> <code>availability-zone</code> - The Availability Zone in which the volume was created.</p> </li> <li> <p> <code>create-time</code> - The time stamp when the volume was created.</p> </li> <li> <p> <code>encrypted</code> - Indicates whether the volume is encrypted (<code>true</code> | <code>false</code>)</p> </li> <li> <p> <code>multi-attach-enabled</code> - Indicates whether the volume is enabled for Multi-Attach (<code>true</code> | <code>false</code>)</p> </li> <li> <p> <code>fast-restored</code> - Indicates whether the volume was created from a snapshot that is enabled for fast snapshot restore (<code>true</code> | <code>false</code>).</p> </li> <li> <p> <code>size</code> - The size of the volume, in GiB.</p> </li> <li> <p> <code>snapshot-id</code> - The snapshot from which the volume was created.</p> </li> <li> <p> <code>status</code> - The state of the volume (<code>creating</code> | <code>available</code> | <code>in-use</code> | <code>deleting</code> | <code>deleted</code> | <code>error</code>).</p> </li> <li> <p> <code>tag</code>:&lt;key&gt; - The key/value combination of a tag assigned to the resource. Use the tag key in the filter name and the tag value as the filter value. For example, to find all resources that have a tag with the key <code>Owner</code> and the value <code>TeamA</code>, specify <code>tag:Owner</code> for the filter name and <code>TeamA</code> for the filter value.</p> </li> <li> <p> <code>tag-key</code> - The key of a tag assigned to the resource. Use this filter to find all resources assigned a tag with a specific key, regardless of the tag value.</p> </li> <li> <p> <code>volume-id</code> - The volume ID.</p> </li> <li> <p> <code>volume-type</code> - The Amazon EBS volume type (<code>gp2</code> | <code>gp3</code> | <code>io1</code> | <code>io2</code> | <code>st1</code> | <code>sc1</code>| <code>standard</code>)</p> </li> </ul>
+          schema:
+            type: array
+            items:
+              allOf:
+                - $ref: "#/components/schemas/Filter"
+                - xml:
+                    name: Filter
+        - name: VolumeId
+          in: query
+          required: false
+          description: The volume IDs.
+          schema:
+            type: array
+            items:
+              allOf:
+                - $ref: "#/components/schemas/VolumeId"
+                - xml:
+                    name: VolumeId
+        - name: DryRun
+          in: query
+          required: false
+          description: Checks whether you have the required permissions for the action, without actually making the request, and provides an error response. If you have the required permissions, the error response is <code>DryRunOperation</code>. Otherwise, it is <code>UnauthorizedOperation</code>.
+          schema:
+            type: boolean
+        - name: MaxResults
+          in: query
+          required: false
+          description: The maximum number of volume results returned by <code>DescribeVolumes</code> in paginated output. When this parameter is used, <code>DescribeVolumes</code> only returns <code>MaxResults</code> results in a single page along with a <code>NextToken</code> response element. The remaining results of the initial request can be seen by sending another <code>DescribeVolumes</code> request with the returned <code>NextToken</code> value. This value can be between 5 and 500; if <code>MaxResults</code> is given a value larger than 500, only 500 results are returned. If this parameter is not used, then <code>DescribeVolumes</code> returns all results. You cannot specify this parameter and the volume IDs parameter in the same request.
+          schema:
+            type: integer
+        - name: NextToken
+          in: query
+          required: false
+          description: The <code>NextToken</code> value returned from a previous paginated <code>DescribeVolumes</code> request where <code>MaxResults</code> was used and the results exceeded the value of that parameter. Pagination continues from the end of the previous results that returned the <code>NextToken</code> value. This value is <code>null</code> when there are no more results to return.
+          schema:
+            type: string
+        - name: Action
+          in: query
+          required: false
+          schema:
+            type: string
+            default: DescribeVolumes
+            enum:
+              - DescribeVolumes
+        - name: Version
+          in: query
+          required: false
+          schema:
+            type: string
+            default: 2016-11-15
+            enum:
+              - 2016-11-15
+    parameters:
+      - $ref: "#/components/parameters/X-Amz-Content-Sha256"
+      - $ref: "#/components/parameters/X-Amz-Date"
+      - $ref: "#/components/parameters/X-Amz-Algorithm"
+      - $ref: "#/components/parameters/X-Amz-Credential"
+      - $ref: "#/components/parameters/X-Amz-Security-Token"
+      - $ref: "#/components/parameters/X-Amz-Signature"
+      - $ref: "#/components/parameters/X-Amz-SignedHeaders"
+    post:
+      x-aws-operation-name: DescribeVolumes
+      operationId: POST_DescribeVolumes
+      description: <p>Describes the specified EBS volumes or all of your EBS volumes.</p> <p>If you are describing a long list of volumes, we recommend that you paginate the output to make the list more manageable. The <code>MaxResults</code> parameter sets the maximum number of results returned in a single page. If the list of results exceeds your <code>MaxResults</code> value, then that number of results is returned along with a <code>NextToken</code> value that can be passed to a subsequent <code>DescribeVolumes</code> request to retrieve the remaining results.</p> <p>For more information about EBS volumes, see <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSVolumes.html">Amazon EBS volumes</a> in the <i>Amazon Elastic Compute Cloud User Guide</i>.</p>
+      responses:
+        "200":
+          description: Success
+          content:
+            application/xml:
+              schema:
+                $ref: "#/components/schemas/DescribeVolumesResult"
+      requestBody:
+        content:
+          application/xml:
+            schema:
+              $ref: "#/components/schemas/DescribeVolumesRequest"
+      parameters:
+        - name: MaxResults
+          in: query
+          schema:
+            type: string
+          description: Pagination limit
+          required: false
+        - name: NextToken
+          in: query
+          schema:
+            type: string
+          description: Pagination token
+          required: false
+        - name: Action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - DescribeVolumes
+        - name: Version
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - 2016-11-15
 components:
+  x-stackQL-resources:
+    volumes:
+      id: aws.ec2.volumes
+      name: volumes
+      title: volumes
+      methods:
+        describeVolumes:
+          operation:
+            $ref: '#/paths/~1?Action=DescribeVolumes&Version=2016-11-15/get'
+          response:
+            mediaType: application/xml
+            openAPIDocKey: '200'
+            objectKey: '/DescribeVolumesResponse/volumeSet/item'
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/volumes/methods/describeVolumes'
+        insert: []
+        update: []
+        delete: []
   parameters:
-    X-Amz-Algorithm:
-      in: header
-      name: X-Amz-Algorithm
-      required: false
-      schema:
-        type: string
     X-Amz-Content-Sha256:
-      in: header
       name: X-Amz-Content-Sha256
-      required: false
-      schema:
-        type: string
-    X-Amz-Credential:
       in: header
-      name: X-Amz-Credential
-      required: false
       schema:
         type: string
+      required: false
     X-Amz-Date:
-      in: header
       name: X-Amz-Date
-      required: false
+      in: header
       schema:
         type: string
+      required: false
+    X-Amz-Algorithm:
+      name: X-Amz-Algorithm
+      in: header
+      schema:
+        type: string
+      required: false
+    X-Amz-Credential:
+      name: X-Amz-Credential
+      in: header
+      schema:
+        type: string
+      required: false
     X-Amz-Security-Token:
-      in: header
       name: X-Amz-Security-Token
-      required: false
+      in: header
       schema:
         type: string
+      required: false
     X-Amz-Signature:
-      in: header
       name: X-Amz-Signature
-      required: false
-      schema:
-        type: string
-    X-Amz-SignedHeaders:
       in: header
-      name: X-Amz-SignedHeaders
-      required: false
       schema:
         type: string
+      required: false
+    X-Amz-SignedHeaders:
+      name: X-Amz-SignedHeaders
+      in: header
+      schema:
+        type: string
+      required: false
+  securitySchemes:
+    hmac:
+      type: apiKey
+      name: Authorization
+      in: header
+      description: Amazon Signature authorization v4
+      x-amazon-apigateway-authtype: awsSigv4
   schemas:
     Boolean:
       type: boolean
     DateTime:
-      format: date-time
       type: string
+      format: date-time
     DescribeVolumesRequest:
+      type: object
+      title: DescribeVolumesRequest
       properties:
-        DryRun:
-          allOf:
-          - $ref: '#/components/schemas/Boolean'
-          - description: Checks whether you have the required permissions for the
-              action, without actually making the request, and provides an error response.
-              If you have the required permissions, the error response is <code>DryRunOperation</code>.
-              Otherwise, it is <code>UnauthorizedOperation</code>.
-            xml:
-              name: dryRun
         Filters:
           allOf:
-          - $ref: '#/components/schemas/FilterList'
-          - description: <p>The filters.</p> <ul> <li> <p> <code>attachment.attach-time</code>
-              - The time stamp when the attachment initiated.</p> </li> <li> <p> <code>attachment.delete-on-termination</code>
-              - Whether the volume is deleted on instance termination.</p> </li> <li>
-              <p> <code>attachment.device</code> - The device name specified in the
-              block device mapping (for example, <code>/dev/sda1</code>).</p> </li>
-              <li> <p> <code>attachment.instance-id</code> - The ID of the instance
-              the volume is attached to.</p> </li> <li> <p> <code>attachment.status</code>
-              - The attachment state (<code>attaching</code> | <code>attached</code>
-              | <code>detaching</code>).</p> </li> <li> <p> <code>availability-zone</code>
-              - The Availability Zone in which the volume was created.</p> </li> <li>
-              <p> <code>create-time</code> - The time stamp when the volume was created.</p>
-              </li> <li> <p> <code>encrypted</code> - Indicates whether the volume
-              is encrypted (<code>true</code> | <code>false</code>)</p> </li> <li>
-              <p> <code>multi-attach-enabled</code> - Indicates whether the volume
-              is enabled for Multi-Attach (<code>true</code> | <code>false</code>)</p>
-              </li> <li> <p> <code>fast-restored</code> - Indicates whether the volume
-              was created from a snapshot that is enabled for fast snapshot restore
-              (<code>true</code> | <code>false</code>).</p> </li> <li> <p> <code>size</code>
-              - The size of the volume, in GiB.</p> </li> <li> <p> <code>snapshot-id</code>
-              - The snapshot from which the volume was created.</p> </li> <li> <p>
-              <code>status</code> - The state of the volume (<code>creating</code>
-              | <code>available</code> | <code>in-use</code> | <code>deleting</code>
-              | <code>deleted</code> | <code>error</code>).</p> </li> <li> <p> <code>tag</code>:&lt;key&gt;
-              - The key/value combination of a tag assigned to the resource. Use the
-              tag key in the filter name and the tag value as the filter value. For
-              example, to find all resources that have a tag with the key <code>Owner</code>
-              and the value <code>TeamA</code>, specify <code>tag:Owner</code> for
-              the filter name and <code>TeamA</code> for the filter value.</p> </li>
-              <li> <p> <code>tag-key</code> - The key of a tag assigned to the resource.
-              Use this filter to find all resources assigned a tag with a specific
-              key, regardless of the tag value.</p> </li> <li> <p> <code>volume-id</code>
-              - The volume ID.</p> </li> <li> <p> <code>volume-type</code> - The Amazon
-              EBS volume type (<code>gp2</code> | <code>gp3</code> | <code>io1</code>
-              | <code>io2</code> | <code>st1</code> | <code>sc1</code>| <code>standard</code>)</p>
-              </li> </ul>
-            xml:
-              name: Filter
-        MaxResults:
-          allOf:
-          - $ref: '#/components/schemas/Integer'
-          - description: The maximum number of volume results returned by <code>DescribeVolumes</code>
-              in paginated output. When this parameter is used, <code>DescribeVolumes</code>
-              only returns <code>MaxResults</code> results in a single page along
-              with a <code>NextToken</code> response element. The remaining results
-              of the initial request can be seen by sending another <code>DescribeVolumes</code>
-              request with the returned <code>NextToken</code> value. This value can
-              be between 5 and 500; if <code>MaxResults</code> is given a value larger
-              than 500, only 500 results are returned. If this parameter is not used,
-              then <code>DescribeVolumes</code> returns all results. You cannot specify
-              this parameter and the volume IDs parameter in the same request.
-            xml:
-              name: maxResults
-        NextToken:
-          allOf:
-          - $ref: '#/components/schemas/String'
-          - description: The <code>NextToken</code> value returned from a previous
-              paginated <code>DescribeVolumes</code> request where <code>MaxResults</code>
-              was used and the results exceeded the value of that parameter. Pagination
-              continues from the end of the previous results that returned the <code>NextToken</code>
-              value. This value is <code>null</code> when there are no more results
-              to return.
-            xml:
-              name: nextToken
+            - $ref: "#/components/schemas/FilterList"
+            - xml:
+                name: Filter
+              description: <p>The filters.</p> <ul> <li> <p> <code>attachment.attach-time</code> - The time stamp when the attachment initiated.</p> </li> <li> <p> <code>attachment.delete-on-termination</code> - Whether the volume is deleted on instance termination.</p> </li> <li> <p> <code>attachment.device</code> - The device name specified in the block device mapping (for example, <code>/dev/sda1</code>).</p> </li> <li> <p> <code>attachment.instance-id</code> - The ID of the instance the volume is attached to.</p> </li> <li> <p> <code>attachment.status</code> - The attachment state (<code>attaching</code> | <code>attached</code> | <code>detaching</code>).</p> </li> <li> <p> <code>availability-zone</code> - The Availability Zone in which the volume was created.</p> </li> <li> <p> <code>create-time</code> - The time stamp when the volume was created.</p> </li> <li> <p> <code>encrypted</code> - Indicates whether the volume is encrypted (<code>true</code> | <code>false</code>)</p> </li> <li> <p> <code>multi-attach-enabled</code> - Indicates whether the volume is enabled for Multi-Attach (<code>true</code> | <code>false</code>)</p> </li> <li> <p> <code>fast-restored</code> - Indicates whether the volume was created from a snapshot that is enabled for fast snapshot restore (<code>true</code> | <code>false</code>).</p> </li> <li> <p> <code>size</code> - The size of the volume, in GiB.</p> </li> <li> <p> <code>snapshot-id</code> - The snapshot from which the volume was created.</p> </li> <li> <p> <code>status</code> - The state of the volume (<code>creating</code> | <code>available</code> | <code>in-use</code> | <code>deleting</code> | <code>deleted</code> | <code>error</code>).</p> </li> <li> <p> <code>tag</code>:&lt;key&gt; - The key/value combination of a tag assigned to the resource. Use the tag key in the filter name and the tag value as the filter value. For example, to find all resources that have a tag with the key <code>Owner</code> and the value <code>TeamA</code>, specify <code>tag:Owner</code> for the filter name and <code>TeamA</code> for the filter value.</p> </li> <li> <p> <code>tag-key</code> - The key of a tag assigned to the resource. Use this filter to find all resources assigned a tag with a specific key, regardless of the tag value.</p> </li> <li> <p> <code>volume-id</code> - The volume ID.</p> </li> <li> <p> <code>volume-type</code> - The Amazon EBS volume type (<code>gp2</code> | <code>gp3</code> | <code>io1</code> | <code>io2</code> | <code>st1</code> | <code>sc1</code>| <code>standard</code>)</p> </li> </ul>
         VolumeIds:
           allOf:
-          - $ref: '#/components/schemas/VolumeIdStringList'
-          - description: The volume IDs.
-            xml:
-              name: VolumeId
-      title: DescribeVolumesRequest
-      type: object
-    DescribeVolumesResult:
-      example:
-        Volumes:
-        - Attachments:
-          - AttachTime: 2013-12-18 22:35:00+00:00
-            DeleteOnTermination: true
-            Device: /dev/sda1
-            InstanceId: i-1234567890abcdef0
-            State: attached
-            VolumeId: vol-049df61146c4d7901
-          AvailabilityZone: us-east-1a
-          CreateTime: 2013-12-18 22:35:00.084000+00:00
-          Size: 8
-          SnapshotId: snap-1234567890abcdef0
-          State: in-use
-          VolumeId: vol-049df61146c4d7901
-          VolumeType: standard
-      properties:
+            - $ref: "#/components/schemas/VolumeIdStringList"
+            - xml:
+                name: VolumeId
+              description: The volume IDs.
+        DryRun:
+          allOf:
+            - $ref: "#/components/schemas/Boolean"
+            - xml:
+                name: dryRun
+              description: Checks whether you have the required permissions for the action, without actually making the request, and provides an error response. If you have the required permissions, the error response is <code>DryRunOperation</code>. Otherwise, it is <code>UnauthorizedOperation</code>.
+        MaxResults:
+          allOf:
+            - $ref: "#/components/schemas/Integer"
+            - xml:
+                name: maxResults
+              description: The maximum number of volume results returned by <code>DescribeVolumes</code> in paginated output. When this parameter is used, <code>DescribeVolumes</code> only returns <code>MaxResults</code> results in a single page along with a <code>NextToken</code> response element. The remaining results of the initial request can be seen by sending another <code>DescribeVolumes</code> request with the returned <code>NextToken</code> value. This value can be between 5 and 500; if <code>MaxResults</code> is given a value larger than 500, only 500 results are returned. If this parameter is not used, then <code>DescribeVolumes</code> returns all results. You cannot specify this parameter and the volume IDs parameter in the same request.
         NextToken:
           allOf:
-          - $ref: '#/components/schemas/String'
-          - description: The <code>NextToken</code> value to include in a future <code>DescribeVolumes</code>
-              request. When the results of a <code>DescribeVolumes</code> request
-              exceed <code>MaxResults</code>, this value can be used to retrieve the
-              next page of results. This value is <code>null</code> when there are
-              no more results to return.
-            xml:
-              name: nextToken
+            - $ref: "#/components/schemas/String"
+            - xml:
+                name: nextToken
+              description: The <code>NextToken</code> value returned from a previous paginated <code>DescribeVolumes</code> request where <code>MaxResults</code> was used and the results exceeded the value of that parameter. Pagination continues from the end of the previous results that returned the <code>NextToken</code> value. This value is <code>null</code> when there are no more results to return.
+    DescribeVolumesResult:
+      type: object
+      example:
+        Volumes:
+          - Attachments:
+              - AttachTime: 2013-12-18T22:35:00.000Z
+                DeleteOnTermination: true
+                Device: /dev/sda1
+                InstanceId: i-1234567890abcdef0
+                State: attached
+                VolumeId: vol-049df61146c4d7901
+            AvailabilityZone: us-east-1a
+            CreateTime: 2013-12-18T22:35:00.084Z
+            Size: 8
+            SnapshotId: snap-1234567890abcdef0
+            State: in-use
+            VolumeId: vol-049df61146c4d7901
+            VolumeType: standard
+      properties:
         Volumes:
           allOf:
-          - $ref: '#/components/schemas/VolumeList'
-          - description: Information about the volumes.
-            xml:
-              name: volumeSet
+            - $ref: "#/components/schemas/VolumeList"
+            - xml:
+                name: volumeSet
+              description: Information about the volumes.
+        NextToken:
+          allOf:
+            - $ref: "#/components/schemas/String"
+            - xml:
+                name: nextToken
+              description: The <code>NextToken</code> value to include in a future <code>DescribeVolumes</code> request. When the results of a <code>DescribeVolumes</code> request exceed <code>MaxResults</code>, this value can be used to retrieve the next page of results. This value is <code>null</code> when there are no more results to return.
+    Tag:
       type: object
+      properties:
+        Key:
+          allOf:
+            - $ref: "#/components/schemas/String"
+            - xml:
+                name: key
+              description: "<p>The key of the tag.</p> <p>Constraints: Tag keys are case-sensitive and accept a maximum of 127 Unicode characters. May not begin with <code>aws:</code>.</p>"
+        Value:
+          allOf:
+            - $ref: "#/components/schemas/String"
+            - xml:
+                name: value
+              description: "<p>The value of the tag.</p> <p>Constraints: Tag values are case-sensitive and accept a maximum of 255 Unicode characters.</p>"
+      description: Describes a tag.
     Filter:
-      description: A filter name and value pair that is used to return a more specific
-        list of results from a describe operation. Filters can be used to match a
-        set of resources by specific criteria, such as tags, attributes, or IDs.
+      type: object
       properties:
         Name:
           allOf:
-          - $ref: '#/components/schemas/String'
-          - description: The name of the filter. Filter names are case-sensitive.
+            - $ref: "#/components/schemas/String"
+            - description: The name of the filter. Filter names are case-sensitive.
         Values:
           allOf:
-          - $ref: '#/components/schemas/ValueStringList'
-          - description: The filter values. Filter values are case-sensitive.
-            xml:
-              name: Value
-      type: object
+            - $ref: "#/components/schemas/ValueStringList"
+            - xml:
+                name: Value
+              description: The filter values. Filter values are case-sensitive.
+      description: A filter name and value pair that is used to return a more specific list of results from a describe operation. Filters can be used to match a set of resources by specific criteria, such as tags, attributes, or IDs.
     FilterList:
+      type: array
       items:
         allOf:
-        - $ref: '#/components/schemas/Filter'
-        - xml:
-            name: Filter
-      type: array
+          - $ref: "#/components/schemas/Filter"
+          - xml:
+              name: Filter
     Integer:
       type: integer
     String:
       type: string
-    Tag:
-      description: Describes a tag.
-      properties:
-        Key:
-          allOf:
-          - $ref: '#/components/schemas/String'
-          - description: '<p>The key of the tag.</p> <p>Constraints: Tag keys are
-              case-sensitive and accept a maximum of 127 Unicode characters. May not
-              begin with <code>aws:</code>.</p>'
-            xml:
-              name: key
-        Value:
-          allOf:
-          - $ref: '#/components/schemas/String'
-          - description: '<p>The value of the tag.</p> <p>Constraints: Tag values
-              are case-sensitive and accept a maximum of 255 Unicode characters.</p>'
-            xml:
-              name: value
-      type: object
     TagList:
+      type: array
       items:
         allOf:
-        - $ref: '#/components/schemas/Tag'
-        - xml:
-            name: item
-      type: array
+          - $ref: "#/components/schemas/Tag"
+          - xml:
+              name: item
     ValueStringList:
+      type: array
       items:
         allOf:
-        - $ref: '#/components/schemas/String'
-        - xml:
-            name: item
-      type: array
+          - $ref: "#/components/schemas/String"
+          - xml:
+              name: item
     Volume:
-      description: Describes a volume.
+      type: object
       example:
         Attachments: []
         AvailabilityZone: us-east-1a
-        CreateTime: 2016-08-29 18:52:32.724000+00:00
+        CreateTime: 2016-08-29T18:52:32.724Z
         Iops: 1000
         Size: 500
         SnapshotId: snap-066877671789bd71b
@@ -244,112 +424,105 @@ components:
       properties:
         Attachments:
           allOf:
-          - $ref: '#/components/schemas/VolumeAttachmentList'
-          - description: Information about the volume attachments.
-            xml:
-              name: attachmentSet
+            - $ref: "#/components/schemas/VolumeAttachmentList"
+            - xml:
+                name: attachmentSet
+              description: Information about the volume attachments.
         AvailabilityZone:
           allOf:
-          - $ref: '#/components/schemas/String'
-          - description: The Availability Zone for the volume.
-            xml:
-              name: availabilityZone
+            - $ref: "#/components/schemas/String"
+            - xml:
+                name: availabilityZone
+              description: The Availability Zone for the volume.
         CreateTime:
           allOf:
-          - $ref: '#/components/schemas/DateTime'
-          - description: The time stamp when volume creation was initiated.
-            xml:
-              name: createTime
+            - $ref: "#/components/schemas/DateTime"
+            - xml:
+                name: createTime
+              description: The time stamp when volume creation was initiated.
         Encrypted:
           allOf:
-          - $ref: '#/components/schemas/Boolean'
-          - description: Indicates whether the volume is encrypted.
-            xml:
-              name: encrypted
-        FastRestored:
-          allOf:
-          - $ref: '#/components/schemas/Boolean'
-          - description: Indicates whether the volume was created using fast snapshot
-              restore.
-            xml:
-              name: fastRestored
-        Iops:
-          allOf:
-          - $ref: '#/components/schemas/Integer'
-          - description: The number of I/O operations per second (IOPS). For <code>gp3</code>,
-              <code>io1</code>, and <code>io2</code> volumes, this represents the
-              number of IOPS that are provisioned for the volume. For <code>gp2</code>
-              volumes, this represents the baseline performance of the volume and
-              the rate at which the volume accumulates I/O credits for bursting.
-            xml:
-              name: iops
+            - $ref: "#/components/schemas/Boolean"
+            - xml:
+                name: encrypted
+              description: Indicates whether the volume is encrypted.
         KmsKeyId:
           allOf:
-          - $ref: '#/components/schemas/String'
-          - description: The Amazon Resource Name (ARN) of the Key Management Service
-              (KMS) KMS key that was used to protect the volume encryption key for
-              the volume.
-            xml:
-              name: kmsKeyId
-        MultiAttachEnabled:
-          allOf:
-          - $ref: '#/components/schemas/Boolean'
-          - description: Indicates whether Amazon EBS Multi-Attach is enabled.
-            xml:
-              name: multiAttachEnabled
+            - $ref: "#/components/schemas/String"
+            - xml:
+                name: kmsKeyId
+              description: The Amazon Resource Name (ARN) of the Key Management Service (KMS) KMS key that was used to protect the volume encryption key for the volume.
         OutpostArn:
           allOf:
-          - $ref: '#/components/schemas/String'
-          - description: The Amazon Resource Name (ARN) of the Outpost.
-            xml:
-              name: outpostArn
+            - $ref: "#/components/schemas/String"
+            - xml:
+                name: outpostArn
+              description: The Amazon Resource Name (ARN) of the Outpost.
         Size:
           allOf:
-          - $ref: '#/components/schemas/Integer'
-          - description: The size of the volume, in GiBs.
-            xml:
-              name: size
+            - $ref: "#/components/schemas/Integer"
+            - xml:
+                name: size
+              description: The size of the volume, in GiBs.
         SnapshotId:
           allOf:
-          - $ref: '#/components/schemas/String'
-          - description: The snapshot from which the volume was created, if applicable.
-            xml:
-              name: snapshotId
+            - $ref: "#/components/schemas/String"
+            - xml:
+                name: snapshotId
+              description: The snapshot from which the volume was created, if applicable.
         State:
           allOf:
-          - $ref: '#/components/schemas/VolumeState'
-          - description: The volume state.
-            xml:
-              name: status
-        Tags:
-          allOf:
-          - $ref: '#/components/schemas/TagList'
-          - description: Any tags assigned to the volume.
-            xml:
-              name: tagSet
-        Throughput:
-          allOf:
-          - $ref: '#/components/schemas/Integer'
-          - description: The throughput that the volume supports, in MiB/s.
-            xml:
-              name: throughput
+            - $ref: "#/components/schemas/VolumeState"
+            - xml:
+                name: status
+              description: The volume state.
         VolumeId:
           allOf:
-          - $ref: '#/components/schemas/String'
-          - description: The ID of the volume.
-            xml:
-              name: volumeId
+            - $ref: "#/components/schemas/String"
+            - xml:
+                name: volumeId
+              description: The ID of the volume.
+        Iops:
+          allOf:
+            - $ref: "#/components/schemas/Integer"
+            - xml:
+                name: iops
+              description: The number of I/O operations per second (IOPS). For <code>gp3</code>, <code>io1</code>, and <code>io2</code> volumes, this represents the number of IOPS that are provisioned for the volume. For <code>gp2</code> volumes, this represents the baseline performance of the volume and the rate at which the volume accumulates I/O credits for bursting.
+        Tags:
+          allOf:
+            - $ref: "#/components/schemas/TagList"
+            - xml:
+                name: tagSet
+              description: Any tags assigned to the volume.
         VolumeType:
           allOf:
-          - $ref: '#/components/schemas/VolumeType'
-          - description: The volume type.
-            xml:
-              name: volumeType
-      type: object
+            - $ref: "#/components/schemas/VolumeType"
+            - xml:
+                name: volumeType
+              description: The volume type.
+        FastRestored:
+          allOf:
+            - $ref: "#/components/schemas/Boolean"
+            - xml:
+                name: fastRestored
+              description: Indicates whether the volume was created using fast snapshot restore.
+        MultiAttachEnabled:
+          allOf:
+            - $ref: "#/components/schemas/Boolean"
+            - xml:
+                name: multiAttachEnabled
+              description: Indicates whether Amazon EBS Multi-Attach is enabled.
+        Throughput:
+          allOf:
+            - $ref: "#/components/schemas/Integer"
+            - xml:
+                name: throughput
+              description: The throughput that the volume supports, in MiB/s.
+      description: Describes a volume.
     VolumeAttachment:
-      description: Describes volume attachment details.
+      type: object
       example:
-        AttachTime: 2014-02-27 19:23:06+00:00
+        AttachTime: 2014-02-27T19:23:06.000Z
         Device: /dev/sdb
         InstanceId: i-1234567890abcdef0
         State: detaching
@@ -357,410 +530,88 @@ components:
       properties:
         AttachTime:
           allOf:
-          - $ref: '#/components/schemas/DateTime'
-          - description: The time stamp when the attachment initiated.
-            xml:
-              name: attachTime
-        DeleteOnTermination:
-          allOf:
-          - $ref: '#/components/schemas/Boolean'
-          - description: Indicates whether the EBS volume is deleted on instance termination.
-            xml:
-              name: deleteOnTermination
+            - $ref: "#/components/schemas/DateTime"
+            - xml:
+                name: attachTime
+              description: The time stamp when the attachment initiated.
         Device:
           allOf:
-          - $ref: '#/components/schemas/String'
-          - description: The device name.
-            xml:
-              name: device
+            - $ref: "#/components/schemas/String"
+            - xml:
+                name: device
+              description: The device name.
         InstanceId:
           allOf:
-          - $ref: '#/components/schemas/String'
-          - description: The ID of the instance.
-            xml:
-              name: instanceId
+            - $ref: "#/components/schemas/String"
+            - xml:
+                name: instanceId
+              description: The ID of the instance.
         State:
           allOf:
-          - $ref: '#/components/schemas/VolumeAttachmentState'
-          - description: The attachment state of the volume.
-            xml:
-              name: status
+            - $ref: "#/components/schemas/VolumeAttachmentState"
+            - xml:
+                name: status
+              description: The attachment state of the volume.
         VolumeId:
           allOf:
-          - $ref: '#/components/schemas/String'
-          - description: The ID of the volume.
-            xml:
-              name: volumeId
-      type: object
+            - $ref: "#/components/schemas/String"
+            - xml:
+                name: volumeId
+              description: The ID of the volume.
+        DeleteOnTermination:
+          allOf:
+            - $ref: "#/components/schemas/Boolean"
+            - xml:
+                name: deleteOnTermination
+              description: Indicates whether the EBS volume is deleted on instance termination.
+      description: Describes volume attachment details.
     VolumeAttachmentList:
+      type: array
       items:
         allOf:
-        - $ref: '#/components/schemas/VolumeAttachment'
-        - xml:
-            name: item
-      type: array
+          - $ref: "#/components/schemas/VolumeAttachment"
+          - xml:
+              name: item
     VolumeAttachmentState:
-      enum:
-      - attaching
-      - attached
-      - detaching
-      - detached
-      - busy
       type: string
+      enum:
+        - attaching
+        - attached
+        - detaching
+        - detached
+        - busy
     VolumeId:
       type: string
     VolumeIdStringList:
+      type: array
       items:
         allOf:
-        - $ref: '#/components/schemas/VolumeId'
-        - xml:
-            name: VolumeId
-      type: array
+          - $ref: "#/components/schemas/VolumeId"
+          - xml:
+              name: VolumeId
     VolumeList:
+      type: array
       items:
         allOf:
-        - $ref: '#/components/schemas/Volume'
-        - xml:
-            name: item
-      type: array
+          - $ref: "#/components/schemas/Volume"
+          - xml:
+              name: item
     VolumeState:
-      enum:
-      - creating
-      - available
-      - in-use
-      - deleting
-      - deleted
-      - error
       type: string
+      enum:
+        - creating
+        - available
+        - in-use
+        - deleting
+        - deleted
+        - error
     VolumeType:
-      enum:
-      - standard
-      - io1
-      - io2
-      - gp2
-      - sc1
-      - st1
-      - gp3
       type: string
-  securitySchemes:
-    hmac:
-      description: Amazon Signature authorization v4
-      in: header
-      name: Authorization
-      type: apiKey
-      x-amazon-apigateway-authtype: awsSigv4
-  x-stackQL-resources:
-    volumes:
-      id: aws.ec2.volumes
-      methods:
-        describeVolumes:
-          operation:
-            $ref: '#/paths/~1?Action=DescribeVolumes&Version=2016-11-15/get'
-          response:
-            mediaType: application/xml
-            objectKey: /DescribeVolumesResponse/volumeSet/item
-            openAPIDocKey: '200'
-      name: volumes
-      sqlVerbs:
-        delete: []
-        insert: []
-        select:
-        - $ref: '#/components/x-stackQL-resources/volumes/methods/describeVolumes'
-        update: []
-      title: volumes
-externalDocs:
-  description: Amazon Web Services documentation
-  url: https://docs.aws.amazon.com/ec2/
-info:
-  contact:
-    email: mike.ralphson@gmail.com
-    name: Mike Ralphson
-    url: https://github.com/mermade/aws2openapi
-    x-twitter: PermittedSoc
-  description: '<fullname>Amazon Elastic Compute Cloud</fullname> <p>Amazon Elastic
-    Compute Cloud (Amazon EC2) provides secure and resizable computing capacity in
-    the AWS Cloud. Using Amazon EC2 eliminates the need to invest in hardware up front,
-    so you can develop and deploy applications faster. Amazon Virtual Private Cloud
-    (Amazon VPC) enables you to provision a logically isolated section of the AWS
-    Cloud where you can launch AWS resources in a virtual network that you''ve defined.
-    Amazon Elastic Block Store (Amazon EBS) provides block level storage volumes for
-    use with EC2 instances. EBS volumes are highly available and reliable storage
-    volumes that can be attached to any running instance and used like a hard drive.</p>
-    <p>To learn more, see the following resources:</p> <ul> <li> <p>Amazon EC2: <a
-    href="http://aws.amazon.com/ec2">AmazonEC2 product page</a>, <a href="http://aws.amazon.com/documentation/ec2">Amazon
-    EC2 documentation</a> </p> </li> <li> <p>Amazon EBS: <a href="http://aws.amazon.com/ebs">Amazon
-    EBS product page</a>, <a href="http://aws.amazon.com/documentation/ebs">Amazon
-    EBS documentation</a> </p> </li> <li> <p>Amazon VPC: <a href="http://aws.amazon.com/vpc">Amazon
-    VPC product page</a>, <a href="http://aws.amazon.com/documentation/vpc">Amazon
-    VPC documentation</a> </p> </li> <li> <p>AWS VPN: <a href="http://aws.amazon.com/vpn">AWS
-    VPN product page</a>, <a href="http://aws.amazon.com/documentation/vpn">AWS VPN
-    documentation</a> </p> </li> </ul>'
-  license:
-    name: Apache 2.0 License
-    url: http://www.apache.org/licenses/
-  termsOfService: https://aws.amazon.com/service-terms/
-  title: Amazon Elastic Compute Cloud
-  version: 2016-11-15
-  x-apiClientRegistration:
-    url: https://portal.aws.amazon.com/gp/aws/developer/registration/index.html?nc2=h_ct
-  x-apisguru-categories:
-  - cloud
-  x-logo:
-    backgroundColor: '#FFFFFF'
-    url: https://api.apis.guru/v2/cache/logo/https_twitter.com_awscloud_profile_image.png
-  x-origin:
-  - contentType: application/json
-    converter:
-      url: https://github.com/mermade/aws2openapi
-      version: 1.0.0
-    url: https://raw.githubusercontent.com/aws/aws-sdk-js/master/apis/ec2-2016-11-15.normal.json
-    x-apisguru-driver: external
-  x-preferred: true
-  x-providerName: amazonaws.com
-  x-release: v4
-  x-serviceName: ec2
-openapi: 3.0.0
-paths:
-  /?Action=DescribeVolumes&Version=2016-11-15:
-    get:
-      description: <p>Describes the specified EBS volumes or all of your EBS volumes.</p>
-        <p>If you are describing a long list of volumes, we recommend that you paginate
-        the output to make the list more manageable. The <code>MaxResults</code> parameter
-        sets the maximum number of results returned in a single page. If the list
-        of results exceeds your <code>MaxResults</code> value, then that number of
-        results is returned along with a <code>NextToken</code> value that can be
-        passed to a subsequent <code>DescribeVolumes</code> request to retrieve the
-        remaining results.</p> <p>For more information about EBS volumes, see <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSVolumes.html">Amazon
-        EBS volumes</a> in the <i>Amazon Elastic Compute Cloud User Guide</i>.</p>
-      operationId: GET_DescribeVolumes
-      parameters:
-      - description: <p>The filters.</p> <ul> <li> <p> <code>attachment.attach-time</code>
-          - The time stamp when the attachment initiated.</p> </li> <li> <p> <code>attachment.delete-on-termination</code>
-          - Whether the volume is deleted on instance termination.</p> </li> <li>
-          <p> <code>attachment.device</code> - The device name specified in the block
-          device mapping (for example, <code>/dev/sda1</code>).</p> </li> <li> <p>
-          <code>attachment.instance-id</code> - The ID of the instance the volume
-          is attached to.</p> </li> <li> <p> <code>attachment.status</code> - The
-          attachment state (<code>attaching</code> | <code>attached</code> | <code>detaching</code>).</p>
-          </li> <li> <p> <code>availability-zone</code> - The Availability Zone in
-          which the volume was created.</p> </li> <li> <p> <code>create-time</code>
-          - The time stamp when the volume was created.</p> </li> <li> <p> <code>encrypted</code>
-          - Indicates whether the volume is encrypted (<code>true</code> | <code>false</code>)</p>
-          </li> <li> <p> <code>multi-attach-enabled</code> - Indicates whether the
-          volume is enabled for Multi-Attach (<code>true</code> | <code>false</code>)</p>
-          </li> <li> <p> <code>fast-restored</code> - Indicates whether the volume
-          was created from a snapshot that is enabled for fast snapshot restore (<code>true</code>
-          | <code>false</code>).</p> </li> <li> <p> <code>size</code> - The size of
-          the volume, in GiB.</p> </li> <li> <p> <code>snapshot-id</code> - The snapshot
-          from which the volume was created.</p> </li> <li> <p> <code>status</code>
-          - The state of the volume (<code>creating</code> | <code>available</code>
-          | <code>in-use</code> | <code>deleting</code> | <code>deleted</code> | <code>error</code>).</p>
-          </li> <li> <p> <code>tag</code>:&lt;key&gt; - The key/value combination
-          of a tag assigned to the resource. Use the tag key in the filter name and
-          the tag value as the filter value. For example, to find all resources that
-          have a tag with the key <code>Owner</code> and the value <code>TeamA</code>,
-          specify <code>tag:Owner</code> for the filter name and <code>TeamA</code>
-          for the filter value.</p> </li> <li> <p> <code>tag-key</code> - The key
-          of a tag assigned to the resource. Use this filter to find all resources
-          assigned a tag with a specific key, regardless of the tag value.</p> </li>
-          <li> <p> <code>volume-id</code> - The volume ID.</p> </li> <li> <p> <code>volume-type</code>
-          - The Amazon EBS volume type (<code>gp2</code> | <code>gp3</code> | <code>io1</code>
-          | <code>io2</code> | <code>st1</code> | <code>sc1</code>| <code>standard</code>)</p>
-          </li> </ul>
-        in: query
-        name: Filter
-        required: false
-        schema:
-          items:
-            allOf:
-            - $ref: '#/components/schemas/Filter'
-            - xml:
-                name: Filter
-          type: array
-      - description: The volume IDs.
-        in: query
-        name: VolumeId
-        required: false
-        schema:
-          items:
-            allOf:
-            - $ref: '#/components/schemas/VolumeId'
-            - xml:
-                name: VolumeId
-          type: array
-      - description: Checks whether you have the required permissions for the action,
-          without actually making the request, and provides an error response. If
-          you have the required permissions, the error response is <code>DryRunOperation</code>.
-          Otherwise, it is <code>UnauthorizedOperation</code>.
-        in: query
-        name: DryRun
-        required: false
-        schema:
-          type: boolean
-      - description: The maximum number of volume results returned by <code>DescribeVolumes</code>
-          in paginated output. When this parameter is used, <code>DescribeVolumes</code>
-          only returns <code>MaxResults</code> results in a single page along with
-          a <code>NextToken</code> response element. The remaining results of the
-          initial request can be seen by sending another <code>DescribeVolumes</code>
-          request with the returned <code>NextToken</code> value. This value can be
-          between 5 and 500; if <code>MaxResults</code> is given a value larger than
-          500, only 500 results are returned. If this parameter is not used, then
-          <code>DescribeVolumes</code> returns all results. You cannot specify this
-          parameter and the volume IDs parameter in the same request.
-        in: query
-        name: MaxResults
-        required: false
-        schema:
-          type: integer
-      - description: The <code>NextToken</code> value returned from a previous paginated
-          <code>DescribeVolumes</code> request where <code>MaxResults</code> was used
-          and the results exceeded the value of that parameter. Pagination continues
-          from the end of the previous results that returned the <code>NextToken</code>
-          value. This value is <code>null</code> when there are no more results to
-          return.
-        in: query
-        name: NextToken
-        required: false
-        schema:
-          type: string
-      - in: query
-        name: Action
-        required: false
-        schema:
-          default: DescribeVolumes
-          enum:
-          - DescribeVolumes
-          type: string
-      - in: query
-        name: Version
-        required: false
-        schema:
-          default: 2016-11-15
-          enum:
-          - 2016-11-15
-          type: string
-      responses:
-        '200':
-          content:
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/DescribeVolumesResult'
-          description: Success
-      x-aws-operation-name: DescribeVolumes
-    parameters:
-    - $ref: '#/components/parameters/X-Amz-Content-Sha256'
-    - $ref: '#/components/parameters/X-Amz-Date'
-    - $ref: '#/components/parameters/X-Amz-Algorithm'
-    - $ref: '#/components/parameters/X-Amz-Credential'
-    - $ref: '#/components/parameters/X-Amz-Security-Token'
-    - $ref: '#/components/parameters/X-Amz-Signature'
-    - $ref: '#/components/parameters/X-Amz-SignedHeaders'
-    post:
-      description: <p>Describes the specified EBS volumes or all of your EBS volumes.</p>
-        <p>If you are describing a long list of volumes, we recommend that you paginate
-        the output to make the list more manageable. The <code>MaxResults</code> parameter
-        sets the maximum number of results returned in a single page. If the list
-        of results exceeds your <code>MaxResults</code> value, then that number of
-        results is returned along with a <code>NextToken</code> value that can be
-        passed to a subsequent <code>DescribeVolumes</code> request to retrieve the
-        remaining results.</p> <p>For more information about EBS volumes, see <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSVolumes.html">Amazon
-        EBS volumes</a> in the <i>Amazon Elastic Compute Cloud User Guide</i>.</p>
-      operationId: POST_DescribeVolumes
-      parameters:
-      - description: Pagination limit
-        in: query
-        name: MaxResults
-        required: false
-        schema:
-          type: string
-      - description: Pagination token
-        in: query
-        name: NextToken
-        required: false
-        schema:
-          type: string
-      - in: query
-        name: Action
-        required: true
-        schema:
-          enum:
-          - DescribeVolumes
-          type: string
-      - in: query
-        name: Version
-        required: true
-        schema:
-          enum:
-          - 2016-11-15
-          type: string
-      requestBody:
-        content:
-          application/xml:
-            schema:
-              $ref: '#/components/schemas/DescribeVolumesRequest'
-      responses:
-        '200':
-          content:
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/DescribeVolumesResult'
-          description: Success
-      x-aws-operation-name: DescribeVolumes
-security:
-- hmac: []
-servers:
-- description: The Amazon EC2 multi-region endpoint
-  url: https://localhost:1091/
-  variables:
-    region:
-      default: us-east-1
-      description: The AWS region
       enum:
-      - us-east-1
-      - us-east-2
-      - us-west-1
-      - us-west-2
-      - us-gov-west-1
-      - us-gov-east-1
-      - ca-central-1
-      - eu-north-1
-      - eu-west-1
-      - eu-west-2
-      - eu-west-3
-      - eu-central-1
-      - eu-south-1
-      - af-south-1
-      - ap-northeast-1
-      - ap-northeast-2
-      - ap-northeast-3
-      - ap-southeast-1
-      - ap-southeast-2
-      - ap-east-1
-      - ap-south-1
-      - sa-east-1
-      - me-south-1
-- description: The general Amazon EC2 endpoint for US East (N. Virginia)
-  url: https://localhost:1091/
-  variables: {}
-- description: The general Amazon EC2 endpoint for US East (N. Virginia)
-  url: https://localhost:1091/
-  variables: {}
-- description: The Amazon EC2 endpoint for China (Beijing) and China (Ningxia)
-  url: https://localhost:1091/
-  variables:
-    region:
-      default: cn-north-1
-      description: The AWS region
-      enum:
-      - cn-north-1
-      - cn-northwest-1
-- description: The Amazon EC2 endpoint for China (Beijing) and China (Ningxia)
-  url: https://localhost:1091/
-  variables:
-    region:
-      default: cn-north-1
-      description: The AWS region
-      enum:
-      - cn-north-1
-      - cn-northwest-1
-x-hasEquivalentPaths: true
+        - standard
+        - io1
+        - io2
+        - gp2
+        - sc1
+        - st1
+        - gp3

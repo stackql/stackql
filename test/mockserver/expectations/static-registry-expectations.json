@@ -1,0 +1,18 @@
+[
+  {
+    "httpRequest": {
+      "method": "GET",
+      "path": "/gh/stackql/stackql-provider-registry/main/providers/dist/providers.yaml"
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "text/yaml; charset=utf-8" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "type": "BINARY",
+        "base64Bytes": "cHJvdmlkZXJzOgogIGdpdGh1YjoKICAgIHZlcnNpb25zOgogICAgLSB2MC4xLjAKICAgIC0gdjAuMS4xCiAgICAtIHYwLjIuMAogICAgLSB2MC4zLjAKICBnb29nbGU6CiAgICB2ZXJzaW9uczoKICAgIC0gdjAuMS4wCiAgICAtIHYwLjEuMQogICAgLSB2MC4xLjIKICBuZXRsaWZ5OgogICAgdmVyc2lvbnM6CiAgICAtIHYwLjEuMAogICAgLSB2MC4yLjAKICBva3RhOgogICAgdmVyc2lvbnM6CiAgICAtIHYwLjEuMA=="
+      }
+    }
+  }
+]
