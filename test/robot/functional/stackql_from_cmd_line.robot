@@ -15,6 +15,7 @@ Positive Control
 
 Get Providers
     Should StackQL Exec Contain    ${SHOW_PROVIDERS_STR}   okta
+    Should StackQL Exec Contain JSON output    ${SHOW_PROVIDERS_STR}   okta
 
 Get Providers No Config
     Should StackQL No Cfg Exec Contain    ${SHOW_PROVIDERS_STR}   name
@@ -99,6 +100,15 @@ Should StackQL Exec Contain
     ${result} =    Run StackQL Canonical Exec Command    ${_EXEC_CMD_STR}
     Should contain    ${result.stdout}    ${_EXEC_CMD_EXPECTED_OUTPUT}    @{varargs}
     ${result} =    Run StackQL Deprecated Exec Command    ${_EXEC_CMD_STR}
+    Should contain    ${result.stdout}    ${_EXEC_CMD_EXPECTED_OUTPUT}    @{varargs}
+
+Should StackQL Exec Contain JSON output
+    [Arguments]    ${_EXEC_CMD_STR}    ${_EXEC_CMD_EXPECTED_OUTPUT}    @{varargs}
+    ${result} =    Run StackQL Exec Command    ${_EXEC_CMD_STR}    \-o\=json
+    Should contain    ${result.stdout}    ${_EXEC_CMD_EXPECTED_OUTPUT}    @{varargs}
+    ${result} =    Run StackQL Canonical Exec Command    ${_EXEC_CMD_STR}    \-o\=json
+    Should contain    ${result.stdout}    ${_EXEC_CMD_EXPECTED_OUTPUT}    @{varargs}
+    ${result} =    Run StackQL Deprecated Exec Command    ${_EXEC_CMD_STR}    \-o\=json
     Should contain    ${result.stdout}    ${_EXEC_CMD_EXPECTED_OUTPUT}    @{varargs}
 
 Should StackQL Novel Exec Contain
