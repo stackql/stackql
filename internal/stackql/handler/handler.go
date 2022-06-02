@@ -40,27 +40,34 @@ type HandlerContext struct {
 	TxnCounterMgr     *txncounter.TxnCounterManager
 }
 
-func getProviderMap(providerName string) map[string]interface{} {
+func getProviderMap(providerName string, providerDesc openapistackql.ProviderDescription) map[string]interface{} {
+	latestVersion, err := providerDesc.GetLatestVersion()
+	if err != nil {
+		latestVersion = fmt.Sprintf("could not infer latest version due to error.  Suggested action is that you wipe the local provider directory.  Error =  '%s'", err.Error())
+	}
 	googleMap := map[string]interface{}{
-		"name": providerName,
+		"name":    providerName,
+		"version": latestVersion,
 	}
 	return googleMap
 }
 
-func getProviderMapExtended(providerName string) map[string]interface{} {
-	return getProviderMap(providerName)
+func getProviderMapExtended(providerName string, providerDesc openapistackql.ProviderDescription) map[string]interface{} {
+	return getProviderMap(providerName, providerDesc)
 }
 
 func (hc *HandlerContext) GetSupportedProviders(extended bool) map[string]map[string]interface{} {
 	retVal := make(map[string]map[string]interface{})
-	for pn := range hc.Registry.ListLocallyAvailableProviders() {
+	provs := hc.Registry.ListLocallyAvailableProviders()
+	for k, pd := range provs {
+		pn := k
 		if pn == "googleapis.com" {
 			pn = "google"
 		}
 		if extended {
-			retVal[pn] = getProviderMapExtended(pn)
+			retVal[pn] = getProviderMapExtended(pn, pd)
 		} else {
-			retVal[pn] = getProviderMap(pn)
+			retVal[pn] = getProviderMap(pn, pd)
 		}
 	}
 	return retVal

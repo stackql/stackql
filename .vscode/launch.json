@@ -11,7 +11,7 @@
       "options": [
         "{ \"url\": \"file://${workspaceFolder}/test/registry-sandbox\", \"localDocRoot\": \"${workspaceFolder}/test/registry-sandbox\", \"verifyConfig\": { \"nopVerify\": true } }",
         "{ \"url\": \"file://${workspaceFolder}/test/registry\", \"localDocRoot\": \"${workspaceFolder}/test/registry\", \"verifyConfig\": { \"nopVerify\": true } }",
-        "{ \"url\": \"https://cdn.statically.io/gh/stackql/stackql-provider-registry/feature/github-v-0-3-0/providers\" }",
+        "{ \"url\": \"https://cdn.statically.io/gh/stackql/stackql-provider-registry/main/providers\", \"localDocRoot\": \"${workspaceFolder}/test/registry\" }",
         "{ \"url\": \"https://cdn.statically.io/gh/stackql/stackql-provider-registry/feature/add-github-provider-published-05/providers\" }"
       ],
       "default": "{ \"url\": \"file://${workspaceFolder}/test/registry-sandbox\", \"localDocRoot\": \"${workspaceFolder}/test/registry-sandbox\", \"verifyConfig\": { \"nopVerify\": true } }"
@@ -583,6 +583,7 @@
       "mode": "debug",
       "program": "${workspaceFolder}/stackql",
       "args": [
+        "--registry=${input:registryString}",
         "exec",
         "show extended resources from google.compute where name = 'resourcePolicies';",
         "-o",
@@ -733,14 +734,15 @@
       ],
     },
     {
-      "name": "SHOW RESOURCES... ;\" -- prebuilt with cmake",
+      "name": "SHOW RESOURCES... ;\"",
       "type": "go",
       "request": "launch",
-      "mode": "exec",
-      "program": "${workspaceFolder}/build/stackql",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
         "--auth=${input:authString}",
+        "--registry=${input:registryString}",
         "show resources from google.container;",
         "-o",
         "table"

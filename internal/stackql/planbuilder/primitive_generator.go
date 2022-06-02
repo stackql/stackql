@@ -345,7 +345,7 @@ func (pb *primitiveGenerator) showInstructionExecutor(node *sqlparser.Show, hand
 		if len(keys) == 0 {
 			rv = util.EmptyProtectResultSet(
 				rv,
-				[]string{"name"},
+				[]string{"name", "version"},
 			)
 		}
 		return rv
