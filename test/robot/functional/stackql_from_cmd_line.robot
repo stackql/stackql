@@ -15,6 +15,7 @@ Positive Control
 
 Get Providers
     Should StackQL Exec Contain    ${SHOW_PROVIDERS_STR}   okta
+    Should StackQL Novel Exec Contain    ${SHOW_PROVIDERS_STR}   v0.3.1
     Should StackQL Exec Contain JSON output    ${SHOW_PROVIDERS_STR}   okta
 
 Get Providers No Config
