@@ -314,7 +314,7 @@ func (pb *primitiveGenerator) showInstructionExecutor(node *sqlparser.Show, hand
 	case "METHODS":
 		var rsc *openapistackql.Resource
 		rsc, err = pb.PrimitiveBuilder.GetProvider().GetResource(node.OnTable.Qualifier.GetRawVal(), node.OnTable.Name.GetRawVal(), handlerCtx.RuntimeContext)
-		methods := rsc.Methods
+		methods := rsc.GetMethodsMatched()
 		tbl, err := pb.PrimitiveBuilder.GetTable(node.OnTable)
 		var filter func(openapistackql.ITable) (openapistackql.ITable, error)
 		if err != nil {
@@ -326,16 +326,15 @@ func (pb *primitiveGenerator) showInstructionExecutor(node *sqlparser.Show, hand
 		if err != nil {
 			return util.PrepareResultSet(dto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, err, nil))
 		}
-		methodKeys := make(map[string]map[string]interface{})
-		var rowKeys []string
-		for k, _ := range methods {
-			rowKeys = append(rowKeys, k)
+		mOrd, err := methods.OrderMethods()
+		if err != nil {
+			return util.PrepareResultSet(dto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, err, nil))
 		}
-		sort.Strings(rowKeys)
-		for i, k := range rowKeys {
-			method := methods[k]
+		methodKeys := make(map[string]map[string]interface{})
+		for i, k := range mOrd {
+			method := k
 			methMap := method.ToPresentationMap(extended)
-			methodKeys[strconv.Itoa(i)] = methMap
+			methodKeys[fmt.Sprintf("%06d", i)] = methMap
 			columnOrder = method.GetColumnOrder(extended)
 		}
 		keys = methodKeys

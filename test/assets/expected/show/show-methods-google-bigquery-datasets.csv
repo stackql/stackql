@@ -1,7 +1,7 @@
-MethodName,RequiredParams
-delete,"datasetId, projectId"
-get,"datasetId, projectId"
-insert,"projectId, data__datasetReference"
-list,projectId
-patch,"datasetId, projectId, data__datasetReference"
-update,"datasetId, projectId, data__datasetReference"
+MethodName,RequiredParams,SQLVerb
+get,"datasetId, projectId",SELECT
+list,projectId,SELECT
+insert,"projectId, data__datasetReference",INSERT
+delete,"datasetId, projectId",DELETE
+patch,"datasetId, projectId, data__datasetReference",EXEC
+update,"datasetId, projectId, data__datasetReference",EXEC
