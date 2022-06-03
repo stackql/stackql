@@ -30,6 +30,9 @@ Get Okta Application Resources
 Describe GitHub Repos Pages
     Should StackQL Novel Exec Contain    ${DESCRIBE_GITHUB_REPOS_PAGES}    https_certificate    url
 
+Show Methods GitHub
+    Should StackQL Novel Exec Equal    ${SHOW_METHODS_GITHUB_REPOS_REPOS}   ${SHOW_METHODS_GITHUB_REPOS_REPOS_EXPECTED}
+
 *** Keywords ***
 Run StackQL Exec Command
     [Arguments]    ${_EXEC_CMD_STR}    @{varargs}
@@ -94,6 +97,12 @@ Should StackQL Exec Equal
     ${result} =    Run StackQL Deprecated Exec Command    ${_EXEC_CMD_STR}    @{varargs}
     Should Be Equal    ${result.stdout}    ${_EXEC_CMD_EXPECTED_OUTPUT} 
 
+Should StackQL Novel Exec Equal
+    [Arguments]    ${_EXEC_CMD_STR}    ${_EXEC_CMD_EXPECTED_OUTPUT}    @{varargs}
+    ${result} =    Run StackQL Exec Command    ${_EXEC_CMD_STR}    @{varargs}
+    Should Be Equal    ${result.stdout}    ${_EXEC_CMD_EXPECTED_OUTPUT} 
+    ${result} =    Run StackQL Canonical Exec Command    ${_EXEC_CMD_STR}    @{varargs}
+    Should Be Equal    ${result.stdout}    ${_EXEC_CMD_EXPECTED_OUTPUT}
 Should StackQL Exec Contain
     [Arguments]    ${_EXEC_CMD_STR}    ${_EXEC_CMD_EXPECTED_OUTPUT}    @{varargs}
     ${result} =    Run StackQL Exec Command    ${_EXEC_CMD_STR}

@@ -1,11 +1,11 @@
-MethodName,RequiredParams
-delete,bucket
-get,bucket
-getIamPolicy,bucket
-insert,"project, data__name"
-list,project
-lockRetentionPolicy,"bucket, ifMetagenerationMatch"
-patch,bucket
-setIamPolicy,"bucket, data__bindings"
-testIamPermissions,"bucket, permissions"
-update,"bucket, data__acl"
+MethodName,RequiredParams,SQLVerb
+get,bucket,SELECT
+list,project,SELECT
+insert,"project, data__name",INSERT
+delete,bucket,DELETE
+getIamPolicy,bucket,EXEC
+lockRetentionPolicy,"bucket, ifMetagenerationMatch",EXEC
+patch,bucket,EXEC
+setIamPolicy,"bucket, data__bindings",EXEC
+testIamPermissions,"bucket, permissions",EXEC
+update,"bucket, data__acl",EXEC
