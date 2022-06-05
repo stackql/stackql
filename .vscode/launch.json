@@ -312,6 +312,19 @@
       ],
     },
     {
+      "name": "DEBUG SELECT google.cloudresourcemanager.project_iam_policies ;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "exec",
+        "SELECT role, members, condition from google.cloudresourcemanager.project_iam_policies where projectsId = 'lab-kr-network-01';"
+      ],
+    },
+    {
       "name": "DEBUG run server;",
       "type": "go",
       "request": "launch",
