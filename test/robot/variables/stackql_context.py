@@ -35,11 +35,20 @@ _MOCKED_REGISTRY_URL :str = f"http://localhost:{MOCKSERVER_PORT_REGISTRY}/gh/sta
 REPOSITORY_ROOT_UNIX = get_unix_path(REPOSITORY_ROOT)
 REGISTRY_ROOT_CANONICAL   = get_unix_path(os.path.join(REPOSITORY_ROOT, 'test', 'registry'))
 REGISTRY_ROOT_MOCKED   = get_unix_path(os.path.join(REPOSITORY_ROOT, 'test', 'registry-mocked'))
+REGISTRY_ROOT_EXPERIMENTAL   = get_unix_path(os.path.join(REPOSITORY_ROOT, 'test', 'registry-advanced'))
 REGISTRY_ROOT_DEPRECATED   = get_unix_path(os.path.join(REPOSITORY_ROOT, 'test', 'registry-deprecated'))
 STACKQL_EXE     = get_unix_path(os.path.join(REPOSITORY_ROOT, 'build', _exe_name))
 _REGISTRY_NO_VERIFY_CFG    = { 
   "url": f"file://{get_unix_path(REGISTRY_ROOT_MOCKED)}",
   "localDocRoot": f"{get_unix_path(REGISTRY_ROOT_MOCKED)}",
+  "useEmbedded": False,
+  "verifyConfig": {
+    "nopVerify": True 
+  } 
+}
+_REGISTRY_EXPERIMENTAL_NO_VERIFY_CFG    = { 
+  "url": f"file://{get_unix_path(REGISTRY_ROOT_EXPERIMENTAL)}",
+  "localDocRoot": f"{get_unix_path(REGISTRY_ROOT_EXPERIMENTAL)}",
   "useEmbedded": False,
   "verifyConfig": {
     "nopVerify": True 
@@ -131,6 +140,7 @@ REGISTRY_DEV_CFG_STR = json.dumps(get_registry_cfg(_DEV_REGISTRY_URL, ROBOT_DEV_
 REGISTRY_MOCKED_CFG_STR = json.dumps(get_registry_cfg(_MOCKED_REGISTRY_URL, ROBOT_MOCKED_REG_DIR, False))
 
 REGISTRY_NO_VERIFY_CFG_STR = json.dumps(_REGISTRY_NO_VERIFY_CFG)
+REGISTRY_EXPERIMENTAL_NO_VERIFY_CFG_STR = json.dumps(_REGISTRY_EXPERIMENTAL_NO_VERIFY_CFG)
 REGISTRY_SQL_VERB_CONTRIVED_NO_VERIFY_CFG_STR = json.dumps(_REGISTRY_SQL_VERB_CONTRIVED_NO_VERIFY_CFG)
 REGISTRY_CANONICAL_CFG_STR = json.dumps(_REGISTRY_CANONICAL_CFG)
 REGISTRY_DEPRECATED_CFG_STR = json.dumps(_REGISTRY_DEPRECATED_CFG)
@@ -210,6 +220,10 @@ GET_IAM_POLICY_AGG_ASC_INPUT_FILE = os.path.join(REPOSITORY_ROOT, 'test', 'asset
 GET_IAM_POLICY_AGG_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aggregated-select', 'google', 'cloudresourcemanager', 'select-exec-getiampolicy-agg.csv'))
 
 SHOW_METHODS_GITHUB_REPOS_REPOS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'show', 'show-methods-github-repo-repo.txt'))
+
+SELECT_GOOGLE_CLOUDRESOURCEMANAGER_IAMPOLICY = "SELECT role, members, condition from google.cloudresourcemanager.project_iam_policies where projectsId = 'testproject' order by role asc;"
+
+SELECT_GOOGLE_CLOUDRESOURCEMANAGER_IAMPOLICY_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'google', 'cloudresourcemanager', 'projects-getiampolicy-roles-asc.txt'))
 
 REGISTRY_LIST = "registry list;"
 REGISTRY_GOOGLE_PROVIDER_LIST = "registry list google;"

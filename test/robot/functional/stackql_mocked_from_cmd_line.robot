@@ -33,6 +33,13 @@ Google IAM Policy Agg
     ...    \-o\=csv
 
 
+Google Select Project IAM Policy
+    Should StackQL Exec Equal
+    ...    ${REGISTRY_EXPERIMENTAL_NO_VERIFY_CFG_STR}
+    ...    ${SELECT_GOOGLE_CLOUDRESOURCEMANAGER_IAMPOLICY}
+    ...    ${SELECT_GOOGLE_CLOUDRESOURCEMANAGER_IAMPOLICY_EXPECTED}
+
+
 Google AcceleratorTypes SQL verb pre changeover
     Should StackQL Exec Equal
     ...    ${REGISTRY_NO_VERIFY_CFG_STR}
