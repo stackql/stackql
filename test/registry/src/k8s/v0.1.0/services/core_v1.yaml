@@ -20000,6 +20000,7 @@ components:
           response:
             mediaType: application/json
             openAPIDocKey: '200'
+            objectKey: '$.items[*].metadata'
         createCoreV1Namespace:
           operation:
             $ref: '#/paths/~1api~1v1~1namespaces/post'
@@ -21204,6 +21205,7 @@ components:
           response:
             mediaType: application/json
             openAPIDocKey: '200'
+            objectKey: '$.items[*].metadata'
         createCoreV1Node:
           operation:
             $ref: '#/paths/~1api~1v1~1nodes/post'

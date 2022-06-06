@@ -38,6 +38,7 @@ Start Mock Server
 Prepare StackQL Environment
     Set Environment Variable    OKTA_SECRET_KEY    ${OKTA_SECRET_STR}
     Set Environment Variable    GITHUB_SECRET_KEY    ${GITHUB_SECRET_STR}
+    Set Environment Variable    K8S_SECRET_KEY    ${K8S_SECRET_STR}
     Start Mock Server    ${JSON_INIT_FILE_PATH_GOOGLE}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_GOOGLE}
     Start Mock Server    ${JSON_INIT_FILE_PATH_OKTA}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_OKTA}
     Start StackQL PG Server mTLS    ${PG_SRV_PORT_MTLS}    ${PG_SRV_MTLS_CFG_STR}
@@ -48,6 +49,7 @@ Run StackQL Exec Command
     [Arguments]    ${_REGISTRY_CFG_STR}    ${_EXEC_CMD_STR}    @{varargs}
     Set Environment Variable    OKTA_SECRET_KEY    ${OKTA_SECRET_STR}
     Set Environment Variable    GITHUB_SECRET_KEY    ${GITHUB_SECRET_STR}
+    Set Environment Variable    K8S_SECRET_KEY    ${K8S_SECRET_STR}
     ${result} =     Run Process    
                     ...  ${STACKQL_EXE}
                     ...  exec    \-\-registry\=${_REGISTRY_CFG_STR}
