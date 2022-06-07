@@ -74,10 +74,14 @@ parser.add_argument(
 
 class ProviderArgs:
 
-  def __init__(self, srcdir :str, destdir :str, port :int):
+  def __init__(self, name :str, srcdir :str, destdir :str, port :int):
+    self.name    = name
     self.srcdir  = srcdir
     self.destdir = destdir
     self.port    = port
+
+  def isServerRewriteRequired(self) -> bool:
+    return self.name != 'k8s' 
 
 def rewrite_provider(args :ProviderArgs):
     os.chdir(args.srcdir)
@@ -89,8 +93,9 @@ def rewrite_provider(args :ProviderArgs):
           with open(os.path.join(r, f)) as fr:
             d = yaml.safe_load(fr)
           servs = d.get('servers', [])
-          for srv in servs:
-            srv['url'] = f'https://localhost:{args.port}/'
+          if args.isServerRewriteRequired():
+            for srv in servs:
+              srv['url'] = f'https://localhost:{args.port}/'
           d['servers'] = servs
           with open(os.path.join(os.path.abspath(args.destdir), r, f), 'w') as fw:
             yaml.dump(d, fw)
@@ -135,6 +140,7 @@ if __name__ == '__main__':
     provider_dirs = [f for f in os.scandir(args.srcdir) if f.is_dir()]
     for prov_dir in provider_dirs:
       prov_args = ProviderArgs(
+        prov_dir.name,
         prov_dir.path,
         os.path.join(args.destdir, prov_dir.name),
         ppm.get_port(prov_dir.name),
