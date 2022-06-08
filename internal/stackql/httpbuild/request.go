@@ -224,6 +224,9 @@ func BuildHTTPRequestCtxFromAnnotation(handlerCtx *handler.HandlerContext, param
 		}
 		var baseRequestCtx *http.Request
 		baseRequestCtx, err = getRequest(svc, m, p.Parameters)
+		if err != nil {
+			return nil, err
+		}
 		for k, v := range p.Header {
 			for _, vi := range v {
 				baseRequestCtx.Header.Set(k, vi)
@@ -231,9 +234,6 @@ func BuildHTTPRequestCtxFromAnnotation(handlerCtx *handler.HandlerContext, param
 		}
 
 		p.Request = baseRequestCtx
-		if err != nil {
-			return nil, err
-		}
 		log.Infoln(fmt.Sprintf("pre transform: httpArmoury.RequestParams[%d] = %s", i, string(p.BodyBytes)))
 		if handlerCtx.RuntimeContext.HTTPLogEnabled {
 			// url, _ := p.Context.GetUrl()

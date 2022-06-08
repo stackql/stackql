@@ -236,7 +236,7 @@ SELECT_GOOGLE_CLOUDRESOURCEMANAGER_IAMPOLICY = "SELECT role, members, condition 
 
 SELECT_GOOGLE_CLOUDRESOURCEMANAGER_IAMPOLICY_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'google', 'cloudresourcemanager', 'projects-getiampolicy-roles-asc.txt'))
 
-SELECT_K8S_NODES_ASC = "select name, uid, creationTimestamp from k8s.core_v1.node where cluster_addr = 'k8shost' order by name asc;"
+SELECT_K8S_NODES_ASC = f"select name, uid, creationTimestamp from k8s.core_v1.node where cluster_addr = '127.0.0.1:{MOCKSERVER_PORT_K8S}' order by name asc;"
 SELECT_K8S_NODES_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'k8s', 'select-nodes-asc.txt'))
 
 REGISTRY_LIST = "registry list;"

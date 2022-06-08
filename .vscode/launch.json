@@ -11,6 +11,7 @@
       "options": [
         "{ \"url\": \"file://${workspaceFolder}/test/registry-sandbox\", \"localDocRoot\": \"${workspaceFolder}/test/registry-sandbox\", \"verifyConfig\": { \"nopVerify\": true } }",
         "{ \"url\": \"file://${workspaceFolder}/test/registry\", \"localDocRoot\": \"${workspaceFolder}/test/registry\", \"verifyConfig\": { \"nopVerify\": true } }",
+        "{ \"url\": \"file://${workspaceFolder}/test/registry-mocked\", \"localDocRoot\": \"${workspaceFolder}/test/registry-mocked\", \"verifyConfig\": { \"nopVerify\": true } }",
         "{ \"url\": \"https://cdn.statically.io/gh/stackql/stackql-provider-registry/main/providers\", \"localDocRoot\": \"${workspaceFolder}/test/registry\" }",
         "{ \"url\": \"https://cdn.statically.io/gh/stackql/stackql-provider-registry/feature/add-github-provider-published-05/providers\" }"
       ],
@@ -500,7 +501,7 @@
       ],
     },
     {
-      "name": "DEBUG select metadata from k8s.core_v1.node where cluster_addr = 'k8shost' limit 1;",
+      "name": "DEBUG select name, uid, creationTimestamp from k8s.core_v1.node where cluster_addr = 'k8shost' limit 1;",
       "type": "go",
       "request": "launch",
       "mode": "debug",
@@ -510,7 +511,7 @@
         "--registry=${input:registryString}",
         "--auth=${input:authString}",
         "--tls.allowInsecure=true",
-        "select * from k8s.core_v1.node where cluster_addr = 'k8shost' limit 1;"
+        "select * from k8s.core_v1.node where cluster_addr = 'localhost' limit 1;"
       ],
     },
     {
