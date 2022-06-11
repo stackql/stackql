@@ -202,6 +202,7 @@ func NewQueryRewriteAstVisitor(
 	dc drm.DRMConfig,
 	txnCtrlCtrs *dto.TxnControlCounters,
 	secondaryTccs []*dto.TxnControlCounters,
+	rewrittenWhere string,
 ) *QueryRewriteAstVisitor {
 	rv := &QueryRewriteAstVisitor{
 		handlerCtx:            handlerCtx,
@@ -214,6 +215,7 @@ func NewQueryRewriteAstVisitor(
 		dc:                    dc,
 		baseCtrlCounters:      txnCtrlCtrs,
 		secondaryCtrlCounters: secondaryTccs,
+		whereExprsStr:         rewrittenWhere,
 	}
 	return rv
 }
@@ -596,7 +598,15 @@ func (v *QueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 	case *sqlparser.AliasedExpr:
 		tbl, err := v.tables.GetTableLoose(node)
 		if err != nil {
-			return err
+			err := v.Visit(node.Expr)
+			if err != nil {
+				return err
+			}
+			col := parserutil.InferColNameFromExpr(node)
+			v.columnNames = append(v.columnNames, col)
+			cd := openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.DecoratedColumn, nil, col.Val)
+			v.columnDescriptors = append(v.columnDescriptors, cd)
+			return nil
 		}
 		schema, _, err := tbl.GetResponseSchemaAndMediaType()
 		if err != nil {
@@ -737,7 +747,13 @@ func (v *QueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		return node.Expr.Accept(v)
 
 	case *sqlparser.ComparisonExpr:
-		return nil
+		switch left := node.Left.(type) {
+		case *sqlparser.ColName:
+			if b, ok := left.Metadata.(bool); ok && b {
+				buf := sqlparser.NewTrackedBuffer(nil)
+				node.Format(buf)
+			}
+		}
 
 	case *sqlparser.RangeCond:
 

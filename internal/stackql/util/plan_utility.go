@@ -10,6 +10,7 @@ import (
 	"github.com/jeroenrinzema/psql-wire/pkg/sqldata"
 	"github.com/lib/pq/oid"
 	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/parserutil"
 
 	"vitess.io/vitess/go/sqltypes"
 	"vitess.io/vitess/go/vt/sqlparser"
@@ -110,21 +111,30 @@ func ExtractSQLNodeParams(statement sqlparser.SQLNode, insertValOnlyRows map[int
 
 func TransformSQLRawParameters(input map[string]interface{}) (map[string]interface{}, error) {
 	rv := make(map[string]interface{})
-	var err error
 	for k, v := range input {
-		switch r := v.(type) {
-		case *sqlparser.SQLVal:
-			val := string(r.Val)
-			rv[k] = val
-		case *sqlparser.ColName:
-			kr := r.Name.GetRawVal()
-			rv[k] = kr
-		default:
-			err = fmt.Errorf("unsupported type on RHS of comparison '%T'", r)
+		r, err := extractRaw(v)
+		if err != nil {
 			return nil, err
 		}
+		rv[k] = r
 	}
 	return rv, nil
+}
+
+func extractRaw(raw interface{}) (string, error) {
+	switch r := raw.(type) {
+	case *sqlparser.SQLVal:
+		val := string(r.Val)
+		return val, nil
+	case *sqlparser.ColName:
+		kr := r.Name.GetRawVal()
+		return kr, nil
+	case parserutil.ParameterMetadata:
+		return extractRaw(r.Val)
+	default:
+		err := fmt.Errorf("unsupported type on RHS of comparison '%T'", r)
+		return "", err
+	}
 }
 
 func InterfaceToBytes(subject interface{}, isErrorCol bool) []byte {

@@ -137,6 +137,48 @@
         "select  kind, name  from  google.compute.acceleratorTypes where project = '${input:gcpProject}' and zone = 'australia-southeast1-a' order by name desc;"
       ],
     },
+    // select name, selfLink from google.compute.machineTypes where project = 'lab-kr-network-01' and zone = 'australia-southeast1-a' and name = 'f1-micro';
+    {
+      "name": "DEBUG select compute.machineTypes ... ;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "select  kind, name  from  google.compute.machineTypes where name = 'f1-micro' and project = '${input:gcpProject}' and zone = 'australia-southeast1-a' order by name desc;"
+      ],
+    },
+    // 
+    {
+      "name": "INSERT /*+ AWAIT */... select... ;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "INSERT /*+ AWAIT */ INTO google.compute.instances ( zone, project, data__name, data__machineType, data__deletionProtection, data__networkInterfaces, data__disks, data__labels ) SELECT 'australia-southeast1-a', '${input:gcpProject}', name, machineType, deletionProtection, networkInterfaces, disks, labels FROM google.compute.instances WHERE project = '${input:gcpProject}'  AND zone = 'australia-southeast1-a';"
+      ],
+    },
+    // 
+    {
+      "name": "SELECT... JSON... INNER JOIN... ;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "SELECT i.zone, i.name, i.machineType, i.deletionProtection, '[{\"subnetwork\":\"' || JSON_EXTRACT(i.networkInterfaces, '$[0].subnetwork') || '\"}]', '[{\"boot\": true,\"initializeParams\":{\"diskSizeGb\": \"' || JSON_EXTRACT(i.disks, '$[0].diskSizeGb') || '\",\"sourceImage\": \"' || d.sourceImage || '\"}}]', i.labels FROM google.compute.instances i INNER JOIN google.compute.disks d ON i.name = d.name WHERE i.project = '${input:gcpProject}' AND i.zone = 'australia-southeast1-a' AND d.project = '${input:gcpProject}' AND d.zone = 'australia-southeast1-a' AND i.name LIKE '%';"
+      ],
+    },
     {
       "name": "DEBUG select NETLIFY sites ... ;",
       "type": "go",
