@@ -39,6 +39,23 @@ Google Select Project IAM Policy
     ...    ${SELECT_GOOGLE_CLOUDRESOURCEMANAGER_IAMPOLICY}
     ...    ${SELECT_GOOGLE_CLOUDRESOURCEMANAGER_IAMPOLICY_EXPECTED}
 
+Google Select Project IAM Policy Filtered And Verify Like Filtering
+    Should StackQL Exec Equal
+    ...    ${REGISTRY_EXPERIMENTAL_NO_VERIFY_CFG_STR}
+    ...    ${SELECT_GOOGLE_CLOUDRESOURCEMANAGER_IAMPOLICY_LIKE_FILTERED}
+    ...    ${SELECT_GOOGLE_CLOUDRESOURCEMANAGER_IAMPOLICY_FILTERED_EXPECTED}
+
+Google Select Project IAM Policy Filtered And Verify Where Filtering
+    Should StackQL Exec Equal
+    ...    ${REGISTRY_EXPERIMENTAL_NO_VERIFY_CFG_STR}
+    ...    ${SELECT_GOOGLE_CLOUDRESOURCEMANAGER_IAMPOLICY_COMPARISON_FILTERED}
+    ...    ${SELECT_GOOGLE_CLOUDRESOURCEMANAGER_IAMPOLICY_FILTERED_EXPECTED}
+
+Google Join Plus String Concatenated Select Expressions
+    Should StackQL Exec Equal
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${SELECT_GOOGLE_JOIN_CONCATENATED_SELECT_EXPRESSIONS}
+    ...    ${SELECT_GOOGLE_JOIN_CONCATENATED_SELECT_EXPRESSIONS_EXPECTED}
 
 Google AcceleratorTypes SQL verb pre changeover
     Should StackQL Exec Equal
