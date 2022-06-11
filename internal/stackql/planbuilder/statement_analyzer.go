@@ -971,6 +971,7 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 				drm.GetGoogleV1SQLiteConfig(),
 				primaryTcc,
 				secondaryTccs,
+				rewrittenWhereStr,
 			)
 			err = v.Visit(pbi.GetStatement())
 			if err != nil {

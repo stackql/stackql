@@ -479,7 +479,12 @@ func (tem TableExprMap) GetByAlias(alias string) (sqlparser.TableExpr, bool) {
 	return nil, false
 }
 
-type ParameterMap map[*sqlparser.ColName]interface{}
+type ParameterMetadata struct {
+	Parent *sqlparser.ComparisonExpr
+	Val    interface{}
+}
+
+type ParameterMap map[*sqlparser.ColName]ParameterMetadata
 
 type ColTableMap map[*sqlparser.ColName]sqlparser.TableExpr
 
@@ -539,7 +544,7 @@ func NewTableParameterCoupling() *TableParameterCoupling {
 	}
 }
 
-func (tpc *TableParameterCoupling) Add(col *sqlparser.ColName, val interface{}) error {
+func (tpc *TableParameterCoupling) Add(col *sqlparser.ColName, val ParameterMetadata) error {
 	tpc.paramMap[col] = val
 	_, ok := tpc.colMappings[col.Name.GetRawVal()]
 	if ok {
@@ -561,7 +566,7 @@ func (tpc *TableParameterCoupling) AbbreviateMap(verboseMap map[string]interface
 	rv := make(map[string]interface{})
 	for k, v := range tpc.paramMap {
 		_, ok := verboseMap[k.GetRawVal()]
-		if !ok || v == nil {
+		if !ok || v.Val == nil {
 			continue
 		}
 		rv[k.Name.GetRawVal()] = v
@@ -579,6 +584,7 @@ func (tpc *TableParameterCoupling) ReconstituteConsumedParams(returnedMap map[st
 		if !ok || v == nil {
 			return nil, fmt.Errorf("no reconstitution mapping for key = '%s'", k)
 		}
+		key.Metadata = true
 		keyToDelete := key.GetRawVal()
 		_, ok = rv[keyToDelete]
 		if !ok {

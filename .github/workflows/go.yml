@@ -141,6 +141,11 @@ jobs:
         PSQL_EXE: C:\Program Files\PostgreSQL\13\bin\psql
       run: |
         cmd /c "robot test\robot\functional"
+
+    - name: Debug robot tests
+      if: always()
+      run: |
+        cat D:\a\stackql-devel\stackql-devel\output.xml
     
     - name: Run robot integration tests
       if: success() && startsWith(${{ steps.git_ref_parse.outputs.SOURCE_TAG }}, 'build-release')
