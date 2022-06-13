@@ -683,14 +683,20 @@ func (v *ParamAstVisitor) Visit(node sqlparser.SQLNode) error {
 		case *sqlparser.ColName:
 			switch rt := node.Right.(type) {
 			case *sqlparser.SQLVal:
-				v.params[lt] = rt
+				v.params[lt] = parserutil.ParameterMetadata{
+					Parent: node,
+					Val:    rt,
+				}
 			default:
 			}
 		default:
 			switch rt := node.Right.(type) {
 			case *sqlparser.SQLVal:
 			case *sqlparser.ColName:
-				v.params[rt] = lt
+				v.params[rt] = parserutil.ParameterMetadata{
+					Parent: node,
+					Val:    lt,
+				}
 			default:
 			}
 		}

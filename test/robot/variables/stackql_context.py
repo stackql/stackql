@@ -5,7 +5,9 @@ import os
 
 _exe_name = 'stackql'
 
+IS_WINDOWS = '0'
 if os.name == 'nt':
+  IS_WINDOWS = '1'
   _exe_name = _exe_name + '.exe'
 
 REPOSITORY_ROOT = os.path.abspath(os.path.join(__file__, '..', '..', '..', '..'))
@@ -235,6 +237,18 @@ SHOW_METHODS_GITHUB_REPOS_REPOS_EXPECTED = get_output_from_local_file(os.path.jo
 SELECT_GOOGLE_CLOUDRESOURCEMANAGER_IAMPOLICY = "SELECT role, members, condition from google.cloudresourcemanager.project_iam_policies where projectsId = 'testproject' order by role asc;"
 
 SELECT_GOOGLE_CLOUDRESOURCEMANAGER_IAMPOLICY_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'google', 'cloudresourcemanager', 'projects-getiampolicy-roles-asc.txt'))
+
+SELECT_GOOGLE_CLOUDRESOURCEMANAGER_IAMPOLICY_LIKE_FILTERED = "SELECT role, members, condition from google.cloudresourcemanager.project_iam_policies where projectsId = 'testproject' and role like '%owner' order by role asc;"
+
+SELECT_GOOGLE_CLOUDRESOURCEMANAGER_IAMPOLICY_COMPARISON_FILTERED = "SELECT role, members, condition from google.cloudresourcemanager.project_iam_policies where projectsId = 'testproject' and role = 'roles/owner' order by role asc;"
+
+SELECT_GOOGLE_CLOUDRESOURCEMANAGER_IAMPOLICY_FILTERED_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'google', 'cloudresourcemanager', 'projects-getiampolicy-roles-asc-filtered.txt'))
+
+SELECT_GOOGLE_JOIN_CONCATENATED_SELECT_EXPRESSIONS :str =  "SELECT i.zone, i.name, i.machineType, i.deletionProtection, '[{\"subnetwork\":\"' || JSON_EXTRACT(i.networkInterfaces, '$[0].subnetwork') || '\"}]', '[{\"boot\": true, \"initializeParams\": { \"diskSizeGb\": \"' || JSON_EXTRACT(i.disks, '$[0].diskSizeGb') || '\", \"sourceImage\": \"' || d.sourceImage || '\"}}]', i.labels FROM google.compute.instances i INNER JOIN google.compute.disks d ON i.name = d.name WHERE i.project = 'testing-project' AND i.zone = 'australia-southeast1-a' AND d.project = 'testing-project' AND d.zone = 'australia-southeast1-a' AND i.name LIKE '%' order by i.name DESC;"
+if os.name == 'nt':
+  SELECT_GOOGLE_JOIN_CONCATENATED_SELECT_EXPRESSIONS =  SELECT_GOOGLE_JOIN_CONCATENATED_SELECT_EXPRESSIONS.replace("||", "^|^|").replace("\"", "^\"")
+
+SELECT_GOOGLE_JOIN_CONCATENATED_SELECT_EXPRESSIONS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'google', 'joins', 'disks-instances-rewritten.txt'))
 
 SELECT_K8S_NODES_ASC = f"select name, uid, creationTimestamp from k8s.core_v1.node where cluster_addr = '127.0.0.1:{MOCKSERVER_PORT_K8S}' order by name asc;"
 SELECT_K8S_NODES_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'k8s', 'select-nodes-asc.txt'))
