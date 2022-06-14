@@ -201,6 +201,8 @@ SELECT_AWS_VOLUMES = "select VolumeId, Encrypted, Size from aws.ec2.volumes wher
 SELECT_GITHUB_REPOS_PAGES_SINGLE = "select url from github.repos.pages where owner = 'dummyorg' and repo = 'dummyapp.io';"
 SELECT_GITHUB_REPOS_IDS_ASC = "select id from github.repos.repos where org = 'dummyorg' order by id ASC;"
 
+SELECT_GITHUB_REPOS_FILTERED_SINGLE = "select id, name from github.repos.repos where org = 'dummyorg' and name = 'dummyapp.io';"
+
 SELECT_OKTA_APPS = "select name, status, label, id from okta.application.apps apps where apps.subdomain = 'example-subdomain' order by name asc;"
 
 SELECT_CONTRIVED_GCP_OKTA_JOIN = "select d1.name, d1.id, d2.name as d2_name, d2.status, d2.label, d2.id as d2_id from google.compute.disks d1 inner join okta.application.apps d2 on d1.name = d2.label where d1.project = 'testing-project' and d1.zone = 'australia-southeast1-b' and d2.subdomain = 'dev-79923018-admin' order by d1.name ASC;"
@@ -219,6 +221,10 @@ SELECT_CONTRIVED_GCP_THREE_WAY_JOIN_EXPECTED = get_output_from_local_file(os.pat
 
 SELECT_CONTRIVED_GCP_SELF_JOIN_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'joins', 'inner', 'contrived-gcp-self-join.txt'))
 
+SELECT_CONTRIVED_GCP_GITHUB_JSON_DEPENDENT_JOIN = "SELECT i.name as instance_name, i.status as instance_status, c.sha as commit_sha, JSON_EXTRACT(c.commit, '$.author.email') as author_email, DATE(JSON_EXTRACT(c.commit, '$.author.date')) as commit_date FROM github.repos.commits c INNER JOIN google.compute.instances i ON JSON_EXTRACT(i.labels, '$.sha') = c.sha WHERE c.owner = 'dummyorg' AND c.repo = 'dummyapp.io' AND i.project = 'testing-project' AND i.zone = 'australia-southeast1-a';"
+
+SELECT_CONTRIVED_GCP_GITHUB_JSON_DEPENDENT_JOIN_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'joins', 'inner', 'gcp-github-labelled-instances-commits.txt'))
+
 SELECT_ACCELERATOR_TYPES_DESC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'simple-select', 'compute-accelerator-type', 'select-zone-list-desc.txt'))
 
 SELECT_OKTA_APPS_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'simple-select', 'okta', 'apps', 'select-apps-asc.txt'))
@@ -227,6 +233,7 @@ SELECT_AWS_VOLUMES_ASC_EXPECTED = get_output_from_local_file(os.path.join('test'
 
 SELECT_GITHUB_REPOS_PAGES_SINGLE_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-repos-pages.txt'))
 SELECT_GITHUB_REPOS_IDS_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-repos-ids-asc.txt'))
+SELECT_GITHUB_REPOS_FILTERED_SINGLE_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-repos-single-filtered.txt'))
 
 GET_IAM_POLICY_AGG_ASC_INPUT_FILE = os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'input', 'select-exec-dependent-org-iam-policy.iql')
 
