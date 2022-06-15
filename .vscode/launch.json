@@ -218,6 +218,20 @@
         "SELECT i.zone, i.name, i.machineType, i.deletionProtection, '[{\"subnetwork\":\"' || JSON_EXTRACT(i.networkInterfaces, '$[0].subnetwork') || '\"}]', '[{\"boot\": true,\"initializeParams\":{\"diskSizeGb\": \"' || JSON_EXTRACT(i.disks, '$[0].diskSizeGb') || '\",\"sourceImage\": \"' || d.sourceImage || '\"}}]', i.labels FROM google.compute.instances i INNER JOIN google.compute.disks d ON i.name = d.name WHERE i.project = '${input:gcpProject}' AND i.zone = 'australia-southeast1-a' AND d.project = '${input:gcpProject}' AND d.zone = 'australia-southeast1-a' AND i.name LIKE '%';"
       ],
     },
+    // 
+    {
+      "name": "SELECT... ANON COLUMNS INNER JOIN... ;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "SELECT 'a' || 'a', 'b' || 'b' FROM google.compute.instances i INNER JOIN google.compute.disks d ON i.name = d.name WHERE i.project = '${input:gcpProject}' AND i.zone = 'australia-southeast1-a' AND d.project = '${input:gcpProject}' AND d.zone = 'australia-southeast1-a' AND i.name LIKE '%' order by i.name DESC;",
+      ],
+    },
     {
       "name": "DEBUG select NETLIFY sites ... ;",
       "type": "go",
