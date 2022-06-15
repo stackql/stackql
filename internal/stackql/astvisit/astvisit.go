@@ -784,7 +784,8 @@ func (v *DRMAstVisitor) Visit(node sqlparser.SQLNode) error {
 		node.LeftExpr.Accept(v)
 		node.LeftExpr.Accept(v)
 		buf.AstPrintf(node, "%v %s %v%v", node.LeftExpr, node.Join, node.RightExpr, node.Condition)
-		v.rewrittenQuery = buf.String()
+		bs := buf.String()
+		v.rewrittenQuery = bs
 
 	case *sqlparser.IndexHints:
 		buf.AstPrintf(node, " %sindex ", node.Type)

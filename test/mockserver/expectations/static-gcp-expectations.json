@@ -687,6 +687,9 @@
             "tags": {
               "fingerprint": "42WmSpB8rSM="
             },
+            "labels": {
+              "sha": "8d5dc38ef71f6249f7090947bb444ace3d5682c3"
+            },
             "machineType": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a/machineTypes/e2-medium",
             "status": "RUNNING",
             "zone": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a",
@@ -797,6 +800,9 @@
             },
             "machineType": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a/machineTypes/e2-medium",
             "status": "RUNNING",
+            "labels": {
+              "sha": "219001a1ecac6c17e8e3a45f7c9182341e4cf71b"
+            },
             "zone": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a",
             "networkInterfaces": [
               {
