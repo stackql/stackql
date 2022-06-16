@@ -4,10 +4,14 @@ from robot.libraries.BuiltIn import BuiltIn
 
 from robot.libraries.Process import Process
 
+from robot.libraries.OperatingSystem import OperatingSystem 
+
+import os
+
 
 
 @library(scope='SUITE', version='0.1.0', doc_format='reST')
-class StackQLInterfaces(Process, BuiltIn):
+class StackQLInterfaces(OperatingSystem, Process, BuiltIn):
   ROBOT_LISTENER_API_VERSION = 2
 
   def __init__(self):
@@ -39,6 +43,35 @@ class StackQLInterfaces(Process, BuiltIn):
     self.log(result.stdout)
     self.log(result.stderr)
     return result
+
+  def _run_stackql_exec_command(
+    self,  
+    stackql_exe :str, 
+    okta_secret_str :str,
+    github_secret_str :str,
+    k8s_secret_str :str,
+    registry_cfg_str :str, 
+    auth_cfg_str :str, 
+    query,
+    *args,
+    **cfg
+  ):
+    self.set_environment_variable("OKTA_SECRET_KEY", okta_secret_str)
+    self.set_environment_variable("GITHUB_SECRET_KEY", github_secret_str)
+    self.set_environment_variable("K8S_SECRET_KEY", k8s_secret_str)
+    res = super().run_process(
+      stackql_exe,
+      "exec",
+      f"--registry={registry_cfg_str}",
+      f"--auth={auth_cfg_str}",
+      "--tls.allowInsecure=true",
+      query,
+      *args,
+      **cfg
+    )
+    self.log(res.stdout)
+    self.log(res.stderr)
+    return res
   
   @keyword
   def should_PG_client_error_inline_contain(self, curdir :str, psql_exe :str, psql_conn_str :str, query :str, expected_output :str):
@@ -52,7 +85,7 @@ class StackQLInterfaces(Process, BuiltIn):
   
   @keyword
   def should_PG_client_inline_contain(self, curdir :str, psql_exe :str, psql_conn_str :str, query :str, expected_output :str):
-    result =    self._run_PG_client_command(
+    result = self._run_PG_client_command(
       curdir,
       psql_exe,
       psql_conn_str,
@@ -67,5 +100,57 @@ class StackQLInterfaces(Process, BuiltIn):
       psql_exe,
       psql_conn_str,
       query
+    )
+    return self.should_be_equal(result.stdout, expected_output)
+  
+  @keyword
+  def should_stackql_exec_inline_equal(
+    self, 
+    stackql_exe :str, 
+    okta_secret_str :str,
+    github_secret_str :str,
+    k8s_secret_str :str,
+    registry_cfg_str :str, 
+    auth_cfg_str :str, 
+    query :str,
+    expected_output :str,
+    *args,
+    **cfg
+  ):
+    result = self._run_stackql_exec_command(
+      stackql_exe, 
+      okta_secret_str,
+      github_secret_str,
+      k8s_secret_str,
+      registry_cfg_str, 
+      auth_cfg_str, 
+      query,
+      *args,
+      **cfg
+    )
+    return self.should_be_equal(result.stdout, expected_output)
+
+  @keyword
+  def should_horrid_query_stackql_inline_equal(
+    self, 
+    stackql_exe :str, 
+    okta_secret_str :str,
+    github_secret_str :str,
+    k8s_secret_str :str,
+    registry_cfg_str :str, 
+    auth_cfg_str :str,
+    query,
+    expected_output :str,
+    stdout_tmp_file :str,
+  ):
+    result = self._run_stackql_exec_command(
+      stackql_exe, 
+      okta_secret_str,
+      github_secret_str,
+      k8s_secret_str,
+      registry_cfg_str, 
+      auth_cfg_str, 
+      query,
+      **{"stdout": stdout_tmp_file }
     )
     return self.should_be_equal(result.stdout, expected_output)

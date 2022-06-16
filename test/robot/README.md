@@ -83,3 +83,13 @@ exec /*+ SHOWRESULTS */ github.users.users.get_by_username @username='general-kr
 /Users/admin/stackql/stackql-devel/build/stackql exec "--registry={\"url\": \"file://${HOME}/stackql/stackql-devel/test/empty\", \"localDocRoot\": \"${HOME}/stackql/stackql-devel/test/empty\", \"useEmbedded\": false, \"verifyConfig\": {\"nopVerify\": true}}" "--auth={\"google\": {\"credentialsfilepath\": \"${HOME}/stackql/stackql-devel/test/assets/credentials/dummy/google/functional-test-dummy-sa-key.json\", \"type\": \"service_account\"}, \"okta\": {\"credentialsenvvar\": \"OKTA_SECRET_KEY\", \"type\": \"api_key\"}}" --tls.allowInsecure=true "show providers;"
 ```
 
+## Windows issues
+
+This somehow works:
+
+```ps1
+$v1="SELECT i.zone, i.name, i.machineType, i.deletionProtection, '[{""""""subnetwork"""""":""""""' || JSON_EXTRACT(i.networkInterfaces, '$[0].subnetwork') || '""""""}]', '[{""""""boot"""""": true, """"""initializeParams"""""": { """"""diskSizeGb"""""": """"""' || JSON_EXTRACT(i.disks, '$[0].diskSizeGb') || '"""""", """"""sourceImage"""""": """"""' || d.sourceImage || '""""""}}]', i.labels FROM google.compute.instances i INNER JOIN google.compute.disks d ON i.name = d.name WHERE i.project = 'testing-project' AND i.zone = 'australia-southeast1-a' AND d.project = 'testing-project' AND d.zone = 'australia-southeast1-a' AND i.name LIKE '%' order by i.name DESC;"
+
+.\build\stackql.exe --auth="${AUTH_STR}" --registry="${REG_CFG_MOCKED}" --tls.allowInsecure=true exec "$v1"
+```
+

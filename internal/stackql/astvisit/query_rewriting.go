@@ -25,6 +25,12 @@ func (v *QueryRewriteAstVisitor) getSelectExprString(dc *drm.StaticDRMConfig, ta
 	return fmt.Sprintf(`"%s" %s`, dc.GetTableName(tabAnnotated.GetHeirarchyIdentifiers(), txnCtrlCtrs.DiscoveryGenerationId), aliasStr)
 }
 
+func (v *QueryRewriteAstVisitor) getNextAlias() string {
+	v.anonColCounter++
+	i := v.anonColCounter
+	return fmt.Sprintf("col_%d", i)
+}
+
 func (v *QueryRewriteAstVisitor) buildAcquireQueryCtx(
 	sqlEngine sqlengine.SQLEngine,
 	ac taxonomy.AnnotationCtx,
@@ -183,6 +189,8 @@ type QueryRewriteAstVisitor struct {
 	fromStr        string
 	whereExprsStr  string
 	selectSuffix   string
+	// singe threaded, so no mutex protection
+	anonColCounter int
 }
 
 func (v *QueryRewriteAstVisitor) getCtrlCounters(discoveryGenerationID int) *dto.TxnControlCounters {
@@ -603,6 +611,9 @@ func (v *QueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 				return err
 			}
 			col := parserutil.InferColNameFromExpr(node)
+			if col.Alias == "" {
+				col.Alias = v.getNextAlias()
+			}
 			v.columnNames = append(v.columnNames, col)
 			cd := openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.DecoratedColumn, nil, col.Val)
 			v.columnDescriptors = append(v.columnDescriptors, cd)
