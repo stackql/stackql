@@ -229,7 +229,7 @@
         "exec",
         "--registry=${input:registryString}",
         "--auth=${input:authString}",
-        "SELECT 'a' || 'a', 'b' || 'b' FROM google.compute.instances i INNER JOIN google.compute.disks d ON i.name = d.name WHERE i.project = '${input:gcpProject}' AND i.zone = 'australia-southeast1-a' AND d.project = '${input:gcpProject}' AND d.zone = 'australia-southeast1-a' AND i.name LIKE '%' order by i.name DESC;",
+        "SELECT 'a' || 'a', '{ \"b\": ' || '\"b\" }' FROM google.compute.instances i INNER JOIN google.compute.disks d ON i.name = d.name WHERE i.project = '${input:gcpProject}' AND i.zone = 'australia-southeast1-a' AND d.project = '${input:gcpProject}' AND d.zone = 'australia-southeast1-a' AND i.name LIKE '%' order by i.name DESC;",
       ],
     },
     {

@@ -389,6 +389,7 @@ func inferColNameFromExpr(node *sqlparser.AliasedExpr) ColumnHandle {
 	default:
 		retVal.DecoratedColumn = sqlparser.String(expr)
 	}
+	retVal.DecoratedColumn = strings.ReplaceAll(retVal.DecoratedColumn, `\"`, `"`)
 	return retVal
 }
 
