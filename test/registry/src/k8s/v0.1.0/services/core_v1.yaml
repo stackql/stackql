@@ -2643,37 +2643,37 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/vnd.kubernetes.protobuf:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/yaml:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
           description: OK
         '201':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/vnd.kubernetes.protobuf:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/yaml:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
           description: Created
         '202':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/vnd.kubernetes.protobuf:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/yaml:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
           description: Accepted
         '401':
           description: Unauthorized
@@ -2685,7 +2685,7 @@ paths:
         content:
           '*/*':
             schema:
-              $ref: '#/components/schemas/Pod'
+              $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
         required: true
       x-kubernetes-action: post
       x-kubernetes-group-version-kind:
@@ -2721,25 +2721,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/vnd.kubernetes.protobuf:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/yaml:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
           description: OK
         '202':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/vnd.kubernetes.protobuf:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/yaml:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
           description: Accepted
         '401':
           description: Unauthorized
@@ -2764,13 +2764,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/vnd.kubernetes.protobuf:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/yaml:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
           description: OK
         '401':
           description: Unauthorized
@@ -2792,25 +2792,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/vnd.kubernetes.protobuf:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/yaml:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
           description: OK
         '201':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/vnd.kubernetes.protobuf:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/yaml:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
           description: Created
         '401':
           description: Unauthorized
@@ -2846,25 +2846,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/vnd.kubernetes.protobuf:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/yaml:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
           description: OK
         '201':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/vnd.kubernetes.protobuf:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/yaml:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
           description: Created
         '401':
           description: Unauthorized
@@ -2876,7 +2876,7 @@ paths:
         content:
           '*/*':
             schema:
-              $ref: '#/components/schemas/Pod'
+              $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
         required: true
       x-kubernetes-action: put
       x-kubernetes-group-version-kind:
@@ -3074,13 +3074,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/vnd.kubernetes.protobuf:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/yaml:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
           description: OK
         '401':
           description: Unauthorized
@@ -3122,25 +3122,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/vnd.kubernetes.protobuf:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/yaml:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
           description: OK
         '201':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/vnd.kubernetes.protobuf:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/yaml:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
           description: Created
         '401':
           description: Unauthorized
@@ -3176,25 +3176,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/vnd.kubernetes.protobuf:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/yaml:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
           description: OK
         '201':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/vnd.kubernetes.protobuf:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/yaml:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
           description: Created
         '401':
           description: Unauthorized
@@ -3206,7 +3206,7 @@ paths:
         content:
           '*/*':
             schema:
-              $ref: '#/components/schemas/Pod'
+              $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
         required: true
       x-kubernetes-action: put
       x-kubernetes-group-version-kind:
@@ -3915,13 +3915,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/vnd.kubernetes.protobuf:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/yaml:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
           description: OK
         '401':
           description: Unauthorized
@@ -3963,25 +3963,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/vnd.kubernetes.protobuf:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/yaml:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
           description: OK
         '201':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/vnd.kubernetes.protobuf:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/yaml:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
           description: Created
         '401':
           description: Unauthorized
@@ -4017,25 +4017,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/vnd.kubernetes.protobuf:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/yaml:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
           description: OK
         '201':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/vnd.kubernetes.protobuf:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
             application/yaml:
               schema:
-                $ref: '#/components/schemas/Pod'
+                $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
           description: Created
         '401':
           description: Unauthorized
@@ -4047,7 +4047,7 @@ paths:
         content:
           '*/*':
             schema:
-              $ref: '#/components/schemas/Pod'
+              $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
         required: true
       x-kubernetes-action: put
       x-kubernetes-group-version-kind:
@@ -14352,7 +14352,7 @@ components:
           description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
         metadata:
-          $ref: '#/components/schemas/ObjectMeta'
+          $ref: '#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta'
           description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
       type: object
       x-kubernetes-group-version-kind:
@@ -14395,7 +14395,7 @@ components:
         - type
         - status
       type: object
-    ObjectMeta:
+    io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta:
       description: ObjectMeta is metadata that all persisted resources must have, which includes all objects users must create.
       properties:
         annotations:
@@ -14598,7 +14598,7 @@ components:
           description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
         metadata:
-          $ref: '#/components/schemas/ObjectMeta'
+          $ref: '#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta'
           description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
       type: object
       x-kubernetes-group-version-kind:
@@ -14651,7 +14651,7 @@ components:
           description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
         metadata:
-          $ref: '#/components/schemas/ObjectMeta'
+          $ref: '#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta'
           description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
         subsets:
           description: The set of all endpoints is the union of all subsets. Addresses are placed into subsets according to the IPs they share. A single address with multiple ports, some of which are ready and some of which are not (because they come from different containers) will result in the address being displayed in different subsets for the different ports. No address will appear in both Addresses and NotReadyAddresses in the same subset. Sets of addresses and ports that comprise a service.
@@ -14787,7 +14787,7 @@ components:
           description: A human-readable description of the status of this operation.
           type: string
         metadata:
-          $ref: '#/components/schemas/ObjectMeta'
+          $ref: '#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta'
           description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
         reason:
           description: This should be a short, machine understandable string that gives the reason for the transition into the object's current status.
@@ -14903,7 +14903,7 @@ components:
           description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
         metadata:
-          $ref: '#/components/schemas/ObjectMeta'
+          $ref: '#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta'
           description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
         spec:
           $ref: '#/components/schemas/io.k8s.api.core.v1.LimitRangeSpec'
@@ -14992,7 +14992,7 @@ components:
           description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
         metadata:
-          $ref: '#/components/schemas/ObjectMeta'
+          $ref: '#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta'
           description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
         spec:
           $ref: '#/components/schemas/io.k8s.api.core.v1.NamespaceSpec'
@@ -15093,7 +15093,7 @@ components:
           description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
         metadata:
-          $ref: '#/components/schemas/ObjectMeta'
+          $ref: '#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta'
           description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
         target:
           $ref: '#/components/schemas/io.k8s.api.core.v1.ObjectReference'
@@ -15413,7 +15413,7 @@ components:
           description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
         metadata:
-          $ref: '#/components/schemas/ObjectMeta'
+          $ref: '#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta'
           description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
         spec:
           $ref: '#/components/schemas/io.k8s.api.core.v1.PersistentVolumeClaimSpec'
@@ -15594,7 +15594,7 @@ components:
         items:
           description: 'List of pods. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md'
           items:
-            $ref: '#/components/schemas/Pod'
+            $ref: '#/components/schemas/io.k8s.api.core.v1.Pod'
           type: array
         kind:
           description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
@@ -15609,7 +15609,7 @@ components:
         - group: ''
           kind: PodList
           version: v1
-    Pod:
+    io.k8s.api.core.v1.Pod:
       description: Pod is a collection of containers that can run on a host. This resource is created by clients and scheduled onto hosts.
       properties:
         apiVersion:
@@ -15619,7 +15619,7 @@ components:
           description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
         metadata:
-          $ref: '#/components/schemas/ObjectMeta'
+          $ref: '#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta'
           description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
         spec:
           $ref: '#/components/schemas/io.k8s.api.core.v1.PodSpec'
@@ -17556,7 +17556,7 @@ components:
       description: PersistentVolumeClaimTemplate is used to produce PersistentVolumeClaim objects as part of an EphemeralVolumeSource.
       properties:
         metadata:
-          $ref: '#/components/schemas/ObjectMeta'
+          $ref: '#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta'
           description: May contain labels and annotations that will be copied into the PVC when creating it. No other fields are allowed and will be rejected during validation.
         spec:
           $ref: '#/components/schemas/io.k8s.api.core.v1.PersistentVolumeClaimSpec'
@@ -17813,7 +17813,7 @@ components:
           description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
         metadata:
-          $ref: '#/components/schemas/ObjectMeta'
+          $ref: '#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta'
           description: ObjectMeta describes the pod that is being evicted.
       type: object
       x-kubernetes-group-version-kind:
@@ -17854,7 +17854,7 @@ components:
           description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
         metadata:
-          $ref: '#/components/schemas/ObjectMeta'
+          $ref: '#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta'
           description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
         template:
           $ref: '#/components/schemas/io.k8s.api.core.v1.PodTemplateSpec'
@@ -17868,7 +17868,7 @@ components:
       description: PodTemplateSpec describes the data a pod should have when created from a template
       properties:
         metadata:
-          $ref: '#/components/schemas/ObjectMeta'
+          $ref: '#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta'
           description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
         spec:
           $ref: '#/components/schemas/io.k8s.api.core.v1.PodSpec'
@@ -17908,7 +17908,7 @@ components:
           description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
         metadata:
-          $ref: '#/components/schemas/ObjectMeta'
+          $ref: '#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta'
           description: 'If the Labels of a ReplicationController are empty, they are defaulted to be the same as the Pod(s) that the replication controller manages. Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
         spec:
           $ref: '#/components/schemas/io.k8s.api.core.v1.ReplicationControllerSpec'
@@ -18007,7 +18007,7 @@ components:
           description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
         metadata:
-          $ref: '#/components/schemas/ObjectMeta'
+          $ref: '#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta'
           description: 'Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata.'
         spec:
           $ref: '#/components/schemas/io.k8s.api.autoscaling.v1.ScaleSpec'
@@ -18075,7 +18075,7 @@ components:
           description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
         metadata:
-          $ref: '#/components/schemas/ObjectMeta'
+          $ref: '#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta'
           description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
         spec:
           $ref: '#/components/schemas/io.k8s.api.core.v1.ResourceQuotaSpec'
@@ -18194,7 +18194,7 @@ components:
           description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
         metadata:
-          $ref: '#/components/schemas/ObjectMeta'
+          $ref: '#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta'
           description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
         stringData:
           additionalProperties:
@@ -18251,7 +18251,7 @@ components:
           description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
         metadata:
-          $ref: '#/components/schemas/ObjectMeta'
+          $ref: '#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta'
           description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
         secrets:
           description: 'Secrets is a list of the secrets in the same namespace that pods running using this ServiceAccount are allowed to use. Pods are only limited to this list if this service account has a "kubernetes.io/enforce-mountable-secrets" annotation set to "true". This field should not be used to find auto-generated service account token secrets for use outside of pods. Instead, tokens can be requested directly using the TokenRequest API, or service account token secrets can be manually created. More info: https://kubernetes.io/docs/concepts/configuration/secret'
@@ -18275,7 +18275,7 @@ components:
           description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
         metadata:
-          $ref: '#/components/schemas/ObjectMeta'
+          $ref: '#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta'
           description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
         spec:
           $ref: '#/components/schemas/io.k8s.api.authentication.v1.TokenRequestSpec'
@@ -18371,7 +18371,7 @@ components:
           description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
         metadata:
-          $ref: '#/components/schemas/ObjectMeta'
+          $ref: '#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta'
           description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
         spec:
           $ref: '#/components/schemas/io.k8s.api.core.v1.ServiceSpec'
@@ -18649,7 +18649,7 @@ components:
           description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
         metadata:
-          $ref: '#/components/schemas/ObjectMeta'
+          $ref: '#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta'
           description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
         spec:
           $ref: '#/components/schemas/io.k8s.api.core.v1.NodeSpec'
@@ -18976,7 +18976,7 @@ components:
           description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
         metadata:
-          $ref: '#/components/schemas/ObjectMeta'
+          $ref: '#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta'
           description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
         spec:
           $ref: '#/components/schemas/io.k8s.api.core.v1.PersistentVolumeSpec'
@@ -20217,6 +20217,7 @@ components:
           response:
             mediaType: application/json
             openAPIDocKey: '200'
+            objectKey: '$.items[*].metadata'
         createCoreV1NamespacedPod:
           operation:
             $ref: '#/paths/~1api~1v1~1namespaces~1{namespace}~1pods/post'
@@ -20235,6 +20236,7 @@ components:
           response:
             mediaType: application/json
             openAPIDocKey: '200'
+            objectKey: '$.items[*].metadata'
         patchCoreV1NamespacedPod:
           operation:
             $ref: '#/paths/~1api~1v1~1namespaces~1{namespace}~1pods~1{name}/patch'
@@ -20295,7 +20297,7 @@ components:
           response:
             mediaType: application/json
             openAPIDocKey: '200'
-            objectKey: items
+            objectKey: '$.items[*].metadata'
         watchCoreV1NamespacedPodList:
           operation:
             $ref: '#/paths/~1api~1v1~1watch~1namespaces~1{namespace}~1pods/get'
@@ -20830,6 +20832,7 @@ components:
           response:
             mediaType: application/json
             openAPIDocKey: '200'
+            objectKey: '$.items[*].metadata'
         createCoreV1NamespacedSecret:
           operation:
             $ref: '#/paths/~1api~1v1~1namespaces~1{namespace}~1secrets/post'
@@ -20848,6 +20851,7 @@ components:
           response:
             mediaType: application/json
             openAPIDocKey: '200'
+            objectKey: '$.items[*].metadata'
         patchCoreV1NamespacedSecret:
           operation:
             $ref: '#/paths/~1api~1v1~1namespaces~1{namespace}~1secrets~1{name}/patch'
@@ -20866,6 +20870,7 @@ components:
           response:
             mediaType: application/json
             openAPIDocKey: '200'
+            objectKey: '$.items[*].metadata'
         watchCoreV1NamespacedSecretList:
           operation:
             $ref: '#/paths/~1api~1v1~1watch~1namespaces~1{namespace}~1secrets/get'
@@ -20912,6 +20917,7 @@ components:
           response:
             mediaType: application/json
             openAPIDocKey: '200'
+            objectKey: '$.items[*].metadata'
         createCoreV1NamespacedServiceAccount:
           operation:
             $ref: '#/paths/~1api~1v1~1namespaces~1{namespace}~1serviceaccounts/post'
@@ -20948,6 +20954,7 @@ components:
           response:
             mediaType: application/json
             openAPIDocKey: '200'
+            objectKey: '$.items[*].metadata'
         watchCoreV1NamespacedServiceAccountList:
           operation:
             $ref: '#/paths/~1api~1v1~1watch~1namespaces~1{namespace}~1serviceaccounts/get'

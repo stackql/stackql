@@ -2,6 +2,7 @@ package primitivebuilder
 
 import (
 	"fmt"
+	"io"
 	"sort"
 	"strconv"
 
@@ -218,7 +219,7 @@ func (un *Union) Build() error {
 			i++
 			us.AddChild(i, drm.NewPreparedStatementParameterized(rhsElement, nil, true))
 		}
-		return prepareGolangResult(un.handlerCtx.SQLEngine, us, un.lhs.GetNonControlColumns(), un.drmCfg)
+		return prepareGolangResult(un.handlerCtx.SQLEngine, un.handlerCtx.OutErrFile, us, un.lhs.GetNonControlColumns(), un.drmCfg)
 	}
 	graph := un.graph
 	unionNode := graph.CreatePrimitiveNode(NewLocalPrimitive(unionEx))
@@ -269,7 +270,7 @@ func (ss *SingleSelect) Build() error {
 		// select phase
 		log.Infoln(fmt.Sprintf("running select with control parameters: %v", ss.selectPreparedStatementCtx.GetGCCtrlCtrs()))
 
-		return prepareGolangResult(ss.handlerCtx.SQLEngine, drm.NewPreparedStatementParameterized(ss.selectPreparedStatementCtx, nil, true), ss.selectPreparedStatementCtx.GetNonControlColumns(), ss.drmCfg)
+		return prepareGolangResult(ss.handlerCtx.SQLEngine, ss.handlerCtx.OutErrFile, drm.NewPreparedStatementParameterized(ss.selectPreparedStatementCtx, nil, true), ss.selectPreparedStatementCtx.GetNonControlColumns(), ss.drmCfg)
 	}
 	graph := ss.graph
 	selectNode := graph.CreatePrimitiveNode(NewLocalPrimitive(selectEx))
@@ -278,14 +279,18 @@ func (ss *SingleSelect) Build() error {
 	return nil
 }
 
-func prepareGolangResult(sqlEngine sqlengine.SQLEngine, stmtCtx drm.PreparedStatementParameterized, nonControlColumns []drm.ColumnMetadata, drmCfg drm.DRMConfig) dto.ExecutorOutput {
+func prepareGolangResult(sqlEngine sqlengine.SQLEngine, errWriter io.Writer, stmtCtx drm.PreparedStatementParameterized, nonControlColumns []drm.ColumnMetadata, drmCfg drm.DRMConfig) dto.ExecutorOutput {
 	r, sqlErr := drmCfg.QueryDML(
 		sqlEngine,
 		stmtCtx,
 	)
 	log.Infoln(fmt.Sprintf("select result = %v, error = %v", r, sqlErr))
 	if sqlErr != nil {
-		log.Errorf("select result = %v, error = %s", r, sqlErr.Error())
+		errWriter.Write(
+			[]byte(
+				fmt.Sprintf("sql error = %s\n", sqlErr.Error()),
+			),
+		)
 	}
 	altKeys := make(map[string]map[string]interface{})
 	rawRows := make(map[int]map[int]interface{})
