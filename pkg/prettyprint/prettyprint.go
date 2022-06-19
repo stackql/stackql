@@ -146,7 +146,7 @@ func (pp *PrettyPrinter) printTemplatedJSON(body interface{}) (string, error) {
 		for _, v := range bt {
 			val, err := pp.printTemplatedJSON(v)
 			if err != nil {
-				log.Errorf(err.Error())
+				log.Infof("%s\n", err.Error())
 				pp.setCurrentIndentation(startPos)
 				return "", err
 			}
