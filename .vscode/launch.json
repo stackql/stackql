@@ -583,6 +583,19 @@
       ],
     },
     {
+      "name": "DEBUG INSERT aws volume ... ;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "insert into aws.ec2.volumes(AvailabilityZone, Size, region) select 'ap-southeast-1a', 10, 'ap-southeast-1';"
+      ],
+    },
+    {
       "name": "DEBUG k8s exec node list ... ;",
       "type": "go",
       "request": "launch",
