@@ -48,7 +48,7 @@ func (sel *DefaultMethodSelector) GetMethodForAction(resource *openapistackql.Re
 		if err == nil {
 			return m, methodName, parameters, nil
 		}
-		return nil, "", parameters, fmt.Errorf("iql action = '%s' curently not supported, there is no method mapping possible for any resource", iqlAction)
+		methodName = "insert"
 	default:
 		return nil, "", parameters, fmt.Errorf("iql action = '%s' curently not supported, there is no method mapping possible for any resource", iqlAction)
 	}

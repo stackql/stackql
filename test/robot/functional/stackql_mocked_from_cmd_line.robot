@@ -137,6 +137,17 @@ AWS Volumes Select Simple
     ...    ${SELECT_AWS_VOLUMES}
     ...    ${SELECT_AWS_VOLUMES_ASC_EXPECTED}
 
+AWS Volume Insert Simple
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${CREATE_AWS_VOLUME}
+    ...    The operation completed successfully
+
 GitHub Pages Select Top Level Object
     Should StackQL Exec Inline Equal
     ...    ${STACKQL_EXE}

@@ -90,7 +90,7 @@ def rewrite_provider(args :ProviderArgs):
         Path(os.path.join(os.path.abspath(args.destdir), r, d)).mkdir(parents=True, exist_ok=True)
       for f in fz:
         if f.endswith('.yaml'):
-          with open(os.path.join(r, f)) as fr:
+          with open(os.path.join(r, f), encoding="utf8") as fr:
             d = yaml.safe_load(fr)
           servs = d.get('servers', [])
           if args.isServerRewriteRequired():
