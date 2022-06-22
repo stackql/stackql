@@ -9,21 +9,21 @@ import (
 	"vitess.io/vitess/go/vt/sqlparser"
 )
 
-type ParamAstVisitor struct {
+type PlaceholderParamAstVisitor struct {
 	params parserutil.ParameterMap
 }
 
-func NewParamAstVisitor(iDColumnName string, shouldCollectTables bool) *ParamAstVisitor {
-	return &ParamAstVisitor{
+func NewPlaceholderParamAstVisitor(iDColumnName string, shouldCollectTables bool) *PlaceholderParamAstVisitor {
+	return &PlaceholderParamAstVisitor{
 		params: parserutil.NewParameterMap(),
 	}
 }
 
-func (v *ParamAstVisitor) GetParameters() parserutil.ParameterMap {
+func (v *PlaceholderParamAstVisitor) GetParameters() parserutil.ParameterMap {
 	return v.params
 }
 
-func (v *ParamAstVisitor) GetStringifiedParameters() map[string]interface{} {
+func (v *PlaceholderParamAstVisitor) GetStringifiedParameters() map[string]interface{} {
 	rv := make(map[string]interface{})
 	for k, v := range v.params.GetMap() {
 		rv[k.String()] = v
@@ -31,7 +31,7 @@ func (v *ParamAstVisitor) GetStringifiedParameters() map[string]interface{} {
 	return rv
 }
 
-func (v *ParamAstVisitor) Visit(node sqlparser.SQLNode) error {
+func (v *PlaceholderParamAstVisitor) Visit(node sqlparser.SQLNode) error {
 	buf := sqlparser.NewTrackedBuffer(nil)
 	var err error
 
@@ -119,6 +119,12 @@ func (v *ParamAstVisitor) Visit(node sqlparser.SQLNode) error {
 		return node.Table.Accept(v)
 
 	case *sqlparser.Insert:
+		if len(node.Columns) > 0 {
+			err := node.Columns.Accept(v)
+			if err != nil {
+				return err
+			}
+		}
 		buf.AstPrintf(node, "%s %v%sinto %v%v%v %v%v",
 			node.Action,
 			node.Comments, node.Ignore,
@@ -551,6 +557,10 @@ func (v *ParamAstVisitor) Visit(node sqlparser.SQLNode) error {
 		}
 		prefix := "("
 		for _, n := range node {
+			err := n.Accept(v)
+			if err != nil {
+				return err
+			}
 			buf.AstPrintf(node, "%s%v", prefix, n)
 			prefix = ", "
 		}
@@ -955,6 +965,14 @@ func (v *ParamAstVisitor) Visit(node sqlparser.SQLNode) error {
 	case sqlparser.ColIdent:
 		for i := sqlparser.NoAt; i < node.GetAtCount(); i++ {
 			buf.WriteByte('@')
+		}
+		k, err := parserutil.NewColumnarReference(node)
+		if err != nil {
+			return err
+		}
+		err = v.params.Set(k, parserutil.NewPlaceholderParameterMetadata())
+		if err != nil {
+			return err
 		}
 		sqlparser.FormatID(buf, node.GetRawVal(), node.Lowered(), node.GetAtCount())
 

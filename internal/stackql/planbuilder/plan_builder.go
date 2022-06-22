@@ -40,6 +40,7 @@ type PlanBuilderInput struct {
 	aliasedTables          parserutil.TableAliasMap
 	assignedAliasedColumns parserutil.TableExprMap
 	tables                 sqlparser.TableExprs
+	paramsPlaceheld        parserutil.ParameterMap
 }
 
 func NewPlanBuilderInput(
@@ -48,7 +49,9 @@ func NewPlanBuilderInput(
 	tables sqlparser.TableExprs,
 	assignedAliasedColumns parserutil.TableExprMap,
 	aliasedTables parserutil.TableAliasMap,
-	colRefs parserutil.ColTableMap) PlanBuilderInput {
+	colRefs parserutil.ColTableMap,
+	paramsPlaceheld parserutil.ParameterMap,
+) PlanBuilderInput {
 	rv := PlanBuilderInput{
 		handlerCtx:             handlerCtx,
 		stmt:                   stmt,
@@ -56,6 +59,7 @@ func NewPlanBuilderInput(
 		aliasedTables:          aliasedTables,
 		assignedAliasedColumns: assignedAliasedColumns,
 		colRefs:                colRefs,
+		paramsPlaceheld:        paramsPlaceheld,
 	}
 	if rv.assignedAliasedColumns == nil {
 		rv.assignedAliasedColumns = make(map[sqlparser.TableName]sqlparser.TableExpr)
@@ -65,6 +69,10 @@ func NewPlanBuilderInput(
 
 func (pbi PlanBuilderInput) GetStatement() sqlparser.SQLNode {
 	return pbi.stmt
+}
+
+func (pbi PlanBuilderInput) GetPlaceholderParams() parserutil.ParameterMap {
+	return pbi.paramsPlaceheld
 }
 
 func (pbi PlanBuilderInput) GetAssignedAliasedColumns() map[sqlparser.TableName]sqlparser.TableExpr {
@@ -510,7 +518,7 @@ func (pgb *planGraphBuilder) handleInsert(pbi PlanBuilderInput) error {
 		if nonValCols > 0 {
 			switch rowsNode := node.Rows.(type) {
 			case *sqlparser.Select:
-				selPbi := NewPlanBuilderInput(pbi.GetHandlerCtx(), rowsNode, pbi.GetTableExprs(), pbi.GetAssignedAliasedColumns(), pbi.GetAliasedTables(), pbi.GetColRefs())
+				selPbi := NewPlanBuilderInput(pbi.GetHandlerCtx(), rowsNode, pbi.GetTableExprs(), pbi.GetAssignedAliasedColumns(), pbi.GetAliasedTables(), pbi.GetColRefs(), pbi.GetPlaceholderParams())
 				_, selectPrimitiveNode, err = pgb.handleSelect(selPbi)
 				if err != nil {
 					return err
@@ -674,7 +682,7 @@ func BuildPlanFromContext(handlerCtx *handler.HandlerContext) (*plan.Plan, error
 	pGBuilder := newPlanGraphBuilder()
 
 	if isPGSetupQuery(handlerCtx.RawQuery) {
-		pbi := NewPlanBuilderInput(handlerCtx, nil, nil, nil, nil, nil)
+		pbi := NewPlanBuilderInput(handlerCtx, nil, nil, nil, nil, nil, nil)
 		createInstructionError := pGBuilder.nop(pbi)
 		if createInstructionError != nil {
 			return nil, createInstructionError
@@ -698,7 +706,10 @@ func BuildPlanFromContext(handlerCtx *handler.HandlerContext) (*plan.Plan, error
 		aVis := astvisit.NewTableAliasAstVisitor(tVis.GetTables())
 		aVis.Visit(ast)
 
-		pbi := NewPlanBuilderInput(handlerCtx, ast, tVis.GetTables(), aVis.GetAliasedColumns(), tVis.GetAliasMap(), aVis.GetColRefs())
+		tpv := astvisit.NewPlaceholderParamAstVisitor("", false)
+		tpv.Visit(ast)
+
+		pbi := NewPlanBuilderInput(handlerCtx, ast, tVis.GetTables(), aVis.GetAliasedColumns(), tVis.GetAliasMap(), aVis.GetColRefs(), tpv.GetParameters())
 
 		createInstructionError := pGBuilder.createInstructionFor(pbi)
 		if createInstructionError != nil {

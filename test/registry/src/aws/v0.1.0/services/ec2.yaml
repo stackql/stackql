@@ -40414,7 +40414,7 @@ components:
       name: volumes
       title: volumes
       methods:
-        create:
+        createVolume:
           operation:
             $ref: '#/paths/~1?Action=CreateVolume&Version=2016-11-15/get'
           response:
@@ -40432,7 +40432,7 @@ components:
         select:
           - $ref: '#/components/x-stackQL-resources/volumes/methods/describeVolumes'
         insert:
-          - $ref: '#/components/x-stackQL-resources/volumes/methods/create'
+          - $ref: '#/components/x-stackQL-resources/volumes/methods/createVolume'
         update: []
         delete: []
   parameters:

@@ -623,6 +623,20 @@
       ],
     },
     {
+      "name": "DEBUG select ...protocol, cluster_addr... from k8s.core_v1.node;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "--tls.allowInsecure=true",
+        "select name, namespace, uid, creationTimestamp from k8s.core_v1.pod where protocol = 'http' and cluster_addr = 'localhost:9091'  order by name asc;"
+      ],
+    },
+    {
       "name": "DEBUG BYO API ... ;",
       "type": "go",
       "request": "launch",
@@ -650,7 +664,7 @@
       ],
     },
     {
-      "name": "SELECT using table alias... ;",
+      "name": "SELECT okta apps... ;",
       "type": "go",
       "request": "launch",
       "mode": "debug",
@@ -658,7 +672,8 @@
       "args": [
         "exec",
         "--auth=${input:authString}",
-        "select apps.id from okta.application.apps apps where subdomain = 'dev-79923018-admin';",
+        "--registry=${input:registryString}",
+        "select name, status, label, id from okta.application.apps apps where apps.subdomain = 'example-subdomain' order by name asc;",
         "-o",
         "json"
       ],

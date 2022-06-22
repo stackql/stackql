@@ -562,7 +562,11 @@ func (v *TableAliasAstVisitor) Visit(node sqlparser.SQLNode) error {
 			if err != nil {
 				return err
 			}
-			v.colRefs[node] = t
+			k, err := parserutil.NewColumnarReference(node)
+			if err != nil {
+				return err
+			}
+			v.colRefs[k] = t
 		}
 
 	case sqlparser.ValTuple:
