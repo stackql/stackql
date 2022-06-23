@@ -480,19 +480,203 @@ func (tem TableExprMap) GetByAlias(alias string) (sqlparser.TableExpr, bool) {
 	return nil, false
 }
 
-type ParameterMetadata struct {
+type ParameterMetadata interface {
+	iParameterMetadata()
+	GetVal() interface{}
+}
+
+type IComparisonParameterMetadata struct {
 	Parent *sqlparser.ComparisonExpr
 	Val    interface{}
 }
 
-type ParameterMap map[*sqlparser.ColName]ParameterMetadata
+type IPlaceholderParameterMetadata struct {
+	placeholderVal struct{}
+}
 
-type ColTableMap map[*sqlparser.ColName]sqlparser.TableExpr
+func NewComparisonParameterMetadata(parent *sqlparser.ComparisonExpr, val interface{}) ParameterMetadata {
+	return IComparisonParameterMetadata{
+		Parent: parent,
+		Val:    val,
+	}
+}
 
-func (tm ParameterMap) ToStringMap() map[string]interface{} {
+func NewPlaceholderParameterMetadata() ParameterMetadata {
+	return IPlaceholderParameterMetadata{}
+}
+
+func (pm IComparisonParameterMetadata) iParameterMetadata() {}
+
+func (pm IComparisonParameterMetadata) GetVal() interface{} {
+	return pm.Val
+}
+
+func (pm IPlaceholderParameterMetadata) iParameterMetadata() {}
+
+func (pm IPlaceholderParameterMetadata) GetVal() interface{} {
+	return pm.placeholderVal
+}
+
+// ParameterMap type is an abstraction
+// for mapping a "Columnar Reference" (an abstract data type)
+// to some supplied or inferred value.
+type ParameterMap interface {
+	iParameterMap()
+	Set(ColumnarReference, ParameterMetadata) error
+	Get(ColumnarReference) (ParameterMetadata, bool)
+	GetMap() map[ColumnarReference]ParameterMetadata
+	GetStringified() map[string]interface{}
+	GetAbbreviatedStringified() map[string]interface{}
+}
+
+// An abstract data type where the
+// underlying datum should in some way
+// represent a column or parameter.
+// Purposes include parameterisation
+// and request routing.
+type ColumnarReference interface {
+	iColumnarReference()
+	Value() interface{}
+	Alias() string
+	String() string
+	Name() string
+}
+
+type IColumnarReference struct {
+	k interface{}
+}
+
+func (cr IColumnarReference) Value() interface{} {
+	return cr.k
+}
+
+func (cr IColumnarReference) Alias() string {
+	switch t := cr.k.(type) {
+	case *sqlparser.ColName:
+		return t.Qualifier.GetRawVal()
+	case *sqlparser.ColIdent:
+		return t.GetRawVal()
+	default:
+		return fmt.Sprintf("%v", t)
+	}
+}
+
+func (cr IColumnarReference) Name() string {
+	switch t := cr.k.(type) {
+	case *sqlparser.ColName:
+		return t.Name.GetRawVal()
+	case *sqlparser.ColIdent:
+		return t.GetRawVal()
+	default:
+		return fmt.Sprintf("%v", t)
+	}
+}
+
+func (cr IColumnarReference) String() string {
+	switch t := cr.k.(type) {
+	case *sqlparser.ColName:
+		return t.GetRawVal()
+	case *sqlparser.ColIdent:
+		return t.GetRawVal()
+	default:
+		return fmt.Sprintf("%v", t)
+	}
+}
+
+func (pk IColumnarReference) iColumnarReference() {}
+
+// Enforces supported underlying data invariant.
+func NewColumnarReference(k interface{}) (ColumnarReference, error) {
+	switch k := k.(type) {
+	case *sqlparser.ColName:
+		return IColumnarReference{k: k}, nil
+	case sqlparser.ColIdent:
+		kp := &k
+		return IColumnarReference{k: kp}, nil
+	default:
+		return nil, fmt.Errorf("cannot accomodate columnar reference for type = '%T'", k)
+	}
+}
+
+type IParameterMap struct {
+	m map[ColumnarReference]ParameterMetadata
+}
+
+func NewParameterMap() ParameterMap {
+	return IParameterMap{
+		m: make(map[ColumnarReference]ParameterMetadata),
+	}
+}
+
+func (pm IParameterMap) iParameterMap() {}
+
+func (pm IParameterMap) GetMap() map[ColumnarReference]ParameterMetadata {
+	return pm.m
+}
+
+func (pm IParameterMap) GetStringified() map[string]interface{} {
 	rv := make(map[string]interface{})
-	for k, v := range tm {
-		rv[k.GetRawVal()] = v
+	for k, v := range pm.m {
+		rv[pm.getStringKey(k)] = v
+	}
+	return rv
+}
+
+func (pm IParameterMap) GetAbbreviatedStringified() map[string]interface{} {
+	rv := make(map[string]interface{})
+	for k, v := range pm.m {
+		switch k := k.Value().(type) {
+		case *sqlparser.ColName:
+			rv[k.Name.GetRawVal()] = v
+		default:
+			rv[pm.getStringKey(k)] = v
+		}
+	}
+	return rv
+}
+
+func (pm IParameterMap) Set(k ColumnarReference, v ParameterMetadata) error {
+	switch t := k.Value().(type) {
+	case *sqlparser.ColName:
+		pm.m[k] = v
+	case *sqlparser.ColIdent:
+		pm.m[k] = v
+	default:
+		return fmt.Errorf("parameter map cannot support key type = '%T'", t)
+	}
+	return nil
+}
+
+func (pm IParameterMap) getStringKey(k interface{}) string {
+	switch k := k.(type) {
+	case *sqlparser.ColName:
+		return k.GetRawVal()
+	case *sqlparser.ColIdent:
+		return k.GetRawVal()
+	default:
+		return fmt.Sprintf("%v", k)
+	}
+}
+
+func (pm IParameterMap) Get(k ColumnarReference) (ParameterMetadata, bool) {
+	switch k.Value().(type) {
+	case *sqlparser.ColName:
+		rv, ok := pm.m[k]
+		return rv, ok
+	case *sqlparser.ColIdent:
+		rv, ok := pm.m[k]
+		return rv, ok
+	default:
+		return nil, false
+	}
+}
+
+type ColTableMap map[ColumnarReference]sqlparser.TableExpr
+
+func (tm IParameterMap) ToStringMap() map[string]interface{} {
+	rv := make(map[string]interface{})
+	for k, v := range tm.m {
+		rv[tm.getStringKey(k)] = v
 	}
 	return rv
 }
@@ -535,58 +719,49 @@ func NewParameterRouter(tablesAliasMap TableAliasMap, tableMap TableExprMap, par
 
 type TableParameterCoupling struct {
 	paramMap    ParameterMap
-	colMappings map[string]*sqlparser.ColName
+	colMappings map[string]ColumnarReference
 }
 
 func NewTableParameterCoupling() *TableParameterCoupling {
 	return &TableParameterCoupling{
-		paramMap:    make(ParameterMap),
-		colMappings: make(map[string]*sqlparser.ColName),
+		paramMap:    NewParameterMap(),
+		colMappings: make(map[string]ColumnarReference),
 	}
 }
 
-func (tpc *TableParameterCoupling) Add(col *sqlparser.ColName, val ParameterMetadata) error {
-	tpc.paramMap[col] = val
-	_, ok := tpc.colMappings[col.Name.GetRawVal()]
-	if ok {
-		return fmt.Errorf("parameter '%s' already present", col.Name.GetRawVal())
+func (tpc *TableParameterCoupling) Add(col ColumnarReference, val ParameterMetadata) error {
+	err := tpc.paramMap.Set(col, val)
+	if err != nil {
+		return err
 	}
-	tpc.colMappings[col.Name.GetRawVal()] = col
+	_, ok := tpc.colMappings[col.Name()]
+	if ok {
+		return fmt.Errorf("parameter '%s' already present", col.Name())
+	}
+	tpc.colMappings[col.Name()] = col
 	return nil
 }
 
 func (tpc *TableParameterCoupling) GetStringified() map[string]interface{} {
-	rv := make(map[string]interface{})
-	for k, v := range tpc.paramMap {
-		rv[k.Name.GetRawVal()] = v
-	}
-	return rv
+	return tpc.paramMap.GetAbbreviatedStringified()
 }
 
 func (tpc *TableParameterCoupling) AbbreviateMap(verboseMap map[string]interface{}) (map[string]interface{}, error) {
-	rv := make(map[string]interface{})
-	for k, v := range tpc.paramMap {
-		_, ok := verboseMap[k.GetRawVal()]
-		if !ok || v.Val == nil {
-			continue
-		}
-		rv[k.Name.GetRawVal()] = v
-	}
-	return rv, nil
+	return tpc.paramMap.GetAbbreviatedStringified(), nil
 }
 
 func (tpc *TableParameterCoupling) ReconstituteConsumedParams(returnedMap map[string]interface{}) (map[string]interface{}, error) {
-	rv := make(map[string]interface{})
-	for k, v := range tpc.paramMap {
-		rv[k.GetRawVal()] = v
-	}
+	rv := tpc.paramMap.GetStringified()
 	for k, v := range returnedMap {
 		key, ok := tpc.colMappings[k]
 		if !ok || v == nil {
 			return nil, fmt.Errorf("no reconstitution mapping for key = '%s'", k)
 		}
-		key.Metadata = true
-		keyToDelete := key.GetRawVal()
+		switch kv := key.Value().(type) {
+		case *sqlparser.ColName:
+			kv.Metadata = true
+		}
+		keyToDelete := key.String()
 		_, ok = rv[keyToDelete]
 		if !ok {
 			return nil, fmt.Errorf("cannot process consumed params: attempt to delete non existing key")
@@ -598,9 +773,9 @@ func (tpc *TableParameterCoupling) ReconstituteConsumedParams(returnedMap map[st
 
 func (pr *ParameterRouter) GetAvailableParameters(tb sqlparser.TableExpr) *TableParameterCoupling {
 	rv := NewTableParameterCoupling()
-	for k, v := range pr.paramMap {
-		key := k.GetRawVal()
-		tableAlias := k.Qualifier.GetRawVal()
+	for k, v := range pr.paramMap.GetMap() {
+		key := k.String()
+		tableAlias := k.Alias()
 		foundTable, ok := pr.tablesAliasMap[tableAlias]
 		if ok && foundTable != tb {
 			continue
@@ -641,8 +816,8 @@ func (pr *ParameterRouter) invalidate(key string, val interface{}) error {
 }
 
 func (pr *ParameterRouter) Route(tb sqlparser.TableExpr) error {
-	for k, _ := range pr.paramMap {
-		alias := k.Qualifier.GetRawVal()
+	for k, _ := range pr.paramMap.GetMap() {
+		alias := k.Alias()
 		if alias == "" {
 			continue
 		}

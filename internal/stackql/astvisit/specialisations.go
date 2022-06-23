@@ -101,7 +101,7 @@ func ExtractParamsFromWhereClause(node *sqlparser.Where) parserutil.ParameterMap
 	if node != nil && node.Expr != nil {
 		node.Expr.Accept(v)
 	} else {
-		return parserutil.ParameterMap{}
+		return parserutil.NewParameterMap()
 	}
 	return v.GetParameters()
 }

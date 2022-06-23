@@ -118,7 +118,7 @@ func (p *primitiveGenerator) analyzeUnion(pbi PlanBuilderInput) error {
 		return err
 	}
 	pChild := p.addChildPrimitiveGenerator(node.FirstStatement, leaf)
-	err = pChild.analyzeSelectStatement(NewPlanBuilderInput(handlerCtx, node.FirstStatement, nil, nil, nil, nil))
+	err = pChild.analyzeSelectStatement(NewPlanBuilderInput(handlerCtx, node.FirstStatement, nil, nil, nil, nil, nil))
 	if err != nil {
 		return err
 	}
@@ -130,7 +130,7 @@ func (p *primitiveGenerator) analyzeUnion(pbi PlanBuilderInput) error {
 			return err
 		}
 		pChild := p.addChildPrimitiveGenerator(rhsStmt.Statement, leaf)
-		err = pChild.analyzeSelectStatement(NewPlanBuilderInput(handlerCtx, rhsStmt.Statement, nil, nil, nil, nil))
+		err = pChild.analyzeSelectStatement(NewPlanBuilderInput(handlerCtx, rhsStmt.Statement, nil, nil, nil, nil, nil))
 		if err != nil {
 			return err
 		}
@@ -1030,7 +1030,7 @@ func (p *primitiveGenerator) analyzeInsert(pbi PlanBuilderInput) error {
 	if !ok {
 		return fmt.Errorf("could not cast node of type '%T' to required Insert", pbi.GetStatement())
 	}
-	err := p.inferHeirarchyAndPersist(handlerCtx, node, nil)
+	err := p.inferHeirarchyAndPersist(handlerCtx, node, pbi.paramsPlaceheld.GetStringified())
 	if err != nil {
 		return err
 	}
@@ -1113,7 +1113,7 @@ func (p *primitiveGenerator) analyzeDelete(pbi PlanBuilderInput) error {
 	p.parseComments(node.Comments)
 	paramMap := astvisit.ExtractParamsFromWhereClause(node.Where)
 
-	err := p.inferHeirarchyAndPersist(handlerCtx, node, paramMap.ToStringMap())
+	err := p.inferHeirarchyAndPersist(handlerCtx, node, paramMap.GetStringified())
 	if err != nil {
 		return err
 	}

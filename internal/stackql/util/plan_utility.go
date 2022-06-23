@@ -130,7 +130,7 @@ func extractRaw(raw interface{}) (string, error) {
 		kr := r.Name.GetRawVal()
 		return kr, nil
 	case parserutil.ParameterMetadata:
-		return extractRaw(r.Val)
+		return extractRaw(r.GetVal())
 	default:
 		err := fmt.Errorf("unsupported type on RHS of comparison '%T'", r)
 		return "", err
