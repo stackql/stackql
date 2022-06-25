@@ -159,6 +159,17 @@ GitHub Pages Select Top Level Object
     ...    ${SELECT_GITHUB_REPOS_PAGES_SINGLE}
     ...    ${SELECT_GITHUB_REPOS_PAGES_SINGLE_EXPECTED}
 
+GitHub Scim Users Select
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SELECT_GITHUB_SCIM_USERS}
+    ...    ${SELECT_GITHUB_SCIM_USERS_EXPECTED}
+
 GitHub Repository IDs Select
     Should StackQL Exec Inline Equal
     ...    ${STACKQL_EXE}

@@ -1,0 +1,974 @@
+paths:
+  /scim/v2/organizations/{org}/Users:
+    get:
+      summary: List SCIM provisioned identities
+      description: |-
+        Retrieves a paginated list of all provisioned organization members, including pending invitations. If you provide the `filter` parameter, the resources for all matching provisions members are returned.
+
+        When a user with a SAML-provisioned external identity leaves (or is removed from) an organization, the account's metadata is immediately removed. However, the returned list of user accounts might not always match the organization or enterprise member list you see on GitHub. This can happen in certain cases where an external identity associated with an organization will not match an organization member:
+          - When a user with a SCIM-provisioned external identity is removed from an organization, the account's metadata is preserved to allow the user to re-join the organization in the future.
+          - When inviting a user to join an organization, you can expect to see their external identity in the results before they accept the invitation, or if the invitation is cancelled (or never accepted).
+          - When a user is invited over SCIM, an external identity is created that matches with the invitee's email address. However, this identity is only linked to a user account when the user accepts the invitation by going through SAML SSO.
+
+        The returned list of external identities can include an entry for a `null` user. These are unlinked SAML identities that are created when a user goes through the following Single Sign-On (SSO) process but does not sign in to their GitHub account after completing SSO:
+
+        1. The user is granted access by the IdP and is not a member of the GitHub organization.
+
+        1. The user attempts to access the GitHub organization and initiates the SAML SSO process, and is not currently signed in to their GitHub account.
+
+        1. After successfully authenticating with the SAML SSO IdP, the `null` external identity entry is created and the user is prompted to sign in to their GitHub account:
+           - If the user signs in, their GitHub account is linked to this entry.
+           - If the user does not sign in (or does not create a new account when prompted), they are not added to the GitHub organization, and the external identity `null` entry remains in place.
+      tags:
+        - scim
+      operationId: scim/list-provisioned-identities
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/scim#list-scim-provisioned-identities
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - name: startIndex
+          description: 'Used for pagination: the index of the first result to return.'
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: count
+          description: 'Used for pagination: the number of results to return.'
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: filter
+          description: |-
+            Filters results using the equals query parameter operator (`eq`). You can filter results that are equal to `id`, `userName`, `emails`, and `external_id`. For example, to search for an identity with the `userName` Octocat, you would use this query:
+
+            `?filter=userName%20eq%20\"Octocat\"`.
+
+            To filter results for the identity with the email `octocat@github.com`, you would use this query:
+
+            `?filter=emails%20eq%20\"octocat@github.com\"`.
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Response
+          content:
+            application/scim+json:
+              schema:
+                $ref: '#/components/schemas/scim-user-list'
+              examples:
+                response-with-filter:
+                  $ref: '#/components/examples/scim-user-list-response-with-filter'
+                response-without-filter:
+                  $ref: '#/components/examples/scim-user-list-response-without-filter'
+        '304':
+          $ref: '#/components/responses/not_modified'
+        '400':
+          $ref: '#/components/responses/scim_bad_request'
+        '403':
+          $ref: '#/components/responses/scim_forbidden'
+        '404':
+          $ref: '#/components/responses/scim_not_found'
+      x-github:
+        githubCloudOnly: true
+        enabledForGitHubApps: true
+        category: scim
+        subcategory: null
+    post:
+      summary: Provision and invite a SCIM user
+      description: Provision organization membership for a user, and send an activation email to the email address.
+      tags:
+        - scim
+      operationId: scim/provision-and-invite-user
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/scim#provision-and-invite-a-scim-user
+      parameters:
+        - $ref: '#/components/parameters/org'
+      responses:
+        '201':
+          description: Response
+          content:
+            application/scim+json:
+              schema:
+                $ref: '#/components/schemas/scim-user'
+              examples:
+                default:
+                  $ref: '#/components/examples/scim-user'
+        '304':
+          $ref: '#/components/responses/not_modified'
+        '400':
+          $ref: '#/components/responses/scim_bad_request'
+        '403':
+          $ref: '#/components/responses/scim_forbidden'
+        '404':
+          $ref: '#/components/responses/scim_not_found'
+        '409':
+          $ref: '#/components/responses/scim_conflict'
+        '500':
+          $ref: '#/components/responses/scim_internal_error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userName:
+                  description: Configured by the admin. Could be an email, login, or username
+                  example: someone@example.com
+                  type: string
+                displayName:
+                  description: The name of the user, suitable for display to end-users
+                  example: Jon Doe
+                  type: string
+                name:
+                  type: object
+                  properties:
+                    givenName:
+                      type: string
+                    familyName:
+                      type: string
+                    formatted:
+                      type: string
+                  required:
+                    - givenName
+                    - familyName
+                  example:
+                    givenName: Jane
+                    familyName: User
+                emails:
+                  description: user emails
+                  example:
+                    - value: someone@example.com
+                      primary: true
+                    - value: another@example.com
+                      primary: false
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    properties:
+                      value:
+                        type: string
+                      primary:
+                        type: boolean
+                      type:
+                        type: string
+                    required:
+                      - value
+                schemas:
+                  type: array
+                  items:
+                    type: string
+                externalId:
+                  type: string
+                groups:
+                  type: array
+                  items:
+                    type: string
+                active:
+                  type: boolean
+              required:
+                - userName
+                - name
+                - emails
+      x-github:
+        githubCloudOnly: true
+        enabledForGitHubApps: true
+        category: scim
+        subcategory: null
+  /scim/v2/organizations/{org}/Users/{scim_user_id}:
+    get:
+      summary: Get SCIM provisioning information for a user
+      description: ''
+      tags:
+        - scim
+      operationId: scim/get-provisioning-information-for-user
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/scim#get-scim-provisioning-information-for-a-user
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/scim-user-id'
+      responses:
+        '200':
+          description: Response
+          content:
+            application/scim+json:
+              schema:
+                $ref: '#/components/schemas/scim-user'
+              examples:
+                default:
+                  $ref: '#/components/examples/scim-user'
+        '304':
+          $ref: '#/components/responses/not_modified'
+        '403':
+          $ref: '#/components/responses/scim_forbidden'
+        '404':
+          $ref: '#/components/responses/scim_not_found'
+      x-github:
+        githubCloudOnly: true
+        enabledForGitHubApps: true
+        category: scim
+        subcategory: null
+    put:
+      summary: Update a provisioned organization membership
+      description: |-
+        Replaces an existing provisioned user's information. You must provide all the information required for the user as if you were provisioning them for the first time. Any existing user information that you don't provide will be removed. If you want to only update a specific attribute, use the [Update an attribute for a SCIM user](https://docs.github.com/rest/reference/scim#update-an-attribute-for-a-scim-user) endpoint instead.
+
+        You must at least provide the required values for the user: `userName`, `name`, and `emails`.
+
+        **Warning:** Setting `active: false` removes the user from the organization, deletes the external identity, and deletes the associated `{scim_user_id}`.
+      tags:
+        - scim
+      operationId: scim/set-information-for-provisioned-user
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/scim#set-scim-information-for-a-provisioned-user
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/scim-user-id'
+      responses:
+        '200':
+          description: Response
+          content:
+            application/scim+json:
+              schema:
+                $ref: '#/components/schemas/scim-user'
+              examples:
+                default:
+                  $ref: '#/components/examples/scim-user'
+        '304':
+          $ref: '#/components/responses/not_modified'
+        '403':
+          $ref: '#/components/responses/scim_forbidden'
+        '404':
+          $ref: '#/components/responses/scim_not_found'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                schemas:
+                  type: array
+                  items:
+                    type: string
+                displayName:
+                  description: The name of the user, suitable for display to end-users
+                  example: Jon Doe
+                  type: string
+                externalId:
+                  type: string
+                groups:
+                  type: array
+                  items:
+                    type: string
+                active:
+                  type: boolean
+                userName:
+                  description: Configured by the admin. Could be an email, login, or username
+                  example: someone@example.com
+                  type: string
+                name:
+                  type: object
+                  properties:
+                    givenName:
+                      type: string
+                    familyName:
+                      type: string
+                    formatted:
+                      type: string
+                  required:
+                    - givenName
+                    - familyName
+                  example:
+                    givenName: Jane
+                    familyName: User
+                emails:
+                  description: user emails
+                  example:
+                    - value: someone@example.com
+                      primary: true
+                    - value: another@example.com
+                      primary: false
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      value:
+                        type: string
+                      primary:
+                        type: boolean
+                    required:
+                      - value
+              required:
+                - userName
+                - name
+                - emails
+      x-github:
+        githubCloudOnly: true
+        enabledForGitHubApps: true
+        category: scim
+        subcategory: null
+    patch:
+      summary: Update an attribute for a SCIM user
+      description: |-
+        Allows you to change a provisioned user's individual attributes. To change a user's values, you must provide a specific `Operations` JSON format that contains at least one of the `add`, `remove`, or `replace` operations. For examples and more information on the SCIM operations format, see the [SCIM specification](https://tools.ietf.org/html/rfc7644#section-3.5.2).
+
+        **Note:** Complicated SCIM `path` selectors that include filters are not supported. For example, a `path` selector defined as `"path": "emails[type eq \"work\"]"` will not work.
+
+        **Warning:** If you set `active:false` using the `replace` operation (as shown in the JSON example below), it removes the user from the organization, deletes the external identity, and deletes the associated `:scim_user_id`.
+
+        ```
+        {
+          "Operations":[{
+            "op":"replace",
+            "value":{
+              "active":false
+            }
+          }]
+        }
+        ```
+      tags:
+        - scim
+      operationId: scim/update-attribute-for-user
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/scim#update-an-attribute-for-a-scim-user
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/scim-user-id'
+      responses:
+        '200':
+          description: Response
+          content:
+            application/scim+json:
+              schema:
+                $ref: '#/components/schemas/scim-user'
+              examples:
+                default:
+                  $ref: '#/components/examples/scim-user'
+        '304':
+          $ref: '#/components/responses/not_modified'
+        '400':
+          $ref: '#/components/responses/scim_bad_request'
+        '403':
+          $ref: '#/components/responses/scim_forbidden'
+        '404':
+          $ref: '#/components/responses/scim_not_found'
+        '429':
+          description: Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/basic-error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                schemas:
+                  type: array
+                  items:
+                    type: string
+                Operations:
+                  description: Set of operations to be performed
+                  example:
+                    - op: replace
+                      value:
+                        active: false
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    properties:
+                      op:
+                        type: string
+                        enum:
+                          - add
+                          - remove
+                          - replace
+                      path:
+                        type: string
+                      value:
+                        oneOf:
+                          - type: object
+                            properties:
+                              active:
+                                type: boolean
+                                nullable: true
+                              userName:
+                                type: string
+                                nullable: true
+                              externalId:
+                                type: string
+                                nullable: true
+                              givenName:
+                                type: string
+                                nullable: true
+                              familyName:
+                                type: string
+                                nullable: true
+                          - type: array
+                            items:
+                              type: object
+                              properties:
+                                value:
+                                  type: string
+                                primary:
+                                  type: boolean
+                          - type: string
+                    required:
+                      - op
+              required:
+                - Operations
+              type: object
+      x-github:
+        githubCloudOnly: true
+        enabledForGitHubApps: true
+        category: scim
+        subcategory: null
+    delete:
+      summary: Delete a SCIM user from an organization
+      description: ''
+      tags:
+        - scim
+      operationId: scim/delete-user-from-org
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/scim#delete-a-scim-user-from-an-organization
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/scim-user-id'
+      responses:
+        '204':
+          description: Response
+        '304':
+          $ref: '#/components/responses/not_modified'
+        '403':
+          $ref: '#/components/responses/scim_forbidden'
+        '404':
+          $ref: '#/components/responses/scim_not_found'
+      x-github:
+        githubCloudOnly: true
+        enabledForGitHubApps: true
+        category: scim
+        subcategory: null
+components:
+  schemas:
+    scim-user-list:
+      title: SCIM User List
+      description: SCIM User List
+      type: object
+      properties:
+        schemas:
+          description: SCIM schema used.
+          type: array
+          minItems: 1
+          items:
+            type: string
+            example: urn:ietf:params:scim:api:messages:2.0:ListResponse
+        totalResults:
+          type: integer
+          example: 3
+        itemsPerPage:
+          type: integer
+          example: 10
+        startIndex:
+          type: integer
+          example: 1
+        Resources:
+          type: array
+          items:
+            $ref: '#/components/schemas/scim-user'
+      required:
+        - schemas
+        - totalResults
+        - itemsPerPage
+        - startIndex
+        - Resources
+    scim-user:
+      title: SCIM /Users
+      description: SCIM /Users provisioning endpoints
+      type: object
+      properties:
+        schemas:
+          description: SCIM schema used.
+          type: array
+          minItems: 1
+          items:
+            type: string
+            example: urn:ietf:params:scim:schemas:core:2.0:User
+        id:
+          description: Unique identifier of an external identity
+          example: 1b78eada-9baa-11e6-9eb6-a431576d590e
+          type: string
+        externalId:
+          description: The ID of the User.
+          type: string
+          example: a7b0f98395
+          nullable: true
+        userName:
+          description: Configured by the admin. Could be an email, login, or username
+          example: someone@example.com
+          type: string
+          nullable: true
+        displayName:
+          description: The name of the user, suitable for display to end-users
+          example: Jon Doe
+          type: string
+          nullable: true
+        name:
+          type: object
+          properties:
+            givenName:
+              type: string
+              nullable: true
+            familyName:
+              type: string
+              nullable: true
+            formatted:
+              type: string
+              nullable: true
+          required:
+            - givenName
+            - familyName
+          example:
+            givenName: Jane
+            familyName: User
+        emails:
+          description: user emails
+          example:
+            - value: someone@example.com
+              primary: true
+            - value: another@example.com
+              primary: false
+          type: array
+          minItems: 1
+          items:
+            type: object
+            properties:
+              value:
+                type: string
+              primary:
+                type: boolean
+            required:
+              - value
+        active:
+          description: The active status of the User.
+          type: boolean
+          example: true
+        meta:
+          type: object
+          properties:
+            resourceType:
+              type: string
+              example: User
+            created:
+              type: string
+              format: date-time
+              example: '2019-01-24T22:45:36.000Z'
+            lastModified:
+              type: string
+              format: date-time
+              example: '2019-01-24T22:45:36.000Z'
+            location:
+              type: string
+              format: uri
+              example: https://api.github.com/scim/v2/organizations/myorg-123abc55141bfd8f/Users/c42772b5-2029-11e9-8543-9264a97dec8d
+        organization_id:
+          description: The ID of the organization.
+          type: integer
+        operations:
+          description: Set of operations to be performed
+          example:
+            - op: replace
+              value:
+                active: false
+          type: array
+          minItems: 1
+          items:
+            properties:
+              op:
+                type: string
+                enum:
+                  - add
+                  - remove
+                  - replace
+              path:
+                type: string
+              value:
+                oneOf:
+                  - type: string
+                  - type: object
+                  - type: array
+                    items: {}
+            required:
+              - op
+            type: object
+        groups:
+          description: associated groups
+          type: array
+          items:
+            properties:
+              value:
+                type: string
+              display:
+                type: string
+      required:
+        - id
+        - schemas
+        - externalId
+        - userName
+        - name
+        - emails
+        - active
+        - meta
+    scim-error:
+      title: Scim Error
+      description: Scim Error
+      type: object
+      properties:
+        message:
+          type: string
+          nullable: true
+        documentation_url:
+          type: string
+          nullable: true
+        detail:
+          type: string
+          nullable: true
+        status:
+          type: integer
+        scimType:
+          type: string
+          nullable: true
+        schemas:
+          type: array
+          items:
+            type: string
+    basic-error:
+      title: Basic Error
+      description: Basic Error
+      type: object
+      properties:
+        message:
+          type: string
+        documentation_url:
+          type: string
+        url:
+          type: string
+        status:
+          type: string
+  parameters:
+    org:
+      name: org
+      in: path
+      required: true
+      schema:
+        type: string
+    scim-user-id:
+      name: scim_user_id
+      description: scim_user_id parameter
+      in: path
+      required: true
+      schema:
+        type: string
+  responses:
+    not_modified:
+      description: Not modified
+    scim_bad_request:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/scim-error'
+        application/scim+json:
+          schema:
+            $ref: '#/components/schemas/scim-error'
+    scim_forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/scim-error'
+        application/scim+json:
+          schema:
+            $ref: '#/components/schemas/scim-error'
+    scim_not_found:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/scim-error'
+        application/scim+json:
+          schema:
+            $ref: '#/components/schemas/scim-error'
+    scim_conflict:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/scim-error'
+        application/scim+json:
+          schema:
+            $ref: '#/components/schemas/scim-error'
+    scim_internal_error:
+      description: Internal Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/scim-error'
+        application/scim+json:
+          schema:
+            $ref: '#/components/schemas/scim-error'
+  securitySchemes: {}
+  callbacks: {}
+  examples:
+    scim-user-list-response-with-filter:
+      summary: Response with filter
+      value:
+        schemas:
+          - urn:ietf:params:scim:api:messages:2.0:ListResponse
+        totalResults: 1
+        itemsPerPage: 1
+        startIndex: 1
+        Resources:
+          - schemas:
+              - urn:ietf:params:scim:schemas:core:2.0:User
+            id: 5fc0c238-1112-11e8-8e45-920c87bdbd75
+            externalId: 00u1dhhb1fkIGP7RL1d8
+            userName: octocat@github.com
+            displayName: Mona Octocat
+            name:
+              givenName: Mona
+              familyName: Octocat
+              formatted: Mona Octocat
+            emails:
+              - value: octocat@github.com
+                primary: true
+            active: true
+            meta:
+              resourceType: User
+              created: '2018-02-13T15:05:24.000-08:00'
+              lastModified: '2018-02-13T15:05:55.000-08:00'
+              location: https://api.github.com/scim/v2/organizations/octo-org/Users/5fc0c238-1112-11e8-8e45-920c87bdbd75
+    scim-user-list-response-without-filter:
+      summary: Response without filter
+      value:
+        schemas:
+          - urn:ietf:params:scim:api:messages:2.0:ListResponse
+        totalResults: 2
+        itemsPerPage: 2
+        startIndex: 1
+        Resources:
+          - schemas:
+              - urn:ietf:params:scim:schemas:core:2.0:User
+            id: edefdfedf-050c-11e7-8d32
+            externalId: a7d0f98382
+            userName: mona.octocat@okta.example.com
+            displayName: Mona Octocat
+            name:
+              givenName: Mona
+              familyName: Octocat
+              formatted: Mona Octocat
+            emails:
+              - value: mona.octocat@okta.example.com
+                primary: true
+            active: true
+            meta:
+              resourceType: User
+              created: '2017-03-09T16:11:13-05:00'
+              lastModified: '2017-03-09T16:11:13-05:00'
+              location: https://api.github.com/scim/v2/organizations/octo-org/Users/edefdfedf-050c-11e7-8d32
+          - schemas:
+              - urn:ietf:params:scim:schemas:core:2.0:User
+            id: 77563764-eb6-24-0598234-958243
+            externalId: sdfoiausdofiua
+            userName: hubot@example.com
+            displayName: hu bot
+            name:
+              givenName: hu
+              familyName: bot
+              formatted: hu bot
+            emails:
+              - value: hubot@example.com
+                primary: true
+            active: true
+            meta:
+              resourceType: User
+              created: '2017-03-09T16:11:13-05:00'
+              lastModified: '2017-03-09T16:11:13-05:00'
+              location: https://api.github.com/scim/v2/organizations/octo-org/Users/77563764-eb6-24-0598234-958243
+    scim-user:
+      value:
+        schemas:
+          - urn:ietf:params:scim:schemas:core:2.0:User
+        id: edefdfedf-050c-11e7-8d32
+        externalId: a7d0f98382
+        userName: mona.octocat@okta.example.com
+        displayName: Monalisa Octocat
+        name:
+          givenName: Monalisa
+          familyName: Octocat
+          formatted: Monalisa Octocat
+        emails:
+          - value: mona.octocat@okta.example.com
+            primary: true
+          - value: monalisa@octocat.github.com
+        active: true
+        meta:
+          resourceType: User
+          created: '2017-03-09T16:11:13-05:00'
+          lastModified: '2017-03-09T16:11:13-05:00'
+          location: https://api.github.com/scim/v2/organizations/octo-org/Users/edefdfedf-050c-11e7-8d32
+  requestBodies: {}
+  headers: {}
+  links: {}
+  x-stackQL-resources:
+    users:
+      id: github.scim.users
+      name: users
+      title: Scim Users
+      methods:
+        list_provisioned_identities:
+          operation:
+            $ref: '#/paths/~1scim~1v2~1organizations~1{org}~1Users/get'
+          response:
+            mediaType: application/scim+json
+            openAPIDocKey: '200'
+            objectKey: '$.Resources[*]'
+        provision_and_invite_user:
+          operation:
+            $ref: '#/paths/~1scim~1v2~1organizations~1{org}~1Users/post'
+          response:
+            mediaType: application/scim+json
+            openAPIDocKey: '201'
+        get_provisioning_information_for_user:
+          operation:
+            $ref: '#/paths/~1scim~1v2~1organizations~1{org}~1Users~1{scim_user_id}/get'
+          response:
+            mediaType: application/scim+json
+            openAPIDocKey: '200'
+        set_information_for_provisioned_user:
+          operation:
+            $ref: '#/paths/~1scim~1v2~1organizations~1{org}~1Users~1{scim_user_id}/put'
+          response:
+            mediaType: application/scim+json
+            openAPIDocKey: '200'
+        update_attribute_for_user:
+          operation:
+            $ref: '#/paths/~1scim~1v2~1organizations~1{org}~1Users~1{scim_user_id}/patch'
+          response:
+            mediaType: application/scim+json
+            openAPIDocKey: '200'
+        delete_user_from_org:
+          operation:
+            $ref: '#/paths/~1scim~1v2~1organizations~1{org}~1Users~1{scim_user_id}/delete'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '204'
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/users/methods/get_provisioning_information_for_user'
+          - $ref: '#/components/x-stackQL-resources/users/methods/list_provisioned_identities'
+        insert: []
+        update: []
+        delete:
+          - $ref: '#/components/x-stackQL-resources/users/methods/delete_user_from_org'
+openapi: 3.0.3
+servers:
+  - url: https://api.github.com
+tags:
+  - name: actions
+    description: Endpoints to manage GitHub Actions using the REST API.
+  - name: activity
+    description: Activity APIs provide access to notifications, subscriptions, and timelines.
+  - name: apps
+    description: Information for integrations and installations.
+  - name: billing
+    description: Monitor charges and usage from Actions and Packages.
+  - name: checks
+    description: Rich interactions with checks run by your integrations.
+  - name: code-scanning
+    description: Retrieve code scanning alerts from a repository.
+  - name: codes-of-conduct
+    description: Insight into codes of conduct for your communities.
+  - name: codespaces
+    description: Endpoints to manage Codespaces using the REST API.
+  - name: emojis
+    description: List emojis available to use on GitHub.
+  - name: enterprise-admin
+    description: Administer a GitHub enterprise.
+  - name: dependabot
+    description: Endpoints to manage Dependabot.
+  - name: gists
+    description: View, modify your gists.
+  - name: git
+    description: Raw Git functionality.
+  - name: gitignore
+    description: View gitignore templates
+  - name: interactions
+    description: Owner or admin management of users interactions.
+  - name: issues
+    description: Interact with GitHub Issues.
+  - name: licenses
+    description: View various OSS licenses.
+  - name: markdown
+    description: Render GitHub flavored markdown
+  - name: meta
+    description: Endpoints that give information about the API.
+  - name: migrations
+    description: Move projects to or from GitHub.
+  - name: oauth-authorizations
+    description: Manage access of OAuth applications
+  - name: orgs
+    description: Interact with GitHub Orgs.
+  - name: packages
+    description: Manage packages for authenticated users and organizations.
+  - name: projects
+    description: Interact with GitHub Projects.
+  - name: pulls
+    description: Interact with GitHub Pull Requests.
+  - name: rate-limit
+    description: Check your current rate limit status
+  - name: reactions
+    description: Interact with reactions to various GitHub entities.
+  - name: repos
+    description: Interact with GitHub Repos.
+  - name: scim
+    description: Provisioning of GitHub organization membership for SCIM-enabled providers.
+  - name: search
+    description: Look for stuff on GitHub.
+  - name: secret-scanning
+    description: Retrieve secret scanning alerts from a repository.
+  - name: server-statistics
+    description: GHES statistics
+  - name: teams
+    description: Interact with GitHub Teams.
+  - name: users
+    description: Interact with and view information about users and also current user.
+externalDocs:
+  description: GitHub v3 REST API
+  url: https://docs.github.com/rest/
+info:
+  version: 1.1.4
+  title: GitHub v3 REST API - scim
+  description: Provisioning of GitHub organization membership for SCIM-enabled providers.
+  license:
+    name: MIT
+    url: https://spdx.org/licenses/MIT
+  termsOfService: https://docs.github.com/articles/github-terms-of-service
+  contact:
+    name: Support
+    url: https://support.github.com/contact?tags=dotcom-rest-api
