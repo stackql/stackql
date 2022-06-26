@@ -159,9 +159,9 @@ type planGraphBuilder struct {
 	planGraph *primitivegraph.PrimitiveGraph
 }
 
-func newPlanGraphBuilder() *planGraphBuilder {
+func newPlanGraphBuilder(concurrencyLimit int) *planGraphBuilder {
 	return &planGraphBuilder{
-		planGraph: primitivegraph.NewPrimitiveGraph(),
+		planGraph: primitivegraph.NewPrimitiveGraph(concurrencyLimit),
 	}
 }
 
@@ -679,7 +679,7 @@ func BuildPlanFromContext(handlerCtx *handler.HandlerContext) (*plan.Plan, error
 	}
 	qPlan.Type = statementType
 
-	pGBuilder := newPlanGraphBuilder()
+	pGBuilder := newPlanGraphBuilder(handlerCtx.RuntimeContext.ExecutionConcurrencyLimit)
 
 	if isPGSetupQuery(handlerCtx.RawQuery) {
 		pbi := NewPlanBuilderInput(handlerCtx, nil, nil, nil, nil, nil, nil)

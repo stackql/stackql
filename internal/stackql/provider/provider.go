@@ -67,9 +67,9 @@ type IProvider interface {
 
 	InferMaxResultsElement(*openapistackql.OperationStore) *dto.HTTPElement
 
-	InferNextPageRequestElement(*openapistackql.OperationStore) *dto.HTTPElement
+	InferNextPageRequestElement(dto.Heirarchy) *dto.HTTPElement
 
-	InferNextPageResponseElement(*openapistackql.OperationStore) *dto.HTTPElement
+	InferNextPageResponseElement(dto.Heirarchy) *dto.HTTPElement
 
 	SetCurrentService(serviceKey string)
 

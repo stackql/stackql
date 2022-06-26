@@ -452,7 +452,15 @@ func (pb *primitiveGenerator) insertExecutor(handlerCtx *handler.HandlerContext,
 		if !inputExists {
 			return dto.NewErroneousExecutorOutput(fmt.Errorf("input does not exist"))
 		}
-		inputMap, err := input.ResultToMap()
+		inputStream, err := input.ResultToMap()
+		if err != nil {
+			return dto.NewErroneousExecutorOutput(err)
+		}
+		rr, err := inputStream.Read()
+		if err != nil {
+			return dto.NewErroneousExecutorOutput(err)
+		}
+		inputMap, err := rr.GetMap()
 		if err != nil {
 			return dto.NewErroneousExecutorOutput(err)
 		}

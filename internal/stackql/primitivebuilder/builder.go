@@ -18,6 +18,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/util"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
+	"github.com/stackql/go-openapistackql/pkg/response"
 
 	"vitess.io/vitess/go/sqltypes"
 	querypb "vitess.io/vitess/go/vt/proto/query"
@@ -424,19 +425,20 @@ func (ss *SingleSelectAcquire) Build() error {
 		for _, reqCtx := range ss.tableMeta.HttpArmoury.RequestParams {
 			response, apiErr := httpmiddleware.HttpApiCallFromRequest(*(ss.handlerCtx), prov, reqCtx.Request.Clone(reqCtx.Request.Context()))
 			housekeepingDone := false
-			npt := prov.InferNextPageResponseElement(ss.tableMeta.HeirarchyObjects.Method)
-			nptKey := prov.InferNextPageRequestElement(ss.tableMeta.HeirarchyObjects.Method)
+			npt := prov.InferNextPageResponseElement(ss.tableMeta.HeirarchyObjects.Heirarchy)
+			nptKey := prov.InferNextPageRequestElement(ss.tableMeta.HeirarchyObjects.Heirarchy)
 			for {
 				if apiErr != nil {
 					return util.PrepareResultSet(dto.NewPrepareResultSetDTO(nil, nil, nil, ss.rowSort, apiErr, nil))
 				}
-				target, err := m.ProcessResponse(response)
+				res, err := m.ProcessResponse(response)
 				if err != nil {
 					return dto.NewErroneousExecutorOutput(err)
 				}
-				log.Infoln(fmt.Sprintf("target = %v", target))
+				log.Infoln(fmt.Sprintf("target = %v", res))
 				var items interface{}
 				var ok bool
+				target := res.GetProcessedBody()
 				switch pl := target.(type) {
 				// add case for xml object,
 				case map[string]interface{}:
@@ -490,14 +492,15 @@ func (ss *SingleSelectAcquire) Build() error {
 				if npt == nil || nptKey == nil {
 					break
 				}
-				tk := extractNextPageToken(target, npt.Name)
+				tk := extractNextPageToken(res, npt)
 				if tk == "" {
 					break
 				}
-				q := reqCtx.Request.URL.Query()
-				q.Set(nptKey.Name, tk)
-				reqCtx.Request.URL.RawQuery = q.Encode()
-				response, apiErr = httpmiddleware.HttpApiCallFromRequest(*(ss.handlerCtx), prov, reqCtx.Request)
+				req, err := reqCtx.SetNextPage(tk, nptKey)
+				if err != nil {
+					return dto.NewErroneousExecutorOutput(err)
+				}
+				response, apiErr = httpmiddleware.HttpApiCallFromRequest(*(ss.handlerCtx), prov, req)
 			}
 			if reqCtx.Request != nil {
 				q := reqCtx.Request.URL.Query()
@@ -524,10 +527,45 @@ func (ss *SingleSelectAcquire) Build() error {
 	return nil
 }
 
-func extractNextPageToken(body interface{}, tokenKey string) string {
+func extractNextPageToken(res *response.Response, tokenKey *dto.HTTPElement) string {
+	switch tokenKey.Type {
+	case dto.BodyAttribute:
+		return extractNextPageTokenFromBody(res, tokenKey)
+	case dto.Header:
+		return extractNextPageTokenFromHeader(res, tokenKey)
+	}
+	return ""
+}
+
+func extractNextPageTokenFromHeader(res *response.Response, tokenKey *dto.HTTPElement) string {
+	r := res.GetHttpResponse()
+	if r == nil {
+		return ""
+	}
+	header := r.Header
+	if tokenKey.Transformer != nil {
+		tf, err := tokenKey.Transformer(header)
+		if err != nil {
+			return ""
+		}
+		rv, ok := tf.(string)
+		if !ok {
+			return ""
+		}
+		return rv
+	}
+	vals := header.Values(tokenKey.Name)
+	if len(vals) == 1 {
+		return vals[0]
+	}
+	return ""
+}
+
+func extractNextPageTokenFromBody(res *response.Response, tokenKey *dto.HTTPElement) string {
+	body := res.GetProcessedBody()
 	switch target := body.(type) {
 	case map[string]interface{}:
-		nextPageToken, ok := target[tokenKey]
+		nextPageToken, ok := target[tokenKey.Name]
 		if !ok || nextPageToken == "" {
 			log.Infoln("breaking out")
 			return ""

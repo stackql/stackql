@@ -32,15 +32,16 @@ func GetRuntimeCtx(providerStr string, outputFmtStr string, testName string) (*d
 		return nil, fmt.Errorf("test failed on %s: %v", dbInitFilePath, err)
 	}
 	return &dto.RuntimeCtx{
-		Delimiter:                ",",
-		ProviderStr:              providerStr,
-		LogLevelStr:              "warn",
-		ApplicationFilesRootPath: appRoot,
-		AuthRaw:                  fmt.Sprintf(`{ "google": { "credentialsfilepath": "%s" }, "okta": { "credentialsfilepath": "%s", "type": "api_key" } }`, saKeyPath, oktaSaKeyPath),
-		RegistryRaw:              fmt.Sprintf(`{ "url": "file://%s",  "useEmbedded": false }`, registryRoot),
-		OutputFormat:             outputFmtStr,
-		DbFilePath:               fmt.Sprintf("file:%s?mode=memory&cache=shared", testName),
-		DbInitFilePath:           dbInitFilePath,
+		Delimiter:                 ",",
+		ProviderStr:               providerStr,
+		LogLevelStr:               "warn",
+		ApplicationFilesRootPath:  appRoot,
+		AuthRaw:                   fmt.Sprintf(`{ "google": { "credentialsfilepath": "%s" }, "okta": { "credentialsfilepath": "%s", "type": "api_key" } }`, saKeyPath, oktaSaKeyPath),
+		RegistryRaw:               fmt.Sprintf(`{ "url": "file://%s",  "useEmbedded": false }`, registryRoot),
+		OutputFormat:              outputFmtStr,
+		DbFilePath:                fmt.Sprintf("file:%s?mode=memory&cache=shared", testName),
+		DbInitFilePath:            dbInitFilePath,
+		ExecutionConcurrencyLimit: 1,
 	}, nil
 }
 

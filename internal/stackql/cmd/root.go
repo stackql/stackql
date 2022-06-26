@@ -114,6 +114,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&runtimeCtx.HTTPLogEnabled, dto.HTTPLogEnabledKey, false, "Display http request info in terminal")
 	rootCmd.PersistentFlags().IntVar(&runtimeCtx.HTTPMaxResults, dto.HTTPMaxResultsKey, -1, "Max results per http request, any number <=0 results in no limitation")
 	rootCmd.PersistentFlags().IntVar(&runtimeCtx.HTTPProxyPort, dto.HTTPProxyPortKey, -1, "http proxy port, any number <=0 will result in the default port for a given scheme (eg: http -> 80)")
+	rootCmd.PersistentFlags().IntVar(&runtimeCtx.ExecutionConcurrencyLimit, dto.ExecutionConcurrencyLimitKey, 1, "concurrency limit for query execution")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.HTTPProxyHost, dto.HTTPProxyHostKey, "", "http proxy host, empty means no proxy")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.HTTPProxyScheme, dto.HTTPProxySchemeKey, "http", "http proxy scheme, eg 'http'")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.HTTPProxyPassword, dto.HTTPProxyPasswordKey, "", "http proxy password")
