@@ -24,6 +24,7 @@ const (
 	DefaultColorScheme              string = DarkColorScheme
 	DefaultWindowsColorScheme       string = NullColorScheme
 	DryRunFlagKey                   string = "dryrun"
+	ExecutionConcurrencyLimitKey    string = "execution.concurrency.limit"
 	AuthCtxKey                      string = "auth"
 	APIRequestTimeoutKey            string = "apirequesttimeout"
 	CacheKeyCountKey                string = "cachekeycount"
@@ -85,11 +86,13 @@ const (
 	PathParam
 	Header
 	BodyAttribute
+	RequestString
 )
 
 type HTTPElement struct {
-	Type HTTPElementType
-	Name string
+	Type        HTTPElementType
+	Name        string
+	Transformer func(interface{}) (interface{}, error)
 }
 
 type AuthCtx struct {
@@ -191,6 +194,7 @@ type RuntimeCtx struct {
 	Delimiter                    string
 	DryRunFlag                   bool
 	ErrorPresentation            string
+	ExecutionConcurrencyLimit    int
 	HTTPLogEnabled               bool
 	HTTPMaxResults               int
 	HTTPProxyHost                string
@@ -279,6 +283,8 @@ func (rc *RuntimeCtx) Set(key string, val string) error {
 		retVal = setBool(&rc.DryRunFlag, val)
 	case ErrorPresentationKey:
 		rc.ErrorPresentation = val
+	case ExecutionConcurrencyLimitKey:
+		retVal = setInt(&rc.ExecutionConcurrencyLimit, val)
 	case HTTPLogEnabledKey:
 		retVal = setBool(&rc.HTTPLogEnabled, val)
 	case HTTPMaxResultsKey:
@@ -396,15 +402,62 @@ func NewPrepareResultSetPlusRawDTO(
 	}
 }
 
+type RawMap map[int]map[int]interface{}
+
+type RawResult interface {
+	GetMap() (RawMap, error)
+}
+
+type SimpleRawResult struct {
+	m RawMap
+}
+
+func (rr *SimpleRawResult) GetMap() (RawMap, error) {
+	return rr.m, nil
+}
+
+func createSimpleRawResult(m RawMap) RawResult {
+	return &SimpleRawResult{
+		m: m,
+	}
+}
+
+func createSimpleRawResultStream(m RawMap) IRawResultStream {
+	return &SimpleRawResultStream{
+		rr: createSimpleRawResult(m),
+	}
+}
+
+type IRawResultStream interface {
+	Read() (RawResult, error)
+	IsNil() bool
+}
+
+type SimpleRawResultStream struct {
+	rr RawResult
+}
+
+func (sr *SimpleRawResultStream) Read() (RawResult, error) {
+	return sr.rr, nil
+}
+
+func (sr *SimpleRawResultStream) IsNil() bool {
+	rm, err := sr.rr.GetMap()
+	if err != nil {
+		return true
+	}
+	return len(rm) < 1
+}
+
 type ExecutorOutput struct {
 	GetSQLResult  func() sqldata.ISQLResultStream
-	GetRawResult  func() map[int]map[int]interface{}
+	GetRawResult  func() IRawResultStream
 	GetOutputBody func() map[string]interface{}
 	Msg           *BackendMessages
 	Err           error
 }
 
-func (ex ExecutorOutput) ResultToMap() (map[int]map[int]interface{}, error) {
+func (ex ExecutorOutput) ResultToMap() (IRawResultStream, error) {
 	return ex.GetRawResult(), nil
 }
 
@@ -415,11 +468,11 @@ func NewExecutorOutput(result sqldata.ISQLResultStream, body map[string]interfac
 func newExecutorOutput(result sqldata.ISQLResultStream, body map[string]interface{}, rawResult map[int]map[int]interface{}, msg *BackendMessages, err error) ExecutorOutput {
 	return ExecutorOutput{
 		GetSQLResult: func() sqldata.ISQLResultStream { return result },
-		GetRawResult: func() map[int]map[int]interface{} {
+		GetRawResult: func() IRawResultStream {
 			if rawResult == nil {
-				return make(map[int]map[int]interface{})
+				return createSimpleRawResultStream(make(map[int]map[int]interface{}))
 			}
-			return rawResult
+			return createSimpleRawResultStream(rawResult)
 		},
 		GetOutputBody: func() map[string]interface{} { return body },
 		Msg:           msg,

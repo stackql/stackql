@@ -104,6 +104,18 @@ Google AcceleratorTypes SQL verb pre changeover
     ...    ${SELECT_ACCELERATOR_TYPES_DESC}
     ...    ${SELECT_ACCELERATOR_TYPES_DESC_EXPECTED}
 
+Google Machine Types Select Paginated
+    Should Horrid Query StackQL Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SELECT_MACHINE_TYPES_DESC}
+    ...    ${SELECT_MACHINE_TYPES_DESC_EXPECTED}
+    ...    ${CURDIR}/tmp/Google-Machine-Types-Select-Paginated.tmp
+
 Google AcceleratorTypes SQL verb post changeover
     Should StackQL Exec Inline Equal
     ...    ${STACKQL_EXE}
@@ -169,6 +181,29 @@ GitHub Scim Users Select
     ...    ${AUTH_CFG_STR}
     ...    ${SELECT_GITHUB_SCIM_USERS}
     ...    ${SELECT_GITHUB_SCIM_USERS_EXPECTED}
+
+GitHub Branch Names Paginated Select
+    Should Horrid Query StackQL Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SELECT_GITHUB_BRANCHES_NAMES_DESC}
+    ...    ${SELECT_GITHUB_BRANCHES_NAMES_DESC_EXPECTED}
+    ...    ${CURDIR}/tmp/GitHub-Branch-Names-Paginated-Select.tmp
+
+GitHub Tags Paginated Count
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SELECT_GITHUB_TAGS_COUNT}
+    ...    ${SELECT_GITHUB_TAGS_COUNT_EXPECTED}
 
 GitHub Repository IDs Select
     Should StackQL Exec Inline Equal

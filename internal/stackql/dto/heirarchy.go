@@ -3,10 +3,18 @@ package dto
 import (
 	"fmt"
 
+	"github.com/stackql/go-openapistackql/openapistackql"
 	"github.com/stackql/stackql/internal/stackql/iqlutil"
 
 	"vitess.io/vitess/go/vt/sqlparser"
 )
+
+type Heirarchy struct {
+	ServiceHdl *openapistackql.Service
+	Resource   *openapistackql.Resource
+	MethodSet  openapistackql.MethodSet
+	Method     *openapistackql.OperationStore
+}
 
 type HeirarchyIdentifiers struct {
 	ProviderStr string
