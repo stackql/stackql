@@ -27,6 +27,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/util"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
+	"github.com/stackql/go-openapistackql/pkg/media"
 
 	"vitess.io/vitess/go/vt/sqlparser"
 
@@ -919,7 +920,7 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 					return err
 				}
 				switch mediaType {
-				case openapistackql.MediaTypeTextXML, openapistackql.MediaTypeXML:
+				case media.MediaTypeTextXML, media.MediaTypeXML:
 					tab = tab.RenameColumnsToXml()
 				}
 				anTab := util.NewAnnotatedTabulation(tab, v.HIDs, v.TableMeta.Alias)

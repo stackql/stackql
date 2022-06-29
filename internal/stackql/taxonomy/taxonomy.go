@@ -321,12 +321,9 @@ func NewExtendedTableMetadata(heirarchyObjects *HeirarchyObjects, alias string) 
 }
 
 type HeirarchyObjects struct {
+	dto.Heirarchy
 	HeirarchyIds dto.HeirarchyIdentifiers
 	Provider     provider.IProvider
-	ServiceHdl   *openapistackql.Service
-	Resource     *openapistackql.Resource
-	MethodSet    openapistackql.MethodSet
-	Method       *openapistackql.OperationStore
 }
 
 func (ho *HeirarchyObjects) GetTableName() string {

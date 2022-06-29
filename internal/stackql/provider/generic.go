@@ -110,7 +110,7 @@ func (gp *GenericProvider) AuthRevoke(authCtx *dto.AuthCtx) error {
 		}
 		return err
 	}
-	return fmt.Errorf(`Auth revoke for Google Failed; improper auth method: "%s" speciied`, authCtx.Type)
+	return fmt.Errorf(`Auth revoke for Google Failed; improper auth method: "%s" specified`, authCtx.Type)
 }
 
 func (gp *GenericProvider) GetMethodForAction(serviceName string, resourceName string, iqlAction string, parameters map[string]interface{}, runtimeCtx dto.RuntimeCtx) (*openapistackql.OperationStore, string, map[string]interface{}, error) {
@@ -390,16 +390,44 @@ func (gp *GenericProvider) InferMaxResultsElement(*openapistackql.OperationStore
 	}
 }
 
-func (gp *GenericProvider) InferNextPageRequestElement(*openapistackql.OperationStore) *dto.HTTPElement {
-	return &dto.HTTPElement{
-		Type: dto.QueryParam,
-		Name: "pageToken",
+func (gp *GenericProvider) InferNextPageRequestElement(dto.Heirarchy) *dto.HTTPElement {
+	switch gp.GetProviderString() {
+	case "github":
+		return &dto.HTTPElement{
+			Type: dto.RequestString,
+		}
+	default:
+		return &dto.HTTPElement{
+			Type: dto.QueryParam,
+			Name: "pageToken",
+		}
 	}
 }
 
-func (gp *GenericProvider) InferNextPageResponseElement(*openapistackql.OperationStore) *dto.HTTPElement {
-	return &dto.HTTPElement{
-		Type: dto.BodyAttribute,
-		Name: "nextPageToken",
+func (gp *GenericProvider) InferNextPageResponseElement(ho dto.Heirarchy) *dto.HTTPElement {
+	switch gp.GetProviderString() {
+	case "github":
+		return &dto.HTTPElement{
+			Type: dto.Header,
+			Name: "Link",
+			Transformer: func(input interface{}) (interface{}, error) {
+				h, ok := input.(http.Header)
+				if !ok {
+					return nil, fmt.Errorf("cannot ingest purported http header of type = '%T'", h)
+				}
+				s := h.Values("Link")
+				gitHubLinksNextRegex := regexp.MustCompile(`.*<(?P<nextURL>[^>]*)>;\ rel="next".*`)
+				resArr := gitHubLinksNextRegex.FindStringSubmatch(strings.Join(s, ","))
+				if len(resArr) == 2 {
+					return resArr[1], nil
+				}
+				return "", nil
+			},
+		}
+	default:
+		return &dto.HTTPElement{
+			Type: dto.BodyAttribute,
+			Name: "nextPageToken",
+		}
 	}
 }
