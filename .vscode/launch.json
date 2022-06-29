@@ -65,16 +65,30 @@
       ],
     },
     {
-      "name": "Debug \"DESCRIBE google.compute.instances;\" -- prebuilt with cmake",
+      "name": "Debug \"DESCRIBE google.fcmdata.delivery_data;\" -- prebuilt with cmake",
       "type": "go",
       "request": "launch",
       "mode": "debug",
       "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
-        "DESCRIBE google.compute.instances;", // "--offline"
+        "--registry=${input:registryString}",
+        "DESCRIBE google.fcmdata.delivery_data;", // "--offline"
       ],
     },
+    {
+      "name": "Debug \"DESCRIBE google.compute.health_checks_aggregated;\" -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "DESCRIBE google.compute.health_checks_aggregated;", // "--offline"
+      ],
+    },
+    // select id, name from google.storage.buckets where project = 'lab-kr-network-01';
     {
       "name": "Debug \"DESCRIBE k8s.core_v1.Node ;\" ",
       "type": "go",
@@ -137,6 +151,20 @@
         "select  kind, name  from  google.compute.acceleratorTypes where project = '${input:gcpProject}' and zone = 'australia-southeast1-a' order by name desc;"
       ],
     },
+    // select id, name from google.storage.buckets where project = 'lab-kr-network-01';
+    {
+      "name": "DEBUG select compute.storage.buckets ... ;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "select id, name from google.storage.buckets where project = '${input:gcpProject}';"
+      ],
+    },
     {
       "name": "DEBUG select horror error ... ;",
       "type": "go",
@@ -161,6 +189,49 @@
         "--registry=${input:registryString}",
         "--auth=${input:authString}",
         "select id, name from github.repos.repos where org = 'stackql' and name = 'cloudy-redirect-app';"
+      ],
+    },
+    // select login, bio from github.users.users where username = 'kingy';
+    {
+      "name": "DEBUG select github.users.users... ;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "--tls.allowInsecure=true",
+        "select login, bio from github.users.users where username = 'kingy';"
+      ],
+    },
+    {
+      "name": "DEBUG join ON param... ;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "--tls.allowInsecure=true",
+        "select u.name, om.login, u.two_factor_authentication AS is_two_fa_enabled from github.orgs.members om inner join github.users.users u on om.login = u.login AND u.username = om.login inner join github.users.users u2 on om.login = u2.login AND u2.username = om.login where om.org = 'dummyorg' order by u.name desc;"
+      ],
+    },
+    // 
+    {
+      "name": "DEBUG weird join error ;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "SELECT i.name as instance_name, i.status as instance_status, c.sha as commit_sha, JSON_EXTRACT(c.commit, '$.author.email') as author_email, DATE(JSON_EXTRACT(c.commit, '$.author.date')) as commit_date FROM github.repos.commits c INNER JOIN google.compute.instances i ON JSON_EXTRACT(i.labels, '$.sha') = c.sha WHERE c.owner = 'dummyorg' AND c.repo = 'dummyapp.io' AND i.project = 'testing-project' AND i.zone = 'australia-southeast1-a';"
       ],
     },
     {
@@ -853,14 +924,15 @@
       ],
     },
     {
-      "name": "Launch exec \"COMPLEX INSERT ... ;\" -- prebuilt with cmake",
+      "name": "Debug exec \"COMPLEX INSERT ... ;\" -- prebuilt with cmake",
       "type": "go",
       "request": "launch",
-      "mode": "exec",
-      "program": "${workspaceFolder}/build/stackql",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
         "--auth=${input:authString}",
+        "--registry=${input:registryString}",
         "insert into google.compute.disks(project, zone, data__name) SELECT '${input:gcpProject}', 'australia-southeast1-a', name || '-newzy2' as name from google.compute.disks where project = '${input:gcpProject}' and zone =  'australia-southeast1-a' limit 2;",
         "-o",
         "json"

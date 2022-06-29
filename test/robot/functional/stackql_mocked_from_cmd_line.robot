@@ -238,7 +238,7 @@ Join GCP Okta Cross Provider
     ...    ${SELECT_CONTRIVED_GCP_OKTA_JOIN}
     ...    ${SELECT_CONTRIVED_GCP_OKTA_JOIN_EXPECTED}
 
-Join GCP Okta Cross Provider JSON Dpendent Keyword in Table Name
+Join GCP Okta Cross Provider JSON Dependent Keyword in Table Name
     Should StackQL Exec Inline Equal
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -303,6 +303,18 @@ Registry List Google Provider
     ...    ${AUTH_CFG_STR}
     ...    ${REGISTRY_GOOGLE_PROVIDER_LIST} 
     ...    ${REGISTRY_GOOGLE_PROVIDER_LIST_EXPECTED}
+
+
+Data Flow Sequential Join Paginated Select Github 
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SELECT_GITHUB_JOIN_DATA_FLOW_SEQUENTIAL} 
+    ...    ${SELECT_GITHUB_JOIN_DATA_FLOW_SEQUENTIAL_EXPECTED}
 
 Basic Query mTLS Returns OK
     Should PG Client Inline Contain

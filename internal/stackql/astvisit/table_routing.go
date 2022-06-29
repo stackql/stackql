@@ -7,23 +7,21 @@ import (
 	"vitess.io/vitess/go/vt/sqlparser"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
-	"github.com/stackql/stackql/internal/stackql/parserutil"
-	"github.com/stackql/stackql/internal/stackql/sqlengine"
+	"github.com/stackql/stackql/internal/stackql/router"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 )
 
 type TableRouteAstVisitor struct {
 	handlerCtx      *handler.HandlerContext
-	router          *parserutil.ParameterRouter
+	router          router.ParameterRouter
 	tableMetaSlice  []*taxonomy.ExtendedTableMetadata
 	tables          taxonomy.TblMap
 	annotations     taxonomy.AnnotationCtxMap
 	annotationSlice []taxonomy.AnnotationCtx
 }
 
-func NewTableRouteAstVisitor(handlerCtx *handler.HandlerContext, router *parserutil.ParameterRouter) *TableRouteAstVisitor {
+func NewTableRouteAstVisitor(handlerCtx *handler.HandlerContext, router router.ParameterRouter) *TableRouteAstVisitor {
 	return &TableRouteAstVisitor{
 		handlerCtx:  handlerCtx,
 		router:      router,
@@ -32,73 +30,12 @@ func NewTableRouteAstVisitor(handlerCtx *handler.HandlerContext, router *parseru
 	}
 }
 
-func obtainAnnotationCtx(
-	sqlEngine sqlengine.SQLEngine,
-	tbl *taxonomy.ExtendedTableMetadata,
-	parameters map[string]interface{},
-) (taxonomy.AnnotationCtx, error) {
-	schema, mediaType, err := tbl.GetResponseSchemaAndMediaType()
-	if err != nil {
-		return taxonomy.AnnotationCtx{}, err
-	}
-	itemObjS, selectItemsKey, err := schema.GetSelectSchema(tbl.LookupSelectItemsKey(), mediaType)
-	unsuitableSchemaMsg := "schema unsuitable for select query"
-	if err != nil {
-		return taxonomy.AnnotationCtx{}, fmt.Errorf(unsuitableSchemaMsg)
-	}
-	tbl.SelectItemsKey = selectItemsKey
-	provStr, _ := tbl.GetProviderStr()
-	svcStr, _ := tbl.GetServiceStr()
-	if itemObjS == nil {
-		return taxonomy.AnnotationCtx{}, fmt.Errorf(unsuitableSchemaMsg)
-	}
-	hIds := dto.NewHeirarchyIdentifiers(provStr, svcStr, itemObjS.GetName(), "")
-	return taxonomy.AnnotationCtx{Schema: itemObjS, HIDs: hIds, TableMeta: tbl, Parameters: parameters}, nil
-}
-
-func (v *TableRouteAstVisitor) addAnnotationCtx(
-	node sqlparser.SQLNode,
-	tbl *taxonomy.ExtendedTableMetadata,
-	parameters map[string]interface{},
-) error {
-	ac, err := obtainAnnotationCtx(v.handlerCtx.SQLEngine, tbl, parameters)
-	if err != nil {
-		return err
-	}
-	v.annotations[node] = ac
-	v.annotationSlice = append(v.annotationSlice, ac)
-	return nil
-}
-
-func (v *TableRouteAstVisitor) analyzeAliasedTable(tb *sqlparser.AliasedTableExpr) (*taxonomy.ExtendedTableMetadata, map[string]interface{}, error) {
+func (v *TableRouteAstVisitor) analyzeAliasedTable(tb *sqlparser.AliasedTableExpr) (taxonomy.AnnotationCtx, error) {
 	switch ex := tb.Expr.(type) {
 	case sqlparser.TableName:
-		err := v.router.Route(tb)
-		if err != nil {
-			return nil, nil, err
-		}
-		tpc := v.router.GetAvailableParameters(tb)
-		hr, remainingParams, err := taxonomy.GetHeirarchyFromStatement(v.handlerCtx, tb, tpc.GetStringified())
-		if err != nil {
-			return nil, nil, err
-		}
-		reconstitutedConsumedParams, err := tpc.ReconstituteConsumedParams(remainingParams)
-		if err != nil {
-			return nil, nil, err
-		}
-		err = v.router.InvalidateParams(reconstitutedConsumedParams)
-		if err != nil {
-			return nil, nil, err
-		}
-		abbreviatedConsumedMap, err := tpc.AbbreviateMap(reconstitutedConsumedParams)
-		if err != nil {
-			return nil, nil, err
-		}
-		m := taxonomy.NewExtendedTableMetadata(hr, taxonomy.GetAliasFromStatement(tb))
-		// v.tables[ex] = m
-		return m, abbreviatedConsumedMap, nil
+		return v.router.Route(tb, v.handlerCtx)
 	default:
-		return nil, nil, fmt.Errorf("table of type '%T' not curently supported", ex)
+		return nil, fmt.Errorf("table of type '%T' not curently supported", ex)
 	}
 }
 
@@ -473,21 +410,18 @@ func (v *TableRouteAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 	case *sqlparser.AliasedTableExpr:
 		if node.Expr != nil {
-			t, params, err := v.analyzeAliasedTable(node)
+			annotation, err := v.analyzeAliasedTable(node)
 			if err != nil {
 				return err
 			}
+			v.annotations[node] = annotation
+			v.annotationSlice = append(v.annotationSlice, annotation)
+			t := annotation.GetTableMeta()
 			if t == nil {
 				return fmt.Errorf("nil table returned")
 			}
 			v.tableMetaSlice = append(v.tableMetaSlice, t)
 			v.tables[node] = t
-			err = v.addAnnotationCtx(node, t, params)
-			if err != nil {
-				return err
-			}
-
-			// node.Expr.Accept(v)
 		}
 		if node.Partitions != nil {
 			node.Partitions.Accept(v)

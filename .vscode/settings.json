@@ -3,5 +3,18 @@
     "*.iql": "sql"
   },
   "cmake.configureOnOpen": false,
-  "go.testFlags": ["-tags", "json1"]
+  "go.testFlags": ["-tags", "json1"],
+  "todohighlight.keywordsPattern": "TODO:|FIXME:|BLOCK|END_BLOCK|(?://.*)\\(([^)]+)\\)", //highlight `TODO:`,`FIXME:` or commented content between parentheses
+  "todohighlight.exclude": [
+    "**/*.json"
+  ],
+  "todohighlight.defaultStyle": {
+      "color": "red",
+      // "backgroundColor": "#ffab00",
+      "overviewRulerColor": "#ffab00",
+      "cursor": "pointer",
+      "border": "1px solid #eee",
+      "borderRadius": "2px",
+      // "isWholeLine": true
+  },
 }

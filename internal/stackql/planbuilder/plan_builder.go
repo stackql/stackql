@@ -15,7 +15,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/plan"
 	"github.com/stackql/stackql/internal/stackql/primitive"
-	"github.com/stackql/stackql/internal/stackql/primitivebuilder"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 	"github.com/stackql/stackql/internal/stackql/util"
 
@@ -29,11 +28,33 @@ var (
 	PlanCacheEnabled string = "true"
 )
 
+type PlanBuilderInput interface {
+	GetAliasedTables() parserutil.TableAliasMap
+	GetAuth() (*sqlparser.Auth, bool)
+	GetAuthRevoke() (*sqlparser.AuthRevoke, bool)
+	GetAssignedAliasedColumns() map[sqlparser.TableName]sqlparser.TableExpr
+	GetColRefs() parserutil.ColTableMap
+	GetDelete() (*sqlparser.Delete, bool)
+	GetDescribeTable() (*sqlparser.DescribeTable, bool)
+	GetExec() (*sqlparser.Exec, bool)
+	GetHandlerCtx() *handler.HandlerContext
+	GetInsert() (*sqlparser.Insert, bool)
+	GetPlaceholderParams() parserutil.ParameterMap
+	GetRegistry() (*sqlparser.Registry, bool)
+	GetSelect() (*sqlparser.Select, bool)
+	GetShow() (*sqlparser.Show, bool)
+	GetSleep() (*sqlparser.Sleep, bool)
+	GetStatement() sqlparser.SQLNode
+	GetTableExprs() sqlparser.TableExprs
+	GetUnion() (*sqlparser.Union, bool)
+	GetUse() (*sqlparser.Use, bool)
+}
+
 func isPlanCacheEnabled() bool {
 	return strings.ToLower(PlanCacheEnabled) != "false"
 }
 
-type PlanBuilderInput struct {
+type StandardPlanBuilderInput struct {
 	handlerCtx             *handler.HandlerContext
 	stmt                   sqlparser.SQLNode
 	colRefs                parserutil.ColTableMap
@@ -52,7 +73,7 @@ func NewPlanBuilderInput(
 	colRefs parserutil.ColTableMap,
 	paramsPlaceheld parserutil.ParameterMap,
 ) PlanBuilderInput {
-	rv := PlanBuilderInput{
+	rv := &StandardPlanBuilderInput{
 		handlerCtx:             handlerCtx,
 		stmt:                   stmt,
 		tables:                 tables,
@@ -67,91 +88,91 @@ func NewPlanBuilderInput(
 	return rv
 }
 
-func (pbi PlanBuilderInput) GetStatement() sqlparser.SQLNode {
+func (pbi *StandardPlanBuilderInput) GetStatement() sqlparser.SQLNode {
 	return pbi.stmt
 }
 
-func (pbi PlanBuilderInput) GetPlaceholderParams() parserutil.ParameterMap {
+func (pbi *StandardPlanBuilderInput) GetPlaceholderParams() parserutil.ParameterMap {
 	return pbi.paramsPlaceheld
 }
 
-func (pbi PlanBuilderInput) GetAssignedAliasedColumns() map[sqlparser.TableName]sqlparser.TableExpr {
+func (pbi *StandardPlanBuilderInput) GetAssignedAliasedColumns() map[sqlparser.TableName]sqlparser.TableExpr {
 	return pbi.assignedAliasedColumns
 }
 
-func (pbi PlanBuilderInput) GetAliasedTables() parserutil.TableAliasMap {
+func (pbi *StandardPlanBuilderInput) GetAliasedTables() parserutil.TableAliasMap {
 	return pbi.aliasedTables
 }
 
-func (pbi PlanBuilderInput) GetColRefs() parserutil.ColTableMap {
+func (pbi *StandardPlanBuilderInput) GetColRefs() parserutil.ColTableMap {
 	return pbi.colRefs
 }
 
-func (pbi PlanBuilderInput) GetTableExprs() sqlparser.TableExprs {
+func (pbi *StandardPlanBuilderInput) GetTableExprs() sqlparser.TableExprs {
 	return pbi.tables
 }
 
-func (pbi PlanBuilderInput) GetAuth() (*sqlparser.Auth, bool) {
+func (pbi *StandardPlanBuilderInput) GetAuth() (*sqlparser.Auth, bool) {
 	rv, ok := pbi.stmt.(*sqlparser.Auth)
 	return rv, ok
 }
 
-func (pbi PlanBuilderInput) GetAuthRevoke() (*sqlparser.AuthRevoke, bool) {
+func (pbi *StandardPlanBuilderInput) GetAuthRevoke() (*sqlparser.AuthRevoke, bool) {
 	rv, ok := pbi.stmt.(*sqlparser.AuthRevoke)
 	return rv, ok
 }
 
-func (pbi PlanBuilderInput) GetDelete() (*sqlparser.Delete, bool) {
+func (pbi *StandardPlanBuilderInput) GetDelete() (*sqlparser.Delete, bool) {
 	rv, ok := pbi.stmt.(*sqlparser.Delete)
 	return rv, ok
 }
 
-func (pbi PlanBuilderInput) GetDescribeTable() (*sqlparser.DescribeTable, bool) {
+func (pbi *StandardPlanBuilderInput) GetDescribeTable() (*sqlparser.DescribeTable, bool) {
 	rv, ok := pbi.stmt.(*sqlparser.DescribeTable)
 	return rv, ok
 }
 
-func (pbi PlanBuilderInput) GetExec() (*sqlparser.Exec, bool) {
+func (pbi *StandardPlanBuilderInput) GetExec() (*sqlparser.Exec, bool) {
 	rv, ok := pbi.stmt.(*sqlparser.Exec)
 	return rv, ok
 }
 
-func (pbi PlanBuilderInput) GetInsert() (*sqlparser.Insert, bool) {
+func (pbi *StandardPlanBuilderInput) GetInsert() (*sqlparser.Insert, bool) {
 	rv, ok := pbi.stmt.(*sqlparser.Insert)
 	return rv, ok
 }
 
-func (pbi PlanBuilderInput) GetRegistry() (*sqlparser.Registry, bool) {
+func (pbi *StandardPlanBuilderInput) GetRegistry() (*sqlparser.Registry, bool) {
 	rv, ok := pbi.stmt.(*sqlparser.Registry)
 	return rv, ok
 }
 
-func (pbi PlanBuilderInput) GetSelect() (*sqlparser.Select, bool) {
+func (pbi *StandardPlanBuilderInput) GetSelect() (*sqlparser.Select, bool) {
 	rv, ok := pbi.stmt.(*sqlparser.Select)
 	return rv, ok
 }
 
-func (pbi PlanBuilderInput) GetShow() (*sqlparser.Show, bool) {
+func (pbi *StandardPlanBuilderInput) GetShow() (*sqlparser.Show, bool) {
 	rv, ok := pbi.stmt.(*sqlparser.Show)
 	return rv, ok
 }
 
-func (pbi PlanBuilderInput) GetSleep() (*sqlparser.Sleep, bool) {
+func (pbi *StandardPlanBuilderInput) GetSleep() (*sqlparser.Sleep, bool) {
 	rv, ok := pbi.stmt.(*sqlparser.Sleep)
 	return rv, ok
 }
 
-func (pbi PlanBuilderInput) GetUnion() (*sqlparser.Union, bool) {
+func (pbi *StandardPlanBuilderInput) GetUnion() (*sqlparser.Union, bool) {
 	rv, ok := pbi.stmt.(*sqlparser.Union)
 	return rv, ok
 }
 
-func (pbi PlanBuilderInput) GetUse() (*sqlparser.Use, bool) {
+func (pbi *StandardPlanBuilderInput) GetUse() (*sqlparser.Use, bool) {
 	rv, ok := pbi.stmt.(*sqlparser.Use)
 	return rv, ok
 }
 
-func (pbi PlanBuilderInput) GetHandlerCtx() *handler.HandlerContext {
+func (pbi *StandardPlanBuilderInput) GetHandlerCtx() *handler.HandlerContext {
 	return pbi.handlerCtx
 }
 
@@ -250,7 +271,7 @@ func (pgb *planGraphBuilder) handleAuth(pbi PlanBuilderInput) error {
 	if authErr != nil {
 		return authErr
 	}
-	pr := primitivebuilder.NewMetaDataPrimitive(
+	pr := primitive.NewMetaDataPrimitive(
 		prov,
 		func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput {
 			authType := strings.ToLower(node.Type)
@@ -287,7 +308,7 @@ func (pgb *planGraphBuilder) handleAuthRevoke(pbi PlanBuilderInput) error {
 	if authErr != nil {
 		return authErr
 	}
-	pr := primitivebuilder.NewMetaDataPrimitive(
+	pr := primitive.NewMetaDataPrimitive(
 		prov,
 		func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput {
 			return dto.NewExecutorOutput(nil, nil, nil, nil, prov.AuthRevoke(authCtx))
@@ -307,7 +328,7 @@ func (pgb *planGraphBuilder) handleDescribe(pbi PlanBuilderInput) error {
 	if err != nil {
 		return err
 	}
-	md, err := primitiveGenerator.PrimitiveBuilder.GetTable(node)
+	md, err := primitiveGenerator.PrimitiveComposer.GetTable(node)
 	if err != nil {
 		return err
 	}
@@ -317,7 +338,7 @@ func (pgb *planGraphBuilder) handleDescribe(pbi PlanBuilderInput) error {
 	}
 	var extended bool = strings.TrimSpace(strings.ToUpper(node.Extended)) == "EXTENDED"
 	var full bool = strings.TrimSpace(strings.ToUpper(node.Full)) == "FULL"
-	pr := primitivebuilder.NewMetaDataPrimitive(
+	pr := primitive.NewMetaDataPrimitive(
 		prov,
 		func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput {
 			return primitiveGenerator.describeInstructionExecutor(handlerCtx, md, extended, full)
@@ -340,7 +361,7 @@ func (pgb *planGraphBuilder) handleSelect(pbi PlanBuilderInput) (*primitivegraph
 			return nil, nil, err
 		}
 		isLocallyExecutable := true
-		for _, val := range primitiveGenerator.PrimitiveBuilder.GetTables() {
+		for _, val := range primitiveGenerator.PrimitiveComposer.GetTables() {
 			isLocallyExecutable = isLocallyExecutable && val.IsLocallyExecutable
 		}
 		if isLocallyExecutable {
@@ -351,10 +372,10 @@ func (pgb *planGraphBuilder) handleSelect(pbi PlanBuilderInput) (*primitivegraph
 			rv := pgb.planGraph.CreatePrimitiveNode(pr)
 			return &rv, &rv, nil
 		}
-		if primitiveGenerator.PrimitiveBuilder.GetBuilder() == nil {
+		if primitiveGenerator.PrimitiveComposer.GetBuilder() == nil {
 			return nil, nil, fmt.Errorf("builder not created for select, cannot proceed")
 		}
-		builder := primitiveGenerator.PrimitiveBuilder.GetBuilder()
+		builder := primitiveGenerator.PrimitiveComposer.GetBuilder()
 		err = builder.Build()
 		if err != nil {
 			return nil, nil, err
@@ -363,7 +384,7 @@ func (pgb *planGraphBuilder) handleSelect(pbi PlanBuilderInput) (*primitivegraph
 		tail := builder.GetTail()
 		return &root, &tail, nil
 	}
-	pr := primitivebuilder.NewLocalPrimitive(nil)
+	pr := primitive.NewLocalPrimitive(nil)
 	rv := pgb.planGraph.CreatePrimitiveNode(pr)
 	return &rv, &rv, nil
 }
@@ -381,13 +402,13 @@ func (pgb *planGraphBuilder) handleUnion(pbi PlanBuilderInput) (*primitivegraph.
 		return nil, nil, err
 	}
 	isLocallyExecutable := true
-	for _, val := range primitiveGenerator.PrimitiveBuilder.GetTables() {
+	for _, val := range primitiveGenerator.PrimitiveComposer.GetTables() {
 		isLocallyExecutable = isLocallyExecutable && val.IsLocallyExecutable
 	}
-	if primitiveGenerator.PrimitiveBuilder.GetBuilder() == nil {
+	if primitiveGenerator.PrimitiveComposer.GetBuilder() == nil {
 		return nil, nil, fmt.Errorf("builder not created for union, cannot proceed")
 	}
-	builder := primitiveGenerator.PrimitiveBuilder.GetBuilder()
+	builder := primitiveGenerator.PrimitiveComposer.GetBuilder()
 	err = builder.Build()
 	if err != nil {
 		return nil, nil, err
@@ -416,7 +437,7 @@ func (pgb *planGraphBuilder) handleDelete(pbi PlanBuilderInput) error {
 		pgb.planGraph.CreatePrimitiveNode(pr)
 		return nil
 	} else {
-		pr := primitivebuilder.NewHTTPRestPrimitive(nil, nil, nil, nil)
+		pr := primitive.NewHTTPRestPrimitive(nil, nil, nil, nil)
 		pgb.planGraph.CreatePrimitiveNode(pr)
 		return nil
 	}
@@ -438,7 +459,7 @@ func (pgb *planGraphBuilder) handleRegistry(pbi PlanBuilderInput) error {
 	if err != nil {
 		return err
 	}
-	pr := primitivebuilder.NewLocalPrimitive(
+	pr := primitive.NewLocalPrimitive(
 		func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput {
 			switch at := strings.ToLower(node.ActionType); at {
 			case "pull":
@@ -546,7 +567,7 @@ func (pgb *planGraphBuilder) handleInsert(pbi PlanBuilderInput) error {
 		pgb.planGraph.NewDependency(*selectPrimitiveNode, prNode, 1.0)
 		return nil
 	} else {
-		pr := primitivebuilder.NewHTTPRestPrimitive(nil, nil, nil, nil)
+		pr := primitive.NewHTTPRestPrimitive(nil, nil, nil, nil)
 		pgb.planGraph.CreatePrimitiveNode(pr)
 		return nil
 	}
@@ -571,7 +592,7 @@ func (pgb *planGraphBuilder) handleExec(pbi PlanBuilderInput) error {
 		}
 		return nil
 	}
-	pr := primitivebuilder.NewHTTPRestPrimitive(nil, nil, nil, nil)
+	pr := primitive.NewHTTPRestPrimitive(nil, nil, nil, nil)
 	pgb.planGraph.CreatePrimitiveNode(pr)
 	return nil
 }
@@ -587,8 +608,8 @@ func (pgb *planGraphBuilder) handleShow(pbi PlanBuilderInput) error {
 	if err != nil {
 		return err
 	}
-	pr := primitivebuilder.NewMetaDataPrimitive(
-		primitiveGenerator.PrimitiveBuilder.GetProvider(),
+	pr := primitive.NewMetaDataPrimitive(
+		primitiveGenerator.PrimitiveComposer.GetProvider(),
 		func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput {
 			return primitiveGenerator.showInstructionExecutor(node, handlerCtx)
 		})
@@ -621,8 +642,8 @@ func (pgb *planGraphBuilder) handleUse(pbi PlanBuilderInput) error {
 	if err != nil {
 		return err
 	}
-	pr := primitivebuilder.NewMetaDataPrimitive(
-		primitiveGenerator.PrimitiveBuilder.GetProvider(),
+	pr := primitive.NewMetaDataPrimitive(
+		primitiveGenerator.PrimitiveComposer.GetProvider(),
 		func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput {
 			handlerCtx.CurrentProvider = node.DBName.GetRawVal()
 			return dto.NewExecutorOutput(nil, nil, nil, nil, nil)
@@ -632,7 +653,7 @@ func (pgb *planGraphBuilder) handleUse(pbi PlanBuilderInput) error {
 }
 
 func createErroneousPlan(handlerCtx *handler.HandlerContext, qPlan *plan.Plan, rowSort func(map[string]map[string]interface{}) []string, err error) (*plan.Plan, error) {
-	qPlan.Instructions = primitivebuilder.NewLocalPrimitive(func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput {
+	qPlan.Instructions = primitive.NewLocalPrimitive(func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput {
 		return util.PrepareResultSet(
 			dto.PrepareResultSetDTO{
 				OutputBody:  nil,
@@ -688,6 +709,7 @@ func BuildPlanFromContext(handlerCtx *handler.HandlerContext) (*plan.Plan, error
 			return nil, createInstructionError
 		}
 	} else {
+		// First pass AST analysis; extract provider strings for auth.
 		provStrSlice := astvisit.ExtractProviderStrings(result.AST)
 		for _, p := range provStrSlice {
 			_, err := handlerCtx.GetProvider(p)
@@ -700,12 +722,29 @@ func BuildPlanFromContext(handlerCtx *handler.HandlerContext) (*plan.Plan, error
 		}
 
 		ast := result.AST
+
+		// Second pass AST analysis; extract provider strings for auth.
+		// Extracts:
+		//   - parser objects representing tables.
+		//   - mapping of string aliases to tables.
 		tVis := astvisit.NewTableExtractAstVisitor()
 		tVis.Visit(ast)
 
+		// Third pass AST analysis.
+		// Accepts slice of parser table objects
+		// extracted from previous analysis.
+		// Extracts:
+		//   - Col Refs; mapping columnar objects to tables.
+		//   - Alias Map; mapping the "TableName" objects
+		//     defining aliases to table objects.
 		aVis := astvisit.NewTableAliasAstVisitor(tVis.GetTables())
 		aVis.Visit(ast)
 
+		// Fourth pass AST analysis.
+		// Extracts:
+		//   - Columnar parameters with null values.
+		//     Useful for method matching.
+		//     Especially for "Insert" queries.
 		tpv := astvisit.NewPlaceholderParamAstVisitor("", false)
 		tpv.Visit(ast)
 

@@ -106,6 +106,14 @@ func ExtractParamsFromWhereClause(node *sqlparser.Where) parserutil.ParameterMap
 	return v.GetParameters()
 }
 
+func ExtractParamsFromFromClause(node sqlparser.TableExprs) parserutil.ParameterMap {
+	v := NewParamAstVisitor("", false)
+	for _, expr := range node {
+		expr.Accept(v)
+	}
+	return v.GetParameters()
+}
+
 func ExtractProviderStrings(node sqlparser.SQLNode) []string {
 	v := NewDRMAstVisitor("", true)
 	node.Accept(v)

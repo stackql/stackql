@@ -9,6 +9,7 @@ import (
 
 	"github.com/jeroenrinzema/psql-wire/pkg/sqldata"
 	"github.com/lib/pq/oid"
+	"github.com/stackql/go-openapistackql/pkg/response"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 
@@ -112,6 +113,17 @@ func ExtractSQLNodeParams(statement sqlparser.SQLNode, insertValOnlyRows map[int
 func TransformSQLRawParameters(input map[string]interface{}) (map[string]interface{}, error) {
 	rv := make(map[string]interface{})
 	for k, v := range input {
+		switch v := v.(type) {
+		case *sqlparser.FuncExpr:
+			log.Infof("%v\n", v)
+			continue
+		case parserutil.ParameterMetadata:
+			switch t := v.GetVal().(type) {
+			case *sqlparser.FuncExpr:
+				log.Infof("%v\n", t)
+				continue
+			}
+		}
 		r, err := extractRaw(v)
 		if err != nil {
 			return nil, err
@@ -166,6 +178,10 @@ func InterfaceToBytes(subject interface{}, isErrorCol bool) []byte {
 		return []byte(fmt.Sprintf(`{ "marshallingError": {"type": "array", "error": "%s"}}`, err.Error()))
 	case nil:
 		return []byte("null")
+	case *response.Response:
+		pb := sub.GetProcessedBody()
+		status := sub.GetHttpResponse().Status
+		return []byte(fmt.Sprintf(`{ "displayError": {"type": "http response", "status": "%s", "body": "%v", }}`, status, pb))
 	default:
 		return []byte(fmt.Sprintf(`{ "displayError": {"type": "%T", "error": "currently unable to represent object of type %T"}}`, subject, subject))
 	}
