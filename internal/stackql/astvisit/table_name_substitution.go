@@ -30,9 +30,13 @@ func (v *TableNameSubstitutionAstVisitor) buildAcquireQueryCtx(
 	ac taxonomy.AnnotationCtx,
 	dc drm.DRMConfig,
 ) (*drm.PreparedStatementCtx, error) {
-	insertTabulation := ac.Schema.Tabulate(false)
+	sc := ac.GetSchema()
+	if sc == nil {
+		return nil, fmt.Errorf("table_name_substitution: cannot build query from nil schema")
+	}
+	insertTabulation := sc.Tabulate(false)
 
-	hIds := ac.HIDs
+	hIds := ac.GetHIDs()
 	log.Infof("%v %v", insertTabulation, hIds)
 
 	annotatedInsertTabulation := util.NewAnnotatedTabulation(insertTabulation, hIds, "")

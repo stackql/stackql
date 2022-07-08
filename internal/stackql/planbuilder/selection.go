@@ -45,19 +45,19 @@ func (p *primitiveGenerator) assembleUnarySelectionBuilder(
 		return err
 	}
 
-	_, err = docparser.OpenapiStackQLTabulationsPersistor(prov, svc, []util.AnnotatedTabulation{annotatedInsertTabulation}, p.PrimitiveBuilder.GetSQLEngine(), prov.Name)
+	_, err = docparser.OpenapiStackQLTabulationsPersistor(prov, svc, []util.AnnotatedTabulation{annotatedInsertTabulation}, p.PrimitiveComposer.GetSQLEngine(), prov.Name)
 	if err != nil {
 		return err
 	}
-	tableDTO, err := p.PrimitiveBuilder.GetDRMConfig().GetCurrentTable(hIds, handlerCtx.SQLEngine)
+	tableDTO, err := p.PrimitiveComposer.GetDRMConfig().GetCurrentTable(hIds, handlerCtx.SQLEngine)
 	if err != nil {
 		return err
 	}
-	insPsc, err := p.PrimitiveBuilder.GetDRMConfig().GenerateInsertDML(annotatedInsertTabulation, dto.NewTxnControlCounters(p.PrimitiveBuilder.GetTxnCounterManager(), tableDTO.GetDiscoveryID()))
+	insPsc, err := p.PrimitiveComposer.GetDRMConfig().GenerateInsertDML(annotatedInsertTabulation, dto.NewTxnControlCounters(p.PrimitiveComposer.GetTxnCounterManager(), tableDTO.GetDiscoveryID()))
 	if err != nil {
 		return err
 	}
-	p.PrimitiveBuilder.SetTxnCtrlCtrs(insPsc.GetGCCtrlCtrs())
+	p.PrimitiveComposer.SetTxnCtrlCtrs(insPsc.GetGCCtrlCtrs())
 	for _, col := range cols {
 		foundSchema := schema.FindByPath(col.Name, nil)
 		cc, ok := method.GetParameter(col.Name)
@@ -72,13 +72,13 @@ func (p *primitiveGenerator) assembleUnarySelectionBuilder(
 		log.Infoln(fmt.Sprintf("schema type = %T", schema))
 	}
 
-	selPsc, err := p.PrimitiveBuilder.GetDRMConfig().GenerateSelectDML(util.NewAnnotatedTabulation(selectTabulation, hIds, tbl.GetAlias()), insPsc.GetGCCtrlCtrs(), astvisit.GenerateModifiedSelectSuffix(node), astvisit.GenerateModifiedWhereClause(rewrittenWhere))
+	selPsc, err := p.PrimitiveComposer.GetDRMConfig().GenerateSelectDML(util.NewAnnotatedTabulation(selectTabulation, hIds, tbl.GetAlias()), insPsc.GetGCCtrlCtrs(), astvisit.GenerateModifiedSelectSuffix(node), astvisit.GenerateModifiedWhereClause(rewrittenWhere))
 	if err != nil {
 		return err
 	}
-	p.PrimitiveBuilder.SetInsertPreparedStatementCtx(insPsc)
-	p.PrimitiveBuilder.SetSelectPreparedStatementCtx(selPsc)
-	p.PrimitiveBuilder.SetColumnOrder(cols)
+	p.PrimitiveComposer.SetInsertPreparedStatementCtx(insPsc)
+	p.PrimitiveComposer.SetSelectPreparedStatementCtx(selPsc)
+	p.PrimitiveComposer.SetColumnOrder(cols)
 	return nil
 }
 

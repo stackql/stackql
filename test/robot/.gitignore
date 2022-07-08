@@ -3,5 +3,5 @@
 *.pyc
 .DS_Store
 log.html
-output.xml
+*output.xml
 report.html

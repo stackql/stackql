@@ -1,0 +1,4789 @@
+paths:
+  /organizations:
+    get:
+      summary: List organizations
+      description: |-
+        Lists all organizations, in the order that they were created on GitHub.
+
+        **Note:** Pagination is powered exclusively by the `since` parameter. Use the [Link header](https://docs.github.com/rest/overview/resources-in-the-rest-api#link-header) to get the URL for the next page of organizations.
+      tags:
+        - orgs
+      operationId: orgs/list
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#list-organizations
+      parameters:
+        - $ref: '#/components/parameters/since-org'
+        - $ref: '#/components/parameters/per-page'
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/organization-simple'
+              examples:
+                default:
+                  $ref: '#/components/examples/organization-simple-items'
+          headers:
+            Link:
+              example: <https://api.github.com/organizations?since=135>; rel="next"
+              schema:
+                type: string
+        '304':
+          $ref: '#/components/responses/not_modified'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: null
+  /organizations/{organization_id}/custom_roles:
+    get:
+      summary: List custom repository roles in an organization
+      description: |-
+        List the custom repository roles available in this organization. In order to see custom
+        repository roles in an organization, the authenticated user must be an organization owner.
+
+        For more information on custom repository roles, see "[Managing custom repository roles for an organization](https://docs.github.com/organizations/managing-peoples-access-to-your-organization-with-roles/managing-custom-repository-roles-for-an-organization)".
+      tags:
+        - orgs
+      operationId: orgs/list-custom-roles
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#list-custom-repository-roles-in-an-organization
+      parameters:
+        - name: organization_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Response - list of custom role names
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_count:
+                    description: The number of custom roles in this organization
+                    example: 3
+                    type: integer
+                  custom_roles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/organization-custom-repository-role'
+              examples:
+                default:
+                  $ref: '#/components/examples/organization-custom-repository-role-example'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: custom_roles
+  /orgs/{org}:
+    get:
+      summary: Get an organization
+      description: |-
+        To see many of the organization response values, you need to be an authenticated organization owner with the `admin:org` scope. When the value of `two_factor_requirement_enabled` is `true`, the organization requires all members, billing managers, and outside collaborators to enable [two-factor authentication](https://docs.github.com/articles/securing-your-account-with-two-factor-authentication-2fa/).
+
+        GitHub Apps with the `Organization plan` permission can use this endpoint to retrieve information about an organization's GitHub plan. See "[Authenticating with GitHub Apps](https://docs.github.com/apps/building-github-apps/authenticating-with-github-apps/)" for details. For an example response, see 'Response with GitHub plan information' below."
+      tags:
+        - orgs
+      operationId: orgs/get
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#get-an-organization
+      parameters:
+        - $ref: '#/components/parameters/org'
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/organization-full'
+              examples:
+                default-response:
+                  $ref: '#/components/examples/organization-full-default-response'
+        '404':
+          $ref: '#/components/responses/not_found'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: null
+    patch:
+      summary: Update an organization
+      description: |-
+        **Parameter Deprecation Notice:** GitHub will replace and discontinue `members_allowed_repository_creation_type` in favor of more granular permissions. The new input parameters are `members_can_create_public_repositories`, `members_can_create_private_repositories` for all organizations and `members_can_create_internal_repositories` for organizations associated with an enterprise account using GitHub Enterprise Cloud or GitHub Enterprise Server 2.20+. For more information, see the [blog post](https://developer.github.com/changes/2019-12-03-internal-visibility-changes).
+
+        Enables an authenticated organization owner with the `admin:org` scope to update the organization's profile and member privileges.
+      tags:
+        - orgs
+      operationId: orgs/update
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs/#update-an-organization
+      parameters:
+        - $ref: '#/components/parameters/org'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                billing_email:
+                  type: string
+                  description: Billing email address. This address is not publicized.
+                company:
+                  type: string
+                  description: The company name.
+                email:
+                  type: string
+                  description: The publicly visible email address.
+                twitter_username:
+                  type: string
+                  description: The Twitter username of the company.
+                location:
+                  type: string
+                  description: The location.
+                name:
+                  type: string
+                  description: The shorthand name of the company.
+                description:
+                  type: string
+                  description: The description of the company.
+                has_organization_projects:
+                  type: boolean
+                  description: Toggles whether an organization can use organization projects.
+                has_repository_projects:
+                  type: boolean
+                  description: Toggles whether repositories that belong to the organization can use repository projects.
+                default_repository_permission:
+                  type: string
+                  description: |-
+                    Default permission level members have for organization repositories:  
+                    \* `read` - can pull, but not push to or administer this repository.  
+                    \* `write` - can pull and push, but not administer this repository.  
+                    \* `admin` - can pull, push, and administer this repository.  
+                    \* `none` - no permissions granted by default.
+                  enum:
+                    - read
+                    - write
+                    - admin
+                    - none
+                  default: read
+                members_can_create_repositories:
+                  type: boolean
+                  description: |-
+                    Toggles the ability of non-admin organization members to create repositories. Can be one of:  
+                    \* `true` - all organization members can create repositories.  
+                    \* `false` - only organization owners can create repositories.  
+                    Default: `true`  
+                    **Note:** A parameter can override this parameter. See `members_allowed_repository_creation_type` in this table for details. **Note:** A parameter can override this parameter. See `members_allowed_repository_creation_type` in this table for details.
+                  default: true
+                members_can_create_internal_repositories:
+                  type: boolean
+                  description: |-
+                    Toggles whether organization members can create internal repositories, which are visible to all enterprise members. You can only allow members to create internal repositories if your organization is associated with an enterprise account using GitHub Enterprise Cloud or GitHub Enterprise Server 2.20+. Can be one of:  
+                    \* `true` - all organization members can create internal repositories.  
+                    \* `false` - only organization owners can create internal repositories.  
+                    Default: `true`. For more information, see "[Restricting repository creation in your organization](https://docs.github.com/github/setting-up-and-managing-organizations-and-teams/restricting-repository-creation-in-your-organization)" in the GitHub Help documentation.
+                members_can_create_private_repositories:
+                  type: boolean
+                  description: |-
+                    Toggles whether organization members can create private repositories, which are visible to organization members with permission. Can be one of:  
+                    \* `true` - all organization members can create private repositories.  
+                    \* `false` - only organization owners can create private repositories.  
+                    Default: `true`. For more information, see "[Restricting repository creation in your organization](https://docs.github.com/github/setting-up-and-managing-organizations-and-teams/restricting-repository-creation-in-your-organization)" in the GitHub Help documentation.
+                members_can_create_public_repositories:
+                  type: boolean
+                  description: |-
+                    Toggles whether organization members can create public repositories, which are visible to anyone. Can be one of:  
+                    \* `true` - all organization members can create public repositories.  
+                    \* `false` - only organization owners can create public repositories.  
+                    Default: `true`. For more information, see "[Restricting repository creation in your organization](https://docs.github.com/github/setting-up-and-managing-organizations-and-teams/restricting-repository-creation-in-your-organization)" in the GitHub Help documentation.
+                members_allowed_repository_creation_type:
+                  type: string
+                  description: |-
+                    Specifies which types of repositories non-admin organization members can create. Can be one of:  
+                    \* `all` - all organization members can create public and private repositories.  
+                    \* `private` - members can create private repositories. This option is only available to repositories that are part of an organization on GitHub Enterprise Cloud.  
+                    \* `none` - only admin members can create repositories.  
+                    **Note:** This parameter is deprecated and will be removed in the future. Its return value ignores internal repositories. Using this parameter overrides values set in `members_can_create_repositories`. See the parameter deprecation notice in the operation description for details.
+                  enum:
+                    - all
+                    - private
+                    - none
+                members_can_create_pages:
+                  type: boolean
+                  description: |-
+                    Toggles whether organization members can create GitHub Pages sites. Can be one of:  
+                    \* `true` - all organization members can create GitHub Pages sites.  
+                    \* `false` - no organization members can create GitHub Pages sites. Existing published sites will not be impacted.
+                  default: true
+                members_can_create_public_pages:
+                  type: boolean
+                  description: |-
+                    Toggles whether organization members can create public GitHub Pages sites. Can be one of:  
+                    \* `true` - all organization members can create public GitHub Pages sites.  
+                    \* `false` - no organization members can create public GitHub Pages sites. Existing published sites will not be impacted.
+                  default: true
+                members_can_create_private_pages:
+                  type: boolean
+                  description: |-
+                    Toggles whether organization members can create private GitHub Pages sites. Can be one of:  
+                    \* `true` - all organization members can create private GitHub Pages sites.  
+                    \* `false` - no organization members can create private GitHub Pages sites. Existing published sites will not be impacted.
+                  default: true
+                members_can_fork_private_repositories:
+                  type: boolean
+                  description: |-
+                    Toggles whether organization members can fork private organization repositories. Can be one of:  
+                    \* `true` - all organization members can fork private repositories within the organization.  
+                    \* `false` - no organization members can fork private repositories within the organization.
+                  default: false
+                blog:
+                  type: string
+                  example: '"http://github.blog"'
+            example:
+              billing_email: mona@github.com
+              company: GitHub
+              email: mona@github.com
+              twitter_username: github
+              location: San Francisco
+              name: github
+              description: GitHub, the company.
+              default_repository_permission: read
+              members_can_create_repositories: true
+              members_allowed_repository_creation_type: all
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/organization-full'
+              examples:
+                default:
+                  $ref: '#/components/examples/organization-full'
+        '409':
+          $ref: '#/components/responses/conflict'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/validation-error'
+                  - $ref: '#/components/schemas/validation-error-simple'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: null
+  /orgs/{org}/audit-log:
+    get:
+      summary: Get the audit log for an organization
+      description: |-
+        Gets the audit log for an organization. For more information, see "[Reviewing the audit log for your organization](https://docs.github.com/github/setting-up-and-managing-organizations-and-teams/reviewing-the-audit-log-for-your-organization)."
+
+        This endpoint is available for organizations on GitHub Enterprise Cloud. To use this endpoint, you must be an organization owner, and you must use an access token with the `admin:org` scope. GitHub Apps must have the `organization_administration` read permission to use this endpoint.
+      operationId: orgs/get-audit-log
+      tags:
+        - orgs
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#get-audit-log
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/audit-log-phrase'
+        - $ref: '#/components/parameters/audit-log-include'
+        - $ref: '#/components/parameters/audit-log-after'
+        - $ref: '#/components/parameters/audit-log-before'
+        - $ref: '#/components/parameters/audit-log-order'
+        - $ref: '#/components/parameters/per-page'
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/audit-log-event'
+              examples:
+                default:
+                  $ref: '#/components/examples/audit-log'
+      x-github:
+        githubCloudOnly: true
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: null
+  /orgs/{org}/blocks:
+    get:
+      summary: List users blocked by an organization
+      description: List the users blocked by an organization.
+      tags:
+        - orgs
+      operationId: orgs/list-blocked-users
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#list-users-blocked-by-an-organization
+      parameters:
+        - $ref: '#/components/parameters/org'
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/simple-user'
+              examples:
+                default:
+                  $ref: '#/components/examples/simple-user-items'
+        '415':
+          $ref: '#/components/responses/preview_header_missing'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: blocking
+  /orgs/{org}/blocks/{username}:
+    get:
+      summary: Check if a user is blocked by an organization
+      description: ''
+      tags:
+        - orgs
+      operationId: orgs/check-blocked-user
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#check-if-a-user-is-blocked-by-an-organization
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/username'
+      responses:
+        '204':
+          description: 'If the user is blocked:'
+        '404':
+          description: 'If the user is not blocked:'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/basic-error'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: blocking
+    put:
+      summary: Block a user from an organization
+      description: ''
+      tags:
+        - orgs
+      operationId: orgs/block-user
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#block-a-user-from-an-organization
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/username'
+      responses:
+        '204':
+          description: Response
+        '422':
+          $ref: '#/components/responses/validation_failed'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: blocking
+    delete:
+      summary: Unblock a user from an organization
+      description: ''
+      tags:
+        - orgs
+      operationId: orgs/unblock-user
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#unblock-a-user-from-an-organization
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/username'
+      responses:
+        '204':
+          description: Response
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: blocking
+  /orgs/{org}/credential-authorizations:
+    get:
+      summary: List SAML SSO authorizations for an organization
+      description: |-
+        Listing and deleting credential authorizations is available to organizations with GitHub Enterprise Cloud. For more information, see [GitHub's products](https://docs.github.com/github/getting-started-with-github/githubs-products).
+
+        An authenticated organization owner with the `read:org` scope can list all credential authorizations for an organization that uses SAML single sign-on (SSO). The credentials are either personal access tokens or SSH keys that organization members have authorized for the organization. For more information, see [About authentication with SAML single sign-on](https://docs.github.com/en/articles/about-authentication-with-saml-single-sign-on).
+      tags:
+        - orgs
+      operationId: orgs/list-saml-sso-authorizations
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#list-saml-sso-authorizations-for-an-organization
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/per-page'
+        - name: page
+          description: Page token
+          in: query
+          schema:
+            type: integer
+        - name: login
+          description: Limits the list of credentials authorizations for an organization to a specific login
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/credential-authorization'
+              examples:
+                default:
+                  $ref: '#/components/examples/credential-authorization-items'
+      x-github:
+        githubCloudOnly: true
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: null
+  /orgs/{org}/credential-authorizations/{credential_id}:
+    delete:
+      summary: Remove a SAML SSO authorization for an organization
+      description: |-
+        Listing and deleting credential authorizations is available to organizations with GitHub Enterprise Cloud. For more information, see [GitHub's products](https://docs.github.com/github/getting-started-with-github/githubs-products).
+
+        An authenticated organization owner with the `admin:org` scope can remove a credential authorization for an organization that uses SAML SSO. Once you remove someone's credential authorization, they will need to create a new personal access token or SSH key and authorize it for the organization they want to access.
+      tags:
+        - orgs
+      operationId: orgs/remove-saml-sso-authorization
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#remove-a-saml-sso-authorization-for-an-organization
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - name: credential_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Response
+        '404':
+          $ref: '#/components/responses/not_found'
+      x-github:
+        githubCloudOnly: true
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: null
+  /orgs/{org}/failed_invitations:
+    get:
+      summary: List failed organization invitations
+      description: The return hash contains `failed_at` and `failed_reason` fields which represent the time at which the invitation failed and the reason for the failure.
+      tags:
+        - orgs
+      operationId: orgs/list-failed-invitations
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#list-failed-organization-invitations
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/per-page'
+        - $ref: '#/components/parameters/page'
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/organization-invitation'
+              examples:
+                default:
+                  $ref: '#/components/examples/organization-invitation-items'
+          headers:
+            Link:
+              $ref: '#/components/headers/link'
+        '404':
+          $ref: '#/components/responses/not_found'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: members
+  /orgs/{org}/hooks:
+    get:
+      summary: List organization webhooks
+      description: ''
+      tags:
+        - orgs
+      operationId: orgs/list-webhooks
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#list-organization-webhooks
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/per-page'
+        - $ref: '#/components/parameters/page'
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/org-hook'
+              examples:
+                default:
+                  $ref: '#/components/examples/org-hook-items'
+          headers:
+            Link:
+              $ref: '#/components/headers/link'
+        '404':
+          $ref: '#/components/responses/not_found'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: webhooks
+    post:
+      summary: Create an organization webhook
+      description: 'Here''s how you can create a hook that posts payloads in JSON format:'
+      tags:
+        - orgs
+      operationId: orgs/create-webhook
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#create-an-organization-webhook
+      parameters:
+        - $ref: '#/components/parameters/org'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Must be passed as "web".
+                config:
+                  type: object
+                  description: Key/value pairs to provide settings for this webhook. [These are defined below](https://docs.github.com/rest/reference/orgs#create-hook-config-params).
+                  properties:
+                    url:
+                      $ref: '#/components/schemas/webhook-config-url'
+                    content_type:
+                      $ref: '#/components/schemas/webhook-config-content-type'
+                    secret:
+                      $ref: '#/components/schemas/webhook-config-secret'
+                    insecure_ssl:
+                      $ref: '#/components/schemas/webhook-config-insecure-ssl'
+                    username:
+                      type: string
+                      example: '"kdaigle"'
+                    password:
+                      type: string
+                      example: '"password"'
+                  required:
+                    - url
+                events:
+                  type: array
+                  description: Determines what [events](https://docs.github.com/webhooks/event-payloads) the hook is triggered for.
+                  default:
+                    - push
+                  items:
+                    type: string
+                active:
+                  type: boolean
+                  description: Determines if notifications are sent when the webhook is triggered. Set to `true` to send notifications.
+                  default: true
+              required:
+                - name
+                - config
+            example:
+              name: web
+              active: true
+              events:
+                - push
+                - pull_request
+              config:
+                url: http://example.com/webhook
+                content_type: json
+      responses:
+        '201':
+          description: Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/org-hook'
+              examples:
+                default:
+                  $ref: '#/components/examples/org-hook'
+          headers:
+            Location:
+              example: https://api.github.com/orgs/octocat/hooks/1
+              schema:
+                type: string
+        '404':
+          $ref: '#/components/responses/not_found'
+        '422':
+          $ref: '#/components/responses/validation_failed'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: webhooks
+  /orgs/{org}/hooks/{hook_id}:
+    get:
+      summary: Get an organization webhook
+      description: Returns a webhook configured in an organization. To get only the webhook `config` properties, see "[Get a webhook configuration for an organization](/rest/reference/orgs#get-a-webhook-configuration-for-an-organization)."
+      tags:
+        - orgs
+      operationId: orgs/get-webhook
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#get-an-organization-webhook
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/hook-id'
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/org-hook'
+              examples:
+                default:
+                  $ref: '#/components/examples/org-hook'
+        '404':
+          $ref: '#/components/responses/not_found'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: webhooks
+    patch:
+      summary: Update an organization webhook
+      description: Updates a webhook configured in an organization. When you update a webhook, the `secret` will be overwritten. If you previously had a `secret` set, you must provide the same `secret` or set a new `secret` or the secret will be removed. If you are only updating individual webhook `config` properties, use "[Update a webhook configuration for an organization](/rest/reference/orgs#update-a-webhook-configuration-for-an-organization)."
+      tags:
+        - orgs
+      operationId: orgs/update-webhook
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#update-an-organization-webhook
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/hook-id'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                config:
+                  type: object
+                  description: Key/value pairs to provide settings for this webhook. [These are defined below](https://docs.github.com/rest/reference/orgs#update-hook-config-params).
+                  properties:
+                    url:
+                      $ref: '#/components/schemas/webhook-config-url'
+                    content_type:
+                      $ref: '#/components/schemas/webhook-config-content-type'
+                    secret:
+                      $ref: '#/components/schemas/webhook-config-secret'
+                    insecure_ssl:
+                      $ref: '#/components/schemas/webhook-config-insecure-ssl'
+                  required:
+                    - url
+                events:
+                  type: array
+                  description: Determines what [events](https://docs.github.com/webhooks/event-payloads) the hook is triggered for.
+                  default:
+                    - push
+                  items:
+                    type: string
+                active:
+                  type: boolean
+                  description: Determines if notifications are sent when the webhook is triggered. Set to `true` to send notifications.
+                  default: true
+                name:
+                  type: string
+                  example: '"web"'
+            example:
+              active: true
+              events:
+                - pull_request
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/org-hook'
+              examples:
+                default:
+                  $ref: '#/components/examples/org-hook-2'
+        '404':
+          $ref: '#/components/responses/not_found'
+        '422':
+          $ref: '#/components/responses/validation_failed'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: webhooks
+    delete:
+      summary: Delete an organization webhook
+      description: ''
+      tags:
+        - orgs
+      operationId: orgs/delete-webhook
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#delete-an-organization-webhook
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/hook-id'
+      responses:
+        '204':
+          description: Response
+        '404':
+          $ref: '#/components/responses/not_found'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: webhooks
+  /orgs/{org}/hooks/{hook_id}/config:
+    get:
+      summary: Get a webhook configuration for an organization
+      description: |-
+        Returns the webhook configuration for an organization. To get more information about the webhook, including the `active` state and `events`, use "[Get an organization webhook ](/rest/reference/orgs#get-an-organization-webhook)."
+
+        Access tokens must have the `admin:org_hook` scope, and GitHub Apps must have the `organization_hooks:read` permission.
+      tags:
+        - orgs
+      operationId: orgs/get-webhook-config-for-org
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#get-a-webhook-configuration-for-an-organization
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/hook-id'
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/webhook-config'
+              examples:
+                default:
+                  $ref: '#/components/examples/webhook-config'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: webhooks
+    patch:
+      summary: Update a webhook configuration for an organization
+      description: |-
+        Updates the webhook configuration for an organization. To update more information about the webhook, including the `active` state and `events`, use "[Update an organization webhook ](/rest/reference/orgs#update-an-organization-webhook)."
+
+        Access tokens must have the `admin:org_hook` scope, and GitHub Apps must have the `organization_hooks:write` permission.
+      tags:
+        - orgs
+      operationId: orgs/update-webhook-config-for-org
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#update-a-webhook-configuration-for-an-organization
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/hook-id'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  $ref: '#/components/schemas/webhook-config-url'
+                content_type:
+                  $ref: '#/components/schemas/webhook-config-content-type'
+                secret:
+                  $ref: '#/components/schemas/webhook-config-secret'
+                insecure_ssl:
+                  $ref: '#/components/schemas/webhook-config-insecure-ssl'
+              example:
+                content_type: json
+                insecure_ssl: '0'
+                secret: '********'
+                url: https://example.com/webhook
+              additionalProperties: false
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/webhook-config'
+              examples:
+                default:
+                  $ref: '#/components/examples/webhook-config'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: webhooks
+  /orgs/{org}/hooks/{hook_id}/deliveries:
+    get:
+      summary: List deliveries for an organization webhook
+      description: Returns a list of webhook deliveries for a webhook configured in an organization.
+      tags:
+        - orgs
+      operationId: orgs/list-webhook-deliveries
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#list-deliveries-for-an-organization-webhook
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/hook-id'
+        - $ref: '#/components/parameters/per-page'
+        - $ref: '#/components/parameters/cursor'
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/hook-delivery-item'
+              examples:
+                default:
+                  $ref: '#/components/examples/hook-delivery-items'
+        '400':
+          $ref: '#/components/responses/bad_request'
+        '422':
+          $ref: '#/components/responses/validation_failed'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: webhooks
+  /orgs/{org}/hooks/{hook_id}/deliveries/{delivery_id}:
+    get:
+      summary: Get a webhook delivery for an organization webhook
+      description: Returns a delivery for a webhook configured in an organization.
+      tags:
+        - orgs
+      operationId: orgs/get-webhook-delivery
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#get-a-webhook-delivery-for-an-organization-webhook
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/hook-id'
+        - $ref: '#/components/parameters/delivery-id'
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/hook-delivery'
+              examples:
+                default:
+                  $ref: '#/components/examples/hook-delivery'
+        '400':
+          $ref: '#/components/responses/bad_request'
+        '422':
+          $ref: '#/components/responses/validation_failed'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: webhooks
+  /orgs/{org}/hooks/{hook_id}/deliveries/{delivery_id}/attempts:
+    post:
+      summary: Redeliver a delivery for an organization webhook
+      description: Redeliver a delivery for a webhook configured in an organization.
+      tags:
+        - orgs
+      operationId: orgs/redeliver-webhook-delivery
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#redeliver-a-delivery-for-an-organization-webhook
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/hook-id'
+        - $ref: '#/components/parameters/delivery-id'
+      responses:
+        '202':
+          $ref: '#/components/responses/accepted'
+        '400':
+          $ref: '#/components/responses/bad_request'
+        '422':
+          $ref: '#/components/responses/validation_failed'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: webhooks
+  /orgs/{org}/hooks/{hook_id}/pings:
+    post:
+      summary: Ping an organization webhook
+      description: This will trigger a [ping event](https://docs.github.com/webhooks/#ping-event) to be sent to the hook.
+      tags:
+        - orgs
+      operationId: orgs/ping-webhook
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#ping-an-organization-webhook
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/hook-id'
+      responses:
+        '204':
+          description: Response
+        '404':
+          $ref: '#/components/responses/not_found'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: webhooks
+  /orgs/{org}/installations:
+    get:
+      summary: List app installations for an organization
+      description: Lists all GitHub Apps in an organization. The installation count includes all GitHub Apps installed on repositories in the organization. You must be an organization owner with `admin:read` scope to use this endpoint.
+      tags:
+        - orgs
+      operationId: orgs/list-app-installations
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#list-app-installations-for-an-organization
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/per-page'
+        - $ref: '#/components/parameters/page'
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - total_count
+                  - installations
+                properties:
+                  total_count:
+                    type: integer
+                  installations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/installation'
+              examples:
+                default:
+                  $ref: '#/components/examples/installation-paginated'
+          headers:
+            Link:
+              $ref: '#/components/headers/link'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: null
+  /orgs/{org}/invitations:
+    get:
+      summary: List pending organization invitations
+      description: 'The return hash contains a `role` field which refers to the Organization Invitation role and will be one of the following values: `direct_member`, `admin`, `billing_manager`, `hiring_manager`, or `reinstate`. If the invitee is not a GitHub member, the `login` field in the return hash will be `null`.'
+      tags:
+        - orgs
+      operationId: orgs/list-pending-invitations
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#list-pending-organization-invitations
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/per-page'
+        - $ref: '#/components/parameters/page'
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/organization-invitation'
+              examples:
+                default:
+                  $ref: '#/components/examples/organization-invitation-items'
+          headers:
+            Link:
+              $ref: '#/components/headers/link'
+        '404':
+          $ref: '#/components/responses/not_found'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: members
+    post:
+      summary: Create an organization invitation
+      description: |-
+        Invite people to an organization by using their GitHub user ID or their email address. In order to create invitations in an organization, the authenticated user must be an organization owner.
+
+        This endpoint triggers [notifications](https://docs.github.com/en/github/managing-subscriptions-and-notifications-on-github/about-notifications). Creating content too quickly using this endpoint may result in secondary rate limiting. See "[Secondary rate limits](https://docs.github.com/rest/overview/resources-in-the-rest-api#secondary-rate-limits)" and "[Dealing with secondary rate limits](https://docs.github.com/rest/guides/best-practices-for-integrators#dealing-with-secondary-rate-limits)" for details.
+      tags:
+        - orgs
+      operationId: orgs/create-invitation
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#create-an-organization-invitation
+      parameters:
+        - $ref: '#/components/parameters/org'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                invitee_id:
+                  type: integer
+                  description: '**Required unless you provide `email`**. GitHub user ID for the person you are inviting.'
+                email:
+                  type: string
+                  description: '**Required unless you provide `invitee_id`**. Email address of the person you are inviting, which can be an existing GitHub user.'
+                role:
+                  type: string
+                  description: |-
+                    Specify role for new member. Can be one of:  
+                    \* `admin` - Organization owners with full administrative rights to the organization and complete access to all repositories and teams.  
+                    \* `direct_member` - Non-owner organization members with ability to see other members and join teams by invitation.  
+                    \* `billing_manager` - Non-owner organization members with ability to manage the billing settings of your organization.
+                  enum:
+                    - admin
+                    - direct_member
+                    - billing_manager
+                  default: direct_member
+                team_ids:
+                  type: array
+                  description: Specify IDs for the teams you want to invite new members to.
+                  items:
+                    type: integer
+            example:
+              email: octocat@github.com
+              role: direct_member
+              team_ids:
+                - 12
+                - 26
+      responses:
+        '201':
+          description: Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/organization-invitation'
+              examples:
+                default:
+                  $ref: '#/components/examples/organization-invitation'
+        '404':
+          $ref: '#/components/responses/not_found'
+        '422':
+          $ref: '#/components/responses/validation_failed'
+      x-github:
+        triggersNotification: true
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: members
+  /orgs/{org}/invitations/{invitation_id}:
+    delete:
+      summary: Cancel an organization invitation
+      description: |-
+        Cancel an organization invitation. In order to cancel an organization invitation, the authenticated user must be an organization owner.
+
+        This endpoint triggers [notifications](https://docs.github.com/en/github/managing-subscriptions-and-notifications-on-github/about-notifications).
+      tags:
+        - orgs
+      operationId: orgs/cancel-invitation
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#cancel-an-organization-invitation
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/invitation-id'
+      responses:
+        '204':
+          description: Response
+        '404':
+          $ref: '#/components/responses/not_found'
+        '422':
+          $ref: '#/components/responses/validation_failed'
+      x-github:
+        triggersNotification: true
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: members
+  /orgs/{org}/invitations/{invitation_id}/teams:
+    get:
+      summary: List organization invitation teams
+      description: List all teams associated with an invitation. In order to see invitations in an organization, the authenticated user must be an organization owner.
+      tags:
+        - orgs
+      operationId: orgs/list-invitation-teams
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#list-organization-invitation-teams
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/invitation-id'
+        - $ref: '#/components/parameters/per-page'
+        - $ref: '#/components/parameters/page'
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/team'
+              examples:
+                default:
+                  $ref: '#/components/examples/team-items'
+          headers:
+            Link:
+              $ref: '#/components/headers/link'
+        '404':
+          $ref: '#/components/responses/not_found'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: members
+  /orgs/{org}/members:
+    get:
+      summary: List organization members
+      description: List all users who are members of an organization. If the authenticated user is also a member of this organization then both concealed and public members will be returned.
+      tags:
+        - orgs
+      operationId: orgs/list-members
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#list-organization-members
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - name: filter
+          description: |-
+            Filter members returned in the list. Can be one of:  
+            \* `2fa_disabled` - Members without [two-factor authentication](https://github.com/blog/1614-two-factor-authentication) enabled. Available for organization owners.  
+            \* `all` - All members the authenticated user can see.
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - 2fa_disabled
+              - all
+            default: all
+        - name: role
+          description: |-
+            Filter members returned by their role. Can be one of:  
+            \* `all` - All members of the organization, regardless of role.  
+            \* `admin` - Organization owners.  
+            \* `member` - Non-owner organization members.
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - all
+              - admin
+              - member
+            default: all
+        - $ref: '#/components/parameters/per-page'
+        - $ref: '#/components/parameters/page'
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/simple-user'
+              examples:
+                default:
+                  $ref: '#/components/examples/simple-user-items'
+          headers:
+            Link:
+              $ref: '#/components/headers/link'
+        '302':
+          description: Response if requester is not an organization member
+          headers:
+            Location:
+              example: https://api.github.com/orgs/github/public_members
+              schema:
+                type: string
+        '422':
+          $ref: '#/components/responses/validation_failed'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: members
+  /orgs/{org}/members/{username}:
+    get:
+      summary: Check organization membership for a user
+      description: Check if a user is, publicly or privately, a member of the organization.
+      tags:
+        - orgs
+      operationId: orgs/check-membership-for-user
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#check-organization-membership-for-a-user
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/username'
+      responses:
+        '204':
+          description: Response if requester is an organization member and user is a member
+        '302':
+          description: Response if requester is not an organization member
+          headers:
+            Location:
+              example: https://api.github.com/orgs/github/public_members/pezra
+              schema:
+                type: string
+        '404':
+          description: Not Found if requester is an organization member and user is not a member
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: members
+    delete:
+      summary: Remove an organization member
+      description: Removing a user from this list will remove them from all teams and they will no longer have any access to the organization's repositories.
+      tags:
+        - orgs
+      operationId: orgs/remove-member
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#remove-an-organization-member
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/username'
+      responses:
+        '204':
+          description: Response
+        '403':
+          $ref: '#/components/responses/forbidden'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: members
+  /orgs/{org}/memberships/{username}:
+    get:
+      summary: Get organization membership for a user
+      description: In order to get a user's membership with an organization, the authenticated user must be an organization member. The `state` parameter in the response can be used to identify the user's membership status.
+      tags:
+        - orgs
+      operationId: orgs/get-membership-for-user
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#get-organization-membership-for-a-user
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/username'
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/org-membership'
+              examples:
+                response-if-user-has-an-active-admin-membership-with-organization:
+                  $ref: '#/components/examples/org-membership-response-if-user-has-an-active-admin-membership-with-organization'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/not_found'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: members
+    put:
+      summary: Set organization membership for a user
+      description: |-
+        Only authenticated organization owners can add a member to the organization or update the member's role.
+
+        *   If the authenticated user is _adding_ a member to the organization, the invited user will receive an email inviting them to the organization. The user's [membership status](https://docs.github.com/rest/reference/orgs#get-organization-membership-for-a-user) will be `pending` until they accept the invitation.
+            
+        *   Authenticated users can _update_ a user's membership by passing the `role` parameter. If the authenticated user changes a member's role to `admin`, the affected user will receive an email notifying them that they've been made an organization owner. If the authenticated user changes an owner's role to `member`, no email will be sent.
+
+        **Rate limits**
+
+        To prevent abuse, the authenticated user is limited to 50 organization invitations per 24 hour period. If the organization is more than one month old or on a paid plan, the limit is 500 invitations per 24 hour period.
+      tags:
+        - orgs
+      operationId: orgs/set-membership-for-user
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#set-organization-membership-for-a-user
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/username'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role:
+                  type: string
+                  description: |-
+                    The role to give the user in the organization. Can be one of:  
+                    \* `admin` - The user will become an owner of the organization.  
+                    \* `member` - The user will become a non-owner member of the organization.
+                  enum:
+                    - admin
+                    - member
+                  default: member
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/org-membership'
+              examples:
+                response-if-user-already-had-membership-with-organization:
+                  $ref: '#/components/examples/org-membership-response-if-user-has-an-active-admin-membership-with-organization'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '422':
+          $ref: '#/components/responses/validation_failed'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: members
+    delete:
+      summary: Remove organization membership for a user
+      description: |-
+        In order to remove a user's membership with an organization, the authenticated user must be an organization owner.
+
+        If the specified user is an active member of the organization, this will remove them from the organization. If the specified user has been invited to the organization, this will cancel their invitation. The specified user will receive an email notification in both cases.
+      tags:
+        - orgs
+      operationId: orgs/remove-membership-for-user
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#remove-organization-membership-for-a-user
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/username'
+      responses:
+        '204':
+          description: Response
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/not_found'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: members
+  /orgs/{org}/outside_collaborators:
+    get:
+      summary: List outside collaborators for an organization
+      description: List all users who are outside collaborators of an organization.
+      tags:
+        - orgs
+      operationId: orgs/list-outside-collaborators
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#list-outside-collaborators-for-an-organization
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - name: filter
+          description: |-
+            Filter the list of outside collaborators. Can be one of:  
+            \* `2fa_disabled`: Outside collaborators without [two-factor authentication](https://github.com/blog/1614-two-factor-authentication) enabled.  
+            \* `all`: All outside collaborators.
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - 2fa_disabled
+              - all
+            default: all
+        - $ref: '#/components/parameters/per-page'
+        - $ref: '#/components/parameters/page'
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/simple-user'
+              examples:
+                default:
+                  $ref: '#/components/examples/simple-user-items'
+          headers:
+            Link:
+              $ref: '#/components/headers/link'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: outside-collaborators
+  /orgs/{org}/outside_collaborators/{username}:
+    put:
+      summary: Convert an organization member to outside collaborator
+      description: When an organization member is converted to an outside collaborator, they'll only have access to the repositories that their current team membership allows. The user will no longer be a member of the organization. For more information, see "[Converting an organization member to an outside collaborator](https://docs.github.com/articles/converting-an-organization-member-to-an-outside-collaborator/)".
+      tags:
+        - orgs
+      operationId: orgs/convert-member-to-outside-collaborator
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#convert-an-organization-member-to-outside-collaborator
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/username'
+      responses:
+        '202':
+          description: User is getting converted asynchronously
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+                additionalProperties: false
+        '204':
+          description: User was converted
+        '403':
+          description: Forbidden if user is the last owner of the organization or not a member of the organization
+        '404':
+          $ref: '#/components/responses/not_found'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: outside-collaborators
+    delete:
+      summary: Remove outside collaborator from an organization
+      description: Removing a user from this list will remove them from all the organization's repositories.
+      tags:
+        - orgs
+      operationId: orgs/remove-outside-collaborator
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#remove-outside-collaborator-from-an-organization
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/username'
+      responses:
+        '204':
+          description: Response
+        '422':
+          description: Unprocessable Entity if user is a member of the organization
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  documentation_url:
+                    type: string
+              examples:
+                response-if-user-is-a-member-of-the-organization:
+                  value:
+                    message: You cannot specify an organization member to remove as an outside collaborator.
+                    documentation_url: https://docs.github.com/rest/reference/orgs#remove-outside-collaborator
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: outside-collaborators
+  /orgs/{org}/public_members:
+    get:
+      summary: List public organization members
+      description: Members of an organization can choose to have their membership publicized or not.
+      tags:
+        - orgs
+      operationId: orgs/list-public-members
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#list-public-organization-members
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/per-page'
+        - $ref: '#/components/parameters/page'
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/simple-user'
+              examples:
+                default:
+                  $ref: '#/components/examples/simple-user-items'
+          headers:
+            Link:
+              $ref: '#/components/headers/link'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: members
+  /orgs/{org}/public_members/{username}:
+    get:
+      summary: Check public organization membership for a user
+      description: ''
+      tags:
+        - orgs
+      operationId: orgs/check-public-membership-for-user
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#check-public-organization-membership-for-a-user
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/username'
+      responses:
+        '204':
+          description: Response if user is a public member
+        '404':
+          description: Not Found if user is not a public member
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: members
+    put:
+      summary: Set public organization membership for the authenticated user
+      description: |-
+        The user can publicize their own membership. (A user cannot publicize the membership for another user.)
+
+        Note that you'll need to set `Content-Length` to zero when calling out to this endpoint. For more information, see "[HTTP verbs](https://docs.github.com/rest/overview/resources-in-the-rest-api#http-verbs)."
+      tags:
+        - orgs
+      operationId: orgs/set-public-membership-for-authenticated-user
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#set-public-organization-membership-for-the-authenticated-user
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/username'
+      responses:
+        '204':
+          description: Response
+        '403':
+          $ref: '#/components/responses/forbidden'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: false
+        category: orgs
+        subcategory: members
+    delete:
+      summary: Remove public organization membership for the authenticated user
+      description: ''
+      tags:
+        - orgs
+      operationId: orgs/remove-public-membership-for-authenticated-user
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#remove-public-organization-membership-for-the-authenticated-user
+      parameters:
+        - $ref: '#/components/parameters/org'
+        - $ref: '#/components/parameters/username'
+      responses:
+        '204':
+          description: Response
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: false
+        category: orgs
+        subcategory: members
+  /user/memberships/orgs:
+    get:
+      summary: List organization memberships for the authenticated user
+      description: ''
+      tags:
+        - orgs
+      operationId: orgs/list-memberships-for-authenticated-user
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#list-organization-memberships-for-the-authenticated-user
+      parameters:
+        - name: state
+          description: Indicates the state of the memberships to return. Can be either `active` or `pending`. If not specified, the API returns both active and pending memberships.
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - active
+              - pending
+        - $ref: '#/components/parameters/per-page'
+        - $ref: '#/components/parameters/page'
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/org-membership'
+              examples:
+                default:
+                  $ref: '#/components/examples/org-membership-items'
+          headers:
+            Link:
+              $ref: '#/components/headers/link'
+        '304':
+          $ref: '#/components/responses/not_modified'
+        '401':
+          $ref: '#/components/responses/requires_authentication'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '422':
+          $ref: '#/components/responses/validation_failed'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: false
+        category: orgs
+        subcategory: members
+  /user/memberships/orgs/{org}:
+    get:
+      summary: Get an organization membership for the authenticated user
+      description: ''
+      tags:
+        - orgs
+      operationId: orgs/get-membership-for-authenticated-user
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#get-an-organization-membership-for-the-authenticated-user
+      parameters:
+        - $ref: '#/components/parameters/org'
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/org-membership'
+              examples:
+                default:
+                  $ref: '#/components/examples/org-membership'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/not_found'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: false
+        category: orgs
+        subcategory: members
+    patch:
+      summary: Update an organization membership for the authenticated user
+      description: ''
+      tags:
+        - orgs
+      operationId: orgs/update-membership-for-authenticated-user
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#update-an-organization-membership-for-the-authenticated-user
+      parameters:
+        - $ref: '#/components/parameters/org'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                state:
+                  type: string
+                  description: The state that the membership should be in. Only `"active"` will be accepted.
+                  enum:
+                    - active
+              required:
+                - state
+            example:
+              state: active
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/org-membership'
+              examples:
+                default:
+                  $ref: '#/components/examples/org-membership-2'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/not_found'
+        '422':
+          $ref: '#/components/responses/validation_failed'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: false
+        category: orgs
+        subcategory: members
+  /user/orgs:
+    get:
+      summary: List organizations for the authenticated user
+      description: |-
+        List organizations for the authenticated user.
+
+        **OAuth scope requirements**
+
+        This only lists organizations that your authorization allows you to operate on in some way (e.g., you can list teams with `read:org` scope, you can publicize your organization membership with `user` scope, etc.). Therefore, this API requires at least `user` or `read:org` scope. OAuth requests with insufficient scope receive a `403 Forbidden` response.
+      tags:
+        - orgs
+      operationId: orgs/list-for-authenticated-user
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#list-organizations-for-the-authenticated-user
+      parameters:
+        - $ref: '#/components/parameters/per-page'
+        - $ref: '#/components/parameters/page'
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/organization-simple'
+              examples:
+                default:
+                  $ref: '#/components/examples/organization-simple-items'
+          headers:
+            Link:
+              $ref: '#/components/headers/link'
+        '304':
+          $ref: '#/components/responses/not_modified'
+        '401':
+          $ref: '#/components/responses/requires_authentication'
+        '403':
+          $ref: '#/components/responses/forbidden'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: false
+        category: orgs
+        subcategory: null
+  /users/{username}/orgs:
+    get:
+      summary: List organizations for a user
+      description: |-
+        List [public organization memberships](https://docs.github.com/articles/publicizing-or-concealing-organization-membership) for the specified user.
+
+        This method only lists _public_ memberships, regardless of authentication. If you need to fetch all of the organization memberships (public and private) for the authenticated user, use the [List organizations for the authenticated user](https://docs.github.com/rest/reference/orgs#list-organizations-for-the-authenticated-user) API instead.
+      tags:
+        - orgs
+      operationId: orgs/list-for-user
+      externalDocs:
+        description: API method documentation
+        url: https://docs.github.com/rest/reference/orgs#list-organizations-for-a-user
+      parameters:
+        - $ref: '#/components/parameters/username'
+        - $ref: '#/components/parameters/per-page'
+        - $ref: '#/components/parameters/page'
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/organization-simple'
+              examples:
+                default:
+                  $ref: '#/components/examples/organization-simple-items'
+          headers:
+            Link:
+              $ref: '#/components/headers/link'
+      x-github:
+        githubCloudOnly: false
+        enabledForGitHubApps: true
+        category: orgs
+        subcategory: null
+components:
+  schemas:
+    organization-simple:
+      title: Organization Simple
+      description: Organization Simple
+      type: object
+      properties:
+        login:
+          type: string
+          example: github
+        id:
+          type: integer
+          example: 1
+        node_id:
+          type: string
+          example: MDEyOk9yZ2FuaXphdGlvbjE=
+        url:
+          type: string
+          format: uri
+          example: https://api.github.com/orgs/github
+        repos_url:
+          type: string
+          format: uri
+          example: https://api.github.com/orgs/github/repos
+        events_url:
+          type: string
+          format: uri
+          example: https://api.github.com/orgs/github/events
+        hooks_url:
+          type: string
+          example: https://api.github.com/orgs/github/hooks
+        issues_url:
+          type: string
+          example: https://api.github.com/orgs/github/issues
+        members_url:
+          type: string
+          example: https://api.github.com/orgs/github/members{/member}
+        public_members_url:
+          type: string
+          example: https://api.github.com/orgs/github/public_members{/member}
+        avatar_url:
+          type: string
+          example: https://github.com/images/error/octocat_happy.gif
+        description:
+          type: string
+          example: A great organization
+          nullable: true
+      required:
+        - login
+        - url
+        - id
+        - node_id
+        - repos_url
+        - events_url
+        - hooks_url
+        - issues_url
+        - members_url
+        - public_members_url
+        - avatar_url
+        - description
+    organization-custom-repository-role:
+      title: Organization Custom Repository Role
+      description: Custom repository roles created by organization administrators
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+      required:
+        - id
+        - name
+    organization-full:
+      title: Organization Full
+      description: Organization Full
+      type: object
+      properties:
+        login:
+          type: string
+          example: github
+        id:
+          type: integer
+          example: 1
+        node_id:
+          type: string
+          example: MDEyOk9yZ2FuaXphdGlvbjE=
+        url:
+          type: string
+          format: uri
+          example: https://api.github.com/orgs/github
+        repos_url:
+          type: string
+          format: uri
+          example: https://api.github.com/orgs/github/repos
+        events_url:
+          type: string
+          format: uri
+          example: https://api.github.com/orgs/github/events
+        hooks_url:
+          type: string
+          example: https://api.github.com/orgs/github/hooks
+        issues_url:
+          type: string
+          example: https://api.github.com/orgs/github/issues
+        members_url:
+          type: string
+          example: https://api.github.com/orgs/github/members{/member}
+        public_members_url:
+          type: string
+          example: https://api.github.com/orgs/github/public_members{/member}
+        avatar_url:
+          type: string
+          example: https://github.com/images/error/octocat_happy.gif
+        description:
+          type: string
+          example: A great organization
+          nullable: true
+        name:
+          type: string
+          example: github
+        company:
+          type: string
+          example: GitHub
+        blog:
+          type: string
+          format: uri
+          example: https://github.com/blog
+        location:
+          type: string
+          example: San Francisco
+        email:
+          type: string
+          format: email
+          example: octocat@github.com
+        twitter_username:
+          type: string
+          example: github
+          nullable: true
+        is_verified:
+          type: boolean
+          example: true
+        has_organization_projects:
+          type: boolean
+          example: true
+        has_repository_projects:
+          type: boolean
+          example: true
+        public_repos:
+          type: integer
+          example: 2
+        public_gists:
+          type: integer
+          example: 1
+        followers:
+          type: integer
+          example: 20
+        following:
+          type: integer
+          example: 0
+        html_url:
+          type: string
+          format: uri
+          example: https://github.com/octocat
+        created_at:
+          type: string
+          format: date-time
+          example: '2008-01-14T04:33:35Z'
+        type:
+          type: string
+          example: Organization
+        total_private_repos:
+          type: integer
+          example: 100
+        owned_private_repos:
+          type: integer
+          example: 100
+        private_gists:
+          type: integer
+          example: 81
+          nullable: true
+        disk_usage:
+          type: integer
+          example: 10000
+          nullable: true
+        collaborators:
+          type: integer
+          example: 8
+          nullable: true
+        billing_email:
+          type: string
+          format: email
+          example: org@example.com
+          nullable: true
+        plan:
+          type: object
+          properties:
+            name:
+              type: string
+            space:
+              type: integer
+            private_repos:
+              type: integer
+            filled_seats:
+              type: integer
+            seats:
+              type: integer
+          required:
+            - name
+            - space
+            - private_repos
+        default_repository_permission:
+          type: string
+          nullable: true
+        members_can_create_repositories:
+          type: boolean
+          example: true
+          nullable: true
+        two_factor_requirement_enabled:
+          type: boolean
+          example: true
+          nullable: true
+        members_allowed_repository_creation_type:
+          type: string
+          example: all
+        members_can_create_public_repositories:
+          type: boolean
+          example: true
+        members_can_create_private_repositories:
+          type: boolean
+          example: true
+        members_can_create_internal_repositories:
+          type: boolean
+          example: true
+        members_can_create_pages:
+          type: boolean
+          example: true
+        members_can_create_public_pages:
+          type: boolean
+          example: true
+        members_can_create_private_pages:
+          type: boolean
+          example: true
+        members_can_fork_private_repositories:
+          type: boolean
+          example: false
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - login
+        - url
+        - id
+        - node_id
+        - repos_url
+        - events_url
+        - hooks_url
+        - issues_url
+        - members_url
+        - public_members_url
+        - avatar_url
+        - description
+        - html_url
+        - has_organization_projects
+        - has_repository_projects
+        - public_repos
+        - public_gists
+        - followers
+        - following
+        - type
+        - created_at
+        - updated_at
+    basic-error:
+      title: Basic Error
+      description: Basic Error
+      type: object
+      properties:
+        message:
+          type: string
+        documentation_url:
+          type: string
+        url:
+          type: string
+        status:
+          type: string
+    validation-error:
+      title: Validation Error
+      description: Validation Error
+      type: object
+      required:
+        - message
+        - documentation_url
+      properties:
+        message:
+          type: string
+        documentation_url:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            required:
+              - code
+            properties:
+              resource:
+                type: string
+              field:
+                type: string
+              message:
+                type: string
+              code:
+                type: string
+              index:
+                type: integer
+              value:
+                oneOf:
+                  - type: string
+                    nullable: true
+                  - type: integer
+                    nullable: true
+                  - type: array
+                    nullable: true
+                    items:
+                      type: string
+    validation-error-simple:
+      title: Validation Error Simple
+      description: Validation Error Simple
+      type: object
+      required:
+        - message
+        - documentation_url
+      properties:
+        message:
+          type: string
+        documentation_url:
+          type: string
+        errors:
+          type: array
+          items:
+            type: string
+    audit-log-event:
+      type: object
+      properties:
+        '@timestamp':
+          type: integer
+          description: The time the audit log event occurred, given as a [Unix timestamp](http://en.wikipedia.org/wiki/Unix_time).
+        action:
+          type: string
+          description: The name of the action that was performed, for example `user.login` or `repo.create`.
+        active:
+          type: boolean
+        active_was:
+          type: boolean
+        actor:
+          type: string
+          description: The actor who performed the action.
+        actor_id:
+          type: integer
+          description: The id of the actor who performed the action.
+        actor_location:
+          type: object
+          properties:
+            country_name:
+              type: string
+        data:
+          type: object
+          additionalProperties: true
+        org_id:
+          type: integer
+        blocked_user:
+          type: string
+          description: The username of the account being blocked.
+        business:
+          type: string
+        config:
+          type: array
+          items:
+            type: object
+        config_was:
+          type: array
+          items:
+            type: object
+        content_type:
+          type: string
+        created_at:
+          type: integer
+          description: The time the audit log event was recorded, given as a [Unix timestamp](http://en.wikipedia.org/wiki/Unix_time).
+        deploy_key_fingerprint:
+          type: string
+        _document_id:
+          type: string
+          description: A unique identifier for an audit event.
+        emoji:
+          type: string
+        events:
+          type: array
+          items:
+            type: object
+        events_were:
+          type: array
+          items:
+            type: object
+        explanation:
+          type: string
+        fingerprint:
+          type: string
+        hook_id:
+          type: integer
+        limited_availability:
+          type: boolean
+        message:
+          type: string
+        name:
+          type: string
+        old_user:
+          type: string
+        openssh_public_key:
+          type: string
+        org:
+          type: string
+        previous_visibility:
+          type: string
+        read_only:
+          type: boolean
+        repo:
+          type: string
+          description: The name of the repository.
+        repository:
+          type: string
+          description: The name of the repository.
+        repository_public:
+          type: boolean
+        target_login:
+          type: string
+        team:
+          type: string
+        transport_protocol:
+          type: integer
+          description: The type of protocol (for example, HTTP or SSH) used to transfer Git data.
+        transport_protocol_name:
+          type: string
+          description: A human readable name for the protocol (for example, HTTP or SSH) used to transfer Git data.
+        user:
+          type: string
+          description: The user that was affected by the action performed (if available).
+        visibility:
+          type: string
+          description: The repository visibility, for example `public` or `private`.
+    simple-user:
+      title: Simple User
+      description: Simple User
+      type: object
+      properties:
+        name:
+          nullable: true
+          type: string
+        email:
+          nullable: true
+          type: string
+        login:
+          type: string
+          example: octocat
+        id:
+          type: integer
+          example: 1
+        node_id:
+          type: string
+          example: MDQ6VXNlcjE=
+        avatar_url:
+          type: string
+          format: uri
+          example: https://github.com/images/error/octocat_happy.gif
+        gravatar_id:
+          type: string
+          example: 41d064eb2195891e12d0413f63227ea7
+          nullable: true
+        url:
+          type: string
+          format: uri
+          example: https://api.github.com/users/octocat
+        html_url:
+          type: string
+          format: uri
+          example: https://github.com/octocat
+        followers_url:
+          type: string
+          format: uri
+          example: https://api.github.com/users/octocat/followers
+        following_url:
+          type: string
+          example: https://api.github.com/users/octocat/following{/other_user}
+        gists_url:
+          type: string
+          example: https://api.github.com/users/octocat/gists{/gist_id}
+        starred_url:
+          type: string
+          example: https://api.github.com/users/octocat/starred{/owner}{/repo}
+        subscriptions_url:
+          type: string
+          format: uri
+          example: https://api.github.com/users/octocat/subscriptions
+        organizations_url:
+          type: string
+          format: uri
+          example: https://api.github.com/users/octocat/orgs
+        repos_url:
+          type: string
+          format: uri
+          example: https://api.github.com/users/octocat/repos
+        events_url:
+          type: string
+          example: https://api.github.com/users/octocat/events{/privacy}
+        received_events_url:
+          type: string
+          format: uri
+          example: https://api.github.com/users/octocat/received_events
+        type:
+          type: string
+          example: User
+        site_admin:
+          type: boolean
+        starred_at:
+          type: string
+          example: '"2020-07-09T00:17:55Z"'
+      required:
+        - avatar_url
+        - events_url
+        - followers_url
+        - following_url
+        - gists_url
+        - gravatar_id
+        - html_url
+        - id
+        - node_id
+        - login
+        - organizations_url
+        - received_events_url
+        - repos_url
+        - site_admin
+        - starred_url
+        - subscriptions_url
+        - type
+        - url
+    credential-authorization:
+      title: Credential Authorization
+      description: Credential Authorization
+      type: object
+      properties:
+        login:
+          type: string
+          example: monalisa
+          description: User login that owns the underlying credential.
+        credential_id:
+          type: integer
+          example: 1
+          description: Unique identifier for the credential.
+        credential_type:
+          type: string
+          example: SSH Key
+          description: Human-readable description of the credential type.
+        token_last_eight:
+          type: string
+          example: '12345678'
+          description: Last eight characters of the credential. Only included in responses with credential_type of personal access token.
+        credential_authorized_at:
+          type: string
+          format: date-time
+          example: '2011-01-26T19:06:43Z'
+          description: Date when the credential was authorized for use.
+        scopes:
+          type: array
+          example:
+            - user
+            - repo
+          description: List of oauth scopes the token has been granted.
+          items:
+            type: string
+        fingerprint:
+          type: string
+          example: jklmnop12345678
+          description: Unique string to distinguish the credential. Only included in responses with credential_type of SSH Key.
+        credential_accessed_at:
+          type: string
+          format: date-time
+          example: '2011-01-26T19:06:43Z'
+          description: Date when the credential was last accessed. May be null if it was never accessed
+          nullable: true
+        authorized_credential_id:
+          type: integer
+          nullable: true
+          example: 12345678
+        authorized_credential_title:
+          type: string
+          nullable: true
+          example: my ssh key
+          description: The title given to the ssh key. This will only be present when the credential is an ssh key.
+        authorized_credential_note:
+          type: string
+          nullable: true
+          example: my token
+          description: The note given to the token. This will only be present when the credential is a token.
+        authorized_credential_expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: The expiry for the token. This will only be present when the credential is a token.
+      required:
+        - login
+        - credential_id
+        - credential_type
+        - credential_authorized_at
+        - credential_accessed_at
+        - authorized_credential_id
+    organization-invitation:
+      title: Organization Invitation
+      description: Organization Invitation
+      type: object
+      properties:
+        id:
+          type: integer
+        login:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        role:
+          type: string
+        created_at:
+          type: string
+        failed_at:
+          type: string
+          nullable: true
+        failed_reason:
+          type: string
+          nullable: true
+        inviter:
+          $ref: '#/components/schemas/simple-user'
+        team_count:
+          type: integer
+        node_id:
+          type: string
+          example: '"MDIyOk9yZ2FuaXphdGlvbkludml0YXRpb24x"'
+        invitation_teams_url:
+          type: string
+          example: '"https://api.github.com/organizations/16/invitations/1/teams"'
+      required:
+        - id
+        - login
+        - email
+        - role
+        - created_at
+        - inviter
+        - team_count
+        - invitation_teams_url
+        - node_id
+    org-hook:
+      title: Org Hook
+      description: Org Hook
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        url:
+          type: string
+          format: uri
+          example: https://api.github.com/orgs/octocat/hooks/1
+        ping_url:
+          type: string
+          format: uri
+          example: https://api.github.com/orgs/octocat/hooks/1/pings
+        deliveries_url:
+          type: string
+          format: uri
+          example: https://api.github.com/orgs/octocat/hooks/1/deliveries
+        name:
+          type: string
+          example: web
+        events:
+          type: array
+          example:
+            - push
+            - pull_request
+          items:
+            type: string
+        active:
+          type: boolean
+          example: true
+        config:
+          type: object
+          properties:
+            url:
+              type: string
+              example: '"http://example.com/2"'
+            insecure_ssl:
+              type: string
+              example: '"0"'
+            content_type:
+              type: string
+              example: '"form"'
+            secret:
+              type: string
+              example: '"********"'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2011-09-06T20:39:23Z'
+        created_at:
+          type: string
+          format: date-time
+          example: '2011-09-06T17:26:27Z'
+        type:
+          type: string
+      required:
+        - id
+        - url
+        - type
+        - name
+        - active
+        - events
+        - config
+        - ping_url
+        - created_at
+        - updated_at
+    webhook-config-url:
+      type: string
+      description: The URL to which the payloads will be delivered.
+      example: https://example.com/webhook
+      format: uri
+    webhook-config-content-type:
+      type: string
+      description: The media type used to serialize the payloads. Supported values include `json` and `form`. The default is `form`.
+      example: '"json"'
+    webhook-config-secret:
+      type: string
+      description: If provided, the `secret` will be used as the `key` to generate the HMAC hex digest value for [delivery signature headers](https://docs.github.com/webhooks/event-payloads/#delivery-headers).
+      example: '"********"'
+    webhook-config-insecure-ssl:
+      oneOf:
+        - type: string
+          description: Determines whether the SSL certificate of the host for `url` will be verified when delivering payloads. Supported values include `0` (verification is performed) and `1` (verification is not performed). The default is `0`. **We strongly recommend not setting this to `1` as you are subject to man-in-the-middle and other attacks.**
+          example: '"0"'
+        - type: number
+    webhook-config:
+      title: Webhook Configuration
+      description: Configuration object of the webhook
+      type: object
+      properties:
+        url:
+          $ref: '#/components/schemas/webhook-config-url'
+        content_type:
+          $ref: '#/components/schemas/webhook-config-content-type'
+        secret:
+          $ref: '#/components/schemas/webhook-config-secret'
+        insecure_ssl:
+          $ref: '#/components/schemas/webhook-config-insecure-ssl'
+    hook-delivery-item:
+      title: Simple webhook delivery
+      description: Delivery made by a webhook, without request and response information.
+      type: object
+      properties:
+        id:
+          description: Unique identifier of the webhook delivery.
+          type: integer
+          example: 42
+        guid:
+          description: Unique identifier for the event (shared with all deliveries for all webhooks that subscribe to this event).
+          type: string
+          example: 58474f00-b361-11eb-836d-0e4f3503ccbe
+        delivered_at:
+          description: Time when the webhook delivery occurred.
+          type: string
+          format: date-time
+          example: '2021-05-12T20:33:44Z'
+        redelivery:
+          description: Whether the webhook delivery is a redelivery.
+          type: boolean
+          example: false
+        duration:
+          description: Time spent delivering.
+          type: number
+          example: 0.03
+        status:
+          description: Describes the response returned after attempting the delivery.
+          type: string
+          example: failed to connect
+        status_code:
+          description: Status code received when delivery was made.
+          type: integer
+          example: 502
+        event:
+          description: The event that triggered the delivery.
+          type: string
+          example: issues
+        action:
+          description: The type of activity for the event that triggered the delivery.
+          type: string
+          example: opened
+          nullable: true
+        installation_id:
+          description: The id of the GitHub App installation associated with this event.
+          type: integer
+          example: 123
+          nullable: true
+        repository_id:
+          description: The id of the repository associated with this event.
+          type: integer
+          example: 123
+          nullable: true
+      required:
+        - id
+        - guid
+        - delivered_at
+        - redelivery
+        - duration
+        - status
+        - status_code
+        - event
+        - action
+        - installation_id
+        - repository_id
+    scim-error:
+      title: Scim Error
+      description: Scim Error
+      type: object
+      properties:
+        message:
+          type: string
+          nullable: true
+        documentation_url:
+          type: string
+          nullable: true
+        detail:
+          type: string
+          nullable: true
+        status:
+          type: integer
+        scimType:
+          type: string
+          nullable: true
+        schemas:
+          type: array
+          items:
+            type: string
+    hook-delivery:
+      title: Webhook delivery
+      description: Delivery made by a webhook.
+      type: object
+      properties:
+        id:
+          description: Unique identifier of the delivery.
+          type: integer
+          example: 42
+        guid:
+          description: Unique identifier for the event (shared with all deliveries for all webhooks that subscribe to this event).
+          type: string
+          example: 58474f00-b361-11eb-836d-0e4f3503ccbe
+        delivered_at:
+          description: Time when the delivery was delivered.
+          type: string
+          format: date-time
+          example: '2021-05-12T20:33:44Z'
+        redelivery:
+          description: Whether the delivery is a redelivery.
+          type: boolean
+          example: false
+        duration:
+          description: Time spent delivering.
+          type: number
+          example: 0.03
+        status:
+          description: Description of the status of the attempted delivery
+          type: string
+          example: failed to connect
+        status_code:
+          description: Status code received when delivery was made.
+          type: integer
+          example: 502
+        event:
+          description: The event that triggered the delivery.
+          type: string
+          example: issues
+        action:
+          description: The type of activity for the event that triggered the delivery.
+          type: string
+          example: opened
+          nullable: true
+        installation_id:
+          description: The id of the GitHub App installation associated with this event.
+          type: integer
+          example: 123
+          nullable: true
+        repository_id:
+          description: The id of the repository associated with this event.
+          type: integer
+          example: 123
+          nullable: true
+        url:
+          description: The URL target of the delivery.
+          type: string
+          example: https://www.example.com
+        request:
+          type: object
+          properties:
+            headers:
+              description: The request headers sent with the webhook delivery.
+              type: object
+              nullable: true
+              additionalProperties: true
+            payload:
+              description: The webhook payload.
+              type: object
+              nullable: true
+              additionalProperties: true
+          required:
+            - headers
+            - payload
+        response:
+          type: object
+          properties:
+            headers:
+              description: The response headers received when the delivery was made.
+              type: object
+              nullable: true
+              additionalProperties: true
+            payload:
+              description: The response payload received.
+              type: string
+              nullable: true
+              additionalProperties: true
+          required:
+            - headers
+            - payload
+      required:
+        - id
+        - guid
+        - delivered_at
+        - redelivery
+        - duration
+        - status
+        - status_code
+        - event
+        - action
+        - installation_id
+        - repository_id
+        - request
+        - response
+    installation:
+      title: Installation
+      description: Installation
+      type: object
+      properties:
+        id:
+          description: The ID of the installation.
+          type: integer
+          example: 1
+        account:
+          nullable: true
+          anyOf:
+            - $ref: '#/components/schemas/simple-user'
+            - $ref: '#/components/schemas/enterprise'
+        repository_selection:
+          description: Describe whether all repositories have been selected or there's a selection involved
+          type: string
+          enum:
+            - all
+            - selected
+        access_tokens_url:
+          type: string
+          format: uri
+          example: https://api.github.com/installations/1/access_tokens
+        repositories_url:
+          type: string
+          format: uri
+          example: https://api.github.com/installation/repositories
+        html_url:
+          type: string
+          format: uri
+          example: https://github.com/organizations/github/settings/installations/1
+        app_id:
+          type: integer
+          example: 1
+        target_id:
+          description: The ID of the user or organization this token is being scoped to.
+          type: integer
+        target_type:
+          type: string
+          example: Organization
+        permissions:
+          $ref: '#/components/schemas/app-permissions'
+        events:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        single_file_name:
+          type: string
+          example: config.yaml
+          nullable: true
+        has_multiple_single_files:
+          type: boolean
+          example: true
+        single_file_paths:
+          type: array
+          items:
+            type: string
+          example:
+            - config.yml
+            - .github/issue_TEMPLATE.md
+        app_slug:
+          type: string
+          example: github-actions
+        suspended_by:
+          $ref: '#/components/schemas/nullable-simple-user'
+        suspended_at:
+          type: string
+          format: date-time
+          nullable: true
+        contact_email:
+          type: string
+          example: '"test_13f1e99741e3e004@d7e1eb0bc0a1ba12.com"'
+          nullable: true
+      required:
+        - id
+        - app_id
+        - app_slug
+        - target_id
+        - target_type
+        - single_file_name
+        - repository_selection
+        - access_tokens_url
+        - html_url
+        - repositories_url
+        - events
+        - account
+        - permissions
+        - created_at
+        - updated_at
+        - suspended_by
+        - suspended_at
+    enterprise:
+      title: Enterprise
+      description: An enterprise account
+      type: object
+      properties:
+        description:
+          description: A short description of the enterprise.
+          type: string
+          nullable: true
+        html_url:
+          type: string
+          format: uri
+          example: https://github.com/enterprises/octo-business
+        website_url:
+          description: The enterprise's website URL.
+          type: string
+          nullable: true
+          format: uri
+        id:
+          description: Unique identifier of the enterprise
+          example: 42
+          type: integer
+        node_id:
+          type: string
+          example: MDEwOlJlcG9zaXRvcnkxMjk2MjY5
+        name:
+          description: The name of the enterprise.
+          type: string
+          example: Octo Business
+        slug:
+          description: The slug url identifier for the enterprise.
+          type: string
+          example: octo-business
+        created_at:
+          type: string
+          nullable: true
+          format: date-time
+          example: '2019-01-26T19:01:12Z'
+        updated_at:
+          type: string
+          nullable: true
+          format: date-time
+          example: '2019-01-26T19:14:43Z'
+        avatar_url:
+          type: string
+          format: uri
+      required:
+        - id
+        - node_id
+        - name
+        - slug
+        - html_url
+        - created_at
+        - updated_at
+        - avatar_url
+    app-permissions:
+      title: App Permissions
+      type: object
+      description: The permissions granted to the user-to-server access token.
+      properties:
+        actions:
+          type: string
+          description: 'The level of permission to grant the access token for GitHub Actions workflows, workflow runs, and artifacts. Can be one of: `read` or `write`.'
+          enum:
+            - read
+            - write
+        administration:
+          type: string
+          description: 'The level of permission to grant the access token for repository creation, deletion, settings, teams, and collaborators creation. Can be one of: `read` or `write`.'
+          enum:
+            - read
+            - write
+        checks:
+          type: string
+          description: 'The level of permission to grant the access token for checks on code. Can be one of: `read` or `write`.'
+          enum:
+            - read
+            - write
+        contents:
+          type: string
+          description: 'The level of permission to grant the access token for repository contents, commits, branches, downloads, releases, and merges. Can be one of: `read` or `write`.'
+          enum:
+            - read
+            - write
+        deployments:
+          type: string
+          description: 'The level of permission to grant the access token for deployments and deployment statuses. Can be one of: `read` or `write`.'
+          enum:
+            - read
+            - write
+        environments:
+          type: string
+          description: 'The level of permission to grant the access token for managing repository environments. Can be one of: `read` or `write`.'
+          enum:
+            - read
+            - write
+        issues:
+          type: string
+          description: 'The level of permission to grant the access token for issues and related comments, assignees, labels, and milestones. Can be one of: `read` or `write`.'
+          enum:
+            - read
+            - write
+        metadata:
+          type: string
+          description: 'The level of permission to grant the access token to search repositories, list collaborators, and access repository metadata. Can be one of: `read` or `write`.'
+          enum:
+            - read
+            - write
+        packages:
+          type: string
+          description: 'The level of permission to grant the access token for packages published to GitHub Packages. Can be one of: `read` or `write`.'
+          enum:
+            - read
+            - write
+        pages:
+          type: string
+          description: 'The level of permission to grant the access token to retrieve Pages statuses, configuration, and builds, as well as create new builds. Can be one of: `read` or `write`.'
+          enum:
+            - read
+            - write
+        pull_requests:
+          type: string
+          description: 'The level of permission to grant the access token for pull requests and related comments, assignees, labels, milestones, and merges. Can be one of: `read` or `write`.'
+          enum:
+            - read
+            - write
+        repository_hooks:
+          type: string
+          description: 'The level of permission to grant the access token to manage the post-receive hooks for a repository. Can be one of: `read` or `write`.'
+          enum:
+            - read
+            - write
+        repository_projects:
+          type: string
+          description: 'The level of permission to grant the access token to manage repository projects, columns, and cards. Can be one of: `read`, `write`, or `admin`.'
+          enum:
+            - read
+            - write
+            - admin
+        secret_scanning_alerts:
+          type: string
+          description: 'The level of permission to grant the access token to view and manage secret scanning alerts. Can be one of: `read` or `write`.'
+          enum:
+            - read
+            - write
+        secrets:
+          type: string
+          description: 'The level of permission to grant the access token to manage repository secrets. Can be one of: `read` or `write`.'
+          enum:
+            - read
+            - write
+        security_events:
+          type: string
+          description: 'The level of permission to grant the access token to view and manage security events like code scanning alerts. Can be one of: `read` or `write`.'
+          enum:
+            - read
+            - write
+        single_file:
+          type: string
+          description: 'The level of permission to grant the access token to manage just a single file. Can be one of: `read` or `write`.'
+          enum:
+            - read
+            - write
+        statuses:
+          type: string
+          description: 'The level of permission to grant the access token for commit statuses. Can be one of: `read` or `write`.'
+          enum:
+            - read
+            - write
+        vulnerability_alerts:
+          type: string
+          description: 'The level of permission to grant the access token to manage Dependabot alerts. Can be one of: `read` or `write`.'
+          enum:
+            - read
+            - write
+        workflows:
+          type: string
+          description: 'The level of permission to grant the access token to update GitHub Actions workflow files. Can be one of: `write`.'
+          enum:
+            - write
+        members:
+          type: string
+          description: 'The level of permission to grant the access token for organization teams and members. Can be one of: `read` or `write`.'
+          enum:
+            - read
+            - write
+        organization_administration:
+          type: string
+          description: 'The level of permission to grant the access token to manage access to an organization. Can be one of: `read` or `write`.'
+          enum:
+            - read
+            - write
+        organization_hooks:
+          type: string
+          description: 'The level of permission to grant the access token to manage the post-receive hooks for an organization. Can be one of: `read` or `write`.'
+          enum:
+            - read
+            - write
+        organization_plan:
+          type: string
+          description: 'The level of permission to grant the access token for viewing an organization''s plan. Can be one of: `read`.'
+          enum:
+            - read
+        organization_projects:
+          type: string
+          description: 'The level of permission to grant the access token to manage organization projects and projects beta (where available). Can be one of: `read`, `write`, or `admin`.'
+          enum:
+            - read
+            - write
+            - admin
+        organization_packages:
+          type: string
+          description: 'The level of permission to grant the access token for organization packages published to GitHub Packages. Can be one of: `read` or `write`.'
+          enum:
+            - read
+            - write
+        organization_secrets:
+          type: string
+          description: 'The level of permission to grant the access token to manage organization secrets. Can be one of: `read` or `write`.'
+          enum:
+            - read
+            - write
+        organization_self_hosted_runners:
+          type: string
+          description: 'The level of permission to grant the access token to view and manage GitHub Actions self-hosted runners available to an organization. Can be one of: `read` or `write`.'
+          enum:
+            - read
+            - write
+        organization_user_blocking:
+          type: string
+          description: 'The level of permission to grant the access token to view and manage users blocked by the organization. Can be one of: `read` or `write`.'
+          enum:
+            - read
+            - write
+        team_discussions:
+          type: string
+          description: 'The level of permission to grant the access token to manage team discussions and related comments. Can be one of: `read` or `write`.'
+          enum:
+            - read
+            - write
+      example:
+        contents: read
+        issues: read
+        deployments: write
+        single_file: read
+    nullable-simple-user:
+      title: Simple User
+      description: Simple User
+      type: object
+      properties:
+        name:
+          nullable: true
+          type: string
+        email:
+          nullable: true
+          type: string
+        login:
+          type: string
+          example: octocat
+        id:
+          type: integer
+          example: 1
+        node_id:
+          type: string
+          example: MDQ6VXNlcjE=
+        avatar_url:
+          type: string
+          format: uri
+          example: https://github.com/images/error/octocat_happy.gif
+        gravatar_id:
+          type: string
+          example: 41d064eb2195891e12d0413f63227ea7
+          nullable: true
+        url:
+          type: string
+          format: uri
+          example: https://api.github.com/users/octocat
+        html_url:
+          type: string
+          format: uri
+          example: https://github.com/octocat
+        followers_url:
+          type: string
+          format: uri
+          example: https://api.github.com/users/octocat/followers
+        following_url:
+          type: string
+          example: https://api.github.com/users/octocat/following{/other_user}
+        gists_url:
+          type: string
+          example: https://api.github.com/users/octocat/gists{/gist_id}
+        starred_url:
+          type: string
+          example: https://api.github.com/users/octocat/starred{/owner}{/repo}
+        subscriptions_url:
+          type: string
+          format: uri
+          example: https://api.github.com/users/octocat/subscriptions
+        organizations_url:
+          type: string
+          format: uri
+          example: https://api.github.com/users/octocat/orgs
+        repos_url:
+          type: string
+          format: uri
+          example: https://api.github.com/users/octocat/repos
+        events_url:
+          type: string
+          example: https://api.github.com/users/octocat/events{/privacy}
+        received_events_url:
+          type: string
+          format: uri
+          example: https://api.github.com/users/octocat/received_events
+        type:
+          type: string
+          example: User
+        site_admin:
+          type: boolean
+        starred_at:
+          type: string
+          example: '"2020-07-09T00:17:55Z"'
+      required:
+        - avatar_url
+        - events_url
+        - followers_url
+        - following_url
+        - gists_url
+        - gravatar_id
+        - html_url
+        - id
+        - node_id
+        - login
+        - organizations_url
+        - received_events_url
+        - repos_url
+        - site_admin
+        - starred_url
+        - subscriptions_url
+        - type
+        - url
+      nullable: true
+    team:
+      title: Team
+      description: Groups of organization members that gives permissions on specified repositories.
+      type: object
+      properties:
+        id:
+          type: integer
+        node_id:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+          nullable: true
+        privacy:
+          type: string
+        permission:
+          type: string
+        permissions:
+          type: object
+          properties:
+            pull:
+              type: boolean
+            triage:
+              type: boolean
+            push:
+              type: boolean
+            maintain:
+              type: boolean
+            admin:
+              type: boolean
+          required:
+            - pull
+            - triage
+            - push
+            - maintain
+            - admin
+        url:
+          type: string
+          format: uri
+        html_url:
+          type: string
+          format: uri
+          example: https://github.com/orgs/rails/teams/core
+        members_url:
+          type: string
+        repositories_url:
+          type: string
+          format: uri
+        parent:
+          $ref: '#/components/schemas/nullable-team-simple'
+      required:
+        - id
+        - node_id
+        - url
+        - members_url
+        - name
+        - description
+        - permission
+        - html_url
+        - repositories_url
+        - slug
+        - parent
+    nullable-team-simple:
+      title: Team Simple
+      description: Groups of organization members that gives permissions on specified repositories.
+      type: object
+      properties:
+        id:
+          description: Unique identifier of the team
+          type: integer
+          example: 1
+        node_id:
+          type: string
+          example: MDQ6VGVhbTE=
+        url:
+          description: URL for the team
+          type: string
+          format: uri
+          example: https://api.github.com/organizations/1/team/1
+        members_url:
+          type: string
+          example: https://api.github.com/organizations/1/team/1/members{/member}
+        name:
+          description: Name of the team
+          type: string
+          example: Justice League
+        description:
+          description: Description of the team
+          type: string
+          nullable: true
+          example: A great team.
+        permission:
+          description: Permission that the team will have for its repositories
+          type: string
+          example: admin
+        privacy:
+          description: The level of privacy this team should have
+          type: string
+          example: closed
+        html_url:
+          type: string
+          format: uri
+          example: https://github.com/orgs/rails/teams/core
+        repositories_url:
+          type: string
+          format: uri
+          example: https://api.github.com/organizations/1/team/1/repos
+        slug:
+          type: string
+          example: justice-league
+        ldap_dn:
+          description: Distinguished Name (DN) that team maps to within LDAP environment
+          example: uid=example,ou=users,dc=github,dc=com
+          type: string
+      required:
+        - id
+        - node_id
+        - url
+        - members_url
+        - name
+        - description
+        - permission
+        - html_url
+        - repositories_url
+        - slug
+      nullable: true
+    org-membership:
+      title: Org Membership
+      description: Org Membership
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          example: https://api.github.com/orgs/octocat/memberships/defunkt
+        state:
+          type: string
+          description: The state of the member in the organization. The `pending` state indicates the user has not yet accepted an invitation.
+          example: active
+          enum:
+            - active
+            - pending
+        role:
+          type: string
+          description: The user's membership type in the organization.
+          example: admin
+          enum:
+            - admin
+            - member
+            - billing_manager
+        organization_url:
+          type: string
+          format: uri
+          example: https://api.github.com/orgs/octocat
+        organization:
+          $ref: '#/components/schemas/organization-simple'
+        user:
+          $ref: '#/components/schemas/nullable-simple-user'
+        permissions:
+          type: object
+          properties:
+            can_create_repository:
+              type: boolean
+          required:
+            - can_create_repository
+      required:
+        - state
+        - role
+        - organization_url
+        - url
+        - organization
+        - user
+  parameters:
+    since-org:
+      name: since
+      description: An organization ID. Only return organizations with an ID greater than this ID.
+      in: query
+      required: false
+      schema:
+        type: integer
+    per-page:
+      name: per_page
+      description: Results per page (max 100)
+      in: query
+      schema:
+        type: integer
+        default: 30
+    org:
+      name: org
+      in: path
+      required: true
+      schema:
+        type: string
+    audit-log-phrase:
+      name: phrase
+      description: A search phrase. For more information, see [Searching the audit log](https://docs.github.com/github/setting-up-and-managing-organizations-and-teams/reviewing-the-audit-log-for-your-organization#searching-the-audit-log).
+      in: query
+      required: false
+      schema:
+        type: string
+    audit-log-include:
+      name: include
+      description: |-
+        The event types to include:
+
+        - `web` - returns web (non-Git) events.
+        - `git` - returns Git events.
+        - `all` - returns both web and Git events.
+
+        The default is `web`.
+      in: query
+      required: false
+      schema:
+        type: string
+        enum:
+          - web
+          - git
+          - all
+    audit-log-after:
+      name: after
+      description: A cursor, as given in the [Link header](https://docs.github.com/rest/overview/resources-in-the-rest-api#link-header). If specified, the query only searches for events after this cursor.
+      in: query
+      required: false
+      schema:
+        type: string
+    audit-log-before:
+      name: before
+      description: A cursor, as given in the [Link header](https://docs.github.com/rest/overview/resources-in-the-rest-api#link-header). If specified, the query only searches for events before this cursor.
+      in: query
+      required: false
+      schema:
+        type: string
+    audit-log-order:
+      name: order
+      description: |-
+        The order of audit log events. To list newest events first, specify `desc`. To list oldest events first, specify `asc`.
+
+        The default is `desc`.
+      in: query
+      required: false
+      schema:
+        type: string
+        enum:
+          - desc
+          - asc
+    username:
+      name: username
+      in: path
+      required: true
+      schema:
+        type: string
+    page:
+      name: page
+      description: Page number of the results to fetch.
+      in: query
+      schema:
+        type: integer
+        default: 1
+    hook-id:
+      name: hook_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    cursor:
+      name: cursor
+      description: 'Used for pagination: the starting delivery from which the page of deliveries is fetched. Refer to the `link` header for the next and previous page cursors.'
+      in: query
+      required: false
+      schema:
+        type: string
+    delivery-id:
+      name: delivery_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    invitation-id:
+      name: invitation_id
+      description: invitation_id parameter
+      in: path
+      required: true
+      schema:
+        type: integer
+  responses:
+    not_modified:
+      description: Not modified
+    not_found:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/basic-error'
+    conflict:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/basic-error'
+    preview_header_missing:
+      description: Preview header missing
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - message
+              - documentation_url
+            properties:
+              message:
+                type: string
+              documentation_url:
+                type: string
+    validation_failed:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/validation-error'
+    bad_request:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/basic-error'
+        application/scim+json:
+          schema:
+            $ref: '#/components/schemas/scim-error'
+    accepted:
+      description: Accepted
+      content:
+        application/json:
+          schema:
+            type: object
+    forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/basic-error'
+    requires_authentication:
+      description: Requires authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/basic-error'
+  securitySchemes: {}
+  callbacks: {}
+  examples:
+    organization-simple-items:
+      value:
+        - login: github
+          id: 1
+          node_id: MDEyOk9yZ2FuaXphdGlvbjE=
+          url: https://api.github.com/orgs/github
+          repos_url: https://api.github.com/orgs/github/repos
+          events_url: https://api.github.com/orgs/github/events
+          hooks_url: https://api.github.com/orgs/github/hooks
+          issues_url: https://api.github.com/orgs/github/issues
+          members_url: https://api.github.com/orgs/github/members{/member}
+          public_members_url: https://api.github.com/orgs/github/public_members{/member}
+          avatar_url: https://github.com/images/error/octocat_happy.gif
+          description: A great organization
+    organization-custom-repository-role-example:
+      value:
+        total_count: 2
+        custom_roles:
+          - id: 8030
+            name: Developer
+          - id: 8031
+            name: Designer
+    organization-full-default-response:
+      summary: Default response
+      value:
+        login: github
+        id: 1
+        node_id: MDEyOk9yZ2FuaXphdGlvbjE=
+        url: https://api.github.com/orgs/github
+        repos_url: https://api.github.com/orgs/github/repos
+        events_url: https://api.github.com/orgs/github/events
+        hooks_url: https://api.github.com/orgs/github/hooks
+        issues_url: https://api.github.com/orgs/github/issues
+        members_url: https://api.github.com/orgs/github/members{/member}
+        public_members_url: https://api.github.com/orgs/github/public_members{/member}
+        avatar_url: https://github.com/images/error/octocat_happy.gif
+        description: A great organization
+        name: github
+        company: GitHub
+        blog: https://github.com/blog
+        location: San Francisco
+        email: octocat@github.com
+        twitter_username: github
+        is_verified: true
+        has_organization_projects: true
+        has_repository_projects: true
+        public_repos: 2
+        public_gists: 1
+        followers: 20
+        following: 0
+        html_url: https://github.com/octocat
+        created_at: '2008-01-14T04:33:35Z'
+        updated_at: '2014-03-03T18:58:10Z'
+        type: Organization
+        total_private_repos: 100
+        owned_private_repos: 100
+        private_gists: 81
+        disk_usage: 10000
+        collaborators: 8
+        billing_email: mona@github.com
+        plan:
+          name: Medium
+          space: 400
+          private_repos: 20
+          filled_seats: 4
+          seats: 5
+        default_repository_permission: read
+        members_can_create_repositories: true
+        two_factor_requirement_enabled: true
+        members_allowed_repository_creation_type: all
+        members_can_create_public_repositories: false
+        members_can_create_private_repositories: false
+        members_can_create_internal_repositories: false
+        members_can_create_pages: true
+        members_can_fork_private_repositories: false
+    organization-full:
+      value:
+        login: github
+        id: 1
+        node_id: MDEyOk9yZ2FuaXphdGlvbjE=
+        url: https://api.github.com/orgs/github
+        repos_url: https://api.github.com/orgs/github/repos
+        events_url: https://api.github.com/orgs/github/events
+        hooks_url: https://api.github.com/orgs/github/hooks
+        issues_url: https://api.github.com/orgs/github/issues
+        members_url: https://api.github.com/orgs/github/members{/member}
+        public_members_url: https://api.github.com/orgs/github/public_members{/member}
+        avatar_url: https://github.com/images/error/octocat_happy.gif
+        description: A great organization
+        name: github
+        company: GitHub
+        blog: https://github.com/blog
+        location: San Francisco
+        email: octocat@github.com
+        twitter_username: github
+        is_verified: true
+        has_organization_projects: true
+        has_repository_projects: true
+        public_repos: 2
+        public_gists: 1
+        followers: 20
+        following: 0
+        html_url: https://github.com/octocat
+        created_at: '2008-01-14T04:33:35Z'
+        type: Organization
+        total_private_repos: 100
+        owned_private_repos: 100
+        private_gists: 81
+        disk_usage: 10000
+        collaborators: 8
+        billing_email: mona@github.com
+        plan:
+          name: Medium
+          space: 400
+          private_repos: 20
+        default_repository_permission: read
+        members_can_create_repositories: true
+        two_factor_requirement_enabled: true
+        members_allowed_repository_creation_type: all
+        members_can_create_public_repositories: false
+        members_can_create_private_repositories: false
+        members_can_create_internal_repositories: false
+        members_can_create_pages: true
+        members_can_create_public_pages: true
+        members_can_create_private_pages: true
+        members_can_fork_private_repositories: false
+        updated_at: '2014-03-03T18:58:10Z'
+    audit-log:
+      value:
+        - '@timestamp': 1606929874512
+          action: team.add_member
+          actor: octocat
+          created_at: 1606929874512
+          _document_id: xJJFlFOhQ6b-5vaAFy9Rjw
+          org: octo-corp
+          team: octo-corp/example-team
+          user: monalisa
+        - '@timestamp': 1606507117008
+          action: org.create
+          actor: octocat
+          created_at: 1606507117008
+          _document_id: Vqvg6kZ4MYqwWRKFDzlMoQ
+          org: octocat-test-org
+        - '@timestamp': 1605719148837
+          action: repo.destroy
+          actor: monalisa
+          created_at: 1605719148837
+          _document_id: LwW2vpJZCDS-WUmo9Z-ifw
+          org: mona-org
+          repo: mona-org/mona-test-repo
+          visibility: private
+    simple-user-items:
+      value:
+        - login: octocat
+          id: 1
+          node_id: MDQ6VXNlcjE=
+          avatar_url: https://github.com/images/error/octocat_happy.gif
+          gravatar_id: ''
+          url: https://api.github.com/users/octocat
+          html_url: https://github.com/octocat
+          followers_url: https://api.github.com/users/octocat/followers
+          following_url: https://api.github.com/users/octocat/following{/other_user}
+          gists_url: https://api.github.com/users/octocat/gists{/gist_id}
+          starred_url: https://api.github.com/users/octocat/starred{/owner}{/repo}
+          subscriptions_url: https://api.github.com/users/octocat/subscriptions
+          organizations_url: https://api.github.com/users/octocat/orgs
+          repos_url: https://api.github.com/users/octocat/repos
+          events_url: https://api.github.com/users/octocat/events{/privacy}
+          received_events_url: https://api.github.com/users/octocat/received_events
+          type: User
+          site_admin: false
+    credential-authorization-items:
+      value:
+        - login: octocat
+          credential_id: 161195
+          credential_type: personal access token
+          token_last_eight: 71c3fc11
+          credential_authorized_at: '2011-01-26T19:06:43Z'
+          authorized_credential_expires_at: '2011-02-25T19:06:43Z'
+          scopes:
+            - user
+            - repo
+        - login: hubot
+          credential_id: 161196
+          credential_type: personal access token
+          token_last_eight: Ae178B4a
+          credential_authorized_at: '2019-03-29T19:06:43Z'
+          authorized_credential_expires_at: '2019-04-28T19:06:43Z'
+          scopes:
+            - repo
+    organization-invitation-items:
+      value:
+        - id: 1
+          login: monalisa
+          node_id: MDQ6VXNlcjE=
+          email: octocat@github.com
+          role: direct_member
+          created_at: '2016-11-30T06:46:10-08:00'
+          failed_at: ''
+          failed_reason: ''
+          inviter:
+            login: other_user
+            id: 1
+            node_id: MDQ6VXNlcjE=
+            avatar_url: https://github.com/images/error/other_user_happy.gif
+            gravatar_id: ''
+            url: https://api.github.com/users/other_user
+            html_url: https://github.com/other_user
+            followers_url: https://api.github.com/users/other_user/followers
+            following_url: https://api.github.com/users/other_user/following{/other_user}
+            gists_url: https://api.github.com/users/other_user/gists{/gist_id}
+            starred_url: https://api.github.com/users/other_user/starred{/owner}{/repo}
+            subscriptions_url: https://api.github.com/users/other_user/subscriptions
+            organizations_url: https://api.github.com/users/other_user/orgs
+            repos_url: https://api.github.com/users/other_user/repos
+            events_url: https://api.github.com/users/other_user/events{/privacy}
+            received_events_url: https://api.github.com/users/other_user/received_events
+            type: User
+            site_admin: false
+          team_count: 2
+          invitation_teams_url: https://api.github.com/organizations/2/invitations/1/teams
+    org-hook-items:
+      value:
+        - id: 1
+          url: https://api.github.com/orgs/octocat/hooks/1
+          ping_url: https://api.github.com/orgs/octocat/hooks/1/pings
+          deliveries_url: https://api.github.com/orgs/octocat/hooks/1/deliveries
+          name: web
+          events:
+            - push
+            - pull_request
+          active: true
+          config:
+            url: http://example.com
+            content_type: json
+          updated_at: '2011-09-06T20:39:23Z'
+          created_at: '2011-09-06T17:26:27Z'
+          type: Organization
+    org-hook:
+      value:
+        id: 1
+        url: https://api.github.com/orgs/octocat/hooks/1
+        ping_url: https://api.github.com/orgs/octocat/hooks/1/pings
+        deliveries_url: https://api.github.com/orgs/octocat/hooks/1/deliveries
+        name: web
+        events:
+          - push
+          - pull_request
+        active: true
+        config:
+          url: http://example.com
+          content_type: json
+        updated_at: '2011-09-06T20:39:23Z'
+        created_at: '2011-09-06T17:26:27Z'
+        type: Organization
+    org-hook-2:
+      value:
+        id: 1
+        url: https://api.github.com/orgs/octocat/hooks/1
+        ping_url: https://api.github.com/orgs/octocat/hooks/1/pings
+        deliveries_url: https://api.github.com/repos/octocat/Hello-World/hooks/12345678/deliveries
+        name: web
+        events:
+          - pull_request
+        active: true
+        config:
+          url: http://example.com
+          content_type: json
+        updated_at: '2011-09-06T20:39:23Z'
+        created_at: '2011-09-06T17:26:27Z'
+        type: Organization
+    webhook-config:
+      value:
+        content_type: json
+        insecure_ssl: '0'
+        secret: '********'
+        url: https://example.com/webhook
+    hook-delivery-items:
+      value:
+        - id: 12345678
+          guid: 0b989ba4-242f-11e5-81e1-c7b6966d2516
+          delivered_at: '2019-06-03T00:57:16Z'
+          redelivery: false
+          duration: 0.27
+          status: OK
+          status_code: 200
+          event: issues
+          action: opened
+          installation_id: 123
+          repository_id: 456
+        - id: 123456789
+          guid: 0b989ba4-242f-11e5-81e1-c7b6966d2516
+          delivered_at: '2019-06-04T00:57:16Z'
+          redelivery: true
+          duration: 0.28
+          status: OK
+          status_code: 200
+          event: issues
+          action: opened
+          installation_id: 123
+          repository_id: 456
+    hook-delivery:
+      value:
+        id: 12345678
+        guid: 0b989ba4-242f-11e5-81e1-c7b6966d2516
+        delivered_at: '2019-06-03T00:57:16Z'
+        redelivery: false
+        duration: 0.27
+        status: OK
+        status_code: 200
+        event: issues
+        action: opened
+        installation_id: 123
+        repository_id: 456
+        url: https://www.example.com
+        request:
+          headers:
+            X-GitHub-Delivery: 0b989ba4-242f-11e5-81e1-c7b6966d2516
+            X-Hub-Signature-256: sha256=6dcb09b5b57875f334f61aebed695e2e4193db5e
+            Accept: '*/*'
+            X-GitHub-Hook-ID: '42'
+            User-Agent: GitHub-Hookshot/b8c71d8
+            X-GitHub-Event: issues
+            X-GitHub-Hook-Installation-Target-ID: '123'
+            X-GitHub-Hook-Installation-Target-Type: repository
+            content-type: application/json
+            X-Hub-Signature: sha1=a84d88e7554fc1fa21bcbc4efae3c782a70d2b9d
+          payload:
+            action: opened
+            issue:
+              body: foo
+            repository:
+              id: 123
+        response:
+          headers:
+            Content-Type: text/html;charset=utf-8
+          payload: ok
+    installation-paginated:
+      value:
+        total_count: 1
+        installations:
+          - id: 25381
+            account:
+              login: octo-org
+              id: 6811672
+              node_id: MDEyOk9yZ2FuaXphdGlvbjY4MTE2NzI=
+              avatar_url: https://avatars3.githubusercontent.com/u/6811672?v=4
+              gravatar_id: ''
+              url: https://api.github.com/users/octo-org
+              html_url: https://github.com/octo-org
+              followers_url: https://api.github.com/users/octo-org/followers
+              following_url: https://api.github.com/users/octo-org/following{/other_user}
+              gists_url: https://api.github.com/users/octo-org/gists{/gist_id}
+              starred_url: https://api.github.com/users/octo-org/starred{/owner}{/repo}
+              subscriptions_url: https://api.github.com/users/octo-org/subscriptions
+              organizations_url: https://api.github.com/users/octo-org/orgs
+              repos_url: https://api.github.com/users/octo-org/repos
+              events_url: https://api.github.com/users/octo-org/events{/privacy}
+              received_events_url: https://api.github.com/users/octo-org/received_events
+              type: Organization
+              site_admin: false
+            repository_selection: selected
+            access_tokens_url: https://api.github.com/app/installations/25381/access_tokens
+            repositories_url: https://api.github.com/installation/repositories
+            html_url: https://github.com/organizations/octo-org/settings/installations/25381
+            app_id: 2218
+            target_id: 6811672
+            target_type: Organization
+            permissions:
+              deployments: write
+              metadata: read
+              pull_requests: read
+              statuses: read
+            events:
+              - deployment
+              - deployment_status
+            created_at: '2017-05-16T08:47:09.000-07:00'
+            updated_at: '2017-06-06T11:23:23.000-07:00'
+            single_file_name: config.yml
+            has_multiple_single_files: true
+            single_file_paths:
+              - config.yml
+              - .github/issue_TEMPLATE.md
+            app_slug: github-actions
+            suspended_at: null
+            suspended_by: null
+    organization-invitation:
+      value:
+        id: 1
+        login: monalisa
+        node_id: MDQ6VXNlcjE=
+        email: octocat@github.com
+        role: direct_member
+        created_at: '2016-11-30T06:46:10-08:00'
+        inviter:
+          login: other_user
+          id: 1
+          node_id: MDQ6VXNlcjE=
+          avatar_url: https://github.com/images/error/other_user_happy.gif
+          gravatar_id: ''
+          url: https://api.github.com/users/other_user
+          html_url: https://github.com/other_user
+          followers_url: https://api.github.com/users/other_user/followers
+          following_url: https://api.github.com/users/other_user/following{/other_user}
+          gists_url: https://api.github.com/users/other_user/gists{/gist_id}
+          starred_url: https://api.github.com/users/other_user/starred{/owner}{/repo}
+          subscriptions_url: https://api.github.com/users/other_user/subscriptions
+          organizations_url: https://api.github.com/users/other_user/orgs
+          repos_url: https://api.github.com/users/other_user/repos
+          events_url: https://api.github.com/users/other_user/events{/privacy}
+          received_events_url: https://api.github.com/users/other_user/received_events
+          type: User
+          site_admin: false
+        team_count: 2
+        invitation_teams_url: https://api.github.com/organizations/2/invitations/1/teams
+    team-items:
+      value:
+        - id: 1
+          node_id: MDQ6VGVhbTE=
+          url: https://api.github.com/teams/1
+          html_url: https://github.com/orgs/github/teams/justice-league
+          name: Justice League
+          slug: justice-league
+          description: A great team.
+          privacy: closed
+          permission: admin
+          members_url: https://api.github.com/teams/1/members{/member}
+          repositories_url: https://api.github.com/teams/1/repos
+          parent: null
+    org-membership-response-if-user-has-an-active-admin-membership-with-organization:
+      summary: Response if user has an active admin membership with organization
+      value:
+        url: https://api.github.com/orgs/octocat/memberships/defunkt
+        state: active
+        role: admin
+        organization_url: https://api.github.com/orgs/octocat
+        organization:
+          login: github
+          id: 1
+          node_id: MDEyOk9yZ2FuaXphdGlvbjE=
+          url: https://api.github.com/orgs/github
+          repos_url: https://api.github.com/orgs/github/repos
+          events_url: https://api.github.com/orgs/github/events
+          hooks_url: https://api.github.com/orgs/github/hooks
+          issues_url: https://api.github.com/orgs/github/issues
+          members_url: https://api.github.com/orgs/github/members{/member}
+          public_members_url: https://api.github.com/orgs/github/public_members{/member}
+          avatar_url: https://github.com/images/error/octocat_happy.gif
+          description: A great organization
+        user:
+          login: octocat
+          id: 1
+          node_id: MDQ6VXNlcjE=
+          avatar_url: https://github.com/images/error/octocat_happy.gif
+          gravatar_id: ''
+          url: https://api.github.com/users/octocat
+          html_url: https://github.com/octocat
+          followers_url: https://api.github.com/users/octocat/followers
+          following_url: https://api.github.com/users/octocat/following{/other_user}
+          gists_url: https://api.github.com/users/octocat/gists{/gist_id}
+          starred_url: https://api.github.com/users/octocat/starred{/owner}{/repo}
+          subscriptions_url: https://api.github.com/users/octocat/subscriptions
+          organizations_url: https://api.github.com/users/octocat/orgs
+          repos_url: https://api.github.com/users/octocat/repos
+          events_url: https://api.github.com/users/octocat/events{/privacy}
+          received_events_url: https://api.github.com/users/octocat/received_events
+          type: User
+          site_admin: false
+    org-membership-items:
+      value:
+        - url: https://api.github.com/orgs/octocat/memberships/defunkt
+          state: active
+          role: admin
+          organization_url: https://api.github.com/orgs/octocat
+          organization:
+            login: github
+            id: 1
+            node_id: MDEyOk9yZ2FuaXphdGlvbjE=
+            url: https://api.github.com/orgs/github
+            repos_url: https://api.github.com/orgs/github/repos
+            events_url: https://api.github.com/orgs/github/events
+            hooks_url: https://api.github.com/orgs/github/hooks
+            issues_url: https://api.github.com/orgs/github/issues
+            members_url: https://api.github.com/orgs/github/members{/member}
+            public_members_url: https://api.github.com/orgs/github/public_members{/member}
+            avatar_url: https://github.com/images/error/octocat_happy.gif
+            description: A great organization
+          user:
+            login: octocat
+            id: 1
+            node_id: MDQ6VXNlcjE=
+            avatar_url: https://github.com/images/error/octocat_happy.gif
+            gravatar_id: ''
+            url: https://api.github.com/users/octocat
+            html_url: https://github.com/octocat
+            followers_url: https://api.github.com/users/octocat/followers
+            following_url: https://api.github.com/users/octocat/following{/other_user}
+            gists_url: https://api.github.com/users/octocat/gists{/gist_id}
+            starred_url: https://api.github.com/users/octocat/starred{/owner}{/repo}
+            subscriptions_url: https://api.github.com/users/octocat/subscriptions
+            organizations_url: https://api.github.com/users/octocat/orgs
+            repos_url: https://api.github.com/users/octocat/repos
+            events_url: https://api.github.com/users/octocat/events{/privacy}
+            received_events_url: https://api.github.com/users/octocat/received_events
+            type: User
+            site_admin: false
+        - url: https://api.github.com/orgs/invitocat/memberships/defunkt
+          state: pending
+          role: admin
+          organization_url: https://api.github.com/orgs/invitocat
+          organization:
+            login: github
+            id: 1
+            node_id: MDEyOk9yZ2FuaXphdGlvbjE=
+            url: https://api.github.com/orgs/github
+            repos_url: https://api.github.com/orgs/github/repos
+            events_url: https://api.github.com/orgs/github/events
+            hooks_url: https://api.github.com/orgs/github/hooks
+            issues_url: https://api.github.com/orgs/github/issues
+            members_url: https://api.github.com/orgs/github/members{/member}
+            public_members_url: https://api.github.com/orgs/github/public_members{/member}
+            avatar_url: https://github.com/images/error/octocat_happy.gif
+            description: A great organization
+          user:
+            login: octocat
+            id: 1
+            node_id: MDQ6VXNlcjE=
+            avatar_url: https://github.com/images/error/octocat_happy.gif
+            gravatar_id: ''
+            url: https://api.github.com/users/octocat
+            html_url: https://github.com/octocat
+            followers_url: https://api.github.com/users/octocat/followers
+            following_url: https://api.github.com/users/octocat/following{/other_user}
+            gists_url: https://api.github.com/users/octocat/gists{/gist_id}
+            starred_url: https://api.github.com/users/octocat/starred{/owner}{/repo}
+            subscriptions_url: https://api.github.com/users/octocat/subscriptions
+            organizations_url: https://api.github.com/users/octocat/orgs
+            repos_url: https://api.github.com/users/octocat/repos
+            events_url: https://api.github.com/users/octocat/events{/privacy}
+            received_events_url: https://api.github.com/users/octocat/received_events
+            type: User
+            site_admin: false
+    org-membership:
+      value:
+        url: https://api.github.com/orgs/invitocat/memberships/defunkt
+        state: pending
+        role: admin
+        organization_url: https://api.github.com/orgs/invitocat
+        organization:
+          login: github
+          id: 1
+          node_id: MDEyOk9yZ2FuaXphdGlvbjE=
+          url: https://api.github.com/orgs/github
+          repos_url: https://api.github.com/orgs/github/repos
+          events_url: https://api.github.com/orgs/github/events
+          hooks_url: https://api.github.com/orgs/github/hooks
+          issues_url: https://api.github.com/orgs/github/issues
+          members_url: https://api.github.com/orgs/github/members{/member}
+          public_members_url: https://api.github.com/orgs/github/public_members{/member}
+          avatar_url: https://github.com/images/error/octocat_happy.gif
+          description: A great organization
+        user:
+          login: octocat
+          id: 1
+          node_id: MDQ6VXNlcjE=
+          avatar_url: https://github.com/images/error/octocat_happy.gif
+          gravatar_id: ''
+          url: https://api.github.com/users/octocat
+          html_url: https://github.com/octocat
+          followers_url: https://api.github.com/users/octocat/followers
+          following_url: https://api.github.com/users/octocat/following{/other_user}
+          gists_url: https://api.github.com/users/octocat/gists{/gist_id}
+          starred_url: https://api.github.com/users/octocat/starred{/owner}{/repo}
+          subscriptions_url: https://api.github.com/users/octocat/subscriptions
+          organizations_url: https://api.github.com/users/octocat/orgs
+          repos_url: https://api.github.com/users/octocat/repos
+          events_url: https://api.github.com/users/octocat/events{/privacy}
+          received_events_url: https://api.github.com/users/octocat/received_events
+          type: User
+          site_admin: false
+    org-membership-2:
+      value:
+        url: https://api.github.com/orgs/octocat/memberships/defunkt
+        state: active
+        role: admin
+        organization_url: https://api.github.com/orgs/octocat
+        organization:
+          login: github
+          id: 1
+          node_id: MDEyOk9yZ2FuaXphdGlvbjE=
+          url: https://api.github.com/orgs/github
+          repos_url: https://api.github.com/orgs/github/repos
+          events_url: https://api.github.com/orgs/github/events
+          hooks_url: https://api.github.com/orgs/github/hooks
+          issues_url: https://api.github.com/orgs/github/issues
+          members_url: https://api.github.com/orgs/github/members{/member}
+          public_members_url: https://api.github.com/orgs/github/public_members{/member}
+          avatar_url: https://github.com/images/error/octocat_happy.gif
+          description: A great organization
+        user:
+          login: octocat
+          id: 1
+          node_id: MDQ6VXNlcjE=
+          avatar_url: https://github.com/images/error/octocat_happy.gif
+          gravatar_id: ''
+          url: https://api.github.com/users/octocat
+          html_url: https://github.com/octocat
+          followers_url: https://api.github.com/users/octocat/followers
+          following_url: https://api.github.com/users/octocat/following{/other_user}
+          gists_url: https://api.github.com/users/octocat/gists{/gist_id}
+          starred_url: https://api.github.com/users/octocat/starred{/owner}{/repo}
+          subscriptions_url: https://api.github.com/users/octocat/subscriptions
+          organizations_url: https://api.github.com/users/octocat/orgs
+          repos_url: https://api.github.com/users/octocat/repos
+          events_url: https://api.github.com/users/octocat/events{/privacy}
+          received_events_url: https://api.github.com/users/octocat/received_events
+          type: User
+          site_admin: false
+  requestBodies: {}
+  headers:
+    link:
+      example: <https://api.github.com/resource?page=2>; rel="next", <https://api.github.com/resource?page=5>; rel="last"
+      schema:
+        type: string
+  links: {}
+  x-stackQL-resources:
+    credential_authorizations:
+      id: github.orgs.credential_authorizations
+      name: credential_authorizations
+      title: Credential Authorizations
+      methods:
+        list_saml_sso_authorizations:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1credential-authorizations/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        remove_saml_sso_authorization:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1credential-authorizations~1{credential_id}/delete'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '204'
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/credential_authorizations/methods/list_saml_sso_authorizations'
+        insert: []
+        update: []
+        delete:
+          - $ref: '#/components/x-stackQL-resources/credential_authorizations/methods/remove_saml_sso_authorization'
+    installations:
+      id: github.orgs.installations
+      name: installations
+      title: Installations
+      methods:
+        list_app_installations:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1installations/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/installations/methods/list_app_installations'
+        insert: []
+        update: []
+        delete: []
+    audit_log_events:
+      id: github.orgs.audit_log_events
+      name: audit_log_events
+      title: Organization Audit Log Events
+      methods:
+        get_audit_log:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1audit-log/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/audit_log_events/methods/get_audit_log'
+        insert: []
+        update: []
+        delete: []
+    orgs:
+      id: github.orgs.orgs
+      name: orgs
+      title: Orgs
+      methods:
+        list:
+          operation:
+            $ref: '#/paths/~1organizations/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        update:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}/patch'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list_for_authenticated_user:
+          operation:
+            $ref: '#/paths/~1user~1orgs/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list_for_user:
+          operation:
+            $ref: '#/paths/~1users~1{username}~1orgs/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/orgs/methods/get'
+          - $ref: '#/components/x-stackQL-resources/orgs/methods/list_for_user'
+          - $ref: '#/components/x-stackQL-resources/orgs/methods/list'
+        insert: []
+        update: []
+        delete: []
+    custom_roles:
+      id: github.orgs.custom_roles
+      name: custom_roles
+      title: Custom_roles
+      methods:
+        list_custom_roles:
+          operation:
+            $ref: '#/paths/~1organizations~1{organization_id}~1custom_roles/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/custom_roles/methods/list_custom_roles'
+        insert: []
+        update: []
+        delete: []
+    blocking:
+      id: github.orgs.blocking
+      name: blocking
+      title: Blocking
+      methods:
+        list_blocked_users:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1blocks/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        check_blocked_user:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1blocks~1{username}/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '204'
+        block_user:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1blocks~1{username}/put'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '204'
+        unblock_user:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1blocks~1{username}/delete'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '204'
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/blocking/methods/list_blocked_users'
+        insert: []
+        update: []
+        delete: []
+    invitation_teams:
+      id: github.orgs.invitation_teams
+      name: invitation_teams
+      title: Invitation Teams
+      methods:
+        list_invitation_teams:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1invitations~1{invitation_id}~1teams/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/invitation_teams/methods/list_invitation_teams'
+        insert: []
+        update: []
+        delete: []
+    memberships:
+      id: github.orgs.memberships
+      name: memberships
+      title: Organization memberships
+      methods:
+        check_membership_for_user:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1members~1{username}/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '204'
+        get_membership_for_user:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1memberships~1{username}/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        set_membership_for_user:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1memberships~1{username}/put'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        remove_membership_for_user:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1memberships~1{username}/delete'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '204'
+        list_memberships_for_authenticated_user:
+          operation:
+            $ref: '#/paths/~1user~1memberships~1orgs/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get_membership_for_authenticated_user:
+          operation:
+            $ref: '#/paths/~1user~1memberships~1orgs~1{org}/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        update_membership_for_authenticated_user:
+          operation:
+            $ref: '#/paths/~1user~1memberships~1orgs~1{org}/patch'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/memberships/methods/get_membership_for_user'
+          - $ref: '#/components/x-stackQL-resources/memberships/methods/get_membership_for_authenticated_user'
+          - $ref: '#/components/x-stackQL-resources/memberships/methods/list_memberships_for_authenticated_user'
+        insert: []
+        update: []
+        delete:
+          - $ref: '#/components/x-stackQL-resources/memberships/methods/remove_membership_for_user'
+    failed_invitations:
+      id: github.orgs.failed_invitations
+      name: failed_invitations
+      title: Failed Invitations
+      methods:
+        list_failed_invitations:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1failed_invitations/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/failed_invitations/methods/list_failed_invitations'
+        insert: []
+        update: []
+        delete: []
+    invitations:
+      id: github.orgs.invitations
+      name: invitations
+      title: Invitations
+      methods:
+        list_pending_invitations:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1invitations/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        create_invitation:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1invitations/post'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '201'
+        cancel_invitation:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1invitations~1{invitation_id}/delete'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '204'
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/invitations/methods/list_pending_invitations'
+        insert:
+          - $ref: '#/components/x-stackQL-resources/invitations/methods/create_invitation'
+        update: []
+        delete: []
+    public_members:
+      id: github.orgs.public_members
+      name: public_members
+      title: Public Members
+      methods:
+        list_public_members:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1public_members/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/public_members/methods/list_public_members'
+        insert: []
+        update: []
+        delete: []
+    public_memberships:
+      id: github.orgs.public_memberships
+      name: public_memberships
+      title: Organization Public memberships
+      methods:
+        check_public_membership_for_user:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1public_members~1{username}/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '204'
+        set_public_membership_for_authenticated_user:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1public_members~1{username}/put'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '204'
+        remove_public_membership_for_authenticated_user:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1public_members~1{username}/delete'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '204'
+      sqlVerbs:
+        select: []
+        insert: []
+        update: []
+        delete:
+          - $ref: '#/components/x-stackQL-resources/public_memberships/methods/remove_public_membership_for_authenticated_user'
+    members:
+      id: github.orgs.members
+      name: members
+      title: Members
+      methods:
+        list_members:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1members/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        remove_member:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1members~1{username}/delete'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '204'
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/members/methods/list_members'
+        insert: []
+        update: []
+        delete:
+          - $ref: '#/components/x-stackQL-resources/members/methods/remove_member'
+    webhook_deliveries:
+      id: github.orgs.webhook_deliveries
+      name: webhook_deliveries
+      title: Webhook Deliveries
+      methods:
+        list_webhook_deliveries:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1hooks~1{hook_id}~1deliveries/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get_webhook_delivery:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1hooks~1{hook_id}~1deliveries~1{delivery_id}/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        redeliver_webhook_delivery:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1hooks~1{hook_id}~1deliveries~1{delivery_id}~1attempts/post'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '202'
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/webhook_deliveries/methods/get_webhook_delivery'
+          - $ref: '#/components/x-stackQL-resources/webhook_deliveries/methods/list_webhook_deliveries'
+        insert: []
+        update: []
+        delete: []
+    webhook_config:
+      id: github.orgs.webhook_config
+      name: webhook_config
+      title: Webhook Config
+      methods:
+        get_webhook_config_for_org:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1hooks~1{hook_id}~1config/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        update_webhook_config_for_org:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1hooks~1{hook_id}~1config/patch'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/webhook_config/methods/get_webhook_config_for_org'
+        insert: []
+        update: []
+        delete: []
+    webhooks:
+      id: github.orgs.webhooks
+      name: webhooks
+      title: Webhooks
+      methods:
+        list_webhooks:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1hooks/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        create_webhook:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1hooks/post'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '201'
+        get_webhook:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1hooks~1{hook_id}/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        update_webhook:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1hooks~1{hook_id}/patch'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete_webhook:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1hooks~1{hook_id}/delete'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '204'
+        ping_webhook:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1hooks~1{hook_id}~1pings/post'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '204'
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/webhooks/methods/get_webhook'
+          - $ref: '#/components/x-stackQL-resources/webhooks/methods/list_webhooks'
+        insert:
+          - $ref: '#/components/x-stackQL-resources/webhooks/methods/create_webhook'
+        update: []
+        delete:
+          - $ref: '#/components/x-stackQL-resources/webhooks/methods/delete_webhook'
+    outside_collaborators:
+      id: github.orgs.outside_collaborators
+      name: outside_collaborators
+      title: Outside_collaborators
+      methods:
+        list_outside_collaborators:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1outside_collaborators/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        convert_member_to_outside_collaborator:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1outside_collaborators~1{username}/put'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '204'
+        remove_outside_collaborator:
+          operation:
+            $ref: '#/paths/~1orgs~1{org}~1outside_collaborators~1{username}/delete'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '204'
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/outside_collaborators/methods/list_outside_collaborators'
+        insert: []
+        update: []
+        delete:
+          - $ref: '#/components/x-stackQL-resources/outside_collaborators/methods/remove_outside_collaborator'
+openapi: 3.0.3
+servers:
+  - url: https://api.github.com
+tags:
+  - name: actions
+    description: Endpoints to manage GitHub Actions using the REST API.
+  - name: activity
+    description: Activity APIs provide access to notifications, subscriptions, and timelines.
+  - name: apps
+    description: Information for integrations and installations.
+  - name: billing
+    description: Monitor charges and usage from Actions and Packages.
+  - name: checks
+    description: Rich interactions with checks run by your integrations.
+  - name: code-scanning
+    description: Retrieve code scanning alerts from a repository.
+  - name: codes-of-conduct
+    description: Insight into codes of conduct for your communities.
+  - name: codespaces
+    description: Endpoints to manage Codespaces using the REST API.
+  - name: emojis
+    description: List emojis available to use on GitHub.
+  - name: enterprise-admin
+    description: Administer a GitHub enterprise.
+  - name: dependabot
+    description: Endpoints to manage Dependabot.
+  - name: gists
+    description: View, modify your gists.
+  - name: git
+    description: Raw Git functionality.
+  - name: gitignore
+    description: View gitignore templates
+  - name: interactions
+    description: Owner or admin management of users interactions.
+  - name: issues
+    description: Interact with GitHub Issues.
+  - name: licenses
+    description: View various OSS licenses.
+  - name: markdown
+    description: Render GitHub flavored markdown
+  - name: meta
+    description: Endpoints that give information about the API.
+  - name: migrations
+    description: Move projects to or from GitHub.
+  - name: oauth-authorizations
+    description: Manage access of OAuth applications
+  - name: orgs
+    description: Interact with GitHub Orgs.
+  - name: packages
+    description: Manage packages for authenticated users and organizations.
+  - name: projects
+    description: Interact with GitHub Projects.
+  - name: pulls
+    description: Interact with GitHub Pull Requests.
+  - name: rate-limit
+    description: Check your current rate limit status
+  - name: reactions
+    description: Interact with reactions to various GitHub entities.
+  - name: repos
+    description: Interact with GitHub Repos.
+  - name: scim
+    description: Provisioning of GitHub organization membership for SCIM-enabled providers.
+  - name: search
+    description: Look for stuff on GitHub.
+  - name: secret-scanning
+    description: Retrieve secret scanning alerts from a repository.
+  - name: server-statistics
+    description: GHES statistics
+  - name: teams
+    description: Interact with GitHub Teams.
+  - name: users
+    description: Interact with and view information about users and also current user.
+externalDocs:
+  description: GitHub v3 REST API
+  url: https://docs.github.com/rest/
+info:
+  version: 1.1.4
+  title: GitHub v3 REST API - orgs
+  description: Interact with GitHub Orgs.
+  license:
+    name: MIT
+    url: https://spdx.org/licenses/MIT
+  termsOfService: https://docs.github.com/articles/github-terms-of-service
+  contact:
+    name: Support
+    url: https://support.github.com/contact?tags=dotcom-rest-api

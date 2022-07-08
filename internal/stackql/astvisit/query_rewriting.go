@@ -36,9 +36,13 @@ func (v *QueryRewriteAstVisitor) buildAcquireQueryCtx(
 	ac taxonomy.AnnotationCtx,
 	dc drm.DRMConfig,
 ) (*drm.PreparedStatementCtx, error) {
-	insertTabulation := ac.Schema.Tabulate(false)
+	sc := ac.GetSchema()
+	if sc == nil {
+		return nil, fmt.Errorf("cannot build acquisition from nil schema")
+	}
+	insertTabulation := ac.GetSchema().Tabulate(false)
 
-	hIds := ac.HIDs
+	hIds := ac.GetHIDs()
 	log.Infof("%v %v", insertTabulation, hIds)
 
 	annotatedInsertTabulation := util.NewAnnotatedTabulation(insertTabulation, hIds, "")
@@ -665,7 +669,7 @@ func (v *QueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 				if !ok {
 					return fmt.Errorf("could not infer discovery generation ID")
 				}
-				replacementExpr := v.dc.GetParserTableName(t.HIDs, dID)
+				replacementExpr := v.dc.GetParserTableName(t.GetHIDs(), dID)
 				node.Expr = replacementExpr
 
 			}

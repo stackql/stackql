@@ -5,6 +5,35 @@
         "accept": [ "application/json" ]
       },
       "method": "GET",
+      "path": "/users/{userId}",
+      "pathParameters": {
+        "userId": ["[A-Za-z0-9-]+"] 
+      }
+    },
+    "httpResponseTemplate": {
+      "template": "#set($login = \"$!request.path.split('/')[-1]\") \n{ 'statusCode': 200, 'headers': { 'Datetime': [ $!now_iso_8601 ] }, 'body': {  \"login\": '$login',  \"id\": 1,  \"node_id\": \"MDQ6VXNlcjE=\",  \"avatar_url\": \"https://github.com/images/error/octocat_happy.gif\",  \"gravatar_id\": \"\",  \"url\": \"https://api.github.com/users/$login\",  \"html_url\": \"https://github.com/$login\",  \"followers_url\": \"https://api.github.com/users/$login/followers\",  \"following_url\": \"https://api.github.com/users/$login/following{/other_user}\",  \"gists_url\": \"https://api.github.com/users/$login/gists{/gist_id}\",  \"starred_url\": \"https://api.github.com/users/$login/starred{/owner}{/repo}\",  \"subscriptions_url\": \"https://api.github.com/users/$login/subscriptions\",  \"organizations_url\": \"https://api.github.com/users/$login/orgs\",  \"repos_url\": \"https://api.github.com/users/$login/repos\",  \"events_url\": \"https://api.github.com/users/$login/events{/privacy}\",  \"received_events_url\": \"https://api.github.com/users/$login/received_events\",  \"type\": \"User\",  \"site_admin\": false,  \"name\": \"monalisa $login\",  \"company\": \"GitHub\",  \"blog\": \"https://github.com/blog\",  \"location\": \"San Francisco\",  \"email\": \"$login@github.com\",  \"hireable\": false,  \"bio\": \"There once was...\",  \"twitter_username\": \"monatheoctocat\",  \"public_repos\": 2,  \"public_gists\": 1,  \"followers\": 20,  \"following\": 0,  \"created_at\": \"2008-01-14T04:33:35Z\",  \"updated_at\": \"2008-01-14T04:33:35Z\" } }",
+      "templateType": "VELOCITY"
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "accept": [ "application/json" ]
+      },
+      "method": "GET",
+      "path": "(?:/orgs/dummyorg/members|/organizations/000000001/members)"
+    },
+    "httpResponseTemplate": {
+      "template": "#set($thisPage = \"#if($!request.queryStringParameters.page[0])$!request.queryStringParameters.page[0]#{else}1#end\")\n#set($userStubs = [\"octocat\", \"decapod\", \"mrfootball\", \"knuckles\"]) \n#set($maxPage = 4) \n#set($Integer = 0) \n#set($nextPage = $Integer.parseInt($thisPage) + 1) \n{ 'statusCode': 200, 'headers': { 'Datetime': [ $!now_iso_8601 ], Next-Page: [ '$!request.queryStringParameters.page[0]' ], Calc-Page: [ '$!thisPage', '$!nextPage' ], Link: [ #if(($nextPage) && ($nextPage <= $maxPage)) '<https://localhost:1093/organizations/000000001/members?page=$!nextPage>; rel=\"next\"', #end '<https://localhost:1093/organizations/000000001/members?page=$!maxPage>; rel=\"last\"' ] }, 'body': [ #foreach( $userStub in $userStubs )  {    \"login\": \"$userStub-$thisPage\",    \"id\":  1,    \"node_id\": \"MDQ6VXNlcjE=\",    \"avatar_url\": \"https://github.com/images/error/octocat_happy.gif\",    \"gravatar_id\": \"\",    \"url\": \"https://api.github.com/users/$userStub-$thisPage\",    \"html_url\": \"https://github.com/$userStub-$thisPage\",    \"followers_url\": \"https://api.github.com/users/$userStub-$thisPage/followers\",    \"following_url\": \"https://api.github.com/users/$userStub-$thisPage/following{/other_user}\",    \"gists_url\": \"https://api.github.com/users/$userStub-$thisPage/gists{/gist_id}\",    \"starred_url\": \"https://api.github.com/users/$userStub-$thisPage/starred{/owner}{/repo}\",    \"subscriptions_url\": \"https://api.github.com/users/$userStub-$thisPage/subscriptions\",    \"organizations_url\": \"https://api.github.com/users/$userStub-$thisPage/orgs\",    \"repos_url\": \"https://api.github.com/users/$userStub-$thisPage/repos\",    \"events_url\": \"https://api.github.com/users/$userStub-$thisPage/events{/privacy}\",    \"received_events_url\": \"https://api.github.com/users/$userStub-$thisPage4x/received_events\",    \"type\": \"User\",    \"site_admin\": false  } #if( $foreach.hasNext ),#end #end ] }",
+      "templateType": "VELOCITY"
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "accept": [ "application/json" ]
+      },
+      "method": "GET",
       "path": "(?:/repos/dummyorg/dummyapp.io/tags|/repositories/000000001/tags)"
     },
     "httpResponseTemplate": {

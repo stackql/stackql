@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/jeroenrinzema/psql-wire/pkg/sqldata"
+	"github.com/stackql/stackql/internal/stackql/streaming"
 )
 
 const (
@@ -453,12 +454,21 @@ type ExecutorOutput struct {
 	GetSQLResult  func() sqldata.ISQLResultStream
 	GetRawResult  func() IRawResultStream
 	GetOutputBody func() map[string]interface{}
+	stream        streaming.MapStream
 	Msg           *BackendMessages
 	Err           error
 }
 
 func (ex ExecutorOutput) ResultToMap() (IRawResultStream, error) {
 	return ex.GetRawResult(), nil
+}
+
+func (ex ExecutorOutput) SetStream(s streaming.MapStream) {
+	ex.stream = s
+}
+
+func (ex ExecutorOutput) GetStream() streaming.MapStream {
+	return ex.stream
 }
 
 func NewExecutorOutput(result sqldata.ISQLResultStream, body map[string]interface{}, rawResult map[int]map[int]interface{}, msg *BackendMessages, err error) ExecutorOutput {

@@ -562,7 +562,7 @@ func (v *TableAliasAstVisitor) Visit(node sqlparser.SQLNode) error {
 			if err != nil {
 				return err
 			}
-			k, err := parserutil.NewColumnarReference(node)
+			k, err := parserutil.NewUnknownTypeColumnarReference(node)
 			if err != nil {
 				return err
 			}

@@ -9,7 +9,7 @@ import (
 
 	"github.com/stackql/stackql/internal/stackql/astvisit"
 	"github.com/stackql/stackql/internal/stackql/constants"
-	"github.com/stackql/stackql/internal/stackql/docparser"
+	"github.com/stackql/stackql/internal/stackql/dependencyplanner"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -21,13 +21,13 @@ import (
 	"github.com/stackql/stackql/internal/stackql/primitivebuilder"
 	"github.com/stackql/stackql/internal/stackql/provider"
 	"github.com/stackql/stackql/internal/stackql/relational"
+	"github.com/stackql/stackql/internal/stackql/router"
 	"github.com/stackql/stackql/internal/stackql/suffix"
 	"github.com/stackql/stackql/internal/stackql/symtab"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 	"github.com/stackql/stackql/internal/stackql/util"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
-	"github.com/stackql/go-openapistackql/pkg/media"
 
 	"vitess.io/vitess/go/vt/sqlparser"
 
@@ -102,7 +102,7 @@ func (p *primitiveGenerator) analyzeUse(pbi PlanBuilderInput) error {
 	if pErr != nil {
 		return pErr
 	}
-	p.PrimitiveBuilder.SetProvider(prov)
+	p.PrimitiveComposer.SetProvider(prov)
 	return nil
 }
 
@@ -114,7 +114,7 @@ func (p *primitiveGenerator) analyzeUnion(pbi PlanBuilderInput) error {
 	}
 	unionQuery := astvisit.GenerateUnionTemplateQuery(node)
 	i := 0
-	leaf, err := p.PrimitiveBuilder.GetSymTab().NewLeaf(i)
+	leaf, err := p.PrimitiveComposer.GetSymTab().NewLeaf(i)
 	if err != nil {
 		return err
 	}
@@ -126,7 +126,7 @@ func (p *primitiveGenerator) analyzeUnion(pbi PlanBuilderInput) error {
 	var selectStatementContexts []*drm.PreparedStatementCtx
 	for _, rhsStmt := range node.UnionSelects {
 		i++
-		leaf, err := p.PrimitiveBuilder.GetSymTab().NewLeaf(i)
+		leaf, err := p.PrimitiveComposer.GetSymTab().NewLeaf(i)
 		if err != nil {
 			return err
 		}
@@ -135,19 +135,19 @@ func (p *primitiveGenerator) analyzeUnion(pbi PlanBuilderInput) error {
 		if err != nil {
 			return err
 		}
-		ctx := pChild.PrimitiveBuilder.GetSelectPreparedStatementCtx()
+		ctx := pChild.PrimitiveComposer.GetSelectPreparedStatementCtx()
 		ctx.SetKind(rhsStmt.Type)
 		selectStatementContexts = append(selectStatementContexts, ctx)
 	}
 
 	bldr := primitivebuilder.NewUnion(
-		p.PrimitiveBuilder.GetGraph(),
+		p.PrimitiveComposer.GetGraph(),
 		handlerCtx,
 		drm.NewQueryOnlyPreparedStatementCtx(unionQuery),
-		pChild.PrimitiveBuilder.GetSelectPreparedStatementCtx(),
+		pChild.PrimitiveComposer.GetSelectPreparedStatementCtx(),
 		selectStatementContexts,
 	)
-	p.PrimitiveBuilder.SetBuilder(bldr)
+	p.PrimitiveComposer.SetBuilder(bldr)
 
 	return nil
 }
@@ -175,7 +175,7 @@ func (p *primitiveGenerator) analyzeAuth(pbi PlanBuilderInput) error {
 	if pErr != nil {
 		return pErr
 	}
-	p.PrimitiveBuilder.SetProvider(provider)
+	p.PrimitiveComposer.SetProvider(provider)
 	return nil
 }
 
@@ -218,17 +218,17 @@ func (pb *primitiveGenerator) analyzeShowFilter(node *sqlparser.Show, table open
 		if err != nil {
 			return fmt.Errorf("cannot compile like string '%s': %s", showFilter.Like, err.Error())
 		}
-		tableFilter := pb.PrimitiveBuilder.GetTableFilter()
-		for _, col := range pb.PrimitiveBuilder.GetLikeAbleColumns() {
+		tableFilter := pb.PrimitiveComposer.GetTableFilter()
+		for _, col := range pb.PrimitiveComposer.GetLikeAbleColumns() {
 			tableFilter = relational.OrTableFilters(tableFilter, relational.ConstructLikePredicateFilter(col, likeRegexp, false))
 		}
-		pb.PrimitiveBuilder.SetTableFilter(relational.OrTableFilters(pb.PrimitiveBuilder.GetTableFilter(), tableFilter))
+		pb.PrimitiveComposer.SetTableFilter(relational.OrTableFilters(pb.PrimitiveComposer.GetTableFilter(), tableFilter))
 	} else if showFilter.Filter != nil {
 		tableFilter, err := pb.traverseShowFilter(table, node, showFilter.Filter)
 		if err != nil {
 			return err
 		}
-		pb.PrimitiveBuilder.SetTableFilter(tableFilter)
+		pb.PrimitiveComposer.SetTableFilter(tableFilter)
 	}
 	return nil
 }
@@ -283,9 +283,7 @@ func (pb *primitiveGenerator) traverseWhereFilter(node sqlparser.SQLNode, requir
 		if rhErr != nil {
 			return nil, nil, rhErr
 		}
-		for _, v := range rParams {
-			lParams = append(lParams, v)
-		}
+		lParams = append(lParams, rParams...)
 		return &sqlparser.AndExpr{Left: lhs, Right: rhs}, lParams, nil
 	case *sqlparser.OrExpr:
 		log.Infoln("complex OR expr detected")
@@ -297,9 +295,7 @@ func (pb *primitiveGenerator) traverseWhereFilter(node sqlparser.SQLNode, requir
 		if rhErr != nil {
 			return nil, nil, rhErr
 		}
-		for _, v := range rParams {
-			lParams = append(lParams, v)
-		}
+		lParams = append(lParams, rParams...)
 		return &sqlparser.OrExpr{Left: lhs, Right: rhs}, lParams, nil
 	case *sqlparser.FuncExpr:
 		return nil, nil, fmt.Errorf("unsupported constraint in openapistackql filter: %v", sqlparser.String(node))
@@ -311,7 +307,6 @@ func (pb *primitiveGenerator) traverseWhereFilter(node sqlparser.SQLNode, requir
 	default:
 		return nil, nil, fmt.Errorf("unsupported constraint in openapistackql filter: %v", sqlparser.String(node))
 	}
-	return nil, nil, fmt.Errorf("unsupported constraint in openapistackql filter: %v", sqlparser.String(node))
 }
 
 func (pb *primitiveGenerator) whereComparisonExprCopyAndReWrite(expr *sqlparser.ComparisonExpr, requiredParameters, optionalParameters *suffix.ParameterSuffixMap) (sqlparser.Expr, string, error) {
@@ -320,7 +315,7 @@ func (pb *primitiveGenerator) whereComparisonExprCopyAndReWrite(expr *sqlparser.
 		return nil, "", fmt.Errorf("unexpected: %v", sqlparser.String(expr))
 	}
 	colName := dto.GeneratePutativelyUniqueColumnID(qualifiedName.Qualifier, qualifiedName.Name.GetRawVal())
-	symTabEntry, symTabErr := pb.PrimitiveBuilder.GetSymbol(colName)
+	symTabEntry, symTabErr := pb.PrimitiveComposer.GetSymbol(colName)
 	_, requiredParamPresent := requiredParameters.Get(colName)
 	_, optionalParamPresent := optionalParameters.Get(colName)
 	log.Infoln(fmt.Sprintf("symTabEntry = %v", symTabEntry))
@@ -396,7 +391,7 @@ func (pb *primitiveGenerator) resolveMethods(where *sqlparser.Where) error {
 	requiredParameters := suffix.NewParameterSuffixMap()
 	// remainingRequiredParameters := suffix.NewParameterSuffixMap()
 	optionalParameters := suffix.NewParameterSuffixMap()
-	for _, tb := range pb.PrimitiveBuilder.GetTables() {
+	for _, tb := range pb.PrimitiveComposer.GetTables() {
 		tbID := tb.GetUniqueId()
 		method, err := tb.GetMethod()
 		if err != nil {
@@ -422,19 +417,12 @@ func (pb *primitiveGenerator) resolveMethods(where *sqlparser.Where) error {
 	return nil
 }
 
-func (pb *primitiveGenerator) extractParamsFromWhere(where *sqlparser.Where) (map[string]interface{}, error) {
-	if where == nil {
-		return map[string]interface{}{}, nil
-	}
-	return map[string]interface{}{}, nil
-}
-
-func (pb *primitiveGenerator) analyzeWhere(where *sqlparser.Where) (*sqlparser.Where, []string, error) {
+func (pb *primitiveGenerator) analyzeWhere(where *sqlparser.Where, existingParams map[string]interface{}) (*sqlparser.Where, []string, error) {
 	requiredParameters := suffix.NewParameterSuffixMap()
 	remainingRequiredParameters := suffix.NewParameterSuffixMap()
 	optionalParameters := suffix.NewParameterSuffixMap()
 	tbVisited := map[*taxonomy.ExtendedTableMetadata]struct{}{}
-	for _, tb := range pb.PrimitiveBuilder.GetTables() {
+	for _, tb := range pb.PrimitiveComposer.GetTables() {
 		if _, ok := tbVisited[tb]; ok {
 			continue
 		}
@@ -476,6 +464,10 @@ func (pb *primitiveGenerator) analyzeWhere(where *sqlparser.Where) (*sqlparser.W
 		remainingRequiredParameters.Put(l, w)
 	}
 
+	for k := range existingParams {
+		remainingRequiredParameters.Delete(k)
+	}
+
 	if remainingRequiredParameters.Size() > 0 {
 		if where == nil {
 			return nil, paramsSupplied, fmt.Errorf("WHERE clause not supplied, run DESCRIBE EXTENDED for the resource to see required parameters")
@@ -503,13 +495,13 @@ func extractVarDefFromExec(node *sqlparser.Exec, argName string) (*sqlparser.Exe
 
 func (p *primitiveGenerator) parseComments(comments sqlparser.Comments) {
 	if comments != nil {
-		p.PrimitiveBuilder.SetCommentDirectives(sqlparser.ExtractCommentDirectives(comments))
-		p.PrimitiveBuilder.SetAwait(p.PrimitiveBuilder.GetCommentDirectives().IsSet("AWAIT"))
+		p.PrimitiveComposer.SetCommentDirectives(sqlparser.ExtractCommentDirectives(comments))
+		p.PrimitiveComposer.SetAwait(p.PrimitiveComposer.GetCommentDirectives().IsSet("AWAIT"))
 	}
 }
 
 func (p *primitiveGenerator) persistHerarchyToBuilder(heirarchy *taxonomy.HeirarchyObjects, node sqlparser.SQLNode) {
-	p.PrimitiveBuilder.SetTable(node, taxonomy.NewExtendedTableMetadata(heirarchy, taxonomy.GetAliasFromStatement(node)))
+	p.PrimitiveComposer.SetTable(node, taxonomy.NewExtendedTableMetadata(heirarchy, taxonomy.GetAliasFromStatement(node)))
 }
 
 func (p *primitiveGenerator) analyzeUnaryExec(handlerCtx *handler.HandlerContext, node *sqlparser.Exec, selectNode *sqlparser.Select, cols []parserutil.ColumnHandle) (*taxonomy.ExtendedTableMetadata, error) {
@@ -519,7 +511,7 @@ func (p *primitiveGenerator) analyzeUnaryExec(handlerCtx *handler.HandlerContext
 	}
 	p.parseComments(node.Comments)
 
-	meta, err := p.PrimitiveBuilder.GetTable(node)
+	meta, err := p.PrimitiveComposer.GetTable(node)
 	if err != nil {
 		return nil, err
 	}
@@ -529,7 +521,7 @@ func (p *primitiveGenerator) analyzeUnaryExec(handlerCtx *handler.HandlerContext
 		return nil, err
 	}
 
-	if p.PrimitiveBuilder.IsAwait() && !method.IsAwaitable() {
+	if p.PrimitiveComposer.IsAwait() && !method.IsAwaitable() {
 		return nil, fmt.Errorf("method %s is not awaitable", method.GetName())
 	}
 
@@ -591,10 +583,10 @@ func (p *primitiveGenerator) analyzeUnaryExec(handlerCtx *handler.HandlerContext
 	if err != nil {
 		return nil, err
 	}
-	p.PrimitiveBuilder.SetTable(node, meta)
+	p.PrimitiveComposer.SetTable(node, meta)
 
 	// parse response with SQL
-	if method.IsNullary() && !p.PrimitiveBuilder.IsAwait() {
+	if method.IsNullary() && !p.PrimitiveComposer.IsAwait() {
 		return meta, nil
 	}
 	if selectNode != nil {
@@ -605,15 +597,15 @@ func (p *primitiveGenerator) analyzeUnaryExec(handlerCtx *handler.HandlerContext
 
 func (p *primitiveGenerator) analyzeNop(pbi PlanBuilderInput) error {
 	handlerCtx := pbi.GetHandlerCtx()
-	p.PrimitiveBuilder.SetBuilder(
+	p.PrimitiveComposer.SetBuilder(
 		primitivebuilder.NewNopBuilder(
-			p.PrimitiveBuilder.GetGraph(),
-			p.PrimitiveBuilder.GetTxnCtrlCtrs(),
+			p.PrimitiveComposer.GetGraph(),
+			p.PrimitiveComposer.GetTxnCtrlCtrs(),
 			handlerCtx,
 			handlerCtx.SQLEngine,
 		),
 	)
-	err := p.PrimitiveBuilder.GetBuilder().Build()
+	err := p.PrimitiveComposer.GetBuilder().Build()
 	return err
 }
 
@@ -632,11 +624,11 @@ func (p *primitiveGenerator) analyzeExec(pbi PlanBuilderInput) error {
 		if err != nil {
 			return err
 		}
-		if m.IsNullary() && !p.PrimitiveBuilder.IsAwait() {
-			p.PrimitiveBuilder.SetBuilder(primitivebuilder.NewSingleSelectAcquire(p.PrimitiveBuilder.GetGraph(), handlerCtx, tbl, p.PrimitiveBuilder.GetInsertPreparedStatementCtx(), nil))
+		if m.IsNullary() && !p.PrimitiveComposer.IsAwait() {
+			p.PrimitiveComposer.SetBuilder(primitivebuilder.NewSingleSelectAcquire(p.PrimitiveComposer.GetGraph(), handlerCtx, tbl, p.PrimitiveComposer.GetInsertPreparedStatementCtx(), nil, nil))
 			return nil
 		}
-		p.PrimitiveBuilder.SetBuilder(primitivebuilder.NewSingleAcquireAndSelect(p.PrimitiveBuilder.GetGraph(), p.PrimitiveBuilder.GetTxnCtrlCtrs(), handlerCtx, tbl, p.PrimitiveBuilder.GetInsertPreparedStatementCtx(), p.PrimitiveBuilder.GetSelectPreparedStatementCtx(), nil))
+		p.PrimitiveComposer.SetBuilder(primitivebuilder.NewSingleAcquireAndSelect(p.PrimitiveComposer.GetGraph(), p.PrimitiveComposer.GetTxnCtrlCtrs(), handlerCtx, tbl, p.PrimitiveComposer.GetInsertPreparedStatementCtx(), p.PrimitiveComposer.GetSelectPreparedStatementCtx(), nil))
 	}
 	return nil
 }
@@ -788,11 +780,34 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 	var pChild *primitiveGenerator
 	var err error
 
-	paramMap := astvisit.ExtractParamsFromWhereClause(node.Where)
+	// BLOCK  ParameterHierarchy
+	// The AST analysis passes extract parameters
+	// prior to the assembly of hierarchies.
+	// This is a chicken and egg scenario:
+	//   - we need hierarchies a priori for temporal
+	//     dependencies between tables.
+	//   - we need paramters to determine hierarchy (for now).
+	//   - parameters may refer to tables and we want to reference
+	//     this for semantic analysis and later temporal sequencing,
+	//     data flow semantics.
+	//   - TODO: so... will need to split this up into multiple passes;
+	//     parameters will need to have Hierarchies attached after they are inferred.
+	//     Then semantic anlaysis and data flow can be instrumented.
+	whereParamMap := astvisit.ExtractParamsFromWhereClause(node.Where)
+	onParamMap := astvisit.ExtractParamsFromFromClause(node.From)
 
-	router := parserutil.NewParameterRouter(pbi.GetAliasedTables(), pbi.GetAssignedAliasedColumns(), paramMap, pbi.GetColRefs())
+	// TODO: There is god awful object <-> namespacing inside here: abstract it.
+	router := router.NewParameterRouter(
+		pbi.GetAliasedTables(),
+		pbi.GetAssignedAliasedColumns(),
+		whereParamMap,
+		onParamMap,
+		pbi.GetColRefs(),
+	)
 
-	v := astvisit.NewTableRouteAstVisitor(pbi.handlerCtx, router)
+	// TODO: Do the proper SOLID treatment on router, etc.
+	// Might need to split into multiple passes.
+	v := astvisit.NewTableRouteAstVisitor(pbi.GetHandlerCtx(), router)
 
 	err = v.Visit(pbi.GetStatement())
 
@@ -802,10 +817,26 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 
 	tblz := v.GetTableMap()
 	annotations := v.GetAnnotations()
+	annotations.AssignParams()
+	existingParams := annotations.GetStringParams()
 	colRefs := pbi.GetColRefs()
+	// END_BLOCK  ParameterHierarchy
+
+	// BLOCK  SequencingAccrual
+	dataFlows, err := router.GetOnConditionDataFlows()
+	log.Debugf("%v\n", dataFlows)
+	// END_BLOCK  SequencingAccrual
+
+	onConditionsToRewrite := router.GetOnConditionsToRewrite()
+
+	parserutil.NaiveRewriteComparisonExprs(onConditionsToRewrite)
+
+	if err != nil {
+		return err
+	}
 
 	for k, v := range tblz {
-		p.PrimitiveBuilder.SetTable(k, v)
+		p.PrimitiveComposer.SetTable(k, v)
 	}
 
 	for i, fromExpr := range node.From {
@@ -817,7 +848,7 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 			}
 		}
 
-		leaf, err := p.PrimitiveBuilder.GetSymTab().NewLeaf(leafKey)
+		leaf, err := p.PrimitiveComposer.GetSymTab().NewLeaf(leafKey)
 		if err != nil {
 			return err
 		}
@@ -832,12 +863,12 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 			for _, sv := range svc.Servers {
 				for k := range sv.Variables {
 					colEntry := symtab.NewSymTabEntry(
-						pChild.PrimitiveBuilder.GetDRMConfig().GetRelationalType("string"),
+						pChild.PrimitiveComposer.GetDRMConfig().GetRelationalType("string"),
 						"",
 						"server",
 					)
 					uid := fmt.Sprintf("%s.%s", tbl.GetUniqueId(), k)
-					pChild.PrimitiveBuilder.SetSymbol(uid, colEntry)
+					pChild.PrimitiveComposer.SetSymbol(uid, colEntry)
 				}
 				break
 			}
@@ -862,16 +893,20 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 					return fmt.Errorf("could not infer column information")
 				}
 				colEntry := symtab.NewSymTabEntry(
-					pChild.PrimitiveBuilder.GetDRMConfig().GetRelationalType(colSchema.Type),
+					pChild.PrimitiveComposer.GetDRMConfig().GetRelationalType(colSchema.Type),
 					colSchema,
 					"",
 				)
 				uid := fmt.Sprintf("%s.%s", tbl.GetUniqueId(), colName)
-				pChild.PrimitiveBuilder.SetSymbol(uid, colEntry)
+				pChild.PrimitiveComposer.SetSymbol(uid, colEntry)
 			}
 		}
 	}
+
+	// BLOCK REWRITE_WHERE
 	// TODO: fix this hack
+	// might make sense to implement an "all in one"
+	// query rewrite as an AST visitor.
 	var rewrittenWhere *sqlparser.Where
 	var paramsPresent []string
 	if len(node.From) == 1 {
@@ -879,113 +914,36 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 		case *sqlparser.ExecSubquery:
 			log.Infoln(fmt.Sprintf("%v", ft))
 		default:
-			rewrittenWhere, paramsPresent, err = p.analyzeWhere(node.Where)
+			rewrittenWhere, paramsPresent, err = p.analyzeWhere(node.Where, existingParams)
 			if err != nil {
 				return err
 			}
-			p.PrimitiveBuilder.SetWhere(rewrittenWhere)
+			p.PrimitiveComposer.SetWhere(rewrittenWhere)
 		}
 	}
 	log.Debugf("len(paramsPresent) = %d\n", len(paramsPresent))
+	// END_BLOCK REWRITE_WHERE
 
-	// END TODO
 	if len(node.From) == 1 {
 		switch ft := node.From[0].(type) {
 		case *sqlparser.JoinTableExpr, *sqlparser.AliasedTableExpr:
-			var execSlice []primitivebuilder.Builder
-			var primaryTcc, tcc *dto.TxnControlCounters
-			var secondaryTccs []*dto.TxnControlCounters
-			var tableSlice []*taxonomy.ExtendedTableMetadata
-			discoGenIDs := make(map[sqlparser.SQLNode]int)
-			for k, v := range annotations {
-				pr, err := v.TableMeta.GetProvider()
-				if err != nil {
-					return err
-				}
-				prov, err := v.TableMeta.GetProviderObject()
-				if err != nil {
-					return err
-				}
-				svc, err := v.TableMeta.GetService()
-				if err != nil {
-					return err
-				}
-				m, err := v.TableMeta.GetMethod()
-				if err != nil {
-					return err
-				}
-				tab := v.Schema.Tabulate(false)
-				_, mediaType, err := m.GetResponseBodySchemaAndMediaType()
-				if err != nil {
-					return err
-				}
-				switch mediaType {
-				case media.MediaTypeTextXML, media.MediaTypeXML:
-					tab = tab.RenameColumnsToXml()
-				}
-				anTab := util.NewAnnotatedTabulation(tab, v.HIDs, v.TableMeta.Alias)
-
-				discoGenId, err := docparser.OpenapiStackQLTabulationsPersistor(prov, svc, []util.AnnotatedTabulation{anTab}, p.PrimitiveBuilder.GetSQLEngine(), prov.Name)
-				if err != nil {
-					return err
-				}
-				discoGenIDs[k] = discoGenId
-				// router.GetAvailableParameters()
-				parametersCleaned, err := util.TransformSQLRawParameters(v.Parameters)
-				if err != nil {
-					return err
-				}
-				httpArmoury, err := httpbuild.BuildHTTPRequestCtxFromAnnotation(handlerCtx, parametersCleaned, pr, m, svc, nil, nil)
-				if err != nil {
-					return err
-				}
-				v.TableMeta.HttpArmoury = httpArmoury
-				tableDTO, err := p.PrimitiveBuilder.GetDRMConfig().GetCurrentTable(v.HIDs, handlerCtx.SQLEngine)
-				if err != nil {
-					return err
-				}
-				if tcc == nil {
-					tcc = dto.NewTxnControlCounters(p.PrimitiveBuilder.GetTxnCounterManager(), tableDTO.GetDiscoveryID())
-					primaryTcc = tcc
-				} else {
-					tcc = tcc.CloneAndIncrementInsertID()
-					tcc.DiscoveryGenerationId = discoGenId
-					secondaryTccs = append(secondaryTccs, tcc)
-				}
-				insPsc, err := p.PrimitiveBuilder.GetDRMConfig().GenerateInsertDML(anTab, tcc)
-				if err != nil {
-					return err
-				}
-				builder := primitivebuilder.NewSingleSelectAcquire(p.PrimitiveBuilder.GetGraph(), handlerCtx, v.TableMeta, insPsc, nil)
-				execSlice = append(execSlice, builder)
-				tableSlice = append(tableSlice, v.TableMeta)
-			}
-			rewrittenWhereStr := astvisit.GenerateModifiedWhereClause(rewrittenWhere)
-			log.Debugf("rewrittenWhereStr = '%s'", rewrittenWhereStr)
-			v := astvisit.NewQueryRewriteAstVisitor(
+			dp := dependencyplanner.NewStandardDependencyPlanner(
 				handlerCtx,
-				tblz,
-				tableSlice,
-				annotations,
-				discoGenIDs,
+				dataFlows,
 				colRefs,
-				drm.GetGoogleV1SQLiteConfig(),
-				primaryTcc,
-				secondaryTccs,
-				rewrittenWhereStr,
+				rewrittenWhere,
+				pbi.GetStatement(),
+				tblz,
+				p.PrimitiveComposer,
 			)
-			err = v.Visit(pbi.GetStatement())
+			err = dp.Plan()
 			if err != nil {
 				return err
 			}
-			selCtx, err := v.GenerateSelectDML()
-			if err != nil {
-				return err
-			}
-			selBld := primitivebuilder.NewSingleSelect(p.PrimitiveBuilder.GetGraph(), handlerCtx, selCtx, nil)
-			bld := primitivebuilder.NewMultipleAcquireAndSelect(p.PrimitiveBuilder.GetGraph(), execSlice, selBld)
-			pChild.PrimitiveBuilder.SetBuilder(bld)
-			p.PrimitiveBuilder.SetSelectPreparedStatementCtx(selCtx)
+			bld := dp.GetBldr()
+			selCtx := dp.GetSelectCtx()
+			pChild.PrimitiveComposer.SetBuilder(bld)
+			p.PrimitiveComposer.SetSelectPreparedStatementCtx(selCtx)
 			return nil
 		case *sqlparser.ExecSubquery:
 			cols, err := parserutil.ExtractSelectColumnNames(node)
@@ -996,7 +954,7 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 			if err != nil {
 				return err
 			}
-			pChild.PrimitiveBuilder.SetBuilder(primitivebuilder.NewSingleAcquireAndSelect(pChild.PrimitiveBuilder.GetGraph(), pChild.PrimitiveBuilder.GetTxnCtrlCtrs(), handlerCtx, tbl, pChild.PrimitiveBuilder.GetInsertPreparedStatementCtx(), pChild.PrimitiveBuilder.GetSelectPreparedStatementCtx(), nil))
+			pChild.PrimitiveComposer.SetBuilder(primitivebuilder.NewSingleAcquireAndSelect(pChild.PrimitiveComposer.GetGraph(), pChild.PrimitiveComposer.GetTxnCtrlCtrs(), handlerCtx, tbl, pChild.PrimitiveComposer.GetInsertPreparedStatementCtx(), pChild.PrimitiveComposer.GetSelectPreparedStatementCtx(), nil))
 			return nil
 		}
 
@@ -1004,7 +962,7 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 	return fmt.Errorf("cannot process complex select just yet")
 }
 
-func (p *primitiveGenerator) buildRequestContext(handlerCtx *handler.HandlerContext, node sqlparser.SQLNode, meta *taxonomy.ExtendedTableMetadata, execContext *httpbuild.ExecContext, rowsToInsert map[int]map[int]interface{}) (*httpbuild.HTTPArmoury, error) {
+func (p *primitiveGenerator) buildRequestContext(handlerCtx *handler.HandlerContext, node sqlparser.SQLNode, meta *taxonomy.ExtendedTableMetadata, execContext *httpbuild.ExecContext, rowsToInsert map[int]map[int]interface{}) (httpbuild.HTTPArmoury, error) {
 	m, err := meta.GetMethod()
 	if err != nil {
 		return nil, err
@@ -1021,7 +979,7 @@ func (p *primitiveGenerator) buildRequestContext(handlerCtx *handler.HandlerCont
 	if err != nil {
 		return nil, err
 	}
-	meta.HttpArmoury = httpArmoury
+	meta.GetHttpArmoury = func() (httpbuild.HTTPArmoury, error) { return httpArmoury, nil }
 	return httpArmoury, err
 }
 
@@ -1031,11 +989,11 @@ func (p *primitiveGenerator) analyzeInsert(pbi PlanBuilderInput) error {
 	if !ok {
 		return fmt.Errorf("could not cast node of type '%T' to required Insert", pbi.GetStatement())
 	}
-	err := p.inferHeirarchyAndPersist(handlerCtx, node, pbi.paramsPlaceheld.GetStringified())
+	err := p.inferHeirarchyAndPersist(handlerCtx, node, pbi.GetPlaceholderParams().GetStringified())
 	if err != nil {
 		return err
 	}
-	tbl, err := p.PrimitiveBuilder.GetTable(node)
+	tbl, err := p.PrimitiveComposer.GetTable(node)
 	if err != nil {
 		return err
 	}
@@ -1055,7 +1013,7 @@ func (p *primitiveGenerator) analyzeInsert(pbi PlanBuilderInput) error {
 	if err != nil {
 		return err
 	}
-	p.PrimitiveBuilder.SetInsertValOnlyRows(insertValOnlyRows)
+	p.PrimitiveComposer.SetInsertValOnlyRows(insertValOnlyRows)
 	if nonValCols > 0 {
 		switch rowsNode := node.Rows.(type) {
 		case *sqlparser.Select:
@@ -1079,7 +1037,7 @@ func (p *primitiveGenerator) analyzeInsert(pbi PlanBuilderInput) error {
 		return err
 	}
 
-	if p.PrimitiveBuilder.IsAwait() && !method.IsAwaitable() {
+	if p.PrimitiveComposer.IsAwait() && !method.IsAwaitable() {
 		return fmt.Errorf("method %s is not awaitable", method.GetName())
 	}
 
@@ -1092,7 +1050,7 @@ func (p *primitiveGenerator) analyzeInsert(pbi PlanBuilderInput) error {
 	if err != nil {
 		return err
 	}
-	p.PrimitiveBuilder.SetTable(node, tbl)
+	p.PrimitiveComposer.SetTable(node, tbl)
 	return nil
 }
 
@@ -1118,7 +1076,7 @@ func (p *primitiveGenerator) analyzeDelete(pbi PlanBuilderInput) error {
 	if err != nil {
 		return err
 	}
-	tbl, err := p.PrimitiveBuilder.GetTable(node)
+	tbl, err := p.PrimitiveComposer.GetTable(node)
 	if err != nil {
 		return err
 	}
@@ -1131,10 +1089,10 @@ func (p *primitiveGenerator) analyzeDelete(pbi PlanBuilderInput) error {
 		return err
 	}
 
-	if p.PrimitiveBuilder.IsAwait() && !method.IsAwaitable() {
+	if p.PrimitiveComposer.IsAwait() && !method.IsAwaitable() {
 		return fmt.Errorf("method %s is not awaitable", method.GetName())
 	}
-	if p.PrimitiveBuilder.IsAwait() && !method.IsAwaitable() {
+	if p.PrimitiveComposer.IsAwait() && !method.IsAwaitable() {
 		return fmt.Errorf("method %s is not awaitable", method.GetName())
 	}
 	currentService, err := tbl.GetServiceStr()
@@ -1154,7 +1112,7 @@ func (p *primitiveGenerator) analyzeDelete(pbi PlanBuilderInput) error {
 		log.Infof("no response schema for delete: %s \n", err.Error())
 	}
 	if schema != nil {
-		_, _, whereErr := p.analyzeWhere(node.Where)
+		_, _, whereErr := p.analyzeWhere(node.Where, make(map[string]interface{}))
 		if whereErr != nil {
 			return whereErr
 		}
@@ -1186,7 +1144,7 @@ func (p *primitiveGenerator) analyzeDelete(pbi PlanBuilderInput) error {
 	if err != nil {
 		return err
 	}
-	p.PrimitiveBuilder.SetTable(node, tbl)
+	p.PrimitiveComposer.SetTable(node, tbl)
 	return err
 }
 
@@ -1201,7 +1159,7 @@ func (p *primitiveGenerator) analyzeDescribe(pbi PlanBuilderInput) error {
 	if err != nil {
 		return err
 	}
-	tbl, err := p.PrimitiveBuilder.GetTable(node)
+	tbl, err := p.PrimitiveComposer.GetTable(node)
 	if err != nil {
 		return err
 	}
@@ -1237,10 +1195,10 @@ func (p *primitiveGenerator) analyzeSleep(pbi PlanBuilderInput) error {
 	if sleepDuration <= 0 {
 		return fmt.Errorf("sleep duration %d not allowed, must be > 0", sleepDuration)
 	}
-	graph := p.PrimitiveBuilder.GetGraph()
-	p.PrimitiveBuilder.SetRoot(
+	graph := p.PrimitiveComposer.GetGraph()
+	p.PrimitiveComposer.SetRoot(
 		graph.CreatePrimitiveNode(
-			primitivebuilder.NewLocalPrimitive(
+			primitive.NewLocalPrimitive(
 				func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput {
 					time.Sleep(time.Duration(sleepDuration) * time.Millisecond)
 					msgs := dto.BackendMessages{
@@ -1277,8 +1235,8 @@ func (p *primitiveGenerator) analyzeShow(pbi PlanBuilderInput) error {
 		return err
 	}
 	nodeTypeUpperCase := strings.ToUpper(node.Type)
-	if p.PrimitiveBuilder.GetProvider() != nil {
-		p.PrimitiveBuilder.SetLikeAbleColumns(p.PrimitiveBuilder.GetProvider().GetLikeableColumns(nodeTypeUpperCase))
+	if p.PrimitiveComposer.GetProvider() != nil {
+		p.PrimitiveComposer.SetLikeAbleColumns(p.PrimitiveComposer.GetProvider().GetLikeableColumns(nodeTypeUpperCase))
 	}
 	colNames, err := parserutil.ExtractShowColNames(node.ShowTablesOpt)
 	if err != nil {
@@ -1301,7 +1259,7 @@ func (p *primitiveGenerator) analyzeShow(pbi PlanBuilderInput) error {
 		if err != nil {
 			return err
 		}
-		tbl, err := p.PrimitiveBuilder.GetTable(node)
+		tbl, err := p.PrimitiveComposer.GetTable(node)
 		if err != nil {
 			return err
 		}
@@ -1313,7 +1271,7 @@ func (p *primitiveGenerator) analyzeShow(pbi PlanBuilderInput) error {
 		if err != nil {
 			return err
 		}
-		_, err = checkResource(handlerCtx, p.PrimitiveBuilder.GetProvider(), currentService, currentResource)
+		_, err = checkResource(handlerCtx, p.PrimitiveComposer.GetProvider(), currentService, currentResource)
 		if err != nil {
 			return err
 		}
@@ -1332,8 +1290,8 @@ func (p *primitiveGenerator) analyzeShow(pbi PlanBuilderInput) error {
 		if err != nil {
 			return err
 		}
-		p.PrimitiveBuilder.SetProvider(prov)
-		_, err = p.assembleResources(handlerCtx, p.PrimitiveBuilder.GetProvider(), node.OnTable.Name.GetRawVal())
+		p.PrimitiveComposer.SetProvider(prov)
+		_, err = p.assembleResources(handlerCtx, p.PrimitiveComposer.GetProvider(), node.OnTable.Name.GetRawVal())
 		if err != nil {
 			return err
 		}
@@ -1363,7 +1321,7 @@ func (p *primitiveGenerator) analyzeShow(pbi PlanBuilderInput) error {
 		if err != nil {
 			return err
 		}
-		p.PrimitiveBuilder.SetProvider(prov)
+		p.PrimitiveComposer.SetProvider(prov)
 		for _, col := range colNames {
 			if !openapistackql.ServiceKeyExists(col) {
 				return fmt.Errorf("SHOW key = '%s' does NOT exist", col)

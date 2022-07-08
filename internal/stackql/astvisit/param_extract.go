@@ -625,6 +625,7 @@ func (v *ParamAstVisitor) Visit(node sqlparser.SQLNode) error {
 	case *sqlparser.JoinTableExpr:
 		node.LeftExpr.Accept(v)
 		node.LeftExpr.Accept(v)
+		node.Condition.On.Accept(v)
 		buf.AstPrintf(node, "%v %s %v%v", node.LeftExpr, node.Join, node.RightExpr, node.Condition)
 
 	case *sqlparser.IndexHints:
@@ -683,7 +684,7 @@ func (v *ParamAstVisitor) Visit(node sqlparser.SQLNode) error {
 		case *sqlparser.ColName:
 			switch rt := node.Right.(type) {
 			case *sqlparser.SQLVal:
-				k, err := parserutil.NewColumnarReference(lt)
+				k, err := parserutil.NewUnknownTypeColumnarReference(lt)
 				if err != nil {
 					return err
 				}
@@ -691,13 +692,30 @@ func (v *ParamAstVisitor) Visit(node sqlparser.SQLNode) error {
 					node,
 					rt,
 				))
+			case *sqlparser.ColName:
+				k, err := parserutil.NewUnknownTypeColumnarReference(lt)
+				if err != nil {
+					return err
+				}
+				v.params.Set(k, parserutil.NewComparisonParameterMetadata(
+					node,
+					rt,
+				))
+				kr, err := parserutil.NewUnknownTypeColumnarReference(rt)
+				if err != nil {
+					return err
+				}
+				v.params.Set(kr, parserutil.NewComparisonParameterMetadata(
+					node,
+					lt,
+				))
 			default:
 			}
 		default:
 			switch rt := node.Right.(type) {
 			case *sqlparser.SQLVal:
 			case *sqlparser.ColName:
-				k, err := parserutil.NewColumnarReference(rt)
+				k, err := parserutil.NewUnknownTypeColumnarReference(rt)
 				if err != nil {
 					return err
 				}
