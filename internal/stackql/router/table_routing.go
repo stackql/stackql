@@ -1,4 +1,4 @@
-package astvisit
+package router
 
 import (
 	"fmt"
@@ -8,20 +8,19 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/stackql/stackql/internal/stackql/handler"
-	"github.com/stackql/stackql/internal/stackql/router"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 )
 
 type TableRouteAstVisitor struct {
 	handlerCtx      *handler.HandlerContext
-	router          router.ParameterRouter
+	router          ParameterRouter
 	tableMetaSlice  []*taxonomy.ExtendedTableMetadata
 	tables          taxonomy.TblMap
 	annotations     taxonomy.AnnotationCtxMap
 	annotationSlice []taxonomy.AnnotationCtx
 }
 
-func NewTableRouteAstVisitor(handlerCtx *handler.HandlerContext, router router.ParameterRouter) *TableRouteAstVisitor {
+func NewTableRouteAstVisitor(handlerCtx *handler.HandlerContext, router ParameterRouter) *TableRouteAstVisitor {
 	return &TableRouteAstVisitor{
 		handlerCtx:  handlerCtx,
 		router:      router,

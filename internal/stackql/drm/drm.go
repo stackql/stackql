@@ -101,6 +101,10 @@ func (ps *PreparedStatementCtx) GetGCCtrlCtrs() *dto.TxnControlCounters {
 	return ps.txnCtrlCtrs
 }
 
+func (ps *PreparedStatementCtx) SetGCCtrlCtrs(tcc *dto.TxnControlCounters) {
+	ps.txnCtrlCtrs = tcc
+}
+
 func (ps *PreparedStatementCtx) GetNonControlColumns() []ColumnMetadata {
 	return ps.nonControlColumns
 }

@@ -5,11 +5,11 @@ import (
 )
 
 type StackQLReader interface {
-	iStackQLReader()
+	// iStackQLReader()
 }
 
 type StackQLWriter interface {
-	iStackQLWriter()
+	// iStackQLWriter()
 }
 
 type StackQLReadWriter interface {

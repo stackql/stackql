@@ -217,10 +217,23 @@
         "--registry=${input:registryString}",
         "--auth=${input:authString}",
         "--tls.allowInsecure=true",
-        "select u.name, om.login, u.two_factor_authentication AS is_two_fa_enabled from github.orgs.members om inner join github.users.users u on om.login = u.login AND u.username = om.login inner join github.users.users u2 on om.login = u2.login AND u2.username = om.login where om.org = 'dummyorg' order by u.name desc;"
+        "select u.name, om.login, u.two_factor_authentication AS is_two_fa_enabled from github.orgs.members om inner join github.users.users u on om.login = u.login AND u.username = om.login where om.org = 'dummyorg' order by u.name desc;"
       ],
     },
-    // 
+    {
+      "name": "TARGET STATE join ON param... ;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "--tls.allowInsecure=true",
+        "select substr(su.userName, 1, instr(su.userName, '@') - 1), su.externalId, su.id, u.login, u.two_factor_authentication AS is_two_fa_enabled from github.scim.users su inner join github.users.users u ON substr(su.userName, 1, instr(su.userName, '@') - 1) = u.username  where su.org = 'dummyorg' order by su.id asc;"
+      ],
+    }, 
     {
       "name": "DEBUG weird join error ;",
       "type": "go",

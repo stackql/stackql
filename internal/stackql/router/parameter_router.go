@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/stackql/stackql/internal/stackql/astvisit"
 	"github.com/stackql/stackql/internal/stackql/dataflow"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
@@ -117,6 +118,22 @@ func (pr *StandardParameterRouter) extractDataFlowDependency(input sqlparser.Exp
 	}
 }
 
+func (pr *StandardParameterRouter) extractFromFunctionExpr(f *sqlparser.FuncExpr) (taxonomy.AnnotationCtx, sqlparser.TableExpr, error) {
+	sv := astvisit.NewLeftoverReferencesAstVisitor(
+		pr.colRefs,
+		pr.tableToAnnotationCtx,
+	)
+	sv.Visit(f)
+	tbz := sv.GetTablesFoundThisIteration()
+	if len(tbz) != 1 {
+		return nil, nil, fmt.Errorf("cannot accomodate this")
+	}
+	for k, v := range tbz {
+		return v, k, nil
+	}
+	return nil, nil, fmt.Errorf("cannot accomodate this")
+}
+
 func (pr *StandardParameterRouter) GetOnConditionDataFlows() (dataflow.DataFlowCollection, error) {
 	rv := dataflow.NewStandardDataFlowCollection()
 	for k, destinationTable := range pr.comparisonToTableDependencies {
@@ -144,6 +161,13 @@ func (pr *StandardParameterRouter) GetOnConditionDataFlows() (dataflow.DataFlowC
 				dependencyTable = candidateTable
 				srcExpr = k.Left
 			}
+		case *sqlparser.FuncExpr:
+			annCtx, te, err := pr.extractFromFunctionExpr(l)
+			if err != nil {
+				return nil, err
+			}
+			dependency = annCtx
+			dependencyTable = te
 		}
 		switch r := k.Right.(type) {
 		case *sqlparser.ColName:
@@ -157,10 +181,18 @@ func (pr *StandardParameterRouter) GetOnConditionDataFlows() (dataflow.DataFlowC
 				}
 				selfTableCited = true
 				destColumn = r
+				srcExpr = k.Left
 			} else {
 				dependency = rhr
 				dependencyTable = candidateTable
 			}
+		case *sqlparser.FuncExpr:
+			annCtx, te, err := pr.extractFromFunctionExpr(r)
+			if err != nil {
+				return nil, err
+			}
+			dependency = annCtx
+			dependencyTable = te
 		}
 		if !selfTableCited {
 			return nil, fmt.Errorf("table join ON comparison '%s' referencing incomplete", sqlparser.String(k))

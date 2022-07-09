@@ -1,8 +1,7 @@
 package dataflow
 
 import (
-	"fmt"
-
+	"github.com/stackql/go-openapistackql/openapistackql"
 	"gonum.org/v1/gonum/graph"
 	"vitess.io/vitess/go/vt/sqlparser"
 )
@@ -10,40 +9,12 @@ import (
 type DataFlowEdge interface {
 	graph.WeightedEdge
 	AddRelation(DataFlowRelation)
+	GetColumnDescriptors() ([]openapistackql.ColumnDescriptor, error)
 	GetDest() DataFlowVertex
 	GetProjection() (map[string]string, error)
+	GetSelectExprs() (sqlparser.SelectExprs, error)
 	GetSource() DataFlowVertex
-}
-
-type DataFlowRelation interface {
-	GetProjection() (string, string, error)
-}
-
-type StandardDataFlowRelation struct {
-	comparisonExpr *sqlparser.ComparisonExpr
-	destColumn     *sqlparser.ColName
-	sourceExpr     sqlparser.Expr
-}
-
-func (dr *StandardDataFlowRelation) GetProjection() (string, string, error) {
-	switch se := dr.sourceExpr.(type) {
-	case *sqlparser.ColName:
-		return se.Name.GetRawVal(), dr.destColumn.Name.GetRawVal(), nil
-	default:
-		return "", "", fmt.Errorf("cannot project from expression type = '%T'", se)
-	}
-}
-
-func NewStandardDataFlowRelation(
-	comparisonExpr *sqlparser.ComparisonExpr,
-	destColumn *sqlparser.ColName,
-	sourceExpr sqlparser.Expr,
-) DataFlowRelation {
-	return &StandardDataFlowRelation{
-		comparisonExpr: comparisonExpr,
-		destColumn:     destColumn,
-		sourceExpr:     sourceExpr,
-	}
+	IsSQL() bool
 }
 
 type StandardDataFlowEdge struct {
@@ -98,6 +69,15 @@ func (de *StandardDataFlowEdge) GetSource() DataFlowVertex {
 	return de.source
 }
 
+func (de *StandardDataFlowEdge) IsSQL() bool {
+	for _, rel := range de.relations {
+		if rel.IsSQL() {
+			return true
+		}
+	}
+	return false
+}
+
 func (de *StandardDataFlowEdge) GetDest() DataFlowVertex {
 	return de.dest
 }
@@ -110,6 +90,30 @@ func (dv *StandardDataFlowEdge) GetProjection() (map[string]string, error) {
 			return nil, err
 		}
 		rv[src] = dst
+	}
+	return rv, nil
+}
+
+func (dv *StandardDataFlowEdge) GetSelectExprs() (sqlparser.SelectExprs, error) {
+	var rv sqlparser.SelectExprs
+	for _, rel := range dv.relations {
+		selExpr, err := rel.GetSelectExpr()
+		if err != nil {
+			return nil, err
+		}
+		rv = append(rv, selExpr)
+	}
+	return rv, nil
+}
+
+func (dv *StandardDataFlowEdge) GetColumnDescriptors() ([]openapistackql.ColumnDescriptor, error) {
+	var rv []openapistackql.ColumnDescriptor
+	for _, rel := range dv.relations {
+		d, err := rel.GetColumnDescriptor()
+		if err != nil {
+			return nil, err
+		}
+		rv = append(rv, d)
 	}
 	return rv, nil
 }
