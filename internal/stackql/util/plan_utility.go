@@ -1,15 +1,13 @@
 package util
 
 import (
-	"encoding/json"
 	"fmt"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/jeroenrinzema/psql-wire/pkg/sqldata"
 	"github.com/lib/pq/oid"
-	"github.com/stackql/go-openapistackql/pkg/response"
+	openapistackql_util "github.com/stackql/go-openapistackql/pkg/util"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 
@@ -149,48 +147,10 @@ func extractRaw(raw interface{}) (string, error) {
 	}
 }
 
-func InterfaceToBytes(subject interface{}, isErrorCol bool) []byte {
-	switch sub := subject.(type) {
-	case bool, sqlparser.BoolVal:
-		if sub == true {
-			return []byte("true")
-		}
-		return []byte("false")
-	case string:
-		return []byte(sub)
-	case int:
-		return []byte(strconv.Itoa(sub))
-	case float32:
-		return []byte(fmt.Sprintf("%f", sub))
-	case float64:
-		return []byte(fmt.Sprintf("%f", sub))
-	case []interface{}:
-		str, err := json.Marshal(subject)
-		if err == nil {
-			return []byte(str)
-		}
-		return []byte(fmt.Sprintf(`{ "marshallingError": {"type": "array", "error": "%s"}}`, err.Error()))
-	case map[string]interface{}:
-		str, err := json.Marshal(subject)
-		if err == nil {
-			return []byte(str)
-		}
-		return []byte(fmt.Sprintf(`{ "marshallingError": {"type": "array", "error": "%s"}}`, err.Error()))
-	case nil:
-		return []byte("null")
-	case *response.Response:
-		pb := sub.GetProcessedBody()
-		status := sub.GetHttpResponse().Status
-		return []byte(fmt.Sprintf(`{ "displayError": {"type": "http response", "status": "%s", "body": "%v", }}`, status, pb))
-	default:
-		return []byte(fmt.Sprintf(`{ "displayError": {"type": "%T", "error": "currently unable to represent object of type %T"}}`, subject, subject))
-	}
-}
-
 func arrangeOrderedColumnRow(row map[string]interface{}, columns []sqldata.ISQLColumn, columnOrder []string, colNumber int) []interface{} {
 	rowVals := make([]interface{}, colNumber)
 	for j := range columnOrder {
-		rowVals[j] = InterfaceToBytes(row[columnOrder[j]], strings.ToLower(columnOrder[j]) == "error")
+		rowVals[j] = openapistackql_util.InterfaceToBytes(row[columnOrder[j]], strings.ToLower(columnOrder[j]) == "error")
 	}
 	return rowVals
 }

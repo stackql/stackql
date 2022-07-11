@@ -40,7 +40,7 @@ import (
 
 const (
 	shellLongStr string = `stackql Command Shell %s
-Copyright (c) 2021, stackql Technologies. All rights reserved.
+Copyright (c) 2021, stackql studios. All rights reserved.
 Welcome to the interactive shell for running stackql commands.
 ---`
 
