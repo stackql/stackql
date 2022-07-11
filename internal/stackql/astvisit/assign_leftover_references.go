@@ -8,66 +8,60 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
+	"github.com/stackql/stackql/internal/stackql/taxonomy"
 )
 
-type TableAliasAstVisitor struct {
-	aliasedColumns parserutil.TableExprMap
-	aliasMap       parserutil.TableAliasMap
-	colRefs        parserutil.ColTableMap
-	tables         sqlparser.TableExprs
+type LeftoverReferencesAstVisitor struct {
+	colRefs                           parserutil.ColTableMap
+	tableToAnnotationCtx              map[sqlparser.TableExpr]taxonomy.AnnotationCtx
+	thisIterationTableToAnnotationCtx map[sqlparser.TableExpr]taxonomy.AnnotationCtx
 }
 
-func NewTableAliasAstVisitor(tables sqlparser.TableExprs) *TableAliasAstVisitor {
-	return &TableAliasAstVisitor{
-		aliasedColumns: make(parserutil.TableExprMap),
-		aliasMap:       make(parserutil.TableAliasMap),
-		colRefs:        make(parserutil.ColTableMap),
-		tables:         tables,
+func NewLeftoverReferencesAstVisitor(
+	colRefs parserutil.ColTableMap,
+	tableToAnnotationCtx map[sqlparser.TableExpr]taxonomy.AnnotationCtx,
+) *LeftoverReferencesAstVisitor {
+	copyColRefs := make(parserutil.ColTableMap)
+	for k, v := range colRefs {
+		copyColRefs[k] = v
+	}
+	return &LeftoverReferencesAstVisitor{
+		colRefs:                           copyColRefs,
+		tableToAnnotationCtx:              tableToAnnotationCtx,
+		thisIterationTableToAnnotationCtx: make(map[sqlparser.TableExpr]taxonomy.AnnotationCtx),
 	}
 }
 
-func tableExprMatchesQualifier(expr sqlparser.TableExpr, qualifier sqlparser.TableName) bool {
-	q := qualifier.GetRawVal()
-	switch expr := expr.(type) {
-	case *sqlparser.AliasedTableExpr:
-		if expr.As.GetRawVal() == q {
-			return true
+func (v *LeftoverReferencesAstVisitor) GetTablesFoundThisIteration() map[sqlparser.TableExpr]taxonomy.AnnotationCtx {
+	return v.thisIterationTableToAnnotationCtx
+}
+
+func (v *LeftoverReferencesAstVisitor) findTableLeftover(colName *sqlparser.ColName) (sqlparser.TableExpr, error) {
+	for tb, md := range v.tableToAnnotationCtx {
+		tm := md.GetTableMeta()
+		if tm == nil {
+			return nil, fmt.Errorf("cannot accomodate nil tables")
 		}
-		if expr.Expr != nil {
-			switch ex := expr.Expr.(type) {
-			case sqlparser.TableName:
-				if ex.GetRawVal() == q {
-					return true
+		selectable, _, err := tm.GetSelectSchemaAndObjectPath()
+		if err != nil {
+			return nil, err
+		}
+		properties, err := selectable.GetProperties()
+		for k, _ := range properties {
+			if k == colName.GetRawVal() {
+				ref, err := parserutil.NewUnknownTypeColumnarReference(k)
+				if err != nil {
+					return nil, err
 				}
+				v.colRefs[ref] = tb
+				return tb, nil
 			}
 		}
 	}
-	return false
+	return nil, fmt.Errorf("could not locate table corresponding to expression '%s'", colName.GetRawVal())
 }
 
-func (v *TableAliasAstVisitor) findTableFromQualifier(qualifier sqlparser.TableName) (sqlparser.TableExpr, error) {
-	for _, tb := range v.tables {
-		if tableExprMatchesQualifier(tb, qualifier) {
-			v.aliasedColumns[qualifier] = tb
-			return tb, nil
-		}
-	}
-	return nil, fmt.Errorf("could not locate table corresponding to expression '%s'", qualifier.GetRawVal())
-}
-
-func (v *TableAliasAstVisitor) GetAliasedColumns() parserutil.TableExprMap {
-	return v.aliasedColumns
-}
-
-func (v *TableAliasAstVisitor) GetAliasMap() parserutil.TableAliasMap {
-	return v.aliasMap
-}
-
-func (v *TableAliasAstVisitor) GetColRefs() parserutil.ColTableMap {
-	return v.colRefs
-}
-
-func (v *TableAliasAstVisitor) Visit(node sqlparser.SQLNode) error {
+func (v *LeftoverReferencesAstVisitor) Visit(node sqlparser.SQLNode) error {
 	var err error
 
 	switch node := node.(type) {
@@ -427,7 +421,7 @@ func (v *TableAliasAstVisitor) Visit(node sqlparser.SQLNode) error {
 	case *sqlparser.AliasedTableExpr:
 		aliasStr := node.As.GetRawVal()
 		if aliasStr != "" {
-			v.aliasMap[aliasStr] = node
+			// v.aliasMap[aliasStr] = node
 		}
 		if node.Expr != nil {
 			node.Expr.Accept(v)
@@ -579,17 +573,29 @@ func (v *TableAliasAstVisitor) Visit(node sqlparser.SQLNode) error {
 		}
 
 	case *sqlparser.ColName:
-		if !node.Qualifier.IsEmpty() {
-			t, err := v.findTableFromQualifier(node.Qualifier)
-			if err != nil {
-				return err
-			}
-			k, err := parserutil.NewUnknownTypeColumnarReference(node)
-			if err != nil {
-				return err
-			}
-			v.colRefs[k] = t
+		k, err := parserutil.NewUnknownTypeColumnarReference(node)
+		if err != nil {
+			return err
 		}
+		t, ok := v.colRefs[k]
+		if ok {
+			annCtx, ok := v.tableToAnnotationCtx[t]
+			if !ok {
+				return fmt.Errorf("found orphan table for col '%s'", node.GetRawVal())
+			}
+			v.thisIterationTableToAnnotationCtx[t] = annCtx
+			return nil
+		}
+		t, err = v.findTableLeftover(node)
+		if err != nil {
+			return err
+		}
+		annCtx, ok := v.tableToAnnotationCtx[t]
+		if !ok {
+			return fmt.Errorf("found orphan table for col '%s'", node.GetRawVal())
+		}
+		v.thisIterationTableToAnnotationCtx[t] = annCtx
+		return nil
 
 	case sqlparser.ValTuple:
 

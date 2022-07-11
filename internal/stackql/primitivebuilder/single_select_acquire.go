@@ -104,6 +104,7 @@ func (ss *SingleSelectAcquire) Build() error {
 			housekeepingDone := false
 			npt := prov.InferNextPageResponseElement(ss.tableMeta.HeirarchyObjects.Heirarchy)
 			nptKey := prov.InferNextPageRequestElement(ss.tableMeta.HeirarchyObjects.Heirarchy)
+			pageCount := 1
 			for {
 				if apiErr != nil {
 					return util.PrepareResultSet(dto.NewPrepareResultSetDTO(nil, nil, nil, ss.rowSort, apiErr, nil))
@@ -174,9 +175,10 @@ func (ss *SingleSelectAcquire) Build() error {
 					break
 				}
 				tk := extractNextPageToken(res, npt)
-				if tk == "" {
+				if tk == "" || (ss.handlerCtx.RuntimeContext.HTTPPageLimit > 0 && pageCount >= ss.handlerCtx.RuntimeContext.HTTPPageLimit) {
 					break
 				}
+				pageCount++
 				req, err := reqCtx.SetNextPage(tk, nptKey)
 				if err != nil {
 					return dto.NewErroneousExecutorOutput(err)

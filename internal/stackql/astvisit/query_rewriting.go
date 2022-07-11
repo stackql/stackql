@@ -13,6 +13,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
+	"github.com/stackql/stackql/internal/stackql/sqlrewrite"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 	"github.com/stackql/stackql/internal/stackql/util"
 )
@@ -86,92 +87,18 @@ func (v *QueryRewriteAstVisitor) getStarColumns(
 }
 
 func (v *QueryRewriteAstVisitor) GenerateSelectDML() (*drm.PreparedStatementCtx, error) {
-	dc := v.dc
-	cols := v.columnDescriptors
-	txnCtrlCtrs := v.baseCtrlCounters
-	selectSuffix := v.selectSuffix
-	rewrittenWhere := v.whereExprsStr
-	var q strings.Builder
-	var quotedColNames []string
-	var columns []drm.ColumnMetadata
-	for _, col := range cols {
-		var typeStr string
-		if col.Schema != nil {
-			typeStr = dc.GetRelationalType(col.Schema.Type)
-		} else {
-			if col.Val != nil {
-				switch col.Val.Type {
-				case sqlparser.BitVal:
-				}
-			}
-		}
-		columns = append(columns, drm.NewColDescriptor(col, typeStr))
-		var colEntry strings.Builder
-		if col.DecoratedCol == "" {
-			colEntry.WriteString(fmt.Sprintf(`"%s" `, col.Name))
-			if col.Alias != "" {
-				colEntry.WriteString(fmt.Sprintf(` AS "%s"`, col.Alias))
-			}
-		} else {
-			colEntry.WriteString(fmt.Sprintf("%s ", col.DecoratedCol))
-		}
-		quotedColNames = append(quotedColNames, fmt.Sprintf("%s ", colEntry.String()))
-
-	}
-	genIdColName := dc.GetGenerationControlColumn()
-	sessionIDColName := dc.GetSessionControlColumn()
-	txnIdColName := dc.GetTxnControlColumn()
-	insIdColName := dc.GetInsControlColumn()
-	var wq strings.Builder
-	var controlWhereComparisons []string
-	for _, v := range v.tableSlice {
-		alias := v.Alias
-		if alias != "" {
-			gIDcn := fmt.Sprintf(`"%s"."%s"`, alias, genIdColName)
-			sIDcn := fmt.Sprintf(`"%s"."%s"`, alias, sessionIDColName)
-			tIDcn := fmt.Sprintf(`"%s"."%s"`, alias, txnIdColName)
-			iIDcn := fmt.Sprintf(`"%s"."%s"`, alias, insIdColName)
-			controlWhereComparisons = append(controlWhereComparisons, fmt.Sprintf(`%s = ? AND %s = ? AND %s = ? AND %s = ?`, gIDcn, sIDcn, tIDcn, iIDcn))
-		} else {
-			gIDcn := fmt.Sprintf(`"%s"`, genIdColName)
-			sIDcn := fmt.Sprintf(`"%s"`, sessionIDColName)
-			tIDcn := fmt.Sprintf(`"%s"`, txnIdColName)
-			iIDcn := fmt.Sprintf(`"%s"`, insIdColName)
-			controlWhereComparisons = append(controlWhereComparisons, fmt.Sprintf(`%s = ? AND %s = ? AND %s = ? AND %s = ?`, gIDcn, sIDcn, tIDcn, iIDcn))
-		}
-	}
-	controlWhereSubClause := fmt.Sprintf("( %s )", strings.Join(controlWhereComparisons, " AND "))
-	wq.WriteString(controlWhereSubClause)
-	if strings.TrimSpace(rewrittenWhere) != "" {
-		wq.WriteString(fmt.Sprintf(" AND ( %s ) ", rewrittenWhere))
-	}
-	v.whereExprsStr = wq.String()
-
-	// write select expressions to execute
-	v.selectExprsStr = strings.Join(quotedColNames, ", ")
-
-	q.WriteString(fmt.Sprintf(`SELECT %s FROM `, strings.Join(quotedColNames, ", ")))
-	q.WriteString(v.fromStr)
-	if v.whereExprsStr != "" {
-		q.WriteString(" WHERE ")
-		q.WriteString(v.whereExprsStr)
-	}
-	q.WriteString(selectSuffix)
-
-	query := q.String()
-	return drm.NewPreparedStatementCtx(
-		query,
-		"",
-		genIdColName,
-		sessionIDColName,
-		nil,
-		txnIdColName,
-		insIdColName,
-		columns,
-		len(v.tables),
-		txnCtrlCtrs,
+	rewriteInput := sqlrewrite.NewStandardSQLRewriteInput(
+		v.dc,
+		v.columnDescriptors,
+		v.baseCtrlCounters,
+		v.selectSuffix,
+		v.whereExprsStr,
 		v.secondaryCtrlCounters,
-	), nil
+		v.tables,
+		v.fromStr,
+		v.tableSlice,
+	)
+	return sqlrewrite.GenerateSelectDML(rewriteInput)
 }
 
 type QueryRewriteAstVisitor struct {

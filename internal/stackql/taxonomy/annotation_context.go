@@ -5,7 +5,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/httpbuild"
-	"github.com/stackql/stackql/internal/stackql/provider"
 	"github.com/stackql/stackql/internal/stackql/streaming"
 	"github.com/stackql/stackql/internal/stackql/util"
 )
@@ -16,7 +15,7 @@ type AnnotationCtx interface {
 	GetParameters() map[string]interface{}
 	GetSchema() *openapistackql.Schema
 	GetTableMeta() *ExtendedTableMetadata
-	Prepare(handlerCtx *handler.HandlerContext, pr provider.IProvider, opStore *openapistackql.OperationStore, svc *openapistackql.Service, inStream streaming.MapStream) error
+	Prepare(handlerCtx *handler.HandlerContext, inStream streaming.MapStream) error
 	SetDynamic()
 }
 
@@ -53,11 +52,20 @@ func (ac *StandardAnnotationCtx) SetDynamic() {
 
 func (ac *StandardAnnotationCtx) Prepare(
 	handlerCtx *handler.HandlerContext,
-	pr provider.IProvider,
-	opStore *openapistackql.OperationStore,
-	svc *openapistackql.Service,
 	stream streaming.MapStream,
 ) error {
+	pr, err := ac.GetTableMeta().GetProvider()
+	if err != nil {
+		return err
+	}
+	svc, err := ac.GetTableMeta().GetService()
+	if err != nil {
+		return err
+	}
+	opStore, err := ac.GetTableMeta().GetMethod()
+	if err != nil {
+		return err
+	}
 	if ac.isDynamic {
 		// LAZY EVAL
 		ac.TableMeta.GetHttpArmoury = func() (httpbuild.HTTPArmoury, error) {

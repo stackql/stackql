@@ -42,6 +42,7 @@ const (
 	ErrorPresentationKey            string = "errorpresentation"
 	HTTPLogEnabledKey               string = "http.log.enabled"
 	HTTPMaxResultsKey               string = "http.response.maxResults"
+	HTTPPAgeLimitKey                string = "http.response.pageLimit"
 	HTTPProxyHostKey                string = "http.proxy.host"
 	HTTPProxyPasswordKey            string = "http.proxy.password"
 	HTTPProxyPortKey                string = "http.proxy.port"
@@ -198,6 +199,7 @@ type RuntimeCtx struct {
 	ExecutionConcurrencyLimit    int
 	HTTPLogEnabled               bool
 	HTTPMaxResults               int
+	HTTPPageLimit                int
 	HTTPProxyHost                string
 	HTTPProxyPassword            string
 	HTTPProxyPort                int
@@ -290,6 +292,8 @@ func (rc *RuntimeCtx) Set(key string, val string) error {
 		retVal = setBool(&rc.HTTPLogEnabled, val)
 	case HTTPMaxResultsKey:
 		retVal = setInt(&rc.HTTPMaxResults, val)
+	case HTTPPAgeLimitKey:
+		retVal = setInt(&rc.HTTPPageLimit, val)
 	case HTTPProxyHostKey:
 		rc.HTTPProxyHost = val
 	case HTTPProxyPasswordKey:

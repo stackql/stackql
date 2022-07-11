@@ -797,7 +797,7 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 	onParamMap := astvisit.ExtractParamsFromFromClause(node.From)
 
 	// TODO: There is god awful object <-> namespacing inside here: abstract it.
-	router := router.NewParameterRouter(
+	paramRouter := router.NewParameterRouter(
 		pbi.GetAliasedTables(),
 		pbi.GetAssignedAliasedColumns(),
 		whereParamMap,
@@ -807,7 +807,7 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 
 	// TODO: Do the proper SOLID treatment on router, etc.
 	// Might need to split into multiple passes.
-	v := astvisit.NewTableRouteAstVisitor(pbi.GetHandlerCtx(), router)
+	v := router.NewTableRouteAstVisitor(pbi.GetHandlerCtx(), paramRouter)
 
 	err = v.Visit(pbi.GetStatement())
 
@@ -823,11 +823,11 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 	// END_BLOCK  ParameterHierarchy
 
 	// BLOCK  SequencingAccrual
-	dataFlows, err := router.GetOnConditionDataFlows()
+	dataFlows, err := paramRouter.GetOnConditionDataFlows()
 	log.Debugf("%v\n", dataFlows)
 	// END_BLOCK  SequencingAccrual
 
-	onConditionsToRewrite := router.GetOnConditionsToRewrite()
+	onConditionsToRewrite := paramRouter.GetOnConditionsToRewrite()
 
 	parserutil.NaiveRewriteComparisonExprs(onConditionsToRewrite)
 
@@ -935,6 +935,7 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 				pbi.GetStatement(),
 				tblz,
 				p.PrimitiveComposer,
+				pChild.PrimitiveComposer.GetTxnCtrlCtrs(),
 			)
 			err = dp.Plan()
 			if err != nil {
