@@ -2408,7 +2408,7 @@ providerServices:
     name: iam
     preferred: true
     service:
-      $ref: googleapis.com/v0.1.2/services/iam-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/iam.yaml
     title: Identity and Access Management (IAM) API
     version: v1
   iamcredentials:

@@ -1,1 +1,2 @@
 instances,google.compute.instances
+instances_iam_policies,google.compute.instances_iam_policies

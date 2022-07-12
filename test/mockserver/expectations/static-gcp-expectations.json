@@ -5,6 +5,20 @@
         "accept": [ "application/json" ]
       },
       "method": "GET",
+      "path": "/projects/testing-project/zones/australia-southeast1-a/instances/000000001/getIamPolicy"
+    },
+    "httpResponse": {
+      "body": {
+        "etag": "ACAB"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "accept": [ "application/json" ]
+      },
+      "method": "GET",
       "path": "/projects/testing-project/zones/australia-southeast1-a/machineTypes"
     },
     "httpResponseTemplate": {

@@ -291,8 +291,11 @@ func (pb *primitiveGenerator) showInstructionExecutor(node *sqlparser.Show, hand
 		}
 		meth, err := tbl.GetMethod()
 		if err != nil {
-			rsc, _ := tbl.GetResourceStr()
-			return util.GenerateSimpleErroneousOutput(fmt.Errorf("error creating insert statement for %s: %s", rsc, err.Error()))
+			tblName, tblErr := tbl.GetTableName()
+			if tblErr != nil {
+				return util.GenerateSimpleErroneousOutput(fmt.Errorf("Cannot find matching operation, possible causes include missing required parameters or an unsupported method for the resource, to find required parameters for supported methods run SHOW METHODS: %s", err.Error()))
+			}
+			return util.GenerateSimpleErroneousOutput(fmt.Errorf("Cannot find matching operation, possible causes include missing required parameters or an unsupported method for the resource, to find required parameters for supported methods run SHOW METHODS IN %s: %s", tblName, err.Error()))
 		}
 		svc, err := tbl.GetService()
 		if err != nil {
