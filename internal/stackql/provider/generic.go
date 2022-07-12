@@ -121,6 +121,18 @@ func (gp *GenericProvider) GetMethodForAction(serviceName string, resourceName s
 	return gp.methodSelector.GetMethodForAction(rsc, iqlAction, parameters)
 }
 
+func (gp *GenericProvider) GetFirstMethodForAction(serviceName string, resourceName string, iqlAction string, runtimeCtx dto.RuntimeCtx) (*openapistackql.OperationStore, string, error) {
+	rsc, err := gp.GetResource(serviceName, resourceName, runtimeCtx)
+	if err != nil {
+		return nil, "", err
+	}
+	rv, str, ok := rsc.GetFirstMethodFromSQLVerb(iqlAction)
+	if !ok {
+		return nil, "", fmt.Errorf("cannot locate method for action '%s'", iqlAction)
+	}
+	return rv, str, nil
+}
+
 func (gp *GenericProvider) InferDescribeMethod(rsc *openapistackql.Resource) (*openapistackql.OperationStore, string, error) {
 	if rsc == nil {
 		return nil, "", fmt.Errorf("cannot infer describe method from nil resource")

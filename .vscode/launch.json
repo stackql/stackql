@@ -18,10 +18,14 @@
       "default": "{ \"url\": \"file://${workspaceFolder}/test/registry-sandbox\", \"localDocRoot\": \"${workspaceFolder}/test/registry-sandbox\", \"verifyConfig\": { \"nopVerify\": true } }"
     },
     {
-      "type": "promptString",
+      "type": "pickString",
       "id": "authString",
       "description": "Auth Input arg String",
-      "default": "{ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" }, \"github\": { \"type\": \"basic\", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/github-key.txt\" }, \"aws\": { \"type\": \"aws_signing_v4\", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/aws-secret-key.txt\", \"keyID\": \"AKIA376P4FQSS2ONB2NS\" }, \"netlify\": { \"type\": \"api_key\", \"valuePrefix\": \"Bearer \", \"credentialsfilepath\": \"${workspaceFolder}/keys/netlify-token.txt\"  }, \"k8s\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/k8s-token.txt\", \"type\": \"api_key\", \"valuePrefix\": \"Bearer \" } }"
+      "default": "{ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" }, \"github\": { \"type\": \"basic\", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/github-key.txt\" }, \"aws\": { \"type\": \"aws_signing_v4\", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/aws-secret-key.txt\", \"keyID\": \"AKIA376P4FQSS2ONB2NS\" }, \"netlify\": { \"type\": \"api_key\", \"valuePrefix\": \"Bearer \", \"credentialsfilepath\": \"${workspaceFolder}/keys/netlify-token.txt\"  }, \"k8s\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/k8s-token.txt\", \"type\": \"api_key\", \"valuePrefix\": \"Bearer \" } }",
+      "options": [
+        "{ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" }, \"github\": { \"type\": \"basic\", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/github-key.txt\" }, \"aws\": { \"type\": \"aws_signing_v4\", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/aws-secret-key.txt\", \"keyID\": \"AKIA376P4FQSS2ONB2NS\" }, \"netlify\": { \"type\": \"api_key\", \"valuePrefix\": \"Bearer \", \"credentialsfilepath\": \"${workspaceFolder}/keys/netlify-token.txt\"  }, \"k8s\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/k8s-token.txt\", \"type\": \"api_key\", \"valuePrefix\": \"Bearer \" } }",
+        "{ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/test/assets/credentials/dummy/google/functional-test-dummy-sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" }, \"github\": { \"type\": \"basic\", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/github-key.txt\" }, \"aws\": { \"type\": \"aws_signing_v4\", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/aws-secret-key.txt\", \"keyID\": \"AKIA376P4FQSS2ONB2NS\" }, \"netlify\": { \"type\": \"api_key\", \"valuePrefix\": \"Bearer \", \"credentialsfilepath\": \"${workspaceFolder}/keys/netlify-token.txt\"  }, \"k8s\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/k8s-token.txt\", \"type\": \"api_key\", \"valuePrefix\": \"Bearer \" } }"
+      ]
     },
     {
       "type": "promptString",
@@ -248,6 +252,32 @@
       ],
     },
     {
+      "name": "DEBUG INSERT INTO google.iam.service_accounts... ;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "INSERT INTO google.iam.service_accounts(  projectsId,  data__accountId,  data__serviceAccount ) SELECT  'lab-kr-network-01',  'terraform-prod',  '{ \"description\": \"Terraform Service Account for prod\", \"displayName\": \"terraform-prod\" }';"
+      ],
+    },
+    {
+      "name": "DEBUG show insert into google.iam.service_accounts ;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "show insert into google.iam.service_accounts;"
+      ],
+    },
+    {
       "name": "DEBUG filtered github.repos.commits... ;",
       "type": "go",
       "request": "launch",
@@ -274,7 +304,44 @@
         "select c.name  FROM github.repos.branches c WHERE c.owner = 'dummyorg' AND c.repo = 'dummyapp.io'"
       ],
     },
-    // select name, selfLink from google.compute.machineTypes where project = 'lab-kr-network-01' and zone = 'australia-southeast1-a' and name = 'f1-micro';
+    {
+      "name": "DEBUG SELECT google.compute.instances_iam_policies... ;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "--tls.allowInsecure=true",
+        "SELECT etag FROM google.compute.instances_iam_policies WHERE project = 'testing-project' AND zone = 'australia-southeast1-a' AND resource = '000000001';"
+      ],
+    },
+    {
+      "name": "DEBUG SHOW INSERT google.compute.instances_iam_policies... ;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "SHOW INSERT INTO google.compute.instances_iam_policies;"
+      ],
+    },
+    {
+      "name": "DEBUG SHOW INSERT google.iam.service_accounts... ;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "show insert into google.iam.service_accounts;"
+      ],
+    },
     {
       "name": "DEBUG select compute.machineTypes ... ;",
       "type": "go",

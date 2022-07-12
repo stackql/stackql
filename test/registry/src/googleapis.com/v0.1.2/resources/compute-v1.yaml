@@ -1,4 +1,33 @@
 resources:
+  instances_iam_policies:
+    id: google.compute.instances_iam_policies
+    name: instances_iam_policies
+    title: Instances_iam_policies
+    methods:
+      instances_getIamPolicy:
+        operation:
+          $ref: 'googleapis.com/v0.1.2/services-split/compute/compute-v1.yaml#/paths/~1projects~1{project}~1zones~1{zone}~1instances~1{resource}~1getIamPolicy/get'
+        response:
+          mediaType: application/json
+          openAPIDocKey: '200'
+      instances_setIamPolicy:
+        operation:
+          $ref: 'googleapis.com/v0.1.2/services-split/compute/compute-v1.yaml#/paths/~1projects~1{project}~1zones~1{zone}~1instances~1{resource}~1setIamPolicy/post'
+        response:
+          mediaType: application/json
+          openAPIDocKey: '200'
+      instances_testIamPermissions:
+        operation:
+          $ref: 'googleapis.com/v0.1.2/services-split/compute/compute-v1.yaml#/paths/~1projects~1{project}~1zones~1{zone}~1instances~1{resource}~1testIamPermissions/post'
+        response:
+          mediaType: application/json
+          openAPIDocKey: '200'
+    sqlVerbs:
+      select:
+        - $ref: '#/resources/instances_iam_policies/methods/instances_getIamPolicy'
+      insert: []
+      update: []
+      delete: []
   acceleratorTypes:
     id: google.compute.acceleratorTypes
     methods:

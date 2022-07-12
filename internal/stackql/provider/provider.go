@@ -39,6 +39,8 @@ type IProvider interface {
 
 	GetDefaultKeyForDeleteItems() string
 
+	GetFirstMethodForAction(serviceName string, resourceName string, iqlAction string, runtimeCtx dto.RuntimeCtx) (*openapistackql.OperationStore, string, error)
+
 	GetLikeableColumns(string) []string
 
 	GetMethodForAction(serviceName string, resourceName string, iqlAction string, parameters map[string]interface{}, runtimeCtx dto.RuntimeCtx) (*openapistackql.OperationStore, string, map[string]interface{}, error)
