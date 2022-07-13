@@ -196,10 +196,6 @@ func BuildHTTPRequestCtx(handlerCtx *handler.HandlerContext, node sqlparser.SQLN
 			return nil, err
 		}
 		log.Infoln(fmt.Sprintf("pre transform: httpArmoury.RequestParams[%d] = %s", i, string(p.BodyBytes)))
-		if handlerCtx.RuntimeContext.HTTPLogEnabled {
-			// url, _ := p.Context.GetUrl()
-			// handlerCtx.OutErrFile.Write([]byte(fmt.Sprintln(fmt.Sprintf("http request url: %s", url))))
-		}
 		log.Infoln(fmt.Sprintf("post transform: httpArmoury.RequestParams[%d] = %s", i, string(p.BodyBytes)))
 		secondPassParams[i] = p
 	}
@@ -314,10 +310,6 @@ func BuildHTTPRequestCtxFromAnnotation(handlerCtx *handler.HandlerContext, param
 
 		p.Request = baseRequestCtx
 		log.Infoln(fmt.Sprintf("pre transform: httpArmoury.RequestParams[%d] = %s", i, string(p.BodyBytes)))
-		if handlerCtx.RuntimeContext.HTTPLogEnabled {
-			// url, _ := p.Context.GetUrl()
-			// handlerCtx.OutErrFile.Write([]byte(fmt.Sprintln(fmt.Sprintf("http request url: %s", url))))
-		}
 		log.Infoln(fmt.Sprintf("post transform: httpArmoury.RequestParams[%d] = %s", i, string(p.BodyBytes)))
 		secondPassParams[i] = p
 	}

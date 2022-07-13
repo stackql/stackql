@@ -26,6 +26,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var (
+	gitHubLinksNextRegex *regexp.Regexp = regexp.MustCompile(`.*<(?P<nextURL>[^>]*)>;\ rel="next".*`)
+)
+
 type GenericProvider struct {
 	provider         *openapistackql.Provider
 	runtimeCtx       dto.RuntimeCtx
@@ -428,7 +432,6 @@ func (gp *GenericProvider) InferNextPageResponseElement(ho dto.Heirarchy) *dto.H
 					return nil, fmt.Errorf("cannot ingest purported http header of type = '%T'", h)
 				}
 				s := h.Values("Link")
-				gitHubLinksNextRegex := regexp.MustCompile(`.*<(?P<nextURL>[^>]*)>;\ rel="next".*`)
 				resArr := gitHubLinksNextRegex.FindStringSubmatch(strings.Join(s, ","))
 				if len(resArr) == 2 {
 					return resArr[1], nil
