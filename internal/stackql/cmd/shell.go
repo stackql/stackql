@@ -33,7 +33,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"readline"
+	"github.com/chzyer/readline"
 
 	log "github.com/sirupsen/logrus"
 )

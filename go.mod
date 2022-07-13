@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	github.com/aws/aws-sdk-go v1.28.8
+	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/fatih/color v1.13.0
 	github.com/getkin/kin-openapi v0.88.0
 	github.com/google/go-jsonnet v0.17.0
@@ -25,7 +26,6 @@ require (
 	gonum.org/v1/gonum v0.11.0
 	gopkg.in/yaml.v2 v2.4.0
 	gotest.tools v2.2.0+incompatible
-	readline v0.0.0-00010101000000-000000000000
 	vitess.io/vitess v0.0.11-alpha04
 )
 
@@ -70,7 +70,7 @@ require (
 	golang.org/x/crypto v0.0.0-20220214200702-86341886e292 // indirect
 	golang.org/x/mod v0.5.1 // indirect
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
-	golang.org/x/sys v0.0.0-20220209214540-3681064d5158 // indirect
+	golang.org/x/sys v0.0.0-20220310020820-b874c991c1a5 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.9 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
@@ -82,7 +82,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.0 // indirect
 )
 
-replace readline => github.com/stackql/readline v0.0.1-rc01
+replace github.com/chzyer/readline => github.com/stackql/readline v0.0.2-alpha05
 
 replace github.com/fatih/color => github.com/stackql/color v0.0.1-rc01
 

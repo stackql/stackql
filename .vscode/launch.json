@@ -1169,7 +1169,7 @@
       "type": "go",
       "request": "attach",
       "mode": "local",
-      "processId": 8745
+      "processId": 0
     }
   ]
 }
