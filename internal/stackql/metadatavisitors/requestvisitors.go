@@ -262,6 +262,9 @@ func (sv *SchemaRequestTemplateVisitor) retrieveTemplateVal(sc *openapistackql.S
 				propertyLocalSchemaVisitedMap[k] = v
 			}
 			if ss != nil && ((ss.Type != "array") || !sv.isVisited(ss.Title, propertyLocalSchemaVisitedMap)) {
+				if propertyLocalSchemaVisitedMap[ss.Title] {
+					return "\"{{ " + templateValName + " }}\"", nil
+				}
 				propertyLocalSchemaVisitedMap[ss.Title] = true
 				sv, err := sv.retrieveTemplateVal(ss, templateValName+"."+k, propertyLocalSchemaVisitedMap)
 				if err != nil {

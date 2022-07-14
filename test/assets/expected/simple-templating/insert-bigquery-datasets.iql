@@ -13,7 +13,7 @@ INSERT INTO google.bigquery.datasets(
 )
 SELECT
   '{{ .values.projectId }}',
-  '[ { "dataset": { "dataset": { "datasetId": "{{ .values.data__access[0].dataset.dataset.datasetId }}", "projectId": "{{ .values.data__access[0].dataset.dataset.projectId }}" } }, "domain": "{{ .values.data__access[0].domain }}", "groupByEmail": "{{ .values.data__access[0].groupByEmail }}", "iamMember": "{{ .values.data__access[0].iamMember }}", "role": "{{ .values.data__access[0].role }}", "routine": { "datasetId": "{{ .values.data__access[0].routine.datasetId }}", "projectId": "{{ .values.data__access[0].routine.projectId }}", "routineId": "{{ .values.data__access[0].routine.routineId }}" }, "specialGroup": "{{ .values.data__access[0].specialGroup }}", "userByEmail": "{{ .values.data__access[0].userByEmail }}", "view": { "datasetId": "{{ .values.data__access[0].view.datasetId }}", "projectId": "{{ .values.data__access[0].view.projectId }}", "tableId": "{{ .values.data__access[0].view.tableId }}" } } ]',
+  '[ { "dataset": "{{ .values.data__access[0].dataset }}", "domain": "{{ .values.data__access[0].domain }}", "groupByEmail": "{{ .values.data__access[0].groupByEmail }}", "iamMember": "{{ .values.data__access[0].iamMember }}", "role": "{{ .values.data__access[0].role }}", "routine": "{{ .values.data__access[0].routine }}", "specialGroup": "{{ .values.data__access[0].specialGroup }}", "userByEmail": "{{ .values.data__access[0].userByEmail }}", "view": "{{ .values.data__access[0].view }}" } ]',
   '{ "datasetId": "{{ .values.data__datasetReference.datasetId }}", "projectId": "{{ .values.data__datasetReference.projectId }}" }',
   '{ "kmsKeyName": "{{ .values.data__defaultEncryptionConfiguration.kmsKeyName }}" }',
   '{{ .values.data__defaultPartitionExpirationMs }}',
