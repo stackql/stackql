@@ -54,6 +54,8 @@ Providers include:
 
 ## Build
 
+### Native Build
+
 Presuming you have all of [the system requirements](#system-requirements-for-local-devlopment-build-and-test), then build/test with cmake:
 
 ```bash
@@ -64,19 +66,74 @@ cmake --build .
 
 Executable `build/stackql` will be created.
 
-### System requirements for local development, build and test
+#### System requirements for local development, build and test
 
 - cmake>=3.22.3
 - golang>=1.16
 - openssl>=1.1.1
 - python>=3.5
 
+### Docker Build
+
+```bash
+docker build -t stackql:${STACKQL_TAG} -t stackql:latest .
+```
 
 ## Run
+
+### Native Run
+
+#### Help message
 
 ```bash
 ./build/stackql --help
 
+```
+
+#### Shell
+
+```bash
+
+# Amend STACKQL_AUTH as required, angle bracketed strings must be replaced.
+export STACKQL_AUTH='{ "google": { "credentialsfilepath": "</path/to/google/sa-key.json>", "type": "service_account" }, "okta": { "credentialsenvvar": "<OKTA_SECRET_KEY>", "type": "api_key" }, "github": { "type": "basic", "credentialsenvvar": "<GITHUB_CREDS>" }, "aws": { "type": "aws_signing_v4", "credentialsfilepath": "</path/to/aws/secret-key.txt>", "keyID": "<YOUR_AWS_KEY_NOT_A_SECRET>" }, "k8s": { "credentialsenvvar": "<K8S_TOKEN>", "type": "api_key", "valuePrefix": "Bearer " } }'
+
+./build/stackql --auth="${STACKQL_AUTH}" shell
+
+```
+
+### Docker Run
+
+**NOTE**: on some docker versions, the argument `--security-opt seccomp=unconfined` is required as a hack for a [known issue in docker](https://github.com/containers/skopeo/issues/1501). 
+
+#### Docker single query
+
+```bash
+docker run --rm stackql "bash" "-c" "stackql exec 'show providers;'"
+```
+
+#### Docker interactive shell
+
+```bash
+
+export AWS_KEY_ID='<YOUR_AWS_KEY_ID_NOT_A_SECRET>'
+
+export DOCKER_AUTH_STR='{ "google": { "credentialsfilepath": "/opt/stackql/keys/sa-key.json", "type": "service_account" }, "okta": { "credentialsenvvar": "OKTA_SECRET_KEY", "type": "api_key" }, "github": { "type": "basic", "credentialsenvvar": "GITHUB_CREDS" }, "aws": { "type": "aws_signing_v4", "credentialsfilepath": "/opt/stackql/keys/integration/aws-secret-key.txt", "keyID": "'${AWS_KEY_ID}'" }, "k8s": { "credentialsenvvar": "K8S_TOKEN", "type": "api_key", "valuePrefix": "Bearer " } }'
+
+export DOCKER_REG_CFG='{ "url": "https://cdn.statically.io/gh/stackql/stackql-provider-registry/dev/providers" }'
+
+docker run --workdir=/opt/stackql -e "OKTA_SECRET_KEY=${OKTA_SECRET_KEY}" -e "GITHUB_CREDS=${GITHUB_CREDS}" -e "K8S_TOKEN=${K8S_TOKEN}" --volume=$(pwd)/keys:/opt/stackql/keys:ro --volume=$(pwd)/vol/stackql:/opt/stackql/.stackql:rw --rm -it stackql "bash" "-c" "stackql --auth='${DOCKER_AUTH_STR}' --registry='${DOCKER_REG_CFG}' --http.log.enabled  shell"
+```
+
+#### Docker PG Server
+
+```bash
+docker run --rm -P stackql
+```
+
+Then, run `docker ps` to ascertain the local port on which the container is serving.  Then...
+
+```bash
+psql -d "host=127.0.0.1 port=<LOCAL_PORT> user=myuser dbname=mydatabase"
 ```
 
 ## Examples

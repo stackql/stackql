@@ -14,8 +14,9 @@ import os
 class StackQLInterfaces(OperatingSystem, Process, BuiltIn):
   ROBOT_LISTENER_API_VERSION = 2
 
-  def __init__(self):
+  def __init__(self, execution_platform='native'):
     self._counter = 0
+    self._execution_platform=execution_platform
     self.ROBOT_LIBRARY_LISTENER = self
     Process.__init__(self)
 
@@ -59,18 +60,47 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn):
     self.set_environment_variable("OKTA_SECRET_KEY", okta_secret_str)
     self.set_environment_variable("GITHUB_SECRET_KEY", github_secret_str)
     self.set_environment_variable("K8S_SECRET_KEY", k8s_secret_str)
+    supplied_args = [ stackql_exe, "exec" ]
+    if registry_cfg_str != "":
+      supplied_args.append(f"--registry={registry_cfg_str}")
+    if auth_cfg_str != "":
+      supplied_args.append(f"--auth={auth_cfg_str}")
+    supplied_args.append("--tls.allowInsecure=true")
     res = super().run_process(
-      stackql_exe,
-      "exec",
-      f"--registry={registry_cfg_str}",
-      f"--auth={auth_cfg_str}",
-      "--tls.allowInsecure=true",
+      *supplied_args,
       query,
       *args,
       **cfg
     )
     self.log(res.stdout)
     self.log(res.stderr)
+    return res
+
+  @keyword
+  def start_stackql_srv_command(
+    self,  
+    stackql_exe :str, 
+    okta_secret_str :str,
+    github_secret_str :str,
+    k8s_secret_str :str,
+    registry_cfg_str :str, 
+    auth_cfg_str :str,
+    *args,
+    **cfg
+  ):
+    self.set_environment_variable("OKTA_SECRET_KEY", okta_secret_str)
+    self.set_environment_variable("GITHUB_SECRET_KEY", github_secret_str)
+    self.set_environment_variable("K8S_SECRET_KEY", k8s_secret_str)
+    supplied_args = [ stackql_exe, "srv" ]
+    if registry_cfg_str != "":
+      supplied_args.append(f"--registry={registry_cfg_str}")
+    if auth_cfg_str != "":
+      supplied_args.append(f"--auth={auth_cfg_str}")
+    res = self.start_process(
+      *supplied_args,
+      *args,
+      **cfg
+    )
     return res
   
   @keyword
@@ -158,6 +188,33 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn):
       **cfg
     )
     return self.should_be_equal(result.stdout, expected_output)
+
+  @keyword
+  def should_stackql_exec_inline_contain(
+    self, 
+    stackql_exe :str, 
+    okta_secret_str :str,
+    github_secret_str :str,
+    k8s_secret_str :str,
+    registry_cfg_str :str, 
+    auth_cfg_str :str, 
+    query :str,
+    expected_output :str,
+    *args,
+    **cfg
+  ):
+    result = self._run_stackql_exec_command(
+      stackql_exe, 
+      okta_secret_str,
+      github_secret_str,
+      k8s_secret_str,
+      registry_cfg_str, 
+      auth_cfg_str, 
+      query,
+      *args,
+      **cfg
+    )
+    return self.should_contain(result.stdout, expected_output)
   
   @keyword
   def should_stackql_exec_inline_equal_stderr(

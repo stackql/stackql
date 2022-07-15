@@ -278,6 +278,19 @@
       ],
     },
     {
+      "name": "DEBUG show insert into google.bigquery.routines ;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "show insert into google.bigquery.routines;"
+      ],
+    },
+    {
       "name": "DEBUG filtered github.repos.commits... ;",
       "type": "go",
       "request": "launch",

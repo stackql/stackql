@@ -1,11 +1,12 @@
 *** Variables ***
-${LOCAL_LIB_HOME}    ../lib
+${LOCAL_LIB_HOME}        ../lib
+${EXECUTION_PLATFORM}    native   # to be overridden from command line, eg "docker"
 
 *** Settings ***
 Library    Process
 Library    OperatingSystem
 Library    String
-Library    ${LOCAL_LIB_HOME}/StackQLInterfaces.py
+Library    ${LOCAL_LIB_HOME}/StackQLInterfaces.py    exection_platform=${EXECUTION_PLATFORM}
 
 *** Settings ***
 Variables         ${CURDIR}/../variables/stackql_context.py
