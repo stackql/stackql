@@ -26,18 +26,12 @@ jobs:
     name: Windows Build
     runs-on: windows-latest
     steps:
+
     - name: Set up Go 1.x
       uses: actions/setup-go@v2
       with:
         go-version: ^1.18
       id: go
-    
-    - name: Git Ref Parse
-      id: git_ref_parse
-      run: |
-          echo ::set-output name=SOURCE_NAME::${GITHUB_REF#refs/*/}
-          echo ::set-output name=SOURCE_BRANCH::${GITHUB_REF#refs/heads/}
-          echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
     
     - name: Set up mingw
       uses: egor-tensin/setup-mingw@v2
@@ -54,6 +48,13 @@ jobs:
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
+    
+    - name: Git Ref Parse
+      id: git_ref_parse
+      run: |
+          echo ::set-output name=SOURCE_NAME::${GITHUB_REF#refs/*/}
+          echo ::set-output name=SOURCE_BRANCH::${GITHUB_REF#refs/heads/}
+          echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
 
     - name: Install Python dependencies
       run: |
@@ -166,11 +167,15 @@ jobs:
     name: Linux Build
     runs-on: ubuntu-latest
     steps:
+
     - name: Set up Go 1.x
       uses: actions/setup-go@v2
       with:
         go-version: ^1.18
       id: go
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
     
     - name: Git Ref Parse
       id: git_ref_parse
@@ -190,9 +195,6 @@ jobs:
       run: |
           sudo apt-get update
           sudo apt-get install --yes --no-install-recommends postgresql-client
-
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v2
 
     - name: Install Python dependencies
       run: |
@@ -300,6 +302,9 @@ jobs:
       with:
         go-version: ^1.18
       id: go
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
     
     - name: Git Ref Parse
       id: git_ref_parse
@@ -307,9 +312,6 @@ jobs:
           echo ::set-output name=SOURCE_NAME::${GITHUB_REF#refs/*/}
           echo ::set-output name=SOURCE_BRANCH::${GITHUB_REF#refs/heads/}
           echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
-
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v2
 
     - name: Install Python dependencies
       run: |
@@ -476,3 +478,78 @@ jobs:
       with:
         name: stackql_darwin_arm64
         path: build/stackql
+
+  dockerbuild:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+    
+    - name: Git Ref Parse
+      id: git_ref_parse
+      run: |
+          echo ::set-output name=SOURCE_NAME::${GITHUB_REF#refs/*/}
+          echo ::set-output name=SOURCE_BRANCH::${GITHUB_REF#refs/heads/}
+          echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
+    
+    - name: Install psql
+      run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends \
+            postgresql-client \
+            ca-certificates \
+            openssl
+
+    - name: Install Python dependencies
+      run: |
+        pip3 install PyYaml
+        pip3 install robotframework
+    
+    - name: Generate rewritten registry for simulations
+      run: |
+        python3 test/python/registry-rewrite.py --replacement-host=host.docker.internal
+
+    - name: Mock Server Download
+      run: |
+        mvn \
+        org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy \
+        -Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded \
+        -DoutputDirectory=test/downloads
+
+    - name: Pull Docker image for cache purposes
+      run: |
+        docker pull stackql/stackql:latest || echo 'could not pull image for cache purposes'
+
+    - name: Create certificates for robot tests
+      run: |
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_server_key.pem -out test/server/mtls/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365 
+        openssl req -x509 -keyout vol/srv/credentials/pg_server_key.pem -out  vol/srv/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout vol/srv/credentials/pg_client_key.pem -out  vol/srv/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout vol/srv/credentials/pg_rubbish_key.pem -out vol/srv/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365
+
+    - name: Build image
+      run: |
+        docker-compose build stackqlsrv
+
+
+    - name: Run robot mocked functional tests
+      if: success()
+      timeout-minutes: 20
+      run: |
+        robot --variable EXECUTION_PLATFORM:docker test/robot/functional
+        cat ./output.xml
+
+    - name: Run robot mocked functional tests
+      if: always()
+      run: |
+        cat ./output.xml
+    
+    - name: Run robot integration tests
+      if: success() && startsWith(${{ steps.git_ref_parse.outputs.SOURCE_TAG }}, 'build-release')
+      run: |
+        robot --variable EXECUTION_PLATFORM:docker test/robot/integration
+

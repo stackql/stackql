@@ -6,6 +6,7 @@
 - [x] "reuired" string.
 - [x] clean up this readme.
 - [ ] integration tests for different registry configurations.
+- [ ] fix library lifetimes issue; as per https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#creating-test-library-class-or-module.
 
 
 ## Running yourself

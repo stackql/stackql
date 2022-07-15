@@ -108,7 +108,7 @@ export STACKQL_AUTH='{ "google": { "credentialsfilepath": "</path/to/google/sa-k
 #### Docker single query
 
 ```bash
-docker run --rm stackql "bash" "-c" "stackql exec 'show providers;'"
+docker-compose run --rm stackqlsrv "bash" "-c" "stackql exec 'show providers;'"
 ```
 
 #### Docker interactive shell
@@ -121,20 +121,32 @@ export DOCKER_AUTH_STR='{ "google": { "credentialsfilepath": "/opt/stackql/keys/
 
 export DOCKER_REG_CFG='{ "url": "https://cdn.statically.io/gh/stackql/stackql-provider-registry/dev/providers" }'
 
-docker run --workdir=/opt/stackql -e "OKTA_SECRET_KEY=${OKTA_SECRET_KEY}" -e "GITHUB_CREDS=${GITHUB_CREDS}" -e "K8S_TOKEN=${K8S_TOKEN}" --volume=$(pwd)/keys:/opt/stackql/keys:ro --volume=$(pwd)/vol/stackql:/opt/stackql/.stackql:rw --rm -it stackql "bash" "-c" "stackql --auth='${DOCKER_AUTH_STR}' --registry='${DOCKER_REG_CFG}' --http.log.enabled  shell"
+docker-compose -p shellrun run --rm -e OKTA_SECRET_KEY=some-dummy-api-key -e GITHUB_SECRET_KEY=some-dummy-github-key -e K8S_SECRET_KEY=some-k8s-token -e REGISTRY_SRC=test/registry-mocked stackqlsrv bash -c "stackql shell --registry='${DOCKER_REG_CFG}' --auth='${DOCKER_AUTH_STR}'"
 ```
 
 #### Docker PG Server
 
-```bash
-docker run --rm -P stackql
-```
-
-Then, run `docker ps` to ascertain the local port on which the container is serving.  Then...
+#### mTLS Server Stock as a rock
 
 ```bash
-psql -d "host=127.0.0.1 port=<LOCAL_PORT> user=myuser dbname=mydatabase"
+docker-compose run --rm credentialsgen 
+
+docker-compose run -d --rm -p5476:5476/tcp  stackqlsrv
 ```
+
+Then, run `docker ps` to ascertain the local port on which the container is serving.  Then, from the root directory of this repository...
+
+```bash
+psql -d "host=127.0.0.1 port=5476 user=myuser sslmode=verify-full sslcert=./vol/srv/credentials/pg_client_cert.pem sslkey=./vol/srv/credentials/pg_client_key.pem sslrootcert=./vol/srv/credentials/pg_server_cert.pem dbname=mydatabase"
+```
+
+When finished, clean up with:
+
+```bash
+docker-compose down
+```
+
+
 
 ## Examples
 
