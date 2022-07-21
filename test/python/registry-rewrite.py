@@ -36,6 +36,12 @@ parser.add_argument(
     help='directory containing config and cache'
 )
 parser.add_argument(
+    '--replacement-host',
+    type=str,
+    default='localhost',
+    help='host name to overwrite in docs'
+)
+parser.add_argument(
     '--default-port',
     type=int,
     default=DEFAULT_PORT,
@@ -74,11 +80,12 @@ parser.add_argument(
 
 class ProviderArgs:
 
-  def __init__(self, name :str, srcdir :str, destdir :str, port :int):
-    self.name    = name
-    self.srcdir  = srcdir
-    self.destdir = destdir
-    self.port    = port
+  def __init__(self, name :str, srcdir :str, destdir :str, port :int, replacement_host :str='localhost'):
+    self.name            = name
+    self.srcdir          = srcdir
+    self.destdir         = destdir
+    self.port            = port
+    self.replacement_host = replacement_host
 
   def isServerRewriteRequired(self) -> bool:
     return self.name != 'k8s' 
@@ -95,7 +102,7 @@ def rewrite_provider(args :ProviderArgs):
           servs = d.get('servers', [])
           if args.isServerRewriteRequired():
             for srv in servs:
-              srv['url'] = f'https://localhost:{args.port}/'
+              srv['url'] = f'https://{args.replacement_host}:{args.port}/'
           d['servers'] = servs
           with open(os.path.join(os.path.abspath(args.destdir), r, f), 'w') as fw:
             yaml.dump(d, fw)
@@ -144,6 +151,7 @@ if __name__ == '__main__':
         prov_dir.path,
         os.path.join(args.destdir, prov_dir.name),
         ppm.get_port(prov_dir.name),
+        replacement_host=args.replacement_host,
       ) 
       print(f'{prov_args.srcdir}, {prov_args.destdir}, {prov_args.port}')
       rewrite_provider(prov_args)

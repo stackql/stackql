@@ -1,14 +1,5 @@
-*** Variables ***
-${LOCAL_LIB_HOME}        ${CURDIR}/../lib
-${EXECUTION_PLATFORM}    native   # to be overridden from command line, eg "docker"
-
 *** Settings ***
-Library    Process
-Library    OperatingSystem 
-Library    ${LOCAL_LIB_HOME}/StackQLInterfaces.py    exection_platform=${EXECUTION_PLATFORM} 
-
-*** Settings ***
-Variables    ${CURDIR}/../variables/stackql_context.py
+Resource          ${CURDIR}/stackql.resource
 
 *** Test Cases *** 
 Positive Control
@@ -176,7 +167,7 @@ Should StackQL No Cfg Exec Contain
     ...    ${OKTA_SECRET_STR}
     ...    ${GITHUB_SECRET_STR}
     ...    ${K8S_SECRET_STR}
-    ...    ${EMPTY}
+    ...    ${REGISTRY_NULL}
     ...    ${EMPTY}
     ...    ${_EXEC_CMD_STR}
     ...    ${_EXEC_CMD_EXPECTED_OUTPUT}

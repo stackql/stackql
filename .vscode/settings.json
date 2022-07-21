@@ -4,7 +4,7 @@
   },
   "cmake.configureOnOpen": false,
   "go.testFlags": ["-tags", "json1"],
-  "todohighlight.keywordsPattern": "TODO:|FIXME:|BLOCK|END_BLOCK|(?://.*)\\(([^)]+)\\)", //highlight `TODO:`,`FIXME:` or commented content between parentheses
+  "todohighlight.keywordsPattern": "TODO:|FIXME:|BLOCK|END_BLOCK", //highlight `TODO:`,`FIXME:` or commented content between parentheses
   "todohighlight.exclude": [
     "**/*.json"
   ],

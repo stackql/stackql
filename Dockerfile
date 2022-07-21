@@ -19,16 +19,51 @@ COPY go.mod go.sum ${SRC_DIR}/
 RUN  cd ${SRC_DIR} && ls && go get -v -t -d ./... && go test --tags "json1" ./... \
      && go build --tags "json1" -o ${BUILD_DIR}/stackql ./stackql
 
+FROM ubuntu:22.04 AS certificates
+
+ARG TEST_ROOT_DIR=/opt/test/stackql
+
+ENV TEST_ROOT_DIR=${TEST_ROOT_DIR}
+
+RUN mkdir -p ${TEST_ROOT_DIR}
+
+COPY --from=builder /work/stackql/src ${TEST_ROOT_DIR}/
+
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends \
+      openssl \
+    && openssl req -x509 -keyout ${TEST_ROOT_DIR}/test/server/mtls/credentials/pg_server_key.pem -out  ${TEST_ROOT_DIR}/test/server/mtls/credentials/pg_server_cert.pem  -config ${TEST_ROOT_DIR}/test/server/mtls/openssl.cnf -days 365 \
+    && openssl req -x509 -keyout ${TEST_ROOT_DIR}/test/server/mtls/credentials/pg_client_key.pem -out  ${TEST_ROOT_DIR}/test/server/mtls/credentials/pg_client_cert.pem  -config ${TEST_ROOT_DIR}/test/server/mtls/openssl.cnf -days 365 \
+    && openssl req -x509 -keyout ${TEST_ROOT_DIR}/test/server/mtls/credentials/pg_rubbish_key.pem -out ${TEST_ROOT_DIR}/test/server/mtls/credentials/pg_rubbish_cert.pem -config ${TEST_ROOT_DIR}/test/server/mtls/openssl.cnf -days 365
+
+FROM ubuntu:22.04 AS registrymock
+
+ARG TEST_ROOT_DIR=/opt/test/stackql
+
+ENV TEST_ROOT_DIR=${TEST_ROOT_DIR}
+
+RUN mkdir -p ${TEST_ROOT_DIR}
+
+COPY --from=certificates /opt/test/stackql ${TEST_ROOT_DIR}/
+
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends \
+      python3 \
+      python3-pip \
+    && pip3 install PyYaml \
+    && python3 ${TEST_ROOT_DIR}/test/python/registry-rewrite.py
 
 FROM ubuntu:22.04 AS integration
 
-ENV TEST_ROOT_DIR=/opt/test/stackql
+ARG TEST_ROOT_DIR=/opt/test/stackql
+
+ENV TEST_ROOT_DIR=${TEST_ROOT_DIR}
 
 RUN mkdir -p ${TEST_ROOT_DIR}/build
 
-COPY --from=builder /work/stackql/build/stackql ${TEST_ROOT_DIR}/build/
+COPY --from=registrymock /opt/test/stackql ${TEST_ROOT_DIR}/
 
-COPY --from=builder /work/stackql/src ${TEST_ROOT_DIR}/
+COPY --from=builder /work/stackql/build/stackql ${TEST_ROOT_DIR}/build/
 
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends \
@@ -44,15 +79,13 @@ RUN apt-get update \
         org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy \
         -Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded \
         -DoutputDirectory=${TEST_ROOT_DIR}/test/downloads \
-    && python3 ${TEST_ROOT_DIR}/test/python/registry-rewrite.py \
-    && openssl req -x509 -keyout ${TEST_ROOT_DIR}/test/server/mtls/credentials/pg_server_key.pem -out  ${TEST_ROOT_DIR}/test/server/mtls/credentials/pg_server_cert.pem  -config ${TEST_ROOT_DIR}/test/server/mtls/openssl.cnf -days 365 \
-    && openssl req -x509 -keyout ${TEST_ROOT_DIR}/test/server/mtls/credentials/pg_client_key.pem -out  ${TEST_ROOT_DIR}/test/server/mtls/credentials/pg_client_cert.pem  -config ${TEST_ROOT_DIR}/test/server/mtls/openssl.cnf -days 365 \
-    && openssl req -x509 -keyout ${TEST_ROOT_DIR}/test/server/mtls/credentials/pg_rubbish_key.pem -out ${TEST_ROOT_DIR}/test/server/mtls/credentials/pg_rubbish_cert.pem -config ${TEST_ROOT_DIR}/test/server/mtls/openssl.cnf -days 365 \ 
     && robot ${TEST_ROOT_DIR}/test/robot/functional
 
 FROM ubuntu:22.04 AS app
 
-ENV TEST_ROOT_DIR=/opt/test/stackql
+ARG TEST_ROOT_DIR=/opt/test/stackql
+
+ENV TEST_ROOT_DIR=${TEST_ROOT_DIR}
 
 ARG APP_DIR=/srv/stackql
 
@@ -66,7 +99,7 @@ ENV STACKQL_CFG_ROOT="${STACKQL_CFG_ROOT}"
 
 ENV STACKQL_PG_PORT="${STACKQL_PG_PORT}"
 
-RUN mkdir -p ${APP_DIR} ${STACKQL_CFG_ROOT}
+RUN mkdir -p ${APP_DIR} ${STACKQL_CFG_ROOT}/keys ${STACKQL_CFG_ROOT}/srv/credentials ${STACKQL_CFG_ROOT}/credentials/dummy ${STACKQL_CFG_ROOT}/registry
 
 ENV PATH="${APP_DIR}:${PATH}"
 

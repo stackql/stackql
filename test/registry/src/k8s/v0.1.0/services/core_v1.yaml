@@ -21466,7 +21466,7 @@ components:
           - $ref: '#/components/x-stackQL-resources/persistent_volume/methods/deleteCoreV1CollectionPersistentVolume'
 openapi: 3.0.0
 servers:
-  - url: '{protocol}://{cluster_addr:^(?:[^.]+|[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(?:\:[0-9]+)?)$}/'
+  - url: '{protocol}://{cluster_addr:^(?:[^\:/]+(?:\:[0-9]+)?|[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(?:\:[0-9]+)?)$}/'
     variables:
       protocol:
         default: https
