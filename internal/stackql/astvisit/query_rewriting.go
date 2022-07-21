@@ -67,7 +67,7 @@ func (v *QueryRewriteAstVisitor) getStarColumns(
 	}
 	itemObjS, selectItemsKey, err := tbl.GetSelectSchemaAndObjectPath()
 	tbl.SelectItemsKey = selectItemsKey
-	unsuitableSchemaMsg := "schema unsuitable for select query"
+	unsuitableSchemaMsg := "QueryRewriteAstVisitor.getStarColumns(): schema unsuitable for select query"
 	if err != nil {
 		return nil, fmt.Errorf(unsuitableSchemaMsg)
 	}

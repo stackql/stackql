@@ -7,6 +7,8 @@ services:
       context: .
       cache_from: 
         - stackql/stackql
+        - stackql/integration
+        - stackql/stackqlsrvcertificates
     command: 
       - bash
       - -c
@@ -43,3 +45,70 @@ services:
         openssl req -x509 -keyout /opt/stackql/srv/credentials/pg_server_key.pem -out /opt/stackql/srv/credentials/pg_server_cert.pem  -config /opt/test/stackql/test/server/mtls/openssl.cnf -days 365 \
         && openssl req -x509 -keyout /opt/stackql/srv/credentials/pg_client_key.pem -out  /opt/stackql/srv/credentials/pg_client_cert.pem  -config /opt/test/stackql/test/server/mtls/openssl.cnf -days 365 \
         && openssl req -x509 -keyout /opt/stackql/srv/credentials/pg_rubbish_key.pem -out /opt/stackql/srv/credentials/pg_rubbish_cert.pem -config /opt/test/stackql/test/server/mtls/openssl.cnf -days 365
+  mockserver:
+    image: stackql/integration
+    build:
+      context: .
+      cache_from: 
+        - stackql/stackql
+        - stackql/integration
+        - stackql/stackqlsrvcertificates
+      target: integration
+    volumes:
+      - ./vol/srv/credentials:/opt/stackql/srv/credentials:rw
+    environment:
+      - MOCKSERVER_PORT_GOOGLE=${MOCKSERVER_PORT_GOOGLE:-1080}
+      - MOCKSERVER_PORT_OKTA=${MOCKSERVER_PORT_OKTA:-1090}
+      - MOCKSERVER_PORT_AWS=${MOCKSERVER_PORT_AWS:-1091}
+      - MOCKSERVER_PORT_K8S=${MOCKSERVER_PORT_K8S:-1092}
+      - MOCKSERVER_PORT_GITHUB=${MOCKSERVER_PORT_GITHUB:-1093}
+      - MOCKSERVER_PORT_REGISTRY=${MOCKSERVER_PORT_REGISTRY:-1094}
+    ports:
+      - "${MOCKSERVER_PORT_GOOGLE:-1080}:${MOCKSERVER_PORT_GOOGLE:-1080}/tcp"
+      - "${MOCKSERVER_PORT_OKTA:-1090}:${MOCKSERVER_PORT_OKTA:-1090}/tcp"
+      - "${MOCKSERVER_PORT_AWS:-1091}:${MOCKSERVER_PORT_AWS:-1091}/tcp"
+      - "${MOCKSERVER_PORT_K8S:-1092}:${MOCKSERVER_PORT_K8S:-1092}/tcp"
+      - "${MOCKSERVER_PORT_GITHUB:-1093}:${MOCKSERVER_PORT_GITHUB:-1093}/tcp"
+      - "${MOCKSERVER_PORT_REGISTRY:-1094}:${MOCKSERVER_PORT_REGISTRY:-1094}/tcp"
+    command: 
+      - bash
+      - -c
+      - |
+        MOCKSERVER_JAR='/opt/test/stackql/test/downloads/mockserver-netty-5.12.0-shaded.jar'
+        JSON_INIT_FILE_DIR='/opt/test/stackql/test/mockserver/expectations'
+        java    -Dfile.encoding=UTF-8 \
+          -Dmockserver.initializationJsonPath=$${JSON_INIT_FILE_DIR}/static-gcp-expectations.json \
+          -Dmockserver.logLevel=OFF \
+          -Droot.logLevel=OFF \
+          -jar    $${MOCKSERVER_JAR} \
+          -serverPort    $${MOCKSERVER_PORT_GOOGLE}&
+        java    -Dfile.encoding=UTF-8 \
+          -Dmockserver.initializationJsonPath=$${JSON_INIT_FILE_DIR}/static-github-expectations.json \
+          -Dmockserver.logLevel=OFF \
+          -Droot.logLevel=OFF \
+          -jar    $${MOCKSERVER_JAR} \
+          -serverPort    $${MOCKSERVER_PORT_GITHUB}&
+        java    -Dfile.encoding=UTF-8 \
+          -Dmockserver.initializationJsonPath=$${JSON_INIT_FILE_DIR}/static-aws-expectations.json \
+          -Dmockserver.logLevel=OFF \
+          -Droot.logLevel=OFF \
+          -jar    $${MOCKSERVER_JAR} \
+          -serverPort    $${MOCKSERVER_PORT_AWS}&
+        java    -Dfile.encoding=UTF-8 \
+          -Dmockserver.initializationJsonPath=$${JSON_INIT_FILE_DIR}/static-k8s-expectations.json \
+          -Dmockserver.logLevel=OFF \
+          -Droot.logLevel=OFF \
+          -jar    $${MOCKSERVER_JAR} \
+          -serverPort    $${MOCKSERVER_PORT_K8S}&
+        java    -Dfile.encoding=UTF-8 \
+          -Dmockserver.initializationJsonPath=$${JSON_INIT_FILE_DIR}/static-registry-expectations.json \
+          -Dmockserver.logLevel=OFF \
+          -Droot.logLevel=OFF \
+          -jar    $${MOCKSERVER_JAR} \
+          -serverPort    $${MOCKSERVER_PORT_REGISTRY}&
+        java    -Dfile.encoding=UTF-8 \
+          -Dmockserver.initializationJsonPath=$${JSON_INIT_FILE_DIR}/static-okta-expectations.json \
+          -Dmockserver.logLevel=OFF \
+          -Droot.logLevel=OFF \
+          -jar    $${MOCKSERVER_JAR} \
+          -serverPort    $${MOCKSERVER_PORT_OKTA}

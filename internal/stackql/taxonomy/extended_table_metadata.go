@@ -20,6 +20,13 @@ type ExtendedTableMetadata struct {
 	Alias               string
 }
 
+func (ex ExtendedTableMetadata) GetGraphQL() (*openapistackql.GraphQL, bool) {
+	if ex.HeirarchyObjects.Method != nil && ex.HeirarchyObjects.Method.GraphQL != nil {
+		return ex.HeirarchyObjects.Method.GraphQL, true
+	}
+	return nil, false
+}
+
 func (ex ExtendedTableMetadata) LookupSelectItemsKey() string {
 	if ex.HeirarchyObjects == nil {
 		return defaultSelectItemsKey
