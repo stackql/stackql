@@ -538,9 +538,9 @@ jobs:
 
     - name: Run robot mocked functional tests
       if: success()
-      timeout-minutes: 20
+      timeout-minutes: 7
       run: |
-        robot --variable EXECUTION_PLATFORM:docker test/robot/functional
+        robot -C off --console quiet --variable EXECUTION_PLATFORM:docker test/robot/functional
         cat ./output.xml
 
     - name: Run robot mocked functional tests
@@ -551,5 +551,5 @@ jobs:
     - name: Run robot integration tests
       if: success() && startsWith(${{ steps.git_ref_parse.outputs.SOURCE_TAG }}, 'build-release')
       run: |
-        robot --variable EXECUTION_PLATFORM:docker test/robot/integration
+        robot -C off --console quiet  --variable EXECUTION_PLATFORM:docker test/robot/integration
 
