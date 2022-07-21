@@ -511,13 +511,6 @@ jobs:
       run: |
         python3 test/python/registry-rewrite.py --replacement-host=host.docker.internal
 
-    - name: Mock Server Download
-      run: |
-        mvn \
-        org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy \
-        -Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded \
-        -DoutputDirectory=test/downloads
-
     - name: Pull Docker image for cache purposes
       run: |
         docker pull stackql/stackql:latest || echo 'could not pull image for cache purposes'
@@ -535,6 +528,45 @@ jobs:
       run: |
         docker-compose build stackqlsrv
 
+    - name: Mock Server Download
+      run: |
+        mvn \
+        org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy \
+        -Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded \
+        -DoutputDirectory=test/downloads
+
+    - name: Debug info
+      run: |
+        echo "psql version info: $(psql --version)"
+        echo ""
+        echo "docker-compose version info: $(docker-compose -version)"
+        echo ""
+        echo "robot version info: $(robot --version)"
+        echo ""
+        echo "#### ps -ef output   ####"
+        echo ""
+        ps -ef
+        echo ""
+        echo "### ###"
+        echo ""
+        echo "#### docker version output   ####"
+        echo ""
+        docker version
+        echo ""
+        echo "### ###"
+        echo ""
+        echo "#### lsb_release output   ####"
+        echo ""
+        lsb_release || echo "lsb_release not present"
+        echo ""
+        echo "### ###"
+        echo ""
+        echo "#### env output   ####"
+        echo ""
+        env
+        echo ""
+        echo "### ###"
+        echo ""
 
     - name: Run robot mocked functional tests
       if: success()
@@ -543,13 +575,12 @@ jobs:
         robot --variable EXECUTION_PLATFORM:docker test/robot/functional
         cat ./output.xml
 
-    - name: Run robot mocked functional tests
+    - name: Output from mocked functional tests
       if: always()
       run: |
         cat ./output.xml
-    
+
     - name: Run robot integration tests
       if: success() && startsWith(${{ steps.git_ref_parse.outputs.SOURCE_TAG }}, 'build-release')
       run: |
-        robot --variable EXECUTION_PLATFORM:docker test/robot/integration
-
+        robot  --variable EXECUTION_PLATFORM:docker test/robot/integration
