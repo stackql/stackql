@@ -38,6 +38,7 @@ Start All Mock Servers
         ...  -p     mockserver
         ...  up
         ...  mockserver
+        Log    Mock Servers Started
     END
 
 Prepare StackQL Environment
