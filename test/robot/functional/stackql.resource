@@ -26,20 +26,10 @@ Start Mock Server
     [Return]    ${process}
 
 Start All Mock Servers
-    IF    "${EXECUTION_PLATFORM}" == "native"
-        Start Mock Server    ${JSON_INIT_FILE_PATH_GOOGLE}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_GOOGLE}
-        Start Mock Server    ${JSON_INIT_FILE_PATH_OKTA}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_OKTA}
-        Start Mock Server    ${JSON_INIT_FILE_PATH_GITHUB}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_GITHUB}
-        Start Mock Server    ${JSON_INIT_FILE_PATH_AWS}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_AWS}
-        Start Mock Server    ${JSON_INIT_FILE_PATH_K8S}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_K8S}
-        Start Mock Server    ${JSON_INIT_FILE_PATH_REGISTRY}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_REGISTRY}
-    ELSE IF    "${EXECUTION_PLATFORM}" == "docker"
-        Start Process    docker-compose    --log-level    CRITICAL
-        ...  -p     mockserver
-        ...  up
-        ...  mockserver
-        Log    Mock Servers Started
-    END
+    Start Process    docker-compose
+    ...  -p     mockserver
+    ...  up
+    ...  mockserver
 
 Prepare StackQL Environment
     Set Environment Variable    OKTA_SECRET_KEY    ${OKTA_SECRET_STR}
