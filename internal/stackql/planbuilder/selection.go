@@ -98,7 +98,7 @@ func (p *primitiveGenerator) analyzeUnarySelection(
 	}
 	itemObjS, selectItemsKey, err := schema.GetSelectSchema(tbl.LookupSelectItemsKey(), mediaType)
 	// rscStr, _ := tbl.GetResourceStr()
-	unsuitableSchemaMsg := "schema unsuitable for select query"
+	unsuitableSchemaMsg := "analyzeUnarySelection(): schema unsuitable for select query"
 	if err != nil {
 		return fmt.Errorf(unsuitableSchemaMsg)
 	}

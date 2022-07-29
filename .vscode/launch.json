@@ -35,7 +35,21 @@
     }
   ],
   "configurations": [
-    
+
+    {
+      "name": "DEBUG GRAPHQL select * from github.scim.samlIDs",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "select * from github.scim.samlIDs where org = 'infraql';"
+      ],
+    },
+
     {
       "name": "Launch help -- prebuilt with cmake",
       "type": "go",
@@ -46,6 +60,7 @@
         "help"
       ]
     },
+
     {
       "name": "Debug exec \"show services from google where name = 'abusiveexperiencereport';\" ",
       "type": "go",
@@ -57,6 +72,7 @@
         "show services from google where name = 'abusiveexperiencereport';"
       ],
     },
+
     {
       "name": "okta -- Launch exec \"show resources from okta.group;\" -- prebuilt with cmake",
       "type": "go",

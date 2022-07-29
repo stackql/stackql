@@ -78,11 +78,11 @@ func (ho *HeirarchyObjects) getObjectSchema() (*openapistackql.Schema, error) {
 }
 
 func (ho *HeirarchyObjects) GetSelectableObjectSchema() (*openapistackql.Schema, error) {
-	unsuitableSchemaMsg := "schema unsuitable for select query"
+	unsuitableSchemaMsg := "GetSelectableObjectSchema(): schema unsuitable for select query"
 	itemObjS, _, err := ho.Method.GetSelectSchemaAndObjectPath()
 	// rscStr, _ := tbl.GetResourceStr()
 	if err != nil {
-		return nil, fmt.Errorf(unsuitableSchemaMsg)
+		return nil, fmt.Errorf("%s: %s", err.Error(), unsuitableSchemaMsg)
 	}
 	if itemObjS == nil || err != nil {
 		return nil, fmt.Errorf("could not locate dml object for response type '%v'", ho.Method.Response.ObjectKey)

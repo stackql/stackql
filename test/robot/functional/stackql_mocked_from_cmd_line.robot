@@ -171,6 +171,17 @@ GitHub Scim Users Select
     ...    ${SELECT_GITHUB_SCIM_USERS}
     ...    ${SELECT_GITHUB_SCIM_USERS_EXPECTED}
 
+GitHub SAML Identities Select GraphQL
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SELECT_GITHUB_SAML_IDENTITIES}
+    ...    ${SELECT_GITHUB_SAML_IDENTITIES_EXPECTED}
+
 GitHub Branch Names Paginated Select
     Should Horrid Query StackQL Inline Equal
     ...    ${STACKQL_EXE}

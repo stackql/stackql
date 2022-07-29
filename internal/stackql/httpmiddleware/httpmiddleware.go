@@ -10,6 +10,10 @@ import (
 	"github.com/stackql/stackql/internal/stackql/provider"
 )
 
+func GetAuthenticatedClient(handlerCtx handler.HandlerContext, prov provider.IProvider) (*http.Client, error) {
+	return getAuthenticatedClient(handlerCtx, prov)
+}
+
 func getAuthenticatedClient(handlerCtx handler.HandlerContext, prov provider.IProvider) (*http.Client, error) {
 	authCtx, authErr := handlerCtx.GetAuthContext(prov.GetProviderString())
 	if authErr != nil {

@@ -73,7 +73,7 @@ func (v *TableNameSubstitutionAstVisitor) getStarColumns(
 	}
 	itemObjS, selectItemsKey, err := tbl.GetSelectSchemaAndObjectPath()
 	// rscStr, _ := tbl.GetResourceStr()
-	unsuitableSchemaMsg := "schema unsuitable for select query"
+	unsuitableSchemaMsg := "TableNameSubstitutionAstVisitor.getStarColumns(): schema unsuitable for select query"
 	if err != nil {
 		return nil, fmt.Errorf(unsuitableSchemaMsg)
 	}

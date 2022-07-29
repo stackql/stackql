@@ -104,6 +104,9 @@ def rewrite_provider(args :ProviderArgs):
             for srv in servs:
               srv['url'] = f'https://{args.replacement_host}:{args.port}/'
           d['servers'] = servs
+          graphql_url = d.get('paths', {}).get('/graphql', {}).get('post', {}).get('x-stackQL-graphQL', {}).get('url')
+          if graphql_url:
+            d['paths']['/graphql']['post']['x-stackQL-graphQL']['url'] = f'https://{args.replacement_host}:{args.port}/graphql'
           with open(os.path.join(os.path.abspath(args.destdir), r, f), 'w') as fw:
             yaml.dump(d, fw)
         else:

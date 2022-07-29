@@ -41,6 +41,35 @@ func NewSingleSelectAcquire(
 	rowSort func(map[string]map[string]interface{}) []string,
 	stream streaming.MapStream,
 ) Builder {
+	_, isGraphQL := tableMeta.GetGraphQL()
+	if isGraphQL {
+		return newGraphQLSingleSelectAcquire(
+			graph,
+			handlerCtx,
+			tableMeta,
+			insertCtx,
+			rowSort,
+			stream,
+		)
+	}
+	return newSingleSelectAcquire(
+		graph,
+		handlerCtx,
+		tableMeta,
+		insertCtx,
+		rowSort,
+		stream,
+	)
+}
+
+func newSingleSelectAcquire(
+	graph *primitivegraph.PrimitiveGraph,
+	handlerCtx *handler.HandlerContext,
+	tableMeta *taxonomy.ExtendedTableMetadata,
+	insertCtx *drm.PreparedStatementCtx,
+	rowSort func(map[string]map[string]interface{}) []string,
+	stream streaming.MapStream,
+) Builder {
 	var tcc *dto.TxnControlCounters
 	if insertCtx != nil {
 		tcc = insertCtx.GetGCCtrlCtrs()

@@ -298,6 +298,7 @@ SELECT_GITHUB_REPOS_IDS_ASC = "select id from github.repos.repos where org = 'du
 SELECT_GITHUB_BRANCHES_NAMES_DESC = "select name from github.repos.branches where owner = 'dummyorg' and repo = 'dummyapp.io' order by name desc;"
 SELECT_GITHUB_REPOS_FILTERED_SINGLE = "select id, name from github.repos.repos where org = 'dummyorg' and name = 'dummyapp.io';"
 SELECT_GITHUB_SCIM_USERS = "select JSON_EXTRACT(name, '$.givenName') || ' ' || JSON_EXTRACT(name, '$.familyName') as name, userName, externalId, id from github.scim.users where org = 'dummyorg' order by id asc;"
+SELECT_GITHUB_SAML_IDENTITIES = "select guid, JSON_EXTRACT(samlIdentity, '$.nameId') AS saml_id, JSON_EXTRACT(user, '$.login') AS github_login from github.scim.samlIDs where org = 'dummyorg' order by JSON_EXTRACT(user, '$.login') asc;"
 SELECT_GITHUB_TAGS_COUNT = "select count(*) as ct from github.repos.tags where owner = 'dummyorg' and repo = 'dummyapp.io';"
 SELECT_GITHUB_SCIM_JOIN_WITH_FUNCTIONS = "select substr(su.userName, 1, instr(su.userName, '@') - 1), su.externalId, su.id, u.login, u.two_factor_authentication AS is_two_fa_enabled from github.scim.users su inner join github.users.users u ON substr(su.userName, 1, instr(su.userName, '@') - 1) = u.username and substr(su.userName, 1, instr(su.userName, '@') - 1) = u.login where su.org = 'dummyorg' order by su.id asc;"
 SELECT_GITHUB_ORGS_MEMBERS = "select om.login from github.orgs.members om where om.org = 'dummyorg' order by om.login desc;"
@@ -341,6 +342,7 @@ SELECT_GITHUB_REPOS_PAGES_SINGLE_EXPECTED = get_output_from_local_file(os.path.j
 SELECT_GITHUB_REPOS_IDS_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-repos-ids-asc.txt'))
 SELECT_GITHUB_REPOS_FILTERED_SINGLE_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-repos-single-filtered.txt'))
 SELECT_GITHUB_SCIM_USERS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'scim', 'select-github-scim-users.txt'))
+SELECT_GITHUB_SAML_IDENTITIES_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'scim', 'select-github-saml-identities.txt'))
 SELECT_GITHUB_BRANCHES_NAMES_DESC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-branches-names-desc.txt'))
 SELECT_GITHUB_TAGS_COUNT_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-tags-count.txt'))
 SELECT_GITHUB_JOIN_DATA_FLOW_SEQUENTIAL_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'joins', 'select-github-sequential-join.txt'))
@@ -414,7 +416,6 @@ def get_variables(execution_env :str):
     'PSQL_EXE':                                       PSQL_EXE,
     'REGISTRY_ROOT_CANONICAL':                        _REGISTRY_CANONICAL,
     'REGISTRY_ROOT_DEPRECATED':                       _REGISTRY_DEPRECATED,
-    # 'REGISTRY_ROOT_MOCKED':                           _REGISTRY_MOCKED_NO_VERIFY,
     'REGISTRY_CANONICAL_CFG_STR':                     _REGISTRY_CANONICAL,
     'REGISTRY_DEPRECATED_CFG_STR':                    _REGISTRY_DEPRECATED,
     'REGISTRY_MOCKED_CFG_STR':                        get_registry_mocked(execution_env),
@@ -460,6 +461,8 @@ def get_variables(execution_env :str):
     'SELECT_GITHUB_REPOS_IDS_ASC_EXPECTED':                                 SELECT_GITHUB_REPOS_IDS_ASC_EXPECTED,
     'SELECT_GITHUB_REPOS_PAGES_SINGLE':                                     SELECT_GITHUB_REPOS_PAGES_SINGLE,
     'SELECT_GITHUB_REPOS_PAGES_SINGLE_EXPECTED':                            SELECT_GITHUB_REPOS_PAGES_SINGLE_EXPECTED,
+    'SELECT_GITHUB_SAML_IDENTITIES':                                        SELECT_GITHUB_SAML_IDENTITIES,
+    'SELECT_GITHUB_SAML_IDENTITIES_EXPECTED':                               SELECT_GITHUB_SAML_IDENTITIES_EXPECTED,
     'SELECT_GITHUB_SCIM_JOIN_WITH_FUNCTIONS':                               SELECT_GITHUB_SCIM_JOIN_WITH_FUNCTIONS,
     'SELECT_GITHUB_SCIM_JOIN_WITH_FUNCTIONS_EXPECTED':                      SELECT_GITHUB_SCIM_JOIN_WITH_FUNCTIONS_EXPECTED,
     'SELECT_GITHUB_SCIM_USERS':                                             SELECT_GITHUB_SCIM_USERS,

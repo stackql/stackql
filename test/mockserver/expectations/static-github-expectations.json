@@ -1,6 +1,20 @@
 [  
   {
     "httpRequest": {
+      "method": "POST",
+      "path": "/graphql",
+      "body": {
+        "type": "REGEX",
+        "regex": ".*query.*samlIdentityProvider.*"
+      }
+    },
+    "httpResponseTemplate": {
+      "template": "#set($end = 2)\n#set($rb = $request.body.json)\n#set($rr = $rb.replaceAll('^.*after:\\D*(\\d+)?.*$|^.*()$', '$1'))\n#set($rn = $rr)\n#set($maxItems = 8)\n#set($thisCursor = \"#if (${rn})${rn}#{else}0#end\")\n#set($Integer = 0)\n#set($currentCursor = $Integer.parseInt($thisCursor))\n#set($cFinal = ($currentCursor * 1) + $end + 1)\n{ 'statusCode': 200, 'headers': { 'Datetime': [ $!now_iso_8601 ] }, 'body': {  \"data\": {    \"viewer\": {      \"organization\": {        \"samlIdentityProvider\": {          \"externalIdentities\": {      \"rb\": ${rb},   \"rr\": '${rr}', \"rn\": '${rn}', \"currentCursor\": '${currentCursor}',   \"edges\": [       #if($currentCursor < $maxItems)  \n#foreach($i in [1..$end])  \n#set($ci = $currentCursor * 1 + $i)\n     {             \"node\": {                  \"guid\": \"4d8ca614-05b3-11ed-8b3b-954c779e608e\",                  \"samlIdentity\": {                    \"nameId\": \"sherlockholmes${ci}@gmail.com\",                    \"username\": \"sherlockholmes${ci}@gmail.com\"                  },                  \"scimIdentity\": {                    \"username\": null                  },                  \"user\": {                    \"login\": \"some-jimbo-${ci}\"                  }                },                \"cursor\": \"${ci}\"              }, #end              {                \"node\": {                  \"guid\": \"2b03a0f4-05bb-11ed-9795-a2b270ddb7b3\",                  \"samlIdentity\": {                    \"nameId\": \"sherlockholmes${cFinal}@gmail.com\",                    \"username\": \"sherlockholmes${cFinal}@gmail.com\"                  },                  \"scimIdentity\": {                    \"username\": null                  },                  \"user\": {                    \"login\": \"some-jimbo-${cFinal}\"                  }                },                \"cursor\": \"${cFinal}\"              }     #{else}#end      ]          }        }      }    }  }  } }",
+      "templateType": "VELOCITY"
+    }
+  },
+  {
+    "httpRequest": {
       "headers": {
         "accept": [ "application/json" ]
       },
