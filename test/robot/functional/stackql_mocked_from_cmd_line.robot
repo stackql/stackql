@@ -127,6 +127,17 @@ Okta Apps Select Simple
     ...    ${SELECT_OKTA_APPS}
     ...    ${SELECT_OKTA_APPS_ASC_EXPECTED}
 
+Okta Users Select Simple Paginated
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SELECT_OKTA_USERS_ASC}
+    ...    ${SELECT_OKTA_USERS_ASC_EXPECTED}
+
 AWS Volumes Select Simple
     Should StackQL Exec Inline Equal
     ...    ${STACKQL_EXE}
@@ -349,6 +360,17 @@ Data Flow Sequential Join Paginated Select Github
     ...    ${AUTH_CFG_STR}
     ...    ${SELECT_GITHUB_JOIN_DATA_FLOW_SEQUENTIAL} 
     ...    ${SELECT_GITHUB_JOIN_DATA_FLOW_SEQUENTIAL_EXPECTED}
+
+Paginated and Data Flow Sequential Join Github Okta SAML 
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}    
+    ...    ${AUTH_CFG_STR}
+    ...    ${SELECT_GITHUB_OKTA_SAML_JOIN} 
+    ...    ${SELECT_GITHUB_OKTA_SAML_JOIN_EXPECTED}
 
 Data Flow Sequential Join Select With Functions Github 
     Should StackQL Exec Inline Equal

@@ -298,14 +298,17 @@ SELECT_GITHUB_REPOS_IDS_ASC = "select id from github.repos.repos where org = 'du
 SELECT_GITHUB_BRANCHES_NAMES_DESC = "select name from github.repos.branches where owner = 'dummyorg' and repo = 'dummyapp.io' order by name desc;"
 SELECT_GITHUB_REPOS_FILTERED_SINGLE = "select id, name from github.repos.repos where org = 'dummyorg' and name = 'dummyapp.io';"
 SELECT_GITHUB_SCIM_USERS = "select JSON_EXTRACT(name, '$.givenName') || ' ' || JSON_EXTRACT(name, '$.familyName') as name, userName, externalId, id from github.scim.users where org = 'dummyorg' order by id asc;"
-SELECT_GITHUB_SAML_IDENTITIES = "select guid, JSON_EXTRACT(samlIdentity, '$.nameId') AS saml_id, JSON_EXTRACT(user, '$.login') AS github_login from github.scim.samlIDs where org = 'dummyorg' order by JSON_EXTRACT(user, '$.login') asc;"
+SELECT_GITHUB_SAML_IDENTITIES = "select guid, JSON_EXTRACT(samlIdentity, '$.nameId') AS saml_id, JSON_EXTRACT(user, '$.login') AS github_login from github.scim.saml_ids where org = 'dummyorg' order by JSON_EXTRACT(user, '$.login') asc;"
 SELECT_GITHUB_TAGS_COUNT = "select count(*) as ct from github.repos.tags where owner = 'dummyorg' and repo = 'dummyapp.io';"
 SELECT_GITHUB_SCIM_JOIN_WITH_FUNCTIONS = "select substr(su.userName, 1, instr(su.userName, '@') - 1), su.externalId, su.id, u.login, u.two_factor_authentication AS is_two_fa_enabled from github.scim.users su inner join github.users.users u ON substr(su.userName, 1, instr(su.userName, '@') - 1) = u.username and substr(su.userName, 1, instr(su.userName, '@') - 1) = u.login where su.org = 'dummyorg' order by su.id asc;"
 SELECT_GITHUB_ORGS_MEMBERS = "select om.login from github.orgs.members om where om.org = 'dummyorg' order by om.login desc;"
 
 SELECT_OKTA_APPS = "select name, status, label, id from okta.application.apps apps where apps.subdomain = 'example-subdomain' order by name asc;"
+SELECT_OKTA_USERS_ASC = "select JSON_EXTRACT(ou.profile, '$.login') as login, ou.status from okta.user.users ou WHERE ou.subdomain = 'dummyorg' order by JSON_EXTRACT(ou.profile, '$.login') asc;"
 
 SELECT_CONTRIVED_GCP_OKTA_JOIN = "select d1.name, d1.id, d2.name as d2_name, d2.status, d2.label, d2.id as d2_id from google.compute.disks d1 inner join okta.application.apps d2 on d1.name = d2.label where d1.project = 'testing-project' and d1.zone = 'australia-southeast1-b' and d2.subdomain = 'dev-79923018-admin' order by d1.name ASC;"
+
+SELECT_GITHUB_OKTA_SAML_JOIN = "select JSON_EXTRACT(saml.samlIdentity, '$.username') as saml_username, om.login as github_login, ou.status as okta_status from github.scim.saml_ids saml INNER JOIN okta.user.users ou ON JSON_EXTRACT(saml.samlIdentity, '$.username') = JSON_EXTRACT(ou.profile, '$.login') INNER JOIN github.orgs.members om ON JSON_EXTRACT(saml.user, '$.login') = om.login where ou.subdomain = 'dummyorg' AND om.org = 'dummyorg' AND saml.org = 'dummyorg' order by om.login desc;"
 
 SELECT_CONTRIVED_GCP_THREE_WAY_JOIN = "select d1.name as n, d1.id, n1.description, s1.description as s1_description from google.compute.disks d1 inner join google.compute.networks n1 on d1.name = n1.name inner join google.compute.subnetworks s1 on d1.name = s1.name where d1.project = 'testing-project' and d1.zone = 'australia-southeast1-b' and n1.project = 'testing-project' and s1.project = 'testing-project' and s1.region = 'australia-southeast1' ;"
 
@@ -335,6 +338,7 @@ SELECT_ACCELERATOR_TYPES_DESC_EXPECTED = get_output_from_local_file(os.path.join
 SELECT_MACHINE_TYPES_DESC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'google', 'compute', 'instance-type-list-names-paginated-desc.txt'))
 
 SELECT_OKTA_APPS_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'simple-select', 'okta', 'apps', 'select-apps-asc.txt'))
+SELECT_OKTA_USERS_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'okta', 'select-users-asc.txt'))
 
 SELECT_AWS_VOLUMES_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'volumes', 'select-volumes-asc.txt'))
 
@@ -347,6 +351,7 @@ SELECT_GITHUB_BRANCHES_NAMES_DESC_EXPECTED = get_output_from_local_file(os.path.
 SELECT_GITHUB_TAGS_COUNT_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-tags-count.txt'))
 SELECT_GITHUB_JOIN_DATA_FLOW_SEQUENTIAL_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'joins', 'select-github-sequential-join.txt'))
 SELECT_GITHUB_SCIM_JOIN_WITH_FUNCTIONS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'joins', 'select-github-sequential-join-with-functions.txt'))
+SELECT_GITHUB_OKTA_SAML_JOIN_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'joins', 'inner', 'github-saml-members-okta-users.txt'))
 SELECT_GITHUB_ORGS_MEMBERS_PAGE_LIMITED_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'orgs', 'page-limited-members.txt'))
 SELECT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'google', 'compute', 'instance-iam-policy-projection.txt'))
 
@@ -453,6 +458,8 @@ def get_variables(execution_env :str):
     'SELECT_GITHUB_JOIN_DATA_FLOW_SEQUENTIAL':                              SELECT_GITHUB_JOIN_DATA_FLOW_SEQUENTIAL,
     'SELECT_GITHUB_JOIN_DATA_FLOW_SEQUENTIAL_EXPECTED':                     SELECT_GITHUB_JOIN_DATA_FLOW_SEQUENTIAL_EXPECTED,
     'SELECT_GITHUB_JOIN_DATA_FLOW_SEQUENTIAL_EXPECTED':                     SELECT_GITHUB_JOIN_DATA_FLOW_SEQUENTIAL_EXPECTED,
+    'SELECT_GITHUB_OKTA_SAML_JOIN':                                         SELECT_GITHUB_OKTA_SAML_JOIN,
+    'SELECT_GITHUB_OKTA_SAML_JOIN_EXPECTED':                                SELECT_GITHUB_OKTA_SAML_JOIN_EXPECTED,
     'SELECT_GITHUB_ORGS_MEMBERS':                                           SELECT_GITHUB_ORGS_MEMBERS,
     'SELECT_GITHUB_ORGS_MEMBERS_PAGE_LIMITED_EXPECTED':                     SELECT_GITHUB_ORGS_MEMBERS_PAGE_LIMITED_EXPECTED,
     'SELECT_GITHUB_REPOS_FILTERED_SINGLE':                                  SELECT_GITHUB_REPOS_FILTERED_SINGLE,
@@ -484,6 +491,8 @@ def get_variables(execution_env :str):
     'SELECT_MACHINE_TYPES_DESC_EXPECTED':                                   SELECT_MACHINE_TYPES_DESC_EXPECTED,
     'SELECT_OKTA_APPS':                                                     SELECT_OKTA_APPS,
     'SELECT_OKTA_APPS_ASC_EXPECTED':                                        SELECT_OKTA_APPS_ASC_EXPECTED,
+    'SELECT_OKTA_USERS_ASC':                                                SELECT_OKTA_USERS_ASC,
+    'SELECT_OKTA_USERS_ASC_EXPECTED':                                       SELECT_OKTA_USERS_ASC_EXPECTED,
     'SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR':                 SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR,
     'SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR':                 SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR,
     'SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR_EXPECTED':        SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR_EXPECTED,

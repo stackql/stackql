@@ -408,7 +408,7 @@ func (gp *GenericProvider) InferMaxResultsElement(*openapistackql.OperationStore
 
 func (gp *GenericProvider) InferNextPageRequestElement(dto.Heirarchy) *dto.HTTPElement {
 	switch gp.GetProviderString() {
-	case "github":
+	case "github", "okta":
 		return &dto.HTTPElement{
 			Type: dto.RequestString,
 		}
@@ -422,7 +422,7 @@ func (gp *GenericProvider) InferNextPageRequestElement(dto.Heirarchy) *dto.HTTPE
 
 func (gp *GenericProvider) InferNextPageResponseElement(ho dto.Heirarchy) *dto.HTTPElement {
 	switch gp.GetProviderString() {
-	case "github":
+	case "github", "okta":
 		return &dto.HTTPElement{
 			Type: dto.Header,
 			Name: "Link",

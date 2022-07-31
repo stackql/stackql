@@ -1,4 +1,14 @@
-[
+[  
+  {
+    "httpRequest": {
+      "method": "GET",
+      "path": "/api/v1/users"
+    },
+    "httpResponseTemplate": {
+      "template": "#set($end = 5) \n#set($thisPage = \"#if($!request.queryStringParameters.after[0])$!request.queryStringParameters.after[0]#{else}0#end\")\n#set($host = $request.headers['Host'][0])\n#set($userStubs = [\"octocat\", \"decapod\", \"mrfootball\", \"knuckles\"]) \n#set($maxPage = 45) \n#set($Integer = 0)\n#set($currentPage = $Integer.parseInt($thisPage))  \n#set($nextPage = $currentPage + $end) \n{ 'statusCode': 200, 'headers': { 'Datetime': [ $!now_iso_8601 ], Next-Page: [ '$!request.queryStringParameters.after[0]' ], Calc-Page: [ '$!thisPage', '$!nextPage' ], Link: [ #if(($nextPage) && ($nextPage <= $maxPage)) '<https://$host/api/v1/users?after=$!nextPage>; rel=\"next\"', #end '<https://$host/api/v1/users?after=$!currentPage>; rel=\"self\"' ] }, 'body': [ #foreach($i in [1..$end])  \n#set($ci = $currentPage + $i)\n   {    \"id\": \"${ci}\",    \"status\": \"ACTIVE\",    \"created\": \"2022-07-17T11:36:23.000Z\",    \"activated\": \"2022-07-17T11:36:23.000Z\",    \"statusChanged\": \"2022-07-17T11:37:06.000Z\",    \"lastLogin\": \"2022-07-17T11:38:36.000Z\",    \"lastUpdated\": \"2022-07-17T11:37:06.000Z\",    \"passwordChanged\": \"2022-07-17T11:37:06.000Z\",    \"type\": {      \"id\": \"oty1l8curaosSnZLn697\"    },    \"profile\": {      \"firstName\": \"sherlock\",      \"lastName\": \"holmes\",      \"mobilePhone\": null,      \"secondEmail\": null,      \"login\": \"sherlockholmes${ci}@gmail.com\",      \"email\": \"sherlockholmes${ci}@gmail.com\"    },    \"credentials\": {      \"password\": {},      \"provider\": {        \"type\": \"OKTA\",        \"name\": \"OKTA\"      }    },    \"_links\": {      \"self\": {        \"href\": \"https://dummyorg.okta.com/api/v1/users/${ci}\"      }    }  } #if( $foreach.hasNext ),#end #end ] }",
+      "templateType": "VELOCITY"
+    }
+  },
   {
     "httpRequest": {
       "method": "GET",
