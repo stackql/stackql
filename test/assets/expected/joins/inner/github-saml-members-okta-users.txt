@@ -1,0 +1,21 @@
+|---------------------------|--------------|-------------|
+|       saml_username       | github_login | okta_status |
+|---------------------------|--------------|-------------|
+| sherlockholmes9@gmail.com | some-jimbo-9 | ACTIVE      |
+|---------------------------|--------------|-------------|
+| sherlockholmes8@gmail.com | some-jimbo-8 | ACTIVE      |
+|---------------------------|--------------|-------------|
+| sherlockholmes7@gmail.com | some-jimbo-7 | ACTIVE      |
+|---------------------------|--------------|-------------|
+| sherlockholmes6@gmail.com | some-jimbo-6 | ACTIVE      |
+|---------------------------|--------------|-------------|
+| sherlockholmes5@gmail.com | some-jimbo-5 | ACTIVE      |
+|---------------------------|--------------|-------------|
+| sherlockholmes4@gmail.com | some-jimbo-4 | ACTIVE      |
+|---------------------------|--------------|-------------|
+| sherlockholmes3@gmail.com | some-jimbo-3 | ACTIVE      |
+|---------------------------|--------------|-------------|
+| sherlockholmes2@gmail.com | some-jimbo-2 | ACTIVE      |
+|---------------------------|--------------|-------------|
+| sherlockholmes1@gmail.com | some-jimbo-1 | ACTIVE      |
+|---------------------------|--------------|-------------|

@@ -1,0 +1,4185 @@
+components:
+  schemas:
+    AppAndInstanceConditionEvaluatorAppOrInstance:
+      properties:
+        id:
+          readOnly: true
+          type: string
+        name:
+          type: string
+        type:
+          enum:
+          - APP_TYPE
+          - APP
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    AppAndInstancePolicyRuleCondition:
+      properties:
+        exclude:
+          items:
+            $ref: '#/components/schemas/AppAndInstanceConditionEvaluatorAppOrInstance'
+          type: array
+        include:
+          items:
+            $ref: '#/components/schemas/AppAndInstanceConditionEvaluatorAppOrInstance'
+          type: array
+      type: object
+      x-okta-tags:
+      - Policy
+    AppInstancePolicyRuleCondition:
+      properties:
+        exclude:
+          items:
+            type: string
+          type: array
+        include:
+          items:
+            type: string
+          type: array
+      type: object
+      x-okta-tags:
+      - Policy
+    AppLink:
+      properties:
+        appAssignmentId:
+          readOnly: true
+          type: string
+        appInstanceId:
+          readOnly: true
+          type: string
+        appName:
+          readOnly: true
+          type: string
+        credentialsSetup:
+          readOnly: true
+          type: boolean
+        hidden:
+          readOnly: true
+          type: boolean
+        id:
+          readOnly: true
+          type: string
+        label:
+          readOnly: true
+          type: string
+        linkUrl:
+          readOnly: true
+          type: string
+        logoUrl:
+          readOnly: true
+          type: string
+        sortOrder:
+          readOnly: true
+          type: integer
+      type: object
+      x-okta-tags:
+      - User
+    AssignRoleRequest:
+      properties:
+        type:
+          $ref: '#/components/schemas/RoleType'
+      type: object
+      x-okta-tags:
+      - Role
+    AuthenticationProvider:
+      properties:
+        name:
+          type: string
+        type:
+          $ref: '#/components/schemas/AuthenticationProviderType'
+      type: object
+      x-okta-tags:
+      - User
+    AuthenticationProviderType:
+      enum:
+      - ACTIVE_DIRECTORY
+      - FEDERATION
+      - LDAP
+      - OKTA
+      - SOCIAL
+      - IMPORT
+      type: string
+      x-okta-tags:
+      - User
+    BeforeScheduledActionPolicyRuleCondition:
+      properties:
+        duration:
+          $ref: '#/components/schemas/Duration'
+        lifecycleAction:
+          $ref: '#/components/schemas/ScheduledUserLifecycleAction'
+      type: object
+      x-okta-tags:
+      - Policy
+    CatalogApplication:
+      properties:
+        _links:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        category:
+          type: string
+        description:
+          type: string
+        displayName:
+          type: string
+        features:
+          items:
+            type: string
+          type: array
+        id:
+          readOnly: true
+          type: string
+        lastUpdated:
+          format: date-time
+          readOnly: true
+          type: string
+        name:
+          type: string
+        signOnModes:
+          items:
+            type: string
+          type: array
+        status:
+          $ref: '#/components/schemas/CatalogApplicationStatus'
+        verificationStatus:
+          type: string
+        website:
+          type: string
+      type: object
+      x-okta-tags:
+      - Role
+    CatalogApplicationStatus:
+      enum:
+      - ACTIVE
+      - INACTIVE
+      type: string
+      x-okta-tags:
+      - Role
+    ChangePasswordRequest:
+      properties:
+        newPassword:
+          $ref: '#/components/schemas/PasswordCredential'
+        oldPassword:
+          $ref: '#/components/schemas/PasswordCredential'
+      type: object
+      x-okta-tags:
+      - User
+    ClientPolicyCondition:
+      properties:
+        include:
+          items:
+            type: string
+          type: array
+      type: object
+      x-okta-tags:
+      - Policy
+    ContextPolicyRuleCondition:
+      properties:
+        expression:
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    CreateUserRequest:
+      properties:
+        credentials:
+          $ref: '#/components/schemas/UserCredentials'
+        groupIds:
+          items:
+            type: string
+          type: array
+        profile:
+          $ref: '#/components/schemas/UserProfile'
+        type:
+          $ref: '#/components/schemas/UserType'
+      type: object
+      x-okta-tags:
+      - User
+    DevicePolicyRuleCondition:
+      properties:
+        migrated:
+          type: boolean
+        platform:
+          $ref: '#/components/schemas/DevicePolicyRuleConditionPlatform'
+        rooted:
+          type: boolean
+        trustLevel:
+          enum:
+          - ANY
+          - TRUSTED
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    DevicePolicyRuleConditionPlatform:
+      properties:
+        supportedMDMFrameworks:
+          items:
+            enum:
+            - AFW
+            - SAFE
+            - NATIVE
+            type: string
+          type: array
+        types:
+          items:
+            enum:
+            - IOS
+            - ANDROID
+            - OSX
+            - WINDOWS
+            type: string
+          type: array
+      type: object
+      x-okta-tags:
+      - Policy
+    Duration:
+      properties:
+        number:
+          type: integer
+        unit:
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    ForgotPasswordResponse:
+      properties:
+        resetPasswordUrl:
+          readOnly: true
+          type: string
+      type: object
+      x-okta-tags:
+      - User
+    GrantTypePolicyRuleCondition:
+      properties:
+        include:
+          items:
+            type: string
+          type: array
+      type: object
+      x-okta-tags:
+      - Policy
+    Group:
+      properties:
+        _embedded:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        _links:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        created:
+          format: date-time
+          readOnly: true
+          type: string
+        id:
+          readOnly: true
+          type: string
+        lastMembershipUpdated:
+          format: date-time
+          readOnly: true
+          type: string
+        lastUpdated:
+          format: date-time
+          readOnly: true
+          type: string
+        objectClass:
+          items:
+            type: string
+          readOnly: true
+          type: array
+        profile:
+          $ref: '#/components/schemas/GroupProfile'
+        type:
+          $ref: '#/components/schemas/GroupType'
+      type: object
+      x-okta-crud:
+      - alias: update
+        arguments:
+        - dest: groupId
+          src: id
+        - dest: group
+          self: true
+        operationId: updateGroup
+      - alias: delete
+        arguments:
+        - dest: groupId
+          src: id
+        operationId: deleteGroup
+      x-okta-operations:
+      - alias: removeUser
+        arguments:
+        - dest: groupId
+          src: id
+        operationId: removeUserFromGroup
+      - alias: listUsers
+        arguments:
+        - dest: groupId
+          src: id
+        operationId: listGroupUsers
+      - alias: listApplications
+        arguments:
+        - dest: groupId
+          src: id
+        operationId: listAssignedApplicationsForGroup
+      - alias: assignRole
+        arguments:
+        - dest: groupId
+          src: id
+        operationId: assignRoleToGroup
+      x-okta-tags:
+      - Group
+    GroupCondition:
+      properties:
+        exclude:
+          items:
+            type: string
+          type: array
+        include:
+          items:
+            type: string
+          type: array
+      type: object
+      x-okta-tags:
+      - Policy
+    GroupPolicyRuleCondition:
+      properties:
+        exclude:
+          items:
+            type: string
+          type: array
+        include:
+          items:
+            type: string
+          type: array
+      type: object
+      x-okta-tags:
+      - Policy
+    GroupProfile:
+      properties:
+        description:
+          type: string
+        name:
+          type: string
+      type: object
+      x-okta-extensible: true
+      x-okta-tags:
+      - Group
+    GroupType:
+      enum:
+      - OKTA_GROUP
+      - APP_GROUP
+      - BUILT_IN
+      type: string
+      x-okta-tags:
+      - Group
+    IdentityProvider:
+      properties:
+        _links:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        created:
+          format: date-time
+          readOnly: true
+          type: string
+        id:
+          readOnly: true
+          type: string
+        issuerMode:
+          enum:
+          - ORG_URL
+          - CUSTOM_URL
+          type: string
+        lastUpdated:
+          format: date-time
+          readOnly: true
+          type: string
+        name:
+          type: string
+        policy:
+          $ref: '#/components/schemas/IdentityProviderPolicy'
+        protocol:
+          $ref: '#/components/schemas/Protocol'
+        status:
+          enum:
+          - ACTIVE
+          - INACTIVE
+          type: string
+        type:
+          enum:
+          - SAML2
+          - GOOGLE
+          - FACEBOOK
+          - LINKEDIN
+          - MICROSOFT
+          - OIDC
+          - OKTA
+          - IWA
+          - AgentlessDSSO
+          - X509
+          type: string
+      type: object
+      x-okta-crud:
+      - alias: create
+        arguments:
+        - dest: idpTrust
+          self: true
+        operationId: createIdentityProvider
+      - alias: read
+        arguments: []
+        operationId: getIdentityProvider
+      - alias: update
+        arguments:
+        - dest: idpId
+          src: id
+        - dest: idpTrust
+          self: true
+        operationId: updateIdentityProvider
+      - alias: delete
+        arguments:
+        - dest: idpId
+          src: id
+        operationId: deleteIdentityProvider
+      x-okta-operations:
+      - alias: listSigningCsrs
+        arguments:
+        - dest: idpId
+          src: id
+        operationId: listCsrsForIdentityProvider
+      - alias: generateCsr
+        arguments:
+        - dest: idpId
+          src: id
+        operationId: generateCsrForIdentityProvider
+      - alias: deleteSigningCsr
+        arguments:
+        - dest: idpId
+          src: id
+        operationId: revokeCsrForIdentityProvider
+      - alias: getSigningCsr
+        arguments:
+        - dest: idpId
+          src: id
+        operationId: getCsrForIdentityProvider
+      - alias: listSigningKeys
+        arguments:
+        - dest: idpId
+          src: id
+        operationId: listIdentityProviderSigningKeys
+      - alias: generateSigningKey
+        arguments:
+        - dest: idpId
+          src: id
+        operationId: generateIdentityProviderSigningKey
+      - alias: getSigningKey
+        arguments:
+        - dest: idpId
+          src: id
+        operationId: getIdentityProviderSigningKey
+      - alias: cloneKey
+        arguments:
+        - dest: idpId
+          src: id
+        operationId: cloneIdentityProviderKey
+      - alias: activate
+        arguments:
+        - dest: idpId
+          src: id
+        operationId: activateIdentityProvider
+      - alias: deactivate
+        arguments:
+        - dest: idpId
+          src: id
+        operationId: deactivateIdentityProvider
+      - alias: listUsers
+        arguments:
+        - dest: idpId
+          src: id
+        operationId: listIdentityProviderApplicationUsers
+      - alias: unlinkUser
+        arguments:
+        - dest: idpId
+          src: id
+        operationId: unlinkUserFromIdentityProvider
+      - alias: getUser
+        arguments:
+        - dest: idpId
+          src: id
+        operationId: getIdentityProviderApplicationUser
+      - alias: linkUser
+        arguments:
+        - dest: idpId
+          src: id
+        operationId: linkUserToIdentityProvider
+      - alias: listSocialAuthTokens
+        arguments:
+        - dest: idpId
+          src: id
+        operationId: listSocialAuthTokens
+      x-okta-tags:
+      - IdentityProvider
+    IdentityProviderCredentials:
+      properties:
+        client:
+          $ref: '#/components/schemas/IdentityProviderCredentialsClient'
+        signing:
+          $ref: '#/components/schemas/IdentityProviderCredentialsSigning'
+        trust:
+          $ref: '#/components/schemas/IdentityProviderCredentialsTrust'
+      type: object
+      x-okta-tags:
+      - IdentityProvider
+    IdentityProviderCredentialsClient:
+      properties:
+        client_id:
+          type: string
+        client_secret:
+          type: string
+      type: object
+      x-okta-tags:
+      - IdentityProvider
+    IdentityProviderCredentialsSigning:
+      properties:
+        kid:
+          type: string
+      type: object
+      x-okta-tags:
+      - IdentityProvider
+    IdentityProviderCredentialsTrust:
+      properties:
+        audience:
+          type: string
+        issuer:
+          type: string
+        kid:
+          type: string
+        revocation:
+          enum:
+          - CRL
+          - DELTA_CRL
+          - OCSP
+          type: string
+        revocationCacheLifetime:
+          type: integer
+      type: object
+      x-okta-tags:
+      - IdentityProvider
+    IdentityProviderPolicy:
+      properties:
+        accountLink:
+          $ref: '#/components/schemas/PolicyAccountLink'
+        maxClockSkew:
+          type: integer
+        provisioning:
+          $ref: '#/components/schemas/Provisioning'
+        subject:
+          $ref: '#/components/schemas/PolicySubject'
+      type: object
+      x-okta-parent: '#/components/schemas/Policy'
+      x-okta-tags:
+      - Policy
+    IdentityProviderPolicyRuleCondition:
+      properties:
+        idpIds:
+          items:
+            type: string
+          type: array
+        provider:
+          enum:
+          - ANY
+          - OKTA
+          - SPECIFIC_IDP
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    InactivityPolicyRuleCondition:
+      properties:
+        number:
+          type: integer
+        unit:
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    LifecycleExpirationPolicyRuleCondition:
+      properties:
+        lifecycleStatus:
+          type: string
+        number:
+          type: integer
+        unit:
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    MDMEnrollmentPolicyRuleCondition:
+      properties:
+        blockNonSafeAndroid:
+          type: boolean
+        enrollment:
+          enum:
+          - OMM
+          - ANY_OR_NONE
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    OAuth2Actor:
+      properties:
+        id:
+          readOnly: true
+          type: string
+        type:
+          type: string
+      type: object
+      x-okta-tags:
+      - Application
+    OAuth2Client:
+      properties:
+        _links:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        client_id:
+          readOnly: true
+          type: string
+        client_name:
+          readOnly: true
+          type: string
+        client_uri:
+          readOnly: true
+          type: string
+        logo_uri:
+          readOnly: true
+          type: string
+      type: object
+      x-okta-tags:
+      - Application
+    OAuth2RefreshToken:
+      properties:
+        _embedded:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        _links:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        clientId:
+          type: string
+        created:
+          format: date-time
+          readOnly: true
+          type: string
+        createdBy:
+          $ref: '#/components/schemas/OAuth2Actor'
+        expiresAt:
+          format: date-time
+          readOnly: true
+          type: string
+        id:
+          readOnly: true
+          type: string
+        issuer:
+          type: string
+        lastUpdated:
+          format: date-time
+          readOnly: true
+          type: string
+        scopes:
+          items:
+            type: string
+          type: array
+        status:
+          enum:
+          - ACTIVE
+          - REVOKED
+          type: string
+        userId:
+          type: string
+      type: object
+      x-okta-tags:
+      - Application
+    OAuth2ScopeConsentGrant:
+      properties:
+        _embedded:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        _links:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        clientId:
+          type: string
+        created:
+          format: date-time
+          readOnly: true
+          type: string
+        createdBy:
+          $ref: '#/components/schemas/OAuth2Actor'
+        id:
+          readOnly: true
+          type: string
+        issuer:
+          type: string
+        lastUpdated:
+          format: date-time
+          readOnly: true
+          type: string
+        scopeId:
+          type: string
+        source:
+          $ref: '#/components/schemas/OAuth2ScopeConsentGrantSource'
+        status:
+          $ref: '#/components/schemas/OAuth2ScopeConsentGrantStatus'
+        userId:
+          type: string
+      type: object
+      x-okta-tags:
+      - Application
+    OAuth2ScopeConsentGrantSource:
+      enum:
+      - END_USER
+      - ADMIN
+      type: string
+      x-okta-tags:
+      - Application
+    OAuth2ScopeConsentGrantStatus:
+      enum:
+      - ACTIVE
+      - REVOKED
+      type: string
+      x-okta-tags:
+      - Application
+    OAuth2ScopesMediationPolicyRuleCondition:
+      properties:
+        include:
+          items:
+            type: string
+          type: array
+      type: object
+      x-okta-tags:
+      - Application
+    OAuthAuthorizationPolicy:
+      type: object
+      x-okta-parent: '#/components/schemas/Policy'
+      x-okta-tags:
+      - Policy
+    OktaSignOnPolicy:
+      properties:
+        conditions:
+          $ref: '#/components/schemas/OktaSignOnPolicyConditions'
+      type: object
+      x-okta-parent: '#/components/schemas/Policy'
+      x-okta-tags:
+      - Policy
+    OktaSignOnPolicyConditions:
+      properties:
+        people:
+          $ref: '#/components/schemas/PolicyPeopleCondition'
+      type: object
+      x-okta-parent: '#/components/schemas/PolicyRuleConditions'
+      x-okta-tags:
+      - Policy
+    PasswordCredential:
+      properties:
+        hash:
+          $ref: '#/components/schemas/PasswordCredentialHash'
+        hook:
+          $ref: '#/components/schemas/PasswordCredentialHook'
+        value:
+          format: password
+          type: string
+      type: object
+      x-okta-tags:
+      - User
+    PasswordCredentialHash:
+      properties:
+        algorithm:
+          $ref: '#/components/schemas/PasswordCredentialHashAlgorithm'
+        salt:
+          type: string
+        saltOrder:
+          type: string
+        value:
+          type: string
+        workFactor:
+          type: integer
+      type: object
+      x-okta-tags:
+      - User
+    PasswordCredentialHashAlgorithm:
+      enum:
+      - BCRYPT
+      - SHA-512
+      - SHA-256
+      - SHA-1
+      - MD5
+      type: string
+      x-okta-tags:
+      - User
+    PasswordCredentialHook:
+      properties:
+        type:
+          type: string
+      type: object
+      x-okta-tags:
+      - User
+    PasswordDictionary:
+      properties:
+        common:
+          $ref: '#/components/schemas/PasswordDictionaryCommon'
+      type: object
+      x-okta-tags:
+      - Policy
+    PasswordDictionaryCommon:
+      properties:
+        exclude:
+          default: false
+          type: boolean
+      type: object
+      x-okta-tags:
+      - Policy
+    PasswordExpirationPolicyRuleCondition:
+      properties:
+        number:
+          type: integer
+        unit:
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    PasswordPolicy:
+      properties:
+        conditions:
+          $ref: '#/components/schemas/PasswordPolicyConditions'
+        settings:
+          $ref: '#/components/schemas/PasswordPolicySettings'
+      type: object
+      x-okta-parent: '#/components/schemas/Policy'
+      x-okta-tags:
+      - Policy
+    PasswordPolicyAuthenticationProviderCondition:
+      properties:
+        include:
+          items:
+            type: string
+          type: array
+        provider:
+          enum:
+          - ACTIVE_DIRECTORY
+          - ANY
+          - LDAP
+          - OKTA
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    PasswordPolicyConditions:
+      properties:
+        authProvider:
+          $ref: '#/components/schemas/PasswordPolicyAuthenticationProviderCondition'
+        people:
+          $ref: '#/components/schemas/PolicyPeopleCondition'
+      type: object
+      x-okta-parent: '#/components/schemas/PolicyRuleConditions'
+      x-okta-tags:
+      - Policy
+    PasswordPolicyDelegationSettings:
+      properties:
+        options:
+          $ref: '#/components/schemas/PasswordPolicyDelegationSettingsOptions'
+      type: object
+      x-okta-tags:
+      - Policy
+    PasswordPolicyDelegationSettingsOptions:
+      properties:
+        skipUnlock:
+          type: boolean
+      type: object
+      x-okta-tags:
+      - Policy
+    PasswordPolicyPasswordSettings:
+      properties:
+        age:
+          $ref: '#/components/schemas/PasswordPolicyPasswordSettingsAge'
+        complexity:
+          $ref: '#/components/schemas/PasswordPolicyPasswordSettingsComplexity'
+        lockout:
+          $ref: '#/components/schemas/PasswordPolicyPasswordSettingsLockout'
+      type: object
+      x-okta-tags:
+      - Policy
+    PasswordPolicyPasswordSettingsAge:
+      properties:
+        expireWarnDays:
+          type: integer
+        historyCount:
+          type: integer
+        maxAgeDays:
+          type: integer
+        minAgeMinutes:
+          type: integer
+      type: object
+      x-okta-tags:
+      - Policy
+    PasswordPolicyPasswordSettingsComplexity:
+      properties:
+        dictionary:
+          $ref: '#/components/schemas/PasswordDictionary'
+        excludeAttributes:
+          items:
+            type: string
+          type: array
+        excludeUsername:
+          default: true
+          type: boolean
+        minLength:
+          type: integer
+        minLowerCase:
+          type: integer
+        minNumber:
+          type: integer
+        minSymbol:
+          type: integer
+        minUpperCase:
+          type: integer
+      type: object
+      x-okta-tags:
+      - Policy
+    PasswordPolicyPasswordSettingsLockout:
+      properties:
+        autoUnlockMinutes:
+          type: integer
+        maxAttempts:
+          type: integer
+        showLockoutFailures:
+          type: boolean
+        userLockoutNotificationChannels:
+          items:
+            type: string
+          type: array
+      type: object
+      x-okta-tags:
+      - Policy
+    PasswordPolicyRecoveryEmail:
+      properties:
+        properties:
+          $ref: '#/components/schemas/PasswordPolicyRecoveryEmailProperties'
+        status:
+          enum:
+          - ACTIVE
+          - INACTIVE
+          readOnly: true
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    PasswordPolicyRecoveryEmailProperties:
+      properties:
+        recoveryToken:
+          $ref: '#/components/schemas/PasswordPolicyRecoveryEmailRecoveryToken'
+      type: object
+      x-okta-tags:
+      - Policy
+    PasswordPolicyRecoveryEmailRecoveryToken:
+      properties:
+        tokenLifetimeMinutes:
+          type: integer
+      type: object
+      x-okta-tags:
+      - Policy
+    PasswordPolicyRecoveryFactorSettings:
+      properties:
+        status:
+          default: INACTIVE
+          enum:
+          - ACTIVE
+          - INACTIVE
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    PasswordPolicyRecoveryFactors:
+      properties:
+        okta_call:
+          $ref: '#/components/schemas/PasswordPolicyRecoveryFactorSettings'
+        okta_email:
+          $ref: '#/components/schemas/PasswordPolicyRecoveryEmail'
+        okta_sms:
+          $ref: '#/components/schemas/PasswordPolicyRecoveryFactorSettings'
+        recovery_question:
+          $ref: '#/components/schemas/PasswordPolicyRecoveryQuestion'
+      type: object
+      x-okta-tags:
+      - Policy
+    PasswordPolicyRecoveryQuestion:
+      properties:
+        properties:
+          $ref: '#/components/schemas/PasswordPolicyRecoveryQuestionProperties'
+        status:
+          enum:
+          - ACTIVE
+          - INACTIVE
+          readOnly: true
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    PasswordPolicyRecoveryQuestionComplexity:
+      properties:
+        minLength:
+          readOnly: true
+          type: integer
+      type: object
+      x-okta-tags:
+      - Policy
+    PasswordPolicyRecoveryQuestionProperties:
+      properties:
+        complexity:
+          $ref: '#/components/schemas/PasswordPolicyRecoveryQuestionComplexity'
+      type: object
+      x-okta-tags:
+      - Policy
+    PasswordPolicyRecoverySettings:
+      properties:
+        factors:
+          $ref: '#/components/schemas/PasswordPolicyRecoveryFactors'
+      type: object
+      x-okta-tags:
+      - Policy
+    PasswordPolicySettings:
+      properties:
+        delegation:
+          $ref: '#/components/schemas/PasswordPolicyDelegationSettings'
+        password:
+          $ref: '#/components/schemas/PasswordPolicyPasswordSettings'
+        recovery:
+          $ref: '#/components/schemas/PasswordPolicyRecoverySettings'
+      type: object
+      x-okta-tags:
+      - Policy
+    PlatformConditionEvaluatorPlatform:
+      properties:
+        os:
+          $ref: '#/components/schemas/PlatformConditionEvaluatorPlatformOperatingSystem'
+        type:
+          enum:
+          - DESKTOP
+          - MOBILE
+          - OTHER
+          - ANY
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    PlatformConditionEvaluatorPlatformOperatingSystem:
+      properties:
+        expression:
+          type: string
+        type:
+          enum:
+          - ANDROID
+          - IOS
+          - WINDOWS
+          - OSX
+          - OTHER
+          - ANY
+          type: string
+        version:
+          $ref: '#/components/schemas/PlatformConditionEvaluatorPlatformOperatingSystemVersion'
+      type: object
+      x-okta-tags:
+      - Policy
+    PlatformConditionEvaluatorPlatformOperatingSystemVersion:
+      properties:
+        matchType:
+          enum:
+          - EXPRESSION
+          - SEMVER
+          type: string
+        value:
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    PlatformPolicyRuleCondition:
+      properties:
+        exclude:
+          items:
+            $ref: '#/components/schemas/PlatformConditionEvaluatorPlatform'
+          type: array
+        include:
+          items:
+            $ref: '#/components/schemas/PlatformConditionEvaluatorPlatform'
+          type: array
+      type: object
+      x-okta-tags:
+      - Policy
+    Policy:
+      properties:
+        _embedded:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        _links:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        conditions:
+          $ref: '#/components/schemas/PolicyRuleConditions'
+        created:
+          format: date-time
+          readOnly: true
+          type: string
+        description:
+          type: string
+        id:
+          readOnly: true
+          type: string
+        lastUpdated:
+          format: date-time
+          readOnly: true
+          type: string
+        name:
+          type: string
+        priority:
+          type: integer
+        status:
+          enum:
+          - ACTIVE
+          - INACTIVE
+          type: string
+        system:
+          type: boolean
+        type:
+          $ref: '#/components/schemas/PolicyType'
+      type: object
+      x-okta-crud:
+      - alias: read
+        arguments:
+        - dest: policyId
+          src: id
+        operationId: getPolicy
+      - alias: update
+        arguments:
+        - dest: policyId
+          src: id
+        - dest: policy
+          self: true
+        operationId: updatePolicy
+      - alias: delete
+        arguments:
+        - dest: policyId
+          src: id
+        operationId: deletePolicy
+      x-okta-operations:
+      - alias: activate
+        arguments:
+        - dest: policyId
+          src: id
+        operationId: activatePolicy
+      - alias: deactivate
+        arguments:
+        - dest: policyId
+          src: id
+        operationId: deactivatePolicy
+      - alias: listPolicyRules
+        arguments:
+        - dest: policyId
+          src: id
+        operationId: listPolicyRules
+      - alias: createRule
+        arguments:
+        - dest: policyId
+          src: id
+        operationId: createPolicyRule
+      - alias: getPolicyRule
+        arguments:
+        - dest: policyId
+          src: id
+        operationId: getPolicyRule
+      x-okta-tags:
+      - Policy
+      x-openapi-v3-discriminator:
+        mapping:
+          IDP_DISCOVERY: '#/components/schemas/IdentityProviderPolicy'
+          OAUTH_AUTHORIZATION_POLICY: '#/components/schemas/OAuthAuthorizationPolicy'
+          OKTA_SIGN_ON: '#/components/schemas/OktaSignOnPolicy'
+          PASSWORD: '#/components/schemas/PasswordPolicy'
+        propertyName: type
+    PolicyAccountLink:
+      properties:
+        action:
+          enum:
+          - AUTO
+          - DISABLED
+          type: string
+        filter:
+          $ref: '#/components/schemas/PolicyAccountLinkFilter'
+      type: object
+      x-okta-tags:
+      - Policy
+    PolicyAccountLinkFilter:
+      properties:
+        groups:
+          $ref: '#/components/schemas/PolicyAccountLinkFilterGroups'
+      type: object
+      x-okta-tags:
+      - Policy
+    PolicyAccountLinkFilterGroups:
+      properties:
+        include:
+          items:
+            type: string
+          type: array
+      type: object
+      x-okta-tags:
+      - Policy
+    PolicyNetworkCondition:
+      properties:
+        connection:
+          enum:
+          - ANYWHERE
+          - ZONE
+          type: string
+        exclude:
+          items:
+            type: string
+          type: array
+        include:
+          items:
+            type: string
+          type: array
+      type: object
+      x-okta-tags:
+      - Policy
+    PolicyPeopleCondition:
+      properties:
+        groups:
+          $ref: '#/components/schemas/GroupCondition'
+        users:
+          $ref: '#/components/schemas/UserCondition'
+      type: object
+      x-okta-tags:
+      - Policy
+    PolicyRuleAuthContextCondition:
+      properties:
+        authType:
+          enum:
+          - ANY
+          - RADIUS
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    PolicyRuleConditions:
+      properties:
+        app:
+          $ref: '#/components/schemas/AppAndInstancePolicyRuleCondition'
+        apps:
+          $ref: '#/components/schemas/AppInstancePolicyRuleCondition'
+        authContext:
+          $ref: '#/components/schemas/PolicyRuleAuthContextCondition'
+        authProvider:
+          $ref: '#/components/schemas/PasswordPolicyAuthenticationProviderCondition'
+        beforeScheduledAction:
+          $ref: '#/components/schemas/BeforeScheduledActionPolicyRuleCondition'
+        clients:
+          $ref: '#/components/schemas/ClientPolicyCondition'
+        context:
+          $ref: '#/components/schemas/ContextPolicyRuleCondition'
+        device:
+          $ref: '#/components/schemas/DevicePolicyRuleCondition'
+        grantTypes:
+          $ref: '#/components/schemas/GrantTypePolicyRuleCondition'
+        groups:
+          $ref: '#/components/schemas/GroupPolicyRuleCondition'
+        identityProvider:
+          $ref: '#/components/schemas/IdentityProviderPolicyRuleCondition'
+        mdmEnrollment:
+          $ref: '#/components/schemas/MDMEnrollmentPolicyRuleCondition'
+        network:
+          $ref: '#/components/schemas/PolicyNetworkCondition'
+        people:
+          $ref: '#/components/schemas/PolicyPeopleCondition'
+        platform:
+          $ref: '#/components/schemas/PlatformPolicyRuleCondition'
+        risk:
+          $ref: '#/components/schemas/RiskPolicyRuleCondition'
+        riskScore:
+          $ref: '#/components/schemas/RiskScorePolicyRuleCondition'
+        scopes:
+          $ref: '#/components/schemas/OAuth2ScopesMediationPolicyRuleCondition'
+        userIdentifier:
+          $ref: '#/components/schemas/UserIdentifierPolicyRuleCondition'
+        userStatus:
+          $ref: '#/components/schemas/UserStatusPolicyRuleCondition'
+        users:
+          $ref: '#/components/schemas/UserPolicyRuleCondition'
+      type: object
+      x-okta-tags:
+      - Policy
+    PolicySubject:
+      properties:
+        filter:
+          type: string
+        format:
+          items:
+            type: string
+          type: array
+        matchAttribute:
+          type: string
+        matchType:
+          $ref: '#/components/schemas/PolicySubjectMatchType'
+        userNameTemplate:
+          $ref: '#/components/schemas/PolicyUserNameTemplate'
+      type: object
+      x-okta-tags:
+      - Policy
+    PolicySubjectMatchType:
+      enum:
+      - USERNAME
+      - EMAIL
+      - USERNAME_OR_EMAIL
+      - CUSTOM_ATTRIBUTE
+      type: string
+      x-okta-tags:
+      - Policy
+    PolicyType:
+      enum:
+      - OAUTH_AUTHORIZATION_POLICY
+      - OKTA_SIGN_ON
+      - PASSWORD
+      - IDP_DISCOVERY
+      type: string
+      x-okta-tags:
+      - Policy
+    PolicyUserNameTemplate:
+      properties:
+        template:
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    Protocol:
+      properties:
+        algorithms:
+          $ref: '#/components/schemas/ProtocolAlgorithms'
+        credentials:
+          $ref: '#/components/schemas/IdentityProviderCredentials'
+        endpoints:
+          $ref: '#/components/schemas/ProtocolEndpoints'
+        issuer:
+          $ref: '#/components/schemas/ProtocolEndpoint'
+        relayState:
+          $ref: '#/components/schemas/ProtocolRelayState'
+        scopes:
+          items:
+            type: string
+          type: array
+        settings:
+          $ref: '#/components/schemas/ProtocolSettings'
+        type:
+          enum:
+          - SAML2
+          - OIDC
+          - OAUTH2
+          - MTLS
+          type: string
+      type: object
+      x-okta-tags:
+      - IdentityProvider
+    ProtocolAlgorithmType:
+      properties:
+        signature:
+          $ref: '#/components/schemas/ProtocolAlgorithmTypeSignature'
+      type: object
+      x-okta-tags:
+      - IdentityProvider
+    ProtocolAlgorithmTypeSignature:
+      properties:
+        algorithm:
+          type: string
+        scope:
+          enum:
+          - RESPONSE
+          - TOKEN
+          - ANY
+          - REQUEST
+          - NONE
+          type: string
+      type: object
+      x-okta-tags:
+      - IdentityProvider
+    ProtocolAlgorithms:
+      properties:
+        request:
+          $ref: '#/components/schemas/ProtocolAlgorithmType'
+        response:
+          $ref: '#/components/schemas/ProtocolAlgorithmType'
+      type: object
+      x-okta-tags:
+      - IdentityProvider
+    ProtocolEndpoint:
+      properties:
+        binding:
+          enum:
+          - HTTP-POST
+          - HTTP-REDIRECT
+          type: string
+        destination:
+          type: string
+        type:
+          enum:
+          - INSTANCE
+          - ORG
+          type: string
+        url:
+          type: string
+      type: object
+      x-okta-tags:
+      - IdentityProvider
+    ProtocolEndpoints:
+      properties:
+        acs:
+          $ref: '#/components/schemas/ProtocolEndpoint'
+        authorization:
+          $ref: '#/components/schemas/ProtocolEndpoint'
+        jwks:
+          $ref: '#/components/schemas/ProtocolEndpoint'
+        metadata:
+          $ref: '#/components/schemas/ProtocolEndpoint'
+        slo:
+          $ref: '#/components/schemas/ProtocolEndpoint'
+        sso:
+          $ref: '#/components/schemas/ProtocolEndpoint'
+        token:
+          $ref: '#/components/schemas/ProtocolEndpoint'
+        userInfo:
+          $ref: '#/components/schemas/ProtocolEndpoint'
+      type: object
+      x-okta-tags:
+      - IdentityProvider
+    ProtocolRelayState:
+      properties:
+        format:
+          $ref: '#/components/schemas/ProtocolRelayStateFormat'
+      type: object
+      x-okta-tags:
+      - IdentityProvider
+    ProtocolRelayStateFormat:
+      enum:
+      - OPAQUE
+      - FROM_URL
+      type: string
+      x-okta-tags:
+      - IdentityProvider
+    ProtocolSettings:
+      properties:
+        nameFormat:
+          type: string
+      type: object
+      x-okta-tags:
+      - IdentityProvider
+    Provisioning:
+      properties:
+        action:
+          enum:
+          - AUTO
+          - CALLOUT
+          - DISABLED
+          type: string
+        conditions:
+          $ref: '#/components/schemas/ProvisioningConditions'
+        groups:
+          $ref: '#/components/schemas/ProvisioningGroups'
+        profileMaster:
+          type: boolean
+      type: object
+      x-okta-tags:
+      - IdentityProvider
+    ProvisioningConditions:
+      properties:
+        deprovisioned:
+          $ref: '#/components/schemas/ProvisioningDeprovisionedCondition'
+        suspended:
+          $ref: '#/components/schemas/ProvisioningSuspendedCondition'
+      type: object
+      x-okta-tags:
+      - IdentityProvider
+    ProvisioningDeprovisionedCondition:
+      properties:
+        action:
+          enum:
+          - NONE
+          - REACTIVATE
+          type: string
+      type: object
+      x-okta-tags:
+      - IdentityProvider
+    ProvisioningGroups:
+      properties:
+        action:
+          enum:
+          - NONE
+          - APPEND
+          - SYNC
+          - ASSIGN
+          type: string
+        assignments:
+          items:
+            type: string
+          type: array
+        filter:
+          items:
+            type: string
+          type: array
+        sourceAttributeName:
+          type: string
+      type: object
+      x-okta-tags:
+      - IdentityProvider
+    ProvisioningSuspendedCondition:
+      properties:
+        action:
+          enum:
+          - NONE
+          - UNSUSPEND
+          type: string
+      type: object
+      x-okta-tags:
+      - IdentityProvider
+    RecoveryQuestionCredential:
+      properties:
+        answer:
+          type: string
+        question:
+          type: string
+      type: object
+      x-okta-tags:
+      - User
+    ResetPasswordToken:
+      properties:
+        resetPasswordUrl:
+          readOnly: true
+          type: string
+      type: object
+      x-okta-tags:
+      - User
+    ResponseLinks:
+      type: object
+      x-okta-tags:
+      - User
+    RiskPolicyRuleCondition:
+      properties:
+        behaviors:
+          items:
+            type: string
+          type: array
+          uniqueItems: true
+      type: object
+      x-okta-tags:
+      - Policy
+    RiskScorePolicyRuleCondition:
+      properties:
+        level:
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    Role:
+      properties:
+        _embedded:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        _links:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        assignmentType:
+          $ref: '#/components/schemas/RoleAssignmentType'
+        created:
+          format: date-time
+          readOnly: true
+          type: string
+        description:
+          type: string
+        id:
+          readOnly: true
+          type: string
+        label:
+          readOnly: true
+          type: string
+        lastUpdated:
+          format: date-time
+          readOnly: true
+          type: string
+        status:
+          $ref: '#/components/schemas/RoleStatus'
+        type:
+          $ref: '#/components/schemas/RoleType'
+      type: object
+      x-okta-operations:
+      - alias: addAdminGroupTarget
+        arguments:
+        - dest: roleId
+          src: id
+        - dest: groupId
+          parentSrc: id
+        operationId: addGroupTargetToGroupAdministratorRoleForGroup
+      - alias: addAppInstanceTargetToAdminRole
+        arguments:
+        - dest: roleId
+          src: id
+        - dest: groupId
+          parentSrc: id
+        operationId: addApplicationInstanceTargetToAppAdminRoleGivenToGroup
+      - alias: addAppTargetToAdminRole
+        arguments:
+        - dest: roleId
+          src: id
+        - dest: groupId
+          parentSrc: id
+        operationId: addApplicationTargetToAdminRoleGivenToGroup
+      - alias: addAllAppsAsTargetToRole
+        arguments:
+        - dest: roleId
+          src: id
+        - dest: userId
+          parentSrc: id
+        operationId: addAllAppsAsTargetToRole
+      - alias: addAppTargetToAppAdminRoleForUser
+        arguments:
+        - dest: roleId
+          src: id
+        - dest: userId
+          parentSrc: id
+        operationId: addApplicationTargetToAppAdminRoleForUser
+      - alias: addAppTargetToAdminRoleForUser
+        arguments:
+        - dest: roleId
+          src: id
+        - dest: userId
+          parentSrc: id
+        operationId: addApplicationTargetToAdminRoleForUser
+      x-okta-tags:
+      - User
+    RoleAssignmentType:
+      enum:
+      - GROUP
+      - USER
+      type: string
+      x-okta-tags:
+      - Role
+    RoleStatus:
+      enum:
+      - ACTIVE
+      - INACTIVE
+      type: string
+      x-okta-tags:
+      - User
+    RoleType:
+      enum:
+      - SUPER_ADMIN
+      - ORG_ADMIN
+      - APP_ADMIN
+      - USER_ADMIN
+      - HELP_DESK_ADMIN
+      - READ_ONLY_ADMIN
+      - MOBILE_ADMIN
+      - API_ACCESS_MANAGEMENT_ADMIN
+      - REPORT_ADMIN
+      - GROUP_MEMBERSHIP_ADMIN
+      type: string
+      x-okta-tags:
+      - Role
+    ScheduledUserLifecycleAction:
+      properties:
+        status:
+          enum:
+          - ACTIVE
+          - INACTIVE
+          - PENDING
+          - DELETED
+          - EXPIRED_PASSWORD
+          - ACTIVATING
+          - SUSPENDED
+          - DELETING
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    TempPassword:
+      properties:
+        tempPassword:
+          readOnly: true
+          type: string
+      type: object
+      x-okta-tags:
+      - User
+    User:
+      properties:
+        _embedded:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        _links:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        activated:
+          format: date-time
+          readOnly: true
+          type: string
+        created:
+          format: date-time
+          readOnly: true
+          type: string
+        credentials:
+          $ref: '#/components/schemas/UserCredentials'
+        id:
+          readOnly: true
+          type: string
+        lastLogin:
+          format: date-time
+          readOnly: true
+          type: string
+        lastUpdated:
+          format: date-time
+          readOnly: true
+          type: string
+        passwordChanged:
+          format: date-time
+          readOnly: true
+          type: string
+        profile:
+          $ref: '#/components/schemas/UserProfile'
+        status:
+          $ref: '#/components/schemas/UserStatus'
+        statusChanged:
+          format: date-time
+          readOnly: true
+          type: string
+        transitioningToStatus:
+          $ref: '#/components/schemas/UserStatus'
+        type:
+          $ref: '#/components/schemas/UserType'
+      type: object
+      x-okta-crud:
+      - alias: create
+        arguments:
+        - dest: user
+          self: true
+        operationId: createUser
+      - alias: read
+        arguments: []
+        operationId: getUser
+      - alias: update
+        arguments:
+        - dest: userId
+          src: id
+        - dest: user
+          self: true
+        operationId: updateUser
+      - alias: delete
+        arguments:
+        - dest: userId
+          src: id
+        - dest: user
+          self: true
+        operationId: deactivateOrDeleteUser
+      x-okta-operations:
+      - alias: listAppLinks
+        arguments:
+        - dest: userId
+          src: id
+        operationId: listAppLinks
+      - alias: changePassword
+        arguments:
+        - dest: userId
+          src: id
+        operationId: changePassword
+      - alias: changeRecoveryQuestion
+        arguments:
+        - dest: userId
+          src: id
+        operationId: changeRecoveryQuestion
+      - alias: forgotPasswordSetNewPassword
+        arguments:
+        - dest: userId
+          src: id
+        operationId: forgotPasswordSetNewPassword
+      - alias: forgotPasswordGenerateOneTimeToken
+        arguments:
+        - dest: userId
+          src: id
+        operationId: forgotPasswordGenerateOneTimeToken
+      - alias: assignRole
+        arguments:
+        - dest: userId
+          src: id
+        operationId: assignRoleToUser
+      - alias: getRole
+        arguments:
+        - dest: userId
+          src: id
+        operationId: getUserRole
+      - alias: removeRole
+        arguments:
+        - dest: userId
+          src: id
+        operationId: removeRoleFromUser
+      - alias: listGroupTargets
+        arguments:
+        - dest: userId
+          src: id
+        operationId: listGroupTargetsForRole
+      - alias: removeGroupTarget
+        arguments:
+        - dest: userId
+          src: id
+        operationId: removeGroupTargetFromRole
+      - alias: addGroupTarget
+        arguments:
+        - dest: userId
+          src: id
+        operationId: addGroupTargetToRole
+      - alias: listAssignedRoles
+        arguments:
+        - dest: userId
+          src: id
+        operationId: listAssignedRolesForUser
+      - alias: addAllAppsAsTarget
+        arguments:
+        - dest: userId
+          src: id
+        operationId: addAllAppsAsTargetToRole
+      - alias: listGroups
+        arguments:
+        - dest: userId
+          src: id
+        operationId: listUserGroups
+      - alias: listGrants
+        arguments:
+        - dest: userId
+          src: id
+        operationId: listUserGrants
+      - alias: revokeGrants
+        arguments:
+        - dest: userId
+          src: id
+        operationId: revokeUserGrants
+      - alias: revokeGrant
+        arguments:
+        - dest: userId
+          src: id
+        operationId: revokeUserGrant
+      - alias: revokeGrantsForUserAndClient
+        arguments:
+        - dest: userId
+          src: id
+        operationId: revokeGrantsForUserAndClient
+      - alias: listRefreshTokensForUserAndClient
+        arguments:
+        - dest: userId
+          src: id
+        operationId: listRefreshTokensForUserAndClient
+      - alias: revokeTokenForUserAndClient
+        arguments:
+        - dest: userId
+          src: id
+        operationId: revokeTokenForUserAndClient
+      - alias: getRefreshTokenForUserAndClient
+        arguments:
+        - dest: userId
+          src: id
+        operationId: getRefreshTokenForUserAndClient
+      - alias: revokeTokensForUserAndClient
+        arguments:
+        - dest: userId
+          src: id
+        operationId: revokeTokensForUserAndClient
+      - alias: listClients
+        arguments:
+        - dest: userId
+          src: id
+        operationId: listUserClients
+      - alias: activate
+        arguments:
+        - dest: userId
+          src: id
+        operationId: activateUser
+      - alias: reactivate
+        arguments:
+        - dest: userId
+          src: id
+        operationId: reactivateUser
+      - alias: deactivate
+        arguments:
+        - dest: userId
+          src: id
+        operationId: deactivateUser
+      - alias: suspend
+        arguments:
+        - dest: userId
+          src: id
+        operationId: suspendUser
+      - alias: unsuspend
+        arguments:
+        - dest: userId
+          src: id
+        operationId: unsuspendUser
+      - alias: resetPassword
+        arguments:
+        - dest: userId
+          src: id
+        operationId: resetPassword
+      - alias: expirePassword
+        arguments:
+        - dest: userId
+          src: id
+        operationId: expirePassword
+      - alias: expirePasswordAndGetTemporaryPassword
+        arguments:
+        - dest: userId
+          src: id
+        operationId: expirePasswordAndGetTemporaryPassword
+      - alias: unlock
+        arguments:
+        - dest: userId
+          src: id
+        operationId: unlockUser
+      - alias: resetFactors
+        arguments:
+        - dest: userId
+          src: id
+        operationId: resetFactors
+      - alias: deleteFactor
+        arguments:
+        - dest: userId
+          src: id
+        operationId: deleteFactor
+      - alias: addToGroup
+        arguments:
+        - dest: userId
+          src: id
+        description: Adds a user to a group with 'OKTA_GROUP' type
+        operationId: addUserToGroup
+      - alias: enrollFactor
+        arguments:
+        - dest: userId
+          src: id
+        operationId: enrollFactor
+      - alias: listSupportedFactors
+        arguments:
+        - dest: userId
+          src: id
+        operationId: listSupportedFactors
+      - alias: listFactors
+        arguments:
+        - dest: userId
+          src: id
+        operationId: listFactors
+      - alias: listSupportedSecurityQuestions
+        arguments:
+        - dest: userId
+          src: id
+        operationId: listSupportedSecurityQuestions
+      - alias: getFactor
+        arguments:
+        - dest: userId
+          src: id
+        operationId: getFactor
+      - alias: setLinkedObject
+        arguments:
+        - dest: associatedUserId
+          src: id
+        operationId: setLinkedObjectForUser
+      - alias: listIdentityProviders
+        arguments:
+        - dest: userId
+          src: id
+        operationId: listUserIdentityProviders
+      - alias: getLinkedObjects
+        arguments:
+        - dest: userId
+          src: id
+        operationId: getLinkedObjectsForUser
+      - alias: clearSessions
+        arguments:
+        - dest: userId
+          src: id
+        operationId: clearUserSessions
+      - alias: removeLinkedObject
+        arguments:
+        - dest: userId
+          src: id
+        operationId: removeLinkedObjectForUser
+      x-okta-tags:
+      - User
+    UserActivationToken:
+      properties:
+        activationToken:
+          readOnly: true
+          type: string
+        activationUrl:
+          readOnly: true
+          type: string
+      type: object
+      x-okta-tags:
+      - User
+    UserCondition:
+      properties:
+        exclude:
+          items:
+            type: string
+          type: array
+        include:
+          items:
+            type: string
+          type: array
+      type: object
+      x-okta-tags:
+      - Policy
+    UserCredentials:
+      properties:
+        password:
+          $ref: '#/components/schemas/PasswordCredential'
+        provider:
+          $ref: '#/components/schemas/AuthenticationProvider'
+        recovery_question:
+          $ref: '#/components/schemas/RecoveryQuestionCredential'
+      type: object
+      x-okta-tags:
+      - User
+    UserIdentifierConditionEvaluatorPattern:
+      properties:
+        matchType:
+          enum:
+          - SUFFIX
+          - EXPRESSION
+          - STARTS_WITH
+          - EQUALS
+          - CONTAINS
+          type: string
+        value:
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    UserIdentifierPolicyRuleCondition:
+      properties:
+        attribute:
+          type: string
+        patterns:
+          items:
+            $ref: '#/components/schemas/UserIdentifierConditionEvaluatorPattern'
+          type: array
+        type:
+          enum:
+          - IDENTIFIER
+          - ATTRIBUTE
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    UserLifecycleAttributePolicyRuleCondition:
+      properties:
+        attributeName:
+          type: string
+        matchingValue:
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    UserNextLogin:
+      enum:
+      - changePassword
+      type: string
+      x-okta-tags:
+      - User
+    UserPolicyRuleCondition:
+      properties:
+        exclude:
+          items:
+            type: string
+          type: array
+        inactivity:
+          $ref: '#/components/schemas/InactivityPolicyRuleCondition'
+        include:
+          items:
+            type: string
+          type: array
+        lifecycleExpiration:
+          $ref: '#/components/schemas/LifecycleExpirationPolicyRuleCondition'
+        passwordExpiration:
+          $ref: '#/components/schemas/PasswordExpirationPolicyRuleCondition'
+        userLifecycleAttribute:
+          $ref: '#/components/schemas/UserLifecycleAttributePolicyRuleCondition'
+      type: object
+      x-okta-tags:
+      - Policy
+    UserProfile:
+      properties:
+        city:
+          type: string
+        costCenter:
+          type: string
+        countryCode:
+          type: string
+        department:
+          type: string
+        displayName:
+          type: string
+        division:
+          type: string
+        email:
+          type: string
+        employeeNumber:
+          type: string
+        firstName:
+          type: string
+        honorificPrefix:
+          type: string
+        honorificSuffix:
+          type: string
+        lastName:
+          type: string
+        locale:
+          type: string
+        login:
+          type: string
+        manager:
+          type: string
+        managerId:
+          type: string
+        middleName:
+          type: string
+        mobilePhone:
+          type: string
+        nickName:
+          type: string
+        organization:
+          type: string
+        postalAddress:
+          type: string
+        preferredLanguage:
+          type: string
+        primaryPhone:
+          type: string
+        profileUrl:
+          type: string
+        secondEmail:
+          type: string
+        state:
+          type: string
+        streetAddress:
+          type: string
+        timezone:
+          type: string
+        title:
+          type: string
+        userType:
+          type: string
+        zipCode:
+          type: string
+      type: object
+      x-okta-extensible: true
+      x-okta-tags:
+      - User
+    UserStatus:
+      enum:
+      - ACTIVE
+      - DEPROVISIONED
+      - LOCKED_OUT
+      - PASSWORD_EXPIRED
+      - PROVISIONED
+      - RECOVERY
+      - STAGED
+      - SUSPENDED
+      type: string
+      x-okta-tags:
+      - User
+    UserStatusPolicyRuleCondition:
+      properties:
+        value:
+          enum:
+          - ACTIVE
+          - INACTIVE
+          - PENDING
+          - DELETED
+          - EXPIRED_PASSWORD
+          - ACTIVATING
+          - SUSPENDED
+          - DELETING
+          type: string
+      type: object
+      x-okta-tags:
+      - Policy
+    UserType:
+      properties:
+        _links:
+          additionalProperties:
+            properties: {}
+            type: object
+          readOnly: true
+          type: object
+        created:
+          format: date-time
+          readOnly: true
+          type: string
+        createdBy:
+          readOnly: true
+          type: string
+        default:
+          readOnly: true
+          type: boolean
+        description:
+          type: string
+        displayName:
+          type: string
+        id:
+          type: string
+        lastUpdated:
+          format: date-time
+          readOnly: true
+          type: string
+        lastUpdatedBy:
+          readOnly: true
+          type: string
+        name:
+          type: string
+      type: object
+      x-okta-crud:
+      - alias: create
+        arguments:
+        - dest: userType
+          self: true
+        operationId: createUserType
+      - alias: update
+        arguments:
+        - dest: typeId
+          src: id
+        - dest: userType
+          self: true
+        operationId: updateUserType
+      - alias: read
+        arguments:
+        - dest: typeId
+          src: id
+        operationId: getUserType
+      - alias: delete
+        arguments:
+        - dest: typeId
+          src: id
+        operationId: deleteUserType
+      x-okta-operations:
+      - alias: replaceUserType
+        arguments:
+        - dest: roleId
+          src: id
+        operationId: replaceUserType
+      x-okta-tags:
+      - UserType
+  securitySchemes:
+    api_token:
+      description: SSWS {API Token}
+      in: header
+      name: Authorization
+      type: apiKey
+  x-stackQL-resources:
+    appadmintargets:
+      id: okta.user.appadmintargets
+      methods:
+        delete:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1roles~1{roleId}~1targets~1catalog~1apps~1{appName}~1{applicationId}/DELETE'
+          response:
+            openAPIDocKey: '204'
+        insert:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1roles~1{roleId}~1targets~1catalog~1apps~1{appName}~1{applicationId}/PUT'
+          response:
+            openAPIDocKey: '204'
+        list:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1roles~1{roleId}~1targets~1catalog~1apps/GET'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: appadmintargets
+      title: appadmintargets
+    appadmintargetsall:
+      id: okta.user.appadmintargetsall
+      methods:
+        insert:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1roles~1{roleId}~1targets~1catalog~1apps/PUT'
+          response:
+            openAPIDocKey: '200'
+      name: appadmintargetsall
+      title: appadmintargetsall
+    appinstanceadmintargets:
+      id: okta.user.appinstanceadmintargets
+      methods:
+        delete:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1roles~1{roleId}~1targets~1catalog~1apps~1{appName}~1{applicationId}/DELETE'
+          response:
+            openAPIDocKey: '204'
+        insert:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1roles~1{roleId}~1targets~1catalog~1apps~1{appName}~1{applicationId}/PUT'
+          response:
+            openAPIDocKey: '204'
+      name: appinstanceadmintargets
+      title: appinstanceadmintargets
+    applinks:
+      id: okta.user.applinks
+      methods:
+        list:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1appLinks/GET'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: applinks
+      title: applinks
+    clientgrants:
+      id: okta.user.clientgrants
+      methods:
+        delete:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1clients~1{clientId}~1grants/DELETE'
+          response:
+            openAPIDocKey: '204'
+        list:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1clients~1{clientId}~1grants/GET'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: clientgrants
+      title: clientgrants
+    clients:
+      id: okta.user.clients
+      methods:
+        list:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1clients/GET'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: clients
+      title: clients
+    clienttokens:
+      id: okta.user.clienttokens
+      methods:
+        delete:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1clients~1{clientId}~1tokens~1{tokenId}/DELETE'
+          response:
+            openAPIDocKey: '204'
+        deleteAll:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1clients~1{clientId}~1tokens/DELETE'
+          response:
+            openAPIDocKey: '204'
+        get:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1clients~1{clientId}~1tokens~1{tokenId}/GET'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1clients~1{clientId}~1tokens/GET'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: clienttokens
+      title: clienttokens
+    grants:
+      id: okta.user.grants
+      methods:
+        delete:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1grants~1{grantId}/DELETE'
+          response:
+            openAPIDocKey: '204'
+        deleteAll:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1grants/DELETE'
+          response:
+            openAPIDocKey: '204'
+        get:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1grants~1{grantId}/GET'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1grants/GET'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: grants
+      title: grants
+    grouptargets:
+      id: okta.user.grouptargets
+      methods:
+        delete:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1roles~1{roleId}~1targets~1groups~1{groupId}/PUT'
+          response:
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1roles~1{roleId}~1targets~1groups~1{groupId}/PUT'
+          response:
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1roles~1{roleId}~1targets~1groups/GET'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: grouptargets
+      title: grouptargets
+    idps:
+      id: okta.user.idps
+      methods:
+        list:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1idps/GET'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: idps
+      title: idps
+    linkedobject:
+      id: okta.user.linkedobject
+      methods:
+        delete:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1linkedObjects~1{relationshipName}/DELETE'
+          response:
+            openAPIDocKey: '204'
+        list:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1linkedObjects~1{relationshipName}/GET'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        update:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{associatedUserId}~1linkedObjects~1{primaryRelationshipName}~1{primaryUserId}/PUT'
+          response:
+            openAPIDocKey: '204'
+      name: linkedobject
+      title: linkedobject
+    roles:
+      id: okta.user.roles
+      methods:
+        delete:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1roles~1{roleId}/DELETE'
+          response:
+            openAPIDocKey: '204'
+        get:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1roles~1{roleId}/GET'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1roles/POST'
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '201'
+        list:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1roles/GET'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: roles
+      title: roles
+    sessions:
+      id: okta.user.sessions
+      methods:
+        delete:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1sessions/DELETE'
+          response:
+            openAPIDocKey: '204'
+      name: sessions
+      title: sessions
+    users:
+      id: okta.user.users
+      methods:
+        activate:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1lifecycle~1activate/POST'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        changePassword:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1credentials~1change_password/POST'
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        changeRecoveryQuestion:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1credentials~1change_recovery_question/POST'
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        deactivate:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1lifecycle~1deactivate/POST'
+          response:
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}/DELETE'
+          response:
+            openAPIDocKey: '202'
+        expirePassword:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1lifecycle~1expire_password?tempPassword=false/POST'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        expirePasswordTemp:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1lifecycle~1expire_password?tempPassword=true/POST'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        forgotPassword:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1credentials~1forgot_password/POST'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}/GET'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        insert:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users/POST'
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users/GET'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        reactivate:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1lifecycle~1reactivate/POST'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        resetFactors:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1lifecycle~1reset_factors/POST'
+          response:
+            openAPIDocKey: '200'
+        resetPassword:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1lifecycle~1reset_password/POST'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        suspend:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1lifecycle~1suspend/POST'
+          response:
+            openAPIDocKey: '200'
+        unlock:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1lifecycle~1unlock/POST'
+          response:
+            openAPIDocKey: '200'
+        unsuspend:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}~1lifecycle~1unsuspend/POST'
+          response:
+            openAPIDocKey: '200'
+        update:
+          operation:
+            $ref: '#/paths/~1api~1v1~1users~1{userId}/PUT'
+          request:
+            mediaType: application/json
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      name: users
+      title: users
+externalDocs:
+  description: Find more info here
+  url: https://developer.okta.com/docs/api/getting_started/design_principles.html
+info:
+  contact:
+    email: devex-public@okta.com
+    name: Okta Developer Team
+    url: https://developer.okta.com/
+  description: Allows customers to easily access the Okta API
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: https://developer.okta.com/terms/
+  title: Okta API
+  version: 2.8.0
+openapi: 3.0.1
+paths:
+  /api/v1/users:
+    get:
+      description: Lists users in your organization with pagination in most cases.  A
+        subset of users can be returned that match a supported filter expression or
+        search criteria.
+      operationId: listUsers
+      parameters:
+      - description: Finds a user that matches firstName, lastName, and email properties
+        in: query
+        name: q
+        schema:
+          type: string
+      - description: Specifies the pagination cursor for the next page of users
+        in: query
+        name: after
+        schema:
+          type: string
+      - description: Specifies the number of results returned
+        in: query
+        name: limit
+        schema:
+          default: 10
+          format: int32
+          type: integer
+      - description: Filters users with a supported expression for a subset of properties
+        in: query
+        name: filter
+        schema:
+          type: string
+      - description: Searches for users with a supported filtering  expression for
+          most properties
+        in: query
+        name: search
+        schema:
+          type: string
+      - in: query
+        name: sortBy
+        schema:
+          type: string
+      - in: query
+        name: sortOrder
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/User'
+                type: array
+          description: Success
+      security:
+      - api_token: []
+      summary: List Users
+      tags:
+      - User
+    post:
+      description: Creates a new user in your Okta organization with or without credentials.
+      operationId: createUser
+      parameters:
+      - description: Executes activation lifecycle operation when creating the user
+        in: query
+        name: activate
+        schema:
+          default: true
+          type: boolean
+      - description: Indicates whether to create a user with a specified authentication
+          provider
+        in: query
+        name: provider
+        schema:
+          default: false
+          type: boolean
+      - description: With activate=true, set nextLogin to "changePassword" to have
+          the password be EXPIRED, so user must change it the next time they log in.
+        in: query
+        name: nextLogin
+        schema:
+          type: string
+          x-okta-added-version: 0.14.0
+          x-openapi-v3-schema-ref: '#/components/schemas/UserNextLogin'
+        x-okta-added-version: 0.14.0
+        x-openapi-v3-schema-ref: '#/components/schemas/UserNextLogin'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: Success
+      security:
+      - api_token: []
+      summary: Create User
+      tags:
+      - User
+      x-codegen-request-body-name: body
+  /api/v1/users/{associatedUserId}/linkedObjects/{primaryRelationshipName}/{primaryUserId}:
+    put:
+      operationId: setLinkedObjectForUser
+      parameters:
+      - in: path
+        name: associatedUserId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: primaryRelationshipName
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: primaryUserId
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          content: {}
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - User
+  /api/v1/users/{userId}:
+    delete:
+      description: Deletes a user permanently.  This operation can only be performed
+        on users that have a `DEPROVISIONED` status.  **This action cannot be recovered!**
+      operationId: deactivateOrDeleteUser
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: sendEmail
+        schema:
+          default: false
+          type: boolean
+          x-okta-added-version: 1.5.0
+        x-okta-added-version: 1.5.0
+      responses:
+        '202':
+          content: {}
+          description: ACCEPTED
+      security:
+      - api_token: []
+      summary: Delete User
+      tags:
+      - User
+    get:
+      description: Fetches a user from your Okta organization.
+      operationId: getUser
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: Success
+      security:
+      - api_token: []
+      summary: Get User
+      tags:
+      - User
+    post:
+      description: Fetch a user by `id`, `login`, or `login shortname` if the short
+        name is unambiguous.
+      operationId: partialUpdateUser
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: strict
+        schema:
+          type: boolean
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - User
+      x-codegen-request-body-name: user
+    put:
+      description: Update a user's profile and/or credentials using strict-update
+        semantics.
+      operationId: updateUser
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: strict
+        schema:
+          type: boolean
+          x-okta-added-version: 1.10.0
+        x-okta-added-version: 1.10.0
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: Success
+      security:
+      - api_token: []
+      summary: Update User
+      tags:
+      - User
+      x-codegen-request-body-name: user
+  /api/v1/users/{userId}/appLinks:
+    get:
+      description: Fetches appLinks for all direct or indirect (via group membership)
+        assigned applications.
+      operationId: listAppLinks
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/AppLink'
+                type: array
+          description: Success
+      security:
+      - api_token: []
+      summary: Get Assigned App Links
+      tags:
+      - User
+  /api/v1/users/{userId}/clients:
+    get:
+      description: Lists all client resources for which the specified user has grants
+        or tokens.
+      operationId: listUserClients
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/OAuth2Client'
+                type: array
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - User
+  /api/v1/users/{userId}/clients/{clientId}/grants:
+    delete:
+      description: Revokes all grants for the specified user and client
+      operationId: revokeGrantsForUserAndClient
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: clientId
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          content: {}
+          description: No Content
+      security:
+      - api_token: []
+      tags:
+      - User
+    get:
+      description: Lists all grants for a specified user and client
+      operationId: listGrantsForUserAndClient
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: clientId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: expand
+        schema:
+          type: string
+      - in: query
+        name: after
+        schema:
+          type: string
+      - in: query
+        name: limit
+        schema:
+          default: 20
+          format: int32
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/OAuth2ScopeConsentGrant'
+                type: array
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - User
+  /api/v1/users/{userId}/clients/{clientId}/tokens:
+    delete:
+      description: Revokes all refresh tokens issued for the specified User and Client.
+      operationId: revokeTokensForUserAndClient
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: clientId
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          content: {}
+          description: No Content
+      security:
+      - api_token: []
+      tags:
+      - User
+    get:
+      description: Lists all refresh tokens issued for the specified User and Client.
+      operationId: listRefreshTokensForUserAndClient
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: clientId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: expand
+        schema:
+          type: string
+      - in: query
+        name: after
+        schema:
+          type: string
+      - in: query
+        name: limit
+        schema:
+          default: 20
+          format: int32
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/OAuth2RefreshToken'
+                type: array
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - User
+  /api/v1/users/{userId}/clients/{clientId}/tokens/{tokenId}:
+    delete:
+      description: Revokes the specified refresh token.
+      operationId: revokeTokenForUserAndClient
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: clientId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: tokenId
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          content: {}
+          description: No Content
+      security:
+      - api_token: []
+      tags:
+      - User
+    get:
+      description: Gets a refresh token issued for the specified User and Client.
+      operationId: getRefreshTokenForUserAndClient
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: clientId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: tokenId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: expand
+        schema:
+          type: string
+      - in: query
+        name: limit
+        schema:
+          default: 20
+          type: integer
+      - in: query
+        name: after
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuth2RefreshToken'
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - User
+  /api/v1/users/{userId}/credentials/change_password:
+    post:
+      description: Changes a user's password by validating the user's current password.
+        This operation can only be performed on users in `STAGED`, `ACTIVE`, `PASSWORD_EXPIRED`,
+        or `RECOVERY` status that have a valid password credential
+      operationId: changePassword
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: strict
+        schema:
+          type: boolean
+          x-okta-added-version: 1.10.0
+        x-okta-added-version: 1.10.0
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserCredentials'
+          description: Success
+      security:
+      - api_token: []
+      summary: Change Password
+      tags:
+      - User
+      x-codegen-request-body-name: changePasswordRequest
+  /api/v1/users/{userId}/credentials/change_recovery_question:
+    post:
+      description: Changes a user's recovery question & answer credential by validating
+        the user's current password.  This operation can only be performed on users
+        in **STAGED**, **ACTIVE** or **RECOVERY** `status` that have a valid password
+        credential
+      operationId: changeRecoveryQuestion
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCredentials'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserCredentials'
+          description: Success
+      security:
+      - api_token: []
+      summary: Change Recovery Question
+      tags:
+      - User
+      x-codegen-request-body-name: userCredentials
+  /api/v1/users/{userId}/credentials/forgot_password:
+    post:
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForgotPasswordResponse'
+          description: Success
+      security:
+      - api_token: []
+      summary: Forgot Password
+      tags:
+      - User
+      x-okta-multi-operation:
+      - description: Generates a one-time token (OTT) that can be used to reset a
+          user's password
+        operationId: forgotPasswordGenerateOneTimeToken
+        parameters:
+        - default: true
+          in: query
+          name: sendEmail
+          type: boolean
+      - description: Sets a new password for a user by validating the user's answer
+          to their current recovery question
+        operationId: forgotPasswordSetNewPassword
+        parameters:
+        - in: body
+          name: user
+          required: true
+          schema:
+            $ref: '#/components/schemas/UserCredentials'
+        - default: true
+          in: query
+          name: sendEmail
+          type: boolean
+  /api/v1/users/{userId}/grants:
+    delete:
+      description: Revokes all grants for a specified user
+      operationId: revokeUserGrants
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          content: {}
+          description: No Content
+      security:
+      - api_token: []
+      tags:
+      - User
+    get:
+      description: Lists all grants for the specified user
+      operationId: listUserGrants
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: scopeId
+        schema:
+          type: string
+      - in: query
+        name: expand
+        schema:
+          type: string
+      - in: query
+        name: after
+        schema:
+          type: string
+      - in: query
+        name: limit
+        schema:
+          default: 20
+          format: int32
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/OAuth2ScopeConsentGrant'
+                type: array
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - User
+  /api/v1/users/{userId}/grants/{grantId}:
+    delete:
+      description: Revokes one grant for a specified user
+      operationId: revokeUserGrant
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: grantId
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          content: {}
+          description: No Content
+      security:
+      - api_token: []
+      tags:
+      - User
+    get:
+      description: Gets a grant for the specified user
+      operationId: getUserGrant
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: grantId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: expand
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuth2ScopeConsentGrant'
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - User
+  /api/v1/users/{userId}/groups:
+    get:
+      description: Fetches the groups of which the user is a member.
+      operationId: listUserGroups
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Group'
+                type: array
+          description: Success
+      security:
+      - api_token: []
+      summary: Get Member Groups
+      tags:
+      - User
+  /api/v1/users/{userId}/idps:
+    get:
+      description: Lists the IdPs associated with the user.
+      operationId: listUserIdentityProviders
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/IdentityProvider'
+                type: array
+          description: Success
+      security:
+      - api_token: []
+      summary: Listing IdPs associated with a user
+      tags:
+      - User
+  /api/v1/users/{userId}/lifecycle/activate:
+    post:
+      description: Activates a user.  This operation can only be performed on users
+        with a `STAGED` status.  Activation of a user is an asynchronous operation.
+        The user will have the `transitioningToStatus` property with a value of `ACTIVE`
+        during activation to indicate that the user hasn't completed the asynchronous
+        operation.  The user will have a status of `ACTIVE` when the activation process
+        is complete.
+      operationId: activateUser
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - description: Sends an activation email to the user if true
+        in: query
+        name: sendEmail
+        required: true
+        schema:
+          default: true
+          type: boolean
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserActivationToken'
+          description: Success
+      security:
+      - api_token: []
+      summary: Activate User
+      tags:
+      - User
+  /api/v1/users/{userId}/lifecycle/deactivate:
+    post:
+      description: Deactivates a user.  This operation can only be performed on users
+        that do not have a `DEPROVISIONED` status.  Deactivation of a user is an asynchronous
+        operation.  The user will have the `transitioningToStatus` property with a
+        value of `DEPROVISIONED` during deactivation to indicate that the user hasn't
+        completed the asynchronous operation.  The user will have a status of `DEPROVISIONED`
+        when the deactivation process is complete.
+      operationId: deactivateUser
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: sendEmail
+        schema:
+          default: false
+          type: boolean
+          x-okta-added-version: 1.5.0
+        x-okta-added-version: 1.5.0
+      responses:
+        '200':
+          content: {}
+          description: OK
+      security:
+      - api_token: []
+      summary: Deactivate User
+      tags:
+      - User
+  /api/v1/users/{userId}/lifecycle/expire_password?tempPassword=false:
+    post:
+      description: This operation transitions the user to the status of `PASSWORD_EXPIRED`
+        so that the user is required to change their password at their next login.
+      operationId: expirePassword
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: Success
+      security:
+      - api_token: []
+      summary: Expire Password
+      tags:
+      - User
+  /api/v1/users/{userId}/lifecycle/expire_password?tempPassword=true:
+    post:
+      description: This operation transitions the user to the status of `PASSWORD_EXPIRED`
+        and the user's password is reset to a temporary password that is returned.
+      operationId: expirePasswordAndGetTemporaryPassword
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TempPassword'
+          description: Success
+      security:
+      - api_token: []
+      summary: Expire Password
+      tags:
+      - User
+  /api/v1/users/{userId}/lifecycle/reactivate:
+    post:
+      description: Reactivates a user.  This operation can only be performed on users
+        with a `PROVISIONED` status.  This operation restarts the activation workflow
+        if for some reason the user activation was not completed when using the activationToken
+        from [Activate User](#activate-user).
+      operationId: reactivateUser
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - description: Sends an activation email to the user if true
+        in: query
+        name: sendEmail
+        schema:
+          default: false
+          type: boolean
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserActivationToken'
+          description: Success
+      security:
+      - api_token: []
+      summary: Reactivate User
+      tags:
+      - User
+  /api/v1/users/{userId}/lifecycle/reset_factors:
+    post:
+      description: This operation resets all factors for the specified user. All MFA
+        factor enrollments returned to the unenrolled state. The user's status remains
+        ACTIVE. This link is present only if the user is currently enrolled in one
+        or more MFA factors.
+      operationId: resetFactors
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content: {}
+          description: OK
+      security:
+      - api_token: []
+      summary: Reset Factors
+      tags:
+      - User
+  /api/v1/users/{userId}/lifecycle/reset_password:
+    post:
+      description: Generates a one-time token (OTT) that can be used to reset a user's
+        password.  The OTT link can be automatically emailed to the user or returned
+        to the API caller and distributed using a custom flow.
+      operationId: resetPassword
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: sendEmail
+        required: true
+        schema:
+          type: boolean
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetPasswordToken'
+          description: Success
+      security:
+      - api_token: []
+      summary: Reset Password
+      tags:
+      - User
+  /api/v1/users/{userId}/lifecycle/suspend:
+    post:
+      description: Suspends a user.  This operation can only be performed on users
+        with an `ACTIVE` status.  The user will have a status of `SUSPENDED` when
+        the process is complete.
+      operationId: suspendUser
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content: {}
+          description: OK
+      security:
+      - api_token: []
+      summary: Suspend User
+      tags:
+      - User
+  /api/v1/users/{userId}/lifecycle/unlock:
+    post:
+      description: Unlocks a user with a `LOCKED_OUT` status and returns them to `ACTIVE`
+        status.  Users will be able to login with their current password.
+      operationId: unlockUser
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content: {}
+          description: Success
+      security:
+      - api_token: []
+      summary: Unlock User
+      tags:
+      - User
+  /api/v1/users/{userId}/lifecycle/unsuspend:
+    post:
+      description: Unsuspends a user and returns them to the `ACTIVE` state.  This
+        operation can only be performed on users that have a `SUSPENDED` status.
+      operationId: unsuspendUser
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content: {}
+          description: Success
+      security:
+      - api_token: []
+      summary: Unsuspend User
+      tags:
+      - User
+  /api/v1/users/{userId}/linkedObjects/{relationshipName}:
+    delete:
+      description: Delete linked objects for a user, relationshipName can be ONLY
+        a primary relationship name
+      operationId: removeLinkedObjectForUser
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: relationshipName
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          content: {}
+          description: No Content
+      security:
+      - api_token: []
+      tags:
+      - User
+    get:
+      description: Get linked objects for a user, relationshipName can be a primary
+        or associated relationship name
+      operationId: getLinkedObjectsForUser
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: relationshipName
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: after
+        schema:
+          type: string
+      - in: query
+        name: limit
+        schema:
+          default: -1
+          format: int32
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ResponseLinks'
+                type: array
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - User
+  /api/v1/users/{userId}/roles:
+    get:
+      description: Lists all roles assigned to a user.
+      operationId: listAssignedRolesForUser
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: expand
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Role'
+                type: array
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - User
+    post:
+      description: Assigns a role to a user.
+      operationId: assignRoleToUser
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: disableNotifications
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignRoleRequest'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+          description: Created
+      security:
+      - api_token: []
+      tags:
+      - User
+      x-codegen-request-body-name: assignRoleRequest
+  /api/v1/users/{userId}/roles/{roleId}:
+    delete:
+      description: Unassigns a role from a user.
+      operationId: removeRoleFromUser
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: roleId
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          content: {}
+          description: No Content
+      security:
+      - api_token: []
+      tags:
+      - User
+    get:
+      description: Gets role that is assigne to user.
+      operationId: getUserRole
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: roleId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - User
+  /api/v1/users/{userId}/roles/{roleId}/targets/catalog/apps:
+    get:
+      description: Lists all App targets for an `APP_ADMIN` Role assigned to a User.
+        This methods return list may include full Applications or Instances. The response
+        for an instance will have an `ID` value, while Application will not have an
+        ID.
+      operationId: listApplicationTargetsForApplicationAdministratorRoleForUser
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: roleId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: after
+        schema:
+          type: string
+      - in: query
+        name: limit
+        schema:
+          default: 20
+          format: int32
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/CatalogApplication'
+                type: array
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - User
+    put:
+      description: Success
+      operationId: addAllAppsAsTargetToRole
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: roleId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content: {}
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - User
+  /api/v1/users/{userId}/roles/{roleId}/targets/catalog/apps/{appName}:
+    delete:
+      description: Success
+      operationId: removeApplicationTargetFromApplicationAdministratorRoleForUser
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: roleId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: appName
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          content: {}
+          description: No Content
+      security:
+      - api_token: []
+      tags:
+      - User
+    put:
+      description: Success
+      operationId: addApplicationTargetToAdminRoleForUser
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: roleId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: appName
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content: {}
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - User
+  /api/v1/users/{userId}/roles/{roleId}/targets/catalog/apps/{appName}/{applicationId}:
+    delete:
+      description: Remove App Instance Target to App Administrator Role given to a
+        User
+      operationId: removeApplicationTargetFromAdministratorRoleForUser
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: roleId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: appName
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: applicationId
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          content: {}
+          description: No Content
+      security:
+      - api_token: []
+      summary: Remove App Instance Target to App Administrator Role given to a User
+      tags:
+      - User
+    put:
+      description: Add App Instance Target to App Administrator Role given to a User
+      operationId: addApplicationTargetToAppAdminRoleForUser
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: roleId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: appName
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: applicationId
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          content: {}
+          description: No Content
+      security:
+      - api_token: []
+      summary: Add App Instance Target to App Administrator Role given to a User
+      tags:
+      - User
+  /api/v1/users/{userId}/roles/{roleId}/targets/groups:
+    get:
+      description: Success
+      operationId: listGroupTargetsForRole
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: roleId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: after
+        schema:
+          type: string
+      - in: query
+        name: limit
+        schema:
+          default: 20
+          format: int32
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Group'
+                type: array
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - User
+  /api/v1/users/{userId}/roles/{roleId}/targets/groups/{groupId}:
+    delete:
+      description: Success
+      operationId: removeGroupTargetFromRole
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: roleId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: groupId
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          content: {}
+          description: No Content
+      security:
+      - api_token: []
+      tags:
+      - User
+    put:
+      description: Success
+      operationId: addGroupTargetToRole
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: roleId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: groupId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content: {}
+          description: Success
+      security:
+      - api_token: []
+      tags:
+      - User
+  /api/v1/users/{userId}/sessions:
+    delete:
+      description: Removes all active identity provider sessions. This forces the
+        user to authenticate on the next operation. Optionally revokes OpenID Connect
+        and OAuth refresh and access tokens issued to the user.
+      operationId: clearUserSessions
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+      - description: Revoke issued OpenID Connect and OAuth refresh and access tokens
+        in: query
+        name: oauthTokens
+        schema:
+          default: false
+          type: boolean
+      responses:
+        '204':
+          content: {}
+          description: No Content
+      security:
+      - api_token: []
+      tags:
+      - User
+servers:
+- url: https://{subdomain}.okta.com/
+  variables:
+    subdomain:
+      default: my-domain

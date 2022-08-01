@@ -16,6 +16,7 @@ paths:
                           externalIdentities(first: 2{{ .cursor }}) {
                               edges {
                                   node {
+                                      id
                                       guid
                                       samlIdentity {
                                           nameId
@@ -74,6 +75,8 @@ paths:
                                               node:
                                                 type: object
                                                 properties:
+                                                  id:
+                                                    type: string
                                                   guid:
                                                     type: string
                                                   samlIdentity:
@@ -930,7 +933,7 @@ components:
   headers: {}
   links: {}
   x-stackQL-resources:
-    samlIDs:
+    saml_ids:
       id: github.scim.samlIDs
       name: samlIDs
       title: SAML IDs
@@ -944,7 +947,7 @@ components:
             objectKey: '$.data.viewer.organization.samlIdentityProvider.externalIdentities.edges[*].node'
       sqlVerbs:
         select:
-          - $ref: '#/components/x-stackQL-resources/samlIDs/methods/list_saml_identities'
+          - $ref: '#/components/x-stackQL-resources/saml_ids/methods/list_saml_identities'
     users:
       id: github.scim.users
       name: users
