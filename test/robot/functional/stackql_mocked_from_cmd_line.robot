@@ -353,7 +353,7 @@ Registry List Google Provider
 
 
 Data Flow Sequential Join Paginated Select Github 
-    Should StackQL Exec Inline Equal
+    Should Horrid Query StackQL Inline Equal
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
     ...    ${GITHUB_SECRET_STR}
@@ -362,6 +362,7 @@ Data Flow Sequential Join Paginated Select Github
     ...    ${AUTH_CFG_STR}
     ...    ${SELECT_GITHUB_JOIN_DATA_FLOW_SEQUENTIAL} 
     ...    ${SELECT_GITHUB_JOIN_DATA_FLOW_SEQUENTIAL_EXPECTED}
+    ...    ${CURDIR}/tmp/Data-Flow-Sequential-Join-Paginated-Select-Github.tmp
 
 Paginated and Data Flow Sequential Join Github Okta SAML 
     Should Horrid Query StackQL Inline Equal
@@ -376,7 +377,7 @@ Paginated and Data Flow Sequential Join Github Okta SAML
     ...    ${CURDIR}/tmp/Paginated-and-Data-Flow-Sequential-Join-Github-Okta-SAML.tmp
 
 Data Flow Sequential Join Select With Functions Github 
-    Should StackQL Exec Inline Equal
+    Should Horrid Query StackQL Inline Equal
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
     ...    ${GITHUB_SECRET_STR}
@@ -385,6 +386,7 @@ Data Flow Sequential Join Select With Functions Github
     ...    ${AUTH_CFG_STR}
     ...    ${SELECT_GITHUB_SCIM_JOIN_WITH_FUNCTIONS} 
     ...    ${SELECT_GITHUB_SCIM_JOIN_WITH_FUNCTIONS_EXPECTED}
+    ...    ${CURDIR}/tmp/Data-Flow-Sequential-Join-Select-With-Functions-Github.tmp
 
 Page Limited Select Github 
     Should Stackql Exec Inline Equal Page Limited
