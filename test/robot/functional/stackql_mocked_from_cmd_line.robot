@@ -128,7 +128,7 @@ Okta Apps Select Simple
     ...    ${SELECT_OKTA_APPS_ASC_EXPECTED}
 
 Okta Users Select Simple Paginated
-    Should StackQL Exec Inline Equal
+    Should Horrid Query StackQL Inline Equal
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
     ...    ${GITHUB_SECRET_STR}
@@ -137,6 +137,7 @@ Okta Users Select Simple Paginated
     ...    ${AUTH_CFG_STR}
     ...    ${SELECT_OKTA_USERS_ASC}
     ...    ${SELECT_OKTA_USERS_ASC_EXPECTED}
+    ...    ${CURDIR}/tmp/Okta-Users-Select-Simple-Paginated.tmp
 
 AWS Volumes Select Simple
     Should StackQL Exec Inline Equal
@@ -183,7 +184,7 @@ GitHub Scim Users Select
     ...    ${SELECT_GITHUB_SCIM_USERS_EXPECTED}
 
 GitHub SAML Identities Select GraphQL
-    Should StackQL Exec Inline Equal
+    Should Horrid Query StackQL Inline Equal
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
     ...    ${GITHUB_SECRET_STR}
@@ -192,6 +193,7 @@ GitHub SAML Identities Select GraphQL
     ...    ${AUTH_CFG_STR}
     ...    ${SELECT_GITHUB_SAML_IDENTITIES}
     ...    ${SELECT_GITHUB_SAML_IDENTITIES_EXPECTED}
+    ...    ${CURDIR}/tmp/GitHub-SAML-Identities-Select-GraphQL.tmp
 
 GitHub Branch Names Paginated Select
     Should Horrid Query StackQL Inline Equal
@@ -362,7 +364,7 @@ Data Flow Sequential Join Paginated Select Github
     ...    ${SELECT_GITHUB_JOIN_DATA_FLOW_SEQUENTIAL_EXPECTED}
 
 Paginated and Data Flow Sequential Join Github Okta SAML 
-    Should StackQL Exec Inline Equal
+    Should Horrid Query StackQL Inline Equal
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
     ...    ${GITHUB_SECRET_STR}
@@ -371,6 +373,7 @@ Paginated and Data Flow Sequential Join Github Okta SAML
     ...    ${AUTH_CFG_STR}
     ...    ${SELECT_GITHUB_OKTA_SAML_JOIN} 
     ...    ${SELECT_GITHUB_OKTA_SAML_JOIN_EXPECTED}
+    ...    ${CURDIR}/tmp/Paginated-and-Data-Flow-Sequential-Join-Github-Okta-SAML.tmp
 
 Data Flow Sequential Join Select With Functions Github 
     Should StackQL Exec Inline Equal
@@ -394,6 +397,7 @@ Page Limited Select Github
     ...    ${AUTH_CFG_STR}
     ...    ${SELECT_GITHUB_ORGS_MEMBERS} 
     ...    ${SELECT_GITHUB_ORGS_MEMBERS_PAGE_LIMITED_EXPECTED}
+    ...    stdout=${CURDIR}/tmp/Page-Limited-Select-Github.tmp
 
 Basic Query mTLS Returns OK
     Should PG Client Inline Contain
