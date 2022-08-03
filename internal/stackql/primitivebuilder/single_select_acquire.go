@@ -193,7 +193,7 @@ func (ss *SingleSelectAcquire) Build() error {
 								r, err := ss.drmCfg.ExecuteInsertDML(ss.handlerCtx.SQLEngine, ss.insertPreparedStatementCtx, item)
 								log.Infoln(fmt.Sprintf("insert result = %v, error = %v", r, err))
 								if err != nil {
-									return dto.NewErroneousExecutorOutput(err)
+									return dto.NewErroneousExecutorOutput(fmt.Errorf("sql insert error: '%s' from query: %s", err.Error(), ss.insertPreparedStatementCtx.GetQuery()))
 								}
 								keys[strconv.Itoa(i)] = item
 							}
