@@ -48,7 +48,7 @@
         "--registry=${input:registryString}",
         "--auth=${input:authString}",
         "--tls.allowInsecure",
-        "select VolumeId from aws.ec2.volumes where region = 'ap-southeast-1' order by VolumeId asc;"
+        "insert into aws.ec2.vpcs(CidrBlock, region) select '10.0.0.0/16', 'ap-southeast-1';"
       ],
     },
     {

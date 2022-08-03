@@ -34,36 +34,6 @@ externalDocs:
   description: Amazon Web Services documentation
   url: 'https://docs.aws.amazon.com/ec2/'
 servers:
-  - url: 'http://ec2.{region}.amazonaws.com'
-    variables:
-      region:
-        description: The AWS region
-        enum:
-          - us-east-1
-          - us-east-2
-          - us-west-1
-          - us-west-2
-          - us-gov-west-1
-          - us-gov-east-1
-          - ca-central-1
-          - eu-north-1
-          - eu-west-1
-          - eu-west-2
-          - eu-west-3
-          - eu-central-1
-          - eu-south-1
-          - af-south-1
-          - ap-northeast-1
-          - ap-northeast-2
-          - ap-northeast-3
-          - ap-southeast-1
-          - ap-southeast-2
-          - ap-east-1
-          - ap-south-1
-          - sa-east-1
-          - me-south-1
-        default: us-east-1
-    description: The Amazon EC2 multi-region endpoint
   - url: 'https://ec2.{region}.amazonaws.com'
     variables:
       region:
@@ -94,21 +64,9 @@ servers:
           - me-south-1
         default: us-east-1
     description: The Amazon EC2 multi-region endpoint
-  - url: 'http://ec2.amazonaws.com'
-    variables: {}
-    description: The general Amazon EC2 endpoint for US East (N. Virginia)
   - url: 'https://ec2.amazonaws.com'
     variables: {}
     description: The general Amazon EC2 endpoint for US East (N. Virginia)
-  - url: 'http://ec2.{region}.amazonaws.com.cn'
-    variables:
-      region:
-        description: The AWS region
-        enum:
-          - cn-north-1
-          - cn-northwest-1
-        default: cn-north-1
-    description: The Amazon EC2 endpoint for China (Beijing) and China (Ningxia)
   - url: 'https://ec2.{region}.amazonaws.com.cn'
     variables:
       region:
@@ -45710,7 +45668,6 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-            objectKey: '/CreateVolumeResponse'
         volume_Delete:
           operation:
             $ref: '#/paths/~1?Action=DeleteVolume&Version=2016-11-15/get'
