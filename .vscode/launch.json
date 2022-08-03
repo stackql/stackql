@@ -36,7 +36,21 @@
   ],
   "configurations": [
 
-    // select ou.status, JSON_EXTRACT(ou.profile, '$.login') as login from okta.user.users ou where ou.subdomain = 'dummyorg';
+    // select VolumeId from aws.ec2.volumes where region = 'ap-southeast-1' order by VolumeId asc;
+    {
+      "name": "DEBUG aws guff",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "--tls.allowInsecure",
+        "select VolumeId from aws.ec2.volumes where region = 'ap-southeast-1' order by VolumeId asc;"
+      ],
+    },
     {
       "name": "DEBUG okta pagination",
       "type": "go",
