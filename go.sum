@@ -787,6 +787,8 @@ github.com/stackql/go-openapistackql v0.0.9-alpha14 h1:IPAsERo+TY6opPh23/8h7kLFK
 github.com/stackql/go-openapistackql v0.0.9-alpha14/go.mod h1:EmwsXQRcFKKJ+9rHpyLq73k62U5LC+9PCdPTZg3cEBg=
 github.com/stackql/go-openapistackql v0.0.9-alpha15 h1:pQqViClbBXpWlqcAQFIhcH1zZXcAJCHQZd7B1ct2GYY=
 github.com/stackql/go-openapistackql v0.0.9-alpha15/go.mod h1:EmwsXQRcFKKJ+9rHpyLq73k62U5LC+9PCdPTZg3cEBg=
+github.com/stackql/go-openapistackql v0.0.9-alpha16 h1:oqjFn8YP6TsvixKbzi4GNEBMYVNCBzapXAT5P1b9kz0=
+github.com/stackql/go-openapistackql v0.0.9-alpha16/go.mod h1:EmwsXQRcFKKJ+9rHpyLq73k62U5LC+9PCdPTZg3cEBg=
 github.com/stackql/go-spew v1.1.3-alpha24 h1:yNmgWU+OKU8SvlQ0umiQWWgWS6C5U1GuRMlYfQgbmJA=
 github.com/stackql/go-spew v1.1.3-alpha24/go.mod h1:o2MPqg2ee1PN4SxAh9zQSJJmKKFJjpro9pejdK7dXWk=
 github.com/stackql/go-sqlite3 v0.0.1-stackqlrc01 h1:q+LfCfPrIqqG5+v9T5xjyYzOEBB4i77Ek10Lzwyd0D4=
