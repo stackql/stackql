@@ -42453,7 +42453,7 @@ components:
             $ref: '#/paths/~1?Action=DescribeInstances&Version=2016-11-15/get'
           response:
             mediaType: text/xml
-            objectKey: /*/instanceSet/item
+            objectKey: /*/reservationSet/item/instancesSet/item
             openAPIDocKey: '200'
         instances_Monitor:
           operation:
