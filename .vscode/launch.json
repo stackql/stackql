@@ -48,7 +48,7 @@
         "--registry=${input:registryString}",
         "--auth=${input:authString}",
         "--tls.allowInsecure",
-        "insert into aws.ec2.vpcs(CidrBlock, region) select '10.0.0.0/16', 'ap-southeast-1';"
+        "describe aws.ec2.instances;"
       ],
     },
     {
