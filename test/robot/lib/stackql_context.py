@@ -248,6 +248,7 @@ SHOW_OKTA_APPLICATION_RESOURCES_FILTERED_STR  = "show resources from okta.applic
 SHOW_METHODS_GITHUB_REPOS_REPOS = "show methods in github.repos.repos;"
 DESCRIBE_GITHUB_REPOS_PAGES = "describe github.repos.pages;"
 DESCRIBE_AWS_EC2_INSTANCES = "describe aws.ec2.instances;"
+DESCRIBE_AWS_EC2_DEFAULT_KMS_KEY_ID = "describe aws.ec2.ebs_default_kms_key_id;"
 MOCKSERVER_JAR = os.path.join(REPOSITORY_ROOT, 'test', 'downloads', 'mockserver-netty-5.12.0-shaded.jar')
 
 JSON_INIT_FILE_PATH_GOOGLE = os.path.join(REPOSITORY_ROOT, 'test', 'mockserver', 'expectations', 'static-gcp-expectations.json')
@@ -432,6 +433,7 @@ def get_variables(execution_env :str):
     ## queries and expectations
     'CREATE_AWS_VOLUME':                                                    CREATE_AWS_VOLUME,
     'DESCRIBE_AWS_EC2_INSTANCES':                                           DESCRIBE_AWS_EC2_INSTANCES,
+    'DESCRIBE_AWS_EC2_DEFAULT_KMS_KEY_ID':                                  DESCRIBE_AWS_EC2_DEFAULT_KMS_KEY_ID,
     'DESCRIBE_GITHUB_REPOS_PAGES':                                          DESCRIBE_GITHUB_REPOS_PAGES,
     'GET_IAM_POLICY_AGG_ASC_EXPECTED':                                      GET_IAM_POLICY_AGG_ASC_EXPECTED,
     'REGISTRY_GOOGLE_PROVIDER_LIST':                                        REGISTRY_GOOGLE_PROVIDER_LIST,

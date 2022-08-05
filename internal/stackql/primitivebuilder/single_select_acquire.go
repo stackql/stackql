@@ -149,7 +149,7 @@ func (ss *SingleSelectAcquire) Build() error {
 				switch pl := target.(type) {
 				// add case for xml object,
 				case map[string]interface{}:
-					if ss.tableMeta.SelectItemsKey != "" {
+					if ss.tableMeta.SelectItemsKey != "" && ss.tableMeta.SelectItemsKey != "/*" {
 						items, ok = pl[ss.tableMeta.SelectItemsKey]
 					} else {
 						items = []interface{}{
