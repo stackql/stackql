@@ -48,7 +48,7 @@
         "--registry=${input:registryString}",
         "--auth=${input:authString}",
         "--tls.allowInsecure",
-        "describe aws.ec2.instances;"
+        "describe aws.ec2.spot_datafeed_subscription;"
       ],
     },
     {

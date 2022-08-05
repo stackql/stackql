@@ -40479,7 +40479,7 @@ components:
             $ref: '#/paths/~1?Action=DescribeAddresses&Version=2016-11-15/get'
           response:
             mediaType: text/xml
-            objectKey: /*/addressSet/item
+            objectKey: /*/addressesSet/item
             openAPIDocKey: '200'
       name: aws.ec2.addresses
       sqlVerbs:
@@ -40809,7 +40809,7 @@ components:
             $ref: '#/paths/~1?Action=DescribeClassicLinkInstances&Version=2016-11-15/get'
           response:
             mediaType: text/xml
-            objectKey: /*/classicLinkInstanceSet/item
+            objectKey: /*/instancesSet/item
             openAPIDocKey: '200'
       name: aws.ec2.classic_link_instances
       sqlVerbs:
@@ -40905,7 +40905,7 @@ components:
             $ref: '#/paths/~1?Action=DescribeClientVpnConnections&Version=2016-11-15/get'
           response:
             mediaType: text/xml
-            objectKey: /*/clientVpnConnectionSet/item
+            objectKey: /*/connections/item
             openAPIDocKey: '200'
         client_vpn_connections_Terminate:
           operation:
@@ -41547,7 +41547,7 @@ components:
             $ref: '#/paths/~1?Action=DescribeFleetInstances&Version=2016-11-15/get'
           response:
             mediaType: text/xml
-            objectKey: /*/fleetInstanceSet/item
+            objectKey: /*/activeInstanceSet/item
             openAPIDocKey: '200'
       name: aws.ec2.fleet_instances
       sqlVerbs:
@@ -42346,7 +42346,7 @@ components:
             $ref: '#/paths/~1?Action=DescribeInstanceStatus&Version=2016-11-15/get'
           response:
             mediaType: text/xml
-            objectKey: /*/statusSet/item
+            objectKey: /*/instanceStatusSet/item
             openAPIDocKey: '200'
         instance_status_Report:
           operation:
@@ -44269,7 +44269,7 @@ components:
             $ref: '#/paths/~1?Action=DescribeSecurityGroups&Version=2016-11-15/get'
           response:
             mediaType: text/xml
-            objectKey: /*/securityGroupSet/item
+            objectKey: /*/securityGroupInfo/item
             openAPIDocKey: '200'
       name: aws.ec2.security_groups
       sqlVerbs:
@@ -46164,7 +46164,7 @@ components:
             $ref: '#/paths/~1?Action=GetVpnConnectionDeviceSampleConfiguration&Version=2016-11-15/get'
           response:
             mediaType: text/xml
-            objectKey: /*/vpnConnectionDeviceSampleConfiguration/item
+            objectKey: /*
             openAPIDocKey: '200'
       name: aws.ec2.vpn_connection_device_sample_configuration
       sqlVerbs:

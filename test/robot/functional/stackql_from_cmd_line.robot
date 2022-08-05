@@ -27,6 +27,11 @@ Describe AWS EC2 Instances Exemplifies Deep XPath for schema
                                                  ...  architecture    bootMode    subnetId
                                                  ...  stdout=${CURDIR}/tmp/describe-aws-ec2-instances.tmp
 
+Describe AWS EC2 Default KMS Key ID Exemplifies Top Level XPath for schema
+    Should StackQL NoVerify Only Exec Contain    ${DESCRIBE_AWS_EC2_DEFAULT_KMS_KEY_ID}
+                                                 ...  kmsKeyId
+                                                 ...  stdout=${CURDIR}/tmp/describe-aws-ec2-default-kms-key-id.tmp
+
 Show Methods GitHub
     Should StackQL Novel Exec Equal    ${SHOW_METHODS_GITHUB_REPOS_REPOS}   ${SHOW_METHODS_GITHUB_REPOS_REPOS_EXPECTED}
 
