@@ -15,6 +15,24 @@ const (
 	FloatBitSize int = 64
 )
 
+// These null "dual" tables are some vitess artifact
+func IsNullTable(node sqlparser.TableExpr) bool {
+	return isNullTable(node)
+}
+
+func isNullTable(node sqlparser.TableExpr) bool {
+	switch node := node.(type) {
+	case *sqlparser.AliasedTableExpr:
+		switch expr := node.Expr.(type) {
+		case sqlparser.TableName:
+			if expr.Name.GetRawVal() == "dual" {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func GetTableNameFromTableExpr(node sqlparser.TableExpr) (sqlparser.TableName, error) {
 	switch tt := node.(type) {
 	case *sqlparser.AliasedTableExpr:
@@ -119,9 +137,19 @@ func ExtractValuesColumnData(values sqlparser.Values) (map[int]map[int]interface
 	return retVal, 0, err
 }
 
+func isNullFromClause(from sqlparser.TableExprs) bool {
+	for _, tb := range from {
+		if !isNullTable(tb) {
+			return false
+		}
+	}
+	return true
+}
+
 func ExtractSelectValColumns(selStmt *sqlparser.Select) (map[int]map[string]interface{}, int) {
 	cols := make(map[int]map[string]interface{})
 	var nonValCount int
+	fromIsNull := isNullFromClause(selStmt.From)
 	for idx, node := range selStmt.SelectExprs {
 		switch node := node.(type) {
 		case *sqlparser.AliasedExpr:
@@ -137,7 +165,14 @@ func ExtractSelectValColumns(selStmt *sqlparser.Select) (map[int]map[string]inte
 			case *sqlparser.OrExpr:
 				nonValCount++
 			case *sqlparser.FuncExpr:
-				nonValCount++
+				if !fromIsNull {
+					nonValCount++
+				} else {
+					alias := node.As.GetRawVal()
+					cols[idx] = map[string]interface{}{
+						alias: expr,
+					}
+				}
 			case *sqlparser.ColName:
 				nonValCount++
 			case sqlparser.BoolVal:

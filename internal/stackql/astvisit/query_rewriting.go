@@ -585,7 +585,7 @@ func (v *QueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		}
 
 	case *sqlparser.AliasedTableExpr:
-		if node.Expr != nil {
+		if node.Expr != nil && !parserutil.IsNullTable(node) {
 			switch node.Expr.(type) {
 			case sqlparser.TableName:
 				t, ok := v.annotations[node]
@@ -598,7 +598,6 @@ func (v *QueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 				}
 				replacementExpr := v.dc.GetParserTableName(t.GetHIDs(), dID)
 				node.Expr = replacementExpr
-
 			}
 		}
 		if node.Partitions != nil {

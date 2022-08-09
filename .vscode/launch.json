@@ -48,7 +48,7 @@
         "--registry=${input:registryString}",
         "--auth=${input:authString}",
         "--tls.allowInsecure",
-        "describe aws.ec2.spot_datafeed_subscription;"
+        "insert into aws.ec2.volumes(AvailabilityZone, Size, region, TagSpecification) select 'ap-southeast-1a', JSON(10), 'ap-southeast-1', JSON('[ { \"ResourceType\": \"volume\", \"Tag\": [ { \"Key\": \"stack\", \"Value\": \"production\" } ] } ]');"
       ],
     },
     {

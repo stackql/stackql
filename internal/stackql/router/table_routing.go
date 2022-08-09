@@ -8,6 +8,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 )
 
@@ -401,6 +402,9 @@ func (v *TableRouteAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 	case sqlparser.TableExprs:
 		for _, n := range node {
+			if parserutil.IsNullTable(n) {
+				continue
+			}
 			err := n.Accept(v)
 			if err != nil {
 				return err

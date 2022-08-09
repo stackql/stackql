@@ -14,7 +14,7 @@ import (
 
 type IDiscoveryStore interface {
 	ProcessProviderDiscoveryDoc(string, string) (*openapistackql.Provider, error)
-	ProcessResourcesDiscoveryDoc(string, *openapistackql.ProviderService, string) (*openapistackql.ResourceRegister, error)
+	processResourcesDiscoveryDoc(*openapistackql.Provider, *openapistackql.ProviderService, string) (*openapistackql.ResourceRegister, error)
 	PersistServiceShard(*openapistackql.Provider, *openapistackql.ProviderService, string) (*openapistackql.Service, error)
 }
 
@@ -92,7 +92,7 @@ func (adp *BasicDiscoveryAdapter) GetResourcesMap(prov *openapistackql.Provider,
 		return nil, err
 	}
 	if component.ResourcesRef != nil && component.ResourcesRef.Ref != "" {
-		disDoc, err := adp.discoveryStore.ProcessResourcesDiscoveryDoc(prov.Name, component, fmt.Sprintf("%s.%s", adp.alias, serviceKey))
+		disDoc, err := adp.discoveryStore.processResourcesDiscoveryDoc(prov, component, fmt.Sprintf("%s.%s", adp.alias, serviceKey))
 		if err != nil {
 			return nil, err
 		}
@@ -151,7 +151,7 @@ func (store *TTLDiscoveryStore) PersistServiceShard(pr *openapistackql.Provider,
 	}
 	b, err := store.sqlengine.CacheStoreGet(k)
 	if b != nil && err == nil {
-		return openapistackql.LoadServiceDocFromBytes(b)
+		return openapistackql.LoadServiceDocFromBytes(serviceHandle, b)
 	}
 	shard, err := store.registry.GetServiceFragment(serviceHandle, resourceKey)
 	if err != nil {
@@ -164,13 +164,14 @@ func (store *TTLDiscoveryStore) PersistServiceShard(pr *openapistackql.Provider,
 	return shard, err
 }
 
-func (store *TTLDiscoveryStore) ProcessResourcesDiscoveryDoc(providerKey string, serviceHandle *openapistackql.ProviderService, alias string) (*openapistackql.ResourceRegister, error) {
+func (store *TTLDiscoveryStore) processResourcesDiscoveryDoc(prov *openapistackql.Provider, serviceHandle *openapistackql.ProviderService, alias string) (*openapistackql.ResourceRegister, error) {
+	providerKey := prov.Name
 	switch providerKey {
 	case "googleapis.com", "google":
 		k := fmt.Sprintf("resources.%s.%s", "google", serviceHandle.Name)
 		b, err := store.sqlengine.CacheStoreGet(k)
 		if b != nil && err == nil {
-			return openapistackql.LoadResourcesShallow(b)
+			return openapistackql.LoadResourcesShallow(serviceHandle, b)
 		}
 		rr, err := store.registry.GetResourcesShallowFromProviderService(serviceHandle)
 		if err != nil {
@@ -189,7 +190,7 @@ func (store *TTLDiscoveryStore) ProcessResourcesDiscoveryDoc(providerKey string,
 		k := fmt.Sprintf("%s.%s", providerKey, serviceHandle.Name)
 		b, err := store.sqlengine.CacheStoreGet(k)
 		if b != nil && err == nil {
-			return openapistackql.LoadResourcesShallow(b)
+			return openapistackql.LoadResourcesShallow(serviceHandle, b)
 		}
 		rr, err := store.registry.GetResourcesShallowFromProviderService(serviceHandle)
 		if err != nil {

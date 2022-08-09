@@ -786,7 +786,7 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 	// This is a chicken and egg scenario:
 	//   - we need hierarchies a priori for temporal
 	//     dependencies between tables.
-	//   - we need paramters to determine hierarchy (for now).
+	//   - we need parameters to determine hierarchy (for now).
 	//   - parameters may refer to tables and we want to reference
 	//     this for semantic analysis and later temporal sequencing,
 	//     data flow semantics.
