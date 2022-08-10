@@ -17,7 +17,7 @@ require (
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.1
-	github.com/stackql/go-openapistackql v0.0.9-alpha23
+	github.com/stackql/go-openapistackql v0.0.9-alpha30
 	github.com/stackql/go-sqlite3 v0.0.1-stackqlrc01
 	github.com/stackql/go-suffix-map v0.0.1-alpha01
 	go.uber.org/zap v1.21.0
@@ -36,7 +36,6 @@ require (
 	github.com/PaesslerAG/jsonpath v0.1.1 // indirect
 	github.com/antchfx/xmlquery v1.3.10 // indirect
 	github.com/antchfx/xpath v1.2.0 // indirect
-	github.com/clbanning/mxj/v2 v2.5.5 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect

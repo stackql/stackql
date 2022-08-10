@@ -534,6 +534,7 @@ func (pgb *planGraphBuilder) handleInsert(pbi PlanBuilderInput) error {
 		if err != nil {
 			return err
 		}
+		// selectPrimitive here forms the insert data
 		var selectPrimitive primitive.IPrimitive
 		var selectPrimitiveNode *primitivegraph.PrimitiveNode
 		if nonValCols > 0 {

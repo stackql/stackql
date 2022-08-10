@@ -80194,3 +80194,5 @@ components:
               name: ZoneId
 security:
   - hmac: []
+x-stackQL-queryParamTranspose:
+  algorithm: AWSCanonical
