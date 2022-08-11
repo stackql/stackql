@@ -10,7 +10,6 @@ import (
 
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
-	"github.com/stackql/stackql/internal/stackql/httpparameters"
 	"github.com/stackql/stackql/internal/stackql/provider"
 	"github.com/stackql/stackql/internal/stackql/requests"
 	"github.com/stackql/stackql/internal/stackql/streaming"
@@ -37,7 +36,7 @@ func NewExecContext(payload *dto.ExecPayload, rsc *openapistackql.Resource) *Exe
 
 type HTTPArmouryParameters struct {
 	Header     http.Header
-	Parameters *httpparameters.HttpParameters
+	Parameters *openapistackql.HttpParameters
 	Request    *http.Request
 	BodyBytes  []byte
 }
@@ -221,12 +220,12 @@ func awsContextHousekeeping(ctx context.Context, svc *openapistackql.Service, pa
 	return ctx
 }
 
-func getRequest(prov *openapistackql.Provider, svc *openapistackql.Service, method *openapistackql.OperationStore, httpParams *httpparameters.HttpParameters) (*http.Request, error) {
+func getRequest(prov *openapistackql.Provider, svc *openapistackql.Service, method *openapistackql.OperationStore, httpParams *openapistackql.HttpParameters) (*http.Request, error) {
 	params, err := httpParams.ToFlatMap()
 	if err != nil {
 		return nil, err
 	}
-	validationParams, err := method.Parameterize(prov, svc, params, httpParams.RequestBody)
+	validationParams, err := method.Parameterize(prov, svc, httpParams, httpParams.RequestBody)
 	if err != nil {
 		return nil, err
 	}

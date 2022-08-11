@@ -6,7 +6,6 @@ require (
 	github.com/aws/aws-sdk-go v1.28.8
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/fatih/color v1.13.0
-	github.com/getkin/kin-openapi v0.88.0
 	github.com/google/go-jsonnet v0.17.0
 	github.com/jackc/pgtype v1.10.0
 	github.com/jeroenrinzema/psql-wire v0.0.1-stackqlalpha3
@@ -17,7 +16,7 @@ require (
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.1
-	github.com/stackql/go-openapistackql v0.0.9-alpha30
+	github.com/stackql/go-openapistackql v0.0.9-beta01
 	github.com/stackql/go-sqlite3 v0.0.1-stackqlrc01
 	github.com/stackql/go-suffix-map v0.0.1-alpha01
 	go.uber.org/zap v1.21.0
@@ -37,6 +36,7 @@ require (
 	github.com/antchfx/xmlquery v1.3.10 // indirect
 	github.com/antchfx/xpath v1.2.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
+	github.com/getkin/kin-openapi v0.88.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/swag v0.21.1 // indirect

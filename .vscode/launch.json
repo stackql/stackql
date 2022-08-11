@@ -52,6 +52,20 @@
       ],
     },
     {
+      "name": "DEBUG github pages",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "--tls.allowInsecure",
+        "select url from github.repos.pages where owner = 'dummyorg' and repo = 'dummyapp.io' ;"
+      ],
+    },
+    {
       "name": "DEBUG okta pagination",
       "type": "go",
       "request": "launch",
