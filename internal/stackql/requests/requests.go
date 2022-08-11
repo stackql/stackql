@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 
 	"github.com/stackql/stackql/internal/stackql/constants"
-	"github.com/stackql/stackql/internal/stackql/httpparameters"
 	"github.com/stackql/stackql/internal/stackql/provider"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
@@ -44,8 +43,8 @@ func parseRequestBodyParam(k string, v interface{}) *requestBodyParam {
 	return nil
 }
 
-func SplitHttpParameters(prov provider.IProvider, sqlParamMap map[int]map[string]interface{}, method *openapistackql.OperationStore) ([]*httpparameters.HttpParameters, error) {
-	var retVal []*httpparameters.HttpParameters
+func SplitHttpParameters(prov provider.IProvider, sqlParamMap map[int]map[string]interface{}, method *openapistackql.OperationStore) ([]*openapistackql.HttpParameters, error) {
+	var retVal []*openapistackql.HttpParameters
 	var rowKeys []int
 	requestSchema, _ := method.GetRequestBodySchema()
 	responseSchema, _ := method.GetRequestBodySchema()
@@ -55,11 +54,7 @@ func SplitHttpParameters(prov provider.IProvider, sqlParamMap map[int]map[string
 	sort.Ints(rowKeys)
 	for _, key := range rowKeys {
 		sqlRow := sqlParamMap[key]
-		pr, err := prov.GetProvider()
-		if err != nil {
-			return nil, err
-		}
-		reqMap := httpparameters.NewHttpParameters(pr, method)
+		reqMap := openapistackql.NewHttpParameters(method)
 		for k, v := range sqlRow {
 			if param, ok := method.GetOperationParameter(k); ok {
 				reqMap.StoreParameter(param, v)
@@ -71,7 +66,7 @@ func SplitHttpParameters(prov provider.IProvider, sqlParamMap map[int]map[string
 						continue
 					}
 				}
-				reqMap.ServerParams[k] = httpparameters.NewParameterBinding(&openapistackql.Parameter{In: "server"}, v)
+				reqMap.ServerParams[k] = openapistackql.NewParameterBinding(&openapistackql.Parameter{In: "server"}, v)
 			}
 			if responseSchema != nil && responseSchema.FindByPath(k, nil) != nil {
 				reqMap.ResponseBody[k] = v
