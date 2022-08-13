@@ -16,30 +16,20 @@ func NewParameterSuffixMap() *ParameterSuffixMap {
 	}
 }
 
-func MakeSuffixMapFromParameterMap(m map[string]*openapistackql.Parameter) *ParameterSuffixMap {
-	m2 := make(map[string]interface{})
-	for k, v := range m {
-		m2[k] = v
-	}
-	return &ParameterSuffixMap{
-		sm: suffixmap.NewSuffixMap(m2),
-	}
-}
-
-func (psm *ParameterSuffixMap) Get(k string) (*openapistackql.Parameter, bool) {
+func (psm *ParameterSuffixMap) Get(k string) (openapistackql.Addressable, bool) {
 	rv, ok := psm.sm.Get(k)
 	if !ok {
 		return nil, false
 	}
-	crv, ok := rv.(*openapistackql.Parameter)
+	crv, ok := rv.(openapistackql.Addressable)
 	return crv, ok
 }
 
-func (psm *ParameterSuffixMap) GetAll() map[string]*openapistackql.Parameter {
+func (psm *ParameterSuffixMap) GetAll() map[string]openapistackql.Addressable {
 	m := psm.sm.GetAll()
-	rv := make(map[string]*openapistackql.Parameter)
+	rv := make(map[string]openapistackql.Addressable)
 	for k, v := range m {
-		p, ok := v.(*openapistackql.Parameter)
+		p, ok := v.(openapistackql.Addressable)
 		if ok {
 			rv[k] = p
 		}
@@ -47,7 +37,7 @@ func (psm *ParameterSuffixMap) GetAll() map[string]*openapistackql.Parameter {
 	return rv
 }
 
-func (psm *ParameterSuffixMap) Put(k string, v *openapistackql.Parameter) {
+func (psm *ParameterSuffixMap) Put(k string, v openapistackql.Addressable) {
 	psm.sm.Put(k, v)
 }
 

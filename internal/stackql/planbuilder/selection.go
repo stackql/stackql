@@ -61,7 +61,7 @@ func (p *primitiveGenerator) assembleUnarySelectionBuilder(
 	for _, col := range cols {
 		foundSchema := schema.FindByPath(col.Name, nil)
 		cc, ok := method.GetParameter(col.Name)
-		if ok && cc.Name == col.Name {
+		if ok && cc.GetName() == col.Name {
 			// continue
 		}
 		if foundSchema == nil && col.IsColumn {

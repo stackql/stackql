@@ -1,0 +1,1277 @@
+openapi: 3.0.0
+info:
+  version: '2021-09-30'
+  x-release: v4
+  title: AWS Cloud Control API
+  description: 'For more information about Amazon Web Services Cloud Control API, see the <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/what-is-cloudcontrolapi.html">Amazon Web Services Cloud Control API User Guide</a>.'
+  x-logo:
+    url: 'https://twitter.com/awscloud/profile_image?size=original'
+    backgroundColor: '#FFFFFF'
+  termsOfService: 'https://aws.amazon.com/service-terms/'
+  contact:
+    name: Mike Ralphson
+    email: mike.ralphson@gmail.com
+    url: 'https://github.com/mermade/aws2openapi'
+    x-twitter: PermittedSoc
+  license:
+    name: Apache 2.0 License
+    url: 'http://www.apache.org/licenses/'
+  x-providerName: amazonaws.com
+  x-serviceName: cloudcontrolapi
+  x-aws-signingName: cloudcontrolapi
+  x-origin:
+    - contentType: application/json
+      url: 'https://raw.githubusercontent.com/aws/aws-sdk-js/master/apis/cloudcontrol-2021-09-30.normal.json'
+      converter:
+        url: 'https://github.com/mermade/aws2openapi'
+        version: 1.0.0
+      x-apisguru-driver: external
+  x-apiClientRegistration:
+    url: 'https://portal.aws.amazon.com/gp/aws/developer/registration/index.html?nc2=h_ct'
+  x-apisguru-categories:
+    - cloud
+  x-preferred: true
+externalDocs:
+  description: Amazon Web Services documentation
+  url: 'https://docs.aws.amazon.com/cloudcontrolapi/'
+servers:
+  - url: 'https://cloudcontrolapi.{region}.amazonaws.com'
+    variables:
+      region:
+        description: The AWS region
+        enum:
+          - us-east-1
+          - us-east-2
+          - us-west-1
+          - us-west-2
+          - us-gov-west-1
+          - us-gov-east-1
+          - ca-central-1
+          - eu-north-1
+          - eu-west-1
+          - eu-west-2
+          - eu-west-3
+          - eu-central-1
+          - eu-south-1
+          - af-south-1
+          - ap-northeast-1
+          - ap-northeast-2
+          - ap-northeast-3
+          - ap-southeast-1
+          - ap-southeast-2
+          - ap-east-1
+          - ap-south-1
+          - sa-east-1
+          - me-south-1
+        default: us-east-1
+    description: The CloudControlApi multi-region endpoint
+  - url: 'https://cloudcontrolapi.{region}.amazonaws.com.cn'
+    variables:
+      region:
+        description: The AWS region
+        enum:
+          - cn-north-1
+          - cn-northwest-1
+        default: cn-north-1
+    description: The CloudControlApi endpoint for China (Beijing) and China (Ningxia)
+paths:
+  /?X-Amz-Target=CloudApiService.CancelResourceRequest&Version=2021-09-30:
+    post:
+      operationId: CancelResourceRequest
+      description: '<p>Cancels the specified resource operation request. For more information, see <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/resource-operations-manage-requests.html#resource-operations-manage-requests-cancel">Canceling resource operation requests</a> in the <i>Amazon Web Services Cloud Control API User Guide</i>.</p> <p>Only resource operations requests with a status of <code>PENDING</code> or <code>IN_PROGRESS</code> can be canceled.</p>'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancelResourceRequestOutput'
+        '480':
+          description: ConcurrentModificationException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConcurrentModificationException'
+        '481':
+          description: RequestTokenNotFoundException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestTokenNotFoundException'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelResourceRequestInput'
+      parameters: []
+    parameters:
+      - $ref: '#/components/parameters/X-Amz-Content-Sha256'
+      - $ref: '#/components/parameters/X-Amz-Date'
+      - $ref: '#/components/parameters/X-Amz-Algorithm'
+      - $ref: '#/components/parameters/X-Amz-Credential'
+      - $ref: '#/components/parameters/X-Amz-Security-Token'
+      - $ref: '#/components/parameters/X-Amz-Signature'
+      - $ref: '#/components/parameters/X-Amz-SignedHeaders'
+  /?X-Amz-Target=CloudApiService.CreateResource&Version=2021-09-30:
+    post:
+      operationId: CreateResource
+      description: '<p>Creates the specified resource. For more information, see <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/resource-operations-create.html">Creating a resource</a> in the <i>Amazon Web Services Cloud Control API User Guide</i>.</p> <p>After you have initiated a resource creation request, you can monitor the progress of your request by calling <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/APIReference/API_GetResourceRequestStatus.html">GetResourceRequestStatus</a> using the <code>RequestToken</code> of the <code>ProgressEvent</code> type returned by <code>CreateResource</code>.</p>'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateResourceOutput'
+        '480':
+          description: AlreadyExistsException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlreadyExistsException'
+        '481':
+          description: HandlerInternalFailureException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HandlerInternalFailureException'
+        '482':
+          description: GeneralServiceException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralServiceException'
+        '483':
+          description: NotUpdatableException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotUpdatableException'
+        '484':
+          description: TypeNotFoundException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TypeNotFoundException'
+        '485':
+          description: ConcurrentOperationException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConcurrentOperationException'
+        '486':
+          description: InvalidRequestException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvalidRequestException'
+        '487':
+          description: PrivateTypeException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateTypeException'
+        '488':
+          description: ResourceNotFoundException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceNotFoundException'
+        '489':
+          description: NetworkFailureException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetworkFailureException'
+        '490':
+          description: UnsupportedActionException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnsupportedActionException'
+        '491':
+          description: NotStabilizedException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotStabilizedException'
+        '492':
+          description: ServiceInternalErrorException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceInternalErrorException'
+        '493':
+          description: HandlerFailureException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HandlerFailureException'
+        '494':
+          description: ServiceLimitExceededException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceLimitExceededException'
+        '495':
+          description: InvalidCredentialsException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvalidCredentialsException'
+        '496':
+          description: ResourceConflictException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceConflictException'
+        '497':
+          description: ClientTokenConflictException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientTokenConflictException'
+        '498':
+          description: ThrottlingException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThrottlingException'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateResourceInput'
+      parameters: []
+    parameters:
+      - $ref: '#/components/parameters/X-Amz-Content-Sha256'
+      - $ref: '#/components/parameters/X-Amz-Date'
+      - $ref: '#/components/parameters/X-Amz-Algorithm'
+      - $ref: '#/components/parameters/X-Amz-Credential'
+      - $ref: '#/components/parameters/X-Amz-Security-Token'
+      - $ref: '#/components/parameters/X-Amz-Signature'
+      - $ref: '#/components/parameters/X-Amz-SignedHeaders'
+  /?X-Amz-Target=CloudApiService.DeleteResource&Version=2021-09-30:
+    post:
+      operationId: DeleteResource
+      description: '<p>Deletes the specified resource. For details, see <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/resource-operations-delete.html">Deleting a resource</a> in the <i>Amazon Web Services Cloud Control API User Guide</i>.</p> <p>After you have initiated a resource deletion request, you can monitor the progress of your request by calling <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/APIReference/API_GetResourceRequestStatus.html">GetResourceRequestStatus</a> using the <code>RequestToken</code> of the <code>ProgressEvent</code> returned by <code>DeleteResource</code>.</p>'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteResourceOutput'
+        '480':
+          description: AlreadyExistsException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlreadyExistsException'
+        '481':
+          description: HandlerInternalFailureException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HandlerInternalFailureException'
+        '482':
+          description: GeneralServiceException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralServiceException'
+        '483':
+          description: NotUpdatableException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotUpdatableException'
+        '484':
+          description: TypeNotFoundException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TypeNotFoundException'
+        '485':
+          description: ConcurrentOperationException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConcurrentOperationException'
+        '486':
+          description: InvalidRequestException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvalidRequestException'
+        '487':
+          description: PrivateTypeException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateTypeException'
+        '488':
+          description: ResourceNotFoundException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceNotFoundException'
+        '489':
+          description: NetworkFailureException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetworkFailureException'
+        '490':
+          description: UnsupportedActionException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnsupportedActionException'
+        '491':
+          description: NotStabilizedException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotStabilizedException'
+        '492':
+          description: ServiceInternalErrorException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceInternalErrorException'
+        '493':
+          description: HandlerFailureException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HandlerFailureException'
+        '494':
+          description: ServiceLimitExceededException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceLimitExceededException'
+        '495':
+          description: InvalidCredentialsException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvalidCredentialsException'
+        '496':
+          description: ResourceConflictException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceConflictException'
+        '497':
+          description: ClientTokenConflictException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientTokenConflictException'
+        '498':
+          description: ThrottlingException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThrottlingException'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteResourceInput'
+      parameters: []
+    parameters:
+      - $ref: '#/components/parameters/X-Amz-Content-Sha256'
+      - $ref: '#/components/parameters/X-Amz-Date'
+      - $ref: '#/components/parameters/X-Amz-Algorithm'
+      - $ref: '#/components/parameters/X-Amz-Credential'
+      - $ref: '#/components/parameters/X-Amz-Security-Token'
+      - $ref: '#/components/parameters/X-Amz-Signature'
+      - $ref: '#/components/parameters/X-Amz-SignedHeaders'
+  /?X-Amz-Target=CloudApiService.GetResource&Version=2021-09-30:
+    post:
+      operationId: GetResource
+      description: '<p>Returns information about the current state of the specified resource. For details, see <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/resource-operations-read.html">Reading a resource''s current state</a>.</p> <p>You can use this action to return information about an existing resource in your account and Amazon Web Services Region, whether those resources were provisioned using Cloud Control API.</p>'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetResourceOutput'
+        '480':
+          description: AlreadyExistsException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlreadyExistsException'
+        '481':
+          description: HandlerInternalFailureException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HandlerInternalFailureException'
+        '482':
+          description: GeneralServiceException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralServiceException'
+        '483':
+          description: NotUpdatableException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotUpdatableException'
+        '484':
+          description: TypeNotFoundException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TypeNotFoundException'
+        '485':
+          description: InvalidRequestException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvalidRequestException'
+        '486':
+          description: PrivateTypeException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateTypeException'
+        '487':
+          description: ResourceNotFoundException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceNotFoundException'
+        '488':
+          description: NetworkFailureException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetworkFailureException'
+        '489':
+          description: UnsupportedActionException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnsupportedActionException'
+        '490':
+          description: NotStabilizedException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotStabilizedException'
+        '491':
+          description: ServiceInternalErrorException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceInternalErrorException'
+        '492':
+          description: HandlerFailureException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HandlerFailureException'
+        '493':
+          description: ServiceLimitExceededException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceLimitExceededException'
+        '494':
+          description: InvalidCredentialsException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvalidCredentialsException'
+        '495':
+          description: ResourceConflictException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceConflictException'
+        '496':
+          description: ThrottlingException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThrottlingException'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetResourceInput'
+      parameters: []
+    parameters:
+      - $ref: '#/components/parameters/X-Amz-Content-Sha256'
+      - $ref: '#/components/parameters/X-Amz-Date'
+      - $ref: '#/components/parameters/X-Amz-Algorithm'
+      - $ref: '#/components/parameters/X-Amz-Credential'
+      - $ref: '#/components/parameters/X-Amz-Security-Token'
+      - $ref: '#/components/parameters/X-Amz-Signature'
+      - $ref: '#/components/parameters/X-Amz-SignedHeaders'
+  /?X-Amz-Target=CloudApiService.GetResourceRequestStatus&Version=2021-09-30:
+    post:
+      operationId: GetResourceRequestStatus
+      description: 'Returns the current status of a resource operation request. For more information, see <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/resource-operations-manage-requests.html#resource-operations-manage-requests-track">Tracking the progress of resource operation requests</a> in the <i>Amazon Web Services Cloud Control API User Guide</i>.'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetResourceRequestStatusOutput'
+        '480':
+          description: RequestTokenNotFoundException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestTokenNotFoundException'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetResourceRequestStatusInput'
+      parameters: []
+    parameters:
+      - $ref: '#/components/parameters/X-Amz-Content-Sha256'
+      - $ref: '#/components/parameters/X-Amz-Date'
+      - $ref: '#/components/parameters/X-Amz-Algorithm'
+      - $ref: '#/components/parameters/X-Amz-Credential'
+      - $ref: '#/components/parameters/X-Amz-Security-Token'
+      - $ref: '#/components/parameters/X-Amz-Signature'
+      - $ref: '#/components/parameters/X-Amz-SignedHeaders'
+  '/?Action=ListResources&Version=2021-09-30':
+    post:
+      operationId: ListResourceRequests
+      description: '<p>Returns existing resource operation requests. This includes requests of all status types. For more information, see <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/resource-operations-manage-requests.html#resource-operations-manage-requests-list">Listing active resource operation requests</a> in the <i>Amazon Web Services Cloud Control API User Guide</i>.</p> <note> <p>Resource operation requests expire after 7 days.</p> </note>'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/x-amz-json-1.0:
+              schema:
+                type: object
+                properties:
+                  ResourceDescriptions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        Identifier:
+                          type: string
+                        Properties:
+                          type: string
+      parameters:
+        - name: MaxResults
+          in: query
+          schema:
+            type: string
+          description: Pagination limit
+          required: false
+        - name: NextToken
+          in: query
+          schema:
+            type: string
+          description: Pagination token
+          required: false
+        - name: X-Amz-Target
+          in: header
+          schema:
+            type: string
+            default: CloudApiService.ListResources
+          description: Action Header
+          required: false
+        - name: Content-Type
+          in: header
+          schema:
+            type: string
+            default: application/x-amz-json-1.0
+          description: Action Header
+          required: false
+        - name: Accept
+          in: header
+          schema:
+            type: string
+            default: application/x-amz-json-1.0
+          description: Action Header
+          required: false
+      requestBody:
+        required: true
+        content:
+          application/x-amz-json-1.0:
+            schema:
+              type: object
+              required:
+                - TypeName
+              properties:
+                TypeName:
+                  type: string
+    parameters:
+      - $ref: '#/components/parameters/X-Amz-Content-Sha256'
+      - $ref: '#/components/parameters/X-Amz-Date'
+      - $ref: '#/components/parameters/X-Amz-Algorithm'
+      - $ref: '#/components/parameters/X-Amz-Credential'
+      - $ref: '#/components/parameters/X-Amz-Security-Token'
+      - $ref: '#/components/parameters/X-Amz-Signature'
+      - $ref: '#/components/parameters/X-Amz-SignedHeaders'
+  /?X-Amz-Target=CloudApiService.ListResources&Version=2021-09-30:
+    post:
+      operationId: ListResources
+      description: '<p>Returns information about the specified resources. For more information, see <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/resource-operations-list.html">Discovering resources</a> in the <i>Amazon Web Services Cloud Control API User Guide</i>.</p> <p>You can use this action to return information about existing resources in your account and Amazon Web Services Region, whether those resources were provisioned using Cloud Control API.</p>'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListResourcesOutput'
+        '480':
+          description: AlreadyExistsException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlreadyExistsException'
+        '481':
+          description: HandlerInternalFailureException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HandlerInternalFailureException'
+        '482':
+          description: GeneralServiceException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralServiceException'
+        '483':
+          description: NotUpdatableException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotUpdatableException'
+        '484':
+          description: TypeNotFoundException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TypeNotFoundException'
+        '485':
+          description: InvalidRequestException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvalidRequestException'
+        '486':
+          description: PrivateTypeException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateTypeException'
+        '487':
+          description: ResourceNotFoundException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceNotFoundException'
+        '488':
+          description: NetworkFailureException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetworkFailureException'
+        '489':
+          description: UnsupportedActionException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnsupportedActionException'
+        '490':
+          description: NotStabilizedException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotStabilizedException'
+        '491':
+          description: ServiceInternalErrorException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceInternalErrorException'
+        '492':
+          description: HandlerFailureException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HandlerFailureException'
+        '493':
+          description: ServiceLimitExceededException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceLimitExceededException'
+        '494':
+          description: InvalidCredentialsException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvalidCredentialsException'
+        '495':
+          description: ResourceConflictException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceConflictException'
+        '496':
+          description: ThrottlingException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThrottlingException'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListResourcesInput'
+      parameters:
+        - name: MaxResults
+          in: query
+          schema:
+            type: string
+          description: Pagination limit
+          required: false
+        - name: NextToken
+          in: query
+          schema:
+            type: string
+          description: Pagination token
+          required: false
+    parameters:
+      - $ref: '#/components/parameters/X-Amz-Content-Sha256'
+      - $ref: '#/components/parameters/X-Amz-Date'
+      - $ref: '#/components/parameters/X-Amz-Algorithm'
+      - $ref: '#/components/parameters/X-Amz-Credential'
+      - $ref: '#/components/parameters/X-Amz-Security-Token'
+      - $ref: '#/components/parameters/X-Amz-Signature'
+      - $ref: '#/components/parameters/X-Amz-SignedHeaders'
+  /?X-Amz-Target=CloudApiService.UpdateResource&Version=2021-09-30:
+    post:
+      operationId: UpdateResource
+      description: '<p>Updates the specified property values in the resource.</p> <p>You specify your resource property updates as a list of patch operations contained in a JSON patch document that adheres to the <a href="https://datatracker.ietf.org/doc/html/rfc6902"> <i>RFC 6902 - JavaScript Object Notation (JSON) Patch</i> </a> standard.</p> <p>For details on how Cloud Control API performs resource update operations, see <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/resource-operations-update.html">Updating a resource</a> in the <i>Amazon Web Services Cloud Control API User Guide</i>.</p> <p>After you have initiated a resource update request, you can monitor the progress of your request by calling <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/APIReference/API_GetResourceRequestStatus.html">GetResourceRequestStatus</a> using the <code>RequestToken</code> of the <code>ProgressEvent</code> returned by <code>UpdateResource</code>.</p> <p>For more information about the properties of a specific resource, refer to the related topic for the resource in the <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html">Resource and property types reference</a> in the <i>CloudFormation Users Guide</i>.</p>'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateResourceOutput'
+        '480':
+          description: AlreadyExistsException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlreadyExistsException'
+        '481':
+          description: HandlerInternalFailureException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HandlerInternalFailureException'
+        '482':
+          description: GeneralServiceException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralServiceException'
+        '483':
+          description: NotUpdatableException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotUpdatableException'
+        '484':
+          description: TypeNotFoundException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TypeNotFoundException'
+        '485':
+          description: ConcurrentOperationException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConcurrentOperationException'
+        '486':
+          description: InvalidRequestException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvalidRequestException'
+        '487':
+          description: PrivateTypeException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateTypeException'
+        '488':
+          description: ResourceNotFoundException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceNotFoundException'
+        '489':
+          description: NetworkFailureException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetworkFailureException'
+        '490':
+          description: UnsupportedActionException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnsupportedActionException'
+        '491':
+          description: NotStabilizedException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotStabilizedException'
+        '492':
+          description: ServiceInternalErrorException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceInternalErrorException'
+        '493':
+          description: HandlerFailureException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HandlerFailureException'
+        '494':
+          description: ServiceLimitExceededException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceLimitExceededException'
+        '495':
+          description: InvalidCredentialsException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvalidCredentialsException'
+        '496':
+          description: ResourceConflictException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceConflictException'
+        '497':
+          description: ClientTokenConflictException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientTokenConflictException'
+        '498':
+          description: ThrottlingException
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThrottlingException'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateResourceInput'
+      parameters: []
+    parameters:
+      - $ref: '#/components/parameters/X-Amz-Content-Sha256'
+      - $ref: '#/components/parameters/X-Amz-Date'
+      - $ref: '#/components/parameters/X-Amz-Algorithm'
+      - $ref: '#/components/parameters/X-Amz-Credential'
+      - $ref: '#/components/parameters/X-Amz-Security-Token'
+      - $ref: '#/components/parameters/X-Amz-Signature'
+      - $ref: '#/components/parameters/X-Amz-SignedHeaders'
+components:
+  x-stackQL-resources:
+    resources:
+      id: resources
+      methods:
+        list_resources:
+          operation:
+            $ref: '#/paths/~1?Action=ListResources&Version=2021-09-30/post'
+          request:
+            mediaType: application/x-amz-json-1.0
+          response:
+            mediaType: application/x-amz-json-1.0
+            objectKey: '$.ResourceDescriptions'
+            openAPIDocKey: '200'
+      name: aws.cloud_control.resources
+      sqlVerbs:
+        delete: []
+        insert: []
+        select:
+        - $ref: '#/components/x-stackQL-resources/resources/methods/list_resources'
+        update: []
+      title: resources
+  parameters:
+    X-Amz-Content-Sha256:
+      name: X-Amz-Content-Sha256
+      in: header
+      schema:
+        type: string
+      required: false
+    X-Amz-Date:
+      name: X-Amz-Date
+      in: header
+      schema:
+        type: string
+      required: false
+    X-Amz-Algorithm:
+      name: X-Amz-Algorithm
+      in: header
+      schema:
+        type: string
+      required: false
+    X-Amz-Credential:
+      name: X-Amz-Credential
+      in: header
+      schema:
+        type: string
+      required: false
+    X-Amz-Security-Token:
+      name: X-Amz-Security-Token
+      in: header
+      schema:
+        type: string
+      required: false
+    X-Amz-Signature:
+      name: X-Amz-Signature
+      in: header
+      schema:
+        type: string
+      required: false
+    X-Amz-SignedHeaders:
+      name: X-Amz-SignedHeaders
+      in: header
+      schema:
+        type: string
+      required: false
+  securitySchemes:
+    hmac:
+      type: apiKey
+      name: Authorization
+      in: header
+      description: Amazon Signature authorization v4
+      x-amazon-apigateway-authtype: awsSigv4
+  schemas:
+    CancelResourceRequestOutput:
+      type: object
+      properties:
+        undefined:
+          $ref: '#/components/schemas/ProgressEvent'
+    CancelResourceRequestInput:
+      type: object
+      required:
+        - RequestToken
+      title: CancelResourceRequestInput
+      properties:
+        undefined:
+          allOf:
+            - $ref: '#/components/schemas/RequestToken'
+            - description: The <code>RequestToken</code> of the <code>ProgressEvent</code> object returned by the resource operation request.
+    ConcurrentModificationException: {}
+    RequestTokenNotFoundException: {}
+    CreateResourceOutput:
+      type: object
+      properties:
+        undefined:
+          allOf:
+            - $ref: '#/components/schemas/ProgressEvent'
+            - description: '<p>Represents the current status of the resource creation request.</p> <p>After you have initiated a resource creation request, you can monitor the progress of your request by calling <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/APIReference/API_GetResourceRequestStatus.html">GetResourceRequestStatus</a> using the <code>RequestToken</code> of the <code>ProgressEvent</code> returned by <code>CreateResource</code>.</p>'
+    CreateResourceInput:
+      type: object
+      required:
+        - TypeName
+        - DesiredState
+      title: CreateResourceInput
+      properties:
+        undefined:
+          allOf:
+            - $ref: '#/components/schemas/Properties'
+            - description: '<p>Structured data format representing the desired state of the resource, consisting of that resource''s properties and their desired values.</p> <note> <p>Cloud Control API currently supports JSON as a structured data format.</p> </note> <pre><code> &lt;p&gt;Specify the desired state as one of the following:&lt;/p&gt; &lt;ul&gt; &lt;li&gt; &lt;p&gt;A JSON blob&lt;/p&gt; &lt;/li&gt; &lt;li&gt; &lt;p&gt;A local path containing the desired state in JSON data format&lt;/p&gt; &lt;/li&gt; &lt;/ul&gt; &lt;p&gt;For more information, see &lt;a href=&quot;https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/resource-operations-create.html#resource-operations-create-desiredstate&quot;&gt;Composing the desired state of the resource&lt;/a&gt; in the &lt;i&gt;Amazon Web Services Cloud Control API User Guide&lt;/i&gt;.&lt;/p&gt; &lt;p&gt;For more information about the properties of a specific resource, refer to the related topic for the resource in the &lt;a href=&quot;https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html&quot;&gt;Resource and property types reference&lt;/a&gt; in the &lt;i&gt;CloudFormation Users Guide&lt;/i&gt;.&lt;/p&gt; </code></pre>'
+    AlreadyExistsException: {}
+    HandlerInternalFailureException: {}
+    GeneralServiceException: {}
+    NotUpdatableException: {}
+    TypeNotFoundException: {}
+    ConcurrentOperationException: {}
+    InvalidRequestException: {}
+    PrivateTypeException: {}
+    ResourceNotFoundException: {}
+    NetworkFailureException: {}
+    UnsupportedActionException: {}
+    NotStabilizedException: {}
+    ServiceInternalErrorException: {}
+    HandlerFailureException: {}
+    ServiceLimitExceededException: {}
+    InvalidCredentialsException: {}
+    ResourceConflictException: {}
+    ClientTokenConflictException: {}
+    ThrottlingException: {}
+    DeleteResourceOutput:
+      type: object
+      properties:
+        undefined:
+          allOf:
+            - $ref: '#/components/schemas/ProgressEvent'
+            - description: '<p>Represents the current status of the resource deletion request.</p> <p>After you have initiated a resource deletion request, you can monitor the progress of your request by calling <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/APIReference/API_GetResourceRequestStatus.html">GetResourceRequestStatus</a> using the <code>RequestToken</code> of the <code>ProgressEvent</code> returned by <code>DeleteResource</code>.</p>'
+    DeleteResourceInput:
+      type: object
+      required:
+        - TypeName
+        - Identifier
+      title: DeleteResourceInput
+      properties:
+        undefined:
+          allOf:
+            - $ref: '#/components/schemas/Identifier'
+            - description: '<p>The identifier for the resource.</p> <p>You can specify the primary identifier, or any secondary identifier defined for the resource type in its resource schema. You can only specify one identifier. Primary identifiers can be specified as a string or JSON; secondary identifiers must be specified as JSON.</p> <p>For compound primary identifiers (that is, one that consists of multiple resource properties strung together), to specify the primary identifier as a string, list the property values <i>in the order they are specified</i> in the primary identifier definition, separated by <code>|</code>.</p> <p>For more information, see <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/resource-identifier.html">Identifying resources</a> in the <i>Amazon Web Services Cloud Control API User Guide</i>.</p>'
+    GetResourceOutput:
+      type: object
+      properties:
+        undefined:
+          $ref: '#/components/schemas/ResourceDescription'
+    GetResourceInput:
+      type: object
+      required:
+        - TypeName
+        - Identifier
+      title: GetResourceInput
+      properties:
+        undefined:
+          allOf:
+            - $ref: '#/components/schemas/Identifier'
+            - description: '<p>The identifier for the resource.</p> <p>You can specify the primary identifier, or any secondary identifier defined for the resource type in its resource schema. You can only specify one identifier. Primary identifiers can be specified as a string or JSON; secondary identifiers must be specified as JSON.</p> <p>For compound primary identifiers (that is, one that consists of multiple resource properties strung together), to specify the primary identifier as a string, list the property values <i>in the order they are specified</i> in the primary identifier definition, separated by <code>|</code>.</p> <p>For more information, see <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/resource-identifier.html">Identifying resources</a> in the <i>Amazon Web Services Cloud Control API User Guide</i>.</p>'
+    GetResourceRequestStatusOutput:
+      type: object
+      properties:
+        undefined:
+          allOf:
+            - $ref: '#/components/schemas/ProgressEvent'
+            - description: Represents the current status of the resource operation request.
+    GetResourceRequestStatusInput:
+      type: object
+      required:
+        - RequestToken
+      title: GetResourceRequestStatusInput
+      properties:
+        undefined:
+          allOf:
+            - $ref: '#/components/schemas/RequestToken'
+            - description: <p>A unique token used to track the progress of the resource operation request.</p> <p>Request tokens are included in the <code>ProgressEvent</code> type returned by a resource operation request.</p>
+    ListResourceRequestsOutput:
+      type: object
+      properties:
+        undefined:
+          allOf:
+            - $ref: '#/components/schemas/NextToken'
+            - description: 'If the request doesn''t return all of the remaining results, <code>NextToken</code> is set to a token. To retrieve the next set of results, call <code>ListResources</code> again and assign that token to the request object''s <code>NextToken</code> parameter. If the request returns all results, <code>NextToken</code> is set to null.'
+    ListResourceRequestsInput:
+      type: object
+      title: ListResourceRequestsInput
+      properties:
+        undefined:
+          allOf:
+            - $ref: '#/components/schemas/ResourceRequestStatusFilter'
+            - description: The filter criteria to apply to the requests returned.
+    ListResourcesOutput:
+      type: object
+      properties:
+        undefined:
+          allOf:
+            - $ref: '#/components/schemas/HandlerNextToken'
+            - description: 'If the request doesn''t return all of the remaining results, <code>NextToken</code> is set to a token. To retrieve the next set of results, call <code>ListResources</code> again and assign that token to the request object''s <code>NextToken</code> parameter. If the request returns all results, <code>NextToken</code> is set to null.'
+    ListResourcesInput:
+      type: object
+      required:
+        - TypeName
+      title: ListResourcesInput
+      properties:
+        undefined:
+          allOf:
+            - $ref: '#/components/schemas/Properties'
+            - description: The resource model to use to select the resources to return.
+    UpdateResourceOutput:
+      type: object
+      properties:
+        undefined:
+          allOf:
+            - $ref: '#/components/schemas/ProgressEvent'
+            - description: '<p>Represents the current status of the resource update request.</p> <p>Use the <code>RequestToken</code> of the <code>ProgressEvent</code> with <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/APIReference/API_GetResourceRequestStatus.html">GetResourceRequestStatus</a> to return the current status of a resource operation request.</p>'
+    UpdateResourceInput:
+      type: object
+      required:
+        - TypeName
+        - Identifier
+        - PatchDocument
+      title: UpdateResourceInput
+      properties:
+        undefined:
+          allOf:
+            - $ref: '#/components/schemas/PatchDocument'
+            - description: 'A JavaScript Object Notation (JSON) document listing the patch operations that represent the updates to apply to the current resource properties. For details, see <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/resource-operations-update.html#resource-operations-update-patch">Composing the patch document</a> in the <i>Amazon Web Services Cloud Control API User Guide</i>.'
+    RequestToken:
+      type: string
+      pattern: '[-A-Za-z0-9+/=]+'
+      minLength: 1
+      maxLength: 128
+    ProgressEvent:
+      type: object
+      properties:
+        undefined:
+          allOf:
+            - $ref: '#/components/schemas/Timestamp'
+            - description: When to next request the status of this resource operation request.
+      description: 'Represents the current status of a resource operation request. For more information, see <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/resource-operations-manage-requests.html">Managing resource operation requests</a> in the <i>Amazon Web Services Cloud Control API User Guide</i>.'
+    ClientToken:
+      type: string
+      pattern: '[-A-Za-z0-9+/=]+'
+      minLength: 1
+      maxLength: 128
+    Properties:
+      type: string
+      pattern: '[\s\S]*'
+      minLength: 1
+      maxLength: 65536
+      format: password
+    Identifier:
+      type: string
+      pattern: .+
+      minLength: 1
+      maxLength: 1024
+    ResourceDescription:
+      type: object
+      properties:
+        undefined:
+          allOf:
+            - $ref: '#/components/schemas/Properties'
+            - description: A list of the resource properties and their current values.
+      description: Represents information about a provisioned resource.
+    HandlerErrorCode:
+      type: string
+      enum:
+        - NotUpdatable
+        - InvalidRequest
+        - AccessDenied
+        - InvalidCredentials
+        - AlreadyExists
+        - NotFound
+        - ResourceConflict
+        - Throttling
+        - ServiceLimitExceeded
+        - NotStabilized
+        - GeneralServiceException
+        - ServiceInternalError
+        - ServiceTimeout
+        - NetworkFailure
+        - InternalFailure
+    HandlerNextToken:
+      type: string
+      pattern: .+
+      minLength: 1
+      maxLength: 2048
+    ResourceRequestStatusFilter:
+      type: object
+      properties:
+        undefined:
+          allOf:
+            - $ref: '#/components/schemas/OperationStatuses'
+            - description: '<p>The operation statuses to include in the filter.</p> <ul> <li> <p> <code>PENDING</code>: The operation has been requested, but not yet initiated.</p> </li> <li> <p> <code>IN_PROGRESS</code>: The operation is in progress.</p> </li> <li> <p> <code>SUCCESS</code>: The operation completed.</p> </li> <li> <p> <code>FAILED</code>: The operation failed.</p> </li> <li> <p> <code>CANCEL_IN_PROGRESS</code>: The operation is in the process of being canceled.</p> </li> <li> <p> <code>CANCEL_COMPLETE</code>: The operation has been canceled.</p> </li> </ul>'
+      description: The filter criteria to use in determining the requests returned.
+    NextToken:
+      type: string
+      pattern: '[-A-Za-z0-9+/=]+'
+      minLength: 1
+      maxLength: 2048
+    MaxResults:
+      type: integer
+      minimum: 1
+      maximum: 100
+    Operation:
+      type: string
+      enum:
+        - CREATE
+        - DELETE
+        - UPDATE
+    OperationStatus:
+      type: string
+      enum:
+        - PENDING
+        - IN_PROGRESS
+        - SUCCESS
+        - FAILED
+        - CANCEL_IN_PROGRESS
+        - CANCEL_COMPLETE
+    OperationStatuses:
+      type: array
+      items:
+        $ref: '#/components/schemas/OperationStatus'
+    Operations:
+      type: array
+      items:
+        $ref: '#/components/schemas/Operation'
+    PatchDocument:
+      type: string
+      pattern: '[\s\S]*'
+      minLength: 1
+      maxLength: 65536
+      format: password
+    Timestamp:
+      type: string
+      format: date-time
+    ResourceDescriptions:
+      type: array
+      items:
+        $ref: '#/components/schemas/ResourceDescription'
+    ResourceRequestStatusSummaries:
+      type: array
+      items:
+        $ref: '#/components/schemas/ProgressEvent'
+    RoleArn:
+      type: string
+      pattern: 'arn:.+:iam::[0-9]{12}:role/.+'
+      minLength: 20
+      maxLength: 2048
+    StatusMessage:
+      type: string
+      pattern: '[\s\S]*'
+      minLength: 0
+      maxLength: 1024
+    TypeName:
+      type: string
+      pattern: '[A-Za-z0-9]{2,64}::[A-Za-z0-9]{2,64}::[A-Za-z0-9]{2,64}'
+      minLength: 10
+      maxLength: 196
+    TypeVersionId:
+      type: string
+      pattern: '[A-Za-z0-9-]+'
+      minLength: 1
+      maxLength: 128
+security:
+  - hmac: []
