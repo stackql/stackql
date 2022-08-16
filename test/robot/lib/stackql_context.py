@@ -294,6 +294,7 @@ SELECT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY = "SELECT eTag FROM google.compute.ins
 
 SELECT_AWS_VOLUMES = "select VolumeId, Encrypted, Size from aws.ec2.volumes where region = 'ap-southeast-1' order by VolumeId asc;"
 CREATE_AWS_VOLUME = """insert into aws.ec2.volumes(AvailabilityZone, Size, region, TagSpecification) select 'ap-southeast-1a', JSON(10), 'ap-southeast-1', JSON('[ { "ResourceType": "volume", "Tag": [ { "Key": "stack", "Value": "production" }, { "Key": "name", "Value": "multi-tag-volume" } ] } ]');"""
+SELECT_AWS_CLOUD_CONTROL_VPCS_DESC = "select Identifier, Properties from aws.cloud_control.resources where region = 'ap-southeast-1' and data__TypeName = 'AWS::EC2::VPC' order by Identifier desc;"
 
 SELECT_GITHUB_REPOS_PAGES_SINGLE = "select url from github.repos.pages where owner = 'dummyorg' and repo = 'dummyapp.io';"
 SELECT_GITHUB_REPOS_IDS_ASC = "select id from github.repos.repos where org = 'dummyorg' order by id ASC;"
@@ -343,6 +344,7 @@ SELECT_OKTA_APPS_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 
 SELECT_OKTA_USERS_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'okta', 'select-users-asc.txt'))
 
 SELECT_AWS_VOLUMES_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'volumes', 'select-volumes-asc.txt'))
+SELECT_AWS_CLOUD_CONTROL_VPCS_DESC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-list-vpcs-desc.txt'))
 
 SELECT_GITHUB_REPOS_PAGES_SINGLE_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-repos-pages.txt'))
 SELECT_GITHUB_REPOS_IDS_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-repos-ids-asc.txt'))
@@ -442,6 +444,8 @@ def get_variables(execution_env :str):
     'REGISTRY_LIST_EXPECTED':                                               REGISTRY_LIST_EXPECTED,
     'SELECT_ACCELERATOR_TYPES_DESC':                                        SELECT_ACCELERATOR_TYPES_DESC,
     'SELECT_ACCELERATOR_TYPES_DESC_EXPECTED':                               SELECT_ACCELERATOR_TYPES_DESC_EXPECTED,
+    'SELECT_AWS_CLOUD_CONTROL_VPCS_DESC':                                   SELECT_AWS_CLOUD_CONTROL_VPCS_DESC,
+    'SELECT_AWS_CLOUD_CONTROL_VPCS_DESC_EXPECTED':                          SELECT_AWS_CLOUD_CONTROL_VPCS_DESC_EXPECTED,
     'SELECT_AWS_VOLUMES':                                                   SELECT_AWS_VOLUMES,
     'SELECT_AWS_VOLUMES_ASC_EXPECTED':                                      SELECT_AWS_VOLUMES_ASC_EXPECTED,
     'SELECT_CONTAINER_SUBNET_AGG_ASC':                                      SELECT_CONTAINER_SUBNET_AGG_ASC,

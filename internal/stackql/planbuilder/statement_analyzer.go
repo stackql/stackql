@@ -432,6 +432,7 @@ func (pb *primitiveGenerator) analyzeWhere(where *sqlparser.Where, existingParam
 		if err != nil {
 			return nil, nil, err
 		}
+		// This method needs to incorporate request body parameters
 		reqParams := method.GetRequiredParameters()
 		for k, v := range reqParams {
 			key := fmt.Sprintf("%s.%s", tbID, k)
@@ -441,6 +442,7 @@ func (pb *primitiveGenerator) analyzeWhere(where *sqlparser.Where, existingParam
 			}
 			requiredParameters.Put(key, v)
 		}
+		// This method needs to incorporate request body parameters
 		for k, vOpt := range method.GetOptionalParameters() {
 			key := fmt.Sprintf("%s.%s", tbID, k)
 			_, keyExists := optionalParameters.Get(key)

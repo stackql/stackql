@@ -3,6 +3,9 @@
     "httpRequest": {
       "method": "GET",
       "path": "/",
+      "headers": {
+        "Authorization": ["^.*SignedHeaders=host;x-amz-date.*$" ]
+      },
       "queryStringParameters": { 
         "Action": [ "^DescribeVolumes$" ],
         "Version": [ "^2016\\-11\\-15$" ] 
@@ -21,8 +24,41 @@
   },
   {
     "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*SignedHeaders=accept;content-type;host;x-amz-date;x-amz-target.*$" ]
+      },
+      "queryStringParameters": { 
+        "Action": [ "^ListResources$" ],
+        "Version": [ "^2021\\-09\\-30$" ] 
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "TypeName":"AWS::EC2::VPC"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+    }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "type": "BINARY",
+        "base64Bytes": "eyJSZXNvdXJjZURlc2NyaXB0aW9ucyI6W3siSWRlbnRpZmllciI6InZwYy0wMDAxIiwiUHJvcGVydGllcyI6IntcIlZwY0lkXCI6XCJ2cGMtMDAwMVwifSJ9LHsiSWRlbnRpZmllciI6InZwYy0wMDAyIiwiUHJvcGVydGllcyI6IntcIlZwY0lkXCI6XCJ2cGMtMDAwMlwifSJ9LHsiSWRlbnRpZmllciI6InZwYy0wMDAzIiwiUHJvcGVydGllcyI6IntcIlZwY0lkXCI6XCJ2cGMtMDAwM1wifSJ9LHsiSWRlbnRpZmllciI6InZwYy0wMDA0IiwiUHJvcGVydGllcyI6IntcIlZwY0lkXCI6XCJ2cGMtMDAwNFwifSJ9LHsiSWRlbnRpZmllciI6InZwYy0wMDA1IiwiUHJvcGVydGllcyI6IntcIlZwY0lkXCI6XCJ2cGMtMDAwNVwifSJ9XSwiVHlwZU5hbWUiOiJBV1M6OkVDMjo6VlBDIn0="
+      }
+    }
+  },
+  {
+    "httpRequest": {
       "method": "GET",
       "path": "/",
+      "headers": {
+        "Authorization": ["^.*SignedHeaders=host;x-amz-date.*$" ]
+      },
       "queryStringParameters": { 
         "Action": [ "^CreateVolume$" ],
         "Version": [ "^2016\\-11\\-15$" ],

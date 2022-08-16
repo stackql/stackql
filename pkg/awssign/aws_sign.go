@@ -10,6 +10,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	v4 "github.com/aws/aws-sdk-go/aws/signer/v4"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -60,15 +61,17 @@ func (t *AwsSignTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 		}
 		rs = bytes.NewReader(body)
 	}
-	_, err := t.signer.Sign(
+	header, err := t.signer.Sign(
 		req,
 		rs,
 		svcStr,
 		rgnStr,
 		time.Now(),
 	)
+	log.Infof("header = %v\n", header)
 	if err != nil {
 		return nil, err
 	}
+
 	return t.underlyingTransport.RoundTrip(req)
 }

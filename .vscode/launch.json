@@ -48,7 +48,7 @@
         "--registry=${input:registryString}",
         "--auth=${input:authString}",
         "--tls.allowInsecure",
-        "insert into aws.ec2.volumes(AvailabilityZone, Size, region, TagSpecification) select 'ap-southeast-1a', JSON(10), 'ap-southeast-1', JSON('[ { \"ResourceType\": \"volume\", \"Tag\": [ { \"Key\": \"stack\", \"Value\": \"production\" } ] } ]');"
+        "select * from aws.cloud_control.resources where region = 'ap-southeast-1' and data__TypeName = 'AWS::EC2::VPC';"
       ],
     },
     {
@@ -606,7 +606,7 @@
       ],
     },
     {
-      "name": "DEBUG show methods in google.compute.disks;",
+      "name": "DEBUG show methods in google.storage.buckets;",
       "type": "go",
       "request": "launch",
       "mode": "debug",
@@ -614,7 +614,7 @@
       "args": [
         "exec",
         "--registry=${input:registryString}",
-        "show methods in google.compute.disks;"
+        "show methods in google.storage.buckets;"
       ],
     },
     {

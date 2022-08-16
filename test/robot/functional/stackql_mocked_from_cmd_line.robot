@@ -139,7 +139,7 @@ Okta Users Select Simple Paginated
     ...    ${SELECT_OKTA_USERS_ASC_EXPECTED}
     ...    ${CURDIR}/tmp/Okta-Users-Select-Simple-Paginated.tmp
 
-AWS Volumes Select Simple
+AWS EC2 Volumes Select Simple
     Should StackQL Exec Inline Equal
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -150,7 +150,18 @@ AWS Volumes Select Simple
     ...    ${SELECT_AWS_VOLUMES}
     ...    ${SELECT_AWS_VOLUMES_ASC_EXPECTED}
 
-AWS Volume Insert Simple
+AWS Cloud Control VPCs Select Simple
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SELECT_AWS_CLOUD_CONTROL_VPCS_DESC}
+    ...    ${SELECT_AWS_CLOUD_CONTROL_VPCS_DESC_EXPECTED}
+
+AWS EC2 Volume Insert Simple
     Should StackQL Exec Inline Equal
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
