@@ -74,21 +74,25 @@ func (ac *StandardAnnotationCtx) Prepare(
 		}
 		return nil
 	} else {
+		// moved out of here so stream is dynamically generated
+	}
+	ac.TableMeta.GetHttpArmoury = func() (httpbuild.HTTPArmoury, error) {
+		// need to dynamically generate stream, otherwise repeated calls result in empty body
 		parametersCleaned, err := util.TransformSQLRawParameters(ac.GetParameters())
 		if err != nil {
-			return err
+			return nil, err
 		}
 		stream.Write(
 			[]map[string]interface{}{
 				parametersCleaned,
 			},
 		)
+		httpArmoury, err := httpbuild.BuildHTTPRequestCtxFromAnnotation(handlerCtx, stream, pr, opStore, svc, nil, nil)
+		if err != nil {
+			return nil, err
+		}
+		return httpArmoury, nil
 	}
-	httpArmoury, err := httpbuild.BuildHTTPRequestCtxFromAnnotation(handlerCtx, stream, pr, opStore, svc, nil, nil)
-	if err != nil {
-		return err
-	}
-	ac.TableMeta.GetHttpArmoury = func() (httpbuild.HTTPArmoury, error) { return httpArmoury, nil }
 	return nil
 }
 
