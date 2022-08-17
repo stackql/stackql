@@ -406,7 +406,21 @@ func (gp *GenericProvider) InferMaxResultsElement(*openapistackql.OperationStore
 	}
 }
 
-func (gp *GenericProvider) InferNextPageRequestElement(dto.Heirarchy) *dto.HTTPElement {
+func (gp *GenericProvider) InferNextPageRequestElement(ho dto.Heirarchy) *dto.HTTPElement {
+	st, ok := gp.getPaginationRequestTokenSemantic(ho)
+	if ok {
+		if tp, err := dto.ExtractHttpElement(st.Location); err == nil {
+			rv := &dto.HTTPElement{
+				Type: tp,
+				Name: st.Key,
+			}
+			transformer, err := st.GetTransformer()
+			if err == nil && transformer != nil {
+				rv.Transformer = transformer
+			}
+			return rv
+		}
+	}
 	switch gp.GetProviderString() {
 	case "github", "okta":
 		return &dto.HTTPElement{
@@ -420,24 +434,41 @@ func (gp *GenericProvider) InferNextPageRequestElement(dto.Heirarchy) *dto.HTTPE
 	}
 }
 
+func (gp *GenericProvider) getPaginationRequestTokenSemantic(ho dto.Heirarchy) (*openapistackql.TokenSemantic, bool) {
+	if ho.Method == nil {
+		return nil, false
+	}
+	return ho.Method.GetPaginationRequestTokenSemantic()
+}
+
+func (gp *GenericProvider) getPaginationResponseTokenSemantic(ho dto.Heirarchy) (*openapistackql.TokenSemantic, bool) {
+	if ho.Method == nil {
+		return nil, false
+	}
+	return ho.Method.GetPaginationResponseTokenSemantic()
+}
+
 func (gp *GenericProvider) InferNextPageResponseElement(ho dto.Heirarchy) *dto.HTTPElement {
+	st, ok := gp.getPaginationResponseTokenSemantic(ho)
+	if ok {
+		if tp, err := dto.ExtractHttpElement(st.Location); err == nil {
+			rv := &dto.HTTPElement{
+				Type: tp,
+				Name: st.Key,
+			}
+			transformer, err := st.GetTransformer()
+			if err == nil && transformer != nil {
+				rv.Transformer = transformer
+			}
+			return rv
+		}
+	}
 	switch gp.GetProviderString() {
 	case "github", "okta":
 		return &dto.HTTPElement{
-			Type: dto.Header,
-			Name: "Link",
-			Transformer: func(input interface{}) (interface{}, error) {
-				h, ok := input.(http.Header)
-				if !ok {
-					return nil, fmt.Errorf("cannot ingest purported http header of type = '%T'", h)
-				}
-				s := h.Values("Link")
-				resArr := gitHubLinksNextRegex.FindStringSubmatch(strings.Join(s, ","))
-				if len(resArr) == 2 {
-					return resArr[1], nil
-				}
-				return "", nil
-			},
+			Type:        dto.Header,
+			Name:        "Link",
+			Transformer: openapistackql.DefaultLinkHeaderTransformer,
 		}
 	default:
 		return &dto.HTTPElement{

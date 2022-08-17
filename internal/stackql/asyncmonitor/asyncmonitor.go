@@ -199,6 +199,7 @@ func (gm *DefaultGoogleAsyncMonitor) getV1Monitor(heirarchy *taxonomy.HeirarchyO
 				return dto.NewExecutorOutput(nil, nil, nil, nil, apiErr)
 			}
 			target, err := heirarchy.Method.DeprecatedProcessResponse(response)
+			gm.handlerCtx.LogHTTPResponseMap(target)
 			if err != nil {
 				return dto.NewExecutorOutput(nil, nil, nil, nil, err)
 			}

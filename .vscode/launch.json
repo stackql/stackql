@@ -48,7 +48,7 @@
         "--registry=${input:registryString}",
         "--auth=${input:authString}",
         "--tls.allowInsecure",
-        "select * from aws.cloud_control.resources where region = 'ap-southeast-1' and data__TypeName = 'AWS::EC2::VPC';"
+        "select VolumeId, Encrypted, Size from aws.ec2.volumes where region = 'ap-southeast-1' order by VolumeId asc;"
       ],
     },
     {

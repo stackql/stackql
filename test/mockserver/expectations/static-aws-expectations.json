@@ -27,11 +27,8 @@
       "method": "POST",
       "path": "/",
       "headers": {
-        "Authorization": ["^.*SignedHeaders=accept;content-type;host;x-amz-date;x-amz-target.*$" ]
-      },
-      "queryStringParameters": { 
-        "Action": [ "^ListResources$" ],
-        "Version": [ "^2021\\-09\\-30$" ] 
+        "Authorization": ["^.*SignedHeaders=accept;content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target": [ "CloudApiService.ListResources" ]
       },
       "body": {
         "type": "JSON",
@@ -39,7 +36,7 @@
           "TypeName":"AWS::EC2::VPC"
         },
         "matchType": "ONLY_MATCHING_FIELDS"
-    }
+      }
     },
     "httpResponse": {
       "headers": {
@@ -49,6 +46,54 @@
       "body": {
         "type": "BINARY",
         "base64Bytes": "eyJSZXNvdXJjZURlc2NyaXB0aW9ucyI6W3siSWRlbnRpZmllciI6InZwYy0wMDAxIiwiUHJvcGVydGllcyI6IntcIlZwY0lkXCI6XCJ2cGMtMDAwMVwifSJ9LHsiSWRlbnRpZmllciI6InZwYy0wMDAyIiwiUHJvcGVydGllcyI6IntcIlZwY0lkXCI6XCJ2cGMtMDAwMlwifSJ9LHsiSWRlbnRpZmllciI6InZwYy0wMDAzIiwiUHJvcGVydGllcyI6IntcIlZwY0lkXCI6XCJ2cGMtMDAwM1wifSJ9LHsiSWRlbnRpZmllciI6InZwYy0wMDA0IiwiUHJvcGVydGllcyI6IntcIlZwY0lkXCI6XCJ2cGMtMDAwNFwifSJ9LHsiSWRlbnRpZmllciI6InZwYy0wMDA1IiwiUHJvcGVydGllcyI6IntcIlZwY0lkXCI6XCJ2cGMtMDAwNVwifSJ9XSwiVHlwZU5hbWUiOiJBV1M6OkVDMjo6VlBDIn0="
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*SignedHeaders=accept;content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target": [ "CloudApiService.ListResourceRequests" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "ResourceRequestStatusFilter": {}
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "template": "#set($end = 2)\n#set($rb = $request.body.json)\n#set($rr = $rb.replaceAll('^.*NextToken\\D*(\\d+)?.*$|^.*()$', '$1'))\n#set($rn = $rr)\n#set($maxItems = 8)\n#set($thisCursor = \"#if (${rn})${rn}#{else}0#end\")\n#set($Integer = 0)\n#set($currentCursor = $Integer.parseInt($thisCursor))\n#set($nextCursor = $currentCursor + 1)\n#set($cFinal = ($currentCursor * 1) + $end + 1)\n{ 'statusCode': 200, 'headers': { 'Content-Type': [ 'application/x-amz-json-1.0' ] }, 'body': { #if($currentCursor < $maxItems) \"NextToken\": '$nextCursor', #end  \"ResourceRequestStatusSummaries\": [       #if($currentCursor < $maxItems)  \n#foreach($i in [1..$end])  \n#set($ci = $currentCursor * 1 + $i)\n     {      \"EventTime\": 1660714274.285,      \"Identifier\": \"LogGroupResourceExampleThird$ci\",      \"Operation\": \"CREATE\",      \"OperationStatus\": \"SUCCESS\",      \"RequestToken\": \"5ae5ae5a-0001-0001-001a-$ci\",      \"TypeName\": \"AWS::Logs::LogGroup\"    },    {      \"EventTime\": 1660709766.092,      \"Identifier\": \"LogGroupResourceExampleSecond$ci\",      \"Operation\": \"CREATE\",      \"OperationStatus\": \"SUCCESS\",      \"RequestToken\": \"5ae5ae5a-0002-0001-001a-$ci\",      \"TypeName\": \"AWS::Logs::LogGroup\"    },    {      \"EventTime\": 1660266055.925,      \"Identifier\": \"CloudControlExample$ci\",      \"Operation\": \"CREATE\",      \"OperationStatus\": \"SUCCESS\",      \"RequestToken\": \"5ae5ae5a-0003-0001-001a-$ci\",      \"TypeName\": \"AWS::Logs::LogGroup\"    },    {      \"ErrorCode\": \"InvalidRequest\",      \"EventTime\": 1660709730.739,      \"OperationStatus\": \"FAILED\",      \"RequestToken\": \"5ae5ae5a-0004-0001-001a-$ci\",      \"StatusMessage\": \"Model validation failed (#/RetentionInDays: #: only 1 subschema matches out of 2\n#/RetentionInDays: failed validation constraint for keyword [enum])\",      \"TypeName\": \"AWS::Logs::LogGroup\"    }, #end              {      \"EventTime\": 1660709644.835,      \"Identifier\": \"LogGroupResourceExample$cFinal\",      \"Operation\": \"CREATE\",      \"OperationStatus\": \"SUCCESS\",      \"RequestToken\": \"5ae5ae5a-0005-0001-001a-$cFinal\",      \"TypeName\": \"AWS::Logs::LogGroup\"    }     #{else}#end      ], \"rb\": $rb          }        }      }    }  }  } }",
+      "templateType": "VELOCITY"
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target": [ "CloudApiService.CreateResource" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "TypeName":"AWS::Logs::LogGroup"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "type": "BINARY",
+        "base64Bytes": "eyJQcm9ncmVzc0V2ZW50Ijp7IkV2ZW50VGltZSI6MS42NjA3MTQyNzM4RTksIklkZW50aWZpZXIiOiJMb2dHcm91cFJlc291cmNlRXhhbXBsZVRoaXJkIiwiT3BlcmF0aW9uIjoiQ1JFQVRFIiwiT3BlcmF0aW9uU3RhdHVzIjoiSU5fUFJPR1JFU1MiLCJSZXF1ZXN0VG9rZW4iOiI1YWU5Zjk2Mi04NzIwLTRhMjEtOTkyZS0xNTk4Y2Y1ZGIyNzMiLCJUeXBlTmFtZSI6IkFXUzo6TG9nczo6TG9nR3JvdXAifX0="
       }
     }
   },

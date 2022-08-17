@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"path"
@@ -92,6 +93,34 @@ func (hc *HandlerContext) GetProvider(providerName string) (provider.IProvider, 
 		err = fmt.Errorf("cannot find provider = '%s': %s", providerName, err.Error())
 	}
 	return prov, err
+}
+
+func (hc *HandlerContext) LogHTTPResponseMap(target interface{}) {
+	if target == nil {
+		hc.OutErrFile.Write([]byte("processed http response body not present\n"))
+		return
+	}
+	if hc.RuntimeContext.HTTPLogEnabled {
+		switch target := target.(type) {
+		case map[string]interface{}, []interface{}:
+			b, err := json.MarshalIndent(target, "", "  ")
+			if err != nil {
+				hc.OutErrFile.Write([]byte(fmt.Sprintf("processed http response body map '%v' colud not be marshalled; error: %s\n", target, err.Error())))
+				return
+			}
+			if target != nil {
+				hc.OutErrFile.Write([]byte(fmt.Sprintf("processed http response body object: %s\n", string(b))))
+			} else {
+				hc.OutErrFile.Write([]byte("processed http response body not present\n"))
+			}
+		default:
+			if target != nil {
+				hc.OutErrFile.Write([]byte(fmt.Sprintf("processed http response body object: %v\n", target)))
+			} else {
+				hc.OutErrFile.Write([]byte("processed http response body not present\n"))
+			}
+		}
+	}
 }
 
 func (hc *HandlerContext) GetAuthContext(providerName string) (*dto.AuthCtx, error) {

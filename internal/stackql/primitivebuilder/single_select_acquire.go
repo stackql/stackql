@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/stackql/go-openapistackql/pkg/httpelement"
 	"github.com/stackql/go-openapistackql/pkg/response"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/dto"
@@ -132,13 +133,14 @@ func (ss *SingleSelectAcquire) Build() error {
 			response, apiErr := httpmiddleware.HttpApiCallFromRequest(*(ss.handlerCtx), prov, reqCtx.Request.Clone(reqCtx.Request.Context()))
 			housekeepingDone := false
 			npt := prov.InferNextPageResponseElement(ss.tableMeta.HeirarchyObjects.Heirarchy)
-			nptKey := prov.InferNextPageRequestElement(ss.tableMeta.HeirarchyObjects.Heirarchy)
+			nptRequest := prov.InferNextPageRequestElement(ss.tableMeta.HeirarchyObjects.Heirarchy)
 			pageCount := 1
 			for {
 				if apiErr != nil {
 					return util.PrepareResultSet(dto.NewPrepareResultSetDTO(nil, nil, nil, ss.rowSort, apiErr, nil))
 				}
 				res, err := m.ProcessResponse(response)
+				ss.handlerCtx.LogHTTPResponseMap(res.GetProcessedBody())
 				if err != nil {
 					return dto.NewErroneousExecutorOutput(err)
 				}
@@ -200,15 +202,15 @@ func (ss *SingleSelectAcquire) Build() error {
 						}
 					}
 				}
-				if npt == nil || nptKey == nil {
+				if npt == nil || nptRequest == nil {
 					break
 				}
 				tk := extractNextPageToken(res, npt)
-				if tk == "" || (ss.handlerCtx.RuntimeContext.HTTPPageLimit > 0 && pageCount >= ss.handlerCtx.RuntimeContext.HTTPPageLimit) {
+				if tk == "" || tk == "<nil>" || tk == "[]" || (ss.handlerCtx.RuntimeContext.HTTPPageLimit > 0 && pageCount >= ss.handlerCtx.RuntimeContext.HTTPPageLimit) {
 					break
 				}
 				pageCount++
-				req, err := reqCtx.SetNextPage(tk, nptKey)
+				req, err := reqCtx.SetNextPage(m, tk, nptRequest)
 				if err != nil {
 					return dto.NewErroneousExecutorOutput(err)
 				}
@@ -216,7 +218,7 @@ func (ss *SingleSelectAcquire) Build() error {
 			}
 			if reqCtx.Request != nil {
 				q := reqCtx.Request.URL.Query()
-				q.Del(nptKey.Name)
+				q.Del(nptRequest.Name)
 				reqCtx.Request.URL.RawQuery = q.Encode()
 			}
 		}
@@ -274,6 +276,20 @@ func extractNextPageTokenFromHeader(res *response.Response, tokenKey *dto.HTTPEl
 }
 
 func extractNextPageTokenFromBody(res *response.Response, tokenKey *dto.HTTPElement) string {
+	elem, err := httpelement.NewHTTPElement(tokenKey.Name, "body")
+	if err == nil {
+		rawVal, err := res.ExtractElement(elem)
+		if err == nil {
+			switch v := rawVal.(type) {
+			case []interface{}:
+				if len(v) == 1 {
+					return fmt.Sprintf("%v", v[0])
+				}
+			default:
+				return fmt.Sprintf("%v", v)
+			}
+		}
+	}
 	body := res.GetProcessedBody()
 	switch target := body.(type) {
 	case map[string]interface{}:

@@ -338,6 +338,19 @@ func InferColNameFromExpr(node *sqlparser.AliasedExpr) ColumnHandle {
 	return inferColNameFromExpr(node)
 }
 
+func GetStringFromStringFunc(fe *sqlparser.FuncExpr) (interface{}, error) {
+	if strings.ToLower(fe.Name.GetRawVal()) == "string" && len(fe.Exprs) == 1 {
+		switch et := fe.Exprs[0].(type) {
+		case *sqlparser.AliasedExpr:
+			switch et2 := et.Expr.(type) {
+			case *sqlparser.SQLVal:
+				return string(et2.Val), nil
+			}
+		}
+	}
+	return "", fmt.Errorf("cannot extract string from func '%s'", fe.Name)
+}
+
 func inferColNameFromExpr(node *sqlparser.AliasedExpr) ColumnHandle {
 	alias := node.As.GetRawVal()
 	retVal := ColumnHandle{
