@@ -486,6 +486,7 @@ func (pb *primitiveGenerator) insertExecutor(handlerCtx *handler.HandlerContext,
 				}
 
 				target, err = m.DeprecatedProcessResponse(response)
+				handlerCtx.LogHTTPResponseMap(target)
 				if err != nil {
 					return dto.NewErroneousExecutorOutput(err)
 				}
@@ -654,6 +655,7 @@ func (pb *primitiveGenerator) deleteExecutor(handlerCtx *handler.HandlerContext,
 				return util.PrepareResultSet(dto.NewPrepareResultSetDTO(nil, nil, nil, nil, apiErr, nil))
 			}
 			target, err = m.DeprecatedProcessResponse(response)
+			handlerCtx.LogHTTPResponseMap(target)
 
 			log.Infoln(fmt.Sprintf("deleteExecutor() target = %v", target))
 			if err != nil {
@@ -760,6 +762,7 @@ func (pb *primitiveGenerator) execExecutor(handlerCtx *handler.HandlerContext, n
 				return util.PrepareResultSet(dto.NewPrepareResultSetDTO(nil, nil, nil, nil, apiErr, nil))
 			}
 			target, err = m.DeprecatedProcessResponse(response)
+			handlerCtx.LogHTTPResponseMap(target)
 			if err != nil {
 				return util.PrepareResultSet(dto.NewPrepareResultSetDTO(
 					nil,

@@ -1,6 +1,7 @@
 package httpbuild
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -48,7 +49,7 @@ func (hap HTTPArmouryParameters) ToFlatMap() (map[string]interface{}, error) {
 	return make(map[string]interface{}), nil
 }
 
-func (hap HTTPArmouryParameters) SetNextPage(token string, tokenKey *dto.HTTPElement) (*http.Request, error) {
+func (hap HTTPArmouryParameters) SetNextPage(ops *openapistackql.OperationStore, token string, tokenKey *dto.HTTPElement) (*http.Request, error) {
 	rv := hap.Request.Clone(hap.Request.Context())
 	switch tokenKey.Type {
 	case dto.QueryParam:
@@ -62,6 +63,19 @@ func (hap HTTPArmouryParameters) SetNextPage(token string, tokenKey *dto.HTTPEle
 			return nil, err
 		}
 		rv.URL = u
+		return rv, nil
+	case dto.BodyAttribute:
+		bm := make(map[string]interface{})
+		for k, v := range hap.Parameters.RequestBody {
+			bm[k] = v
+		}
+		bm[tokenKey.Name] = token
+		b, err := ops.MarshalBody(bm, ops.Request)
+		if err != nil {
+			return nil, err
+		}
+		rv.Body = io.NopCloser(bytes.NewBuffer(b))
+		rv.ContentLength = int64(len(b))
 		return rv, nil
 	default:
 		return nil, fmt.Errorf("cannot accomodate pagaination for http element type = %+v", tokenKey.Type)

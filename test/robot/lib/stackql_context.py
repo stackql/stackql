@@ -294,7 +294,10 @@ SELECT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY = "SELECT eTag FROM google.compute.ins
 
 SELECT_AWS_VOLUMES = "select VolumeId, Encrypted, Size from aws.ec2.volumes where region = 'ap-southeast-1' order by VolumeId asc;"
 CREATE_AWS_VOLUME = """insert into aws.ec2.volumes(AvailabilityZone, Size, region, TagSpecification) select 'ap-southeast-1a', JSON(10), 'ap-southeast-1', JSON('[ { "ResourceType": "volume", "Tag": [ { "Key": "stack", "Value": "production" }, { "Key": "name", "Value": "multi-tag-volume" } ] } ]');"""
+CREATE_AWS_CLOUD_CONTROL_LOG_GROUP = """insert into aws.cloud_control.resources(region, data__TypeName, data__DesiredState) select 'ap-southeast-1', 'AWS::Logs::LogGroup', string('{ "LogGroupName": "LogGroupResourceExampleThird", "RetentionInDays":90}');"""
 SELECT_AWS_CLOUD_CONTROL_VPCS_DESC = "select Identifier, Properties from aws.cloud_control.resources where region = 'ap-southeast-1' and data__TypeName = 'AWS::EC2::VPC' order by Identifier desc;"
+
+SELECT_AWS_CLOUD_CONTROL_OPERATIONS_DESC = "select TypeName, OperationStatus, StatusMessage, Identifier, RequestToken from aws.cloud_control.resource_requests where data__ResourceRequestStatusFilter='{}' and region = 'ap-southeast-1' order by RequestToken desc;"
 
 SELECT_GITHUB_REPOS_PAGES_SINGLE = "select url from github.repos.pages where owner = 'dummyorg' and repo = 'dummyapp.io';"
 SELECT_GITHUB_REPOS_IDS_ASC = "select id from github.repos.repos where org = 'dummyorg' order by id ASC;"
@@ -345,6 +348,7 @@ SELECT_OKTA_USERS_ASC_EXPECTED = get_output_from_local_file(os.path.join('test',
 
 SELECT_AWS_VOLUMES_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'volumes', 'select-volumes-asc.txt'))
 SELECT_AWS_CLOUD_CONTROL_VPCS_DESC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-list-vpcs-desc.txt'))
+SELECT_AWS_CLOUD_CONTROL_OPERATIONS_DESC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-list-operations-desc.txt'))
 
 SELECT_GITHUB_REPOS_PAGES_SINGLE_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-repos-pages.txt'))
 SELECT_GITHUB_REPOS_IDS_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-repos-ids-asc.txt'))
@@ -434,6 +438,7 @@ def get_variables(execution_env :str):
     'STACKQL_EXE':                                    STACKQL_EXE,
     ## queries and expectations
     'CREATE_AWS_VOLUME':                                                    CREATE_AWS_VOLUME,
+    'CREATE_AWS_CLOUD_CONTROL_LOG_GROUP':                                   CREATE_AWS_CLOUD_CONTROL_LOG_GROUP,
     'DESCRIBE_AWS_EC2_INSTANCES':                                           DESCRIBE_AWS_EC2_INSTANCES,
     'DESCRIBE_AWS_EC2_DEFAULT_KMS_KEY_ID':                                  DESCRIBE_AWS_EC2_DEFAULT_KMS_KEY_ID,
     'DESCRIBE_GITHUB_REPOS_PAGES':                                          DESCRIBE_GITHUB_REPOS_PAGES,
@@ -444,6 +449,8 @@ def get_variables(execution_env :str):
     'REGISTRY_LIST_EXPECTED':                                               REGISTRY_LIST_EXPECTED,
     'SELECT_ACCELERATOR_TYPES_DESC':                                        SELECT_ACCELERATOR_TYPES_DESC,
     'SELECT_ACCELERATOR_TYPES_DESC_EXPECTED':                               SELECT_ACCELERATOR_TYPES_DESC_EXPECTED,
+    'SELECT_AWS_CLOUD_CONTROL_OPERATIONS_DESC':                             SELECT_AWS_CLOUD_CONTROL_OPERATIONS_DESC,
+    'SELECT_AWS_CLOUD_CONTROL_OPERATIONS_DESC_EXPECTED':                    SELECT_AWS_CLOUD_CONTROL_OPERATIONS_DESC_EXPECTED,
     'SELECT_AWS_CLOUD_CONTROL_VPCS_DESC':                                   SELECT_AWS_CLOUD_CONTROL_VPCS_DESC,
     'SELECT_AWS_CLOUD_CONTROL_VPCS_DESC_EXPECTED':                          SELECT_AWS_CLOUD_CONTROL_VPCS_DESC_EXPECTED,
     'SELECT_AWS_VOLUMES':                                                   SELECT_AWS_VOLUMES,

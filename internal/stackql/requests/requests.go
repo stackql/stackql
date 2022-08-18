@@ -7,7 +7,9 @@ import (
 	"encoding/json"
 
 	"github.com/stackql/stackql/internal/stackql/constants"
+	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/provider"
+	"vitess.io/vitess/go/vt/sqlparser"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
 )
@@ -29,6 +31,17 @@ func parseRequestBodyParam(k string, v interface{}) *requestBodyParam {
 				parsedVal = js
 			} else if json.Unmarshal([]byte(vt), &jArr) == nil {
 				parsedVal = jArr
+			} else {
+				parsedVal = vt
+			}
+		case *sqlparser.FuncExpr:
+			if strings.ToLower(vt.Name.GetRawVal()) == "string" && len(vt.Exprs) == 1 {
+				pv, err := parserutil.GetStringFromStringFunc(vt)
+				if err == nil {
+					parsedVal = pv
+				} else {
+					parsedVal = vt
+				}
 			} else {
 				parsedVal = vt
 			}
