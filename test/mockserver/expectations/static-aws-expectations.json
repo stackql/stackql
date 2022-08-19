@@ -44,8 +44,59 @@
       },
       "statusCode": 200,
       "body": {
-        "type": "BINARY",
-        "base64Bytes": "eyJSZXNvdXJjZURlc2NyaXB0aW9ucyI6W3siSWRlbnRpZmllciI6InZwYy0wMDAxIiwiUHJvcGVydGllcyI6IntcIlZwY0lkXCI6XCJ2cGMtMDAwMVwifSJ9LHsiSWRlbnRpZmllciI6InZwYy0wMDAyIiwiUHJvcGVydGllcyI6IntcIlZwY0lkXCI6XCJ2cGMtMDAwMlwifSJ9LHsiSWRlbnRpZmllciI6InZwYy0wMDAzIiwiUHJvcGVydGllcyI6IntcIlZwY0lkXCI6XCJ2cGMtMDAwM1wifSJ9LHsiSWRlbnRpZmllciI6InZwYy0wMDA0IiwiUHJvcGVydGllcyI6IntcIlZwY0lkXCI6XCJ2cGMtMDAwNFwifSJ9LHsiSWRlbnRpZmllciI6InZwYy0wMDA1IiwiUHJvcGVydGllcyI6IntcIlZwY0lkXCI6XCJ2cGMtMDAwNVwifSJ9XSwiVHlwZU5hbWUiOiJBV1M6OkVDMjo6VlBDIn0="
+        "ResourceDescriptions": [
+          {
+            "Identifier": "vpc-0001", 
+            "Properties": "{\"VpcId\":\"vpc-0001\"}"
+          },
+          {
+            "Identifier": "vpc-0002",
+            "Properties": "{\"VpcId\":\"vpc-0002\"}"
+          },
+          {
+            "Identifier": "vpc-0003",
+            "Properties": "{\"VpcId\":\"vpc-0003\"}"
+          },
+          {
+            "Identifier": "vpc-0004",
+            "Properties": "{\"VpcId\":\"vpc-0004\"}"
+          },
+          {
+            "Identifier": "vpc-0005",
+            "Properties": "{\"VpcId\":\"vpc-0005\"}"
+          }
+        ],
+        "TypeName":"AWS::EC2::VPC"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*SignedHeaders.*content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target": [ "CloudApiService.GetResource" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "TypeName":"AWS::EC2::VPC",
+          "Identifier": "CloudControlExample"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "ResourceDescription": {
+          "Identifier": "CloudControlExample",
+          "Properties": "{\"RetentionInDays\":90,\"LogGroupName\":\"CloudControlExample\",\"Arn\":\"arn:aws:logs:ap-southeast-1:0000000001:log-group:CloudControlExample:*\"}"
+        }
       }
     }
   },
@@ -81,7 +132,7 @@
       "body": {
         "type": "JSON",
         "json": {
-          "TypeName":"AWS::Logs::LogGroup"
+          "TypeName": "AWS::Logs::LogGroup"
         },
         "matchType": "ONLY_MATCHING_FIELDS"
       }
@@ -92,8 +143,148 @@
       },
       "statusCode": 200,
       "body": {
-        "type": "BINARY",
-        "base64Bytes": "eyJQcm9ncmVzc0V2ZW50Ijp7IkV2ZW50VGltZSI6MS42NjA3MTQyNzM4RTksIklkZW50aWZpZXIiOiJMb2dHcm91cFJlc291cmNlRXhhbXBsZVRoaXJkIiwiT3BlcmF0aW9uIjoiQ1JFQVRFIiwiT3BlcmF0aW9uU3RhdHVzIjoiSU5fUFJPR1JFU1MiLCJSZXF1ZXN0VG9rZW4iOiI1YWU5Zjk2Mi04NzIwLTRhMjEtOTkyZS0xNTk4Y2Y1ZGIyNzMiLCJUeXBlTmFtZSI6IkFXUzo6TG9nczo6TG9nR3JvdXAifX0="
+        "ProgressEvent":{
+          "EventTime": 1.6607142738E9,
+          "Identifier": "LogGroupResourceExampleThird",
+          "Operation": "CREATE",
+          "OperationStatus": "IN_PROGRESS",
+          "RequestToken": "5ae9f962-8720-4a21-992e-1598cf5db273",
+          "TypeName": "AWS::Logs::LogGroup"
+        }
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target": [ "CloudApiService.UpdateResource" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "TypeName": "AWS::Logs::LogGroup",
+          "Identifier": "LogGroupResourceExampleThird" 
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "ProgressEvent":{
+          "EventTime": 1.6607142738E9,
+          "Identifier": "LogGroupResourceExampleThird",
+          "Operation": "UPDATE",
+          "OperationStatus": "IN_PROGRESS",
+          "RequestToken": "5ae9f962-8720-4a21-992e-1598cf5db273",
+          "TypeName": "AWS::Logs::LogGroup"
+        }
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target": [ "CloudApiService.DeleteResource" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "TypeName": "AWS::Logs::LogGroup",
+          "Identifier": "LogGroupResourceExampleThird" 
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "ProgressEvent":{
+          "EventTime": 1.6607142738E9,
+          "Identifier": "LogGroupResourceExampleThird",
+          "Operation": "DELETE",
+          "OperationStatus": "IN_PROGRESS",
+          "RequestToken": "5ae9f962-8720-4a21-992e-1598cf5db273",
+          "TypeName": "AWS::Logs::LogGroup"
+        }
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target": [ "CloudApiService.CancelResourceRequest" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "RequestToken": "abc001" 
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "ProgressEvent":{
+          "EventTime": 1.6607142738E9,
+          "Identifier": "LogGroupResourceExampleThird",
+          "Operation": "DELETE",
+          "OperationStatus": "IN_PROGRESS",
+          "RequestToken": "5ae9f962-8720-4a21-992e-1598cf5db273",
+          "TypeName": "AWS::Logs::LogGroup"
+        }
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target": [ "CloudApiService.GetResourceRequestStatus" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "RequestToken": "abc001" 
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "ProgressEvent":{
+          "EventTime": 1.6607142738E9,
+          "Identifier": "LogGroupResourceExampleThird",
+          "Operation": "DELETE",
+          "OperationStatus": "IN_PROGRESS",
+          "RequestToken": "abc001",
+          "TypeName": "AWS::Logs::LogGroup"
+        }
       }
     }
   },
