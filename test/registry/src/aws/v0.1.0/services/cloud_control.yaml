@@ -76,428 +76,446 @@ servers:
     description: The CloudControlApi endpoint for China (Beijing) and China (Ningxia)
 paths:
   /?Action=CancelResourceRequest&Version=2021-09-30:
+    parameters:
+    - $ref: '#/components/parameters/X-Amz-Content-Sha256'
+    - $ref: '#/components/parameters/X-Amz-Date'
+    - $ref: '#/components/parameters/X-Amz-Algorithm'
+    - $ref: '#/components/parameters/X-Amz-Credential'
+    - $ref: '#/components/parameters/X-Amz-Security-Token'
+    - $ref: '#/components/parameters/X-Amz-Signature'
+    - $ref: '#/components/parameters/X-Amz-SignedHeaders'
     post:
       operationId: CancelResourceRequest
-      description: '<p>Cancels the specified resource operation request. For more information, see <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/resource-operations-manage-requests.html#resource-operations-manage-requests-cancel">Canceling resource operation requests</a> in the <i>Amazon Web Services Cloud Control API User Guide</i>.</p> <p>Only resource operations requests with a status of <code>PENDING</code> or <code>IN_PROGRESS</code> can be canceled.</p>'
+      parameters:
+      - description: Action Header
+        in: header
+        name: X-Amz-Target
+        required: false
+        schema:
+          default: CloudApiService.CancelResourceRequest
+          enum:
+          - CloudApiService.CancelResourceRequest
+          type: string
+      - in: header
+        name: Content-Type
+        required: false
+        schema:
+          default: application/x-amz-json-1.0
+          enum:
+          - application/x-amz-json-1.0
+          type: string
+      requestBody:
+        content:
+          application/x-amz-json-1.0:
+            schema:
+              $ref: '#/components/schemas/CancelResourceRequestInput'
+        required: true
       responses:
         '200':
-          description: Success
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CancelResourceRequestOutput'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CancelResourceRequestInput'
-      parameters: 
-        - name: X-Amz-Target
-          in: header
-          schema:
-            type: string
-            default: CloudApiService.CancelResourceRequest
-            enum:
-              - CloudApiService.CancelResourceRequest
-          description: Action Header
-          required: false
-        - name: Content-Type
-          in: header
-          schema:
-            type: string
-            default: application/x-amz-json-1.0
-            enum:
-              - application/x-amz-json-1.0
-          required: false
-    parameters:
-      - $ref: '#/components/parameters/X-Amz-Content-Sha256'
-      - $ref: '#/components/parameters/X-Amz-Date'
-      - $ref: '#/components/parameters/X-Amz-Algorithm'
-      - $ref: '#/components/parameters/X-Amz-Credential'
-      - $ref: '#/components/parameters/X-Amz-Security-Token'
-      - $ref: '#/components/parameters/X-Amz-Signature'
-      - $ref: '#/components/parameters/X-Amz-SignedHeaders'
+          description: Success
   /?Action=CreateResource&Version=2021-09-30:
+    parameters:
+    - $ref: '#/components/parameters/X-Amz-Content-Sha256'
+    - $ref: '#/components/parameters/X-Amz-Date'
+    - $ref: '#/components/parameters/X-Amz-Algorithm'
+    - $ref: '#/components/parameters/X-Amz-Credential'
+    - $ref: '#/components/parameters/X-Amz-Security-Token'
+    - $ref: '#/components/parameters/X-Amz-Signature'
+    - $ref: '#/components/parameters/X-Amz-SignedHeaders'
     post:
       operationId: CreateResource
-      description: '<p>Creates the specified resource. For more information, see <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/resource-operations-create.html">Creating a resource</a> in the <i>Amazon Web Services Cloud Control API User Guide</i>.</p> <p>After you have initiated a resource creation request, you can monitor the progress of your request by calling <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/APIReference/API_GetResourceRequestStatus.html">GetResourceRequestStatus</a> using the <code>RequestToken</code> of the <code>ProgressEvent</code> type returned by <code>CreateResource</code>.</p>'
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProgressEvent'
+      parameters:
+      - description: Action Header
+        in: header
+        name: X-Amz-Target
+        required: false
+        schema:
+          default: CloudApiService.CreateResource
+          enum:
+          - CloudApiService.CreateResource
+          type: string
+      - in: header
+        name: Content-Type
+        required: false
+        schema:
+          default: application/x-amz-json-1.0
+          enum:
+          - application/x-amz-json-1.0
+          type: string
       requestBody:
-        required: true
         content:
           application/x-amz-json-1.0:
             schema:
               $ref: '#/components/schemas/CreateResourceInput'
-      parameters: 
-        - name: X-Amz-Target
-          in: header
-          schema:
-            type: string
-            default: CloudApiService.CreateResource
-            enum:
-              - CloudApiService.CreateResource
-          description: Action Header
-          required: false
-        - name: Content-Type
-          in: header
-          schema:
-            type: string
-            default: application/x-amz-json-1.0
-            enum: 
-              - application/x-amz-json-1.0
-          required: false
-    parameters:
-      - $ref: '#/components/parameters/X-Amz-Content-Sha256'
-      - $ref: '#/components/parameters/X-Amz-Date'
-      - $ref: '#/components/parameters/X-Amz-Algorithm'
-      - $ref: '#/components/parameters/X-Amz-Credential'
-      - $ref: '#/components/parameters/X-Amz-Security-Token'
-      - $ref: '#/components/parameters/X-Amz-Signature'
-      - $ref: '#/components/parameters/X-Amz-SignedHeaders'
-  /?Action=DeleteResource&Version=2021-09-30:
-    post:
-      operationId: DeleteResource
-      description: '<p>Deletes the specified resource. For details, see <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/resource-operations-delete.html">Deleting a resource</a> in the <i>Amazon Web Services Cloud Control API User Guide</i>.</p> <p>After you have initiated a resource deletion request, you can monitor the progress of your request by calling <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/APIReference/API_GetResourceRequestStatus.html">GetResourceRequestStatus</a> using the <code>RequestToken</code> of the <code>ProgressEvent</code> returned by <code>DeleteResource</code>.</p>'
+        required: true
       responses:
         '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgressEvent'
           description: Success
+  /?Action=DeleteResource&Version=2021-09-30:
+    parameters:
+    - $ref: '#/components/parameters/X-Amz-Content-Sha256'
+    - $ref: '#/components/parameters/X-Amz-Date'
+    - $ref: '#/components/parameters/X-Amz-Algorithm'
+    - $ref: '#/components/parameters/X-Amz-Credential'
+    - $ref: '#/components/parameters/X-Amz-Security-Token'
+    - $ref: '#/components/parameters/X-Amz-Signature'
+    - $ref: '#/components/parameters/X-Amz-SignedHeaders'
+    post:
+      operationId: DeleteResource
+      parameters:
+      - description: Action Header
+        in: header
+        name: X-Amz-Target
+        required: false
+        schema:
+          default: CloudApiService.DeleteResource
+          enum:
+          - CloudApiService.DeleteResource
+          type: string
+      - in: header
+        name: Content-Type
+        required: false
+        schema:
+          default: application/x-amz-json-1.0
+          enum:
+          - application/x-amz-json-1.0
+          type: string
+      requestBody:
+        content:
+          application/x-amz-json-1.0:
+            schema:
+              $ref: '#/components/schemas/DeleteResourceInput'
+        required: true
+      responses:
+        '200':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/DeleteResourceOutput'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DeleteResourceInput'
-      parameters: 
-        - name: X-Amz-Target
-          in: header
-          schema:
-            type: string
-            default: CloudApiService.DeleteResource
-            enum:
-              - CloudApiService.DeleteResource
-          description: Action Header
-          required: false
-        - name: Content-Type
-          in: header
-          schema:
-            type: string
-            default: application/x-amz-json-1.0
-            enum:
-              - application/x-amz-json-1.0
-          required: false
-    parameters:
-      - $ref: '#/components/parameters/X-Amz-Content-Sha256'
-      - $ref: '#/components/parameters/X-Amz-Date'
-      - $ref: '#/components/parameters/X-Amz-Algorithm'
-      - $ref: '#/components/parameters/X-Amz-Credential'
-      - $ref: '#/components/parameters/X-Amz-Security-Token'
-      - $ref: '#/components/parameters/X-Amz-Signature'
-      - $ref: '#/components/parameters/X-Amz-SignedHeaders'
+          description: Success
   /?Action=GetResource&Version=2021-09-30:
+    parameters:
+    - $ref: '#/components/parameters/X-Amz-Content-Sha256'
+    - $ref: '#/components/parameters/X-Amz-Date'
+    - $ref: '#/components/parameters/X-Amz-Algorithm'
+    - $ref: '#/components/parameters/X-Amz-Credential'
+    - $ref: '#/components/parameters/X-Amz-Security-Token'
+    - $ref: '#/components/parameters/X-Amz-Signature'
+    - $ref: '#/components/parameters/X-Amz-SignedHeaders'
     post:
       operationId: GetResource
-      description: '<p>Returns information about the current state of the specified resource. For details, see <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/resource-operations-read.html">Reading a resource''s current state</a>.</p> <p>You can use this action to return information about an existing resource in your account and Amazon Web Services Region, whether those resources were provisioned using Cloud Control API.</p>'
+      parameters:
+      - description: Action Header
+        in: header
+        name: X-Amz-Target
+        required: false
+        schema:
+          default: CloudApiService.GetResource
+          enum:
+          - CloudApiService.GetResource
+          type: string
+      - in: header
+        name: Content-Type
+        required: false
+        schema:
+          default: application/x-amz-json-1.0
+          enum:
+          - application/x-amz-json-1.0
+          type: string
+      requestBody:
+        content:
+          application/x-amz-json-1.0:
+            schema:
+              $ref: '#/components/schemas/GetResourceInput'
+        required: true
       responses:
         '200':
-          description: Success
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetResourceOutput'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GetResourceInput'
-      parameters: 
-        - name: X-Amz-Target
-          in: header
-          schema:
-            type: string
-            default: CloudApiService.GetResource
-            enum:
-              - CloudApiService.GetResource
-          description: Action Header
-          required: false
-        - name: Content-Type
-          in: header
-          schema:
-            type: string
-            default: application/x-amz-json-1.0
-            enum:
-              - application/x-amz-json-1.0
-          required: false
-    parameters:
-      - $ref: '#/components/parameters/X-Amz-Content-Sha256'
-      - $ref: '#/components/parameters/X-Amz-Date'
-      - $ref: '#/components/parameters/X-Amz-Algorithm'
-      - $ref: '#/components/parameters/X-Amz-Credential'
-      - $ref: '#/components/parameters/X-Amz-Security-Token'
-      - $ref: '#/components/parameters/X-Amz-Signature'
-      - $ref: '#/components/parameters/X-Amz-SignedHeaders'
+          description: Success
   /?Action=GetResourceRequestStatus&Version=2021-09-30:
+    parameters:
+    - $ref: '#/components/parameters/X-Amz-Content-Sha256'
+    - $ref: '#/components/parameters/X-Amz-Date'
+    - $ref: '#/components/parameters/X-Amz-Algorithm'
+    - $ref: '#/components/parameters/X-Amz-Credential'
+    - $ref: '#/components/parameters/X-Amz-Security-Token'
+    - $ref: '#/components/parameters/X-Amz-Signature'
+    - $ref: '#/components/parameters/X-Amz-SignedHeaders'
     post:
       operationId: GetResourceRequestStatus
-      description: 'Returns the current status of a resource operation request. For more information, see <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/resource-operations-manage-requests.html#resource-operations-manage-requests-track">Tracking the progress of resource operation requests</a> in the <i>Amazon Web Services Cloud Control API User Guide</i>.'
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetResourceRequestStatusOutput'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GetResourceRequestStatusInput'
-      parameters: 
-        - name: X-Amz-Target
-          in: header
-          schema:
-            type: string
-            default: CloudApiService.GetResourceRequestStatus
-            enum:
-              - CloudApiService.GetResourceRequestStatus
-          description: Action Header
-          required: false
-        - name: Content-Type
-          in: header
-          schema:
-            type: string
-            default: application/x-amz-json-1.0
-            enum:
-              - application/x-amz-json-1.0
-          required: false
-    parameters:
-      - $ref: '#/components/parameters/X-Amz-Content-Sha256'
-      - $ref: '#/components/parameters/X-Amz-Date'
-      - $ref: '#/components/parameters/X-Amz-Algorithm'
-      - $ref: '#/components/parameters/X-Amz-Credential'
-      - $ref: '#/components/parameters/X-Amz-Security-Token'
-      - $ref: '#/components/parameters/X-Amz-Signature'
-      - $ref: '#/components/parameters/X-Amz-SignedHeaders'
-  '/?Action=ListResources&Version=2021-09-30':
-    post:
-      operationId: ListResources
-      responses:
-        '200':
-          description: Success
-          content:
-            application/x-amz-json-1.0:
-              schema:
-                type: object
-                properties:
-                  ResourceDescriptions:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        Identifier:
-                          type: string
-                        Properties:
-                          type: string
       parameters:
-        - name: MaxResults
-          in: query
-          schema:
-            type: string
-          description: Pagination limit
-          required: false
-        - name: NextToken
-          in: query
-          schema:
-            type: string
-          description: Pagination token
-          required: false
-        - name: X-Amz-Target
-          in: header
-          schema:
-            type: string
-            default: CloudApiService.ListResources
-            enum:
-              - CloudApiService.ListResources
-          description: Action Header
-          required: false
-        - name: Content-Type
-          in: header
-          schema:
-            type: string
-            default: application/x-amz-json-1.0
-            enum:
-              - application/x-amz-json-1.0
-          required: false
-        - name: Accept
-          in: header
-          schema:
-            type: string
-            default: application/x-amz-json-1.0
-            enum:
-              - application/x-amz-json-1.0
-          required: false
+      - description: Action Header
+        in: header
+        name: X-Amz-Target
+        required: false
+        schema:
+          default: CloudApiService.GetResourceRequestStatus
+          enum:
+          - CloudApiService.GetResourceRequestStatus
+          type: string
+      - in: header
+        name: Content-Type
+        required: false
+        schema:
+          default: application/x-amz-json-1.0
+          enum:
+          - application/x-amz-json-1.0
+          type: string
       requestBody:
-        required: true
         content:
           application/x-amz-json-1.0:
             schema:
-              type: object
-              required:
-                - TypeName
-              properties:
-                TypeName:
-                  type: string
-    parameters:
-      - $ref: '#/components/parameters/X-Amz-Content-Sha256'
-      - $ref: '#/components/parameters/X-Amz-Date'
-      - $ref: '#/components/parameters/X-Amz-Algorithm'
-      - $ref: '#/components/parameters/X-Amz-Credential'
-      - $ref: '#/components/parameters/X-Amz-Security-Token'
-      - $ref: '#/components/parameters/X-Amz-Signature'
-      - $ref: '#/components/parameters/X-Amz-SignedHeaders'
-  '/?Action=ListResourceRequests&Version=2021-09-30':
-    post:
-      operationId: ListResourceRequests
+              $ref: '#/components/schemas/GetResourceRequestStatusInput'
+        required: true
       responses:
         '200':
-          description: Success
           content:
             application/x-amz-json-1.0:
               schema:
-                type: object
+                $ref: '#/components/schemas/GetResourceRequestStatusOutput'
+          description: Success
+  /?Action=ListResourceRequests&Version=2021-09-30:
+    parameters:
+    - $ref: '#/components/parameters/X-Amz-Content-Sha256'
+    - $ref: '#/components/parameters/X-Amz-Date'
+    - $ref: '#/components/parameters/X-Amz-Algorithm'
+    - $ref: '#/components/parameters/X-Amz-Credential'
+    - $ref: '#/components/parameters/X-Amz-Security-Token'
+    - $ref: '#/components/parameters/X-Amz-Signature'
+    - $ref: '#/components/parameters/X-Amz-SignedHeaders'
+    post:
+      operationId: ListResourceRequests
+      parameters:
+      - description: Pagination limit
+        in: query
+        name: MaxResults
+        required: false
+        schema:
+          type: string
+      - description: Pagination token
+        in: query
+        name: NextToken
+        required: false
+        schema:
+          type: string
+      - description: Action Header
+        in: header
+        name: X-Amz-Target
+        required: false
+        schema:
+          default: CloudApiService.ListResourceRequests
+          enum:
+          - CloudApiService.ListResourceRequests
+          type: string
+      - in: header
+        name: Content-Type
+        required: false
+        schema:
+          default: application/x-amz-json-1.0
+          enum:
+          - application/x-amz-json-1.0
+          type: string
+      - in: header
+        name: Accept
+        required: false
+        schema:
+          default: application/x-amz-json-1.0
+          enum:
+          - application/x-amz-json-1.0
+          type: string
+      requestBody:
+        content:
+          application/x-amz-json-1.0:
+            schema:
+              properties:
+                ResourceRequestStatusFilter:
+                  properties:
+                    OperationStatuses:
+                      enum:
+                      - PENDING
+                      - IN_PROGRESS
+                      - SUCCESS
+                      - FAILED
+                      - CANCEL_IN_PROGRESS
+                      - CANCEL_COMPLETE
+                      type: string
+                    Operations:
+                      enum:
+                      - CREATE
+                      - DELETE
+                      - UPDATE
+                      type: string
+                  type: object
+              type: object
+        required: true
+      responses:
+        '200':
+          content:
+            application/x-amz-json-1.0:
+              schema:
                 properties:
                   NextToken:
                     type: string
                   ResourceRequestStatusSummaries:
-                    type: array
                     items:
                       $ref: '#/components/schemas/ProgressEvent'
+                    type: array
+                type: object
+          description: Success
+  /?Action=ListResources&Version=2021-09-30:
+    parameters:
+    - $ref: '#/components/parameters/X-Amz-Content-Sha256'
+    - $ref: '#/components/parameters/X-Amz-Date'
+    - $ref: '#/components/parameters/X-Amz-Algorithm'
+    - $ref: '#/components/parameters/X-Amz-Credential'
+    - $ref: '#/components/parameters/X-Amz-Security-Token'
+    - $ref: '#/components/parameters/X-Amz-Signature'
+    - $ref: '#/components/parameters/X-Amz-SignedHeaders'
+    post:
+      operationId: ListResources
       parameters:
-        - name: MaxResults
-          in: query
-          schema:
-            type: string
-          description: Pagination limit
-          required: false
-        - name: NextToken
-          in: query
-          schema:
-            type: string
-          description: Pagination token
-          required: false
-        - name: X-Amz-Target
-          in: header
-          schema:
-            type: string
-            default: CloudApiService.ListResourceRequests
-            enum:
-              - CloudApiService.ListResourceRequests
-          description: Action Header
-          required: false
-        - name: Content-Type
-          in: header
-          schema:
-            type: string
-            default: application/x-amz-json-1.0
-            enum:
-              - application/x-amz-json-1.0
-          required: false
-        - name: Accept
-          in: header
-          schema:
-            type: string
-            default: application/x-amz-json-1.0
-            enum:
-              - application/x-amz-json-1.0
-          required: false
+      - description: Pagination limit
+        in: query
+        name: MaxResults
+        required: false
+        schema:
+          type: string
+      - description: Pagination token
+        in: query
+        name: NextToken
+        required: false
+        schema:
+          type: string
+      - description: Action Header
+        in: header
+        name: X-Amz-Target
+        required: false
+        schema:
+          default: CloudApiService.ListResources
+          enum:
+          - CloudApiService.ListResources
+          type: string
+      - in: header
+        name: Content-Type
+        required: false
+        schema:
+          default: application/x-amz-json-1.0
+          enum:
+          - application/x-amz-json-1.0
+          type: string
+      - in: header
+        name: Accept
+        required: false
+        schema:
+          default: application/x-amz-json-1.0
+          enum:
+          - application/x-amz-json-1.0
+          type: string
       requestBody:
-        required: true
         content:
           application/x-amz-json-1.0:
             schema:
-              type: object
               properties:
-                ResourceRequestStatusFilter:
-                  type: object
-                  properties:
-                    Operations:
-                      type: string
-                      enum:
-                        - CREATE
-                        - DELETE
-                        - UPDATE
-                    OperationStatuses:
-                      type: string
-                      enum:
-                        - PENDING
-                        - IN_PROGRESS
-                        - SUCCESS
-                        - FAILED
-                        - CANCEL_IN_PROGRESS
-                        - CANCEL_COMPLETE
-    parameters:
-      - $ref: '#/components/parameters/X-Amz-Content-Sha256'
-      - $ref: '#/components/parameters/X-Amz-Date'
-      - $ref: '#/components/parameters/X-Amz-Algorithm'
-      - $ref: '#/components/parameters/X-Amz-Credential'
-      - $ref: '#/components/parameters/X-Amz-Security-Token'
-      - $ref: '#/components/parameters/X-Amz-Signature'
-      - $ref: '#/components/parameters/X-Amz-SignedHeaders'
-  /?X-Amz-Target=CloudApiService.UpdateResource&Version=2021-09-30:
-    post:
-      operationId: UpdateResource
-      description: '<p>Updates the specified property values in the resource.</p> <p>You specify your resource property updates as a list of patch operations contained in a JSON patch document that adheres to the <a href="https://datatracker.ietf.org/doc/html/rfc6902"> <i>RFC 6902 - JavaScript Object Notation (JSON) Patch</i> </a> standard.</p> <p>For details on how Cloud Control API performs resource update operations, see <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/resource-operations-update.html">Updating a resource</a> in the <i>Amazon Web Services Cloud Control API User Guide</i>.</p> <p>After you have initiated a resource update request, you can monitor the progress of your request by calling <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/APIReference/API_GetResourceRequestStatus.html">GetResourceRequestStatus</a> using the <code>RequestToken</code> of the <code>ProgressEvent</code> returned by <code>UpdateResource</code>.</p> <p>For more information about the properties of a specific resource, refer to the related topic for the resource in the <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html">Resource and property types reference</a> in the <i>CloudFormation Users Guide</i>.</p>'
+                MaxResults: 
+                  $ref: '#/components/schemas/MaxResults'
+                NextToken:
+                  $ref: '#/components/schemas/NextToken'
+                ResourceModel:
+                  type: string
+                RoleArn:
+                  $ref: '#/components/schemas/RoleArn'
+                TypeName:
+                  $ref: '#/components/schemas/TypeName'
+                TypeVersionId:
+                  $ref: '#/components/schemas/TypeVersionId'
+              required:
+              - TypeName
+              type: object
+        required: true
       responses:
         '200':
+          content:
+            application/x-amz-json-1.0:
+              schema:
+                properties:
+                  RequestToken:
+                    type: string
+                  ResourceDescriptions:
+                    items:
+                      $ref: '#/components/schemas/ResourceDescription'
+                    type: array
+                type: object
           description: Success
+  /?Action=UpdateResource&Version=2021-09-30:
+    parameters:
+    - $ref: '#/components/parameters/X-Amz-Content-Sha256'
+    - $ref: '#/components/parameters/X-Amz-Date'
+    - $ref: '#/components/parameters/X-Amz-Algorithm'
+    - $ref: '#/components/parameters/X-Amz-Credential'
+    - $ref: '#/components/parameters/X-Amz-Security-Token'
+    - $ref: '#/components/parameters/X-Amz-Signature'
+    - $ref: '#/components/parameters/X-Amz-SignedHeaders'
+    post:
+      operationId: UpdateResource
+      parameters:
+      - description: Action Header
+        in: header
+        name: X-Amz-Target
+        required: false
+        schema:
+          default: CloudApiService.UpdateResource
+          enum:
+          - CloudApiService.UpdateResource
+          type: string
+      - in: header
+        name: Content-Type
+        required: false
+        schema:
+          default: application/x-amz-json-1.0
+          enum:
+          - application/x-amz-json-1.0
+          type: string
+      requestBody:
+        content:
+          application/x-amz-json-1.0:
+            schema:
+              properties:
+                ClientName: 
+                  type: string
+                Identifier:
+                  $ref: '#/components/schemas/Identifier'
+                PatchDocument:
+                  type: string
+                RoleArn:
+                  $ref: '#/components/schemas/RoleArn'
+                TypeName:
+                  $ref: '#/components/schemas/TypeName'
+                TypeVersionId:
+                  $ref: '#/components/schemas/TypeVersionId'
+              required:
+              - Identifier
+              - PatchDocument
+              - TypeName
+              type: object
+        required: true
+      responses:
+        '200':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UpdateResourceOutput'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateResourceInput'
-      parameters: 
-        - name: X-Amz-Target
-          in: header
-          schema:
-            type: string
-            default: CloudApiService.UpdateResource
-            enum:
-              - CloudApiService.UpdateResource
-          description: Action Header
-          required: false
-        - name: Content-Type
-          in: header
-          schema:
-            type: string
-            default: application/x-amz-json-1.0
-            enum:
-              - application/x-amz-json-1.0
-          required: false
-    parameters:
-      - $ref: '#/components/parameters/X-Amz-Content-Sha256'
-      - $ref: '#/components/parameters/X-Amz-Date'
-      - $ref: '#/components/parameters/X-Amz-Algorithm'
-      - $ref: '#/components/parameters/X-Amz-Credential'
-      - $ref: '#/components/parameters/X-Amz-Security-Token'
-      - $ref: '#/components/parameters/X-Amz-Signature'
-      - $ref: '#/components/parameters/X-Amz-SignedHeaders'
+          description: Success
 components:
   x-stackQL-resources:
     resources:
@@ -520,12 +538,38 @@ components:
           response:
             mediaType: application/json
             openAPIDocKey: '200'
+        delete_resource:
+          operation:
+            $ref: '#/paths/~1?Action=DeleteResource&Version=2021-09-30/post'
+          request:
+            mediaType: application/x-amz-json-1.0
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get_resource:
+          operation:
+            $ref: '#/paths/~1?Action=GetResource&Version=2021-09-30/post'
+          request:
+            mediaType: application/x-amz-json-1.0
+          response:
+            mediaType: application/json
+            objectKey: '$.ResourceDescription'
+            openAPIDocKey: '200'
+        update_resource:
+          operation:
+            $ref: '#/paths/~1?Action=UpdateResource&Version=2021-09-30/post'
+          request:
+            mediaType: application/x-amz-json-1.0
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
       name: aws.cloud_control.resources
       sqlVerbs:
         delete: []
         insert:
         - $ref: '#/components/x-stackQL-resources/resources/methods/create_resource'
         select:
+        - $ref: '#/components/x-stackQL-resources/resources/methods/get_resource'
         - $ref: '#/components/x-stackQL-resources/resources/methods/list_resources'
         update: []
       title: resources
@@ -541,11 +585,29 @@ components:
             mediaType: application/x-amz-json-1.0
             objectKey: '$.ResourceRequestStatusSummaries'
             openAPIDocKey: '200'
-      name: aws.cloud_control.resources
+        get_resource_request:
+          operation:
+            $ref: '#/paths/~1?Action=GetResourceRequestStatus&Version=2021-09-30/post'
+          request:
+            mediaType: application/x-amz-json-1.0
+          response:
+            mediaType: application/x-amz-json-1.0
+            objectKey: '$.ProgressEvent'
+            openAPIDocKey: '200'
+        cancel_resource_request:
+          operation:
+            $ref: '#/paths/~1?Action=CancelResourceRequest&Version=2021-09-30/post'
+          request:
+            mediaType: application/x-amz-json-1.0
+          response:
+            mediaType: application/x-amz-json-1.0
+            openAPIDocKey: '200'
+      name: aws.cloud_control.resource_requests
       sqlVerbs:
         delete: []
         insert: []
         select:
+        - $ref: '#/components/x-stackQL-resources/resource_requests/methods/get_resource_request'
         - $ref: '#/components/x-stackQL-resources/resource_requests/methods/list_resource_requests'
         update: []
       title: resource_requests
@@ -600,42 +662,209 @@ components:
       description: Amazon Signature authorization v4
       x-amazon-apigateway-authtype: awsSigv4
   schemas:
-    CancelResourceRequestOutput:
-      type: object
-      properties:
-        undefined:
-          $ref: '#/components/schemas/ProgressEvent'
+    AlreadyExistsException: {}
     CancelResourceRequestInput:
-      type: object
-      required:
-        - RequestToken
-      title: CancelResourceRequestInput
       properties:
-        undefined:
-          allOf:
-            - $ref: '#/components/schemas/RequestToken'
-            - description: The <code>RequestToken</code> of the <code>ProgressEvent</code> object returned by the resource operation request.
-    ConcurrentModificationException: {}
-    RequestTokenNotFoundException: {}
-    CreateResourceOutput:
+        RequestToken:
+          $ref: '#/components/schemas/RequestToken'
+      required:
+      - RequestToken
+      title: CancelResourceRequestInput
       type: object
+    CancelResourceRequestOutput:
       properties:
         ProgressEvent:
           $ref: '#/components/schemas/ProgressEvent'
-    ProgressEvent:
       type: object
-      example: {
-        "ErrorCode": "string",
-        "EventTime": number,
-        "Identifier": "string",
-        "Operation": "string",
-        "OperationStatus": "string",
-        "RequestToken": "string",
-        "ResourceModel": "string",
-        "RetryAfter": number,
-        "StatusMessage": "string",
-        "TypeName": "string"
-      }
+    ClientToken:
+      maxLength: 128
+      minLength: 1
+      pattern: '[-A-Za-z0-9+/=]+'
+      type: string
+    ClientTokenConflictException: {}
+    ConcurrentModificationException: {}
+    ConcurrentOperationException: {}
+    CreateResourceInput:
+      properties:
+        ClientToken:
+          type: string
+        DesiredState:
+          allOf:
+          - $ref: '#/components/schemas/Properties'
+          - description: <p>Structured data format representing the desired state
+              of the resource, consisting of that resource's properties and their
+              desired values.</p> <note> <p>Cloud Control API currently supports JSON
+              as a structured data format.</p> </note> <pre><code> &lt;p&gt;Specify
+              the desired state as one of the following:&lt;/p&gt; &lt;ul&gt; &lt;li&gt;
+              &lt;p&gt;A JSON blob&lt;/p&gt; &lt;/li&gt; &lt;li&gt; &lt;p&gt;A local
+              path containing the desired state in JSON data format&lt;/p&gt; &lt;/li&gt;
+              &lt;/ul&gt; &lt;p&gt;For more information, see &lt;a href=&quot;https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/resource-operations-create.html#resource-operations-create-desiredstate&quot;&gt;Composing
+              the desired state of the resource&lt;/a&gt; in the &lt;i&gt;Amazon Web
+              Services Cloud Control API User Guide&lt;/i&gt;.&lt;/p&gt; &lt;p&gt;For
+              more information about the properties of a specific resource, refer
+              to the related topic for the resource in the &lt;a href=&quot;https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html&quot;&gt;Resource
+              and property types reference&lt;/a&gt; in the &lt;i&gt;CloudFormation
+              Users Guide&lt;/i&gt;.&lt;/p&gt; </code></pre>
+        RoleArn:
+          type: string
+        TypeName:
+          type: string
+        TypeVersionId:
+          type: string
+      required:
+      - TypeName
+      - DesiredState
+      title: CreateResourceInput
+      type: object
+    CreateResourceOutput:
+      properties:
+        ProgressEvent:
+          $ref: '#/components/schemas/ProgressEvent'
+      type: object
+    DeleteResourceInput:
+      properties:
+        ClientToken:
+          type: string
+        Identifier:
+          $ref: '#/components/schemas/Identifier'
+        RoleArn:
+          type: string
+        TypeName:
+          type: string
+        TypeVersionId:
+          type: string
+      required:
+      - TypeName
+      - Identifier
+      title: DeleteResourceInput
+      type: object
+    DeleteResourceOutput:
+      properties:
+        ProgressEvent:
+          $ref: '#/components/schemas/ProgressEvent'
+      type: object
+    GeneralServiceException: {}
+    GetResourceInput:
+      properties:
+        TypeName:
+          $ref: '#/components/schemas/TypeName'
+        Identifier:
+          $ref: '#/components/schemas/Identifier'
+        TypeVersionId:
+          $ref: '#/components/schemas/TypeVersionId'
+        RoleArn:
+          $ref: '#/components/schemas/RoleArn'
+      required:
+      - TypeName
+      - Identifier
+      title: GetResourceInput
+      type: object
+    GetResourceOutput:
+      properties:
+        ResourceDescription:
+          $ref: '#/components/schemas/ResourceDescription'
+        TypeName:
+          type: string
+      type: object
+    GetResourceRequestStatusInput:
+      properties:
+        RequestToken:
+          $ref: '#/components/schemas/RequestToken'
+      required:
+      - RequestToken
+      title: GetResourceRequestStatusInput
+      type: object
+    GetResourceRequestStatusOutput:
+      properties:
+        ProgressEvent:
+          $ref: '#/components/schemas/ProgressEvent'
+      type: object
+    HandlerErrorCode:
+      enum:
+      - NotUpdatable
+      - InvalidRequest
+      - AccessDenied
+      - InvalidCredentials
+      - AlreadyExists
+      - NotFound
+      - ResourceConflict
+      - Throttling
+      - ServiceLimitExceeded
+      - NotStabilized
+      - GeneralServiceException
+      - ServiceInternalError
+      - ServiceTimeout
+      - NetworkFailure
+      - InternalFailure
+      type: string
+    HandlerFailureException: {}
+    HandlerInternalFailureException: {}
+    HandlerNextToken:
+      maxLength: 2048
+      minLength: 1
+      pattern: .+
+      type: string
+    Identifier:
+      maxLength: 1024
+      minLength: 1
+      pattern: .+
+      type: string
+    InvalidCredentialsException: {}
+    InvalidRequestException: {}
+    MaxResults:
+      maximum: 100
+      minimum: 1
+      type: integer
+    NetworkFailureException: {}
+    NextToken:
+      maxLength: 2048
+      minLength: 1
+      pattern: '[-A-Za-z0-9+/=]+'
+      type: string
+    NotStabilizedException: {}
+    NotUpdatableException: {}
+    Operation:
+      enum:
+      - CREATE
+      - DELETE
+      - UPDATE
+      type: string
+    OperationStatus:
+      enum:
+      - PENDING
+      - IN_PROGRESS
+      - SUCCESS
+      - FAILED
+      - CANCEL_IN_PROGRESS
+      - CANCEL_COMPLETE
+      type: string
+    OperationStatuses:
+      items:
+        $ref: '#/components/schemas/OperationStatus'
+      type: array
+    Operations:
+      items:
+        $ref: '#/components/schemas/Operation'
+      type: array
+    PatchDocument:
+      format: password
+      maxLength: 65536
+      minLength: 1
+      pattern: '[\s\S]*'
+      type: string
+    PrivateTypeException: {}
+    ProgressEvent:
+      example:
+        ErrorCode: string
+        EventTime: number
+        Identifier: string
+        Operation: string
+        OperationStatus: string
+        RequestToken: string
+        ResourceModel: string
+        RetryAfter: number
+        StatusMessage: string
+        TypeName: string
       properties:
         ErrorCode:
           type: string
@@ -651,281 +880,103 @@ components:
           type: string
         ResourceModel:
           type: string
-        RetryAfter: 
+        RetryAfter:
           type: number
         StatusMessage:
           type: string
         TypeName:
           type: string
-    CreateResourceInput:
       type: object
-      required:
-        - TypeName
-        - DesiredState
-      title: CreateResourceInput
-      properties:
-        ClientToken:
-          type: string
-        TypeName:
-          type: string
-        RoleArn:
-          type: string
-        TypeVersionId:
-          type: string
-        DesiredState:
-          allOf:
-            - $ref: '#/components/schemas/Properties'
-            - description: '<p>Structured data format representing the desired state of the resource, consisting of that resource''s properties and their desired values.</p> <note> <p>Cloud Control API currently supports JSON as a structured data format.</p> </note> <pre><code> &lt;p&gt;Specify the desired state as one of the following:&lt;/p&gt; &lt;ul&gt; &lt;li&gt; &lt;p&gt;A JSON blob&lt;/p&gt; &lt;/li&gt; &lt;li&gt; &lt;p&gt;A local path containing the desired state in JSON data format&lt;/p&gt; &lt;/li&gt; &lt;/ul&gt; &lt;p&gt;For more information, see &lt;a href=&quot;https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/resource-operations-create.html#resource-operations-create-desiredstate&quot;&gt;Composing the desired state of the resource&lt;/a&gt; in the &lt;i&gt;Amazon Web Services Cloud Control API User Guide&lt;/i&gt;.&lt;/p&gt; &lt;p&gt;For more information about the properties of a specific resource, refer to the related topic for the resource in the &lt;a href=&quot;https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html&quot;&gt;Resource and property types reference&lt;/a&gt; in the &lt;i&gt;CloudFormation Users Guide&lt;/i&gt;.&lt;/p&gt; </code></pre>'
-    AlreadyExistsException: {}
-    HandlerInternalFailureException: {}
-    GeneralServiceException: {}
-    NotUpdatableException: {}
-    TypeNotFoundException: {}
-    ConcurrentOperationException: {}
-    InvalidRequestException: {}
-    PrivateTypeException: {}
-    ResourceNotFoundException: {}
-    NetworkFailureException: {}
-    UnsupportedActionException: {}
-    NotStabilizedException: {}
-    ServiceInternalErrorException: {}
-    HandlerFailureException: {}
-    ServiceLimitExceededException: {}
-    InvalidCredentialsException: {}
-    ResourceConflictException: {}
-    ClientTokenConflictException: {}
-    ThrottlingException: {}
-    DeleteResourceOutput:
-      type: object
-      properties:
-        undefined:
-          allOf:
-            - $ref: '#/components/schemas/ProgressEvent'
-            - description: '<p>Represents the current status of the resource deletion request.</p> <p>After you have initiated a resource deletion request, you can monitor the progress of your request by calling <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/APIReference/API_GetResourceRequestStatus.html">GetResourceRequestStatus</a> using the <code>RequestToken</code> of the <code>ProgressEvent</code> returned by <code>DeleteResource</code>.</p>'
-    DeleteResourceInput:
-      type: object
-      required:
-        - TypeName
-        - Identifier
-      title: DeleteResourceInput
-      properties:
-        undefined:
-          allOf:
-            - $ref: '#/components/schemas/Identifier'
-            - description: '<p>The identifier for the resource.</p> <p>You can specify the primary identifier, or any secondary identifier defined for the resource type in its resource schema. You can only specify one identifier. Primary identifiers can be specified as a string or JSON; secondary identifiers must be specified as JSON.</p> <p>For compound primary identifiers (that is, one that consists of multiple resource properties strung together), to specify the primary identifier as a string, list the property values <i>in the order they are specified</i> in the primary identifier definition, separated by <code>|</code>.</p> <p>For more information, see <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/resource-identifier.html">Identifying resources</a> in the <i>Amazon Web Services Cloud Control API User Guide</i>.</p>'
-    GetResourceOutput:
-      type: object
-      properties:
-        undefined:
-          $ref: '#/components/schemas/ResourceDescription'
-    GetResourceInput:
-      type: object
-      required:
-        - TypeName
-        - Identifier
-      title: GetResourceInput
-      properties:
-        undefined:
-          allOf:
-            - $ref: '#/components/schemas/Identifier'
-            - description: '<p>The identifier for the resource.</p> <p>You can specify the primary identifier, or any secondary identifier defined for the resource type in its resource schema. You can only specify one identifier. Primary identifiers can be specified as a string or JSON; secondary identifiers must be specified as JSON.</p> <p>For compound primary identifiers (that is, one that consists of multiple resource properties strung together), to specify the primary identifier as a string, list the property values <i>in the order they are specified</i> in the primary identifier definition, separated by <code>|</code>.</p> <p>For more information, see <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/resource-identifier.html">Identifying resources</a> in the <i>Amazon Web Services Cloud Control API User Guide</i>.</p>'
-    GetResourceRequestStatusOutput:
-      type: object
-      properties:
-        undefined:
-          allOf:
-            - $ref: '#/components/schemas/ProgressEvent'
-            - description: Represents the current status of the resource operation request.
-    GetResourceRequestStatusInput:
-      type: object
-      required:
-        - RequestToken
-      title: GetResourceRequestStatusInput
-      properties:
-        undefined:
-          allOf:
-            - $ref: '#/components/schemas/RequestToken'
-            - description: <p>A unique token used to track the progress of the resource operation request.</p> <p>Request tokens are included in the <code>ProgressEvent</code> type returned by a resource operation request.</p>
-    ListResourceRequestsOutput:
-      type: object
-      properties:
-        undefined:
-          allOf:
-            - $ref: '#/components/schemas/NextToken'
-            - description: 'If the request doesn''t return all of the remaining results, <code>NextToken</code> is set to a token. To retrieve the next set of results, call <code>ListResources</code> again and assign that token to the request object''s <code>NextToken</code> parameter. If the request returns all results, <code>NextToken</code> is set to null.'
-    ListResourceRequestsInput:
-      type: object
-      title: ListResourceRequestsInput
-      properties:
-        undefined:
-          allOf:
-            - $ref: '#/components/schemas/ResourceRequestStatusFilter'
-            - description: The filter criteria to apply to the requests returned.
-    ListResourcesOutput:
-      type: object
-      properties:
-        undefined:
-          allOf:
-            - $ref: '#/components/schemas/HandlerNextToken'
-            - description: 'If the request doesn''t return all of the remaining results, <code>NextToken</code> is set to a token. To retrieve the next set of results, call <code>ListResources</code> again and assign that token to the request object''s <code>NextToken</code> parameter. If the request returns all results, <code>NextToken</code> is set to null.'
-    ListResourcesInput:
-      type: object
-      required:
-        - TypeName
-      title: ListResourcesInput
-      properties:
-        undefined:
-          allOf:
-            - $ref: '#/components/schemas/Properties'
-            - description: The resource model to use to select the resources to return.
-    UpdateResourceOutput:
-      type: object
-      properties:
-        undefined:
-          allOf:
-            - $ref: '#/components/schemas/ProgressEvent'
-            - description: '<p>Represents the current status of the resource update request.</p> <p>Use the <code>RequestToken</code> of the <code>ProgressEvent</code> with <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/APIReference/API_GetResourceRequestStatus.html">GetResourceRequestStatus</a> to return the current status of a resource operation request.</p>'
-    UpdateResourceInput:
-      type: object
-      required:
-        - TypeName
-        - Identifier
-        - PatchDocument
-      title: UpdateResourceInput
-      properties:
-        undefined:
-          allOf:
-            - $ref: '#/components/schemas/PatchDocument'
-            - description: 'A JavaScript Object Notation (JSON) document listing the patch operations that represent the updates to apply to the current resource properties. For details, see <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/resource-operations-update.html#resource-operations-update-patch">Composing the patch document</a> in the <i>Amazon Web Services Cloud Control API User Guide</i>.'
-    RequestToken:
-      type: string
-      pattern: '[-A-Za-z0-9+/=]+'
-      minLength: 1
-      maxLength: 128
-    ClientToken:
-      type: string
-      pattern: '[-A-Za-z0-9+/=]+'
-      minLength: 1
-      maxLength: 128
     Properties:
-      type: string
-      pattern: '[\s\S]*'
-      minLength: 1
-      maxLength: 65536
       format: password
-    Identifier:
-      type: string
-      pattern: .+
+      maxLength: 65536
       minLength: 1
-      maxLength: 1024
-    ResourceDescription:
-      type: object
-      properties:
-        undefined:
-          allOf:
-            - $ref: '#/components/schemas/Properties'
-            - description: A list of the resource properties and their current values.
-      description: Represents information about a provisioned resource.
-    HandlerErrorCode:
+      pattern: '[\s\S]*'
       type: string
-      enum:
-        - NotUpdatable
-        - InvalidRequest
-        - AccessDenied
-        - InvalidCredentials
-        - AlreadyExists
-        - NotFound
-        - ResourceConflict
-        - Throttling
-        - ServiceLimitExceeded
-        - NotStabilized
-        - GeneralServiceException
-        - ServiceInternalError
-        - ServiceTimeout
-        - NetworkFailure
-        - InternalFailure
-    HandlerNextToken:
-      type: string
-      pattern: .+
+    RequestToken:
+      maxLength: 128
       minLength: 1
-      maxLength: 2048
-    ResourceRequestStatusFilter:
-      type: object
-      properties:
-        undefined:
-          allOf:
-            - $ref: '#/components/schemas/OperationStatuses'
-            - description: '<p>The operation statuses to include in the filter.</p> <ul> <li> <p> <code>PENDING</code>: The operation has been requested, but not yet initiated.</p> </li> <li> <p> <code>IN_PROGRESS</code>: The operation is in progress.</p> </li> <li> <p> <code>SUCCESS</code>: The operation completed.</p> </li> <li> <p> <code>FAILED</code>: The operation failed.</p> </li> <li> <p> <code>CANCEL_IN_PROGRESS</code>: The operation is in the process of being canceled.</p> </li> <li> <p> <code>CANCEL_COMPLETE</code>: The operation has been canceled.</p> </li> </ul>'
-      description: The filter criteria to use in determining the requests returned.
-    NextToken:
-      type: string
       pattern: '[-A-Za-z0-9+/=]+'
-      minLength: 1
-      maxLength: 2048
-    MaxResults:
-      type: integer
-      minimum: 1
-      maximum: 100
-    Operation:
       type: string
-      enum:
-        - CREATE
-        - DELETE
-        - UPDATE
-    OperationStatus:
-      type: string
-      enum:
-        - PENDING
-        - IN_PROGRESS
-        - SUCCESS
-        - FAILED
-        - CANCEL_IN_PROGRESS
-        - CANCEL_COMPLETE
-    OperationStatuses:
-      type: array
-      items:
-        $ref: '#/components/schemas/OperationStatus'
-    Operations:
-      type: array
-      items:
-        $ref: '#/components/schemas/Operation'
-    PatchDocument:
-      type: string
-      pattern: '[\s\S]*'
-      minLength: 1
-      maxLength: 65536
-      format: password
-    Timestamp:
-      type: string
-      format: date-time
+    RequestTokenNotFoundException: {}
+    ResourceConflictException: {}
+    ResourceDescription:
+      description: Represents information about a provisioned resource.
+      properties:
+        Identifier:
+          type: string
+        Properties:
+          type: string
+      type: object
     ResourceDescriptions:
-      type: array
       items:
         $ref: '#/components/schemas/ResourceDescription'
-    ResourceRequestStatusSummaries:
       type: array
+    ResourceNotFoundException: {}
+    ResourceRequestStatusFilter:
+      description: The filter criteria to use in determining the requests returned.
+      properties:
+        undefined:
+          allOf:
+          - $ref: '#/components/schemas/OperationStatuses'
+          - description: '<p>The operation statuses to include in the filter.</p>
+              <ul> <li> <p> <code>PENDING</code>: The operation has been requested,
+              but not yet initiated.</p> </li> <li> <p> <code>IN_PROGRESS</code>:
+              The operation is in progress.</p> </li> <li> <p> <code>SUCCESS</code>:
+              The operation completed.</p> </li> <li> <p> <code>FAILED</code>: The
+              operation failed.</p> </li> <li> <p> <code>CANCEL_IN_PROGRESS</code>:
+              The operation is in the process of being canceled.</p> </li> <li> <p>
+              <code>CANCEL_COMPLETE</code>: The operation has been canceled.</p> </li>
+              </ul>'
+      type: object
+    ResourceRequestStatusSummaries:
       items:
         $ref: '#/components/schemas/ProgressEvent'
+      type: array
     RoleArn:
-      type: string
-      pattern: 'arn:.+:iam::[0-9]{12}:role/.+'
-      minLength: 20
       maxLength: 2048
+      minLength: 20
+      pattern: arn:.+:iam::[0-9]{12}:role/.+
+      type: string
+    ServiceInternalErrorException: {}
+    ServiceLimitExceededException: {}
     StatusMessage:
-      type: string
-      pattern: '[\s\S]*'
-      minLength: 0
       maxLength: 1024
+      minLength: 0
+      pattern: '[\s\S]*'
+      type: string
+    ThrottlingException: {}
+    Timestamp:
+      format: date-time
+      type: string
     TypeName:
-      type: string
-      pattern: '[A-Za-z0-9]{2,64}::[A-Za-z0-9]{2,64}::[A-Za-z0-9]{2,64}'
-      minLength: 10
       maxLength: 196
-    TypeVersionId:
+      minLength: 10
+      pattern: '[A-Za-z0-9]{2,64}::[A-Za-z0-9]{2,64}::[A-Za-z0-9]{2,64}'
       type: string
-      pattern: '[A-Za-z0-9-]+'
-      minLength: 1
+    TypeNotFoundException: {}
+    TypeVersionId:
       maxLength: 128
+      minLength: 1
+      pattern: '[A-Za-z0-9-]+'
+      type: string
+    UnsupportedActionException: {}
+    UpdateResourceInput:
+      properties:
+        undefined:
+          allOf:
+          - $ref: '#/components/schemas/PatchDocument'
+      required:
+      - TypeName
+      - Identifier
+      - PatchDocument
+      title: UpdateResourceInput
+      type: object
+    UpdateResourceOutput:
+      properties:
+        ProgressEvent:
+          $ref: '#/components/schemas/ProgressEvent'
+      type: object
 security:
   - hmac: []
 x-stackQL-config:

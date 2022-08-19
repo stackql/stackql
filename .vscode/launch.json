@@ -48,7 +48,7 @@
         "--registry=${input:registryString}",
         "--auth=${input:authString}",
         "--tls.allowInsecure",
-        "select VolumeId, Encrypted, Size from aws.ec2.volumes where region = 'ap-southeast-1' order by VolumeId asc;"
+        "select Identifier, Properties from aws.cloud_control.resources where region = 'ap-southeast-1' and data__TypeName = 'AWS::Logs::LogGroup' and data__Identifier = 'CloudControlExample';"
       ],
     },
     {

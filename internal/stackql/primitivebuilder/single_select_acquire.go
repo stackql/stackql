@@ -153,6 +153,12 @@ func (ss *SingleSelectAcquire) Build() error {
 				case map[string]interface{}:
 					if ss.tableMeta.SelectItemsKey != "" && ss.tableMeta.SelectItemsKey != "/*" {
 						items, ok = pl[ss.tableMeta.SelectItemsKey]
+						if !ok {
+							items = []interface{}{
+								pl,
+							}
+							ok = true
+						}
 					} else {
 						items = []interface{}{
 							pl,
