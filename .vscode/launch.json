@@ -21,9 +21,9 @@
       "type": "pickString",
       "id": "authString",
       "description": "Auth Input arg String",
-      "default": "{ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" }, \"github\": { \"type\": \"basic\", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/github-key.txt\" }, \"aws\": { \"type\": \"aws_signing_v4\", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/aws-secret-key.txt\", \"keyID\": \"AKIA376P4FQSS2ONB2NS\" }, \"netlify\": { \"type\": \"api_key\", \"valuePrefix\": \"Bearer \", \"credentialsfilepath\": \"${workspaceFolder}/keys/netlify-token.txt\"  }, \"k8s\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/k8s-token.txt\", \"type\": \"api_key\", \"valuePrefix\": \"Bearer \" } }",
+      "default": "{ \"azure\": { \"type\": \"api_key\", \"valuePrefix\": \"Bearer \", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/azure-key.txt\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" }, \"github\": { \"type\": \"basic\", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/github-key.txt\" }, \"aws\": { \"type\": \"aws_signing_v4\", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/aws-secret-key.txt\", \"keyID\": \"AKIA376P4FQSS2ONB2NS\" }, \"netlify\": { \"type\": \"api_key\", \"valuePrefix\": \"Bearer \", \"credentialsfilepath\": \"${workspaceFolder}/keys/netlify-token.txt\"  }, \"k8s\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/k8s-token.txt\", \"type\": \"api_key\", \"valuePrefix\": \"Bearer \" } }",
       "options": [
-        "{ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" }, \"github\": { \"type\": \"basic\", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/github-key.txt\" }, \"aws\": { \"type\": \"aws_signing_v4\", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/aws-secret-key.txt\", \"keyID\": \"AKIA376P4FQSS2ONB2NS\" }, \"netlify\": { \"type\": \"api_key\", \"valuePrefix\": \"Bearer \", \"credentialsfilepath\": \"${workspaceFolder}/keys/netlify-token.txt\"  }, \"k8s\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/k8s-token.txt\", \"type\": \"api_key\", \"valuePrefix\": \"Bearer \" } }",
+        "{ \"azure\": { \"type\": \"api_key\", \"valuePrefix\": \"Bearer \", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/azure-key.txt\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" }, \"github\": { \"type\": \"basic\", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/github-key.txt\" }, \"aws\": { \"type\": \"aws_signing_v4\", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/aws-secret-key.txt\", \"keyID\": \"AKIA376P4FQSS2ONB2NS\" }, \"netlify\": { \"type\": \"api_key\", \"valuePrefix\": \"Bearer \", \"credentialsfilepath\": \"${workspaceFolder}/keys/netlify-token.txt\"  }, \"k8s\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/k8s-token.txt\", \"type\": \"api_key\", \"valuePrefix\": \"Bearer \" } }",
         "{ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/test/assets/credentials/dummy/google/functional-test-dummy-sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" }, \"github\": { \"type\": \"basic\", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/github-key.txt\" }, \"aws\": { \"type\": \"aws_signing_v4\", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/aws-secret-key.txt\", \"keyID\": \"AKIA376P4FQSS2ONB2NS\" }, \"netlify\": { \"type\": \"api_key\", \"valuePrefix\": \"Bearer \", \"credentialsfilepath\": \"${workspaceFolder}/keys/netlify-token.txt\"  }, \"k8s\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/k8s-token.txt\", \"type\": \"api_key\", \"valuePrefix\": \"Bearer \" } }"
       ]
     },
@@ -48,7 +48,7 @@
         "--registry=${input:registryString}",
         "--auth=${input:authString}",
         "--tls.allowInsecure",
-        "SELECT * FROM azure.compute.virtual_machines WHERE resourceGroupName = 'stackql-ops-cicd-dev-01' AND subscriptionId = '631d1c6d-2a65-43e7-93c2-688bfe4e1468';"
+        "SELECT type, resources, zones, extendedLocation FROM azure.compute.virtual_machines WHERE resourceGroupName = 'stackql-ops-cicd-dev-01' AND subscriptionId = '631d1c6d-2a65-43e7-93c2-688bfe4e1468';"
       ],
     },
     {
@@ -1241,7 +1241,7 @@
       "type": "go",
       "request": "attach",
       "mode": "local",
-      "processId": 0
+      "processId": 44125
     }
   ]
 }

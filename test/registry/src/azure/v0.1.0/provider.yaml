@@ -1,0 +1,1238 @@
+id: azure
+name: azure
+version: v0.1.0
+providerServices:
+  aad_domain_services:
+    description: The AAD Domain Services API.
+    id: aad_domain_services:v0.1.0
+    name: aad_domain_services
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/aad_domain_services.yaml
+    title: Domain Services Resource Provider (Microsoft.Aad)
+    version: v0.1.0
+  analysis_services:
+    description: The Azure Analysis Services Web API provides a RESTful set of web services that enables users to create, retrieve, update, and delete Analysis Services servers
+    id: analysis_services:v0.1.0
+    name: analysis_services
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/analysis_services.yaml
+    title: AzureAnalysisServices (Microsoft.AnalysisServices)
+    version: v0.1.0
+  api_management:
+    description: Use these REST APIs for performing operations on entities like API, Product, and Subscription associated with your Azure API Management deployment.
+    id: api_management:v0.1.0
+    name: api_management
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/api_management.yaml
+    title: ApiManagementClient (Microsoft.ApiManagement)
+    version: v0.1.0
+  app_configuration:
+    description: AppConfigurationManagementClient
+    id: app_configuration:v0.1.0
+    name: app_configuration
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/app_configuration.yaml
+    title: AppConfigurationManagementClient (Microsoft.AppConfiguration)
+    version: v0.1.0
+  application_insights:
+    description: Azure Application Insights client for web tests.
+    id: application_insights:v0.1.0
+    name: application_insights
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/application_insights.yaml
+    title: ApplicationInsightsManagementClient (Microsoft.Insights)
+    version: v0.1.0
+  attestation:
+    description: Various APIs for managing resources in attestation service. This primarily encompasses per-provider management.
+    id: attestation:v0.1.0
+    name: attestation
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/attestation.yaml
+    title: AttestationManagementClient (Microsoft.Attestation)
+    version: v0.1.0
+  authorization:
+    description: Role based access control provides you a way to apply granular level policy administration down to individual resources or resource groups.
+    id: authorization:v0.1.0
+    name: authorization
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/authorization.yaml
+    title: AuthorizationManagementClient (Microsoft.Authorization)
+    version: v0.1.0
+  azure_active_directory:
+    description: Azure Active Directory Client.
+    id: azure_active_directory:v0.1.0
+    name: azure_active_directory
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/azure_active_directory.yaml
+    title: azureactivedirectory (microsoft.aadiam)
+    version: v0.1.0
+  azure_stack_hci:
+    description: Azure Stack HCI management service
+    id: azure_stack_hci:v0.1.0
+    name: azure_stack_hci
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/azure_stack_hci.yaml
+    title: AzureStackHCI (Microsoft.AzureStackHCI)
+    version: v0.1.0
+  backup_admin:
+    description: The Admin Backup Management Client.
+    id: backup_admin:v0.1.0
+    name: backup_admin
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/backup_admin.yaml
+    title: BackupManagementClient (Microsoft.Backup.Admin)
+    version: v0.1.0
+  bare_metal_infrastructure:
+    description: The BareMetalInfrastructure Management client
+    id: bare_metal_infrastructure:v0.1.0
+    name: bare_metal_infrastructure
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/bare_metal_infrastructure.yaml
+    title: bareMetalInfrastructureClient (Microsoft.BareMetalInfrastructure)
+    version: v0.1.0
+  batch:
+    description: The Batch Management Client.
+    id: batch:v0.1.0
+    name: batch
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/batch.yaml
+    title: BatchManagementClient (Microsoft.Batch)
+    version: v0.1.0
+  billing:
+    description: The billing client allows you to view and manage your billing details programmatically.
+    id: billing:v0.1.0
+    name: billing
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/billing.yaml
+    title: BillingManagementClient (Microsoft.Billing)
+    version: v0.1.0
+  blueprint:
+    description: Azure Blueprints Client provides access to blueprint definitions, assignments, and artifacts, and related blueprint operations.
+    id: blueprint:v0.1.0
+    name: blueprint
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/blueprint.yaml
+    title: BlueprintClient (Microsoft.Blueprint)
+    version: v0.1.0
+  cdn:
+    description: Use these APIs to manage Azure CDN resources through the Azure Resource Manager. You must make sure that requests made to these resources are secure.
+    id: cdn:v0.1.0
+    name: cdn
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/cdn.yaml
+    title: CdnManagementClient (Microsoft.Cdn)
+    version: v0.1.0
+  cloud_shell:
+    description: CloudShellClient
+    id: cloud_shell:v0.1.0
+    name: cloud_shell
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/cloud_shell.yaml
+    title: CloudShellClient (Microsoft.Portal)
+    version: v0.1.0
+  cognitive_services:
+    description: Cognitive Services Management Client
+    id: cognitive_services:v0.1.0
+    name: cognitive_services
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/cognitive_services.yaml
+    title: CognitiveServicesManagementClient (Microsoft.CognitiveServices)
+    version: v0.1.0
+  compute:
+    description: The Compute Management Client.
+    id: compute:v0.1.0
+    name: compute
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/compute.yaml
+    title: ComputeManagementClient (Microsoft.Compute)
+    version: v0.1.0
+  compute_admin:
+    description: Compute Admin Client
+    id: compute_admin:v0.1.0
+    name: compute_admin
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/compute_admin.yaml
+    title: Compute Admin Client (Microsoft.Compute.Admin)
+    version: v0.1.0
+  confluent:
+    description: Microsoft.Confluent
+    id: confluent:v0.1.0
+    name: confluent
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/confluent.yaml
+    title: Microsoft.Confluent (Microsoft.Confluent)
+    version: v0.1.0
+  consumption:
+    description: Consumption management client provides access to consumption resources for Azure Enterprise Subscriptions.
+    id: consumption:v0.1.0
+    name: consumption
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/consumption.yaml
+    title: ConsumptionManagementClient (Microsoft.Consumption)
+    version: v0.1.0
+  container_apps:
+    description: ContainerApps API Client
+    id: container_apps:v0.1.0
+    name: container_apps
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/container_apps.yaml
+    title: ContainerApps API Client (Microsoft.App)
+    version: v0.1.0
+  container_instance:
+    description: ContainerInstanceManagementClient
+    id: container_instance:v0.1.0
+    name: container_instance
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/container_instance.yaml
+    title: ContainerInstanceManagementClient (Microsoft.ContainerInstance)
+    version: v0.1.0
+  container_registry:
+    description: ContainerRegistryManagementClient
+    id: container_registry:v0.1.0
+    name: container_registry
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/container_registry.yaml
+    title: ContainerRegistryManagementClient (Microsoft.ContainerRegistry)
+    version: v0.1.0
+  container_registry_admin:
+    description: Admin Container Registry Management Client.
+    id: container_registry_admin:v0.1.0
+    name: container_registry_admin
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/container_registry_admin.yaml
+    title: ContainerRegistryManagementClient (Microsoft.ContainerRegistry.Admin)
+    version: v0.1.0
+  container_service:
+    description: The Container Service Client.
+    id: container_service:v0.1.0
+    name: container_service
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/container_service.yaml
+    title: ContainerServiceClient (Microsoft.ContainerService)
+    version: v0.1.0
+  container_service_admin:
+    description: Admin Container Service Management Client.
+    id: container_service_admin:v0.1.0
+    name: container_service_admin
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/container_service_admin.yaml
+    title: ContainerServiceAdminClient (Microsoft.ContainerService.Admin)
+    version: v0.1.0
+  cosmos_db:
+    description: Azure Cosmos DB Database Service Resource Provider REST API
+    id: cosmos_db:v0.1.0
+    name: cosmos_db
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/cosmos_db.yaml
+    title: Cosmos DB (Microsoft.DocumentDB)
+    version: v0.1.0
+  cost_management:
+    description: CostManagementClient
+    id: cost_management:v0.1.0
+    name: cost_management
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/cost_management.yaml
+    title: CostManagementClient (Microsoft.CostManagement)
+    version: v0.1.0
+  data_catalog:
+    description: The Azure Data Catalog Resource Provider Services API.
+    id: data_catalog:v0.1.0
+    name: data_catalog
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/data_catalog.yaml
+    title: Azure Data Catalog Resource Provider (Microsoft.DataCatalog)
+    version: v0.1.0
+  data_factory:
+    description: DataFactoryManagementClient
+    id: data_factory:v0.1.0
+    name: data_factory
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/data_factory.yaml
+    title: DataFactoryManagementClient (Microsoft.DataFactory)
+    version: v0.1.0
+  data_lake_analytics:
+    description: DataLakeAnalyticsAccountManagementClient
+    id: data_lake_analytics:v0.1.0
+    name: data_lake_analytics
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/data_lake_analytics.yaml
+    title: DataLakeAnalyticsAccountManagementClient (Microsoft.DataLakeAnalytics)
+    version: v0.1.0
+  data_lake_store:
+    description: DataLakeStoreAccountManagementClient
+    id: data_lake_store:v0.1.0
+    name: data_lake_store
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/data_lake_store.yaml
+    title: DataLakeStoreAccountManagementClient (Microsoft.DataLakeStore)
+    version: v0.1.0
+  data_migration:
+    description: The Database Migration Service helps people migrate their data from on-premise database servers to Azure, or from older database software to newer software. The service manages one or more workers that are joined to a customers virtual network, which is assumed to provide connectivity to their databases. To avoid frequent updates to the resource provider, data migration tasks are implemented by the resource provider in a generic way as task resources, each of which has a task type (which identifies the type of work to run), input, and output. The client is responsible for providing appropriate task type and inputs, which will be passed through unexamined to the machines that implement the functionality, and for understanding the output, which is passed back unexamined to the client.
+    id: data_migration:v0.1.0
+    name: data_migration
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/data_migration.yaml
+    title: Azure Database Migration Service Resource Provider (Microsoft.DataMigration)
+    version: v0.1.0
+  data_protection:
+    description: DataProtectionBackupClient
+    id: data_protection:v0.1.0
+    name: data_protection
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/data_protection.yaml
+    title: DataProtectionBackupClient (Microsoft.DataProtection)
+    version: v0.1.0
+  databricks:
+    description: DatabricksClient
+    id: databricks:v0.1.0
+    name: databricks
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/databricks.yaml
+    title: DatabricksClient (Microsoft.Databricks)
+    version: v0.1.0
+  datadog:
+    description: Microsoft.Datadog
+    id: datadog:v0.1.0
+    name: datadog
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/datadog.yaml
+    title: Microsoft.Datadog (Microsoft.Datadog)
+    version: v0.1.0
+  deployment_admin:
+    description: Deployment Admin Client.
+    id: deployment_admin:v0.1.0
+    name: deployment_admin
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/deployment_admin.yaml
+    title: DeploymentAdminClient (Microsoft.Deployment.Admin)
+    version: v0.1.0
+  deployment_manager:
+    description: REST APIs for orchestrating deployments using the Azure Deployment Manager (ADM). See https://docs.microsoft.com/en-us/azure-resource-manager/deployment-manager-overview for more information.
+    id: deployment_manager:v0.1.0
+    name: deployment_manager
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/deployment_manager.yaml
+    title: AzureDeploymentManager (Microsoft.DeploymentManager)
+    version: v0.1.0
+  devops:
+    description: Azure DevOps Resource Provider
+    id: devops:v0.1.0
+    name: devops
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/devops.yaml
+    title: Azure DevOps (Microsoft.DevOps)
+    version: v0.1.0
+  dns:
+    description: The DNS Management Client.
+    id: dns:v0.1.0
+    name: dns
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/dns.yaml
+    title: DnsManagementClient (Microsoft.Network)
+    version: v0.1.0
+  dns_resolver:
+    description: The DNS Resolver Management Client.
+    id: dns_resolver:v0.1.0
+    name: dns_resolver
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/dns_resolver.yaml
+    title: DnsResolverManagementClient (Microsoft.Network)
+    version: v0.1.0
+  dynatrace:
+    description: Dynatrace.Observability
+    id: dynatrace:v0.1.0
+    name: dynatrace
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/dynatrace.yaml
+    title: Dynatrace.Observability (Dynatrace.Observability)
+    version: v0.1.0
+  enterprise_knowledge_graph:
+    description: Azure Enterprise Knowledge Graph Service is a platform for creating knowledge graphs at scale.
+    id: enterprise_knowledge_graph:v0.1.0
+    name: enterprise_knowledge_graph
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/enterprise_knowledge_graph.yaml
+    title: Azure Enterprise Knowledge Graph Service (Microsoft.EnterpriseKnowledgeGraph)
+    version: v0.1.0
+  event_grid:
+    description: event_grid
+    id: event_grid:v0.1.0
+    name: event_grid
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/event_grid.yaml
+    title: event_grid (Microsoft.EventGrid)
+    version: v0.1.0
+  event_hub:
+    description: event_hub
+    id: event_hub:v0.1.0
+    name: event_hub
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/event_hub.yaml
+    title: event_hub (Microsoft.EventHub)
+    version: v0.1.0
+  guest_configuration:
+    description: GuestConfiguration
+    id: guest_configuration:v0.1.0
+    name: guest_configuration
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/guest_configuration.yaml
+    title: GuestConfiguration (Microsoft.GuestConfiguration)
+    version: v0.1.0
+  hardware_security_modules:
+    description: hardware_security_modules
+    id: hardware_security_modules:v0.1.0
+    name: hardware_security_modules
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/hardware_security_modules.yaml
+    title: hardware_security_modules (Microsoft.HardwareSecurityModules)
+    version: v0.1.0
+  hdinsight:
+    description: hdinsight
+    id: hdinsight:v0.1.0
+    name: hdinsight
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/hdinsight.yaml
+    title: hdinsight (Microsoft.HDInsight)
+    version: v0.1.0
+  hybrid_compute:
+    description: hybrid_compute
+    id: hybrid_compute:v0.1.0
+    name: hybrid_compute
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/hybrid_compute.yaml
+    title: hybrid_compute (Microsoft.HybridCompute)
+    version: v0.1.0
+  hybrid_connectivity:
+    description: hybrid_connectivity
+    id: hybrid_connectivity:v0.1.0
+    name: hybrid_connectivity
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/hybrid_connectivity.yaml
+    title: hybrid_connectivity (Microsoft.HybridConnectivity)
+    version: v0.1.0
+  hybrid_data_manager:
+    description: hybrid_data_manager
+    id: hybrid_data_manager:v0.1.0
+    name: hybrid_data_manager
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/hybrid_data_manager.yaml
+    title: hybrid_data_manager (Microsoft.HybridData)
+    version: v0.1.0
+  hybrid_kubernetes:
+    description: hybrid_kubernetes
+    id: hybrid_kubernetes:v0.1.0
+    name: hybrid_kubernetes
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/hybrid_kubernetes.yaml
+    title: hybrid_kubernetes (Microsoft.Kubernetes)
+    version: v0.1.0
+  hybrid_network:
+    description: hybrid_network
+    id: hybrid_network:v0.1.0
+    name: hybrid_network
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/hybrid_network.yaml
+    title: hybrid_network (Microsoft.HybridNetwork)
+    version: v0.1.0
+  infrastructure_insights:
+    description: The Admin Infrastructure Insights Management Client.
+    id: infrastructure_insights:v0.1.0
+    name: infrastructure_insights
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/infrastructure_insights.yaml
+    title: InfrastructureInsightsManagementClient (Microsoft.InfrastructureInsights.Admin)
+    version: v0.1.0
+  iot_central:
+    description: iot_central
+    id: iot_central:v0.1.0
+    name: iot_central
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/iot_central.yaml
+    title: iot_central (Microsoft.IoTCentral)
+    version: v0.1.0
+  iot_hub:
+    description: iot_hub
+    id: iot_hub:v0.1.0
+    name: iot_hub
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/iot_hub.yaml
+    title: iot_hub (Microsoft.Devices)
+    version: v0.1.0
+  iot_security:
+    description: iot_security
+    id: iot_security:v0.1.0
+    name: iot_security
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/iot_security.yaml
+    title: iot_security (Microsoft.IoTSecurity)
+    version: v0.1.0
+  key_vault:
+    description: The Azure management API provides a RESTful set of web services that interact with Azure Key Vault.
+    id: key_vault:v0.1.0
+    name: key_vault
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/key_vault.yaml
+    title: KeyVaultManagementClient (Microsoft.KeyVault)
+    version: v0.1.0
+  key_vault_admin:
+    description: The Admin KeyVault Management Client.
+    id: key_vault_admin:v0.1.0
+    name: key_vault_admin
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/key_vault_admin.yaml
+    title: KeyVaultManagementClient (Microsoft.KeyVault.Admin)
+    version: v0.1.0
+  kubernetes_configuration:
+    description: Use these APIs to create Source Control Configuration resources through ARM, for Kubernetes Clusters.
+    id: kubernetes_configuration:v0.1.0
+    name: kubernetes_configuration
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/kubernetes_configuration.yaml
+    title: SourceControlConfigurationClient (Microsoft.KubernetesConfiguration)
+    version: v0.1.0
+  logic_apps:
+    description: REST API for Azure Logic Apps.
+    id: logic_apps:v0.1.0
+    name: logic_apps
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/logic_apps.yaml
+    title: LogicManagementClient (Microsoft.Logic)
+    version: v0.1.0
+  logz:
+    description: Microsoft.Logz
+    id: logz:v0.1.0
+    name: logz
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/logz.yaml
+    title: Microsoft.Logz (Microsoft.Logz)
+    version: v0.1.0
+  machine_learning:
+    description: machine_learning
+    id: machine_learning:v0.1.0
+    name: machine_learning
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/machine_learning.yaml
+    title: machine_learning (Microsoft.MachineLearning)
+    version: v0.1.0
+  machine_learning_compute:
+    description: machine_learning_compute
+    id: machine_learning_compute:v0.1.0
+    name: machine_learning_compute
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/machine_learning_compute.yaml
+    title: machine_learning_compute (Microsoft.MachineLearningCompute)
+    version: v0.1.0
+  machine_learning_experimentation:
+    description: machine_learning_experimentation
+    id: machine_learning_experimentation:v0.1.0
+    name: machine_learning_experimentation
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/machine_learning_experimentation.yaml
+    title: machine_learning_experimentation (Microsoft.MachineLearningExperimentation)
+    version: v0.1.0
+  machine_learning_services:
+    description: machine_learning_services
+    id: machine_learning_services:v0.1.0
+    name: machine_learning_services
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/machine_learning_services.yaml
+    title: machine_learning_services (Microsoft.MachineLearningServices)
+    version: v0.1.0
+  maintenance:
+    description: maintenance
+    id: maintenance:v0.1.0
+    name: maintenance
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/maintenance.yaml
+    title: maintenance (Microsoft.Maintenance)
+    version: v0.1.0
+  managed_network:
+    description: managed_network
+    id: managed_network:v0.1.0
+    name: managed_network
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/managed_network.yaml
+    title: managed_network (Microsoft.ManagedNetwork)
+    version: v0.1.0
+  managed_service_identity:
+    description: managed_service_identity
+    id: managed_service_identity:v0.1.0
+    name: managed_service_identity
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/managed_service_identity.yaml
+    title: managed_service_identity (Microsoft.ManagedIdentity)
+    version: v0.1.0
+  managed_services:
+    description: managed_services
+    id: managed_services:v0.1.0
+    name: managed_services
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/managed_services.yaml
+    title: managed_services (Microsoft.ManagedServices)
+    version: v0.1.0
+  management_groups:
+    description: management_groups
+    id: management_groups:v0.1.0
+    name: management_groups
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/management_groups.yaml
+    title: management_groups (Microsoft.Management)
+    version: v0.1.0
+  maria_db:
+    description: maria_db
+    id: maria_db:v0.1.0
+    name: maria_db
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/maria_db.yaml
+    title: maria_db (Microsoft.DBforMariaDB)
+    version: v0.1.0
+  monitor:
+    description: monitor
+    id: monitor:v0.1.0
+    name: monitor
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/monitor.yaml
+    title: monitor (Microsoft.Insights)
+    version: v0.1.0
+  mysql:
+    description: mysql
+    id: mysql:v0.1.0
+    name: mysql
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/mysql.yaml
+    title: mysql (Microsoft.DBforMySQL)
+    version: v0.1.0
+  netapp:
+    description: Microsoft NetApp Azure Resource Provider specification
+    id: netapp:v0.1.0
+    name: netapp
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/netapp.yaml
+    title: Microsoft NetApp (Microsoft.NetApp)
+    version: v0.1.0
+  network:
+    description: The Microsoft Azure Network management API provides a RESTful set of web services that interact with Microsoft Azure Networks service to manage your network resources. The API has entities that capture the relationship between an end user and the Microsoft Azure Networks service.
+    id: network:v0.1.0
+    name: network
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/network.yaml
+    title: NetworkManagementClient (Microsoft.Network)
+    version: v0.1.0
+  network_admin:
+    description: The Admin Network Management Client
+    id: network_admin:v0.1.0
+    name: network_admin
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/network_admin.yaml
+    title: NetworkAdminManagementClient (Microsoft.Network.Admin)
+    version: v0.1.0
+  network_function:
+    description: Azure Traffic Collector service
+    id: network_function:v0.1.0
+    name: network_function
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/network_function.yaml
+    title: Azure Traffic Collector (Microsoft.NetworkFunction)
+    version: v0.1.0
+  notification_hubs:
+    description: Azure NotificationHub client
+    id: notification_hubs:v0.1.0
+    name: notification_hubs
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/notification_hubs.yaml
+    title: NotificationHubsManagementClient (Microsoft.NotificationHubs)
+    version: v0.1.0
+  operational_insights:
+    description: Azure Log Analytics API reference.
+    id: operational_insights:v0.1.0
+    name: operational_insights
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/operational_insights.yaml
+    title: Azure Log Analytics (Microsoft.OperationalInsights)
+    version: v0.1.0
+  operations_management:
+    description: Azure Log Analytics - Operations Management
+    id: operations_management:v0.1.0
+    name: operations_management
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/operations_management.yaml
+    title: Azure Log Analytics - Operations Management (Microsoft.OperationsManagement)
+    version: v0.1.0
+  peering:
+    description: peering
+    id: peering:v0.1.0
+    name: peering
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/peering.yaml
+    title: peering (Microsoft.Peering)
+    version: v0.1.0
+  portal:
+    description: portal
+    id: portal:v0.1.0
+    name: portal
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/portal.yaml
+    title: portal (Microsoft.Portal)
+    version: v0.1.0
+  postgresql:
+    description: postgresql
+    id: postgresql:v0.1.0
+    name: postgresql
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/postgresql.yaml
+    title: postgresql (Microsoft.DBforPostgreSQL)
+    version: v0.1.0
+  postgresql_hsc:
+    description: postgresql_hsc
+    id: postgresql_hsc:v0.1.0
+    name: postgresql_hsc
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/postgresql_hsc.yaml
+    title: postgresql_hsc (Microsoft.DBForPostgreSql)
+    version: v0.1.0
+  power_platform:
+    description: power_platform
+    id: power_platform:v0.1.0
+    name: power_platform
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/power_platform.yaml
+    title: power_platform (Microsoft.PowerPlatform)
+    version: v0.1.0
+  powerbi_dedicated:
+    description: powerbi_dedicated
+    id: powerbi_dedicated:v0.1.0
+    name: powerbi_dedicated
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/powerbi_dedicated.yaml
+    title: powerbi_dedicated (Microsoft.PowerBIDedicated)
+    version: v0.1.0
+  powerbi_embedded:
+    description: powerbi_embedded
+    id: powerbi_embedded:v0.1.0
+    name: powerbi_embedded
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/powerbi_embedded.yaml
+    title: powerbi_embedded (Microsoft.PowerBI)
+    version: v0.1.0
+  powerbi_privatelinks:
+    description: powerbi_privatelinks
+    id: powerbi_privatelinks:v0.1.0
+    name: powerbi_privatelinks
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/powerbi_privatelinks.yaml
+    title: powerbi_privatelinks (Microsoft.PowerBI)
+    version: v0.1.0
+  private_dns:
+    description: private_dns
+    id: private_dns:v0.1.0
+    name: private_dns
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/private_dns.yaml
+    title: private_dns (Microsoft.Network)
+    version: v0.1.0
+  provider_hub:
+    description: provider_hub
+    id: provider_hub:v0.1.0
+    name: provider_hub
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/provider_hub.yaml
+    title: provider_hub (Microsoft.ProviderHub)
+    version: v0.1.0
+  purview:
+    description: purview
+    id: purview:v0.1.0
+    name: purview
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/purview.yaml
+    title: purview (Microsoft.Purview)
+    version: v0.1.0
+  recovery_services:
+    description: recovery_services
+    id: recovery_services:v0.1.0
+    name: recovery_services
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/recovery_services.yaml
+    title: recovery_services (Microsoft.RecoveryServices)
+    version: v0.1.0
+  recovery_services_backup:
+    description: recovery_services_backup
+    id: recovery_services_backup:v0.1.0
+    name: recovery_services_backup
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/recovery_services_backup.yaml
+    title: recovery_services_backup (Microsoft.RecoveryServices)
+    version: v0.1.0
+  recovery_services_site_recovery:
+    description: recovery_services_site_recovery
+    id: recovery_services_site_recovery:v0.1.0
+    name: recovery_services_site_recovery
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/recovery_services_site_recovery.yaml
+    title: recovery_services_site_recovery (Microsoft.RecoveryServices)
+    version: v0.1.0
+  redhat_openshift:
+    description: redhat_openshift
+    id: redhat_openshift:v0.1.0
+    name: redhat_openshift
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/redhat_openshift.yaml
+    title: redhat_openshift (Microsoft.RedHatOpenShift)
+    version: v0.1.0
+  redis:
+    description: redis
+    id: redis:v0.1.0
+    name: redis
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/redis.yaml
+    title: redis (Microsoft.Cache)
+    version: v0.1.0
+  redis_enterprise:
+    description: redis_enterprise
+    id: redis_enterprise:v0.1.0
+    name: redis_enterprise
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/redis_enterprise.yaml
+    title: redis_enterprise (Microsoft.Cache)
+    version: v0.1.0
+  reservations:
+    description: reservations
+    id: reservations:v0.1.0
+    name: reservations
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/reservations.yaml
+    title: reservations (Microsoft.Capacity)
+    version: v0.1.0
+  resource_connector:
+    description: resource_connector
+    id: resource_connector:v0.1.0
+    name: resource_connector
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/resource_connector.yaml
+    title: resource_connector (Microsoft.ResourceConnector)
+    version: v0.1.0
+  resource_graph:
+    description: resource_graph
+    id: resource_graph:v0.1.0
+    name: resource_graph
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/resource_graph.yaml
+    title: resource_graph (Microsoft.ResourceGraph)
+    version: v0.1.0
+  resource_health:
+    description: resource_health
+    id: resource_health:v0.1.0
+    name: resource_health
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/resource_health.yaml
+    title: resource_health (Microsoft.ResourceHealth)
+    version: v0.1.0
+  resource_mover:
+    description: resource_mover
+    id: resource_mover:v0.1.0
+    name: resource_mover
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/resource_mover.yaml
+    title: resource_mover (Microsoft.Migrate)
+    version: v0.1.0
+  resources:
+    description: resources
+    id: resources:v0.1.0
+    name: resources
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/resources.yaml
+    title: resources (Microsoft.Resources)
+    version: v0.1.0
+  scheduler:
+    description: scheduler
+    id: scheduler:v0.1.0
+    name: scheduler
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/scheduler.yaml
+    title: scheduler (Microsoft.Scheduler)
+    version: v0.1.0
+  security:
+    description: security
+    id: security:v0.1.0
+    name: security
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/security.yaml
+    title: security (Microsoft.Security)
+    version: v0.1.0
+  security_and_compliance:
+    description: security_and_compliance
+    id: security_and_compliance:v0.1.0
+    name: security_and_compliance
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/security_and_compliance.yaml
+    title: security_and_compliance (Microsoft.SecurityAndCompliance)
+    version: v0.1.0
+  security_insights:
+    description: security_insights
+    id: security_insights:v0.1.0
+    name: security_insights
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/security_insights.yaml
+    title: security_insights (Microsoft.OperationalInsights)
+    version: v0.1.0
+  serial_console:
+    description: serial_console
+    id: serial_console:v0.1.0
+    name: serial_console
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/serial_console.yaml
+    title: serial_console (Microsoft.SerialConsole)
+    version: v0.1.0
+  service_bus:
+    description: service_bus
+    id: service_bus:v0.1.0
+    name: service_bus
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/service_bus.yaml
+    title: service_bus (Microsoft.ServiceBus)
+    version: v0.1.0
+  service_fabric:
+    description: service_fabric
+    id: service_fabric:v0.1.0
+    name: service_fabric
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/service_fabric.yaml
+    title: service_fabric (Microsoft.ServiceFabric)
+    version: v0.1.0
+  service_fabric_managed_clusters:
+    description: service_fabric_managed_clusters
+    id: service_fabric_managed_clusters:v0.1.0
+    name: service_fabric_managed_clusters
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/service_fabric_managed_clusters.yaml
+    title: service_fabric_managed_clusters (Microsoft.ServiceFabric)
+    version: v0.1.0
+  service_fabric_mesh:
+    description: service_fabric_mesh
+    id: service_fabric_mesh:v0.1.0
+    name: service_fabric_mesh
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/service_fabric_mesh.yaml
+    title: service_fabric_mesh (Microsoft.ServiceFabricMesh)
+    version: v0.1.0
+  service_linker:
+    description: service_linker
+    id: service_linker:v0.1.0
+    name: service_linker
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/service_linker.yaml
+    title: service_linker (Microsoft.ServiceLinker)
+    version: v0.1.0
+  service_map:
+    description: service_map
+    id: service_map:v0.1.0
+    name: service_map
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/service_map.yaml
+    title: service_map (Microsoft.OperationalInsights)
+    version: v0.1.0
+  softwareplan:
+    description: softwareplan
+    id: softwareplan:v0.1.0
+    name: softwareplan
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/softwareplan.yaml
+    title: softwareplan (Microsoft.SoftwarePlan)
+    version: v0.1.0
+  sql:
+    description: sql
+    id: sql:v0.1.0
+    name: sql
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/sql.yaml
+    title: sql (Microsoft.Sql)
+    version: v0.1.0
+  sql_virtual_machine:
+    description: sql_virtual_machine
+    id: sql_virtual_machine:v0.1.0
+    name: sql_virtual_machine
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/sql_virtual_machine.yaml
+    title: sql_virtual_machine (Microsoft.SqlVirtualMachine)
+    version: v0.1.0
+  storage:
+    description: storage
+    id: storage:v0.1.0
+    name: storage
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/storage.yaml
+    title: storage (Microsoft.Storage)
+    version: v0.1.0
+  storage_admin:
+    description: The Admin Storage Management Client.
+    id: storage_admin:v0.1.0
+    name: storage_admin
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/storage_admin.yaml
+    title: StorageManagementClient (Microsoft.Storage.Admin)
+    version: v0.1.0
+  storage_cache:
+    description: storage_cache
+    id: storage_cache:v0.1.0
+    name: storage_cache
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/storage_cache.yaml
+    title: storage_cache (Microsoft.StorageCache)
+    version: v0.1.0
+  storage_import_export:
+    description: storage_import_export
+    id: storage_import_export:v0.1.0
+    name: storage_import_export
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/storage_import_export.yaml
+    title: storage_import_export (Microsoft.ImportExport)
+    version: v0.1.0
+  storage_mover:
+    description: storage_mover
+    id: storage_mover:v0.1.0
+    name: storage_mover
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/storage_mover.yaml
+    title: storage_mover (Microsoft.StorageMover)
+    version: v0.1.0
+  storage_pool:
+    description: storage_pool
+    id: storage_pool:v0.1.0
+    name: storage_pool
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/storage_pool.yaml
+    title: storage_pool (Microsoft.StoragePool)
+    version: v0.1.0
+  storage_sync:
+    description: storage_sync
+    id: storage_sync:v0.1.0
+    name: storage_sync
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/storage_sync.yaml
+    title: storage_sync (Microsoft.StorageSync)
+    version: v0.1.0
+  stream_analytics:
+    description: stream_analytics
+    id: stream_analytics:v0.1.0
+    name: stream_analytics
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/stream_analytics.yaml
+    title: stream_analytics (Microsoft.StreamAnalytics)
+    version: v0.1.0
+  subscription:
+    description: subscription
+    id: subscription:v0.1.0
+    name: subscription
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/subscription.yaml
+    title: subscription ()
+    version: v0.1.0
+  subscriptions_admin:
+    description: The Admin Subscriptions Management Client.
+    id: subscriptions_admin:v0.1.0
+    name: subscriptions_admin
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/subscriptions_admin.yaml
+    title: SubscriptionsManagementClient (Microsoft.Subscriptions.Admin)
+    version: v0.1.0
+  support:
+    description: support
+    id: support:v0.1.0
+    name: support
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/support.yaml
+    title: support (Microsoft.Support)
+    version: v0.1.0
+  synapse:
+    description: synapse
+    id: synapse:v0.1.0
+    name: synapse
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/synapse.yaml
+    title: synapse (Microsoft.Synapse)
+    version: v0.1.0
+  system_center_vm_manager:
+    description: system_center_vm_manager
+    id: system_center_vm_manager:v0.1.0
+    name: system_center_vm_manager
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/system_center_vm_manager.yaml
+    title: system_center_vm_manager (Microsoft.ScVmm)
+    version: v0.1.0
+  time_series_insights:
+    description: Time Series Insights client
+    id: time_series_insights:v0.1.0
+    name: time_series_insights
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/time_series_insights.yaml
+    title: TimeSeriesInsightsClient (Microsoft.TimeSeriesInsights)
+    version: v0.1.0
+  traffic_manager:
+    description: TrafficManagerManagementClient
+    id: traffic_manager:v0.1.0
+    name: traffic_manager
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/traffic_manager.yaml
+    title: TrafficManagerManagementClient (Microsoft.Network)
+    version: v0.1.0
+  virtual_machine_images:
+    description: virtual_machine_images
+    id: virtual_machine_images:v0.1.0
+    name: virtual_machine_images
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/virtual_machine_images.yaml
+    title: virtual_machine_images (Microsoft.VirtualMachineImages)
+    version: v0.1.0
+  web_apps:
+    description: web_apps
+    id: web_apps:v0.1.0
+    name: web_apps
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/web_apps.yaml
+    title: web_apps (Microsoft.Web)
+    version: v0.1.0
+  web_pub_sub:
+    description: web_pub_sub
+    id: web_pub_sub:v0.1.0
+    name: web_pub_sub
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/web_pub_sub.yaml
+    title: web_pub_sub (Microsoft.SignalRService)
+    version: v0.1.0
+openapi: 3.0.0

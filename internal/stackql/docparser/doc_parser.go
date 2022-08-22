@@ -48,7 +48,7 @@ func OpenapiStackQLServiceDiscoveryDocPersistor(prov *openapistackql.Provider, s
 	version := svc.Info.Version
 	var tabluationsAnnotated []util.AnnotatedTabulation
 	for name, s := range svc.Components.Schemas {
-		v := openapistackql.NewSchema(s.Value, name)
+		v := openapistackql.NewSchema(s.Value, svc, name)
 		if v.IsArrayRef() {
 			continue
 		}
@@ -60,10 +60,10 @@ func OpenapiStackQLServiceDiscoveryDocPersistor(prov *openapistackql.Provider, s
 			tabluationsAnnotated = append(tabluationsAnnotated, annTab)
 			if version == "v2" {
 				for pr, prVal := range v.Properties {
-					prValSc := openapistackql.NewSchema(prVal.Value, pr)
+					prValSc := openapistackql.NewSchema(prVal.Value, svc, pr)
 					if prValSc != nil {
 						if prValSc.IsArrayRef() {
-							iSc := openapistackql.NewSchema(prValSc.Items.Value, fmt.Sprintf("%s.%s.Items", v.Title, pr))
+							iSc := openapistackql.NewSchema(prValSc.Items.Value, svc, fmt.Sprintf("%s.%s.Items", v.Title, pr))
 							tb := iSc.Tabulate(false)
 							log.Infoln(fmt.Sprintf("tb = %v", tb))
 							if tb != nil {

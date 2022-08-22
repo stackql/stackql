@@ -6,6 +6,7 @@ import (
 
 	"encoding/json"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/provider"
@@ -79,7 +80,7 @@ func SplitHttpParameters(prov provider.IProvider, sqlParamMap map[int]map[string
 						continue
 					}
 				}
-				reqMap.ServerParams[k] = openapistackql.NewParameterBinding(&openapistackql.Parameter{In: "server"}, v)
+				reqMap.ServerParams[k] = openapistackql.NewParameterBinding(openapistackql.NewParameter(&openapi3.Parameter{In: "server"}, method.Service), v)
 			}
 			if responseSchema != nil && responseSchema.FindByPath(k, nil) != nil {
 				reqMap.ResponseBody[k] = v
