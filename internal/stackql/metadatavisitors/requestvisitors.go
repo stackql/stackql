@@ -186,7 +186,7 @@ func (sv *SchemaRequestTemplateVisitor) processSubSchemasMap(sc *openapistackql.
 				log.Infoln(fmt.Sprintf("property = '%s' will be skipped", k))
 				continue
 			}
-			rv, err := sv.retrieveTemplateVal(ss, ".values."+constants.RequestBodyBaseKey+k, localSchemaVisitedMap)
+			rv, err := sv.retrieveTemplateVal(ss, method.Service, ".values."+constants.RequestBodyBaseKey+k, localSchemaVisitedMap)
 			if err != nil {
 				return nil, err
 			}
@@ -221,7 +221,7 @@ func (sv *SchemaRequestTemplateVisitor) RetrieveTemplate(sc *openapistackql.Sche
 			return retVal, err
 		}
 		if sc.AdditionalProperties != nil && sc.AdditionalProperties.Value != nil {
-			retVal, err = sv.processSubSchemasMap(sc, method, map[string]*openapistackql.Schema{"k1": openapistackql.NewSchema(sc.AdditionalProperties.Value, "k1")})
+			retVal, err = sv.processSubSchemasMap(sc, method, map[string]*openapistackql.Schema{"k1": openapistackql.NewSchema(sc.AdditionalProperties.Value, method.Service, "k1")})
 		}
 		if len(retVal) == 0 {
 			return nil, nil
@@ -231,7 +231,7 @@ func (sv *SchemaRequestTemplateVisitor) RetrieveTemplate(sc *openapistackql.Sche
 	return nil, fmt.Errorf("templating of request body only supported for object type payload")
 }
 
-func (sv *SchemaRequestTemplateVisitor) retrieveTemplateVal(sc *openapistackql.Schema, objectKey string, localSchemaVisitedMap map[string]bool) (interface{}, error) {
+func (sv *SchemaRequestTemplateVisitor) retrieveTemplateVal(sc *openapistackql.Schema, svc *openapistackql.Service, objectKey string, localSchemaVisitedMap map[string]bool) (interface{}, error) {
 	sSplit := strings.Split(objectKey, ".")
 	oKey := sSplit[len(sSplit)-1]
 	oPrefix := objectKey
@@ -266,7 +266,7 @@ func (sv *SchemaRequestTemplateVisitor) retrieveTemplateVal(sc *openapistackql.S
 					return "\"{{ " + templateValName + " }}\"", nil
 				}
 				propertyLocalSchemaVisitedMap[ss.Title] = true
-				sv, err := sv.retrieveTemplateVal(ss, templateValName+"."+k, propertyLocalSchemaVisitedMap)
+				sv, err := sv.retrieveTemplateVal(ss, svc, templateValName+"."+k, propertyLocalSchemaVisitedMap)
 				if err != nil {
 					return nil, err
 				}
@@ -278,11 +278,11 @@ func (sv *SchemaRequestTemplateVisitor) retrieveTemplateVal(sc *openapistackql.S
 		if len(rv) == 0 {
 			if sc.AdditionalProperties != nil {
 				if aps := sc.AdditionalProperties.Value; aps != nil {
-					aps := openapistackql.NewSchema(aps, "additionalProperties")
+					aps := openapistackql.NewSchema(aps, svc, "additionalProperties")
 					hasProperties := false
 					for k, v := range aps.Properties {
 						hasProperties = true
-						ss := openapistackql.NewSchema(v.Value, k)
+						ss := openapistackql.NewSchema(v.Value, svc, k)
 						if k == "" {
 							k = "key"
 						}
@@ -310,7 +310,7 @@ func (sv *SchemaRequestTemplateVisitor) retrieveTemplateVal(sc *openapistackql.S
 		for k, v := range initialLocalSchemaVisitedMap {
 			itemLocalSchemaVisitedMap[k] = v
 		}
-		itemS, err := sv.retrieveTemplateVal(iSch, templateValName+"[0]", itemLocalSchemaVisitedMap)
+		itemS, err := sv.retrieveTemplateVal(iSch, svc, templateValName+"[0]", itemLocalSchemaVisitedMap)
 		arr = append(arr, itemS)
 		if err != nil {
 			return nil, err
