@@ -347,6 +347,9 @@ SELECT_MACHINE_TYPES_DESC_EXPECTED = get_output_from_local_file(os.path.join('te
 SELECT_OKTA_APPS_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'simple-select', 'okta', 'apps', 'select-apps-asc.txt'))
 SELECT_OKTA_USERS_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'okta', 'select-users-asc.txt'))
 
+
+DELETE_AWS_CLOUD_CONTROL_LOG_GROUP = "delete from aws.cloud_control.resources where region = 'ap-southeast-1' and data__TypeName = 'AWS::Logs::LogGroup' and data__Identifier = 'LogGroupResourceExampleThird';"
+
 SELECT_AWS_VOLUMES_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'volumes', 'select-volumes-asc.txt'))
 SELECT_AWS_CLOUD_CONTROL_VPCS_DESC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-list-vpcs-desc.txt'))
 GET_AWS_CLOUD_CONTROL_VPCS_DESC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-get-vpcs-desc.txt'))
@@ -442,6 +445,7 @@ def get_variables(execution_env :str):
     ## queries and expectations
     'CREATE_AWS_VOLUME':                                                    CREATE_AWS_VOLUME,
     'CREATE_AWS_CLOUD_CONTROL_LOG_GROUP':                                   CREATE_AWS_CLOUD_CONTROL_LOG_GROUP,
+    'DELETE_AWS_CLOUD_CONTROL_LOG_GROUP':                                   DELETE_AWS_CLOUD_CONTROL_LOG_GROUP,
     'DESCRIBE_AWS_EC2_INSTANCES':                                           DESCRIBE_AWS_EC2_INSTANCES,
     'DESCRIBE_AWS_EC2_DEFAULT_KMS_KEY_ID':                                  DESCRIBE_AWS_EC2_DEFAULT_KMS_KEY_ID,
     'DESCRIBE_GITHUB_REPOS_PAGES':                                          DESCRIBE_GITHUB_REPOS_PAGES,

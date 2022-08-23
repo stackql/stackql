@@ -358,6 +358,8 @@ paths:
                       type: string
                   type: object
               type: object
+              required:
+                - ResourceRequestStatusFilter
         required: true
       responses:
         '200':
@@ -565,7 +567,8 @@ components:
             openAPIDocKey: '200'
       name: aws.cloud_control.resources
       sqlVerbs:
-        delete: []
+        delete:
+        - $ref: '#/components/x-stackQL-resources/resources/methods/delete_resource'
         insert:
         - $ref: '#/components/x-stackQL-resources/resources/methods/create_resource'
         select:
@@ -604,7 +607,8 @@ components:
             openAPIDocKey: '200'
       name: aws.cloud_control.resource_requests
       sqlVerbs:
-        delete: []
+        delete:
+        - $ref: '#/components/x-stackQL-resources/resource_requests/methods/cancel_resource_request'
         insert: []
         select:
         - $ref: '#/components/x-stackQL-resources/resource_requests/methods/get_resource_request'
