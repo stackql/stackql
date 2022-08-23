@@ -574,7 +574,8 @@ components:
         select:
         - $ref: '#/components/x-stackQL-resources/resources/methods/get_resource'
         - $ref: '#/components/x-stackQL-resources/resources/methods/list_resources'
-        update: []
+        update:
+        - $ref: '#/components/x-stackQL-resources/resources/methods/update_resource'
       title: resources
     resource_requests:
       name: resource_requests

@@ -68,6 +68,29 @@ func extractInsertParams(insert *sqlparser.Insert, insertValOnlyRows map[int]map
 	return retVal, err
 }
 
+func extractUpdateParams(update *sqlparser.Update, insertValOnlyRows map[int]map[int]interface{}) (map[int]map[string]interface{}, error) {
+	retVal := make(map[int]map[string]interface{})
+	var err error
+	if len(insertValOnlyRows) < 1 {
+		return nil, fmt.Errorf("cannot insert zero data")
+	}
+	lookupMap := make(map[string]*sqlparser.ColName)
+	var columnOrder []string
+	for _, row := range update.Exprs {
+		lookupMap[row.Name.GetRawVal()] = row.Name
+		columnOrder = append(columnOrder, row.Name.GetRawVal())
+	}
+	sort.Strings(columnOrder)
+	for i, valRow := range insertValOnlyRows {
+		rowMap := make(map[string]interface{})
+		for idx, k := range columnOrder {
+			rowMap[k] = valRow[idx]
+		}
+		retVal[i] = rowMap
+	}
+	return retVal, err
+}
+
 func ExtractSQLNodeParams(statement sqlparser.SQLNode, insertValOnlyRows map[int]map[int]interface{}) (map[int]map[string]interface{}, error) {
 	switch stmt := statement.(type) {
 	case *sqlparser.Exec:
@@ -75,6 +98,8 @@ func ExtractSQLNodeParams(statement sqlparser.SQLNode, insertValOnlyRows map[int
 		return map[int]map[string]interface{}{0: val}, err
 	case *sqlparser.Insert:
 		return extractInsertParams(stmt, insertValOnlyRows)
+	case *sqlparser.Update:
+		return extractUpdateParams(stmt, insertValOnlyRows)
 	}
 	paramMap := make(map[string]interface{})
 	var err error

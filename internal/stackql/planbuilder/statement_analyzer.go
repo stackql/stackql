@@ -1057,6 +1057,53 @@ func (p *primitiveGenerator) analyzeInsert(pbi PlanBuilderInput) error {
 	return nil
 }
 
+func (p *primitiveGenerator) analyzeUpdate(pbi PlanBuilderInput) error {
+	handlerCtx := pbi.GetHandlerCtx()
+	node, ok := pbi.GetUpdate()
+	if !ok {
+		return fmt.Errorf("could not cast node of type '%T' to required Update", pbi.GetStatement())
+	}
+	err := p.inferHeirarchyAndPersist(handlerCtx, node, pbi.GetPlaceholderParams().GetStringified())
+	if err != nil {
+		return err
+	}
+	tbl, err := p.PrimitiveComposer.GetTable(node)
+	if err != nil {
+		return err
+	}
+	prov, err := tbl.GetProvider()
+	if err != nil {
+		return err
+	}
+	currentService, err := tbl.GetServiceStr()
+	if err != nil {
+		return err
+	}
+	currentResource, err := tbl.GetResourceStr()
+	if err != nil {
+		return err
+	}
+
+	p.parseComments(node.Comments)
+
+	method, err := tbl.GetMethod()
+	if err != nil {
+		return err
+	}
+
+	if p.PrimitiveComposer.IsAwait() && !method.IsAwaitable() {
+		return fmt.Errorf("method %s is not awaitable", method.GetName())
+	}
+
+	_, err = checkResource(handlerCtx, prov, currentService, currentResource)
+	if err != nil {
+		return err
+	}
+
+	p.PrimitiveComposer.SetTable(node, tbl)
+	return nil
+}
+
 func (p *primitiveGenerator) inferHeirarchyAndPersist(handlerCtx *handler.HandlerContext, node sqlparser.SQLNode, parameters map[string]interface{}) error {
 	heirarchy, _, err := taxonomy.GetHeirarchyFromStatement(handlerCtx, node, parameters)
 	if err != nil {

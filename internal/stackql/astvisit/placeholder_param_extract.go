@@ -132,6 +132,10 @@ func (v *PlaceholderParamAstVisitor) Visit(node sqlparser.SQLNode) error {
 			node.Table, node.Partitions, node.Columns, node.Rows, node.OnDup)
 
 	case *sqlparser.Update:
+		err = v.Visit(node.Exprs)
+		if err != nil {
+			return err
+		}
 		buf.AstPrintf(node, "update %v%s%v set %v%v%v%v",
 			node.Comments, node.Ignore, node.TableExprs,
 			node.Exprs, node.Where, node.OrderBy, node.Limit)
@@ -144,7 +148,11 @@ func (v *PlaceholderParamAstVisitor) Visit(node sqlparser.SQLNode) error {
 		buf.AstPrintf(node, "from %v%v%v%v%v", node.TableExprs, node.Partitions, node.Where, node.OrderBy, node.Limit)
 
 	case *sqlparser.Set:
+		err = v.Visit(node.Exprs)
 		buf.AstPrintf(node, "set %v%v", node.Comments, node.Exprs)
+		if err != nil {
+			return err
+		}
 
 	case *sqlparser.SetTransaction:
 		if node.Scope == "" {
@@ -925,36 +933,37 @@ func (v *PlaceholderParamAstVisitor) Visit(node sqlparser.SQLNode) error {
 		}
 
 	case sqlparser.UpdateExprs:
-		var prefix string
 		for _, n := range node {
-			buf.AstPrintf(node, "%s%v", prefix, n)
-			prefix = ", "
+			err = v.Visit(n)
+			if err != nil {
+				return err
+			}
 		}
 
 	case *sqlparser.UpdateExpr:
+		switch node.Expr.(type) {
+		default:
+			k, err := parserutil.NewUnknownTypeColumnarReference(node.Name)
+			if err != nil {
+				return err
+			}
+			v.params.Set(k, parserutil.NewPlaceholderParameterMetadata())
+		}
 		buf.AstPrintf(node, "%v = %v", node.Name, node.Expr)
 
 	case sqlparser.SetExprs:
-		var prefix string
+		// var prefix string
 		for _, n := range node {
-			buf.AstPrintf(node, "%s%v", prefix, n)
-			prefix = ", "
+			err = v.Visit(n)
+			if err != nil {
+				return err
+			}
 		}
 
 	case *sqlparser.SetExpr:
-		if node.Scope != "" {
-			buf.WriteString(node.Scope)
-			buf.WriteString(" ")
-		}
-		// We don't have to backtick set variable names.
-		switch {
-		case node.Name.EqualString("charset") || node.Name.EqualString("names"):
-			buf.AstPrintf(node, "%s %v", node.Name.String(), node.Expr)
-		case node.Name.EqualString(sqlparser.TransactionStr):
-			sqlVal := node.Expr.(*sqlparser.SQLVal)
-			buf.AstPrintf(node, "%s %s", node.Name.String(), strings.ToLower(string(sqlVal.Val)))
-		default:
-			buf.AstPrintf(node, "%v = %v", node.Name, node.Expr)
+		err = v.Visit(node.Name)
+		if err != nil {
+			return err
 		}
 
 	case sqlparser.OnDup:

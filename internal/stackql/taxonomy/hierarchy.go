@@ -124,6 +124,12 @@ func getHids(handlerCtx *handler.HandlerContext, node sqlparser.SQLNode) (*dto.H
 		}
 	case *sqlparser.Insert:
 		hIds = dto.ResolveResourceTerminalHeirarchyIdentifiers(n.Table)
+	case *sqlparser.Update:
+		currentSvcRsc, err := parserutil.ExtractSingleTableFromTableExprs(n.TableExprs)
+		if err != nil {
+			return nil, err
+		}
+		hIds = dto.ResolveResourceTerminalHeirarchyIdentifiers(*currentSvcRsc)
 	case *sqlparser.Delete:
 		currentSvcRsc, err := parserutil.ExtractSingleTableFromTableExprs(n.TableExprs)
 		if err != nil {
@@ -191,6 +197,8 @@ func GetHeirarchyFromStatement(handlerCtx *handler.HandlerContext, node sqlparse
 		methodAction = "insert"
 	case *sqlparser.Delete:
 		methodAction = "delete"
+	case *sqlparser.Update:
+		methodAction = "update"
 	default:
 		return nil, remainingParams, fmt.Errorf("cannot resolve taxonomy")
 	}
