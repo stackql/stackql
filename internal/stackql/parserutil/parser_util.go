@@ -195,11 +195,46 @@ func ExtractInsertValColumns(insStmt *sqlparser.Insert) (map[int]map[int]interfa
 	return extractInsertValColumns(insStmt, false)
 }
 
+func ExtractUpdateValColumns(upStmt *sqlparser.Update) (map[int]map[int]interface{}, int, error) {
+	return extractInsertValColumns(upStmt, false)
+}
+
 func ExtractInsertValColumnsPlusPlaceHolders(insStmt *sqlparser.Insert) (map[int]map[int]interface{}, int, error) {
 	return extractInsertValColumns(insStmt, false)
 }
 
 func extractInsertValColumns(insStmt *sqlparser.Insert, includePlaceholders bool) (map[int]map[int]interface{}, int, error) {
+	var nonValCount int
+	var err error
+	switch node := insStmt.Rows.(type) {
+	case *sqlparser.Select:
+		row, nvc := ExtractSelectValColumns(node)
+		transformedRow := make(map[int]interface{})
+		for k, v := range row {
+			if v != nil {
+				for _, c := range v {
+					transformedRow[k] = c
+					break
+				}
+			} else {
+				if includePlaceholders {
+					nvc = 0
+					transformedRow[k] = nil
+				}
+			}
+		}
+		return map[int]map[int]interface{}{
+			0: transformedRow,
+		}, nvc, err
+	case sqlparser.Values:
+		return ExtractValuesColumnData(node)
+	default:
+		err = fmt.Errorf("cannot use an insert Rows value column of type '%T' as a raw value", node)
+	}
+	return nil, nonValCount, err
+}
+
+func extractUpdateValColumns(updateStmt *sqlparser.Update, includePlaceholders bool) (map[int]map[int]interface{}, int, error) {
 	var nonValCount int
 	var err error
 	switch node := insStmt.Rows.(type) {
