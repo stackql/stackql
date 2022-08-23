@@ -441,7 +441,6 @@ func (pgb *planGraphBuilder) handleDelete(pbi PlanBuilderInput) error {
 		pgb.planGraph.CreatePrimitiveNode(pr)
 		return nil
 	}
-	return nil
 }
 
 func (pgb *planGraphBuilder) handleRegistry(pbi PlanBuilderInput) error {

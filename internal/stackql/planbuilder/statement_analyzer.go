@@ -1110,11 +1110,31 @@ func (p *primitiveGenerator) analyzeDelete(pbi PlanBuilderInput) error {
 	if err != nil {
 		return err
 	}
-	schema, _, err := method.GetResponseBodySchemaAndMediaType()
+	requestSchema, err := method.GetRequestBodySchema()
+	if err != nil {
+		log.Infof("no request schema for delete: %s \n", err.Error())
+	}
+	responseSchema, _, err := method.GetResponseBodySchemaAndMediaType()
 	if err != nil {
 		log.Infof("no response schema for delete: %s \n", err.Error())
 	}
-	if schema != nil {
+	svc, err := tbl.GetService()
+	if err != nil {
+		return err
+	}
+	for _, sv := range svc.Servers {
+		for k := range sv.Variables {
+			colEntry := symtab.NewSymTabEntry(
+				p.PrimitiveComposer.GetDRMConfig().GetRelationalType("string"),
+				"",
+				"server",
+			)
+			uid := fmt.Sprintf("%s.%s", tbl.GetUniqueId(), k)
+			p.PrimitiveComposer.SetSymbol(uid, colEntry)
+		}
+		break
+	}
+	if responseSchema != nil {
 		_, _, whereErr := p.analyzeWhere(node.Where, make(map[string]interface{}))
 		if whereErr != nil {
 			return whereErr
@@ -1130,13 +1150,14 @@ func (p *primitiveGenerator) analyzeDelete(pbi PlanBuilderInput) error {
 		if ok {
 			continue
 		}
-		if schema == nil {
+		if responseSchema == nil {
 			return fmt.Errorf("cannot locate parameter '%s'", w)
 		}
 		log.Infoln(fmt.Sprintf("w = '%s'", w))
-		foundSchemaPrefixed := schema.FindByPath(colPrefix+w, nil)
-		foundSchema := schema.FindByPath(w, nil)
-		if foundSchemaPrefixed == nil && foundSchema == nil {
+		foundSchemaPrefixed := responseSchema.FindByPath(colPrefix+w, nil)
+		foundSchema := responseSchema.FindByPath(w, nil)
+		foundRequestSchema := requestSchema.FindByPath(strings.TrimPrefix(w, openapistackql.RequestBodyBaseKey), nil)
+		if foundSchemaPrefixed == nil && foundSchema == nil && foundRequestSchema == nil {
 			return fmt.Errorf("DELETE Where element = '%s' is NOT present in data returned from provider", w)
 		}
 	}
