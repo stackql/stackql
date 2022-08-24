@@ -48,7 +48,7 @@
         "--registry=${input:registryString}",
         "--auth=${input:authString}",
         "--tls.allowInsecure",
-        "update aws.cloud_control.resources set region = 'ap-southeast-1',  data__TypeName = 'AWS::Logs::LogGroup', data__Identifier = 'LogGroupResourceExample', data__PatchDocument =  string('[{\"op\":\"test\",\"path\":\"/RetentionInDays\",\"value\":90}]');"
+        "update aws.cloud_control.resources set region = 'ap-southeast-1',  data__TypeName = 'AWS::Logs::LogGroup', data__Identifier = 'LogGroupResourceExample', data__PatchDocument =  string('[{\"op\":\"test\",\"path\":\"/RetentionInDays\",\"value\":180}]');"
       ],
     },
     {
@@ -63,6 +63,20 @@
         "--auth=${input:authString}",
         "--tls.allowInsecure",
         "SELECT type, resources, zones, extendedLocation FROM azure.compute.virtual_machines WHERE resourceGroupName = 'stackql-ops-cicd-dev-01' AND subscriptionId = '631d1c6d-2a65-43e7-93c2-688bfe4e1468';"
+      ],
+    },
+    {
+      "name": "DEBUG github guff",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "--tls.allowInsecure",
+        "update github.orgs.orgs set body__description = 'Next generation cloud infrastructure, platform and software asset management and deployment automation software solutions.' WHERE org = 'infraql';"
       ],
     },
     {

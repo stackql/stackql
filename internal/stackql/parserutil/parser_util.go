@@ -260,6 +260,38 @@ func extractUpdateValColumns(updateStmt *sqlparser.Update, includePlaceholders b
 			return nil, nil, fmt.Errorf("update statement RHS of type '%T' not yet supported", node)
 		}
 	}
+	var err error
+	err = sqlparser.Walk(func(node sqlparser.SQLNode) (bool, error) {
+		switch node := node.(type) {
+		case *sqlparser.ComparisonExpr:
+			if node.Operator == sqlparser.EqualStr {
+				switch l := node.Left.(type) {
+				case *sqlparser.ColName:
+					// key := l.Name.GetRawVal()
+					// lookupMap[key] = l
+					// columnOrder = append(columnOrder, key)
+					switch r := node.Right.(type) {
+					case *sqlparser.SQLVal:
+						retVal[l] = string(r.Val)
+						// paramMap[key] = val
+					case *sqlparser.ColName:
+						return true, fmt.Errorf("cannot accomodate LHS and RHS col references in update where clause")
+					default:
+						err = fmt.Errorf("unsupported type on RHS of comparison '%T', FYI LHS type is '%T'", r, l)
+						return true, err
+					}
+				case *sqlparser.FuncExpr:
+				default:
+					err = fmt.Errorf("failed to analyse left node of comparison")
+					return true, err
+				}
+			}
+		}
+		return true, err
+	}, updateStmt.Where)
+	if err != nil {
+		return nil, nonValCols, err
+	}
 	return retVal, nonValCols, nil
 }
 

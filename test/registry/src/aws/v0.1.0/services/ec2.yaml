@@ -45706,7 +45706,8 @@ components:
         - $ref: '#/components/x-stackQL-resources/volumes/methods/volume_Create'
         select:
         - $ref: '#/components/x-stackQL-resources/volumes/methods/volumes_Describe'
-        update: []
+        update:
+        - $ref: '#/components/x-stackQL-resources/volumes/methods/volume_Modify'
       title: volumes
     volumes_modifications:
       name: volumes_modifications

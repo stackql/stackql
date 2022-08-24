@@ -184,6 +184,28 @@ AWS EC2 Volume Insert Simple
     ...    ${CREATE_AWS_VOLUME}
     ...    The operation completed successfully
 
+AWS EC2 Volume Update Simple
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${UPDATE_AWS_EC2_VOLUME}
+    ...    The operation completed successfully
+
+GitHub Orgs Org Update Simple
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${UPDATE_GITHUB_ORG}
+    ...    The operation completed successfully
+
 AWS Cloud Control Log Group Insert Simple
     Should StackQL Exec Inline Equal
     ...    ${STACKQL_EXE}

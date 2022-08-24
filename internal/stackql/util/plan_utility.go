@@ -80,6 +80,35 @@ func extractUpdateParams(update *sqlparser.Update, insertValOnlyRows map[int]map
 		lookupMap[row.Name.GetRawVal()] = row.Name
 		columnOrder = append(columnOrder, row.Name.GetRawVal())
 	}
+	sqlparser.Walk(func(node sqlparser.SQLNode) (bool, error) {
+		switch node := node.(type) {
+		case *sqlparser.ComparisonExpr:
+			if node.Operator == sqlparser.EqualStr {
+				switch l := node.Left.(type) {
+				case *sqlparser.ColName:
+					key := l.Name.GetRawVal()
+					lookupMap[key] = l
+					columnOrder = append(columnOrder, key)
+					switch r := node.Right.(type) {
+					case *sqlparser.SQLVal:
+						// val := string(r.Val)
+						// paramMap[key] = val
+					case *sqlparser.ColName:
+						return true, fmt.Errorf("cannot accomodate LHS and RHS col references in update where clause")
+					default:
+						err = fmt.Errorf("unsupported type on RHS of comparison '%T', FYI LHS type is '%T'", r, l)
+						return true, err
+					}
+				case *sqlparser.FuncExpr:
+				default:
+					err = fmt.Errorf("failed to analyse left node of comparison")
+					return true, err
+				}
+			}
+		}
+		return true, err
+	}, update.Where)
+
 	sort.Strings(columnOrder)
 	for i, valRow := range insertValOnlyRows {
 		rowMap := make(map[string]interface{})
