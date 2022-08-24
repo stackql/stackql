@@ -40368,7 +40368,7 @@ paths:
 components:
   x-stackQL-resources:
     account_attributes:
-      id: account_attributes
+      name: account_attributes
       methods:
         account_attributes_Describe:
           operation:
@@ -40377,7 +40377,7 @@ components:
             mediaType: text/xml
             objectKey: /*/accountAttributeSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.account_attributes
+      id: aws.ec2.account_attributes
       sqlVerbs:
         delete: []
         insert: []
@@ -40386,7 +40386,7 @@ components:
         update: []
       title: account_attributes
     address:
-      id: address
+      name: address
       methods:
         address_Allocate:
           operation:
@@ -40410,7 +40410,7 @@ components:
             $ref: '#/paths/~1?Action=ReleaseAddress&Version=2016-11-15/get'
           response:
             openAPIDocKey: '200'
-      name: aws.ec2.address
+      id: aws.ec2.address
       sqlVerbs:
         delete: []
         insert: []
@@ -40418,7 +40418,7 @@ components:
         update: []
       title: address
     address_attribute:
-      id: address_attribute
+      name: address_attribute
       methods:
         address_attribute_Modify:
           operation:
@@ -40432,7 +40432,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.address_attribute
+      id: aws.ec2.address_attribute
       sqlVerbs:
         delete: []
         insert: []
@@ -40440,7 +40440,7 @@ components:
         update: []
       title: address_attribute
     address_to_classic:
-      id: address_to_classic
+      name: address_to_classic
       methods:
         address_to_classic_Restore:
           operation:
@@ -40448,7 +40448,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.address_to_classic
+      id: aws.ec2.address_to_classic
       sqlVerbs:
         delete: []
         insert: []
@@ -40456,7 +40456,7 @@ components:
         update: []
       title: address_to_classic
     address_to_vpc:
-      id: address_to_vpc
+      name: address_to_vpc
       methods:
         address_to_vpc_Move:
           operation:
@@ -40464,7 +40464,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.address_to_vpc
+      id: aws.ec2.address_to_vpc
       sqlVerbs:
         delete: []
         insert: []
@@ -40472,7 +40472,7 @@ components:
         update: []
       title: address_to_vpc
     addresses:
-      id: addresses
+      name: addresses
       methods:
         addresses_Describe:
           operation:
@@ -40481,7 +40481,7 @@ components:
             mediaType: text/xml
             objectKey: /*/addressesSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.addresses
+      id: aws.ec2.addresses
       sqlVerbs:
         delete: []
         insert: []
@@ -40490,7 +40490,7 @@ components:
         update: []
       title: addresses
     addresses_attribute:
-      id: addresses_attribute
+      name: addresses_attribute
       methods:
         addresses_attribute_Describe:
           operation:
@@ -40499,7 +40499,7 @@ components:
             mediaType: text/xml
             objectKey: /*/addressSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.addresses_attribute
+      id: aws.ec2.addresses_attribute
       sqlVerbs:
         delete: []
         insert: []
@@ -40508,7 +40508,7 @@ components:
         update: []
       title: addresses_attribute
     aggregate_id_format:
-      id: aggregate_id_format
+      name: aggregate_id_format
       methods:
         aggregate_id_format_Describe:
           operation:
@@ -40517,7 +40517,7 @@ components:
             mediaType: text/xml
             objectKey: /*/statusSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.aggregate_id_format
+      id: aws.ec2.aggregate_id_format
       sqlVerbs:
         delete: []
         insert: []
@@ -40526,7 +40526,7 @@ components:
         update: []
       title: aggregate_id_format
     associated_enclave_certificate_iam_roles:
-      id: associated_enclave_certificate_iam_roles
+      name: associated_enclave_certificate_iam_roles
       methods:
         associated_enclave_certificate_iam_roles_Get:
           operation:
@@ -40535,7 +40535,7 @@ components:
             mediaType: text/xml
             objectKey: /*/associatedRoleSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.associated_enclave_certificate_iam_roles
+      id: aws.ec2.associated_enclave_certificate_iam_roles
       sqlVerbs:
         delete: []
         insert: []
@@ -40544,7 +40544,7 @@ components:
         update: []
       title: associated_enclave_certificate_iam_roles
     associated_ipv6_pool_cidrs:
-      id: associated_ipv6_pool_cidrs
+      name: associated_ipv6_pool_cidrs
       methods:
         associated_ipv6_pool_cidrs_Get:
           operation:
@@ -40553,7 +40553,7 @@ components:
             mediaType: text/xml
             objectKey: /*/ipv6CidrAssociationSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.associated_ipv6_pool_cidrs
+      id: aws.ec2.associated_ipv6_pool_cidrs
       sqlVerbs:
         delete: []
         insert: []
@@ -40562,7 +40562,7 @@ components:
         update: []
       title: associated_ipv6_pool_cidrs
     availability_zone_group:
-      id: availability_zone_group
+      name: availability_zone_group
       methods:
         availability_zone_group_Modify:
           operation:
@@ -40570,7 +40570,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.availability_zone_group
+      id: aws.ec2.availability_zone_group
       sqlVerbs:
         delete: []
         insert: []
@@ -40578,7 +40578,7 @@ components:
         update: []
       title: availability_zone_group
     availability_zones:
-      id: availability_zones
+      name: availability_zones
       methods:
         availability_zones_Describe:
           operation:
@@ -40587,7 +40587,7 @@ components:
             mediaType: text/xml
             objectKey: /*/availabilityZoneInfo/item
             openAPIDocKey: '200'
-      name: aws.ec2.availability_zones
+      id: aws.ec2.availability_zones
       sqlVerbs:
         delete: []
         insert: []
@@ -40596,7 +40596,7 @@ components:
         update: []
       title: availability_zones
     bundle_tasks:
-      id: bundle_tasks
+      name: bundle_tasks
       methods:
         bundle_task_Cancel:
           operation:
@@ -40611,7 +40611,7 @@ components:
             mediaType: text/xml
             objectKey: /*/bundleInstanceTasksSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.bundle_tasks
+      id: aws.ec2.bundle_tasks
       sqlVerbs:
         delete: []
         insert: []
@@ -40620,7 +40620,7 @@ components:
         update: []
       title: bundle_tasks
     byoip_cidr_to_ipam:
-      id: byoip_cidr_to_ipam
+      name: byoip_cidr_to_ipam
       methods:
         byoip_cidr_to_ipam_Move:
           operation:
@@ -40628,7 +40628,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.byoip_cidr_to_ipam
+      id: aws.ec2.byoip_cidr_to_ipam
       sqlVerbs:
         delete: []
         insert: []
@@ -40636,7 +40636,7 @@ components:
         update: []
       title: byoip_cidr_to_ipam
     byoip_cidrs:
-      id: byoip_cidrs
+      name: byoip_cidrs
       methods:
         byoip_cidr_Advertise:
           operation:
@@ -40669,7 +40669,7 @@ components:
             mediaType: text/xml
             objectKey: /*/byoipCidrSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.byoip_cidrs
+      id: aws.ec2.byoip_cidrs
       sqlVerbs:
         delete: []
         insert: []
@@ -40678,7 +40678,7 @@ components:
         update: []
       title: byoip_cidrs
     capacity_reservation_fleets:
-      id: capacity_reservation_fleets
+      name: capacity_reservation_fleets
       methods:
         capacity_reservation_fleet_Create:
           operation:
@@ -40705,7 +40705,7 @@ components:
             mediaType: text/xml
             objectKey: /*/capacityReservationFleetSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.capacity_reservation_fleets
+      id: aws.ec2.capacity_reservation_fleets
       sqlVerbs:
         delete: []
         insert:
@@ -40715,7 +40715,7 @@ components:
         update: []
       title: capacity_reservation_fleets
     capacity_reservation_usage:
-      id: capacity_reservation_usage
+      name: capacity_reservation_usage
       methods:
         capacity_reservation_usage_Get:
           operation:
@@ -40724,7 +40724,7 @@ components:
             mediaType: text/xml
             objectKey: /*
             openAPIDocKey: '200'
-      name: aws.ec2.capacity_reservation_usage
+      id: aws.ec2.capacity_reservation_usage
       sqlVerbs:
         delete: []
         insert: []
@@ -40733,7 +40733,7 @@ components:
         update: []
       title: capacity_reservation_usage
     capacity_reservations:
-      id: capacity_reservations
+      name: capacity_reservations
       methods:
         capacity_reservation_Cancel:
           operation:
@@ -40760,7 +40760,7 @@ components:
             mediaType: text/xml
             objectKey: /*/capacityReservationSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.capacity_reservations
+      id: aws.ec2.capacity_reservations
       sqlVerbs:
         delete: []
         insert:
@@ -40770,7 +40770,7 @@ components:
         update: []
       title: capacity_reservations
     carrier_gateways:
-      id: carrier_gateways
+      name: carrier_gateways
       methods:
         carrier_gateway_Create:
           operation:
@@ -40791,7 +40791,7 @@ components:
             mediaType: text/xml
             objectKey: /*/carrierGatewaySet/item
             openAPIDocKey: '200'
-      name: aws.ec2.carrier_gateways
+      id: aws.ec2.carrier_gateways
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/carrier_gateways/methods/carrier_gateway_Delete'
@@ -40802,7 +40802,7 @@ components:
         update: []
       title: carrier_gateways
     classic_link_instances:
-      id: classic_link_instances
+      name: classic_link_instances
       methods:
         classic_link_instances_Describe:
           operation:
@@ -40811,7 +40811,7 @@ components:
             mediaType: text/xml
             objectKey: /*/instancesSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.classic_link_instances
+      id: aws.ec2.classic_link_instances
       sqlVerbs:
         delete: []
         insert: []
@@ -40820,7 +40820,7 @@ components:
         update: []
       title: classic_link_instances
     classic_link_vpc:
-      id: classic_link_vpc
+      name: classic_link_vpc
       methods:
         classic_link_vpc_Attach:
           operation:
@@ -40834,7 +40834,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.classic_link_vpc
+      id: aws.ec2.classic_link_vpc
       sqlVerbs:
         delete: []
         insert: []
@@ -40842,7 +40842,7 @@ components:
         update: []
       title: classic_link_vpc
     client_vpn_authorization_rules:
-      id: client_vpn_authorization_rules
+      name: client_vpn_authorization_rules
       methods:
         client_vpn_authorization_rules_Describe:
           operation:
@@ -40851,7 +40851,7 @@ components:
             mediaType: text/xml
             objectKey: /*/authorizationRule/item
             openAPIDocKey: '200'
-      name: aws.ec2.client_vpn_authorization_rules
+      id: aws.ec2.client_vpn_authorization_rules
       sqlVerbs:
         delete: []
         insert: []
@@ -40860,7 +40860,7 @@ components:
         update: []
       title: client_vpn_authorization_rules
     client_vpn_client_certificate_revocation_list:
-      id: client_vpn_client_certificate_revocation_list
+      name: client_vpn_client_certificate_revocation_list
       methods:
         client_vpn_client_certificate_revocation_list_Export:
           operation:
@@ -40874,7 +40874,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.client_vpn_client_certificate_revocation_list
+      id: aws.ec2.client_vpn_client_certificate_revocation_list
       sqlVerbs:
         delete: []
         insert: []
@@ -40882,7 +40882,7 @@ components:
         update: []
       title: client_vpn_client_certificate_revocation_list
     client_vpn_client_configuration:
-      id: client_vpn_client_configuration
+      name: client_vpn_client_configuration
       methods:
         client_vpn_client_configuration_Export:
           operation:
@@ -40890,7 +40890,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.client_vpn_client_configuration
+      id: aws.ec2.client_vpn_client_configuration
       sqlVerbs:
         delete: []
         insert: []
@@ -40898,7 +40898,7 @@ components:
         update: []
       title: client_vpn_client_configuration
     client_vpn_connections:
-      id: client_vpn_connections
+      name: client_vpn_connections
       methods:
         client_vpn_connections_Describe:
           operation:
@@ -40913,7 +40913,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.client_vpn_connections
+      id: aws.ec2.client_vpn_connections
       sqlVerbs:
         delete: []
         insert: []
@@ -40922,7 +40922,7 @@ components:
         update: []
       title: client_vpn_connections
     client_vpn_endpoints:
-      id: client_vpn_endpoints
+      name: client_vpn_endpoints
       methods:
         client_vpn_endpoint_Create:
           operation:
@@ -40949,7 +40949,7 @@ components:
             mediaType: text/xml
             objectKey: /*/clientVpnEndpoint/item
             openAPIDocKey: '200'
-      name: aws.ec2.client_vpn_endpoints
+      id: aws.ec2.client_vpn_endpoints
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/client_vpn_endpoints/methods/client_vpn_endpoint_Delete'
@@ -40960,7 +40960,7 @@ components:
         update: []
       title: client_vpn_endpoints
     client_vpn_ingress:
-      id: client_vpn_ingress
+      name: client_vpn_ingress
       methods:
         client_vpn_ingress_Authorize:
           operation:
@@ -40974,7 +40974,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.client_vpn_ingress
+      id: aws.ec2.client_vpn_ingress
       sqlVerbs:
         delete: []
         insert: []
@@ -40982,7 +40982,7 @@ components:
         update: []
       title: client_vpn_ingress
     client_vpn_routes:
-      id: client_vpn_routes
+      name: client_vpn_routes
       methods:
         client_vpn_route_Create:
           operation:
@@ -41003,7 +41003,7 @@ components:
             mediaType: text/xml
             objectKey: /*/routes/item
             openAPIDocKey: '200'
-      name: aws.ec2.client_vpn_routes
+      id: aws.ec2.client_vpn_routes
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/client_vpn_routes/methods/client_vpn_route_Delete'
@@ -41014,7 +41014,7 @@ components:
         update: []
       title: client_vpn_routes
     client_vpn_target_networks:
-      id: client_vpn_target_networks
+      name: client_vpn_target_networks
       methods:
         client_vpn_target_network_Associate:
           operation:
@@ -41035,7 +41035,7 @@ components:
             mediaType: text/xml
             objectKey: /*/clientVpnTargetNetworks/item
             openAPIDocKey: '200'
-      name: aws.ec2.client_vpn_target_networks
+      id: aws.ec2.client_vpn_target_networks
       sqlVerbs:
         delete: []
         insert: []
@@ -41044,7 +41044,7 @@ components:
         update: []
       title: client_vpn_target_networks
     coip_pool_usage:
-      id: coip_pool_usage
+      name: coip_pool_usage
       methods:
         coip_pool_usage_Get:
           operation:
@@ -41053,7 +41053,7 @@ components:
             mediaType: text/xml
             objectKey: /*/coipAddressUsageSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.coip_pool_usage
+      id: aws.ec2.coip_pool_usage
       sqlVerbs:
         delete: []
         insert: []
@@ -41062,7 +41062,7 @@ components:
         update: []
       title: coip_pool_usage
     coip_pools:
-      id: coip_pools
+      name: coip_pools
       methods:
         coip_pools_Describe:
           operation:
@@ -41071,7 +41071,7 @@ components:
             mediaType: text/xml
             objectKey: /*/coipPoolSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.coip_pools
+      id: aws.ec2.coip_pools
       sqlVerbs:
         delete: []
         insert: []
@@ -41080,7 +41080,7 @@ components:
         update: []
       title: coip_pools
     console_output:
-      id: console_output
+      name: console_output
       methods:
         console_output_Get:
           operation:
@@ -41089,7 +41089,7 @@ components:
             mediaType: text/xml
             objectKey: /*
             openAPIDocKey: '200'
-      name: aws.ec2.console_output
+      id: aws.ec2.console_output
       sqlVerbs:
         delete: []
         insert: []
@@ -41098,7 +41098,7 @@ components:
         update: []
       title: console_output
     console_screenshot:
-      id: console_screenshot
+      name: console_screenshot
       methods:
         console_screenshot_Get:
           operation:
@@ -41107,7 +41107,7 @@ components:
             mediaType: text/xml
             objectKey: /*
             openAPIDocKey: '200'
-      name: aws.ec2.console_screenshot
+      id: aws.ec2.console_screenshot
       sqlVerbs:
         delete: []
         insert: []
@@ -41116,7 +41116,7 @@ components:
         update: []
       title: console_screenshot
     conversion_tasks:
-      id: conversion_tasks
+      name: conversion_tasks
       methods:
         conversion_task_Cancel:
           operation:
@@ -41130,7 +41130,7 @@ components:
             mediaType: text/xml
             objectKey: /*/conversionTasks/item
             openAPIDocKey: '200'
-      name: aws.ec2.conversion_tasks
+      id: aws.ec2.conversion_tasks
       sqlVerbs:
         delete: []
         insert: []
@@ -41139,7 +41139,7 @@ components:
         update: []
       title: conversion_tasks
     customer_gateways:
-      id: customer_gateways
+      name: customer_gateways
       methods:
         customer_gateway_Create:
           operation:
@@ -41159,7 +41159,7 @@ components:
             mediaType: text/xml
             objectKey: /*/customerGatewaySet/item
             openAPIDocKey: '200'
-      name: aws.ec2.customer_gateways
+      id: aws.ec2.customer_gateways
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/customer_gateways/methods/customer_gateway_Delete'
@@ -41170,7 +41170,7 @@ components:
         update: []
       title: customer_gateways
     default_credit_specification:
-      id: default_credit_specification
+      name: default_credit_specification
       methods:
         default_credit_specification_Get:
           operation:
@@ -41185,7 +41185,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.default_credit_specification
+      id: aws.ec2.default_credit_specification
       sqlVerbs:
         delete: []
         insert: []
@@ -41194,7 +41194,7 @@ components:
         update: []
       title: default_credit_specification
     default_subnet:
-      id: default_subnet
+      name: default_subnet
       methods:
         default_subnet_Create:
           operation:
@@ -41202,7 +41202,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.default_subnet
+      id: aws.ec2.default_subnet
       sqlVerbs:
         delete: []
         insert:
@@ -41211,7 +41211,7 @@ components:
         update: []
       title: default_subnet
     default_vpc:
-      id: default_vpc
+      name: default_vpc
       methods:
         default_vpc_Create:
           operation:
@@ -41219,7 +41219,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.default_vpc
+      id: aws.ec2.default_vpc
       sqlVerbs:
         delete: []
         insert:
@@ -41228,7 +41228,7 @@ components:
         update: []
       title: default_vpc
     dhcp_options:
-      id: dhcp_options
+      name: dhcp_options
       methods:
         dhcp_options_Associate:
           operation:
@@ -41253,7 +41253,7 @@ components:
             mediaType: text/xml
             objectKey: /*/dhcpOptionsSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.dhcp_options
+      id: aws.ec2.dhcp_options
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/dhcp_options/methods/dhcp_options_Delete'
@@ -41264,14 +41264,14 @@ components:
         update: []
       title: dhcp_options
     diagnostic_interrupt:
-      id: diagnostic_interrupt
+      name: diagnostic_interrupt
       methods:
         diagnostic_interrupt_Send:
           operation:
             $ref: '#/paths/~1?Action=SendDiagnosticInterrupt&Version=2016-11-15/get'
           response:
             openAPIDocKey: '200'
-      name: aws.ec2.diagnostic_interrupt
+      id: aws.ec2.diagnostic_interrupt
       sqlVerbs:
         delete: []
         insert: []
@@ -41279,7 +41279,7 @@ components:
         update: []
       title: diagnostic_interrupt
     ebs_default_kms_key_id:
-      id: ebs_default_kms_key_id
+      name: ebs_default_kms_key_id
       methods:
         ebs_default_kms_key_id_Get:
           operation:
@@ -41300,7 +41300,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.ebs_default_kms_key_id
+      id: aws.ec2.ebs_default_kms_key_id
       sqlVerbs:
         delete: []
         insert: []
@@ -41309,7 +41309,7 @@ components:
         update: []
       title: ebs_default_kms_key_id
     ebs_encryption_by_default:
-      id: ebs_encryption_by_default
+      name: ebs_encryption_by_default
       methods:
         ebs_encryption_by_default_Disable:
           operation:
@@ -41330,7 +41330,7 @@ components:
             mediaType: text/xml
             objectKey: /*
             openAPIDocKey: '200'
-      name: aws.ec2.ebs_encryption_by_default
+      id: aws.ec2.ebs_encryption_by_default
       sqlVerbs:
         delete: []
         insert: []
@@ -41339,7 +41339,7 @@ components:
         update: []
       title: ebs_encryption_by_default
     egress_only_internet_gateways:
-      id: egress_only_internet_gateways
+      name: egress_only_internet_gateways
       methods:
         egress_only_internet_gateway_Create:
           operation:
@@ -41360,7 +41360,7 @@ components:
             mediaType: text/xml
             objectKey: /*/egressOnlyInternetGatewaySet/item
             openAPIDocKey: '200'
-      name: aws.ec2.egress_only_internet_gateways
+      id: aws.ec2.egress_only_internet_gateways
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/egress_only_internet_gateways/methods/egress_only_internet_gateway_Delete'
@@ -41371,7 +41371,7 @@ components:
         update: []
       title: egress_only_internet_gateways
     elastic_gpus:
-      id: elastic_gpus
+      name: elastic_gpus
       methods:
         elastic_gpus_Describe:
           operation:
@@ -41380,7 +41380,7 @@ components:
             mediaType: text/xml
             objectKey: /*/elasticGpuSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.elastic_gpus
+      id: aws.ec2.elastic_gpus
       sqlVerbs:
         delete: []
         insert: []
@@ -41389,7 +41389,7 @@ components:
         update: []
       title: elastic_gpus
     enclave_certificate_iam_role:
-      id: enclave_certificate_iam_role
+      name: enclave_certificate_iam_role
       methods:
         enclave_certificate_iam_role_Associate:
           operation:
@@ -41403,7 +41403,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.enclave_certificate_iam_role
+      id: aws.ec2.enclave_certificate_iam_role
       sqlVerbs:
         delete: []
         insert: []
@@ -41411,7 +41411,7 @@ components:
         update: []
       title: enclave_certificate_iam_role
     export_image_tasks:
-      id: export_image_tasks
+      name: export_image_tasks
       methods:
         export_image_tasks_Describe:
           operation:
@@ -41420,7 +41420,7 @@ components:
             mediaType: text/xml
             objectKey: /*/exportImageTaskSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.export_image_tasks
+      id: aws.ec2.export_image_tasks
       sqlVerbs:
         delete: []
         insert: []
@@ -41429,7 +41429,7 @@ components:
         update: []
       title: export_image_tasks
     export_tasks:
-      id: export_tasks
+      name: export_tasks
       methods:
         export_task_Cancel:
           operation:
@@ -41443,7 +41443,7 @@ components:
             mediaType: text/xml
             objectKey: /*/exportTaskSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.export_tasks
+      id: aws.ec2.export_tasks
       sqlVerbs:
         delete: []
         insert: []
@@ -41452,7 +41452,7 @@ components:
         update: []
       title: export_tasks
     fast_launch:
-      id: fast_launch
+      name: fast_launch
       methods:
         fast_launch_Disable:
           operation:
@@ -41466,7 +41466,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.fast_launch
+      id: aws.ec2.fast_launch
       sqlVerbs:
         delete: []
         insert: []
@@ -41474,7 +41474,7 @@ components:
         update: []
       title: fast_launch
     fast_launch_images:
-      id: fast_launch_images
+      name: fast_launch_images
       methods:
         fast_launch_images_Describe:
           operation:
@@ -41483,7 +41483,7 @@ components:
             mediaType: text/xml
             objectKey: /*/fastLaunchImageSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.fast_launch_images
+      id: aws.ec2.fast_launch_images
       sqlVerbs:
         delete: []
         insert: []
@@ -41492,7 +41492,7 @@ components:
         update: []
       title: fast_launch_images
     fast_snapshot_restores:
-      id: fast_snapshot_restores
+      name: fast_snapshot_restores
       methods:
         fast_snapshot_restores_Describe:
           operation:
@@ -41513,7 +41513,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.fast_snapshot_restores
+      id: aws.ec2.fast_snapshot_restores
       sqlVerbs:
         delete: []
         insert: []
@@ -41522,7 +41522,7 @@ components:
         update: []
       title: fast_snapshot_restores
     fleet_history:
-      id: fleet_history
+      name: fleet_history
       methods:
         fleet_history_Describe:
           operation:
@@ -41531,7 +41531,7 @@ components:
             mediaType: text/xml
             objectKey: /*
             openAPIDocKey: '200'
-      name: aws.ec2.fleet_history
+      id: aws.ec2.fleet_history
       sqlVerbs:
         delete: []
         insert: []
@@ -41540,7 +41540,7 @@ components:
         update: []
       title: fleet_history
     fleet_instances:
-      id: fleet_instances
+      name: fleet_instances
       methods:
         fleet_instances_Describe:
           operation:
@@ -41549,7 +41549,7 @@ components:
             mediaType: text/xml
             objectKey: /*/activeInstanceSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.fleet_instances
+      id: aws.ec2.fleet_instances
       sqlVerbs:
         delete: []
         insert: []
@@ -41558,7 +41558,7 @@ components:
         update: []
       title: fleet_instances
     fleets:
-      id: fleets
+      name: fleets
       methods:
         fleet_Create:
           operation:
@@ -41585,7 +41585,7 @@ components:
             mediaType: text/xml
             objectKey: /*/fleetSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.fleets
+      id: aws.ec2.fleets
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/fleets/methods/fleets_Delete'
@@ -41596,7 +41596,7 @@ components:
         update: []
       title: fleets
     flow_logs:
-      id: flow_logs
+      name: flow_logs
       methods:
         flow_logs_Create:
           operation:
@@ -41617,7 +41617,7 @@ components:
             mediaType: text/xml
             objectKey: /*/flowLogSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.flow_logs
+      id: aws.ec2.flow_logs
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/flow_logs/methods/flow_logs_Delete'
@@ -41628,7 +41628,7 @@ components:
         update: []
       title: flow_logs
     flow_logs_integration_template:
-      id: flow_logs_integration_template
+      name: flow_logs_integration_template
       methods:
         flow_logs_integration_template_Get:
           operation:
@@ -41637,7 +41637,7 @@ components:
             mediaType: text/xml
             objectKey: /*
             openAPIDocKey: '200'
-      name: aws.ec2.flow_logs_integration_template
+      id: aws.ec2.flow_logs_integration_template
       sqlVerbs:
         delete: []
         insert: []
@@ -41646,7 +41646,7 @@ components:
         update: []
       title: flow_logs_integration_template
     fpga_image_attribute:
-      id: fpga_image_attribute
+      name: fpga_image_attribute
       methods:
         fpga_image_attribute_Describe:
           operation:
@@ -41667,7 +41667,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.fpga_image_attribute
+      id: aws.ec2.fpga_image_attribute
       sqlVerbs:
         delete: []
         insert: []
@@ -41676,7 +41676,7 @@ components:
         update: []
       title: fpga_image_attribute
     fpga_images:
-      id: fpga_images
+      name: fpga_images
       methods:
         fpga_image_Copy:
           operation:
@@ -41703,7 +41703,7 @@ components:
             mediaType: text/xml
             objectKey: /*/fpgaImageSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.fpga_images
+      id: aws.ec2.fpga_images
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/fpga_images/methods/fpga_image_Delete'
@@ -41714,7 +41714,7 @@ components:
         update: []
       title: fpga_images
     groups_for_capacity_reservation:
-      id: groups_for_capacity_reservation
+      name: groups_for_capacity_reservation
       methods:
         groups_for_capacity_reservation_Get:
           operation:
@@ -41723,7 +41723,7 @@ components:
             mediaType: text/xml
             objectKey: /*/capacityReservationGroupSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.groups_for_capacity_reservation
+      id: aws.ec2.groups_for_capacity_reservation
       sqlVerbs:
         delete: []
         insert: []
@@ -41732,7 +41732,7 @@ components:
         update: []
       title: groups_for_capacity_reservation
     host_reservation_offerings:
-      id: host_reservation_offerings
+      name: host_reservation_offerings
       methods:
         host_reservation_offerings_Describe:
           operation:
@@ -41741,7 +41741,7 @@ components:
             mediaType: text/xml
             objectKey: /*/offeringSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.host_reservation_offerings
+      id: aws.ec2.host_reservation_offerings
       sqlVerbs:
         delete: []
         insert: []
@@ -41750,7 +41750,7 @@ components:
         update: []
       title: host_reservation_offerings
     host_reservation_purchase_preview:
-      id: host_reservation_purchase_preview
+      name: host_reservation_purchase_preview
       methods:
         host_reservation_purchase_preview_Get:
           operation:
@@ -41759,7 +41759,7 @@ components:
             mediaType: text/xml
             objectKey: /*
             openAPIDocKey: '200'
-      name: aws.ec2.host_reservation_purchase_preview
+      id: aws.ec2.host_reservation_purchase_preview
       sqlVerbs:
         delete: []
         insert: []
@@ -41768,7 +41768,7 @@ components:
         update: []
       title: host_reservation_purchase_preview
     host_reservations:
-      id: host_reservations
+      name: host_reservations
       methods:
         host_reservation_Purchase:
           operation:
@@ -41783,7 +41783,7 @@ components:
             mediaType: text/xml
             objectKey: /*/hostReservationSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.host_reservations
+      id: aws.ec2.host_reservations
       sqlVerbs:
         delete: []
         insert: []
@@ -41792,7 +41792,7 @@ components:
         update: []
       title: host_reservations
     hosts:
-      id: hosts
+      name: hosts
       methods:
         hosts_Allocate:
           operation:
@@ -41819,7 +41819,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.hosts
+      id: aws.ec2.hosts
       sqlVerbs:
         delete: []
         insert: []
@@ -41828,7 +41828,7 @@ components:
         update: []
       title: hosts
     iam_instance_profile:
-      id: iam_instance_profile
+      name: iam_instance_profile
       methods:
         iam_instance_profile_Associate:
           operation:
@@ -41842,7 +41842,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.iam_instance_profile
+      id: aws.ec2.iam_instance_profile
       sqlVerbs:
         delete: []
         insert: []
@@ -41850,7 +41850,7 @@ components:
         update: []
       title: iam_instance_profile
     iam_instance_profile_associations:
-      id: iam_instance_profile_associations
+      name: iam_instance_profile_associations
       methods:
         iam_instance_profile_association_Replace:
           operation:
@@ -41865,7 +41865,7 @@ components:
             mediaType: text/xml
             objectKey: /*/iamInstanceProfileAssociationSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.iam_instance_profile_associations
+      id: aws.ec2.iam_instance_profile_associations
       sqlVerbs:
         delete: []
         insert: []
@@ -41874,7 +41874,7 @@ components:
         update: []
       title: iam_instance_profile_associations
     id_format:
-      id: id_format
+      name: id_format
       methods:
         id_format_Describe:
           operation:
@@ -41888,7 +41888,7 @@ components:
             $ref: '#/paths/~1?Action=ModifyIdFormat&Version=2016-11-15/get'
           response:
             openAPIDocKey: '200'
-      name: aws.ec2.id_format
+      id: aws.ec2.id_format
       sqlVerbs:
         delete: []
         insert: []
@@ -41897,7 +41897,7 @@ components:
         update: []
       title: id_format
     identity_id_format:
-      id: identity_id_format
+      name: identity_id_format
       methods:
         identity_id_format_Describe:
           operation:
@@ -41911,7 +41911,7 @@ components:
             $ref: '#/paths/~1?Action=ModifyIdentityIdFormat&Version=2016-11-15/get'
           response:
             openAPIDocKey: '200'
-      name: aws.ec2.identity_id_format
+      id: aws.ec2.identity_id_format
       sqlVerbs:
         delete: []
         insert: []
@@ -41920,7 +41920,7 @@ components:
         update: []
       title: identity_id_format
     image_attribute:
-      id: image_attribute
+      name: image_attribute
       methods:
         image_attribute_Describe:
           operation:
@@ -41939,7 +41939,7 @@ components:
             $ref: '#/paths/~1?Action=ResetImageAttribute&Version=2016-11-15/get'
           response:
             openAPIDocKey: '200'
-      name: aws.ec2.image_attribute
+      id: aws.ec2.image_attribute
       sqlVerbs:
         delete: []
         insert: []
@@ -41948,7 +41948,7 @@ components:
         update: []
       title: image_attribute
     image_deprecation:
-      id: image_deprecation
+      name: image_deprecation
       methods:
         image_deprecation_Disable:
           operation:
@@ -41962,7 +41962,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.image_deprecation
+      id: aws.ec2.image_deprecation
       sqlVerbs:
         delete: []
         insert: []
@@ -41970,7 +41970,7 @@ components:
         update: []
       title: image_deprecation
     image_from_recycle_bin:
-      id: image_from_recycle_bin
+      name: image_from_recycle_bin
       methods:
         image_from_recycle_bin_Restore:
           operation:
@@ -41978,7 +41978,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.image_from_recycle_bin
+      id: aws.ec2.image_from_recycle_bin
       sqlVerbs:
         delete: []
         insert: []
@@ -41986,7 +41986,7 @@ components:
         update: []
       title: image_from_recycle_bin
     images:
-      id: images
+      name: images
       methods:
         image_Copy:
           operation:
@@ -42030,7 +42030,7 @@ components:
             mediaType: text/xml
             objectKey: /*
             openAPIDocKey: '200'
-      name: aws.ec2.images
+      id: aws.ec2.images
       sqlVerbs:
         delete: []
         insert:
@@ -42040,7 +42040,7 @@ components:
         update: []
       title: images
     images_in_recycle_bin:
-      id: images_in_recycle_bin
+      name: images_in_recycle_bin
       methods:
         images_in_recycle_bin_List:
           operation:
@@ -42049,7 +42049,7 @@ components:
             mediaType: text/xml
             objectKey: /*/imageSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.images_in_recycle_bin
+      id: aws.ec2.images_in_recycle_bin
       sqlVerbs:
         delete: []
         insert: []
@@ -42058,7 +42058,7 @@ components:
         update: []
       title: images_in_recycle_bin
     import_image_tasks:
-      id: import_image_tasks
+      name: import_image_tasks
       methods:
         import_image_tasks_Describe:
           operation:
@@ -42067,7 +42067,7 @@ components:
             mediaType: text/xml
             objectKey: /*/importImageTaskSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.import_image_tasks
+      id: aws.ec2.import_image_tasks
       sqlVerbs:
         delete: []
         insert: []
@@ -42076,7 +42076,7 @@ components:
         update: []
       title: import_image_tasks
     import_snapshot_tasks:
-      id: import_snapshot_tasks
+      name: import_snapshot_tasks
       methods:
         import_snapshot_tasks_Describe:
           operation:
@@ -42085,7 +42085,7 @@ components:
             mediaType: text/xml
             objectKey: /*/importSnapshotTaskSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.import_snapshot_tasks
+      id: aws.ec2.import_snapshot_tasks
       sqlVerbs:
         delete: []
         insert: []
@@ -42094,7 +42094,7 @@ components:
         update: []
       title: import_snapshot_tasks
     import_task:
-      id: import_task
+      name: import_task
       methods:
         import_task_Cancel:
           operation:
@@ -42102,7 +42102,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.import_task
+      id: aws.ec2.import_task
       sqlVerbs:
         delete: []
         insert: []
@@ -42110,7 +42110,7 @@ components:
         update: []
       title: import_task
     instance_attribute:
-      id: instance_attribute
+      name: instance_attribute
       methods:
         instance_attribute_Describe:
           operation:
@@ -42129,7 +42129,7 @@ components:
             $ref: '#/paths/~1?Action=ResetInstanceAttribute&Version=2016-11-15/get'
           response:
             openAPIDocKey: '200'
-      name: aws.ec2.instance_attribute
+      id: aws.ec2.instance_attribute
       sqlVerbs:
         delete: []
         insert: []
@@ -42138,7 +42138,7 @@ components:
         update: []
       title: instance_attribute
     instance_capacity_reservation_attributes:
-      id: instance_capacity_reservation_attributes
+      name: instance_capacity_reservation_attributes
       methods:
         instance_capacity_reservation_attributes_Modify:
           operation:
@@ -42146,7 +42146,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.instance_capacity_reservation_attributes
+      id: aws.ec2.instance_capacity_reservation_attributes
       sqlVerbs:
         delete: []
         insert: []
@@ -42154,7 +42154,7 @@ components:
         update: []
       title: instance_capacity_reservation_attributes
     instance_credit_specifications:
-      id: instance_credit_specifications
+      name: instance_credit_specifications
       methods:
         instance_credit_specification_Modify:
           operation:
@@ -42169,7 +42169,7 @@ components:
             mediaType: text/xml
             objectKey: /*/instanceCreditSpecificationSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.instance_credit_specifications
+      id: aws.ec2.instance_credit_specifications
       sqlVerbs:
         delete: []
         insert: []
@@ -42178,7 +42178,7 @@ components:
         update: []
       title: instance_credit_specifications
     instance_event_notification_attributes:
-      id: instance_event_notification_attributes
+      name: instance_event_notification_attributes
       methods:
         instance_event_notification_attributes_Deregister:
           operation:
@@ -42199,7 +42199,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.instance_event_notification_attributes
+      id: aws.ec2.instance_event_notification_attributes
       sqlVerbs:
         delete: []
         insert: []
@@ -42208,7 +42208,7 @@ components:
         update: []
       title: instance_event_notification_attributes
     instance_event_start_time:
-      id: instance_event_start_time
+      name: instance_event_start_time
       methods:
         instance_event_start_time_Modify:
           operation:
@@ -42216,7 +42216,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.instance_event_start_time
+      id: aws.ec2.instance_event_start_time
       sqlVerbs:
         delete: []
         insert: []
@@ -42224,7 +42224,7 @@ components:
         update: []
       title: instance_event_start_time
     instance_event_windows:
-      id: instance_event_windows
+      name: instance_event_windows
       methods:
         instance_event_window_Associate:
           operation:
@@ -42263,7 +42263,7 @@ components:
             mediaType: text/xml
             objectKey: /*/instanceEventWindowSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.instance_event_windows
+      id: aws.ec2.instance_event_windows
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/instance_event_windows/methods/instance_event_window_Delete'
@@ -42274,7 +42274,7 @@ components:
         update: []
       title: instance_event_windows
     instance_export_task:
-      id: instance_export_task
+      name: instance_export_task
       methods:
         instance_export_task_Create:
           operation:
@@ -42282,7 +42282,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.instance_export_task
+      id: aws.ec2.instance_export_task
       sqlVerbs:
         delete: []
         insert:
@@ -42291,7 +42291,7 @@ components:
         update: []
       title: instance_export_task
     instance_maintenance_options:
-      id: instance_maintenance_options
+      name: instance_maintenance_options
       methods:
         instance_maintenance_options_Modify:
           operation:
@@ -42299,7 +42299,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.instance_maintenance_options
+      id: aws.ec2.instance_maintenance_options
       sqlVerbs:
         delete: []
         insert: []
@@ -42307,7 +42307,7 @@ components:
         update: []
       title: instance_maintenance_options
     instance_metadata_options:
-      id: instance_metadata_options
+      name: instance_metadata_options
       methods:
         instance_metadata_options_Modify:
           operation:
@@ -42315,7 +42315,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.instance_metadata_options
+      id: aws.ec2.instance_metadata_options
       sqlVerbs:
         delete: []
         insert: []
@@ -42323,7 +42323,7 @@ components:
         update: []
       title: instance_metadata_options
     instance_placement:
-      id: instance_placement
+      name: instance_placement
       methods:
         instance_placement_Modify:
           operation:
@@ -42331,7 +42331,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.instance_placement
+      id: aws.ec2.instance_placement
       sqlVerbs:
         delete: []
         insert: []
@@ -42339,7 +42339,7 @@ components:
         update: []
       title: instance_placement
     instance_status:
-      id: instance_status
+      name: instance_status
       methods:
         instance_status_Describe:
           operation:
@@ -42353,7 +42353,7 @@ components:
             $ref: '#/paths/~1?Action=ReportInstanceStatus&Version=2016-11-15/get'
           response:
             openAPIDocKey: '200'
-      name: aws.ec2.instance_status
+      id: aws.ec2.instance_status
       sqlVerbs:
         delete: []
         insert: []
@@ -42362,7 +42362,7 @@ components:
         update: []
       title: instance_status
     instance_type_offerings:
-      id: instance_type_offerings
+      name: instance_type_offerings
       methods:
         instance_type_offerings_Describe:
           operation:
@@ -42371,7 +42371,7 @@ components:
             mediaType: text/xml
             objectKey: /*/instanceTypeOfferingSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.instance_type_offerings
+      id: aws.ec2.instance_type_offerings
       sqlVerbs:
         delete: []
         insert: []
@@ -42380,7 +42380,7 @@ components:
         update: []
       title: instance_type_offerings
     instance_types:
-      id: instance_types
+      name: instance_types
       methods:
         instance_types_Describe:
           operation:
@@ -42389,7 +42389,7 @@ components:
             mediaType: text/xml
             objectKey: /*/instanceTypeSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.instance_types
+      id: aws.ec2.instance_types
       sqlVerbs:
         delete: []
         insert: []
@@ -42398,7 +42398,7 @@ components:
         update: []
       title: instance_types
     instance_types_from_instance_requirements:
-      id: instance_types_from_instance_requirements
+      name: instance_types_from_instance_requirements
       methods:
         instance_types_from_instance_requirements_Get:
           operation:
@@ -42407,7 +42407,7 @@ components:
             mediaType: text/xml
             objectKey: /*/instanceTypeSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.instance_types_from_instance_requirements
+      id: aws.ec2.instance_types_from_instance_requirements
       sqlVerbs:
         delete: []
         insert: []
@@ -42416,7 +42416,7 @@ components:
         update: []
       title: instance_types_from_instance_requirements
     instance_uefi_data:
-      id: instance_uefi_data
+      name: instance_uefi_data
       methods:
         instance_uefi_data_Get:
           operation:
@@ -42425,7 +42425,7 @@ components:
             mediaType: text/xml
             objectKey: /*
             openAPIDocKey: '200'
-      name: aws.ec2.instance_uefi_data
+      id: aws.ec2.instance_uefi_data
       sqlVerbs:
         delete: []
         insert: []
@@ -42434,7 +42434,7 @@ components:
         update: []
       title: instance_uefi_data
     instances:
-      id: instances
+      name: instances
       methods:
         instance_Bundle:
           operation:
@@ -42496,7 +42496,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.instances
+      id: aws.ec2.instances
       sqlVerbs:
         delete: []
         insert: []
@@ -42505,7 +42505,7 @@ components:
         update: []
       title: instances
     internet_gateways:
-      id: internet_gateways
+      name: internet_gateways
       methods:
         internet_gateway_Attach:
           operation:
@@ -42535,7 +42535,7 @@ components:
             mediaType: text/xml
             objectKey: /*/internetGatewaySet/item
             openAPIDocKey: '200'
-      name: aws.ec2.internet_gateways
+      id: aws.ec2.internet_gateways
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/internet_gateways/methods/internet_gateway_Delete'
@@ -42546,7 +42546,7 @@ components:
         update: []
       title: internet_gateways
     ipam_address_history:
-      id: ipam_address_history
+      name: ipam_address_history
       methods:
         ipam_address_history_Get:
           operation:
@@ -42555,7 +42555,7 @@ components:
             mediaType: text/xml
             objectKey: /*/historyRecordSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.ipam_address_history
+      id: aws.ec2.ipam_address_history
       sqlVerbs:
         delete: []
         insert: []
@@ -42564,7 +42564,7 @@ components:
         update: []
       title: ipam_address_history
     ipam_organization_admin_account:
-      id: ipam_organization_admin_account
+      name: ipam_organization_admin_account
       methods:
         ipam_organization_admin_account_Disable:
           operation:
@@ -42578,7 +42578,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.ipam_organization_admin_account
+      id: aws.ec2.ipam_organization_admin_account
       sqlVerbs:
         delete: []
         insert: []
@@ -42586,7 +42586,7 @@ components:
         update: []
       title: ipam_organization_admin_account
     ipam_pool_allocations:
-      id: ipam_pool_allocations
+      name: ipam_pool_allocations
       methods:
         ipam_pool_allocation_Release:
           operation:
@@ -42601,7 +42601,7 @@ components:
             mediaType: text/xml
             objectKey: /*/ipamPoolAllocationSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.ipam_pool_allocations
+      id: aws.ec2.ipam_pool_allocations
       sqlVerbs:
         delete: []
         insert: []
@@ -42610,7 +42610,7 @@ components:
         update: []
       title: ipam_pool_allocations
     ipam_pool_cidrs:
-      id: ipam_pool_cidrs
+      name: ipam_pool_cidrs
       methods:
         ipam_pool_cidr_Allocate:
           operation:
@@ -42637,7 +42637,7 @@ components:
             mediaType: text/xml
             objectKey: /*/ipamPoolCidrSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.ipam_pool_cidrs
+      id: aws.ec2.ipam_pool_cidrs
       sqlVerbs:
         delete: []
         insert: []
@@ -42646,7 +42646,7 @@ components:
         update: []
       title: ipam_pool_cidrs
     ipam_pools:
-      id: ipam_pools
+      name: ipam_pools
       methods:
         ipam_pool_Create:
           operation:
@@ -42673,7 +42673,7 @@ components:
             mediaType: text/xml
             objectKey: /*/ipamPoolSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.ipam_pools
+      id: aws.ec2.ipam_pools
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/ipam_pools/methods/ipam_pool_Delete'
@@ -42684,7 +42684,7 @@ components:
         update: []
       title: ipam_pools
     ipam_resource_cidrs:
-      id: ipam_resource_cidrs
+      name: ipam_resource_cidrs
       methods:
         ipam_resource_cidr_Modify:
           operation:
@@ -42699,7 +42699,7 @@ components:
             mediaType: text/xml
             objectKey: /*/ipamResourceCidrSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.ipam_resource_cidrs
+      id: aws.ec2.ipam_resource_cidrs
       sqlVerbs:
         delete: []
         insert: []
@@ -42708,7 +42708,7 @@ components:
         update: []
       title: ipam_resource_cidrs
     ipam_scopes:
-      id: ipam_scopes
+      name: ipam_scopes
       methods:
         ipam_scope_Create:
           operation:
@@ -42735,7 +42735,7 @@ components:
             mediaType: text/xml
             objectKey: /*/ipamScopeSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.ipam_scopes
+      id: aws.ec2.ipam_scopes
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/ipam_scopes/methods/ipam_scope_Delete'
@@ -42746,7 +42746,7 @@ components:
         update: []
       title: ipam_scopes
     ipams:
-      id: ipams
+      name: ipams
       methods:
         ipam_Create:
           operation:
@@ -42773,7 +42773,7 @@ components:
             mediaType: text/xml
             objectKey: /*/ipamSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.ipams
+      id: aws.ec2.ipams
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/ipams/methods/ipam_Delete'
@@ -42784,7 +42784,7 @@ components:
         update: []
       title: ipams
     ipv6_addresses:
-      id: ipv6_addresses
+      name: ipv6_addresses
       methods:
         ipv6_addresses_Assign:
           operation:
@@ -42798,7 +42798,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.ipv6_addresses
+      id: aws.ec2.ipv6_addresses
       sqlVerbs:
         delete: []
         insert: []
@@ -42806,7 +42806,7 @@ components:
         update: []
       title: ipv6_addresses
     ipv6_pools:
-      id: ipv6_pools
+      name: ipv6_pools
       methods:
         ipv6_pools_Describe:
           operation:
@@ -42815,7 +42815,7 @@ components:
             mediaType: text/xml
             objectKey: /*/ipv6PoolSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.ipv6_pools
+      id: aws.ec2.ipv6_pools
       sqlVerbs:
         delete: []
         insert: []
@@ -42824,7 +42824,7 @@ components:
         update: []
       title: ipv6_pools
     key_pairs:
-      id: key_pairs
+      name: key_pairs
       methods:
         key_pair_Create:
           operation:
@@ -42850,7 +42850,7 @@ components:
             mediaType: text/xml
             objectKey: /*
             openAPIDocKey: '200'
-      name: aws.ec2.key_pairs
+      id: aws.ec2.key_pairs
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/key_pairs/methods/key_pair_Delete'
@@ -42861,7 +42861,7 @@ components:
         update: []
       title: key_pairs
     launch_template_data:
-      id: launch_template_data
+      name: launch_template_data
       methods:
         launch_template_data_Get:
           operation:
@@ -42870,7 +42870,7 @@ components:
             mediaType: text/xml
             objectKey: /*
             openAPIDocKey: '200'
-      name: aws.ec2.launch_template_data
+      id: aws.ec2.launch_template_data
       sqlVerbs:
         delete: []
         insert: []
@@ -42879,7 +42879,7 @@ components:
         update: []
       title: launch_template_data
     launch_template_versions:
-      id: launch_template_versions
+      name: launch_template_versions
       methods:
         launch_template_version_Create:
           operation:
@@ -42900,7 +42900,7 @@ components:
             mediaType: text/xml
             objectKey: /*/launchTemplateVersionSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.launch_template_versions
+      id: aws.ec2.launch_template_versions
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/launch_template_versions/methods/launch_template_versions_Delete'
@@ -42911,7 +42911,7 @@ components:
         update: []
       title: launch_template_versions
     launch_templates:
-      id: launch_templates
+      name: launch_templates
       methods:
         launch_template_Create:
           operation:
@@ -42938,7 +42938,7 @@ components:
             mediaType: text/xml
             objectKey: /*/launchTemplates/item
             openAPIDocKey: '200'
-      name: aws.ec2.launch_templates
+      id: aws.ec2.launch_templates
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/launch_templates/methods/launch_template_Delete'
@@ -42949,7 +42949,7 @@ components:
         update: []
       title: launch_templates
     local_gateway_route_table_virtual_interface_group_associations:
-      id: local_gateway_route_table_virtual_interface_group_associations
+      name: local_gateway_route_table_virtual_interface_group_associations
       methods:
         local_gateway_route_table_virtual_interface_group_associations_Describe:
           operation:
@@ -42958,7 +42958,7 @@ components:
             mediaType: text/xml
             objectKey: /*/localGatewayRouteTableVirtualInterfaceGroupAssociationSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.local_gateway_route_table_virtual_interface_group_associations
+      id: aws.ec2.local_gateway_route_table_virtual_interface_group_associations
       sqlVerbs:
         delete: []
         insert: []
@@ -42967,7 +42967,7 @@ components:
         update: []
       title: local_gateway_route_table_virtual_interface_group_associations
     local_gateway_route_table_vpc_associations:
-      id: local_gateway_route_table_vpc_associations
+      name: local_gateway_route_table_vpc_associations
       methods:
         local_gateway_route_table_vpc_association_Create:
           operation:
@@ -42988,7 +42988,7 @@ components:
             mediaType: text/xml
             objectKey: /*/localGatewayRouteTableVpcAssociationSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.local_gateway_route_table_vpc_associations
+      id: aws.ec2.local_gateway_route_table_vpc_associations
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/local_gateway_route_table_vpc_associations/methods/local_gateway_route_table_vpc_association_Delete'
@@ -42999,7 +42999,7 @@ components:
         update: []
       title: local_gateway_route_table_vpc_associations
     local_gateway_route_tables:
-      id: local_gateway_route_tables
+      name: local_gateway_route_tables
       methods:
         local_gateway_route_tables_Describe:
           operation:
@@ -43008,7 +43008,7 @@ components:
             mediaType: text/xml
             objectKey: /*/localGatewayRouteTableSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.local_gateway_route_tables
+      id: aws.ec2.local_gateway_route_tables
       sqlVerbs:
         delete: []
         insert: []
@@ -43017,7 +43017,7 @@ components:
         update: []
       title: local_gateway_route_tables
     local_gateway_routes:
-      id: local_gateway_routes
+      name: local_gateway_routes
       methods:
         local_gateway_route_Create:
           operation:
@@ -43037,7 +43037,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.local_gateway_routes
+      id: aws.ec2.local_gateway_routes
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/local_gateway_routes/methods/local_gateway_route_Delete'
@@ -43047,7 +43047,7 @@ components:
         update: []
       title: local_gateway_routes
     local_gateway_virtual_interface_groups:
-      id: local_gateway_virtual_interface_groups
+      name: local_gateway_virtual_interface_groups
       methods:
         local_gateway_virtual_interface_groups_Describe:
           operation:
@@ -43056,7 +43056,7 @@ components:
             mediaType: text/xml
             objectKey: /*/localGatewayVirtualInterfaceGroupSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.local_gateway_virtual_interface_groups
+      id: aws.ec2.local_gateway_virtual_interface_groups
       sqlVerbs:
         delete: []
         insert: []
@@ -43065,7 +43065,7 @@ components:
         update: []
       title: local_gateway_virtual_interface_groups
     local_gateway_virtual_interfaces:
-      id: local_gateway_virtual_interfaces
+      name: local_gateway_virtual_interfaces
       methods:
         local_gateway_virtual_interfaces_Describe:
           operation:
@@ -43074,7 +43074,7 @@ components:
             mediaType: text/xml
             objectKey: /*/localGatewayVirtualInterfaceSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.local_gateway_virtual_interfaces
+      id: aws.ec2.local_gateway_virtual_interfaces
       sqlVerbs:
         delete: []
         insert: []
@@ -43083,7 +43083,7 @@ components:
         update: []
       title: local_gateway_virtual_interfaces
     local_gateways:
-      id: local_gateways
+      name: local_gateways
       methods:
         local_gateways_Describe:
           operation:
@@ -43092,7 +43092,7 @@ components:
             mediaType: text/xml
             objectKey: /*/localGatewaySet/item
             openAPIDocKey: '200'
-      name: aws.ec2.local_gateways
+      id: aws.ec2.local_gateways
       sqlVerbs:
         delete: []
         insert: []
@@ -43101,7 +43101,7 @@ components:
         update: []
       title: local_gateways
     managed_prefix_list_associations:
-      id: managed_prefix_list_associations
+      name: managed_prefix_list_associations
       methods:
         managed_prefix_list_associations_Get:
           operation:
@@ -43110,7 +43110,7 @@ components:
             mediaType: text/xml
             objectKey: /*/prefixListAssociationSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.managed_prefix_list_associations
+      id: aws.ec2.managed_prefix_list_associations
       sqlVerbs:
         delete: []
         insert: []
@@ -43119,7 +43119,7 @@ components:
         update: []
       title: managed_prefix_list_associations
     managed_prefix_list_entries:
-      id: managed_prefix_list_entries
+      name: managed_prefix_list_entries
       methods:
         managed_prefix_list_entries_Get:
           operation:
@@ -43128,7 +43128,7 @@ components:
             mediaType: text/xml
             objectKey: /*/entrySet/item
             openAPIDocKey: '200'
-      name: aws.ec2.managed_prefix_list_entries
+      id: aws.ec2.managed_prefix_list_entries
       sqlVerbs:
         delete: []
         insert: []
@@ -43137,7 +43137,7 @@ components:
         update: []
       title: managed_prefix_list_entries
     managed_prefix_list_version:
-      id: managed_prefix_list_version
+      name: managed_prefix_list_version
       methods:
         managed_prefix_list_version_Restore:
           operation:
@@ -43145,7 +43145,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.managed_prefix_list_version
+      id: aws.ec2.managed_prefix_list_version
       sqlVerbs:
         delete: []
         insert: []
@@ -43153,7 +43153,7 @@ components:
         update: []
       title: managed_prefix_list_version
     managed_prefix_lists:
-      id: managed_prefix_lists
+      name: managed_prefix_lists
       methods:
         managed_prefix_list_Create:
           operation:
@@ -43180,7 +43180,7 @@ components:
             mediaType: text/xml
             objectKey: /*/prefixListSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.managed_prefix_lists
+      id: aws.ec2.managed_prefix_lists
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/managed_prefix_lists/methods/managed_prefix_list_Delete'
@@ -43191,7 +43191,7 @@ components:
         update: []
       title: managed_prefix_lists
     moving_addresses:
-      id: moving_addresses
+      name: moving_addresses
       methods:
         moving_addresses_Describe:
           operation:
@@ -43200,7 +43200,7 @@ components:
             mediaType: text/xml
             objectKey: /*/movingAddressStatusSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.moving_addresses
+      id: aws.ec2.moving_addresses
       sqlVerbs:
         delete: []
         insert: []
@@ -43209,7 +43209,7 @@ components:
         update: []
       title: moving_addresses
     nat_gateways:
-      id: nat_gateways
+      name: nat_gateways
       methods:
         nat_gateway_Create:
           operation:
@@ -43230,7 +43230,7 @@ components:
             mediaType: text/xml
             objectKey: /*/natGatewaySet/item
             openAPIDocKey: '200'
-      name: aws.ec2.nat_gateways
+      id: aws.ec2.nat_gateways
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/nat_gateways/methods/nat_gateway_Delete'
@@ -43241,7 +43241,7 @@ components:
         update: []
       title: nat_gateways
     network_acl_association:
-      id: network_acl_association
+      name: network_acl_association
       methods:
         network_acl_association_Replace:
           operation:
@@ -43249,7 +43249,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.network_acl_association
+      id: aws.ec2.network_acl_association
       sqlVerbs:
         delete: []
         insert: []
@@ -43257,7 +43257,7 @@ components:
         update: []
       title: network_acl_association
     network_acl_entry:
-      id: network_acl_entry
+      name: network_acl_entry
       methods:
         network_acl_entry_Create:
           operation:
@@ -43274,7 +43274,7 @@ components:
             $ref: '#/paths/~1?Action=ReplaceNetworkAclEntry&Version=2016-11-15/get'
           response:
             openAPIDocKey: '200'
-      name: aws.ec2.network_acl_entry
+      id: aws.ec2.network_acl_entry
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/network_acl_entry/methods/network_acl_entry_Delete'
@@ -43284,7 +43284,7 @@ components:
         update: []
       title: network_acl_entry
     network_acls:
-      id: network_acls
+      name: network_acls
       methods:
         network_acl_Create:
           operation:
@@ -43304,7 +43304,7 @@ components:
             mediaType: text/xml
             objectKey: /*/networkAclSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.network_acls
+      id: aws.ec2.network_acls
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/network_acls/methods/network_acl_Delete'
@@ -43315,7 +43315,7 @@ components:
         update: []
       title: network_acls
     network_insights_access_scope_analyses:
-      id: network_insights_access_scope_analyses
+      name: network_insights_access_scope_analyses
       methods:
         network_insights_access_scope_analyses_Describe:
           operation:
@@ -43324,7 +43324,7 @@ components:
             mediaType: text/xml
             objectKey: /*/networkInsightsAccessScopeAnalysisSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.network_insights_access_scope_analyses
+      id: aws.ec2.network_insights_access_scope_analyses
       sqlVerbs:
         delete: []
         insert: []
@@ -43333,7 +43333,7 @@ components:
         update: []
       title: network_insights_access_scope_analyses
     network_insights_access_scope_analysis:
-      id: network_insights_access_scope_analysis
+      name: network_insights_access_scope_analysis
       methods:
         network_insights_access_scope_analysis_Delete:
           operation:
@@ -43347,7 +43347,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.network_insights_access_scope_analysis
+      id: aws.ec2.network_insights_access_scope_analysis
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/network_insights_access_scope_analysis/methods/network_insights_access_scope_analysis_Delete'
@@ -43356,7 +43356,7 @@ components:
         update: []
       title: network_insights_access_scope_analysis
     network_insights_access_scope_analysis_findings:
-      id: network_insights_access_scope_analysis_findings
+      name: network_insights_access_scope_analysis_findings
       methods:
         network_insights_access_scope_analysis_findings_Get:
           operation:
@@ -43365,7 +43365,7 @@ components:
             mediaType: text/xml
             objectKey: /*/analysisFindingSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.network_insights_access_scope_analysis_findings
+      id: aws.ec2.network_insights_access_scope_analysis_findings
       sqlVerbs:
         delete: []
         insert: []
@@ -43374,7 +43374,7 @@ components:
         update: []
       title: network_insights_access_scope_analysis_findings
     network_insights_access_scope_content:
-      id: network_insights_access_scope_content
+      name: network_insights_access_scope_content
       methods:
         network_insights_access_scope_content_Get:
           operation:
@@ -43383,7 +43383,7 @@ components:
             mediaType: text/xml
             objectKey: /*
             openAPIDocKey: '200'
-      name: aws.ec2.network_insights_access_scope_content
+      id: aws.ec2.network_insights_access_scope_content
       sqlVerbs:
         delete: []
         insert: []
@@ -43392,7 +43392,7 @@ components:
         update: []
       title: network_insights_access_scope_content
     network_insights_access_scopes:
-      id: network_insights_access_scopes
+      name: network_insights_access_scopes
       methods:
         network_insights_access_scope_Create:
           operation:
@@ -43413,7 +43413,7 @@ components:
             mediaType: text/xml
             objectKey: /*/networkInsightsAccessScopeSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.network_insights_access_scopes
+      id: aws.ec2.network_insights_access_scopes
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/network_insights_access_scopes/methods/network_insights_access_scope_Delete'
@@ -43424,7 +43424,7 @@ components:
         update: []
       title: network_insights_access_scopes
     network_insights_analyses:
-      id: network_insights_analyses
+      name: network_insights_analyses
       methods:
         network_insights_analyses_Describe:
           operation:
@@ -43433,7 +43433,7 @@ components:
             mediaType: text/xml
             objectKey: /*/networkInsightsAnalysisSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.network_insights_analyses
+      id: aws.ec2.network_insights_analyses
       sqlVerbs:
         delete: []
         insert: []
@@ -43442,7 +43442,7 @@ components:
         update: []
       title: network_insights_analyses
     network_insights_analysis:
-      id: network_insights_analysis
+      name: network_insights_analysis
       methods:
         network_insights_analysis_Delete:
           operation:
@@ -43456,7 +43456,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.network_insights_analysis
+      id: aws.ec2.network_insights_analysis
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/network_insights_analysis/methods/network_insights_analysis_Delete'
@@ -43465,7 +43465,7 @@ components:
         update: []
       title: network_insights_analysis
     network_insights_paths:
-      id: network_insights_paths
+      name: network_insights_paths
       methods:
         network_insights_path_Create:
           operation:
@@ -43486,7 +43486,7 @@ components:
             mediaType: text/xml
             objectKey: /*/networkInsightsPathSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.network_insights_paths
+      id: aws.ec2.network_insights_paths
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/network_insights_paths/methods/network_insights_path_Delete'
@@ -43497,7 +43497,7 @@ components:
         update: []
       title: network_insights_paths
     network_interface_attribute:
-      id: network_interface_attribute
+      name: network_interface_attribute
       methods:
         network_interface_attribute_Describe:
           operation:
@@ -43516,7 +43516,7 @@ components:
             $ref: '#/paths/~1?Action=ResetNetworkInterfaceAttribute&Version=2016-11-15/get'
           response:
             openAPIDocKey: '200'
-      name: aws.ec2.network_interface_attribute
+      id: aws.ec2.network_interface_attribute
       sqlVerbs:
         delete: []
         insert: []
@@ -43525,7 +43525,7 @@ components:
         update: []
       title: network_interface_attribute
     network_interface_permissions:
-      id: network_interface_permissions
+      name: network_interface_permissions
       methods:
         network_interface_permission_Create:
           operation:
@@ -43546,7 +43546,7 @@ components:
             mediaType: text/xml
             objectKey: /*/networkInterfacePermissions/item
             openAPIDocKey: '200'
-      name: aws.ec2.network_interface_permissions
+      id: aws.ec2.network_interface_permissions
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/network_interface_permissions/methods/network_interface_permission_Delete'
@@ -43557,7 +43557,7 @@ components:
         update: []
       title: network_interface_permissions
     network_interfaces:
-      id: network_interfaces
+      name: network_interfaces
       methods:
         network_interface_Attach:
           operation:
@@ -43588,7 +43588,7 @@ components:
             mediaType: text/xml
             objectKey: /*/networkInterfaceSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.network_interfaces
+      id: aws.ec2.network_interfaces
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/network_interfaces/methods/network_interface_Delete'
@@ -43599,7 +43599,7 @@ components:
         update: []
       title: network_interfaces
     password_data:
-      id: password_data
+      name: password_data
       methods:
         password_data_Get:
           operation:
@@ -43608,7 +43608,7 @@ components:
             mediaType: text/xml
             objectKey: /*
             openAPIDocKey: '200'
-      name: aws.ec2.password_data
+      id: aws.ec2.password_data
       sqlVerbs:
         delete: []
         insert: []
@@ -43617,7 +43617,7 @@ components:
         update: []
       title: password_data
     placement_groups:
-      id: placement_groups
+      name: placement_groups
       methods:
         placement_group_Create:
           operation:
@@ -43637,7 +43637,7 @@ components:
             mediaType: text/xml
             objectKey: /*/placementGroupSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.placement_groups
+      id: aws.ec2.placement_groups
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/placement_groups/methods/placement_group_Delete'
@@ -43648,7 +43648,7 @@ components:
         update: []
       title: placement_groups
     prefix_lists:
-      id: prefix_lists
+      name: prefix_lists
       methods:
         prefix_lists_Describe:
           operation:
@@ -43657,7 +43657,7 @@ components:
             mediaType: text/xml
             objectKey: /*/prefixListSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.prefix_lists
+      id: aws.ec2.prefix_lists
       sqlVerbs:
         delete: []
         insert: []
@@ -43666,7 +43666,7 @@ components:
         update: []
       title: prefix_lists
     principal_id_format:
-      id: principal_id_format
+      name: principal_id_format
       methods:
         principal_id_format_Describe:
           operation:
@@ -43675,7 +43675,7 @@ components:
             mediaType: text/xml
             objectKey: /*/principalSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.principal_id_format
+      id: aws.ec2.principal_id_format
       sqlVerbs:
         delete: []
         insert: []
@@ -43684,7 +43684,7 @@ components:
         update: []
       title: principal_id_format
     private_dns_name_options:
-      id: private_dns_name_options
+      name: private_dns_name_options
       methods:
         private_dns_name_options_Modify:
           operation:
@@ -43692,7 +43692,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.private_dns_name_options
+      id: aws.ec2.private_dns_name_options
       sqlVerbs:
         delete: []
         insert: []
@@ -43700,7 +43700,7 @@ components:
         update: []
       title: private_dns_name_options
     private_ip_addresses:
-      id: private_ip_addresses
+      name: private_ip_addresses
       methods:
         private_ip_addresses_Assign:
           operation:
@@ -43713,7 +43713,7 @@ components:
             $ref: '#/paths/~1?Action=UnassignPrivateIpAddresses&Version=2016-11-15/get'
           response:
             openAPIDocKey: '200'
-      name: aws.ec2.private_ip_addresses
+      id: aws.ec2.private_ip_addresses
       sqlVerbs:
         delete: []
         insert: []
@@ -43721,7 +43721,7 @@ components:
         update: []
       title: private_ip_addresses
     product_instance:
-      id: product_instance
+      name: product_instance
       methods:
         product_instance_Confirm:
           operation:
@@ -43729,7 +43729,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.product_instance
+      id: aws.ec2.product_instance
       sqlVerbs:
         delete: []
         insert: []
@@ -43737,7 +43737,7 @@ components:
         update: []
       title: product_instance
     public_ipv4_pool_cidr:
-      id: public_ipv4_pool_cidr
+      name: public_ipv4_pool_cidr
       methods:
         public_ipv4_pool_cidr_Deprovision:
           operation:
@@ -43751,7 +43751,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.public_ipv4_pool_cidr
+      id: aws.ec2.public_ipv4_pool_cidr
       sqlVerbs:
         delete: []
         insert: []
@@ -43759,7 +43759,7 @@ components:
         update: []
       title: public_ipv4_pool_cidr
     public_ipv4_pools:
-      id: public_ipv4_pools
+      name: public_ipv4_pools
       methods:
         public_ipv4_pool_Create:
           operation:
@@ -43780,7 +43780,7 @@ components:
             mediaType: text/xml
             objectKey: /*/publicIpv4PoolSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.public_ipv4_pools
+      id: aws.ec2.public_ipv4_pools
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/public_ipv4_pools/methods/public_ipv4_pool_Delete'
@@ -43791,7 +43791,7 @@ components:
         update: []
       title: public_ipv4_pools
     queued_reserved_instances:
-      id: queued_reserved_instances
+      name: queued_reserved_instances
       methods:
         queued_reserved_instances_Delete:
           operation:
@@ -43799,7 +43799,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.queued_reserved_instances
+      id: aws.ec2.queued_reserved_instances
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/queued_reserved_instances/methods/queued_reserved_instances_Delete'
@@ -43808,9 +43808,9 @@ components:
         update: []
       title: queued_reserved_instances
     raw_resource:
-      id: raw_resource
+      name: raw_resource
       methods: {}
-      name: aws.ec2.raw_resource
+      id: aws.ec2.raw_resource
       sqlVerbs:
         delete: []
         insert: []
@@ -43818,7 +43818,7 @@ components:
         update: []
       title: raw_resource
     regions:
-      id: regions
+      name: regions
       methods:
         regions_Describe:
           operation:
@@ -43827,7 +43827,7 @@ components:
             mediaType: text/xml
             objectKey: /*/regionInfo/item
             openAPIDocKey: '200'
-      name: aws.ec2.regions
+      id: aws.ec2.regions
       sqlVerbs:
         delete: []
         insert: []
@@ -43836,7 +43836,7 @@ components:
         update: []
       title: regions
     replace_root_volume_tasks:
-      id: replace_root_volume_tasks
+      name: replace_root_volume_tasks
       methods:
         replace_root_volume_task_Create:
           operation:
@@ -43851,7 +43851,7 @@ components:
             mediaType: text/xml
             objectKey: /*/replaceRootVolumeTaskSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.replace_root_volume_tasks
+      id: aws.ec2.replace_root_volume_tasks
       sqlVerbs:
         delete: []
         insert:
@@ -43861,7 +43861,7 @@ components:
         update: []
       title: replace_root_volume_tasks
     reserved_instances:
-      id: reserved_instances
+      name: reserved_instances
       methods:
         reserved_instances_Describe:
           operation:
@@ -43876,7 +43876,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.reserved_instances
+      id: aws.ec2.reserved_instances
       sqlVerbs:
         delete: []
         insert: []
@@ -43885,7 +43885,7 @@ components:
         update: []
       title: reserved_instances
     reserved_instances_exchange_quote:
-      id: reserved_instances_exchange_quote
+      name: reserved_instances_exchange_quote
       methods:
         reserved_instances_exchange_quote_Accept:
           operation:
@@ -43900,7 +43900,7 @@ components:
             mediaType: text/xml
             objectKey: /*
             openAPIDocKey: '200'
-      name: aws.ec2.reserved_instances_exchange_quote
+      id: aws.ec2.reserved_instances_exchange_quote
       sqlVerbs:
         delete: []
         insert: []
@@ -43909,7 +43909,7 @@ components:
         update: []
       title: reserved_instances_exchange_quote
     reserved_instances_listings:
-      id: reserved_instances_listings
+      name: reserved_instances_listings
       methods:
         reserved_instances_listing_Cancel:
           operation:
@@ -43930,7 +43930,7 @@ components:
             mediaType: text/xml
             objectKey: /*/reservedInstancesListingsSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.reserved_instances_listings
+      id: aws.ec2.reserved_instances_listings
       sqlVerbs:
         delete: []
         insert:
@@ -43940,7 +43940,7 @@ components:
         update: []
       title: reserved_instances_listings
     reserved_instances_modifications:
-      id: reserved_instances_modifications
+      name: reserved_instances_modifications
       methods:
         reserved_instances_modifications_Describe:
           operation:
@@ -43949,7 +43949,7 @@ components:
             mediaType: text/xml
             objectKey: /*/reservedInstancesModificationsSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.reserved_instances_modifications
+      id: aws.ec2.reserved_instances_modifications
       sqlVerbs:
         delete: []
         insert: []
@@ -43958,7 +43958,7 @@ components:
         update: []
       title: reserved_instances_modifications
     reserved_instances_offerings:
-      id: reserved_instances_offerings
+      name: reserved_instances_offerings
       methods:
         reserved_instances_offering_Purchase:
           operation:
@@ -43973,7 +43973,7 @@ components:
             mediaType: text/xml
             objectKey: /*/reservedInstancesOfferingsSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.reserved_instances_offerings
+      id: aws.ec2.reserved_instances_offerings
       sqlVerbs:
         delete: []
         insert: []
@@ -43982,7 +43982,7 @@ components:
         update: []
       title: reserved_instances_offerings
     restore_image_task:
-      id: restore_image_task
+      name: restore_image_task
       methods:
         restore_image_task_Create:
           operation:
@@ -43990,7 +43990,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.restore_image_task
+      id: aws.ec2.restore_image_task
       sqlVerbs:
         delete: []
         insert:
@@ -43999,7 +43999,7 @@ components:
         update: []
       title: restore_image_task
     route:
-      id: route
+      name: route
       methods:
         route_Create:
           operation:
@@ -44017,7 +44017,7 @@ components:
             $ref: '#/paths/~1?Action=ReplaceRoute&Version=2016-11-15/get'
           response:
             openAPIDocKey: '200'
-      name: aws.ec2.route
+      id: aws.ec2.route
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/route/methods/route_Delete'
@@ -44027,7 +44027,7 @@ components:
         update: []
       title: route
     route_table_association:
-      id: route_table_association
+      name: route_table_association
       methods:
         route_table_association_Replace:
           operation:
@@ -44035,7 +44035,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.route_table_association
+      id: aws.ec2.route_table_association
       sqlVerbs:
         delete: []
         insert: []
@@ -44043,7 +44043,7 @@ components:
         update: []
       title: route_table_association
     route_tables:
-      id: route_tables
+      name: route_tables
       methods:
         route_table_Associate:
           operation:
@@ -44074,7 +44074,7 @@ components:
             mediaType: text/xml
             objectKey: /*/routeTableSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.route_tables
+      id: aws.ec2.route_tables
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/route_tables/methods/route_table_Delete'
@@ -44085,7 +44085,7 @@ components:
         update: []
       title: route_tables
     scheduled_instance_availability:
-      id: scheduled_instance_availability
+      name: scheduled_instance_availability
       methods:
         scheduled_instance_availability_Describe:
           operation:
@@ -44094,7 +44094,7 @@ components:
             mediaType: text/xml
             objectKey: /*/scheduledInstanceAvailabilitySet/item
             openAPIDocKey: '200'
-      name: aws.ec2.scheduled_instance_availability
+      id: aws.ec2.scheduled_instance_availability
       sqlVerbs:
         delete: []
         insert: []
@@ -44103,7 +44103,7 @@ components:
         update: []
       title: scheduled_instance_availability
     scheduled_instances:
-      id: scheduled_instances
+      name: scheduled_instances
       methods:
         scheduled_instances_Describe:
           operation:
@@ -44124,7 +44124,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.scheduled_instances
+      id: aws.ec2.scheduled_instances
       sqlVerbs:
         delete: []
         insert: []
@@ -44133,7 +44133,7 @@ components:
         update: []
       title: scheduled_instances
     security_group_egress:
-      id: security_group_egress
+      name: security_group_egress
       methods:
         security_group_egress_Authorize:
           operation:
@@ -44147,7 +44147,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.security_group_egress
+      id: aws.ec2.security_group_egress
       sqlVerbs:
         delete: []
         insert: []
@@ -44155,7 +44155,7 @@ components:
         update: []
       title: security_group_egress
     security_group_ingress:
-      id: security_group_ingress
+      name: security_group_ingress
       methods:
         security_group_ingress_Authorize:
           operation:
@@ -44169,7 +44169,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.security_group_ingress
+      id: aws.ec2.security_group_ingress
       sqlVerbs:
         delete: []
         insert: []
@@ -44177,7 +44177,7 @@ components:
         update: []
       title: security_group_ingress
     security_group_references:
-      id: security_group_references
+      name: security_group_references
       methods:
         security_group_references_Describe:
           operation:
@@ -44186,7 +44186,7 @@ components:
             mediaType: text/xml
             objectKey: /*/securityGroupReferenceSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.security_group_references
+      id: aws.ec2.security_group_references
       sqlVerbs:
         delete: []
         insert: []
@@ -44195,7 +44195,7 @@ components:
         update: []
       title: security_group_references
     security_group_rule_descriptions_egress:
-      id: security_group_rule_descriptions_egress
+      name: security_group_rule_descriptions_egress
       methods:
         security_group_rule_descriptions_egress_Update:
           operation:
@@ -44203,7 +44203,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.security_group_rule_descriptions_egress
+      id: aws.ec2.security_group_rule_descriptions_egress
       sqlVerbs:
         delete: []
         insert: []
@@ -44211,7 +44211,7 @@ components:
         update: []
       title: security_group_rule_descriptions_egress
     security_group_rule_descriptions_ingress:
-      id: security_group_rule_descriptions_ingress
+      name: security_group_rule_descriptions_ingress
       methods:
         security_group_rule_descriptions_ingress_Update:
           operation:
@@ -44219,7 +44219,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.security_group_rule_descriptions_ingress
+      id: aws.ec2.security_group_rule_descriptions_ingress
       sqlVerbs:
         delete: []
         insert: []
@@ -44227,7 +44227,7 @@ components:
         update: []
       title: security_group_rule_descriptions_ingress
     security_group_rules:
-      id: security_group_rules
+      name: security_group_rules
       methods:
         security_group_rules_Describe:
           operation:
@@ -44242,7 +44242,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.security_group_rules
+      id: aws.ec2.security_group_rules
       sqlVerbs:
         delete: []
         insert: []
@@ -44251,7 +44251,7 @@ components:
         update: []
       title: security_group_rules
     security_groups:
-      id: security_groups
+      name: security_groups
       methods:
         security_group_Create:
           operation:
@@ -44271,7 +44271,7 @@ components:
             mediaType: text/xml
             objectKey: /*/securityGroupInfo/item
             openAPIDocKey: '200'
-      name: aws.ec2.security_groups
+      id: aws.ec2.security_groups
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/security_groups/methods/security_group_Delete'
@@ -44282,7 +44282,7 @@ components:
         update: []
       title: security_groups
     security_groups_to_client_vpn_target_network:
-      id: security_groups_to_client_vpn_target_network
+      name: security_groups_to_client_vpn_target_network
       methods:
         security_groups_to_client_vpn_target_network_Apply:
           operation:
@@ -44290,7 +44290,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.security_groups_to_client_vpn_target_network
+      id: aws.ec2.security_groups_to_client_vpn_target_network
       sqlVerbs:
         delete: []
         insert: []
@@ -44298,7 +44298,7 @@ components:
         update: []
       title: security_groups_to_client_vpn_target_network
     serial_console_access:
-      id: serial_console_access
+      name: serial_console_access
       methods:
         serial_console_access_Disable:
           operation:
@@ -44312,7 +44312,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.serial_console_access
+      id: aws.ec2.serial_console_access
       sqlVerbs:
         delete: []
         insert: []
@@ -44320,7 +44320,7 @@ components:
         update: []
       title: serial_console_access
     serial_console_access_status:
-      id: serial_console_access_status
+      name: serial_console_access_status
       methods:
         serial_console_access_status_Get:
           operation:
@@ -44329,7 +44329,7 @@ components:
             mediaType: text/xml
             objectKey: /*
             openAPIDocKey: '200'
-      name: aws.ec2.serial_console_access_status
+      id: aws.ec2.serial_console_access_status
       sqlVerbs:
         delete: []
         insert: []
@@ -44338,7 +44338,7 @@ components:
         update: []
       title: serial_console_access_status
     snapshot_attribute:
-      id: snapshot_attribute
+      name: snapshot_attribute
       methods:
         snapshot_attribute_Describe:
           operation:
@@ -44357,7 +44357,7 @@ components:
             $ref: '#/paths/~1?Action=ResetSnapshotAttribute&Version=2016-11-15/get'
           response:
             openAPIDocKey: '200'
-      name: aws.ec2.snapshot_attribute
+      id: aws.ec2.snapshot_attribute
       sqlVerbs:
         delete: []
         insert: []
@@ -44366,7 +44366,7 @@ components:
         update: []
       title: snapshot_attribute
     snapshot_from_recycle_bin:
-      id: snapshot_from_recycle_bin
+      name: snapshot_from_recycle_bin
       methods:
         snapshot_from_recycle_bin_Restore:
           operation:
@@ -44374,7 +44374,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.snapshot_from_recycle_bin
+      id: aws.ec2.snapshot_from_recycle_bin
       sqlVerbs:
         delete: []
         insert: []
@@ -44382,7 +44382,7 @@ components:
         update: []
       title: snapshot_from_recycle_bin
     snapshot_tier:
-      id: snapshot_tier
+      name: snapshot_tier
       methods:
         snapshot_tier_Modify:
           operation:
@@ -44396,7 +44396,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.snapshot_tier
+      id: aws.ec2.snapshot_tier
       sqlVerbs:
         delete: []
         insert: []
@@ -44404,7 +44404,7 @@ components:
         update: []
       title: snapshot_tier
     snapshot_tier_status:
-      id: snapshot_tier_status
+      name: snapshot_tier_status
       methods:
         snapshot_tier_status_Describe:
           operation:
@@ -44413,7 +44413,7 @@ components:
             mediaType: text/xml
             objectKey: /*/snapshotTierStatusSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.snapshot_tier_status
+      id: aws.ec2.snapshot_tier_status
       sqlVerbs:
         delete: []
         insert: []
@@ -44422,7 +44422,7 @@ components:
         update: []
       title: snapshot_tier_status
     snapshots:
-      id: snapshots
+      name: snapshots
       methods:
         snapshot_Copy:
           operation:
@@ -44460,7 +44460,7 @@ components:
             mediaType: text/xml
             objectKey: /*/snapshotSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.snapshots
+      id: aws.ec2.snapshots
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/snapshots/methods/snapshot_Delete'
@@ -44472,7 +44472,7 @@ components:
         update: []
       title: snapshots
     snapshots_in_recycle_bin:
-      id: snapshots_in_recycle_bin
+      name: snapshots_in_recycle_bin
       methods:
         snapshots_in_recycle_bin_List:
           operation:
@@ -44481,7 +44481,7 @@ components:
             mediaType: text/xml
             objectKey: /*/snapshotSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.snapshots_in_recycle_bin
+      id: aws.ec2.snapshots_in_recycle_bin
       sqlVerbs:
         delete: []
         insert: []
@@ -44490,7 +44490,7 @@ components:
         update: []
       title: snapshots_in_recycle_bin
     spot_datafeed_subscription:
-      id: spot_datafeed_subscription
+      name: spot_datafeed_subscription
       methods:
         spot_datafeed_subscription_Create:
           operation:
@@ -44510,7 +44510,7 @@ components:
             mediaType: text/xml
             objectKey: /*/spotDatafeedSubscription/*
             openAPIDocKey: '200'
-      name: aws.ec2.spot_datafeed_subscription
+      id: aws.ec2.spot_datafeed_subscription
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/spot_datafeed_subscription/methods/spot_datafeed_subscription_Delete'
@@ -44521,7 +44521,7 @@ components:
         update: []
       title: spot_datafeed_subscription
     spot_fleet:
-      id: spot_fleet
+      name: spot_fleet
       methods:
         spot_fleet_Request:
           operation:
@@ -44529,7 +44529,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.spot_fleet
+      id: aws.ec2.spot_fleet
       sqlVerbs:
         delete: []
         insert: []
@@ -44537,7 +44537,7 @@ components:
         update: []
       title: spot_fleet
     spot_fleet_instances:
-      id: spot_fleet_instances
+      name: spot_fleet_instances
       methods:
         spot_fleet_instances_Describe:
           operation:
@@ -44546,7 +44546,7 @@ components:
             mediaType: text/xml
             objectKey: /*/activeInstanceSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.spot_fleet_instances
+      id: aws.ec2.spot_fleet_instances
       sqlVerbs:
         delete: []
         insert: []
@@ -44555,7 +44555,7 @@ components:
         update: []
       title: spot_fleet_instances
     spot_fleet_request_history:
-      id: spot_fleet_request_history
+      name: spot_fleet_request_history
       methods:
         spot_fleet_request_history_Describe:
           operation:
@@ -44564,7 +44564,7 @@ components:
             mediaType: text/xml
             objectKey: /*/historyRecordSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.spot_fleet_request_history
+      id: aws.ec2.spot_fleet_request_history
       sqlVerbs:
         delete: []
         insert: []
@@ -44573,7 +44573,7 @@ components:
         update: []
       title: spot_fleet_request_history
     spot_fleet_requests:
-      id: spot_fleet_requests
+      name: spot_fleet_requests
       methods:
         spot_fleet_request_Modify:
           operation:
@@ -44594,7 +44594,7 @@ components:
             mediaType: text/xml
             objectKey: /*/spotFleetRequestConfigSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.spot_fleet_requests
+      id: aws.ec2.spot_fleet_requests
       sqlVerbs:
         delete: []
         insert: []
@@ -44603,7 +44603,7 @@ components:
         update: []
       title: spot_fleet_requests
     spot_instance_requests:
-      id: spot_instance_requests
+      name: spot_instance_requests
       methods:
         spot_instance_requests_Cancel:
           operation:
@@ -44618,7 +44618,7 @@ components:
             mediaType: text/xml
             objectKey: /*/spotInstanceRequestSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.spot_instance_requests
+      id: aws.ec2.spot_instance_requests
       sqlVerbs:
         delete: []
         insert: []
@@ -44627,7 +44627,7 @@ components:
         update: []
       title: spot_instance_requests
     spot_instances:
-      id: spot_instances
+      name: spot_instances
       methods:
         spot_instances_Request:
           operation:
@@ -44635,7 +44635,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.spot_instances
+      id: aws.ec2.spot_instances
       sqlVerbs:
         delete: []
         insert: []
@@ -44643,7 +44643,7 @@ components:
         update: []
       title: spot_instances
     spot_placement_scores:
-      id: spot_placement_scores
+      name: spot_placement_scores
       methods:
         spot_placement_scores_Get:
           operation:
@@ -44652,7 +44652,7 @@ components:
             mediaType: text/xml
             objectKey: /*/spotPlacementScoreSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.spot_placement_scores
+      id: aws.ec2.spot_placement_scores
       sqlVerbs:
         delete: []
         insert: []
@@ -44661,7 +44661,7 @@ components:
         update: []
       title: spot_placement_scores
     spot_price_history:
-      id: spot_price_history
+      name: spot_price_history
       methods:
         spot_price_history_Describe:
           operation:
@@ -44670,7 +44670,7 @@ components:
             mediaType: text/xml
             objectKey: /*/spotPriceHistorySet/item
             openAPIDocKey: '200'
-      name: aws.ec2.spot_price_history
+      id: aws.ec2.spot_price_history
       sqlVerbs:
         delete: []
         insert: []
@@ -44679,7 +44679,7 @@ components:
         update: []
       title: spot_price_history
     stale_security_groups:
-      id: stale_security_groups
+      name: stale_security_groups
       methods:
         stale_security_groups_Describe:
           operation:
@@ -44688,7 +44688,7 @@ components:
             mediaType: text/xml
             objectKey: /*/staleSecurityGroupSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.stale_security_groups
+      id: aws.ec2.stale_security_groups
       sqlVerbs:
         delete: []
         insert: []
@@ -44697,7 +44697,7 @@ components:
         update: []
       title: stale_security_groups
     store_image_tasks:
-      id: store_image_tasks
+      name: store_image_tasks
       methods:
         store_image_task_Create:
           operation:
@@ -44712,7 +44712,7 @@ components:
             mediaType: text/xml
             objectKey: /*/storeImageTaskResultSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.store_image_tasks
+      id: aws.ec2.store_image_tasks
       sqlVerbs:
         delete: []
         insert:
@@ -44722,14 +44722,14 @@ components:
         update: []
       title: store_image_tasks
     subnet_attribute:
-      id: subnet_attribute
+      name: subnet_attribute
       methods:
         subnet_attribute_Modify:
           operation:
             $ref: '#/paths/~1?Action=ModifySubnetAttribute&Version=2016-11-15/get'
           response:
             openAPIDocKey: '200'
-      name: aws.ec2.subnet_attribute
+      id: aws.ec2.subnet_attribute
       sqlVerbs:
         delete: []
         insert: []
@@ -44737,7 +44737,7 @@ components:
         update: []
       title: subnet_attribute
     subnet_cidr_block:
-      id: subnet_cidr_block
+      name: subnet_cidr_block
       methods:
         subnet_cidr_block_Associate:
           operation:
@@ -44751,7 +44751,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.subnet_cidr_block
+      id: aws.ec2.subnet_cidr_block
       sqlVerbs:
         delete: []
         insert: []
@@ -44759,7 +44759,7 @@ components:
         update: []
       title: subnet_cidr_block
     subnet_cidr_reservations:
-      id: subnet_cidr_reservations
+      name: subnet_cidr_reservations
       methods:
         subnet_cidr_reservation_Create:
           operation:
@@ -44780,7 +44780,7 @@ components:
             mediaType: text/xml
             objectKey: /*
             openAPIDocKey: '200'
-      name: aws.ec2.subnet_cidr_reservations
+      id: aws.ec2.subnet_cidr_reservations
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/subnet_cidr_reservations/methods/subnet_cidr_reservation_Delete'
@@ -44791,7 +44791,7 @@ components:
         update: []
       title: subnet_cidr_reservations
     subnets:
-      id: subnets
+      name: subnets
       methods:
         subnet_Create:
           operation:
@@ -44811,7 +44811,7 @@ components:
             mediaType: text/xml
             objectKey: /*/subnetSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.subnets
+      id: aws.ec2.subnets
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/subnets/methods/subnet_Delete'
@@ -44822,7 +44822,7 @@ components:
         update: []
       title: subnets
     tags:
-      id: tags
+      name: tags
       methods:
         tags_Create:
           operation:
@@ -44841,7 +44841,7 @@ components:
             mediaType: text/xml
             objectKey: /*/tagSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.tags
+      id: aws.ec2.tags
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/tags/methods/tags_Delete'
@@ -44852,7 +44852,7 @@ components:
         update: []
       title: tags
     traffic_mirror_filter_network_services:
-      id: traffic_mirror_filter_network_services
+      name: traffic_mirror_filter_network_services
       methods:
         traffic_mirror_filter_network_services_Modify:
           operation:
@@ -44860,7 +44860,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.traffic_mirror_filter_network_services
+      id: aws.ec2.traffic_mirror_filter_network_services
       sqlVerbs:
         delete: []
         insert: []
@@ -44868,7 +44868,7 @@ components:
         update: []
       title: traffic_mirror_filter_network_services
     traffic_mirror_filter_rule:
-      id: traffic_mirror_filter_rule
+      name: traffic_mirror_filter_rule
       methods:
         traffic_mirror_filter_rule_Create:
           operation:
@@ -44888,7 +44888,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.traffic_mirror_filter_rule
+      id: aws.ec2.traffic_mirror_filter_rule
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/traffic_mirror_filter_rule/methods/traffic_mirror_filter_rule_Delete'
@@ -44898,7 +44898,7 @@ components:
         update: []
       title: traffic_mirror_filter_rule
     traffic_mirror_filters:
-      id: traffic_mirror_filters
+      name: traffic_mirror_filters
       methods:
         traffic_mirror_filter_Create:
           operation:
@@ -44919,7 +44919,7 @@ components:
             mediaType: text/xml
             objectKey: /*/trafficMirrorFilterSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.traffic_mirror_filters
+      id: aws.ec2.traffic_mirror_filters
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/traffic_mirror_filters/methods/traffic_mirror_filter_Delete'
@@ -44930,7 +44930,7 @@ components:
         update: []
       title: traffic_mirror_filters
     traffic_mirror_sessions:
-      id: traffic_mirror_sessions
+      name: traffic_mirror_sessions
       methods:
         traffic_mirror_session_Create:
           operation:
@@ -44957,7 +44957,7 @@ components:
             mediaType: text/xml
             objectKey: /*/trafficMirrorSessionSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.traffic_mirror_sessions
+      id: aws.ec2.traffic_mirror_sessions
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/traffic_mirror_sessions/methods/traffic_mirror_session_Delete'
@@ -44968,7 +44968,7 @@ components:
         update: []
       title: traffic_mirror_sessions
     traffic_mirror_targets:
-      id: traffic_mirror_targets
+      name: traffic_mirror_targets
       methods:
         traffic_mirror_target_Create:
           operation:
@@ -44989,7 +44989,7 @@ components:
             mediaType: text/xml
             objectKey: /*/trafficMirrorTargetSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.traffic_mirror_targets
+      id: aws.ec2.traffic_mirror_targets
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/traffic_mirror_targets/methods/traffic_mirror_target_Delete'
@@ -45000,7 +45000,7 @@ components:
         update: []
       title: traffic_mirror_targets
     transit_gateway_attachment_propagations:
-      id: transit_gateway_attachment_propagations
+      name: transit_gateway_attachment_propagations
       methods:
         transit_gateway_attachment_propagations_Get:
           operation:
@@ -45009,7 +45009,7 @@ components:
             mediaType: text/xml
             objectKey: /*/transitGatewayAttachmentPropagations/item
             openAPIDocKey: '200'
-      name: aws.ec2.transit_gateway_attachment_propagations
+      id: aws.ec2.transit_gateway_attachment_propagations
       sqlVerbs:
         delete: []
         insert: []
@@ -45018,7 +45018,7 @@ components:
         update: []
       title: transit_gateway_attachment_propagations
     transit_gateway_attachments:
-      id: transit_gateway_attachments
+      name: transit_gateway_attachments
       methods:
         transit_gateway_attachments_Describe:
           operation:
@@ -45027,7 +45027,7 @@ components:
             mediaType: text/xml
             objectKey: /*/transitGatewayAttachments/item
             openAPIDocKey: '200'
-      name: aws.ec2.transit_gateway_attachments
+      id: aws.ec2.transit_gateway_attachments
       sqlVerbs:
         delete: []
         insert: []
@@ -45036,7 +45036,7 @@ components:
         update: []
       title: transit_gateway_attachments
     transit_gateway_connect_peers:
-      id: transit_gateway_connect_peers
+      name: transit_gateway_connect_peers
       methods:
         transit_gateway_connect_peer_Create:
           operation:
@@ -45057,7 +45057,7 @@ components:
             mediaType: text/xml
             objectKey: /*/transitGatewayConnectPeerSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.transit_gateway_connect_peers
+      id: aws.ec2.transit_gateway_connect_peers
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/transit_gateway_connect_peers/methods/transit_gateway_connect_peer_Delete'
@@ -45068,7 +45068,7 @@ components:
         update: []
       title: transit_gateway_connect_peers
     transit_gateway_connects:
-      id: transit_gateway_connects
+      name: transit_gateway_connects
       methods:
         transit_gateway_connect_Create:
           operation:
@@ -45089,7 +45089,7 @@ components:
             mediaType: text/xml
             objectKey: /*/transitGatewayConnectSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.transit_gateway_connects
+      id: aws.ec2.transit_gateway_connects
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/transit_gateway_connects/methods/transit_gateway_connect_Delete'
@@ -45100,7 +45100,7 @@ components:
         update: []
       title: transit_gateway_connects
     transit_gateway_multicast_domain_associations:
-      id: transit_gateway_multicast_domain_associations
+      name: transit_gateway_multicast_domain_associations
       methods:
         transit_gateway_multicast_domain_associations_Accept:
           operation:
@@ -45121,7 +45121,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.transit_gateway_multicast_domain_associations
+      id: aws.ec2.transit_gateway_multicast_domain_associations
       sqlVerbs:
         delete: []
         insert: []
@@ -45130,7 +45130,7 @@ components:
         update: []
       title: transit_gateway_multicast_domain_associations
     transit_gateway_multicast_domains:
-      id: transit_gateway_multicast_domains
+      name: transit_gateway_multicast_domains
       methods:
         transit_gateway_multicast_domain_Associate:
           operation:
@@ -45163,7 +45163,7 @@ components:
             mediaType: text/xml
             objectKey: /*/transitGatewayMulticastDomains/item
             openAPIDocKey: '200'
-      name: aws.ec2.transit_gateway_multicast_domains
+      id: aws.ec2.transit_gateway_multicast_domains
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/transit_gateway_multicast_domains/methods/transit_gateway_multicast_domain_Delete'
@@ -45174,7 +45174,7 @@ components:
         update: []
       title: transit_gateway_multicast_domains
     transit_gateway_multicast_group_members:
-      id: transit_gateway_multicast_group_members
+      name: transit_gateway_multicast_group_members
       methods:
         transit_gateway_multicast_group_members_Deregister:
           operation:
@@ -45188,7 +45188,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.transit_gateway_multicast_group_members
+      id: aws.ec2.transit_gateway_multicast_group_members
       sqlVerbs:
         delete: []
         insert: []
@@ -45196,7 +45196,7 @@ components:
         update: []
       title: transit_gateway_multicast_group_members
     transit_gateway_multicast_group_sources:
-      id: transit_gateway_multicast_group_sources
+      name: transit_gateway_multicast_group_sources
       methods:
         transit_gateway_multicast_group_sources_Deregister:
           operation:
@@ -45210,7 +45210,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.transit_gateway_multicast_group_sources
+      id: aws.ec2.transit_gateway_multicast_group_sources
       sqlVerbs:
         delete: []
         insert: []
@@ -45218,7 +45218,7 @@ components:
         update: []
       title: transit_gateway_multicast_group_sources
     transit_gateway_multicast_groups:
-      id: transit_gateway_multicast_groups
+      name: transit_gateway_multicast_groups
       methods:
         transit_gateway_multicast_groups_Search:
           operation:
@@ -45226,7 +45226,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.transit_gateway_multicast_groups
+      id: aws.ec2.transit_gateway_multicast_groups
       sqlVerbs:
         delete: []
         insert: []
@@ -45234,7 +45234,7 @@ components:
         update: []
       title: transit_gateway_multicast_groups
     transit_gateway_peering_attachments:
-      id: transit_gateway_peering_attachments
+      name: transit_gateway_peering_attachments
       methods:
         transit_gateway_peering_attachment_Accept:
           operation:
@@ -45267,7 +45267,7 @@ components:
             mediaType: text/xml
             objectKey: /*/transitGatewayPeeringAttachments/item
             openAPIDocKey: '200'
-      name: aws.ec2.transit_gateway_peering_attachments
+      id: aws.ec2.transit_gateway_peering_attachments
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/transit_gateway_peering_attachments/methods/transit_gateway_peering_attachment_Delete'
@@ -45278,7 +45278,7 @@ components:
         update: []
       title: transit_gateway_peering_attachments
     transit_gateway_prefix_list_references:
-      id: transit_gateway_prefix_list_references
+      name: transit_gateway_prefix_list_references
       methods:
         transit_gateway_prefix_list_reference_Create:
           operation:
@@ -45305,7 +45305,7 @@ components:
             mediaType: text/xml
             objectKey: /*/transitGatewayPrefixListReferenceSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.transit_gateway_prefix_list_references
+      id: aws.ec2.transit_gateway_prefix_list_references
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/transit_gateway_prefix_list_references/methods/transit_gateway_prefix_list_reference_Delete'
@@ -45316,7 +45316,7 @@ components:
         update: []
       title: transit_gateway_prefix_list_references
     transit_gateway_route_table_associations:
-      id: transit_gateway_route_table_associations
+      name: transit_gateway_route_table_associations
       methods:
         transit_gateway_route_table_associations_Get:
           operation:
@@ -45325,7 +45325,7 @@ components:
             mediaType: text/xml
             objectKey: /*/associations/item
             openAPIDocKey: '200'
-      name: aws.ec2.transit_gateway_route_table_associations
+      id: aws.ec2.transit_gateway_route_table_associations
       sqlVerbs:
         delete: []
         insert: []
@@ -45334,7 +45334,7 @@ components:
         update: []
       title: transit_gateway_route_table_associations
     transit_gateway_route_table_propagations:
-      id: transit_gateway_route_table_propagations
+      name: transit_gateway_route_table_propagations
       methods:
         transit_gateway_route_table_propagation_Disable:
           operation:
@@ -45355,7 +45355,7 @@ components:
             mediaType: text/xml
             objectKey: /*/transitGatewayRouteTablePropagations/item
             openAPIDocKey: '200'
-      name: aws.ec2.transit_gateway_route_table_propagations
+      id: aws.ec2.transit_gateway_route_table_propagations
       sqlVerbs:
         delete: []
         insert: []
@@ -45364,7 +45364,7 @@ components:
         update: []
       title: transit_gateway_route_table_propagations
     transit_gateway_route_tables:
-      id: transit_gateway_route_tables
+      name: transit_gateway_route_tables
       methods:
         transit_gateway_route_table_Associate:
           operation:
@@ -45397,7 +45397,7 @@ components:
             mediaType: text/xml
             objectKey: /*/transitGatewayRouteTables/item
             openAPIDocKey: '200'
-      name: aws.ec2.transit_gateway_route_tables
+      id: aws.ec2.transit_gateway_route_tables
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/transit_gateway_route_tables/methods/transit_gateway_route_table_Delete'
@@ -45408,7 +45408,7 @@ components:
         update: []
       title: transit_gateway_route_tables
     transit_gateway_routes:
-      id: transit_gateway_routes
+      name: transit_gateway_routes
       methods:
         transit_gateway_route_Create:
           operation:
@@ -45440,7 +45440,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.transit_gateway_routes
+      id: aws.ec2.transit_gateway_routes
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/transit_gateway_routes/methods/transit_gateway_route_Delete'
@@ -45450,7 +45450,7 @@ components:
         update: []
       title: transit_gateway_routes
     transit_gateway_vpc_attachments:
-      id: transit_gateway_vpc_attachments
+      name: transit_gateway_vpc_attachments
       methods:
         transit_gateway_vpc_attachment_Accept:
           operation:
@@ -45489,7 +45489,7 @@ components:
             mediaType: text/xml
             objectKey: /*/transitGatewayVpcAttachments/item
             openAPIDocKey: '200'
-      name: aws.ec2.transit_gateway_vpc_attachments
+      id: aws.ec2.transit_gateway_vpc_attachments
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/transit_gateway_vpc_attachments/methods/transit_gateway_vpc_attachment_Delete'
@@ -45500,7 +45500,7 @@ components:
         update: []
       title: transit_gateway_vpc_attachments
     transit_gateways:
-      id: transit_gateways
+      name: transit_gateways
       methods:
         transit_gateway_Create:
           operation:
@@ -45527,7 +45527,7 @@ components:
             mediaType: text/xml
             objectKey: /*/transitGatewaySet/item
             openAPIDocKey: '200'
-      name: aws.ec2.transit_gateways
+      id: aws.ec2.transit_gateways
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/transit_gateways/methods/transit_gateway_Delete'
@@ -45538,7 +45538,7 @@ components:
         update: []
       title: transit_gateways
     trunk_interface:
-      id: trunk_interface
+      name: trunk_interface
       methods:
         trunk_interface_Associate:
           operation:
@@ -45552,7 +45552,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.trunk_interface
+      id: aws.ec2.trunk_interface
       sqlVerbs:
         delete: []
         insert: []
@@ -45560,7 +45560,7 @@ components:
         update: []
       title: trunk_interface
     trunk_interface_associations:
-      id: trunk_interface_associations
+      name: trunk_interface_associations
       methods:
         trunk_interface_associations_Describe:
           operation:
@@ -45569,7 +45569,7 @@ components:
             mediaType: text/xml
             objectKey: /*/interfaceAssociationSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.trunk_interface_associations
+      id: aws.ec2.trunk_interface_associations
       sqlVerbs:
         delete: []
         insert: []
@@ -45578,7 +45578,7 @@ components:
         update: []
       title: trunk_interface_associations
     vgw_route_propagation:
-      id: vgw_route_propagation
+      name: vgw_route_propagation
       methods:
         vgw_route_propagation_Disable:
           operation:
@@ -45590,7 +45590,7 @@ components:
             $ref: '#/paths/~1?Action=EnableVgwRoutePropagation&Version=2016-11-15/get'
           response:
             openAPIDocKey: '200'
-      name: aws.ec2.vgw_route_propagation
+      id: aws.ec2.vgw_route_propagation
       sqlVerbs:
         delete: []
         insert: []
@@ -45598,7 +45598,7 @@ components:
         update: []
       title: vgw_route_propagation
     volume_attribute:
-      id: volume_attribute
+      name: volume_attribute
       methods:
         volume_attribute_Describe:
           operation:
@@ -45612,7 +45612,7 @@ components:
             $ref: '#/paths/~1?Action=ModifyVolumeAttribute&Version=2016-11-15/get'
           response:
             openAPIDocKey: '200'
-      name: aws.ec2.volume_attribute
+      id: aws.ec2.volume_attribute
       sqlVerbs:
         delete: []
         insert: []
@@ -45621,14 +45621,14 @@ components:
         update: []
       title: volume_attribute
     volume_i_o:
-      id: volume_i_o
+      name: volume_i_o
       methods:
         volume_i_o_Enable:
           operation:
             $ref: '#/paths/~1?Action=EnableVolumeIO&Version=2016-11-15/get'
           response:
             openAPIDocKey: '200'
-      name: aws.ec2.volume_i_o
+      id: aws.ec2.volume_i_o
       sqlVerbs:
         delete: []
         insert: []
@@ -45636,7 +45636,7 @@ components:
         update: []
       title: volume_i_o
     volume_status:
-      id: volume_status
+      name: volume_status
       methods:
         volume_status_Describe:
           operation:
@@ -45645,7 +45645,7 @@ components:
             mediaType: text/xml
             objectKey: /*/volumeStatusSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.volume_status
+      id: aws.ec2.volume_status
       sqlVerbs:
         delete: []
         insert: []
@@ -45654,7 +45654,7 @@ components:
         update: []
       title: volume_status
     volumes:
-      id: volumes
+      name: volumes
       methods:
         volume_Attach:
           operation:
@@ -45698,7 +45698,7 @@ components:
             mediaType: text/xml
             objectKey: /*/volumeSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.volumes
+      id: aws.ec2.volumes
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/volumes/methods/volume_Delete'
@@ -45709,7 +45709,7 @@ components:
         update: []
       title: volumes
     volumes_modifications:
-      id: volumes_modifications
+      name: volumes_modifications
       methods:
         volumes_modifications_Describe:
           operation:
@@ -45718,7 +45718,7 @@ components:
             mediaType: text/xml
             objectKey: /*/volumeModificationSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.volumes_modifications
+      id: aws.ec2.volumes_modifications
       sqlVerbs:
         delete: []
         insert: []
@@ -45727,7 +45727,7 @@ components:
         update: []
       title: volumes_modifications
     vpc_attribute:
-      id: vpc_attribute
+      name: vpc_attribute
       methods:
         vpc_attribute_Describe:
           operation:
@@ -45741,7 +45741,7 @@ components:
             $ref: '#/paths/~1?Action=ModifyVpcAttribute&Version=2016-11-15/get'
           response:
             openAPIDocKey: '200'
-      name: aws.ec2.vpc_attribute
+      id: aws.ec2.vpc_attribute
       sqlVerbs:
         delete: []
         insert: []
@@ -45750,7 +45750,7 @@ components:
         update: []
       title: vpc_attribute
     vpc_cidr_block:
-      id: vpc_cidr_block
+      name: vpc_cidr_block
       methods:
         vpc_cidr_block_Associate:
           operation:
@@ -45764,7 +45764,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.vpc_cidr_block
+      id: aws.ec2.vpc_cidr_block
       sqlVerbs:
         delete: []
         insert: []
@@ -45772,7 +45772,7 @@ components:
         update: []
       title: vpc_cidr_block
     vpc_classic_link:
-      id: vpc_classic_link
+      name: vpc_classic_link
       methods:
         vpc_classic_link_Describe:
           operation:
@@ -45793,7 +45793,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.vpc_classic_link
+      id: aws.ec2.vpc_classic_link
       sqlVerbs:
         delete: []
         insert: []
@@ -45802,7 +45802,7 @@ components:
         update: []
       title: vpc_classic_link
     vpc_classic_link_dns_support:
-      id: vpc_classic_link_dns_support
+      name: vpc_classic_link_dns_support
       methods:
         vpc_classic_link_dns_support_Describe:
           operation:
@@ -45823,7 +45823,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.vpc_classic_link_dns_support
+      id: aws.ec2.vpc_classic_link_dns_support
       sqlVerbs:
         delete: []
         insert: []
@@ -45832,7 +45832,7 @@ components:
         update: []
       title: vpc_classic_link_dns_support
     vpc_endpoint_connection_notifications:
-      id: vpc_endpoint_connection_notifications
+      name: vpc_endpoint_connection_notifications
       methods:
         vpc_endpoint_connection_notification_Create:
           operation:
@@ -45859,7 +45859,7 @@ components:
             mediaType: text/xml
             objectKey: /*/connectionNotificationSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.vpc_endpoint_connection_notifications
+      id: aws.ec2.vpc_endpoint_connection_notifications
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/vpc_endpoint_connection_notifications/methods/vpc_endpoint_connection_notifications_Delete'
@@ -45870,7 +45870,7 @@ components:
         update: []
       title: vpc_endpoint_connection_notifications
     vpc_endpoint_connections:
-      id: vpc_endpoint_connections
+      name: vpc_endpoint_connections
       methods:
         vpc_endpoint_connections_Accept:
           operation:
@@ -45891,7 +45891,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.vpc_endpoint_connections
+      id: aws.ec2.vpc_endpoint_connections
       sqlVerbs:
         delete: []
         insert: []
@@ -45900,7 +45900,7 @@ components:
         update: []
       title: vpc_endpoint_connections
     vpc_endpoint_service_configurations:
-      id: vpc_endpoint_service_configurations
+      name: vpc_endpoint_service_configurations
       methods:
         vpc_endpoint_service_configuration_Create:
           operation:
@@ -45927,7 +45927,7 @@ components:
             mediaType: text/xml
             objectKey: /*/serviceConfigurationSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.vpc_endpoint_service_configurations
+      id: aws.ec2.vpc_endpoint_service_configurations
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/vpc_endpoint_service_configurations/methods/vpc_endpoint_service_configurations_Delete'
@@ -45938,7 +45938,7 @@ components:
         update: []
       title: vpc_endpoint_service_configurations
     vpc_endpoint_service_payer_responsibility:
-      id: vpc_endpoint_service_payer_responsibility
+      name: vpc_endpoint_service_payer_responsibility
       methods:
         vpc_endpoint_service_payer_responsibility_Modify:
           operation:
@@ -45946,7 +45946,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.vpc_endpoint_service_payer_responsibility
+      id: aws.ec2.vpc_endpoint_service_payer_responsibility
       sqlVerbs:
         delete: []
         insert: []
@@ -45954,7 +45954,7 @@ components:
         update: []
       title: vpc_endpoint_service_payer_responsibility
     vpc_endpoint_service_permissions:
-      id: vpc_endpoint_service_permissions
+      name: vpc_endpoint_service_permissions
       methods:
         vpc_endpoint_service_permissions_Describe:
           operation:
@@ -45969,7 +45969,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.vpc_endpoint_service_permissions
+      id: aws.ec2.vpc_endpoint_service_permissions
       sqlVerbs:
         delete: []
         insert: []
@@ -45978,7 +45978,7 @@ components:
         update: []
       title: vpc_endpoint_service_permissions
     vpc_endpoint_service_private_dns_verification:
-      id: vpc_endpoint_service_private_dns_verification
+      name: vpc_endpoint_service_private_dns_verification
       methods:
         vpc_endpoint_service_private_dns_verification_Start:
           operation:
@@ -45986,7 +45986,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.vpc_endpoint_service_private_dns_verification
+      id: aws.ec2.vpc_endpoint_service_private_dns_verification
       sqlVerbs:
         delete: []
         insert: []
@@ -45994,7 +45994,7 @@ components:
         update: []
       title: vpc_endpoint_service_private_dns_verification
     vpc_endpoint_services:
-      id: vpc_endpoint_services
+      name: vpc_endpoint_services
       methods:
         vpc_endpoint_services_Describe:
           operation:
@@ -46003,7 +46003,7 @@ components:
             mediaType: text/xml
             objectKey: /*/serviceDetailSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.vpc_endpoint_services
+      id: aws.ec2.vpc_endpoint_services
       sqlVerbs:
         delete: []
         insert: []
@@ -46012,7 +46012,7 @@ components:
         update: []
       title: vpc_endpoint_services
     vpc_endpoints:
-      id: vpc_endpoints
+      name: vpc_endpoints
       methods:
         vpc_endpoint_Create:
           operation:
@@ -46039,7 +46039,7 @@ components:
             mediaType: text/xml
             objectKey: /*/vpcEndpointSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.vpc_endpoints
+      id: aws.ec2.vpc_endpoints
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/vpc_endpoints/methods/vpc_endpoints_Delete'
@@ -46050,7 +46050,7 @@ components:
         update: []
       title: vpc_endpoints
     vpc_peering_connection_options:
-      id: vpc_peering_connection_options
+      name: vpc_peering_connection_options
       methods:
         vpc_peering_connection_options_Modify:
           operation:
@@ -46058,7 +46058,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.vpc_peering_connection_options
+      id: aws.ec2.vpc_peering_connection_options
       sqlVerbs:
         delete: []
         insert: []
@@ -46066,7 +46066,7 @@ components:
         update: []
       title: vpc_peering_connection_options
     vpc_peering_connections:
-      id: vpc_peering_connections
+      name: vpc_peering_connections
       methods:
         vpc_peering_connection_Accept:
           operation:
@@ -46099,7 +46099,7 @@ components:
             mediaType: text/xml
             objectKey: /*/vpcPeeringConnectionSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.vpc_peering_connections
+      id: aws.ec2.vpc_peering_connections
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/vpc_peering_connections/methods/vpc_peering_connection_Delete'
@@ -46110,7 +46110,7 @@ components:
         update: []
       title: vpc_peering_connections
     vpc_tenancy:
-      id: vpc_tenancy
+      name: vpc_tenancy
       methods:
         vpc_tenancy_Modify:
           operation:
@@ -46118,7 +46118,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.vpc_tenancy
+      id: aws.ec2.vpc_tenancy
       sqlVerbs:
         delete: []
         insert: []
@@ -46126,7 +46126,7 @@ components:
         update: []
       title: vpc_tenancy
     vpcs:
-      id: vpcs
+      name: vpcs
       methods:
         vpc_Create:
           operation:
@@ -46146,7 +46146,7 @@ components:
             mediaType: text/xml
             objectKey: /*/vpcSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.vpcs
+      id: aws.ec2.vpcs
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/vpcs/methods/vpc_Delete'
@@ -46157,7 +46157,7 @@ components:
         update: []
       title: vpcs
     vpn_connection_device_sample_configuration:
-      id: vpn_connection_device_sample_configuration
+      name: vpn_connection_device_sample_configuration
       methods:
         vpn_connection_device_sample_configuration_Get:
           operation:
@@ -46166,7 +46166,7 @@ components:
             mediaType: text/xml
             objectKey: /*
             openAPIDocKey: '200'
-      name: aws.ec2.vpn_connection_device_sample_configuration
+      id: aws.ec2.vpn_connection_device_sample_configuration
       sqlVerbs:
         delete: []
         insert: []
@@ -46175,7 +46175,7 @@ components:
         update: []
       title: vpn_connection_device_sample_configuration
     vpn_connection_device_types:
-      id: vpn_connection_device_types
+      name: vpn_connection_device_types
       methods:
         vpn_connection_device_types_Get:
           operation:
@@ -46184,7 +46184,7 @@ components:
             mediaType: text/xml
             objectKey: /*/vpnConnectionDeviceTypeSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.vpn_connection_device_types
+      id: aws.ec2.vpn_connection_device_types
       sqlVerbs:
         delete: []
         insert: []
@@ -46193,7 +46193,7 @@ components:
         update: []
       title: vpn_connection_device_types
     vpn_connection_options:
-      id: vpn_connection_options
+      name: vpn_connection_options
       methods:
         vpn_connection_options_Modify:
           operation:
@@ -46201,7 +46201,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.vpn_connection_options
+      id: aws.ec2.vpn_connection_options
       sqlVerbs:
         delete: []
         insert: []
@@ -46209,7 +46209,7 @@ components:
         update: []
       title: vpn_connection_options
     vpn_connection_route:
-      id: vpn_connection_route
+      name: vpn_connection_route
       methods:
         vpn_connection_route_Create:
           operation:
@@ -46221,7 +46221,7 @@ components:
             $ref: '#/paths/~1?Action=DeleteVpnConnectionRoute&Version=2016-11-15/get'
           response:
             openAPIDocKey: '200'
-      name: aws.ec2.vpn_connection_route
+      id: aws.ec2.vpn_connection_route
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/vpn_connection_route/methods/vpn_connection_route_Delete'
@@ -46231,7 +46231,7 @@ components:
         update: []
       title: vpn_connection_route
     vpn_connections:
-      id: vpn_connections
+      name: vpn_connections
       methods:
         vpn_connection_Create:
           operation:
@@ -46257,7 +46257,7 @@ components:
             mediaType: text/xml
             objectKey: /*/vpnConnectionSet/item
             openAPIDocKey: '200'
-      name: aws.ec2.vpn_connections
+      id: aws.ec2.vpn_connections
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/vpn_connections/methods/vpn_connection_Delete'
@@ -46268,7 +46268,7 @@ components:
         update: []
       title: vpn_connections
     vpn_gateways:
-      id: vpn_gateways
+      name: vpn_gateways
       methods:
         vpn_gateway_Attach:
           operation:
@@ -46299,7 +46299,7 @@ components:
             mediaType: text/xml
             objectKey: /*/vpnGatewaySet/item
             openAPIDocKey: '200'
-      name: aws.ec2.vpn_gateways
+      id: aws.ec2.vpn_gateways
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/vpn_gateways/methods/vpn_gateway_Delete'
@@ -46310,7 +46310,7 @@ components:
         update: []
       title: vpn_gateways
     vpn_tunnel_certificate:
-      id: vpn_tunnel_certificate
+      name: vpn_tunnel_certificate
       methods:
         vpn_tunnel_certificate_Modify:
           operation:
@@ -46318,7 +46318,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.vpn_tunnel_certificate
+      id: aws.ec2.vpn_tunnel_certificate
       sqlVerbs:
         delete: []
         insert: []
@@ -46326,7 +46326,7 @@ components:
         update: []
       title: vpn_tunnel_certificate
     vpn_tunnel_options:
-      id: vpn_tunnel_options
+      name: vpn_tunnel_options
       methods:
         vpn_tunnel_options_Modify:
           operation:
@@ -46334,7 +46334,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: aws.ec2.vpn_tunnel_options
+      id: aws.ec2.vpn_tunnel_options
       sqlVerbs:
         delete: []
         insert: []

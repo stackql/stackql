@@ -521,7 +521,7 @@ paths:
 components:
   x-stackQL-resources:
     resources:
-      id: resources
+      name: resources
       methods:
         list_resources:
           operation:
@@ -565,7 +565,7 @@ components:
           response:
             mediaType: application/json
             openAPIDocKey: '200'
-      name: aws.cloud_control.resources
+      id: aws.cloud_control.resources
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/resources/methods/delete_resource'
@@ -577,7 +577,7 @@ components:
         update: []
       title: resources
     resource_requests:
-      id: resource_requests
+      name: resource_requests
       methods:
         list_resource_requests:
           operation:
@@ -605,7 +605,7 @@ components:
           response:
             mediaType: application/x-amz-json-1.0
             openAPIDocKey: '200'
-      name: aws.cloud_control.resource_requests
+      id: aws.cloud_control.resource_requests
       sqlVerbs:
         delete:
         - $ref: '#/components/x-stackQL-resources/resource_requests/methods/cancel_resource_request'
