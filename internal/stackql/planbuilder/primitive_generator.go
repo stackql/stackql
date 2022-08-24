@@ -423,7 +423,12 @@ func (pb *primitiveGenerator) describeInstructionExecutor(handlerCtx *handler.Ha
 	return util.PrepareResultSet(dto.NewPrepareResultSetDTO(nil, keys, columnOrder, util.DescribeRowSort, err, nil))
 }
 
-func (pb *primitiveGenerator) insertExecutor(handlerCtx *handler.HandlerContext, node *sqlparser.Insert, rowSort func(map[string]map[string]interface{}) []string) (primitive.IPrimitive, error) {
+func (pb *primitiveGenerator) insertExecutor(handlerCtx *handler.HandlerContext, node sqlparser.SQLNode, rowSort func(map[string]map[string]interface{}) []string) (primitive.IPrimitive, error) {
+	switch node := node.(type) {
+	case *sqlparser.Insert, *sqlparser.Update:
+	default:
+		return nil, fmt.Errorf("mutation executor: cannnot accomodate node of type '%T'", node)
+	}
 	tbl, err := pb.PrimitiveComposer.GetTable(node)
 	if err != nil {
 		return nil, err
@@ -626,6 +631,35 @@ func (pb *primitiveGenerator) insertableValsExecutor(handlerCtx *handler.Handler
 			}
 			keys["0"] = row
 			return util.PrepareResultSet(dto.NewPrepareResultSetPlusRawDTO(nil, keys, columnOrder, nil, nil, nil, vals))
+		}), nil
+}
+
+func (pb *primitiveGenerator) updateableValsExecutor(handlerCtx *handler.HandlerContext, vals map[*sqlparser.ColName]interface{}) (primitive.IPrimitive, error) {
+	return primitive.NewLocalPrimitive(
+		func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput {
+			keys := make(map[string]map[string]interface{})
+			row := make(map[string]interface{})
+			rawRow := make(map[int]interface{})
+			var columnOrder []string
+			i := 0
+			lookupMap := make(map[string]*sqlparser.ColName)
+			for k, _ := range vals {
+				columnOrder = append(columnOrder, k.Name.GetRawVal())
+				lookupMap[k.Name.GetRawVal()] = k
+			}
+			sort.Strings(columnOrder)
+			for _, rk := range columnOrder {
+				k := lookupMap[rk]
+				v := vals[k]
+				row[k.Name.GetRawVal()] = v
+				rawRow[i] = v
+				i++
+			}
+			keys["0"] = row
+			rawRows := map[int]map[int]interface{}{
+				0: rawRow,
+			}
+			return util.PrepareResultSet(dto.NewPrepareResultSetPlusRawDTO(nil, keys, columnOrder, nil, nil, nil, rawRows))
 		}), nil
 }
 

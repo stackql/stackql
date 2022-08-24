@@ -47,6 +47,7 @@ type PlanBuilderInput interface {
 	GetStatement() sqlparser.SQLNode
 	GetTableExprs() sqlparser.TableExprs
 	GetUnion() (*sqlparser.Union, bool)
+	GetUpdate() (*sqlparser.Update, bool)
 	GetUse() (*sqlparser.Use, bool)
 }
 
@@ -172,6 +173,11 @@ func (pbi *StandardPlanBuilderInput) GetUse() (*sqlparser.Use, bool) {
 	return rv, ok
 }
 
+func (pbi *StandardPlanBuilderInput) GetUpdate() (*sqlparser.Update, bool) {
+	rv, ok := pbi.stmt.(*sqlparser.Update)
+	return rv, ok
+}
+
 func (pbi *StandardPlanBuilderInput) GetHandlerCtx() *handler.HandlerContext {
 	return pbi.handlerCtx
 }
@@ -238,7 +244,7 @@ func (pgb *planGraphBuilder) createInstructionFor(pbi PlanBuilderInput) error {
 		_, _, err := pgb.handleUnion(pbi)
 		return err
 	case *sqlparser.Update:
-		return iqlerror.GetStatementNotSupportedError("UPDATE")
+		return pgb.handleUpdate(pbi)
 	case *sqlparser.Use:
 		return pgb.handleUse(pbi)
 	}
@@ -572,6 +578,54 @@ func (pgb *planGraphBuilder) handleInsert(pbi PlanBuilderInput) error {
 		return nil
 	}
 	return nil
+}
+
+func (pgb *planGraphBuilder) handleUpdate(pbi PlanBuilderInput) error {
+	handlerCtx := pbi.GetHandlerCtx()
+	node, ok := pbi.GetUpdate()
+	if !ok {
+		return fmt.Errorf("could not cast statement of type '%T' to required Insert", pbi.GetStatement())
+	}
+	if !handlerCtx.RuntimeContext.TestWithoutApiCalls {
+		primitiveGenerator := newRootPrimitiveGenerator(node, handlerCtx, pgb.planGraph)
+		err := primitiveGenerator.analyzeUpdate(pbi)
+		if err != nil {
+			return err
+		}
+		insertValOnlyRows, nonValCols, err := parserutil.ExtractUpdateValColumns(node)
+		if err != nil {
+			return err
+		}
+		// selectPrimitive here forms the insert data
+		var selectPrimitive primitive.IPrimitive
+		var selectPrimitiveNode *primitivegraph.PrimitiveNode
+		if len(nonValCols) > 0 {
+			// TODO: support dynamic content
+			return fmt.Errorf("update does not currently support dynamic content")
+		} else {
+			selectPrimitive, err = primitiveGenerator.updateableValsExecutor(handlerCtx, insertValOnlyRows)
+			if err != nil {
+				return err
+			}
+			sn := pgb.planGraph.CreatePrimitiveNode(selectPrimitive)
+			selectPrimitiveNode = &sn
+		}
+		pr, err := primitiveGenerator.insertExecutor(handlerCtx, node, util.DefaultRowSort)
+		if err != nil {
+			return err
+		}
+		if selectPrimitiveNode == nil {
+			return fmt.Errorf("nil selection for insert -- cannot work")
+		}
+		pr.SetInputAlias("", selectPrimitiveNode.ID())
+		prNode := pgb.planGraph.CreatePrimitiveNode(pr)
+		pgb.planGraph.NewDependency(*selectPrimitiveNode, prNode, 1.0)
+		return nil
+	} else {
+		pr := primitive.NewHTTPRestPrimitive(nil, nil, nil, nil)
+		pgb.planGraph.CreatePrimitiveNode(pr)
+		return nil
+	}
 }
 
 func (pgb *planGraphBuilder) handleExec(pbi PlanBuilderInput) error {
