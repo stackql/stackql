@@ -196,7 +196,7 @@ func BuildHTTPRequestCtx(handlerCtx *handler.HandlerContext, node sqlparser.SQLN
 		}
 		var baseRequestCtx *http.Request
 		switch node := node.(type) {
-		case *sqlparser.Delete, *sqlparser.Exec, *sqlparser.Insert, *sqlparser.Select:
+		case *sqlparser.Delete, *sqlparser.Exec, *sqlparser.Insert, *sqlparser.Select, *sqlparser.Update:
 			baseRequestCtx, err = getRequest(pr, svc, m, p.Parameters)
 			if err != nil {
 				return nil, err

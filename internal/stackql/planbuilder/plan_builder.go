@@ -588,30 +588,22 @@ func (pgb *planGraphBuilder) handleUpdate(pbi PlanBuilderInput) error {
 	}
 	if !handlerCtx.RuntimeContext.TestWithoutApiCalls {
 		primitiveGenerator := newRootPrimitiveGenerator(node, handlerCtx, pgb.planGraph)
-		err := primitiveGenerator.analyzeInsert(pbi)
+		err := primitiveGenerator.analyzeUpdate(pbi)
 		if err != nil {
 			return err
 		}
-		insertValOnlyRows, nonValCols, err := parserutil.ExtractInsertValColumns(node)
+		insertValOnlyRows, nonValCols, err := parserutil.ExtractUpdateValColumns(node)
 		if err != nil {
 			return err
 		}
 		// selectPrimitive here forms the insert data
 		var selectPrimitive primitive.IPrimitive
 		var selectPrimitiveNode *primitivegraph.PrimitiveNode
-		if nonValCols > 0 {
-			switch rowsNode := node.Rows.(type) {
-			case *sqlparser.Select:
-				selPbi := NewPlanBuilderInput(pbi.GetHandlerCtx(), rowsNode, pbi.GetTableExprs(), pbi.GetAssignedAliasedColumns(), pbi.GetAliasedTables(), pbi.GetColRefs(), pbi.GetPlaceholderParams())
-				_, selectPrimitiveNode, err = pgb.handleSelect(selPbi)
-				if err != nil {
-					return err
-				}
-			default:
-				return fmt.Errorf("insert with rows of type '%T' not currently supported", rowsNode)
-			}
+		if len(nonValCols) > 0 {
+			// TODO: support dynamic content
+			return fmt.Errorf("update does not currently support dynamic content")
 		} else {
-			selectPrimitive, err = primitiveGenerator.insertableValsExecutor(handlerCtx, insertValOnlyRows)
+			selectPrimitive, err = primitiveGenerator.updateableValsExecutor(handlerCtx, insertValOnlyRows)
 			if err != nil {
 				return err
 			}
@@ -634,7 +626,6 @@ func (pgb *planGraphBuilder) handleUpdate(pbi PlanBuilderInput) error {
 		pgb.planGraph.CreatePrimitiveNode(pr)
 		return nil
 	}
-	return nil
 }
 
 func (pgb *planGraphBuilder) handleExec(pbi PlanBuilderInput) error {

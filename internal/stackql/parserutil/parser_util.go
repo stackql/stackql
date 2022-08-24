@@ -195,8 +195,8 @@ func ExtractInsertValColumns(insStmt *sqlparser.Insert) (map[int]map[int]interfa
 	return extractInsertValColumns(insStmt, false)
 }
 
-func ExtractUpdateValColumns(upStmt *sqlparser.Update) (map[int]map[int]interface{}, int, error) {
-	return extractInsertValColumns(upStmt, false)
+func ExtractUpdateValColumns(upStmt *sqlparser.Update) (map[*sqlparser.ColName]interface{}, []*sqlparser.ColName, error) {
+	return extractUpdateValColumns(upStmt, false)
 }
 
 func ExtractInsertValColumnsPlusPlaceHolders(insStmt *sqlparser.Insert) (map[int]map[int]interface{}, int, error) {
@@ -234,35 +234,33 @@ func extractInsertValColumns(insStmt *sqlparser.Insert, includePlaceholders bool
 	return nil, nonValCount, err
 }
 
-func extractUpdateValColumns(updateStmt *sqlparser.Update, includePlaceholders bool) (map[int]map[int]interface{}, int, error) {
-	var nonValCount int
-	var err error
-	switch node := insStmt.Rows.(type) {
-	case *sqlparser.Select:
-		row, nvc := ExtractSelectValColumns(node)
-		transformedRow := make(map[int]interface{})
-		for k, v := range row {
-			if v != nil {
-				for _, c := range v {
-					transformedRow[k] = c
-					break
+func extractUpdateValColumns(updateStmt *sqlparser.Update, includePlaceholders bool) (map[*sqlparser.ColName]interface{}, []*sqlparser.ColName, error) {
+	var nonValCols []*sqlparser.ColName
+	retVal := make(map[*sqlparser.ColName]interface{})
+	for _, ex := range updateStmt.Exprs {
+		switch node := ex.Expr.(type) {
+		case *sqlparser.Subquery:
+			log.Infof("subquery provided for update: '%v'", node)
+			return nil, nil, fmt.Errorf("subquery in update statement not yet supported")
+		case *sqlparser.SQLVal:
+			retVal[ex.Name] = string(node.Val)
+		case *sqlparser.FuncExpr:
+			if strings.ToLower(node.Name.GetRawVal()) == "string" {
+				_, err := GetStringFromStringFunc(node)
+				if err != nil {
+					return nil, nil, fmt.Errorf("could not extract string from func string()")
 				}
+				retVal[ex.Name] = node
+			} else if strings.ToLower(node.Name.GetRawVal()) == "json" {
+				retVal[ex.Name] = node
 			} else {
-				if includePlaceholders {
-					nvc = 0
-					transformedRow[k] = nil
-				}
+				return nil, nil, fmt.Errorf("could not extract string from func string()")
 			}
+		default:
+			return nil, nil, fmt.Errorf("update statement RHS of type '%T' not yet supported", node)
 		}
-		return map[int]map[int]interface{}{
-			0: transformedRow,
-		}, nvc, err
-	case sqlparser.Values:
-		return ExtractValuesColumnData(node)
-	default:
-		err = fmt.Errorf("cannot use an insert Rows value column of type '%T' as a raw value", node)
 	}
-	return nil, nonValCount, err
+	return retVal, nonValCols, nil
 }
 
 func ExtractWhereColNames(statement *sqlparser.Where) ([]string, error) {
@@ -373,7 +371,7 @@ func InferColNameFromExpr(node *sqlparser.AliasedExpr) ColumnHandle {
 	return inferColNameFromExpr(node)
 }
 
-func GetStringFromStringFunc(fe *sqlparser.FuncExpr) (interface{}, error) {
+func GetStringFromStringFunc(fe *sqlparser.FuncExpr) (string, error) {
 	if strings.ToLower(fe.Name.GetRawVal()) == "string" && len(fe.Exprs) == 1 {
 		switch et := fe.Exprs[0].(type) {
 		case *sqlparser.AliasedExpr:
