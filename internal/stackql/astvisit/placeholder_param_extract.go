@@ -136,6 +136,10 @@ func (v *PlaceholderParamAstVisitor) Visit(node sqlparser.SQLNode) error {
 		if err != nil {
 			return err
 		}
+		err = v.Visit(node.Where)
+		if err != nil {
+			return err
+		}
 		buf.AstPrintf(node, "update %v%s%v set %v%v%v%v",
 			node.Comments, node.Ignore, node.TableExprs,
 			node.Exprs, node.Where, node.OrderBy, node.Limit)

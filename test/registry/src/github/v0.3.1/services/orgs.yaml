@@ -4324,7 +4324,8 @@ components:
           - $ref: '#/components/x-stackQL-resources/orgs/methods/list_for_user'
           - $ref: '#/components/x-stackQL-resources/orgs/methods/list'
         insert: []
-        update: []
+        update:
+          - $ref: '#/components/x-stackQL-resources/orgs/methods/update'
         delete: []
     custom_roles:
       id: github.orgs.custom_roles
