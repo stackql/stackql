@@ -48,7 +48,7 @@
         "--registry=${input:registryString}",
         "--auth=${input:authString}",
         "--tls.allowInsecure",
-        "update aws.cloud_control.resources set region = 'ap-southeast-1',  data__TypeName = 'AWS::Logs::LogGroup', data__Identifier = 'LogGroupResourceExample', data__PatchDocument =  string('[{\"op\":\"test\",\"path\":\"/RetentionInDays\",\"value\":180}]');"
+        "select * from aws.iam.users WHERE region = 'us-east-1';"
       ],
     },
     {
