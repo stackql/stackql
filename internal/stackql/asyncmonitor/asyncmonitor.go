@@ -154,7 +154,8 @@ func (gm *DefaultGoogleAsyncMonitor) getV1Monitor(heirarchy *taxonomy.HeirarchyO
 	if comments != nil {
 		asyncPrim.noStatus = comments.IsSet("NOSTATUS")
 	}
-	if heirarchy.Method.IsAwaitable() {
+	m := heirarchy.Method
+	if m.IsAwaitable() {
 		asyncPrim.executor = func(pc primitive.IPrimitiveCtx, bd interface{}) dto.ExecutorOutput {
 			body, ok := bd.(map[string]interface{})
 			if !ok {
@@ -194,7 +195,7 @@ func (gm *DefaultGoogleAsyncMonitor) getV1Monitor(heirarchy *taxonomy.HeirarchyO
 			if err != nil {
 				return dto.NewExecutorOutput(nil, nil, nil, nil, err)
 			}
-			response, apiErr := httpmiddleware.HttpApiCallFromRequest(*gm.handlerCtx, gm.provider, req)
+			response, apiErr := httpmiddleware.HttpApiCallFromRequest(*gm.handlerCtx, gm.provider, m, req)
 			if apiErr != nil {
 				return dto.NewExecutorOutput(nil, nil, nil, nil, apiErr)
 			}

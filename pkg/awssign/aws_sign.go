@@ -60,6 +60,7 @@ func (t *AwsSignTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 			return nil, err
 		}
 		rs = bytes.NewReader(body)
+		req.Body = nil
 	}
 	header, err := t.signer.Sign(
 		req,

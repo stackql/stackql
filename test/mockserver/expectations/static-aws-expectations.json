@@ -1,14 +1,17 @@
 [
   {
     "httpRequest": {
-      "method": "GET",
+      "method": "POST",
       "path": "/",
       "headers": {
-        "Authorization": ["^.*SignedHeaders=host;x-amz-date.*$" ]
+        "Authorization": ["^.*SignedHeaders=.*content-type;host;x-amz-date.*$" ]
       },
-      "queryStringParameters": { 
-        "Action": [ "^DescribeVolumes$" ],
-        "Version": [ "^2016\\-11\\-15$" ] 
+      "body" : {
+        "type" : "PARAMETERS",
+        "parameters": {
+          "Action": [ "^DescribeVolumes$" ],
+          "Version": [ "^2016\\-11\\-15$" ] 
+        }
       }
     },
     "httpResponse": {
@@ -19,6 +22,32 @@
       "body": {
         "type": "BINARY",
         "base64Bytes": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPERlc2NyaWJlVm9sdW1lc1Jlc3BvbnNlIHhtbG5zPSJodHRwOi8vZWMyLmFtYXpvbmF3cy5jb20vZG9jLzIwMTYtMTEtMTUvIj4KICAgIDxyZXF1ZXN0SWQ+NmI1ZTA0NzQtMDQyYi00NWQ2LWFkYWMtMDRiMGFmZjlhYjEwPC9yZXF1ZXN0SWQ+CiAgICA8dm9sdW1lU2V0PgogICAgICAgIDxpdGVtPgogICAgICAgICAgICA8dm9sdW1lSWQ+dm9sLTAwMTAwMDAwMDAwMDAwMDAwPC92b2x1bWVJZD4KICAgICAgICAgICAgPHNpemU+MTA8L3NpemU+CiAgICAgICAgICAgIDxzbmFwc2hvdElkLz4KICAgICAgICAgICAgPGF2YWlsYWJpbGl0eVpvbmU+YXAtc291dGhlYXN0LTFhPC9hdmFpbGFiaWxpdHlab25lPgogICAgICAgICAgICA8c3RhdHVzPmF2YWlsYWJsZTwvc3RhdHVzPgogICAgICAgICAgICA8Y3JlYXRlVGltZT4yMDIyLTA1LTAyVDIzOjA5OjMwLjE3MVo8L2NyZWF0ZVRpbWU+CiAgICAgICAgICAgIDxhdHRhY2htZW50U2V0Lz4KICAgICAgICAgICAgPHZvbHVtZVR5cGU+Z3AyPC92b2x1bWVUeXBlPgogICAgICAgICAgICA8aW9wcz4xMDA8L2lvcHM+CiAgICAgICAgICAgIDxlbmNyeXB0ZWQ+ZmFsc2U8L2VuY3J5cHRlZD4KICAgICAgICAgICAgPG11bHRpQXR0YWNoRW5hYmxlZD5mYWxzZTwvbXVsdGlBdHRhY2hFbmFibGVkPgogICAgICAgIDwvaXRlbT4KICAgICAgICA8aXRlbT4KICAgICAgICAgICAgPHZvbHVtZUlkPnZvbC0wMDIwMDAwMDAwMDAwMDAwMDwvdm9sdW1lSWQ+CiAgICAgICAgICAgIDxzaXplPjg8L3NpemU+CiAgICAgICAgICAgIDxzbmFwc2hvdElkLz4KICAgICAgICAgICAgPGF2YWlsYWJpbGl0eVpvbmU+YXAtc291dGhlYXN0LTFhPC9hdmFpbGFiaWxpdHlab25lPgogICAgICAgICAgICA8c3RhdHVzPmF2YWlsYWJsZTwvc3RhdHVzPgogICAgICAgICAgICA8Y3JlYXRlVGltZT4yMDIyLTA1LTExVDA0OjQ1OjQwLjYyN1o8L2NyZWF0ZVRpbWU+CiAgICAgICAgICAgIDxhdHRhY2htZW50U2V0Lz4KICAgICAgICAgICAgPHZvbHVtZVR5cGU+Z3AyPC92b2x1bWVUeXBlPgogICAgICAgICAgICA8aW9wcz4xMDA8L2lvcHM+CiAgICAgICAgICAgIDxlbmNyeXB0ZWQ+ZmFsc2U8L2VuY3J5cHRlZD4KICAgICAgICAgICAgPG11bHRpQXR0YWNoRW5hYmxlZD5mYWxzZTwvbXVsdGlBdHRhY2hFbmFibGVkPgogICAgICAgIDwvaXRlbT4KICAgIDwvdm9sdW1lU2V0Pgo8L0Rlc2NyaWJlVm9sdW1lc1Jlc3BvbnNlPg=="
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*SignedHeaders=.*content-type;host;x-amz-date.*$" ]
+      },
+      "body" : {
+        "type" : "PARAMETERS",
+        "parameters": {
+          "Action": [ "^ListUsers$" ],
+          "Version": [ "^2010\\-05\\-08$" ] 
+        }
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "text/xml" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "type": "BINARY",
+        "base64Bytes": "PExpc3RVc2Vyc1Jlc3BvbnNlIHhtbG5zPSJodHRwczovL2lhbS5hbWF6b25hd3MuY29tL2RvYy8yMDEwLTA1LTA4LyI+CiAgPExpc3RVc2Vyc1Jlc3VsdD4KICAgIDxJc1RydW5jYXRlZD5mYWxzZTwvSXNUcnVuY2F0ZWQ+CiAgICA8VXNlcnM+CiAgICAgIDxtZW1iZXI+CiAgICAgICAgPFBhdGg+LzwvUGF0aD4KICAgICAgICA8UGFzc3dvcmRMYXN0VXNlZD4yMDIyLTA4LTA0VDAyOjQ1OjMzWjwvUGFzc3dvcmRMYXN0VXNlZD4KICAgICAgICA8QXJuPmFybjphd3M6aWFtOjoxMDAwMDAwMDAwMDE6dXNlci9qb2huLnNtaXRoPC9Bcm4+CiAgICAgICAgPFVzZXJOYW1lPmpvaG4uc21pdGg8L1VzZXJOYW1lPgogICAgICAgIDxVc2VySWQ+QURJREFTVFJBQ0tTVUlUUEFOVFMwMTwvVXNlcklkPgogICAgICAgIDxDcmVhdGVEYXRlPjIwMjItMDMtMTdUMDQ6MzU6MzBaPC9DcmVhdGVEYXRlPgogICAgICA8L21lbWJlcj4KICAgICAgPG1lbWJlcj4KICAgICAgICA8UGF0aD4vPC9QYXRoPgogICAgICAgIDxQYXNzd29yZExhc3RVc2VkPjIwMjItMDgtMjZUMDg6MjE6NTZaPC9QYXNzd29yZExhc3RVc2VkPgogICAgICAgIDxBcm4+YXJuOmF3czppYW06OjEwMDAwMDAwMDAwMTp1c2VyL2pvZS5ibG93PC9Bcm4+CiAgICAgICAgPFVzZXJOYW1lPmpvZS5ibG93PC9Vc2VyTmFtZT4KICAgICAgICA8VXNlcklkPkFESURBU1RSQUNLU1VJVFBBTlRTMDI8L1VzZXJJZD4KICAgICAgICA8Q3JlYXRlRGF0ZT4yMDIyLTAzLTE3VDA0OjM4OjM4WjwvQ3JlYXRlRGF0ZT4KICAgICAgPC9tZW1iZXI+CiAgICAgIDxtZW1iZXI+CiAgICAgICAgPFBhdGg+LzwvUGF0aD4KICAgICAgICA8QXJuPmFybjphd3M6aWFtOjoxMDAwMDAwMDAwMDE6dXNlci9OZXdVc2VyPC9Bcm4+CiAgICAgICAgPFVzZXJOYW1lPk5ld1VzZXI8L1VzZXJOYW1lPgogICAgICAgIDxVc2VySWQ+QURJREFTVFJBQ0tTVUlUUEFOVFMwMzwvVXNlcklkPgogICAgICAgIDxDcmVhdGVEYXRlPjIwMjItMDUtMDJUMjE6NDQ6NTFaPC9DcmVhdGVEYXRlPgogICAgICA8L21lbWJlcj4KICAgIDwvVXNlcnM+CiAgPC9MaXN0VXNlcnNSZXN1bHQ+CiAgPFJlc3BvbnNlTWV0YWRhdGE+CiAgICA8UmVxdWVzdElkPmZmMTAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMDwvUmVxdWVzdElkPgogIDwvUmVzcG9uc2VNZXRhZGF0YT4KPC9MaXN0VXNlcnNSZXNwb25zZT4="
       }
     }
   },
@@ -290,20 +319,23 @@
   },
   {
     "httpRequest": {
-      "method": "GET",
+      "method": "POST",
       "path": "/",
       "headers": {
-        "Authorization": ["^.*SignedHeaders=host;x-amz-date.*$" ]
+        "Authorization": ["^.*SignedHeaders=.*content-type;host;x-amz-date.*$" ]
       },
-      "queryStringParameters": { 
-        "Action": [ "^CreateVolume$" ],
-        "Version": [ "^2016\\-11\\-15$" ],
-        "Size": ["^10$"],
-        "TagSpecification.1.ResourceType": [ "volume" ],
-        "TagSpecification.1.Tag.1.Key": [ "stack" ],
-        "TagSpecification.1.Tag.1.Value": [ "production" ],
-        "TagSpecification.1.Tag.2.Key": [ "name" ],
-        "TagSpecification.1.Tag.2.Value": [ "multi-tag-volume" ]
+      "body" : {
+        "type" : "PARAMETERS",
+        "parameters": {
+          "Action": [ "^CreateVolume$" ],
+          "Version": [ "^2016\\-11\\-15$" ],
+          "Size": ["^10$"],
+          "TagSpecification.1.ResourceType": [ "volume" ],
+          "TagSpecification.1.Tag.1.Key": [ "stack" ],
+          "TagSpecification.1.Tag.1.Value": [ "production" ],
+          "TagSpecification.1.Tag.2.Key": [ "name" ],
+          "TagSpecification.1.Tag.2.Value": [ "multi-tag-volume" ]
+        }
       }
     },
     "httpResponse": {
@@ -319,16 +351,19 @@
   },
   {
     "httpRequest": {
-      "method": "GET",
+      "method": "POST",
       "path": "/",
       "headers": {
-        "Authorization": ["^.*SignedHeaders=host;x-amz-date.*$" ]
+        "Authorization": ["^.*SignedHeaders=.*content-type;host;x-amz-date.*$" ]
       },
-      "queryStringParameters": { 
-        "Action": [ "^ModifyVolume$" ],
-        "Version": [ "^2016\\-11\\-15$" ],
-        "Size": ["^12$"],
-        "VolumeId": [ "vol-000000000000001" ]
+      "body" : {
+        "type" : "PARAMETERS",
+        "parameters": {
+          "Action": [ "^ModifyVolume$" ],
+          "Version": [ "^2016\\-11\\-15$" ],
+          "Size": ["^12$"],
+          "VolumeId": [ "vol-000000000000001" ]
+        }
       }
     },
     "httpResponse": {

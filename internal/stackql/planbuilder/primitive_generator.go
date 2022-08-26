@@ -485,7 +485,7 @@ func (pb *primitiveGenerator) insertExecutor(handlerCtx *handler.HandlerContext,
 				// log.Infoln(fmt.Sprintf("req.BodyBytes = %s", string(req.BodyBytes)))
 				// req.Context.SetBody(bytes.NewReader(req.BodyBytes))
 				// log.Infoln(fmt.Sprintf("req.Context = %v", req.Context))
-				response, apiErr := httpmiddleware.HttpApiCallFromRequest(*handlerCtx, prov, req.Request)
+				response, apiErr := httpmiddleware.HttpApiCallFromRequest(*handlerCtx, prov, m, req.Request)
 				if apiErr != nil {
 					return dto.NewErroneousExecutorOutput(apiErr)
 				}
@@ -684,7 +684,7 @@ func (pb *primitiveGenerator) deleteExecutor(handlerCtx *handler.HandlerContext,
 			return util.PrepareResultSet(dto.NewPrepareResultSetDTO(nil, nil, nil, nil, err, nil))
 		}
 		for _, req := range httpArmoury.GetRequestParams() {
-			response, apiErr := httpmiddleware.HttpApiCallFromRequest(*handlerCtx, prov, req.Request)
+			response, apiErr := httpmiddleware.HttpApiCallFromRequest(*handlerCtx, prov, m, req.Request)
 			if apiErr != nil {
 				return util.PrepareResultSet(dto.NewPrepareResultSetDTO(nil, nil, nil, nil, apiErr, nil))
 			}
@@ -791,7 +791,7 @@ func (pb *primitiveGenerator) execExecutor(handlerCtx *handler.HandlerContext, n
 			return dto.NewErroneousExecutorOutput(err)
 		}
 		for i, req := range httpArmoury.GetRequestParams() {
-			response, apiErr := httpmiddleware.HttpApiCallFromRequest(*handlerCtx, prov, req.Request)
+			response, apiErr := httpmiddleware.HttpApiCallFromRequest(*handlerCtx, prov, m, req.Request)
 			if apiErr != nil {
 				return util.PrepareResultSet(dto.NewPrepareResultSetDTO(nil, nil, nil, nil, apiErr, nil))
 			}

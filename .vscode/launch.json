@@ -38,7 +38,7 @@
 
     // select VolumeId from aws.ec2.volumes where region = 'ap-southeast-1' order by VolumeId asc;
     {
-      "name": "DEBUG aws guff",
+      "name": "DEBUG aws guff working",
       "type": "go",
       "request": "launch",
       "mode": "debug",
@@ -48,7 +48,21 @@
         "--registry=${input:registryString}",
         "--auth=${input:authString}",
         "--tls.allowInsecure",
-        "update aws.cloud_control.resources set region = 'ap-southeast-1',  data__TypeName = 'AWS::Logs::LogGroup', data__Identifier = 'LogGroupResourceExample', data__PatchDocument =  string('[{\"op\":\"test\",\"path\":\"/RetentionInDays\",\"value\":180}]');"
+        "select UserName, Arn from aws.iam.users WHERE region = 'us-east-1' order by UserName ASC;"
+      ],
+    },
+    {
+      "name": "DEBUG aws guff failing",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "--tls.allowInsecure",
+        "select VolumeId, Size from aws.ec2.volumes where region = 'ap-southeast-1';"
       ],
     },
     {

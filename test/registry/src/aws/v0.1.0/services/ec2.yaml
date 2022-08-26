@@ -34,7 +34,7 @@ externalDocs:
   description: Amazon Web Services documentation
   url: 'https://docs.aws.amazon.com/ec2/'
 servers:
-  - url: 'https://ec2.{region}.amazonaws.com'
+  - url: 'https://{region}.ec2.amazonaws.com'
     variables:
       region:
         description: The AWS region
@@ -23590,7 +23590,7 @@ paths:
             type: string
           description: Pagination token
           required: false
-  /?Action=DescribeVolumes&Version=2016-11-15:
+  '/?Action=DescribeVolumes&Version=2016-11-15':
     get:
       x-aws-operation-name: DescribeVolumes
       operationId: GET_DescribeVolumes
@@ -80198,3 +80198,5 @@ security:
 x-stackQL-config:
   queryParamTranspose:
     algorithm: AWSCanonical
+  requestTranslate:
+    algorithm: get_query_to_post_form_utf_8

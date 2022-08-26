@@ -130,7 +130,7 @@ func (ss *SingleSelectAcquire) Build() error {
 			}
 		}
 		for _, reqCtx := range httpArmoury.GetRequestParams() {
-			response, apiErr := httpmiddleware.HttpApiCallFromRequest(*(ss.handlerCtx), prov, reqCtx.Request.Clone(reqCtx.Request.Context()))
+			response, apiErr := httpmiddleware.HttpApiCallFromRequest(*(ss.handlerCtx), prov, m, reqCtx.Request.Clone(reqCtx.Request.Context()))
 			housekeepingDone := false
 			npt := prov.InferNextPageResponseElement(ss.tableMeta.HeirarchyObjects.Heirarchy)
 			nptRequest := prov.InferNextPageRequestElement(ss.tableMeta.HeirarchyObjects.Heirarchy)
@@ -220,7 +220,7 @@ func (ss *SingleSelectAcquire) Build() error {
 				if err != nil {
 					return dto.NewErroneousExecutorOutput(err)
 				}
-				response, apiErr = httpmiddleware.HttpApiCallFromRequest(*(ss.handlerCtx), prov, req)
+				response, apiErr = httpmiddleware.HttpApiCallFromRequest(*(ss.handlerCtx), prov, m, req)
 			}
 			if reqCtx.Request != nil {
 				q := reqCtx.Request.URL.Query()

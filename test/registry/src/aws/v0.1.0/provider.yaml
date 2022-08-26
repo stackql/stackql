@@ -2,6 +2,15 @@ id: aws
 name: aws
 version: v0.1.0
 providerServices:
+  cloud_control:
+    description: cloud_control
+    id: cloud_control:v0.1.0
+    name: cloud_control
+    preferred: true
+    service:
+      $ref: aws/v0.1.0/services/cloud_control.yaml
+    title: Cloud Control API
+    version: v0.1.0
   ec2:
     description: ec2
     id: ec2:v0.1.0
@@ -11,13 +20,13 @@ providerServices:
       $ref: aws/v0.1.0/services/ec2.yaml
     title: EC2
     version: v0.1.0
-  cloud_control:
-    description: cloud_control
-    id: cloud_control:v0.1.0
-    name: cloud_control
+  iam:
+    description: iam
+    id: iam:v0.1.0
+    name: ec2
     preferred: true
     service:
-      $ref: aws/v0.1.0/services/cloud_control.yaml
-    title: Cloud Control API
+      $ref: aws/v0.1.0/services/iam.yaml
+    title: IAM
     version: v0.1.0
 openapi: 3.0.0
