@@ -110,7 +110,10 @@ components:
       type: object
     AccessDetails:
       items:
-        $ref: '#/components/schemas/AccessDetail'
+        allOf:
+        - $ref: '#/components/schemas/AccessDetail'
+        - xml:
+            name: member
       type: array
     AccessKey:
       description: <p>Contains information about an Amazon Web Services access key.</p>
@@ -216,7 +219,10 @@ components:
       type: object
     ActionNameListType:
       items:
-        $ref: '#/components/schemas/ActionNameType'
+        allOf:
+        - $ref: '#/components/schemas/ActionNameType'
+        - xml:
+            name: member
       type: array
     ActionNameType:
       maxLength: 128
@@ -289,7 +295,10 @@ components:
       type: object
     ArnListType:
       items:
-        $ref: '#/components/schemas/arnType'
+        allOf:
+        - $ref: '#/components/schemas/arnType'
+        - xml:
+            name: member
       type: array
     AttachGroupPolicyRequest:
       properties:
@@ -447,7 +456,10 @@ components:
       type: object
     ContextEntryListType:
       items:
-        $ref: '#/components/schemas/ContextEntry'
+        allOf:
+        - $ref: '#/components/schemas/ContextEntry'
+        - xml:
+            name: member
       type: array
     ContextKeyNameType:
       maxLength: 256
@@ -455,7 +467,10 @@ components:
       type: string
     ContextKeyNamesResultListType:
       items:
-        $ref: '#/components/schemas/ContextKeyNameType'
+        allOf:
+        - $ref: '#/components/schemas/ContextKeyNameType'
+        - xml:
+            name: member
       type: array
     ContextKeyTypeEnum:
       enum:
@@ -474,7 +489,10 @@ components:
       type: string
     ContextKeyValueListType:
       items:
-        $ref: '#/components/schemas/ContextKeyValueType'
+        allOf:
+        - $ref: '#/components/schemas/ContextKeyValueType'
+        - xml:
+            name: member
       type: array
     ContextKeyValueType:
       type: string
@@ -1941,7 +1959,10 @@ components:
       type: object
     EvaluationResultsListType:
       items:
-        $ref: '#/components/schemas/EvaluationResult'
+        allOf:
+        - $ref: '#/components/schemas/EvaluationResult'
+        - xml:
+            name: member
       type: array
     GenerateCredentialReportResponse:
       description: 'Contains the response to a successful <a>GenerateCredentialReport</a>
@@ -5574,7 +5595,10 @@ components:
       type: object
     ManagedPolicyDetailListType:
       items:
-        $ref: '#/components/schemas/ManagedPolicyDetail'
+        allOf:
+        - $ref: '#/components/schemas/ManagedPolicyDetail'
+        - xml:
+            name: member
       type: array
     NoSuchEntityException: {}
     OpenIDConnectProviderListEntry:
@@ -5587,7 +5611,10 @@ components:
     OpenIDConnectProviderListType:
       description: Contains a list of IAM OpenID Connect providers.
       items:
-        $ref: '#/components/schemas/OpenIDConnectProviderListEntry'
+        allOf:
+        - $ref: '#/components/schemas/OpenIDConnectProviderListEntry'
+        - xml:
+            name: member
       type: array
     OpenIDConnectProviderUrlType:
       description: Contains a URL that specifies the endpoint for an OpenID Connect
@@ -5844,7 +5871,10 @@ components:
       type: object
     PolicyGroupListType:
       items:
-        $ref: '#/components/schemas/PolicyGroup'
+        allOf:
+        - $ref: '#/components/schemas/PolicyGroup'
+        - xml:
+            name: member
       type: array
     PolicyIdentifierType:
       type: string
@@ -5869,7 +5899,10 @@ components:
       type: object
     PolicyRoleListType:
       items:
-        $ref: '#/components/schemas/PolicyRole'
+        allOf:
+        - $ref: '#/components/schemas/PolicyRole'
+        - xml:
+            name: member
       type: array
     PolicySourceType:
       enum:
@@ -5910,7 +5943,10 @@ components:
       type: object
     PolicyUserListType:
       items:
-        $ref: '#/components/schemas/PolicyUser'
+        allOf:
+        - $ref: '#/components/schemas/PolicyUser'
+        - xml:
+            name: member
       type: array
     PolicyVersion:
       description: <p>Contains information about a version of a managed policy.</p>
@@ -6246,7 +6282,10 @@ components:
       type: string
     ResourceNameListType:
       items:
-        $ref: '#/components/schemas/ResourceNameType'
+        allOf:
+        - $ref: '#/components/schemas/ResourceNameType'
+        - xml:
+            name: member
       type: array
     ResourceNameType:
       maxLength: 2048
@@ -6306,7 +6345,10 @@ components:
       type: object
     ResourceSpecificResultListType:
       items:
-        $ref: '#/components/schemas/ResourceSpecificResult'
+        allOf:
+        - $ref: '#/components/schemas/ResourceSpecificResult'
+        - xml:
+            name: member
       type: array
     ResyncMFADeviceRequest:
       properties:
@@ -6519,7 +6561,10 @@ components:
       type: object
     RoleUsageListType:
       items:
-        $ref: '#/components/schemas/RoleUsageType'
+        allOf:
+        - $ref: '#/components/schemas/RoleUsageType'
+        - xml:
+            name: member
       type: array
     RoleUsageType:
       description: <p>An object that contains details about how a service-linked role
@@ -6560,7 +6605,10 @@ components:
       type: object
     SAMLProviderListType:
       items:
-        $ref: '#/components/schemas/SAMLProviderListEntry'
+        allOf:
+        - $ref: '#/components/schemas/SAMLProviderListEntry'
+        - xml:
+            name: member
       type: array
     SAMLProviderNameType:
       maxLength: 128
@@ -6608,7 +6656,10 @@ components:
       type: object
     SSHPublicKeyListType:
       items:
-        $ref: '#/components/schemas/SSHPublicKeyMetadata'
+        allOf:
+        - $ref: '#/components/schemas/SSHPublicKeyMetadata'
+        - xml:
+            name: member
       type: array
     SSHPublicKeyMetadata:
       description: <p>Contains information about an SSH public key, without the key's
@@ -6873,11 +6924,17 @@ components:
       type: object
     ServiceSpecificCredentialsListType:
       items:
-        $ref: '#/components/schemas/ServiceSpecificCredentialMetadata'
+        allOf:
+        - $ref: '#/components/schemas/ServiceSpecificCredentialMetadata'
+        - xml:
+            name: member
       type: array
     ServicesLastAccessed:
       items:
-        $ref: '#/components/schemas/ServiceLastAccessed'
+        allOf:
+        - $ref: '#/components/schemas/ServiceLastAccessed'
+        - xml:
+            name: member
       type: array
     SetDefaultPolicyVersionRequest:
       properties:
@@ -7340,7 +7397,10 @@ components:
       type: object
     SimulationPolicyListType:
       items:
-        $ref: '#/components/schemas/policyDocumentType'
+        allOf:
+        - $ref: '#/components/schemas/policyDocumentType'
+        - xml:
+            name: member
       type: array
     Statement:
       description: <p>Contains a reference to a <code>Statement</code> element in
@@ -7369,7 +7429,10 @@ components:
       type: object
     StatementListType:
       items:
-        $ref: '#/components/schemas/Statement'
+        allOf:
+        - $ref: '#/components/schemas/Statement'
+        - xml:
+            name: member
       type: array
     Tag:
       description: A structure that represents user-provided metadata that can be
@@ -7595,7 +7658,10 @@ components:
       type: object
     TrackedActionsLastAccessed:
       items:
-        $ref: '#/components/schemas/TrackedActionLastAccessed'
+        allOf:
+        - $ref: '#/components/schemas/TrackedActionLastAccessed'
+        - xml:
+            name: member
       type: array
     UnmodifiableEntityException: {}
     UnrecognizedPublicKeyEncodingException: {}
@@ -8611,14 +8677,20 @@ components:
       description: <p>Contains a list of access key metadata.</p> <p>This data type
         is used as a response element in the <a>ListAccessKeys</a> operation.</p>
       items:
-        $ref: '#/components/schemas/AccessKeyMetadata'
+        allOf:
+        - $ref: '#/components/schemas/AccessKeyMetadata'
+        - xml:
+            name: member
       type: array
     accessKeySecretType:
       format: password
       type: string
     accountAliasListType:
       items:
-        $ref: '#/components/schemas/accountAliasType'
+        allOf:
+        - $ref: '#/components/schemas/accountAliasType'
+        - xml:
+            name: member
       type: array
     accountAliasType:
       maxLength: 63
@@ -8642,7 +8714,10 @@ components:
       type: string
     attachedPoliciesListType:
       items:
-        $ref: '#/components/schemas/AttachedPolicy'
+        allOf:
+        - $ref: '#/components/schemas/AttachedPolicy'
+        - xml:
+            name: member
       type: array
     attachmentCountType:
       type: integer
@@ -8674,11 +8749,17 @@ components:
       description: <p>Contains a list of signing certificates.</p> <p>This data type
         is used as a response element in the <a>ListSigningCertificates</a> operation.</p>
       items:
-        $ref: '#/components/schemas/SigningCertificate'
+        allOf:
+        - $ref: '#/components/schemas/SigningCertificate'
+        - xml:
+            name: member
       type: array
     clientIDListType:
       items:
-        $ref: '#/components/schemas/clientIDType'
+        allOf:
+        - $ref: '#/components/schemas/clientIDType'
+        - xml:
+            name: member
       type: array
     clientIDType:
       maxLength: 255
@@ -8699,11 +8780,17 @@ components:
       type: string
     entityDetailsListType:
       items:
-        $ref: '#/components/schemas/EntityDetails'
+        allOf:
+        - $ref: '#/components/schemas/EntityDetails'
+        - xml:
+            name: member
       type: array
     entityListType:
       items:
-        $ref: '#/components/schemas/EntityType'
+        allOf:
+        - $ref: '#/components/schemas/EntityType'
+        - xml:
+            name: member
       type: array
     entityNameType:
       maxLength: 128
@@ -8722,17 +8809,26 @@ components:
       type: string
     groupDetailListType:
       items:
-        $ref: '#/components/schemas/GroupDetail'
+        allOf:
+        - $ref: '#/components/schemas/GroupDetail'
+        - xml:
+            name: member
       type: array
     groupListType:
       description: <p>Contains a list of IAM groups.</p> <p>This data type is used
         as a response element in the <a>ListGroups</a> operation.</p>
       items:
-        $ref: '#/components/schemas/Group'
+        allOf:
+        - $ref: '#/components/schemas/Group'
+        - xml:
+            name: member
       type: array
     groupNameListType:
       items:
-        $ref: '#/components/schemas/groupNameType'
+        allOf:
+        - $ref: '#/components/schemas/groupNameType'
+        - xml:
+            name: member
       type: array
     groupNameType:
       maxLength: 128
@@ -8747,7 +8843,10 @@ components:
     instanceProfileListType:
       description: Contains a list of instance profiles.
       items:
-        $ref: '#/components/schemas/InstanceProfile'
+        allOf:
+        - $ref: '#/components/schemas/InstanceProfile'
+        - xml:
+            name: member
       type: array
     instanceProfileNameType:
       maxLength: 128
@@ -8768,7 +8867,10 @@ components:
       type: string
     listPolicyGrantingServiceAccessResponseListType:
       items:
-        $ref: '#/components/schemas/ListPoliciesGrantingServiceAccessEntry'
+        allOf:
+        - $ref: '#/components/schemas/ListPoliciesGrantingServiceAccessEntry'
+        - xml:
+            name: member
       type: array
     markerType:
       maxLength: 320
@@ -8788,7 +8890,10 @@ components:
         as a response element in the <a>ListMFADevices</a> and <a>ListVirtualMFADevices</a>
         operations. </p>
       items:
-        $ref: '#/components/schemas/MFADevice'
+        allOf:
+        - $ref: '#/components/schemas/MFADevice'
+        - xml:
+            name: member
       type: array
     minimumPasswordLengthType:
       maximum: 128
@@ -8827,7 +8932,10 @@ components:
       type: string
     policyDetailListType:
       items:
-        $ref: '#/components/schemas/PolicyDetail'
+        allOf:
+        - $ref: '#/components/schemas/PolicyDetail'
+        - xml:
+            name: member
       type: array
     policyDocumentType:
       maxLength: 131072
@@ -8836,21 +8944,33 @@ components:
       type: string
     policyDocumentVersionListType:
       items:
-        $ref: '#/components/schemas/PolicyVersion'
+        allOf:
+        - $ref: '#/components/schemas/PolicyVersion'
+        - xml:
+            name: member
       type: array
     policyGrantingServiceAccessListType:
       items:
-        $ref: '#/components/schemas/PolicyGrantingServiceAccess'
+        allOf:
+        - $ref: '#/components/schemas/PolicyGrantingServiceAccess'
+        - xml:
+            name: member
       type: array
     policyListType:
       items:
-        $ref: '#/components/schemas/Policy'
+        allOf:
+        - $ref: '#/components/schemas/Policy'
+        - xml:
+            name: member
       type: array
     policyNameListType:
       description: <p>Contains a list of policy names.</p> <p>This data type is used
         as a response element in the <a>ListPolicies</a> operation.</p>
       items:
-        $ref: '#/components/schemas/policyNameType'
+        allOf:
+        - $ref: '#/components/schemas/policyNameType'
+        - xml:
+            name: member
       type: array
     policyNameType:
       maxLength: 128
@@ -8911,13 +9031,19 @@ components:
       type: string
     roleDetailListType:
       items:
-        $ref: '#/components/schemas/RoleDetail'
+        allOf:
+        - $ref: '#/components/schemas/RoleDetail'
+        - xml:
+            name: member
       type: array
     roleListType:
       description: <p>Contains a list of IAM roles.</p> <p>This data type is used
         as a response element in the <a>ListRoles</a> operation.</p>
       items:
-        $ref: '#/components/schemas/Role'
+        allOf:
+        - $ref: '#/components/schemas/Role'
+        - xml:
+            name: member
       type: array
     roleMaxSessionDurationType:
       maximum: 43200
@@ -8935,7 +9061,10 @@ components:
       type: string
     serverCertificateMetadataListType:
       items:
-        $ref: '#/components/schemas/ServerCertificateMetadata'
+        allOf:
+        - $ref: '#/components/schemas/ServerCertificateMetadata'
+        - xml:
+            name: member
       type: array
     serverCertificateNameType:
       maxLength: 128
@@ -8948,7 +9077,10 @@ components:
       type: string
     serviceNamespaceListType:
       items:
-        $ref: '#/components/schemas/serviceNamespaceType'
+        allOf:
+        - $ref: '#/components/schemas/serviceNamespaceType'
+        - xml:
+            name: member
       maxItems: 200
       minItems: 1
       type: array
@@ -9021,7 +9153,10 @@ components:
       type: integer
     tagKeyListType:
       items:
-        $ref: '#/components/schemas/tagKeyType'
+        allOf:
+        - $ref: '#/components/schemas/tagKeyType'
+        - xml:
+            name: member
       maxItems: 50
       type: array
     tagKeyType:
@@ -9031,7 +9166,10 @@ components:
       type: string
     tagListType:
       items:
-        $ref: '#/components/schemas/Tag'
+        allOf:
+        - $ref: '#/components/schemas/Tag'
+        - xml:
+            name: member
       maxItems: 50
       type: array
     tagValueType:
@@ -9042,7 +9180,10 @@ components:
     thumbprintListType:
       description: Contains a list of thumbprints of identity provider server certificates.
       items:
-        $ref: '#/components/schemas/thumbprintType'
+        allOf:
+        - $ref: '#/components/schemas/thumbprintType'
+        - xml:
+            name: member
       type: array
     thumbprintType:
       description: <p>Contains a thumbprint for an identity provider's server certificate.</p>
@@ -9055,16 +9196,19 @@ components:
       type: string
     userDetailListType:
       items:
-        $ref: '#/components/schemas/UserDetail'
+        allOf:
+        - $ref: '#/components/schemas/UserDetail'
+        - xml:
+            name: member
       type: array
     userListType:
       description: <p>Contains a list of users.</p> <p>This data type is used as a
         response element in the <a>GetGroup</a> and <a>ListUsers</a> operations. </p>
       items:
         allOf:
-          - $ref: '#/components/schemas/User'
-          - xml:
-              name: member
+        - $ref: '#/components/schemas/User'
+        - xml:
+            name: member
       type: array
     userNameType:
       maxLength: 64
@@ -9073,7 +9217,10 @@ components:
       type: string
     virtualMFADeviceListType:
       items:
-        $ref: '#/components/schemas/VirtualMFADevice'
+        allOf:
+        - $ref: '#/components/schemas/VirtualMFADevice'
+        - xml:
+            name: member
       type: array
     virtualMFADeviceName:
       minLength: 1
@@ -9095,7 +9242,7 @@ components:
             $ref: '#/paths/~1?Action=GetAccessKeyLastUsed&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/GetAccessKeyLastUsedResult
             openAPIDocKey: '200'
       name: access_key_last_useds
       sqlVerbs:
@@ -9124,7 +9271,7 @@ components:
             $ref: '#/paths/~1?Action=ListAccessKeys&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/ListAccessKeysResult/AccessKeyMetadata/member
             openAPIDocKey: '200'
         access_keys_Update:
           operation:
@@ -9171,7 +9318,7 @@ components:
             $ref: '#/paths/~1?Action=ListAccountAliases&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/ListAccountAliasesResult/AccountAliases/member
             openAPIDocKey: '200'
       name: account_aliases
       sqlVerbs:
@@ -9189,7 +9336,7 @@ components:
             $ref: '#/paths/~1?Action=GetAccountAuthorizationDetails&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/GetAccountAuthorizationDetailsResult
             openAPIDocKey: '200'
       name: account_authorization_details
       sqlVerbs:
@@ -9199,68 +9346,68 @@ components:
         - $ref: '#/components/x-stackQL-resources/account_authorization_details/methods/account_authorization_details_Get'
         update: []
       title: account_authorization_details
-    account_password_policys:
-      id: aws.iam.account_password_policys
+    account_password_policies:
+      id: aws.iam.account_password_policies
       methods:
-        account_password_policys_Delete:
+        account_password_policies_Delete:
           operation:
             $ref: '#/paths/~1?Action=DeleteAccountPasswordPolicy&Version=2010-05-08/get'
           response:
             openAPIDocKey: '200'
-        account_password_policys_Get:
+        account_password_policies_Get:
           operation:
             $ref: '#/paths/~1?Action=GetAccountPasswordPolicy&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/GetAccountPasswordPolicyResult
             openAPIDocKey: '200'
-        account_password_policys_Update:
+        account_password_policies_Update:
           operation:
             $ref: '#/paths/~1?Action=UpdateAccountPasswordPolicy&Version=2010-05-08/get'
           response:
             openAPIDocKey: '200'
-      name: account_password_policys
+      name: account_password_policies
       sqlVerbs:
         delete:
-        - $ref: '#/components/x-stackQL-resources/account_password_policys/methods/account_password_policys_Delete'
+        - $ref: '#/components/x-stackQL-resources/account_password_policies/methods/account_password_policies_Delete'
         insert: []
         select:
-        - $ref: '#/components/x-stackQL-resources/account_password_policys/methods/account_password_policys_Get'
+        - $ref: '#/components/x-stackQL-resources/account_password_policies/methods/account_password_policies_Get'
         update: []
-      title: account_password_policys
-    account_summarys:
-      id: aws.iam.account_summarys
+      title: account_password_policies
+    account_summaries:
+      id: aws.iam.account_summaries
       methods:
-        account_summarys_Get:
+        account_summaries_Get:
           operation:
             $ref: '#/paths/~1?Action=GetAccountSummary&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/GetAccountSummaryResult
             openAPIDocKey: '200'
-      name: account_summarys
+      name: account_summaries
       sqlVerbs:
         delete: []
         insert: []
         select:
-        - $ref: '#/components/x-stackQL-resources/account_summarys/methods/account_summarys_Get'
+        - $ref: '#/components/x-stackQL-resources/account_summaries/methods/account_summaries_Get'
         update: []
-      title: account_summarys
-    assume_role_policys:
-      id: aws.iam.assume_role_policys
+      title: account_summaries
+    assume_role_policies:
+      id: aws.iam.assume_role_policies
       methods:
-        assume_role_policys_Update:
+        assume_role_policies_Update:
           operation:
             $ref: '#/paths/~1?Action=UpdateAssumeRolePolicy&Version=2010-05-08/get'
           response:
             openAPIDocKey: '200'
-      name: assume_role_policys
+      name: assume_role_policies
       sqlVerbs:
         delete: []
         insert: []
         select: []
         update: []
-      title: assume_role_policys
+      title: assume_role_policies
     attached_group_policies:
       id: aws.iam.attached_group_policies
       methods:
@@ -9269,7 +9416,7 @@ components:
             $ref: '#/paths/~1?Action=ListAttachedGroupPolicies&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/ListAttachedGroupPoliciesResult/AttachedPolicies/member
             openAPIDocKey: '200'
       name: attached_group_policies
       sqlVerbs:
@@ -9287,7 +9434,7 @@ components:
             $ref: '#/paths/~1?Action=ListAttachedRolePolicies&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/ListAttachedRolePoliciesResult/AttachedPolicies/member
             openAPIDocKey: '200'
       name: attached_role_policies
       sqlVerbs:
@@ -9305,7 +9452,7 @@ components:
             $ref: '#/paths/~1?Action=ListAttachedUserPolicies&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/ListAttachedUserPoliciesResult/AttachedPolicies/member
             openAPIDocKey: '200'
       name: attached_user_policies
       sqlVerbs:
@@ -9315,67 +9462,67 @@ components:
         - $ref: '#/components/x-stackQL-resources/attached_user_policies/methods/attached_user_policies_List'
         update: []
       title: attached_user_policies
-    client_i_d_from_open_i_d_connect_providers:
-      id: aws.iam.client_i_d_from_open_i_d_connect_providers
+    client_id_from_open_id_connect_providers:
+      id: aws.iam.client_id_from_open_id_connect_providers
       methods:
-        client_i_d_from_open_i_d_connect_providers_Remove:
+        client_id_from_open_id_connect_providers_Remove:
           operation:
             $ref: '#/paths/~1?Action=RemoveClientIDFromOpenIDConnectProvider&Version=2010-05-08/get'
           response:
             openAPIDocKey: '200'
-      name: client_i_d_from_open_i_d_connect_providers
+      name: client_id_from_open_id_connect_providers
       sqlVerbs:
         delete: []
         insert: []
         select: []
         update: []
-      title: client_i_d_from_open_i_d_connect_providers
-    client_i_d_to_open_i_d_connect_providers:
-      id: aws.iam.client_i_d_to_open_i_d_connect_providers
+      title: client_id_from_open_id_connect_providers
+    client_id_to_open_id_connect_providers:
+      id: aws.iam.client_id_to_open_id_connect_providers
       methods: {}
-      name: client_i_d_to_open_i_d_connect_providers
+      name: client_id_to_open_id_connect_providers
       sqlVerbs:
         delete: []
         insert: []
         select: []
         update: []
-      title: client_i_d_to_open_i_d_connect_providers
-    context_keys_for_custom_policys:
-      id: aws.iam.context_keys_for_custom_policys
+      title: client_id_to_open_id_connect_providers
+    context_keys_for_custom_policies:
+      id: aws.iam.context_keys_for_custom_policies
       methods:
-        context_keys_for_custom_policys_Get:
+        context_keys_for_custom_policies_Get:
           operation:
             $ref: '#/paths/~1?Action=GetContextKeysForCustomPolicy&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/GetContextKeysForCustomPolicyResult
             openAPIDocKey: '200'
-      name: context_keys_for_custom_policys
+      name: context_keys_for_custom_policies
       sqlVerbs:
         delete: []
         insert: []
         select:
-        - $ref: '#/components/x-stackQL-resources/context_keys_for_custom_policys/methods/context_keys_for_custom_policys_Get'
+        - $ref: '#/components/x-stackQL-resources/context_keys_for_custom_policies/methods/context_keys_for_custom_policies_Get'
         update: []
-      title: context_keys_for_custom_policys
-    context_keys_for_principal_policys:
-      id: aws.iam.context_keys_for_principal_policys
+      title: context_keys_for_custom_policies
+    context_keys_for_principal_policies:
+      id: aws.iam.context_keys_for_principal_policies
       methods:
-        context_keys_for_principal_policys_Get:
+        context_keys_for_principal_policies_Get:
           operation:
             $ref: '#/paths/~1?Action=GetContextKeysForPrincipalPolicy&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/GetContextKeysForPrincipalPolicyResult
             openAPIDocKey: '200'
-      name: context_keys_for_principal_policys
+      name: context_keys_for_principal_policies
       sqlVerbs:
         delete: []
         insert: []
         select:
-        - $ref: '#/components/x-stackQL-resources/context_keys_for_principal_policys/methods/context_keys_for_principal_policys_Get'
+        - $ref: '#/components/x-stackQL-resources/context_keys_for_principal_policies/methods/context_keys_for_principal_policies_Get'
         update: []
-      title: context_keys_for_principal_policys
+      title: context_keys_for_principal_policies
     credential_reports:
       id: aws.iam.credential_reports
       methods:
@@ -9390,7 +9537,7 @@ components:
             $ref: '#/paths/~1?Action=GetCredentialReport&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/GetCredentialReportResult
             openAPIDocKey: '200'
       name: credential_reports
       sqlVerbs:
@@ -9400,22 +9547,22 @@ components:
         - $ref: '#/components/x-stackQL-resources/credential_reports/methods/credential_reports_Get'
         update: []
       title: credential_reports
-    custom_policys:
-      id: aws.iam.custom_policys
+    custom_policies:
+      id: aws.iam.custom_policies
       methods:
-        custom_policys_Simulate:
+        custom_policies_Simulate:
           operation:
             $ref: '#/paths/~1?Action=SimulateCustomPolicy&Version=2010-05-08/get'
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: custom_policys
+      name: custom_policies
       sqlVerbs:
         delete: []
         insert: []
         select: []
         update: []
-      title: custom_policys
+      title: custom_policies
     default_policy_versions:
       id: aws.iam.default_policy_versions
       methods:
@@ -9431,81 +9578,71 @@ components:
         select: []
         update: []
       title: default_policy_versions
-    entities_for_policys:
-      id: aws.iam.entities_for_policys
+    entities_for_policies:
+      id: aws.iam.entities_for_policies
       methods:
-        entities_for_policys_List:
+        entities_for_policies_List:
           operation:
             $ref: '#/paths/~1?Action=ListEntitiesForPolicy&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/ListEntitiesForPolicyResult/PolicyGroups/member
             openAPIDocKey: '200'
-      name: entities_for_policys
+      name: entities_for_policies
       sqlVerbs:
         delete: []
         insert: []
         select:
-        - $ref: '#/components/x-stackQL-resources/entities_for_policys/methods/entities_for_policys_List'
+        - $ref: '#/components/x-stackQL-resources/entities_for_policies/methods/entities_for_policies_List'
         update: []
-      title: entities_for_policys
+      title: entities_for_policies
     group_policies:
       id: aws.iam.group_policies
       methods:
+        group_policies_Attach:
+          operation:
+            $ref: '#/paths/~1?Action=AttachGroupPolicy&Version=2010-05-08/get'
+          response:
+            openAPIDocKey: '200'
+        group_policies_Delete:
+          operation:
+            $ref: '#/paths/~1?Action=DeleteGroupPolicy&Version=2010-05-08/get'
+          response:
+            openAPIDocKey: '200'
+        group_policies_Detach:
+          operation:
+            $ref: '#/paths/~1?Action=DetachGroupPolicy&Version=2010-05-08/get'
+          response:
+            openAPIDocKey: '200'
+        group_policies_Get:
+          operation:
+            $ref: '#/paths/~1?Action=GetGroupPolicy&Version=2010-05-08/get'
+          response:
+            mediaType: text/xml
+            objectKey: /*/GetGroupPolicyResult
+            openAPIDocKey: '200'
         group_policies_List:
           operation:
             $ref: '#/paths/~1?Action=ListGroupPolicies&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/ListGroupPoliciesResult/PolicyNames/member
             openAPIDocKey: '200'
-      name: group_policies
-      sqlVerbs:
-        delete: []
-        insert: []
-        select:
-        - $ref: '#/components/x-stackQL-resources/group_policies/methods/group_policies_List'
-        update: []
-      title: group_policies
-    group_policys:
-      id: aws.iam.group_policys
-      methods:
-        group_policys_Attach:
-          operation:
-            $ref: '#/paths/~1?Action=AttachGroupPolicy&Version=2010-05-08/get'
-          response:
-            openAPIDocKey: '200'
-        group_policys_Delete:
-          operation:
-            $ref: '#/paths/~1?Action=DeleteGroupPolicy&Version=2010-05-08/get'
-          response:
-            openAPIDocKey: '200'
-        group_policys_Detach:
-          operation:
-            $ref: '#/paths/~1?Action=DetachGroupPolicy&Version=2010-05-08/get'
-          response:
-            openAPIDocKey: '200'
-        group_policys_Get:
-          operation:
-            $ref: '#/paths/~1?Action=GetGroupPolicy&Version=2010-05-08/get'
-          response:
-            mediaType: text/xml
-            objectKey: /*/*/item
-            openAPIDocKey: '200'
-        group_policys_Put:
+        group_policies_Put:
           operation:
             $ref: '#/paths/~1?Action=PutGroupPolicy&Version=2010-05-08/get'
           response:
             openAPIDocKey: '200'
-      name: group_policys
+      name: group_policies
       sqlVerbs:
         delete:
-        - $ref: '#/components/x-stackQL-resources/group_policys/methods/group_policys_Delete'
+        - $ref: '#/components/x-stackQL-resources/group_policies/methods/group_policies_Delete'
         insert: []
         select:
-        - $ref: '#/components/x-stackQL-resources/group_policys/methods/group_policys_Get'
+        - $ref: '#/components/x-stackQL-resources/group_policies/methods/group_policies_Get'
+        - $ref: '#/components/x-stackQL-resources/group_policies/methods/group_policies_List'
         update: []
-      title: group_policys
+      title: group_policies
     groups:
       id: aws.iam.groups
       methods:
@@ -9525,14 +9662,14 @@ components:
             $ref: '#/paths/~1?Action=GetGroup&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/GetGroupResult/Group
             openAPIDocKey: '200'
         groups_List:
           operation:
             $ref: '#/paths/~1?Action=ListGroups&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/ListGroupsResult/Groups/member
             openAPIDocKey: '200'
         groups_Update:
           operation:
@@ -9558,7 +9695,7 @@ components:
             $ref: '#/paths/~1?Action=ListGroupsForUser&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/ListGroupsForUserResult/Groups/member
             openAPIDocKey: '200'
       name: groups_for_users
       sqlVerbs:
@@ -9576,7 +9713,7 @@ components:
             $ref: '#/paths/~1?Action=ListInstanceProfileTags&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/ListInstanceProfileTagsResult/Tags/member
             openAPIDocKey: '200'
       name: instance_profile_tags
       sqlVerbs:
@@ -9605,14 +9742,14 @@ components:
             $ref: '#/paths/~1?Action=GetInstanceProfile&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/GetInstanceProfileResult
             openAPIDocKey: '200'
         instance_profiles_List:
           operation:
             $ref: '#/paths/~1?Action=ListInstanceProfiles&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/ListInstanceProfilesResult/InstanceProfiles/member
             openAPIDocKey: '200'
         instance_profiles_Tag:
           operation:
@@ -9643,7 +9780,7 @@ components:
             $ref: '#/paths/~1?Action=ListInstanceProfilesForRole&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/ListInstanceProfilesForRoleResult/InstanceProfiles/member
             openAPIDocKey: '200'
       name: instance_profiles_for_roles
       sqlVerbs:
@@ -9672,7 +9809,7 @@ components:
             $ref: '#/paths/~1?Action=GetLoginProfile&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/GetLoginProfileResult
             openAPIDocKey: '200'
         login_profiles_Update:
           operation:
@@ -9689,149 +9826,149 @@ components:
         - $ref: '#/components/x-stackQL-resources/login_profiles/methods/login_profiles_Get'
         update: []
       title: login_profiles
-    m_f_a_device_tags:
-      id: aws.iam.m_f_a_device_tags
+    mfa_device_tags:
+      id: aws.iam.mfa_device_tags
       methods:
-        m_f_a_device_tags_List:
+        mfa_device_tags_List:
           operation:
             $ref: '#/paths/~1?Action=ListMFADeviceTags&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/ListMFADeviceTagsResult/Tags/member
             openAPIDocKey: '200'
-      name: m_f_a_device_tags
+      name: mfa_device_tags
       sqlVerbs:
         delete: []
         insert: []
         select:
-        - $ref: '#/components/x-stackQL-resources/m_f_a_device_tags/methods/m_f_a_device_tags_List'
+        - $ref: '#/components/x-stackQL-resources/mfa_device_tags/methods/mfa_device_tags_List'
         update: []
-      title: m_f_a_device_tags
-    m_f_a_devices:
-      id: aws.iam.m_f_a_devices
+      title: mfa_device_tags
+    mfa_devices:
+      id: aws.iam.mfa_devices
       methods:
-        m_f_a_devices_Deactivate:
+        mfa_devices_Deactivate:
           operation:
             $ref: '#/paths/~1?Action=DeactivateMFADevice&Version=2010-05-08/get'
           response:
             openAPIDocKey: '200'
-        m_f_a_devices_Enable:
+        mfa_devices_Enable:
           operation:
             $ref: '#/paths/~1?Action=EnableMFADevice&Version=2010-05-08/get'
           response:
             openAPIDocKey: '200'
-        m_f_a_devices_List:
+        mfa_devices_List:
           operation:
             $ref: '#/paths/~1?Action=ListMFADevices&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/ListMFADevicesResult/MFADevices/member
             openAPIDocKey: '200'
-        m_f_a_devices_Resync:
+        mfa_devices_Resync:
           operation:
             $ref: '#/paths/~1?Action=ResyncMFADevice&Version=2010-05-08/get'
           response:
             openAPIDocKey: '200'
-        m_f_a_devices_Tag:
+        mfa_devices_Tag:
           operation:
             $ref: '#/paths/~1?Action=TagMFADevice&Version=2010-05-08/get'
           response:
             openAPIDocKey: '200'
-        m_f_a_devices_Untag:
+        mfa_devices_Untag:
           operation:
             $ref: '#/paths/~1?Action=UntagMFADevice&Version=2010-05-08/get'
           response:
             openAPIDocKey: '200'
-      name: m_f_a_devices
+      name: mfa_devices
       sqlVerbs:
         delete: []
         insert: []
         select:
-        - $ref: '#/components/x-stackQL-resources/m_f_a_devices/methods/m_f_a_devices_List'
+        - $ref: '#/components/x-stackQL-resources/mfa_devices/methods/mfa_devices_List'
         update: []
-      title: m_f_a_devices
-    open_i_d_connect_provider_tags:
-      id: aws.iam.open_i_d_connect_provider_tags
+      title: mfa_devices
+    open_id_connect_provider_tags:
+      id: aws.iam.open_id_connect_provider_tags
       methods:
-        open_i_d_connect_provider_tags_List:
+        open_id_connect_provider_tags_List:
           operation:
             $ref: '#/paths/~1?Action=ListOpenIDConnectProviderTags&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/ListOpenIDConnectProviderTagsResult/Tags/member
             openAPIDocKey: '200'
-      name: open_i_d_connect_provider_tags
+      name: open_id_connect_provider_tags
       sqlVerbs:
         delete: []
         insert: []
         select:
-        - $ref: '#/components/x-stackQL-resources/open_i_d_connect_provider_tags/methods/open_i_d_connect_provider_tags_List'
+        - $ref: '#/components/x-stackQL-resources/open_id_connect_provider_tags/methods/open_id_connect_provider_tags_List'
         update: []
-      title: open_i_d_connect_provider_tags
-    open_i_d_connect_provider_thumbprints:
-      id: aws.iam.open_i_d_connect_provider_thumbprints
+      title: open_id_connect_provider_tags
+    open_id_connect_provider_thumbprints:
+      id: aws.iam.open_id_connect_provider_thumbprints
       methods:
-        open_i_d_connect_provider_thumbprints_Update:
+        open_id_connect_provider_thumbprints_Update:
           operation:
             $ref: '#/paths/~1?Action=UpdateOpenIDConnectProviderThumbprint&Version=2010-05-08/get'
           response:
             openAPIDocKey: '200'
-      name: open_i_d_connect_provider_thumbprints
+      name: open_id_connect_provider_thumbprints
       sqlVerbs:
         delete: []
         insert: []
         select: []
         update: []
-      title: open_i_d_connect_provider_thumbprints
-    open_i_d_connect_providers:
-      id: aws.iam.open_i_d_connect_providers
+      title: open_id_connect_provider_thumbprints
+    open_id_connect_providers:
+      id: aws.iam.open_id_connect_providers
       methods:
-        open_i_d_connect_providers_Create:
+        open_id_connect_providers_Create:
           operation:
             $ref: '#/paths/~1?Action=CreateOpenIDConnectProvider&Version=2010-05-08/get'
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-        open_i_d_connect_providers_Delete:
+        open_id_connect_providers_Delete:
           operation:
             $ref: '#/paths/~1?Action=DeleteOpenIDConnectProvider&Version=2010-05-08/get'
           response:
             openAPIDocKey: '200'
-        open_i_d_connect_providers_Get:
+        open_id_connect_providers_Get:
           operation:
             $ref: '#/paths/~1?Action=GetOpenIDConnectProvider&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/GetOpenIDConnectProviderResult
             openAPIDocKey: '200'
-        open_i_d_connect_providers_List:
+        open_id_connect_providers_List:
           operation:
             $ref: '#/paths/~1?Action=ListOpenIDConnectProviders&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/ListOpenIDConnectProvidersResult/OpenIDConnectProviderList/member
             openAPIDocKey: '200'
-        open_i_d_connect_providers_Tag:
+        open_id_connect_providers_Tag:
           operation:
             $ref: '#/paths/~1?Action=TagOpenIDConnectProvider&Version=2010-05-08/get'
           response:
             openAPIDocKey: '200'
-        open_i_d_connect_providers_Untag:
+        open_id_connect_providers_Untag:
           operation:
             $ref: '#/paths/~1?Action=UntagOpenIDConnectProvider&Version=2010-05-08/get'
           response:
             openAPIDocKey: '200'
-      name: open_i_d_connect_providers
+      name: open_id_connect_providers
       sqlVerbs:
         delete:
-        - $ref: '#/components/x-stackQL-resources/open_i_d_connect_providers/methods/open_i_d_connect_providers_Delete'
+        - $ref: '#/components/x-stackQL-resources/open_id_connect_providers/methods/open_id_connect_providers_Delete'
         insert:
-        - $ref: '#/components/x-stackQL-resources/open_i_d_connect_providers/methods/open_i_d_connect_providers_Create'
+        - $ref: '#/components/x-stackQL-resources/open_id_connect_providers/methods/open_id_connect_providers_Create'
         select:
-        - $ref: '#/components/x-stackQL-resources/open_i_d_connect_providers/methods/open_i_d_connect_providers_Get'
-        - $ref: '#/components/x-stackQL-resources/open_i_d_connect_providers/methods/open_i_d_connect_providers_List'
+        - $ref: '#/components/x-stackQL-resources/open_id_connect_providers/methods/open_id_connect_providers_Get'
+        - $ref: '#/components/x-stackQL-resources/open_id_connect_providers/methods/open_id_connect_providers_List'
         update: []
-      title: open_i_d_connect_providers
+      title: open_id_connect_providers
     organizations_access_reports:
       id: aws.iam.organizations_access_reports
       methods:
@@ -9846,7 +9983,7 @@ components:
             $ref: '#/paths/~1?Action=GetOrganizationsAccessReport&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/GetOrganizationsAccessReportResult
             openAPIDocKey: '200'
       name: organizations_access_reports
       sqlVerbs:
@@ -9874,18 +10011,49 @@ components:
     policies:
       id: aws.iam.policies
       methods:
+        policies_Create:
+          operation:
+            $ref: '#/paths/~1?Action=CreatePolicy&Version=2010-05-08/get'
+          response:
+            mediaType: text/xml
+            openAPIDocKey: '200'
+        policies_Delete:
+          operation:
+            $ref: '#/paths/~1?Action=DeletePolicy&Version=2010-05-08/get'
+          response:
+            openAPIDocKey: '200'
+        policies_Get:
+          operation:
+            $ref: '#/paths/~1?Action=GetPolicy&Version=2010-05-08/get'
+          response:
+            mediaType: text/xml
+            objectKey: /*/GetPolicyResult
+            openAPIDocKey: '200'
         policies_List:
           operation:
             $ref: '#/paths/~1?Action=ListPolicies&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/ListPoliciesResult/Policies/member
+            openAPIDocKey: '200'
+        policies_Tag:
+          operation:
+            $ref: '#/paths/~1?Action=TagPolicy&Version=2010-05-08/get'
+          response:
+            openAPIDocKey: '200'
+        policies_Untag:
+          operation:
+            $ref: '#/paths/~1?Action=UntagPolicy&Version=2010-05-08/get'
+          response:
             openAPIDocKey: '200'
       name: policies
       sqlVerbs:
-        delete: []
-        insert: []
+        delete:
+        - $ref: '#/components/x-stackQL-resources/policies/methods/policies_Delete'
+        insert:
+        - $ref: '#/components/x-stackQL-resources/policies/methods/policies_Create'
         select:
+        - $ref: '#/components/x-stackQL-resources/policies/methods/policies_Get'
         - $ref: '#/components/x-stackQL-resources/policies/methods/policies_List'
         update: []
       title: policies
@@ -9897,7 +10065,7 @@ components:
             $ref: '#/paths/~1?Action=ListPolicyTags&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/ListPolicyTagsResult/Tags/member
             openAPIDocKey: '200'
       name: policy_tags
       sqlVerbs:
@@ -9926,14 +10094,14 @@ components:
             $ref: '#/paths/~1?Action=GetPolicyVersion&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/GetPolicyVersionResult
             openAPIDocKey: '200'
         policy_versions_List:
           operation:
             $ref: '#/paths/~1?Action=ListPolicyVersions&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/ListPolicyVersionsResult/Versions/member
             openAPIDocKey: '200'
       name: policy_versions
       sqlVerbs:
@@ -9946,63 +10114,22 @@ components:
         - $ref: '#/components/x-stackQL-resources/policy_versions/methods/policy_versions_List'
         update: []
       title: policy_versions
-    policys:
-      id: aws.iam.policys
+    principal_policies:
+      id: aws.iam.principal_policies
       methods:
-        policys_Create:
-          operation:
-            $ref: '#/paths/~1?Action=CreatePolicy&Version=2010-05-08/get'
-          response:
-            mediaType: text/xml
-            openAPIDocKey: '200'
-        policys_Delete:
-          operation:
-            $ref: '#/paths/~1?Action=DeletePolicy&Version=2010-05-08/get'
-          response:
-            openAPIDocKey: '200'
-        policys_Get:
-          operation:
-            $ref: '#/paths/~1?Action=GetPolicy&Version=2010-05-08/get'
-          response:
-            mediaType: text/xml
-            objectKey: /*/*/item
-            openAPIDocKey: '200'
-        policys_Tag:
-          operation:
-            $ref: '#/paths/~1?Action=TagPolicy&Version=2010-05-08/get'
-          response:
-            openAPIDocKey: '200'
-        policys_Untag:
-          operation:
-            $ref: '#/paths/~1?Action=UntagPolicy&Version=2010-05-08/get'
-          response:
-            openAPIDocKey: '200'
-      name: policys
-      sqlVerbs:
-        delete:
-        - $ref: '#/components/x-stackQL-resources/policys/methods/policys_Delete'
-        insert:
-        - $ref: '#/components/x-stackQL-resources/policys/methods/policys_Create'
-        select:
-        - $ref: '#/components/x-stackQL-resources/policys/methods/policys_Get'
-        update: []
-      title: policys
-    principal_policys:
-      id: aws.iam.principal_policys
-      methods:
-        principal_policys_Simulate:
+        principal_policies_Simulate:
           operation:
             $ref: '#/paths/~1?Action=SimulatePrincipalPolicy&Version=2010-05-08/get'
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: principal_policys
+      name: principal_policies
       sqlVerbs:
         delete: []
         insert: []
         select: []
         update: []
-      title: principal_policys
+      title: principal_policies
     role_descriptions:
       id: aws.iam.role_descriptions
       methods:
@@ -10034,84 +10161,74 @@ components:
         select: []
         update: []
       title: role_from_instance_profiles
-    role_permissions_boundarys:
-      id: aws.iam.role_permissions_boundarys
+    role_permissions_boundaries:
+      id: aws.iam.role_permissions_boundaries
       methods:
-        role_permissions_boundarys_Delete:
+        role_permissions_boundaries_Delete:
           operation:
             $ref: '#/paths/~1?Action=DeleteRolePermissionsBoundary&Version=2010-05-08/get'
           response:
             openAPIDocKey: '200'
-        role_permissions_boundarys_Put:
+        role_permissions_boundaries_Put:
           operation:
             $ref: '#/paths/~1?Action=PutRolePermissionsBoundary&Version=2010-05-08/get'
           response:
             openAPIDocKey: '200'
-      name: role_permissions_boundarys
+      name: role_permissions_boundaries
       sqlVerbs:
         delete:
-        - $ref: '#/components/x-stackQL-resources/role_permissions_boundarys/methods/role_permissions_boundarys_Delete'
+        - $ref: '#/components/x-stackQL-resources/role_permissions_boundaries/methods/role_permissions_boundaries_Delete'
         insert: []
         select: []
         update: []
-      title: role_permissions_boundarys
+      title: role_permissions_boundaries
     role_policies:
       id: aws.iam.role_policies
       methods:
+        role_policies_Attach:
+          operation:
+            $ref: '#/paths/~1?Action=AttachRolePolicy&Version=2010-05-08/get'
+          response:
+            openAPIDocKey: '200'
+        role_policies_Delete:
+          operation:
+            $ref: '#/paths/~1?Action=DeleteRolePolicy&Version=2010-05-08/get'
+          response:
+            openAPIDocKey: '200'
+        role_policies_Detach:
+          operation:
+            $ref: '#/paths/~1?Action=DetachRolePolicy&Version=2010-05-08/get'
+          response:
+            openAPIDocKey: '200'
+        role_policies_Get:
+          operation:
+            $ref: '#/paths/~1?Action=GetRolePolicy&Version=2010-05-08/get'
+          response:
+            mediaType: text/xml
+            objectKey: /*/GetRolePolicyResult
+            openAPIDocKey: '200'
         role_policies_List:
           operation:
             $ref: '#/paths/~1?Action=ListRolePolicies&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/ListRolePoliciesResult/PolicyNames/member
             openAPIDocKey: '200'
-      name: role_policies
-      sqlVerbs:
-        delete: []
-        insert: []
-        select:
-        - $ref: '#/components/x-stackQL-resources/role_policies/methods/role_policies_List'
-        update: []
-      title: role_policies
-    role_policys:
-      id: aws.iam.role_policys
-      methods:
-        role_policys_Attach:
-          operation:
-            $ref: '#/paths/~1?Action=AttachRolePolicy&Version=2010-05-08/get'
-          response:
-            openAPIDocKey: '200'
-        role_policys_Delete:
-          operation:
-            $ref: '#/paths/~1?Action=DeleteRolePolicy&Version=2010-05-08/get'
-          response:
-            openAPIDocKey: '200'
-        role_policys_Detach:
-          operation:
-            $ref: '#/paths/~1?Action=DetachRolePolicy&Version=2010-05-08/get'
-          response:
-            openAPIDocKey: '200'
-        role_policys_Get:
-          operation:
-            $ref: '#/paths/~1?Action=GetRolePolicy&Version=2010-05-08/get'
-          response:
-            mediaType: text/xml
-            objectKey: /*/*/item
-            openAPIDocKey: '200'
-        role_policys_Put:
+        role_policies_Put:
           operation:
             $ref: '#/paths/~1?Action=PutRolePolicy&Version=2010-05-08/get'
           response:
             openAPIDocKey: '200'
-      name: role_policys
+      name: role_policies
       sqlVerbs:
         delete:
-        - $ref: '#/components/x-stackQL-resources/role_policys/methods/role_policys_Delete'
+        - $ref: '#/components/x-stackQL-resources/role_policies/methods/role_policies_Delete'
         insert: []
         select:
-        - $ref: '#/components/x-stackQL-resources/role_policys/methods/role_policys_Get'
+        - $ref: '#/components/x-stackQL-resources/role_policies/methods/role_policies_Get'
+        - $ref: '#/components/x-stackQL-resources/role_policies/methods/role_policies_List'
         update: []
-      title: role_policys
+      title: role_policies
     role_tags:
       id: aws.iam.role_tags
       methods:
@@ -10120,7 +10237,7 @@ components:
             $ref: '#/paths/~1?Action=ListRoleTags&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/ListRoleTagsResult/Tags/member
             openAPIDocKey: '200'
       name: role_tags
       sqlVerbs:
@@ -10164,14 +10281,14 @@ components:
             $ref: '#/paths/~1?Action=GetRole&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/GetRoleResult/Role
             openAPIDocKey: '200'
         roles_List:
           operation:
             $ref: '#/paths/~1?Action=ListRoles&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/ListRolesResult/Roles/member
             openAPIDocKey: '200'
         roles_Tag:
           operation:
@@ -10200,122 +10317,79 @@ components:
         - $ref: '#/components/x-stackQL-resources/roles/methods/roles_List'
         update: []
       title: roles
-    s_a_m_l_provider_tags:
-      id: aws.iam.s_a_m_l_provider_tags
+    saml_provider_tags:
+      id: aws.iam.saml_provider_tags
       methods:
-        s_a_m_l_provider_tags_List:
+        saml_provider_tags_List:
           operation:
             $ref: '#/paths/~1?Action=ListSAMLProviderTags&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/ListSAMLProviderTagsResult/Tags/member
             openAPIDocKey: '200'
-      name: s_a_m_l_provider_tags
+      name: saml_provider_tags
       sqlVerbs:
         delete: []
         insert: []
         select:
-        - $ref: '#/components/x-stackQL-resources/s_a_m_l_provider_tags/methods/s_a_m_l_provider_tags_List'
+        - $ref: '#/components/x-stackQL-resources/saml_provider_tags/methods/saml_provider_tags_List'
         update: []
-      title: s_a_m_l_provider_tags
-    s_a_m_l_providers:
-      id: aws.iam.s_a_m_l_providers
+      title: saml_provider_tags
+    saml_providers:
+      id: aws.iam.saml_providers
       methods:
-        s_a_m_l_providers_Create:
+        saml_providers_Create:
           operation:
             $ref: '#/paths/~1?Action=CreateSAMLProvider&Version=2010-05-08/get'
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-        s_a_m_l_providers_Delete:
+        saml_providers_Delete:
           operation:
             $ref: '#/paths/~1?Action=DeleteSAMLProvider&Version=2010-05-08/get'
           response:
             openAPIDocKey: '200'
-        s_a_m_l_providers_Get:
+        saml_providers_Get:
           operation:
             $ref: '#/paths/~1?Action=GetSAMLProvider&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/GetSAMLProviderResult
             openAPIDocKey: '200'
-        s_a_m_l_providers_List:
+        saml_providers_List:
           operation:
             $ref: '#/paths/~1?Action=ListSAMLProviders&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/ListSAMLProvidersResult/SAMLProviderList/member
             openAPIDocKey: '200'
-        s_a_m_l_providers_Tag:
+        saml_providers_Tag:
           operation:
             $ref: '#/paths/~1?Action=TagSAMLProvider&Version=2010-05-08/get'
           response:
             openAPIDocKey: '200'
-        s_a_m_l_providers_Untag:
+        saml_providers_Untag:
           operation:
             $ref: '#/paths/~1?Action=UntagSAMLProvider&Version=2010-05-08/get'
           response:
             openAPIDocKey: '200'
-        s_a_m_l_providers_Update:
+        saml_providers_Update:
           operation:
             $ref: '#/paths/~1?Action=UpdateSAMLProvider&Version=2010-05-08/get'
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      name: s_a_m_l_providers
+      name: saml_providers
       sqlVerbs:
         delete:
-        - $ref: '#/components/x-stackQL-resources/s_a_m_l_providers/methods/s_a_m_l_providers_Delete'
+        - $ref: '#/components/x-stackQL-resources/saml_providers/methods/saml_providers_Delete'
         insert:
-        - $ref: '#/components/x-stackQL-resources/s_a_m_l_providers/methods/s_a_m_l_providers_Create'
+        - $ref: '#/components/x-stackQL-resources/saml_providers/methods/saml_providers_Create'
         select:
-        - $ref: '#/components/x-stackQL-resources/s_a_m_l_providers/methods/s_a_m_l_providers_Get'
-        - $ref: '#/components/x-stackQL-resources/s_a_m_l_providers/methods/s_a_m_l_providers_List'
+        - $ref: '#/components/x-stackQL-resources/saml_providers/methods/saml_providers_Get'
+        - $ref: '#/components/x-stackQL-resources/saml_providers/methods/saml_providers_List'
         update: []
-      title: s_a_m_l_providers
-    s_s_h_public_keys:
-      id: aws.iam.s_s_h_public_keys
-      methods:
-        s_s_h_public_keys_Delete:
-          operation:
-            $ref: '#/paths/~1?Action=DeleteSSHPublicKey&Version=2010-05-08/get'
-          response:
-            openAPIDocKey: '200'
-        s_s_h_public_keys_Get:
-          operation:
-            $ref: '#/paths/~1?Action=GetSSHPublicKey&Version=2010-05-08/get'
-          response:
-            mediaType: text/xml
-            objectKey: /*/*/item
-            openAPIDocKey: '200'
-        s_s_h_public_keys_List:
-          operation:
-            $ref: '#/paths/~1?Action=ListSSHPublicKeys&Version=2010-05-08/get'
-          response:
-            mediaType: text/xml
-            objectKey: /*/*/item
-            openAPIDocKey: '200'
-        s_s_h_public_keys_Update:
-          operation:
-            $ref: '#/paths/~1?Action=UpdateSSHPublicKey&Version=2010-05-08/get'
-          response:
-            openAPIDocKey: '200'
-        s_s_h_public_keys_Upload:
-          operation:
-            $ref: '#/paths/~1?Action=UploadSSHPublicKey&Version=2010-05-08/get'
-          response:
-            mediaType: text/xml
-            openAPIDocKey: '200'
-      name: s_s_h_public_keys
-      sqlVerbs:
-        delete:
-        - $ref: '#/components/x-stackQL-resources/s_s_h_public_keys/methods/s_s_h_public_keys_Delete'
-        insert: []
-        select:
-        - $ref: '#/components/x-stackQL-resources/s_s_h_public_keys/methods/s_s_h_public_keys_Get'
-        - $ref: '#/components/x-stackQL-resources/s_s_h_public_keys/methods/s_s_h_public_keys_List'
-        update: []
-      title: s_s_h_public_keys
+      title: saml_providers
     security_token_service_preferences:
       id: aws.iam.security_token_service_preferences
       methods:
@@ -10339,7 +10413,7 @@ components:
             $ref: '#/paths/~1?Action=ListServerCertificateTags&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/ListServerCertificateTagsResult/Tags/member
             openAPIDocKey: '200'
       name: server_certificate_tags
       sqlVerbs:
@@ -10362,14 +10436,14 @@ components:
             $ref: '#/paths/~1?Action=GetServerCertificate&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/GetServerCertificateResult
             openAPIDocKey: '200'
         server_certificates_List:
           operation:
             $ref: '#/paths/~1?Action=ListServerCertificates&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/ListServerCertificatesResult/ServerCertificateMetadataList/member
             openAPIDocKey: '200'
         server_certificates_Tag:
           operation:
@@ -10416,7 +10490,7 @@ components:
             $ref: '#/paths/~1?Action=GetServiceLastAccessedDetails&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/GetServiceLastAccessedDetailsResult
             openAPIDocKey: '200'
       name: service_last_accessed_details
       sqlVerbs:
@@ -10434,7 +10508,7 @@ components:
             $ref: '#/paths/~1?Action=GetServiceLastAccessedDetailsWithEntities&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/GetServiceLastAccessedDetailsWithEntitiesResult
             openAPIDocKey: '200'
       name: service_last_accessed_details_with_entities
       sqlVerbs:
@@ -10452,7 +10526,7 @@ components:
             $ref: '#/paths/~1?Action=GetServiceLinkedRoleDeletionStatus&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/GetServiceLinkedRoleDeletionStatusResult
             openAPIDocKey: '200'
       name: service_linked_role_deletion_status
       sqlVerbs:
@@ -10505,7 +10579,7 @@ components:
             $ref: '#/paths/~1?Action=ListServiceSpecificCredentials&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/ListServiceSpecificCredentialsResult/ServiceSpecificCredentials/member
             openAPIDocKey: '200'
         service_specific_credentials_Reset:
           operation:
@@ -10541,7 +10615,7 @@ components:
             $ref: '#/paths/~1?Action=ListSigningCertificates&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/ListSigningCertificatesResult/Certificates/member
             openAPIDocKey: '200'
         signing_certificates_Update:
           operation:
@@ -10563,6 +10637,49 @@ components:
         - $ref: '#/components/x-stackQL-resources/signing_certificates/methods/signing_certificates_List'
         update: []
       title: signing_certificates
+    ssh_public_keys:
+      id: aws.iam.ssh_public_keys
+      methods:
+        ssh_public_keys_Delete:
+          operation:
+            $ref: '#/paths/~1?Action=DeleteSSHPublicKey&Version=2010-05-08/get'
+          response:
+            openAPIDocKey: '200'
+        ssh_public_keys_Get:
+          operation:
+            $ref: '#/paths/~1?Action=GetSSHPublicKey&Version=2010-05-08/get'
+          response:
+            mediaType: text/xml
+            objectKey: /*/GetSSHPublicKeyResult
+            openAPIDocKey: '200'
+        ssh_public_keys_List:
+          operation:
+            $ref: '#/paths/~1?Action=ListSSHPublicKeys&Version=2010-05-08/get'
+          response:
+            mediaType: text/xml
+            objectKey: /*/ListSSHPublicKeysResult/SSHPublicKeys/member
+            openAPIDocKey: '200'
+        ssh_public_keys_Update:
+          operation:
+            $ref: '#/paths/~1?Action=UpdateSSHPublicKey&Version=2010-05-08/get'
+          response:
+            openAPIDocKey: '200'
+        ssh_public_keys_Upload:
+          operation:
+            $ref: '#/paths/~1?Action=UploadSSHPublicKey&Version=2010-05-08/get'
+          response:
+            mediaType: text/xml
+            openAPIDocKey: '200'
+      name: ssh_public_keys
+      sqlVerbs:
+        delete:
+        - $ref: '#/components/x-stackQL-resources/ssh_public_keys/methods/ssh_public_keys_Delete'
+        insert: []
+        select:
+        - $ref: '#/components/x-stackQL-resources/ssh_public_keys/methods/ssh_public_keys_Get'
+        - $ref: '#/components/x-stackQL-resources/ssh_public_keys/methods/ssh_public_keys_List'
+        update: []
+      title: ssh_public_keys
     user_from_groups:
       id: aws.iam.user_from_groups
       methods:
@@ -10578,84 +10695,74 @@ components:
         select: []
         update: []
       title: user_from_groups
-    user_permissions_boundarys:
-      id: aws.iam.user_permissions_boundarys
+    user_permissions_boundaries:
+      id: aws.iam.user_permissions_boundaries
       methods:
-        user_permissions_boundarys_Delete:
+        user_permissions_boundaries_Delete:
           operation:
             $ref: '#/paths/~1?Action=DeleteUserPermissionsBoundary&Version=2010-05-08/get'
           response:
             openAPIDocKey: '200'
-        user_permissions_boundarys_Put:
+        user_permissions_boundaries_Put:
           operation:
             $ref: '#/paths/~1?Action=PutUserPermissionsBoundary&Version=2010-05-08/get'
           response:
             openAPIDocKey: '200'
-      name: user_permissions_boundarys
+      name: user_permissions_boundaries
       sqlVerbs:
         delete:
-        - $ref: '#/components/x-stackQL-resources/user_permissions_boundarys/methods/user_permissions_boundarys_Delete'
+        - $ref: '#/components/x-stackQL-resources/user_permissions_boundaries/methods/user_permissions_boundaries_Delete'
         insert: []
         select: []
         update: []
-      title: user_permissions_boundarys
+      title: user_permissions_boundaries
     user_policies:
       id: aws.iam.user_policies
       methods:
+        user_policies_Attach:
+          operation:
+            $ref: '#/paths/~1?Action=AttachUserPolicy&Version=2010-05-08/get'
+          response:
+            openAPIDocKey: '200'
+        user_policies_Delete:
+          operation:
+            $ref: '#/paths/~1?Action=DeleteUserPolicy&Version=2010-05-08/get'
+          response:
+            openAPIDocKey: '200'
+        user_policies_Detach:
+          operation:
+            $ref: '#/paths/~1?Action=DetachUserPolicy&Version=2010-05-08/get'
+          response:
+            openAPIDocKey: '200'
+        user_policies_Get:
+          operation:
+            $ref: '#/paths/~1?Action=GetUserPolicy&Version=2010-05-08/get'
+          response:
+            mediaType: text/xml
+            objectKey: /*/GetUserPolicyResult
+            openAPIDocKey: '200'
         user_policies_List:
           operation:
             $ref: '#/paths/~1?Action=ListUserPolicies&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/ListUserPoliciesResult/PolicyNames/member
             openAPIDocKey: '200'
-      name: user_policies
-      sqlVerbs:
-        delete: []
-        insert: []
-        select:
-        - $ref: '#/components/x-stackQL-resources/user_policies/methods/user_policies_List'
-        update: []
-      title: user_policies
-    user_policys:
-      id: aws.iam.user_policys
-      methods:
-        user_policys_Attach:
-          operation:
-            $ref: '#/paths/~1?Action=AttachUserPolicy&Version=2010-05-08/get'
-          response:
-            openAPIDocKey: '200'
-        user_policys_Delete:
-          operation:
-            $ref: '#/paths/~1?Action=DeleteUserPolicy&Version=2010-05-08/get'
-          response:
-            openAPIDocKey: '200'
-        user_policys_Detach:
-          operation:
-            $ref: '#/paths/~1?Action=DetachUserPolicy&Version=2010-05-08/get'
-          response:
-            openAPIDocKey: '200'
-        user_policys_Get:
-          operation:
-            $ref: '#/paths/~1?Action=GetUserPolicy&Version=2010-05-08/get'
-          response:
-            mediaType: text/xml
-            objectKey: /*/*/item
-            openAPIDocKey: '200'
-        user_policys_Put:
+        user_policies_Put:
           operation:
             $ref: '#/paths/~1?Action=PutUserPolicy&Version=2010-05-08/get'
           response:
             openAPIDocKey: '200'
-      name: user_policys
+      name: user_policies
       sqlVerbs:
         delete:
-        - $ref: '#/components/x-stackQL-resources/user_policys/methods/user_policys_Delete'
+        - $ref: '#/components/x-stackQL-resources/user_policies/methods/user_policies_Delete'
         insert: []
         select:
-        - $ref: '#/components/x-stackQL-resources/user_policys/methods/user_policys_Get'
+        - $ref: '#/components/x-stackQL-resources/user_policies/methods/user_policies_Get'
+        - $ref: '#/components/x-stackQL-resources/user_policies/methods/user_policies_List'
         update: []
-      title: user_policys
+      title: user_policies
     user_tags:
       id: aws.iam.user_tags
       methods:
@@ -10664,7 +10771,7 @@ components:
             $ref: '#/paths/~1?Action=ListUserTags&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/ListUserTagsResult/Tags/member
             openAPIDocKey: '200'
       name: user_tags
       sqlVerbs:
@@ -10708,7 +10815,7 @@ components:
             $ref: '#/paths/~1?Action=GetUser&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/GetUserResult/User
             openAPIDocKey: '200'
         users_List:
           operation:
@@ -10742,37 +10849,37 @@ components:
         - $ref: '#/components/x-stackQL-resources/users/methods/users_List'
         update: []
       title: users
-    virtual_m_f_a_devices:
-      id: aws.iam.virtual_m_f_a_devices
+    virtual_mfa_devices:
+      id: aws.iam.virtual_mfa_devices
       methods:
-        virtual_m_f_a_devices_Create:
+        virtual_mfa_devices_Create:
           operation:
             $ref: '#/paths/~1?Action=CreateVirtualMFADevice&Version=2010-05-08/get'
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-        virtual_m_f_a_devices_Delete:
+        virtual_mfa_devices_Delete:
           operation:
             $ref: '#/paths/~1?Action=DeleteVirtualMFADevice&Version=2010-05-08/get'
           response:
             openAPIDocKey: '200'
-        virtual_m_f_a_devices_List:
+        virtual_mfa_devices_List:
           operation:
             $ref: '#/paths/~1?Action=ListVirtualMFADevices&Version=2010-05-08/get'
           response:
             mediaType: text/xml
-            objectKey: /*/*/item
+            objectKey: /*/ListVirtualMFADevicesResult/VirtualMFADevices/member
             openAPIDocKey: '200'
-      name: virtual_m_f_a_devices
+      name: virtual_mfa_devices
       sqlVerbs:
         delete:
-        - $ref: '#/components/x-stackQL-resources/virtual_m_f_a_devices/methods/virtual_m_f_a_devices_Delete'
+        - $ref: '#/components/x-stackQL-resources/virtual_mfa_devices/methods/virtual_mfa_devices_Delete'
         insert:
-        - $ref: '#/components/x-stackQL-resources/virtual_m_f_a_devices/methods/virtual_m_f_a_devices_Create'
+        - $ref: '#/components/x-stackQL-resources/virtual_mfa_devices/methods/virtual_mfa_devices_Create'
         select:
-        - $ref: '#/components/x-stackQL-resources/virtual_m_f_a_devices/methods/virtual_m_f_a_devices_List'
+        - $ref: '#/components/x-stackQL-resources/virtual_mfa_devices/methods/virtual_mfa_devices_List'
         update: []
-      title: virtual_m_f_a_devices
+      title: virtual_mfa_devices
 externalDocs:
   description: Amazon Web Services documentation
   url: https://docs.aws.amazon.com/iam/
@@ -11747,7 +11854,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/CreateAccessKeyResponse'
+                properties:
+                  CreateAccessKeyResult:
+                    $ref: '#/components/schemas/CreateAccessKeyResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -11804,7 +11914,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/CreateAccessKeyResponse'
+                properties:
+                  CreateAccessKeyResult:
+                    $ref: '#/components/schemas/CreateAccessKeyResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -11950,7 +12063,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/CreateGroupResponse'
+                properties:
+                  CreateGroupResult:
+                    $ref: '#/components/schemas/CreateGroupResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -12001,7 +12117,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/CreateGroupResponse'
+                properties:
+                  CreateGroupResult:
+                    $ref: '#/components/schemas/CreateGroupResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -12080,7 +12199,10 @@ paths:
         required: false
         schema:
           items:
-            $ref: '#/components/schemas/Tag'
+            allOf:
+            - $ref: '#/components/schemas/Tag'
+            - xml:
+                name: member
           maxItems: 50
           type: array
       responses:
@@ -12088,7 +12210,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/CreateInstanceProfileResponse'
+                properties:
+                  CreateInstanceProfileResult:
+                    $ref: '#/components/schemas/CreateInstanceProfileResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -12149,7 +12274,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/CreateInstanceProfileResponse'
+                properties:
+                  CreateInstanceProfileResult:
+                    $ref: '#/components/schemas/CreateInstanceProfileResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -12237,7 +12365,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/CreateLoginProfileResponse'
+                properties:
+                  CreateLoginProfileResult:
+                    $ref: '#/components/schemas/CreateLoginProfileResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -12299,7 +12430,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/CreateLoginProfileResponse'
+                properties:
+                  CreateLoginProfileResult:
+                    $ref: '#/components/schemas/CreateLoginProfileResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -12395,7 +12529,10 @@ paths:
         required: false
         schema:
           items:
-            $ref: '#/components/schemas/clientIDType'
+            allOf:
+            - $ref: '#/components/schemas/clientIDType'
+            - xml:
+                name: member
           type: array
       - description: <p>A list of server certificate thumbprints for the OpenID Connect
           (OIDC) identity provider's server certificates. Typically this list includes
@@ -12419,7 +12556,10 @@ paths:
           description: Contains a list of thumbprints of identity provider server
             certificates.
           items:
-            $ref: '#/components/schemas/thumbprintType'
+            allOf:
+            - $ref: '#/components/schemas/thumbprintType'
+            - xml:
+                name: member
           type: array
       - description: <p>A list of tags that you want to attach to the new IAM OpenID
           Connect (OIDC) provider. Each tag consists of a key name and an associated
@@ -12432,7 +12572,10 @@ paths:
         required: false
         schema:
           items:
-            $ref: '#/components/schemas/Tag'
+            allOf:
+            - $ref: '#/components/schemas/Tag'
+            - xml:
+                name: member
           maxItems: 50
           type: array
       responses:
@@ -12440,7 +12583,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/CreateOpenIDConnectProviderResponse'
+                properties:
+                  CreateOpenIDConnectProviderResult:
+                    $ref: '#/components/schemas/CreateOpenIDConnectProviderResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -12521,7 +12667,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/CreateOpenIDConnectProviderResponse'
+                properties:
+                  CreateOpenIDConnectProviderResult:
+                    $ref: '#/components/schemas/CreateOpenIDConnectProviderResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -12646,7 +12795,10 @@ paths:
         required: false
         schema:
           items:
-            $ref: '#/components/schemas/Tag'
+            allOf:
+            - $ref: '#/components/schemas/Tag'
+            - xml:
+                name: member
           maxItems: 50
           type: array
       responses:
@@ -12654,7 +12806,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/CreatePolicyResponse'
+                properties:
+                  CreatePolicyResult:
+                    $ref: '#/components/schemas/CreatePolicyResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -12723,7 +12878,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/CreatePolicyResponse'
+                properties:
+                  CreatePolicyResult:
+                    $ref: '#/components/schemas/CreatePolicyResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -12832,7 +12990,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/CreatePolicyVersionResponse'
+                properties:
+                  CreatePolicyVersionResult:
+                    $ref: '#/components/schemas/CreatePolicyVersionResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -12895,7 +13056,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/CreatePolicyVersionResponse'
+                properties:
+                  CreatePolicyVersionResult:
+                    $ref: '#/components/schemas/CreatePolicyVersionResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -13043,7 +13207,10 @@ paths:
         required: false
         schema:
           items:
-            $ref: '#/components/schemas/Tag'
+            allOf:
+            - $ref: '#/components/schemas/Tag'
+            - xml:
+                name: member
           maxItems: 50
           type: array
       responses:
@@ -13051,7 +13218,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/CreateRoleResponse'
+                properties:
+                  CreateRoleResult:
+                    $ref: '#/components/schemas/CreateRoleResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -13116,7 +13286,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/CreateRoleResponse'
+                properties:
+                  CreateRoleResult:
+                    $ref: '#/components/schemas/CreateRoleResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -13213,7 +13386,10 @@ paths:
         required: false
         schema:
           items:
-            $ref: '#/components/schemas/Tag'
+            allOf:
+            - $ref: '#/components/schemas/Tag'
+            - xml:
+                name: member
           maxItems: 50
           type: array
       responses:
@@ -13221,7 +13397,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/CreateSAMLProviderResponse'
+                properties:
+                  CreateSAMLProviderResult:
+                    $ref: '#/components/schemas/CreateSAMLProviderResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -13292,7 +13471,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/CreateSAMLProviderResponse'
+                properties:
+                  CreateSAMLProviderResult:
+                    $ref: '#/components/schemas/CreateSAMLProviderResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -13385,7 +13567,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/CreateServiceLinkedRoleResponse'
+                properties:
+                  CreateServiceLinkedRoleResult:
+                    $ref: '#/components/schemas/CreateServiceLinkedRoleResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -13443,7 +13628,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/CreateServiceLinkedRoleResponse'
+                properties:
+                  CreateServiceLinkedRoleResult:
+                    $ref: '#/components/schemas/CreateServiceLinkedRoleResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -13513,7 +13701,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/CreateServiceSpecificCredentialResponse'
+                properties:
+                  CreateServiceSpecificCredentialResult:
+                    $ref: '#/components/schemas/CreateServiceSpecificCredentialResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -13566,7 +13757,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/CreateServiceSpecificCredentialResponse'
+                properties:
+                  CreateServiceSpecificCredentialResult:
+                    $ref: '#/components/schemas/CreateServiceSpecificCredentialResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -13650,7 +13844,10 @@ paths:
         required: false
         schema:
           items:
-            $ref: '#/components/schemas/Tag'
+            allOf:
+            - $ref: '#/components/schemas/Tag'
+            - xml:
+                name: member
           maxItems: 50
           type: array
       responses:
@@ -13658,7 +13855,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/CreateUserResponse'
+                properties:
+                  CreateUserResult:
+                    $ref: '#/components/schemas/CreateUserResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -13722,7 +13922,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/CreateUserResponse'
+                properties:
+                  CreateUserResult:
+                    $ref: '#/components/schemas/CreateUserResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -13818,7 +14021,10 @@ paths:
         required: false
         schema:
           items:
-            $ref: '#/components/schemas/Tag'
+            allOf:
+            - $ref: '#/components/schemas/Tag'
+            - xml:
+                name: member
           maxItems: 50
           type: array
       responses:
@@ -13826,7 +14032,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/CreateVirtualMFADeviceResponse'
+                properties:
+                  CreateVirtualMFADeviceResult:
+                    $ref: '#/components/schemas/CreateVirtualMFADeviceResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -13892,7 +14101,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/CreateVirtualMFADeviceResponse'
+                properties:
+                  CreateVirtualMFADeviceResult:
+                    $ref: '#/components/schemas/CreateVirtualMFADeviceResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -15694,7 +15906,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/DeleteServiceLinkedRoleResponse'
+                properties:
+                  DeleteServiceLinkedRoleResult:
+                    $ref: '#/components/schemas/DeleteServiceLinkedRoleResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -15754,7 +15969,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/DeleteServiceLinkedRoleResponse'
+                properties:
+                  DeleteServiceLinkedRoleResult:
+                    $ref: '#/components/schemas/DeleteServiceLinkedRoleResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -16871,7 +17089,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GenerateCredentialReportResponse'
+                properties:
+                  GenerateCredentialReportResult:
+                    $ref: '#/components/schemas/GenerateCredentialReportResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -16905,7 +17126,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GenerateCredentialReportResponse'
+                properties:
+                  GenerateCredentialReportResult:
+                    $ref: '#/components/schemas/GenerateCredentialReportResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -17048,7 +17272,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GenerateOrganizationsAccessReportResponse'
+                properties:
+                  GenerateOrganizationsAccessReportResult:
+                    $ref: '#/components/schemas/GenerateOrganizationsAccessReportResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -17173,7 +17400,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GenerateOrganizationsAccessReportResponse'
+                properties:
+                  GenerateOrganizationsAccessReportResult:
+                    $ref: '#/components/schemas/GenerateOrganizationsAccessReportResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -17265,7 +17495,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GenerateServiceLastAccessedDetailsResponse'
+                properties:
+                  GenerateServiceLastAccessedDetailsResult:
+                    $ref: '#/components/schemas/GenerateServiceLastAccessedDetailsResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -17346,7 +17579,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GenerateServiceLastAccessedDetailsResponse'
+                properties:
+                  GenerateServiceLastAccessedDetailsResult:
+                    $ref: '#/components/schemas/GenerateServiceLastAccessedDetailsResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -17386,7 +17622,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetAccessKeyLastUsedResponse'
+                properties:
+                  GetAccessKeyLastUsedResult:
+                    $ref: '#/components/schemas/GetAccessKeyLastUsedResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -17420,7 +17659,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetAccessKeyLastUsedResponse'
+                properties:
+                  GetAccessKeyLastUsedResult:
+                    $ref: '#/components/schemas/GetAccessKeyLastUsedResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -17456,7 +17698,10 @@ paths:
         required: false
         schema:
           items:
-            $ref: '#/components/schemas/EntityType'
+            allOf:
+            - $ref: '#/components/schemas/EntityType'
+            - xml:
+                name: member
           type: array
       - description: <p>Use this only when paginating results to indicate the maximum
           number of items you want in the response. If additional items exist beyond
@@ -17491,7 +17736,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetAccountAuthorizationDetailsResponse'
+                properties:
+                  GetAccountAuthorizationDetailsResult:
+                    $ref: '#/components/schemas/GetAccountAuthorizationDetailsResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -17545,7 +17793,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetAccountAuthorizationDetailsResponse'
+                properties:
+                  GetAccountAuthorizationDetailsResult:
+                    $ref: '#/components/schemas/GetAccountAuthorizationDetailsResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -17568,7 +17819,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetAccountPasswordPolicyResponse'
+                properties:
+                  GetAccountPasswordPolicyResult:
+                    $ref: '#/components/schemas/GetAccountPasswordPolicyResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -17604,7 +17858,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetAccountPasswordPolicyResponse'
+                properties:
+                  GetAccountPasswordPolicyResult:
+                    $ref: '#/components/schemas/GetAccountPasswordPolicyResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -17632,7 +17889,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetAccountSummaryResponse'
+                properties:
+                  GetAccountSummaryResult:
+                    $ref: '#/components/schemas/GetAccountSummaryResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -17661,7 +17921,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetAccountSummaryResponse'
+                properties:
+                  GetAccountSummaryResult:
+                    $ref: '#/components/schemas/GetAccountSummaryResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -17700,14 +17963,20 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/components/schemas/policyDocumentType'
+            allOf:
+            - $ref: '#/components/schemas/policyDocumentType'
+            - xml:
+                name: member
           type: array
       responses:
         '200':
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetContextKeysForPolicyResponse'
+                properties:
+                  GetContextKeysForCustomPolicyResult:
+                    $ref: '#/components/schemas/GetContextKeysForPolicyResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -17747,7 +18016,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetContextKeysForPolicyResponse'
+                properties:
+                  GetContextKeysForCustomPolicyResult:
+                    $ref: '#/components/schemas/GetContextKeysForPolicyResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -17811,14 +18083,20 @@ paths:
         required: false
         schema:
           items:
-            $ref: '#/components/schemas/policyDocumentType'
+            allOf:
+            - $ref: '#/components/schemas/policyDocumentType'
+            - xml:
+                name: member
           type: array
       responses:
         '200':
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetContextKeysForPolicyResponse'
+                properties:
+                  GetContextKeysForPrincipalPolicyResult:
+                    $ref: '#/components/schemas/GetContextKeysForPolicyResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -17868,7 +18146,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetContextKeysForPolicyResponse'
+                properties:
+                  GetContextKeysForPrincipalPolicyResult:
+                    $ref: '#/components/schemas/GetContextKeysForPolicyResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -17895,7 +18176,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetCredentialReportResponse'
+                properties:
+                  GetCredentialReportResult:
+                    $ref: '#/components/schemas/GetCredentialReportResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -17941,7 +18225,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetCredentialReportResponse'
+                properties:
+                  GetCredentialReportResult:
+                    $ref: '#/components/schemas/GetCredentialReportResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -18020,7 +18307,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetGroupResponse'
+                properties:
+                  GetGroupResult:
+                    $ref: '#/components/schemas/GetGroupResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -18071,7 +18361,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetGroupResponse'
+                properties:
+                  GetGroupResult:
+                    $ref: '#/components/schemas/GetGroupResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -18132,7 +18425,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetGroupPolicyResponse'
+                properties:
+                  GetGroupPolicyResult:
+                    $ref: '#/components/schemas/GetGroupPolicyResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -18180,7 +18476,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetGroupPolicyResponse'
+                properties:
+                  GetGroupPolicyResult:
+                    $ref: '#/components/schemas/GetGroupPolicyResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -18221,7 +18520,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetInstanceProfileResponse'
+                properties:
+                  GetInstanceProfileResult:
+                    $ref: '#/components/schemas/GetInstanceProfileResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -18261,7 +18563,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetInstanceProfileResponse'
+                properties:
+                  GetInstanceProfileResult:
+                    $ref: '#/components/schemas/GetInstanceProfileResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -18309,7 +18614,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetLoginProfileResponse'
+                properties:
+                  GetLoginProfileResult:
+                    $ref: '#/components/schemas/GetLoginProfileResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -18356,7 +18664,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetLoginProfileResponse'
+                properties:
+                  GetLoginProfileResult:
+                    $ref: '#/components/schemas/GetLoginProfileResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -18399,7 +18710,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetOpenIDConnectProviderResponse'
+                properties:
+                  GetOpenIDConnectProviderResult:
+                    $ref: '#/components/schemas/GetOpenIDConnectProviderResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -18443,7 +18757,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetOpenIDConnectProviderResponse'
+                properties:
+                  GetOpenIDConnectProviderResult:
+                    $ref: '#/components/schemas/GetOpenIDConnectProviderResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -18539,7 +18856,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetOrganizationsAccessReportResponse'
+                properties:
+                  GetOrganizationsAccessReportResult:
+                    $ref: '#/components/schemas/GetOrganizationsAccessReportResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -18585,7 +18905,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetOrganizationsAccessReportResponse'
+                properties:
+                  GetOrganizationsAccessReportResult:
+                    $ref: '#/components/schemas/GetOrganizationsAccessReportResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -18630,7 +18953,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetPolicyResponse'
+                properties:
+                  GetPolicyResult:
+                    $ref: '#/components/schemas/GetPolicyResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -18683,7 +19009,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetPolicyResponse'
+                properties:
+                  GetPolicyResult:
+                    $ref: '#/components/schemas/GetPolicyResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -18755,7 +19084,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetPolicyVersionResponse'
+                properties:
+                  GetPolicyVersionResult:
+                    $ref: '#/components/schemas/GetPolicyVersionResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -18812,7 +19144,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetPolicyVersionResponse'
+                properties:
+                  GetPolicyVersionResult:
+                    $ref: '#/components/schemas/GetPolicyVersionResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -18864,7 +19199,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetRoleResponse'
+                properties:
+                  GetRoleResult:
+                    $ref: '#/components/schemas/GetRoleResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -18909,7 +19247,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetRoleResponse'
+                properties:
+                  GetRoleResult:
+                    $ref: '#/components/schemas/GetRoleResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -18972,7 +19313,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetRolePolicyResponse'
+                properties:
+                  GetRolePolicyResult:
+                    $ref: '#/components/schemas/GetRolePolicyResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -19022,7 +19366,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetRolePolicyResponse'
+                properties:
+                  GetRolePolicyResult:
+                    $ref: '#/components/schemas/GetRolePolicyResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -19066,7 +19413,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetSAMLProviderResponse'
+                properties:
+                  GetSAMLProviderResult:
+                    $ref: '#/components/schemas/GetSAMLProviderResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -19112,7 +19462,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetSAMLProviderResponse'
+                properties:
+                  GetSAMLProviderResult:
+                    $ref: '#/components/schemas/GetSAMLProviderResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -19184,7 +19537,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetSSHPublicKeyResponse'
+                properties:
+                  GetSSHPublicKeyResult:
+                    $ref: '#/components/schemas/GetSSHPublicKeyResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -19226,7 +19582,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetSSHPublicKeyResponse'
+                properties:
+                  GetSSHPublicKeyResult:
+                    $ref: '#/components/schemas/GetSSHPublicKeyResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -19269,7 +19628,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetServerCertificateResponse'
+                properties:
+                  GetServerCertificateResult:
+                    $ref: '#/components/schemas/GetServerCertificateResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -19311,7 +19673,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetServerCertificateResponse'
+                properties:
+                  GetServerCertificateResult:
+                    $ref: '#/components/schemas/GetServerCertificateResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -19410,7 +19775,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetServiceLastAccessedDetailsResponse'
+                properties:
+                  GetServiceLastAccessedDetailsResult:
+                    $ref: '#/components/schemas/GetServiceLastAccessedDetailsResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -19482,7 +19850,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetServiceLastAccessedDetailsResponse'
+                properties:
+                  GetServiceLastAccessedDetailsResult:
+                    $ref: '#/components/schemas/GetServiceLastAccessedDetailsResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -19577,7 +19948,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetServiceLastAccessedDetailsWithEntitiesResponse'
+                properties:
+                  GetServiceLastAccessedDetailsWithEntitiesResult:
+                    $ref: '#/components/schemas/GetServiceLastAccessedDetailsWithEntitiesResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -19628,7 +20002,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetServiceLastAccessedDetailsWithEntitiesResponse'
+                properties:
+                  GetServiceLastAccessedDetailsWithEntitiesResult:
+                    $ref: '#/components/schemas/GetServiceLastAccessedDetailsWithEntitiesResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -19667,7 +20044,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetServiceLinkedRoleDeletionStatusResponse'
+                properties:
+                  GetServiceLinkedRoleDeletionStatusResult:
+                    $ref: '#/components/schemas/GetServiceLinkedRoleDeletionStatusResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -19715,7 +20095,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetServiceLinkedRoleDeletionStatusResponse'
+                properties:
+                  GetServiceLinkedRoleDeletionStatusResult:
+                    $ref: '#/components/schemas/GetServiceLinkedRoleDeletionStatusResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -19763,7 +20146,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetUserResponse'
+                properties:
+                  GetUserResult:
+                    $ref: '#/components/schemas/GetUserResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -19803,7 +20189,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetUserResponse'
+                properties:
+                  GetUserResult:
+                    $ref: '#/components/schemas/GetUserResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -19864,7 +20253,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetUserPolicyResponse'
+                properties:
+                  GetUserPolicyResult:
+                    $ref: '#/components/schemas/GetUserPolicyResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -19912,7 +20304,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/GetUserPolicyResponse'
+                properties:
+                  GetUserPolicyResult:
+                    $ref: '#/components/schemas/GetUserPolicyResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -19988,7 +20383,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListAccessKeysResponse'
+                properties:
+                  ListAccessKeysResult:
+                    $ref: '#/components/schemas/ListAccessKeysResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -20048,7 +20446,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListAccessKeysResponse'
+                properties:
+                  ListAccessKeysResult:
+                    $ref: '#/components/schemas/ListAccessKeysResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -20104,7 +20505,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListAccountAliasesResponse'
+                properties:
+                  ListAccountAliasesResult:
+                    $ref: '#/components/schemas/ListAccountAliasesResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -20150,7 +20554,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListAccountAliasesResponse'
+                properties:
+                  ListAccountAliasesResult:
+                    $ref: '#/components/schemas/ListAccountAliasesResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -20235,7 +20642,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListAttachedGroupPoliciesResponse'
+                properties:
+                  ListAttachedGroupPoliciesResult:
+                    $ref: '#/components/schemas/ListAttachedGroupPoliciesResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -20299,7 +20709,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListAttachedGroupPoliciesResponse'
+                properties:
+                  ListAttachedGroupPoliciesResult:
+                    $ref: '#/components/schemas/ListAttachedGroupPoliciesResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -20396,7 +20809,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListAttachedRolePoliciesResponse'
+                properties:
+                  ListAttachedRolePoliciesResult:
+                    $ref: '#/components/schemas/ListAttachedRolePoliciesResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -20460,7 +20876,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListAttachedRolePoliciesResponse'
+                properties:
+                  ListAttachedRolePoliciesResult:
+                    $ref: '#/components/schemas/ListAttachedRolePoliciesResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -20557,7 +20976,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListAttachedUserPoliciesResponse'
+                properties:
+                  ListAttachedUserPoliciesResult:
+                    $ref: '#/components/schemas/ListAttachedUserPoliciesResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -20621,7 +21043,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListAttachedUserPoliciesResponse'
+                properties:
+                  ListAttachedUserPoliciesResult:
+                    $ref: '#/components/schemas/ListAttachedUserPoliciesResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -20753,7 +21178,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListEntitiesForPolicyResponse'
+                properties:
+                  ListEntitiesForPolicyResult:
+                    $ref: '#/components/schemas/ListEntitiesForPolicyResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -20814,7 +21242,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListEntitiesForPolicyResponse'
+                properties:
+                  ListEntitiesForPolicyResult:
+                    $ref: '#/components/schemas/ListEntitiesForPolicyResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -20893,7 +21324,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListGroupPoliciesResponse'
+                properties:
+                  ListGroupPoliciesResult:
+                    $ref: '#/components/schemas/ListGroupPoliciesResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -20950,7 +21384,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListGroupPoliciesResponse'
+                properties:
+                  ListGroupPoliciesResult:
+                    $ref: '#/components/schemas/ListGroupPoliciesResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -21023,7 +21460,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListGroupsResponse'
+                properties:
+                  ListGroupsResult:
+                    $ref: '#/components/schemas/ListGroupsResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -21068,7 +21508,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListGroupsResponse'
+                properties:
+                  ListGroupsResult:
+                    $ref: '#/components/schemas/ListGroupsResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -21129,7 +21572,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListGroupsForUserResponse'
+                properties:
+                  ListGroupsForUserResult:
+                    $ref: '#/components/schemas/ListGroupsForUserResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -21180,7 +21626,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListGroupsForUserResponse'
+                properties:
+                  ListGroupsForUserResult:
+                    $ref: '#/components/schemas/ListGroupsForUserResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -21249,7 +21698,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListInstanceProfileTagsResponse'
+                properties:
+                  ListInstanceProfileTagsResult:
+                    $ref: '#/components/schemas/ListInstanceProfileTagsResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -21289,7 +21741,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListInstanceProfileTagsResponse'
+                properties:
+                  ListInstanceProfileTagsResult:
+                    $ref: '#/components/schemas/ListInstanceProfileTagsResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -21369,7 +21824,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListInstanceProfilesResponse'
+                properties:
+                  ListInstanceProfilesResult:
+                    $ref: '#/components/schemas/ListInstanceProfilesResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -21420,7 +21878,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListInstanceProfilesResponse'
+                properties:
+                  ListInstanceProfilesResult:
+                    $ref: '#/components/schemas/ListInstanceProfilesResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -21484,7 +21945,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListInstanceProfilesForRoleResponse'
+                properties:
+                  ListInstanceProfilesForRoleResult:
+                    $ref: '#/components/schemas/ListInstanceProfilesForRoleResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -21537,7 +22001,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListInstanceProfilesForRoleResponse'
+                properties:
+                  ListInstanceProfilesForRoleResult:
+                    $ref: '#/components/schemas/ListInstanceProfilesForRoleResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -21607,7 +22074,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListMFADeviceTagsResponse'
+                properties:
+                  ListMFADeviceTagsResult:
+                    $ref: '#/components/schemas/ListMFADeviceTagsResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -21653,7 +22123,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListMFADeviceTagsResponse'
+                properties:
+                  ListMFADeviceTagsResult:
+                    $ref: '#/components/schemas/ListMFADeviceTagsResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -21730,7 +22203,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListMFADevicesResponse'
+                properties:
+                  ListMFADevicesResult:
+                    $ref: '#/components/schemas/ListMFADevicesResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -21784,7 +22260,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListMFADevicesResponse'
+                properties:
+                  ListMFADevicesResult:
+                    $ref: '#/components/schemas/ListMFADevicesResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -21859,7 +22338,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListOpenIDConnectProviderTagsResponse'
+                properties:
+                  ListOpenIDConnectProviderTagsResult:
+                    $ref: '#/components/schemas/ListOpenIDConnectProviderTagsResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -21907,7 +22389,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListOpenIDConnectProviderTagsResponse'
+                properties:
+                  ListOpenIDConnectProviderTagsResult:
+                    $ref: '#/components/schemas/ListOpenIDConnectProviderTagsResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -21943,7 +22428,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListOpenIDConnectProvidersResponse'
+                properties:
+                  ListOpenIDConnectProvidersResult:
+                    $ref: '#/components/schemas/ListOpenIDConnectProvidersResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -21979,7 +22467,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListOpenIDConnectProvidersResponse'
+                properties:
+                  ListOpenIDConnectProvidersResult:
+                    $ref: '#/components/schemas/ListOpenIDConnectProvidersResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -22100,7 +22591,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListPoliciesResponse'
+                properties:
+                  ListPoliciesResult:
+                    $ref: '#/components/schemas/ListPoliciesResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -22157,7 +22651,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListPoliciesResponse'
+                properties:
+                  ListPoliciesResult:
+                    $ref: '#/components/schemas/ListPoliciesResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -22238,7 +22735,10 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/components/schemas/serviceNamespaceType'
+            allOf:
+            - $ref: '#/components/schemas/serviceNamespaceType'
+            - xml:
+                name: member
           maxItems: 200
           minItems: 1
           type: array
@@ -22247,7 +22747,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListPoliciesGrantingServiceAccessResponse'
+                properties:
+                  ListPoliciesGrantingServiceAccessResult:
+                    $ref: '#/components/schemas/ListPoliciesGrantingServiceAccessResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -22310,7 +22813,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListPoliciesGrantingServiceAccessResponse'
+                properties:
+                  ListPoliciesGrantingServiceAccessResult:
+                    $ref: '#/components/schemas/ListPoliciesGrantingServiceAccessResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -22383,7 +22889,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListPolicyTagsResponse'
+                properties:
+                  ListPolicyTagsResult:
+                    $ref: '#/components/schemas/ListPolicyTagsResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -22429,7 +22938,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListPolicyTagsResponse'
+                properties:
+                  ListPolicyTagsResult:
+                    $ref: '#/components/schemas/ListPolicyTagsResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -22506,7 +23018,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListPolicyVersionsResponse'
+                properties:
+                  ListPolicyVersionsResult:
+                    $ref: '#/components/schemas/ListPolicyVersionsResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -22564,7 +23079,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListPolicyVersionsResponse'
+                properties:
+                  ListPolicyVersionsResult:
+                    $ref: '#/components/schemas/ListPolicyVersionsResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -22643,7 +23161,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListRolePoliciesResponse'
+                properties:
+                  ListRolePoliciesResult:
+                    $ref: '#/components/schemas/ListRolePoliciesResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -22700,7 +23221,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListRolePoliciesResponse'
+                properties:
+                  ListRolePoliciesResult:
+                    $ref: '#/components/schemas/ListRolePoliciesResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -22769,7 +23293,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListRoleTagsResponse'
+                properties:
+                  ListRoleTagsResult:
+                    $ref: '#/components/schemas/ListRoleTagsResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -22809,7 +23336,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListRoleTagsResponse'
+                properties:
+                  ListRoleTagsResult:
+                    $ref: '#/components/schemas/ListRoleTagsResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -22888,7 +23418,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListRolesResponse'
+                properties:
+                  ListRolesResult:
+                    $ref: '#/components/schemas/ListRolesResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -22939,7 +23472,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListRolesResponse'
+                properties:
+                  ListRolesResult:
+                    $ref: '#/components/schemas/ListRolesResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -23008,7 +23544,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListSAMLProviderTagsResponse'
+                properties:
+                  ListSAMLProviderTagsResult:
+                    $ref: '#/components/schemas/ListSAMLProviderTagsResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -23056,7 +23595,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListSAMLProviderTagsResponse'
+                properties:
+                  ListSAMLProviderTagsResult:
+                    $ref: '#/components/schemas/ListSAMLProviderTagsResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -23093,7 +23635,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListSAMLProvidersResponse'
+                properties:
+                  ListSAMLProvidersResult:
+                    $ref: '#/components/schemas/ListSAMLProvidersResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -23130,7 +23675,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListSAMLProvidersResponse'
+                properties:
+                  ListSAMLProvidersResult:
+                    $ref: '#/components/schemas/ListSAMLProvidersResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -23200,7 +23748,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListSSHPublicKeysResponse'
+                properties:
+                  ListSSHPublicKeysResult:
+                    $ref: '#/components/schemas/ListSSHPublicKeysResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -23251,7 +23802,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListSSHPublicKeysResponse'
+                properties:
+                  ListSSHPublicKeysResult:
+                    $ref: '#/components/schemas/ListSSHPublicKeysResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -23319,7 +23873,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListServerCertificateTagsResponse'
+                properties:
+                  ListServerCertificateTagsResult:
+                    $ref: '#/components/schemas/ListServerCertificateTagsResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -23364,7 +23921,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListServerCertificateTagsResponse'
+                properties:
+                  ListServerCertificateTagsResult:
+                    $ref: '#/components/schemas/ListServerCertificateTagsResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -23446,7 +24006,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListServerCertificatesResponse'
+                properties:
+                  ListServerCertificatesResult:
+                    $ref: '#/components/schemas/ListServerCertificatesResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -23500,7 +24063,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListServerCertificatesResponse'
+                properties:
+                  ListServerCertificatesResult:
+                    $ref: '#/components/schemas/ListServerCertificatesResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -23548,7 +24114,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListServiceSpecificCredentialsResponse'
+                properties:
+                  ListServiceSpecificCredentialsResult:
+                    $ref: '#/components/schemas/ListServiceSpecificCredentialsResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -23591,7 +24160,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListServiceSpecificCredentialsResponse'
+                properties:
+                  ListServiceSpecificCredentialsResult:
+                    $ref: '#/components/schemas/ListServiceSpecificCredentialsResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -23666,7 +24238,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListSigningCertificatesResponse'
+                properties:
+                  ListSigningCertificatesResult:
+                    $ref: '#/components/schemas/ListSigningCertificatesResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -23724,7 +24299,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListSigningCertificatesResponse'
+                properties:
+                  ListSigningCertificatesResult:
+                    $ref: '#/components/schemas/ListSigningCertificatesResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -23796,7 +24374,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListUserPoliciesResponse'
+                properties:
+                  ListUserPoliciesResult:
+                    $ref: '#/components/schemas/ListUserPoliciesResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -23852,7 +24433,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListUserPoliciesResponse'
+                properties:
+                  ListUserPoliciesResult:
+                    $ref: '#/components/schemas/ListUserPoliciesResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -23921,7 +24505,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListUserTagsResponse'
+                properties:
+                  ListUserTagsResult:
+                    $ref: '#/components/schemas/ListUserTagsResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -23973,7 +24560,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListUserTagsResponse'
+                properties:
+                  ListUserTagsResult:
+                    $ref: '#/components/schemas/ListUserTagsResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -24051,10 +24641,10 @@ paths:
           content:
             text/xml:
               schema:
-                type: object
                 properties:
                   ListUsersResult:
                     $ref: '#/components/schemas/ListUsersResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -24104,7 +24694,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListUsersResponse'
+                properties:
+                  ListUsersResult:
+                    $ref: '#/components/schemas/ListUsersResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -24173,7 +24766,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListVirtualMFADevicesResponse'
+                properties:
+                  ListVirtualMFADevicesResult:
+                    $ref: '#/components/schemas/ListVirtualMFADevicesResponse'
+                type: object
           description: Success
       x-aws-operation-name: ListVirtualMFADevices
     parameters:
@@ -24219,7 +24815,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListVirtualMFADevicesResponse'
+                properties:
+                  ListVirtualMFADevicesResult:
+                    $ref: '#/components/schemas/ListVirtualMFADevicesResponse'
+                type: object
           description: Success
       x-aws-operation-name: ListVirtualMFADevices
   /?Action=PutGroupPolicy&Version=2010-05-08:
@@ -25272,7 +25871,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ResetServiceSpecificCredentialResponse'
+                properties:
+                  ResetServiceSpecificCredentialResult:
+                    $ref: '#/components/schemas/ResetServiceSpecificCredentialResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -25306,7 +25908,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ResetServiceSpecificCredentialResponse'
+                properties:
+                  ResetServiceSpecificCredentialResult:
+                    $ref: '#/components/schemas/ResetServiceSpecificCredentialResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -25700,7 +26305,10 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/components/schemas/policyDocumentType'
+            allOf:
+            - $ref: '#/components/schemas/policyDocumentType'
+            - xml:
+                name: member
           type: array
       - description: <p>The IAM permissions boundary policy to simulate. The permissions
           boundary sets the maximum permissions that an IAM entity can have. You can
@@ -25726,7 +26334,10 @@ paths:
         required: false
         schema:
           items:
-            $ref: '#/components/schemas/policyDocumentType'
+            allOf:
+            - $ref: '#/components/schemas/policyDocumentType'
+            - xml:
+                name: member
           type: array
       - description: A list of names of API operations to evaluate in the simulation.
           Each operation is evaluated against each resource. Each operation must include
@@ -25737,7 +26348,10 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/components/schemas/ActionNameType'
+            allOf:
+            - $ref: '#/components/schemas/ActionNameType'
+            - xml:
+                name: member
           type: array
       - description: <p>A list of ARNs of Amazon Web Services resources to include
           in the simulation. If this parameter is not provided, then the value defaults
@@ -25758,7 +26372,10 @@ paths:
         required: false
         schema:
           items:
-            $ref: '#/components/schemas/ResourceNameType'
+            allOf:
+            - $ref: '#/components/schemas/ResourceNameType'
+            - xml:
+                name: member
           type: array
       - description: <p>A resource-based policy to include in the simulation provided
           as a string. Each resource in the simulation is treated as if it had this
@@ -25824,7 +26441,10 @@ paths:
         required: false
         schema:
           items:
-            $ref: '#/components/schemas/ContextEntry'
+            allOf:
+            - $ref: '#/components/schemas/ContextEntry'
+            - xml:
+                name: member
           type: array
       - description: <p>Specifies the type of simulation to run. Different API operations
           that support resource-based policies require different combinations of resources.
@@ -25888,7 +26508,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/SimulatePolicyResponse'
+                properties:
+                  SimulateCustomPolicyResult:
+                    $ref: '#/components/schemas/SimulatePolicyResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -25953,7 +26576,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/SimulatePolicyResponse'
+                properties:
+                  SimulateCustomPolicyResult:
+                    $ref: '#/components/schemas/SimulatePolicyResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -26035,7 +26661,10 @@ paths:
         required: false
         schema:
           items:
-            $ref: '#/components/schemas/policyDocumentType'
+            allOf:
+            - $ref: '#/components/schemas/policyDocumentType'
+            - xml:
+                name: member
           type: array
       - description: <p>The IAM permissions boundary policy to simulate. The permissions
           boundary sets the maximum permissions that the entity can have. You can
@@ -26065,7 +26694,10 @@ paths:
         required: false
         schema:
           items:
-            $ref: '#/components/schemas/policyDocumentType'
+            allOf:
+            - $ref: '#/components/schemas/policyDocumentType'
+            - xml:
+                name: member
           type: array
       - description: A list of names of API operations to evaluate in the simulation.
           Each operation is evaluated for each resource. Each operation must include
@@ -26075,7 +26707,10 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/components/schemas/ActionNameType'
+            allOf:
+            - $ref: '#/components/schemas/ActionNameType'
+            - xml:
+                name: member
           type: array
       - description: <p>A list of ARNs of Amazon Web Services resources to include
           in the simulation. If this parameter is not provided, then the value defaults
@@ -26093,7 +26728,10 @@ paths:
         required: false
         schema:
           items:
-            $ref: '#/components/schemas/ResourceNameType'
+            allOf:
+            - $ref: '#/components/schemas/ResourceNameType'
+            - xml:
+                name: member
           type: array
       - description: <p>A resource-based policy to include in the simulation provided
           as a string. Each resource in the simulation is treated as if it had this
@@ -26165,7 +26803,10 @@ paths:
         required: false
         schema:
           items:
-            $ref: '#/components/schemas/ContextEntry'
+            allOf:
+            - $ref: '#/components/schemas/ContextEntry'
+            - xml:
+                name: member
           type: array
       - description: <p>Specifies the type of simulation to run. Different API operations
           that support resource-based policies require different combinations of resources.
@@ -26229,7 +26870,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/SimulatePolicyResponse'
+                properties:
+                  SimulatePrincipalPolicyResult:
+                    $ref: '#/components/schemas/SimulatePolicyResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -26307,7 +26951,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/SimulatePolicyResponse'
+                properties:
+                  SimulatePrincipalPolicyResult:
+                    $ref: '#/components/schemas/SimulatePolicyResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -26373,7 +27020,10 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/components/schemas/Tag'
+            allOf:
+            - $ref: '#/components/schemas/Tag'
+            - xml:
+                name: member
           maxItems: 50
           type: array
       responses:
@@ -26527,7 +27177,10 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/components/schemas/Tag'
+            allOf:
+            - $ref: '#/components/schemas/Tag'
+            - xml:
+                name: member
           maxItems: 50
           type: array
       responses:
@@ -26686,7 +27339,10 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/components/schemas/Tag'
+            allOf:
+            - $ref: '#/components/schemas/Tag'
+            - xml:
+                name: member
           maxItems: 50
           type: array
       responses:
@@ -26846,7 +27502,10 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/components/schemas/Tag'
+            allOf:
+            - $ref: '#/components/schemas/Tag'
+            - xml:
+                name: member
           maxItems: 50
           type: array
       responses:
@@ -27005,7 +27664,10 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/components/schemas/Tag'
+            allOf:
+            - $ref: '#/components/schemas/Tag'
+            - xml:
+                name: member
           maxItems: 50
           type: array
       responses:
@@ -27170,7 +27832,10 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/components/schemas/Tag'
+            allOf:
+            - $ref: '#/components/schemas/Tag'
+            - xml:
+                name: member
           maxItems: 50
           type: array
       responses:
@@ -27333,7 +27998,10 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/components/schemas/Tag'
+            allOf:
+            - $ref: '#/components/schemas/Tag'
+            - xml:
+                name: member
           maxItems: 50
           type: array
       responses:
@@ -27497,7 +28165,10 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/components/schemas/Tag'
+            allOf:
+            - $ref: '#/components/schemas/Tag'
+            - xml:
+                name: member
           maxItems: 50
           type: array
       responses:
@@ -27636,7 +28307,10 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/components/schemas/tagKeyType'
+            allOf:
+            - $ref: '#/components/schemas/tagKeyType'
+            - xml:
+                name: member
           maxItems: 50
           type: array
       responses:
@@ -27742,7 +28416,10 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/components/schemas/tagKeyType'
+            allOf:
+            - $ref: '#/components/schemas/tagKeyType'
+            - xml:
+                name: member
           maxItems: 50
           type: array
       responses:
@@ -27853,7 +28530,10 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/components/schemas/tagKeyType'
+            allOf:
+            - $ref: '#/components/schemas/tagKeyType'
+            - xml:
+                name: member
           maxItems: 50
           type: array
       responses:
@@ -27964,7 +28644,10 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/components/schemas/tagKeyType'
+            allOf:
+            - $ref: '#/components/schemas/tagKeyType'
+            - xml:
+                name: member
           maxItems: 50
           type: array
       responses:
@@ -28069,7 +28752,10 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/components/schemas/tagKeyType'
+            allOf:
+            - $ref: '#/components/schemas/tagKeyType'
+            - xml:
+                name: member
           maxItems: 50
           type: array
       responses:
@@ -28168,7 +28854,10 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/components/schemas/tagKeyType'
+            allOf:
+            - $ref: '#/components/schemas/tagKeyType'
+            - xml:
+                name: member
           maxItems: 50
           type: array
       responses:
@@ -28280,7 +28969,10 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/components/schemas/tagKeyType'
+            allOf:
+            - $ref: '#/components/schemas/tagKeyType'
+            - xml:
+                name: member
           maxItems: 50
           type: array
       responses:
@@ -28390,7 +29082,10 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/components/schemas/tagKeyType'
+            allOf:
+            - $ref: '#/components/schemas/tagKeyType'
+            - xml:
+                name: member
           maxItems: 50
           type: array
       responses:
@@ -29234,7 +29929,10 @@ paths:
           description: Contains a list of thumbprints of identity provider server
             certificates.
           items:
-            $ref: '#/components/schemas/thumbprintType'
+            allOf:
+            - $ref: '#/components/schemas/thumbprintType'
+            - xml:
+                name: member
           type: array
       responses:
         '200':
@@ -29363,7 +30061,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/UpdateRoleResponse'
+                properties:
+                  UpdateRoleResult:
+                    $ref: '#/components/schemas/UpdateRoleResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -29407,7 +30108,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/UpdateRoleResponse'
+                properties:
+                  UpdateRoleResult:
+                    $ref: '#/components/schemas/UpdateRoleResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -29457,7 +30161,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/UpdateRoleDescriptionResponse'
+                properties:
+                  UpdateRoleDescriptionResult:
+                    $ref: '#/components/schemas/UpdateRoleDescriptionResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -29502,7 +30209,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/UpdateRoleDescriptionResponse'
+                properties:
+                  UpdateRoleDescriptionResult:
+                    $ref: '#/components/schemas/UpdateRoleDescriptionResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -29563,7 +30273,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/UpdateSAMLProviderResponse'
+                properties:
+                  UpdateSAMLProviderResult:
+                    $ref: '#/components/schemas/UpdateSAMLProviderResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -29614,7 +30327,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/UpdateSAMLProviderResponse'
+                properties:
+                  UpdateSAMLProviderResult:
+                    $ref: '#/components/schemas/UpdateSAMLProviderResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -30301,7 +31017,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/UploadSSHPublicKeyResponse'
+                properties:
+                  UploadSSHPublicKeyResult:
+                    $ref: '#/components/schemas/UploadSSHPublicKeyResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -30361,7 +31080,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/UploadSSHPublicKeyResponse'
+                properties:
+                  UploadSSHPublicKeyResult:
+                    $ref: '#/components/schemas/UploadSSHPublicKeyResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -30522,7 +31244,10 @@ paths:
         required: false
         schema:
           items:
-            $ref: '#/components/schemas/Tag'
+            allOf:
+            - $ref: '#/components/schemas/Tag'
+            - xml:
+                name: member
           maxItems: 50
           type: array
       responses:
@@ -30530,7 +31255,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/UploadServerCertificateResponse'
+                properties:
+                  UploadServerCertificateResult:
+                    $ref: '#/components/schemas/UploadServerCertificateResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -30620,7 +31348,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/UploadServerCertificateResponse'
+                properties:
+                  UploadServerCertificateResult:
+                    $ref: '#/components/schemas/UploadServerCertificateResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -30724,7 +31455,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/UploadSigningCertificateResponse'
+                properties:
+                  UploadSigningCertificateResult:
+                    $ref: '#/components/schemas/UploadSigningCertificateResponse'
+                type: object
           description: Success
         '480':
           content:
@@ -30810,7 +31544,10 @@ paths:
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/UploadSigningCertificateResponse'
+                properties:
+                  UploadSigningCertificateResult:
+                    $ref: '#/components/schemas/UploadSigningCertificateResponse'
+                type: object
           description: Success
         '480':
           content:
