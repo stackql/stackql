@@ -31,6 +31,16 @@ If you want further auth types or discover bugs, please raise an issue.
 
 Examples are present [here](/docs/examples.md).
 
+### Azure development phase
+
+Until we integrate token refresh code into the core (likely from Azure SDK), token refresh for `axure` and `azure_extras` is done manually.
+
+```
+AZ_ACCESS_TOKEN_RAW=$(az account get-access-token --query accessToken --output tsv)
+
+export AZ_ACCESS_TOKEN=`echo $AZ_ACCESS_TOKEN_RAW | tr -d '\r'`
+```
+
 ## Server mode
 
 **Note that this feature is in alpha**.  We will update timelines for General Availability after a period of analysis and testing.  At the time of writing, server mode is most useful for R&D purposes: 

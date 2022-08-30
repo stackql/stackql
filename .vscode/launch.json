@@ -62,7 +62,7 @@
         "--registry=${input:registryString}",
         "--auth=${input:authString}",
         "--tls.allowInsecure",
-        "select VolumeId, Size from aws.ec2.volumes where region = 'ap-southeast-1';"
+        "select * from aws.s3.buckets where region = 'ap-southeast-1';"
       ],
     },
     {
@@ -1283,7 +1283,7 @@
       "type": "go",
       "request": "attach",
       "mode": "local",
-      "processId": 44125
+      "processId": 81780
     }
   ]
 }
