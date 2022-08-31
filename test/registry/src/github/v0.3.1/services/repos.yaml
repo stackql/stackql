@@ -6355,11 +6355,15 @@ paths:
         description: API method documentation
         url: https://docs.github.com/rest/reference/repos#upload-a-release-asset
       servers:
-        - url: '{origin}'
+        - url: '{protocol}://{origin:^(?:[^\:/]+(?:\:[0-9]+)?|[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(?:\:[0-9]+)?)$}/'
           variables:
+            protocol:
+              default: https
+              enum:
+                - https
+                - http
             origin:
-              default: https://uploads.github.com
-              description: The URL origin (protocol + host name + port) is included in `upload_url` returned in the response of the "Create a release" endpoint
+              default: uploads.github.com
       parameters:
         - $ref: '#/components/parameters/owner'
         - $ref: '#/components/parameters/repo'
