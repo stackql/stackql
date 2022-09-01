@@ -162,6 +162,18 @@ AWS IAM Users Select Simple
     ...    ${SELECT_AWS_IAM_USERS_ASC_EXPECTED}
     ...    ${CURDIR}/tmp/AWS-IAM-Users-Select-Simple.tmp
 
+AWS S3 Objects Select Simple
+    Should Horrid Query StackQL Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SELECT_AWS_S3_OBJECTS}
+    ...    ${SELECT_AWS_S3_OBJECTS_EXPECTED}
+    ...    ${CURDIR}/tmp/AWS-S3-Objects-Select-Simple.tmp
+
 AWS Cloud Control VPCs Select Simple
     Should StackQL Exec Inline Equal
     ...    ${STACKQL_EXE}

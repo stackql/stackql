@@ -104,6 +104,19 @@ def rewrite_provider(args :ProviderArgs):
             for srv in servs:
               srv['url'] = f'https://{args.replacement_host}:{args.port}/'
           d['servers'] = servs
+          for path, path_item in d.get('paths', {}).items():
+            path_item_servers = path_item.get('servers', [])
+            if args.isServerRewriteRequired():
+              for srv in path_item_servers:
+                srv['url'] = f'https://{args.replacement_host}:{args.port}/' 
+                path_item_servers
+            for k in ('get', 'put', 'post', 'delete', 'head'):
+              operation = path_item.get(k)
+              if operation:
+                operation_servers = operation.get('servers', [])
+                if args.isServerRewriteRequired():
+                  for srv in operation_servers:
+                    srv['url'] = f'https://{args.replacement_host}:{args.port}/' 
           graphql_url = d.get('paths', {}).get('/graphql', {}).get('post', {}).get('x-stackQL-graphQL', {}).get('url')
           if graphql_url:
             d['paths']['/graphql']['post']['x-stackQL-graphQL']['url'] = f'https://{args.replacement_host}:{args.port}/graphql'
