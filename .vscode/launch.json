@@ -62,7 +62,7 @@
         "--registry=${input:registryString}",
         "--auth=${input:authString}",
         "--tls.allowInsecure",
-        "select VolumeId, Encrypted, Size from aws.ec2.volumes where region = 'ap-southeast-1' order by VolumeId asc;"
+        "select `Key`, Size, StorageClass from  aws.s3.objects where region = 'ap-southeast-2' and bucket = 'stackql-trial-bucket-02' order by `Key` ASC;"
       ],
     },
     {

@@ -6892,7 +6892,7 @@ components:
             $ref: '#/paths/~1/get'
           response:
             mediaType: text/xml
-            objectKey: /*/Contents
+            objectKey: /*/Buckets/Bucket
             openAPIDocKey: '200'
       name: buckets
       sqlVerbs:
@@ -7157,10 +7157,10 @@ components:
             openAPIDocKey: '200'
         objects_List:
           operation:
-            $ref: '#/paths/~1/get'
+            $ref: '#/paths/~1?max-keys=1000/get'
           response:
             mediaType: text/xml
-            objectKey: /*/Contents/member
+            objectKey: /*/Contents
             openAPIDocKey: '200'
         objects_Put:
           operation:
@@ -7729,13 +7729,13 @@ paths:
         '204':
           description: Success
     get:
+      description: Returns a list of all buckets owned by the authenticated sender
+        of the request. To use this operation, you must have the <code>s3:ListAllMyBuckets</code>
+        permission.
       servers:
         - description: The Amazon S3 multi-region endpoint
-          url: https://{bucket}.s3.{region}.amazonaws.com
+          url: https://s3.{region}.amazonaws.com
           variables:
-            bucket:
-              default: null-bucket
-              description: The name of the bucket
             region:
               default: us-east-2
               description: The AWS region
@@ -7754,115 +7754,16 @@ paths:
               - ap-east-1
               - ap-south-1
               - me-south-1
-      description: <p>Returns some or all (up to 1,000) of the objects in a bucket.
-        You can use the request parameters as selection criteria to return a subset
-        of the objects in a bucket. A 200 OK response can contain valid or invalid
-        XML. Be sure to design your application to parse the contents of the response
-        and handle it appropriately.</p> <important> <p>This action has been revised.
-        We recommend that you use the newer version, <a href="https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectsV2.html">ListObjectsV2</a>,
-        when developing applications. For backward compatibility, Amazon S3 continues
-        to support <code>ListObjects</code>.</p> </important> <p>The following operations
-        are related to <code>ListObjects</code>:</p> <ul> <li> <p> <a href="https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectsV2.html">ListObjectsV2</a>
-        </p> </li> <li> <p> <a href="https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html">GetObject</a>
-        </p> </li> <li> <p> <a href="https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html">PutObject</a>
-        </p> </li> <li> <p> <a href="https://docs.aws.amazon.com/AmazonS3/latest/API/API_CreateBucket.html">CreateBucket</a>
-        </p> </li> <li> <p> <a href="https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListBuckets.html">ListBuckets</a>
-        </p> </li> </ul>
       externalDocs:
-        url: http://docs.amazonwebservices.com/AmazonS3/latest/API/RESTBucketGET.html
-      operationId: ListObjects
-      parameters:
-      - description: A delimiter is a character you use to group keys.
-        in: query
-        name: delimiter
-        required: false
-        schema:
-          type: string
-      - description: ''
-        in: query
-        name: encoding-type
-        required: false
-        schema:
-          description: Requests Amazon S3 to encode the object keys in the response
-            and specifies the encoding method to use. An object key may contain any
-            Unicode character; however, XML 1.0 parser cannot parse some characters,
-            such as characters with an ASCII value from 0 to 10. For characters that
-            are not supported in XML 1.0, you can add this parameter to request that
-            Amazon S3 encode the keys in the response.
-          enum:
-          - url
-          type: string
-      - description: Marker is where you want Amazon S3 to start listing from. Amazon
-          S3 starts listing after this specified key. Marker can be any key in the
-          bucket.
-        in: query
-        name: marker
-        required: false
-        schema:
-          type: string
-      - description: 'Sets the maximum number of keys returned in the response. By
-          default the action returns up to 1,000 key names. The response might contain
-          fewer keys but will never contain more. '
-        in: query
-        name: max-keys
-        required: false
-        schema:
-          type: integer
-          default: 1000
-      - description: Limits the response to keys that begin with the specified prefix.
-        in: query
-        name: prefix
-        required: false
-        schema:
-          type: string
-      - description: Confirms that the requester knows that she or he will be charged
-          for the list objects request. Bucket owners need not specify this parameter
-          in their requests.
-        in: header
-        name: x-amz-request-payer
-        required: false
-        schema:
-          description: Confirms that the requester knows that they will be charged
-            for the request. Bucket owners need not specify this parameter in their
-            requests. For information about downloading objects from Requester Pays
-            buckets, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/ObjectsinRequesterPaysBuckets.html">Downloading
-            Objects in Requester Pays Buckets</a> in the <i>Amazon S3 User Guide</i>.
-          enum:
-          - requester
-          type: string
-      - description: The account ID of the expected bucket owner. If the bucket is
-          owned by a different account, the request fails with the HTTP status code
-          <code>403 Forbidden</code> (access denied).
-        in: header
-        name: x-amz-expected-bucket-owner
-        required: false
-        schema:
-          type: string
-      - description: Pagination limit
-        in: query
-        name: MaxKeys
-        required: false
-        schema:
-          type: string
-      - description: Pagination token
-        in: query
-        name: Marker
-        required: false
-        schema:
-          type: string
+        url: http://docs.amazonwebservices.com/AmazonS3/latest/API/RESTServiceGET.html
+      operationId: ListBuckets
       responses:
         '200':
           content:
             text/xml:
               schema:
-                $ref: '#/components/schemas/ListObjectsOutput'
+                $ref: '#/components/schemas/ListBucketsOutput'
           description: Success
-        '480':
-          content:
-            text/xml:
-              schema:
-                $ref: '#/components/schemas/NoSuchBucket'
-          description: NoSuchBucket
     head:
       description: <p>This action is useful to determine if a bucket exists and you
         have permission to access it. The action returns a <code>200 OK</code> if
@@ -8098,6 +7999,142 @@ paths:
               schema:
                 $ref: '#/components/schemas/BucketAlreadyOwnedByYou'
           description: BucketAlreadyOwnedByYou
+  /?max-keys=1000:
+    get:
+      servers:
+        - description: The Amazon S3 multi-region endpoint
+          url: https://{bucket}.s3.{region}.amazonaws.com
+          variables:
+            bucket:
+              default: null-bucket
+              description: The name of the bucket
+            region:
+              default: us-east-2
+              description: The AWS region
+              enum:
+              - us-east-2
+              - us-gov-east-1
+              - ca-central-1
+              - eu-north-1
+              - eu-west-2
+              - eu-west-3
+              - eu-central-1
+              - eu-south-1
+              - af-south-1
+              - ap-northeast-2
+              - ap-northeast-3
+              - ap-east-1
+              - ap-south-1
+              - me-south-1
+      description: <p>Returns some or all (up to 1,000) of the objects in a bucket.
+        You can use the request parameters as selection criteria to return a subset
+        of the objects in a bucket. A 200 OK response can contain valid or invalid
+        XML. Be sure to design your application to parse the contents of the response
+        and handle it appropriately.</p> <important> <p>This action has been revised.
+        We recommend that you use the newer version, <a href="https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectsV2.html">ListObjectsV2</a>,
+        when developing applications. For backward compatibility, Amazon S3 continues
+        to support <code>ListObjects</code>.</p> </important> <p>The following operations
+        are related to <code>ListObjects</code>:</p> <ul> <li> <p> <a href="https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectsV2.html">ListObjectsV2</a>
+        </p> </li> <li> <p> <a href="https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html">GetObject</a>
+        </p> </li> <li> <p> <a href="https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html">PutObject</a>
+        </p> </li> <li> <p> <a href="https://docs.aws.amazon.com/AmazonS3/latest/API/API_CreateBucket.html">CreateBucket</a>
+        </p> </li> <li> <p> <a href="https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListBuckets.html">ListBuckets</a>
+        </p> </li> </ul>
+      externalDocs:
+        url: http://docs.amazonwebservices.com/AmazonS3/latest/API/RESTBucketGET.html
+      operationId: ListObjects
+      parameters:
+      - description: A delimiter is a character you use to group keys.
+        in: query
+        name: delimiter
+        required: false
+        schema:
+          type: string
+      - description: ''
+        in: query
+        name: encoding-type
+        required: false
+        schema:
+          description: Requests Amazon S3 to encode the object keys in the response
+            and specifies the encoding method to use. An object key may contain any
+            Unicode character; however, XML 1.0 parser cannot parse some characters,
+            such as characters with an ASCII value from 0 to 10. For characters that
+            are not supported in XML 1.0, you can add this parameter to request that
+            Amazon S3 encode the keys in the response.
+          enum:
+          - url
+          type: string
+      - description: Marker is where you want Amazon S3 to start listing from. Amazon
+          S3 starts listing after this specified key. Marker can be any key in the
+          bucket.
+        in: query
+        name: marker
+        required: false
+        schema:
+          type: string
+      - description: 'Sets the maximum number of keys returned in the response. By
+          default the action returns up to 1,000 key names. The response might contain
+          fewer keys but will never contain more. '
+        in: query
+        name: max-keys
+        required: false
+        schema:
+          type: integer
+          default: 1000
+      - description: Limits the response to keys that begin with the specified prefix.
+        in: query
+        name: prefix
+        required: false
+        schema:
+          type: string
+      - description: Confirms that the requester knows that she or he will be charged
+          for the list objects request. Bucket owners need not specify this parameter
+          in their requests.
+        in: header
+        name: x-amz-request-payer
+        required: false
+        schema:
+          description: Confirms that the requester knows that they will be charged
+            for the request. Bucket owners need not specify this parameter in their
+            requests. For information about downloading objects from Requester Pays
+            buckets, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/ObjectsinRequesterPaysBuckets.html">Downloading
+            Objects in Requester Pays Buckets</a> in the <i>Amazon S3 User Guide</i>.
+          enum:
+          - requester
+          type: string
+      - description: The account ID of the expected bucket owner. If the bucket is
+          owned by a different account, the request fails with the HTTP status code
+          <code>403 Forbidden</code> (access denied).
+        in: header
+        name: x-amz-expected-bucket-owner
+        required: false
+        schema:
+          type: string
+      - description: Pagination limit
+        in: query
+        name: MaxKeys
+        required: false
+        schema:
+          type: string
+      - description: Pagination token
+        in: query
+        name: Marker
+        required: false
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            text/xml:
+              schema:
+                $ref: '#/components/schemas/ListObjectsOutput'
+          description: Success
+        '480':
+          content:
+            text/xml:
+              schema:
+                $ref: '#/components/schemas/NoSuchBucket'
+          description: NoSuchBucket
   /{Key}:
     delete:
       description: <p>Removes the null version (if there is one) of an object and
