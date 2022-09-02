@@ -292,6 +292,7 @@ SELECT_ACCELERATOR_TYPES_DESC = "select  kind, name  from  google.compute.accele
 SELECT_MACHINE_TYPES_DESC = "select name from google.compute.machineTypes where project = 'testing-project' and zone = 'australia-southeast1-a' order by name desc;"
 SELECT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY = "SELECT eTag FROM google.compute.instances_iam_policies WHERE project = 'testing-project' AND zone = 'australia-southeast1-a' AND resource = '000000001';"
 
+SELECT_AWS_S3_BUCKET_LOCATIONS = "select LocationConstraint from aws.s3.bucket_locations where region = 'ap-southeast-1' and bucket = 'stackql-trial-bucket-01';"
 SELECT_AWS_S3_BUCKETS = "select Name, CreationDate from  aws.s3.buckets where region = 'ap-southeast-1' order by Name ASC;"
 SELECT_AWS_S3_OBJECTS = "select `Key`, Size, StorageClass from  aws.s3.objects where region = 'ap-southeast-1' and bucket = 'stackql-trial-bucket-01' order by `Key` ASC;"
 SELECT_AWS_S3_OBJECTS_NULL = "select `Key`, Size, StorageClass from  aws.s3.objects where region = 'ap-southeast-2' and bucket = 'stackql-trial-bucket-02' order by `Key` ASC;"
@@ -369,6 +370,7 @@ GET_AWS_CLOUD_CONTROL_REQUEST_LOG_GROUP_EXPECTED = get_output_from_local_file(os
 SELECT_AWS_S3_OBJECTS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 's3', 'select-objects.txt'))
 SELECT_AWS_S3_OBJECTS_NULL_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 's3', 'select-objects-empty.txt'))
 SELECT_AWS_S3_BUCKETS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 's3', 'select-buckets.txt'))
+SELECT_AWS_S3_BUCKET_LOCATIONS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 's3', 'select-bucket-locations.txt'))
 
 SELECT_GITHUB_REPOS_PAGES_SINGLE_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-repos-pages.txt'))
 SELECT_GITHUB_REPOS_IDS_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-repos-ids-asc.txt'))
@@ -482,6 +484,8 @@ def get_variables(execution_env :str):
     'SELECT_AWS_EC2_VPN_GATEWAYS_NULL_EXPECTED':                            SELECT_AWS_EC2_VPN_GATEWAYS_NULL_EXPECTED,
     'SELECT_AWS_IAM_USERS_ASC':                                             SELECT_AWS_IAM_USERS_ASC,
     'SELECT_AWS_IAM_USERS_ASC_EXPECTED':                                    SELECT_AWS_IAM_USERS_ASC_EXPECTED,
+    'SELECT_AWS_S3_BUCKET_LOCATIONS':                                       SELECT_AWS_S3_BUCKET_LOCATIONS,
+    'SELECT_AWS_S3_BUCKET_LOCATIONS_EXPECTED':                              SELECT_AWS_S3_BUCKET_LOCATIONS_EXPECTED,
     'SELECT_AWS_S3_BUCKETS':                                                SELECT_AWS_S3_BUCKETS,
     'SELECT_AWS_S3_BUCKETS_EXPECTED':                                       SELECT_AWS_S3_BUCKETS_EXPECTED,
     'SELECT_AWS_S3_OBJECTS':                                                SELECT_AWS_S3_OBJECTS,
