@@ -65,7 +65,7 @@ func HttpApiCallFromRequest(handlerCtx handler.HandlerContext, prov provider.IPr
 	if handlerCtx.RuntimeContext.HTTPLogEnabled {
 		if r != nil {
 			handlerCtx.OutErrFile.Write([]byte(fmt.Sprintf("http response status: %s\n", r.Status)))
-			if r.StatusCode >= 300 {
+			if r.StatusCode >= 300 || handlerCtx.RuntimeContext.VerboseFlag {
 				if r.Body != nil {
 					bodyBytes, err := io.ReadAll(r.Body)
 					if err != nil {

@@ -140,6 +140,9 @@ func (ss *SingleSelectAcquire) Build() error {
 					return util.PrepareResultSet(dto.NewPrepareResultSetDTO(nil, nil, nil, ss.rowSort, apiErr, nil))
 				}
 				res, err := m.ProcessResponse(response)
+				if err != nil {
+					return dto.NewErroneousExecutorOutput(err)
+				}
 				ss.handlerCtx.LogHTTPResponseMap(res.GetProcessedBody())
 				if err != nil {
 					return dto.NewErroneousExecutorOutput(err)
