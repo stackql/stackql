@@ -6800,7 +6800,7 @@ components:
             $ref: '#/paths/~1?tagging/get'
           response:
             mediaType: text/xml
-            objectKey: /*
+            objectKey: /*/TagSet/Tag
             openAPIDocKey: '200'
         bucket_taggings_Put:
           operation:

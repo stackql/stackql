@@ -198,6 +198,18 @@ AWS S3 Objects Null Select Simple
     ...    ${SELECT_AWS_S3_OBJECTS_NULL_EXPECTED}
     ...    ${CURDIR}/tmp/AWS-S3-Objects-Null-Select-Simple.tmp
 
+AWS S3 Bucket Locations Top Level Property Select Simple
+    Should Horrid Query StackQL Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SELECT_AWS_S3_BUCKET_LOCATIONS}
+    ...    ${SELECT_AWS_S3_BUCKET_LOCATIONS_EXPECTED}
+    ...    ${CURDIR}/tmp/AWS-S3-Bucket-Locations-Top-Level-Property-Select-Simple.tmp
+
 AWS EC2 VPN Gateways Null Select Simple
     Should Horrid Query StackQL Inline Equal
     ...    ${STACKQL_EXE}
