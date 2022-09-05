@@ -574,9 +574,3 @@ Erroneous mTLS Config Plus Basic Query Returns Error
     ...    ${PSQL_MTLS_INVALID_CONN_STR}
     ...    ${SELECT_CONTAINER_SUBNET_AGG_ASC}
     ...    error
-
-
-
-
-
-

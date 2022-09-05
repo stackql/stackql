@@ -1,15 +1,17 @@
 
 
+from asyncio import subprocess
 import json
 import os
+import typing
 
 from robot.api.deco import keyword, library
 from robot.libraries.BuiltIn import BuiltIn
 from robot.libraries.Process import Process
 from robot.libraries.OperatingSystem import OperatingSystem 
 
-from stackql_context import RegistryCfg
-
+from stackql_context import RegistryCfg, _TEST_APP_CACHE_ROOT
+from ShellSession import ShellSession
 
 
 @library(scope='SUITE', version='0.1.0', doc_format='reST')
@@ -82,6 +84,43 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn):
       **cfg
     )
 
+
+  def _run_stackql_shell_command(
+    self,  
+    stackql_exe :str, 
+    okta_secret_str :str,
+    github_secret_str :str,
+    k8s_secret_str :str,
+    registry_cfg :RegistryCfg, 
+    auth_cfg_str :str, 
+    queries :typing.Iterable[str],
+    *args,
+    **cfg
+  ):
+    if self._execution_platform == 'docker':
+      return self._run_stackql_shell_command_docker(
+        okta_secret_str,
+        github_secret_str,
+        k8s_secret_str,
+        registry_cfg, 
+        auth_cfg_str, 
+        queries,
+        *args,
+        **cfg
+      )
+    return self._run_stackql_shell_command_native(
+      stackql_exe, 
+      okta_secret_str,
+      github_secret_str,
+      k8s_secret_str,
+      registry_cfg, 
+      auth_cfg_str, 
+      queries,
+      *args,
+      **cfg
+    )
+
+
   def _run_stackql_exec_command_docker(
     self,
     okta_secret_str :str,
@@ -128,6 +167,59 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn):
     self.log(res.stderr)
     return res
 
+
+  def _run_stackql_shell_command_docker(
+    self,
+    okta_secret_str :str,
+    github_secret_str :str,
+    k8s_secret_str :str,
+    registry_cfg :RegistryCfg, 
+    auth_cfg_str :str, 
+    queries :typing.Iterable[str],
+    *args,
+    **cfg
+  ):
+    reg_location = registry_cfg.get_source_path_for_docker()
+    supplied_args = []
+    registry_cfg_str = registry_cfg.get_config_str('docker')
+    if registry_cfg_str != "":
+      supplied_args.append(f"--registry='{registry_cfg_str}'")
+    if auth_cfg_str != "":
+      supplied_args.append(f"--auth='{auth_cfg_str}'")
+    supplied_args.append("--tls.allowInsecure=true")
+    supplied_args = supplied_args + list(args)
+    os.environ['REGISTRY_SRC']= f'./{reg_location}'
+    start_cmd = [
+      "docker-compose",
+      "-p",
+      "stackqlshell",
+      "run",
+      "--rm",
+      "-e",
+      f"OKTA_SECRET_KEY={okta_secret_str}", 
+      "-e",
+      f"GITHUB_SECRET_KEY={github_secret_str}",
+      "-e",
+      f"K8S_SECRET_KEY={k8s_secret_str}",
+      "stackqlsrv",
+      "bash",
+      "-c",
+      f"stackql {' '.join(supplied_args)} shell",
+    ]
+    stdout = cfg.get('stdout', subprocess.PIPE)
+    stderr = cfg.get('stderr', subprocess.PIPE)
+    shell_session = ShellSession()
+    res = shell_session.run_shell_session(
+      start_cmd,
+      queries,
+      stdout=stdout,
+      stderr=stderr,
+    )
+    self.log(res.stdout)
+    self.log(res.stderr)
+    return res
+
+
   def _run_stackql_exec_command_native(
     self,  
     stackql_exe :str, 
@@ -159,7 +251,44 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn):
     self.log(res.stdout)
     self.log(res.stderr)
     return res
-  
+
+
+  def _run_stackql_shell_command_native(
+    self,  
+    stackql_exe :str, 
+    okta_secret_str :str,
+    github_secret_str :str,
+    k8s_secret_str :str,
+    registry_cfg :RegistryCfg, 
+    auth_cfg_str :str, 
+    queries :typing.Iterable[str],
+    *args,
+    **cfg
+  ):
+    self.set_environment_variable("OKTA_SECRET_KEY", okta_secret_str)
+    self.set_environment_variable("GITHUB_SECRET_KEY", github_secret_str)
+    self.set_environment_variable("K8S_SECRET_KEY", k8s_secret_str)
+    supplied_args = [ stackql_exe, "shell" ]
+    registry_cfg_str = registry_cfg.get_config_str('native')
+    if registry_cfg_str != "":
+      supplied_args.append(f"--registry={registry_cfg_str}")
+    if auth_cfg_str != "":
+      supplied_args.append(f"--auth={auth_cfg_str}")
+    supplied_args.append("--tls.allowInsecure=true")
+    supplied_args.append(f'--approot="{_TEST_APP_CACHE_ROOT}"')
+    stdout = cfg.get('stdout', subprocess.PIPE)
+    stderr = cfg.get('stderr', subprocess.PIPE)
+    shell_session = ShellSession()
+    res = shell_session.run_shell_session(
+      supplied_args,
+      queries,
+      stdout=stdout,
+      stderr=stderr,
+    )
+    self.log(res.stdout)
+    self.log(res.stderr)
+    return res
+
   @keyword
   def should_PG_client_error_inline_contain(self, curdir :str, psql_exe :str, psql_conn_str :str, query :str, expected_output :str):
     result =    self._run_PG_client_command(
@@ -169,7 +298,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn):
       query
     ) #    ${CURDIR}    ${PSQL_EXE}    ${_CONN_STR}    ${_QUERY}
     return self.should_contain(result.stderr, expected_output)
-  
+
+
   @keyword
   def should_PG_client_inline_contain(self, curdir :str, psql_exe :str, psql_conn_str :str, query :str, expected_output :str):
     result = self._run_PG_client_command(
@@ -179,7 +309,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn):
       query
     )
     return self.should_contain(result.stdout, expected_output)
-  
+
+
   @keyword
   def should_PG_client_inline_equal(self, curdir :str, psql_exe :str, psql_conn_str :str, query :str, expected_output :str):
     result =    self._run_PG_client_command(
@@ -189,7 +320,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn):
       query
     )
     return self.should_be_equal(result.stdout, expected_output)
-  
+
+
   @keyword
   def should_stackql_exec_inline_equal_page_limited(
     self, 
@@ -219,6 +351,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn):
     )
     return self.should_be_equal(result.stdout, expected_output)
 
+
   @keyword
   def should_stackql_exec_inline_equal(
     self, 
@@ -246,6 +379,35 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn):
     )
     return self.should_be_equal(result.stdout, expected_output)
 
+
+  @keyword
+  def should_stackql_shell_inline_equal(
+    self, 
+    stackql_exe :str, 
+    okta_secret_str :str,
+    github_secret_str :str,
+    k8s_secret_str :str,
+    registry_cfg :RegistryCfg, 
+    auth_cfg_str :str, 
+    queries :typing.Iterable[str],
+    expected_output :str,
+    *args,
+    **cfg
+  ):
+    result = self._run_stackql_shell_command(
+      stackql_exe, 
+      okta_secret_str,
+      github_secret_str,
+      k8s_secret_str,
+      registry_cfg, 
+      auth_cfg_str, 
+      queries,
+      *args,
+      **cfg
+    )
+    return self.should_be_equal(result.stdout, expected_output)
+
+
   @keyword
   def should_stackql_exec_inline_contain(
     self, 
@@ -272,7 +434,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn):
       **cfg
     )
     return self.should_contain(result.stdout, expected_output)
-  
+
+
   @keyword
   def should_stackql_exec_inline_equal_stderr(
     self, 
@@ -305,6 +468,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn):
         se = se_split[-1]
     return self.should_be_equal(se, expected_output, collapse_spaces=True, formatter='ascii', strip_spaces=True)
 
+
   @keyword
   def should_horrid_query_stackql_inline_equal(
     self, 
@@ -329,3 +493,4 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn):
       **{"stdout": stdout_tmp_file }
     )
     return self.should_be_equal(result.stdout, expected_output)
+

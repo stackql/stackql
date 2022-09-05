@@ -3,6 +3,7 @@ package writer
 import (
 	"io"
 	"os"
+	"runtime"
 
 	"github.com/stackql/stackql/internal/stackql/color"
 
@@ -26,7 +27,7 @@ func GetOutputWriter(filename string) (io.Writer, error) {
 }
 
 func GetDecoratedOutputWriter(filename string, cd *color.ColorDriver, overrideColor ...color.Attribute) (io.Writer, error) {
-	if cd.Peek() == nil {
+	if cd.Peek() == nil || runtime.GOOS == "windows" {
 		return GetOutputWriter(filename)
 	}
 	switch filename {

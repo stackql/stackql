@@ -12,6 +12,19 @@ if os.name == 'nt':
 
 _DOCKER_REG_PATH :str = '/opt/stackql/registry' 
 
+BUILD_MAJOR_VERSION = os.environ.get('BUILDMAJORVERSION', '')
+BUILD_MINOR_VERSION = os.environ.get('BUILDMINORVERSION', '')
+BUILD_PATCH_VERSION = os.environ.get('BUILDPATCHVERSION', '')
+
+_SHELL_WELCOME_MSG = """
+""" + f"stackql Command Shell {BUILD_MAJOR_VERSION}.{BUILD_MINOR_VERSION}.{BUILD_PATCH_VERSION}" + """
+Copyright (c) 2021, stackql studios. All rights reserved.
+Welcome to the interactive shell for running stackql commands.
+---
+"""
+
+_TEST_APP_CACHE_ROOT = os.path.join("test", ".stackql")
+
 class RegistryCfg:
 
   def __init__(
@@ -64,6 +77,8 @@ class RegistryCfg:
 
 
 REPOSITORY_ROOT = os.path.abspath(os.path.join(__file__, '..', '..', '..', '..'))
+
+_TEST_APP_CACHE_ROOT = os.path.abspath(os.path.join(REPOSITORY_ROOT, "test", ".stackql"))
 
 ROBOT_TEST_ROOT = os.path.abspath(os.path.join(__file__, '..'))
 
@@ -433,6 +448,7 @@ def get_variables(execution_env :str):
   rv = {
     ## general config
     'GITHUB_SECRET_STR':                              GITHUB_SECRET_STR,
+    'IS_WINDOWS':                                     IS_WINDOWS,
     'K8S_SECRET_STR':                                 K8S_SECRET_STR,
     'MOCKSERVER_JAR':                                 MOCKSERVER_JAR,
     'MOCKSERVER_PORT_AWS':                            MOCKSERVER_PORT_AWS,
@@ -547,6 +563,8 @@ def get_variables(execution_env :str):
     'SELECT_OKTA_APPS_ASC_EXPECTED':                                        SELECT_OKTA_APPS_ASC_EXPECTED,
     'SELECT_OKTA_USERS_ASC':                                                SELECT_OKTA_USERS_ASC,
     'SELECT_OKTA_USERS_ASC_EXPECTED':                                       SELECT_OKTA_USERS_ASC_EXPECTED,
+    'SHELL_SESSION_SIMPLE_COMMANDS':                                        [ SELECT_GITHUB_BRANCHES_NAMES_DESC ],
+    'SHELL_SESSION_SIMPLE_EXPECTED':                                        _SHELL_WELCOME_MSG + SELECT_GITHUB_BRANCHES_NAMES_DESC_EXPECTED,
     'SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR':                 SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR,
     'SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR':                 SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR,
     'SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR_EXPECTED':        SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR_EXPECTED,
