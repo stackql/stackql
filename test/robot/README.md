@@ -5,8 +5,8 @@
 - [ ] Source registry files from other repository, where possible.
 - [x] "reuired" string.
 - [x] clean up this readme.
-- [ ] integration tests for different registry configurations.
-- [ ] fix library lifetimes issue; as per https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#creating-test-library-class-or-module.
+- [x] integration tests for different registry configurations.
+- [x] fix library lifetimes issue; as per https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#creating-test-library-class-or-module.
 
 
 ## Running yourself
@@ -92,5 +92,62 @@ This somehow works:
 $v1="SELECT i.zone, i.name, i.machineType, i.deletionProtection, '[{""""""subnetwork"""""":""""""' || JSON_EXTRACT(i.networkInterfaces, '$[0].subnetwork') || '""""""}]', '[{""""""boot"""""": true, """"""initializeParams"""""": { """"""diskSizeGb"""""": """"""' || JSON_EXTRACT(i.disks, '$[0].diskSizeGb') || '"""""", """"""sourceImage"""""": """"""' || d.sourceImage || '""""""}}]', i.labels FROM google.compute.instances i INNER JOIN google.compute.disks d ON i.name = d.name WHERE i.project = 'testing-project' AND i.zone = 'australia-southeast1-a' AND d.project = 'testing-project' AND d.zone = 'australia-southeast1-a' AND i.name LIKE '%' order by i.name DESC;"
 
 .\build\stackql.exe --auth="${AUTH_STR}" --registry="${REG_CFG_MOCKED}" --tls.allowInsecure=true exec "$v1"
+```
+
+## Session testing for Server and Shell
+
+Basic idea is have python start a session, run commands with result verification and then terminate.  Probably custom library(ies).
+
+Library would do something like the below adaptation of [this example from stack overflow](https://stackoverflow.com/questions/19880190/interactive-input-output-using-python):
+
+```py
+import os
+import subprocess
+import sys
+
+
+def start(cmd_arg_list):
+  command = [item.encode(sys.getdefaultencoding()) for item in cmd_arg_list]
+  return subprocess.Popen(
+    command,
+    stdin=subprocess.PIPE,
+    stdout=subprocess.PIPE,
+    stderr=subprocess.PIPE
+  )
+
+
+def read(process):
+    return process.stdout.readline().decode("utf-8").strip()
+
+
+def write(process, message):
+    process.stdin.write(f"{message.strip()}\n".encode("utf-8"))
+    process.stdin.flush()
+
+
+def terminate(process):
+    process.stdin.close()
+    process.terminate()
+    process.wait(timeout=0.2)
+
+
+process = start(
+  [ "./stackql",
+    f"--registry={os.environ.get('REG_TEST')}",
+    f"--auth={os.environ.get('AUTH_STR_INT')}",
+    "shell"
+  ]
+)
+
+
+
+write(process, "show providers;")
+
+response_01 = read(process)
+
+print(response_01)
+
+terminate(process)
+
 ```
 

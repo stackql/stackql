@@ -1,5 +1,23 @@
 FROM golang:1.18.4-bullseye AS builder
 
+ARG BUILDMAJORVERSION="1"
+ARG BUILDMINORVERSION="1"
+ARG BUILDPATCHVERSION="1"
+ARG BUILDCOMMITSHA="1"
+ARG BUILDSHORTCOMMITSHA="1"
+ARG BUILDDATE="1"
+ARG PLANCACHEENABLED="1"
+ARG BUILDPLATFORM="1"
+
+ENV BUILDMAJORVERSION=${BUILDMAJORVERSION}
+ENV BUILDMINORVERSION=${BUILDMINORVERSION}
+ENV BUILDPATCHVERSION=${BUILDPATCHVERSION}
+ENV BUILDCOMMITSHA=${BUILDCOMMITSHA}
+ENV BUILDSHORTCOMMITSHA=${BUILDSHORTCOMMITSHA}
+ENV BUILDDATE=${BUILDDATE}
+ENV PLANCACHEENABLED=${PLANCACHEENABLED}
+ENV BUILDPLATFORM=${BUILDPLATFORM}
+
 ENV SRC_DIR=/work/stackql/src
 
 ENV BUILD_DIR=/work/stackql/build
@@ -17,7 +35,16 @@ ADD test ${SRC_DIR}/test
 COPY go.mod go.sum ${SRC_DIR}/
 
 RUN  cd ${SRC_DIR} && ls && go get -v -t -d ./... && go test --tags "json1" ./... \
-     && go build --tags "json1" -o ${BUILD_DIR}/stackql ./stackql
+     && go build -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion=$BUILDMAJORVERSION \
+          -X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion=$BUILDMINORVERSION \
+          -X github.com/stackql/stackql/internal/stackql/cmd.BuildPatchVersion=$BUILDPATCHVERSION \
+          -X github.com/stackql/stackql/internal/stackql/cmd.BuildCommitSHA=$BUILDCOMMITSHA \
+          -X github.com/stackql/stackql/internal/stackql/cmd.BuildShortCommitSHA=$BUILDSHORTCOMMITSHA \
+          -X \"github.com/stackql/stackql/internal/stackql/cmd.BuildDate=$BUILDDATE\" \
+          -X \"stackql/internal/stackql/planbuilder.PlanCacheEnabled=$PLANCACHEENABLED\" \
+          -X github.com/stackql/stackql/internal/stackql/cmd.BuildPlatform=$BUILDPLATFORM" \
+        --tags "json1" \
+        -o ${BUILD_DIR}/stackql ./stackql
 
 FROM ubuntu:22.04 AS certificates
 
@@ -59,6 +86,24 @@ ARG TEST_ROOT_DIR=/opt/test/stackql
 
 ENV TEST_ROOT_DIR=${TEST_ROOT_DIR}
 
+ARG BUILDMAJORVERSION="1"
+ARG BUILDMINORVERSION="1"
+ARG BUILDPATCHVERSION="1"
+ARG BUILDCOMMITSHA="1"
+ARG BUILDSHORTCOMMITSHA="1"
+ARG BUILDDATE="1"
+ARG PLANCACHEENABLED="1"
+ARG BUILDPLATFORM="1"
+
+ENV BUILDMAJORVERSION=${BUILDMAJORVERSION}
+ENV BUILDMINORVERSION=${BUILDMINORVERSION}
+ENV BUILDPATCHVERSION=${BUILDPATCHVERSION}
+ENV BUILDCOMMITSHA=${BUILDCOMMITSHA}
+ENV BUILDSHORTCOMMITSHA=${BUILDSHORTCOMMITSHA}
+ENV BUILDDATE=${BUILDDATE}
+ENV PLANCACHEENABLED=${PLANCACHEENABLED}
+ENV BUILDPLATFORM=${BUILDPLATFORM}
+
 RUN mkdir -p ${TEST_ROOT_DIR}/build
 
 COPY --from=registrymock /opt/test/stackql ${TEST_ROOT_DIR}/
@@ -99,7 +144,7 @@ ENV STACKQL_CFG_ROOT="${STACKQL_CFG_ROOT}"
 
 ENV STACKQL_PG_PORT="${STACKQL_PG_PORT}"
 
-RUN mkdir -p ${APP_DIR} ${STACKQL_CFG_ROOT}/keys ${STACKQL_CFG_ROOT}/srv/credentials ${STACKQL_CFG_ROOT}/credentials/dummy ${STACKQL_CFG_ROOT}/registry
+RUN mkdir -p ${APP_DIR} ${STACKQL_CFG_ROOT}/keys ${STACKQL_CFG_ROOT}/srv/credentials ${STACKQL_CFG_ROOT}/credentials/dummy ${STACKQL_CFG_ROOT}/registry ${STACKQL_CFG_ROOT}/logs
 
 ENV PATH="${APP_DIR}:${PATH}"
 

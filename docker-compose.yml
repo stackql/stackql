@@ -9,6 +9,10 @@ services:
         - stackql/stackql
         - stackql/integration
         - stackql/stackqlsrvcertificates
+      args:
+        - BUILDMAJORVERSION=${BUILDMAJORVERSION:-1}
+        - BUILDMINORVERSION=${BUILDMINORVERSION:-1}
+        - BUILDPATCHVERSION=${BUILDPATCHVERSION:-1}
     command: 
       - bash
       - -c
@@ -20,6 +24,7 @@ services:
       - ./test/assets/input:/opt/stackql/input:ro
       - ${REGISTRY_SRC:-./test/registry-mocked}:/opt/stackql/registry:ro
       - ./vol/stackql/config:/opt/stackql/.stackql:rw 
+      - ./vol/logs:/opt/stackql/logs:rw 
     ports:
       - "${PG_SRV_PORT_DOCKER_MTLS:-5576}:${PG_SRV_PORT_MTLS:-5476}/tcp"
     extra_hosts:
@@ -28,6 +33,9 @@ services:
       - OKTA_SECRET_KEY=${OKTA_SECRET_STR:-some-junk}
       - GITHUB_SECRET_KEY=${GITHUB_SECRET_STR:-some-junk}
       - K8S_SECRET_KEY=${K8S_SECRET_STR:-some-junk}
+      - BUILDMAJORVERSION=${BUILDMAJORVERSION:-1}
+      - BUILDMINORVERSION=${BUILDMINORVERSION:-1}
+      - BUILDPATCHVERSION=${BUILDPATCHVERSION:-1}
   credentialsgen:
     image: stackql/stackqlsrvcertificates
     build:
