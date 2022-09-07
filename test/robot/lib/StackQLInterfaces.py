@@ -157,6 +157,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn):
       f"GITHUB_SECRET_KEY={github_secret_str}",
       "-e",
       f"K8S_SECRET_KEY={k8s_secret_str}",
+      "-e",
+      f"AZ_ACCESS_TOKEN={self._get_default_env().get('AZ_ACCESS_TOKEN')}",
       "stackqlsrv",
       "bash",
       "-c",
@@ -166,6 +168,12 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn):
     self.log(res.stdout)
     self.log(res.stderr)
     return res
+
+
+  def _get_default_env(self) -> dict:
+    return {
+      "AZ_ACCESS_TOKEN": os.environ.get('AZ_ACCESS_TOKEN', "az_access_dummy_secret")
+    }
 
 
   def _run_stackql_shell_command_docker(
@@ -201,6 +209,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn):
       f"GITHUB_SECRET_KEY={github_secret_str}",
       "-e",
       f"K8S_SECRET_KEY={k8s_secret_str}",
+      "-e",
+      f"AZ_ACCESS_TOKEN={self._get_default_env().get('AZ_ACCESS_TOKEN')}",
       "stackqlsrv",
       "bash",
       "-c",
@@ -235,6 +245,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn):
     self.set_environment_variable("OKTA_SECRET_KEY", okta_secret_str)
     self.set_environment_variable("GITHUB_SECRET_KEY", github_secret_str)
     self.set_environment_variable("K8S_SECRET_KEY", k8s_secret_str)
+    self.set_environment_variable("AZ_ACCESS_TOKEN", f"{self._get_default_env().get('AZ_ACCESS_TOKEN')}")
     supplied_args = [ stackql_exe, "exec" ]
     registry_cfg_str = registry_cfg.get_config_str('native')
     if registry_cfg_str != "":
@@ -268,6 +279,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn):
     self.set_environment_variable("OKTA_SECRET_KEY", okta_secret_str)
     self.set_environment_variable("GITHUB_SECRET_KEY", github_secret_str)
     self.set_environment_variable("K8S_SECRET_KEY", k8s_secret_str)
+    self.set_environment_variable("AZ_ACCESS_TOKEN", f"{self._get_default_env().get('AZ_ACCESS_TOKEN')}")
     supplied_args = [ stackql_exe, "shell" ]
     registry_cfg_str = registry_cfg.get_config_str('native')
     if registry_cfg_str != "":

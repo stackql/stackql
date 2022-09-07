@@ -19,6 +19,7 @@ OKTA_DEFAULT_PORT = 1090
 AWS_DEFAULT_PORT = 1091
 K8S_DEFAULT_PORT = 1092
 GITHUB_DEFAULT_PORT = 1093
+AZURE_DEFAULT_PORT = 1095
 
 
 
@@ -76,6 +77,12 @@ parser.add_argument(
     type=int,
     default=GITHUB_DEFAULT_PORT,
     help='port for github mock service'
+)
+parser.add_argument(
+    '--azure-port',
+    type=int,
+    default=AZURE_DEFAULT_PORT,
+    help='port for azure mock service'
 )
 
 class ProviderArgs:
@@ -135,6 +142,9 @@ class ProviderCfgMapping:
     self._provider_lookup :dict = {
       "aws": {
         "port": processed_args.aws_port
+      },
+      "azure": {
+        "port": processed_args.azure_port
       },
       "github": {
         "port": processed_args.github_port

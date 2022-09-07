@@ -32,16 +32,18 @@ Start All Mock Servers
     Start Mock Server    ${JSON_INIT_FILE_PATH_AWS}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_AWS}
     Start Mock Server    ${JSON_INIT_FILE_PATH_K8S}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_K8S}
     Start Mock Server    ${JSON_INIT_FILE_PATH_REGISTRY}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_REGISTRY}
-    
+    Start Mock Server    ${JSON_INIT_FILE_PATH_AZURE}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_AZURE}
+
 
 Prepare StackQL Environment
     Set Environment Variable    OKTA_SECRET_KEY    ${OKTA_SECRET_STR}
     Set Environment Variable    GITHUB_SECRET_KEY    ${GITHUB_SECRET_STR}
     Set Environment Variable    K8S_SECRET_KEY    ${K8S_SECRET_STR}
+    Set Environment Variable    AZURE_SECRET_KEY    ${AZURE_SECRET_STR}
     Start All Mock Servers
     Start StackQL PG Server mTLS    ${PG_SRV_PORT_MTLS}    ${PG_SRV_MTLS_CFG_STR}
     Start StackQL PG Server unencrypted    ${PG_SRV_PORT_UNENCRYPTED}
-    Sleep    30s
+    Sleep    50s
 
 Start StackQL PG Server mTLS
     [Arguments]    ${_SRV_PORT_MTLS}    ${_MTLS_CFG_STR}
