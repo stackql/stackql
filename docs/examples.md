@@ -60,6 +60,23 @@ And then, using the `psql` client (from same directory; `build`):
 psql -d "host=127.0.0.1 port=5466 user=silly dbname=silly sslmode=verify-full sslcert=../test/server/mtls/credentials/pg_client_cert.pem sslkey=../test/server/mtls/credentials/pg_client_key.pem sslrootcert=../test/server/mtls/credentials/pg_server_cert.pem"
 ```
 
+### Access from pscopg python
+
+```py
+import psycopg
+# Connect to your stackql instance.
+# Devil is in the detail of conection string.
+# `autocommit = True` is all-important until we support (at least NOP) Transactions.
+conn = psycopg.connect("host=127.0.0.1 port=5466 user=silly dbname=silly", autocommit = True)
+
+
+
+res = conn.execute("""SHOW PROVIDERS""")
+
+conn.fetchall()
+
+```
+
 ## Queries
 
 ### SELECT

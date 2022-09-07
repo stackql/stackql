@@ -27,3 +27,10 @@ Shell Session Azure Compute Table Nomenclature Mutation Guard
     ...    ${SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD}
     ...    ${SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD_EXPECTED}
     ...    stdout=${CURDIR}/tmp/Shell-Session-Azure-Compute-Table-Nomenclature-Mutation-Guard.tmp
+
+PG Session Azure Compute Table Nomenclature Mutation Guard
+    Should PG Client Session Inline Equal
+    ...    ${PSQL_MTLS_CONN_STR}
+    ...    ${SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD}
+    ...    ${SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD_JSON_EXPECTED}
+    ...    stdout=${CURDIR}/tmp/PG-Session-Azure-Compute-Table-Nomenclature-Mutation-Guard.tmp

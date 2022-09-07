@@ -1,0 +1,6 @@
+[
+  {
+    "id": "/subscriptions/10001000-1000-1000-1000-100010001000/resourceGroups/stackql-ops-cicd-dev-01/providers/Microsoft.Compute/virtualMachines/test",
+    "name": "test"
+  }
+]
