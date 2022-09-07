@@ -39,7 +39,7 @@ Prepare StackQL Environment
     Set Environment Variable    OKTA_SECRET_KEY    ${OKTA_SECRET_STR}
     Set Environment Variable    GITHUB_SECRET_KEY    ${GITHUB_SECRET_STR}
     Set Environment Variable    K8S_SECRET_KEY    ${K8S_SECRET_STR}
-    Set Environment Variable    AZURE_SECRET_KEY    ${AZURE_SECRET_STR}
+    Set Environment Variable    AZ_ACCESS_TOKEN    ${AZURE_SECRET_STR}
     Start All Mock Servers
     Start StackQL PG Server mTLS    ${PG_SRV_PORT_MTLS}    ${PG_SRV_MTLS_CFG_STR}
     Start StackQL PG Server unencrypted    ${PG_SRV_PORT_UNENCRYPTED}

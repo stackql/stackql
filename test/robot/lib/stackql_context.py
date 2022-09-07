@@ -2,6 +2,7 @@
 import base64
 import json
 import os
+import typing
 
 _exe_name = 'stackql'
 
@@ -93,6 +94,10 @@ MOCKSERVER_PORT_REGISTRY = 1094
 def get_output_from_local_file(fp :str) -> str:
   with open(os.path.join(REPOSITORY_ROOT, fp), 'r') as f:
     return f.read().strip()
+
+def get_json_from_local_file(fp :str) -> typing.Any:
+  with open(os.path.join(REPOSITORY_ROOT, fp), 'r') as f:
+    return json.load(f)
 
 def get_unix_path(pathStr :str) -> str:
   return pathStr.replace('\\', '/')
@@ -206,6 +211,9 @@ STACKQL_PG_SERVER_KEY_PATH   :str = os.path.abspath(os.path.join(REPOSITORY_ROOT
 STACKQL_PG_SERVER_CERT_PATH  :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "test", "server", "mtls", "credentials", "pg_server_cert.pem"))
 STACKQL_PG_CLIENT_KEY_PATH   :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "test", "server", "mtls", "credentials", "pg_client_key.pem"))
 STACKQL_PG_CLIENT_CERT_PATH  :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "test", "server", "mtls", "credentials", "pg_client_cert.pem"))
+STACKQL_PG_SERVER_CERT_PATH_UNIX  :str = get_unix_path(STACKQL_PG_SERVER_CERT_PATH)
+STACKQL_PG_CLIENT_KEY_PATH_UNIX   :str = get_unix_path(STACKQL_PG_CLIENT_KEY_PATH)
+STACKQL_PG_CLIENT_CERT_PATH_UNIX  :str = get_unix_path(STACKQL_PG_CLIENT_CERT_PATH)
 STACKQL_PG_RUBBISH_KEY_PATH  :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "test", "server", "mtls", "credentials", "pg_rubbish_key.pem"))
 STACKQL_PG_RUBBISH_CERT_PATH :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "test", "server", "mtls", "credentials", "pg_rubbish_cert.pem"))
 STACKQL_PG_SERVER_KEY_PATH_DOCKER   :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "vol", "srv", "credentials", "pg_server_key.pem"))
@@ -309,6 +317,7 @@ PSQL_EXE :str = os.environ.get('PSQL_EXE', 'psql')
 PSQL_CLIENT_HOST :str = "127.0.0.1"
 
 PSQL_MTLS_CONN_STR :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH} sslkey={STACKQL_PG_CLIENT_KEY_PATH} sslrootcert={STACKQL_PG_SERVER_CERT_PATH} dbname=mydatabase"
+PSQL_MTLS_CONN_STR_UNIX :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH_UNIX} sslkey={STACKQL_PG_CLIENT_KEY_PATH_UNIX} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_UNIX} dbname=mydatabase"
 PSQL_MTLS_INVALID_CONN_STR :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=verify-full sslcert={STACKQL_PG_RUBBISH_CERT_PATH} sslkey={STACKQL_PG_RUBBISH_KEY_PATH} sslrootcert={STACKQL_PG_SERVER_CERT_PATH} dbname=mydatabase"
 PSQL_UNENCRYPTED_CONN_STR :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_UNENCRYPTED} user=myuser dbname=mydatabase"
 
@@ -329,6 +338,8 @@ SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES = "SELECT id, name FROM azure.compute.virt
 SELECT_AZURE_COMPUTE_PUBLIC_KEYS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'azure', 'compute', 'ssh-public-keys-list.txt'))
 SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'azure', 'compute', 'vm-list.txt'))
 
+SELECT_AZURE_COMPUTE_PUBLIC_KEYS_JSON_EXPECTED = get_json_from_local_file(os.path.join('test', 'assets', 'expected', 'azure', 'compute', 'ssh-public-keys-list.json'))
+SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_JSON_EXPECTED = get_json_from_local_file(os.path.join('test', 'assets', 'expected', 'azure', 'compute', 'vm-list.json'))
 
 SELECT_AWS_S3_BUCKET_LOCATIONS = "select LocationConstraint from aws.s3.bucket_locations where region = 'ap-southeast-1' and bucket = 'stackql-trial-bucket-01';"
 SELECT_AWS_S3_BUCKETS = "select Name, CreationDate from  aws.s3.buckets where region = 'ap-southeast-1' order by Name ASC;"
@@ -590,6 +601,7 @@ def get_variables(execution_env :str):
     'SELECT_OKTA_USERS_ASC_EXPECTED':                                       SELECT_OKTA_USERS_ASC_EXPECTED,
     'SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD':                          [ SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES, SELECT_AZURE_COMPUTE_PUBLIC_KEYS ],
     'SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD_EXPECTED':                 _SHELL_WELCOME_MSG + SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_EXPECTED + '\n' + SELECT_AZURE_COMPUTE_PUBLIC_KEYS_EXPECTED,
+    'SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD_JSON_EXPECTED':            SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_JSON_EXPECTED + SELECT_AZURE_COMPUTE_PUBLIC_KEYS_JSON_EXPECTED,
     'SHELL_SESSION_SIMPLE_COMMANDS':                                        [ SELECT_GITHUB_BRANCHES_NAMES_DESC ],
     'SHELL_SESSION_SIMPLE_EXPECTED':                                        _SHELL_WELCOME_MSG + SELECT_GITHUB_BRANCHES_NAMES_DESC_EXPECTED,
     'SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR':                 SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR,
@@ -619,6 +631,7 @@ def get_variables(execution_env :str):
     rv['JSON_INIT_FILE_PATH_REGISTRY']                  = JSON_INIT_FILE_PATH_REGISTRY
     rv['PG_SRV_MTLS_CFG_STR']                           = PG_SRV_MTLS_CFG_STR
     rv['PSQL_MTLS_CONN_STR']                            = PSQL_MTLS_CONN_STR_DOCKER
+    rv['PSQL_MTLS_CONN_STR_UNIX']                       = PSQL_MTLS_CONN_STR_DOCKER
     rv['PSQL_MTLS_INVALID_CONN_STR']                    = PSQL_MTLS_INVALID_CONN_STR_DOCKER
     rv['PSQL_UNENCRYPTED_CONN_STR']                     = PSQL_UNENCRYPTED_CONN_STR_DOCKER
     rv['REGISTRY_EXPERIMENTAL_NO_VERIFY_CFG_STR']       = _REGISTRY_EXPERIMENTAL_DOCKER_NO_VERIFY
@@ -635,6 +648,7 @@ def get_variables(execution_env :str):
     rv['JSON_INIT_FILE_PATH_REGISTRY']                  = JSON_INIT_FILE_PATH_REGISTRY
     rv['PG_SRV_MTLS_CFG_STR']                           = PG_SRV_MTLS_CFG_STR
     rv['PSQL_MTLS_CONN_STR']                            = PSQL_MTLS_CONN_STR
+    rv['PSQL_MTLS_CONN_STR_UNIX']                       = PSQL_MTLS_CONN_STR_UNIX
     rv['PSQL_MTLS_INVALID_CONN_STR']                    = PSQL_MTLS_INVALID_CONN_STR
     rv['PSQL_UNENCRYPTED_CONN_STR']                     = PSQL_UNENCRYPTED_CONN_STR
     rv['REGISTRY_EXPERIMENTAL_NO_VERIFY_CFG_STR']       = _REGISTRY_EXPERIMENTAL_NO_VERIFY

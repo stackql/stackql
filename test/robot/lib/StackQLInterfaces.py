@@ -7,15 +7,17 @@ import typing
 
 from robot.api.deco import keyword, library
 from robot.libraries.BuiltIn import BuiltIn
+from robot.libraries.Collections import Collections
 from robot.libraries.Process import Process
 from robot.libraries.OperatingSystem import OperatingSystem 
 
 from stackql_context import RegistryCfg, _TEST_APP_CACHE_ROOT
 from ShellSession import ShellSession
+from psycopg_client import PsycoPGClient
 
 
 @library(scope='SUITE', version='0.1.0', doc_format='reST')
-class StackQLInterfaces(OperatingSystem, Process, BuiltIn):
+class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
   ROBOT_LISTENER_API_VERSION = 2
 
   def __init__(self, execution_platform='native'):
@@ -332,6 +334,16 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn):
       query
     )
     return self.should_be_equal(result.stdout, expected_output)
+
+
+  @keyword
+  def should_PG_client_session_inline_equal(self, conn_str :str, queries :typing.List[str], expected_output :typing.List[typing.Dict], **kwargs):
+    client = PsycoPGClient(conn_str)
+    result =  client.run_queries(
+      queries
+    )
+    self.log(result)
+    return self.lists_should_be_equal(result, expected_output)
 
 
   @keyword
