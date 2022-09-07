@@ -590,6 +590,7 @@ jobs:
     - name: Build image
       run: |
         docker-compose build credentialsgen
+        docker-compose build mockserver
         docker-compose build stackqlsrv
 
     - name: Mock Server Download
@@ -636,9 +637,14 @@ jobs:
       if: success()
       timeout-minutes: 20
       run: |
-        robot --variable EXECUTION_PLATFORM:docker -d /opt/stackql/logs test/robot/functional
+        robot --variable EXECUTION_PLATFORM:docker -d test/robot/functional test/robot/functional
+
+    - name: Output from mocked functional tests
+      if: always()
+      run: |
+        cat ./test/robot/functional/output.xml
 
     - name: Run robot integration tests
       if: success() && startsWith(${{ steps.git_ref_parse.outputs.SOURCE_TAG }}, 'build-release')
       run: |
-        robot  --variable EXECUTION_PLATFORM:docker -d /opt/stackql/logs test/robot/integration
+        robot  --variable EXECUTION_PLATFORM:docker -d test/robot/functional test/robot/integration
