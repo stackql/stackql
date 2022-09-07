@@ -71,6 +71,7 @@ services:
       - MOCKSERVER_PORT_K8S=${MOCKSERVER_PORT_K8S:-1092}
       - MOCKSERVER_PORT_GITHUB=${MOCKSERVER_PORT_GITHUB:-1093}
       - MOCKSERVER_PORT_REGISTRY=${MOCKSERVER_PORT_REGISTRY:-1094}
+      - MOCKSERVER_PORT_AZURE=${MOCKSERVER_PORT_AZURE:-1095}
     ports:
       - "${MOCKSERVER_PORT_GOOGLE:-1080}:${MOCKSERVER_PORT_GOOGLE:-1080}/tcp"
       - "${MOCKSERVER_PORT_OKTA:-1090}:${MOCKSERVER_PORT_OKTA:-1090}/tcp"
@@ -78,6 +79,7 @@ services:
       - "${MOCKSERVER_PORT_K8S:-1092}:${MOCKSERVER_PORT_K8S:-1092}/tcp"
       - "${MOCKSERVER_PORT_GITHUB:-1093}:${MOCKSERVER_PORT_GITHUB:-1093}/tcp"
       - "${MOCKSERVER_PORT_REGISTRY:-1094}:${MOCKSERVER_PORT_REGISTRY:-1094}/tcp"
+      - "${MOCKSERVER_PORT_AZURE:-1095}:${MOCKSERVER_PORT_AZURE:-1095}/tcp"
     command: 
       - bash
       - -c
@@ -119,4 +121,10 @@ services:
           -Dmockserver.logLevel=OFF \
           -Droot.logLevel=OFF \
           -jar    $${MOCKSERVER_JAR} \
-          -serverPort    $${MOCKSERVER_PORT_OKTA}
+          -serverPort    $${MOCKSERVER_PORT_OKTA}&
+        java    -Dfile.encoding=UTF-8 \
+          -Dmockserver.initializationJsonPath=$${JSON_INIT_FILE_DIR}/static-azure-expectations.json \
+          -Dmockserver.logLevel=OFF \
+          -Droot.logLevel=OFF \
+          -jar    $${MOCKSERVER_JAR} \
+          -serverPort    $${MOCKSERVER_PORT_AZURE}
