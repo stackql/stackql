@@ -56,6 +56,8 @@ Providers include:
 
 ### Native Build
 
+#### With cmake
+
 Presuming you have all of [the system requirements](#system-requirements-for-local-devlopment-build-and-test), then build/test with cmake:
 
 ```bash
@@ -65,6 +67,23 @@ cmake --build .
 ```
 
 Executable `build/stackql` will be created.
+
+#### In shell
+
+```bash
+go build \
+  --tags "json1" \
+  -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion=${BUILDMAJORVERSION:-1} \
+  -X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion=${BUILDMINORVERSION:-1} \
+  -X github.com/stackql/stackql/internal/stackql/cmd.BuildPatchVersion=${BUILDPATCHVERSION:-1} \
+  -X github.com/stackql/stackql/internal/stackql/cmd.BuildCommitSHA=$BUILDCOMMITSHA \
+  -X github.com/stackql/stackql/internal/stackql/cmd.BuildShortCommitSHA=$BUILDSHORTCOMMITSHA \
+  -X \"github.com/stackql/stackql/internal/stackql/cmd.BuildDate=$BUILDDATE\" \
+  -X \"stackql/internal/stackql/planbuilder.PlanCacheEnabled=$PLANCACHEENABLED\" \
+  -X github.com/stackql/stackql/internal/stackql/cmd.BuildPlatform=$BUILDPLATFORM" -o ./build ./...
+
+
+```
 
 #### System requirements for local development, build and test
 

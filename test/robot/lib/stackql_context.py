@@ -166,6 +166,11 @@ _AUTH_CFG={
     "credentialsenvvar": "K8S_SECRET_KEY",
     "type": "api_key",
     "valuePrefix": "Bearer " 
+  },
+  "azure": { 
+    "type": "api_key",
+    "valuePrefix": "Bearer ",
+    "credentialsenvvar": "AZ_ACCESS_TOKEN"
   }
 }
 _AUTH_CFG_DOCKER={ 
@@ -190,6 +195,11 @@ _AUTH_CFG_DOCKER={
     "credentialsenvvar": "K8S_SECRET_KEY",
     "type": "api_key",
     "valuePrefix": "Bearer " 
+  },
+  "azure": { 
+    "type": "api_key",
+    "valuePrefix": "Bearer ",
+    "credentialsenvvar": "AZ_ACCESS_TOKEN"
   }
 }
 STACKQL_PG_SERVER_KEY_PATH   :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "test", "server", "mtls", "credentials", "pg_server_key.pem"))
@@ -251,6 +261,8 @@ with open(os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'credentials', 'dummy'
 with open(os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'credentials', 'dummy', 'k8s', 'k8s-token.txt'), 'r') as f:
     K8S_SECRET_STR = f.read()
 
+with open(os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'credentials', 'dummy', 'azure', 'azure-token.txt'), 'r') as f:
+    AZURE_SECRET_STR = f.read()
 
 REGISTRY_PROD_CFG_STR = json.dumps(get_registry_cfg(_PROD_REGISTRY_URL, ROBOT_PROD_REG_DIR, False))
 REGISTRY_DEV_CFG_STR = json.dumps(get_registry_cfg(_DEV_REGISTRY_URL, ROBOT_DEV_REG_DIR, False))
@@ -281,6 +293,9 @@ MOCKSERVER_PORT_K8S = 1092
 JSON_INIT_FILE_PATH_GITHUB = os.path.join(REPOSITORY_ROOT, 'test', 'mockserver', 'expectations', 'static-github-expectations.json')
 MOCKSERVER_PORT_GITHUB = 1093
 
+JSON_INIT_FILE_PATH_AZURE = os.path.join(REPOSITORY_ROOT, 'test', 'mockserver', 'expectations', 'static-azure-expectations.json')
+MOCKSERVER_PORT_AZURE = 1095
+
 JSON_INIT_FILE_PATH_REGISTRY = os.path.join(REPOSITORY_ROOT, 'test', 'mockserver', 'expectations', 'static-registry-expectations.json')
 
 PG_SRV_PORT_MTLS = 5476
@@ -306,6 +321,14 @@ SELECT_CONTAINER_SUBNET_AGG_ASC = "select ipCidrRange, sum(5) cc  from  google.c
 SELECT_ACCELERATOR_TYPES_DESC = "select  kind, name  from  google.compute.acceleratorTypes where project = 'testing-project' and zone = 'australia-southeast1-a' order by name desc;"
 SELECT_MACHINE_TYPES_DESC = "select name from google.compute.machineTypes where project = 'testing-project' and zone = 'australia-southeast1-a' order by name desc;"
 SELECT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY = "SELECT eTag FROM google.compute.instances_iam_policies WHERE project = 'testing-project' AND zone = 'australia-southeast1-a' AND resource = '000000001';"
+
+SELECT_AZURE_COMPUTE_PUBLIC_KEYS = "select id, location from azure.compute.ssh_public_keys where subscriptionId = '10001000-1000-1000-1000-100010001000' ORDER BY id ASC;"
+SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES = "SELECT id, name FROM azure.compute.virtual_machines WHERE resourceGroupName = 'stackql-ops-cicd-dev-01' AND subscriptionId = '10001000-1000-1000-1000-100010001000' ORDER BY name ASC;"
+
+
+SELECT_AZURE_COMPUTE_PUBLIC_KEYS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'azure', 'compute', 'ssh-public-keys-list.txt'))
+SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'azure', 'compute', 'vm-list.txt'))
+
 
 SELECT_AWS_S3_BUCKET_LOCATIONS = "select LocationConstraint from aws.s3.bucket_locations where region = 'ap-southeast-1' and bucket = 'stackql-trial-bucket-01';"
 SELECT_AWS_S3_BUCKETS = "select Name, CreationDate from  aws.s3.buckets where region = 'ap-southeast-1' order by Name ASC;"
@@ -447,11 +470,13 @@ REGISTRY_GOOGLE_PROVIDER_LIST_EXPECTED = get_output_from_local_file(os.path.join
 def get_variables(execution_env :str):
   rv = {
     ## general config
+    'AZURE_SECRET_STR':                               AZURE_SECRET_STR,
     'GITHUB_SECRET_STR':                              GITHUB_SECRET_STR,
     'IS_WINDOWS':                                     IS_WINDOWS,
     'K8S_SECRET_STR':                                 K8S_SECRET_STR,
     'MOCKSERVER_JAR':                                 MOCKSERVER_JAR,
     'MOCKSERVER_PORT_AWS':                            MOCKSERVER_PORT_AWS,
+    'MOCKSERVER_PORT_AZURE':                          MOCKSERVER_PORT_AZURE,
     'MOCKSERVER_PORT_GITHUB':                         MOCKSERVER_PORT_GITHUB,
     'MOCKSERVER_PORT_GOOGLE':                         MOCKSERVER_PORT_GOOGLE,
     'MOCKSERVER_PORT_K8S':                            MOCKSERVER_PORT_K8S,
@@ -563,6 +588,8 @@ def get_variables(execution_env :str):
     'SELECT_OKTA_APPS_ASC_EXPECTED':                                        SELECT_OKTA_APPS_ASC_EXPECTED,
     'SELECT_OKTA_USERS_ASC':                                                SELECT_OKTA_USERS_ASC,
     'SELECT_OKTA_USERS_ASC_EXPECTED':                                       SELECT_OKTA_USERS_ASC_EXPECTED,
+    'SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD':                          [ SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES, SELECT_AZURE_COMPUTE_PUBLIC_KEYS ],
+    'SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD_EXPECTED':                 _SHELL_WELCOME_MSG + SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_EXPECTED + '\n' + SELECT_AZURE_COMPUTE_PUBLIC_KEYS_EXPECTED,
     'SHELL_SESSION_SIMPLE_COMMANDS':                                        [ SELECT_GITHUB_BRANCHES_NAMES_DESC ],
     'SHELL_SESSION_SIMPLE_EXPECTED':                                        _SHELL_WELCOME_MSG + SELECT_GITHUB_BRANCHES_NAMES_DESC_EXPECTED,
     'SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR':                 SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR,
@@ -584,6 +611,7 @@ def get_variables(execution_env :str):
     rv['AUTH_CFG_STR']                                  = AUTH_CFG_STR_DOCKER
     rv['GET_IAM_POLICY_AGG_ASC_INPUT_FILE']             = GET_IAM_POLICY_AGG_ASC_INPUT_FILE_DOCKER
     rv['JSON_INIT_FILE_PATH_AWS']                       = JSON_INIT_FILE_PATH_AWS
+    rv['JSON_INIT_FILE_PATH_AZURE']                     = JSON_INIT_FILE_PATH_AZURE
     rv['JSON_INIT_FILE_PATH_GITHUB']                    = JSON_INIT_FILE_PATH_GITHUB
     rv['JSON_INIT_FILE_PATH_GOOGLE']                    = JSON_INIT_FILE_PATH_GOOGLE
     rv['JSON_INIT_FILE_PATH_K8S']                       = JSON_INIT_FILE_PATH_K8S
@@ -599,6 +627,7 @@ def get_variables(execution_env :str):
     rv['AUTH_CFG_STR']                                  = AUTH_CFG_STR
     rv['GET_IAM_POLICY_AGG_ASC_INPUT_FILE']             = GET_IAM_POLICY_AGG_ASC_INPUT_FILE
     rv['JSON_INIT_FILE_PATH_AWS']                       = JSON_INIT_FILE_PATH_AWS
+    rv['JSON_INIT_FILE_PATH_AZURE']                     = JSON_INIT_FILE_PATH_AZURE
     rv['JSON_INIT_FILE_PATH_GITHUB']                    = JSON_INIT_FILE_PATH_GITHUB
     rv['JSON_INIT_FILE_PATH_GOOGLE']                    = JSON_INIT_FILE_PATH_GOOGLE
     rv['JSON_INIT_FILE_PATH_K8S']                       = JSON_INIT_FILE_PATH_K8S
