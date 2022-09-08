@@ -14,6 +14,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/httpbuild"
 	"github.com/stackql/stackql/internal/stackql/httpmiddleware"
 	"github.com/stackql/stackql/internal/stackql/iqlutil"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/metadatavisitors"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivecomposer"
@@ -27,8 +28,6 @@ import (
 	"github.com/stackql/stackql/pkg/sqltypeutil"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
-
-	log "github.com/sirupsen/logrus"
 
 	"vitess.io/vitess/go/sqltypes"
 	"vitess.io/vitess/go/vt/sqlparser"
@@ -52,7 +51,7 @@ func (pb *primitiveGenerator) addChildPrimitiveGenerator(ast sqlparser.SQLNode, 
 	tables := pb.PrimitiveComposer.GetTables()
 	switch node := ast.(type) {
 	case sqlparser.Statement:
-		log.Infoln(fmt.Sprintf("creating new table map for node = %v", node))
+		logging.GetLogger().Infoln(fmt.Sprintf("creating new table map for node = %v", node))
 		tables = make(taxonomy.TblMap)
 	}
 	retVal := &primitiveGenerator{
@@ -261,10 +260,10 @@ func (pb *primitiveGenerator) showInstructionExecutor(node *sqlparser.Show, hand
 	var columnOrder []string
 	var err error
 	var filter func(interface{}) (openapistackql.ITable, error)
-	log.Infoln(fmt.Sprintf("filter type = %T", filter))
+	logging.GetLogger().Infoln(fmt.Sprintf("filter type = %T", filter))
 	switch nodeTypeUpperCase {
 	case "AUTH":
-		log.Infoln(fmt.Sprintf("Show For node.Type = '%s'", node.Type))
+		logging.GetLogger().Infoln(fmt.Sprintf("Show For node.Type = '%s'", node.Type))
 		if err == nil {
 			authCtx, err := handlerCtx.GetAuthContext(pb.PrimitiveComposer.GetProvider().GetProviderString())
 			if err == nil {
@@ -284,6 +283,7 @@ func (pb *primitiveGenerator) showInstructionExecutor(node *sqlparser.Show, hand
 			constants.DefaultPrettyPrintIndent,
 			constants.DefaultPrettyPrintBaseIndent,
 			"'",
+			logging.GetLogger(),
 		)
 		tbl, err := pb.PrimitiveComposer.GetTable(node)
 		if err != nil {
@@ -321,7 +321,7 @@ func (pb *primitiveGenerator) showInstructionExecutor(node *sqlparser.Show, hand
 		tbl, err := pb.PrimitiveComposer.GetTable(node.OnTable)
 		var filter func(openapistackql.ITable) (openapistackql.ITable, error)
 		if err != nil {
-			log.Infoln(fmt.Sprintf("table and therefore filter not found for AST, shall procede nil filter"))
+			logging.GetLogger().Infoln(fmt.Sprintf("table and therefore filter not found for AST, shall procede nil filter"))
 		} else {
 			filter = tbl.TableFilter
 		}
@@ -364,7 +364,7 @@ func (pb *primitiveGenerator) showInstructionExecutor(node *sqlparser.Show, hand
 		columnOrder = openapistackql.GetResourcesHeader(extended)
 		var filter func(openapistackql.ITable) (openapistackql.ITable, error)
 		if err != nil {
-			log.Infoln(fmt.Sprintf("table and therefore filter not found for AST, shall procede nil filter"))
+			logging.GetLogger().Infoln(fmt.Sprintf("table and therefore filter not found for AST, shall procede nil filter"))
 		} else {
 			filter = pb.PrimitiveComposer.GetTableFilter()
 		}
@@ -377,7 +377,7 @@ func (pb *primitiveGenerator) showInstructionExecutor(node *sqlparser.Show, hand
 			keys[k] = v.ToMap(extended)
 		}
 	case "SERVICES":
-		log.Infoln(fmt.Sprintf("Show For node.Type = '%s': Displaying services for provider = '%s'", node.Type, pb.PrimitiveComposer.GetProvider().GetProviderString()))
+		logging.GetLogger().Infoln(fmt.Sprintf("Show For node.Type = '%s': Displaying services for provider = '%s'", node.Type, pb.PrimitiveComposer.GetProvider().GetProviderString()))
 		var services map[string]*openapistackql.ProviderService
 		services, err = pb.PrimitiveComposer.GetProvider().GetProviderServicesRedacted(handlerCtx.RuntimeContext, extended)
 		if err != nil {
@@ -482,9 +482,9 @@ func (pb *primitiveGenerator) insertExecutor(handlerCtx *handler.HandlerContext,
 		for _, r := range httpArmoury.GetRequestParams() {
 			req := r
 			zeroArityEx := func() dto.ExecutorOutput {
-				// log.Infoln(fmt.Sprintf("req.BodyBytes = %s", string(req.BodyBytes)))
+				// logging.GetLogger().Infoln(fmt.Sprintf("req.BodyBytes = %s", string(req.BodyBytes)))
 				// req.Context.SetBody(bytes.NewReader(req.BodyBytes))
-				// log.Infoln(fmt.Sprintf("req.Context = %v", req.Context))
+				// logging.GetLogger().Infoln(fmt.Sprintf("req.Context = %v", req.Context))
 				response, apiErr := httpmiddleware.HttpApiCallFromRequest(*handlerCtx, prov, m, req.Request)
 				if apiErr != nil {
 					return dto.NewErroneousExecutorOutput(apiErr)
@@ -499,7 +499,7 @@ func (pb *primitiveGenerator) insertExecutor(handlerCtx *handler.HandlerContext,
 				if err != nil {
 					return dto.NewErroneousExecutorOutput(err)
 				}
-				log.Infoln(fmt.Sprintf("target = %v", target))
+				logging.GetLogger().Infoln(fmt.Sprintf("target = %v", target))
 				items, ok := target[tbl.LookupSelectItemsKey()]
 				keys := make(map[string]map[string]interface{})
 				if ok {
@@ -691,7 +691,7 @@ func (pb *primitiveGenerator) deleteExecutor(handlerCtx *handler.HandlerContext,
 			target, err = m.DeprecatedProcessResponse(response)
 			handlerCtx.LogHTTPResponseMap(target)
 
-			log.Infoln(fmt.Sprintf("deleteExecutor() target = %v", target))
+			logging.GetLogger().Infoln(fmt.Sprintf("deleteExecutor() target = %v", target))
 			if err != nil {
 				return util.PrepareResultSet(dto.NewPrepareResultSetDTO(
 					nil,
@@ -702,7 +702,7 @@ func (pb *primitiveGenerator) deleteExecutor(handlerCtx *handler.HandlerContext,
 					nil,
 				))
 			}
-			log.Infoln(fmt.Sprintf("target = %v", target))
+			logging.GetLogger().Infoln(fmt.Sprintf("target = %v", target))
 			items, ok := target[prov.GetDefaultKeyForDeleteItems()]
 			if ok {
 				iArr, ok := items.([]interface{})
@@ -807,7 +807,7 @@ func (pb *primitiveGenerator) execExecutor(handlerCtx *handler.HandlerContext, n
 					nil,
 				))
 			}
-			log.Infoln(fmt.Sprintf("target = %v", target))
+			logging.GetLogger().Infoln(fmt.Sprintf("target = %v", target))
 			items, ok := target[tbl.LookupSelectItemsKey()]
 			if ok {
 				iArr, ok := items.([]interface{})
@@ -824,8 +824,8 @@ func (pb *primitiveGenerator) execExecutor(handlerCtx *handler.HandlerContext, n
 			}
 			// optional data return pattern to be included in grammar subsequently
 			// return util.PrepareResultSet(dto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, err, nil))
-			log.Debugln(fmt.Sprintf("keys = %v", keys))
-			log.Debugln(fmt.Sprintf("columnOrder = %v", columnOrder))
+			logging.GetLogger().Debugln(fmt.Sprintf("keys = %v", keys))
+			logging.GetLogger().Debugln(fmt.Sprintf("columnOrder = %v", columnOrder))
 		}
 		msgs := dto.BackendMessages{}
 		if err == nil {

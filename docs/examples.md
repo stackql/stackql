@@ -73,7 +73,7 @@ conn = psycopg.connect("host=127.0.0.1 port=5466 user=silly dbname=silly", autoc
 
 res = conn.execute("""SHOW PROVIDERS""")
 
-conn.fetchall()
+res.fetchall()
 
 ```
 

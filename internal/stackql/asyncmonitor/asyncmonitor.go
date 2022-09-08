@@ -9,12 +9,12 @@ import (
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/httpmiddleware"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/provider"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 	"github.com/stackql/stackql/internal/stackql/util"
 
-	log "github.com/sirupsen/logrus"
 	"vitess.io/vitess/go/vt/sqlparser"
 )
 
@@ -167,7 +167,7 @@ func (gm *DefaultGoogleAsyncMonitor) getV1Monitor(heirarchy *taxonomy.HeirarchyO
 			if body == nil {
 				return dto.NewExecutorOutput(nil, nil, nil, nil, fmt.Errorf("cannot execute monitor: no body present"))
 			}
-			log.Infoln(fmt.Sprintf("body = %v", body))
+			logging.GetLogger().Infoln(fmt.Sprintf("body = %v", body))
 
 			operationDescriptor := getOperationDescriptor(body)
 			endTime, endTimeOk := body["endTime"]

@@ -9,18 +9,17 @@ import (
 
 	. "github.com/stackql/stackql/internal/stackql/driver"
 	"github.com/stackql/stackql/internal/stackql/entryutil"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/querysubmit"
 	"github.com/stackql/stackql/internal/stackql/responsehandler"
 	"github.com/stackql/stackql/internal/test/stackqltestutil"
 	"github.com/stackql/stackql/internal/test/testobjects"
 
-	log "github.com/sirupsen/logrus"
-
 	lrucache "vitess.io/vitess/go/cache"
 )
 
 func TestMain(m *testing.M) {
-	log.SetOutput(ioutil.Discard)
+	logging.GetLogger().SetOutput(ioutil.Discard)
 	os.Exit(m.Run())
 }
 

@@ -11,6 +11,7 @@ import (
 
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/provider"
 	"github.com/stackql/stackql/internal/stackql/requests"
 	"github.com/stackql/stackql/internal/stackql/streaming"
@@ -19,8 +20,6 @@ import (
 	"github.com/stackql/go-openapistackql/openapistackql"
 
 	"vitess.io/vitess/go/vt/sqlparser"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type ExecContext struct {
@@ -213,8 +212,8 @@ func BuildHTTPRequestCtx(handlerCtx *handler.HandlerContext, node sqlparser.SQLN
 		if err != nil {
 			return nil, err
 		}
-		log.Infoln(fmt.Sprintf("pre transform: httpArmoury.RequestParams[%d] = %s", i, string(p.BodyBytes)))
-		log.Infoln(fmt.Sprintf("post transform: httpArmoury.RequestParams[%d] = %s", i, string(p.BodyBytes)))
+		logging.GetLogger().Infoln(fmt.Sprintf("pre transform: httpArmoury.RequestParams[%d] = %s", i, string(p.BodyBytes)))
+		logging.GetLogger().Infoln(fmt.Sprintf("post transform: httpArmoury.RequestParams[%d] = %s", i, string(p.BodyBytes)))
 		secondPassParams[i] = p
 	}
 	httpArmoury.SetRequestParams(secondPassParams)
@@ -331,8 +330,8 @@ func BuildHTTPRequestCtxFromAnnotation(handlerCtx *handler.HandlerContext, param
 		}
 
 		p.Request = baseRequestCtx
-		log.Infoln(fmt.Sprintf("pre transform: httpArmoury.RequestParams[%d] = %s", i, string(p.BodyBytes)))
-		log.Infoln(fmt.Sprintf("post transform: httpArmoury.RequestParams[%d] = %s", i, string(p.BodyBytes)))
+		logging.GetLogger().Infoln(fmt.Sprintf("pre transform: httpArmoury.RequestParams[%d] = %s", i, string(p.BodyBytes)))
+		logging.GetLogger().Infoln(fmt.Sprintf("post transform: httpArmoury.RequestParams[%d] = %s", i, string(p.BodyBytes)))
 		secondPassParams[i] = p
 	}
 	httpArmoury.SetRequestParams(secondPassParams)

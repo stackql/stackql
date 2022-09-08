@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 type PrettyPrintContext struct {
@@ -13,6 +13,7 @@ type PrettyPrintContext struct {
 	Indentation     int
 	BaseIndentation int
 	Delimiter       string
+	Logger          *logrus.Logger
 }
 
 type PrettyPrinter struct {
@@ -20,12 +21,13 @@ type PrettyPrinter struct {
 	currentIndentation int
 }
 
-func NewPrettyPrintContext(isPrettyPrint bool, indentation int, baseIndentation int, delimiter string) PrettyPrintContext {
+func NewPrettyPrintContext(isPrettyPrint bool, indentation int, baseIndentation int, delimiter string, logger *logrus.Logger) PrettyPrintContext {
 	return PrettyPrintContext{
 		PrettyPrint:     isPrettyPrint,
 		Indentation:     indentation,
 		BaseIndentation: baseIndentation,
 		Delimiter:       delimiter,
+		Logger:          logger,
 	}
 }
 
@@ -146,7 +148,7 @@ func (pp *PrettyPrinter) printTemplatedJSON(body interface{}) (string, error) {
 		for _, v := range bt {
 			val, err := pp.printTemplatedJSON(v)
 			if err != nil {
-				log.Infof("%s\n", err.Error())
+				pp.prettyPrintContext.Logger.Infof("%s\n", err.Error())
 				pp.setCurrentIndentation(startPos)
 				return "", err
 			}

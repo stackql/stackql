@@ -5,6 +5,7 @@ import (
 
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/util"
 
@@ -12,8 +13,6 @@ import (
 
 	"regexp"
 	"strings"
-
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -65,7 +64,7 @@ func OpenapiStackQLServiceDiscoveryDocPersistor(prov *openapistackql.Provider, s
 						if prValSc.IsArrayRef() {
 							iSc := openapistackql.NewSchema(prValSc.Items.Value, svc, fmt.Sprintf("%s.%s.Items", v.Title, pr))
 							tb := iSc.Tabulate(false)
-							log.Infoln(fmt.Sprintf("tb = %v", tb))
+							logging.GetLogger().Infoln(fmt.Sprintf("tb = %v", tb))
 							if tb != nil {
 								annTab := util.NewAnnotatedTabulation(tb, dto.NewHeirarchyIdentifiers(prov.Name, svc.GetName(), tb.GetName(), ""), "")
 								tabluationsAnnotated = append(tabluationsAnnotated, annTab)
@@ -96,11 +95,11 @@ func OpenapiStackQLServiceDiscoveryDocPersistor(prov *openapistackql.Provider, s
 	for _, tblt := range tabluationsAnnotated {
 		ddl := drmConfig.GenerateDDL(tblt, discoveryGenerationId, true)
 		for _, q := range ddl {
-			// log.Infoln(q)
+			// logging.GetLogger().Infoln(q)
 			_, err = db.Exec(q)
 			if err != nil {
 				errStr := fmt.Sprintf("aborting DDL run on query = %s, err = %v", q, err)
-				log.Infoln(errStr)
+				logging.GetLogger().Infoln(errStr)
 				txn.Rollback()
 				return err
 			}
@@ -133,11 +132,11 @@ func OpenapiStackQLTabulationsPersistor(prov *openapistackql.Provider, svc *open
 	for _, tblt := range tabluationsAnnotated {
 		ddl := drmConfig.GenerateDDL(tblt, discoveryGenerationId, false)
 		for _, q := range ddl {
-			// log.Infoln(q)
+			// logging.GetLogger().Infoln(q)
 			_, err = db.Exec(q)
 			if err != nil {
 				errStr := fmt.Sprintf("aborting DDL run on query = %s, err = %v", q, err)
-				log.Infoln(errStr)
+				logging.GetLogger().Infoln(errStr)
 				txn.Rollback()
 				return discoveryGenerationId, err
 			}

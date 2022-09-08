@@ -9,11 +9,10 @@ import (
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/entryutil"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/querysubmit"
 	"github.com/stackql/stackql/internal/stackql/responsehandler"
 	"github.com/stackql/stackql/internal/stackql/util"
-
-	log "github.com/sirupsen/logrus"
 )
 
 func ProcessDryRun(handlerCtx *handler.HandlerContext) {
@@ -22,7 +21,7 @@ func ProcessDryRun(handlerCtx *handler.HandlerContext) {
 			"query": handlerCtx.RawQuery,
 		},
 	}
-	log.Debugln("dryrun query underway...")
+	logging.GetLogger().Debugln("dryrun query underway...")
 	response := util.PrepareResultSet(dto.NewPrepareResultSetDTO(nil, resultMap, nil, nil, nil, nil))
 	responsehandler.HandleResponse(handlerCtx, response)
 }

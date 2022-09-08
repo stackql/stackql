@@ -6,8 +6,7 @@ import (
 	"vitess.io/vitess/go/vt/sqlparser"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
-
-	log "github.com/sirupsen/logrus"
+	"github.com/stackql/stackql/internal/stackql/logging"
 )
 
 type DataFlowRelation interface {
@@ -49,7 +48,7 @@ func (dr *StandardDataFlowRelation) IsSQL() bool {
 	case *sqlparser.ColName:
 		return false
 	default:
-		log.Infof("%v\n", se)
+		logging.GetLogger().Infof("%v\n", se)
 		return true
 	}
 }

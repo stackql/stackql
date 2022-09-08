@@ -3,13 +3,13 @@ name: Go
 on:
   push:
     branches:
-      - master
+      - main
       - develop
     tags:
       - build*
   pull_request:
     branches:
-      - master
+      - main
       - develop
 
 env:
@@ -653,3 +653,17 @@ jobs:
       if: success() && startsWith(${{ steps.git_ref_parse.outputs.SOURCE_TAG }}, 'build-release')
       run: |
         robot  --variable EXECUTION_PLATFORM:docker -d test/robot/functional test/robot/integration
+
+    - name: Login to Docker Hub
+      if: ${{ success() && github.ref_type == 'branch' && github.ref_name == 'main' && github.repository == 'stackql/stackql' && github.event_name == 'push' }}
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Push stackql image to Docker Hub
+      if: ${{ success() && github.ref_type == 'branch' && github.ref_name == 'main' && github.repository == 'stackql/stackql' && github.event_name == 'push' }}
+      run: |
+        docker tag stackql/stackql:latest stackql/stackql:${{github.sha}}
+        docker push stackql/stackql:latest 
+        docker push stackql/stackql:${{github.sha}}

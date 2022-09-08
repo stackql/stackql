@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"io"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/stackql/go-openapistackql/pkg/graphql"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/httpmiddleware"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 	"github.com/stackql/stackql/internal/stackql/streaming"
@@ -131,7 +131,7 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 					}
 					for _, item := range response {
 						r, err := ss.drmCfg.ExecuteInsertDML(ss.handlerCtx.SQLEngine, ss.insertPreparedStatementCtx, item)
-						log.Infoln(fmt.Sprintf("insert result = %v, error = %v", r, err))
+						logging.GetLogger().Infoln(fmt.Sprintf("insert result = %v, error = %v", r, err))
 						if err != nil {
 							return dto.NewErroneousExecutorOutput(err)
 						}

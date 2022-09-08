@@ -24,6 +24,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/config"
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/pkg/txncounter"
 
 	"github.com/magiconair/properties"
@@ -32,8 +33,6 @@ import (
 	"github.com/spf13/viper"
 
 	lrucache "vitess.io/vitess/go/cache"
-
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -163,14 +162,6 @@ func init() {
 
 }
 
-func setLogLevel() {
-	logLevel, err := log.ParseLevel(runtimeCtx.LogLevelStr)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.SetLevel(logLevel)
-}
-
 func mergeConfigFromFile(runtimeCtx *dto.RuntimeCtx, flagSet pflag.FlagSet) {
 	props, err := properties.LoadFile(runtimeCtx.ConfigFilePath, properties.UTF8)
 	if err == nil {
@@ -188,7 +179,7 @@ func initConfig() {
 
 	mergeConfigFromFile(&runtimeCtx, *rootCmd.PersistentFlags())
 
-	setLogLevel()
+	logging.SetLogger(runtimeCtx.LogLevelStr)
 	config.CreateDirIfNotExists(runtimeCtx.ApplicationFilesRootPath, os.FileMode(runtimeCtx.ApplicationFilesRootPathMode))
 	config.CreateDirIfNotExists(path.Join(runtimeCtx.ApplicationFilesRootPath, runtimeCtx.ProviderStr), os.FileMode(runtimeCtx.ApplicationFilesRootPathMode))
 	config.CreateDirIfNotExists(config.GetReadlineDirPath(runtimeCtx), os.FileMode(runtimeCtx.ApplicationFilesRootPathMode))

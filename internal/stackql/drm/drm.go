@@ -9,13 +9,13 @@ import (
 	"strings"
 
 	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/util"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
 
-	log "github.com/sirupsen/logrus"
 	"vitess.io/vitess/go/vt/sqlparser"
 )
 
@@ -380,7 +380,7 @@ func (dc *StaticDRMConfig) GenerateDDL(tabAnn util.AnnotatedTabulation, discover
 }
 
 func (dc *StaticDRMConfig) GenerateInsertDML(tabAnnotated util.AnnotatedTabulation, tcc *dto.TxnControlCounters) (*PreparedStatementCtx, error) {
-	// log.Infoln(fmt.Sprintf("%v", tabulation))
+	// logging.GetLogger().Infoln(fmt.Sprintf("%v", tabulation))
 	var q strings.Builder
 	var quotedColNames, vals []string
 	var columns []ColumnMetadata
@@ -484,7 +484,7 @@ func (dc *StaticDRMConfig) GenerateSelectDML(tabAnnotated util.AnnotatedTabulati
 }
 
 func (dc *StaticDRMConfig) generateControlVarArgs(cp PreparedStatementParameterized) ([]interface{}, error) {
-	// log.Infoln(fmt.Sprintf("%v", ctx))
+	// logging.GetLogger().Infoln(fmt.Sprintf("%v", ctx))
 	var varArgs []interface{}
 	if cp.controlArgsRequired {
 		ctrSlice := cp.Ctx.GetAllCtrlCtrs()
@@ -561,7 +561,7 @@ func (dc *StaticDRMConfig) QueryDML(dbEngine sqlengine.SQLEngine, ctxParameteriz
 	sort.Ints(keys)
 	for _, k := range keys {
 		cp := rootArgs.children[k]
-		log.Infoln(fmt.Sprintf("adding child query = %s", cp.query))
+		logging.GetLogger().Infoln(fmt.Sprintf("adding child query = %s", cp.query))
 		childQueryStrings = append(childQueryStrings, cp.query)
 		if len(rootArgs.args) >= k {
 			varArgs = append(varArgs, rootArgs.args[j:k]...)
@@ -569,14 +569,14 @@ func (dc *StaticDRMConfig) QueryDML(dbEngine sqlengine.SQLEngine, ctxParameteriz
 		varArgs = append(varArgs, cp.args...)
 		j = k
 	}
-	log.Infoln(fmt.Sprintf("raw query = %s", query))
+	logging.GetLogger().Infoln(fmt.Sprintf("raw query = %s", query))
 	if len(childQueryStrings) > 0 {
 		query = fmt.Sprintf(rootArgs.query, childQueryStrings...)
 	}
 	if len(rootArgs.args) >= j {
 		varArgs = append(varArgs, rootArgs.args[j:]...)
 	}
-	log.Infoln(fmt.Sprintf("query = %s", query))
+	logging.GetLogger().Infoln(fmt.Sprintf("query = %s", query))
 	return dbEngine.Query(query, varArgs...)
 }
 

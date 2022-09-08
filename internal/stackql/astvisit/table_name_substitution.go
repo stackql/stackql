@@ -6,11 +6,11 @@ import (
 
 	"vitess.io/vitess/go/vt/sqlparser"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/stackql/go-openapistackql/openapistackql"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
@@ -37,7 +37,7 @@ func (v *TableNameSubstitutionAstVisitor) buildAcquireQueryCtx(
 	insertTabulation := sc.Tabulate(false)
 
 	hIds := ac.GetHIDs()
-	log.Infof("%v %v", insertTabulation, hIds)
+	logging.GetLogger().Infof("%v %v", insertTabulation, hIds)
 
 	annotatedInsertTabulation := util.NewAnnotatedTabulation(insertTabulation, hIds, "")
 	tableDTO, err := dc.GetCurrentTable(hIds, sqlEngine)
@@ -122,7 +122,7 @@ func (v *TableNameSubstitutionAstVisitor) buildSelectQuery(
 
 	hIds := dto.NewHeirarchyIdentifiers(provStr, svcStr, itemObjS.GetName(), "")
 	selectTabulation := itemObjS.Tabulate(true)
-	log.Infof("%v %v %v", insertTabulation, hIds, selectTabulation)
+	logging.GetLogger().Infof("%v %v %v", insertTabulation, hIds, selectTabulation)
 
 	// annotatedSelectTabulation := util.NewAnnotatedTabulation(selectTabulation, hIds, tbl.GetAlias())
 	annotatedInsertTabulation := util.NewAnnotatedTabulation(insertTabulation, hIds, "")
@@ -431,7 +431,7 @@ func (v *TableNameSubstitutionAstVisitor) Visit(node sqlparser.SQLNode) error {
 		numParams := len(node.Params)
 		if numParams != 0 {
 			for i, p := range node.Params {
-				log.Debugf("%v\n", p)
+				logging.GetLogger().Debugf("%v\n", p)
 				if i != 0 {
 				}
 			}
@@ -573,7 +573,7 @@ func (v *TableNameSubstitutionAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 	case sqlparser.Columns:
 		for _, n := range node {
-			log.Debugf("%v\n", n)
+			logging.GetLogger().Debugf("%v\n", n)
 		}
 
 	case sqlparser.Partitions:
@@ -581,7 +581,7 @@ func (v *TableNameSubstitutionAstVisitor) Visit(node sqlparser.SQLNode) error {
 			return nil
 		}
 		for _, n := range node {
-			log.Debugf("%v\n", n)
+			logging.GetLogger().Debugf("%v\n", n)
 		}
 
 	case sqlparser.TableExprs:
@@ -600,7 +600,7 @@ func (v *TableNameSubstitutionAstVisitor) Visit(node sqlparser.SQLNode) error {
 				if !ok {
 					return fmt.Errorf("cannot process table '%s'", exp.GetRawVal())
 				}
-				log.Debugf("%v\n", exp)
+				logging.GetLogger().Debugf("%v\n", exp)
 				node.Expr = v.dc.GetParserTableName(tbl.GetHeirarchyIdentifiers(), v.baseCtrlCounters.DiscoveryGenerationId)
 			}
 			// t, err := v.analyzeAliasedTable(node)
@@ -656,7 +656,7 @@ func (v *TableNameSubstitutionAstVisitor) Visit(node sqlparser.SQLNode) error {
 		if len(node.Indexes) == 0 {
 		} else {
 			for _, n := range node.Indexes {
-				log.Debugf("%v\n", n)
+				logging.GetLogger().Debugf("%v\n", n)
 			}
 		}
 
@@ -668,7 +668,7 @@ func (v *TableNameSubstitutionAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 	case sqlparser.Exprs:
 		for _, n := range node {
-			log.Debugf("%v\n", n)
+			logging.GetLogger().Debugf("%v\n", n)
 		}
 
 	case *sqlparser.AndExpr:
@@ -808,7 +808,7 @@ func (v *TableNameSubstitutionAstVisitor) Visit(node sqlparser.SQLNode) error {
 		if node.Expr != nil {
 		}
 		for _, when := range node.Whens {
-			log.Debugf("%v\n", when)
+			logging.GetLogger().Debugf("%v\n", when)
 		}
 		if node.Else != nil {
 		}
@@ -821,17 +821,17 @@ func (v *TableNameSubstitutionAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 	case sqlparser.GroupBy:
 		for _, n := range node {
-			log.Debugf("%v\n", n)
+			logging.GetLogger().Debugf("%v\n", n)
 		}
 
 	case sqlparser.OrderBy:
 		for _, n := range node {
-			log.Debugf("%v\n", n)
+			logging.GetLogger().Debugf("%v\n", n)
 		}
 
 	case *sqlparser.Order:
 		if node, ok := node.Expr.(*sqlparser.NullVal); ok {
-			log.Debugf("%v\n", node)
+			logging.GetLogger().Debugf("%v\n", node)
 			return nil
 		}
 		if node, ok := node.Expr.(*sqlparser.FuncExpr); ok {
@@ -849,19 +849,19 @@ func (v *TableNameSubstitutionAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 	case sqlparser.Values:
 		for _, n := range node {
-			log.Debugf("%v\n", n)
+			logging.GetLogger().Debugf("%v\n", n)
 		}
 
 	case sqlparser.UpdateExprs:
 		for _, n := range node {
-			log.Debugf("%v\n", n)
+			logging.GetLogger().Debugf("%v\n", n)
 		}
 
 	case *sqlparser.UpdateExpr:
 
 	case sqlparser.SetExprs:
 		for _, n := range node {
-			log.Debugf("%v\n", n)
+			logging.GetLogger().Debugf("%v\n", n)
 		}
 
 	case *sqlparser.SetExpr:

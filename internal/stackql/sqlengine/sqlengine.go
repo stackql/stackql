@@ -8,9 +8,9 @@ import (
 	"sync"
 
 	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/util"
 
-	log "github.com/sirupsen/logrus"
 	_ "github.com/stackql/go-sqlite3"
 )
 
@@ -93,7 +93,7 @@ func newSQLiteEngine(cfg SQLEngineConfig) (*SQLiteEngine, error) {
 	if err != nil {
 		return eng, err
 	}
-	log.Infoln(fmt.Sprintf("opened db with file = '%s' and err  = '%v'", fileName, err))
+	logging.GetLogger().Infoln(fmt.Sprintf("opened db with file = '%s' and err  = '%v'", fileName, err))
 	if err != nil {
 		return eng, err
 	}
@@ -132,9 +132,9 @@ func (eng *SQLiteEngine) initSQLiteEngine() error {
 }
 
 func (se SQLiteEngine) Exec(query string, varArgs ...interface{}) (sql.Result, error) {
-	// log.Infoln(fmt.Sprintf("exec query = %s", query))
+	// logging.GetLogger().Infoln(fmt.Sprintf("exec query = %s", query))
 	res, err := se.db.Exec(query, varArgs...)
-	// log.Infoln(fmt.Sprintf("res= %v, err = %v", res, err))
+	// logging.GetLogger().Infoln(fmt.Sprintf("res= %v, err = %v", res, err))
 	return res, err
 }
 
@@ -193,7 +193,7 @@ func (se SQLiteEngine) getCurrentTable(tableHeirarchyIDs *dto.HeirarchyIdentifie
 	res := se.db.QueryRow(`select name, CAST(REPLACE(name, ?, '') AS INTEGER) from sqlite_schema where type = 'table' and name like ? ORDER BY name DESC limit 1`, tableNameLHSRemove, tableNamePattern)
 	err := res.Scan(&tableName, &discoID)
 	if err != nil {
-		log.Errorln(fmt.Sprintf("err = %v for tableNamePattern = '%s' and tableNameLHSRemove = '%s'", err, tableNamePattern, tableNameLHSRemove))
+		logging.GetLogger().Errorln(fmt.Sprintf("err = %v for tableNamePattern = '%s' and tableNameLHSRemove = '%s'", err, tableNamePattern, tableNameLHSRemove))
 	}
 	return dto.NewDBTable(tableName, discoID, tableHeirarchyIDs), err
 }
@@ -230,7 +230,7 @@ func (se SQLiteEngine) getNextSessionId(generationId int) (int, error) {
 	var retVal int
 	res := se.db.QueryRow(`INSERT INTO "__iql__.control.session" (iql_generation_id, created_dttm) VALUES (?, strftime('%s', 'now')) RETURNING iql_session_id`, generationId)
 	err := res.Scan(&retVal)
-	log.Infoln(fmt.Sprintf("getNextSessionId(): generation id = %d, session id = %d", generationId, retVal))
+	logging.GetLogger().Infoln(fmt.Sprintf("getNextSessionId(): generation id = %d, session id = %d", generationId, retVal))
 	return retVal, err
 }
 
@@ -316,24 +316,24 @@ func (se SQLiteEngine) concertedQueryGen(generatorQuery string, args ...interfac
 	}
 	rows, err := se.db.Query(generatorQuery, args...)
 	if err != nil {
-		log.Infoln(fmt.Sprintf("obsolete compose error: %v", err))
+		logging.GetLogger().Infoln(fmt.Sprintf("obsolete compose error: %v", err))
 		return err
 	}
 	txn, err := se.db.Begin()
 	if err != nil {
-		log.Infoln(fmt.Sprintf("%v", err))
+		logging.GetLogger().Infoln(fmt.Sprintf("%v", err))
 		return err
 	}
 	amalgam, err := singleColRowsToString(rows)
 	if err != nil {
-		log.Infoln(fmt.Sprintf("obsolete obtain error: %v", err))
+		logging.GetLogger().Infoln(fmt.Sprintf("obsolete obtain error: %v", err))
 		txn.Rollback()
 		return err
 	}
-	log.Infoln(fmt.Sprintf("amalgam = %s", amalgam))
+	logging.GetLogger().Infoln(fmt.Sprintf("amalgam = %s", amalgam))
 	_, err = se.db.Exec(amalgam, args...)
 	if err != nil {
-		log.Infoln(fmt.Sprintf("obsolete exec error: %v", err))
+		logging.GetLogger().Infoln(fmt.Sprintf("obsolete exec error: %v", err))
 		txn.Rollback()
 		return err
 	}
@@ -346,9 +346,9 @@ func (se SQLiteEngine) Query(query string, varArgs ...interface{}) (*sql.Rows, e
 }
 
 func (se SQLiteEngine) query(query string, varArgs ...interface{}) (*sql.Rows, error) {
-	// log.Infoln(fmt.Sprintf("query = %s", query))
+	// logging.GetLogger().Infoln(fmt.Sprintf("query = %s", query))
 	res, err := se.db.Query(query, varArgs...)
-	// log.Infoln(fmt.Sprintf("res= %v, err = %v", res, err))
+	// logging.GetLogger().Infoln(fmt.Sprintf("res= %v, err = %v", res, err))
 	return res, err
 }
 

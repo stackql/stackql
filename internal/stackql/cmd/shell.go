@@ -28,14 +28,13 @@ import (
 	"github.com/stackql/stackql/internal/stackql/entryutil"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/iqlerror"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/provider"
 	"github.com/stackql/stackql/internal/stackql/writer"
 
 	"github.com/spf13/cobra"
 
 	"github.com/chzyer/readline"
-
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -203,7 +202,7 @@ var shellCmd = &cobra.Command{
 				goto exit
 			case line == "":
 			default:
-				log.Debugln("you said:", strconv.Quote(line))
+				logging.GetLogger().Debugln("you said:", strconv.Quote(line))
 				inlineCommentIdx := strings.Index(line, "--")
 				if inlineCommentIdx > -1 {
 					line = line[:inlineCommentIdx]

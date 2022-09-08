@@ -9,14 +9,13 @@ import (
 	"github.com/lib/pq/oid"
 	openapistackql_util "github.com/stackql/go-openapistackql/pkg/util"
 	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 
 	"vitess.io/vitess/go/sqltypes"
 	"vitess.io/vitess/go/vt/sqlparser"
 
 	querypb "vitess.io/vitess/go/vt/proto/query"
-
-	log "github.com/sirupsen/logrus"
 )
 
 var defaultColSortArr []string = []string{
@@ -55,7 +54,7 @@ func extractInsertParams(insert *sqlparser.Insert, insertValOnlyRows map[int]map
 	for i, row := range insertValOnlyRows {
 		rowVal := make(map[string]interface{})
 		if len(insert.Columns) != len(row) {
-			log.Infoln(fmt.Sprintf("row = %v", row))
+			logging.GetLogger().Infoln(fmt.Sprintf("row = %v", row))
 			return nil, fmt.Errorf("disparity in fields to insert and supplied data")
 		}
 		for idx, col := range insert.Columns {
@@ -167,12 +166,12 @@ func TransformSQLRawParameters(input map[string]interface{}) (map[string]interfa
 	for k, v := range input {
 		switch v := v.(type) {
 		case *sqlparser.FuncExpr:
-			log.Infof("%v\n", v)
+			logging.GetLogger().Infof("%v\n", v)
 			continue
 		case parserutil.ParameterMetadata:
 			switch t := v.GetVal().(type) {
 			case *sqlparser.FuncExpr:
-				log.Infof("%v\n", t)
+				logging.GetLogger().Infof("%v\n", t)
 				continue
 			}
 		}

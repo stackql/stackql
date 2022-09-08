@@ -658,8 +658,8 @@ github.com/stackql/go-sqlite3 v0.0.1-stackqlrc01 h1:q+LfCfPrIqqG5+v9T5xjyYzOEBB4
 github.com/stackql/go-sqlite3 v0.0.1-stackqlrc01/go.mod h1:JHMGM3Hu7TcW8NBiJMFSBCHaUkhm1VjGZD5/uDaUDf4=
 github.com/stackql/go-suffix-map v0.0.1-alpha01 h1:TDUDS8bySu41Oo9p0eniUeCm43mnRM6zFEd6j6VUaz8=
 github.com/stackql/go-suffix-map v0.0.1-alpha01/go.mod h1:QAi+SKukOyf4dBtWy8UMy+hsXXV+yyEE4vmBkji2V7g=
-github.com/stackql/psql-wire v0.0.2-stackqlbeta01 h1:bbIRwFWZ15JrKqLfJ+CrgiSH9iOxj/attzxmHS9nO6I=
-github.com/stackql/psql-wire v0.0.2-stackqlbeta01/go.mod h1:p4SxaTS4m9mLiq08GSOaatXSiai8REL5XPMlcVJxSwE=
+github.com/stackql/psql-wire v0.0.2-stackqlbeta02 h1:djbLljmiFK1pzOaisEWkD/ZmDNgGprcLN9BDaTwBQ4Q=
+github.com/stackql/psql-wire v0.0.2-stackqlbeta02/go.mod h1:mS0gvNPicc1rtwVkIDqVuWMOSL29WNEDOeF8mxkrwqY=
 github.com/stackql/readline v0.0.2-alpha05 h1:ID4QzGdplFBsrSnTuz8pvKzWw96JbrJg8fsLry2UriU=
 github.com/stackql/readline v0.0.2-alpha05/go.mod h1:OFAYOdXk/X4+5GYiDXFfaGrk+bCN6Qv0SYY5HNzD2E0=
 github.com/stackql/stackql-provider-registry v0.0.1-rc01 h1:3XorfaYEhGpuvEeQK04EmpZUCr42hZ/a4Nh3wE25LF0=

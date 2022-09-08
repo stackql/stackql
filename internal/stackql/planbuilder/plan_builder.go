@@ -11,6 +11,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/iqlerror"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parse"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/plan"
@@ -19,8 +20,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/util"
 
 	"vitess.io/vitess/go/vt/sqlparser"
-
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -270,7 +269,7 @@ func (pgb *planGraphBuilder) handleAuth(pbi PlanBuilderInput) error {
 	}
 	err = primitiveGenerator.analyzeStatement(pbi)
 	if err != nil {
-		log.Debugln(fmt.Sprintf("err = %s", err.Error()))
+		logging.GetLogger().Debugln(fmt.Sprintf("err = %s", err.Error()))
 		return err
 	}
 	authCtx, authErr := handlerCtx.GetAuthContext(node.Provider)
@@ -363,7 +362,7 @@ func (pgb *planGraphBuilder) handleSelect(pbi PlanBuilderInput) (*primitivegraph
 		primitiveGenerator := newRootPrimitiveGenerator(node, handlerCtx, pgb.planGraph)
 		err := primitiveGenerator.analyzeStatement(pbi)
 		if err != nil {
-			log.Infoln(fmt.Sprintf("select statement analysis error = '%s'", err.Error()))
+			logging.GetLogger().Infoln(fmt.Sprintf("select statement analysis error = '%s'", err.Error()))
 			return nil, nil, err
 		}
 		isLocallyExecutable := true
@@ -404,7 +403,7 @@ func (pgb *planGraphBuilder) handleUnion(pbi PlanBuilderInput) (*primitivegraph.
 	primitiveGenerator := newRootPrimitiveGenerator(node, handlerCtx, pgb.planGraph)
 	err := primitiveGenerator.analyzeStatement(pbi)
 	if err != nil {
-		log.Infoln(fmt.Sprintf("select statement analysis error = '%s'", err.Error()))
+		logging.GetLogger().Infoln(fmt.Sprintf("select statement analysis error = '%s'", err.Error()))
 		return nil, nil, err
 	}
 	isLocallyExecutable := true
@@ -725,7 +724,7 @@ func createErroneousPlan(handlerCtx *handler.HandlerContext, qPlan *plan.Plan, r
 func BuildPlanFromContext(handlerCtx *handler.HandlerContext) (*plan.Plan, error) {
 	planKey := handlerCtx.Query
 	if qp, ok := handlerCtx.LRUCache.Get(planKey); ok && isPlanCacheEnabled() {
-		log.Infoln("retrieving query plan from cache")
+		logging.GetLogger().Infoln("retrieving query plan from cache")
 		pl, ok := qp.(*plan.Plan)
 		if ok {
 			pl.Instructions.SetTxnId(handlerCtx.TxnCounterMgr.GetNextTxnId())
