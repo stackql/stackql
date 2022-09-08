@@ -29,16 +29,13 @@ const MAX = 100
 
 const DEFAULT_PORT_NO = 3406
 
-// execCmd represents the exec command
 var srvCmd = &cobra.Command{
 	Use:   "srv",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "run postgres wire server",
+	Long: `
+	Run a PostgreSQL wire protocol server.
+	Supports client connections from psql and all manner or libs.
+  `,
 	Run: func(cmd *cobra.Command, args []string) {
 		sqlEngine, err := entryutil.BuildSQLEngine(runtimeCtx)
 		iqlerror.PrintErrorAndExitOneIfError(err)
