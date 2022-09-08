@@ -5,8 +5,8 @@ import (
 
 	"vitess.io/vitess/go/vt/sqlparser"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/stackql/go-suffix-map/pkg/suffixmap"
+	"github.com/stackql/stackql/internal/stackql/logging"
 )
 
 type SymTabEntry struct {
@@ -44,7 +44,7 @@ func NewHashMapTreeSymTab() *HashMapTreeSymTab {
 func (st *HashMapTreeSymTab) GetSymbol(k interface{}) (SymTabEntry, error) {
 	switch k := k.(type) {
 	case *sqlparser.ColName:
-		log.Infoln(fmt.Sprintf("reading from symbol table using ColIdent %v", k))
+		logging.GetLogger().Infoln(fmt.Sprintf("reading from symbol table using ColIdent %v", k))
 		return st.GetSymbol(k.Name.GetRawVal())
 	}
 	v, ok := st.tab[k]

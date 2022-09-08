@@ -3,10 +3,10 @@ package router
 import (
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/stackql/stackql/internal/stackql/astvisit"
 	"github.com/stackql/stackql/internal/stackql/dataflow"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 	"vitess.io/vitess/go/vt/sqlparser"
@@ -254,9 +254,9 @@ func (pr *StandardParameterRouter) getAvailableParameters(tb sqlparser.TableExpr
 		val := v.GetVal()
 		switch val := val.(type) {
 		case *sqlparser.ColName:
-			log.Debugf("%v\n", val)
+			logging.GetLogger().Debugf("%v\n", val)
 			rhsAlias := val.Qualifier.GetRawVal()
-			log.Debugf("%v\n", rhsAlias)
+			logging.GetLogger().Debugf("%v\n", rhsAlias)
 			foundTable, ok := pr.tablesAliasMap[rhsAlias]
 			if ok && foundTable != tb {
 				//
@@ -297,7 +297,7 @@ func (pr *StandardParameterRouter) invalidate(key string, val interface{}) error
 // TODO: Get rid of the dead set mess that is where paramters in preference.
 func (pr *StandardParameterRouter) Route(tb sqlparser.TableExpr, handlerCtx *handler.HandlerContext) (taxonomy.AnnotationCtx, error) {
 	for k, v := range pr.whereParamMap.GetMap() {
-		log.Infof("%v\n", v)
+		logging.GetLogger().Infof("%v\n", v)
 		alias := k.Alias()
 		if alias == "" {
 			continue
@@ -315,7 +315,7 @@ func (pr *StandardParameterRouter) Route(tb sqlparser.TableExpr, handlerCtx *han
 		}
 	}
 	for k, v := range pr.onParamMap.GetMap() {
-		log.Infof("%v\n", v)
+		logging.GetLogger().Infof("%v\n", v)
 		alias := k.Alias()
 		if alias == "" {
 			continue
@@ -368,7 +368,7 @@ func (pr *StandardParameterRouter) Route(tb sqlparser.TableExpr, handlerCtx *han
 		// the Table - Paramater coupling object
 		tpc = notOnParams
 	}
-	log.Infof("hr = '%+v', remainingParams = '%+v', err = '%+v'", hr, remainingParams, err)
+	logging.GetLogger().Infof("hr = '%+v', remainingParams = '%+v', err = '%+v'", hr, remainingParams, err)
 	if err != nil {
 		return nil, err
 	}
@@ -382,7 +382,7 @@ func (pr *StandardParameterRouter) Route(tb sqlparser.TableExpr, handlerCtx *han
 	}
 	onConsumed := reconstitutedConsumedParams.GetOnCoupling()
 	pms := onConsumed.GetAllParameters()
-	log.Infof("onConsumed = '%+v'", onConsumed)
+	logging.GetLogger().Infof("onConsumed = '%+v'", onConsumed)
 	for _, kv := range pms {
 		// In this stanza:
 		//   1. [*] mark comparisons for rewriting
@@ -395,7 +395,7 @@ func (pr *StandardParameterRouter) Route(tb sqlparser.TableExpr, handlerCtx *han
 		pr.comparisonToTableDependencies[p] = tb
 		// this can be done, not sure if it is the best way
 		// rewriteComparisonExpr(p)
-		log.Infof("%v", kv)
+		logging.GetLogger().Infof("%v", kv)
 	}
 	m := taxonomy.NewExtendedTableMetadata(hr, taxonomy.GetAliasFromStatement(tb))
 	// store relationship from sqlparser table expression to

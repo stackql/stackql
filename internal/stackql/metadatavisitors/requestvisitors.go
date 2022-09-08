@@ -5,6 +5,7 @@ import (
 
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/iqlutil"
+	"github.com/stackql/stackql/internal/stackql/logging"
 
 	"sort"
 	"strings"
@@ -13,7 +14,6 @@ import (
 
 	"github.com/stackql/go-openapistackql/openapistackql"
 
-	log "github.com/sirupsen/logrus"
 	"vitess.io/vitess/go/vt/sqlparser"
 )
 
@@ -141,7 +141,7 @@ func ToInsertStatement(columns sqlparser.Columns, m *openapistackql.OperationSto
 
 	tVal, _ := schemaVisitor.RetrieveTemplate(sch, m, extended)
 
-	log.Infoln(fmt.Sprintf("tVal = %v", tVal))
+	logging.GetLogger().Infoln(fmt.Sprintf("tVal = %v", tVal))
 
 	colMap := getColsMap(columns)
 
@@ -178,12 +178,12 @@ func ToInsertStatement(columns sqlparser.Columns, m *openapistackql.OperationSto
 func (sv *SchemaRequestTemplateVisitor) processSubSchemasMap(sc *openapistackql.Schema, method *openapistackql.OperationStore, properties map[string]*openapistackql.Schema) (map[string]string, error) {
 	retVal := make(map[string]string)
 	for k, ss := range properties {
-		log.Infoln(fmt.Sprintf("RetrieveTemplate() k = '%s', ss is nil ? '%t'", k, ss == nil))
+		logging.GetLogger().Infoln(fmt.Sprintf("RetrieveTemplate() k = '%s', ss is nil ? '%t'", k, ss == nil))
 		if ss != nil && (k == "" || !sv.isVisited(k, nil)) {
 			localSchemaVisitedMap := make(map[string]bool)
 			localSchemaVisitedMap[k] = true
 			if !method.IsRequiredRequestBodyProperty(k) && (ss.ReadOnly || (sv.requiredOnly && !sc.IsRequired(k))) {
-				log.Infoln(fmt.Sprintf("property = '%s' will be skipped", k))
+				logging.GetLogger().Infoln(fmt.Sprintf("property = '%s' will be skipped", k))
 				continue
 			}
 			rv, err := sv.retrieveTemplateVal(ss, method.Service, ".values."+constants.RequestBodyBaseKey+k, localSchemaVisitedMap)

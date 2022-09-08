@@ -6,8 +6,7 @@ import (
 	"runtime"
 
 	"github.com/stackql/stackql/internal/stackql/color"
-
-	log "github.com/sirupsen/logrus"
+	"github.com/stackql/stackql/internal/stackql/logging"
 )
 
 const (
@@ -69,6 +68,6 @@ func (ssw *StdStreamWriter) enclose(p []byte) []byte {
 }
 
 func (ssw *StdStreamWriter) Write(p []byte) (n int, err error) {
-	log.Infoln("stylised write called")
+	logging.GetLogger().Infoln("stylised write called")
 	return ssw.writer.Write(ssw.enclose(p))
 }

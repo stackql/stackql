@@ -9,6 +9,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/docparser"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	sdk "github.com/stackql/stackql/internal/stackql/google_sdk"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/methodselect"
 	"github.com/stackql/stackql/internal/stackql/netutils"
 	"github.com/stackql/stackql/internal/stackql/relational"
@@ -22,8 +23,6 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
-
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -192,7 +191,7 @@ func (gp *GenericProvider) ShowAuth(authCtx *dto.AuthCtx) (*openapistackql.AuthM
 				err = errors.New(constants.NotAuthenticatedShowStr)
 			}
 		} else {
-			log.Infoln(sdkErr)
+			logging.GetLogger().Infoln(sdkErr)
 			err = errors.New(constants.NotAuthenticatedShowStr)
 		}
 	default:

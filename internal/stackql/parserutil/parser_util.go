@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
+	"github.com/stackql/stackql/internal/stackql/logging"
 
-	log "github.com/sirupsen/logrus"
 	"vitess.io/vitess/go/vt/sqlparser"
 )
 
@@ -178,12 +178,12 @@ func ExtractSelectValColumns(selStmt *sqlparser.Select) (map[int]map[string]inte
 			case sqlparser.BoolVal:
 				cols[idx] = map[string]interface{}{fmt.Sprintf("$$unaliased_col_%d", idx): expr}
 			default:
-				log.Infoln(fmt.Sprintf("cannot use AliasedExpr of type '%T' as a raw value", expr))
+				logging.GetLogger().Infoln(fmt.Sprintf("cannot use AliasedExpr of type '%T' as a raw value", expr))
 				cols[idx] = nil
 				nonValCount++
 			}
 		default:
-			log.Infoln(fmt.Sprintf("cannot use SelectExpr of type '%T' as a raw value", node))
+			logging.GetLogger().Infoln(fmt.Sprintf("cannot use SelectExpr of type '%T' as a raw value", node))
 			cols[idx] = nil
 			nonValCount++
 		}
@@ -240,7 +240,7 @@ func extractUpdateValColumns(updateStmt *sqlparser.Update, includePlaceholders b
 	for _, ex := range updateStmt.Exprs {
 		switch node := ex.Expr.(type) {
 		case *sqlparser.Subquery:
-			log.Infof("subquery provided for update: '%v'", node)
+			logging.GetLogger().Infof("subquery provided for update: '%v'", node)
 			return nil, nil, fmt.Errorf("subquery in update statement not yet supported")
 		case *sqlparser.SQLVal:
 			retVal[ex.Name] = string(node.Val)
@@ -354,7 +354,7 @@ func CheckColUsagesAgainstTable(colUsages []ColumnUsageMetadata, table *openapis
 				return usageErr
 			}
 		}
-		log.Debugln(fmt.Sprintf("colname = %v", colUsage.ColName))
+		logging.GetLogger().Debugln(fmt.Sprintf("colname = %v", colUsage.ColName))
 	}
 	return nil
 }
@@ -543,7 +543,7 @@ func ExtractTableNameFromTableExpr(tableExpr sqlparser.TableExpr) (*sqlparser.Ta
 
 func ExtractSingleTableFromTableExprs(tableExprs sqlparser.TableExprs) (*sqlparser.TableName, error) {
 	for _, t := range tableExprs {
-		log.Infoln(fmt.Sprintf("t = %v", t))
+		logging.GetLogger().Infoln(fmt.Sprintf("t = %v", t))
 		return ExtractTableNameFromTableExpr(t)
 	}
 	return nil, fmt.Errorf("could not extract table name from TableExprs")

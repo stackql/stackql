@@ -7,13 +7,13 @@ import (
 	"github.com/stackql/stackql/internal/stackql/docparser"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 	"github.com/stackql/stackql/internal/stackql/util"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
 
-	log "github.com/sirupsen/logrus"
 	"vitess.io/vitess/go/vt/sqlparser"
 )
 
@@ -68,8 +68,8 @@ func (p *primitiveGenerator) assembleUnarySelectionBuilder(
 			return fmt.Errorf("column = '%s' is NOT present in either:  - data returned from provider, - acceptable parameters, use the DESCRIBE command to view available fields for SELECT operations", col.Name)
 		}
 		selectTabulation.PushBackColumn(openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.DecoratedColumn, foundSchema, col.Val))
-		log.Infoln(fmt.Sprintf("rsc = %T", col))
-		log.Infoln(fmt.Sprintf("schema type = %T", schema))
+		logging.GetLogger().Infoln(fmt.Sprintf("rsc = %T", col))
+		logging.GetLogger().Infoln(fmt.Sprintf("schema type = %T", schema))
 	}
 
 	selPsc, err := p.PrimitiveComposer.GetDRMConfig().GenerateSelectDML(util.NewAnnotatedTabulation(selectTabulation, hIds, tbl.GetAlias()), insPsc.GetGCCtrlCtrs(), astvisit.GenerateModifiedSelectSuffix(node), astvisit.GenerateModifiedWhereClause(rewrittenWhere))

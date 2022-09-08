@@ -9,6 +9,7 @@ import (
 	"github.com/jeroenrinzema/psql-wire/pkg/sqldata"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/util"
@@ -17,8 +18,6 @@ import (
 
 	"vitess.io/vitess/go/sqltypes"
 	querypb "vitess.io/vitess/go/vt/proto/query"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type Builder interface {
@@ -34,7 +33,7 @@ func prepareGolangResult(sqlEngine sqlengine.SQLEngine, errWriter io.Writer, stm
 		sqlEngine,
 		stmtCtx,
 	)
-	log.Infoln(fmt.Sprintf("select result = %v, error = %v", r, sqlErr))
+	logging.GetLogger().Infoln(fmt.Sprintf("select result = %v, error = %v", r, sqlErr))
 	if sqlErr != nil {
 		errWriter.Write(
 			[]byte(
@@ -60,10 +59,10 @@ func prepareGolangResult(sqlEngine sqlengine.SQLEngine, errWriter io.Writer, stm
 		for r.Next() {
 			errScan := r.Scan(ifArr...)
 			if errScan != nil {
-				log.Infoln(fmt.Sprintf("%v", errScan))
+				logging.GetLogger().Infoln(fmt.Sprintf("%v", errScan))
 			}
 			for ord, val := range ifArr {
-				log.Infoln(fmt.Sprintf("col #%d '%s':  %v  type: %T", ord, nonControlColumns[ord].GetName(), val, val))
+				logging.GetLogger().Infoln(fmt.Sprintf("col #%d '%s':  %v  type: %T", ord, nonControlColumns[ord].GetName(), val, val))
 			}
 			im := make(map[string]interface{})
 			imRaw := make(map[int]interface{})
@@ -81,7 +80,7 @@ func prepareGolangResult(sqlEngine sqlengine.SQLEngine, errWriter io.Writer, stm
 
 		for ord := range ks {
 			val := altKeys[strconv.Itoa(ord)]
-			log.Infoln(fmt.Sprintf("row #%d:  %v  type: %T", ord, val, val))
+			logging.GetLogger().Infoln(fmt.Sprintf("row #%d:  %v  type: %T", ord, val, val))
 		}
 	}
 	var cNames []string

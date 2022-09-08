@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"gonum.org/v1/gonum/graph"
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
 	"vitess.io/vitess/go/vt/sqlparser"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type DataFlowUnit interface {
@@ -151,7 +150,7 @@ func (dc *StandardDataFlowCollection) optimise() error {
 	for _, node := range dc.sorted {
 		switch node := node.(type) {
 		case DataFlowVertex:
-			log.Debugf("%v\n", node)
+			logging.GetLogger().Debugf("%v\n", node)
 			inDegree := dc.g.To(node.ID()).Len()
 			outDegree := dc.g.From(node.ID()).Len()
 			if inDegree == 0 && outDegree == 0 {

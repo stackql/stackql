@@ -16,10 +16,9 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/test/testobjects"
 	"github.com/stackql/stackql/internal/test/testutil"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type HTTPRequestExpectations struct {
@@ -60,7 +59,7 @@ func NewExpectationStore(tokenCalls int) ExpectationStore {
 }
 
 func (ex ExpectationStore) Put(k string, v HTTPRequestExpectations) {
-	log.Infoln(fmt.Sprintf("inputting expectation with key = %s", k))
+	logging.GetLogger().Infoln(fmt.Sprintf("inputting expectation with key = %s", k))
 	eL, ok := ex[k]
 	if ok {
 		eL.Ex = append(eL.Ex, v)

@@ -6,9 +6,8 @@ import (
 
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/output"
-
-	log "github.com/sirupsen/logrus"
 )
 
 func handleEmptyWriter(outputWriter output.IOutputWriter, err error) {
@@ -25,7 +24,7 @@ func handleEmptyWriter(outputWriter output.IOutputWriter, err error) {
 func HandleResponse(handlerCtx *handler.HandlerContext, response dto.ExecutorOutput) error {
 	var outputWriter output.IOutputWriter
 	var err error
-	log.Debugln(fmt.Sprintf("response from query = '%v'", response.GetSQLResult()))
+	logging.GetLogger().Debugln(fmt.Sprintf("response from query = '%v'", response.GetSQLResult()))
 	if response.Msg != nil {
 		for _, msg := range response.Msg.WorkingMessages {
 			handlerCtx.Outfile.Write([]byte(msg + fmt.Sprintln("")))

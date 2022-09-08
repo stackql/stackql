@@ -10,7 +10,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	v4 "github.com/aws/aws-sdk-go/aws/signer/v4"
-	log "github.com/sirupsen/logrus"
+	"github.com/stackql/stackql/internal/stackql/logging"
 )
 
 const (
@@ -69,7 +69,7 @@ func (t *AwsSignTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 		rgnStr,
 		time.Now(),
 	)
-	log.Infof("header = %v\n", header)
+	logging.GetLogger().Infof("header = %v\n", header)
 	if err != nil {
 		return nil, err
 	}

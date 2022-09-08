@@ -5,7 +5,7 @@ import (
 
 	"vitess.io/vitess/go/vt/sqlparser"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 )
 
@@ -252,7 +252,7 @@ func (v *TableExtractAstVisitor) Visit(node sqlparser.SQLNode) error {
 		numParams := len(node.Params)
 		if numParams != 0 {
 			for i, p := range node.Params {
-				log.Debugf("%v\n", p)
+				logging.GetLogger().Debugf("%v\n", p)
 				if i != 0 {
 				}
 			}
@@ -363,7 +363,7 @@ func (v *TableExtractAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 	case sqlparser.Columns:
 		for _, n := range node {
-			log.Debugf("%v\n", n)
+			logging.GetLogger().Debugf("%v\n", n)
 		}
 
 	case sqlparser.Partitions:
@@ -371,7 +371,7 @@ func (v *TableExtractAstVisitor) Visit(node sqlparser.SQLNode) error {
 			return nil
 		}
 		for _, n := range node {
-			log.Debugf("%v\n", n)
+			logging.GetLogger().Debugf("%v\n", n)
 		}
 
 	case sqlparser.TableExprs:
@@ -453,7 +453,7 @@ func (v *TableExtractAstVisitor) Visit(node sqlparser.SQLNode) error {
 		if len(node.Indexes) == 0 {
 		} else {
 			for _, n := range node.Indexes {
-				log.Debugf("%v\n", n)
+				logging.GetLogger().Debugf("%v\n", n)
 			}
 		}
 
@@ -465,7 +465,7 @@ func (v *TableExtractAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 	case sqlparser.Exprs:
 		for _, n := range node {
-			log.Debugf("%v\n", n)
+			logging.GetLogger().Debugf("%v\n", n)
 		}
 
 	case *sqlparser.AndExpr:
@@ -605,7 +605,7 @@ func (v *TableExtractAstVisitor) Visit(node sqlparser.SQLNode) error {
 		if node.Expr != nil {
 		}
 		for _, when := range node.Whens {
-			log.Debugf("%v\n", when)
+			logging.GetLogger().Debugf("%v\n", when)
 		}
 		if node.Else != nil {
 		}
@@ -618,17 +618,17 @@ func (v *TableExtractAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 	case sqlparser.GroupBy:
 		for _, n := range node {
-			log.Debugf("%v\n", n)
+			logging.GetLogger().Debugf("%v\n", n)
 		}
 
 	case sqlparser.OrderBy:
 		for _, n := range node {
-			log.Debugf("%v\n", n)
+			logging.GetLogger().Debugf("%v\n", n)
 		}
 
 	case *sqlparser.Order:
 		if node, ok := node.Expr.(*sqlparser.NullVal); ok {
-			log.Debugf("%v\n", node)
+			logging.GetLogger().Debugf("%v\n", node)
 			return nil
 		}
 		if node, ok := node.Expr.(*sqlparser.FuncExpr); ok {
@@ -646,19 +646,19 @@ func (v *TableExtractAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 	case sqlparser.Values:
 		for _, n := range node {
-			log.Debugf("%v\n", n)
+			logging.GetLogger().Debugf("%v\n", n)
 		}
 
 	case sqlparser.UpdateExprs:
 		for _, n := range node {
-			log.Debugf("%v\n", n)
+			logging.GetLogger().Debugf("%v\n", n)
 		}
 
 	case *sqlparser.UpdateExpr:
 
 	case sqlparser.SetExprs:
 		for _, n := range node {
-			log.Debugf("%v\n", n)
+			logging.GetLogger().Debugf("%v\n", n)
 		}
 
 	case *sqlparser.SetExpr:

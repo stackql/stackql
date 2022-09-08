@@ -13,11 +13,11 @@ import (
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/iqlutil"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/psqlwire"
 
 	"github.com/jeroenrinzema/psql-wire/pkg/sqldata"
 	"github.com/olekukonko/tablewriter"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -167,7 +167,7 @@ func resToArr(res sqldata.ISQLResult) []map[string]interface{} {
 func (jw *JsonWriter) writeRowsFromResult(res sqldata.ISQLResultStream) error {
 	for {
 		r, err := res.Read()
-		log.Debugln(fmt.Sprintf("result from stream: %v", r))
+		logging.GetLogger().Debugln(fmt.Sprintf("result from stream: %v", r))
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				rowsArr := resToArr(r)
@@ -246,7 +246,7 @@ func (tw *TableWriter) Write(res sqldata.ISQLResultStream) error {
 	for {
 		var rowsArr [][]string
 		r, err := res.Read()
-		log.Debugln(fmt.Sprintf("result from stream: %v", r))
+		logging.GetLogger().Debugln(fmt.Sprintf("result from stream: %v", r))
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				if !isHeaderRead {
@@ -323,7 +323,7 @@ func (csvw *CSVWriter) Write(res sqldata.ISQLResultStream) error {
 	for {
 		var rowsArr [][]string
 		r, err := res.Read()
-		log.Debugln(fmt.Sprintf("result from stream: %v", r))
+		logging.GetLogger().Debugln(fmt.Sprintf("result from stream: %v", r))
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				if !isHeaderRead {
@@ -373,7 +373,7 @@ func (rw *RawWriter) Write(res sqldata.ISQLResultStream) error {
 	for {
 		var rowsArr [][]string
 		r, err := res.Read()
-		log.Debugln(fmt.Sprintf("result from stream: %v", r))
+		logging.GetLogger().Debugln(fmt.Sprintf("result from stream: %v", r))
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				if !isHeaderRead {
@@ -421,7 +421,7 @@ func (rw *PrettyWriter) Write(res sqldata.ISQLResultStream) error {
 	for {
 		var rowsArr [][]string
 		r, err := res.Read()
-		log.Debugln(fmt.Sprintf("result from stream: %v", r))
+		logging.GetLogger().Debugln(fmt.Sprintf("result from stream: %v", r))
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				if !isHeaderRead {

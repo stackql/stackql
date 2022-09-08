@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"strconv"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/stackql/go-openapistackql/pkg/httpelement"
 	"github.com/stackql/go-openapistackql/pkg/response"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/httpmiddleware"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 	"github.com/stackql/stackql/internal/stackql/streaming"
@@ -147,7 +147,7 @@ func (ss *SingleSelectAcquire) Build() error {
 				if err != nil {
 					return dto.NewErroneousExecutorOutput(err)
 				}
-				log.Infoln(fmt.Sprintf("target = %v", res))
+				logging.GetLogger().Infoln(fmt.Sprintf("target = %v", res))
 				var items interface{}
 				var ok bool
 				target := res.GetProcessedBody()
@@ -200,9 +200,9 @@ func (ss *SingleSelectAcquire) Build() error {
 						for i, item := range iArr {
 							if item != nil {
 
-								log.Infoln(fmt.Sprintf("running insert with control parameters: %v", ss.insertPreparedStatementCtx.GetGCCtrlCtrs()))
+								logging.GetLogger().Infoln(fmt.Sprintf("running insert with control parameters: %v", ss.insertPreparedStatementCtx.GetGCCtrlCtrs()))
 								r, err := ss.drmCfg.ExecuteInsertDML(ss.handlerCtx.SQLEngine, ss.insertPreparedStatementCtx, item)
-								log.Infoln(fmt.Sprintf("insert result = %v, error = %v", r, err))
+								logging.GetLogger().Infoln(fmt.Sprintf("insert result = %v, error = %v", r, err))
 								if err != nil {
 									return dto.NewErroneousExecutorOutput(fmt.Errorf("sql insert error: '%s' from query: %s", err.Error(), ss.insertPreparedStatementCtx.GetQuery()))
 								}
@@ -304,12 +304,12 @@ func extractNextPageTokenFromBody(res *response.Response, tokenKey *dto.HTTPElem
 	case map[string]interface{}:
 		nextPageToken, ok := target[tokenKey.Name]
 		if !ok || nextPageToken == "" {
-			log.Infoln("breaking out")
+			logging.GetLogger().Infoln("breaking out")
 			return ""
 		}
 		tk, ok := nextPageToken.(string)
 		if !ok {
-			log.Infoln("breaking out")
+			logging.GetLogger().Infoln("breaking out")
 			return ""
 		}
 		return tk

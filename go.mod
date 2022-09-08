@@ -20,7 +20,6 @@ require (
 	github.com/stackql/go-openapistackql v0.0.10-beta01
 	github.com/stackql/go-sqlite3 v0.0.1-stackqlrc01
 	github.com/stackql/go-suffix-map v0.0.1-alpha01
-	go.uber.org/zap v1.21.0
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
 	gonum.org/v1/gonum v0.11.0
@@ -66,6 +65,7 @@ require (
 	github.com/subosito/gotenv v1.2.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.7.0 // indirect
+	go.uber.org/zap v1.21.0 // indirect
 	golang.org/x/crypto v0.0.0-20220214200702-86341886e292 // indirect
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3 // indirect
@@ -88,4 +88,4 @@ replace github.com/fatih/color => github.com/stackql/color v0.0.1-rc01
 
 replace vitess.io/vitess => github.com/stackql/vitess v0.0.11-alpha11
 
-replace github.com/jeroenrinzema/psql-wire => github.com/stackql/psql-wire v0.0.2-stackqlbeta01
+replace github.com/jeroenrinzema/psql-wire => github.com/stackql/psql-wire v0.0.2-stackqlbeta02

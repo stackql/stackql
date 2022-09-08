@@ -16,6 +16,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/httpbuild"
 	"github.com/stackql/stackql/internal/stackql/iqlerror"
 	"github.com/stackql/stackql/internal/stackql/iqlutil"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivebuilder"
@@ -30,8 +31,6 @@ import (
 	"github.com/stackql/go-openapistackql/openapistackql"
 
 	"vitess.io/vitess/go/vt/sqlparser"
-
-	log "github.com/sirupsen/logrus"
 )
 
 func (p *primitiveGenerator) analyzeStatement(pbi PlanBuilderInput) error {
@@ -239,7 +238,7 @@ func (pb *primitiveGenerator) traverseShowFilter(table openapistackql.ITable, no
 	case *sqlparser.ComparisonExpr:
 		return pb.comparisonExprToFilterFunc(table, node, filter)
 	case *sqlparser.AndExpr:
-		log.Infoln("complex AND expr detected")
+		logging.GetLogger().Infoln("complex AND expr detected")
 		lhs, lhErr := pb.traverseShowFilter(table, node, filter.Left)
 		rhs, rhErr := pb.traverseShowFilter(table, node, filter.Right)
 		if lhErr != nil {
@@ -250,7 +249,7 @@ func (pb *primitiveGenerator) traverseShowFilter(table openapistackql.ITable, no
 		}
 		return relational.AndTableFilters(lhs, rhs), nil
 	case *sqlparser.OrExpr:
-		log.Infoln("complex OR expr detected")
+		logging.GetLogger().Infoln("complex OR expr detected")
 		lhs, lhErr := pb.traverseShowFilter(table, node, filter.Left)
 		rhs, rhErr := pb.traverseShowFilter(table, node, filter.Right)
 		if lhErr != nil {
@@ -274,7 +273,7 @@ func (pb *primitiveGenerator) traverseWhereFilter(node sqlparser.SQLNode, requir
 		exp, cn, err := pb.whereComparisonExprCopyAndReWrite(node, requiredParameters, optionalParameters)
 		return exp, []string{cn}, err
 	case *sqlparser.AndExpr:
-		log.Infoln("complex AND expr detected")
+		logging.GetLogger().Infoln("complex AND expr detected")
 		lhs, lParams, lhErr := pb.traverseWhereFilter(node.Left, requiredParameters, optionalParameters)
 		rhs, rParams, rhErr := pb.traverseWhereFilter(node.Right, requiredParameters, optionalParameters)
 		if lhErr != nil {
@@ -286,7 +285,7 @@ func (pb *primitiveGenerator) traverseWhereFilter(node sqlparser.SQLNode, requir
 		lParams = append(lParams, rParams...)
 		return &sqlparser.AndExpr{Left: lhs, Right: rhs}, lParams, nil
 	case *sqlparser.OrExpr:
-		log.Infoln("complex OR expr detected")
+		logging.GetLogger().Infoln("complex OR expr detected")
 		lhs, lParams, lhErr := pb.traverseWhereFilter(node.Left, requiredParameters, optionalParameters)
 		rhs, rParams, rhErr := pb.traverseWhereFilter(node.Right, requiredParameters, optionalParameters)
 		if lhErr != nil {
@@ -318,7 +317,7 @@ func (pb *primitiveGenerator) whereComparisonExprCopyAndReWrite(expr *sqlparser.
 	symTabEntry, symTabErr := pb.PrimitiveComposer.GetSymbol(colName)
 	_, requiredParamPresent := requiredParameters.Get(colName)
 	_, optionalParamPresent := optionalParameters.Get(colName)
-	log.Infoln(fmt.Sprintf("symTabEntry = %v", symTabEntry))
+	logging.GetLogger().Infoln(fmt.Sprintf("symTabEntry = %v", symTabEntry))
 	if symTabErr != nil && !(requiredParamPresent || optionalParamPresent) {
 		return nil, colName, symTabErr
 	}
@@ -538,7 +537,7 @@ func (p *primitiveGenerator) analyzeUnaryExec(handlerCtx *handler.HandlerContext
 		return nil, usageErr
 	}
 	for k, param := range requiredParams {
-		log.Debugln(fmt.Sprintf("param = %v", param))
+		logging.GetLogger().Debugln(fmt.Sprintf("param = %v", param))
 		_, err := extractVarDefFromExec(node, k)
 		if err != nil {
 			return nil, fmt.Errorf("required param not supplied for exec: %s", err.Error())
@@ -556,7 +555,7 @@ func (p *primitiveGenerator) analyzeUnaryExec(handlerCtx *handler.HandlerContext
 	if err != nil {
 		return nil, err
 	}
-	log.Infoln(fmt.Sprintf("provider = '%s', service = '%s', resource = '%s'", prov.GetProviderString(), svcStr, rStr))
+	logging.GetLogger().Infoln(fmt.Sprintf("provider = '%s', service = '%s', resource = '%s'", prov.GetProviderString(), svcStr, rStr))
 	requestSchema, err := method.GetRequestBodySchema()
 	// requestSchema, err := prov.GetObjectSchema(svcStr, rStr, method.Request.BodyMediaType)
 	if err != nil && method.Request != nil {
@@ -619,7 +618,7 @@ func (p *primitiveGenerator) analyzeExec(pbi PlanBuilderInput) error {
 	}
 	tbl, err := p.analyzeUnaryExec(handlerCtx, node, nil, nil)
 	if err != nil {
-		log.Infoln(fmt.Sprintf("error analyzing EXEC as selection: '%s'", err.Error()))
+		logging.GetLogger().Infoln(fmt.Sprintf("error analyzing EXEC as selection: '%s'", err.Error()))
 		return err
 	} else {
 		m, err := tbl.GetMethod()
@@ -758,7 +757,7 @@ func (p *primitiveGenerator) analyzeSchemaVsMap(handlerCtx *handler.HandlerConte
 }
 
 func isPGSetupQuery(q string) bool {
-	if q == "select relname, nspname, relkind from pg_catalog.pg_class c, pg_catalog.pg_namespace n where relkind in ('r', 'v', 'm', 'f') and nspname not in ('pg_catalog', 'information_schema', 'pg_toast', 'pg_temp_1') and n.oid = relnamespace order by nspname, relname" {
+	if q == "select relname, nspname, relkind from pg_catalogging.GetLogger()pg_class c, pg_catalogging.GetLogger()pg_namespace n where relkind in ('r', 'v', 'm', 'f') and nspname not in ('pg_catalog', 'information_schema', 'pg_toast', 'pg_temp_1') and n.oid = relnamespace order by nspname, relname" {
 		return true
 	}
 	if q == "select oid, typbasetype from pg_type where typname = 'lo'" {
@@ -826,7 +825,7 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 
 	// BLOCK  SequencingAccrual
 	dataFlows, err := paramRouter.GetOnConditionDataFlows()
-	log.Debugf("%v\n", dataFlows)
+	logging.GetLogger().Debugf("%v\n", dataFlows)
 	// END_BLOCK  SequencingAccrual
 
 	onConditionsToRewrite := paramRouter.GetOnConditionsToRewrite()
@@ -914,7 +913,7 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 	if len(node.From) == 1 {
 		switch ft := node.From[0].(type) {
 		case *sqlparser.ExecSubquery:
-			log.Infoln(fmt.Sprintf("%v", ft))
+			logging.GetLogger().Infoln(fmt.Sprintf("%v", ft))
 		default:
 			rewrittenWhere, paramsPresent, err = p.analyzeWhere(node.Where, existingParams)
 			if err != nil {
@@ -923,7 +922,7 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 			p.PrimitiveComposer.SetWhere(rewrittenWhere)
 		}
 	}
-	log.Debugf("len(paramsPresent) = %d\n", len(paramsPresent))
+	logging.GetLogger().Debugf("len(paramsPresent) = %d\n", len(paramsPresent))
 	// END_BLOCK REWRITE_WHERE
 
 	if len(node.From) == 1 {
@@ -1159,11 +1158,11 @@ func (p *primitiveGenerator) analyzeDelete(pbi PlanBuilderInput) error {
 	}
 	requestSchema, err := method.GetRequestBodySchema()
 	if err != nil {
-		log.Infof("no request schema for delete: %s \n", err.Error())
+		logging.GetLogger().Infof("no request schema for delete: %s \n", err.Error())
 	}
 	responseSchema, _, err := method.GetResponseBodySchemaAndMediaType()
 	if err != nil {
-		log.Infof("no response schema for delete: %s \n", err.Error())
+		logging.GetLogger().Infof("no response schema for delete: %s \n", err.Error())
 	}
 	svc, err := tbl.GetService()
 	if err != nil {
@@ -1200,7 +1199,7 @@ func (p *primitiveGenerator) analyzeDelete(pbi PlanBuilderInput) error {
 		if responseSchema == nil {
 			return fmt.Errorf("cannot locate parameter '%s'", w)
 		}
-		log.Infoln(fmt.Sprintf("w = '%s'", w))
+		logging.GetLogger().Infoln(fmt.Sprintf("w = '%s'", w))
 		foundSchemaPrefixed := responseSchema.FindByPath(colPrefix+w, nil)
 		foundSchema := responseSchema.FindByPath(w, nil)
 		foundRequestSchema := requestSchema.FindByPath(strings.TrimPrefix(w, openapistackql.RequestBodyBaseKey), nil)

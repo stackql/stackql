@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	postgreswire "github.com/jeroenrinzema/psql-wire"
+	"github.com/sirupsen/logrus"
 
 	"github.com/jackc/pgtype"
 	"github.com/jeroenrinzema/psql-wire/pkg/sqlbackend"
@@ -62,7 +63,7 @@ func MakeSQLStream() (sqlbackend.ISQLBackend, error) {
 }
 
 func makePGServer(sqlBackend sqlbackend.ISQLBackend) (*postgreswire.Server, error) {
-	return postgreswire.NewServer(postgreswire.SQLBackend(sqlBackend))
+	return postgreswire.NewServer(postgreswire.SQLBackend(sqlBackend), postgreswire.Logger(logrus.StandardLogger()))
 }
 
 func ExtractRowElement(column sqldata.ISQLColumn, src interface{}, ci *pgtype.ConnInfo) ([]byte, error) {

@@ -10,6 +10,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/primitivebuilder"
 	"github.com/stackql/stackql/internal/stackql/primitivecomposer"
@@ -19,8 +20,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 	"github.com/stackql/stackql/internal/stackql/util"
 	"vitess.io/vitess/go/vt/sqlparser"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type DependencyPlanner interface {
@@ -101,7 +100,7 @@ func (dp *StandardDependencyPlanner) Plan() error {
 			outDegree := dp.dataflowCollection.OutDegree(unit)
 			if inDegree == 0 && outDegree > 0 {
 				// TODO: start builder
-				log.Infof("\n")
+				logging.GetLogger().Infof("\n")
 			}
 			if inDegree != 0 || outDegree != 0 {
 				return fmt.Errorf("cannot currently execute data dependent tables with inDegree = %d and/or outDegree = %d", inDegree, outDegree)
@@ -123,12 +122,12 @@ func (dp *StandardDependencyPlanner) Plan() error {
 			if err != nil {
 				return err
 			}
-			log.Infof("%v\n", orderedNodes)
+			logging.GetLogger().Infof("%v\n", orderedNodes)
 			edges, err := unit.GetEdges()
 			if err != nil {
 				return err
 			}
-			log.Infof("%v\n", edges)
+			logging.GetLogger().Infof("%v\n", edges)
 			edgeCount := len(edges)
 			if edgeCount > 1 {
 				return fmt.Errorf("data flow: cannot accomodate table dependencies of this complexity: supplied = %d, max = 1", edgeCount)
@@ -185,7 +184,7 @@ func (dp *StandardDependencyPlanner) Plan() error {
 		return fmt.Errorf("data flow: there are too many weakly connected components; found = %d, max = 1", weaklyConnectedComponentCount)
 	}
 	rewrittenWhereStr := astvisit.GenerateModifiedWhereClause(dp.rewrittenWhere)
-	log.Debugf("rewrittenWhereStr = '%s'", rewrittenWhereStr)
+	logging.GetLogger().Debugf("rewrittenWhereStr = '%s'", rewrittenWhereStr)
 	v := astvisit.NewQueryRewriteAstVisitor(
 		dp.handlerCtx,
 		dp.tblz,

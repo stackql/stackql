@@ -8,12 +8,13 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/logging"
 
 	"github.com/jeroenrinzema/psql-wire/pkg/sqlbackend"
 
 	wire "github.com/jeroenrinzema/psql-wire"
-	"go.uber.org/zap"
 )
 
 type IWireServer interface {
@@ -21,21 +22,19 @@ type IWireServer interface {
 }
 
 type SimpleWireServer struct {
-	logger *zap.Logger
+	logger *logrus.Logger
 	server *wire.Server
 	rtCtx  dto.RuntimeCtx
 	tlsCfg dto.PgTLSCfg
 }
 
 func MakeWireServer(sbe sqlbackend.ISQLBackend, cfg dto.RuntimeCtx) (IWireServer, error) {
-	logger, err := zap.NewDevelopment()
-	if err != nil {
-		return nil, err
-	}
+	logger := logging.GetLogger()
 
 	var tlsCfg dto.PgTLSCfg
 	var server *wire.Server
 
+	var err error
 	if cfg.PGSrvRawTLSCfg != "" {
 		err = json.Unmarshal([]byte(cfg.PGSrvRawTLSCfg), &tlsCfg)
 		if err != nil {
@@ -49,7 +48,7 @@ func MakeWireServer(sbe sqlbackend.ISQLBackend, cfg dto.RuntimeCtx) (IWireServer
 		server, err = wire.NewServer(
 			wire.SQLBackend(sbe),
 			wire.Certificates(certs),
-			wire.Logger(logger),
+			wire.Logger(logging.GetLogger()),
 		)
 		var cp *x509.CertPool
 		if len(tlsCfg.ClientCAs) > 0 {

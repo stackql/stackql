@@ -6,8 +6,7 @@ import (
 	"runtime"
 
 	"github.com/stackql/stackql/internal/stackql/dto"
-
-	log "github.com/sirupsen/logrus"
+	"github.com/stackql/stackql/internal/stackql/logging"
 )
 
 const defaultConfigCacheDir = ".stackql"
@@ -39,7 +38,7 @@ func GetDefaultErrorPresentationString() string {
 func GetWorkingDir() string {
 	dir, err := os.Getwd()
 	if err != nil {
-		log.Fatal(err)
+		logging.GetLogger().Fatal(err)
 	}
 	return dir
 }

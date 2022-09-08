@@ -5,11 +5,11 @@ import (
 	"os"
 	"testing"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/stackql/stackql/internal/stackql/logging"
 )
 
 func TestMain(m *testing.M) {
-	log.SetOutput(ioutil.Discard)
+	logging.GetLogger().SetOutput(ioutil.Discard)
 	os.Exit(m.Run())
 }
 
