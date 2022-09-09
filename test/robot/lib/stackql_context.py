@@ -13,12 +13,12 @@ if os.name == 'nt':
 
 _DOCKER_REG_PATH :str = '/opt/stackql/registry' 
 
-BUILD_MAJOR_VERSION = os.environ.get('BUILDMAJORVERSION', '')
-BUILD_MINOR_VERSION = os.environ.get('BUILDMINORVERSION', '')
-BUILD_PATCH_VERSION = os.environ.get('BUILDPATCHVERSION', '')
+_BUILD_MAJOR_VERSION = os.environ.get('BUILDMAJORVERSION', '1')
+_BUILD_MINOR_VERSION = os.environ.get('BUILDMINORVERSION', '1')
+_BUILD_PATCH_VERSION = os.environ.get('BUILDPATCHVERSION', '1')
 
 _SHELL_WELCOME_MSG = """
-""" + f"stackql Command Shell {BUILD_MAJOR_VERSION}.{BUILD_MINOR_VERSION}.{BUILD_PATCH_VERSION}" + """
+""" + f"stackql Command Shell {_BUILD_MAJOR_VERSION}.{_BUILD_MINOR_VERSION}.{_BUILD_PATCH_VERSION}" + """
 Copyright (c) 2021, stackql studios. All rights reserved.
 Welcome to the interactive shell for running stackql commands.
 ---
@@ -334,6 +334,11 @@ SELECT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY = "SELECT eTag FROM google.compute.ins
 SELECT_AZURE_COMPUTE_PUBLIC_KEYS = "select id, location from azure.compute.ssh_public_keys where subscriptionId = '10001000-1000-1000-1000-100010001000' ORDER BY id ASC;"
 SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES = "SELECT id, name FROM azure.compute.virtual_machines WHERE resourceGroupName = 'stackql-ops-cicd-dev-01' AND subscriptionId = '10001000-1000-1000-1000-100010001000' ORDER BY name ASC;"
 
+SHOW_TRANSACTION_ISOLATION_LEVEL = "show transaction isolation level"
+SELECT_HSTORE_DETAILS = "SELECT t.oid, typarray FROM pg_type t JOIN pg_namespace ns ON typnamespace = ns.oid WHERE typname = 'hstore'"
+
+SHOW_TRANSACTION_ISOLATION_LEVEL_JSON_EXPECTED = [{"transaction_isolation": "read committed"}]
+SELECT_HSTORE_DETAILS_JSON_EXPECTED = []
 
 SELECT_AZURE_COMPUTE_PUBLIC_KEYS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'azure', 'compute', 'ssh-public-keys-list.txt'))
 SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'azure', 'compute', 'vm-list.txt'))
@@ -482,6 +487,9 @@ def get_variables(execution_env :str):
   rv = {
     ## general config
     'AZURE_SECRET_STR':                               AZURE_SECRET_STR,
+    'BUILDMAJORVERSION':                              _BUILD_MAJOR_VERSION,
+    'BUILDMINORVERSION':                              _BUILD_MINOR_VERSION,
+    'BUILDPATCHVERSION':                              _BUILD_PATCH_VERSION,
     'GITHUB_SECRET_STR':                              GITHUB_SECRET_STR,
     'IS_WINDOWS':                                     IS_WINDOWS,
     'K8S_SECRET_STR':                                 K8S_SECRET_STR,
@@ -522,6 +530,8 @@ def get_variables(execution_env :str):
     'GET_AWS_CLOUD_CONTROL_VPCS_DESC':                                      GET_AWS_CLOUD_CONTROL_VPCS_DESC,
     'GET_AWS_CLOUD_CONTROL_VPCS_DESC_EXPECTED':                             GET_AWS_CLOUD_CONTROL_VPCS_DESC_EXPECTED,
     'GET_IAM_POLICY_AGG_ASC_EXPECTED':                                      GET_IAM_POLICY_AGG_ASC_EXPECTED,
+    'PG_CLIENT_SETUP_QUERIES':                                              [ SHOW_TRANSACTION_ISOLATION_LEVEL, SELECT_HSTORE_DETAILS ],
+    'PG_CLIENT_SETUP_QUERIES_JSON_EXPECTED':                                SHOW_TRANSACTION_ISOLATION_LEVEL_JSON_EXPECTED + SELECT_HSTORE_DETAILS_JSON_EXPECTED,
     'REGISTRY_GOOGLE_PROVIDER_LIST':                                        REGISTRY_GOOGLE_PROVIDER_LIST,
     'REGISTRY_GOOGLE_PROVIDER_LIST_EXPECTED':                               REGISTRY_GOOGLE_PROVIDER_LIST_EXPECTED,
     'REGISTRY_LIST':                                                        REGISTRY_LIST,

@@ -16,6 +16,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/plan"
 	"github.com/stackql/stackql/internal/stackql/primitive"
+	"github.com/stackql/stackql/internal/stackql/primitivebuilder"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 	"github.com/stackql/stackql/internal/stackql/util"
 
@@ -199,9 +200,9 @@ func (pgb *planGraphBuilder) createInstructionFor(pbi PlanBuilderInput) error {
 	case *sqlparser.AuthRevoke:
 		return pgb.handleAuthRevoke(pbi)
 	case *sqlparser.Begin:
-		return iqlerror.GetStatementNotSupportedError("TRANSACTION: BEGIN")
+		return pgb.nop(pbi)
 	case *sqlparser.Commit:
-		return iqlerror.GetStatementNotSupportedError("TRANSACTION: COMMIT")
+		return pgb.nop(pbi)
 	case *sqlparser.DBDDL:
 		return iqlerror.GetStatementNotSupportedError(fmt.Sprintf("unsupported: Database DDL %v", sqlparser.String(stmt)))
 	case *sqlparser.DDL:
@@ -221,24 +222,24 @@ func (pgb *planGraphBuilder) createInstructionFor(pbi PlanBuilderInput) error {
 	case *sqlparser.Registry:
 		return pgb.handleRegistry(pbi)
 	case *sqlparser.Rollback:
-		return iqlerror.GetStatementNotSupportedError("TRANSACTION: ROLLBACK")
+		return pgb.nop(pbi)
 	case *sqlparser.Savepoint:
-		return iqlerror.GetStatementNotSupportedError("TRANSACTION: SAVEPOINT")
+		return pgb.nop(pbi)
 	case *sqlparser.Select:
 		_, _, err := pgb.handleSelect(pbi)
 		return err
 	case *sqlparser.Set:
 		return pgb.nop(pbi)
 	case *sqlparser.SetTransaction:
-		return iqlerror.GetStatementNotSupportedError("SET TRANSACTION")
+		return pgb.nop(pbi)
 	case *sqlparser.Show:
 		return pgb.handleShow(pbi)
 	case *sqlparser.Sleep:
 		return pgb.handleSleep(pbi)
 	case *sqlparser.SRollback:
-		return iqlerror.GetStatementNotSupportedError("TRANSACTION: SROLLBACK")
+		return pgb.nop(pbi)
 	case *sqlparser.Release:
-		return iqlerror.GetStatementNotSupportedError("TRANSACTION: RELEASE")
+		return pgb.nop(pbi)
 	case *sqlparser.Union:
 		_, _, err := pgb.handleUnion(pbi)
 		return err
@@ -365,9 +366,14 @@ func (pgb *planGraphBuilder) handleSelect(pbi PlanBuilderInput) (*primitivegraph
 			logging.GetLogger().Infoln(fmt.Sprintf("select statement analysis error = '%s'", err.Error()))
 			return nil, nil, err
 		}
-		isLocallyExecutable := true
-		for _, val := range primitiveGenerator.PrimitiveComposer.GetTables() {
-			isLocallyExecutable = isLocallyExecutable && val.IsLocallyExecutable
+		builder := primitiveGenerator.PrimitiveComposer.GetBuilder()
+		_, isNativeSelect := builder.(*primitivebuilder.NativeSelect)
+		isLocallyExecutable := !isNativeSelect
+		// check tables only if not native
+		if isLocallyExecutable {
+			for _, val := range primitiveGenerator.PrimitiveComposer.GetTables() {
+				isLocallyExecutable = isLocallyExecutable && val.IsLocallyExecutable
+			}
 		}
 		if isLocallyExecutable {
 			pr, err := primitiveGenerator.localSelectExecutor(handlerCtx, node, util.DefaultRowSort)
@@ -380,7 +386,6 @@ func (pgb *planGraphBuilder) handleSelect(pbi PlanBuilderInput) (*primitivegraph
 		if primitiveGenerator.PrimitiveComposer.GetBuilder() == nil {
 			return nil, nil, fmt.Errorf("builder not created for select, cannot proceed")
 		}
-		builder := primitiveGenerator.PrimitiveComposer.GetBuilder()
 		err = builder.Build()
 		if err != nil {
 			return nil, nil, err
@@ -661,6 +666,17 @@ func (pgb *planGraphBuilder) handleShow(pbi PlanBuilderInput) error {
 	if err != nil {
 		return err
 	}
+	nodeTypeUpper := strings.ToUpper(node.Type)
+	switch nodeTypeUpper {
+	case "TRANSACTION_ISOLATION_LEVEL":
+		builder := primitiveGenerator.PrimitiveComposer.GetBuilder()
+		_, isNativeSelect := builder.(*primitivebuilder.NativeSelect)
+		if isNativeSelect {
+			err := builder.Build()
+			return err
+		}
+		return fmt.Errorf("improper usage of 'show transaction isolation level'")
+	}
 	pr := primitive.NewMetaDataPrimitive(
 		primitiveGenerator.PrimitiveComposer.GetProvider(),
 		func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput {
@@ -755,11 +771,19 @@ func BuildPlanFromContext(handlerCtx *handler.HandlerContext) (*plan.Plan, error
 
 	pGBuilder := newPlanGraphBuilder(handlerCtx.RuntimeContext.ExecutionConcurrencyLimit)
 
-	if isPGSetupQuery(handlerCtx.RawQuery) {
-		pbi := NewPlanBuilderInput(handlerCtx, nil, nil, nil, nil, nil, nil)
-		createInstructionError := pGBuilder.nop(pbi)
-		if createInstructionError != nil {
-			return nil, createInstructionError
+	if sel, ok := isPGSetupQuery(handlerCtx.RawQuery); ok {
+		if sel != nil {
+			pbi := NewPlanBuilderInput(handlerCtx, result.AST, nil, nil, nil, nil, nil)
+			createInstructionError := pGBuilder.createInstructionFor(pbi)
+			if createInstructionError != nil {
+				return nil, createInstructionError
+			}
+		} else {
+			pbi := NewPlanBuilderInput(handlerCtx, nil, nil, nil, nil, nil, nil)
+			createInstructionError := pGBuilder.nop(pbi)
+			if createInstructionError != nil {
+				return nil, createInstructionError
+			}
 		}
 	} else {
 		// First pass AST analysis; extract provider strings for auth.

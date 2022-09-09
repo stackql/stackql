@@ -17,12 +17,14 @@ import (
 	"github.com/stackql/stackql/internal/stackql/iqlerror"
 	"github.com/stackql/stackql/internal/stackql/iqlutil"
 	"github.com/stackql/stackql/internal/stackql/logging"
+	"github.com/stackql/stackql/internal/stackql/nativedb"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivebuilder"
 	"github.com/stackql/stackql/internal/stackql/provider"
 	"github.com/stackql/stackql/internal/stackql/relational"
 	"github.com/stackql/stackql/internal/stackql/router"
+	"github.com/stackql/stackql/internal/stackql/sqlstream"
 	"github.com/stackql/stackql/internal/stackql/suffix"
 	"github.com/stackql/stackql/internal/stackql/symtab"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
@@ -31,6 +33,14 @@ import (
 	"github.com/stackql/go-openapistackql/openapistackql"
 
 	"vitess.io/vitess/go/vt/sqlparser"
+)
+
+var (
+	multipleWhitespaceRegexp     *regexp.Regexp = regexp.MustCompile(`\s+`)
+	getOidsRegexp                *regexp.Regexp = regexp.MustCompile(`(?i)select\s+t\.oid,\s+(?:NULL|typarray)\s+from.*pg_type`)
+	selectPGCatalogVersionRegexp *regexp.Regexp = regexp.MustCompile(`(?i)select\s+pg_catalog\.version\(\)`)
+	selectCurrentSchemaRegexp    *regexp.Regexp = regexp.MustCompile(`(?i)select\s+current_schema\(\)`)
+	showTxnIsolationLevelRegexp  *regexp.Regexp = regexp.MustCompile(`(?i)show\s+transaction\s+isolation\s+level`)
 )
 
 func (p *primitiveGenerator) analyzeStatement(pbi PlanBuilderInput) error {
@@ -756,14 +766,42 @@ func (p *primitiveGenerator) analyzeSchemaVsMap(handlerCtx *handler.HandlerConte
 	return nil
 }
 
-func isPGSetupQuery(q string) bool {
-	if q == "select relname, nspname, relkind from pg_catalogging.GetLogger()pg_class c, pg_catalogging.GetLogger()pg_namespace n where relkind in ('r', 'v', 'm', 'f') and nspname not in ('pg_catalog', 'information_schema', 'pg_toast', 'pg_temp_1') and n.oid = relnamespace order by nspname, relname" {
-		return true
+func isPGSetupQuery(q string) (nativedb.Select, bool) {
+	qStripped := multipleWhitespaceRegexp.ReplaceAllString(q, " ")
+	if qStripped == "select relname, nspname, relkind from pg_catalog.pg_class c, pg_catalog.pg_namespace n where relkind in ('r', 'v', 'm', 'f') and nspname not in ('pg_catalog', 'information_schema', 'pg_toast', 'pg_temp_1') and n.oid = relnamespace order by nspname, relname" {
+		return nil, true
 	}
-	if q == "select oid, typbasetype from pg_type where typname = 'lo'" {
-		return true
+	if qStripped == "select oid, typbasetype from pg_type where typname = 'lo'" {
+		return nil, true
 	}
-	return false
+	if getOidsRegexp.MatchString(qStripped) {
+		var colz []nativedb.Column
+		colz = append(colz, nativedb.NewColumn("oid", "oid"))
+		colz = append(colz, nativedb.NewColumn("typarray", "oid"))
+		return nativedb.NewSelect(colz), true
+	}
+	if selectPGCatalogVersionRegexp.MatchString(qStripped) {
+		var colz []nativedb.Column
+		colz = append(colz, nativedb.NewColumn("version", "text"))
+		return nativedb.NewSelectWithRows(colz, sqlstream.NewStaticMapStream([]map[string]interface{}{
+			{"version": "PostgreSQL 14.5 on x86_64-apple-darwin20.6.0, compiled by Apple clang version 13.0.0 (clang-1300.0.29.30), 64-bit"},
+		})), true
+	}
+	if showTxnIsolationLevelRegexp.MatchString(qStripped) {
+		var colz []nativedb.Column
+		colz = append(colz, nativedb.NewColumn("transaction_isolation", "text"))
+		return nativedb.NewSelectWithRows(colz, sqlstream.NewStaticMapStream([]map[string]interface{}{
+			{"transaction_isolation": "read committed"},
+		})), true
+	}
+	if selectCurrentSchemaRegexp.MatchString(qStripped) {
+		var colz []nativedb.Column
+		colz = append(colz, nativedb.NewColumn("current_schema", "text"))
+		return nativedb.NewSelectWithRows(colz, sqlstream.NewStaticMapStream([]map[string]interface{}{
+			{"current_schema": "public"},
+		})), true
+	}
+	return nil, false
 }
 
 func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
@@ -774,7 +812,12 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 		return fmt.Errorf("could not cast statement of type '%T' to required Select", pbi.GetStatement())
 	}
 
-	if isPGSetupQuery(handlerCtx.RawQuery) {
+	if sel, ok := isPGSetupQuery(handlerCtx.RawQuery); ok {
+		if sel != nil {
+			bldr := primitivebuilder.NewNativeSelect(p.PrimitiveComposer.GetGraph(), handlerCtx, sel)
+			p.PrimitiveComposer.SetBuilder(bldr)
+			return nil
+		}
 		return p.analyzeNop(pbi)
 	}
 
@@ -1298,6 +1341,14 @@ func (p *primitiveGenerator) analyzeShow(pbi PlanBuilderInput) error {
 	node, ok := pbi.GetShow()
 	if !ok {
 		return fmt.Errorf("could not cast node of type '%T' to required Show", pbi.GetStatement())
+	}
+	if sel, ok := isPGSetupQuery(handlerCtx.RawQuery); ok {
+		if sel != nil {
+			bldr := primitivebuilder.NewNativeSelect(p.PrimitiveComposer.GetGraph(), handlerCtx, sel)
+			p.PrimitiveComposer.SetBuilder(bldr)
+			return nil
+		}
+		return p.analyzeNop(pbi)
 	}
 	p.parseComments(node.Comments)
 	err = p.inferProviderForShow(node, handlerCtx)

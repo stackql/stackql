@@ -60,6 +60,7 @@ jobs:
       run: |
         pip3 install PyYaml
         pip3 install robotframework
+        pip3 install psycopg2-binary
         pip3 install "psycopg[binary]"
 
     
@@ -213,6 +214,7 @@ jobs:
       run: |
         pip3 install PyYaml
         pip3 install robotframework
+        pip3 install psycopg2-binary
         pip3 install "psycopg[binary]"
     
     - name: Generate rewritten registry for simulations
@@ -340,6 +342,7 @@ jobs:
       run: |
         pip3 install PyYaml
         pip3 install robotframework
+        pip3 install psycopg2-binary
         pip3 install "psycopg[binary]"
     
     - name: Generate rewritten registry for simulations
@@ -544,6 +547,7 @@ jobs:
       run: |
         pip3 install PyYaml
         pip3 install robotframework
+        pip3 install psycopg2-binary
         pip3 install "psycopg[binary]"
     
     - name: Extract Build Info and Persist

@@ -12,6 +12,8 @@
         "{ \"url\": \"file://${workspaceFolder}/test/registry-sandbox\", \"localDocRoot\": \"${workspaceFolder}/test/registry-sandbox\", \"verifyConfig\": { \"nopVerify\": true } }",
         "{ \"url\": \"file://${workspaceFolder}/test/registry\", \"localDocRoot\": \"${workspaceFolder}/test/registry\", \"verifyConfig\": { \"nopVerify\": true } }",
         "{ \"url\": \"file://${workspaceFolder}/test/registry-mocked\", \"localDocRoot\": \"${workspaceFolder}/test/registry-mocked\", \"verifyConfig\": { \"nopVerify\": true } }",
+        "{ \"url\": \"file://${workspaceFolder}/build/.stackql\", \"localDocRoot\": \"${workspaceFolder}/build/.stackql\" }",
+        "{ \"url\": \"file://${workspaceFolder}/examples/empty-registry\", \"localDocRoot\": \"${workspaceFolder}/examples/empty-registry\" }",
         "{ \"url\": \"https://cdn.statically.io/gh/stackql/stackql-provider-registry/main/providers\", \"localDocRoot\": \"${workspaceFolder}/test/registry\" }",
         "{ \"url\": \"https://cdn.statically.io/gh/stackql/stackql-provider-registry/dev/providers\" }"
       ],
@@ -38,17 +40,25 @@
 
     // select VolumeId from aws.ec2.volumes where region = 'ap-southeast-1' order by VolumeId asc;
     {
-      "name": "DEBUG aws guff working",
+      "name": "DEBUG boilerplate",
       "type": "go",
       "request": "launch",
       "mode": "debug",
       "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "--tls.allowInsecure",
-        "select UserName, Arn from aws.iam.users WHERE region = 'us-east-1' order by UserName ASC;"
+        "SELECT t.oid, typarray FROM pg_type t JOIN pg_namespace ns ON typnamespace = ns.oid WHERE typname = 'hstore';"
+      ],
+    },
+    {
+      "name": "DEBUG pg_catalog boilerplate",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "select pg_catalog.version();"
       ],
     },
     {
@@ -1183,6 +1193,7 @@
       "args": [
         "exec",
         "--auth=${input:authString}",
+        "--registry=${input:registryString}",
         "show providers;",
         "-o",
         "json"
@@ -1283,7 +1294,7 @@
       "type": "go",
       "request": "attach",
       "mode": "local",
-      "processId": 81780
+      "processId": 95356
     }
   ]
 }

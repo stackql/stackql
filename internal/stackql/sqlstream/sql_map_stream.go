@@ -4,7 +4,6 @@ import (
 	"io"
 
 	"github.com/stackql/stackql/internal/stackql/drm"
-	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/streaming"
 )
@@ -29,16 +28,8 @@ func NewSimpleSQLMapStream(
 	}
 }
 
-func (ss *SimpleSQLMapStream) iStackQLReader() {}
-
-func (ss *SimpleSQLMapStream) iStackQLWriter() {}
-
 func (ss *SimpleSQLMapStream) Write(input []map[string]interface{}) error {
 	return nil
-}
-
-func (ss *SimpleSQLMapStream) SetTCCs(tcc *dto.TxnControlCounters) {
-	ss.selectCtx.SetGCCtrlCtrs(tcc)
 }
 
 func (ss *SimpleSQLMapStream) Read() ([]map[string]interface{}, error) {
