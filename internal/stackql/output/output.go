@@ -150,6 +150,9 @@ func resToArr(res sqldata.ISQLResult) []map[string]interface{} {
 	var retVal []map[string]interface{}
 	for _, r := range res.GetRows() {
 		rowArr := r.GetRowDataNaive()
+		if len(rowArr) == 0 {
+			continue
+		}
 		rm := make(map[string]interface{})
 		for i, c := range keys {
 			switch tp := rowArr[i].(type) {
@@ -288,6 +291,9 @@ func decodeRow(colz []sqldata.ISQLColumn, row sqldata.ISQLRow, ci *pgtype.ConnIn
 	var retVal [][]byte
 	rawRow := row.GetRowDataNaive()
 	if len(rawRow) != len(colz) {
+		if len(rawRow) == 0 {
+			return nil, nil
+		}
 		return nil, fmt.Errorf("row length != column count (%d != %d)", len(rawRow), len(colz))
 	}
 	for i, col := range colz {
@@ -307,6 +313,9 @@ func tabulateResults(r sqldata.ISQLResult, ci *pgtype.ConnInfo) ([][]string, err
 		rd, err := decodeRow(colz, v, ci)
 		if err != nil {
 			return nil, err
+		}
+		if rd == nil {
+			continue
 		}
 		var rs []string
 		for _, b := range rd {

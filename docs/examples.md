@@ -60,22 +60,14 @@ And then, using the `psql` client (from same directory; `build`):
 psql -d "host=127.0.0.1 port=5466 user=silly dbname=silly sslmode=verify-full sslcert=../test/server/mtls/credentials/pg_client_cert.pem sslkey=../test/server/mtls/credentials/pg_client_key.pem sslrootcert=../test/server/mtls/credentials/pg_server_cert.pem"
 ```
 
-### Access from pscopg python
+### Access from python
 
-```py
-import psycopg
-# Connect to your stackql instance.
-# Devil is in the detail of conection string.
-# `autocommit = True` is all-important until we support (at least NOP) Transactions.
-conn = psycopg.connect("host=127.0.0.1 port=5466 user=silly dbname=silly", autocommit = True)
-
-
-
-res = conn.execute("""SHOW PROVIDERS""")
-
-res.fetchall()
-
-```
+- Python access requires a runnning server, simplest is `stackql srv` which will serve on default port with zero credentials.
+- For integration testing, we use `psycopg` which is currently `v3`.
+    - Run / adapt [this script](/examples/scripts/python/psycopg3_scratchpad.py) for troubleshooting `psycopg` `v3`. 
+- `superset` uses `sqlalchemy` which consumes `psycopg2` **note different version**.
+    - Run / adapt [this script](/examples/scripts/python/psycopg2_scratchpad.py) for troubleshooting `psycopg2`. 
+    - Run / adapt [this script](/examples/scripts/python/sqlalchemy_scratchpad.py) for troubleshooting `sqlalchemy`. 
 
 ## Queries
 

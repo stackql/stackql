@@ -14,6 +14,7 @@ from robot.libraries.OperatingSystem import OperatingSystem
 from stackql_context import RegistryCfg, _TEST_APP_CACHE_ROOT
 from ShellSession import ShellSession
 from psycopg_client import PsycoPGClient
+from psycopg2_client import PsycoPG2Client
 
 
 @library(scope='SUITE', version='0.1.0', doc_format='reST')
@@ -339,6 +340,16 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
   @keyword
   def should_PG_client_session_inline_equal(self, conn_str :str, queries :typing.List[str], expected_output :typing.List[typing.Dict], **kwargs):
     client = PsycoPGClient(conn_str)
+    result =  client.run_queries(
+      queries
+    )
+    self.log(result)
+    return self.lists_should_be_equal(result, expected_output)
+  
+
+  @keyword
+  def should_PG_client_V2_session_inline_equal(self, conn_str :str, queries :typing.List[str], expected_output :typing.List[typing.Dict], **kwargs):
+    client = PsycoPG2Client(conn_str)
     result =  client.run_queries(
       queries
     )

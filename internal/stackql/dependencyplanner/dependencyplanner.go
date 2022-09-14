@@ -289,21 +289,6 @@ func (dp *StandardDependencyPlanner) processAcquire(
 	return anTab, dp.tcc, nil
 }
 
-// switch stream := stream.(type) {
-// case *sqlstream.SimpleSQLMapStream:
-// 	stream.SetTCCs(dp.tcc)
-// }
-// 	err = annotationCtx.Prepare(
-// 		dp.handlerCtx,
-// 		stream,
-// 	)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return insPsc, err
-// }
-
 func (dp *StandardDependencyPlanner) createSelectFrom() (*sqlparser.Select, error) {
 	return &sqlparser.Select{
 		SelectExprs: sqlparser.SelectExprs{

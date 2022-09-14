@@ -15,9 +15,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/util"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
-
-	"vitess.io/vitess/go/sqltypes"
-	querypb "vitess.io/vitess/go/vt/proto/query"
 )
 
 type Builder interface {
@@ -101,21 +98,11 @@ func prepareGolangResult(sqlEngine sqlengine.SQLEngine, errWriter io.Writer, stm
 		return rv
 	}
 	rv := util.PrepareResultSet(dto.NewPrepareResultSetPlusRawDTO(nil, altKeys, cNames, rowSort, nil, nil, rawRows))
+
 	if rv.GetSQLResult() == nil {
-
-		resVal := &sqltypes.Result{
-			Fields: make([]*querypb.Field, len(nonControlColumns)),
-		}
-
 		var colz []string
 		for _, col := range nonControlColumns {
 			colz = append(colz, col.GetIdentifier())
-		}
-
-		for f := range resVal.Fields {
-			resVal.Fields[f] = &querypb.Field{
-				Name: cNames[f],
-			}
 		}
 		rv.GetSQLResult = func() sqldata.ISQLResultStream { return util.GetHeaderOnlyResultStream(colz) }
 	}

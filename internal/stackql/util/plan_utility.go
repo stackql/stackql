@@ -12,10 +12,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 
-	"vitess.io/vitess/go/sqltypes"
 	"vitess.io/vitess/go/vt/sqlparser"
-
-	querypb "vitess.io/vitess/go/vt/proto/query"
 )
 
 var defaultColSortArr []string = []string{
@@ -350,22 +347,25 @@ func PrepareResultSet(payload dto.PrepareResultSetDTO) dto.ExecutorOutput {
 }
 
 func EmptyProtectResultSet(rv dto.ExecutorOutput, columns []string) dto.ExecutorOutput {
+	return emptyProtectResultSet(rv, columns)
+}
+
+func NewEmptyListResultSet(columns []string) dto.ExecutorOutput {
+	rv := dto.NewExecutorOutput(nil, nil, nil, nil, nil)
+	return emptyProtectResultSet(rv, columns)
+}
+
+func emptyProtectResultSet(rv dto.ExecutorOutput, columns []string) dto.ExecutorOutput {
 	if rv.GetRawResult().IsNil() {
-		resVal := &sqltypes.Result{
-			Fields: make([]*querypb.Field, len(columns)),
-		}
-		for f := range resVal.Fields {
-			resVal.Fields[f] = &querypb.Field{
-				Name: columns[f],
-			}
-		}
 		table := sqldata.NewSQLTable(0, "meta_table")
 		rCols := make([]sqldata.ISQLColumn, len(columns))
 		for f := range rCols {
 			rCols[f] = getPlaceholderColumn(table, columns[f])
 		}
 		rv.GetSQLResult = func() sqldata.ISQLResultStream {
-			return sqldata.NewSimpleSQLResultStream(sqldata.NewSQLResult(rCols, 0, 0, nil))
+			return sqldata.NewSimpleSQLResultStream(sqldata.NewSQLResult(rCols, 0, 0, []sqldata.ISQLRow{
+				sqldata.NewSQLRow([]interface{}{}),
+			}))
 		}
 	}
 	return rv
