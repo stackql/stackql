@@ -40,7 +40,7 @@ const (
 	DbInitFilePathKey               string = "dbinitfilepath"
 	DelimiterKey                    string = "delimiter"
 	ErrorPresentationKey            string = "errorpresentation"
-	HTTPLogEnabledKey               string = "http.logging.GetLogger()enabled"
+	HTTPLogEnabledKey               string = "http.log.enabled"
 	HTTPMaxResultsKey               string = "http.response.maxResults"
 	HTTPPAgeLimitKey                string = "http.response.pageLimit"
 	HTTPProxyHostKey                string = "http.proxy.host"
