@@ -44,7 +44,11 @@ func (v *TableNameSubstitutionAstVisitor) buildAcquireQueryCtx(
 	if err != nil {
 		return nil, err
 	}
-	insPsc, err := dc.GenerateInsertDML(annotatedInsertTabulation, v.getCtrlCounters(tableDTO.GetDiscoveryID()))
+	os, err := ac.GetTableMeta().GetMethod()
+	if err != nil {
+		return nil, err
+	}
+	insPsc, err := dc.GenerateInsertDML(annotatedInsertTabulation, os, v.getCtrlCounters(tableDTO.GetDiscoveryID()))
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +134,11 @@ func (v *TableNameSubstitutionAstVisitor) buildSelectQuery(
 	if err != nil {
 		return err
 	}
-	insPsc, err := dc.GenerateInsertDML(annotatedInsertTabulation, v.getCtrlCounters(tableDTO.GetDiscoveryID()))
+	os, err := tbl.GetMethod()
+	if err != nil {
+		return err
+	}
+	insPsc, err := dc.GenerateInsertDML(annotatedInsertTabulation, os, v.getCtrlCounters(tableDTO.GetDiscoveryID()))
 	if err != nil {
 		return err
 	}

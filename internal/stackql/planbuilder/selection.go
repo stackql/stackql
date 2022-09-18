@@ -7,7 +7,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/docparser"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
-	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 	"github.com/stackql/stackql/internal/stackql/util"
@@ -35,17 +34,12 @@ func (p *primitiveGenerator) assembleUnarySelectionBuilder(
 		return err
 	}
 
-	svc, err := tbl.GetService()
-	if err != nil {
-		return err
-	}
-
 	method, err := tbl.GetMethod()
 	if err != nil {
 		return err
 	}
 
-	_, err = docparser.OpenapiStackQLTabulationsPersistor(prov, svc, []util.AnnotatedTabulation{annotatedInsertTabulation}, p.PrimitiveComposer.GetSQLEngine(), prov.Name)
+	_, err = docparser.OpenapiStackQLTabulationsPersistor(method, []util.AnnotatedTabulation{annotatedInsertTabulation}, p.PrimitiveComposer.GetSQLEngine(), prov.Name)
 	if err != nil {
 		return err
 	}
@@ -53,7 +47,7 @@ func (p *primitiveGenerator) assembleUnarySelectionBuilder(
 	if err != nil {
 		return err
 	}
-	insPsc, err := p.PrimitiveComposer.GetDRMConfig().GenerateInsertDML(annotatedInsertTabulation, dto.NewTxnControlCounters(p.PrimitiveComposer.GetTxnCounterManager(), tableDTO.GetDiscoveryID()))
+	insPsc, err := p.PrimitiveComposer.GetDRMConfig().GenerateInsertDML(annotatedInsertTabulation, method, dto.NewTxnControlCounters(p.PrimitiveComposer.GetTxnCounterManager(), tableDTO.GetDiscoveryID()))
 	if err != nil {
 		return err
 	}
@@ -61,15 +55,12 @@ func (p *primitiveGenerator) assembleUnarySelectionBuilder(
 	for _, col := range cols {
 		foundSchema := schema.FindByPath(col.Name, nil)
 		cc, ok := method.GetParameter(col.Name)
-		if ok && cc.GetName() == col.Name {
-			// continue
-		}
 		if foundSchema == nil && col.IsColumn {
-			return fmt.Errorf("column = '%s' is NOT present in either:  - data returned from provider, - acceptable parameters, use the DESCRIBE command to view available fields for SELECT operations", col.Name)
+			if !(ok && cc.GetName() == col.Name) {
+				return fmt.Errorf("column = '%s' is NOT present in either:  - data returned from provider, - acceptable parameters, use the DESCRIBE command to view available fields for SELECT operations", col.Name)
+			}
 		}
 		selectTabulation.PushBackColumn(openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.DecoratedColumn, foundSchema, col.Val))
-		logging.GetLogger().Infoln(fmt.Sprintf("rsc = %T", col))
-		logging.GetLogger().Infoln(fmt.Sprintf("schema type = %T", schema))
 	}
 
 	selPsc, err := p.PrimitiveComposer.GetDRMConfig().GenerateSelectDML(util.NewAnnotatedTabulation(selectTabulation, hIds, tbl.GetAlias()), insPsc.GetGCCtrlCtrs(), astvisit.GenerateModifiedSelectSuffix(node), astvisit.GenerateModifiedWhereClause(rewrittenWhere))
@@ -92,6 +83,10 @@ func (p *primitiveGenerator) analyzeUnarySelection(
 	if err != nil {
 		return err
 	}
+	method, err := tbl.GetMethod()
+	if err != nil {
+		return err
+	}
 	schema, mediaType, err := tbl.GetResponseSchemaAndMediaType()
 	if err != nil {
 		return err
@@ -110,9 +105,10 @@ func (p *primitiveGenerator) analyzeUnarySelection(
 		return fmt.Errorf(unsuitableSchemaMsg)
 	}
 	if len(cols) == 0 {
-		colNames := itemObjS.GetAllColumns()
-		for _, v := range colNames {
-			cols = append(cols, parserutil.NewUnaliasedColumnHandle(v))
+		tsa := util.NewTableSchemaAnalyzer(schema, method)
+		colz := tsa.GetColumns()
+		for _, v := range colz {
+			cols = append(cols, parserutil.NewUnaliasedColumnHandle(v.GetName()))
 		}
 	}
 	insertTabulation := itemObjS.Tabulate(false)

@@ -19726,7 +19726,7 @@ components:
             $ref: '#/paths/~1repos~1{owner}~1{repo}~1contributors/get'
           response:
             mediaType: application/json
-            openAPIDocKey: '204'
+            openAPIDocKey: '200'
       sqlVerbs:
         select:
           - $ref: '#/components/x-stackQL-resources/contributors/methods/list_contributors'

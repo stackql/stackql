@@ -200,6 +200,15 @@ func (ss *SingleSelectAcquire) Build() error {
 						for i, item := range iArr {
 							if item != nil {
 
+								paramsUsed, err := reqCtx.ToFlatMap()
+								if err == nil {
+									for k, v := range paramsUsed {
+										if _, ok := item[k]; !ok {
+											item[k] = v
+										}
+									}
+								}
+
 								logging.GetLogger().Infoln(fmt.Sprintf("running insert with control parameters: %v", ss.insertPreparedStatementCtx.GetGCCtrlCtrs()))
 								r, err := ss.drmCfg.ExecuteInsertDML(ss.handlerCtx.SQLEngine, ss.insertPreparedStatementCtx, item)
 								logging.GetLogger().Infoln(fmt.Sprintf("insert result = %v, error = %v", r, err))

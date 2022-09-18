@@ -39,6 +39,17 @@ func (hi *HeirarchyIdentifiers) GetTableName() string {
 	return fmt.Sprintf("%s.%s", hi.ServiceStr, hi.ResourceStr)
 }
 
+func (hi *HeirarchyIdentifiers) GetStackQLTableName() string {
+	baseStr := fmt.Sprintf("%s.%s", hi.ServiceStr, hi.ResourceStr)
+	if hi.ProviderStr != "" {
+		baseStr = fmt.Sprintf("%s.%s", hi.ProviderStr, baseStr)
+	}
+	if hi.MethodStr != "" {
+		return fmt.Sprintf("%s.%s", baseStr, hi.MethodStr)
+	}
+	return baseStr
+}
+
 func ResolveMethodTerminalHeirarchyIdentifiers(node sqlparser.TableName) *HeirarchyIdentifiers {
 	var retVal HeirarchyIdentifiers
 	// all will default to empty string

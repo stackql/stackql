@@ -1,0 +1,27 @@
+|---------------------------|----------------|------|-----------|
+|           name            |     login      | type | role_name |
+|---------------------------|----------------|------|-----------|
+| docusaurus-plugin-hubspot | somejimbo      | User | admin     |
+|---------------------------|----------------|------|-----------|
+| docusaurus-plugin-hubspot | marcusaurelius | User | admin     |
+|---------------------------|----------------|------|-----------|
+| docusaurus-plugin-hubspot | johnsmith      | User | read      |
+|---------------------------|----------------|------|-----------|
+| docusaurus-plugin-hubspot | joeblow        | User | admin     |
+|---------------------------|----------------|------|-----------|
+| dummyapp.io               | somejimbo      | User | admin     |
+|---------------------------|----------------|------|-----------|
+| dummyapp.io               | marcusaurelius | User | admin     |
+|---------------------------|----------------|------|-----------|
+| dummyapp.io               | johnsmith      | User | read      |
+|---------------------------|----------------|------|-----------|
+| dummyapp.io               | joeblow        | User | admin     |
+|---------------------------|----------------|------|-----------|
+| gatsby-plugin-smartlook   | somejimbo      | User | admin     |
+|---------------------------|----------------|------|-----------|
+| gatsby-plugin-smartlook   | marcusaurelius | User | admin     |
+|---------------------------|----------------|------|-----------|
+| gatsby-plugin-smartlook   | johnsmith      | User | read      |
+|---------------------------|----------------|------|-----------|
+| gatsby-plugin-smartlook   | joeblow        | User | admin     |
+|---------------------------|----------------|------|-----------|

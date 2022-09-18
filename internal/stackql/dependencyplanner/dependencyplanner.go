@@ -149,7 +149,10 @@ func (dp *StandardDependencyPlanner) Plan() error {
 						if err != nil {
 							return err
 						}
-						stream, err := dp.getStreamFromEdge(e, tcc)
+						toNode := e.GetDest()
+						toTableExpr := toNode.GetTableExpr()
+						toAnnotation := toNode.GetAnnotation()
+						stream, err := dp.getStreamFromEdge(e, toAnnotation, tcc)
 						if err != nil {
 							return err
 						}
@@ -158,9 +161,6 @@ func (dp *StandardDependencyPlanner) Plan() error {
 							return err
 						}
 						//
-						toNode := e.GetDest()
-						toTableExpr := toNode.GetTableExpr()
-						toAnnotation := toNode.GetAnnotation()
 						dp.annMap[toTableExpr] = toAnnotation
 						toAnnotation.SetDynamic()
 						insPsc, _, err = dp.processOrphan(toTableExpr, toAnnotation, stream)
@@ -217,7 +217,11 @@ func (dp *StandardDependencyPlanner) processOrphan(sqlNode sqlparser.SQLNode, an
 	if err != nil {
 		return nil, nil, err
 	}
-	insPsc, err := dp.primitiveComposer.GetDRMConfig().GenerateInsertDML(anTab, tcc)
+	os, err := annotationCtx.GetTableMeta().GetMethod()
+	if err != nil {
+		return nil, nil, err
+	}
+	insPsc, err := dp.primitiveComposer.GetDRMConfig().GenerateInsertDML(anTab, os, tcc)
 	return insPsc, tcc, err
 }
 
@@ -250,10 +254,6 @@ func (dp *StandardDependencyPlanner) processAcquire(
 	if err != nil {
 		return util.NewAnnotatedTabulation(nil, nil, ""), nil, err
 	}
-	svc, err := annotationCtx.GetTableMeta().GetService()
-	if err != nil {
-		return util.NewAnnotatedTabulation(nil, nil, ""), nil, err
-	}
 	m, err := annotationCtx.GetTableMeta().GetMethod()
 	if err != nil {
 		return util.NewAnnotatedTabulation(nil, nil, ""), nil, err
@@ -269,7 +269,7 @@ func (dp *StandardDependencyPlanner) processAcquire(
 	}
 	anTab := util.NewAnnotatedTabulation(tab, annotationCtx.GetHIDs(), annotationCtx.GetTableMeta().Alias)
 
-	discoGenId, err := docparser.OpenapiStackQLTabulationsPersistor(prov, svc, []util.AnnotatedTabulation{anTab}, dp.primitiveComposer.GetSQLEngine(), prov.Name)
+	discoGenId, err := docparser.OpenapiStackQLTabulationsPersistor(m, []util.AnnotatedTabulation{anTab}, dp.primitiveComposer.GetSQLEngine(), prov.Name)
 	if err != nil {
 		return util.NewAnnotatedTabulation(nil, nil, ""), nil, err
 	}
@@ -303,7 +303,7 @@ func (dp *StandardDependencyPlanner) createSelectFrom() (*sqlparser.Select, erro
 	}, nil
 }
 
-func (dp *StandardDependencyPlanner) getStreamFromEdge(e dataflow.DataFlowEdge, tcc *dto.TxnControlCounters) (streaming.MapStream, error) {
+func (dp *StandardDependencyPlanner) getStreamFromEdge(e dataflow.DataFlowEdge, ac taxonomy.AnnotationCtx, tcc *dto.TxnControlCounters) (streaming.MapStream, error) {
 	if e.IsSQL() {
 		selectCtx, err := dp.generateSelectDML(e, tcc)
 		if err != nil {
@@ -315,7 +315,25 @@ func (dp *StandardDependencyPlanner) getStreamFromEdge(e dataflow.DataFlowEdge, 
 	if err != nil {
 		return nil, err
 	}
-	return streaming.NewSimpleProjectionMapStream(projection), nil
+	incomingCols := make(map[string]struct{})
+	for _, v := range projection {
+		incomingCols[v] = struct{}{}
+	}
+	params := ac.GetParameters()
+	staticParams := make(map[string]interface{})
+	for k, v := range params {
+		if _, ok := incomingCols[k]; !ok {
+			staticParams[k] = v
+			incomingCols[k] = struct{}{}
+		}
+	}
+	if len(staticParams) > 0 {
+		staticParams, err = util.TransformSQLRawParameters(staticParams)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return streaming.NewSimpleProjectionMapStream(projection, staticParams), nil
 }
 
 func (dp *StandardDependencyPlanner) generateSelectDML(e dataflow.DataFlowEdge, tcc *dto.TxnControlCounters) (*drm.PreparedStatementCtx, error) {

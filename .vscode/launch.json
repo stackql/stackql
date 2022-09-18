@@ -37,32 +37,45 @@
     }
   ],
   "configurations": [
-
-    // select VolumeId from aws.ec2.volumes where region = 'ap-southeast-1' order by VolumeId asc;
+    // ATTACH
     {
-      "name": "DEBUG boilerplate",
+      // need to edit processId as appropriate
+      "name": "Attach to local process -- eg shell -- amend processId as required",
+      "type": "go",
+      "request": "attach",
+      "mode": "local",
+      "processId": 95356
+    },
+    // DEBUG
+    {
+      "name": "AWAIT exec ... ;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/build/stackql",
+      "args": [
+        "exec",
+        "--auth=${input:authString}",
+        "EXEC /*+ some AWAIT */ compute.disks.insert @project='${input:gcpProject}', @zone= 'australia-southeast1-a' @@json='{ \"name\": \"test-disk9\", \"sizeGb\": 10 }';",
+        "-o",
+        "json"
+      ],
+    },
+    {
+      "name": "aws INSERT volume ... ;",
       "type": "go",
       "request": "launch",
       "mode": "debug",
       "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
-        "SELECT t.oid, typarray FROM pg_type t JOIN pg_namespace ns ON typnamespace = ns.oid WHERE typname = 'hstore';"
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "insert into aws.ec2.volumes(AvailabilityZone, Size, region) select 'ap-southeast-1a', 10, 'ap-southeast-1';"
       ],
     },
     {
-      "name": "DEBUG pg_catalog boilerplate",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "select pg_catalog.version();"
-      ],
-    },
-    {
-      "name": "DEBUG aws guff failing",
+      "name": "aws guff failing",
       "type": "go",
       "request": "launch",
       "mode": "debug",
@@ -76,7 +89,20 @@
       ],
     },
     {
-      "name": "DEBUG azure guff",
+      "name": "aws select volumes ... ;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "select * from aws.ec2.volumes where region = 'ap-southeast-1';"
+      ],
+    },
+    {
+      "name": "azure guff",
       "type": "go",
       "request": "launch",
       "mode": "debug",
@@ -90,924 +116,25 @@
       ],
     },
     {
-      "name": "DEBUG github guff",
+      "name": "Boilerplate",
       "type": "go",
       "request": "launch",
       "mode": "debug",
       "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "--tls.allowInsecure",
-        "update github.orgs.orgs set body__description = 'Next generation cloud infrastructure, platform and software asset management and deployment automation software solutions.' WHERE org = 'infraql';"
+        "SELECT t.oid, typarray FROM pg_type t JOIN pg_namespace ns ON typnamespace = ns.oid WHERE typname = 'hstore';"
       ],
     },
     {
-      "name": "DEBUG github pages",
+      "name": "Biolerplate; pg_catalog",
       "type": "go",
       "request": "launch",
       "mode": "debug",
       "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "--tls.allowInsecure",
-        "select url from github.repos.pages where owner = 'dummyorg' and repo = 'dummyapp.io' ;"
-      ],
-    },
-    {
-      "name": "DEBUG okta pagination",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "--tls.allowInsecure",
-        "select ou.status, ou.profile from okta.user.users ou where ou.subdomain = 'dummyorg';"
-      ],
-    },
-    {
-      "name": "DEBUG GRAPHQL select * from github.scim.saml_ids",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "select * from github.scim.saml_ids where org = 'infraql';"
-      ],
-    },
-
-    {
-      "name": "Launch help -- prebuilt with cmake",
-      "type": "go",
-      "request": "launch",
-      "mode": "exec",
-      "program": "${workspaceFolder}/build/stackql",
-      "args": [
-        "help"
-      ]
-    },
-
-    {
-      "name": "Debug exec \"show services from google where name = 'abusiveexperiencereport';\" ",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "show services from google where name = 'abusiveexperiencereport';"
-      ],
-    },
-
-    {
-      "name": "okta -- Launch exec \"show resources from okta.group;\" -- prebuilt with cmake",
-      "type": "go",
-      "request": "launch",
-      "mode": "exec",
-      "program": "${workspaceFolder}/build/stackql",
-      "args": [
-        "exec",
-        "show resources from okta.group;"
-      ],
-    },
-    {
-      "name": "Debug \"DESCRIBE google.fcmdata.delivery_data;\" -- prebuilt with cmake",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "DESCRIBE google.fcmdata.delivery_data;", // "--offline"
-      ],
-    },
-    {
-      "name": "Debug \"DESCRIBE google.compute.health_checks_aggregated;\" -- prebuilt with cmake",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "DESCRIBE google.compute.health_checks_aggregated;", // "--offline"
-      ],
-    },
-    // select id, name from google.storage.buckets where project = 'lab-kr-network-01';
-    {
-      "name": "Debug \"DESCRIBE k8s.core_v1.Node ;\" ",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "DESCRIBE k8s.core_v1.Node ;", // "--offline"
-      ],
-    },
-    {
-      "name": "Launch exec \"DESCRIBE google.compute.disks;\" -- prebuilt with cmake",
-      "type": "go",
-      "request": "launch",
-      "mode": "exec",
-      "program": "${workspaceFolder}/build/stackql",
-      "args": [
-        "exec",
-        "DESCRIBE compute.disks;", // "--offline"
-      ],
-    },
-    {
-      "name": "Launch exec \"SHOW... google.compute;\" -- prebuilt with cmake",
-      "type": "go",
-      "request": "launch",
-      "mode": "exec",
-      "program": "${workspaceFolder}/build/stackql",
-      "args": [
-        "exec",
-        "SHOW resources from google.compute WHERE name = '';", // "--offline"
-      ],
-    },
-    {
-      "name": "Launch JOIN exec \"SELECT projects.logs ... ;\" -- prebuilt with cmake",
-      "type": "go",
-      "request": "launch",
-      "mode": "exec",
-      "program": "${workspaceFolder}/build/stackql",
-      "args": [
-        "exec",
-        "--auth=${input:authString}",
-        "select * from google.logging.`projects.logs` WHERE parent = 'projects/${input:gcpProject}';",
-        "-o",
-        "json"
-      ],
-    },
-    // select name from google.compute.disks where project = '${input:gcpProject}' and zone = 'australia-southeast1-a';
-    {
-      "name": "DEBUG select compute.acceleratorTypes ... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "select  kind, name  from  google.compute.acceleratorTypes where project = '${input:gcpProject}' and zone = 'australia-southeast1-a' order by name desc;"
-      ],
-    },
-    // select id, name from google.storage.buckets where project = 'lab-kr-network-01';
-    {
-      "name": "DEBUG select compute.storage.buckets ... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "select id, name from google.storage.buckets where project = '${input:gcpProject}';"
-      ],
-    },
-    {
-      "name": "DEBUG select horror error ... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "SELECT  i.name as instance_name,  i.status as instance_status,  c.sha as commit_sha,  JSON_EXTRACT(c.commit, '$.author.email') as author_email,  DATE(JSON_EXTRACT(c.commit, '$.author.date')) as commit_date FROM github.repos.commits c INNER JOIN google.compute.instances i ON  JSON_EXTRACT(i.labels, '$.sha') = c.sha WHERE c.owner = 'stackql' AND c.repo = 'stackql-demo' AND i.project = '${input:gcpProject}' AND i.zone = 'australia-southeast1-a';"
-      ],
-    },
-    {
-      "name": "DEBUG filtered github.repos.repos... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "select id, name from github.repos.repos where org = 'stackql' and name = 'cloudy-redirect-app';"
-      ],
-    },
-    // select login, bio from github.users.users where username = 'kingy';
-    {
-      "name": "DEBUG select github.users.users... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "--tls.allowInsecure=true",
-        "select login, bio from github.users.users where username = 'kingy';"
-      ],
-    },
-    {
-      "name": "DEBUG join ON param... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "--tls.allowInsecure=true",
-        "select u.name, om.login, u.two_factor_authentication AS is_two_fa_enabled from github.orgs.members om inner join github.users.users u on om.login = u.login AND u.username = om.login where om.org = 'dummyorg' order by u.name desc;"
-      ],
-    },
-    {
-      "name": "TARGET STATE join ON param... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "--tls.allowInsecure=true",
-        "select substr(su.userName, 1, instr(su.userName, '@') - 1), su.externalId, su.id, u.login, u.two_factor_authentication AS is_two_fa_enabled from github.scim.users su inner join github.users.users u ON substr(su.userName, 1, instr(su.userName, '@') - 1) = u.username  where su.org = 'dummyorg' order by su.id asc;"
-      ],
-    }, 
-    {
-      "name": "DEBUG weird join error ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "SELECT i.name as instance_name, i.status as instance_status, c.sha as commit_sha, JSON_EXTRACT(c.commit, '$.author.email') as author_email, DATE(JSON_EXTRACT(c.commit, '$.author.date')) as commit_date FROM github.repos.commits c INNER JOIN google.compute.instances i ON JSON_EXTRACT(i.labels, '$.sha') = c.sha WHERE c.owner = 'dummyorg' AND c.repo = 'dummyapp.io' AND i.project = 'testing-project' AND i.zone = 'australia-southeast1-a';"
-      ],
-    },
-    {
-      "name": "DEBUG INSERT INTO google.iam.service_accounts... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "INSERT INTO google.iam.service_accounts(  projectsId,  data__accountId,  data__serviceAccount ) SELECT  'lab-kr-network-01',  'terraform-prod',  '{ \"description\": \"Terraform Service Account for prod\", \"displayName\": \"terraform-prod\" }';"
-      ],
-    },
-    {
-      "name": "DEBUG show insert into google.iam.service_accounts ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "show insert into google.iam.service_accounts;"
-      ],
-    },
-    {
-      "name": "DEBUG show insert into google.bigquery.routines ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "show insert into google.bigquery.routines;"
-      ],
-    },
-    {
-      "name": "DEBUG filtered github.repos.commits... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "select c.sha as commit_sha, c.commit  FROM github.repos.commits c WHERE c.owner = 'stackql' AND c.repo = 'stackql-demo'"
-      ],
-    },
-    {
-      "name": "DEBUG github.repos.branches... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "--tls.allowInsecure=true",
-        "select c.name  FROM github.repos.branches c WHERE c.owner = 'dummyorg' AND c.repo = 'dummyapp.io'"
-      ],
-    },
-    {
-      "name": "DEBUG SELECT google.compute.instances_iam_policies... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "--tls.allowInsecure=true",
-        "SELECT etag FROM google.compute.instances_iam_policies WHERE project = 'testing-project' AND zone = 'australia-southeast1-a' AND resource = '000000001';"
-      ],
-    },
-    {
-      "name": "DEBUG SHOW INSERT google.compute.instances_iam_policies... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "SHOW INSERT INTO google.compute.instances_iam_policies;"
-      ],
-    },
-    {
-      "name": "DEBUG SHOW INSERT google.iam.service_accounts... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "show insert into google.iam.service_accounts;"
-      ],
-    },
-    {
-      "name": "DEBUG select compute.machineTypes ... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "select  kind, name  from  google.compute.machineTypes where name = 'f1-micro' and project = '${input:gcpProject}' and zone = 'australia-southeast1-a' order by name desc;"
-      ],
-    },
-    // 
-    {
-      "name": "INSERT /*+ AWAIT */... select... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "INSERT /*+ AWAIT */ INTO google.compute.instances ( zone, project, data__name, data__machineType, data__deletionProtection, data__networkInterfaces, data__disks, data__labels ) SELECT 'australia-southeast1-a', '${input:gcpProject}', name, machineType, deletionProtection, networkInterfaces, disks, labels FROM google.compute.instances WHERE project = '${input:gcpProject}'  AND zone = 'australia-southeast1-a';"
-      ],
-    },
-    // 
-    {
-      "name": "SELECT... JSON... INNER JOIN... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "SELECT i.zone, i.name, i.machineType, i.deletionProtection, '[{\"subnetwork\":\"' || JSON_EXTRACT(i.networkInterfaces, '$[0].subnetwork') || '\"}]', '[{\"boot\": true,\"initializeParams\":{\"diskSizeGb\": \"' || JSON_EXTRACT(i.disks, '$[0].diskSizeGb') || '\",\"sourceImage\": \"' || d.sourceImage || '\"}}]', i.labels FROM google.compute.instances i INNER JOIN google.compute.disks d ON i.name = d.name WHERE i.project = '${input:gcpProject}' AND i.zone = 'australia-southeast1-a' AND d.project = '${input:gcpProject}' AND d.zone = 'australia-southeast1-a' AND i.name LIKE '%';"
-      ],
-    },
-    // 
-    {
-      "name": "SELECT... ANON COLUMNS INNER JOIN... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "SELECT 'a' || 'a', '{ \"b\": ' || '\"b\" }' FROM google.compute.instances i INNER JOIN google.compute.disks d ON i.name = d.name WHERE i.project = '${input:gcpProject}' AND i.zone = 'australia-southeast1-a' AND d.project = '${input:gcpProject}' AND d.zone = 'australia-southeast1-a' AND i.name LIKE '%' order by i.name DESC;",
-      ],
-    },
-    {
-      "name": "DEBUG select NETLIFY sites ... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "select * from  netlify.site.site;"
-      ],
-    },
-    // 
-    {
-      "name": "DEBUG select github.repos.repos ... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "select name, ssh_url from github.repos.repos where org = 'stackql' ;"
-      ],
-    }, 
-    {
-      "name": "DEBUG authenticated select github.repos.repos ... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "select name, ssh_url from github.repos.repos where org = 'stackql' ;"
-      ],
-    },
-    // select * from github.activity.starring where owner = 'stackql' and repo = 'stackql' limit 1;
-    {
-      "name": "DEBUG authenticated select github.activity.starring ... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "select id from github.activity.starring where owner = 'stackql' and repo = 'stackql' limit 1;"
-      ],
-    },
-    // describe github.activity.starring;
-    {
-      "name": "DEBUG describe github.repos.pages;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "describe github.repos.pages;"
-      ],
-    },
-    // describe github.repos.statistics_code_frequency;
-    {
-      "name": "DEBUG describe github.repos.statistics_code_frequency;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "describe github.repos.statistics_code_frequency;"
-      ],
-    },
-    // select id from  github.repos.repos where org = 'stackql';
-    {
-      "name": "DEBUG select id from  github.repos.repos where org = 'stackql';",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "select id from  github.repos.repos where org = 'stackql';"
-      ],
-    },
-    {
-      "name": "DEBUG select url from github.repos.pages where owner = 'stackql' and repo = 'fullstackchronicles.io';",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "select url from github.repos.pages where owner = 'stackql' and repo = 'fullstackchronicles.io';"
-      ],
-    },
-    {
-      "name": "DEBUG authenticated select github.usrs.users ... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "select login, url from github.users.users;"
-      ],
-    },
-    // EXEC github.repos.repos.create_in_org @org='stackql', @body_name='test-r1';
-    {
-      "name": "DEBUG authenticated insert github.repos.repos ... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "EXEC github.repos.repos.create_in_org @org='stackql' @@json='{\"name\":\"test-r2\"}';"
-      ],
-    },
-    {
-      "name": "DEBUG show methods in google.storage.buckets;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "show methods in google.storage.buckets;"
-      ],
-    },
-    {
-      "name": "DEBUG show methods in github.repos.repos;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "show methods in github.repos.repos;"
-      ],
-    },
-    // show extended resources from okta.group
-    {
-      "name": "DEBUG show resources from okta.group ... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--auth=${input:authString}",
-        "show extended resources from okta.group;",
-        "-o",
-        "json"
-      ],
-    },
-    {
-      "name": "DEBUG SELECT google.cloudresourcemanager.project_iam_policies ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "exec",
-        "SELECT role, members, condition from google.cloudresourcemanager.project_iam_policies where projectsId = 'lab-kr-network-01';"
-      ],
-    },
-    {
-      "name": "DEBUG run server;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "srv",
-        "--auth=${input:authString}",
-        "{ \"url\": \"file://${workspaceFolder}/examples/registry\", \"localDocRoot\": \"${workspaceFolder}/examples/registry\", \"verifyConfig\": {\"nopVerify\": true } }"
-      ],
-    },
-    {
-      "name": "DEBUG delete from google.storage.buckets ... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--auth=${input:authString}",
-        "delete from google.storage.buckets WHERE bucket = 'lab-kr-network-03-trial-bucket';",
-        "-o",
-        "json"
-      ],
-    },
-    // ' registry pull okta
-    {
-      "name": "DEBUG pull github v0.3.0 ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "registry",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "pull",
-        "github",
-        "v0.3.0"
-      ],
-    },
-    {
-      "name": "DEBUG registry list ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "registry",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "list"
-      ],
-    },
-    {
-      "name": "DEBUG pull github v0.1.0 ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "registry",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "pull",
-        "github",
-        "v0.1.0"
-      ],
-    },
-    // { "url": "file://${workspaceFolder}/examples/registry'${PROVIDER_REGISTRY_ROOT_DIR}'", "localDocRoot": "'${PROVIDER_REGISTRY_ROOT_DIR}'",  "useEmbedded": false, "verifyConfig": {"nopVerify": true } }
-    {
-      "name": "DEBUG BYO describe anonymous column ... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "describe publicapis.api.categories;"
-      ],
-    },
-    {
-      "name": "DEBUG BYO anonymous column ... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "select column_anon as f from publicapis.api.categories where column_anon like 'B%' limit 10;"
-      ],
-    },
-    {
-      "name": "DEBUG join #1 ... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "select d1.name, d1.id from google.compute.disks d1 inner join google.compute.disks d2 on d1.id = d2.id where d1.project = '${input:gcpProject}' and d1.zone = 'australia-southeast1-a' and d2.project = '${input:gcpProject}' and d2.zone = 'australia-southeast1-a';"
-      ],
-    },
-    {
-      "name": "DEBUG equaivalent NON join #1 ... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "select d1.name, d1.id from google.compute.disks d1 where d1.project = '${input:gcpProject}' and d1.zone = 'australia-southeast1-a';"
-      ],
-    },
-    {
-      "name": "DEBUG join #2 ... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "select d1.name, d1.id, d2.label as d2_id from google.compute.disks d1 inner join okta.application.apps d2 on d1.name = d2.label where d1.project = '${input:gcpProject}' and d1.zone = 'australia-southeast1-a' and d2.subdomain = 'dev-79923018-admin';"
-      ],
-    },
-    {
-      "name": "DEBUG equivalent NON join #2 ... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "select apps.label from okta.application.apps apps where apps.subdomain = 'dev-79923018-admin';"
-      ],
-    },
-    {
-      "name": "DEBUG aws select volumes ... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "select * from aws.ec2.volumes where region = 'ap-southeast-1';"
-      ],
-    },
-    {
-      "name": "DEBUG INSERT aws volume ... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "insert into aws.ec2.volumes(AvailabilityZone, Size, region) select 'ap-southeast-1a', 10, 'ap-southeast-1';"
-      ],
-    },
-    {
-      "name": "DEBUG k8s exec node list ... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "exec /*+ SHOWRESULTS */ k8s.core_v1.Node.listCoreV1Node @server_address='35.244.65.136';"
-      ],
-    },
-    {
-      "name": "DEBUG select name, uid, creationTimestamp from k8s.core_v1.node where cluster_addr = 'k8shost' limit 1;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "--tls.allowInsecure=true",
-        "select * from k8s.core_v1.node where cluster_addr = 'localhost' limit 1;"
-      ],
-    },
-    {
-      "name": "DEBUG select ...protocol, cluster_addr... from k8s.core_v1.node;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "--tls.allowInsecure=true",
-        "select name, namespace, uid, creationTimestamp from k8s.core_v1.pod where protocol = 'http' and cluster_addr = 'localhost:9091'  order by name asc;"
-      ],
-    },
-    {
-      "name": "DEBUG BYO API ... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "select API from publicapis.api.apis limit 10;"
-      ],
-    },
-    // exec /*+ SHOWRESULTS */ publicapis.api.health.get;
-    {
-      "name": "DEBUG bool select BYO anon ... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "select * from (exec /*+ SHOWRESULTS */ publicapis.api.health.get);"
-      ],
-    },
-    {
-      "name": "SELECT okta apps... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--auth=${input:authString}",
-        "--registry=${input:registryString}",
-        "select name, status, label, id from okta.application.apps apps where apps.subdomain = 'example-subdomain' order by name asc;",
-        "-o",
-        "json"
-      ],
-    },
-    {
-      "name": "Launch exec \"INSERT /*+ AWAIT */ logging...buckets ... ;\" -- prebuilt with cmake",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--auth=${input:authString}",
-        "insert /*+ AWAIT */ into google.logging.`organizations.locations.buckets`(parent, bucketId) values('projects/${input:gcpProject}/locations/australia-southeast1', 'kr-lab-network-01-logging-bucket-03');",
-        "-o",
-        "json"
-      ],
-    },
-    // DELETE FROM google.bigquery.datasets WHERE projectId='${input:gcpProject}' and datasetId='DEMO_DATASET';
-    {
-      "name": "Intractible \"SELECT BQ jobs ... ;\" -- prebuilt with cmake",
-      "type": "go",
-      "request": "launch",
-      "mode": "exec",
-      "program": "${workspaceFolder}/build/stackql",
-      "args": [
-        "exec",
-        "--auth=${input:authString}",
-        "select * from google.bigquery.jobs where projectId='${input:gcpProject}';",
-        "-o",
-        "json"
-      ],
-    },
-    {
-      "name": "Intractible \"select from exec ... ;\" -- prebuilt with cmake",
-      "type": "go",
-      "request": "launch",
-      "mode": "exec",
-      "program": "${workspaceFolder}/build/stackql",
-      "args": [
-        "exec",
-        "--credentialsfilepath=${workspaceFolder}/keys/sa-key.json",
-        "select * from ( exec /*+ SHOWRESULTS */ google.bigquery.jobs.getQueryResults @projectId='${input:gcpProject}', @jobId='bquxjob_19abc6d_17c14bbcb9e' ) ;",
-        "-o",
-        "json"
+        "select pg_catalog.version();"
       ],
     },
     {
@@ -1026,120 +153,224 @@
       ],
     },
     {
-      "name": "okta debug \"insert into apps ... ;\" -- prebuilt with cmake",
+      "name": "github guff",
       "type": "go",
       "request": "launch",
       "mode": "debug",
       "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
+        "--registry=${input:registryString}",
         "--auth=${input:authString}",
-        "insert into okta.application.apps(subdomain, data__name, data__label, data__signOnMode, data__settings) SELECT 'dev-79923018-admin', 'template_basic_auth', 'some new app again', 'BASIC_AUTH', '{ \"app\": { \"authURL\": \"https://example.com/auth.html\", \"url\": \"https://example.com/bookmark.htm\" } }' ;",
+        "--tls.allowInsecure",
+        "select r.name, col.login, col.type, col.role_name from github.repos.collaborators col inner join github.repos.repos r ON col.repo = r.name where col.owner = 'stackql' and r.org = 'stackql';"
+      ],
+    },
+    {
+      "name": "github pages",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "--tls.allowInsecure",
+        "select url from github.repos.pages where owner = 'dummyorg' and repo = 'dummyapp.io' ;"
+      ],
+    },
+    {
+      "name": "GRAPHQL select * from github.scim.saml_ids",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "select * from github.scim.saml_ids where org = 'infraql';"
+      ],
+    },
+    {
+      "name": "JOIN exec \"SELECT projects.logs ... ;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/build/stackql",
+      "args": [
+        "exec",
+        "--auth=${input:authString}",
+        "select * from google.logging.`projects.logs` WHERE parent = 'projects/${input:gcpProject}';",
         "-o",
         "json"
       ],
     },
-    // 
     {
-      "name": "debug \"SHOW RESOURCES ;\" -- prebuilt with cmake",
+      "name": "join ON param",
       "type": "go",
       "request": "launch",
       "mode": "debug",
       "program": "${workspaceFolder}/stackql",
       "args": [
-        "--registry=${input:registryString}",
         "exec",
-        "show extended resources from google.compute where name = 'resourcePolicies';",
-        "-o",
-        "json"
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "--tls.allowInsecure=true",
+        "select u.name, om.login, u.two_factor_authentication AS is_two_fa_enabled from github.orgs.members om inner join github.users.users u on om.login = u.login AND u.username = om.login where om.org = 'dummyorg' order by u.name desc;"
       ],
-    }, 
+    },
     {
-      "name": "exec \"SHOW RESOURCES ;\" -- prebuilt with cmake",
+      "name": "join ON param problematic",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "--tls.allowInsecure=true",
+        "select r.name, col.login, col.type, col.role_name from github.repos.repos r inner join github.repos.collaborators col ON col.repo = r.name where col.owner = 'stackql' and r.org = 'stackql';"
+      ],
+    },
+    {
+      "name": "join ON param target state",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "--tls.allowInsecure=true",
+        "select substr(su.userName, 1, instr(su.userName, '@') - 1), su.externalId, su.id, u.login, u.two_factor_authentication AS is_two_fa_enabled from github.scim.users su inner join github.users.users u ON substr(su.userName, 1, instr(su.userName, '@') - 1) = u.username  where su.org = 'dummyorg' order by su.id asc;"
+      ],
+    },
+    {
+      "name": "okta pagination",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "--tls.allowInsecure",
+        "select ou.status, ou.profile from okta.user.users ou where ou.subdomain = 'dummyorg';"
+      ],
+    },
+    {
+      "name": "registry list ;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "registry",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "list"
+      ],
+    },
+    {
+      "name": "registry pull github v0.3.0 ;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "registry",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "pull",
+        "github",
+        "v0.3.0"
+      ],
+    },
+    {
+      "name": "RUN insert complex iql file... ;\" -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/build/stackql",
+      "args": [
+        "exec",
+        "--auth=${input:authString}",
+        "-i=${workspaceFolder}/test/assets/input/insert-compute-network.iql",
+        "-o",
+        "table"
+      ],
+    },
+    {
+      "name": "run server;",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "srv",
+        "--auth=${input:authString}",
+        "{ \"url\": \"file://${workspaceFolder}/examples/registry\", \"localDocRoot\": \"${workspaceFolder}/examples/registry\", \"verifyConfig\": {\"nopVerify\": true } }"
+      ],
+    },
+    {
+      "name": "RUN test iql file... ;\" -- prebuilt with cmake",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/build/stackql",
+      "args": [
+        "exec",
+        "--auth=${input:authString}",
+        "-i=${workspaceFolder}/test/assets/input/show-services-extended-filtered.iql",
+        "-o",
+        "table"
+      ],
+    },
+    {
+      "name": "SELECT bq.datasets ... ;",
       "type": "go",
       "request": "launch",
       "mode": "exec",
       "program": "${workspaceFolder}/build/stackql",
       "args": [
         "exec",
-        "show extended resources from google.compute where name = 'resourcePolicies';",
+        "--auth=${input:authString}",
+        "select * from google.bigquery.datasets where projectId = '${input:gcpProject}';",
         "-o",
         "json"
       ],
     },
     {
-      "name": "okta \"DELETE from okta.application.apps ;\" -- prebuilt with cmake",
+      "name": "SELECT container agg ... ;",
       "type": "go",
       "request": "launch",
       "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--auth=${input:authString}",
-        "delete from okta.application.apps where appId = '0oa3fvey86qdXch1g5d7' and subdomain = 'dev-79923018-admin';",
-        "-o",
-        "json"
-      ],
-    },
-    {
-      "name": "okta deactivate \"okta.application.apps.deactivate ;\" -- prebuilt with cmake",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--auth=${input:authString}",
-        "exec okta.application.apps.deactivate @appId = '0oa3pssr5jYavmnNF5d7',  @subdomain = 'dev-79923018-admin';",
-        "-o",
-        "json"
-      ],
-    },
-    {
-      "name": "okta \"show resources from okta.group ;\" -- prebuilt with cmake",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--auth=${input:authString}",
-        "show resources from okta.group;",
-        "-o",
-        "json"
-      ],
-    },
-    {
-      "name": "\"AWAIT exec ... ;\" -- prebuilt with cmake",
-      "type": "go",
-      "request": "launch",
-      "mode": "exec",
       "program": "${workspaceFolder}/build/stackql",
       "args": [
         "exec",
         "--auth=${input:authString}",
-        // "exec /*+ some AWAIT */ google.compute.disks.list  @zone = 'australia-southeast1-a', /* */ @project = '${input:gcpProject}';",
-        "EXEC /*+ some AWAIT */ compute.disks.insert @project='${input:gcpProject}', @zone= 'australia-southeast1-a' @@json='{ \"name\": \"test-disk9\", \"sizeGb\": 10 }';",
-        // "select name, region from google.compute.subnetworks where region = 'australia-southeast1' AND /* */ project = '${input:gcpProject}';",
-        // "select * from compute.instances WHERE `google.compute.project` = '${input:gcpProject}' ;",
-        // "select canIpForward from compute.instances WHERE zone = 2 AND project = '${input:gcpProject}' ;",
+        "select * from google.container.`projects.aggregated.usableSubnetworks` where parent = 'projects/kr-lab-network-01'",
         "-o",
         "json"
       ],
     },
     {
-      "name": "Debug exec \"COMPLEX INSERT ... ;\" -- prebuilt with cmake",
+      "name": "SELECT google.compute.instances_iam_policies... ;",
       "type": "go",
       "request": "launch",
       "mode": "debug",
       "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
-        "--auth=${input:authString}",
         "--registry=${input:registryString}",
-        "insert into google.compute.disks(project, zone, data__name) SELECT '${input:gcpProject}', 'australia-southeast1-a', name || '-newzy2' as name from google.compute.disks where project = '${input:gcpProject}' and zone =  'australia-southeast1-a' limit 2;",
-        "-o",
-        "json"
+        "--auth=${input:authString}",
+        "--tls.allowInsecure=true",
+        "SELECT etag FROM google.compute.instances_iam_policies WHERE project = 'testing-project' AND zone = 'australia-southeast1-a' AND resource = '000000001';"
       ],
     },
     {
@@ -1157,10 +388,10 @@
       ],
     },
     {
-      "name": "SHOW INSERT...instances( project...) ;\" -- prebuilt with cmake",
+      "name": "SHOW INSERT...instances( project...) ;",
       "type": "go",
       "request": "launch",
-      "mode": "exec",
+      "mode": "debug",
       "program": "${workspaceFolder}/build/stackql",
       "args": [
         "exec",
@@ -1171,10 +402,10 @@
       ],
     },
     {
-      "name": "SHOW INSERT /*+ REQUIRED */... ;\" -- prebuilt with cmake",
+      "name": "SHOW INSERT /*+ REQUIRED */... ;",
       "type": "go",
       "request": "launch",
-      "mode": "exec",
+      "mode": "debug",
       "program": "${workspaceFolder}/build/stackql",
       "args": [
         "exec",
@@ -1213,88 +444,6 @@
         "-o",
         "table"
       ],
-    },
-    {
-      "name": "RUN test iql file... ;\" -- prebuilt with cmake",
-      "type": "go",
-      "request": "launch",
-      "mode": "exec",
-      "program": "${workspaceFolder}/build/stackql",
-      "args": [
-        "exec",
-        "--auth=${input:authString}",
-        "-i=${workspaceFolder}/test/assets/input/show-services-extended-filtered.iql",
-        "-o",
-        "table"
-      ],
-    },
-    {
-      "name": "RUN insert complex iql file... ;\" -- prebuilt with cmake",
-      "type": "go",
-      "request": "launch",
-      "mode": "exec",
-      "program": "${workspaceFolder}/build/stackql",
-      "args": [
-        "exec",
-        "--auth=${input:authString}",
-        "-i=${workspaceFolder}/test/assets/input/insert-compute-network.iql",
-        "-o",
-        "table"
-      ],
-    },
-    // select * from google.container.`projects.aggregated.usableSubnetworks` where parent = '"'paojects/kr-lab-network-01'"';
-    {
-      "name": "Launch exec \"SELECT container agg ... ;\" -- prebuilt with cmake",
-      "type": "go",
-      "request": "launch",
-      "mode": "exec",
-      "program": "${workspaceFolder}/build/stackql",
-      "args": [
-        "exec",
-        "--auth=${input:authString}",
-        "select * from google.container.`projects.aggregated.usableSubnetworks` where parent = 'projects/kr-lab-network-01'",
-        "-o",
-        "json"
-      ],
-    },
-    {
-      "name": "Launch exec \"SELECT bq.datasets ... ;\" -- prebuilt with cmake",
-      "type": "go",
-      "request": "launch",
-      "mode": "exec",
-      "program": "${workspaceFolder}/build/stackql",
-      "args": [
-        "exec",
-        "--auth=${input:authString}",
-        "select * from google.bigquery.datasets where projectId = '${input:gcpProject}';",
-        "-o",
-        "json"
-      ],
-    },
-
-    {
-      "name": "DEBUG exec \"SELECT name FROM google.storage.buckets WHERE project = '${input:gcpProject}';\" -- prebuilt with cmake",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--auth=${input:authString}",
-        "SELECT name FROM google.storage.buckets WHERE project = '${input:gcpProject}';",
-        "-o",
-        "json"
-      ],
-    },
-    // ;
-    // ./stackql --verbose --approot=./.stackql   --credentialsfilepath=../keys/sa-key.json exec    "select canIpForward from compute.instances WHERE zone = 'australia-southeast1-b' AND project = '${input:gcpProject}' ;" -o json | jq
-    {
-      // need to edit processId as appropriate
-      "name": "Attach to local process -- eg shell -- amend processId as required",
-      "type": "go",
-      "request": "attach",
-      "mode": "local",
-      "processId": 95356
     }
   ]
 }

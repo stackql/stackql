@@ -291,7 +291,7 @@ func (pb *primitiveGenerator) showInstructionExecutor(node *sqlparser.Show, hand
 		}
 		meth, err := tbl.GetMethod()
 		if err != nil {
-			tblName, tblErr := tbl.GetTableName()
+			tblName, tblErr := tbl.GetStackQLTableName()
 			if tblErr != nil {
 				return util.GenerateSimpleErroneousOutput(fmt.Errorf("Cannot find matching operation, possible causes include missing required parameters or an unsupported method for the resource, to find required parameters for supported methods run SHOW METHODS: %s", err.Error()))
 			}
