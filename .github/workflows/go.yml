@@ -14,7 +14,7 @@ on:
 
 env:
   GOGETCMD: "go get -v -t -d ./..."
-  GOTESTCMD: "go test -timeout 1200s --tags \"json1\" -v ./..."
+  GOTESTCMD: "go test -timeout 1200s --tags \"json1 sqleanall\" -v ./..."
   TESTSCRIPT: "test/python/main.py"
   GOPRIVATE: github.com/stackql/*
   GH_ACCESS_TOKEN: ${{ secrets.ACTIONS_PRIVATE_PACKAGE_SECRET }}
@@ -117,7 +117,7 @@ jobs:
         echo "BUILDMINORVERSION=$BuildMinorVersion" >> $GITHUB_ENV
         echo "BUILDPATCHVERSION=$BuildPatchVersion" >> $GITHUB_ENV
 
-        go build -x -v --tags "json1" -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion=$BuildMajorVersion `
+        go build -x -v --tags "json1 sqleanall" -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion=$BuildMajorVersion `
           -X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion=$BuildMinorVersion `
           -X github.com/stackql/stackql/internal/stackql/cmd.BuildPatchVersion=$BuildPatchVersion `
           -X github.com/stackql/stackql/internal/stackql/cmd.BuildCommitSHA=$BuildCommitSHA `
@@ -129,7 +129,7 @@ jobs:
 
     - name: Test
       if: success()
-      run: go test -timeout 1200s --tags "json1" -v ./...
+      run: go test -timeout 1200s --tags "json1 sqleanall" -v ./...
 
     - name: Mock Server Download
       run: |
@@ -259,7 +259,7 @@ jobs:
         echo "BUILDMINORVERSION=$BUILDMINORVERSION" >> $GITHUB_ENV
         echo "BUILDPATCHVERSION=$BUILDPATCHVERSION" >> $GITHUB_ENV
 
-        go build -x -v --tags "json1" -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion=$BUILDMAJORVERSION \
+        go build -x -v --tags "json1 sqleanall" -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion=$BUILDMAJORVERSION \
         -X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion=$BUILDMINORVERSION \
         -X github.com/stackql/stackql/internal/stackql/cmd.BuildPatchVersion=$BUILDPATCHVERSION \
         -X github.com/stackql/stackql/internal/stackql/cmd.BuildCommitSHA=$BUILDCOMMITSHA \
@@ -271,7 +271,7 @@ jobs:
       
     - name: Test
       if: success()
-      run: go test -timeout 1200s --tags "json1" -v ./...
+      run: go test -timeout 1200s --tags "json1 sqleanall" -v ./...
 
     - name: Mock Server Download
       run: |
@@ -389,7 +389,7 @@ jobs:
         echo "BUILDMINORVERSION=$BUILDMINORVERSION" >> $GITHUB_ENV
         echo "BUILDPATCHVERSION=$BUILDPATCHVERSION" >> $GITHUB_ENV
 
-        go build -x -v --tags "json1" -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion=$BUILDMAJORVERSION \
+        go build -x -v --tags "json1 sqleanall" -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion=$BUILDMAJORVERSION \
         -X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion=$BUILDMINORVERSION \
         -X github.com/stackql/stackql/internal/stackql/cmd.BuildPatchVersion=$BUILDPATCHVERSION \
         -X github.com/stackql/stackql/internal/stackql/cmd.BuildCommitSHA=$BUILDCOMMITSHA \
@@ -401,7 +401,7 @@ jobs:
 
     - name: Test
       if: success()
-      run: go test -timeout 1200s --tags "json1" -v ./...
+      run: go test -timeout 1200s --tags "json1 sqleanall" -v ./...
 
     - name: Mock Server Download
       run: |
@@ -503,7 +503,7 @@ jobs:
         echo "BUILDPATCHVERSION=$BUILDPATCHVERSION" >> $GITHUB_ENV
 
         GOOS=darwin GOARCH=arm64 \
-        go build -x -v --tags "json1" -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion=$BUILDMAJORVERSION \
+        go build -x -v --tags "json1 sqleanall" -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion=$BUILDMAJORVERSION \
         -X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion=$BUILDMINORVERSION \
         -X github.com/stackql/stackql/internal/stackql/cmd.BuildPatchVersion=$BUILDPATCHVERSION \
         -X github.com/stackql/stackql/internal/stackql/cmd.BuildCommitSHA=$BUILDCOMMITSHA \

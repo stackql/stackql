@@ -8,7 +8,7 @@
 Some pretty hefty things, also the `json1` tag is a must.
 
 ```
-go test -timeout 2400s -p 2 --tags "json1" ./...
+go test -timeout 2400s -p 2 --tags "json1 sqleanall" ./...
 ```
 
 ## Provider development
@@ -135,7 +135,7 @@ Test coverage is sparse.  Regressions are mitigated by `gotest` integration test
 #### Point in time gotest coverage
 
 If not already done, then install 'cover' with `go get golang.org/x/tools/cmd/cover`.  
-Then: `go test -cover ../...`.
+Then: `go test --tags "json1 sqleanall" -cover ../...`.
 
 ### Integration testing
 

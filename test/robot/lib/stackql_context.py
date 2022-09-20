@@ -367,6 +367,7 @@ UPDATE_GITHUB_ORG = "update github.orgs.orgs set data__description = 'Some silly
 SELECT_GITHUB_REPOS_PAGES_SINGLE = "select url from github.repos.pages where owner = 'dummyorg' and repo = 'dummyapp.io';"
 SELECT_GITHUB_REPOS_IDS_ASC = "select id from github.repos.repos where org = 'dummyorg' order by id ASC;"
 SELECT_GITHUB_BRANCHES_NAMES_DESC = "select name from github.repos.branches where owner = 'dummyorg' and repo = 'dummyapp.io' order by name desc;"
+SELECT_GITHUB_REPOS_WITH_USEFUL_FUNCTIONS = "select name, split_part(teams_url, '/', 4) as extracted_team, regexp_replace((JSON_EXTRACT(owner, '$.url')), '^https://[^/]+/[^/]+/', 'username = ') as user_suffix, nlike('%docusaurus%', name) as is_docusaurus, unicode_version() as unicode_lib_version from github.repos.repos where org = 'dummyorg' order by name ASC;"
 SELECT_GITHUB_REPOS_FILTERED_SINGLE = "select id, name from github.repos.repos where org = 'dummyorg' and name = 'dummyapp.io';"
 SELECT_GITHUB_SCIM_USERS = "select JSON_EXTRACT(name, '$.givenName') || ' ' || JSON_EXTRACT(name, '$.familyName') as name, userName, externalId, id from github.scim.users where org = 'dummyorg' order by id asc;"
 SELECT_GITHUB_SAML_IDENTITIES = "select guid, JSON_EXTRACT(samlIdentity, '$.nameId') AS saml_id, JSON_EXTRACT(user, '$.login') AS github_login from github.scim.saml_ids where org = 'dummyorg' order by JSON_EXTRACT(user, '$.login') asc;"
@@ -428,6 +429,7 @@ SELECT_AWS_S3_BUCKET_LOCATIONS_EXPECTED = get_output_from_local_file(os.path.joi
 
 SELECT_GITHUB_REPOS_PAGES_SINGLE_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-repos-pages.txt'))
 SELECT_GITHUB_REPOS_IDS_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-repos-ids-asc.txt'))
+SELECT_GITHUB_REPOS_WITH_USEFUL_FUNCTIONS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-repos-functions.txt'))
 SELECT_GITHUB_REPOS_FILTERED_SINGLE_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-repos-single-filtered.txt'))
 SELECT_GITHUB_SCIM_USERS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'scim', 'select-github-scim-users.txt'))
 SELECT_GITHUB_SAML_IDENTITIES_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'scim', 'select-github-saml-identities.txt'))
@@ -584,6 +586,8 @@ def get_variables(execution_env :str):
     'SELECT_GITHUB_REPOS_IDS_ASC_EXPECTED':                                 SELECT_GITHUB_REPOS_IDS_ASC_EXPECTED,
     'SELECT_GITHUB_REPOS_PAGES_SINGLE':                                     SELECT_GITHUB_REPOS_PAGES_SINGLE,
     'SELECT_GITHUB_REPOS_PAGES_SINGLE_EXPECTED':                            SELECT_GITHUB_REPOS_PAGES_SINGLE_EXPECTED,
+    'SELECT_GITHUB_REPOS_WITH_USEFUL_FUNCTIONS':                            SELECT_GITHUB_REPOS_WITH_USEFUL_FUNCTIONS,
+    'SELECT_GITHUB_REPOS_WITH_USEFUL_FUNCTIONS_EXPECTED':                   SELECT_GITHUB_REPOS_WITH_USEFUL_FUNCTIONS_EXPECTED,
     'SELECT_GITHUB_SAML_IDENTITIES':                                        SELECT_GITHUB_SAML_IDENTITIES,
     'SELECT_GITHUB_SAML_IDENTITIES_EXPECTED':                               SELECT_GITHUB_SAML_IDENTITIES_EXPECTED,
     'SELECT_GITHUB_SCIM_JOIN_WITH_FUNCTIONS':                               SELECT_GITHUB_SCIM_JOIN_WITH_FUNCTIONS,

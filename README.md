@@ -72,7 +72,7 @@ Executable `build/stackql` will be created.
 
 ```bash
 go build \
-  --tags "json1" \
+  --tags "json1 sqleanall" \
   -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion=${BUILDMAJORVERSION:-1} \
   -X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion=${BUILDMINORVERSION:-1} \
   -X github.com/stackql/stackql/internal/stackql/cmd.BuildPatchVersion=${BUILDPATCHVERSION:-1} \
