@@ -379,6 +379,18 @@ GitHub Repository IDs Select
     ...    ${SELECT_GITHUB_REPOS_IDS_ASC}
     ...    ${SELECT_GITHUB_REPOS_IDS_ASC_EXPECTED}
 
+GitHub Repository With Functions Select
+    Should Horrid Query StackQL Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SELECT_GITHUB_REPOS_WITH_USEFUL_FUNCTIONS}
+    ...    ${SELECT_GITHUB_REPOS_WITH_USEFUL_FUNCTIONS_EXPECTED}
+    ...    ${CURDIR}/tmp/GitHub-Repository-With-Functions-Select.tmp
+
 Filter on Implicit Selectable Object
     Should StackQL Exec Inline Equal
     ...    ${STACKQL_EXE}

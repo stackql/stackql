@@ -100,7 +100,7 @@ add_custom_command(TARGET ${TARGET}
   PRE_BUILD
   DEPENDS ${SRCS}
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-  COMMAND go test -timeout 2400s -p 2 --tags "json1" ./...
+  COMMAND go test -timeout 2400s -p 2 --tags "json1 sqleanall" ./...
   COMMENT "Running Go Unit Tests"
 )
 
@@ -116,7 +116,7 @@ add_custom_command(TARGET ${TARGET}
   PRE_BUILD
   DEPENDS ${SRCS}
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-  COMMAND go build  --tags "json1" -ldflags
+  COMMAND go build  --tags "json1 sqleanall" -ldflags
   "-X stackql/internal/stackql/cmd.BuildMajorVersion=${BUILDMAJORVERSION} \
   -X stackql/internal/stackql/cmd.BuildMinorVersion=${BUILDMINORVERSION} \
   -X stackql/internal/stackql/cmd.BuildPatchVersion=${BUILDPATCHVERSION} \
@@ -134,7 +134,7 @@ add_custom_command(TARGET ${TARGET}
   PRE_BUILD
   DEPENDS ${SRCS}
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-  COMMAND ${CMAKE_COMMAND} -E env GOOS=${OS_STR_MAC} go build --tags "json1" -ldflags
+  COMMAND ${CMAKE_COMMAND} -E env GOOS=${OS_STR_MAC} go build --tags "json1 sqleanall" -ldflags
   "-X stackql/internal/stackql/cmd.BuildMajorVersion=${BUILDMAJORVERSION} \
   -X stackql/internal/stackql/cmd.BuildMinorVersion=${BUILDMINORVERSION} \
   -X stackql/internal/stackql/cmd.BuildPatchVersion=${BUILDPATCHVERSION} \
@@ -152,7 +152,7 @@ add_custom_command(TARGET ${TARGET}
   PRE_BUILD
   DEPENDS ${SRCS}
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-  COMMAND ${CMAKE_COMMAND} -E env GOOS=${OS_STR_WINDOWS} ${WINCOMPILER} go build --tags "json1" -ldflags
+  COMMAND ${CMAKE_COMMAND} -E env GOOS=${OS_STR_WINDOWS} ${WINCOMPILER} go build --tags "json1 sqleanall" -ldflags
   "-X stackql/internal/stackql/cmd.BuildMajorVersion=${BUILDMAJORVERSION} \
   -X stackql/internal/stackql/cmd.BuildMinorVersion=${BUILDMINORVERSION} \
   -X stackql/internal/stackql/cmd.BuildPatchVersion=${BUILDPATCHVERSION} \

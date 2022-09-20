@@ -19,25 +19,25 @@ mvn org.apache.maven.plugins:maven-dependency-plugin:3.2.0:copy -Dartifact=org.m
 GCP mocks:
 
 ```bash
-java  -Dfile.encoding=UTF-8 -Dmockserver.initializationJsonPath=${HOME}/stackql/stackql-devel/test/mockserver/expectations/static-gcp-expectations.json -jar test/downloads/mockserver-netty-5.12.0-shaded.jar  -serverPort 1080 -logLevel INFO
+java  -Dfile.encoding=UTF-8 -Dmockserver.initializationJsonPath=${HOME}/stackql/stackql-devel/test/mockserver/expectations/static-gcp-expectations.json -jar ${HOME}/stackql/stackql-devel/test/downloads/mockserver-netty-5.12.0-shaded.jar  -serverPort 1080 -logLevel INFO
 ```
 
 Okta mocks:
 
 ```bash
-java  -Dfile.encoding=UTF-8 -Dmockserver.initializationJsonPath=${HOME}/stackql/stackql-devel/test/mockserver/expectations/static-okta-expectations.json -jar test/downloads/mockserver-netty-5.12.0-shaded.jar  -serverPort 1090 -logLevel INFO
+java  -Dfile.encoding=UTF-8 -Dmockserver.initializationJsonPath=${HOME}/stackql/stackql-devel/test/mockserver/expectations/static-okta-expectations.json -jar ${HOME}/stackql/stackql-devel/test/downloads/mockserver-netty-5.12.0-shaded.jar  -serverPort 1090 -logLevel INFO
 ```
 
 AWS mocks:
 
 ```bash
-java  -Dfile.encoding=UTF-8 -Dmockserver.initializationJsonPath=${HOME}/stackql/stackql-devel/test/mockserver/expectations/static-aws-expectations.json -jar test/downloads/mockserver-netty-5.12.0-shaded.jar  -serverPort 1090 -logLevel INFO
+java  -Dfile.encoding=UTF-8 -Dmockserver.initializationJsonPath=${HOME}/stackql/stackql-devel/test/mockserver/expectations/static-aws-expectations.json -jar ${HOME}/stackql/stackql-devel/test/downloads/mockserver-netty-5.12.0-shaded.jar  -serverPort 1090 -logLevel INFO
 ```
 
 Github mocks:
 
 ```bash
-java  -Dfile.encoding=UTF-8 -Dmockserver.initializationJsonPath=${HOME}/stackql/stackql-devel/test/mockserver/expectations/static-github-expectations.json -jar test/downloads/mockserver-netty-5.12.0-shaded.jar  -serverPort 1093 -logLevel INFO
+java  -Dfile.encoding=UTF-8 -Dmockserver.initializationJsonPath=${HOME}/stackql/stackql-devel/test/mockserver/expectations/static-github-expectations.json -jar ${HOME}/stackql/stackql-devel/test/downloads/mockserver-netty-5.12.0-shaded.jar  -serverPort 1093 -logLevel INFO
 ```
 
 
