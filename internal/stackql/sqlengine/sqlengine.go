@@ -35,7 +35,6 @@ type SQLEngine interface {
 	ExecFileLocal(string) error
 	ExecFile(string) error
 	GCCollectObsolete(*dto.TxnControlCounters) error
-	GCCollectObsoleteAll() error
 	GCCollectUnreachable() error
 	GCEnactFull() error
 	GetCurrentGenerationId() (int, error)
@@ -284,10 +283,6 @@ func (se SQLiteEngine) GCEnactFull() error {
 	}
 	err = se.collectUnreachable()
 	return err
-}
-
-func (se SQLiteEngine) GCCollectObsoleteAll() error {
-	return se.collectObsolete()
 }
 
 func (se SQLiteEngine) GCCollectObsolete(tcc *dto.TxnControlCounters) error {

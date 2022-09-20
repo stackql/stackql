@@ -109,6 +109,138 @@
         "accept": [ "application/json" ]
       },
       "method": "GET",
+      "path": "/repos/{org}/{repositoryId}/collaborators",
+      "pathParameters": {
+        "org":          ["[A-Za-z0-9-]+"],
+        "repositoryId": ["[A-Za-z0-9-\\.]+"] 
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/json" ]
+      },
+      "body": [
+        {
+          "avatar_url": "https://avatars.githubusercontent.com/u/90000004?v=4",
+          "events_url": "https://api.github.com/users/joeblow/events{/privacy}",
+          "followers_url": "https://api.github.com/users/joeblow/followers",
+          "following_url": "https://api.github.com/users/joeblow/following{/other_user}",
+          "gists_url": "https://api.github.com/users/joeblow/gists{/gist_id}",
+          "gravatar_id": "",
+          "html_url": "https://github.com/joeblow",
+          "id": 90000004,
+          "login": "joeblow",
+          "node_id": "SOMEHASHORotheryouk=",
+          "organizations_url": "https://api.github.com/users/joeblow/orgs",
+          "permissions": {
+            "admin": true,
+            "maintain": true,
+            "pull": true,
+            "push": true,
+            "triage": true
+          },
+          "received_events_url": "https://api.github.com/users/joeblow/received_events",
+          "repos_url": "https://api.github.com/users/joeblow/repos",
+          "role_name": "admin",
+          "site_admin": false,
+          "starred_url": "https://api.github.com/users/joeblow/starred{/owner}{/repo}",
+          "subscriptions_url": "https://api.github.com/users/joeblow/subscriptions",
+          "type": "User",
+          "url": "https://api.github.com/users/joeblow"
+        },
+        {
+          "avatar_url": "https://avatars.githubusercontent.com/u/90000003?v=4",
+          "events_url": "https://api.github.com/users/marcusaurelius/events{/privacy}",
+          "followers_url": "https://api.github.com/users/marcusaurelius/followers",
+          "following_url": "https://api.github.com/users/marcusaurelius/following{/other_user}",
+          "gists_url": "https://api.github.com/users/marcusaurelius/gists{/gist_id}",
+          "gravatar_id": "",
+          "html_url": "https://github.com/marcusaurelius",
+          "id": 90000003,
+          "login": "marcusaurelius",
+          "node_id": "SOMEHASHORotheryouk=",
+          "organizations_url": "https://api.github.com/users/marcusaurelius/orgs",
+          "permissions": {
+            "admin": true,
+            "maintain": true,
+            "pull": true,
+            "push": true,
+            "triage": true
+          },
+          "received_events_url": "https://api.github.com/users/marcusaurelius/received_events",
+          "repos_url": "https://api.github.com/users/marcusaurelius/repos",
+          "role_name": "admin",
+          "site_admin": false,
+          "starred_url": "https://api.github.com/users/marcusaurelius/starred{/owner}{/repo}",
+          "subscriptions_url": "https://api.github.com/users/marcusaurelius/subscriptions",
+          "type": "User",
+          "url": "https://api.github.com/users/marcusaurelius"
+        },
+        {
+          "avatar_url": "https://avatars.githubusercontent.com/u/90000002?v=4",
+          "events_url": "https://api.github.com/users/johnsmith/events{/privacy}",
+          "followers_url": "https://api.github.com/users/johnsmith/followers",
+          "following_url": "https://api.github.com/users/johnsmith/following{/other_user}",
+          "gists_url": "https://api.github.com/users/johnsmith/gists{/gist_id}",
+          "gravatar_id": "",
+          "html_url": "https://github.com/johnsmith",
+          "id": 90000002,
+          "login": "johnsmith",
+          "node_id": "SOMEHASHORotheryouk=",
+          "organizations_url": "https://api.github.com/users/johnsmith/orgs",
+          "permissions": {
+            "admin": false,
+            "maintain": false,
+            "pull": true,
+            "push": false,
+            "triage": false
+          },
+          "received_events_url": "https://api.github.com/users/johnsmith/received_events",
+          "repos_url": "https://api.github.com/users/johnsmith/repos",
+          "role_name": "read",
+          "site_admin": false,
+          "starred_url": "https://api.github.com/users/johnsmith/starred{/owner}{/repo}",
+          "subscriptions_url": "https://api.github.com/users/johnsmith/subscriptions",
+          "type": "User",
+          "url": "https://api.github.com/users/johnsmith"
+        },
+        {
+          "avatar_url": "https://avatars.githubusercontent.com/u/90000001?v=4",
+          "events_url": "https://api.github.com/users/somejimbo/events{/privacy}",
+          "followers_url": "https://api.github.com/users/somejimbo/followers",
+          "following_url": "https://api.github.com/users/somejimbo/following{/other_user}",
+          "gists_url": "https://api.github.com/users/somejimbo/gists{/gist_id}",
+          "gravatar_id": "",
+          "html_url": "https://github.com/somejimbo",
+          "id": 90000001,
+          "login": "somejimbo",
+          "node_id": "SOMEHASHORotheryouk=",
+          "organizations_url": "https://api.github.com/users/somejimbo/orgs",
+          "permissions": {
+            "admin": true,
+            "maintain": true,
+            "pull": true,
+            "push": true,
+            "triage": true
+          },
+          "received_events_url": "https://api.github.com/users/somejimbo/received_events",
+          "repos_url": "https://api.github.com/users/somejimbo/repos",
+          "role_name": "admin",
+          "site_admin": false,
+          "starred_url": "https://api.github.com/users/somejimbo/starred{/owner}{/repo}",
+          "subscriptions_url": "https://api.github.com/users/somejimbo/subscriptions",
+          "type": "User",
+          "url": "https://api.github.com/users/somejimbo"
+        }
+      ]
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "accept": [ "application/json" ]
+      },
+      "method": "GET",
       "path": "(?:/orgs/dummyorg/members|/organizations/000000001/members)"
     },
     "httpResponseTemplate": {
@@ -309,9 +441,9 @@
           "comments_url": "https://api.github.com/repos/dummyorg/dummyapp.io/commits/191bff27f5a4510acce1e9caee4109eb953fb9dd/comments",
           "author": {
             "login": "joeblow",
-            "id": 5146499,
-            "node_id": "MDQ6VXNlcjUxNDY0OTk=",
-            "avatar_url": "https://avatars.githubusercontent.com/u/5146499?v=4",
+            "id": 90000004,
+            "node_id": "SOMEHASHORotheryouk=",
+            "avatar_url": "https://avatars.githubusercontent.com/u/90000004?v=4",
             "gravatar_id": "",
             "url": "https://api.github.com/users/joeblow",
             "html_url": "https://github.com/joeblow",
@@ -329,9 +461,9 @@
           },
           "committer": {
             "login": "joeblow",
-            "id": 5146499,
-            "node_id": "MDQ6VXNlcjUxNDY0OTk=",
-            "avatar_url": "https://avatars.githubusercontent.com/u/5146499?v=4",
+            "id": 90000004,
+            "node_id": "SOMEHASHORotheryouk=",
+            "avatar_url": "https://avatars.githubusercontent.com/u/90000004?v=4",
             "gravatar_id": "",
             "url": "https://api.github.com/users/joeblow",
             "html_url": "https://github.com/joeblow",
@@ -388,9 +520,9 @@
           "comments_url": "https://api.github.com/repos/dummyorg/dummyapp.io/commits/8d5dc38ef71f6249f7090947bb444ace3d5682c3/comments",
           "author": {
             "login": "joeblow",
-            "id": 5146499,
-            "node_id": "MDQ6VXNlcjUxNDY0OTk=",
-            "avatar_url": "https://avatars.githubusercontent.com/u/5146499?v=4",
+            "id": 90000004,
+            "node_id": "SOMEHASHORotheryouk=",
+            "avatar_url": "https://avatars.githubusercontent.com/u/90000004?v=4",
             "gravatar_id": "",
             "url": "https://api.github.com/users/joeblow",
             "html_url": "https://github.com/joeblow",
@@ -408,9 +540,9 @@
           },
           "committer": {
             "login": "joeblow",
-            "id": 5146499,
-            "node_id": "MDQ6VXNlcjUxNDY0OTk=",
-            "avatar_url": "https://avatars.githubusercontent.com/u/5146499?v=4",
+            "id": 90000004,
+            "node_id": "SOMEHASHORotheryouk=",
+            "avatar_url": "https://avatars.githubusercontent.com/u/90000004?v=4",
             "gravatar_id": "",
             "url": "https://api.github.com/users/joeblow",
             "html_url": "https://github.com/joeblow",
@@ -467,9 +599,9 @@
           "comments_url": "https://api.github.com/repos/dummyorg/dummyapp.io/commits/219001a1ecac6c17e8e3a45f7c9182341e4cf71b/comments",
           "author": {
             "login": "joeblow",
-            "id": 5146499,
-            "node_id": "MDQ6VXNlcjUxNDY0OTk=",
-            "avatar_url": "https://avatars.githubusercontent.com/u/5146499?v=4",
+            "id": 90000004,
+            "node_id": "SOMEHASHORotheryouk=",
+            "avatar_url": "https://avatars.githubusercontent.com/u/90000004?v=4",
             "gravatar_id": "",
             "url": "https://api.github.com/users/joeblow",
             "html_url": "https://github.com/joeblow",
@@ -487,9 +619,9 @@
           },
           "committer": {
             "login": "joeblow",
-            "id": 5146499,
-            "node_id": "MDQ6VXNlcjUxNDY0OTk=",
-            "avatar_url": "https://avatars.githubusercontent.com/u/5146499?v=4",
+            "id": 90000004,
+            "node_id": "SOMEHASHORotheryouk=",
+            "avatar_url": "https://avatars.githubusercontent.com/u/90000004?v=4",
             "gravatar_id": "",
             "url": "https://api.github.com/users/joeblow",
             "html_url": "https://github.com/joeblow",

@@ -6,13 +6,15 @@ import (
 )
 
 type SimpleProjectionMapStream struct {
-	store      []map[string]interface{}
-	projection map[string]string
+	staticStore  map[string]interface{}
+	dynamicStore []map[string]interface{}
+	projection   map[string]string
 }
 
-func NewSimpleProjectionMapStream(projection map[string]string) MapStream {
+func NewSimpleProjectionMapStream(projection map[string]string, staticStore map[string]interface{}) MapStream {
 	return &SimpleProjectionMapStream{
-		projection: projection,
+		projection:  projection,
+		staticStore: staticStore,
 	}
 }
 
@@ -21,13 +23,13 @@ func (ss *SimpleProjectionMapStream) iStackQLReader() {}
 func (ss *SimpleProjectionMapStream) iStackQLWriter() {}
 
 func (ss *SimpleProjectionMapStream) Write(input []map[string]interface{}) error {
-	ss.store = append(ss.store, input...)
+	ss.dynamicStore = append(ss.dynamicStore, input...)
 	return nil
 }
 
 func (ss *SimpleProjectionMapStream) Read() ([]map[string]interface{}, error) {
 	var rv []map[string]interface{}
-	for _, row := range ss.store {
+	for _, row := range ss.dynamicStore {
 		rowTransformed := map[string]interface{}{}
 		for k, v := range ss.projection {
 			captured, ok := row[k]
@@ -35,10 +37,12 @@ func (ss *SimpleProjectionMapStream) Read() ([]map[string]interface{}, error) {
 				return nil, fmt.Errorf("streaming: cannot project response data: missing key '%s'", k)
 			}
 			rowTransformed[v] = captured
-
+		}
+		for k, v := range ss.staticStore {
+			rowTransformed[k] = v
 		}
 		rv = append(rv, rowTransformed)
 	}
-	ss.store = nil
+	ss.dynamicStore = nil
 	return rv, io.EOF
 }

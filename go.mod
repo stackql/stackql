@@ -17,7 +17,7 @@ require (
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.1
-	github.com/stackql/go-openapistackql v0.0.10-beta01
+	github.com/stackql/go-openapistackql v0.0.10-beta02
 	github.com/stackql/go-sqlite3 v0.0.2-stackqlbeta02
 	github.com/stackql/go-suffix-map v0.0.1-alpha01
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8

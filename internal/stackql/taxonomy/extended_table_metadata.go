@@ -149,6 +149,13 @@ func (ex ExtendedTableMetadata) GetTableName() (string, error) {
 	return ex.HeirarchyObjects.HeirarchyIds.GetTableName(), nil
 }
 
+func (ex ExtendedTableMetadata) GetStackQLTableName() (string, error) {
+	if ex.HeirarchyObjects == nil || ex.HeirarchyObjects.HeirarchyIds.GetTableName() == "" {
+		return "", fmt.Errorf("cannot resolve TableName")
+	}
+	return ex.HeirarchyObjects.HeirarchyIds.GetStackQLTableName(), nil
+}
+
 func (ex ExtendedTableMetadata) GetSelectableObjectSchema() (*openapistackql.Schema, error) {
 	return ex.HeirarchyObjects.GetSelectableObjectSchema()
 }

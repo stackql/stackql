@@ -374,6 +374,7 @@ SELECT_GITHUB_SAML_IDENTITIES = "select guid, JSON_EXTRACT(samlIdentity, '$.name
 SELECT_GITHUB_TAGS_COUNT = "select count(*) as ct from github.repos.tags where owner = 'dummyorg' and repo = 'dummyapp.io';"
 SELECT_GITHUB_SCIM_JOIN_WITH_FUNCTIONS = "select substr(su.userName, 1, instr(su.userName, '@') - 1), su.externalId, su.id, u.login, u.two_factor_authentication AS is_two_fa_enabled from github.scim.users su inner join github.users.users u ON substr(su.userName, 1, instr(su.userName, '@') - 1) = u.username and substr(su.userName, 1, instr(su.userName, '@') - 1) = u.login where su.org = 'dummyorg' order by su.id asc;"
 SELECT_GITHUB_ORGS_MEMBERS = "select om.login from github.orgs.members om where om.org = 'dummyorg' order by om.login desc;"
+SELECT_GITHUB_JOIN_IN_PARAMS = "select r.name, col.login, col.type, col.role_name from github.repos.collaborators col inner join github.repos.repos r ON col.repo = r.name where col.owner = 'dummyorg' and r.org = 'dummyorg' order by r.name, col.login desc;"
 
 SELECT_OKTA_APPS = "select name, status, label, id from okta.application.apps apps where apps.subdomain = 'example-subdomain' order by name asc;"
 SELECT_OKTA_USERS_ASC = "select JSON_EXTRACT(ou.profile, '$.login') as login, ou.status from okta.user.users ou WHERE ou.subdomain = 'dummyorg' order by JSON_EXTRACT(ou.profile, '$.login') asc;"
@@ -436,6 +437,7 @@ SELECT_GITHUB_SAML_IDENTITIES_EXPECTED = get_output_from_local_file(os.path.join
 SELECT_GITHUB_BRANCHES_NAMES_DESC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-branches-names-desc.txt'))
 SELECT_GITHUB_TAGS_COUNT_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-tags-count.txt'))
 SELECT_GITHUB_JOIN_DATA_FLOW_SEQUENTIAL_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'joins', 'select-github-sequential-join.txt'))
+SELECT_GITHUB_JOIN_IN_PARAMS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'joins', 'select-github-join-on-path-param.txt'))
 SELECT_GITHUB_SCIM_JOIN_WITH_FUNCTIONS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'joins', 'select-github-sequential-join-with-functions.txt'))
 SELECT_GITHUB_OKTA_SAML_JOIN_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'joins', 'inner', 'github-saml-members-okta-users.txt'))
 SELECT_GITHUB_ORGS_MEMBERS_PAGE_LIMITED_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'orgs', 'page-limited-members.txt'))
@@ -573,9 +575,9 @@ def get_variables(execution_env :str):
     'SELECT_GITHUB_BRANCHES_NAMES_DESC':                                    SELECT_GITHUB_BRANCHES_NAMES_DESC,
     'SELECT_GITHUB_BRANCHES_NAMES_DESC_EXPECTED':                           SELECT_GITHUB_BRANCHES_NAMES_DESC_EXPECTED,
     'SELECT_GITHUB_JOIN_DATA_FLOW_SEQUENTIAL':                              SELECT_GITHUB_JOIN_DATA_FLOW_SEQUENTIAL,
-    'SELECT_GITHUB_JOIN_DATA_FLOW_SEQUENTIAL':                              SELECT_GITHUB_JOIN_DATA_FLOW_SEQUENTIAL,
     'SELECT_GITHUB_JOIN_DATA_FLOW_SEQUENTIAL_EXPECTED':                     SELECT_GITHUB_JOIN_DATA_FLOW_SEQUENTIAL_EXPECTED,
-    'SELECT_GITHUB_JOIN_DATA_FLOW_SEQUENTIAL_EXPECTED':                     SELECT_GITHUB_JOIN_DATA_FLOW_SEQUENTIAL_EXPECTED,
+    'SELECT_GITHUB_JOIN_IN_PARAMS':                                         SELECT_GITHUB_JOIN_IN_PARAMS,
+    'SELECT_GITHUB_JOIN_IN_PARAMS_EXPECTED':                                SELECT_GITHUB_JOIN_IN_PARAMS_EXPECTED,
     'SELECT_GITHUB_OKTA_SAML_JOIN':                                         SELECT_GITHUB_OKTA_SAML_JOIN,
     'SELECT_GITHUB_OKTA_SAML_JOIN_EXPECTED':                                SELECT_GITHUB_OKTA_SAML_JOIN_EXPECTED,
     'SELECT_GITHUB_ORGS_MEMBERS':                                           SELECT_GITHUB_ORGS_MEMBERS,
