@@ -4,6 +4,8 @@ import json
 import os
 import typing
 
+from typed_python_responses import SELECT_AWS_CLOUD_CONTROL_EVENTS_MINIMAL_EXPECTED
+
 _exe_name = 'stackql'
 
 IS_WINDOWS = '0'
@@ -331,6 +333,8 @@ SELECT_ACCELERATOR_TYPES_DESC = "select  kind, name  from  google.compute.accele
 SELECT_MACHINE_TYPES_DESC = "select name from google.compute.machineTypes where project = 'testing-project' and zone = 'australia-southeast1-a' order by name desc;"
 SELECT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY = "SELECT eTag FROM google.compute.instances_iam_policies WHERE project = 'testing-project' AND zone = 'australia-southeast1-a' AND resource = '000000001';"
 
+SELECT_AWS_CLOUD_CONTROL_EVENTS_MINIMAL = "SELECT DISTINCT EventTime, Identifier from aws.cloud_control.resource_requests where data__ResourceRequestStatusFilter='{}' and region = 'ap-southeast-1' order by Identifier, EventTime;"
+
 SELECT_AZURE_COMPUTE_PUBLIC_KEYS = "select id, location from azure.compute.ssh_public_keys where subscriptionId = '10001000-1000-1000-1000-100010001000' ORDER BY id ASC;"
 SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES = "SELECT id, name FROM azure.compute.virtual_machines WHERE resourceGroupName = 'stackql-ops-cicd-dev-01' AND subscriptionId = '10001000-1000-1000-1000-100010001000' ORDER BY name ASC;"
 
@@ -542,6 +546,8 @@ def get_variables(execution_env :str):
     'REGISTRY_LIST_EXPECTED':                                               REGISTRY_LIST_EXPECTED,
     'SELECT_ACCELERATOR_TYPES_DESC':                                        SELECT_ACCELERATOR_TYPES_DESC,
     'SELECT_ACCELERATOR_TYPES_DESC_EXPECTED':                               SELECT_ACCELERATOR_TYPES_DESC_EXPECTED,
+    'SELECT_AWS_CLOUD_CONTROL_EVENTS_MINIMAL':                              [ SELECT_AWS_CLOUD_CONTROL_EVENTS_MINIMAL ],
+    'SELECT_AWS_CLOUD_CONTROL_EVENTS_MINIMAL_EXPECTED':                     SELECT_AWS_CLOUD_CONTROL_EVENTS_MINIMAL_EXPECTED,
     'SELECT_AWS_CLOUD_CONTROL_OPERATIONS_DESC':                             SELECT_AWS_CLOUD_CONTROL_OPERATIONS_DESC,
     'SELECT_AWS_CLOUD_CONTROL_OPERATIONS_DESC_EXPECTED':                    SELECT_AWS_CLOUD_CONTROL_OPERATIONS_DESC_EXPECTED,
     'SELECT_AWS_CLOUD_CONTROL_VPCS_DESC':                                   SELECT_AWS_CLOUD_CONTROL_VPCS_DESC,

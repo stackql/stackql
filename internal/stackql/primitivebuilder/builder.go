@@ -81,8 +81,10 @@ func prepareGolangResult(sqlEngine sqlengine.SQLEngine, errWriter io.Writer, stm
 		}
 	}
 	var cNames []string
+	var cSchemas []*openapistackql.Schema
 	for _, v := range nonControlColumns {
 		cNames = append(cNames, v.Column.GetIdentifier())
+		cSchemas = append(cSchemas, v.Column.GetRepresentativeSchema())
 	}
 	rowSort := func(m map[string]map[string]interface{}) []string {
 		var arr []int
@@ -97,7 +99,7 @@ func prepareGolangResult(sqlEngine sqlengine.SQLEngine, errWriter io.Writer, stm
 		}
 		return rv
 	}
-	rv := util.PrepareResultSet(dto.NewPrepareResultSetPlusRawDTO(nil, altKeys, cNames, rowSort, nil, nil, rawRows))
+	rv := util.PrepareResultSet(dto.NewPrepareResultSetPlusRawAndTypesDTO(nil, altKeys, cNames, cSchemas, rowSort, nil, nil, rawRows))
 
 	if rv.GetSQLResult() == nil {
 		var colz []string

@@ -7,6 +7,7 @@ import (
 
 	"github.com/jeroenrinzema/psql-wire/pkg/sqldata"
 	"github.com/lib/pq/oid"
+	"github.com/stackql/go-openapistackql/openapistackql"
 	openapistackql_util "github.com/stackql/go-openapistackql/pkg/util"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/logging"
@@ -273,7 +274,11 @@ func PrepareResultSet(payload dto.PrepareResultSetDTO) dto.ExecutorOutput {
 	rowsVisited := make(map[string]bool, len(payload.RowMap))
 	if payload.ColumnOrder != nil && len(payload.ColumnOrder) > 0 {
 		for f := range columns {
-			columns[f] = getPlaceholderColumn(table, payload.ColumnOrder[f])
+			var s *openapistackql.Schema
+			if len(columns) == len(payload.ColumnSchemas) {
+				s = payload.ColumnSchemas[f]
+			}
+			columns[f] = getPlaceholderColumn(table, payload.ColumnOrder[f], s)
 		}
 		i := 0
 		for _, key := range payload.RowSort(payload.RowMap) {
@@ -301,7 +306,11 @@ func PrepareResultSet(payload dto.PrepareResultSetDTO) dto.ExecutorOutput {
 		}
 		for _, k := range defaultColSortArr {
 			if _, isPresent := sampleRow[k]; isPresent {
-				columns[colIdx] = getPlaceholderColumn(table, k)
+				var s *openapistackql.Schema
+				if len(columns) == len(payload.ColumnSchemas) {
+					s = payload.ColumnSchemas[colIdx]
+				}
+				columns[colIdx] = getPlaceholderColumn(table, k, s)
 				payload.ColumnOrder[colIdx] = k
 				colIdx++
 				colSet[k] = true
@@ -309,7 +318,11 @@ func PrepareResultSet(payload dto.PrepareResultSetDTO) dto.ExecutorOutput {
 		}
 		for k := range sampleRow {
 			if !colSet[k] {
-				columns[colIdx] = getPlaceholderColumn(table, k)
+				var s *openapistackql.Schema
+				if len(columns) == len(payload.ColumnSchemas) {
+					s = payload.ColumnSchemas[colIdx]
+				}
+				columns[colIdx] = getPlaceholderColumn(table, k, s)
 				payload.ColumnOrder[colIdx] = k
 				colIdx++
 				colSet[k] = true
@@ -360,7 +373,7 @@ func emptyProtectResultSet(rv dto.ExecutorOutput, columns []string) dto.Executor
 		table := sqldata.NewSQLTable(0, "meta_table")
 		rCols := make([]sqldata.ISQLColumn, len(columns))
 		for f := range rCols {
-			rCols[f] = getPlaceholderColumn(table, columns[f])
+			rCols[f] = getPlaceholderColumn(table, columns[f], nil)
 		}
 		rv.GetSQLResult = func() sqldata.ISQLResultStream {
 			return sqldata.NewSimpleSQLResultStream(sqldata.NewSQLResult(rCols, 0, 0, []sqldata.ISQLRow{
@@ -375,16 +388,30 @@ func DescribeRowSort(rows map[string]map[string]interface{}) []string {
 	return describeRowSortArr
 }
 
-func GetPlaceholderColumn(table sqldata.ISQLTable, colName string) sqldata.ISQLColumn {
-	return getPlaceholderColumn(table, colName)
+func getOidForSchema(colSchema *openapistackql.Schema) oid.Oid {
+	if colSchema == nil {
+		return oid.T_text
+	}
+	switch colSchema.Type {
+	case "object", "array":
+		return oid.T_text
+	// case "integer":
+	// 	return oid.T_numeric
+	case "boolean", "bool":
+		return oid.T_text
+	case "number":
+		return oid.T_numeric
+	default:
+		return oid.T_text
+	}
 }
 
-func getPlaceholderColumn(table sqldata.ISQLTable, colName string) sqldata.ISQLColumn {
+func getPlaceholderColumn(table sqldata.ISQLTable, colName string, colSchema *openapistackql.Schema) sqldata.ISQLColumn {
 	return sqldata.NewSQLColumn(
 		table,
 		colName,
 		0,
-		uint32(oid.T_text),
+		uint32(getOidForSchema(colSchema)),
 		1024,
 		0,
 		"TextFormat",
@@ -395,7 +422,7 @@ func GetHeaderOnlyResultStream(colz []string) sqldata.ISQLResultStream {
 	table := sqldata.NewSQLTable(0, "table_meta")
 	columns := make([]sqldata.ISQLColumn, len(colz))
 	for i := range colz {
-		columns[i] = getPlaceholderColumn(table, colz[i])
+		columns[i] = getPlaceholderColumn(table, colz[i], nil)
 	}
 	return sqldata.NewSimpleSQLResultStream(sqldata.NewSQLResult(columns, 0, 0, nil))
 

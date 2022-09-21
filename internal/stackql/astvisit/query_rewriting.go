@@ -85,7 +85,7 @@ func (v *QueryRewriteAstVisitor) getStarColumns(
 	}
 	var columnDescriptors []openapistackql.ColumnDescriptor
 	for _, col := range cols {
-		columnDescriptors = append(columnDescriptors, openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.DecoratedColumn, schema, col.Val))
+		columnDescriptors = append(columnDescriptors, openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.DecoratedColumn, nil, schema, col.Val))
 	}
 	return columnDescriptors, nil
 }
@@ -550,17 +550,18 @@ func (v *QueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 				col.Alias = v.getNextAlias()
 			}
 			v.columnNames = append(v.columnNames, col)
-			cd := openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.DecoratedColumn, nil, col.Val)
+			cd := openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.DecoratedColumn, node, nil, col.Val)
 			v.columnDescriptors = append(v.columnDescriptors, cd)
 			return nil
 		}
-		schema, _, err := tbl.GetResponseSchemaAndMediaType()
+		schema, err := tbl.GetSelectableObjectSchema()
 		if err != nil {
 			return err
 		}
 		col := parserutil.InferColNameFromExpr(node)
 		v.columnNames = append(v.columnNames, col)
-		cd := openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.DecoratedColumn, schema, col.Val)
+		ss, _ := schema.GetProperty(col.Name)
+		cd := openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.DecoratedColumn, node, ss, col.Val)
 		v.columnDescriptors = append(v.columnDescriptors, cd)
 		if !node.As.IsEmpty() {
 		}
