@@ -9,6 +9,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/provider"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/symtab"
+	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
@@ -37,7 +38,7 @@ type PrimitiveComposer interface {
 	GetSQLEngine() sqlengine.SQLEngine
 	GetSymbol(k interface{}) (symtab.SymTabEntry, error)
 	GetSymTab() symtab.SymTab
-	GetTable(node sqlparser.SQLNode) (*taxonomy.ExtendedTableMetadata, error)
+	GetTable(node sqlparser.SQLNode) (*tablemetadata.ExtendedTableMetadata, error)
 	GetTableFilter() func(openapistackql.ITable) (openapistackql.ITable, error)
 	GetTables() taxonomy.TblMap
 	GetTxnCounterManager() *txncounter.TxnCounterManager
@@ -59,7 +60,7 @@ type PrimitiveComposer interface {
 	SetRoot(root primitivegraph.PrimitiveNode)
 	SetSelectPreparedStatementCtx(ctx *drm.PreparedStatementCtx)
 	SetSymbol(k interface{}, v symtab.SymTabEntry) error
-	SetTable(node sqlparser.SQLNode, table *taxonomy.ExtendedTableMetadata)
+	SetTable(node sqlparser.SQLNode, table *tablemetadata.ExtendedTableMetadata)
 	SetTableFilter(tableFilter func(openapistackql.ITable) (openapistackql.ITable, error))
 	SetTxnCtrlCtrs(tc *dto.TxnControlCounters)
 	SetValOnlyCols(m map[int]map[string]interface{})
@@ -299,11 +300,11 @@ func (pb *StandardPrimitiveComposer) SetAwait(await bool) {
 	pb.await = await
 }
 
-func (pb *StandardPrimitiveComposer) GetTable(node sqlparser.SQLNode) (*taxonomy.ExtendedTableMetadata, error) {
+func (pb *StandardPrimitiveComposer) GetTable(node sqlparser.SQLNode) (*tablemetadata.ExtendedTableMetadata, error) {
 	return pb.tables.GetTable(node)
 }
 
-func (pb *StandardPrimitiveComposer) SetTable(node sqlparser.SQLNode, table *taxonomy.ExtendedTableMetadata) {
+func (pb *StandardPrimitiveComposer) SetTable(node sqlparser.SQLNode, table *tablemetadata.ExtendedTableMetadata) {
 	pb.tables.SetTable(node, table)
 }
 

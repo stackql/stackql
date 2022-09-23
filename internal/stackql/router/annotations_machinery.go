@@ -5,13 +5,16 @@ import (
 
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
+	"github.com/stackql/stackql/internal/stackql/tablemetadata"
+	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 )
 
 func obtainAnnotationCtx(
 	sqlEngine sqlengine.SQLEngine,
-	tbl *taxonomy.ExtendedTableMetadata,
+	tbl *tablemetadata.ExtendedTableMetadata,
 	parameters map[string]interface{},
+	namespaceCollection tablenamespace.TableNamespaceCollection,
 ) (taxonomy.AnnotationCtx, error) {
 	schema, mediaType, err := tbl.GetResponseSchemaAndMediaType()
 	if err != nil {
@@ -29,6 +32,10 @@ func obtainAnnotationCtx(
 		return nil, fmt.Errorf(unsuitableSchemaMsg)
 	}
 	name := itemObjS.GetSelectionName()
+	tn, err := tbl.GetTableName()
+	if err == nil && namespaceCollection.GetAnalyticsCacheTableNamespaceConfigurator().IsAllowed(tn) {
+		name, _ = tbl.GetResourceStr()
+	}
 	hIds := dto.NewHeirarchyIdentifiers(provStr, svcStr, name, "")
 	return taxonomy.NewStaticStandardAnnotationCtx(itemObjS, hIds, tbl, parameters), nil
 }

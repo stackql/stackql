@@ -14,7 +14,8 @@ import (
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 	"github.com/stackql/stackql/internal/stackql/streaming"
-	"github.com/stackql/stackql/internal/stackql/taxonomy"
+	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
+	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/util"
 )
 
@@ -25,9 +26,10 @@ import (
 type SingleSelectAcquire struct {
 	graph                      *primitivegraph.PrimitiveGraph
 	handlerCtx                 *handler.HandlerContext
-	tableMeta                  *taxonomy.ExtendedTableMetadata
+	tableMeta                  *tablemetadata.ExtendedTableMetadata
 	drmCfg                     drm.DRMConfig
 	insertPreparedStatementCtx *drm.PreparedStatementCtx
+	insertionContainer         tableinsertioncontainer.TableInsertionContainer
 	txnCtrlCtr                 *dto.TxnControlCounters
 	rowSort                    func(map[string]map[string]interface{}) []string
 	root                       primitivegraph.PrimitiveNode
@@ -37,11 +39,12 @@ type SingleSelectAcquire struct {
 func NewSingleSelectAcquire(
 	graph *primitivegraph.PrimitiveGraph,
 	handlerCtx *handler.HandlerContext,
-	tableMeta *taxonomy.ExtendedTableMetadata,
+	insertionContainer tableinsertioncontainer.TableInsertionContainer,
 	insertCtx *drm.PreparedStatementCtx,
 	rowSort func(map[string]map[string]interface{}) []string,
 	stream streaming.MapStream,
 ) Builder {
+	tableMeta := insertionContainer.GetTableMetadata()
 	_, isGraphQL := tableMeta.GetGraphQL()
 	if isGraphQL {
 		return newGraphQLSingleSelectAcquire(
@@ -49,6 +52,7 @@ func NewSingleSelectAcquire(
 			handlerCtx,
 			tableMeta,
 			insertCtx,
+			insertionContainer,
 			rowSort,
 			stream,
 		)
@@ -58,6 +62,7 @@ func NewSingleSelectAcquire(
 		handlerCtx,
 		tableMeta,
 		insertCtx,
+		insertionContainer,
 		rowSort,
 		stream,
 	)
@@ -66,8 +71,9 @@ func NewSingleSelectAcquire(
 func newSingleSelectAcquire(
 	graph *primitivegraph.PrimitiveGraph,
 	handlerCtx *handler.HandlerContext,
-	tableMeta *taxonomy.ExtendedTableMetadata,
+	tableMeta *tablemetadata.ExtendedTableMetadata,
 	insertCtx *drm.PreparedStatementCtx,
+	insertionContainer tableinsertioncontainer.TableInsertionContainer,
 	rowSort func(map[string]map[string]interface{}) []string,
 	stream streaming.MapStream,
 ) Builder {
@@ -85,6 +91,7 @@ func newSingleSelectAcquire(
 		rowSort:                    rowSort,
 		drmCfg:                     handlerCtx.DrmConfig,
 		insertPreparedStatementCtx: insertCtx,
+		insertionContainer:         insertionContainer,
 		txnCtrlCtr:                 tcc,
 		stream:                     stream,
 	}
@@ -104,6 +111,10 @@ func (ss *SingleSelectAcquire) Build() error {
 		return err
 	}
 	m, err := ss.tableMeta.GetMethod()
+	if err != nil {
+		return err
+	}
+	tableName, err := ss.tableMeta.GetTableName()
 	if err != nil {
 		return err
 	}
@@ -130,6 +141,27 @@ func (ss *SingleSelectAcquire) Build() error {
 			}
 		}
 		for _, reqCtx := range httpArmoury.GetRequestParams() {
+			paramsUsed, err := reqCtx.ToFlatMap()
+			if err != nil {
+				return dto.NewErroneousExecutorOutput(err)
+			}
+			reqEncoding := reqCtx.Encode()
+			tcc, isMatch := ss.handlerCtx.GetNamespaceCollection().GetAnalyticsCacheTableNamespaceConfigurator().Match(tableName, reqEncoding, ss.drmCfg.GetLastUpdatedControlColumn(), ss.drmCfg.GetInsertEncodedControlColumn())
+			if isMatch {
+				nonControlColumns := ss.insertPreparedStatementCtx.GetNonControlColumns()
+				var nonControlColumnNames []string
+				for _, c := range nonControlColumns {
+					nonControlColumnNames = append(nonControlColumnNames, c.GetName())
+				}
+				ss.insertionContainer.SetTableTxnCounters(tableName, tcc)
+				ss.insertPreparedStatementCtx.SetGCCtrlCtrs(tcc)
+				r, sqlErr := ss.handlerCtx.GetNamespaceCollection().GetAnalyticsCacheTableNamespaceConfigurator().Read(tableName, reqEncoding, ss.drmCfg.GetInsertEncodedControlColumn(), nonControlColumnNames)
+				if sqlErr != nil {
+					dto.NewErroneousExecutorOutput(sqlErr)
+				}
+				ss.drmCfg.ExtractObjectFromSQLRows(r, nonControlColumns, ss.stream)
+				return dto.ExecutorOutput{}
+			}
 			response, apiErr := httpmiddleware.HttpApiCallFromRequest(*(ss.handlerCtx), prov, m, reqCtx.Request.Clone(reqCtx.Request.Context()))
 			housekeepingDone := false
 			npt := prov.InferNextPageResponseElement(ss.tableMeta.HeirarchyObjects.Heirarchy)
@@ -191,6 +223,9 @@ func (ss *SingleSelectAcquire) Build() error {
 					if ok && len(iArr) > 0 {
 						if !housekeepingDone && ss.insertPreparedStatementCtx != nil {
 							_, err = ss.handlerCtx.SQLEngine.Exec(ss.insertPreparedStatementCtx.GetGCHousekeepingQueries())
+							tcc := ss.insertPreparedStatementCtx.GetGCCtrlCtrs()
+							tcc.TableName = tableName
+							ss.insertionContainer.SetTableTxnCounters(tableName, tcc)
 							housekeepingDone = true
 						}
 						if err != nil {
@@ -200,7 +235,6 @@ func (ss *SingleSelectAcquire) Build() error {
 						for i, item := range iArr {
 							if item != nil {
 
-								paramsUsed, err := reqCtx.ToFlatMap()
 								if err == nil {
 									for k, v := range paramsUsed {
 										if _, ok := item[k]; !ok {
@@ -210,7 +244,7 @@ func (ss *SingleSelectAcquire) Build() error {
 								}
 
 								logging.GetLogger().Infoln(fmt.Sprintf("running insert with control parameters: %v", ss.insertPreparedStatementCtx.GetGCCtrlCtrs()))
-								r, err := ss.drmCfg.ExecuteInsertDML(ss.handlerCtx.SQLEngine, ss.insertPreparedStatementCtx, item)
+								r, err := ss.drmCfg.ExecuteInsertDML(ss.handlerCtx.SQLEngine, ss.insertPreparedStatementCtx, item, reqEncoding)
 								logging.GetLogger().Infoln(fmt.Sprintf("insert result = %v, error = %v", r, err))
 								if err != nil {
 									return dto.NewErroneousExecutorOutput(fmt.Errorf("sql insert error: '%s' from query: %s", err.Error(), ss.insertPreparedStatementCtx.GetQuery()))

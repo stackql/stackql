@@ -37,9 +37,9 @@ var srvCmd = &cobra.Command{
 	Supports client connections from psql and all manner or libs.
   `,
 	Run: func(cmd *cobra.Command, args []string) {
-		sqlEngine, err := entryutil.BuildSQLEngine(runtimeCtx)
+		inputBundle, err := entryutil.BuildInputBundle(runtimeCtx)
 		iqlerror.PrintErrorAndExitOneIfError(err)
-		handlerCtx, err := entryutil.BuildHandlerContextNoPreProcess(runtimeCtx, queryCache, sqlEngine)
+		handlerCtx, err := entryutil.BuildHandlerContextNoPreProcess(runtimeCtx, queryCache, inputBundle)
 		iqlerror.PrintErrorAndExitOneIfError(err)
 		sbe, err := driver.NewStackQLBackend(&handlerCtx)
 		iqlerror.PrintErrorAndExitOneIfError(err)

@@ -1,6 +1,7 @@
 package constants
 
 const (
+	AnalyticsPrefix                    string = "stackql_analytics"
 	GoogleV1DiscoveryDoc               string = "https://www.googleapis.com/discovery/v1/apis"
 	GoogleV1OperationURLPropertyString string = "selfLink"
 	GoogleV1ProviderCacheName          string = "google_provider_v_0_3_7"
@@ -22,4 +23,16 @@ const (
 	DefaultPrettyPrintBaseIndent       int    = 2
 	DefaultPrettyPrintIndent           int    = 2
 	DefaultQueryCacheSize              int    = 10000
+	DefaultAnalyticsTemplateString     string = "stackql_analytics_{{ .objectName }}"
+	DefaultViewsTemplateString         string = "stackql_views.{{ .objectName }}"
+	DefaultAnalyticsRegexpString       string = `^stackql_analytics_(?P<objectName>.*)$`
+	DefaultViewsRegexpString           string = `^stackql_views\.(?P<objectName>.*)$`
+)
+
+type GCStatus int
+
+const (
+	GCWhite GCStatus = iota
+	GCBlack
+	GCGrey
 )

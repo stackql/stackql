@@ -1,0 +1,14 @@
+[
+  { "id": "100000001", "name": "docusaurus-plugin-hubspot", "login": "somejimbo", "type": "User", "role_name": "admin" },
+  { "id": "100000001", "name": "docusaurus-plugin-hubspot", "login": "marcusaurelius", "type": "User", "role_name": "admin" },
+  { "id": "100000001", "name": "docusaurus-plugin-hubspot", "login": "johnsmith", "type": "User", "role_name": "read" },
+  { "id": "100000001", "name": "docusaurus-plugin-hubspot", "login": "joeblow", "type": "User", "role_name": "admin" },
+  { "id": "100000002", "name": "dummyapp.io", "login": "somejimbo", "type": "User", "role_name": "admin" },
+  { "id": "100000002", "name": "dummyapp.io", "login": "marcusaurelius", "type": "User", "role_name": "admin" },
+  { "id": "100000002", "name": "dummyapp.io", "login": "johnsmith", "type": "User", "role_name": "read" },
+  { "id": "100000002", "name": "dummyapp.io", "login": "joeblow", "type": "User", "role_name": "admin" },
+  { "id": "100000003", "name": "gatsby-plugin-smartlook", "login": "somejimbo", "type": "User", "role_name": "admin" },
+  { "id": "100000003", "name": "gatsby-plugin-smartlook", "login": "marcusaurelius", "type": "User", "role_name": "admin" },
+  { "id": "100000003", "name": "gatsby-plugin-smartlook", "login": "johnsmith", "type": "User", "role_name": "read" },
+  { "id": "100000003", "name": "gatsby-plugin-smartlook", "login": "joeblow", "type": "User", "role_name": "admin" }
+]

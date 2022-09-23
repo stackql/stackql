@@ -2,6 +2,7 @@
 !.gitignore
 !db.sqlite
 !localized-db.sqlite
+!cache_setup.sql
 !setup.sql
 !*.json
 !tmp/

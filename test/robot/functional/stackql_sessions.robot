@@ -35,6 +35,13 @@ PG Session Azure Compute Table Nomenclature Mutation Guard
     ...    ${SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD_JSON_EXPECTED}
     ...    stdout=${CURDIR}/tmp/PG-Session-Azure-Compute-Table-Nomenclature-Mutation-Guard.tmp
 
+PG Session Anayltics Cache Behaviour Canonical
+    Should PG Client Session Inline Equal
+    ...    ${PSQL_MTLS_CONN_STR_UNIX_WITH_NAMESPACES}
+    ...    ${SHELL_COMMANDS_SPECIALCASE_REPEATED_CACHED}
+    ...    ${SHELL_COMMANDS_SPECIALCASE_REPEATED_CACHED_JSON_EXPECTED}
+    ...    stdout=${CURDIR}/tmp/PG-Session-Anayltics-Cache-Behaviour-Canonical.tmp
+
 PG Session Postgres Client Setup Queries
     Should PG Client Session Inline Equal
     ...    ${PSQL_MTLS_CONN_STR_UNIX}

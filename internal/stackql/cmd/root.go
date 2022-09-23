@@ -97,13 +97,15 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
+	rootCmd.PersistentFlags().StringVar(&runtimeCtx.NamespaceCfgRaw, dto.NamespaceCfgRawKey, "{}", "JSON / YAML string representing namespaces for cacheing, views etc")
+	rootCmd.PersistentFlags().StringVar(&runtimeCtx.GCCfgRaw, dto.GCCfgRawKey, "{}", "JSON / YAML string representing GC config")
 	rootCmd.PersistentFlags().IntVar(&runtimeCtx.APIRequestTimeout, dto.APIRequestTimeoutKey, 45, "API request timeout in seconds, 0 for no timeout.")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.ColorScheme, dto.ColorSchemeKey, config.GetDefaultColorScheme(), fmt.Sprintf("Color scheme, must be one of {'%s', '%s', '%s'}", dto.DarkColorScheme, dto.LightColorScheme, dto.NullColorScheme))
-	rootCmd.PersistentFlags().StringVar(&runtimeCtx.CABundle, dto.CABundleKey, "", fmt.Sprintf("Path to CA bundle, if not specified then system defaults used."))
+	rootCmd.PersistentFlags().StringVar(&runtimeCtx.CABundle, dto.CABundleKey, "", "Path to CA bundle, if not specified then system defaults used.")
 	rootCmd.PersistentFlags().BoolVar(&runtimeCtx.AllowInsecure, dto.AllowInsecureKey, false, "Allow trust of insecure certificates (not recommended)")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.ConfigFilePath, dto.ConfigFilePathKey, config.GetDefaultConfigFilePath(), fmt.Sprintf("Config file full path; defaults to current dir"))
-	rootCmd.PersistentFlags().StringVar(&runtimeCtx.ApplicationFilesRootPath, dto.ApplicationFilesRootPathKey, config.GetDefaultApplicationFilesRoot(), fmt.Sprintf("Application config and cache root path"))
-	rootCmd.PersistentFlags().Uint32Var(&runtimeCtx.ApplicationFilesRootPathMode, dto.ApplicationFilesRootPathModeKey, config.GetDefaultProviderCacheDirFileMode(), fmt.Sprintf("Application config and cache file mode"))
+	rootCmd.PersistentFlags().StringVar(&runtimeCtx.ApplicationFilesRootPath, dto.ApplicationFilesRootPathKey, config.GetDefaultApplicationFilesRoot(), "Application config and cache root path")
+	rootCmd.PersistentFlags().Uint32Var(&runtimeCtx.ApplicationFilesRootPathMode, dto.ApplicationFilesRootPathModeKey, config.GetDefaultProviderCacheDirFileMode(), "Application config and cache file mode")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.ViperCfgFileName, dto.ViperCfgFileNameKey, config.GetDefaultViperConfigFileName(), fmt.Sprintf("Config filename"))
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.AuthRaw, dto.AuthCtxKey, "", `auth contexts keyvals in json form, eg: '{ "google": { "credentialsfilepath": "/path/to/google/sevice/account/key.json",  "type": "service_account" }, "okta": { "credentialsenvvar": "OKTA_SECRET_KEY",  "type": "api_key" } }'`)
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.RegistryRaw, dto.RegistryRawKey, fmt.Sprintf(`{ "url": "%s", "localDocRoot": "%s" }`, defaultRegistryUrlString, strings.ReplaceAll(path.Join(runtimeCtx.ApplicationFilesRootPath), `\`, `\\`)), fmt.Sprintf(`openapi registry context keyvals in json form, eg: '{ "url": "%s" }'.`, defaultRegistryUrlString))

@@ -144,7 +144,7 @@ ENV STACKQL_CFG_ROOT="${STACKQL_CFG_ROOT}"
 
 ENV STACKQL_PG_PORT="${STACKQL_PG_PORT}"
 
-RUN mkdir -p ${APP_DIR} ${STACKQL_CFG_ROOT}/keys ${STACKQL_CFG_ROOT}/srv/credentials ${STACKQL_CFG_ROOT}/credentials/dummy ${STACKQL_CFG_ROOT}/registry ${STACKQL_CFG_ROOT}/logs
+RUN mkdir -p ${APP_DIR} ${STACKQL_CFG_ROOT}/keys ${STACKQL_CFG_ROOT}/srv/credentials ${STACKQL_CFG_ROOT}/credentials/dummy ${STACKQL_CFG_ROOT}/registry ${STACKQL_CFG_ROOT}/logs ${STACKQL_CFG_ROOT}/db
 
 ENV PATH="${APP_DIR}:${PATH}"
 

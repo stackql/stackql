@@ -21,6 +21,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 	"github.com/stackql/stackql/internal/stackql/relational"
 	"github.com/stackql/stackql/internal/stackql/symtab"
+	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 	"github.com/stackql/stackql/internal/stackql/util"
 
@@ -406,7 +407,7 @@ func prepareErroneousResultSet(rowMap map[string]map[string]interface{}, columnO
 	)
 }
 
-func (pb *primitiveGenerator) describeInstructionExecutor(handlerCtx *handler.HandlerContext, tbl *taxonomy.ExtendedTableMetadata, extended bool, full bool) dto.ExecutorOutput {
+func (pb *primitiveGenerator) describeInstructionExecutor(handlerCtx *handler.HandlerContext, tbl *tablemetadata.ExtendedTableMetadata, extended bool, full bool) dto.ExecutorOutput {
 	schema, err := tbl.GetSelectableObjectSchema()
 	if err != nil {
 		return dto.NewErroneousExecutorOutput(err)
@@ -472,7 +473,7 @@ func (pb *primitiveGenerator) insertExecutor(handlerCtx *handler.HandlerContext,
 		if err != nil {
 			return dto.NewErroneousExecutorOutput(err)
 		}
-		httpArmoury, err := httpbuild.BuildHTTPRequestCtx(handlerCtx, node, prov, m, svc, inputMap, nil)
+		httpArmoury, err := httpbuild.BuildHTTPRequestCtx(node, prov, m, svc, inputMap, nil)
 		if err != nil {
 			return dto.NewErroneousExecutorOutput(err)
 		}
@@ -734,7 +735,7 @@ func (pb *primitiveGenerator) deleteExecutor(handlerCtx *handler.HandlerContext,
 	return pb.composeAsyncMonitor(handlerCtx, deletePrimitive, tbl)
 }
 
-func generateSuccessMessagesFromHeirarchy(meta *taxonomy.ExtendedTableMetadata) []string {
+func generateSuccessMessagesFromHeirarchy(meta *tablemetadata.ExtendedTableMetadata) []string {
 	successMsgs := []string{
 		"The operation completed successfully",
 	}
@@ -850,7 +851,7 @@ func (pb *primitiveGenerator) execExecutor(handlerCtx *handler.HandlerContext, n
 	return graph.CreatePrimitiveNode(pr), nil
 }
 
-func (pb *primitiveGenerator) composeAsyncMonitor(handlerCtx *handler.HandlerContext, precursor primitive.IPrimitive, meta *taxonomy.ExtendedTableMetadata) (primitive.IPrimitive, error) {
+func (pb *primitiveGenerator) composeAsyncMonitor(handlerCtx *handler.HandlerContext, precursor primitive.IPrimitive, meta *tablemetadata.ExtendedTableMetadata) (primitive.IPrimitive, error) {
 	prov, err := meta.GetProvider()
 	if err != nil {
 		return nil, err

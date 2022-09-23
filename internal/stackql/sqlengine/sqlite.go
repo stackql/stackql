@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/logging"
@@ -65,6 +66,39 @@ func newSQLiteEngine(cfg SQLEngineConfig) (*sqLiteEngine, error) {
 	return eng, err
 }
 
+// In SQLite, `DateTime` objects are not properly aware; the zone is not recorded.
+// That being said, those fields populated with `DateTime('now')` are UTC.
+// As per https://www.sqlite.org/lang_datefunc.html:
+//    The 'now' argument to date and time functions always returns exactly
+//    the same value for multiple invocations within the same sqlite3_step()
+//    call. Universal Coordinated Time (UTC) is used.
+// Therefore, this method will behave correctly provided that the column `colName`
+// is populated with `DateTime('now')`.
+func (eng *sqLiteEngine) TableOldestUpdateUTC(tableName string, requestEncoding string, updateColName string, requestEncodingColName string) (time.Time, *dto.TxnControlCounters) {
+	var gen_id_col_name string = "iql_generation_id"
+	var ssn_id_col_name string = "iql_session_id"
+	var txn_id_col_name string = "iql_txn_id"
+	var ins_id_col_name string = "iql_insert_id"
+	rows, err := eng.db.Query(fmt.Sprintf("SELECT strftime('%%Y-%%m-%%dT%%H:%%M:%%S', min(%s)) as oldest_update, %s, %s, %s, %s FROM \"%s\" WHERE %s = '%s';", updateColName, gen_id_col_name, ssn_id_col_name, txn_id_col_name, ins_id_col_name, tableName, requestEncodingColName, requestEncoding))
+	if err == nil && rows != nil {
+		defer rows.Close()
+		rowExists := rows.Next()
+		if rowExists {
+			var oldest string
+			tcc := dto.TxnControlCounters{}
+			err = rows.Scan(&oldest, &tcc.GenId, &tcc.SessionId, &tcc.TxnId, &tcc.InsertId)
+			if err == nil {
+				oldestTime, err := time.Parse("2006-01-02T15:04:05", oldest)
+				if err == nil {
+					tcc.TableName = tableName
+					return oldestTime, &tcc
+				}
+			}
+		}
+	}
+	return time.Time{}, nil
+}
+
 func (eng *sqLiteEngine) execFileSQLite(fileName string) error {
 	fileContents, err := ioutil.ReadFile(fileName)
 	if err != nil {
@@ -72,6 +106,22 @@ func (eng *sqLiteEngine) execFileSQLite(fileName string) error {
 	}
 	_, err = eng.db.Exec(string(fileContents))
 	return err
+}
+
+func (eng *sqLiteEngine) IsTablePresent(tableName string, requestEncoding string, colName string) bool {
+	rows, err := eng.db.Query(fmt.Sprintf(`SELECT count(*) as ct FROM "%s" WHERE iql_insert_encoded=?;`, tableName), requestEncoding)
+	if err == nil && rows != nil {
+		defer rows.Close()
+		rowExists := rows.Next()
+		if rowExists {
+			var ct int
+			rows.Scan(&ct)
+			if ct > 0 {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (eng *sqLiteEngine) execFileLocal(fileName string) error {
@@ -100,6 +150,22 @@ func (se sqLiteEngine) Exec(query string, varArgs ...interface{}) (sql.Result, e
 	res, err := se.db.Exec(query, varArgs...)
 	// logging.GetLogger().Infoln(fmt.Sprintf("res= %v, err = %v", res, err))
 	return res, err
+}
+
+func (se sqLiteEngine) ExecInTxn(queries []string) error {
+	txn, err := se.db.Begin()
+	if err != nil {
+		return err
+	}
+	for _, query := range queries {
+		_, err = txn.Exec(query)
+		if err != nil {
+			txn.Rollback()
+			return err
+		}
+	}
+	err = txn.Commit()
+	return err
 }
 
 func (se sqLiteEngine) GetNextGenerationId() (int, error) {

@@ -27,7 +27,7 @@ func TestSimpleInsertDependentGoogleComputeDiskAsync(t *testing.T) {
 		t.Fatalf("TestSimpleInsertDependentGoogleComputeNetworkAsync failed: %v", err)
 	}
 	runtimeCtx.InfilePath = inputFile
-	sqlEngine, err := stackqltestutil.BuildSQLEngine(*runtimeCtx)
+	inputBundle, err := stackqltestutil.BuildInputBundle(*runtimeCtx)
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
@@ -38,7 +38,7 @@ func TestSimpleInsertDependentGoogleComputeDiskAsync(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
-		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, rdr, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), sqlEngine)
+		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, rdr, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -74,7 +74,7 @@ func TestSimpleInsertDependentGoogleComputeDiskAsyncReversed(t *testing.T) {
 		t.Fatalf("TestSimpleInsertDependentGoogleComputeNetworkAsync failed: %v", err)
 	}
 	runtimeCtx.InfilePath = inputFile
-	sqlEngine, err := stackqltestutil.BuildSQLEngine(*runtimeCtx)
+	inputBundle, err := stackqltestutil.BuildInputBundle(*runtimeCtx)
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
@@ -85,7 +85,7 @@ func TestSimpleInsertDependentGoogleComputeDiskAsyncReversed(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
-		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, rdr, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), sqlEngine)
+		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, rdr, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -121,7 +121,7 @@ func TestSimpleInsertDependentGoogleBQDatasetAsync(t *testing.T) {
 		t.Fatalf("TestSimpleInsertDependentGoogleComputeNetworkAsync failed: %v", err)
 	}
 	runtimeCtx.InfilePath = inputFile
-	sqlEngine, err := stackqltestutil.BuildSQLEngine(*runtimeCtx)
+	inputBundle, err := stackqltestutil.BuildInputBundle(*runtimeCtx)
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
@@ -132,7 +132,7 @@ func TestSimpleInsertDependentGoogleBQDatasetAsync(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
-		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, rdr, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), sqlEngine)
+		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, rdr, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -168,7 +168,7 @@ func TestSimpleSelectExecDependentGoogleOrganizationsGetIamPolicy(t *testing.T) 
 		t.Fatalf("TestSimpleSelectExecDependentGoogleOrganizationsGetIamPolicy failed: %v", err)
 	}
 	runtimeCtx.InfilePath = inputFile
-	sqlEngine, err := stackqltestutil.BuildSQLEngine(*runtimeCtx)
+	inputBundle, err := stackqltestutil.BuildInputBundle(*runtimeCtx)
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
@@ -179,7 +179,7 @@ func TestSimpleSelectExecDependentGoogleOrganizationsGetIamPolicy(t *testing.T) 
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
-		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, rdr, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), sqlEngine)
+		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, rdr, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}

@@ -6,6 +6,8 @@ import (
 
 type TxnControlCounters struct {
 	GenId, SessionId, TxnId, InsertId, DiscoveryGenerationId int
+	TableName                                                string
+	RequestEncoding                                          []string
 }
 
 func NewTxnControlCounters(txnCtrMgr *txncounter.TxnCounterManager, discoveryGenerationID int) *TxnControlCounters {
@@ -24,6 +26,7 @@ func (tc *TxnControlCounters) CloneWithDiscoGenID(discoveryGenerationID int) *Tx
 		SessionId:             tc.SessionId,
 		TxnId:                 tc.TxnId,
 		InsertId:              tc.InsertId,
+		RequestEncoding:       tc.RequestEncoding,
 		DiscoveryGenerationId: discoveryGenerationID,
 	}
 }
@@ -34,6 +37,7 @@ func (tc *TxnControlCounters) CloneAndIncrementInsertID() *TxnControlCounters {
 		SessionId:             tc.SessionId,
 		TxnId:                 tc.TxnId,
 		InsertId:              tc.InsertId + 1,
+		RequestEncoding:       tc.RequestEncoding,
 		DiscoveryGenerationId: tc.DiscoveryGenerationId,
 	}
 }

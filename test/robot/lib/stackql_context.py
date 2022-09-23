@@ -91,6 +91,14 @@ ROBOT_MOCKED_REG_DIR = os.path.abspath(os.path.join(ROBOT_TEST_ROOT, 'registry',
 
 ROBOT_INTEGRATION_TEST_ROOT = os.path.abspath(os.path.join(__file__, '..', 'integration'))
 
+_NAMESPACES_TTL_SIMPLE = '{ "analytics": { "ttl": 86400, "regex": "^(?:stackql_analytics_)?(?P<objectName>.*)$", "template": "stackql_analytics_{{ .objectName }}" } }'
+_NAMESPACES_TTL_TRANSPARENT = '{ "analytics": { "ttl": 86400, "regex": "^(?P<objectName>.*)$", "template": "stackql_analytics_{{ .objectName }}" } }'
+_NAMESPACES_TTL_SPECIALCASE_TRANSPARENT = '{ "analytics": { "ttl": 86400, "regex": "^(?P<objectName>github.*)$", "template": "stackql_analytics_{{ .objectName }}" } }'
+
+NAMESPACES_TTL_SIMPLE = _NAMESPACES_TTL_SIMPLE.replace(' ', '')
+NAMESPACES_TTL_TRANSPARENT = _NAMESPACES_TTL_TRANSPARENT.replace(' ', '')
+NAMESPACES_TTL_SPECIALCASE_TRANSPARENT = _NAMESPACES_TTL_SPECIALCASE_TRANSPARENT.replace(' ', '')
+
 MOCKSERVER_PORT_REGISTRY = 1094
 
 def get_output_from_local_file(fp :str) -> str:
@@ -225,6 +233,9 @@ STACKQL_PG_CLIENT_CERT_PATH_DOCKER  :str = os.path.abspath(os.path.join(REPOSITO
 STACKQL_PG_RUBBISH_KEY_PATH_DOCKER  :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "vol", "srv", "credentials", "pg_rubbish_key.pem"))
 STACKQL_PG_RUBBISH_CERT_PATH_DOCKER :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "vol", "srv", "credentials", "pg_rubbish_cert.pem"))
 
+ANALYTICS_DB_INIT_PATH :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "test", "db", "cache_setup.sql"))
+ANALYTICS_DB_INIT_PATH_DOCKER :str = get_unix_path(os.path.join('/opt', 'stackql', "db", "cache_setup.sql"))
+
 with open(os.path.join(REPOSITORY_ROOT, 'test', 'server', 'mtls', 'credentials', 'pg_client_cert.pem'), 'rb') as f:
   _CLIENT_CERT_ENCODED :str = base64.b64encode(f.read()).decode('utf-8')
 
@@ -309,9 +320,11 @@ MOCKSERVER_PORT_AZURE = 1095
 JSON_INIT_FILE_PATH_REGISTRY = os.path.join(REPOSITORY_ROOT, 'test', 'mockserver', 'expectations', 'static-registry-expectations.json')
 
 PG_SRV_PORT_MTLS = 5476
+PG_SRV_PORT_MTLS_WITH_NAMESPACES = 5486
 PG_SRV_PORT_UNENCRYPTED = 5477
 
 PG_SRV_PORT_DOCKER_MTLS = 5576
+PG_SRV_PORT_DOCKER_MTLS_WITH_NAMESPACES = 5586
 PG_SRV_PORT_DOCKER_UNENCRYPTED = 5577
 
 PSQL_EXE :str = os.environ.get('PSQL_EXE', 'psql')
@@ -320,10 +333,12 @@ PSQL_CLIENT_HOST :str = "127.0.0.1"
 
 PSQL_MTLS_CONN_STR :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH} sslkey={STACKQL_PG_CLIENT_KEY_PATH} sslrootcert={STACKQL_PG_SERVER_CERT_PATH} dbname=mydatabase"
 PSQL_MTLS_CONN_STR_UNIX :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH_UNIX} sslkey={STACKQL_PG_CLIENT_KEY_PATH_UNIX} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_UNIX} dbname=mydatabase"
+PSQL_MTLS_CONN_STR_UNIX_WITH_NAMESPACES :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS_WITH_NAMESPACES} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH_UNIX} sslkey={STACKQL_PG_CLIENT_KEY_PATH_UNIX} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_UNIX} dbname=mydatabase"
 PSQL_MTLS_INVALID_CONN_STR :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=verify-full sslcert={STACKQL_PG_RUBBISH_CERT_PATH} sslkey={STACKQL_PG_RUBBISH_KEY_PATH} sslrootcert={STACKQL_PG_SERVER_CERT_PATH} dbname=mydatabase"
 PSQL_UNENCRYPTED_CONN_STR :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_UNENCRYPTED} user=myuser dbname=mydatabase"
 
 PSQL_MTLS_CONN_STR_DOCKER :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH_DOCKER} sslkey={STACKQL_PG_CLIENT_KEY_PATH_DOCKER} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_DOCKER} dbname=mydatabase"
+PSQL_MTLS_CONN_STR_WITH_NAMESPACES_DOCKER :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS_WITH_NAMESPACES} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH_DOCKER} sslkey={STACKQL_PG_CLIENT_KEY_PATH_DOCKER} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_DOCKER} dbname=mydatabase"
 PSQL_MTLS_INVALID_CONN_STR_DOCKER :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=verify-full sslcert={STACKQL_PG_RUBBISH_CERT_PATH_DOCKER} sslkey={STACKQL_PG_RUBBISH_KEY_PATH_DOCKER} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_DOCKER} dbname=mydatabase"
 PSQL_UNENCRYPTED_CONN_STR_DOCKER :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_UNENCRYPTED} user=myuser dbname=mydatabase"
 
@@ -379,6 +394,10 @@ SELECT_GITHUB_TAGS_COUNT = "select count(*) as ct from github.repos.tags where o
 SELECT_GITHUB_SCIM_JOIN_WITH_FUNCTIONS = "select substr(su.userName, 1, instr(su.userName, '@') - 1), su.externalId, su.id, u.login, u.two_factor_authentication AS is_two_fa_enabled from github.scim.users su inner join github.users.users u ON substr(su.userName, 1, instr(su.userName, '@') - 1) = u.username and substr(su.userName, 1, instr(su.userName, '@') - 1) = u.login where su.org = 'dummyorg' order by su.id asc;"
 SELECT_GITHUB_ORGS_MEMBERS = "select om.login from github.orgs.members om where om.org = 'dummyorg' order by om.login desc;"
 SELECT_GITHUB_JOIN_IN_PARAMS = "select r.name, col.login, col.type, col.role_name from github.repos.collaborators col inner join github.repos.repos r ON col.repo = r.name where col.owner = 'dummyorg' and r.org = 'dummyorg' order by r.name, col.login desc;"
+SELECT_GITHUB_JOIN_IN_PARAMS_SPECIALCASE = "select r.id, r.name, col.login, col.type, col.role_name from github.repos.collaborators col inner join github.repos.repos r ON col.repo = r.name where col.owner = 'specialcaseorg' and r.org = 'specialcaseorg' order by r.name, col.login desc;"
+
+SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_SIMPLE = "select r.name, col.login, col.type, col.role_name from stackql_analytics_github.repos.collaborators col inner join stackql_analytics_github.repos.repos r ON col.repo = r.name where col.owner = 'stackql' and r.org = 'stackql' order by r.name, col.login desc;"
+SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_TRANSPARENT = "select r.name, col.login, col.type, col.role_name from github.repos.collaborators col inner join github.repos.repos r ON col.repo = r.name where col.owner = 'stackql' and r.org = 'stackql' order by r.name, col.login desc;"
 
 SELECT_OKTA_APPS = "select name, status, label, id from okta.application.apps apps where apps.subdomain = 'example-subdomain' order by name asc;"
 SELECT_OKTA_USERS_ASC = "select JSON_EXTRACT(ou.profile, '$.login') as login, ou.status from okta.user.users ou WHERE ou.subdomain = 'dummyorg' order by JSON_EXTRACT(ou.profile, '$.login') asc;"
@@ -443,6 +462,8 @@ SELECT_GITHUB_TAGS_COUNT_EXPECTED = get_output_from_local_file(os.path.join('tes
 SELECT_GITHUB_JOIN_DATA_FLOW_SEQUENTIAL_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'joins', 'select-github-sequential-join.txt'))
 SELECT_GITHUB_JOIN_IN_PARAMS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'joins', 'select-github-join-on-path-param.txt'))
 SELECT_GITHUB_SCIM_JOIN_WITH_FUNCTIONS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'joins', 'select-github-sequential-join-with-functions.txt'))
+SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'joins', 'analytics-repositories-collaborators.txt'))
+SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_SPECIALCASE_JSON_EXPECTED = get_json_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'joins', 'specialcase-firstlook-repositories-collaborators.json'))
 SELECT_GITHUB_OKTA_SAML_JOIN_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'joins', 'inner', 'github-saml-members-okta-users.txt'))
 SELECT_GITHUB_ORGS_MEMBERS_PAGE_LIMITED_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'orgs', 'page-limited-members.txt'))
 SELECT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'google', 'compute', 'instance-iam-policy-projection.txt'))
@@ -509,11 +530,16 @@ def get_variables(execution_env :str):
     'MOCKSERVER_PORT_K8S':                            MOCKSERVER_PORT_K8S,
     'MOCKSERVER_PORT_OKTA':                           MOCKSERVER_PORT_OKTA,
     'MOCKSERVER_PORT_REGISTRY':                       MOCKSERVER_PORT_REGISTRY,
+    'NAMESPACES_TTL_SIMPLE':                          NAMESPACES_TTL_SIMPLE,
+    'NAMESPACES_TTL_SPECIALCASE_TRANSPARENT':         NAMESPACES_TTL_SPECIALCASE_TRANSPARENT,
+    'NAMESPACES_TTL_TRANSPARENT':                     NAMESPACES_TTL_TRANSPARENT,
     'OKTA_SECRET_STR':                                OKTA_SECRET_STR,
     'PG_SRV_MTLS_DOCKER_CFG_STR':                     PG_SRV_MTLS_DOCKER_CFG_STR,
     'PG_SRV_PORT_DOCKER_MTLS':                        PG_SRV_PORT_DOCKER_MTLS,
+    'PG_SRV_PORT_DOCKER_MTLS_WITH_NAMESPACES':        PG_SRV_PORT_DOCKER_MTLS_WITH_NAMESPACES,
     'PG_SRV_PORT_DOCKER_UNENCRYPTED':                 PG_SRV_PORT_DOCKER_UNENCRYPTED,
     'PG_SRV_PORT_MTLS':                               PG_SRV_PORT_MTLS,
+    'PG_SRV_PORT_MTLS_WITH_NAMESPACES':               PG_SRV_PORT_MTLS_WITH_NAMESPACES,
     'PG_SRV_PORT_UNENCRYPTED':                        PG_SRV_PORT_UNENCRYPTED,
     'PSQL_CLIENT_HOST':                               PSQL_CLIENT_HOST,
     'PSQL_EXE':                                       PSQL_EXE,
@@ -546,6 +572,9 @@ def get_variables(execution_env :str):
     'REGISTRY_LIST_EXPECTED':                                               REGISTRY_LIST_EXPECTED,
     'SELECT_ACCELERATOR_TYPES_DESC':                                        SELECT_ACCELERATOR_TYPES_DESC,
     'SELECT_ACCELERATOR_TYPES_DESC_EXPECTED':                               SELECT_ACCELERATOR_TYPES_DESC_EXPECTED,
+    'SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_EXPECTED':    SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_EXPECTED,
+    'SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_SIMPLE':      SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_SIMPLE,
+    'SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_TRANSPARENT': SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_TRANSPARENT,
     'SELECT_AWS_CLOUD_CONTROL_EVENTS_MINIMAL':                              [ SELECT_AWS_CLOUD_CONTROL_EVENTS_MINIMAL ],
     'SELECT_AWS_CLOUD_CONTROL_EVENTS_MINIMAL_EXPECTED':                     SELECT_AWS_CLOUD_CONTROL_EVENTS_MINIMAL_EXPECTED,
     'SELECT_AWS_CLOUD_CONTROL_OPERATIONS_DESC':                             SELECT_AWS_CLOUD_CONTROL_OPERATIONS_DESC,
@@ -624,6 +653,8 @@ def get_variables(execution_env :str):
     'SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD':                          [ SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES, SELECT_AZURE_COMPUTE_PUBLIC_KEYS ],
     'SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD_EXPECTED':                 _SHELL_WELCOME_MSG + SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_EXPECTED + '\n' + SELECT_AZURE_COMPUTE_PUBLIC_KEYS_EXPECTED,
     'SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD_JSON_EXPECTED':            SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_JSON_EXPECTED + SELECT_AZURE_COMPUTE_PUBLIC_KEYS_JSON_EXPECTED,
+    'SHELL_COMMANDS_SPECIALCASE_REPEATED_CACHED':                          [ SELECT_GITHUB_JOIN_IN_PARAMS_SPECIALCASE, SELECT_GITHUB_JOIN_IN_PARAMS_SPECIALCASE ],
+    'SHELL_COMMANDS_SPECIALCASE_REPEATED_CACHED_JSON_EXPECTED':             SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_SPECIALCASE_JSON_EXPECTED + SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_SPECIALCASE_JSON_EXPECTED,
     'SHELL_SESSION_SIMPLE_COMMANDS':                                        [ SELECT_GITHUB_BRANCHES_NAMES_DESC ],
     'SHELL_SESSION_SIMPLE_EXPECTED':                                        _SHELL_WELCOME_MSG + SELECT_GITHUB_BRANCHES_NAMES_DESC_EXPECTED,
     'SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR':                 SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR,
@@ -642,6 +673,7 @@ def get_variables(execution_env :str):
     'UPDATE_GITHUB_ORG':                                                    UPDATE_GITHUB_ORG,
   }
   if execution_env == 'docker':
+    rv['ANALYTICS_DB_INIT_PATH']                        = ANALYTICS_DB_INIT_PATH_DOCKER
     rv['AUTH_CFG_STR']                                  = AUTH_CFG_STR_DOCKER
     rv['GET_IAM_POLICY_AGG_ASC_INPUT_FILE']             = GET_IAM_POLICY_AGG_ASC_INPUT_FILE_DOCKER
     rv['JSON_INIT_FILE_PATH_AWS']                       = JSON_INIT_FILE_PATH_AWS
@@ -654,11 +686,13 @@ def get_variables(execution_env :str):
     rv['PG_SRV_MTLS_CFG_STR']                           = PG_SRV_MTLS_CFG_STR
     rv['PSQL_MTLS_CONN_STR']                            = PSQL_MTLS_CONN_STR_DOCKER
     rv['PSQL_MTLS_CONN_STR_UNIX']                       = PSQL_MTLS_CONN_STR_DOCKER
+    rv['PSQL_MTLS_CONN_STR_UNIX_WITH_NAMESPACES']       = PSQL_MTLS_CONN_STR_WITH_NAMESPACES_DOCKER
     rv['PSQL_MTLS_INVALID_CONN_STR']                    = PSQL_MTLS_INVALID_CONN_STR_DOCKER
     rv['PSQL_UNENCRYPTED_CONN_STR']                     = PSQL_UNENCRYPTED_CONN_STR_DOCKER
     rv['REGISTRY_EXPERIMENTAL_NO_VERIFY_CFG_STR']       = _REGISTRY_EXPERIMENTAL_DOCKER_NO_VERIFY
     rv['REGISTRY_SQL_VERB_CONTRIVED_NO_VERIFY_CFG_STR'] = _REGISTRY_SQL_VERB_CONTRIVED_NO_VERIFY_DOCKER
-  else: 
+  else:
+    rv['ANALYTICS_DB_INIT_PATH']                        = ANALYTICS_DB_INIT_PATH
     rv['AUTH_CFG_STR']                                  = AUTH_CFG_STR
     rv['GET_IAM_POLICY_AGG_ASC_INPUT_FILE']             = GET_IAM_POLICY_AGG_ASC_INPUT_FILE
     rv['JSON_INIT_FILE_PATH_AWS']                       = JSON_INIT_FILE_PATH_AWS
@@ -671,6 +705,7 @@ def get_variables(execution_env :str):
     rv['PG_SRV_MTLS_CFG_STR']                           = PG_SRV_MTLS_CFG_STR
     rv['PSQL_MTLS_CONN_STR']                            = PSQL_MTLS_CONN_STR
     rv['PSQL_MTLS_CONN_STR_UNIX']                       = PSQL_MTLS_CONN_STR_UNIX
+    rv['PSQL_MTLS_CONN_STR_UNIX_WITH_NAMESPACES']       = PSQL_MTLS_CONN_STR_UNIX_WITH_NAMESPACES
     rv['PSQL_MTLS_INVALID_CONN_STR']                    = PSQL_MTLS_INVALID_CONN_STR
     rv['PSQL_UNENCRYPTED_CONN_STR']                     = PSQL_UNENCRYPTED_CONN_STR
     rv['REGISTRY_EXPERIMENTAL_NO_VERIFY_CFG_STR']       = _REGISTRY_EXPERIMENTAL_NO_VERIFY

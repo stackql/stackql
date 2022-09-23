@@ -9,13 +9,14 @@ import (
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
+	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 )
 
 type TableRouteAstVisitor struct {
 	handlerCtx      *handler.HandlerContext
 	router          ParameterRouter
-	tableMetaSlice  []*taxonomy.ExtendedTableMetadata
+	tableMetaSlice  []*tablemetadata.ExtendedTableMetadata
 	tables          taxonomy.TblMap
 	annotations     taxonomy.AnnotationCtxMap
 	annotationSlice []taxonomy.AnnotationCtx
@@ -39,7 +40,7 @@ func (v *TableRouteAstVisitor) analyzeAliasedTable(tb *sqlparser.AliasedTableExp
 	}
 }
 
-func (v *TableRouteAstVisitor) GetTableMetaArray() []*taxonomy.ExtendedTableMetadata {
+func (v *TableRouteAstVisitor) GetTableMetaArray() []*tablemetadata.ExtendedTableMetadata {
 	return v.tableMetaSlice
 }
 

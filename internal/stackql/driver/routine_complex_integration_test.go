@@ -24,14 +24,14 @@ func TestUnionAllSelectComputeDisksOrderByCrtTmstpAscPlusCoalesceJsonExtract(t *
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
-	sqlEngine, err := stackqltestutil.BuildSQLEngine(*runtimeCtx)
+	inputBundle, err := stackqltestutil.BuildInputBundle(*runtimeCtx)
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
 
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
-		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), sqlEngine)
+		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}

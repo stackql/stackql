@@ -8,10 +8,14 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/stackql/stackql/internal/stackql/bundle"
 	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/garbagecollector"
+	"github.com/stackql/stackql/internal/stackql/gcexec"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/iqlerror"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
+	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 
 	"github.com/stackql/stackql/pkg/preprocessor"
 	"github.com/stackql/stackql/pkg/txncounter"
@@ -19,9 +23,46 @@ import (
 	lrucache "vitess.io/vitess/go/cache"
 )
 
-func BuildSQLEngine(runtimeCtx dto.RuntimeCtx) (sqlengine.SQLEngine, error) {
+func BuildInputBundle(runtimeCtx dto.RuntimeCtx) (bundle.Bundle, error) {
+	se, err := buildSQLEngine(runtimeCtx)
+	if err != nil {
+		return nil, err
+	}
+	namespaces, err := initNamespaces(runtimeCtx.NamespaceCfgRaw, se)
+	if err != nil {
+		return nil, err
+	}
+	gcCfg, err := dto.GetGCCfg("")
+	if err != nil {
+		return nil, err
+	}
+	gcExec, err := buildGCExec(se, namespaces, runtimeCtx)
+	if err != nil {
+		return nil, err
+	}
+	gc := buildGC(gcExec, gcCfg)
+	return bundle.NewBundle(gc, namespaces, se), nil
+}
+
+func initNamespaces(namespaceCfgRaw string, sqlEngine sqlengine.SQLEngine) (tablenamespace.TableNamespaceCollection, error) {
+	cfgs, err := dto.GetNamespaceCfg(namespaceCfgRaw)
+	if err != nil {
+		return nil, err
+	}
+	return tablenamespace.NewStandardTableNamespaceCollection(cfgs, sqlEngine)
+}
+
+func buildSQLEngine(runtimeCtx dto.RuntimeCtx) (sqlengine.SQLEngine, error) {
 	sqlCfg := sqlengine.NewSQLEngineConfig(runtimeCtx)
 	return sqlengine.NewSQLEngine(sqlCfg)
+}
+
+func buildGCExec(sqlEngine sqlengine.SQLEngine, namespaces tablenamespace.TableNamespaceCollection, runtimeCtx dto.RuntimeCtx) (gcexec.GarbageCollectorExecutor, error) {
+	return gcexec.GetGarbageCollectorExecutorInstance(sqlEngine, namespaces, "sqlite")
+}
+
+func buildGC(gcExec gcexec.GarbageCollectorExecutor, gcCfg dto.GCCfg) garbagecollector.GarbageCollector {
+	return garbagecollector.NewGarbageCollector(gcExec, gcCfg)
 }
 
 func GetTxnCounterManager(handlerCtx handler.HandlerContext) (*txncounter.TxnCounterManager, error) {
@@ -80,12 +121,12 @@ func assemblePreprocessor(runtimeCtx dto.RuntimeCtx, rdr io.Reader) ([]byte, err
 	return bb, err
 }
 
-func BuildHandlerContext(runtimeCtx dto.RuntimeCtx, rdr io.Reader, lruCache *lrucache.LRUCache, sqlEngine sqlengine.SQLEngine) (handler.HandlerContext, error) {
+func BuildHandlerContext(runtimeCtx dto.RuntimeCtx, rdr io.Reader, lruCache *lrucache.LRUCache, inputBundle bundle.Bundle) (handler.HandlerContext, error) {
 	bb, err := assemblePreprocessor(runtimeCtx, rdr)
 	iqlerror.PrintErrorAndExitOneIfError(err)
-	return handler.GetHandlerCtx(strings.TrimSpace(string(bb)), runtimeCtx, lruCache, sqlEngine)
+	return handler.GetHandlerCtx(strings.TrimSpace(string(bb)), runtimeCtx, lruCache, inputBundle)
 }
 
-func BuildHandlerContextNoPreProcess(runtimeCtx dto.RuntimeCtx, lruCache *lrucache.LRUCache, sqlEngine sqlengine.SQLEngine) (handler.HandlerContext, error) {
-	return handler.GetHandlerCtx("", runtimeCtx, lruCache, sqlEngine)
+func BuildHandlerContextNoPreProcess(runtimeCtx dto.RuntimeCtx, lruCache *lrucache.LRUCache, inputBundle bundle.Bundle) (handler.HandlerContext, error) {
+	return handler.GetHandlerCtx("", runtimeCtx, lruCache, inputBundle)
 }

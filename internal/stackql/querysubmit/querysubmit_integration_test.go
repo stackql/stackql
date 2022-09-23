@@ -37,9 +37,9 @@ func TestSimpleSelectGoogleComputeInstanceQuerySubmit(t *testing.T) {
 	testhttpapi.StartServer(t, exp)
 	provider.DummyAuth = true
 
-	sqlEng, err := stackqltestutil.BuildSQLEngine(*runtimeCtx)
+	inputBundle, err := stackqltestutil.BuildInputBundle(*runtimeCtx)
 
-	handlerCtx, err := handler.GetHandlerCtx(testobjects.SimpleSelectGoogleComputeInstance, *runtimeCtx, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), sqlEng)
+	handlerCtx, err := handler.GetHandlerCtx(testobjects.SimpleSelectGoogleComputeInstance, *runtimeCtx, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
 	handlerCtx.Outfile = os.Stdout
 	handlerCtx.OutErrFile = os.Stderr
 

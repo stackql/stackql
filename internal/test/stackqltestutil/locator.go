@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"github.com/stackql/stackql/internal/stackql/bundle"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/entryutil"
-	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/util"
 )
 
@@ -53,8 +53,8 @@ func getBytesFromLocalPath(path string) ([]byte, error) {
 	return ioutil.ReadFile(fullPath)
 }
 
-func BuildSQLEngine(runtimeCtx dto.RuntimeCtx) (sqlengine.SQLEngine, error) {
-	sqlEng, err := entryutil.BuildSQLEngine(runtimeCtx)
+func BuildInputBundle(runtimeCtx dto.RuntimeCtx) (bundle.Bundle, error) {
+	inputBundle, err := entryutil.BuildInputBundle(runtimeCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -78,6 +78,7 @@ func BuildSQLEngine(runtimeCtx dto.RuntimeCtx) (sqlengine.SQLEngine, error) {
 	if err != nil {
 		return nil, err
 	}
+	sqlEng := inputBundle.GetSQLEngine()
 	sqlEng.Exec(`INSERT INTO "__iql__.cache.key_val"(k, v) VALUES(?, ?)`, "https://www.googleapis.com/discovery/v1/apis", googleRootDiscoveryBytes)
 	if err != nil {
 		return nil, err
@@ -98,5 +99,5 @@ func BuildSQLEngine(runtimeCtx dto.RuntimeCtx) (sqlengine.SQLEngine, error) {
 	if err != nil {
 		return nil, err
 	}
-	return sqlEng, nil
+	return inputBundle, nil
 }

@@ -14,17 +14,12 @@ import (
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/sqlrewrite"
+	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
+	"github.com/stackql/stackql/internal/stackql/tablemetadata"
+	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 	"github.com/stackql/stackql/internal/stackql/util"
 )
-
-func (v *QueryRewriteAstVisitor) getSelectExprString(dc *drm.StaticDRMConfig, tabAnnotated util.AnnotatedTabulation, txnCtrlCtrs *dto.TxnControlCounters) string {
-	aliasStr := ""
-	if tabAnnotated.GetAlias() != "" {
-		aliasStr = fmt.Sprintf(` AS "%s" `, tabAnnotated.GetAlias())
-	}
-	return fmt.Sprintf(`"%s" %s`, dc.GetTableName(tabAnnotated.GetHeirarchyIdentifiers(), txnCtrlCtrs.DiscoveryGenerationId), aliasStr)
-}
 
 func (v *QueryRewriteAstVisitor) getNextAlias() string {
 	v.anonColCounter++
@@ -63,7 +58,7 @@ func (v *QueryRewriteAstVisitor) buildAcquireQueryCtx(
 }
 
 func (v *QueryRewriteAstVisitor) getStarColumns(
-	tbl *taxonomy.ExtendedTableMetadata,
+	tbl *tablemetadata.ExtendedTableMetadata,
 ) ([]openapistackql.ColumnDescriptor, error) {
 	schema, _, err := tbl.GetResponseSchemaAndMediaType()
 	if err != nil {
@@ -101,6 +96,7 @@ func (v *QueryRewriteAstVisitor) GenerateSelectDML() (*drm.PreparedStatementCtx,
 		v.tables,
 		v.fromStr,
 		v.tableSlice,
+		v.namespaceCollection,
 	)
 	return sqlrewrite.GenerateSelectDML(rewriteInput)
 }
@@ -118,7 +114,8 @@ type QueryRewriteAstVisitor struct {
 	colRefs               parserutil.ColTableMap
 	columnNames           []parserutil.ColumnHandle
 	columnDescriptors     []openapistackql.ColumnDescriptor
-	tableSlice            []*taxonomy.ExtendedTableMetadata
+	tableSlice            []tableinsertioncontainer.TableInsertionContainer
+	namespaceCollection   tablenamespace.TableNamespaceCollection
 	//
 	selectExprsStr string
 	fromStr        string
@@ -138,7 +135,7 @@ func (v *QueryRewriteAstVisitor) getCtrlCounters(discoveryGenerationID int) *dto
 func NewQueryRewriteAstVisitor(
 	handlerCtx *handler.HandlerContext,
 	tables taxonomy.TblMap,
-	tableSlice []*taxonomy.ExtendedTableMetadata,
+	tableSlice []tableinsertioncontainer.TableInsertionContainer,
 	annotations taxonomy.AnnotationCtxMap,
 	discoGenIDs map[sqlparser.SQLNode]int,
 	colRefs parserutil.ColTableMap,
@@ -146,6 +143,7 @@ func NewQueryRewriteAstVisitor(
 	txnCtrlCtrs *dto.TxnControlCounters,
 	secondaryTccs []*dto.TxnControlCounters,
 	rewrittenWhere string,
+	namespaceCollection tablenamespace.TableNamespaceCollection,
 ) *QueryRewriteAstVisitor {
 	rv := &QueryRewriteAstVisitor{
 		handlerCtx:            handlerCtx,
@@ -159,6 +157,7 @@ func NewQueryRewriteAstVisitor(
 		baseCtrlCounters:      txnCtrlCtrs,
 		secondaryCtrlCounters: secondaryTccs,
 		whereExprsStr:         rewrittenWhere,
+		namespaceCollection:   namespaceCollection,
 	}
 	return rv
 }
@@ -183,7 +182,7 @@ func (v *QueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 	switch node := node.(type) {
 	case *sqlparser.Select:
-		v.selectSuffix = GenerateModifiedSelectSuffix(node)
+		v.selectSuffix = GenerateModifiedSelectSuffix(node, v.namespaceCollection)
 		var options string
 		addIf := func(b bool, s string) {
 			if b {
@@ -215,7 +214,7 @@ func (v *QueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			if err != nil {
 				return err
 			}
-			fromVis := NewDRMAstVisitor("", true)
+			fromVis := NewDRMAstVisitor("", true, v.namespaceCollection)
 			if node.From != nil {
 				node.From.Accept(fromVis)
 				v.fromStr = fromVis.GetRewrittenQuery()
@@ -516,7 +515,7 @@ func (v *QueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		}
 
 	case *sqlparser.StarExpr:
-		var tbl *taxonomy.ExtendedTableMetadata
+		var tbl *tablemetadata.ExtendedTableMetadata
 		if node.TableName.IsEmpty() {
 			if len(v.tables) != 1 {
 				return fmt.Errorf("unaliased star expr not permitted for table count = %d", len(v.tables))
