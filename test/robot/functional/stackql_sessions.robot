@@ -48,3 +48,17 @@ PG Session Postgres Client V2 Setup Queries
     ...    ${PG_CLIENT_SETUP_QUERIES}
     ...    ${PG_CLIENT_SETUP_QUERIES_JSON_EXPECTED}
     ...    stdout=${CURDIR}/tmp/PG-Session-Postgres-Client-V2-Setup-Queries.tmp
+
+PG Session Postgres Client Typed Queries
+    Should PG Client Session Inline Equal
+    ...    ${PSQL_MTLS_CONN_STR_UNIX}
+    ...    ${SELECT_AWS_CLOUD_CONTROL_EVENTS_MINIMAL}
+    ...    ${SELECT_AWS_CLOUD_CONTROL_EVENTS_MINIMAL_EXPECTED}
+    ...    stdout=${CURDIR}/tmp/PG-Session-Postgres-Client-Typed-Queries.tmp
+
+PG Session Postgres Client V2 Typed Queries
+    Should PG Client V2 Session Inline Equal
+    ...    ${PSQL_MTLS_CONN_STR_UNIX}
+    ...    ${SELECT_AWS_CLOUD_CONTROL_EVENTS_MINIMAL}
+    ...    ${SELECT_AWS_CLOUD_CONTROL_EVENTS_MINIMAL_EXPECTED}
+    ...    stdout=${CURDIR}/tmp/PG-Session-Postgres-Client-V2-Typed-Queries.tmp
