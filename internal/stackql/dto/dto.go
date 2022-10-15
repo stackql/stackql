@@ -17,6 +17,7 @@ const (
 	AuthApiKeyStr                   string = "api_key"
 	AuthAWSSigningv4Str             string = "aws_signing_v4"
 	AuthBasicStr                    string = "basic"
+	AuthBearerStr                   string = "bearer"
 	AuthInteractiveStr              string = "interactive"
 	AuthServiceAccountStr           string = "service_account"
 	AuthNullStr                     string = "null_auth"
@@ -127,6 +128,7 @@ type AuthCtx struct {
 	ValuePrefix string   `json:"valuePrefix" yaml:"valuePrefix"`
 	ID          string   `json:"-" yaml:"-"`
 	KeyID       string   `json:"keyID" yaml:"keyID"`
+	KeyIDEnvVar string   `json:"keyIDenvvar" yaml:"keyIDenvvar"`
 	KeyFilePath string   `json:"credentialsfilepath" yaml:"credentialsfilepath"`
 	KeyEnvVar   string   `json:"credentialsenvvar" yaml:"credentialsenvvar"`
 	Active      bool     `json:"-" yaml:"-"`
@@ -137,6 +139,17 @@ func (ac *AuthCtx) HasKey() bool {
 		return true
 	}
 	return false
+}
+
+func (ac *AuthCtx) GetKeyIDString() (string, error) {
+	if ac.KeyIDEnvVar != "" {
+		rv := os.Getenv(ac.KeyIDEnvVar)
+		if rv == "" {
+			return "", fmt.Errorf("keyIDenvvar references empty string")
+		}
+		return rv, nil
+	}
+	return ac.KeyID, nil
 }
 
 func (ac *AuthCtx) InferAuthType(authTypeRequested string) string {

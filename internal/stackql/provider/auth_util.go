@@ -38,7 +38,7 @@ type transport struct {
 
 func newTransport(token []byte, authType, authValuePrefix, tokenLocation, key string, underlyingTransport http.RoundTripper) (*transport, error) {
 	switch authType {
-	case authTypeBasic, authTypeBearer, authTypeSSWS:
+	case authTypeBasic, authTypeBearer, authTypeApiKey:
 		if len(token) < 1 {
 			return nil, fmt.Errorf("no credentials provided for auth type = '%s'", authType)
 		}
@@ -71,14 +71,14 @@ const (
 	locationQuery  string = "query"
 	authTypeBasic  string = "BASIC"
 	authTypeBearer string = "Bearer"
-	authTypeSSWS   string = "SSWS"
+	authTypeApiKey string = "api_key"
 )
 
 func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	switch t.tokenLocation {
 	case locationHeader:
 		switch t.authType {
-		case authTypeBasic, authTypeBearer, authTypeSSWS:
+		case authTypeBasic, authTypeBearer, authTypeApiKey:
 			authValuePrefix := t.authValuePrefix
 			if t.authValuePrefix == "" {
 				authValuePrefix = fmt.Sprintf("%s ", t.authType)
@@ -150,14 +150,18 @@ func oauthServiceAccount(provider string, authCtx *dto.AuthCtx, scopes []string,
 	return config.Client(context.WithValue(oauth2.NoContext, oauth2.HTTPClient, httpClient)), nil
 }
 
-func apiTokenAuth(authCtx *dto.AuthCtx, runtimeCtx dto.RuntimeCtx) (*http.Client, error) {
+func apiTokenAuth(authCtx *dto.AuthCtx, runtimeCtx dto.RuntimeCtx, enforceBearer bool) (*http.Client, error) {
 	b, err := authCtx.GetCredentialsBytes()
 	if err != nil {
 		return nil, fmt.Errorf("credentials error: %v", err)
 	}
 	activateAuth(authCtx, "", "api_key")
 	httpClient := netutils.GetHttpClient(runtimeCtx, http.DefaultClient)
-	tr, err := newTransport(b, authTypeSSWS, authCtx.ValuePrefix, locationHeader, "", httpClient.Transport)
+	valPrefix := authCtx.ValuePrefix
+	if enforceBearer {
+		valPrefix = "Bearer "
+	}
+	tr, err := newTransport(b, authTypeApiKey, valPrefix, locationHeader, "", httpClient.Transport)
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +175,10 @@ func awsSigningAuth(authCtx *dto.AuthCtx, runtimeCtx dto.RuntimeCtx) (*http.Clie
 		return nil, fmt.Errorf("credentials error: %v", err)
 	}
 	keyStr := string(b)
-	keyID := authCtx.KeyID
+	keyID, err := authCtx.GetKeyIDString()
+	if err != nil {
+		return nil, err
+	}
 	if keyStr == "" || keyID == "" {
 		return nil, fmt.Errorf("cannot compose AWS signing credentials")
 	}

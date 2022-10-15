@@ -68,6 +68,8 @@ func (gp *GenericProvider) inferAuthType(authCtx dto.AuthCtx, authTypeRequested 
 		return dto.AuthApiKeyStr
 	case dto.AuthBasicStr:
 		return dto.AuthBasicStr
+	case dto.AuthBearerStr:
+		return dto.AuthBearerStr
 	case dto.AuthServiceAccountStr:
 		return dto.AuthServiceAccountStr
 	case dto.AuthInteractiveStr:
@@ -87,7 +89,9 @@ func (gp *GenericProvider) Auth(authCtx *dto.AuthCtx, authTypeRequested string, 
 	at := gp.inferAuthType(*authCtx, authTypeRequested)
 	switch at {
 	case dto.AuthApiKeyStr:
-		return gp.apiTokenFileAuth(authCtx)
+		return gp.apiTokenFileAuth(authCtx, false)
+	case dto.AuthBearerStr:
+		return gp.apiTokenFileAuth(authCtx, true)
 	case dto.AuthServiceAccountStr:
 		return gp.keyFileAuth(authCtx)
 	case dto.AuthBasicStr:
@@ -236,8 +240,8 @@ func (gp *GenericProvider) keyFileAuth(authCtx *dto.AuthCtx) (*http.Client, erro
 	return oauthServiceAccount(gp.GetProviderString(), authCtx, scopes, gp.runtimeCtx)
 }
 
-func (gp *GenericProvider) apiTokenFileAuth(authCtx *dto.AuthCtx) (*http.Client, error) {
-	return apiTokenAuth(authCtx, gp.runtimeCtx)
+func (gp *GenericProvider) apiTokenFileAuth(authCtx *dto.AuthCtx, enforceBearer bool) (*http.Client, error) {
+	return apiTokenAuth(authCtx, gp.runtimeCtx, enforceBearer)
 }
 
 func (gp *GenericProvider) awsSigningAuth(authCtx *dto.AuthCtx) (*http.Client, error) {
