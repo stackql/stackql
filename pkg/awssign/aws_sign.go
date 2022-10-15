@@ -13,14 +13,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/logging"
 )
 
-const (
-	locationHeader string = "header"
-	locationQuery  string = "query"
-	authTypeBasic  string = "BASIC"
-	authTypeBearer string = "Bearer"
-	authTypeSSWS   string = "SSWS"
-)
-
 type AwsSignTransport struct {
 	underlyingTransport http.RoundTripper
 	signer              *v4.Signer
