@@ -6,7 +6,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
-	"github.com/stackql/stackql/internal/stackql/provider"
+	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
 
@@ -14,81 +14,6 @@ import (
 
 	"vitess.io/vitess/go/vt/sqlparser"
 )
-
-type HeirarchyObjects struct {
-	dto.Heirarchy
-	HeirarchyIds dto.HeirarchyIdentifiers
-	Provider     provider.IProvider
-}
-
-func (ho *HeirarchyObjects) LookupSelectItemsKey() string {
-	method := ho.Method
-	if method == nil {
-		return defaultSelectItemsKey
-	}
-	if sk := method.GetSelectItemsKey(); sk != "" {
-		return sk
-	}
-	responseSchema, _, err := method.GetResponseBodySchemaAndMediaType()
-	if responseSchema == nil || err != nil {
-		return ""
-	}
-	switch responseSchema.Type {
-	case "string", "integer":
-		return openapistackql.AnonymousColumnName
-	}
-	return defaultSelectItemsKey
-}
-
-func (ho *HeirarchyObjects) GetResponseSchemaAndMediaType() (*openapistackql.Schema, string, error) {
-	m := ho.Method
-	if m == nil {
-		return nil, "", fmt.Errorf("method is nil")
-	}
-	return m.GetResponseBodySchemaAndMediaType()
-}
-
-func (ho *HeirarchyObjects) GetSelectSchemaAndObjectPath() (*openapistackql.Schema, string, error) {
-	m := ho.Method
-	if m == nil {
-		return nil, "", fmt.Errorf("method is nil")
-	}
-	return m.GetSelectSchemaAndObjectPath()
-}
-
-func (ho *HeirarchyObjects) GetRequestSchema() (*openapistackql.Schema, error) {
-	m := ho.Method
-	if m == nil {
-		return nil, fmt.Errorf("method is nil")
-	}
-	return ho.GetRequestSchema()
-}
-
-func (ho *HeirarchyObjects) GetTableName() string {
-	return ho.HeirarchyIds.GetTableName()
-}
-
-func (ho *HeirarchyObjects) GetObjectSchema() (*openapistackql.Schema, error) {
-	return ho.getObjectSchema()
-}
-
-func (ho *HeirarchyObjects) getObjectSchema() (*openapistackql.Schema, error) {
-	rv, _, err := ho.Method.GetResponseBodySchemaAndMediaType()
-	return rv, err
-}
-
-func (ho *HeirarchyObjects) GetSelectableObjectSchema() (*openapistackql.Schema, error) {
-	unsuitableSchemaMsg := "GetSelectableObjectSchema(): schema unsuitable for select query"
-	itemObjS, _, err := ho.Method.GetSelectSchemaAndObjectPath()
-	// rscStr, _ := tbl.GetResourceStr()
-	if err != nil {
-		return nil, fmt.Errorf("%s: %s", err.Error(), unsuitableSchemaMsg)
-	}
-	if itemObjS == nil || err != nil {
-		return nil, fmt.Errorf("could not locate dml object for response type '%v'", ho.Method.Response.ObjectKey)
-	}
-	return itemObjS, nil
-}
 
 func GetHeirarchyIDs(handlerCtx *handler.HandlerContext, node sqlparser.SQLNode) (*dto.HeirarchyIdentifiers, error) {
 	return getHids(handlerCtx, node)
@@ -162,7 +87,7 @@ func GetAliasFromStatement(node sqlparser.SQLNode) string {
 //   - Hierarchy
 //   - Supplied parameters that are **not** consumed in Hierarchy inference
 //   - Error if applicable.
-func GetHeirarchyFromStatement(handlerCtx *handler.HandlerContext, node sqlparser.SQLNode, parameters map[string]interface{}) (*HeirarchyObjects, map[string]interface{}, error) {
+func GetHeirarchyFromStatement(handlerCtx *handler.HandlerContext, node sqlparser.SQLNode, parameters map[string]interface{}) (*tablemetadata.HeirarchyObjects, map[string]interface{}, error) {
 	var hIds *dto.HeirarchyIdentifiers
 	getFirstAvailableMethod := false
 	remainingParams := make(map[string]interface{})
@@ -202,7 +127,7 @@ func GetHeirarchyFromStatement(handlerCtx *handler.HandlerContext, node sqlparse
 	default:
 		return nil, remainingParams, fmt.Errorf("cannot resolve taxonomy")
 	}
-	retVal := HeirarchyObjects{
+	retVal := tablemetadata.HeirarchyObjects{
 		HeirarchyIds: *hIds,
 	}
 	prov, err := handlerCtx.GetProvider(hIds.ProviderStr)

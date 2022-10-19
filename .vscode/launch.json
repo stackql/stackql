@@ -30,6 +30,17 @@
       ]
     },
     {
+      "type": "pickString",
+      "id": "namespaceString",
+      "description": "Namespace JSON config String",
+      "default": "{ \"analytics\": { \"ttl\": 86400, \"regex\": \"^stackql_analytics_(?P<objectName>.*)$\", \"template\": \"stackql_analytics_{{ .objectName }}\" } }",
+      "options": [
+        "{ \"analytics\": { \"ttl\": 86400, \"regex\": \"^(?:stackql_analytics_)?(?P<objectName>.*)$\", \"template\": \"stackql_analytics_{{ .objectName }}\" } }",
+        "{ \"analytics\": { \"ttl\": 86400, \"regex\": \"^(?P<objectName>.*)$\", \"template\": \"stackql_analytics_{{ .objectName }}\" } }",
+        "{}"
+      ]
+    },
+    {
       "type": "promptString",
       "id": "gcpProject",
       "description": "GCP Project arg String",
@@ -44,18 +55,63 @@
       "type": "go",
       "request": "attach",
       "mode": "local",
-      "processId": 79787
+      "processId": 81953
     },
     // DEBUG
+    {
+      "name": "analytics select",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--auth=${input:authString}",
+        "--registry=${input:registryString}",
+        "--namespaces=${input:namespaceString}",
+        "--dbinitfilepath=${workspaceFolder}/test/db/cache_setup.sql",
+        "select r.name, col.login, col.type, col.role_name from github.repos.collaborators col inner join github.repos.repos r ON col.repo = r.name where col.owner = 'stackql' and r.org = 'stackql' order by r.name, col.login desc;"
+      ],
+    },
+    {
+      "name": "analytics select NOT primed",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--auth=${input:authString}",
+        "--registry=${input:registryString}",
+        "--namespaces=${input:namespaceString}",
+        "select r.name, col.login, col.type, col.role_name from github.repos.collaborators col inner join github.repos.repos r ON col.repo = r.name where col.owner = 'stackql' and r.org = 'stackql' order by r.name, col.login desc;"
+      ],
+    },
+    {
+      "name": "analytics select NOT primed GRAPHQL",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--auth=${input:authString}",
+        "--registry=${input:registryString}",
+        "--namespaces=${input:namespaceString}",
+        "--tls.allowInsecure=true",
+        "select substr(su.userName, 1, instr(su.userName, '@') - 1), su.externalId, su.id, u.login, u.two_factor_authentication AS is_two_fa_enabled from github.scim.users su inner join github.users.users u ON substr(su.userName, 1, instr(su.userName, '@') - 1) = u.username and substr(su.userName, 1, instr(su.userName, '@') - 1) = u.login where su.org = 'dummyorg' order by su.id asc;"
+      ],
+    }, 
     {
       "name": "AWAIT exec ... ;",
       "type": "go",
       "request": "launch",
       "mode": "debug",
-      "program": "${workspaceFolder}/build/stackql",
+      "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
         "--auth=${input:authString}",
+        "--registry=${input:registryString}",
         "EXEC /*+ some AWAIT */ compute.disks.insert @project='${input:gcpProject}', @zone= 'australia-southeast1-a' @@json='{ \"name\": \"test-disk9\", \"sizeGb\": 10 }';",
         "-o",
         "json"
@@ -198,7 +254,7 @@
       "type": "go",
       "request": "launch",
       "mode": "debug",
-      "program": "${workspaceFolder}/build/stackql",
+      "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
         "--auth=${input:authString}",
@@ -296,7 +352,7 @@
       "type": "go",
       "request": "launch",
       "mode": "debug",
-      "program": "${workspaceFolder}/build/stackql",
+      "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
         "--auth=${input:authString}",
@@ -322,7 +378,7 @@
       "type": "go",
       "request": "launch",
       "mode": "debug",
-      "program": "${workspaceFolder}/build/stackql",
+      "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
         "--auth=${input:authString}",
@@ -336,7 +392,7 @@
       "type": "go",
       "request": "launch",
       "mode": "exec",
-      "program": "${workspaceFolder}/build/stackql",
+      "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
         "--auth=${input:authString}",
@@ -350,7 +406,7 @@
       "type": "go",
       "request": "launch",
       "mode": "debug",
-      "program": "${workspaceFolder}/build/stackql",
+      "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
         "--auth=${input:authString}",
@@ -378,7 +434,7 @@
       "type": "go",
       "request": "launch",
       "mode": "exec",
-      "program": "${workspaceFolder}/build/stackql",
+      "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
         "--auth=${input:authString}",
@@ -392,7 +448,7 @@
       "type": "go",
       "request": "launch",
       "mode": "debug",
-      "program": "${workspaceFolder}/build/stackql",
+      "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
         "--auth=${input:authString}",
@@ -406,7 +462,7 @@
       "type": "go",
       "request": "launch",
       "mode": "debug",
-      "program": "${workspaceFolder}/build/stackql",
+      "program": "${workspaceFolder}/stackql",
       "args": [
         "exec",
         "--auth=${input:authString}",

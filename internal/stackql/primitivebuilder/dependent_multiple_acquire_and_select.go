@@ -18,8 +18,12 @@ func NewDependentMultipleAcquireAndSelect(graph *primitivegraph.PrimitiveGraph, 
 	}
 }
 
+// Cache queries may not have acquire builders.
 func (ss *DependentMultipleAcquireAndSelect) GetRoot() primitivegraph.PrimitiveNode {
-	return ss.acquireBuilders[0].GetRoot()
+	if len(ss.acquireBuilders) > 0 {
+		return ss.acquireBuilders[0].GetRoot()
+	}
+	return ss.selectBuilder.GetRoot()
 }
 
 func (ss *DependentMultipleAcquireAndSelect) GetTail() primitivegraph.PrimitiveNode {

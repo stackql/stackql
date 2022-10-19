@@ -2,6 +2,7 @@ package sqlengine
 
 import (
 	"database/sql"
+	"time"
 
 	"github.com/stackql/stackql/internal/stackql/dto"
 )
@@ -12,6 +13,7 @@ type SQLEngine interface {
 	Query(string, ...interface{}) (*sql.Rows, error)
 	ExecFileLocal(string) error
 	ExecFile(string) error
+	ExecInTxn(queries []string) error
 	GCCollectObsolete(*dto.TxnControlCounters) error
 	GCCollectUnreachable() error
 	GCEnactFull() error
@@ -25,6 +27,8 @@ type SQLEngine interface {
 	CacheStoreGet(string) ([]byte, error)
 	CacheStoreGetAll() ([]dto.KeyVal, error)
 	CacheStorePut(string, []byte, string, int) error
+	IsTablePresent(string, string, string) bool
+	TableOldestUpdateUTC(string, string, string, string) (time.Time, *dto.TxnControlCounters)
 }
 
 func NewSQLEngine(cfg SQLEngineConfig) (SQLEngine, error) {

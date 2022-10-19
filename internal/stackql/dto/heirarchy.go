@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
+	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/iqlutil"
 
 	"vitess.io/vitess/go/vt/sqlparser"
@@ -99,13 +100,23 @@ type DBTable struct {
 	name        string
 	discoveryID int
 	hIDs        *HeirarchyIdentifiers
+	namespace   string
 }
 
 func NewDBTable(name string, discoveryID int, hIDs *HeirarchyIdentifiers) DBTable {
+	return newDBTable(name, discoveryID, hIDs, "")
+}
+
+func NewDBTableAnalytics(name string, discoveryID int, hIDs *HeirarchyIdentifiers) DBTable {
+	return newDBTable(name, discoveryID, hIDs, constants.AnalyticsPrefix)
+}
+
+func newDBTable(name string, discoveryID int, hIDs *HeirarchyIdentifiers, namespace string) DBTable {
 	return DBTable{
 		name:        name,
 		discoveryID: discoveryID,
 		hIDs:        hIDs,
+		namespace:   namespace,
 	}
 }
 
@@ -119,4 +130,8 @@ func (dbt DBTable) GetDiscoveryID() int {
 
 func (dbt DBTable) GetHeirarchyIdentifiers() *HeirarchyIdentifiers {
 	return dbt.hIDs
+}
+
+func (dbt DBTable) IsAnalytics() bool {
+	return dbt.namespace == constants.AnalyticsPrefix
 }

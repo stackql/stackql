@@ -6,6 +6,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/httpbuild"
 	"github.com/stackql/stackql/internal/stackql/streaming"
+	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/util"
 )
 
@@ -14,7 +15,7 @@ type AnnotationCtx interface {
 	IsDynamic() bool
 	GetParameters() map[string]interface{}
 	GetSchema() *openapistackql.Schema
-	GetTableMeta() *ExtendedTableMetadata
+	GetTableMeta() *tablemetadata.ExtendedTableMetadata
 	Prepare(handlerCtx *handler.HandlerContext, inStream streaming.MapStream) error
 	SetDynamic()
 }
@@ -23,14 +24,14 @@ type StandardAnnotationCtx struct {
 	isDynamic  bool
 	Schema     *openapistackql.Schema
 	HIDs       *dto.HeirarchyIdentifiers
-	TableMeta  *ExtendedTableMetadata
+	TableMeta  *tablemetadata.ExtendedTableMetadata
 	Parameters map[string]interface{}
 }
 
 func NewStaticStandardAnnotationCtx(
 	schema *openapistackql.Schema,
 	hIds *dto.HeirarchyIdentifiers,
-	tableMeta *ExtendedTableMetadata,
+	tableMeta *tablemetadata.ExtendedTableMetadata,
 	parameters map[string]interface{},
 ) AnnotationCtx {
 	return &StandardAnnotationCtx{
@@ -69,7 +70,7 @@ func (ac *StandardAnnotationCtx) Prepare(
 	if ac.isDynamic {
 		// LAZY EVAL
 		ac.TableMeta.GetHttpArmoury = func() (httpbuild.HTTPArmoury, error) {
-			httpArmoury, err := httpbuild.BuildHTTPRequestCtxFromAnnotation(handlerCtx, stream, pr, opStore, svc, nil, nil)
+			httpArmoury, err := httpbuild.BuildHTTPRequestCtxFromAnnotation(stream, pr, opStore, svc, nil, nil)
 			return httpArmoury, err
 		}
 		return nil
@@ -87,7 +88,7 @@ func (ac *StandardAnnotationCtx) Prepare(
 				parametersCleaned,
 			},
 		)
-		httpArmoury, err := httpbuild.BuildHTTPRequestCtxFromAnnotation(handlerCtx, stream, pr, opStore, svc, nil, nil)
+		httpArmoury, err := httpbuild.BuildHTTPRequestCtxFromAnnotation(stream, pr, opStore, svc, nil, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -108,6 +109,6 @@ func (ac *StandardAnnotationCtx) GetSchema() *openapistackql.Schema {
 	return ac.Schema
 }
 
-func (ac *StandardAnnotationCtx) GetTableMeta() *ExtendedTableMetadata {
+func (ac *StandardAnnotationCtx) GetTableMeta() *tablemetadata.ExtendedTableMetadata {
 	return ac.TableMeta
 }

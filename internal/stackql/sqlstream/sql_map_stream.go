@@ -6,25 +6,29 @@ import (
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/streaming"
+	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
 )
 
 type SimpleSQLMapStream struct {
-	selectCtx *drm.PreparedStatementCtx
-	drmCfg    drm.DRMConfig
-	sqlEngine sqlengine.SQLEngine
+	selectCtx       *drm.PreparedStatementCtx
+	insertContainer tableinsertioncontainer.TableInsertionContainer
+	drmCfg          drm.DRMConfig
+	sqlEngine       sqlengine.SQLEngine
 	// No buffering just yet; let us revisit soon
 	// store     []map[string]interface{}
 }
 
 func NewSimpleSQLMapStream(
 	selectCtx *drm.PreparedStatementCtx,
+	inserinsertContainer tableinsertioncontainer.TableInsertionContainer,
 	drmCfg drm.DRMConfig,
 	sqlEngine sqlengine.SQLEngine,
 ) streaming.MapStream {
 	return &SimpleSQLMapStream{
-		selectCtx: selectCtx,
-		drmCfg:    drmCfg,
-		sqlEngine: sqlEngine,
+		selectCtx:       selectCtx,
+		insertContainer: inserinsertContainer,
+		drmCfg:          drmCfg,
+		sqlEngine:       sqlEngine,
 	}
 }
 

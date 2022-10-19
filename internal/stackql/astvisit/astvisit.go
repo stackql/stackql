@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 
 	"vitess.io/vitess/go/sqltypes"
 	"vitess.io/vitess/go/vt/sqlparser"
@@ -15,20 +16,23 @@ type SQLAstVisitor interface {
 }
 
 type DRMAstVisitor struct {
-	iDColumnName        string
-	rewrittenQuery      string
-	gcQueries           []string
-	tablesCited         map[*sqlparser.AliasedTableExpr]sqlparser.TableName
-	params              map[sqlparser.SQLNode]interface{}
-	shouldCollectTables bool
+	iDColumnName                   string
+	rewrittenQuery                 string
+	gcQueries                      []string
+	tablesCited                    map[*sqlparser.AliasedTableExpr]sqlparser.TableName
+	params                         map[sqlparser.SQLNode]interface{}
+	shouldCollectTables            bool
+	namespaceCollection            tablenamespace.TableNamespaceCollection
+	containsAnalyticsCacheMaterial bool
 }
 
-func NewDRMAstVisitor(iDColumnName string, shouldCollectTables bool) *DRMAstVisitor {
+func NewDRMAstVisitor(iDColumnName string, shouldCollectTables bool, namespaceCollection tablenamespace.TableNamespaceCollection) *DRMAstVisitor {
 	return &DRMAstVisitor{
 		iDColumnName:        iDColumnName,
 		tablesCited:         make(map[*sqlparser.AliasedTableExpr]sqlparser.TableName),
 		params:              make(map[sqlparser.SQLNode]interface{}),
 		shouldCollectTables: shouldCollectTables,
+		namespaceCollection: namespaceCollection,
 	}
 }
 
@@ -41,6 +45,10 @@ func (v *DRMAstVisitor) GetProviderStrings() []string {
 		}
 	}
 	return retVal
+}
+
+func (v *DRMAstVisitor) ContainsAnalyticsCacheMaterial() bool {
+	return v.containsAnalyticsCacheMaterial
 }
 
 func (v *DRMAstVisitor) GetRewrittenQuery() string {
@@ -136,22 +144,27 @@ func (v *DRMAstVisitor) Visit(node sqlparser.SQLNode) error {
 			node.SelectExprs.Accept(v)
 			selectExprStr = v.GetRewrittenQuery()
 		}
-		fromVis := NewDRMAstVisitor(v.iDColumnName, true)
+		fromVis := NewDRMAstVisitor(v.iDColumnName, true, v.namespaceCollection)
 		if node.From != nil {
 			node.From.Accept(fromVis)
 			v.tablesCited = fromVis.tablesCited
 			fromStr = fromVis.GetRewrittenQuery()
 		}
+		if fromVis.ContainsAnalyticsCacheMaterial() {
+			v.containsAnalyticsCacheMaterial = true
+		}
 		qIdSubtree, _ := fromVis.computeQIDWhereSubTree()
 		augmentedWhere := node.Where
-		if augmentedWhere != nil {
-			newWhereExpr := &sqlparser.AndExpr{
-				Left:  node.Where.Expr,
-				Right: qIdSubtree,
+		if qIdSubtree != nil {
+			if augmentedWhere != nil {
+				newWhereExpr := &sqlparser.AndExpr{
+					Left:  node.Where.Expr,
+					Right: qIdSubtree,
+				}
+				augmentedWhere = sqlparser.NewWhere(sqlparser.WhereStr, newWhereExpr)
+			} else {
+				augmentedWhere = sqlparser.NewWhere(sqlparser.WhereStr, qIdSubtree)
 			}
-			augmentedWhere = sqlparser.NewWhere(sqlparser.WhereStr, newWhereExpr)
-		} else {
-			augmentedWhere = sqlparser.NewWhere(sqlparser.WhereStr, qIdSubtree)
 		}
 		augmentedWhere.Accept(v)
 		whereStr = v.GetRewrittenQuery()
@@ -764,8 +777,17 @@ func (v *DRMAstVisitor) Visit(node sqlparser.SQLNode) error {
 		if node.IsEmpty() {
 			return nil
 		}
-		str := fmt.Sprintf(`"%s"`, node.GetRawVal())
-		v.rewrittenQuery = str
+		str := node.GetRawVal()
+		if v.namespaceCollection.GetAnalyticsCacheTableNamespaceConfigurator().IsAllowed(str) {
+			v.containsAnalyticsCacheMaterial = true
+			var err error
+			str, err = v.namespaceCollection.GetAnalyticsCacheTableNamespaceConfigurator().RenderTemplate(str)
+			if err != nil {
+				return err
+			}
+		}
+		v.rewrittenQuery = fmt.Sprintf(`"%s"`, str)
+		return nil
 
 	case *sqlparser.ParenTableExpr:
 		buf.AstPrintf(node, "(%v)", node.Exprs)
@@ -781,9 +803,14 @@ func (v *DRMAstVisitor) Visit(node sqlparser.SQLNode) error {
 		v.rewrittenQuery = buf.String()
 
 	case *sqlparser.JoinTableExpr:
-		node.LeftExpr.Accept(v)
-		node.LeftExpr.Accept(v)
-		buf.AstPrintf(node, "%v %s %v%v", node.LeftExpr, node.Join, node.RightExpr, node.Condition)
+		lVis := NewDRMAstVisitor("", true, v.namespaceCollection)
+		node.LeftExpr.Accept(lVis)
+		rVis := NewDRMAstVisitor("", true, v.namespaceCollection)
+		node.RightExpr.Accept(rVis)
+		if lVis.ContainsAnalyticsCacheMaterial() || rVis.ContainsAnalyticsCacheMaterial() {
+			v.containsAnalyticsCacheMaterial = true
+		}
+		buf.AstPrintf(node, "%s %s %s%v", lVis.GetRewrittenQuery(), node.Join, rVis.GetRewrittenQuery(), node.Condition)
 		bs := buf.String()
 		v.rewrittenQuery = bs
 

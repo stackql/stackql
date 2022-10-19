@@ -12,7 +12,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/provider"
-	"github.com/stackql/stackql/internal/stackql/taxonomy"
+	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/util"
 
 	"vitess.io/vitess/go/vt/sqlparser"
@@ -21,12 +21,12 @@ import (
 var MonitorPollIntervalSeconds int = 10
 
 type IAsyncMonitor interface {
-	GetMonitorPrimitive(heirarchy *taxonomy.HeirarchyObjects, precursor primitive.IPrimitive, initialCtx primitive.IPrimitiveCtx, comments sqlparser.CommentDirectives) (primitive.IPrimitive, error)
+	GetMonitorPrimitive(heirarchy *tablemetadata.HeirarchyObjects, precursor primitive.IPrimitive, initialCtx primitive.IPrimitiveCtx, comments sqlparser.CommentDirectives) (primitive.IPrimitive, error)
 }
 
 type AsyncHttpMonitorPrimitive struct {
 	handlerCtx          *handler.HandlerContext
-	heirarchy           *taxonomy.HeirarchyObjects
+	heirarchy           *tablemetadata.HeirarchyObjects
 	initialCtx          primitive.IPrimitiveCtx
 	precursor           primitive.IPrimitive
 	transferPayload     map[string]interface{}
@@ -116,7 +116,7 @@ type DefaultGoogleAsyncMonitor struct {
 	precursor  primitive.IPrimitive
 }
 
-func (gm *DefaultGoogleAsyncMonitor) GetMonitorPrimitive(heirarchy *taxonomy.HeirarchyObjects, precursor primitive.IPrimitive, initialCtx primitive.IPrimitiveCtx, comments sqlparser.CommentDirectives) (primitive.IPrimitive, error) {
+func (gm *DefaultGoogleAsyncMonitor) GetMonitorPrimitive(heirarchy *tablemetadata.HeirarchyObjects, precursor primitive.IPrimitive, initialCtx primitive.IPrimitiveCtx, comments sqlparser.CommentDirectives) (primitive.IPrimitive, error) {
 	switch strings.ToLower(heirarchy.Provider.GetVersion()) {
 	default:
 		return gm.getV1Monitor(heirarchy, precursor, initialCtx, comments)
@@ -141,7 +141,7 @@ func getOperationDescriptor(body map[string]interface{}) string {
 	return operationDescriptor
 }
 
-func (gm *DefaultGoogleAsyncMonitor) getV1Monitor(heirarchy *taxonomy.HeirarchyObjects, precursor primitive.IPrimitive, initialCtx primitive.IPrimitiveCtx, comments sqlparser.CommentDirectives) (primitive.IPrimitive, error) {
+func (gm *DefaultGoogleAsyncMonitor) getV1Monitor(heirarchy *tablemetadata.HeirarchyObjects, precursor primitive.IPrimitive, initialCtx primitive.IPrimitiveCtx, comments sqlparser.CommentDirectives) (primitive.IPrimitive, error) {
 	asyncPrim := AsyncHttpMonitorPrimitive{
 		handlerCtx:          gm.handlerCtx,
 		heirarchy:           heirarchy,

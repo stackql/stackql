@@ -7,7 +7,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/primitive"
 
 	"vitess.io/vitess/go/vt/sqlparser"
-	// log "github.com/sirupsen/logrus"
 )
 
 type Plan struct {
@@ -22,10 +21,29 @@ type Plan struct {
 	ShardQueries uint64        // Total number of shard queries
 	Rows         uint64        // Total number of rows
 	Errors       uint64        // Total number of errors
+	isCacheable  bool
+}
+
+func NewPlan(
+	rawQuery string,
+) *Plan {
+	return &Plan{
+		Original:    rawQuery,
+		isCacheable: true,
+	}
 }
 
 // Size is defined so that Plan can be given to a cache.LRUCache,
 // which requires its objects to define a Size function.
 func (p *Plan) Size() int {
 	return 1
+}
+
+// Signals whether the plan is worthy to place in `cache.LRUCache`
+func (p *Plan) IsCacheable() bool {
+	return p.isCacheable
+}
+
+func (p *Plan) SetCacheable(isCacheable bool) {
+	p.isCacheable = isCacheable
 }

@@ -123,6 +123,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       **cfg
     )
 
+  def _docker_transform_args(self, *args) -> typing.Iterable:
+    return [ f"--namespaces='{b[13:]}'" if type(b) == str and b.startswith('--namespaces=') else b for b in list(args) ]
 
   def _run_stackql_exec_command_docker(
     self,
@@ -145,7 +147,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     if auth_cfg_str != "":
       supplied_args.append(f"--auth='{auth_cfg_str}'")
     supplied_args.append("--tls.allowInsecure=true")
-    supplied_args = supplied_args + list(args)
+    transformed_args = self._docker_transform_args(*args)
+    supplied_args = supplied_args + transformed_args
     query_escaped = query.replace("'", "'\"'\"'")
     os.environ['REGISTRY_SRC']= f'./{reg_location}'
     res = super().run_process(
@@ -198,7 +201,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     if auth_cfg_str != "":
       supplied_args.append(f"--auth='{auth_cfg_str}'")
     supplied_args.append("--tls.allowInsecure=true")
-    supplied_args = supplied_args + list(args)
+    transformed_args = self._docker_transform_args(*args)
+    supplied_args = supplied_args + transformed_args
     os.environ['REGISTRY_SRC']= f'./{reg_location}'
     start_cmd = [
       "docker-compose",

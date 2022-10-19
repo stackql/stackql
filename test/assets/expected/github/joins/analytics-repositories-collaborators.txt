@@ -1,0 +1,315 @@
+|---------------------------------|-----------|------|-----------|
+|              name               |   login   | type | role_name |
+|---------------------------------|-----------|------|-----------|
+| aws2openapi                     | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| aws2openapi                     | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| aws2openapi                     | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| aws2openapi                     | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| cloudy-redirect-app             | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| cloudy-redirect-app             | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| cloudy-redirect-app             | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| cloudy-redirect-app             | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| color                           | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| color                           | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| color                           | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| color                           | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| docusaurus-plugin-hubspot       | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| docusaurus-plugin-hubspot       | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| docusaurus-plugin-hubspot       | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| docusaurus-plugin-hubspot       | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| docusaurus-plugin-smartlook     | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| docusaurus-plugin-smartlook     | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| docusaurus-plugin-smartlook     | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| docusaurus-plugin-smartlook     | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| fullstackchronicles.io          | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| fullstackchronicles.io          | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| fullstackchronicles.io          | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| fullstackchronicles.io          | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| gatsby-plugin-smartlook         | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| gatsby-plugin-smartlook         | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| gatsby-plugin-smartlook         | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| gatsby-plugin-smartlook         | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| github-oauth-login              | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| github-oauth-login              | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| github-oauth-login              | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| github-oauth-login              | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| go-openapistackql               | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| go-openapistackql               | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| go-openapistackql               | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| go-openapistackql               | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| go-spew                         | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| go-spew                         | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| go-spew                         | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| go-spew                         | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| go-sqlite3                      | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| go-sqlite3                      | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| go-sqlite3                      | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| go-sqlite3                      | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| go-suffix-map                   | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| go-suffix-map                   | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| go-suffix-map                   | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| go-suffix-map                   | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| google-discovery-to-openapi     | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| google-discovery-to-openapi     | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| google-discovery-to-openapi     | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| google-discovery-to-openapi     | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| local-registry                  | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| local-registry                  | johnsmith | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| local-registry                  | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| local-registry                  | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| okta-pkce-login                 | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| okta-pkce-login                 | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| okta-pkce-login                 | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| okta-pkce-login                 | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| openapi-doc-util                | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| openapi-doc-util                | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| openapi-doc-util                | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| openapi-doc-util                | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| pg-server-thin                  | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| pg-server-thin                  | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| pg-server-thin                  | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| pg-server-thin                  | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| pg-server-various               | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| pg-server-various               | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| pg-server-various               | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| pg-server-various               | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| provider-doc-util               | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| provider-doc-util               | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| provider-doc-util               | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| provider-doc-util               | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| psql-wire                       | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| psql-wire                       | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| psql-wire                       | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| psql-wire                       | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| pystackql                       | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| pystackql                       | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| pystackql                       | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| pystackql                       | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| readline                        | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| readline                        | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| readline                        | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| readline                        | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| registry.stackql.io             | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| registry.stackql.io             | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| registry.stackql.io             | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| registry.stackql.io             | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| releases.stackql.io             | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| releases.stackql.io             | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| releases.stackql.io             | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| releases.stackql.io             | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql                         | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql                         | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| stackql                         | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql                         | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-artwork                 | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-artwork                 | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| stackql-artwork                 | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-artwork                 | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-azure-openapi           | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-azure-openapi           | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| stackql-azure-openapi           | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-azure-openapi           | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-demo                    | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-demo                    | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| stackql-demo                    | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-demo                    | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-devel                   | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-devel                   | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| stackql-devel                   | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-devel                   | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-docs                    | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-docs                    | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| stackql-docs                    | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-docs                    | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-gcp-foundations         | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-gcp-foundations         | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| stackql-gcp-foundations         | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-gcp-foundations         | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-jupyter-demo            | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-jupyter-demo            | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| stackql-jupyter-demo            | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-jupyter-demo            | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-jupyter-google-okta-iam | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-jupyter-google-okta-iam | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| stackql-jupyter-google-okta-iam | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-jupyter-google-okta-iam | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-mac-installer           | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-mac-installer           | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| stackql-mac-installer           | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-mac-installer           | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-middleware              | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-middleware              | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| stackql-middleware              | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-middleware              | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-provider-doc-generator  | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-provider-doc-generator  | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| stackql-provider-doc-generator  | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-provider-doc-generator  | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-provider-registry       | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-provider-registry       | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| stackql-provider-registry       | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql-provider-registry       | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql.io                      | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql.io                      | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| stackql.io                      | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| stackql.io                      | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| vitess                          | somejimbo | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| vitess                          | johnsmith | User | read      |
+|---------------------------------|-----------|------|-----------|
+| vitess                          | joeblow   | User | admin     |
+|---------------------------------|-----------|------|-----------|
+| vitess                          | fredjones | User | admin     |
+|---------------------------------|-----------|------|-----------|

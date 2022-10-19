@@ -7,11 +7,14 @@ import (
 	"github.com/stackql/go-openapistackql/openapistackql"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
+	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 	"vitess.io/vitess/go/vt/sqlparser"
 )
 
 type SQLRewriteInput interface {
+	GetNamespaceCollection() tablenamespace.TableNamespaceCollection
 	GetDRMConfig() drm.DRMConfig
 	GetColumnDescriptors() []openapistackql.ColumnDescriptor
 	GetBaseControlCounters() *dto.TxnControlCounters
@@ -20,19 +23,20 @@ type SQLRewriteInput interface {
 	GetRewrittenWhere() string
 	GetSecondaryCtrlCounters() []*dto.TxnControlCounters
 	GetTables() taxonomy.TblMap
-	GetTableSlice() []*taxonomy.ExtendedTableMetadata
+	GetTableInsertionContainers() []tableinsertioncontainer.TableInsertionContainer
 }
 
 type StandardSQLRewriteInput struct {
-	dc                    drm.DRMConfig
-	columnDescriptors     []openapistackql.ColumnDescriptor
-	baseControlCounters   *dto.TxnControlCounters
-	selectSuffix          string
-	rewrittenWhere        string
-	secondaryCtrlCounters []*dto.TxnControlCounters
-	tables                taxonomy.TblMap
-	fromString            string
-	tableSlice            []*taxonomy.ExtendedTableMetadata
+	dc                       drm.DRMConfig
+	columnDescriptors        []openapistackql.ColumnDescriptor
+	baseControlCounters      *dto.TxnControlCounters
+	selectSuffix             string
+	rewrittenWhere           string
+	secondaryCtrlCounters    []*dto.TxnControlCounters
+	tables                   taxonomy.TblMap
+	fromString               string
+	tableInsertionContainers []tableinsertioncontainer.TableInsertionContainer
+	namespaceCollection      tablenamespace.TableNamespaceCollection
 }
 
 func NewStandardSQLRewriteInput(
@@ -44,18 +48,20 @@ func NewStandardSQLRewriteInput(
 	secondaryCtrlCounters []*dto.TxnControlCounters,
 	tables taxonomy.TblMap,
 	fromString string,
-	tableSlice []*taxonomy.ExtendedTableMetadata,
+	tableInsertionContainers []tableinsertioncontainer.TableInsertionContainer,
+	namespaceCollection tablenamespace.TableNamespaceCollection,
 ) SQLRewriteInput {
 	return &StandardSQLRewriteInput{
-		dc:                    dc,
-		columnDescriptors:     columnDescriptors,
-		baseControlCounters:   baseControlCounters,
-		selectSuffix:          selectSuffix,
-		rewrittenWhere:        rewrittenWhere,
-		secondaryCtrlCounters: secondaryCtrlCounters,
-		tables:                tables,
-		fromString:            fromString,
-		tableSlice:            tableSlice,
+		dc:                       dc,
+		columnDescriptors:        columnDescriptors,
+		baseControlCounters:      baseControlCounters,
+		selectSuffix:             selectSuffix,
+		rewrittenWhere:           rewrittenWhere,
+		secondaryCtrlCounters:    secondaryCtrlCounters,
+		tables:                   tables,
+		fromString:               fromString,
+		tableInsertionContainers: tableInsertionContainers,
+		namespaceCollection:      namespaceCollection,
 	}
 }
 
@@ -63,12 +69,16 @@ func (ri *StandardSQLRewriteInput) GetDRMConfig() drm.DRMConfig {
 	return ri.dc
 }
 
+func (ri *StandardSQLRewriteInput) GetNamespaceCollection() tablenamespace.TableNamespaceCollection {
+	return ri.namespaceCollection
+}
+
 func (ri *StandardSQLRewriteInput) GetColumnDescriptors() []openapistackql.ColumnDescriptor {
 	return ri.columnDescriptors
 }
 
-func (ri *StandardSQLRewriteInput) GetTableSlice() []*taxonomy.ExtendedTableMetadata {
-	return ri.tableSlice
+func (ri *StandardSQLRewriteInput) GetTableInsertionContainers() []tableinsertioncontainer.TableInsertionContainer {
+	return ri.tableInsertionContainers
 }
 
 func (ri *StandardSQLRewriteInput) GetBaseControlCounters() *dto.TxnControlCounters {
@@ -98,7 +108,8 @@ func (ri *StandardSQLRewriteInput) GetTables() taxonomy.TblMap {
 func GenerateSelectDML(input SQLRewriteInput) (*drm.PreparedStatementCtx, error) {
 	dc := input.GetDRMConfig()
 	cols := input.GetColumnDescriptors()
-	txnCtrlCtrs := input.GetBaseControlCounters()
+	var txnCtrlCtrs *dto.TxnControlCounters
+	var secondaryCtrlCounters []*dto.TxnControlCounters
 	selectSuffix := input.GetSelectSuffix()
 	rewrittenWhere := input.GetRewrittenWhere()
 	var q strings.Builder
@@ -131,9 +142,23 @@ func GenerateSelectDML(input SQLRewriteInput) (*drm.PreparedStatementCtx, error)
 	sessionIDColName := dc.GetSessionControlColumn()
 	txnIdColName := dc.GetTxnControlColumn()
 	insIdColName := dc.GetInsControlColumn()
+	insEncodedColName := dc.GetInsertEncodedControlColumn()
 	var wq strings.Builder
 	var controlWhereComparisons []string
-	for _, v := range input.GetTableSlice() {
+	inputContainers := input.GetTableInsertionContainers()
+	if len(inputContainers) > 0 {
+		_, txnCtrlCtrs = inputContainers[0].GetTableTxnCounters()
+	} else {
+		txnCtrlCtrs = input.GetBaseControlCounters()
+		secondaryCtrlCounters = input.GetSecondaryCtrlCounters()
+	}
+	i := 0
+	for _, tb := range inputContainers {
+		if i > 0 {
+			_, secondaryCtr := tb.GetTableTxnCounters()
+			secondaryCtrlCounters = append(secondaryCtrlCounters, secondaryCtr)
+		}
+		v := tb.GetTableMetadata()
 		alias := v.Alias
 		if alias != "" {
 			gIDcn := fmt.Sprintf(`"%s"."%s"`, alias, genIdColName)
@@ -148,11 +173,20 @@ func GenerateSelectDML(input SQLRewriteInput) (*drm.PreparedStatementCtx, error)
 			iIDcn := fmt.Sprintf(`"%s"`, insIdColName)
 			controlWhereComparisons = append(controlWhereComparisons, fmt.Sprintf(`%s = ? AND %s = ? AND %s = ? AND %s = ?`, gIDcn, sIDcn, tIDcn, iIDcn))
 		}
+
+		i++
 	}
-	controlWhereSubClause := fmt.Sprintf("( %s )", strings.Join(controlWhereComparisons, " AND "))
-	wq.WriteString(controlWhereSubClause)
+	if len(controlWhereComparisons) > 0 {
+		controlWhereSubClause := fmt.Sprintf("( %s )", strings.Join(controlWhereComparisons, " AND "))
+		wq.WriteString(controlWhereSubClause)
+	}
+
 	if strings.TrimSpace(rewrittenWhere) != "" {
-		wq.WriteString(fmt.Sprintf(" AND ( %s ) ", rewrittenWhere))
+		if len(controlWhereComparisons) > 0 {
+			wq.WriteString(fmt.Sprintf(" AND ( %s ) ", rewrittenWhere))
+		} else {
+			wq.WriteString(fmt.Sprintf(" ( %s ) ", rewrittenWhere))
+		}
 	}
 	whereExprsStr := wq.String()
 
@@ -173,9 +207,11 @@ func GenerateSelectDML(input SQLRewriteInput) (*drm.PreparedStatementCtx, error)
 		nil,
 		txnIdColName,
 		insIdColName,
+		insEncodedColName,
 		columns,
 		len(input.GetTables()),
 		txnCtrlCtrs,
-		input.GetSecondaryCtrlCounters(),
+		secondaryCtrlCounters,
+		input.GetDRMConfig().GetNamespaceCollection(),
 	), nil
 }

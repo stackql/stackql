@@ -738,6 +738,7 @@ func createErroneousPlan(handlerCtx *handler.HandlerContext, qPlan *plan.Plan, r
 }
 
 func BuildPlanFromContext(handlerCtx *handler.HandlerContext) (*plan.Plan, error) {
+	defer handlerCtx.GarbageCollector.Close()
 	planKey := handlerCtx.Query
 	if qp, ok := handlerCtx.LRUCache.Get(planKey); ok && isPlanCacheEnabled() {
 		logging.GetLogger().Infoln("retrieving query plan from cache")
@@ -748,9 +749,9 @@ func BuildPlanFromContext(handlerCtx *handler.HandlerContext) (*plan.Plan, error
 		}
 		return qp.(*plan.Plan), nil
 	}
-	qPlan := &plan.Plan{
-		Original: handlerCtx.RawQuery,
-	}
+	qPlan := plan.NewPlan(
+		handlerCtx.RawQuery,
+	)
 	var err error
 	var rowSort func(map[string]map[string]interface{}) []string
 	var statement sqlparser.Statement
@@ -787,7 +788,10 @@ func BuildPlanFromContext(handlerCtx *handler.HandlerContext) (*plan.Plan, error
 		}
 	} else {
 		// First pass AST analysis; extract provider strings for auth.
-		provStrSlice := astvisit.ExtractProviderStrings(result.AST)
+		provStrSlice, analyticsCacheMaterialDetected := astvisit.ExtractProviderStringsAndDetectAnalyticsCache(result.AST, handlerCtx.GetNamespaceCollection())
+		if analyticsCacheMaterialDetected {
+			qPlan.SetCacheable(false)
+		}
 		for _, p := range provStrSlice {
 			_, err := handlerCtx.GetProvider(p)
 			if err != nil {
@@ -840,7 +844,9 @@ func BuildPlanFromContext(handlerCtx *handler.HandlerContext) (*plan.Plan, error
 		if err != nil {
 			return createErroneousPlan(handlerCtx, qPlan, rowSort, err)
 		}
-		handlerCtx.LRUCache.Set(planKey, qPlan)
+		if qPlan.IsCacheable() {
+			handlerCtx.LRUCache.Set(planKey, qPlan)
+		}
 	}
 
 	return qPlan, err

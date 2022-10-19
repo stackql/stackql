@@ -12,6 +12,8 @@ import (
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
+	"github.com/stackql/stackql/internal/stackql/streaming"
+	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
 	"github.com/stackql/stackql/internal/stackql/util"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
@@ -25,7 +27,15 @@ type Builder interface {
 	GetTail() primitivegraph.PrimitiveNode
 }
 
-func prepareGolangResult(sqlEngine sqlengine.SQLEngine, errWriter io.Writer, stmtCtx drm.PreparedStatementParameterized, nonControlColumns []drm.ColumnMetadata, drmCfg drm.DRMConfig) dto.ExecutorOutput {
+func prepareGolangResult(
+	sqlEngine sqlengine.SQLEngine,
+	errWriter io.Writer,
+	stmtCtx drm.PreparedStatementParameterized,
+	insertContainers []tableinsertioncontainer.TableInsertionContainer,
+	nonControlColumns []drm.ColumnMetadata,
+	drmCfg drm.DRMConfig,
+	stream streaming.MapStream,
+) dto.ExecutorOutput {
 	r, sqlErr := drmCfg.QueryDML(
 		sqlEngine,
 		stmtCtx,
@@ -34,52 +44,11 @@ func prepareGolangResult(sqlEngine sqlengine.SQLEngine, errWriter io.Writer, stm
 	if sqlErr != nil {
 		errWriter.Write(
 			[]byte(
-				fmt.Sprintf("sql error = %s\n", sqlErr.Error()),
+				fmt.Sprintf("sql SELECT error = %s\n", sqlErr.Error()),
 			),
 		)
 	}
-	altKeys := make(map[string]map[string]interface{})
-	rawRows := make(map[int]map[int]interface{})
-	var ks []int
-	i := 0
-	var keyArr []string
-	var ifArr []interface{}
-	for i < len(nonControlColumns) {
-		x := nonControlColumns[i]
-		y := drmCfg.GetGolangValue(x.GetType())
-		ifArr = append(ifArr, y)
-		keyArr = append(keyArr, x.Column.GetIdentifier())
-		i++
-	}
-	if r != nil {
-		i := 0
-		for r.Next() {
-			errScan := r.Scan(ifArr...)
-			if errScan != nil {
-				logging.GetLogger().Infoln(fmt.Sprintf("%v", errScan))
-			}
-			for ord, val := range ifArr {
-				logging.GetLogger().Infoln(fmt.Sprintf("col #%d '%s':  %v  type: %T", ord, nonControlColumns[ord].GetName(), val, val))
-			}
-			im := make(map[string]interface{})
-			imRaw := make(map[int]interface{})
-			for ord, key := range keyArr {
-				val := ifArr[ord]
-				ev := drmCfg.ExtractFromGolangValue(val)
-				im[key] = ev
-				imRaw[ord] = ev
-			}
-			altKeys[strconv.Itoa(i)] = im
-			rawRows[i] = imRaw
-			ks = append(ks, i)
-			i++
-		}
-
-		for ord := range ks {
-			val := altKeys[strconv.Itoa(ord)]
-			logging.GetLogger().Infoln(fmt.Sprintf("row #%d:  %v  type: %T", ord, val, val))
-		}
-	}
+	altKeys, rawRows := drmCfg.ExtractObjectFromSQLRows(r, nonControlColumns, stream)
 	var cNames []string
 	var cSchemas []*openapistackql.Schema
 	for _, v := range nonControlColumns {

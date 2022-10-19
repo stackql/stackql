@@ -13,7 +13,8 @@ import (
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 	"github.com/stackql/stackql/internal/stackql/streaming"
-	"github.com/stackql/stackql/internal/stackql/taxonomy"
+	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
+	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 )
 
 // GraphQLSingleSelectAcquire implements the Builder interface
@@ -23,9 +24,10 @@ import (
 type GraphQLSingleSelectAcquire struct {
 	graph                      *primitivegraph.PrimitiveGraph
 	handlerCtx                 *handler.HandlerContext
-	tableMeta                  *taxonomy.ExtendedTableMetadata
+	tableMeta                  *tablemetadata.ExtendedTableMetadata
 	drmCfg                     drm.DRMConfig
 	insertPreparedStatementCtx *drm.PreparedStatementCtx
+	insertionContainer         tableinsertioncontainer.TableInsertionContainer
 	txnCtrlCtr                 *dto.TxnControlCounters
 	rowSort                    func(map[string]map[string]interface{}) []string
 	root                       primitivegraph.PrimitiveNode
@@ -35,8 +37,9 @@ type GraphQLSingleSelectAcquire struct {
 func newGraphQLSingleSelectAcquire(
 	graph *primitivegraph.PrimitiveGraph,
 	handlerCtx *handler.HandlerContext,
-	tableMeta *taxonomy.ExtendedTableMetadata,
+	tableMeta *tablemetadata.ExtendedTableMetadata,
 	insertCtx *drm.PreparedStatementCtx,
+	insertionContainer tableinsertioncontainer.TableInsertionContainer,
 	rowSort func(map[string]map[string]interface{}) []string,
 	stream streaming.MapStream,
 ) Builder {
@@ -54,6 +57,7 @@ func newGraphQLSingleSelectAcquire(
 		rowSort:                    rowSort,
 		drmCfg:                     handlerCtx.DrmConfig,
 		insertPreparedStatementCtx: insertCtx,
+		insertionContainer:         insertionContainer,
 		txnCtrlCtr:                 tcc,
 		stream:                     stream,
 	}
@@ -102,6 +106,27 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 			if !ok {
 				return dto.NewErroneousExecutorOutput(fmt.Errorf("cannot perform graphql action without response json path"))
 			}
+			tableName, err := ss.tableMeta.GetTableName()
+			if err != nil {
+				return dto.NewErroneousExecutorOutput(err)
+			}
+			reqEncoding := reqCtx.Encode()
+			tcc, isMatch := ss.handlerCtx.GetNamespaceCollection().GetAnalyticsCacheTableNamespaceConfigurator().Match(tableName, reqEncoding, ss.drmCfg.GetLastUpdatedControlColumn(), ss.drmCfg.GetInsertEncodedControlColumn())
+			if isMatch {
+				nonControlColumns := ss.insertPreparedStatementCtx.GetNonControlColumns()
+				var nonControlColumnNames []string
+				for _, c := range nonControlColumns {
+					nonControlColumnNames = append(nonControlColumnNames, c.GetName())
+				}
+				ss.insertionContainer.SetTableTxnCounters(tableName, tcc)
+				ss.insertPreparedStatementCtx.SetGCCtrlCtrs(tcc)
+				r, sqlErr := ss.handlerCtx.GetNamespaceCollection().GetAnalyticsCacheTableNamespaceConfigurator().Read(tableName, reqEncoding, ss.drmCfg.GetInsertEncodedControlColumn(), nonControlColumnNames)
+				if sqlErr != nil {
+					dto.NewErroneousExecutorOutput(sqlErr)
+				}
+				ss.drmCfg.ExtractObjectFromSQLRows(r, nonControlColumns, ss.stream)
+				return dto.ExecutorOutput{}
+			}
 			graphQLReader, err := graphql.NewStandardGQLReader(
 				client,
 				req,
@@ -120,6 +145,7 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 				if len(response) > 0 {
 					if !housekeepingDone && ss.insertPreparedStatementCtx != nil {
 						_, err = ss.handlerCtx.SQLEngine.Exec(ss.insertPreparedStatementCtx.GetGCHousekeepingQueries())
+						ss.insertionContainer.SetTableTxnCounters(tableName, ss.insertPreparedStatementCtx.GetGCCtrlCtrs())
 						housekeepingDone = true
 					}
 					if err != nil {
@@ -130,7 +156,8 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 						return dto.NewErroneousExecutorOutput(err)
 					}
 					for _, item := range response {
-						r, err := ss.drmCfg.ExecuteInsertDML(ss.handlerCtx.SQLEngine, ss.insertPreparedStatementCtx, item)
+						// TODO: handle request encoding
+						r, err := ss.drmCfg.ExecuteInsertDML(ss.handlerCtx.SQLEngine, ss.insertPreparedStatementCtx, item, "")
 						logging.GetLogger().Infoln(fmt.Sprintf("insert result = %v, error = %v", r, err))
 						if err != nil {
 							return dto.NewErroneousExecutorOutput(err)

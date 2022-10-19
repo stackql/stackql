@@ -8,6 +8,8 @@ import (
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
+	"github.com/stackql/stackql/internal/stackql/tablemetadata"
+	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 	"vitess.io/vitess/go/vt/sqlparser"
 )
@@ -60,6 +62,7 @@ type StandardParameterRouter struct {
 	tableToComparisonDependencies parserutil.ComparisonTableMap
 	tableToAnnotationCtx          map[sqlparser.TableExpr]taxonomy.AnnotationCtx
 	invalidatedParams             map[string]interface{}
+	namespaceCollection           tablenamespace.TableNamespaceCollection
 }
 
 func NewParameterRouter(
@@ -68,6 +71,7 @@ func NewParameterRouter(
 	whereParamMap parserutil.ParameterMap,
 	onParamMap parserutil.ParameterMap,
 	colRefs parserutil.ColTableMap,
+	namespaceCollection tablenamespace.TableNamespaceCollection,
 ) ParameterRouter {
 	return &StandardParameterRouter{
 		tablesAliasMap:                tablesAliasMap,
@@ -79,6 +83,7 @@ func NewParameterRouter(
 		comparisonToTableDependencies: make(parserutil.ComparisonTableMap),
 		tableToComparisonDependencies: make(parserutil.ComparisonTableMap),
 		tableToAnnotationCtx:          make(map[sqlparser.TableExpr]taxonomy.AnnotationCtx),
+		namespaceCollection:           namespaceCollection,
 	}
 }
 
@@ -398,12 +403,12 @@ func (pr *StandardParameterRouter) Route(tb sqlparser.TableExpr, handlerCtx *han
 		pr.comparisonToTableDependencies[p] = tb
 		logging.GetLogger().Infof("%v", kv)
 	}
-	m := taxonomy.NewExtendedTableMetadata(hr, taxonomy.GetAliasFromStatement(tb))
+	m := tablemetadata.NewExtendedTableMetadata(hr, taxonomy.GetAliasFromStatement(tb))
 	// store relationship from sqlparser table expression to
 	// hierarchy.  This enables e2e relationship
 	// from expression to hierarchy.
 	// eg: "on" clause to openapi method
-	ac, err := obtainAnnotationCtx(handlerCtx.SQLEngine, m, abbreviatedConsumedMap)
+	ac, err := obtainAnnotationCtx(handlerCtx.SQLEngine, m, abbreviatedConsumedMap, pr.namespaceCollection)
 	pr.tableToAnnotationCtx[tb] = ac
 	return ac, err
 }

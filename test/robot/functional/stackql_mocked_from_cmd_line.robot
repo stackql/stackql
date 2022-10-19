@@ -379,6 +379,34 @@ GitHub Repository IDs Select
     ...    ${SELECT_GITHUB_REPOS_IDS_ASC}
     ...    ${SELECT_GITHUB_REPOS_IDS_ASC_EXPECTED}
 
+GitHub Analytics Simple Select Repositories Collaborators
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_SIMPLE}
+    ...    ${SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_EXPECTED}
+    ...    \-\-dbinitfilepath\=${ANALYTICS_DB_INIT_PATH}
+    ...    \-\-namespaces\=${NAMESPACES_TTL_SIMPLE}
+    ...    stdout=${CURDIR}/tmp/GitHub-Analytics-Select-Repositories-Collaborators.tmp
+
+GitHub Analytics Transparent Select Repositories Collaborators
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_TRANSPARENT}
+    ...    ${SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_EXPECTED}
+    ...    \-\-dbinitfilepath\=${ANALYTICS_DB_INIT_PATH}
+    ...    \-\-namespaces\=${NAMESPACES_TTL_TRANSPARENT}
+    ...    stdout=${CURDIR}/tmp/GitHub-Analytics-Select-Repositories-Collaborators.tmp
+
 GitHub Repository With Functions Select
     Should Horrid Query StackQL Inline Equal
     ...    ${STACKQL_EXE}

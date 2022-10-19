@@ -8,7 +8,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
-	"github.com/stackql/stackql/internal/stackql/taxonomy"
+	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/util"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
@@ -22,7 +22,7 @@ func (p *primitiveGenerator) assembleUnarySelectionBuilder(
 	rewrittenWhere *sqlparser.Where,
 	hIds *dto.HeirarchyIdentifiers,
 	schema *openapistackql.Schema,
-	tbl *taxonomy.ExtendedTableMetadata,
+	tbl *tablemetadata.ExtendedTableMetadata,
 	selectTabulation *openapistackql.Tabulation,
 	insertTabulation *openapistackql.Tabulation,
 	cols []parserutil.ColumnHandle,
@@ -39,7 +39,7 @@ func (p *primitiveGenerator) assembleUnarySelectionBuilder(
 		return err
 	}
 
-	_, err = docparser.OpenapiStackQLTabulationsPersistor(method, []util.AnnotatedTabulation{annotatedInsertTabulation}, p.PrimitiveComposer.GetSQLEngine(), prov.Name)
+	_, err = docparser.OpenapiStackQLTabulationsPersistor(method, []util.AnnotatedTabulation{annotatedInsertTabulation}, p.PrimitiveComposer.GetSQLEngine(), prov.Name, handlerCtx.GetNamespaceCollection())
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func (p *primitiveGenerator) assembleUnarySelectionBuilder(
 		selectTabulation.PushBackColumn(openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.DecoratedColumn, col.Expr, foundSchema, col.Val))
 	}
 
-	selPsc, err := p.PrimitiveComposer.GetDRMConfig().GenerateSelectDML(util.NewAnnotatedTabulation(selectTabulation, hIds, tbl.GetAlias()), insPsc.GetGCCtrlCtrs(), astvisit.GenerateModifiedSelectSuffix(node), astvisit.GenerateModifiedWhereClause(rewrittenWhere))
+	selPsc, err := p.PrimitiveComposer.GetDRMConfig().GenerateSelectDML(util.NewAnnotatedTabulation(selectTabulation, hIds, tbl.GetAlias()), insPsc.GetGCCtrlCtrs(), astvisit.GenerateModifiedSelectSuffix(node, handlerCtx.GetNamespaceCollection()), astvisit.GenerateModifiedWhereClause(rewrittenWhere, handlerCtx.GetNamespaceCollection()))
 	if err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func (p *primitiveGenerator) analyzeUnarySelection(
 	handlerCtx *handler.HandlerContext,
 	node sqlparser.SQLNode,
 	rewrittenWhere *sqlparser.Where,
-	tbl *taxonomy.ExtendedTableMetadata,
+	tbl *tablemetadata.ExtendedTableMetadata,
 	cols []parserutil.ColumnHandle) error {
 	_, err := tbl.GetProvider()
 	if err != nil {
