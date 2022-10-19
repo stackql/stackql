@@ -136,6 +136,23 @@ type AuthCtx struct {
 	Active      bool     `json:"-" yaml:"-"`
 }
 
+func (ac *AuthCtx) Clone() *AuthCtx {
+	var scopesCopy []string
+	scopesCopy = append(scopesCopy, ac.Scopes...)
+	rv := &AuthCtx{
+		Scopes:      scopesCopy,
+		Type:        ac.Type,
+		ValuePrefix: ac.ValuePrefix,
+		ID:          ac.ID,
+		KeyID:       ac.KeyID,
+		KeyIDEnvVar: ac.KeyIDEnvVar,
+		KeyFilePath: ac.KeyFilePath,
+		KeyEnvVar:   ac.KeyEnvVar,
+		Active:      ac.Active,
+	}
+	return rv
+}
+
 func (ac *AuthCtx) HasKey() bool {
 	if ac.KeyFilePath != "" || ac.KeyEnvVar != "" {
 		return true

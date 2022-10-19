@@ -86,6 +86,7 @@ func (gp *GenericProvider) inferAuthType(authCtx dto.AuthCtx, authTypeRequested 
 }
 
 func (gp *GenericProvider) Auth(authCtx *dto.AuthCtx, authTypeRequested string, enforceRevokeFirst bool) (*http.Client, error) {
+	authCtx = authCtx.Clone()
 	at := gp.inferAuthType(*authCtx, authTypeRequested)
 	switch at {
 	case dto.AuthApiKeyStr:

@@ -1,4 +1,9 @@
 
+# Garbage Collection, Caching, Concurrency and Views
+
+**NOTE**: The features here described are in ***alpha*** and **owner onus applies**.
+
+
 ## Observations on relationship GC plus cache plus concurrency 
 
 If we want to implement a large result set / analytics cache, then:
@@ -31,4 +36,17 @@ If we want to implement a large result set / analytics cache, then:
 - Stuff data into empty cache table in setup script.
 - Analysis phase to include awareness of cache prefix.
 - Bingo!
+
+
+## Usage
+
+
+Here is an example usage for 1 hour duration caching of github responses:
+
+```
+export NAMESPACES='{ "analytics": { "ttl": 86400, "regex": "^(?P<objectName>github.*)$", "template": "stackql_analytics_{{ .objectName }}" } }'
+
+
+stackql ... --namespaces="${NAMESPACES}" ... shell
+```
 
