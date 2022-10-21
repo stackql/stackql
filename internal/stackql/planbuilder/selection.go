@@ -17,6 +17,7 @@ import (
 )
 
 func (p *primitiveGenerator) assembleUnarySelectionBuilder(
+	pbi PlanBuilderInput,
 	handlerCtx *handler.HandlerContext,
 	node sqlparser.SQLNode,
 	rewrittenWhere *sqlparser.Where,
@@ -39,15 +40,16 @@ func (p *primitiveGenerator) assembleUnarySelectionBuilder(
 		return err
 	}
 
-	_, err = docparser.OpenapiStackQLTabulationsPersistor(method, []util.AnnotatedTabulation{annotatedInsertTabulation}, p.PrimitiveComposer.GetSQLEngine(), prov.Name, handlerCtx.GetNamespaceCollection())
+	_, err = docparser.OpenapiStackQLTabulationsPersistor(method, []util.AnnotatedTabulation{annotatedInsertTabulation}, p.PrimitiveComposer.GetSQLEngine(), prov.Name, handlerCtx.GetNamespaceCollection(), handlerCtx.ControlAttributes)
 	if err != nil {
 		return err
 	}
-	tableDTO, err := p.PrimitiveComposer.GetDRMConfig().GetCurrentTable(hIds, handlerCtx.SQLEngine)
-	if err != nil {
-		return err
-	}
-	insPsc, err := p.PrimitiveComposer.GetDRMConfig().GenerateInsertDML(annotatedInsertTabulation, method, dto.NewTxnControlCounters(p.PrimitiveComposer.GetTxnCounterManager(), tableDTO.GetDiscoveryID()))
+	// tableDTO, err := p.PrimitiveComposer.GetDRMConfig().GetCurrentTable(hIds, handlerCtx.SQLEngine)
+	// if err != nil {
+	// 	return err
+	// }
+	ctrs := pbi.GetTxnCtrlCtrs()
+	insPsc, err := p.PrimitiveComposer.GetDRMConfig().GenerateInsertDML(annotatedInsertTabulation, method, &ctrs)
 	if err != nil {
 		return err
 	}
@@ -74,6 +76,7 @@ func (p *primitiveGenerator) assembleUnarySelectionBuilder(
 }
 
 func (p *primitiveGenerator) analyzeUnarySelection(
+	pbi PlanBuilderInput,
 	handlerCtx *handler.HandlerContext,
 	node sqlparser.SQLNode,
 	rewrittenWhere *sqlparser.Where,
@@ -117,6 +120,7 @@ func (p *primitiveGenerator) analyzeUnarySelection(
 	selectTabulation := itemObjS.Tabulate(true)
 
 	return p.assembleUnarySelectionBuilder(
+		pbi,
 		handlerCtx,
 		node,
 		rewrittenWhere,

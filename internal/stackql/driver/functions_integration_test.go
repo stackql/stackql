@@ -40,13 +40,6 @@ func TestSelectComputeDisksOrderByCrtTmstpAscPlusJsonExtract(t *testing.T) {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		tc, err := entryutil.GetTxnCounterManager(handlerCtx)
-		if err != nil {
-			t.Fatalf("Test failed: %v", err)
-		}
-
-		handlerCtx.TxnCounterMgr = tc
-
 		handlerCtx.Query = testobjects.SelectGoogleComputeDisksOrderCreationTmstpAscPlusJsonExtract
 		response := querysubmit.SubmitQuery(&handlerCtx)
 		handlerCtx.Outfile = outFile
@@ -82,13 +75,6 @@ func TestSelectComputeDisksOrderByCrtTmstpAscPlusCoalesceJsonExtract(t *testing.
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		tc, err := entryutil.GetTxnCounterManager(handlerCtx)
-		if err != nil {
-			t.Fatalf("Test failed: %v", err)
-		}
-
-		handlerCtx.TxnCounterMgr = tc
-
 		handlerCtx.Query = testobjects.SelectGoogleComputeDisksOrderCreationTmstpAscPlusJsonExtractCoalesce
 		response := querysubmit.SubmitQuery(&handlerCtx)
 		handlerCtx.Outfile = outFile
@@ -123,13 +109,6 @@ func TestSelectComputeDisksOrderByCrtTmstpAscPlusCoalesceJsonInstr(t *testing.T)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
-
-		tc, err := entryutil.GetTxnCounterManager(handlerCtx)
-		if err != nil {
-			t.Fatalf("Test failed: %v", err)
-		}
-
-		handlerCtx.TxnCounterMgr = tc
 
 		handlerCtx.Query = testobjects.SelectGoogleComputeDisksOrderCreationTmstpAscPlusJsonExtractInstr
 		response := querysubmit.SubmitQuery(&handlerCtx)

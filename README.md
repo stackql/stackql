@@ -191,6 +191,10 @@ More examples in [docs/examples.md](/docs/examples.md).
 
 Please see [the server mode section of the developer docs](/docs/developer_guide.md#server-mode).
 
+## Alpha Features
+
+- [GC, cacheing and concurrent users](/docs/GC_cache_concurrency.md)
+
 ## Acknowledgements
 
 Forks of the following support our work:

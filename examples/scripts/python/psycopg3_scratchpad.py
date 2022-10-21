@@ -25,9 +25,26 @@ foo = importlib.util.module_from_spec(spec)
 sys.modules["module.name"] = foo
 spec.loader.exec_module(foo)
 
-psycopg3_client = foo.PsycoPGClient("host=127.0.0.1 port=5432 user=admin dbname=postgres")
+psycopg3_client = foo.PsycoPGClient("host=127.0.0.1 port=5888 user=admin dbname=postgres")
 
-rv = psycopg3_client.run_queries(["show transaction isolation level"])
+table_name = "okta.application.Application.generation_1"
+
+SELECT_OKTA_APPS = "select name, status, label, id from okta.application.apps apps where apps.subdomain = 'example-subdomain' order by name asc;"
+NATIVEQUERY_OKTA_APPS_ROW_COUNT = f"NATIVEQUERY 'SELECT COUNT(*) as object_count FROM \"{table_name}\"' ;"
+PURGE_CONSERVATIVE = "purge conservative;"
+
+
+rv = psycopg3_client.run_queries([
+  SELECT_OKTA_APPS, 
+  NATIVEQUERY_OKTA_APPS_ROW_COUNT, 
+  PURGE_CONSERVATIVE, 
+  NATIVEQUERY_OKTA_APPS_ROW_COUNT, 
+  SELECT_OKTA_APPS, 
+  SELECT_OKTA_APPS, 
+  NATIVEQUERY_OKTA_APPS_ROW_COUNT, 
+  PURGE_CONSERVATIVE, 
+  NATIVEQUERY_OKTA_APPS_ROW_COUNT
+])
 
 print(rv)
 

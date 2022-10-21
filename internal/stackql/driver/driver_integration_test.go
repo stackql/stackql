@@ -58,12 +58,6 @@ func TestSimpleSelectGoogleComputeInstanceDriver(t *testing.T) {
 		t.Fatalf("Test failed: %v", err)
 	}
 
-	tc, err := entryutil.GetTxnCounterManager(handlerCtx)
-	if err != nil {
-		t.Fatalf("Test failed: %v", err)
-	}
-	handlerCtx.TxnCounterMgr = tc
-
 	ProcessQuery(&handlerCtx)
 
 	t.Logf("simple select driver integration test passed")
@@ -85,12 +79,6 @@ func TestSimpleSelectGoogleComputeInstanceDriverOutput(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
-
-		tc, err := entryutil.GetTxnCounterManager(handlerCtx)
-		if err != nil {
-			t.Fatalf("Test failed: %v", err)
-		}
-		handlerCtx.TxnCounterMgr = tc
 
 		handlerCtx.Outfile = outFile
 		handlerCtx.OutErrFile = os.Stderr
@@ -134,12 +122,6 @@ func TestSimpleSelectGoogleComputeInstanceDriverOutputRepeated(t *testing.T) {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		tc, err := entryutil.GetTxnCounterManager(handlerCtx)
-		if err != nil {
-			t.Fatalf("Test failed: %v", err)
-		}
-		handlerCtx.TxnCounterMgr = tc
-
 		handlerCtx.Query = testobjects.SimpleSelectGoogleComputeInstance
 		response := querysubmit.SubmitQuery(&handlerCtx)
 		handlerCtx.Outfile = outFile
@@ -175,12 +157,6 @@ func TestSimpleSelectGoogleContainerSubnetworksAllowedDriverOutput(t *testing.T)
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		tc, err := entryutil.GetTxnCounterManager(handlerCtx)
-		if err != nil {
-			t.Fatalf("Test failed: %v", err)
-		}
-		handlerCtx.TxnCounterMgr = tc
-
 		handlerCtx.Query = testobjects.SimpleSelectGoogleContainerSubnetworks
 		response := querysubmit.SubmitQuery(&handlerCtx)
 		handlerCtx.Outfile = outFile
@@ -215,12 +191,6 @@ func TestSimpleInsertGoogleComputeNetworkAsync(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
-
-		tc, err := entryutil.GetTxnCounterManager(handlerCtx)
-		if err != nil {
-			t.Fatalf("Test failed: %v", err)
-		}
-		handlerCtx.TxnCounterMgr = tc
 
 		handlerCtx.Query = testobjects.SimpleInsertComputeNetwork
 		response := querysubmit.SubmitQuery(&handlerCtx)
@@ -268,12 +238,6 @@ func TestK8sTheHardWayAsync(t *testing.T) {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		tc, err := entryutil.GetTxnCounterManager(handlerCtx)
-		if err != nil {
-			t.Fatalf("Test failed: %v", err)
-		}
-		handlerCtx.TxnCounterMgr = tc
-
 		handlerCtx.RawQuery = strings.TrimSpace(string(megaQueryConcat))
 		ProcessQuery(&handlerCtx)
 	}
@@ -320,12 +284,6 @@ func TestSimpleDryRunK8sTheHardWayDriver(t *testing.T) {
 
 		handlerCtx.Outfile = outFile
 		handlerCtx.OutErrFile = os.Stderr
-
-		tc, err := entryutil.GetTxnCounterManager(handlerCtx)
-		if err != nil {
-			t.Fatalf("Test failed: %v", err)
-		}
-		handlerCtx.TxnCounterMgr = tc
 
 		ProcessDryRun(&handlerCtx)
 	}

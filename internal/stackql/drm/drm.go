@@ -13,6 +13,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
+	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/streaming"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
@@ -21,16 +22,6 @@ import (
 	"github.com/stackql/go-openapistackql/openapistackql"
 
 	"vitess.io/vitess/go/vt/sqlparser"
-)
-
-const (
-	gen_id_col_name         string = "iql_generation_id"
-	ssn_id_col_name         string = "iql_session_id"
-	txn_id_col_name         string = "iql_txn_id"
-	ins_id_col_name         string = "iql_insert_id"
-	insert_endoded_col_name string = "iql_insert_encoded"
-	latest_update_col_name  string = "iql_last_modified"
-	gc_status_col_name      string = "iql_gc_status"
 )
 
 type DRM interface {
@@ -216,17 +207,12 @@ type DRMConfig interface {
 	GetCurrentTable(*dto.HeirarchyIdentifiers, sqlengine.SQLEngine) (dto.DBTable, error)
 	GetRelationalType(string) string
 	GenerateDDL(util.AnnotatedTabulation, *openapistackql.OperationStore, int, bool) ([]string, error)
+	GetControlAttributes() sqlcontrol.ControlAttributes
 	GetGolangValue(string) interface{}
 	GetGolangSlices([]ColumnMetadata) ([]interface{}, []string)
-	GetInsControlColumn() string
-	GetInsertEncodedControlColumn() string
-	GetLastUpdatedControlColumn() string
 	GetNamespaceCollection() tablenamespace.TableNamespaceCollection
 	GetParserTableName(*dto.HeirarchyIdentifiers, int) sqlparser.TableName
-	GetSessionControlColumn() string
 	GetTableName(*dto.HeirarchyIdentifiers, int) (string, error)
-	GetTxnControlColumn() string
-	GetGenerationControlColumn() string
 	GenerateInsertDML(util.AnnotatedTabulation, *openapistackql.OperationStore, *dto.TxnControlCounters) (*PreparedStatementCtx, error)
 	GenerateSelectDML(util.AnnotatedTabulation, *dto.TxnControlCounters, string, string) (*PreparedStatementCtx, error)
 	ExecuteInsertDML(sqlengine.SQLEngine, *PreparedStatementCtx, map[string]interface{}, string) (sql.Result, error)
@@ -239,6 +225,16 @@ type StaticDRMConfig struct {
 	defaultGolangKind     reflect.Kind
 	defaultGolangValue    interface{}
 	namespaceCollection   tablenamespace.TableNamespaceCollection
+	controlAttributes     sqlcontrol.ControlAttributes
+	sqlEngine             sqlengine.SQLEngine
+}
+
+func (dc *StaticDRMConfig) GetControlAttributes() sqlcontrol.ControlAttributes {
+	return dc.getControlAttributes()
+}
+
+func (dc *StaticDRMConfig) getControlAttributes() sqlcontrol.ControlAttributes {
+	return dc.controlAttributes
 }
 
 func (dc *StaticDRMConfig) getDefaultGolangValue() interface{} {
@@ -373,66 +369,14 @@ func (dc *StaticDRMConfig) GetGolangKind(discoType string) reflect.Kind {
 	return rv.GolangKind
 }
 
-func (dc *StaticDRMConfig) GetGenerationControlColumn() string {
-	return dc.getGenerationControlColumn()
-}
-
-func (dc *StaticDRMConfig) getGenerationControlColumn() string {
-	return gen_id_col_name
-}
-
-func (dc *StaticDRMConfig) GetSessionControlColumn() string {
-	return dc.getSessionControlColumn()
-}
-
-func (dc *StaticDRMConfig) GetGCStatusColumn() string {
-	return dc.getGCStatusColumn()
-}
-
-func (dc *StaticDRMConfig) getSessionControlColumn() string {
-	return ssn_id_col_name
-}
-
-func (dc *StaticDRMConfig) getGCStatusColumn() string {
-	return gc_status_col_name
-}
-
-func (dc *StaticDRMConfig) GetTxnControlColumn() string {
-	return dc.getTxnControlColumn()
-}
-
-func (dc *StaticDRMConfig) getTxnControlColumn() string {
-	return txn_id_col_name
-}
-
-func (dc *StaticDRMConfig) GetInsControlColumn() string {
-	return dc.getInsControlColumn()
-}
-
-func (dc *StaticDRMConfig) getInsControlColumn() string {
-	return ins_id_col_name
-}
-
-func (dc *StaticDRMConfig) GetLastUpdatedControlColumn() string {
-	return dc.getLastUpdatedControlColumn()
-}
-
-func (dc *StaticDRMConfig) getLastUpdatedControlColumn() string {
-	return latest_update_col_name
-}
-
-func (dc *StaticDRMConfig) GetInsertEncodedControlColumn() string {
-	return dc.getInsertEncodedControlColumn()
-}
-
-func (dc *StaticDRMConfig) getInsertEncodedControlColumn() string {
-	return insert_endoded_col_name
-}
-
 func (dc *StaticDRMConfig) GetCurrentTable(tableHeirarchyIDs *dto.HeirarchyIdentifiers, dbEngine sqlengine.SQLEngine) (dto.DBTable, error) {
 	tn := tableHeirarchyIDs.GetTableName()
 	if dc.namespaceCollection.GetAnalyticsCacheTableNamespaceConfigurator().IsAllowed(tn) {
-		return dto.NewDBTableAnalytics(tn, -1, tableHeirarchyIDs), nil
+		templatedName, err := dc.namespaceCollection.GetAnalyticsCacheTableNamespaceConfigurator().RenderTemplate(tn)
+		if err != nil {
+			return dto.NewDBTableAnalytics(templatedName, -1, tableHeirarchyIDs), err
+		}
+		return dto.NewDBTableAnalytics(templatedName, -1, tableHeirarchyIDs), nil
 	}
 	return dbEngine.GetCurrentTable(tableHeirarchyIDs)
 }
@@ -499,16 +443,18 @@ func (dc *StaticDRMConfig) GenerateDDL(tabAnn util.AnnotatedTabulation, m *opena
 	}
 	rv.WriteString(fmt.Sprintf(`create table if not exists "%s" ( `, tableName))
 	colDefs = append(colDefs, fmt.Sprintf(`"iql_%s_id" INTEGER PRIMARY KEY AUTOINCREMENT`, tableName))
-	genIdColName := dc.getGenerationControlColumn()
-	sessionIdColName := dc.getSessionControlColumn()
-	txnIdColName := dc.getTxnControlColumn()
-	insIdColName := dc.getInsControlColumn()
-	lastUpdateColName := dc.getLastUpdatedControlColumn()
-	insertEncodedColName := dc.getInsertEncodedControlColumn()
-	gcStatusColName := dc.getGCStatusColumn()
+	genIdColName := dc.controlAttributes.GetControlGenIdColumnName()
+	sessionIdColName := dc.controlAttributes.GetControlSsnIdColumnName()
+	txnIdColName := dc.controlAttributes.GetControlTxnIdColumnName()
+	maxTxnIdColName := dc.controlAttributes.GetControlMaxTxnColumnName()
+	insIdColName := dc.controlAttributes.GetControlInsIdColumnName()
+	lastUpdateColName := dc.controlAttributes.GetControlLatestUpdateColumnName()
+	insertEncodedColName := dc.controlAttributes.GetControlInsertEncodedIdColumnName()
+	gcStatusColName := dc.controlAttributes.GetControlGCStatusColumnName()
 	colDefs = append(colDefs, fmt.Sprintf(`"%s" INTEGER `, genIdColName))
 	colDefs = append(colDefs, fmt.Sprintf(`"%s" INTEGER `, sessionIdColName))
 	colDefs = append(colDefs, fmt.Sprintf(`"%s" INTEGER `, txnIdColName))
+	colDefs = append(colDefs, fmt.Sprintf(`"%s" INTEGER `, maxTxnIdColName))
 	colDefs = append(colDefs, fmt.Sprintf(`"%s" INTEGER `, insIdColName))
 	colDefs = append(colDefs, fmt.Sprintf(`"%s" TEXT `, insertEncodedColName))
 	colDefs = append(colDefs, fmt.Sprintf(`"%s" DateTime NOT NULL DEFAULT CURRENT_TIMESTAMP `, lastUpdateColName))
@@ -545,16 +491,16 @@ func (dc *StaticDRMConfig) GenerateInsertDML(tabAnnotated util.AnnotatedTabulati
 	var q strings.Builder
 	var quotedColNames, vals []string
 	var columns []ColumnMetadata
-	tableName, err := dc.inferTableName(tabAnnotated.GetHeirarchyIdentifiers(), tcc.DiscoveryGenerationId)
+	tableName, err := dc.GetCurrentTable(tabAnnotated.GetHeirarchyIdentifiers(), dc.sqlEngine)
 	if err != nil {
 		return nil, err
 	}
-	q.WriteString(fmt.Sprintf(`INSERT INTO "%s" `, tableName))
-	genIdColName := dc.getGenerationControlColumn()
-	sessionIdColName := dc.getSessionControlColumn()
-	txnIdColName := dc.getTxnControlColumn()
-	insIdColName := dc.getInsControlColumn()
-	insEncodedColName := dc.getInsertEncodedControlColumn()
+	q.WriteString(fmt.Sprintf(`INSERT INTO "%s" `, tableName.GetName()))
+	genIdColName := dc.controlAttributes.GetControlGenIdColumnName()
+	sessionIdColName := dc.controlAttributes.GetControlSsnIdColumnName()
+	txnIdColName := dc.controlAttributes.GetControlTxnIdColumnName()
+	insIdColName := dc.controlAttributes.GetControlInsIdColumnName()
+	insEncodedColName := dc.controlAttributes.GetControlInsertEncodedIdColumnName()
 	quotedColNames = append(quotedColNames, `"`+genIdColName+`" `)
 	quotedColNames = append(quotedColNames, `"`+sessionIdColName+`" `)
 	quotedColNames = append(quotedColNames, `"`+txnIdColName+`" `)
@@ -584,7 +530,7 @@ func (dc *StaticDRMConfig) GenerateInsertDML(tabAnnotated util.AnnotatedTabulati
 			"",
 			genIdColName,
 			sessionIdColName,
-			[]string{tableName},
+			[]string{tableName.GetName()},
 			txnIdColName,
 			insIdColName,
 			insEncodedColName,
@@ -626,10 +572,10 @@ func (dc *StaticDRMConfig) GenerateSelectDML(tabAnnotated util.AnnotatedTabulati
 		quotedColNames = append(quotedColNames, fmt.Sprintf("%s ", colEntry.String()))
 
 	}
-	genIdColName := dc.getGenerationControlColumn()
-	sessionIDColName := dc.getSessionControlColumn()
-	txnIdColName := dc.getTxnControlColumn()
-	insIdColName := dc.getInsControlColumn()
+	genIdColName := dc.controlAttributes.GetControlGenIdColumnName()
+	sessionIDColName := dc.controlAttributes.GetControlSsnIdColumnName()
+	txnIdColName := dc.controlAttributes.GetControlTxnIdColumnName()
+	insIdColName := dc.controlAttributes.GetControlInsIdColumnName()
 	quotedWhereColNames = append(quotedWhereColNames, `"`+genIdColName+`" `)
 	quotedWhereColNames = append(quotedWhereColNames, `"`+txnIdColName+`" `)
 	quotedWhereColNames = append(quotedWhereColNames, `"`+insIdColName+`" `)
@@ -637,11 +583,11 @@ func (dc *StaticDRMConfig) GenerateSelectDML(tabAnnotated util.AnnotatedTabulati
 	if tabAnnotated.GetAlias() != "" {
 		aliasStr = fmt.Sprintf(` AS "%s" `, tabAnnotated.GetAlias())
 	}
-	tn, err := dc.getTableName(tabAnnotated.GetHeirarchyIdentifiers(), txnCtrlCtrs.DiscoveryGenerationId)
+	tn, err := dc.GetCurrentTable(tabAnnotated.GetHeirarchyIdentifiers(), dc.sqlEngine)
 	if err != nil {
 		return nil, err
 	}
-	q.WriteString(fmt.Sprintf(`SELECT %s FROM "%s" %s WHERE `, strings.Join(quotedColNames, ", "), tn, aliasStr))
+	q.WriteString(fmt.Sprintf(`SELECT %s FROM "%s" %s WHERE `, strings.Join(quotedColNames, ", "), tn.GetName(), aliasStr))
 	q.WriteString(fmt.Sprintf(`( "%s" = ? AND "%s" = ? AND "%s" = ? AND "%s" = ? ) `, genIdColName, sessionIDColName, txnIdColName, insIdColName))
 	if strings.TrimSpace(rewrittenWhere) != "" {
 		q.WriteString(fmt.Sprintf(" AND ( %s ) ", rewrittenWhere))
@@ -656,7 +602,7 @@ func (dc *StaticDRMConfig) GenerateSelectDML(tabAnnotated util.AnnotatedTabulati
 		nil,
 		txnIdColName,
 		insIdColName,
-		dc.getInsertEncodedControlColumn(),
+		dc.controlAttributes.GetControlInsertEncodedIdColumnName(),
 		columns,
 		1,
 		txnCtrlCtrs,
@@ -768,7 +714,7 @@ func (dc *StaticDRMConfig) QueryDML(dbEngine sqlengine.SQLEngine, ctxParameteriz
 	return dbEngine.Query(query, varArgs...)
 }
 
-func GetGoogleV1SQLiteConfig(namespaceCollection tablenamespace.TableNamespaceCollection) (DRMConfig, error) {
+func GetGoogleV1SQLiteConfig(sqlEngine sqlengine.SQLEngine, namespaceCollection tablenamespace.TableNamespaceCollection, controlAttributes sqlcontrol.ControlAttributes) (DRMConfig, error) {
 	rv := &StaticDRMConfig{
 		typeMappings: map[string]DRMCoupling{
 			"array":   {RelationalType: "text", GolangKind: reflect.Slice},
@@ -782,6 +728,8 @@ func GetGoogleV1SQLiteConfig(namespaceCollection tablenamespace.TableNamespaceCo
 		defaultGolangKind:     reflect.String,
 		defaultGolangValue:    sql.NullString{}, // string is default
 		namespaceCollection:   namespaceCollection,
+		controlAttributes:     controlAttributes,
+		sqlEngine:             sqlEngine,
 	}
 	return rv, nil
 }

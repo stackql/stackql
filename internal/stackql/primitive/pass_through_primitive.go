@@ -4,21 +4,21 @@ import (
 	"fmt"
 
 	"github.com/stackql/stackql/internal/stackql/dto"
-	"github.com/stackql/stackql/internal/stackql/sqlengine"
+	"github.com/stackql/stackql/internal/stackql/sqldialect"
 )
 
 type PassThroughPrimitive struct {
 	Inputs                 map[int64]dto.ExecutorOutput
 	id                     int64
-	sqlEngine              sqlengine.SQLEngine
+	sqlDialect             sqldialect.SQLDialect
 	shouldCollectGarbage   bool
 	txnControlCounterSlice []dto.TxnControlCounters
 }
 
-func NewPassThroughPrimitive(sqlEngine sqlengine.SQLEngine, txnControlCounterSlice []dto.TxnControlCounters, shouldCollectGarbage bool) IPrimitive {
+func NewPassThroughPrimitive(sqlDialect sqldialect.SQLDialect, txnControlCounterSlice []dto.TxnControlCounters, shouldCollectGarbage bool) IPrimitive {
 	return &PassThroughPrimitive{
 		Inputs:                 make(map[int64]dto.ExecutorOutput),
-		sqlEngine:              sqlEngine,
+		sqlDialect:             sqlDialect,
 		txnControlCounterSlice: txnControlCounterSlice,
 		shouldCollectGarbage:   shouldCollectGarbage,
 	}
@@ -50,11 +50,7 @@ func (pr *PassThroughPrimitive) IncidentData(fromId int64, input dto.ExecutorOut
 }
 
 func (pt *PassThroughPrimitive) collectGarbage() {
-	if pt.shouldCollectGarbage {
-		for _, gc := range pt.txnControlCounterSlice {
-			pt.sqlEngine.GCCollectObsolete(&gc)
-		}
-	}
+	// placeholder
 }
 
 func (pt *PassThroughPrimitive) Execute(pc IPrimitiveCtx) dto.ExecutorOutput {

@@ -28,6 +28,20 @@ Shell Session Azure Compute Table Nomenclature Mutation Guard
     ...    ${SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD_EXPECTED}
     ...    stdout=${CURDIR}/tmp/Shell-Session-Azure-Compute-Table-Nomenclature-Mutation-Guard.tmp
 
+PG Session GC Manual Behaviour Canonical
+    Should PG Client Session Inline Equal
+    ...    ${PSQL_MTLS_CONN_STR_UNIX}
+    ...    ${SHELL_COMMANDS_GC_SEQUENCE_CANONICAL}
+    ...    ${SHELL_COMMANDS_GC_SEQUENCE_CANONICAL_JSON_EXPECTED}
+    ...    stdout=${CURDIR}/tmp/PG-Session-GC-Manual-Behaviour-Canonical.tmp
+
+PG Session GC Eager Behaviour Canonical
+    Should PG Client Session Inline Equal
+    ...    ${PSQL_MTLS_CONN_STR_UNIX_WITH_EAGER_GC}
+    ...    ${SHELL_COMMANDS_GC_SEQUENCE_EAGER}
+    ...    ${SHELL_COMMANDS_GC_SEQUENCE_EAGER_JSON_EXPECTED}
+    ...    stdout=${CURDIR}/tmp/PG-Session-GC-Eager-Behaviour-Canonical.tmp
+
 PG Session Azure Compute Table Nomenclature Mutation Guard
     Should PG Client Session Inline Equal
     ...    ${PSQL_MTLS_CONN_STR_UNIX}

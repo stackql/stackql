@@ -55,3 +55,24 @@ CREATE TABLE IF NOT EXISTS "__iql__.control.gc.txn_table_x_ref" (
   ,PRIMARY KEY (iql_generation_id, iql_session_id, iql_transaction_id, table_name)
 )
 ;
+
+CREATE TABLE IF NOT EXISTS "__iql__.control.gc.rings" (
+   ring_id INTEGER PRIMARY KEY AUTOINCREMENT
+  ,ring_name TEXT not null UNIQUE
+  ,current_value INTEGER not null DEFAULT 0
+  ,current_offset INTEGER not null DEFAULT 0
+  ,width_bits INTEGER not null DEFAULT 32
+  ,created_dttm DateTime not null default CURRENT_TIMESTAMP
+  ,collected_dttm DateTime default null
+)
+;
+
+CREATE INDEX IF NOT EXISTS "idx.__iql__.control.gc.rings.ring_name" 
+ON "__iql__.control.gc.rings" (ring_name)
+;
+
+INSERT OR IGNORE INTO "__iql__.control.gc.rings" (ring_name) VALUES ("transaction_id");
+
+INSERT OR IGNORE INTO "__iql__.control.gc.rings" (ring_name) VALUES ("session_id");
+
+

@@ -68,12 +68,6 @@ func TestSelectOktaApplicationAppsDriver(t *testing.T) {
 		t.Fatalf("Test failed: %v", err)
 	}
 
-	tc, err := entryutil.GetTxnCounterManager(handlerCtx)
-	if err != nil {
-		t.Fatalf("Test failed: %v", err)
-	}
-	handlerCtx.TxnCounterMgr = tc
-
 	ProcessQuery(&handlerCtx)
 
 	t.Logf("simple select driver integration test passed")
@@ -95,12 +89,6 @@ func TestSimpleSelectOktaApplicationAppsDriverOutput(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
-
-		tc, err := entryutil.GetTxnCounterManager(handlerCtx)
-		if err != nil {
-			t.Fatalf("Test failed: %v", err)
-		}
-		handlerCtx.TxnCounterMgr = tc
 
 		handlerCtx.Outfile = outFile
 		handlerCtx.OutErrFile = os.Stderr

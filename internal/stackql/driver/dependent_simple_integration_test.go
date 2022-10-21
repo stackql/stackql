@@ -50,12 +50,6 @@ func TestSimpleInsertDependentGoogleComputeDiskAsync(t *testing.T) {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		tc, err := entryutil.GetTxnCounterManager(handlerCtx)
-		if err != nil {
-			t.Fatalf("Test failed: %v", err)
-		}
-		handlerCtx.TxnCounterMgr = tc
-
 		ProcessQuery(&handlerCtx)
 	}
 
@@ -96,12 +90,6 @@ func TestSimpleInsertDependentGoogleComputeDiskAsyncReversed(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
-
-		tc, err := entryutil.GetTxnCounterManager(handlerCtx)
-		if err != nil {
-			t.Fatalf("Test failed: %v", err)
-		}
-		handlerCtx.TxnCounterMgr = tc
 
 		ProcessQuery(&handlerCtx)
 	}
@@ -144,12 +132,6 @@ func TestSimpleInsertDependentGoogleBQDatasetAsync(t *testing.T) {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		tc, err := entryutil.GetTxnCounterManager(handlerCtx)
-		if err != nil {
-			t.Fatalf("Test failed: %v", err)
-		}
-		handlerCtx.TxnCounterMgr = tc
-
 		ProcessQuery(&handlerCtx)
 	}
 
@@ -190,12 +172,6 @@ func TestSimpleSelectExecDependentGoogleOrganizationsGetIamPolicy(t *testing.T) 
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
-
-		tc, err := entryutil.GetTxnCounterManager(handlerCtx)
-		if err != nil {
-			t.Fatalf("Test failed: %v", err)
-		}
-		handlerCtx.TxnCounterMgr = tc
 
 		ProcessQuery(&handlerCtx)
 	}

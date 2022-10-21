@@ -24,6 +24,7 @@ type DRMAstVisitor struct {
 	shouldCollectTables            bool
 	namespaceCollection            tablenamespace.TableNamespaceCollection
 	containsAnalyticsCacheMaterial bool
+	containsNativeBackendMaterial  bool
 }
 
 func NewDRMAstVisitor(iDColumnName string, shouldCollectTables bool, namespaceCollection tablenamespace.TableNamespaceCollection) *DRMAstVisitor {
@@ -49,6 +50,14 @@ func (v *DRMAstVisitor) GetProviderStrings() []string {
 
 func (v *DRMAstVisitor) ContainsAnalyticsCacheMaterial() bool {
 	return v.containsAnalyticsCacheMaterial
+}
+
+func (v *DRMAstVisitor) ContainsNativeBackendMaterial() bool {
+	return v.containsNativeBackendMaterial
+}
+
+func (v *DRMAstVisitor) ContainsCacheExceptMaterial() bool {
+	return v.containsAnalyticsCacheMaterial || v.containsNativeBackendMaterial
 }
 
 func (v *DRMAstVisitor) GetRewrittenQuery() string {
@@ -152,6 +161,9 @@ func (v *DRMAstVisitor) Visit(node sqlparser.SQLNode) error {
 		}
 		if fromVis.ContainsAnalyticsCacheMaterial() {
 			v.containsAnalyticsCacheMaterial = true
+		}
+		if fromVis.ContainsNativeBackendMaterial() {
+			v.containsNativeBackendMaterial = true
 		}
 		qIdSubtree, _ := fromVis.computeQIDWhereSubTree()
 		augmentedWhere := node.Where
@@ -793,6 +805,10 @@ func (v *DRMAstVisitor) Visit(node sqlparser.SQLNode) error {
 		buf.AstPrintf(node, "(%v)", node.Exprs)
 		v.rewrittenQuery = buf.String()
 
+	case *sqlparser.NativeQuery:
+		buf.AstPrintf(node, "NATIVEQUERY '&s'", strings.ReplaceAll(node.QueryString, "'", "''"))
+		v.containsNativeBackendMaterial = true
+
 	case sqlparser.JoinCondition:
 		if node.On != nil {
 			buf.AstPrintf(node, " on %v", node.On)
@@ -809,6 +825,9 @@ func (v *DRMAstVisitor) Visit(node sqlparser.SQLNode) error {
 		node.RightExpr.Accept(rVis)
 		if lVis.ContainsAnalyticsCacheMaterial() || rVis.ContainsAnalyticsCacheMaterial() {
 			v.containsAnalyticsCacheMaterial = true
+		}
+		if lVis.ContainsNativeBackendMaterial() || rVis.ContainsNativeBackendMaterial() {
+			v.containsNativeBackendMaterial = true
 		}
 		buf.AstPrintf(node, "%s %s %s%v", lVis.GetRewrittenQuery(), node.Join, rVis.GetRewrittenQuery(), node.Condition)
 		bs := buf.String()

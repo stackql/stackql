@@ -14,6 +14,9 @@ import (
 	"github.com/stackql/stackql/internal/stackql/gcexec"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/iqlerror"
+	"github.com/stackql/stackql/internal/stackql/kstore"
+	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
+	"github.com/stackql/stackql/internal/stackql/sqldialect"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 
@@ -24,7 +27,8 @@ import (
 )
 
 func BuildInputBundle(runtimeCtx dto.RuntimeCtx) (bundle.Bundle, error) {
-	se, err := buildSQLEngine(runtimeCtx)
+	controlAttributes := sqlcontrol.GetControlAttributes("standard")
+	se, err := buildSQLEngine(runtimeCtx, controlAttributes)
 	if err != nil {
 		return nil, err
 	}
@@ -32,16 +36,32 @@ func BuildInputBundle(runtimeCtx dto.RuntimeCtx) (bundle.Bundle, error) {
 	if err != nil {
 		return nil, err
 	}
-	gcCfg, err := dto.GetGCCfg("")
+	gcCfg, err := dto.GetGCCfg(runtimeCtx.GCCfgRaw)
 	if err != nil {
 		return nil, err
 	}
-	gcExec, err := buildGCExec(se, namespaces, runtimeCtx)
+	txnStoreCfg, err := dto.GetKStoreCfg(runtimeCtx.StoreTxnCfgRaw)
 	if err != nil {
 		return nil, err
 	}
-	gc := buildGC(gcExec, gcCfg)
-	return bundle.NewBundle(gc, namespaces, se), nil
+	dialect, err := sqldialect.NewSQLDialect(se, namespaces, controlAttributes, "sqlite")
+	if err != nil {
+		return nil, err
+	}
+	txnStore, err := kstore.GetKStore(txnStoreCfg)
+	if err != nil {
+		return nil, err
+	}
+	gcExec, err := buildGCExec(se, namespaces, dialect, txnStore)
+	if err != nil {
+		return nil, err
+	}
+	gc := buildGC(gcExec, gcCfg, se)
+	txnCtrMgr, err := getTxnCounterManager(se)
+	if err != nil {
+		return nil, err
+	}
+	return bundle.NewBundle(gc, namespaces, se, dialect, controlAttributes, txnStore, txnCtrMgr), nil
 }
 
 func initNamespaces(namespaceCfgRaw string, sqlEngine sqlengine.SQLEngine) (tablenamespace.TableNamespaceCollection, error) {
@@ -52,28 +72,28 @@ func initNamespaces(namespaceCfgRaw string, sqlEngine sqlengine.SQLEngine) (tabl
 	return tablenamespace.NewStandardTableNamespaceCollection(cfgs, sqlEngine)
 }
 
-func buildSQLEngine(runtimeCtx dto.RuntimeCtx) (sqlengine.SQLEngine, error) {
+func buildSQLEngine(runtimeCtx dto.RuntimeCtx, controlAttributes sqlcontrol.ControlAttributes) (sqlengine.SQLEngine, error) {
 	sqlCfg := sqlengine.NewSQLEngineConfig(runtimeCtx)
-	return sqlengine.NewSQLEngine(sqlCfg)
+	return sqlengine.NewSQLEngine(sqlCfg, controlAttributes)
 }
 
-func buildGCExec(sqlEngine sqlengine.SQLEngine, namespaces tablenamespace.TableNamespaceCollection, runtimeCtx dto.RuntimeCtx) (gcexec.GarbageCollectorExecutor, error) {
-	return gcexec.GetGarbageCollectorExecutorInstance(sqlEngine, namespaces, "sqlite")
+func buildGCExec(sqlEngine sqlengine.SQLEngine, namespaces tablenamespace.TableNamespaceCollection, dialect sqldialect.SQLDialect, txnStore kstore.KStore) (gcexec.GarbageCollectorExecutor, error) {
+	return gcexec.GetGarbageCollectorExecutorInstance(sqlEngine, namespaces, dialect, txnStore)
 }
 
-func buildGC(gcExec gcexec.GarbageCollectorExecutor, gcCfg dto.GCCfg) garbagecollector.GarbageCollector {
-	return garbagecollector.NewGarbageCollector(gcExec, gcCfg)
+func buildGC(gcExec gcexec.GarbageCollectorExecutor, gcCfg dto.GCCfg, sqlEngine sqlengine.SQLEngine) garbagecollector.GarbageCollector {
+	return garbagecollector.NewGarbageCollector(gcExec, gcCfg, sqlEngine)
 }
 
-func GetTxnCounterManager(handlerCtx handler.HandlerContext) (*txncounter.TxnCounterManager, error) {
-	genId, err := handlerCtx.SQLEngine.GetCurrentGenerationId()
+func getTxnCounterManager(sqlEngine sqlengine.SQLEngine) (txncounter.TxnCounterManager, error) {
+	genId, err := sqlEngine.GetCurrentGenerationId()
 	if err != nil {
-		genId, err = handlerCtx.SQLEngine.GetNextGenerationId()
+		genId, err = sqlEngine.GetNextGenerationId()
 		if err != nil {
 			return nil, err
 		}
 	}
-	sessionId, err := handlerCtx.SQLEngine.GetNextSessionId(genId)
+	sessionId, err := sqlEngine.GetNextSessionId(genId)
 	if err != nil {
 		return nil, err
 	}

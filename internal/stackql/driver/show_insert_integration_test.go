@@ -49,12 +49,6 @@ func TestSimpleShowInsertComputeAddressesRequired(t *testing.T) {
 		handlerCtx.Outfile = outFile
 		handlerCtx.OutErrFile = os.Stderr
 
-		tc, err := entryutil.GetTxnCounterManager(handlerCtx)
-		if err != nil {
-			t.Fatalf("Test failed: %v", err)
-		}
-		handlerCtx.TxnCounterMgr = tc
-
 		ProcessQuery(&handlerCtx)
 	}
 
@@ -94,12 +88,6 @@ func TestSimpleShowInsertBiqueryDatasets(t *testing.T) {
 		handlerCtx.Outfile = outFile
 		handlerCtx.OutErrFile = os.Stderr
 
-		tc, err := entryutil.GetTxnCounterManager(handlerCtx)
-		if err != nil {
-			t.Fatalf("Test failed: %v", err)
-		}
-		handlerCtx.TxnCounterMgr = tc
-
 		ProcessQuery(&handlerCtx)
 	}
 
@@ -138,12 +126,6 @@ func TestSimpleShowInsertBiqueryDatasetsRequired(t *testing.T) {
 
 		handlerCtx.Outfile = outFile
 		handlerCtx.OutErrFile = os.Stderr
-
-		tc, err := entryutil.GetTxnCounterManager(handlerCtx)
-		if err != nil {
-			t.Fatalf("Test failed: %v", err)
-		}
-		handlerCtx.TxnCounterMgr = tc
 
 		ProcessQuery(&handlerCtx)
 	}

@@ -45,13 +45,6 @@ func TestSelectComputeDisksOrderByCrtTmstpAsc(t *testing.T) {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		tc, err := entryutil.GetTxnCounterManager(handlerCtx)
-		if err != nil {
-			t.Fatalf("Test failed: %v", err)
-		}
-
-		handlerCtx.TxnCounterMgr = tc
-
 		handlerCtx.Query = testobjects.SelectGoogleComputeDisksOrderCreationTmstpAsc
 		response := querysubmit.SubmitQuery(&handlerCtx)
 		handlerCtx.Outfile = outFile
@@ -86,13 +79,6 @@ func TestSelectComputeDisksAggOrderBySizeAsc(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
-
-		tc, err := entryutil.GetTxnCounterManager(handlerCtx)
-		if err != nil {
-			t.Fatalf("Test failed: %v", err)
-		}
-
-		handlerCtx.TxnCounterMgr = tc
 
 		handlerCtx.Query = testobjects.SelectGoogleComputeDisksAggOrderSizeAsc
 		response := querysubmit.SubmitQuery(&handlerCtx)
@@ -129,13 +115,6 @@ func TestSelectComputeDisksAggOrderBySizeDesc(t *testing.T) {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		tc, err := entryutil.GetTxnCounterManager(handlerCtx)
-		if err != nil {
-			t.Fatalf("Test failed: %v", err)
-		}
-
-		handlerCtx.TxnCounterMgr = tc
-
 		handlerCtx.Query = testobjects.SelectGoogleComputeDisksAggOrderSizeDesc
 		response := querysubmit.SubmitQuery(&handlerCtx)
 		handlerCtx.Outfile = outFile
@@ -171,13 +150,6 @@ func TestSelectComputeDisksAggTotalSize(t *testing.T) {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		tc, err := entryutil.GetTxnCounterManager(handlerCtx)
-		if err != nil {
-			t.Fatalf("Test failed: %v", err)
-		}
-
-		handlerCtx.TxnCounterMgr = tc
-
 		handlerCtx.Query = testobjects.SelectGoogleComputeDisksAggSizeTotal
 		response := querysubmit.SubmitQuery(&handlerCtx)
 		handlerCtx.Outfile = outFile
@@ -212,13 +184,6 @@ func TestSelectComputeDisksAggTotalString(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
-
-		tc, err := entryutil.GetTxnCounterManager(handlerCtx)
-		if err != nil {
-			t.Fatalf("Test failed: %v", err)
-		}
-
-		handlerCtx.TxnCounterMgr = tc
 
 		handlerCtx.Query = testobjects.SelectGoogleComputeDisksAggStringTotal
 		response := querysubmit.SubmitQuery(&handlerCtx)

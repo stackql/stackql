@@ -130,7 +130,9 @@ func (p *primitiveGenerator) analyzeUnion(pbi PlanBuilderInput) error {
 		return err
 	}
 	pChild := p.addChildPrimitiveGenerator(node.FirstStatement, leaf)
-	err = pChild.analyzeSelectStatement(NewPlanBuilderInput(handlerCtx, node.FirstStatement, nil, nil, nil, nil, nil))
+	counters := pbi.GetTxnCtrlCtrs()
+	ctrPtr := &counters
+	err = pChild.analyzeSelectStatement(NewPlanBuilderInput(handlerCtx, node.FirstStatement, nil, nil, nil, nil, nil, counters))
 	if err != nil {
 		return err
 	}
@@ -142,7 +144,8 @@ func (p *primitiveGenerator) analyzeUnion(pbi PlanBuilderInput) error {
 			return err
 		}
 		pChild := p.addChildPrimitiveGenerator(rhsStmt.Statement, leaf)
-		err = pChild.analyzeSelectStatement(NewPlanBuilderInput(handlerCtx, rhsStmt.Statement, nil, nil, nil, nil, nil))
+		ctrPtr = ctrPtr.CloneAndIncrementInsertID()
+		err = pChild.analyzeSelectStatement(NewPlanBuilderInput(handlerCtx, rhsStmt.Statement, nil, nil, nil, nil, nil, *ctrPtr))
 		if err != nil {
 			return err
 		}
@@ -517,7 +520,7 @@ func (p *primitiveGenerator) persistHerarchyToBuilder(heirarchy *tablemetadata.H
 	p.PrimitiveComposer.SetTable(node, tablemetadata.NewExtendedTableMetadata(heirarchy, taxonomy.GetAliasFromStatement(node)))
 }
 
-func (p *primitiveGenerator) analyzeUnaryExec(handlerCtx *handler.HandlerContext, node *sqlparser.Exec, selectNode *sqlparser.Select, cols []parserutil.ColumnHandle) (*tablemetadata.ExtendedTableMetadata, error) {
+func (p *primitiveGenerator) analyzeUnaryExec(pbi PlanBuilderInput, handlerCtx *handler.HandlerContext, node *sqlparser.Exec, selectNode *sqlparser.Select, cols []parserutil.ColumnHandle) (*tablemetadata.ExtendedTableMetadata, error) {
 	err := p.inferHeirarchyAndPersist(handlerCtx, node, nil)
 	if err != nil {
 		return nil, err
@@ -603,9 +606,9 @@ func (p *primitiveGenerator) analyzeUnaryExec(handlerCtx *handler.HandlerContext
 		return meta, nil
 	}
 	if selectNode != nil {
-		return meta, p.analyzeUnarySelection(handlerCtx, selectNode, selectNode.Where, meta, cols)
+		return meta, p.analyzeUnarySelection(pbi, handlerCtx, selectNode, selectNode.Where, meta, cols)
 	}
-	return meta, p.analyzeUnarySelection(handlerCtx, node, nil, meta, cols)
+	return meta, p.analyzeUnarySelection(pbi, handlerCtx, node, nil, meta, cols)
 }
 
 func (p *primitiveGenerator) analyzeNop(pbi PlanBuilderInput) error {
@@ -628,8 +631,8 @@ func (p *primitiveGenerator) analyzeExec(pbi PlanBuilderInput) error {
 	if !ok {
 		return fmt.Errorf("could not cast node of type '%T' to required Exec", pbi.GetStatement())
 	}
-	tbl, err := p.analyzeUnaryExec(handlerCtx, node, nil, nil)
-	insertionContainer := tableinsertioncontainer.NewTableInsertionContainer(tbl)
+	tbl, err := p.analyzeUnaryExec(pbi, handlerCtx, node, nil, nil)
+	insertionContainer := tableinsertioncontainer.NewTableInsertionContainer(tbl, handlerCtx.SQLEngine)
 	if err != nil {
 		logging.GetLogger().Infoln(fmt.Sprintf("error analyzing EXEC as selection: '%s'", err.Error()))
 		return err
@@ -975,7 +978,8 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 	if len(node.From) == 1 {
 		switch ft := node.From[0].(type) {
 		case *sqlparser.JoinTableExpr, *sqlparser.AliasedTableExpr:
-			dp := dependencyplanner.NewStandardDependencyPlanner(
+			tcc := pbi.GetTxnCtrlCtrs()
+			dp, err := dependencyplanner.NewStandardDependencyPlanner(
 				handlerCtx,
 				dataFlows,
 				colRefs,
@@ -983,8 +987,11 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 				pbi.GetStatement(),
 				tblz,
 				p.PrimitiveComposer,
-				pChild.PrimitiveComposer.GetTxnCtrlCtrs(),
+				&tcc,
 			)
+			if err != nil {
+				return err
+			}
 			err = dp.Plan()
 			if err != nil {
 				return err
@@ -999,11 +1006,11 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 			if err != nil {
 				return err
 			}
-			tbl, err := pChild.analyzeUnaryExec(handlerCtx, ft.Exec, node, cols)
+			tbl, err := pChild.analyzeUnaryExec(pbi, handlerCtx, ft.Exec, node, cols)
 			if err != nil {
 				return err
 			}
-			insertionContainer := tableinsertioncontainer.NewTableInsertionContainer(tbl)
+			insertionContainer := tableinsertioncontainer.NewTableInsertionContainer(tbl, handlerCtx.SQLEngine)
 			pChild.PrimitiveComposer.SetBuilder(primitivebuilder.NewSingleAcquireAndSelect(pChild.PrimitiveComposer.GetGraph(), pChild.PrimitiveComposer.GetTxnCtrlCtrs(), handlerCtx, insertionContainer, pChild.PrimitiveComposer.GetInsertPreparedStatementCtx(), pChild.PrimitiveComposer.GetSelectPreparedStatementCtx(), nil))
 			return nil
 		}

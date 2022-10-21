@@ -13,7 +13,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/methodselect"
 	"github.com/stackql/stackql/internal/stackql/netutils"
 	"github.com/stackql/stackql/internal/stackql/relational"
-	"github.com/stackql/stackql/internal/stackql/sqlengine"
 
 	"github.com/stackql/stackql/pkg/sqltypeutil"
 
@@ -36,10 +35,6 @@ type GenericProvider struct {
 	discoveryAdapter discovery.IDiscoveryAdapter
 	apiVersion       string
 	methodSelector   methodselect.IMethodSelector
-}
-
-func (gp *GenericProvider) GetDiscoveryGeneration(dbEngine sqlengine.SQLEngine) (int, error) {
-	return dbEngine.GetCurrentDiscoveryGenerationId(gp.GetProviderString())
 }
 
 func (gp *GenericProvider) GetDefaultKeyForDeleteItems() string {

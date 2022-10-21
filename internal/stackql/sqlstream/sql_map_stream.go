@@ -20,13 +20,13 @@ type SimpleSQLMapStream struct {
 
 func NewSimpleSQLMapStream(
 	selectCtx *drm.PreparedStatementCtx,
-	inserinsertContainer tableinsertioncontainer.TableInsertionContainer,
+	insertContainer tableinsertioncontainer.TableInsertionContainer,
 	drmCfg drm.DRMConfig,
 	sqlEngine sqlengine.SQLEngine,
 ) streaming.MapStream {
 	return &SimpleSQLMapStream{
 		selectCtx:       selectCtx,
-		insertContainer: inserinsertContainer,
+		insertContainer: insertContainer,
 		drmCfg:          drmCfg,
 		sqlEngine:       sqlEngine,
 	}

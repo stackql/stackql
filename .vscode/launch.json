@@ -31,6 +31,16 @@
     },
     {
       "type": "pickString",
+      "id": "gcString",
+      "description": "GC Input arg String",
+      "default": "{}",
+      "options": [
+        "{}",
+        "{ \"isEager\": true }"
+      ]
+    },
+    {
+      "type": "pickString",
       "id": "namespaceString",
       "description": "Namespace JSON config String",
       "default": "{ \"analytics\": { \"ttl\": 86400, \"regex\": \"^stackql_analytics_(?P<objectName>.*)$\", \"template\": \"stackql_analytics_{{ .objectName }}\" } }",
@@ -55,7 +65,7 @@
       "type": "go",
       "request": "attach",
       "mode": "local",
-      "processId": 81953
+      "processId": 70664
     },
     // DEBUG
     {
@@ -141,7 +151,7 @@
         "--registry=${input:registryString}",
         "--auth=${input:authString}",
         "--tls.allowInsecure",
-        "select * from aws.s3.bucket_locations where region = 'ap-southeast-1' and bucket = 'stackql-trial-bucket-01';"
+        "select `Key`, Size, StorageClass from aws.s3.objects where region = 'ap-southeast-1' and bucket = 'stackql-trial-bucket-01' order by `Key` ASC;"
       ],
     },
     {
@@ -306,6 +316,20 @@
       ],
     },
     {
+      "name": "native query",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "--tls.allowInsecure=true",
+        "NATIVEQUERY 'select * from sqlite_master';"
+      ],
+    },
+    {
       "name": "okta pagination",
       "type": "go",
       "request": "launch",
@@ -369,8 +393,11 @@
       "program": "${workspaceFolder}/stackql",
       "args": [
         "srv",
+        "--pgsrv.port=5888",
+        "--tls.allowInsecure",
         "--auth=${input:authString}",
-        "{ \"url\": \"file://${workspaceFolder}/examples/registry\", \"localDocRoot\": \"${workspaceFolder}/examples/registry\", \"verifyConfig\": {\"nopVerify\": true } }"
+        "--gc=${input:gcString}",
+        "--registry=${input:registryString}"
       ],
     },
     {
