@@ -16,6 +16,12 @@ const (
 	CSVStr                             string = "csv"
 	TextStr                            string = "text"
 	PrettyTextStr                      string = "pptext"
+	DbEngineSQLite3Embedded            string = "sqlite3_embedded"
+	DbEnginePostgresTCP                string = "postgres_tcp"
+	DefaultDbEngine                    string = DbEngineSQLite3Embedded
+	SQLDialectSQLite3                  string = "sqlite3"
+	SQLDialectPostgres                 string = "postgres"
+	DefaultSQLDialect                  string = SQLDialectSQLite3
 	DefaulHttpBodyFormat               string = JsonStr
 	RequestBodyKeyPrefix               string = "data"
 	RequestBodyKeyDelimiter            string = "__"

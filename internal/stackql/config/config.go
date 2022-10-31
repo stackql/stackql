@@ -25,8 +25,6 @@ const readlineDir = "readline"
 
 const readlineTmpFile = "readline.tmp"
 
-const defaultDbEngine = "sqlite3"
-
 func GetDefaultLogLevelString() string {
 	return defaltLogLevel
 }
@@ -71,18 +69,6 @@ func GetDefaultViperConfigFileName() string {
 }
 
 func GetDefaultKeyFilePath() string {
-	return ""
-}
-
-func GetDefaultDbEngine() string {
-	return defaultDbEngine
-}
-
-func GetDefaultDbFilePath() string {
-	return ""
-}
-
-func GetDefaultDbInitFilePath() string {
 	return ""
 }
 

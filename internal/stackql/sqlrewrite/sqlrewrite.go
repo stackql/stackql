@@ -1,12 +1,10 @@
 package sqlrewrite
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/stackql/go-openapistackql/openapistackql"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/relationaldto"
 	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
@@ -112,9 +110,9 @@ func GenerateSelectDML(input SQLRewriteInput) (*drm.PreparedStatementCtx, error)
 	var secondaryCtrlCounters []*dto.TxnControlCounters
 	selectSuffix := input.GetSelectSuffix()
 	rewrittenWhere := input.GetRewrittenWhere()
-	var q strings.Builder
-	var quotedColNames []string
 	var columns []drm.ColumnMetadata
+	var relationalColumns []relationaldto.RelationalColumn
+	var tableAliases []string
 	for _, col := range cols {
 		var typeStr string
 		if col.Schema != nil {
@@ -126,25 +124,16 @@ func GenerateSelectDML(input SQLRewriteInput) (*drm.PreparedStatementCtx, error)
 				}
 			}
 		}
+		relationalColumn := relationaldto.NewRelationalColumn(col.Name, typeStr).WithQualifier(col.Qualifier).WithAlias(col.Alias).WithDecorated(col.DecoratedCol)
 		columns = append(columns, drm.NewColDescriptor(col, typeStr))
-		var colEntry strings.Builder
-		if col.DecoratedCol == "" {
-			colEntry.WriteString(fmt.Sprintf(`"%s" `, col.Name))
-			if col.Alias != "" {
-				colEntry.WriteString(fmt.Sprintf(` AS "%s"`, col.Alias))
-			}
-		} else {
-			colEntry.WriteString(fmt.Sprintf("%s ", col.DecoratedCol))
-		}
-		quotedColNames = append(quotedColNames, fmt.Sprintf("%s ", colEntry.String()))
+		// TODO: Need a way to handle postgres differences. This is a fragile point
+		relationalColumns = append(relationalColumns, relationalColumn)
 	}
 	genIdColName := dc.GetControlAttributes().GetControlGenIdColumnName()
 	sessionIDColName := dc.GetControlAttributes().GetControlSsnIdColumnName()
 	txnIdColName := dc.GetControlAttributes().GetControlTxnIdColumnName()
 	insIdColName := dc.GetControlAttributes().GetControlInsIdColumnName()
 	insEncodedColName := dc.GetControlAttributes().GetControlInsertEncodedIdColumnName()
-	var wq strings.Builder
-	var controlWhereComparisons []string
 	inputContainers := input.GetTableInsertionContainers()
 	if len(inputContainers) > 0 {
 		_, txnCtrlCtrs = inputContainers[0].GetTableTxnCounters()
@@ -160,45 +149,14 @@ func GenerateSelectDML(input SQLRewriteInput) (*drm.PreparedStatementCtx, error)
 		}
 		v := tb.GetTableMetadata()
 		alias := v.Alias
-		if alias != "" {
-			gIDcn := fmt.Sprintf(`"%s"."%s"`, alias, genIdColName)
-			sIDcn := fmt.Sprintf(`"%s"."%s"`, alias, sessionIDColName)
-			tIDcn := fmt.Sprintf(`"%s"."%s"`, alias, txnIdColName)
-			iIDcn := fmt.Sprintf(`"%s"."%s"`, alias, insIdColName)
-			controlWhereComparisons = append(controlWhereComparisons, fmt.Sprintf(`%s = ? AND %s = ? AND %s = ? AND %s = ?`, gIDcn, sIDcn, tIDcn, iIDcn))
-		} else {
-			gIDcn := fmt.Sprintf(`"%s"`, genIdColName)
-			sIDcn := fmt.Sprintf(`"%s"`, sessionIDColName)
-			tIDcn := fmt.Sprintf(`"%s"`, txnIdColName)
-			iIDcn := fmt.Sprintf(`"%s"`, insIdColName)
-			controlWhereComparisons = append(controlWhereComparisons, fmt.Sprintf(`%s = ? AND %s = ? AND %s = ? AND %s = ?`, gIDcn, sIDcn, tIDcn, iIDcn))
-		}
-
+		tableAliases = append(tableAliases, alias)
 		i++
 	}
-	if len(controlWhereComparisons) > 0 {
-		controlWhereSubClause := fmt.Sprintf("( %s )", strings.Join(controlWhereComparisons, " AND "))
-		wq.WriteString(controlWhereSubClause)
-	}
 
-	if strings.TrimSpace(rewrittenWhere) != "" {
-		if len(controlWhereComparisons) > 0 {
-			wq.WriteString(fmt.Sprintf(" AND ( %s ) ", rewrittenWhere))
-		} else {
-			wq.WriteString(fmt.Sprintf(" ( %s ) ", rewrittenWhere))
-		}
+	query, err := dc.GetSQLDialect().ComposeSelectQuery(relationalColumns, tableAliases, input.GetFromString(), rewrittenWhere, selectSuffix)
+	if err != nil {
+		return nil, err
 	}
-	whereExprsStr := wq.String()
-
-	q.WriteString(fmt.Sprintf(`SELECT %s FROM `, strings.Join(quotedColNames, ", ")))
-	q.WriteString(input.GetFromString())
-	if whereExprsStr != "" {
-		q.WriteString(" WHERE ")
-		q.WriteString(whereExprsStr)
-	}
-	q.WriteString(selectSuffix)
-
-	query := q.String()
 	return drm.NewPreparedStatementCtx(
 		query,
 		"",
@@ -213,5 +171,6 @@ func GenerateSelectDML(input SQLRewriteInput) (*drm.PreparedStatementCtx, error)
 		txnCtrlCtrs,
 		secondaryCtrlCounters,
 		input.GetDRMConfig().GetNamespaceCollection(),
+		dc.GetSQLDialect(),
 	), nil
 }

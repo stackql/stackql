@@ -36,10 +36,6 @@ const (
 	ConfigFilePathKey               string = "configfile"
 	CPUProfileKey                   string = "cpuprofile"
 	CSVHeadersDisableKey            string = "hideheaders"
-	DbEngineKey                     string = "dbengine"
-	DbGenerationIdKey               string = "dbgenerationid"
-	DbFilePathKey                   string = "dbfilepath"
-	DbInitFilePathKey               string = "dbinitfilepath"
 	DelimiterKey                    string = "delimiter"
 	ErrorPresentationKey            string = "errorpresentation"
 	HTTPLogEnabledKey               string = "http.log.enabled"
@@ -67,8 +63,8 @@ const (
 	RegistryRawKey                  string = "registry"
 	GCCfgRawKey                     string = "gc"
 	NamespaceCfgRawKey              string = "namespaces"
+	SQLBackendCfgRawKey             string = "sqlBackend"
 	StoreTxnCfgRawKey               string = "store.txn"
-	ReinitKey                       string = "reinit"
 	TemplateCtxFilePathKey          string = "iqldata"
 	TestWithoutApiCallsKey          string = "testwithoutapicalls"
 	UseNonPreferredAPIsKEy          string = "usenonpreferredapis"
@@ -246,9 +242,6 @@ type RuntimeCtx struct {
 	ConfigFilePath               string
 	CPUProfile                   string
 	CSVHeadersDisable            bool
-	DbEngine                     string
-	DbFilePath                   string
-	DbInitFilePath               string
 	Delimiter                    string
 	DryRunFlag                   bool
 	ErrorPresentation            string
@@ -273,10 +266,10 @@ type RuntimeCtx struct {
 	PGSrvRawTLSCfg               string
 	ProviderStr                  string
 	RegistryRaw                  string
+	SQLBackendCfgRaw             string
 	NamespaceCfgRaw              string
 	StoreTxnCfgRaw               string
 	GCCfgRaw                     string
-	Reinit                       bool
 	QueryCacheSize               int
 	TemplateCtxFilePath          string
 	TestWithoutApiCalls          bool
@@ -331,12 +324,8 @@ func (rc *RuntimeCtx) Set(key string, val string) error {
 		rc.CPUProfile = val
 	case CSVHeadersDisableKey:
 		retVal = setBool(&rc.CSVHeadersDisable, val)
-	case DbEngineKey:
-		rc.DbEngine = val
-	case DbFilePathKey:
-		rc.DbFilePath = val
-	case DbInitFilePathKey:
-		rc.DbInitFilePath = val
+	case SQLBackendCfgRawKey:
+		rc.SQLBackendCfgRaw = val
 	case DelimiterKey:
 		rc.Delimiter = val
 	case DryRunFlagKey:
@@ -391,8 +380,6 @@ func (rc *RuntimeCtx) Set(key string, val string) error {
 		retVal = setInt(&rc.QueryCacheSize, val)
 	case RegistryRawKey:
 		rc.RegistryRaw = val
-	case ReinitKey:
-		retVal = setBool(&rc.Reinit, val)
 	case TemplateCtxFilePathKey:
 		rc.TemplateCtxFilePath = val
 	case TestWithoutApiCallsKey:

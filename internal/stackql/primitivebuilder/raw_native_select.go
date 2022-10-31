@@ -53,6 +53,7 @@ func (ss *RawNativeSelect) Build() error {
 		if err != nil {
 			return dto.NewErroneousExecutorOutput(err)
 		}
+		defer rows.Close()
 
 		rv := util.PrepareNativeResultSet(rows)
 		return rv

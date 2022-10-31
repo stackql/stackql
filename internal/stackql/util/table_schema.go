@@ -54,6 +54,7 @@ func (ta *simpleTableSchemaAnalyzer) GetColumnDescriptors(tabAnnotated Annotated
 			"",
 			k,
 			"",
+			"",
 			nil,
 			schema,
 			nil,

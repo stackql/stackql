@@ -123,7 +123,7 @@ func (p *primitiveGenerator) analyzeUnion(pbi PlanBuilderInput) error {
 	if !ok {
 		return fmt.Errorf("could not cast statement of type '%T' to required Union", pbi.GetStatement())
 	}
-	unionQuery := astvisit.GenerateUnionTemplateQuery(node, handlerCtx.GetNamespaceCollection())
+	unionQuery := astvisit.GenerateUnionTemplateQuery(node, handlerCtx.SQLDialect, handlerCtx.GetNamespaceCollection())
 	i := 0
 	leaf, err := p.PrimitiveComposer.GetSymTab().NewLeaf(i)
 	if err != nil {
@@ -132,7 +132,11 @@ func (p *primitiveGenerator) analyzeUnion(pbi PlanBuilderInput) error {
 	pChild := p.addChildPrimitiveGenerator(node.FirstStatement, leaf)
 	counters := pbi.GetTxnCtrlCtrs()
 	ctrPtr := &counters
-	err = pChild.analyzeSelectStatement(NewPlanBuilderInput(handlerCtx, node.FirstStatement, nil, nil, nil, nil, nil, counters))
+	sPbi, err := NewPlanBuilderInput(handlerCtx, node.FirstStatement, nil, nil, nil, nil, nil, counters)
+	if err != nil {
+		return err
+	}
+	err = pChild.analyzeSelectStatement(sPbi)
 	if err != nil {
 		return err
 	}
@@ -145,7 +149,11 @@ func (p *primitiveGenerator) analyzeUnion(pbi PlanBuilderInput) error {
 		}
 		pChild := p.addChildPrimitiveGenerator(rhsStmt.Statement, leaf)
 		ctrPtr = ctrPtr.CloneAndIncrementInsertID()
-		err = pChild.analyzeSelectStatement(NewPlanBuilderInput(handlerCtx, rhsStmt.Statement, nil, nil, nil, nil, nil, *ctrPtr))
+		sPbi, err := NewPlanBuilderInput(handlerCtx, rhsStmt.Statement, nil, nil, nil, nil, nil, *ctrPtr)
+		if err != nil {
+			return err
+		}
+		err = pChild.analyzeSelectStatement(sPbi)
 		if err != nil {
 			return err
 		}
@@ -772,8 +780,8 @@ func (p *primitiveGenerator) analyzeSchemaVsMap(handlerCtx *handler.HandlerConte
 	return nil
 }
 
-func isPGSetupQuery(q string) (nativedb.Select, bool) {
-	qStripped := multipleWhitespaceRegexp.ReplaceAllString(q, " ")
+func isPGSetupQuery(pbi PlanBuilderInput) (nativedb.Select, bool) {
+	qStripped := multipleWhitespaceRegexp.ReplaceAllString(pbi.GetRawQuery(), " ")
 	if qStripped == "select relname, nspname, relkind from pg_catalog.pg_class c, pg_catalog.pg_namespace n where relkind in ('r', 'v', 'm', 'f') and nspname not in ('pg_catalog', 'information_schema', 'pg_toast', 'pg_temp_1') and n.oid = relnamespace order by nspname, relname" {
 		return nil, true
 	}
@@ -818,7 +826,7 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 		return fmt.Errorf("could not cast statement of type '%T' to required Select", pbi.GetStatement())
 	}
 
-	if sel, ok := isPGSetupQuery(handlerCtx.RawQuery); ok {
+	if sel, ok := isPGSetupQuery(pbi); ok {
 		if sel != nil {
 			bldr := primitivebuilder.NewNativeSelect(p.PrimitiveComposer.GetGraph(), handlerCtx, sel)
 			p.PrimitiveComposer.SetBuilder(bldr)
@@ -1354,7 +1362,7 @@ func (p *primitiveGenerator) analyzeShow(pbi PlanBuilderInput) error {
 	if !ok {
 		return fmt.Errorf("could not cast node of type '%T' to required Show", pbi.GetStatement())
 	}
-	if sel, ok := isPGSetupQuery(handlerCtx.RawQuery); ok {
+	if sel, ok := isPGSetupQuery(pbi); ok {
 		if sel != nil {
 			bldr := primitivebuilder.NewNativeSelect(p.PrimitiveComposer.GetGraph(), handlerCtx, sel)
 			p.PrimitiveComposer.SetBuilder(bldr)

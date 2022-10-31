@@ -89,7 +89,7 @@ func (v *TableNameSubstitutionAstVisitor) getStarColumns(
 	}
 	var columnDescriptors []openapistackql.ColumnDescriptor
 	for _, col := range cols {
-		columnDescriptors = append(columnDescriptors, openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.DecoratedColumn, nil, schema, col.Val))
+		columnDescriptors = append(columnDescriptors, openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, nil, schema, col.Val))
 	}
 	return columnDescriptors, nil
 }
@@ -574,7 +574,7 @@ func (v *TableNameSubstitutionAstVisitor) Visit(node sqlparser.SQLNode) error {
 		}
 		col := parserutil.InferColNameFromExpr(node)
 		v.columnNames = append(v.columnNames, col)
-		cd := openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.DecoratedColumn, node, schema, col.Val)
+		cd := openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, node, schema, col.Val)
 		v.columnDescriptors = append(v.columnDescriptors, cd)
 		if !node.As.IsEmpty() {
 		}

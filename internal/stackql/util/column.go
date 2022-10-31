@@ -7,6 +7,7 @@ import (
 type Column interface {
 	GetName() string
 	GetSchema() *openapistackql.Schema
+	GetWidth() int
 }
 
 type simpleColumn struct {
@@ -23,6 +24,10 @@ func newSimpleColumn(name string, schema *openapistackql.Schema) Column {
 
 func (sc simpleColumn) GetName() string {
 	return sc.name
+}
+
+func (sc simpleColumn) GetWidth() int {
+	return -1
 }
 
 func (sc simpleColumn) GetSchema() *openapistackql.Schema {

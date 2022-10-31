@@ -40,7 +40,7 @@ func (p *primitiveGenerator) assembleUnarySelectionBuilder(
 		return err
 	}
 
-	_, err = docparser.OpenapiStackQLTabulationsPersistor(method, []util.AnnotatedTabulation{annotatedInsertTabulation}, p.PrimitiveComposer.GetSQLEngine(), prov.Name, handlerCtx.GetNamespaceCollection(), handlerCtx.ControlAttributes)
+	_, err = docparser.OpenapiStackQLTabulationsPersistor(method, []util.AnnotatedTabulation{annotatedInsertTabulation}, p.PrimitiveComposer.GetSQLEngine(), prov.Name, handlerCtx.GetNamespaceCollection(), handlerCtx.ControlAttributes, handlerCtx.SQLDialect)
 	if err != nil {
 		return err
 	}
@@ -62,10 +62,10 @@ func (p *primitiveGenerator) assembleUnarySelectionBuilder(
 				return fmt.Errorf("column = '%s' is NOT present in either:  - data returned from provider, - acceptable parameters, use the DESCRIBE command to view available fields for SELECT operations", col.Name)
 			}
 		}
-		selectTabulation.PushBackColumn(openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.DecoratedColumn, col.Expr, foundSchema, col.Val))
+		selectTabulation.PushBackColumn(openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, col.Expr, foundSchema, col.Val))
 	}
 
-	selPsc, err := p.PrimitiveComposer.GetDRMConfig().GenerateSelectDML(util.NewAnnotatedTabulation(selectTabulation, hIds, tbl.GetAlias()), insPsc.GetGCCtrlCtrs(), astvisit.GenerateModifiedSelectSuffix(node, handlerCtx.GetNamespaceCollection()), astvisit.GenerateModifiedWhereClause(rewrittenWhere, handlerCtx.GetNamespaceCollection()))
+	selPsc, err := p.PrimitiveComposer.GetDRMConfig().GenerateSelectDML(util.NewAnnotatedTabulation(selectTabulation, hIds, tbl.GetAlias()), insPsc.GetGCCtrlCtrs(), astvisit.GenerateModifiedSelectSuffix(node, handlerCtx.SQLDialect, handlerCtx.GetNamespaceCollection()), astvisit.GenerateModifiedWhereClause(rewrittenWhere, handlerCtx.SQLDialect, handlerCtx.GetNamespaceCollection()))
 	if err != nil {
 		return err
 	}

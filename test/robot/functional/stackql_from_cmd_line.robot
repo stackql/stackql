@@ -45,6 +45,7 @@ Should StackQL Exec Equal
     ...    ${K8S_SECRET_STR}
     ...    ${REGISTRY_NO_VERIFY_CFG_STR}
     ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${_EXEC_CMD_STR}
     ...    ${_EXEC_CMD_EXPECTED_OUTPUT}
     ...    &{kwargs}
@@ -55,6 +56,7 @@ Should StackQL Exec Equal
     ...    ${K8S_SECRET_STR}
     ...    ${REGISTRY_CANONICAL_CFG_STR}
     ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${_EXEC_CMD_STR}
     ...    ${_EXEC_CMD_EXPECTED_OUTPUT}
     ...    &{kwargs}
@@ -65,6 +67,7 @@ Should StackQL Exec Equal
     ...    ${K8S_SECRET_STR}
     ...    ${REGISTRY_DEPRECATED_CFG_STR}
     ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${_EXEC_CMD_STR}
     ...    ${_EXEC_CMD_EXPECTED_OUTPUT}
     ...    &{kwargs}
@@ -78,6 +81,7 @@ Should StackQL Novel Exec Equal
     ...    ${K8S_SECRET_STR}
     ...    ${REGISTRY_NO_VERIFY_CFG_STR}
     ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${_EXEC_CMD_STR}
     ...    ${_EXEC_CMD_EXPECTED_OUTPUT}
     ...    &{kwargs}
@@ -88,6 +92,7 @@ Should StackQL Novel Exec Equal
     ...    ${K8S_SECRET_STR}
     ...    ${REGISTRY_CANONICAL_CFG_STR}
     ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${_EXEC_CMD_STR}
     ...    ${_EXEC_CMD_EXPECTED_OUTPUT}
     ...    &{kwargs}
@@ -100,6 +105,7 @@ Should StackQL Exec Contain
     ...    ${K8S_SECRET_STR}
     ...    ${REGISTRY_NO_VERIFY_CFG_STR}
     ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${_EXEC_CMD_STR}
     ...    ${_EXEC_CMD_EXPECTED_OUTPUT}
     ...    &{kwargs}
@@ -110,6 +116,7 @@ Should StackQL Exec Contain
     ...    ${K8S_SECRET_STR}
     ...    ${REGISTRY_CANONICAL_CFG_STR}
     ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${_EXEC_CMD_STR}
     ...    ${_EXEC_CMD_EXPECTED_OUTPUT}
     ...    &{kwargs}
@@ -120,6 +127,7 @@ Should StackQL Exec Contain
     ...    ${K8S_SECRET_STR}
     ...    ${REGISTRY_DEPRECATED_CFG_STR}
     ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${_EXEC_CMD_STR}
     ...    ${_EXEC_CMD_EXPECTED_OUTPUT}
     ...    &{kwargs}
@@ -133,6 +141,7 @@ Should StackQL Exec Contain JSON output
     ...    ${K8S_SECRET_STR}
     ...    ${REGISTRY_NO_VERIFY_CFG_STR}
     ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${_EXEC_CMD_STR}
     ...    ${_EXEC_CMD_EXPECTED_OUTPUT}
     ...    \-o\=json
@@ -144,6 +153,7 @@ Should StackQL Exec Contain JSON output
     ...    ${K8S_SECRET_STR}
     ...    ${REGISTRY_CANONICAL_CFG_STR}
     ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${_EXEC_CMD_STR}
     ...    ${_EXEC_CMD_EXPECTED_OUTPUT}
     ...    \-o\=json
@@ -155,6 +165,7 @@ Should StackQL Exec Contain JSON output
     ...    ${K8S_SECRET_STR}
     ...    ${REGISTRY_DEPRECATED_CFG_STR}
     ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${_EXEC_CMD_STR}
     ...    ${_EXEC_CMD_EXPECTED_OUTPUT}
     ...    \-o\=json
@@ -169,6 +180,7 @@ Should StackQL Novel Exec Contain
     ...    ${K8S_SECRET_STR}
     ...    ${REGISTRY_NO_VERIFY_CFG_STR}
     ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${_EXEC_CMD_STR}
     ...    ${_EXEC_CMD_EXPECTED_OUTPUT}
     ...    &{kwargs}
@@ -179,6 +191,7 @@ Should StackQL Novel Exec Contain
     ...    ${K8S_SECRET_STR}
     ...    ${REGISTRY_CANONICAL_CFG_STR}
     ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${_EXEC_CMD_STR}
     ...    ${_EXEC_CMD_EXPECTED_OUTPUT}
     ...    &{kwargs}
@@ -192,6 +205,7 @@ Should StackQL NoVerify Only Exec Contain
     ...    ${K8S_SECRET_STR}
     ...    ${REGISTRY_NO_VERIFY_CFG_STR}
     ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${_EXEC_CMD_STR}
     ...    ${_EXEC_CMD_EXPECTED_OUTPUT}
     ...    &{kwargs}
@@ -205,6 +219,7 @@ Should StackQL No Cfg Exec Contain
     ...    ${K8S_SECRET_STR}
     ...    ${REGISTRY_NULL}
     ...    ${EMPTY}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${_EXEC_CMD_STR}
     ...    ${_EXEC_CMD_EXPECTED_OUTPUT}
     ...    &{kwargs}
