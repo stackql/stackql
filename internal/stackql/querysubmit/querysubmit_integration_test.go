@@ -7,7 +7,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/stackql/stackql/internal/stackql/entryutil"
 	. "github.com/stackql/stackql/internal/stackql/querysubmit"
 	"gotest.tools/assert"
 
@@ -46,14 +45,6 @@ func TestSimpleSelectGoogleComputeInstanceQuerySubmit(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
-
-	tc, err := entryutil.GetTxnCounterManager(handlerCtx)
-
-	if err != nil {
-		t.Fatalf("Test failed: %v", err)
-	}
-
-	handlerCtx.TxnCounterMgr = tc
 
 	handlerCtx.Query = testobjects.SimpleSelectGoogleComputeInstance
 	response := SubmitQuery(&handlerCtx)

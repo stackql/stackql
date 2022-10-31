@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
 )
 
 type SQLEngine interface {
@@ -14,9 +15,6 @@ type SQLEngine interface {
 	ExecFileLocal(string) error
 	ExecFile(string) error
 	ExecInTxn(queries []string) error
-	GCCollectObsolete(*dto.TxnControlCounters) error
-	GCCollectUnreachable() error
-	GCEnactFull() error
 	GetCurrentGenerationId() (int, error)
 	GetNextGenerationId() (int, error)
 	GetCurrentSessionId(int) (int, error)
@@ -27,10 +25,11 @@ type SQLEngine interface {
 	CacheStoreGet(string) ([]byte, error)
 	CacheStoreGetAll() ([]dto.KeyVal, error)
 	CacheStorePut(string, []byte, string, int) error
+	IsMemory() bool
 	IsTablePresent(string, string, string) bool
 	TableOldestUpdateUTC(string, string, string, string) (time.Time, *dto.TxnControlCounters)
 }
 
-func NewSQLEngine(cfg SQLEngineConfig) (SQLEngine, error) {
-	return newSQLiteEngine(cfg)
+func NewSQLEngine(cfg SQLEngineConfig, controlAttributes sqlcontrol.ControlAttributes) (SQLEngine, error) {
+	return newSQLiteEngine(cfg, controlAttributes)
 }

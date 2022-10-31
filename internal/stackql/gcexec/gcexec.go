@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/kstore"
 	"github.com/stackql/stackql/internal/stackql/sqldialect"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
@@ -14,73 +15,15 @@ var (
 	garbageCollectorExecutor GarbageCollectorExecutor
 )
 
-type TxnMap interface {
-	Add(tcc *dto.TxnControlCounters) int
-	Delete(tcc *dto.TxnControlCounters) int
-	GetTxnIDs() []int
-}
-
-type basicTxnMap struct {
-	mutex *sync.Mutex
-	m     map[int]int
-}
-
-func newTxnMap() TxnMap {
-	return basicTxnMap{
-		mutex: &sync.Mutex{},
-		m:     make(map[int]int),
-	}
-}
-
-func (tm basicTxnMap) GetTxnIDs() []int {
-	tm.mutex.Lock()
-	defer tm.mutex.Unlock()
-	var rv []int
-	for k, v := range tm.m {
-		if v > 0 {
-			rv = append(rv, k)
-		}
-	}
-	return rv
-}
-
-func (tm basicTxnMap) Add(tcc *dto.TxnControlCounters) int {
-	tm.mutex.Lock()
-	defer tm.mutex.Unlock()
-	key := tcc.TxnId
-	existingVal, ok := tm.m[key]
-	if ok {
-		tm.m[key] = existingVal + 1
-		return existingVal + 1
-	}
-	tm.m[key] = 1
-	return 1
-}
-
-func (tm basicTxnMap) Delete(tcc *dto.TxnControlCounters) int {
-	tm.mutex.Lock()
-	defer tm.mutex.Unlock()
-	key := tcc.TxnId
-	existingVal, ok := tm.m[key]
-	if ok {
-		newVal := existingVal - 1
-		if newVal == 0 {
-			delete(tm.m, key)
-			return 0
-		}
-		tm.m[key] = newVal
-		return newVal
-	}
-	return 0
-}
-
 type BrutalGarbageCollectorExecutor interface {
-	CollectAll() error
+	Purge() error
+	PurgeCache() error
+	PurgeControlTables() error
+	PurgeEphemeral() error
 }
 
 type AbstractFlatGarbageCollectorExecutor interface {
-	Add(string, *dto.TxnControlCounters) bool
-	Condemn(string, *dto.TxnControlCounters) bool
+	Update(string, dto.TxnControlCounters, dto.TxnControlCounters) error
 	Collect() error
 }
 
@@ -90,78 +33,91 @@ type GarbageCollectorExecutor interface {
 }
 
 // Idiomatic golang singleton
-func GetGarbageCollectorExecutorInstance(sqlEngine sqlengine.SQLEngine, ns tablenamespace.TableNamespaceCollection, dialectStr string) (GarbageCollectorExecutor, error) {
+// Credit to http://marcio.io/2015/07/singleton-pattern-in-go/
+func GetGarbageCollectorExecutorInstance(sqlEngine sqlengine.SQLEngine, ns tablenamespace.TableNamespaceCollection, dialect sqldialect.SQLDialect, txnStore kstore.KStore) (GarbageCollectorExecutor, error) {
 	var err error
-	var dialect sqldialect.SQLDialect
 	once.Do(func() {
-		dialect, err = sqldialect.NewSQLDialect(sqlEngine, ns, dialectStr)
 		if err != nil {
 			return
 		}
-		garbageCollectorExecutor, err = newBasicGarbageCollectorExecutor(dialect, ns)
+		garbageCollectorExecutor, err = newBasicGarbageCollectorExecutor(dialect, ns, txnStore)
 	})
 	return garbageCollectorExecutor, err
 }
 
-func newBasicGarbageCollectorExecutor(dialect sqldialect.SQLDialect, ns tablenamespace.TableNamespaceCollection) (GarbageCollectorExecutor, error) {
+func newBasicGarbageCollectorExecutor(dialect sqldialect.SQLDialect, ns tablenamespace.TableNamespaceCollection, txnStore kstore.KStore) (GarbageCollectorExecutor, error) {
 	return &basicGarbageCollectorExecutor{
-		activeTxns:      newTxnMap(),
-		activeTxnsCache: newTxnMap(),
-		gcMutex:         &sync.Mutex{},
-		ns:              ns,
-		sqlDialect:      dialect,
+		gcMutex:    &sync.Mutex{},
+		ns:         ns,
+		sqlDialect: dialect,
+		txnStore:   txnStore,
 	}, nil
 }
 
 // Algorithm summary:
-//   - `Collect()` will reclaim resources from all txns **not** in supplied list of IDs.
-//   - `CollectAll()` as assumed.
+//   - `Collect()` will reclaim resources from all txns **not** < supplied min ID.
 type basicGarbageCollectorExecutor struct {
-	activeTxns      TxnMap
-	activeTxnsCache TxnMap
-	gcMutex         *sync.Mutex
-	ns              tablenamespace.TableNamespaceCollection
-	sqlDialect      sqldialect.SQLDialect
+	gcMutex    *sync.Mutex
+	ns         tablenamespace.TableNamespaceCollection
+	sqlDialect sqldialect.SQLDialect
+	txnStore   kstore.KStore
 }
 
-func (rc *basicGarbageCollectorExecutor) Add(tableName string, tcc *dto.TxnControlCounters) bool {
+func (rc *basicGarbageCollectorExecutor) Update(tableName string, parentTcc, tcc dto.TxnControlCounters) error {
 	rc.gcMutex.Lock()
 	defer rc.gcMutex.Unlock()
 	if rc.ns.GetAnalyticsCacheTableNamespaceConfigurator().IsAllowed(tableName) {
-		rc.activeTxnsCache.Add(tcc)
-		return true
+		templatedName, err := rc.ns.GetAnalyticsCacheTableNamespaceConfigurator().RenderTemplate(tableName)
+		if err != nil {
+			return err
+		}
+		err = rc.sqlDialect.GCAdd(templatedName, parentTcc, tcc)
+		if err != nil {
+			return err
+		}
+		return nil
 	}
-	rc.activeTxns.Add(tcc)
-	return true
-}
-
-func (rc *basicGarbageCollectorExecutor) Condemn(tableName string, tcc *dto.TxnControlCounters) bool {
-	rc.gcMutex.Lock()
-	defer rc.gcMutex.Unlock()
-	if rc.ns.GetAnalyticsCacheTableNamespaceConfigurator().IsAllowed(tableName) {
-		rc.activeTxnsCache.Delete(tcc)
-		return true
-	}
-	rc.activeTxns.Delete(tcc)
-	return true
+	return nil
 }
 
 // Algorithm, **must be done during pause**:
-//   - Assemble active transactions.
+//   - Obtain **minimum** active transaction.
 //   - Retrieve GC queries from control table.
 //   - Execute GC queries in a txn.
 func (rc *basicGarbageCollectorExecutor) Collect() error {
 	rc.gcMutex.Lock()
 	defer rc.gcMutex.Unlock()
-	activeTxnIDs := rc.activeTxns.GetTxnIDs()
-	activeCacheTxnIDs := rc.activeTxnsCache.GetTxnIDs()
-	return rc.sqlDialect.GCCollect(activeTxnIDs, activeCacheTxnIDs)
+	minId, minValid := rc.txnStore.Min()
+	if !minValid {
+		return rc.sqlDialect.GCCollectAll()
+	}
+	return rc.sqlDialect.GCCollectObsoleted(minId)
 }
 
 // Algorithm, **must be done during pause**:
-//   - Execute **all possible** GC queries in a txn.
-func (rc *basicGarbageCollectorExecutor) CollectAll() error {
+//   - Obtain **minimum** active transaction.
+//   - Retrieve GC queries from control table.
+//   - Execute GC queries in a txn.
+func (rc *basicGarbageCollectorExecutor) Purge() error {
 	rc.gcMutex.Lock()
 	defer rc.gcMutex.Unlock()
-	return rc.sqlDialect.GCCollectAll()
+	return rc.sqlDialect.PurgeAll()
+}
+
+func (rc *basicGarbageCollectorExecutor) PurgeCache() error {
+	rc.gcMutex.Lock()
+	defer rc.gcMutex.Unlock()
+	return rc.sqlDialect.GCPurgeCache()
+}
+
+func (rc *basicGarbageCollectorExecutor) PurgeControlTables() error {
+	rc.gcMutex.Lock()
+	defer rc.gcMutex.Unlock()
+	return rc.sqlDialect.GCControlTablesPurge()
+}
+
+func (rc *basicGarbageCollectorExecutor) PurgeEphemeral() error {
+	rc.gcMutex.Lock()
+	defer rc.gcMutex.Unlock()
+	return rc.sqlDialect.GCPurgeEphemeral()
 }

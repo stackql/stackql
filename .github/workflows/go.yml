@@ -28,7 +28,7 @@ jobs:
     steps:
 
     - name: Set up Go 1.x
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v3
       with:
         go-version: ^1.18
       id: go
@@ -38,7 +38,7 @@ jobs:
       id: gccsetup
 
     - name: Choco install postgres
-      uses: crazy-max/ghaction-chocolatey@v1
+      uses: crazy-max/ghaction-chocolatey@v2
       with:
         args: "install --force postgresql13 openssl"
 
@@ -47,14 +47,14 @@ jobs:
         git config --global core.autocrlf false
 
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     
     - name: Git Ref Parse
       id: git_ref_parse
       run: |
-          echo ::set-output name=SOURCE_NAME::${GITHUB_REF#refs/*/}
-          echo ::set-output name=SOURCE_BRANCH::${GITHUB_REF#refs/heads/}
-          echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
+          echo "SOURCE_NAME=${GITHUB_REF#refs/*/}" >> $GITHUB_STATE
+          echo "SOURCE_BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_STATE
+          echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_STATE
 
     - name: Install Python dependencies
       run: |
@@ -171,7 +171,7 @@ jobs:
       run: python.exe test/python/main.py
 
     - name: Upload Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       if: success()
       with:
         name: stackql_windows_amd64
@@ -183,20 +183,20 @@ jobs:
     steps:
 
     - name: Set up Go 1.x
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v3
       with:
         go-version: ^1.18
       id: go
 
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     
     - name: Git Ref Parse
       id: git_ref_parse
       run: |
-          echo ::set-output name=SOURCE_NAME::${GITHUB_REF#refs/*/}
-          echo ::set-output name=SOURCE_BRANCH::${GITHUB_REF#refs/heads/}
-          echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
+          echo "SOURCE_NAME=${GITHUB_REF#refs/*/}" >> $GITHUB_STATE
+          echo "SOURCE_BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_STATE
+          echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_STATE
     
     - name: Set up GCC
       uses: egor-tensin/setup-gcc@v1
@@ -312,7 +312,7 @@ jobs:
         TESTSCRIPT: ${{env.TESTSCRIPT}}
 
     - name: Upload Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       if: success()
       with:
         name: stackql_linux_amd64
@@ -323,20 +323,20 @@ jobs:
     runs-on: macos-latest
     steps:
     - name: Set up Go 1.x
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v3
       with:
         go-version: ^1.18
       id: go
 
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     
     - name: Git Ref Parse
       id: git_ref_parse
       run: |
-          echo ::set-output name=SOURCE_NAME::${GITHUB_REF#refs/*/}
-          echo ::set-output name=SOURCE_BRANCH::${GITHUB_REF#refs/heads/}
-          echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
+          echo "SOURCE_NAME=${GITHUB_REF#refs/*/}" >> $GITHUB_STATE
+          echo "SOURCE_BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_STATE
+          echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_STATE
 
     - name: Install Python dependencies
       run: |
@@ -442,7 +442,7 @@ jobs:
         TESTSCRIPT: ${{env.TESTSCRIPT}}
 
     - name: Upload Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       if: success()
       with:
         name: stackql_darwin_amd64
@@ -453,13 +453,13 @@ jobs:
     runs-on: macos-latest
     steps:
     - name: Set up Go 1.x
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v3
       with:
         go-version: ^1.16
       id: go
 
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Get dependencies
       run: |
@@ -514,7 +514,7 @@ jobs:
         -o build/ ./...
 
     - name: Upload Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       if: success()
       with:
         name: stackql_darwin_arm64
@@ -526,14 +526,14 @@ jobs:
     steps:
 
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     
     - name: Git Ref Parse
       id: git_ref_parse
       run: |
-          echo ::set-output name=SOURCE_NAME::${GITHUB_REF#refs/*/}
-          echo ::set-output name=SOURCE_BRANCH::${GITHUB_REF#refs/heads/}
-          echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
+          echo "SOURCE_NAME=${GITHUB_REF#refs/*/}" >> $GITHUB_STATE
+          echo "SOURCE_BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_STATE
+          echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_STATE
     
     - name: Install psql
       run: |

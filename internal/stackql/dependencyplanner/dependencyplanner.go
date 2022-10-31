@@ -59,7 +59,10 @@ func NewStandardDependencyPlanner(
 	tblz taxonomy.TblMap,
 	primitiveComposer primitivecomposer.PrimitiveComposer,
 	tcc *dto.TxnControlCounters,
-) DependencyPlanner {
+) (DependencyPlanner, error) {
+	if tcc == nil {
+		return nil, fmt.Errorf("violation of StandardDependencyPlanner invariant: txn counter cannot be nil")
+	}
 	return &StandardDependencyPlanner{
 		handlerCtx:         handlerCtx,
 		dataflowCollection: dataflowCollection,
@@ -72,7 +75,7 @@ func NewStandardDependencyPlanner(
 		defaultStream:      streaming.NewStandardMapStream(),
 		annMap:             make(taxonomy.AnnotationCtxMap),
 		tcc:                tcc,
-	}
+	}, nil
 }
 
 func (dp *StandardDependencyPlanner) GetBldr() primitivebuilder.Builder {
@@ -187,7 +190,7 @@ func (dp *StandardDependencyPlanner) Plan() error {
 	}
 	rewrittenWhereStr := astvisit.GenerateModifiedWhereClause(dp.rewrittenWhere, dp.handlerCtx.GetNamespaceCollection())
 	logging.GetLogger().Debugf("rewrittenWhereStr = '%s'", rewrittenWhereStr)
-	drmCfg, err := drm.GetGoogleV1SQLiteConfig(dp.handlerCtx.GetNamespaceCollection())
+	drmCfg, err := drm.GetGoogleV1SQLiteConfig(dp.handlerCtx.SQLEngine, dp.handlerCtx.GetNamespaceCollection(), dp.handlerCtx.ControlAttributes)
 	if err != nil {
 		return err
 	}
@@ -245,7 +248,7 @@ func (dp *StandardDependencyPlanner) orchestrate(
 	inStream streaming.MapStream,
 	outStream streaming.MapStream,
 ) error {
-	rc := tableinsertioncontainer.NewTableInsertionContainer(annotationCtx.GetTableMeta())
+	rc := tableinsertioncontainer.NewTableInsertionContainer(annotationCtx.GetTableMeta(), dp.handlerCtx.SQLEngine)
 	builder := primitivebuilder.NewSingleSelectAcquire(
 		dp.primitiveComposer.GetGraph(),
 		dp.handlerCtx,
@@ -284,38 +287,18 @@ func (dp *StandardDependencyPlanner) processAcquire(
 	}
 	anTab := util.NewAnnotatedTabulation(tab, annotationCtx.GetHIDs(), annotationCtx.GetTableMeta().Alias)
 
-	discoGenId, err := docparser.OpenapiStackQLTabulationsPersistor(m, []util.AnnotatedTabulation{anTab}, dp.primitiveComposer.GetSQLEngine(), prov.Name, dp.handlerCtx.GetNamespaceCollection())
+	discoGenId, err := docparser.OpenapiStackQLTabulationsPersistor(m, []util.AnnotatedTabulation{anTab}, dp.primitiveComposer.GetSQLEngine(), prov.Name, dp.handlerCtx.GetNamespaceCollection(), dp.handlerCtx.ControlAttributes)
 	if err != nil {
 		return util.NewAnnotatedTabulation(nil, nil, ""), nil, err
 	}
 	dp.discoGenIDs[sqlNode] = discoGenId
-	tableDTO, err := dp.primitiveComposer.GetDRMConfig().GetCurrentTable(annotationCtx.GetHIDs(), dp.handlerCtx.SQLEngine)
-	if err != nil {
-		return util.NewAnnotatedTabulation(nil, nil, ""), nil, err
-	}
 	if dp.tcc == nil {
-		dp.tcc = dto.NewTxnControlCounters(dp.primitiveComposer.GetTxnCounterManager(), tableDTO.GetDiscoveryID())
-		dp.primaryTcc = dp.tcc
+		return util.NewAnnotatedTabulation(nil, nil, ""), nil, fmt.Errorf("nil counters disallowed in dependency planner")
 	} else {
 		dp.tcc = dp.tcc.CloneAndIncrementInsertID()
-		dp.tcc.DiscoveryGenerationId = discoGenId
 		dp.secondaryTccs = append(dp.secondaryTccs, dp.tcc)
 	}
 	return anTab, dp.tcc, nil
-}
-
-func (dp *StandardDependencyPlanner) createSelectFrom() (*sqlparser.Select, error) {
-	return &sqlparser.Select{
-		SelectExprs: sqlparser.SelectExprs{
-			//retrieve from somewhere
-		},
-		From: sqlparser.TableExprs{
-			// retrieve from somewhere
-		},
-		Where:
-		// retrieve from somewhere
-		nil,
-	}, nil
 }
 
 func (dp *StandardDependencyPlanner) getStreamFromEdge(e dataflow.DataFlowEdge, ac taxonomy.AnnotationCtx, tcc *dto.TxnControlCounters) (streaming.MapStream, error) {
@@ -326,7 +309,7 @@ func (dp *StandardDependencyPlanner) getStreamFromEdge(e dataflow.DataFlowEdge, 
 		}
 		ann := e.GetSource().GetAnnotation()
 		meta := ann.GetTableMeta()
-		insertContainer := tableinsertioncontainer.NewTableInsertionContainer(meta)
+		insertContainer := tableinsertioncontainer.NewTableInsertionContainer(meta, dp.handlerCtx.SQLEngine)
 		return sqlstream.NewSimpleSQLMapStream(selectCtx, insertContainer, dp.handlerCtx.DrmConfig, dp.handlerCtx.SQLEngine), nil
 	}
 	projection, err := e.GetProjection()

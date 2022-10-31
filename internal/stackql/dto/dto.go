@@ -67,6 +67,7 @@ const (
 	RegistryRawKey                  string = "registry"
 	GCCfgRawKey                     string = "gc"
 	NamespaceCfgRawKey              string = "namespaces"
+	StoreTxnCfgRawKey               string = "store.txn"
 	ReinitKey                       string = "reinit"
 	TemplateCtxFilePathKey          string = "iqldata"
 	TestWithoutApiCallsKey          string = "testwithoutapicalls"
@@ -247,7 +248,6 @@ type RuntimeCtx struct {
 	CSVHeadersDisable            bool
 	DbEngine                     string
 	DbFilePath                   string
-	DbGenerationId               int
 	DbInitFilePath               string
 	Delimiter                    string
 	DryRunFlag                   bool
@@ -274,6 +274,7 @@ type RuntimeCtx struct {
 	ProviderStr                  string
 	RegistryRaw                  string
 	NamespaceCfgRaw              string
+	StoreTxnCfgRaw               string
 	GCCfgRaw                     string
 	Reinit                       bool
 	QueryCacheSize               int
@@ -334,8 +335,6 @@ func (rc *RuntimeCtx) Set(key string, val string) error {
 		rc.DbEngine = val
 	case DbFilePathKey:
 		rc.DbFilePath = val
-	case DbGenerationIdKey:
-		retVal = setInt(&rc.DbGenerationId, val)
 	case DbInitFilePathKey:
 		rc.DbInitFilePath = val
 	case DelimiterKey:
@@ -368,6 +367,8 @@ func (rc *RuntimeCtx) Set(key string, val string) error {
 		rc.LogLevelStr = val
 	case NamespaceCfgRawKey:
 		rc.NamespaceCfgRaw = val
+	case StoreTxnCfgRawKey:
+		rc.StoreTxnCfgRaw = val
 	case GCCfgRawKey:
 		rc.GCCfgRaw = val
 	case OutfilePathKey:

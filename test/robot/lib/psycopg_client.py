@@ -24,7 +24,9 @@ class PsycoPGClient(object):
   def _run_queries(self, queries :typing.List[str]) -> typing.List[typing.Dict]:
     ret_val = []
     for q in queries:
-      ret_val += self._exec_query(q)
+      nv = self._exec_query(q)
+      if nv:
+        ret_val += nv
     return ret_val
 
 

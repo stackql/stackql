@@ -1,0 +1,7 @@
+[
+  { "name": "oidc_client", "status": "ACTIVE", "label": "demo-disk-xx4", "id": "0oa3fwm4zsW5jR5V55d7" },
+  { "name": "okta_browser_plugin", "status": "ACTIVE", "label": "Okta Browser Plugin", "id": "0oa3cy8k83is5uMwh5d7" },
+  { "name": "okta_enduser", "status": "ACTIVE", "label": "Okta Dashboard", "id": "0oa3cy8k8zaX4fKl15d7" },
+  { "name": "saasure", "status": "ACTIVE", "label": "Okta Admin Console", "id": "0oa3cy8k41YM15j4H5d7" },
+  { "name": "template_basic_auth", "status": "INACTIVE", "label": "demo-disk-xx5", "id": "0oa3pssr5jYavmnNF5d7" }
+]

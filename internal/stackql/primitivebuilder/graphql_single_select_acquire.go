@@ -85,7 +85,8 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 		return fmt.Errorf("could not build graphql exection for table")
 	}
 	ex := func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput {
-		ss.graph.AddTxnControlCounters(*ss.insertPreparedStatementCtx.GetGCCtrlCtrs())
+		currentTcc := *ss.insertPreparedStatementCtx.GetGCCtrlCtrs()
+		ss.graph.AddTxnControlCounters(currentTcc)
 
 		for _, reqCtx := range httpArmoury.GetRequestParams() {
 			req := reqCtx.Request
@@ -111,16 +112,17 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 				return dto.NewErroneousExecutorOutput(err)
 			}
 			reqEncoding := reqCtx.Encode()
-			tcc, isMatch := ss.handlerCtx.GetNamespaceCollection().GetAnalyticsCacheTableNamespaceConfigurator().Match(tableName, reqEncoding, ss.drmCfg.GetLastUpdatedControlColumn(), ss.drmCfg.GetInsertEncodedControlColumn())
+			olderTcc, isMatch := ss.handlerCtx.GetNamespaceCollection().GetAnalyticsCacheTableNamespaceConfigurator().Match(tableName, reqEncoding, ss.drmCfg.GetControlAttributes().GetControlLatestUpdateColumnName(), ss.drmCfg.GetControlAttributes().GetControlInsertEncodedIdColumnName())
 			if isMatch {
 				nonControlColumns := ss.insertPreparedStatementCtx.GetNonControlColumns()
 				var nonControlColumnNames []string
 				for _, c := range nonControlColumns {
 					nonControlColumnNames = append(nonControlColumnNames, c.GetName())
 				}
-				ss.insertionContainer.SetTableTxnCounters(tableName, tcc)
-				ss.insertPreparedStatementCtx.SetGCCtrlCtrs(tcc)
-				r, sqlErr := ss.handlerCtx.GetNamespaceCollection().GetAnalyticsCacheTableNamespaceConfigurator().Read(tableName, reqEncoding, ss.drmCfg.GetInsertEncodedControlColumn(), nonControlColumnNames)
+				ss.handlerCtx.GarbageCollector.Update(tableName, *olderTcc, currentTcc)
+				ss.insertionContainer.SetTableTxnCounters(tableName, olderTcc)
+				ss.insertPreparedStatementCtx.SetGCCtrlCtrs(olderTcc)
+				r, sqlErr := ss.handlerCtx.GetNamespaceCollection().GetAnalyticsCacheTableNamespaceConfigurator().Read(tableName, reqEncoding, ss.drmCfg.GetControlAttributes().GetControlInsertEncodedIdColumnName(), nonControlColumnNames)
 				if sqlErr != nil {
 					dto.NewErroneousExecutorOutput(sqlErr)
 				}

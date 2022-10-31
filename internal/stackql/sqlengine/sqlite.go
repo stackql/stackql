@@ -10,6 +10,7 @@ import (
 
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/logging"
+	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
 	"github.com/stackql/stackql/internal/stackql/util"
 
 	_ "github.com/stackql/go-sqlite3"
@@ -20,11 +21,12 @@ var (
 )
 
 type sqLiteEngine struct {
-	db             *sql.DB
-	fileName       string
-	ctrlMutex      *sync.Mutex
-	sessionMutex   *sync.Mutex
-	discoveryMutex *sync.Mutex
+	db                *sql.DB
+	fileName          string
+	controlAttributes sqlcontrol.ControlAttributes
+	ctrlMutex         *sync.Mutex
+	sessionMutex      *sync.Mutex
+	discoveryMutex    *sync.Mutex
 }
 
 func (se *sqLiteEngine) IsMemory() bool {
@@ -35,7 +37,7 @@ func (se *sqLiteEngine) GetDB() (*sql.DB, error) {
 	return se.db, nil
 }
 
-func newSQLiteEngine(cfg SQLEngineConfig) (*sqLiteEngine, error) {
+func newSQLiteEngine(cfg SQLEngineConfig, controlAttributes sqlcontrol.ControlAttributes) (*sqLiteEngine, error) {
 	fileName := cfg.fileName
 	if fileName == "" {
 		fileName = "file::memory:?cache=shared"
@@ -43,11 +45,12 @@ func newSQLiteEngine(cfg SQLEngineConfig) (*sqLiteEngine, error) {
 	db, err := sql.Open("sqlite3", fileName)
 	db.SetConnMaxLifetime(-1)
 	eng := &sqLiteEngine{
-		db:             db,
-		fileName:       fileName,
-		ctrlMutex:      &sync.Mutex{},
-		sessionMutex:   &sync.Mutex{},
-		discoveryMutex: &sync.Mutex{},
+		db:                db,
+		fileName:          fileName,
+		controlAttributes: controlAttributes,
+		ctrlMutex:         &sync.Mutex{},
+		sessionMutex:      &sync.Mutex{},
+		discoveryMutex:    &sync.Mutex{},
 	}
 	if err != nil {
 		return eng, err
@@ -62,8 +65,16 @@ func newSQLiteEngine(cfg SQLEngineConfig) (*sqLiteEngine, error) {
 	if err != nil {
 		return eng, err
 	}
-	err = eng.initSQLiteEngine()
 	return eng, err
+}
+
+func (eng *sqLiteEngine) execFileSQLite(fileName string) error {
+	fileContents, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		return err
+	}
+	_, err = eng.db.Exec(string(fileContents))
+	return err
 }
 
 // In SQLite, `DateTime` objects are not properly aware; the zone is not recorded.
@@ -75,11 +86,11 @@ func newSQLiteEngine(cfg SQLEngineConfig) (*sqLiteEngine, error) {
 // Therefore, this method will behave correctly provided that the column `colName`
 // is populated with `DateTime('now')`.
 func (eng *sqLiteEngine) TableOldestUpdateUTC(tableName string, requestEncoding string, updateColName string, requestEncodingColName string) (time.Time, *dto.TxnControlCounters) {
-	var gen_id_col_name string = "iql_generation_id"
-	var ssn_id_col_name string = "iql_session_id"
-	var txn_id_col_name string = "iql_txn_id"
-	var ins_id_col_name string = "iql_insert_id"
-	rows, err := eng.db.Query(fmt.Sprintf("SELECT strftime('%%Y-%%m-%%dT%%H:%%M:%%S', min(%s)) as oldest_update, %s, %s, %s, %s FROM \"%s\" WHERE %s = '%s';", updateColName, gen_id_col_name, ssn_id_col_name, txn_id_col_name, ins_id_col_name, tableName, requestEncodingColName, requestEncoding))
+	genIdColName := eng.controlAttributes.GetControlGenIdColumnName()
+	ssnIdColName := eng.controlAttributes.GetControlSsnIdColumnName()
+	txnIdColName := eng.controlAttributes.GetControlTxnIdColumnName()
+	insIdColName := eng.controlAttributes.GetControlInsIdColumnName()
+	rows, err := eng.db.Query(fmt.Sprintf("SELECT strftime('%%Y-%%m-%%dT%%H:%%M:%%S', min(%s)) as oldest_update, %s, %s, %s, %s FROM \"%s\" WHERE %s = '%s';", updateColName, genIdColName, ssnIdColName, txnIdColName, insIdColName, tableName, requestEncodingColName, requestEncoding))
 	if err == nil && rows != nil {
 		defer rows.Close()
 		rowExists := rows.Next()
@@ -97,15 +108,6 @@ func (eng *sqLiteEngine) TableOldestUpdateUTC(tableName string, requestEncoding 
 		}
 	}
 	return time.Time{}, nil
-}
-
-func (eng *sqLiteEngine) execFileSQLite(fileName string) error {
-	fileContents, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		return err
-	}
-	_, err = eng.db.Exec(string(fileContents))
-	return err
 }
 
 func (eng *sqLiteEngine) IsTablePresent(tableName string, requestEncoding string, colName string) bool {
@@ -138,11 +140,6 @@ func (eng *sqLiteEngine) ExecFileLocal(fileName string) error {
 
 func (eng *sqLiteEngine) ExecFile(fileName string) error {
 	return eng.execFileSQLite(fileName)
-}
-
-func (eng *sqLiteEngine) initSQLiteEngine() error {
-	_, err := eng.db.Exec(sqlEngineSetupDDL)
-	return err
 }
 
 func (se sqLiteEngine) Exec(query string, varArgs ...interface{}) (sql.Result, error) {
@@ -300,66 +297,6 @@ func (se sqLiteEngine) CacheStorePut(key string, val []byte, tablespace string, 
 	}
 	_, err = txn.Exec(`INSERT INTO "__iql__.cache.key_val" (k, v, tablespace, tablespace_id) VALUES(?, ?, ?, ?)`, key, val, tablespace, tablespaceID)
 	if err != nil {
-		txn.Rollback()
-		return err
-	}
-	err = txn.Commit()
-	return err
-}
-
-func (se sqLiteEngine) GCEnactFull() error {
-	err := se.collectObsolete()
-	if err != nil {
-		return err
-	}
-	err = se.collectUnreachable()
-	return err
-}
-
-func (se sqLiteEngine) GCCollectObsolete(tcc *dto.TxnControlCounters) error {
-	return se.collectObsoleteQualified(tcc)
-}
-
-func (se sqLiteEngine) GCCollectUnreachable() error {
-	return se.collectUnreachable()
-}
-
-func (se sqLiteEngine) collectUnreachable() error {
-	return se.concertedQueryGen(unreachableTablesQuery)
-}
-
-func (se sqLiteEngine) collectObsolete() error {
-	return se.concertedQueryGen(cleanupObsoleteQuery)
-}
-
-func (se sqLiteEngine) collectObsoleteQualified(tcc *dto.TxnControlCounters) error {
-	return se.concertedQueryGen(cleanupObsoleteQualifiedQuery, tcc.GenId, tcc.SessionId, tcc.TxnId)
-}
-
-func (se sqLiteEngine) concertedQueryGen(generatorQuery string, args ...interface{}) error {
-	if se.IsMemory() {
-		return nil
-	}
-	rows, err := se.db.Query(generatorQuery, args...)
-	if err != nil {
-		logging.GetLogger().Infoln(fmt.Sprintf("obsolete compose error: %v", err))
-		return err
-	}
-	txn, err := se.db.Begin()
-	if err != nil {
-		logging.GetLogger().Infoln(fmt.Sprintf("%v", err))
-		return err
-	}
-	amalgam, err := singleColRowsToString(rows)
-	if err != nil {
-		logging.GetLogger().Infoln(fmt.Sprintf("obsolete obtain error: %v", err))
-		txn.Rollback()
-		return err
-	}
-	logging.GetLogger().Infoln(fmt.Sprintf("amalgam = %s", amalgam))
-	_, err = se.db.Exec(amalgam, args...)
-	if err != nil {
-		logging.GetLogger().Infoln(fmt.Sprintf("obsolete exec error: %v", err))
 		txn.Rollback()
 		return err
 	}

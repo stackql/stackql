@@ -1,6 +1,7 @@
 package util
 
 import (
+	"database/sql"
 	"fmt"
 	"sort"
 	"strings"
@@ -359,6 +360,96 @@ func PrepareResultSet(payload dto.PrepareResultSetDTO) dto.ExecutorOutput {
 	return rv
 }
 
+func getColumnArr(colTypes []*sql.ColumnType) []sqldata.ISQLColumn {
+	var columns []sqldata.ISQLColumn
+
+	table := sqldata.NewSQLTable(0, "meta_table")
+
+	for _, col := range colTypes {
+		columns = append(columns, getPlaceholderColumnForNativeResult(table, col.Name(), col))
+	}
+	return columns
+}
+
+func getRowPointers(colTypes []*sql.ColumnType) []any {
+	var rowPtr []any
+
+	for _, col := range colTypes {
+		rowPtr = append(rowPtr, getScannableObjectForNativeResult(col))
+	}
+	return rowPtr
+}
+
+func nativeProtect(rv dto.ExecutorOutput, columns []string) dto.ExecutorOutput {
+	if rv.GetSQLResult() == nil {
+		table := sqldata.NewSQLTable(0, "meta_table")
+		rCols := make([]sqldata.ISQLColumn, len(columns))
+		for f := range rCols {
+			rCols[f] = getPlaceholderColumn(table, columns[f], nil)
+		}
+		rv.GetSQLResult = func() sqldata.ISQLResultStream {
+			return sqldata.NewSimpleSQLResultStream(sqldata.NewSQLResult(rCols, 0, 0, []sqldata.ISQLRow{
+				sqldata.NewSQLRow([]interface{}{}),
+			}))
+		}
+	}
+	return rv
+}
+
+func PrepareNativeResultSet(rows *sql.Rows) dto.ExecutorOutput {
+	if rows == nil {
+		emptyResult := dto.NewExecutorOutput(
+			nil,
+			nil,
+			nil,
+			&dto.BackendMessages{WorkingMessages: []string{"native sql nil result set"}},
+			nil,
+		)
+		return nativeProtect(emptyResult, []string{"error"})
+	}
+	colTypes, err := rows.ColumnTypes()
+	if err != nil {
+		return nativeProtect(dto.NewErroneousExecutorOutput(err), []string{"error"})
+	}
+
+	columns := getColumnArr(colTypes)
+
+	var colz []string
+
+	for _, c := range colTypes {
+		colz = append(colz, c.Name())
+	}
+
+	var outRows []sqldata.ISQLRow
+
+	for {
+		hasNext := rows.Next()
+		if !hasNext {
+			break
+		}
+		rowPtr := getRowPointers(colTypes)
+		err = rows.Scan(rowPtr...)
+		if err != nil {
+			return nativeProtect(dto.NewErroneousExecutorOutput(err), []string{"error"})
+		}
+		outRows = append(outRows, sqldata.NewSQLRow(rowPtr))
+	}
+	resultStream := sqldata.NewChannelSQLResultStream()
+	rv := dto.NewExecutorOutput(
+		resultStream,
+		nil,
+		nil,
+		nil,
+		nil,
+	)
+	resultStream.Write(sqldata.NewSQLResult(columns, 0, 0, outRows))
+	resultStream.Close()
+	if len(outRows) == 0 {
+		nativeProtect(rv, colz)
+	}
+	return rv
+}
+
 func EmptyProtectResultSet(rv dto.ExecutorOutput, columns []string) dto.ExecutorOutput {
 	return emptyProtectResultSet(rv, columns)
 }
@@ -406,6 +497,22 @@ func getOidForSchema(colSchema *openapistackql.Schema) oid.Oid {
 	}
 }
 
+func getOidForSQLType(colType *sql.ColumnType) oid.Oid {
+	if colType == nil {
+		return oid.T_text
+	}
+	switch strings.ToLower(colType.DatabaseTypeName()) {
+	case "object", "array":
+		return oid.T_text
+	case "boolean", "bool":
+		return oid.T_text
+	case "number", "int", "bigint", "smallint", "tinyint":
+		return oid.T_numeric
+	default:
+		return oid.T_text
+	}
+}
+
 func getPlaceholderColumn(table sqldata.ISQLTable, colName string, colSchema *openapistackql.Schema) sqldata.ISQLColumn {
 	return sqldata.NewSQLColumn(
 		table,
@@ -416,6 +523,35 @@ func getPlaceholderColumn(table sqldata.ISQLTable, colName string, colSchema *op
 		0,
 		"TextFormat",
 	)
+}
+
+func getPlaceholderColumnForNativeResult(table sqldata.ISQLTable, colName string, colSchema *sql.ColumnType) sqldata.ISQLColumn {
+	return sqldata.NewSQLColumn(
+		table,
+		colName,
+		0,
+		uint32(getOidForSQLType(colSchema)),
+		1024,
+		0,
+		"TextFormat",
+	)
+}
+
+func getScannableObjectForNativeResult(colSchema *sql.ColumnType) any {
+	switch strings.ToLower(colSchema.DatabaseTypeName()) {
+	case "int", "int32", "smallint", "tinyint":
+		return new(sql.NullInt32)
+	case "uint", "uint32":
+		return new(sql.NullInt64)
+	case "int64", "bigint":
+		return new(sql.NullInt64)
+	case "numeric", "decimal", "float", "float32", "float64":
+		return new(sql.NullFloat64)
+	case "bool":
+		return new(sql.NullBool)
+	default:
+		return new(sql.NullString)
+	}
 }
 
 func GetHeaderOnlyResultStream(colz []string) sqldata.ISQLResultStream {

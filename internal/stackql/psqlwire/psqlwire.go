@@ -2,6 +2,7 @@ package psqlwire
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 
 	postgreswire "github.com/jeroenrinzema/psql-wire"
@@ -66,13 +67,24 @@ func makePGServer(sqlBackend sqlbackend.ISQLBackend) (*postgreswire.Server, erro
 	return postgreswire.NewServer(postgreswire.SQLBackend(sqlBackend), postgreswire.Logger(logrus.StandardLogger()))
 }
 
+func processRowElement(rowElement interface{}) interface{} {
+	switch re := rowElement.(type) {
+	case driver.Valuer:
+		v, _ := re.Value()
+		return v
+	default:
+		return re
+	}
+}
+
 func ExtractRowElement(column sqldata.ISQLColumn, src interface{}, ci *pgtype.ConnInfo) ([]byte, error) {
 	typed, has := ci.DataTypeForOID(column.GetObjectID())
 	if !has {
 		return nil, fmt.Errorf("unknown data type: %T", column)
 	}
 
-	err := typed.Value.Set(src)
+	processedElement := processRowElement(src)
+	err := typed.Value.Set(processedElement)
 	if err != nil {
 		return nil, err
 	}

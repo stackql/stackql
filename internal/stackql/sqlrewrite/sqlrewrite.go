@@ -138,11 +138,11 @@ func GenerateSelectDML(input SQLRewriteInput) (*drm.PreparedStatementCtx, error)
 		}
 		quotedColNames = append(quotedColNames, fmt.Sprintf("%s ", colEntry.String()))
 	}
-	genIdColName := dc.GetGenerationControlColumn()
-	sessionIDColName := dc.GetSessionControlColumn()
-	txnIdColName := dc.GetTxnControlColumn()
-	insIdColName := dc.GetInsControlColumn()
-	insEncodedColName := dc.GetInsertEncodedControlColumn()
+	genIdColName := dc.GetControlAttributes().GetControlGenIdColumnName()
+	sessionIDColName := dc.GetControlAttributes().GetControlSsnIdColumnName()
+	txnIdColName := dc.GetControlAttributes().GetControlTxnIdColumnName()
+	insIdColName := dc.GetControlAttributes().GetControlInsIdColumnName()
+	insEncodedColName := dc.GetControlAttributes().GetControlInsertEncodedIdColumnName()
 	var wq strings.Builder
 	var controlWhereComparisons []string
 	inputContainers := input.GetTableInsertionContainers()

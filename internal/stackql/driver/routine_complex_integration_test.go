@@ -40,13 +40,6 @@ func TestUnionAllSelectComputeDisksOrderByCrtTmstpAscPlusCoalesceJsonExtract(t *
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		tc, err := entryutil.GetTxnCounterManager(handlerCtx)
-		if err != nil {
-			t.Fatalf("Test failed: %v", err)
-		}
-
-		handlerCtx.TxnCounterMgr = tc
-
 		handlerCtx.Query = testobjects.UnionSelectGoogleComputeDisksOrderCreationTmstpAscPlusJsonExtractCoalesce
 		response := querysubmit.SubmitQuery(&handlerCtx)
 		handlerCtx.Outfile = outFile

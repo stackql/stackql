@@ -76,8 +76,6 @@ type IProvider interface {
 	SetCurrentService(serviceKey string)
 
 	ShowAuth(authCtx *dto.AuthCtx) (*openapistackql.AuthMetadata, error)
-
-	GetDiscoveryGeneration(sqlengine.SQLEngine) (int, error)
 }
 
 func GetProvider(runtimeCtx dto.RuntimeCtx, providerStr, providerVersion string, reg openapistackql.RegistryAPI, dbEngine sqlengine.SQLEngine) (IProvider, error) {

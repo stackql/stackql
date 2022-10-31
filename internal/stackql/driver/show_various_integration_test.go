@@ -50,12 +50,6 @@ func TestSimpleShowResourcesFiltered(t *testing.T) {
 		handlerCtx.Outfile = outFile
 		handlerCtx.OutErrFile = os.Stderr
 
-		tc, err := entryutil.GetTxnCounterManager(handlerCtx)
-		if err != nil {
-			t.Fatalf("Test failed: %v", err)
-		}
-		handlerCtx.TxnCounterMgr = tc
-
 		ProcessQuery(&handlerCtx)
 	}
 
@@ -96,12 +90,6 @@ func TestSimpleShowBQDatasets(t *testing.T) {
 		handlerCtx.Outfile = outFile
 		handlerCtx.OutErrFile = os.Stderr
 
-		tc, err := entryutil.GetTxnCounterManager(handlerCtx)
-		if err != nil {
-			t.Fatalf("Test failed: %v", err)
-		}
-		handlerCtx.TxnCounterMgr = tc
-
 		ProcessQuery(&handlerCtx)
 	}
 
@@ -141,12 +129,6 @@ func TestSimpleShowGoogleStorageBuckets(t *testing.T) {
 
 		handlerCtx.Outfile = outFile
 		handlerCtx.OutErrFile = os.Stderr
-
-		tc, err := entryutil.GetTxnCounterManager(handlerCtx)
-		if err != nil {
-			t.Fatalf("Test failed: %v", err)
-		}
-		handlerCtx.TxnCounterMgr = tc
 
 		ProcessQuery(&handlerCtx)
 	}

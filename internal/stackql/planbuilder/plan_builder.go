@@ -39,13 +39,16 @@ type PlanBuilderInput interface {
 	GetExec() (*sqlparser.Exec, bool)
 	GetHandlerCtx() *handler.HandlerContext
 	GetInsert() (*sqlparser.Insert, bool)
+	GetNativeQuery() (*sqlparser.NativeQuery, bool)
 	GetPlaceholderParams() parserutil.ParameterMap
+	GetPurge() (*sqlparser.Purge, bool)
 	GetRegistry() (*sqlparser.Registry, bool)
 	GetSelect() (*sqlparser.Select, bool)
 	GetShow() (*sqlparser.Show, bool)
 	GetSleep() (*sqlparser.Sleep, bool)
 	GetStatement() sqlparser.SQLNode
 	GetTableExprs() sqlparser.TableExprs
+	GetTxnCtrlCtrs() dto.TxnControlCounters
 	GetUnion() (*sqlparser.Union, bool)
 	GetUpdate() (*sqlparser.Update, bool)
 	GetUse() (*sqlparser.Use, bool)
@@ -63,6 +66,7 @@ type StandardPlanBuilderInput struct {
 	assignedAliasedColumns parserutil.TableExprMap
 	tables                 sqlparser.TableExprs
 	paramsPlaceheld        parserutil.ParameterMap
+	tcc                    dto.TxnControlCounters
 }
 
 func NewPlanBuilderInput(
@@ -73,6 +77,7 @@ func NewPlanBuilderInput(
 	aliasedTables parserutil.TableAliasMap,
 	colRefs parserutil.ColTableMap,
 	paramsPlaceheld parserutil.ParameterMap,
+	tcc dto.TxnControlCounters,
 ) PlanBuilderInput {
 	rv := &StandardPlanBuilderInput{
 		handlerCtx:             handlerCtx,
@@ -82,6 +87,7 @@ func NewPlanBuilderInput(
 		assignedAliasedColumns: assignedAliasedColumns,
 		colRefs:                colRefs,
 		paramsPlaceheld:        paramsPlaceheld,
+		tcc:                    tcc,
 	}
 	if rv.assignedAliasedColumns == nil {
 		rv.assignedAliasedColumns = make(map[sqlparser.TableName]sqlparser.TableExpr)
@@ -91,6 +97,10 @@ func NewPlanBuilderInput(
 
 func (pbi *StandardPlanBuilderInput) GetStatement() sqlparser.SQLNode {
 	return pbi.stmt
+}
+
+func (pbi *StandardPlanBuilderInput) GetTxnCtrlCtrs() dto.TxnControlCounters {
+	return pbi.tcc
 }
 
 func (pbi *StandardPlanBuilderInput) GetPlaceholderParams() parserutil.ParameterMap {
@@ -145,6 +155,16 @@ func (pbi *StandardPlanBuilderInput) GetInsert() (*sqlparser.Insert, bool) {
 
 func (pbi *StandardPlanBuilderInput) GetRegistry() (*sqlparser.Registry, bool) {
 	rv, ok := pbi.stmt.(*sqlparser.Registry)
+	return rv, ok
+}
+
+func (pbi *StandardPlanBuilderInput) GetPurge() (*sqlparser.Purge, bool) {
+	rv, ok := pbi.stmt.(*sqlparser.Purge)
+	return rv, ok
+}
+
+func (pbi *StandardPlanBuilderInput) GetNativeQuery() (*sqlparser.NativeQuery, bool) {
+	rv, ok := pbi.stmt.(*sqlparser.NativeQuery)
 	return rv, ok
 }
 
@@ -217,8 +237,12 @@ func (pgb *planGraphBuilder) createInstructionFor(pbi PlanBuilderInput) error {
 		return iqlerror.GetStatementNotSupportedError("EXPLAIN")
 	case *sqlparser.Insert:
 		return pgb.handleInsert(pbi)
+	case *sqlparser.NativeQuery:
+		return pgb.handleNativeQuery(pbi)
 	case *sqlparser.OtherRead, *sqlparser.OtherAdmin:
 		return iqlerror.GetStatementNotSupportedError("OTHER")
+	case *sqlparser.Purge:
+		return pgb.handlePurge(pbi)
 	case *sqlparser.Registry:
 		return pgb.handleRegistry(pbi)
 	case *sqlparser.Rollback:
@@ -527,6 +551,98 @@ func (pgb *planGraphBuilder) handleRegistry(pbi PlanBuilderInput) error {
 	return nil
 }
 
+func (pgb *planGraphBuilder) handlePurge(pbi PlanBuilderInput) error {
+	handlerCtx := pbi.GetHandlerCtx()
+	node, ok := pbi.GetPurge()
+	if !ok {
+		return fmt.Errorf("could not cast statement of type '%T' to required Purge", pbi.GetStatement())
+	}
+	// primitiveGenerator := newRootPrimitiveGenerator(node, handlerCtx, pgb.planGraph)
+	pr := primitive.NewLocalPrimitive(
+		func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput {
+			if node.IsGlobal {
+				err := handlerCtx.GarbageCollector.Purge()
+				if err != nil {
+					return dto.NewErroneousExecutorOutput(err)
+				}
+				return util.PrepareResultSet(
+					dto.NewPrepareResultSetPlusRawDTO(
+						nil,
+						map[string]map[string]interface{}{"0": {"message": "purge 'GLOBAL' completed"}},
+						[]string{"message"},
+						nil,
+						nil,
+						&dto.BackendMessages{
+							WorkingMessages: []string{fmt.Sprintf("Global PURGE successfully completed")}},
+						nil,
+					),
+				)
+			}
+			targetStr := strings.ToLower(node.Target.GetRawVal())
+			switch targetStr {
+			case "cache":
+				err := handlerCtx.GarbageCollector.PurgeCache()
+				if err != nil {
+					return dto.NewErroneousExecutorOutput(err)
+				}
+			case "conservative":
+				err := handlerCtx.GarbageCollector.Collect()
+				if err != nil {
+					return dto.NewErroneousExecutorOutput(err)
+				}
+			case "control_tables":
+				err := handlerCtx.GarbageCollector.PurgeControlTables()
+				if err != nil {
+					return dto.NewErroneousExecutorOutput(err)
+				}
+			case "ephemeral":
+				err := handlerCtx.GarbageCollector.PurgeEphemeral()
+				if err != nil {
+					return dto.NewErroneousExecutorOutput(err)
+				}
+			default:
+				return dto.NewErroneousExecutorOutput(fmt.Errorf("purge target '%s' not supported", targetStr))
+			}
+			// This happens in all cases, provided the ourge is successful.
+			handlerCtx.LRUCache.Clear()
+			purgeMsg := fmt.Sprintf("PURGE of type '%s' successfully completed", targetStr)
+			return util.PrepareResultSet(
+				dto.NewPrepareResultSetPlusRawDTO(
+					nil,
+					map[string]map[string]interface{}{"0": {"message": purgeMsg}},
+					[]string{"message"},
+					nil,
+					nil,
+					nil,
+					// &dto.BackendMessages{
+					// 	WorkingMessages: []string{fmt.Sprintf("PURGE of type '%s' successfully completed", targetStr)}},
+					nil,
+				),
+			)
+		},
+	)
+	pgb.planGraph.CreatePrimitiveNode(pr)
+
+	return nil
+}
+
+func (pgb *planGraphBuilder) handleNativeQuery(pbi PlanBuilderInput) error {
+	handlerCtx := pbi.GetHandlerCtx()
+	node, ok := pbi.GetNativeQuery()
+	if !ok {
+		return fmt.Errorf("could not cast statement of type '%T' to required Purge", pbi.GetStatement())
+	}
+	rns := primitivebuilder.NewRawNativeSelect(pgb.planGraph, handlerCtx, pbi.GetTxnCtrlCtrs(), node.QueryString)
+
+	err := rns.Build()
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (pgb *planGraphBuilder) handleInsert(pbi PlanBuilderInput) error {
 	handlerCtx := pbi.GetHandlerCtx()
 	node, ok := pbi.GetInsert()
@@ -549,7 +665,7 @@ func (pgb *planGraphBuilder) handleInsert(pbi PlanBuilderInput) error {
 		if nonValCols > 0 {
 			switch rowsNode := node.Rows.(type) {
 			case *sqlparser.Select:
-				selPbi := NewPlanBuilderInput(pbi.GetHandlerCtx(), rowsNode, pbi.GetTableExprs(), pbi.GetAssignedAliasedColumns(), pbi.GetAliasedTables(), pbi.GetColRefs(), pbi.GetPlaceholderParams())
+				selPbi := NewPlanBuilderInput(pbi.GetHandlerCtx(), rowsNode, pbi.GetTableExprs(), pbi.GetAssignedAliasedColumns(), pbi.GetAliasedTables(), pbi.GetColRefs(), pbi.GetPlaceholderParams(), pbi.GetTxnCtrlCtrs())
 				_, selectPrimitiveNode, err = pgb.handleSelect(selPbi)
 				if err != nil {
 					return err
@@ -739,12 +855,23 @@ func createErroneousPlan(handlerCtx *handler.HandlerContext, qPlan *plan.Plan, r
 
 func BuildPlanFromContext(handlerCtx *handler.HandlerContext) (*plan.Plan, error) {
 	defer handlerCtx.GarbageCollector.Close()
+	tcc, err := dto.NewTxnControlCounters(handlerCtx.TxnCounterMgr)
+	handlerCtx.TxnStore.Put(tcc.TxnId)
+	defer handlerCtx.TxnStore.Del(tcc.TxnId)
+	logging.GetLogger().Debugf("tcc = %v\n", tcc)
+	if err != nil {
+		return nil, err
+	}
 	planKey := handlerCtx.Query
 	if qp, ok := handlerCtx.LRUCache.Get(planKey); ok && isPlanCacheEnabled() {
 		logging.GetLogger().Infoln("retrieving query plan from cache")
 		pl, ok := qp.(*plan.Plan)
 		if ok {
-			pl.Instructions.SetTxnId(handlerCtx.TxnCounterMgr.GetNextTxnId())
+			txnId, err := handlerCtx.TxnCounterMgr.GetNextTxnId()
+			if err != nil {
+				return nil, err
+			}
+			pl.Instructions.SetTxnId(txnId)
 			return pl, nil
 		}
 		return qp.(*plan.Plan), nil
@@ -752,7 +879,6 @@ func BuildPlanFromContext(handlerCtx *handler.HandlerContext) (*plan.Plan, error
 	qPlan := plan.NewPlan(
 		handlerCtx.RawQuery,
 	)
-	var err error
 	var rowSort func(map[string]map[string]interface{}) []string
 	var statement sqlparser.Statement
 	statement, err = parse.ParseQuery(handlerCtx.Query)
@@ -774,13 +900,13 @@ func BuildPlanFromContext(handlerCtx *handler.HandlerContext) (*plan.Plan, error
 
 	if sel, ok := isPGSetupQuery(handlerCtx.RawQuery); ok {
 		if sel != nil {
-			pbi := NewPlanBuilderInput(handlerCtx, result.AST, nil, nil, nil, nil, nil)
+			pbi := NewPlanBuilderInput(handlerCtx, result.AST, nil, nil, nil, nil, nil, *tcc)
 			createInstructionError := pGBuilder.createInstructionFor(pbi)
 			if createInstructionError != nil {
 				return nil, createInstructionError
 			}
 		} else {
-			pbi := NewPlanBuilderInput(handlerCtx, nil, nil, nil, nil, nil, nil)
+			pbi := NewPlanBuilderInput(handlerCtx, nil, nil, nil, nil, nil, nil, *tcc)
 			createInstructionError := pGBuilder.nop(pbi)
 			if createInstructionError != nil {
 				return nil, createInstructionError
@@ -788,8 +914,8 @@ func BuildPlanFromContext(handlerCtx *handler.HandlerContext) (*plan.Plan, error
 		}
 	} else {
 		// First pass AST analysis; extract provider strings for auth.
-		provStrSlice, analyticsCacheMaterialDetected := astvisit.ExtractProviderStringsAndDetectAnalyticsCache(result.AST, handlerCtx.GetNamespaceCollection())
-		if analyticsCacheMaterialDetected {
+		provStrSlice, cacheExemptMaterialDetected := astvisit.ExtractProviderStringsAndDetectCacheExceptMaterial(result.AST, handlerCtx.GetNamespaceCollection())
+		if cacheExemptMaterialDetected {
 			qPlan.SetCacheable(false)
 		}
 		for _, p := range provStrSlice {
@@ -829,7 +955,7 @@ func BuildPlanFromContext(handlerCtx *handler.HandlerContext) (*plan.Plan, error
 		tpv := astvisit.NewPlaceholderParamAstVisitor("", false)
 		tpv.Visit(ast)
 
-		pbi := NewPlanBuilderInput(handlerCtx, ast, tVis.GetTables(), aVis.GetAliasedColumns(), tVis.GetAliasMap(), aVis.GetColRefs(), tpv.GetParameters())
+		pbi := NewPlanBuilderInput(handlerCtx, ast, tVis.GetTables(), aVis.GetAliasedColumns(), tVis.GetAliasMap(), aVis.GetColRefs(), tpv.GetParameters(), *tcc)
 
 		createInstructionError := pGBuilder.createInstructionFor(pbi)
 		if createInstructionError != nil {

@@ -7,7 +7,6 @@ import (
 
 	"github.com/jeroenrinzema/psql-wire/pkg/sqldata"
 	"github.com/stackql/stackql/internal/stackql/dto"
-	"github.com/stackql/stackql/internal/stackql/entryutil"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/querysubmit"
@@ -89,12 +88,6 @@ func NewStackQLBackend(handlerCtx *handler.HandlerContext) (*StackQLBackend, err
 func processQueryOrQueries(handlerCtx *handler.HandlerContext) ([]dto.ExecutorOutput, bool) {
 	var retVal []dto.ExecutorOutput
 	cmdString := handlerCtx.RawQuery
-	tc, err := entryutil.GetTxnCounterManager(*handlerCtx)
-	if err != nil {
-		throwErr(err, handlerCtx)
-		return nil, false
-	}
-	handlerCtx.TxnCounterMgr = tc
 	for _, s := range strings.Split(cmdString, ";") {
 		if s == "" {
 			continue

@@ -50,7 +50,11 @@ func (v *QueryRewriteAstVisitor) buildAcquireQueryCtx(
 	if err != nil {
 		return nil, err
 	}
-	insPsc, err := dc.GenerateInsertDML(annotatedInsertTabulation, os, v.getCtrlCounters(tableDTO.GetDiscoveryID()))
+	ctrs, err := v.getCtrlCounters(tableDTO.GetDiscoveryID())
+	if err != nil {
+		return nil, err
+	}
+	insPsc, err := dc.GenerateInsertDML(annotatedInsertTabulation, os, ctrs)
 	if err != nil {
 		return nil, err
 	}
@@ -125,11 +129,11 @@ type QueryRewriteAstVisitor struct {
 	anonColCounter int
 }
 
-func (v *QueryRewriteAstVisitor) getCtrlCounters(discoveryGenerationID int) *dto.TxnControlCounters {
+func (v *QueryRewriteAstVisitor) getCtrlCounters(discoveryGenerationID int) (*dto.TxnControlCounters, error) {
 	if v.baseCtrlCounters == nil {
-		return dto.NewTxnControlCounters(v.handlerCtx.TxnCounterMgr, discoveryGenerationID)
+		return nil, fmt.Errorf("QueryRewriteAstVisitor: no control counters present")
 	}
-	return v.baseCtrlCounters.CloneWithDiscoGenID(discoveryGenerationID)
+	return v.baseCtrlCounters.CloneWithDiscoGenID(discoveryGenerationID), nil
 }
 
 func NewQueryRewriteAstVisitor(

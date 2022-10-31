@@ -36,7 +36,6 @@ func TestSimpleSelectGoogleComputeInstance(t *testing.T) {
 		fmt.Sprintf("--registry=%s", runtimeCtx.RegistryRaw),
 		fmt.Sprintf("--dbfilepath=%s", runtimeCtx.DbFilePath),
 		fmt.Sprintf("--dbinitfilepath=%s", runtimeCtx.DbInitFilePath),
-		fmt.Sprintf("--dbgenerationid=%d", 1),
 		"-i=stdin",
 		"exec",
 		testobjects.SimpleSelectGoogleComputeInstance,
