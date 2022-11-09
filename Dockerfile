@@ -54,7 +54,7 @@ RUN   cd ${SRC_DIR} && go test --tags "json1 sqleanall" ./... \
         --tags "json1 sqleanall" \
         -o ${BUILD_DIR}/stackql ./stackql
 
-FROM ubuntu:22.04 AS certificates
+FROM alpine/openssl:latest AS certificates
 
 ARG TEST_ROOT_DIR=/opt/test/stackql
 
@@ -62,16 +62,13 @@ ENV TEST_ROOT_DIR=${TEST_ROOT_DIR}
 
 RUN mkdir -p ${TEST_ROOT_DIR}
 
-COPY --from=builder /work/stackql/src ${TEST_ROOT_DIR}/
+ADD test ${TEST_ROOT_DIR}/test
 
-RUN apt-get update \
-    && apt-get install --yes --no-install-recommends \
-      openssl \
-    && openssl req -x509 -keyout ${TEST_ROOT_DIR}/test/server/mtls/credentials/pg_server_key.pem -out  ${TEST_ROOT_DIR}/test/server/mtls/credentials/pg_server_cert.pem  -config ${TEST_ROOT_DIR}/test/server/mtls/openssl.cnf -days 365 \
+RUN openssl req -x509 -keyout ${TEST_ROOT_DIR}/test/server/mtls/credentials/pg_server_key.pem -out  ${TEST_ROOT_DIR}/test/server/mtls/credentials/pg_server_cert.pem  -config ${TEST_ROOT_DIR}/test/server/mtls/openssl.cnf -days 365 \
     && openssl req -x509 -keyout ${TEST_ROOT_DIR}/test/server/mtls/credentials/pg_client_key.pem -out  ${TEST_ROOT_DIR}/test/server/mtls/credentials/pg_client_cert.pem  -config ${TEST_ROOT_DIR}/test/server/mtls/openssl.cnf -days 365 \
     && openssl req -x509 -keyout ${TEST_ROOT_DIR}/test/server/mtls/credentials/pg_rubbish_key.pem -out ${TEST_ROOT_DIR}/test/server/mtls/credentials/pg_rubbish_cert.pem -config ${TEST_ROOT_DIR}/test/server/mtls/openssl.cnf -days 365
 
-FROM ubuntu:22.04 AS registrymock
+FROM python:3.11-bullseye AS registrymock
 
 ARG TEST_ROOT_DIR=/opt/test/stackql
 
@@ -81,14 +78,29 @@ RUN mkdir -p ${TEST_ROOT_DIR}
 
 COPY --from=certificates /opt/test/stackql ${TEST_ROOT_DIR}/
 
-RUN apt-get update \
-    && apt-get install --yes --no-install-recommends \
-      python3 \
-      python3-pip \
-    && pip3 install PyYaml \
+RUN pip3 install PyYaml \
     && python3 ${TEST_ROOT_DIR}/test/python/registry-rewrite.py
 
-FROM ubuntu:22.04 AS integration
+FROM python:3.11-bullseye AS preintegration
+
+ARG TEST_ROOT_DIR=/opt/test/stackql
+
+ENV TEST_ROOT_DIR=${TEST_ROOT_DIR}
+
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends \
+      default-jdk \
+      default-jre \
+      maven \
+      openssl \
+      postgresql-client \
+    && pip3 install PyYaml robotframework psycopg2-binary "psycopg[binary]" \
+    && mvn \
+        org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy \
+        -Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded \
+        -DoutputDirectory=${TEST_ROOT_DIR}/test/downloads
+
+FROM preintegration AS integration
 
 ARG TEST_ROOT_DIR=/opt/test/stackql
 
@@ -118,21 +130,7 @@ COPY --from=registrymock /opt/test/stackql ${TEST_ROOT_DIR}/
 
 COPY --from=builder /work/stackql/build/stackql ${TEST_ROOT_DIR}/build/
 
-RUN apt-get update \
-    && apt-get install --yes --no-install-recommends \
-      default-jdk \
-      default-jre \
-      maven \
-      openssl \
-      postgresql-client \
-      python3 \
-      python3-pip \
-    && pip3 install PyYaml robotframework psycopg2-binary "psycopg[binary]" \
-    && mvn \
-        org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy \
-        -Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded \
-        -DoutputDirectory=${TEST_ROOT_DIR}/test/downloads \
-    && robot ${TEST_ROOT_DIR}/test/robot/functional
+RUN  robot ${TEST_ROOT_DIR}/test/robot/functional
 
 FROM ubuntu:22.04 AS app
 

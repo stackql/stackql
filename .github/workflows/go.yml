@@ -588,6 +588,11 @@ jobs:
       run: |
         python3 test/python/registry-rewrite.py --replacement-host=host.docker.internal
 
+    - name: Pull Docker base images for cache purposes
+      run: |
+        docker pull golang:1.18.4-bullseye
+        docker pull ubuntu:22.04
+
     - name: Pull Docker image for cache purposes
       run: |
         docker pull stackql/stackql:latest || echo 'could not pull image for cache purposes'
@@ -603,9 +608,9 @@ jobs:
 
     - name: Build image
       run: |
-        docker-compose build credentialsgen
-        docker-compose build mockserver
-        docker-compose build stackqlsrv
+        docker compose build credentialsgen
+        docker compose build mockserver
+        docker compose build stackqlsrv
 
     - name: Mock Server Download
       run: |

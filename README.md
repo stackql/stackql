@@ -71,7 +71,7 @@ Executable `build/stackql` will be created.
 #### In shell
 
 ```bash
-go build \
+env CGO_ENABLED=1 go build \
   --tags "json1 sqleanall" \
   -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion=${BUILDMAJORVERSION:-1} \
   -X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion=${BUILDMINORVERSION:-1} \
