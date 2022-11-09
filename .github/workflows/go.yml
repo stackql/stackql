@@ -45,7 +45,7 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
-        cache: pip-${{ runner.os }}
+        cache: pip
         python-version: '3.11' 
 
     - name: Cache Chocolatey packages
@@ -83,10 +83,7 @@ jobs:
 
     - name: Install Python dependencies
       run: |
-        pip3 install PyYaml
-        pip3 install robotframework
-        pip3 install psycopg2-binary
-        pip3 install "psycopg[binary]"
+        pip3 install -r requirements.txt
 
     
     - name: Generate rewritten registry for simulations
@@ -221,7 +218,7 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
-        cache: pip-${{ runner.os }}
+        cache: pip
         python-version: '3.11' 
     
     - name: Git Ref Parse
@@ -245,10 +242,7 @@ jobs:
 
     - name: Install Python dependencies
       run: |
-        pip3 install PyYaml
-        pip3 install robotframework
-        pip3 install psycopg2-binary
-        pip3 install "psycopg[binary]"
+        pip3 install -r requirements.txt
     
     - name: Generate rewritten registry for simulations
       run: |
@@ -369,7 +363,7 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
-        cache: pip-${{ runner.os }}
+        cache: pip
         python-version: '3.11' 
     
     - name: Git Ref Parse
@@ -381,10 +375,7 @@ jobs:
 
     - name: Install Python dependencies
       run: |
-        pip3 install PyYaml
-        pip3 install robotframework
-        pip3 install psycopg2-binary
-        pip3 install "psycopg[binary]"
+        pip3 install -r requirements.txt
     
     - name: Generate rewritten registry for simulations
       run: |
@@ -575,7 +566,7 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
-        cache: pip-docker-${{ runner.os }}
+        cache: pip
         python-version: '3.11'
     
     - name: Git Ref Parse
@@ -595,10 +586,7 @@ jobs:
 
     - name: Install Python dependencies
       run: |
-        pip3 install PyYaml
-        pip3 install robotframework
-        pip3 install psycopg2-binary
-        pip3 install "psycopg[binary]"
+        pip3 install -r requirements.txt
     
     - name: Extract Build Info and Persist
       env:
