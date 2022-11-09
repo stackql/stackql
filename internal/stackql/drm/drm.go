@@ -9,11 +9,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
+	"github.com/stackql/stackql/internal/stackql/relationaldto"
 	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
+	"github.com/stackql/stackql/internal/stackql/sqldialect"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/streaming"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
@@ -87,6 +88,7 @@ type PreparedStatementCtx struct {
 	txnCtrlCtrs             *dto.TxnControlCounters
 	selectTxnCtrlCtrs       []*dto.TxnControlCounters
 	namespaceCollection     tablenamespace.TableNamespaceCollection
+	sqlDialect              sqldialect.SQLDialect
 }
 
 func (ps *PreparedStatementCtx) SetKind(kind string) {
@@ -130,6 +132,7 @@ func NewPreparedStatementCtx(
 	txnCtrlCtrs *dto.TxnControlCounters,
 	secondaryCtrs []*dto.TxnControlCounters,
 	namespaceCollection tablenamespace.TableNamespaceCollection,
+	sqlDialect sqldialect.SQLDialect,
 ) *PreparedStatementCtx {
 	return &PreparedStatementCtx{
 		query:                   query,
@@ -145,6 +148,7 @@ func NewPreparedStatementCtx(
 		txnCtrlCtrs:             txnCtrlCtrs,
 		selectTxnCtrlCtrs:       secondaryCtrs,
 		namespaceCollection:     namespaceCollection,
+		sqlDialect:              sqlDialect,
 	}
 }
 
@@ -153,16 +157,9 @@ func NewQueryOnlyPreparedStatementCtx(query string) *PreparedStatementCtx {
 }
 
 func (ps PreparedStatementCtx) GetGCHousekeepingQueries() string {
-	templateQuery := `INSERT OR IGNORE INTO 
-	  "__iql__.control.gc.txn_table_x_ref" (
-			iql_generation_id, 
-			iql_session_id, 
-			iql_transaction_id, 
-			table_name
-		) values(%d, %d, %d, '%s')`
 	var housekeepingQueries []string
 	for _, table := range ps.TableNames {
-		housekeepingQueries = append(housekeepingQueries, fmt.Sprintf(templateQuery, ps.txnCtrlCtrs.GenId, ps.txnCtrlCtrs.SessionId, ps.txnCtrlCtrs.TxnId, table))
+		housekeepingQueries = append(housekeepingQueries, ps.sqlDialect.GetGCHousekeepingQuery(table, *ps.txnCtrlCtrs))
 	}
 	return strings.Join(housekeepingQueries, "; ")
 }
@@ -212,6 +209,7 @@ type DRMConfig interface {
 	GetGolangSlices([]ColumnMetadata) ([]interface{}, []string)
 	GetNamespaceCollection() tablenamespace.TableNamespaceCollection
 	GetParserTableName(*dto.HeirarchyIdentifiers, int) sqlparser.TableName
+	GetSQLDialect() sqldialect.SQLDialect
 	GetTableName(*dto.HeirarchyIdentifiers, int) (string, error)
 	GenerateInsertDML(util.AnnotatedTabulation, *openapistackql.OperationStore, *dto.TxnControlCounters) (*PreparedStatementCtx, error)
 	GenerateSelectDML(util.AnnotatedTabulation, *dto.TxnControlCounters, string, string) (*PreparedStatementCtx, error)
@@ -227,6 +225,11 @@ type StaticDRMConfig struct {
 	namespaceCollection   tablenamespace.TableNamespaceCollection
 	controlAttributes     sqlcontrol.ControlAttributes
 	sqlEngine             sqlengine.SQLEngine
+	sqlDialect            sqldialect.SQLDialect
+}
+
+func (dc *StaticDRMConfig) GetSQLDialect() sqldialect.SQLDialect {
+	return dc.sqlDialect
 }
 
 func (dc *StaticDRMConfig) GetControlAttributes() sqlcontrol.ControlAttributes {
@@ -254,6 +257,7 @@ func (dc *StaticDRMConfig) ExtractObjectFromSQLRows(r *sql.Rows, nonControlColum
 }
 
 func (dc *StaticDRMConfig) extractObjectFromSQLRows(r *sql.Rows, nonControlColumns []ColumnMetadata, stream streaming.MapStream) (map[string]map[string]interface{}, map[int]map[int]interface{}) {
+	defer r.Close()
 	altKeys := make(map[string]map[string]interface{})
 	rawRows := make(map[int]map[int]interface{})
 	var ks []int
@@ -435,82 +439,38 @@ func (dc *StaticDRMConfig) inferColType(col util.Column) string {
 }
 
 func (dc *StaticDRMConfig) GenerateDDL(tabAnn util.AnnotatedTabulation, m *openapistackql.OperationStore, discoveryGenerationID int, dropTable bool) ([]string, error) {
-	var colDefs, retVal []string
-	var rv strings.Builder
 	tableName, err := dc.getTableName(tabAnn.GetHeirarchyIdentifiers(), discoveryGenerationID)
 	if err != nil {
 		return nil, err
 	}
-	rv.WriteString(fmt.Sprintf(`create table if not exists "%s" ( `, tableName))
-	colDefs = append(colDefs, fmt.Sprintf(`"iql_%s_id" INTEGER PRIMARY KEY AUTOINCREMENT`, tableName))
-	genIdColName := dc.controlAttributes.GetControlGenIdColumnName()
-	sessionIdColName := dc.controlAttributes.GetControlSsnIdColumnName()
-	txnIdColName := dc.controlAttributes.GetControlTxnIdColumnName()
-	maxTxnIdColName := dc.controlAttributes.GetControlMaxTxnColumnName()
-	insIdColName := dc.controlAttributes.GetControlInsIdColumnName()
-	lastUpdateColName := dc.controlAttributes.GetControlLatestUpdateColumnName()
-	insertEncodedColName := dc.controlAttributes.GetControlInsertEncodedIdColumnName()
-	gcStatusColName := dc.controlAttributes.GetControlGCStatusColumnName()
-	colDefs = append(colDefs, fmt.Sprintf(`"%s" INTEGER `, genIdColName))
-	colDefs = append(colDefs, fmt.Sprintf(`"%s" INTEGER `, sessionIdColName))
-	colDefs = append(colDefs, fmt.Sprintf(`"%s" INTEGER `, txnIdColName))
-	colDefs = append(colDefs, fmt.Sprintf(`"%s" INTEGER `, maxTxnIdColName))
-	colDefs = append(colDefs, fmt.Sprintf(`"%s" INTEGER `, insIdColName))
-	colDefs = append(colDefs, fmt.Sprintf(`"%s" TEXT `, insertEncodedColName))
-	colDefs = append(colDefs, fmt.Sprintf(`"%s" DateTime NOT NULL DEFAULT CURRENT_TIMESTAMP `, lastUpdateColName))
-	colDefs = append(colDefs, fmt.Sprintf(`"%s" SMALLINT NOT NULL DEFAULT %d `, gcStatusColName, constants.GCBlack))
+	relationalTable := relationaldto.NewRelationalTable(tableName)
 	schemaAnalyzer := util.NewTableSchemaAnalyzer(tabAnn.GetTabulation().GetSchema(), m)
 	tableColumns := schemaAnalyzer.GetColumns()
 	for _, col := range tableColumns {
-		var b strings.Builder
 		colName := col.GetName()
 		colType := dc.inferColType(col)
-		b.WriteString(`"` + colName + `" `)
-		b.WriteString(dc.GetRelationalType(colType))
-		colDefs = append(colDefs, b.String())
+		relationalType := dc.GetRelationalType(colType)
+		// TODO: add drm logic to infer / transform width as suplied by openapi doc
+		colWidth := col.GetWidth()
+		relationalColumn := relationaldto.NewRelationalColumn(colName, relationalType).WithWidth(colWidth)
+		relationalTable.PushBackColumn(relationalColumn)
 	}
-	rv.WriteString(strings.Join(colDefs, " , "))
-	rv.WriteString(" ) ")
-	if dropTable {
-		dts, err := dc.generateDropTableStatement(tabAnn.GetHeirarchyIdentifiers(), discoveryGenerationID)
-		if err != nil {
-			return nil, err
-		}
-		retVal = append(retVal, dts)
-	}
-	retVal = append(retVal, rv.String())
-	retVal = append(retVal, fmt.Sprintf(`create index if not exists "idx_%s_%s" on "%s" ( "%s" ) `, strings.ReplaceAll(tableName, ".", "_"), genIdColName, tableName, genIdColName))
-	retVal = append(retVal, fmt.Sprintf(`create index if not exists "idx_%s_%s" on "%s" ( "%s" ) `, strings.ReplaceAll(tableName, ".", "_"), sessionIdColName, tableName, sessionIdColName))
-	retVal = append(retVal, fmt.Sprintf(`create index if not exists "idx_%s_%s" on "%s" ( "%s" ) `, strings.ReplaceAll(tableName, ".", "_"), txnIdColName, tableName, txnIdColName))
-	retVal = append(retVal, fmt.Sprintf(`create index if not exists "idx_%s_%s" on "%s" ( "%s" ) `, strings.ReplaceAll(tableName, ".", "_"), insIdColName, tableName, insIdColName))
-	return retVal, nil
+	return dc.sqlDialect.GenerateDDL(relationalTable, dropTable)
 }
 
 func (dc *StaticDRMConfig) GenerateInsertDML(tabAnnotated util.AnnotatedTabulation, method *openapistackql.OperationStore, tcc *dto.TxnControlCounters) (*PreparedStatementCtx, error) {
-	// logging.GetLogger().Infoln(fmt.Sprintf("%v", tabulation))
-	var q strings.Builder
-	var quotedColNames, vals []string
 	var columns []ColumnMetadata
 	tableName, err := dc.GetCurrentTable(tabAnnotated.GetHeirarchyIdentifiers(), dc.sqlEngine)
 	if err != nil {
 		return nil, err
 	}
-	q.WriteString(fmt.Sprintf(`INSERT INTO "%s" `, tableName.GetName()))
 	genIdColName := dc.controlAttributes.GetControlGenIdColumnName()
 	sessionIdColName := dc.controlAttributes.GetControlSsnIdColumnName()
 	txnIdColName := dc.controlAttributes.GetControlTxnIdColumnName()
 	insIdColName := dc.controlAttributes.GetControlInsIdColumnName()
 	insEncodedColName := dc.controlAttributes.GetControlInsertEncodedIdColumnName()
-	quotedColNames = append(quotedColNames, `"`+genIdColName+`" `)
-	quotedColNames = append(quotedColNames, `"`+sessionIdColName+`" `)
-	quotedColNames = append(quotedColNames, `"`+txnIdColName+`" `)
-	quotedColNames = append(quotedColNames, `"`+insIdColName+`" `)
-	quotedColNames = append(quotedColNames, `"`+insEncodedColName+`" `)
-	vals = append(vals, "?")
-	vals = append(vals, "?")
-	vals = append(vals, "?")
-	vals = append(vals, "?")
-	vals = append(vals, "?")
+
+	relationalTable := relationaldto.NewRelationalTable(tableName.GetName())
 	schemaAnalyzer := util.NewTableSchemaAnalyzer(tabAnnotated.GetTabulation().GetSchema(), method)
 	tableColumns := schemaAnalyzer.GetColumnDescriptors(tabAnnotated)
 	for _, col := range tableColumns {
@@ -520,13 +480,15 @@ func (dc *StaticDRMConfig) GenerateInsertDML(tabAnnotated util.AnnotatedTabulati
 			relationalType = dc.GetRelationalType(schema.Type)
 		}
 		columns = append(columns, NewColDescriptor(col, relationalType))
-		quotedColNames = append(quotedColNames, `"`+col.Name+`" `)
-		vals = append(vals, "?")
+		relationalColumn := relationaldto.NewRelationalColumn(col.Name, relationalType)
+		relationalTable.PushBackColumn(relationalColumn)
 	}
-	q.WriteString(fmt.Sprintf(" (%s) ", strings.Join(quotedColNames, ", ")))
-	q.WriteString(fmt.Sprintf(" VALUES (%s) ", strings.Join(vals, ", ")))
+	queryString, err := dc.sqlDialect.GenerateInsertDML(relationalTable, tcc)
+	if err != nil {
+		return nil, err
+	}
 	return NewPreparedStatementCtx(
-			q.String(),
+			queryString,
 			"",
 			genIdColName,
 			sessionIdColName,
@@ -539,15 +501,24 @@ func (dc *StaticDRMConfig) GenerateInsertDML(tabAnnotated util.AnnotatedTabulati
 			tcc,
 			nil,
 			dc.namespaceCollection,
+			dc.sqlDialect,
 		),
 		nil
 }
 
 func (dc *StaticDRMConfig) GenerateSelectDML(tabAnnotated util.AnnotatedTabulation, txnCtrlCtrs *dto.TxnControlCounters, selectSuffix, rewrittenWhere string) (*PreparedStatementCtx, error) {
-	var q strings.Builder
-	var quotedColNames, quotedWhereColNames []string
+	var quotedColNames []string
 	var columns []ColumnMetadata
-	// var vals []interface{}
+
+	aliasStr := ""
+	if tabAnnotated.GetAlias() != "" {
+		aliasStr = fmt.Sprintf(` AS "%s" `, tabAnnotated.GetAlias())
+	}
+	tn, err := dc.GetCurrentTable(tabAnnotated.GetHeirarchyIdentifiers(), dc.sqlEngine)
+	if err != nil {
+		return nil, err
+	}
+	relationalTable := relationaldto.NewRelationalTable(tn.GetName()).WithAlias(aliasStr)
 	for _, col := range tabAnnotated.GetTabulation().GetColumns() {
 		var typeStr string
 		if col.Schema != nil {
@@ -560,42 +531,30 @@ func (dc *StaticDRMConfig) GenerateSelectDML(tabAnnotated util.AnnotatedTabulati
 			}
 		}
 		columns = append(columns, NewColDescriptor(col, typeStr))
-		var colEntry strings.Builder
+		// TODO: logic to infer column width
+		relationalColumn := relationaldto.NewRelationalColumn(col.Name, typeStr).WithQualifier(col.Qualifier)
 		if col.DecoratedCol == "" {
-			colEntry.WriteString(fmt.Sprintf(`"%s" `, col.Name))
 			if col.Alias != "" {
-				colEntry.WriteString(fmt.Sprintf(` AS "%s"`, col.Alias))
+				relationalColumn = relationalColumn.WithAlias(col.Alias)
 			}
 		} else {
-			colEntry.WriteString(fmt.Sprintf("%s ", col.DecoratedCol))
+			relationalColumn = relationalColumn.WithDecorated(col.DecoratedCol)
 		}
-		quotedColNames = append(quotedColNames, fmt.Sprintf("%s ", colEntry.String()))
-
+		relationalTable.PushBackColumn(relationalColumn)
+		quotedColNames = append(quotedColNames, fmt.Sprintf("%s ", relationalColumn.CanonicalSelectionString()))
 	}
+	queryString, err := dc.sqlDialect.GenerateSelectDML(relationalTable, txnCtrlCtrs, selectSuffix, rewrittenWhere)
+
+	if err != nil {
+		return nil, err
+	}
+
 	genIdColName := dc.controlAttributes.GetControlGenIdColumnName()
 	sessionIDColName := dc.controlAttributes.GetControlSsnIdColumnName()
 	txnIdColName := dc.controlAttributes.GetControlTxnIdColumnName()
 	insIdColName := dc.controlAttributes.GetControlInsIdColumnName()
-	quotedWhereColNames = append(quotedWhereColNames, `"`+genIdColName+`" `)
-	quotedWhereColNames = append(quotedWhereColNames, `"`+txnIdColName+`" `)
-	quotedWhereColNames = append(quotedWhereColNames, `"`+insIdColName+`" `)
-	aliasStr := ""
-	if tabAnnotated.GetAlias() != "" {
-		aliasStr = fmt.Sprintf(` AS "%s" `, tabAnnotated.GetAlias())
-	}
-	tn, err := dc.GetCurrentTable(tabAnnotated.GetHeirarchyIdentifiers(), dc.sqlEngine)
-	if err != nil {
-		return nil, err
-	}
-	q.WriteString(fmt.Sprintf(`SELECT %s FROM "%s" %s WHERE `, strings.Join(quotedColNames, ", "), tn.GetName(), aliasStr))
-	q.WriteString(fmt.Sprintf(`( "%s" = ? AND "%s" = ? AND "%s" = ? AND "%s" = ? ) `, genIdColName, sessionIDColName, txnIdColName, insIdColName))
-	if strings.TrimSpace(rewrittenWhere) != "" {
-		q.WriteString(fmt.Sprintf(" AND ( %s ) ", rewrittenWhere))
-	}
-	q.WriteString(selectSuffix)
-
 	return NewPreparedStatementCtx(
-		q.String(),
+		queryString,
 		"",
 		genIdColName,
 		sessionIDColName,
@@ -608,11 +567,11 @@ func (dc *StaticDRMConfig) GenerateSelectDML(tabAnnotated util.AnnotatedTabulati
 		txnCtrlCtrs,
 		nil,
 		dc.namespaceCollection,
+		dc.sqlDialect,
 	), nil
 }
 
 func (dc *StaticDRMConfig) generateControlVarArgs(cp PreparedStatementParameterized, isInsert bool) ([]interface{}, error) {
-	// logging.GetLogger().Infoln(fmt.Sprintf("%v", ctx))
 	var varArgs []interface{}
 	if cp.controlArgsRequired {
 		ctrSlice := cp.Ctx.GetAllCtrlCtrs()
@@ -714,7 +673,7 @@ func (dc *StaticDRMConfig) QueryDML(dbEngine sqlengine.SQLEngine, ctxParameteriz
 	return dbEngine.Query(query, varArgs...)
 }
 
-func GetGoogleV1SQLiteConfig(sqlEngine sqlengine.SQLEngine, namespaceCollection tablenamespace.TableNamespaceCollection, controlAttributes sqlcontrol.ControlAttributes) (DRMConfig, error) {
+func GetDRMConfig(sqlDialect sqldialect.SQLDialect, namespaceCollection tablenamespace.TableNamespaceCollection, controlAttributes sqlcontrol.ControlAttributes) (DRMConfig, error) {
 	rv := &StaticDRMConfig{
 		typeMappings: map[string]DRMCoupling{
 			"array":   {RelationalType: "text", GolangKind: reflect.Slice},
@@ -729,7 +688,8 @@ func GetGoogleV1SQLiteConfig(sqlEngine sqlengine.SQLEngine, namespaceCollection 
 		defaultGolangValue:    sql.NullString{}, // string is default
 		namespaceCollection:   namespaceCollection,
 		controlAttributes:     controlAttributes,
-		sqlEngine:             sqlEngine,
+		sqlEngine:             sqlDialect.GetSQLEngine(),
+		sqlDialect:            sqlDialect,
 	}
 	return rv, nil
 }

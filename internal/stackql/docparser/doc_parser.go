@@ -6,6 +6,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
+	"github.com/stackql/stackql/internal/stackql/sqldialect"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"github.com/stackql/stackql/internal/stackql/util"
@@ -36,8 +37,9 @@ func OpenapiStackQLTabulationsPersistor(
 	prefix string,
 	namespaceCollection tablenamespace.TableNamespaceCollection,
 	controlAttributes sqlcontrol.ControlAttributes,
+	sqlDialect sqldialect.SQLDialect,
 ) (int, error) {
-	drmCfg, err := drm.GetGoogleV1SQLiteConfig(dbEngine, namespaceCollection, controlAttributes)
+	drmCfg, err := drm.GetDRMConfig(sqlDialect, namespaceCollection, controlAttributes)
 	if err != nil {
 		return 0, err
 	}

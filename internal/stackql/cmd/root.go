@@ -95,6 +95,7 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
+	rootCmd.PersistentFlags().StringVar(&runtimeCtx.SQLBackendCfgRaw, dto.SQLBackendCfgRawKey, "{}", "JSON / YAML string representing SQL Backend System Config")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.NamespaceCfgRaw, dto.NamespaceCfgRawKey, "{}", "JSON / YAML string representing namespaces for cacheing, views etc")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.StoreTxnCfgRaw, dto.StoreTxnCfgRawKey, "{}", "JSON / YAML string representing Txn store config")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.GCCfgRaw, dto.GCCfgRawKey, "{}", "JSON / YAML string representing GC config")
@@ -108,8 +109,6 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.ViperCfgFileName, dto.ViperCfgFileNameKey, config.GetDefaultViperConfigFileName(), fmt.Sprintf("Config filename"))
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.AuthRaw, dto.AuthCtxKey, "", `auth contexts keyvals in json form, eg: '{ "google": { "credentialsfilepath": "/path/to/google/sevice/account/key.json",  "type": "service_account" }, "okta": { "credentialsenvvar": "OKTA_SECRET_KEY",  "type": "api_key" } }'`)
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.RegistryRaw, dto.RegistryRawKey, fmt.Sprintf(`{ "url": "%s", "localDocRoot": "%s" }`, defaultRegistryUrlString, strings.ReplaceAll(path.Join(runtimeCtx.ApplicationFilesRootPath), `\`, `\\`)), fmt.Sprintf(`openapi registry context keyvals in json form, eg: '{ "url": "%s" }'.`, defaultRegistryUrlString))
-	rootCmd.PersistentFlags().StringVar(&runtimeCtx.DbEngine, dto.DbEngineKey, config.GetDefaultDbEngine(), fmt.Sprintf("DB engine id"))
-	rootCmd.PersistentFlags().StringVar(&runtimeCtx.DbFilePath, dto.DbFilePathKey, config.GetDefaultDbFilePath(), fmt.Sprintf("DB persistence filename"))
 	rootCmd.PersistentFlags().BoolVar(&runtimeCtx.HTTPLogEnabled, dto.HTTPLogEnabledKey, false, "Display http request info in terminal")
 	rootCmd.PersistentFlags().IntVar(&runtimeCtx.HTTPMaxResults, dto.HTTPMaxResultsKey, -1, "Max results per http request, any number <=0 results in no limitation")
 	rootCmd.PersistentFlags().IntVar(&runtimeCtx.HTTPPageLimit, dto.HTTPPAgeLimitKey, 20, "Max pages of results that will be returned per resource, any number <=0 results in no limitation")
@@ -119,12 +118,10 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.HTTPProxyScheme, dto.HTTPProxySchemeKey, "http", "http proxy scheme, eg 'http'")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.HTTPProxyPassword, dto.HTTPProxyPasswordKey, "", "http proxy password")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.HTTPProxyUser, dto.HTTPProxyUserKey, "", "http proxy user")
-	rootCmd.PersistentFlags().StringVar(&runtimeCtx.DbInitFilePath, dto.DbInitFilePathKey, config.GetDefaultDbInitFilePath(), fmt.Sprintf("DB init file path"))
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.ProviderStr, dto.ProviderStrKey, "", fmt.Sprintf(`stackql provider`))
 	rootCmd.PersistentFlags().BoolVar(&runtimeCtx.WorkOffline, dto.WorkOfflineKey, false, "Work offline, using cached data")
 	rootCmd.PersistentFlags().BoolVarP(&runtimeCtx.VerboseFlag, dto.VerboseFlagKey, "v", false, "Verbose flag")
 	rootCmd.PersistentFlags().BoolVar(&runtimeCtx.DryRunFlag, dto.DryRunFlagKey, false, "dryrun flag; preprocessor only will run and output returned")
-	rootCmd.PersistentFlags().BoolVar(&runtimeCtx.Reinit, dto.ReinitKey, false, "reinit; will delete db file at startup and force regeneration of all dependencies")
 	rootCmd.PersistentFlags().BoolVarP(&runtimeCtx.CSVHeadersDisable, dto.CSVHeadersDisableKey, "H", false, "Disable CSV headers flag")
 	rootCmd.PersistentFlags().StringVarP(&runtimeCtx.OutputFormat, dto.OutputFormatKey, "o", "table", "Output format, must be (json | table | csv)")
 	rootCmd.PersistentFlags().StringVarP(&runtimeCtx.OutfilePath, dto.OutfilePathKey, "f", "stdout", "Output file into which results are written")
@@ -183,9 +180,6 @@ func initConfig() {
 	config.CreateDirIfNotExists(runtimeCtx.ApplicationFilesRootPath, os.FileMode(runtimeCtx.ApplicationFilesRootPathMode))
 	config.CreateDirIfNotExists(path.Join(runtimeCtx.ApplicationFilesRootPath, runtimeCtx.ProviderStr), os.FileMode(runtimeCtx.ApplicationFilesRootPathMode))
 	config.CreateDirIfNotExists(config.GetReadlineDirPath(runtimeCtx), os.FileMode(runtimeCtx.ApplicationFilesRootPathMode))
-	if runtimeCtx.Reinit {
-		os.Remove(runtimeCtx.DbFilePath)
-	}
 	viper.SetConfigFile(path.Join(runtimeCtx.ApplicationFilesRootPath, runtimeCtx.ViperCfgFileName))
 	viper.AddConfigPath(runtimeCtx.ApplicationFilesRootPath)
 

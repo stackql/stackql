@@ -1,4 +1,24 @@
-FROM golang:1.18.4-bullseye AS builder
+FROM golang:1.18.4-bullseye AS sourceprep
+
+ENV SRC_DIR=/work/stackql/src
+
+ENV BUILD_DIR=/work/stackql/build
+
+RUN mkdir -p ${SRC_DIR} ${BUILD_DIR}
+
+ADD internal  ${SRC_DIR}/internal
+
+ADD pkg ${SRC_DIR}/pkg
+
+ADD stackql ${SRC_DIR}/stackql
+
+ADD test ${SRC_DIR}/test
+
+COPY go.mod go.sum ${SRC_DIR}/
+
+RUN  cd ${SRC_DIR} && ls && go get -v -t -d ./...
+
+FROM sourceprep AS builder 
 
 ARG BUILDMAJORVERSION="1"
 ARG BUILDMINORVERSION="1"
@@ -22,20 +42,8 @@ ENV SRC_DIR=/work/stackql/src
 
 ENV BUILD_DIR=/work/stackql/build
 
-RUN mkdir -p ${SRC_DIR} ${BUILD_DIR}
-
-ADD internal  ${SRC_DIR}/internal
-
-ADD pkg ${SRC_DIR}/pkg
-
-ADD stackql ${SRC_DIR}/stackql
-
-ADD test ${SRC_DIR}/test
-
-COPY go.mod go.sum ${SRC_DIR}/
-
-RUN  cd ${SRC_DIR} && ls && go get -v -t -d ./... && go test --tags "json1 sqleanall" ./... \
-     && go build -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion=$BUILDMAJORVERSION \
+RUN   cd ${SRC_DIR} && go test --tags "json1 sqleanall" ./... \
+      && go build -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion=$BUILDMAJORVERSION \
           -X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion=$BUILDMINORVERSION \
           -X github.com/stackql/stackql/internal/stackql/cmd.BuildPatchVersion=$BUILDPATCHVERSION \
           -X github.com/stackql/stackql/internal/stackql/cmd.BuildCommitSHA=$BUILDCOMMITSHA \

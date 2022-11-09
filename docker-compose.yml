@@ -38,6 +38,8 @@ services:
       - BUILDMAJORVERSION=${BUILDMAJORVERSION:-1}
       - BUILDMINORVERSION=${BUILDMINORVERSION:-1}
       - BUILDPATCHVERSION=${BUILDPATCHVERSION:-1}
+    depends_on:
+      - postgres_stackql
   credentialsgen:
     image: stackql/stackqlsrvcertificates
     build:
@@ -127,4 +129,14 @@ services:
           -Dmockserver.logLevel=OFF \
           -Droot.logLevel=OFF \
           -jar    $${MOCKSERVER_JAR} \
-          -serverPort    $${MOCKSERVER_PORT_AZURE}
+          -serverPort    $${MOCKSERVER_PORT_AZURE} \
+        && sleep 5
+  postgres_stackql:
+    image: postgres:14.5-bullseye
+    hostname: postgres_stackql
+    volumes:
+      - ./vol/postgres/setup:/docker-entrypoint-initdb.d:ro
+    environment:
+      - POSTGRES_PASSWORD=stackql
+    ports:
+      - "5432/tcp"

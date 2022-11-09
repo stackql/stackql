@@ -39,8 +39,7 @@ func GetRuntimeCtx(providerStr string, outputFmtStr string, testName string) (*d
 		AuthRaw:                   fmt.Sprintf(`{ "google": { "credentialsfilepath": "%s" }, "okta": { "credentialsfilepath": "%s", "type": "api_key" } }`, saKeyPath, oktaSaKeyPath),
 		RegistryRaw:               fmt.Sprintf(`{ "url": "file://%s",  "useEmbedded": false }`, registryRoot),
 		OutputFormat:              outputFmtStr,
-		DbFilePath:                fmt.Sprintf("file:%s?mode=memory&cache=shared", testName),
-		DbInitFilePath:            dbInitFilePath,
+		SQLBackendCfgRaw:          fmt.Sprintf(`{ "dbInitFilepath": "%s", "dsn": "file:%s?mode=memory&cache=shared" }`, dbInitFilePath, testName),
 		ExecutionConcurrencyLimit: 1,
 	}, nil
 }

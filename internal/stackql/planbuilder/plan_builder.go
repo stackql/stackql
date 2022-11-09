@@ -42,6 +42,7 @@ type PlanBuilderInput interface {
 	GetNativeQuery() (*sqlparser.NativeQuery, bool)
 	GetPlaceholderParams() parserutil.ParameterMap
 	GetPurge() (*sqlparser.Purge, bool)
+	GetRawQuery() string
 	GetRegistry() (*sqlparser.Registry, bool)
 	GetSelect() (*sqlparser.Select, bool)
 	GetShow() (*sqlparser.Show, bool)
@@ -78,7 +79,7 @@ func NewPlanBuilderInput(
 	colRefs parserutil.ColTableMap,
 	paramsPlaceheld parserutil.ParameterMap,
 	tcc dto.TxnControlCounters,
-) PlanBuilderInput {
+) (PlanBuilderInput, error) {
 	rv := &StandardPlanBuilderInput{
 		handlerCtx:             handlerCtx,
 		stmt:                   stmt,
@@ -89,10 +90,17 @@ func NewPlanBuilderInput(
 		paramsPlaceheld:        paramsPlaceheld,
 		tcc:                    tcc,
 	}
+	if handlerCtx == nil {
+		return nil, fmt.Errorf("plan builder input invariant violation: nil handler context")
+	}
 	if rv.assignedAliasedColumns == nil {
 		rv.assignedAliasedColumns = make(map[sqlparser.TableName]sqlparser.TableExpr)
 	}
-	return rv
+	return rv, nil
+}
+
+func (pbi *StandardPlanBuilderInput) GetRawQuery() string {
+	return pbi.handlerCtx.RawQuery
 }
 
 func (pbi *StandardPlanBuilderInput) GetStatement() sqlparser.SQLNode {
@@ -665,7 +673,10 @@ func (pgb *planGraphBuilder) handleInsert(pbi PlanBuilderInput) error {
 		if nonValCols > 0 {
 			switch rowsNode := node.Rows.(type) {
 			case *sqlparser.Select:
-				selPbi := NewPlanBuilderInput(pbi.GetHandlerCtx(), rowsNode, pbi.GetTableExprs(), pbi.GetAssignedAliasedColumns(), pbi.GetAliasedTables(), pbi.GetColRefs(), pbi.GetPlaceholderParams(), pbi.GetTxnCtrlCtrs())
+				selPbi, err := NewPlanBuilderInput(pbi.GetHandlerCtx(), rowsNode, pbi.GetTableExprs(), pbi.GetAssignedAliasedColumns(), pbi.GetAliasedTables(), pbi.GetColRefs(), pbi.GetPlaceholderParams(), pbi.GetTxnCtrlCtrs())
+				if err != nil {
+					return err
+				}
 				_, selectPrimitiveNode, err = pgb.handleSelect(selPbi)
 				if err != nil {
 					return err
@@ -898,69 +909,78 @@ func BuildPlanFromContext(handlerCtx *handler.HandlerContext) (*plan.Plan, error
 
 	pGBuilder := newPlanGraphBuilder(handlerCtx.RuntimeContext.ExecutionConcurrencyLimit)
 
-	if sel, ok := isPGSetupQuery(handlerCtx.RawQuery); ok {
+	// First pass AST analysis; extract provider strings for auth.
+	provStrSlice, cacheExemptMaterialDetected := astvisit.ExtractProviderStringsAndDetectCacheExceptMaterial(result.AST, handlerCtx.SQLDialect, handlerCtx.GetNamespaceCollection())
+	if cacheExemptMaterialDetected {
+		qPlan.SetCacheable(false)
+	}
+	for _, p := range provStrSlice {
+		_, err := handlerCtx.GetProvider(p)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if err != nil {
+		return createErroneousPlan(handlerCtx, qPlan, rowSort, err)
+	}
+
+	ast := result.AST
+
+	// Second pass AST analysis; extract provider strings for auth.
+	// Extracts:
+	//   - parser objects representing tables.
+	//   - mapping of string aliases to tables.
+	tVis := astvisit.NewTableExtractAstVisitor()
+	tVis.Visit(ast)
+
+	// Third pass AST analysis.
+	// Accepts slice of parser table objects
+	// extracted from previous analysis.
+	// Extracts:
+	//   - Col Refs; mapping columnar objects to tables.
+	//   - Alias Map; mapping the "TableName" objects
+	//     defining aliases to table objects.
+	aVis := astvisit.NewTableAliasAstVisitor(tVis.GetTables())
+	aVis.Visit(ast)
+
+	// Fourth pass AST analysis.
+	// Extracts:
+	//   - Columnar parameters with null values.
+	//     Useful for method matching.
+	//     Especially for "Insert" queries.
+	tpv := astvisit.NewPlaceholderParamAstVisitor("", false)
+	tpv.Visit(ast)
+
+	pbi, err := NewPlanBuilderInput(handlerCtx, ast, tVis.GetTables(), aVis.GetAliasedColumns(), tVis.GetAliasMap(), aVis.GetColRefs(), tpv.GetParameters(), *tcc)
+	if err != nil {
+		return nil, err
+	}
+
+	if sel, ok := isPGSetupQuery(pbi); ok {
 		if sel != nil {
-			pbi := NewPlanBuilderInput(handlerCtx, result.AST, nil, nil, nil, nil, nil, *tcc)
+			pbi, err := NewPlanBuilderInput(handlerCtx, result.AST, nil, nil, nil, nil, nil, *tcc)
+			if err != nil {
+				return nil, err
+			}
 			createInstructionError := pGBuilder.createInstructionFor(pbi)
 			if createInstructionError != nil {
 				return nil, createInstructionError
 			}
 		} else {
-			pbi := NewPlanBuilderInput(handlerCtx, nil, nil, nil, nil, nil, nil, *tcc)
+			pbi, err := NewPlanBuilderInput(handlerCtx, nil, nil, nil, nil, nil, nil, *tcc)
+			if err != nil {
+				return nil, err
+			}
 			createInstructionError := pGBuilder.nop(pbi)
 			if createInstructionError != nil {
 				return nil, createInstructionError
 			}
 		}
-	} else {
-		// First pass AST analysis; extract provider strings for auth.
-		provStrSlice, cacheExemptMaterialDetected := astvisit.ExtractProviderStringsAndDetectCacheExceptMaterial(result.AST, handlerCtx.GetNamespaceCollection())
-		if cacheExemptMaterialDetected {
-			qPlan.SetCacheable(false)
-		}
-		for _, p := range provStrSlice {
-			_, err := handlerCtx.GetProvider(p)
-			if err != nil {
-				return nil, err
-			}
-		}
-		if err != nil {
-			return createErroneousPlan(handlerCtx, qPlan, rowSort, err)
-		}
+	}
 
-		ast := result.AST
-
-		// Second pass AST analysis; extract provider strings for auth.
-		// Extracts:
-		//   - parser objects representing tables.
-		//   - mapping of string aliases to tables.
-		tVis := astvisit.NewTableExtractAstVisitor()
-		tVis.Visit(ast)
-
-		// Third pass AST analysis.
-		// Accepts slice of parser table objects
-		// extracted from previous analysis.
-		// Extracts:
-		//   - Col Refs; mapping columnar objects to tables.
-		//   - Alias Map; mapping the "TableName" objects
-		//     defining aliases to table objects.
-		aVis := astvisit.NewTableAliasAstVisitor(tVis.GetTables())
-		aVis.Visit(ast)
-
-		// Fourth pass AST analysis.
-		// Extracts:
-		//   - Columnar parameters with null values.
-		//     Useful for method matching.
-		//     Especially for "Insert" queries.
-		tpv := astvisit.NewPlaceholderParamAstVisitor("", false)
-		tpv.Visit(ast)
-
-		pbi := NewPlanBuilderInput(handlerCtx, ast, tVis.GetTables(), aVis.GetAliasedColumns(), tVis.GetAliasMap(), aVis.GetColRefs(), tpv.GetParameters(), *tcc)
-
-		createInstructionError := pGBuilder.createInstructionFor(pbi)
-		if createInstructionError != nil {
-			return nil, createInstructionError
-		}
+	createInstructionError := pGBuilder.createInstructionFor(pbi)
+	if createInstructionError != nil {
+		return nil, createInstructionError
 	}
 
 	qPlan.Instructions = pGBuilder.planGraph

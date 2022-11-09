@@ -216,7 +216,7 @@ func GetHandlerCtx(cmdString string, runtimeCtx dto.RuntimeCtx, lruCache *lrucac
 		TxnStore:            inputBundle.GetTxnStore(),
 		namespaceCollection: inputBundle.GetNamespaceCollection(),
 	}
-	drmCfg, err := drm.GetGoogleV1SQLiteConfig(sqlEngine, rv.namespaceCollection, controlAttributes)
+	drmCfg, err := drm.GetDRMConfig(inputBundle.GetSQLDialect(), rv.namespaceCollection, controlAttributes)
 	if err != nil {
 		return HandlerContext{}, err
 	}

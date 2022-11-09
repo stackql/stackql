@@ -84,7 +84,7 @@ func (v *QueryRewriteAstVisitor) getStarColumns(
 	}
 	var columnDescriptors []openapistackql.ColumnDescriptor
 	for _, col := range cols {
-		columnDescriptors = append(columnDescriptors, openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.DecoratedColumn, nil, schema, col.Val))
+		columnDescriptors = append(columnDescriptors, openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, nil, schema, col.Val))
 	}
 	return columnDescriptors, nil
 }
@@ -186,7 +186,7 @@ func (v *QueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 	switch node := node.(type) {
 	case *sqlparser.Select:
-		v.selectSuffix = GenerateModifiedSelectSuffix(node, v.namespaceCollection)
+		v.selectSuffix = GenerateModifiedSelectSuffix(node, v.handlerCtx.SQLDialect, v.namespaceCollection)
 		var options string
 		addIf := func(b bool, s string) {
 			if b {
@@ -218,7 +218,7 @@ func (v *QueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			if err != nil {
 				return err
 			}
-			fromVis := NewDRMAstVisitor("", true, v.namespaceCollection)
+			fromVis := NewDRMAstVisitor("", true, v.handlerCtx.SQLDialect, v.namespaceCollection)
 			if node.From != nil {
 				node.From.Accept(fromVis)
 				v.fromStr = fromVis.GetRewrittenQuery()
@@ -553,7 +553,7 @@ func (v *QueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 				col.Alias = v.getNextAlias()
 			}
 			v.columnNames = append(v.columnNames, col)
-			cd := openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.DecoratedColumn, node, nil, col.Val)
+			cd := openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, node, nil, col.Val)
 			v.columnDescriptors = append(v.columnDescriptors, cd)
 			return nil
 		}
@@ -564,7 +564,7 @@ func (v *QueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		col := parserutil.InferColNameFromExpr(node)
 		v.columnNames = append(v.columnNames, col)
 		ss, _ := schema.GetProperty(col.Name)
-		cd := openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.DecoratedColumn, node, ss, col.Val)
+		cd := openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, node, ss, col.Val)
 		v.columnDescriptors = append(v.columnDescriptors, cd)
 		if !node.As.IsEmpty() {
 		}

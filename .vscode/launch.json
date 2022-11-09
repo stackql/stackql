@@ -12,6 +12,8 @@
         "{ \"url\": \"file://${workspaceFolder}/test/registry-sandbox\", \"localDocRoot\": \"${workspaceFolder}/test/registry-sandbox\", \"verifyConfig\": { \"nopVerify\": true } }",
         "{ \"url\": \"file://${workspaceFolder}/test/registry\", \"localDocRoot\": \"${workspaceFolder}/test/registry\", \"verifyConfig\": { \"nopVerify\": true } }",
         "{ \"url\": \"file://${workspaceFolder}/test/registry-mocked\", \"localDocRoot\": \"${workspaceFolder}/test/registry-mocked\", \"verifyConfig\": { \"nopVerify\": true } }",
+        "{ \"url\": \"file://${workspaceFolder}/test/registry-mocked-native\", \"localDocRoot\": \"${workspaceFolder}/test/registry-mocked-native\", \"verifyConfig\": { \"nopVerify\": true } }",
+        "{ \"url\": \"file://${workspaceFolder}/test/registry-advanced\", \"localDocRoot\": \"${workspaceFolder}/test/registry-advanced\", \"verifyConfig\": { \"nopVerify\": true } }",
         "{ \"url\": \"file://${workspaceFolder}/build/.stackql\", \"localDocRoot\": \"${workspaceFolder}/build/.stackql\" }",
         "{ \"url\": \"file://${workspaceFolder}/examples/empty-registry\", \"localDocRoot\": \"${workspaceFolder}/examples/empty-registry\" }",
         "{ \"url\": \"https://cdn.statically.io/gh/stackql/stackql-provider-registry/main/providers\", \"localDocRoot\": \"${workspaceFolder}/test/registry\" }",
@@ -55,6 +57,17 @@
       "id": "gcpProject",
       "description": "GCP Project arg String",
       "default": "lab-kr-network-01"
+    },
+    {
+      "type": "pickString",
+      "id": "sqlBackendString",
+      "description": "GC Input arg String",
+      "default": "{}",
+      "options": [
+        "{}",
+        "{ \"dbEngine\": \"postgres_tcp\", \"sqlDialect\": \"postgres\", \"dsn\": \"postgres://stackql:stackql@127.0.0.1:5432/stackql\" }",
+        "{ \"dbEngine\": \"postgres_tcp\", \"sqlDialect\": \"postgres\", \"dsn\": \"postgres://stackql:stackql@127.0.0.1:7432/stackql\" }"
+      ]
     }
   ],
   "configurations": [
@@ -79,7 +92,7 @@
         "--auth=${input:authString}",
         "--registry=${input:registryString}",
         "--namespaces=${input:namespaceString}",
-        "--dbinitfilepath=${workspaceFolder}/test/db/cache_setup.sql",
+        "--sqlBackend={ \"dbInitFilepath\": \"${workspaceFolder}/test/db/cache_setup.sql\" }" ,
         "select r.name, col.login, col.type, col.role_name from github.repos.collaborators col inner join github.repos.repos r ON col.repo = r.name where col.owner = 'stackql' and r.org = 'stackql' order by r.name, col.login desc;"
       ],
     },
@@ -243,7 +256,53 @@
         "--registry=${input:registryString}",
         "--auth=${input:authString}",
         "--tls.allowInsecure",
+        "--sqlBackend=${input:sqlBackendString}",
         "select url from github.repos.pages where owner = 'dummyorg' and repo = 'dummyapp.io' ;"
+      ],
+    },
+    {
+      "name": "google case sensitive",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "--tls.allowInsecure",
+        "--sqlBackend=${input:sqlBackendString}",
+        "select ipCidrRange, sum(5) cc  from  google.container.`projects.aggregated.usableSubnetworks` where projectsId = 'testing-project' group by ipCidrRange having sum(5) >= 5 order by ipCidrRange desc;"
+      ],
+    },
+    {
+      "name": "google JOIN docker defective",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "--tls.allowInsecure",
+        "--sqlBackend=${input:sqlBackendString}",
+        "select JSON_EXTRACT(saml.samlIdentity, '$.username') as saml_username, om.login as github_login, ou.status as okta_status from github.scim.saml_ids saml INNER JOIN okta.user.users ou ON JSON_EXTRACT(saml.samlIdentity, '$.username') = JSON_EXTRACT(ou.profile, '$.login') INNER JOIN github.orgs.members om ON JSON_EXTRACT(saml.user, '$.login') = om.login where ou.subdomain = 'dummyorg' AND om.org = 'dummyorg' AND saml.org = 'dummyorg' order by om.login desc;'"
+      ],
+    },
+    {
+      "name": "google WHERE docker defective",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "exec",
+        "--registry=${input:registryString}",
+        "--auth=${input:authString}",
+        "--tls.allowInsecure",
+        "--sqlBackend=${input:sqlBackendString}",
+        "select  kind, name  from  google.compute.acceleratorTypes where project = 'testing-project' and zone = 'australia-southeast1-a' order by name desc;"
       ],
     },
     {
@@ -340,6 +399,7 @@
         "--registry=${input:registryString}",
         "--auth=${input:authString}",
         "--tls.allowInsecure",
+        "--sqlBackend=${input:sqlBackendString}",
         "select ou.status, ou.profile from okta.user.users ou where ou.subdomain = 'dummyorg';"
       ],
     },
