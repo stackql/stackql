@@ -49,15 +49,15 @@ jobs:
         python-version: '3.11' 
 
     - name: Cache Chocolatey packages
-        id: cache-choco
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-choco-packages
-        with:
-          path: 'C:\Users\${{ env.username }}\AppData\Local\Temp\chocolatey\'
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/*.zip') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
+      id: cache-choco
+      uses: actions/cache@v3
+      env:
+        cache-name: cache-choco-packages
+      with:
+        path: 'C:\Users\${{ env.username }}\AppData\Local\Temp\chocolatey\'
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/*.zip') }}
+        restore-keys: |
+          ${{ runner.os }}-build-${{ env.cache-name }}-
       
     - if: ${{ steps.cache-choco.outputs.cache-hit == 'true' }}
       name: List the state of Chocolatey packages
