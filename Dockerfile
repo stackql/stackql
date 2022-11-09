@@ -54,7 +54,26 @@ RUN   cd ${SRC_DIR} && go test --tags "json1 sqleanall" ./... \
         --tags "json1 sqleanall" \
         -o ${BUILD_DIR}/stackql ./stackql
 
-FROM alpine/openssl:latest AS certificates
+FROM python:3.11-bullseye AS utility
+
+ARG TEST_ROOT_DIR=/opt/test/stackql
+
+ENV TEST_ROOT_DIR=${TEST_ROOT_DIR}
+
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends \
+      default-jdk \
+      default-jre \
+      maven \
+      openssl \
+      postgresql-client \
+    && pip3 install PyYaml robotframework psycopg2-binary "psycopg[binary]" \
+    && mvn \
+        org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy \
+        -Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded \
+        -DoutputDirectory=${TEST_ROOT_DIR}/test/downloads
+
+FROM utility AS certificates
 
 ARG TEST_ROOT_DIR=/opt/test/stackql
 
@@ -81,26 +100,7 @@ COPY --from=certificates /opt/test/stackql ${TEST_ROOT_DIR}/
 RUN pip3 install PyYaml \
     && python3 ${TEST_ROOT_DIR}/test/python/registry-rewrite.py
 
-FROM python:3.11-bullseye AS preintegration
-
-ARG TEST_ROOT_DIR=/opt/test/stackql
-
-ENV TEST_ROOT_DIR=${TEST_ROOT_DIR}
-
-RUN apt-get update \
-    && apt-get install --yes --no-install-recommends \
-      default-jdk \
-      default-jre \
-      maven \
-      openssl \
-      postgresql-client \
-    && pip3 install PyYaml robotframework psycopg2-binary "psycopg[binary]" \
-    && mvn \
-        org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy \
-        -Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded \
-        -DoutputDirectory=${TEST_ROOT_DIR}/test/downloads
-
-FROM preintegration AS integration
+FROM utility AS integration
 
 ARG TEST_ROOT_DIR=/opt/test/stackql
 
@@ -165,5 +165,3 @@ EXPOSE ${STACKQL_PG_PORT}/tcp
 WORKDIR ${STACKQL_CFG_ROOT}
 
 CMD ["/bin/bash", "-c", "stackql --pgsrv.port=${STACKQL_PG_PORT} srv"]
-
-

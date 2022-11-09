@@ -129,8 +129,7 @@ services:
           -Dmockserver.logLevel=OFF \
           -Droot.logLevel=OFF \
           -jar    $${MOCKSERVER_JAR} \
-          -serverPort    $${MOCKSERVER_PORT_AZURE} \
-        && sleep 5
+          -serverPort    $${MOCKSERVER_PORT_AZURE}
   postgres_stackql:
     image: postgres:14.5-bullseye
     hostname: postgres_stackql
