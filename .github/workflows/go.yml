@@ -55,7 +55,7 @@ jobs:
         cache-name: cache-choco-packages
       with:
         path: 'C:\Users\${{ env.username }}\AppData\Local\Temp\chocolatey\'
-        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/*.zip') }}
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/chocolatey/**/*.zip', '**/chocolatey/**/*.7z') }}
         restore-keys: |
           ${{ runner.os }}-build-${{ env.cache-name }}-
       
