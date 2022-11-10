@@ -16,12 +16,14 @@ from ShellSession import ShellSession
 from psycopg_client import PsycoPGClient
 from psycopg2_client import PsycoPG2Client
 
+SQL_BACKEND_CANONICAL_SQLITE_EMBEDDED :str = 'sqlite_embedded'
+
 
 @library(scope='SUITE', version='0.1.0', doc_format='reST')
 class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
   ROBOT_LISTENER_API_VERSION = 2
 
-  def __init__(self, execution_platform='native', sql_backend='sqlite_embedded'):
+  def __init__(self, execution_platform='native', sql_backend=SQL_BACKEND_CANONICAL_SQLITE_EMBEDDED):
     self._counter = 0
     self._execution_platform=execution_platform
     self._sql_backend=sql_backend
@@ -163,8 +165,10 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     supplied_args = supplied_args + transformed_args
     query_escaped = query.replace("'", "'\"'\"'")
     os.environ['REGISTRY_SRC']= f'./{reg_location}'
+    sleep_prefix = '' if self._sql_backend == SQL_BACKEND_CANONICAL_SQLITE_EMBEDDED else 'sleep 5 && '
     res = super().run_process(
-      "docker-compose",
+      "docker",
+      "compose",
       "-p",
       "execrun",
       "run",
@@ -180,7 +184,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       "stackqlsrv",
       "bash",
       "-c",
-      f"sleep 5 && stackql exec {' '.join(supplied_args)} '{query_escaped}'",
+      f"{sleep_prefix}stackql exec {' '.join(supplied_args)} '{query_escaped}'",
       **cfg
     )
     self.log(res.stdout)
