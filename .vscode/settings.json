@@ -3,6 +3,7 @@
     "*.iql": "sql",
     "*.ddl": "sql"
   },
+  "editor.insertSpaces": true,
   "cmake.configureOnOpen": false,
   "go.testFlags": ["-tags", "json1"],
   "todohighlight.keywordsPattern": "TODO:|FIXME:|BLOCK|END_BLOCK", //highlight `TODO:`,`FIXME:` or commented content between parentheses

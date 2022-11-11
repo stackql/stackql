@@ -10,8 +10,8 @@ import (
 	"vitess.io/vitess/go/vt/sqlparser"
 )
 
-func GenerateModifiedSelectSuffix(node sqlparser.SQLNode, sqlDialect sqldialect.SQLDialect, namespaceCollection tablenamespace.TableNamespaceCollection) string {
-	v := NewDRMAstVisitor("", false, sqlDialect, namespaceCollection)
+func GenerateModifiedSelectSuffix(node sqlparser.SQLNode, sqlDialect sqldialect.SQLDialect, formatter sqlparser.NodeFormatter, namespaceCollection tablenamespace.TableNamespaceCollection) string {
+	v := NewDRMAstVisitor("", false, sqlDialect, formatter, namespaceCollection)
 	switch node := node.(type) {
 	case *sqlparser.Select:
 		var options string
@@ -56,8 +56,8 @@ func GenerateModifiedSelectSuffix(node sqlparser.SQLNode, sqlDialect sqldialect.
 	return v.GetRewrittenQuery()
 }
 
-func GenerateUnionTemplateQuery(node *sqlparser.Union, sqlDialect sqldialect.SQLDialect, namespaceCollection tablenamespace.TableNamespaceCollection) string {
-	v := NewDRMAstVisitor("", false, sqlDialect, namespaceCollection)
+func GenerateUnionTemplateQuery(node *sqlparser.Union, sqlDialect sqldialect.SQLDialect, formatter sqlparser.NodeFormatter, namespaceCollection tablenamespace.TableNamespaceCollection) string {
+	v := NewDRMAstVisitor("", false, sqlDialect, formatter, namespaceCollection)
 
 	var sb strings.Builder
 	sb.WriteString("%s ")
@@ -85,8 +85,8 @@ func GenerateUnionTemplateQuery(node *sqlparser.Union, sqlDialect sqldialect.SQL
 	return v.GetRewrittenQuery()
 }
 
-func GenerateModifiedWhereClause(node *sqlparser.Where, sqlDialect sqldialect.SQLDialect, namespaceCollection tablenamespace.TableNamespaceCollection) string {
-	v := NewDRMAstVisitor("", false, sqlDialect, namespaceCollection)
+func GenerateModifiedWhereClause(node *sqlparser.Where, sqlDialect sqldialect.SQLDialect, formatter sqlparser.NodeFormatter, namespaceCollection tablenamespace.TableNamespaceCollection) string {
+	v := NewDRMAstVisitor("", false, sqlDialect, formatter, namespaceCollection)
 	var whereStr string
 	if node != nil && node.Expr != nil {
 		node.Expr.Accept(v)
@@ -108,6 +108,16 @@ func ExtractParamsFromWhereClause(node *sqlparser.Where) parserutil.ParameterMap
 	return v.GetParameters()
 }
 
+func ExtractParamsFromExecSubqueryClause(node *sqlparser.ExecSubquery) parserutil.ParameterMap {
+	v := NewParamAstVisitor("", false)
+	if node != nil && node.Exec != nil {
+		node.Exec.Accept(v)
+	} else {
+		return parserutil.NewParameterMap()
+	}
+	return v.GetParameters()
+}
+
 func ExtractParamsFromFromClause(node sqlparser.TableExprs) parserutil.ParameterMap {
 	v := NewParamAstVisitor("", false)
 	for _, expr := range node {
@@ -116,8 +126,8 @@ func ExtractParamsFromFromClause(node sqlparser.TableExprs) parserutil.Parameter
 	return v.GetParameters()
 }
 
-func ExtractProviderStringsAndDetectCacheExceptMaterial(node sqlparser.SQLNode, sqlDialect sqldialect.SQLDialect, namespaceCollection tablenamespace.TableNamespaceCollection) ([]string, bool) {
-	v := NewDRMAstVisitor("", true, sqlDialect, namespaceCollection)
+func ExtractProviderStringsAndDetectCacheExceptMaterial(node sqlparser.SQLNode, sqlDialect sqldialect.SQLDialect, formatter sqlparser.NodeFormatter, namespaceCollection tablenamespace.TableNamespaceCollection) ([]string, bool) {
+	v := NewDRMAstVisitor("", true, sqlDialect, formatter, namespaceCollection)
 	node.Accept(v)
 	return v.GetProviderStrings(), v.ContainsCacheExceptMaterial()
 }

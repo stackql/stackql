@@ -188,7 +188,7 @@ func (dp *StandardDependencyPlanner) Plan() error {
 	if weaklyConnectedComponentCount > 1 {
 		return fmt.Errorf("data flow: there are too many weakly connected components; found = %d, max = 1", weaklyConnectedComponentCount)
 	}
-	rewrittenWhereStr := astvisit.GenerateModifiedWhereClause(dp.rewrittenWhere, dp.handlerCtx.SQLDialect, dp.handlerCtx.GetNamespaceCollection())
+	rewrittenWhereStr := astvisit.GenerateModifiedWhereClause(dp.rewrittenWhere, dp.handlerCtx.SQLDialect, dp.handlerCtx.GetASTFormatter(), dp.handlerCtx.GetNamespaceCollection())
 	rewrittenWhereStr, err = dp.handlerCtx.SQLDialect.SanitizeWhereQueryString(rewrittenWhereStr)
 	if err != nil {
 		return err
@@ -210,7 +210,7 @@ func (dp *StandardDependencyPlanner) Plan() error {
 		dp.secondaryTccs,
 		rewrittenWhereStr,
 		drmCfg.GetNamespaceCollection(),
-	)
+	).WithFormatter(drmCfg.GetSQLDialect().GetASTFormatter())
 	err = v.Visit(dp.sqlStatement)
 	if err != nil {
 		return err

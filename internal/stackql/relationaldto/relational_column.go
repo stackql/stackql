@@ -3,6 +3,8 @@ package relationaldto
 import (
 	"fmt"
 	"strings"
+
+	"vitess.io/vitess/go/vt/sqlparser"
 )
 
 var (
@@ -20,6 +22,7 @@ type RelationalColumn interface {
 	GetWidth() int
 	WithAlias(string) RelationalColumn
 	WithDecorated(string) RelationalColumn
+	WithParserNode(sqlparser.SQLNode) RelationalColumn
 	WithQualifier(string) RelationalColumn
 	WithWidth(int) RelationalColumn
 }
@@ -32,12 +35,13 @@ func NewRelationalColumn(colName string, colType string) RelationalColumn {
 }
 
 type standardRelationalColumn struct {
-	alias     string
-	colType   string
-	colName   string
-	decorated string
-	qualifier string
-	width     int
+	alias         string
+	colType       string
+	colName       string
+	decorated     string
+	qualifier     string
+	width         int
+	sqlParserNode sqlparser.SQLNode
 }
 
 func (rc *standardRelationalColumn) CanonicalSelectionString() string {
@@ -56,6 +60,13 @@ func (rc *standardRelationalColumn) CanonicalSelectionString() string {
 }
 
 func (rc *standardRelationalColumn) DelimitedSelectionString(delim string) string {
+	switch node := rc.sqlParserNode.(type) {
+	case *sqlparser.AliasedExpr:
+		switch node.Expr.(type) {
+		case *sqlparser.FuncExpr:
+			delim = ""
+		}
+	}
 	if rc.decorated != "" {
 		// if !strings.ContainsAny(rc.decorated, " '`\t\n\"().") {
 		// 	return fmt.Sprintf(`"%s" `, rc.decorated)
@@ -102,6 +113,11 @@ func (rc *standardRelationalColumn) GetDecorated() string {
 
 func (rc *standardRelationalColumn) WithDecorated(decorated string) RelationalColumn {
 	rc.decorated = decorated
+	return rc
+}
+
+func (rc *standardRelationalColumn) WithParserNode(sqlNode sqlparser.SQLNode) RelationalColumn {
+	rc.sqlParserNode = sqlNode
 	return rc
 }
 

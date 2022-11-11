@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/sqldialect"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 )
 
@@ -21,6 +22,7 @@ type TableNamespaceConfigurator interface {
 	Match(string, string, string, string) (*dto.TxnControlCounters, bool)
 	Read(string, string, string, []string) (*sql.Rows, error)
 	RenderTemplate(string) (string, error)
+	WithSQLDialect(sqlDialect sqldialect.SQLDialect) (TableNamespaceConfigurator, error)
 }
 
 var (
@@ -28,6 +30,7 @@ var (
 )
 
 type regexTableNamespaceConfigurator struct {
+	sqlDialect sqldialect.SQLDialect
 	sqlEngine  sqlengine.SQLEngine
 	regex      *regexp.Regexp
 	template   *template.Template
@@ -73,7 +76,7 @@ func (stc *regexTableNamespaceConfigurator) Read(tableString string, requestEnco
 		quotedNonControlColNames = append(quotedNonControlColNames, fmt.Sprintf(`"%s"`, c))
 	}
 	colzString := strings.Join(quotedNonControlColNames, ", ")
-	return stc.sqlEngine.Query(fmt.Sprintf(`SELECT %s FROM "%s" WHERE "%s" = ?`, colzString, actualTableName, requestEncodingColName), requestEncoding)
+	return stc.sqlDialect.QueryNamespaced(colzString, actualTableName, requestEncodingColName, requestEncoding)
 }
 
 func (stc *regexTableNamespaceConfigurator) Match(tableString string, requestEncoding string, lastModifiedColName string, requestEncodingColName string) (*dto.TxnControlCounters, bool) {
@@ -132,4 +135,9 @@ func (stc *regexTableNamespaceConfigurator) getObjectName(inputString string) st
 		}
 	}
 	return ""
+}
+
+func (stc *regexTableNamespaceConfigurator) WithSQLDialect(sqlDialect sqldialect.SQLDialect) (TableNamespaceConfigurator, error) {
+	stc.sqlDialect = sqlDialect
+	return stc, nil
 }

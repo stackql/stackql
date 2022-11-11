@@ -237,17 +237,27 @@ STACKQL_PG_CLIENT_CERT_PATH_DOCKER  :str = os.path.abspath(os.path.join(REPOSITO
 STACKQL_PG_RUBBISH_KEY_PATH_DOCKER  :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "vol", "srv", "credentials", "pg_rubbish_key.pem"))
 STACKQL_PG_RUBBISH_CERT_PATH_DOCKER :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "vol", "srv", "credentials", "pg_rubbish_cert.pem"))
 
-ANALYTICS_DB_INIT_PATH :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "test", "db", "cache_setup.sql"))
+def get_sql_dialect_from_sql_backend_str(sql_backend_str :str) -> str:
+  if sql_backend_str == 'postgres_tcp':
+    return 'postgres'
+  return 'sqlite'
+
+def get_analytics_db_init_path(sql_backend_str :str) -> str:
+  sql_dialect = get_sql_dialect_from_sql_backend_str(sql_backend_str)
+  return os.path.abspath(os.path.join(REPOSITORY_ROOT, "test", "db", sql_dialect,  "cache_setup.sql"))
+
+
 ANALYTICS_DB_INIT_PATH_DOCKER :str = get_unix_path(os.path.join('/opt', 'stackql', "db", "cache_setup.sql"))
 
-ANALYTICS_DB_INIT_PATH_UNIX :str = get_unix_path(ANALYTICS_DB_INIT_PATH)
+def get_analytics_db_init_path_unix(sql_backend_str :str) ->str:
+  return get_unix_path(get_analytics_db_init_path(sql_backend_str))
 
 _SQL_BACKEND_POSTGRES_DOCKER_DSN :str = 'postgres://stackql:stackql@postgres_stackql:5432/stackql'
 
 
 def get_analytics_sql_backend(execution_env :str, sql_backend_str :str) -> str:
   if execution_env == 'native':
-    return f'{{ "dbInitFilepath": "{ANALYTICS_DB_INIT_PATH_UNIX}" }}'.replace(' ', '')
+    return f'{{ "dbInitFilepath": "{get_analytics_db_init_path_unix(sql_backend_str)}" }}'.replace(' ', '')
   if execution_env == 'docker':
     if sql_backend_str == 'postgres_tcp':
       return f'{{ "dbEngine": "postgres_tcp", "dsn": "{_SQL_BACKEND_POSTGRES_DOCKER_DSN}", "sqlDialect": "postgres", "dbInitFilepath": "{ANALYTICS_DB_INIT_PATH_DOCKER}" }}'.replace(' ', '')
@@ -384,7 +394,7 @@ SELECT_CONTAINER_SUBNET_AGG_DESC = "select ipCidrRange, sum(5) cc  from  google.
 SELECT_CONTAINER_SUBNET_AGG_ASC = "select ipCidrRange, sum(5) cc  from  google.container.`projects.aggregated.usableSubnetworks` where projectsId = 'testing-project' group by ipCidrRange having sum(5) >= 5 order by ipCidrRange asc;"
 SELECT_ACCELERATOR_TYPES_DESC = "select  kind, name  from  google.compute.acceleratorTypes where project = 'testing-project' and zone = 'australia-southeast1-a' order by name desc;"
 SELECT_MACHINE_TYPES_DESC = "select name from google.compute.machineTypes where project = 'testing-project' and zone = 'australia-southeast1-a' order by name desc;"
-SELECT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY = "SELECT eTag FROM google.compute.instances_iam_policies WHERE project = 'testing-project' AND zone = 'australia-southeast1-a' AND resource = '000000001';"
+SELECT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY = "SELECT etag FROM google.compute.instances_iam_policies WHERE project = 'testing-project' AND zone = 'australia-southeast1-a' AND resource = '000000001';"
 
 SELECT_AWS_CLOUD_CONTROL_EVENTS_MINIMAL = "SELECT DISTINCT EventTime, Identifier from aws.cloud_control.resource_requests where data__ResourceRequestStatusFilter='{}' and region = 'ap-southeast-1' order by Identifier, EventTime;"
 

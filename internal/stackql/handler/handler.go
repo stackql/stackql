@@ -24,6 +24,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 	lrucache "vitess.io/vitess/go/cache"
+	"vitess.io/vitess/go/vt/sqlparser"
 )
 
 type HandlerContext struct {
@@ -46,6 +47,7 @@ type HandlerContext struct {
 	TxnCounterMgr       txncounter.TxnCounterManager
 	TxnStore            kstore.KStore
 	namespaceCollection tablenamespace.TableNamespaceCollection
+	formatter           sqlparser.NodeFormatter
 }
 
 func getProviderMap(providerName string, providerDesc openapistackql.ProviderDescription) map[string]interface{} {
@@ -79,6 +81,10 @@ func (hc *HandlerContext) GetSupportedProviders(extended bool) map[string]map[st
 		}
 	}
 	return retVal
+}
+
+func (hc *HandlerContext) GetASTFormatter() sqlparser.NodeFormatter {
+	return hc.formatter
 }
 
 func (hc *HandlerContext) GetProvider(providerName string) (provider.IProvider, error) {
@@ -215,6 +221,7 @@ func GetHandlerCtx(cmdString string, runtimeCtx dto.RuntimeCtx, lruCache *lrucac
 		TxnCounterMgr:       inputBundle.GetTxnCounterManager(),
 		TxnStore:            inputBundle.GetTxnStore(),
 		namespaceCollection: inputBundle.GetNamespaceCollection(),
+		formatter:           inputBundle.GetSQLDialect().GetASTFormatter(),
 	}
 	drmCfg, err := drm.GetDRMConfig(inputBundle.GetSQLDialect(), rv.namespaceCollection, controlAttributes)
 	if err != nil {

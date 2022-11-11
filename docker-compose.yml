@@ -22,7 +22,7 @@ services:
       - ./vol/srv/credentials:/opt/stackql/srv/credentials:ro
       - ./test/assets/credentials/dummy:/opt/stackql/credentials/dummy:ro
       - ./test/assets/input:/opt/stackql/input:ro
-      - ./test/db:/opt/stackql/db:ro
+      - ${DB_SETUP_SRC:-./test/db/sqlite}:/opt/stackql/db:ro
       - ${REGISTRY_SRC:-./test/registry-mocked}:/opt/stackql/registry:ro
       - ./vol/stackql/config:/opt/stackql/.stackql:rw 
       - ./vol/logs:/opt/stackql/logs:rw 

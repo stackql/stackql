@@ -23,6 +23,7 @@ import (
 type PrimitiveComposer interface {
 	AddChild(val PrimitiveComposer)
 	GetAst() sqlparser.SQLNode
+	GetASTFormatter() sqlparser.NodeFormatter
 	GetBuilder() primitivebuilder.Builder
 	GetChildren() []PrimitiveComposer
 	GetColumnOrder() []string
@@ -116,6 +117,8 @@ type StandardPrimitiveComposer struct {
 	sqlEngine sqlengine.SQLEngine
 
 	sqlDialect sqldialect.SQLDialect
+
+	formatter sqlparser.NodeFormatter
 }
 
 func (pb *StandardPrimitiveComposer) ShouldCollectGarbage() bool {
@@ -132,6 +135,10 @@ func (pb *StandardPrimitiveComposer) GetTxnCtrlCtrs() *dto.TxnControlCounters {
 
 func (pb *StandardPrimitiveComposer) GetGraph() *primitivegraph.PrimitiveGraph {
 	return pb.graph
+}
+
+func (pb *StandardPrimitiveComposer) GetASTFormatter() sqlparser.NodeFormatter {
+	return pb.formatter
 }
 
 func (pb *StandardPrimitiveComposer) GetParent() PrimitiveComposer {
@@ -175,7 +182,7 @@ func (pb *StandardPrimitiveComposer) GetTxnCounterManager() txncounter.TxnCounte
 }
 
 func (pb *StandardPrimitiveComposer) NewChildPrimitiveBuilder(ast sqlparser.SQLNode) PrimitiveComposer {
-	child := NewPrimitiveComposer(pb, ast, pb.drmConfig, pb.txnCounterManager, pb.graph, pb.tables, pb.symTab, pb.sqlEngine, pb.sqlDialect)
+	child := NewPrimitiveComposer(pb, ast, pb.drmConfig, pb.txnCounterManager, pb.graph, pb.tables, pb.symTab, pb.sqlEngine, pb.sqlDialect, pb.formatter)
 	pb.children = append(pb.children, child)
 	return child
 }
@@ -328,7 +335,7 @@ func (pb *StandardPrimitiveComposer) GetSQLDialect() sqldialect.SQLDialect {
 	return pb.sqlDialect
 }
 
-func NewPrimitiveComposer(parent PrimitiveComposer, ast sqlparser.SQLNode, drmConfig drm.DRMConfig, txnCtrMgr txncounter.TxnCounterManager, graph *primitivegraph.PrimitiveGraph, tblMap taxonomy.TblMap, symTab symtab.SymTab, sqlEngine sqlengine.SQLEngine, sqlDialect sqldialect.SQLDialect) PrimitiveComposer {
+func NewPrimitiveComposer(parent PrimitiveComposer, ast sqlparser.SQLNode, drmConfig drm.DRMConfig, txnCtrMgr txncounter.TxnCounterManager, graph *primitivegraph.PrimitiveGraph, tblMap taxonomy.TblMap, symTab symtab.SymTab, sqlEngine sqlengine.SQLEngine, sqlDialect sqldialect.SQLDialect, formatter sqlparser.NodeFormatter) PrimitiveComposer {
 	return &StandardPrimitiveComposer{
 		parent:            parent,
 		ast:               ast,
@@ -342,5 +349,6 @@ func NewPrimitiveComposer(parent PrimitiveComposer, ast sqlparser.SQLNode, drmCo
 		graph:             graph,
 		sqlEngine:         sqlEngine,
 		sqlDialect:        sqlDialect,
+		formatter:         formatter,
 	}
 }

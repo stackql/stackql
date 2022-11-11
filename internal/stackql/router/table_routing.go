@@ -40,6 +40,10 @@ func (v *TableRouteAstVisitor) analyzeAliasedTable(tb *sqlparser.AliasedTableExp
 	}
 }
 
+func (v *TableRouteAstVisitor) analyzeExecTableName(tb *sqlparser.ExecSubquery) (taxonomy.AnnotationCtx, error) {
+	return v.router.Route(tb, v.handlerCtx)
+}
+
 func (v *TableRouteAstVisitor) GetTableMetaArray() []*tablemetadata.ExtendedTableMetadata {
 	return v.tableMetaSlice
 }
@@ -115,6 +119,21 @@ func (v *TableRouteAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 	case *sqlparser.AuthRevoke:
 		return nil
+	case *sqlparser.ExecSubquery:
+		annotation, err := v.analyzeExecTableName(node)
+		if err != nil {
+			return err
+		}
+		v.annotations[node] = annotation
+		v.annotationSlice = append(v.annotationSlice, annotation)
+		t := annotation.GetTableMeta()
+		if t == nil {
+			return fmt.Errorf("nil table returned")
+		}
+		v.tableMetaSlice = append(v.tableMetaSlice, t)
+		v.tables[node] = t
+	case *sqlparser.Exec:
+		return node.MethodName.Accept(v)
 	case *sqlparser.Sleep:
 		return nil
 
