@@ -18,10 +18,10 @@ func GetSQLBackendCfg(s string) (SQLBackendCfg, error) {
 	rv := SQLBackendCfg{}
 	err := yaml.Unmarshal([]byte(s), &rv)
 	if rv.DbEngine == "" {
-		rv.DbEngine = constants.DefaultDbEngine
+		rv.DbEngine = constants.DbEngineDefault
 	}
 	if rv.SQLDialect == "" {
-		rv.SQLDialect = constants.DefaultSQLDialect
+		rv.SQLDialect = constants.SQLDialectDefault
 	}
 	if rv.InitMaxRetries < 1 {
 		rv.InitMaxRetries = 10

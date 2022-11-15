@@ -1,15 +1,19 @@
 package sqldialect
 
 import (
+	"database/sql"
 	"fmt"
+	"reflect"
 	"strings"
 
+	"github.com/stackql/stackql/internal/stackql/astformat"
+	"github.com/stackql/stackql/internal/stackql/astfuncrewrite"
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/relationaldto"
 	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
-	"github.com/stackql/stackql/internal/stackql/tablenamespace"
+	"vitess.io/vitess/go/vt/sqlparser"
 )
 
 type SQLDialect interface {
@@ -34,6 +38,8 @@ type SQLDialect interface {
 	GenerateSelectDML(relationaldto.RelationalTable, *dto.TxnControlCounters, string, string) (string, error)
 	GetGCHousekeepingQuery(string, dto.TxnControlCounters) string
 	//
+	GetASTFormatter() sqlparser.NodeFormatter
+	GetASTFuncRewriter() astfuncrewrite.ASTFuncRewriter
 	GetSQLEngine() sqlengine.SQLEngine
 	// PurgeAll() drops all data tables, does **not** drop control tables.
 	PurgeAll() error
@@ -42,14 +48,29 @@ type SQLDialect interface {
 	SanitizeWhereQueryString(queryString string) (string, error)
 	GetOperatorOr() string
 	GetOperatorStringConcat() string
+	GetName() string
+	GetGolangKind(string) reflect.Kind
+	GetGolangValue(string) interface{}
+	GetRelationalType(string) string
+
+	QueryNamespaced(string, string, string, string) (*sql.Rows, error)
 }
 
-func NewSQLDialect(sqlEngine sqlengine.SQLEngine, namespaces tablenamespace.TableNamespaceCollection, controlAttributes sqlcontrol.ControlAttributes, name string) (SQLDialect, error) {
-	switch strings.ToLower(name) {
+func getNodeFormatter(name string) sqlparser.NodeFormatter {
+	if name == constants.SQLDialectPostgres {
+		return astformat.PostgresSelectExprsFormatter
+	}
+	return nil
+}
+
+func NewSQLDialect(sqlEngine sqlengine.SQLEngine, analyticsNamespaceLikeString string, controlAttributes sqlcontrol.ControlAttributes, name string) (SQLDialect, error) {
+	nameLowered := strings.ToLower(name)
+	formatter := getNodeFormatter(nameLowered)
+	switch nameLowered {
 	case constants.SQLDialectSQLite3:
-		return newSQLiteDialect(sqlEngine, namespaces, controlAttributes)
+		return newSQLiteDialect(sqlEngine, analyticsNamespaceLikeString, controlAttributes, formatter)
 	case constants.SQLDialectPostgres:
-		return newPostgresDialect(sqlEngine, namespaces, controlAttributes)
+		return newPostgresDialect(sqlEngine, analyticsNamespaceLikeString, controlAttributes, formatter)
 	default:
 		return nil, fmt.Errorf("cannot accomodate sql dialect '%s'", name)
 	}

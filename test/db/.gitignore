@@ -6,3 +6,5 @@
 !setup.sql
 !*.json
 !tmp/
+!sqlite/
+!postgres/

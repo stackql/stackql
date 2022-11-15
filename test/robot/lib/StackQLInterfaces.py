@@ -17,6 +17,7 @@ from psycopg_client import PsycoPGClient
 from psycopg2_client import PsycoPG2Client
 
 SQL_BACKEND_CANONICAL_SQLITE_EMBEDDED :str = 'sqlite_embedded'
+SQL_BACKEND_POSTGRES_TCP :str = 'postgres_tcp'
 
 
 @library(scope='SUITE', version='0.1.0', doc_format='reST')
@@ -165,7 +166,9 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     supplied_args = supplied_args + transformed_args
     query_escaped = query.replace("'", "'\"'\"'")
     os.environ['REGISTRY_SRC']= f'./{reg_location}'
-    sleep_prefix = '' if self._sql_backend == SQL_BACKEND_CANONICAL_SQLITE_EMBEDDED else 'sleep 5 && '
+    if self._sql_backend == SQL_BACKEND_POSTGRES_TCP:
+      os.environ['DB_SETUP_SRC']= f'./test/db/postgres'
+    sleep_prefix = '' if self._sql_backend == SQL_BACKEND_CANONICAL_SQLITE_EMBEDDED else 'sleep 2 && '
     res = super().run_process(
       "docker",
       "compose",

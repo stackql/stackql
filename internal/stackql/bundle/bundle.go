@@ -8,6 +8,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"github.com/stackql/stackql/pkg/txncounter"
+	"vitess.io/vitess/go/vt/sqlparser"
 )
 
 type Bundle interface {
@@ -37,6 +38,7 @@ func NewBundle(
 		controlAttributes: controlAttributes,
 		txnStore:          txnStore,
 		txnCtrMgr:         txnCtrMgr,
+		formatter:         sqlDialect.GetASTFormatter(),
 	}
 }
 
@@ -48,10 +50,15 @@ type simpleBundle struct {
 	sqlDialect        sqldialect.SQLDialect
 	txnStore          kstore.KStore
 	txnCtrMgr         txncounter.TxnCounterManager
+	formatter         sqlparser.NodeFormatter
 }
 
 func (sb *simpleBundle) GetControlAttributes() sqlcontrol.ControlAttributes {
 	return sb.controlAttributes
+}
+
+func (sb *simpleBundle) GetASTFormatter() sqlparser.NodeFormatter {
+	return sb.formatter
 }
 
 func (sb *simpleBundle) GetTxnStore() kstore.KStore {

@@ -1,6 +1,7 @@
 package astvisit
 
 import (
+	"fmt"
 	"strings"
 
 	"vitess.io/vitess/go/vt/sqlparser"
@@ -390,10 +391,10 @@ func (v *TableExtractAstVisitor) Visit(node sqlparser.SQLNode) error {
 					return err
 				}
 			case *sqlparser.ExecSubquery:
-				err = v.Visit(n)
-				if err != nil {
-					return err
+				if n.Exec == nil {
+					return fmt.Errorf("cannot accomodate nil method name container in exec subquery")
 				}
+				v.tables = append(v.tables, n)
 			case *sqlparser.Union:
 				err = v.Visit(n)
 				if err != nil {

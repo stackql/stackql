@@ -48,7 +48,11 @@ func BuildInputBundle(runtimeCtx dto.RuntimeCtx) (bundle.Bundle, error) {
 	if err != nil {
 		return nil, err
 	}
-	dialect, err := sqldialect.NewSQLDialect(se, namespaces, controlAttributes, sqlCfg.SQLDialect)
+	dialect, err := sqldialect.NewSQLDialect(se, namespaces.GetAnalyticsCacheTableNamespaceConfigurator().GetLikeString(), controlAttributes, sqlCfg.SQLDialect)
+	if err != nil {
+		return nil, err
+	}
+	namespaces, err = namespaces.WithSQLDialect(dialect)
 	if err != nil {
 		return nil, err
 	}

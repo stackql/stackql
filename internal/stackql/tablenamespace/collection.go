@@ -2,12 +2,14 @@ package tablenamespace
 
 import (
 	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/sqldialect"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 )
 
 type TableNamespaceCollection interface {
 	GetAnalyticsCacheTableNamespaceConfigurator() TableNamespaceConfigurator
 	GetViewsTableNamespaceConfigurator() TableNamespaceConfigurator
+	WithSQLDialect(sqldialect.SQLDialect) (TableNamespaceCollection, error)
 }
 
 func NewStandardTableNamespaceCollection(cfg map[string]dto.NamespaceCfg, sqlEngine sqlengine.SQLEngine) (TableNamespaceCollection, error) {
@@ -45,4 +47,16 @@ func (col *StandardTableNamespaceCollection) GetAnalyticsCacheTableNamespaceConf
 
 func (col *StandardTableNamespaceCollection) GetViewsTableNamespaceConfigurator() TableNamespaceConfigurator {
 	return col.viewCfg
+}
+
+func (col *StandardTableNamespaceCollection) WithSQLDialect(sqlDialect sqldialect.SQLDialect) (TableNamespaceCollection, error) {
+	_, err := col.analyticsCfg.WithSQLDialect(sqlDialect)
+	if err != nil {
+		return nil, err
+	}
+	_, err = col.viewCfg.WithSQLDialect(sqlDialect)
+	if err != nil {
+		return nil, err
+	}
+	return col, nil
 }

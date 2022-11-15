@@ -120,6 +120,7 @@ type QueryRewriteAstVisitor struct {
 	columnDescriptors     []openapistackql.ColumnDescriptor
 	tableSlice            []tableinsertioncontainer.TableInsertionContainer
 	namespaceCollection   tablenamespace.TableNamespaceCollection
+	formatter             sqlparser.NodeFormatter
 	//
 	selectExprsStr string
 	fromStr        string
@@ -166,6 +167,11 @@ func NewQueryRewriteAstVisitor(
 	return rv
 }
 
+func (v *QueryRewriteAstVisitor) WithFormatter(formatter sqlparser.NodeFormatter) *QueryRewriteAstVisitor {
+	v.formatter = formatter
+	return v
+}
+
 func (v *QueryRewriteAstVisitor) GetTableMap() taxonomy.TblMap {
 	return v.tables
 }
@@ -186,7 +192,7 @@ func (v *QueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 	switch node := node.(type) {
 	case *sqlparser.Select:
-		v.selectSuffix = GenerateModifiedSelectSuffix(node, v.handlerCtx.SQLDialect, v.namespaceCollection)
+		v.selectSuffix = GenerateModifiedSelectSuffix(node, v.handlerCtx.SQLDialect, v.handlerCtx.GetASTFormatter(), v.namespaceCollection)
 		var options string
 		addIf := func(b bool, s string) {
 			if b {
@@ -218,7 +224,7 @@ func (v *QueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			if err != nil {
 				return err
 			}
-			fromVis := NewDRMAstVisitor("", true, v.handlerCtx.SQLDialect, v.namespaceCollection)
+			fromVis := NewDRMAstVisitor("", true, v.handlerCtx.SQLDialect, v.formatter, v.namespaceCollection)
 			if node.From != nil {
 				node.From.Accept(fromVis)
 				v.fromStr = fromVis.GetRewrittenQuery()
@@ -408,6 +414,18 @@ func (v *QueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 	case *sqlparser.AutoIncSpec:
 
+	case *sqlparser.ExecSubquery:
+		t, ok := v.annotations[node]
+		if !ok {
+			return fmt.Errorf("could not infer annotated table")
+		}
+		dID, ok := v.discoGenIDs[node]
+		if !ok {
+			return fmt.Errorf("could not infer discovery generation ID")
+		}
+		replacementExpr := v.dc.GetParserTableName(t.GetHIDs(), dID)
+		node.Exec.MethodName = replacementExpr
+
 	case *sqlparser.VindexSpec:
 
 		numParams := len(node.Params)
@@ -542,13 +560,16 @@ func (v *QueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		v.columnDescriptors = append(v.columnDescriptors, cols...)
 
 	case *sqlparser.AliasedExpr:
-		tbl, err := v.tables.GetTableLoose(node)
+		tbl, tblErr := v.tables.GetTableLoose(node)
+		err := v.Visit(node.Expr)
 		if err != nil {
-			err := v.Visit(node.Expr)
+			return err
+		}
+		if tblErr != nil {
+			col, err := parserutil.InferColNameFromExpr(node, v.formatter)
 			if err != nil {
 				return err
 			}
-			col := parserutil.InferColNameFromExpr(node)
 			if col.Alias == "" {
 				col.Alias = v.getNextAlias()
 			}
@@ -561,7 +582,10 @@ func (v *QueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		if err != nil {
 			return err
 		}
-		col := parserutil.InferColNameFromExpr(node)
+		col, err := parserutil.InferColNameFromExpr(node, v.formatter)
+		if err != nil {
+			return err
+		}
 		v.columnNames = append(v.columnNames, col)
 		ss, _ := schema.GetProperty(col.Name)
 		cd := openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, node, ss, col.Val)
@@ -756,6 +780,13 @@ func (v *QueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 	case *sqlparser.CollateExpr:
 
 	case *sqlparser.FuncExpr:
+		newNode, err := v.dc.GetSQLDialect().GetASTFuncRewriter().RewriteFunc(node)
+		if err != nil {
+			return err
+		}
+		node.Distinct = newNode.Distinct
+		node.Exprs = newNode.Exprs
+		node.Name = newNode.Name
 		if node.Distinct {
 		}
 		if !node.Qualifier.IsEmpty() {
@@ -769,6 +800,7 @@ func (v *QueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		}
 
 	case *sqlparser.GroupConcatExpr:
+		// v.handlerCtx.SQLDialect.GetASTFuncRewriter().RewriteFunc(node)
 
 	case *sqlparser.ValuesFuncExpr:
 

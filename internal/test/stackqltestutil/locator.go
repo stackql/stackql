@@ -23,7 +23,7 @@ func GetRuntimeCtx(providerStr string, outputFmtStr string, testName string) (*d
 	if err != nil {
 		return nil, fmt.Errorf("test failed: %v", err)
 	}
-	dbInitFilePath, err := util.GetFilePathFromRepositoryRoot("test/db/setup.sql")
+	dbInitFilePath, err := util.GetFilePathFromRepositoryRoot("test/db/sqlite/setup.sql")
 	if err != nil {
 		return nil, fmt.Errorf("test failed on %s: %v", dbInitFilePath, err)
 	}

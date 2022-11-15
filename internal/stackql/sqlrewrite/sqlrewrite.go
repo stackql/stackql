@@ -124,7 +124,7 @@ func GenerateSelectDML(input SQLRewriteInput) (*drm.PreparedStatementCtx, error)
 				}
 			}
 		}
-		relationalColumn := relationaldto.NewRelationalColumn(col.Name, typeStr).WithQualifier(col.Qualifier).WithAlias(col.Alias).WithDecorated(col.DecoratedCol)
+		relationalColumn := relationaldto.NewRelationalColumn(col.Name, typeStr).WithQualifier(col.Qualifier).WithAlias(col.Alias).WithDecorated(col.DecoratedCol).WithParserNode(col.Node)
 		columns = append(columns, drm.NewColDescriptor(col, typeStr))
 		// TODO: Need a way to handle postgres differences. This is a fragile point
 		relationalColumns = append(relationalColumns, relationalColumn)

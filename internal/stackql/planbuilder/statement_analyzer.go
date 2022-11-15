@@ -123,7 +123,7 @@ func (p *primitiveGenerator) analyzeUnion(pbi PlanBuilderInput) error {
 	if !ok {
 		return fmt.Errorf("could not cast statement of type '%T' to required Union", pbi.GetStatement())
 	}
-	unionQuery := astvisit.GenerateUnionTemplateQuery(node, handlerCtx.SQLDialect, handlerCtx.GetNamespaceCollection())
+	unionQuery := astvisit.GenerateUnionTemplateQuery(node, handlerCtx.SQLDialect, handlerCtx.GetASTFormatter(), handlerCtx.GetNamespaceCollection())
 	i := 0
 	leaf, err := p.PrimitiveComposer.GetSymTab().NewLeaf(i)
 	if err != nil {
@@ -1010,7 +1010,7 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 			p.PrimitiveComposer.SetSelectPreparedStatementCtx(selCtx)
 			return nil
 		case *sqlparser.ExecSubquery:
-			cols, err := parserutil.ExtractSelectColumnNames(node)
+			cols, err := parserutil.ExtractSelectColumnNames(node, handlerCtx.GetASTFormatter())
 			if err != nil {
 				return err
 			}
