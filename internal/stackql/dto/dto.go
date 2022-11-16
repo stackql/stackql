@@ -64,6 +64,7 @@ const (
 	GCCfgRawKey                     string = "gc"
 	NamespaceCfgRawKey              string = "namespaces"
 	SQLBackendCfgRawKey             string = "sqlBackend"
+	DBInternalCfgRawKey             string = "dbInternal"
 	StoreTxnCfgRawKey               string = "store.txn"
 	TemplateCtxFilePathKey          string = "iqldata"
 	TestWithoutApiCallsKey          string = "testwithoutapicalls"
@@ -267,6 +268,7 @@ type RuntimeCtx struct {
 	ProviderStr                  string
 	RegistryRaw                  string
 	SQLBackendCfgRaw             string
+	DBInternalCfgRaw             string
 	NamespaceCfgRaw              string
 	StoreTxnCfgRaw               string
 	GCCfgRaw                     string
@@ -326,6 +328,8 @@ func (rc *RuntimeCtx) Set(key string, val string) error {
 		retVal = setBool(&rc.CSVHeadersDisable, val)
 	case SQLBackendCfgRawKey:
 		rc.SQLBackendCfgRaw = val
+	case DBInternalCfgRawKey:
+		rc.DBInternalCfgRaw = val
 	case DelimiterKey:
 		rc.Delimiter = val
 	case DryRunFlagKey:

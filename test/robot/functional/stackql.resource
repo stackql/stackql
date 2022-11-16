@@ -46,7 +46,7 @@ Prepare StackQL Environment
     Start StackQL PG Server mTLS    ${PG_SRV_PORT_MTLS}    ${PG_SRV_MTLS_CFG_STR}    {}    {}    ${SQL_BACKEND_CFG_STR_CANONICAL}    ${PG_SRV_PORT_DOCKER_MTLS}
     Start StackQL PG Server mTLS    ${PG_SRV_PORT_MTLS_WITH_NAMESPACES}    ${PG_SRV_MTLS_CFG_STR}    ${NAMESPACES_TTL_SPECIALCASE_TRANSPARENT}    {}    ${SQL_BACKEND_CFG_STR_CANONICAL}    ${PG_SRV_PORT_DOCKER_MTLS_WITH_NAMESPACES}
     Start StackQL PG Server mTLS    ${PG_SRV_PORT_MTLS_WITH_EAGER_GC}    ${PG_SRV_MTLS_CFG_STR}    {}    ${GC_CFG_EAGER}    ${SQL_BACKEND_CFG_STR_CANONICAL}    ${PG_SRV_PORT_DOCKER_MTLS_WITH_EAGER_GC}
-    Start StackQL PG Server unencrypted    ${PG_SRV_PORT_UNENCRYPTED}    {}
+    Start StackQL PG Server unencrypted    ${PG_SRV_PORT_UNENCRYPTED}    {}    ${SQL_BACKEND_CFG_STR_CANONICAL}
     Sleep    50s
 
 Generate Container Credentials for StackQL PG Server mTLS
@@ -87,7 +87,7 @@ Start StackQL PG Server mTLS
     [Return]    ${process}
 
 Start StackQL PG Server unencrypted
-    [Arguments]    ${_SRV_PORT_UNENCRYPTED}    ${_NAMESPACES_CFG}
+    [Arguments]    ${_SRV_PORT_UNENCRYPTED}    ${_NAMESPACES_CFG}   ${_SQL_BACKEND_CFG}
     IF    "${EXECUTION_PLATFORM}" == "native"
         ${process} =    Start Process    ${STACKQL_EXE}
                         ...  srv    \-\-registry\=${REGISTRY_NO_VERIFY_CFG_STR.get_config_str('native')}
@@ -96,6 +96,7 @@ Start StackQL PG Server unencrypted
                         ...  \-\-pgsrv\.address\=0.0.0.0 
                         ...  \-\-pgsrv\.port\=${_SRV_PORT_UNENCRYPTED}
                         ...  \-\-namespaces\=${_NAMESPACES_CFG}
+                        ...  \-\-sqlBackend\=${_SQL_BACKEND_CFG}
                         ...  stderr=${CURDIR}/tmp/stdout-stackql-srv-unencrypted-${_SRV_PORT_UNENCRYPTED}.txt
                         ...  stdout=${CURDIR}/tmp/stderr-stackql-srv-unencrypted-${_SRV_PORT_UNENCRYPTED}.txt
     ELSE IF    "${EXECUTION_PLATFORM}" == "docker"
@@ -106,7 +107,7 @@ Start StackQL PG Server unencrypted
                         ...  stackqlsrv
                         ...  bash
                         ...  \-c
-                        ...  stackql srv \-\-registry\='${REGISTRY_NO_VERIFY_CFG_STR.get_config_str('docker')}' \-\-auth\='${AUTH_CFG_STR}' \-\-namespaces\='${_NAMESPACES_CFG}' \-\-tls\.allowInsecure\=true \-\-pgsrv\.address\=0.0.0.0 \-\-pgsrv\.port\=${PG_SRV_PORT_DOCKER_UNENCRYPTED}
+                        ...  stackql srv \-\-registry\='${REGISTRY_NO_VERIFY_CFG_STR.get_config_str('docker')}' \-\-auth\='${AUTH_CFG_STR}' \-\-namespaces\='${_NAMESPACES_CFG}' \-\-sqlBackend\='${_SQL_BACKEND_CFG}' \-\-tls\.allowInsecure\=true \-\-pgsrv\.address\=0.0.0.0 \-\-pgsrv\.port\=${PG_SRV_PORT_DOCKER_UNENCRYPTED}
                         ...  stderr=${CURDIR}/tmp/stdout-stackql-srv-unencrypted-${_SRV_PORT_UNENCRYPTED}.txt
                         ...  stdout=${CURDIR}/tmp/stderr-stackql-srv-unencrypted-${_SRV_PORT_UNENCRYPTED}.txt
     END

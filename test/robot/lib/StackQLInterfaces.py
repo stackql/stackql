@@ -15,6 +15,7 @@ from stackql_context import RegistryCfg, _TEST_APP_CACHE_ROOT
 from ShellSession import ShellSession
 from psycopg_client import PsycoPGClient
 from psycopg2_client import PsycoPG2Client
+from sqlalchemy_client import SQLAlchemyClient
 
 SQL_BACKEND_CANONICAL_SQLITE_EMBEDDED :str = 'sqlite_embedded'
 SQL_BACKEND_POSTGRES_TCP :str = 'postgres_tcp'
@@ -374,6 +375,16 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
   def should_PG_client_session_inline_equal(self, conn_str :str, queries :typing.List[str], expected_output :typing.List[typing.Dict], **kwargs):
     client = PsycoPGClient(conn_str)
     result =  client.run_queries(
+      queries
+    )
+    self.log(result)
+    return self.lists_should_be_equal(result, expected_output)
+
+
+  @keyword
+  def should_sqlalchemy_raw_session_inline_equal(self, conn_str :str, queries :typing.List[str], expected_output :typing.List, **kwargs):
+    client = SQLAlchemyClient(conn_str)
+    result =  client.run_raw_queries(
       queries
     )
     self.log(result)

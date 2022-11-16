@@ -67,7 +67,7 @@ RUN apt-get update \
       maven \
       openssl \
       postgresql-client \
-    && pip3 install PyYaml robotframework psycopg2-binary "psycopg[binary]" \
+    && pip3 install PyYaml robotframework psycopg2-binary "psycopg[binary]" sqlalchemy \
     && mvn \
         org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy \
         -Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded \

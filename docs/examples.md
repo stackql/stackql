@@ -69,6 +69,18 @@ psql -d "host=127.0.0.1 port=5466 user=silly dbname=silly sslmode=verify-full ss
     - Run / adapt [this script](/examples/scripts/python/psycopg2_scratchpad.py) for troubleshooting `psycopg2`. 
     - Run / adapt [this script](/examples/scripts/python/sqlalchemy_scratchpad.py) for troubleshooting `sqlalchemy`. 
 
+### With docker
+
+From the repository root directory.
+
+```bash
+docker compose up stackqlsrv
+```
+
+```bash
+psql -d "host=127.0.0.1 port=5576 user=silly dbname=silly sslmode=verify-full sslcert=./vol/srv/credentials/pg_client_cert.pem sslkey=./vol/srv/credentials/pg_client_key.pem sslrootcert=./vol/srv/credentials/pg_server_cert.pem"
+```
+
 ## Queries
 
 ### SELECT

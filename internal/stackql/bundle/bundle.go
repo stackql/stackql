@@ -1,6 +1,7 @@
 package bundle
 
 import (
+	"github.com/stackql/stackql/internal/stackql/dbmsinternal"
 	"github.com/stackql/stackql/internal/stackql/garbagecollector"
 	"github.com/stackql/stackql/internal/stackql/kstore"
 	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
@@ -15,6 +16,7 @@ type Bundle interface {
 	GetControlAttributes() sqlcontrol.ControlAttributes
 	GetGC() garbagecollector.GarbageCollector
 	GetNamespaceCollection() tablenamespace.TableNamespaceCollection
+	GetDBMSInternalRouter() dbmsinternal.DBMSInternalRouter
 	GetSQLDialect() sqldialect.SQLDialect
 	GetSQLEngine() sqlengine.SQLEngine
 	GetTxnCounterManager() txncounter.TxnCounterManager
@@ -26,6 +28,7 @@ func NewBundle(
 	namespaces tablenamespace.TableNamespaceCollection,
 	sqlEngine sqlengine.SQLEngine,
 	sqlDialect sqldialect.SQLDialect,
+	pgInternalRouter dbmsinternal.DBMSInternalRouter,
 	controlAttributes sqlcontrol.ControlAttributes,
 	txnStore kstore.KStore,
 	txnCtrMgr txncounter.TxnCounterManager,
@@ -39,6 +42,7 @@ func NewBundle(
 		txnStore:          txnStore,
 		txnCtrMgr:         txnCtrMgr,
 		formatter:         sqlDialect.GetASTFormatter(),
+		pgInternalRouter:  pgInternalRouter,
 	}
 }
 
@@ -51,10 +55,15 @@ type simpleBundle struct {
 	txnStore          kstore.KStore
 	txnCtrMgr         txncounter.TxnCounterManager
 	formatter         sqlparser.NodeFormatter
+	pgInternalRouter  dbmsinternal.DBMSInternalRouter
 }
 
 func (sb *simpleBundle) GetControlAttributes() sqlcontrol.ControlAttributes {
 	return sb.controlAttributes
+}
+
+func (sb *simpleBundle) GetDBMSInternalRouter() dbmsinternal.DBMSInternalRouter {
+	return sb.pgInternalRouter
 }
 
 func (sb *simpleBundle) GetASTFormatter() sqlparser.NodeFormatter {

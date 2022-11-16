@@ -379,16 +379,20 @@ PSQL_CLIENT_HOST :str = "127.0.0.1"
 
 PSQL_MTLS_CONN_STR :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH} sslkey={STACKQL_PG_CLIENT_KEY_PATH} sslrootcert={STACKQL_PG_SERVER_CERT_PATH} dbname=mydatabase"
 PSQL_MTLS_CONN_STR_UNIX :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH_UNIX} sslkey={STACKQL_PG_CLIENT_KEY_PATH_UNIX} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_UNIX} dbname=mydatabase"
+
 PSQL_MTLS_CONN_STR_UNIX_WITH_NAMESPACES :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS_WITH_NAMESPACES} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH_UNIX} sslkey={STACKQL_PG_CLIENT_KEY_PATH_UNIX} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_UNIX} dbname=mydatabase"
 PSQL_MTLS_CONN_STR_UNIX_WITH_EAGER_GC :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS_WITH_EAGER_GC} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH_UNIX} sslkey={STACKQL_PG_CLIENT_KEY_PATH_UNIX} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_UNIX} dbname=mydatabase"
 PSQL_MTLS_INVALID_CONN_STR :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=verify-full sslcert={STACKQL_PG_RUBBISH_CERT_PATH} sslkey={STACKQL_PG_RUBBISH_KEY_PATH} sslrootcert={STACKQL_PG_SERVER_CERT_PATH} dbname=mydatabase"
+
 PSQL_UNENCRYPTED_CONN_STR :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_UNENCRYPTED} user=myuser dbname=mydatabase"
+POSTGRES_URL_UNENCRYPTED_CONN :str = f"postgresql://myuser:mypass@{PSQL_CLIENT_HOST}:{PG_SRV_PORT_UNENCRYPTED}/mydatabase"
 
 PSQL_MTLS_CONN_STR_DOCKER :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH_DOCKER} sslkey={STACKQL_PG_CLIENT_KEY_PATH_DOCKER} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_DOCKER} dbname=mydatabase"
 PSQL_MTLS_CONN_STR_WITH_NAMESPACES_DOCKER :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS_WITH_NAMESPACES} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH_DOCKER} sslkey={STACKQL_PG_CLIENT_KEY_PATH_DOCKER} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_DOCKER} dbname=mydatabase"
 PSQL_MTLS_CONN_STR_WITH_EAGER_GC_DOCKER :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS_WITH_EAGER_GC} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH_DOCKER} sslkey={STACKQL_PG_CLIENT_KEY_PATH_DOCKER} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_DOCKER} dbname=mydatabase"
 PSQL_MTLS_INVALID_CONN_STR_DOCKER :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=verify-full sslcert={STACKQL_PG_RUBBISH_CERT_PATH_DOCKER} sslkey={STACKQL_PG_RUBBISH_KEY_PATH_DOCKER} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_DOCKER} dbname=mydatabase"
 PSQL_UNENCRYPTED_CONN_STR_DOCKER :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_UNENCRYPTED} user=myuser dbname=mydatabase"
+POSTGRES_URL_UNENCRYPTED_CONN_DOCKER :str = f"postgresql://myuser:mypass@{PSQL_CLIENT_HOST}:{PG_SRV_PORT_UNENCRYPTED}/mydatabase"
 
 SELECT_CONTAINER_SUBNET_AGG_DESC = "select ipCidrRange, sum(5) cc  from  google.container.`projects.aggregated.usableSubnetworks` where projectsId = 'testing-project' group by ipCidrRange having sum(5) >= 5 order by ipCidrRange desc;"
 SELECT_CONTAINER_SUBNET_AGG_ASC = "select ipCidrRange, sum(5) cc  from  google.container.`projects.aggregated.usableSubnetworks` where projectsId = 'testing-project' group by ipCidrRange having sum(5) >= 5 order by ipCidrRange asc;"
@@ -406,6 +410,9 @@ SELECT_HSTORE_DETAILS = "SELECT t.oid, typarray FROM pg_type t JOIN pg_namespace
 
 SHOW_TRANSACTION_ISOLATION_LEVEL_JSON_EXPECTED = [{"transaction_isolation": "read committed"}]
 SELECT_HSTORE_DETAILS_JSON_EXPECTED = []
+
+SHOW_TRANSACTION_ISOLATION_LEVEL_TUPLE_EXPECTED = [("read committed",)]
+SELECT_HSTORE_DETAILS_TUPLE_EXPECTED = []
 
 SELECT_AZURE_COMPUTE_PUBLIC_KEYS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'azure', 'compute', 'ssh-public-keys-list.txt'))
 SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'azure', 'compute', 'vm-list.txt'))
@@ -608,6 +615,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'PG_SRV_PORT_MTLS_WITH_EAGER_GC':                 PG_SRV_PORT_MTLS_WITH_EAGER_GC,
     'PG_SRV_PORT_MTLS_WITH_NAMESPACES':               PG_SRV_PORT_MTLS_WITH_NAMESPACES,
     'PG_SRV_PORT_UNENCRYPTED':                        PG_SRV_PORT_UNENCRYPTED,
+    'POSTGRES_URL_UNENCRYPTED_CONN':                  POSTGRES_URL_UNENCRYPTED_CONN,
     'PSQL_CLIENT_HOST':                               PSQL_CLIENT_HOST,
     'PSQL_EXE':                                       PSQL_EXE,
     'REGISTRY_ROOT_CANONICAL':                        _REGISTRY_CANONICAL,
@@ -635,6 +643,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'GET_IAM_POLICY_AGG_ASC_EXPECTED':                                      GET_IAM_POLICY_AGG_ASC_EXPECTED,
     'PG_CLIENT_SETUP_QUERIES':                                              [ SHOW_TRANSACTION_ISOLATION_LEVEL, SELECT_HSTORE_DETAILS ],
     'PG_CLIENT_SETUP_QUERIES_JSON_EXPECTED':                                SHOW_TRANSACTION_ISOLATION_LEVEL_JSON_EXPECTED + SELECT_HSTORE_DETAILS_JSON_EXPECTED,
+    'PG_CLIENT_SETUP_QUERIES_TUPLE_EXPECTED':                               SHOW_TRANSACTION_ISOLATION_LEVEL_TUPLE_EXPECTED + SELECT_HSTORE_DETAILS_TUPLE_EXPECTED,
     'REGISTRY_GOOGLE_PROVIDER_LIST':                                        REGISTRY_GOOGLE_PROVIDER_LIST,
     'REGISTRY_GOOGLE_PROVIDER_LIST_EXPECTED':                               REGISTRY_GOOGLE_PROVIDER_LIST_EXPECTED,
     'REGISTRY_LIST':                                                        REGISTRY_LIST,

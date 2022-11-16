@@ -289,6 +289,20 @@ func (pgb *planGraphBuilder) nop(pbi PlanBuilderInput) error {
 	return err
 }
 
+func (pgb *planGraphBuilder) pgInternal(pbi PlanBuilderInput) error {
+	primitiveGenerator := newRootPrimitiveGenerator(nil, pbi.GetHandlerCtx(), pgb.planGraph)
+	err := primitiveGenerator.analyzePGInternal(pbi)
+	if err != nil {
+		return err
+	}
+	builder := primitiveGenerator.PrimitiveComposer.GetBuilder()
+	if builder == nil {
+		return fmt.Errorf("nil pg internal builder")
+	}
+	err = builder.Build()
+	return err
+}
+
 func (pgb *planGraphBuilder) handleAuth(pbi PlanBuilderInput) error {
 	handlerCtx := pbi.GetHandlerCtx()
 	node, ok := pbi.GetAuth()
@@ -400,7 +414,9 @@ func (pgb *planGraphBuilder) handleSelect(pbi PlanBuilderInput) (*primitivegraph
 		}
 		builder := primitiveGenerator.PrimitiveComposer.GetBuilder()
 		_, isNativeSelect := builder.(*primitivebuilder.NativeSelect)
-		isLocallyExecutable := !isNativeSelect
+		_, isRawNativeSelect := builder.(*primitivebuilder.RawNativeSelect)
+		_, isRawNativeExec := builder.(*primitivebuilder.RawNativeExec)
+		isLocallyExecutable := !isNativeSelect && !isRawNativeSelect && !isRawNativeExec
 		// check tables only if not native
 		if isLocallyExecutable {
 			for _, val := range primitiveGenerator.PrimitiveComposer.GetTables() {
@@ -907,6 +923,33 @@ func BuildPlanFromContext(handlerCtx *handler.HandlerContext) (*plan.Plan, error
 	qPlan.Type = statementType
 
 	pGBuilder := newPlanGraphBuilder(handlerCtx.RuntimeContext.ExecutionConcurrencyLimit)
+
+	// Before analysing AST, see if we can pass stright to SQL backend
+	opType, ok := handlerCtx.GetDBMSInternalRouter().CanRoute(result.AST)
+	if ok {
+		logging.GetLogger().Debugf("%v", opType)
+		pbi, err := NewPlanBuilderInput(handlerCtx, result.AST, nil, nil, nil, nil, nil, *tcc)
+		if err != nil {
+			return nil, err
+		}
+		createInstructionError := pGBuilder.pgInternal(pbi)
+		if createInstructionError != nil {
+			return nil, createInstructionError
+		}
+		qPlan.Instructions = pGBuilder.planGraph
+
+		if qPlan.Instructions != nil {
+			err = qPlan.Instructions.Optimise()
+			if err != nil {
+				return createErroneousPlan(handlerCtx, qPlan, rowSort, err)
+			}
+			if qPlan.IsCacheable() {
+				handlerCtx.LRUCache.Set(planKey, qPlan)
+			}
+		}
+		return qPlan, err
+
+	}
 
 	// First pass AST analysis; extract provider strings for auth.
 	provStrSlice, cacheExemptMaterialDetected := astvisit.ExtractProviderStringsAndDetectCacheExceptMaterial(result.AST, handlerCtx.SQLDialect, handlerCtx.GetASTFormatter(), handlerCtx.GetNamespaceCollection())
