@@ -100,6 +100,15 @@ func (pgr *standardDBMSInternalRouter) analyzeTableExpr(node sqlparser.TableExpr
 		case sqlparser.TableName:
 			return pgr.analyzeTableName(expr)
 		}
+	case *sqlparser.JoinTableExpr:
+		lhs := pgr.analyzeTableExpr(node.LeftExpr)
+		if lhs {
+			return true
+		}
+		rhs := pgr.analyzeTableExpr(node.RightExpr)
+		if rhs {
+			return true
+		}
 	}
 	return false
 }

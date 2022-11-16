@@ -81,6 +81,8 @@ class RegistryCfg:
 
 REPOSITORY_ROOT = os.path.abspath(os.path.join(__file__, '..', '..', '..', '..'))
 
+DB_INTERNAL_CFG_LAX :str = "{ \"tableRegex\": \"(?i)^(?:public\\\\.)?(?:pg_.*|current_schema)\" }"
+
 _TEST_APP_CACHE_ROOT = os.path.abspath(os.path.join(REPOSITORY_ROOT, "test", ".stackql"))
 
 ROBOT_TEST_ROOT = os.path.abspath(os.path.join(__file__, '..'))
@@ -411,8 +413,10 @@ SELECT_HSTORE_DETAILS = "SELECT t.oid, typarray FROM pg_type t JOIN pg_namespace
 SHOW_TRANSACTION_ISOLATION_LEVEL_JSON_EXPECTED = [{"transaction_isolation": "read committed"}]
 SELECT_HSTORE_DETAILS_JSON_EXPECTED = []
 
-SHOW_TRANSACTION_ISOLATION_LEVEL_TUPLE_EXPECTED = [("read committed",)]
-SELECT_HSTORE_DETAILS_TUPLE_EXPECTED = []
+SHOW_TRANSACTION_ISOLATION_LEVEL_TUPLES_EXPECTED = [("read committed",)]
+SELECT_HSTORE_DETAILS_TUPLES_EXPECTED = []
+
+SELECT_POSTGRES_CATALOG_JOIN_TUPLE_EXPECTED = ("__iql__.control.gc.rings",)
 
 SELECT_AZURE_COMPUTE_PUBLIC_KEYS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'azure', 'compute', 'ssh-public-keys-list.txt'))
 SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'azure', 'compute', 'vm-list.txt'))
@@ -505,6 +509,8 @@ SELECT_OKTA_APPS_ASC_EXPECTED_JSON = get_json_from_local_file(os.path.join('test
 SELECT_OKTA_USERS_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'okta', 'select-users-asc.txt'))
 
 
+SELECT_POSTGRES_CATALOG_JOIN = "SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relkind in ('r', 'p');"
+
 DELETE_AWS_CLOUD_CONTROL_LOG_GROUP = "delete from aws.cloud_control.resources where region = 'ap-southeast-1' and data__TypeName = 'AWS::Logs::LogGroup' and data__Identifier = 'LogGroupResourceExampleThird';"
 
 SELECT_AWS_VOLUMES_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'ec2', 'select-volumes-asc.txt'))
@@ -590,6 +596,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'BUILDMAJORVERSION':                              _BUILD_MAJOR_VERSION,
     'BUILDMINORVERSION':                              _BUILD_MINOR_VERSION,
     'BUILDPATCHVERSION':                              _BUILD_PATCH_VERSION,
+    'DB_INTERNAL_CFG_LAX':                            DB_INTERNAL_CFG_LAX,
     'GC_CFG_EAGER':                                   _GC_CFG_EAGER,
     'GITHUB_SECRET_STR':                              GITHUB_SECRET_STR,
     'IS_WINDOWS':                                     IS_WINDOWS,
@@ -643,7 +650,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'GET_IAM_POLICY_AGG_ASC_EXPECTED':                                      GET_IAM_POLICY_AGG_ASC_EXPECTED,
     'PG_CLIENT_SETUP_QUERIES':                                              [ SHOW_TRANSACTION_ISOLATION_LEVEL, SELECT_HSTORE_DETAILS ],
     'PG_CLIENT_SETUP_QUERIES_JSON_EXPECTED':                                SHOW_TRANSACTION_ISOLATION_LEVEL_JSON_EXPECTED + SELECT_HSTORE_DETAILS_JSON_EXPECTED,
-    'PG_CLIENT_SETUP_QUERIES_TUPLE_EXPECTED':                               SHOW_TRANSACTION_ISOLATION_LEVEL_TUPLE_EXPECTED + SELECT_HSTORE_DETAILS_TUPLE_EXPECTED,
+    'PG_CLIENT_SETUP_QUERIES_TUPLES_EXPECTED':                              SHOW_TRANSACTION_ISOLATION_LEVEL_TUPLES_EXPECTED + SELECT_HSTORE_DETAILS_TUPLES_EXPECTED,
     'REGISTRY_GOOGLE_PROVIDER_LIST':                                        REGISTRY_GOOGLE_PROVIDER_LIST,
     'REGISTRY_GOOGLE_PROVIDER_LIST_EXPECTED':                               REGISTRY_GOOGLE_PROVIDER_LIST_EXPECTED,
     'REGISTRY_LIST':                                                        REGISTRY_LIST,
@@ -728,6 +735,8 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'SELECT_OKTA_APPS_ASC_EXPECTED':                                        SELECT_OKTA_APPS_ASC_EXPECTED,
     'SELECT_OKTA_USERS_ASC':                                                SELECT_OKTA_USERS_ASC,
     'SELECT_OKTA_USERS_ASC_EXPECTED':                                       SELECT_OKTA_USERS_ASC_EXPECTED,
+    'SELECT_POSTGRES_CATALOG_JOIN':                                         SELECT_POSTGRES_CATALOG_JOIN,
+    'SELECT_POSTGRES_CATALOG_JOIN_TUPLE_EXPECTED':                          SELECT_POSTGRES_CATALOG_JOIN_TUPLE_EXPECTED,
     'SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD':                          [ SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES, SELECT_AZURE_COMPUTE_PUBLIC_KEYS ],
     'SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD_EXPECTED':                 _SHELL_WELCOME_MSG + SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_EXPECTED + '\n' + SELECT_AZURE_COMPUTE_PUBLIC_KEYS_EXPECTED,
     'SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD_JSON_EXPECTED':            SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_JSON_EXPECTED + SELECT_AZURE_COMPUTE_PUBLIC_KEYS_JSON_EXPECTED,

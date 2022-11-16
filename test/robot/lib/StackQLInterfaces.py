@@ -389,7 +389,17 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     )
     self.log(result)
     return self.lists_should_be_equal(result, expected_output)
-  
+
+
+  @keyword
+  def should_sqlalchemy_raw_session_inline_contain(self, conn_str :str, queries :typing.List[str], expected_output :typing.Tuple, **kwargs):
+    client = SQLAlchemyClient(conn_str)
+    result =  client.run_raw_queries(
+      queries
+    )
+    self.log(result)
+    return self.list_should_contain_value(result, expected_output)
+
 
   @keyword
   def should_PG_client_V2_session_inline_equal(self, conn_str :str, queries :typing.List[str], expected_output :typing.List[typing.Dict], **kwargs):
