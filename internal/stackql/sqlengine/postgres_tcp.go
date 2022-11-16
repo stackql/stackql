@@ -66,8 +66,23 @@ func newPostgresTcpEngine(cfg dto.SQLBackendCfg, controlAttributes sqlcontrol.Co
 		retryCount++
 	}
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("postgres db object setup error = '%s'", err.Error())
 	}
+	logging.GetLogger().Debugln(fmt.Sprintf("opened postgres TCP db with connection string = '%s' and err  = '%v'", dsn, err))
+	pingErr := db.Ping()
+	retryCount = 0
+	for {
+		if retryCount >= cfg.InitMaxRetries || err == nil {
+			break
+		}
+		time.Sleep(time.Duration(cfg.InitRetryInitialDelay) * time.Second)
+		pingErr = db.Ping()
+		retryCount++
+	}
+	if pingErr != nil {
+		return nil, fmt.Errorf("postgres connection setup ping error = '%s'", pingErr.Error())
+	}
+	logging.GetLogger().Debugln(fmt.Sprintf("opened and pinged postgres TCP db with connection string = '%s' and err  = '%v'", dsn, err))
 	db.SetConnMaxLifetime(-1)
 	eng := &postgresTcpEngine{
 		db:                db,
@@ -89,7 +104,7 @@ func newPostgresTcpEngine(cfg dto.SQLBackendCfg, controlAttributes sqlcontrol.Co
 	if err != nil {
 		return eng, err
 	}
-	logging.GetLogger().Debugln(fmt.Sprintf("opened postgres TCP db with connection string = '%s' and err  = '%v'", dsn, err))
+	// logging.GetLogger().Debugln(fmt.Sprintf("opened postgres TCP db with connection string = '%s'", dsn))
 	if err != nil {
 		return eng, err
 	}

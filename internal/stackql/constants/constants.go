@@ -48,3 +48,11 @@ const (
 	GCBlack
 	GCGrey
 )
+
+type BackendQueryType int
+
+const (
+	BackendExec BackendQueryType = iota
+	BackendQuery
+	BackendNop
+)

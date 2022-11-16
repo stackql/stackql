@@ -775,12 +775,15 @@ func (p *primitiveGenerator) analyzeSchemaVsMap(handlerCtx *handler.HandlerConte
 		for k, _ := range requiredElements {
 			missingKeys = append(missingKeys, k)
 		}
-		return fmt.Errorf("required elements not included in suplied object; the following keys are missing: %s.", strings.Join(missingKeys, ", "))
+		return fmt.Errorf("required elements not included in suplied object; the following keys are missing: %s", strings.Join(missingKeys, ", "))
 	}
 	return nil
 }
 
 func isPGSetupQuery(pbi PlanBuilderInput) (nativedb.Select, bool) {
+	handlerCtx := pbi.GetHandlerCtx()
+	routeType, canRoute := handlerCtx.GetDBMSInternalRouter().CanRoute(pbi.GetStatement())
+	logging.GetLogger().Debugf("canRoute = %t, routeType = %v\n", canRoute, routeType)
 	qStripped := multipleWhitespaceRegexp.ReplaceAllString(pbi.GetRawQuery(), " ")
 	if qStripped == "select relname, nspname, relkind from pg_catalog.pg_class c, pg_catalog.pg_namespace n where relkind in ('r', 'v', 'm', 'f') and nspname not in ('pg_catalog', 'information_schema', 'pg_toast', 'pg_temp_1') and n.oid = relnamespace order by nspname, relname" {
 		return nil, true
@@ -818,6 +821,26 @@ func isPGSetupQuery(pbi PlanBuilderInput) (nativedb.Select, bool) {
 	return nil, false
 }
 
+func (p *primitiveGenerator) analyzePGInternal(pbi PlanBuilderInput) error {
+	handlerCtx := pbi.GetHandlerCtx()
+	if backendQueryType, ok := handlerCtx.GetDBMSInternalRouter().CanRoute(pbi.GetStatement()); ok {
+		if backendQueryType == constants.BackendQuery {
+			bldr := primitivebuilder.NewRawNativeSelect(p.PrimitiveComposer.GetGraph(), handlerCtx, pbi.GetTxnCtrlCtrs(), pbi.GetRawQuery())
+			p.PrimitiveComposer.SetBuilder(bldr)
+			return nil
+		}
+		if backendQueryType == constants.BackendExec {
+			bldr := primitivebuilder.NewRawNativeExec(p.PrimitiveComposer.GetGraph(), handlerCtx, pbi.GetTxnCtrlCtrs(), pbi.GetRawQuery())
+			p.PrimitiveComposer.SetBuilder(bldr)
+			return nil
+		}
+		if backendQueryType == constants.BackendNop {
+			return p.analyzeNop(pbi)
+		}
+	}
+	return fmt.Errorf("cannot execute PG internal")
+}
+
 func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 
 	handlerCtx := pbi.GetHandlerCtx()
@@ -826,6 +849,8 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 		return fmt.Errorf("could not cast statement of type '%T' to required Select", pbi.GetStatement())
 	}
 
+	// TODO: get rid of this and dependent tests.
+	// We need not emulate postgres for other backends at this stage.
 	if sel, ok := isPGSetupQuery(pbi); ok {
 		if sel != nil {
 			bldr := primitivebuilder.NewNativeSelect(p.PrimitiveComposer.GetGraph(), handlerCtx, sel)
