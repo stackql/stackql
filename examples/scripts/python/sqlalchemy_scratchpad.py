@@ -15,11 +15,15 @@ SELECT_HSTORE_DETAILS_JSON_EXPECTED = []
 
 curs.execute("show transaction isolation level")
 
-rv = curs.fetchall()
+# rv = curs.fetchall()
 
-e1 = None
-for entry in rv:
-    dir(entry)
-    print(entry)
-    e1 = entry
+if curs.rowcount > 0:
+    rv = curs.fetchall()
+    e1 = None
+    for entry in rv:
+        dir(entry)
+        print(entry)
+        e1 = entry
+else:
+    print("empty result")
     

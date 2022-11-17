@@ -33,7 +33,7 @@ func newPostgresDialect(sqlEngine sqlengine.SQLEngine, analyticsNamespaceLikeStr
 		sqlEngine:                    sqlEngine,
 		formatter:                    formatter,
 	}
-	err := rv.initSQLiteEngine()
+	err := rv.initPostgresEngine()
 	return rv, err
 }
 
@@ -47,7 +47,7 @@ type postgresDialect struct {
 	defaultGolangKind            reflect.Kind
 }
 
-func (eng *postgresDialect) initSQLiteEngine() error {
+func (eng *postgresDialect) initPostgresEngine() error {
 	_, err := eng.sqlEngine.Exec(postgresEngineSetupDDL)
 	return err
 }
