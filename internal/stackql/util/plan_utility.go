@@ -442,6 +442,9 @@ func PrepareNativeResultSet(rows *sql.Rows) dto.ExecutorOutput {
 		nil,
 		nil,
 	)
+	if len(outRows) == 0 {
+		outRows = append(outRows, sqldata.NewSQLRow([]interface{}{}))
+	}
 	resultStream.Write(sqldata.NewSQLResult(columns, 0, 0, outRows))
 	resultStream.Close()
 	if len(outRows) == 0 {

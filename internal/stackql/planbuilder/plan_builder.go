@@ -943,9 +943,6 @@ func BuildPlanFromContext(handlerCtx *handler.HandlerContext) (*plan.Plan, error
 			if err != nil {
 				return createErroneousPlan(handlerCtx, qPlan, rowSort, err)
 			}
-			if qPlan.IsCacheable() {
-				handlerCtx.LRUCache.Set(planKey, qPlan)
-			}
 		}
 		return qPlan, err
 

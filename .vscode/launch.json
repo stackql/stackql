@@ -10,6 +10,7 @@
       "description": "SQL Query string",
       "options": [
         "select `Key`, Size, StorageClass from  aws.s3.objects where region = 'ap-southeast-1' and bucket = 'stackql-trial-bucket-01' order by `Key` ASC;",
+        "SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relkind in ('r', 'p')",
         "select name from google.compute.machineTypes where project = 'testing-project' and zone = 'australia-southeast1-a' order by name desc;",
         "select oid, typbasetype from pg_type where typname = 'lo'",
         "select relname, nspname, relkind from pg_catalog.pg_class c, pg_catalog.pg_namespace n where relkind in ('r', 'v', 'm', 'f') and nspname not in ('pg_catalog', 'information_schema', 'pg_toast', 'pg_temp_1') and n.oid = relnamespace order by nspname, relname",
@@ -83,7 +84,19 @@
         "{ \"dbEngine\": \"postgres_tcp\", \"sqlDialect\": \"postgres\", \"dsn\": \"postgres://stackql:stackql@127.0.0.1:7432/stackql\" }",
         "{ \"dbInitFilepath\": \"${workspaceFolder}/test/db/postgres/cache_setup.sql\", \"dbEngine\": \"postgres_tcp\", \"sqlDialect\": \"postgres\", \"dsn\": \"postgres://stackql:stackql@127.0.0.1:7432/stackql\" }"
       ]
+    },
+    {
+      "type": "pickString",
+      "id": "dbInternalString",
+      "description": "routing internal queries",
+      "default": "{}",
+      "options": [
+        "{}",
+        "{ \"tableRegex\": \"(?i)^(?:public\\\\.)?(?:pg_.*|current_schema)\" }"
+      ]
     }
+    // dbInternalString
+    // 
   ],
   "configurations": [
     // ATTACH
@@ -259,6 +272,7 @@
         "--tls.allowInsecure",
         "--sqlBackend=${input:sqlBackendString}",
         "--namespaces=${input:namespaceString}",
+        "--dbInternal=${input:dbInternalString}",
         "${input:queryString}"
       ],
     },
@@ -520,7 +534,8 @@
         "--gc=${input:gcString}",
         "--registry=${input:registryString}",
         "--namespaces=${input:namespaceString}",
-        "--sqlBackend=${input:sqlBackendString}"
+        "--sqlBackend=${input:sqlBackendString}",
+        "--dbInternal=${input:dbInternalString}"
       ],
     },
     {
