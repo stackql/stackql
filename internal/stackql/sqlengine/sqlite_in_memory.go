@@ -68,14 +68,6 @@ func newSQLiteInProcessEngine(cfg dto.SQLBackendCfg, controlAttributes sqlcontro
 	return eng, err
 }
 
-func (eng *sqLiteInProcessEngine) GetTableCatalog() string {
-	return ""
-}
-
-func (eng *sqLiteInProcessEngine) GetTableSchema() string {
-	return ""
-}
-
 func (eng *sqLiteInProcessEngine) execFileSQLite(fileName string) error {
 	fileContents, err := ioutil.ReadFile(fileName)
 	if err != nil {
@@ -88,9 +80,11 @@ func (eng *sqLiteInProcessEngine) execFileSQLite(fileName string) error {
 // In SQLite, `DateTime` objects are not properly aware; the zone is not recorded.
 // That being said, those fields populated with `DateTime('now')` are UTC.
 // As per https://www.sqlite.org/lang_datefunc.html:
-//    The 'now' argument to date and time functions always returns exactly
-//    the same value for multiple invocations within the same sqlite3_step()
-//    call. Universal Coordinated Time (UTC) is used.
+//
+//	The 'now' argument to date and time functions always returns exactly
+//	the same value for multiple invocations within the same sqlite3_step()
+//	call. Universal Coordinated Time (UTC) is used.
+//
 // Therefore, this method will behave correctly provided that the column `colName`
 // is populated with `DateTime('now')`.
 func (eng *sqLiteInProcessEngine) TableOldestUpdateUTC(tableName string, requestEncoding string, updateColName string, requestEncodingColName string) (time.Time, *dto.TxnControlCounters) {

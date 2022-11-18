@@ -15,7 +15,7 @@ import (
 	"vitess.io/vitess/go/vt/sqlparser"
 )
 
-func newSQLiteDialect(sqlEngine sqlengine.SQLEngine, analyticsNamespaceLikeString string, controlAttributes sqlcontrol.ControlAttributes, formatter sqlparser.NodeFormatter) (SQLDialect, error) {
+func newSQLiteDialect(sqlEngine sqlengine.SQLEngine, analyticsNamespaceLikeString string, controlAttributes sqlcontrol.ControlAttributes, formatter sqlparser.NodeFormatter, sqlCfg dto.SQLBackendCfg) (SQLDialect, error) {
 	rv := &sqLiteDialect{
 		defaultGolangKind:     reflect.String,
 		defaultRelationalType: "text",
@@ -286,6 +286,14 @@ func (eng *sqLiteDialect) composeSelectQuery(columns []relationaldto.RelationalC
 	query := q.String()
 
 	return eng.sanitizeQueryString(query)
+}
+
+func (eng *sqLiteDialect) GetFullyQualifiedTableName(unqualifiedTableName string) (string, error) {
+	return eng.getFullyQualifiedTableName(unqualifiedTableName)
+}
+
+func (eng *sqLiteDialect) getFullyQualifiedTableName(unqualifiedTableName string) (string, error) {
+	return fmt.Sprintf(`"%s"`, unqualifiedTableName), nil
 }
 
 func (eng *sqLiteDialect) SanitizeQueryString(queryString string) (string, error) {

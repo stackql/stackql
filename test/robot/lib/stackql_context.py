@@ -81,7 +81,7 @@ class RegistryCfg:
 
 REPOSITORY_ROOT = os.path.abspath(os.path.join(__file__, '..', '..', '..', '..'))
 
-DB_INTERNAL_CFG_LAX :str = "{ \"tableRegex\": \"(?i)^(?:public\\\\.)?(?:pg_.*|current_schema)\" }"
+DB_INTERNAL_CFG_LAX :str = "{ \"tableRegex\": \"(?i)^(?:public\\\\.)?(?:pg_.*|current_schema|information_schema)\" }"
 
 _TEST_APP_CACHE_ROOT = os.path.abspath(os.path.join(REPOSITORY_ROOT, "test", ".stackql"))
 
@@ -396,8 +396,8 @@ PSQL_MTLS_INVALID_CONN_STR_DOCKER :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_
 PSQL_UNENCRYPTED_CONN_STR_DOCKER :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_UNENCRYPTED} user=myuser dbname=mydatabase"
 POSTGRES_URL_UNENCRYPTED_CONN_DOCKER :str = f"postgresql://myuser:mypass@{PSQL_CLIENT_HOST}:{PG_SRV_PORT_UNENCRYPTED}/mydatabase"
 
-SELECT_CONTAINER_SUBNET_AGG_DESC = "select ipCidrRange, sum(5) cc  from  google.container.`projects.aggregated.usableSubnetworks` where projectsId = 'testing-project' group by ipCidrRange having sum(5) >= 5 order by ipCidrRange desc;"
-SELECT_CONTAINER_SUBNET_AGG_ASC = "select ipCidrRange, sum(5) cc  from  google.container.`projects.aggregated.usableSubnetworks` where projectsId = 'testing-project' group by ipCidrRange having sum(5) >= 5 order by ipCidrRange asc;"
+SELECT_CONTAINER_SUBNET_AGG_DESC = "select ipCidrRange, sum(5) cc  from  google.container.\"projects.aggregated.usableSubnetworks\" where projectsId = 'testing-project' group by ipCidrRange having sum(5) >= 5 order by ipCidrRange desc;"
+SELECT_CONTAINER_SUBNET_AGG_ASC = "select ipCidrRange, sum(5) cc  from  google.container.\"projects.aggregated.usableSubnetworks\" where projectsId = 'testing-project' group by ipCidrRange having sum(5) >= 5 order by ipCidrRange asc;"
 SELECT_ACCELERATOR_TYPES_DESC = "select  kind, name  from  google.compute.acceleratorTypes where project = 'testing-project' and zone = 'australia-southeast1-a' order by name desc;"
 SELECT_MACHINE_TYPES_DESC = "select name from google.compute.machineTypes where project = 'testing-project' and zone = 'australia-southeast1-a' order by name desc;"
 SELECT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY = "SELECT etag FROM google.compute.instances_iam_policies WHERE project = 'testing-project' AND zone = 'australia-southeast1-a' AND resource = '000000001';"
@@ -426,8 +426,8 @@ SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_JSON_EXPECTED = get_json_from_local_file(o
 
 SELECT_AWS_S3_BUCKET_LOCATIONS = "select LocationConstraint from aws.s3.bucket_locations where region = 'ap-southeast-1' and bucket = 'stackql-trial-bucket-01';"
 SELECT_AWS_S3_BUCKETS = "select Name, CreationDate from  aws.s3.buckets where region = 'ap-southeast-1' order by Name ASC;"
-SELECT_AWS_S3_OBJECTS = "select `Key`, Size, StorageClass from  aws.s3.objects where region = 'ap-southeast-1' and bucket = 'stackql-trial-bucket-01' order by `Key` ASC;"
-SELECT_AWS_S3_OBJECTS_NULL = "select `Key`, Size, StorageClass from  aws.s3.objects where region = 'ap-southeast-2' and bucket = 'stackql-trial-bucket-02' order by `Key` ASC;"
+SELECT_AWS_S3_OBJECTS = "select \"Key\", Size, StorageClass from  aws.s3.objects where region = 'ap-southeast-1' and bucket = 'stackql-trial-bucket-01' order by \"Key\" ASC;"
+SELECT_AWS_S3_OBJECTS_NULL = "select \"Key\", Size, StorageClass from  aws.s3.objects where region = 'ap-southeast-2' and bucket = 'stackql-trial-bucket-02' order by \"Key\" ASC;"
 SELECT_AWS_EC2_VPN_GATEWAYS_NULL = "select vpnGatewayId, amazonSideAsn from aws.ec2.vpn_gateways where region = 'ap-southeast-1' order by vpnGatewayId ASC;"
 SELECT_AWS_VOLUMES = "select VolumeId, Encrypted, Size from aws.ec2.volumes where region = 'ap-southeast-1' order by VolumeId asc;"
 SELECT_AWS_IAM_USERS_ASC = "select UserName, Arn from aws.iam.users WHERE region = 'us-east-1' order by UserName ASC;"
@@ -735,6 +735,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'SELECT_OKTA_APPS_ASC_EXPECTED':                                        SELECT_OKTA_APPS_ASC_EXPECTED,
     'SELECT_OKTA_USERS_ASC':                                                SELECT_OKTA_USERS_ASC,
     'SELECT_OKTA_USERS_ASC_EXPECTED':                                       SELECT_OKTA_USERS_ASC_EXPECTED,
+    'SELECT_POSTGRES_BACKEND_PID_ARR':                                      [ 'SELECT pg_backend_pid();' ],
     'SELECT_POSTGRES_CATALOG_JOIN_ARR':                                     [ SELECT_POSTGRES_CATALOG_JOIN ],
     'SELECT_POSTGRES_CATALOG_JOIN_TUPLE_EXPECTED':                          SELECT_POSTGRES_CATALOG_JOIN_TUPLE_EXPECTED,
     'SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD':                          [ SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES, SELECT_AZURE_COMPUTE_PUBLIC_KEYS ],

@@ -1,17 +1,15 @@
 package tablenamespace
 
 import (
-	"bytes"
 	"database/sql"
 	"fmt"
-	"regexp"
 	"strings"
-	"text/template"
 	"time"
 
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/sqldialect"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
+	"github.com/stackql/stackql/internal/stackql/templatenamespace"
 )
 
 type TableNamespaceConfigurator interface {
@@ -30,16 +28,15 @@ var (
 )
 
 type regexTableNamespaceConfigurator struct {
-	sqlDialect sqldialect.SQLDialect
-	sqlEngine  sqlengine.SQLEngine
-	regex      *regexp.Regexp
-	template   *template.Template
-	likeString string
-	ttl        int
+	sqlDialect                    sqldialect.SQLDialect
+	sqlEngine                     sqlengine.SQLEngine
+	templateNamespaceConfigurator templatenamespace.TemplateNamespaceConfigurator
+	likeString                    string
+	ttl                           int
 }
 
 func (stc *regexTableNamespaceConfigurator) IsAllowed(tableString string) bool {
-	return stc.isAllowed(tableString)
+	return stc.templateNamespaceConfigurator.IsAllowed(tableString)
 }
 
 func (stc *regexTableNamespaceConfigurator) GetTTL() int {
@@ -54,16 +51,12 @@ func (stc *regexTableNamespaceConfigurator) getLikeString() string {
 	return stc.likeString
 }
 
-func (stc *regexTableNamespaceConfigurator) isAllowed(tableString string) bool {
-	return stc.regex.MatchString(tableString)
-}
-
 func (stc *regexTableNamespaceConfigurator) Read(tableString string, requestEncoding string, requestEncodingColName string, nonControlColumnNames []string) (*sql.Rows, error) {
-	isAllowed := stc.isAllowed(tableString)
+	isAllowed := stc.templateNamespaceConfigurator.IsAllowed(tableString)
 	if !isAllowed {
 		return nil, fmt.Errorf("disallowed tableString = '%s'", tableString)
 	}
-	actualTableName, err := stc.renderTemplate(tableString)
+	actualTableName, err := stc.templateNamespaceConfigurator.RenderTemplate(tableString)
 	if err != nil {
 		return nil, fmt.Errorf("could not infer actual table name for tableString = '%s'", tableString)
 	}
@@ -80,11 +73,11 @@ func (stc *regexTableNamespaceConfigurator) Read(tableString string, requestEnco
 }
 
 func (stc *regexTableNamespaceConfigurator) Match(tableString string, requestEncoding string, lastModifiedColName string, requestEncodingColName string) (*dto.TxnControlCounters, bool) {
-	isAllowed := stc.isAllowed(tableString)
+	isAllowed := stc.templateNamespaceConfigurator.IsAllowed(tableString)
 	if !isAllowed {
 		return nil, false
 	}
-	actualTableName, err := stc.renderTemplate(tableString)
+	actualTableName, err := stc.templateNamespaceConfigurator.RenderTemplate(tableString)
 	if err != nil {
 		return nil, false
 	}
@@ -102,39 +95,11 @@ func (stc *regexTableNamespaceConfigurator) Match(tableString string, requestEnc
 }
 
 func (stc *regexTableNamespaceConfigurator) RenderTemplate(input string) (string, error) {
-	return stc.renderTemplate(input)
-}
-
-func (stc *regexTableNamespaceConfigurator) renderTemplate(input string) (string, error) {
-	objName := stc.getObjectName(input)
-	inputMap := map[string]interface{}{
-		"objectName": objName,
-	}
-	return stc.render(inputMap)
-}
-
-func (stc *regexTableNamespaceConfigurator) render(input map[string]interface{}) (string, error) {
-	var tplWr bytes.Buffer
-	if err := stc.template.Execute(&tplWr, input); err != nil {
-		return "", err
-	}
-	return tplWr.String(), nil
+	return stc.templateNamespaceConfigurator.RenderTemplate(input)
 }
 
 func (stc *regexTableNamespaceConfigurator) GetObjectName(inputString string) string {
-	return stc.getObjectName(inputString)
-}
-
-func (stc *regexTableNamespaceConfigurator) getObjectName(inputString string) string {
-	for i, name := range stc.regex.SubexpNames() {
-		if name == "objectName" {
-			submatches := stc.regex.FindStringSubmatch(inputString)
-			if len(submatches) > i {
-				return submatches[i]
-			}
-		}
-	}
-	return ""
+	return stc.templateNamespaceConfigurator.GetObjectName(inputString)
 }
 
 func (stc *regexTableNamespaceConfigurator) WithSQLDialect(sqlDialect sqldialect.SQLDialect) (TableNamespaceConfigurator, error) {

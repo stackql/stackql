@@ -668,8 +668,8 @@ github.com/stackql/readline v0.0.2-alpha05 h1:ID4QzGdplFBsrSnTuz8pvKzWw96JbrJg8f
 github.com/stackql/readline v0.0.2-alpha05/go.mod h1:OFAYOdXk/X4+5GYiDXFfaGrk+bCN6Qv0SYY5HNzD2E0=
 github.com/stackql/stackql-provider-registry v0.0.1-rc01 h1:3XorfaYEhGpuvEeQK04EmpZUCr42hZ/a4Nh3wE25LF0=
 github.com/stackql/stackql-provider-registry v0.0.1-rc01/go.mod h1:D0WFWa7HOXS+PQAmvN0Nm1E6dMdUkUFtAzRH8cXxg88=
-github.com/stackql/vitess v0.0.11-alpha15 h1:1oWe8CIlA6hkTiLTGigULJp63u3/qJ+k3AMq+BPBvHE=
-github.com/stackql/vitess v0.0.11-alpha15/go.mod h1:6aOZHbgHclTasEGZvrdoWfca6Y4XJfemKMqwnDL/klI=
+github.com/stackql/vitess v0.0.12-alpha01 h1:IFoosO/I50xVDNqWjzd/nQdqzVhEhLX7tsVmb9OdChI=
+github.com/stackql/vitess v0.0.12-alpha01/go.mod h1:6aOZHbgHclTasEGZvrdoWfca6Y4XJfemKMqwnDL/klI=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/objx v0.1.1/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/objx v0.2.0/go.mod h1:qt09Ya8vawLte6SNmTgCsAVtYtaKzEcn8ATUoHMkEqE=

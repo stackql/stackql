@@ -224,7 +224,7 @@ func (v *QueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			if err != nil {
 				return err
 			}
-			fromVis := NewDRMAstVisitor("", true, v.handlerCtx.SQLDialect, v.formatter, v.namespaceCollection)
+			fromVis := NewFromRewriteAstVisitor("", true, v.handlerCtx.SQLDialect, v.formatter, v.namespaceCollection)
 			if node.From != nil {
 				node.From.Accept(fromVis)
 				v.fromStr = fromVis.GetRewrittenQuery()

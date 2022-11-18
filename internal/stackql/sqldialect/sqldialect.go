@@ -40,6 +40,7 @@ type SQLDialect interface {
 	//
 	GetASTFormatter() sqlparser.NodeFormatter
 	GetASTFuncRewriter() astfuncrewrite.ASTFuncRewriter
+	GetFullyQualifiedTableName(string) (string, error)
 	GetSQLEngine() sqlengine.SQLEngine
 	// PurgeAll() drops all data tables, does **not** drop control tables.
 	PurgeAll() error
@@ -63,14 +64,15 @@ func getNodeFormatter(name string) sqlparser.NodeFormatter {
 	return nil
 }
 
-func NewSQLDialect(sqlEngine sqlengine.SQLEngine, analyticsNamespaceLikeString string, controlAttributes sqlcontrol.ControlAttributes, name string) (SQLDialect, error) {
+func NewSQLDialect(sqlEngine sqlengine.SQLEngine, analyticsNamespaceLikeString string, controlAttributes sqlcontrol.ControlAttributes, sqlCfg dto.SQLBackendCfg) (SQLDialect, error) {
+	name := sqlCfg.SQLDialect
 	nameLowered := strings.ToLower(name)
 	formatter := getNodeFormatter(nameLowered)
 	switch nameLowered {
 	case constants.SQLDialectSQLite3:
-		return newSQLiteDialect(sqlEngine, analyticsNamespaceLikeString, controlAttributes, formatter)
+		return newSQLiteDialect(sqlEngine, analyticsNamespaceLikeString, controlAttributes, formatter, sqlCfg)
 	case constants.SQLDialectPostgres:
-		return newPostgresDialect(sqlEngine, analyticsNamespaceLikeString, controlAttributes, formatter)
+		return newPostgresDialect(sqlEngine, analyticsNamespaceLikeString, controlAttributes, formatter, sqlCfg)
 	default:
 		return nil, fmt.Errorf("cannot accomodate sql dialect '%s'", name)
 	}

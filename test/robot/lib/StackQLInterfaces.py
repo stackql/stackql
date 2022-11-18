@@ -399,6 +399,16 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     )
     self.log(result)
     return self.list_should_contain_value(result, expected_output)
+  
+
+  @keyword
+  def should_sqlalchemy_raw_session_inline_have_length(self, conn_str :str, queries :typing.List[str], expected_length :int, **kwargs):
+    client = SQLAlchemyClient(conn_str)
+    result =  client.run_raw_queries(
+      queries
+    )
+    self.log(result)
+    return self.should_be_equal(len(result), expected_length)
 
 
   @keyword
