@@ -3,7 +3,7 @@ package testobjects
 const (
 	SimpleSelectOktaApplicationApps               string = `select label, json_extract(settings, '$.notifications.vpn') st from okta.application.apps where subdomain = 'some-silly-subdomain' order by label asc;`
 	SimpleSelectGoogleComputeInstance             string = `select name, zone from google.compute.instances where zone = 'australia-southeast1-b' AND /* */ project = 'testing-project';`
-	SimpleSelectGoogleContainerSubnetworks        string = "select subnetwork, ipCidrRange from  google.container.`projects.aggregated.usableSubnetworks` where projectsId = 'testing-project' ;"
+	SimpleSelectGoogleContainerSubnetworks        string = "select subnetwork, ipCidrRange from  google.container.\"projects.aggregated.usableSubnetworks\" where projectsId = 'testing-project' ;"
 	K8STheHardWayTemplateFile                     string = "test/assets/input/k8s-the-hard-way/k8s-the-hard-way.iql"
 	K8STheHardWayTemplateContextFile              string = "test/assets/input/k8s-the-hard-way/vars.jsonnet"
 	SimpleShowResourcesFilteredFile               string = "test/assets/input/show/show-resources-filtered.iql"
@@ -40,8 +40,8 @@ const (
 		}';`
 	SimpleDeleteComputeNetwork                                                string = `delete /*+ AWAIT  */ from google.compute.networks WHERE project = 'stackql-demo' and network = 'kubernetes-the-hard-way-vpc';`
 	SimpleDeleteExecComputeNetwork                                            string = `EXEC /*+ AWAIT */ google.compute.networks.delete @project = 'stackql-demo', @network = 'kubernetes-the-hard-way-vpc';`
-	SimpleAggCountGroupedGoogleContainerSubnetworkAsc                         string = "select ipCidrRange, sum(5) cc  from  google.container.`projects.aggregated.usableSubnetworks` where projectsId = 'testing-project' group by ipCidrRange having sum(5) >= 5 order by ipCidrRange asc;"
-	SimpleAggCountGroupedGoogleContainerSubnetworkDesc                        string = "select ipCidrRange, sum(5) cc  from  google.container.`projects.aggregated.usableSubnetworks` where projectsId = 'testing-project' group by ipCidrRange having sum(5) >= 5 order by ipCidrRange desc;"
+	SimpleAggCountGroupedGoogleContainerSubnetworkAsc                         string = "select ipCidrRange, sum(5) cc  from  google.container.\"projects.aggregated.usableSubnetworks\" where projectsId = 'testing-project' group by ipCidrRange having sum(5) >= 5 order by ipCidrRange asc;"
+	SimpleAggCountGroupedGoogleContainerSubnetworkDesc                        string = "select ipCidrRange, sum(5) cc  from  google.container.\"projects.aggregated.usableSubnetworks\" where projectsId = 'testing-project' group by ipCidrRange having sum(5) >= 5 order by ipCidrRange desc;"
 	SelectGoogleComputeDisksOrderCreationTmstpAsc                             string = `select d1.name, d1.sizeGb, d1.creationTimestamp from google.compute.disks d1 where zone = 'australia-southeast1-b' AND /* */ project = 'testing-project' ORDER BY creationTimestamp asc;`
 	SelectGoogleComputeDisksOrderCreationTmstpAscPlusJsonExtract              string = `select name, json_extract('{"a":2,"c":[4,5,{"f":7}]}', '$.c') as json_rendition, sizeGb, creationTimestamp from google.compute.disks where zone = 'australia-southeast1-b' AND /* */ project = 'testing-project' ORDER BY creationTimestamp asc;`
 	SelectGoogleComputeDisksOrderCreationTmstpAscPlusJsonExtractCoalesce      string = `select name, coalesce(json_extract(labels, '$.k1'), 'dummy_value') as json_rendition, sizeGb, creationTimestamp from google.compute.disks where zone = 'australia-southeast1-b' AND /* */ project = 'testing-project' ORDER BY creationTimestamp asc;`

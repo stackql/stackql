@@ -12,8 +12,6 @@ import (
 
 type SQLEngine interface {
 	GetDB() (*sql.DB, error)
-	GetTableCatalog() string
-	GetTableSchema() string
 	Exec(string, ...interface{}) (sql.Result, error)
 	Query(string, ...interface{}) (*sql.Rows, error)
 	ExecFileLocal(string) error

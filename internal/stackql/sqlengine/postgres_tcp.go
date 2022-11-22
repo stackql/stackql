@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"io/ioutil"
-	"strings"
 	"sync"
 	"time"
 
@@ -12,8 +11,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
 	"github.com/stackql/stackql/internal/stackql/util"
-
-	"github.com/xo/dburl"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -25,9 +22,6 @@ var (
 type postgresTcpEngine struct {
 	db                *sql.DB
 	dsn               string
-	tableCatalog      string
-	tableSchema       string
-	dburl             *dburl.URL
 	controlAttributes sqlcontrol.ControlAttributes
 	ctrlMutex         *sync.Mutex
 	sessionMutex      *sync.Mutex
@@ -47,14 +41,6 @@ func newPostgresTcpEngine(cfg dto.SQLBackendCfg, controlAttributes sqlcontrol.Co
 	if dsn == "" {
 		return nil, fmt.Errorf("cannot init postgres TCP connection with empty connection string")
 	}
-	dbUrl, err := dburl.Parse(dsn)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing postgres dsn: %s", err.Error())
-	}
-	if dbUrl == nil {
-		return nil, fmt.Errorf("error parsing postgres dsn, nil url generated")
-	}
-	databaseName := strings.TrimLeft(dbUrl.Path, "/")
 	db, err := sql.Open("pgx", dsn)
 	retryCount := 0
 	for {
@@ -72,7 +58,7 @@ func newPostgresTcpEngine(cfg dto.SQLBackendCfg, controlAttributes sqlcontrol.Co
 	pingErr := db.Ping()
 	retryCount = 0
 	for {
-		if retryCount >= cfg.InitMaxRetries || err == nil {
+		if retryCount >= cfg.InitMaxRetries || pingErr == nil {
 			break
 		}
 		time.Sleep(time.Duration(cfg.InitRetryInitialDelay) * time.Second)
@@ -87,9 +73,6 @@ func newPostgresTcpEngine(cfg dto.SQLBackendCfg, controlAttributes sqlcontrol.Co
 	eng := &postgresTcpEngine{
 		db:                db,
 		dsn:               dsn,
-		dburl:             dbUrl,
-		tableCatalog:      databaseName,
-		tableSchema:       "public",
 		controlAttributes: controlAttributes,
 		ctrlMutex:         &sync.Mutex{},
 		sessionMutex:      &sync.Mutex{},
@@ -109,14 +92,6 @@ func newPostgresTcpEngine(cfg dto.SQLBackendCfg, controlAttributes sqlcontrol.Co
 		return eng, err
 	}
 	return eng, err
-}
-
-func (eng *postgresTcpEngine) GetTableCatalog() string {
-	return eng.tableCatalog
-}
-
-func (eng *postgresTcpEngine) GetTableSchema() string {
-	return eng.tableSchema
 }
 
 func (eng *postgresTcpEngine) execFile(fileName string) error {

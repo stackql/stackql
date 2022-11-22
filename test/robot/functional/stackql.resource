@@ -81,7 +81,7 @@ Start StackQL PG Server mTLS
                         ...  stackqlsrv
                         ...  bash
                         ...  \-c
-                        ...  stackql srv \-\-registry\='${REGISTRY_NO_VERIFY_CFG_STR.get_config_str('docker')}' \-\-auth\='${AUTH_CFG_STR}' \-\-namespaces\='${_NAMESPACES_CFG}' \-\-gc\='${_GC_CFG}' \-\-sqlBackend\='${_SQL_BACKEND_CFG}' \-\-dbInternal\='${DB_INTERNAL_CFG_LAX}' \-\-tls\.allowInsecure\=true \-\-pgsrv\.address\='0.0.0.0' \-\-pgsrv\.port\=${_DOCKER_PORT} \-\-pgsrv\.tls\='{\"keyFilePath\": \"/opt/stackql/srv/credentials/pg_server_key.pem\", \"certFilePath\": \"/opt/stackql/srv/credentials/pg_server_cert.pem\", \"clientCAs\": [\"'$(base64 -w 0 /opt/stackql/srv/credentials/pg_client_cert.pem)'\"]}'
+                        ...  sleep 2 && stackql srv \-\-registry\='${REGISTRY_NO_VERIFY_CFG_STR.get_config_str('docker')}' \-\-auth\='${AUTH_CFG_STR}' \-\-namespaces\='${_NAMESPACES_CFG}' \-\-gc\='${_GC_CFG}' \-\-sqlBackend\='${_SQL_BACKEND_CFG}' \-\-dbInternal\='${DB_INTERNAL_CFG_LAX}' \-\-tls\.allowInsecure\=true \-\-pgsrv\.address\='0.0.0.0' \-\-pgsrv\.port\=${_DOCKER_PORT} \-\-pgsrv\.tls\='{\"keyFilePath\": \"/opt/stackql/srv/credentials/pg_server_key.pem\", \"certFilePath\": \"/opt/stackql/srv/credentials/pg_server_cert.pem\", \"clientCAs\": [\"'$(base64 -w 0 /opt/stackql/srv/credentials/pg_client_cert.pem)'\"]}'
                         ...  stderr=${CURDIR}/tmp/stdout-stackql-srv-mtls-${_SRV_PORT_MTLS}.txt
                         ...  stdout=${CURDIR}/tmp/stderr-stackql-srv-mtls-${_SRV_PORT_MTLS}.txt
     END
@@ -109,7 +109,7 @@ Start StackQL PG Server unencrypted
                         ...  stackqlsrv
                         ...  bash
                         ...  \-c
-                        ...  stackql srv \-\-registry\='${REGISTRY_NO_VERIFY_CFG_STR.get_config_str('docker')}' \-\-auth\='${AUTH_CFG_STR}' \-\-namespaces\='${_NAMESPACES_CFG}' \-\-sqlBackend\='${_SQL_BACKEND_CFG}' \-\-dbInternal\='${DB_INTERNAL_CFG_LAX}' \-\-tls\.allowInsecure\=true \-\-pgsrv\.address\=0.0.0.0 \-\-pgsrv\.port\=${PG_SRV_PORT_DOCKER_UNENCRYPTED}
+                        ...  sleep 2 && stackql srv \-\-registry\='${REGISTRY_NO_VERIFY_CFG_STR.get_config_str('docker')}' \-\-auth\='${AUTH_CFG_STR}' \-\-namespaces\='${_NAMESPACES_CFG}' \-\-sqlBackend\='${_SQL_BACKEND_CFG}' \-\-dbInternal\='${DB_INTERNAL_CFG_LAX}' \-\-tls\.allowInsecure\=true \-\-pgsrv\.address\=0.0.0.0 \-\-pgsrv\.port\=${PG_SRV_PORT_DOCKER_UNENCRYPTED}
                         ...  stderr=${CURDIR}/tmp/stdout-stackql-srv-unencrypted-${_SRV_PORT_UNENCRYPTED}.txt
                         ...  stdout=${CURDIR}/tmp/stderr-stackql-srv-unencrypted-${_SRV_PORT_UNENCRYPTED}.txt
     END

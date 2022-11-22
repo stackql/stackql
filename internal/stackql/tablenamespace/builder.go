@@ -5,6 +5,7 @@ import (
 	"text/template"
 
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
+	"github.com/stackql/stackql/internal/stackql/templatenamespace"
 )
 
 var (
@@ -58,11 +59,17 @@ func (b *standardTableNamespaceConfiguratorBuilder) WithSQLEngine(sqlEngine sqle
 }
 
 func (b *standardTableNamespaceConfiguratorBuilder) Build() (TableNamespaceConfigurator, error) {
+	tmplCfg, err := templatenamespace.NewTemplateNamespaceConfigurator(
+		b.regex,
+		b.tmpl,
+	)
+	if err != nil {
+		return nil, err
+	}
 	return &regexTableNamespaceConfigurator{
-		sqlEngine:  b.sqlEngine,
-		regex:      b.regex,
-		template:   b.tmpl,
-		ttl:        b.ttl,
-		likeString: b.likeString,
+		sqlEngine:                     b.sqlEngine,
+		templateNamespaceConfigurator: tmplCfg,
+		ttl:                           b.ttl,
+		likeString:                    b.likeString,
 	}, nil
 }

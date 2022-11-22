@@ -1,0 +1,148 @@
+version: "3.9"
+   
+services:
+  stackqlsrv:
+    image: stackql/stackql
+    build:
+      context: .
+      cache_from: 
+        - stackql/stackql
+        - stackql/integration
+        - stackql/stackqlsrvcertificates
+      args:
+        - BUILDMAJORVERSION=${BUILDMAJORVERSION:-1}
+        - BUILDMINORVERSION=${BUILDMINORVERSION:-1}
+        - BUILDPATCHVERSION=${BUILDPATCHVERSION:-1}
+    command: 
+      - stackql 
+      - --loglevel=DEBUG 
+      - '--auth={ "google": { "credentialsfilepath": "/opt/stackql/keys/integration/gcp-key.json", "type": "service_account" }, "okta": { "credentialsenvvar": "OKTA_SECRET_KEY", "type": "api_key" }, "github": { "type": "basic", "credentialsenvvar": "GITHUB_CREDS" }, "aws": { "type": "aws_signing_v4", "credentialsfilepath": "/opt/stackql/credentials/dummy/aws/functional-test-dummy-aws-key.txt", "keyID": "some-key-not-a-secret" }, "k8s": { "credentialsenvvar": "K8S_TOKEN", "type": "api_key", "valuePrefix": "Bearer " } }'
+      - '--registry={ "url": "file:///opt/stackql/registry", "localDocRoot": "/opt/stackql/registry", "verifyConfig": { "nopVerify": true } }'
+      - '--sqlBackend={ "dbEngine": "postgres_tcp", "sqlDialect": "postgres", "dsn": "postgres://stackql:stackql@postgres_stackql:5432/stackql" }'
+      - '--dbInternal={ "tableRegex": "(?i)^(?:public\\\\.)?(?:pg_.*|current_schema|information_schema)" }'
+      - --pgsrv.address=0.0.0.0
+      - --pgsrv.port=5476
+      - --tls.allowInsecure
+      - srv
+    volumes:
+      - ./keys:/opt/stackql/keys:ro
+      - ./vol/srv/credentials:/opt/stackql/srv/credentials:ro
+      - ./test/assets/credentials/dummy:/opt/stackql/credentials/dummy:ro
+      - ./test/assets/input:/opt/stackql/input:ro
+      - ${DB_SETUP_SRC:-./test/db/sqlite}:/opt/stackql/db:ro
+      - ${REGISTRY_SRC:-./test/registry-mocked}:/opt/stackql/registry:ro
+      - ./vol/stackql/config:/opt/stackql/.stackql:rw 
+      - ./vol/logs:/opt/stackql/logs:rw 
+    ports:
+      - "${PG_SRV_PORT_DOCKER_MTLS:-5576}:${PG_SRV_PORT_MTLS:-5476}/tcp"
+    environment:
+      - OKTA_SECRET_KEY=${OKTA_SECRET_STR:-some-junk}
+      - GITHUB_SECRET_KEY=${GITHUB_SECRET_STR:-some-junk}
+      - K8S_SECRET_KEY=${K8S_SECRET_STR:-some-junk}
+      - AZ_ACCESS_TOKEN=${AZ_ACCESS_TOKEN:-some_junk}
+      - BUILDMAJORVERSION=${BUILDMAJORVERSION:-1}
+      - BUILDMINORVERSION=${BUILDMINORVERSION:-1}
+      - BUILDPATCHVERSION=${BUILDPATCHVERSION:-1}
+    depends_on:
+      - postgres_stackql
+      - mockserver
+  credentialsgen:
+    image: stackql/stackqlsrvcertificates
+    build:
+      context: .
+      cache_from: 
+        - stackql/stackql
+        - stackql/stackqlsrvcertificates
+      target: certificates
+    volumes:
+      - ./vol/srv/credentials:/opt/stackql/srv/credentials:rw
+    command: 
+      - bash
+      - -c
+      - |
+        openssl req -x509 -keyout /opt/stackql/srv/credentials/pg_server_key.pem -out /opt/stackql/srv/credentials/pg_server_cert.pem  -config /opt/test/stackql/test/server/mtls/openssl.cnf -days 365 \
+        && openssl req -x509 -keyout /opt/stackql/srv/credentials/pg_client_key.pem -out  /opt/stackql/srv/credentials/pg_client_cert.pem  -config /opt/test/stackql/test/server/mtls/openssl.cnf -days 365 \
+        && openssl req -x509 -keyout /opt/stackql/srv/credentials/pg_rubbish_key.pem -out /opt/stackql/srv/credentials/pg_rubbish_cert.pem -config /opt/test/stackql/test/server/mtls/openssl.cnf -days 365
+  mockserver:
+    image: stackql/integration
+    build:
+      context: .
+      cache_from:
+        - stackql/integration
+      target: integration
+    volumes:
+      - ./vol/srv/credentials:/opt/stackql/srv/credentials:rw
+    environment:
+      - MOCKSERVER_PORT_GOOGLE=${MOCKSERVER_PORT_GOOGLE:-1080}
+      - MOCKSERVER_PORT_OKTA=${MOCKSERVER_PORT_OKTA:-1090}
+      - MOCKSERVER_PORT_AWS=${MOCKSERVER_PORT_AWS:-1091}
+      - MOCKSERVER_PORT_K8S=${MOCKSERVER_PORT_K8S:-1092}
+      - MOCKSERVER_PORT_GITHUB=${MOCKSERVER_PORT_GITHUB:-1093}
+      - MOCKSERVER_PORT_REGISTRY=${MOCKSERVER_PORT_REGISTRY:-1094}
+      - MOCKSERVER_PORT_AZURE=${MOCKSERVER_PORT_AZURE:-1095}
+    ports:
+      - "${MOCKSERVER_PORT_GOOGLE:-1080}/tcp"
+      - "${MOCKSERVER_PORT_OKTA:-1090}/tcp"
+      - "${MOCKSERVER_PORT_AWS:-1091}/tcp"
+      - "${MOCKSERVER_PORT_K8S:-1092}/tcp"
+      - "${MOCKSERVER_PORT_GITHUB:-1093}/tcp"
+      - "${MOCKSERVER_PORT_REGISTRY:-1094}/tcp"
+      - "${MOCKSERVER_PORT_AZURE:-1095}/tcp"
+    command: 
+      - bash
+      - -c
+      - |
+        MOCKSERVER_JAR='/opt/test/stackql/test/downloads/mockserver-netty-5.12.0-shaded.jar'
+        JSON_INIT_FILE_DIR='/opt/test/stackql/test/mockserver/expectations'
+        java    -Dfile.encoding=UTF-8 \
+          -Dmockserver.initializationJsonPath=$${JSON_INIT_FILE_DIR}/static-gcp-expectations.json \
+          -Dmockserver.logLevel=OFF \
+          -Droot.logLevel=OFF \
+          -jar    $${MOCKSERVER_JAR} \
+          -serverPort    $${MOCKSERVER_PORT_GOOGLE}&
+        java    -Dfile.encoding=UTF-8 \
+          -Dmockserver.initializationJsonPath=$${JSON_INIT_FILE_DIR}/static-github-expectations.json \
+          -Dmockserver.logLevel=OFF \
+          -Droot.logLevel=OFF \
+          -jar    $${MOCKSERVER_JAR} \
+          -serverPort    $${MOCKSERVER_PORT_GITHUB}&
+        java    -Dfile.encoding=UTF-8 \
+          -Dmockserver.initializationJsonPath=$${JSON_INIT_FILE_DIR}/static-aws-expectations.json \
+          -Dmockserver.logLevel=OFF \
+          -Droot.logLevel=OFF \
+          -jar    $${MOCKSERVER_JAR} \
+          -serverPort    $${MOCKSERVER_PORT_AWS}&
+        java    -Dfile.encoding=UTF-8 \
+          -Dmockserver.initializationJsonPath=$${JSON_INIT_FILE_DIR}/static-k8s-expectations.json \
+          -Dmockserver.logLevel=OFF \
+          -Droot.logLevel=OFF \
+          -jar    $${MOCKSERVER_JAR} \
+          -serverPort    $${MOCKSERVER_PORT_K8S}&
+        java    -Dfile.encoding=UTF-8 \
+          -Dmockserver.initializationJsonPath=$${JSON_INIT_FILE_DIR}/static-registry-expectations.json \
+          -Dmockserver.logLevel=OFF \
+          -Droot.logLevel=OFF \
+          -jar    $${MOCKSERVER_JAR} \
+          -serverPort    $${MOCKSERVER_PORT_REGISTRY}&
+        java    -Dfile.encoding=UTF-8 \
+          -Dmockserver.initializationJsonPath=$${JSON_INIT_FILE_DIR}/static-okta-expectations.json \
+          -Dmockserver.logLevel=OFF \
+          -Droot.logLevel=OFF \
+          -jar    $${MOCKSERVER_JAR} \
+          -serverPort    $${MOCKSERVER_PORT_OKTA}&
+        java    -Dfile.encoding=UTF-8 \
+          -Dmockserver.initializationJsonPath=$${JSON_INIT_FILE_DIR}/static-azure-expectations.json \
+          -Dmockserver.logLevel=OFF \
+          -Droot.logLevel=OFF \
+          -jar    $${MOCKSERVER_JAR} \
+          -serverPort    $${MOCKSERVER_PORT_AZURE}
+  postgres_stackql:
+    image: postgres:14.5-bullseye
+    hostname: postgres_stackql
+    volumes:
+      - ./vol/postgres/setup:/docker-entrypoint-initdb.d:ro
+      - ./vol/postgres/dev/data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=stackql
+    ports:
+      - "5432/tcp"
