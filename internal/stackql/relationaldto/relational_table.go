@@ -6,26 +6,33 @@ var (
 
 type RelationalTable interface {
 	GetAlias() string
+	GetBaseName() string
 	GetColumns() []RelationalColumn
 	GetName() string
 	PushBackColumn(RelationalColumn)
 	WithAlias(alias string) RelationalTable
 }
 
-func NewRelationalTable(name string) RelationalTable {
+func NewRelationalTable(name, baseName string) RelationalTable {
 	return &standardRelationalTable{
-		name: name,
+		name:     name,
+		baseName: baseName,
 	}
 }
 
 type standardRelationalTable struct {
-	alias   string
-	name    string
-	columns []RelationalColumn
+	alias    string
+	name     string
+	baseName string
+	columns  []RelationalColumn
 }
 
 func (rt *standardRelationalTable) GetName() string {
 	return rt.name
+}
+
+func (rt *standardRelationalTable) GetBaseName() string {
+	return rt.baseName
 }
 
 func (rt *standardRelationalTable) GetAlias() string {

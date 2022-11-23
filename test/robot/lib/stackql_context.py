@@ -15,6 +15,9 @@ if os.name == 'nt':
 
 _DOCKER_REG_PATH :str = '/opt/stackql/registry' 
 
+_PG_SCHEMA_PHYSICAL_TABLES = "stackql_raw"
+_PG_SCHEMA_INTEL = "stackql_intel"
+
 _BUILD_MAJOR_VERSION = os.environ.get('BUILDMAJORVERSION', '1')
 _BUILD_MINOR_VERSION = os.environ.get('BUILDMINORVERSION', '1')
 _BUILD_PATCH_VERSION = os.environ.get('BUILDPATCHVERSION', '1')
@@ -271,7 +274,7 @@ def get_canonical_sql_backend(execution_env :str, sql_backend_str :str) -> str:
     return '{}'
   if execution_env == 'docker':
     if sql_backend_str == 'postgres_tcp':
-      return f'{{ "dbEngine": "postgres_tcp", "dsn": "{_SQL_BACKEND_POSTGRES_DOCKER_DSN}", "sqlDialect": "postgres" }}'.replace(' ', '')
+      return f'{{ "dbEngine": "postgres_tcp", "dsn": "{_SQL_BACKEND_POSTGRES_DOCKER_DSN}", "sqlDialect": "postgres", "schemata": {{ "tableSchema": "{_PG_SCHEMA_PHYSICAL_TABLES}", "intelViewSchema": "{_PG_SCHEMA_INTEL}", "opsViewSchema": "stackql_ops" }} }}'.replace(' ', '')
     return '{}'
 
 
@@ -399,6 +402,7 @@ POSTGRES_URL_UNENCRYPTED_CONN_DOCKER :str = f"postgresql://myuser:mypass@{PSQL_C
 SELECT_CONTAINER_SUBNET_AGG_DESC = "select ipCidrRange, sum(5) cc  from  google.container.\"projects.aggregated.usableSubnetworks\" where projectsId = 'testing-project' group by ipCidrRange having sum(5) >= 5 order by ipCidrRange desc;"
 SELECT_CONTAINER_SUBNET_AGG_ASC = "select ipCidrRange, sum(5) cc  from  google.container.\"projects.aggregated.usableSubnetworks\" where projectsId = 'testing-project' group by ipCidrRange having sum(5) >= 5 order by ipCidrRange asc;"
 SELECT_ACCELERATOR_TYPES_DESC = "select  kind, name  from  google.compute.acceleratorTypes where project = 'testing-project' and zone = 'australia-southeast1-a' order by name desc;"
+SELECT_ACCELERATOR_TYPES_DESC_FROM_INTEL_VIEWS = "select  kind, name  from  stackql_intel.\"google.compute.acceleratorTypes\" where project = 'testing-project' and zone like '%australia-southeast1-a' order by name desc;"
 SELECT_MACHINE_TYPES_DESC = "select name from google.compute.machineTypes where project = 'testing-project' and zone = 'australia-southeast1-a' order by name desc;"
 SELECT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY = "SELECT etag FROM google.compute.instances_iam_policies WHERE project = 'testing-project' AND zone = 'australia-southeast1-a' AND resource = '000000001';"
 
@@ -465,11 +469,13 @@ PURGE_CONSERVATIVE = "PURGE CONSERVATIVE;"
 
 PURGE_CONSERVATIVE_RESPONSE_JSON = [{'message': "PURGE of type 'conservative' successfully completed"}]
 
-def get_native_query_row_count_from_table(table_name :str) -> str:
+def get_native_query_row_count_from_table(table_name :str, sql_backend_str :str) -> str:
+  if sql_backend_str == 'postgres_tcp':
+    return f"NATIVEQUERY 'SELECT COUNT(*) as object_count FROM \"{_PG_SCHEMA_PHYSICAL_TABLES}\".\"{table_name}\"' ;"
   return f"NATIVEQUERY 'SELECT COUNT(*) as object_count FROM \"{table_name}\"' ;"
 
 
-def get_native_table_count_by_name(table_name :str) -> str:
+def get_native_table_count_by_name(table_name :str, sql_backend_str :str) -> str:
   return f"NATIVEQUERY 'SELECT COUNT(*) as object_count FROM sqlite_master where type = 'table' and name = '{table_name}' ;"
 
 
@@ -586,10 +592,11 @@ REGISTRY_GOOGLE_PROVIDER_LIST = "registry list google;"
 REGISTRY_LIST_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'registry', 'all-providers-list.txt'))
 REGISTRY_GOOGLE_PROVIDER_LIST_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'registry', 'google-list.txt'))
 
-NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_ONE = get_native_query_row_count_from_table('okta.application.Application.generation_1')
-NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_TWO = get_native_query_row_count_from_table('okta.application.Application.generation_2')
+
 
 def get_variables(execution_env :str, sql_backend_str :str):
+  NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_ONE = get_native_query_row_count_from_table('okta.application.Application.generation_1', sql_backend_str)
+  NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_TWO = get_native_query_row_count_from_table('okta.application.Application.generation_2', sql_backend_str)
   rv = {
     ## general config
     'AZURE_SECRET_STR':                               AZURE_SECRET_STR,
@@ -657,6 +664,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'REGISTRY_LIST_EXPECTED':                                               REGISTRY_LIST_EXPECTED,
     'SELECT_ACCELERATOR_TYPES_DESC':                                        SELECT_ACCELERATOR_TYPES_DESC,
     'SELECT_ACCELERATOR_TYPES_DESC_EXPECTED':                               SELECT_ACCELERATOR_TYPES_DESC_EXPECTED,
+    'SELECT_ACCELERATOR_TYPES_DESC_SEQUENCE':                               [ SELECT_ACCELERATOR_TYPES_DESC, SELECT_ACCELERATOR_TYPES_DESC_FROM_INTEL_VIEWS ],
     'SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_EXPECTED':    SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_EXPECTED,
     'SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_SIMPLE':      SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_SIMPLE,
     'SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_TRANSPARENT': SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_TRANSPARENT,

@@ -63,6 +63,7 @@ type StandardParameterRouter struct {
 	tableToAnnotationCtx          map[sqlparser.TableExpr]taxonomy.AnnotationCtx
 	invalidatedParams             map[string]interface{}
 	namespaceCollection           tablenamespace.TableNamespaceCollection
+	astFormatter                  sqlparser.NodeFormatter
 }
 
 func NewParameterRouter(
@@ -72,6 +73,7 @@ func NewParameterRouter(
 	onParamMap parserutil.ParameterMap,
 	colRefs parserutil.ColTableMap,
 	namespaceCollection tablenamespace.TableNamespaceCollection,
+	astFormatter sqlparser.NodeFormatter,
 ) ParameterRouter {
 	return &StandardParameterRouter{
 		tablesAliasMap:                tablesAliasMap,
@@ -84,6 +86,7 @@ func NewParameterRouter(
 		tableToComparisonDependencies: make(parserutil.ComparisonTableMap),
 		tableToAnnotationCtx:          make(map[sqlparser.TableExpr]taxonomy.AnnotationCtx),
 		namespaceCollection:           namespaceCollection,
+		astFormatter:                  astFormatter,
 	}
 }
 
@@ -95,6 +98,7 @@ func (pr *StandardParameterRouter) AnalyzeDependencies() error {
 // Essentially, not required so long as:
 //   - in params
 //   - result set data
+//
 // ...are guaranteed present in same table.
 func (pr *StandardParameterRouter) GetOnConditionsToRewrite() map[*sqlparser.ComparisonExpr]struct{} {
 	rv := make(map[*sqlparser.ComparisonExpr]struct{})
@@ -403,7 +407,7 @@ func (pr *StandardParameterRouter) Route(tb sqlparser.TableExpr, handlerCtx *han
 		pr.comparisonToTableDependencies[p] = tb
 		logging.GetLogger().Infof("%v", kv)
 	}
-	m := tablemetadata.NewExtendedTableMetadata(hr, taxonomy.GetAliasFromStatement(tb))
+	m := tablemetadata.NewExtendedTableMetadata(hr, taxonomy.GetTableNameFromStatement(tb, pr.astFormatter), taxonomy.GetAliasFromStatement(tb))
 	// store relationship from sqlparser table expression to
 	// hierarchy.  This enables e2e relationship
 	// from expression to hierarchy.

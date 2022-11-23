@@ -98,22 +98,24 @@ func ResolveResourceTerminalHeirarchyIdentifiers(node sqlparser.TableName) *Heir
 
 type DBTable struct {
 	name        string
+	baseName    string
 	discoveryID int
 	hIDs        *HeirarchyIdentifiers
 	namespace   string
 }
 
-func NewDBTable(name string, discoveryID int, hIDs *HeirarchyIdentifiers) DBTable {
-	return newDBTable(name, discoveryID, hIDs, "")
+func NewDBTable(name string, baseName string, discoveryID int, hIDs *HeirarchyIdentifiers) DBTable {
+	return newDBTable(name, baseName, discoveryID, hIDs, "")
 }
 
 func NewDBTableAnalytics(name string, discoveryID int, hIDs *HeirarchyIdentifiers) DBTable {
-	return newDBTable(name, discoveryID, hIDs, constants.AnalyticsPrefix)
+	return newDBTable(name, name, discoveryID, hIDs, constants.AnalyticsPrefix)
 }
 
-func newDBTable(name string, discoveryID int, hIDs *HeirarchyIdentifiers, namespace string) DBTable {
+func newDBTable(name string, baseName string, discoveryID int, hIDs *HeirarchyIdentifiers, namespace string) DBTable {
 	return DBTable{
 		name:        name,
+		baseName:    baseName,
 		discoveryID: discoveryID,
 		hIDs:        hIDs,
 		namespace:   namespace,
@@ -122,6 +124,10 @@ func newDBTable(name string, discoveryID int, hIDs *HeirarchyIdentifiers, namesp
 
 func (dbt DBTable) GetName() string {
 	return dbt.name
+}
+
+func (dbt DBTable) GetBaseName() string {
+	return dbt.baseName
 }
 
 func (dbt DBTable) GetDiscoveryID() int {

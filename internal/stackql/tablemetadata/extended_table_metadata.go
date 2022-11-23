@@ -18,6 +18,7 @@ type ExtendedTableMetadata struct {
 	GetHttpArmoury      func() (httpbuild.HTTPArmoury, error)
 	SelectItemsKey      string
 	Alias               string
+	inputTableName      string
 }
 
 func (ex ExtendedTableMetadata) GetGraphQL() (*openapistackql.GraphQL, bool) {
@@ -156,15 +157,20 @@ func (ex ExtendedTableMetadata) GetStackQLTableName() (string, error) {
 	return ex.HeirarchyObjects.HeirarchyIds.GetStackQLTableName(), nil
 }
 
+func (ex ExtendedTableMetadata) GetInputTableName() (string, error) {
+	return ex.inputTableName, nil
+}
+
 func (ex ExtendedTableMetadata) GetSelectableObjectSchema() (*openapistackql.Schema, error) {
 	return ex.HeirarchyObjects.GetSelectableObjectSchema()
 }
 
-func NewExtendedTableMetadata(heirarchyObjects *HeirarchyObjects, alias string) *ExtendedTableMetadata {
+func NewExtendedTableMetadata(heirarchyObjects *HeirarchyObjects, tableName string, alias string) *ExtendedTableMetadata {
 	return &ExtendedTableMetadata{
 		ColsVisited:        make(map[string]bool),
 		RequiredParameters: make(map[string]openapistackql.Parameter),
 		HeirarchyObjects:   heirarchyObjects,
 		Alias:              alias,
+		inputTableName:     tableName,
 	}
 }

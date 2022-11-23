@@ -1,6 +1,6 @@
 BEGIN TRANSACTION;
 
-CREATE TABLE IF NOT EXISTS "stackql_analytics_github.repos.repos" ( 
+CREATE TABLE IF NOT EXISTS "stackql_raw"."stackql_analytics_github.repos.repos" ( 
   "iql_github.repos.minimal-repository.generation_1_id" BIGSERIAL PRIMARY KEY ,
   "iql_generation_id" INTEGER  ,
   "iql_session_id" INTEGER  ,
@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS "stackql_analytics_github.repos.repos" (
   "org" text 
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" 
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" 
 VALUES(
 2,
 1,
@@ -194,7 +194,7 @@ false,
 );
 
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 3,
 1,
 3,
@@ -314,7 +314,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 4,
 1,
 3,
@@ -429,7 +429,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 5,
 1,
 3,
@@ -549,7 +549,7 @@ false,
 );
 
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 6,
 1,
 3,
@@ -645,7 +645,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 7,
 1,
 3,
@@ -741,7 +741,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 8,
 1,
 3,
@@ -838,7 +838,7 @@ false,
 );
 
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 9,
 1,
 3,
@@ -958,7 +958,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 10,
 1,
 3,
@@ -1077,7 +1077,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 11,
 1,
 3,
@@ -1192,7 +1192,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 12,
 1,
 3,
@@ -1313,7 +1313,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 13,
 1,
 3,
@@ -1432,7 +1432,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 14,
 1,
 3,
@@ -1551,7 +1551,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 15,
 1,
 3,
@@ -1669,7 +1669,7 @@ false,
 0,
 'stackql');
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 16,
 1,
 3,
@@ -1788,7 +1788,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 17,
 1,
 3,
@@ -1907,7 +1907,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 18,
 1,
 3,
@@ -2028,7 +2028,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 19,
 1,
 3,
@@ -2151,7 +2151,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 20,
 1,
 3,
@@ -2270,7 +2270,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
   21,
 1,
 3,
@@ -2389,7 +2389,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 22,
 1,
 3,
@@ -2508,7 +2508,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 23,
 1,
 3,
@@ -2627,7 +2627,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 24,
 1,
 3,
@@ -2746,7 +2746,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 25,
 1,
 3,
@@ -2865,7 +2865,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 26,
 1,
 3,
@@ -2989,7 +2989,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 27,
 1,
 3,
@@ -3108,7 +3108,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(28,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(28,
 1,
 3,
 2,
@@ -3226,7 +3226,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(29,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(29,
 1,
 3,
 2,
@@ -3344,7 +3344,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 30,
 1,
 3,
@@ -3471,7 +3471,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 31,
 1,
 3,
@@ -3592,7 +3592,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 32,
 1,
 3,
@@ -3715,7 +3715,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 33,
 1,
 3,
@@ -3834,7 +3834,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 34,
 1,
 3,
@@ -3961,7 +3961,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 35,
 1,
 3,
@@ -4080,7 +4080,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 36,
 1,
 3,
@@ -4199,7 +4199,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 37,
 1,
 3,
@@ -4318,7 +4318,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 38,
 1,
 3,
@@ -4445,7 +4445,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(
 39,
 1,
 3,
@@ -4564,7 +4564,7 @@ false,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.repos" VALUES(40,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.repos" VALUES(40,
 1,
 3,
 2,
@@ -4682,7 +4682,7 @@ false,
 'stackql'
 );
 
-CREATE TABLE IF NOT EXISTS "stackql_analytics_github.repos.collaborators" (
+CREATE TABLE IF NOT EXISTS "stackql_raw"."stackql_analytics_github.repos.collaborators" (
   "iql_github.repos.collaborator.generation_1_id" BIGSERIAL PRIMARY KEY ,
   "iql_generation_id" INTEGER  ,
   "iql_session_id" INTEGER  ,
@@ -4717,7 +4717,7 @@ CREATE TABLE IF NOT EXISTS "stackql_analytics_github.repos.collaborators" (
 );
 
 
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(1,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(1,
 1,
 3,
 2,
@@ -4754,7 +4754,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'fullstackchronicles.io');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(2,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(2,
 1,
 3,
 2,
@@ -4792,7 +4792,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'fullstackchronicles.io');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(3,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(3,
 1,
 3,
 2,
@@ -4830,7 +4830,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'fullstackchronicles.io');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(4,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(4,
 1,
 3,
 2,
@@ -4868,7 +4868,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'fullstackchronicles.io');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(5,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(5,
 1,
 3,
 2,
@@ -4906,7 +4906,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'docusaurus-plugin-hubspot');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(6,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(6,
 1,
 3,
 2,
@@ -4944,7 +4944,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'docusaurus-plugin-hubspot');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(7,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(7,
 1,
 3,
 2,
@@ -4982,7 +4982,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'docusaurus-plugin-hubspot');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(8,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(8,
 1,
 3,
 2,
@@ -5020,7 +5020,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'docusaurus-plugin-hubspot');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(9,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(9,
 1,
 3,
 2,
@@ -5058,7 +5058,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'gatsby-plugin-smartlook');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(10,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(10,
 1,
 3,
 2,
@@ -5096,7 +5096,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'gatsby-plugin-smartlook');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(11,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(11,
 1,
 3,
 2,
@@ -5134,7 +5134,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'gatsby-plugin-smartlook');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(12,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(12,
 1,
 3,
 2,
@@ -5172,7 +5172,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'gatsby-plugin-smartlook');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(13,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(13,
 1,
 3,
 2,
@@ -5210,7 +5210,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'docusaurus-plugin-smartlook');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(14,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(14,
 1,
 3,
 2,
@@ -5248,7 +5248,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'docusaurus-plugin-smartlook');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(15,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(15,
 1,
 3,
 2,
@@ -5286,7 +5286,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'docusaurus-plugin-smartlook');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(16,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(16,
 1,
 3,
 2,
@@ -5324,7 +5324,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'docusaurus-plugin-smartlook');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(17,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(17,
 1,
 3,
 2,
@@ -5362,7 +5362,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'stackql.io');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(18,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(18,
 1,
 3,
 2,
@@ -5400,7 +5400,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'stackql.io');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(19,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(19,
 1,
 3,
 2,
@@ -5438,7 +5438,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'stackql.io');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(20,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(20,
 1,
 3,
 2,
@@ -5476,7 +5476,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'stackql.io');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(21,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(21,
 1,
 3,
 2,
@@ -5514,7 +5514,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'stackql-provider-registry');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(22,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(22,
 1,
 3,
 2,
@@ -5552,7 +5552,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'stackql-provider-registry');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(23,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(23,
 1,
 3,
 2,
@@ -5590,7 +5590,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'stackql-provider-registry');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(24,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(24,
 1,
 3,
 2,
@@ -5628,7 +5628,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'stackql-provider-registry');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(25,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(25,
 1,
 3,
 2,
@@ -5666,7 +5666,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'releases.stackql.io');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(26,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(26,
 1,
 3,
 2,
@@ -5704,7 +5704,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'releases.stackql.io');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(27,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(27,
 1,
 3,
 2,
@@ -5742,7 +5742,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'releases.stackql.io');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(28,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(28,
 1,
 3,
 2,
@@ -5780,7 +5780,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'releases.stackql.io');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(29,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(29,
 1,
 3,
 2,
@@ -5820,7 +5820,7 @@ NULL,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(
 30,
 1,
 3,
@@ -5858,7 +5858,7 @@ NULL,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(31,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(31,
 1,
 3,
 2,
@@ -5895,7 +5895,7 @@ NULL,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(
 32,
 1,
 3,
@@ -5933,7 +5933,7 @@ NULL,
 'stackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(
 33,
 1,
 3,
@@ -5971,7 +5971,7 @@ NULL,
 'go-openapistackql'
 );
 
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(34,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(34,
 1,
 3,
 2,
@@ -6009,7 +6009,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'go-openapistackql');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(35,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(35,
 1,
 3,
 2,
@@ -6047,7 +6047,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'go-openapistackql');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(36,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(36,
 1,
 3,
 2,
@@ -6085,7 +6085,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'go-openapistackql');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(37,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(37,
 1,
 3,
 2,
@@ -6123,7 +6123,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'go-spew');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(38,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(38,
 1,
 3,
 2,
@@ -6161,7 +6161,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'go-spew');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(39,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(39,
 1,
 3,
 2,
@@ -6199,7 +6199,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'go-spew');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(40,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(40,
 1,
 3,
 2,
@@ -6237,7 +6237,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'go-spew');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(41,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(41,
 1,
 3,
 2,
@@ -6275,7 +6275,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'stackql-devel');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(42,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(42,
 1,
 3,
 2,
@@ -6313,7 +6313,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'stackql-devel');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(43,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(43,
 1,
 3,
 2,
@@ -6351,7 +6351,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'stackql-devel');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(44,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(44,
 1,
 3,
 2,
@@ -6389,7 +6389,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'stackql-devel');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(45,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(45,
 1,
 3,
 2,
@@ -6427,7 +6427,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'go-sqlite3');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(46,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(46,
 1,
 3,
 2,
@@ -6465,7 +6465,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'go-sqlite3');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(47,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(47,
 1,
 3,
 2,
@@ -6503,7 +6503,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'go-sqlite3');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(48,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(48,
 1,
 3,
 2,
@@ -6541,7 +6541,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'go-sqlite3');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(49,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(49,
 1,
 3,
 2,
@@ -6579,7 +6579,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'vitess');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(50,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(50,
 1,
 3,
 2,
@@ -6617,7 +6617,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'vitess');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(51,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(51,
 1,
 3,
 2,
@@ -6655,7 +6655,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'vitess');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(52,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(52,
 1,
 3,
 2,
@@ -6693,7 +6693,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'vitess');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(53,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(53,
 1,
 3,
 2,
@@ -6731,7 +6731,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'readline');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(54,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(54,
 1,
 3,
 2,
@@ -6769,7 +6769,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'readline');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(55,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(55,
 1,
 3,
 2,
@@ -6807,7 +6807,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'readline');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(56,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(56,
 1,
 3,
 2,
@@ -6845,7 +6845,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'readline');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(57,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(57,
 1,
 3,
 2,
@@ -6883,7 +6883,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'color');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(58,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(58,
 1,
 3,
 2,
@@ -6921,7 +6921,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'color');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(59,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(59,
 1,
 3,
 2,
@@ -6959,7 +6959,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'color');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(60,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(60,
 1,
 3,
 2,
@@ -6997,7 +6997,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'color');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(61,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(61,
 1,
 3,
 2,
@@ -7035,7 +7035,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'stackql-artwork');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(62,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(62,
 1,
 3,
 2,
@@ -7073,7 +7073,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'stackql-artwork');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(63,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(63,
 1,
 3,
 2,
@@ -7111,7 +7111,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'stackql-artwork');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(64,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(64,
 1,
 3,
 2,
@@ -7149,7 +7149,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'stackql-artwork');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(65,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(65,
 1,
 3,
 2,
@@ -7187,7 +7187,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'pystackql');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(66,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(66,
 1,
 3,
 2,
@@ -7225,7 +7225,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'pystackql');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(67,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(67,
 1,
 3,
 2,
@@ -7263,7 +7263,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'pystackql');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(68,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(68,
 1,
 3,
 2,
@@ -7301,7 +7301,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'pystackql');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(69,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(69,
 1,
 3,
 2,
@@ -7339,7 +7339,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'stackql-jupyter-demo');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(70,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(70,
 1,
 3,
 2,
@@ -7377,7 +7377,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'stackql-jupyter-demo');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(71,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(71,
 1,
 3,
 2,
@@ -7415,7 +7415,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'stackql-jupyter-demo');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(72,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(72,
 1,
 3,
 2,
@@ -7453,7 +7453,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'stackql-jupyter-demo');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(73,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(73,
 1,
 3,
 2,
@@ -7491,7 +7491,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'stackql-mac-installer');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(74,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(74,
 1,
 3,
 2,
@@ -7529,7 +7529,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'stackql-mac-installer');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(75,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(75,
 1,
 3,
 2,
@@ -7567,7 +7567,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'stackql-mac-installer');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(76,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(76,
 1,
 3,
 2,
@@ -7605,7 +7605,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'stackql-mac-installer');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(77,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(77,
 1,
 3,
 2,
@@ -7643,7 +7643,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'pg-server-thin');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(78,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(78,
 1,
 3,
 2,
@@ -7681,7 +7681,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'pg-server-thin');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(79,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(79,
 1,
 3,
 2,
@@ -7719,7 +7719,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'pg-server-thin');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(80,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(80,
 1,
 3,
 2,
@@ -7757,7 +7757,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'pg-server-thin');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(81,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(81,
 1,
 3,
 2,
@@ -7795,7 +7795,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'psql-wire');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(82,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(82,
 1,
 3,
 2,
@@ -7833,7 +7833,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'psql-wire');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(83,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(83,
 1,
 3,
 2,
@@ -7871,7 +7871,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'psql-wire');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(84,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(84,
 1,
 3,
 2,
@@ -7909,7 +7909,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'psql-wire');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(85,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(85,
 1,
 3,
 2,
@@ -7947,7 +7947,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'pg-server-various');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(86,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(86,
 1,
 3,
 2,
@@ -7985,7 +7985,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'pg-server-various');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(87,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(87,
 1,
 3,
 2,
@@ -8023,7 +8023,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'pg-server-various');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(88,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(88,
 1,
 3,
 2,
@@ -8061,7 +8061,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'pg-server-various');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(89,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(89,
 1,
 3,
 2,
@@ -8099,7 +8099,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'provider-doc-util');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(90,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(90,
 1,
 3,
 2,
@@ -8137,7 +8137,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'provider-doc-util');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(91,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(91,
 1,
 3,
 2,
@@ -8175,7 +8175,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'provider-doc-util');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(92,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(92,
 1,
 3,
 2,
@@ -8213,7 +8213,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'provider-doc-util');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(93,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(93,
 1,
 3,
 2,
@@ -8251,7 +8251,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'go-suffix-map');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(94,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(94,
 1,
 3,
 2,
@@ -8289,7 +8289,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'go-suffix-map');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(95,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(95,
 1,
 3,
 2,
@@ -8327,7 +8327,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'go-suffix-map');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(96,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(96,
 1,
 3,
 2,
@@ -8365,7 +8365,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'go-suffix-map');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(97,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(97,
 1,
 3,
 2,
@@ -8403,7 +8403,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'okta-pkce-login');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(98,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(98,
 1,
 3,
 2,
@@ -8441,7 +8441,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'okta-pkce-login');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(99,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(99,
 1,
 3,
 2,
@@ -8479,7 +8479,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'okta-pkce-login');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(100,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(100,
 1,
 3,
 2,
@@ -8516,7 +8516,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'okta-pkce-login');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(101,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(101,
 1,
 3,
 2,
@@ -8553,7 +8553,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'github-oauth-login');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(102,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(102,
 1,
 3,
 2,
@@ -8590,7 +8590,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'github-oauth-login');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(103,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(103,
 1,
 3,
 2,
@@ -8627,7 +8627,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'github-oauth-login');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(104,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(104,
 1,
 3,
 2,
@@ -8664,7 +8664,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'github-oauth-login');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(105,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(105,
 1,
 3,
 2,
@@ -8701,7 +8701,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'local-registry');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(106,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(106,
 1,
 3,
 2,
@@ -8738,7 +8738,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'local-registry');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(107,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(107,
 1,
 3,
 2,
@@ -8775,7 +8775,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'local-registry');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(108,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(108,
 1,
 3,
 2,
@@ -8812,7 +8812,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'local-registry');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(109,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(109,
 1,
 3,
 2,
@@ -8849,7 +8849,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'cloudy-redirect-app');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(110,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(110,
 1,
 3,
 2,
@@ -8886,7 +8886,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'cloudy-redirect-app');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(111,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(111,
 1,
 3,
 2,
@@ -8923,7 +8923,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'cloudy-redirect-app');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(112,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(112,
 1,
 3,
 2,
@@ -8960,7 +8960,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'cloudy-redirect-app');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(113,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(113,
 1,
 3,
 2,
@@ -8997,7 +8997,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'openapi-doc-util');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(114,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(114,
 1,
 3,
 2,
@@ -9034,7 +9034,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'openapi-doc-util');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(115,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(115,
 1,
 3,
 2,
@@ -9071,7 +9071,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'openapi-doc-util');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(116,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(116,
 1,
 3,
 2,
@@ -9108,7 +9108,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'openapi-doc-util');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(117,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(117,
 1,
 3,
 2,
@@ -9145,7 +9145,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'stackql-jupyter-google-okta-iam');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(118,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(118,
 1,
 3,
 2,
@@ -9182,7 +9182,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'stackql-jupyter-google-okta-iam');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(119,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(119,
 1,
 3,
 2,
@@ -9219,7 +9219,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'stackql-jupyter-google-okta-iam');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(120,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(120,
 1,
 3,
 2,
@@ -9256,7 +9256,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'stackql-jupyter-google-okta-iam');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(121,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(121,
 1,
 3,
 2,
@@ -9293,7 +9293,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'stackql-gcp-foundations');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(122,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(122,
 1,
 3,
 2,
@@ -9330,7 +9330,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'stackql-gcp-foundations');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(123,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(123,
 1,
 3,
 2,
@@ -9367,7 +9367,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'stackql-gcp-foundations');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(124,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(124,
 1,
 3,
 2,
@@ -9404,7 +9404,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'stackql-gcp-foundations');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(125,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(125,
 1,
 3,
 2,
@@ -9441,7 +9441,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'stackql-demo');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(126,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(126,
 1,
 3,
 2,
@@ -9478,7 +9478,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'stackql-demo');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(127,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(127,
 1,
 3,
 2,
@@ -9515,7 +9515,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'stackql-demo');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(128,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(128,
 1,
 3,
 2,
@@ -9552,7 +9552,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'stackql-demo');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(129,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(129,
 1,
 3,
 2,
@@ -9589,7 +9589,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'registry.stackql.io');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(130,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(130,
 1,
 3,
 2,
@@ -9626,7 +9626,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'registry.stackql.io');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(131,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(131,
 1,
 3,
 2,
@@ -9663,7 +9663,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'registry.stackql.io');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(132,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(132,
 1,
 3,
 2,
@@ -9700,7 +9700,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'registry.stackql.io');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(133,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(133,
 1,
 3,
 2,
@@ -9737,7 +9737,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'stackql-docs');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(134,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(134,
 1,
 3,
 2,
@@ -9774,7 +9774,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'stackql-docs');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(135,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(135,
 1,
 3,
 2,
@@ -9811,7 +9811,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'stackql-docs');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(136,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(136,
 1,
 3,
 2,
@@ -9848,7 +9848,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'stackql-docs');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(137,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(137,
 1,
 3,
 2,
@@ -9885,7 +9885,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'stackql-provider-doc-generator');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(138,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(138,
 1,
 3,
 2,
@@ -9922,7 +9922,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'stackql-provider-doc-generator');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(139,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(139,
 1,
 3,
 2,
@@ -9959,7 +9959,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'stackql-provider-doc-generator');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(140,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(140,
 1,
 3,
 2,
@@ -9996,7 +9996,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'stackql-provider-doc-generator');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(141,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(141,
 1,
 3,
 2,
@@ -10033,7 +10033,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'google-discovery-to-openapi');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(142,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(142,
 1,
 3,
 2,
@@ -10070,7 +10070,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'google-discovery-to-openapi');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(143,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(143,
 1,
 3,
 2,
@@ -10107,7 +10107,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'google-discovery-to-openapi');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(144,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(144,
 1,
 3,
 2,
@@ -10144,7 +10144,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'google-discovery-to-openapi');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(145,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(145,
 1,
 3,
 2,
@@ -10181,7 +10181,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'stackql-azure-openapi');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(146,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(146,
 1,
 3,
 2,
@@ -10218,7 +10218,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'stackql-azure-openapi');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(147,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(147,
 1,
 3,
 2,
@@ -10255,7 +10255,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'stackql-azure-openapi');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(148,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(148,
 1,
 3,
 2,
@@ -10292,7 +10292,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'stackql-azure-openapi');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(149,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(149,
 1,
 3,
 2,
@@ -10329,7 +10329,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'aws2openapi');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(150,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(150,
 1,
 3,
 2,
@@ -10366,7 +10366,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'aws2openapi');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(151,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(151,
 1,
 3,
 2,
@@ -10403,7 +10403,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'aws2openapi');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(152,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(152,
 1,
 3,
 2,
@@ -10440,7 +10440,7 @@ NULL,
 'https://api.github.com/users/fredjones/orgs',
 'stackql',
 'aws2openapi');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(153,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(153,
 1,
 3,
 2,
@@ -10477,7 +10477,7 @@ NULL,
 'https://api.github.com/users/joeblow/orgs',
 'stackql',
 'stackql-middleware');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(154,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(154,
 1,
 3,
 2,
@@ -10514,7 +10514,7 @@ NULL,
 'https://api.github.com/users/somejimbo/orgs',
 'stackql',
 'stackql-middleware');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(155,
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(155,
 1,
 3,
 2,
@@ -10551,7 +10551,7 @@ NULL,
 'https://api.github.com/users/johnsmith/orgs',
 'stackql',
 'stackql-middleware');
-INSERT INTO "stackql_analytics_github.repos.collaborators" VALUES(
+INSERT INTO "stackql_raw"."stackql_analytics_github.repos.collaborators" VALUES(
 156,
 1,
 3,
@@ -10597,13 +10597,13 @@ NULL,
 -- INSERT INTO sqlite_sequence VALUES('stackql_analytics_github.repos.collaborators',
 -- 156);
 
-CREATE INDEX if not exists "idx_github_repos_minimal-repository_generation_1_iql_generation_id" on "stackql_analytics_github.repos.repos" ( "iql_generation_id" ) ;
-CREATE INDEX if not exists "idx_github_repos_minimal-repository_generation_1_iql_session_id" on "stackql_analytics_github.repos.repos" ( "iql_session_id" ) ;
-CREATE INDEX if not exists "idx_github_repos_minimal-repository_generation_1_iql_txn_id" on "stackql_analytics_github.repos.repos" ( "iql_txn_id" ) ;
-CREATE INDEX if not exists "idx_github_repos_minimal-repository_generation_1_iql_insert_id" on "stackql_analytics_github.repos.repos" ( "iql_insert_id" ) ;
-CREATE INDEX if not exists "idx_github_repos_collaborator_generation_1_iql_generation_id" on "stackql_analytics_github.repos.collaborators" ( "iql_generation_id" ) ;
-CREATE INDEX if not exists "idx_github_repos_collaborator_generation_1_iql_session_id" on "stackql_analytics_github.repos.collaborators" ( "iql_session_id" ) ;
-CREATE INDEX if not exists "idx_github_repos_collaborator_generation_1_iql_txn_id" on "stackql_analytics_github.repos.collaborators" ( "iql_txn_id" ) ;
-CREATE INDEX if not exists "idx_github_repos_collaborator_generation_1_iql_insert_id" on "stackql_analytics_github.repos.collaborators" ( "iql_insert_id" ) ;
+CREATE INDEX if not exists "idx_github_repos_minimal-repository_generation_1_iql_generation_id" on "stackql_raw"."stackql_analytics_github.repos.repos" ( "iql_generation_id" ) ;
+CREATE INDEX if not exists "idx_github_repos_minimal-repository_generation_1_iql_session_id" on "stackql_raw"."stackql_analytics_github.repos.repos" ( "iql_session_id" ) ;
+CREATE INDEX if not exists "idx_github_repos_minimal-repository_generation_1_iql_txn_id" on "stackql_raw"."stackql_analytics_github.repos.repos" ( "iql_txn_id" ) ;
+CREATE INDEX if not exists "idx_github_repos_minimal-repository_generation_1_iql_insert_id" on "stackql_raw"."stackql_analytics_github.repos.repos" ( "iql_insert_id" ) ;
+CREATE INDEX if not exists "idx_github_repos_collaborator_generation_1_iql_generation_id" on "stackql_raw"."stackql_analytics_github.repos.collaborators" ( "iql_generation_id" ) ;
+CREATE INDEX if not exists "idx_github_repos_collaborator_generation_1_iql_session_id" on "stackql_raw"."stackql_analytics_github.repos.collaborators" ( "iql_session_id" ) ;
+CREATE INDEX if not exists "idx_github_repos_collaborator_generation_1_iql_txn_id" on "stackql_raw"."stackql_analytics_github.repos.collaborators" ( "iql_txn_id" ) ;
+CREATE INDEX if not exists "idx_github_repos_collaborator_generation_1_iql_insert_id" on "stackql_raw"."stackql_analytics_github.repos.collaborators" ( "iql_insert_id" ) ;
 
 COMMIT;

@@ -60,7 +60,7 @@ func (stc *regexTableNamespaceConfigurator) Read(tableString string, requestEnco
 	if err != nil {
 		return nil, fmt.Errorf("could not infer actual table name for tableString = '%s'", tableString)
 	}
-	isPresent := stc.sqlEngine.IsTablePresent(actualTableName, requestEncoding, requestEncodingColName)
+	isPresent := stc.sqlDialect.IsTablePresent(actualTableName, requestEncoding, requestEncodingColName)
 	if !isPresent {
 		return nil, fmt.Errorf("absent table name = '%s'", actualTableName)
 	}
@@ -81,11 +81,11 @@ func (stc *regexTableNamespaceConfigurator) Match(tableString string, requestEnc
 	if err != nil {
 		return nil, false
 	}
-	isPresent := stc.sqlEngine.IsTablePresent(actualTableName, requestEncoding, requestEncodingColName)
+	isPresent := stc.sqlDialect.IsTablePresent(actualTableName, requestEncoding, requestEncodingColName)
 	if !isPresent {
 		return nil, false
 	}
-	oldestUpdate, tcc := stc.sqlEngine.TableOldestUpdateUTC(actualTableName, requestEncoding, lastModifiedColName, requestEncodingColName)
+	oldestUpdate, tcc := stc.sqlDialect.TableOldestUpdateUTC(actualTableName, requestEncoding, lastModifiedColName, requestEncodingColName)
 	diff := time.Since(oldestUpdate)
 	ds := diff.Seconds()
 	if stc.ttl > -1 && int(ds) > stc.ttl {

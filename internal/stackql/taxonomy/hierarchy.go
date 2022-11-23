@@ -3,6 +3,7 @@ package taxonomy
 import (
 	"fmt"
 
+	"github.com/stackql/stackql/internal/stackql/astformat"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
@@ -79,6 +80,20 @@ func GetAliasFromStatement(node sqlparser.SQLNode) string {
 		return n.As.GetRawVal()
 	default:
 		return ""
+	}
+}
+
+func GetTableNameFromStatement(node sqlparser.SQLNode, formatter sqlparser.NodeFormatter) string {
+	switch n := node.(type) {
+	case *sqlparser.AliasedTableExpr:
+		switch et := n.Expr.(type) {
+		case sqlparser.TableName:
+			return et.GetRawVal()
+		default:
+			return astformat.String(n.Expr, formatter)
+		}
+	default:
+		return astformat.String(n, formatter)
 	}
 }
 

@@ -106,45 +106,6 @@ func (eng *postgresTcpEngine) execFile(fileName string) error {
 	return nil
 }
 
-// In Postgres, `Timestamp with time zone` objects are timezone-aware.
-func (eng *postgresTcpEngine) TableOldestUpdateUTC(tableName string, requestEncoding string, updateColName string, requestEncodingColName string) (time.Time, *dto.TxnControlCounters) {
-	genIdColName := eng.controlAttributes.GetControlGenIdColumnName()
-	ssnIdColName := eng.controlAttributes.GetControlSsnIdColumnName()
-	txnIdColName := eng.controlAttributes.GetControlTxnIdColumnName()
-	insIdColName := eng.controlAttributes.GetControlInsIdColumnName()
-	rows, err := eng.db.Query(fmt.Sprintf("SELECT min(%s) as oldest_update, %s, %s, %s, %s FROM \"%s\" WHERE %s = '%s' GROUP BY %s, %s, %s, %s;", updateColName, genIdColName, ssnIdColName, txnIdColName, insIdColName, tableName, requestEncodingColName, requestEncoding, genIdColName, ssnIdColName, txnIdColName, insIdColName))
-	if err == nil && rows != nil {
-		defer rows.Close()
-		rowExists := rows.Next()
-		if rowExists {
-			var oldestTime time.Time
-			tcc := dto.TxnControlCounters{}
-			err = rows.Scan(&oldestTime, &tcc.GenId, &tcc.SessionId, &tcc.TxnId, &tcc.InsertId)
-			if err == nil {
-				tcc.TableName = tableName
-				return oldestTime, &tcc
-			}
-		}
-	}
-	return time.Time{}, nil
-}
-
-func (eng *postgresTcpEngine) IsTablePresent(tableName string, requestEncoding string, colName string) bool {
-	rows, err := eng.db.Query(fmt.Sprintf(`SELECT count(*) as ct FROM "%s" WHERE iql_insert_encoded = $1 `, tableName), requestEncoding)
-	if err == nil && rows != nil {
-		defer rows.Close()
-		rowExists := rows.Next()
-		if rowExists {
-			var ct int
-			rows.Scan(&ct)
-			if ct > 0 {
-				return true
-			}
-		}
-	}
-	return false
-}
-
 func (eng *postgresTcpEngine) execFileLocal(fileName string) error {
 	expF, err := util.GetFilePathFromRepositoryRoot(fileName)
 	if err != nil {
@@ -251,7 +212,7 @@ func (se postgresTcpEngine) getCurrentTable(tableHeirarchyIDs *dto.HeirarchyIden
 	if err != nil {
 		logging.GetLogger().Errorln(fmt.Sprintf("err = %v for tableNamePattern = '%s' and tableNameLHSRemove = '%s'", err, tableNamePattern, tableNameLHSRemove))
 	}
-	return dto.NewDBTable(tableName, discoID, tableHeirarchyIDs), err
+	return dto.NewDBTable(tableName, tableHeirarchyIDs.GetTableName(), discoID, tableHeirarchyIDs), err
 }
 
 func (se postgresTcpEngine) getNextGenerationId() (int, error) {

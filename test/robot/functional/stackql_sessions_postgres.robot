@@ -27,5 +27,14 @@ SQLAlchemy Session Postgres PID Function
     ...    ${POSTGRES_URL_UNENCRYPTED_CONN}
     ...    ${SELECT_POSTGRES_BACKEND_PID_ARR}
     ...    1
-    ...    stdout=${CURDIR}/tmp/SQLAlchemy-Session-Postgres-Catalog-Join.tmp
+    ...    stdout=${CURDIR}/tmp/SQLAlchemy-Session-Postgres-PID-Function.tmp
+    [Teardown]    NONE
+
+SQLAlchemy Session Postgres Intel Views Exist
+    Pass Execution If    "${SQL_BACKEND}" != "postgres_tcp"    This is a postgres only test
+    Should SQLALchemy Raw Session Inline Have Length Greater Than Or Equal To
+    ...    ${POSTGRES_URL_UNENCRYPTED_CONN}
+    ...    ${SELECT_ACCELERATOR_TYPES_DESC_SEQUENCE}
+    ...    8
+    ...    stdout=${CURDIR}/tmp/SQLAlchemy-Session-Postgres-Intel-Views-Exist.tmp
     [Teardown]    NONE

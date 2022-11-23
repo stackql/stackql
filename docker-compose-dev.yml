@@ -18,7 +18,7 @@ services:
       - --loglevel=DEBUG 
       - '--auth={ "google": { "credentialsfilepath": "/opt/stackql/keys/integration/gcp-key.json", "type": "service_account" }, "okta": { "credentialsenvvar": "OKTA_SECRET_KEY", "type": "api_key" }, "github": { "type": "basic", "credentialsenvvar": "GITHUB_CREDS" }, "aws": { "type": "aws_signing_v4", "credentialsfilepath": "/opt/stackql/credentials/dummy/aws/functional-test-dummy-aws-key.txt", "keyID": "some-key-not-a-secret" }, "k8s": { "credentialsenvvar": "K8S_TOKEN", "type": "api_key", "valuePrefix": "Bearer " } }'
       - '--registry={ "url": "file:///opt/stackql/registry", "localDocRoot": "/opt/stackql/registry", "verifyConfig": { "nopVerify": true } }'
-      - '--sqlBackend={ "dbEngine": "postgres_tcp", "sqlDialect": "postgres", "dsn": "postgres://stackql:stackql@postgres_stackql:5432/stackql" }'
+      - '--sqlBackend={ "dbEngine": "postgres_tcp", "sqlDialect": "postgres", "dsn": "postgres://stackql:stackql@postgres_stackql:5432/stackql", "schemata": { "tableSchema": "stackql_raw", "intelViewSchema": "stackql_intel", "opsViewSchema": "stackql_ops" } }'
       - '--dbInternal={ "tableRegex": "(?i)^(?:public\\\\.)?(?:pg_.*|current_schema|information_schema)" }'
       - --pgsrv.address=0.0.0.0
       - --pgsrv.port=5476
@@ -30,14 +30,14 @@ services:
       - ./test/assets/credentials/dummy:/opt/stackql/credentials/dummy:ro
       - ./test/assets/input:/opt/stackql/input:ro
       - ${DB_SETUP_SRC:-./test/db/sqlite}:/opt/stackql/db:ro
-      - ${REGISTRY_SRC:-./test/registry-mocked}:/opt/stackql/registry:ro
+      - ${REGISTRY_SRC:-./test/registry-mocked-docker-service}:/opt/stackql/registry:ro
       - ./vol/stackql/config:/opt/stackql/.stackql:rw 
       - ./vol/logs:/opt/stackql/logs:rw 
     ports:
       - "${PG_SRV_PORT_DOCKER_MTLS:-5576}:${PG_SRV_PORT_MTLS:-5476}/tcp"
     environment:
       - OKTA_SECRET_KEY=${OKTA_SECRET_STR:-some-junk}
-      - GITHUB_SECRET_KEY=${GITHUB_SECRET_STR:-some-junk}
+      - GITHUB_CREDS=${GITHUB_SECRET_STR:-some-junk}
       - K8S_SECRET_KEY=${K8S_SECRET_STR:-some-junk}
       - AZ_ACCESS_TOKEN=${AZ_ACCESS_TOKEN:-some_junk}
       - BUILDMAJORVERSION=${BUILDMAJORVERSION:-1}

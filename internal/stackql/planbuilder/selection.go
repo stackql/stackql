@@ -28,7 +28,11 @@ func (p *primitiveGenerator) assembleUnarySelectionBuilder(
 	insertTabulation *openapistackql.Tabulation,
 	cols []parserutil.ColumnHandle,
 ) error {
-	annotatedInsertTabulation := util.NewAnnotatedTabulation(insertTabulation, hIds, "")
+	inputTableName, err := tbl.GetInputTableName()
+	if err != nil {
+		return err
+	}
+	annotatedInsertTabulation := util.NewAnnotatedTabulation(insertTabulation, hIds, inputTableName, "")
 
 	prov, err := tbl.GetProviderObject()
 	if err != nil {
@@ -64,8 +68,7 @@ func (p *primitiveGenerator) assembleUnarySelectionBuilder(
 		}
 		selectTabulation.PushBackColumn(openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, col.Expr, foundSchema, col.Val))
 	}
-
-	selPsc, err := p.PrimitiveComposer.GetDRMConfig().GenerateSelectDML(util.NewAnnotatedTabulation(selectTabulation, hIds, tbl.GetAlias()), insPsc.GetGCCtrlCtrs(), astvisit.GenerateModifiedSelectSuffix(node, handlerCtx.SQLDialect, handlerCtx.GetASTFormatter(), handlerCtx.GetNamespaceCollection()), astvisit.GenerateModifiedWhereClause(rewrittenWhere, handlerCtx.SQLDialect, handlerCtx.GetASTFormatter(), handlerCtx.GetNamespaceCollection()))
+	selPsc, err := p.PrimitiveComposer.GetDRMConfig().GenerateSelectDML(util.NewAnnotatedTabulation(selectTabulation, hIds, inputTableName, tbl.GetAlias()), insPsc.GetGCCtrlCtrs(), astvisit.GenerateModifiedSelectSuffix(node, handlerCtx.SQLDialect, handlerCtx.GetASTFormatter(), handlerCtx.GetNamespaceCollection()), astvisit.GenerateModifiedWhereClause(rewrittenWhere, handlerCtx.SQLDialect, handlerCtx.GetASTFormatter(), handlerCtx.GetNamespaceCollection()))
 	if err != nil {
 		return err
 	}

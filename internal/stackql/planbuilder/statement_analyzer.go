@@ -525,7 +525,7 @@ func (p *primitiveGenerator) parseComments(comments sqlparser.Comments) {
 }
 
 func (p *primitiveGenerator) persistHerarchyToBuilder(heirarchy *tablemetadata.HeirarchyObjects, node sqlparser.SQLNode) {
-	p.PrimitiveComposer.SetTable(node, tablemetadata.NewExtendedTableMetadata(heirarchy, taxonomy.GetAliasFromStatement(node)))
+	p.PrimitiveComposer.SetTable(node, tablemetadata.NewExtendedTableMetadata(heirarchy, taxonomy.GetTableNameFromStatement(node, p.PrimitiveComposer.GetASTFormatter()), taxonomy.GetAliasFromStatement(node)))
 }
 
 func (p *primitiveGenerator) analyzeUnaryExec(pbi PlanBuilderInput, handlerCtx *handler.HandlerContext, node *sqlparser.Exec, selectNode *sqlparser.Select, cols []parserutil.ColumnHandle) (*tablemetadata.ExtendedTableMetadata, error) {
@@ -887,6 +887,7 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 		onParamMap,
 		pbi.GetColRefs(),
 		handlerCtx.GetNamespaceCollection(),
+		handlerCtx.GetASTFormatter(),
 	)
 
 	// TODO: Do the proper SOLID treatment on router, etc.
