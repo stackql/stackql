@@ -147,16 +147,18 @@ docker-compose -p shellrun run --rm -e OKTA_SECRET_KEY=some-dummy-api-key -e GIT
 
 #### mTLS Server Stock as a rock
 
-```bash
-docker-compose run --rm credentialsgen 
+From the root directory of this repository...
 
-docker-compose run -d --rm -p5476:5476/tcp  stackqlsrv
+```bash
+docker compose -f docker-compose-credentials.yml run --rm credentialsgen 
+
+docker compose up stackqlsrv
 ```
 
-Then, run `docker ps` to ascertain the local port on which the container is serving.  Then, from the root directory of this repository...
+Then...
 
 ```bash
-psql -d "host=127.0.0.1 port=5476 user=myuser sslmode=verify-full sslcert=./vol/srv/credentials/pg_client_cert.pem sslkey=./vol/srv/credentials/pg_client_key.pem sslrootcert=./vol/srv/credentials/pg_server_cert.pem dbname=mydatabase"
+psql -d "host=127.0.0.1 port=5576 user=myuser sslmode=verify-full sslcert=./vol/srv/credentials/pg_client_cert.pem sslkey=./vol/srv/credentials/pg_client_key.pem sslrootcert=./vol/srv/credentials/pg_server_cert.pem dbname=mydatabase"
 ```
 
 When finished, clean up with:
