@@ -265,7 +265,7 @@ def get_analytics_sql_backend(execution_env :str, sql_backend_str :str) -> str:
     return f'{{ "dbInitFilepath": "{get_analytics_db_init_path_unix(sql_backend_str)}" }}'.replace(' ', '')
   if execution_env == 'docker':
     if sql_backend_str == 'postgres_tcp':
-      return f'{{ "dbEngine": "postgres_tcp", "dsn": "{_SQL_BACKEND_POSTGRES_DOCKER_DSN}", "sqlDialect": "postgres", "dbInitFilepath": "{ANALYTICS_DB_INIT_PATH_DOCKER}" }}'.replace(' ', '')
+      return f'{{ "dbEngine": "postgres_tcp", "dsn": "{_SQL_BACKEND_POSTGRES_DOCKER_DSN}", "sqlDialect": "postgres", "dbInitFilepath": "{ANALYTICS_DB_INIT_PATH_DOCKER}", "schemata": {{ "tableSchema": "{_PG_SCHEMA_PHYSICAL_TABLES}", "intelViewSchema": "{_PG_SCHEMA_INTEL}", "opsViewSchema": "stackql_ops" }} }}'.replace(' ', '')
     return f'{{ "dbInitFilepath": "{ANALYTICS_DB_INIT_PATH_DOCKER}" }}'.replace(' ', '')
 
 
@@ -593,6 +593,12 @@ REGISTRY_LIST_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets
 REGISTRY_GOOGLE_PROVIDER_LIST_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'registry', 'google-list.txt'))
 
 
+def get_db_setup_src(sql_backend_str :str) -> str:
+  if sql_backend_str == 'postgres_tcp':
+    return './test/db/postgres'
+  return './test/db/sqlite'
+
+
 
 def get_variables(execution_env :str, sql_backend_str :str):
   NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_ONE = get_native_query_row_count_from_table('okta.application.Application.generation_1', sql_backend_str)
@@ -604,6 +610,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'BUILDMINORVERSION':                              _BUILD_MINOR_VERSION,
     'BUILDPATCHVERSION':                              _BUILD_PATCH_VERSION,
     'DB_INTERNAL_CFG_LAX':                            DB_INTERNAL_CFG_LAX,
+    'DB_SETUP_SRC':                                   get_db_setup_src(sql_backend_str),
     'GC_CFG_EAGER':                                   _GC_CFG_EAGER,
     'GITHUB_SECRET_STR':                              GITHUB_SECRET_STR,
     'IS_WINDOWS':                                     IS_WINDOWS,
