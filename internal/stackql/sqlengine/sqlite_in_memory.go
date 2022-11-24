@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/logging"
@@ -75,57 +74,6 @@ func (eng *sqLiteInProcessEngine) execFileSQLite(fileName string) error {
 	}
 	_, err = eng.db.Exec(string(fileContents))
 	return err
-}
-
-// In SQLite, `DateTime` objects are not properly aware; the zone is not recorded.
-// That being said, those fields populated with `DateTime('now')` are UTC.
-// As per https://www.sqlite.org/lang_datefunc.html:
-//
-//	The 'now' argument to date and time functions always returns exactly
-//	the same value for multiple invocations within the same sqlite3_step()
-//	call. Universal Coordinated Time (UTC) is used.
-//
-// Therefore, this method will behave correctly provided that the column `colName`
-// is populated with `DateTime('now')`.
-func (eng *sqLiteInProcessEngine) TableOldestUpdateUTC(tableName string, requestEncoding string, updateColName string, requestEncodingColName string) (time.Time, *dto.TxnControlCounters) {
-	genIdColName := eng.controlAttributes.GetControlGenIdColumnName()
-	ssnIdColName := eng.controlAttributes.GetControlSsnIdColumnName()
-	txnIdColName := eng.controlAttributes.GetControlTxnIdColumnName()
-	insIdColName := eng.controlAttributes.GetControlInsIdColumnName()
-	rows, err := eng.db.Query(fmt.Sprintf("SELECT strftime('%%Y-%%m-%%dT%%H:%%M:%%S', min(%s)) as oldest_update, %s, %s, %s, %s FROM \"%s\" WHERE %s = '%s';", updateColName, genIdColName, ssnIdColName, txnIdColName, insIdColName, tableName, requestEncodingColName, requestEncoding))
-	if err == nil && rows != nil {
-		defer rows.Close()
-		rowExists := rows.Next()
-		if rowExists {
-			var oldest string
-			tcc := dto.TxnControlCounters{}
-			err = rows.Scan(&oldest, &tcc.GenId, &tcc.SessionId, &tcc.TxnId, &tcc.InsertId)
-			if err == nil {
-				oldestTime, err := time.Parse("2006-01-02T15:04:05", oldest)
-				if err == nil {
-					tcc.TableName = tableName
-					return oldestTime, &tcc
-				}
-			}
-		}
-	}
-	return time.Time{}, nil
-}
-
-func (eng *sqLiteInProcessEngine) IsTablePresent(tableName string, requestEncoding string, colName string) bool {
-	rows, err := eng.db.Query(fmt.Sprintf(`SELECT count(*) as ct FROM "%s" WHERE iql_insert_encoded=?;`, tableName), requestEncoding)
-	if err == nil && rows != nil {
-		defer rows.Close()
-		rowExists := rows.Next()
-		if rowExists {
-			var ct int
-			rows.Scan(&ct)
-			if ct > 0 {
-				return true
-			}
-		}
-	}
-	return false
 }
 
 func (eng *sqLiteInProcessEngine) execFileLocal(fileName string) error {
@@ -224,7 +172,7 @@ func (se sqLiteInProcessEngine) getCurrentTable(tableHeirarchyIDs *dto.Heirarchy
 	if err != nil {
 		logging.GetLogger().Errorln(fmt.Sprintf("err = %v for tableNamePattern = '%s' and tableNameLHSRemove = '%s'", err, tableNamePattern, tableNameLHSRemove))
 	}
-	return dto.NewDBTable(tableName, discoID, tableHeirarchyIDs), err
+	return dto.NewDBTable(tableName, tableHeirarchyIDs.GetTableName(), discoID, tableHeirarchyIDs), err
 }
 
 func (se sqLiteInProcessEngine) getNextGenerationId() (int, error) {

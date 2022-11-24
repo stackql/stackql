@@ -41,6 +41,7 @@ Prepare StackQL Environment
     Set Environment Variable    GITHUB_SECRET_KEY    ${GITHUB_SECRET_STR}
     Set Environment Variable    K8S_SECRET_KEY    ${K8S_SECRET_STR}
     Set Environment Variable    AZ_ACCESS_TOKEN    ${AZURE_SECRET_STR}
+    Set Environment Variable    DB_SETUP_SRC    ${DB_SETUP_SRC}
     Start All Mock Servers
     Generate Container Credentials for StackQL PG Server mTLS
     Start StackQL PG Server mTLS    ${PG_SRV_PORT_MTLS}    ${PG_SRV_MTLS_CFG_STR}    {}    {}    ${SQL_BACKEND_CFG_STR_CANONICAL}    ${PG_SRV_PORT_DOCKER_MTLS}

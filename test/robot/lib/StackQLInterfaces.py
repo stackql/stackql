@@ -409,6 +409,16 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     )
     self.log(result)
     return self.should_be_equal(len(result), expected_length)
+  
+
+  @keyword
+  def should_sqlalchemy_raw_session_inline_have_length_greater_than_or_equal_to(self, conn_str :str, queries :typing.List[str], expected_length :int, **kwargs):
+    client = SQLAlchemyClient(conn_str)
+    result =  client.run_raw_queries(
+      queries
+    )
+    self.log(result)
+    return self.should_be_true(len(result) >= expected_length)
 
 
   @keyword

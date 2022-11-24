@@ -13,6 +13,7 @@ import (
 type AnnotationCtx interface {
 	GetHIDs() *dto.HeirarchyIdentifiers
 	IsDynamic() bool
+	GetInputTableName() (string, error)
 	GetParameters() map[string]interface{}
 	GetSchema() *openapistackql.Schema
 	GetTableMeta() *tablemetadata.ExtendedTableMetadata
@@ -107,6 +108,10 @@ func (ac *StandardAnnotationCtx) GetParameters() map[string]interface{} {
 
 func (ac *StandardAnnotationCtx) GetSchema() *openapistackql.Schema {
 	return ac.Schema
+}
+
+func (ac *StandardAnnotationCtx) GetInputTableName() (string, error) {
+	return ac.TableMeta.GetInputTableName()
 }
 
 func (ac *StandardAnnotationCtx) GetTableMeta() *tablemetadata.ExtendedTableMetadata {

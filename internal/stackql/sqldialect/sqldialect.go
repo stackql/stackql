@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/stackql/stackql/internal/stackql/astformat"
 	"github.com/stackql/stackql/internal/stackql/astfuncrewrite"
@@ -55,6 +56,9 @@ type SQLDialect interface {
 	GetRelationalType(string) string
 
 	QueryNamespaced(string, string, string, string) (*sql.Rows, error)
+
+	IsTablePresent(string, string, string) bool
+	TableOldestUpdateUTC(string, string, string, string) (time.Time, *dto.TxnControlCounters)
 }
 
 func getNodeFormatter(name string) sqlparser.NodeFormatter {

@@ -32,6 +32,10 @@ func (v *QueryRewriteAstVisitor) buildAcquireQueryCtx(
 	ac taxonomy.AnnotationCtx,
 	dc drm.DRMConfig,
 ) (*drm.PreparedStatementCtx, error) {
+	inputTableName, err := ac.GetInputTableName()
+	if err != nil {
+		return nil, err
+	}
 	sc := ac.GetSchema()
 	if sc == nil {
 		return nil, fmt.Errorf("cannot build acquisition from nil schema")
@@ -41,7 +45,7 @@ func (v *QueryRewriteAstVisitor) buildAcquireQueryCtx(
 	hIds := ac.GetHIDs()
 	logging.GetLogger().Infof("%v %v", insertTabulation, hIds)
 
-	annotatedInsertTabulation := util.NewAnnotatedTabulation(insertTabulation, hIds, "")
+	annotatedInsertTabulation := util.NewAnnotatedTabulation(insertTabulation, hIds, inputTableName, "")
 	tableDTO, err := dc.GetCurrentTable(hIds, sqlEngine)
 	if err != nil {
 		return nil, err

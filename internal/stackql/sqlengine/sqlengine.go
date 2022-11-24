@@ -3,7 +3,6 @@ package sqlengine
 import (
 	"database/sql"
 	"fmt"
-	"time"
 
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/dto"
@@ -28,8 +27,6 @@ type SQLEngine interface {
 	CacheStoreGetAll() ([]dto.KeyVal, error)
 	CacheStorePut(string, []byte, string, int) error
 	IsMemory() bool
-	IsTablePresent(string, string, string) bool
-	TableOldestUpdateUTC(string, string, string, string) (time.Time, *dto.TxnControlCounters)
 }
 
 func NewSQLEngine(cfg dto.SQLBackendCfg, controlAttributes sqlcontrol.ControlAttributes) (SQLEngine, error) {

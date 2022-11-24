@@ -272,32 +272,36 @@ func (dp *StandardDependencyPlanner) processAcquire(
 	annotationCtx taxonomy.AnnotationCtx,
 	stream streaming.MapStream,
 ) (util.AnnotatedTabulation, *dto.TxnControlCounters, error) {
+	inputTableName, err := annotationCtx.GetInputTableName()
+	if err != nil {
+		return util.NewAnnotatedTabulation(nil, nil, "", ""), nil, err
+	}
 	prov, err := annotationCtx.GetTableMeta().GetProviderObject()
 	if err != nil {
-		return util.NewAnnotatedTabulation(nil, nil, ""), nil, err
+		return util.NewAnnotatedTabulation(nil, nil, "", ""), nil, err
 	}
 	m, err := annotationCtx.GetTableMeta().GetMethod()
 	if err != nil {
-		return util.NewAnnotatedTabulation(nil, nil, ""), nil, err
+		return util.NewAnnotatedTabulation(nil, nil, "", ""), nil, err
 	}
 	tab := annotationCtx.GetSchema().Tabulate(false)
 	_, mediaType, err := m.GetResponseBodySchemaAndMediaType()
 	if err != nil {
-		return util.NewAnnotatedTabulation(nil, nil, ""), nil, err
+		return util.NewAnnotatedTabulation(nil, nil, "", ""), nil, err
 	}
 	switch mediaType {
 	case media.MediaTypeTextXML, media.MediaTypeXML:
 		tab = tab.RenameColumnsToXml()
 	}
-	anTab := util.NewAnnotatedTabulation(tab, annotationCtx.GetHIDs(), annotationCtx.GetTableMeta().Alias)
+	anTab := util.NewAnnotatedTabulation(tab, annotationCtx.GetHIDs(), inputTableName, annotationCtx.GetTableMeta().Alias)
 
 	discoGenId, err := docparser.OpenapiStackQLTabulationsPersistor(m, []util.AnnotatedTabulation{anTab}, dp.primitiveComposer.GetSQLEngine(), prov.Name, dp.handlerCtx.GetNamespaceCollection(), dp.handlerCtx.ControlAttributes, dp.handlerCtx.SQLDialect)
 	if err != nil {
-		return util.NewAnnotatedTabulation(nil, nil, ""), nil, err
+		return util.NewAnnotatedTabulation(nil, nil, "", ""), nil, err
 	}
 	dp.discoGenIDs[sqlNode] = discoGenId
 	if dp.tcc == nil {
-		return util.NewAnnotatedTabulation(nil, nil, ""), nil, fmt.Errorf("nil counters disallowed in dependency planner")
+		return util.NewAnnotatedTabulation(nil, nil, "", ""), nil, fmt.Errorf("nil counters disallowed in dependency planner")
 	} else {
 		dp.tcc = dp.tcc.CloneAndIncrementInsertID()
 		dp.secondaryTccs = append(dp.secondaryTccs, dp.tcc)

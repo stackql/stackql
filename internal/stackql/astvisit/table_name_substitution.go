@@ -32,7 +32,12 @@ func (v *TableNameSubstitutionAstVisitor) buildAcquireQueryCtx(
 	hIds := ac.GetHIDs()
 	logging.GetLogger().Infof("%v %v", insertTabulation, hIds)
 
-	annotatedInsertTabulation := util.NewAnnotatedTabulation(insertTabulation, hIds, "")
+	inputTableName, err := ac.GetInputTableName()
+	if err != nil {
+		return nil, err
+	}
+
+	annotatedInsertTabulation := util.NewAnnotatedTabulation(insertTabulation, hIds, inputTableName, "")
 	tableDTO, err := dc.GetCurrentTable(hIds, sqlEngine)
 	if err != nil {
 		return nil, err
@@ -101,6 +106,10 @@ func (v *TableNameSubstitutionAstVisitor) buildSelectQuery(
 	cols []parserutil.ColumnHandle,
 	dc drm.DRMConfig,
 ) error {
+	inputTableName, err := tbl.GetInputTableName()
+	if err != nil {
+		return err
+	}
 	itemObjS, selectItemsKey, err := tbl.GetSelectSchemaAndObjectPath()
 	// rscStr, _ := tbl.GetResourceStr()
 	unsuitableSchemaMsg := "schema unsuitable for select query"
@@ -126,7 +135,7 @@ func (v *TableNameSubstitutionAstVisitor) buildSelectQuery(
 	logging.GetLogger().Infof("%v %v %v", insertTabulation, hIds, selectTabulation)
 
 	// annotatedSelectTabulation := util.NewAnnotatedTabulation(selectTabulation, hIds, tbl.GetAlias())
-	annotatedInsertTabulation := util.NewAnnotatedTabulation(insertTabulation, hIds, "")
+	annotatedInsertTabulation := util.NewAnnotatedTabulation(insertTabulation, hIds, inputTableName, "")
 	tableDTO, err := dc.GetCurrentTable(hIds, handlerCtx.SQLEngine)
 	if err != nil {
 		return err

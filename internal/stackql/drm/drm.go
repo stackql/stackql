@@ -404,7 +404,7 @@ func (dc *StaticDRMConfig) genRelationalTable(tabAnn util.AnnotatedTabulation, m
 	if err != nil {
 		return nil, err
 	}
-	relationalTable := relationaldto.NewRelationalTable(tableName)
+	relationalTable := relationaldto.NewRelationalTable(tableName, tabAnn.GetInputTableName())
 	schemaAnalyzer := util.NewTableSchemaAnalyzer(tabAnn.GetTabulation().GetSchema(), m)
 	tableColumns := schemaAnalyzer.GetColumns()
 	for _, col := range tableColumns {
@@ -439,7 +439,7 @@ func (dc *StaticDRMConfig) GenerateInsertDML(tabAnnotated util.AnnotatedTabulati
 	insIdColName := dc.controlAttributes.GetControlInsIdColumnName()
 	insEncodedColName := dc.controlAttributes.GetControlInsertEncodedIdColumnName()
 
-	relationalTable := relationaldto.NewRelationalTable(tableName.GetName())
+	relationalTable := relationaldto.NewRelationalTable(tableName.GetName(), tabAnnotated.GetInputTableName())
 	schemaAnalyzer := util.NewTableSchemaAnalyzer(tabAnnotated.GetTabulation().GetSchema(), method)
 	tableColumns := schemaAnalyzer.GetColumnDescriptors(tabAnnotated)
 	for _, col := range tableColumns {
@@ -487,7 +487,7 @@ func (dc *StaticDRMConfig) GenerateSelectDML(tabAnnotated util.AnnotatedTabulati
 	if err != nil {
 		return nil, err
 	}
-	relationalTable := relationaldto.NewRelationalTable(tn.GetName()).WithAlias(aliasStr)
+	relationalTable := relationaldto.NewRelationalTable(tn.GetName(), tabAnnotated.GetInputTableName()).WithAlias(aliasStr)
 	for _, col := range tabAnnotated.GetTabulation().GetColumns() {
 		var typeStr string
 		if col.Schema != nil {

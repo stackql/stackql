@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/stackql/stackql/internal/stackql/astfuncrewrite"
 	"github.com/stackql/stackql/internal/stackql/constants"
@@ -19,6 +20,10 @@ func newPostgresDialect(sqlEngine sqlengine.SQLEngine, analyticsNamespaceLikeStr
 	catalogName, err := sqlCfg.GetDatabaseName()
 	if err != nil {
 		return nil, err
+	}
+	tableSchemaName := sqlCfg.GetTableSchemaName()
+	if tableSchemaName == "" {
+		tableSchemaName = "public"
 	}
 	rv := &postgresDialect{
 		defaultGolangKind:     reflect.String,
@@ -36,7 +41,7 @@ func newPostgresDialect(sqlEngine sqlengine.SQLEngine, analyticsNamespaceLikeStr
 		analyticsNamespaceLikeString: analyticsNamespaceLikeString,
 		sqlEngine:                    sqlEngine,
 		formatter:                    formatter,
-		tableSchema:                  "public",
+		tableSchema:                  tableSchemaName,
 		tableCatalog:                 catalogName,
 	}
 	viewSchemataEnabled, err := rv.inferViewSchemataEnabled(sqlCfg.Schemata)
@@ -129,6 +134,22 @@ func (eng *postgresDialect) sanitizeWhereQueryString(queryString string) (string
 	), nil
 }
 
+func (eng *postgresDialect) generateViewDDL(srcSchemaName string, destSchemaName string, relationalTable relationaldto.RelationalTable) ([]string, error) {
+	var colNames, retVal []string
+	var createViewBuilder strings.Builder
+	retVal = append(retVal, fmt.Sprintf(`drop view if exists "%s"."%s" ; `, destSchemaName, relationalTable.GetBaseName()))
+	createViewBuilder.WriteString(fmt.Sprintf(`create or replace view "%s"."%s" AS `, destSchemaName, relationalTable.GetBaseName()))
+	for _, col := range relationalTable.GetColumns() {
+		var b strings.Builder
+		colName := col.GetName()
+		b.WriteString(`"` + colName + `" `)
+		colNames = append(colNames, b.String())
+	}
+	createViewBuilder.WriteString(fmt.Sprintf(`select %s from "%s"."%s" ;`, strings.Join(colNames, ", "), srcSchemaName, relationalTable.GetName()))
+	retVal = append(retVal, createViewBuilder.String())
+	return retVal, nil
+}
+
 func (eng *postgresDialect) generateDDL(relationalTable relationaldto.RelationalTable, dropTable bool) ([]string, error) {
 	var colDefs, retVal []string
 	if dropTable {
@@ -165,10 +186,17 @@ func (eng *postgresDialect) generateDDL(relationalTable relationaldto.Relational
 	rv.WriteString(strings.Join(colDefs, " , "))
 	rv.WriteString(" ) ")
 	retVal = append(retVal, rv.String())
-	retVal = append(retVal, fmt.Sprintf(`create index if not exists "idx_%s_%s" on "%s" ( "%s" ) `, strings.ReplaceAll(tableName, ".", "_"), genIdColName, tableName, genIdColName))
-	retVal = append(retVal, fmt.Sprintf(`create index if not exists "idx_%s_%s" on "%s" ( "%s" ) `, strings.ReplaceAll(tableName, ".", "_"), sessionIdColName, tableName, sessionIdColName))
-	retVal = append(retVal, fmt.Sprintf(`create index if not exists "idx_%s_%s" on "%s" ( "%s" ) `, strings.ReplaceAll(tableName, ".", "_"), txnIdColName, tableName, txnIdColName))
-	retVal = append(retVal, fmt.Sprintf(`create index if not exists "idx_%s_%s" on "%s" ( "%s" ) `, strings.ReplaceAll(tableName, ".", "_"), insIdColName, tableName, insIdColName))
+	retVal = append(retVal, fmt.Sprintf(`create index if not exists "idx_%s_%s" on "%s"."%s" ( "%s" ) `, strings.ReplaceAll(tableName, ".", "_"), genIdColName, eng.tableSchema, tableName, genIdColName))
+	retVal = append(retVal, fmt.Sprintf(`create index if not exists "idx_%s_%s" on "%s"."%s" ( "%s" ) `, strings.ReplaceAll(tableName, ".", "_"), sessionIdColName, eng.tableSchema, tableName, sessionIdColName))
+	retVal = append(retVal, fmt.Sprintf(`create index if not exists "idx_%s_%s" on "%s"."%s" ( "%s" ) `, strings.ReplaceAll(tableName, ".", "_"), txnIdColName, eng.tableSchema, tableName, txnIdColName))
+	retVal = append(retVal, fmt.Sprintf(`create index if not exists "idx_%s_%s" on "%s"."%s" ( "%s" ) `, strings.ReplaceAll(tableName, ".", "_"), insIdColName, eng.tableSchema, tableName, insIdColName))
+	if eng.viewSchemataEnabled {
+		intelViewDDL, err := eng.generateViewDDL(eng.tableSchema, eng.intelViewSchema, relationalTable)
+		if err != nil {
+			return nil, err
+		}
+		retVal = append(retVal, intelViewDDL...)
+	}
 	return retVal, nil
 }
 
@@ -384,7 +412,7 @@ func (sl *postgresDialect) gCCollectObsoleted(minTransactionID int) error {
 	obtainQuery := fmt.Sprintf(
 		`
 		SELECT
-			'DELETE FROM "' || table_name || '" WHERE "%s" < %d ; '
+			'DELETE FROM "%s"."' || table_name || '" WHERE "%s" < %d ; '
 		from 
 			information_schema.tables 
 		where 
@@ -396,6 +424,7 @@ func (sl *postgresDialect) gCCollectObsoleted(minTransactionID int) error {
 		  and
 			table_name not like '__iql__%%'
 		`,
+		sl.tableSchema,
 		maxTxnColName,
 		minTransactionID,
 	)
@@ -419,9 +448,9 @@ func (sl *postgresDialect) GetOperatorStringConcat() string {
 }
 
 func (sl *postgresDialect) gCCollectAll() error {
-	obtainQuery := `
+	obtainQuery := fmt.Sprintf(`
 		SELECT
-			'DELETE FROM "' || table_name || '"  ; '
+			'DELETE FROM "%s"."' || table_name || '"  ; '
 		from 
 			information_schema.tables 
 		where 
@@ -432,7 +461,9 @@ func (sl *postgresDialect) gCCollectAll() error {
 			table_schema = $2
 		  and
 			table_name not like '__iql__%%'
-		`
+		`,
+		sl.tableSchema,
+	)
 	deleteQueryResultSet, err := sl.sqlEngine.Query(obtainQuery, sl.tableCatalog, sl.tableSchema)
 	if err != nil {
 		return err
@@ -444,10 +475,49 @@ func (sl *postgresDialect) GCControlTablesPurge() error {
 	return sl.gcControlTablesPurge()
 }
 
+func (eng *postgresDialect) IsTablePresent(tableName string, requestEncoding string, colName string) bool {
+	rows, err := eng.sqlEngine.Query(fmt.Sprintf(`SELECT count(*) as ct FROM "%s"."%s" WHERE iql_insert_encoded = $1 `, eng.tableSchema, tableName), requestEncoding)
+	if err == nil && rows != nil {
+		defer rows.Close()
+		rowExists := rows.Next()
+		if rowExists {
+			var ct int
+			rows.Scan(&ct)
+			if ct > 0 {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// In Postgres, `Timestamp with time zone` objects are timezone-aware.
+func (eng *postgresDialect) TableOldestUpdateUTC(tableName string, requestEncoding string, updateColName string, requestEncodingColName string) (time.Time, *dto.TxnControlCounters) {
+	genIdColName := eng.controlAttributes.GetControlGenIdColumnName()
+	ssnIdColName := eng.controlAttributes.GetControlSsnIdColumnName()
+	txnIdColName := eng.controlAttributes.GetControlTxnIdColumnName()
+	insIdColName := eng.controlAttributes.GetControlInsIdColumnName()
+	rows, err := eng.sqlEngine.Query(fmt.Sprintf("SELECT min(%s) as oldest_update, %s, %s, %s, %s FROM \"%s\".\"%s\" WHERE %s = '%s' GROUP BY %s, %s, %s, %s;", updateColName, genIdColName, ssnIdColName, txnIdColName, insIdColName, eng.tableSchema, tableName, requestEncodingColName, requestEncoding, genIdColName, ssnIdColName, txnIdColName, insIdColName))
+	if err == nil && rows != nil {
+		defer rows.Close()
+		rowExists := rows.Next()
+		if rowExists {
+			var oldestTime time.Time
+			tcc := dto.TxnControlCounters{}
+			err = rows.Scan(&oldestTime, &tcc.GenId, &tcc.SessionId, &tcc.TxnId, &tcc.InsertId)
+			if err == nil {
+				tcc.TableName = tableName
+				return oldestTime, &tcc
+			}
+		}
+	}
+	return time.Time{}, nil
+}
+
 func (sl *postgresDialect) gcControlTablesPurge() error {
-	obtainQuery := `
+	obtainQuery := fmt.Sprintf(`
 		SELECT
-		  'DELETE FROM "' || table_name || '" ; '
+		  'DELETE FROM "%s"."' || table_name || '" ; '
 			from 
 			information_schema.tables 
 		where 
@@ -458,7 +528,9 @@ func (sl *postgresDialect) gcControlTablesPurge() error {
 			table_schema = $2
 		  and
 			table_name like '__iql__%%'
-		`
+		`,
+		sl.tableSchema,
+	)
 	deleteQueryResultSet, err := sl.sqlEngine.Query(obtainQuery, sl.tableCatalog, sl.tableSchema)
 	if err != nil {
 		return err
@@ -632,5 +704,5 @@ func (eng *postgresDialect) getDefaultGolangKind() reflect.Kind {
 }
 
 func (eng *postgresDialect) QueryNamespaced(colzString string, actualTableName string, requestEncodingColName string, requestEncoding string) (*sql.Rows, error) {
-	return eng.sqlEngine.Query(fmt.Sprintf(`SELECT %s FROM "%s" WHERE "%s" = $1`, colzString, actualTableName, requestEncodingColName), requestEncoding)
+	return eng.sqlEngine.Query(fmt.Sprintf(`SELECT %s FROM "%s"."%s" WHERE "%s" = $1`, colzString, eng.tableSchema, actualTableName, requestEncodingColName), requestEncoding)
 }
