@@ -641,7 +641,7 @@ jobs:
 
     - name: Build image
       run: |
-        docker compose build credentialsgen
+        docker compose -f docker-compose-credentials.yml build credentialsgen
         docker compose build mockserver
         docker compose build stackqlsrv
 

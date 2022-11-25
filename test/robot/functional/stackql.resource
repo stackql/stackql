@@ -52,7 +52,7 @@ Prepare StackQL Environment
 
 Generate Container Credentials for StackQL PG Server mTLS
     IF    "${EXECUTION_PLATFORM}" == "docker"
-        ${res} =         Run Process    docker\-compose    \-\-log\-level    ERROR
+        ${res} =         Run Process    docker\-compose    \-f    docker\-compose\-credentials.yml    \-\-log\-level    ERROR
                         ...  run    \-\-rm    credentialsgen
         Log     Credentials gen completed
         Should Be Equal As Integers    ${res.rc}    0

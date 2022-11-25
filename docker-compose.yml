@@ -16,7 +16,27 @@ services:
     command: 
       - bash
       - -c
-      - 'stackql --auth=''{ "google": { "credentialsfilepath": "/opt/stackql/credentials/dummy/google/functional-test-dummy-sa-key.json", "type": "service_account" }, "okta": { "credentialsenvvar": "OKTA_SECRET_KEY", "type": "api_key" }, "github": { "type": "basic", "credentialsenvvar": "GITHUB_CREDS" }, "aws": { "type": "aws_signing_v4", "credentialsfilepath": "/opt/stackql/credentials/dummy/aws/functional-test-dummy-aws-key.txt", "keyID": "some-key-not-a-secret" }, "k8s": { "credentialsenvvar": "K8S_TOKEN", "type": "api_key", "valuePrefix": "Bearer " } }'' --registry=''{"url": "https://cdn.statically.io/gh/stackql/stackql-provider-registry/dev/providers"}}'' --pgsrv.tls=''{ "keyFilePath": "/opt/stackql/srv/credentials/pg_server_key.pem", "certFilePath": "/opt/stackql/srv/credentials/pg_server_cert.pem", "clientCAs": [ "''$$(base64 -w 0 /opt/stackql/srv/credentials/pg_client_cert.pem)''" ] }'' --pgsrv.address=0.0.0.0 --pgsrv.port=${PG_SRV_PORT_MTLS:-5476} srv'
+      - 'stackql 
+         --auth=''{ 
+           "google": { "credentialsfilepath": "/opt/stackql/credentials/dummy/google/functional-test-dummy-sa-key.json", "type": "service_account" }, 
+           "okta": { "credentialsenvvar": "OKTA_SECRET_KEY", "type": "api_key" }, 
+           "github": { "type": "basic", "credentialsenvvar": "GITHUB_CREDS" }, 
+           "aws": { "type": "aws_signing_v4", "credentialsfilepath": "/opt/stackql/credentials/dummy/aws/functional-test-dummy-aws-key.txt", "keyID": "some-key-not-a-secret" }, 
+           "k8s": { "credentialsenvvar": "K8S_TOKEN", "type": "api_key", "valuePrefix": "Bearer " } 
+         }'' 
+         --registry=''{
+           "url": "https://cdn.statically.io/gh/stackql/stackql-provider-registry/dev/providers"
+         }'' 
+         --pgsrv.tls=''{ 
+           "keyFilePath": "/opt/stackql/srv/credentials/pg_server_key.pem", 
+           "certFilePath": "/opt/stackql/srv/credentials/pg_server_cert.pem", 
+           "clientCAs": [ 
+             "''$$(base64 -w 0 /opt/stackql/srv/credentials/pg_client_cert.pem)''" 
+           ] 
+         }'' 
+         --pgsrv.address=0.0.0.0 
+         --pgsrv.port=${PG_SRV_PORT_MTLS:-5476} 
+         srv'
     volumes:
       - ./keys:/opt/stackql/keys:ro
       - ./vol/srv/credentials:/opt/stackql/srv/credentials:ro
@@ -40,23 +60,6 @@ services:
       - BUILDPATCHVERSION=${BUILDPATCHVERSION:-1}
     depends_on:
       - postgres_stackql
-  credentialsgen:
-    image: stackql/stackqlsrvcertificates
-    build:
-      context: .
-      cache_from: 
-        - stackql/stackql
-        - stackql/stackqlsrvcertificates
-      target: certificates
-    volumes:
-      - ./vol/srv/credentials:/opt/stackql/srv/credentials:rw
-    command: 
-      - bash
-      - -c
-      - |
-        openssl req -x509 -keyout /opt/stackql/srv/credentials/pg_server_key.pem -out /opt/stackql/srv/credentials/pg_server_cert.pem  -config /opt/test/stackql/test/server/mtls/openssl.cnf -days 365 \
-        && openssl req -x509 -keyout /opt/stackql/srv/credentials/pg_client_key.pem -out  /opt/stackql/srv/credentials/pg_client_cert.pem  -config /opt/test/stackql/test/server/mtls/openssl.cnf -days 365 \
-        && openssl req -x509 -keyout /opt/stackql/srv/credentials/pg_rubbish_key.pem -out /opt/stackql/srv/credentials/pg_rubbish_cert.pem -config /opt/test/stackql/test/server/mtls/openssl.cnf -days 365
   mockserver:
     image: stackql/integration
     build:
