@@ -5,8 +5,10 @@ import (
 	"strings"
 
 	"github.com/stackql/stackql/internal/stackql/astformat"
+	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/sqldialect"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
+	"github.com/stackql/stackql/internal/stackql/taxonomy"
 
 	"vitess.io/vitess/go/sqltypes"
 	"vitess.io/vitess/go/vt/sqlparser"
@@ -21,15 +23,27 @@ type FromRewriteAstVisitor struct {
 	containsNativeBackendMaterial  bool
 	sqlDialect                     sqldialect.SQLDialect
 	formatter                      sqlparser.NodeFormatter
+	annotations                    taxonomy.AnnotationCtxMap
+	dc                             drm.DRMConfig
 }
 
-func NewFromRewriteAstVisitor(iDColumnName string, shouldCollectTables bool, sqlDialect sqldialect.SQLDialect, formatter sqlparser.NodeFormatter, namespaceCollection tablenamespace.TableNamespaceCollection) *FromRewriteAstVisitor {
+func NewFromRewriteAstVisitor(
+	iDColumnName string,
+	shouldCollectTables bool,
+	sqlDialect sqldialect.SQLDialect,
+	formatter sqlparser.NodeFormatter,
+	namespaceCollection tablenamespace.TableNamespaceCollection,
+	annotations taxonomy.AnnotationCtxMap,
+	dc drm.DRMConfig,
+) *FromRewriteAstVisitor {
 	return &FromRewriteAstVisitor{
 		iDColumnName:        iDColumnName,
 		shouldCollectTables: shouldCollectTables,
 		namespaceCollection: namespaceCollection,
 		sqlDialect:          sqlDialect,
 		formatter:           formatter,
+		annotations:         annotations,
+		dc:                  dc,
 	}
 }
 
@@ -601,7 +615,42 @@ func (v *FromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 	case *sqlparser.AliasedTableExpr:
 		var exprStr, partitionStr string
 		if node.Expr != nil {
-			node.Expr.Accept(v)
+			anCtx, ok := v.annotations[node]
+			if !ok {
+				return fmt.Errorf("cannot find annotated tabulation for table object")
+			}
+			switch ex := node.Expr.(type) {
+			case sqlparser.TableName:
+				if ex.IsEmpty() {
+					return nil
+				}
+				// str := anCtx.GetHIDs().GetTableName()
+				// if v.namespaceCollection.GetAnalyticsCacheTableNamespaceConfigurator().IsAllowed(str) {
+				// 	v.containsAnalyticsCacheMaterial = true
+				// 	var err error
+				// 	str, err = v.namespaceCollection.GetAnalyticsCacheTableNamespaceConfigurator().RenderTemplate(str)
+				// 	if err != nil {
+				// 		return err
+				// 	}
+				// }
+
+				// fqtn, err := v.sqlDialect.GetFullyQualifiedTableName(str)
+				dbTbl, err := v.dc.GetCurrentTable(anCtx.GetHIDs())
+				if err != nil {
+					return err
+				}
+				tblStr := dbTbl.GetName()
+				fqtn, err := v.sqlDialect.GetFullyQualifiedTableName(tblStr)
+				v.rewrittenQuery = fqtn
+				if err != nil {
+					return err
+				}
+			default:
+				err := node.Expr.Accept(v)
+				if err != nil {
+					return err
+				}
+			}
 			exprStr = v.GetRewrittenQuery()
 		}
 		if node.Partitions != nil {
@@ -632,21 +681,7 @@ func (v *FromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		v.rewrittenQuery = buf.String()
 
 	case sqlparser.TableName:
-		if node.IsEmpty() {
-			return nil
-		}
-		str := node.GetRawVal()
-		if v.namespaceCollection.GetAnalyticsCacheTableNamespaceConfigurator().IsAllowed(str) {
-			v.containsAnalyticsCacheMaterial = true
-			var err error
-			str, err = v.namespaceCollection.GetAnalyticsCacheTableNamespaceConfigurator().RenderTemplate(str)
-			if err != nil {
-				return err
-			}
-		}
-		fqtn, err := v.sqlDialect.GetFullyQualifiedTableName(str)
-		v.rewrittenQuery = fqtn
-		return err
+		return fmt.Errorf("FromVisitor should not be able to assess an unadorned TableName")
 
 	case *sqlparser.ParenTableExpr:
 		buf.AstPrintf(node, "(%v)", node.Exprs)
@@ -667,11 +702,11 @@ func (v *FromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		v.rewrittenQuery = buf.String()
 
 	case *sqlparser.JoinTableExpr:
-		lVis := NewFromRewriteAstVisitor("", true, v.sqlDialect, v.formatter, v.namespaceCollection)
+		lVis := NewFromRewriteAstVisitor("", true, v.sqlDialect, v.formatter, v.namespaceCollection, v.annotations, v.dc)
 		node.LeftExpr.Accept(lVis)
-		rVis := NewFromRewriteAstVisitor("", true, v.sqlDialect, v.formatter, v.namespaceCollection)
+		rVis := NewFromRewriteAstVisitor("", true, v.sqlDialect, v.formatter, v.namespaceCollection, v.annotations, v.dc)
 		node.RightExpr.Accept(rVis)
-		conditionVis := NewFromRewriteAstVisitor("", true, v.sqlDialect, v.formatter, v.namespaceCollection)
+		conditionVis := NewFromRewriteAstVisitor("", true, v.sqlDialect, v.formatter, v.namespaceCollection, v.annotations, v.dc)
 		node.Condition.Accept(conditionVis)
 		if lVis.ContainsAnalyticsCacheMaterial() || rVis.ContainsAnalyticsCacheMaterial() {
 			v.containsAnalyticsCacheMaterial = true
@@ -729,9 +764,9 @@ func (v *FromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		v.rewrittenQuery = buf.String()
 
 	case *sqlparser.ComparisonExpr:
-		lVis := NewFromRewriteAstVisitor("", true, v.sqlDialect, v.formatter, v.namespaceCollection)
+		lVis := NewFromRewriteAstVisitor("", true, v.sqlDialect, v.formatter, v.namespaceCollection, v.annotations, v.dc)
 		node.Left.Accept(lVis)
-		rVis := NewFromRewriteAstVisitor("", true, v.sqlDialect, v.formatter, v.namespaceCollection)
+		rVis := NewFromRewriteAstVisitor("", true, v.sqlDialect, v.formatter, v.namespaceCollection, v.annotations, v.dc)
 		node.Right.Accept(rVis)
 		buf.AstPrintf(node, "%s %s %s", lVis.GetRewrittenQuery(), node.Operator, rVis.GetRewrittenQuery())
 		if node.Escape != nil {

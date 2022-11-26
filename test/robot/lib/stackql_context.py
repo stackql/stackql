@@ -601,8 +601,8 @@ def get_db_setup_src(sql_backend_str :str) -> str:
 
 
 def get_variables(execution_env :str, sql_backend_str :str):
-  NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_ONE = get_native_query_row_count_from_table('okta.application.Application.generation_1', sql_backend_str)
-  NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_TWO = get_native_query_row_count_from_table('okta.application.Application.generation_2', sql_backend_str)
+  NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_ONE = get_native_query_row_count_from_table('okta.application.apps.Application.generation_1', sql_backend_str)
+  NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_TWO = get_native_query_row_count_from_table('okta.application.apps.Application.generation_2', sql_backend_str)
   rv = {
     ## general config
     'AZURE_SECRET_STR':                               AZURE_SECRET_STR,

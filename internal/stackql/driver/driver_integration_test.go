@@ -76,6 +76,8 @@ func TestSimpleSelectGoogleComputeInstanceDriverOutput(t *testing.T) {
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
+		handlerCtx.Outfile = os.Stdout
+		handlerCtx.OutErrFile = os.Stderr
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -111,6 +113,8 @@ func TestSimpleSelectGoogleComputeInstanceDriverOutputRepeated(t *testing.T) {
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
+		handlerCtx.Outfile = os.Stdout
+		handlerCtx.OutErrFile = os.Stderr
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -146,6 +150,8 @@ func TestSimpleSelectGoogleContainerSubnetworksAllowedDriverOutput(t *testing.T)
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
+		handlerCtx.Outfile = os.Stdout
+		handlerCtx.OutErrFile = os.Stderr
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -181,6 +187,8 @@ func TestSimpleInsertGoogleComputeNetworkAsync(t *testing.T) {
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
+		handlerCtx.Outfile = os.Stdout
+		handlerCtx.OutErrFile = os.Stderr
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -227,6 +235,8 @@ func TestK8sTheHardWayAsync(t *testing.T) {
 		runtimeCtx.CSVHeadersDisable = true
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
+		handlerCtx.Outfile = os.Stdout
+		handlerCtx.OutErrFile = os.Stderr
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -278,6 +288,8 @@ func TestSimpleDryRunK8sTheHardWayDriver(t *testing.T) {
 		}
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, rdr, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
+		handlerCtx.Outfile = os.Stdout
+		handlerCtx.OutErrFile = os.Stderr
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}

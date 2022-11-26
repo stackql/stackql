@@ -1,34 +1,80 @@
 package relationaldto
 
-var (
-	_ RelationalTable = &standardRelationalTable{}
+import (
+	"github.com/stackql/stackql/internal/stackql/dto"
 )
+
+var (
+	_ RelationalTable     = &standardRelationalTable{}
+	_ NomenclatureContext = &standardNomenclatureContext{}
+)
+
+type TableNomenclatureEncodingAlgorithm int
+
+const (
+	VerbatimNomenclatureEncoding TableNomenclatureEncodingAlgorithm = iota
+	BasicCondenseNomenclatureEncoding
+)
+
+type NomenclatureContext interface {
+	GetAlgorithm() TableNomenclatureEncodingAlgorithm
+	GetMaxWidth() int
+	WithMaxWidth(int) NomenclatureContext
+}
+
+func NewNomenclatureContext(algo TableNomenclatureEncodingAlgorithm) (NomenclatureContext, error) {
+	return &standardNomenclatureContext{
+		algo: algo,
+	}, nil
+}
+
+func (nc *standardNomenclatureContext) WithMaxWidth(maxWidth int) NomenclatureContext {
+	nc.maxWidth = maxWidth
+	return nc
+}
+
+type standardNomenclatureContext struct {
+	algo     TableNomenclatureEncodingAlgorithm
+	maxWidth int
+}
+
+func (nc *standardNomenclatureContext) GetAlgorithm() TableNomenclatureEncodingAlgorithm {
+	return nc.algo
+}
+
+func (nc *standardNomenclatureContext) GetMaxWidth() int {
+	return nc.maxWidth
+}
 
 type RelationalTable interface {
 	GetAlias() string
 	GetBaseName() string
 	GetColumns() []RelationalColumn
-	GetName() string
+	GetName(NomenclatureContext) (string, error)
 	PushBackColumn(RelationalColumn)
 	WithAlias(alias string) RelationalTable
 }
 
-func NewRelationalTable(name, baseName string) RelationalTable {
+func NewRelationalTable(hIDs *dto.HeirarchyIdentifiers, discoveryID int, name, baseName string) RelationalTable {
 	return &standardRelationalTable{
-		name:     name,
-		baseName: baseName,
+		hIDs:        hIDs,
+		name:        name,
+		baseName:    baseName,
+		discoveryID: discoveryID,
 	}
 }
 
 type standardRelationalTable struct {
-	alias    string
-	name     string
-	baseName string
-	columns  []RelationalColumn
+	alias       string
+	name        string
+	baseName    string
+	discoveryID int
+	hIDs        *dto.HeirarchyIdentifiers
+	columns     []RelationalColumn
 }
 
-func (rt *standardRelationalTable) GetName() string {
-	return rt.name
+func (rt *standardRelationalTable) GetName(ctx NomenclatureContext) (string, error) {
+	return rt.name, nil
 }
 
 func (rt *standardRelationalTable) GetBaseName() string {

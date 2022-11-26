@@ -37,6 +37,8 @@ func TestSelectComputeDisksOrderByCrtTmstpAsc(t *testing.T) {
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
+		handlerCtx.Outfile = os.Stdout
+		handlerCtx.OutErrFile = os.Stderr
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -72,6 +74,8 @@ func TestSelectComputeDisksAggOrderBySizeAsc(t *testing.T) {
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
+		handlerCtx.Outfile = os.Stdout
+		handlerCtx.OutErrFile = os.Stderr
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -107,6 +111,8 @@ func TestSelectComputeDisksAggOrderBySizeDesc(t *testing.T) {
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
+		handlerCtx.Outfile = os.Stdout
+		handlerCtx.OutErrFile = os.Stderr
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -142,6 +148,8 @@ func TestSelectComputeDisksAggTotalSize(t *testing.T) {
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
+		handlerCtx.Outfile = os.Stdout
+		handlerCtx.OutErrFile = os.Stderr
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -177,6 +185,8 @@ func TestSelectComputeDisksAggTotalString(t *testing.T) {
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
+		handlerCtx.Outfile = os.Stdout
+		handlerCtx.OutErrFile = os.Stderr
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}

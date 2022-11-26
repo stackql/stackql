@@ -59,6 +59,9 @@ type SQLDialect interface {
 
 	IsTablePresent(string, string, string) bool
 	TableOldestUpdateUTC(string, string, string, string) (time.Time, *dto.TxnControlCounters)
+
+	GetCurrentTable(*dto.HeirarchyIdentifiers) (dto.DBTable, error)
+	GetTable(*dto.HeirarchyIdentifiers, int) (dto.DBTable, error)
 }
 
 func getNodeFormatter(name string) sqlparser.NodeFormatter {

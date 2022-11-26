@@ -15,6 +15,7 @@ const (
 	TableStr                           string = "table"
 	CSVStr                             string = "csv"
 	TextStr                            string = "text"
+	PostgresIDMaxWidth                 int    = 63
 	PrettyTextStr                      string = "pptext"
 	DbEngineSQLite3Embedded            string = "sqlite3_embedded"
 	DbEnginePostgresTCP                string = "postgres_tcp"
@@ -35,6 +36,7 @@ const (
 	DefaultPrettyPrintBaseIndent       int    = 2
 	DefaultPrettyPrintIndent           int    = 2
 	DefaultQueryCacheSize              int    = 10000
+	MaxDigits32BitUnsigned             int    = 10
 	DefaultAnalyticsTemplateString     string = "stackql_analytics_{{ .objectName }}"
 	DefaultViewsTemplateString         string = "stackql_views.{{ .objectName }}"
 	DefaultAnalyticsRegexpString       string = `^stackql_analytics_(?P<objectName>.*)$`
