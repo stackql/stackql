@@ -1,6 +1,7 @@
 package driver_test
 
 import (
+	"os"
 	"strings"
 	"testing"
 
@@ -32,6 +33,8 @@ func TestSelectComputeDisksOrderByCrtTmstpAscPlusJsonExtract(t *testing.T) {
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
+		handlerCtx.Outfile = os.Stdout
+		handlerCtx.OutErrFile = os.Stderr
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -67,6 +70,8 @@ func TestSelectComputeDisksOrderByCrtTmstpAscPlusCoalesceJsonExtract(t *testing.
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
+		handlerCtx.Outfile = os.Stdout
+		handlerCtx.OutErrFile = os.Stderr
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -102,6 +107,8 @@ func TestSelectComputeDisksOrderByCrtTmstpAscPlusCoalesceJsonInstr(t *testing.T)
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
+		handlerCtx.Outfile = os.Stdout
+		handlerCtx.OutErrFile = os.Stderr
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}

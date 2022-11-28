@@ -18,10 +18,11 @@ type Heirarchy struct {
 }
 
 type HeirarchyIdentifiers struct {
-	ProviderStr string
-	ServiceStr  string
-	ResourceStr string
-	MethodStr   string
+	ProviderStr       string
+	ServiceStr        string
+	ResourceStr       string
+	ResponseSchemaStr string
+	MethodStr         string
 }
 
 func NewHeirarchyIdentifiers(prov, svc, rsc, method string) *HeirarchyIdentifiers {
@@ -33,11 +34,35 @@ func NewHeirarchyIdentifiers(prov, svc, rsc, method string) *HeirarchyIdentifier
 	}
 }
 
+func (hi *HeirarchyIdentifiers) WithResponseSchemaStr(rss string) *HeirarchyIdentifiers {
+	hi.ResponseSchemaStr = rss
+	return hi
+}
+
 func (hi *HeirarchyIdentifiers) GetTableName() string {
 	if hi.ProviderStr != "" {
-		return fmt.Sprintf("%s.%s.%s", hi.ProviderStr, hi.ServiceStr, hi.ResourceStr)
+		if hi.ResponseSchemaStr == "" {
+			return fmt.Sprintf("%s.%s.%s", hi.ProviderStr, hi.ServiceStr, hi.ResourceStr)
+		}
+		return fmt.Sprintf("%s.%s.%s.%s", hi.ProviderStr, hi.ServiceStr, hi.ResourceStr, hi.ResponseSchemaStr)
 	}
-	return fmt.Sprintf("%s.%s", hi.ServiceStr, hi.ResourceStr)
+	if hi.ResponseSchemaStr == "" {
+		return fmt.Sprintf("%s.%s", hi.ServiceStr, hi.ResourceStr)
+	}
+	return fmt.Sprintf("%s.%s.%s", hi.ServiceStr, hi.ResourceStr, hi.ResponseSchemaStr)
+}
+
+func (hi *HeirarchyIdentifiers) GetCompressedTableName() string {
+	if hi.ProviderStr != "" {
+		if hi.ResponseSchemaStr == "" {
+			return fmt.Sprintf("%s.%s.%s", hi.ProviderStr, hi.ServiceStr, hi.ResourceStr)
+		}
+		return fmt.Sprintf("%s.%s.%s.%s", hi.ProviderStr, hi.ServiceStr, hi.ResourceStr, hi.ResponseSchemaStr)
+	}
+	if hi.ResponseSchemaStr == "" {
+		return fmt.Sprintf("%s.%s", hi.ServiceStr, hi.ResourceStr)
+	}
+	return fmt.Sprintf("%s.%s.%s", hi.ServiceStr, hi.ResourceStr, hi.ResponseSchemaStr)
 }
 
 func (hi *HeirarchyIdentifiers) GetStackQLTableName() string {
@@ -98,23 +123,25 @@ func ResolveResourceTerminalHeirarchyIdentifiers(node sqlparser.TableName) *Heir
 
 type DBTable struct {
 	name        string
+	nameStump   string
 	baseName    string
 	discoveryID int
 	hIDs        *HeirarchyIdentifiers
 	namespace   string
 }
 
-func NewDBTable(name string, baseName string, discoveryID int, hIDs *HeirarchyIdentifiers) DBTable {
-	return newDBTable(name, baseName, discoveryID, hIDs, "")
+func NewDBTable(name string, nameStump string, baseName string, discoveryID int, hIDs *HeirarchyIdentifiers) DBTable {
+	return newDBTable(name, nameStump, baseName, discoveryID, hIDs, "")
 }
 
 func NewDBTableAnalytics(name string, discoveryID int, hIDs *HeirarchyIdentifiers) DBTable {
-	return newDBTable(name, name, discoveryID, hIDs, constants.AnalyticsPrefix)
+	return newDBTable(name, name, name, discoveryID, hIDs, constants.AnalyticsPrefix)
 }
 
-func newDBTable(name string, baseName string, discoveryID int, hIDs *HeirarchyIdentifiers, namespace string) DBTable {
+func newDBTable(name string, nameStump string, baseName string, discoveryID int, hIDs *HeirarchyIdentifiers, namespace string) DBTable {
 	return DBTable{
 		name:        name,
+		nameStump:   nameStump,
 		baseName:    baseName,
 		discoveryID: discoveryID,
 		hIDs:        hIDs,
@@ -124,6 +151,10 @@ func newDBTable(name string, baseName string, discoveryID int, hIDs *HeirarchyId
 
 func (dbt DBTable) GetName() string {
 	return dbt.name
+}
+
+func (dbt DBTable) GetNameStump() string {
+	return dbt.nameStump
 }
 
 func (dbt DBTable) GetBaseName() string {

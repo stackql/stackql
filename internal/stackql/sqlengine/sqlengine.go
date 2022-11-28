@@ -13,6 +13,7 @@ type SQLEngine interface {
 	GetDB() (*sql.DB, error)
 	Exec(string, ...interface{}) (sql.Result, error)
 	Query(string, ...interface{}) (*sql.Rows, error)
+	QueryRow(query string, args ...any) *sql.Row
 	ExecFileLocal(string) error
 	ExecFile(string) error
 	ExecInTxn(queries []string) error
@@ -20,7 +21,6 @@ type SQLEngine interface {
 	GetNextGenerationId() (int, error)
 	GetCurrentSessionId(int) (int, error)
 	GetNextSessionId(int) (int, error)
-	GetCurrentTable(*dto.HeirarchyIdentifiers) (dto.DBTable, error)
 	GetCurrentDiscoveryGenerationId(discoveryID string) (int, error)
 	GetNextDiscoveryGenerationId(discoveryID string) (int, error)
 	CacheStoreGet(string) ([]byte, error)

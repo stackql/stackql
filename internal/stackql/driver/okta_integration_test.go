@@ -86,6 +86,8 @@ func TestSimpleSelectOktaApplicationAppsDriverOutput(t *testing.T) {
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
+		handlerCtx.Outfile = os.Stdout
+		handlerCtx.OutErrFile = os.Stderr
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}

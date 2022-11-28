@@ -2,6 +2,7 @@ package driver_test
 
 import (
 	"bufio"
+	"os"
 	"strings"
 	"testing"
 
@@ -30,6 +31,8 @@ func TestSelectComputeDisksOrderByCrtTmstpAscPaginated(t *testing.T) {
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
+		handlerCtx.Outfile = os.Stdout
+		handlerCtx.OutErrFile = os.Stderr
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -66,6 +69,8 @@ func TestSelectComputeDisksAggOrderBySizeAscPaginated(t *testing.T) {
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
+		handlerCtx.Outfile = os.Stdout
+		handlerCtx.OutErrFile = os.Stderr
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -102,6 +107,8 @@ func TestSelectComputeDisksAggOrderBySizeDescPaginated(t *testing.T) {
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
+		handlerCtx.Outfile = os.Stdout
+		handlerCtx.OutErrFile = os.Stderr
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -138,6 +145,8 @@ func TestSelectComputeDisksAggTotalSizePaginated(t *testing.T) {
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
+		handlerCtx.Outfile = os.Stdout
+		handlerCtx.OutErrFile = os.Stderr
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -174,6 +183,8 @@ func TestSelectComputeDisksAggTotalStringPaginated(t *testing.T) {
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
+		handlerCtx.Outfile = os.Stdout
+		handlerCtx.OutErrFile = os.Stderr
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}

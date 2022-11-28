@@ -10,6 +10,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/astfuncrewrite"
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/relationaldto"
 	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
@@ -54,6 +55,12 @@ func newPostgresDialect(sqlEngine sqlengine.SQLEngine, analyticsNamespaceLikeStr
 		rv.opsViewSchema = sqlCfg.GetOpsViewSchemaName()
 		rv.intelViewSchema = sqlCfg.GetIntelViewSchemaName()
 	}
+	nomenclatureCtx, err := relationaldto.NewNomenclatureContext(relationaldto.BasicCondenseNomenclatureEncoding)
+	if err != nil {
+		return nil, err
+	}
+	nomenclatureCtx = nomenclatureCtx.WithMaxWidth(constants.PostgresIDMaxWidth)
+	rv.tableNomenclatureCtx = nomenclatureCtx
 	err = rv.initPostgresEngine()
 	if err != nil {
 		return nil, err
@@ -81,6 +88,7 @@ type postgresDialect struct {
 	opsViewSchema                string
 	intelViewSchema              string
 	tableCatalog                 string
+	tableNomenclatureCtx         relationaldto.NomenclatureContext
 }
 
 func (eng *postgresDialect) initPostgresEngine() error {
@@ -88,8 +96,12 @@ func (eng *postgresDialect) initPostgresEngine() error {
 	return err
 }
 
-func (eng *postgresDialect) generateDropTableStatement(relationalTable relationaldto.RelationalTable) string {
-	return fmt.Sprintf(`drop table if exists "%s"`, relationalTable.GetName())
+func (eng *postgresDialect) generateDropTableStatement(relationalTable relationaldto.RelationalTable) (string, error) {
+	tableName, err := relationalTable.GetName(eng.tableNomenclatureCtx)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf(`drop table if exists "%s"`, tableName), nil
 }
 
 func (eng *postgresDialect) GetFullyQualifiedTableName(unqualifiedTableName string) (string, error) {
@@ -145,7 +157,11 @@ func (eng *postgresDialect) generateViewDDL(srcSchemaName string, destSchemaName
 		b.WriteString(`"` + colName + `" `)
 		colNames = append(colNames, b.String())
 	}
-	createViewBuilder.WriteString(fmt.Sprintf(`select %s from "%s"."%s" ;`, strings.Join(colNames, ", "), srcSchemaName, relationalTable.GetName()))
+	tableName, err := relationalTable.GetName(eng.tableNomenclatureCtx)
+	if err != nil {
+		return nil, err
+	}
+	createViewBuilder.WriteString(fmt.Sprintf(`select %s from "%s"."%s" ;`, strings.Join(colNames, ", "), srcSchemaName, tableName))
 	retVal = append(retVal, createViewBuilder.String())
 	return retVal, nil
 }
@@ -153,10 +169,17 @@ func (eng *postgresDialect) generateViewDDL(srcSchemaName string, destSchemaName
 func (eng *postgresDialect) generateDDL(relationalTable relationaldto.RelationalTable, dropTable bool) ([]string, error) {
 	var colDefs, retVal []string
 	if dropTable {
-		retVal = append(retVal, eng.generateDropTableStatement(relationalTable))
+		dt, err := eng.generateDropTableStatement(relationalTable)
+		if err != nil {
+			return nil, err
+		}
+		retVal = append(retVal, dt)
 	}
 	var rv strings.Builder
-	tableName := relationalTable.GetName()
+	tableName, err := relationalTable.GetName(eng.tableNomenclatureCtx)
+	if err != nil {
+		return nil, err
+	}
 	rv.WriteString(fmt.Sprintf(`create table if not exists "%s"."%s" ( `, eng.tableSchema, tableName))
 	colDefs = append(colDefs, fmt.Sprintf(`"iql_%s_id" BIGSERIAL PRIMARY KEY`, tableName))
 	genIdColName := eng.controlAttributes.GetControlGenIdColumnName()
@@ -297,7 +320,11 @@ func (eng *postgresDialect) GenerateInsertDML(relationalTable relationaldto.Rela
 func (eng *postgresDialect) generateInsertDML(relationalTable relationaldto.RelationalTable, tcc *dto.TxnControlCounters) (string, error) {
 	var q strings.Builder
 	var quotedColNames, vals []string
-	q.WriteString(fmt.Sprintf(`INSERT INTO "%s"."%s" `, eng.tableSchema, relationalTable.GetName()))
+	tableName, err := relationalTable.GetName(eng.tableNomenclatureCtx)
+	if err != nil {
+		return "", err
+	}
+	q.WriteString(fmt.Sprintf(`INSERT INTO "%s"."%s" `, eng.tableSchema, tableName))
 	genIdColName := eng.controlAttributes.GetControlGenIdColumnName()
 	sessionIdColName := eng.controlAttributes.GetControlSsnIdColumnName()
 	txnIdColName := eng.controlAttributes.GetControlTxnIdColumnName()
@@ -356,7 +383,11 @@ func (eng *postgresDialect) generateSelectDML(relationalTable relationaldto.Rela
 	if relationalTable.GetAlias() != "" {
 		aliasStr = fmt.Sprintf(` AS "%s" `, relationalTable.GetAlias())
 	}
-	q.WriteString(fmt.Sprintf(`SELECT %s FROM "%s"."%s" %s WHERE `, strings.Join(quotedColNames, ", "), eng.tableCatalog, relationalTable.GetName(), aliasStr))
+	tableName, err := relationalTable.GetName(eng.tableNomenclatureCtx)
+	if err != nil {
+		return "", err
+	}
+	q.WriteString(fmt.Sprintf(`SELECT %s FROM "%s"."%s" %s WHERE `, strings.Join(quotedColNames, ", "), eng.tableCatalog, tableName, aliasStr))
 	q.WriteString(fmt.Sprintf(`( "%s" = $1 AND "%s" = $2 AND "%s" = $3 AND "%s" = $4 ) `, genIdColName, sessionIDColName, txnIdColName, insIdColName))
 	if strings.TrimSpace(rewrittenWhere) != "" {
 		q.WriteString(fmt.Sprintf(" AND ( %s ) ", rewrittenWhere))
@@ -705,4 +736,61 @@ func (eng *postgresDialect) getDefaultGolangKind() reflect.Kind {
 
 func (eng *postgresDialect) QueryNamespaced(colzString string, actualTableName string, requestEncodingColName string, requestEncoding string) (*sql.Rows, error) {
 	return eng.sqlEngine.Query(fmt.Sprintf(`SELECT %s FROM "%s"."%s" WHERE "%s" = $1`, colzString, eng.tableSchema, actualTableName, requestEncodingColName), requestEncoding)
+}
+
+func (se *postgresDialect) GetTable(tableHeirarchyIDs *dto.HeirarchyIdentifiers, discoveryId int) (dto.DBTable, error) {
+	return se.getTable(tableHeirarchyIDs, discoveryId)
+}
+
+func (se *postgresDialect) getTable(tableHeirarchyIDs *dto.HeirarchyIdentifiers, discoveryId int) (dto.DBTable, error) {
+	tableNameStump, err := se.getTableNameStump(tableHeirarchyIDs)
+	if err != nil {
+		return dto.NewDBTable("", "", "", 0, tableHeirarchyIDs), err
+	}
+	tableName := fmt.Sprintf("%s.generation_%d", tableNameStump, discoveryId)
+	return dto.NewDBTable(tableName, tableNameStump, tableHeirarchyIDs.GetTableName(), discoveryId, tableHeirarchyIDs), err
+}
+
+func (se *postgresDialect) GetCurrentTable(tableHeirarchyIDs *dto.HeirarchyIdentifiers) (dto.DBTable, error) {
+	return se.getCurrentTable(tableHeirarchyIDs)
+}
+
+// In postgres, 63 chars is default length for IDs such as table names
+// https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
+func (se *postgresDialect) getTableNameStump(tableHeirarchyIDs *dto.HeirarchyIdentifiers) (string, error) {
+	rawTableName := tableHeirarchyIDs.GetTableName()
+	maxRawTableNameWidth := constants.PostgresIDMaxWidth - (len(".generation_") + constants.MaxDigits32BitUnsigned)
+	if len(rawTableName) > maxRawTableNameWidth {
+		return rawTableName[:maxRawTableNameWidth], nil
+	}
+	return rawTableName, nil
+}
+
+func (se *postgresDialect) getCurrentTable(tableHeirarchyIDs *dto.HeirarchyIdentifiers) (dto.DBTable, error) {
+	var tableName string
+	var discoID int
+	tableNameStump, err := se.getTableNameStump(tableHeirarchyIDs)
+	if err != nil {
+		return dto.NewDBTable("", "", "", 0, tableHeirarchyIDs), err
+	}
+	tableNamePattern := fmt.Sprintf("%s.generation_%%", tableNameStump)
+	tableNameLHSRemove := fmt.Sprintf("%s.generation_", tableNameStump)
+	res := se.sqlEngine.QueryRow(`
+	select 
+		table_name, 
+		CAST(REPLACE(table_name, $1, '') AS INTEGER) 
+	from 
+		information_schema.tables 
+	where 
+		table_type = 'BASE TABLE'
+	  and 
+		table_name like $2 
+	ORDER BY table_name DESC 
+	limit 1
+	`, tableNameLHSRemove, tableNamePattern)
+	err = res.Scan(&tableName, &discoID)
+	if err != nil {
+		logging.GetLogger().Errorln(fmt.Sprintf("err = %v for tableNamePattern = '%s' and tableNameLHSRemove = '%s'", err, tableNamePattern, tableNameLHSRemove))
+	}
+	return dto.NewDBTable(tableName, tableNameStump, tableHeirarchyIDs.GetTableName(), discoID, tableHeirarchyIDs), err
 }

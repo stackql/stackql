@@ -28,14 +28,20 @@ func obtainAnnotationCtx(
 	tbl.SelectItemsKey = selectItemsKey
 	provStr, _ := tbl.GetProviderStr()
 	svcStr, _ := tbl.GetServiceStr()
+	rscStr, _ := tbl.GetResourceStr()
+	methodStr, _ := tbl.GetMethodStr()
 	if itemObjS == nil {
 		return nil, fmt.Errorf(unsuitableSchemaMsg)
 	}
 	name := itemObjS.GetSelectionName()
+	tbl, err = tbl.WithResponseSchemaStr(name)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %s", unsuitableSchemaMsg, err.Error())
+	}
 	tn, err := tbl.GetTableName()
 	if err == nil && namespaceCollection.GetAnalyticsCacheTableNamespaceConfigurator().IsAllowed(tn) {
-		name, _ = tbl.GetResourceStr()
+		name, _ = tbl.GetResponseSchemaStr()
 	}
-	hIds := dto.NewHeirarchyIdentifiers(provStr, svcStr, name, "")
+	hIds := dto.NewHeirarchyIdentifiers(provStr, svcStr, rscStr, methodStr).WithResponseSchemaStr(name)
 	return taxonomy.NewStaticStandardAnnotationCtx(itemObjS, hIds, tbl, parameters), nil
 }

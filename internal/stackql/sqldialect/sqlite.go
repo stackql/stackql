@@ -10,6 +10,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/astfuncrewrite"
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/relationaldto"
 	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
@@ -33,7 +34,12 @@ func newSQLiteDialect(sqlEngine sqlengine.SQLEngine, analyticsNamespaceLikeStrin
 		sqlEngine:                    sqlEngine,
 		formatter:                    formatter,
 	}
-	err := rv.initSQLiteEngine()
+	nomenclatureCtx, err := relationaldto.NewNomenclatureContext(relationaldto.VerbatimNomenclatureEncoding)
+	if err != nil {
+		return nil, err
+	}
+	rv.tableNomenclatureCtx = nomenclatureCtx
+	err = rv.initSQLiteEngine()
 	return rv, err
 }
 
@@ -46,11 +52,50 @@ type sqLiteDialect struct {
 	defaultRelationalType        string
 	defaultGolangKind            reflect.Kind
 	defaultGolangValue           interface{}
+	tableNomenclatureCtx         relationaldto.NomenclatureContext
 }
 
 func (eng *sqLiteDialect) initSQLiteEngine() error {
 	_, err := eng.sqlEngine.Exec(sqLiteEngineSetupDDL)
 	return err
+}
+
+func (se *sqLiteDialect) GetTable(tableHeirarchyIDs *dto.HeirarchyIdentifiers, discoveryId int) (dto.DBTable, error) {
+	return se.getTable(tableHeirarchyIDs, discoveryId)
+}
+
+func (se *sqLiteDialect) getTable(tableHeirarchyIDs *dto.HeirarchyIdentifiers, discoveryId int) (dto.DBTable, error) {
+	tableNameStump, err := se.getTableNameStump(tableHeirarchyIDs)
+	if err != nil {
+		return dto.NewDBTable("", "", "", 0, tableHeirarchyIDs), err
+	}
+	tableName := fmt.Sprintf("%s.generation_%d", tableNameStump, discoveryId)
+	return dto.NewDBTable(tableName, tableNameStump, tableHeirarchyIDs.GetTableName(), discoveryId, tableHeirarchyIDs), err
+}
+
+func (se *sqLiteDialect) GetCurrentTable(tableHeirarchyIDs *dto.HeirarchyIdentifiers) (dto.DBTable, error) {
+	return se.getCurrentTable(tableHeirarchyIDs)
+}
+
+func (se *sqLiteDialect) getTableNameStump(tableHeirarchyIDs *dto.HeirarchyIdentifiers) (string, error) {
+	return tableHeirarchyIDs.GetTableName(), nil
+}
+
+func (se *sqLiteDialect) getCurrentTable(tableHeirarchyIDs *dto.HeirarchyIdentifiers) (dto.DBTable, error) {
+	var tableName string
+	var discoID int
+	tableNameStump, err := se.getTableNameStump(tableHeirarchyIDs)
+	if err != nil {
+		return dto.NewDBTable("", "", "", 0, tableHeirarchyIDs), err
+	}
+	tableNamePattern := fmt.Sprintf("%s.generation_%%", tableNameStump)
+	tableNameLHSRemove := fmt.Sprintf("%s.generation_", tableNameStump)
+	res := se.sqlEngine.QueryRow(`select name, CAST(REPLACE(name, ?, '') AS INTEGER) from sqlite_schema where type = 'table' and name like ? ORDER BY name DESC limit 1`, tableNameLHSRemove, tableNamePattern)
+	err = res.Scan(&tableName, &discoID)
+	if err != nil {
+		logging.GetLogger().Errorln(fmt.Sprintf("err = %v for tableNamePattern = '%s' and tableNameLHSRemove = '%s'", err, tableNamePattern, tableNameLHSRemove))
+	}
+	return dto.NewDBTable(tableName, tableNameStump, tableHeirarchyIDs.GetTableName(), discoID, tableHeirarchyIDs), err
 }
 
 func (sl *sqLiteDialect) GetName() string {
@@ -159,8 +204,9 @@ func (sl *sqLiteDialect) gCCollectAll() error {
 	return sl.readExecGeneratedQueries(deleteQueryResultSet)
 }
 
-func (eng *sqLiteDialect) generateDropTableStatement(relationalTable relationaldto.RelationalTable) string {
-	return fmt.Sprintf(`drop table if exists "%s"`, relationalTable.GetName())
+func (eng *sqLiteDialect) generateDropTableStatement(relationalTable relationaldto.RelationalTable) (string, error) {
+	s, err := relationalTable.GetName(eng.tableNomenclatureCtx)
+	return fmt.Sprintf(`drop table if exists "%s"`, s), err
 }
 
 func (sl *sqLiteDialect) GCControlTablesPurge() error {
@@ -175,9 +221,16 @@ func (eng *sqLiteDialect) generateDDL(relationalTable relationaldto.RelationalTa
 	var colDefs, retVal []string
 	var rv strings.Builder
 	if dropTable {
-		retVal = append(retVal, eng.generateDropTableStatement(relationalTable))
+		dt, err := eng.generateDropTableStatement(relationalTable)
+		if err != nil {
+			return nil, err
+		}
+		retVal = append(retVal, dt)
 	}
-	tableName := relationalTable.GetName()
+	tableName, err := relationalTable.GetName(eng.tableNomenclatureCtx)
+	if err != nil {
+		return nil, err
+	}
 	rv.WriteString(fmt.Sprintf(`create table if not exists "%s" ( `, tableName))
 	colDefs = append(colDefs, fmt.Sprintf(`"iql_%s_id" INTEGER PRIMARY KEY AUTOINCREMENT`, tableName))
 	genIdColName := eng.controlAttributes.GetControlGenIdColumnName()
@@ -371,7 +424,11 @@ func (eng *sqLiteDialect) GenerateInsertDML(relationalTable relationaldto.Relati
 func (eng *sqLiteDialect) generateInsertDML(relationalTable relationaldto.RelationalTable, tcc *dto.TxnControlCounters) (string, error) {
 	var q strings.Builder
 	var quotedColNames, vals []string
-	q.WriteString(fmt.Sprintf(`INSERT INTO "%s" `, relationalTable.GetName()))
+	tableName, err := relationalTable.GetName(eng.tableNomenclatureCtx)
+	if err != nil {
+		return "", err
+	}
+	q.WriteString(fmt.Sprintf(`INSERT INTO "%s" `, tableName))
 	genIdColName := eng.controlAttributes.GetControlGenIdColumnName()
 	sessionIdColName := eng.controlAttributes.GetControlSsnIdColumnName()
 	txnIdColName := eng.controlAttributes.GetControlTxnIdColumnName()
@@ -424,7 +481,11 @@ func (eng *sqLiteDialect) generateSelectDML(relationalTable relationaldto.Relati
 	if relationalTable.GetAlias() != "" {
 		aliasStr = fmt.Sprintf(` AS "%s" `, relationalTable.GetAlias())
 	}
-	q.WriteString(fmt.Sprintf(`SELECT %s FROM "%s" %s WHERE `, strings.Join(quotedColNames, ", "), relationalTable.GetName(), aliasStr))
+	tableName, err := relationalTable.GetName(eng.tableNomenclatureCtx)
+	if err != nil {
+		return "", err
+	}
+	q.WriteString(fmt.Sprintf(`SELECT %s FROM "%s" %s WHERE `, strings.Join(quotedColNames, ", "), tableName, aliasStr))
 	q.WriteString(fmt.Sprintf(`( "%s" = ? AND "%s" = ? AND "%s" = ? AND "%s" = ? ) `, genIdColName, sessionIDColName, txnIdColName, insIdColName))
 	if strings.TrimSpace(rewrittenWhere) != "" {
 		q.WriteString(fmt.Sprintf(" AND ( %s ) ", rewrittenWhere))

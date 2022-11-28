@@ -158,21 +158,9 @@ func (se sqLiteInProcessEngine) getCurrentGenerationId() (int, error) {
 	return retVal, err
 }
 
-func (se sqLiteInProcessEngine) GetCurrentTable(tableHeirarchyIDs *dto.HeirarchyIdentifiers) (dto.DBTable, error) {
-	return se.getCurrentTable(tableHeirarchyIDs)
-}
-
-func (se sqLiteInProcessEngine) getCurrentTable(tableHeirarchyIDs *dto.HeirarchyIdentifiers) (dto.DBTable, error) {
-	var tableName string
-	var discoID int
-	tableNamePattern := fmt.Sprintf("%s.generation_%%", tableHeirarchyIDs.GetTableName())
-	tableNameLHSRemove := fmt.Sprintf("%s.generation_", tableHeirarchyIDs.GetTableName())
-	res := se.db.QueryRow(`select name, CAST(REPLACE(name, ?, '') AS INTEGER) from sqlite_schema where type = 'table' and name like ? ORDER BY name DESC limit 1`, tableNameLHSRemove, tableNamePattern)
-	err := res.Scan(&tableName, &discoID)
-	if err != nil {
-		logging.GetLogger().Errorln(fmt.Sprintf("err = %v for tableNamePattern = '%s' and tableNameLHSRemove = '%s'", err, tableNamePattern, tableNameLHSRemove))
-	}
-	return dto.NewDBTable(tableName, tableHeirarchyIDs.GetTableName(), discoID, tableHeirarchyIDs), err
+func (se sqLiteInProcessEngine) QueryRow(query string, varArgs ...interface{}) *sql.Row {
+	res := se.db.QueryRow(query, varArgs...)
+	return res
 }
 
 func (se sqLiteInProcessEngine) getNextGenerationId() (int, error) {

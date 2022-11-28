@@ -12,57 +12,17 @@ import (
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
-	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/sqlrewrite"
 	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
-	"github.com/stackql/stackql/internal/stackql/util"
 )
 
 func (v *QueryRewriteAstVisitor) getNextAlias() string {
 	v.anonColCounter++
 	i := v.anonColCounter
 	return fmt.Sprintf("col_%d", i)
-}
-
-func (v *QueryRewriteAstVisitor) buildAcquireQueryCtx(
-	sqlEngine sqlengine.SQLEngine,
-	ac taxonomy.AnnotationCtx,
-	dc drm.DRMConfig,
-) (*drm.PreparedStatementCtx, error) {
-	inputTableName, err := ac.GetInputTableName()
-	if err != nil {
-		return nil, err
-	}
-	sc := ac.GetSchema()
-	if sc == nil {
-		return nil, fmt.Errorf("cannot build acquisition from nil schema")
-	}
-	insertTabulation := ac.GetSchema().Tabulate(false)
-
-	hIds := ac.GetHIDs()
-	logging.GetLogger().Infof("%v %v", insertTabulation, hIds)
-
-	annotatedInsertTabulation := util.NewAnnotatedTabulation(insertTabulation, hIds, inputTableName, "")
-	tableDTO, err := dc.GetCurrentTable(hIds, sqlEngine)
-	if err != nil {
-		return nil, err
-	}
-	os, err := ac.GetTableMeta().GetMethod()
-	if err != nil {
-		return nil, err
-	}
-	ctrs, err := v.getCtrlCounters(tableDTO.GetDiscoveryID())
-	if err != nil {
-		return nil, err
-	}
-	insPsc, err := dc.GenerateInsertDML(annotatedInsertTabulation, os, ctrs)
-	if err != nil {
-		return nil, err
-	}
-	return insPsc, nil
 }
 
 func (v *QueryRewriteAstVisitor) getStarColumns(
@@ -126,19 +86,11 @@ type QueryRewriteAstVisitor struct {
 	namespaceCollection   tablenamespace.TableNamespaceCollection
 	formatter             sqlparser.NodeFormatter
 	//
-	selectExprsStr string
-	fromStr        string
-	whereExprsStr  string
-	selectSuffix   string
+	fromStr       string
+	whereExprsStr string
+	selectSuffix  string
 	// singe threaded, so no mutex protection
 	anonColCounter int
-}
-
-func (v *QueryRewriteAstVisitor) getCtrlCounters(discoveryGenerationID int) (*dto.TxnControlCounters, error) {
-	if v.baseCtrlCounters == nil {
-		return nil, fmt.Errorf("QueryRewriteAstVisitor: no control counters present")
-	}
-	return v.baseCtrlCounters.CloneWithDiscoGenID(discoveryGenerationID), nil
 }
 
 func NewQueryRewriteAstVisitor(
@@ -228,7 +180,7 @@ func (v *QueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			if err != nil {
 				return err
 			}
-			fromVis := NewFromRewriteAstVisitor("", true, v.handlerCtx.SQLDialect, v.formatter, v.namespaceCollection)
+			fromVis := NewFromRewriteAstVisitor("", true, v.handlerCtx.SQLDialect, v.formatter, v.namespaceCollection, v.annotations, v.dc)
 			if node.From != nil {
 				node.From.Accept(fromVis)
 				v.fromStr = fromVis.GetRewrittenQuery()

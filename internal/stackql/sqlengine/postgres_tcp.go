@@ -127,6 +127,11 @@ func (se postgresTcpEngine) Exec(query string, varArgs ...interface{}) (sql.Resu
 	return res, err
 }
 
+func (se postgresTcpEngine) QueryRow(query string, varArgs ...interface{}) *sql.Row {
+	res := se.db.QueryRow(query, varArgs...)
+	return res
+}
+
 func (se postgresTcpEngine) ExecInTxn(queries []string) error {
 	txn, err := se.db.Begin()
 	if err != nil {
@@ -184,35 +189,6 @@ func (se postgresTcpEngine) getCurrentGenerationId() (int, error) {
 	res := se.db.QueryRow(`SELECT lhs.iql_generation_id FROM "__iql__.control.generation" lhs INNER JOIN (SELECT max(created_dttm) AS max_dttm FROM "__iql__.control.generation" WHERE collected_dttm IS null) rhs ON  lhs.created_dttm = rhs.max_dttm WHERE lhs.collected_dttm IS null`)
 	err := res.Scan(&retVal)
 	return retVal, err
-}
-
-func (se postgresTcpEngine) GetCurrentTable(tableHeirarchyIDs *dto.HeirarchyIdentifiers) (dto.DBTable, error) {
-	return se.getCurrentTable(tableHeirarchyIDs)
-}
-
-func (se postgresTcpEngine) getCurrentTable(tableHeirarchyIDs *dto.HeirarchyIdentifiers) (dto.DBTable, error) {
-	var tableName string
-	var discoID int
-	tableNamePattern := fmt.Sprintf("%s.generation_%%", tableHeirarchyIDs.GetTableName())
-	tableNameLHSRemove := fmt.Sprintf("%s.generation_", tableHeirarchyIDs.GetTableName())
-	res := se.db.QueryRow(`
-	select 
-		table_name, 
-		CAST(REPLACE(table_name, $1, '') AS INTEGER) 
-	from 
-		information_schema.tables 
-	where 
-		table_type = 'BASE TABLE'
-	  and 
-		table_name like $2 
-	ORDER BY table_name DESC 
-	limit 1
-	`, tableNameLHSRemove, tableNamePattern)
-	err := res.Scan(&tableName, &discoID)
-	if err != nil {
-		logging.GetLogger().Errorln(fmt.Sprintf("err = %v for tableNamePattern = '%s' and tableNameLHSRemove = '%s'", err, tableNamePattern, tableNameLHSRemove))
-	}
-	return dto.NewDBTable(tableName, tableHeirarchyIDs.GetTableName(), discoID, tableHeirarchyIDs), err
 }
 
 func (se postgresTcpEngine) getNextGenerationId() (int, error) {
