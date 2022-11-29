@@ -112,7 +112,10 @@ func (p *primitiveGenerator) analyzeUnarySelection(
 	}
 	if len(cols) == 0 {
 		tsa := util.NewTableSchemaAnalyzer(schema, method)
-		colz := tsa.GetColumns()
+		colz, err := tsa.GetColumns()
+		if err != nil {
+			return err
+		}
 		for _, v := range colz {
 			cols = append(cols, parserutil.NewUnaliasedColumnHandle(v.GetName()))
 		}

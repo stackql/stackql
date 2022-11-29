@@ -624,17 +624,6 @@ func (v *FromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 				if ex.IsEmpty() {
 					return nil
 				}
-				// str := anCtx.GetHIDs().GetTableName()
-				// if v.namespaceCollection.GetAnalyticsCacheTableNamespaceConfigurator().IsAllowed(str) {
-				// 	v.containsAnalyticsCacheMaterial = true
-				// 	var err error
-				// 	str, err = v.namespaceCollection.GetAnalyticsCacheTableNamespaceConfigurator().RenderTemplate(str)
-				// 	if err != nil {
-				// 		return err
-				// 	}
-				// }
-
-				// fqtn, err := v.sqlDialect.GetFullyQualifiedTableName(str)
 				dbTbl, err := v.dc.GetCurrentTable(anCtx.GetHIDs())
 				if err != nil {
 					return err

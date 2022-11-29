@@ -80,6 +80,14 @@ PG Session Postgres Client V2 Setup Queries
     ...    stdout=${CURDIR}/tmp/PG-Session-Postgres-Client-V2-Setup-Queries.tmp
     [Teardown]    NONE
 
+PG Session Postgres Client AWS Method Signature Polymorphism
+    Should PG Client Session Inline Equal
+    ...    ${PSQL_MTLS_CONN_STR_UNIX}
+    ...    ${AWS_CLOUD_CONTROL_METHOD_SIGNATURE_CMD_ARR}
+    ...    ${AWS_CLOUD_CONTROL_METHOD_SIGNATURE_CMD_ARR_EXPECTED}
+    ...    stdout=${CURDIR}/tmp/PG-Session-Postgres-Client-AWS-Method-Signature-Polymorphism.tmp
+    [Teardown]    NONE
+
 PG Session Postgres Client Typed Queries
     Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test.
     Should PG Client Session Inline Equal

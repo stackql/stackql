@@ -221,7 +221,7 @@ func (sv *SchemaRequestTemplateVisitor) RetrieveTemplate(sc *openapistackql.Sche
 			return retVal, err
 		}
 		if sc.AdditionalProperties != nil && sc.AdditionalProperties.Value != nil {
-			retVal, err = sv.processSubSchemasMap(sc, method, map[string]*openapistackql.Schema{"k1": openapistackql.NewSchema(sc.AdditionalProperties.Value, method.Service, "k1")})
+			retVal, err = sv.processSubSchemasMap(sc, method, map[string]*openapistackql.Schema{"k1": openapistackql.NewSchema(sc.AdditionalProperties.Value, method.Service, "k1", sc.AdditionalProperties.Ref)})
 		}
 		if len(retVal) == 0 {
 			return nil, nil
@@ -278,11 +278,11 @@ func (sv *SchemaRequestTemplateVisitor) retrieveTemplateVal(sc *openapistackql.S
 		if len(rv) == 0 {
 			if sc.AdditionalProperties != nil {
 				if aps := sc.AdditionalProperties.Value; aps != nil {
-					aps := openapistackql.NewSchema(aps, svc, "additionalProperties")
+					aps := openapistackql.NewSchema(aps, svc, "additionalProperties", sc.AdditionalProperties.Ref)
 					hasProperties := false
 					for k, v := range aps.Properties {
 						hasProperties = true
-						ss := openapistackql.NewSchema(v.Value, svc, k)
+						ss := openapistackql.NewSchema(v.Value, svc, k, v.Ref)
 						if k == "" {
 							k = "key"
 						}

@@ -5,52 +5,14 @@ import (
 )
 
 var (
-	_ RelationalTable     = &standardRelationalTable{}
-	_ NomenclatureContext = &standardNomenclatureContext{}
+	_ RelationalTable = &standardRelationalTable{}
 )
-
-type TableNomenclatureEncodingAlgorithm int
-
-const (
-	VerbatimNomenclatureEncoding TableNomenclatureEncodingAlgorithm = iota
-	BasicCondenseNomenclatureEncoding
-)
-
-type NomenclatureContext interface {
-	GetAlgorithm() TableNomenclatureEncodingAlgorithm
-	GetMaxWidth() int
-	WithMaxWidth(int) NomenclatureContext
-}
-
-func NewNomenclatureContext(algo TableNomenclatureEncodingAlgorithm) (NomenclatureContext, error) {
-	return &standardNomenclatureContext{
-		algo: algo,
-	}, nil
-}
-
-func (nc *standardNomenclatureContext) WithMaxWidth(maxWidth int) NomenclatureContext {
-	nc.maxWidth = maxWidth
-	return nc
-}
-
-type standardNomenclatureContext struct {
-	algo     TableNomenclatureEncodingAlgorithm
-	maxWidth int
-}
-
-func (nc *standardNomenclatureContext) GetAlgorithm() TableNomenclatureEncodingAlgorithm {
-	return nc.algo
-}
-
-func (nc *standardNomenclatureContext) GetMaxWidth() int {
-	return nc.maxWidth
-}
 
 type RelationalTable interface {
 	GetAlias() string
 	GetBaseName() string
 	GetColumns() []RelationalColumn
-	GetName(NomenclatureContext) (string, error)
+	GetName() (string, error)
 	PushBackColumn(RelationalColumn)
 	WithAlias(alias string) RelationalTable
 }
@@ -73,7 +35,7 @@ type standardRelationalTable struct {
 	columns     []RelationalColumn
 }
 
-func (rt *standardRelationalTable) GetName(ctx NomenclatureContext) (string, error) {
+func (rt *standardRelationalTable) GetName() (string, error) {
 	return rt.name, nil
 }
 

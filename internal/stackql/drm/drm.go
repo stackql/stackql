@@ -388,7 +388,10 @@ func (dc *StaticDRMConfig) genRelationalTable(tabAnn util.AnnotatedTabulation, m
 	}
 	relationalTable := relationaldto.NewRelationalTable(tabAnn.GetHeirarchyIdentifiers(), discoveryGenerationID, tableName, tabAnn.GetInputTableName())
 	schemaAnalyzer := util.NewTableSchemaAnalyzer(tabAnn.GetTabulation().GetSchema(), m)
-	tableColumns := schemaAnalyzer.GetColumns()
+	tableColumns, err := schemaAnalyzer.GetColumns()
+	if err != nil {
+		return nil, err
+	}
 	for _, col := range tableColumns {
 		colName := col.GetName()
 		colType := dc.inferColType(col)
@@ -423,7 +426,10 @@ func (dc *StaticDRMConfig) GenerateInsertDML(tabAnnotated util.AnnotatedTabulati
 
 	relationalTable := relationaldto.NewRelationalTable(tabAnnotated.GetHeirarchyIdentifiers(), tableName.GetDiscoveryID(), tableName.GetName(), tabAnnotated.GetInputTableName())
 	schemaAnalyzer := util.NewTableSchemaAnalyzer(tabAnnotated.GetTabulation().GetSchema(), method)
-	tableColumns := schemaAnalyzer.GetColumnDescriptors(tabAnnotated)
+	tableColumns, err := schemaAnalyzer.GetColumnDescriptors(tabAnnotated)
+	if err != nil {
+		return nil, err
+	}
 	for _, col := range tableColumns {
 		relationalType := "text"
 		schema := col.Schema
