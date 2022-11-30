@@ -3,8 +3,8 @@ package util
 import "github.com/stackql/go-openapistackql/openapistackql"
 
 type TableSchemaAnalyzer interface {
-	GetColumns() []Column
-	GetColumnDescriptors(AnnotatedTabulation) []openapistackql.ColumnDescriptor
+	GetColumns() ([]Column, error)
+	GetColumnDescriptors(AnnotatedTabulation) ([]openapistackql.ColumnDescriptor, error)
 }
 
 type simpleTableSchemaAnalyzer struct {
@@ -19,7 +19,7 @@ func NewTableSchemaAnalyzer(s *openapistackql.Schema, m *openapistackql.Operatio
 	}
 }
 
-func (ta *simpleTableSchemaAnalyzer) GetColumns() []Column {
+func (ta *simpleTableSchemaAnalyzer) GetColumns() ([]Column, error) {
 	var rv []Column
 	tableColumns := ta.s.Tabulate(false).GetColumns()
 	existingColumns := make(map[string]struct{})
@@ -27,17 +27,21 @@ func (ta *simpleTableSchemaAnalyzer) GetColumns() []Column {
 		existingColumns[col.Name] = struct{}{}
 		rv = append(rv, newSimpleColumn(col.Name, col.Schema))
 	}
-	for k, col := range ta.m.GetRequiredParameters() {
+	unionedRequiredParams, err := ta.m.GetUnionRequiredParameters()
+	if err != nil {
+		return nil, err
+	}
+	for k, col := range unionedRequiredParams {
 		if _, ok := existingColumns[k]; ok {
 			continue
 		}
 		schema, _ := col.GetSchema()
 		rv = append(rv, newSimpleColumn(k, schema))
 	}
-	return rv
+	return rv, nil
 }
 
-func (ta *simpleTableSchemaAnalyzer) GetColumnDescriptors(tabAnnotated AnnotatedTabulation) []openapistackql.ColumnDescriptor {
+func (ta *simpleTableSchemaAnalyzer) GetColumnDescriptors(tabAnnotated AnnotatedTabulation) ([]openapistackql.ColumnDescriptor, error) {
 	existingColumns := make(map[string]struct{})
 	var rv []openapistackql.ColumnDescriptor
 	for _, col := range tabAnnotated.GetTabulation().GetColumns() {
@@ -45,7 +49,11 @@ func (ta *simpleTableSchemaAnalyzer) GetColumnDescriptors(tabAnnotated Annotated
 		existingColumns[colName] = struct{}{}
 		rv = append(rv, col)
 	}
-	for k, col := range ta.m.GetRequiredParameters() {
+	unionedRequiredParams, err := ta.m.GetUnionRequiredParameters()
+	if err != nil {
+		return nil, err
+	}
+	for k, col := range unionedRequiredParams {
 		if _, ok := existingColumns[k]; ok {
 			continue
 		}
@@ -61,5 +69,5 @@ func (ta *simpleTableSchemaAnalyzer) GetColumnDescriptors(tabAnnotated Annotated
 		)
 		rv = append(rv, colDesc)
 	}
-	return rv
+	return rv, nil
 }

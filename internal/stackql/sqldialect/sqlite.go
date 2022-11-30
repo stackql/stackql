@@ -34,12 +34,7 @@ func newSQLiteDialect(sqlEngine sqlengine.SQLEngine, analyticsNamespaceLikeStrin
 		sqlEngine:                    sqlEngine,
 		formatter:                    formatter,
 	}
-	nomenclatureCtx, err := relationaldto.NewNomenclatureContext(relationaldto.VerbatimNomenclatureEncoding)
-	if err != nil {
-		return nil, err
-	}
-	rv.tableNomenclatureCtx = nomenclatureCtx
-	err = rv.initSQLiteEngine()
+	err := rv.initSQLiteEngine()
 	return rv, err
 }
 
@@ -52,7 +47,6 @@ type sqLiteDialect struct {
 	defaultRelationalType        string
 	defaultGolangKind            reflect.Kind
 	defaultGolangValue           interface{}
-	tableNomenclatureCtx         relationaldto.NomenclatureContext
 }
 
 func (eng *sqLiteDialect) initSQLiteEngine() error {
@@ -205,7 +199,7 @@ func (sl *sqLiteDialect) gCCollectAll() error {
 }
 
 func (eng *sqLiteDialect) generateDropTableStatement(relationalTable relationaldto.RelationalTable) (string, error) {
-	s, err := relationalTable.GetName(eng.tableNomenclatureCtx)
+	s, err := relationalTable.GetName()
 	return fmt.Sprintf(`drop table if exists "%s"`, s), err
 }
 
@@ -227,7 +221,7 @@ func (eng *sqLiteDialect) generateDDL(relationalTable relationaldto.RelationalTa
 		}
 		retVal = append(retVal, dt)
 	}
-	tableName, err := relationalTable.GetName(eng.tableNomenclatureCtx)
+	tableName, err := relationalTable.GetName()
 	if err != nil {
 		return nil, err
 	}
@@ -424,7 +418,7 @@ func (eng *sqLiteDialect) GenerateInsertDML(relationalTable relationaldto.Relati
 func (eng *sqLiteDialect) generateInsertDML(relationalTable relationaldto.RelationalTable, tcc *dto.TxnControlCounters) (string, error) {
 	var q strings.Builder
 	var quotedColNames, vals []string
-	tableName, err := relationalTable.GetName(eng.tableNomenclatureCtx)
+	tableName, err := relationalTable.GetName()
 	if err != nil {
 		return "", err
 	}
@@ -481,7 +475,7 @@ func (eng *sqLiteDialect) generateSelectDML(relationalTable relationaldto.Relati
 	if relationalTable.GetAlias() != "" {
 		aliasStr = fmt.Sprintf(` AS "%s" `, relationalTable.GetAlias())
 	}
-	tableName, err := relationalTable.GetName(eng.tableNomenclatureCtx)
+	tableName, err := relationalTable.GetName()
 	if err != nil {
 		return "", err
 	}

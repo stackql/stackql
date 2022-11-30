@@ -52,19 +52,6 @@ func (hi *HeirarchyIdentifiers) GetTableName() string {
 	return fmt.Sprintf("%s.%s.%s", hi.ServiceStr, hi.ResourceStr, hi.ResponseSchemaStr)
 }
 
-func (hi *HeirarchyIdentifiers) GetCompressedTableName() string {
-	if hi.ProviderStr != "" {
-		if hi.ResponseSchemaStr == "" {
-			return fmt.Sprintf("%s.%s.%s", hi.ProviderStr, hi.ServiceStr, hi.ResourceStr)
-		}
-		return fmt.Sprintf("%s.%s.%s.%s", hi.ProviderStr, hi.ServiceStr, hi.ResourceStr, hi.ResponseSchemaStr)
-	}
-	if hi.ResponseSchemaStr == "" {
-		return fmt.Sprintf("%s.%s", hi.ServiceStr, hi.ResourceStr)
-	}
-	return fmt.Sprintf("%s.%s.%s", hi.ServiceStr, hi.ResourceStr, hi.ResponseSchemaStr)
-}
-
 func (hi *HeirarchyIdentifiers) GetStackQLTableName() string {
 	baseStr := fmt.Sprintf("%s.%s", hi.ServiceStr, hi.ResourceStr)
 	if hi.ProviderStr != "" {

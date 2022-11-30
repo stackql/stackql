@@ -524,6 +524,8 @@ SELECT_AWS_EC2_VPN_GATEWAYS_NULL_EXPECTED = get_output_from_local_file(os.path.j
 SELECT_AWS_IAM_USERS_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'iam', 'select-users-asc.txt'))
 SELECT_AWS_CLOUD_CONTROL_VPCS_DESC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-list-vpcs-desc.txt'))
 GET_AWS_CLOUD_CONTROL_VPCS_DESC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-get-vpcs-desc.txt'))
+SELECT_AWS_CLOUD_CONTROL_VPCS_DESC_JSON_EXPECTED = get_json_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-list-vpcs-desc.json'))
+GET_AWS_CLOUD_CONTROL_VPCS_DESC_JSON_EXPECTED = get_json_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-get-vpcs-desc.json'))
 SELECT_AWS_CLOUD_CONTROL_OPERATIONS_DESC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-list-operations-desc.txt'))
 GET_AWS_CLOUD_CONTROL_REQUEST_LOG_GROUP_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-get-operation-desc.txt'))
 SELECT_AWS_S3_OBJECTS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 's3', 'select-objects.txt'))
@@ -651,6 +653,8 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'SQL_BACKEND_CFG_STR_CANONICAL':                  get_canonical_sql_backend(execution_env, sql_backend_str),
     'STACKQL_EXE':                                    STACKQL_EXE,
     ## queries and expectations
+    'AWS_CLOUD_CONTROL_METHOD_SIGNATURE_CMD_ARR':                           [ SELECT_AWS_CLOUD_CONTROL_VPCS_DESC, GET_AWS_CLOUD_CONTROL_VPCS_DESC ],
+    'AWS_CLOUD_CONTROL_METHOD_SIGNATURE_CMD_ARR_EXPECTED':                  SELECT_AWS_CLOUD_CONTROL_VPCS_DESC_JSON_EXPECTED + GET_AWS_CLOUD_CONTROL_VPCS_DESC_JSON_EXPECTED,
     'CREATE_AWS_VOLUME':                                                    CREATE_AWS_VOLUME,
     'CREATE_AWS_CLOUD_CONTROL_LOG_GROUP':                                   CREATE_AWS_CLOUD_CONTROL_LOG_GROUP,
     'DELETE_AWS_CLOUD_CONTROL_LOG_GROUP':                                   DELETE_AWS_CLOUD_CONTROL_LOG_GROUP,

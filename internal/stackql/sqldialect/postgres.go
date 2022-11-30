@@ -55,12 +55,6 @@ func newPostgresDialect(sqlEngine sqlengine.SQLEngine, analyticsNamespaceLikeStr
 		rv.opsViewSchema = sqlCfg.GetOpsViewSchemaName()
 		rv.intelViewSchema = sqlCfg.GetIntelViewSchemaName()
 	}
-	nomenclatureCtx, err := relationaldto.NewNomenclatureContext(relationaldto.BasicCondenseNomenclatureEncoding)
-	if err != nil {
-		return nil, err
-	}
-	nomenclatureCtx = nomenclatureCtx.WithMaxWidth(constants.PostgresIDMaxWidth)
-	rv.tableNomenclatureCtx = nomenclatureCtx
 	err = rv.initPostgresEngine()
 	if err != nil {
 		return nil, err
@@ -88,7 +82,6 @@ type postgresDialect struct {
 	opsViewSchema                string
 	intelViewSchema              string
 	tableCatalog                 string
-	tableNomenclatureCtx         relationaldto.NomenclatureContext
 }
 
 func (eng *postgresDialect) initPostgresEngine() error {
@@ -97,7 +90,7 @@ func (eng *postgresDialect) initPostgresEngine() error {
 }
 
 func (eng *postgresDialect) generateDropTableStatement(relationalTable relationaldto.RelationalTable) (string, error) {
-	tableName, err := relationalTable.GetName(eng.tableNomenclatureCtx)
+	tableName, err := relationalTable.GetName()
 	if err != nil {
 		return "", err
 	}
@@ -157,7 +150,7 @@ func (eng *postgresDialect) generateViewDDL(srcSchemaName string, destSchemaName
 		b.WriteString(`"` + colName + `" `)
 		colNames = append(colNames, b.String())
 	}
-	tableName, err := relationalTable.GetName(eng.tableNomenclatureCtx)
+	tableName, err := relationalTable.GetName()
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +169,7 @@ func (eng *postgresDialect) generateDDL(relationalTable relationaldto.Relational
 		retVal = append(retVal, dt)
 	}
 	var rv strings.Builder
-	tableName, err := relationalTable.GetName(eng.tableNomenclatureCtx)
+	tableName, err := relationalTable.GetName()
 	if err != nil {
 		return nil, err
 	}
@@ -320,7 +313,7 @@ func (eng *postgresDialect) GenerateInsertDML(relationalTable relationaldto.Rela
 func (eng *postgresDialect) generateInsertDML(relationalTable relationaldto.RelationalTable, tcc *dto.TxnControlCounters) (string, error) {
 	var q strings.Builder
 	var quotedColNames, vals []string
-	tableName, err := relationalTable.GetName(eng.tableNomenclatureCtx)
+	tableName, err := relationalTable.GetName()
 	if err != nil {
 		return "", err
 	}
@@ -383,7 +376,7 @@ func (eng *postgresDialect) generateSelectDML(relationalTable relationaldto.Rela
 	if relationalTable.GetAlias() != "" {
 		aliasStr = fmt.Sprintf(` AS "%s" `, relationalTable.GetAlias())
 	}
-	tableName, err := relationalTable.GetName(eng.tableNomenclatureCtx)
+	tableName, err := relationalTable.GetName()
 	if err != nil {
 		return "", err
 	}
@@ -674,10 +667,6 @@ func (sl *postgresDialect) readExecGeneratedQueries(queryResultSet *sql.Rows) er
 	}
 	err := sl.sqlEngine.ExecInTxn(queries)
 	return err
-}
-
-func (eng *postgresDialect) zz(tableName string, tcc dto.TxnControlCounters) string {
-	return eng.getGCHousekeepingQuery(tableName, tcc)
 }
 
 func (eng *postgresDialect) GetRelationalType(discoType string) string {
