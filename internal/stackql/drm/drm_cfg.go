@@ -12,7 +12,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/logging"
-	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/relationaldto"
 	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
 	"github.com/stackql/stackql/internal/stackql/sqldialect"
@@ -30,208 +29,61 @@ type DRM interface {
 	DRMConfig
 }
 
-type ColumnMetadata struct {
-	Coupling dto.DRMCoupling
-	Column   openapistackql.ColumnDescriptor
-}
-
-func (cd ColumnMetadata) GetName() string {
-	return cd.Column.Name
-}
-
-func (cd ColumnMetadata) GetIdentifier() string {
-	return cd.Column.GetIdentifier()
-}
-
-func (cd ColumnMetadata) GetType() string {
-	if cd.Column.Schema != nil {
-		return cd.Column.Schema.Type
-	}
-	return parserutil.ExtractStringRepresentationOfValueColumn(cd.Column.Val)
-}
-
-func NewColDescriptor(col openapistackql.ColumnDescriptor, relTypeStr string) ColumnMetadata {
-	return ColumnMetadata{
-		Coupling: dto.DRMCoupling{RelationalType: relTypeStr, GolangKind: reflect.String},
-		Column:   col,
-	}
-}
-
-type PreparedStatementCtx struct {
-	query                   string
-	kind                    string // string annotation applicable only in some cases eg UNION [ALL]
-	genIdControlColName     string
-	sessionIdControlColName string
-	TableNames              []string
-	txnIdControlColName     string
-	insIdControlColName     string
-	insEncodedColName       string
-	nonControlColumns       []ColumnMetadata
-	ctrlColumnRepeats       int
-	txnCtrlCtrs             *dto.TxnControlCounters
-	selectTxnCtrlCtrs       []*dto.TxnControlCounters
-	namespaceCollection     tablenamespace.TableNamespaceCollection
-	sqlDialect              sqldialect.SQLDialect
-}
-
-func (ps *PreparedStatementCtx) SetKind(kind string) {
-	ps.kind = kind
-}
-
-func (ps *PreparedStatementCtx) GetQuery() string {
-	return ps.query
-}
-
-func (ps *PreparedStatementCtx) GetGCCtrlCtrs() *dto.TxnControlCounters {
-	return ps.txnCtrlCtrs
-}
-
-func (ps *PreparedStatementCtx) SetGCCtrlCtrs(tcc *dto.TxnControlCounters) {
-	ps.txnCtrlCtrs = tcc
-}
-
-func (ps *PreparedStatementCtx) GetNonControlColumns() []ColumnMetadata {
-	return ps.nonControlColumns
-}
-
-func (ps *PreparedStatementCtx) GetAllCtrlCtrs() []*dto.TxnControlCounters {
-	var rv []*dto.TxnControlCounters
-	rv = append(rv, ps.txnCtrlCtrs)
-	rv = append(rv, ps.selectTxnCtrlCtrs...)
-	return rv
-}
-
-func NewPreparedStatementCtx(
-	query string,
-	kind string,
-	genIdControlColName string,
-	sessionIdControlColName string,
-	tableNames []string,
-	txnIdControlColName string,
-	insIdControlColName string,
-	insEncodedColName string,
-	nonControlColumns []ColumnMetadata,
-	ctrlColumnRepeats int,
-	txnCtrlCtrs *dto.TxnControlCounters,
-	secondaryCtrs []*dto.TxnControlCounters,
-	namespaceCollection tablenamespace.TableNamespaceCollection,
-	sqlDialect sqldialect.SQLDialect,
-) *PreparedStatementCtx {
-	return &PreparedStatementCtx{
-		query:                   query,
-		kind:                    kind,
-		genIdControlColName:     genIdControlColName,
-		sessionIdControlColName: sessionIdControlColName,
-		TableNames:              tableNames,
-		txnIdControlColName:     txnIdControlColName,
-		insIdControlColName:     insIdControlColName,
-		insEncodedColName:       insEncodedColName,
-		nonControlColumns:       nonControlColumns,
-		ctrlColumnRepeats:       ctrlColumnRepeats,
-		txnCtrlCtrs:             txnCtrlCtrs,
-		selectTxnCtrlCtrs:       secondaryCtrs,
-		namespaceCollection:     namespaceCollection,
-		sqlDialect:              sqlDialect,
-	}
-}
-
-func NewQueryOnlyPreparedStatementCtx(query string) *PreparedStatementCtx {
-	return &PreparedStatementCtx{query: query, ctrlColumnRepeats: 0}
-}
-
-func (ps PreparedStatementCtx) GetGCHousekeepingQueries() string {
-	var housekeepingQueries []string
-	for _, table := range ps.TableNames {
-		housekeepingQueries = append(housekeepingQueries, ps.sqlDialect.GetGCHousekeepingQuery(table, *ps.txnCtrlCtrs))
-	}
-	return strings.Join(housekeepingQueries, "; ")
-}
-
-type PreparedStatementParameterized struct {
-	Ctx                 *PreparedStatementCtx
-	args                map[string]interface{}
-	controlArgsRequired bool
-	requestEncoding     string
-	children            map[int]PreparedStatementParameterized
-}
-
-func (ps PreparedStatementParameterized) AddChild(key int, val PreparedStatementParameterized) {
-	ps.children[key] = val
-}
-
-type PreparedStatementArgs struct {
-	query    string
-	args     []interface{}
-	children map[int]PreparedStatementArgs
-}
-
-func NewPreparedStatementArgs(query string) PreparedStatementArgs {
-	return PreparedStatementArgs{
-		query:    query,
-		children: make(map[int]PreparedStatementArgs),
-	}
-}
-
-func NewPreparedStatementParameterized(ctx *PreparedStatementCtx, args map[string]interface{}, controlArgsRequired bool) PreparedStatementParameterized {
-	return PreparedStatementParameterized{
-		Ctx:                 ctx,
-		args:                args,
-		controlArgsRequired: controlArgsRequired,
-		children:            make(map[int]PreparedStatementParameterized),
-	}
-}
+var (
+	_ DRMConfig = &staticDRMConfig{}
+)
 
 type DRMConfig interface {
 	ExtractFromGolangValue(interface{}) interface{}
 	ExtractObjectFromSQLRows(r *sql.Rows, nonControlColumns []ColumnMetadata, stream streaming.MapStream) (map[string]map[string]interface{}, map[int]map[int]interface{})
-	GetCurrentTable(*dto.HeirarchyIdentifiers) (dto.DBTable, error)
+	GetCurrentTable(dto.HeirarchyIdentifiers) (dto.DBTable, error)
 	GetRelationalType(string) string
 	GenerateDDL(util.AnnotatedTabulation, *openapistackql.OperationStore, int, bool) ([]string, error)
 	GetControlAttributes() sqlcontrol.ControlAttributes
 	GetGolangValue(string) interface{}
 	GetGolangSlices([]ColumnMetadata) ([]interface{}, []string)
 	GetNamespaceCollection() tablenamespace.TableNamespaceCollection
-	GetParserTableName(*dto.HeirarchyIdentifiers, int) sqlparser.TableName
+	GetParserTableName(dto.HeirarchyIdentifiers, int) sqlparser.TableName
 	GetSQLDialect() sqldialect.SQLDialect
-	GetTable(*dto.HeirarchyIdentifiers, int) (dto.DBTable, error)
-	GenerateInsertDML(util.AnnotatedTabulation, *openapistackql.OperationStore, *dto.TxnControlCounters) (*PreparedStatementCtx, error)
-	GenerateSelectDML(util.AnnotatedTabulation, *dto.TxnControlCounters, string, string) (*PreparedStatementCtx, error)
-	ExecuteInsertDML(sqlengine.SQLEngine, *PreparedStatementCtx, map[string]interface{}, string) (sql.Result, error)
+	GetTable(dto.HeirarchyIdentifiers, int) (dto.DBTable, error)
+	GenerateInsertDML(util.AnnotatedTabulation, *openapistackql.OperationStore, dto.TxnControlCounters) (PreparedStatementCtx, error)
+	GenerateSelectDML(util.AnnotatedTabulation, dto.TxnControlCounters, string, string) (PreparedStatementCtx, error)
+	ExecuteInsertDML(sqlengine.SQLEngine, PreparedStatementCtx, map[string]interface{}, string) (sql.Result, error)
 	QueryDML(sqlengine.SQLEngine, PreparedStatementParameterized) (*sql.Rows, error)
 }
 
-type StaticDRMConfig struct {
+type staticDRMConfig struct {
 	namespaceCollection tablenamespace.TableNamespaceCollection
 	controlAttributes   sqlcontrol.ControlAttributes
 	sqlEngine           sqlengine.SQLEngine
 	sqlDialect          sqldialect.SQLDialect
 }
 
-func (dc *StaticDRMConfig) GetSQLDialect() sqldialect.SQLDialect {
+func (dc *staticDRMConfig) GetSQLDialect() sqldialect.SQLDialect {
 	return dc.sqlDialect
 }
 
-func (dc *StaticDRMConfig) GetTable(hids *dto.HeirarchyIdentifiers, discoveryID int) (dto.DBTable, error) {
+func (dc *staticDRMConfig) GetTable(hids dto.HeirarchyIdentifiers, discoveryID int) (dto.DBTable, error) {
 	return dc.sqlDialect.GetTable(hids, discoveryID)
 }
 
-func (dc *StaticDRMConfig) GetControlAttributes() sqlcontrol.ControlAttributes {
+func (dc *staticDRMConfig) GetControlAttributes() sqlcontrol.ControlAttributes {
 	return dc.getControlAttributes()
 }
 
-func (dc *StaticDRMConfig) getControlAttributes() sqlcontrol.ControlAttributes {
+func (dc *staticDRMConfig) getControlAttributes() sqlcontrol.ControlAttributes {
 	return dc.controlAttributes
 }
 
-func (dc *StaticDRMConfig) GetGolangSlices(nonControlColumns []ColumnMetadata) ([]interface{}, []string) {
+func (dc *staticDRMConfig) GetGolangSlices(nonControlColumns []ColumnMetadata) ([]interface{}, []string) {
 	return dc.getGolangSlices(nonControlColumns)
 }
 
-func (dc *StaticDRMConfig) ExtractObjectFromSQLRows(r *sql.Rows, nonControlColumns []ColumnMetadata, stream streaming.MapStream) (map[string]map[string]interface{}, map[int]map[int]interface{}) {
+func (dc *staticDRMConfig) ExtractObjectFromSQLRows(r *sql.Rows, nonControlColumns []ColumnMetadata, stream streaming.MapStream) (map[string]map[string]interface{}, map[int]map[int]interface{}) {
 	return dc.extractObjectFromSQLRows(r, nonControlColumns, stream)
 }
 
-func (dc *StaticDRMConfig) extractObjectFromSQLRows(r *sql.Rows, nonControlColumns []ColumnMetadata, stream streaming.MapStream) (map[string]map[string]interface{}, map[int]map[int]interface{}) {
+func (dc *staticDRMConfig) extractObjectFromSQLRows(r *sql.Rows, nonControlColumns []ColumnMetadata, stream streaming.MapStream) (map[string]map[string]interface{}, map[int]map[int]interface{}) {
 	if r != nil {
 		defer r.Close()
 	}
@@ -272,7 +124,7 @@ func (dc *StaticDRMConfig) extractObjectFromSQLRows(r *sql.Rows, nonControlColum
 	return altKeys, rawRows
 }
 
-func (dc *StaticDRMConfig) getGolangSlices(nonControlColumns []ColumnMetadata) ([]interface{}, []string) {
+func (dc *staticDRMConfig) getGolangSlices(nonControlColumns []ColumnMetadata) ([]interface{}, []string) {
 	i := 0
 	var keyArr []string
 	var ifArr []interface{}
@@ -280,29 +132,29 @@ func (dc *StaticDRMConfig) getGolangSlices(nonControlColumns []ColumnMetadata) (
 		x := nonControlColumns[i]
 		y := dc.sqlDialect.GetGolangValue(x.GetType())
 		ifArr = append(ifArr, y)
-		keyArr = append(keyArr, x.Column.GetIdentifier())
+		keyArr = append(keyArr, x.GetColumn().GetIdentifier())
 		i++
 	}
 	return ifArr, keyArr
 }
 
-func (dc *StaticDRMConfig) GetRelationalType(discoType string) string {
+func (dc *staticDRMConfig) GetRelationalType(discoType string) string {
 	return dc.sqlDialect.GetRelationalType(discoType)
 }
 
-func (dc *StaticDRMConfig) GetNamespaceCollection() tablenamespace.TableNamespaceCollection {
+func (dc *staticDRMConfig) GetNamespaceCollection() tablenamespace.TableNamespaceCollection {
 	return dc.namespaceCollection
 }
 
-func (dc *StaticDRMConfig) GetGolangValue(discoType string) interface{} {
+func (dc *staticDRMConfig) GetGolangValue(discoType string) interface{} {
 	return dc.sqlDialect.GetGolangValue(discoType)
 }
 
-func (dc *StaticDRMConfig) ExtractFromGolangValue(val interface{}) interface{} {
+func (dc *staticDRMConfig) ExtractFromGolangValue(val interface{}) interface{} {
 	return dc.extractFromGolangValue(val)
 }
 
-func (dc *StaticDRMConfig) extractFromGolangValue(val interface{}) interface{} {
+func (dc *staticDRMConfig) extractFromGolangValue(val interface{}) interface{} {
 	if val == nil {
 		return nil
 	}
@@ -320,11 +172,11 @@ func (dc *StaticDRMConfig) extractFromGolangValue(val interface{}) interface{} {
 	return retVal
 }
 
-func (dc *StaticDRMConfig) GetGolangKind(discoType string) reflect.Kind {
+func (dc *staticDRMConfig) GetGolangKind(discoType string) reflect.Kind {
 	return dc.sqlDialect.GetGolangKind(discoType)
 }
 
-func (dc *StaticDRMConfig) GetCurrentTable(tableHeirarchyIDs *dto.HeirarchyIdentifiers) (dto.DBTable, error) {
+func (dc *staticDRMConfig) GetCurrentTable(tableHeirarchyIDs dto.HeirarchyIdentifiers) (dto.DBTable, error) {
 	tn := tableHeirarchyIDs.GetTableName()
 	if dc.namespaceCollection.GetAnalyticsCacheTableNamespaceConfigurator().IsAllowed(tn) {
 		templatedName, err := dc.namespaceCollection.GetAnalyticsCacheTableNamespaceConfigurator().RenderTemplate(tn)
@@ -336,11 +188,11 @@ func (dc *StaticDRMConfig) GetCurrentTable(tableHeirarchyIDs *dto.HeirarchyIdent
 	return dc.sqlDialect.GetCurrentTable(tableHeirarchyIDs)
 }
 
-func (dc *StaticDRMConfig) GetTableName(hIds *dto.HeirarchyIdentifiers, discoveryGenerationID int) (string, error) {
+func (dc *staticDRMConfig) GetTableName(hIds dto.HeirarchyIdentifiers, discoveryGenerationID int) (string, error) {
 	return dc.getTableName(hIds, discoveryGenerationID)
 }
 
-func (dc *StaticDRMConfig) getTableName(hIds *dto.HeirarchyIdentifiers, discoveryGenerationID int) (string, error) {
+func (dc *staticDRMConfig) getTableName(hIds dto.HeirarchyIdentifiers, discoveryGenerationID int) (string, error) {
 	tbl, err := dc.sqlDialect.GetTable(hIds, discoveryGenerationID)
 	if err != nil {
 		return "", err
@@ -352,27 +204,27 @@ func (dc *StaticDRMConfig) getTableName(hIds *dto.HeirarchyIdentifiers, discover
 	return tbl.GetName(), nil
 }
 
-func (dc *StaticDRMConfig) GetParserTableName(hIds *dto.HeirarchyIdentifiers, discoveryGenerationID int) sqlparser.TableName {
+func (dc *staticDRMConfig) GetParserTableName(hIds dto.HeirarchyIdentifiers, discoveryGenerationID int) sqlparser.TableName {
 	return dc.getParserTableName(hIds, discoveryGenerationID)
 }
 
-func (dc *StaticDRMConfig) getParserTableName(hIds *dto.HeirarchyIdentifiers, discoveryGenerationID int) sqlparser.TableName {
+func (dc *staticDRMConfig) getParserTableName(hIds dto.HeirarchyIdentifiers, discoveryGenerationID int) sqlparser.TableName {
 	if dc.namespaceCollection.GetAnalyticsCacheTableNamespaceConfigurator().IsAllowed(hIds.GetTableName()) {
 		return sqlparser.TableName{
-			Name:            sqlparser.NewTableIdent(hIds.ResourceStr),
-			Qualifier:       sqlparser.NewTableIdent(hIds.ServiceStr),
-			QualifierSecond: sqlparser.NewTableIdent(hIds.ProviderStr),
+			Name:            sqlparser.NewTableIdent(hIds.GetResourceStr()),
+			Qualifier:       sqlparser.NewTableIdent(hIds.GetServiceStr()),
+			QualifierSecond: sqlparser.NewTableIdent(hIds.GetProviderStr()),
 		}
 	}
 	return sqlparser.TableName{
 		Name:            sqlparser.NewTableIdent(fmt.Sprintf("generation_%d", discoveryGenerationID)),
-		Qualifier:       sqlparser.NewTableIdent(hIds.ResourceStr),
-		QualifierSecond: sqlparser.NewTableIdent(hIds.ServiceStr),
-		QualifierThird:  sqlparser.NewTableIdent(hIds.ProviderStr),
+		Qualifier:       sqlparser.NewTableIdent(hIds.GetResourceStr()),
+		QualifierSecond: sqlparser.NewTableIdent(hIds.GetServiceStr()),
+		QualifierThird:  sqlparser.NewTableIdent(hIds.GetProviderStr()),
 	}
 }
 
-func (dc *StaticDRMConfig) inferColType(col util.Column) string {
+func (dc *staticDRMConfig) inferColType(col util.Column) string {
 	relationalType := "text"
 	schema := col.GetSchema()
 	if schema != nil && schema.Type != "" {
@@ -381,7 +233,7 @@ func (dc *StaticDRMConfig) inferColType(col util.Column) string {
 	return relationalType
 }
 
-func (dc *StaticDRMConfig) genRelationalTable(tabAnn util.AnnotatedTabulation, m *openapistackql.OperationStore, discoveryGenerationID int) (relationaldto.RelationalTable, error) {
+func (dc *staticDRMConfig) genRelationalTable(tabAnn util.AnnotatedTabulation, m *openapistackql.OperationStore, discoveryGenerationID int) (relationaldto.RelationalTable, error) {
 	tableName, err := dc.getTableName(tabAnn.GetHeirarchyIdentifiers(), discoveryGenerationID)
 	if err != nil {
 		return nil, err
@@ -404,7 +256,7 @@ func (dc *StaticDRMConfig) genRelationalTable(tabAnn util.AnnotatedTabulation, m
 	return relationalTable, nil
 }
 
-func (dc *StaticDRMConfig) GenerateDDL(tabAnn util.AnnotatedTabulation, m *openapistackql.OperationStore, discoveryGenerationID int, dropTable bool) ([]string, error) {
+func (dc *staticDRMConfig) GenerateDDL(tabAnn util.AnnotatedTabulation, m *openapistackql.OperationStore, discoveryGenerationID int, dropTable bool) ([]string, error) {
 	relationalTable, err := dc.genRelationalTable(tabAnn, m, discoveryGenerationID)
 	if err != nil {
 		return nil, err
@@ -412,7 +264,7 @@ func (dc *StaticDRMConfig) GenerateDDL(tabAnn util.AnnotatedTabulation, m *opena
 	return dc.sqlDialect.GenerateDDL(relationalTable, dropTable)
 }
 
-func (dc *StaticDRMConfig) GenerateInsertDML(tabAnnotated util.AnnotatedTabulation, method *openapistackql.OperationStore, tcc *dto.TxnControlCounters) (*PreparedStatementCtx, error) {
+func (dc *staticDRMConfig) GenerateInsertDML(tabAnnotated util.AnnotatedTabulation, method *openapistackql.OperationStore, tcc dto.TxnControlCounters) (PreparedStatementCtx, error) {
 	var columns []ColumnMetadata
 	tableName, err := dc.GetCurrentTable(tabAnnotated.GetHeirarchyIdentifiers())
 	if err != nil {
@@ -463,7 +315,7 @@ func (dc *StaticDRMConfig) GenerateInsertDML(tabAnnotated util.AnnotatedTabulati
 		nil
 }
 
-func (dc *StaticDRMConfig) GenerateSelectDML(tabAnnotated util.AnnotatedTabulation, txnCtrlCtrs *dto.TxnControlCounters, selectSuffix, rewrittenWhere string) (*PreparedStatementCtx, error) {
+func (dc *staticDRMConfig) GenerateSelectDML(tabAnnotated util.AnnotatedTabulation, txnCtrlCtrs dto.TxnControlCounters, selectSuffix, rewrittenWhere string) (PreparedStatementCtx, error) {
 	var quotedColNames []string
 	var columns []ColumnMetadata
 
@@ -528,39 +380,40 @@ func (dc *StaticDRMConfig) GenerateSelectDML(tabAnnotated util.AnnotatedTabulati
 	), nil
 }
 
-func (dc *StaticDRMConfig) generateControlVarArgs(cp PreparedStatementParameterized, isInsert bool) ([]interface{}, error) {
+func (dc *staticDRMConfig) generateControlVarArgs(cp PreparedStatementParameterized, isInsert bool) ([]interface{}, error) {
 	var varArgs []interface{}
-	if cp.controlArgsRequired {
-		ctrSlice := cp.Ctx.GetAllCtrlCtrs()
+	if cp.IsControlArgsRequired() {
+		ctrSlice := cp.GetCtx().GetAllCtrlCtrs()
 		for _, ctrs := range ctrSlice {
 			if ctrs == nil {
 				continue
 			}
-			varArgs = append(varArgs, ctrs.GenId)
-			varArgs = append(varArgs, ctrs.SessionId)
-			varArgs = append(varArgs, ctrs.TxnId)
-			varArgs = append(varArgs, ctrs.InsertId)
+			varArgs = append(varArgs, ctrs.GetGenID())
+			varArgs = append(varArgs, ctrs.GetSessionID())
+			varArgs = append(varArgs, ctrs.GetTxnID())
+			varArgs = append(varArgs, ctrs.GetInsertID())
 			if isInsert {
-				varArgs = append(varArgs, cp.requestEncoding)
+				varArgs = append(varArgs, cp.GetRequestEncoding())
 			}
 		}
 	}
 	return varArgs, nil
 }
 
-func (dc *StaticDRMConfig) generateVarArgs(cp PreparedStatementParameterized, isInsert bool) (PreparedStatementArgs, error) {
-	retVal := NewPreparedStatementArgs(cp.Ctx.GetQuery())
-	for i, child := range cp.children {
+func (dc *staticDRMConfig) generateVarArgs(cp PreparedStatementParameterized, isInsert bool) (PreparedStatementArgs, error) {
+	retVal := NewPreparedStatementArgs(cp.GetCtx().GetQuery())
+	for i, child := range cp.GetChildren() {
 		chidRv, err := dc.generateVarArgs(child, isInsert)
 		if err != nil {
 			return retVal, err
 		}
-		retVal.children[i] = chidRv
+		retVal.SetChild(i, chidRv)
 	}
 	varArgs, _ := dc.generateControlVarArgs(cp, isInsert)
-	if cp.args != nil && len(cp.args) > 0 {
-		for _, col := range cp.Ctx.GetNonControlColumns() {
-			va, ok := cp.args[col.GetName()]
+	psArgs := cp.GetArgs()
+	if psArgs != nil && len(psArgs) > 0 {
+		for _, col := range cp.GetCtx().GetNonControlColumns() {
+			va, ok := psArgs[col.GetName()]
 			if !ok {
 				varArgs = append(varArgs, nil)
 				continue
@@ -575,7 +428,7 @@ func (dc *StaticDRMConfig) generateVarArgs(cp PreparedStatementParameterized, is
 			case string:
 				varArgs = append(varArgs, va)
 			default:
-				if strings.ToLower(col.Coupling.RelationalType) == "text" && strings.ToLower(dc.sqlDialect.GetName()) == constants.SQLDialectPostgres {
+				if strings.ToLower(col.GetRelationalType()) == "text" && strings.ToLower(dc.sqlDialect.GetName()) == constants.SQLDialectPostgres {
 					varArgs = append(varArgs, fmt.Sprintf("%v", va))
 					continue
 				}
@@ -583,23 +436,23 @@ func (dc *StaticDRMConfig) generateVarArgs(cp PreparedStatementParameterized, is
 			}
 		}
 	}
-	retVal.args = varArgs
+	retVal.SetArgs(varArgs)
 	return retVal, nil
 }
 
-func (dc *StaticDRMConfig) ExecuteInsertDML(dbEngine sqlengine.SQLEngine, ctx *PreparedStatementCtx, payload map[string]interface{}, requestEncoding string) (sql.Result, error) {
+func (dc *staticDRMConfig) ExecuteInsertDML(dbEngine sqlengine.SQLEngine, ctx PreparedStatementCtx, payload map[string]interface{}, requestEncoding string) (sql.Result, error) {
 	if ctx == nil {
 		return nil, fmt.Errorf("cannot execute on nil PreparedStatementContext")
 	}
-	stmtArgs, err := dc.generateVarArgs(PreparedStatementParameterized{Ctx: ctx, args: payload, controlArgsRequired: true, requestEncoding: requestEncoding}, true)
+	stmtArgs, err := dc.generateVarArgs(NewPreparedStatementParameterized(ctx, payload, true).WithRequestEncoding(requestEncoding), true)
 	if err != nil {
 		return nil, err
 	}
-	return dbEngine.Exec(stmtArgs.query, stmtArgs.args...)
+	return dbEngine.Exec(stmtArgs.GetQuery(), stmtArgs.GetArgs()...)
 }
 
-func (dc *StaticDRMConfig) QueryDML(dbEngine sqlengine.SQLEngine, ctxParameterized PreparedStatementParameterized) (*sql.Rows, error) {
-	if ctxParameterized.Ctx == nil {
+func (dc *staticDRMConfig) QueryDML(dbEngine sqlengine.SQLEngine, ctxParameterized PreparedStatementParameterized) (*sql.Rows, error) {
+	if ctxParameterized.GetCtx() == nil {
 		return nil, fmt.Errorf("cannot execute based upon nil PreparedStatementContext")
 	}
 	rootArgs, err := dc.generateVarArgs(ctxParameterized, false)
@@ -608,36 +461,36 @@ func (dc *StaticDRMConfig) QueryDML(dbEngine sqlengine.SQLEngine, ctxParameteriz
 	}
 	var varArgs []interface{}
 	j := 0
-	query := rootArgs.query
+	query := rootArgs.GetQuery()
 	var childQueryStrings []interface{} // dunno why
 	var keys []int
-	for i := range rootArgs.children {
+	for i := range rootArgs.GetChildren() {
 		keys = append(keys, i)
 	}
 	sort.Ints(keys)
 	for _, k := range keys {
-		cp := rootArgs.children[k]
-		logging.GetLogger().Infoln(fmt.Sprintf("adding child query = %s", cp.query))
-		childQueryStrings = append(childQueryStrings, cp.query)
-		if len(rootArgs.args) >= k {
-			varArgs = append(varArgs, rootArgs.args[j:k]...)
+		cp := rootArgs.GetChild(k)
+		logging.GetLogger().Infoln(fmt.Sprintf("adding child query = %s", cp.GetQuery()))
+		childQueryStrings = append(childQueryStrings, cp.GetQuery())
+		if len(rootArgs.GetArgs()) >= k {
+			varArgs = append(varArgs, rootArgs.GetArgs()[j:k]...)
 		}
-		varArgs = append(varArgs, cp.args...)
+		varArgs = append(varArgs, cp.GetArgs()...)
 		j = k
 	}
 	logging.GetLogger().Infoln(fmt.Sprintf("raw query = %s", query))
 	if len(childQueryStrings) > 0 {
-		query = fmt.Sprintf(rootArgs.query, childQueryStrings...)
+		query = fmt.Sprintf(rootArgs.GetQuery(), childQueryStrings...)
 	}
-	if len(rootArgs.args) >= j {
-		varArgs = append(varArgs, rootArgs.args[j:]...)
+	if len(rootArgs.GetArgs()) >= j {
+		varArgs = append(varArgs, rootArgs.GetArgs()[j:]...)
 	}
 	logging.GetLogger().Infoln(fmt.Sprintf("query = %s", query))
 	return dbEngine.Query(query, varArgs...)
 }
 
 func GetDRMConfig(sqlDialect sqldialect.SQLDialect, namespaceCollection tablenamespace.TableNamespaceCollection, controlAttributes sqlcontrol.ControlAttributes) (DRMConfig, error) {
-	rv := &StaticDRMConfig{
+	rv := &staticDRMConfig{
 		namespaceCollection: namespaceCollection,
 		controlAttributes:   controlAttributes,
 		sqlEngine:           sqlDialect.GetSQLEngine(),

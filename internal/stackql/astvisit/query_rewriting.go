@@ -26,14 +26,14 @@ func (v *QueryRewriteAstVisitor) getNextAlias() string {
 }
 
 func (v *QueryRewriteAstVisitor) getStarColumns(
-	tbl *tablemetadata.ExtendedTableMetadata,
+	tbl tablemetadata.ExtendedTableMetadata,
 ) ([]openapistackql.ColumnDescriptor, error) {
 	schema, _, err := tbl.GetResponseSchemaAndMediaType()
 	if err != nil {
 		return nil, err
 	}
 	itemObjS, selectItemsKey, err := tbl.GetSelectSchemaAndObjectPath()
-	tbl.SelectItemsKey = selectItemsKey
+	tbl.SetSelectItemsKey(selectItemsKey)
 	unsuitableSchemaMsg := "QueryRewriteAstVisitor.getStarColumns(): schema unsuitable for select query"
 	if err != nil {
 		return nil, fmt.Errorf(unsuitableSchemaMsg)
@@ -53,7 +53,7 @@ func (v *QueryRewriteAstVisitor) getStarColumns(
 	return columnDescriptors, nil
 }
 
-func (v *QueryRewriteAstVisitor) GenerateSelectDML() (*drm.PreparedStatementCtx, error) {
+func (v *QueryRewriteAstVisitor) GenerateSelectDML() (drm.PreparedStatementCtx, error) {
 	rewriteInput := sqlrewrite.NewStandardSQLRewriteInput(
 		v.dc,
 		v.columnDescriptors,
@@ -76,9 +76,9 @@ type QueryRewriteAstVisitor struct {
 	annotations           taxonomy.AnnotationCtxMap
 	discoGenIDs           map[sqlparser.SQLNode]int
 	annotatedTabulations  taxonomy.AnnotatedTabulationMap
-	selectCtx             *drm.PreparedStatementCtx
-	baseCtrlCounters      *dto.TxnControlCounters
-	secondaryCtrlCounters []*dto.TxnControlCounters
+	selectCtx             drm.PreparedStatementCtx
+	baseCtrlCounters      dto.TxnControlCounters
+	secondaryCtrlCounters []dto.TxnControlCounters
 	colRefs               parserutil.ColTableMap
 	columnNames           []parserutil.ColumnHandle
 	columnDescriptors     []openapistackql.ColumnDescriptor
@@ -101,8 +101,8 @@ func NewQueryRewriteAstVisitor(
 	discoGenIDs map[sqlparser.SQLNode]int,
 	colRefs parserutil.ColTableMap,
 	dc drm.DRMConfig,
-	txnCtrlCtrs *dto.TxnControlCounters,
-	secondaryTccs []*dto.TxnControlCounters,
+	txnCtrlCtrs dto.TxnControlCounters,
+	secondaryTccs []dto.TxnControlCounters,
 	rewrittenWhere string,
 	namespaceCollection tablenamespace.TableNamespaceCollection,
 ) *QueryRewriteAstVisitor {
@@ -136,7 +136,7 @@ func (v *QueryRewriteAstVisitor) GetColumnDescriptors() []openapistackql.ColumnD
 	return v.columnDescriptors
 }
 
-func (v *QueryRewriteAstVisitor) GetSelectContext() (*drm.PreparedStatementCtx, bool) {
+func (v *QueryRewriteAstVisitor) GetSelectContext() (drm.PreparedStatementCtx, bool) {
 	if v.selectCtx != nil {
 		return v.selectCtx, true
 	}
@@ -493,7 +493,7 @@ func (v *QueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		}
 
 	case *sqlparser.StarExpr:
-		var tbl *tablemetadata.ExtendedTableMetadata
+		var tbl tablemetadata.ExtendedTableMetadata
 		if node.TableName.IsEmpty() {
 			if len(v.tables) != 1 {
 				return fmt.Errorf("unaliased star expr not permitted for table count = %d", len(v.tables))

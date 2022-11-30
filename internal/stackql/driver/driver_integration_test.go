@@ -36,6 +36,7 @@ func TestSimpleSelectGoogleComputeInstanceDriver(t *testing.T) {
 	}
 	ex := testhttpapi.NewHTTPRequestExpectations(nil, nil, "GET", url, "compute.googleapis.com", testobjects.SimpleSelectGoogleComputeInstanceResponse, nil)
 	expectations := map[string]testhttpapi.HTTPRequestExpectations{
+		// TODO: fix cloning ops
 		"compute.googleapis.com" + path: *ex,
 	}
 	exp := testhttpapi.NewExpectationStore(1)

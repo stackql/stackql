@@ -7,9 +7,9 @@ import (
 	"vitess.io/vitess/go/vt/sqlparser"
 )
 
-type TblMap map[sqlparser.SQLNode]*tablemetadata.ExtendedTableMetadata
+type TblMap map[sqlparser.SQLNode]tablemetadata.ExtendedTableMetadata
 
-func (tm TblMap) GetTable(node sqlparser.SQLNode) (*tablemetadata.ExtendedTableMetadata, error) {
+func (tm TblMap) GetTable(node sqlparser.SQLNode) (tablemetadata.ExtendedTableMetadata, error) {
 	tbl, ok := tm[node]
 	if !ok {
 		return nil, fmt.Errorf("could not locate table for AST node: %v", node)
@@ -18,7 +18,7 @@ func (tm TblMap) GetTable(node sqlparser.SQLNode) (*tablemetadata.ExtendedTableM
 }
 
 func (tm TblMap) getUniqueCount() int {
-	found := make(map[*tablemetadata.ExtendedTableMetadata]struct{})
+	found := make(map[tablemetadata.ExtendedTableMetadata]struct{})
 	for _, v := range tm {
 		if _, ok := found[v]; !ok {
 			found[v] = struct{}{}
@@ -27,14 +27,14 @@ func (tm TblMap) getUniqueCount() int {
 	return len(found)
 }
 
-func (tm TblMap) getFirst() (*tablemetadata.ExtendedTableMetadata, bool) {
+func (tm TblMap) getFirst() (tablemetadata.ExtendedTableMetadata, bool) {
 	for _, v := range tm {
 		return v, true
 	}
 	return nil, false
 }
 
-func (tm TblMap) GetTableLoose(node sqlparser.SQLNode) (*tablemetadata.ExtendedTableMetadata, error) {
+func (tm TblMap) GetTableLoose(node sqlparser.SQLNode) (tablemetadata.ExtendedTableMetadata, error) {
 	tbl, ok := tm[node]
 	if ok {
 		return tbl, nil
@@ -66,6 +66,6 @@ func (tm TblMap) GetTableLoose(node sqlparser.SQLNode) (*tablemetadata.ExtendedT
 	return nil, fmt.Errorf("could not locate table for AST node: %v", node)
 }
 
-func (tm TblMap) SetTable(node sqlparser.SQLNode, table *tablemetadata.ExtendedTableMetadata) {
+func (tm TblMap) SetTable(node sqlparser.SQLNode, table tablemetadata.ExtendedTableMetadata) {
 	tm[node] = table
 }

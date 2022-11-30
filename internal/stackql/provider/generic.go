@@ -8,7 +8,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/discovery"
 	"github.com/stackql/stackql/internal/stackql/docparser"
 	"github.com/stackql/stackql/internal/stackql/dto"
-	sdk "github.com/stackql/stackql/internal/stackql/google_sdk"
+	google_sdk "github.com/stackql/stackql/internal/stackql/google_sdk"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/methodselect"
 	"github.com/stackql/stackql/internal/stackql/netutils"
@@ -107,7 +107,7 @@ func (gp *GenericProvider) AuthRevoke(authCtx *dto.AuthCtx) error {
 	case dto.AuthServiceAccountStr:
 		return errors.New(constants.ServiceAccountRevokeErrStr)
 	case dto.AuthInteractiveStr:
-		err := sdk.RevokeGoogleAuth()
+		err := google_sdk.RevokeGoogleAuth()
 		if err == nil {
 			deactivateAuth(authCtx)
 		}
@@ -176,7 +176,7 @@ func (gp *GenericProvider) ShowAuth(authCtx *dto.AuthCtx) (*openapistackql.AuthM
 			activateAuth(authCtx, sa.Email, dto.AuthServiceAccountStr)
 		}
 	case dto.AuthInteractiveStr:
-		principal, sdkErr := sdk.GetCurrentAuthUser()
+		principal, sdkErr := google_sdk.GetCurrentAuthUser()
 		if sdkErr == nil {
 			principalStr := string(principal)
 			if principalStr != "" {
@@ -203,14 +203,14 @@ func (gp *GenericProvider) ShowAuth(authCtx *dto.AuthCtx) (*openapistackql.AuthM
 func (gp *GenericProvider) oAuth(authCtx *dto.AuthCtx, enforceRevokeFirst bool) (*http.Client, error) {
 	var err error
 	var tokenBytes []byte
-	tokenBytes, err = sdk.GetAccessToken()
+	tokenBytes, err = google_sdk.GetAccessToken()
 	if enforceRevokeFirst && authCtx.Type == dto.AuthInteractiveStr && err == nil {
 		return nil, fmt.Errorf(constants.OAuthInteractiveAuthErrStr)
 	}
 	if err != nil {
-		err = sdk.OAuthToGoogle()
+		err = google_sdk.OAuthToGoogle()
 		if err == nil {
-			tokenBytes, err = sdk.GetAccessToken()
+			tokenBytes, err = google_sdk.GetAccessToken()
 		}
 	}
 	if err != nil {
@@ -434,17 +434,17 @@ func (gp *GenericProvider) InferNextPageRequestElement(ho dto.Heirarchy) *dto.HT
 }
 
 func (gp *GenericProvider) getPaginationRequestTokenSemantic(ho dto.Heirarchy) (*openapistackql.TokenSemantic, bool) {
-	if ho.Method == nil {
+	if ho.GetMethod() == nil {
 		return nil, false
 	}
-	return ho.Method.GetPaginationRequestTokenSemantic()
+	return ho.GetMethod().GetPaginationRequestTokenSemantic()
 }
 
 func (gp *GenericProvider) getPaginationResponseTokenSemantic(ho dto.Heirarchy) (*openapistackql.TokenSemantic, bool) {
-	if ho.Method == nil {
+	if ho.GetMethod() == nil {
 		return nil, false
 	}
-	return ho.Method.GetPaginationResponseTokenSemantic()
+	return ho.GetMethod().GetPaginationResponseTokenSemantic()
 }
 
 func (gp *GenericProvider) InferNextPageResponseElement(ho dto.Heirarchy) *dto.HTTPElement {

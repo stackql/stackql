@@ -16,7 +16,7 @@ type NopBuilder struct {
 	sqlEngine  sqlengine.SQLEngine
 }
 
-func NewNopBuilder(graph *primitivegraph.PrimitiveGraph, txnControlCounters *dto.TxnControlCounters, handlerCtx *handler.HandlerContext, sqlEngine sqlengine.SQLEngine) Builder {
+func NewNopBuilder(graph *primitivegraph.PrimitiveGraph, txnControlCounters dto.TxnControlCounters, handlerCtx *handler.HandlerContext, sqlEngine sqlengine.SQLEngine) Builder {
 	return &NopBuilder{
 		graph:      graph,
 		handlerCtx: handlerCtx,

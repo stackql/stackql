@@ -326,7 +326,7 @@ func (pb *primitiveGenerator) showInstructionExecutor(node *sqlparser.Show, hand
 		if err != nil {
 			logging.GetLogger().Infoln(fmt.Sprintf("table and therefore filter not found for AST, shall procede nil filter"))
 		} else {
-			filter = tbl.TableFilter
+			filter = tbl.GetTableFilter()
 		}
 		methods, err = filterMethods(methods, filter)
 		if err != nil {
@@ -409,7 +409,7 @@ func prepareErroneousResultSet(rowMap map[string]map[string]interface{}, columnO
 	)
 }
 
-func (pb *primitiveGenerator) describeInstructionExecutor(handlerCtx *handler.HandlerContext, tbl *tablemetadata.ExtendedTableMetadata, extended bool, full bool) dto.ExecutorOutput {
+func (pb *primitiveGenerator) describeInstructionExecutor(handlerCtx *handler.HandlerContext, tbl tablemetadata.ExtendedTableMetadata, extended bool, full bool) dto.ExecutorOutput {
 	schema, err := tbl.GetSelectableObjectSchema()
 	if err != nil {
 		return dto.NewErroneousExecutorOutput(err)
@@ -737,7 +737,7 @@ func (pb *primitiveGenerator) deleteExecutor(handlerCtx *handler.HandlerContext,
 	return pb.composeAsyncMonitor(handlerCtx, deletePrimitive, tbl)
 }
 
-func generateSuccessMessagesFromHeirarchy(meta *tablemetadata.ExtendedTableMetadata) []string {
+func generateSuccessMessagesFromHeirarchy(meta tablemetadata.ExtendedTableMetadata) []string {
 	successMsgs := []string{
 		"The operation completed successfully",
 	}
@@ -853,7 +853,7 @@ func (pb *primitiveGenerator) execExecutor(handlerCtx *handler.HandlerContext, n
 	return graph.CreatePrimitiveNode(pr), nil
 }
 
-func (pb *primitiveGenerator) composeAsyncMonitor(handlerCtx *handler.HandlerContext, precursor primitive.IPrimitive, meta *tablemetadata.ExtendedTableMetadata) (primitive.IPrimitive, error) {
+func (pb *primitiveGenerator) composeAsyncMonitor(handlerCtx *handler.HandlerContext, precursor primitive.IPrimitive, meta tablemetadata.ExtendedTableMetadata) (primitive.IPrimitive, error) {
 	prov, err := meta.GetProvider()
 	if err != nil {
 		return nil, err
@@ -873,7 +873,7 @@ func (pb *primitiveGenerator) composeAsyncMonitor(handlerCtx *handler.HandlerCon
 		handlerCtx.Outfile,
 		handlerCtx.OutErrFile,
 	)
-	primitive, err := asm.GetMonitorPrimitive(meta.HeirarchyObjects, precursor, pl, pb.PrimitiveComposer.GetCommentDirectives())
+	primitive, err := asm.GetMonitorPrimitive(meta.GetHeirarchyObjects(), precursor, pl, pb.PrimitiveComposer.GetCommentDirectives())
 	if err != nil {
 		return nil, err
 	}

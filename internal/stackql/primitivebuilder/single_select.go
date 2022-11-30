@@ -17,9 +17,9 @@ type SingleSelect struct {
 	graph                      *primitivegraph.PrimitiveGraph
 	handlerCtx                 *handler.HandlerContext
 	drmCfg                     drm.DRMConfig
-	selectPreparedStatementCtx *drm.PreparedStatementCtx
+	selectPreparedStatementCtx drm.PreparedStatementCtx
 	insertionContainers        []tableinsertioncontainer.TableInsertionContainer
-	txnCtrlCtr                 *dto.TxnControlCounters
+	txnCtrlCtr                 dto.TxnControlCounters
 	rowSort                    func(map[string]map[string]interface{}) []string
 	root                       primitivegraph.PrimitiveNode
 	stream                     streaming.MapStream
@@ -28,7 +28,7 @@ type SingleSelect struct {
 func NewSingleSelect(
 	graph *primitivegraph.PrimitiveGraph,
 	handlerCtx *handler.HandlerContext,
-	selectCtx *drm.PreparedStatementCtx,
+	selectCtx drm.PreparedStatementCtx,
 	insertionContainers []tableinsertioncontainer.TableInsertionContainer,
 	rowSort func(map[string]map[string]interface{}) []string,
 	stream streaming.MapStream,

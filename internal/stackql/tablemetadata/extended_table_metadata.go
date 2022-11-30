@@ -9,183 +9,263 @@ import (
 	"github.com/stackql/go-openapistackql/openapistackql"
 )
 
-type ExtendedTableMetadata struct {
-	TableFilter         func(openapistackql.ITable) (openapistackql.ITable, error)
-	ColsVisited         map[string]bool
-	HeirarchyObjects    *HeirarchyObjects
-	RequiredParameters  map[string]openapistackql.Parameter
-	IsLocallyExecutable bool
-	GetHttpArmoury      func() (httpbuild.HTTPArmoury, error)
-	SelectItemsKey      string
-	Alias               string
+var (
+	_ ExtendedTableMetadata = &standardExtendedTableMetadata{}
+)
+
+type ExtendedTableMetadata interface {
+	GetAlias() string
+	GetGraphQL() (*openapistackql.GraphQL, bool)
+	GetHeirarchyObjects() HeirarchyObjects
+	GetHttpArmoury() (httpbuild.HTTPArmoury, error)
+	GetInputTableName() (string, error)
+	GetMethod() (*openapistackql.OperationStore, error)
+	GetMethodStr() (string, error)
+	GetProvider() (provider.IProvider, error)
+	GetProviderStr() (string, error)
+	GetProviderObject() (*openapistackql.Provider, error)
+	GetQueryUniqueId() string
+	GetRequestSchema() (*openapistackql.Schema, error)
+	GetRequiredParameters() map[string]openapistackql.Parameter
+	GetResource() (*openapistackql.Resource, error)
+	GetResourceStr() (string, error)
+	GetResponseSchemaStr() (string, error)
+	GetResponseSchemaAndMediaType() (*openapistackql.Schema, string, error)
+	GetSelectableObjectSchema() (*openapistackql.Schema, error)
+	GetSelectItemsKey() string
+	GetSelectSchemaAndObjectPath() (*openapistackql.Schema, string, error)
+	GetService() (*openapistackql.Service, error)
+	GetServiceStr() (string, error)
+	GetStackQLTableName() (string, error)
+	GetTableFilter() func(openapistackql.ITable) (openapistackql.ITable, error)
+	GetTableName() (string, error)
+	GetUniqueId() string
+	IsLocallyExecutable() bool
+	IsSimple() bool
+	LookupSelectItemsKey() string
+	SetSelectItemsKey(string)
+	SetTableFilter(f func(openapistackql.ITable) (openapistackql.ITable, error))
+	WithGetHttpArmoury(f func() (httpbuild.HTTPArmoury, error)) ExtendedTableMetadata
+	WithResponseSchemaStr(rss string) (ExtendedTableMetadata, error)
+}
+
+type standardExtendedTableMetadata struct {
+	tableFilter         func(openapistackql.ITable) (openapistackql.ITable, error)
+	colsVisited         map[string]bool
+	heirarchyObjects    HeirarchyObjects
+	requiredParameters  map[string]openapistackql.Parameter
+	isLocallyExecutable bool
+	getHttpArmoury      func() (httpbuild.HTTPArmoury, error)
+	selectItemsKey      string
+	alias               string
 	inputTableName      string
 }
 
-func (ex ExtendedTableMetadata) GetGraphQL() (*openapistackql.GraphQL, bool) {
-	if ex.HeirarchyObjects.Method != nil && ex.HeirarchyObjects.Method.GraphQL != nil {
-		return ex.HeirarchyObjects.Method.GraphQL, true
+func (ex *standardExtendedTableMetadata) IsLocallyExecutable() bool {
+	return ex.isLocallyExecutable
+}
+
+func (ex *standardExtendedTableMetadata) GetSelectItemsKey() string {
+	return ex.selectItemsKey
+}
+
+func (ex *standardExtendedTableMetadata) GetHeirarchyObjects() HeirarchyObjects {
+	return ex.heirarchyObjects
+}
+
+func (ex *standardExtendedTableMetadata) SetSelectItemsKey(k string) {
+	ex.selectItemsKey = k
+}
+
+func (ex *standardExtendedTableMetadata) SetTableFilter(f func(openapistackql.ITable) (openapistackql.ITable, error)) {
+	ex.tableFilter = f
+}
+
+func (ex *standardExtendedTableMetadata) GetTableFilter() func(openapistackql.ITable) (openapistackql.ITable, error) {
+	return ex.tableFilter
+}
+
+func (ex *standardExtendedTableMetadata) GetGraphQL() (*openapistackql.GraphQL, bool) {
+	if ex.heirarchyObjects.GetMethod() != nil && ex.heirarchyObjects.GetMethod().GraphQL != nil {
+		return ex.heirarchyObjects.GetMethod().GraphQL, true
 	}
 	return nil, false
 }
 
-func (ex ExtendedTableMetadata) LookupSelectItemsKey() string {
-	if ex.HeirarchyObjects == nil {
+func (ex *standardExtendedTableMetadata) GetRequiredParameters() map[string]openapistackql.Parameter {
+	return ex.requiredParameters
+}
+
+func (ex *standardExtendedTableMetadata) GetHttpArmoury() (httpbuild.HTTPArmoury, error) {
+	if ex.getHttpArmoury == nil {
+		return nil, fmt.Errorf("nil getHttpAroury() function in ExtendedTableMetadata object")
+	}
+	return ex.getHttpArmoury()
+}
+
+func (ex *standardExtendedTableMetadata) WithGetHttpArmoury(f func() (httpbuild.HTTPArmoury, error)) ExtendedTableMetadata {
+	ex.getHttpArmoury = f
+	return ex
+}
+
+func (ex *standardExtendedTableMetadata) LookupSelectItemsKey() string {
+	if ex.heirarchyObjects == nil {
 		return defaultSelectItemsKey
 	}
-	return ex.HeirarchyObjects.LookupSelectItemsKey()
+	return ex.heirarchyObjects.LookupSelectItemsKey()
 }
 
-func (ex ExtendedTableMetadata) GetAlias() string {
-	return ex.Alias
+func (ex *standardExtendedTableMetadata) GetAlias() string {
+	return ex.alias
 }
 
-func (ex ExtendedTableMetadata) IsSimple() bool {
+func (ex *standardExtendedTableMetadata) IsSimple() bool {
 	return ex.isSimple()
 }
 
-func (ex ExtendedTableMetadata) isSimple() bool {
-	return ex.HeirarchyObjects != nil && (len(ex.HeirarchyObjects.MethodSet) > 0 || ex.HeirarchyObjects.Method != nil)
+func (ex *standardExtendedTableMetadata) isSimple() bool {
+	return ex.heirarchyObjects != nil && (len(ex.heirarchyObjects.GetMethodSet()) > 0 || ex.heirarchyObjects.GetMethod() != nil)
 }
 
-func (ex ExtendedTableMetadata) GetUniqueId() string {
-	if ex.Alias != "" {
-		return ex.Alias
+func (ex *standardExtendedTableMetadata) GetUniqueId() string {
+	if ex.alias != "" {
+		return ex.alias
 	}
-	return ex.HeirarchyObjects.GetTableName()
+	return ex.heirarchyObjects.GetTableName()
 }
 
-func (ex ExtendedTableMetadata) GetQueryUniqueId() string {
-	if ex.Alias != "" {
-		return ex.Alias
+func (ex *standardExtendedTableMetadata) GetQueryUniqueId() string {
+	if ex.alias != "" {
+		return ex.alias
 	}
-	return ex.HeirarchyObjects.GetTableName()
+	return ex.heirarchyObjects.GetTableName()
 }
 
-func (ex ExtendedTableMetadata) GetProvider() (provider.IProvider, error) {
-	if ex.HeirarchyObjects == nil || ex.HeirarchyObjects.Provider == nil {
+func (ex *standardExtendedTableMetadata) GetProvider() (provider.IProvider, error) {
+	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetProvider() == nil {
 		return nil, fmt.Errorf("cannot resolve Provider")
 	}
-	return ex.HeirarchyObjects.Provider, nil
+	return ex.heirarchyObjects.GetProvider(), nil
 }
 
-func (ex ExtendedTableMetadata) GetProviderObject() (*openapistackql.Provider, error) {
-	if ex.HeirarchyObjects == nil || ex.HeirarchyObjects.Provider == nil {
+func (ex *standardExtendedTableMetadata) GetProviderObject() (*openapistackql.Provider, error) {
+	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetProvider() == nil {
 		return nil, fmt.Errorf("cannot resolve Provider")
 	}
-	return ex.HeirarchyObjects.Provider.GetProvider()
+	return ex.heirarchyObjects.GetProvider().GetProvider()
 }
 
-func (ex ExtendedTableMetadata) GetService() (*openapistackql.Service, error) {
-	if ex.HeirarchyObjects == nil || ex.HeirarchyObjects.ServiceHdl == nil {
+func (ex *standardExtendedTableMetadata) GetService() (*openapistackql.Service, error) {
+	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetServiceHdl() == nil {
 		return nil, fmt.Errorf("cannot resolve ServiceHandle")
 	}
-	return ex.HeirarchyObjects.ServiceHdl, nil
+	return ex.heirarchyObjects.GetServiceHdl(), nil
 }
 
-func (ex ExtendedTableMetadata) GetResource() (*openapistackql.Resource, error) {
-	if ex.HeirarchyObjects == nil || ex.HeirarchyObjects.Resource == nil {
+func (ex *standardExtendedTableMetadata) GetResource() (*openapistackql.Resource, error) {
+	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetResource() == nil {
 		return nil, fmt.Errorf("cannot resolve Resource")
 	}
-	return ex.HeirarchyObjects.Resource, nil
+	return ex.heirarchyObjects.GetResource(), nil
 }
 
-func (ex ExtendedTableMetadata) GetMethod() (*openapistackql.OperationStore, error) {
+func (ex *standardExtendedTableMetadata) GetMethod() (*openapistackql.OperationStore, error) {
 	return ex.getMethod()
 }
 
-func (ex ExtendedTableMetadata) getMethod() (*openapistackql.OperationStore, error) {
-	if ex.HeirarchyObjects == nil || ex.HeirarchyObjects.Method == nil {
+func (ex *standardExtendedTableMetadata) getMethod() (*openapistackql.OperationStore, error) {
+	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetMethod() == nil {
 		return nil, fmt.Errorf("cannot resolve Method")
 	}
-	return ex.HeirarchyObjects.Method, nil
+	return ex.heirarchyObjects.GetMethod(), nil
 }
 
-func (ex ExtendedTableMetadata) GetSelectSchemaAndObjectPath() (*openapistackql.Schema, string, error) {
-	return ex.HeirarchyObjects.GetSelectSchemaAndObjectPath()
+func (ex *standardExtendedTableMetadata) GetSelectSchemaAndObjectPath() (*openapistackql.Schema, string, error) {
+	return ex.heirarchyObjects.GetSelectSchemaAndObjectPath()
 }
 
-func (ex ExtendedTableMetadata) GetResponseSchemaAndMediaType() (*openapistackql.Schema, string, error) {
+func (ex *standardExtendedTableMetadata) GetResponseSchemaAndMediaType() (*openapistackql.Schema, string, error) {
 	if ex.isSimple() {
-		return ex.HeirarchyObjects.GetResponseSchemaAndMediaType()
+		return ex.heirarchyObjects.GetResponseSchemaAndMediaType()
 	}
 	return nil, "", fmt.Errorf("subqueries currently not supported")
 }
 
-func (ex ExtendedTableMetadata) GetRequestSchema() (*openapistackql.Schema, error) {
-	return ex.HeirarchyObjects.GetRequestSchema()
+func (ex *standardExtendedTableMetadata) GetRequestSchema() (*openapistackql.Schema, error) {
+	return ex.heirarchyObjects.GetRequestSchema()
 }
 
-func (ex ExtendedTableMetadata) GetServiceStr() (string, error) {
-	if ex.HeirarchyObjects == nil || ex.HeirarchyObjects.HeirarchyIds.ServiceStr == "" {
+func (ex *standardExtendedTableMetadata) GetServiceStr() (string, error) {
+	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetHeirarchyIds().GetServiceStr() == "" {
 		return "", fmt.Errorf("cannot resolve ServiceStr")
 	}
-	return ex.HeirarchyObjects.HeirarchyIds.ServiceStr, nil
+	return ex.heirarchyObjects.GetHeirarchyIds().GetServiceStr(), nil
 }
 
-func (ex ExtendedTableMetadata) GetResourceStr() (string, error) {
-	if ex.HeirarchyObjects == nil || ex.HeirarchyObjects.HeirarchyIds.ResourceStr == "" {
+func (ex *standardExtendedTableMetadata) GetResourceStr() (string, error) {
+	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetHeirarchyIds().GetResourceStr() == "" {
 		return "", fmt.Errorf("cannot resolve ResourceStr")
 	}
-	return ex.HeirarchyObjects.HeirarchyIds.ResourceStr, nil
+	return ex.heirarchyObjects.GetHeirarchyIds().GetResourceStr(), nil
 }
 
-func (ex ExtendedTableMetadata) GetProviderStr() (string, error) {
-	if ex.HeirarchyObjects == nil || ex.HeirarchyObjects.HeirarchyIds.ProviderStr == "" {
+func (ex *standardExtendedTableMetadata) GetProviderStr() (string, error) {
+	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetHeirarchyIds().GetProviderStr() == "" {
 		return "", fmt.Errorf("cannot resolve ProviderStr")
 	}
-	return ex.HeirarchyObjects.HeirarchyIds.ProviderStr, nil
+	return ex.heirarchyObjects.GetHeirarchyIds().GetProviderStr(), nil
 }
 
-func (ex ExtendedTableMetadata) GetMethodStr() (string, error) {
-	if ex.HeirarchyObjects == nil || ex.HeirarchyObjects.HeirarchyIds.MethodStr == "" {
+func (ex *standardExtendedTableMetadata) GetMethodStr() (string, error) {
+	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetHeirarchyIds().GetMethodStr() == "" {
 		return "", fmt.Errorf("cannot resolve MethodStr")
 	}
-	return ex.HeirarchyObjects.HeirarchyIds.MethodStr, nil
+	return ex.heirarchyObjects.GetHeirarchyIds().GetMethodStr(), nil
 }
 
-func (ex ExtendedTableMetadata) GetResponseSchemaStr() (string, error) {
-	if ex.HeirarchyObjects == nil || ex.HeirarchyObjects.HeirarchyIds.ResponseSchemaStr == "" {
+func (ex *standardExtendedTableMetadata) GetResponseSchemaStr() (string, error) {
+	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetHeirarchyIds().GetResponseSchemaStr() == "" {
 		return "", fmt.Errorf("cannot resolve ResponseSchemaStr")
 	}
-	return ex.HeirarchyObjects.HeirarchyIds.ResponseSchemaStr, nil
+	return ex.heirarchyObjects.GetHeirarchyIds().GetResponseSchemaStr(), nil
 }
 
-func (ex *ExtendedTableMetadata) WithResponseSchemaStr(rss string) (*ExtendedTableMetadata, error) {
-	if ex.HeirarchyObjects == nil {
-		return ex, fmt.Errorf("ExtendedTableMetadata.WithResponseSchemaStr(): cannot resolve HeirarchyObjects")
+func (ex *standardExtendedTableMetadata) WithResponseSchemaStr(rss string) (ExtendedTableMetadata, error) {
+	if ex.heirarchyObjects == nil {
+		return ex, fmt.Errorf("standardExtendedTableMetadata.WithResponseSchemaStr(): cannot resolve HeirarchyObjects")
 	}
-	ex.HeirarchyObjects.HeirarchyIds.ResponseSchemaStr = rss
+	ex.heirarchyObjects.GetHeirarchyIds().WithResponseSchemaStr(rss)
 	return ex, nil
 }
 
-func (ex ExtendedTableMetadata) GetTableName() (string, error) {
-	if ex.HeirarchyObjects == nil || ex.HeirarchyObjects.HeirarchyIds.GetTableName() == "" {
+func (ex *standardExtendedTableMetadata) GetTableName() (string, error) {
+	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetHeirarchyIds().GetTableName() == "" {
 		return "", fmt.Errorf("cannot resolve TableName")
 	}
-	return ex.HeirarchyObjects.HeirarchyIds.GetTableName(), nil
+	return ex.heirarchyObjects.GetHeirarchyIds().GetTableName(), nil
 }
 
-func (ex ExtendedTableMetadata) GetStackQLTableName() (string, error) {
-	if ex.HeirarchyObjects == nil || ex.HeirarchyObjects.HeirarchyIds.GetTableName() == "" {
+func (ex *standardExtendedTableMetadata) GetStackQLTableName() (string, error) {
+	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetHeirarchyIds().GetTableName() == "" {
 		return "", fmt.Errorf("cannot resolve TableName")
 	}
-	return ex.HeirarchyObjects.HeirarchyIds.GetStackQLTableName(), nil
+	return ex.heirarchyObjects.GetHeirarchyIds().GetStackQLTableName(), nil
 }
 
-func (ex ExtendedTableMetadata) GetInputTableName() (string, error) {
+func (ex *standardExtendedTableMetadata) GetInputTableName() (string, error) {
 	return ex.inputTableName, nil
 }
 
-func (ex ExtendedTableMetadata) GetSelectableObjectSchema() (*openapistackql.Schema, error) {
-	return ex.HeirarchyObjects.GetSelectableObjectSchema()
+func (ex *standardExtendedTableMetadata) GetSelectableObjectSchema() (*openapistackql.Schema, error) {
+	return ex.heirarchyObjects.GetSelectableObjectSchema()
 }
 
-func NewExtendedTableMetadata(heirarchyObjects *HeirarchyObjects, tableName string, alias string) *ExtendedTableMetadata {
-	return &ExtendedTableMetadata{
-		ColsVisited:        make(map[string]bool),
-		RequiredParameters: make(map[string]openapistackql.Parameter),
-		HeirarchyObjects:   heirarchyObjects,
-		Alias:              alias,
+func NewExtendedTableMetadata(heirarchyObjects HeirarchyObjects, tableName string, alias string) ExtendedTableMetadata {
+	return &standardExtendedTableMetadata{
+		colsVisited:        make(map[string]bool),
+		requiredParameters: make(map[string]openapistackql.Parameter),
+		heirarchyObjects:   heirarchyObjects,
+		alias:              alias,
 		inputTableName:     tableName,
 	}
 }

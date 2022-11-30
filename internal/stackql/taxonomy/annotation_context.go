@@ -11,48 +11,48 @@ import (
 )
 
 type AnnotationCtx interface {
-	GetHIDs() *dto.HeirarchyIdentifiers
+	GetHIDs() dto.HeirarchyIdentifiers
 	IsDynamic() bool
 	GetInputTableName() (string, error)
 	GetParameters() map[string]interface{}
 	GetSchema() *openapistackql.Schema
-	GetTableMeta() *tablemetadata.ExtendedTableMetadata
+	GetTableMeta() tablemetadata.ExtendedTableMetadata
 	Prepare(handlerCtx *handler.HandlerContext, inStream streaming.MapStream) error
 	SetDynamic()
 }
 
-type StandardAnnotationCtx struct {
+type standardAnnotationCtx struct {
 	isDynamic  bool
-	Schema     *openapistackql.Schema
-	HIDs       *dto.HeirarchyIdentifiers
-	TableMeta  *tablemetadata.ExtendedTableMetadata
-	Parameters map[string]interface{}
+	schema     *openapistackql.Schema
+	hIDs       dto.HeirarchyIdentifiers
+	tableMeta  tablemetadata.ExtendedTableMetadata
+	parameters map[string]interface{}
 }
 
 func NewStaticStandardAnnotationCtx(
 	schema *openapistackql.Schema,
-	hIds *dto.HeirarchyIdentifiers,
-	tableMeta *tablemetadata.ExtendedTableMetadata,
+	hIds dto.HeirarchyIdentifiers,
+	tableMeta tablemetadata.ExtendedTableMetadata,
 	parameters map[string]interface{},
 ) AnnotationCtx {
-	return &StandardAnnotationCtx{
+	return &standardAnnotationCtx{
 		isDynamic:  false,
-		Schema:     schema,
-		HIDs:       hIds,
-		TableMeta:  tableMeta,
-		Parameters: parameters,
+		schema:     schema,
+		hIDs:       hIds,
+		tableMeta:  tableMeta,
+		parameters: parameters,
 	}
 }
 
-func (ac *StandardAnnotationCtx) IsDynamic() bool {
+func (ac *standardAnnotationCtx) IsDynamic() bool {
 	return ac.isDynamic
 }
 
-func (ac *StandardAnnotationCtx) SetDynamic() {
+func (ac *standardAnnotationCtx) SetDynamic() {
 	ac.isDynamic = true
 }
 
-func (ac *StandardAnnotationCtx) Prepare(
+func (ac *standardAnnotationCtx) Prepare(
 	handlerCtx *handler.HandlerContext,
 	stream streaming.MapStream,
 ) error {
@@ -70,50 +70,54 @@ func (ac *StandardAnnotationCtx) Prepare(
 	}
 	if ac.isDynamic {
 		// LAZY EVAL
-		ac.TableMeta.GetHttpArmoury = func() (httpbuild.HTTPArmoury, error) {
-			httpArmoury, err := httpbuild.BuildHTTPRequestCtxFromAnnotation(stream, pr, opStore, svc, nil, nil)
-			return httpArmoury, err
-		}
+		ac.tableMeta.WithGetHttpArmoury(
+			func() (httpbuild.HTTPArmoury, error) {
+				httpArmoury, err := httpbuild.BuildHTTPRequestCtxFromAnnotation(stream, pr, opStore, svc, nil, nil)
+				return httpArmoury, err
+			},
+		)
 		return nil
 	} else {
 		// moved out of here so stream is dynamically generated
 	}
-	ac.TableMeta.GetHttpArmoury = func() (httpbuild.HTTPArmoury, error) {
-		// need to dynamically generate stream, otherwise repeated calls result in empty body
-		parametersCleaned, err := util.TransformSQLRawParameters(ac.GetParameters())
-		if err != nil {
-			return nil, err
-		}
-		stream.Write(
-			[]map[string]interface{}{
-				parametersCleaned,
-			},
-		)
-		httpArmoury, err := httpbuild.BuildHTTPRequestCtxFromAnnotation(stream, pr, opStore, svc, nil, nil)
-		if err != nil {
-			return nil, err
-		}
-		return httpArmoury, nil
-	}
+	ac.tableMeta.WithGetHttpArmoury(
+		func() (httpbuild.HTTPArmoury, error) {
+			// need to dynamically generate stream, otherwise repeated calls result in empty body
+			parametersCleaned, err := util.TransformSQLRawParameters(ac.GetParameters())
+			if err != nil {
+				return nil, err
+			}
+			stream.Write(
+				[]map[string]interface{}{
+					parametersCleaned,
+				},
+			)
+			httpArmoury, err := httpbuild.BuildHTTPRequestCtxFromAnnotation(stream, pr, opStore, svc, nil, nil)
+			if err != nil {
+				return nil, err
+			}
+			return httpArmoury, nil
+		},
+	)
 	return nil
 }
 
-func (ac *StandardAnnotationCtx) GetHIDs() *dto.HeirarchyIdentifiers {
-	return ac.HIDs
+func (ac *standardAnnotationCtx) GetHIDs() dto.HeirarchyIdentifiers {
+	return ac.hIDs
 }
 
-func (ac *StandardAnnotationCtx) GetParameters() map[string]interface{} {
-	return ac.Parameters
+func (ac *standardAnnotationCtx) GetParameters() map[string]interface{} {
+	return ac.parameters
 }
 
-func (ac *StandardAnnotationCtx) GetSchema() *openapistackql.Schema {
-	return ac.Schema
+func (ac *standardAnnotationCtx) GetSchema() *openapistackql.Schema {
+	return ac.schema
 }
 
-func (ac *StandardAnnotationCtx) GetInputTableName() (string, error) {
-	return ac.TableMeta.GetInputTableName()
+func (ac *standardAnnotationCtx) GetInputTableName() (string, error) {
+	return ac.tableMeta.GetInputTableName()
 }
 
-func (ac *StandardAnnotationCtx) GetTableMeta() *tablemetadata.ExtendedTableMetadata {
-	return ac.TableMeta
+func (ac *standardAnnotationCtx) GetTableMeta() tablemetadata.ExtendedTableMetadata {
+	return ac.tableMeta
 }

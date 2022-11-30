@@ -16,7 +16,7 @@ import (
 type TableRouteAstVisitor struct {
 	handlerCtx      *handler.HandlerContext
 	router          ParameterRouter
-	tableMetaSlice  []*tablemetadata.ExtendedTableMetadata
+	tableMetaSlice  []tablemetadata.ExtendedTableMetadata
 	tables          taxonomy.TblMap
 	annotations     taxonomy.AnnotationCtxMap
 	annotationSlice []taxonomy.AnnotationCtx
@@ -44,7 +44,7 @@ func (v *TableRouteAstVisitor) analyzeExecTableName(tb *sqlparser.ExecSubquery) 
 	return v.router.Route(tb, v.handlerCtx)
 }
 
-func (v *TableRouteAstVisitor) GetTableMetaArray() []*tablemetadata.ExtendedTableMetadata {
+func (v *TableRouteAstVisitor) GetTableMetaArray() []tablemetadata.ExtendedTableMetadata {
 	return v.tableMetaSlice
 }
 

@@ -12,7 +12,7 @@ import (
 
 func obtainAnnotationCtx(
 	sqlEngine sqlengine.SQLEngine,
-	tbl *tablemetadata.ExtendedTableMetadata,
+	tbl tablemetadata.ExtendedTableMetadata,
 	parameters map[string]interface{},
 	namespaceCollection tablenamespace.TableNamespaceCollection,
 ) (taxonomy.AnnotationCtx, error) {
@@ -25,7 +25,7 @@ func obtainAnnotationCtx(
 	if err != nil {
 		return nil, fmt.Errorf(unsuitableSchemaMsg)
 	}
-	tbl.SelectItemsKey = selectItemsKey
+	tbl.SetSelectItemsKey(selectItemsKey)
 	provStr, _ := tbl.GetProviderStr()
 	svcStr, _ := tbl.GetServiceStr()
 	rscStr, _ := tbl.GetResourceStr()

@@ -9,14 +9,14 @@ import (
 type HTTPRestPrimitive struct {
 	Provider      provider.IProvider
 	Executor      func(pc IPrimitiveCtx) dto.ExecutorOutput
-	Preparator    func() *drm.PreparedStatementCtx
-	TxnControlCtr *dto.TxnControlCounters
+	Preparator    func() drm.PreparedStatementCtx
+	TxnControlCtr dto.TxnControlCounters
 	Inputs        map[int64]dto.ExecutorOutput
 	InputAliases  map[string]int64
 	id            int64
 }
 
-func NewHTTPRestPrimitive(provider provider.IProvider, executor func(pc IPrimitiveCtx) dto.ExecutorOutput, preparator func() *drm.PreparedStatementCtx, txnCtrlCtr *dto.TxnControlCounters) IPrimitive {
+func NewHTTPRestPrimitive(provider provider.IProvider, executor func(pc IPrimitiveCtx) dto.ExecutorOutput, preparator func() drm.PreparedStatementCtx, txnCtrlCtr dto.TxnControlCounters) IPrimitive {
 	return &HTTPRestPrimitive{
 		Provider:      provider,
 		Executor:      executor,
@@ -29,7 +29,7 @@ func NewHTTPRestPrimitive(provider provider.IProvider, executor func(pc IPrimiti
 
 func (pr *HTTPRestPrimitive) SetTxnId(id int) {
 	if pr.TxnControlCtr != nil {
-		pr.TxnControlCtr.TxnId = id
+		pr.TxnControlCtr.SetTxnID(id)
 	}
 }
 

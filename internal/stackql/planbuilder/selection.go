@@ -21,9 +21,9 @@ func (p *primitiveGenerator) assembleUnarySelectionBuilder(
 	handlerCtx *handler.HandlerContext,
 	node sqlparser.SQLNode,
 	rewrittenWhere *sqlparser.Where,
-	hIds *dto.HeirarchyIdentifiers,
+	hIds dto.HeirarchyIdentifiers,
 	schema *openapistackql.Schema,
-	tbl *tablemetadata.ExtendedTableMetadata,
+	tbl tablemetadata.ExtendedTableMetadata,
 	selectTabulation *openapistackql.Tabulation,
 	insertTabulation *openapistackql.Tabulation,
 	cols []parserutil.ColumnHandle,
@@ -53,7 +53,7 @@ func (p *primitiveGenerator) assembleUnarySelectionBuilder(
 	// 	return err
 	// }
 	ctrs := pbi.GetTxnCtrlCtrs()
-	insPsc, err := p.PrimitiveComposer.GetDRMConfig().GenerateInsertDML(annotatedInsertTabulation, method, &ctrs)
+	insPsc, err := p.PrimitiveComposer.GetDRMConfig().GenerateInsertDML(annotatedInsertTabulation, method, ctrs)
 	if err != nil {
 		return err
 	}
@@ -83,7 +83,7 @@ func (p *primitiveGenerator) analyzeUnarySelection(
 	handlerCtx *handler.HandlerContext,
 	node sqlparser.SQLNode,
 	rewrittenWhere *sqlparser.Where,
-	tbl *tablemetadata.ExtendedTableMetadata,
+	tbl tablemetadata.ExtendedTableMetadata,
 	cols []parserutil.ColumnHandle) error {
 	_, err := tbl.GetProvider()
 	if err != nil {
@@ -103,7 +103,7 @@ func (p *primitiveGenerator) analyzeUnarySelection(
 	if err != nil {
 		return fmt.Errorf(unsuitableSchemaMsg)
 	}
-	tbl.SelectItemsKey = selectItemsKey
+	tbl.SetSelectItemsKey(selectItemsKey)
 	provStr, _ := tbl.GetProviderStr()
 	svcStr, _ := tbl.GetServiceStr()
 	// rscStr, _ := tbl.GetResourceStr()

@@ -8,12 +8,12 @@ import (
 
 type AnnotatedTabulation struct {
 	tab            *openapistackql.Tabulation
-	hIds           *dto.HeirarchyIdentifiers
+	hIds           dto.HeirarchyIdentifiers
 	inputTableName string
 	alias          string
 }
 
-func NewAnnotatedTabulation(tab *openapistackql.Tabulation, hIds *dto.HeirarchyIdentifiers, inputTableName string, alias string) AnnotatedTabulation {
+func NewAnnotatedTabulation(tab *openapistackql.Tabulation, hIds dto.HeirarchyIdentifiers, inputTableName string, alias string) AnnotatedTabulation {
 	return AnnotatedTabulation{
 		tab:            tab,
 		hIds:           hIds,
@@ -34,6 +34,6 @@ func (at AnnotatedTabulation) GetInputTableName() string {
 	return at.inputTableName
 }
 
-func (at AnnotatedTabulation) GetHeirarchyIdentifiers() *dto.HeirarchyIdentifiers {
+func (at AnnotatedTabulation) GetHeirarchyIdentifiers() dto.HeirarchyIdentifiers {
 	return at.hIds
 }
