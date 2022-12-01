@@ -35,8 +35,8 @@ type SQLDialect interface {
 	GCPurgeEphemeral() error
 	//
 	GenerateDDL(relationaldto.RelationalTable, bool) ([]string, error)
-	GenerateInsertDML(relationaldto.RelationalTable, *dto.TxnControlCounters) (string, error)
-	GenerateSelectDML(relationaldto.RelationalTable, *dto.TxnControlCounters, string, string) (string, error)
+	GenerateInsertDML(relationaldto.RelationalTable, dto.TxnControlCounters) (string, error)
+	GenerateSelectDML(relationaldto.RelationalTable, dto.TxnControlCounters, string, string) (string, error)
 	GetGCHousekeepingQuery(string, dto.TxnControlCounters) string
 	//
 	GetASTFormatter() sqlparser.NodeFormatter
@@ -58,10 +58,10 @@ type SQLDialect interface {
 	QueryNamespaced(string, string, string, string) (*sql.Rows, error)
 
 	IsTablePresent(string, string, string) bool
-	TableOldestUpdateUTC(string, string, string, string) (time.Time, *dto.TxnControlCounters)
+	TableOldestUpdateUTC(string, string, string, string) (time.Time, dto.TxnControlCounters)
 
-	GetCurrentTable(*dto.HeirarchyIdentifiers) (dto.DBTable, error)
-	GetTable(*dto.HeirarchyIdentifiers, int) (dto.DBTable, error)
+	GetCurrentTable(dto.HeirarchyIdentifiers) (dto.DBTable, error)
+	GetTable(dto.HeirarchyIdentifiers, int) (dto.DBTable, error)
 }
 
 func getNodeFormatter(name string) sqlparser.NodeFormatter {

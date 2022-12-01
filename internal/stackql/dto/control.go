@@ -4,13 +4,32 @@ import (
 	"github.com/stackql/stackql/pkg/txncounter"
 )
 
-type TxnControlCounters struct {
-	GenId, SessionId, TxnId, InsertId int
-	TableName                         string
-	RequestEncoding                   []string
+var (
+	_ TxnControlCounters = &standardTxnControlCounters{}
+)
+
+type TxnControlCounters interface {
+	GetGenID() int
+	GetInsertID() int
+	GetSessionID() int
+	GetTxnID() int
+	SetTableName(string)
+	SetTxnID(int)
+	Clone() TxnControlCounters
+	Copy(TxnControlCounters) TxnControlCounters
+	CloneAndIncrementInsertID() TxnControlCounters
 }
 
-func NewTxnControlCounters(txnCtrMgr txncounter.TxnCounterManager) (*TxnControlCounters, error) {
+type standardTxnControlCounters struct {
+	genId, sessionId, txnId, insertId int
+	tableName                         string
+	requestEncoding                   []string
+}
+
+func NewTxnControlCounters(txnCtrMgr txncounter.TxnCounterManager) (TxnControlCounters, error) {
+	if txnCtrMgr == nil {
+		return &standardTxnControlCounters{}, nil
+	}
 	genId, err := txnCtrMgr.GetCurrentGenerationId()
 	if err != nil {
 		return nil, err
@@ -27,34 +46,75 @@ func NewTxnControlCounters(txnCtrMgr txncounter.TxnCounterManager) (*TxnControlC
 	if err != nil {
 		return nil, err
 	}
-	return &TxnControlCounters{
-		GenId:     genId,
-		SessionId: ssnId,
-		TxnId:     txnId,
-		InsertId:  insertId,
+	return &standardTxnControlCounters{
+		genId:     genId,
+		sessionId: ssnId,
+		txnId:     txnId,
+		insertId:  insertId,
 	}, nil
 }
 
-func (tc *TxnControlCounters) CloneWithDiscoGenID(discoveryGenerationID int) *TxnControlCounters {
-	return &TxnControlCounters{
-		GenId:           tc.GenId,
-		SessionId:       tc.SessionId,
-		TxnId:           tc.TxnId,
-		InsertId:        tc.InsertId,
-		RequestEncoding: tc.RequestEncoding,
+func NewTxnControlCountersFromVals(genId, ssnId, txnId, insertId int) TxnControlCounters {
+	return &standardTxnControlCounters{
+		genId:     genId,
+		sessionId: ssnId,
+		txnId:     txnId,
+		insertId:  insertId,
 	}
 }
 
-func (tc *TxnControlCounters) CloneAndIncrementInsertID() *TxnControlCounters {
-	return &TxnControlCounters{
-		GenId:           tc.GenId,
-		SessionId:       tc.SessionId,
-		TxnId:           tc.TxnId,
-		InsertId:        tc.InsertId + 1,
-		RequestEncoding: tc.RequestEncoding,
+func (tc *standardTxnControlCounters) SetTxnID(tID int) {
+	tc.txnId = tID
+}
+
+func (tc *standardTxnControlCounters) SetTableName(tn string) {
+	tc.tableName = tn
+}
+
+func (tc *standardTxnControlCounters) GetGenID() int {
+	return tc.genId
+}
+
+func (tc *standardTxnControlCounters) GetSessionID() int {
+	return tc.sessionId
+}
+
+func (tc *standardTxnControlCounters) GetTxnID() int {
+	return tc.txnId
+}
+
+func (tc *standardTxnControlCounters) GetInsertID() int {
+	return tc.insertId
+}
+
+func (tc *standardTxnControlCounters) Copy(input TxnControlCounters) TxnControlCounters {
+	tc.genId = input.GetGenID()
+	tc.insertId = input.GetInsertID()
+	tc.sessionId = input.GetSessionID()
+	tc.txnId = input.GetTxnID()
+	return tc
+}
+
+func (tc *standardTxnControlCounters) Clone() TxnControlCounters {
+	return &standardTxnControlCounters{
+		genId:           tc.genId,
+		sessionId:       tc.sessionId,
+		txnId:           tc.txnId,
+		insertId:        tc.insertId,
+		requestEncoding: tc.requestEncoding,
 	}
 }
 
-func (tc *TxnControlCounters) SetTxnId(ti int) {
-	tc.TxnId = ti
+func (tc *standardTxnControlCounters) CloneAndIncrementInsertID() TxnControlCounters {
+	return &standardTxnControlCounters{
+		genId:           tc.genId,
+		sessionId:       tc.sessionId,
+		txnId:           tc.txnId,
+		insertId:        tc.insertId + 1,
+		requestEncoding: tc.requestEncoding,
+	}
+}
+
+func (tc *standardTxnControlCounters) SetTxnId(ti int) {
+	tc.txnId = ti
 }

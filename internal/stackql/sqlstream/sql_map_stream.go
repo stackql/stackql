@@ -10,7 +10,7 @@ import (
 )
 
 type SimpleSQLMapStream struct {
-	selectCtx       *drm.PreparedStatementCtx
+	selectCtx       drm.PreparedStatementCtx
 	insertContainer tableinsertioncontainer.TableInsertionContainer
 	drmCfg          drm.DRMConfig
 	sqlEngine       sqlengine.SQLEngine
@@ -19,7 +19,7 @@ type SimpleSQLMapStream struct {
 }
 
 func NewSimpleSQLMapStream(
-	selectCtx *drm.PreparedStatementCtx,
+	selectCtx drm.PreparedStatementCtx,
 	insertContainer tableinsertioncontainer.TableInsertionContainer,
 	drmCfg drm.DRMConfig,
 	sqlEngine sqlengine.SQLEngine,
@@ -53,7 +53,7 @@ func (ss *SimpleSQLMapStream) Read() ([]map[string]interface{}, error) {
 		x := nonControlColumns[i]
 		y := ss.drmCfg.GetGolangValue(x.GetType())
 		ifArr = append(ifArr, y)
-		keyArr = append(keyArr, x.Column.GetIdentifier())
+		keyArr = append(keyArr, x.GetColumn().GetIdentifier())
 		i++
 	}
 	if r != nil {

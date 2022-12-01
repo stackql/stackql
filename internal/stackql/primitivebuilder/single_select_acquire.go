@@ -26,11 +26,11 @@ import (
 type SingleSelectAcquire struct {
 	graph                      *primitivegraph.PrimitiveGraph
 	handlerCtx                 *handler.HandlerContext
-	tableMeta                  *tablemetadata.ExtendedTableMetadata
+	tableMeta                  tablemetadata.ExtendedTableMetadata
 	drmCfg                     drm.DRMConfig
-	insertPreparedStatementCtx *drm.PreparedStatementCtx
+	insertPreparedStatementCtx drm.PreparedStatementCtx
 	insertionContainer         tableinsertioncontainer.TableInsertionContainer
-	txnCtrlCtr                 *dto.TxnControlCounters
+	txnCtrlCtr                 dto.TxnControlCounters
 	rowSort                    func(map[string]map[string]interface{}) []string
 	root                       primitivegraph.PrimitiveNode
 	stream                     streaming.MapStream
@@ -40,7 +40,7 @@ func NewSingleSelectAcquire(
 	graph *primitivegraph.PrimitiveGraph,
 	handlerCtx *handler.HandlerContext,
 	insertionContainer tableinsertioncontainer.TableInsertionContainer,
-	insertCtx *drm.PreparedStatementCtx,
+	insertCtx drm.PreparedStatementCtx,
 	rowSort func(map[string]map[string]interface{}) []string,
 	stream streaming.MapStream,
 ) Builder {
@@ -71,13 +71,13 @@ func NewSingleSelectAcquire(
 func newSingleSelectAcquire(
 	graph *primitivegraph.PrimitiveGraph,
 	handlerCtx *handler.HandlerContext,
-	tableMeta *tablemetadata.ExtendedTableMetadata,
-	insertCtx *drm.PreparedStatementCtx,
+	tableMeta tablemetadata.ExtendedTableMetadata,
+	insertCtx drm.PreparedStatementCtx,
 	insertionContainer tableinsertioncontainer.TableInsertionContainer,
 	rowSort func(map[string]map[string]interface{}) []string,
 	stream streaming.MapStream,
 ) Builder {
-	var tcc *dto.TxnControlCounters
+	var tcc dto.TxnControlCounters
 	if insertCtx != nil {
 		tcc = insertCtx.GetGCCtrlCtrs()
 	}
@@ -119,7 +119,7 @@ func (ss *SingleSelectAcquire) Build() error {
 		return err
 	}
 	ex := func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput {
-		currentTcc := *ss.insertPreparedStatementCtx.GetGCCtrlCtrs()
+		currentTcc := ss.insertPreparedStatementCtx.GetGCCtrlCtrs().Clone()
 		ss.graph.AddTxnControlCounters(currentTcc)
 		mr := prov.InferMaxResultsElement(m)
 		httpArmoury, err := ss.tableMeta.GetHttpArmoury()
@@ -154,7 +154,7 @@ func (ss *SingleSelectAcquire) Build() error {
 				for _, c := range nonControlColumns {
 					nonControlColumnNames = append(nonControlColumnNames, c.GetName())
 				}
-				ss.handlerCtx.GarbageCollector.Update(tableName, *olderTcc, currentTcc)
+				ss.handlerCtx.GarbageCollector.Update(tableName, olderTcc.Clone(), currentTcc)
 				ss.insertionContainer.SetTableTxnCounters(tableName, olderTcc)
 				ss.insertPreparedStatementCtx.SetGCCtrlCtrs(olderTcc)
 				r, sqlErr := ss.handlerCtx.GetNamespaceCollection().GetAnalyticsCacheTableNamespaceConfigurator().Read(tableName, reqEncoding, ss.drmCfg.GetControlAttributes().GetControlInsertEncodedIdColumnName(), nonControlColumnNames)
@@ -164,10 +164,11 @@ func (ss *SingleSelectAcquire) Build() error {
 				ss.drmCfg.ExtractObjectFromSQLRows(r, nonControlColumns, ss.stream)
 				return dto.ExecutorOutput{}
 			}
+			// TODO: fix cloning ops
 			response, apiErr := httpmiddleware.HttpApiCallFromRequest(*(ss.handlerCtx), prov, m, reqCtx.Request.Clone(reqCtx.Request.Context()))
 			housekeepingDone := false
-			npt := prov.InferNextPageResponseElement(ss.tableMeta.HeirarchyObjects.Heirarchy)
-			nptRequest := prov.InferNextPageRequestElement(ss.tableMeta.HeirarchyObjects.Heirarchy)
+			npt := prov.InferNextPageResponseElement(ss.tableMeta.GetHeirarchyObjects())
+			nptRequest := prov.InferNextPageRequestElement(ss.tableMeta.GetHeirarchyObjects())
 			pageCount := 1
 			for {
 				if apiErr != nil {
@@ -188,8 +189,8 @@ func (ss *SingleSelectAcquire) Build() error {
 				switch pl := target.(type) {
 				// add case for xml object,
 				case map[string]interface{}:
-					if ss.tableMeta.SelectItemsKey != "" && ss.tableMeta.SelectItemsKey != "/*" {
-						items, ok = pl[ss.tableMeta.SelectItemsKey]
+					if ss.tableMeta.GetSelectItemsKey() != "" && ss.tableMeta.GetSelectItemsKey() != "/*" {
+						items, ok = pl[ss.tableMeta.GetSelectItemsKey()]
 						if !ok {
 							items = []interface{}{
 								pl,
@@ -226,7 +227,7 @@ func (ss *SingleSelectAcquire) Build() error {
 						if !housekeepingDone && ss.insertPreparedStatementCtx != nil {
 							_, err = ss.handlerCtx.SQLEngine.Exec(ss.insertPreparedStatementCtx.GetGCHousekeepingQueries())
 							tcc := ss.insertPreparedStatementCtx.GetGCCtrlCtrs()
-							tcc.TableName = tableName
+							tcc.SetTableName(tableName)
 							ss.insertionContainer.SetTableTxnCounters(tableName, tcc)
 							housekeepingDone = true
 						}
@@ -279,7 +280,7 @@ func (ss *SingleSelectAcquire) Build() error {
 		return dto.ExecutorOutput{}
 	}
 
-	prep := func() *drm.PreparedStatementCtx {
+	prep := func() drm.PreparedStatementCtx {
 		return ss.insertPreparedStatementCtx
 	}
 	insertPrim := primitive.NewHTTPRestPrimitive(

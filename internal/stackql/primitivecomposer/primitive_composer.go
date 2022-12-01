@@ -30,22 +30,22 @@ type PrimitiveComposer interface {
 	GetCommentDirectives() sqlparser.CommentDirectives
 	GetDRMConfig() drm.DRMConfig
 	GetGraph() *primitivegraph.PrimitiveGraph
-	GetInsertPreparedStatementCtx() *drm.PreparedStatementCtx
+	GetInsertPreparedStatementCtx() drm.PreparedStatementCtx
 	GetInsertValOnlyRows() map[int]map[int]interface{}
 	GetLikeAbleColumns() []string
 	GetParent() PrimitiveComposer
 	GetProvider() provider.IProvider
 	GetRoot() primitivegraph.PrimitiveNode
-	GetSelectPreparedStatementCtx() *drm.PreparedStatementCtx
+	GetSelectPreparedStatementCtx() drm.PreparedStatementCtx
 	GetSQLEngine() sqlengine.SQLEngine
 	GetSQLDialect() sqldialect.SQLDialect
 	GetSymbol(k interface{}) (symtab.SymTabEntry, error)
 	GetSymTab() symtab.SymTab
-	GetTable(node sqlparser.SQLNode) (*tablemetadata.ExtendedTableMetadata, error)
+	GetTable(node sqlparser.SQLNode) (tablemetadata.ExtendedTableMetadata, error)
 	GetTableFilter() func(openapistackql.ITable) (openapistackql.ITable, error)
 	GetTables() taxonomy.TblMap
 	GetTxnCounterManager() txncounter.TxnCounterManager
-	GetTxnCtrlCtrs() *dto.TxnControlCounters
+	GetTxnCtrlCtrs() dto.TxnControlCounters
 	GetValOnlyCol(key int) map[string]interface{}
 	GetValOnlyColKeys() []int
 	GetWhere() *sqlparser.Where
@@ -56,16 +56,16 @@ type PrimitiveComposer interface {
 	SetColumnOrder(co []parserutil.ColumnHandle)
 	SetColVisited(colname string, isVisited bool)
 	SetCommentDirectives(dirs sqlparser.CommentDirectives)
-	SetInsertPreparedStatementCtx(ctx *drm.PreparedStatementCtx)
+	SetInsertPreparedStatementCtx(ctx drm.PreparedStatementCtx)
 	SetInsertValOnlyRows(m map[int]map[int]interface{})
 	SetLikeAbleColumns(cols []string)
 	SetProvider(prov provider.IProvider)
 	SetRoot(root primitivegraph.PrimitiveNode)
-	SetSelectPreparedStatementCtx(ctx *drm.PreparedStatementCtx)
+	SetSelectPreparedStatementCtx(ctx drm.PreparedStatementCtx)
 	SetSymbol(k interface{}, v symtab.SymTabEntry) error
-	SetTable(node sqlparser.SQLNode, table *tablemetadata.ExtendedTableMetadata)
+	SetTable(node sqlparser.SQLNode, table tablemetadata.ExtendedTableMetadata)
 	SetTableFilter(tableFilter func(openapistackql.ITable) (openapistackql.ITable, error))
-	SetTxnCtrlCtrs(tc *dto.TxnControlCounters)
+	SetTxnCtrlCtrs(tc dto.TxnControlCounters)
 	SetValOnlyCols(m map[int]map[string]interface{})
 	SetWhere(where *sqlparser.Where)
 	ShouldCollectGarbage() bool
@@ -99,13 +99,13 @@ type StandardPrimitiveComposer struct {
 	columnOrder       []string
 	commentDirectives sqlparser.CommentDirectives
 	txnCounterManager txncounter.TxnCounterManager
-	txnCtrlCtrs       *dto.TxnControlCounters
+	txnCtrlCtrs       dto.TxnControlCounters
 
 	// per query -- SELECT only
 	insertValOnlyRows          map[int]map[int]interface{}
 	valOnlyCols                map[int]map[string]interface{}
-	insertPreparedStatementCtx *drm.PreparedStatementCtx
-	selectPreparedStatementCtx *drm.PreparedStatementCtx
+	insertPreparedStatementCtx drm.PreparedStatementCtx
+	selectPreparedStatementCtx drm.PreparedStatementCtx
 
 	// TODO: universally retire in favour of builder, which returns primitive.IPrimitive
 	root primitivegraph.PrimitiveNode
@@ -125,11 +125,11 @@ func (pb *StandardPrimitiveComposer) ShouldCollectGarbage() bool {
 	return pb.parent == nil
 }
 
-func (pb *StandardPrimitiveComposer) SetTxnCtrlCtrs(tc *dto.TxnControlCounters) {
+func (pb *StandardPrimitiveComposer) SetTxnCtrlCtrs(tc dto.TxnControlCounters) {
 	pb.txnCtrlCtrs = tc
 }
 
-func (pb *StandardPrimitiveComposer) GetTxnCtrlCtrs() *dto.TxnControlCounters {
+func (pb *StandardPrimitiveComposer) GetTxnCtrlCtrs() dto.TxnControlCounters {
 	return pb.txnCtrlCtrs
 }
 
@@ -259,19 +259,19 @@ func (pb *StandardPrimitiveComposer) SetTableFilter(tableFilter func(openapistac
 	pb.tableFilter = tableFilter
 }
 
-func (pb *StandardPrimitiveComposer) SetInsertPreparedStatementCtx(ctx *drm.PreparedStatementCtx) {
+func (pb *StandardPrimitiveComposer) SetInsertPreparedStatementCtx(ctx drm.PreparedStatementCtx) {
 	pb.insertPreparedStatementCtx = ctx
 }
 
-func (pb *StandardPrimitiveComposer) GetInsertPreparedStatementCtx() *drm.PreparedStatementCtx {
+func (pb *StandardPrimitiveComposer) GetInsertPreparedStatementCtx() drm.PreparedStatementCtx {
 	return pb.insertPreparedStatementCtx
 }
 
-func (pb *StandardPrimitiveComposer) SetSelectPreparedStatementCtx(ctx *drm.PreparedStatementCtx) {
+func (pb *StandardPrimitiveComposer) SetSelectPreparedStatementCtx(ctx drm.PreparedStatementCtx) {
 	pb.selectPreparedStatementCtx = ctx
 }
 
-func (pb *StandardPrimitiveComposer) GetSelectPreparedStatementCtx() *drm.PreparedStatementCtx {
+func (pb *StandardPrimitiveComposer) GetSelectPreparedStatementCtx() drm.PreparedStatementCtx {
 	return pb.selectPreparedStatementCtx
 }
 
@@ -311,11 +311,11 @@ func (pb *StandardPrimitiveComposer) SetAwait(await bool) {
 	pb.await = await
 }
 
-func (pb *StandardPrimitiveComposer) GetTable(node sqlparser.SQLNode) (*tablemetadata.ExtendedTableMetadata, error) {
+func (pb *StandardPrimitiveComposer) GetTable(node sqlparser.SQLNode) (tablemetadata.ExtendedTableMetadata, error) {
 	return pb.tables.GetTable(node)
 }
 
-func (pb *StandardPrimitiveComposer) SetTable(node sqlparser.SQLNode, table *tablemetadata.ExtendedTableMetadata) {
+func (pb *StandardPrimitiveComposer) SetTable(node sqlparser.SQLNode, table tablemetadata.ExtendedTableMetadata) {
 	pb.tables.SetTable(node, table)
 }
 

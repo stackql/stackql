@@ -47,8 +47,8 @@ func (v *DRMAstVisitor) GetProviderStrings() []string {
 	var retVal []string
 	for _, tName := range v.tablesCited {
 		tx := dto.ResolveResourceTerminalHeirarchyIdentifiers(tName)
-		if tx.ProviderStr != "" {
-			retVal = append(retVal, tx.ProviderStr)
+		if tx.GetProviderStr() != "" {
+			retVal = append(retVal, tx.GetProviderStr())
 		}
 	}
 	return retVal

@@ -26,7 +26,7 @@ import (
 type DependencyPlanner interface {
 	Plan() error
 	GetBldr() primitivebuilder.Builder
-	GetSelectCtx() *drm.PreparedStatementCtx
+	GetSelectCtx() drm.PreparedStatementCtx
 }
 
 type StandardDependencyPlanner struct {
@@ -34,10 +34,10 @@ type StandardDependencyPlanner struct {
 	colRefs            parserutil.ColTableMap
 	handlerCtx         *handler.HandlerContext
 	execSlice          []primitivebuilder.Builder
-	primaryTcc, tcc    *dto.TxnControlCounters
+	primaryTcc, tcc    dto.TxnControlCounters
 	primitiveComposer  primitivecomposer.PrimitiveComposer
 	rewrittenWhere     *sqlparser.Where
-	secondaryTccs      []*dto.TxnControlCounters
+	secondaryTccs      []dto.TxnControlCounters
 	sqlStatement       sqlparser.SQLNode
 	tableSlice         []tableinsertioncontainer.TableInsertionContainer
 	tblz               taxonomy.TblMap
@@ -45,7 +45,7 @@ type StandardDependencyPlanner struct {
 
 	//
 	bldr          primitivebuilder.Builder
-	selCtx        *drm.PreparedStatementCtx
+	selCtx        drm.PreparedStatementCtx
 	defaultStream streaming.MapStream
 	annMap        taxonomy.AnnotationCtxMap
 }
@@ -58,7 +58,7 @@ func NewStandardDependencyPlanner(
 	sqlStatement sqlparser.SQLNode,
 	tblz taxonomy.TblMap,
 	primitiveComposer primitivecomposer.PrimitiveComposer,
-	tcc *dto.TxnControlCounters,
+	tcc dto.TxnControlCounters,
 ) (DependencyPlanner, error) {
 	if tcc == nil {
 		return nil, fmt.Errorf("violation of StandardDependencyPlanner invariant: txn counter cannot be nil")
@@ -82,7 +82,7 @@ func (dp *StandardDependencyPlanner) GetBldr() primitivebuilder.Builder {
 	return dp.bldr
 }
 
-func (dp *StandardDependencyPlanner) GetSelectCtx() *drm.PreparedStatementCtx {
+func (dp *StandardDependencyPlanner) GetSelectCtx() drm.PreparedStatementCtx {
 	return dp.selCtx
 }
 
@@ -233,7 +233,7 @@ func (dp *StandardDependencyPlanner) Plan() error {
 	return nil
 }
 
-func (dp *StandardDependencyPlanner) processOrphan(sqlNode sqlparser.SQLNode, annotationCtx taxonomy.AnnotationCtx, inStream streaming.MapStream) (*drm.PreparedStatementCtx, *dto.TxnControlCounters, error) {
+func (dp *StandardDependencyPlanner) processOrphan(sqlNode sqlparser.SQLNode, annotationCtx taxonomy.AnnotationCtx, inStream streaming.MapStream) (drm.PreparedStatementCtx, dto.TxnControlCounters, error) {
 	anTab, tcc, err := dp.processAcquire(sqlNode, annotationCtx, inStream)
 	if err != nil {
 		return nil, nil, err
@@ -248,11 +248,14 @@ func (dp *StandardDependencyPlanner) processOrphan(sqlNode sqlparser.SQLNode, an
 
 func (dp *StandardDependencyPlanner) orchestrate(
 	annotationCtx taxonomy.AnnotationCtx,
-	insPsc *drm.PreparedStatementCtx,
+	insPsc drm.PreparedStatementCtx,
 	inStream streaming.MapStream,
 	outStream streaming.MapStream,
 ) error {
-	rc := tableinsertioncontainer.NewTableInsertionContainer(annotationCtx.GetTableMeta(), dp.handlerCtx.SQLEngine)
+	rc, err := tableinsertioncontainer.NewTableInsertionContainer(annotationCtx.GetTableMeta(), dp.handlerCtx.SQLEngine)
+	if err != nil {
+		return err
+	}
 	builder := primitivebuilder.NewSingleSelectAcquire(
 		dp.primitiveComposer.GetGraph(),
 		dp.handlerCtx,
@@ -263,7 +266,7 @@ func (dp *StandardDependencyPlanner) orchestrate(
 	)
 	dp.execSlice = append(dp.execSlice, builder)
 	dp.tableSlice = append(dp.tableSlice, rc)
-	err := annotationCtx.Prepare(dp.handlerCtx, inStream)
+	err = annotationCtx.Prepare(dp.handlerCtx, inStream)
 	return err
 }
 
@@ -271,7 +274,7 @@ func (dp *StandardDependencyPlanner) processAcquire(
 	sqlNode sqlparser.SQLNode,
 	annotationCtx taxonomy.AnnotationCtx,
 	stream streaming.MapStream,
-) (util.AnnotatedTabulation, *dto.TxnControlCounters, error) {
+) (util.AnnotatedTabulation, dto.TxnControlCounters, error) {
 	inputTableName, err := annotationCtx.GetInputTableName()
 	if err != nil {
 		return util.NewAnnotatedTabulation(nil, nil, "", ""), nil, err
@@ -293,7 +296,7 @@ func (dp *StandardDependencyPlanner) processAcquire(
 	case media.MediaTypeTextXML, media.MediaTypeXML:
 		tab = tab.RenameColumnsToXml()
 	}
-	anTab := util.NewAnnotatedTabulation(tab, annotationCtx.GetHIDs(), inputTableName, annotationCtx.GetTableMeta().Alias)
+	anTab := util.NewAnnotatedTabulation(tab, annotationCtx.GetHIDs(), inputTableName, annotationCtx.GetTableMeta().GetAlias())
 
 	discoGenId, err := docparser.OpenapiStackQLTabulationsPersistor(m, []util.AnnotatedTabulation{anTab}, dp.primitiveComposer.GetSQLEngine(), prov.Name, dp.handlerCtx.GetNamespaceCollection(), dp.handlerCtx.ControlAttributes, dp.handlerCtx.SQLDialect)
 	if err != nil {
@@ -309,7 +312,7 @@ func (dp *StandardDependencyPlanner) processAcquire(
 	return anTab, dp.tcc, nil
 }
 
-func (dp *StandardDependencyPlanner) getStreamFromEdge(e dataflow.DataFlowEdge, ac taxonomy.AnnotationCtx, tcc *dto.TxnControlCounters) (streaming.MapStream, error) {
+func (dp *StandardDependencyPlanner) getStreamFromEdge(e dataflow.DataFlowEdge, ac taxonomy.AnnotationCtx, tcc dto.TxnControlCounters) (streaming.MapStream, error) {
 	if e.IsSQL() {
 		selectCtx, err := dp.generateSelectDML(e, tcc)
 		if err != nil {
@@ -317,7 +320,10 @@ func (dp *StandardDependencyPlanner) getStreamFromEdge(e dataflow.DataFlowEdge, 
 		}
 		ann := e.GetSource().GetAnnotation()
 		meta := ann.GetTableMeta()
-		insertContainer := tableinsertioncontainer.NewTableInsertionContainer(meta, dp.handlerCtx.SQLEngine)
+		insertContainer, err := tableinsertioncontainer.NewTableInsertionContainer(meta, dp.handlerCtx.SQLEngine)
+		if err != nil {
+			return nil, err
+		}
 		return sqlstream.NewSimpleSQLMapStream(selectCtx, insertContainer, dp.handlerCtx.DrmConfig, dp.handlerCtx.SQLEngine), nil
 	}
 	projection, err := e.GetProjection()
@@ -345,14 +351,14 @@ func (dp *StandardDependencyPlanner) getStreamFromEdge(e dataflow.DataFlowEdge, 
 	return streaming.NewSimpleProjectionMapStream(projection, staticParams), nil
 }
 
-func (dp *StandardDependencyPlanner) generateSelectDML(e dataflow.DataFlowEdge, tcc *dto.TxnControlCounters) (*drm.PreparedStatementCtx, error) {
+func (dp *StandardDependencyPlanner) generateSelectDML(e dataflow.DataFlowEdge, tcc dto.TxnControlCounters) (drm.PreparedStatementCtx, error) {
 	ann := e.GetSource().GetAnnotation()
 	columnDescriptors, err := e.GetColumnDescriptors()
 	if err != nil {
 		return nil, err
 	}
-	alias := ann.GetTableMeta().Alias
-	tn, err := dp.handlerCtx.DrmConfig.GetTable(ann.GetHIDs(), dp.tcc.GenId)
+	alias := ann.GetTableMeta().GetAlias()
+	tn, err := dp.handlerCtx.DrmConfig.GetTable(ann.GetHIDs(), dp.tcc.GetGenID())
 	if err != nil {
 		return nil, err
 	}

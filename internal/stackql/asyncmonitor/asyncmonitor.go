@@ -21,12 +21,12 @@ import (
 var MonitorPollIntervalSeconds int = 10
 
 type IAsyncMonitor interface {
-	GetMonitorPrimitive(heirarchy *tablemetadata.HeirarchyObjects, precursor primitive.IPrimitive, initialCtx primitive.IPrimitiveCtx, comments sqlparser.CommentDirectives) (primitive.IPrimitive, error)
+	GetMonitorPrimitive(heirarchy tablemetadata.HeirarchyObjects, precursor primitive.IPrimitive, initialCtx primitive.IPrimitiveCtx, comments sqlparser.CommentDirectives) (primitive.IPrimitive, error)
 }
 
 type AsyncHttpMonitorPrimitive struct {
 	handlerCtx          *handler.HandlerContext
-	heirarchy           *tablemetadata.HeirarchyObjects
+	heirarchy           tablemetadata.HeirarchyObjects
 	initialCtx          primitive.IPrimitiveCtx
 	precursor           primitive.IPrimitive
 	transferPayload     map[string]interface{}
@@ -62,7 +62,7 @@ func (asm *AsyncHttpMonitorPrimitive) Execute(pc primitive.IPrimitiveCtx) dto.Ex
 		if pr.Err != nil || asm.executor == nil {
 			return pr
 		}
-		prStr := asm.heirarchy.Provider.GetProviderString()
+		prStr := asm.heirarchy.GetProvider().GetProviderString()
 		// seems pointless
 		_, err := asm.initialCtx.GetAuthContext(prStr)
 		if err != nil {
@@ -116,8 +116,8 @@ type DefaultGoogleAsyncMonitor struct {
 	precursor  primitive.IPrimitive
 }
 
-func (gm *DefaultGoogleAsyncMonitor) GetMonitorPrimitive(heirarchy *tablemetadata.HeirarchyObjects, precursor primitive.IPrimitive, initialCtx primitive.IPrimitiveCtx, comments sqlparser.CommentDirectives) (primitive.IPrimitive, error) {
-	switch strings.ToLower(heirarchy.Provider.GetVersion()) {
+func (gm *DefaultGoogleAsyncMonitor) GetMonitorPrimitive(heirarchy tablemetadata.HeirarchyObjects, precursor primitive.IPrimitive, initialCtx primitive.IPrimitiveCtx, comments sqlparser.CommentDirectives) (primitive.IPrimitive, error) {
+	switch strings.ToLower(heirarchy.GetProvider().GetVersion()) {
 	default:
 		return gm.getV1Monitor(heirarchy, precursor, initialCtx, comments)
 	}
@@ -141,7 +141,7 @@ func getOperationDescriptor(body map[string]interface{}) string {
 	return operationDescriptor
 }
 
-func (gm *DefaultGoogleAsyncMonitor) getV1Monitor(heirarchy *tablemetadata.HeirarchyObjects, precursor primitive.IPrimitive, initialCtx primitive.IPrimitiveCtx, comments sqlparser.CommentDirectives) (primitive.IPrimitive, error) {
+func (gm *DefaultGoogleAsyncMonitor) getV1Monitor(heirarchy tablemetadata.HeirarchyObjects, precursor primitive.IPrimitive, initialCtx primitive.IPrimitiveCtx, comments sqlparser.CommentDirectives) (primitive.IPrimitive, error) {
 	asyncPrim := AsyncHttpMonitorPrimitive{
 		handlerCtx:          gm.handlerCtx,
 		heirarchy:           heirarchy,
@@ -154,7 +154,7 @@ func (gm *DefaultGoogleAsyncMonitor) getV1Monitor(heirarchy *tablemetadata.Heira
 	if comments != nil {
 		asyncPrim.noStatus = comments.IsSet("NOSTATUS")
 	}
-	m := heirarchy.Method
+	m := heirarchy.GetMethod()
 	if m.IsAwaitable() {
 		asyncPrim.executor = func(pc primitive.IPrimitiveCtx, bd interface{}) dto.ExecutorOutput {
 			body, ok := bd.(map[string]interface{})
@@ -178,7 +178,7 @@ func (gm *DefaultGoogleAsyncMonitor) getV1Monitor(heirarchy *tablemetadata.Heira
 			if !ok {
 				return dto.NewExecutorOutput(nil, nil, nil, nil, fmt.Errorf("cannot execute monitor: no 'selfLink' property present"))
 			}
-			prStr := heirarchy.Provider.GetProviderString()
+			prStr := heirarchy.GetProvider().GetProviderString()
 			authCtx, err := pc.GetAuthContext(prStr)
 			if err != nil {
 				return dto.NewExecutorOutput(nil, nil, nil, nil, err)
@@ -199,7 +199,7 @@ func (gm *DefaultGoogleAsyncMonitor) getV1Monitor(heirarchy *tablemetadata.Heira
 			if apiErr != nil {
 				return dto.NewExecutorOutput(nil, nil, nil, nil, apiErr)
 			}
-			target, err := heirarchy.Method.DeprecatedProcessResponse(response)
+			target, err := heirarchy.GetMethod().DeprecatedProcessResponse(response)
 			gm.handlerCtx.LogHTTPResponseMap(target)
 			if err != nil {
 				return dto.NewExecutorOutput(nil, nil, nil, nil, err)
@@ -213,7 +213,7 @@ func (gm *DefaultGoogleAsyncMonitor) getV1Monitor(heirarchy *tablemetadata.Heira
 		}
 		return &asyncPrim, nil
 	}
-	return nil, fmt.Errorf("method %s is not awaitable", heirarchy.Method.GetName())
+	return nil, fmt.Errorf("method %s is not awaitable", heirarchy.GetMethod().GetName())
 }
 
 func prepareReultSet(prim *AsyncHttpMonitorPrimitive, pc primitive.IPrimitiveCtx, target map[string]interface{}, operationDescriptor string) dto.ExecutorOutput {

@@ -131,7 +131,6 @@ func (p *primitiveGenerator) analyzeUnion(pbi PlanBuilderInput) error {
 	}
 	pChild := p.addChildPrimitiveGenerator(node.FirstStatement, leaf)
 	counters := pbi.GetTxnCtrlCtrs()
-	ctrPtr := &counters
 	sPbi, err := NewPlanBuilderInput(handlerCtx, node.FirstStatement, nil, nil, nil, nil, nil, counters)
 	if err != nil {
 		return err
@@ -140,7 +139,7 @@ func (p *primitiveGenerator) analyzeUnion(pbi PlanBuilderInput) error {
 	if err != nil {
 		return err
 	}
-	var selectStatementContexts []*drm.PreparedStatementCtx
+	var selectStatementContexts []drm.PreparedStatementCtx
 	for _, rhsStmt := range node.UnionSelects {
 		i++
 		leaf, err := p.PrimitiveComposer.GetSymTab().NewLeaf(i)
@@ -148,8 +147,8 @@ func (p *primitiveGenerator) analyzeUnion(pbi PlanBuilderInput) error {
 			return err
 		}
 		pChild := p.addChildPrimitiveGenerator(rhsStmt.Statement, leaf)
-		ctrPtr = ctrPtr.CloneAndIncrementInsertID()
-		sPbi, err := NewPlanBuilderInput(handlerCtx, rhsStmt.Statement, nil, nil, nil, nil, nil, *ctrPtr)
+		ctrClone := counters.CloneAndIncrementInsertID()
+		sPbi, err := NewPlanBuilderInput(handlerCtx, rhsStmt.Statement, nil, nil, nil, nil, nil, ctrClone)
 		if err != nil {
 			return err
 		}
@@ -443,7 +442,7 @@ func (pb *primitiveGenerator) analyzeWhere(where *sqlparser.Where, existingParam
 	requiredParameters := suffix.NewParameterSuffixMap()
 	remainingRequiredParameters := suffix.NewParameterSuffixMap()
 	optionalParameters := suffix.NewParameterSuffixMap()
-	tbVisited := map[*tablemetadata.ExtendedTableMetadata]struct{}{}
+	tbVisited := map[tablemetadata.ExtendedTableMetadata]struct{}{}
 	for _, tb := range pb.PrimitiveComposer.GetTables() {
 		if _, ok := tbVisited[tb]; ok {
 			continue
@@ -524,11 +523,11 @@ func (p *primitiveGenerator) parseComments(comments sqlparser.Comments) {
 	}
 }
 
-func (p *primitiveGenerator) persistHerarchyToBuilder(heirarchy *tablemetadata.HeirarchyObjects, node sqlparser.SQLNode) {
+func (p *primitiveGenerator) persistHerarchyToBuilder(heirarchy tablemetadata.HeirarchyObjects, node sqlparser.SQLNode) {
 	p.PrimitiveComposer.SetTable(node, tablemetadata.NewExtendedTableMetadata(heirarchy, taxonomy.GetTableNameFromStatement(node, p.PrimitiveComposer.GetASTFormatter()), taxonomy.GetAliasFromStatement(node)))
 }
 
-func (p *primitiveGenerator) analyzeUnaryExec(pbi PlanBuilderInput, handlerCtx *handler.HandlerContext, node *sqlparser.Exec, selectNode *sqlparser.Select, cols []parserutil.ColumnHandle) (*tablemetadata.ExtendedTableMetadata, error) {
+func (p *primitiveGenerator) analyzeUnaryExec(pbi PlanBuilderInput, handlerCtx *handler.HandlerContext, node *sqlparser.Exec, selectNode *sqlparser.Select, cols []parserutil.ColumnHandle) (tablemetadata.ExtendedTableMetadata, error) {
 	err := p.inferHeirarchyAndPersist(handlerCtx, node, nil)
 	if err != nil {
 		return nil, err
@@ -640,7 +639,10 @@ func (p *primitiveGenerator) analyzeExec(pbi PlanBuilderInput) error {
 		return fmt.Errorf("could not cast node of type '%T' to required Exec", pbi.GetStatement())
 	}
 	tbl, err := p.analyzeUnaryExec(pbi, handlerCtx, node, nil, nil)
-	insertionContainer := tableinsertioncontainer.NewTableInsertionContainer(tbl, handlerCtx.SQLEngine)
+	insertionContainer, err := tableinsertioncontainer.NewTableInsertionContainer(tbl, handlerCtx.SQLEngine)
+	if err != nil {
+		return err
+	}
 	if err != nil {
 		logging.GetLogger().Infoln(fmt.Sprintf("error analyzing EXEC as selection: '%s'", err.Error()))
 		return err
@@ -1021,7 +1023,7 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 				pbi.GetStatement(),
 				tblz,
 				p.PrimitiveComposer,
-				&tcc,
+				tcc,
 			)
 			if err != nil {
 				return err
@@ -1044,7 +1046,10 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 			if err != nil {
 				return err
 			}
-			insertionContainer := tableinsertioncontainer.NewTableInsertionContainer(tbl, handlerCtx.SQLEngine)
+			insertionContainer, err := tableinsertioncontainer.NewTableInsertionContainer(tbl, handlerCtx.SQLEngine)
+			if err != nil {
+				return err
+			}
 			pChild.PrimitiveComposer.SetBuilder(primitivebuilder.NewSingleAcquireAndSelect(pChild.PrimitiveComposer.GetGraph(), pChild.PrimitiveComposer.GetTxnCtrlCtrs(), handlerCtx, insertionContainer, pChild.PrimitiveComposer.GetInsertPreparedStatementCtx(), pChild.PrimitiveComposer.GetSelectPreparedStatementCtx(), nil))
 			return nil
 		}
@@ -1053,7 +1058,7 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 	return fmt.Errorf("cannot process cartesian join select just yet")
 }
 
-func (p *primitiveGenerator) buildRequestContext(handlerCtx *handler.HandlerContext, node sqlparser.SQLNode, meta *tablemetadata.ExtendedTableMetadata, execContext *httpbuild.ExecContext, rowsToInsert map[int]map[int]interface{}) (httpbuild.HTTPArmoury, error) {
+func (p *primitiveGenerator) buildRequestContext(handlerCtx *handler.HandlerContext, node sqlparser.SQLNode, meta tablemetadata.ExtendedTableMetadata, execContext *httpbuild.ExecContext, rowsToInsert map[int]map[int]interface{}) (httpbuild.HTTPArmoury, error) {
 	m, err := meta.GetMethod()
 	if err != nil {
 		return nil, err
@@ -1070,7 +1075,7 @@ func (p *primitiveGenerator) buildRequestContext(handlerCtx *handler.HandlerCont
 	if err != nil {
 		return nil, err
 	}
-	meta.GetHttpArmoury = func() (httpbuild.HTTPArmoury, error) { return httpArmoury, nil }
+	meta.WithGetHttpArmoury(func() (httpbuild.HTTPArmoury, error) { return httpArmoury, nil })
 	return httpArmoury, err
 }
 

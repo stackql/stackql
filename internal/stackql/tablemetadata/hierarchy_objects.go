@@ -8,14 +8,96 @@ import (
 	"github.com/stackql/stackql/internal/stackql/provider"
 )
 
-type HeirarchyObjects struct {
-	dto.Heirarchy
-	HeirarchyIds dto.HeirarchyIdentifiers
-	Provider     provider.IProvider
+var (
+	_ HeirarchyObjects = &standardHeirarchyObjects{}
+)
+
+type HeirarchyObjects interface {
+	GetHeirarchyIds() dto.HeirarchyIdentifiers
+	GetObjectSchema() (*openapistackql.Schema, error)
+	GetProvider() provider.IProvider
+	GetRequestSchema() (*openapistackql.Schema, error)
+	GetResponseSchemaAndMediaType() (*openapistackql.Schema, string, error)
+	GetSelectableObjectSchema() (*openapistackql.Schema, error)
+	GetSelectSchemaAndObjectPath() (*openapistackql.Schema, string, error)
+	GetTableName() string
+	LookupSelectItemsKey() string
+	SetProvider(provider.IProvider)
+	// De facto inheritance
+	GetServiceHdl() *openapistackql.Service
+	GetResource() *openapistackql.Resource
+	GetMethodSet() openapistackql.MethodSet
+	GetMethod() *openapistackql.OperationStore
+	SetServiceHdl(*openapistackql.Service)
+	SetResource(*openapistackql.Resource)
+	SetMethodSet(openapistackql.MethodSet)
+	SetMethod(*openapistackql.OperationStore)
+	SetMethodStr(string)
 }
 
-func (ho *HeirarchyObjects) LookupSelectItemsKey() string {
-	method := ho.Method
+func NewHeirarchyObjects(hIDs dto.HeirarchyIdentifiers) HeirarchyObjects {
+	return &standardHeirarchyObjects{
+		heirarchyIds: hIDs,
+		hr:           dto.NewHeirarchy(hIDs),
+	}
+}
+
+type standardHeirarchyObjects struct {
+	hr           dto.Heirarchy
+	heirarchyIds dto.HeirarchyIdentifiers
+	prov         provider.IProvider
+}
+
+func (ho *standardHeirarchyObjects) GetServiceHdl() *openapistackql.Service {
+	return ho.hr.GetServiceHdl()
+}
+
+func (ho *standardHeirarchyObjects) GetResource() *openapistackql.Resource {
+	return ho.hr.GetResource()
+}
+
+func (ho *standardHeirarchyObjects) GetMethodSet() openapistackql.MethodSet {
+	return ho.hr.GetMethodSet()
+}
+
+func (ho *standardHeirarchyObjects) GetMethod() *openapistackql.OperationStore {
+	return ho.hr.GetMethod()
+}
+
+func (ho *standardHeirarchyObjects) SetServiceHdl(sh *openapistackql.Service) {
+	ho.hr.SetServiceHdl(sh)
+}
+
+func (ho *standardHeirarchyObjects) SetResource(r *openapistackql.Resource) {
+	ho.hr.SetResource(r)
+}
+
+func (ho *standardHeirarchyObjects) SetMethodSet(mSet openapistackql.MethodSet) {
+	ho.hr.SetMethodSet(mSet)
+}
+
+func (ho *standardHeirarchyObjects) SetMethod(m *openapistackql.OperationStore) {
+	ho.hr.SetMethod(m)
+}
+
+func (ho *standardHeirarchyObjects) SetProvider(prov provider.IProvider) {
+	ho.prov = prov
+}
+
+func (ho *standardHeirarchyObjects) GetProvider() provider.IProvider {
+	return ho.prov
+}
+
+func (ho *standardHeirarchyObjects) GetHeirarchyIds() dto.HeirarchyIdentifiers {
+	return ho.heirarchyIds
+}
+
+func (ho *standardHeirarchyObjects) SetMethodStr(mStr string) {
+	ho.hr.SetMethodStr(mStr)
+}
+
+func (ho *standardHeirarchyObjects) LookupSelectItemsKey() string {
+	method := ho.GetMethod()
 	if method == nil {
 		return defaultSelectItemsKey
 	}
@@ -33,52 +115,52 @@ func (ho *HeirarchyObjects) LookupSelectItemsKey() string {
 	return defaultSelectItemsKey
 }
 
-func (ho *HeirarchyObjects) GetResponseSchemaAndMediaType() (*openapistackql.Schema, string, error) {
-	m := ho.Method
+func (ho *standardHeirarchyObjects) GetResponseSchemaAndMediaType() (*openapistackql.Schema, string, error) {
+	m := ho.GetMethod()
 	if m == nil {
 		return nil, "", fmt.Errorf("method is nil")
 	}
 	return m.GetResponseBodySchemaAndMediaType()
 }
 
-func (ho *HeirarchyObjects) GetSelectSchemaAndObjectPath() (*openapistackql.Schema, string, error) {
-	m := ho.Method
+func (ho *standardHeirarchyObjects) GetSelectSchemaAndObjectPath() (*openapistackql.Schema, string, error) {
+	m := ho.GetMethod()
 	if m == nil {
 		return nil, "", fmt.Errorf("method is nil")
 	}
 	return m.GetSelectSchemaAndObjectPath()
 }
 
-func (ho *HeirarchyObjects) GetRequestSchema() (*openapistackql.Schema, error) {
-	m := ho.Method
+func (ho *standardHeirarchyObjects) GetRequestSchema() (*openapistackql.Schema, error) {
+	m := ho.GetMethod()
 	if m == nil {
 		return nil, fmt.Errorf("method is nil")
 	}
 	return ho.GetRequestSchema()
 }
 
-func (ho *HeirarchyObjects) GetTableName() string {
-	return ho.HeirarchyIds.GetTableName()
+func (ho *standardHeirarchyObjects) GetTableName() string {
+	return ho.heirarchyIds.GetTableName()
 }
 
-func (ho *HeirarchyObjects) GetObjectSchema() (*openapistackql.Schema, error) {
+func (ho *standardHeirarchyObjects) GetObjectSchema() (*openapistackql.Schema, error) {
 	return ho.getObjectSchema()
 }
 
-func (ho *HeirarchyObjects) getObjectSchema() (*openapistackql.Schema, error) {
-	rv, _, err := ho.Method.GetResponseBodySchemaAndMediaType()
+func (ho *standardHeirarchyObjects) getObjectSchema() (*openapistackql.Schema, error) {
+	rv, _, err := ho.GetMethod().GetResponseBodySchemaAndMediaType()
 	return rv, err
 }
 
-func (ho *HeirarchyObjects) GetSelectableObjectSchema() (*openapistackql.Schema, error) {
+func (ho *standardHeirarchyObjects) GetSelectableObjectSchema() (*openapistackql.Schema, error) {
 	unsuitableSchemaMsg := "GetSelectableObjectSchema(): schema unsuitable for select query"
-	itemObjS, _, err := ho.Method.GetSelectSchemaAndObjectPath()
+	itemObjS, _, err := ho.GetMethod().GetSelectSchemaAndObjectPath()
 	// rscStr, _ := tbl.GetResourceStr()
 	if err != nil {
 		return nil, fmt.Errorf("%s: %s", err.Error(), unsuitableSchemaMsg)
 	}
 	if itemObjS == nil || err != nil {
-		return nil, fmt.Errorf("could not locate dml object for response type '%v'", ho.Method.Response.ObjectKey)
+		return nil, fmt.Errorf("could not locate dml object for response type '%v'", ho.GetMethod().Response.ObjectKey)
 	}
 	return itemObjS, nil
 }

@@ -11,11 +11,11 @@ import (
 
 type Union struct {
 	graph      *primitivegraph.PrimitiveGraph
-	unionCtx   *drm.PreparedStatementCtx
+	unionCtx   drm.PreparedStatementCtx
 	handlerCtx *handler.HandlerContext
 	drmCfg     drm.DRMConfig
-	lhs        *drm.PreparedStatementCtx
-	rhs        []*drm.PreparedStatementCtx
+	lhs        drm.PreparedStatementCtx
+	rhs        []drm.PreparedStatementCtx
 	root, tail primitivegraph.PrimitiveNode
 }
 
@@ -36,7 +36,7 @@ func (un *Union) Build() error {
 	return nil
 }
 
-func NewUnion(graph *primitivegraph.PrimitiveGraph, handlerCtx *handler.HandlerContext, unionCtx *drm.PreparedStatementCtx, lhs *drm.PreparedStatementCtx, rhs []*drm.PreparedStatementCtx) Builder {
+func NewUnion(graph *primitivegraph.PrimitiveGraph, handlerCtx *handler.HandlerContext, unionCtx drm.PreparedStatementCtx, lhs drm.PreparedStatementCtx, rhs []drm.PreparedStatementCtx) Builder {
 	return &Union{
 		graph:      graph,
 		handlerCtx: handlerCtx,

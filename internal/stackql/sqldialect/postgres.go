@@ -230,7 +230,7 @@ func (eng *postgresDialect) getGCHousekeepingQuery(tableName string, tcc dto.Txn
 		) values(%d, %d, %d, '%s')
 		ON CONFLICT (iql_generation_id, iql_session_id, iql_transaction_id, table_name) DO NOTHING
 		`
-	return fmt.Sprintf(templateQuery, tcc.GenId, tcc.SessionId, tcc.TxnId, tableName)
+	return fmt.Sprintf(templateQuery, tcc.GetGenID(), tcc.GetSessionID(), tcc.GetTxnID(), tableName)
 }
 
 func (eng *postgresDialect) DelimitGroupByColumn(term string) string {
@@ -306,11 +306,11 @@ func (eng *postgresDialect) composeSelectQuery(columns []relationaldto.Relationa
 	return eng.sanitizeQueryString(query)
 }
 
-func (eng *postgresDialect) GenerateInsertDML(relationalTable relationaldto.RelationalTable, tcc *dto.TxnControlCounters) (string, error) {
+func (eng *postgresDialect) GenerateInsertDML(relationalTable relationaldto.RelationalTable, tcc dto.TxnControlCounters) (string, error) {
 	return eng.generateInsertDML(relationalTable, tcc)
 }
 
-func (eng *postgresDialect) generateInsertDML(relationalTable relationaldto.RelationalTable, tcc *dto.TxnControlCounters) (string, error) {
+func (eng *postgresDialect) generateInsertDML(relationalTable relationaldto.RelationalTable, tcc dto.TxnControlCounters) (string, error) {
 	var q strings.Builder
 	var quotedColNames, vals []string
 	tableName, err := relationalTable.GetName()
@@ -348,11 +348,11 @@ func (eng *postgresDialect) generateInsertDML(relationalTable relationaldto.Rela
 	return q.String(), nil
 }
 
-func (eng *postgresDialect) GenerateSelectDML(relationalTable relationaldto.RelationalTable, txnCtrlCtrs *dto.TxnControlCounters, selectSuffix, rewrittenWhere string) (string, error) {
+func (eng *postgresDialect) GenerateSelectDML(relationalTable relationaldto.RelationalTable, txnCtrlCtrs dto.TxnControlCounters, selectSuffix, rewrittenWhere string) (string, error) {
 	return eng.generateSelectDML(relationalTable, txnCtrlCtrs, selectSuffix, rewrittenWhere)
 }
 
-func (eng *postgresDialect) generateSelectDML(relationalTable relationaldto.RelationalTable, txnCtrlCtrs *dto.TxnControlCounters, selectSuffix, rewrittenWhere string) (string, error) {
+func (eng *postgresDialect) generateSelectDML(relationalTable relationaldto.RelationalTable, txnCtrlCtrs dto.TxnControlCounters, selectSuffix, rewrittenWhere string) (string, error) {
 	var q strings.Builder
 	var quotedColNames []string
 	for _, col := range relationalTable.GetColumns() {
@@ -423,7 +423,7 @@ func (sl *postgresDialect) GCAdd(tableName string, parentTcc, lockableTcc dto.Tx
 		maxTxnColName,
 		maxTxnColName,
 	)
-	_, err := sl.sqlEngine.Exec(q, lockableTcc.TxnId, lockableTcc.InsertId)
+	_, err := sl.sqlEngine.Exec(q, lockableTcc.GetTxnID(), lockableTcc.GetInsertID())
 	return err
 }
 
@@ -516,7 +516,7 @@ func (eng *postgresDialect) IsTablePresent(tableName string, requestEncoding str
 }
 
 // In Postgres, `Timestamp with time zone` objects are timezone-aware.
-func (eng *postgresDialect) TableOldestUpdateUTC(tableName string, requestEncoding string, updateColName string, requestEncodingColName string) (time.Time, *dto.TxnControlCounters) {
+func (eng *postgresDialect) TableOldestUpdateUTC(tableName string, requestEncoding string, updateColName string, requestEncodingColName string) (time.Time, dto.TxnControlCounters) {
 	genIdColName := eng.controlAttributes.GetControlGenIdColumnName()
 	ssnIdColName := eng.controlAttributes.GetControlSsnIdColumnName()
 	txnIdColName := eng.controlAttributes.GetControlTxnIdColumnName()
@@ -527,11 +527,12 @@ func (eng *postgresDialect) TableOldestUpdateUTC(tableName string, requestEncodi
 		rowExists := rows.Next()
 		if rowExists {
 			var oldestTime time.Time
-			tcc := dto.TxnControlCounters{}
-			err = rows.Scan(&oldestTime, &tcc.GenId, &tcc.SessionId, &tcc.TxnId, &tcc.InsertId)
+			var genID, sessionID, txnID, insertID int
+			err = rows.Scan(&oldestTime, &genID, &sessionID, &txnID, &insertID)
 			if err == nil {
-				tcc.TableName = tableName
-				return oldestTime, &tcc
+				tcc := dto.NewTxnControlCountersFromVals(genID, sessionID, txnID, insertID)
+				tcc.SetTableName(tableName)
+				return oldestTime, tcc
 			}
 		}
 	}
@@ -727,11 +728,11 @@ func (eng *postgresDialect) QueryNamespaced(colzString string, actualTableName s
 	return eng.sqlEngine.Query(fmt.Sprintf(`SELECT %s FROM "%s"."%s" WHERE "%s" = $1`, colzString, eng.tableSchema, actualTableName, requestEncodingColName), requestEncoding)
 }
 
-func (se *postgresDialect) GetTable(tableHeirarchyIDs *dto.HeirarchyIdentifiers, discoveryId int) (dto.DBTable, error) {
+func (se *postgresDialect) GetTable(tableHeirarchyIDs dto.HeirarchyIdentifiers, discoveryId int) (dto.DBTable, error) {
 	return se.getTable(tableHeirarchyIDs, discoveryId)
 }
 
-func (se *postgresDialect) getTable(tableHeirarchyIDs *dto.HeirarchyIdentifiers, discoveryId int) (dto.DBTable, error) {
+func (se *postgresDialect) getTable(tableHeirarchyIDs dto.HeirarchyIdentifiers, discoveryId int) (dto.DBTable, error) {
 	tableNameStump, err := se.getTableNameStump(tableHeirarchyIDs)
 	if err != nil {
 		return dto.NewDBTable("", "", "", 0, tableHeirarchyIDs), err
@@ -740,13 +741,13 @@ func (se *postgresDialect) getTable(tableHeirarchyIDs *dto.HeirarchyIdentifiers,
 	return dto.NewDBTable(tableName, tableNameStump, tableHeirarchyIDs.GetTableName(), discoveryId, tableHeirarchyIDs), err
 }
 
-func (se *postgresDialect) GetCurrentTable(tableHeirarchyIDs *dto.HeirarchyIdentifiers) (dto.DBTable, error) {
+func (se *postgresDialect) GetCurrentTable(tableHeirarchyIDs dto.HeirarchyIdentifiers) (dto.DBTable, error) {
 	return se.getCurrentTable(tableHeirarchyIDs)
 }
 
 // In postgres, 63 chars is default length for IDs such as table names
 // https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
-func (se *postgresDialect) getTableNameStump(tableHeirarchyIDs *dto.HeirarchyIdentifiers) (string, error) {
+func (se *postgresDialect) getTableNameStump(tableHeirarchyIDs dto.HeirarchyIdentifiers) (string, error) {
 	rawTableName := tableHeirarchyIDs.GetTableName()
 	maxRawTableNameWidth := constants.PostgresIDMaxWidth - (len(".generation_") + constants.MaxDigits32BitUnsigned)
 	if len(rawTableName) > maxRawTableNameWidth {
@@ -755,7 +756,7 @@ func (se *postgresDialect) getTableNameStump(tableHeirarchyIDs *dto.HeirarchyIde
 	return rawTableName, nil
 }
 
-func (se *postgresDialect) getCurrentTable(tableHeirarchyIDs *dto.HeirarchyIdentifiers) (dto.DBTable, error) {
+func (se *postgresDialect) getCurrentTable(tableHeirarchyIDs dto.HeirarchyIdentifiers) (dto.DBTable, error) {
 	var tableName string
 	var discoID int
 	tableNameStump, err := se.getTableNameStump(tableHeirarchyIDs)

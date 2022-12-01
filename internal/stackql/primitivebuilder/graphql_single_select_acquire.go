@@ -24,11 +24,11 @@ import (
 type GraphQLSingleSelectAcquire struct {
 	graph                      *primitivegraph.PrimitiveGraph
 	handlerCtx                 *handler.HandlerContext
-	tableMeta                  *tablemetadata.ExtendedTableMetadata
+	tableMeta                  tablemetadata.ExtendedTableMetadata
 	drmCfg                     drm.DRMConfig
-	insertPreparedStatementCtx *drm.PreparedStatementCtx
+	insertPreparedStatementCtx drm.PreparedStatementCtx
 	insertionContainer         tableinsertioncontainer.TableInsertionContainer
-	txnCtrlCtr                 *dto.TxnControlCounters
+	txnCtrlCtr                 dto.TxnControlCounters
 	rowSort                    func(map[string]map[string]interface{}) []string
 	root                       primitivegraph.PrimitiveNode
 	stream                     streaming.MapStream
@@ -37,13 +37,13 @@ type GraphQLSingleSelectAcquire struct {
 func newGraphQLSingleSelectAcquire(
 	graph *primitivegraph.PrimitiveGraph,
 	handlerCtx *handler.HandlerContext,
-	tableMeta *tablemetadata.ExtendedTableMetadata,
-	insertCtx *drm.PreparedStatementCtx,
+	tableMeta tablemetadata.ExtendedTableMetadata,
+	insertCtx drm.PreparedStatementCtx,
 	insertionContainer tableinsertioncontainer.TableInsertionContainer,
 	rowSort func(map[string]map[string]interface{}) []string,
 	stream streaming.MapStream,
 ) Builder {
-	var tcc *dto.TxnControlCounters
+	var tcc dto.TxnControlCounters
 	if insertCtx != nil {
 		tcc = insertCtx.GetGCCtrlCtrs()
 	}
@@ -85,7 +85,7 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 		return fmt.Errorf("could not build graphql exection for table")
 	}
 	ex := func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput {
-		currentTcc := *ss.insertPreparedStatementCtx.GetGCCtrlCtrs()
+		currentTcc := ss.insertPreparedStatementCtx.GetGCCtrlCtrs().Clone()
 		ss.graph.AddTxnControlCounters(currentTcc)
 
 		for _, reqCtx := range httpArmoury.GetRequestParams() {
@@ -119,7 +119,7 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 				for _, c := range nonControlColumns {
 					nonControlColumnNames = append(nonControlColumnNames, c.GetName())
 				}
-				ss.handlerCtx.GarbageCollector.Update(tableName, *olderTcc, currentTcc)
+				ss.handlerCtx.GarbageCollector.Update(tableName, olderTcc, currentTcc)
 				ss.insertionContainer.SetTableTxnCounters(tableName, olderTcc)
 				ss.insertPreparedStatementCtx.SetGCCtrlCtrs(olderTcc)
 				r, sqlErr := ss.handlerCtx.GetNamespaceCollection().GetAnalyticsCacheTableNamespaceConfigurator().Read(tableName, reqEncoding, ss.drmCfg.GetControlAttributes().GetControlInsertEncodedIdColumnName(), nonControlColumnNames)
@@ -177,7 +177,7 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 		return dto.ExecutorOutput{}
 	}
 
-	prep := func() *drm.PreparedStatementCtx {
+	prep := func() drm.PreparedStatementCtx {
 		return ss.insertPreparedStatementCtx
 	}
 	insertPrim := primitive.NewHTTPRestPrimitive(
