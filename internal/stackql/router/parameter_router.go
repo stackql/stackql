@@ -41,7 +41,7 @@ type ParameterRouter interface {
 	//   - Hierarchy.
 	//   - Columnar objects definitely assigned as HTTP method parameters.
 	//   - Error if applicable.
-	Route(tb sqlparser.TableExpr, handler *handler.HandlerContext) (taxonomy.AnnotationCtx, error)
+	Route(tb sqlparser.TableExpr, handler handler.HandlerContext) (taxonomy.AnnotationCtx, error)
 
 	// Detects:
 	//   - Dependency cycle.
@@ -307,7 +307,7 @@ func (pr *StandardParameterRouter) invalidate(key string, val interface{}) error
 // Columnar input may come from either where clause
 // or on conditions.
 // TODO: Get rid of the dead set mess that is where paramters in preference.
-func (pr *StandardParameterRouter) Route(tb sqlparser.TableExpr, handlerCtx *handler.HandlerContext) (taxonomy.AnnotationCtx, error) {
+func (pr *StandardParameterRouter) Route(tb sqlparser.TableExpr, handlerCtx handler.HandlerContext) (taxonomy.AnnotationCtx, error) {
 	for k, v := range pr.whereParamMap.GetMap() {
 		logging.GetLogger().Infof("%v\n", v)
 		alias := k.Alias()
@@ -412,7 +412,7 @@ func (pr *StandardParameterRouter) Route(tb sqlparser.TableExpr, handlerCtx *han
 	// hierarchy.  This enables e2e relationship
 	// from expression to hierarchy.
 	// eg: "on" clause to openapi method
-	ac, err := obtainAnnotationCtx(handlerCtx.SQLEngine, m, abbreviatedConsumedMap, pr.namespaceCollection)
+	ac, err := obtainAnnotationCtx(handlerCtx.GetSQLEngine(), m, abbreviatedConsumedMap, pr.namespaceCollection)
 	pr.tableToAnnotationCtx[tb] = ac
 	return ac, err
 }

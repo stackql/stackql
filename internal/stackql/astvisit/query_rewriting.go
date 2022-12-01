@@ -8,8 +8,8 @@ import (
 
 	"github.com/stackql/go-openapistackql/openapistackql"
 	"github.com/stackql/stackql/internal/stackql/drm"
-	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/sqlrewrite"
@@ -70,15 +70,15 @@ func (v *QueryRewriteAstVisitor) GenerateSelectDML() (drm.PreparedStatementCtx, 
 }
 
 type QueryRewriteAstVisitor struct {
-	handlerCtx            *handler.HandlerContext
+	handlerCtx            handler.HandlerContext
 	dc                    drm.DRMConfig
 	tables                taxonomy.TblMap
 	annotations           taxonomy.AnnotationCtxMap
 	discoGenIDs           map[sqlparser.SQLNode]int
 	annotatedTabulations  taxonomy.AnnotatedTabulationMap
 	selectCtx             drm.PreparedStatementCtx
-	baseCtrlCounters      dto.TxnControlCounters
-	secondaryCtrlCounters []dto.TxnControlCounters
+	baseCtrlCounters      internaldto.TxnControlCounters
+	secondaryCtrlCounters []internaldto.TxnControlCounters
 	colRefs               parserutil.ColTableMap
 	columnNames           []parserutil.ColumnHandle
 	columnDescriptors     []openapistackql.ColumnDescriptor
@@ -94,15 +94,15 @@ type QueryRewriteAstVisitor struct {
 }
 
 func NewQueryRewriteAstVisitor(
-	handlerCtx *handler.HandlerContext,
+	handlerCtx handler.HandlerContext,
 	tables taxonomy.TblMap,
 	tableSlice []tableinsertioncontainer.TableInsertionContainer,
 	annotations taxonomy.AnnotationCtxMap,
 	discoGenIDs map[sqlparser.SQLNode]int,
 	colRefs parserutil.ColTableMap,
 	dc drm.DRMConfig,
-	txnCtrlCtrs dto.TxnControlCounters,
-	secondaryTccs []dto.TxnControlCounters,
+	txnCtrlCtrs internaldto.TxnControlCounters,
+	secondaryTccs []internaldto.TxnControlCounters,
 	rewrittenWhere string,
 	namespaceCollection tablenamespace.TableNamespaceCollection,
 ) *QueryRewriteAstVisitor {
@@ -148,7 +148,7 @@ func (v *QueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 	switch node := node.(type) {
 	case *sqlparser.Select:
-		v.selectSuffix = GenerateModifiedSelectSuffix(node, v.handlerCtx.SQLDialect, v.handlerCtx.GetASTFormatter(), v.namespaceCollection)
+		v.selectSuffix = GenerateModifiedSelectSuffix(node, v.handlerCtx.GetSQLDialect(), v.handlerCtx.GetASTFormatter(), v.namespaceCollection)
 		var options string
 		addIf := func(b bool, s string) {
 			if b {
@@ -180,7 +180,7 @@ func (v *QueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			if err != nil {
 				return err
 			}
-			fromVis := NewFromRewriteAstVisitor("", true, v.handlerCtx.SQLDialect, v.formatter, v.namespaceCollection, v.annotations, v.dc)
+			fromVis := NewFromRewriteAstVisitor("", true, v.handlerCtx.GetSQLDialect(), v.formatter, v.namespaceCollection, v.annotations, v.dc)
 			if node.From != nil {
 				node.From.Accept(fromVis)
 				v.fromStr = fromVis.GetRewrittenQuery()
@@ -756,7 +756,7 @@ func (v *QueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		}
 
 	case *sqlparser.GroupConcatExpr:
-		// v.handlerCtx.SQLDialect.GetASTFuncRewriter().RewriteFunc(node)
+		// v.handlerCtx.GetSQLDialect().GetASTFuncRewriter().RewriteFunc(node)
 
 	case *sqlparser.ValuesFuncExpr:
 

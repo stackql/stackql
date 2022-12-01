@@ -1,15 +1,13 @@
 package relationaldto
 
-import (
-	"github.com/stackql/stackql/internal/stackql/dto"
-)
+import "github.com/stackql/stackql/internal/stackql/internaldto"
 
 type standardRelationalTable struct {
 	alias       string
 	name        string
 	baseName    string
 	discoveryID int
-	hIDs        dto.HeirarchyIdentifiers
+	hIDs        internaldto.HeirarchyIdentifiers
 	columns     []RelationalColumn
 }
 

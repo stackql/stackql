@@ -11,6 +11,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/astfuncrewrite"
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/relationaldto"
 	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
@@ -22,7 +23,7 @@ type SQLDialect interface {
 	DelimitGroupByColumn(term string) string
 	DelimitOrderByColumn(term string) string
 	// GCAdd() will record a Txn as active
-	GCAdd(string, dto.TxnControlCounters, dto.TxnControlCounters) error
+	GCAdd(string, internaldto.TxnControlCounters, internaldto.TxnControlCounters) error
 	// GCCollectAll() will remove all records from data tables.
 	GCCollectAll() error
 	// GCCollectObsoleted() must be mutex-protected.
@@ -35,9 +36,9 @@ type SQLDialect interface {
 	GCPurgeEphemeral() error
 	//
 	GenerateDDL(relationaldto.RelationalTable, bool) ([]string, error)
-	GenerateInsertDML(relationaldto.RelationalTable, dto.TxnControlCounters) (string, error)
-	GenerateSelectDML(relationaldto.RelationalTable, dto.TxnControlCounters, string, string) (string, error)
-	GetGCHousekeepingQuery(string, dto.TxnControlCounters) string
+	GenerateInsertDML(relationaldto.RelationalTable, internaldto.TxnControlCounters) (string, error)
+	GenerateSelectDML(relationaldto.RelationalTable, internaldto.TxnControlCounters, string, string) (string, error)
+	GetGCHousekeepingQuery(string, internaldto.TxnControlCounters) string
 	//
 	GetASTFormatter() sqlparser.NodeFormatter
 	GetASTFuncRewriter() astfuncrewrite.ASTFuncRewriter
@@ -58,10 +59,10 @@ type SQLDialect interface {
 	QueryNamespaced(string, string, string, string) (*sql.Rows, error)
 
 	IsTablePresent(string, string, string) bool
-	TableOldestUpdateUTC(string, string, string, string) (time.Time, dto.TxnControlCounters)
+	TableOldestUpdateUTC(string, string, string, string) (time.Time, internaldto.TxnControlCounters)
 
-	GetCurrentTable(dto.HeirarchyIdentifiers) (dto.DBTable, error)
-	GetTable(dto.HeirarchyIdentifiers, int) (dto.DBTable, error)
+	GetCurrentTable(internaldto.HeirarchyIdentifiers) (internaldto.DBTable, error)
+	GetTable(internaldto.HeirarchyIdentifiers, int) (internaldto.DBTable, error)
 }
 
 func getNodeFormatter(name string) sqlparser.NodeFormatter {

@@ -6,8 +6,8 @@ import (
 	"strconv"
 
 	"github.com/stackql/stackql/internal/stackql/drm"
-	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/nativedb"
 	"github.com/stackql/stackql/internal/stackql/primitive"
@@ -17,17 +17,17 @@ import (
 
 type NativeSelect struct {
 	graph       *primitivegraph.PrimitiveGraph
-	handlerCtx  *handler.HandlerContext
+	handlerCtx  handler.HandlerContext
 	drmCfg      drm.DRMConfig
 	selectQuery nativedb.Select
 	root        primitivegraph.PrimitiveNode
 }
 
-func NewNativeSelect(graph *primitivegraph.PrimitiveGraph, handlerCtx *handler.HandlerContext, selectQuery nativedb.Select) Builder {
+func NewNativeSelect(graph *primitivegraph.PrimitiveGraph, handlerCtx handler.HandlerContext, selectQuery nativedb.Select) Builder {
 	return &NativeSelect{
 		graph:       graph,
 		handlerCtx:  handlerCtx,
-		drmCfg:      handlerCtx.DrmConfig,
+		drmCfg:      handlerCtx.GetDrmConfig(),
 		selectQuery: selectQuery,
 	}
 }
@@ -42,7 +42,7 @@ func (ss *NativeSelect) GetTail() primitivegraph.PrimitiveNode {
 
 func (ss *NativeSelect) Build() error {
 
-	selectEx := func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput {
+	selectEx := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 
 		// select phase
 		logging.GetLogger().Infoln(fmt.Sprintf("running empty select with columns: %v", ss.selectQuery))
@@ -58,7 +58,7 @@ func (ss *NativeSelect) Build() error {
 			for {
 				rows, err := rowStream.Read()
 				if err != nil && err != io.EOF {
-					return dto.NewErroneousExecutorOutput(err)
+					return internaldto.NewErroneousExecutorOutput(err)
 				}
 				for _, row := range rows {
 					rowMap[strconv.Itoa(i)] = row
@@ -69,7 +69,7 @@ func (ss *NativeSelect) Build() error {
 				}
 			}
 		}
-		rv := util.PrepareResultSet(dto.NewPrepareResultSetDTO(nil, rowMap, colz, nil, nil, nil))
+		rv := util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, rowMap, colz, nil, nil, nil))
 		if len(rowMap) > 0 {
 			return rv
 		}

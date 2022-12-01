@@ -4,7 +4,7 @@ import (
 	"reflect"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
-	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 )
 
@@ -21,7 +21,7 @@ type ColumnMetadata interface {
 }
 
 type standardColumnMetadata struct {
-	coupling dto.DRMCoupling
+	coupling internaldto.DRMCoupling
 	column   openapistackql.ColumnDescriptor
 }
 
@@ -45,12 +45,12 @@ func (cd *standardColumnMetadata) GetType() string {
 }
 
 func (cd *standardColumnMetadata) GetRelationalType() string {
-	return cd.coupling.RelationalType
+	return cd.coupling.GetRelationalType()
 }
 
 func NewColDescriptor(col openapistackql.ColumnDescriptor, relTypeStr string) ColumnMetadata {
 	return &standardColumnMetadata{
-		coupling: dto.DRMCoupling{RelationalType: relTypeStr, GolangKind: reflect.String},
+		coupling: internaldto.NewDRMCoupling(relTypeStr, reflect.String),
 		column:   col,
 	}
 }

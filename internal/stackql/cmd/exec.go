@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -74,8 +74,8 @@ stackql exec -i iqlscripts/create-disk.iql --credentialsfilepath /mnt/c/tmp/stac
 		iqlerror.PrintErrorAndExitOneIfError(err)
 		handlerCtx, err := entryutil.BuildHandlerContext(runtimeCtx, rdr, queryCache, inputBundle)
 		iqlerror.PrintErrorAndExitOneIfError(err)
-		iqlerror.PrintErrorAndExitOneIfNil(&handlerCtx, "Handler context error")
-		RunCommand(&handlerCtx, nil, nil)
+		iqlerror.PrintErrorAndExitOneIfNil(handlerCtx, "Handler context error")
+		RunCommand(handlerCtx, nil, nil)
 	},
 }
 
@@ -90,17 +90,17 @@ func getOutputFile(filename string) (*os.File, error) {
 	}
 }
 
-func RunCommand(handlerCtx *handler.HandlerContext, outfile io.Writer, outErrFile io.Writer) {
+func RunCommand(handlerCtx handler.HandlerContext, outfile io.Writer, outErrFile io.Writer) {
 	defer iqlerror.HandlePanic(outErrFile)
 	if outfile == nil {
-		outfile, _ = getOutputFile(handlerCtx.RuntimeContext.OutfilePath)
+		outfile, _ = getOutputFile(handlerCtx.GetRuntimeContext().OutfilePath)
 	}
 	if outErrFile == nil {
 		outErrFile, _ = getOutputFile(writer.StdErrStr)
 	}
-	handlerCtx.Outfile = outfile
-	handlerCtx.OutErrFile = outErrFile
-	if handlerCtx.RuntimeContext.DryRunFlag {
+	handlerCtx.SetOutfile(outfile)
+	handlerCtx.SetOutErrFile(outErrFile)
+	if handlerCtx.GetRuntimeContext().DryRunFlag {
 		driver.ProcessDryRun(handlerCtx)
 		return
 	}

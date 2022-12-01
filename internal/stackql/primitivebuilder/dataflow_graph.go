@@ -2,8 +2,8 @@ package primitivebuilder
 
 import (
 	"github.com/stackql/stackql/internal/stackql/dataflow"
-	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
@@ -13,7 +13,7 @@ import (
 type DataflowGraphBuilder struct {
 	graph         *primitivegraph.PrimitiveGraph
 	dataflowGraph dataflow.DataFlowWeaklyConnectedComponent
-	handlerCtx    *handler.HandlerContext
+	handlerCtx    handler.HandlerContext
 	root          primitivegraph.PrimitiveNode
 	sqlEngine     sqlengine.SQLEngine
 }
@@ -21,8 +21,8 @@ type DataflowGraphBuilder struct {
 func NewDataflowGraphBuilder(
 	graph *primitivegraph.PrimitiveGraph,
 	dataflowGraph dataflow.DataFlowWeaklyConnectedComponent,
-	txnControlCounters *dto.TxnControlCounters,
-	handlerCtx *handler.HandlerContext,
+	txnControlCounters *internaldto.TxnControlCounters,
+	handlerCtx handler.HandlerContext,
 	sqlEngine sqlengine.SQLEngine,
 ) Builder {
 	return &DataflowGraphBuilder{
@@ -36,15 +36,15 @@ func NewDataflowGraphBuilder(
 func (nb *DataflowGraphBuilder) Build() error {
 
 	pr := primitive.NewLocalPrimitive(
-		func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput {
+		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			return util.PrepareResultSet(
-				dto.NewPrepareResultSetPlusRawDTO(
+				internaldto.NewPrepareResultSetPlusRawDTO(
 					nil,
 					nil,
 					nil,
 					nil,
 					nil,
-					&dto.BackendMessages{WorkingMessages: []string{"nop completed"}}, nil),
+					&internaldto.BackendMessages{WorkingMessages: []string{"nop completed"}}, nil),
 			)
 		},
 	)

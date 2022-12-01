@@ -42,16 +42,16 @@ func TestSimpleShowInsertComputeAddressesRequired(t *testing.T) {
 		}
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, rdr, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.Outfile = os.Stdout
-		handlerCtx.OutErrFile = os.Stderr
+		handlerCtx.SetOutfile(os.Stdout)
+		handlerCtx.SetOutErrFile(os.Stderr)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		handlerCtx.Outfile = outFile
-		handlerCtx.OutErrFile = os.Stderr
+		handlerCtx.SetOutfile(outFile)
+		handlerCtx.SetOutErrFile(os.Stderr)
 
-		ProcessQuery(&handlerCtx)
+		ProcessQuery(handlerCtx)
 	}
 
 	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedShowInsertAddressesRequiredFile})
@@ -83,16 +83,16 @@ func TestSimpleShowInsertBiqueryDatasets(t *testing.T) {
 		}
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, rdr, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.Outfile = os.Stdout
-		handlerCtx.OutErrFile = os.Stderr
+		handlerCtx.SetOutfile(os.Stdout)
+		handlerCtx.SetOutErrFile(os.Stderr)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		handlerCtx.Outfile = outFile
-		handlerCtx.OutErrFile = os.Stderr
+		handlerCtx.SetOutfile(outFile)
+		handlerCtx.SetOutErrFile(os.Stderr)
 
-		ProcessQuery(&handlerCtx)
+		ProcessQuery(handlerCtx)
 	}
 
 	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedShowInsertBQDatasetsFile})
@@ -124,16 +124,16 @@ func TestSimpleShowInsertBiqueryDatasetsRequired(t *testing.T) {
 		}
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, rdr, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.Outfile = os.Stdout
-		handlerCtx.OutErrFile = os.Stderr
+		handlerCtx.SetOutfile(os.Stdout)
+		handlerCtx.SetOutErrFile(os.Stderr)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		handlerCtx.Outfile = outFile
-		handlerCtx.OutErrFile = os.Stderr
+		handlerCtx.SetOutfile(outFile)
+		handlerCtx.SetOutErrFile(os.Stderr)
 
-		ProcessQuery(&handlerCtx)
+		ProcessQuery(handlerCtx)
 	}
 
 	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedShowInsertBQDatasetsRequiredFile})

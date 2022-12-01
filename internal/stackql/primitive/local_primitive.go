@@ -2,27 +2,27 @@ package primitive
 
 import (
 	"github.com/stackql/stackql/internal/stackql/drm"
-	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 )
 
 type LocalPrimitive struct {
-	Executor   func(pc IPrimitiveCtx) dto.ExecutorOutput
+	Executor   func(pc IPrimitiveCtx) internaldto.ExecutorOutput
 	Preparator func() *drm.PreparedStatementCtx
-	Inputs     map[int64]dto.ExecutorOutput
+	Inputs     map[int64]internaldto.ExecutorOutput
 	id         int64
 }
 
-func NewLocalPrimitive(executor func(pc IPrimitiveCtx) dto.ExecutorOutput) IPrimitive {
+func NewLocalPrimitive(executor func(pc IPrimitiveCtx) internaldto.ExecutorOutput) IPrimitive {
 	return &LocalPrimitive{
 		Executor: executor,
-		Inputs:   make(map[int64]dto.ExecutorOutput),
+		Inputs:   make(map[int64]internaldto.ExecutorOutput),
 	}
 }
 
 func (pr *LocalPrimitive) SetTxnId(id int) {
 }
 
-func (pr *LocalPrimitive) IncidentData(fromId int64, input dto.ExecutorOutput) error {
+func (pr *LocalPrimitive) IncidentData(fromId int64, input internaldto.ExecutorOutput) error {
 	pr.Inputs[fromId] = input
 	return nil
 }
@@ -35,12 +35,12 @@ func (pr *LocalPrimitive) Optimise() error {
 	return nil
 }
 
-func (pr *LocalPrimitive) GetInputFromAlias(string) (dto.ExecutorOutput, bool) {
-	var rv dto.ExecutorOutput
+func (pr *LocalPrimitive) GetInputFromAlias(string) (internaldto.ExecutorOutput, bool) {
+	var rv internaldto.ExecutorOutput
 	return rv, false
 }
 
-func (pr *LocalPrimitive) SetExecutor(ex func(pc IPrimitiveCtx) dto.ExecutorOutput) error {
+func (pr *LocalPrimitive) SetExecutor(ex func(pc IPrimitiveCtx) internaldto.ExecutorOutput) error {
 	pr.Executor = ex
 	return nil
 }
@@ -49,9 +49,9 @@ func (pr *LocalPrimitive) ID() int64 {
 	return pr.id
 }
 
-func (pr *LocalPrimitive) Execute(pc IPrimitiveCtx) dto.ExecutorOutput {
+func (pr *LocalPrimitive) Execute(pc IPrimitiveCtx) internaldto.ExecutorOutput {
 	if pr.Executor != nil {
 		return pr.Executor(pc)
 	}
-	return dto.NewExecutorOutput(nil, nil, nil, nil, nil)
+	return internaldto.NewExecutorOutput(nil, nil, nil, nil, nil)
 }

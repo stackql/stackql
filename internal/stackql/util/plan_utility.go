@@ -10,7 +10,7 @@ import (
 	"github.com/lib/pq/oid"
 	"github.com/stackql/go-openapistackql/openapistackql"
 	openapistackql_util "github.com/stackql/go-openapistackql/pkg/util"
-	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 
@@ -219,9 +219,9 @@ func DefaultRowSort(rowMap map[string]map[string]interface{}) []string {
 	return []string{}
 }
 
-func GenerateSimpleErroneousOutput(err error) dto.ExecutorOutput {
+func GenerateSimpleErroneousOutput(err error) internaldto.ExecutorOutput {
 	return PrepareResultSet(
-		dto.NewPrepareResultSetDTO(
+		internaldto.NewPrepareResultSetDTO(
 			nil,
 			nil,
 			nil,
@@ -232,9 +232,9 @@ func GenerateSimpleErroneousOutput(err error) dto.ExecutorOutput {
 	)
 }
 
-func PrepareResultSet(payload dto.PrepareResultSetDTO) dto.ExecutorOutput {
+func PrepareResultSet(payload internaldto.PrepareResultSetDTO) internaldto.ExecutorOutput {
 	if payload.Err != nil {
-		return dto.NewExecutorOutput(
+		return internaldto.NewExecutorOutput(
 			nil,
 			payload.OutputBody,
 			nil,
@@ -243,7 +243,7 @@ func PrepareResultSet(payload dto.PrepareResultSetDTO) dto.ExecutorOutput {
 		)
 	}
 	if payload.RowMap == nil || len(payload.RowMap) == 0 {
-		return dto.NewExecutorOutput(
+		return internaldto.NewExecutorOutput(
 			nil,
 			payload.OutputBody,
 			nil,
@@ -348,7 +348,7 @@ func PrepareResultSet(payload dto.PrepareResultSetDTO) dto.ExecutorOutput {
 		}
 	}
 	resultStream := sqldata.NewChannelSQLResultStream()
-	rv := dto.NewExecutorOutput(
+	rv := internaldto.NewExecutorOutput(
 		resultStream,
 		payload.OutputBody,
 		payload.RawRows,
@@ -380,7 +380,7 @@ func getRowPointers(colTypes []*sql.ColumnType) []any {
 	return rowPtr
 }
 
-func nativeProtect(rv dto.ExecutorOutput, columns []string) dto.ExecutorOutput {
+func nativeProtect(rv internaldto.ExecutorOutput, columns []string) internaldto.ExecutorOutput {
 	if rv.GetSQLResult() == nil {
 		table := sqldata.NewSQLTable(0, "meta_table")
 		rCols := make([]sqldata.ISQLColumn, len(columns))
@@ -396,20 +396,20 @@ func nativeProtect(rv dto.ExecutorOutput, columns []string) dto.ExecutorOutput {
 	return rv
 }
 
-func PrepareNativeResultSet(rows *sql.Rows) dto.ExecutorOutput {
+func PrepareNativeResultSet(rows *sql.Rows) internaldto.ExecutorOutput {
 	if rows == nil {
-		emptyResult := dto.NewExecutorOutput(
+		emptyResult := internaldto.NewExecutorOutput(
 			nil,
 			nil,
 			nil,
-			&dto.BackendMessages{WorkingMessages: []string{"native sql nil result set"}},
+			&internaldto.BackendMessages{WorkingMessages: []string{"native sql nil result set"}},
 			nil,
 		)
 		return nativeProtect(emptyResult, []string{"error"})
 	}
 	colTypes, err := rows.ColumnTypes()
 	if err != nil {
-		return nativeProtect(dto.NewErroneousExecutorOutput(err), []string{"error"})
+		return nativeProtect(internaldto.NewErroneousExecutorOutput(err), []string{"error"})
 	}
 
 	columns := getColumnArr(colTypes)
@@ -430,12 +430,12 @@ func PrepareNativeResultSet(rows *sql.Rows) dto.ExecutorOutput {
 		rowPtr := getRowPointers(colTypes)
 		err = rows.Scan(rowPtr...)
 		if err != nil {
-			return nativeProtect(dto.NewErroneousExecutorOutput(err), []string{"error"})
+			return nativeProtect(internaldto.NewErroneousExecutorOutput(err), []string{"error"})
 		}
 		outRows = append(outRows, sqldata.NewSQLRow(rowPtr))
 	}
 	resultStream := sqldata.NewChannelSQLResultStream()
-	rv := dto.NewExecutorOutput(
+	rv := internaldto.NewExecutorOutput(
 		resultStream,
 		nil,
 		nil,
@@ -453,16 +453,16 @@ func PrepareNativeResultSet(rows *sql.Rows) dto.ExecutorOutput {
 	return rv
 }
 
-func EmptyProtectResultSet(rv dto.ExecutorOutput, columns []string) dto.ExecutorOutput {
+func EmptyProtectResultSet(rv internaldto.ExecutorOutput, columns []string) internaldto.ExecutorOutput {
 	return emptyProtectResultSet(rv, columns)
 }
 
-func NewEmptyListResultSet(columns []string) dto.ExecutorOutput {
-	rv := dto.NewExecutorOutput(nil, nil, nil, nil, nil)
+func NewEmptyListResultSet(columns []string) internaldto.ExecutorOutput {
+	rv := internaldto.NewExecutorOutput(nil, nil, nil, nil, nil)
 	return emptyProtectResultSet(rv, columns)
 }
 
-func emptyProtectResultSet(rv dto.ExecutorOutput, columns []string) dto.ExecutorOutput {
+func emptyProtectResultSet(rv internaldto.ExecutorOutput, columns []string) internaldto.ExecutorOutput {
 	if rv.GetRawResult().IsNil() {
 		table := sqldata.NewSQLTable(0, "meta_table")
 		rCols := make([]sqldata.ISQLColumn, len(columns))

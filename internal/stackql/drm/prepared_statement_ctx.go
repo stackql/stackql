@@ -3,18 +3,18 @@ package drm
 import (
 	"strings"
 
-	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/sqldialect"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 )
 
 type PreparedStatementCtx interface {
-	GetAllCtrlCtrs() []dto.TxnControlCounters
-	GetGCCtrlCtrs() dto.TxnControlCounters
+	GetAllCtrlCtrs() []internaldto.TxnControlCounters
+	GetGCCtrlCtrs() internaldto.TxnControlCounters
 	GetNonControlColumns() []ColumnMetadata
 	GetGCHousekeepingQueries() string
 	GetQuery() string
-	SetGCCtrlCtrs(tcc dto.TxnControlCounters)
+	SetGCCtrlCtrs(tcc internaldto.TxnControlCounters)
 	SetKind(kind string)
 }
 
@@ -29,8 +29,8 @@ type standardPreparedStatementCtx struct {
 	insEncodedColName       string
 	nonControlColumns       []ColumnMetadata
 	ctrlColumnRepeats       int
-	txnCtrlCtrs             dto.TxnControlCounters
-	selectTxnCtrlCtrs       []dto.TxnControlCounters
+	txnCtrlCtrs             internaldto.TxnControlCounters
+	selectTxnCtrlCtrs       []internaldto.TxnControlCounters
 	namespaceCollection     tablenamespace.TableNamespaceCollection
 	sqlDialect              sqldialect.SQLDialect
 }
@@ -43,11 +43,11 @@ func (ps *standardPreparedStatementCtx) GetQuery() string {
 	return ps.query
 }
 
-func (ps *standardPreparedStatementCtx) GetGCCtrlCtrs() dto.TxnControlCounters {
+func (ps *standardPreparedStatementCtx) GetGCCtrlCtrs() internaldto.TxnControlCounters {
 	return ps.txnCtrlCtrs
 }
 
-func (ps *standardPreparedStatementCtx) SetGCCtrlCtrs(tcc dto.TxnControlCounters) {
+func (ps *standardPreparedStatementCtx) SetGCCtrlCtrs(tcc internaldto.TxnControlCounters) {
 	ps.txnCtrlCtrs = tcc
 }
 
@@ -55,8 +55,8 @@ func (ps *standardPreparedStatementCtx) GetNonControlColumns() []ColumnMetadata 
 	return ps.nonControlColumns
 }
 
-func (ps *standardPreparedStatementCtx) GetAllCtrlCtrs() []dto.TxnControlCounters {
-	var rv []dto.TxnControlCounters
+func (ps *standardPreparedStatementCtx) GetAllCtrlCtrs() []internaldto.TxnControlCounters {
+	var rv []internaldto.TxnControlCounters
 	rv = append(rv, ps.txnCtrlCtrs)
 	rv = append(rv, ps.selectTxnCtrlCtrs...)
 	return rv
@@ -73,8 +73,8 @@ func NewPreparedStatementCtx(
 	insEncodedColName string,
 	nonControlColumns []ColumnMetadata,
 	ctrlColumnRepeats int,
-	txnCtrlCtrs dto.TxnControlCounters,
-	secondaryCtrs []dto.TxnControlCounters,
+	txnCtrlCtrs internaldto.TxnControlCounters,
+	secondaryCtrs []internaldto.TxnControlCounters,
 	namespaceCollection tablenamespace.TableNamespaceCollection,
 	sqlDialect sqldialect.SQLDialect,
 ) PreparedStatementCtx {

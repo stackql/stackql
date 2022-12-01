@@ -2,8 +2,8 @@ package primitivebuilder
 
 import (
 	"github.com/stackql/stackql/internal/stackql/drm"
-	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 	"github.com/stackql/stackql/internal/stackql/streaming"
 	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
@@ -15,7 +15,7 @@ type SingleAcquireAndSelect struct {
 	selectBuilder  Builder
 }
 
-func NewSingleAcquireAndSelect(graph *primitivegraph.PrimitiveGraph, txnControlCounters dto.TxnControlCounters, handlerCtx *handler.HandlerContext, insertContainer tableinsertioncontainer.TableInsertionContainer, insertCtx drm.PreparedStatementCtx, selectCtx drm.PreparedStatementCtx, rowSort func(map[string]map[string]interface{}) []string) Builder {
+func NewSingleAcquireAndSelect(graph *primitivegraph.PrimitiveGraph, txnControlCounters internaldto.TxnControlCounters, handlerCtx handler.HandlerContext, insertContainer tableinsertioncontainer.TableInsertionContainer, insertCtx drm.PreparedStatementCtx, selectCtx drm.PreparedStatementCtx, rowSort func(map[string]map[string]interface{}) []string) Builder {
 	return &SingleAcquireAndSelect{
 		graph:          graph,
 		acquireBuilder: NewSingleSelectAcquire(graph, handlerCtx, insertContainer, insertCtx, rowSort, nil),

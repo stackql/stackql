@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/output"
 )
@@ -21,21 +21,21 @@ func handleEmptyWriter(outputWriter output.IOutputWriter, err error) {
 	}
 }
 
-func HandleResponse(handlerCtx *handler.HandlerContext, response dto.ExecutorOutput) error {
+func HandleResponse(handlerCtx handler.HandlerContext, response internaldto.ExecutorOutput) error {
 	var outputWriter output.IOutputWriter
 	var err error
 	logging.GetLogger().Debugln(fmt.Sprintf("response from query = '%v'", response.GetSQLResult()))
 	if response.Msg != nil {
 		for _, msg := range response.Msg.WorkingMessages {
-			handlerCtx.Outfile.Write([]byte(msg + fmt.Sprintln("")))
+			handlerCtx.GetOutfile().Write([]byte(msg + fmt.Sprintln("")))
 		}
 	}
 	if response.GetSQLResult() != nil && response.GetSQLResult() != nil && response.Err == nil {
 		outputWriter, err = output.GetOutputWriter(
-			handlerCtx.Outfile,
-			handlerCtx.OutErrFile,
-			dto.OutputContext{
-				RuntimeContext: handlerCtx.RuntimeContext,
+			handlerCtx.GetOutfile(),
+			handlerCtx.GetOutErrFile(),
+			internaldto.OutputContext{
+				RuntimeContext: handlerCtx.GetRuntimeContext(),
 				Result:         response.GetSQLResult(),
 			},
 		)
@@ -46,10 +46,10 @@ func HandleResponse(handlerCtx *handler.HandlerContext, response dto.ExecutorOut
 		outputWriter.Write(response.GetSQLResult())
 	} else if response.Err != nil {
 		outputWriter, err = output.GetOutputWriter(
-			handlerCtx.Outfile,
-			handlerCtx.OutErrFile,
-			dto.OutputContext{
-				RuntimeContext: handlerCtx.RuntimeContext,
+			handlerCtx.GetOutfile(),
+			handlerCtx.GetOutErrFile(),
+			internaldto.OutputContext{
+				RuntimeContext: handlerCtx.GetRuntimeContext(),
 				Result:         response.GetSQLResult(),
 			},
 		)
@@ -57,7 +57,7 @@ func HandleResponse(handlerCtx *handler.HandlerContext, response dto.ExecutorOut
 			handleEmptyWriter(outputWriter, err)
 			return response.Err
 		}
-		outputWriter.WriteError(response.Err, handlerCtx.ErrorPresentation)
+		outputWriter.WriteError(response.Err, handlerCtx.GetErrorPresentation())
 		return response.Err
 	}
 	return err

@@ -39,15 +39,15 @@ func TestSimpleSelectGoogleComputeInstanceQuerySubmit(t *testing.T) {
 	inputBundle, err := stackqltestutil.BuildInputBundle(*runtimeCtx)
 
 	handlerCtx, err := handler.GetHandlerCtx(testobjects.SimpleSelectGoogleComputeInstance, *runtimeCtx, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-	handlerCtx.Outfile = os.Stdout
-	handlerCtx.OutErrFile = os.Stderr
+	handlerCtx.SetOutfile(os.Stdout)
+	handlerCtx.SetOutErrFile(os.Stderr)
 
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
 
-	handlerCtx.Query = testobjects.SimpleSelectGoogleComputeInstance
-	response := SubmitQuery(&handlerCtx)
+	handlerCtx.SetQuery(testobjects.SimpleSelectGoogleComputeInstance)
+	response := SubmitQuery(handlerCtx)
 
 	if response.GetSQLResult() == nil {
 		t.Fatalf("response is unexpectedly nil")

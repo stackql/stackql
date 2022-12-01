@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/stackql/stackql/internal/stackql/constants"
-	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/relationaldto"
 	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
@@ -25,10 +25,6 @@ import (
 	"vitess.io/vitess/go/vt/sqlparser"
 )
 
-type DRM interface {
-	DRMConfig
-}
-
 var (
 	_ DRMConfig = &staticDRMConfig{}
 )
@@ -36,18 +32,18 @@ var (
 type DRMConfig interface {
 	ExtractFromGolangValue(interface{}) interface{}
 	ExtractObjectFromSQLRows(r *sql.Rows, nonControlColumns []ColumnMetadata, stream streaming.MapStream) (map[string]map[string]interface{}, map[int]map[int]interface{})
-	GetCurrentTable(dto.HeirarchyIdentifiers) (dto.DBTable, error)
+	GetCurrentTable(internaldto.HeirarchyIdentifiers) (internaldto.DBTable, error)
 	GetRelationalType(string) string
 	GenerateDDL(util.AnnotatedTabulation, *openapistackql.OperationStore, int, bool) ([]string, error)
 	GetControlAttributes() sqlcontrol.ControlAttributes
 	GetGolangValue(string) interface{}
 	GetGolangSlices([]ColumnMetadata) ([]interface{}, []string)
 	GetNamespaceCollection() tablenamespace.TableNamespaceCollection
-	GetParserTableName(dto.HeirarchyIdentifiers, int) sqlparser.TableName
+	GetParserTableName(internaldto.HeirarchyIdentifiers, int) sqlparser.TableName
 	GetSQLDialect() sqldialect.SQLDialect
-	GetTable(dto.HeirarchyIdentifiers, int) (dto.DBTable, error)
-	GenerateInsertDML(util.AnnotatedTabulation, *openapistackql.OperationStore, dto.TxnControlCounters) (PreparedStatementCtx, error)
-	GenerateSelectDML(util.AnnotatedTabulation, dto.TxnControlCounters, string, string) (PreparedStatementCtx, error)
+	GetTable(internaldto.HeirarchyIdentifiers, int) (internaldto.DBTable, error)
+	GenerateInsertDML(util.AnnotatedTabulation, *openapistackql.OperationStore, internaldto.TxnControlCounters) (PreparedStatementCtx, error)
+	GenerateSelectDML(util.AnnotatedTabulation, internaldto.TxnControlCounters, string, string) (PreparedStatementCtx, error)
 	ExecuteInsertDML(sqlengine.SQLEngine, PreparedStatementCtx, map[string]interface{}, string) (sql.Result, error)
 	QueryDML(sqlengine.SQLEngine, PreparedStatementParameterized) (*sql.Rows, error)
 }
@@ -63,7 +59,7 @@ func (dc *staticDRMConfig) GetSQLDialect() sqldialect.SQLDialect {
 	return dc.sqlDialect
 }
 
-func (dc *staticDRMConfig) GetTable(hids dto.HeirarchyIdentifiers, discoveryID int) (dto.DBTable, error) {
+func (dc *staticDRMConfig) GetTable(hids internaldto.HeirarchyIdentifiers, discoveryID int) (internaldto.DBTable, error) {
 	return dc.sqlDialect.GetTable(hids, discoveryID)
 }
 
@@ -176,23 +172,23 @@ func (dc *staticDRMConfig) GetGolangKind(discoType string) reflect.Kind {
 	return dc.sqlDialect.GetGolangKind(discoType)
 }
 
-func (dc *staticDRMConfig) GetCurrentTable(tableHeirarchyIDs dto.HeirarchyIdentifiers) (dto.DBTable, error) {
+func (dc *staticDRMConfig) GetCurrentTable(tableHeirarchyIDs internaldto.HeirarchyIdentifiers) (internaldto.DBTable, error) {
 	tn := tableHeirarchyIDs.GetTableName()
 	if dc.namespaceCollection.GetAnalyticsCacheTableNamespaceConfigurator().IsAllowed(tn) {
 		templatedName, err := dc.namespaceCollection.GetAnalyticsCacheTableNamespaceConfigurator().RenderTemplate(tn)
 		if err != nil {
-			return dto.NewDBTableAnalytics(templatedName, -1, tableHeirarchyIDs), err
+			return internaldto.NewDBTableAnalytics(templatedName, -1, tableHeirarchyIDs), err
 		}
-		return dto.NewDBTableAnalytics(templatedName, -1, tableHeirarchyIDs), nil
+		return internaldto.NewDBTableAnalytics(templatedName, -1, tableHeirarchyIDs), nil
 	}
 	return dc.sqlDialect.GetCurrentTable(tableHeirarchyIDs)
 }
 
-func (dc *staticDRMConfig) GetTableName(hIds dto.HeirarchyIdentifiers, discoveryGenerationID int) (string, error) {
+func (dc *staticDRMConfig) GetTableName(hIds internaldto.HeirarchyIdentifiers, discoveryGenerationID int) (string, error) {
 	return dc.getTableName(hIds, discoveryGenerationID)
 }
 
-func (dc *staticDRMConfig) getTableName(hIds dto.HeirarchyIdentifiers, discoveryGenerationID int) (string, error) {
+func (dc *staticDRMConfig) getTableName(hIds internaldto.HeirarchyIdentifiers, discoveryGenerationID int) (string, error) {
 	tbl, err := dc.sqlDialect.GetTable(hIds, discoveryGenerationID)
 	if err != nil {
 		return "", err
@@ -204,11 +200,11 @@ func (dc *staticDRMConfig) getTableName(hIds dto.HeirarchyIdentifiers, discovery
 	return tbl.GetName(), nil
 }
 
-func (dc *staticDRMConfig) GetParserTableName(hIds dto.HeirarchyIdentifiers, discoveryGenerationID int) sqlparser.TableName {
+func (dc *staticDRMConfig) GetParserTableName(hIds internaldto.HeirarchyIdentifiers, discoveryGenerationID int) sqlparser.TableName {
 	return dc.getParserTableName(hIds, discoveryGenerationID)
 }
 
-func (dc *staticDRMConfig) getParserTableName(hIds dto.HeirarchyIdentifiers, discoveryGenerationID int) sqlparser.TableName {
+func (dc *staticDRMConfig) getParserTableName(hIds internaldto.HeirarchyIdentifiers, discoveryGenerationID int) sqlparser.TableName {
 	if dc.namespaceCollection.GetAnalyticsCacheTableNamespaceConfigurator().IsAllowed(hIds.GetTableName()) {
 		return sqlparser.TableName{
 			Name:            sqlparser.NewTableIdent(hIds.GetResourceStr()),
@@ -264,7 +260,7 @@ func (dc *staticDRMConfig) GenerateDDL(tabAnn util.AnnotatedTabulation, m *opena
 	return dc.sqlDialect.GenerateDDL(relationalTable, dropTable)
 }
 
-func (dc *staticDRMConfig) GenerateInsertDML(tabAnnotated util.AnnotatedTabulation, method *openapistackql.OperationStore, tcc dto.TxnControlCounters) (PreparedStatementCtx, error) {
+func (dc *staticDRMConfig) GenerateInsertDML(tabAnnotated util.AnnotatedTabulation, method *openapistackql.OperationStore, tcc internaldto.TxnControlCounters) (PreparedStatementCtx, error) {
 	var columns []ColumnMetadata
 	tableName, err := dc.GetCurrentTable(tabAnnotated.GetHeirarchyIdentifiers())
 	if err != nil {
@@ -315,7 +311,7 @@ func (dc *staticDRMConfig) GenerateInsertDML(tabAnnotated util.AnnotatedTabulati
 		nil
 }
 
-func (dc *staticDRMConfig) GenerateSelectDML(tabAnnotated util.AnnotatedTabulation, txnCtrlCtrs dto.TxnControlCounters, selectSuffix, rewrittenWhere string) (PreparedStatementCtx, error) {
+func (dc *staticDRMConfig) GenerateSelectDML(tabAnnotated util.AnnotatedTabulation, txnCtrlCtrs internaldto.TxnControlCounters, selectSuffix, rewrittenWhere string) (PreparedStatementCtx, error) {
 	var quotedColNames []string
 	var columns []ColumnMetadata
 

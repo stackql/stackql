@@ -1,7 +1,7 @@
 package primitivebuilder
 
 import (
-	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 	"github.com/stackql/stackql/internal/stackql/sqldialect"
@@ -14,7 +14,7 @@ type DiamondBuilder struct {
 	root, tailRoot, tailTail primitivegraph.PrimitiveNode
 	sqlDialect               sqldialect.SQLDialect
 	shouldCollectGarbage     bool
-	txnControlCounterSlice   []dto.TxnControlCounters
+	txnControlCounterSlice   []internaldto.TxnControlCounters
 }
 
 func NewDiamondBuilder(parent Builder, children []Builder, graph *primitivegraph.PrimitiveGraph, sqlDialect sqldialect.SQLDialect, shouldCollectGarbage bool) Builder {

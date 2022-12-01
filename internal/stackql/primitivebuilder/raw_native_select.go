@@ -3,8 +3,8 @@ package primitivebuilder
 import (
 	"fmt"
 
-	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
@@ -13,16 +13,16 @@ import (
 
 type RawNativeSelect struct {
 	graph       *primitivegraph.PrimitiveGraph
-	handlerCtx  *handler.HandlerContext
-	txnCtrlCtr  dto.TxnControlCounters
+	handlerCtx  handler.HandlerContext
+	txnCtrlCtr  internaldto.TxnControlCounters
 	root        primitivegraph.PrimitiveNode
 	nativeQuery string
 }
 
 func NewRawNativeSelect(
 	graph *primitivegraph.PrimitiveGraph,
-	handlerCtx *handler.HandlerContext,
-	txnCtrlCtr dto.TxnControlCounters,
+	handlerCtx handler.HandlerContext,
+	txnCtrlCtr internaldto.TxnControlCounters,
 	nativeQuery string,
 ) Builder {
 	return &RawNativeSelect{
@@ -43,15 +43,15 @@ func (ss *RawNativeSelect) GetTail() primitivegraph.PrimitiveNode {
 
 func (ss *RawNativeSelect) Build() error {
 
-	selectEx := func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput {
+	selectEx := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 
 		// select phase
 		logging.GetLogger().Infoln(fmt.Sprintf("running native query: '''%s''' ", ss.nativeQuery))
 
-		rows, err := ss.handlerCtx.SQLEngine.Query(ss.nativeQuery)
+		rows, err := ss.handlerCtx.GetSQLEngine().Query(ss.nativeQuery)
 
 		if err != nil {
-			return dto.NewErroneousExecutorOutput(err)
+			return internaldto.NewErroneousExecutorOutput(err)
 		}
 		defer rows.Close()
 

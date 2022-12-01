@@ -2,29 +2,29 @@ package planbuilder
 
 import (
 	"github.com/stackql/stackql/internal/stackql/astvisit"
-	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parse"
 	"github.com/stackql/stackql/internal/stackql/plan"
 	"vitess.io/vitess/go/vt/sqlparser"
 )
 
-func BuildPlanFromContext(handlerCtx *handler.HandlerContext) (*plan.Plan, error) {
-	defer handlerCtx.GarbageCollector.Close()
-	tcc, err := dto.NewTxnControlCounters(handlerCtx.TxnCounterMgr)
-	handlerCtx.TxnStore.Put(tcc.GetTxnID())
-	defer handlerCtx.TxnStore.Del(tcc.GetTxnID())
+func BuildPlanFromContext(handlerCtx handler.HandlerContext) (*plan.Plan, error) {
+	defer handlerCtx.GetGarbageCollector().Close()
+	tcc, err := internaldto.NewTxnControlCounters(handlerCtx.GetTxnCounterMgr())
+	handlerCtx.GetTxnStore().Put(tcc.GetTxnID())
+	defer handlerCtx.GetTxnStore().Del(tcc.GetTxnID())
 	logging.GetLogger().Debugf("tcc = %v\n", tcc)
 	if err != nil {
 		return nil, err
 	}
-	planKey := handlerCtx.Query
-	if qp, ok := handlerCtx.LRUCache.Get(planKey); ok && isPlanCacheEnabled() {
+	planKey := handlerCtx.GetQuery()
+	if qp, ok := handlerCtx.GetLRUCache().Get(planKey); ok && isPlanCacheEnabled() {
 		logging.GetLogger().Infoln("retrieving query plan from cache")
 		pl, ok := qp.(*plan.Plan)
 		if ok {
-			txnId, err := handlerCtx.TxnCounterMgr.GetNextTxnId()
+			txnId, err := handlerCtx.GetTxnCounterMgr().GetNextTxnId()
 			if err != nil {
 				return nil, err
 			}
@@ -34,11 +34,11 @@ func BuildPlanFromContext(handlerCtx *handler.HandlerContext) (*plan.Plan, error
 		return qp.(*plan.Plan), nil
 	}
 	qPlan := plan.NewPlan(
-		handlerCtx.RawQuery,
+		handlerCtx.GetRawQuery(),
 	)
 	var rowSort func(map[string]map[string]interface{}) []string
 	var statement sqlparser.Statement
-	statement, err = parse.ParseQuery(handlerCtx.Query)
+	statement, err = parse.ParseQuery(handlerCtx.GetQuery())
 	if err != nil {
 		return createErroneousPlan(handlerCtx, qPlan, rowSort, err)
 	}
@@ -52,7 +52,7 @@ func BuildPlanFromContext(handlerCtx *handler.HandlerContext) (*plan.Plan, error
 	}
 	qPlan.Type = statementType
 
-	pGBuilder := newPlanGraphBuilder(handlerCtx.RuntimeContext.ExecutionConcurrencyLimit)
+	pGBuilder := newPlanGraphBuilder(handlerCtx.GetRuntimeContext().ExecutionConcurrencyLimit)
 
 	// Before analysing AST, see if we can pass stright to SQL backend
 	opType, ok := handlerCtx.GetDBMSInternalRouter().CanRoute(result.AST)
@@ -79,7 +79,7 @@ func BuildPlanFromContext(handlerCtx *handler.HandlerContext) (*plan.Plan, error
 	}
 
 	// First pass AST analysis; extract provider strings for auth.
-	provStrSlice, cacheExemptMaterialDetected := astvisit.ExtractProviderStringsAndDetectCacheExceptMaterial(result.AST, handlerCtx.SQLDialect, handlerCtx.GetASTFormatter(), handlerCtx.GetNamespaceCollection())
+	provStrSlice, cacheExemptMaterialDetected := astvisit.ExtractProviderStringsAndDetectCacheExceptMaterial(result.AST, handlerCtx.GetSQLDialect(), handlerCtx.GetASTFormatter(), handlerCtx.GetNamespaceCollection())
 	if cacheExemptMaterialDetected {
 		qPlan.SetCacheable(false)
 	}
@@ -160,7 +160,7 @@ func BuildPlanFromContext(handlerCtx *handler.HandlerContext) (*plan.Plan, error
 			return createErroneousPlan(handlerCtx, qPlan, rowSort, err)
 		}
 		if qPlan.IsCacheable() {
-			handlerCtx.LRUCache.Set(planKey, qPlan)
+			handlerCtx.GetLRUCache().Set(planKey, qPlan)
 		}
 	}
 

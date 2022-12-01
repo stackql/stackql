@@ -4,6 +4,7 @@ import (
 	"io"
 
 	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 )
 
 type IPrimitiveCtx interface {
@@ -15,15 +16,15 @@ type IPrimitiveCtx interface {
 type IPrimitive interface {
 	Optimise() error
 
-	Execute(IPrimitiveCtx) dto.ExecutorOutput
+	Execute(IPrimitiveCtx) internaldto.ExecutorOutput
 
-	SetExecutor(func(pc IPrimitiveCtx) dto.ExecutorOutput) error
+	SetExecutor(func(pc IPrimitiveCtx) internaldto.ExecutorOutput) error
 
 	SetTxnId(int)
 
-	IncidentData(int64, dto.ExecutorOutput) error
+	IncidentData(int64, internaldto.ExecutorOutput) error
 
 	SetInputAlias(string, int64) error
 
-	GetInputFromAlias(string) (dto.ExecutorOutput, bool)
+	GetInputFromAlias(string) (internaldto.ExecutorOutput, bool)
 }

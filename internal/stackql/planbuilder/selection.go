@@ -5,8 +5,8 @@ import (
 
 	"github.com/stackql/stackql/internal/stackql/astvisit"
 	"github.com/stackql/stackql/internal/stackql/docparser"
-	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/util"
@@ -18,10 +18,10 @@ import (
 
 func (p *primitiveGenerator) assembleUnarySelectionBuilder(
 	pbi PlanBuilderInput,
-	handlerCtx *handler.HandlerContext,
+	handlerCtx handler.HandlerContext,
 	node sqlparser.SQLNode,
 	rewrittenWhere *sqlparser.Where,
-	hIds dto.HeirarchyIdentifiers,
+	hIds internaldto.HeirarchyIdentifiers,
 	schema *openapistackql.Schema,
 	tbl tablemetadata.ExtendedTableMetadata,
 	selectTabulation *openapistackql.Tabulation,
@@ -44,11 +44,11 @@ func (p *primitiveGenerator) assembleUnarySelectionBuilder(
 		return err
 	}
 
-	_, err = docparser.OpenapiStackQLTabulationsPersistor(method, []util.AnnotatedTabulation{annotatedInsertTabulation}, p.PrimitiveComposer.GetSQLEngine(), prov.Name, handlerCtx.GetNamespaceCollection(), handlerCtx.ControlAttributes, handlerCtx.SQLDialect)
+	_, err = docparser.OpenapiStackQLTabulationsPersistor(method, []util.AnnotatedTabulation{annotatedInsertTabulation}, p.PrimitiveComposer.GetSQLEngine(), prov.Name, handlerCtx.GetNamespaceCollection(), handlerCtx.GetControlAttributes(), handlerCtx.GetSQLDialect())
 	if err != nil {
 		return err
 	}
-	// tableDTO, err := p.PrimitiveComposer.GetDRMConfig().GetCurrentTable(hIds, handlerCtx.SQLEngine)
+	// tableDTO, err := p.PrimitiveComposer.GetDRMConfig().GetCurrentTable(hIds, handlerCtx.GetSQLEngine())
 	// if err != nil {
 	// 	return err
 	// }
@@ -68,7 +68,7 @@ func (p *primitiveGenerator) assembleUnarySelectionBuilder(
 		}
 		selectTabulation.PushBackColumn(openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, col.Expr, foundSchema, col.Val))
 	}
-	selPsc, err := p.PrimitiveComposer.GetDRMConfig().GenerateSelectDML(util.NewAnnotatedTabulation(selectTabulation, hIds, inputTableName, tbl.GetAlias()), insPsc.GetGCCtrlCtrs(), astvisit.GenerateModifiedSelectSuffix(node, handlerCtx.SQLDialect, handlerCtx.GetASTFormatter(), handlerCtx.GetNamespaceCollection()), astvisit.GenerateModifiedWhereClause(rewrittenWhere, handlerCtx.SQLDialect, handlerCtx.GetASTFormatter(), handlerCtx.GetNamespaceCollection()))
+	selPsc, err := p.PrimitiveComposer.GetDRMConfig().GenerateSelectDML(util.NewAnnotatedTabulation(selectTabulation, hIds, inputTableName, tbl.GetAlias()), insPsc.GetGCCtrlCtrs(), astvisit.GenerateModifiedSelectSuffix(node, handlerCtx.GetSQLDialect(), handlerCtx.GetASTFormatter(), handlerCtx.GetNamespaceCollection()), astvisit.GenerateModifiedWhereClause(rewrittenWhere, handlerCtx.GetSQLDialect(), handlerCtx.GetASTFormatter(), handlerCtx.GetNamespaceCollection()))
 	if err != nil {
 		return err
 	}
@@ -80,7 +80,7 @@ func (p *primitiveGenerator) assembleUnarySelectionBuilder(
 
 func (p *primitiveGenerator) analyzeUnarySelection(
 	pbi PlanBuilderInput,
-	handlerCtx *handler.HandlerContext,
+	handlerCtx handler.HandlerContext,
 	node sqlparser.SQLNode,
 	rewrittenWhere *sqlparser.Where,
 	tbl tablemetadata.ExtendedTableMetadata,
@@ -122,7 +122,7 @@ func (p *primitiveGenerator) analyzeUnarySelection(
 	}
 	insertTabulation := itemObjS.Tabulate(false)
 
-	hIds := dto.NewHeirarchyIdentifiers(provStr, svcStr, itemObjS.GetName(), "")
+	hIds := internaldto.NewHeirarchyIdentifiers(provStr, svcStr, itemObjS.GetName(), "")
 	selectTabulation := itemObjS.Tabulate(true)
 
 	return p.assembleUnarySelectionBuilder(

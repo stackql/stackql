@@ -1,19 +1,18 @@
 package util
 
 import (
-	"github.com/stackql/stackql/internal/stackql/dto"
-
 	"github.com/stackql/go-openapistackql/openapistackql"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 )
 
 type AnnotatedTabulation struct {
 	tab            *openapistackql.Tabulation
-	hIds           dto.HeirarchyIdentifiers
+	hIds           internaldto.HeirarchyIdentifiers
 	inputTableName string
 	alias          string
 }
 
-func NewAnnotatedTabulation(tab *openapistackql.Tabulation, hIds dto.HeirarchyIdentifiers, inputTableName string, alias string) AnnotatedTabulation {
+func NewAnnotatedTabulation(tab *openapistackql.Tabulation, hIds internaldto.HeirarchyIdentifiers, inputTableName string, alias string) AnnotatedTabulation {
 	return AnnotatedTabulation{
 		tab:            tab,
 		hIds:           hIds,
@@ -34,6 +33,6 @@ func (at AnnotatedTabulation) GetInputTableName() string {
 	return at.inputTableName
 }
 
-func (at AnnotatedTabulation) GetHeirarchyIdentifiers() dto.HeirarchyIdentifiers {
+func (at AnnotatedTabulation) GetHeirarchyIdentifiers() internaldto.HeirarchyIdentifiers {
 	return at.hIds
 }

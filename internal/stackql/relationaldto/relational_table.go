@@ -1,8 +1,6 @@
 package relationaldto
 
-import (
-	"github.com/stackql/stackql/internal/stackql/dto"
-)
+import "github.com/stackql/stackql/internal/stackql/internaldto"
 
 var (
 	_ RelationalTable = &standardRelationalTable{}
@@ -19,7 +17,7 @@ type RelationalTable interface {
 	WithAlias(alias string) RelationalTable
 }
 
-func NewRelationalTable(hIDs dto.HeirarchyIdentifiers, discoveryID int, name, baseName string) RelationalTable {
+func NewRelationalTable(hIDs internaldto.HeirarchyIdentifiers, discoveryID int, name, baseName string) RelationalTable {
 	return &standardRelationalTable{
 		hIDs:        hIDs,
 		name:        name,
@@ -28,7 +26,7 @@ func NewRelationalTable(hIDs dto.HeirarchyIdentifiers, discoveryID int, name, ba
 	}
 }
 
-func NewRelationalView(hIDs dto.HeirarchyIdentifiers, discoveryID int, name, baseName string) RelationalTable {
+func NewRelationalView(hIDs internaldto.HeirarchyIdentifiers, discoveryID int, name, baseName string) RelationalTable {
 	return &standardRelationalView{
 		hIDs:        hIDs,
 		name:        name,

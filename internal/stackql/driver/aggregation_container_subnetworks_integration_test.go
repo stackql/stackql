@@ -28,23 +28,23 @@ func TestSimpleAggGoogleContainerSubnetworksGroupedAllowedDriverOutputAsc(t *tes
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.Outfile = os.Stdout
-		handlerCtx.OutErrFile = os.Stderr
+		handlerCtx.SetOutfile(os.Stdout)
+		handlerCtx.SetOutErrFile(os.Stderr)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		handlerCtx.Outfile = outFile
-		handlerCtx.OutErrFile = os.Stderr
+		handlerCtx.SetOutfile(outFile)
+		handlerCtx.SetOutErrFile(os.Stderr)
 
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		handlerCtx.Query = testobjects.SimpleAggCountGroupedGoogleContainerSubnetworkAsc
-		response := querysubmit.SubmitQuery(&handlerCtx)
-		handlerCtx.Outfile = outFile
-		responsehandler.HandleResponse(&handlerCtx, response)
+		handlerCtx.SetQuery(testobjects.SimpleAggCountGroupedGoogleContainerSubnetworkAsc)
+		response := querysubmit.SubmitQuery(handlerCtx)
+		handlerCtx.SetOutfile(outFile)
+		responsehandler.HandleResponse(handlerCtx, response)
 	}
 
 	stackqltestutil.SetupSimpleSelectGoogleContainerAggAllowedSubnetworks(t)
@@ -65,23 +65,23 @@ func TestSimpleAggGoogleContainerSubnetworksGroupedAllowedDriverOutputDesc(t *te
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.Outfile = os.Stdout
-		handlerCtx.OutErrFile = os.Stderr
+		handlerCtx.SetOutfile(os.Stdout)
+		handlerCtx.SetOutErrFile(os.Stderr)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		handlerCtx.Outfile = outFile
-		handlerCtx.OutErrFile = os.Stderr
+		handlerCtx.SetOutfile(outFile)
+		handlerCtx.SetOutErrFile(os.Stderr)
 
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		handlerCtx.Query = testobjects.SimpleAggCountGroupedGoogleContainerSubnetworkDesc
-		response := querysubmit.SubmitQuery(&handlerCtx)
-		handlerCtx.Outfile = outFile
-		responsehandler.HandleResponse(&handlerCtx, response)
+		handlerCtx.SetQuery(testobjects.SimpleAggCountGroupedGoogleContainerSubnetworkDesc)
+		response := querysubmit.SubmitQuery(handlerCtx)
+		handlerCtx.SetOutfile(outFile)
+		responsehandler.HandleResponse(handlerCtx, response)
 	}
 
 	stackqltestutil.SetupSimpleSelectGoogleContainerAggAllowedSubnetworks(t)

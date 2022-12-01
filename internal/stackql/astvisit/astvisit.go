@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/stackql/stackql/internal/stackql/astformat"
-	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/sqldialect"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 
@@ -46,7 +46,7 @@ func NewDRMAstVisitor(iDColumnName string, shouldCollectTables bool, sqlDialect 
 func (v *DRMAstVisitor) GetProviderStrings() []string {
 	var retVal []string
 	for _, tName := range v.tablesCited {
-		tx := dto.ResolveResourceTerminalHeirarchyIdentifiers(tName)
+		tx := internaldto.ResolveResourceTerminalHeirarchyIdentifiers(tName)
 		if tx.GetProviderStr() != "" {
 			retVal = append(retVal, tx.GetProviderStr())
 		}

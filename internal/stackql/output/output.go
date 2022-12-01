@@ -11,7 +11,7 @@ import (
 
 	"github.com/jackc/pgtype"
 	"github.com/stackql/stackql/internal/stackql/constants"
-	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/iqlutil"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/psqlwire"
@@ -48,7 +48,7 @@ func writeStderrError(writer io.Writer, err error) error {
 	return e
 }
 
-func GetOutputWriter(writer io.Writer, errWriter io.Writer, outputCtx dto.OutputContext) (IOutputWriter, error) {
+func GetOutputWriter(writer io.Writer, errWriter io.Writer, outputCtx internaldto.OutputContext) (IOutputWriter, error) {
 	if errWriter == nil {
 		errWriter = os.Stdout
 	}
@@ -110,12 +110,12 @@ type JsonWriter struct {
 	ci        *pgtype.ConnInfo
 	writer    io.Writer
 	errWriter io.Writer
-	outputCtx dto.OutputContext
+	outputCtx internaldto.OutputContext
 }
 
 type AbstractTabularWriter struct {
 	ci        *pgtype.ConnInfo
-	outputCtx dto.OutputContext
+	outputCtx internaldto.OutputContext
 }
 
 type TableWriter struct {

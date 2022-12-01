@@ -9,6 +9,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/docparser"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	google_sdk "github.com/stackql/stackql/internal/stackql/google_sdk"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/methodselect"
 	"github.com/stackql/stackql/internal/stackql/netutils"
@@ -398,18 +399,18 @@ func (gp *GenericProvider) GetProvider() (*openapistackql.Provider, error) {
 	return gp.provider, nil
 }
 
-func (gp *GenericProvider) InferMaxResultsElement(*openapistackql.OperationStore) *dto.HTTPElement {
-	return &dto.HTTPElement{
-		Type: dto.QueryParam,
+func (gp *GenericProvider) InferMaxResultsElement(*openapistackql.OperationStore) *internaldto.HTTPElement {
+	return &internaldto.HTTPElement{
+		Type: internaldto.QueryParam,
 		Name: "maxResults",
 	}
 }
 
-func (gp *GenericProvider) InferNextPageRequestElement(ho dto.Heirarchy) *dto.HTTPElement {
+func (gp *GenericProvider) InferNextPageRequestElement(ho internaldto.Heirarchy) *internaldto.HTTPElement {
 	st, ok := gp.getPaginationRequestTokenSemantic(ho)
 	if ok {
-		if tp, err := dto.ExtractHttpElement(st.Location); err == nil {
-			rv := &dto.HTTPElement{
+		if tp, err := internaldto.ExtractHttpElement(st.Location); err == nil {
+			rv := &internaldto.HTTPElement{
 				Type: tp,
 				Name: st.Key,
 			}
@@ -422,36 +423,36 @@ func (gp *GenericProvider) InferNextPageRequestElement(ho dto.Heirarchy) *dto.HT
 	}
 	switch gp.GetProviderString() {
 	case "github", "okta":
-		return &dto.HTTPElement{
-			Type: dto.RequestString,
+		return &internaldto.HTTPElement{
+			Type: internaldto.RequestString,
 		}
 	default:
-		return &dto.HTTPElement{
-			Type: dto.QueryParam,
+		return &internaldto.HTTPElement{
+			Type: internaldto.QueryParam,
 			Name: "pageToken",
 		}
 	}
 }
 
-func (gp *GenericProvider) getPaginationRequestTokenSemantic(ho dto.Heirarchy) (*openapistackql.TokenSemantic, bool) {
+func (gp *GenericProvider) getPaginationRequestTokenSemantic(ho internaldto.Heirarchy) (*openapistackql.TokenSemantic, bool) {
 	if ho.GetMethod() == nil {
 		return nil, false
 	}
 	return ho.GetMethod().GetPaginationRequestTokenSemantic()
 }
 
-func (gp *GenericProvider) getPaginationResponseTokenSemantic(ho dto.Heirarchy) (*openapistackql.TokenSemantic, bool) {
+func (gp *GenericProvider) getPaginationResponseTokenSemantic(ho internaldto.Heirarchy) (*openapistackql.TokenSemantic, bool) {
 	if ho.GetMethod() == nil {
 		return nil, false
 	}
 	return ho.GetMethod().GetPaginationResponseTokenSemantic()
 }
 
-func (gp *GenericProvider) InferNextPageResponseElement(ho dto.Heirarchy) *dto.HTTPElement {
+func (gp *GenericProvider) InferNextPageResponseElement(ho internaldto.Heirarchy) *internaldto.HTTPElement {
 	st, ok := gp.getPaginationResponseTokenSemantic(ho)
 	if ok {
-		if tp, err := dto.ExtractHttpElement(st.Location); err == nil {
-			rv := &dto.HTTPElement{
+		if tp, err := internaldto.ExtractHttpElement(st.Location); err == nil {
+			rv := &internaldto.HTTPElement{
 				Type: tp,
 				Name: st.Key,
 			}
@@ -464,14 +465,14 @@ func (gp *GenericProvider) InferNextPageResponseElement(ho dto.Heirarchy) *dto.H
 	}
 	switch gp.GetProviderString() {
 	case "github", "okta":
-		return &dto.HTTPElement{
-			Type:        dto.Header,
+		return &internaldto.HTTPElement{
+			Type:        internaldto.Header,
 			Name:        "Link",
 			Transformer: openapistackql.DefaultLinkHeaderTransformer,
 		}
 	default:
-		return &dto.HTTPElement{
-			Type: dto.BodyAttribute,
+		return &internaldto.HTTPElement{
+			Type: internaldto.BodyAttribute,
 			Name: "nextPageToken",
 		}
 	}

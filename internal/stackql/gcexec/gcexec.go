@@ -3,7 +3,7 @@ package gcexec
 import (
 	"sync"
 
-	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/kstore"
 	"github.com/stackql/stackql/internal/stackql/sqldialect"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
@@ -23,7 +23,7 @@ type BrutalGarbageCollectorExecutor interface {
 }
 
 type AbstractFlatGarbageCollectorExecutor interface {
-	Update(string, dto.TxnControlCounters, dto.TxnControlCounters) error
+	Update(string, internaldto.TxnControlCounters, internaldto.TxnControlCounters) error
 	Collect() error
 }
 
@@ -63,7 +63,7 @@ type basicGarbageCollectorExecutor struct {
 	txnStore   kstore.KStore
 }
 
-func (rc *basicGarbageCollectorExecutor) Update(tableName string, parentTcc, tcc dto.TxnControlCounters) error {
+func (rc *basicGarbageCollectorExecutor) Update(tableName string, parentTcc, tcc internaldto.TxnControlCounters) error {
 	rc.gcMutex.Lock()
 	defer rc.gcMutex.Unlock()
 	if rc.ns.GetAnalyticsCacheTableNamespaceConfigurator().IsAllowed(tableName) {

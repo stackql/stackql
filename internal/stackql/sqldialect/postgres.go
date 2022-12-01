@@ -10,6 +10,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/astfuncrewrite"
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/relationaldto"
 	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
@@ -29,14 +30,14 @@ func newPostgresDialect(sqlEngine sqlengine.SQLEngine, analyticsNamespaceLikeStr
 	rv := &postgresDialect{
 		defaultGolangKind:     reflect.String,
 		defaultRelationalType: "text",
-		typeMappings: map[string]dto.DRMCoupling{
-			"array":   {RelationalType: "text", GolangKind: reflect.Slice},
-			"boolean": {RelationalType: "boolean", GolangKind: reflect.Bool},
-			"int":     {RelationalType: "integer", GolangKind: reflect.Int},
-			"integer": {RelationalType: "integer", GolangKind: reflect.Int},
-			"object":  {RelationalType: "text", GolangKind: reflect.Map},
-			"string":  {RelationalType: "text", GolangKind: reflect.String},
-			"number":  {RelationalType: "numeric", GolangKind: reflect.Float64},
+		typeMappings: map[string]internaldto.DRMCoupling{
+			"array":   internaldto.NewDRMCoupling("text", reflect.Slice),
+			"boolean": internaldto.NewDRMCoupling("boolean", reflect.Bool),
+			"int":     internaldto.NewDRMCoupling("integer", reflect.Int),
+			"integer": internaldto.NewDRMCoupling("integer", reflect.Int),
+			"object":  internaldto.NewDRMCoupling("text", reflect.Map),
+			"string":  internaldto.NewDRMCoupling("text", reflect.String),
+			"number":  internaldto.NewDRMCoupling("numeric", reflect.Float64),
 		},
 		controlAttributes:            controlAttributes,
 		analyticsNamespaceLikeString: analyticsNamespaceLikeString,
@@ -74,7 +75,7 @@ type postgresDialect struct {
 	analyticsNamespaceLikeString string
 	sqlEngine                    sqlengine.SQLEngine
 	formatter                    sqlparser.NodeFormatter
-	typeMappings                 map[string]dto.DRMCoupling
+	typeMappings                 map[string]internaldto.DRMCoupling
 	defaultRelationalType        string
 	defaultGolangKind            reflect.Kind
 	tableSchema                  string
@@ -216,11 +217,11 @@ func (eng *postgresDialect) generateDDL(relationalTable relationaldto.Relational
 	return retVal, nil
 }
 
-func (eng *postgresDialect) GetGCHousekeepingQuery(tableName string, tcc dto.TxnControlCounters) string {
+func (eng *postgresDialect) GetGCHousekeepingQuery(tableName string, tcc internaldto.TxnControlCounters) string {
 	return eng.getGCHousekeepingQuery(tableName, tcc)
 }
 
-func (eng *postgresDialect) getGCHousekeepingQuery(tableName string, tcc dto.TxnControlCounters) string {
+func (eng *postgresDialect) getGCHousekeepingQuery(tableName string, tcc internaldto.TxnControlCounters) string {
 	templateQuery := `INSERT INTO 
 	  "__iql__.control.gc.txn_table_x_ref" (
 			iql_generation_id, 
@@ -306,11 +307,11 @@ func (eng *postgresDialect) composeSelectQuery(columns []relationaldto.Relationa
 	return eng.sanitizeQueryString(query)
 }
 
-func (eng *postgresDialect) GenerateInsertDML(relationalTable relationaldto.RelationalTable, tcc dto.TxnControlCounters) (string, error) {
+func (eng *postgresDialect) GenerateInsertDML(relationalTable relationaldto.RelationalTable, tcc internaldto.TxnControlCounters) (string, error) {
 	return eng.generateInsertDML(relationalTable, tcc)
 }
 
-func (eng *postgresDialect) generateInsertDML(relationalTable relationaldto.RelationalTable, tcc dto.TxnControlCounters) (string, error) {
+func (eng *postgresDialect) generateInsertDML(relationalTable relationaldto.RelationalTable, tcc internaldto.TxnControlCounters) (string, error) {
 	var q strings.Builder
 	var quotedColNames, vals []string
 	tableName, err := relationalTable.GetName()
@@ -348,11 +349,11 @@ func (eng *postgresDialect) generateInsertDML(relationalTable relationaldto.Rela
 	return q.String(), nil
 }
 
-func (eng *postgresDialect) GenerateSelectDML(relationalTable relationaldto.RelationalTable, txnCtrlCtrs dto.TxnControlCounters, selectSuffix, rewrittenWhere string) (string, error) {
+func (eng *postgresDialect) GenerateSelectDML(relationalTable relationaldto.RelationalTable, txnCtrlCtrs internaldto.TxnControlCounters, selectSuffix, rewrittenWhere string) (string, error) {
 	return eng.generateSelectDML(relationalTable, txnCtrlCtrs, selectSuffix, rewrittenWhere)
 }
 
-func (eng *postgresDialect) generateSelectDML(relationalTable relationaldto.RelationalTable, txnCtrlCtrs dto.TxnControlCounters, selectSuffix, rewrittenWhere string) (string, error) {
+func (eng *postgresDialect) generateSelectDML(relationalTable relationaldto.RelationalTable, txnCtrlCtrs internaldto.TxnControlCounters, selectSuffix, rewrittenWhere string) (string, error) {
 	var q strings.Builder
 	var quotedColNames []string
 	for _, col := range relationalTable.GetColumns() {
@@ -390,7 +391,7 @@ func (eng *postgresDialect) generateSelectDML(relationalTable relationaldto.Rela
 	return q.String(), nil
 }
 
-func (sl *postgresDialect) GCAdd(tableName string, parentTcc, lockableTcc dto.TxnControlCounters) error {
+func (sl *postgresDialect) GCAdd(tableName string, parentTcc, lockableTcc internaldto.TxnControlCounters) error {
 	maxTxnColName := sl.controlAttributes.GetControlMaxTxnColumnName()
 	q := fmt.Sprintf(
 		`
@@ -516,7 +517,7 @@ func (eng *postgresDialect) IsTablePresent(tableName string, requestEncoding str
 }
 
 // In Postgres, `Timestamp with time zone` objects are timezone-aware.
-func (eng *postgresDialect) TableOldestUpdateUTC(tableName string, requestEncoding string, updateColName string, requestEncodingColName string) (time.Time, dto.TxnControlCounters) {
+func (eng *postgresDialect) TableOldestUpdateUTC(tableName string, requestEncoding string, updateColName string, requestEncodingColName string) (time.Time, internaldto.TxnControlCounters) {
 	genIdColName := eng.controlAttributes.GetControlGenIdColumnName()
 	ssnIdColName := eng.controlAttributes.GetControlSsnIdColumnName()
 	txnIdColName := eng.controlAttributes.GetControlTxnIdColumnName()
@@ -530,7 +531,7 @@ func (eng *postgresDialect) TableOldestUpdateUTC(tableName string, requestEncodi
 			var genID, sessionID, txnID, insertID int
 			err = rows.Scan(&oldestTime, &genID, &sessionID, &txnID, &insertID)
 			if err == nil {
-				tcc := dto.NewTxnControlCountersFromVals(genID, sessionID, txnID, insertID)
+				tcc := internaldto.NewTxnControlCountersFromVals(genID, sessionID, txnID, insertID)
 				tcc.SetTableName(tableName)
 				return oldestTime, tcc
 			}
@@ -677,7 +678,7 @@ func (eng *postgresDialect) GetRelationalType(discoType string) string {
 func (eng *postgresDialect) getRelationalType(discoType string) string {
 	rv, ok := eng.typeMappings[discoType]
 	if ok {
-		return rv.RelationalType
+		return rv.GetRelationalType()
 	}
 	return eng.defaultRelationalType
 }
@@ -691,7 +692,7 @@ func (eng *postgresDialect) getGolangValue(discoType string) interface{} {
 	if !ok {
 		return eng.getDefaultGolangValue()
 	}
-	switch rv.GolangKind {
+	switch rv.GetGolangKind() {
 	case reflect.String:
 		return &sql.NullString{}
 	case reflect.Array:
@@ -717,7 +718,7 @@ func (eng *postgresDialect) GetGolangKind(discoType string) reflect.Kind {
 	if !ok {
 		return eng.getDefaultGolangKind()
 	}
-	return rv.GolangKind
+	return rv.GetGolangKind()
 }
 
 func (eng *postgresDialect) getDefaultGolangKind() reflect.Kind {
@@ -728,26 +729,26 @@ func (eng *postgresDialect) QueryNamespaced(colzString string, actualTableName s
 	return eng.sqlEngine.Query(fmt.Sprintf(`SELECT %s FROM "%s"."%s" WHERE "%s" = $1`, colzString, eng.tableSchema, actualTableName, requestEncodingColName), requestEncoding)
 }
 
-func (se *postgresDialect) GetTable(tableHeirarchyIDs dto.HeirarchyIdentifiers, discoveryId int) (dto.DBTable, error) {
+func (se *postgresDialect) GetTable(tableHeirarchyIDs internaldto.HeirarchyIdentifiers, discoveryId int) (internaldto.DBTable, error) {
 	return se.getTable(tableHeirarchyIDs, discoveryId)
 }
 
-func (se *postgresDialect) getTable(tableHeirarchyIDs dto.HeirarchyIdentifiers, discoveryId int) (dto.DBTable, error) {
+func (se *postgresDialect) getTable(tableHeirarchyIDs internaldto.HeirarchyIdentifiers, discoveryId int) (internaldto.DBTable, error) {
 	tableNameStump, err := se.getTableNameStump(tableHeirarchyIDs)
 	if err != nil {
-		return dto.NewDBTable("", "", "", 0, tableHeirarchyIDs), err
+		return internaldto.NewDBTable("", "", "", 0, tableHeirarchyIDs), err
 	}
 	tableName := fmt.Sprintf("%s.generation_%d", tableNameStump, discoveryId)
-	return dto.NewDBTable(tableName, tableNameStump, tableHeirarchyIDs.GetTableName(), discoveryId, tableHeirarchyIDs), err
+	return internaldto.NewDBTable(tableName, tableNameStump, tableHeirarchyIDs.GetTableName(), discoveryId, tableHeirarchyIDs), err
 }
 
-func (se *postgresDialect) GetCurrentTable(tableHeirarchyIDs dto.HeirarchyIdentifiers) (dto.DBTable, error) {
+func (se *postgresDialect) GetCurrentTable(tableHeirarchyIDs internaldto.HeirarchyIdentifiers) (internaldto.DBTable, error) {
 	return se.getCurrentTable(tableHeirarchyIDs)
 }
 
 // In postgres, 63 chars is default length for IDs such as table names
 // https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
-func (se *postgresDialect) getTableNameStump(tableHeirarchyIDs dto.HeirarchyIdentifiers) (string, error) {
+func (se *postgresDialect) getTableNameStump(tableHeirarchyIDs internaldto.HeirarchyIdentifiers) (string, error) {
 	rawTableName := tableHeirarchyIDs.GetTableName()
 	maxRawTableNameWidth := constants.PostgresIDMaxWidth - (len(".generation_") + constants.MaxDigits32BitUnsigned)
 	if len(rawTableName) > maxRawTableNameWidth {
@@ -756,12 +757,12 @@ func (se *postgresDialect) getTableNameStump(tableHeirarchyIDs dto.HeirarchyIden
 	return rawTableName, nil
 }
 
-func (se *postgresDialect) getCurrentTable(tableHeirarchyIDs dto.HeirarchyIdentifiers) (dto.DBTable, error) {
+func (se *postgresDialect) getCurrentTable(tableHeirarchyIDs internaldto.HeirarchyIdentifiers) (internaldto.DBTable, error) {
 	var tableName string
 	var discoID int
 	tableNameStump, err := se.getTableNameStump(tableHeirarchyIDs)
 	if err != nil {
-		return dto.NewDBTable("", "", "", 0, tableHeirarchyIDs), err
+		return internaldto.NewDBTable("", "", "", 0, tableHeirarchyIDs), err
 	}
 	tableNamePattern := fmt.Sprintf("%s.generation_%%", tableNameStump)
 	tableNameLHSRemove := fmt.Sprintf("%s.generation_", tableNameStump)
@@ -782,5 +783,5 @@ func (se *postgresDialect) getCurrentTable(tableHeirarchyIDs dto.HeirarchyIdenti
 	if err != nil {
 		logging.GetLogger().Errorln(fmt.Sprintf("err = %v for tableNamePattern = '%s' and tableNameLHSRemove = '%s'", err, tableNamePattern, tableNameLHSRemove))
 	}
-	return dto.NewDBTable(tableName, tableNameStump, tableHeirarchyIDs.GetTableName(), discoID, tableHeirarchyIDs), err
+	return internaldto.NewDBTable(tableName, tableNameStump, tableHeirarchyIDs.GetTableName(), discoID, tableHeirarchyIDs), err
 }
