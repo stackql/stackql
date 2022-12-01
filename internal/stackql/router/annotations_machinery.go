@@ -3,7 +3,7 @@ package router
 import (
 	"fmt"
 
-	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
@@ -42,6 +42,6 @@ func obtainAnnotationCtx(
 	if err == nil && namespaceCollection.GetAnalyticsCacheTableNamespaceConfigurator().IsAllowed(tn) {
 		name, _ = tbl.GetResponseSchemaStr()
 	}
-	hIds := dto.NewHeirarchyIdentifiers(provStr, svcStr, rscStr, methodStr).WithResponseSchemaStr(name)
+	hIds := internaldto.NewHeirarchyIdentifiers(provStr, svcStr, rscStr, methodStr).WithResponseSchemaStr(name)
 	return taxonomy.NewStaticStandardAnnotationCtx(itemObjS, hIds, tbl, parameters), nil
 }

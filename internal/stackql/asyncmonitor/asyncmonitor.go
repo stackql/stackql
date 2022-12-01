@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/httpmiddleware"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/provider"
@@ -25,12 +25,12 @@ type IAsyncMonitor interface {
 }
 
 type AsyncHttpMonitorPrimitive struct {
-	handlerCtx          *handler.HandlerContext
+	handlerCtx          handler.HandlerContext
 	heirarchy           tablemetadata.HeirarchyObjects
 	initialCtx          primitive.IPrimitiveCtx
 	precursor           primitive.IPrimitive
 	transferPayload     map[string]interface{}
-	executor            func(pc primitive.IPrimitiveCtx, initalBody interface{}) dto.ExecutorOutput
+	executor            func(pc primitive.IPrimitiveCtx, initalBody interface{}) internaldto.ExecutorOutput
 	elapsedSeconds      int
 	pollIntervalSeconds int
 	noStatus            bool
@@ -41,7 +41,7 @@ type AsyncHttpMonitorPrimitive struct {
 func (pr *AsyncHttpMonitorPrimitive) SetTxnId(id int) {
 }
 
-func (pr *AsyncHttpMonitorPrimitive) IncidentData(fromId int64, input dto.ExecutorOutput) error {
+func (pr *AsyncHttpMonitorPrimitive) IncidentData(fromId int64, input internaldto.ExecutorOutput) error {
 	return pr.precursor.IncidentData(fromId, input)
 }
 
@@ -53,7 +53,7 @@ func (pr *AsyncHttpMonitorPrimitive) Optimise() error {
 	return nil
 }
 
-func (asm *AsyncHttpMonitorPrimitive) Execute(pc primitive.IPrimitiveCtx) dto.ExecutorOutput {
+func (asm *AsyncHttpMonitorPrimitive) Execute(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 	if asm.executor != nil {
 		if pc == nil {
 			pc = asm.initialCtx
@@ -66,33 +66,33 @@ func (asm *AsyncHttpMonitorPrimitive) Execute(pc primitive.IPrimitiveCtx) dto.Ex
 		// seems pointless
 		_, err := asm.initialCtx.GetAuthContext(prStr)
 		if err != nil {
-			return dto.NewExecutorOutput(nil, nil, nil, nil, err)
+			return internaldto.NewExecutorOutput(nil, nil, nil, nil, err)
 		}
 		//
-		asyP := dto.NewBasicPrimitiveContext(
+		asyP := internaldto.NewBasicPrimitiveContext(
 			asm.initialCtx.GetAuthContext,
 			pc.GetWriter(),
 			pc.GetErrWriter(),
 		)
 		return asm.executor(asyP, pr.GetOutputBody())
 	}
-	return dto.NewExecutorOutput(nil, nil, nil, nil, nil)
+	return internaldto.NewExecutorOutput(nil, nil, nil, nil, nil)
 }
 
 func (pr *AsyncHttpMonitorPrimitive) ID() int64 {
 	return pr.id
 }
 
-func (pr *AsyncHttpMonitorPrimitive) GetInputFromAlias(string) (dto.ExecutorOutput, bool) {
-	var rv dto.ExecutorOutput
+func (pr *AsyncHttpMonitorPrimitive) GetInputFromAlias(string) (internaldto.ExecutorOutput, bool) {
+	var rv internaldto.ExecutorOutput
 	return rv, false
 }
 
-func (pr *AsyncHttpMonitorPrimitive) SetExecutor(ex func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput) error {
+func (pr *AsyncHttpMonitorPrimitive) SetExecutor(ex func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput) error {
 	return fmt.Errorf("AsyncHttpMonitorPrimitive does not support SetExecutor()")
 }
 
-func NewAsyncMonitor(handlerCtx *handler.HandlerContext, prov provider.IProvider) (IAsyncMonitor, error) {
+func NewAsyncMonitor(handlerCtx handler.HandlerContext, prov provider.IProvider) (IAsyncMonitor, error) {
 	switch prov.GetProviderString() {
 	case "google":
 		return newGoogleAsyncMonitor(handlerCtx, prov, prov.GetVersion())
@@ -100,7 +100,7 @@ func NewAsyncMonitor(handlerCtx *handler.HandlerContext, prov provider.IProvider
 	return nil, fmt.Errorf("async operation monitor for provider = '%s', api version = '%s' currently not supported", prov.GetProviderString(), prov.GetVersion())
 }
 
-func newGoogleAsyncMonitor(handlerCtx *handler.HandlerContext, prov provider.IProvider, version string) (IAsyncMonitor, error) {
+func newGoogleAsyncMonitor(handlerCtx handler.HandlerContext, prov provider.IProvider, version string) (IAsyncMonitor, error) {
 	switch version {
 	default:
 		return &DefaultGoogleAsyncMonitor{
@@ -111,7 +111,7 @@ func newGoogleAsyncMonitor(handlerCtx *handler.HandlerContext, prov provider.IPr
 }
 
 type DefaultGoogleAsyncMonitor struct {
-	handlerCtx *handler.HandlerContext
+	handlerCtx handler.HandlerContext
 	provider   provider.IProvider
 	precursor  primitive.IPrimitive
 }
@@ -156,16 +156,16 @@ func (gm *DefaultGoogleAsyncMonitor) getV1Monitor(heirarchy tablemetadata.Heirar
 	}
 	m := heirarchy.GetMethod()
 	if m.IsAwaitable() {
-		asyncPrim.executor = func(pc primitive.IPrimitiveCtx, bd interface{}) dto.ExecutorOutput {
+		asyncPrim.executor = func(pc primitive.IPrimitiveCtx, bd interface{}) internaldto.ExecutorOutput {
 			body, ok := bd.(map[string]interface{})
 			if !ok {
-				return dto.NewExecutorOutput(nil, nil, nil, nil, fmt.Errorf("cannot execute monitor: response body of type '%T' unreadable", bd))
+				return internaldto.NewExecutorOutput(nil, nil, nil, nil, fmt.Errorf("cannot execute monitor: response body of type '%T' unreadable", bd))
 			}
 			if pc == nil {
-				return dto.NewExecutorOutput(nil, nil, nil, nil, fmt.Errorf("cannot execute monitor: nil plan primitive"))
+				return internaldto.NewExecutorOutput(nil, nil, nil, nil, fmt.Errorf("cannot execute monitor: nil plan primitive"))
 			}
 			if body == nil {
-				return dto.NewExecutorOutput(nil, nil, nil, nil, fmt.Errorf("cannot execute monitor: no body present"))
+				return internaldto.NewExecutorOutput(nil, nil, nil, nil, fmt.Errorf("cannot execute monitor: no body present"))
 			}
 			logging.GetLogger().Infoln(fmt.Sprintf("body = %v", body))
 
@@ -176,15 +176,15 @@ func (gm *DefaultGoogleAsyncMonitor) getV1Monitor(heirarchy tablemetadata.Heirar
 			}
 			url, ok := body["selfLink"]
 			if !ok {
-				return dto.NewExecutorOutput(nil, nil, nil, nil, fmt.Errorf("cannot execute monitor: no 'selfLink' property present"))
+				return internaldto.NewExecutorOutput(nil, nil, nil, nil, fmt.Errorf("cannot execute monitor: no 'selfLink' property present"))
 			}
 			prStr := heirarchy.GetProvider().GetProviderString()
 			authCtx, err := pc.GetAuthContext(prStr)
 			if err != nil {
-				return dto.NewExecutorOutput(nil, nil, nil, nil, err)
+				return internaldto.NewExecutorOutput(nil, nil, nil, nil, err)
 			}
 			if authCtx == nil {
-				return dto.NewExecutorOutput(nil, nil, nil, nil, fmt.Errorf("cannot execute monitor: no auth context"))
+				return internaldto.NewExecutorOutput(nil, nil, nil, nil, fmt.Errorf("cannot execute monitor: no auth context"))
 			}
 			time.Sleep(time.Duration(asyncPrim.pollIntervalSeconds) * time.Second)
 			asyncPrim.elapsedSeconds += asyncPrim.pollIntervalSeconds
@@ -193,18 +193,18 @@ func (gm *DefaultGoogleAsyncMonitor) getV1Monitor(heirarchy tablemetadata.Heirar
 			}
 			req, err := getMonitorRequest(url.(string))
 			if err != nil {
-				return dto.NewExecutorOutput(nil, nil, nil, nil, err)
+				return internaldto.NewExecutorOutput(nil, nil, nil, nil, err)
 			}
-			response, apiErr := httpmiddleware.HttpApiCallFromRequest(*gm.handlerCtx, gm.provider, m, req)
+			response, apiErr := httpmiddleware.HttpApiCallFromRequest(gm.handlerCtx.Clone(), gm.provider, m, req)
 			if apiErr != nil {
-				return dto.NewExecutorOutput(nil, nil, nil, nil, apiErr)
+				return internaldto.NewExecutorOutput(nil, nil, nil, nil, apiErr)
 			}
 			target, err := heirarchy.GetMethod().DeprecatedProcessResponse(response)
 			gm.handlerCtx.LogHTTPResponseMap(target)
 			if err != nil {
-				return dto.NewExecutorOutput(nil, nil, nil, nil, err)
+				return internaldto.NewExecutorOutput(nil, nil, nil, nil, err)
 			}
-			return asyncPrim.executor(dto.NewBasicPrimitiveContext(
+			return asyncPrim.executor(internaldto.NewBasicPrimitiveContext(
 				pc.GetAuthContext,
 				pc.GetWriter(),
 				pc.GetErrWriter(),
@@ -216,8 +216,8 @@ func (gm *DefaultGoogleAsyncMonitor) getV1Monitor(heirarchy tablemetadata.Heirar
 	return nil, fmt.Errorf("method %s is not awaitable", heirarchy.GetMethod().GetName())
 }
 
-func prepareReultSet(prim *AsyncHttpMonitorPrimitive, pc primitive.IPrimitiveCtx, target map[string]interface{}, operationDescriptor string) dto.ExecutorOutput {
-	payload := dto.PrepareResultSetDTO{
+func prepareReultSet(prim *AsyncHttpMonitorPrimitive, pc primitive.IPrimitiveCtx, target map[string]interface{}, operationDescriptor string) internaldto.ExecutorOutput {
+	payload := internaldto.PrepareResultSetDTO{
 		OutputBody:  target,
 		Msg:         nil,
 		RowMap:      nil,

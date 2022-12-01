@@ -33,8 +33,8 @@ func TestUnionAllSelectComputeDisksOrderByCrtTmstpAscPlusCoalesceJsonExtract(t *
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.Outfile = os.Stdout
-		handlerCtx.OutErrFile = os.Stderr
+		handlerCtx.SetOutfile(os.Stdout)
+		handlerCtx.SetOutErrFile(os.Stderr)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -43,12 +43,12 @@ func TestUnionAllSelectComputeDisksOrderByCrtTmstpAscPlusCoalesceJsonExtract(t *
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		handlerCtx.Query = testobjects.UnionSelectGoogleComputeDisksOrderCreationTmstpAscPlusJsonExtractCoalesce
-		response := querysubmit.SubmitQuery(&handlerCtx)
-		handlerCtx.Outfile = outFile
-		responsehandler.HandleResponse(&handlerCtx, response)
+		handlerCtx.SetQuery(testobjects.UnionSelectGoogleComputeDisksOrderCreationTmstpAscPlusJsonExtractCoalesce)
+		response := querysubmit.SubmitQuery(handlerCtx)
+		handlerCtx.SetOutfile(outFile)
+		responsehandler.HandleResponse(handlerCtx, response)
 
-		ProcessQuery(&handlerCtx)
+		ProcessQuery(handlerCtx)
 	}
 
 	stackqltestutil.SetupSimpleSelectGoogleComputeDisks(t, 2)

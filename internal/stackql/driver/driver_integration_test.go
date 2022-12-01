@@ -52,14 +52,14 @@ func TestSimpleSelectGoogleComputeInstanceDriver(t *testing.T) {
 	}
 
 	handlerCtx, err := handler.GetHandlerCtx(testobjects.SimpleSelectGoogleComputeInstance, *runtimeCtx, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-	handlerCtx.Outfile = os.Stdout
-	handlerCtx.OutErrFile = os.Stderr
+	handlerCtx.SetOutfile(os.Stdout)
+	handlerCtx.SetOutErrFile(os.Stderr)
 
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
 
-	ProcessQuery(&handlerCtx)
+	ProcessQuery(handlerCtx)
 
 	t.Logf("simple select driver integration test passed")
 }
@@ -77,23 +77,23 @@ func TestSimpleSelectGoogleComputeInstanceDriverOutput(t *testing.T) {
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.Outfile = os.Stdout
-		handlerCtx.OutErrFile = os.Stderr
+		handlerCtx.SetOutfile(os.Stdout)
+		handlerCtx.SetOutErrFile(os.Stderr)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		handlerCtx.Outfile = outFile
-		handlerCtx.OutErrFile = os.Stderr
+		handlerCtx.SetOutfile(outFile)
+		handlerCtx.SetOutErrFile(os.Stderr)
 
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		handlerCtx.Query = testobjects.SimpleSelectGoogleComputeInstance
-		response := querysubmit.SubmitQuery(&handlerCtx)
-		handlerCtx.Outfile = outFile
-		responsehandler.HandleResponse(&handlerCtx, response)
+		handlerCtx.SetQuery(testobjects.SimpleSelectGoogleComputeInstance)
+		response := querysubmit.SubmitQuery(handlerCtx)
+		handlerCtx.SetOutfile(outFile)
+		responsehandler.HandleResponse(handlerCtx, response)
 	}
 
 	stackqltestutil.SetupSimpleSelectGoogleComputeInstance(t)
@@ -114,23 +114,23 @@ func TestSimpleSelectGoogleComputeInstanceDriverOutputRepeated(t *testing.T) {
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.Outfile = os.Stdout
-		handlerCtx.OutErrFile = os.Stderr
+		handlerCtx.SetOutfile(os.Stdout)
+		handlerCtx.SetOutErrFile(os.Stderr)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		handlerCtx.Outfile = outFile
-		handlerCtx.OutErrFile = os.Stderr
+		handlerCtx.SetOutfile(outFile)
+		handlerCtx.SetOutErrFile(os.Stderr)
 
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		handlerCtx.Query = testobjects.SimpleSelectGoogleComputeInstance
-		response := querysubmit.SubmitQuery(&handlerCtx)
-		handlerCtx.Outfile = outFile
-		responsehandler.HandleResponse(&handlerCtx, response)
+		handlerCtx.SetQuery(testobjects.SimpleSelectGoogleComputeInstance)
+		response := querysubmit.SubmitQuery(handlerCtx)
+		handlerCtx.SetOutfile(outFile)
+		responsehandler.HandleResponse(handlerCtx, response)
 	}
 
 	stackqltestutil.SetupSimpleSelectGoogleComputeInstance(t)
@@ -151,23 +151,23 @@ func TestSimpleSelectGoogleContainerSubnetworksAllowedDriverOutput(t *testing.T)
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.Outfile = os.Stdout
-		handlerCtx.OutErrFile = os.Stderr
+		handlerCtx.SetOutfile(os.Stdout)
+		handlerCtx.SetOutErrFile(os.Stderr)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		handlerCtx.Outfile = outFile
-		handlerCtx.OutErrFile = os.Stderr
+		handlerCtx.SetOutfile(outFile)
+		handlerCtx.SetOutErrFile(os.Stderr)
 
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		handlerCtx.Query = testobjects.SimpleSelectGoogleContainerSubnetworks
-		response := querysubmit.SubmitQuery(&handlerCtx)
-		handlerCtx.Outfile = outFile
-		responsehandler.HandleResponse(&handlerCtx, response)
+		handlerCtx.SetQuery(testobjects.SimpleSelectGoogleContainerSubnetworks)
+		response := querysubmit.SubmitQuery(handlerCtx)
+		handlerCtx.SetOutfile(outFile)
+		responsehandler.HandleResponse(handlerCtx, response)
 	}
 
 	stackqltestutil.SetupSimpleSelectGoogleContainerAggAllowedSubnetworks(t)
@@ -188,23 +188,23 @@ func TestSimpleInsertGoogleComputeNetworkAsync(t *testing.T) {
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.Outfile = os.Stdout
-		handlerCtx.OutErrFile = os.Stderr
+		handlerCtx.SetOutfile(os.Stdout)
+		handlerCtx.SetOutErrFile(os.Stderr)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		handlerCtx.Outfile = outFile
-		handlerCtx.OutErrFile = os.Stderr
+		handlerCtx.SetOutfile(outFile)
+		handlerCtx.SetOutErrFile(os.Stderr)
 
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		handlerCtx.Query = testobjects.SimpleInsertComputeNetwork
-		response := querysubmit.SubmitQuery(&handlerCtx)
-		handlerCtx.Outfile = outFile
-		responsehandler.HandleResponse(&handlerCtx, response)
+		handlerCtx.SetQuery(testobjects.SimpleInsertComputeNetwork)
+		response := querysubmit.SubmitQuery(handlerCtx)
+		handlerCtx.SetOutfile(outFile)
+		responsehandler.HandleResponse(handlerCtx, response)
 	}
 
 	stackqltestutil.SetupSimpleInsertGoogleComputeNetworks(t)
@@ -236,21 +236,21 @@ func TestK8sTheHardWayAsync(t *testing.T) {
 		runtimeCtx.CSVHeadersDisable = true
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.Outfile = os.Stdout
-		handlerCtx.OutErrFile = os.Stderr
+		handlerCtx.SetOutfile(os.Stdout)
+		handlerCtx.SetOutErrFile(os.Stderr)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		handlerCtx.Outfile = outFile
-		handlerCtx.OutErrFile = os.Stderr
+		handlerCtx.SetOutfile(outFile)
+		handlerCtx.SetOutErrFile(os.Stderr)
 
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		handlerCtx.RawQuery = strings.TrimSpace(string(megaQueryConcat))
-		ProcessQuery(&handlerCtx)
+		handlerCtx.SetRawQuery(strings.TrimSpace(string(megaQueryConcat)))
+		ProcessQuery(handlerCtx)
 	}
 
 	stackqltestutil.SetupK8sTheHardWayE2eSuccess(t)
@@ -289,16 +289,16 @@ func TestSimpleDryRunK8sTheHardWayDriver(t *testing.T) {
 		}
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, rdr, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.Outfile = os.Stdout
-		handlerCtx.OutErrFile = os.Stderr
+		handlerCtx.SetOutfile(os.Stdout)
+		handlerCtx.SetOutErrFile(os.Stderr)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		handlerCtx.Outfile = outFile
-		handlerCtx.OutErrFile = os.Stderr
+		handlerCtx.SetOutfile(outFile)
+		handlerCtx.SetOutErrFile(os.Stderr)
 
-		ProcessDryRun(&handlerCtx)
+		ProcessDryRun(handlerCtx)
 	}
 
 	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedK8STheHardWayRenderedFile})

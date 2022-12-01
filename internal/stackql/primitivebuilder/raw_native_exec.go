@@ -3,8 +3,8 @@ package primitivebuilder
 import (
 	"fmt"
 
-	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
@@ -13,16 +13,16 @@ import (
 
 type RawNativeExec struct {
 	graph       *primitivegraph.PrimitiveGraph
-	handlerCtx  *handler.HandlerContext
-	txnCtrlCtr  dto.TxnControlCounters
+	handlerCtx  handler.HandlerContext
+	txnCtrlCtr  internaldto.TxnControlCounters
 	root        primitivegraph.PrimitiveNode
 	nativeQuery string
 }
 
 func NewRawNativeExec(
 	graph *primitivegraph.PrimitiveGraph,
-	handlerCtx *handler.HandlerContext,
-	txnCtrlCtr dto.TxnControlCounters,
+	handlerCtx handler.HandlerContext,
+	txnCtrlCtr internaldto.TxnControlCounters,
 	nativeQuery string,
 ) Builder {
 	return &RawNativeExec{
@@ -43,12 +43,12 @@ func (ss *RawNativeExec) GetTail() primitivegraph.PrimitiveNode {
 
 func (ss *RawNativeExec) Build() error {
 
-	selectEx := func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput {
+	selectEx := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 
 		// select phase
 		logging.GetLogger().Infoln(fmt.Sprintf("running native query: '''%s''' ", ss.nativeQuery))
 
-		row, err := ss.handlerCtx.SQLEngine.Exec(ss.nativeQuery)
+		row, err := ss.handlerCtx.GetSQLEngine().Exec(ss.nativeQuery)
 
 		if row != nil {
 			rowsAffected, countErr := row.RowsAffected()
@@ -60,17 +60,17 @@ func (ss *RawNativeExec) Build() error {
 		}
 
 		if err != nil {
-			return dto.NewErroneousExecutorOutput(err)
+			return internaldto.NewErroneousExecutorOutput(err)
 		}
 
 		return util.PrepareResultSet(
-			dto.NewPrepareResultSetPlusRawDTO(
+			internaldto.NewPrepareResultSetPlusRawDTO(
 				nil,
 				nil,
 				nil,
 				nil,
 				nil,
-				&dto.BackendMessages{WorkingMessages: []string{"exec completed"}}, nil),
+				&internaldto.BackendMessages{WorkingMessages: []string{"exec completed"}}, nil),
 		)
 	}
 

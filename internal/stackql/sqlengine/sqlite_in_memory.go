@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
 	"github.com/stackql/stackql/internal/stackql/util"
@@ -206,14 +207,14 @@ func (se sqLiteInProcessEngine) CacheStoreGet(key string) ([]byte, error) {
 	return retVal, err
 }
 
-func (se sqLiteInProcessEngine) CacheStoreGetAll() ([]dto.KeyVal, error) {
-	var retVal []dto.KeyVal
+func (se sqLiteInProcessEngine) CacheStoreGetAll() ([]internaldto.KeyVal, error) {
+	var retVal []internaldto.KeyVal
 	res, err := se.db.Query(`SELECT k, v FROM "__iql__.cache.key_val"`)
 	if err != nil {
 		return nil, err
 	}
 	for res.Next() {
-		var kv dto.KeyVal
+		var kv internaldto.KeyVal
 		err = res.Scan(&kv.K, &kv.V)
 		if err != nil {
 			return nil, err

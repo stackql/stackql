@@ -62,14 +62,14 @@ func TestSelectOktaApplicationAppsDriver(t *testing.T) {
 	}
 
 	handlerCtx, err := handler.GetHandlerCtx(testobjects.SimpleSelectOktaApplicationApps, *runtimeCtx, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-	handlerCtx.Outfile = os.Stdout
-	handlerCtx.OutErrFile = os.Stderr
+	handlerCtx.SetOutfile(os.Stdout)
+	handlerCtx.SetOutErrFile(os.Stderr)
 
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
 
-	ProcessQuery(&handlerCtx)
+	ProcessQuery(handlerCtx)
 
 	t.Logf("simple select driver integration test passed")
 }
@@ -87,23 +87,23 @@ func TestSimpleSelectOktaApplicationAppsDriverOutput(t *testing.T) {
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.Outfile = os.Stdout
-		handlerCtx.OutErrFile = os.Stderr
+		handlerCtx.SetOutfile(os.Stdout)
+		handlerCtx.SetOutErrFile(os.Stderr)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		handlerCtx.Outfile = outFile
-		handlerCtx.OutErrFile = os.Stderr
+		handlerCtx.SetOutfile(outFile)
+		handlerCtx.SetOutErrFile(os.Stderr)
 
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		handlerCtx.Query = testobjects.SimpleSelectOktaApplicationApps
-		response := querysubmit.SubmitQuery(&handlerCtx)
-		handlerCtx.Outfile = outFile
-		responsehandler.HandleResponse(&handlerCtx, response)
+		handlerCtx.SetQuery(testobjects.SimpleSelectOktaApplicationApps)
+		response := querysubmit.SubmitQuery(handlerCtx)
+		handlerCtx.SetOutfile(outFile)
+		responsehandler.HandleResponse(handlerCtx, response)
 	}
 
 	stackqltestutil.SetupSelectOktaApplicationApps(t)

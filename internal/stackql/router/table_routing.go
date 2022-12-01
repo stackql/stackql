@@ -14,7 +14,7 @@ import (
 )
 
 type TableRouteAstVisitor struct {
-	handlerCtx      *handler.HandlerContext
+	handlerCtx      handler.HandlerContext
 	router          ParameterRouter
 	tableMetaSlice  []tablemetadata.ExtendedTableMetadata
 	tables          taxonomy.TblMap
@@ -22,7 +22,7 @@ type TableRouteAstVisitor struct {
 	annotationSlice []taxonomy.AnnotationCtx
 }
 
-func NewTableRouteAstVisitor(handlerCtx *handler.HandlerContext, router ParameterRouter) *TableRouteAstVisitor {
+func NewTableRouteAstVisitor(handlerCtx handler.HandlerContext, router ParameterRouter) *TableRouteAstVisitor {
 	return &TableRouteAstVisitor{
 		handlerCtx:  handlerCtx,
 		router:      router,

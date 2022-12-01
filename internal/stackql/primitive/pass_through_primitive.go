@@ -3,21 +3,21 @@ package primitive
 import (
 	"fmt"
 
-	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/sqldialect"
 )
 
 type PassThroughPrimitive struct {
-	Inputs                 map[int64]dto.ExecutorOutput
+	Inputs                 map[int64]internaldto.ExecutorOutput
 	id                     int64
 	sqlDialect             sqldialect.SQLDialect
 	shouldCollectGarbage   bool
-	txnControlCounterSlice []dto.TxnControlCounters
+	txnControlCounterSlice []internaldto.TxnControlCounters
 }
 
-func NewPassThroughPrimitive(sqlDialect sqldialect.SQLDialect, txnControlCounterSlice []dto.TxnControlCounters, shouldCollectGarbage bool) IPrimitive {
+func NewPassThroughPrimitive(sqlDialect sqldialect.SQLDialect, txnControlCounterSlice []internaldto.TxnControlCounters, shouldCollectGarbage bool) IPrimitive {
 	return &PassThroughPrimitive{
-		Inputs:                 make(map[int64]dto.ExecutorOutput),
+		Inputs:                 make(map[int64]internaldto.ExecutorOutput),
 		sqlDialect:             sqlDialect,
 		txnControlCounterSlice: txnControlCounterSlice,
 		shouldCollectGarbage:   shouldCollectGarbage,
@@ -35,16 +35,16 @@ func (pr *PassThroughPrimitive) Optimise() error {
 	return nil
 }
 
-func (pr *PassThroughPrimitive) GetInputFromAlias(string) (dto.ExecutorOutput, bool) {
-	var rv dto.ExecutorOutput
+func (pr *PassThroughPrimitive) GetInputFromAlias(string) (internaldto.ExecutorOutput, bool) {
+	var rv internaldto.ExecutorOutput
 	return rv, false
 }
 
-func (pr *PassThroughPrimitive) SetExecutor(func(pc IPrimitiveCtx) dto.ExecutorOutput) error {
+func (pr *PassThroughPrimitive) SetExecutor(func(pc IPrimitiveCtx) internaldto.ExecutorOutput) error {
 	return fmt.Errorf("pass through primitive does not support SetExecutor()")
 }
 
-func (pr *PassThroughPrimitive) IncidentData(fromId int64, input dto.ExecutorOutput) error {
+func (pr *PassThroughPrimitive) IncidentData(fromId int64, input internaldto.ExecutorOutput) error {
 	pr.Inputs[fromId] = input
 	return nil
 }
@@ -53,10 +53,10 @@ func (pt *PassThroughPrimitive) collectGarbage() {
 	// placeholder
 }
 
-func (pt *PassThroughPrimitive) Execute(pc IPrimitiveCtx) dto.ExecutorOutput {
+func (pt *PassThroughPrimitive) Execute(pc IPrimitiveCtx) internaldto.ExecutorOutput {
 	defer pt.collectGarbage()
 	for _, input := range pt.Inputs {
 		return input
 	}
-	return dto.ExecutorOutput{}
+	return internaldto.ExecutorOutput{}
 }

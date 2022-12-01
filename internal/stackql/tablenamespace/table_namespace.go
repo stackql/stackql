@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/sqldialect"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/templatenamespace"
@@ -17,7 +17,7 @@ type TableNamespaceConfigurator interface {
 	GetLikeString() string
 	GetObjectName(string) string
 	IsAllowed(string) bool
-	Match(string, string, string, string) (dto.TxnControlCounters, bool)
+	Match(string, string, string, string) (internaldto.TxnControlCounters, bool)
 	Read(string, string, string, []string) (*sql.Rows, error)
 	RenderTemplate(string) (string, error)
 	WithSQLDialect(sqlDialect sqldialect.SQLDialect) (TableNamespaceConfigurator, error)
@@ -72,7 +72,7 @@ func (stc *regexTableNamespaceConfigurator) Read(tableString string, requestEnco
 	return stc.sqlDialect.QueryNamespaced(colzString, actualTableName, requestEncodingColName, requestEncoding)
 }
 
-func (stc *regexTableNamespaceConfigurator) Match(tableString string, requestEncoding string, lastModifiedColName string, requestEncodingColName string) (dto.TxnControlCounters, bool) {
+func (stc *regexTableNamespaceConfigurator) Match(tableString string, requestEncoding string, lastModifiedColName string, requestEncodingColName string) (internaldto.TxnControlCounters, bool) {
 	isAllowed := stc.templateNamespaceConfigurator.IsAllowed(tableString)
 	if !isAllowed {
 		return nil, false

@@ -1,4 +1,4 @@
-package dto
+package internaldto
 
 import (
 	"github.com/stackql/stackql/pkg/txncounter"

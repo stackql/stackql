@@ -8,7 +8,7 @@ import (
 
 	"github.com/jeroenrinzema/psql-wire/pkg/sqldata"
 	"github.com/stackql/stackql/internal/stackql/drm"
-	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
@@ -35,7 +35,7 @@ func prepareGolangResult(
 	nonControlColumns []drm.ColumnMetadata,
 	drmCfg drm.DRMConfig,
 	stream streaming.MapStream,
-) dto.ExecutorOutput {
+) internaldto.ExecutorOutput {
 	r, sqlErr := drmCfg.QueryDML(
 		sqlEngine,
 		stmtCtx,
@@ -68,7 +68,7 @@ func prepareGolangResult(
 		}
 		return rv
 	}
-	rv := util.PrepareResultSet(dto.NewPrepareResultSetPlusRawAndTypesDTO(nil, altKeys, cNames, cSchemas, rowSort, nil, nil, rawRows))
+	rv := util.PrepareResultSet(internaldto.NewPrepareResultSetPlusRawAndTypesDTO(nil, altKeys, cNames, cSchemas, rowSort, nil, nil, rawRows))
 
 	if rv.GetSQLResult() == nil {
 		var colz []string

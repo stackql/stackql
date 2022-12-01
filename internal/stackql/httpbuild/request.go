@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/provider"
 	"github.com/stackql/stackql/internal/stackql/requests"
@@ -22,11 +22,11 @@ import (
 )
 
 type ExecContext struct {
-	ExecPayload *dto.ExecPayload
+	ExecPayload *internaldto.ExecPayload
 	Resource    *openapistackql.Resource
 }
 
-func NewExecContext(payload *dto.ExecPayload, rsc *openapistackql.Resource) *ExecContext {
+func NewExecContext(payload *internaldto.ExecPayload, rsc *openapistackql.Resource) *ExecContext {
 	return &ExecContext{
 		ExecPayload: payload,
 		Resource:    rsc,
@@ -58,22 +58,22 @@ func (hap HTTPArmouryParameters) Encode() string {
 	return ""
 }
 
-func (hap HTTPArmouryParameters) SetNextPage(ops *openapistackql.OperationStore, token string, tokenKey *dto.HTTPElement) (*http.Request, error) {
+func (hap HTTPArmouryParameters) SetNextPage(ops *openapistackql.OperationStore, token string, tokenKey *internaldto.HTTPElement) (*http.Request, error) {
 	rv := hap.Request.Clone(hap.Request.Context())
 	switch tokenKey.Type {
-	case dto.QueryParam:
+	case internaldto.QueryParam:
 		q := hap.Request.URL.Query()
 		q.Set(tokenKey.Name, token)
 		rv.URL.RawQuery = q.Encode()
 		return rv, nil
-	case dto.RequestString:
+	case internaldto.RequestString:
 		u, err := url.Parse(token)
 		if err != nil {
 			return nil, err
 		}
 		rv.URL = u
 		return rv, nil
-	case dto.BodyAttribute:
+	case internaldto.BodyAttribute:
 		bm := make(map[string]interface{})
 		for k, v := range hap.Parameters.RequestBody {
 			bm[k] = v

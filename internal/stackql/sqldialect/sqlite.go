@@ -10,6 +10,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/astfuncrewrite"
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/relationaldto"
 	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
@@ -21,13 +22,13 @@ func newSQLiteDialect(sqlEngine sqlengine.SQLEngine, analyticsNamespaceLikeStrin
 	rv := &sqLiteDialect{
 		defaultGolangKind:     reflect.String,
 		defaultRelationalType: "text",
-		typeMappings: map[string]dto.DRMCoupling{
-			"array":   {RelationalType: "text", GolangKind: reflect.Slice},
-			"boolean": {RelationalType: "boolean", GolangKind: reflect.Bool},
-			"int":     {RelationalType: "integer", GolangKind: reflect.Int},
-			"integer": {RelationalType: "integer", GolangKind: reflect.Int},
-			"object":  {RelationalType: "text", GolangKind: reflect.Map},
-			"string":  {RelationalType: "text", GolangKind: reflect.String},
+		typeMappings: map[string]internaldto.DRMCoupling{
+			"array":   internaldto.NewDRMCoupling("text", reflect.Slice),
+			"boolean": internaldto.NewDRMCoupling("boolean", reflect.Bool),
+			"int":     internaldto.NewDRMCoupling("integer", reflect.Int),
+			"integer": internaldto.NewDRMCoupling("integer", reflect.Int),
+			"object":  internaldto.NewDRMCoupling("text", reflect.Map),
+			"string":  internaldto.NewDRMCoupling("text", reflect.String),
 		},
 		controlAttributes:            controlAttributes,
 		analyticsNamespaceLikeString: analyticsNamespaceLikeString,
@@ -43,7 +44,7 @@ type sqLiteDialect struct {
 	analyticsNamespaceLikeString string
 	sqlEngine                    sqlengine.SQLEngine
 	formatter                    sqlparser.NodeFormatter
-	typeMappings                 map[string]dto.DRMCoupling
+	typeMappings                 map[string]internaldto.DRMCoupling
 	defaultRelationalType        string
 	defaultGolangKind            reflect.Kind
 	defaultGolangValue           interface{}
@@ -54,33 +55,33 @@ func (eng *sqLiteDialect) initSQLiteEngine() error {
 	return err
 }
 
-func (se *sqLiteDialect) GetTable(tableHeirarchyIDs dto.HeirarchyIdentifiers, discoveryId int) (dto.DBTable, error) {
+func (se *sqLiteDialect) GetTable(tableHeirarchyIDs internaldto.HeirarchyIdentifiers, discoveryId int) (internaldto.DBTable, error) {
 	return se.getTable(tableHeirarchyIDs, discoveryId)
 }
 
-func (se *sqLiteDialect) getTable(tableHeirarchyIDs dto.HeirarchyIdentifiers, discoveryId int) (dto.DBTable, error) {
+func (se *sqLiteDialect) getTable(tableHeirarchyIDs internaldto.HeirarchyIdentifiers, discoveryId int) (internaldto.DBTable, error) {
 	tableNameStump, err := se.getTableNameStump(tableHeirarchyIDs)
 	if err != nil {
-		return dto.NewDBTable("", "", "", 0, tableHeirarchyIDs), err
+		return internaldto.NewDBTable("", "", "", 0, tableHeirarchyIDs), err
 	}
 	tableName := fmt.Sprintf("%s.generation_%d", tableNameStump, discoveryId)
-	return dto.NewDBTable(tableName, tableNameStump, tableHeirarchyIDs.GetTableName(), discoveryId, tableHeirarchyIDs), err
+	return internaldto.NewDBTable(tableName, tableNameStump, tableHeirarchyIDs.GetTableName(), discoveryId, tableHeirarchyIDs), err
 }
 
-func (se *sqLiteDialect) GetCurrentTable(tableHeirarchyIDs dto.HeirarchyIdentifiers) (dto.DBTable, error) {
+func (se *sqLiteDialect) GetCurrentTable(tableHeirarchyIDs internaldto.HeirarchyIdentifiers) (internaldto.DBTable, error) {
 	return se.getCurrentTable(tableHeirarchyIDs)
 }
 
-func (se *sqLiteDialect) getTableNameStump(tableHeirarchyIDs dto.HeirarchyIdentifiers) (string, error) {
+func (se *sqLiteDialect) getTableNameStump(tableHeirarchyIDs internaldto.HeirarchyIdentifiers) (string, error) {
 	return tableHeirarchyIDs.GetTableName(), nil
 }
 
-func (se *sqLiteDialect) getCurrentTable(tableHeirarchyIDs dto.HeirarchyIdentifiers) (dto.DBTable, error) {
+func (se *sqLiteDialect) getCurrentTable(tableHeirarchyIDs internaldto.HeirarchyIdentifiers) (internaldto.DBTable, error) {
 	var tableName string
 	var discoID int
 	tableNameStump, err := se.getTableNameStump(tableHeirarchyIDs)
 	if err != nil {
-		return dto.NewDBTable("", "", "", 0, tableHeirarchyIDs), err
+		return internaldto.NewDBTable("", "", "", 0, tableHeirarchyIDs), err
 	}
 	tableNamePattern := fmt.Sprintf("%s.generation_%%", tableNameStump)
 	tableNameLHSRemove := fmt.Sprintf("%s.generation_", tableNameStump)
@@ -89,7 +90,7 @@ func (se *sqLiteDialect) getCurrentTable(tableHeirarchyIDs dto.HeirarchyIdentifi
 	if err != nil {
 		logging.GetLogger().Errorln(fmt.Sprintf("err = %v for tableNamePattern = '%s' and tableNameLHSRemove = '%s'", err, tableNamePattern, tableNameLHSRemove))
 	}
-	return dto.NewDBTable(tableName, tableNameStump, tableHeirarchyIDs.GetTableName(), discoID, tableHeirarchyIDs), err
+	return internaldto.NewDBTable(tableName, tableNameStump, tableHeirarchyIDs.GetTableName(), discoID, tableHeirarchyIDs), err
 }
 
 func (sl *sqLiteDialect) GetName() string {
@@ -104,7 +105,7 @@ func (sl *sqLiteDialect) GetASTFuncRewriter() astfuncrewrite.ASTFuncRewriter {
 	return astfuncrewrite.GetNopFuncRewriter()
 }
 
-func (sl *sqLiteDialect) GCAdd(tableName string, parentTcc, lockableTcc dto.TxnControlCounters) error {
+func (sl *sqLiteDialect) GCAdd(tableName string, parentTcc, lockableTcc internaldto.TxnControlCounters) error {
 	maxTxnColName := sl.controlAttributes.GetControlMaxTxnColumnName()
 	q := fmt.Sprintf(
 		`
@@ -287,7 +288,7 @@ func (eng *sqLiteDialect) IsTablePresent(tableName string, requestEncoding strin
 //
 // Therefore, this method will behave correctly provided that the column `colName`
 // is populated with `DateTime('now')`.
-func (eng *sqLiteDialect) TableOldestUpdateUTC(tableName string, requestEncoding string, updateColName string, requestEncodingColName string) (time.Time, dto.TxnControlCounters) {
+func (eng *sqLiteDialect) TableOldestUpdateUTC(tableName string, requestEncoding string, updateColName string, requestEncodingColName string) (time.Time, internaldto.TxnControlCounters) {
 	genIdColName := eng.controlAttributes.GetControlGenIdColumnName()
 	ssnIdColName := eng.controlAttributes.GetControlSsnIdColumnName()
 	txnIdColName := eng.controlAttributes.GetControlTxnIdColumnName()
@@ -303,7 +304,7 @@ func (eng *sqLiteDialect) TableOldestUpdateUTC(tableName string, requestEncoding
 			if err == nil {
 				oldestTime, err := time.Parse("2006-01-02T15:04:05", oldest)
 				if err == nil {
-					tcc := dto.NewTxnControlCountersFromVals(genID, sessionID, txnID, insertID)
+					tcc := internaldto.NewTxnControlCountersFromVals(genID, sessionID, txnID, insertID)
 					tcc.SetTableName(tableName)
 					return oldestTime, tcc
 				}
@@ -313,11 +314,11 @@ func (eng *sqLiteDialect) TableOldestUpdateUTC(tableName string, requestEncoding
 	return time.Time{}, nil
 }
 
-func (eng *sqLiteDialect) GetGCHousekeepingQuery(tableName string, tcc dto.TxnControlCounters) string {
+func (eng *sqLiteDialect) GetGCHousekeepingQuery(tableName string, tcc internaldto.TxnControlCounters) string {
 	return eng.getGCHousekeepingQuery(tableName, tcc)
 }
 
-func (eng *sqLiteDialect) getGCHousekeepingQuery(tableName string, tcc dto.TxnControlCounters) string {
+func (eng *sqLiteDialect) getGCHousekeepingQuery(tableName string, tcc internaldto.TxnControlCounters) string {
 	templateQuery := `INSERT OR IGNORE INTO 
 	  "__iql__.control.gc.txn_table_x_ref" (
 			iql_generation_id, 
@@ -412,11 +413,11 @@ func (eng *sqLiteDialect) sanitizeWhereQueryString(queryString string) (string, 
 	return queryString, nil
 }
 
-func (eng *sqLiteDialect) GenerateInsertDML(relationalTable relationaldto.RelationalTable, tcc dto.TxnControlCounters) (string, error) {
+func (eng *sqLiteDialect) GenerateInsertDML(relationalTable relationaldto.RelationalTable, tcc internaldto.TxnControlCounters) (string, error) {
 	return eng.generateInsertDML(relationalTable, tcc)
 }
 
-func (eng *sqLiteDialect) generateInsertDML(relationalTable relationaldto.RelationalTable, tcc dto.TxnControlCounters) (string, error) {
+func (eng *sqLiteDialect) generateInsertDML(relationalTable relationaldto.RelationalTable, tcc internaldto.TxnControlCounters) (string, error) {
 	var q strings.Builder
 	var quotedColNames, vals []string
 	tableName, err := relationalTable.GetName()
@@ -448,11 +449,11 @@ func (eng *sqLiteDialect) generateInsertDML(relationalTable relationaldto.Relati
 	return q.String(), nil
 }
 
-func (eng *sqLiteDialect) GenerateSelectDML(relationalTable relationaldto.RelationalTable, txnCtrlCtrs dto.TxnControlCounters, selectSuffix, rewrittenWhere string) (string, error) {
+func (eng *sqLiteDialect) GenerateSelectDML(relationalTable relationaldto.RelationalTable, txnCtrlCtrs internaldto.TxnControlCounters, selectSuffix, rewrittenWhere string) (string, error) {
 	return eng.generateSelectDML(relationalTable, txnCtrlCtrs, selectSuffix, rewrittenWhere)
 }
 
-func (eng *sqLiteDialect) generateSelectDML(relationalTable relationaldto.RelationalTable, txnCtrlCtrs dto.TxnControlCounters, selectSuffix, rewrittenWhere string) (string, error) {
+func (eng *sqLiteDialect) generateSelectDML(relationalTable relationaldto.RelationalTable, txnCtrlCtrs internaldto.TxnControlCounters, selectSuffix, rewrittenWhere string) (string, error) {
 	var q strings.Builder
 	var quotedColNames []string
 	for _, col := range relationalTable.GetColumns() {
@@ -618,7 +619,7 @@ func (eng *sqLiteDialect) GetRelationalType(discoType string) string {
 func (eng *sqLiteDialect) getRelationalType(discoType string) string {
 	rv, ok := eng.typeMappings[discoType]
 	if ok {
-		return rv.RelationalType
+		return rv.GetRelationalType()
 	}
 	return eng.defaultRelationalType
 }
@@ -632,7 +633,7 @@ func (eng *sqLiteDialect) getGolangValue(discoType string) interface{} {
 	if !ok {
 		return eng.getDefaultGolangValue()
 	}
-	switch rv.GolangKind {
+	switch rv.GetGolangKind() {
 	case reflect.String:
 		return &sql.NullString{}
 	case reflect.Array:
@@ -656,7 +657,7 @@ func (eng *sqLiteDialect) GetGolangKind(discoType string) reflect.Kind {
 	if !ok {
 		return eng.getDefaultGolangKind()
 	}
-	return rv.GolangKind
+	return rv.GetGolangKind()
 }
 
 func (eng *sqLiteDialect) getDefaultGolangKind() reflect.Kind {

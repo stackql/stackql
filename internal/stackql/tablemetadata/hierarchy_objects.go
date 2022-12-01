@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
-	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/provider"
 )
 
@@ -13,7 +13,7 @@ var (
 )
 
 type HeirarchyObjects interface {
-	GetHeirarchyIds() dto.HeirarchyIdentifiers
+	GetHeirarchyIds() internaldto.HeirarchyIdentifiers
 	GetObjectSchema() (*openapistackql.Schema, error)
 	GetProvider() provider.IProvider
 	GetRequestSchema() (*openapistackql.Schema, error)
@@ -35,16 +35,16 @@ type HeirarchyObjects interface {
 	SetMethodStr(string)
 }
 
-func NewHeirarchyObjects(hIDs dto.HeirarchyIdentifiers) HeirarchyObjects {
+func NewHeirarchyObjects(hIDs internaldto.HeirarchyIdentifiers) HeirarchyObjects {
 	return &standardHeirarchyObjects{
 		heirarchyIds: hIDs,
-		hr:           dto.NewHeirarchy(hIDs),
+		hr:           internaldto.NewHeirarchy(hIDs),
 	}
 }
 
 type standardHeirarchyObjects struct {
-	hr           dto.Heirarchy
-	heirarchyIds dto.HeirarchyIdentifiers
+	hr           internaldto.Heirarchy
+	heirarchyIds internaldto.HeirarchyIdentifiers
 	prov         provider.IProvider
 }
 
@@ -88,7 +88,7 @@ func (ho *standardHeirarchyObjects) GetProvider() provider.IProvider {
 	return ho.prov
 }
 
-func (ho *standardHeirarchyObjects) GetHeirarchyIds() dto.HeirarchyIdentifiers {
+func (ho *standardHeirarchyObjects) GetHeirarchyIds() internaldto.HeirarchyIdentifiers {
 	return ho.heirarchyIds
 }
 

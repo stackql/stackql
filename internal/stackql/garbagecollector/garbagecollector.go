@@ -3,6 +3,7 @@ package garbagecollector
 import (
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/gcexec"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 )
 
@@ -17,7 +18,7 @@ type GarbageCollector interface {
 	PurgeCache() error
 	PurgeControlTables() error
 	PurgeEphemeral() error
-	Update(string, dto.TxnControlCounters, dto.TxnControlCounters) error
+	Update(string, internaldto.TxnControlCounters, internaldto.TxnControlCounters) error
 }
 
 func NewGarbageCollector(gcExecutor gcexec.GarbageCollectorExecutor, gcCfg dto.GCCfg, sqlEngine sqlengine.SQLEngine) GarbageCollector {
@@ -38,7 +39,7 @@ type standardGarbageCollector struct {
 	sqlEngine  sqlengine.SQLEngine
 }
 
-func (gc *standardGarbageCollector) Update(tableName string, parentTcc, tcc dto.TxnControlCounters) error {
+func (gc *standardGarbageCollector) Update(tableName string, parentTcc, tcc internaldto.TxnControlCounters) error {
 	return gc.gcExecutor.Update(tableName, parentTcc, tcc)
 }
 

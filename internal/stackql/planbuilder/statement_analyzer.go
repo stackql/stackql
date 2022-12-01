@@ -14,6 +14,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/httpbuild"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/iqlerror"
 	"github.com/stackql/stackql/internal/stackql/iqlutil"
 	"github.com/stackql/stackql/internal/stackql/logging"
@@ -123,7 +124,7 @@ func (p *primitiveGenerator) analyzeUnion(pbi PlanBuilderInput) error {
 	if !ok {
 		return fmt.Errorf("could not cast statement of type '%T' to required Union", pbi.GetStatement())
 	}
-	unionQuery := astvisit.GenerateUnionTemplateQuery(node, handlerCtx.SQLDialect, handlerCtx.GetASTFormatter(), handlerCtx.GetNamespaceCollection())
+	unionQuery := astvisit.GenerateUnionTemplateQuery(node, handlerCtx.GetSQLDialect(), handlerCtx.GetASTFormatter(), handlerCtx.GetNamespaceCollection())
 	i := 0
 	leaf, err := p.PrimitiveComposer.GetSymTab().NewLeaf(i)
 	if err != nil {
@@ -217,12 +218,12 @@ func (p *primitiveGenerator) analyzeAuthRevoke(pbi PlanBuilderInput) error {
 	return fmt.Errorf(`Auth revoke for Google Failed; improper auth method: "%s" specified`, authCtx.Type)
 }
 
-func checkResource(handlerCtx *handler.HandlerContext, prov provider.IProvider, service string, resource string) (*openapistackql.Resource, error) {
-	return prov.GetResource(service, resource, handlerCtx.RuntimeContext)
+func checkResource(handlerCtx handler.HandlerContext, prov provider.IProvider, service string, resource string) (*openapistackql.Resource, error) {
+	return prov.GetResource(service, resource, handlerCtx.GetRuntimeContext())
 }
 
-func (pb *primitiveGenerator) assembleResources(handlerCtx *handler.HandlerContext, prov provider.IProvider, service string) (map[string]*openapistackql.Resource, error) {
-	rm, err := prov.GetResourcesMap(service, handlerCtx.RuntimeContext)
+func (pb *primitiveGenerator) assembleResources(handlerCtx handler.HandlerContext, prov provider.IProvider, service string) (map[string]*openapistackql.Resource, error) {
+	rm, err := prov.GetResourcesMap(service, handlerCtx.GetRuntimeContext())
 	if err != nil {
 		return nil, err
 	}
@@ -335,7 +336,7 @@ func (pb *primitiveGenerator) whereComparisonExprCopyAndReWrite(expr *sqlparser.
 	if !ok {
 		return nil, "", fmt.Errorf("unexpected: %v", sqlparser.String(expr))
 	}
-	colName := dto.GeneratePutativelyUniqueColumnID(qualifiedName.Qualifier, qualifiedName.Name.GetRawVal())
+	colName := internaldto.GeneratePutativelyUniqueColumnID(qualifiedName.Qualifier, qualifiedName.Name.GetRawVal())
 	symTabEntry, symTabErr := pb.PrimitiveComposer.GetSymbol(colName)
 	_, requiredParamPresent := requiredParameters.Get(colName)
 	_, optionalParamPresent := optionalParameters.Get(colName)
@@ -527,7 +528,7 @@ func (p *primitiveGenerator) persistHerarchyToBuilder(heirarchy tablemetadata.He
 	p.PrimitiveComposer.SetTable(node, tablemetadata.NewExtendedTableMetadata(heirarchy, taxonomy.GetTableNameFromStatement(node, p.PrimitiveComposer.GetASTFormatter()), taxonomy.GetAliasFromStatement(node)))
 }
 
-func (p *primitiveGenerator) analyzeUnaryExec(pbi PlanBuilderInput, handlerCtx *handler.HandlerContext, node *sqlparser.Exec, selectNode *sqlparser.Select, cols []parserutil.ColumnHandle) (tablemetadata.ExtendedTableMetadata, error) {
+func (p *primitiveGenerator) analyzeUnaryExec(pbi PlanBuilderInput, handlerCtx handler.HandlerContext, node *sqlparser.Exec, selectNode *sqlparser.Select, cols []parserutil.ColumnHandle) (tablemetadata.ExtendedTableMetadata, error) {
 	err := p.inferHeirarchyAndPersist(handlerCtx, node, nil)
 	if err != nil {
 		return nil, err
@@ -583,7 +584,7 @@ func (p *primitiveGenerator) analyzeUnaryExec(pbi PlanBuilderInput, handlerCtx *
 	if err != nil && method.Request != nil {
 		return nil, err
 	}
-	var execPayload *dto.ExecPayload
+	var execPayload *internaldto.ExecPayload
 	if node.OptExecPayload != nil {
 		mediaType := "application/json"
 		if method.Request != nil && method.Request.BodyMediaType != "" {
@@ -625,7 +626,7 @@ func (p *primitiveGenerator) analyzeNop(pbi PlanBuilderInput) error {
 			p.PrimitiveComposer.GetGraph(),
 			p.PrimitiveComposer.GetTxnCtrlCtrs(),
 			handlerCtx,
-			handlerCtx.SQLEngine,
+			handlerCtx.GetSQLEngine(),
 		),
 	)
 	err := p.PrimitiveComposer.GetBuilder().Build()
@@ -639,7 +640,7 @@ func (p *primitiveGenerator) analyzeExec(pbi PlanBuilderInput) error {
 		return fmt.Errorf("could not cast node of type '%T' to required Exec", pbi.GetStatement())
 	}
 	tbl, err := p.analyzeUnaryExec(pbi, handlerCtx, node, nil, nil)
-	insertionContainer, err := tableinsertioncontainer.NewTableInsertionContainer(tbl, handlerCtx.SQLEngine)
+	insertionContainer, err := tableinsertioncontainer.NewTableInsertionContainer(tbl, handlerCtx.GetSQLEngine())
 	if err != nil {
 		return err
 	}
@@ -660,7 +661,7 @@ func (p *primitiveGenerator) analyzeExec(pbi PlanBuilderInput) error {
 	return nil
 }
 
-func (p *primitiveGenerator) parseExecPayload(node *sqlparser.ExecVarDef, payloadType string) (*dto.ExecPayload, error) {
+func (p *primitiveGenerator) parseExecPayload(node *sqlparser.ExecVarDef, payloadType string) (*internaldto.ExecPayload, error) {
 	var b []byte
 	m := make(map[string][]string)
 	var pm map[string]interface{}
@@ -680,7 +681,7 @@ func (p *primitiveGenerator) parseExecPayload(node *sqlparser.ExecVarDef, payloa
 	default:
 		return nil, fmt.Errorf("payload map of declared type = '%T' not allowed", payloadType)
 	}
-	return &dto.ExecPayload{
+	return &internaldto.ExecPayload{
 		Payload:    b,
 		Header:     m,
 		PayloadMap: pm,
@@ -696,7 +697,7 @@ func contains(slice []interface{}, elem interface{}) bool {
 	return false
 }
 
-func (p *primitiveGenerator) analyzeSchemaVsMap(handlerCtx *handler.HandlerContext, schema *openapistackql.Schema, payload map[string]interface{}, method *openapistackql.OperationStore) error {
+func (p *primitiveGenerator) analyzeSchemaVsMap(handlerCtx handler.HandlerContext, schema *openapistackql.Schema, payload map[string]interface{}, method *openapistackql.OperationStore) error {
 	requiredElements := make(map[string]bool)
 	schemas, err := schema.GetProperties()
 	if err != nil {
@@ -1046,7 +1047,7 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 			if err != nil {
 				return err
 			}
-			insertionContainer, err := tableinsertioncontainer.NewTableInsertionContainer(tbl, handlerCtx.SQLEngine)
+			insertionContainer, err := tableinsertioncontainer.NewTableInsertionContainer(tbl, handlerCtx.GetSQLEngine())
 			if err != nil {
 				return err
 			}
@@ -1058,7 +1059,7 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 	return fmt.Errorf("cannot process cartesian join select just yet")
 }
 
-func (p *primitiveGenerator) buildRequestContext(handlerCtx *handler.HandlerContext, node sqlparser.SQLNode, meta tablemetadata.ExtendedTableMetadata, execContext *httpbuild.ExecContext, rowsToInsert map[int]map[int]interface{}) (httpbuild.HTTPArmoury, error) {
+func (p *primitiveGenerator) buildRequestContext(handlerCtx handler.HandlerContext, node sqlparser.SQLNode, meta tablemetadata.ExtendedTableMetadata, execContext *httpbuild.ExecContext, rowsToInsert map[int]map[int]interface{}) (httpbuild.HTTPArmoury, error) {
 	m, err := meta.GetMethod()
 	if err != nil {
 		return nil, err
@@ -1197,7 +1198,7 @@ func (p *primitiveGenerator) analyzeUpdate(pbi PlanBuilderInput) error {
 	return nil
 }
 
-func (p *primitiveGenerator) inferHeirarchyAndPersist(handlerCtx *handler.HandlerContext, node sqlparser.SQLNode, parameters map[string]interface{}) error {
+func (p *primitiveGenerator) inferHeirarchyAndPersist(handlerCtx handler.HandlerContext, node sqlparser.SQLNode, parameters map[string]interface{}) error {
 	heirarchy, _, err := taxonomy.GetHeirarchyFromStatement(handlerCtx, node, parameters)
 	if err != nil {
 		return err
@@ -1363,14 +1364,14 @@ func (p *primitiveGenerator) analyzeSleep(pbi PlanBuilderInput) error {
 	p.PrimitiveComposer.SetRoot(
 		graph.CreatePrimitiveNode(
 			primitive.NewLocalPrimitive(
-				func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput {
+				func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 					time.Sleep(time.Duration(sleepDuration) * time.Millisecond)
-					msgs := dto.BackendMessages{
+					msgs := internaldto.BackendMessages{
 						WorkingMessages: []string{
 							fmt.Sprintf("Success: slept for %d milliseconds", sleepDuration),
 						},
 					}
-					return dto.NewExecutorOutput(nil, nil, nil, &msgs, nil)
+					return internaldto.NewExecutorOutput(nil, nil, nil, &msgs, nil)
 				},
 			),
 		),

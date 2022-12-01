@@ -3,7 +3,7 @@ package sqlrewrite
 import (
 	"github.com/stackql/go-openapistackql/openapistackql"
 	"github.com/stackql/stackql/internal/stackql/drm"
-	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/relationaldto"
 	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
@@ -15,11 +15,11 @@ type SQLRewriteInput interface {
 	GetNamespaceCollection() tablenamespace.TableNamespaceCollection
 	GetDRMConfig() drm.DRMConfig
 	GetColumnDescriptors() []openapistackql.ColumnDescriptor
-	GetBaseControlCounters() dto.TxnControlCounters
+	GetBaseControlCounters() internaldto.TxnControlCounters
 	GetFromString() string
 	GetSelectSuffix() string
 	GetRewrittenWhere() string
-	GetSecondaryCtrlCounters() []dto.TxnControlCounters
+	GetSecondaryCtrlCounters() []internaldto.TxnControlCounters
 	GetTables() taxonomy.TblMap
 	GetTableInsertionContainers() []tableinsertioncontainer.TableInsertionContainer
 }
@@ -27,10 +27,10 @@ type SQLRewriteInput interface {
 type StandardSQLRewriteInput struct {
 	dc                       drm.DRMConfig
 	columnDescriptors        []openapistackql.ColumnDescriptor
-	baseControlCounters      dto.TxnControlCounters
+	baseControlCounters      internaldto.TxnControlCounters
 	selectSuffix             string
 	rewrittenWhere           string
-	secondaryCtrlCounters    []dto.TxnControlCounters
+	secondaryCtrlCounters    []internaldto.TxnControlCounters
 	tables                   taxonomy.TblMap
 	fromString               string
 	tableInsertionContainers []tableinsertioncontainer.TableInsertionContainer
@@ -40,10 +40,10 @@ type StandardSQLRewriteInput struct {
 func NewStandardSQLRewriteInput(
 	dc drm.DRMConfig,
 	columnDescriptors []openapistackql.ColumnDescriptor,
-	baseControlCounters dto.TxnControlCounters,
+	baseControlCounters internaldto.TxnControlCounters,
 	selectSuffix string,
 	rewrittenWhere string,
-	secondaryCtrlCounters []dto.TxnControlCounters,
+	secondaryCtrlCounters []internaldto.TxnControlCounters,
 	tables taxonomy.TblMap,
 	fromString string,
 	tableInsertionContainers []tableinsertioncontainer.TableInsertionContainer,
@@ -79,7 +79,7 @@ func (ri *StandardSQLRewriteInput) GetTableInsertionContainers() []tableinsertio
 	return ri.tableInsertionContainers
 }
 
-func (ri *StandardSQLRewriteInput) GetBaseControlCounters() dto.TxnControlCounters {
+func (ri *StandardSQLRewriteInput) GetBaseControlCounters() internaldto.TxnControlCounters {
 	return ri.baseControlCounters
 }
 
@@ -95,7 +95,7 @@ func (ri *StandardSQLRewriteInput) GetRewrittenWhere() string {
 	return ri.rewrittenWhere
 }
 
-func (ri *StandardSQLRewriteInput) GetSecondaryCtrlCounters() []dto.TxnControlCounters {
+func (ri *StandardSQLRewriteInput) GetSecondaryCtrlCounters() []internaldto.TxnControlCounters {
 	return ri.secondaryCtrlCounters
 }
 
@@ -106,8 +106,8 @@ func (ri *StandardSQLRewriteInput) GetTables() taxonomy.TblMap {
 func GenerateSelectDML(input SQLRewriteInput) (drm.PreparedStatementCtx, error) {
 	dc := input.GetDRMConfig()
 	cols := input.GetColumnDescriptors()
-	var txnCtrlCtrs dto.TxnControlCounters
-	var secondaryCtrlCounters []dto.TxnControlCounters
+	var txnCtrlCtrs internaldto.TxnControlCounters
+	var secondaryCtrlCounters []internaldto.TxnControlCounters
 	selectSuffix := input.GetSelectSuffix()
 	rewrittenWhere := input.GetRewrittenWhere()
 	var columns []drm.ColumnMetadata

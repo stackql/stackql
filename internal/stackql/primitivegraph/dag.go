@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/stackql/stackql/internal/stackql/drm"
-	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 
 	"gonum.org/v1/gonum/graph"
@@ -19,32 +19,32 @@ import (
 type PrimitiveGraph struct {
 	g                      *simple.WeightedDirectedGraph
 	sorted                 []graph.Node
-	txnControlCounterSlice []dto.TxnControlCounters
+	txnControlCounterSlice []internaldto.TxnControlCounters
 	errGroup               *errgroup.Group
 	errGroupCtx            context.Context
 }
 
-func (pg *PrimitiveGraph) AddTxnControlCounters(t dto.TxnControlCounters) {
+func (pg *PrimitiveGraph) AddTxnControlCounters(t internaldto.TxnControlCounters) {
 	pg.txnControlCounterSlice = append(pg.txnControlCounterSlice, t)
 }
 
-func (pg *PrimitiveGraph) GetTxnControlCounterSlice() []dto.TxnControlCounters {
+func (pg *PrimitiveGraph) GetTxnControlCounterSlice() []internaldto.TxnControlCounters {
 	return pg.txnControlCounterSlice
 }
 
-func (pg *PrimitiveGraph) SetExecutor(func(pc primitive.IPrimitiveCtx) dto.ExecutorOutput) error {
+func (pg *PrimitiveGraph) SetExecutor(func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput) error {
 	return fmt.Errorf("pass through primitive does not support SetExecutor()")
 }
 
-func (pr *PrimitiveGraph) GetInputFromAlias(string) (dto.ExecutorOutput, bool) {
-	var rv dto.ExecutorOutput
+func (pr *PrimitiveGraph) GetInputFromAlias(string) (internaldto.ExecutorOutput, bool) {
+	var rv internaldto.ExecutorOutput
 	return rv, false
 }
 
-func (pg *PrimitiveGraph) Execute(ctx primitive.IPrimitiveCtx) dto.ExecutorOutput {
-	var output dto.ExecutorOutput = dto.NewExecutorOutput(nil, nil, nil, nil, fmt.Errorf("empty execution graph"))
+func (pg *PrimitiveGraph) Execute(ctx primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+	var output internaldto.ExecutorOutput = internaldto.NewExecutorOutput(nil, nil, nil, nil, fmt.Errorf("empty execution graph"))
 	for _, node := range pg.sorted {
-		outChan := make(chan dto.ExecutorOutput, 1)
+		outChan := make(chan internaldto.ExecutorOutput, 1)
 		switch node := node.(type) {
 		case PrimitiveNode:
 			pg.errGroup.Go(
@@ -68,11 +68,11 @@ func (pg *PrimitiveGraph) Execute(ctx primitive.IPrimitiveCtx) dto.ExecutorOutpu
 				}
 			}
 		default:
-			dto.NewExecutorOutput(nil, nil, nil, nil, fmt.Errorf("unknown execution primitive type: '%T'", node))
+			internaldto.NewExecutorOutput(nil, nil, nil, nil, fmt.Errorf("unknown execution primitive type: '%T'", node))
 		}
 	}
 	if err := pg.errGroup.Wait(); err != nil {
-		return dto.NewExecutorOutput(nil, nil, nil, nil, err)
+		return internaldto.NewExecutorOutput(nil, nil, nil, nil, err)
 	}
 	return output
 }
@@ -101,7 +101,7 @@ func (pg *PrimitiveGraph) Optimise() error {
 	return err
 }
 
-func (pg *PrimitiveGraph) IncidentData(fromId int64, input dto.ExecutorOutput) error {
+func (pg *PrimitiveGraph) IncidentData(fromId int64, input internaldto.ExecutorOutput) error {
 	return nil
 }
 

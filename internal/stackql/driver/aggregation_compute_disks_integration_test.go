@@ -37,8 +37,8 @@ func TestSelectComputeDisksOrderByCrtTmstpAsc(t *testing.T) {
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.Outfile = os.Stdout
-		handlerCtx.OutErrFile = os.Stderr
+		handlerCtx.SetOutfile(os.Stdout)
+		handlerCtx.SetOutErrFile(os.Stderr)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -47,12 +47,12 @@ func TestSelectComputeDisksOrderByCrtTmstpAsc(t *testing.T) {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		handlerCtx.Query = testobjects.SelectGoogleComputeDisksOrderCreationTmstpAsc
-		response := querysubmit.SubmitQuery(&handlerCtx)
-		handlerCtx.Outfile = outFile
-		responsehandler.HandleResponse(&handlerCtx, response)
+		handlerCtx.SetQuery(testobjects.SelectGoogleComputeDisksOrderCreationTmstpAsc)
+		response := querysubmit.SubmitQuery(handlerCtx)
+		handlerCtx.SetOutfile(outFile)
+		responsehandler.HandleResponse(handlerCtx, response)
 
-		ProcessQuery(&handlerCtx)
+		ProcessQuery(handlerCtx)
 	}
 
 	stackqltestutil.SetupSimpleSelectGoogleComputeDisks(t, 1)
@@ -74,8 +74,8 @@ func TestSelectComputeDisksAggOrderBySizeAsc(t *testing.T) {
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.Outfile = os.Stdout
-		handlerCtx.OutErrFile = os.Stderr
+		handlerCtx.SetOutfile(os.Stdout)
+		handlerCtx.SetOutErrFile(os.Stderr)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -84,12 +84,12 @@ func TestSelectComputeDisksAggOrderBySizeAsc(t *testing.T) {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		handlerCtx.Query = testobjects.SelectGoogleComputeDisksAggOrderSizeAsc
-		response := querysubmit.SubmitQuery(&handlerCtx)
-		handlerCtx.Outfile = outFile
-		responsehandler.HandleResponse(&handlerCtx, response)
+		handlerCtx.SetQuery(testobjects.SelectGoogleComputeDisksAggOrderSizeAsc)
+		response := querysubmit.SubmitQuery(handlerCtx)
+		handlerCtx.SetOutfile(outFile)
+		responsehandler.HandleResponse(handlerCtx, response)
 
-		ProcessQuery(&handlerCtx)
+		ProcessQuery(handlerCtx)
 	}
 
 	stackqltestutil.SetupSimpleSelectGoogleComputeDisks(t, 1)
@@ -111,8 +111,8 @@ func TestSelectComputeDisksAggOrderBySizeDesc(t *testing.T) {
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.Outfile = os.Stdout
-		handlerCtx.OutErrFile = os.Stderr
+		handlerCtx.SetOutfile(os.Stdout)
+		handlerCtx.SetOutErrFile(os.Stderr)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -121,12 +121,12 @@ func TestSelectComputeDisksAggOrderBySizeDesc(t *testing.T) {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		handlerCtx.Query = testobjects.SelectGoogleComputeDisksAggOrderSizeDesc
-		response := querysubmit.SubmitQuery(&handlerCtx)
-		handlerCtx.Outfile = outFile
-		responsehandler.HandleResponse(&handlerCtx, response)
+		handlerCtx.SetQuery(testobjects.SelectGoogleComputeDisksAggOrderSizeDesc)
+		response := querysubmit.SubmitQuery(handlerCtx)
+		handlerCtx.SetOutfile(outFile)
+		responsehandler.HandleResponse(handlerCtx, response)
 
-		ProcessQuery(&handlerCtx)
+		ProcessQuery(handlerCtx)
 	}
 
 	stackqltestutil.SetupSimpleSelectGoogleComputeDisks(t, 1)
@@ -148,8 +148,8 @@ func TestSelectComputeDisksAggTotalSize(t *testing.T) {
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.Outfile = os.Stdout
-		handlerCtx.OutErrFile = os.Stderr
+		handlerCtx.SetOutfile(os.Stdout)
+		handlerCtx.SetOutErrFile(os.Stderr)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -158,12 +158,12 @@ func TestSelectComputeDisksAggTotalSize(t *testing.T) {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		handlerCtx.Query = testobjects.SelectGoogleComputeDisksAggSizeTotal
-		response := querysubmit.SubmitQuery(&handlerCtx)
-		handlerCtx.Outfile = outFile
-		responsehandler.HandleResponse(&handlerCtx, response)
+		handlerCtx.SetQuery(testobjects.SelectGoogleComputeDisksAggSizeTotal)
+		response := querysubmit.SubmitQuery(handlerCtx)
+		handlerCtx.SetOutfile(outFile)
+		responsehandler.HandleResponse(handlerCtx, response)
 
-		ProcessQuery(&handlerCtx)
+		ProcessQuery(handlerCtx)
 	}
 
 	stackqltestutil.SetupSimpleSelectGoogleComputeDisks(t, 1)
@@ -185,8 +185,8 @@ func TestSelectComputeDisksAggTotalString(t *testing.T) {
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
 
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.Outfile = os.Stdout
-		handlerCtx.OutErrFile = os.Stderr
+		handlerCtx.SetOutfile(os.Stdout)
+		handlerCtx.SetOutErrFile(os.Stderr)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -195,12 +195,12 @@ func TestSelectComputeDisksAggTotalString(t *testing.T) {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		handlerCtx.Query = testobjects.SelectGoogleComputeDisksAggStringTotal
-		response := querysubmit.SubmitQuery(&handlerCtx)
-		handlerCtx.Outfile = outFile
-		responsehandler.HandleResponse(&handlerCtx, response)
+		handlerCtx.SetQuery(testobjects.SelectGoogleComputeDisksAggStringTotal)
+		response := querysubmit.SubmitQuery(handlerCtx)
+		handlerCtx.SetOutfile(outFile)
+		responsehandler.HandleResponse(handlerCtx, response)
 
-		ProcessQuery(&handlerCtx)
+		ProcessQuery(handlerCtx)
 	}
 
 	stackqltestutil.SetupSimpleSelectGoogleComputeDisks(t, 1)

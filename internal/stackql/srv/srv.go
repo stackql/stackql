@@ -39,14 +39,14 @@ func handleConnection(c net.Conn, runtimeCtx dto.RuntimeCtx, lruCache *lrucache.
 			return
 		}
 		handlerContext, _ := handler.GetHandlerCtx(netData, runtimeCtx, lruCache, inputBundle)
-		handlerContext.Outfile = c
-		handlerContext.OutErrFile = c
+		handlerContext.SetOutfile(c)
+		handlerContext.SetOutErrFile(c)
 		defer iqlerror.HandlePanic(c)
-		if handlerContext.RuntimeContext.DryRunFlag {
-			driver.ProcessDryRun(&handlerContext)
+		if handlerContext.GetRuntimeContext().DryRunFlag {
+			driver.ProcessDryRun(handlerContext)
 			continue
 		}
-		driver.ProcessQuery(&handlerContext)
+		driver.ProcessQuery(handlerContext)
 	}
 	c.Close()
 }

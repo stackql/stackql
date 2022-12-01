@@ -6,31 +6,31 @@ import (
 	"strings"
 
 	"github.com/jeroenrinzema/psql-wire/pkg/sqldata"
-	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/querysubmit"
 	"github.com/stackql/stackql/internal/stackql/responsehandler"
 	"github.com/stackql/stackql/internal/stackql/util"
 )
 
-func ProcessDryRun(handlerCtx *handler.HandlerContext) {
+func ProcessDryRun(handlerCtx handler.HandlerContext) {
 	resultMap := map[string]map[string]interface{}{
 		"1": {
-			"query": handlerCtx.RawQuery,
+			"query": handlerCtx.GetRawQuery(),
 		},
 	}
 	logging.GetLogger().Debugln("dryrun query underway...")
-	response := util.PrepareResultSet(dto.NewPrepareResultSetDTO(nil, resultMap, nil, nil, nil, nil))
+	response := util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, resultMap, nil, nil, nil, nil))
 	responsehandler.HandleResponse(handlerCtx, response)
 }
 
-func throwErr(err error, handlerCtx *handler.HandlerContext) {
-	response := dto.NewExecutorOutput(nil, nil, nil, nil, err)
+func throwErr(err error, handlerCtx handler.HandlerContext) {
+	response := internaldto.NewExecutorOutput(nil, nil, nil, nil, err)
 	responsehandler.HandleResponse(handlerCtx, response)
 }
 
-func ProcessQuery(handlerCtx *handler.HandlerContext) {
+func ProcessQuery(handlerCtx handler.HandlerContext) {
 	responses, ok := processQueryOrQueries(handlerCtx)
 	if ok {
 		for _, r := range responses {
@@ -40,11 +40,11 @@ func ProcessQuery(handlerCtx *handler.HandlerContext) {
 }
 
 type StackQLBackend struct {
-	handlerCtx *handler.HandlerContext
+	handlerCtx handler.HandlerContext
 }
 
 func (sbs *StackQLBackend) HandleSimpleQuery(ctx context.Context, query string) (sqldata.ISQLResultStream, error) {
-	sbs.handlerCtx.RawQuery = query
+	sbs.handlerCtx.SetRawQuery(query)
 	// if strings.Count(query, ";") > 1 {
 	// 	return nil, fmt.Errorf("only support single queries in server mode at this time")
 	// }
@@ -79,20 +79,20 @@ func (sb *StackQLBackend) SplitCompoundQuery(s string) ([]string, error) {
 	return append(res, s[beg:]), nil
 }
 
-func NewStackQLBackend(handlerCtx *handler.HandlerContext) (*StackQLBackend, error) {
+func NewStackQLBackend(handlerCtx handler.HandlerContext) (*StackQLBackend, error) {
 	return &StackQLBackend{
 		handlerCtx: handlerCtx,
 	}, nil
 }
 
-func processQueryOrQueries(handlerCtx *handler.HandlerContext) ([]dto.ExecutorOutput, bool) {
-	var retVal []dto.ExecutorOutput
-	cmdString := handlerCtx.RawQuery
+func processQueryOrQueries(handlerCtx handler.HandlerContext) ([]internaldto.ExecutorOutput, bool) {
+	var retVal []internaldto.ExecutorOutput
+	cmdString := handlerCtx.GetRawQuery()
 	for _, s := range strings.Split(cmdString, ";") {
 		if s == "" {
 			continue
 		}
-		handlerCtx.Query = s
+		handlerCtx.SetQuery(s)
 		retVal = append(retVal, querysubmit.SubmitQuery(handlerCtx))
 	}
 	return retVal, true

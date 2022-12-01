@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -131,27 +131,27 @@ var shellCmd = &cobra.Command{
 		var authCtx *dto.AuthCtx
 		var prov provider.IProvider
 		var pErr, authErr error
-		if handlerCtx.RuntimeContext.ProviderStr != "" {
-			prov, pErr = handlerCtx.GetProvider(handlerCtx.RuntimeContext.ProviderStr)
+		if handlerCtx.GetRuntimeContext().ProviderStr != "" {
+			prov, pErr = handlerCtx.GetProvider(handlerCtx.GetRuntimeContext().ProviderStr)
 			authCtx, authErr = handlerCtx.GetAuthContext(prov.GetProviderString())
 			if authErr != nil {
-				fmt.Fprintln(outErrFile, fmt.Sprintf("Error setting up AUTH for provider '%s'", handlerCtx.RuntimeContext.ProviderStr))
+				fmt.Fprintln(outErrFile, fmt.Sprintf("Error setting up AUTH for provider '%s'", handlerCtx.GetRuntimeContext().ProviderStr))
 			}
 			if pErr == nil {
 				prov.ShowAuth(authCtx)
 			} else {
-				fmt.Fprintln(outErrFile, fmt.Sprintf("Error setting up API for provider '%s'", handlerCtx.RuntimeContext.ProviderStr))
+				fmt.Fprintln(outErrFile, fmt.Sprintf("Error setting up API for provider '%s'", handlerCtx.GetRuntimeContext().ProviderStr))
 			}
 		}
 
 		var readlineCfg *readline.Config
 
-		if colorIsNull(handlerCtx.RuntimeContext) {
+		if colorIsNull(handlerCtx.GetRuntimeContext()) {
 			readlineCfg = &readline.Config{
 				Prompt:               getShellPRompt(authCtx, cd),
 				InterruptPrompt:      "^C",
 				EOFPrompt:            "exit",
-				HistoryFile:          config.GetReadlineFilePath(handlerCtx.RuntimeContext),
+				HistoryFile:          config.GetReadlineFilePath(handlerCtx.GetRuntimeContext()),
 				HistorySearchFold:    true,
 				HistoryExternalWrite: true,
 			}
@@ -162,7 +162,7 @@ var shellCmd = &cobra.Command{
 				Prompt:               getShellPRompt(authCtx, cd),
 				InterruptPrompt:      "^C",
 				EOFPrompt:            "exit",
-				HistoryFile:          config.GetReadlineFilePath(handlerCtx.RuntimeContext),
+				HistoryFile:          config.GetReadlineFilePath(handlerCtx.GetRuntimeContext()),
 				HistorySearchFold:    true,
 				HistoryExternalWrite: true,
 			}
@@ -217,9 +217,9 @@ var shellCmd = &cobra.Command{
 					if err != nil {
 						io.WriteString(outErrFile, "\r\n"+err.Error()+"\r\n")
 					}
-					handlerCtx.RawQuery = queryToExecute
+					handlerCtx.SetRawQuery(queryToExecute)
 					l.WriteToHistory(rawQuery)
-					RunCommand(&handlerCtx, outfile, outErrFile)
+					RunCommand(handlerCtx, outfile, outErrFile)
 					sb.Reset()
 					sb.WriteString(line[semiColonIdx+1:])
 				} else {

@@ -2,7 +2,7 @@ package primitivecomposer
 
 import (
 	"github.com/stackql/stackql/internal/stackql/drm"
-	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/primitivebuilder"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
@@ -45,7 +45,7 @@ type PrimitiveComposer interface {
 	GetTableFilter() func(openapistackql.ITable) (openapistackql.ITable, error)
 	GetTables() taxonomy.TblMap
 	GetTxnCounterManager() txncounter.TxnCounterManager
-	GetTxnCtrlCtrs() dto.TxnControlCounters
+	GetTxnCtrlCtrs() internaldto.TxnControlCounters
 	GetValOnlyCol(key int) map[string]interface{}
 	GetValOnlyColKeys() []int
 	GetWhere() *sqlparser.Where
@@ -65,7 +65,7 @@ type PrimitiveComposer interface {
 	SetSymbol(k interface{}, v symtab.SymTabEntry) error
 	SetTable(node sqlparser.SQLNode, table tablemetadata.ExtendedTableMetadata)
 	SetTableFilter(tableFilter func(openapistackql.ITable) (openapistackql.ITable, error))
-	SetTxnCtrlCtrs(tc dto.TxnControlCounters)
+	SetTxnCtrlCtrs(tc internaldto.TxnControlCounters)
 	SetValOnlyCols(m map[int]map[string]interface{})
 	SetWhere(where *sqlparser.Where)
 	ShouldCollectGarbage() bool
@@ -99,7 +99,7 @@ type StandardPrimitiveComposer struct {
 	columnOrder       []string
 	commentDirectives sqlparser.CommentDirectives
 	txnCounterManager txncounter.TxnCounterManager
-	txnCtrlCtrs       dto.TxnControlCounters
+	txnCtrlCtrs       internaldto.TxnControlCounters
 
 	// per query -- SELECT only
 	insertValOnlyRows          map[int]map[int]interface{}
@@ -125,11 +125,11 @@ func (pb *StandardPrimitiveComposer) ShouldCollectGarbage() bool {
 	return pb.parent == nil
 }
 
-func (pb *StandardPrimitiveComposer) SetTxnCtrlCtrs(tc dto.TxnControlCounters) {
+func (pb *StandardPrimitiveComposer) SetTxnCtrlCtrs(tc internaldto.TxnControlCounters) {
 	pb.txnCtrlCtrs = tc
 }
 
-func (pb *StandardPrimitiveComposer) GetTxnCtrlCtrs() dto.TxnControlCounters {
+func (pb *StandardPrimitiveComposer) GetTxnCtrlCtrs() internaldto.TxnControlCounters {
 	return pb.txnCtrlCtrs
 }
 

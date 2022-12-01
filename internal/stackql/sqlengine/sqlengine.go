@@ -6,6 +6,7 @@ import (
 
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
 )
 
@@ -24,7 +25,7 @@ type SQLEngine interface {
 	GetCurrentDiscoveryGenerationId(discoveryID string) (int, error)
 	GetNextDiscoveryGenerationId(discoveryID string) (int, error)
 	CacheStoreGet(string) ([]byte, error)
-	CacheStoreGetAll() ([]dto.KeyVal, error)
+	CacheStoreGetAll() ([]internaldto.KeyVal, error)
 	CacheStorePut(string, []byte, string, int) error
 	IsMemory() bool
 }

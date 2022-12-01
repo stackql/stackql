@@ -8,8 +8,8 @@ import (
 	"github.com/stackql/stackql/internal/stackql/dataflow"
 	"github.com/stackql/stackql/internal/stackql/docparser"
 	"github.com/stackql/stackql/internal/stackql/drm"
-	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/primitivebuilder"
@@ -32,12 +32,12 @@ type DependencyPlanner interface {
 type StandardDependencyPlanner struct {
 	dataflowCollection dataflow.DataFlowCollection
 	colRefs            parserutil.ColTableMap
-	handlerCtx         *handler.HandlerContext
+	handlerCtx         handler.HandlerContext
 	execSlice          []primitivebuilder.Builder
-	primaryTcc, tcc    dto.TxnControlCounters
+	primaryTcc, tcc    internaldto.TxnControlCounters
 	primitiveComposer  primitivecomposer.PrimitiveComposer
 	rewrittenWhere     *sqlparser.Where
-	secondaryTccs      []dto.TxnControlCounters
+	secondaryTccs      []internaldto.TxnControlCounters
 	sqlStatement       sqlparser.SQLNode
 	tableSlice         []tableinsertioncontainer.TableInsertionContainer
 	tblz               taxonomy.TblMap
@@ -51,14 +51,14 @@ type StandardDependencyPlanner struct {
 }
 
 func NewStandardDependencyPlanner(
-	handlerCtx *handler.HandlerContext,
+	handlerCtx handler.HandlerContext,
 	dataflowCollection dataflow.DataFlowCollection,
 	colRefs parserutil.ColTableMap,
 	rewrittenWhere *sqlparser.Where,
 	sqlStatement sqlparser.SQLNode,
 	tblz taxonomy.TblMap,
 	primitiveComposer primitivecomposer.PrimitiveComposer,
-	tcc dto.TxnControlCounters,
+	tcc internaldto.TxnControlCounters,
 ) (DependencyPlanner, error) {
 	if tcc == nil {
 		return nil, fmt.Errorf("violation of StandardDependencyPlanner invariant: txn counter cannot be nil")
@@ -188,13 +188,13 @@ func (dp *StandardDependencyPlanner) Plan() error {
 	if weaklyConnectedComponentCount > 1 {
 		return fmt.Errorf("data flow: there are too many weakly connected components; found = %d, max = 1", weaklyConnectedComponentCount)
 	}
-	rewrittenWhereStr := astvisit.GenerateModifiedWhereClause(dp.rewrittenWhere, dp.handlerCtx.SQLDialect, dp.handlerCtx.GetASTFormatter(), dp.handlerCtx.GetNamespaceCollection())
-	rewrittenWhereStr, err = dp.handlerCtx.SQLDialect.SanitizeWhereQueryString(rewrittenWhereStr)
+	rewrittenWhereStr := astvisit.GenerateModifiedWhereClause(dp.rewrittenWhere, dp.handlerCtx.GetSQLDialect(), dp.handlerCtx.GetASTFormatter(), dp.handlerCtx.GetNamespaceCollection())
+	rewrittenWhereStr, err = dp.handlerCtx.GetSQLDialect().SanitizeWhereQueryString(rewrittenWhereStr)
 	if err != nil {
 		return err
 	}
 	logging.GetLogger().Debugf("rewrittenWhereStr = '%s'", rewrittenWhereStr)
-	drmCfg, err := drm.GetDRMConfig(dp.handlerCtx.SQLDialect, dp.handlerCtx.GetNamespaceCollection(), dp.handlerCtx.ControlAttributes)
+	drmCfg, err := drm.GetDRMConfig(dp.handlerCtx.GetSQLDialect(), dp.handlerCtx.GetNamespaceCollection(), dp.handlerCtx.GetControlAttributes())
 	if err != nil {
 		return err
 	}
@@ -233,7 +233,7 @@ func (dp *StandardDependencyPlanner) Plan() error {
 	return nil
 }
 
-func (dp *StandardDependencyPlanner) processOrphan(sqlNode sqlparser.SQLNode, annotationCtx taxonomy.AnnotationCtx, inStream streaming.MapStream) (drm.PreparedStatementCtx, dto.TxnControlCounters, error) {
+func (dp *StandardDependencyPlanner) processOrphan(sqlNode sqlparser.SQLNode, annotationCtx taxonomy.AnnotationCtx, inStream streaming.MapStream) (drm.PreparedStatementCtx, internaldto.TxnControlCounters, error) {
 	anTab, tcc, err := dp.processAcquire(sqlNode, annotationCtx, inStream)
 	if err != nil {
 		return nil, nil, err
@@ -252,7 +252,7 @@ func (dp *StandardDependencyPlanner) orchestrate(
 	inStream streaming.MapStream,
 	outStream streaming.MapStream,
 ) error {
-	rc, err := tableinsertioncontainer.NewTableInsertionContainer(annotationCtx.GetTableMeta(), dp.handlerCtx.SQLEngine)
+	rc, err := tableinsertioncontainer.NewTableInsertionContainer(annotationCtx.GetTableMeta(), dp.handlerCtx.GetSQLEngine())
 	if err != nil {
 		return err
 	}
@@ -274,7 +274,7 @@ func (dp *StandardDependencyPlanner) processAcquire(
 	sqlNode sqlparser.SQLNode,
 	annotationCtx taxonomy.AnnotationCtx,
 	stream streaming.MapStream,
-) (util.AnnotatedTabulation, dto.TxnControlCounters, error) {
+) (util.AnnotatedTabulation, internaldto.TxnControlCounters, error) {
 	inputTableName, err := annotationCtx.GetInputTableName()
 	if err != nil {
 		return util.NewAnnotatedTabulation(nil, nil, "", ""), nil, err
@@ -298,7 +298,7 @@ func (dp *StandardDependencyPlanner) processAcquire(
 	}
 	anTab := util.NewAnnotatedTabulation(tab, annotationCtx.GetHIDs(), inputTableName, annotationCtx.GetTableMeta().GetAlias())
 
-	discoGenId, err := docparser.OpenapiStackQLTabulationsPersistor(m, []util.AnnotatedTabulation{anTab}, dp.primitiveComposer.GetSQLEngine(), prov.Name, dp.handlerCtx.GetNamespaceCollection(), dp.handlerCtx.ControlAttributes, dp.handlerCtx.SQLDialect)
+	discoGenId, err := docparser.OpenapiStackQLTabulationsPersistor(m, []util.AnnotatedTabulation{anTab}, dp.primitiveComposer.GetSQLEngine(), prov.Name, dp.handlerCtx.GetNamespaceCollection(), dp.handlerCtx.GetControlAttributes(), dp.handlerCtx.GetSQLDialect())
 	if err != nil {
 		return util.NewAnnotatedTabulation(nil, nil, "", ""), nil, err
 	}
@@ -312,7 +312,7 @@ func (dp *StandardDependencyPlanner) processAcquire(
 	return anTab, dp.tcc, nil
 }
 
-func (dp *StandardDependencyPlanner) getStreamFromEdge(e dataflow.DataFlowEdge, ac taxonomy.AnnotationCtx, tcc dto.TxnControlCounters) (streaming.MapStream, error) {
+func (dp *StandardDependencyPlanner) getStreamFromEdge(e dataflow.DataFlowEdge, ac taxonomy.AnnotationCtx, tcc internaldto.TxnControlCounters) (streaming.MapStream, error) {
 	if e.IsSQL() {
 		selectCtx, err := dp.generateSelectDML(e, tcc)
 		if err != nil {
@@ -320,11 +320,11 @@ func (dp *StandardDependencyPlanner) getStreamFromEdge(e dataflow.DataFlowEdge, 
 		}
 		ann := e.GetSource().GetAnnotation()
 		meta := ann.GetTableMeta()
-		insertContainer, err := tableinsertioncontainer.NewTableInsertionContainer(meta, dp.handlerCtx.SQLEngine)
+		insertContainer, err := tableinsertioncontainer.NewTableInsertionContainer(meta, dp.handlerCtx.GetSQLEngine())
 		if err != nil {
 			return nil, err
 		}
-		return sqlstream.NewSimpleSQLMapStream(selectCtx, insertContainer, dp.handlerCtx.DrmConfig, dp.handlerCtx.SQLEngine), nil
+		return sqlstream.NewSimpleSQLMapStream(selectCtx, insertContainer, dp.handlerCtx.GetDrmConfig(), dp.handlerCtx.GetSQLEngine()), nil
 	}
 	projection, err := e.GetProjection()
 	if err != nil {
@@ -351,14 +351,14 @@ func (dp *StandardDependencyPlanner) getStreamFromEdge(e dataflow.DataFlowEdge, 
 	return streaming.NewSimpleProjectionMapStream(projection, staticParams), nil
 }
 
-func (dp *StandardDependencyPlanner) generateSelectDML(e dataflow.DataFlowEdge, tcc dto.TxnControlCounters) (drm.PreparedStatementCtx, error) {
+func (dp *StandardDependencyPlanner) generateSelectDML(e dataflow.DataFlowEdge, tcc internaldto.TxnControlCounters) (drm.PreparedStatementCtx, error) {
 	ann := e.GetSource().GetAnnotation()
 	columnDescriptors, err := e.GetColumnDescriptors()
 	if err != nil {
 		return nil, err
 	}
 	alias := ann.GetTableMeta().GetAlias()
-	tn, err := dp.handlerCtx.DrmConfig.GetTable(ann.GetHIDs(), dp.tcc.GetGenID())
+	tn, err := dp.handlerCtx.GetDrmConfig().GetTable(ann.GetHIDs(), dp.tcc.GetGenID())
 	if err != nil {
 		return nil, err
 	}
@@ -367,7 +367,7 @@ func (dp *StandardDependencyPlanner) generateSelectDML(e dataflow.DataFlowEdge, 
 		tableName = fmt.Sprintf("%s AS %s", tableName, alias)
 	}
 	rewriteInput := sqlrewrite.NewStandardSQLRewriteInput(
-		dp.handlerCtx.DrmConfig,
+		dp.handlerCtx.GetDrmConfig(),
 		columnDescriptors,
 		tcc,
 		"",

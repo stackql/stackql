@@ -7,6 +7,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/discovery"
 	"github.com/stackql/stackql/internal/stackql/docparser"
 	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/methodselect"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 
@@ -67,11 +68,11 @@ type IProvider interface {
 
 	InferDescribeMethod(*openapistackql.Resource) (*openapistackql.OperationStore, string, error)
 
-	InferMaxResultsElement(*openapistackql.OperationStore) *dto.HTTPElement
+	InferMaxResultsElement(*openapistackql.OperationStore) *internaldto.HTTPElement
 
-	InferNextPageRequestElement(dto.Heirarchy) *dto.HTTPElement
+	InferNextPageRequestElement(internaldto.Heirarchy) *internaldto.HTTPElement
 
-	InferNextPageResponseElement(dto.Heirarchy) *dto.HTTPElement
+	InferNextPageResponseElement(internaldto.Heirarchy) *internaldto.HTTPElement
 
 	SetCurrentService(serviceKey string)
 
