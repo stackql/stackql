@@ -89,13 +89,13 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 		ss.graph.AddTxnControlCounters(currentTcc)
 
 		for _, reqCtx := range httpArmoury.GetRequestParams() {
-			req := reqCtx.Request
+			req := reqCtx.GetRequest()
 			housekeepingDone := false
 			client, err := httpmiddleware.GetAuthenticatedClient(ss.handlerCtx.Clone(), prov)
 			if err != nil {
 				return internaldto.NewErroneousExecutorOutput(err)
 			}
-			paramMap, err := reqCtx.Parameters.ToFlatMap()
+			paramMap, err := reqCtx.GetParameters().ToFlatMap()
 			if err != nil {
 				return internaldto.NewErroneousExecutorOutput(err)
 			}

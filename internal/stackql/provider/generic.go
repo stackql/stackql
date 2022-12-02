@@ -399,38 +399,39 @@ func (gp *GenericProvider) GetProvider() (*openapistackql.Provider, error) {
 	return gp.provider, nil
 }
 
-func (gp *GenericProvider) InferMaxResultsElement(*openapistackql.OperationStore) *internaldto.HTTPElement {
-	return &internaldto.HTTPElement{
-		Type: internaldto.QueryParam,
-		Name: "maxResults",
-	}
+func (gp *GenericProvider) InferMaxResultsElement(*openapistackql.OperationStore) internaldto.HTTPElement {
+	return internaldto.NewHTTPElement(
+		internaldto.QueryParam,
+		"maxResults",
+	)
 }
 
-func (gp *GenericProvider) InferNextPageRequestElement(ho internaldto.Heirarchy) *internaldto.HTTPElement {
+func (gp *GenericProvider) InferNextPageRequestElement(ho internaldto.Heirarchy) internaldto.HTTPElement {
 	st, ok := gp.getPaginationRequestTokenSemantic(ho)
 	if ok {
 		if tp, err := internaldto.ExtractHttpElement(st.Location); err == nil {
-			rv := &internaldto.HTTPElement{
-				Type: tp,
-				Name: st.Key,
-			}
+			rv := internaldto.NewHTTPElement(
+				tp,
+				st.Key,
+			)
 			transformer, err := st.GetTransformer()
 			if err == nil && transformer != nil {
-				rv.Transformer = transformer
+				rv.SetTransformer(transformer)
 			}
 			return rv
 		}
 	}
 	switch gp.GetProviderString() {
 	case "github", "okta":
-		return &internaldto.HTTPElement{
-			Type: internaldto.RequestString,
-		}
+		return internaldto.NewHTTPElement(
+			internaldto.RequestString,
+			"",
+		)
 	default:
-		return &internaldto.HTTPElement{
-			Type: internaldto.QueryParam,
-			Name: "pageToken",
-		}
+		return internaldto.NewHTTPElement(
+			internaldto.QueryParam,
+			"pageToken",
+		)
 	}
 }
 
@@ -448,32 +449,33 @@ func (gp *GenericProvider) getPaginationResponseTokenSemantic(ho internaldto.Hei
 	return ho.GetMethod().GetPaginationResponseTokenSemantic()
 }
 
-func (gp *GenericProvider) InferNextPageResponseElement(ho internaldto.Heirarchy) *internaldto.HTTPElement {
+func (gp *GenericProvider) InferNextPageResponseElement(ho internaldto.Heirarchy) internaldto.HTTPElement {
 	st, ok := gp.getPaginationResponseTokenSemantic(ho)
 	if ok {
 		if tp, err := internaldto.ExtractHttpElement(st.Location); err == nil {
-			rv := &internaldto.HTTPElement{
-				Type: tp,
-				Name: st.Key,
-			}
+			rv := internaldto.NewHTTPElement(
+				tp,
+				st.Key,
+			)
 			transformer, err := st.GetTransformer()
 			if err == nil && transformer != nil {
-				rv.Transformer = transformer
+				rv.SetTransformer(transformer)
 			}
 			return rv
 		}
 	}
 	switch gp.GetProviderString() {
 	case "github", "okta":
-		return &internaldto.HTTPElement{
-			Type:        internaldto.Header,
-			Name:        "Link",
-			Transformer: openapistackql.DefaultLinkHeaderTransformer,
-		}
+		rv := internaldto.NewHTTPElement(
+			internaldto.Header,
+			"Link",
+		)
+		rv.SetTransformer(openapistackql.DefaultLinkHeaderTransformer)
+		return rv
 	default:
-		return &internaldto.HTTPElement{
-			Type: internaldto.BodyAttribute,
-			Name: "nextPageToken",
-		}
+		return internaldto.NewHTTPElement(
+			internaldto.BodyAttribute,
+			"nextPageToken",
+		)
 	}
 }

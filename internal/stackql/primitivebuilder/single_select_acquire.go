@@ -133,9 +133,9 @@ func (ss *SingleSelectAcquire) Build() error {
 				passOverParams := httpArmoury.GetRequestParams()
 				for i, param := range passOverParams {
 					// param.Context.SetQueryParam("maxResults", strconv.Itoa(ss.handlerCtx.GetRuntimeContext().HTTPMaxResults))
-					q := param.Request.URL.Query()
+					q := param.GetQuery()
 					q.Set("maxResults", strconv.Itoa(ss.handlerCtx.GetRuntimeContext().HTTPMaxResults))
-					param.Request.URL.RawQuery = q.Encode()
+					param.SetRawQuery(q.Encode())
 					passOverParams[i] = param
 				}
 				httpArmoury.SetRequestParams(passOverParams)
@@ -165,7 +165,7 @@ func (ss *SingleSelectAcquire) Build() error {
 				return internaldto.ExecutorOutput{}
 			}
 			// TODO: fix cloning ops
-			response, apiErr := httpmiddleware.HttpApiCallFromRequest(ss.handlerCtx.Clone(), prov, m, reqCtx.Request.Clone(reqCtx.Request.Context()))
+			response, apiErr := httpmiddleware.HttpApiCallFromRequest(ss.handlerCtx.Clone(), prov, m, reqCtx.GetRequest().Clone(reqCtx.GetRequest().Context()))
 			housekeepingDone := false
 			npt := prov.InferNextPageResponseElement(ss.tableMeta.GetHeirarchyObjects())
 			nptRequest := prov.InferNextPageRequestElement(ss.tableMeta.GetHeirarchyObjects())
@@ -271,10 +271,10 @@ func (ss *SingleSelectAcquire) Build() error {
 				}
 				response, apiErr = httpmiddleware.HttpApiCallFromRequest(ss.handlerCtx.Clone(), prov, m, req)
 			}
-			if reqCtx.Request != nil {
-				q := reqCtx.Request.URL.Query()
-				q.Del(nptRequest.Name)
-				reqCtx.Request.URL.RawQuery = q.Encode()
+			if reqCtx.GetRequest() != nil {
+				q := reqCtx.GetRequest().URL.Query()
+				q.Del(nptRequest.GetName())
+				reqCtx.SetRawQuery(q.Encode())
 			}
 		}
 		return internaldto.ExecutorOutput{}
@@ -296,8 +296,8 @@ func (ss *SingleSelectAcquire) Build() error {
 	return nil
 }
 
-func extractNextPageToken(res *response.Response, tokenKey *internaldto.HTTPElement) string {
-	switch tokenKey.Type {
+func extractNextPageToken(res *response.Response, tokenKey internaldto.HTTPElement) string {
+	switch tokenKey.GetType() {
 	case internaldto.BodyAttribute:
 		return extractNextPageTokenFromBody(res, tokenKey)
 	case internaldto.Header:
@@ -306,13 +306,13 @@ func extractNextPageToken(res *response.Response, tokenKey *internaldto.HTTPElem
 	return ""
 }
 
-func extractNextPageTokenFromHeader(res *response.Response, tokenKey *internaldto.HTTPElement) string {
+func extractNextPageTokenFromHeader(res *response.Response, tokenKey internaldto.HTTPElement) string {
 	r := res.GetHttpResponse()
 	if r == nil {
 		return ""
 	}
 	header := r.Header
-	if tokenKey.Transformer != nil {
+	if tokenKey.IsTransformerPresent() {
 		tf, err := tokenKey.Transformer(header)
 		if err != nil {
 			return ""
@@ -323,15 +323,15 @@ func extractNextPageTokenFromHeader(res *response.Response, tokenKey *internaldt
 		}
 		return rv
 	}
-	vals := header.Values(tokenKey.Name)
+	vals := header.Values(tokenKey.GetName())
 	if len(vals) == 1 {
 		return vals[0]
 	}
 	return ""
 }
 
-func extractNextPageTokenFromBody(res *response.Response, tokenKey *internaldto.HTTPElement) string {
-	elem, err := httpelement.NewHTTPElement(tokenKey.Name, "body")
+func extractNextPageTokenFromBody(res *response.Response, tokenKey internaldto.HTTPElement) string {
+	elem, err := httpelement.NewHTTPElement(tokenKey.GetName(), "body")
 	if err == nil {
 		rawVal, err := res.ExtractElement(elem)
 		if err == nil {
@@ -348,7 +348,8 @@ func extractNextPageTokenFromBody(res *response.Response, tokenKey *internaldto.
 	body := res.GetProcessedBody()
 	switch target := body.(type) {
 	case map[string]interface{}:
-		nextPageToken, ok := target[tokenKey.Name]
+		tokenName := tokenKey.GetName()
+		nextPageToken, ok := target[tokenName]
 		if !ok || nextPageToken == "" {
 			logging.GetLogger().Infoln("breaking out")
 			return ""
