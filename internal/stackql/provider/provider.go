@@ -68,11 +68,11 @@ type IProvider interface {
 
 	InferDescribeMethod(*openapistackql.Resource) (*openapistackql.OperationStore, string, error)
 
-	InferMaxResultsElement(*openapistackql.OperationStore) *internaldto.HTTPElement
+	InferMaxResultsElement(*openapistackql.OperationStore) internaldto.HTTPElement
 
-	InferNextPageRequestElement(internaldto.Heirarchy) *internaldto.HTTPElement
+	InferNextPageRequestElement(internaldto.Heirarchy) internaldto.HTTPElement
 
-	InferNextPageResponseElement(internaldto.Heirarchy) *internaldto.HTTPElement
+	InferNextPageResponseElement(internaldto.Heirarchy) internaldto.HTTPElement
 
 	SetCurrentService(serviceKey string)
 

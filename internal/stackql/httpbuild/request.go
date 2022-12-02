@@ -1,15 +1,12 @@
 package httpbuild
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 
-	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/provider"
 	"github.com/stackql/stackql/internal/stackql/requests"
@@ -21,131 +18,7 @@ import (
 	"vitess.io/vitess/go/vt/sqlparser"
 )
 
-type ExecContext struct {
-	ExecPayload *internaldto.ExecPayload
-	Resource    *openapistackql.Resource
-}
-
-func NewExecContext(payload *internaldto.ExecPayload, rsc *openapistackql.Resource) *ExecContext {
-	return &ExecContext{
-		ExecPayload: payload,
-		Resource:    rsc,
-	}
-}
-
-type HTTPArmouryParameters struct {
-	Header     http.Header
-	Parameters *openapistackql.HttpParameters
-	Request    *http.Request
-	BodyBytes  []byte
-}
-
-func (hap HTTPArmouryParameters) ToFlatMap() (map[string]interface{}, error) {
-	return hap.toFlatMap()
-}
-
-func (hap HTTPArmouryParameters) toFlatMap() (map[string]interface{}, error) {
-	if hap.Parameters != nil {
-		return hap.Parameters.ToFlatMap()
-	}
-	return make(map[string]interface{}), nil
-}
-
-func (hap HTTPArmouryParameters) Encode() string {
-	if hap.Parameters != nil {
-		return hap.Parameters.Encode()
-	}
-	return ""
-}
-
-func (hap HTTPArmouryParameters) SetNextPage(ops *openapistackql.OperationStore, token string, tokenKey *internaldto.HTTPElement) (*http.Request, error) {
-	rv := hap.Request.Clone(hap.Request.Context())
-	switch tokenKey.Type {
-	case internaldto.QueryParam:
-		q := hap.Request.URL.Query()
-		q.Set(tokenKey.Name, token)
-		rv.URL.RawQuery = q.Encode()
-		return rv, nil
-	case internaldto.RequestString:
-		u, err := url.Parse(token)
-		if err != nil {
-			return nil, err
-		}
-		rv.URL = u
-		return rv, nil
-	case internaldto.BodyAttribute:
-		bm := make(map[string]interface{})
-		for k, v := range hap.Parameters.RequestBody {
-			bm[k] = v
-		}
-		bm[tokenKey.Name] = token
-		b, err := ops.MarshalBody(bm, ops.Request)
-		if err != nil {
-			return nil, err
-		}
-		rv.Body = io.NopCloser(bytes.NewBuffer(b))
-		rv.ContentLength = int64(len(b))
-		return rv, nil
-	default:
-		return nil, fmt.Errorf("cannot accomodate pagaination for http element type = %+v", tokenKey.Type)
-	}
-}
-
-type HTTPArmoury interface {
-	AddRequestParams(HTTPArmouryParameters)
-	GetRequestParams() []HTTPArmouryParameters
-	GetRequestSchema() *openapistackql.Schema
-	GetResponseSchema() *openapistackql.Schema
-	SetRequestParams([]HTTPArmouryParameters)
-	SetRequestSchema(*openapistackql.Schema)
-	SetResponseSchema(*openapistackql.Schema)
-}
-
-type StandardHTTPArmoury struct {
-	RequestParams  []HTTPArmouryParameters
-	RequestSchema  *openapistackql.Schema
-	ResponseSchema *openapistackql.Schema
-}
-
-func (ih *StandardHTTPArmoury) GetRequestParams() []HTTPArmouryParameters {
-	return ih.RequestParams
-}
-
-func (ih *StandardHTTPArmoury) SetRequestParams(ps []HTTPArmouryParameters) {
-	ih.RequestParams = ps
-}
-
-func (ih *StandardHTTPArmoury) AddRequestParams(p HTTPArmouryParameters) {
-	ih.RequestParams = append(ih.RequestParams, p)
-}
-
-func (ih *StandardHTTPArmoury) SetRequestSchema(s *openapistackql.Schema) {
-	ih.RequestSchema = s
-}
-
-func (ih *StandardHTTPArmoury) SetResponseSchema(s *openapistackql.Schema) {
-	ih.ResponseSchema = s
-}
-
-func (ih *StandardHTTPArmoury) GetRequestSchema() *openapistackql.Schema {
-	return ih.RequestSchema
-}
-
-func (ih *StandardHTTPArmoury) GetResponseSchema() *openapistackql.Schema {
-	return ih.ResponseSchema
-}
-
-func NewHTTPArmouryParameters() HTTPArmouryParameters {
-	return HTTPArmouryParameters{
-		Header: make(http.Header),
-	}
-}
-
-func NewHTTPArmoury() HTTPArmoury {
-	return &StandardHTTPArmoury{}
-}
-
-func BuildHTTPRequestCtx(node sqlparser.SQLNode, prov provider.IProvider, m *openapistackql.OperationStore, svc *openapistackql.Service, insertValOnlyRows map[int]map[int]interface{}, execContext *ExecContext) (HTTPArmoury, error) {
+func BuildHTTPRequestCtx(node sqlparser.SQLNode, prov provider.IProvider, m *openapistackql.OperationStore, svc *openapistackql.Service, insertValOnlyRows map[int]map[int]interface{}, execContext ExecContext) (HTTPArmoury, error) {
 	var err error
 	httpArmoury := NewHTTPArmoury()
 	var requestSchema, responseSchema *openapistackql.Schema
@@ -171,26 +44,26 @@ func BuildHTTPRequestCtx(node sqlparser.SQLNode, prov provider.IProvider, m *ope
 		if err != nil {
 			return nil, err
 		}
-		if execContext != nil && execContext.ExecPayload != nil {
-			pm.BodyBytes = execContext.ExecPayload.Payload
-			for j, v := range execContext.ExecPayload.Header {
-				pm.Header[j] = v
+		if execContext != nil && execContext.GetExecPayload() != nil {
+			pm.SetBodyBytes(execContext.GetExecPayload().GetPayload())
+			for j, v := range execContext.GetExecPayload().GetHeader() {
+				pm.SetHeaderKV(j, v)
 			}
-			params.RequestBody = execContext.ExecPayload.PayloadMap
+			params.RequestBody = execContext.GetExecPayload().GetPayloadMap()
 		} else if params.RequestBody != nil && len(params.RequestBody) != 0 {
 			b, err := json.Marshal(params.RequestBody)
 			if err != nil {
 				return nil, err
 			}
-			pm.BodyBytes = b
-			pm.Header["Content-Type"] = []string{m.Request.BodyMediaType}
+			pm.SetBodyBytes(b)
+			pm.SetHeaderKV("Content-Type", []string{m.Request.BodyMediaType})
 		}
 		if m.Response != nil {
 			if m.Response.BodyMediaType != "" && prov.GetProviderString() != "aws" {
-				pm.Header["Accept"] = []string{m.Response.BodyMediaType}
+				pm.SetHeaderKV("Accept", []string{m.Response.BodyMediaType})
 			}
 		}
-		pm.Parameters = params
+		pm.SetParameters(params)
 		httpArmoury.AddRequestParams(pm)
 	}
 	secondPassParams := httpArmoury.GetRequestParams()
@@ -200,30 +73,30 @@ func BuildHTTPRequestCtx(node sqlparser.SQLNode, prov provider.IProvider, m *ope
 	}
 	for i, param := range secondPassParams {
 		p := param
-		if len(p.Parameters.RequestBody) == 0 {
-			p.Parameters.RequestBody = nil
+		if len(p.GetParameters().RequestBody) == 0 {
+			p.SetRequestBodyMap(nil)
 		}
 		var baseRequestCtx *http.Request
 		switch node := node.(type) {
 		case *sqlparser.Delete, *sqlparser.Exec, *sqlparser.Insert, *sqlparser.Select, *sqlparser.Update:
-			baseRequestCtx, err = getRequest(pr, svc, m, p.Parameters)
+			baseRequestCtx, err = getRequest(pr, svc, m, p.GetParameters())
 			if err != nil {
 				return nil, err
 			}
-			for k, v := range p.Header {
+			for k, v := range p.GetHeader() {
 				for _, vi := range v {
 					baseRequestCtx.Header.Set(k, vi)
 				}
 			}
-			p.Request = baseRequestCtx
+			p.SetRequest(baseRequestCtx)
 		default:
 			return nil, fmt.Errorf("cannot create http primitive for sql node of type %T", node)
 		}
 		if err != nil {
 			return nil, err
 		}
-		logging.GetLogger().Infoln(fmt.Sprintf("pre transform: httpArmoury.RequestParams[%d] = %s", i, string(p.BodyBytes)))
-		logging.GetLogger().Infoln(fmt.Sprintf("post transform: httpArmoury.RequestParams[%d] = %s", i, string(p.BodyBytes)))
+		logging.GetLogger().Infoln(fmt.Sprintf("pre transform: httpArmoury.RequestParams[%d] = %s", i, string(p.GetBodyBytes())))
+		logging.GetLogger().Infoln(fmt.Sprintf("post transform: httpArmoury.RequestParams[%d] = %s", i, string(p.GetBodyBytes())))
 		secondPassParams[i] = p
 	}
 	httpArmoury.SetRequestParams(secondPassParams)
@@ -258,7 +131,7 @@ func getRequest(prov *openapistackql.Provider, svc *openapistackql.Service, meth
 	return request, nil
 }
 
-func BuildHTTPRequestCtxFromAnnotation(parameters streaming.MapStream, prov provider.IProvider, m *openapistackql.OperationStore, svc *openapistackql.Service, insertValOnlyRows map[int]map[int]interface{}, execContext *ExecContext) (HTTPArmoury, error) {
+func BuildHTTPRequestCtxFromAnnotation(parameters streaming.MapStream, prov provider.IProvider, m *openapistackql.OperationStore, svc *openapistackql.Service, insertValOnlyRows map[int]map[int]interface{}, execContext ExecContext) (HTTPArmoury, error) {
 	var err error
 	httpArmoury := NewHTTPArmoury()
 	var requestSchema, responseSchema *openapistackql.Schema
@@ -296,26 +169,26 @@ func BuildHTTPRequestCtxFromAnnotation(parameters streaming.MapStream, prov prov
 		if err != nil {
 			return nil, err
 		}
-		if execContext != nil && execContext.ExecPayload != nil {
-			pm.BodyBytes = execContext.ExecPayload.Payload
-			for j, v := range execContext.ExecPayload.Header {
-				pm.Header[j] = v
+		if execContext != nil && execContext.GetExecPayload() != nil {
+			pm.SetBodyBytes(execContext.GetExecPayload().GetPayload())
+			for j, v := range execContext.GetExecPayload().GetHeader() {
+				pm.SetHeaderKV(j, v)
 			}
-			params.RequestBody = execContext.ExecPayload.PayloadMap
+			params.RequestBody = execContext.GetExecPayload().GetPayloadMap()
 		} else if params.RequestBody != nil && len(params.RequestBody) != 0 {
 			b, err := json.Marshal(params.RequestBody)
 			if err != nil {
 				return nil, err
 			}
-			pm.BodyBytes = b
-			pm.Header["Content-Type"] = []string{m.Request.BodyMediaType}
+			pm.SetBodyBytes(b)
+			pm.SetHeaderKV("Content-Type", []string{m.Request.BodyMediaType})
 		}
 		if m.Response != nil {
 			if m.Response.BodyMediaType != "" && prov.GetProviderString() != "aws" {
-				pm.Header["Accept"] = []string{m.Response.BodyMediaType}
+				pm.SetHeaderKV("Accept", []string{m.Response.BodyMediaType})
 			}
 		}
-		pm.Parameters = params
+		pm.SetParameters(params)
 		httpArmoury.AddRequestParams(pm)
 	}
 	secondPassParams := httpArmoury.GetRequestParams()
@@ -325,23 +198,23 @@ func BuildHTTPRequestCtxFromAnnotation(parameters streaming.MapStream, prov prov
 	}
 	for i, param := range secondPassParams {
 		p := param
-		if len(p.Parameters.RequestBody) == 0 {
-			p.Parameters.RequestBody = nil
+		if len(p.GetParameters().RequestBody) == 0 {
+			p.SetRequestBodyMap(nil)
 		}
 		var baseRequestCtx *http.Request
-		baseRequestCtx, err = getRequest(pr, svc, m, p.Parameters)
+		baseRequestCtx, err = getRequest(pr, svc, m, p.GetParameters())
 		if err != nil {
 			return nil, err
 		}
-		for k, v := range p.Header {
+		for k, v := range p.GetHeader() {
 			for _, vi := range v {
 				baseRequestCtx.Header.Set(k, vi)
 			}
 		}
 
-		p.Request = baseRequestCtx
-		logging.GetLogger().Infoln(fmt.Sprintf("pre transform: httpArmoury.RequestParams[%d] = %s", i, string(p.BodyBytes)))
-		logging.GetLogger().Infoln(fmt.Sprintf("post transform: httpArmoury.RequestParams[%d] = %s", i, string(p.BodyBytes)))
+		p.SetRequest(baseRequestCtx)
+		logging.GetLogger().Infoln(fmt.Sprintf("pre transform: httpArmoury.RequestParams[%d] = %s", i, string(p.GetBodyBytes())))
+		logging.GetLogger().Infoln(fmt.Sprintf("post transform: httpArmoury.RequestParams[%d] = %s", i, string(p.GetBodyBytes())))
 		secondPassParams[i] = p
 	}
 	httpArmoury.SetRequestParams(secondPassParams)

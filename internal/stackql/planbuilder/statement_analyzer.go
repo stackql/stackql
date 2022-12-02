@@ -584,7 +584,7 @@ func (p *primitiveGenerator) analyzeUnaryExec(pbi PlanBuilderInput, handlerCtx h
 	if err != nil && method.Request != nil {
 		return nil, err
 	}
-	var execPayload *internaldto.ExecPayload
+	var execPayload internaldto.ExecPayload
 	if node.OptExecPayload != nil {
 		mediaType := "application/json"
 		if method.Request != nil && method.Request.BodyMediaType != "" {
@@ -594,7 +594,7 @@ func (p *primitiveGenerator) analyzeUnaryExec(pbi PlanBuilderInput, handlerCtx h
 		if err != nil {
 			return nil, err
 		}
-		err = p.analyzeSchemaVsMap(handlerCtx, requestSchema, execPayload.PayloadMap, method)
+		err = p.analyzeSchemaVsMap(handlerCtx, requestSchema, execPayload.GetPayloadMap(), method)
 		if err != nil {
 			return nil, err
 		}
@@ -661,7 +661,7 @@ func (p *primitiveGenerator) analyzeExec(pbi PlanBuilderInput) error {
 	return nil
 }
 
-func (p *primitiveGenerator) parseExecPayload(node *sqlparser.ExecVarDef, payloadType string) (*internaldto.ExecPayload, error) {
+func (p *primitiveGenerator) parseExecPayload(node *sqlparser.ExecVarDef, payloadType string) (internaldto.ExecPayload, error) {
 	var b []byte
 	m := make(map[string][]string)
 	var pm map[string]interface{}
@@ -681,11 +681,11 @@ func (p *primitiveGenerator) parseExecPayload(node *sqlparser.ExecVarDef, payloa
 	default:
 		return nil, fmt.Errorf("payload map of declared type = '%T' not allowed", payloadType)
 	}
-	return &internaldto.ExecPayload{
-		Payload:    b,
-		Header:     m,
-		PayloadMap: pm,
-	}, nil
+	return internaldto.NewExecPayload(
+		b,
+		m,
+		pm,
+	), nil
 }
 
 func contains(slice []interface{}, elem interface{}) bool {
@@ -1059,7 +1059,7 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 	return fmt.Errorf("cannot process cartesian join select just yet")
 }
 
-func (p *primitiveGenerator) buildRequestContext(handlerCtx handler.HandlerContext, node sqlparser.SQLNode, meta tablemetadata.ExtendedTableMetadata, execContext *httpbuild.ExecContext, rowsToInsert map[int]map[int]interface{}) (httpbuild.HTTPArmoury, error) {
+func (p *primitiveGenerator) buildRequestContext(handlerCtx handler.HandlerContext, node sqlparser.SQLNode, meta tablemetadata.ExtendedTableMetadata, execContext httpbuild.ExecContext, rowsToInsert map[int]map[int]interface{}) (httpbuild.HTTPArmoury, error) {
 	m, err := meta.GetMethod()
 	if err != nil {
 		return nil, err
