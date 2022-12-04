@@ -686,3 +686,15 @@ Erroneous mTLS Config Plus Basic Query Returns Error
     ...    ${PSQL_MTLS_INVALID_CONN_STR}
     ...    ${SELECT_CONTAINER_SUBNET_AGG_ASC}
     ...    error
+
+Basic View Error Displayed
+    Should Stackql Exec Inline Contain Stderr
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    SELECT * FROM stackql_providers;
+    ...    views not yet supported

@@ -16,7 +16,7 @@ type DataFlowRelation interface {
 	IsSQL() bool
 }
 
-type StandardDataFlowRelation struct {
+type standardDataFlowRelation struct {
 	comparisonExpr *sqlparser.ComparisonExpr
 	destColumn     *sqlparser.ColName
 	sourceExpr     sqlparser.Expr
@@ -27,14 +27,14 @@ func NewStandardDataFlowRelation(
 	destColumn *sqlparser.ColName,
 	sourceExpr sqlparser.Expr,
 ) DataFlowRelation {
-	return &StandardDataFlowRelation{
+	return &standardDataFlowRelation{
 		comparisonExpr: comparisonExpr,
 		destColumn:     destColumn,
 		sourceExpr:     sourceExpr,
 	}
 }
 
-func (dr *StandardDataFlowRelation) GetProjection() (string, string, error) {
+func (dr *standardDataFlowRelation) GetProjection() (string, string, error) {
 	switch se := dr.sourceExpr.(type) {
 	case *sqlparser.ColName:
 		return se.Name.GetRawVal(), dr.destColumn.Name.GetRawVal(), nil
@@ -43,7 +43,7 @@ func (dr *StandardDataFlowRelation) GetProjection() (string, string, error) {
 	}
 }
 
-func (dr *StandardDataFlowRelation) IsSQL() bool {
+func (dr *standardDataFlowRelation) IsSQL() bool {
 	switch se := dr.sourceExpr.(type) {
 	case *sqlparser.ColName:
 		return false
@@ -53,7 +53,7 @@ func (dr *StandardDataFlowRelation) IsSQL() bool {
 	}
 }
 
-func (dr *StandardDataFlowRelation) GetSelectExpr() (sqlparser.SelectExpr, error) {
+func (dr *standardDataFlowRelation) GetSelectExpr() (sqlparser.SelectExpr, error) {
 	rv := &sqlparser.AliasedExpr{
 		Expr: dr.sourceExpr,
 		As:   dr.destColumn.Name,
@@ -61,7 +61,7 @@ func (dr *StandardDataFlowRelation) GetSelectExpr() (sqlparser.SelectExpr, error
 	return rv, nil
 }
 
-func (dr *StandardDataFlowRelation) GetColumnDescriptor() (openapistackql.ColumnDescriptor, error) {
+func (dr *standardDataFlowRelation) GetColumnDescriptor() (openapistackql.ColumnDescriptor, error) {
 	decoratedColumn := fmt.Sprintf(`%s AS %s`, sqlparser.String(dr.sourceExpr), dr.destColumn.Name.GetRawVal())
 	cd := openapistackql.NewColumnDescriptor(dr.destColumn.Name.GetRawVal(), "", "", decoratedColumn, nil, nil, nil)
 	return cd, nil

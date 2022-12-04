@@ -63,6 +63,10 @@ type SQLDialect interface {
 
 	GetCurrentTable(internaldto.HeirarchyIdentifiers) (internaldto.DBTable, error)
 	GetTable(internaldto.HeirarchyIdentifiers, int) (internaldto.DBTable, error)
+
+	// Views
+	CreateView(viewName string, rawDDL string, translatedDDL string) error
+	ViewExists(viewName string) bool
 }
 
 func getNodeFormatter(name string) sqlparser.NodeFormatter {
