@@ -22,6 +22,11 @@ The runtime representation of views must support:
 ## Ideation
 
 - StackQL views DDL stored in some special stackql table designated for this purpose.
+    - Physical table name such as `__iql__.views`.
+    - Views need not exist until the `SELECT ... FROM <view>` portion of the query is executed.
+      This is advantagesous on RDBMS systems where view creation will fail if physical tables do not exist.
+    - We may need a layer of indirection for views to execute, wrt table names containing generation ID.
+      Simplest option is input table name.
 - SQL view definitions (translated to physical tables) are stored in the RDBMS.
     - This implies that even quite early in analysis, it must be known that a view is being referenced.
     - Some part of the namespace must be reserved for these views; configurable using existing regex / template namespacing?

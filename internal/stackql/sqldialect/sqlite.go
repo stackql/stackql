@@ -47,7 +47,6 @@ type sqLiteDialect struct {
 	typeMappings                 map[string]internaldto.DRMCoupling
 	defaultRelationalType        string
 	defaultGolangKind            reflect.Kind
-	defaultGolangValue           interface{}
 }
 
 func (eng *sqLiteDialect) initSQLiteEngine() error {
@@ -259,6 +258,59 @@ func (eng *sqLiteDialect) generateDDL(relationalTable relationaldto.RelationalTa
 	retVal = append(retVal, fmt.Sprintf(`create index if not exists "idx_%s_%s" on "%s" ( "%s" ) `, strings.ReplaceAll(tableName, ".", "_"), sessionIdColName, tableName, sessionIdColName))
 	retVal = append(retVal, fmt.Sprintf(`create index if not exists "idx_%s_%s" on "%s" ( "%s" ) `, strings.ReplaceAll(tableName, ".", "_"), txnIdColName, tableName, txnIdColName))
 	retVal = append(retVal, fmt.Sprintf(`create index if not exists "idx_%s_%s" on "%s" ( "%s" ) `, strings.ReplaceAll(tableName, ".", "_"), insIdColName, tableName, insIdColName))
+	rawViewDDL, err := eng.generateViewDDL(relationalTable)
+	if err != nil {
+		return nil, err
+	}
+	retVal = append(retVal, rawViewDDL...)
+	return retVal, nil
+}
+
+func (eng *sqLiteDialect) ViewExists(viewName string) bool {
+	return eng.viewExists(viewName)
+}
+
+func (eng *sqLiteDialect) viewExists(viewName string) bool {
+	q := `SELECT count(*) AS view_count FROM "__iql__.views" WHERE view_name = ? and deleted_dttm IS NULL`
+	row := eng.sqlEngine.QueryRow(q, viewName)
+	if row != nil {
+		var viewCount int
+		err := row.Scan(&viewCount)
+		if err != nil {
+			return false
+		}
+		if viewCount == 1 {
+			return true
+		}
+	}
+	return false
+}
+
+func (eng *sqLiteDialect) CreateView(viewName string, rawDDL string, translatedDDL string) error {
+	return eng.createView(viewName, rawDDL, translatedDDL)
+}
+
+func (eng *sqLiteDialect) createView(viewName string, rawDDL string, translatedDDL string) error {
+	return nil
+}
+
+func (eng *sqLiteDialect) generateViewDDL(relationalTable relationaldto.RelationalTable) ([]string, error) {
+	var colNames, retVal []string
+	var createViewBuilder strings.Builder
+	retVal = append(retVal, fmt.Sprintf(`drop view if exists "%s" ; `, relationalTable.GetBaseName()))
+	createViewBuilder.WriteString(fmt.Sprintf(`create view "%s" AS `, relationalTable.GetBaseName()))
+	for _, col := range relationalTable.GetColumns() {
+		var b strings.Builder
+		colName := col.GetName()
+		b.WriteString(`"` + colName + `" `)
+		colNames = append(colNames, b.String())
+	}
+	tableName, err := relationalTable.GetName()
+	if err != nil {
+		return nil, err
+	}
+	createViewBuilder.WriteString(fmt.Sprintf(`select %s from "%s" ;`, strings.Join(colNames, ", "), tableName))
+	retVal = append(retVal, createViewBuilder.String())
 	return retVal, nil
 }
 

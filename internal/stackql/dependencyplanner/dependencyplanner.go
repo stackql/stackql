@@ -29,7 +29,7 @@ type DependencyPlanner interface {
 	GetSelectCtx() drm.PreparedStatementCtx
 }
 
-type StandardDependencyPlanner struct {
+type standardDependencyPlanner struct {
 	dataflowCollection dataflow.DataFlowCollection
 	colRefs            parserutil.ColTableMap
 	handlerCtx         handler.HandlerContext
@@ -61,9 +61,9 @@ func NewStandardDependencyPlanner(
 	tcc internaldto.TxnControlCounters,
 ) (DependencyPlanner, error) {
 	if tcc == nil {
-		return nil, fmt.Errorf("violation of StandardDependencyPlanner invariant: txn counter cannot be nil")
+		return nil, fmt.Errorf("violation of standardDependencyPlanner invariant: txn counter cannot be nil")
 	}
-	return &StandardDependencyPlanner{
+	return &standardDependencyPlanner{
 		handlerCtx:         handlerCtx,
 		dataflowCollection: dataflowCollection,
 		colRefs:            colRefs,
@@ -78,15 +78,15 @@ func NewStandardDependencyPlanner(
 	}, nil
 }
 
-func (dp *StandardDependencyPlanner) GetBldr() primitivebuilder.Builder {
+func (dp *standardDependencyPlanner) GetBldr() primitivebuilder.Builder {
 	return dp.bldr
 }
 
-func (dp *StandardDependencyPlanner) GetSelectCtx() drm.PreparedStatementCtx {
+func (dp *standardDependencyPlanner) GetSelectCtx() drm.PreparedStatementCtx {
 	return dp.selCtx
 }
 
-func (dp *StandardDependencyPlanner) Plan() error {
+func (dp *standardDependencyPlanner) Plan() error {
 	err := dp.dataflowCollection.Sort()
 	if err != nil {
 		return err
@@ -233,7 +233,7 @@ func (dp *StandardDependencyPlanner) Plan() error {
 	return nil
 }
 
-func (dp *StandardDependencyPlanner) processOrphan(sqlNode sqlparser.SQLNode, annotationCtx taxonomy.AnnotationCtx, inStream streaming.MapStream) (drm.PreparedStatementCtx, internaldto.TxnControlCounters, error) {
+func (dp *standardDependencyPlanner) processOrphan(sqlNode sqlparser.SQLNode, annotationCtx taxonomy.AnnotationCtx, inStream streaming.MapStream) (drm.PreparedStatementCtx, internaldto.TxnControlCounters, error) {
 	anTab, tcc, err := dp.processAcquire(sqlNode, annotationCtx, inStream)
 	if err != nil {
 		return nil, nil, err
@@ -246,7 +246,7 @@ func (dp *StandardDependencyPlanner) processOrphan(sqlNode sqlparser.SQLNode, an
 	return insPsc, tcc, err
 }
 
-func (dp *StandardDependencyPlanner) orchestrate(
+func (dp *standardDependencyPlanner) orchestrate(
 	annotationCtx taxonomy.AnnotationCtx,
 	insPsc drm.PreparedStatementCtx,
 	inStream streaming.MapStream,
@@ -270,7 +270,7 @@ func (dp *StandardDependencyPlanner) orchestrate(
 	return err
 }
 
-func (dp *StandardDependencyPlanner) processAcquire(
+func (dp *standardDependencyPlanner) processAcquire(
 	sqlNode sqlparser.SQLNode,
 	annotationCtx taxonomy.AnnotationCtx,
 	stream streaming.MapStream,
@@ -312,7 +312,7 @@ func (dp *StandardDependencyPlanner) processAcquire(
 	return anTab, dp.tcc, nil
 }
 
-func (dp *StandardDependencyPlanner) getStreamFromEdge(e dataflow.DataFlowEdge, ac taxonomy.AnnotationCtx, tcc internaldto.TxnControlCounters) (streaming.MapStream, error) {
+func (dp *standardDependencyPlanner) getStreamFromEdge(e dataflow.DataFlowEdge, ac taxonomy.AnnotationCtx, tcc internaldto.TxnControlCounters) (streaming.MapStream, error) {
 	if e.IsSQL() {
 		selectCtx, err := dp.generateSelectDML(e, tcc)
 		if err != nil {
@@ -351,7 +351,7 @@ func (dp *StandardDependencyPlanner) getStreamFromEdge(e dataflow.DataFlowEdge, 
 	return streaming.NewSimpleProjectionMapStream(projection, staticParams), nil
 }
 
-func (dp *StandardDependencyPlanner) generateSelectDML(e dataflow.DataFlowEdge, tcc internaldto.TxnControlCounters) (drm.PreparedStatementCtx, error) {
+func (dp *standardDependencyPlanner) generateSelectDML(e dataflow.DataFlowEdge, tcc internaldto.TxnControlCounters) (drm.PreparedStatementCtx, error) {
 	ann := e.GetSource().GetAnnotation()
 	columnDescriptors, err := e.GetColumnDescriptors()
 	if err != nil {

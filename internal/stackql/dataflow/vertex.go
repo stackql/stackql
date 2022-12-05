@@ -13,9 +13,8 @@ type DataFlowVertex interface {
 	GetTableExpr() sqlparser.TableExpr
 }
 
-type StandardDataFlowVertex struct {
+type standardDataFlowVertex struct {
 	id         int64
-	collection DataFlowCollection
 	annotation taxonomy.AnnotationCtx
 	tableExpr  sqlparser.TableExpr
 }
@@ -24,23 +23,23 @@ func NewStandardDataFlowVertex(
 	annotation taxonomy.AnnotationCtx,
 	tableExpr sqlparser.TableExpr,
 	id int64) DataFlowVertex {
-	return &StandardDataFlowVertex{
+	return &standardDataFlowVertex{
 		annotation: annotation,
 		tableExpr:  tableExpr,
 		id:         id,
 	}
 }
 
-func (dv *StandardDataFlowVertex) iDataFlowUnit() {}
+func (dv *standardDataFlowVertex) iDataFlowUnit() {}
 
-func (dv *StandardDataFlowVertex) ID() int64 {
+func (dv *standardDataFlowVertex) ID() int64 {
 	return dv.id
 }
 
-func (dv *StandardDataFlowVertex) GetAnnotation() taxonomy.AnnotationCtx {
+func (dv *standardDataFlowVertex) GetAnnotation() taxonomy.AnnotationCtx {
 	return dv.annotation
 }
 
-func (dv *StandardDataFlowVertex) GetTableExpr() sqlparser.TableExpr {
+func (dv *standardDataFlowVertex) GetTableExpr() sqlparser.TableExpr {
 	return dv.tableExpr
 }

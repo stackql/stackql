@@ -86,7 +86,9 @@ type HeirarchyIdentifiers interface {
 	GetResponseSchemaStr() string
 	GetStackQLTableName() string
 	GetTableName() string
+	IsView() bool
 	SetMethodStr(string)
+	WithIsView(bool) HeirarchyIdentifiers
 	WithProviderStr(string) HeirarchyIdentifiers
 	WithResponseSchemaStr(rss string) HeirarchyIdentifiers
 }
@@ -97,6 +99,7 @@ type standardHeirarchyIdentifiers struct {
 	resourceStr       string
 	responseSchemaStr string
 	methodStr         string
+	isView            bool
 }
 
 func (hi *standardHeirarchyIdentifiers) SetMethodStr(mStr string) {
@@ -109,6 +112,10 @@ func (hi *standardHeirarchyIdentifiers) GetProviderStr() string {
 
 func (hi *standardHeirarchyIdentifiers) GetServiceStr() string {
 	return hi.serviceStr
+}
+
+func (hi *standardHeirarchyIdentifiers) IsView() bool {
+	return hi.isView
 }
 
 func (hi *standardHeirarchyIdentifiers) GetResourceStr() string {
@@ -125,6 +132,11 @@ func (hi *standardHeirarchyIdentifiers) GetMethodStr() string {
 
 func (hi *standardHeirarchyIdentifiers) WithProviderStr(ps string) HeirarchyIdentifiers {
 	hi.providerStr = ps
+	return hi
+}
+
+func (hi *standardHeirarchyIdentifiers) WithIsView(isView bool) HeirarchyIdentifiers {
+	hi.isView = isView
 	return hi
 }
 
@@ -150,6 +162,9 @@ func (hi *standardHeirarchyIdentifiers) GetTableName() string {
 		return fmt.Sprintf("%s.%s.%s.%s", hi.providerStr, hi.serviceStr, hi.resourceStr, hi.responseSchemaStr)
 	}
 	if hi.responseSchemaStr == "" {
+		if hi.serviceStr == "" {
+			return hi.resourceStr
+		}
 		return fmt.Sprintf("%s.%s", hi.serviceStr, hi.resourceStr)
 	}
 	return fmt.Sprintf("%s.%s.%s", hi.serviceStr, hi.resourceStr, hi.responseSchemaStr)

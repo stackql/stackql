@@ -15,19 +15,19 @@ type DataFlowWeaklyConnectedComponent interface {
 	PushBack(DataFlowVertex)
 }
 
-type StandardDataFlowWeaklyConnectedComponent struct {
+type standardDataFlowWeaklyConnectedComponent struct {
 	idsVisited   map[int64]struct{}
-	collection   *StandardDataFlowCollection
+	collection   *standardDataFlowCollection
 	root         graph.Node
 	orderedNodes []graph.Node
 	edges        []graph.Edge
 }
 
 func NewStandardDataFlowWeaklyConnectedComponent(
-	collection *StandardDataFlowCollection,
+	collection *standardDataFlowCollection,
 	root graph.Node,
 ) DataFlowWeaklyConnectedComponent {
-	return &StandardDataFlowWeaklyConnectedComponent{
+	return &standardDataFlowWeaklyConnectedComponent{
 		collection: collection,
 		root:       root,
 		idsVisited: map[int64]struct{}{
@@ -39,7 +39,7 @@ func NewStandardDataFlowWeaklyConnectedComponent(
 	}
 }
 
-func (wc *StandardDataFlowWeaklyConnectedComponent) GetOrderedNodes() ([]DataFlowVertex, error) {
+func (wc *standardDataFlowWeaklyConnectedComponent) GetOrderedNodes() ([]DataFlowVertex, error) {
 	var rv []DataFlowVertex
 	for _, n := range wc.orderedNodes {
 		switch n := n.(type) {
@@ -52,7 +52,7 @@ func (wc *StandardDataFlowWeaklyConnectedComponent) GetOrderedNodes() ([]DataFlo
 	return rv, nil
 }
 
-func (wc *StandardDataFlowWeaklyConnectedComponent) GetEdges() ([]DataFlowEdge, error) {
+func (wc *standardDataFlowWeaklyConnectedComponent) GetEdges() ([]DataFlowEdge, error) {
 	var rv []DataFlowEdge
 	for _, n := range wc.edges {
 		switch n := n.(type) {
@@ -65,7 +65,7 @@ func (wc *StandardDataFlowWeaklyConnectedComponent) GetEdges() ([]DataFlowEdge, 
 	return rv, nil
 }
 
-func (wc *StandardDataFlowWeaklyConnectedComponent) Analyze() error {
+func (wc *standardDataFlowWeaklyConnectedComponent) Analyze() error {
 	// This algorithm underlying this analyisis
 	// is defective; or would be were it not halted early.
 	// TODO: Upgrade this algorithm and make limits configurable
@@ -99,12 +99,12 @@ func (wc *StandardDataFlowWeaklyConnectedComponent) Analyze() error {
 	return nil
 }
 
-func (wc *StandardDataFlowWeaklyConnectedComponent) AddEdge(e DataFlowEdge) {
+func (wc *standardDataFlowWeaklyConnectedComponent) AddEdge(e DataFlowEdge) {
 	wc.edges = append(wc.edges, e)
 }
 
-func (wc *StandardDataFlowWeaklyConnectedComponent) PushBack(v DataFlowVertex) {
+func (wc *standardDataFlowWeaklyConnectedComponent) PushBack(v DataFlowVertex) {
 	wc.orderedNodes = append(wc.orderedNodes, v)
 }
 
-func (wc *StandardDataFlowWeaklyConnectedComponent) iDataFlowUnit() {}
+func (wc *standardDataFlowWeaklyConnectedComponent) iDataFlowUnit() {}

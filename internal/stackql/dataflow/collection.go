@@ -27,7 +27,7 @@ type DataFlowCollection interface {
 }
 
 func NewStandardDataFlowCollection() DataFlowCollection {
-	return &StandardDataFlowCollection{
+	return &standardDataFlowCollection{
 		idMutex:               &sync.Mutex{},
 		g:                     simple.NewWeightedDirectedGraph(0.0, 0.0),
 		vertices:              make(map[DataFlowVertex]struct{}),
@@ -35,7 +35,7 @@ func NewStandardDataFlowCollection() DataFlowCollection {
 	}
 }
 
-type StandardDataFlowCollection struct {
+type standardDataFlowCollection struct {
 	idMutex                *sync.Mutex
 	maxId                  int64
 	g                      *simple.WeightedDirectedGraph
@@ -47,14 +47,14 @@ type StandardDataFlowCollection struct {
 	edges                  []DataFlowEdge
 }
 
-func (dc *StandardDataFlowCollection) GetNextID() int64 {
+func (dc *standardDataFlowCollection) GetNextID() int64 {
 	defer dc.idMutex.Unlock()
 	dc.idMutex.Lock()
 	dc.maxId++
 	return dc.maxId
 }
 
-func (dc *StandardDataFlowCollection) AddOrUpdateEdgeOld(e DataFlowEdge) error {
+func (dc *standardDataFlowCollection) AddOrUpdateEdgeOld(e DataFlowEdge) error {
 	dc.AddVertex(e.GetSource())
 	dc.AddVertex(e.GetDest())
 	dc.edges = append(dc.edges, e)
@@ -62,7 +62,7 @@ func (dc *StandardDataFlowCollection) AddOrUpdateEdgeOld(e DataFlowEdge) error {
 	return nil
 }
 
-func (dc *StandardDataFlowCollection) AddOrUpdateEdge(
+func (dc *standardDataFlowCollection) AddOrUpdateEdge(
 	source DataFlowVertex,
 	dest DataFlowVertex,
 	comparisonExpr *sqlparser.ComparisonExpr,
@@ -87,7 +87,7 @@ func (dc *StandardDataFlowCollection) AddOrUpdateEdge(
 	return nil
 }
 
-func (dc *StandardDataFlowCollection) AddVertex(v DataFlowVertex) {
+func (dc *standardDataFlowCollection) AddVertex(v DataFlowVertex) {
 	_, ok := dc.verticesForTableExprs[v.GetTableExpr()]
 	if ok {
 		return
@@ -97,7 +97,7 @@ func (dc *StandardDataFlowCollection) AddVertex(v DataFlowVertex) {
 	dc.g.AddNode(v)
 }
 
-func (dc *StandardDataFlowCollection) Sort() error {
+func (dc *standardDataFlowCollection) Sort() error {
 	var err error
 	dc.sorted, err = topo.Sort(dc.g)
 	if err != nil {
@@ -107,7 +107,7 @@ func (dc *StandardDataFlowCollection) Sort() error {
 	return err
 }
 
-func (dc *StandardDataFlowCollection) Vertices() []DataFlowVertex {
+func (dc *standardDataFlowCollection) Vertices() []DataFlowVertex {
 	var rv []DataFlowVertex
 	for vert := range dc.vertices {
 		rv = append(rv, vert)
@@ -115,7 +115,7 @@ func (dc *StandardDataFlowCollection) Vertices() []DataFlowVertex {
 	return rv
 }
 
-func (dc *StandardDataFlowCollection) GetAllUnits() ([]DataFlowUnit, error) {
+func (dc *standardDataFlowCollection) GetAllUnits() ([]DataFlowUnit, error) {
 	var rv []DataFlowUnit
 	for _, orphan := range dc.orphans {
 		rv = append(rv, orphan)
@@ -126,7 +126,7 @@ func (dc *StandardDataFlowCollection) GetAllUnits() ([]DataFlowUnit, error) {
 	return rv, nil
 }
 
-func (dc *StandardDataFlowCollection) InDegree(v DataFlowVertex) int {
+func (dc *standardDataFlowCollection) InDegree(v DataFlowVertex) int {
 	inDegree := 0
 	for _, e := range dc.edges {
 		if e.GetDest() == v {
@@ -136,7 +136,7 @@ func (dc *StandardDataFlowCollection) InDegree(v DataFlowVertex) int {
 	return inDegree
 }
 
-func (dc *StandardDataFlowCollection) OutDegree(v DataFlowVertex) int {
+func (dc *standardDataFlowCollection) OutDegree(v DataFlowVertex) int {
 	outDegree := 0
 	for _, e := range dc.edges {
 		if e.GetSource() == v {
@@ -146,7 +146,7 @@ func (dc *StandardDataFlowCollection) OutDegree(v DataFlowVertex) int {
 	return outDegree
 }
 
-func (dc *StandardDataFlowCollection) optimise() error {
+func (dc *standardDataFlowCollection) optimise() error {
 	for _, node := range dc.sorted {
 		switch node := node.(type) {
 		case DataFlowVertex:

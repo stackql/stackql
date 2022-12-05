@@ -207,6 +207,11 @@ func (eng *postgresDialect) generateDDL(relationalTable relationaldto.Relational
 	retVal = append(retVal, fmt.Sprintf(`create index if not exists "idx_%s_%s" on "%s"."%s" ( "%s" ) `, strings.ReplaceAll(tableName, ".", "_"), sessionIdColName, eng.tableSchema, tableName, sessionIdColName))
 	retVal = append(retVal, fmt.Sprintf(`create index if not exists "idx_%s_%s" on "%s"."%s" ( "%s" ) `, strings.ReplaceAll(tableName, ".", "_"), txnIdColName, eng.tableSchema, tableName, txnIdColName))
 	retVal = append(retVal, fmt.Sprintf(`create index if not exists "idx_%s_%s" on "%s"."%s" ( "%s" ) `, strings.ReplaceAll(tableName, ".", "_"), insIdColName, eng.tableSchema, tableName, insIdColName))
+	rawViewDDL, err := eng.generateViewDDL(eng.tableSchema, eng.tableSchema, relationalTable)
+	if err != nil {
+		return nil, err
+	}
+	retVal = append(retVal, rawViewDDL...)
 	if eng.viewSchemataEnabled {
 		intelViewDDL, err := eng.generateViewDDL(eng.tableSchema, eng.intelViewSchema, relationalTable)
 		if err != nil {
@@ -215,6 +220,34 @@ func (eng *postgresDialect) generateDDL(relationalTable relationaldto.Relational
 		retVal = append(retVal, intelViewDDL...)
 	}
 	return retVal, nil
+}
+
+func (eng *postgresDialect) CreateView(viewName string, rawDDL string, translatedDDL string) error {
+	return eng.createView(viewName, rawDDL, translatedDDL)
+}
+
+func (eng *postgresDialect) createView(viewName string, rawDDL string, translatedDDL string) error {
+	return nil
+}
+
+func (eng *postgresDialect) ViewExists(viewName string) bool {
+	return eng.viewExists(viewName)
+}
+
+func (eng *postgresDialect) viewExists(viewName string) bool {
+	q := `SELECT count(*) AS view_count FROM "__iql__.views" WHERE view_name = $1 and deleted_dttm IS NULL`
+	row := eng.sqlEngine.QueryRow(q, viewName)
+	if row != nil {
+		var viewCount int
+		err := row.Scan(&viewCount)
+		if err != nil {
+			return false
+		}
+		if viewCount == 1 {
+			return true
+		}
+	}
+	return false
 }
 
 func (eng *postgresDialect) GetGCHousekeepingQuery(tableName string, tcc internaldto.TxnControlCounters) string {

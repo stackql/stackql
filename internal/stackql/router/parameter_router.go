@@ -376,13 +376,16 @@ func (pr *StandardParameterRouter) Route(tb sqlparser.TableExpr, handlerCtx hand
 	if err != nil {
 		hr, remainingParams, err = taxonomy.GetHeirarchyFromStatement(handlerCtx, tb, stringParams)
 	} else {
-		// if the where pearamters are sufficient, then need to switch
+		// If the where parameters are sufficient, then need to switch
 		// the Table - Paramater coupling object
 		tpc = notOnParams
 	}
 	logging.GetLogger().Infof("hr = '%+v', remainingParams = '%+v', err = '%+v'", hr, remainingParams, err)
 	if err != nil {
 		return nil, err
+	}
+	if hr.IsView() {
+		return nil, fmt.Errorf("views not supported at this time")
 	}
 	reconstitutedConsumedParams, err := tpc.ReconstituteConsumedParams(remainingParams)
 	if err != nil {
