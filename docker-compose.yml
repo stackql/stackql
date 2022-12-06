@@ -55,6 +55,7 @@ services:
       - GITHUB_SECRET_KEY=${GITHUB_SECRET_STR:-some-junk}
       - K8S_SECRET_KEY=${K8S_SECRET_STR:-some-junk}
       - AZ_ACCESS_TOKEN=${AZ_ACCESS_TOKEN:-some_junk}
+      - SUMO_CREDS=${SUMO_CREDS:-some_junk}
       - BUILDMAJORVERSION=${BUILDMAJORVERSION:-1}
       - BUILDMINORVERSION=${BUILDMINORVERSION:-1}
       - BUILDPATCHVERSION=${BUILDPATCHVERSION:-1}
@@ -127,6 +128,12 @@ services:
           -Droot.logLevel=OFF \
           -jar    $${MOCKSERVER_JAR} \
           -serverPort    $${MOCKSERVER_PORT_OKTA}&
+        java    -Dfile.encoding=UTF-8 \
+          -Dmockserver.initializationJsonPath=$${JSON_INIT_FILE_DIR}/static-sumologic-expectations.json \
+          -Dmockserver.logLevel=OFF \
+          -Droot.logLevel=OFF \
+          -jar    $${MOCKSERVER_JAR} \
+          -serverPort    $${MOCKSERVER_PORT_SUMOLOGIC}&
         java    -Dfile.encoding=UTF-8 \
           -Dmockserver.initializationJsonPath=$${JSON_INIT_FILE_DIR}/static-azure-expectations.json \
           -Dmockserver.logLevel=OFF \

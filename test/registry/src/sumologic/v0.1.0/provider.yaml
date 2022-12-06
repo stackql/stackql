@@ -1,0 +1,23 @@
+id: sumologic
+name: sumologic
+version: v0.1.0
+providerServices:
+  collectors:
+    description: Interact with and view information about collectors.
+    id: collectors:v0.1.0
+    name: collectors
+    preferred: true
+    service:
+      $ref: sumologic/v0.1.0/services/collectors.yaml
+    title: Sumo Logic v1 REST API - users
+    version: v0.1.0
+  users:
+    description: Interact with and view information about users.
+    id: users:v0.1.0
+    name: users
+    preferred: true
+    service:
+      $ref: sumologic/v0.1.0/services/users.yaml
+    title: Sumo Logic v1 REST API - users
+    version: v0.1.0
+openapi: 3.0.3
