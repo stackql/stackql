@@ -52,7 +52,7 @@ type ParameterRouter interface {
 	GetOnConditionDataFlows() (dataflow.DataFlowCollection, error)
 }
 
-type StandardParameterRouter struct {
+type standardParameterRouter struct {
 	tablesAliasMap                parserutil.TableAliasMap
 	tableMap                      parserutil.TableExprMap
 	onParamMap                    parserutil.ParameterMap
@@ -75,7 +75,7 @@ func NewParameterRouter(
 	namespaceCollection tablenamespace.TableNamespaceCollection,
 	astFormatter sqlparser.NodeFormatter,
 ) ParameterRouter {
-	return &StandardParameterRouter{
+	return &standardParameterRouter{
 		tablesAliasMap:                tablesAliasMap,
 		tableMap:                      tableMap,
 		whereParamMap:                 whereParamMap,
@@ -90,7 +90,7 @@ func NewParameterRouter(
 	}
 }
 
-func (pr *StandardParameterRouter) AnalyzeDependencies() error {
+func (pr *standardParameterRouter) AnalyzeDependencies() error {
 	return nil
 }
 
@@ -100,7 +100,7 @@ func (pr *StandardParameterRouter) AnalyzeDependencies() error {
 //   - result set data
 //
 // ...are guaranteed present in same table.
-func (pr *StandardParameterRouter) GetOnConditionsToRewrite() map[*sqlparser.ComparisonExpr]struct{} {
+func (pr *standardParameterRouter) GetOnConditionsToRewrite() map[*sqlparser.ComparisonExpr]struct{} {
 	rv := make(map[*sqlparser.ComparisonExpr]struct{})
 	for k, _ := range pr.comparisonToTableDependencies {
 		logging.GetLogger().Debugf("%v\n", k)
@@ -108,7 +108,7 @@ func (pr *StandardParameterRouter) GetOnConditionsToRewrite() map[*sqlparser.Com
 	return rv
 }
 
-func (pr *StandardParameterRouter) extractDataFlowDependency(input sqlparser.Expr) (taxonomy.AnnotationCtx, sqlparser.TableExpr, error) {
+func (pr *standardParameterRouter) extractDataFlowDependency(input sqlparser.Expr) (taxonomy.AnnotationCtx, sqlparser.TableExpr, error) {
 	switch l := input.(type) {
 	case *sqlparser.ColName:
 		// leave unknown for now -- bit of a mess
@@ -130,7 +130,7 @@ func (pr *StandardParameterRouter) extractDataFlowDependency(input sqlparser.Exp
 	}
 }
 
-func (pr *StandardParameterRouter) extractFromFunctionExpr(f *sqlparser.FuncExpr) (taxonomy.AnnotationCtx, sqlparser.TableExpr, error) {
+func (pr *standardParameterRouter) extractFromFunctionExpr(f *sqlparser.FuncExpr) (taxonomy.AnnotationCtx, sqlparser.TableExpr, error) {
 	sv := astvisit.NewLeftoverReferencesAstVisitor(
 		pr.colRefs,
 		pr.tableToAnnotationCtx,
@@ -146,7 +146,7 @@ func (pr *StandardParameterRouter) extractFromFunctionExpr(f *sqlparser.FuncExpr
 	return nil, nil, fmt.Errorf("cannot accomodate this")
 }
 
-func (pr *StandardParameterRouter) GetOnConditionDataFlows() (dataflow.DataFlowCollection, error) {
+func (pr *standardParameterRouter) GetOnConditionDataFlows() (dataflow.DataFlowCollection, error) {
 	rv := dataflow.NewStandardDataFlowCollection()
 	for k, destinationTable := range pr.comparisonToTableDependencies {
 		selfTableCited := false
@@ -231,7 +231,7 @@ func (pr *StandardParameterRouter) GetOnConditionDataFlows() (dataflow.DataFlowC
 	return rv, nil
 }
 
-func (pr *StandardParameterRouter) getAvailableParameters(tb sqlparser.TableExpr) parserutil.TableParameterCoupling {
+func (pr *standardParameterRouter) getAvailableParameters(tb sqlparser.TableExpr) parserutil.TableParameterCoupling {
 	rv := parserutil.NewTableParameterCoupling()
 	for k, v := range pr.whereParamMap.GetMap() {
 		key := k.String()
@@ -279,7 +279,7 @@ func (pr *StandardParameterRouter) getAvailableParameters(tb sqlparser.TableExpr
 	return rv
 }
 
-func (pr *StandardParameterRouter) invalidateParams(params map[string]interface{}) error {
+func (pr *standardParameterRouter) invalidateParams(params map[string]interface{}) error {
 	for k, v := range params {
 		err := pr.invalidate(k, v)
 		if err != nil {
@@ -289,12 +289,12 @@ func (pr *StandardParameterRouter) invalidateParams(params map[string]interface{
 	return nil
 }
 
-func (pr *StandardParameterRouter) isInvalidated(key string) bool {
+func (pr *standardParameterRouter) isInvalidated(key string) bool {
 	_, ok := pr.invalidatedParams[key]
 	return ok
 }
 
-func (pr *StandardParameterRouter) invalidate(key string, val interface{}) error {
+func (pr *standardParameterRouter) invalidate(key string, val interface{}) error {
 	if pr.isInvalidated(key) {
 		return fmt.Errorf("parameter '%s' already invalidated", key)
 	}
@@ -307,7 +307,7 @@ func (pr *StandardParameterRouter) invalidate(key string, val interface{}) error
 // Columnar input may come from either where clause
 // or on conditions.
 // TODO: Get rid of the dead set mess that is where paramters in preference.
-func (pr *StandardParameterRouter) Route(tb sqlparser.TableExpr, handlerCtx handler.HandlerContext) (taxonomy.AnnotationCtx, error) {
+func (pr *standardParameterRouter) Route(tb sqlparser.TableExpr, handlerCtx handler.HandlerContext) (taxonomy.AnnotationCtx, error) {
 	for k, v := range pr.whereParamMap.GetMap() {
 		logging.GetLogger().Infof("%v\n", v)
 		alias := k.Alias()

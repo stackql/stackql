@@ -1,0 +1,938 @@
+paths:
+  /v1/users:
+    get:
+      tags:
+        - userManagement
+      summary: Get a list of users.
+      description: Get a list of all users in the organization. The response is paginated with a default limit of 100 users per page.
+      operationId: listUsers
+      parameters:
+        - name: limit
+          in: query
+          description: Limit the number of users returned in the response. The number of users returned may be less than the `limit`.
+          required: false
+          schema:
+            maximum: 1000
+            minimum: 1
+            type: integer
+            format: int32
+            default: 100
+        - name: token
+          in: query
+          description: Continuation token to get the next page of results. A page object with the next continuation token is returned in the response body. Subsequent GET requests should specify the continuation token to get the next page of results. `token` is set to null when no more pages are left.
+          required: false
+          schema:
+            type: string
+        - name: sortBy
+          in: query
+          description: Sort the list of users by the `firstName`, `lastName`, or `email` field.
+          required: false
+          schema:
+            type: string
+        - name: email
+          in: query
+          description: Find user with the given email address.
+          required: false
+          schema:
+            minLength: 1
+            type: string
+      responses:
+        '200':
+          description: A paginated list of users in the organization.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListUserModelsResponse'
+        default:
+          description: Operation failed with an error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+        - userManagement
+      summary: Create a new user.
+      description: Create a new user in the organization.
+      operationId: createUser
+      parameters: []
+      requestBody:
+        description: Information about the new user.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserDefinition'
+        required: true
+      responses:
+        '200':
+          description: The user has been created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserModel'
+        default:
+          description: Operation failed with an error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/users/{id}:
+    get:
+      tags:
+        - userManagement
+      summary: Get a user.
+      description: Get a user with the given identifier from the organization.
+      operationId: getUser
+      parameters:
+        - name: id
+          in: path
+          description: Identifier of user to return.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User object that was requested.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserModel'
+        default:
+          description: Operation failed with an error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+        - userManagement
+      summary: Update a user.
+      description: Update an existing user in the organization.
+      operationId: updateUser
+      parameters:
+        - name: id
+          in: path
+          description: Identifier of the user to update.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Information to update about the user.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserDefinition'
+        required: true
+      responses:
+        '200':
+          description: The user was successfully modified.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserModel'
+        default:
+          description: Operation failed with an error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+        - userManagement
+      summary: Delete a user.
+      description: Delete a user with the given identifier from the organization and transfer their content to the user with the identifier specified in "transferTo".
+      operationId: deleteUser
+      parameters:
+        - name: id
+          in: path
+          description: Identifier of the user to delete.
+          required: true
+          schema:
+            type: string
+        - name: transferTo
+          in: query
+          description: Identifier of the user to receive the transfer of content from the deleted user. <br> **Note:** If `deleteContent` is not set to `true`, and no user identifier is specified in `transferTo`, content from the deleted user is transferred to the executing user.
+          required: false
+          schema:
+            type: string
+        - name: deleteContent
+          in: query
+          description: Whether to delete content from the deleted user or not. <br> **Warning:** If `deleteContent` is set to `true`, all of the content for the user being deleted is permanently deleted and cannot be recovered.
+          required: false
+          schema:
+            type: boolean
+      responses:
+        '204':
+          description: User was deleted successfully.
+        default:
+          description: Operation failed with an error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/users/{id}/email/requestChange:
+    post:
+      tags:
+        - userManagement
+      summary: Change email address.
+      description: An email with an activation link is sent to the user’s new email address. The user must click the link in the email within seven days to complete the email address change, or the link will expire.
+      operationId: requestChangeEmail
+      parameters:
+        - name: id
+          in: path
+          description: Identifier of the user to change email address.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: New email address of the user.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeEmailRequest'
+        required: true
+      responses:
+        '204':
+          description: Email change request was submitted successfully.
+        default:
+          description: Operation failed with an error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/users/{id}/password/reset:
+    post:
+      tags:
+        - userManagement
+      summary: Reset password.
+      description: Reset a user's password.
+      operationId: resetPassword
+      parameters:
+        - name: id
+          in: path
+          description: Identifier of the user to reset password.
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: User's password was reset successfully.
+        default:
+          description: Operation failed with an error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/users/{id}/unlock:
+    post:
+      tags:
+        - userManagement
+      summary: Unlock a user.
+      description: Unlock another user's account.
+      operationId: unlockUser
+      parameters:
+        - name: id
+          in: path
+          description: The id of the user that needs to be unlocked.
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: User's account was unlocked successfully.
+        default:
+          description: Operation failed with an error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/users/{id}/mfa/disable:
+    put:
+      tags:
+        - userManagement
+      summary: Disable MFA for user.
+      description: Disable multi-factor authentication for given user.
+      operationId: disableMfa
+      parameters:
+        - name: id
+          in: path
+          description: Identifier of the user to disable MFA for.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Email and Password of the user to disable MFA for.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DisableMfaRequest'
+        required: true
+      responses:
+        '204':
+          description: User's MFA was disabled successfully.
+        default:
+          description: Operation failed with an error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    ListUserModelsResponse:
+      required:
+        - data
+      type: object
+      properties:
+        data:
+          type: array
+          description: List of users.
+          items:
+            $ref: '#/components/schemas/UserModel'
+        next:
+          type: string
+          description: Next continuation token.
+          example: GDCiRv4vebF3UWFJQ1kySXBOR3Bzh69GR0RyWm9vCtc
+    ErrorResponse:
+      required:
+        - errors
+        - id
+      type: object
+      properties:
+        id:
+          type: string
+          description: An identifier for the error; this is unique to the specific API request.
+          example: IUUQI-DGH5I-TJ045
+        errors:
+          type: array
+          description: A list of one or more causes of the error.
+          example:
+            - code: auth:password_too_short
+              message: Your password was too short.
+            - code: auth:password_character_classes
+              message: Your password did not contain any non-alphanumeric characters
+          items:
+            $ref: '#/components/schemas/ErrorDescription'
+    UserModel:
+      allOf:
+        - $ref: '#/components/schemas/CreateUserDefinition'
+        - $ref: '#/components/schemas/MetadataModel'
+        - required:
+            - id
+          properties:
+            id:
+              type: string
+              description: Unique identifier for the user.
+              example: 000000000FE20FE2
+            isActive:
+              type: boolean
+              description: True if the user is active.
+              example: true
+            isLocked:
+              type: boolean
+              description: This has the value `true` if the user's account has been locked. If a user tries to log into their account several times and fails, his or her account will be locked for security reasons.
+              example: false
+            isMfaEnabled:
+              type: boolean
+              description: True if multi factor authentication is enabled for the user.
+              example: false
+            lastLoginTimestamp:
+              type: string
+              description: Timestamp of the last login for the user in UTC. Will be null if the user has never logged in.
+              format: date-time
+    ErrorDescription:
+      required:
+        - code
+        - message
+      type: object
+      properties:
+        code:
+          type: string
+          description: An error code describing the type of error.
+          example: auth:password_too_short
+        message:
+          type: string
+          description: A short English-language description of the error.
+          example: Your password was too short.
+        detail:
+          type: string
+          description: An optional fuller English-language description of the error.
+          example: Your password was 5 characters long, the minimum length is 12 characters. See http://example.com/password for more information.
+        meta:
+          type: object
+          description: An optional list of metadata about the error.
+          example:
+            minLength: 12
+            actualLength: 5
+    CreateUserDefinition:
+      required:
+        - email
+        - firstName
+        - lastName
+        - roleIds
+      type: object
+      properties:
+        firstName:
+          maxLength: 128
+          minLength: 1
+          type: string
+          description: First name of the user.
+          example: John
+        lastName:
+          maxLength: 128
+          minLength: 0
+          type: string
+          description: Last name of the user.
+          example: Doe
+        email:
+          maxLength: 255
+          type: string
+          description: Email address of the user.
+          format: email
+          example: johndoe@acme.com
+        roleIds:
+          type: array
+          description: List of roleIds associated with the user.
+          example:
+            - 00000000000001DF
+            - 00000000000002D2
+          items:
+            type: string
+    MetadataModel:
+      required:
+        - createdAt
+        - createdBy
+        - modifiedAt
+        - modifiedBy
+      type: object
+      properties:
+        createdAt:
+          type: string
+          description: Creation timestamp in UTC in [RFC3339](https://tools.ietf.org/html/rfc3339) format.
+          format: date-time
+          example: '2018-10-16T09:10:00Z'
+        createdBy:
+          type: string
+          description: Identifier of the user who created the resource.
+          example: 0000000006743FDD
+        modifiedAt:
+          type: string
+          description: Last modification timestamp in UTC.
+          format: date-time
+          example: '2018-10-16T09:10:00Z'
+        modifiedBy:
+          type: string
+          description: Identifier of the user who last modified the resource.
+          example: 0000000006743FE8
+    UpdateUserDefinition:
+      required:
+        - firstName
+        - isActive
+        - lastName
+        - roleIds
+      type: object
+      properties:
+        firstName:
+          maxLength: 128
+          minLength: 1
+          type: string
+          description: First name of the user.
+          example: John
+        lastName:
+          maxLength: 128
+          minLength: 0
+          type: string
+          description: Last name of the user.
+          example: Doe
+        isActive:
+          type: boolean
+          description: This has the value `true` if the user is active and `false` if they have been deactivated.
+          example: true
+        roleIds:
+          type: array
+          description: List of role identifiers associated with the user.
+          example:
+            - 00000000000001DF
+            - 00000000000002D2
+          items:
+            type: string
+    ChangeEmailRequest:
+      required:
+        - email
+      type: object
+      properties:
+        email:
+          maxLength: 255
+          type: string
+          description: New email address of the user.
+          format: email
+          example: johndoe@acme.com
+    DisableMfaRequest:
+      required:
+        - email
+        - password
+      type: object
+      properties:
+        email:
+          maxLength: 255
+          type: string
+          description: Email of user whose mfa is being disabled.
+          format: email
+          example: johndoe@cme.com
+        password:
+          type: string
+          description: Password of user whose mfa is being disabled.
+  parameters: {}
+  responses: {}
+  securitySchemes: {}
+  callbacks: {}
+  examples: {}
+  requestBodies: {}
+  headers: {}
+  links: {}
+  x-stackQL-resources:
+    users:
+      id: sumologic.users.users
+      name: users
+      title: Users
+      methods:
+        listUsers:
+          operation:
+            $ref: '#/paths/~1v1~1users/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        createUser:
+          operation:
+            $ref: '#/paths/~1v1~1users/post'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        getUser:
+          operation:
+            $ref: '#/paths/~1v1~1users~1{id}/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        updateUser:
+          operation:
+            $ref: '#/paths/~1v1~1users~1{id}/put'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        deleteUser:
+          operation:
+            $ref: '#/paths/~1v1~1users~1{id}/delete'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/users/methods/getUser'
+          - $ref: '#/components/x-stackQL-resources/users/methods/listUsers'
+        insert:
+          - $ref: '#/components/x-stackQL-resources/users/methods/createUser'
+        update: []
+        delete:
+          - $ref: '#/components/x-stackQL-resources/users/methods/deleteUser'
+    email_request_change:
+      id: sumologic.users.email_request_change
+      name: email_request_change
+      title: Email_request_change
+      methods:
+        requestChangeEmail:
+          operation:
+            $ref: '#/paths/~1v1~1users~1{id}~1email~1requestChange/post'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      sqlVerbs:
+        select: []
+        insert: []
+        update: []
+        delete: []
+    password_reset:
+      id: sumologic.users.password_reset
+      name: password_reset
+      title: Password_reset
+      methods:
+        resetPassword:
+          operation:
+            $ref: '#/paths/~1v1~1users~1{id}~1password~1reset/post'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      sqlVerbs:
+        select: []
+        insert: []
+        update: []
+        delete: []
+    unlock:
+      id: sumologic.users.unlock
+      name: unlock
+      title: Unlock
+      methods:
+        unlockUser:
+          operation:
+            $ref: '#/paths/~1v1~1users~1{id}~1unlock/post'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      sqlVerbs:
+        select: []
+        insert: []
+        update: []
+        delete: []
+    mfa_disable:
+      id: sumologic.users.mfa_disable
+      name: mfa_disable
+      title: Mfa_disable
+      methods:
+        disableMfa:
+          operation:
+            $ref: '#/paths/~1v1~1users~1{id}~1mfa~1disable/put'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      sqlVerbs:
+        select: []
+        insert: []
+        update: []
+        delete: []
+openapi: 3.0.0
+servers:
+  - url: https://api.au.sumologic.com/api/
+    description: AU deployment API server
+  - url: https://api.ca.sumologic.com/api/
+    description: CA deployment API server
+  - url: https://api.de.sumologic.com/api/
+    description: DE deployment API server
+  - url: https://api.eu.sumologic.com/api/
+    description: EU deployment API server
+  - url: https://api.fed.sumologic.com/api/
+    description: FED deployment API server
+  - url: https://api.jp.sumologic.com/api/
+    description: JP deployment API server
+  - url: https://api.in.sumologic.com/api/
+    description: IN deployment API server
+  - url: https://api.sumologic.com/api/
+    description: US1 deployment API server
+  - url: https://api.us2.sumologic.com/api/
+    description: US2 deployment API server
+security:
+  - basicAuth: []
+tags:
+  - name: accountManagement
+    description: |
+      Account Management API.
+
+      Manage the custom subdomain for the URL used to access your Sumo Logic account. For more information see [Manage Organization](https://help.sumologic.com/Manage/01Account_Usage/05Manage_Organization).
+    x-displayName: Account
+  - name: appManagement
+    description: |
+      App installation API.
+
+      View and install Sumo Logic Applications that deliver out-of-the-box dashboards, saved searches, and field extraction for popular data sources. For more information see [Sumo Logic Apps](https://help.sumologic.com/07Sumo-Logic-Apps).
+    x-displayName: Apps (Beta)
+  - name: connectionManagement
+    description: |
+      Connection management API.
+
+      Set up connections to send alerts to other tools. For more information see [Connections and Integrations](https://help.sumologic.com/?cid=1044).
+    x-displayName: Connections
+  - name: contentManagement
+    description: |
+      Content management API.
+
+      You can export, import, delete and copy content in your organization’s Library. For more information see [Library](https://help.sumologic.com/?cid=5173). You can perform the request as a Content Administrator by using the `isAdminMode` parameter. For more information see [Admin Mode](https://help.sumologic.com/Manage/Content_Sharing/Admin_Mode).
+      <br/> <br/>
+      ### Example
+      The following example uses API endpoints in the US1 deployment. Sumo Logic has several deployments that are assigned depending on the geographic location and the date an account is created. For details determining your account's deployment see [API endpoints](https://help.sumologic.com/?cid=3011).
+      The [Content Import API](#operation/beginAsyncImport) can be used to create or update a Search, Scheduled Search, or Dashboard. Here is an example creating a Scheduled Search:
+      1. Get the identifier of your `Personal` folder.
+        ```bash
+        curl -X GET -u "<accessId>:<accessKey>" https://api.sumologic.com/api/v2/content/folders/personal
+        ```
+
+        Find the identifier of your `Personal` folder in the response.
+        ```json
+        {
+            ...
+            "id": "0000000006A2E86F", <----
+            "name": "Personal",
+            "itemType": "Folder",
+            ...
+        }
+        ```
+
+        You can use [getFolder](#operation/getFolder), [getAdminRecommededFolder](#operation/getAdminRecommendedFolderAsync),
+        or [getGlobalFolder](#operation/getGlobalFolderAsync) endpoints to traverse the content tree and find the identifier of any
+        folder you want to manage.
+
+      2. Use the [Content Import API](#operation/beginAsyncImport) to create a new Scheduled Search inside your
+        `Personal` folder.
+        ```bash
+        curl -X POST -u "<accessId>:<accessKey>" -H "Content-Type: application/json" -d @search.json https://api.sumologic.com/api/v2/content/folders/0000000006A2E86F/import
+        ```
+
+        The data file `search.json` in the above command has the following `SavedSearchWithScheduleSyncDefinition` object.
+        ```json
+        // file: search.json
+        {
+            "type": "SavedSearchWithScheduleSyncDefinition",
+            "name": "demo-scheduled-search",
+            "description": "Runs every hour with timerange of 15m and sends email notifications",
+            "search": {
+                "queryText": "\"error\" and \"warn\"",
+                "defaultTimeRange": "-15m",
+                "byReceiptTime": false,
+                "viewName": "",
+                "viewStartTime": null,
+                "queryParameters": []
+            },
+            "searchSchedule": {
+                "cronExpression": "0 0/15 * * * ? *",
+                "displayableTimeRange": "-15m",
+                "parseableTimeRange": {
+                    "from": {
+                        "relativeTime": "-15m",
+                        "type": "RelativeTimeRangeBoundary"
+                    },
+                    "to": null,
+                    "type": "BeginBoundedTimeRange"
+                },
+                "timeZone": "America/Los_Angeles",
+                "threshold": null,
+                "notification": {
+                    "taskType": "EmailSearchNotificationSyncDefinition",
+                    "toList": [
+                        "ops@acme.org"
+                    ],
+                    "subjectTemplate": "Search Results: {{SearchName}}",
+                    "includeQuery": true,
+                    "includeResultSet": true,
+                    "includeHistogram": true,
+                    "includeCsvAttachment": false
+                },
+                "muteErrorEmails": false,
+                "scheduleType": "1Hour",
+                "parameters": []
+            }
+        }
+        ```
+
+        The response of above request will have the job identifier that you can use to track the status of the import job.
+        ```json
+        {
+            "id": "74DC17FA765C7443"
+        }
+        ```
+
+      3. Use the job identifier from the import request to get the [status](#operation/getAsyncImportStatus) of the
+        import job.
+        ```bash
+        curl -X GET -u "<accessId>:<accessKey>" https://api.sumologic.com/api/v2/content/folders/0000000006A2E86F/import/74DC17FA765C7443/status
+        ```
+
+        If you are importing a large item, you might have to wait for the import job to finish. The following is an
+        example response from a completed job.
+        ```json
+        {
+            "status": "Success",
+            "statusMessage": null,
+            "error": null
+        }
+        ```
+    x-displayName: Content
+  - name: contentPermissions
+    description: |
+      Content permissions API.
+
+      You can share your folders, searches, and dashboards with specific users or roles. For more information see [Share Content](https://help.sumologic.com/?cid=8675309). You can perform the request as a Content Administrator by using the `isAdminMode` parameter. For more information see [Admin Mode](https://help.sumologic.com/Manage/Content_Sharing/Admin_Mode).
+    x-displayName: Permissions
+  - name: dashboardManagement
+    description: |
+      Dashboard (New) management API.
+
+      Dashboard (New) allows you to analyze metric and log data on the same dashboard, in a seamless view. This gives you control over the visual display of metric and log data. Dashboard (New) streamlines dashboard configurations and on-the-fly analytic visualizations with its new templating features. For more information see [Dashboard (New)](https://help.sumologic.com/?cid=5500).
+    x-displayName: Dashboard (New)
+  - name: dynamicParsingRuleManagement
+    description: |
+      Dynamic Parsing management API.
+
+      Dynamic Parsing allows automatic field extraction from your log messages when you run a search.  This allows you to view fields from logs without having to manually specify parsing logic. For more information  see [Dynamic Parsing](https://help.sumologic.com/?cid=20011).
+    x-displayName: Dynamic Parsing
+  - name: extractionRuleManagement
+    description: |
+      Field Extraction Rule management API.
+
+      Field Extraction Rules allow you to parse fields from your log messages at the time the messages are ingested eliminating the need to parse fields in your query. For more information see [Manage Field Extraction](https://help.sumologic.com/?cid=5313).
+    x-displayName: Field Extraction Rules
+  - name: fieldManagementV1
+    description: |
+      Field management API.
+
+      Fields allow you to reference log data based on meaningful associations. They act as metadata tags that are assigned to your logs so you can search with them. Each field contains a key-value pair, where the field name is the key. Fields may be referred to as Log Metadata Fields. For more information see [Fields](https://help.sumologic.com/?cid=10116).
+    x-displayName: Field Management
+  - name: folderManagement
+    description: |
+      Folder management API.
+
+      You can add folders and subfolders to the Library in order to organize your content for easy access or to share content. For more information see [Add Folders to the Library](https://help.sumologic.com/?cid=5020). You can perform the request as a Content Administrator by using the `isAdminMode` parameter. For more information see [Admin Mode](https://help.sumologic.com/Manage/Content_Sharing/Admin_Mode).
+    x-displayName: Folders
+  - name: ingestBudgetManagementV1
+    description: |
+      Ingest Budget management API.
+
+      Ingest Budgets allow you to control the capacity of daily ingestion volume sent to Sumo Logic from Collectors. For more information see [Ingest Budgets](https://help.sumologic.com/?cid=5235).
+    x-displayName: Ingest Budgets
+  - name: ingestBudgetManagementV2
+    description: |
+      Ingest Budget management API V2.
+
+      Ingest Budgets V2 provide you the ability to create and assign budgets to your log data by Fields instead of using a Field Value. For more information see [Metadata Ingest Budgets](https://help.sumologic.com/?cid=52352).
+    x-displayName: Ingest Budgets V2
+  - name: partitionManagement
+    description: |
+      Partition management API.
+
+      Creating a Partition allows you to improve search performance by searching over a smaller number of messages. For more information see [Manage Partitions](https://help.sumologic.com/?cid=5231).
+    x-displayName: Partitions
+  - name: logsDataForwardingManagement
+    description: |
+      Logs Data Forwarding management API.
+
+      Logs Data Forwarding allows you to forward log data from a Partition or Scheduled View to an S3 bucket. For more information see [Forwarding Data to S3](https://help.sumologic.com/Manage/Data-Forwarding/Configure-Data-Forwarding-from-Sumo-Logic-to-S3).
+    x-displayName: Logs Data Forwarding
+  - name: roleManagement
+    description: |
+      Role management API.
+
+      Roles determine the functions that users are able to perform in Sumo Logic. To manage roles, you must have an administrator role or your role must have been assigned the manage users and roles capability. For more information see [Manage Roles](https://help.sumologic.com/?cid=5234).
+    x-displayName: Roles
+  - name: lookupManagement
+    description: |
+      Lookup Table management API.
+
+      A Lookup Table is a table of data hosted on Sumo Logic that you can use to enrich the log and event data received by Sumo Logic. You must create a table schema before you can populate the table. For more information see [Lookup Tables](https://help.sumologic.com/?cid=10109).
+    x-displayName: Lookup Tables
+  - name: scheduledViewManagement
+    description: |
+      Scheduled View management API.
+
+      Scheduled Views speed the search process for small and historical subsets of your data by functioning as a pre-aggregated index. For more information see [Manage Scheduled Views](https://help.sumologic.com/?cid=5128).
+    x-displayName: Scheduled Views
+  - name: tokensLibraryManagement
+    description: |
+      Tokens management API.
+
+      Tokens are associated with your organization to authorize specific operations. Currently, we support collector registration tokens, which can be used to register Installed Collectors. Managing tokens requires the Manage Tokens role capability. For more information see [Installation Tokens](https://help.sumologic.com/?cid=0100).
+    x-displayName: Tokens
+  - name: transformationRuleManagement
+    description: |
+      Transformation Rule management API.
+      Metrics Transformation Rules allow you control how long raw metrics are retained. You can also aggregate metrics at collection time and specify a separate retention period for the aggregated metrics. For more information see [Metrics Transformation Rules](https://help.sumologic.com/?cid=10117).
+    x-displayName: Transformation Rules (Beta)
+  - name: userManagement
+    description: |
+      User management API.
+
+      To manage users, you must have the administrator role or your role must have been assigned the manage users and roles capability. For more information see [Manage Users](https://help.sumologic.com/?cid=1006).
+    x-displayName: Users
+  - name: metricsSearchesManagement
+    description: |
+      Metrics Search management API.
+
+      Save metrics searches in the content library and organize them in a folder hierarchy. Share useful queries with users in your organization. For more information see [Sharing Metric Charts](https://help.sumologic.com/Metrics/03-Metric-Charts/Share_a_Metric_Chart).
+    x-displayName: Metrics Searches (Beta)
+  - name: metricsQuery
+    description: |
+      Metrics Query API.
+
+      The Metrics Query API allows you to execute queries on various metrics and retrieve multiple time-series (data-points) over time range(s). For more information see [Metrics - Classic](https://help.sumologic.com/?cid=1079).
+    x-displayName: Metrics Query
+  - name: accessKeyManagement
+    description: |
+      Access Key management API.
+
+      Access Keys allow you to securely register new Collectors and access Sumo Logic APIs. For more information see [Access Keys](https://help.sumologic.com/?cid=6690).
+    x-displayName: Access Keys
+  - name: samlConfigurationManagement
+    description: |
+      SAML configuration management API
+
+      Organizations with Enterprise accounts can provision Security Assertion Markup Language (SAML) 2.0 to enable Single Sign-On (SSO) for user access to Sumo Logic. For more information see [SAML Configuration](https://help.sumologic.com/?cid=4016).
+    x-displayName: SAML Configuration
+  - name: serviceAllowlistManagement
+    description: |
+      Service Allowlist management API
+
+      Service Allowlist Settings allow you to explicitly grant access to specific IP addresses and/or CIDR notations for logins, APIs, and dashboard access. For more information see [Service Allowlist Settings](https://help.sumologic.com/?cid=5454).
+    x-displayName: Service Allowlist
+  - name: healthEvents
+    description: |
+      Health Events management API.
+
+      Health Events allow you to keep track of the health of your Collectors and Sources. You can use them to find and investigate common errors and warnings that are known to cause collection issues. For more information see [Health Events](https://help.sumologic.com/?cid=0020).
+    x-displayName: Health Events
+  - name: archiveManagement
+    description: |-
+      Archive Ingestion Management API.
+
+      Archive Ingestion allows you to ingest data from Archive destinations. You can use this API to ingest data from your Archive with an existing AWS S3 Archive Source. You need the Manage or View Collectors role capability to manage or view ingestion jobs. For more information see [Archive](https://help.sumologic.com/?cid=10011).
+    x-displayName: Archive Ingestion Management
+  - name: logSearchesEstimatedUsage
+    description: |
+      Log Search Estimated Usage API.
+
+      Gets the estimated volume of data that would be scanned for a given log search in the Infrequent data tier, over a particular time range. In the Infrequent Data Tier, you pay per query, based on the amount data scanned. You can use this endpoint to get an estimate of the total data that would be scanned before running a query, and refine your query to scan less data, as necessary. For more information see [Infrequent data tier](https://help.sumologic.com/?cid=11987).
+    x-displayName: Log Search Estimated Usage
+  - name: passwordPolicy
+    description: |
+      Password Policy Management API
+
+      The password policy controls how user passwords are managed. The "Manage Password Policy" role capability is required to update the password policy. For more information see [how to set a password policy](https://help.sumologic.com/?cid=8595).
+    x-displayName: Password Policy
+  - name: policiesManagement
+    description: |
+      Policies management API.
+
+      Policies control the security and share settings of your organization. For more information see [Security](https://help.sumologic.com/?cid=4041).
+    x-displayName: Policies
+  - name: traces
+    description: |
+      Traces API
+
+      The Traces API allows you to browse traces collected in the system. You can execute queries to find traces matching provided search criteria as well as gather detailed information about individual traces and spans. For more information see [View and investigate traces](https://help.sumologic.com/Traces/View_and_investigate_traces).
+    x-displayName: Traces
+  - name: spanAnalytics
+    description: |
+      Span Analytics API
+
+      The Span Analytics API allows you to browse spans collected in the system. You can execute queries to find individual spans matching provided search criteria as well as run aggregated span queries and retrieve their results. For more information see [Spans](https://help.sumologic.com/Traces/Spans).
+    x-displayName: Span Analytics
+  - name: serviceMap
+    description: |
+      Service Map API
+
+      The Service Map API allows you to fetch a graph representation of the Service Map, which is a high-level view of your application environment, automatically derived from tracing data. For more information see [Service Map](https://help.sumologic.com/Traces/Service_Map_and_Dashboards#service-map).
+    x-displayName: Service Map
+  - name: slosLibraryManagement
+    description: |
+      SLO Management API.
+
+      SLOs are used to monitor and alert on KPIs for your most important services or user experience.
+    x-displayName: SLOs
+  - name: monitorsLibraryManagement
+    description: |
+      Monitor Management API.
+
+
+      Monitors continuously query your data to monitor and send notifications when specific events occur.
+      For more information see [Monitors](https://help.sumologic.com/?cid=10020).
+    x-displayName: Monitors
+info:
+  title: Sumo Logic API - users
+  description: users
+  version: 1.0.0
+  x-logo:
+    url: ./sumologic_logo.png

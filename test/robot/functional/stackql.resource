@@ -34,6 +34,7 @@ Start All Mock Servers
     Start Mock Server    ${JSON_INIT_FILE_PATH_K8S}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_K8S}
     Start Mock Server    ${JSON_INIT_FILE_PATH_REGISTRY}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_REGISTRY}
     Start Mock Server    ${JSON_INIT_FILE_PATH_AZURE}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_AZURE}
+    Start Mock Server    ${JSON_INIT_FILE_PATH_SUMOLOGIC}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_SUMOLOGIC}
 
 
 Prepare StackQL Environment
@@ -41,6 +42,7 @@ Prepare StackQL Environment
     Set Environment Variable    GITHUB_SECRET_KEY    ${GITHUB_SECRET_STR}
     Set Environment Variable    K8S_SECRET_KEY    ${K8S_SECRET_STR}
     Set Environment Variable    AZ_ACCESS_TOKEN    ${AZURE_SECRET_STR}
+    Set Environment Variable    SUMO_CREDS    ${SUMOLOGIC_SECRET_STR}
     Set Environment Variable    DB_SETUP_SRC    ${DB_SETUP_SRC}
     Start All Mock Servers
     Generate Container Credentials for StackQL PG Server mTLS

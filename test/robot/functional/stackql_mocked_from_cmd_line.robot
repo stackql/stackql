@@ -698,3 +698,17 @@ Basic View Error Displayed
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    SELECT * FROM stackql_providers;
     ...    views not yet supported
+
+Weird ID WSL bug query 
+    # ID cannot be handled as integer on WSL
+    Should Horrid Query StackQL Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}    
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${SELECT_SUMOLOGIC_COLLECTORS_IDS}
+    ...    ${SELECT_SUMOLOGIC_COLLECTORS_IDS_EXPECTED}
+    ...    ${CURDIR}/tmp/Weird-ID-WSL-bug-query.tmp

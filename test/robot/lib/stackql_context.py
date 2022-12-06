@@ -195,6 +195,10 @@ _AUTH_CFG={
     "type": "api_key",
     "valuePrefix": "Bearer ",
     "credentialsenvvar": "AZ_ACCESS_TOKEN"
+  },
+  "sumologic": {
+    "type": "basic",
+    "credentialsenvvar": "SUMO_CREDS"
   }
 }
 _AUTH_CFG_DOCKER={ 
@@ -224,6 +228,10 @@ _AUTH_CFG_DOCKER={
     "type": "api_key",
     "valuePrefix": "Bearer ",
     "credentialsenvvar": "AZ_ACCESS_TOKEN"
+  },
+  "sumologic": {
+    "type": "basic",
+    "credentialsenvvar": "SUMO_CREDS"
   }
 }
 STACKQL_PG_SERVER_KEY_PATH   :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "test", "server", "mtls", "credentials", "pg_server_key.pem"))
@@ -334,6 +342,9 @@ with open(os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'credentials', 'dummy'
 with open(os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'credentials', 'dummy', 'azure', 'azure-token.txt'), 'r') as f:
     AZURE_SECRET_STR = f.read()
 
+with open(os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'credentials', 'dummy', 'sumologic', 'sumologic-token.txt'), 'r') as f:
+    SUMOLOGIC_SECRET_STR = f.read()
+
 REGISTRY_PROD_CFG_STR = json.dumps(get_registry_cfg(_PROD_REGISTRY_URL, ROBOT_PROD_REG_DIR, False))
 REGISTRY_DEV_CFG_STR = json.dumps(get_registry_cfg(_DEV_REGISTRY_URL, ROBOT_DEV_REG_DIR, False))
 
@@ -365,6 +376,9 @@ MOCKSERVER_PORT_GITHUB = 1093
 
 JSON_INIT_FILE_PATH_AZURE = os.path.join(REPOSITORY_ROOT, 'test', 'mockserver', 'expectations', 'static-azure-expectations.json')
 MOCKSERVER_PORT_AZURE = 1095
+
+JSON_INIT_FILE_PATH_SUMOLOGIC = os.path.join(REPOSITORY_ROOT, 'test', 'mockserver', 'expectations', 'static-sumologic-expectations.json')
+MOCKSERVER_PORT_SUMOLOGIC = 1096
 
 JSON_INIT_FILE_PATH_REGISTRY = os.path.join(REPOSITORY_ROOT, 'test', 'mockserver', 'expectations', 'static-registry-expectations.json')
 
@@ -553,6 +567,8 @@ SELECT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_EXPECTED = get_output_from_local_file(
 SHOW_INSERT_GOOGLE_IAM_SERVICE_ACCOUNTS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'show', 'show-insert-google-iam-service-accounts.txt'))
 SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'show', 'show-insert-google-compute-instances-iam-error.txt'))
 
+SELECT_SUMOLOGIC_COLLECTORS_IDS = 'select id from sumologic.collectors.collectors order by id desc;'
+SELECT_SUMOLOGIC_COLLECTORS_IDS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'sumologic', 'select-collectors-desc.txt'))
 
 GET_IAM_POLICY_AGG_ASC_INPUT_FILE = os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'input', 'select-exec-dependent-org-iam-policy.iql')
 GET_IAM_POLICY_AGG_ASC_INPUT_FILE_DOCKER = os.path.join('/opt', 'stackql', 'input', 'select-exec-dependent-org-iam-policy.iql')
@@ -625,6 +641,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'MOCKSERVER_PORT_K8S':                            MOCKSERVER_PORT_K8S,
     'MOCKSERVER_PORT_OKTA':                           MOCKSERVER_PORT_OKTA,
     'MOCKSERVER_PORT_REGISTRY':                       MOCKSERVER_PORT_REGISTRY,
+    'MOCKSERVER_PORT_SUMOLOGIC':                      MOCKSERVER_PORT_SUMOLOGIC,
     'NAMESPACES_TTL_SIMPLE':                          NAMESPACES_TTL_SIMPLE,
     'NAMESPACES_TTL_SPECIALCASE_TRANSPARENT':         NAMESPACES_TTL_SPECIALCASE_TRANSPARENT,
     'NAMESPACES_TTL_TRANSPARENT':                     NAMESPACES_TTL_TRANSPARENT,
@@ -652,6 +669,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'SQL_BACKEND_CFG_STR_ANALYTICS':                  get_analytics_sql_backend(execution_env, sql_backend_str),
     'SQL_BACKEND_CFG_STR_CANONICAL':                  get_canonical_sql_backend(execution_env, sql_backend_str),
     'STACKQL_EXE':                                    STACKQL_EXE,
+    'SUMOLOGIC_SECRET_STR':                           SUMOLOGIC_SECRET_STR,
     ## queries and expectations
     'AWS_CLOUD_CONTROL_METHOD_SIGNATURE_CMD_ARR':                           [ SELECT_AWS_CLOUD_CONTROL_VPCS_DESC, GET_AWS_CLOUD_CONTROL_VPCS_DESC ],
     'AWS_CLOUD_CONTROL_METHOD_SIGNATURE_CMD_ARR_EXPECTED':                  SELECT_AWS_CLOUD_CONTROL_VPCS_DESC_JSON_EXPECTED + GET_AWS_CLOUD_CONTROL_VPCS_DESC_JSON_EXPECTED,
@@ -757,6 +775,8 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'SELECT_POSTGRES_BACKEND_PID_ARR':                                      [ 'SELECT pg_backend_pid();' ],
     'SELECT_POSTGRES_CATALOG_JOIN_ARR':                                     [ SELECT_POSTGRES_CATALOG_JOIN ],
     'SELECT_POSTGRES_CATALOG_JOIN_TUPLE_EXPECTED':                          SELECT_POSTGRES_CATALOG_JOIN_TUPLE_EXPECTED,
+    'SELECT_SUMOLOGIC_COLLECTORS_IDS':                                      SELECT_SUMOLOGIC_COLLECTORS_IDS,
+    'SELECT_SUMOLOGIC_COLLECTORS_IDS_EXPECTED':                             SELECT_SUMOLOGIC_COLLECTORS_IDS_EXPECTED,
     'SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD':                          [ SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES, SELECT_AZURE_COMPUTE_PUBLIC_KEYS ],
     'SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD_EXPECTED':                 _SHELL_WELCOME_MSG + SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_EXPECTED + '\n' + SELECT_AZURE_COMPUTE_PUBLIC_KEYS_EXPECTED,
     'SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD_JSON_EXPECTED':            SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_JSON_EXPECTED + SELECT_AZURE_COMPUTE_PUBLIC_KEYS_JSON_EXPECTED,
@@ -793,6 +813,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     rv['JSON_INIT_FILE_PATH_K8S']                       = JSON_INIT_FILE_PATH_K8S
     rv['JSON_INIT_FILE_PATH_OKTA']                      = JSON_INIT_FILE_PATH_OKTA
     rv['JSON_INIT_FILE_PATH_REGISTRY']                  = JSON_INIT_FILE_PATH_REGISTRY
+    rv['JSON_INIT_FILE_PATH_SUMOLOGIC']                 = JSON_INIT_FILE_PATH_SUMOLOGIC
     rv['PG_SRV_MTLS_CFG_STR']                           = PG_SRV_MTLS_CFG_STR
     rv['PSQL_MTLS_CONN_STR']                            = PSQL_MTLS_CONN_STR_DOCKER
     rv['PSQL_MTLS_CONN_STR_UNIX']                       = PSQL_MTLS_CONN_STR_DOCKER
@@ -812,6 +833,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     rv['JSON_INIT_FILE_PATH_K8S']                       = JSON_INIT_FILE_PATH_K8S
     rv['JSON_INIT_FILE_PATH_OKTA']                      = JSON_INIT_FILE_PATH_OKTA
     rv['JSON_INIT_FILE_PATH_REGISTRY']                  = JSON_INIT_FILE_PATH_REGISTRY
+    rv['JSON_INIT_FILE_PATH_SUMOLOGIC']                 = JSON_INIT_FILE_PATH_SUMOLOGIC
     rv['PG_SRV_MTLS_CFG_STR']                           = PG_SRV_MTLS_CFG_STR
     rv['PSQL_MTLS_CONN_STR']                            = PSQL_MTLS_CONN_STR
     rv['PSQL_MTLS_CONN_STR_UNIX']                       = PSQL_MTLS_CONN_STR_UNIX
