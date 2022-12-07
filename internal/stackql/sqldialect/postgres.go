@@ -33,8 +33,8 @@ func newPostgresDialect(sqlEngine sqlengine.SQLEngine, analyticsNamespaceLikeStr
 		typeMappings: map[string]internaldto.DRMCoupling{
 			"array":   internaldto.NewDRMCoupling("text", reflect.Slice),
 			"boolean": internaldto.NewDRMCoupling("boolean", reflect.Bool),
-			"int":     internaldto.NewDRMCoupling("integer", reflect.Int),
-			"integer": internaldto.NewDRMCoupling("integer", reflect.Int),
+			"int":     internaldto.NewDRMCoupling("bigint", reflect.Int64),
+			"integer": internaldto.NewDRMCoupling("bigint", reflect.Int64),
 			"object":  internaldto.NewDRMCoupling("text", reflect.Map),
 			"string":  internaldto.NewDRMCoupling("text", reflect.String),
 			"number":  internaldto.NewDRMCoupling("numeric", reflect.Float64),
@@ -734,7 +734,7 @@ func (eng *postgresDialect) getGolangValue(discoType string) interface{} {
 		return &sql.NullBool{}
 	case reflect.Map:
 		return &sql.NullString{}
-	case reflect.Int:
+	case reflect.Int, reflect.Int64:
 		return &sql.NullInt64{}
 	case reflect.Float64:
 		return &sql.NullFloat64{}

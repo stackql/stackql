@@ -879,6 +879,7 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 	//   - TODO: so... will need to split this up into multiple passes;
 	//     parameters will need to have Hierarchies attached after they are inferred.
 	//     Then semantic anlaysis and data flow can be instrumented.
+	//  - TODO: add support for views and subqueries.
 	whereParamMap := astvisit.ExtractParamsFromWhereClause(node.Where)
 	onParamMap := astvisit.ExtractParamsFromFromClause(node.From)
 

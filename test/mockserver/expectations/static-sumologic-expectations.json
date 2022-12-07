@@ -1,0 +1,45 @@
+[
+  {
+    "httpRequest": {
+      "method": "GET",
+      "path": "/v1/collectors"
+    },
+    "httpResponse": {
+      "body": {
+        "collectors":[{
+          "id":100000001,
+          "name":"Netlify",
+          "category":"netlify",
+          "timeZone":"Australia/Melbourne",
+          "fields":{
+            
+          },
+          "links":[{
+            "rel":"sources",
+            "href":"/v1/collectors/100000001/sources"
+          }],
+          "collectorType":"Hosted",
+          "collectorVersion":"",
+          "lastSeenAlive":1670366500147,
+          "alive":true
+        },{
+          "id":100000002,
+          "name":"Okta",
+          "category":"okta",
+          "timeZone":"Australia/Melbourne",
+          "fields":{
+            
+          },
+          "links":[{
+            "rel":"sources",
+            "href":"/v1/collectors/100000002/sources"
+          }],
+          "collectorType":"Hosted",
+          "collectorVersion":"",
+          "lastSeenAlive":1670366500147,
+          "alive":true
+        }]
+      }
+    }
+  }
+]

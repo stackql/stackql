@@ -1,0 +1,632 @@
+components:
+  schemas:
+    CollectorsList:
+      description: List of Collector objects.
+      properties:
+        collectors:
+          items:
+            $ref: '#/components/schemas/Collector'
+          type: array
+      type: object
+    GetCollector:
+      description: Collector object.
+      properties:
+        collector:
+          $ref: '#/components/schemas/Collector'
+      type: object
+    Collector:
+      description: Collector object.
+      properties:
+        alive:
+          type: boolean
+          description: When a Collector is running it sends Sumo a heartbeat message every 15 seconds. If no heartbeat message is received after 30 minutes this becomes false.
+        category:
+          type: string
+          description: The Category of the Collector, used as metadata when searching data.
+        collectorType:
+          type: string
+          description: 'The Collector type: Installable or Hosted'
+        collectorVersion:
+          type: string
+          description: Version of the Collector software installed.
+        fields:
+          type: object
+          description: JSON map of key-value fields (metadata) to apply to the Collector.
+        id:
+          type: integer   
+          description: Identifier
+        lastSeenAlive:
+          type: integer
+          description: The last time the Sumo Logic service received an active heartbeat from the Collector, specified as milliseconds since epoch.
+        links:
+          type: array
+          items:
+            properties:
+              href:
+                type: string
+              rel:
+                type: string
+            type: object
+        name:
+          type: string
+          description: Name of the Collector. It must be unique on your account.
+        description:
+          type: string
+          description: Description of the Collector.
+        timeZone:
+          type: string
+          description: Time zone of the Collector. For a list of possible values, refer to the "TZ" column in this Wikipedia article.
+        cutoffRelativeTime:
+          type: string
+          description: 'Can be specified instead of cutoffTimestamp to provide a relative offset with respect to the current time. Example: use "-1h", "-1d", or "-1w" to collect data thats less than one hour, one day, or one week old, respectively.'
+        cutoffTimestamp:
+          type: integer
+          description: 0 (collects all data)|Only collect data from files with a modified date more recent than this timestamp, specified as milliseconds since epoch
+        ephemeral:
+          type: boolean
+          description: When true, the collector will be deleted after 12 hours of inactivity. For more information, see Setting a Collector as Ephemeral.
+        hostName:
+          type: string
+          description: Host name of the Collector. The hostname can be a maximum of 128 characters.
+        sourceSyncMode:
+          type: string
+          description: For installed Collectors, whether the Collector is using local source configuration management (using a JSON file), or cloud management (using the UI)
+        targetCpu:
+          type: integer
+          description: When CPU utilization exceeds this threshold, the Collector will slow down its rate of ingestion to lower its CPU utilization.
+        osName:
+          type: string
+          description: Name of OS that Collector is installed on. [Installed Collectors only]
+        osVersion:
+          type: string
+          description: Version of the OS that Collector is installed on. [Installed Collectors only]
+        osArch:
+          type: string
+          description: Architecture of the OS that Collector is installed on. [Installed Collectors only]
+        osTime:
+          type: integer
+          description: Time that the Collector has been running, in milliseconds. [Installed Collectors only]
+      type: object
+    HostedCollectorDefinition:
+      description: Hosted Collector object creation fields.
+      properties:
+        collector:
+          type: object
+          required:
+            - name
+          properties:
+            category:
+              type: string
+              description: The Category of the Collector, used as metadata when searching data.
+            collectorType:
+              type: string
+              description: 'The Collector type: Installable or Hosted'
+              default: Hosted
+            fields:
+              type: object
+              description: JSON map of key-value fields (metadata) to apply to the Collector.
+            name:
+              type: string
+              description: Name of the Collector. It must be unique on your account.
+            description:
+              type: string
+              description: Description of the Collector.
+      type: object
+    SourcesList:
+      description: List of Sources for a Collector.
+      properties:
+        sources:
+          items:
+            $ref: '#/components/schemas/Source'
+          type: array
+      type: object
+    Source:
+      description: Source object.
+      properties:
+        id:
+          type: integer
+          description: Source identifer.
+        name:
+          type: string
+          description: Source name.
+        category:
+          type: string
+          description: Source category.                 
+        hostName:
+          type: string
+          description: Source hostName.
+        automaticDateParsing:
+          type: boolean
+          description: Source automaticDateParsing.
+        multilineProcessingEnabled:
+          type: boolean
+          description: Source multilineProcessingEnabled.
+        useAutolineMatching:
+          type: boolean
+          description: Source useAutolineMatching.
+        alive:
+          type: boolean
+          description: Source alive.
+        forceTimeZone:
+          type: boolean
+          description: Source forceTimeZone.
+        messagePerRequest:
+          type: boolean
+          description: Source messagePerRequest.
+        sourceType:
+          type: string
+          description: Source sourceType.
+        encoding:
+          type: string
+          description: Source encoding.
+        hashAlgorithm:
+          type: string
+          description: Source hashAlgorithm.
+        url:
+          type: string
+          description: Source url.
+        pathExpression:
+          type: string
+          description: Source pathExpression.
+        denylist:
+          type: array
+          description: Source denylist.
+        filters:
+          type: array
+          description: Source filters.
+        fields:
+          type: object
+          description: Source fields.
+        cutoffTimestamp:
+          type: integer
+          description: Source cutoffTimestamp.                                        
+      type: object
+    GetSource:
+      description: Source object.
+      properties:
+        source:
+          $ref: '#/components/schemas/Source'
+      type: object
+    SourceDefinition:
+      description: Source object to create.
+      properties:
+        source:
+          type: object
+          properties:
+            name:
+              type: string
+              description: Source name.
+            category:
+              type: string
+              description: Source category.                 
+            automaticDateParsing:
+              type: boolean
+              description: Source automaticDateParsing.
+            multilineProcessingEnabled:
+              type: boolean
+              description: Source multilineProcessingEnabled.
+            useAutolineMatching:
+              type: boolean
+              description: Source useAutolineMatching.
+            forceTimeZone:
+              type: boolean
+              description: Source forceTimeZone.
+            messagePerRequest:
+              type: boolean
+              description: Source messagePerRequest.
+            sourceType:
+              type: string
+              description: Source sourceType.
+            encoding:
+              type: string
+              description: Source encoding.
+            filters:
+              type: array
+              description: Source filters.
+            fields:
+              type: object
+              description: Source fields.
+            cutoffTimestamp:
+              type: integer
+              description: Source cutoffTimestamp.          
+      type: object
+  x-stackQL-resources:
+    collectors:
+      name: collectors
+      methods:
+        create_collector:
+          operation:
+            $ref: '#/paths/~1v1~1collectors/post'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list_collectors:
+          operation:
+            $ref: '#/paths/~1v1~1collectors/get'
+          response:
+            mediaType: application/json
+            objectKey: '$.collectors'
+            openAPIDocKey: '200'
+        get_collector_by_id:
+          operation:
+            $ref: '#/paths/~1v1~1collectors~1{id}/get'
+          response:
+            mediaType: application/json
+            objectKey: '$.collector'
+            openAPIDocKey: '200'
+        delete_collector:
+          operation:
+            $ref: '#/paths/~1v1~1collectors~1{id}/delete'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'            
+        update_collector:
+          operation:
+            $ref: '#/paths/~1v1~1collectors~1{id}/put'
+          response:
+            mediaType: application/json
+            objectKey: '$.collector'
+            openAPIDocKey: '200'        
+        get_collector_by_name:
+          operation:
+            $ref: '#/paths/~1v1~1collectors~1name~1{name}/get'
+          response:
+            mediaType: application/json
+            objectKey: '$.collector'
+            openAPIDocKey: '200'                        
+      id: sumologic.collectors.collectors
+      sqlVerbs:
+        delete: 
+        - $ref: '#/components/x-stackQL-resources/collectors/methods/delete_collector'        
+        insert:
+        - $ref: '#/components/x-stackQL-resources/collectors/methods/create_collector'        
+        select:
+        - $ref: '#/components/x-stackQL-resources/collectors/methods/get_collector_by_id'
+        - $ref: '#/components/x-stackQL-resources/collectors/methods/get_collector_by_name'
+        - $ref: '#/components/x-stackQL-resources/collectors/methods/list_collectors'
+        update: []
+      title: collectors
+    offline_collectors:
+      name: offline_collectors
+      methods:
+        list_offline_collectors:
+          operation:
+            $ref: '#/paths/~1v1~1collectors~1offline/get'
+          response:
+            mediaType: application/json
+            objectKey: '$.collectors'
+            openAPIDocKey: '200'
+      id: sumologic.collectors.offline_collectors
+      sqlVerbs:
+        delete: []
+        insert: []
+        select:
+        - $ref: '#/components/x-stackQL-resources/offline_collectors/methods/list_offline_collectors'
+        update: []
+      title: offline_collectors
+    sources: 
+      name: sources
+      methods:
+        list_sources:
+          operation:
+            $ref: '#/paths/~1v1~1collectors~1{collectorId}~1sources/get'
+          response:
+            mediaType: application/json
+            objectKey: '$.sources'
+            openAPIDocKey: '200'
+        get_source_by_id:
+          operation:
+            $ref: '#/paths/~1v1~1collectors~1{collectorId}~1sources~1{sourceId}/get'
+          response:
+            mediaType: application/json
+            objectKey: '$.source'
+            openAPIDocKey: '200'
+        create_source:
+          operation:
+            $ref: '#/paths/~1v1~1collectors~1{collectorId}~1sources/post'
+          response:
+            mediaType: application/json
+            objectKey: '$.source'
+            openAPIDocKey: '200'
+        update_source:
+          operation:
+            $ref: '#/paths/~1v1~1collectors~1{collectorId}~1sources~1{sourceId}/put'
+          response:
+            mediaType: application/json
+            objectKey: '$.source'
+            openAPIDocKey: '200'
+        delete_source:
+          operation:
+            $ref: '#/paths/~1v1~1collectors~1{collectorId}~1sources~1{sourceId}/delete'
+          response:
+            mediaType: application/json
+            objectKey: '$.source'
+            openAPIDocKey: '200'                                    
+      id: sumologic.collectors.sources
+      sqlVerbs: 
+        delete: 
+        - $ref: '#/components/x-stackQL-resources/sources/methods/delete_source'
+        insert:
+        - $ref: '#/components/x-stackQL-resources/sources/methods/create_source'
+        select:
+        - $ref: '#/components/x-stackQL-resources/sources/methods/get_source_by_id'
+        - $ref: '#/components/x-stackQL-resources/sources/methods/list_sources'
+        update: []
+      title: sources
+externalDocs:
+  description: Find more info here
+  url: https://help.sumologic.com/docs/api/collectors/
+info:
+  title: Sumologic Collector Managament API
+  description: OpenAPI 3 specification for Sumologic Collector Managament API with StackQL extensions
+  contact: 
+    name: Jeffrey Aven
+    url: https://github.com/stackql/stackql
+    email: javen@stackql.io
+  version: 'v0.0.1'
+openapi: 3.0.1
+paths:
+  /v1/collectors/{id}:
+    get:
+      description: Get the Collector with the specified Identifier.
+      parameters:
+      - name: id
+        in: path
+        description: Unique identifier of the Collector.
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCollector'
+          description: Success
+    put:
+      description: Update a Collector
+      parameters:
+        - name: id
+          in: path
+          description: Id of the collector to update.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Information to update about the collector.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Collector'
+        required: true
+      responses:
+        '200':
+          description: The collector was successfully modified.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCollector'
+    delete:
+      description: Delete Collector by ID
+      parameters:
+        - name: id
+          in: path
+          description: Identifier of the collector to delete.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Collector was deleted successfully.
+  /v1/collectors/name/{name}:
+    get:
+      description: Get the Collector with the specified name.
+      parameters:
+      - name: name
+        in: path
+        description: Name of the Collector.
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCollector'
+          description: Success
+  /v1/collectors:
+    post:
+      description: Create Hosted Collector.  This method can only be used to create Hosted Collectors. You must install a Collector manually to create an Installed Collector.
+      parameters: []
+      requestBody:
+        description: Information about the new connection.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HostedCollectorDefinition'
+        required: true
+      responses:
+        '200':
+          description: The connection has been created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCollector'
+    get:
+      description: Get a list of Collectors with an optional limit and offset.
+      parameters:
+      - description: 'Filter the Collectors returned using one of the available filter types:installed, hosted, dead, or alive.'
+        in: query
+        name: filter
+        schema:
+          type: string
+      - description: Max number of Collectors to return.
+        in: query
+        name: limit
+        schema:
+          type: integer
+      - description: Offset into the list of Collectors.
+        in: query
+        name: offset
+        schema:
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectorsList'
+          description: Success
+  /v1/collectors/offline:
+    get:
+      description: Get a list of Installed Collectors last seen alive before a specified number of days with an optional limit and offset.
+      parameters:
+      - description: 'Filter the Collectors returned using one of the available filter types:installed, hosted, dead, or alive.'
+        in: query
+        name: aliveBeforeDays
+        schema:
+          type: integer
+      - description: Minimum number of days the Collectors have been offline, must be at least 1 day.
+        in: query
+        name: limit
+        schema:
+          type: integer
+      - description: 'Offset into the list of Collectors.'
+        in: query
+        name: offset
+        schema:
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectorsList'
+          description: Success
+  /v1/collectors/{collectorId}/sources:
+    post:
+      description: Creates a new Source for a Collector. See Use JSON to Configure Sources for required fields for the request JSON file.
+      parameters:
+      - name: collectorId
+        in: path
+        description: Unique identifier of the Collector.
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: Information about the new source.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SourceDefinition'
+        required: true
+      responses:
+        '200':
+          description: The source has been created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetSource'
+    get:
+      description: Gets information about all Sources for a specified Collector.
+      parameters:
+      - name: collectorId
+        in: path
+        description: Unique Collector identifier.
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourcesList'
+          description: Success
+  /v1/collectors/{collectorId}/sources/{sourceId}:
+    get:
+      description: Gets information about a specified Collector and Source.
+      parameters:
+      - name: collectorId
+        in: path
+        description: Unique Collector identifier.
+        required: true
+        schema:
+          type: string
+      - name: sourceId
+        in: path
+        description: Unique Source identifier.
+        required: true
+        schema:
+          type: string          
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetSource'
+          description: Success
+    put:
+      description: Update a source
+      parameters:
+      - name: collectorId
+        in: path
+        description: Unique Collector identifier.
+        required: true
+        schema:
+          type: string
+      - name: sourceId
+        in: path
+        description: Unique Source identifier.
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: Information to update about the source.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Source'
+        required: true
+      responses:
+        '200':
+          description: The source was successfully modified.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetSource'          
+    delete:
+      description: Delete Source by ID
+      parameters:
+      - name: collectorId
+        in: path
+        description: Unique Collector identifier.
+        required: true
+        schema:
+          type: string
+      - name: sourceId
+        in: path
+        description: Unique Source identifier.
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Source was deleted successfully.                
+servers:
+  - url: 'https://api.{region}.sumologic.com/api'
+    variables:
+      region:
+        description: SumoLogic region
+        enum:
+          - us2
+          - au
+          - ca
+          - de
+          - eu
+          - fed
+          - in
+          - jp
+        default: us2
+    description: The SumoLogic regional endpoint

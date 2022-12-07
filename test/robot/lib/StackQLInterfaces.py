@@ -185,6 +185,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       f"K8S_SECRET_KEY={k8s_secret_str}",
       "-e",
       f"AZ_ACCESS_TOKEN={self._get_default_env().get('AZ_ACCESS_TOKEN')}",
+      "-e",
+      f"SUMO_CREDS={self._get_default_env().get('SUMO_CREDS')}",
       "stackqlsrv",
       "bash",
       "-c",
@@ -198,7 +200,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
 
   def _get_default_env(self) -> dict:
     return {
-      "AZ_ACCESS_TOKEN": os.environ.get('AZ_ACCESS_TOKEN', "az_access_dummy_secret")
+      "AZ_ACCESS_TOKEN": os.environ.get('AZ_ACCESS_TOKEN', "az_access_dummy_secret"),
+      "SUMO_CREDS": os.environ.get('SUMO_CREDS', "sumologicdummysecret")
     }
 
 
@@ -241,6 +244,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       f"K8S_SECRET_KEY={k8s_secret_str}",
       "-e",
       f"AZ_ACCESS_TOKEN={self._get_default_env().get('AZ_ACCESS_TOKEN')}",
+      "-e",
+      f"SUMO_CREDS={self._get_default_env().get('SUMO_CREDS')}",
       "stackqlsrv",
       "bash",
       "-c",
@@ -277,6 +282,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     self.set_environment_variable("GITHUB_SECRET_KEY", github_secret_str)
     self.set_environment_variable("K8S_SECRET_KEY", k8s_secret_str)
     self.set_environment_variable("AZ_ACCESS_TOKEN", f"{self._get_default_env().get('AZ_ACCESS_TOKEN')}")
+    self.set_environment_variable("SUMO_CREDS", f"{self._get_default_env().get('SUMO_CREDS')}")
     supplied_args = [ stackql_exe, "exec" ]
     registry_cfg_str = registry_cfg.get_config_str('native')
     if registry_cfg_str != "":
@@ -314,6 +320,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     self.set_environment_variable("GITHUB_SECRET_KEY", github_secret_str)
     self.set_environment_variable("K8S_SECRET_KEY", k8s_secret_str)
     self.set_environment_variable("AZ_ACCESS_TOKEN", f"{self._get_default_env().get('AZ_ACCESS_TOKEN')}")
+    self.set_environment_variable("SUMO_CREDS", f"{self._get_default_env().get('SUMO_CREDS')}")
     supplied_args = [ stackql_exe, "shell" ]
     registry_cfg_str = registry_cfg.get_config_str('native')
     if registry_cfg_str != "":
