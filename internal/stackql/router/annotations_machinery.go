@@ -4,18 +4,22 @@ import (
 	"fmt"
 
 	"github.com/stackql/stackql/internal/stackql/internaldto"
-	"github.com/stackql/stackql/internal/stackql/sqlengine"
+	"github.com/stackql/stackql/internal/stackql/sqldialect"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 )
 
 func obtainAnnotationCtx(
-	sqlEngine sqlengine.SQLEngine,
+	sqlDialect sqldialect.SQLDialect,
 	tbl tablemetadata.ExtendedTableMetadata,
 	parameters map[string]interface{},
 	namespaceCollection tablenamespace.TableNamespaceCollection,
 ) (taxonomy.AnnotationCtx, error) {
+	if tbl.IsView() {
+		// TODO: upgrade this flow
+		return taxonomy.NewStaticStandardAnnotationCtx(nil, tbl.GetHeirarchyObjects().GetHeirarchyIds(), tbl, parameters), nil
+	}
 	schema, mediaType, err := tbl.GetResponseSchemaAndMediaType()
 	if err != nil {
 		return nil, err
@@ -43,5 +47,7 @@ func obtainAnnotationCtx(
 		name, _ = tbl.GetResponseSchemaStr()
 	}
 	hIds := internaldto.NewHeirarchyIdentifiers(provStr, svcStr, rscStr, methodStr).WithResponseSchemaStr(name)
+	isView := sqlDialect.ViewExists(hIds.GetTableName())
+	hIds = hIds.WithIsView(isView)
 	return taxonomy.NewStaticStandardAnnotationCtx(itemObjS, hIds, tbl, parameters), nil
 }

@@ -53,7 +53,7 @@ func NewExpectationStore(tokenCalls int) ExpectationStore {
 	path := "/token"
 	for i := 0; i < tokenCalls; i++ {
 		ex := NewHTTPRequestExpectations(nil, nil, "POST", &url.URL{Path: path}, host, testobjects.GoogleAuthTokenResponse, nil)
-		exStore.Put(host+path, *ex)
+		exStore.Put(host+path, ex)
 	}
 	return exStore
 }
@@ -177,8 +177,8 @@ func NewSimulatedRoundTripper(t *testing.T, expectations ExpectationStore, round
 	}
 }
 
-func NewHTTPRequestExpectations(body io.ReadCloser, header http.Header, method string, url *url.URL, host string, responseBody string, reponseHeader http.Header) *HTTPRequestExpectations {
-	return &HTTPRequestExpectations{
+func NewHTTPRequestExpectations(body io.ReadCloser, header http.Header, method string, url *url.URL, host string, responseBody string, reponseHeader http.Header) HTTPRequestExpectations {
+	return HTTPRequestExpectations{
 		Body:   body,
 		Header: header,
 		Method: method,

@@ -27,7 +27,8 @@
         "select u.name, om.login, u.two_factor_authentication AS is_two_fa_enabled from github.orgs.members om inner join github.users.users u on om.login = u.login AND u.username = om.login where om.org = 'dummyorg' order by u.name desc;",
         "select * from stackql_providers;",
         "describe sumologic.users.users;",
-        "select id from sumologic.collectors.collectors order by id desc;"
+        "select id from sumologic.collectors.collectors order by id desc;",
+        "select VolumeId, Encrypted, Size from aws.ec2.volumes where region = 'ap-southeast-1' order by VolumeId asc;"
       ],
       "default": "show providers;"
     },

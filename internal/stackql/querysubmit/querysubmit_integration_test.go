@@ -31,12 +31,16 @@ func TestSimpleSelectGoogleComputeInstanceQuerySubmit(t *testing.T) {
 	}
 	ex := testhttpapi.NewHTTPRequestExpectations(nil, nil, "GET", url, testobjects.GoogleComputeHost, testobjects.SimpleSelectGoogleComputeInstanceResponse, nil)
 	exp := testhttpapi.NewExpectationStore(1)
-	exp.Put(testobjects.GoogleComputeHost+path, *ex)
+	exp.Put(testobjects.GoogleComputeHost+path, ex)
 
 	testhttpapi.StartServer(t, exp)
 	provider.DummyAuth = true
 
 	inputBundle, err := stackqltestutil.BuildInputBundle(*runtimeCtx)
+
+	if err != nil {
+		t.Fatalf("Test failed: %v", err)
+	}
 
 	handlerCtx, err := handler.GetHandlerCtx(testobjects.SimpleSelectGoogleComputeInstance, *runtimeCtx, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
 	handlerCtx.SetOutfile(os.Stdout)

@@ -182,13 +182,12 @@ func (hi *standardHeirarchyIdentifiers) GetStackQLTableName() string {
 }
 
 func ResolveMethodTerminalHeirarchyIdentifiers(node sqlparser.TableName) HeirarchyIdentifiers {
-	var retVal standardHeirarchyIdentifiers
-	// all will default to empty string
-	retVal.providerStr = iqlutil.SanitisePossibleTickEscapedTerm(node.QualifierThird.String())
-	retVal.serviceStr = iqlutil.SanitisePossibleTickEscapedTerm(node.QualifierSecond.String())
-	retVal.resourceStr = iqlutil.SanitisePossibleTickEscapedTerm(node.Qualifier.String())
-	retVal.methodStr = iqlutil.SanitisePossibleTickEscapedTerm(node.Name.String())
-	return &retVal
+	return NewHeirarchyIdentifiers(
+		iqlutil.SanitisePossibleTickEscapedTerm(node.QualifierThird.String()),
+		iqlutil.SanitisePossibleTickEscapedTerm(node.QualifierSecond.String()),
+		iqlutil.SanitisePossibleTickEscapedTerm(node.Qualifier.String()),
+		iqlutil.SanitisePossibleTickEscapedTerm(node.Name.String()),
+	)
 }
 
 func generatePutativelyUniqueTableName(node sqlparser.TableName) string {
@@ -218,12 +217,12 @@ func GeneratePutativelyUniqueColumnID(node sqlparser.TableName, colName string) 
 }
 
 func ResolveResourceTerminalHeirarchyIdentifiers(node sqlparser.TableName) HeirarchyIdentifiers {
-	var retVal standardHeirarchyIdentifiers
-	// all will default to empty string
-	retVal.providerStr = iqlutil.SanitisePossibleTickEscapedTerm(node.QualifierSecond.String())
-	retVal.serviceStr = iqlutil.SanitisePossibleTickEscapedTerm(node.Qualifier.String())
-	retVal.resourceStr = iqlutil.SanitisePossibleTickEscapedTerm(node.Name.String())
-	return &retVal
+	return NewHeirarchyIdentifiers(
+		iqlutil.SanitisePossibleTickEscapedTerm(node.QualifierSecond.String()),
+		iqlutil.SanitisePossibleTickEscapedTerm(node.Qualifier.String()),
+		iqlutil.SanitisePossibleTickEscapedTerm(node.Name.String()),
+		"",
+	)
 }
 
 type DBTable interface {
