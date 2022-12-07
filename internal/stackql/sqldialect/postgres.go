@@ -33,8 +33,8 @@ func newPostgresDialect(sqlEngine sqlengine.SQLEngine, analyticsNamespaceLikeStr
 		typeMappings: map[string]internaldto.DRMCoupling{
 			"array":   internaldto.NewDRMCoupling("text", reflect.Slice),
 			"boolean": internaldto.NewDRMCoupling("boolean", reflect.Bool),
-			"int":     internaldto.NewDRMCoupling("integer", reflect.Int),
-			"integer": internaldto.NewDRMCoupling("integer", reflect.Int),
+			"int":     internaldto.NewDRMCoupling("bigint", reflect.Int64),
+			"integer": internaldto.NewDRMCoupling("bigint", reflect.Int64),
 			"object":  internaldto.NewDRMCoupling("text", reflect.Map),
 			"string":  internaldto.NewDRMCoupling("text", reflect.String),
 			"number":  internaldto.NewDRMCoupling("numeric", reflect.Float64),

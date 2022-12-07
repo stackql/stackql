@@ -699,7 +699,7 @@ Basic View Error Displayed
     ...    SELECT * FROM stackql_providers;
     ...    views not yet supported
 
-Weird ID WSL bug query 
+Weird ID WSL bug query
     # ID cannot be handled as integer on WSL
     Should Horrid Query StackQL Inline Equal
     ...    ${STACKQL_EXE}
