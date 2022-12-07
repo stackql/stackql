@@ -79,7 +79,7 @@ Google Select Project IAM Policy Filtered And Verify Where Filtering
     ...    ${SELECT_GOOGLE_CLOUDRESOURCEMANAGER_IAMPOLICY_FILTERED_EXPECTED}
 
 Google Join Plus String Concatenated Select Expressions
-    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test.
+    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test due to unsupported function json_extract
     Should Horrid Query StackQL Inline Equal
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -142,7 +142,7 @@ Okta Apps Select Simple
     ...    ${SELECT_OKTA_APPS_ASC_EXPECTED}
 
 Okta Users Select Simple Paginated
-    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test.
+    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test due to unsupported function json_extract
     Should Horrid Query StackQL Inline Equal
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -156,7 +156,7 @@ Okta Users Select Simple Paginated
     ...    ${CURDIR}/tmp/Okta-Users-Select-Simple-Paginated.tmp
 
 AWS EC2 Volumes Select Simple
-    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test.
+    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test likely due to case sensitivity and incorrect XML property aliasing 
     Should StackQL Exec Inline Equal
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -498,7 +498,7 @@ Join GCP Okta Cross Provider
     ...    ${SELECT_CONTRIVED_GCP_OKTA_JOIN_EXPECTED}
 
 Join GCP Okta Cross Provider JSON Dependent Keyword in Table Name
-    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test.
+    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test due to unsupported function json_extract
     Should StackQL Exec Inline Equal
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -535,7 +535,6 @@ Join GCP Self
     ...    ${SELECT_CONTRIVED_GCP_SELF_JOIN_EXPECTED}
 
 K8S Nodes Select Leveraging JSON Path
-    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test.
     Should StackQL Exec Inline Equal
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -636,7 +635,7 @@ Paginated and Data Flow Sequential Join Github Okta SAML
     ...    ${CURDIR}/tmp/Paginated-and-Data-Flow-Sequential-Join-Github-Okta-SAML.tmp
 
 Data Flow Sequential Join Select With Functions Github 
-    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test.
+    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test due to unsupported function instr
     Should Horrid Query StackQL Inline Equal
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}

@@ -46,8 +46,7 @@ func TestSelectOktaApplicationAppsDriver(t *testing.T) {
 	}
 	ex := testhttpapi.NewHTTPRequestExpectations(nil, nil, "GET", url, "some-silly-subdomain.okta.com", string(responseBytes1), nil)
 	expectations := map[string]testhttpapi.HTTPRequestExpectations{
-		// TODO: fix cloning ops
-		"some-silly-subdomain.okta.com" + path: *ex,
+		"some-silly-subdomain.okta.com" + path: ex,
 	}
 	exp := testhttpapi.NewExpectationStore(1)
 	for k, v := range expectations {

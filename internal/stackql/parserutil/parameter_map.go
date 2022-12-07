@@ -21,19 +21,19 @@ type ParameterMap interface {
 	GetAbbreviatedStringified() map[string]interface{}
 }
 
-type StandardParameterMap struct {
+type standardParameterMap struct {
 	m map[ColumnarReference]ParameterMetadata
 }
 
 func NewParameterMap() ParameterMap {
-	return StandardParameterMap{
+	return standardParameterMap{
 		m: make(map[ColumnarReference]ParameterMetadata),
 	}
 }
 
-func (pm StandardParameterMap) iParameterMap() {}
+func (pm standardParameterMap) iParameterMap() {}
 
-func (pm StandardParameterMap) GetByString(s string) ([]ParameterMapKeyVal, bool) {
+func (pm standardParameterMap) GetByString(s string) ([]ParameterMapKeyVal, bool) {
 	var retVal []ParameterMapKeyVal
 	for k, v := range pm.m {
 		if k.GetStringKey() == s {
@@ -43,7 +43,7 @@ func (pm StandardParameterMap) GetByString(s string) ([]ParameterMapKeyVal, bool
 	return retVal, true
 }
 
-func (pm StandardParameterMap) GetAll() []ParameterMapKeyVal {
+func (pm standardParameterMap) GetAll() []ParameterMapKeyVal {
 	var retVal []ParameterMapKeyVal
 	for k, v := range pm.m {
 		retVal = append(retVal, ParameterMapKeyVal{K: k, V: v})
@@ -51,7 +51,7 @@ func (pm StandardParameterMap) GetAll() []ParameterMapKeyVal {
 	return retVal
 }
 
-func (pm StandardParameterMap) Delete(k ColumnarReference) bool {
+func (pm standardParameterMap) Delete(k ColumnarReference) bool {
 	_, ok := pm.m[k]
 	if ok {
 		delete(pm.m, k)
@@ -60,11 +60,11 @@ func (pm StandardParameterMap) Delete(k ColumnarReference) bool {
 	return false
 }
 
-func (pm StandardParameterMap) GetMap() map[ColumnarReference]ParameterMetadata {
+func (pm standardParameterMap) GetMap() map[ColumnarReference]ParameterMetadata {
 	return pm.m
 }
 
-func (pm StandardParameterMap) GetStringified() map[string]interface{} {
+func (pm standardParameterMap) GetStringified() map[string]interface{} {
 	rv := make(map[string]interface{})
 	for k, v := range pm.m {
 		rv[k.GetStringKey()] = v
@@ -72,7 +72,7 @@ func (pm StandardParameterMap) GetStringified() map[string]interface{} {
 	return rv
 }
 
-func (pm StandardParameterMap) GetAbbreviatedStringified() map[string]interface{} {
+func (pm standardParameterMap) GetAbbreviatedStringified() map[string]interface{} {
 	rv := make(map[string]interface{})
 	for k, v := range pm.m {
 		if k.SourceType() == JoinOnParam {
@@ -88,7 +88,7 @@ func (pm StandardParameterMap) GetAbbreviatedStringified() map[string]interface{
 	return rv
 }
 
-func (pm StandardParameterMap) Set(k ColumnarReference, v ParameterMetadata) error {
+func (pm standardParameterMap) Set(k ColumnarReference, v ParameterMetadata) error {
 	switch t := k.Value().(type) {
 	case *sqlparser.ColName:
 		pm.m[k] = v
@@ -100,7 +100,7 @@ func (pm StandardParameterMap) Set(k ColumnarReference, v ParameterMetadata) err
 	return nil
 }
 
-func (pm StandardParameterMap) Get(k ColumnarReference) (ParameterMetadata, bool) {
+func (pm standardParameterMap) Get(k ColumnarReference) (ParameterMetadata, bool) {
 	switch k.Value().(type) {
 	case *sqlparser.ColName:
 		rv, ok := pm.m[k]
@@ -113,7 +113,7 @@ func (pm StandardParameterMap) Get(k ColumnarReference) (ParameterMetadata, bool
 	}
 }
 
-func (tm StandardParameterMap) ToStringMap() map[string]interface{} {
+func (tm standardParameterMap) ToStringMap() map[string]interface{} {
 	rv := make(map[string]interface{})
 	for k, v := range tm.m {
 		rv[k.GetStringKey()] = v

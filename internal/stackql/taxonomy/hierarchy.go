@@ -148,7 +148,8 @@ func GetHeirarchyFromStatement(handlerCtx handler.HandlerContext, node sqlparser
 	}
 	retVal := tablemetadata.NewHeirarchyObjects(hIds)
 	if retVal.IsView() {
-		return retVal, remainingParams, fmt.Errorf("error extracting hierarchy: views not yet supported")
+		// return retVal, remainingParams, fmt.Errorf("error extracting hierarchy: views not yet supported")
+		return retVal, remainingParams, nil
 	}
 	prov, err := handlerCtx.GetProvider(hIds.GetProviderStr())
 	retVal.SetProvider(prov)

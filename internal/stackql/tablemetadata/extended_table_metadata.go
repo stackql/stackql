@@ -44,7 +44,6 @@ type ExtendedTableMetadata interface {
 	IsSimple() bool
 	IsView() bool
 	LookupSelectItemsKey() string
-	SetIsView(bool)
 	SetSelectItemsKey(string)
 	SetTableFilter(f func(openapistackql.ITable) (openapistackql.ITable, error))
 	WithGetHttpArmoury(f func() (httpbuild.HTTPArmoury, error)) ExtendedTableMetadata
@@ -61,7 +60,6 @@ type standardExtendedTableMetadata struct {
 	selectItemsKey      string
 	alias               string
 	inputTableName      string
-	isView              bool
 }
 
 func (ex *standardExtendedTableMetadata) IsLocallyExecutable() bool {
@@ -127,11 +125,7 @@ func (ex *standardExtendedTableMetadata) IsSimple() bool {
 }
 
 func (ex *standardExtendedTableMetadata) IsView() bool {
-	return ex.isView
-}
-
-func (ex *standardExtendedTableMetadata) SetIsView(isView bool) {
-	ex.isView = isView
+	return ex.heirarchyObjects.IsView()
 }
 
 func (ex *standardExtendedTableMetadata) isSimple() bool {

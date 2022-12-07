@@ -27,7 +27,7 @@ func TestSimpleSelectGoogleComputeInstance(t *testing.T) {
 	}
 	ex := testhttpapi.NewHTTPRequestExpectations(nil, nil, "GET", url, "compute.googleapis.com", testobjects.SimpleSelectGoogleComputeInstanceResponse, nil)
 	exp := testhttpapi.NewExpectationStore(1)
-	exp.Put("compute.googleapis.com"+path, *ex)
+	exp.Put("compute.googleapis.com"+path, ex)
 	testhttpapi.StartServer(t, exp)
 	provider.DummyAuth = true
 	args := []string{

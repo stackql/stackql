@@ -879,7 +879,7 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 	//   - TODO: so... will need to split this up into multiple passes;
 	//     parameters will need to have Hierarchies attached after they are inferred.
 	//     Then semantic anlaysis and data flow can be instrumented.
-	//  - TODO: add support for views and subqueries.
+	//   - TODO: add support for views and subqueries.
 	whereParamMap := astvisit.ExtractParamsFromWhereClause(node.Where)
 	onParamMap := astvisit.ExtractParamsFromFromClause(node.From)
 
@@ -945,6 +945,9 @@ func (p *primitiveGenerator) analyzeSelect(pbi PlanBuilderInput) error {
 
 		for _, tbl := range tblz {
 			//
+			if tbl.IsView() {
+				return fmt.Errorf("error analyzing from clause: views not yet supported")
+			}
 			svc, err := tbl.GetService()
 			if err != nil {
 				return err

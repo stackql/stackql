@@ -1,66 +1,6 @@
 version: "3.9"
    
 services:
-  stackqlsrv:
-    image: stackql/stackql
-    build:
-      context: .
-      cache_from: 
-        - stackql/stackql
-        - stackql/integration
-        - stackql/stackqlsrvcertificates
-      args:
-        - BUILDMAJORVERSION=${BUILDMAJORVERSION:-1}
-        - BUILDMINORVERSION=${BUILDMINORVERSION:-1}
-        - BUILDPATCHVERSION=${BUILDPATCHVERSION:-1}
-    command: 
-      - bash
-      - -c
-      - 'stackql 
-         --auth=''{ 
-           "google": { "credentialsfilepath": "/opt/stackql/credentials/dummy/google/functional-test-dummy-sa-key.json", "type": "service_account" }, 
-           "okta": { "credentialsenvvar": "OKTA_SECRET_KEY", "type": "api_key" }, 
-           "github": { "type": "basic", "credentialsenvvar": "GITHUB_CREDS" }, 
-           "aws": { "type": "aws_signing_v4", "credentialsfilepath": "/opt/stackql/credentials/dummy/aws/functional-test-dummy-aws-key.txt", "keyID": "some-key-not-a-secret" }, 
-           "k8s": { "credentialsenvvar": "K8S_TOKEN", "type": "api_key", "valuePrefix": "Bearer " } 
-         }'' 
-         --registry=''{
-           "url": "https://cdn.statically.io/gh/stackql/stackql-provider-registry/dev/providers"
-         }'' 
-         --pgsrv.tls=''{ 
-           "keyFilePath": "/opt/stackql/srv/credentials/pg_server_key.pem", 
-           "certFilePath": "/opt/stackql/srv/credentials/pg_server_cert.pem", 
-           "clientCAs": [ 
-             "''$$(base64 -w 0 /opt/stackql/srv/credentials/pg_client_cert.pem)''" 
-           ] 
-         }'' 
-         --pgsrv.address=0.0.0.0 
-         --pgsrv.port=${PG_SRV_PORT_MTLS:-5476} 
-         srv'
-    volumes:
-      - ./keys:/opt/stackql/keys:ro
-      - ./vol/srv/credentials:/opt/stackql/srv/credentials:ro
-      - ./test/assets/credentials/dummy:/opt/stackql/credentials/dummy:ro
-      - ./test/assets/input:/opt/stackql/input:ro
-      - ${DB_SETUP_SRC:-./test/db/sqlite}:/opt/stackql/db:ro
-      - ${REGISTRY_SRC:-./test/registry-mocked}:/opt/stackql/registry:ro
-      - ./vol/stackql/config:/opt/stackql/.stackql:rw 
-      - ./vol/logs:/opt/stackql/logs:rw 
-    ports:
-      - "${PG_SRV_PORT_DOCKER_MTLS:-5576}:${PG_SRV_PORT_MTLS:-5476}/tcp"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    environment:
-      - OKTA_SECRET_KEY=${OKTA_SECRET_STR:-some-junk}
-      - GITHUB_SECRET_KEY=${GITHUB_SECRET_STR:-some-junk}
-      - K8S_SECRET_KEY=${K8S_SECRET_STR:-some-junk}
-      - AZ_ACCESS_TOKEN=${AZ_ACCESS_TOKEN:-some_junk}
-      - SUMO_CREDS=${SUMO_CREDS:-some_junk}
-      - BUILDMAJORVERSION=${BUILDMAJORVERSION:-1}
-      - BUILDMINORVERSION=${BUILDMINORVERSION:-1}
-      - BUILDPATCHVERSION=${BUILDPATCHVERSION:-1}
-    depends_on:
-      - postgres_stackql
   mockserver:
     image: stackql/integration
     build:
@@ -80,14 +20,14 @@ services:
       - MOCKSERVER_PORT_AZURE=${MOCKSERVER_PORT_AZURE:-1095}
       - MOCKSERVER_PORT_SUMOLOGIC=${MOCKSERVER_PORT_SUMOLOGIC:-1096}
     ports:
-      - "${MOCKSERVER_PORT_GOOGLE:-1080}/tcp"
-      - "${MOCKSERVER_PORT_OKTA:-1090}/tcp"
-      - "${MOCKSERVER_PORT_AWS:-1091}/tcp"
-      - "${MOCKSERVER_PORT_K8S:-1092}/tcp"
-      - "${MOCKSERVER_PORT_GITHUB:-1093}/tcp"
-      - "${MOCKSERVER_PORT_REGISTRY:-1094}/tcp"
-      - "${MOCKSERVER_PORT_AZURE:-1095}/tcp"
-      - "${MOCKSERVER_PORT_SUMOLOGIC:-1096}/tcp"
+      - "${MOCKSERVER_PORT_GOOGLE:-1080}:${MOCKSERVER_PORT_GOOGLE:-1080}/tcp"
+      - "${MOCKSERVER_PORT_OKTA:-1090}:${MOCKSERVER_PORT_OKTA:-1090}/tcp"
+      - "${MOCKSERVER_PORT_AWS:-1091}:${MOCKSERVER_PORT_AWS:-1091}/tcp"
+      - "${MOCKSERVER_PORT_K8S:-1092}:${MOCKSERVER_PORT_K8S:-1092}/tcp"
+      - "${MOCKSERVER_PORT_GITHUB:-1093}:${MOCKSERVER_PORT_GITHUB:-1093}/tcp"
+      - "${MOCKSERVER_PORT_REGISTRY:-1094}:${MOCKSERVER_PORT_REGISTRY:-1094}/tcp"
+      - "${MOCKSERVER_PORT_AZURE:-1095}:${MOCKSERVER_PORT_AZURE:-1095}/tcp"
+      - "${MOCKSERVER_PORT_SUMOLOGIC:-1096}:${MOCKSERVER_PORT_SUMOLOGIC:-1096}/tcp"
     command: 
       - bash
       - -c
@@ -147,7 +87,8 @@ services:
     hostname: postgres_stackql
     volumes:
       - ./vol/postgres/setup:/docker-entrypoint-initdb.d:ro
+      - ./vol/postgres/dev/data:/var/lib/postgresql/data
     environment:
       - POSTGRES_PASSWORD=stackql
     ports:
-      - "5432/tcp"
+      - "7432:5432/tcp"

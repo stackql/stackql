@@ -23,7 +23,7 @@ func SetupSimpleSelectGoogleComputeInstance(t *testing.T) {
 	}
 	ex := testhttpapi.NewHTTPRequestExpectations(nil, nil, "GET", url, testobjects.GoogleComputeHost, testobjects.SimpleSelectGoogleComputeInstanceResponse, nil)
 	expectations := testhttpapi.NewExpectationStore(1)
-	expectations.Put(testobjects.GoogleComputeHost+path, *ex)
+	expectations.Put(testobjects.GoogleComputeHost+path, ex)
 	testhttpapi.StartServer(t, expectations)
 	provider.DummyAuth = true
 }
@@ -43,7 +43,7 @@ func SetupSelectOktaApplicationApps(t *testing.T) {
 	}
 	ex := testhttpapi.NewHTTPRequestExpectations(nil, nil, "GET", url, "some-silly-subdomain.okta.com", string(responseBytes1), nil)
 	expectations := testhttpapi.NewExpectationStore(1)
-	expectations.Put("some-silly-subdomain.okta.com"+path, *ex)
+	expectations.Put("some-silly-subdomain.okta.com"+path, ex)
 	testhttpapi.StartServer(t, expectations)
 	provider.DummyAuth = true
 }
@@ -64,8 +64,7 @@ func getDisksSelectExpectations(t *testing.T) map[string]testhttpapi.HTTPRequest
 	ex := testhttpapi.NewHTTPRequestExpectations(nil, nil, "GET", url, testobjects.GoogleComputeHost, string(responseBytes), nil)
 
 	return map[string]testhttpapi.HTTPRequestExpectations{
-		// TODO: fix cloning ops
-		testobjects.GoogleComputeHost + path: *ex,
+		testobjects.GoogleComputeHost + path: ex,
 	}
 }
 
@@ -86,8 +85,7 @@ func getCloudResourceManagerOrganizationsGetIamPolicyExpectations(t *testing.T) 
 	ex := testhttpapi.NewHTTPRequestExpectations(nil, nil, "POST", url, testobjects.GoogleCloudResourceManagerHost, string(responseBytes), nil)
 
 	return map[string]testhttpapi.HTTPRequestExpectations{
-		// TODO: fix cloning ops
-		testobjects.GoogleCloudResourceManagerHost + path: *ex,
+		testobjects.GoogleCloudResourceManagerHost + path: ex,
 	}
 }
 
@@ -108,8 +106,7 @@ func getCloudResourceManagerProjectSelectExpectations(t *testing.T) map[string]t
 	ex := testhttpapi.NewHTTPRequestExpectations(nil, nil, "GET", url, testobjects.GoogleCloudResourceManagerHost, string(responseBytes), nil)
 
 	return map[string]testhttpapi.HTTPRequestExpectations{
-		// TODO: fix cloning ops
-		testobjects.GoogleCloudResourceManagerHost + path + "?parent=organizations%2F123456789012": *ex,
+		testobjects.GoogleCloudResourceManagerHost + path + "?parent=organizations%2F123456789012": ex,
 	}
 }
 
@@ -174,9 +171,9 @@ func SetupSimpleSelectGoogleComputeDisksPaginated(t *testing.T) {
 	ex3 := testhttpapi.NewHTTPRequestExpectations(nil, nil, "GET", url3, testobjects.GoogleComputeHost, string(responseBytes3), nil)
 
 	expectations := testhttpapi.NewExpectationStore(3)
-	expectations.Put(testobjects.GoogleComputeHost+path+"?"+rawQuery1, *ex1)
-	expectations.Put(testobjects.GoogleComputeHost+path+"?"+rawQuery2, *ex2)
-	expectations.Put(testobjects.GoogleComputeHost+path+"?"+rawQuery3, *ex3)
+	expectations.Put(testobjects.GoogleComputeHost+path+"?"+rawQuery1, ex1)
+	expectations.Put(testobjects.GoogleComputeHost+path+"?"+rawQuery2, ex2)
+	expectations.Put(testobjects.GoogleComputeHost+path+"?"+rawQuery3, ex3)
 
 	testhttpapi.StartServer(t, expectations)
 	provider.DummyAuth = true
@@ -189,7 +186,7 @@ func SetupSimpleSelectGoogleContainerAggAllowedSubnetworks(t *testing.T) {
 	}
 	ex := testhttpapi.NewHTTPRequestExpectations(nil, nil, "GET", url, testobjects.GoogleContainerHost, testobjects.SimpleSelectGoogleContainerAggregatedSubnetworksResponse, nil)
 	expectations := testhttpapi.NewExpectationStore(1)
-	expectations.Put(testobjects.GoogleContainerHost+path, *ex)
+	expectations.Put(testobjects.GoogleContainerHost+path, ex)
 	testhttpapi.StartServer(t, expectations)
 	provider.DummyAuth = true
 }
@@ -222,10 +219,8 @@ func getNetworkInsertSuccessExpectations() map[string]testhttpapi.HTTPRequestExp
 	)
 
 	return map[string]testhttpapi.HTTPRequestExpectations{
-		// TODO: fix cloning ops
-		testobjects.GoogleComputeHost + testobjects.NetworkInsertPath: *networkInsertExpectation,
-		// TODO: fix cloning ops
-		testobjects.GoogleApisHost + testobjects.GoogleComputeInsertOperationPath: *networkInsertOpPollExpectation,
+		testobjects.GoogleComputeHost + testobjects.NetworkInsertPath:             networkInsertExpectation,
+		testobjects.GoogleApisHost + testobjects.GoogleComputeInsertOperationPath: networkInsertOpPollExpectation,
 	}
 }
 
@@ -257,10 +252,8 @@ func getDiskInsertSuccessExpectations(expectedRequestBody string) map[string]tes
 	)
 
 	return map[string]testhttpapi.HTTPRequestExpectations{
-		// TODO: fix cloning ops
-		testobjects.GoogleComputeHost + testobjects.DiskInsertPath: *diskInsertExpectation,
-		// TODO: fix cloning ops
-		testobjects.GoogleApisHost + testobjects.GoogleComputeInsertOperationPath: *networkInsertOpPollExpectation,
+		testobjects.GoogleComputeHost + testobjects.DiskInsertPath:                diskInsertExpectation,
+		testobjects.GoogleApisHost + testobjects.GoogleComputeInsertOperationPath: networkInsertOpPollExpectation,
 	}
 }
 
@@ -279,8 +272,7 @@ func getBQDatasetInsertSuccessExpectations(bqInsertPath, expectedRequestBody, re
 	)
 
 	return map[string]testhttpapi.HTTPRequestExpectations{
-		// TODO: fix cloning ops
-		testobjects.GoogleBQHost + bqInsertPath: *datasetInsertExpectation,
+		testobjects.GoogleBQHost + bqInsertPath: datasetInsertExpectation,
 	}
 }
 
@@ -312,10 +304,8 @@ func getSubnetworkInsertSuccessExpectations() map[string]testhttpapi.HTTPRequest
 	)
 
 	return map[string]testhttpapi.HTTPRequestExpectations{
-		// TODO: fix cloning ops
-		testobjects.GoogleComputeHost + testobjects.SubnetworkInsertPath: *networkInsertExpectation,
-		// TODO: fix cloning ops
-		testobjects.GoogleApisHost + testobjects.GoogleComputeInsertOperationPath: *networkInsertOpPollExpectation,
+		testobjects.GoogleComputeHost + testobjects.SubnetworkInsertPath:          networkInsertExpectation,
+		testobjects.GoogleApisHost + testobjects.GoogleComputeInsertOperationPath: networkInsertOpPollExpectation,
 	}
 }
 
@@ -347,10 +337,8 @@ func getIPInsertSuccessExpectations() map[string]testhttpapi.HTTPRequestExpectat
 	)
 
 	return map[string]testhttpapi.HTTPRequestExpectations{
-		// TODO: fix cloning ops
-		testobjects.GoogleComputeHost + testobjects.IPInsertPath: *networkInsertExpectation,
-		// TODO: fix cloning ops
-		testobjects.GoogleApisHost + testobjects.GoogleComputeInsertOperationPath: *networkInsertOpPollExpectation,
+		testobjects.GoogleComputeHost + testobjects.IPInsertPath:                  networkInsertExpectation,
+		testobjects.GoogleApisHost + testobjects.GoogleComputeInsertOperationPath: networkInsertOpPollExpectation,
 	}
 }
 
@@ -382,10 +370,8 @@ func getInternalFirewallInsertSuccessExpectations() map[string]testhttpapi.HTTPR
 	)
 
 	return map[string]testhttpapi.HTTPRequestExpectations{
-		// TODO: fix cloning ops
-		testobjects.GoogleComputeHost + testobjects.FirewallInsertPath: *networkInsertExpectation,
-		// TODO: fix cloning ops
-		testobjects.GoogleApisHost + testobjects.GoogleComputeInsertOperationPath: *networkInsertOpPollExpectation,
+		testobjects.GoogleComputeHost + testobjects.FirewallInsertPath:            networkInsertExpectation,
+		testobjects.GoogleApisHost + testobjects.GoogleComputeInsertOperationPath: networkInsertOpPollExpectation,
 	}
 }
 
@@ -417,10 +403,8 @@ func getExternalFirewallInsertSuccessExpectations() map[string]testhttpapi.HTTPR
 	)
 
 	return map[string]testhttpapi.HTTPRequestExpectations{
-		// TODO: fix cloning ops
-		testobjects.GoogleComputeHost + testobjects.FirewallInsertPath: *networkInsertExpectation,
-		// TODO: fix cloning ops
-		testobjects.GoogleApisHost + testobjects.GoogleComputeInsertOperationPath: *networkInsertOpPollExpectation,
+		testobjects.GoogleComputeHost + testobjects.FirewallInsertPath:            networkInsertExpectation,
+		testobjects.GoogleApisHost + testobjects.GoogleComputeInsertOperationPath: networkInsertOpPollExpectation,
 	}
 }
 
@@ -452,10 +436,8 @@ func getComputeInstanceInsertSuccessExpectations(name string, secondaryTag strin
 	)
 
 	return map[string]testhttpapi.HTTPRequestExpectations{
-		// TODO: fix cloning ops
-		testobjects.GoogleComputeHost + testobjects.ComputeInstanceInsertPath: *networkInsertExpectation,
-		// TODO: fix cloning ops
-		testobjects.GoogleApisHost + testobjects.GoogleComputeInsertOperationPath: *networkInsertOpPollExpectation,
+		testobjects.GoogleComputeHost + testobjects.ComputeInstanceInsertPath:     networkInsertExpectation,
+		testobjects.GoogleApisHost + testobjects.GoogleComputeInsertOperationPath: networkInsertOpPollExpectation,
 	}
 }
 
@@ -488,10 +470,8 @@ func getNetworkDeleteSuccessExpectations() map[string]testhttpapi.HTTPRequestExp
 	)
 
 	return map[string]testhttpapi.HTTPRequestExpectations{
-		// TODO: fix cloning ops
-		testobjects.GoogleComputeHost + path: *networkDeleteExpectation,
-		// TODO: fix cloning ops
-		testobjects.GoogleApisHost + testobjects.GoogleComputeInsertOperationPath: *networkInsertOpPollExpectation,
+		testobjects.GoogleComputeHost + path:                                      networkDeleteExpectation,
+		testobjects.GoogleApisHost + testobjects.GoogleComputeInsertOperationPath: networkInsertOpPollExpectation,
 	}
 }
 

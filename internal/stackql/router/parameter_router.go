@@ -384,9 +384,6 @@ func (pr *standardParameterRouter) Route(tb sqlparser.TableExpr, handlerCtx hand
 	if err != nil {
 		return nil, err
 	}
-	if hr.IsView() {
-		return nil, fmt.Errorf("views not supported at this time")
-	}
 	reconstitutedConsumedParams, err := tpc.ReconstituteConsumedParams(remainingParams)
 	if err != nil {
 		return nil, err
@@ -411,11 +408,12 @@ func (pr *standardParameterRouter) Route(tb sqlparser.TableExpr, handlerCtx hand
 		logging.GetLogger().Infof("%v", kv)
 	}
 	m := tablemetadata.NewExtendedTableMetadata(hr, taxonomy.GetTableNameFromStatement(tb, pr.astFormatter), taxonomy.GetAliasFromStatement(tb))
+
 	// store relationship from sqlparser table expression to
 	// hierarchy.  This enables e2e relationship
 	// from expression to hierarchy.
 	// eg: "on" clause to openapi method
-	ac, err := obtainAnnotationCtx(handlerCtx.GetSQLEngine(), m, abbreviatedConsumedMap, pr.namespaceCollection)
+	ac, err := obtainAnnotationCtx(handlerCtx.GetSQLDialect(), m, abbreviatedConsumedMap, pr.namespaceCollection)
 	pr.tableToAnnotationCtx[tb] = ac
 	return ac, err
 }
