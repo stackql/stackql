@@ -15,6 +15,7 @@ type DataFlowUnit interface {
 	iDataFlowUnit()
 }
 
+// DataFlowCollection is the DAG representing
 type DataFlowCollection interface {
 	AddOrUpdateEdge(source DataFlowVertex, dest DataFlowVertex, comparisonExpr *sqlparser.ComparisonExpr, sourceExpr sqlparser.Expr, destColumn *sqlparser.ColName) error
 	AddVertex(v DataFlowVertex)

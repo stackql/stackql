@@ -91,13 +91,11 @@ ON "__iql__.views" (view_name)
 
 INSERT OR IGNORE INTO "__iql__.views" (
   view_name,
-  view_ddl,
-  view_stackql_ddl
+  view_ddl
 ) 
 VALUES (
-  'stackql_providers',
-  'SHOW PROVIDERS',
-  'SHOW PROVIDERS'
+  'stackql_repositories',
+  'select id, name, url from github.repos.repos where org = ''stackql'';'
 )
 ;
 

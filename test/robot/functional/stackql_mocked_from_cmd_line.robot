@@ -695,7 +695,7 @@ Basic View Error Displayed
     ...    ${REGISTRY_NO_VERIFY_CFG_STR}
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
-    ...    SELECT * FROM stackql_providers;
+    ...    SELECT * FROM stackql_repositories ;
     ...    views not yet supported
 
 Weird ID WSL bug query

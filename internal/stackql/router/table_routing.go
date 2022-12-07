@@ -34,6 +34,16 @@ func NewTableRouteAstVisitor(handlerCtx handler.HandlerContext, router Parameter
 func (v *TableRouteAstVisitor) analyzeAliasedTable(tb *sqlparser.AliasedTableExpr) (taxonomy.AnnotationCtx, error) {
 	switch ex := tb.Expr.(type) {
 	case sqlparser.TableName:
+		hIDs, err := taxonomy.GetHeirarchyIDsFromParserNode(v.handlerCtx, ex)
+		if err != nil {
+			return nil, err
+		}
+		if _, isView := hIDs.GetView(); isView {
+
+			// TODO: Route the view
+			//sv := NewTableRouteAstVisitor(v.handlerCtx, nil)
+
+		}
 		return v.router.Route(tb, v.handlerCtx)
 	default:
 		return nil, fmt.Errorf("table of type '%T' not curently supported", ex)
@@ -41,6 +51,7 @@ func (v *TableRouteAstVisitor) analyzeAliasedTable(tb *sqlparser.AliasedTableExp
 }
 
 func (v *TableRouteAstVisitor) analyzeExecTableName(tb *sqlparser.ExecSubquery) (taxonomy.AnnotationCtx, error) {
+	// cannot be recursive
 	return v.router.Route(tb, v.handlerCtx)
 }
 

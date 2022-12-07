@@ -8,7 +8,13 @@ type standardRelationalTable struct {
 	baseName    string
 	discoveryID int
 	hIDs        internaldto.HeirarchyIdentifiers
+	viewDTO     internaldto.ViewDTO
 	columns     []RelationalColumn
+}
+
+func (rt *standardRelationalTable) WithView(viewDTO internaldto.ViewDTO) RelationalTable {
+	rt.viewDTO = viewDTO
+	return rt
 }
 
 func (rt *standardRelationalTable) GetName() (string, error) {
@@ -30,6 +36,10 @@ func (rt *standardRelationalTable) GetAlias() string {
 func (rt *standardRelationalTable) WithAlias(alias string) RelationalTable {
 	rt.alias = alias
 	return rt
+}
+
+func (rt *standardRelationalTable) GetView() (internaldto.ViewDTO, bool) {
+	return rt.viewDTO, rt.viewDTO != nil
 }
 
 func (rt *standardRelationalTable) GetColumns() []RelationalColumn {

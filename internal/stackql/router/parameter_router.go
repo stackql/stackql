@@ -307,7 +307,12 @@ func (pr *standardParameterRouter) invalidate(key string, val interface{}) error
 // Columnar input may come from either where clause
 // or on conditions.
 // TODO: Get rid of the dead set mess that is where paramters in preference.
+
 func (pr *standardParameterRouter) Route(tb sqlparser.TableExpr, handlerCtx handler.HandlerContext) (taxonomy.AnnotationCtx, error) {
+	return pr.route(tb, handlerCtx)
+}
+
+func (pr *standardParameterRouter) route(tb sqlparser.TableExpr, handlerCtx handler.HandlerContext) (taxonomy.AnnotationCtx, error) {
 	for k, v := range pr.whereParamMap.GetMap() {
 		logging.GetLogger().Infof("%v\n", v)
 		alias := k.Alias()

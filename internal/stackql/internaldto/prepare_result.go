@@ -1,22 +1,8 @@
 package internaldto
 
 import (
-	"github.com/jeroenrinzema/psql-wire/pkg/sqldata"
 	"github.com/stackql/go-openapistackql/openapistackql"
-	"github.com/stackql/stackql/internal/stackql/dto"
 )
-
-type RowsDTO struct {
-	RowMap      map[string]map[string]interface{}
-	ColumnOrder []string
-	Err         error
-	RowSort     func(map[string]map[string]interface{}) []string
-}
-
-type OutputContext struct {
-	RuntimeContext dto.RuntimeCtx
-	Result         sqldata.ISQLResultStream
-}
 
 type PrepareResultSetDTO struct {
 	OutputBody    map[string]interface{}

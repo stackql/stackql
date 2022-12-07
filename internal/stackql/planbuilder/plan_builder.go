@@ -13,6 +13,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/plan"
+	"github.com/stackql/stackql/internal/stackql/planbuilderinput"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivebuilder"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
@@ -26,186 +27,8 @@ var (
 	PlanCacheEnabled string = "true"
 )
 
-type PlanBuilderInput interface {
-	GetAliasedTables() parserutil.TableAliasMap
-	GetAuth() (*sqlparser.Auth, bool)
-	GetAuthRevoke() (*sqlparser.AuthRevoke, bool)
-	GetAssignedAliasedColumns() map[sqlparser.TableName]sqlparser.TableExpr
-	GetColRefs() parserutil.ColTableMap
-	GetDelete() (*sqlparser.Delete, bool)
-	GetDescribeTable() (*sqlparser.DescribeTable, bool)
-	GetExec() (*sqlparser.Exec, bool)
-	GetHandlerCtx() handler.HandlerContext
-	GetInsert() (*sqlparser.Insert, bool)
-	GetNativeQuery() (*sqlparser.NativeQuery, bool)
-	GetPlaceholderParams() parserutil.ParameterMap
-	GetPurge() (*sqlparser.Purge, bool)
-	GetRawQuery() string
-	GetRegistry() (*sqlparser.Registry, bool)
-	GetSelect() (*sqlparser.Select, bool)
-	GetShow() (*sqlparser.Show, bool)
-	GetSleep() (*sqlparser.Sleep, bool)
-	GetStatement() sqlparser.SQLNode
-	GetTableExprs() sqlparser.TableExprs
-	GetTxnCtrlCtrs() internaldto.TxnControlCounters
-	GetUnion() (*sqlparser.Union, bool)
-	GetUpdate() (*sqlparser.Update, bool)
-	GetUse() (*sqlparser.Use, bool)
-}
-
 func isPlanCacheEnabled() bool {
 	return strings.ToLower(PlanCacheEnabled) != "false"
-}
-
-type StandardPlanBuilderInput struct {
-	handlerCtx             handler.HandlerContext
-	stmt                   sqlparser.SQLNode
-	colRefs                parserutil.ColTableMap
-	aliasedTables          parserutil.TableAliasMap
-	assignedAliasedColumns parserutil.TableExprMap
-	tables                 sqlparser.TableExprs
-	paramsPlaceheld        parserutil.ParameterMap
-	tcc                    internaldto.TxnControlCounters
-}
-
-func NewPlanBuilderInput(
-	handlerCtx handler.HandlerContext,
-	stmt sqlparser.SQLNode,
-	tables sqlparser.TableExprs,
-	assignedAliasedColumns parserutil.TableExprMap,
-	aliasedTables parserutil.TableAliasMap,
-	colRefs parserutil.ColTableMap,
-	paramsPlaceheld parserutil.ParameterMap,
-	tcc internaldto.TxnControlCounters,
-) (PlanBuilderInput, error) {
-	rv := &StandardPlanBuilderInput{
-		handlerCtx:             handlerCtx,
-		stmt:                   stmt,
-		tables:                 tables,
-		aliasedTables:          aliasedTables,
-		assignedAliasedColumns: assignedAliasedColumns,
-		colRefs:                colRefs,
-		paramsPlaceheld:        paramsPlaceheld,
-		tcc:                    tcc,
-	}
-	if handlerCtx == nil {
-		return nil, fmt.Errorf("plan builder input invariant violation: nil handler context")
-	}
-	if rv.assignedAliasedColumns == nil {
-		rv.assignedAliasedColumns = make(map[sqlparser.TableName]sqlparser.TableExpr)
-	}
-	return rv, nil
-}
-
-func (pbi *StandardPlanBuilderInput) GetRawQuery() string {
-	return pbi.handlerCtx.GetRawQuery()
-}
-
-func (pbi *StandardPlanBuilderInput) GetStatement() sqlparser.SQLNode {
-	return pbi.stmt
-}
-
-func (pbi *StandardPlanBuilderInput) GetTxnCtrlCtrs() internaldto.TxnControlCounters {
-	return pbi.tcc
-}
-
-func (pbi *StandardPlanBuilderInput) GetPlaceholderParams() parserutil.ParameterMap {
-	return pbi.paramsPlaceheld
-}
-
-func (pbi *StandardPlanBuilderInput) GetAssignedAliasedColumns() map[sqlparser.TableName]sqlparser.TableExpr {
-	return pbi.assignedAliasedColumns
-}
-
-func (pbi *StandardPlanBuilderInput) GetAliasedTables() parserutil.TableAliasMap {
-	return pbi.aliasedTables
-}
-
-func (pbi *StandardPlanBuilderInput) GetColRefs() parserutil.ColTableMap {
-	return pbi.colRefs
-}
-
-func (pbi *StandardPlanBuilderInput) GetTableExprs() sqlparser.TableExprs {
-	return pbi.tables
-}
-
-func (pbi *StandardPlanBuilderInput) GetAuth() (*sqlparser.Auth, bool) {
-	rv, ok := pbi.stmt.(*sqlparser.Auth)
-	return rv, ok
-}
-
-func (pbi *StandardPlanBuilderInput) GetAuthRevoke() (*sqlparser.AuthRevoke, bool) {
-	rv, ok := pbi.stmt.(*sqlparser.AuthRevoke)
-	return rv, ok
-}
-
-func (pbi *StandardPlanBuilderInput) GetDelete() (*sqlparser.Delete, bool) {
-	rv, ok := pbi.stmt.(*sqlparser.Delete)
-	return rv, ok
-}
-
-func (pbi *StandardPlanBuilderInput) GetDescribeTable() (*sqlparser.DescribeTable, bool) {
-	rv, ok := pbi.stmt.(*sqlparser.DescribeTable)
-	return rv, ok
-}
-
-func (pbi *StandardPlanBuilderInput) GetExec() (*sqlparser.Exec, bool) {
-	rv, ok := pbi.stmt.(*sqlparser.Exec)
-	return rv, ok
-}
-
-func (pbi *StandardPlanBuilderInput) GetInsert() (*sqlparser.Insert, bool) {
-	rv, ok := pbi.stmt.(*sqlparser.Insert)
-	return rv, ok
-}
-
-func (pbi *StandardPlanBuilderInput) GetRegistry() (*sqlparser.Registry, bool) {
-	rv, ok := pbi.stmt.(*sqlparser.Registry)
-	return rv, ok
-}
-
-func (pbi *StandardPlanBuilderInput) GetPurge() (*sqlparser.Purge, bool) {
-	rv, ok := pbi.stmt.(*sqlparser.Purge)
-	return rv, ok
-}
-
-func (pbi *StandardPlanBuilderInput) GetNativeQuery() (*sqlparser.NativeQuery, bool) {
-	rv, ok := pbi.stmt.(*sqlparser.NativeQuery)
-	return rv, ok
-}
-
-func (pbi *StandardPlanBuilderInput) GetSelect() (*sqlparser.Select, bool) {
-	rv, ok := pbi.stmt.(*sqlparser.Select)
-	return rv, ok
-}
-
-func (pbi *StandardPlanBuilderInput) GetShow() (*sqlparser.Show, bool) {
-	rv, ok := pbi.stmt.(*sqlparser.Show)
-	return rv, ok
-}
-
-func (pbi *StandardPlanBuilderInput) GetSleep() (*sqlparser.Sleep, bool) {
-	rv, ok := pbi.stmt.(*sqlparser.Sleep)
-	return rv, ok
-}
-
-func (pbi *StandardPlanBuilderInput) GetUnion() (*sqlparser.Union, bool) {
-	rv, ok := pbi.stmt.(*sqlparser.Union)
-	return rv, ok
-}
-
-func (pbi *StandardPlanBuilderInput) GetUse() (*sqlparser.Use, bool) {
-	rv, ok := pbi.stmt.(*sqlparser.Use)
-	return rv, ok
-}
-
-func (pbi *StandardPlanBuilderInput) GetUpdate() (*sqlparser.Update, bool) {
-	rv, ok := pbi.stmt.(*sqlparser.Update)
-	return rv, ok
-}
-
-func (pbi *StandardPlanBuilderInput) GetHandlerCtx() handler.HandlerContext {
-	return pbi.handlerCtx
 }
 
 type planGraphBuilder struct {
@@ -218,7 +41,7 @@ func newPlanGraphBuilder(concurrencyLimit int) *planGraphBuilder {
 	}
 }
 
-func (pgb *planGraphBuilder) createInstructionFor(pbi PlanBuilderInput) error {
+func (pgb *planGraphBuilder) createInstructionFor(pbi planbuilderinput.PlanBuilderInput) error {
 	stmt := pbi.GetStatement()
 	switch stmt := stmt.(type) {
 	case *sqlparser.Auth:
@@ -281,13 +104,13 @@ func (pgb *planGraphBuilder) createInstructionFor(pbi PlanBuilderInput) error {
 	return iqlerror.GetStatementNotSupportedError(fmt.Sprintf("BUG: unexpected statement type: %T", stmt))
 }
 
-func (pgb *planGraphBuilder) nop(pbi PlanBuilderInput) error {
+func (pgb *planGraphBuilder) nop(pbi planbuilderinput.PlanBuilderInput) error {
 	primitiveGenerator := newRootPrimitiveGenerator(nil, pbi.GetHandlerCtx(), pgb.planGraph)
 	err := primitiveGenerator.analyzeNop(pbi)
 	return err
 }
 
-func (pgb *planGraphBuilder) pgInternal(pbi PlanBuilderInput) error {
+func (pgb *planGraphBuilder) pgInternal(pbi planbuilderinput.PlanBuilderInput) error {
 	primitiveGenerator := newRootPrimitiveGenerator(nil, pbi.GetHandlerCtx(), pgb.planGraph)
 	err := primitiveGenerator.analyzePGInternal(pbi)
 	if err != nil {
@@ -301,7 +124,7 @@ func (pgb *planGraphBuilder) pgInternal(pbi PlanBuilderInput) error {
 	return err
 }
 
-func (pgb *planGraphBuilder) handleAuth(pbi PlanBuilderInput) error {
+func (pgb *planGraphBuilder) handleAuth(pbi planbuilderinput.PlanBuilderInput) error {
 	handlerCtx := pbi.GetHandlerCtx()
 	node, ok := pbi.GetAuth()
 	if !ok {
@@ -338,7 +161,7 @@ func (pgb *planGraphBuilder) handleAuth(pbi PlanBuilderInput) error {
 	return nil
 }
 
-func (pgb *planGraphBuilder) handleAuthRevoke(pbi PlanBuilderInput) error {
+func (pgb *planGraphBuilder) handleAuthRevoke(pbi planbuilderinput.PlanBuilderInput) error {
 	handlerCtx := pbi.GetHandlerCtx()
 	stmt := pbi.GetStatement()
 	node, ok := stmt.(*sqlparser.AuthRevoke)
@@ -367,7 +190,7 @@ func (pgb *planGraphBuilder) handleAuthRevoke(pbi PlanBuilderInput) error {
 	return nil
 }
 
-func (pgb *planGraphBuilder) handleDescribe(pbi PlanBuilderInput) error {
+func (pgb *planGraphBuilder) handleDescribe(pbi planbuilderinput.PlanBuilderInput) error {
 	handlerCtx := pbi.GetHandlerCtx()
 	node, ok := pbi.GetDescribeTable()
 	if !ok {
@@ -397,7 +220,7 @@ func (pgb *planGraphBuilder) handleDescribe(pbi PlanBuilderInput) error {
 	return nil
 }
 
-func (pgb *planGraphBuilder) handleSelect(pbi PlanBuilderInput) (*primitivegraph.PrimitiveNode, *primitivegraph.PrimitiveNode, error) {
+func (pgb *planGraphBuilder) handleSelect(pbi planbuilderinput.PlanBuilderInput) (*primitivegraph.PrimitiveNode, *primitivegraph.PrimitiveNode, error) {
 	handlerCtx := pbi.GetHandlerCtx()
 	node, ok := pbi.GetSelect()
 	if !ok {
@@ -445,7 +268,7 @@ func (pgb *planGraphBuilder) handleSelect(pbi PlanBuilderInput) (*primitivegraph
 	return &rv, &rv, nil
 }
 
-func (pgb *planGraphBuilder) handleUnion(pbi PlanBuilderInput) (*primitivegraph.PrimitiveNode, *primitivegraph.PrimitiveNode, error) {
+func (pgb *planGraphBuilder) handleUnion(pbi planbuilderinput.PlanBuilderInput) (*primitivegraph.PrimitiveNode, *primitivegraph.PrimitiveNode, error) {
 	handlerCtx := pbi.GetHandlerCtx()
 	node, ok := pbi.GetUnion()
 	if !ok {
@@ -474,7 +297,7 @@ func (pgb *planGraphBuilder) handleUnion(pbi PlanBuilderInput) (*primitivegraph.
 	return &root, &tail, nil
 }
 
-func (pgb *planGraphBuilder) handleDelete(pbi PlanBuilderInput) error {
+func (pgb *planGraphBuilder) handleDelete(pbi planbuilderinput.PlanBuilderInput) error {
 	handlerCtx := pbi.GetHandlerCtx()
 	node, ok := pbi.GetDelete()
 	if !ok {
@@ -499,7 +322,7 @@ func (pgb *planGraphBuilder) handleDelete(pbi PlanBuilderInput) error {
 	}
 }
 
-func (pgb *planGraphBuilder) handleRegistry(pbi PlanBuilderInput) error {
+func (pgb *planGraphBuilder) handleRegistry(pbi planbuilderinput.PlanBuilderInput) error {
 	handlerCtx := pbi.GetHandlerCtx()
 	node, ok := pbi.GetRegistry()
 	if !ok {
@@ -573,7 +396,7 @@ func (pgb *planGraphBuilder) handleRegistry(pbi PlanBuilderInput) error {
 	return nil
 }
 
-func (pgb *planGraphBuilder) handlePurge(pbi PlanBuilderInput) error {
+func (pgb *planGraphBuilder) handlePurge(pbi planbuilderinput.PlanBuilderInput) error {
 	handlerCtx := pbi.GetHandlerCtx()
 	node, ok := pbi.GetPurge()
 	if !ok {
@@ -648,7 +471,7 @@ func (pgb *planGraphBuilder) handlePurge(pbi PlanBuilderInput) error {
 	return nil
 }
 
-func (pgb *planGraphBuilder) handleNativeQuery(pbi PlanBuilderInput) error {
+func (pgb *planGraphBuilder) handleNativeQuery(pbi planbuilderinput.PlanBuilderInput) error {
 	handlerCtx := pbi.GetHandlerCtx()
 	node, ok := pbi.GetNativeQuery()
 	if !ok {
@@ -665,7 +488,7 @@ func (pgb *planGraphBuilder) handleNativeQuery(pbi PlanBuilderInput) error {
 	return nil
 }
 
-func (pgb *planGraphBuilder) handleInsert(pbi PlanBuilderInput) error {
+func (pgb *planGraphBuilder) handleInsert(pbi planbuilderinput.PlanBuilderInput) error {
 	handlerCtx := pbi.GetHandlerCtx()
 	node, ok := pbi.GetInsert()
 	if !ok {
@@ -687,7 +510,7 @@ func (pgb *planGraphBuilder) handleInsert(pbi PlanBuilderInput) error {
 		if nonValCols > 0 {
 			switch rowsNode := node.Rows.(type) {
 			case *sqlparser.Select:
-				selPbi, err := NewPlanBuilderInput(pbi.GetHandlerCtx(), rowsNode, pbi.GetTableExprs(), pbi.GetAssignedAliasedColumns(), pbi.GetAliasedTables(), pbi.GetColRefs(), pbi.GetPlaceholderParams(), pbi.GetTxnCtrlCtrs())
+				selPbi, err := planbuilderinput.NewPlanBuilderInput(pbi.GetHandlerCtx(), rowsNode, pbi.GetTableExprs(), pbi.GetAssignedAliasedColumns(), pbi.GetAliasedTables(), pbi.GetColRefs(), pbi.GetPlaceholderParams(), pbi.GetTxnCtrlCtrs())
 				if err != nil {
 					return err
 				}
@@ -725,7 +548,7 @@ func (pgb *planGraphBuilder) handleInsert(pbi PlanBuilderInput) error {
 	return nil
 }
 
-func (pgb *planGraphBuilder) handleUpdate(pbi PlanBuilderInput) error {
+func (pgb *planGraphBuilder) handleUpdate(pbi planbuilderinput.PlanBuilderInput) error {
 	handlerCtx := pbi.GetHandlerCtx()
 	node, ok := pbi.GetUpdate()
 	if !ok {
@@ -773,7 +596,7 @@ func (pgb *planGraphBuilder) handleUpdate(pbi PlanBuilderInput) error {
 	}
 }
 
-func (pgb *planGraphBuilder) handleExec(pbi PlanBuilderInput) error {
+func (pgb *planGraphBuilder) handleExec(pbi planbuilderinput.PlanBuilderInput) error {
 	handlerCtx := pbi.GetHandlerCtx()
 	node, ok := pbi.GetExec()
 	if !ok {
@@ -796,7 +619,7 @@ func (pgb *planGraphBuilder) handleExec(pbi PlanBuilderInput) error {
 	return nil
 }
 
-func (pgb *planGraphBuilder) handleShow(pbi PlanBuilderInput) error {
+func (pgb *planGraphBuilder) handleShow(pbi planbuilderinput.PlanBuilderInput) error {
 	handlerCtx := pbi.GetHandlerCtx()
 	node, ok := pbi.GetShow()
 	if !ok {
@@ -827,7 +650,7 @@ func (pgb *planGraphBuilder) handleShow(pbi PlanBuilderInput) error {
 	return nil
 }
 
-func (pgb *planGraphBuilder) handleSleep(pbi PlanBuilderInput) error {
+func (pgb *planGraphBuilder) handleSleep(pbi planbuilderinput.PlanBuilderInput) error {
 	handlerCtx := pbi.GetHandlerCtx()
 	node, ok := pbi.GetSleep()
 	if !ok {
@@ -841,7 +664,7 @@ func (pgb *planGraphBuilder) handleSleep(pbi PlanBuilderInput) error {
 	return nil
 }
 
-func (pgb *planGraphBuilder) handleUse(pbi PlanBuilderInput) error {
+func (pgb *planGraphBuilder) handleUse(pbi planbuilderinput.PlanBuilderInput) error {
 	handlerCtx := pbi.GetHandlerCtx()
 	node, ok := pbi.GetUse()
 	if !ok {

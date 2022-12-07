@@ -266,24 +266,22 @@ func (eng *sqLiteDialect) generateDDL(relationalTable relationaldto.RelationalTa
 	return retVal, nil
 }
 
-func (eng *sqLiteDialect) ViewExists(viewName string) bool {
-	return eng.viewExists(viewName)
+func (eng *sqLiteDialect) GetViewByName(viewName string) (internaldto.ViewDTO, bool) {
+	return eng.getViewByName(viewName)
 }
 
-func (eng *sqLiteDialect) viewExists(viewName string) bool {
-	q := `SELECT count(*) AS view_count FROM "__iql__.views" WHERE view_name = ? and deleted_dttm IS NULL`
+func (eng *sqLiteDialect) getViewByName(viewName string) (internaldto.ViewDTO, bool) {
+	q := `SELECT view_ddl FROM "__iql__.views" WHERE view_name = ? and deleted_dttm IS NULL`
 	row := eng.sqlEngine.QueryRow(q, viewName)
 	if row != nil {
-		var viewCount int
-		err := row.Scan(&viewCount)
+		var viewDDL string
+		err := row.Scan(&viewDDL)
 		if err != nil {
-			return false
+			return nil, false
 		}
-		if viewCount == 1 {
-			return true
-		}
+		return internaldto.NewViewDTO(viewDDL), true
 	}
-	return false
+	return nil, false
 }
 
 func (eng *sqLiteDialect) CreateView(viewName string, rawDDL string, translatedDDL string) error {

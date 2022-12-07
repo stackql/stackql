@@ -8,6 +8,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
+	"github.com/stackql/stackql/internal/stackql/planbuilderinput"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/util"
 
@@ -17,7 +18,7 @@ import (
 )
 
 func (p *primitiveGenerator) assembleUnarySelectionBuilder(
-	pbi PlanBuilderInput,
+	pbi planbuilderinput.PlanBuilderInput,
 	handlerCtx handler.HandlerContext,
 	node sqlparser.SQLNode,
 	rewrittenWhere *sqlparser.Where,
@@ -79,7 +80,7 @@ func (p *primitiveGenerator) assembleUnarySelectionBuilder(
 }
 
 func (p *primitiveGenerator) analyzeUnarySelection(
-	pbi PlanBuilderInput,
+	pbi planbuilderinput.PlanBuilderInput,
 	handlerCtx handler.HandlerContext,
 	node sqlparser.SQLNode,
 	rewrittenWhere *sqlparser.Where,
@@ -123,8 +124,10 @@ func (p *primitiveGenerator) analyzeUnarySelection(
 	insertTabulation := itemObjS.Tabulate(false)
 
 	hIds := internaldto.NewHeirarchyIdentifiers(provStr, svcStr, itemObjS.GetName(), "")
-	isView := handlerCtx.GetSQLDialect().ViewExists(hIds.GetTableName())
-	hIds = hIds.WithIsView(isView)
+	viewDTO, isView := handlerCtx.GetSQLDialect().GetViewByName(hIds.GetTableName())
+	if isView {
+		hIds = hIds.WithView(viewDTO)
+	}
 	selectTabulation := itemObjS.Tabulate(true)
 
 	return p.assembleUnarySelectionBuilder(

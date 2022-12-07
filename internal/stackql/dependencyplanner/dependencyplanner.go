@@ -111,7 +111,7 @@ func (dp *standardDependencyPlanner) Plan() error {
 			}
 			tableExpr := unit.GetTableExpr()
 			annotation := unit.GetAnnotation()
-			if annotation.IsView() {
+			if _, isView := annotation.GetView(); isView {
 				return fmt.Errorf("error in dependency planning: views in progress")
 			}
 			dp.annMap[tableExpr] = annotation
