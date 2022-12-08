@@ -42,7 +42,8 @@ ENV SRC_DIR=/work/stackql/src
 
 ENV BUILD_DIR=/work/stackql/build
 
-RUN   cd ${SRC_DIR} && go test --tags "json1 sqleanall" ./... \
+RUN   cd ${SRC_DIR} \
+      && go test --tags "json1 sqleanall" ./... \
       && go build -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion=$BUILDMAJORVERSION \
           -X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion=$BUILDMINORVERSION \
           -X github.com/stackql/stackql/internal/stackql/cmd.BuildPatchVersion=$BUILDPATCHVERSION \
