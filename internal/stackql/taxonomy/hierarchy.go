@@ -6,6 +6,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/astformat"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internaldto"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 
@@ -16,7 +17,7 @@ import (
 	"vitess.io/vitess/go/vt/sqlparser"
 )
 
-func GetHeirarchyIDs(handlerCtx handler.HandlerContext, node sqlparser.SQLNode) (internaldto.HeirarchyIdentifiers, error) {
+func GetHeirarchyIDsFromParserNode(handlerCtx handler.HandlerContext, node sqlparser.SQLNode) (internaldto.HeirarchyIdentifiers, error) {
 	return getHids(handlerCtx, node)
 }
 
@@ -65,9 +66,11 @@ func getHids(handlerCtx handler.HandlerContext, node sqlparser.SQLNode) (interna
 	default:
 		return nil, fmt.Errorf("cannot resolve taxonomy")
 	}
-	isView := handlerCtx.GetSQLDialect().ViewExists(hIds.GetTableName())
-	hIds = hIds.WithIsView(isView)
-	if !(hIds.IsView()) && hIds.GetProviderStr() == "" {
+	viewDTO, isView := handlerCtx.GetSQLDialect().GetViewByName(hIds.GetTableName())
+	if isView {
+		hIds = hIds.WithView(viewDTO)
+	}
+	if !(isView) && hIds.GetProviderStr() == "" {
 		if handlerCtx.GetCurrentProvider() == "" {
 			return nil, fmt.Errorf("No provider selected, please set a provider using the USE command, or specify a three part object identifier in your IQL query")
 		}
@@ -147,8 +150,10 @@ func GetHeirarchyFromStatement(handlerCtx handler.HandlerContext, node sqlparser
 		return nil, remainingParams, fmt.Errorf("cannot resolve taxonomy")
 	}
 	retVal := tablemetadata.NewHeirarchyObjects(hIds)
-	if retVal.IsView() {
+	viewDTO, isView := retVal.GetView()
+	if isView {
 		// return retVal, remainingParams, fmt.Errorf("error extracting hierarchy: views not yet supported")
+		logging.GetLogger().Debugf("viewDTO = %v\n", viewDTO)
 		return retVal, remainingParams, nil
 	}
 	prov, err := handlerCtx.GetProvider(hIds.GetProviderStr())

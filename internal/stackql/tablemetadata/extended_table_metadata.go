@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/stackql/stackql/internal/stackql/httpbuild"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/provider"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
@@ -42,7 +43,7 @@ type ExtendedTableMetadata interface {
 	GetUniqueId() string
 	IsLocallyExecutable() bool
 	IsSimple() bool
-	IsView() bool
+	GetView() (internaldto.ViewDTO, bool)
 	LookupSelectItemsKey() string
 	SetSelectItemsKey(string)
 	SetTableFilter(f func(openapistackql.ITable) (openapistackql.ITable, error))
@@ -124,8 +125,8 @@ func (ex *standardExtendedTableMetadata) IsSimple() bool {
 	return ex.isSimple()
 }
 
-func (ex *standardExtendedTableMetadata) IsView() bool {
-	return ex.heirarchyObjects.IsView()
+func (ex *standardExtendedTableMetadata) GetView() (internaldto.ViewDTO, bool) {
+	return ex.heirarchyObjects.GetView()
 }
 
 func (ex *standardExtendedTableMetadata) isSimple() bool {

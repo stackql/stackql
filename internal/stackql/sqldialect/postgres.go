@@ -230,24 +230,22 @@ func (eng *postgresDialect) createView(viewName string, rawDDL string, translate
 	return nil
 }
 
-func (eng *postgresDialect) ViewExists(viewName string) bool {
-	return eng.viewExists(viewName)
+func (eng *postgresDialect) GetViewByName(viewName string) (internaldto.ViewDTO, bool) {
+	return eng.getViewByName(viewName)
 }
 
-func (eng *postgresDialect) viewExists(viewName string) bool {
-	q := `SELECT count(*) AS view_count FROM "__iql__.views" WHERE view_name = $1 and deleted_dttm IS NULL`
+func (eng *postgresDialect) getViewByName(viewName string) (internaldto.ViewDTO, bool) {
+	q := `SELECT view_ddl FROM "__iql__.views" WHERE view_name = $1 and deleted_dttm IS NULL`
 	row := eng.sqlEngine.QueryRow(q, viewName)
 	if row != nil {
-		var viewCount int
-		err := row.Scan(&viewCount)
+		var viewDDL string
+		err := row.Scan(&viewDDL)
 		if err != nil {
-			return false
+			return nil, false
 		}
-		if viewCount == 1 {
-			return true
-		}
+		return internaldto.NewViewDTO(viewDDL), true
 	}
-	return false
+	return nil, false
 }
 
 func (eng *postgresDialect) GetGCHousekeepingQuery(tableName string, tcc internaldto.TxnControlCounters) string {

@@ -5,6 +5,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/httpbuild"
 	"github.com/stackql/stackql/internal/stackql/internaldto"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/streaming"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/util"
@@ -15,7 +16,7 @@ import (
 type AnnotationCtx interface {
 	GetHIDs() internaldto.HeirarchyIdentifiers
 	IsDynamic() bool
-	IsView() bool
+	GetView() (internaldto.ViewDTO, bool)
 	GetInputTableName() (string, error)
 	GetParameters() map[string]interface{}
 	GetSchema() *openapistackql.Schema
@@ -26,7 +27,6 @@ type AnnotationCtx interface {
 
 type standardAnnotationCtx struct {
 	isDynamic  bool
-	isView     bool
 	schema     *openapistackql.Schema
 	hIDs       internaldto.HeirarchyIdentifiers
 	tableMeta  tablemetadata.ExtendedTableMetadata
@@ -52,8 +52,8 @@ func (ac *standardAnnotationCtx) IsDynamic() bool {
 	return ac.isDynamic
 }
 
-func (ac *standardAnnotationCtx) IsView() bool {
-	return ac.hIDs.IsView()
+func (ac *standardAnnotationCtx) GetView() (internaldto.ViewDTO, bool) {
+	return ac.hIDs.GetView()
 }
 
 func (ac *standardAnnotationCtx) SetDynamic() {
@@ -76,8 +76,13 @@ func (ac *standardAnnotationCtx) Prepare(
 	if err != nil {
 		return err
 	}
+	// LAZY EVAL if dynamic
 	if ac.isDynamic {
-		// LAZY EVAL
+		viewDTO, isView := ac.GetView()
+		// TODO: fill this out
+		if isView {
+			logging.GetLogger().Debugf("viewDTO = %v\n", viewDTO)
+		}
 		ac.tableMeta.WithGetHttpArmoury(
 			func() (httpbuild.HTTPArmoury, error) {
 				httpArmoury, err := httpbuild.BuildHTTPRequestCtxFromAnnotation(stream, pr, opStore, svc, nil, nil)

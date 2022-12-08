@@ -21,7 +21,7 @@ type HeirarchyObjects interface {
 	GetSelectableObjectSchema() (*openapistackql.Schema, error)
 	GetSelectSchemaAndObjectPath() (*openapistackql.Schema, string, error)
 	GetTableName() string
-	IsView() bool
+	GetView() (internaldto.ViewDTO, bool)
 	LookupSelectItemsKey() string
 	SetProvider(provider.IProvider)
 	// De facto inheritance
@@ -53,8 +53,8 @@ func (ho *standardHeirarchyObjects) GetServiceHdl() *openapistackql.Service {
 	return ho.hr.GetServiceHdl()
 }
 
-func (ho *standardHeirarchyObjects) IsView() bool {
-	return ho.heirarchyIds.IsView()
+func (ho *standardHeirarchyObjects) GetView() (internaldto.ViewDTO, bool) {
+	return ho.heirarchyIds.GetView()
 }
 
 func (ho *standardHeirarchyObjects) GetResource() *openapistackql.Resource {

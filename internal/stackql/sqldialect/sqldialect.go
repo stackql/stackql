@@ -66,7 +66,7 @@ type SQLDialect interface {
 
 	// Views
 	CreateView(viewName string, rawDDL string, translatedDDL string) error
-	ViewExists(viewName string) bool
+	GetViewByName(viewName string) (internaldto.ViewDTO, bool)
 }
 
 func getNodeFormatter(name string) sqlparser.NodeFormatter {

@@ -263,6 +263,8 @@ jobs:
         BUILDBRANCH: ${{github.ref}}
         BUILDPLATFORM: ${{runner.os}}
         BUILDPATCHVERSION: ${{github.run_number}}
+        CGO_ENABLED: 1
+        CGO_LDFLAGS: '-static'
       run: |
         source version.txt
         BUILDMAJORVERSION=$MajorVersion

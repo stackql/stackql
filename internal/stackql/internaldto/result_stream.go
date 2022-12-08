@@ -6,16 +6,16 @@ type RawResult interface {
 	GetMap() (RawMap, error)
 }
 
-type SimpleRawResult struct {
+type simpleRawResult struct {
 	m RawMap
 }
 
-func (rr *SimpleRawResult) GetMap() (RawMap, error) {
+func (rr *simpleRawResult) GetMap() (RawMap, error) {
 	return rr.m, nil
 }
 
 func createSimpleRawResult(m RawMap) RawResult {
-	return &SimpleRawResult{
+	return &simpleRawResult{
 		m: m,
 	}
 }

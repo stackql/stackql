@@ -122,6 +122,7 @@ func (ss *SingleSelectAcquire) Build() error {
 		currentTcc := ss.insertPreparedStatementCtx.GetGCCtrlCtrs().Clone()
 		ss.graph.AddTxnControlCounters(currentTcc)
 		mr := prov.InferMaxResultsElement(m)
+		// TODO: instrument for view
 		httpArmoury, err := ss.tableMeta.GetHttpArmoury()
 		if err != nil {
 			return internaldto.NewErroneousExecutorOutput(err)
