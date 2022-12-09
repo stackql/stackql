@@ -711,3 +711,18 @@ Weird ID WSL bug query
     ...    ${SELECT_SUMOLOGIC_COLLECTORS_IDS}
     ...    ${SELECT_SUMOLOGIC_COLLECTORS_IDS_EXPECTED}
     ...    ${CURDIR}/tmp/Weird-ID-WSL-bug-query.tmp
+
+
+HTTP Log enabled regression test
+    Pass Execution If    "${EXECUTION_PLATFORM}" == "docker"    TODO: FIX THIS... Skipping docker test because of arg pass nonsense
+    Should Horrid HTTP Log Enabled Query StackQL Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}    
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${SELECT_SUMOLOGIC_COLLECTORS_IDS}
+    ...    ${SELECT_SUMOLOGIC_COLLECTORS_IDS_EXPECTED}
+    ...    ${CURDIR}/tmp/HTTP-Log-enabled-regression-test.tmp

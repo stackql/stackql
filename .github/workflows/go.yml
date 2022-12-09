@@ -347,6 +347,84 @@ jobs:
         name: stackql_linux_amd64
         path: build/stackql
 
+  wsltest:
+    name: WSL Test
+    runs-on: windows-latest
+    needs: linuxbuild
+    steps:
+
+    - name: Get rid of disruptive line endings before checkout
+      run: |
+        git config --global core.autocrlf false
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v3
+
+    - name: Download Artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: stackql_linux_amd64
+        path: build
+    
+    - name: Setup WSL with dependencies
+      uses: Vampire/setup-wsl@v1
+      with:
+        additional-packages:
+          maven
+          openjdk-11-jre
+          openssl
+          postgresql
+          python3
+          python3-pip
+        wsl-conf: |
+          [automount]
+          options = "metadata"
+
+    - shell: wsl-bash -u root {0}
+      name: Stackql permissions
+      run:  |
+        chmod a+rwx build/stackql
+        ls -al build/stackql
+
+    - shell: wsl-bash -u root {0}
+      name: Install Python dependencies
+      run: pip3 install -r requirements.txt
+    
+    - shell: wsl-bash {0}
+      name: Generate rewritten registry for simulations
+      run: python3 test/python/registry-rewrite.py
+
+    - shell: wsl-bash {0}
+      name: Mock Server Download
+      run: |
+          mvn \
+          org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy \
+          -Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded \
+          -DoutputDirectory=test/downloads
+
+    - shell: wsl-bash {0}
+      name: Create certificates for robot tests
+      run: |
+          openssl req -x509 -keyout test/server/mtls/credentials/pg_server_key.pem -out test/server/mtls/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
+          openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
+          openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365 
+
+    - shell: wsl-bash {0}
+      name: Run robot mocked functional tests
+      run: |
+          robot --variable IS_WSL:true test/robot/functional
+
+    - shell: wsl-bash {0}
+      name: Output from mocked functional tests
+      run: |
+          cat ./output.xml
+    
+    - shell: wsl-bash {0}
+      name: Run robot integration tests
+      run: |
+          robot --variable IS_WSL:true test/robot/integration
+
+
   macosbuild:
     name: MacOS Build
     runs-on: macos-11

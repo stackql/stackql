@@ -286,6 +286,8 @@ func (hc *standardHandlerContext) Clone() HandlerContext {
 		sqlEngine:           hc.sqlEngine,
 		sqlDialect:          hc.sqlDialect,
 		garbageCollector:    hc.garbageCollector,
+		outErrFile:          hc.outErrFile,
+		outfile:             hc.outfile,
 		txnCounterMgr:       hc.txnCounterMgr,
 		txnStore:            hc.txnStore,
 		namespaceCollection: hc.namespaceCollection,
