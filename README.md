@@ -127,7 +127,7 @@ export STACKQL_AUTH='{ "google": { "credentialsfilepath": "</path/to/google/sa-k
 #### Docker single query
 
 ```bash
-docker-compose run --rm stackqlsrv "bash" "-c" "stackql exec 'show providers;'"
+docker compose run --rm stackqlsrv "bash" "-c" "stackql exec 'show providers;'"
 ```
 
 #### Docker interactive shell
@@ -140,7 +140,7 @@ export DOCKER_AUTH_STR='{ "google": { "credentialsfilepath": "/opt/stackql/keys/
 
 export DOCKER_REG_CFG='{ "url": "https://cdn.statically.io/gh/stackql/stackql-provider-registry/dev/providers" }'
 
-docker-compose -p shellrun run --rm -e OKTA_SECRET_KEY=some-dummy-api-key -e GITHUB_SECRET_KEY=some-dummy-github-key -e K8S_SECRET_KEY=some-k8s-token -e REGISTRY_SRC=test/registry-mocked stackqlsrv bash -c "stackql shell --registry='${DOCKER_REG_CFG}' --auth='${DOCKER_AUTH_STR}'"
+docker compose -p shellrun run --rm -e OKTA_SECRET_KEY=some-dummy-api-key -e GITHUB_SECRET_KEY=some-dummy-github-key -e K8S_SECRET_KEY=some-k8s-token -e REGISTRY_SRC=test/registry-mocked stackqlsrv bash -c "stackql shell --registry='${DOCKER_REG_CFG}' --auth='${DOCKER_AUTH_STR}'"
 ```
 
 #### Docker PG Server
@@ -164,7 +164,7 @@ psql -d "host=127.0.0.1 port=5576 user=myuser sslmode=verify-full sslcert=./vol/
 When finished, clean up with:
 
 ```bash
-docker-compose down
+docker compose down
 ```
 
 

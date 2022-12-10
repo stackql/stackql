@@ -3,7 +3,7 @@ Resource          ${CURDIR}/stackql.resource
 
 *** Test Cases *** 
 Shell Session Simple
-    Pass Execution If    "${IS_WINDOWS}" == "1" or "${IS_WSL}" == "true"    Skipping session test in windows and WSL
+    Pass Execution If    "${IS_WINDOWS}" == "1"    Skipping session test in windows
     Should StackQL Shell Inline Equal
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -18,7 +18,7 @@ Shell Session Simple
     [Teardown]    Stackql Per Test Teardown
 
 Shell Session Azure Compute Table Nomenclature Mutation Guard
-    Pass Execution If    "${IS_WINDOWS}" == "1" or "${IS_WSL}" == "true"    Skipping session test in windows and WSL
+    Pass Execution If    "${IS_WINDOWS}" == "1"    Skipping session test in windows
     Should StackQL Shell Inline Equal
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
