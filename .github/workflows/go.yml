@@ -412,6 +412,19 @@ jobs:
     - shell: wsl-bash {0}
       name: Run robot mocked functional tests
       run: |
+          . version.txt
+          export BUILDBRANCH="${{github.ref}}"
+          export BUILDPATCHVERSION="${{github.run_number}}"
+          export BUILDMAJORVERSION=$MajorVersion
+          export BUILDMINORVERSION=$MinorVersion
+          echo "BUILDBRANCH=$BUILDBRANCH"
+          echo "BUILDMAJORVERSION=$BUILDMAJORVERSION"
+          echo "BUILDMINORVERSION=$BUILDMINORVERSION"
+          echo "BUILDPATCHVERSION=$BUILDPATCHVERSION"
+          if [[ ! "$BUILDBRANCH" == *develop ]]
+            then
+            export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
+          fi
           robot --variable IS_WSL:true test/robot/functional
 
     - shell: wsl-bash {0}
@@ -422,6 +435,19 @@ jobs:
     - shell: wsl-bash {0}
       name: Run robot integration tests
       run: |
+          . version.txt
+          export BUILDBRANCH="${{github.ref}}"
+          export BUILDPATCHVERSION="${{github.run_number}}"
+          export BUILDMAJORVERSION=$MajorVersion
+          export BUILDMINORVERSION=$MinorVersion
+          echo "BUILDBRANCH=$BUILDBRANCH"
+          echo "BUILDMAJORVERSION=$BUILDMAJORVERSION"
+          echo "BUILDMINORVERSION=$BUILDMINORVERSION"
+          echo "BUILDPATCHVERSION=$BUILDPATCHVERSION"
+          if [[ ! "$BUILDBRANCH" == *develop ]]
+            then
+            export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
+          fi
           robot --variable IS_WSL:true test/robot/integration
 
 

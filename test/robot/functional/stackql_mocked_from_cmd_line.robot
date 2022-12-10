@@ -714,7 +714,6 @@ Weird ID WSL bug query
 
 
 HTTP Log enabled regression test
-    Pass Execution If    "${EXECUTION_PLATFORM}" == "docker"    TODO: FIX THIS... Skipping docker test because of arg pass nonsense
     Should Horrid HTTP Log Enabled Query StackQL Inline Equal
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}

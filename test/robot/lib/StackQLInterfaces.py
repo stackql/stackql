@@ -231,7 +231,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     supplied_args = supplied_args + transformed_args
     os.environ['REGISTRY_SRC']= f'./{reg_location}'
     start_cmd = [
-      "docker-compose",
+      "docker", 
+      "compose",
       "-p",
       "stackqlshell",
       "run",
@@ -672,6 +673,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     expected_output :str,
     stdout_tmp_file :str,
   ):
+    args = ("--http.log.enabled",)
     result = self._run_stackql_exec_command(
       stackql_exe, 
       okta_secret_str,
@@ -681,7 +683,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       auth_cfg_str, 
       sql_backend_cfg_str,
       query,
-      "--http.log.enabled",
+      *args,
       **{"stdout": stdout_tmp_file }
     )
     return self.should_be_equal(result.stdout, expected_output)
