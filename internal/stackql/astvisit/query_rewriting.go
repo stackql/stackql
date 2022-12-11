@@ -7,6 +7,7 @@ import (
 	"vitess.io/vitess/go/vt/sqlparser"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
+	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internaldto"
@@ -19,13 +20,80 @@ import (
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 )
 
-func (v *QueryRewriteAstVisitor) getNextAlias() string {
+var (
+	_ QueryRewriteAstVisitor = &standardQueryRewriteAstVisitor{}
+)
+
+type QueryRewriteAstVisitor interface {
+	sqlparser.SQLAstVisitor
+	GenerateSelectDML() (drm.PreparedStatementCtx, error)
+	WithFormatter(formatter sqlparser.NodeFormatter) QueryRewriteAstVisitor
+}
+
+type standardQueryRewriteAstVisitor struct {
+	handlerCtx            handler.HandlerContext
+	dc                    drm.DRMConfig
+	tables                taxonomy.TblMap
+	annotations           taxonomy.AnnotationCtxMap
+	discoGenIDs           map[sqlparser.SQLNode]int
+	annotatedTabulations  taxonomy.AnnotatedTabulationMap
+	selectCtx             drm.PreparedStatementCtx
+	baseCtrlCounters      internaldto.TxnControlCounters
+	secondaryCtrlCounters []internaldto.TxnControlCounters
+	colRefs               parserutil.ColTableMap
+	columnNames           []parserutil.ColumnHandle
+	columnDescriptors     []openapistackql.ColumnDescriptor
+	tableSlice            []tableinsertioncontainer.TableInsertionContainer
+	namespaceCollection   tablenamespace.TableNamespaceCollection
+	formatter             sqlparser.NodeFormatter
+	annotatedAST          annotatedast.AnnotatedAst
+	//
+	fromStr       string
+	whereExprsStr string
+	selectSuffix  string
+	// singe threaded, so no mutex protection
+	anonColCounter int
+}
+
+func NewQueryRewriteAstVisitor(
+	annotatedAST annotatedast.AnnotatedAst,
+	handlerCtx handler.HandlerContext,
+	tables taxonomy.TblMap,
+	tableSlice []tableinsertioncontainer.TableInsertionContainer,
+	annotations taxonomy.AnnotationCtxMap,
+	discoGenIDs map[sqlparser.SQLNode]int,
+	colRefs parserutil.ColTableMap,
+	dc drm.DRMConfig,
+	txnCtrlCtrs internaldto.TxnControlCounters,
+	secondaryTccs []internaldto.TxnControlCounters,
+	rewrittenWhere string,
+	namespaceCollection tablenamespace.TableNamespaceCollection,
+) QueryRewriteAstVisitor {
+	rv := &standardQueryRewriteAstVisitor{
+		annotatedAST:          annotatedAST,
+		handlerCtx:            handlerCtx,
+		tables:                tables,
+		tableSlice:            tableSlice,
+		annotations:           annotations,
+		discoGenIDs:           discoGenIDs,
+		annotatedTabulations:  make(taxonomy.AnnotatedTabulationMap),
+		colRefs:               colRefs,
+		dc:                    dc,
+		baseCtrlCounters:      txnCtrlCtrs,
+		secondaryCtrlCounters: secondaryTccs,
+		whereExprsStr:         rewrittenWhere,
+		namespaceCollection:   namespaceCollection,
+	}
+	return rv
+}
+
+func (v *standardQueryRewriteAstVisitor) getNextAlias() string {
 	v.anonColCounter++
 	i := v.anonColCounter
 	return fmt.Sprintf("col_%d", i)
 }
 
-func (v *QueryRewriteAstVisitor) getStarColumns(
+func (v *standardQueryRewriteAstVisitor) getStarColumns(
 	tbl tablemetadata.ExtendedTableMetadata,
 ) ([]openapistackql.ColumnDescriptor, error) {
 	schema, _, err := tbl.GetResponseSchemaAndMediaType()
@@ -34,7 +102,7 @@ func (v *QueryRewriteAstVisitor) getStarColumns(
 	}
 	itemObjS, selectItemsKey, err := tbl.GetSelectSchemaAndObjectPath()
 	tbl.SetSelectItemsKey(selectItemsKey)
-	unsuitableSchemaMsg := "QueryRewriteAstVisitor.getStarColumns(): schema unsuitable for select query"
+	unsuitableSchemaMsg := "standardQueryRewriteAstVisitor.getStarColumns(): schema unsuitable for select query"
 	if err != nil {
 		return nil, fmt.Errorf(unsuitableSchemaMsg)
 	}
@@ -53,7 +121,7 @@ func (v *QueryRewriteAstVisitor) getStarColumns(
 	return columnDescriptors, nil
 }
 
-func (v *QueryRewriteAstVisitor) GenerateSelectDML() (drm.PreparedStatementCtx, error) {
+func (v *standardQueryRewriteAstVisitor) GenerateSelectDML() (drm.PreparedStatementCtx, error) {
 	rewriteInput := sqlrewrite.NewStandardSQLRewriteInput(
 		v.dc,
 		v.columnDescriptors,
@@ -69,86 +137,34 @@ func (v *QueryRewriteAstVisitor) GenerateSelectDML() (drm.PreparedStatementCtx, 
 	return sqlrewrite.GenerateSelectDML(rewriteInput)
 }
 
-type QueryRewriteAstVisitor struct {
-	handlerCtx            handler.HandlerContext
-	dc                    drm.DRMConfig
-	tables                taxonomy.TblMap
-	annotations           taxonomy.AnnotationCtxMap
-	discoGenIDs           map[sqlparser.SQLNode]int
-	annotatedTabulations  taxonomy.AnnotatedTabulationMap
-	selectCtx             drm.PreparedStatementCtx
-	baseCtrlCounters      internaldto.TxnControlCounters
-	secondaryCtrlCounters []internaldto.TxnControlCounters
-	colRefs               parserutil.ColTableMap
-	columnNames           []parserutil.ColumnHandle
-	columnDescriptors     []openapistackql.ColumnDescriptor
-	tableSlice            []tableinsertioncontainer.TableInsertionContainer
-	namespaceCollection   tablenamespace.TableNamespaceCollection
-	formatter             sqlparser.NodeFormatter
-	//
-	fromStr       string
-	whereExprsStr string
-	selectSuffix  string
-	// singe threaded, so no mutex protection
-	anonColCounter int
-}
+// Need not be view-aware.
 
-func NewQueryRewriteAstVisitor(
-	handlerCtx handler.HandlerContext,
-	tables taxonomy.TblMap,
-	tableSlice []tableinsertioncontainer.TableInsertionContainer,
-	annotations taxonomy.AnnotationCtxMap,
-	discoGenIDs map[sqlparser.SQLNode]int,
-	colRefs parserutil.ColTableMap,
-	dc drm.DRMConfig,
-	txnCtrlCtrs internaldto.TxnControlCounters,
-	secondaryTccs []internaldto.TxnControlCounters,
-	rewrittenWhere string,
-	namespaceCollection tablenamespace.TableNamespaceCollection,
-) *QueryRewriteAstVisitor {
-	rv := &QueryRewriteAstVisitor{
-		handlerCtx:            handlerCtx,
-		tables:                tables,
-		tableSlice:            tableSlice,
-		annotations:           annotations,
-		discoGenIDs:           discoGenIDs,
-		annotatedTabulations:  make(taxonomy.AnnotatedTabulationMap),
-		colRefs:               colRefs,
-		dc:                    dc,
-		baseCtrlCounters:      txnCtrlCtrs,
-		secondaryCtrlCounters: secondaryTccs,
-		whereExprsStr:         rewrittenWhere,
-		namespaceCollection:   namespaceCollection,
-	}
-	return rv
-}
-
-func (v *QueryRewriteAstVisitor) WithFormatter(formatter sqlparser.NodeFormatter) *QueryRewriteAstVisitor {
+func (v *standardQueryRewriteAstVisitor) WithFormatter(formatter sqlparser.NodeFormatter) QueryRewriteAstVisitor {
 	v.formatter = formatter
 	return v
 }
 
-func (v *QueryRewriteAstVisitor) GetTableMap() taxonomy.TblMap {
+func (v *standardQueryRewriteAstVisitor) GetTableMap() taxonomy.TblMap {
 	return v.tables
 }
 
-func (v *QueryRewriteAstVisitor) GetColumnDescriptors() []openapistackql.ColumnDescriptor {
+func (v *standardQueryRewriteAstVisitor) GetColumnDescriptors() []openapistackql.ColumnDescriptor {
 	return v.columnDescriptors
 }
 
-func (v *QueryRewriteAstVisitor) GetSelectContext() (drm.PreparedStatementCtx, bool) {
+func (v *standardQueryRewriteAstVisitor) GetSelectContext() (drm.PreparedStatementCtx, bool) {
 	if v.selectCtx != nil {
 		return v.selectCtx, true
 	}
 	return nil, false
 }
 
-func (v *QueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
+func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 	var err error
 
 	switch node := node.(type) {
 	case *sqlparser.Select:
-		v.selectSuffix = GenerateModifiedSelectSuffix(node, v.handlerCtx.GetSQLDialect(), v.handlerCtx.GetASTFormatter(), v.namespaceCollection)
+		v.selectSuffix = GenerateModifiedSelectSuffix(v.annotatedAST, node, v.handlerCtx.GetSQLDialect(), v.handlerCtx.GetASTFormatter(), v.namespaceCollection)
 		var options string
 		addIf := func(b bool, s string) {
 			if b {
@@ -180,7 +196,7 @@ func (v *QueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			if err != nil {
 				return err
 			}
-			fromVis := NewFromRewriteAstVisitor("", true, v.handlerCtx.GetSQLDialect(), v.formatter, v.namespaceCollection, v.annotations, v.dc)
+			fromVis := NewFromRewriteAstVisitor(v.annotatedAST, "", true, v.handlerCtx.GetSQLDialect(), v.formatter, v.namespaceCollection, v.annotations, v.dc)
 			if node.From != nil {
 				node.From.Accept(fromVis)
 				v.fromStr = fromVis.GetRewrittenQuery()

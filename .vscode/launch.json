@@ -109,8 +109,6 @@
         "{ \"tableRegex\": \"(?i)^(?:public\\\\.)?(?:pg_.*|current_schema|information_schema)\" }"
       ]
     }
-    // dbInternalString
-    // 
   ],
   "configurations": [
     // ATTACH

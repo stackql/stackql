@@ -4,27 +4,42 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"vitess.io/vitess/go/sqltypes"
 	"vitess.io/vitess/go/vt/sqlparser"
 )
 
+var (
+	_ ParserPlaceholderParamAstVisitor = &standardParserPlaceholderParamAstVisitor{}
+)
+
 // Extracts "parameters" with null values for subsequent analyses.
-type PlaceholderParamAstVisitor struct {
-	params parserutil.ParameterMap
+// TODO: must be view-aware **but** scoped at statement level.
+//   - View internal parameters scoped only to objects immediately inside view.
+//   - Parameters in parent statement can only reference data exposed by view.
+type ParserPlaceholderParamAstVisitor interface {
+	sqlparser.SQLAstVisitor
+	GetParameters() parserutil.ParameterMap
 }
 
-func NewPlaceholderParamAstVisitor(iDColumnName string, shouldCollectTables bool) *PlaceholderParamAstVisitor {
-	return &PlaceholderParamAstVisitor{
-		params: parserutil.NewParameterMap(),
+type standardParserPlaceholderParamAstVisitor struct {
+	params       parserutil.ParameterMap
+	annotatedAST annotatedast.AnnotatedAst
+}
+
+func NewPlaceholderParamAstVisitor(annotatedAST annotatedast.AnnotatedAst, iDColumnName string, shouldCollectTables bool) ParserPlaceholderParamAstVisitor {
+	return &standardParserPlaceholderParamAstVisitor{
+		annotatedAST: annotatedAST,
+		params:       parserutil.NewParameterMap(),
 	}
 }
 
-func (v *PlaceholderParamAstVisitor) GetParameters() parserutil.ParameterMap {
+func (v *standardParserPlaceholderParamAstVisitor) GetParameters() parserutil.ParameterMap {
 	return v.params
 }
 
-func (v *PlaceholderParamAstVisitor) GetStringifiedParameters() map[string]interface{} {
+func (v *standardParserPlaceholderParamAstVisitor) GetStringifiedParameters() map[string]interface{} {
 	rv := make(map[string]interface{})
 	for k, v := range v.params.GetMap() {
 		rv[k.String()] = v
@@ -32,7 +47,7 @@ func (v *PlaceholderParamAstVisitor) GetStringifiedParameters() map[string]inter
 	return rv
 }
 
-func (v *PlaceholderParamAstVisitor) Visit(node sqlparser.SQLNode) error {
+func (v *standardParserPlaceholderParamAstVisitor) Visit(node sqlparser.SQLNode) error {
 	buf := sqlparser.NewTrackedBuffer(nil)
 	var err error
 

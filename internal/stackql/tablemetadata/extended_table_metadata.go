@@ -194,7 +194,7 @@ func (ex *standardExtendedTableMetadata) GetResponseSchemaAndMediaType() (*opena
 	if ex.isSimple() {
 		return ex.heirarchyObjects.GetResponseSchemaAndMediaType()
 	}
-	return nil, "", fmt.Errorf("subqueries currently not supported")
+	return nil, "", fmt.Errorf("error extracting response schema and media type: views not yet supported")
 }
 
 func (ex *standardExtendedTableMetadata) GetRequestSchema() (*openapistackql.Schema, error) {

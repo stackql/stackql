@@ -1,12 +1,13 @@
 package earlyanalysis
 
 import (
+	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/astvisit"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
-	"github.com/stackql/stackql/internal/stackql/parse"
 	"github.com/stackql/stackql/internal/stackql/planbuilderinput"
+	"github.com/stackql/stackql/internal/stackql/primitivegenerator"
 	"vitess.io/vitess/go/vt/sqlparser"
 )
 
@@ -21,7 +22,7 @@ const (
 )
 
 type Analyzer interface {
-	Analyze(handlerCtx handler.HandlerContext, tcc internaldto.TxnControlCounters) error
+	Analyze(statement sqlparser.Statement, handlerCtx handler.HandlerContext, tcc internaldto.TxnControlCounters) error
 }
 
 type InitialPassesScreener interface {
@@ -40,8 +41,10 @@ var (
 	_ InitialPassesScreenerAnalyzer = &standardInitialPasses{}
 )
 
-func NewEarlyScreenerAnalyzer() (InitialPassesScreenerAnalyzer, error) {
-	return &standardInitialPasses{}, nil
+func NewEarlyScreenerAnalyzer(primitiveGenerator primitivegenerator.PrimitiveGenerator) (InitialPassesScreenerAnalyzer, error) {
+	return &standardInitialPasses{
+		primitiveGenerator: primitiveGenerator,
+	}, nil
 }
 
 type standardInitialPasses struct {
@@ -49,6 +52,7 @@ type standardInitialPasses struct {
 	isCacheExemptMaterialDetected bool
 	planBuilderInput              planbuilderinput.PlanBuilderInput
 	result                        *sqlparser.RewriteASTResult
+	primitiveGenerator            primitivegenerator.PrimitiveGenerator
 }
 
 func (sp *standardInitialPasses) GetInstructionType() InstructionType {
@@ -67,17 +71,18 @@ func (sp *standardInitialPasses) IsCacheExemptMaterialDetected() bool {
 	return sp.isCacheExemptMaterialDetected
 }
 
-func (sp *standardInitialPasses) Analyze(handlerCtx handler.HandlerContext, tcc internaldto.TxnControlCounters) error {
-	return sp.initialPasses(handlerCtx, tcc)
+func (sp *standardInitialPasses) Analyze(statement sqlparser.Statement, handlerCtx handler.HandlerContext, tcc internaldto.TxnControlCounters) error {
+	return sp.initialPasses(statement, handlerCtx, tcc)
 }
 
-func (sp *standardInitialPasses) initialPasses(handlerCtx handler.HandlerContext, tcc internaldto.TxnControlCounters) error {
-	statement, err := parse.ParseQuery(handlerCtx.GetQuery())
+func (sp *standardInitialPasses) initialPasses(statement sqlparser.Statement, handlerCtx handler.HandlerContext, tcc internaldto.TxnControlCounters) error {
+
+	result, err := sqlparser.RewriteAST(statement)
+	sp.result = result
 	if err != nil {
 		return err
 	}
-	result, err := sqlparser.RewriteAST(statement)
-	sp.result = result
+	annotatedAST, err := annotatedast.NewAnnotatedAst(result.AST)
 	if err != nil {
 		return err
 	}
@@ -87,7 +92,17 @@ func (sp *standardInitialPasses) initialPasses(handlerCtx handler.HandlerContext
 	if ok {
 		sp.instructionType = InternallyRoutableInstruction
 		logging.GetLogger().Debugf("%v", opType)
-		pbi, err := planbuilderinput.NewPlanBuilderInput(handlerCtx, result.AST, nil, nil, nil, nil, nil, tcc.Clone())
+		pbi, err := planbuilderinput.NewPlanBuilderInput(
+			annotatedAST,
+			handlerCtx,
+			result.AST,
+			nil,
+			nil,
+			nil,
+			nil,
+			nil,
+			tcc.Clone(),
+		)
 		if err != nil {
 			return err
 		}
@@ -95,8 +110,19 @@ func (sp *standardInitialPasses) initialPasses(handlerCtx handler.HandlerContext
 		return nil
 	}
 
-	// First pass AST analysis; extract provider strings for auth.
-	provStrSlice, isCacheExemptMaterialDetected := astvisit.ExtractProviderStringsAndDetectCacheExceptMaterial(result.AST, handlerCtx.GetSQLDialect(), handlerCtx.GetASTFormatter(), handlerCtx.GetNamespaceCollection())
+	// First pass AST analysis; annotate and expand AST for indirects (views).
+	astExpandVisitor, err := newIndirectExpandAstVisitor(handlerCtx, annotatedAST, sp.primitiveGenerator, handlerCtx.GetSQLDialect(), handlerCtx.GetASTFormatter(), handlerCtx.GetNamespaceCollection(), tcc)
+	if err != nil {
+		return err
+	}
+	err = astExpandVisitor.Analyze()
+	if err != nil {
+		return err
+	}
+	annotatedAST = astExpandVisitor.GetAnnotatedAST()
+
+	// Second pass AST analysis; extract provider strings for auth.
+	provStrSlice, isCacheExemptMaterialDetected := astvisit.ExtractProviderStringsAndDetectCacheExemptMaterial(annotatedAST, annotatedAST.GetAST(), handlerCtx.GetSQLDialect(), handlerCtx.GetASTFormatter(), handlerCtx.GetNamespaceCollection())
 	sp.isCacheExemptMaterialDetected = isCacheExemptMaterialDetected
 	for _, p := range provStrSlice {
 		_, err := handlerCtx.GetProvider(p)
@@ -105,34 +131,44 @@ func (sp *standardInitialPasses) initialPasses(handlerCtx handler.HandlerContext
 		}
 	}
 
-	ast := result.AST
+	ast := annotatedAST.GetAST()
 
-	// Second pass AST analysis; extract provider strings for auth.
+	// Third pass AST analysis; extract parser table objects.
 	// Extracts:
 	//   - parser objects representing tables.
 	//   - mapping of string aliases to tables.
-	tVis := astvisit.NewTableExtractAstVisitor()
+	tVis := astvisit.NewTableExtractAstVisitor(annotatedAST)
 	tVis.Visit(ast)
 
-	// Third pass AST analysis.
+	// Fourth pass AST analysis.
 	// Accepts slice of parser table objects
 	// extracted from previous analysis.
 	// Extracts:
 	//   - Col Refs; mapping columnar objects to tables.
 	//   - Alias Map; mapping the "TableName" objects
 	//     defining aliases to table objects.
-	aVis := astvisit.NewTableAliasAstVisitor(tVis.GetTables())
+	aVis := astvisit.NewTableAliasAstVisitor(annotatedAST, tVis.GetTables())
 	aVis.Visit(ast)
 
-	// Fourth pass AST analysis.
+	// Fifth pass AST analysis.
 	// Extracts:
 	//   - Columnar parameters with null values.
 	//     Useful for method matching.
 	//     Especially for "Insert" queries.
-	tpv := astvisit.NewPlaceholderParamAstVisitor("", false)
+	tpv := astvisit.NewPlaceholderParamAstVisitor(annotatedAST, "", false)
 	tpv.Visit(ast)
 
-	pbi, err := planbuilderinput.NewPlanBuilderInput(handlerCtx, ast, tVis.GetTables(), aVis.GetAliasedColumns(), tVis.GetAliasMap(), aVis.GetColRefs(), tpv.GetParameters(), tcc.Clone())
+	pbi, err := planbuilderinput.NewPlanBuilderInput(
+		annotatedAST,
+		handlerCtx,
+		ast,
+		tVis.GetTables(),
+		aVis.GetAliasedColumns(),
+		tVis.GetAliasMap(),
+		aVis.GetColRefs(),
+		tpv.GetParameters(),
+		tcc.Clone(),
+	)
 	if err != nil {
 		return err
 	}
@@ -140,7 +176,17 @@ func (sp *standardInitialPasses) initialPasses(handlerCtx handler.HandlerContext
 	if sel, ok := planbuilderinput.IsPGSetupQuery(pbi); ok {
 		if sel != nil {
 			sp.instructionType = DummiedPGInstruction
-			pbi, err := planbuilderinput.NewPlanBuilderInput(handlerCtx, result.AST, nil, nil, nil, nil, nil, tcc.Clone())
+			pbi, err := planbuilderinput.NewPlanBuilderInput(
+				annotatedAST,
+				handlerCtx,
+				result.AST,
+				nil,
+				nil,
+				nil,
+				nil,
+				nil,
+				tcc.Clone(),
+			)
 			if err != nil {
 				return err
 			}
@@ -148,7 +194,17 @@ func (sp *standardInitialPasses) initialPasses(handlerCtx handler.HandlerContext
 			return nil
 		} else {
 			sp.instructionType = NopInstruction
-			pbi, err := planbuilderinput.NewPlanBuilderInput(handlerCtx, nil, nil, nil, nil, nil, nil, tcc.Clone())
+			pbi, err := planbuilderinput.NewPlanBuilderInput(
+				annotatedAST,
+				handlerCtx,
+				nil,
+				nil,
+				nil,
+				nil,
+				nil,
+				nil,
+				tcc.Clone(),
+			)
 			if err != nil {
 				return err
 			}

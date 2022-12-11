@@ -5,96 +5,146 @@ import (
 	"strings"
 
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
-	"github.com/stackql/stackql/internal/stackql/astformat"
-	"github.com/stackql/stackql/internal/stackql/drm"
+	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/sqldialect"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
-	"github.com/stackql/stackql/internal/stackql/taxonomy"
 
 	"vitess.io/vitess/go/sqltypes"
 	"vitess.io/vitess/go/vt/sqlparser"
 )
 
 var (
-	_ FromRewriteAstVisitor = &standardFromRewriteAstVisitor{}
+	_ ProviderStringAstVisitor = &standardProviderStringAstVisitor{}
 )
 
-type FromRewriteAstVisitor interface {
+type ProviderStringAstVisitor interface {
 	sqlparser.SQLAstVisitor
-	GetRewrittenQuery() string
+	ContainsAnalyticsCacheMaterial() bool
+	ContainsCacheExemptMaterial() bool
+	ContainsNativeBackendMaterial() bool
+	GetProviderStrings() []string
+	GetParserTablesCited() map[*sqlparser.AliasedTableExpr]sqlparser.TableName
 }
 
-// Need not be view-aware.
-type standardFromRewriteAstVisitor struct {
-	iDColumnName        string
-	rewrittenQuery      string
-	shouldCollectTables bool
-	namespaceCollection tablenamespace.TableNamespaceCollection
-	sqlDialect          sqldialect.SQLDialect
-	formatter           sqlparser.NodeFormatter
-	annotations         taxonomy.AnnotationCtxMap
-	dc                  drm.DRMConfig
-	annotatedAST        annotatedast.AnnotatedAst
+// TODO: must be view-aware.
+type standardProviderStringAstVisitor struct {
+	tablesCited                    map[*sqlparser.AliasedTableExpr]sqlparser.TableName
+	sqlDialect                     sqldialect.SQLDialect
+	formatter                      sqlparser.NodeFormatter
+	annotatedAST                   annotatedast.AnnotatedAst
+	namespaceCollection            tablenamespace.TableNamespaceCollection
+	containsAnalyticsCacheMaterial bool
+	containsNativeBackendMaterial  bool
 }
 
-func NewFromRewriteAstVisitor(
-	annotatedAST annotatedast.AnnotatedAst,
-	iDColumnName string,
-	shouldCollectTables bool,
-	sqlDialect sqldialect.SQLDialect,
-	formatter sqlparser.NodeFormatter,
-	namespaceCollection tablenamespace.TableNamespaceCollection,
-	annotations taxonomy.AnnotationCtxMap,
-	dc drm.DRMConfig,
-) FromRewriteAstVisitor {
-	return &standardFromRewriteAstVisitor{
-		annotatedAST:        annotatedAST,
-		iDColumnName:        iDColumnName,
-		shouldCollectTables: shouldCollectTables,
-		namespaceCollection: namespaceCollection,
+func NewProviderStringAstVisitor(annotatedAST annotatedast.AnnotatedAst, sqlDialect sqldialect.SQLDialect, formatter sqlparser.NodeFormatter, namespaceCollection tablenamespace.TableNamespaceCollection) ProviderStringAstVisitor {
+	return &standardProviderStringAstVisitor{
+		tablesCited:         make(map[*sqlparser.AliasedTableExpr]sqlparser.TableName),
 		sqlDialect:          sqlDialect,
 		formatter:           formatter,
-		annotations:         annotations,
-		dc:                  dc,
+		annotatedAST:        annotatedAST,
+		namespaceCollection: namespaceCollection,
 	}
 }
 
-func (v *standardFromRewriteAstVisitor) GetRewrittenQuery() string {
-	return v.rewrittenQuery
+func (v *standardProviderStringAstVisitor) GetParserTablesCited() map[*sqlparser.AliasedTableExpr]sqlparser.TableName {
+	return v.tablesCited
 }
 
-func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
+func (v *standardProviderStringAstVisitor) ContainsCacheExemptMaterial() bool {
+	return v.containsAnalyticsCacheMaterial || v.containsNativeBackendMaterial
+}
+
+func (v *standardProviderStringAstVisitor) ContainsAnalyticsCacheMaterial() bool {
+	return v.containsAnalyticsCacheMaterial
+}
+
+func (v *standardProviderStringAstVisitor) ContainsNativeBackendMaterial() bool {
+	return v.containsNativeBackendMaterial
+}
+
+func (v *standardProviderStringAstVisitor) GetProviderStrings() []string {
+	var retVal []string
+	for _, tName := range v.tablesCited {
+		tx := internaldto.ResolveResourceTerminalHeirarchyIdentifiers(tName)
+		if tx.GetProviderStr() != "" {
+			retVal = append(retVal, tx.GetProviderStr())
+		}
+	}
+	return retVal
+}
+
+func (v *standardProviderStringAstVisitor) Visit(node sqlparser.SQLNode) error {
 	buf := sqlparser.NewTrackedBuffer(v.formatter)
 
 	switch node := node.(type) {
 	case *sqlparser.Select:
-		return fmt.Errorf("unsupported subquery pattern")
+		var options string
+		addIf := func(b bool, s string) {
+			if b {
+				options += s
+			}
+		}
+		addIf(node.Distinct, sqlparser.DistinctStr)
+		if node.Cache != nil {
+			if *node.Cache {
+				options += sqlparser.SQLCacheStr
+			} else {
+				options += sqlparser.SQLNoCacheStr
+			}
+		}
+		addIf(node.StraightJoinHint, sqlparser.StraightJoinHint)
+		addIf(node.SQLCalcFoundRows, sqlparser.SQLCalcFoundRowsStr)
+
+		if node.Comments != nil {
+			node.Comments.Accept(v)
+		}
+		if node.SelectExprs != nil {
+			selVis := NewProviderStringAstVisitor(v.annotatedAST, v.sqlDialect, v.formatter, v.namespaceCollection)
+			err := node.SelectExprs.Accept(selVis)
+			if err != nil {
+				return err
+			}
+		}
+		fromVis := NewProviderStringAstVisitor(
+			v.annotatedAST,
+			v.sqlDialect,
+			v.formatter, v.namespaceCollection)
+		if node.From != nil {
+			err := node.From.Accept(fromVis)
+			if err != nil {
+				return err
+			}
+			v.tablesCited = fromVis.GetParserTablesCited()
+			if fromVis.ContainsAnalyticsCacheMaterial() {
+				v.containsAnalyticsCacheMaterial = true
+			}
+			if fromVis.ContainsNativeBackendMaterial() {
+				v.containsNativeBackendMaterial = true
+			}
+		}
+		if node.GroupBy != nil {
+			node.GroupBy.Accept(v)
+		}
+		if node.Having != nil {
+			node.Having.Accept(v)
+		}
+		if node.OrderBy != nil {
+			node.OrderBy.Accept(v)
+		}
+		if node.Limit != nil {
+			node.Limit.Accept(v)
+		}
+		return nil
 
 	case *sqlparser.ParenSelect:
 		node.Accept(v)
-		selStr := v.GetRewrittenQuery()
-		rq := fmt.Sprintf("(%v)", selStr)
-		v.rewrittenQuery = rq
 
 	case *sqlparser.Auth:
-		var stackql_opt string
-		if node.SessionAuth {
-			stackql_opt = "stackql "
-		}
-		rq := fmt.Sprintf("%sAUTH %v %s %v %v", stackql_opt, node.Provider, node.Type, node.KeyFilePath, node.KeyEnvVar)
-		v.rewrittenQuery = rq
 
 	case *sqlparser.AuthRevoke:
-		var stackql_opt string
-		if node.SessionAuth {
-			stackql_opt = "stackql "
-		}
-		rq := fmt.Sprintf("%sauth revoke %v", stackql_opt, node.Provider)
-		v.rewrittenQuery = rq
 
 	case *sqlparser.Sleep:
-		rq := fmt.Sprintf("sleep %v", node.Duration)
-		v.rewrittenQuery = rq
 
 	case *sqlparser.Union:
 		buf.AstPrintf(node, "%v", node.FirstStatement)
@@ -102,29 +152,24 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			buf.AstPrintf(node, "%v", us)
 		}
 		buf.AstPrintf(node, "%v%v%s", node.OrderBy, node.Limit, node.Lock)
-		v.rewrittenQuery = buf.String()
 
 	case *sqlparser.UnionSelect:
 		buf.AstPrintf(node, " %s %v", node.Type, node.Statement)
-		v.rewrittenQuery = buf.String()
 
 	case *sqlparser.Stream:
 		buf.AstPrintf(node, "stream %v%v from %v",
 			node.Comments, node.SelectExpr, node.Table)
-		v.rewrittenQuery = buf.String()
 
 	case *sqlparser.Insert:
 		buf.AstPrintf(node, "%s %v%sinto %v%v%v %v%v",
 			node.Action,
 			node.Comments, node.Ignore,
 			node.Table, node.Partitions, node.Columns, node.Rows, node.OnDup)
-		v.rewrittenQuery = buf.String()
 
 	case *sqlparser.Update:
 		buf.AstPrintf(node, "update %v%s%v set %v%v%v%v",
 			node.Comments, node.Ignore, node.TableExprs,
 			node.Exprs, node.Where, node.OrderBy, node.Limit)
-		v.rewrittenQuery = buf.String()
 
 	case *sqlparser.Delete:
 		buf.AstPrintf(node, "delete %v", node.Comments)
@@ -132,11 +177,9 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			buf.AstPrintf(node, "%v ", node.Targets)
 		}
 		buf.AstPrintf(node, "from %v%v%v%v%v", node.TableExprs, node.Partitions, node.Where, node.OrderBy, node.Limit)
-		v.rewrittenQuery = buf.String()
 
 	case *sqlparser.Set:
 		buf.AstPrintf(node, "set %v%v", node.Comments, node.Exprs)
-		v.rewrittenQuery = buf.String()
 
 	case *sqlparser.SetTransaction:
 		if node.Scope == "" {
@@ -151,7 +194,6 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			}
 			buf.AstPrintf(node, "%v", char)
 		}
-		v.rewrittenQuery = buf.String()
 
 	case *sqlparser.DBDDL:
 		switch node.Action {
@@ -164,7 +206,6 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			}
 			buf.WriteString(fmt.Sprintf("%s database%s %v", node.Action, exists, node.DBName))
 		}
-		v.rewrittenQuery = buf.String()
 
 	case *sqlparser.DDL:
 		switch node.Action {
@@ -225,11 +266,9 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		default:
 			buf.AstPrintf(node, "%s table %v", node.Action, node.Table)
 		}
-		v.rewrittenQuery = buf.String()
 
 	case *sqlparser.OptLike:
 		buf.AstPrintf(node, "like %v", node.LikeTable)
-		v.rewrittenQuery = buf.String()
 
 	case *sqlparser.PartitionSpec:
 		switch node.Action {
@@ -244,7 +283,6 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		default:
 			panic("unimplemented")
 		}
-		v.rewrittenQuery = buf.String()
 
 	case *sqlparser.PartitionDefinition:
 		if !node.Maxvalue {
@@ -252,7 +290,6 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		} else {
 			buf.AstPrintf(node, "partition %v values less than (maxvalue)", node.Name)
 		}
-		v.rewrittenQuery = buf.String()
 
 	case *sqlparser.TableSpec:
 		ts := node
@@ -272,12 +309,12 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		}
 
 		buf.AstPrintf(ts, "\n)%s", strings.Replace(ts.Options, ", ", ",\n  ", -1))
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.ColumnDefinition:
 		col := node
 		buf.AstPrintf(col, "%v %v", col.Name, &col.Type)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	// Format returns a canonical string representation of the type and all relevant options
 	case *sqlparser.ColumnType:
@@ -342,7 +379,7 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		if len(opts) != 0 {
 			buf.AstPrintf(ct, " %s", strings.Join(opts, " "))
 		}
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.IndexDefinition:
 		idx := node
@@ -367,7 +404,7 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 				buf.AstPrintf(idx, " %v", opt.Value)
 			}
 		}
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.IndexInfo:
 		ii := node
@@ -379,12 +416,12 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 				buf.AstPrintf(ii, " %v", ii.Name)
 			}
 		}
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.AutoIncSpec:
 		buf.AstPrintf(node, "%v ", node.Column)
 		buf.AstPrintf(node, "using %v", node.Sequence)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.VindexSpec:
 		buf.AstPrintf(node, "using %v", node.Type)
@@ -399,11 +436,11 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 				buf.AstPrintf(node, "%v", p)
 			}
 		}
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case sqlparser.VindexParam:
 		buf.AstPrintf(node, "%s=%s", node.Key.String(), node.Val)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.ConstraintDefinition:
 		c := node
@@ -411,7 +448,7 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			buf.AstPrintf(c, "constraint %s ", c.Name)
 		}
 		c.Details.Format(buf)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case sqlparser.ReferenceAction:
 		a := node
@@ -427,7 +464,7 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		case sqlparser.SetDefault:
 			buf.WriteString("set default")
 		}
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.ForeignKeyDefinition:
 		f := node
@@ -438,7 +475,7 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		if f.OnUpdate != sqlparser.DefaultAction {
 			buf.AstPrintf(f, " on update %v", f.OnUpdate)
 		}
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.Show:
 		nodeType := strings.ToLower(node.Type)
@@ -478,7 +515,7 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		if node.HasTable() {
 			buf.AstPrintf(node, " %v", node.Table)
 		}
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.ShowFilter:
 		if node == nil {
@@ -489,7 +526,7 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		} else {
 			buf.AstPrintf(node, " where %v", node.Filter)
 		}
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.Use:
 		if node.DBName.GetRawVal() != "" {
@@ -497,31 +534,31 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		} else {
 			buf.AstPrintf(node, "use")
 		}
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.Commit:
 		buf.WriteString("commit")
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.Begin:
 		buf.WriteString("begin")
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.Rollback:
 		buf.WriteString("rollback")
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.SRollback:
 		buf.AstPrintf(node, "rollback to %v", node.Name)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.Savepoint:
 		buf.AstPrintf(node, "savepoint %v", node.Name)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.Release:
 		buf.AstPrintf(node, "release savepoint %v", node.Name)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.Explain:
 		format := ""
@@ -533,25 +570,25 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			format = "format = " + node.Type + " "
 		}
 		buf.AstPrintf(node, "explain %s%v", format, node.Statement)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.OtherRead:
 		buf.WriteString("otherread")
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.DescribeTable:
 		buf.WriteString("describetable")
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.OtherAdmin:
 		buf.WriteString("otheradmin")
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case sqlparser.Comments:
 		for _, c := range node {
 			buf.AstPrintf(node, "%s ", c)
 		}
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case sqlparser.SelectExprs:
 		var prefix string
@@ -559,25 +596,25 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			buf.AstPrintf(node, "%s%v", prefix, n)
 			prefix = ", "
 		}
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.StarExpr:
 		if !node.TableName.IsEmpty() {
 			buf.AstPrintf(node, "%v.", node.TableName)
 		}
 		buf.AstPrintf(node, "*")
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.AliasedExpr:
 		buf.AstPrintf(node, "%v", node.Expr)
 		if !node.As.IsEmpty() {
 			buf.AstPrintf(node, " as %v", node.As)
 		}
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case sqlparser.Nextval:
 		buf.AstPrintf(node, "next %v values", node.Expr)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case sqlparser.Columns:
 		if node == nil {
@@ -589,7 +626,7 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			prefix = ", "
 		}
 		buf.WriteString(")")
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case sqlparser.Partitions:
 		if node == nil {
@@ -601,64 +638,39 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			prefix = ", "
 		}
 		buf.WriteString(")")
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case sqlparser.TableExprs:
-		var exprs []string
 		for _, n := range node {
-			n.Accept(v)
-			s := v.GetRewrittenQuery()
-			exprs = append(exprs, s)
+			err := n.Accept(v)
+			if err != nil {
+				return err
+			}
 		}
-		v.rewrittenQuery = strings.Join(exprs, ", ")
 
 	case *sqlparser.AliasedTableExpr:
-		var exprStr, partitionStr string
 		if node.Expr != nil {
-			anCtx, ok := v.annotations[node]
-			if !ok {
-				return fmt.Errorf("cannot find annotated tabulation for table object")
+			err := node.Expr.Accept(v)
+			if err != nil {
+				return err
 			}
-			switch ex := node.Expr.(type) {
+
+			// always collecting tables in this visitor
+			switch te := node.Expr.(type) {
 			case sqlparser.TableName:
-				if ex.IsEmpty() {
-					return nil
-				}
-				dbTbl, err := v.dc.GetCurrentTable(anCtx.GetHIDs())
-				if err != nil {
-					return err
-				}
-				tblStr := dbTbl.GetName()
-				fqtn, err := v.sqlDialect.GetFullyQualifiedTableName(tblStr)
-				v.rewrittenQuery = fqtn
-				if err != nil {
-					return err
-				}
-			default:
-				err := node.Expr.Accept(v)
-				if err != nil {
-					return err
-				}
+				v.tablesCited[node] = te
 			}
-			exprStr = v.GetRewrittenQuery()
 		}
 		if node.Partitions != nil {
 			node.Partitions.Accept(v)
-			partitionStr = v.GetRewrittenQuery()
 		}
-		q := fmt.Sprintf("%s%s", exprStr, partitionStr)
 		if !node.As.IsEmpty() {
 			node.As.Accept(v)
-			asStr := v.GetRewrittenQuery()
-			q = fmt.Sprintf("%s as %v", q, asStr)
 		}
 		if node.Hints != nil {
 			node.Hints.Accept(v)
-			// Hint node provides the space padding.
-			hintStr := v.GetRewrittenQuery()
-			q = fmt.Sprintf("%s%v", q, hintStr)
 		}
-		v.rewrittenQuery = q
+		// v.rewrittenQuery = q
 
 	case sqlparser.TableNames:
 		var prefix string
@@ -667,17 +679,30 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			buf.AstPrintf(node, "%s%v", prefix, n)
 			prefix = ", "
 		}
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case sqlparser.TableName:
-		return fmt.Errorf("FromVisitor should not be able to assess an unadorned TableName")
+		if node.IsEmpty() {
+			return nil
+		}
+		str := node.GetRawVal()
+		if v.namespaceCollection.GetAnalyticsCacheTableNamespaceConfigurator().IsAllowed(str) {
+			v.containsAnalyticsCacheMaterial = true
+			var err error
+			str, err = v.namespaceCollection.GetAnalyticsCacheTableNamespaceConfigurator().RenderTemplate(str)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
 
 	case *sqlparser.ParenTableExpr:
 		buf.AstPrintf(node, "(%v)", node.Exprs)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.NativeQuery:
 		buf.AstPrintf(node, "NATIVEQUERY '&s'", strings.ReplaceAll(node.QueryString, "'", "''"))
+		v.containsNativeBackendMaterial = true
 
 	case sqlparser.JoinCondition:
 		v.Visit(node.On)
@@ -687,18 +712,15 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		if node.Using != nil {
 			buf.AstPrintf(node, " using %v", node.Using)
 		}
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.JoinTableExpr:
-		lVis := NewFromRewriteAstVisitor(v.annotatedAST, "", true, v.sqlDialect, v.formatter, v.namespaceCollection, v.annotations, v.dc)
+		lVis := NewProviderStringAstVisitor(v.annotatedAST, v.sqlDialect, v.formatter, v.namespaceCollection)
 		node.LeftExpr.Accept(lVis)
-		rVis := NewFromRewriteAstVisitor(v.annotatedAST, "", true, v.sqlDialect, v.formatter, v.namespaceCollection, v.annotations, v.dc)
+		rVis := NewProviderStringAstVisitor(v.annotatedAST, v.sqlDialect, v.formatter, v.namespaceCollection)
 		node.RightExpr.Accept(rVis)
-		conditionVis := NewFromRewriteAstVisitor(v.annotatedAST, "", true, v.sqlDialect, v.formatter, v.namespaceCollection, v.annotations, v.dc)
+		conditionVis := NewProviderStringAstVisitor(v.annotatedAST, v.sqlDialect, v.formatter, v.namespaceCollection)
 		node.Condition.Accept(conditionVis)
-		buf.AstPrintf(node, "%s %s %s %s", lVis.GetRewrittenQuery(), node.Join, rVis.GetRewrittenQuery(), conditionVis.GetRewrittenQuery())
-		bs := buf.String()
-		v.rewrittenQuery = bs
 
 	case *sqlparser.IndexHints:
 		buf.AstPrintf(node, " %sindex ", node.Type)
@@ -712,14 +734,14 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			}
 			buf.AstPrintf(node, ")")
 		}
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.Where:
 		if node == nil || node.Expr == nil {
 			return nil
 		}
 		buf.AstPrintf(node, " %s %v", node.Type, node.Expr)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case sqlparser.Exprs:
 		var prefix string
@@ -727,46 +749,47 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			buf.AstPrintf(node, "%s%v", prefix, n)
 			prefix = ", "
 		}
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.AndExpr:
 		buf.AstPrintf(node, "%v and %v", node.Left, node.Right)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.OrExpr:
 		buf.AstPrintf(node, "%v or %v", node.Left, node.Right)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.XorExpr:
 		buf.AstPrintf(node, "%v xor %v", node.Left, node.Right)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.NotExpr:
 		buf.AstPrintf(node, "not %v", node.Expr)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.ComparisonExpr:
-		lVis := NewFromRewriteAstVisitor(v.annotatedAST, "", true, v.sqlDialect, v.formatter, v.namespaceCollection, v.annotations, v.dc)
-		node.Left.Accept(lVis)
-		rVis := NewFromRewriteAstVisitor(v.annotatedAST, "", true, v.sqlDialect, v.formatter, v.namespaceCollection, v.annotations, v.dc)
-		node.Right.Accept(rVis)
-		buf.AstPrintf(node, "%s %s %s", lVis.GetRewrittenQuery(), node.Operator, rVis.GetRewrittenQuery())
-		if node.Escape != nil {
-			buf.AstPrintf(node, " escape %v", node.Escape)
+		lVis := NewProviderStringAstVisitor(v.annotatedAST, v.sqlDialect, v.formatter, v.namespaceCollection)
+		err := node.Left.Accept(lVis)
+		if err != nil {
+			return err
 		}
-		v.rewrittenQuery = buf.String()
+		rVis := NewProviderStringAstVisitor(v.annotatedAST, v.sqlDialect, v.formatter, v.namespaceCollection)
+		err = node.Right.Accept(rVis)
+		if err != nil {
+			return err
+		}
 
 	case *sqlparser.RangeCond:
 		buf.AstPrintf(node, "%v %s %v and %v", node.Left, node.Operator, node.From, node.To)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.IsExpr:
 		buf.AstPrintf(node, "%v %s", node.Expr, node.Operator)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.ExistsExpr:
 		buf.AstPrintf(node, "exists %v", node.Subquery)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.SQLVal:
 		switch node.Type {
@@ -783,11 +806,11 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		default:
 			panic("unexpected")
 		}
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.NullVal:
 		buf.AstPrintf(node, "null")
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case sqlparser.BoolVal:
 		if node {
@@ -795,30 +818,30 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		} else {
 			buf.AstPrintf(node, "false")
 		}
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.ColName:
 		if !node.Qualifier.IsEmpty() {
 			buf.AstPrintf(node, "%v.", node.Qualifier)
 		}
 		buf.AstPrintf(node, "%v", node.Name)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case sqlparser.ValTuple:
 		buf.AstPrintf(node, "(%v)", sqlparser.Exprs(node))
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.Subquery:
 		buf.AstPrintf(node, "(%v)", node.Select)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case sqlparser.ListArg:
 		buf.WriteArg(string(node))
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.BinaryExpr:
 		buf.AstPrintf(node, "%v %s %v", node.Left, node.Operator, node.Right)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.UnaryExpr:
 		if _, unary := node.Expr.(*sqlparser.UnaryExpr); unary {
@@ -827,37 +850,28 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			return nil
 		}
 		buf.AstPrintf(node, "%s%v", node.Operator, node.Expr)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.IntervalExpr:
 		buf.AstPrintf(node, "interval %v %s", node.Expr, node.Unit)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.TimestampFuncExpr:
 		buf.AstPrintf(node, "%s(%s, %v, %v)", node.Name, node.Unit, node.Expr1, node.Expr2)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.CurTimeFuncExpr:
 		buf.AstPrintf(node, "%s(%v)", node.Name.String(), node.Fsp)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.CollateExpr:
 		buf.AstPrintf(node, "%v collate %s", node.Expr, node.Charset)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.ExecSubquery:
 		if node.Exec == nil {
 			return fmt.Errorf("cannont accomodate nil exec table container")
 		}
-		// if v.shouldCollectTables {
-		// 	switch te := node.Exec.MethodName.(type) {
-		// 	case sqlparser.TableName:
-		// 		v.tablesCited[node] = te
-		// 	}
-		// }
-		s := astformat.String(node.Exec.MethodName, v.sqlDialect.GetASTFormatter())
-		v.rewrittenQuery = s
-
 	case *sqlparser.FuncExpr:
 		newNode, err := v.sqlDialect.GetASTFuncRewriter().RewriteFunc(node)
 		if err != nil {
@@ -883,15 +897,15 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			buf.WriteString(funcName)
 		}
 		buf.AstPrintf(node, "(%s%v)", distinct, node.Exprs)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.GroupConcatExpr:
 		buf.AstPrintf(node, "group_concat(%s%v%v%s%v)", node.Distinct, node.Exprs, node.OrderBy, node.Separator, node.Limit)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.ValuesFuncExpr:
 		buf.AstPrintf(node, "values(%v)", node.Name)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.SubstrExpr:
 		var val interface{}
@@ -906,15 +920,15 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		} else {
 			buf.AstPrintf(node, "substr(%v, %v, %v)", val, node.From, node.To)
 		}
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.ConvertExpr:
 		buf.AstPrintf(node, "convert(%v, %v)", node.Expr, node.Type)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.ConvertUsingExpr:
 		buf.AstPrintf(node, "convert(%v using %s)", node.Expr, node.Type)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.ConvertType:
 		buf.AstPrintf(node, "%s", node.Type)
@@ -928,11 +942,11 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		if node.Charset != "" {
 			buf.AstPrintf(node, "%s %s", node.Operator, node.Charset)
 		}
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.MatchExpr:
 		buf.AstPrintf(node, "match(%v) against (%v%s)", node.Columns, node.Expr, node.Option)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.CaseExpr:
 		buf.AstPrintf(node, "case sqlparser.")
@@ -946,7 +960,7 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			buf.AstPrintf(node, "else %v ", node.Else)
 		}
 		buf.AstPrintf(node, "end")
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.Default:
 		buf.AstPrintf(node, "default")
@@ -955,11 +969,11 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			sqlparser.FormatID(buf, node.ColName, strings.ToLower(node.ColName), sqlparser.NoAt)
 			buf.WriteString(")")
 		}
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.When:
 		buf.AstPrintf(node, "when %v then %v", node.Cond, node.Val)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case sqlparser.GroupBy:
 		var colz []string
@@ -976,9 +990,9 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			}
 		}
 		if len(colz) > 0 {
-			v.rewrittenQuery = fmt.Sprintf(" group by %s", strings.Join(colz, ", "))
+			// v.rewrittenQuery = fmt.Sprintf(" group by %s", strings.Join(colz, ", "))
 		} else {
-			v.rewrittenQuery = ""
+			// v.rewrittenQuery = ""
 		}
 
 	case sqlparser.OrderBy:
@@ -996,9 +1010,9 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			}
 		}
 		if len(colz) > 0 {
-			v.rewrittenQuery = fmt.Sprintf(" order by %s", strings.Join(colz, ", "))
+			// v.rewrittenQuery = fmt.Sprintf(" order by %s", strings.Join(colz, ", "))
 		} else {
-			v.rewrittenQuery = ""
+			// v.rewrittenQuery = ""
 		}
 
 	case *sqlparser.Order:
@@ -1014,7 +1028,7 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		}
 
 		buf.AstPrintf(node, "%v %s", node.Expr, node.Direction)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.Limit:
 		if node == nil {
@@ -1025,7 +1039,7 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			buf.AstPrintf(node, "%v, ", node.Offset)
 		}
 		buf.AstPrintf(node, "%v", node.Rowcount)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case sqlparser.Values:
 		prefix := "values "
@@ -1033,7 +1047,7 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			buf.AstPrintf(node, "%s%v", prefix, n)
 			prefix = ", "
 		}
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case sqlparser.UpdateExprs:
 		var prefix string
@@ -1041,11 +1055,11 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			buf.AstPrintf(node, "%s%v", prefix, n)
 			prefix = ", "
 		}
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.UpdateExpr:
 		buf.AstPrintf(node, "%v = %v", node.Name, node.Expr)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case sqlparser.SetExprs:
 		var prefix string
@@ -1053,7 +1067,7 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			buf.AstPrintf(node, "%s%v", prefix, n)
 			prefix = ", "
 		}
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.SetExpr:
 		if node.Scope != "" {
@@ -1070,33 +1084,32 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		default:
 			buf.AstPrintf(node, "%v = %v", node.Name, node.Expr)
 		}
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case sqlparser.OnDup:
 		if node == nil {
 			return nil
 		}
 		buf.AstPrintf(node, " on duplicate key update %v", sqlparser.UpdateExprs(node))
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case sqlparser.ColIdent:
 		for i := sqlparser.NoAt; i < node.GetAtCount(); i++ {
 			buf.WriteByte('@')
 		}
 		sqlparser.FormatID(buf, node.GetRawVal(), node.Lowered(), node.GetAtCount())
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case sqlparser.TableIdent:
-		tn := node.GetRawVal()
-		v.rewrittenQuery = tn
+		// v.rewrittenQuery = tn
 
 	case *sqlparser.IsolationLevel:
 		buf.WriteString("isolation level " + node.Level)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.AccessMode:
 		buf.WriteString(node.Mode)
-		v.rewrittenQuery = buf.String()
+		// v.rewrittenQuery = buf.String()
 	}
 	return nil
 }

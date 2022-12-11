@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/stackql/go-openapistackql/pkg/media"
+	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/astvisit"
 	"github.com/stackql/stackql/internal/stackql/dataflow"
 	"github.com/stackql/stackql/internal/stackql/docparser"
@@ -30,6 +31,7 @@ type DependencyPlanner interface {
 }
 
 type standardDependencyPlanner struct {
+	annotatedAST       annotatedast.AnnotatedAst
 	dataflowCollection dataflow.DataFlowCollection
 	colRefs            parserutil.ColTableMap
 	handlerCtx         handler.HandlerContext
@@ -51,6 +53,7 @@ type standardDependencyPlanner struct {
 }
 
 func NewStandardDependencyPlanner(
+	annotatedAST annotatedast.AnnotatedAst,
 	handlerCtx handler.HandlerContext,
 	dataflowCollection dataflow.DataFlowCollection,
 	colRefs parserutil.ColTableMap,
@@ -64,6 +67,7 @@ func NewStandardDependencyPlanner(
 		return nil, fmt.Errorf("violation of standardDependencyPlanner invariant: txn counter cannot be nil")
 	}
 	return &standardDependencyPlanner{
+		annotatedAST:       annotatedAST,
 		handlerCtx:         handlerCtx,
 		dataflowCollection: dataflowCollection,
 		colRefs:            colRefs,
@@ -112,7 +116,8 @@ func (dp *standardDependencyPlanner) Plan() error {
 			tableExpr := unit.GetTableExpr()
 			annotation := unit.GetAnnotation()
 			if _, isView := annotation.GetView(); isView {
-				return fmt.Errorf("error in dependency planning: views in progress")
+				continue
+				// return fmt.Errorf("error in dependency planning: views in progress")
 			}
 			dp.annMap[tableExpr] = annotation
 			insPsc, _, err := dp.processOrphan(tableExpr, annotation, dp.defaultStream)
@@ -191,7 +196,7 @@ func (dp *standardDependencyPlanner) Plan() error {
 	if weaklyConnectedComponentCount > 1 {
 		return fmt.Errorf("data flow: there are too many weakly connected components; found = %d, max = 1", weaklyConnectedComponentCount)
 	}
-	rewrittenWhereStr := astvisit.GenerateModifiedWhereClause(dp.rewrittenWhere, dp.handlerCtx.GetSQLDialect(), dp.handlerCtx.GetASTFormatter(), dp.handlerCtx.GetNamespaceCollection())
+	rewrittenWhereStr := astvisit.GenerateModifiedWhereClause(dp.annotatedAST, dp.rewrittenWhere, dp.handlerCtx.GetSQLDialect(), dp.handlerCtx.GetASTFormatter(), dp.handlerCtx.GetNamespaceCollection())
 	rewrittenWhereStr, err = dp.handlerCtx.GetSQLDialect().SanitizeWhereQueryString(rewrittenWhereStr)
 	if err != nil {
 		return err
@@ -202,6 +207,7 @@ func (dp *standardDependencyPlanner) Plan() error {
 		return err
 	}
 	v := astvisit.NewQueryRewriteAstVisitor(
+		dp.annotatedAST,
 		dp.handlerCtx,
 		dp.tblz,
 		dp.tableSlice,

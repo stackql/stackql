@@ -6,69 +6,173 @@ import (
 
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/astformat"
-	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/sqldialect"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
-	"github.com/stackql/stackql/internal/stackql/taxonomy"
 
 	"vitess.io/vitess/go/sqltypes"
 	"vitess.io/vitess/go/vt/sqlparser"
 )
 
 var (
-	_ FromRewriteAstVisitor = &standardFromRewriteAstVisitor{}
+	_ FramentRewriteAstVisitor = &standardFramentRewriteAstVisitor{}
 )
 
-type FromRewriteAstVisitor interface {
+type FramentRewriteAstVisitor interface {
 	sqlparser.SQLAstVisitor
+	ComputeQIDWhereSubTree() (sqlparser.Expr, error)
 	GetRewrittenQuery() string
+	SetRewrittenQuery(string)
 }
 
-// Need not be view-aware.
-type standardFromRewriteAstVisitor struct {
+// TODO: must be view-aware.
+type standardFramentRewriteAstVisitor struct {
 	iDColumnName        string
 	rewrittenQuery      string
+	tablesCited         map[*sqlparser.AliasedTableExpr]sqlparser.TableName
 	shouldCollectTables bool
 	namespaceCollection tablenamespace.TableNamespaceCollection
 	sqlDialect          sqldialect.SQLDialect
 	formatter           sqlparser.NodeFormatter
-	annotations         taxonomy.AnnotationCtxMap
-	dc                  drm.DRMConfig
 	annotatedAST        annotatedast.AnnotatedAst
 }
 
-func NewFromRewriteAstVisitor(
-	annotatedAST annotatedast.AnnotatedAst,
-	iDColumnName string,
-	shouldCollectTables bool,
-	sqlDialect sqldialect.SQLDialect,
-	formatter sqlparser.NodeFormatter,
-	namespaceCollection tablenamespace.TableNamespaceCollection,
-	annotations taxonomy.AnnotationCtxMap,
-	dc drm.DRMConfig,
-) FromRewriteAstVisitor {
-	return &standardFromRewriteAstVisitor{
-		annotatedAST:        annotatedAST,
+func NewFramentRewriteAstVisitor(annotatedAST annotatedast.AnnotatedAst, iDColumnName string, shouldCollectTables bool, sqlDialect sqldialect.SQLDialect, formatter sqlparser.NodeFormatter, namespaceCollection tablenamespace.TableNamespaceCollection) FramentRewriteAstVisitor {
+	return &standardFramentRewriteAstVisitor{
 		iDColumnName:        iDColumnName,
+		tablesCited:         make(map[*sqlparser.AliasedTableExpr]sqlparser.TableName),
 		shouldCollectTables: shouldCollectTables,
 		namespaceCollection: namespaceCollection,
 		sqlDialect:          sqlDialect,
 		formatter:           formatter,
-		annotations:         annotations,
-		dc:                  dc,
+		annotatedAST:        annotatedAST,
 	}
 }
 
-func (v *standardFromRewriteAstVisitor) GetRewrittenQuery() string {
+func (v *standardFramentRewriteAstVisitor) SetRewrittenQuery(query string) {
+	v.rewrittenQuery = query
+}
+
+func (v *standardFramentRewriteAstVisitor) GetRewrittenQuery() string {
 	return v.rewrittenQuery
 }
 
-func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
+func (v *standardFramentRewriteAstVisitor) generateQIDComparison(ta sqlparser.TableIdent) *sqlparser.ComparisonExpr {
+	return &sqlparser.ComparisonExpr{
+		Left:     &sqlparser.ColName{Qualifier: sqlparser.TableName{Name: ta}, Name: sqlparser.NewColIdent(v.iDColumnName)},
+		Right:    sqlparser.NewValArg([]byte(":" + v.iDColumnName)),
+		Operator: sqlparser.EqualStr,
+	}
+}
+
+func (v *standardFramentRewriteAstVisitor) ComputeQIDWhereSubTree() (sqlparser.Expr, error) {
+	tblCount := len(v.tablesCited)
+	if tblCount == 0 {
+		return nil, nil
+	}
+	if tblCount == 1 {
+		for k := range v.tablesCited {
+			return v.generateQIDComparison(k.As), nil
+		}
+	}
+	var retVal, curAndExpr *sqlparser.AndExpr
+	i := 0
+	for k := range v.tablesCited {
+		comparisonExpr := v.generateQIDComparison(k.As)
+		if i == 0 {
+			curAndExpr = &sqlparser.AndExpr{Left: comparisonExpr}
+			retVal = curAndExpr
+			i++
+			continue
+		}
+		if i == tblCount {
+			curAndExpr.Right = comparisonExpr
+			break
+		}
+		newAndExpr := &sqlparser.AndExpr{Left: comparisonExpr}
+		curAndExpr.Right = newAndExpr
+		curAndExpr = newAndExpr
+	}
+	return retVal, nil
+}
+
+func (v *standardFramentRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 	buf := sqlparser.NewTrackedBuffer(v.formatter)
 
 	switch node := node.(type) {
 	case *sqlparser.Select:
-		return fmt.Errorf("unsupported subquery pattern")
+		var options string
+		addIf := func(b bool, s string) {
+			if b {
+				options += s
+			}
+		}
+		addIf(node.Distinct, sqlparser.DistinctStr)
+		if node.Cache != nil {
+			if *node.Cache {
+				options += sqlparser.SQLCacheStr
+			} else {
+				options += sqlparser.SQLNoCacheStr
+			}
+		}
+		addIf(node.StraightJoinHint, sqlparser.StraightJoinHint)
+		addIf(node.SQLCalcFoundRows, sqlparser.SQLCalcFoundRowsStr)
+
+		var commentStr, selectExprStr, fromStr, whereStr, groupByStr, havingStr, orderByStr, limitStr string
+		if node.Comments != nil {
+			node.Comments.Accept(v)
+			commentStr = v.GetRewrittenQuery()
+		}
+		if node.SelectExprs != nil {
+			selVis := NewFramentRewriteAstVisitor(v.annotatedAST, v.iDColumnName, true, v.sqlDialect, v.formatter, v.namespaceCollection)
+			node.SelectExprs.Accept(selVis)
+			selectExprStr = selVis.GetRewrittenQuery()
+		}
+		fromVis := NewFramentRewriteAstVisitor(v.annotatedAST, v.iDColumnName, true, v.sqlDialect, v.formatter, v.namespaceCollection)
+		fromTablesCitedVisitor := NewProviderStringAstVisitor(v.annotatedAST, v.sqlDialect, v.formatter, v.namespaceCollection)
+		if node.From != nil {
+			node.From.Accept(fromVis)
+			node.From.Accept(fromTablesCitedVisitor)
+			v.tablesCited = fromTablesCitedVisitor.GetParserTablesCited()
+			fromStr = fromVis.GetRewrittenQuery()
+		}
+		qIdSubtree, _ := fromVis.ComputeQIDWhereSubTree()
+		augmentedWhere := node.Where
+		if qIdSubtree != nil {
+			if augmentedWhere != nil {
+				newWhereExpr := &sqlparser.AndExpr{
+					Left:  node.Where.Expr,
+					Right: qIdSubtree,
+				}
+				augmentedWhere = sqlparser.NewWhere(sqlparser.WhereStr, newWhereExpr)
+			} else {
+				augmentedWhere = sqlparser.NewWhere(sqlparser.WhereStr, qIdSubtree)
+			}
+		}
+		augmentedWhere.Accept(v)
+		whereStr = v.GetRewrittenQuery()
+		if node.GroupBy != nil {
+			node.GroupBy.Accept(v)
+			groupByStr = v.GetRewrittenQuery()
+		}
+		if node.Having != nil {
+			node.Having.Accept(v)
+			havingStr = v.GetRewrittenQuery()
+		}
+		if node.OrderBy != nil {
+			node.OrderBy.Accept(v)
+			orderByStr = v.GetRewrittenQuery()
+		}
+		if node.Limit != nil {
+			node.Limit.Accept(v)
+			orderByStr = v.GetRewrittenQuery()
+		}
+		rq := fmt.Sprintf("select %v%s%v from %v%v%v%v%v%v%s",
+			commentStr, options, selectExprStr,
+			fromStr, whereStr,
+			groupByStr, havingStr, orderByStr,
+			limitStr, node.Lock)
+		v.rewrittenQuery = rq
+		return nil
 
 	case *sqlparser.ParenSelect:
 		node.Accept(v)
@@ -615,29 +719,11 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 	case *sqlparser.AliasedTableExpr:
 		var exprStr, partitionStr string
 		if node.Expr != nil {
-			anCtx, ok := v.annotations[node]
-			if !ok {
-				return fmt.Errorf("cannot find annotated tabulation for table object")
-			}
-			switch ex := node.Expr.(type) {
-			case sqlparser.TableName:
-				if ex.IsEmpty() {
-					return nil
-				}
-				dbTbl, err := v.dc.GetCurrentTable(anCtx.GetHIDs())
-				if err != nil {
-					return err
-				}
-				tblStr := dbTbl.GetName()
-				fqtn, err := v.sqlDialect.GetFullyQualifiedTableName(tblStr)
-				v.rewrittenQuery = fqtn
-				if err != nil {
-					return err
-				}
-			default:
-				err := node.Expr.Accept(v)
-				if err != nil {
-					return err
+			node.Expr.Accept(v)
+			if v.shouldCollectTables {
+				switch te := node.Expr.(type) {
+				case sqlparser.TableName:
+					v.tablesCited[node] = te
 				}
 			}
 			exprStr = v.GetRewrittenQuery()
@@ -670,7 +756,12 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		v.rewrittenQuery = buf.String()
 
 	case sqlparser.TableName:
-		return fmt.Errorf("FromVisitor should not be able to assess an unadorned TableName")
+		if node.IsEmpty() {
+			return nil
+		}
+		str := node.GetRawVal()
+		v.rewrittenQuery = fmt.Sprintf(`"%s"`, str)
+		return nil
 
 	case *sqlparser.ParenTableExpr:
 		buf.AstPrintf(node, "(%v)", node.Exprs)
@@ -690,11 +781,11 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		v.rewrittenQuery = buf.String()
 
 	case *sqlparser.JoinTableExpr:
-		lVis := NewFromRewriteAstVisitor(v.annotatedAST, "", true, v.sqlDialect, v.formatter, v.namespaceCollection, v.annotations, v.dc)
+		lVis := NewFramentRewriteAstVisitor(v.annotatedAST, "", true, v.sqlDialect, v.formatter, v.namespaceCollection)
 		node.LeftExpr.Accept(lVis)
-		rVis := NewFromRewriteAstVisitor(v.annotatedAST, "", true, v.sqlDialect, v.formatter, v.namespaceCollection, v.annotations, v.dc)
+		rVis := NewFramentRewriteAstVisitor(v.annotatedAST, "", true, v.sqlDialect, v.formatter, v.namespaceCollection)
 		node.RightExpr.Accept(rVis)
-		conditionVis := NewFromRewriteAstVisitor(v.annotatedAST, "", true, v.sqlDialect, v.formatter, v.namespaceCollection, v.annotations, v.dc)
+		conditionVis := NewFramentRewriteAstVisitor(v.annotatedAST, "", true, v.sqlDialect, v.formatter, v.namespaceCollection)
 		node.Condition.Accept(conditionVis)
 		buf.AstPrintf(node, "%s %s %s %s", lVis.GetRewrittenQuery(), node.Join, rVis.GetRewrittenQuery(), conditionVis.GetRewrittenQuery())
 		bs := buf.String()
@@ -746,9 +837,9 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		v.rewrittenQuery = buf.String()
 
 	case *sqlparser.ComparisonExpr:
-		lVis := NewFromRewriteAstVisitor(v.annotatedAST, "", true, v.sqlDialect, v.formatter, v.namespaceCollection, v.annotations, v.dc)
+		lVis := NewFramentRewriteAstVisitor(v.annotatedAST, "", true, v.sqlDialect, v.formatter, v.namespaceCollection)
 		node.Left.Accept(lVis)
-		rVis := NewFromRewriteAstVisitor(v.annotatedAST, "", true, v.sqlDialect, v.formatter, v.namespaceCollection, v.annotations, v.dc)
+		rVis := NewFramentRewriteAstVisitor(v.annotatedAST, "", true, v.sqlDialect, v.formatter, v.namespaceCollection)
 		node.Right.Accept(rVis)
 		buf.AstPrintf(node, "%s %s %s", lVis.GetRewrittenQuery(), node.Operator, rVis.GetRewrittenQuery())
 		if node.Escape != nil {
@@ -849,12 +940,6 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		if node.Exec == nil {
 			return fmt.Errorf("cannont accomodate nil exec table container")
 		}
-		// if v.shouldCollectTables {
-		// 	switch te := node.Exec.MethodName.(type) {
-		// 	case sqlparser.TableName:
-		// 		v.tablesCited[node] = te
-		// 	}
-		// }
 		s := astformat.String(node.Exec.MethodName, v.sqlDialect.GetASTFormatter())
 		v.rewrittenQuery = s
 
