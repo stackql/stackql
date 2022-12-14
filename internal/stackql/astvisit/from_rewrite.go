@@ -21,6 +21,7 @@ var (
 
 type FromRewriteAstVisitor interface {
 	sqlparser.SQLAstVisitor
+	GetIndirectContexts() []drm.PreparedStatementCtx
 	GetRewrittenQuery() string
 }
 
@@ -35,6 +36,7 @@ type standardFromRewriteAstVisitor struct {
 	annotations         taxonomy.AnnotationCtxMap
 	dc                  drm.DRMConfig
 	annotatedAST        annotatedast.AnnotatedAst
+	indirectContexts    []drm.PreparedStatementCtx
 }
 
 func NewFromRewriteAstVisitor(
@@ -61,6 +63,10 @@ func NewFromRewriteAstVisitor(
 
 func (v *standardFromRewriteAstVisitor) GetRewrittenQuery() string {
 	return v.rewrittenQuery
+}
+
+func (v *standardFromRewriteAstVisitor) GetIndirectContexts() []drm.PreparedStatementCtx {
+	return v.indirectContexts
 }
 
 func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
@@ -619,25 +625,34 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			if !ok {
 				return fmt.Errorf("cannot find annotated tabulation for table object")
 			}
-			switch ex := node.Expr.(type) {
-			case sqlparser.TableName:
-				if ex.IsEmpty() {
-					return nil
-				}
-				dbTbl, err := v.dc.GetCurrentTable(anCtx.GetHIDs())
-				if err != nil {
-					return err
-				}
-				tblStr := dbTbl.GetName()
-				fqtn, err := v.sqlDialect.GetFullyQualifiedTableName(tblStr)
-				v.rewrittenQuery = fqtn
-				if err != nil {
-					return err
-				}
-			default:
-				err := node.Expr.Accept(v)
-				if err != nil {
-					return err
+			if indirect, isIndirect := anCtx.GetTableMeta().GetIndirect(); isIndirect {
+				//
+				alias := indirect.GetName()
+				templateString := fmt.Sprintf(` ( %%s ) AS %s `, alias)
+				v.rewrittenQuery = templateString
+				v.indirectContexts = append(v.indirectContexts, indirect.GetSelectContext())
+
+			} else {
+				switch ex := node.Expr.(type) {
+				case sqlparser.TableName:
+					if ex.IsEmpty() {
+						return nil
+					}
+					dbTbl, err := v.dc.GetCurrentTable(anCtx.GetHIDs())
+					if err != nil {
+						return err
+					}
+					tblStr := dbTbl.GetName()
+					fqtn, err := v.sqlDialect.GetFullyQualifiedTableName(tblStr)
+					v.rewrittenQuery = fqtn
+					if err != nil {
+						return err
+					}
+				default:
+					err := node.Expr.Accept(v)
+					if err != nil {
+						return err
+					}
 				}
 			}
 			exprStr = v.GetRewrittenQuery()

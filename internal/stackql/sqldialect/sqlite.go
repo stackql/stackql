@@ -82,6 +82,9 @@ func (se *sqLiteDialect) getCurrentTable(tableHeirarchyIDs internaldto.Heirarchy
 	if err != nil {
 		return internaldto.NewDBTable("", "", "", 0, tableHeirarchyIDs), err
 	}
+	if _, isView := tableHeirarchyIDs.GetView(); isView {
+		return internaldto.NewDBTable(tableNameStump, tableNameStump, tableHeirarchyIDs.GetTableName(), discoID, tableHeirarchyIDs), nil
+	}
 	tableNamePattern := fmt.Sprintf("%s.generation_%%", tableNameStump)
 	tableNameLHSRemove := fmt.Sprintf("%s.generation_", tableNameStump)
 	res := se.sqlEngine.QueryRow(`select name, CAST(REPLACE(name, ?, '') AS INTEGER) from sqlite_schema where type = 'table' and name like ? ORDER BY name DESC limit 1`, tableNameLHSRemove, tableNamePattern)
@@ -89,7 +92,7 @@ func (se *sqLiteDialect) getCurrentTable(tableHeirarchyIDs internaldto.Heirarchy
 	if err != nil {
 		logging.GetLogger().Errorln(fmt.Sprintf("err = %v for tableNamePattern = '%s' and tableNameLHSRemove = '%s'", err, tableNamePattern, tableNameLHSRemove))
 	}
-	return internaldto.NewDBTable(tableName, tableNameStump, tableHeirarchyIDs.GetTableName(), discoID, tableHeirarchyIDs), err
+	return internaldto.NewDBTable(tableName, tableNameStump, tableHeirarchyIDs.GetTableName(), discoID, tableHeirarchyIDs), nil
 }
 
 func (sl *sqLiteDialect) GetName() string {
@@ -279,7 +282,7 @@ func (eng *sqLiteDialect) getViewByName(viewName string) (internaldto.ViewDTO, b
 		if err != nil {
 			return nil, false
 		}
-		return internaldto.NewViewDTO(viewDDL), true
+		return internaldto.NewViewDTO(viewName, viewDDL), true
 	}
 	return nil, false
 }
@@ -694,6 +697,8 @@ func (eng *sqLiteDialect) getGolangValue(discoType string) interface{} {
 		return &sql.NullString{}
 	case reflect.Int:
 		return &sql.NullInt64{}
+	case reflect.Float64:
+		return &sql.NullFloat64{}
 	}
 	return eng.getDefaultGolangValue()
 }

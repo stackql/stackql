@@ -30,6 +30,8 @@ var (
 )
 
 type DRMConfig interface {
+	ColumnsToRelationalColumns(cols []ColumnMetadata) []relationaldto.RelationalColumn
+	ColumnToRelationalColumn(cols ColumnMetadata) relationaldto.RelationalColumn
 	ExtractFromGolangValue(interface{}) interface{}
 	ExtractObjectFromSQLRows(r *sql.Rows, nonControlColumns []ColumnMetadata, stream streaming.MapStream) (map[string]map[string]interface{}, map[int]map[int]interface{})
 	GetCurrentTable(internaldto.HeirarchyIdentifiers) (internaldto.DBTable, error)
@@ -45,6 +47,8 @@ type DRMConfig interface {
 	GenerateInsertDML(util.AnnotatedTabulation, *openapistackql.OperationStore, internaldto.TxnControlCounters) (PreparedStatementCtx, error)
 	GenerateSelectDML(util.AnnotatedTabulation, internaldto.TxnControlCounters, string, string) (PreparedStatementCtx, error)
 	ExecuteInsertDML(sqlengine.SQLEngine, PreparedStatementCtx, map[string]interface{}, string) (sql.Result, error)
+	OpenapiColumnsToRelationalColumns(cols []openapistackql.ColumnDescriptor) []relationaldto.RelationalColumn
+	OpenapiColumnsToRelationalColumn(col openapistackql.ColumnDescriptor) relationaldto.RelationalColumn
 	QueryDML(sqlengine.SQLEngine, PreparedStatementParameterized) (*sql.Rows, error)
 }
 
@@ -61,6 +65,69 @@ func (dc *staticDRMConfig) GetSQLDialect() sqldialect.SQLDialect {
 
 func (dc *staticDRMConfig) GetTable(hids internaldto.HeirarchyIdentifiers, discoveryID int) (internaldto.DBTable, error) {
 	return dc.sqlDialect.GetTable(hids, discoveryID)
+}
+
+func (dc *staticDRMConfig) OpenapiColumnsToRelationalColumns(cols []openapistackql.ColumnDescriptor) []relationaldto.RelationalColumn {
+	var relationalColumns []relationaldto.RelationalColumn
+	for _, col := range cols {
+		var typeStr string
+		schemaExists := false
+		if col.Schema != nil {
+			typeStr = dc.GetRelationalType(col.Schema.Type)
+			schemaExists = true
+		} else {
+			if col.Val != nil {
+				switch col.Val.Type {
+				case sqlparser.BitVal:
+				}
+			}
+		}
+		relationalColumn := relationaldto.NewRelationalColumn(col.Name, typeStr).WithQualifier(col.Qualifier).WithAlias(col.Alias).WithDecorated(col.DecoratedCol).WithParserNode(col.Node)
+		if schemaExists {
+			inferredOID := getOidForSchema(col.Schema)
+			relationalColumn = relationalColumn.WithOID(inferredOID)
+		}
+		// TODO: Need a way to handle postgres differences. This is a fragile point
+		relationalColumns = append(relationalColumns, relationalColumn)
+	}
+	return relationalColumns
+}
+
+func (dc *staticDRMConfig) OpenapiColumnsToRelationalColumn(col openapistackql.ColumnDescriptor) relationaldto.RelationalColumn {
+	var typeStr string
+	schemaExists := false
+	if col.Schema != nil {
+		typeStr = dc.GetRelationalType(col.Schema.Type)
+		schemaExists = true
+	} else {
+		if col.Val != nil {
+			switch col.Val.Type {
+			case sqlparser.BitVal:
+			}
+		}
+	}
+	relationalColumn := relationaldto.NewRelationalColumn(col.Name, typeStr).WithQualifier(col.Qualifier).WithAlias(col.Alias).WithDecorated(col.DecoratedCol).WithParserNode(col.Node)
+	if schemaExists {
+		inferredOID := getOidForSchema(col.Schema)
+		relationalColumn = relationalColumn.WithOID(inferredOID)
+	}
+	// TODO: Need a way to handle postgres differences
+
+	return relationalColumn
+}
+
+func (dc *staticDRMConfig) ColumnsToRelationalColumns(cols []ColumnMetadata) []relationaldto.RelationalColumn {
+	var relationalColumns []relationaldto.RelationalColumn
+	for _, col := range cols {
+		relationalColumn := relationaldto.NewRelationalColumn(col.GetName(), col.GetRelationalType()).WithAlias(col.GetIdentifier())
+		relationalColumns = append(relationalColumns, relationalColumn)
+	}
+	return relationalColumns
+}
+
+func (dc *staticDRMConfig) ColumnToRelationalColumn(col ColumnMetadata) relationaldto.RelationalColumn {
+	relationalColumn := relationaldto.NewRelationalColumn(col.GetName(), col.GetRelationalType()).WithAlias(col.GetIdentifier())
+	return relationalColumn
 }
 
 func (dc *staticDRMConfig) GetControlAttributes() sqlcontrol.ControlAttributes {

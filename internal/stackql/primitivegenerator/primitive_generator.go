@@ -66,7 +66,7 @@ func (pb *standardPrimitiveGenerator) GetPrimitiveComposer() primitivecomposer.P
 func (pb *standardPrimitiveGenerator) CreateIndirectPrimitiveGenerator(ast sqlparser.SQLNode, handlerCtx handler.HandlerContext) PrimitiveGenerator {
 	rv := NewRootPrimitiveGenerator(ast, handlerCtx, pb.PrimitiveComposer.GetGraph())
 	pb.indirects = append(pb.indirects, rv)
-	pb.PrimitiveComposer.AddChild(rv.GetPrimitiveComposer())
+	pb.PrimitiveComposer.AddIndirect(rv.GetPrimitiveComposer())
 	return rv
 }
 

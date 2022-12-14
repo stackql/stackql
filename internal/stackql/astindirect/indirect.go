@@ -31,8 +31,13 @@ func NewViewIndirect(viewDTO internaldto.ViewDTO) (Indirect, error) {
 
 type Indirect interface {
 	Parse() error
+	GetColumnByName(name string) (drm.ColumnMetadata, bool)
+	GetColumns() []drm.ColumnMetadata
+	GetName() string
 	GetSelectAST() sqlparser.SelectStatement
+	GetSelectContext() drm.PreparedStatementCtx
 	GetType() IndirectType
+	SetSelectContext(drm.PreparedStatementCtx)
 }
 
 type view struct {
@@ -43,6 +48,31 @@ type view struct {
 
 func (v *view) GetType() IndirectType {
 	return ViewType
+}
+
+func (v *view) GetName() string {
+	return v.viewDTO.GetName()
+}
+
+func (v *view) GetColumns() []drm.ColumnMetadata {
+	return v.selCtx.GetNonControlColumns()
+}
+
+func (v *view) GetColumnByName(name string) (drm.ColumnMetadata, bool) {
+	for _, col := range v.selCtx.GetNonControlColumns() {
+		if col.GetName() == name {
+			return col, true
+		}
+	}
+	return nil, false
+}
+
+func (v *view) SetSelectContext(selCtx drm.PreparedStatementCtx) {
+	v.selCtx = selCtx
+}
+
+func (v *view) GetSelectContext() drm.PreparedStatementCtx {
+	return v.selCtx
 }
 
 func (v *view) GetTables() sqlparser.TableExprs {

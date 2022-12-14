@@ -1750,7 +1750,7 @@
   {
     "httpRequest": {
       "method": "GET",
-      "path": "/orgs/specialcaseorg/repos"
+      "path": "/orgs/(?:specialcaseorg|stackql)/repos"
     },
     "times" : {
       "unlimited" : true

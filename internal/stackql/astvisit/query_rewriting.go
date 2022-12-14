@@ -13,6 +13,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
+	"github.com/stackql/stackql/internal/stackql/relationaldto"
 	"github.com/stackql/stackql/internal/stackql/sqlrewrite"
 	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
@@ -43,6 +44,7 @@ type standardQueryRewriteAstVisitor struct {
 	colRefs               parserutil.ColTableMap
 	columnNames           []parserutil.ColumnHandle
 	columnDescriptors     []openapistackql.ColumnDescriptor
+	relationalColumns     []relationaldto.RelationalColumn
 	tableSlice            []tableinsertioncontainer.TableInsertionContainer
 	namespaceCollection   tablenamespace.TableNamespaceCollection
 	formatter             sqlparser.NodeFormatter
@@ -53,6 +55,8 @@ type standardQueryRewriteAstVisitor struct {
 	selectSuffix  string
 	// singe threaded, so no mutex protection
 	anonColCounter int
+	//
+	indirectContexts []drm.PreparedStatementCtx
 }
 
 func NewQueryRewriteAstVisitor(
@@ -95,7 +99,14 @@ func (v *standardQueryRewriteAstVisitor) getNextAlias() string {
 
 func (v *standardQueryRewriteAstVisitor) getStarColumns(
 	tbl tablemetadata.ExtendedTableMetadata,
-) ([]openapistackql.ColumnDescriptor, error) {
+) ([]relationaldto.RelationalColumn, error) {
+	// if view, isView := tbl.GetView(); isView {
+	// 	return view.GetRawQuery()
+	// }
+	if indirect, isIndirect := tbl.GetIndirect(); isIndirect {
+		rv := v.dc.ColumnsToRelationalColumns(indirect.GetColumns())
+		return rv, nil
+	}
 	schema, _, err := tbl.GetResponseSchemaAndMediaType()
 	if err != nil {
 		return nil, err
@@ -118,13 +129,15 @@ func (v *standardQueryRewriteAstVisitor) getStarColumns(
 	for _, col := range cols {
 		columnDescriptors = append(columnDescriptors, openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, nil, schema, col.Val))
 	}
-	return columnDescriptors, nil
+	relationalColumns := v.dc.OpenapiColumnsToRelationalColumns(columnDescriptors)
+	return relationalColumns, nil
 }
 
 func (v *standardQueryRewriteAstVisitor) GenerateSelectDML() (drm.PreparedStatementCtx, error) {
+	relationalColumns := v.relationalColumns
 	rewriteInput := sqlrewrite.NewStandardSQLRewriteInput(
 		v.dc,
-		v.columnDescriptors,
+		relationalColumns,
 		v.baseCtrlCounters,
 		v.selectSuffix,
 		v.whereExprsStr,
@@ -133,7 +146,7 @@ func (v *standardQueryRewriteAstVisitor) GenerateSelectDML() (drm.PreparedStatem
 		v.fromStr,
 		v.tableSlice,
 		v.namespaceCollection,
-	)
+	).WithIndirectContexts(v.indirectContexts)
 	return sqlrewrite.GenerateSelectDML(rewriteInput)
 }
 
@@ -201,6 +214,7 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 				node.From.Accept(fromVis)
 				v.fromStr = fromVis.GetRewrittenQuery()
 			}
+			v.indirectContexts = fromVis.GetIndirectContexts()
 		}
 		if node.Where != nil {
 			node.Where.Accept(v)
@@ -389,11 +403,11 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 	case *sqlparser.ExecSubquery:
 		t, ok := v.annotations[node]
 		if !ok {
-			return fmt.Errorf("could not infer annotated table")
+			return fmt.Errorf("exec: could not infer annotated table")
 		}
 		dID, ok := v.discoGenIDs[node]
 		if !ok {
-			return fmt.Errorf("could not infer discovery generation ID")
+			return fmt.Errorf("exec: could not infer discovery generation ID")
 		}
 		replacementExpr := v.dc.GetParserTableName(t.GetHIDs(), dID)
 		node.Exec.MethodName = replacementExpr
@@ -529,7 +543,7 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		if err != nil {
 			return err
 		}
-		v.columnDescriptors = append(v.columnDescriptors, cols...)
+		v.relationalColumns = append(v.relationalColumns, cols...)
 
 	case *sqlparser.AliasedExpr:
 		tbl, tblErr := v.tables.GetTableLoose(node)
@@ -548,6 +562,20 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			v.columnNames = append(v.columnNames, col)
 			cd := openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, node, nil, col.Val)
 			v.columnDescriptors = append(v.columnDescriptors, cd)
+			v.relationalColumns = append(v.relationalColumns, v.dc.OpenapiColumnsToRelationalColumn(cd))
+			return nil
+		}
+		if indirect, isIndirect := tbl.GetIndirect(); isIndirect {
+			col, err := parserutil.InferColNameFromExpr(node, v.formatter)
+			if err != nil {
+				return err
+			}
+			c, ok := indirect.GetColumnByName(col.Name)
+			if !ok {
+				return fmt.Errorf("query rewriting for indirection: cannot find col = '%s'", col.Name)
+			}
+			rv := v.dc.ColumnToRelationalColumn(c)
+			v.relationalColumns = append(v.relationalColumns, rv)
 			return nil
 		}
 		schema, err := tbl.GetSelectableObjectSchema()
@@ -562,6 +590,7 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		ss, _ := schema.GetProperty(col.Name)
 		cd := openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, node, ss, col.Val)
 		v.columnDescriptors = append(v.columnDescriptors, cd)
+		v.relationalColumns = append(v.relationalColumns, v.dc.OpenapiColumnsToRelationalColumn(cd))
 		if !node.As.IsEmpty() {
 		}
 
@@ -596,12 +625,16 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 				if !ok {
 					return fmt.Errorf("could not infer annotated table")
 				}
-				dID, ok := v.discoGenIDs[node]
-				if !ok {
-					return fmt.Errorf("could not infer discovery generation ID")
+				if _, isIndirect := t.GetTableMeta().GetIndirect(); isIndirect {
+					// do nothing
+				} else {
+					dID, ok := v.discoGenIDs[node]
+					if !ok {
+						return fmt.Errorf("could not infer discovery generation ID")
+					}
+					replacementExpr := v.dc.GetParserTableName(t.GetHIDs(), dID)
+					node.Expr = replacementExpr
 				}
-				replacementExpr := v.dc.GetParserTableName(t.GetHIDs(), dID)
-				node.Expr = replacementExpr
 			}
 		}
 		if node.Partitions != nil {

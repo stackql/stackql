@@ -3,7 +3,8 @@ package primitivebuilder
 import "github.com/stackql/stackql/internal/stackql/primitivegraph"
 
 type SubTreeBuilder struct {
-	children []Builder
+	indirects []Builder
+	children  []Builder
 }
 
 func NewSubTreeBuilder(children []Builder) Builder {

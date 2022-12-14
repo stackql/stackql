@@ -116,6 +116,9 @@ func (dp *standardDependencyPlanner) Plan() error {
 			tableExpr := unit.GetTableExpr()
 			annotation := unit.GetAnnotation()
 			if _, isView := annotation.GetView(); isView {
+
+				dp.annMap[tableExpr] = annotation
+
 				continue
 				// return fmt.Errorf("error in dependency planning: views in progress")
 			}
@@ -375,9 +378,10 @@ func (dp *standardDependencyPlanner) generateSelectDML(e dataflow.DataFlowEdge, 
 	if alias != "" {
 		tableName = fmt.Sprintf("%s AS %s", tableName, alias)
 	}
+	relationalColumns := dp.handlerCtx.GetDrmConfig().OpenapiColumnsToRelationalColumns(columnDescriptors)
 	rewriteInput := sqlrewrite.NewStandardSQLRewriteInput(
 		dp.handlerCtx.GetDrmConfig(),
-		columnDescriptors,
+		relationalColumns,
 		tcc,
 		"",
 		"",

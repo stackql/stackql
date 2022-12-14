@@ -686,8 +686,8 @@ Erroneous mTLS Config Plus Basic Query Returns Error
     ...    ${SELECT_CONTAINER_SUBNET_AGG_ASC}
     ...    error
 
-Basic View Error Displayed
-    Should Stackql Exec Inline Contain Stderr
+Basic View Returns Results
+    Should Stackql Exec Inline Contain
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
     ...    ${GITHUB_SECRET_STR}
@@ -696,7 +696,7 @@ Basic View Error Displayed
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    SELECT * FROM stackql_repositories ;
-    ...    views not yet supported
+    ...    dummyapp.io
 
 Weird ID WSL bug query
     # ID cannot be handled as integer on WSL

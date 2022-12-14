@@ -14,15 +14,16 @@ import (
 )
 
 type SingleSelect struct {
-	graph                      *primitivegraph.PrimitiveGraph
-	handlerCtx                 handler.HandlerContext
-	drmCfg                     drm.DRMConfig
-	selectPreparedStatementCtx drm.PreparedStatementCtx
-	insertionContainers        []tableinsertioncontainer.TableInsertionContainer
-	txnCtrlCtr                 internaldto.TxnControlCounters
-	rowSort                    func(map[string]map[string]interface{}) []string
-	root                       primitivegraph.PrimitiveNode
-	stream                     streaming.MapStream
+	graph                         *primitivegraph.PrimitiveGraph
+	handlerCtx                    handler.HandlerContext
+	drmCfg                        drm.DRMConfig
+	selectPreparedStatementCtx    drm.PreparedStatementCtx
+	indirectPreparedStatementCtxs []drm.PreparedStatementCtx
+	insertionContainers           []tableinsertioncontainer.TableInsertionContainer
+	txnCtrlCtr                    internaldto.TxnControlCounters
+	rowSort                       func(map[string]map[string]interface{}) []string
+	root                          primitivegraph.PrimitiveNode
+	stream                        streaming.MapStream
 }
 
 func NewSingleSelect(
