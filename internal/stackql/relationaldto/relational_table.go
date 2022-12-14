@@ -1,6 +1,8 @@
 package relationaldto
 
-import "github.com/stackql/stackql/internal/stackql/internaldto"
+import (
+	"github.com/stackql/stackql/internal/stackql/internaldto"
+)
 
 var (
 	_ RelationalTable = &standardRelationalTable{}
@@ -14,7 +16,6 @@ type RelationalTable interface {
 	GetView() (internaldto.ViewDTO, bool)
 	PushBackColumn(RelationalColumn)
 	WithAlias(alias string) RelationalTable
-	WithView(viewDTO internaldto.ViewDTO) RelationalTable
 }
 
 func NewRelationalTable(hIDs internaldto.HeirarchyIdentifiers, discoveryID int, name, baseName string) RelationalTable {
@@ -23,5 +24,11 @@ func NewRelationalTable(hIDs internaldto.HeirarchyIdentifiers, discoveryID int, 
 		name:        name,
 		baseName:    baseName,
 		discoveryID: discoveryID,
+	}
+}
+
+func NewRelationalView(viewDTO internaldto.ViewDTO) RelationalTable {
+	return &standardRelationalTable{
+		viewDTO: viewDTO,
 	}
 }

@@ -3,6 +3,7 @@ package router
 import (
 	"fmt"
 
+	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/astvisit"
 	"github.com/stackql/stackql/internal/stackql/dataflow"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -53,6 +54,7 @@ type ParameterRouter interface {
 }
 
 type standardParameterRouter struct {
+	annotatedAST                  annotatedast.AnnotatedAst
 	tablesAliasMap                parserutil.TableAliasMap
 	tableMap                      parserutil.TableExprMap
 	onParamMap                    parserutil.ParameterMap
@@ -67,6 +69,7 @@ type standardParameterRouter struct {
 }
 
 func NewParameterRouter(
+	annotatedAST annotatedast.AnnotatedAst,
 	tablesAliasMap parserutil.TableAliasMap,
 	tableMap parserutil.TableExprMap,
 	whereParamMap parserutil.ParameterMap,
@@ -132,6 +135,7 @@ func (pr *standardParameterRouter) extractDataFlowDependency(input sqlparser.Exp
 
 func (pr *standardParameterRouter) extractFromFunctionExpr(f *sqlparser.FuncExpr) (taxonomy.AnnotationCtx, sqlparser.TableExpr, error) {
 	sv := astvisit.NewLeftoverReferencesAstVisitor(
+		pr.annotatedAST,
 		pr.colRefs,
 		pr.tableToAnnotationCtx,
 	)

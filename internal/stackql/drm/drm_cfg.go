@@ -128,7 +128,7 @@ func (dc *staticDRMConfig) getGolangSlices(nonControlColumns []ColumnMetadata) (
 		x := nonControlColumns[i]
 		y := dc.sqlDialect.GetGolangValue(x.GetType())
 		ifArr = append(ifArr, y)
-		keyArr = append(keyArr, x.GetColumn().GetIdentifier())
+		keyArr = append(keyArr, x.GetIdentifier())
 		i++
 	}
 	return ifArr, keyArr

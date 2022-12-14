@@ -4,26 +4,40 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"vitess.io/vitess/go/sqltypes"
 	"vitess.io/vitess/go/vt/sqlparser"
 )
 
-type ParamAstVisitor struct {
-	params parserutil.ParameterMap
+var (
+	_ ParserParamAstVisitor = &standardParserParamAstVisitor{}
+)
+
+type ParserParamAstVisitor interface {
+	sqlparser.SQLAstVisitor
+	GetParameters() parserutil.ParameterMap
+	GetStringifiedParameters() map[string]interface{}
 }
 
-func NewParamAstVisitor(iDColumnName string, shouldCollectTables bool) *ParamAstVisitor {
-	return &ParamAstVisitor{
-		params: parserutil.NewParameterMap(),
+// TODO: must be view-aware.
+type standardParserParamAstVisitor struct {
+	params       parserutil.ParameterMap
+	annotatedAST annotatedast.AnnotatedAst
+}
+
+func NewParamAstVisitor(annotatedAST annotatedast.AnnotatedAst, iDColumnName string, shouldCollectTables bool) ParserParamAstVisitor {
+	return &standardParserParamAstVisitor{
+		annotatedAST: annotatedAST,
+		params:       parserutil.NewParameterMap(),
 	}
 }
 
-func (v *ParamAstVisitor) GetParameters() parserutil.ParameterMap {
+func (v *standardParserParamAstVisitor) GetParameters() parserutil.ParameterMap {
 	return v.params
 }
 
-func (v *ParamAstVisitor) GetStringifiedParameters() map[string]interface{} {
+func (v *standardParserParamAstVisitor) GetStringifiedParameters() map[string]interface{} {
 	rv := make(map[string]interface{})
 	for k, v := range v.params.GetMap() {
 		rv[k.String()] = v
@@ -31,7 +45,7 @@ func (v *ParamAstVisitor) GetStringifiedParameters() map[string]interface{} {
 	return rv
 }
 
-func (v *ParamAstVisitor) Visit(node sqlparser.SQLNode) error {
+func (v *standardParserParamAstVisitor) Visit(node sqlparser.SQLNode) error {
 	buf := sqlparser.NewTrackedBuffer(nil)
 	var err error
 

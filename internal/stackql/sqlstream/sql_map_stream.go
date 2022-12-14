@@ -53,7 +53,7 @@ func (ss *SimpleSQLMapStream) Read() ([]map[string]interface{}, error) {
 		x := nonControlColumns[i]
 		y := ss.drmCfg.GetGolangValue(x.GetType())
 		ifArr = append(ifArr, y)
-		keyArr = append(keyArr, x.GetColumn().GetIdentifier())
+		keyArr = append(keyArr, x.GetIdentifier())
 		i++
 	}
 	if r != nil {

@@ -1,18 +1,18 @@
 package internaldto
 
 import (
-	"github.com/stackql/go-openapistackql/openapistackql"
+	"github.com/lib/pq/oid"
 )
 
 type PrepareResultSetDTO struct {
-	OutputBody    map[string]interface{}
-	Msg           *BackendMessages
-	RawRows       map[int]map[int]interface{}
-	RowMap        map[string]map[string]interface{}
-	ColumnOrder   []string
-	ColumnSchemas []*openapistackql.Schema
-	RowSort       func(map[string]map[string]interface{}) []string
-	Err           error
+	OutputBody  map[string]interface{}
+	Msg         *BackendMessages
+	RawRows     map[int]map[int]interface{}
+	RowMap      map[string]map[string]interface{}
+	ColumnOrder []string
+	ColumnOIDs  []oid.Oid
+	RowSort     func(map[string]map[string]interface{}) []string
+	Err         error
 }
 
 func NewPrepareResultSetDTO(
@@ -58,20 +58,20 @@ func NewPrepareResultSetPlusRawAndTypesDTO(
 	body map[string]interface{},
 	rowMap map[string]map[string]interface{},
 	columnOrder []string,
-	columnSchemas []*openapistackql.Schema,
+	columnOIDs []oid.Oid,
 	rowSort func(map[string]map[string]interface{}) []string,
 	err error,
 	msg *BackendMessages,
 	rawRows map[int]map[int]interface{},
 ) PrepareResultSetDTO {
 	return PrepareResultSetDTO{
-		OutputBody:    body,
-		RowMap:        rowMap,
-		ColumnOrder:   columnOrder,
-		ColumnSchemas: columnSchemas,
-		RowSort:       rowSort,
-		Err:           err,
-		Msg:           msg,
-		RawRows:       rawRows,
+		OutputBody:  body,
+		RowMap:      rowMap,
+		ColumnOrder: columnOrder,
+		ColumnOIDs:  columnOIDs,
+		RowSort:     rowSort,
+		Err:         err,
+		Msg:         msg,
+		RawRows:     rawRows,
 	}
 }

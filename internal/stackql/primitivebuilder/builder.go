@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/jeroenrinzema/psql-wire/pkg/sqldata"
+	"github.com/lib/pq/oid"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
@@ -50,10 +51,10 @@ func prepareGolangResult(
 	}
 	altKeys, rawRows := drmCfg.ExtractObjectFromSQLRows(r, nonControlColumns, stream)
 	var cNames []string
-	var cSchemas []*openapistackql.Schema
+	var colOIDs []oid.Oid
 	for _, v := range nonControlColumns {
-		cNames = append(cNames, v.GetColumn().GetIdentifier())
-		cSchemas = append(cSchemas, v.GetColumn().GetRepresentativeSchema())
+		cNames = append(cNames, v.GetIdentifier())
+		colOIDs = append(colOIDs, v.GetColumnOID())
 	}
 	rowSort := func(m map[string]map[string]interface{}) []string {
 		var arr []int
@@ -68,7 +69,7 @@ func prepareGolangResult(
 		}
 		return rv
 	}
-	rv := util.PrepareResultSet(internaldto.NewPrepareResultSetPlusRawAndTypesDTO(nil, altKeys, cNames, cSchemas, rowSort, nil, nil, rawRows))
+	rv := util.PrepareResultSet(internaldto.NewPrepareResultSetPlusRawAndTypesDTO(nil, altKeys, cNames, colOIDs, rowSort, nil, nil, rawRows))
 
 	if rv.GetSQLResult() == nil {
 		var colz []string

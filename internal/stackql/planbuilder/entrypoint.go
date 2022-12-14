@@ -5,7 +5,9 @@ import (
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
+	"github.com/stackql/stackql/internal/stackql/parse"
 	"github.com/stackql/stackql/internal/stackql/plan"
+	"github.com/stackql/stackql/internal/stackql/primitivegenerator"
 )
 
 func BuildPlanFromContext(handlerCtx handler.HandlerContext) (*plan.Plan, error) {
@@ -36,18 +38,28 @@ func BuildPlanFromContext(handlerCtx handler.HandlerContext) (*plan.Plan, error)
 	)
 	var rowSort func(map[string]map[string]interface{}) []string
 
-	earlyPassScreenerAnalyzer, err := earlyanalysis.NewEarlyScreenerAnalyzer()
+	statement, err := parse.ParseQuery(handlerCtx.GetQuery())
 	if err != nil {
 		return createErroneousPlan(handlerCtx, qPlan, rowSort, err)
 	}
-	err = earlyPassScreenerAnalyzer.Analyze(handlerCtx, tcc)
-	if err != nil {
-		return createErroneousPlan(handlerCtx, qPlan, rowSort, err)
-	}
-	statementType := earlyPassScreenerAnalyzer.GetStatementType()
-	qPlan.Type = statementType
 
 	pGBuilder := newPlanGraphBuilder(handlerCtx.GetRuntimeContext().ExecutionConcurrencyLimit)
+
+	primitiveGenerator := primitivegenerator.NewRootPrimitiveGenerator(statement, handlerCtx, pGBuilder.planGraph)
+
+	pGBuilder.rootPrimitiveGenerator = primitiveGenerator
+
+	earlyPassScreenerAnalyzer, err := earlyanalysis.NewEarlyScreenerAnalyzer(primitiveGenerator)
+	if err != nil {
+		return createErroneousPlan(handlerCtx, qPlan, rowSort, err)
+	}
+	err = earlyPassScreenerAnalyzer.Analyze(statement, handlerCtx, tcc)
+	if err != nil {
+		return createErroneousPlan(handlerCtx, qPlan, rowSort, err)
+	}
+	// TODO: full analysis of view, which will become child of top level query
+	statementType := earlyPassScreenerAnalyzer.GetStatementType()
+	qPlan.Type = statementType
 
 	switch earlyPassScreenerAnalyzer.GetInstructionType() {
 	case earlyanalysis.InternallyRoutableInstruction:

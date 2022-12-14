@@ -3,6 +3,7 @@ package planbuilderinput
 import (
 	"fmt"
 
+	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
@@ -11,6 +12,7 @@ import (
 
 type PlanBuilderInput interface {
 	GetAliasedTables() parserutil.TableAliasMap
+	GetAnnotatedAST() annotatedast.AnnotatedAst
 	GetAuth() (*sqlparser.Auth, bool)
 	GetAuthRevoke() (*sqlparser.AuthRevoke, bool)
 	GetAssignedAliasedColumns() map[sqlparser.TableName]sqlparser.TableExpr
@@ -37,6 +39,7 @@ type PlanBuilderInput interface {
 }
 
 type StandardPlanBuilderInput struct {
+	annotatedAST           annotatedast.AnnotatedAst
 	handlerCtx             handler.HandlerContext
 	stmt                   sqlparser.SQLNode
 	colRefs                parserutil.ColTableMap
@@ -48,6 +51,7 @@ type StandardPlanBuilderInput struct {
 }
 
 func NewPlanBuilderInput(
+	annotatedAST annotatedast.AnnotatedAst,
 	handlerCtx handler.HandlerContext,
 	stmt sqlparser.SQLNode,
 	tables sqlparser.TableExprs,
@@ -58,6 +62,7 @@ func NewPlanBuilderInput(
 	tcc internaldto.TxnControlCounters,
 ) (PlanBuilderInput, error) {
 	rv := &StandardPlanBuilderInput{
+		annotatedAST:           annotatedAST,
 		handlerCtx:             handlerCtx,
 		stmt:                   stmt,
 		tables:                 tables,
@@ -78,6 +83,10 @@ func NewPlanBuilderInput(
 
 func (pbi *StandardPlanBuilderInput) GetRawQuery() string {
 	return pbi.handlerCtx.GetRawQuery()
+}
+
+func (pbi *StandardPlanBuilderInput) GetAnnotatedAST() annotatedast.AnnotatedAst {
+	return pbi.annotatedAST
 }
 
 func (pbi *StandardPlanBuilderInput) GetStatement() sqlparser.SQLNode {
