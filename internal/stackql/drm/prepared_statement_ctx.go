@@ -11,10 +11,12 @@ import (
 type PreparedStatementCtx interface {
 	GetAllCtrlCtrs() []internaldto.TxnControlCounters
 	GetGCCtrlCtrs() internaldto.TxnControlCounters
+	GetIndirectContexts() []PreparedStatementCtx
 	GetNonControlColumns() []ColumnMetadata
 	GetGCHousekeepingQueries() string
 	GetQuery() string
 	SetGCCtrlCtrs(tcc internaldto.TxnControlCounters)
+	SetIndirectContexts(indirectContexts []PreparedStatementCtx)
 	SetKind(kind string)
 }
 
@@ -33,6 +35,15 @@ type standardPreparedStatementCtx struct {
 	selectTxnCtrlCtrs       []internaldto.TxnControlCounters
 	namespaceCollection     tablenamespace.TableNamespaceCollection
 	sqlDialect              sqldialect.SQLDialect
+	indirectContexts        []PreparedStatementCtx
+}
+
+func (ps *standardPreparedStatementCtx) SetIndirectContexts(indirectContexts []PreparedStatementCtx) {
+	ps.indirectContexts = indirectContexts
+}
+
+func (ps *standardPreparedStatementCtx) GetIndirectContexts() []PreparedStatementCtx {
+	return ps.indirectContexts
 }
 
 func (ps *standardPreparedStatementCtx) SetKind(kind string) {

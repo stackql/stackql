@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/lib/pq/oid"
 	"vitess.io/vitess/go/vt/sqlparser"
 )
 
@@ -17,6 +18,7 @@ type RelationalColumn interface {
 	GetAlias() string
 	GetDecorated() string
 	GetName() string
+	GetOID() (oid.Oid, bool)
 	GetQualifier() string
 	GetType() string
 	GetWidth() int
@@ -25,6 +27,7 @@ type RelationalColumn interface {
 	WithParserNode(sqlparser.SQLNode) RelationalColumn
 	WithQualifier(string) RelationalColumn
 	WithWidth(int) RelationalColumn
+	WithOID(oid.Oid) RelationalColumn
 }
 
 func NewRelationalColumn(colName string, colType string) RelationalColumn {
@@ -41,6 +44,7 @@ type standardRelationalColumn struct {
 	decorated     string
 	qualifier     string
 	width         int
+	oID           *oid.Oid
 	sqlParserNode sqlparser.SQLNode
 }
 
@@ -134,4 +138,18 @@ func (rc *standardRelationalColumn) WithAlias(alias string) RelationalColumn {
 func (rc *standardRelationalColumn) WithWidth(width int) RelationalColumn {
 	rc.width = width
 	return rc
+}
+
+func (rc *standardRelationalColumn) WithOID(oID oid.Oid) RelationalColumn {
+	op := &oID
+	rc.oID = op
+	return rc
+}
+
+func (rc *standardRelationalColumn) GetOID() (oid.Oid, bool) {
+	var defaultRv oid.Oid
+	if rc.oID != nil {
+		return *rc.oID, true
+	}
+	return defaultRv, false
 }

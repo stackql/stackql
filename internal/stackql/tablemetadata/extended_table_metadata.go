@@ -3,6 +3,7 @@ package tablemetadata
 import (
 	"fmt"
 
+	"github.com/stackql/stackql/internal/stackql/astindirect"
 	"github.com/stackql/stackql/internal/stackql/httpbuild"
 	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/provider"
@@ -43,11 +44,13 @@ type ExtendedTableMetadata interface {
 	GetUniqueId() string
 	IsLocallyExecutable() bool
 	IsSimple() bool
+	GetIndirect() (astindirect.Indirect, bool)
 	GetView() (internaldto.ViewDTO, bool)
 	LookupSelectItemsKey() string
 	SetSelectItemsKey(string)
 	SetTableFilter(f func(openapistackql.ITable) (openapistackql.ITable, error))
 	WithGetHttpArmoury(f func() (httpbuild.HTTPArmoury, error)) ExtendedTableMetadata
+	WithIndirect(astindirect.Indirect) ExtendedTableMetadata
 	WithResponseSchemaStr(rss string) (ExtendedTableMetadata, error)
 }
 
@@ -61,10 +64,23 @@ type standardExtendedTableMetadata struct {
 	selectItemsKey      string
 	alias               string
 	inputTableName      string
+	indirect            astindirect.Indirect
 }
 
 func (ex *standardExtendedTableMetadata) IsLocallyExecutable() bool {
 	return ex.isLocallyExecutable
+}
+
+func (ex *standardExtendedTableMetadata) WithIndirect(indirect astindirect.Indirect) ExtendedTableMetadata {
+	ex.indirect = indirect
+	return ex
+}
+
+func (ex *standardExtendedTableMetadata) GetIndirect() (astindirect.Indirect, bool) {
+	if ex.indirect != nil {
+		return ex.indirect, true
+	}
+	return nil, false
 }
 
 func (ex *standardExtendedTableMetadata) GetSelectItemsKey() string {

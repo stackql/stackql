@@ -90,6 +90,7 @@ func NewParameterRouter(
 		tableToAnnotationCtx:          make(map[sqlparser.TableExpr]taxonomy.AnnotationCtx),
 		namespaceCollection:           namespaceCollection,
 		astFormatter:                  astFormatter,
+		annotatedAST:                  annotatedAST,
 	}
 }
 
@@ -416,7 +417,8 @@ func (pr *standardParameterRouter) route(tb sqlparser.TableExpr, handlerCtx hand
 		pr.comparisonToTableDependencies[p] = tb
 		logging.GetLogger().Infof("%v", kv)
 	}
-	m := tablemetadata.NewExtendedTableMetadata(hr, taxonomy.GetTableNameFromStatement(tb, pr.astFormatter), taxonomy.GetAliasFromStatement(tb))
+	indirect, _ := pr.annotatedAST.GetIndirect(tb)
+	m := tablemetadata.NewExtendedTableMetadata(hr, taxonomy.GetTableNameFromStatement(tb, pr.astFormatter), taxonomy.GetAliasFromStatement(tb)).WithIndirect(indirect)
 
 	// store relationship from sqlparser table expression to
 	// hierarchy.  This enables e2e relationship

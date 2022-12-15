@@ -22,6 +22,7 @@ import (
 
 type PrimitiveComposer interface {
 	AddChild(val PrimitiveComposer)
+	AddIndirect(val PrimitiveComposer)
 	GetAst() sqlparser.SQLNode
 	GetASTFormatter() sqlparser.NodeFormatter
 	GetBuilder() primitivebuilder.Builder
@@ -75,6 +76,8 @@ type standardPrimitiveComposer struct {
 	parent PrimitiveComposer
 
 	children []PrimitiveComposer
+
+	indirects []PrimitiveComposer
 
 	await bool
 
@@ -151,6 +154,10 @@ func (pb *standardPrimitiveComposer) GetChildren() []PrimitiveComposer {
 
 func (pb *standardPrimitiveComposer) AddChild(val PrimitiveComposer) {
 	pb.children = append(pb.children, val)
+}
+
+func (pb *standardPrimitiveComposer) AddIndirect(val PrimitiveComposer) {
+	pb.indirects = append(pb.indirects, val)
 }
 
 func (pb *standardPrimitiveComposer) GetSymbol(k interface{}) (symtab.SymTabEntry, error) {
@@ -293,10 +300,19 @@ func (pb *standardPrimitiveComposer) GetBuilder() primitivebuilder.Builder {
 			builders = append(builders, bldr)
 		}
 	}
-	if true {
-		return primitivebuilder.NewDiamondBuilder(pb.builder, builders, pb.graph, pb.sqlDialect, pb.ShouldCollectGarbage())
+	simpleDiamond := primitivebuilder.NewDiamondBuilder(pb.builder, builders, pb.graph, pb.sqlDialect, pb.ShouldCollectGarbage())
+	if len(pb.indirects) > 0 {
+		var indirectBuilders []primitivebuilder.Builder
+		for _, ind := range pb.indirects {
+			if bldr := ind.GetBuilder(); bldr != nil {
+				indirectBuilders = append(indirectBuilders, bldr)
+			}
+		}
+		indirectDiamond := primitivebuilder.NewDiamondBuilder(pb.builder, indirectBuilders, pb.graph, pb.sqlDialect, pb.ShouldCollectGarbage())
+		return primitivebuilder.NewDependencySubDAGBuilder(pb.graph, []primitivebuilder.Builder{indirectDiamond}, simpleDiamond)
 	}
-	return primitivebuilder.NewSubTreeBuilder(builders)
+	return simpleDiamond
+
 }
 
 func (pb *standardPrimitiveComposer) SetBuilder(builder primitivebuilder.Builder) {

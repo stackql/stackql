@@ -38,6 +38,10 @@ func (cd *standardColumnMetadata) GetType() string {
 }
 
 func (cd *standardColumnMetadata) getOidForSchema(colSchema *openapistackql.Schema) oid.Oid {
+	return getOidForSchema(colSchema)
+}
+
+func getOidForSchema(colSchema *openapistackql.Schema) oid.Oid {
 	if colSchema == nil {
 		return oid.T_text
 	}

@@ -663,6 +663,7 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 			if err != nil {
 				return err
 			}
+			indirect.SetSelectContext(indirectPrimitiveGenerator.GetPrimitiveComposer().GetSelectPreparedStatementCtx())
 			v.annotatedAST.SetIndirect(node, indirect)
 		}
 		return nil

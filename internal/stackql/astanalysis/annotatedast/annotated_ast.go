@@ -23,6 +23,8 @@ func (aa *standardAnnotatedAst) GetAST() sqlparser.Statement {
 
 func (aa *standardAnnotatedAst) GetIndirect(node sqlparser.SQLNode) (astindirect.Indirect, bool) {
 	switch n := node.(type) {
+	case *sqlparser.AliasedTableExpr:
+		return aa.GetIndirect(n.Expr)
 	case sqlparser.TableName:
 		rv, ok := aa.tableIndirects[n.GetRawVal()]
 		return rv, ok
