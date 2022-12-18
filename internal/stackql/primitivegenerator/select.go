@@ -3,13 +3,11 @@ package primitivegenerator
 import (
 	"fmt"
 
-	"github.com/stackql/stackql/internal/stackql/astvisit"
 	"github.com/stackql/stackql/internal/stackql/dependencyplanner"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/planbuilderinput"
 	"github.com/stackql/stackql/internal/stackql/primitivebuilder"
-	"github.com/stackql/stackql/internal/stackql/router"
 	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
 	"vitess.io/vitess/go/vt/sqlparser"
 )
@@ -17,18 +15,6 @@ import (
 func (p *standardPrimitiveGenerator) analyzeSelect(pbi planbuilderinput.PlanBuilderInput) error {
 
 	annotatedAST := pbi.GetAnnotatedAST()
-
-	allIndirects := annotatedAST.GetIndirects()
-
-	for k, v := range allIndirects {
-		// planbuilderinput.NewPlanBuilderInput(
-		// 	annotatedAST,
-		// 	pbi.GetHandlerCtx(),
-		// 	v.GetSelectAST(),
-		// )
-		// p.analyzeSelect()
-		logging.GetLogger().Debugf("indirect k = '%s', v = '%v'\n", k, v)
-	}
 
 	handlerCtx := pbi.GetHandlerCtx()
 	node, ok := pbi.GetSelect()
@@ -47,61 +33,40 @@ func (p *standardPrimitiveGenerator) analyzeSelect(pbi planbuilderinput.PlanBuil
 		return p.AnalyzeNop(pbi)
 	}
 
+	selectMetadata, ok := annotatedAST.GetSelectMetadata(node)
+	if !ok {
+		return fmt.Errorf("could not obtain select metadata for select AST node")
+	}
+
 	var pChild PrimitiveGenerator
 	var err error
-
-	// BLOCK  ParameterHierarchy
-	// The AST analysis passes extract parameters
-	// prior to the assembly of hierarchies.
-	// This is a chicken and egg scenario:
-	//   - we need hierarchies a priori for temporal
-	//     dependencies between tables.
-	//   - we need parameters to determine hierarchy (for now).
-	//   - parameters may refer to tables and we want to reference
-	//     this for semantic analysis and later temporal sequencing,
-	//     data flow semantics.
-	//   - TODO: so... will need to split this up into multiple passes;
-	//     parameters will need to have Hierarchies attached after they are inferred.
-	//     Then semantic anlaysis and data flow can be instrumented.
-	//   - TODO: add support for views and subqueries.
-	whereParamMap := astvisit.ExtractParamsFromWhereClause(annotatedAST, node.Where)
-	onParamMap := astvisit.ExtractParamsFromFromClause(annotatedAST, node.From)
-
-	// TODO: There is god awful object <-> namespacing inside here: abstract it.
-	paramRouter := router.NewParameterRouter(
-		annotatedAST,
-		pbi.GetAliasedTables(),
-		pbi.GetAssignedAliasedColumns(),
-		whereParamMap,
-		onParamMap,
-		pbi.GetColRefs(),
-		handlerCtx.GetNamespaceCollection(),
-		handlerCtx.GetASTFormatter(),
-	)
-
-	// TODO: Do the proper SOLID treatment on router, etc.
-	// Might need to split into multiple passes.
-	v := router.NewTableRouteAstVisitor(pbi.GetHandlerCtx(), paramRouter)
-
-	err = v.Visit(pbi.GetStatement())
 
 	if err != nil {
 		return err
 	}
 
-	tblz := v.GetTableMap()
-	annotations := v.GetAnnotations()
+	tblz, hasTblz := selectMetadata.GetTableMap()
+	if !hasTblz {
+		return fmt.Errorf("select analysis: no table map present")
+	}
+	annotations, hasAnnotations := selectMetadata.GetAnnotations()
+	if !hasAnnotations {
+		return fmt.Errorf("select analysis not viable: no annotations present")
+	}
 	annotations.AssignParams()
 	existingParams := annotations.GetStringParams()
 	colRefs := pbi.GetColRefs()
 	// END_BLOCK  ParameterHierarchy
 
 	// BLOCK  SequencingAccrual
-	dataFlows, err := paramRouter.GetOnConditionDataFlows()
+	dataFlows, ok := selectMetadata.GetOnConditionDataFlows()
+	if !ok {
+		return fmt.Errorf("could not obtain ON condition data flows for select AST node")
+	}
 	logging.GetLogger().Debugf("%v\n", dataFlows)
 	// END_BLOCK  SequencingAccrual
 
-	onConditionsToRewrite := paramRouter.GetOnConditionsToRewrite()
+	onConditionsToRewrite := selectMetadata.GetOnConditionsToRewrite()
 
 	parserutil.NaiveRewriteComparisonExprs(onConditionsToRewrite)
 
@@ -161,6 +126,7 @@ func (p *standardPrimitiveGenerator) analyzeSelect(pbi planbuilderinput.PlanBuil
 		switch ft := node.From[0].(type) {
 		case *sqlparser.JoinTableExpr, *sqlparser.AliasedTableExpr:
 			tcc := pbi.GetTxnCtrlCtrs()
+			tccAheadOfTime := pbi.IsTccSetAheadOfTime()
 			dp, err := dependencyplanner.NewStandardDependencyPlanner(
 				annotatedAST,
 				handlerCtx,
@@ -171,6 +137,7 @@ func (p *standardPrimitiveGenerator) analyzeSelect(pbi planbuilderinput.PlanBuil
 				tblz,
 				p.PrimitiveComposer,
 				tcc,
+				tccAheadOfTime,
 			)
 			if err != nil {
 				return err

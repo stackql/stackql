@@ -34,7 +34,7 @@ externalDocs:
   description: Amazon Web Services documentation
   url: 'https://docs.aws.amazon.com/ec2/'
 servers:
-  - url: 'https://{region}.ec2.amazonaws.com'
+  - url: 'https://ec2.{region}.amazonaws.com'
     variables:
       region:
         description: The AWS region
@@ -48048,9 +48048,8 @@ components:
             - $ref: '#/components/schemas/String'
             - description: The Amazon Resource Name (ARN) of the Outpost.
         size:
-          allOf:
-            - $ref: '#/components/schemas/Integer'
-            - description: 'The size of the volume, in GiBs.'
+          type: integer
+          description: 'The size of the volume, in GiBs.'
         snapshotId:
           allOf:
             - $ref: '#/components/schemas/String'
@@ -66406,9 +66405,8 @@ components:
         - Size
       properties:
         size:
-          allOf:
-            - $ref: '#/components/schemas/Long'
-            - description: 'The size of the volume, in GiB.'
+          type: integer
+          description: 'The size of the volume, in GiB.'
       description: Describes an EBS volume.
     DiskImageDescription:
       type: object

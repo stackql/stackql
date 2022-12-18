@@ -697,6 +697,35 @@ Basic View Returns Results
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    SELECT * FROM stackql_repositories ;
     ...    dummyapp.io
+    ...    stdout=${CURDIR}/tmp/Basic-View-Returns-Results.tmp
+
+Basic View of Union Returns Results
+    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test likely due to case sensitivity and incorrect XML property aliasing
+    Should Stackql Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select aws_region, VolumeId, Encrypted, Size from aws_ec2_all_volumes ;
+    ...    sa\-east\-1
+    ...    stdout=${CURDIR}/tmp/Basic-View-of-Union-Returns-Results.tmp
+
+Basic Count of View of Union Returns Expected Result
+    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test likely due to case sensitivity and incorrect XML property aliasing
+    Should Stackql Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select count(VolumeId) as ct from aws_ec2_all_volumes ;
+    ...    34
+    ...    stdout=${CURDIR}/tmp/Basic-Count-of-View-of-Union-Returns-Expected-Result.tmp
 
 Weird ID WSL bug query
     # ID cannot be handled as integer on WSL

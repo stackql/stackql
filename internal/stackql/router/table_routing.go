@@ -13,7 +13,20 @@ import (
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 )
 
-type TableRouteAstVisitor struct {
+var (
+	_ TableRouteAstVisitor = &standardTableRouteAstVisitor{}
+)
+
+type TableRouteAstVisitor interface {
+	GetAnnotations() taxonomy.AnnotationCtxMap
+	GetAnnotationSlice() []taxonomy.AnnotationCtx
+	GetParameterRouter() ParameterRouter
+	GetTableMap() taxonomy.TblMap
+	GetTableMetaArray() []tablemetadata.ExtendedTableMetadata
+	Visit(node sqlparser.SQLNode) error
+}
+
+type standardTableRouteAstVisitor struct {
 	handlerCtx      handler.HandlerContext
 	router          ParameterRouter
 	tableMetaSlice  []tablemetadata.ExtendedTableMetadata
@@ -22,8 +35,8 @@ type TableRouteAstVisitor struct {
 	annotationSlice []taxonomy.AnnotationCtx
 }
 
-func NewTableRouteAstVisitor(handlerCtx handler.HandlerContext, router ParameterRouter) *TableRouteAstVisitor {
-	return &TableRouteAstVisitor{
+func NewTableRouteAstVisitor(handlerCtx handler.HandlerContext, router ParameterRouter) TableRouteAstVisitor {
+	return &standardTableRouteAstVisitor{
 		handlerCtx:  handlerCtx,
 		router:      router,
 		tables:      make(taxonomy.TblMap),
@@ -31,7 +44,7 @@ func NewTableRouteAstVisitor(handlerCtx handler.HandlerContext, router Parameter
 	}
 }
 
-func (v *TableRouteAstVisitor) analyzeAliasedTable(tb *sqlparser.AliasedTableExpr) (taxonomy.AnnotationCtx, error) {
+func (v *standardTableRouteAstVisitor) analyzeAliasedTable(tb *sqlparser.AliasedTableExpr) (taxonomy.AnnotationCtx, error) {
 	switch ex := tb.Expr.(type) {
 	case sqlparser.TableName:
 		hIDs, err := taxonomy.GetHeirarchyIDsFromParserNode(v.handlerCtx, ex)
@@ -50,28 +63,32 @@ func (v *TableRouteAstVisitor) analyzeAliasedTable(tb *sqlparser.AliasedTableExp
 	}
 }
 
-func (v *TableRouteAstVisitor) analyzeExecTableName(tb *sqlparser.ExecSubquery) (taxonomy.AnnotationCtx, error) {
+func (v *standardTableRouteAstVisitor) GetParameterRouter() ParameterRouter {
+	return v.router
+}
+
+func (v *standardTableRouteAstVisitor) analyzeExecTableName(tb *sqlparser.ExecSubquery) (taxonomy.AnnotationCtx, error) {
 	// cannot be recursive
 	return v.router.Route(tb, v.handlerCtx)
 }
 
-func (v *TableRouteAstVisitor) GetTableMetaArray() []tablemetadata.ExtendedTableMetadata {
+func (v *standardTableRouteAstVisitor) GetTableMetaArray() []tablemetadata.ExtendedTableMetadata {
 	return v.tableMetaSlice
 }
 
-func (v *TableRouteAstVisitor) GetTableMap() taxonomy.TblMap {
+func (v *standardTableRouteAstVisitor) GetTableMap() taxonomy.TblMap {
 	return v.tables
 }
 
-func (v *TableRouteAstVisitor) GetAnnotations() taxonomy.AnnotationCtxMap {
+func (v *standardTableRouteAstVisitor) GetAnnotations() taxonomy.AnnotationCtxMap {
 	return v.annotations
 }
 
-func (v *TableRouteAstVisitor) GetAnnotationSlice() []taxonomy.AnnotationCtx {
+func (v *standardTableRouteAstVisitor) GetAnnotationSlice() []taxonomy.AnnotationCtx {
 	return v.annotationSlice
 }
 
-func (v *TableRouteAstVisitor) Visit(node sqlparser.SQLNode) error {
+func (v *standardTableRouteAstVisitor) Visit(node sqlparser.SQLNode) error {
 	var err error
 
 	switch node := node.(type) {

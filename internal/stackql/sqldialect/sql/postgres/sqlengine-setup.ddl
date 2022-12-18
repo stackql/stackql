@@ -107,3 +107,151 @@ VALUES (
 ON CONFLICT (view_name) DO NOTHING
 ;
 
+INSERT INTO "__iql__.views" (
+  view_name,
+  view_ddl
+) 
+VALUES (
+  'aws_ec2_all_volumes',
+  'select 
+    ''ap-southeast-2'' AS aws_region, 
+    VolumeId, 
+    Encrypted, 
+    Size
+  from aws.ec2.volumes 
+  where region = ''ap-southeast-2'' 
+  UNION 
+  SELECT 
+    ''ap-southeast-1'' AS aws_region, 
+    VolumeId, 
+    Encrypted, 
+    Size 
+  from aws.ec2.volumes 
+  where region = ''ap-southeast-1''
+  UNION 
+  SELECT 
+    ''ap-northeast-1'' AS aws_region, 
+    VolumeId, 
+    Encrypted, 
+    Size 
+  from aws.ec2.volumes 
+  where region = ''ap-northeast-1''
+  UNION 
+  SELECT 
+    ''ap-northeast-2'' AS aws_region, 
+    VolumeId, 
+    Encrypted, 
+    Size 
+  from aws.ec2.volumes 
+  where region = ''ap-northeast-2''
+  UNION 
+  SELECT 
+    ''ap-northeast-3'' AS aws_region, 
+    VolumeId, 
+    Encrypted, 
+    Size 
+  from aws.ec2.volumes 
+  where region = ''ap-northeast-3''
+  UNION 
+  SELECT 
+    ''ap-south-1'' AS aws_region, 
+    VolumeId, 
+    Encrypted, 
+    Size 
+  from aws.ec2.volumes 
+  where region = ''ap-south-1''
+  UNION 
+  SELECT 
+    ''us-east-1'' AS aws_region, 
+    VolumeId, 
+    Encrypted, 
+    Size 
+  from aws.ec2.volumes 
+  where region = ''us-east-1''
+  UNION 
+  SELECT 
+    ''us-east-2'' AS aws_region, 
+    VolumeId, 
+    Encrypted, 
+    Size 
+  from aws.ec2.volumes 
+  where region = ''us-east-2''
+  UNION
+  SELECT 
+    ''us-west-1'' AS aws_region, 
+    VolumeId, 
+    Encrypted, 
+    Size 
+  from aws.ec2.volumes 
+  where region = ''us-west-1''
+  UNION 
+  SELECT 
+    ''us-west-2'' AS aws_region, 
+    VolumeId, 
+    Encrypted, 
+    Size 
+  from aws.ec2.volumes 
+  where region = ''us-west-2''
+  UNION 
+  SELECT 
+    ''ca-central-1'' AS aws_region, 
+    VolumeId, 
+    Encrypted, 
+    Size 
+  from aws.ec2.volumes 
+  where region = ''ca-central-1''
+  UNION 
+  SELECT 
+    ''sa-east-1'' AS aws_region, 
+    VolumeId, 
+    Encrypted, 
+    Size 
+  from aws.ec2.volumes 
+  where region = ''sa-east-1''
+  UNION 
+  SELECT 
+    ''eu-central-1'' AS aws_region, 
+    VolumeId, 
+    Encrypted, 
+    Size 
+  from aws.ec2.volumes 
+  where region = ''eu-central-1''
+  UNION 
+  SELECT 
+    ''eu-north-1'' AS aws_region, 
+    VolumeId, 
+    Encrypted, 
+    Size 
+  from aws.ec2.volumes 
+  where region = ''eu-north-1''
+  UNION 
+  SELECT 
+    ''eu-west-1'' AS aws_region, 
+    VolumeId, 
+    Encrypted, 
+    Size 
+  from aws.ec2.volumes 
+  where region = ''eu-west-1''
+  UNION 
+  SELECT 
+    ''eu-west-2'' AS aws_region, 
+    VolumeId, 
+    Encrypted, 
+    Size 
+  from aws.ec2.volumes 
+  where region = ''eu-west-2''
+  UNION 
+  SELECT 
+    ''eu-west-3'' AS aws_region, 
+    VolumeId, 
+    Encrypted, 
+    Size 
+  from aws.ec2.volumes 
+  where region = ''eu-west-3''
+  ORDER BY Size DESC
+  ;'
+)
+ON CONFLICT (view_name) DO NOTHING
+;
+
+

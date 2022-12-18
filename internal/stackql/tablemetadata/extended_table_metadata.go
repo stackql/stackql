@@ -28,7 +28,8 @@ type ExtendedTableMetadata interface {
 	GetProviderObject() (*openapistackql.Provider, error)
 	GetQueryUniqueId() string
 	GetRequestSchema() (*openapistackql.Schema, error)
-	GetRequiredParameters() map[string]openapistackql.Parameter
+	GetOptionalParameters() map[string]openapistackql.Addressable
+	GetRequiredParameters() map[string]openapistackql.Addressable
 	GetResource() (*openapistackql.Resource, error)
 	GetResourceStr() (string, error)
 	GetResponseSchemaStr() (string, error)
@@ -58,7 +59,6 @@ type standardExtendedTableMetadata struct {
 	tableFilter         func(openapistackql.ITable) (openapistackql.ITable, error)
 	colsVisited         map[string]bool
 	heirarchyObjects    HeirarchyObjects
-	requiredParameters  map[string]openapistackql.Parameter
 	isLocallyExecutable bool
 	getHttpArmoury      func() (httpbuild.HTTPArmoury, error)
 	selectItemsKey      string
@@ -110,8 +110,18 @@ func (ex *standardExtendedTableMetadata) GetGraphQL() (*openapistackql.GraphQL, 
 	return nil, false
 }
 
-func (ex *standardExtendedTableMetadata) GetRequiredParameters() map[string]openapistackql.Parameter {
-	return ex.requiredParameters
+func (ex *standardExtendedTableMetadata) GetRequiredParameters() map[string]openapistackql.Addressable {
+	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetMethod() == nil {
+		return nil
+	}
+	return ex.heirarchyObjects.GetMethod().GetRequiredParameters()
+}
+
+func (ex *standardExtendedTableMetadata) GetOptionalParameters() map[string]openapistackql.Addressable {
+	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetMethod() == nil {
+		return nil
+	}
+	return ex.heirarchyObjects.GetMethod().GetOptionalParameters()
 }
 
 func (ex *standardExtendedTableMetadata) GetHttpArmoury() (httpbuild.HTTPArmoury, error) {
@@ -284,10 +294,9 @@ func (ex *standardExtendedTableMetadata) GetSelectableObjectSchema() (*openapist
 
 func NewExtendedTableMetadata(heirarchyObjects HeirarchyObjects, tableName string, alias string) ExtendedTableMetadata {
 	return &standardExtendedTableMetadata{
-		colsVisited:        make(map[string]bool),
-		requiredParameters: make(map[string]openapistackql.Parameter),
-		heirarchyObjects:   heirarchyObjects,
-		alias:              alias,
-		inputTableName:     tableName,
+		colsVisited:      make(map[string]bool),
+		heirarchyObjects: heirarchyObjects,
+		alias:            alias,
+		inputTableName:   tableName,
 	}
 }

@@ -41,11 +41,13 @@ type PrimitiveGenerator interface {
 	AnalyzeUnaryExec(pbi planbuilderinput.PlanBuilderInput, handlerCtx handler.HandlerContext, node *sqlparser.Exec, selectNode *sqlparser.Select, cols []parserutil.ColumnHandle) (tablemetadata.ExtendedTableMetadata, error)
 	CreateIndirectPrimitiveGenerator(ast sqlparser.SQLNode, handlerCtx handler.HandlerContext) PrimitiveGenerator
 	GetPrimitiveComposer() primitivecomposer.PrimitiveComposer
+	WithDataFlowDependentPrimitiveGenerator(PrimitiveGenerator) PrimitiveGenerator
 	IsShowResults() bool
 }
 
 type standardPrimitiveGenerator struct {
 	Parent            PrimitiveGenerator
+	dataflowDependent PrimitiveGenerator
 	Children          []PrimitiveGenerator
 	indirects         []PrimitiveGenerator
 	PrimitiveComposer primitivecomposer.PrimitiveComposer
@@ -59,12 +61,17 @@ func NewRootPrimitiveGenerator(ast sqlparser.SQLNode, handlerCtx handler.Handler
 	}
 }
 
+func (pb *standardPrimitiveGenerator) WithDataFlowDependentPrimitiveGenerator(dependent PrimitiveGenerator) PrimitiveGenerator {
+	pb.dataflowDependent = dependent
+	return pb
+}
+
 func (pb *standardPrimitiveGenerator) GetPrimitiveComposer() primitivecomposer.PrimitiveComposer {
 	return pb.PrimitiveComposer
 }
 
 func (pb *standardPrimitiveGenerator) CreateIndirectPrimitiveGenerator(ast sqlparser.SQLNode, handlerCtx handler.HandlerContext) PrimitiveGenerator {
-	rv := NewRootPrimitiveGenerator(ast, handlerCtx, pb.PrimitiveComposer.GetGraph())
+	rv := NewRootPrimitiveGenerator(ast, handlerCtx, pb.PrimitiveComposer.GetGraph()).WithDataFlowDependentPrimitiveGenerator(pb)
 	pb.indirects = append(pb.indirects, rv)
 	pb.PrimitiveComposer.AddIndirect(rv.GetPrimitiveComposer())
 	return rv

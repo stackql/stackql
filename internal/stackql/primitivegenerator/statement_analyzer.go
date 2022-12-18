@@ -123,6 +123,7 @@ func (p *standardPrimitiveGenerator) analyzeUnion(pbi planbuilderinput.PlanBuild
 	pChild := p.AddChildPrimitiveGenerator(node.FirstStatement, leaf)
 	counters := pbi.GetTxnCtrlCtrs()
 	sPbi, err := planbuilderinput.NewPlanBuilderInput(pbi.GetAnnotatedAST(), handlerCtx, node.FirstStatement, nil, nil, nil, nil, nil, counters)
+	sPbi.SetIsTccSetAheadOfTime(true)
 	if err != nil {
 		return err
 	}
@@ -131,6 +132,16 @@ func (p *standardPrimitiveGenerator) analyzeUnion(pbi planbuilderinput.PlanBuild
 		return err
 	}
 	var selectStatementContexts []drm.PreparedStatementCtx
+
+	ctx := pChild.GetPrimitiveComposer().GetSelectPreparedStatementCtx()
+	ctx.SetGCCtrlCtrs(counters)
+	selectStatementContexts = append(selectStatementContexts, ctx)
+
+	unionNonControlColumns := pChild.GetPrimitiveComposer().GetSelectPreparedStatementCtx().GetNonControlColumns()
+	unionSelectCtx := drm.NewQueryOnlyPreparedStatementCtx(unionQuery, unionNonControlColumns)
+
+	ctrClone := counters.Clone()
+
 	for _, rhsStmt := range node.UnionSelects {
 		i++
 		leaf, err := p.PrimitiveComposer.GetSymTab().NewLeaf(i)
@@ -138,28 +149,31 @@ func (p *standardPrimitiveGenerator) analyzeUnion(pbi planbuilderinput.PlanBuild
 			return err
 		}
 		pChild := p.AddChildPrimitiveGenerator(rhsStmt.Statement, leaf)
-		ctrClone := counters.CloneAndIncrementInsertID()
+		ctrClone = ctrClone.CloneAndIncrementInsertID()
 		sPbi, err := planbuilderinput.NewPlanBuilderInput(pbi.GetAnnotatedAST(), handlerCtx, rhsStmt.Statement, nil, nil, nil, nil, nil, ctrClone)
 		if err != nil {
 			return err
 		}
+		sPbi.SetIsTccSetAheadOfTime(true)
 		err = pChild.AnalyzeSelectStatement(sPbi)
 		if err != nil {
 			return err
 		}
 		ctx := pChild.GetPrimitiveComposer().GetSelectPreparedStatementCtx()
 		ctx.SetKind(rhsStmt.Type)
+		ctx.SetGCCtrlCtrs(ctrClone)
 		selectStatementContexts = append(selectStatementContexts, ctx)
+		// unionSelectCtx
 	}
+	unionSelectCtx.SetIndirectContexts(selectStatementContexts)
 
 	bldr := primitivebuilder.NewUnion(
 		p.PrimitiveComposer.GetGraph(),
 		handlerCtx,
-		drm.NewQueryOnlyPreparedStatementCtx(unionQuery),
-		pChild.GetPrimitiveComposer().GetSelectPreparedStatementCtx(),
-		selectStatementContexts,
+		unionSelectCtx,
 	)
 	p.PrimitiveComposer.SetBuilder(bldr)
+	p.PrimitiveComposer.SetSelectPreparedStatementCtx(unionSelectCtx)
 
 	return nil
 }
@@ -399,43 +413,13 @@ func (pb *standardPrimitiveGenerator) whereComparisonExprCopyAndReWrite(expr *sq
 	}, colName, nil
 }
 
-func (pb *standardPrimitiveGenerator) resolveMethods(where *sqlparser.Where) error {
-	requiredParameters := suffix.NewParameterSuffixMap()
-	// remainingRequiredParameters := suffix.NewParameterSuffixMap()
-	optionalParameters := suffix.NewParameterSuffixMap()
-	for _, tb := range pb.PrimitiveComposer.GetTables() {
-		tbID := tb.GetUniqueId()
-		method, err := tb.GetMethod()
-		if err != nil {
-			return err
-		}
-		for k, v := range method.GetRequiredParameters() {
-			key := fmt.Sprintf("%s.%s", tbID, k)
-			_, keyExists := requiredParameters.Get(key)
-			if keyExists {
-				return fmt.Errorf("key already is required: %s", k)
-			}
-			requiredParameters.Put(key, v)
-		}
-		for k, vOpt := range method.GetOptionalParameters() {
-			key := fmt.Sprintf("%s.%s", tbID, k)
-			_, keyExists := optionalParameters.Get(key)
-			if keyExists {
-				return fmt.Errorf("key already is optional: %s", k)
-			}
-			optionalParameters.Put(key, vOpt)
-		}
-	}
-	return nil
-}
-
 func (pb *standardPrimitiveGenerator) analyzeWhere(where *sqlparser.Where, existingParams map[string]interface{}) (*sqlparser.Where, []string, error) {
 	requiredParameters := suffix.NewParameterSuffixMap()
 	remainingRequiredParameters := suffix.NewParameterSuffixMap()
 	optionalParameters := suffix.NewParameterSuffixMap()
 	tbVisited := map[tablemetadata.ExtendedTableMetadata]struct{}{}
 	for _, tb := range pb.PrimitiveComposer.GetTables() {
-		if _, isView := tb.GetView(); isView {
+		if _, isView := tb.GetIndirect(); isView {
 			continue
 		}
 		if _, ok := tbVisited[tb]; ok {
@@ -443,12 +427,8 @@ func (pb *standardPrimitiveGenerator) analyzeWhere(where *sqlparser.Where, exist
 		}
 		tbVisited[tb] = struct{}{}
 		tbID := tb.GetUniqueId()
-		method, err := tb.GetMethod()
-		if err != nil {
-			return nil, nil, err
-		}
 		// This method needs to incorporate request body parameters
-		reqParams := method.GetRequiredParameters()
+		reqParams := tb.GetRequiredParameters()
 		for k, v := range reqParams {
 			key := fmt.Sprintf("%s.%s", tbID, k)
 			_, keyExists := requiredParameters.Get(key)
@@ -458,7 +438,7 @@ func (pb *standardPrimitiveGenerator) analyzeWhere(where *sqlparser.Where, exist
 			requiredParameters.Put(key, v)
 		}
 		// This method needs to incorporate request body parameters
-		for k, vOpt := range method.GetOptionalParameters() {
+		for k, vOpt := range tb.GetOptionalParameters() {
 			key := fmt.Sprintf("%s.%s", tbID, k)
 			_, keyExists := optionalParameters.Get(key)
 			if keyExists {

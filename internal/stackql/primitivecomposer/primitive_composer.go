@@ -38,6 +38,7 @@ type PrimitiveComposer interface {
 	GetProvider() provider.IProvider
 	GetRoot() primitivegraph.PrimitiveNode
 	GetSelectPreparedStatementCtx() drm.PreparedStatementCtx
+	GetIndirectSelectPreparedStatementCtx() drm.PreparedStatementCtx
 	GetSQLEngine() sqlengine.SQLEngine
 	GetSQLDialect() sqldialect.SQLDialect
 	GetSymbol(k interface{}) (symtab.SymTabEntry, error)
@@ -51,14 +52,17 @@ type PrimitiveComposer interface {
 	GetValOnlyColKeys() []int
 	GetWhere() *sqlparser.Where
 	IsAwait() bool
+	IsTccSetAheadOfTime() bool
 	NewChildPrimitiveComposer(ast sqlparser.SQLNode) PrimitiveComposer
 	SetAwait(await bool)
 	SetBuilder(builder primitivebuilder.Builder)
 	SetColumnOrder(co []parserutil.ColumnHandle)
 	SetColVisited(colname string, isVisited bool)
 	SetCommentDirectives(dirs sqlparser.CommentDirectives)
+	SetDataflowDependent(val PrimitiveComposer)
 	SetInsertPreparedStatementCtx(ctx drm.PreparedStatementCtx)
 	SetInsertValOnlyRows(m map[int]map[int]interface{})
+	SetIsTccSetAheadOfTime(bool)
 	SetLikeAbleColumns(cols []string)
 	SetProvider(prov provider.IProvider)
 	SetRoot(root primitivegraph.PrimitiveNode)
@@ -67,6 +71,7 @@ type PrimitiveComposer interface {
 	SetTable(node sqlparser.SQLNode, table tablemetadata.ExtendedTableMetadata)
 	SetTableFilter(tableFilter func(openapistackql.ITable) (openapistackql.ITable, error))
 	SetTxnCtrlCtrs(tc internaldto.TxnControlCounters)
+	SetUnionSelectPreparedStatementCtx(ctx drm.PreparedStatementCtx)
 	SetValOnlyCols(m map[int]map[string]interface{})
 	SetWhere(where *sqlparser.Where)
 	ShouldCollectGarbage() bool
@@ -78,6 +83,8 @@ type standardPrimitiveComposer struct {
 	children []PrimitiveComposer
 
 	indirects []PrimitiveComposer
+
+	dataflowDependent PrimitiveComposer
 
 	await bool
 
@@ -105,10 +112,11 @@ type standardPrimitiveComposer struct {
 	txnCtrlCtrs       internaldto.TxnControlCounters
 
 	// per query -- SELECT only
-	insertValOnlyRows          map[int]map[int]interface{}
-	valOnlyCols                map[int]map[string]interface{}
-	insertPreparedStatementCtx drm.PreparedStatementCtx
-	selectPreparedStatementCtx drm.PreparedStatementCtx
+	insertValOnlyRows               map[int]map[int]interface{}
+	valOnlyCols                     map[int]map[string]interface{}
+	insertPreparedStatementCtx      drm.PreparedStatementCtx
+	selectPreparedStatementCtx      drm.PreparedStatementCtx
+	unionSelectPreparedStatementCtx drm.PreparedStatementCtx
 
 	// TODO: universally retire in favour of builder, which returns primitive.IPrimitive
 	root primitivegraph.PrimitiveNode
@@ -122,10 +130,29 @@ type standardPrimitiveComposer struct {
 	sqlDialect sqldialect.SQLDialect
 
 	formatter sqlparser.NodeFormatter
+
+	unionNonControlColumns []drm.ColumnMetadata
+
+	tccSetAheadOfTime bool
+}
+
+func (pb *standardPrimitiveComposer) GetNonControlColumns() []drm.ColumnMetadata {
+	if pb.GetSelectPreparedStatementCtx() != nil {
+		return pb.GetSelectPreparedStatementCtx().GetNonControlColumns()
+	}
+	return pb.unionNonControlColumns
 }
 
 func (pb *standardPrimitiveComposer) ShouldCollectGarbage() bool {
 	return pb.parent == nil
+}
+
+func (pb *standardPrimitiveComposer) IsTccSetAheadOfTime() bool {
+	return pb.tccSetAheadOfTime
+}
+
+func (pb *standardPrimitiveComposer) SetIsTccSetAheadOfTime(tccSetAheadOfTime bool) {
+	pb.tccSetAheadOfTime = tccSetAheadOfTime
 }
 
 func (pb *standardPrimitiveComposer) SetTxnCtrlCtrs(tc internaldto.TxnControlCounters) {
@@ -158,6 +185,10 @@ func (pb *standardPrimitiveComposer) AddChild(val PrimitiveComposer) {
 
 func (pb *standardPrimitiveComposer) AddIndirect(val PrimitiveComposer) {
 	pb.indirects = append(pb.indirects, val)
+}
+
+func (pb *standardPrimitiveComposer) SetDataflowDependent(val PrimitiveComposer) {
+	pb.dataflowDependent = val
 }
 
 func (pb *standardPrimitiveComposer) GetSymbol(k interface{}) (symtab.SymTabEntry, error) {
@@ -278,7 +309,18 @@ func (pb *standardPrimitiveComposer) SetSelectPreparedStatementCtx(ctx drm.Prepa
 	pb.selectPreparedStatementCtx = ctx
 }
 
+func (pb *standardPrimitiveComposer) SetUnionSelectPreparedStatementCtx(ctx drm.PreparedStatementCtx) {
+	pb.unionSelectPreparedStatementCtx = ctx
+}
+
 func (pb *standardPrimitiveComposer) GetSelectPreparedStatementCtx() drm.PreparedStatementCtx {
+	return pb.selectPreparedStatementCtx
+}
+
+func (pb *standardPrimitiveComposer) GetIndirectSelectPreparedStatementCtx() drm.PreparedStatementCtx {
+	if pb.unionSelectPreparedStatementCtx != nil {
+		return pb.unionSelectPreparedStatementCtx
+	}
 	return pb.selectPreparedStatementCtx
 }
 
