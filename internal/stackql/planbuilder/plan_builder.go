@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
+	"github.com/stackql/stackql/internal/stackql/astanalysis/routeanalysis"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/iqlerror"
@@ -537,6 +538,11 @@ func (pgb *planGraphBuilder) handleInsert(pbi planbuilderinput.PlanBuilderInput)
 			switch rowsNode := node.Rows.(type) {
 			case *sqlparser.Select:
 				selPbi, err := planbuilderinput.NewPlanBuilderInput(pbi.GetAnnotatedAST(), pbi.GetHandlerCtx(), rowsNode, pbi.GetTableExprs(), pbi.GetAssignedAliasedColumns(), pbi.GetAliasedTables(), pbi.GetColRefs(), pbi.GetPlaceholderParams(), pbi.GetTxnCtrlCtrs())
+				if err != nil {
+					return err
+				}
+				sr := routeanalysis.NewSelectRoutePass(rowsNode, selPbi)
+				err = sr.RoutePass()
 				if err != nil {
 					return err
 				}

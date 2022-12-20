@@ -15,6 +15,10 @@ import (
 	"vitess.io/vitess/go/vt/sqlparser"
 )
 
+var (
+	_ ParameterRouter = &standardParameterRouter{}
+)
+
 // Parameter router supports
 // mapping columnar input to
 // tabular output.

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -522,32 +521,12 @@ func (dc *staticDRMConfig) QueryDML(dbEngine sqlengine.SQLEngine, ctxParameteriz
 	if err != nil {
 		return nil, err
 	}
-	var varArgs []interface{}
-	j := 0
-	query := rootArgs.GetQuery()
-	var childQueryStrings []interface{} // dunno why
-	var keys []int
-	for i := range rootArgs.GetChildren() {
-		keys = append(keys, i)
+	err = rootArgs.Analyze()
+	if err != nil {
+		return nil, err
 	}
-	sort.Ints(keys)
-	for _, k := range keys {
-		cp := rootArgs.GetChild(k)
-		logging.GetLogger().Infoln(fmt.Sprintf("adding child query = %s", cp.GetQuery()))
-		childQueryStrings = append(childQueryStrings, cp.GetQuery())
-		if len(rootArgs.GetArgs()) >= k {
-			varArgs = append(varArgs, rootArgs.GetArgs()[j:k]...)
-		}
-		varArgs = append(varArgs, cp.GetArgs()...)
-		j = k
-	}
-	logging.GetLogger().Infoln(fmt.Sprintf("raw query = %s", query))
-	if len(childQueryStrings) > 0 {
-		query = fmt.Sprintf(rootArgs.GetQuery(), childQueryStrings...)
-	}
-	if len(rootArgs.GetArgs()) >= j {
-		varArgs = append(varArgs, rootArgs.GetArgs()[j:]...)
-	}
+	query := rootArgs.GetExpandedQuery()
+	varArgs := rootArgs.GetExpandedArgs()
 	logging.GetLogger().Infoln(fmt.Sprintf("query = %s", query))
 	return dbEngine.Query(query, varArgs...)
 }

@@ -107,8 +107,8 @@ func NewPreparedStatementCtx(
 	}
 }
 
-func NewQueryOnlyPreparedStatementCtx(query string) PreparedStatementCtx {
-	return &standardPreparedStatementCtx{query: query, ctrlColumnRepeats: 0}
+func NewQueryOnlyPreparedStatementCtx(query string, nonControlCols []ColumnMetadata) PreparedStatementCtx {
+	return &standardPreparedStatementCtx{query: query, nonControlColumns: nonControlCols, ctrlColumnRepeats: 0}
 }
 
 func (ps *standardPreparedStatementCtx) GetGCHousekeepingQueries() string {

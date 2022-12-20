@@ -29,7 +29,10 @@
         "describe sumologic.users.users;",
         "select id from sumologic.collectors.collectors order by id desc;",
         "select VolumeId, Encrypted, Size from aws.ec2.volumes where region = 'ap-southeast-1' order by VolumeId asc;",
-        "SELECT DISTINCT \"EventTime\", \"Identifier\" from aws.cloud_control.resource_requests where data__ResourceRequestStatusFilter='{}' and region = 'ap-southeast-1' order by \"Identifier\", \"EventTime\";"
+        "SELECT DISTINCT \"EventTime\", \"Identifier\" from aws.cloud_control.resource_requests where data__ResourceRequestStatusFilter='{}' and region = 'ap-southeast-1' order by \"Identifier\", \"EventTime\";",
+        "select id, name, url from stackql_repositories where type = 'public';",
+        "select aws_region, VolumeId, Size from aws_ec2_all_volumes;",
+        "select count(VolumeId) as ct from aws_ec2_all_volumes;"
       ],
       "default": "show providers;"
     },

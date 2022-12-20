@@ -44,6 +44,7 @@ type standardDependencyPlanner struct {
 	tableSlice         []tableinsertioncontainer.TableInsertionContainer
 	tblz               taxonomy.TblMap
 	discoGenIDs        map[sqlparser.SQLNode]int
+	tccSetAheadOfTime  bool
 
 	//
 	bldr          primitivebuilder.Builder
@@ -62,6 +63,7 @@ func NewStandardDependencyPlanner(
 	tblz taxonomy.TblMap,
 	primitiveComposer primitivecomposer.PrimitiveComposer,
 	tcc internaldto.TxnControlCounters,
+	tccSetAheadOfTime bool,
 ) (DependencyPlanner, error) {
 	if tcc == nil {
 		return nil, fmt.Errorf("violation of standardDependencyPlanner invariant: txn counter cannot be nil")
@@ -79,6 +81,7 @@ func NewStandardDependencyPlanner(
 		defaultStream:      streaming.NewStandardMapStream(),
 		annMap:             make(taxonomy.AnnotationCtxMap),
 		tcc:                tcc,
+		tccSetAheadOfTime:  tccSetAheadOfTime,
 	}, nil
 }
 
@@ -318,7 +321,9 @@ func (dp *standardDependencyPlanner) processAcquire(
 	if dp.tcc == nil {
 		return util.NewAnnotatedTabulation(nil, nil, "", ""), nil, fmt.Errorf("nil counters disallowed in dependency planner")
 	} else {
-		dp.tcc = dp.tcc.CloneAndIncrementInsertID()
+		if !dp.tccSetAheadOfTime {
+			dp.tcc = dp.tcc.CloneAndIncrementInsertID()
+		}
 		dp.secondaryTccs = append(dp.secondaryTccs, dp.tcc)
 	}
 	return anTab, dp.tcc, nil

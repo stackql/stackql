@@ -4,15 +4,20 @@ import (
 	"fmt"
 
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
+	"github.com/stackql/stackql/internal/stackql/dataflow"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
+	"github.com/stackql/stackql/internal/stackql/router"
+	"github.com/stackql/stackql/internal/stackql/taxonomy"
 	"vitess.io/vitess/go/vt/sqlparser"
 )
 
 type PlanBuilderInput interface {
+	Clone() PlanBuilderInput
 	GetAliasedTables() parserutil.TableAliasMap
 	GetAnnotatedAST() annotatedast.AnnotatedAst
+	GetAnnotations() (taxonomy.AnnotationCtxMap, bool)
 	GetAuth() (*sqlparser.Auth, bool)
 	GetAuthRevoke() (*sqlparser.AuthRevoke, bool)
 	GetAssignedAliasedColumns() map[sqlparser.TableName]sqlparser.TableExpr
@@ -36,6 +41,11 @@ type PlanBuilderInput interface {
 	GetUnion() (*sqlparser.Union, bool)
 	GetUpdate() (*sqlparser.Update, bool)
 	GetUse() (*sqlparser.Use, bool)
+	IsTccSetAheadOfTime() bool
+	SetIsTccSetAheadOfTime(bool)
+
+	WithParameterRouter(router.ParameterRouter) PlanBuilderInput
+	WithTableRouteVisitor(tableRouteVisitor router.TableRouteAstVisitor) PlanBuilderInput
 }
 
 type StandardPlanBuilderInput struct {
@@ -48,6 +58,11 @@ type StandardPlanBuilderInput struct {
 	tables                 sqlparser.TableExprs
 	paramsPlaceheld        parserutil.ParameterMap
 	tcc                    internaldto.TxnControlCounters
+	paramRouter            router.ParameterRouter
+	tableRouteVisitor      router.TableRouteAstVisitor
+	onConditionDataFlows   dataflow.DataFlowCollection
+	onConditionsToRewrite  map[*sqlparser.ComparisonExpr]struct{}
+	tccSetAheadOfTime      bool
 }
 
 func NewPlanBuilderInput(
@@ -61,6 +76,33 @@ func NewPlanBuilderInput(
 	paramsPlaceheld parserutil.ParameterMap,
 	tcc internaldto.TxnControlCounters,
 ) (PlanBuilderInput, error) {
+	if handlerCtx == nil {
+		return nil, fmt.Errorf("plan builder input invariant violation: nil handler context")
+	}
+	return newPlanBuilderInput(
+		annotatedAST,
+		handlerCtx,
+		stmt,
+		tables,
+		assignedAliasedColumns,
+		aliasedTables,
+		colRefs,
+		paramsPlaceheld,
+		tcc,
+	), nil
+}
+
+func newPlanBuilderInput(
+	annotatedAST annotatedast.AnnotatedAst,
+	handlerCtx handler.HandlerContext,
+	stmt sqlparser.SQLNode,
+	tables sqlparser.TableExprs,
+	assignedAliasedColumns parserutil.TableExprMap,
+	aliasedTables parserutil.TableAliasMap,
+	colRefs parserutil.ColTableMap,
+	paramsPlaceheld parserutil.ParameterMap,
+	tcc internaldto.TxnControlCounters,
+) PlanBuilderInput {
 	rv := &StandardPlanBuilderInput{
 		annotatedAST:           annotatedAST,
 		handlerCtx:             handlerCtx,
@@ -72,17 +114,82 @@ func NewPlanBuilderInput(
 		paramsPlaceheld:        paramsPlaceheld,
 		tcc:                    tcc,
 	}
-	if handlerCtx == nil {
-		return nil, fmt.Errorf("plan builder input invariant violation: nil handler context")
-	}
 	if rv.assignedAliasedColumns == nil {
 		rv.assignedAliasedColumns = make(map[sqlparser.TableName]sqlparser.TableExpr)
 	}
-	return rv, nil
+	return rv
+}
+
+func (pbi *StandardPlanBuilderInput) Clone() PlanBuilderInput {
+	clonedPbi := newPlanBuilderInput(
+		pbi.annotatedAST,
+		pbi.handlerCtx,
+		pbi.stmt,
+		pbi.tables,
+		pbi.assignedAliasedColumns,
+		pbi.aliasedTables,
+		pbi.colRefs,
+		pbi.paramsPlaceheld,
+		pbi.tcc,
+	)
+	return clonedPbi
+}
+
+func (pbi *StandardPlanBuilderInput) GetOnConditionsToRewrite() map[*sqlparser.ComparisonExpr]struct{} {
+	return pbi.onConditionsToRewrite
+}
+
+func (pbi *StandardPlanBuilderInput) IsTccSetAheadOfTime() bool {
+	return pbi.tccSetAheadOfTime
+}
+
+func (pbi *StandardPlanBuilderInput) SetIsTccSetAheadOfTime(tccSetAheadOfTime bool) {
+	pbi.tccSetAheadOfTime = tccSetAheadOfTime
+}
+
+func (pbi *StandardPlanBuilderInput) GetOnConditionDataFlows() (dataflow.DataFlowCollection, bool) {
+	return pbi.onConditionDataFlows, pbi.onConditionDataFlows != nil
+}
+
+func (pbi *StandardPlanBuilderInput) SetOnConditionsToRewrite(onConditionsToRewrite map[*sqlparser.ComparisonExpr]struct{}) {
+	pbi.onConditionsToRewrite = onConditionsToRewrite
+}
+
+func (pbi *StandardPlanBuilderInput) SetOnConditionDataFlows(onConditionDataFlows dataflow.DataFlowCollection) {
+	pbi.onConditionDataFlows = onConditionDataFlows
+}
+
+func (pbi *StandardPlanBuilderInput) GetTableMap() (taxonomy.TblMap, bool) {
+	if pbi.tableRouteVisitor != nil {
+		return pbi.tableRouteVisitor.GetTableMap(), true
+	}
+	return nil, false
+}
+
+func (pbi *StandardPlanBuilderInput) GetAnnotations() (taxonomy.AnnotationCtxMap, bool) {
+	if pbi.tableRouteVisitor != nil {
+		return pbi.tableRouteVisitor.GetAnnotations(), true
+	}
+	return nil, false
+}
+
+func (pbi *StandardPlanBuilderInput) WithTableRouteVisitor(tableRouteVisitor router.TableRouteAstVisitor) PlanBuilderInput {
+	pbi.tableRouteVisitor = tableRouteVisitor
+	return pbi
 }
 
 func (pbi *StandardPlanBuilderInput) GetRawQuery() string {
 	return pbi.handlerCtx.GetRawQuery()
+}
+
+// router.ParameterRouter
+func (pbi *StandardPlanBuilderInput) GetParameterRouter() (router.ParameterRouter, bool) {
+	return pbi.paramRouter, true
+}
+
+func (pbi *StandardPlanBuilderInput) WithParameterRouter(paramRouter router.ParameterRouter) PlanBuilderInput {
+	pbi.paramRouter = paramRouter
+	return pbi
 }
 
 func (pbi *StandardPlanBuilderInput) GetAnnotatedAST() annotatedast.AnnotatedAst {

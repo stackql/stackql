@@ -574,7 +574,7 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			if !ok {
 				return fmt.Errorf("query rewriting for indirection: cannot find col = '%s'", col.Name)
 			}
-			rv := v.dc.ColumnToRelationalColumn(c)
+			rv := v.dc.ColumnToRelationalColumn(c).WithAlias(col.Alias).WithDecorated(col.DecoratedColumn)
 			v.relationalColumns = append(v.relationalColumns, rv)
 			return nil
 		}

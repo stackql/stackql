@@ -2,6 +2,7 @@ package earlyanalysis
 
 import (
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
+	"github.com/stackql/stackql/internal/stackql/astanalysis/routeanalysis"
 	"github.com/stackql/stackql/internal/stackql/astvisit"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internaldto"
@@ -212,6 +213,30 @@ func (sp *standardInitialPasses) initialPasses(statement sqlparser.Statement, ha
 			return nil
 		}
 	}
+	switch node := ast.(type) {
+	case *sqlparser.Select:
+		routeAnalyzer := routeanalysis.NewSelectRoutePass(node, pbi)
+		err = routeAnalyzer.RoutePass()
+		if err != nil {
+			return err
+		}
+		pbi = routeAnalyzer.GetPlanBuilderInput()
+	case *sqlparser.ParenSelect:
+		routeAnalyzer := routeanalysis.NewSelectRoutePass(node.Select, pbi)
+		err = routeAnalyzer.RoutePass()
+		if err != nil {
+			return err
+		}
+		pbi = routeAnalyzer.GetPlanBuilderInput()
+	case *sqlparser.Union:
+		routeAnalyzer := routeanalysis.NewSelectRoutePass(node, pbi)
+		err = routeAnalyzer.RoutePass()
+		if err != nil {
+			return err
+		}
+		pbi = routeAnalyzer.GetPlanBuilderInput()
+	}
+
 	sp.instructionType = StandardInstruction
 	sp.planBuilderInput = pbi
 	return nil

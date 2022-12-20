@@ -512,10 +512,14 @@ func inferColNameFromExpr(node *sqlparser.AliasedExpr, formatter sqlparser.NodeF
 		}
 	case *sqlparser.SQLVal:
 		// As a shortcut, functions are integral types
-		retVal.Name = astformat.String(expr, formatter)
+		retVal.Name = alias
 		retVal.Type = expr.Type
 		retVal.Val = expr
-		retVal.DecoratedColumn = ExtractStringRepresentationOfValueColumn(expr)
+		if alias != "" {
+			retVal.DecoratedColumn = fmt.Sprintf(`%s AS "%s"`, ExtractStringRepresentationOfValueColumn(expr), alias)
+		} else {
+			retVal.DecoratedColumn = ExtractStringRepresentationOfValueColumn(expr)
+		}
 	default:
 		retVal.DecoratedColumn = astformat.String(expr, formatter)
 	}
