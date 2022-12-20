@@ -5,7 +5,10 @@
   },
   "editor.insertSpaces": true,
   "cmake.configureOnOpen": false,
-  "go.testFlags": ["-tags", "json1"],
+  "go.buildFlags": [
+    "-tags=json1,sqleanall"
+  ],
+  "go.testTags": "json1,sqleanall",
   "todohighlight.keywordsPattern": "TODO:|FIXME:|BLOCK|END_BLOCK", //highlight `TODO:`,`FIXME:` or commented content between parentheses
   "todohighlight.exclude": [
     "**/*.json"

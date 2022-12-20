@@ -456,7 +456,8 @@ func inferColNameFromExpr(node *sqlparser.AliasedExpr, formatter sqlparser.NodeF
 		funcNameLowered := expr.Name.Lowered()
 		retVal.Name = astformat.String(expr, formatter)
 		if len(funcNameLowered) >= 4 && funcNameLowered[0:4] == "json" {
-			retVal.DecoratedColumn = strings.ReplaceAll(retVal.Name, `\"`, `"`)
+			decoratedColumn := strings.ReplaceAll(retVal.Name, `\"`, `"`)
+			retVal.DecoratedColumn = getDecoratedColRendition(decoratedColumn, alias)
 			return retVal, nil
 		}
 		if len(expr.Exprs) == 1 {
@@ -466,7 +467,8 @@ func inferColNameFromExpr(node *sqlparser.AliasedExpr, formatter sqlparser.NodeF
 				if err != nil {
 					return rv, err
 				}
-				rv.DecoratedColumn = astformat.String(expr, formatter)
+				decoratedColumn := astformat.String(expr, formatter)
+				rv.DecoratedColumn = getDecoratedColRendition(decoratedColumn, alias)
 				rv.Alias = alias
 				return rv, nil
 			}
@@ -482,7 +484,8 @@ func inferColNameFromExpr(node *sqlparser.AliasedExpr, formatter sqlparser.NodeF
 					exprsDecorated = append(exprsDecorated, rv.DecoratedColumn)
 				}
 			}
-			retVal.DecoratedColumn = fmt.Sprintf("%s(%s)", funcNameLowered, strings.Join(exprsDecorated, ", "))
+			decoratedColumn := fmt.Sprintf("%s(%s)", funcNameLowered, strings.Join(exprsDecorated, ", "))
+			retVal.DecoratedColumn = getDecoratedColRendition(decoratedColumn, alias)
 			return retVal, nil
 		}
 		switch funcNameLowered {
@@ -506,7 +509,8 @@ func inferColNameFromExpr(node *sqlparser.AliasedExpr, formatter sqlparser.NodeF
 				Alias: "",
 				Expr:  ex,
 			}
-			rv.DecoratedColumn = fmt.Sprintf("CAST(%s AS %s)", astformat.String(ex, formatter), astformat.String(expr.Type, formatter))
+			decoratedColumn := fmt.Sprintf("CAST(%s AS %s)", astformat.String(ex, formatter), astformat.String(expr.Type, formatter))
+			rv.DecoratedColumn = getDecoratedColRendition(decoratedColumn, alias)
 			rv.Alias = alias
 			return rv, nil
 		}
@@ -515,16 +519,22 @@ func inferColNameFromExpr(node *sqlparser.AliasedExpr, formatter sqlparser.NodeF
 		retVal.Name = alias
 		retVal.Type = expr.Type
 		retVal.Val = expr
-		if alias != "" {
-			retVal.DecoratedColumn = fmt.Sprintf(`%s AS "%s"`, ExtractStringRepresentationOfValueColumn(expr), alias)
-		} else {
-			retVal.DecoratedColumn = ExtractStringRepresentationOfValueColumn(expr)
-		}
+		decoratedColumn := ExtractStringRepresentationOfValueColumn(expr)
+		retVal.DecoratedColumn = getDecoratedColRendition(decoratedColumn, alias)
+
 	default:
-		retVal.DecoratedColumn = astformat.String(expr, formatter)
+		decoratedColumn := astformat.String(expr, formatter)
+		retVal.DecoratedColumn = getDecoratedColRendition(decoratedColumn, alias)
 	}
 	retVal.DecoratedColumn = strings.ReplaceAll(retVal.DecoratedColumn, `\"`, `"`)
 	return retVal, nil
+}
+
+func getDecoratedColRendition(baseDecoratedColumn, alias string) string {
+	if alias != "" {
+		return fmt.Sprintf(`%s AS "%s"`, baseDecoratedColumn, alias)
+	}
+	return baseDecoratedColumn
 }
 
 func CheckSqlParserTypeVsServiceColumn(colUsage ColumnUsageMetadata) error {

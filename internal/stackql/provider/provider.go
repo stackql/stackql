@@ -9,6 +9,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/methodselect"
+	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
@@ -44,7 +45,7 @@ type IProvider interface {
 
 	GetLikeableColumns(string) []string
 
-	GetMethodForAction(serviceName string, resourceName string, iqlAction string, parameters map[string]interface{}, runtimeCtx dto.RuntimeCtx) (*openapistackql.OperationStore, string, map[string]interface{}, error)
+	GetMethodForAction(serviceName string, resourceName string, iqlAction string, parameters parserutil.ColumnKeyedDatastore, runtimeCtx dto.RuntimeCtx) (*openapistackql.OperationStore, string, error)
 
 	GetMethodSelector() methodselect.IMethodSelector
 

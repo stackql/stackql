@@ -18,12 +18,25 @@ type ColumnarReference interface {
 	Alias() string
 	String() string
 	Name() string
+	Abbreviate() (string, bool)
 	SourceType() ParamSourceType
 }
 
 type StandardColumnarReference struct {
 	k          interface{}
 	sourceType ParamSourceType
+}
+
+func (cr StandardColumnarReference) Abbreviate() (string, bool) {
+	if cr.SourceType() == JoinOnParam {
+		// return "", false
+	}
+	switch kv := cr.Value().(type) {
+	case *sqlparser.ColName:
+		return kv.Name.GetRawVal(), true
+	default:
+		return cr.GetStringKey(), true
+	}
 }
 
 func (cr StandardColumnarReference) SourceType() ParamSourceType {

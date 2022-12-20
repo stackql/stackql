@@ -649,7 +649,7 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 				return nil
 			}
 			// Views must be recursively expanded
-			childAnalyzer, err := NewEarlyScreenerAnalyzer(v.primitiveGenerator)
+			childAnalyzer, err := NewEarlyScreenerAnalyzer(v.primitiveGenerator, v.annotatedAST)
 			if err != nil {
 				return err
 			}

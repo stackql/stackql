@@ -360,6 +360,7 @@ func (pr *standardParameterRouter) route(tb sqlparser.TableExpr, handlerCtx hand
 	}
 	// These are "available parameters"
 	tpc := pr.getAvailableParameters(tb)
+	runParamters := tpc.Clone()
 	// After executing GetHeirarchyFromStatement(), we know:
 	//   - Any remaining param is not required.
 	//   - Any "on" param that was consumed:
@@ -383,29 +384,48 @@ func (pr *standardParameterRouter) route(tb sqlparser.TableExpr, handlerCtx hand
 	//          - Dual outgoing from ON object.
 	//   e) [ ] Rewrite NOP on clauses.
 	//   f) [ ] Catalogue and return dataflows (somehow)
-	stringParams := tpc.GetStringified()
-	notOnParams := tpc.GetNotOnCoupling()
-	notOnStringParams := notOnParams.GetStringified()
-	hr, remainingParams, err := taxonomy.GetHeirarchyFromStatement(handlerCtx, tb, notOnStringParams)
+	// stringParams := tpc.GetStringified()
+	notOnParams := runParamters.Clone().GetNotOnCoupling()
+	priorNotOnParameters := notOnParams.Clone()
+	priorParameters := runParamters.Clone()
+	// notOnStringParams := notOnParams.GetStringified()
+	// TODO: add parent params into the mix here.
+	hr, err := taxonomy.GetHeirarchyFromStatement(handlerCtx, tb, notOnParams)
 	if err != nil {
-		hr, remainingParams, err = taxonomy.GetHeirarchyFromStatement(handlerCtx, tb, stringParams)
+		hr, err = taxonomy.GetHeirarchyFromStatement(handlerCtx, tb, runParamters)
 	} else {
 		// If the where parameters are sufficient, then need to switch
 		// the Table - Paramater coupling object
-		tpc = notOnParams
+		runParamters = notOnParams
+		priorParameters = priorNotOnParameters
 	}
-	logging.GetLogger().Infof("hr = '%+v', remainingParams = '%+v', err = '%+v'", hr, remainingParams, err)
+	// logging.GetLogger().Infof("hr = '%+v', remainingParams = '%+v', err = '%+v'", hr, remainingParams, err)
 	if err != nil {
 		return nil, err
 	}
-	reconstitutedConsumedParams, err := tpc.ReconstituteConsumedParams(remainingParams)
-	if err != nil {
-		return nil, err
-	}
+	// reconstitutedConsumedParams, err := tpc.ReconstituteConsumedParams(remainingParams)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// reconstitutedConsumedParams := tpc.Minus(runParamters)
+	// reconstitutedConsumedParams := priorParameters.Minus(runParamters)
+	logging.GetLogger().Debugf("%v\n", priorParameters)
+	// TODO: need to get ALL the required stuff in here,
+	//       BUT not send the wrong things for dataflow analysis.
+	reconstitutedConsumedParams := runParamters
 	abbreviatedConsumedMap, err := reconstitutedConsumedParams.AbbreviateMap()
 	if err != nil {
 		return nil, err
 	}
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// TODO: fix this mess and make it global
+	//       so that ancestor params can be correctly consumed!!!
+	// err = pr.invalidateParams(abbreviatedConsumedMap)
+	// if err != nil {
+	// 	return nil, err
+	// }
 	onConsumed := reconstitutedConsumedParams.GetOnCoupling()
 	pms := onConsumed.GetAllParameters()
 	logging.GetLogger().Infof("onConsumed = '%+v'", onConsumed)

@@ -15,33 +15,69 @@ const (
 )
 
 type TableParameterCoupling interface {
+	ColumnKeyedDatastore
+	getParameterMap() ParameterMap
 	AbbreviateMap() (map[string]interface{}, error)
 	Add(ColumnarReference, ParameterMetadata, ParamSourceType) error
-	Delete(ColumnarReference) bool
+	Clone() TableParameterCoupling
 	GetOnCoupling() TableParameterCoupling
 	GetNotOnCoupling() TableParameterCoupling
 	GetAllParameters() []ParameterMapKeyVal
-	GetStringified() map[string]interface{}
+	Minus(rhs TableParameterCoupling) TableParameterCoupling
 	ReconstituteConsumedParams(map[string]interface{}) (TableParameterCoupling, error)
 }
 
-type StandardTableParameterCoupling struct {
+type standardTableParameterCoupling struct {
 	paramMap    ParameterMap
 	colMappings map[string]ColumnarReference
 }
 
 func NewTableParameterCoupling() TableParameterCoupling {
-	return &StandardTableParameterCoupling{
+	return &standardTableParameterCoupling{
 		paramMap:    NewParameterMap(),
 		colMappings: make(map[string]ColumnarReference),
 	}
 }
 
-func (tpc *StandardTableParameterCoupling) GetAllParameters() []ParameterMapKeyVal {
+func (tpc *standardTableParameterCoupling) AndStringMap(rhs map[string]interface{}) ColumnKeyedDatastore {
+	tpc.paramMap.AndStringMap(rhs)
+	return tpc
+}
+
+func (tpc *standardTableParameterCoupling) DeleteStringMap(rhs map[string]interface{}) ColumnKeyedDatastore {
+	tpc.paramMap.DeleteStringMap(rhs)
+	return tpc
+}
+
+func (tpc *standardTableParameterCoupling) Clone() TableParameterCoupling {
+	colMappings := make(map[string]ColumnarReference)
+	for k, v := range tpc.colMappings {
+		colMappings[k] = v
+	}
+	return &standardTableParameterCoupling{
+		paramMap:    tpc.paramMap.Clone(),
+		colMappings: colMappings,
+	}
+}
+
+func (tpc *standardTableParameterCoupling) getParameterMap() ParameterMap {
+	return tpc.paramMap
+}
+
+func (tpc *standardTableParameterCoupling) Minus(rhs TableParameterCoupling) TableParameterCoupling {
+	difference := tpc.Clone()
+	rhsParamMap := rhs.getParameterMap()
+	for _, k := range rhsParamMap.GetAll() {
+		difference.Delete(k.K)
+	}
+	return difference
+}
+
+func (tpc *standardTableParameterCoupling) GetAllParameters() []ParameterMapKeyVal {
 	return tpc.paramMap.GetAll()
 }
 
-func (tpc *StandardTableParameterCoupling) Add(col ColumnarReference, val ParameterMetadata, paramType ParamSourceType) error {
+func (tpc *standardTableParameterCoupling) Add(col ColumnarReference, val ParameterMetadata, paramType ParamSourceType) error {
 	colTyped, err := NewColumnarReference(col.Value(), paramType)
 	if err != nil {
 		return err
@@ -58,19 +94,31 @@ func (tpc *StandardTableParameterCoupling) Add(col ColumnarReference, val Parame
 	return nil
 }
 
-func (tpc *StandardTableParameterCoupling) Delete(col ColumnarReference) bool {
+func (tpc *standardTableParameterCoupling) Delete(col ColumnarReference) bool {
 	return tpc.paramMap.Delete(col)
 }
 
-func (tpc *StandardTableParameterCoupling) GetStringified() map[string]interface{} {
+func (tpc *standardTableParameterCoupling) Contains(col ColumnarReference) bool {
+	return tpc.paramMap.Delete(col)
+}
+
+func (tpc *standardTableParameterCoupling) GetStringified() map[string]interface{} {
 	return tpc.paramMap.GetAbbreviatedStringified()
 }
 
-func (tpc *StandardTableParameterCoupling) AbbreviateMap() (map[string]interface{}, error) {
+func (tpc *standardTableParameterCoupling) DeleteByString(k string) bool {
+	return tpc.paramMap.DeleteByString(k)
+}
+
+func (tpc *standardTableParameterCoupling) ContainsString(k string) bool {
+	return tpc.paramMap.ContainsString(k)
+}
+
+func (tpc *standardTableParameterCoupling) AbbreviateMap() (map[string]interface{}, error) {
 	return tpc.paramMap.GetAbbreviatedStringified(), nil
 }
 
-func (tpc *StandardTableParameterCoupling) GetOnCoupling() TableParameterCoupling {
+func (tpc *standardTableParameterCoupling) GetOnCoupling() TableParameterCoupling {
 	retVal := NewTableParameterCoupling()
 	m := tpc.paramMap.GetMap()
 	for k, v := range m {
@@ -81,7 +129,7 @@ func (tpc *StandardTableParameterCoupling) GetOnCoupling() TableParameterCouplin
 	return retVal
 }
 
-func (tpc *StandardTableParameterCoupling) GetNotOnCoupling() TableParameterCoupling {
+func (tpc *standardTableParameterCoupling) GetNotOnCoupling() TableParameterCoupling {
 	retVal := NewTableParameterCoupling()
 	m := tpc.paramMap.GetMap()
 	for k, v := range m {
@@ -92,7 +140,7 @@ func (tpc *StandardTableParameterCoupling) GetNotOnCoupling() TableParameterCoup
 	return retVal
 }
 
-func (tpc *StandardTableParameterCoupling) clone() TableParameterCoupling {
+func (tpc *standardTableParameterCoupling) clone() TableParameterCoupling {
 	retVal := NewTableParameterCoupling()
 	m := tpc.paramMap.GetMap()
 	for k, v := range m {
@@ -101,7 +149,7 @@ func (tpc *StandardTableParameterCoupling) clone() TableParameterCoupling {
 	return retVal
 }
 
-func (tpc *StandardTableParameterCoupling) ReconstituteConsumedParams(
+func (tpc *standardTableParameterCoupling) ReconstituteConsumedParams(
 	returnedMap map[string]interface{},
 ) (TableParameterCoupling, error) {
 	retVal := tpc.clone()

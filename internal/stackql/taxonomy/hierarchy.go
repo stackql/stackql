@@ -109,16 +109,12 @@ func GetTableNameFromStatement(node sqlparser.SQLNode, formatter sqlparser.NodeF
 //   - Hierarchy
 //   - Supplied parameters that are **not** consumed in Hierarchy inference
 //   - Error if applicable.
-func GetHeirarchyFromStatement(handlerCtx handler.HandlerContext, node sqlparser.SQLNode, parameters map[string]interface{}) (tablemetadata.HeirarchyObjects, map[string]interface{}, error) {
+func GetHeirarchyFromStatement(handlerCtx handler.HandlerContext, node sqlparser.SQLNode, parameters parserutil.ColumnKeyedDatastore) (tablemetadata.HeirarchyObjects, error) {
 	var hIds internaldto.HeirarchyIdentifiers
 	getFirstAvailableMethod := false
-	remainingParams := make(map[string]interface{})
-	for k, v := range parameters {
-		remainingParams[k] = v
-	}
 	hIds, err := getHids(handlerCtx, node)
 	if err != nil {
-		return nil, remainingParams, err
+		return nil, err
 	}
 	methodRequired := true
 	var methodAction string
@@ -129,7 +125,7 @@ func GetHeirarchyFromStatement(handlerCtx handler.HandlerContext, node sqlparser
 	case *sqlparser.DescribeTable:
 	case sqlparser.TableName:
 	case *sqlparser.AliasedTableExpr:
-		return GetHeirarchyFromStatement(handlerCtx, n.Expr, remainingParams)
+		return GetHeirarchyFromStatement(handlerCtx, n.Expr, parameters)
 	case *sqlparser.Show:
 		switch strings.ToUpper(n.Type) {
 		case "INSERT":
@@ -138,7 +134,7 @@ func GetHeirarchyFromStatement(handlerCtx handler.HandlerContext, node sqlparser
 		case "METHODS":
 			methodRequired = false
 		default:
-			return nil, remainingParams, fmt.Errorf("cannot resolve taxonomy for SHOW statement of type = '%s'", strings.ToUpper(n.Type))
+			return nil, fmt.Errorf("cannot resolve taxonomy for SHOW statement of type = '%s'", strings.ToUpper(n.Type))
 		}
 	case *sqlparser.Insert:
 		methodAction = "insert"
@@ -147,27 +143,27 @@ func GetHeirarchyFromStatement(handlerCtx handler.HandlerContext, node sqlparser
 	case *sqlparser.Update:
 		methodAction = "update"
 	default:
-		return nil, remainingParams, fmt.Errorf("cannot resolve taxonomy")
+		return nil, fmt.Errorf("cannot resolve taxonomy")
 	}
 	retVal := tablemetadata.NewHeirarchyObjects(hIds)
 	viewDTO, isView := retVal.GetView()
 	if isView {
 		logging.GetLogger().Debugf("viewDTO = %v\n", viewDTO)
-		return retVal, remainingParams, nil
+		return retVal, nil
 	}
 	prov, err := handlerCtx.GetProvider(hIds.GetProviderStr())
 	retVal.SetProvider(prov)
 	if err != nil {
-		return nil, remainingParams, err
+		return nil, err
 	}
 	svcHdl, err := prov.GetServiceShard(hIds.GetServiceStr(), hIds.GetResourceStr(), handlerCtx.GetRuntimeContext())
 	if err != nil {
-		return nil, remainingParams, err
+		return nil, err
 	}
 	retVal.SetServiceHdl(svcHdl)
 	rsc, err := prov.GetResource(hIds.GetServiceStr(), hIds.GetResourceStr(), handlerCtx.GetRuntimeContext())
 	if err != nil {
-		return nil, remainingParams, err
+		return nil, err
 	}
 	retVal.SetResource(rsc)
 	var method *openapistackql.OperationStore
@@ -175,21 +171,21 @@ func GetHeirarchyFromStatement(handlerCtx handler.HandlerContext, node sqlparser
 	case *sqlparser.Exec, *sqlparser.ExecSubquery:
 		method, err = rsc.FindMethod(hIds.GetMethodStr())
 		if err != nil {
-			return nil, remainingParams, err
+			return nil, err
 		}
 		retVal.SetMethod(method)
-		return retVal, remainingParams, nil
+		return retVal, nil
 	}
 	if methodRequired {
 		switch node.(type) {
 		case *sqlparser.DescribeTable:
 			m, mStr, err := prov.InferDescribeMethod(rsc)
 			if err != nil {
-				return nil, remainingParams, err
+				return nil, err
 			}
 			retVal.SetMethod(m)
 			retVal.SetMethodStr(mStr)
-			return retVal, remainingParams, nil
+			return retVal, nil
 		}
 		if methodAction == "" {
 			methodAction = "select"
@@ -199,24 +195,30 @@ func GetHeirarchyFromStatement(handlerCtx handler.HandlerContext, node sqlparser
 		if getFirstAvailableMethod {
 			meth, methStr, err = prov.GetFirstMethodForAction(retVal.GetHeirarchyIds().GetServiceStr(), retVal.GetHeirarchyIds().GetResourceStr(), methodAction, handlerCtx.GetRuntimeContext())
 		} else {
-			meth, methStr, remainingParams, err = prov.GetMethodForAction(retVal.GetHeirarchyIds().GetServiceStr(), retVal.GetHeirarchyIds().GetResourceStr(), methodAction, remainingParams, handlerCtx.GetRuntimeContext())
+			meth, methStr, err = prov.GetMethodForAction(retVal.GetHeirarchyIds().GetServiceStr(), retVal.GetHeirarchyIds().GetResourceStr(), methodAction, parameters, handlerCtx.GetRuntimeContext())
 			if err != nil {
-				return nil, remainingParams, fmt.Errorf("Cannot find matching operation, possible causes include missing required parameters or an unsupported method for the resource, to find required parameters for supported methods run SHOW METHODS IN %s: %s", retVal.GetHeirarchyIds().GetTableName(), err.Error())
+				return nil, fmt.Errorf("Cannot find matching operation, possible causes include missing required parameters or an unsupported method for the resource, to find required parameters for supported methods run SHOW METHODS IN %s: %s", retVal.GetHeirarchyIds().GetTableName(), err.Error())
 			}
 		}
 		for _, srv := range svcHdl.Servers {
-			for k, _ := range srv.Variables {
-				_, ok := remainingParams[k]
-				if ok {
-					delete(remainingParams, k)
-				}
+			for k := range srv.Variables {
+				logging.GetLogger().Debugf("server paramter = '%s'\n", k)
+				// parameters.DeleteByString(k)
 			}
 		}
+		// for _, srv := range svcHdl.Servers {
+		// 	for k, _ := range srv.Variables {
+		// 		_, ok := remainingParams[k]
+		// 		if ok {
+		// 			delete(remainingParams, k)
+		// 		}
+		// 	}
+		// }
 		method = meth
 		retVal.SetMethodStr(methStr)
 	}
 	if methodRequired {
 		retVal.SetMethod(method)
 	}
-	return retVal, remainingParams, nil
+	return retVal, nil
 }
