@@ -294,7 +294,7 @@ func (pb *standardPrimitiveGenerator) traverseShowFilter(table openapistackql.IT
 	return retVal, nil
 }
 
-func (pb *standardPrimitiveGenerator) traverseWhereFilter(node sqlparser.SQLNode, requiredParameters, optionalParameters *suffix.ParameterSuffixMap) (sqlparser.Expr, []string, error) {
+func (pb *standardPrimitiveGenerator) traverseWhereFilter(node sqlparser.SQLNode, requiredParameters, optionalParameters suffix.ParameterSuffixMap) (sqlparser.Expr, []string, error) {
 	switch node := node.(type) {
 	case *sqlparser.ComparisonExpr:
 		exp, cn, err := pb.whereComparisonExprCopyAndReWrite(node, requiredParameters, optionalParameters)
@@ -335,7 +335,7 @@ func (pb *standardPrimitiveGenerator) traverseWhereFilter(node sqlparser.SQLNode
 	}
 }
 
-func (pb *standardPrimitiveGenerator) whereComparisonExprCopyAndReWrite(expr *sqlparser.ComparisonExpr, requiredParameters, optionalParameters *suffix.ParameterSuffixMap) (sqlparser.Expr, string, error) {
+func (pb *standardPrimitiveGenerator) whereComparisonExprCopyAndReWrite(expr *sqlparser.ComparisonExpr, requiredParameters, optionalParameters suffix.ParameterSuffixMap) (sqlparser.Expr, string, error) {
 	qualifiedName, ok := expr.Left.(*sqlparser.ColName)
 	if !ok {
 		return nil, "", fmt.Errorf("unexpected: %v", sqlparser.String(expr))
@@ -414,42 +414,15 @@ func (pb *standardPrimitiveGenerator) whereComparisonExprCopyAndReWrite(expr *sq
 }
 
 func (pb *standardPrimitiveGenerator) analyzeWhere(where *sqlparser.Where, existingParams map[string]interface{}) (*sqlparser.Where, []string, error) {
-	requiredParameters := suffix.NewParameterSuffixMap()
-	remainingRequiredParameters := suffix.NewParameterSuffixMap()
-	optionalParameters := suffix.NewParameterSuffixMap()
-	tbVisited := map[tablemetadata.ExtendedTableMetadata]struct{}{}
-	for _, tb := range pb.PrimitiveComposer.GetTables() {
-		if _, isView := tb.GetIndirect(); isView {
-			continue
-		}
-		if _, ok := tbVisited[tb]; ok {
-			continue
-		}
-		tbVisited[tb] = struct{}{}
-		tbID := tb.GetUniqueId()
-		// This method needs to incorporate request body parameters
-		reqParams := tb.GetRequiredParameters()
-		for k, v := range reqParams {
-			key := fmt.Sprintf("%s.%s", tbID, k)
-			_, keyExists := requiredParameters.Get(key)
-			if keyExists {
-				return nil, nil, fmt.Errorf("key already is required: %s", k)
-			}
-			requiredParameters.Put(key, v)
-		}
-		// This method needs to incorporate request body parameters
-		for k, vOpt := range tb.GetOptionalParameters() {
-			key := fmt.Sprintf("%s.%s", tbID, k)
-			_, keyExists := optionalParameters.Get(key)
-			if keyExists {
-				return nil, nil, fmt.Errorf("key already is optional: %s", k)
-			}
-			optionalParameters.Put(key, vOpt)
-		}
-	}
 	var retVal sqlparser.Expr
 	var paramsSupplied []string
-	var err error
+	tableParameterCollection, err := pb.PrimitiveComposer.AssignParameters()
+	if err != nil {
+		return nil, paramsSupplied, err
+	}
+	optionalParameters := tableParameterCollection.GetOptionalParams()
+	requiredParameters := tableParameterCollection.GetRequiredParams()
+	remainingRequiredParameters := tableParameterCollection.GetRemainingRequiredParams()
 	if where != nil {
 		retVal, paramsSupplied, err = pb.traverseWhereFilter(where.Expr, requiredParameters, optionalParameters)
 		if err != nil {
@@ -464,6 +437,9 @@ func (pb *standardPrimitiveGenerator) analyzeWhere(where *sqlparser.Where, exist
 	for k := range existingParams {
 		remainingRequiredParameters.Delete(k)
 	}
+
+	// TODO: consume parent parameters for any shortfall in required params
+	// TODO: same, for optional params
 
 	if remainingRequiredParameters.Size() > 0 {
 		if where == nil {
@@ -862,7 +838,7 @@ func (p *standardPrimitiveGenerator) AnalyzeInsert(pbi planbuilderinput.PlanBuil
 	if !ok {
 		return fmt.Errorf("could not cast node of type '%T' to required Insert", pbi.GetStatement())
 	}
-	err := p.inferHeirarchyAndPersist(handlerCtx, node, pbi.GetPlaceholderParams().GetStringified())
+	err := p.inferHeirarchyAndPersist(handlerCtx, node, pbi.GetPlaceholderParams())
 	if err != nil {
 		return err
 	}
@@ -933,7 +909,7 @@ func (p *standardPrimitiveGenerator) AnalyzeUpdate(pbi planbuilderinput.PlanBuil
 	if !ok {
 		return fmt.Errorf("could not cast node of type '%T' to required Update", pbi.GetStatement())
 	}
-	err := p.inferHeirarchyAndPersist(handlerCtx, node, pbi.GetPlaceholderParams().GetStringified())
+	err := p.inferHeirarchyAndPersist(handlerCtx, node, pbi.GetPlaceholderParams())
 	if err != nil {
 		return err
 	}
@@ -974,8 +950,8 @@ func (p *standardPrimitiveGenerator) AnalyzeUpdate(pbi planbuilderinput.PlanBuil
 	return nil
 }
 
-func (p *standardPrimitiveGenerator) inferHeirarchyAndPersist(handlerCtx handler.HandlerContext, node sqlparser.SQLNode, parameters map[string]interface{}) error {
-	heirarchy, _, err := taxonomy.GetHeirarchyFromStatement(handlerCtx, node, parameters)
+func (p *standardPrimitiveGenerator) inferHeirarchyAndPersist(handlerCtx handler.HandlerContext, node sqlparser.SQLNode, parameters parserutil.ColumnKeyedDatastore) error {
+	heirarchy, err := taxonomy.GetHeirarchyFromStatement(handlerCtx, node, parameters)
 	if err != nil {
 		return err
 	}
@@ -990,9 +966,12 @@ func (p *standardPrimitiveGenerator) analyzeDelete(pbi planbuilderinput.PlanBuil
 		return fmt.Errorf("could not cast node of type '%T' to required Delete", pbi.GetStatement())
 	}
 	p.parseComments(node.Comments)
-	paramMap := astvisit.ExtractParamsFromWhereClause(pbi.GetAnnotatedAST(), node.Where)
+	paramMap, ok := pbi.GetAnnotatedAST().GetWhereParamMapsEntry(node.Where)
+	if !ok {
+		return fmt.Errorf("where parameters not found; should be anlaysed a priori")
+	}
 
-	err := p.inferHeirarchyAndPersist(handlerCtx, node, paramMap.GetStringified())
+	err := p.inferHeirarchyAndPersist(handlerCtx, node, paramMap)
 	if err != nil {
 		return err
 	}

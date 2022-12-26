@@ -42,9 +42,10 @@ var (
 	_ InitialPassesScreenerAnalyzer = &standardInitialPasses{}
 )
 
-func NewEarlyScreenerAnalyzer(primitiveGenerator primitivegenerator.PrimitiveGenerator) (InitialPassesScreenerAnalyzer, error) {
+func NewEarlyScreenerAnalyzer(primitiveGenerator primitivegenerator.PrimitiveGenerator, parentAnnotatedAST annotatedast.AnnotatedAst) (InitialPassesScreenerAnalyzer, error) {
 	return &standardInitialPasses{
 		primitiveGenerator: primitiveGenerator,
+		parentAnnotatedAST: parentAnnotatedAST,
 	}, nil
 }
 
@@ -54,6 +55,7 @@ type standardInitialPasses struct {
 	planBuilderInput              planbuilderinput.PlanBuilderInput
 	result                        *sqlparser.RewriteASTResult
 	primitiveGenerator            primitivegenerator.PrimitiveGenerator
+	parentAnnotatedAST            annotatedast.AnnotatedAst
 }
 
 func (sp *standardInitialPasses) GetInstructionType() InstructionType {
@@ -83,13 +85,14 @@ func (sp *standardInitialPasses) initialPasses(statement sqlparser.Statement, ha
 	if err != nil {
 		return err
 	}
-	annotatedAST, err := annotatedast.NewAnnotatedAst(result.AST)
+	ast := result.AST
+	annotatedAST, err := annotatedast.NewAnnotatedAst(sp.parentAnnotatedAST, ast)
 	if err != nil {
 		return err
 	}
 
 	// Before analysing AST, see if we can pass stright to SQL backend
-	opType, ok := handlerCtx.GetDBMSInternalRouter().CanRoute(result.AST)
+	opType, ok := handlerCtx.GetDBMSInternalRouter().CanRoute(ast)
 	if ok {
 		sp.instructionType = InternallyRoutableInstruction
 		logging.GetLogger().Debugf("%v", opType)
@@ -109,6 +112,14 @@ func (sp *standardInitialPasses) initialPasses(statement sqlparser.Statement, ha
 		}
 		sp.planBuilderInput = pbi
 		return nil
+	}
+
+	// Where clause paramter extract from top down does not require a deep pass
+	switch node := ast.(type) {
+	case *sqlparser.Select:
+		astvisit.ExtractParamsFromWhereClause(annotatedAST, node.Where)
+	case *sqlparser.Delete:
+		astvisit.ExtractParamsFromWhereClause(annotatedAST, node.Where)
 	}
 
 	// First pass AST analysis; annotate and expand AST for indirects (views).
@@ -131,8 +142,6 @@ func (sp *standardInitialPasses) initialPasses(statement sqlparser.Statement, ha
 			return err
 		}
 	}
-
-	ast := annotatedAST.GetAST()
 
 	// Third pass AST analysis; extract parser table objects.
 	// Extracts:

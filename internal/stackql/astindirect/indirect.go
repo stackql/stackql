@@ -3,6 +3,7 @@ package astindirect
 import (
 	"fmt"
 
+	"github.com/stackql/go-openapistackql/openapistackql"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/parse"
 
@@ -34,6 +35,8 @@ type Indirect interface {
 	GetColumnByName(name string) (drm.ColumnMetadata, bool)
 	GetColumns() []drm.ColumnMetadata
 	GetName() string
+	GetOptionalParameters() map[string]openapistackql.Addressable
+	GetRequiredParameters() map[string]openapistackql.Addressable
 	GetSelectAST() sqlparser.SelectStatement
 	GetSelectContext() drm.PreparedStatementCtx
 	GetType() IndirectType
@@ -58,9 +61,17 @@ func (v *view) GetColumns() []drm.ColumnMetadata {
 	return v.selCtx.GetNonControlColumns()
 }
 
+func (v *view) GetOptionalParameters() map[string]openapistackql.Addressable {
+	return nil
+}
+
+func (v *view) GetRequiredParameters() map[string]openapistackql.Addressable {
+	return nil
+}
+
 func (v *view) GetColumnByName(name string) (drm.ColumnMetadata, bool) {
 	for _, col := range v.selCtx.GetNonControlColumns() {
-		if col.GetName() == name {
+		if col.GetIdentifier() == name {
 			return col, true
 		}
 	}
@@ -90,14 +101,6 @@ func (v *view) GetSelectAST() sqlparser.SelectStatement {
 func (v *view) GetSelectionCtx() (drm.PreparedStatementCtx, error) {
 	return v.selCtx, nil
 }
-
-// func (v *view) SetPlanBuilderInput(planBuilderInput planbuilderinput.PlanBuilderInput) {
-// 	v.planBuilderInput = planBuilderInput
-// }
-
-// func (v *view) GetPlanBuilderInput() (planbuilderinput.PlanBuilderInput, bool) {
-// 	return v.planBuilderInput, v.planBuilderInput != nil
-// }
 
 func (v *view) Analyze() error {
 

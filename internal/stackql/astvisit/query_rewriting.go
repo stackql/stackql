@@ -100,9 +100,6 @@ func (v *standardQueryRewriteAstVisitor) getNextAlias() string {
 func (v *standardQueryRewriteAstVisitor) getStarColumns(
 	tbl tablemetadata.ExtendedTableMetadata,
 ) ([]relationaldto.RelationalColumn, error) {
-	// if view, isView := tbl.GetView(); isView {
-	// 	return view.GetRawQuery()
-	// }
 	if indirect, isIndirect := tbl.GetIndirect(); isIndirect {
 		rv := v.dc.ColumnsToRelationalColumns(indirect.GetColumns())
 		return rv, nil
@@ -570,11 +567,11 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			if err != nil {
 				return err
 			}
-			c, ok := indirect.GetColumnByName(col.Name)
+			r, ok := indirect.GetColumnByName(col.Name)
 			if !ok {
 				return fmt.Errorf("query rewriting for indirection: cannot find col = '%s'", col.Name)
 			}
-			rv := v.dc.ColumnToRelationalColumn(c).WithAlias(col.Alias).WithDecorated(col.DecoratedColumn)
+			rv := relationaldto.NewRelationalColumn(col.Name, r.GetType()).WithDecorated(col.DecoratedColumn)
 			v.relationalColumns = append(v.relationalColumns, rv)
 			return nil
 		}

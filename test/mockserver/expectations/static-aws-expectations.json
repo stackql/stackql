@@ -245,6 +245,36 @@
       "method": "POST",
       "path": "/",
       "headers": {
+        "Authorization": ["^.*SignedHeaders.*content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target": [ "CloudApiService.GetResource" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "TypeName":"AWS::S3::Bucket",
+          "Identifier": "stackql-trial-bucket-01"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "ResourceDescription": {
+          "Identifier": "stackql-trial-bucket-01",
+          "Properties": "{\"PublicAccessBlockConfiguration\":{\"RestrictPublicBuckets\":true,\"BlockPublicPolicy\":true,\"BlockPublicAcls\":true,\"IgnorePublicAcls\":true},\"BucketName\":\"stackql-trial-bucket-01\",\"RegionalDomainName\":\"stackql-trial-bucket-01.s3.ap-southeast-1.amazonaws.com\",\"OwnershipControls\":{\"Rules\":[{\"ObjectOwnership\":\"BucketOwnerEnforced\"}]},\"DomainName\":\"stackql-trial-bucket-01.s3.amazonaws.com\",\"WebsiteURL\":\"http://stackql-trial-bucket-01.s3-website-ap-southeast-1.amazonaws.com\",\"DualStackDomainName\":\"stackql-trial-bucket-01.s3.dualstack.ap-southeast-1.amazonaws.com\",\"Arn\":\"arn:aws:s3:::stackql-trial-bucket-01\",\"Tags\":[{\"Value\":\"first-ever-bucket\",\"Key\":\"sundry\"}]}"
+        }
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
         "Authorization": ["^.*SignedHeaders=accept;content-type;host;x-amz-date;x-amz-target.*$" ],
         "X-Amz-Target": [ "CloudApiService.ListResourceRequests" ]
       },

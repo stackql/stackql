@@ -10,14 +10,14 @@ import (
 // for mapping a "Columnar Reference" (an abstract data type)
 // to some supplied or inferred value.
 type ParameterMap interface {
+	ColumnKeyedDatastore
 	iParameterMap()
+	Clone() ParameterMap
 	Set(ColumnarReference, ParameterMetadata) error
 	Get(ColumnarReference) (ParameterMetadata, bool)
-	Delete(ColumnarReference) bool
 	GetAll() []ParameterMapKeyVal
 	GetByString(string) ([]ParameterMapKeyVal, bool)
 	GetMap() map[ColumnarReference]ParameterMetadata
-	GetStringified() map[string]interface{}
 	GetAbbreviatedStringified() map[string]interface{}
 }
 
@@ -31,6 +31,16 @@ func NewParameterMap() ParameterMap {
 	}
 }
 
+func (pm standardParameterMap) Clone() ParameterMap {
+	subMap := make(map[ColumnarReference]ParameterMetadata)
+	for k, v := range pm.m {
+		subMap[k] = v
+	}
+	return standardParameterMap{
+		m: subMap,
+	}
+}
+
 func (pm standardParameterMap) iParameterMap() {}
 
 func (pm standardParameterMap) GetByString(s string) ([]ParameterMapKeyVal, bool) {
@@ -41,6 +51,57 @@ func (pm standardParameterMap) GetByString(s string) ([]ParameterMapKeyVal, bool
 		}
 	}
 	return retVal, true
+}
+
+func (pm standardParameterMap) DeleteByString(s string) bool {
+	for k, _ := range pm.m {
+		if k.GetStringKey() == s {
+			delete(pm.m, k)
+		}
+	}
+	return true
+}
+
+func (pm standardParameterMap) deleteByAbbreviatedString(s string) bool {
+	for k, _ := range pm.m {
+		abbreviation, ok := k.Abbreviate()
+		if !ok {
+			continue
+		}
+		if abbreviation == s {
+			delete(pm.m, k)
+		}
+	}
+	return true
+}
+
+func (pm standardParameterMap) AndStringMap(rhs map[string]interface{}) ColumnKeyedDatastore {
+	abbreviatedMap := pm.GetAbbreviatedStringified()
+	for k, _ := range abbreviatedMap {
+		if _, ok := rhs[k]; !ok {
+			pm.deleteByAbbreviatedString(k)
+		}
+	}
+	return pm
+}
+
+func (pm standardParameterMap) DeleteStringMap(rhs map[string]interface{}) ColumnKeyedDatastore {
+	abbreviatedMap := pm.GetAbbreviatedStringified()
+	for k, _ := range abbreviatedMap {
+		if _, ok := rhs[k]; ok {
+			pm.deleteByAbbreviatedString(k)
+		}
+	}
+	return pm
+}
+
+func (pm standardParameterMap) ContainsString(s string) bool {
+	for k, _ := range pm.m {
+		if k.GetStringKey() == s {
+			return true
+		}
+	}
+	return false
 }
 
 func (pm standardParameterMap) GetAll() []ParameterMapKeyVal {
@@ -58,6 +119,11 @@ func (pm standardParameterMap) Delete(k ColumnarReference) bool {
 		return true
 	}
 	return false
+}
+
+func (pm standardParameterMap) Contains(k ColumnarReference) bool {
+	_, ok := pm.m[k]
+	return ok
 }
 
 func (pm standardParameterMap) GetMap() map[ColumnarReference]ParameterMetadata {

@@ -245,3 +245,51 @@ VALUES (
   ;'
 )
 ;
+
+INSERT OR IGNORE INTO "__iql__.views" (
+  view_name,
+  view_ddl
+) 
+VALUES (
+  'aws_cc_bucket_detail',
+  '
+  SELECT 
+  JSON_EXTRACT(Properties, ''$.Arn'') as Arn,
+  JSON_EXTRACT(Properties, ''$.BucketName'') as BucketName,
+  JSON_EXTRACT(Properties, ''$.DomainName'') as DomainName,
+  JSON_EXTRACT(Properties, ''$.RegionalDomainName'') as RegionalDomainName,
+  JSON_EXTRACT(Properties, ''$.DualStackDomainName'') as DualStackDomainName,
+  JSON_EXTRACT(Properties, ''$.WebsiteURL'') as WebsiteURL,
+  JSON_EXTRACT(Properties, ''$.OwnershipControls.Rules[0].ObjectOwnership'') as ObjectOwnership,
+  IIF(JSON_EXTRACT(Properties, ''$.PublicAccessBlockConfiguration.RestrictPublicBuckets'') = 0, ''false'', ''true'') as RestrictPublicBuckets,
+  IIF(JSON_EXTRACT(Properties, ''$.PublicAccessBlockConfiguration.BlockPublicPolicy'') = 0, ''false'', ''true'') as BlockPublicPolicy,
+  IIF(JSON_EXTRACT(Properties, ''$.PublicAccessBlockConfiguration.BlockPublicAcls'') = 0, ''false'', ''true'') as BlockPublicAcls,
+  IIF(JSON_EXTRACT(Properties, ''$.PublicAccessBlockConfiguration.IgnorePublicAcls'') = 0, ''false'', ''true'') as IgnorePublicAcls,
+  JSON_EXTRACT(Properties, ''$.Tags'') as Tags
+  FROM aws.cloud_control.resources WHERE region = ''ap-southeast-2'' and data__TypeName = ''AWS::S3::Bucket'' and data__Identifier = ''stackql-trial-bucket-01''
+  ;'
+);
+
+INSERT OR IGNORE INTO "__iql__.views" (
+  view_name,
+  view_ddl
+) 
+VALUES (
+  'aws_cc_bucket_unfiltered',
+  '
+  SELECT 
+  JSON_EXTRACT(Properties, ''$.Arn'') as Arn,
+  JSON_EXTRACT(Properties, ''$.BucketName'') as BucketName,
+  JSON_EXTRACT(Properties, ''$.DomainName'') as DomainName,
+  JSON_EXTRACT(Properties, ''$.RegionalDomainName'') as RegionalDomainName,
+  JSON_EXTRACT(Properties, ''$.DualStackDomainName'') as DualStackDomainName,
+  JSON_EXTRACT(Properties, ''$.WebsiteURL'') as WebsiteURL,
+  JSON_EXTRACT(Properties, ''$.OwnershipControls.Rules[0].ObjectOwnership'') as ObjectOwnership,
+  IIF(JSON_EXTRACT(Properties, ''$.PublicAccessBlockConfiguration.RestrictPublicBuckets'') = 0, ''false'', ''true'') as RestrictPublicBuckets,
+  IIF(JSON_EXTRACT(Properties, ''$.PublicAccessBlockConfiguration.BlockPublicPolicy'') = 0, ''false'', ''true'') as BlockPublicPolicy,
+  IIF(JSON_EXTRACT(Properties, ''$.PublicAccessBlockConfiguration.BlockPublicAcls'') = 0, ''false'', ''true'') as BlockPublicAcls,
+  IIF(JSON_EXTRACT(Properties, ''$.PublicAccessBlockConfiguration.IgnorePublicAcls'') = 0, ''false'', ''true'') as IgnorePublicAcls,
+  JSON_EXTRACT(Properties, ''$.Tags'') as Tags
+  FROM aws.cloud_control.resources WHERE region = ''ap-southeast-2'' and data__TypeName = ''AWS::S3::Bucket''
+  ;'
+);

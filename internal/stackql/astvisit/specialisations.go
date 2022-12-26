@@ -106,7 +106,9 @@ func ExtractParamsFromWhereClause(annotatedAST annotatedast.AnnotatedAst, node *
 	} else {
 		return parserutil.NewParameterMap()
 	}
-	return v.GetParameters()
+	rv := v.GetParameters()
+	annotatedAST.SetWhereParamMapsEntry(node, rv)
+	return rv
 }
 
 func ExtractParamsFromExecSubqueryClause(annotatedAST annotatedast.AnnotatedAst, node *sqlparser.ExecSubquery) parserutil.ParameterMap {

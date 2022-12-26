@@ -13,6 +13,7 @@ var (
 	_ RoutePass = &standardSelectRoutePass{}
 )
 
+// TODO: must accomodate parent (and indeed ancestor) clause parameter passing.
 type RoutePass interface {
 	RoutePass() error
 	GetPlanBuilderInput() planbuilderinput.PlanBuilderInput
@@ -106,7 +107,10 @@ func (sp *standardSelectRoutePass) RoutePass() error {
 	//     parameters will need to have Hierarchies attached after they are inferred.
 	//     Then semantic anlaysis and data flow can be instrumented.
 	//   - TODO: add support for views and subqueries.
-	whereParamMap := astvisit.ExtractParamsFromWhereClause(annotatedAST, node.Where)
+	whereParamMap, ok := pbi.GetAnnotatedAST().GetWhereParamMapsEntry(node.Where)
+	if !ok {
+		whereParamMap = astvisit.ExtractParamsFromWhereClause(annotatedAST, node.Where)
+	}
 	onParamMap := astvisit.ExtractParamsFromFromClause(annotatedAST, node.From)
 
 	// TODO: There is god awful object <-> namespacing inside here: abstract it.
@@ -136,6 +140,7 @@ func (sp *standardSelectRoutePass) RoutePass() error {
 	pbi = pbi.WithTableRouteVisitor(v)
 
 	onConditionsToRewrite := v.GetParameterRouter().GetOnConditionsToRewrite()
+	// TODO: ensure this only contains actual data flows, not normal on conitions
 	onConditionDataFlows, err := v.GetParameterRouter().GetOnConditionDataFlows()
 	if err != nil {
 		return err

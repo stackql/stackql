@@ -5,12 +5,13 @@ import (
 	"strings"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
+	"github.com/stackql/stackql/internal/stackql/parserutil"
 )
 
 type IMethodSelector interface {
 	GetMethod(resource *openapistackql.Resource, methodName string) (*openapistackql.OperationStore, error)
 
-	GetMethodForAction(resource *openapistackql.Resource, iqlAction string, parameters map[string]interface{}) (*openapistackql.OperationStore, string, map[string]interface{}, error)
+	GetMethodForAction(resource *openapistackql.Resource, iqlAction string, parameters parserutil.ColumnKeyedDatastore) (*openapistackql.OperationStore, string, error)
 }
 
 func NewMethodSelector(provider string, version string) (IMethodSelector, error) {
@@ -30,7 +31,7 @@ func newGoogleMethodSelector(version string) (IMethodSelector, error) {
 type DefaultMethodSelector struct {
 }
 
-func (sel *DefaultMethodSelector) GetMethodForAction(resource *openapistackql.Resource, iqlAction string, parameters map[string]interface{}) (*openapistackql.OperationStore, string, map[string]interface{}, error) {
+func (sel *DefaultMethodSelector) GetMethodForAction(resource *openapistackql.Resource, iqlAction string, parameters parserutil.ColumnKeyedDatastore) (*openapistackql.OperationStore, string, error) {
 	var methodName string
 	switch strings.ToLower(iqlAction) {
 	case "select":
@@ -42,10 +43,10 @@ func (sel *DefaultMethodSelector) GetMethodForAction(resource *openapistackql.Re
 	case "update":
 		methodName = "update"
 	default:
-		return nil, "", parameters, fmt.Errorf("iql action = '%s' curently not supported, there is no method mapping possible for any resource", iqlAction)
+		return nil, "", fmt.Errorf("iql action = '%s' curently not supported, there is no method mapping possible for any resource", iqlAction)
 	}
-	m, remainingParams, err := sel.getMethodByNameAndParameters(resource, methodName, parameters)
-	return m, methodName, remainingParams, err
+	m, err := sel.getMethodByNameAndParameters(resource, methodName, parameters)
+	return m, methodName, err
 }
 
 func (sel *DefaultMethodSelector) GetMethod(resource *openapistackql.Resource, methodName string) (*openapistackql.OperationStore, error) {
@@ -60,10 +61,23 @@ func (sel *DefaultMethodSelector) getMethodByName(resource *openapistackql.Resou
 	return m, nil
 }
 
-func (sel *DefaultMethodSelector) getMethodByNameAndParameters(resource *openapistackql.Resource, methodName string, parameters map[string]interface{}) (*openapistackql.OperationStore, map[string]interface{}, error) {
-	m, remainingParams, ok := resource.GetFirstMethodMatchFromSQLVerb(methodName, parameters)
+func (sel *DefaultMethodSelector) getMethodByNameAndParameters(resource *openapistackql.Resource, methodName string, parameters parserutil.ColumnKeyedDatastore) (*openapistackql.OperationStore, error) {
+	stringifiedParams := parameters.GetStringified()
+	m, remainingParams, ok := resource.GetFirstMethodMatchFromSQLVerb(methodName, stringifiedParams)
 	if !ok {
-		return nil, parameters, fmt.Errorf("no appropriate method = '%s' for resource = '%s'", methodName, resource.Name)
+		return nil, fmt.Errorf("no appropriate method = '%s' for resource = '%s'", methodName, resource.Name)
 	}
-	return m, remainingParams, nil
+	// TODO: fix this bodge and
+	//       refactor such that:
+	//         - Server selection and variable assignment is AOT and binding
+	//         - Server selection is passed in to `Paramaterize()`
+	if resource != nil && resource.Service != nil && resource.Service.Servers != nil {
+		for _, srv := range resource.Service.Servers {
+			for k := range srv.Variables {
+				delete(remainingParams, k)
+			}
+		}
+	}
+	parameters.DeleteStringMap(remainingParams)
+	return m, nil
 }

@@ -1,6 +1,8 @@
 package primitivecomposer
 
 import (
+	"fmt"
+
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
@@ -9,6 +11,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/provider"
 	"github.com/stackql/stackql/internal/stackql/sqldialect"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
+	"github.com/stackql/stackql/internal/stackql/suffix"
 	"github.com/stackql/stackql/internal/stackql/symtab"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
@@ -23,6 +26,7 @@ import (
 type PrimitiveComposer interface {
 	AddChild(val PrimitiveComposer)
 	AddIndirect(val PrimitiveComposer)
+	AssignParameters() (internaldto.TableParameterCollection, error)
 	GetAst() sqlparser.SQLNode
 	GetASTFormatter() sqlparser.NodeFormatter
 	GetBuilder() primitivebuilder.Builder
@@ -177,6 +181,44 @@ func (pb *standardPrimitiveComposer) GetParent() PrimitiveComposer {
 
 func (pb *standardPrimitiveComposer) GetChildren() []PrimitiveComposer {
 	return pb.children
+}
+
+func (pb *standardPrimitiveComposer) AssignParameters() (internaldto.TableParameterCollection, error) {
+	requiredParameters := suffix.NewParameterSuffixMap()
+	remainingRequiredParameters := suffix.NewParameterSuffixMap()
+	optionalParameters := suffix.NewParameterSuffixMap()
+	tbVisited := map[tablemetadata.ExtendedTableMetadata]struct{}{}
+	for _, tb := range pb.GetTables() {
+		if _, isView := tb.GetIndirect(); isView {
+			continue
+		}
+		if _, ok := tbVisited[tb]; ok {
+			continue
+		}
+		tbVisited[tb] = struct{}{}
+		tbID := tb.GetUniqueId()
+		// This method needs to incorporate request body parameters
+		reqParams := tb.GetRequiredParameters()
+		for k, v := range reqParams {
+			key := fmt.Sprintf("%s.%s", tbID, k)
+			_, keyExists := requiredParameters.Get(key)
+			if keyExists {
+				return nil, fmt.Errorf("key already is required: %s", k)
+			}
+			requiredParameters.Put(key, v)
+		}
+		// This method needs to incorporate request body parameters
+		tblOptParams := tb.GetOptionalParameters()
+		for k, vOpt := range tblOptParams {
+			key := fmt.Sprintf("%s.%s", tbID, k)
+			_, keyExists := optionalParameters.Get(key)
+			if keyExists {
+				return nil, fmt.Errorf("key already is optional: %s", k)
+			}
+			optionalParameters.Put(key, vOpt)
+		}
+	}
+	return internaldto.NewTableParameterCollection(requiredParameters, optionalParameters, remainingRequiredParameters), nil
 }
 
 func (pb *standardPrimitiveComposer) AddChild(val PrimitiveComposer) {

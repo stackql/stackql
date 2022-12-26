@@ -26,6 +26,10 @@ func (cd *standardColumnMetadata) GetName() string {
 	return cd.column.Name
 }
 
+func (cd *standardColumnMetadata) GetDecorated() string {
+	return cd.column.DecoratedCol
+}
+
 func (cd *standardColumnMetadata) GetIdentifier() string {
 	return cd.column.GetIdentifier()
 }

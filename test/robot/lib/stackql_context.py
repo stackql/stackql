@@ -546,6 +546,8 @@ SELECT_AWS_S3_OBJECTS_EXPECTED = get_output_from_local_file(os.path.join('test',
 SELECT_AWS_S3_OBJECTS_NULL_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 's3', 'select-objects-empty.txt'))
 SELECT_AWS_S3_BUCKETS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 's3', 'select-buckets.txt'))
 SELECT_AWS_S3_BUCKET_LOCATIONS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 's3', 'select-bucket-locations.txt'))
+VIEW_SELECT_AWS_CLOUD_CONTROL_BUCKET_DETAIL_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-bucket-detail.txt'))
+VIEW_SELECT_STAR_AWS_CLOUD_CONTROL_BUCKET_DETAIL_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-star-bucket-detail.txt'))
 
 SELECT_GITHUB_REPOS_PAGES_SINGLE_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-repos-pages.txt'))
 SELECT_GITHUB_REPOS_IDS_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-repos-ids-asc.txt'))
@@ -802,6 +804,8 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'UPDATE_AWS_CLOUD_CONTROL_REQUEST_LOG_GROUP':                           UPDATE_AWS_CLOUD_CONTROL_REQUEST_LOG_GROUP,
     'UPDATE_AWS_EC2_VOLUME':                                                UPDATE_AWS_EC2_VOLUME,
     'UPDATE_GITHUB_ORG':                                                    UPDATE_GITHUB_ORG,
+    'VIEW_SELECT_AWS_CLOUD_CONTROL_BUCKET_DETAIL_EXPECTED':                 VIEW_SELECT_AWS_CLOUD_CONTROL_BUCKET_DETAIL_EXPECTED,
+    'VIEW_SELECT_STAR_AWS_CLOUD_CONTROL_BUCKET_DETAIL_EXPECTED':            VIEW_SELECT_STAR_AWS_CLOUD_CONTROL_BUCKET_DETAIL_EXPECTED,
   }
   if execution_env == 'docker':
     rv['AUTH_CFG_STR']                                  = AUTH_CFG_STR_DOCKER

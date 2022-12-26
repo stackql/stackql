@@ -72,6 +72,7 @@ func (wc *standardDataFlowWeaklyConnectedComponent) Analyze() error {
 	// and document the algorithm.
 	for _, node := range wc.collection.sorted {
 		incidentNodes := wc.collection.g.To(node.ID())
+		wc.idsVisited[node.ID()] = struct{}{}
 		if incidentNodes.Len() > 1 {
 			return fmt.Errorf("data flow: too complex for now; %d dependencies detected when max allowed = 1", incidentNodes.Len())
 		}

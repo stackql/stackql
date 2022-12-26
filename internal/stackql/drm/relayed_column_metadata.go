@@ -29,6 +29,10 @@ func (cd *relayedColumnMetadata) GetName() string {
 	return cd.column.GetName()
 }
 
+func (cd *relayedColumnMetadata) GetDecorated() string {
+	return cd.column.GetDecorated()
+}
+
 func (cd *relayedColumnMetadata) GetIdentifier() string {
 	alias := cd.column.GetAlias()
 	if alias != "" {
