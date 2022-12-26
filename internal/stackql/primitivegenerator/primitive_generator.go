@@ -41,6 +41,7 @@ type PrimitiveGenerator interface {
 	AnalyzeUnaryExec(pbi planbuilderinput.PlanBuilderInput, handlerCtx handler.HandlerContext, node *sqlparser.Exec, selectNode *sqlparser.Select, cols []parserutil.ColumnHandle) (tablemetadata.ExtendedTableMetadata, error)
 	CreateIndirectPrimitiveGenerator(ast sqlparser.SQLNode, handlerCtx handler.HandlerContext) PrimitiveGenerator
 	GetPrimitiveComposer() primitivecomposer.PrimitiveComposer
+	SetIsIndirect(isIndirect bool)
 	WithDataFlowDependentPrimitiveGenerator(PrimitiveGenerator) PrimitiveGenerator
 	IsShowResults() bool
 }
@@ -70,10 +71,15 @@ func (pb *standardPrimitiveGenerator) GetPrimitiveComposer() primitivecomposer.P
 	return pb.PrimitiveComposer
 }
 
+func (pb *standardPrimitiveGenerator) SetIsIndirect(isIndirect bool) {
+	pb.PrimitiveComposer.SetIsIndirect(isIndirect)
+}
+
 func (pb *standardPrimitiveGenerator) CreateIndirectPrimitiveGenerator(ast sqlparser.SQLNode, handlerCtx handler.HandlerContext) PrimitiveGenerator {
 	rv := NewRootPrimitiveGenerator(ast, handlerCtx, pb.PrimitiveComposer.GetGraph()).WithDataFlowDependentPrimitiveGenerator(pb)
 	pb.indirects = append(pb.indirects, rv)
 	pb.PrimitiveComposer.AddIndirect(rv.GetPrimitiveComposer())
+	rv.SetIsIndirect(true)
 	return rv
 }
 

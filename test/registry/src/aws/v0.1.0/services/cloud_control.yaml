@@ -430,7 +430,9 @@ paths:
             schema:
               properties:
                 MaxResults: 
-                  $ref: '#/components/schemas/MaxResults'
+                  type: integer
+                  maximum: 100
+                  minimum: 1
                 NextToken:
                   $ref: '#/components/schemas/NextToken'
                 ResourceModel:

@@ -49,7 +49,7 @@ func BuildPlanFromContext(handlerCtx handler.HandlerContext) (*plan.Plan, error)
 
 	pGBuilder.rootPrimitiveGenerator = primitiveGenerator
 
-	earlyPassScreenerAnalyzer, err := earlyanalysis.NewEarlyScreenerAnalyzer(primitiveGenerator, nil)
+	earlyPassScreenerAnalyzer, err := earlyanalysis.NewEarlyScreenerAnalyzer(primitiveGenerator, nil, nil)
 	if err != nil {
 		return createErroneousPlan(handlerCtx, qPlan, rowSort, err)
 	}

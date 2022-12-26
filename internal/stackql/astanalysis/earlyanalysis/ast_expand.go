@@ -8,6 +8,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/astindirect"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internaldto"
+	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/primitivegenerator"
 	"github.com/stackql/stackql/internal/stackql/sqldialect"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
@@ -36,6 +37,7 @@ type indirectExpandAstVisitor struct {
 	handlerCtx                     handler.HandlerContext
 	tcc                            internaldto.TxnControlCounters
 	primitiveGenerator             primitivegenerator.PrimitiveGenerator
+	whereParams                    parserutil.ParameterMap
 }
 
 func newIndirectExpandAstVisitor(
@@ -45,6 +47,7 @@ func newIndirectExpandAstVisitor(
 	sqlDialect sqldialect.SQLDialect,
 	formatter sqlparser.NodeFormatter,
 	namespaceCollection tablenamespace.TableNamespaceCollection,
+	whereParams parserutil.ParameterMap,
 	tcc internaldto.TxnControlCounters,
 ) (AstExpandVisitor, error) {
 	rv := &indirectExpandAstVisitor{
@@ -55,6 +58,7 @@ func newIndirectExpandAstVisitor(
 		formatter:           formatter,
 		handlerCtx:          handlerCtx,
 		tcc:                 tcc,
+		whereParams:         whereParams,
 	}
 	return rv, nil
 }
@@ -648,8 +652,7 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 			if err != nil {
 				return nil
 			}
-			// Views must be recursively expanded
-			childAnalyzer, err := NewEarlyScreenerAnalyzer(v.primitiveGenerator, v.annotatedAST)
+			childAnalyzer, err := NewEarlyScreenerAnalyzer(v.primitiveGenerator, v.annotatedAST, v.whereParams.Clone())
 			if err != nil {
 				return err
 			}
@@ -657,14 +660,17 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 			if err != nil {
 				return nil
 			}
-			// TODO: analyze select
+			v.annotatedAST.SetIndirect(node, indirect)
 			indirectPrimitiveGenerator := v.primitiveGenerator.CreateIndirectPrimitiveGenerator(indirect.GetSelectAST(), v.handlerCtx)
 			err = indirectPrimitiveGenerator.AnalyzeSelectStatement(childAnalyzer.GetPlanBuilderInput())
 			if err != nil {
 				return err
 			}
 			indirect.SetSelectContext(indirectPrimitiveGenerator.GetPrimitiveComposer().GetIndirectSelectPreparedStatementCtx())
-			v.annotatedAST.SetIndirect(node, indirect)
+			assignedParams, ok := indirectPrimitiveGenerator.GetPrimitiveComposer().GetAssignedParameters()
+			if ok {
+				indirect.SetAssignedParameters(assignedParams)
+			}
 		}
 		return nil
 

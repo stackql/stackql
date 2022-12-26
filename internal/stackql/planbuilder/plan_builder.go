@@ -541,7 +541,7 @@ func (pgb *planGraphBuilder) handleInsert(pbi planbuilderinput.PlanBuilderInput)
 				if err != nil {
 					return err
 				}
-				sr := routeanalysis.NewSelectRoutePass(rowsNode, selPbi)
+				sr := routeanalysis.NewSelectRoutePass(rowsNode, selPbi, nil)
 				err = sr.RoutePass()
 				if err != nil {
 					return err

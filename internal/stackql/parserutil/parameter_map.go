@@ -13,6 +13,7 @@ type ParameterMap interface {
 	ColumnKeyedDatastore
 	iParameterMap()
 	Clone() ParameterMap
+	Merge(ParameterMap) ParameterMap
 	Set(ColumnarReference, ParameterMetadata) error
 	Get(ColumnarReference) (ParameterMetadata, bool)
 	GetAll() []ParameterMapKeyVal
@@ -39,6 +40,16 @@ func (pm standardParameterMap) Clone() ParameterMap {
 	return standardParameterMap{
 		m: subMap,
 	}
+}
+
+func (pm standardParameterMap) Merge(rhs ParameterMap) ParameterMap {
+	if rhs != nil {
+		allEntries := rhs.GetAll()
+		for _, kv := range allEntries {
+			pm.m[kv.K] = kv.V
+		}
+	}
+	return pm
 }
 
 func (pm standardParameterMap) iParameterMap() {}

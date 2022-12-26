@@ -441,7 +441,8 @@ func (pb *standardPrimitiveGenerator) analyzeWhere(where *sqlparser.Where, exist
 	// TODO: consume parent parameters for any shortfall in required params
 	// TODO: same, for optional params
 
-	if remainingRequiredParameters.Size() > 0 {
+	isIndirect := pb.PrimitiveComposer.IsIndirect()
+	if remainingRequiredParameters.Size() > 0 && !isIndirect {
 		if where == nil {
 			return nil, paramsSupplied, fmt.Errorf("WHERE clause not supplied, run DESCRIBE EXTENDED for the resource to see required parameters")
 		}
