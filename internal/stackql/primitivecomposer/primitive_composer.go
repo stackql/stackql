@@ -27,6 +27,7 @@ type PrimitiveComposer interface {
 	AddChild(val PrimitiveComposer)
 	AddIndirect(val PrimitiveComposer)
 	AssignParameters() (internaldto.TableParameterCollection, error)
+	GetAssignedParameters() (internaldto.TableParameterCollection, bool)
 	GetAst() sqlparser.SQLNode
 	GetASTFormatter() sqlparser.NodeFormatter
 	GetBuilder() primitivebuilder.Builder
@@ -56,6 +57,7 @@ type PrimitiveComposer interface {
 	GetValOnlyColKeys() []int
 	GetWhere() *sqlparser.Where
 	IsAwait() bool
+	IsIndirect() bool
 	IsTccSetAheadOfTime() bool
 	NewChildPrimitiveComposer(ast sqlparser.SQLNode) PrimitiveComposer
 	SetAwait(await bool)
@@ -66,6 +68,7 @@ type PrimitiveComposer interface {
 	SetDataflowDependent(val PrimitiveComposer)
 	SetInsertPreparedStatementCtx(ctx drm.PreparedStatementCtx)
 	SetInsertValOnlyRows(m map[int]map[int]interface{})
+	SetIsIndirect(isIndirect bool)
 	SetIsTccSetAheadOfTime(bool)
 	SetLikeAbleColumns(cols []string)
 	SetProvider(prov provider.IProvider)
@@ -138,6 +141,22 @@ type standardPrimitiveComposer struct {
 	unionNonControlColumns []drm.ColumnMetadata
 
 	tccSetAheadOfTime bool
+
+	paramCollection internaldto.TableParameterCollection
+
+	isIndirect bool
+}
+
+func (pb *standardPrimitiveComposer) IsIndirect() bool {
+	return pb.isIndirect
+}
+
+func (pb *standardPrimitiveComposer) SetIsIndirect(isIndirect bool) {
+	pb.isIndirect = isIndirect
+}
+
+func (pb *standardPrimitiveComposer) GetAssignedParameters() (internaldto.TableParameterCollection, bool) {
+	return pb.paramCollection, pb.paramCollection != nil
 }
 
 func (pb *standardPrimitiveComposer) GetNonControlColumns() []drm.ColumnMetadata {
@@ -189,16 +208,27 @@ func (pb *standardPrimitiveComposer) AssignParameters() (internaldto.TableParame
 	optionalParameters := suffix.NewParameterSuffixMap()
 	tbVisited := map[tablemetadata.ExtendedTableMetadata]struct{}{}
 	for _, tb := range pb.GetTables() {
-		if _, isView := tb.GetIndirect(); isView {
-			continue
-		}
 		if _, ok := tbVisited[tb]; ok {
 			continue
 		}
 		tbVisited[tb] = struct{}{}
 		tbID := tb.GetUniqueId()
+		var reqParams, tblOptParams map[string]openapistackql.Addressable
+		if view, isView := tb.GetIndirect(); isView {
+			// TODO: fill this out
+			assignedParams, ok := view.GetAssignedParameters()
+			if !ok {
+				continue
+			}
+			reqParams = assignedParams.GetRequiredParams().GetAll()
+			tblOptParams = assignedParams.GetOptionalParams().GetAll()
+		} else {
+			// These methods need to incorporate request body parameters
+			reqParams = tb.GetRequiredParameters()
+			tblOptParams = tb.GetOptionalParameters()
+		}
 		// This method needs to incorporate request body parameters
-		reqParams := tb.GetRequiredParameters()
+
 		for k, v := range reqParams {
 			key := fmt.Sprintf("%s.%s", tbID, k)
 			_, keyExists := requiredParameters.Get(key)
@@ -207,8 +237,6 @@ func (pb *standardPrimitiveComposer) AssignParameters() (internaldto.TableParame
 			}
 			requiredParameters.Put(key, v)
 		}
-		// This method needs to incorporate request body parameters
-		tblOptParams := tb.GetOptionalParameters()
 		for k, vOpt := range tblOptParams {
 			key := fmt.Sprintf("%s.%s", tbID, k)
 			_, keyExists := optionalParameters.Get(key)
@@ -218,7 +246,9 @@ func (pb *standardPrimitiveComposer) AssignParameters() (internaldto.TableParame
 			optionalParameters.Put(key, vOpt)
 		}
 	}
-	return internaldto.NewTableParameterCollection(requiredParameters, optionalParameters, remainingRequiredParameters), nil
+	rv := internaldto.NewTableParameterCollection(requiredParameters, optionalParameters, remainingRequiredParameters)
+	pb.paramCollection = rv
+	return rv, nil
 }
 
 func (pb *standardPrimitiveComposer) AddChild(val PrimitiveComposer) {

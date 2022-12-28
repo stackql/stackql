@@ -4,6 +4,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/astanalysis/selectmetadata"
 	"github.com/stackql/stackql/internal/stackql/astvisit"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/planbuilderinput"
 	"github.com/stackql/stackql/internal/stackql/router"
 	"vitess.io/vitess/go/vt/sqlparser"
@@ -19,19 +20,25 @@ type RoutePass interface {
 	GetPlanBuilderInput() planbuilderinput.PlanBuilderInput
 }
 
-func NewSelectRoutePass(node sqlparser.SelectStatement, pbi planbuilderinput.PlanBuilderInput) RoutePass {
+func NewSelectRoutePass(
+	node sqlparser.SelectStatement,
+	pbi planbuilderinput.PlanBuilderInput,
+	parentWhereParams parserutil.ParameterMap,
+) RoutePass {
 	return &standardSelectRoutePass{
-		inputPbi:   pbi,
-		handlerCtx: pbi.GetHandlerCtx(),
-		node:       node,
+		inputPbi:          pbi,
+		handlerCtx:        pbi.GetHandlerCtx(),
+		node:              node,
+		parentWhereParams: parentWhereParams,
 	}
 }
 
 type standardSelectRoutePass struct {
-	inputPbi   planbuilderinput.PlanBuilderInput
-	outputPbi  planbuilderinput.PlanBuilderInput
-	handlerCtx handler.HandlerContext
-	node       sqlparser.SelectStatement
+	inputPbi          planbuilderinput.PlanBuilderInput
+	outputPbi         planbuilderinput.PlanBuilderInput
+	handlerCtx        handler.HandlerContext
+	node              sqlparser.SelectStatement
+	parentWhereParams parserutil.ParameterMap
 }
 
 func (sp *standardSelectRoutePass) GetPlanBuilderInput() planbuilderinput.PlanBuilderInput {
@@ -50,7 +57,7 @@ func (sp *standardSelectRoutePass) RoutePass() error {
 	case *sqlparser.Select:
 		node = n
 	case *sqlparser.ParenSelect:
-		routePass := NewSelectRoutePass(n.Select, sp.inputPbi)
+		routePass := NewSelectRoutePass(n.Select, sp.inputPbi, sp.parentWhereParams)
 		err := routePass.RoutePass()
 		sp.outputPbi = pbi
 		return err
@@ -59,7 +66,7 @@ func (sp *standardSelectRoutePass) RoutePass() error {
 		if err != nil {
 			return err
 		}
-		routePass := NewSelectRoutePass(n.FirstStatement, lhsPbi)
+		routePass := NewSelectRoutePass(n.FirstStatement, lhsPbi, sp.parentWhereParams)
 		err = routePass.RoutePass()
 		if err != nil {
 			return err
@@ -70,7 +77,7 @@ func (sp *standardSelectRoutePass) RoutePass() error {
 			if err != nil {
 				return err
 			}
-			routePass := NewSelectRoutePass(s.Statement, sPbi)
+			routePass := NewSelectRoutePass(s.Statement, sPbi, sp.parentWhereParams)
 			err = routePass.RoutePass()
 			if err != nil {
 				return err
@@ -111,6 +118,7 @@ func (sp *standardSelectRoutePass) RoutePass() error {
 	if !ok {
 		whereParamMap = astvisit.ExtractParamsFromWhereClause(annotatedAST, node.Where)
 	}
+	whereParamMap.Merge(sp.parentWhereParams)
 	onParamMap := astvisit.ExtractParamsFromFromClause(annotatedAST, node.From)
 
 	// TODO: There is god awful object <-> namespacing inside here: abstract it.

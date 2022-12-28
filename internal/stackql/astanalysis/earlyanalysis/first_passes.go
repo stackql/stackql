@@ -7,6 +7,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
+	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/planbuilderinput"
 	"github.com/stackql/stackql/internal/stackql/primitivegenerator"
 	"vitess.io/vitess/go/vt/sqlparser"
@@ -42,10 +43,11 @@ var (
 	_ InitialPassesScreenerAnalyzer = &standardInitialPasses{}
 )
 
-func NewEarlyScreenerAnalyzer(primitiveGenerator primitivegenerator.PrimitiveGenerator, parentAnnotatedAST annotatedast.AnnotatedAst) (InitialPassesScreenerAnalyzer, error) {
+func NewEarlyScreenerAnalyzer(primitiveGenerator primitivegenerator.PrimitiveGenerator, parentAnnotatedAST annotatedast.AnnotatedAst, parentWhereParams parserutil.ParameterMap) (InitialPassesScreenerAnalyzer, error) {
 	return &standardInitialPasses{
 		primitiveGenerator: primitiveGenerator,
 		parentAnnotatedAST: parentAnnotatedAST,
+		parentWhereParams:  parentWhereParams,
 	}, nil
 }
 
@@ -56,6 +58,7 @@ type standardInitialPasses struct {
 	result                        *sqlparser.RewriteASTResult
 	primitiveGenerator            primitivegenerator.PrimitiveGenerator
 	parentAnnotatedAST            annotatedast.AnnotatedAst
+	parentWhereParams             parserutil.ParameterMap
 }
 
 func (sp *standardInitialPasses) GetInstructionType() InstructionType {
@@ -114,16 +117,32 @@ func (sp *standardInitialPasses) initialPasses(statement sqlparser.Statement, ha
 		return nil
 	}
 
+	var whereParams parserutil.ParameterMap
+
 	// Where clause paramter extract from top down does not require a deep pass
 	switch node := ast.(type) {
 	case *sqlparser.Select:
-		astvisit.ExtractParamsFromWhereClause(annotatedAST, node.Where)
+		whereParams = astvisit.ExtractParamsFromWhereClause(annotatedAST, node.Where)
 	case *sqlparser.Delete:
-		astvisit.ExtractParamsFromWhereClause(annotatedAST, node.Where)
+		whereParams = astvisit.ExtractParamsFromWhereClause(annotatedAST, node.Where)
+	}
+	if whereParams == nil {
+		whereParams = sp.parentWhereParams
+	} else {
+		whereParams.Merge(sp.parentWhereParams)
 	}
 
 	// First pass AST analysis; annotate and expand AST for indirects (views).
-	astExpandVisitor, err := newIndirectExpandAstVisitor(handlerCtx, annotatedAST, sp.primitiveGenerator, handlerCtx.GetSQLDialect(), handlerCtx.GetASTFormatter(), handlerCtx.GetNamespaceCollection(), tcc)
+	astExpandVisitor, err := newIndirectExpandAstVisitor(
+		handlerCtx,
+		annotatedAST,
+		sp.primitiveGenerator,
+		handlerCtx.GetSQLDialect(),
+		handlerCtx.GetASTFormatter(),
+		handlerCtx.GetNamespaceCollection(),
+		whereParams,
+		tcc,
+	)
 	if err != nil {
 		return err
 	}
@@ -224,21 +243,21 @@ func (sp *standardInitialPasses) initialPasses(statement sqlparser.Statement, ha
 	}
 	switch node := ast.(type) {
 	case *sqlparser.Select:
-		routeAnalyzer := routeanalysis.NewSelectRoutePass(node, pbi)
+		routeAnalyzer := routeanalysis.NewSelectRoutePass(node, pbi, whereParams)
 		err = routeAnalyzer.RoutePass()
 		if err != nil {
 			return err
 		}
 		pbi = routeAnalyzer.GetPlanBuilderInput()
 	case *sqlparser.ParenSelect:
-		routeAnalyzer := routeanalysis.NewSelectRoutePass(node.Select, pbi)
+		routeAnalyzer := routeanalysis.NewSelectRoutePass(node.Select, pbi, whereParams)
 		err = routeAnalyzer.RoutePass()
 		if err != nil {
 			return err
 		}
 		pbi = routeAnalyzer.GetPlanBuilderInput()
 	case *sqlparser.Union:
-		routeAnalyzer := routeanalysis.NewSelectRoutePass(node, pbi)
+		routeAnalyzer := routeanalysis.NewSelectRoutePass(node, pbi, whereParams)
 		err = routeAnalyzer.RoutePass()
 		if err != nil {
 			return err

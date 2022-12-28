@@ -32,6 +32,7 @@ func NewViewIndirect(viewDTO internaldto.ViewDTO) (Indirect, error) {
 
 type Indirect interface {
 	Parse() error
+	GetAssignedParameters() (internaldto.TableParameterCollection, bool)
 	GetColumnByName(name string) (drm.ColumnMetadata, bool)
 	GetColumns() []drm.ColumnMetadata
 	GetName() string
@@ -40,17 +41,27 @@ type Indirect interface {
 	GetSelectAST() sqlparser.SelectStatement
 	GetSelectContext() drm.PreparedStatementCtx
 	GetType() IndirectType
+	SetAssignedParameters(internaldto.TableParameterCollection)
 	SetSelectContext(drm.PreparedStatementCtx)
 }
 
 type view struct {
-	viewDTO    internaldto.ViewDTO
-	selectStmt sqlparser.SelectStatement
-	selCtx     drm.PreparedStatementCtx
+	viewDTO         internaldto.ViewDTO
+	selectStmt      sqlparser.SelectStatement
+	selCtx          drm.PreparedStatementCtx
+	paramCollection internaldto.TableParameterCollection
 }
 
 func (v *view) GetType() IndirectType {
 	return ViewType
+}
+
+func (v *view) GetAssignedParameters() (internaldto.TableParameterCollection, bool) {
+	return v.paramCollection, v.paramCollection != nil
+}
+
+func (v *view) SetAssignedParameters(paramCollection internaldto.TableParameterCollection) {
+	v.paramCollection = paramCollection
 }
 
 func (v *view) GetName() string {
