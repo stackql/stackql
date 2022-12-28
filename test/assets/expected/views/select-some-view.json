@@ -1,0 +1,5 @@
+[
+  { "id": "200000001", "name": "docusaurus-plugin-hubspot" , "url": "https://api.github.com/repos/specialcaseorg/docusaurus-plugin-hubspot" },
+  { "id": "200000002", "name": "dummyapp.io"               , "url": "https://api.github.com/repos/specialcaseorg/dummyapp.io"               },
+  { "id": "200000003", "name": "gatsby-plugin-smartlook"   , "url": "https://api.github.com/repos/specialcaseorg/gatsby-plugin-smartlook"   }
+]

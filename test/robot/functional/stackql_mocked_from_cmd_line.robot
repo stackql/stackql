@@ -767,7 +767,7 @@ Parameterized View of Cloud Control Resource Returns Expected Result
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select Arn, BucketName, DomainName from aws_cc_bucket_unfiltered where data__Identifier = 'stackql-trial-bucket-01' ;
     ...    ${VIEW_SELECT_AWS_CLOUD_CONTROL_BUCKET_DETAIL_EXPECTED}
-    ...    ${CURDIR}/tmp/Basic-View-of-Cloud-Control-Resource-Returns-Expected-Result.tmp
+    ...    ${CURDIR}/tmp/Parameterized-View-of-Cloud-Control-Resource-Returns-Expected-Result.tmp
 
 Basic View Select Star of Cloud Control Resource Returns Expected Result
     Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test likely due to case sensitivity and incorrect XML property aliasing
@@ -795,7 +795,7 @@ Parameterized View Select Star of Cloud Control Resource Returns Expected Result
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select * from aws_cc_bucket_unfiltered where data__Identifier = 'stackql-trial-bucket-01' ;
     ...    ${VIEW_SELECT_STAR_AWS_CLOUD_CONTROL_BUCKET_DETAIL_EXPECTED}
-    ...    ${CURDIR}/tmp/Basic-View-Select-Star-of-Cloud-Control-Resource-Returns-Expected-Result.tmp
+    ...    ${CURDIR}/tmp/Parameterized-View-Select-Star-of-Cloud-Control-Resource-Returns-Expected-Result.tmp
 
 Weird ID WSL bug query
     # ID cannot be handled as integer on WSL

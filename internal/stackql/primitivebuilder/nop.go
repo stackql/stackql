@@ -10,13 +10,13 @@ import (
 )
 
 type NopBuilder struct {
-	graph      *primitivegraph.PrimitiveGraph
+	graph      primitivegraph.PrimitiveGraph
 	handlerCtx handler.HandlerContext
 	root       primitivegraph.PrimitiveNode
 	sqlEngine  sqlengine.SQLEngine
 }
 
-func NewNopBuilder(graph *primitivegraph.PrimitiveGraph, txnControlCounters internaldto.TxnControlCounters, handlerCtx handler.HandlerContext, sqlEngine sqlengine.SQLEngine) Builder {
+func NewNopBuilder(graph primitivegraph.PrimitiveGraph, txnControlCounters internaldto.TxnControlCounters, handlerCtx handler.HandlerContext, sqlEngine sqlengine.SQLEngine) Builder {
 	return &NopBuilder{
 		graph:      graph,
 		handlerCtx: handlerCtx,

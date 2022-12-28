@@ -48,6 +48,15 @@ PG Session GC Eager Behaviour Canonical
     ...    stdout=${CURDIR}/tmp/PG-Session-GC-Eager-Behaviour-Canonical.tmp
     [Teardown]    NONE
 
+PG Session View Handling Behaviour Canonical
+    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test likely due to case sensitivity and incorrect XML property aliasing
+    Should PG Client Session Inline Equal
+    ...    ${PSQL_MTLS_CONN_STR_UNIX_WITH_EAGER_GC}
+    ...    ${SHELL_COMMANDS_VIEW_HANDLING_SEQUENCE}
+    ...    ${SHELL_COMMANDS_VIEW_HANDLING_SEQUENCE_JSON_EXPECTED}
+    ...    stdout=${CURDIR}/tmp/PG-Session-View-Handling-Behaviour-Canonical.tmp
+    [Teardown]    NONE
+
 PG Session Azure Compute Table Nomenclature Mutation Guard
     Should PG Client Session Inline Equal
     ...    ${PSQL_MTLS_CONN_STR_UNIX}

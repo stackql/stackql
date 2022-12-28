@@ -5,12 +5,12 @@ import (
 )
 
 type DependentMultipleAcquireAndSelect struct {
-	graph           *primitivegraph.PrimitiveGraph
+	graph           primitivegraph.PrimitiveGraph
 	acquireBuilders []Builder
 	selectBuilder   Builder
 }
 
-func NewDependentMultipleAcquireAndSelect(graph *primitivegraph.PrimitiveGraph, acquireBuilders []Builder, selectBuilder Builder) Builder {
+func NewDependentMultipleAcquireAndSelect(graph primitivegraph.PrimitiveGraph, acquireBuilders []Builder, selectBuilder Builder) Builder {
 	return &DependentMultipleAcquireAndSelect{
 		graph:           graph,
 		acquireBuilders: acquireBuilders,

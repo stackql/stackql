@@ -88,6 +88,10 @@ func BuildPlanFromContext(handlerCtx handler.HandlerContext) (*plan.Plan, error)
 		}
 	}
 
+	if pGBuilder.planGraph.ContainsIndirect() {
+		qPlan.SetCacheable(false)
+	}
+
 	qPlan.Instructions = pGBuilder.planGraph
 
 	if qPlan.Instructions != nil {

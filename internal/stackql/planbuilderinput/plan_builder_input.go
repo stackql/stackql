@@ -24,6 +24,7 @@ type PlanBuilderInput interface {
 	GetColRefs() parserutil.ColTableMap
 	GetDelete() (*sqlparser.Delete, bool)
 	GetDescribeTable() (*sqlparser.DescribeTable, bool)
+	GetDDL() (*sqlparser.DDL, bool)
 	GetExec() (*sqlparser.Exec, bool)
 	GetHandlerCtx() handler.HandlerContext
 	GetInsert() (*sqlparser.Insert, bool)
@@ -251,6 +252,11 @@ func (pbi *StandardPlanBuilderInput) GetExec() (*sqlparser.Exec, bool) {
 
 func (pbi *StandardPlanBuilderInput) GetInsert() (*sqlparser.Insert, bool) {
 	rv, ok := pbi.stmt.(*sqlparser.Insert)
+	return rv, ok
+}
+
+func (pbi *StandardPlanBuilderInput) GetDDL() (*sqlparser.DDL, bool) {
+	rv, ok := pbi.stmt.(*sqlparser.DDL)
 	return rv, ok
 }
 

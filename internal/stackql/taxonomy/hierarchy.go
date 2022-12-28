@@ -72,7 +72,7 @@ func getHids(handlerCtx handler.HandlerContext, node sqlparser.SQLNode) (interna
 	}
 	if !(isView) && hIds.GetProviderStr() == "" {
 		if handlerCtx.GetCurrentProvider() == "" {
-			return nil, fmt.Errorf("No provider selected, please set a provider using the USE command, or specify a three part object identifier in your IQL query")
+			return nil, fmt.Errorf("could not locate table '%s'", hIds.GetTableName())
 		}
 		hIds.WithProviderStr(handlerCtx.GetCurrentProvider())
 	}

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 
@@ -16,40 +15,66 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-type PrimitiveGraph struct {
+type PrimitiveGraph interface {
+	AddTxnControlCounters(t internaldto.TxnControlCounters)
+	ContainsIndirect() bool
+	CreatePrimitiveNode(pr primitive.IPrimitive) PrimitiveNode
+	Execute(ctx primitive.IPrimitiveCtx) internaldto.ExecutorOutput
+	GetInputFromAlias(string) (internaldto.ExecutorOutput, bool)
+	IncidentData(fromId int64, input internaldto.ExecutorOutput) error
+	GetTxnControlCounterSlice() []internaldto.TxnControlCounters
+	NewDependency(from PrimitiveNode, to PrimitiveNode, weight float64)
+	Optimise() error
+	SetContainsIndirect(containsView bool)
+	SetExecutor(func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput) error
+	SetInputAlias(alias string, id int64) error
+	SetTxnId(id int)
+	Sort() (sorted []graph.Node, err error)
+}
+
+type standardPrimitiveGraph struct {
 	g                      *simple.WeightedDirectedGraph
 	sorted                 []graph.Node
 	txnControlCounterSlice []internaldto.TxnControlCounters
 	errGroup               *errgroup.Group
 	errGroupCtx            context.Context
+	containsView           bool
 }
 
-func (pg *PrimitiveGraph) AddTxnControlCounters(t internaldto.TxnControlCounters) {
+func (pg *standardPrimitiveGraph) AddTxnControlCounters(t internaldto.TxnControlCounters) {
 	pg.txnControlCounterSlice = append(pg.txnControlCounterSlice, t)
 }
 
-func (pg *PrimitiveGraph) GetTxnControlCounterSlice() []internaldto.TxnControlCounters {
+func (pg *standardPrimitiveGraph) GetTxnControlCounterSlice() []internaldto.TxnControlCounters {
 	return pg.txnControlCounterSlice
 }
 
-func (pg *PrimitiveGraph) SetExecutor(func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput) error {
+func (pg *standardPrimitiveGraph) SetExecutor(func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput) error {
 	return fmt.Errorf("pass through primitive does not support SetExecutor()")
 }
 
-func (pr *PrimitiveGraph) GetInputFromAlias(string) (internaldto.ExecutorOutput, bool) {
+func (pg *standardPrimitiveGraph) ContainsIndirect() bool {
+	return pg.containsView
+}
+
+func (pg *standardPrimitiveGraph) SetContainsIndirect(containsView bool) {
+	pg.containsView = containsView
+}
+
+func (pr *standardPrimitiveGraph) GetInputFromAlias(string) (internaldto.ExecutorOutput, bool) {
 	var rv internaldto.ExecutorOutput
 	return rv, false
 }
 
-func (pg *PrimitiveGraph) Execute(ctx primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+func (pg *standardPrimitiveGraph) Execute(ctx primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 	var output internaldto.ExecutorOutput = internaldto.NewExecutorOutput(nil, nil, nil, nil, fmt.Errorf("empty execution graph"))
 	for _, node := range pg.sorted {
 		outChan := make(chan internaldto.ExecutorOutput, 1)
 		switch node := node.(type) {
-		case PrimitiveNode:
+		case standardPrimitiveNode:
 			pg.errGroup.Go(
 				func() error {
-					output := node.Primitive.Execute(ctx)
+					output := node.GetPrimitive().Execute(ctx)
 					outChan <- output
 					close(outChan)
 					return output.Err
@@ -63,8 +88,8 @@ func (pg *PrimitiveGraph) Execute(ctx primitive.IPrimitiveCtx) internaldto.Execu
 				}
 				fromNode := destinationNodes.Node()
 				switch fromNode := fromNode.(type) {
-				case PrimitiveNode:
-					fromNode.Primitive.IncidentData(node.ID(), output)
+				case standardPrimitiveNode:
+					fromNode.GetPrimitive().IncidentData(node.ID(), output)
 				}
 			}
 		default:
@@ -77,11 +102,7 @@ func (pg *PrimitiveGraph) Execute(ctx primitive.IPrimitiveCtx) internaldto.Execu
 	return output
 }
 
-func (pg *PrimitiveGraph) GetPreparedStatementContext() *drm.PreparedStatementCtx {
-	return nil
-}
-
-func (pg *PrimitiveGraph) SetTxnId(id int) {
+func (pg *standardPrimitiveGraph) SetTxnId(id int) {
 	nodes := pg.g.Nodes()
 	for {
 		if !nodes.Next() {
@@ -89,64 +110,78 @@ func (pg *PrimitiveGraph) SetTxnId(id int) {
 		}
 		node := nodes.Node()
 		switch node := node.(type) {
-		case PrimitiveNode:
-			node.Primitive.SetTxnId(id)
+		case standardPrimitiveNode:
+			node.GetPrimitive().SetTxnId(id)
 		}
 	}
 }
 
-func (pg *PrimitiveGraph) Optimise() error {
+func (pg *standardPrimitiveGraph) Optimise() error {
 	var err error
 	pg.sorted, err = topo.Sort(pg.g)
 	return err
 }
 
-func (pg *PrimitiveGraph) IncidentData(fromId int64, input internaldto.ExecutorOutput) error {
+func (pg *standardPrimitiveGraph) IncidentData(fromId int64, input internaldto.ExecutorOutput) error {
 	return nil
 }
 
-func (pr *PrimitiveGraph) SetInputAlias(alias string, id int64) error {
+func (pr *standardPrimitiveGraph) SetInputAlias(alias string, id int64) error {
 	return nil
 }
 
-func SortPlan(g *PrimitiveGraph) (sorted []graph.Node, err error) {
+func (g *standardPrimitiveGraph) Sort() (sorted []graph.Node, err error) {
 	return topo.Sort(g.g)
 }
 
-type PrimitiveNode struct {
-	Primitive primitive.IPrimitive
+func SortPlan(g PrimitiveGraph) (sorted []graph.Node, err error) {
+	return g.Sort()
+}
+
+type PrimitiveNode interface {
+	GetPrimitive() primitive.IPrimitive
+	ID() int64
+	SetInputAlias(alias string, id int64) error
+}
+
+type standardPrimitiveNode struct {
+	primitive primitive.IPrimitive
 	id        int64
 }
 
-func (pg *PrimitiveGraph) CreatePrimitiveNode(pr primitive.IPrimitive) PrimitiveNode {
+func (pg *standardPrimitiveGraph) CreatePrimitiveNode(pr primitive.IPrimitive) PrimitiveNode {
 	nn := pg.g.NewNode()
-	node := PrimitiveNode{
-		Primitive: pr,
+	node := standardPrimitiveNode{
+		primitive: pr,
 		id:        nn.ID(),
 	}
 	pg.g.AddNode(node)
 	return node
 }
 
-func (pn PrimitiveNode) ID() int64 {
+func (pn standardPrimitiveNode) ID() int64 {
 	return pn.id
 }
 
-func (pn PrimitiveNode) SetInputAlias(alias string, id int64) error {
-	return pn.Primitive.SetInputAlias(alias, id)
+func (pn standardPrimitiveNode) GetPrimitive() primitive.IPrimitive {
+	return pn.primitive
 }
 
-func NewPrimitiveGraph(concurrencyLimit int) *PrimitiveGraph {
+func (pn standardPrimitiveNode) SetInputAlias(alias string, id int64) error {
+	return pn.GetPrimitive().SetInputAlias(alias, id)
+}
+
+func NewPrimitiveGraph(concurrencyLimit int) PrimitiveGraph {
 	eg, egCtx := errgroup.WithContext(context.Background())
 	eg.SetLimit(concurrencyLimit)
-	return &PrimitiveGraph{
+	return &standardPrimitiveGraph{
 		g:           simple.NewWeightedDirectedGraph(0.0, 0.0),
 		errGroup:    eg,
 		errGroupCtx: egCtx,
 	}
 }
 
-func (pg *PrimitiveGraph) NewDependency(from PrimitiveNode, to PrimitiveNode, weight float64) {
+func (pg *standardPrimitiveGraph) NewDependency(from PrimitiveNode, to PrimitiveNode, weight float64) {
 	e := pg.g.NewWeightedEdge(from, to, weight)
 	pg.g.SetWeightedEdge(e)
 }

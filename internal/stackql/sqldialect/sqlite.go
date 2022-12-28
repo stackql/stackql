@@ -287,12 +287,28 @@ func (eng *sqLiteDialect) getViewByName(viewName string) (internaldto.ViewDTO, b
 	return nil, false
 }
 
-func (eng *sqLiteDialect) CreateView(viewName string, rawDDL string, translatedDDL string) error {
-	return eng.createView(viewName, rawDDL, translatedDDL)
+func (eng *sqLiteDialect) DropView(viewName string) error {
+	_, err := eng.sqlEngine.Exec(`delete from "__iql__.views" where view_name = ?`, viewName)
+	return err
 }
 
-func (eng *sqLiteDialect) createView(viewName string, rawDDL string, translatedDDL string) error {
-	return nil
+func (eng *sqLiteDialect) CreateView(viewName string, rawDDL string) error {
+	return eng.createView(viewName, rawDDL)
+}
+
+func (eng *sqLiteDialect) createView(viewName string, rawDDL string) error {
+	q := `
+	INSERT INTO "__iql__.views" (
+		view_name,
+		view_ddl
+	  ) 
+	  VALUES (
+		?,
+		?
+	  )
+	`
+	_, err := eng.sqlEngine.Exec(q, viewName, rawDDL)
+	return err
 }
 
 func (eng *sqLiteDialect) generateViewDDL(relationalTable relationaldto.RelationalTable) ([]string, error) {

@@ -54,7 +54,7 @@ type standardPrimitiveGenerator struct {
 	PrimitiveComposer primitivecomposer.PrimitiveComposer
 }
 
-func NewRootPrimitiveGenerator(ast sqlparser.SQLNode, handlerCtx handler.HandlerContext, graph *primitivegraph.PrimitiveGraph) PrimitiveGenerator {
+func NewRootPrimitiveGenerator(ast sqlparser.SQLNode, handlerCtx handler.HandlerContext, graph primitivegraph.PrimitiveGraph) PrimitiveGenerator {
 	tblMap := make(taxonomy.TblMap)
 	symTab := symtab.NewHashMapTreeSymTab()
 	return &standardPrimitiveGenerator{
@@ -78,6 +78,7 @@ func (pb *standardPrimitiveGenerator) SetIsIndirect(isIndirect bool) {
 func (pb *standardPrimitiveGenerator) CreateIndirectPrimitiveGenerator(ast sqlparser.SQLNode, handlerCtx handler.HandlerContext) PrimitiveGenerator {
 	rv := NewRootPrimitiveGenerator(ast, handlerCtx, pb.PrimitiveComposer.GetGraph()).WithDataFlowDependentPrimitiveGenerator(pb)
 	pb.indirects = append(pb.indirects, rv)
+	pb.PrimitiveComposer.GetGraph().SetContainsIndirect(true)
 	pb.PrimitiveComposer.AddIndirect(rv.GetPrimitiveComposer())
 	rv.SetIsIndirect(true)
 	return rv

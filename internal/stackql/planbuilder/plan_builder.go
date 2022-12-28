@@ -35,7 +35,7 @@ func isPlanCacheEnabled() bool {
 }
 
 type planGraphBuilder struct {
-	planGraph              *primitivegraph.PrimitiveGraph
+	planGraph              primitivegraph.PrimitiveGraph
 	rootPrimitiveGenerator primitivegenerator.PrimitiveGenerator
 }
 
@@ -59,7 +59,7 @@ func (pgb *planGraphBuilder) createInstructionFor(pbi planbuilderinput.PlanBuild
 	case *sqlparser.DBDDL:
 		return iqlerror.GetStatementNotSupportedError(fmt.Sprintf("unsupported: Database DDL %v", sqlparser.String(stmt)))
 	case *sqlparser.DDL:
-		return iqlerror.GetStatementNotSupportedError("DDL")
+		return pgb.handleDDL(pbi)
 	case *sqlparser.Delete:
 		return pgb.handleDelete(pbi)
 	case *sqlparser.DescribeTable:
@@ -232,7 +232,25 @@ func (pgb *planGraphBuilder) handleDescribe(pbi planbuilderinput.PlanBuilderInpu
 	return nil
 }
 
-func (pgb *planGraphBuilder) handleSelect(pbi planbuilderinput.PlanBuilderInput) (*primitivegraph.PrimitiveNode, *primitivegraph.PrimitiveNode, error) {
+func (pgb *planGraphBuilder) handleDDL(pbi planbuilderinput.PlanBuilderInput) error {
+	handlerCtx := pbi.GetHandlerCtx()
+	node, ok := pbi.GetDDL()
+	if !ok {
+		return fmt.Errorf("could not cast node of type '%T' to required DDL", pbi.GetStatement())
+	}
+	bldr := primitivebuilder.NewDDL(
+		pgb.planGraph,
+		handlerCtx,
+		node,
+	)
+	err := bldr.Build()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (pgb *planGraphBuilder) handleSelect(pbi planbuilderinput.PlanBuilderInput) (primitivegraph.PrimitiveNode, primitivegraph.PrimitiveNode, error) {
 	handlerCtx := pbi.GetHandlerCtx()
 	node, ok := pbi.GetSelect()
 	if !ok {
@@ -267,7 +285,7 @@ func (pgb *planGraphBuilder) handleSelect(pbi planbuilderinput.PlanBuilderInput)
 				return nil, nil, err
 			}
 			rv := pgb.planGraph.CreatePrimitiveNode(pr)
-			return &rv, &rv, nil
+			return rv, rv, nil
 		}
 		if primitiveGenerator.GetPrimitiveComposer().GetBuilder() == nil {
 			return nil, nil, fmt.Errorf("builder not created for select, cannot proceed")
@@ -278,14 +296,14 @@ func (pgb *planGraphBuilder) handleSelect(pbi planbuilderinput.PlanBuilderInput)
 		}
 		root := builder.GetRoot()
 		tail := builder.GetTail()
-		return &root, &tail, nil
+		return root, tail, nil
 	}
 	pr := primitive.NewLocalPrimitive(nil)
 	rv := pgb.planGraph.CreatePrimitiveNode(pr)
-	return &rv, &rv, nil
+	return rv, rv, nil
 }
 
-func (pgb *planGraphBuilder) handleUnion(pbi planbuilderinput.PlanBuilderInput) (*primitivegraph.PrimitiveNode, *primitivegraph.PrimitiveNode, error) {
+func (pgb *planGraphBuilder) handleUnion(pbi planbuilderinput.PlanBuilderInput) (primitivegraph.PrimitiveNode, primitivegraph.PrimitiveNode, error) {
 	// handlerCtx := pbi.GetHandlerCtx()
 	_, ok := pbi.GetUnion()
 	if !ok {
@@ -311,7 +329,7 @@ func (pgb *planGraphBuilder) handleUnion(pbi planbuilderinput.PlanBuilderInput) 
 	}
 	root := builder.GetRoot()
 	tail := builder.GetTail()
-	return &root, &tail, nil
+	return root, tail, nil
 }
 
 func (pgb *planGraphBuilder) handleDelete(pbi planbuilderinput.PlanBuilderInput) error {
@@ -533,7 +551,7 @@ func (pgb *planGraphBuilder) handleInsert(pbi planbuilderinput.PlanBuilderInput)
 		}
 		// selectPrimitive here forms the insert data
 		var selectPrimitive primitive.IPrimitive
-		var selectPrimitiveNode *primitivegraph.PrimitiveNode
+		var selectPrimitiveNode primitivegraph.PrimitiveNode
 		if nonValCols > 0 {
 			switch rowsNode := node.Rows.(type) {
 			case *sqlparser.Select:
@@ -559,7 +577,7 @@ func (pgb *planGraphBuilder) handleInsert(pbi planbuilderinput.PlanBuilderInput)
 				return err
 			}
 			sn := pgb.planGraph.CreatePrimitiveNode(selectPrimitive)
-			selectPrimitiveNode = &sn
+			selectPrimitiveNode = sn
 		}
 		if selectPrimitiveNode == nil {
 			return fmt.Errorf("nil selection for insert -- cannot work")
@@ -608,7 +626,7 @@ func (pgb *planGraphBuilder) handleUpdate(pbi planbuilderinput.PlanBuilderInput)
 		}
 		// selectPrimitive here forms the insert data
 		var selectPrimitive primitive.IPrimitive
-		var selectPrimitiveNode *primitivegraph.PrimitiveNode
+		var selectPrimitiveNode primitivegraph.PrimitiveNode
 		if len(nonValCols) > 0 {
 			// TODO: support dynamic content
 			return fmt.Errorf("update does not currently support dynamic content")
@@ -618,7 +636,7 @@ func (pgb *planGraphBuilder) handleUpdate(pbi planbuilderinput.PlanBuilderInput)
 				return err
 			}
 			sn := pgb.planGraph.CreatePrimitiveNode(selectPrimitive)
-			selectPrimitiveNode = &sn
+			selectPrimitiveNode = sn
 		}
 		if selectPrimitiveNode == nil {
 			return fmt.Errorf("nil selection for insert -- cannot work")

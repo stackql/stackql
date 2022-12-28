@@ -10,14 +10,14 @@ import (
 type DiamondBuilder struct {
 	SubTreeBuilder
 	parentBuilder            Builder
-	graph                    *primitivegraph.PrimitiveGraph
+	graph                    primitivegraph.PrimitiveGraph
 	root, tailRoot, tailTail primitivegraph.PrimitiveNode
 	sqlDialect               sqldialect.SQLDialect
 	shouldCollectGarbage     bool
 	txnControlCounterSlice   []internaldto.TxnControlCounters
 }
 
-func NewDiamondBuilder(parent Builder, children []Builder, graph *primitivegraph.PrimitiveGraph, sqlDialect sqldialect.SQLDialect, shouldCollectGarbage bool) Builder {
+func NewDiamondBuilder(parent Builder, children []Builder, graph primitivegraph.PrimitiveGraph, sqlDialect sqldialect.SQLDialect, shouldCollectGarbage bool) Builder {
 	return &DiamondBuilder{
 		SubTreeBuilder:       SubTreeBuilder{children: children},
 		parentBuilder:        parent,

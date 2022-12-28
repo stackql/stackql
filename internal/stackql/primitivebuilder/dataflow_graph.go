@@ -11,7 +11,7 @@ import (
 )
 
 type DataflowGraphBuilder struct {
-	graph         *primitivegraph.PrimitiveGraph
+	graph         primitivegraph.PrimitiveGraph
 	dataflowGraph dataflow.DataFlowWeaklyConnectedComponent
 	handlerCtx    handler.HandlerContext
 	root          primitivegraph.PrimitiveNode
@@ -19,7 +19,7 @@ type DataflowGraphBuilder struct {
 }
 
 func NewDataflowGraphBuilder(
-	graph *primitivegraph.PrimitiveGraph,
+	graph primitivegraph.PrimitiveGraph,
 	dataflowGraph dataflow.DataFlowWeaklyConnectedComponent,
 	txnControlCounters *internaldto.TxnControlCounters,
 	handlerCtx handler.HandlerContext,

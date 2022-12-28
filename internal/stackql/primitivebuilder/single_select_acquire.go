@@ -24,7 +24,7 @@ import (
 // and then persisting that data into a table.
 // This data would then subsequently be queried by later execution phases.
 type SingleSelectAcquire struct {
-	graph                      *primitivegraph.PrimitiveGraph
+	graph                      primitivegraph.PrimitiveGraph
 	handlerCtx                 handler.HandlerContext
 	tableMeta                  tablemetadata.ExtendedTableMetadata
 	drmCfg                     drm.DRMConfig
@@ -37,7 +37,7 @@ type SingleSelectAcquire struct {
 }
 
 func NewSingleSelectAcquire(
-	graph *primitivegraph.PrimitiveGraph,
+	graph primitivegraph.PrimitiveGraph,
 	handlerCtx handler.HandlerContext,
 	insertionContainer tableinsertioncontainer.TableInsertionContainer,
 	insertCtx drm.PreparedStatementCtx,
@@ -69,7 +69,7 @@ func NewSingleSelectAcquire(
 }
 
 func newSingleSelectAcquire(
-	graph *primitivegraph.PrimitiveGraph,
+	graph primitivegraph.PrimitiveGraph,
 	handlerCtx handler.HandlerContext,
 	tableMeta tablemetadata.ExtendedTableMetadata,
 	insertCtx drm.PreparedStatementCtx,

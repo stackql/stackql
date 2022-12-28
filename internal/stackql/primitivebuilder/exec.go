@@ -17,7 +17,7 @@ import (
 )
 
 type Exec struct {
-	graph         *primitivegraph.PrimitiveGraph
+	graph         primitivegraph.PrimitiveGraph
 	handlerCtx    handler.HandlerContext
 	drmCfg        drm.DRMConfig
 	root          primitivegraph.PrimitiveNode
@@ -27,7 +27,7 @@ type Exec struct {
 }
 
 func NewExec(
-	graph *primitivegraph.PrimitiveGraph,
+	graph primitivegraph.PrimitiveGraph,
 	handlerCtx handler.HandlerContext,
 	node sqlparser.SQLNode,
 	tbl tablemetadata.ExtendedTableMetadata,

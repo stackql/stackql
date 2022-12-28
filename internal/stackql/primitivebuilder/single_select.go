@@ -14,7 +14,7 @@ import (
 )
 
 type SingleSelect struct {
-	graph                         *primitivegraph.PrimitiveGraph
+	graph                         primitivegraph.PrimitiveGraph
 	handlerCtx                    handler.HandlerContext
 	drmCfg                        drm.DRMConfig
 	selectPreparedStatementCtx    drm.PreparedStatementCtx
@@ -27,7 +27,7 @@ type SingleSelect struct {
 }
 
 func NewSingleSelect(
-	graph *primitivegraph.PrimitiveGraph,
+	graph primitivegraph.PrimitiveGraph,
 	handlerCtx handler.HandlerContext,
 	selectCtx drm.PreparedStatementCtx,
 	insertionContainers []tableinsertioncontainer.TableInsertionContainer,

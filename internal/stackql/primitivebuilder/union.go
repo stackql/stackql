@@ -10,7 +10,7 @@ import (
 )
 
 type Union struct {
-	graph      *primitivegraph.PrimitiveGraph
+	graph      primitivegraph.PrimitiveGraph
 	unionCtx   drm.PreparedStatementCtx
 	handlerCtx handler.HandlerContext
 	drmCfg     drm.DRMConfig
@@ -31,7 +31,7 @@ func (un *Union) Build() error {
 	return nil
 }
 
-func NewUnion(graph *primitivegraph.PrimitiveGraph, handlerCtx handler.HandlerContext, unionCtx drm.PreparedStatementCtx) Builder {
+func NewUnion(graph primitivegraph.PrimitiveGraph, handlerCtx handler.HandlerContext, unionCtx drm.PreparedStatementCtx) Builder {
 	return &Union{
 		graph:      graph,
 		handlerCtx: handlerCtx,

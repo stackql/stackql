@@ -5,12 +5,12 @@ import (
 )
 
 type DependencySubDAGBuilder struct {
-	graph              *primitivegraph.PrimitiveGraph
+	graph              primitivegraph.PrimitiveGraph
 	dependencyBuilders []Builder
 	dependentBuilder   Builder
 }
 
-func NewDependencySubDAGBuilder(graph *primitivegraph.PrimitiveGraph, dependencyBuilders []Builder, dependentBuilder Builder) Builder {
+func NewDependencySubDAGBuilder(graph primitivegraph.PrimitiveGraph, dependencyBuilders []Builder, dependentBuilder Builder) Builder {
 	return &DependencySubDAGBuilder{
 		graph:              graph,
 		dependencyBuilders: dependencyBuilders,

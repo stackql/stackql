@@ -90,6 +90,6 @@ replace github.com/chzyer/readline => github.com/stackql/readline v0.0.2-alpha05
 
 replace github.com/fatih/color => github.com/stackql/color v0.0.1-rc01
 
-replace vitess.io/vitess => github.com/stackql/vitess v0.0.12-alpha01
+replace vitess.io/vitess => github.com/stackql/vitess v0.0.12-alpha05
 
 replace github.com/jeroenrinzema/psql-wire => github.com/stackql/psql-wire v0.0.2-stackqlbeta14
