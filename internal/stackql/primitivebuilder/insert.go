@@ -17,23 +17,23 @@ import (
 )
 
 type Insert struct {
-	graph               *primitivegraph.PrimitiveGraph
+	graph               primitivegraph.PrimitiveGraph
 	handlerCtx          handler.HandlerContext
 	drmCfg              drm.DRMConfig
 	root                primitivegraph.PrimitiveNode
 	tbl                 tablemetadata.ExtendedTableMetadata
 	node                sqlparser.SQLNode
 	commentDirectives   sqlparser.CommentDirectives
-	selectPrimitiveNode *primitivegraph.PrimitiveNode
+	selectPrimitiveNode primitivegraph.PrimitiveNode
 	isAwait             bool
 }
 
 func NewInsert(
-	graph *primitivegraph.PrimitiveGraph,
+	graph primitivegraph.PrimitiveGraph,
 	handlerCtx handler.HandlerContext,
 	node sqlparser.SQLNode,
 	tbl tablemetadata.ExtendedTableMetadata,
-	selectPrimitiveNode *primitivegraph.PrimitiveNode,
+	selectPrimitiveNode primitivegraph.PrimitiveNode,
 	commentDirectives sqlparser.CommentDirectives,
 	isAwait bool,
 ) Builder {
@@ -212,8 +212,8 @@ func (ss *Insert) Build() error {
 
 	insertPrimitive.SetInputAlias("", ss.selectPrimitiveNode.ID())
 	insertNode := graph.CreatePrimitiveNode(insertPrimitive)
-	graph.NewDependency(*(ss.selectPrimitiveNode), insertNode, 1.0)
-	ss.root = *ss.selectPrimitiveNode
+	graph.NewDependency(ss.selectPrimitiveNode, insertNode, 1.0)
+	ss.root = ss.selectPrimitiveNode
 
 	return nil
 }

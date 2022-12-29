@@ -529,6 +529,8 @@ SELECT_OKTA_APPS_ASC_EXPECTED_JSON = get_json_from_local_file(os.path.join('test
 SELECT_OKTA_USERS_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'okta', 'select-users-asc.txt'))
 
 
+SELECT_SOME_VIEW_EXPECTED_JSON = get_json_from_local_file(os.path.join('test', 'assets', 'expected', 'views', 'select-some-view.json'))
+
 SELECT_POSTGRES_CATALOG_JOIN = "SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relkind in ('r', 'p');"
 
 DELETE_AWS_CLOUD_CONTROL_LOG_GROUP = "delete from aws.cloud_control.resources where region = 'ap-southeast-1' and data__TypeName = 'AWS::Logs::LogGroup' and data__Identifier = 'LogGroupResourceExampleThird';"
@@ -592,6 +594,8 @@ SELECT_GOOGLE_CLOUDRESOURCEMANAGER_IAMPOLICY_FILTERED_EXPECTED = get_output_from
 SELECT_GOOGLE_JOIN_CONCATENATED_SELECT_EXPRESSIONS :bytes =  b"""SELECT i.zone, i.name, i.machineType, i.deletionProtection, '[{"subnetwork":"' || JSON_EXTRACT(i.networkInterfaces, '$[0].subnetwork') || '"}]', '[{"boot": true, "initializeParams": { "diskSizeGb": "' || JSON_EXTRACT(i.disks, '$[0].diskSizeGb') || '", "sourceImage": "' || d.sourceImage || '"}}]', i.labels FROM google.compute.instances i INNER JOIN google.compute.disks d ON i.name = d.name WHERE i.project = 'testing-project' AND i.zone = 'australia-southeast1-a' AND d.project = 'testing-project' AND d.zone = 'australia-southeast1-a' AND i.name LIKE '%' order by i.name DESC;"""
 
 SELECT_GOOGLE_JOIN_CONCATENATED_SELECT_EXPRESSIONS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'google', 'joins', 'disks-instances-rewritten.txt'))
+
+_CREATE_SOME_VIEW = "create or replace view some_view as select id, name, url from github.repos.repos where org = 'stackql' order by name;"
 
 def get_select_k8s_nodes_asc(execution_env :str) -> str:
   k8s_host = '127.0.0.1'
@@ -788,6 +792,8 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'SHELL_COMMANDS_GC_SEQUENCE_CANONICAL_JSON_EXPECTED':                   SELECT_OKTA_APPS_ASC_EXPECTED_JSON + [ get_object_count_dict(5)] + PURGE_CONSERVATIVE_RESPONSE_JSON + [ get_object_count_dict(0) ] + SELECT_OKTA_APPS_ASC_EXPECTED_JSON + SELECT_OKTA_APPS_ASC_EXPECTED_JSON + [ get_object_count_dict(10)] + PURGE_CONSERVATIVE_RESPONSE_JSON + [get_object_count_dict(0) ],
     'SHELL_COMMANDS_GC_SEQUENCE_EAGER':                                     [ SELECT_OKTA_APPS, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_ONE, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_ONE, SELECT_OKTA_APPS, SELECT_OKTA_APPS, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_ONE, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_ONE ],
     'SHELL_COMMANDS_GC_SEQUENCE_EAGER_JSON_EXPECTED':                       SELECT_OKTA_APPS_ASC_EXPECTED_JSON + [ get_object_count_dict(0)] + [ get_object_count_dict(0) ] + SELECT_OKTA_APPS_ASC_EXPECTED_JSON + SELECT_OKTA_APPS_ASC_EXPECTED_JSON + [ get_object_count_dict(0)] + [get_object_count_dict(0) ],
+    'SHELL_COMMANDS_VIEW_HANDLING_SEQUENCE':                                [ _CREATE_SOME_VIEW, "select * from some_view;", "drop view some_view;" ],
+    'SHELL_COMMANDS_VIEW_HANDLING_SEQUENCE_JSON_EXPECTED':                  [ { "message": "DDL execution completed" } ] + SELECT_SOME_VIEW_EXPECTED_JSON + [ { "message": "DDL execution completed" } ],
     'SHELL_SESSION_SIMPLE_COMMANDS':                                        [ SELECT_GITHUB_BRANCHES_NAMES_DESC ],
     'SHELL_SESSION_SIMPLE_EXPECTED':                                        _SHELL_WELCOME_MSG + SELECT_GITHUB_BRANCHES_NAMES_DESC_EXPECTED,
     'SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR':                 SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR,

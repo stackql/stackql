@@ -35,7 +35,7 @@ type PrimitiveComposer interface {
 	GetColumnOrder() []string
 	GetCommentDirectives() sqlparser.CommentDirectives
 	GetDRMConfig() drm.DRMConfig
-	GetGraph() *primitivegraph.PrimitiveGraph
+	GetGraph() primitivegraph.PrimitiveGraph
 	GetInsertPreparedStatementCtx() drm.PreparedStatementCtx
 	GetInsertValOnlyRows() map[int]map[int]interface{}
 	GetLikeAbleColumns() []string
@@ -99,7 +99,7 @@ type standardPrimitiveComposer struct {
 
 	builder primitivebuilder.Builder
 
-	graph *primitivegraph.PrimitiveGraph
+	graph primitivegraph.PrimitiveGraph
 
 	drmConfig drm.DRMConfig
 
@@ -186,7 +186,7 @@ func (pb *standardPrimitiveComposer) GetTxnCtrlCtrs() internaldto.TxnControlCoun
 	return pb.txnCtrlCtrs
 }
 
-func (pb *standardPrimitiveComposer) GetGraph() *primitivegraph.PrimitiveGraph {
+func (pb *standardPrimitiveComposer) GetGraph() primitivegraph.PrimitiveGraph {
 	return pb.graph
 }
 
@@ -465,7 +465,7 @@ func (pb *standardPrimitiveComposer) GetSQLDialect() sqldialect.SQLDialect {
 	return pb.sqlDialect
 }
 
-func NewPrimitiveComposer(parent PrimitiveComposer, ast sqlparser.SQLNode, drmConfig drm.DRMConfig, txnCtrMgr txncounter.TxnCounterManager, graph *primitivegraph.PrimitiveGraph, tblMap taxonomy.TblMap, symTab symtab.SymTab, sqlEngine sqlengine.SQLEngine, sqlDialect sqldialect.SQLDialect, formatter sqlparser.NodeFormatter) PrimitiveComposer {
+func NewPrimitiveComposer(parent PrimitiveComposer, ast sqlparser.SQLNode, drmConfig drm.DRMConfig, txnCtrMgr txncounter.TxnCounterManager, graph primitivegraph.PrimitiveGraph, tblMap taxonomy.TblMap, symTab symtab.SymTab, sqlEngine sqlengine.SQLEngine, sqlDialect sqldialect.SQLDialect, formatter sqlparser.NodeFormatter) PrimitiveComposer {
 	return &standardPrimitiveComposer{
 		parent:            parent,
 		ast:               ast,

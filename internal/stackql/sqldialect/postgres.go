@@ -223,12 +223,28 @@ func (eng *postgresDialect) generateDDL(relationalTable relationaldto.Relational
 	return retVal, nil
 }
 
-func (eng *postgresDialect) CreateView(viewName string, rawDDL string, translatedDDL string) error {
-	return eng.createView(viewName, rawDDL, translatedDDL)
+func (eng *postgresDialect) DropView(viewName string) error {
+	_, err := eng.sqlEngine.Exec(`delete from "__iql__.views" where view_name = ?`, viewName)
+	return err
 }
 
-func (eng *postgresDialect) createView(viewName string, rawDDL string, translatedDDL string) error {
-	return nil
+func (eng *postgresDialect) CreateView(viewName string, rawDDL string) error {
+	return eng.createView(viewName, rawDDL)
+}
+
+func (eng *postgresDialect) createView(viewName string, rawDDL string) error {
+	q := `
+	INSERT INTO "__iql__.views" (
+		view_name,
+		view_ddl
+	  ) 
+	  VALUES (
+		$1,
+		$2
+	  )
+	`
+	_, err := eng.sqlEngine.Exec(q, viewName, rawDDL)
+	return err
 }
 
 func (eng *postgresDialect) GetViewByName(viewName string) (internaldto.ViewDTO, bool) {

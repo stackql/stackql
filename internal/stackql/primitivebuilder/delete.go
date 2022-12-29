@@ -17,7 +17,7 @@ import (
 )
 
 type Delete struct {
-	graph             *primitivegraph.PrimitiveGraph
+	graph             primitivegraph.PrimitiveGraph
 	handlerCtx        handler.HandlerContext
 	drmCfg            drm.DRMConfig
 	root              primitivegraph.PrimitiveNode
@@ -28,7 +28,7 @@ type Delete struct {
 }
 
 func NewDelete(
-	graph *primitivegraph.PrimitiveGraph,
+	graph primitivegraph.PrimitiveGraph,
 	handlerCtx handler.HandlerContext,
 	node sqlparser.SQLNode,
 	tbl tablemetadata.ExtendedTableMetadata,

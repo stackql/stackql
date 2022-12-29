@@ -22,7 +22,7 @@ import (
 // and then persisting that data into a table.
 // This data would then subsequently be queried by later execution phases.
 type GraphQLSingleSelectAcquire struct {
-	graph                      *primitivegraph.PrimitiveGraph
+	graph                      primitivegraph.PrimitiveGraph
 	handlerCtx                 handler.HandlerContext
 	tableMeta                  tablemetadata.ExtendedTableMetadata
 	drmCfg                     drm.DRMConfig
@@ -35,7 +35,7 @@ type GraphQLSingleSelectAcquire struct {
 }
 
 func newGraphQLSingleSelectAcquire(
-	graph *primitivegraph.PrimitiveGraph,
+	graph primitivegraph.PrimitiveGraph,
 	handlerCtx handler.HandlerContext,
 	tableMeta tablemetadata.ExtendedTableMetadata,
 	insertCtx drm.PreparedStatementCtx,

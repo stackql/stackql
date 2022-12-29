@@ -16,14 +16,14 @@ import (
 )
 
 type NativeSelect struct {
-	graph       *primitivegraph.PrimitiveGraph
+	graph       primitivegraph.PrimitiveGraph
 	handlerCtx  handler.HandlerContext
 	drmCfg      drm.DRMConfig
 	selectQuery nativedb.Select
 	root        primitivegraph.PrimitiveNode
 }
 
-func NewNativeSelect(graph *primitivegraph.PrimitiveGraph, handlerCtx handler.HandlerContext, selectQuery nativedb.Select) Builder {
+func NewNativeSelect(graph primitivegraph.PrimitiveGraph, handlerCtx handler.HandlerContext, selectQuery nativedb.Select) Builder {
 	return &NativeSelect{
 		graph:       graph,
 		handlerCtx:  handlerCtx,
