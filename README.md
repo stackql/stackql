@@ -138,7 +138,7 @@ export AWS_KEY_ID='<YOUR_AWS_KEY_ID_NOT_A_SECRET>'
 
 export DOCKER_AUTH_STR='{ "google": { "credentialsfilepath": "/opt/stackql/keys/sa-key.json", "type": "service_account" }, "okta": { "credentialsenvvar": "OKTA_SECRET_KEY", "type": "api_key" }, "github": { "type": "basic", "credentialsenvvar": "GITHUB_CREDS" }, "aws": { "type": "aws_signing_v4", "credentialsfilepath": "/opt/stackql/keys/integration/aws-secret-key.txt", "keyID": "'${AWS_KEY_ID}'" }, "k8s": { "credentialsenvvar": "K8S_TOKEN", "type": "api_key", "valuePrefix": "Bearer " } }'
 
-export DOCKER_REG_CFG='{ "url": "https://cdn.statically.io/gh/stackql/stackql-provider-registry/dev/providers" }'
+export DOCKER_REG_CFG='{ "url": "https://registry.stackql.app/providers" }'
 
 docker compose -p shellrun run --rm -e OKTA_SECRET_KEY=some-dummy-api-key -e GITHUB_SECRET_KEY=some-dummy-github-key -e K8S_SECRET_KEY=some-k8s-token -e REGISTRY_SRC=test/registry-mocked stackqlsrv bash -c "stackql shell --registry='${DOCKER_REG_CFG}' --auth='${DOCKER_AUTH_STR}'"
 ```

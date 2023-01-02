@@ -45,7 +45,7 @@ var (
 )
 
 const (
-	defaultRegistryUrlString string = "https://cdn.statically.io/gh/stackql/stackql-provider-registry/main/providers"
+	defaultRegistryUrlString string = "https://registry.stackql.app/providers"
 )
 
 var SemVersion string = fmt.Sprintf("%s.%s.%s", BuildMajorVersion, BuildMinorVersion, BuildPatchVersion)
