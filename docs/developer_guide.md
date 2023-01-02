@@ -33,7 +33,7 @@ Examples are present [here](/docs/examples.md).
 
 ### Azure development phase
 
-Until we integrate token refresh code into the core (likely from Azure SDK), token refresh for `axure` and `azure_extras` is done manually.
+Until we integrate token refresh code into the core (likely from Azure SDK), token refresh for `azure` and `azure_extras` is done manually.
 
 ```
 AZ_ACCESS_TOKEN_RAW=$(az account get-access-token --query accessToken --output tsv)

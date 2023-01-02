@@ -61,6 +61,8 @@ func (gp *GenericProvider) GetServiceShard(serviceKey string, resourceKey string
 func (gp *GenericProvider) inferAuthType(authCtx dto.AuthCtx, authTypeRequested string) string {
 	ft := strings.ToLower(authTypeRequested)
 	switch ft {
+	case dto.AuthAzureDefaultStr:
+		return dto.AuthAzureDefaultStr
 	case dto.AuthApiKeyStr:
 		return dto.AuthApiKeyStr
 	case dto.AuthBasicStr:
@@ -94,6 +96,8 @@ func (gp *GenericProvider) Auth(authCtx *dto.AuthCtx, authTypeRequested string, 
 		return gp.keyFileAuth(authCtx)
 	case dto.AuthBasicStr:
 		return gp.basicAuth(authCtx)
+	case dto.AuthAzureDefaultStr:
+		return gp.azureDefaultAuth(authCtx)
 	case dto.AuthInteractiveStr:
 		return gp.oAuth(authCtx, enforceRevokeFirst)
 	case dto.AuthAWSSigningv4Str:
@@ -248,6 +252,10 @@ func (gp *GenericProvider) awsSigningAuth(authCtx *dto.AuthCtx) (*http.Client, e
 
 func (gp *GenericProvider) basicAuth(authCtx *dto.AuthCtx) (*http.Client, error) {
 	return basicAuth(authCtx, gp.runtimeCtx)
+}
+
+func (gp *GenericProvider) azureDefaultAuth(authCtx *dto.AuthCtx) (*http.Client, error) {
+	return azureDefaultAuth(authCtx, gp.runtimeCtx)
 }
 
 func (gp *GenericProvider) getServiceType(service *openapistackql.Service) string {

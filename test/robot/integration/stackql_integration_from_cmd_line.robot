@@ -9,6 +9,19 @@ Nop From Lib
     ${result} =     Nop Cloud Integration Keyword
     Should Be Equal    ${result}    PASS
 
+Azure Authenticated VM Sizes
+    Should Stackql Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_CANONICAL_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR_INTEGRATION}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${AZURE_VM_SIZES_ENUMERATION}
+    ...    Standard_
+    ...    stdout=${CURDIR}/tmp/Azure-Authenticated-VM-Sizes.tmp
+
 *** Keywords ***
 Start Mock Server
     [Arguments]    ${_JSON_INIT_FILE_PATH}    ${_MOCKSERVER_JAR}    ${_MOCKSERVER_PORT}

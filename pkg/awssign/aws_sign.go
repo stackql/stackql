@@ -13,22 +13,30 @@ import (
 	"github.com/stackql/stackql/internal/stackql/logging"
 )
 
-type AwsSignTransport struct {
+var (
+	_ AwsSignTransport = &standardAwsSignTransport{}
+)
+
+type AwsSignTransport interface {
+	RoundTrip(req *http.Request) (*http.Response, error)
+}
+
+type standardAwsSignTransport struct {
 	underlyingTransport http.RoundTripper
 	signer              *v4.Signer
 }
 
-func NewAwsSignTransport(underlyingTransport http.RoundTripper, id, secret, token string, options ...func(*v4.Signer)) *AwsSignTransport {
+func NewAwsSignTransport(underlyingTransport http.RoundTripper, id, secret, token string, options ...func(*v4.Signer)) AwsSignTransport {
 	creds := credentials.NewStaticCredentials(id, secret, token)
 	//creds := credentials.NewEnvCredentials()
 	signer := v4.NewSigner(creds, options...)
-	return &AwsSignTransport{
+	return &standardAwsSignTransport{
 		underlyingTransport: underlyingTransport,
 		signer:              signer,
 	}
 }
 
-func (t *AwsSignTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+func (t *standardAwsSignTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	svc := req.Context().Value("service")
 	if svc == nil {
 		return nil, fmt.Errorf("AWS service is nil")
