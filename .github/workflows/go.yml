@@ -68,6 +68,8 @@ jobs:
     - name: Set up mingw
       uses: egor-tensin/setup-mingw@v2
       id: gccsetup
+      with:
+        static: 0
 
     - name: Choco install postgres
       uses: crazy-max/ghaction-chocolatey@v2
