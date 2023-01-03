@@ -66,10 +66,10 @@ jobs:
            dir "C:\Users\${{ env.username }}\AppData\Local\Temp\chocolatey\"
 
     - name: Set up mingw
-      uses: egor-tensin/setup-mingw@3fe42b779393693ece2e71eb995781aada92f0a0
+      uses: stackql/setup-mingw@c8d00a8034a5c526ea76031fa985e53d2282183a
       id: gccsetup
-      # with:
-      #   static: 0
+      with:
+        version: '8.1.0'
 
     - name: Choco install postgres
       uses: crazy-max/ghaction-chocolatey@v2
