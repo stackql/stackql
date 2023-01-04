@@ -183,8 +183,12 @@ jobs:
       if: success() && startsWith(${{ steps.git_ref_parse.outputs.SOURCE_TAG }}, 'build-release')
       env:
         PSQL_EXE: C:\Program Files\PostgreSQL\13\bin\psql
+        AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
+        AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       run: |
-        robot test/robot/integration
+        robot -d test/robot/integration test/robot/integration
     
     - name: Prepare Test DB
       if: success()
@@ -329,8 +333,13 @@ jobs:
     
     - name: Run robot integration tests
       if: success() && startsWith(${{ steps.git_ref_parse.outputs.SOURCE_TAG }}, 'build-release')
+      env:
+        AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
+        AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       run: |
-        robot test/robot/integration
+        robot -d test/robot/integration test/robot/integration
     
     - name: Prepare Test DB
       if: success()
@@ -438,6 +447,10 @@ jobs:
       name: Run robot integration tests
       run: |
           . version.txt
+          export AZURE_CLIENT_ID='${{ secrets.AZURE_CLIENT_ID }}'
+          export AZURE_CLIENT_SECRET='${{ secrets.AZURE_CLIENT_SECRET }}'
+          export AZURE_INTEGRATION_TESTING_SUB_ID='${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}'
+          export AZURE_TENANT_ID='${{ secrets.AZURE_TENANT_ID }}'
           export BUILDBRANCH="${{github.ref}}"
           export BUILDPATCHVERSION="${{github.run_number}}"
           export BUILDMAJORVERSION=$MajorVersion
@@ -450,7 +463,7 @@ jobs:
             then
             export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
           fi
-          robot --variable IS_WSL:true test/robot/integration
+          robot --variable IS_WSL:true -d test/robot/integration test/robot/integration
 
 
   macosbuild:
@@ -568,8 +581,13 @@ jobs:
     
     - name: Run robot integration tests
       if: success() && startsWith(${{ steps.git_ref_parse.outputs.SOURCE_TAG }}, 'build-release')
+      env:
+        AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
+        AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       run: |
-        robot test/robot/integration
+        robot -d test/robot/integration test/robot/integration
     
     - name: Prepare Test DB
       if: success()
@@ -812,8 +830,13 @@ jobs:
 
     - name: Run robot integration tests
       if: success() && startsWith(${{ steps.git_ref_parse.outputs.SOURCE_TAG }}, 'build-release')
+      env:
+        AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
+        AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       run: |
-        robot  --variable EXECUTION_PLATFORM:docker -d test/robot/functional test/robot/integration
+        robot  --variable EXECUTION_PLATFORM:docker -d test/robot/integration test/robot/integration
 
     - name: Login to Docker Hub
       if: ${{ success() && github.ref_type == 'branch' && github.ref_name == 'main' && github.repository == 'stackql/stackql' && github.event_name == 'push' }}

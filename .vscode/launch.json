@@ -39,7 +39,8 @@
         "select * from aws_cc_bucket_unfiltered where data__MaxResults = 2;",
         "select * from aws_cc_bucket_unfiltered where data__Identifier = 'stackql-trial-bucket-01';",
         "create or replace view self_created as select id, name, url from github.repos.repos where org = 'stackql';",
-        "drop view if exists self_created ; "
+        "drop view if exists self_created ; ",
+        "registry pull azure v23.01.00102 ; "
       ],
       "default": "show providers;"
     },
@@ -56,7 +57,9 @@
         "{ \"url\": \"file://${workspaceFolder}/build/.stackql\", \"localDocRoot\": \"${workspaceFolder}/build/.stackql\" }",
         "{ \"url\": \"file://${workspaceFolder}/examples/empty-registry\", \"localDocRoot\": \"${workspaceFolder}/examples/empty-registry\" }",
         "{ \"url\": \"https://cdn.statically.io/gh/stackql/stackql-provider-registry/main/providers\", \"localDocRoot\": \"${workspaceFolder}/test/registry\" }",
-        "{ \"url\": \"https://cdn.statically.io/gh/stackql/stackql-provider-registry/dev/providers\" }"
+        "{ \"url\": \"https://cdn.statically.io/gh/stackql/stackql-provider-registry/dev/providers\" }",
+        "{ \"url\": \"https://registry-dev.stackql.app/providers\" }",
+        "{ \"url\": \"https://registry.stackql.app/providers\" }"
       ],
       "default": "{ \"url\": \"file://${workspaceFolder}/test/registry-sandbox\", \"localDocRoot\": \"${workspaceFolder}/test/registry-sandbox\", \"verifyConfig\": { \"nopVerify\": true } }"
     },
@@ -67,6 +70,7 @@
       "default": "{ \"azure\": { \"type\": \"api_key\", \"valuePrefix\": \"Bearer \", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/azure-key.txt\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" }, \"github\": { \"type\": \"basic\", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/github-key.txt\" }, \"aws\": { \"type\": \"aws_signing_v4\", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/aws-secret-key.txt\", \"keyID\": \"AKIA376P4FQSS2ONB2NS\" }, \"netlify\": { \"type\": \"api_key\", \"valuePrefix\": \"Bearer \", \"credentialsfilepath\": \"${workspaceFolder}/keys/netlify-token.txt\"  }, \"k8s\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/k8s-token.txt\", \"type\": \"api_key\", \"valuePrefix\": \"Bearer \" }, \"sumologic\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/sumologic-token.txt\", \"type\": \"basic\" } }",
       "options": [
         "{ \"azure\": { \"type\": \"api_key\", \"valuePrefix\": \"Bearer \", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/azure-key.txt\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" }, \"github\": { \"type\": \"basic\", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/github-key.txt\" }, \"aws\": { \"type\": \"aws_signing_v4\", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/aws-secret-key.txt\", \"keyID\": \"AKIA376P4FQSS2ONB2NS\" }, \"netlify\": { \"type\": \"api_key\", \"valuePrefix\": \"Bearer \", \"credentialsfilepath\": \"${workspaceFolder}/keys/netlify-token.txt\"  }, \"k8s\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/k8s-token.txt\", \"type\": \"api_key\", \"valuePrefix\": \"Bearer \" }, \"sumologic\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/sumologic-token.txt\", \"type\": \"basic\" } }",
+        "{ \"azure\": { \"type\": \"azure_default\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" }, \"github\": { \"type\": \"basic\", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/github-key.txt\" }, \"aws\": { \"type\": \"aws_signing_v4\", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/aws-secret-key.txt\", \"keyID\": \"AKIA376P4FQSS2ONB2NS\" }, \"netlify\": { \"type\": \"api_key\", \"valuePrefix\": \"Bearer \", \"credentialsfilepath\": \"${workspaceFolder}/keys/netlify-token.txt\"  }, \"k8s\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/k8s-token.txt\", \"type\": \"api_key\", \"valuePrefix\": \"Bearer \" }, \"sumologic\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/sumologic-token.txt\", \"type\": \"basic\" } }",
         "{ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/test/assets/credentials/dummy/google/functional-test-dummy-sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/test/assets/credentials/dummy/okta/api-key.txt\", \"type\": \"api_key\", \"valuePrefix\": \"SSWS \" }, \"github\": { \"type\": \"basic\", \"credentialsfilepath\": \"${workspaceFolder}/test/assets/credentials/dummy/okta/api-key.txt\" }, \"aws\": { \"type\": \"aws_signing_v4\", \"credentialsfilepath\": \"${workspaceFolder}/test/assets/credentials/dummy/aws/functional-test-dummy-aws-key.txt\", \"keyID\": \"AKIA376P4FQSS2ONB2NS\" }, \"netlify\": { \"type\": \"api_key\", \"valuePrefix\": \"Bearer \", \"credentialsfilepath\": \"${workspaceFolder}/test/assets/credentials/dummy/netlify/netlify-token.txt\"  }, \"k8s\": { \"credentialsfilepath\": \"${workspaceFolder}/test/assets/credentials/dummy/k8s/k8s-token.txt\", \"type\": \"api_key\", \"valuePrefix\": \"Bearer \" }, \"sumologic\": { \"credentialsfilepath\": \"${workspaceFolder}/test/assets/credentials/dummy/sumologic/sumologic-token.txt\", \"type\": \"basic\" } }"
       ]
     },

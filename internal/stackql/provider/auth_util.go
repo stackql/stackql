@@ -9,6 +9,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/netutils"
 	"github.com/stackql/stackql/pkg/awssign"
+	"github.com/stackql/stackql/pkg/azureauth"
 
 	"net/http"
 	"regexp"
@@ -197,6 +198,26 @@ func basicAuth(authCtx *dto.AuthCtx, runtimeCtx dto.RuntimeCtx) (*http.Client, e
 	activateAuth(authCtx, "", "basic")
 	httpClient := netutils.GetHttpClient(runtimeCtx, http.DefaultClient)
 	tr, err := newTransport(b, authTypeBasic, authCtx.ValuePrefix, locationHeader, "", httpClient.Transport)
+	if err != nil {
+		return nil, err
+	}
+	httpClient.Transport = tr
+	return httpClient, nil
+}
+
+func azureDefaultAuth(authCtx *dto.AuthCtx, runtimeCtx dto.RuntimeCtx) (*http.Client, error) {
+	azureTokenSource, err := azureauth.NewDefaultCredentialAzureTokenSource()
+	if err != nil {
+		return nil, fmt.Errorf("azure default credentials error: %v", err)
+	}
+	token, err := azureTokenSource.GetToken(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("azure default credentials token error: %v", err)
+	}
+	tokenString := token.Token
+	activateAuth(authCtx, "", "azure_default")
+	httpClient := netutils.GetHttpClient(runtimeCtx, http.DefaultClient)
+	tr, err := newTransport([]byte(tokenString), authTypeBearer, "Bearer ", locationHeader, "", httpClient.Transport)
 	if err != nil {
 		return nil, err
 	}

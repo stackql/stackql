@@ -134,6 +134,20 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       **cfg
     )
 
+  def _expand_docker_env_args(self, okta_secret_str :str, github_secret_str :str, k8s_secret_str :str, *args) -> typing.Iterable:
+    rv = [
+      "-e",
+      f"OKTA_SECRET_KEY={okta_secret_str}", 
+      "-e",
+      f"GITHUB_SECRET_KEY={github_secret_str}",
+      "-e",
+      f"K8S_SECRET_KEY={k8s_secret_str}",
+    ]
+    for k, v in self._get_default_env().items():
+      rv.append("-e")
+      rv.append(f"{k}={v}")
+    return rv
+
   def _docker_transform_args(self, *args) -> typing.Iterable:
     rv = [ f"--namespaces='{b[13:]}'" if type(b) == str and b.startswith('--namespaces=') else b for b in list(args) ]
     rv = [ f"--sqlBackend='{b[13:]}'" if type(b) == str and b.startswith('--sqlBackend=') else b for b in list(rv) ]
@@ -170,6 +184,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     if self._sql_backend == SQL_BACKEND_POSTGRES_TCP:
       os.environ['DB_SETUP_SRC']= f'./test/db/postgres'
     sleep_prefix = '' if self._sql_backend == SQL_BACKEND_CANONICAL_SQLITE_EMBEDDED else 'sleep 2 && '
+    env_args_to_docker = self._expand_docker_env_args(okta_secret_str, github_secret_str, k8s_secret_str)
     res = super().run_process(
       "docker",
       "compose",
@@ -177,16 +192,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       "execrun",
       "run",
       "--rm",
-      "-e",
-      f"OKTA_SECRET_KEY={okta_secret_str}", 
-      "-e",
-      f"GITHUB_SECRET_KEY={github_secret_str}",
-      "-e",
-      f"K8S_SECRET_KEY={k8s_secret_str}",
-      "-e",
-      f"AZ_ACCESS_TOKEN={self._get_default_env().get('AZ_ACCESS_TOKEN')}",
-      "-e",
-      f"SUMO_CREDS={self._get_default_env().get('SUMO_CREDS')}",
+      *env_args_to_docker,
       "stackqlsrv",
       "bash",
       "-c",
@@ -198,11 +204,24 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     return res
 
 
+  def _get_allowed_docker_env_keys(self):
+    return [ 
+        'AZURE_CLIENT_ID',
+        'AZURE_CLIENT_SECRET',
+        'AZURE_INTEGRATION_TESTING_SUB_ID',
+        'AZURE_TENANT_ID'
+    ]
+
+
   def _get_default_env(self) -> dict:
-    return {
-      "AZ_ACCESS_TOKEN": os.environ.get('AZ_ACCESS_TOKEN', "az_access_dummy_secret"),
-      "SUMO_CREDS": os.environ.get('SUMO_CREDS', "sumologicdummysecret")
-    }
+    existing = dict(os.environ)
+    rv = {}
+    for k, v in existing.items():
+      if k in self._get_allowed_docker_env_keys():
+        rv[k] = v
+    rv["AZ_ACCESS_TOKEN"] = os.environ.get('AZ_ACCESS_TOKEN', "az_access_dummy_secret")
+    rv["SUMO_CREDS"] = os.environ.get('SUMO_CREDS', "sumologicdummysecret")
+    return rv
 
 
   def _run_stackql_shell_command_docker(

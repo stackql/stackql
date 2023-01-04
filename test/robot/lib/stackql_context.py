@@ -29,6 +29,10 @@ Welcome to the interactive shell for running stackql commands.
 ---
 """
 
+_AZURE_INTEGRATION_TESTING_SUB_ID :str = os.environ.get('AZURE_INTEGRATION_TESTING_SUB_ID', '10001000-1000-1000-1000-100010001000')
+
+_AZURE_VM_SIZES_ENUMERATION :str = f"SELECT * FROM azure.compute.virtual_machine_sizes WHERE location = 'Australia East' AND subscriptionId = '{_AZURE_INTEGRATION_TESTING_SUB_ID}';"
+
 _TEST_APP_CACHE_ROOT = os.path.join("test", ".stackql")
 
 class RegistryCfg:
@@ -138,6 +142,10 @@ _REGISTRY_NULL = RegistryCfg(
   '',
   is_null_registry=True
 )
+_REGISTRY_CANONICAL_NO_VERIFY = RegistryCfg(
+  get_unix_path(os.path.join('test', 'registry')),
+  nop_verify=True
+)
 _REGISTRY_NO_VERIFY = RegistryCfg(
   get_unix_path(os.path.join('test', 'registry-mocked')),
   nop_verify=True
@@ -228,6 +236,68 @@ _AUTH_CFG_DOCKER={
     "type": "api_key",
     "valuePrefix": "Bearer ",
     "credentialsenvvar": "AZ_ACCESS_TOKEN"
+  },
+  "sumologic": {
+    "type": "basic",
+    "credentialsenvvar": "SUMO_CREDS"
+  }
+}
+_AUTH_CFG_INTEGRATION={ 
+  "google": { 
+    "credentialsfilepath": get_unix_path(os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'credentials', 'dummy', 'google', 'functional-test-dummy-sa-key.json')),
+    "type": "service_account"
+  }, 
+  "okta": { 
+    "credentialsenvvar": "OKTA_SECRET_KEY",
+    "type": "api_key" 
+  }, 
+  "aws": { 
+    "type": "aws_signing_v4",
+    "credentialsfilepath": get_unix_path(os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'credentials', 'dummy', 'aws', 'functional-test-dummy-aws-key.txt')),
+     "keyID": "NON_SECRET" 
+  },
+  "github": { 
+    "type": "basic", 
+    "credentialsenvvar": "GITHUB_SECRET_KEY" 
+  },
+  "k8s": { 
+    "credentialsenvvar": "K8S_SECRET_KEY",
+    "type": "api_key",
+    "valuePrefix": "Bearer " 
+  },
+  "azure": { 
+    "type": "azure_default"
+  },
+  "sumologic": {
+    "type": "basic",
+    "credentialsenvvar": "SUMO_CREDS"
+  }
+}
+_AUTH_CFG_INTEGRATION_DOCKER={ 
+  "google": { 
+    "credentialsfilepath": get_unix_path(os.path.join('/opt', 'stackql', 'credentials', 'dummy', 'google', 'docker-functional-test-dummy-sa-key.json')),
+    "type": "service_account"
+  }, 
+  "okta": { 
+    "credentialsenvvar": "OKTA_SECRET_KEY",
+    "type": "api_key" 
+  }, 
+  "aws": { 
+    "type": "aws_signing_v4",
+    "credentialsfilepath": get_unix_path(os.path.join('/opt', 'stackql', 'credentials', 'dummy', 'aws', 'functional-test-dummy-aws-key.txt')),
+     "keyID": "NON_SECRET" 
+  },
+  "github": { 
+    "type": "basic", 
+    "credentialsenvvar": "GITHUB_SECRET_KEY" 
+  },
+  "k8s": { 
+    "credentialsenvvar": "K8S_SECRET_KEY",
+    "type": "api_key",
+    "valuePrefix": "Bearer " 
+  },
+  "azure": { 
+    "type": "azure_default"
   },
   "sumologic": {
     "type": "basic",
@@ -350,6 +420,8 @@ REGISTRY_DEV_CFG_STR = json.dumps(get_registry_cfg(_DEV_REGISTRY_URL, ROBOT_DEV_
 
 AUTH_CFG_STR = json.dumps(_AUTH_CFG)
 AUTH_CFG_STR_DOCKER = json.dumps(_AUTH_CFG_DOCKER)
+AUTH_CFG_INTEGRATION_STR = json.dumps(_AUTH_CFG_INTEGRATION)
+AUTH_CFG_INTEGRATION_STR_DOCKER = json.dumps(_AUTH_CFG_INTEGRATION_DOCKER)
 SHOW_PROVIDERS_STR = "show providers;"
 SHOW_OKTA_SERVICES_FILTERED_STR  = "show services from okta like 'app%';"
 SHOW_OKTA_APPLICATION_RESOURCES_FILTERED_STR  = "show resources from okta.application like 'gr%';"
@@ -667,6 +739,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'REGISTRY_ROOT_CANONICAL':                        _REGISTRY_CANONICAL,
     'REGISTRY_ROOT_DEPRECATED':                       _REGISTRY_DEPRECATED,
     'REGISTRY_CANONICAL_CFG_STR':                     _REGISTRY_CANONICAL,
+    'REGISTRY_CANONICAL_NO_VERIFY_CFG_STR':           _REGISTRY_CANONICAL_NO_VERIFY,
     'REGISTRY_DEPRECATED_CFG_STR':                    _REGISTRY_DEPRECATED,
     'REGISTRY_MOCKED_CFG_STR':                        get_registry_mocked(execution_env),
     'REGISTRY_NO_VERIFY_CFG_STR':                     _REGISTRY_NO_VERIFY,
@@ -679,6 +752,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     ## queries and expectations
     'AWS_CLOUD_CONTROL_METHOD_SIGNATURE_CMD_ARR':                           [ SELECT_AWS_CLOUD_CONTROL_VPCS_DESC, GET_AWS_CLOUD_CONTROL_VPCS_DESC ],
     'AWS_CLOUD_CONTROL_METHOD_SIGNATURE_CMD_ARR_EXPECTED':                  SELECT_AWS_CLOUD_CONTROL_VPCS_DESC_JSON_EXPECTED + GET_AWS_CLOUD_CONTROL_VPCS_DESC_JSON_EXPECTED,
+    'AZURE_VM_SIZES_ENUMERATION':                                           _AZURE_VM_SIZES_ENUMERATION,
     'CREATE_AWS_VOLUME':                                                    CREATE_AWS_VOLUME,
     'CREATE_AWS_CLOUD_CONTROL_LOG_GROUP':                                   CREATE_AWS_CLOUD_CONTROL_LOG_GROUP,
     'DELETE_AWS_CLOUD_CONTROL_LOG_GROUP':                                   DELETE_AWS_CLOUD_CONTROL_LOG_GROUP,
@@ -815,6 +889,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
   }
   if execution_env == 'docker':
     rv['AUTH_CFG_STR']                                  = AUTH_CFG_STR_DOCKER
+    rv['AUTH_CFG_STR_INTEGRATION']                      = AUTH_CFG_INTEGRATION_STR_DOCKER
     rv['GET_IAM_POLICY_AGG_ASC_INPUT_FILE']             = GET_IAM_POLICY_AGG_ASC_INPUT_FILE_DOCKER
     rv['JSON_INIT_FILE_PATH_AWS']                       = JSON_INIT_FILE_PATH_AWS
     rv['JSON_INIT_FILE_PATH_AZURE']                     = JSON_INIT_FILE_PATH_AZURE
@@ -835,6 +910,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     rv['REGISTRY_SQL_VERB_CONTRIVED_NO_VERIFY_CFG_STR'] = _REGISTRY_SQL_VERB_CONTRIVED_NO_VERIFY_DOCKER
   else:
     rv['AUTH_CFG_STR']                                  = AUTH_CFG_STR
+    rv['AUTH_CFG_STR_INTEGRATION']                      = AUTH_CFG_INTEGRATION_STR
     rv['GET_IAM_POLICY_AGG_ASC_INPUT_FILE']             = GET_IAM_POLICY_AGG_ASC_INPUT_FILE
     rv['JSON_INIT_FILE_PATH_AWS']                       = JSON_INIT_FILE_PATH_AWS
     rv['JSON_INIT_FILE_PATH_AZURE']                     = JSON_INIT_FILE_PATH_AZURE
