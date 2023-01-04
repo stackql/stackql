@@ -16,9 +16,12 @@ class PsycoPGClient(object):
     )
 
 
-  def _exec_query(self, query :str) -> typing.List[typing.Dict]:
-    r = self._connection.execute(query)
-    return r.fetchall()
+  def _exec_query(self, query :str) -> typing.List[typing.Dict]:  
+    try:
+      r = self._connection.execute(query)
+      return r.fetchall()
+    except Exception as err:
+      return []
 
 
   def _run_queries(self, queries :typing.List[str]) -> typing.List[typing.Dict]:

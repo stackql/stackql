@@ -106,6 +106,14 @@ PG Session Postgres Client Typed Queries
     ...    stdout=${CURDIR}/tmp/PG-Session-Postgres-Client-Typed-Queries.tmp
     [Teardown]    NONE
 
+PG Session Server Survives Defective Query
+    Should PG Client Session Inline Equal
+    ...    ${PSQL_MTLS_CONN_STR_UNIX}
+    ...    ${AWS_CLOUD_CONTROL_BUCKET_DETAIL_PROJECTION_DEFECTIVE_CMD_ARR}
+    ...    ${AWS_CLOUD_CONTROL_BUCKET_DETAIL_PROJECTION_DEFECTIVE_CMD_ARR_EXPECTED}
+    ...    stdout=${CURDIR}/tmp/PG-Session-Server-Survives-Defective-Query-and-Subsequently-Serves-Valid-Query.tmp
+    [Teardown]    NONE
+
 PG Session Postgres Client V2 Typed Queries
     Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test likely due to case sensitivity and incorrect XML property aliasing
     Should PG Client V2 Session Inline Equal
