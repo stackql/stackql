@@ -43,11 +43,7 @@ func prepareGolangResult(
 	)
 	logging.GetLogger().Infoln(fmt.Sprintf("select result = %v, error = %v", r, sqlErr))
 	if sqlErr != nil {
-		errWriter.Write(
-			[]byte(
-				fmt.Sprintf("sql SELECT error = %s\n", sqlErr.Error()),
-			),
-		)
+		return internaldto.NewErroneousExecutorOutput(fmt.Errorf("sql SELECT error: %s", sqlErr.Error()))
 	}
 	altKeys, rawRows := drmCfg.ExtractObjectFromSQLRows(r, nonControlColumns, stream)
 	var cNames []string

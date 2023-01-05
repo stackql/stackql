@@ -440,6 +440,7 @@ jobs:
 
     - shell: wsl-bash {0}
       name: Output from mocked functional tests
+      if: always()
       run: |
           cat ./output.xml
     
