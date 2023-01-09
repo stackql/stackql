@@ -127,7 +127,7 @@ func parseServiceAccountFile(ac *dto.AuthCtx) (serviceAccount, error) {
 
 func getJWTConfig(provider string, credentialsBytes []byte, scopes []string) (*jwt.Config, error) {
 	switch provider {
-	case "google":
+	case "google", "googleads", "googleanalytics", "googledevelopers", "googlemybusiness", "googleworkspace", "youtube":
 		return google.JWTConfigFromJSON(credentialsBytes, scopes...)
 	default:
 		return nil, fmt.Errorf("service account auth for provider = '%s' currently not supported", provider)
