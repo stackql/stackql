@@ -387,11 +387,19 @@ func (pgb *planGraphBuilder) handleRegistry(pbi planbuilderinput.PlanBuilderInpu
 		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			switch at := strings.ToLower(node.ActionType); at {
 			case "pull":
-				err := reg.PullAndPersistProviderArchive(node.ProviderId, node.ProviderVersion)
+				var err error
+				providerVersion := node.ProviderVersion
+				if providerVersion == "" {
+					providerVersion, err = reg.GetLatestPublishedVersion(node.ProviderId)
+				}
 				if err != nil {
 					return internaldto.NewErroneousExecutorOutput(err)
 				}
-				return util.PrepareResultSet(internaldto.NewPrepareResultSetPlusRawDTO(nil, nil, nil, nil, nil, &internaldto.BackendMessages{WorkingMessages: []string{fmt.Sprintf("%s provider, version '%s' successfully installed", node.ProviderId, node.ProviderVersion)}}, nil))
+				err = reg.PullAndPersistProviderArchive(node.ProviderId, providerVersion)
+				if err != nil {
+					return internaldto.NewErroneousExecutorOutput(err)
+				}
+				return util.PrepareResultSet(internaldto.NewPrepareResultSetPlusRawDTO(nil, nil, nil, nil, nil, &internaldto.BackendMessages{WorkingMessages: []string{fmt.Sprintf("%s provider, version '%s' successfully installed", node.ProviderId, providerVersion)}}, nil))
 			case "list":
 				var colz []string
 				var provz map[string]openapistackql.ProviderDescription
