@@ -607,6 +607,42 @@ Registry List Google Provider
     ...    ${REGISTRY_GOOGLE_PROVIDER_LIST} 
     ...    ${REGISTRY_GOOGLE_PROVIDER_LIST_EXPECTED}
 
+Registry Pull Google Provider Specific Version
+    Should Stackql Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_MOCKED_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    registry pull google v0.1.2 ; 
+    ...    successfully installed
+
+Registry Pull Google Provider Specific Version Prerelease
+    Should Stackql Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_MOCKED_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    registry pull google 'v0.1.1\-alpha01' ; 
+    ...    successfully installed
+
+Registry Pull Google Provider Implicit Latest Version
+    Should Stackql Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_MOCKED_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    registry pull google ;
+    ...    successfully installed
+
 
 Data Flow Sequential Join Paginated Select Github 
     Should Horrid Query StackQL Inline Equal

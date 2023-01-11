@@ -40,7 +40,8 @@
         "select * from aws_cc_bucket_unfiltered where data__Identifier = 'stackql-trial-bucket-01';",
         "create or replace view self_created as select id, name, url from github.repos.repos where org = 'stackql';",
         "drop view if exists self_created ; ",
-        "registry pull azure v23.01.00102 ; "
+        "registry pull azure v23.01.00102 ; ",
+        "registry pull azure ; "
       ],
       "default": "show providers;"
     },
