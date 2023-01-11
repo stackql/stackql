@@ -833,6 +833,34 @@ Parameterized View Select Star of Cloud Control Resource Returns Expected Result
     ...    ${VIEW_SELECT_STAR_AWS_CLOUD_CONTROL_BUCKET_DETAIL_EXPECTED}
     ...    ${CURDIR}/tmp/Parameterized-View-Select-Star-of-Cloud-Control-Resource-Returns-Expected-Result.tmp
 
+Projection of Resource Level View of Cloud Control Resource Returns Expected Result
+    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test likely due to case sensitivity and incorrect XML property aliasing
+    Should Horrid Query StackQL Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}    
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${AWS_CLOUD_CONTROL_BUCKET_VIEW_DETAIL_PROJECTION}
+    ...    ${AWS_CLOUD_CONTROL_BUCKET_VIEW_DETAIL_PROJECTION_EXPECTED}
+    ...    ${CURDIR}/tmp/Projection-of-Resource-Level-View-of-Cloud-Control-Resource-Returns-Expected-Result.tmp
+
+Star of Resource Level View of Cloud Control Resource Returns Expected Result
+    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test likely due to case sensitivity and incorrect XML property aliasing
+    Should Horrid Query StackQL Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}    
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${AWS_CLOUD_CONTROL_BUCKET_VIEW_DETAIL_STAR}
+    ...    ${AWS_CLOUD_CONTROL_BUCKET_VIEW_DETAIL_STAR_EXPECTED}
+    ...    ${CURDIR}/tmp/Star-of-Resource-Level-View-of-Cloud-Control-Resource-Returns-Expected-Result.tmp
+
 Weird ID WSL bug query
     # ID cannot be handled as integer on WSL
     Should Horrid Query StackQL Inline Equal

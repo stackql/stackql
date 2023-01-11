@@ -194,7 +194,7 @@ func (hc *standardHandlerContext) GetProvider(providerName string) (provider.IPr
 	}
 	prov, ok := hc.providers[providerName]
 	if !ok {
-		prov, err = provider.GetProvider(hc.runtimeContext, ds.Name, ds.Tag, hc.registry, hc.sqlEngine)
+		prov, err = provider.GetProvider(hc.runtimeContext, ds.Name, ds.Tag, hc.registry, hc.sqlDialect)
 		if err == nil {
 			hc.providers[providerName] = prov
 			return prov, err

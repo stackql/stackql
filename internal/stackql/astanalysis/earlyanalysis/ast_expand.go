@@ -8,6 +8,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/astindirect"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internaldto"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/primitivegenerator"
 	"github.com/stackql/stackql/internal/stackql/sqldialect"
@@ -643,7 +644,23 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 				return err
 			}
 		}
-		if viewDTO, isView := v.sqlDialect.GetViewByName(node.GetRawVal()); isView {
+		// OPTIMISTIC DOC PERSISTENCE AND VIEW DEFINITION
+		providerName := node.QualifierSecond.GetRawVal()
+		serviceName := node.Qualifier.GetRawVal()
+		resourceName := node.Name.GetRawVal()
+		prov, err := v.handlerCtx.GetProvider(providerName)
+		if err != nil {
+			logging.GetLogger().Debugf("optimistic doc error: %s", err.Error())
+		} else {
+			_, err = prov.GetServiceShard(serviceName, resourceName, v.handlerCtx.GetRuntimeContext())
+			if err != nil {
+
+				logging.GetLogger().Debugf("optimistic doc error: %s", err.Error())
+			}
+		}
+		// END OPTIMISTIC DOC PERSISTENCE AND VIEW DEFINITION
+		viewDTO, isView := v.sqlDialect.GetViewByName(node.GetRawVal())
+		if isView {
 			indirect, err := astindirect.NewViewIndirect(viewDTO)
 			if err != nil {
 				return nil

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
+	"github.com/stackql/stackql/internal/stackql/astindirect"
 	"github.com/stackql/stackql/internal/stackql/astvisit"
 	"github.com/stackql/stackql/internal/stackql/dataflow"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -442,6 +443,17 @@ func (pr *standardParameterRouter) route(tb sqlparser.TableExpr, handlerCtx hand
 		logging.GetLogger().Infof("%v", kv)
 	}
 	indirect, _ := pr.annotatedAST.GetIndirect(tb)
+	hrView, hrViewPresent := hr.GetHeirarchyIds().GetView()
+	if indirect == nil && hrViewPresent {
+		indirect, err = astindirect.NewViewIndirect(hrView)
+		if err != nil {
+			return nil, err
+		}
+		err = indirect.Parse()
+		if err != nil {
+			return nil, err
+		}
+	}
 	m := tablemetadata.NewExtendedTableMetadata(hr, taxonomy.GetTableNameFromStatement(tb, pr.astFormatter), taxonomy.GetAliasFromStatement(tb)).WithIndirect(indirect)
 
 	// store relationship from sqlparser table expression to
