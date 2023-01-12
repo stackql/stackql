@@ -628,7 +628,7 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			if indirect, isIndirect := anCtx.GetTableMeta().GetIndirect(); isIndirect {
 				//
 				alias := indirect.GetName()
-				templateString := fmt.Sprintf(` ( %%s ) AS %s `, alias)
+				templateString := fmt.Sprintf(` ( %%s ) AS "%s" `, alias)
 				v.rewrittenQuery = templateString
 				v.indirectContexts = append(v.indirectContexts, indirect.GetSelectContext())
 

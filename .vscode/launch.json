@@ -41,7 +41,8 @@
         "create or replace view self_created as select id, name, url from github.repos.repos where org = 'stackql';",
         "drop view if exists self_created ; ",
         "registry pull azure v23.01.00102 ; ",
-        "registry pull azure ; "
+        "registry pull azure ; ",
+        "select * from aws.cloud_control.s3_bucket_listing;"
       ],
       "default": "show providers;"
     },

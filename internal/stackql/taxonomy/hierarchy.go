@@ -166,6 +166,24 @@ func GetHeirarchyFromStatement(handlerCtx handler.HandlerContext, node sqlparser
 		return nil, err
 	}
 	retVal.SetResource(rsc)
+	if viewBodyDDL, ok := rsc.GetViewBodyDDLForSQLDialect(handlerCtx.GetSQLDialect().GetName()); ok {
+		viewName := hIds.GetStackQLTableName()
+		// TODO: mutex required or some other strategy
+		viewDTO, viewExists := handlerCtx.GetSQLDialect().GetViewByName(viewName)
+		if !viewExists {
+			err := handlerCtx.GetSQLDialect().CreateView(viewName, viewBodyDDL)
+			if err != nil {
+				return nil, err
+			}
+			viewDTO, isView := handlerCtx.GetSQLDialect().GetViewByName(hIds.GetTableName())
+			if isView {
+				hIds = hIds.WithView(viewDTO)
+			}
+			return retVal, nil
+		}
+		hIds = hIds.WithView(viewDTO)
+		return retVal, nil
+	}
 	var method *openapistackql.OperationStore
 	switch node.(type) {
 	case *sqlparser.Exec, *sqlparser.ExecSubquery:
@@ -197,23 +215,14 @@ func GetHeirarchyFromStatement(handlerCtx handler.HandlerContext, node sqlparser
 		} else {
 			meth, methStr, err = prov.GetMethodForAction(retVal.GetHeirarchyIds().GetServiceStr(), retVal.GetHeirarchyIds().GetResourceStr(), methodAction, parameters, handlerCtx.GetRuntimeContext())
 			if err != nil {
-				return nil, fmt.Errorf("Cannot find matching operation, possible causes include missing required parameters or an unsupported method for the resource, to find required parameters for supported methods run SHOW METHODS IN %s: %s", retVal.GetHeirarchyIds().GetTableName(), err.Error())
+				return nil, fmt.Errorf("cannot find matching operation, possible causes include missing required parameters or an unsupported method for the resource, to find required parameters for supported methods run SHOW METHODS IN %s: %s", retVal.GetHeirarchyIds().GetTableName(), err.Error())
 			}
 		}
 		for _, srv := range svcHdl.Servers {
 			for k := range srv.Variables {
-				logging.GetLogger().Debugf("server paramter = '%s'\n", k)
-				// parameters.DeleteByString(k)
+				logging.GetLogger().Debugf("server parameter = '%s'\n", k)
 			}
 		}
-		// for _, srv := range svcHdl.Servers {
-		// 	for k, _ := range srv.Variables {
-		// 		_, ok := remainingParams[k]
-		// 		if ok {
-		// 			delete(remainingParams, k)
-		// 		}
-		// 	}
-		// }
 		method = meth
 		retVal.SetMethodStr(methStr)
 	}

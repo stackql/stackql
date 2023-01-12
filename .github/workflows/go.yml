@@ -66,7 +66,7 @@ jobs:
            dir "C:\Users\${{ env.username }}\AppData\Local\Temp\chocolatey\"
 
     - name: Set up mingw
-      uses: stackql/setup-mingw@c8d00a8034a5c526ea76031fa985e53d2282183a
+      uses: egor-tensin/setup-mingw@v2.2.0
       id: gccsetup
       with:
         version: '8.1.0'

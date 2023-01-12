@@ -10,7 +10,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/methodselect"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
-	"github.com/stackql/stackql/internal/stackql/sqlengine"
+	"github.com/stackql/stackql/internal/stackql/sqldialect"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
 )
@@ -80,10 +80,10 @@ type IProvider interface {
 	ShowAuth(authCtx *dto.AuthCtx) (*openapistackql.AuthMetadata, error)
 }
 
-func GetProvider(runtimeCtx dto.RuntimeCtx, providerStr, providerVersion string, reg openapistackql.RegistryAPI, dbEngine sqlengine.SQLEngine) (IProvider, error) {
+func GetProvider(runtimeCtx dto.RuntimeCtx, providerStr, providerVersion string, reg openapistackql.RegistryAPI, sqlDialect sqldialect.SQLDialect) (IProvider, error) {
 	switch providerStr {
 	default:
-		return newGenericProvider(runtimeCtx, providerStr, providerVersion, reg, dbEngine)
+		return newGenericProvider(runtimeCtx, providerStr, providerVersion, reg, sqlDialect)
 	}
 }
 
@@ -96,7 +96,7 @@ func getUrl(prov string) (string, error) {
 	}
 }
 
-func newGenericProvider(rtCtx dto.RuntimeCtx, providerStr, versionStr string, reg openapistackql.RegistryAPI, dbEngine sqlengine.SQLEngine) (IProvider, error) {
+func newGenericProvider(rtCtx dto.RuntimeCtx, providerStr, versionStr string, reg openapistackql.RegistryAPI, sqlDialect sqldialect.SQLDialect) (IProvider, error) {
 	methSel, err := methodselect.NewMethodSelector(providerStr, versionStr)
 	if err != nil {
 		return nil, err
@@ -111,12 +111,13 @@ func newGenericProvider(rtCtx dto.RuntimeCtx, providerStr, versionStr string, re
 		providerStr,
 		rootUrl,
 		discovery.NewTTLDiscoveryStore(
-			dbEngine,
+			sqlDialect,
 			reg,
 			rtCtx,
 		),
 		&rtCtx,
 		reg,
+		sqlDialect,
 	)
 
 	p, err := da.GetProvider(rtCtx.ProviderStr)

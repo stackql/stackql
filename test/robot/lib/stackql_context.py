@@ -525,6 +525,8 @@ CREATE_AWS_VOLUME = """insert into aws.ec2.volumes(AvailabilityZone, Size, regio
 CREATE_AWS_CLOUD_CONTROL_LOG_GROUP = """insert into aws.cloud_control.resources(region, data__TypeName, data__DesiredState) select 'ap-southeast-1', 'AWS::Logs::LogGroup', string('{ "LogGroupName": "LogGroupResourceExampleThird", "RetentionInDays":90}');"""
 SELECT_AWS_CLOUD_CONTROL_VPCS_DESC = "select Identifier, Properties from aws.cloud_control.resources where region = 'ap-southeast-1' and data__TypeName = 'AWS::EC2::VPC' order by Identifier desc;"
 SELECT_AWS_CLOUD_CONTROL_BUCKET_PROJECTION = "SELECT JSON_EXTRACT(Properties, '$.Arn') as Arn FROM aws.cloud_control.resources WHERE region = 'ap-southeast-2' and data__TypeName = 'AWS::S3::Bucket' and data__Identifier = 'stackql-trial-bucket-01';"
+SELECT_AWS_CLOUD_CONTROL_BUCKET_VIEW_PROJECTION = "select Arn from aws.cloud_control.s3_bucket_listing where data__Identifier = 'stackql-trial-bucket-01' ;"
+SELECT_AWS_CLOUD_CONTROL_BUCKET_VIEW_STAR = "select * from aws.cloud_control.s3_bucket_listing where data__Identifier = 'stackql-trial-bucket-01' ;"
 SELECT_AWS_CLOUD_CONTROL_BUCKET_PROJECTION_DEFECTIVE = "SELECT JSON_EXTRACT(Arn, '$.Properties') as Arn FROM aws.cloud_control.resources WHERE region = 'ap-southeast-2' and data__TypeName = 'AWS::S3::Bucket' and data__Identifier = 'stackql-trial-bucket-01';"
 GET_AWS_CLOUD_CONTROL_VPCS_DESC = "select Identifier, Properties from aws.cloud_control.resources where region = 'ap-southeast-1' and data__TypeName = 'AWS::EC2::VPC' and data__Identifier = 'CloudControlExample';"
 GET_AWS_CLOUD_CONTROL_REQUEST_LOG_GROUP = """select TypeName, OperationStatus, StatusMessage, Identifier, RequestToken from aws.cloud_control.resource_requests where data__RequestToken = 'abc001' and region = 'ap-southeast-1';"""
@@ -615,6 +617,8 @@ SELECT_AWS_IAM_USERS_ASC_EXPECTED = get_output_from_local_file(os.path.join('tes
 SELECT_AWS_CLOUD_CONTROL_VPCS_DESC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-list-vpcs-desc.txt'))
 GET_AWS_CLOUD_CONTROL_VPCS_DESC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-get-vpcs-desc.txt'))
 SELECT_AWS_CLOUD_CONTROL_VPCS_DESC_JSON_EXPECTED = get_json_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-list-vpcs-desc.json'))
+SELECT_AWS_CLOUD_CONTROL_BUCKET_PROJECTION_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-bucket-detail-projection.txt'))
+SELECT_AWS_CLOUD_CONTROL_BUCKET_VIEW_STAR_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-bucket-detail-star.txt'))
 SELECT_AWS_CLOUD_CONTROL_BUCKET_PROJECTION_JSON_EXPECTED = get_json_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-bucket-detail-projection.json'))
 GET_AWS_CLOUD_CONTROL_VPCS_DESC_JSON_EXPECTED = get_json_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-get-vpcs-desc.json'))
 SELECT_AWS_CLOUD_CONTROL_OPERATIONS_DESC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-list-operations-desc.txt'))
@@ -757,6 +761,10 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'AWS_CLOUD_CONTROL_METHOD_SIGNATURE_CMD_ARR_EXPECTED':                    SELECT_AWS_CLOUD_CONTROL_VPCS_DESC_JSON_EXPECTED + GET_AWS_CLOUD_CONTROL_VPCS_DESC_JSON_EXPECTED,
     'AWS_CLOUD_CONTROL_BUCKET_DETAIL_PROJECTION_DEFECTIVE_CMD_ARR':           [ SELECT_AWS_CLOUD_CONTROL_BUCKET_PROJECTION_DEFECTIVE, SELECT_AWS_CLOUD_CONTROL_BUCKET_PROJECTION ],
     'AWS_CLOUD_CONTROL_BUCKET_DETAIL_PROJECTION_DEFECTIVE_CMD_ARR_EXPECTED':  SELECT_AWS_CLOUD_CONTROL_BUCKET_PROJECTION_JSON_EXPECTED,
+    'AWS_CLOUD_CONTROL_BUCKET_VIEW_DETAIL_PROJECTION':                        SELECT_AWS_CLOUD_CONTROL_BUCKET_VIEW_PROJECTION,
+    'AWS_CLOUD_CONTROL_BUCKET_VIEW_DETAIL_PROJECTION_EXPECTED':               SELECT_AWS_CLOUD_CONTROL_BUCKET_PROJECTION_EXPECTED,
+    'AWS_CLOUD_CONTROL_BUCKET_VIEW_DETAIL_STAR':                              SELECT_AWS_CLOUD_CONTROL_BUCKET_VIEW_STAR,
+    'AWS_CLOUD_CONTROL_BUCKET_VIEW_DETAIL_STAR_EXPECTED':                     SELECT_AWS_CLOUD_CONTROL_BUCKET_VIEW_STAR_EXPECTED,
     'AZURE_VM_SIZES_ENUMERATION':                                             _AZURE_VM_SIZES_ENUMERATION,
     'CREATE_AWS_VOLUME':                                                      CREATE_AWS_VOLUME,
     'CREATE_AWS_CLOUD_CONTROL_LOG_GROUP':                                     CREATE_AWS_CLOUD_CONTROL_LOG_GROUP,
