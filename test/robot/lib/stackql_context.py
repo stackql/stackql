@@ -629,6 +629,10 @@ SELECT_AWS_S3_BUCKETS_EXPECTED = get_output_from_local_file(os.path.join('test',
 SELECT_AWS_S3_BUCKET_LOCATIONS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 's3', 'select-bucket-locations.txt'))
 VIEW_SELECT_AWS_CLOUD_CONTROL_BUCKET_DETAIL_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-bucket-detail.txt'))
 VIEW_SELECT_STAR_AWS_CLOUD_CONTROL_BUCKET_DETAIL_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-star-bucket-detail.txt'))
+AWS_CC_VIEW_SELECT_PROJECTION_BUCKET_FILTERED_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-projection-bucket-view-response-filtered-only.txt'))
+AWS_CC_VIEW_SELECT_STAR_BUCKET_FILTERED_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-star-bucket-view-response-filtered-only.txt'))
+AWS_CC_VIEW_SELECT_PROJECTION_BUCKET_COMPLEX_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-projection-bucket-view-parameter-pushed-and-response-filtered.txt'))
+AWS_CC_VIEW_SELECT_STAR_BUCKET_COMPLEX_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-star-bucket-view-parameter-pushed-and-response-filtered.txt'))
 
 SELECT_GITHUB_REPOS_PAGES_SINGLE_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-repos-pages.txt'))
 SELECT_GITHUB_REPOS_IDS_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-repos-ids-asc.txt'))
@@ -757,6 +761,10 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'STACKQL_EXE':                                    STACKQL_EXE,
     'SUMOLOGIC_SECRET_STR':                           SUMOLOGIC_SECRET_STR,
     ## queries and expectations
+    'AWS_CC_VIEW_SELECT_PROJECTION_BUCKET_COMPLEX_EXPECTED':                  AWS_CC_VIEW_SELECT_PROJECTION_BUCKET_COMPLEX_EXPECTED,
+    'AWS_CC_VIEW_SELECT_PROJECTION_BUCKET_FILTERED_EXPECTED':                 AWS_CC_VIEW_SELECT_PROJECTION_BUCKET_FILTERED_EXPECTED,
+    'AWS_CC_VIEW_SELECT_STAR_BUCKET_COMPLEX_EXPECTED':                        AWS_CC_VIEW_SELECT_STAR_BUCKET_COMPLEX_EXPECTED,
+    'AWS_CC_VIEW_SELECT_STAR_BUCKET_FILTERED_EXPECTED':                       AWS_CC_VIEW_SELECT_STAR_BUCKET_FILTERED_EXPECTED,
     'AWS_CLOUD_CONTROL_METHOD_SIGNATURE_CMD_ARR':                             [ SELECT_AWS_CLOUD_CONTROL_VPCS_DESC, GET_AWS_CLOUD_CONTROL_VPCS_DESC ],
     'AWS_CLOUD_CONTROL_METHOD_SIGNATURE_CMD_ARR_EXPECTED':                    SELECT_AWS_CLOUD_CONTROL_VPCS_DESC_JSON_EXPECTED + GET_AWS_CLOUD_CONTROL_VPCS_DESC_JSON_EXPECTED,
     'AWS_CLOUD_CONTROL_BUCKET_DETAIL_PROJECTION_DEFECTIVE_CMD_ARR':           [ SELECT_AWS_CLOUD_CONTROL_BUCKET_PROJECTION_DEFECTIVE, SELECT_AWS_CLOUD_CONTROL_BUCKET_PROJECTION ],

@@ -75,6 +75,7 @@ type PrimitiveComposer interface {
 	SetRoot(root primitivegraph.PrimitiveNode)
 	SetSelectPreparedStatementCtx(ctx drm.PreparedStatementCtx)
 	SetSymbol(k interface{}, v symtab.SymTabEntry) error
+	SetSymTab(symtab.SymTab)
 	SetTable(node sqlparser.SQLNode, table tablemetadata.ExtendedTableMetadata)
 	SetTableFilter(tableFilter func(openapistackql.ITable) (openapistackql.ITable, error))
 	SetTxnCtrlCtrs(tc internaldto.TxnControlCounters)
@@ -157,6 +158,10 @@ func (pb *standardPrimitiveComposer) SetIsIndirect(isIndirect bool) {
 
 func (pb *standardPrimitiveComposer) GetAssignedParameters() (internaldto.TableParameterCollection, bool) {
 	return pb.paramCollection, pb.paramCollection != nil
+}
+
+func (pb *standardPrimitiveComposer) SetSymTab(symTab symtab.SymTab) {
+	pb.symTab = symTab
 }
 
 func (pb *standardPrimitiveComposer) GetNonControlColumns() []drm.ColumnMetadata {

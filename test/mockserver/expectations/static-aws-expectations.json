@@ -275,6 +275,45 @@
       "method": "POST",
       "path": "/",
       "headers": {
+        "Authorization": ["^.*SignedHeaders.*content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target": [ "CloudApiService.ListResources" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "TypeName":"AWS::S3::Bucket"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "ResourceDescriptions": [
+          {
+            "Identifier": "stackql-registry-artifacts",
+            "Properties": "{\"BucketName\":\"stackql-registry-artifacts\"}"
+          },
+          {
+            "Identifier": "stackql-trial-bucket-01",
+            "Properties": "{\"BucketName\":\"stackql-trial-bucket-01\"}"
+          },
+          {
+            "Identifier": "stackql-trial-bucket-02",
+            "Properties": "{\"BucketName\":\"stackql-trial-bucket-02\"}"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
         "Authorization": ["^.*SignedHeaders=accept;content-type;host;x-amz-date;x-amz-target.*$" ],
         "X-Amz-Target": [ "CloudApiService.ListResourceRequests" ]
       },

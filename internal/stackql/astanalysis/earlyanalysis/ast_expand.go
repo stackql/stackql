@@ -12,6 +12,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/primitivegenerator"
 	"github.com/stackql/stackql/internal/stackql/sqldialect"
+	"github.com/stackql/stackql/internal/stackql/symtab"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 
 	"vitess.io/vitess/go/sqltypes"
@@ -683,6 +684,19 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 			if err != nil {
 				return err
 			}
+			selCtx := indirectPrimitiveGenerator.GetPrimitiveComposer().GetIndirectSelectPreparedStatementCtx()
+			underlyingSymTab := indirectPrimitiveGenerator.GetPrimitiveComposer().GetSymTab()
+			colz := selCtx.GetNonControlColumns()
+			for _, col := range colz {
+				colId := col.GetIdentifier()
+				colEntry := symtab.NewSymTabEntry(
+					indirectPrimitiveGenerator.GetPrimitiveComposer().GetDRMConfig().GetRelationalType(col.GetType()),
+					"",
+					"",
+				)
+				underlyingSymTab.SetSymbol(colId, colEntry)
+			}
+			indirect.SetUnderlyingSymTab(underlyingSymTab)
 			indirect.SetSelectContext(indirectPrimitiveGenerator.GetPrimitiveComposer().GetIndirectSelectPreparedStatementCtx())
 			assignedParams, ok := indirectPrimitiveGenerator.GetPrimitiveComposer().GetAssignedParameters()
 			if ok {
