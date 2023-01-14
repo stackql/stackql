@@ -42,7 +42,8 @@
         "drop view if exists self_created ; ",
         "registry pull azure v23.01.00102 ; ",
         "registry pull azure ; ",
-        "select * from aws.cloud_control.s3_bucket_listing where region = 'ap-southeast-2' and RegionalDomainName = 'stackql-trial-bucket-01.s3.ap-southeast-1.amazonaws.com';"
+        "select * from aws.pseudo_s3.s3_bucket_listing where region = 'ap-southeast-2' and RegionalDomainName = 'stackql-trial-bucket-01.s3.ap-southeast-1.amazonaws.com';",
+        "describe aws.pseudo_s3.s3_bucket_listing;"
       ],
       "default": "show providers;"
     },
