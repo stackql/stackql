@@ -52,6 +52,9 @@ func newIndirectExpandAstVisitor(
 	whereParams parserutil.ParameterMap,
 	tcc internaldto.TxnControlCounters,
 ) (AstExpandVisitor, error) {
+	if whereParams == nil {
+		whereParams = parserutil.NewParameterMap()
+	}
 	rv := &indirectExpandAstVisitor{
 		namespaceCollection: namespaceCollection,
 		primitiveGenerator:  primitiveGenerator,
@@ -539,7 +542,10 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 		buf.WriteString("otherread")
 
 	case *sqlparser.DescribeTable:
-		buf.WriteString("describetable")
+		err := node.Table.Accept(v)
+		if err != nil {
+			return err
+		}
 
 	case *sqlparser.OtherAdmin:
 		buf.WriteString("otheradmin")

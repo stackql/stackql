@@ -8,6 +8,7 @@ import (
 
 	"github.com/stackql/go-openapistackql/openapistackql"
 	"github.com/stackql/stackql/internal/stackql/constants"
+	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
@@ -309,7 +310,7 @@ func prepareErroneousResultSet(rowMap map[string]map[string]interface{}, columnO
 	)
 }
 
-func NewDescribeInstructionExecutor(handlerCtx handler.HandlerContext, tbl tablemetadata.ExtendedTableMetadata, extended bool, full bool) internaldto.ExecutorOutput {
+func NewDescribeTableInstructionExecutor(handlerCtx handler.HandlerContext, tbl tablemetadata.ExtendedTableMetadata, extended bool, full bool) internaldto.ExecutorOutput {
 	schema, err := tbl.GetSelectableObjectSchema()
 	if err != nil {
 		return internaldto.NewErroneousExecutorOutput(err)
@@ -324,6 +325,34 @@ func NewDescribeInstructionExecutor(handlerCtx handler.HandlerContext, tbl table
 		}
 	}
 	return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, util.DescribeRowSort, err, nil))
+}
+
+func NewDescribeViewInstructionExecutor(handlerCtx handler.HandlerContext, tbl tablemetadata.ExtendedTableMetadata, nonControlColumns []drm.ColumnMetadata, extended bool, full bool) internaldto.ExecutorOutput {
+	columnOrder := openapistackql.GetDescribeHeader(extended)
+	descriptionMap := columnsToFlatDescriptionMap(nonControlColumns, extended)
+	keys := make(map[string]map[string]interface{})
+	for k, v := range descriptionMap {
+		switch val := v.(type) {
+		case map[string]interface{}:
+			keys[k] = val
+		}
+	}
+	return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, util.DescribeRowSort, nil, nil))
+}
+
+func columnsToFlatDescriptionMap(colz []drm.ColumnMetadata, extended bool) map[string]interface{} {
+	retVal := make(map[string]interface{})
+	for _, col := range colz {
+		colName := col.GetIdentifier()
+		colMap := make(map[string]interface{})
+		colMap["name"] = colName
+		colMap["type"] = col.GetType()
+		if extended {
+			colMap["description"] = ""
+		}
+		retVal[colName] = colMap
+	}
+	return retVal
 }
 
 func NewLocalSelectExecutor(handlerCtx handler.HandlerContext, node *sqlparser.Select, rowSort func(map[string]map[string]interface{}) []string, colz []map[string]interface{}) (primitive.IPrimitive, error) {

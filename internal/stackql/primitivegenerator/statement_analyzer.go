@@ -1073,6 +1073,10 @@ func (p *standardPrimitiveGenerator) analyzeDescribe(pbi planbuilderinput.PlanBu
 	if err != nil {
 		return err
 	}
+	_, isView := tbl.GetView()
+	if isView {
+		return nil
+	}
 	prov, err := tbl.GetProvider()
 	if err != nil {
 		return err

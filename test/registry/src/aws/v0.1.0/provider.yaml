@@ -29,6 +29,15 @@ providerServices:
       $ref: aws/v0.1.0/services/iam.yaml
     title: IAM
     version: v0.1.0
+  pseudo_s3:
+    description: pseudo_s3
+    id: pseudo_s3:v0.1.0
+    name: pseudo_s3
+    preferred: true
+    service:
+      $ref: aws/v0.1.0/services/pseudo_s3.yaml
+    title: Pseudo S3 API
+    version: v0.1.0
   s3:
     description: s3
     id: s3:v0.1.0

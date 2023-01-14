@@ -43,6 +43,7 @@ type PrimitiveComposer interface {
 	GetProvider() provider.IProvider
 	GetRoot() primitivegraph.PrimitiveNode
 	GetSelectPreparedStatementCtx() drm.PreparedStatementCtx
+	GetIndirectDescribeSelectCtx() (drm.PreparedStatementCtx, bool)
 	GetIndirectSelectPreparedStatementCtx() drm.PreparedStatementCtx
 	GetSQLEngine() sqlengine.SQLEngine
 	GetSQLDialect() sqldialect.SQLDialect
@@ -262,6 +263,14 @@ func (pb *standardPrimitiveComposer) AddChild(val PrimitiveComposer) {
 
 func (pb *standardPrimitiveComposer) AddIndirect(val PrimitiveComposer) {
 	pb.indirects = append(pb.indirects, val)
+}
+
+func (pb *standardPrimitiveComposer) GetIndirectDescribeSelectCtx() (drm.PreparedStatementCtx, bool) {
+	if len(pb.indirects) != 1 || pb.indirects[0] == nil {
+		return nil, false
+	}
+	rv := pb.indirects[0].GetIndirectSelectPreparedStatementCtx()
+	return rv, rv != nil
 }
 
 func (pb *standardPrimitiveComposer) SetDataflowDependent(val PrimitiveComposer) {

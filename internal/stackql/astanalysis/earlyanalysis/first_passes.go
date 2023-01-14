@@ -94,7 +94,7 @@ func (sp *standardInitialPasses) initialPasses(statement sqlparser.Statement, ha
 		return err
 	}
 
-	// Before analysing AST, see if we can pass stright to SQL backend
+	// Before analysing AST, see if we can pass straight to SQL backend
 	opType, ok := handlerCtx.GetDBMSInternalRouter().CanRoute(ast)
 	if ok {
 		sp.instructionType = InternallyRoutableInstruction

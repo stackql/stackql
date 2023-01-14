@@ -223,10 +223,28 @@ func (pgb *planGraphBuilder) handleDescribe(pbi planbuilderinput.PlanBuilderInpu
 	}
 	var extended bool = strings.TrimSpace(strings.ToUpper(node.Extended)) == "EXTENDED"
 	var full bool = strings.TrimSpace(strings.ToUpper(node.Full)) == "FULL"
+	_, isView := md.GetHeirarchyObjects().GetHeirarchyIds().GetView()
+	if isView {
+		stmtCtx, ok := primitiveGenerator.GetPrimitiveComposer().GetIndirectDescribeSelectCtx()
+		if !ok || stmtCtx == nil {
+			return fmt.Errorf("cannot describe view without context")
+		}
+		nonControlColummns := stmtCtx.GetNonControlColumns()
+		if len(nonControlColummns) < 1 {
+			return fmt.Errorf("cannot describe view lacking columns")
+		}
+		pr := primitive.NewMetaDataPrimitive(
+			prov,
+			func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+				return primitivebuilder.NewDescribeViewInstructionExecutor(handlerCtx, md, nonControlColummns, extended, full)
+			})
+		pgb.planGraph.CreatePrimitiveNode(pr)
+		return nil
+	}
 	pr := primitive.NewMetaDataPrimitive(
 		prov,
 		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
-			return primitivebuilder.NewDescribeInstructionExecutor(handlerCtx, md, extended, full)
+			return primitivebuilder.NewDescribeTableInstructionExecutor(handlerCtx, md, extended, full)
 		})
 	pgb.planGraph.CreatePrimitiveNode(pr)
 	return nil
