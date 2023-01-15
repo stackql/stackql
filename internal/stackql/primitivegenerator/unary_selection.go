@@ -6,7 +6,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/astvisit"
 	"github.com/stackql/stackql/internal/stackql/docparser"
 	"github.com/stackql/stackql/internal/stackql/handler"
-	"github.com/stackql/stackql/internal/stackql/internaldto"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/planbuilderinput"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
@@ -45,7 +45,7 @@ func (p *standardPrimitiveGenerator) assembleUnarySelectionBuilder(
 		return err
 	}
 
-	_, err = docparser.OpenapiStackQLTabulationsPersistor(method, []util.AnnotatedTabulation{annotatedInsertTabulation}, p.PrimitiveComposer.GetSQLEngine(), prov.Name, handlerCtx.GetNamespaceCollection(), handlerCtx.GetControlAttributes(), handlerCtx.GetSQLDialect())
+	_, err = docparser.OpenapiStackQLTabulationsPersistor(method, []util.AnnotatedTabulation{annotatedInsertTabulation}, p.PrimitiveComposer.GetSQLEngine(), prov.Name, handlerCtx.GetNamespaceCollection(), handlerCtx.GetControlAttributes(), handlerCtx.GetSQLSystem())
 	if err != nil {
 		return err
 	}
@@ -65,12 +65,12 @@ func (p *standardPrimitiveGenerator) assembleUnarySelectionBuilder(
 		}
 		selectTabulation.PushBackColumn(openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, col.Expr, foundSchema, col.Val))
 	}
-	selectSuffix := astvisit.GenerateModifiedSelectSuffix(pbi.GetAnnotatedAST(), node, handlerCtx.GetSQLDialect(), handlerCtx.GetASTFormatter(), handlerCtx.GetNamespaceCollection())
+	selectSuffix := astvisit.GenerateModifiedSelectSuffix(pbi.GetAnnotatedAST(), node, handlerCtx.GetSQLSystem(), handlerCtx.GetASTFormatter(), handlerCtx.GetNamespaceCollection())
 	selPsc, err := p.PrimitiveComposer.GetDRMConfig().GenerateSelectDML(
 		util.NewAnnotatedTabulation(selectTabulation, hIds, inputTableName, tbl.GetAlias()),
 		insPsc.GetGCCtrlCtrs(),
 		selectSuffix,
-		astvisit.GenerateModifiedWhereClause(pbi.GetAnnotatedAST(), rewrittenWhere, handlerCtx.GetSQLDialect(), handlerCtx.GetASTFormatter(), handlerCtx.GetNamespaceCollection()),
+		astvisit.GenerateModifiedWhereClause(pbi.GetAnnotatedAST(), rewrittenWhere, handlerCtx.GetSQLSystem(), handlerCtx.GetASTFormatter(), handlerCtx.GetNamespaceCollection()),
 	)
 	if err != nil {
 		return err
@@ -126,7 +126,7 @@ func (p *standardPrimitiveGenerator) analyzeUnarySelection(
 	insertTabulation := itemObjS.Tabulate(false)
 
 	hIds := internaldto.NewHeirarchyIdentifiers(provStr, svcStr, itemObjS.GetName(), "")
-	viewDTO, isView := handlerCtx.GetSQLDialect().GetViewByName(hIds.GetTableName())
+	viewDTO, isView := handlerCtx.GetSQLSystem().GetViewByName(hIds.GetTableName())
 	if isView {
 		hIds = hIds.WithView(viewDTO)
 	}

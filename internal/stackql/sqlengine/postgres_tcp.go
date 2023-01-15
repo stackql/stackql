@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"sync"
-	"time"
 
+	"github.com/stackql/stackql/internal/stackql/db_util"
 	"github.com/stackql/stackql/internal/stackql/dto"
-	"github.com/stackql/stackql/internal/stackql/internaldto"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
 	"github.com/stackql/stackql/internal/stackql/util"
@@ -37,39 +37,19 @@ func (se *postgresTcpEngine) GetDB() (*sql.DB, error) {
 	return se.db, nil
 }
 
+func (se *postgresTcpEngine) GetTx() (*sql.Tx, error) {
+	return se.db.Begin()
+}
+
 func newPostgresTcpEngine(cfg dto.SQLBackendCfg, controlAttributes sqlcontrol.ControlAttributes) (*postgresTcpEngine, error) {
-	dsn := cfg.DSN
+	dsn := cfg.GetDSN()
 	if dsn == "" {
-		return nil, fmt.Errorf("cannot init postgres TCP connection with empty connection string")
+		return nil, fmt.Errorf("cannot init postgres from empty dsn")
 	}
-	db, err := sql.Open("pgx", dsn)
-	retryCount := 0
-	for {
-		if retryCount >= cfg.InitMaxRetries || err == nil {
-			break
-		}
-		time.Sleep(time.Duration(cfg.InitRetryInitialDelay) * time.Second)
-		db, err = sql.Open("pgx", dsn)
-		retryCount++
-	}
+	db, err := db_util.GetDB("pgx", "postgres", cfg)
 	if err != nil {
-		return nil, fmt.Errorf("postgres db object setup error = '%s'", err.Error())
+		return nil, err
 	}
-	logging.GetLogger().Debugln(fmt.Sprintf("opened postgres TCP db with connection string = '%s' and err  = '%v'", dsn, err))
-	pingErr := db.Ping()
-	retryCount = 0
-	for {
-		if retryCount >= cfg.InitMaxRetries || pingErr == nil {
-			break
-		}
-		time.Sleep(time.Duration(cfg.InitRetryInitialDelay) * time.Second)
-		pingErr = db.Ping()
-		retryCount++
-	}
-	if pingErr != nil {
-		return nil, fmt.Errorf("postgres connection setup ping error = '%s'", pingErr.Error())
-	}
-	logging.GetLogger().Debugln(fmt.Sprintf("opened and pinged postgres TCP db with connection string = '%s' and err  = '%v'", dsn, err))
 	db.SetConnMaxLifetime(-1)
 	eng := &postgresTcpEngine{
 		db:                db,

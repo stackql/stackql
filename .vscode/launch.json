@@ -43,7 +43,8 @@
         "registry pull azure v23.01.00102 ; ",
         "registry pull azure ; ",
         "select * from aws.pseudo_s3.s3_bucket_listing where region = 'ap-southeast-2' and RegionalDomainName = 'stackql-trial-bucket-01.s3.ap-southeast-1.amazonaws.com';",
-        "describe aws.pseudo_s3.s3_bucket_listing;"
+        "describe aws.pseudo_s3.s3_bucket_listing;",
+        "select role_name from external_postgres_information_schema.information_schema.applicable_roles where role_name = 'pg_database_owner';"
       ],
       "default": "show providers;"
     },
@@ -74,7 +75,8 @@
       "options": [
         "{ \"azure\": { \"type\": \"api_key\", \"valuePrefix\": \"Bearer \", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/azure-key.txt\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" }, \"github\": { \"type\": \"basic\", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/github-key.txt\" }, \"aws\": { \"type\": \"aws_signing_v4\", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/aws-secret-key.txt\", \"keyID\": \"AKIA376P4FQSS2ONB2NS\" }, \"netlify\": { \"type\": \"api_key\", \"valuePrefix\": \"Bearer \", \"credentialsfilepath\": \"${workspaceFolder}/keys/netlify-token.txt\"  }, \"k8s\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/k8s-token.txt\", \"type\": \"api_key\", \"valuePrefix\": \"Bearer \" }, \"sumologic\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/sumologic-token.txt\", \"type\": \"basic\" } }",
         "{ \"azure\": { \"type\": \"azure_default\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" }, \"github\": { \"type\": \"basic\", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/github-key.txt\" }, \"aws\": { \"type\": \"aws_signing_v4\", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/aws-secret-key.txt\", \"keyID\": \"AKIA376P4FQSS2ONB2NS\" }, \"netlify\": { \"type\": \"api_key\", \"valuePrefix\": \"Bearer \", \"credentialsfilepath\": \"${workspaceFolder}/keys/netlify-token.txt\"  }, \"k8s\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/k8s-token.txt\", \"type\": \"api_key\", \"valuePrefix\": \"Bearer \" }, \"sumologic\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/sumologic-token.txt\", \"type\": \"basic\" } }",
-        "{ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/test/assets/credentials/dummy/google/functional-test-dummy-sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/test/assets/credentials/dummy/okta/api-key.txt\", \"type\": \"api_key\", \"valuePrefix\": \"SSWS \" }, \"github\": { \"type\": \"basic\", \"credentialsfilepath\": \"${workspaceFolder}/test/assets/credentials/dummy/okta/api-key.txt\" }, \"aws\": { \"type\": \"aws_signing_v4\", \"credentialsfilepath\": \"${workspaceFolder}/test/assets/credentials/dummy/aws/functional-test-dummy-aws-key.txt\", \"keyID\": \"AKIA376P4FQSS2ONB2NS\" }, \"netlify\": { \"type\": \"api_key\", \"valuePrefix\": \"Bearer \", \"credentialsfilepath\": \"${workspaceFolder}/test/assets/credentials/dummy/netlify/netlify-token.txt\"  }, \"k8s\": { \"credentialsfilepath\": \"${workspaceFolder}/test/assets/credentials/dummy/k8s/k8s-token.txt\", \"type\": \"api_key\", \"valuePrefix\": \"Bearer \" }, \"sumologic\": { \"credentialsfilepath\": \"${workspaceFolder}/test/assets/credentials/dummy/sumologic/sumologic-token.txt\", \"type\": \"basic\" } }"
+        "{ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/test/assets/credentials/dummy/google/functional-test-dummy-sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/test/assets/credentials/dummy/okta/api-key.txt\", \"type\": \"api_key\", \"valuePrefix\": \"SSWS \" }, \"github\": { \"type\": \"basic\", \"credentialsfilepath\": \"${workspaceFolder}/test/assets/credentials/dummy/okta/api-key.txt\" }, \"aws\": { \"type\": \"aws_signing_v4\", \"credentialsfilepath\": \"${workspaceFolder}/test/assets/credentials/dummy/aws/functional-test-dummy-aws-key.txt\", \"keyID\": \"AKIA376P4FQSS2ONB2NS\" }, \"netlify\": { \"type\": \"api_key\", \"valuePrefix\": \"Bearer \", \"credentialsfilepath\": \"${workspaceFolder}/test/assets/credentials/dummy/netlify/netlify-token.txt\"  }, \"k8s\": { \"credentialsfilepath\": \"${workspaceFolder}/test/assets/credentials/dummy/k8s/k8s-token.txt\", \"type\": \"api_key\", \"valuePrefix\": \"Bearer \" }, \"sumologic\": { \"credentialsfilepath\": \"${workspaceFolder}/test/assets/credentials/dummy/sumologic/sumologic-token.txt\", \"type\": \"basic\" } }",
+        "{ \"external_postgres_information_schema\": { \"type\": \"sql_data_source::postgres\", \"sqlDataSource\": { \"dsn\": \"postgres://stackql:stackql@127.0.0.1:8432\" } }, \"azure\": { \"type\": \"azure_default\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/okta-token.txt\", \"type\": \"api_key\" }, \"github\": { \"type\": \"basic\", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/github-key.txt\" }, \"aws\": { \"type\": \"aws_signing_v4\", \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/aws-secret-key.txt\", \"keyID\": \"AKIA376P4FQSS2ONB2NS\" }, \"netlify\": { \"type\": \"api_key\", \"valuePrefix\": \"Bearer \", \"credentialsfilepath\": \"${workspaceFolder}/keys/netlify-token.txt\"  }, \"k8s\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/k8s-token.txt\", \"type\": \"api_key\", \"valuePrefix\": \"Bearer \" }, \"sumologic\": { \"credentialsfilepath\": \"${workspaceFolder}/keys/integration/sumologic-token.txt\", \"type\": \"basic\" } }",
       ]
     },
     {
@@ -117,14 +119,15 @@
     {
       "type": "pickString",
       "id": "sqlBackendString",
-      "description": "GC Input arg String",
+      "description": "SQL backend Input arg String",
       "default": "{}",
       "options": [
         "{}",
         "{ \"dbEngine\": \"postgres_tcp\", \"sqlDialect\": \"postgres\", \"dsn\": \"postgres://stackql:stackql@127.0.0.1:5432/stackql\" }",
         "{ \"dbEngine\": \"postgres_tcp\", \"sqlDialect\": \"postgres\", \"dsn\": \"postgres://stackql:stackql@127.0.0.1:7432/stackql\" }",
         "{ \"dbEngine\": \"postgres_tcp\", \"sqlDialect\": \"postgres\", \"dsn\": \"postgres://stackql:stackql@127.0.0.1:7432/stackql\", \"schemata\": { \"tableSchema\": \"stackql_raw\", \"intelViewSchema\": \"stackql_intel\", \"opsViewSchema\": \"stackql_ops\" } }",
-        "{ \"dbInitFilepath\": \"${workspaceFolder}/test/db/postgres/cache_setup.sql\", \"dbEngine\": \"postgres_tcp\", \"sqlDialect\": \"postgres\", \"dsn\": \"postgres://stackql:stackql@127.0.0.1:7432/stackql\", \"schemata\": { \"tableSchema\": \"stackql_raw\", \"intelViewSchema\": \"stackql_intel\", \"opsViewSchema\": \"stackql_ops\" } }"
+        "{ \"dbInitFilepath\": \"${workspaceFolder}/test/db/postgres/cache_setup.sql\", \"dbEngine\": \"postgres_tcp\", \"sqlDialect\": \"postgres\", \"dsn\": \"postgres://stackql:stackql@127.0.0.1:7432/stackql\", \"schemata\": { \"tableSchema\": \"stackql_raw\", \"intelViewSchema\": \"stackql_intel\", \"opsViewSchema\": \"stackql_ops\" } }",
+        "{ \"dsn\": \"file:${workspaceFolder}/build/db.sqlite\"}"
       ]
     },
     {

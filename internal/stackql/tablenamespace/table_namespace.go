@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/stackql/stackql/internal/stackql/internaldto"
-	"github.com/stackql/stackql/internal/stackql/sqldialect"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
+	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/templatenamespace"
 )
@@ -20,7 +20,7 @@ type TableNamespaceConfigurator interface {
 	Match(string, string, string, string) (internaldto.TxnControlCounters, bool)
 	Read(string, string, string, []string) (*sql.Rows, error)
 	RenderTemplate(string) (string, error)
-	WithSQLDialect(sqlDialect sqldialect.SQLDialect) (TableNamespaceConfigurator, error)
+	WithSQLSystem(sqlSystem sql_system.SQLSystem) (TableNamespaceConfigurator, error)
 }
 
 var (
@@ -28,7 +28,7 @@ var (
 )
 
 type regexTableNamespaceConfigurator struct {
-	sqlDialect                    sqldialect.SQLDialect
+	sqlSystem                     sql_system.SQLSystem
 	sqlEngine                     sqlengine.SQLEngine
 	templateNamespaceConfigurator templatenamespace.TemplateNamespaceConfigurator
 	likeString                    string
@@ -60,7 +60,7 @@ func (stc *regexTableNamespaceConfigurator) Read(tableString string, requestEnco
 	if err != nil {
 		return nil, fmt.Errorf("could not infer actual table name for tableString = '%s'", tableString)
 	}
-	isPresent := stc.sqlDialect.IsTablePresent(actualTableName, requestEncoding, requestEncodingColName)
+	isPresent := stc.sqlSystem.IsTablePresent(actualTableName, requestEncoding, requestEncodingColName)
 	if !isPresent {
 		return nil, fmt.Errorf("absent table name = '%s'", actualTableName)
 	}
@@ -69,7 +69,7 @@ func (stc *regexTableNamespaceConfigurator) Read(tableString string, requestEnco
 		quotedNonControlColNames = append(quotedNonControlColNames, fmt.Sprintf(`"%s"`, c))
 	}
 	colzString := strings.Join(quotedNonControlColNames, ", ")
-	return stc.sqlDialect.QueryNamespaced(colzString, actualTableName, requestEncodingColName, requestEncoding)
+	return stc.sqlSystem.QueryNamespaced(colzString, actualTableName, requestEncodingColName, requestEncoding)
 }
 
 func (stc *regexTableNamespaceConfigurator) Match(tableString string, requestEncoding string, lastModifiedColName string, requestEncodingColName string) (internaldto.TxnControlCounters, bool) {
@@ -81,11 +81,11 @@ func (stc *regexTableNamespaceConfigurator) Match(tableString string, requestEnc
 	if err != nil {
 		return nil, false
 	}
-	isPresent := stc.sqlDialect.IsTablePresent(actualTableName, requestEncoding, requestEncodingColName)
+	isPresent := stc.sqlSystem.IsTablePresent(actualTableName, requestEncoding, requestEncodingColName)
 	if !isPresent {
 		return nil, false
 	}
-	oldestUpdate, tcc := stc.sqlDialect.TableOldestUpdateUTC(actualTableName, requestEncoding, lastModifiedColName, requestEncodingColName)
+	oldestUpdate, tcc := stc.sqlSystem.TableOldestUpdateUTC(actualTableName, requestEncoding, lastModifiedColName, requestEncodingColName)
 	diff := time.Since(oldestUpdate)
 	ds := diff.Seconds()
 	if stc.ttl > -1 && int(ds) > stc.ttl {
@@ -102,7 +102,7 @@ func (stc *regexTableNamespaceConfigurator) GetObjectName(inputString string) st
 	return stc.templateNamespaceConfigurator.GetObjectName(inputString)
 }
 
-func (stc *regexTableNamespaceConfigurator) WithSQLDialect(sqlDialect sqldialect.SQLDialect) (TableNamespaceConfigurator, error) {
-	stc.sqlDialect = sqlDialect
+func (stc *regexTableNamespaceConfigurator) WithSQLSystem(sqlSystem sql_system.SQLSystem) (TableNamespaceConfigurator, error) {
+	stc.sqlSystem = sqlSystem
 	return stc, nil
 }

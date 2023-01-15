@@ -9,7 +9,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/docparser"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	google_sdk "github.com/stackql/stackql/internal/stackql/google_sdk"
-	"github.com/stackql/stackql/internal/stackql/internaldto"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/methodselect"
 	"github.com/stackql/stackql/internal/stackql/netutils"
@@ -56,6 +56,10 @@ func (gp *GenericProvider) GetVersion() string {
 
 func (gp *GenericProvider) GetServiceShard(serviceKey string, resourceKey string, runtimeCtx dto.RuntimeCtx) (*openapistackql.Service, error) {
 	return gp.discoveryAdapter.GetServiceShard(gp.provider, serviceKey, resourceKey)
+}
+
+func (gp *GenericProvider) PersistStaticExternalSQLDataSource(runtimeCtx dto.RuntimeCtx) error {
+	return gp.discoveryAdapter.PersistStaticExternalSQLDataSource(gp.provider)
 }
 
 func (gp *GenericProvider) inferAuthType(authCtx dto.AuthCtx, authTypeRequested string) string {

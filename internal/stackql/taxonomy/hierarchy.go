@@ -5,7 +5,7 @@ import (
 
 	"github.com/stackql/stackql/internal/stackql/astformat"
 	"github.com/stackql/stackql/internal/stackql/handler"
-	"github.com/stackql/stackql/internal/stackql/internaldto"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
@@ -66,7 +66,7 @@ func getHids(handlerCtx handler.HandlerContext, node sqlparser.SQLNode) (interna
 	default:
 		return nil, fmt.Errorf("cannot resolve taxonomy")
 	}
-	viewDTO, isView := handlerCtx.GetSQLDialect().GetViewByName(hIds.GetTableName())
+	viewDTO, isView := handlerCtx.GetSQLSystem().GetViewByName(hIds.GetTableName())
 	if isView {
 		hIds = hIds.WithView(viewDTO)
 	}
@@ -146,6 +146,11 @@ func GetHeirarchyFromStatement(handlerCtx handler.HandlerContext, node sqlparser
 		return nil, fmt.Errorf("cannot resolve taxonomy")
 	}
 	retVal := tablemetadata.NewHeirarchyObjects(hIds)
+	sqlDataSource, isSQLDataSource := handlerCtx.GetSQLDataSource(hIds.GetProviderStr())
+	if isSQLDataSource {
+		retVal.SetSQLDataSource(sqlDataSource)
+		return retVal, nil
+	}
 	prov, err := handlerCtx.GetProvider(hIds.GetProviderStr())
 	retVal.SetProvider(prov)
 	viewDTO, isView := retVal.GetView()
@@ -166,16 +171,16 @@ func GetHeirarchyFromStatement(handlerCtx handler.HandlerContext, node sqlparser
 		return nil, err
 	}
 	retVal.SetResource(rsc)
-	if viewBodyDDL, ok := rsc.GetViewBodyDDLForSQLDialect(handlerCtx.GetSQLDialect().GetName()); ok {
+	if viewBodyDDL, ok := rsc.GetViewBodyDDLForSQLDialect(handlerCtx.GetSQLSystem().GetName()); ok {
 		viewName := hIds.GetStackQLTableName()
 		// TODO: mutex required or some other strategy
-		viewDTO, viewExists := handlerCtx.GetSQLDialect().GetViewByName(viewName)
+		viewDTO, viewExists := handlerCtx.GetSQLSystem().GetViewByName(viewName)
 		if !viewExists {
-			err := handlerCtx.GetSQLDialect().CreateView(viewName, viewBodyDDL)
+			err := handlerCtx.GetSQLSystem().CreateView(viewName, viewBodyDDL)
 			if err != nil {
 				return nil, err
 			}
-			viewDTO, isView := handlerCtx.GetSQLDialect().GetViewByName(hIds.GetTableName())
+			viewDTO, isView := handlerCtx.GetSQLSystem().GetViewByName(hIds.GetTableName())
 			if isView {
 				hIds = hIds.WithView(viewDTO)
 			}

@@ -2,14 +2,14 @@ package tablenamespace
 
 import (
 	"github.com/stackql/stackql/internal/stackql/dto"
-	"github.com/stackql/stackql/internal/stackql/sqldialect"
+	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 )
 
 type TableNamespaceCollection interface {
 	GetAnalyticsCacheTableNamespaceConfigurator() TableNamespaceConfigurator
 	GetViewsTableNamespaceConfigurator() TableNamespaceConfigurator
-	WithSQLDialect(sqldialect.SQLDialect) (TableNamespaceCollection, error)
+	WithSQLSystem(sql_system.SQLSystem) (TableNamespaceCollection, error)
 }
 
 func NewStandardTableNamespaceCollection(cfg map[string]dto.NamespaceCfg, sqlEngine sqlengine.SQLEngine) (TableNamespaceCollection, error) {
@@ -49,12 +49,12 @@ func (col *StandardTableNamespaceCollection) GetViewsTableNamespaceConfigurator(
 	return col.viewCfg
 }
 
-func (col *StandardTableNamespaceCollection) WithSQLDialect(sqlDialect sqldialect.SQLDialect) (TableNamespaceCollection, error) {
-	_, err := col.analyticsCfg.WithSQLDialect(sqlDialect)
+func (col *StandardTableNamespaceCollection) WithSQLSystem(sqlSystem sql_system.SQLSystem) (TableNamespaceCollection, error) {
+	_, err := col.analyticsCfg.WithSQLSystem(sqlSystem)
 	if err != nil {
 		return nil, err
 	}
-	_, err = col.viewCfg.WithSQLDialect(sqlDialect)
+	_, err = col.viewCfg.WithSQLSystem(sqlSystem)
 	if err != nil {
 		return nil, err
 	}

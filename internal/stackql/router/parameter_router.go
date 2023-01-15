@@ -460,7 +460,7 @@ func (pr *standardParameterRouter) route(tb sqlparser.TableExpr, handlerCtx hand
 	// hierarchy.  This enables e2e relationship
 	// from expression to hierarchy.
 	// eg: "on" clause to openapi method
-	ac, err := obtainAnnotationCtx(handlerCtx.GetSQLDialect(), m, abbreviatedConsumedMap, pr.namespaceCollection)
+	ac, err := obtainAnnotationCtx(handlerCtx.GetSQLSystem(), m, abbreviatedConsumedMap, pr.namespaceCollection)
 	pr.tableToAnnotationCtx[tb] = ac
 	return ac, err
 }

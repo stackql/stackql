@@ -3,7 +3,7 @@ package planbuilder
 import (
 	"github.com/stackql/stackql/internal/stackql/astanalysis/earlyanalysis"
 	"github.com/stackql/stackql/internal/stackql/handler"
-	"github.com/stackql/stackql/internal/stackql/internaldto"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parse"
 	"github.com/stackql/stackql/internal/stackql/plan"

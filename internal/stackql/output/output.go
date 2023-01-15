@@ -11,7 +11,7 @@ import (
 
 	"github.com/jackc/pgtype"
 	"github.com/stackql/stackql/internal/stackql/constants"
-	"github.com/stackql/stackql/internal/stackql/internaldto"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/iqlutil"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/psqlwire"

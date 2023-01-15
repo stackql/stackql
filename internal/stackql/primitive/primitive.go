@@ -4,7 +4,7 @@ import (
 	"io"
 
 	"github.com/stackql/stackql/internal/stackql/dto"
-	"github.com/stackql/stackql/internal/stackql/internaldto"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 )
 
 type IPrimitiveCtx interface {

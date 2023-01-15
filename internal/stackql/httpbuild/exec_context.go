@@ -2,7 +2,7 @@ package httpbuild
 
 import (
 	"github.com/stackql/go-openapistackql/openapistackql"
-	"github.com/stackql/stackql/internal/stackql/internaldto"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 )
 
 var (

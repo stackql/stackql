@@ -4,7 +4,8 @@ import (
 	"fmt"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
-	"github.com/stackql/stackql/internal/stackql/internaldto"
+	"github.com/stackql/stackql/internal/stackql/datasource/sql_datasource"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/provider"
 )
 
@@ -20,10 +21,12 @@ type HeirarchyObjects interface {
 	GetResponseSchemaAndMediaType() (*openapistackql.Schema, string, error)
 	GetSelectableObjectSchema() (*openapistackql.Schema, error)
 	GetSelectSchemaAndObjectPath() (*openapistackql.Schema, string, error)
+	GetSQLDataSource() (sql_datasource.SQLDataSource, bool)
 	GetTableName() string
 	GetView() (internaldto.ViewDTO, bool)
 	LookupSelectItemsKey() string
 	SetProvider(provider.IProvider)
+	SetSQLDataSource(sql_datasource.SQLDataSource)
 	// De facto inheritance
 	GetServiceHdl() *openapistackql.Service
 	GetResource() *openapistackql.Resource
@@ -44,13 +47,22 @@ func NewHeirarchyObjects(hIDs internaldto.HeirarchyIdentifiers) HeirarchyObjects
 }
 
 type standardHeirarchyObjects struct {
-	hr           internaldto.Heirarchy
-	heirarchyIds internaldto.HeirarchyIdentifiers
-	prov         provider.IProvider
+	hr            internaldto.Heirarchy
+	heirarchyIds  internaldto.HeirarchyIdentifiers
+	prov          provider.IProvider
+	sqlDataSource sql_datasource.SQLDataSource
 }
 
 func (ho *standardHeirarchyObjects) GetServiceHdl() *openapistackql.Service {
 	return ho.hr.GetServiceHdl()
+}
+
+func (ho *standardHeirarchyObjects) GetSQLDataSource() (sql_datasource.SQLDataSource, bool) {
+	return ho.sqlDataSource, ho.sqlDataSource != nil
+}
+
+func (ho *standardHeirarchyObjects) SetSQLDataSource(sqlDataSource sql_datasource.SQLDataSource) {
+	ho.sqlDataSource = sqlDataSource
 }
 
 func (ho *standardHeirarchyObjects) GetView() (internaldto.ViewDTO, bool) {

@@ -3,6 +3,7 @@ import base64
 import json
 import os
 import typing
+import copy
 
 from typed_python_responses import SELECT_AWS_CLOUD_CONTROL_EVENTS_MINIMAL_EXPECTED
 
@@ -209,6 +210,16 @@ _AUTH_CFG={
     "credentialsenvvar": "SUMO_CREDS"
   }
 }
+
+_AUTH_PLUS_EXTERNAL_POSTGRES = copy.deepcopy(_AUTH_CFG)
+
+_AUTH_PLUS_EXTERNAL_POSTGRES["external_postgres_information_schema"] = { 
+  "type": "sql_data_source::postgres",
+  "sqlDataSource": {
+    "dsn": "postgres://stackql:stackql@127.0.0.1:8432" 
+  } 
+}
+
 _AUTH_CFG_DOCKER={ 
   "google": { 
     "credentialsfilepath": get_unix_path(os.path.join('/opt', 'stackql', 'credentials', 'dummy', 'google', 'docker-functional-test-dummy-sa-key.json')),
@@ -242,6 +253,16 @@ _AUTH_CFG_DOCKER={
     "credentialsenvvar": "SUMO_CREDS"
   }
 }
+
+_AUTH_PLUS_EXTERNAL_POSTGRES_DOCKER = copy.deepcopy(_AUTH_CFG_DOCKER)
+
+_AUTH_PLUS_EXTERNAL_POSTGRES_DOCKER["external_postgres_information_schema"] = { 
+  "type": "sql_data_source::postgres",
+  "sqlDataSource": {
+    "dsn": "postgres://stackql:stackql@host.docker.internal:8432" 
+  } 
+}
+
 _AUTH_CFG_INTEGRATION={ 
   "google": { 
     "credentialsfilepath": get_unix_path(os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'credentials', 'dummy', 'google', 'functional-test-dummy-sa-key.json')),
@@ -420,6 +441,8 @@ REGISTRY_DEV_CFG_STR = json.dumps(get_registry_cfg(_DEV_REGISTRY_URL, ROBOT_DEV_
 
 AUTH_CFG_STR = json.dumps(_AUTH_CFG)
 AUTH_CFG_STR_DOCKER = json.dumps(_AUTH_CFG_DOCKER)
+AUTH_PLUS_EXTERNAL_POSTGRES = json.dumps(_AUTH_PLUS_EXTERNAL_POSTGRES)
+AUTH_PLUS_EXTERNAL_POSTGRES_DOCKER = json.dumps(_AUTH_PLUS_EXTERNAL_POSTGRES_DOCKER)
 AUTH_CFG_INTEGRATION_STR = json.dumps(_AUTH_CFG_INTEGRATION)
 AUTH_CFG_INTEGRATION_STR_DOCKER = json.dumps(_AUTH_CFG_INTEGRATION_DOCKER)
 SHOW_PROVIDERS_STR = "show providers;"
@@ -510,6 +533,9 @@ SELECT_POSTGRES_CATALOG_JOIN_TUPLE_EXPECTED = ("__iql__.control.gc.rings",)
 
 SELECT_AZURE_COMPUTE_PUBLIC_KEYS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'azure', 'compute', 'ssh-public-keys-list.txt'))
 SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'azure', 'compute', 'vm-list.txt'))
+
+SELECT_EXTERNAL_INFORMATION_SCHEMA_ORDERED_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'external_sources', 'select_information_schema_single_table_ordered.txt'))
+SELECT_EXTERNAL_INFORMATION_SCHEMA_FILTERED_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'external_sources', 'select_information_schema_single_table_filtered.txt'))
 
 SELECT_AZURE_COMPUTE_PUBLIC_KEYS_JSON_EXPECTED = get_json_from_local_file(os.path.join('test', 'assets', 'expected', 'azure', 'compute', 'ssh-public-keys-list.json'))
 SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_JSON_EXPECTED = get_json_from_local_file(os.path.join('test', 'assets', 'expected', 'azure', 'compute', 'vm-list.json'))
@@ -830,6 +856,8 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'SELECT_CONTRIVED_GCP_SELF_JOIN_EXPECTED':                                SELECT_CONTRIVED_GCP_SELF_JOIN_EXPECTED,
     'SELECT_CONTRIVED_GCP_THREE_WAY_JOIN':                                    SELECT_CONTRIVED_GCP_THREE_WAY_JOIN,
     'SELECT_CONTRIVED_GCP_THREE_WAY_JOIN_EXPECTED':                           SELECT_CONTRIVED_GCP_THREE_WAY_JOIN_EXPECTED,
+    'SELECT_EXTERNAL_INFORMATION_SCHEMA_FILTERED_EXPECTED':                   SELECT_EXTERNAL_INFORMATION_SCHEMA_FILTERED_EXPECTED,
+    'SELECT_EXTERNAL_INFORMATION_SCHEMA_ORDERED_EXPECTED':                    SELECT_EXTERNAL_INFORMATION_SCHEMA_ORDERED_EXPECTED,
     'SELECT_GITHUB_BRANCHES_NAMES_DESC':                                      SELECT_GITHUB_BRANCHES_NAMES_DESC,
     'SELECT_GITHUB_BRANCHES_NAMES_DESC_EXPECTED':                             SELECT_GITHUB_BRANCHES_NAMES_DESC_EXPECTED,
     'SELECT_GITHUB_JOIN_DATA_FLOW_SEQUENTIAL':                                SELECT_GITHUB_JOIN_DATA_FLOW_SEQUENTIAL,
@@ -910,6 +938,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
   }
   if execution_env == 'docker':
     rv['AUTH_CFG_STR']                                  = AUTH_CFG_STR_DOCKER
+    rv['AUTH_PLUS_EXTERNAL_POSTGRES']                   = AUTH_PLUS_EXTERNAL_POSTGRES_DOCKER
     rv['AUTH_CFG_STR_INTEGRATION']                      = AUTH_CFG_INTEGRATION_STR_DOCKER
     rv['GET_IAM_POLICY_AGG_ASC_INPUT_FILE']             = GET_IAM_POLICY_AGG_ASC_INPUT_FILE_DOCKER
     rv['JSON_INIT_FILE_PATH_AWS']                       = JSON_INIT_FILE_PATH_AWS
@@ -931,6 +960,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     rv['REGISTRY_SQL_VERB_CONTRIVED_NO_VERIFY_CFG_STR'] = _REGISTRY_SQL_VERB_CONTRIVED_NO_VERIFY_DOCKER
   else:
     rv['AUTH_CFG_STR']                                  = AUTH_CFG_STR
+    rv['AUTH_PLUS_EXTERNAL_POSTGRES']                   = AUTH_PLUS_EXTERNAL_POSTGRES
     rv['AUTH_CFG_STR_INTEGRATION']                      = AUTH_CFG_INTEGRATION_STR
     rv['GET_IAM_POLICY_AGG_ASC_INPUT_FILE']             = GET_IAM_POLICY_AGG_ASC_INPUT_FILE
     rv['JSON_INIT_FILE_PATH_AWS']                       = JSON_INIT_FILE_PATH_AWS

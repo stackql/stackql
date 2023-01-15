@@ -8,9 +8,8 @@ import (
 
 	"github.com/stackql/go-openapistackql/openapistackql"
 	"github.com/stackql/stackql/internal/stackql/constants"
-	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/handler"
-	"github.com/stackql/stackql/internal/stackql/internaldto"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/metadatavisitors"
 	"github.com/stackql/stackql/internal/stackql/primitive"
@@ -169,7 +168,10 @@ func NewShowInstructionExecutor(node *sqlparser.Show, prov provider.IProvider, t
 		}
 		keys = methodKeys
 	case "PROVIDERS":
-		keys = handlerCtx.GetSupportedProviders(extended)
+		keys, err = handlerCtx.GetSupportedProviders(extended)
+		if err != nil {
+			return internaldto.NewErroneousExecutorOutput(err)
+		}
 		rv := util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, err, nil))
 		if len(keys) == 0 {
 			rv = util.EmptyProtectResultSet(
@@ -327,7 +329,7 @@ func NewDescribeTableInstructionExecutor(handlerCtx handler.HandlerContext, tbl 
 	return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, util.DescribeRowSort, err, nil))
 }
 
-func NewDescribeViewInstructionExecutor(handlerCtx handler.HandlerContext, tbl tablemetadata.ExtendedTableMetadata, nonControlColumns []drm.ColumnMetadata, extended bool, full bool) internaldto.ExecutorOutput {
+func NewDescribeViewInstructionExecutor(handlerCtx handler.HandlerContext, tbl tablemetadata.ExtendedTableMetadata, nonControlColumns []internaldto.ColumnMetadata, extended bool, full bool) internaldto.ExecutorOutput {
 	columnOrder := openapistackql.GetDescribeHeader(extended)
 	descriptionMap := columnsToFlatDescriptionMap(nonControlColumns, extended)
 	keys := make(map[string]map[string]interface{})
@@ -340,7 +342,7 @@ func NewDescribeViewInstructionExecutor(handlerCtx handler.HandlerContext, tbl t
 	return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, util.DescribeRowSort, nil, nil))
 }
 
-func columnsToFlatDescriptionMap(colz []drm.ColumnMetadata, extended bool) map[string]interface{} {
+func columnsToFlatDescriptionMap(colz []internaldto.ColumnMetadata, extended bool) map[string]interface{} {
 	retVal := make(map[string]interface{})
 	for _, col := range colz {
 		colName := col.GetIdentifier()

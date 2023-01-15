@@ -9,7 +9,7 @@ import (
 	"github.com/stackql/go-openapistackql/openapistackql"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/routeanalysis"
 	"github.com/stackql/stackql/internal/stackql/handler"
-	"github.com/stackql/stackql/internal/stackql/internaldto"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/iqlerror"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"

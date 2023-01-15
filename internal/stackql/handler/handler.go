@@ -10,6 +10,7 @@ import (
 	"github.com/stackql/go-openapistackql/openapistackql"
 	"github.com/stackql/go-openapistackql/pkg/nomenclature"
 	"github.com/stackql/stackql/internal/stackql/bundle"
+	"github.com/stackql/stackql/internal/stackql/datasource/sql_datasource"
 	"github.com/stackql/stackql/internal/stackql/dbmsinternal"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/dto"
@@ -17,8 +18,8 @@ import (
 	"github.com/stackql/stackql/internal/stackql/kstore"
 	"github.com/stackql/stackql/internal/stackql/netutils"
 	"github.com/stackql/stackql/internal/stackql/provider"
+	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
-	"github.com/stackql/stackql/internal/stackql/sqldialect"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"github.com/stackql/stackql/pkg/txncounter"
@@ -39,7 +40,7 @@ type HandlerContext interface {
 	GetAuthContext(providerName string) (*dto.AuthCtx, error)
 	GetDBMSInternalRouter() dbmsinternal.DBMSInternalRouter
 	GetProvider(providerName string) (provider.IProvider, error)
-	GetSupportedProviders(extended bool) map[string]map[string]interface{}
+	GetSupportedProviders(extended bool) (map[string]map[string]interface{}, error)
 	LogHTTPResponseMap(target interface{})
 	//
 	GetRawQuery() string
@@ -54,8 +55,9 @@ type HandlerContext interface {
 	GetOutfile() io.Writer
 	GetOutErrFile() io.Writer
 	GetLRUCache() *lrucache.LRUCache
+	GetSQLDataSource(name string) (sql_datasource.SQLDataSource, bool)
 	GetSQLEngine() sqlengine.SQLEngine
-	GetSQLDialect() sqldialect.SQLDialect
+	GetSQLSystem() sql_system.SQLSystem
 	GetGarbageCollector() garbagecollector.GarbageCollector
 	GetDrmConfig() drm.DRMConfig
 	GetTxnCounterMgr() txncounter.TxnCounterManager
@@ -79,13 +81,14 @@ type standardHandlerContext struct {
 	controlAttributes   sqlcontrol.ControlAttributes
 	currentProvider     string
 	authContexts        map[string]*dto.AuthCtx
+	sqlDataSources      map[string]sql_datasource.SQLDataSource
 	registry            openapistackql.RegistryAPI
 	errorPresentation   string
 	outfile             io.Writer
 	outErrFile          io.Writer
 	lRUCache            *lrucache.LRUCache
 	sqlEngine           sqlengine.SQLEngine
-	sqlDialect          sqldialect.SQLDialect
+	sqlSystem           sql_system.SQLSystem
 	garbageCollector    garbagecollector.GarbageCollector
 	drmConfig           drm.DRMConfig
 	txnCounterMgr       txncounter.TxnCounterManager
@@ -125,7 +128,7 @@ func (hc *standardHandlerContext) GetOutfile() io.Writer                    { re
 func (hc *standardHandlerContext) GetOutErrFile() io.Writer                 { return hc.outErrFile }
 func (hc *standardHandlerContext) GetLRUCache() *lrucache.LRUCache          { return hc.lRUCache }
 func (hc *standardHandlerContext) GetSQLEngine() sqlengine.SQLEngine        { return hc.sqlEngine }
-func (hc *standardHandlerContext) GetSQLDialect() sqldialect.SQLDialect     { return hc.sqlDialect }
+func (hc *standardHandlerContext) GetSQLSystem() sql_system.SQLSystem       { return hc.sqlSystem }
 func (hc *standardHandlerContext) GetGarbageCollector() garbagecollector.GarbageCollector {
 	return hc.garbageCollector
 }
@@ -159,9 +162,23 @@ func getProviderMapExtended(providerName string, providerDesc openapistackql.Pro
 	return getProviderMap(providerName, providerDesc)
 }
 
-func (hc *standardHandlerContext) GetSupportedProviders(extended bool) map[string]map[string]interface{} {
+func (hc *standardHandlerContext) GetSQLDataSource(name string) (sql_datasource.SQLDataSource, bool) {
+	ac, ok := hc.sqlDataSources[name]
+	return ac, ok
+}
+
+func (hc *standardHandlerContext) GetSupportedProviders(extended bool) (map[string]map[string]interface{}, error) {
 	retVal := make(map[string]map[string]interface{})
 	provs := hc.registry.ListLocallyAvailableProviders()
+	// Supporting SQL data sources
+	// These will be overwritten by any documented providers with the same name
+	for k, _ := range hc.sqlDataSources {
+		pn := k
+		retVal[pn] = map[string]interface{}{
+			"name": pn,
+		}
+
+	}
 	for k, pd := range provs {
 		pn := k
 		if pn == "googleapis.com" {
@@ -173,7 +190,7 @@ func (hc *standardHandlerContext) GetSupportedProviders(extended bool) map[strin
 			retVal[pn] = getProviderMap(pn, pd)
 		}
 	}
-	return retVal
+	return retVal, nil
 }
 
 func (hc *standardHandlerContext) GetASTFormatter() sqlparser.NodeFormatter {
@@ -194,7 +211,7 @@ func (hc *standardHandlerContext) GetProvider(providerName string) (provider.IPr
 	}
 	prov, ok := hc.providers[providerName]
 	if !ok {
-		prov, err = provider.GetProvider(hc.runtimeContext, ds.Name, ds.Tag, hc.registry, hc.sqlDialect)
+		prov, err = provider.GetProvider(hc.runtimeContext, ds.Name, ds.Tag, hc.registry, hc.sqlSystem)
 		if err == nil {
 			hc.providers[providerName] = prov
 			return prov, err
@@ -284,7 +301,8 @@ func (hc *standardHandlerContext) Clone() HandlerContext {
 		errorPresentation:   hc.errorPresentation,
 		lRUCache:            hc.lRUCache,
 		sqlEngine:           hc.sqlEngine,
-		sqlDialect:          hc.sqlDialect,
+		sqlDataSources:      hc.sqlDataSources,
+		sqlSystem:           hc.sqlSystem,
 		garbageCollector:    hc.garbageCollector,
 		outErrFile:          hc.outErrFile,
 		outfile:             hc.outfile,
@@ -297,26 +315,7 @@ func (hc *standardHandlerContext) Clone() HandlerContext {
 	return &rv
 }
 
-func (hc *standardHandlerContext) initNamespaces() error {
-	cfgs, err := dto.GetNamespaceCfg(hc.runtimeContext.NamespaceCfgRaw)
-	if err != nil {
-		return err
-	}
-	namespaces, err := tablenamespace.NewStandardTableNamespaceCollection(cfgs, hc.sqlEngine)
-	if err != nil {
-		return err
-	}
-	hc.namespaceCollection = namespaces
-	return nil
-}
-
 func GetHandlerCtx(cmdString string, runtimeCtx dto.RuntimeCtx, lruCache *lrucache.LRUCache, inputBundle bundle.Bundle) (HandlerContext, error) {
-
-	ac := make(map[string]*dto.AuthCtx)
-	err := yaml.Unmarshal([]byte(runtimeCtx.AuthRaw), ac)
-	if err != nil {
-		return nil, err
-	}
 	reg, err := getRegistry(runtimeCtx)
 	if err != nil {
 		return nil, err
@@ -331,21 +330,22 @@ func GetHandlerCtx(cmdString string, runtimeCtx dto.RuntimeCtx, lruCache *lrucac
 		rawQuery:            cmdString,
 		runtimeContext:      runtimeCtx,
 		providers:           providers,
-		authContexts:        ac,
+		authContexts:        inputBundle.GetAuthContexts(),
 		registry:            reg,
 		controlAttributes:   controlAttributes,
 		errorPresentation:   runtimeCtx.ErrorPresentation,
 		lRUCache:            lruCache,
 		sqlEngine:           sqlEngine,
-		sqlDialect:          inputBundle.GetSQLDialect(),
+		sqlDataSources:      inputBundle.GetSQLDataSources(),
+		sqlSystem:           inputBundle.GetSQLSystem(),
 		garbageCollector:    inputBundle.GetGC(),
 		txnCounterMgr:       inputBundle.GetTxnCounterManager(),
 		txnStore:            inputBundle.GetTxnStore(),
 		namespaceCollection: inputBundle.GetNamespaceCollection(),
-		formatter:           inputBundle.GetSQLDialect().GetASTFormatter(),
+		formatter:           inputBundle.GetSQLSystem().GetASTFormatter(),
 		pgInternalRouter:    inputBundle.GetDBMSInternalRouter(),
 	}
-	drmCfg, err := drm.GetDRMConfig(inputBundle.GetSQLDialect(), rv.namespaceCollection, controlAttributes)
+	drmCfg, err := drm.GetDRMConfig(inputBundle.GetSQLSystem(), rv.namespaceCollection, controlAttributes)
 	if err != nil {
 		return nil, err
 	}

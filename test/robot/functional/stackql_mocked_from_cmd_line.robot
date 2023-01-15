@@ -958,3 +958,31 @@ HTTP Log enabled regression test
     ...    ${SELECT_SUMOLOGIC_COLLECTORS_IDS}
     ...    ${SELECT_SUMOLOGIC_COLLECTORS_IDS_EXPECTED}
     ...    ${CURDIR}/tmp/HTTP-Log-enabled-regression-test.tmp
+
+External Postgres Data Source Simple Ordered Query
+    Pass Execution If    "${SHOULD_RUN_DOCKER_EXTERNAL_TESTS}" != "true"    Skipping docker tests in uncertain environment
+    Should Horrid Query StackQL Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_PLUS_EXTERNAL_POSTGRES}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select role_name from external_postgres_information_schema.information_schema.applicable_roles order by role_name desc;
+    ...    ${SELECT_EXTERNAL_INFORMATION_SCHEMA_ORDERED_EXPECTED}
+    ...    ${CURDIR}/tmp/External-Postgres-Data-Source-Simple-Ordered-Query.tmp
+
+External Postgres Data Source Simple Filtered Query
+    Pass Execution If    "${SHOULD_RUN_DOCKER_EXTERNAL_TESTS}" != "true"    Skipping docker tests in uncertain environment
+    Should Horrid Query StackQL Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_PLUS_EXTERNAL_POSTGRES}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select role_name from external_postgres_information_schema.information_schema.applicable_roles where role_name \= 'pg_database_owner';
+    ...    ${SELECT_EXTERNAL_INFORMATION_SCHEMA_FILTERED_EXPECTED}
+    ...    ${CURDIR}/tmp/External-Postgres-Data-Source-Simple-Filtered-Query.tmp

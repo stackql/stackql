@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/stackql/stackql/internal/stackql/internaldto"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 
 	"gonum.org/v1/gonum/graph"

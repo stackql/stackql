@@ -6,13 +6,13 @@ import (
 
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
-	"github.com/stackql/stackql/internal/stackql/sqldialect"
+	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"vitess.io/vitess/go/vt/sqlparser"
 )
 
-func GenerateModifiedSelectSuffix(annotatedAST annotatedast.AnnotatedAst, node sqlparser.SQLNode, sqlDialect sqldialect.SQLDialect, formatter sqlparser.NodeFormatter, namespaceCollection tablenamespace.TableNamespaceCollection) string {
-	v := NewFramentRewriteAstVisitor(annotatedAST, "", false, sqlDialect, formatter, namespaceCollection)
+func GenerateModifiedSelectSuffix(annotatedAST annotatedast.AnnotatedAst, node sqlparser.SQLNode, sqlSystem sql_system.SQLSystem, formatter sqlparser.NodeFormatter, namespaceCollection tablenamespace.TableNamespaceCollection) string {
+	v := NewFramentRewriteAstVisitor(annotatedAST, "", false, sqlSystem, formatter, namespaceCollection)
 	switch node := node.(type) {
 	case *sqlparser.Select:
 		var options string
@@ -57,8 +57,8 @@ func GenerateModifiedSelectSuffix(annotatedAST annotatedast.AnnotatedAst, node s
 	return v.GetRewrittenQuery()
 }
 
-func GenerateUnionTemplateQuery(annotatedAST annotatedast.AnnotatedAst, node *sqlparser.Union, sqlDialect sqldialect.SQLDialect, formatter sqlparser.NodeFormatter, namespaceCollection tablenamespace.TableNamespaceCollection) string {
-	v := NewFramentRewriteAstVisitor(annotatedAST, "", false, sqlDialect, formatter, namespaceCollection)
+func GenerateUnionTemplateQuery(annotatedAST annotatedast.AnnotatedAst, node *sqlparser.Union, sqlSystem sql_system.SQLSystem, formatter sqlparser.NodeFormatter, namespaceCollection tablenamespace.TableNamespaceCollection) string {
+	v := NewFramentRewriteAstVisitor(annotatedAST, "", false, sqlSystem, formatter, namespaceCollection)
 
 	var sb strings.Builder
 	sb.WriteString("%s ")
@@ -86,8 +86,8 @@ func GenerateUnionTemplateQuery(annotatedAST annotatedast.AnnotatedAst, node *sq
 	return v.GetRewrittenQuery()
 }
 
-func GenerateModifiedWhereClause(annotatedAST annotatedast.AnnotatedAst, node *sqlparser.Where, sqlDialect sqldialect.SQLDialect, formatter sqlparser.NodeFormatter, namespaceCollection tablenamespace.TableNamespaceCollection) string {
-	v := NewFramentRewriteAstVisitor(annotatedAST, "", false, sqlDialect, formatter, namespaceCollection)
+func GenerateModifiedWhereClause(annotatedAST annotatedast.AnnotatedAst, node *sqlparser.Where, sqlSystem sql_system.SQLSystem, formatter sqlparser.NodeFormatter, namespaceCollection tablenamespace.TableNamespaceCollection) string {
+	v := NewFramentRewriteAstVisitor(annotatedAST, "", false, sqlSystem, formatter, namespaceCollection)
 	var whereStr string
 	if node != nil && node.Expr != nil {
 		node.Expr.Accept(v)
@@ -129,8 +129,8 @@ func ExtractParamsFromFromClause(annotatedAST annotatedast.AnnotatedAst, node sq
 	return v.GetParameters()
 }
 
-func ExtractProviderStringsAndDetectCacheExemptMaterial(annotatedAST annotatedast.AnnotatedAst, node sqlparser.SQLNode, sqlDialect sqldialect.SQLDialect, formatter sqlparser.NodeFormatter, namespaceCollection tablenamespace.TableNamespaceCollection) ([]string, bool) {
-	v := NewProviderStringAstVisitor(annotatedAST, sqlDialect, formatter, namespaceCollection)
+func ExtractProviderStringsAndDetectCacheExemptMaterial(annotatedAST annotatedast.AnnotatedAst, node sqlparser.SQLNode, sqlSystem sql_system.SQLSystem, formatter sqlparser.NodeFormatter, namespaceCollection tablenamespace.TableNamespaceCollection) ([]string, bool) {
+	v := NewProviderStringAstVisitor(annotatedAST, sqlSystem, formatter, namespaceCollection)
 	node.Accept(v)
 	return v.GetProviderStrings(), v.ContainsCacheExemptMaterial()
 }
