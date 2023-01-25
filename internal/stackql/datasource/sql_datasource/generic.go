@@ -47,6 +47,10 @@ func (ds *genericSQLDataSource) GetSchemaType() string {
 	return ds.schemaType
 }
 
+func (ds *genericSQLDataSource) GetDBName() string {
+	return ds.dbName
+}
+
 func (ds *genericSQLDataSource) Exec(query string, args ...interface{}) (sql.Result, error) {
 	return ds.db.Exec(query, args...)
 }

@@ -224,7 +224,7 @@ func (sl *sqLiteSystem) getSQLExternalSchema(providerName string) string {
 		if ok && ac != nil {
 			sqlCfg, ok := ac.GetSQLCfg()
 			if ok {
-				rv = sqlCfg.GetTableSchemaName()
+				rv = sqlCfg.GetSchemaType()
 			}
 		}
 	}
