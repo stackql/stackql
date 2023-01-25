@@ -347,6 +347,10 @@ func (dp *standardDependencyPlanner) processAcquire(
 		if dp.tcc == nil {
 			return util.NewAnnotatedTabulation(nil, nil, "", ""), nil, fmt.Errorf("nil counters disallowed in dependency planner")
 		}
+		if !dp.tccSetAheadOfTime {
+			dp.tcc = dp.tcc.CloneAndIncrementInsertID()
+		}
+		dp.secondaryTccs = append(dp.secondaryTccs, dp.tcc)
 		anTab := util.NewAnnotatedTabulation(nil, annotationCtx.GetHIDs(), inputTableName, annotationCtx.GetTableMeta().GetAlias())
 		anTab.SetSQLDataSource(sqlDataSource)
 		return anTab, dp.tcc, nil

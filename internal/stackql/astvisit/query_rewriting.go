@@ -588,6 +588,8 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 				tbl.GetHeirarchyObjects().GetHeirarchyIds(),
 				col.Name,
 			)
+			relationalColumn = relationalColumn.WithAlias(col.Alias)
+			relationalColumn = relationalColumn.WithQualifier(col.Qualifier)
 			if err != nil {
 				return err
 			}

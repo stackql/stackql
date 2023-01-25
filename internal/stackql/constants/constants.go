@@ -48,7 +48,7 @@ const (
 )
 
 const (
-	SQLDataSourceSchemaPostgresInfo string = "external_postgres_information_schema"
+	SQLDataSourceSchemaPostgresInfo string = "pgi"
 	SQLDataSourceSchemaDefault      string = SQLDataSourceSchemaPostgresInfo
 )
 
