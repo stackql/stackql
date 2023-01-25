@@ -213,7 +213,7 @@ _AUTH_CFG={
 
 _AUTH_PLUS_EXTERNAL_POSTGRES = copy.deepcopy(_AUTH_CFG)
 
-_AUTH_PLUS_EXTERNAL_POSTGRES["external_postgres_information_schema"] = { 
+_AUTH_PLUS_EXTERNAL_POSTGRES["pgi"] = { 
   "type": "sql_data_source::postgres",
   "sqlDataSource": {
     "dsn": "postgres://stackql:stackql@127.0.0.1:8432" 
@@ -256,7 +256,7 @@ _AUTH_CFG_DOCKER={
 
 _AUTH_PLUS_EXTERNAL_POSTGRES_DOCKER = copy.deepcopy(_AUTH_CFG_DOCKER)
 
-_AUTH_PLUS_EXTERNAL_POSTGRES_DOCKER["external_postgres_information_schema"] = { 
+_AUTH_PLUS_EXTERNAL_POSTGRES_DOCKER["pgi"] = { 
   "type": "sql_data_source::postgres",
   "sqlDataSource": {
     "dsn": "postgres://stackql:stackql@host.docker.internal:8432" 
@@ -536,6 +536,7 @@ SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_EXPECTED = get_output_from_local_file(os.p
 
 SELECT_EXTERNAL_INFORMATION_SCHEMA_ORDERED_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'external_sources', 'select_information_schema_single_table_ordered.txt'))
 SELECT_EXTERNAL_INFORMATION_SCHEMA_FILTERED_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'external_sources', 'select_information_schema_single_table_filtered.txt'))
+SELECT_EXTERNAL_INFORMATION_SCHEMA_INNER_JOIN_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'external_sources', 'select_information_schema_inner_join.txt'))
 
 SELECT_AZURE_COMPUTE_PUBLIC_KEYS_JSON_EXPECTED = get_json_from_local_file(os.path.join('test', 'assets', 'expected', 'azure', 'compute', 'ssh-public-keys-list.json'))
 SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_JSON_EXPECTED = get_json_from_local_file(os.path.join('test', 'assets', 'expected', 'azure', 'compute', 'vm-list.json'))
@@ -857,6 +858,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'SELECT_CONTRIVED_GCP_THREE_WAY_JOIN':                                    SELECT_CONTRIVED_GCP_THREE_WAY_JOIN,
     'SELECT_CONTRIVED_GCP_THREE_WAY_JOIN_EXPECTED':                           SELECT_CONTRIVED_GCP_THREE_WAY_JOIN_EXPECTED,
     'SELECT_EXTERNAL_INFORMATION_SCHEMA_FILTERED_EXPECTED':                   SELECT_EXTERNAL_INFORMATION_SCHEMA_FILTERED_EXPECTED,
+    'SELECT_EXTERNAL_INFORMATION_SCHEMA_INNER_JOIN_EXPECTED':                 SELECT_EXTERNAL_INFORMATION_SCHEMA_INNER_JOIN_EXPECTED,
     'SELECT_EXTERNAL_INFORMATION_SCHEMA_ORDERED_EXPECTED':                    SELECT_EXTERNAL_INFORMATION_SCHEMA_ORDERED_EXPECTED,
     'SELECT_GITHUB_BRANCHES_NAMES_DESC':                                      SELECT_GITHUB_BRANCHES_NAMES_DESC,
     'SELECT_GITHUB_BRANCHES_NAMES_DESC_EXPECTED':                             SELECT_GITHUB_BRANCHES_NAMES_DESC_EXPECTED,

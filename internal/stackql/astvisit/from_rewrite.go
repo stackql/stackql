@@ -719,10 +719,13 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 	case *sqlparser.JoinTableExpr:
 		lVis := NewFromRewriteAstVisitor(v.annotatedAST, "", true, v.sqlSystem, v.formatter, v.namespaceCollection, v.annotations, v.dc)
+		lVis.SetAvoidSQLSourceNaming(v.isAvoidSQLSourceNaming)
 		node.LeftExpr.Accept(lVis)
 		rVis := NewFromRewriteAstVisitor(v.annotatedAST, "", true, v.sqlSystem, v.formatter, v.namespaceCollection, v.annotations, v.dc)
+		rVis.SetAvoidSQLSourceNaming(v.isAvoidSQLSourceNaming)
 		node.RightExpr.Accept(rVis)
 		conditionVis := NewFromRewriteAstVisitor(v.annotatedAST, "", true, v.sqlSystem, v.formatter, v.namespaceCollection, v.annotations, v.dc)
+		conditionVis.SetAvoidSQLSourceNaming(v.isAvoidSQLSourceNaming)
 		node.Condition.Accept(conditionVis)
 		buf.AstPrintf(node, "%s %s %s %s", lVis.GetRewrittenQuery(), node.Join, rVis.GetRewrittenQuery(), conditionVis.GetRewrittenQuery())
 		bs := buf.String()
