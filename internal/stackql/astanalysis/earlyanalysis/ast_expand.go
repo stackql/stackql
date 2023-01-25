@@ -7,11 +7,11 @@ import (
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/astindirect"
 	"github.com/stackql/stackql/internal/stackql/handler"
-	"github.com/stackql/stackql/internal/stackql/internaldto"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/primitivegenerator"
-	"github.com/stackql/stackql/internal/stackql/sqldialect"
+	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/symtab"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 
@@ -33,7 +33,7 @@ type indirectExpandAstVisitor struct {
 	namespaceCollection            tablenamespace.TableNamespaceCollection
 	containsAnalyticsCacheMaterial bool
 	containsNativeBackendMaterial  bool
-	sqlDialect                     sqldialect.SQLDialect
+	sqlSystem                      sql_system.SQLSystem
 	annotatedAST                   annotatedast.AnnotatedAst
 	formatter                      sqlparser.NodeFormatter
 	handlerCtx                     handler.HandlerContext
@@ -46,7 +46,7 @@ func newIndirectExpandAstVisitor(
 	handlerCtx handler.HandlerContext,
 	annotatedAST annotatedast.AnnotatedAst,
 	primitiveGenerator primitivegenerator.PrimitiveGenerator,
-	sqlDialect sqldialect.SQLDialect,
+	sqlSystem sql_system.SQLSystem,
 	formatter sqlparser.NodeFormatter,
 	namespaceCollection tablenamespace.TableNamespaceCollection,
 	whereParams parserutil.ParameterMap,
@@ -58,7 +58,7 @@ func newIndirectExpandAstVisitor(
 	rv := &indirectExpandAstVisitor{
 		namespaceCollection: namespaceCollection,
 		primitiveGenerator:  primitiveGenerator,
-		sqlDialect:          sqlDialect,
+		sqlSystem:           sqlSystem,
 		annotatedAST:        annotatedAST,
 		formatter:           formatter,
 		handlerCtx:          handlerCtx,
@@ -651,22 +651,34 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 				return err
 			}
 		}
-		// OPTIMISTIC DOC PERSISTENCE AND VIEW DEFINITION
 		providerName := node.QualifierSecond.GetRawVal()
 		serviceName := node.Qualifier.GetRawVal()
 		resourceName := node.Name.GetRawVal()
+		sqlDataSource, hasSQLDataSource := v.handlerCtx.GetSQLDataSource(providerName)
+		if hasSQLDataSource {
+			// Persist data source for later retrieval
+			v.annotatedAST.SetSQLDataSource(node, sqlDataSource)
+		}
+		// OPTIMISTIC DOC PERSISTENCE AND VIEW DEFINITION
 		prov, err := v.handlerCtx.GetProvider(providerName)
+
 		if err != nil {
 			logging.GetLogger().Debugf("optimistic doc error: %s", err.Error())
 		} else {
-			_, err = prov.GetServiceShard(serviceName, resourceName, v.handlerCtx.GetRuntimeContext())
-			if err != nil {
-
-				logging.GetLogger().Debugf("optimistic doc error: %s", err.Error())
+			if hasSQLDataSource {
+				err = prov.PersistStaticExternalSQLDataSource(v.handlerCtx.GetRuntimeContext())
+				if err != nil {
+					return err
+				}
+			} else {
+				_, err = prov.GetServiceShard(serviceName, resourceName, v.handlerCtx.GetRuntimeContext())
+				if err != nil {
+					logging.GetLogger().Debugf("optimistic doc error: %s", err.Error())
+				}
 			}
 		}
 		// END OPTIMISTIC DOC PERSISTENCE AND VIEW DEFINITION
-		viewDTO, isView := v.sqlDialect.GetViewByName(node.GetRawVal())
+		viewDTO, isView := v.sqlSystem.GetViewByName(node.GetRawVal())
 		if isView {
 			indirect, err := astindirect.NewViewIndirect(viewDTO)
 			if err != nil {
@@ -684,6 +696,7 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 			if err != nil {
 				return nil
 			}
+			// Persist indirect for later retrieval
 			v.annotatedAST.SetIndirect(node, indirect)
 			indirectPrimitiveGenerator := v.primitiveGenerator.CreateIndirectPrimitiveGenerator(indirect.GetSelectAST(), v.handlerCtx)
 			err = indirectPrimitiveGenerator.AnalyzeSelectStatement(childAnalyzer.GetPlanBuilderInput())
@@ -871,7 +884,7 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 		}
 
 	case *sqlparser.FuncExpr:
-		newNode, err := v.sqlDialect.GetASTFuncRewriter().RewriteFunc(node)
+		newNode, err := v.sqlSystem.GetASTFuncRewriter().RewriteFunc(node)
 		if err != nil {
 			return err
 		}

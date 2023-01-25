@@ -6,7 +6,7 @@ import (
 
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/astformat"
-	"github.com/stackql/stackql/internal/stackql/sqldialect"
+	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 
 	"vitess.io/vitess/go/sqltypes"
@@ -31,18 +31,18 @@ type standardFramentRewriteAstVisitor struct {
 	tablesCited         map[*sqlparser.AliasedTableExpr]sqlparser.TableName
 	shouldCollectTables bool
 	namespaceCollection tablenamespace.TableNamespaceCollection
-	sqlDialect          sqldialect.SQLDialect
+	sqlSystem           sql_system.SQLSystem
 	formatter           sqlparser.NodeFormatter
 	annotatedAST        annotatedast.AnnotatedAst
 }
 
-func NewFramentRewriteAstVisitor(annotatedAST annotatedast.AnnotatedAst, iDColumnName string, shouldCollectTables bool, sqlDialect sqldialect.SQLDialect, formatter sqlparser.NodeFormatter, namespaceCollection tablenamespace.TableNamespaceCollection) FramentRewriteAstVisitor {
+func NewFramentRewriteAstVisitor(annotatedAST annotatedast.AnnotatedAst, iDColumnName string, shouldCollectTables bool, sqlSystem sql_system.SQLSystem, formatter sqlparser.NodeFormatter, namespaceCollection tablenamespace.TableNamespaceCollection) FramentRewriteAstVisitor {
 	return &standardFramentRewriteAstVisitor{
 		iDColumnName:        iDColumnName,
 		tablesCited:         make(map[*sqlparser.AliasedTableExpr]sqlparser.TableName),
 		shouldCollectTables: shouldCollectTables,
 		namespaceCollection: namespaceCollection,
-		sqlDialect:          sqlDialect,
+		sqlSystem:           sqlSystem,
 		formatter:           formatter,
 		annotatedAST:        annotatedAST,
 	}
@@ -123,12 +123,12 @@ func (v *standardFramentRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			commentStr = v.GetRewrittenQuery()
 		}
 		if node.SelectExprs != nil {
-			selVis := NewFramentRewriteAstVisitor(v.annotatedAST, v.iDColumnName, true, v.sqlDialect, v.formatter, v.namespaceCollection)
+			selVis := NewFramentRewriteAstVisitor(v.annotatedAST, v.iDColumnName, true, v.sqlSystem, v.formatter, v.namespaceCollection)
 			node.SelectExprs.Accept(selVis)
 			selectExprStr = selVis.GetRewrittenQuery()
 		}
-		fromVis := NewFramentRewriteAstVisitor(v.annotatedAST, v.iDColumnName, true, v.sqlDialect, v.formatter, v.namespaceCollection)
-		fromTablesCitedVisitor := NewProviderStringAstVisitor(v.annotatedAST, v.sqlDialect, v.formatter, v.namespaceCollection)
+		fromVis := NewFramentRewriteAstVisitor(v.annotatedAST, v.iDColumnName, true, v.sqlSystem, v.formatter, v.namespaceCollection)
+		fromTablesCitedVisitor := NewProviderStringAstVisitor(v.annotatedAST, v.sqlSystem, v.formatter, v.namespaceCollection)
 		if node.From != nil {
 			node.From.Accept(fromVis)
 			node.From.Accept(fromTablesCitedVisitor)
@@ -781,11 +781,11 @@ func (v *standardFramentRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		v.rewrittenQuery = buf.String()
 
 	case *sqlparser.JoinTableExpr:
-		lVis := NewFramentRewriteAstVisitor(v.annotatedAST, "", true, v.sqlDialect, v.formatter, v.namespaceCollection)
+		lVis := NewFramentRewriteAstVisitor(v.annotatedAST, "", true, v.sqlSystem, v.formatter, v.namespaceCollection)
 		node.LeftExpr.Accept(lVis)
-		rVis := NewFramentRewriteAstVisitor(v.annotatedAST, "", true, v.sqlDialect, v.formatter, v.namespaceCollection)
+		rVis := NewFramentRewriteAstVisitor(v.annotatedAST, "", true, v.sqlSystem, v.formatter, v.namespaceCollection)
 		node.RightExpr.Accept(rVis)
-		conditionVis := NewFramentRewriteAstVisitor(v.annotatedAST, "", true, v.sqlDialect, v.formatter, v.namespaceCollection)
+		conditionVis := NewFramentRewriteAstVisitor(v.annotatedAST, "", true, v.sqlSystem, v.formatter, v.namespaceCollection)
 		node.Condition.Accept(conditionVis)
 		buf.AstPrintf(node, "%s %s %s %s", lVis.GetRewrittenQuery(), node.Join, rVis.GetRewrittenQuery(), conditionVis.GetRewrittenQuery())
 		bs := buf.String()
@@ -837,9 +837,9 @@ func (v *standardFramentRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		v.rewrittenQuery = buf.String()
 
 	case *sqlparser.ComparisonExpr:
-		lVis := NewFramentRewriteAstVisitor(v.annotatedAST, "", true, v.sqlDialect, v.formatter, v.namespaceCollection)
+		lVis := NewFramentRewriteAstVisitor(v.annotatedAST, "", true, v.sqlSystem, v.formatter, v.namespaceCollection)
 		node.Left.Accept(lVis)
-		rVis := NewFramentRewriteAstVisitor(v.annotatedAST, "", true, v.sqlDialect, v.formatter, v.namespaceCollection)
+		rVis := NewFramentRewriteAstVisitor(v.annotatedAST, "", true, v.sqlSystem, v.formatter, v.namespaceCollection)
 		node.Right.Accept(rVis)
 		buf.AstPrintf(node, "%s %s %s", lVis.GetRewrittenQuery(), node.Operator, rVis.GetRewrittenQuery())
 		if node.Escape != nil {
@@ -940,11 +940,11 @@ func (v *standardFramentRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		if node.Exec == nil {
 			return fmt.Errorf("cannont accomodate nil exec table container")
 		}
-		s := astformat.String(node.Exec.MethodName, v.sqlDialect.GetASTFormatter())
+		s := astformat.String(node.Exec.MethodName, v.sqlSystem.GetASTFormatter())
 		v.rewrittenQuery = s
 
 	case *sqlparser.FuncExpr:
-		newNode, err := v.sqlDialect.GetASTFuncRewriter().RewriteFunc(node)
+		newNode, err := v.sqlSystem.GetASTFuncRewriter().RewriteFunc(node)
 		if err != nil {
 			return err
 		}
@@ -1052,9 +1052,9 @@ func (v *standardFramentRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			switch n := n.(type) {
 			case *sqlparser.ColName:
 				if n.Qualifier.GetRawVal() == "" {
-					colz = append(colz, v.sqlDialect.DelimitGroupByColumn(n.Name.GetRawVal()))
+					colz = append(colz, v.sqlSystem.DelimitGroupByColumn(n.Name.GetRawVal()))
 				} else {
-					colz = append(colz, fmt.Sprintf(`%s.%s`, v.sqlDialect.DelimitGroupByColumn(n.Qualifier.GetRawVal()), v.sqlDialect.DelimitGroupByColumn(n.Name.GetRawVal())))
+					colz = append(colz, fmt.Sprintf(`%s.%s`, v.sqlSystem.DelimitGroupByColumn(n.Qualifier.GetRawVal()), v.sqlSystem.DelimitGroupByColumn(n.Name.GetRawVal())))
 				}
 			default:
 				colz = append(colz, sqlparser.String(n))
@@ -1072,9 +1072,9 @@ func (v *standardFramentRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			switch n := orderNode.Expr.(type) {
 			case *sqlparser.ColName:
 				if n.Qualifier.GetRawVal() == "" {
-					colz = append(colz, fmt.Sprintf(`%s %s`, v.sqlDialect.DelimitOrderByColumn(n.Name.GetRawVal()), orderNode.Direction))
+					colz = append(colz, fmt.Sprintf(`%s %s`, v.sqlSystem.DelimitOrderByColumn(n.Name.GetRawVal()), orderNode.Direction))
 				} else {
-					colz = append(colz, fmt.Sprintf(`%s.%s %s`, v.sqlDialect.DelimitOrderByColumn(n.Qualifier.GetRawVal()), v.sqlDialect.DelimitOrderByColumn(n.Name.GetRawVal()), orderNode.Direction))
+					colz = append(colz, fmt.Sprintf(`%s.%s %s`, v.sqlSystem.DelimitOrderByColumn(n.Qualifier.GetRawVal()), v.sqlSystem.DelimitOrderByColumn(n.Name.GetRawVal()), orderNode.Direction))
 				}
 			default:
 				colz = append(colz, fmt.Sprintf("%s %s", sqlparser.String(n), orderNode.Direction))

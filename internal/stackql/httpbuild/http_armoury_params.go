@@ -8,7 +8,7 @@ import (
 	"net/url"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
-	"github.com/stackql/stackql/internal/stackql/internaldto"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 )
 
 type HTTPArmouryParameters interface {

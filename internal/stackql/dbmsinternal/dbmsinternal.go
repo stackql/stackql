@@ -6,7 +6,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/logging"
-	"github.com/stackql/stackql/internal/stackql/sqldialect"
+	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"vitess.io/vitess/go/vt/sqlparser"
 )
 
@@ -22,7 +22,7 @@ type DBMSInternalRouter interface {
 	CanRoute(node sqlparser.SQLNode) (constants.BackendQueryType, bool)
 }
 
-func GetDBMSInternalRouter(cfg dto.DBMSInternalCfg, sqlDialect sqldialect.SQLDialect) (DBMSInternalRouter, error) {
+func GetDBMSInternalRouter(cfg dto.DBMSInternalCfg, sqlSystem sql_system.SQLSystem) (DBMSInternalRouter, error) {
 	showRegexp := showHousekeepingRegexp
 	tableRegexp := internalTableRegexp
 	funcRegexp := funcNameRegexp
@@ -54,7 +54,7 @@ func GetDBMSInternalRouter(cfg dto.DBMSInternalCfg, sqlDialect sqldialect.SQLDia
 	}
 	return &standardDBMSInternalRouter{
 		cfg:            cfg,
-		sqlDialect:     sqlDialect,
+		sqlSystem:      sqlSystem,
 		showRegexp:     showRegexp,
 		tableRegexp:    tableRegexp,
 		funcNameRegexp: funcRegexp,
@@ -64,7 +64,7 @@ func GetDBMSInternalRouter(cfg dto.DBMSInternalCfg, sqlDialect sqldialect.SQLDia
 
 type standardDBMSInternalRouter struct {
 	cfg            dto.DBMSInternalCfg
-	sqlDialect     sqldialect.SQLDialect
+	sqlSystem      sql_system.SQLSystem
 	showRegexp     *regexp.Regexp
 	schemaRegexp   *regexp.Regexp
 	tableRegexp    *regexp.Regexp
@@ -72,7 +72,7 @@ type standardDBMSInternalRouter struct {
 }
 
 func (pgr *standardDBMSInternalRouter) CanRoute(node sqlparser.SQLNode) (constants.BackendQueryType, bool) {
-	if pgr.sqlDialect.GetName() != constants.SQLDialectPostgres {
+	if pgr.sqlSystem.GetName() != constants.SQLDialectPostgres {
 		return pgr.negative()
 	}
 	switch node := node.(type) {

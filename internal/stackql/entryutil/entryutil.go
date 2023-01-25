@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/stackql/stackql/internal/stackql/bundle"
+	"github.com/stackql/stackql/internal/stackql/datasource/sql_datasource"
 	"github.com/stackql/stackql/internal/stackql/dbmsinternal"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/garbagecollector"
@@ -16,10 +17,11 @@ import (
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/iqlerror"
 	"github.com/stackql/stackql/internal/stackql/kstore"
+	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
-	"github.com/stackql/stackql/internal/stackql/sqldialect"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
+	"gopkg.in/yaml.v2"
 
 	"github.com/stackql/stackql/pkg/preprocessor"
 	"github.com/stackql/stackql/pkg/txncounter"
@@ -32,6 +34,11 @@ func BuildInputBundle(runtimeCtx dto.RuntimeCtx) (bundle.Bundle, error) {
 	sqlCfg, err := dto.GetSQLBackendCfg(runtimeCtx.SQLBackendCfgRaw)
 	if err != nil {
 		return nil, err
+	}
+	ac := make(map[string]*dto.AuthCtx)
+	err = yaml.Unmarshal([]byte(runtimeCtx.AuthRaw), ac)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshalling auth: %s", err.Error())
 	}
 	se, err := buildSQLEngine(sqlCfg, controlAttributes)
 	if err != nil {
@@ -49,7 +56,7 @@ func BuildInputBundle(runtimeCtx dto.RuntimeCtx) (bundle.Bundle, error) {
 	if err != nil {
 		return nil, err
 	}
-	dialect, err := sqldialect.NewSQLDialect(se, namespaces.GetAnalyticsCacheTableNamespaceConfigurator().GetLikeString(), controlAttributes, sqlCfg)
+	system, err := sql_system.NewSQLSystem(se, namespaces.GetAnalyticsCacheTableNamespaceConfigurator().GetLikeString(), controlAttributes, sqlCfg, ac)
 	if err != nil {
 		return nil, err
 	}
@@ -57,8 +64,8 @@ func BuildInputBundle(runtimeCtx dto.RuntimeCtx) (bundle.Bundle, error) {
 	if err != nil {
 		return nil, err
 	}
-	pgInternal, err := dbmsinternal.GetDBMSInternalRouter(pgInternalCfg, dialect)
-	namespaces, err = namespaces.WithSQLDialect(dialect)
+	pgInternal, err := dbmsinternal.GetDBMSInternalRouter(pgInternalCfg, system)
+	namespaces, err = namespaces.WithSQLSystem(system)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +73,7 @@ func BuildInputBundle(runtimeCtx dto.RuntimeCtx) (bundle.Bundle, error) {
 	if err != nil {
 		return nil, err
 	}
-	gcExec, err := buildGCExec(se, namespaces, dialect, txnStore)
+	gcExec, err := buildGCExec(se, namespaces, system, txnStore)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +82,26 @@ func BuildInputBundle(runtimeCtx dto.RuntimeCtx) (bundle.Bundle, error) {
 	if err != nil {
 		return nil, err
 	}
-	return bundle.NewBundle(gc, namespaces, se, dialect, pgInternal, controlAttributes, txnStore, txnCtrMgr), nil
+	sqlDataSources, err := initSQLDataSources(ac)
+	if err != nil {
+		return nil, fmt.Errorf("error initializing SQL data sources: %s", err.Error())
+	}
+	return bundle.NewBundle(gc, namespaces, se, system, pgInternal, controlAttributes, txnStore, txnCtrMgr, ac, sqlDataSources), nil
+}
+
+func initSQLDataSources(authContextMap map[string]*dto.AuthCtx) (map[string]sql_datasource.SQLDataSource, error) {
+	rv := make(map[string]sql_datasource.SQLDataSource)
+	for k, ac := range authContextMap {
+		_, isSQLCfg := ac.GetSQLCfg()
+		if isSQLCfg {
+			sqlDataSource, err := sql_datasource.NewDataSource(ac)
+			if err != nil {
+				return nil, err
+			}
+			rv[k] = sqlDataSource
+		}
+	}
+	return rv, nil
 }
 
 func initNamespaces(namespaceCfgRaw string, sqlEngine sqlengine.SQLEngine) (tablenamespace.TableNamespaceCollection, error) {
@@ -90,8 +116,8 @@ func buildSQLEngine(sqlCfg dto.SQLBackendCfg, controlAttributes sqlcontrol.Contr
 	return sqlengine.NewSQLEngine(sqlCfg, controlAttributes)
 }
 
-func buildGCExec(sqlEngine sqlengine.SQLEngine, namespaces tablenamespace.TableNamespaceCollection, dialect sqldialect.SQLDialect, txnStore kstore.KStore) (gcexec.GarbageCollectorExecutor, error) {
-	return gcexec.GetGarbageCollectorExecutorInstance(sqlEngine, namespaces, dialect, txnStore)
+func buildGCExec(sqlEngine sqlengine.SQLEngine, namespaces tablenamespace.TableNamespaceCollection, system sql_system.SQLSystem, txnStore kstore.KStore) (gcexec.GarbageCollectorExecutor, error) {
+	return gcexec.GetGarbageCollectorExecutorInstance(sqlEngine, namespaces, system, txnStore)
 }
 
 func buildGC(gcExec gcexec.GarbageCollectorExecutor, gcCfg dto.GCCfg, sqlEngine sqlengine.SQLEngine) garbagecollector.GarbageCollector {

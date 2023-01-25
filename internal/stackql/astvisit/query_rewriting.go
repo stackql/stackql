@@ -10,10 +10,10 @@ import (
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/handler"
-	"github.com/stackql/stackql/internal/stackql/internaldto"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/relationaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
-	"github.com/stackql/stackql/internal/stackql/relationaldto"
 	"github.com/stackql/stackql/internal/stackql/sqlrewrite"
 	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
@@ -174,7 +174,7 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 	switch node := node.(type) {
 	case *sqlparser.Select:
-		v.selectSuffix = GenerateModifiedSelectSuffix(v.annotatedAST, node, v.handlerCtx.GetSQLDialect(), v.handlerCtx.GetASTFormatter(), v.namespaceCollection)
+		v.selectSuffix = GenerateModifiedSelectSuffix(v.annotatedAST, node, v.handlerCtx.GetSQLSystem(), v.handlerCtx.GetASTFormatter(), v.namespaceCollection)
 		var options string
 		addIf := func(b bool, s string) {
 			if b {
@@ -206,7 +206,8 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			if err != nil {
 				return err
 			}
-			fromVis := NewFromRewriteAstVisitor(v.annotatedAST, "", true, v.handlerCtx.GetSQLDialect(), v.formatter, v.namespaceCollection, v.annotations, v.dc)
+			fromVis := NewFromRewriteAstVisitor(v.annotatedAST, "", true, v.handlerCtx.GetSQLSystem(), v.formatter, v.namespaceCollection, v.annotations, v.dc)
+			fromVis.SetAvoidSQLSourceNaming(true)
 			if node.From != nil {
 				node.From.Accept(fromVis)
 				v.fromStr = fromVis.GetRewrittenQuery()
@@ -575,6 +576,25 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			v.relationalColumns = append(v.relationalColumns, rv)
 			return nil
 		}
+		// TODO: accomodate SQL data source
+		sqlDataSource, isSQLDataSource := tbl.GetSQLDataSource()
+		if isSQLDataSource {
+			//
+			col, err := parserutil.InferColNameFromExpr(node, v.formatter)
+			if err != nil {
+				return err
+			}
+			relationalColumn, err := v.dc.GetSQLSystem().ObtainRelationalColumnFromExternalSQLtable(
+				tbl.GetHeirarchyObjects().GetHeirarchyIds(),
+				col.Name,
+			)
+			if err != nil {
+				return err
+			}
+			v.relationalColumns = append(v.relationalColumns, relationalColumn)
+			logging.GetLogger().Debugf("sqlDataSource = '%v'\n", sqlDataSource)
+			return nil
+		}
 		schema, err := tbl.GetSelectableObjectSchema()
 		if err != nil {
 			return err
@@ -622,7 +642,9 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 				if !ok {
 					return fmt.Errorf("could not infer annotated table")
 				}
-				if _, isIndirect := t.GetTableMeta().GetIndirect(); isIndirect {
+				_, isIndirect := t.GetTableMeta().GetIndirect()
+				_, isSQLDataSource := t.GetTableMeta().GetSQLDataSource()
+				if isIndirect || isSQLDataSource {
 					// do nothing
 				} else {
 					dID, ok := v.discoGenIDs[node]
@@ -782,7 +804,7 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 	case *sqlparser.CollateExpr:
 
 	case *sqlparser.FuncExpr:
-		newNode, err := v.dc.GetSQLDialect().GetASTFuncRewriter().RewriteFunc(node)
+		newNode, err := v.dc.GetSQLSystem().GetASTFuncRewriter().RewriteFunc(node)
 		if err != nil {
 			return err
 		}
@@ -802,7 +824,7 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		}
 
 	case *sqlparser.GroupConcatExpr:
-		// v.handlerCtx.GetSQLDialect().GetASTFuncRewriter().RewriteFunc(node)
+		// v.handlerCtx.GetSQLSystem().GetASTFuncRewriter().RewriteFunc(node)
 
 	case *sqlparser.ValuesFuncExpr:
 

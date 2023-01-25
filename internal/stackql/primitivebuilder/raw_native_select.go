@@ -3,12 +3,12 @@ package primitivebuilder
 import (
 	"fmt"
 
+	"github.com/stackql/stackql/internal/stackql/data_staging/input_data_staging"
 	"github.com/stackql/stackql/internal/stackql/handler"
-	"github.com/stackql/stackql/internal/stackql/internaldto"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
-	"github.com/stackql/stackql/internal/stackql/util"
 )
 
 type RawNativeSelect struct {
@@ -55,7 +55,9 @@ func (ss *RawNativeSelect) Build() error {
 		}
 		defer rows.Close()
 
-		rv := util.PrepareNativeResultSet(rows)
+		preparator := input_data_staging.NewNaiveNativeResultSetPreparator(rows, ss.handlerCtx.GetDrmConfig(), nil)
+
+		rv := preparator.PrepareNativeResultSet()
 		return rv
 	}
 

@@ -3,22 +3,22 @@ package primitive
 import (
 	"fmt"
 
-	"github.com/stackql/stackql/internal/stackql/internaldto"
-	"github.com/stackql/stackql/internal/stackql/sqldialect"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
+	"github.com/stackql/stackql/internal/stackql/sql_system"
 )
 
 type PassThroughPrimitive struct {
 	Inputs                 map[int64]internaldto.ExecutorOutput
 	id                     int64
-	sqlDialect             sqldialect.SQLDialect
+	sqlSystem              sql_system.SQLSystem
 	shouldCollectGarbage   bool
 	txnControlCounterSlice []internaldto.TxnControlCounters
 }
 
-func NewPassThroughPrimitive(sqlDialect sqldialect.SQLDialect, txnControlCounterSlice []internaldto.TxnControlCounters, shouldCollectGarbage bool) IPrimitive {
+func NewPassThroughPrimitive(sqlSystem sql_system.SQLSystem, txnControlCounterSlice []internaldto.TxnControlCounters, shouldCollectGarbage bool) IPrimitive {
 	return &PassThroughPrimitive{
 		Inputs:                 make(map[int64]internaldto.ExecutorOutput),
-		sqlDialect:             sqlDialect,
+		sqlSystem:              sqlSystem,
 		txnControlCounterSlice: txnControlCounterSlice,
 		shouldCollectGarbage:   shouldCollectGarbage,
 	}

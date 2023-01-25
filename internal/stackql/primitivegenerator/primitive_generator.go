@@ -58,7 +58,7 @@ func NewRootPrimitiveGenerator(ast sqlparser.SQLNode, handlerCtx handler.Handler
 	tblMap := make(taxonomy.TblMap)
 	symTab := symtab.NewHashMapTreeSymTab()
 	return &standardPrimitiveGenerator{
-		PrimitiveComposer: primitivecomposer.NewPrimitiveComposer(nil, ast, handlerCtx.GetDrmConfig(), handlerCtx.GetTxnCounterMgr(), graph, tblMap, symTab, handlerCtx.GetSQLEngine(), handlerCtx.GetSQLDialect(), handlerCtx.GetASTFormatter()),
+		PrimitiveComposer: primitivecomposer.NewPrimitiveComposer(nil, ast, handlerCtx.GetDrmConfig(), handlerCtx.GetTxnCounterMgr(), graph, tblMap, symTab, handlerCtx.GetSQLEngine(), handlerCtx.GetSQLSystem(), handlerCtx.GetASTFormatter()),
 	}
 }
 
@@ -102,7 +102,7 @@ func (pb *standardPrimitiveGenerator) AddChildPrimitiveGenerator(ast sqlparser.S
 			tables,
 			leaf,
 			pb.PrimitiveComposer.GetSQLEngine(),
-			pb.PrimitiveComposer.GetSQLDialect(),
+			pb.PrimitiveComposer.GetSQLSystem(),
 			pb.PrimitiveComposer.GetASTFormatter(),
 		),
 	}

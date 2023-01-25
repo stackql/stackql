@@ -2,6 +2,7 @@ package dto
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/stackql/stackql/internal/stackql/constants"
@@ -18,18 +19,33 @@ type SQLBackendSchemata struct {
 type SQLBackendCfg struct {
 	DbEngine              string             `json:"dbEngine" yaml:"dbEngine"`
 	DSN                   string             `json:"dsn" yaml:"dsn"`
+	DSNEnvVar             string             `json:"dsnEnvVar" yaml:"dsnEnvVar"`
 	Schemata              SQLBackendSchemata `json:"schemata" yaml:"schemata"`
 	DbInitFilePath        string             `json:"dbInitFilepath" yaml:"dbInitFilepath"`
-	SQLDialect            string             `json:"sqlDialect" yaml:"sqlDialect"`
+	SQLSystem             string             `json:"sqlDialect" yaml:"sqlDialect"`
+	SchemaType            string             `json:"schemaType" yaml:"schemaType"`
 	InitMaxRetries        int                `json:"initMaxRetries" yaml:"initMaxRetries"`
 	InitRetryInitialDelay int                `json:"initRetryInitialDelay" yaml:"initRetryInitialDelay"`
 }
 
-func (sqlCfg SQLBackendCfg) GetDatabaseName() (string, error) {
-	if sqlCfg.DSN == "" {
-		return "", fmt.Errorf("GetDatabaseName() cannot accomodate empty DSN")
+func (sqlCfg SQLBackendCfg) GetDSN() string {
+	dsn := sqlCfg.DSN
+	if sqlCfg.DSNEnvVar != "" {
+		dsn = os.Getenv(sqlCfg.DSNEnvVar)
 	}
-	dbUrl, err := dburl.Parse(sqlCfg.DSN)
+	return dsn
+}
+
+func (sqlCfg SQLBackendCfg) GetSchemaType() string {
+	return sqlCfg.SchemaType
+}
+
+func (sqlCfg SQLBackendCfg) GetDatabaseName() (string, error) {
+	dsn := sqlCfg.GetDSN()
+	if dsn == "" {
+		return "", fmt.Errorf("cannot ionfer db name from empty dsn")
+	}
+	dbUrl, err := dburl.Parse(dsn)
 	if err != nil {
 		return "", fmt.Errorf("error parsing postgres dsn: %s", err.Error())
 	}
@@ -57,8 +73,8 @@ func GetSQLBackendCfg(s string) (SQLBackendCfg, error) {
 	if rv.DbEngine == "" {
 		rv.DbEngine = constants.DbEngineDefault
 	}
-	if rv.SQLDialect == "" {
-		rv.SQLDialect = constants.SQLDialectDefault
+	if rv.SQLSystem == "" {
+		rv.SQLSystem = constants.SQLDialectDefault
 	}
 	if rv.InitMaxRetries < 1 {
 		rv.InitMaxRetries = 10

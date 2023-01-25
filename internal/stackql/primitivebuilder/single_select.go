@@ -3,9 +3,10 @@ package primitivebuilder
 import (
 	"fmt"
 
+	"github.com/stackql/stackql/internal/stackql/data_staging/output_data_staging"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/handler"
-	"github.com/stackql/stackql/internal/stackql/internaldto"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
@@ -61,7 +62,20 @@ func (ss *SingleSelect) Build() error {
 		// select phase
 		logging.GetLogger().Infoln(fmt.Sprintf("running select with control parameters: %v", ss.selectPreparedStatementCtx.GetGCCtrlCtrs()))
 
-		return prepareGolangResult(ss.handlerCtx.GetSQLEngine(), ss.handlerCtx.GetOutErrFile(), drm.NewPreparedStatementParameterized(ss.selectPreparedStatementCtx, nil, true), ss.insertionContainers, ss.selectPreparedStatementCtx.GetNonControlColumns(), ss.drmCfg, ss.stream)
+		outputter := output_data_staging.NewNaiveOutputter(
+			output_data_staging.NewNaivePacketPreparator(
+				output_data_staging.NewNaiveSource(
+					ss.handlerCtx.GetSQLEngine(),
+					drm.NewPreparedStatementParameterized(ss.selectPreparedStatementCtx, nil, true),
+					ss.drmCfg,
+				),
+				ss.selectPreparedStatementCtx.GetNonControlColumns(),
+				ss.stream,
+				ss.drmCfg,
+			),
+			ss.selectPreparedStatementCtx.GetNonControlColumns(),
+		)
+		return outputter.OutputExecutorResult()
 	}
 	graph := ss.graph
 	selectNode := graph.CreatePrimitiveNode(primitive.NewLocalPrimitive(selectEx))

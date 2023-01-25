@@ -5,7 +5,7 @@ import (
 
 	"github.com/stackql/stackql/internal/stackql/docparser"
 	"github.com/stackql/stackql/internal/stackql/dto"
-	"github.com/stackql/stackql/internal/stackql/sqldialect"
+	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"gopkg.in/yaml.v2"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
@@ -19,7 +19,7 @@ type IDiscoveryStore interface {
 }
 
 type TTLDiscoveryStore struct {
-	sqlDialect sqldialect.SQLDialect
+	sqlSystem  sql_system.SQLSystem
 	runtimeCtx dto.RuntimeCtx
 	registry   openapistackql.RegistryAPI
 }
@@ -30,6 +30,7 @@ type IDiscoveryAdapter interface {
 	GetServiceHandlesMap(prov *openapistackql.Provider) (map[string]*openapistackql.ProviderService, error)
 	GetServiceHandle(prov *openapistackql.Provider, serviceKey string) (*openapistackql.ProviderService, error)
 	GetProvider(providerKey string) (*openapistackql.Provider, error)
+	PersistStaticExternalSQLDataSource(prov *openapistackql.Provider) error
 	getDicoveryStore() IDiscoveryStore
 }
 
@@ -39,7 +40,7 @@ type BasicDiscoveryAdapter struct {
 	discoveryStore     IDiscoveryStore
 	runtimeCtx         *dto.RuntimeCtx
 	registry           openapistackql.RegistryAPI
-	sqlDialect         sqldialect.SQLDialect
+	sqlSystem          sql_system.SQLSystem
 }
 
 func NewBasicDiscoveryAdapter(
@@ -48,7 +49,7 @@ func NewBasicDiscoveryAdapter(
 	discoveryStore IDiscoveryStore,
 	runtimeCtx *dto.RuntimeCtx,
 	registry openapistackql.RegistryAPI,
-	sqlDialect sqldialect.SQLDialect,
+	sqlSystem sql_system.SQLSystem,
 ) IDiscoveryAdapter {
 	return &BasicDiscoveryAdapter{
 		alias:              alias,
@@ -56,7 +57,7 @@ func NewBasicDiscoveryAdapter(
 		discoveryStore:     discoveryStore,
 		runtimeCtx:         runtimeCtx,
 		registry:           registry,
-		sqlDialect:         sqlDialect,
+		sqlSystem:          sqlSystem,
 	}
 }
 
@@ -95,18 +96,36 @@ func (adp *BasicDiscoveryAdapter) GetServiceShard(prov *openapistackql.Provider,
 	if err != nil && resourceKey != "" {
 		return nil, err
 	}
-	viewBodyDDL, viewBodyDDLPresent := rsc.GetViewBodyDDLForSQLDialect(adp.sqlDialect.GetName())
+	viewBodyDDL, viewBodyDDLPresent := rsc.GetViewBodyDDLForSQLDialect(adp.sqlSystem.GetName())
 	if viewBodyDDLPresent {
 		viewName := rsc.ID
-		_, viewExists := adp.sqlDialect.GetViewByName(viewName)
+		_, viewExists := adp.sqlSystem.GetViewByName(viewName)
 		if !viewExists {
-			err := adp.sqlDialect.CreateView(viewName, viewBodyDDL)
+			err := adp.sqlSystem.CreateView(viewName, viewBodyDDL)
 			if err != nil {
 				return nil, err
 			}
 		}
 	}
 	return shard, nil
+}
+
+func (adp *BasicDiscoveryAdapter) PersistStaticExternalSQLDataSource(prov *openapistackql.Provider) error {
+	if prov.StackQLConfig == nil || len(prov.StackQLConfig.ExternalTables) < 1 {
+		return fmt.Errorf("no external tables supplied")
+	}
+	providerName := prov.Name
+	externalTables := prov.StackQLConfig.ExternalTables
+	for _, tbl := range externalTables {
+		err := adp.sqlSystem.RegisterExternalTable(
+			providerName,
+			tbl,
+		)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (adp *BasicDiscoveryAdapter) GetResourcesMap(prov *openapistackql.Provider, serviceKey string) (map[string]*openapistackql.Resource, error) {
@@ -137,9 +156,9 @@ func (adp *BasicDiscoveryAdapter) GetResourcesMap(prov *openapistackql.Provider,
 
 }
 
-func NewTTLDiscoveryStore(sqlDialect sqldialect.SQLDialect, registry openapistackql.RegistryAPI, runtimeCtx dto.RuntimeCtx) IDiscoveryStore {
+func NewTTLDiscoveryStore(sqlSystem sql_system.SQLSystem, registry openapistackql.RegistryAPI, runtimeCtx dto.RuntimeCtx) IDiscoveryStore {
 	return &TTLDiscoveryStore{
-		sqlDialect: sqlDialect,
+		sqlSystem:  sqlSystem,
 		runtimeCtx: runtimeCtx,
 		registry:   registry,
 	}
@@ -172,7 +191,7 @@ func (store *TTLDiscoveryStore) PersistServiceShard(pr *openapistackql.Provider,
 	if ok && svc != nil {
 		return svc, nil
 	}
-	b, err := store.sqlDialect.GetSQLEngine().CacheStoreGet(k)
+	b, err := store.sqlSystem.GetSQLEngine().CacheStoreGet(k)
 	if b != nil && err == nil {
 		return openapistackql.LoadServiceDocFromBytes(serviceHandle, b)
 	}
@@ -192,7 +211,7 @@ func (store *TTLDiscoveryStore) processResourcesDiscoveryDoc(prov *openapistackq
 	switch providerKey {
 	case "googleapis.com", "google":
 		k := fmt.Sprintf("resources.%s.%s", "google", serviceHandle.Name)
-		b, err := store.sqlDialect.GetSQLEngine().CacheStoreGet(k)
+		b, err := store.sqlSystem.GetSQLEngine().CacheStoreGet(k)
 		if b != nil && err == nil {
 			return openapistackql.LoadResourcesShallow(serviceHandle, b)
 		}
@@ -204,14 +223,14 @@ func (store *TTLDiscoveryStore) processResourcesDiscoveryDoc(prov *openapistackq
 		if err != nil {
 			return nil, err
 		}
-		err = store.sqlDialect.GetSQLEngine().CacheStorePut(k, bt, "", 0)
+		err = store.sqlSystem.GetSQLEngine().CacheStorePut(k, bt, "", 0)
 		if err != nil {
 			return nil, err
 		}
 		return rr, err
 	default:
 		k := fmt.Sprintf("%s.%s", providerKey, serviceHandle.Name)
-		b, err := store.sqlDialect.GetSQLEngine().CacheStoreGet(k)
+		b, err := store.sqlSystem.GetSQLEngine().CacheStoreGet(k)
 		if b != nil && err == nil {
 			return openapistackql.LoadResourcesShallow(serviceHandle, b)
 		}
@@ -223,7 +242,7 @@ func (store *TTLDiscoveryStore) processResourcesDiscoveryDoc(prov *openapistackq
 		if err != nil {
 			return nil, err
 		}
-		err = store.sqlDialect.GetSQLEngine().CacheStorePut(k, bt, "", 0)
+		err = store.sqlSystem.GetSQLEngine().CacheStorePut(k, bt, "", 0)
 		if err != nil {
 			return nil, err
 		}

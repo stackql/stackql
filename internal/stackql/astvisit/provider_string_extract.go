@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
-	"github.com/stackql/stackql/internal/stackql/internaldto"
-	"github.com/stackql/stackql/internal/stackql/sqldialect"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
+	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 
 	"vitess.io/vitess/go/sqltypes"
@@ -29,7 +29,7 @@ type ProviderStringAstVisitor interface {
 // TODO: must be view-aware.
 type standardProviderStringAstVisitor struct {
 	tablesCited                    map[*sqlparser.AliasedTableExpr]sqlparser.TableName
-	sqlDialect                     sqldialect.SQLDialect
+	sqlSystem                      sql_system.SQLSystem
 	formatter                      sqlparser.NodeFormatter
 	annotatedAST                   annotatedast.AnnotatedAst
 	namespaceCollection            tablenamespace.TableNamespaceCollection
@@ -37,10 +37,10 @@ type standardProviderStringAstVisitor struct {
 	containsNativeBackendMaterial  bool
 }
 
-func NewProviderStringAstVisitor(annotatedAST annotatedast.AnnotatedAst, sqlDialect sqldialect.SQLDialect, formatter sqlparser.NodeFormatter, namespaceCollection tablenamespace.TableNamespaceCollection) ProviderStringAstVisitor {
+func NewProviderStringAstVisitor(annotatedAST annotatedast.AnnotatedAst, sqlSystem sql_system.SQLSystem, formatter sqlparser.NodeFormatter, namespaceCollection tablenamespace.TableNamespaceCollection) ProviderStringAstVisitor {
 	return &standardProviderStringAstVisitor{
 		tablesCited:         make(map[*sqlparser.AliasedTableExpr]sqlparser.TableName),
-		sqlDialect:          sqlDialect,
+		sqlSystem:           sqlSystem,
 		formatter:           formatter,
 		annotatedAST:        annotatedAST,
 		namespaceCollection: namespaceCollection,
@@ -100,7 +100,7 @@ func (v *standardProviderStringAstVisitor) Visit(node sqlparser.SQLNode) error {
 			node.Comments.Accept(v)
 		}
 		if node.SelectExprs != nil {
-			selVis := NewProviderStringAstVisitor(v.annotatedAST, v.sqlDialect, v.formatter, v.namespaceCollection)
+			selVis := NewProviderStringAstVisitor(v.annotatedAST, v.sqlSystem, v.formatter, v.namespaceCollection)
 			err := node.SelectExprs.Accept(selVis)
 			if err != nil {
 				return err
@@ -108,7 +108,7 @@ func (v *standardProviderStringAstVisitor) Visit(node sqlparser.SQLNode) error {
 		}
 		fromVis := NewProviderStringAstVisitor(
 			v.annotatedAST,
-			v.sqlDialect,
+			v.sqlSystem,
 			v.formatter, v.namespaceCollection)
 		if node.From != nil {
 			err := node.From.Accept(fromVis)
@@ -715,11 +715,11 @@ func (v *standardProviderStringAstVisitor) Visit(node sqlparser.SQLNode) error {
 		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.JoinTableExpr:
-		lVis := NewProviderStringAstVisitor(v.annotatedAST, v.sqlDialect, v.formatter, v.namespaceCollection)
+		lVis := NewProviderStringAstVisitor(v.annotatedAST, v.sqlSystem, v.formatter, v.namespaceCollection)
 		node.LeftExpr.Accept(lVis)
-		rVis := NewProviderStringAstVisitor(v.annotatedAST, v.sqlDialect, v.formatter, v.namespaceCollection)
+		rVis := NewProviderStringAstVisitor(v.annotatedAST, v.sqlSystem, v.formatter, v.namespaceCollection)
 		node.RightExpr.Accept(rVis)
-		conditionVis := NewProviderStringAstVisitor(v.annotatedAST, v.sqlDialect, v.formatter, v.namespaceCollection)
+		conditionVis := NewProviderStringAstVisitor(v.annotatedAST, v.sqlSystem, v.formatter, v.namespaceCollection)
 		node.Condition.Accept(conditionVis)
 
 	case *sqlparser.IndexHints:
@@ -768,12 +768,12 @@ func (v *standardProviderStringAstVisitor) Visit(node sqlparser.SQLNode) error {
 		// v.rewrittenQuery = buf.String()
 
 	case *sqlparser.ComparisonExpr:
-		lVis := NewProviderStringAstVisitor(v.annotatedAST, v.sqlDialect, v.formatter, v.namespaceCollection)
+		lVis := NewProviderStringAstVisitor(v.annotatedAST, v.sqlSystem, v.formatter, v.namespaceCollection)
 		err := node.Left.Accept(lVis)
 		if err != nil {
 			return err
 		}
-		rVis := NewProviderStringAstVisitor(v.annotatedAST, v.sqlDialect, v.formatter, v.namespaceCollection)
+		rVis := NewProviderStringAstVisitor(v.annotatedAST, v.sqlSystem, v.formatter, v.namespaceCollection)
 		err = node.Right.Accept(rVis)
 		if err != nil {
 			return err
@@ -873,7 +873,7 @@ func (v *standardProviderStringAstVisitor) Visit(node sqlparser.SQLNode) error {
 			return fmt.Errorf("cannont accomodate nil exec table container")
 		}
 	case *sqlparser.FuncExpr:
-		newNode, err := v.sqlDialect.GetASTFuncRewriter().RewriteFunc(node)
+		newNode, err := v.sqlSystem.GetASTFuncRewriter().RewriteFunc(node)
 		if err != nil {
 			return err
 		}
@@ -981,9 +981,9 @@ func (v *standardProviderStringAstVisitor) Visit(node sqlparser.SQLNode) error {
 			switch n := n.(type) {
 			case *sqlparser.ColName:
 				if n.Qualifier.GetRawVal() == "" {
-					colz = append(colz, v.sqlDialect.DelimitGroupByColumn(n.Name.GetRawVal()))
+					colz = append(colz, v.sqlSystem.DelimitGroupByColumn(n.Name.GetRawVal()))
 				} else {
-					colz = append(colz, fmt.Sprintf(`%s.%s`, v.sqlDialect.DelimitGroupByColumn(n.Qualifier.GetRawVal()), v.sqlDialect.DelimitGroupByColumn(n.Name.GetRawVal())))
+					colz = append(colz, fmt.Sprintf(`%s.%s`, v.sqlSystem.DelimitGroupByColumn(n.Qualifier.GetRawVal()), v.sqlSystem.DelimitGroupByColumn(n.Name.GetRawVal())))
 				}
 			default:
 				colz = append(colz, sqlparser.String(n))
@@ -1001,9 +1001,9 @@ func (v *standardProviderStringAstVisitor) Visit(node sqlparser.SQLNode) error {
 			switch n := orderNode.Expr.(type) {
 			case *sqlparser.ColName:
 				if n.Qualifier.GetRawVal() == "" {
-					colz = append(colz, fmt.Sprintf(`%s %s`, v.sqlDialect.DelimitOrderByColumn(n.Name.GetRawVal()), orderNode.Direction))
+					colz = append(colz, fmt.Sprintf(`%s %s`, v.sqlSystem.DelimitOrderByColumn(n.Name.GetRawVal()), orderNode.Direction))
 				} else {
-					colz = append(colz, fmt.Sprintf(`%s.%s %s`, v.sqlDialect.DelimitOrderByColumn(n.Qualifier.GetRawVal()), v.sqlDialect.DelimitOrderByColumn(n.Name.GetRawVal()), orderNode.Direction))
+					colz = append(colz, fmt.Sprintf(`%s.%s %s`, v.sqlSystem.DelimitOrderByColumn(n.Qualifier.GetRawVal()), v.sqlSystem.DelimitOrderByColumn(n.Name.GetRawVal()), orderNode.Direction))
 				}
 			default:
 				colz = append(colz, fmt.Sprintf("%s %s", sqlparser.String(n), orderNode.Direction))

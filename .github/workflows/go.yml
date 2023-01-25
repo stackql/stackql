@@ -324,12 +324,12 @@ jobs:
     - name: Run robot mocked functional tests
       if: success()
       run: |
-        robot test/robot/functional
+        robot --variable SHOULD_RUN_DOCKER_EXTERNAL_TESTS:true -d test/robot/functional test/robot/functional
 
     - name: Output from mocked functional tests
       if: always()
       run: |
-        cat ./output.xml
+        cat ./test/robot/functional/output.xml
     
     - name: Run robot integration tests
       if: success() && startsWith(${{ steps.git_ref_parse.outputs.SOURCE_TAG }}, 'build-release')
@@ -822,7 +822,7 @@ jobs:
       if: success()
       timeout-minutes: 20
       run: |
-        robot --variable EXECUTION_PLATFORM:docker --variable SQL_BACKEND:postgres_tcp -d test/robot/functional test/robot/functional
+        robot --variable EXECUTION_PLATFORM:docker --variable SQL_BACKEND:postgres_tcp --variable SHOULD_RUN_DOCKER_EXTERNAL_TESTS:true -d test/robot/functional test/robot/functional
 
     - name: Output from mocked functional tests
       if: always()

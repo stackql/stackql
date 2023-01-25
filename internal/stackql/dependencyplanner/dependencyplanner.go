@@ -2,7 +2,9 @@ package dependencyplanner
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/stackql/go-openapistackql/openapistackql"
 	"github.com/stackql/go-openapistackql/pkg/media"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/astvisit"
@@ -10,7 +12,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/docparser"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/handler"
-	"github.com/stackql/stackql/internal/stackql/internaldto"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/primitivebuilder"
@@ -119,11 +121,8 @@ func (dp *standardDependencyPlanner) Plan() error {
 			tableExpr := unit.GetTableExpr()
 			annotation := unit.GetAnnotation()
 			if _, isView := annotation.GetView(); isView {
-
 				dp.annMap[tableExpr] = annotation
-
 				continue
-				// return fmt.Errorf("error in dependency planning: views in progress")
 			}
 			dp.annMap[tableExpr] = annotation
 			insPsc, _, err := dp.processOrphan(tableExpr, annotation, dp.defaultStream)
@@ -202,13 +201,13 @@ func (dp *standardDependencyPlanner) Plan() error {
 	if weaklyConnectedComponentCount > 1 {
 		return fmt.Errorf("data flow: there are too many weakly connected components; found = %d, max = 1", weaklyConnectedComponentCount)
 	}
-	rewrittenWhereStr := astvisit.GenerateModifiedWhereClause(dp.annotatedAST, dp.rewrittenWhere, dp.handlerCtx.GetSQLDialect(), dp.handlerCtx.GetASTFormatter(), dp.handlerCtx.GetNamespaceCollection())
-	rewrittenWhereStr, err = dp.handlerCtx.GetSQLDialect().SanitizeWhereQueryString(rewrittenWhereStr)
+	rewrittenWhereStr := astvisit.GenerateModifiedWhereClause(dp.annotatedAST, dp.rewrittenWhere, dp.handlerCtx.GetSQLSystem(), dp.handlerCtx.GetASTFormatter(), dp.handlerCtx.GetNamespaceCollection())
+	rewrittenWhereStr, err = dp.handlerCtx.GetSQLSystem().SanitizeWhereQueryString(rewrittenWhereStr)
 	if err != nil {
 		return err
 	}
 	logging.GetLogger().Debugf("rewrittenWhereStr = '%s'", rewrittenWhereStr)
-	drmCfg, err := drm.GetDRMConfig(dp.handlerCtx.GetSQLDialect(), dp.handlerCtx.GetNamespaceCollection(), dp.handlerCtx.GetControlAttributes())
+	drmCfg, err := drm.GetDRMConfig(dp.handlerCtx.GetSQLSystem(), dp.handlerCtx.GetNamespaceCollection(), dp.handlerCtx.GetControlAttributes())
 	if err != nil {
 		return err
 	}
@@ -225,7 +224,7 @@ func (dp *standardDependencyPlanner) Plan() error {
 		dp.secondaryTccs,
 		rewrittenWhereStr,
 		drmCfg.GetNamespaceCollection(),
-	).WithFormatter(drmCfg.GetSQLDialect().GetASTFormatter())
+	).WithFormatter(drmCfg.GetSQLSystem().GetASTFormatter())
 	err = v.Visit(dp.sqlStatement)
 	if err != nil {
 		return err
@@ -253,11 +252,26 @@ func (dp *standardDependencyPlanner) processOrphan(sqlNode sqlparser.SQLNode, an
 	if err != nil {
 		return nil, nil, err
 	}
-	os, err := annotationCtx.GetTableMeta().GetMethod()
-	if err != nil {
-		return nil, nil, err
+	_, isSQLDataSource := annotationCtx.GetTableMeta().GetSQLDataSource()
+	var opStore *openapistackql.OperationStore
+	if !isSQLDataSource {
+		opStore, err = annotationCtx.GetTableMeta().GetMethod()
+		if err != nil {
+			return nil, nil, err
+		}
+	} else {
+		// Persist SQL mirror table here prior to generating insert DML
+		drmCfg := dp.handlerCtx.GetDrmConfig()
+		ddl, err := drmCfg.GenerateDDL(anTab, opStore, 0, false)
+		if err != nil {
+			return nil, nil, err
+		}
+		err = dp.handlerCtx.GetSQLEngine().ExecInTxn(ddl)
+		if err != nil {
+			return nil, nil, err
+		}
 	}
-	insPsc, err := dp.primitiveComposer.GetDRMConfig().GenerateInsertDML(anTab, os, tcc)
+	insPsc, err := dp.primitiveComposer.GetDRMConfig().GenerateInsertDML(anTab, opStore, tcc)
 	return insPsc, tcc, err
 }
 
@@ -271,14 +285,50 @@ func (dp *standardDependencyPlanner) orchestrate(
 	if err != nil {
 		return err
 	}
-	builder := primitivebuilder.NewSingleSelectAcquire(
-		dp.primitiveComposer.GetGraph(),
-		dp.handlerCtx,
-		rc,
-		insPsc,
-		nil,
-		outStream,
-	)
+	_, isSQLDataSource := annotationCtx.GetTableMeta().GetSQLDataSource()
+	var builder primitivebuilder.Builder
+	if isSQLDataSource {
+		// TODO: generate query properly with ordered columns
+		// starColNames := range insPsc.GetNonControlColumns()
+		var colNames []string
+		colz := insPsc.GetNonControlColumns()
+		for _, col := range colz {
+			//
+			colNames = append(colNames, fmt.Sprintf(`"%s"`, col.GetIdentifier()))
+		}
+		projectionStr := strings.Join(colNames, ", ")
+		tableObj, err := dp.handlerCtx.GetDrmConfig().GetCurrentTable(annotationCtx.GetHIDs())
+		if err != nil {
+			return err
+		}
+		tableName := tableObj.GetName()
+		// discoverID = tableObj.GetDiscoveryID()
+		if err != nil {
+			return err
+		}
+		tableName = annotationCtx.GetHIDs().GetSQLDataSourceTableName()
+		// targetTableName := annotationCtx.GetHIDs().GetStackQLTableName()
+		query := fmt.Sprintf(`SELECT %s FROM %s`, projectionStr, tableName)
+		builder = primitivebuilder.NewSQLDataSourceSingleSelectAcquire(
+			dp.primitiveComposer.GetGraph(),
+			dp.handlerCtx,
+			rc,
+			query,
+			nil,
+			insPsc,
+			nil,
+			outStream,
+		)
+	} else {
+		builder = primitivebuilder.NewSingleSelectAcquire(
+			dp.primitiveComposer.GetGraph(),
+			dp.handlerCtx,
+			rc,
+			insPsc,
+			nil,
+			outStream,
+		)
+	}
 	dp.execSlice = append(dp.execSlice, builder)
 	dp.tableSlice = append(dp.tableSlice, rc)
 	err = annotationCtx.Prepare(dp.handlerCtx, inStream)
@@ -291,6 +341,16 @@ func (dp *standardDependencyPlanner) processAcquire(
 	stream streaming.MapStream,
 ) (util.AnnotatedTabulation, internaldto.TxnControlCounters, error) {
 	inputTableName, err := annotationCtx.GetInputTableName()
+	inputProviderString := annotationCtx.GetHIDs().GetProviderStr()
+	sqlDataSource, isSQLDataSource := dp.handlerCtx.GetSQLDataSource(inputProviderString)
+	if isSQLDataSource {
+		if dp.tcc == nil {
+			return util.NewAnnotatedTabulation(nil, nil, "", ""), nil, fmt.Errorf("nil counters disallowed in dependency planner")
+		}
+		anTab := util.NewAnnotatedTabulation(nil, annotationCtx.GetHIDs(), inputTableName, annotationCtx.GetTableMeta().GetAlias())
+		anTab.SetSQLDataSource(sqlDataSource)
+		return anTab, dp.tcc, nil
+	}
 	if err != nil {
 		return util.NewAnnotatedTabulation(nil, nil, "", ""), nil, err
 	}
@@ -313,7 +373,7 @@ func (dp *standardDependencyPlanner) processAcquire(
 	}
 	anTab := util.NewAnnotatedTabulation(tab, annotationCtx.GetHIDs(), inputTableName, annotationCtx.GetTableMeta().GetAlias())
 
-	discoGenId, err := docparser.OpenapiStackQLTabulationsPersistor(m, []util.AnnotatedTabulation{anTab}, dp.primitiveComposer.GetSQLEngine(), prov.Name, dp.handlerCtx.GetNamespaceCollection(), dp.handlerCtx.GetControlAttributes(), dp.handlerCtx.GetSQLDialect())
+	discoGenId, err := docparser.OpenapiStackQLTabulationsPersistor(m, []util.AnnotatedTabulation{anTab}, dp.primitiveComposer.GetSQLEngine(), prov.Name, dp.handlerCtx.GetNamespaceCollection(), dp.handlerCtx.GetControlAttributes(), dp.handlerCtx.GetSQLSystem())
 	if err != nil {
 		return util.NewAnnotatedTabulation(nil, nil, "", ""), nil, err
 	}

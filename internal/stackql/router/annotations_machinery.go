@@ -3,20 +3,22 @@ package router
 import (
 	"fmt"
 
-	"github.com/stackql/stackql/internal/stackql/internaldto"
-	"github.com/stackql/stackql/internal/stackql/sqldialect"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
+	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 )
 
 func obtainAnnotationCtx(
-	sqlDialect sqldialect.SQLDialect,
+	sqlSystem sql_system.SQLSystem,
 	tbl tablemetadata.ExtendedTableMetadata,
 	parameters map[string]interface{},
 	namespaceCollection tablenamespace.TableNamespaceCollection,
 ) (taxonomy.AnnotationCtx, error) {
-	if _, isView := tbl.GetView(); isView {
+	_, isView := tbl.GetView()
+	_, isSQLDataSource := tbl.GetSQLDataSource()
+	if isView || isSQLDataSource {
 		// TODO: upgrade this flow; nil == YUCK!!!
 		return taxonomy.NewStaticStandardAnnotationCtx(nil, tbl.GetHeirarchyObjects().GetHeirarchyIds(), tbl, parameters), nil
 	}
@@ -47,7 +49,7 @@ func obtainAnnotationCtx(
 		name, _ = tbl.GetResponseSchemaStr()
 	}
 	hIds := internaldto.NewHeirarchyIdentifiers(provStr, svcStr, rscStr, methodStr).WithResponseSchemaStr(name)
-	viewDTO, isView := sqlDialect.GetViewByName(hIds.GetTableName())
+	viewDTO, isView := sqlSystem.GetViewByName(hIds.GetTableName())
 	if isView {
 		hIds = hIds.WithView(viewDTO)
 	}

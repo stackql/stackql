@@ -52,10 +52,6 @@ func (v *standardTableRouteAstVisitor) analyzeAliasedTable(tb *sqlparser.Aliased
 			return nil, err
 		}
 		if _, isView := hIDs.GetView(); isView {
-
-			// TODO: Route the view
-			//sv := NewTableRouteAstVisitor(v.handlerCtx, nil)
-
 		}
 		return v.router.Route(tb, v.handlerCtx)
 	default:

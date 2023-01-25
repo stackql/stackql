@@ -3,9 +3,9 @@ package gcexec
 import (
 	"sync"
 
-	"github.com/stackql/stackql/internal/stackql/internaldto"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/kstore"
-	"github.com/stackql/stackql/internal/stackql/sqldialect"
+	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 )
@@ -34,33 +34,33 @@ type GarbageCollectorExecutor interface {
 
 // Idiomatic golang singleton
 // Credit to http://marcio.io/2015/07/singleton-pattern-in-go/
-func GetGarbageCollectorExecutorInstance(sqlEngine sqlengine.SQLEngine, ns tablenamespace.TableNamespaceCollection, dialect sqldialect.SQLDialect, txnStore kstore.KStore) (GarbageCollectorExecutor, error) {
+func GetGarbageCollectorExecutorInstance(sqlEngine sqlengine.SQLEngine, ns tablenamespace.TableNamespaceCollection, system sql_system.SQLSystem, txnStore kstore.KStore) (GarbageCollectorExecutor, error) {
 	var err error
 	once.Do(func() {
 		if err != nil {
 			return
 		}
-		garbageCollectorExecutor, err = newBasicGarbageCollectorExecutor(dialect, ns, txnStore)
+		garbageCollectorExecutor, err = newBasicGarbageCollectorExecutor(system, ns, txnStore)
 	})
 	return garbageCollectorExecutor, err
 }
 
-func newBasicGarbageCollectorExecutor(dialect sqldialect.SQLDialect, ns tablenamespace.TableNamespaceCollection, txnStore kstore.KStore) (GarbageCollectorExecutor, error) {
+func newBasicGarbageCollectorExecutor(system sql_system.SQLSystem, ns tablenamespace.TableNamespaceCollection, txnStore kstore.KStore) (GarbageCollectorExecutor, error) {
 	return &basicGarbageCollectorExecutor{
-		gcMutex:    &sync.Mutex{},
-		ns:         ns,
-		sqlDialect: dialect,
-		txnStore:   txnStore,
+		gcMutex:   &sync.Mutex{},
+		ns:        ns,
+		sqlSystem: system,
+		txnStore:  txnStore,
 	}, nil
 }
 
 // Algorithm summary:
 //   - `Collect()` will reclaim resources from all txns **not** < supplied min ID.
 type basicGarbageCollectorExecutor struct {
-	gcMutex    *sync.Mutex
-	ns         tablenamespace.TableNamespaceCollection
-	sqlDialect sqldialect.SQLDialect
-	txnStore   kstore.KStore
+	gcMutex   *sync.Mutex
+	ns        tablenamespace.TableNamespaceCollection
+	sqlSystem sql_system.SQLSystem
+	txnStore  kstore.KStore
 }
 
 func (rc *basicGarbageCollectorExecutor) Update(tableName string, parentTcc, tcc internaldto.TxnControlCounters) error {
@@ -71,7 +71,7 @@ func (rc *basicGarbageCollectorExecutor) Update(tableName string, parentTcc, tcc
 		if err != nil {
 			return err
 		}
-		err = rc.sqlDialect.GCAdd(templatedName, parentTcc, tcc)
+		err = rc.sqlSystem.GCAdd(templatedName, parentTcc, tcc)
 		if err != nil {
 			return err
 		}
@@ -89,9 +89,9 @@ func (rc *basicGarbageCollectorExecutor) Collect() error {
 	defer rc.gcMutex.Unlock()
 	minId, minValid := rc.txnStore.Min()
 	if !minValid {
-		return rc.sqlDialect.GCCollectAll()
+		return rc.sqlSystem.GCCollectAll()
 	}
-	return rc.sqlDialect.GCCollectObsoleted(minId)
+	return rc.sqlSystem.GCCollectObsoleted(minId)
 }
 
 // Algorithm, **must be done during pause**:
@@ -101,23 +101,23 @@ func (rc *basicGarbageCollectorExecutor) Collect() error {
 func (rc *basicGarbageCollectorExecutor) Purge() error {
 	rc.gcMutex.Lock()
 	defer rc.gcMutex.Unlock()
-	return rc.sqlDialect.PurgeAll()
+	return rc.sqlSystem.PurgeAll()
 }
 
 func (rc *basicGarbageCollectorExecutor) PurgeCache() error {
 	rc.gcMutex.Lock()
 	defer rc.gcMutex.Unlock()
-	return rc.sqlDialect.GCPurgeCache()
+	return rc.sqlSystem.GCPurgeCache()
 }
 
 func (rc *basicGarbageCollectorExecutor) PurgeControlTables() error {
 	rc.gcMutex.Lock()
 	defer rc.gcMutex.Unlock()
-	return rc.sqlDialect.GCControlTablesPurge()
+	return rc.sqlSystem.GCControlTablesPurge()
 }
 
 func (rc *basicGarbageCollectorExecutor) PurgeEphemeral() error {
 	rc.gcMutex.Lock()
 	defer rc.gcMutex.Unlock()
-	return rc.sqlDialect.GCPurgeEphemeral()
+	return rc.sqlSystem.GCPurgeEphemeral()
 }

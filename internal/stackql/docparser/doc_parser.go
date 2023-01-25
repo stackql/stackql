@@ -5,8 +5,8 @@ import (
 
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/logging"
+	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
-	"github.com/stackql/stackql/internal/stackql/sqldialect"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"github.com/stackql/stackql/internal/stackql/util"
@@ -37,9 +37,9 @@ func OpenapiStackQLTabulationsPersistor(
 	prefix string,
 	namespaceCollection tablenamespace.TableNamespaceCollection,
 	controlAttributes sqlcontrol.ControlAttributes,
-	sqlDialect sqldialect.SQLDialect,
+	sqlSystem sql_system.SQLSystem,
 ) (int, error) {
-	drmCfg, err := drm.GetDRMConfig(sqlDialect, namespaceCollection, controlAttributes)
+	drmCfg, err := drm.GetDRMConfig(sqlSystem, namespaceCollection, controlAttributes)
 	if err != nil {
 		return 0, err
 	}
@@ -67,7 +67,7 @@ func OpenapiStackQLTabulationsPersistor(
 			return discoveryGenerationId, displayErr
 		}
 		for _, q := range ddl {
-			_, err = db.Exec(q)
+			_, err = txn.Exec(q)
 			if err != nil {
 				displayErr := fmt.Errorf("aborting DDL run for query '''%s''' with error: %s", q, err.Error())
 				logging.GetLogger().Infof("aborting DDL run for query '''%s''' with error: %s\n", q, err.Error())

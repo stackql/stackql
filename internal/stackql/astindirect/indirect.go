@@ -8,7 +8,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/parse"
 	"github.com/stackql/stackql/internal/stackql/symtab"
 
-	"github.com/stackql/stackql/internal/stackql/internaldto"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"vitess.io/vitess/go/vt/sqlparser"
 )
 
@@ -35,8 +35,8 @@ func NewViewIndirect(viewDTO internaldto.ViewDTO) (Indirect, error) {
 type Indirect interface {
 	Parse() error
 	GetAssignedParameters() (internaldto.TableParameterCollection, bool)
-	GetColumnByName(name string) (drm.ColumnMetadata, bool)
-	GetColumns() []drm.ColumnMetadata
+	GetColumnByName(name string) (internaldto.ColumnMetadata, bool)
+	GetColumns() []internaldto.ColumnMetadata
 	GetName() string
 	GetOptionalParameters() map[string]openapistackql.Addressable
 	GetRequiredParameters() map[string]openapistackql.Addressable
@@ -81,7 +81,7 @@ func (v *view) GetName() string {
 	return v.viewDTO.GetName()
 }
 
-func (v *view) GetColumns() []drm.ColumnMetadata {
+func (v *view) GetColumns() []internaldto.ColumnMetadata {
 	return v.selCtx.GetNonControlColumns()
 }
 
@@ -93,7 +93,7 @@ func (v *view) GetRequiredParameters() map[string]openapistackql.Addressable {
 	return nil
 }
 
-func (v *view) GetColumnByName(name string) (drm.ColumnMetadata, bool) {
+func (v *view) GetColumnByName(name string) (internaldto.ColumnMetadata, bool) {
 	for _, col := range v.selCtx.GetNonControlColumns() {
 		if col.GetIdentifier() == name {
 			return col, true

@@ -4,12 +4,12 @@ import (
 	"fmt"
 
 	"github.com/stackql/stackql/internal/stackql/drm"
-	"github.com/stackql/stackql/internal/stackql/internaldto"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/primitivebuilder"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 	"github.com/stackql/stackql/internal/stackql/provider"
-	"github.com/stackql/stackql/internal/stackql/sqldialect"
+	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/suffix"
 	"github.com/stackql/stackql/internal/stackql/symtab"
@@ -27,6 +27,7 @@ type PrimitiveComposer interface {
 	AddChild(val PrimitiveComposer)
 	AddIndirect(val PrimitiveComposer)
 	AssignParameters() (internaldto.TableParameterCollection, error)
+	ContainsSQLDataSource() bool
 	GetAssignedParameters() (internaldto.TableParameterCollection, bool)
 	GetAst() sqlparser.SQLNode
 	GetASTFormatter() sqlparser.NodeFormatter
@@ -46,7 +47,7 @@ type PrimitiveComposer interface {
 	GetIndirectDescribeSelectCtx() (drm.PreparedStatementCtx, bool)
 	GetIndirectSelectPreparedStatementCtx() drm.PreparedStatementCtx
 	GetSQLEngine() sqlengine.SQLEngine
-	GetSQLDialect() sqldialect.SQLDialect
+	GetSQLSystem() sql_system.SQLSystem
 	GetSymbol(k interface{}) (symtab.SymTabEntry, error)
 	GetSymTab() symtab.SymTab
 	GetTable(node sqlparser.SQLNode) (tablemetadata.ExtendedTableMetadata, error)
@@ -136,17 +137,27 @@ type standardPrimitiveComposer struct {
 
 	sqlEngine sqlengine.SQLEngine
 
-	sqlDialect sqldialect.SQLDialect
+	sqlSystem sql_system.SQLSystem
 
 	formatter sqlparser.NodeFormatter
 
-	unionNonControlColumns []drm.ColumnMetadata
+	unionNonControlColumns []internaldto.ColumnMetadata
 
 	tccSetAheadOfTime bool
 
 	paramCollection internaldto.TableParameterCollection
 
 	isIndirect bool
+}
+
+func (pb *standardPrimitiveComposer) ContainsSQLDataSource() bool {
+	for _, tb := range pb.tables {
+		_, isSQLDataSource := tb.GetSQLDataSource()
+		if isSQLDataSource {
+			return true
+		}
+	}
+	return false
 }
 
 func (pb *standardPrimitiveComposer) IsIndirect() bool {
@@ -165,7 +176,7 @@ func (pb *standardPrimitiveComposer) SetSymTab(symTab symtab.SymTab) {
 	pb.symTab = symTab
 }
 
-func (pb *standardPrimitiveComposer) GetNonControlColumns() []drm.ColumnMetadata {
+func (pb *standardPrimitiveComposer) GetNonControlColumns() []internaldto.ColumnMetadata {
 	if pb.GetSelectPreparedStatementCtx() != nil {
 		return pb.GetSelectPreparedStatementCtx().GetNonControlColumns()
 	}
@@ -306,7 +317,7 @@ func (pb *standardPrimitiveComposer) GetTxnCounterManager() txncounter.TxnCounte
 }
 
 func (pb *standardPrimitiveComposer) NewChildPrimitiveComposer(ast sqlparser.SQLNode) PrimitiveComposer {
-	child := NewPrimitiveComposer(pb, ast, pb.drmConfig, pb.txnCounterManager, pb.graph, pb.tables, pb.symTab, pb.sqlEngine, pb.sqlDialect, pb.formatter)
+	child := NewPrimitiveComposer(pb, ast, pb.drmConfig, pb.txnCounterManager, pb.graph, pb.tables, pb.symTab, pb.sqlEngine, pb.sqlSystem, pb.formatter)
 	pb.children = append(pb.children, child)
 	return child
 }
@@ -428,7 +439,7 @@ func (pb *standardPrimitiveComposer) GetBuilder() primitivebuilder.Builder {
 			builders = append(builders, bldr)
 		}
 	}
-	simpleDiamond := primitivebuilder.NewDiamondBuilder(pb.builder, builders, pb.graph, pb.sqlDialect, pb.ShouldCollectGarbage())
+	simpleDiamond := primitivebuilder.NewDiamondBuilder(pb.builder, builders, pb.graph, pb.sqlSystem, pb.ShouldCollectGarbage())
 	if len(pb.indirects) > 0 {
 		var indirectBuilders []primitivebuilder.Builder
 		for _, ind := range pb.indirects {
@@ -436,7 +447,7 @@ func (pb *standardPrimitiveComposer) GetBuilder() primitivebuilder.Builder {
 				indirectBuilders = append(indirectBuilders, bldr)
 			}
 		}
-		indirectDiamond := primitivebuilder.NewDiamondBuilder(pb.builder, indirectBuilders, pb.graph, pb.sqlDialect, pb.ShouldCollectGarbage())
+		indirectDiamond := primitivebuilder.NewDiamondBuilder(pb.builder, indirectBuilders, pb.graph, pb.sqlSystem, pb.ShouldCollectGarbage())
 		return primitivebuilder.NewDependencySubDAGBuilder(pb.graph, []primitivebuilder.Builder{indirectDiamond}, simpleDiamond)
 	}
 	return simpleDiamond
@@ -475,11 +486,11 @@ func (pb *standardPrimitiveComposer) GetSQLEngine() sqlengine.SQLEngine {
 	return pb.sqlEngine
 }
 
-func (pb *standardPrimitiveComposer) GetSQLDialect() sqldialect.SQLDialect {
-	return pb.sqlDialect
+func (pb *standardPrimitiveComposer) GetSQLSystem() sql_system.SQLSystem {
+	return pb.sqlSystem
 }
 
-func NewPrimitiveComposer(parent PrimitiveComposer, ast sqlparser.SQLNode, drmConfig drm.DRMConfig, txnCtrMgr txncounter.TxnCounterManager, graph primitivegraph.PrimitiveGraph, tblMap taxonomy.TblMap, symTab symtab.SymTab, sqlEngine sqlengine.SQLEngine, sqlDialect sqldialect.SQLDialect, formatter sqlparser.NodeFormatter) PrimitiveComposer {
+func NewPrimitiveComposer(parent PrimitiveComposer, ast sqlparser.SQLNode, drmConfig drm.DRMConfig, txnCtrMgr txncounter.TxnCounterManager, graph primitivegraph.PrimitiveGraph, tblMap taxonomy.TblMap, symTab symtab.SymTab, sqlEngine sqlengine.SQLEngine, sqlSystem sql_system.SQLSystem, formatter sqlparser.NodeFormatter) PrimitiveComposer {
 	return &standardPrimitiveComposer{
 		parent:            parent,
 		ast:               ast,
@@ -492,7 +503,7 @@ func NewPrimitiveComposer(parent PrimitiveComposer, ast sqlparser.SQLNode, drmCo
 		symTab:            symTab,
 		graph:             graph,
 		sqlEngine:         sqlEngine,
-		sqlDialect:        sqlDialect,
+		sqlSystem:         sqlSystem,
 		formatter:         formatter,
 	}
 }

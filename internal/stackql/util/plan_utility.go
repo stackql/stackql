@@ -9,7 +9,7 @@ import (
 	"github.com/jeroenrinzema/psql-wire/pkg/sqldata"
 	"github.com/lib/pq/oid"
 	openapistackql_util "github.com/stackql/go-openapistackql/pkg/util"
-	"github.com/stackql/stackql/internal/stackql/internaldto"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 
@@ -395,63 +395,6 @@ func nativeProtect(rv internaldto.ExecutorOutput, columns []string) internaldto.
 	return rv
 }
 
-func PrepareNativeResultSet(rows *sql.Rows) internaldto.ExecutorOutput {
-	if rows == nil {
-		emptyResult := internaldto.NewExecutorOutput(
-			nil,
-			nil,
-			nil,
-			&internaldto.BackendMessages{WorkingMessages: []string{"native sql nil result set"}},
-			nil,
-		)
-		return nativeProtect(emptyResult, []string{"error"})
-	}
-	colTypes, err := rows.ColumnTypes()
-	if err != nil {
-		return nativeProtect(internaldto.NewErroneousExecutorOutput(err), []string{"error"})
-	}
-
-	columns := getColumnArr(colTypes)
-
-	var colz []string
-
-	for _, c := range colTypes {
-		colz = append(colz, c.Name())
-	}
-
-	var outRows []sqldata.ISQLRow
-
-	for {
-		hasNext := rows.Next()
-		if !hasNext {
-			break
-		}
-		rowPtr := getRowPointers(colTypes)
-		err = rows.Scan(rowPtr...)
-		if err != nil {
-			return nativeProtect(internaldto.NewErroneousExecutorOutput(err), []string{"error"})
-		}
-		outRows = append(outRows, sqldata.NewSQLRow(rowPtr))
-	}
-	resultStream := sqldata.NewChannelSQLResultStream()
-	rv := internaldto.NewExecutorOutput(
-		resultStream,
-		nil,
-		nil,
-		nil,
-		nil,
-	)
-	if len(outRows) == 0 {
-		outRows = append(outRows, sqldata.NewSQLRow([]interface{}{}))
-	}
-	resultStream.Write(sqldata.NewSQLResult(columns, 0, 0, outRows))
-	resultStream.Close()
-	if len(outRows) == 0 {
-		nativeProtect(rv, colz)
-	}
-	return rv
-}
-
 func EmptyProtectResultSet(rv internaldto.ExecutorOutput, columns []string) internaldto.ExecutorOutput {
 	return emptyProtectResultSet(rv, columns)
 }
@@ -485,7 +428,16 @@ func getOidForSQLType(colType *sql.ColumnType) oid.Oid {
 	if colType == nil {
 		return oid.T_text
 	}
-	switch strings.ToLower(colType.DatabaseTypeName()) {
+	return getOidForSQLDatabaseTypeName(colType.DatabaseTypeName())
+}
+
+func GetOidForSQLDatabaseTypeName(typeName string) oid.Oid {
+	return getOidForSQLDatabaseTypeName(typeName)
+}
+
+func getOidForSQLDatabaseTypeName(typeName string) oid.Oid {
+	typeNameLowered := strings.ToLower(typeName)
+	switch strings.ToLower(typeNameLowered) {
 	case "object", "array":
 		return oid.T_text
 	case "boolean", "bool":
