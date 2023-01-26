@@ -8,6 +8,7 @@ import (
 	"github.com/stackql/go-openapistackql/pkg/media"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/astvisit"
+	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/dataflow"
 	"github.com/stackql/stackql/internal/stackql/docparser"
 	"github.com/stackql/stackql/internal/stackql/drm"
@@ -285,7 +286,7 @@ func (dp *standardDependencyPlanner) orchestrate(
 	if err != nil {
 		return err
 	}
-	_, isSQLDataSource := annotationCtx.GetTableMeta().GetSQLDataSource()
+	sqlDataSource, isSQLDataSource := annotationCtx.GetTableMeta().GetSQLDataSource()
 	var builder primitivebuilder.Builder
 	if isSQLDataSource {
 		// TODO: generate query properly with ordered columns
@@ -309,6 +310,9 @@ func (dp *standardDependencyPlanner) orchestrate(
 		tableName = annotationCtx.GetHIDs().GetSQLDataSourceTableName()
 		// targetTableName := annotationCtx.GetHIDs().GetStackQLTableName()
 		query := fmt.Sprintf(`SELECT %s FROM %s`, projectionStr, tableName)
+		if sqlDataSource.GetDBName() == constants.SQLDbNameSnowflake {
+			query = strings.ReplaceAll(query, `"`, ``)
+		}
 		builder = primitivebuilder.NewSQLDataSourceSingleSelectAcquire(
 			dp.primitiveComposer.GetGraph(),
 			dp.handlerCtx,

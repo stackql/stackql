@@ -26,6 +26,7 @@ const (
 	SQLDialectSQLite3                  string = "sqlite3"
 	SQLDialectPostgres                 string = "postgres"
 	SQLDialectSnowflake                string = "snowflake"
+	SQLDbNameSnowflake                 string = "snowflake"
 	SQLDialectDefault                  string = SQLDialectSQLite3
 	SQLFuncJSONExtractSQLite           string = "json_extract"
 	SQLFuncJSONExtractPostgres         string = "json_extract_path_text"
