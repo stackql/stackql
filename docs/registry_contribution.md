@@ -34,7 +34,7 @@ Configure `stackql` to use your docs, via the `--registry` command line argument
 
 ### 4. Iterate and verify that `stackql` works as expected against your new provider.
 
-Iterate upon steps 2 and 3 until API coverage and functionality fulfil your requirements.
+Iterate upon steps 2 and 3 until API coverage and functionality fulfill your requirements.
 
 ### 5. Submit a Pull Request against the Provider Registry repository.
 
@@ -47,7 +47,7 @@ In this walkthrough, we demonstrate the bare bones of integrating a simple Provi
 
 The assumptions for this walkthrough are:
 
-1. You have either built (eg: via `cmake` as per [the readme](/README.md#build)) or copied the `stackql` executable for your platform into the [build](/build) directory.
+1. You have either built (eg: as per [the readme](/README.md#build)) or copied the `stackql` executable for your platform into the [build](/build) directory.
 2. The current working directory is same as this document, otherwise relative paths to `pwd` will need to be adjusted.
 
 ### Configuring StackQL to consume a local development registry

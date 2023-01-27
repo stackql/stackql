@@ -1,15 +1,11 @@
 
 # StackQL Developer Guide
 
+## Contribution 
+
+Please see [the contributing document](/CONTRIBUTING.md).
+
 ## Quick walkthrough
-
-### Running unit tests standalone
-
-Some pretty hefty things, also the `json1` tag is a must.
-
-```
-go test -timeout 2400s -p 2 --tags "json1 sqleanall" ./...
-```
 
 ## Provider development
 
@@ -29,17 +25,8 @@ At this stage, authentication config must be specified for each provider, even f
 
 If you want further auth types or discover bugs, please raise an issue.
 
-Examples are present [here](/docs/examples.md).
+Examples are present [here](/examples/examples.md).
 
-### Azure development phase
-
-Until we integrate token refresh code into the core (likely from Azure SDK), token refresh for `azure` and `azure_extras` is done manually.
-
-```
-AZ_ACCESS_TOKEN_RAW=$(az account get-access-token --query accessToken --output tsv)
-
-export AZ_ACCESS_TOKEN=`echo $AZ_ACCESS_TOKEN_RAW | tr -d '\r'`
-```
 
 ## Server mode
 
@@ -49,7 +36,7 @@ export AZ_ACCESS_TOKEN=`echo $AZ_ACCESS_TOKEN_RAW | tr -d '\r'`
 - development of `stackql` itself.
 - development of use cases for the product.
 
-The `stackql` server leverages the `postgres` wire protocol and can be used with the `psql` client, including mTLS auth / encryption in transit.  Please see [the relevant examples](/docs/examples.md#running-in-server-mode) for further details.
+The `stackql` server leverages the `postgres` wire protocol and can be used with the `psql` client, including mTLS auth / encryption in transit.  Please see [the relevant examples](/examples/examples.md#running-in-server-mode) for further details.
 
 ## Concurrency considerations
 
@@ -106,60 +93,46 @@ Really high level stuff:
 ### Execution model
 
   - Failure modes and possible multiple errors... how to communicate cause and final state to user.  Need some overall philosophy that is extensible to transactions.
-  - Need reasoned view of primitives and optimisations, default extensible method map aproach.
-  - Parallelisation of "atomic" DML ops.
+  - Need reasoned view of primitives and optimisations, default extensible method map approach.
+  - Paral;elisation of "atomic" DML ops.
 
-### Presentation layer
-
-  - MySQL client Server POC.
-  - Readlines up arrow bug when line loner than one window width.
 
 ## Tests
 
-See also:
+Really, the github action files are the source of truth for build and test and we do encourage perusal of them.  However, to keep things brief, here below is the developers' brief for testing.
 
-- [standalone unit tests](#running-unit-tests-standalone).
+Requirements are [detailed in the root README](/README.md#system-requirements). 
 
-Building locally or in cloud will automatically:
+Local testing of the application:
 
-1. Run `go test` tests.
-2. Build the executable.
-3. Run integration tests.
+1. Run `go test --tags "json1 sqleanall" ./...` tests.
+2. Build the executable [as per the root README](/README.md#build)
+3. Perform registry rewrites as needed for mocking `python3 test/python/registry-rewrite.py`.
+3. Run robot tests:
+    - Functional tests, mocked as needed `robot -d test/robot/functional test/robot/functional`.
+    - Integration tests `robot -d test/robot/integration test/robot/integration`.  For these, you will need to set various envirnonment variables as per the github actions.
+4. Run the deprecated manual python tests:
+    - Prepare with `cp test/db/db.sqlite test/db/tmp/python-tests-tmp-db.sqlite`.
+    - Run with `python3 test/python/main.py`.
 
 [This article](https://medium.com/cbi-engineering/mocking-techniques-for-go-805c10f1676b) gives a nice overview of mocking in golang.
 
 ### go test
 
-Test coverage is sparse.  Regressions are mitigated by `gotest` integration testing in the [driver](/internal/stackql/driver/driver_integration_test.go) and [stackql](/stackql/main_integration_test.go) packages.  Some testing functionality is supported through convenience functionality inside the [test](/internal/test) packages.
+Test coverage is sparse.  Regressions are mitigated by `go test` integration testing in the [driver](/internal/stackql/driver/driver_integration_test.go) and [stackql](/stackql/main_integration_test.go) packages.  Some testing functionality is supported through convenience functionality inside the [test](/internal/test) packages.
 
 #### Point in time gotest coverage
 
 If not already done, then install 'cover' with `go get golang.org/x/tools/cmd/cover`.  
 Then: `go test --tags "json1 sqleanall" -cover ../...`.
 
-### Integration testing
+### Functional and Integration testing
 
-Integration testing is driven from [test/python/main.py](/test/python/main.py), and via config-driven [generators](/test/test-generators/live-integration/integration.json).  In the first instance, this did not not call any remote backends; rather calling the `stackql` executable to run queries against cached provider discovery data.    
+Automated functional and integration testing are done largely through robot framework.  Please see [the robot test readme](/test/robot/README.md).
 
-One can run local integration tests against remote backends; simple, extensible example as follows:
-
-1. place a service account key file in `test/assets/secrets/google/sa-key.json`.
-2. place a jsonnet context file in `test/assets/input/live-integration/template-context/local/network-crud/network-crud.jsonnet`; something similar to `test/assets/input/live-integration/template-context/example.jsonnet` with the name of a project for whoch the service account has network create and view privileges will suffice.
-3. `cd build`
-4. `cmake -DLIVE_INTEGRATION_TESTS=live-integration ..`
-5. `cmake --build .`
-
-
-To stop running live integration tests:
-
-- `cmake -DLIVE_INTEGRATION_TESTS=live-integration ..`
-- `cmake --build .`
-
-**TODO**: instrument **REAL** integration tests as part of github actions workflow(s).
+There is some legacy, deprecated [manual python testing](/test/python/main.py) which will be migrated to robot and decommissioned.
 
 ## Cross Compilation locally
-
-`cmake` can cross-compile, provided dependencies are met.
 
 ### From mac
 
