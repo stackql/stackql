@@ -92,11 +92,3 @@ services:
       - POSTGRES_PASSWORD=stackql
     ports:
       - "7432:5432/tcp"
-  postgres_external_data_source:
-    image: postgres:14.5-bullseye
-    hostname: postgres_external_data_source
-    environment:
-      - POSTGRES_PASSWORD=stackql
-      - POSTGRES_USER=stackql
-    ports:
-      - "8432:5432/tcp"

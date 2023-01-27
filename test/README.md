@@ -11,7 +11,7 @@ Offline invocations of `stackql` are assessed against expected responses, throug
 (1) is deprecated and will be entirely migrated to (2).
 
 These tests are run during the build process:
-  - locally through cmake as per [/README.md#build](/README.md#build)
+  - locally as per [/README.md#build](/README.md#build)
   - in github actions based CICD as per [/.github/workflows/go.yml](/.github/workflows/go.yml).
 
 ## Unit tests using standard golang approaches

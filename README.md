@@ -56,18 +56,6 @@ Providers include:
 
 ### Native Build
 
-#### With cmake
-
-Presuming you have all of [the system requirements](#system-requirements-for-local-devlopment-build-and-test), then build/test with cmake:
-
-```bash
-cd build
-cmake ..
-cmake --build .
-```
-
-Executable `build/stackql` will be created.
-
 #### In shell
 
 ```bash
@@ -85,12 +73,15 @@ env CGO_ENABLED=1 go build \
 
 ```
 
-#### System requirements for local development, build and test
+#### System requirements
 
-- cmake>=3.22.3
-- golang>=1.16
+These are the system requirements for local development, build and test
+
+- golang>=1.18
 - openssl>=1.1.1
-- python>=3.5
+- python>=3.10
+    - python packages as per [the requirements file](/requirements.txt)
+- docker
 
 ### Docker Build
 
@@ -175,19 +166,19 @@ docker compose down
 ./stackql exec "show extended services from google where title = 'Service Directory API';"
 ```
 
-More examples in [docs/examples.md](/docs/examples.md).
+More examples in [examples/examples.md](/examples/examples.md).
 
 ---
 
 ## Developers
 
-[docs/developer_guide.md](/docs/developer_guide.md).
+- [docs/developer_guide.md](/docs/developer_guide.md).
+- [contributing](/CONTRIBUTING.md).
 
 ## Testing
 
-[test/README.md](/test/README.md).
-
-[docs/integration_testing.md](/docs/integration_testing.md).
+- [test/README.md](/test/README.md).
+- [docs/integration_testing.md](/docs/integration_testing.md).
 
 ## Server mode
 
