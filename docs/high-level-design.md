@@ -13,7 +13,7 @@ The architecture of `stackql` can be regarded as an amalgam of:
 
 ---
 
-`stackql` generalizes the idea of infrastructure / computing reources into a `provider`, `service`, `resource` heirarchy that can be queried with SQL semantics, plus some imperative operations which are not canonical SQL.  Potentially any infrastructure: computing, orchestration, storage, SAAS, PAAS offerings etc can be managed with `stackql`, athough the primary driver is cloud infrastructure management.  Multi-provider queries are to be a first class citizen in `stackql`.
+`stackql` generalizes the idea of infrastructure / computing resources into a `provider`, `service`, `resource` hierarchy that can be queried with SQL semantics, plus some imperative operations which are not canonical SQL.  Potentially any infrastructure: computing, orchestration, storage, SAAS, PAAS offerings etc can be managed with `stackql`, although the primary driver is cloud infrastructure management.  Multi-provider queries are a first class citizen in `stackql`.
 
 ---
 
@@ -26,7 +26,7 @@ Considering query execution in a bottom-up manner from backend execution to fron
     3. **Code Generation**; final calls against whatever backend, eg HTTP API. 
   - **Semantic Analysis** of queries is a phase that accepts an AST as input and:
     - creates a symbol table.
-    - analyzes provider heirarchies and API(s) required to complete the query.  Typically these would be sourced by downloading and cacheing provider discovery documents.
+    - analyzes provider hierarchies and API(s) required to complete the query.  Typically these would be sourced by downloading and cacheing provider discovery documents.
     - performs type checking, scope (label) analysis.
     - creates a `Planbuilder` object and decorates it during analysis.
     - **may** generate some primitives.
@@ -54,7 +54,7 @@ The existing default implementation is an embedded `SQLite3` binary, accessibled
 By default the database instance is in memory, but can be persistent, specified via runtime arguments.
 
 For each API response type, a database table can be lazily created (eagerly is slower, but we would not rule out some future opt-in scenarios for persistent databases).  
-Table nomenclature includes dot (`.`) separated namespacing for provider, service, resource, schema type and `generation`; this latter being a poisitve integer version for the table itself.  Generation suppports either analyics on extinct records or multiple versions of an API.
+Table nomenclature includes dot (`.`) separated namespacing for provider, service, resource, schema type and `generation`; this latter being a positive integer version for the table itself.  Generation supports either analytics on extinct records or multiple versions of an API.
 
 Each table contains control columns to identify the query and session to which records belong.
 This will support audit, concurrency, and garbage collection.
@@ -65,7 +65,7 @@ Garbage collection is not implemented at this point in time.
 In the short term, a manual collect all option will be implemented.
 
 **Table GC1**: Proposed database object lifetimes.
-| Object | Proposed Mimimum Lifetime | Proposed Maximum Lifetime |
+| Object | Proposed Minimum Lifetime | Proposed Maximum Lifetime |
 | --- | ----------- | ----------- |
 | Database |  |  |
 | Tables | Same as API document lifetime | Same as API document lifetime |
