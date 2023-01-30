@@ -17,7 +17,7 @@ const defaultWindowsConfigCacheDirFileMode uint32 = 0777
 
 const defaultConfigFileName = ".stackqlrc"
 
-const defaltLogLevel = "warn"
+const defaltLogLevel = "fatal"
 
 const defaltErrorPresentation = "stderr"
 

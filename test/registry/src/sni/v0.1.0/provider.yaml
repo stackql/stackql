@@ -1,7 +1,6 @@
 id: sni
 name: sni
 version: v0.1.0
-openapi: 3.0.3
 config:
   sqlExternalTables:
     information_schema.applicable_roles:
