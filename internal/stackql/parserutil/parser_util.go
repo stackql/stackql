@@ -433,7 +433,8 @@ func inferColNameFromExpr(node *sqlparser.AliasedExpr, formatter sqlparser.NodeF
 		retVal.Qualifier = expr.Qualifier.GetRawVal()
 		decoratedCol := expr.GetRawVal()
 		// if decoratedCol != retVal.Name {
-		retVal.DecoratedColumn = decoratedCol
+		retVal.Alias = alias
+		retVal.DecoratedColumn = getDecoratedColRendition(decoratedCol, alias)
 		//}
 		retVal.IsColumn = true
 	case *sqlparser.GroupConcatExpr:

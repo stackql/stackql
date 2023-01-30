@@ -56,6 +56,24 @@ PG Session View Handling Behaviour Canonical
     ...    stdout=${CURDIR}/tmp/PG-Session-View-Handling-Behaviour-Canonical.tmp
     [Teardown]    NONE
 
+PG Session Aliased Cross Cloud Disks View Handling Behaviour Canonical
+    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test due to split_part function
+    Should PG Client Session Inline Equal
+    ...    ${PSQL_MTLS_CONN_STR_UNIX_WITH_EAGER_GC}
+    ...    ${SHELL_COMMANDS_DISKS_VIEW_ALIASED_SEQUENCE}
+    ...    ${SHELL_COMMANDS_DISKS_VIEW_ALIASED_SEQUENCE_JSON_EXPECTED}
+    ...    stdout=${CURDIR}/tmp/PG-Session-Aliased-Cross-Cloud-Disks-View-Handling-Behaviour-Canonical.tmp
+    [Teardown]    NONE
+
+PG Session NOT Aliased Cross Cloud Disks View Handling Behaviour Canonical
+    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test due to split_part function
+    Should PG Client Session Inline Equal
+    ...    ${PSQL_MTLS_CONN_STR_UNIX_WITH_EAGER_GC}
+    ...    ${SHELL_COMMANDS_DISKS_VIEW_NOT_ALIASED_SEQUENCE}
+    ...    ${SHELL_COMMANDS_DISKS_VIEW_NOT_ALIASED_SEQUENCE_JSON_EXPECTED}
+    ...    stdout=${CURDIR}/tmp/PG-Session-NOT-Aliased-Cross-Cloud-Disks-View-Handling-Behaviour-Canonical.tmp
+    [Teardown]    NONE
+
 PG Session Azure Compute Table Nomenclature Mutation Guard
     Should PG Client Session Inline Equal
     ...    ${PSQL_MTLS_CONN_STR_UNIX}
