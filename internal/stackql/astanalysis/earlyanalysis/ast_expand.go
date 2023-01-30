@@ -6,6 +6,7 @@ import (
 
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/astindirect"
+	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
@@ -40,6 +41,7 @@ type indirectExpandAstVisitor struct {
 	tcc                            internaldto.TxnControlCounters
 	primitiveGenerator             primitivegenerator.PrimitiveGenerator
 	whereParams                    parserutil.ParameterMap
+	indirectionDepth               int
 }
 
 func newIndirectExpandAstVisitor(
@@ -51,6 +53,7 @@ func newIndirectExpandAstVisitor(
 	namespaceCollection tablenamespace.TableNamespaceCollection,
 	whereParams parserutil.ParameterMap,
 	tcc internaldto.TxnControlCounters,
+	indirectionDepth int,
 ) (AstExpandVisitor, error) {
 	if whereParams == nil {
 		whereParams = parserutil.NewParameterMap()
@@ -64,6 +67,7 @@ func newIndirectExpandAstVisitor(
 		handlerCtx:          handlerCtx,
 		tcc:                 tcc,
 		whereParams:         whereParams,
+		indirectionDepth:    indirectionDepth,
 	}
 	return rv, nil
 }
@@ -601,7 +605,10 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 	case sqlparser.TableExprs:
 		for _, n := range node {
-			n.Accept(v)
+			err := n.Accept(v)
+			if err != nil {
+				return err
+			}
 		}
 
 	case *sqlparser.AliasedTableExpr:
@@ -692,9 +699,10 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 			if err != nil {
 				return err
 			}
+			childAnalyzer.SetIndirectionDepth(v.indirectionDepth + 1)
 			err = childAnalyzer.Analyze(indirect.GetSelectAST(), v.handlerCtx, v.tcc)
 			if err != nil {
-				return nil
+				return err
 			}
 			// Persist indirect for later retrieval
 			v.annotatedAST.SetIndirect(node, indirect)
@@ -703,6 +711,11 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 			if err != nil {
 				return err
 			}
+			maxIndirectCount := childAnalyzer.GetIndirectionDepth()
+			if maxIndirectCount > constants.LimitsIndirectMaxChainLength {
+				return fmt.Errorf("query error: indirection chain length %d > %d and is therefore disallowed; please do not cite views from within views", maxIndirectCount, constants.LimitsIndirectMaxChainLength)
+			}
+			indirectPrimitiveGenerator.GetPrimitiveComposer().GetAst()
 			selCtx := indirectPrimitiveGenerator.GetPrimitiveComposer().GetIndirectSelectPreparedStatementCtx()
 			underlyingSymTab := indirectPrimitiveGenerator.GetPrimitiveComposer().GetSymTab()
 			colz := selCtx.GetNonControlColumns()
