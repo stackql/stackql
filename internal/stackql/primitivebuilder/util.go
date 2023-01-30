@@ -1,21 +1,27 @@
 package primitivebuilder
 
 import (
+	"fmt"
+
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/util"
 )
 
-func generateSuccessMessagesFromHeirarchy(meta tablemetadata.ExtendedTableMetadata) []string {
+func generateSuccessMessagesFromHeirarchy(meta tablemetadata.ExtendedTableMetadata, isAwait bool) []string {
+	baseSuccessString := "The operation completed successfully"
+	if !isAwait {
+		baseSuccessString = "The operation was despatched successfully"
+	}
 	successMsgs := []string{
-		"The operation completed successfully",
+		baseSuccessString,
 	}
 	m, methodErr := meta.GetMethod()
 	prov, err := meta.GetProvider()
 	if methodErr == nil && err == nil && m != nil && prov != nil && prov.GetProviderString() == "google" {
 		if m.APIMethod == "select" || m.APIMethod == "get" || m.APIMethod == "list" || m.APIMethod == "aggregatedList" {
 			successMsgs = []string{
-				"The operation completed successfully, consider using a SELECT statement if you are performing an operation that returns data, see https://docs.stackql.io/language-spec/select for more information",
+				fmt.Sprintf("%s, consider using a SELECT statement if you are performing an operation that returns data, see https://docs.stackql.io/language-spec/select for more information", baseSuccessString),
 			}
 		}
 	}

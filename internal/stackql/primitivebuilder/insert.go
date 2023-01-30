@@ -151,7 +151,7 @@ func (ss *Insert) Build() error {
 				}
 				msgs := internaldto.BackendMessages{}
 				if err == nil {
-					msgs.WorkingMessages = generateSuccessMessagesFromHeirarchy(tbl)
+					msgs.WorkingMessages = generateSuccessMessagesFromHeirarchy(tbl, isAwait)
 				} else {
 					msgs.WorkingMessages = []string{err.Error()}
 				}

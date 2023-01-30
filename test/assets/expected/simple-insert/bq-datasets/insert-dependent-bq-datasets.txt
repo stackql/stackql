@@ -1,2 +1,2 @@
-The operation completed successfully
-The operation completed successfully
+The operation was despatched successfully
+The operation was despatched successfully

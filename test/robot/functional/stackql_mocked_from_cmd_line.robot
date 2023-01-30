@@ -281,7 +281,7 @@ AWS EC2 Volume Insert Simple
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${CREATE_AWS_VOLUME}
-    ...    The operation completed successfully
+    ...    The operation was despatched successfully
 
 AWS EC2 Volume Update Simple
     Should StackQL Exec Inline Equal
@@ -293,7 +293,7 @@ AWS EC2 Volume Update Simple
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${UPDATE_AWS_EC2_VOLUME}
-    ...    The operation completed successfully
+    ...    The operation was despatched successfully
 
 GitHub Orgs Org Update Simple
     Should StackQL Exec Inline Equal
@@ -305,7 +305,7 @@ GitHub Orgs Org Update Simple
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${UPDATE_GITHUB_ORG}
-    ...    The operation completed successfully
+    ...    The operation was despatched successfully
 
 AWS Cloud Control Log Group Insert Simple
     Should StackQL Exec Inline Equal
@@ -317,7 +317,7 @@ AWS Cloud Control Log Group Insert Simple
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${CREATE_AWS_CLOUD_CONTROL_LOG_GROUP}
-    ...    The operation completed successfully
+    ...    The operation was despatched successfully
 
 AWS Cloud Control Log Group Delete Simple
     Should StackQL Exec Inline Equal
@@ -329,7 +329,7 @@ AWS Cloud Control Log Group Delete Simple
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${DELETE_AWS_CLOUD_CONTROL_LOG_GROUP}
-    ...    The operation completed successfully
+    ...    The operation was despatched successfully
 
 AWS Cloud Control Log Group Update Simple
     Should StackQL Exec Inline Equal
@@ -341,7 +341,7 @@ AWS Cloud Control Log Group Update Simple
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${UPDATE_AWS_CLOUD_CONTROL_REQUEST_LOG_GROUP}
-    ...    The operation completed successfully
+    ...    The operation was despatched successfully
 
 GitHub Pages Select Top Level Object
     Should StackQL Exec Inline Equal

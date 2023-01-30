@@ -108,7 +108,7 @@ func (ss *Delete) Build() error {
 		}
 		msgs := internaldto.BackendMessages{}
 		if err == nil {
-			msgs.WorkingMessages = generateSuccessMessagesFromHeirarchy(tbl)
+			msgs.WorkingMessages = generateSuccessMessagesFromHeirarchy(tbl, ss.isAwait)
 		}
 		return generateResultIfNeededfunc(keys, target, &msgs, err, false)
 	}
