@@ -491,6 +491,9 @@ PSQL_EXE :str = os.environ.get('PSQL_EXE', 'psql')
 
 PSQL_CLIENT_HOST :str = "127.0.0.1"
 
+CREATE_DISKS_VIEW_NO_PRIMARY_ALIAS = "create view cross_cloud_disks_not_aliased as select 'aws' as vendor, volumeId as name, volumeType as type, size from aws.ec2.volumes where region = 'ap-southeast-2' union select 'google' as vendor, name, split_part(split_part(type, '/', 11), '-', 2) as type, sizeGb as size from google.compute.disks where project = 'testing-project' and zone = 'australia-southeast1-a' ;"
+CREATE_DISKS_VIEW_PRIMARY_ALIAS = "create view cross_cloud_disks_aliased as select 'google' as vendor, name, split_part(split_part(type, '/', 11), '-', 2) as type, sizeGb as size from google.compute.disks where project = 'testing-project' and zone = 'australia-southeast1-a' union select 'aws' as vendor, volumeId as name, volumeType as type, size from aws.ec2.volumes where region = 'ap-southeast-2' ;"
+
 PSQL_MTLS_CONN_STR :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH} sslkey={STACKQL_PG_CLIENT_KEY_PATH} sslrootcert={STACKQL_PG_SERVER_CERT_PATH} dbname=mydatabase"
 PSQL_MTLS_CONN_STR_UNIX :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH_UNIX} sslkey={STACKQL_PG_CLIENT_KEY_PATH_UNIX} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_UNIX} dbname=mydatabase"
 
@@ -633,6 +636,8 @@ SELECT_OKTA_USERS_ASC_EXPECTED = get_output_from_local_file(os.path.join('test',
 
 
 SELECT_SOME_VIEW_EXPECTED_JSON = get_json_from_local_file(os.path.join('test', 'assets', 'expected', 'views', 'select-some-view.json'))
+
+SELECT_CROSS_CLOUD_DISKS_VIEW_EXPECTED_JSON = get_json_from_local_file(os.path.join('test', 'assets', 'expected', 'views', 'select-cross-cloud-disks.json'))
 
 SELECT_POSTGRES_CATALOG_JOIN = "SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relkind in ('r', 'p');"
 
@@ -857,6 +862,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'SELECT_CONTRIVED_GCP_SELF_JOIN_EXPECTED':                                SELECT_CONTRIVED_GCP_SELF_JOIN_EXPECTED,
     'SELECT_CONTRIVED_GCP_THREE_WAY_JOIN':                                    SELECT_CONTRIVED_GCP_THREE_WAY_JOIN,
     'SELECT_CONTRIVED_GCP_THREE_WAY_JOIN_EXPECTED':                           SELECT_CONTRIVED_GCP_THREE_WAY_JOIN_EXPECTED,
+    'SELECT_CROSS_CLOUD_DISKS_VIEW_EXPECTED_JSON':                            SELECT_CROSS_CLOUD_DISKS_VIEW_EXPECTED_JSON,
     'SELECT_EXTERNAL_INFORMATION_SCHEMA_FILTERED_EXPECTED':                   SELECT_EXTERNAL_INFORMATION_SCHEMA_FILTERED_EXPECTED,
     'SELECT_EXTERNAL_INFORMATION_SCHEMA_INNER_JOIN_EXPECTED':                 SELECT_EXTERNAL_INFORMATION_SCHEMA_INNER_JOIN_EXPECTED,
     'SELECT_EXTERNAL_INFORMATION_SCHEMA_ORDERED_EXPECTED':                    SELECT_EXTERNAL_INFORMATION_SCHEMA_ORDERED_EXPECTED,
@@ -911,12 +917,16 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD':                            [ SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES, SELECT_AZURE_COMPUTE_PUBLIC_KEYS ],
     'SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD_EXPECTED':                   _SHELL_WELCOME_MSG + SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_EXPECTED + '\n' + SELECT_AZURE_COMPUTE_PUBLIC_KEYS_EXPECTED,
     'SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD_JSON_EXPECTED':              SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_JSON_EXPECTED + SELECT_AZURE_COMPUTE_PUBLIC_KEYS_JSON_EXPECTED,
-    'SHELL_COMMANDS_SPECIALCASE_REPEATED_CACHED':                             [ SELECT_GITHUB_JOIN_IN_PARAMS_SPECIALCASE, SELECT_GITHUB_JOIN_IN_PARAMS_SPECIALCASE ],
-    'SHELL_COMMANDS_SPECIALCASE_REPEATED_CACHED_JSON_EXPECTED':               SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_SPECIALCASE_JSON_EXPECTED + SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_SPECIALCASE_JSON_EXPECTED,
+    'SHELL_COMMANDS_DISKS_VIEW_ALIASED_SEQUENCE':                             [ CREATE_DISKS_VIEW_PRIMARY_ALIAS, "select * from cross_cloud_disks_aliased order by name desc;", "drop view cross_cloud_disks_aliased;" ],
+    'SHELL_COMMANDS_DISKS_VIEW_ALIASED_SEQUENCE_JSON_EXPECTED':               [ { "message": "DDL execution completed" } ] + SELECT_CROSS_CLOUD_DISKS_VIEW_EXPECTED_JSON + [ { "message": "DDL execution completed" } ],
+    'SHELL_COMMANDS_DISKS_VIEW_NOT_ALIASED_SEQUENCE':                         [ CREATE_DISKS_VIEW_NO_PRIMARY_ALIAS, "select * from cross_cloud_disks_not_aliased order by name desc;", "drop view cross_cloud_disks_not_aliased;" ],
+    'SHELL_COMMANDS_DISKS_VIEW_NOT_ALIASED_SEQUENCE_JSON_EXPECTED':           [ { "message": "DDL execution completed" } ] + SELECT_CROSS_CLOUD_DISKS_VIEW_EXPECTED_JSON + [ { "message": "DDL execution completed" } ],
     'SHELL_COMMANDS_GC_SEQUENCE_CANONICAL':                                   [ SELECT_OKTA_APPS, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_TWO, PURGE_CONSERVATIVE, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_TWO, SELECT_OKTA_APPS, SELECT_OKTA_APPS, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_TWO, PURGE_CONSERVATIVE, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_TWO ],
     'SHELL_COMMANDS_GC_SEQUENCE_CANONICAL_JSON_EXPECTED':                     SELECT_OKTA_APPS_ASC_EXPECTED_JSON + [ get_object_count_dict(5)] + PURGE_CONSERVATIVE_RESPONSE_JSON + [ get_object_count_dict(0) ] + SELECT_OKTA_APPS_ASC_EXPECTED_JSON + SELECT_OKTA_APPS_ASC_EXPECTED_JSON + [ get_object_count_dict(10)] + PURGE_CONSERVATIVE_RESPONSE_JSON + [get_object_count_dict(0) ],
     'SHELL_COMMANDS_GC_SEQUENCE_EAGER':                                       [ SELECT_OKTA_APPS, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_ONE, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_ONE, SELECT_OKTA_APPS, SELECT_OKTA_APPS, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_ONE, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_ONE ],
     'SHELL_COMMANDS_GC_SEQUENCE_EAGER_JSON_EXPECTED':                         SELECT_OKTA_APPS_ASC_EXPECTED_JSON + [ get_object_count_dict(0)] + [ get_object_count_dict(0) ] + SELECT_OKTA_APPS_ASC_EXPECTED_JSON + SELECT_OKTA_APPS_ASC_EXPECTED_JSON + [ get_object_count_dict(0)] + [get_object_count_dict(0) ],
+    'SHELL_COMMANDS_SPECIALCASE_REPEATED_CACHED':                             [ SELECT_GITHUB_JOIN_IN_PARAMS_SPECIALCASE, SELECT_GITHUB_JOIN_IN_PARAMS_SPECIALCASE ],
+    'SHELL_COMMANDS_SPECIALCASE_REPEATED_CACHED_JSON_EXPECTED':               SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_SPECIALCASE_JSON_EXPECTED + SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_SPECIALCASE_JSON_EXPECTED,
     'SHELL_COMMANDS_VIEW_HANDLING_SEQUENCE':                                  [ _CREATE_SOME_VIEW, "select * from some_view;", "drop view some_view;" ],
     'SHELL_COMMANDS_VIEW_HANDLING_SEQUENCE_JSON_EXPECTED':                    [ { "message": "DDL execution completed" } ] + SELECT_SOME_VIEW_EXPECTED_JSON + [ { "message": "DDL execution completed" } ],
     'SHELL_SESSION_SIMPLE_COMMANDS':                                          [ SELECT_GITHUB_BRANCHES_NAMES_DESC ],

@@ -507,8 +507,8 @@ func (eng *sqLiteSystem) generateViewDDL(relationalTable relationaldto.Relationa
 	createViewBuilder.WriteString(fmt.Sprintf(`create view "%s" AS `, relationalTable.GetBaseName()))
 	for _, col := range relationalTable.GetColumns() {
 		var b strings.Builder
-		colName := col.GetName()
-		b.WriteString(`"` + colName + `" `)
+		colName := col.DelimitedSelectionString(`"`)
+		b.WriteString(colName)
 		colNames = append(colNames, b.String())
 	}
 	tableName, err := relationalTable.GetName()

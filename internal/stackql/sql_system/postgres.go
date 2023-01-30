@@ -338,8 +338,8 @@ func (eng *postgresSystem) generateViewDDL(srcSchemaName string, destSchemaName 
 	createViewBuilder.WriteString(fmt.Sprintf(`create or replace view "%s"."%s" AS `, destSchemaName, relationalTable.GetBaseName()))
 	for _, col := range relationalTable.GetColumns() {
 		var b strings.Builder
-		colName := col.GetName()
-		b.WriteString(`"` + colName + `" `)
+		colName := col.DelimitedSelectionString(`"`)
+		b.WriteString(colName)
 		colNames = append(colNames, b.String())
 	}
 	tableName, err := relationalTable.GetName()
