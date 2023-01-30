@@ -53,6 +53,10 @@ const (
 	SQLDataSourceSchemaDefault      string = SQLDataSourceSchemaPostgresInfo
 )
 
+const (
+	LimitsIndirectMaxChainLength int = 1
+)
+
 type GCStatus int
 
 const (

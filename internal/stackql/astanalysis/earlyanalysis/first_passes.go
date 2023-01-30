@@ -31,7 +31,9 @@ type InitialPassesScreener interface {
 	GetInstructionType() InstructionType
 	GetPlanBuilderInput() planbuilderinput.PlanBuilderInput
 	GetStatementType() sqlparser.StatementType
+	GetIndirectionDepth() int
 	IsCacheExemptMaterialDetected() bool
+	SetIndirectionDepth(int)
 }
 
 type InitialPassesScreenerAnalyzer interface {
@@ -59,6 +61,15 @@ type standardInitialPasses struct {
 	primitiveGenerator            primitivegenerator.PrimitiveGenerator
 	parentAnnotatedAST            annotatedast.AnnotatedAst
 	parentWhereParams             parserutil.ParameterMap
+	indirectionDepth              int
+}
+
+func (sp *standardInitialPasses) GetIndirectionDepth() int {
+	return sp.indirectionDepth
+}
+
+func (sp *standardInitialPasses) SetIndirectionDepth(indirectionDepth int) {
+	sp.indirectionDepth = indirectionDepth
 }
 
 func (sp *standardInitialPasses) GetInstructionType() InstructionType {
@@ -142,6 +153,7 @@ func (sp *standardInitialPasses) initialPasses(statement sqlparser.Statement, ha
 		handlerCtx.GetNamespaceCollection(),
 		whereParams,
 		tcc,
+		sp.indirectionDepth,
 	)
 	if err != nil {
 		return err

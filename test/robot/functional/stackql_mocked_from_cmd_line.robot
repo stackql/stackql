@@ -931,6 +931,20 @@ Describe View of Cloud Control Resource Returns Expected Result
     ...    RestrictPublicBuckets
     ...    stdout=${CURDIR}/tmp/Describe-View-of-Cloud-Control-Resource-Returns-Expected-Result.tmp
 
+View Depth Limitation Upheld
+    Should Stackql Exec Inline Contain Stderr
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}    
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    create view zz1 as select name from stackql_repositories; select * from zz1;
+    ...    please do not cite views from within views
+    ...    stdout=${CURDIR}/tmp/View-Depth-Limitation-Upheld-stdout.tmp
+    ...    stderr=${CURDIR}/tmp/View-Depth-Limitation-Upheld-stderr.tmp
+
 Weird ID WSL bug query
     # ID cannot be handled as integer on WSL
     Should Horrid Query StackQL Inline Equal
