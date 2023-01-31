@@ -79,6 +79,18 @@ func (ss *Delete) Build() error {
 				return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, nil, nil, nil, apiErr, nil))
 			}
 			target, err = m.DeprecatedProcessResponse(response)
+			if response.StatusCode < 300 && len(target) < 1 {
+				msgs := internaldto.BackendMessages{}
+				msgs.WorkingMessages = generateSuccessMessagesFromHeirarchy(tbl, ss.isAwait)
+				return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(
+					nil,
+					nil,
+					nil,
+					nil,
+					nil,
+					&msgs,
+				))
+			}
 			handlerCtx.LogHTTPResponseMap(target)
 
 			logging.GetLogger().Infoln(fmt.Sprintf("DeleteExecutor() target = %v", target))
