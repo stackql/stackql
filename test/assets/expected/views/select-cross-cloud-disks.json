@@ -1,8 +1,8 @@
 [
-    { "vendor": "aws",    "name": "vol-00200000000000000", "type": "gp2",      "size":  "8" },
-    { "vendor": "aws",    "name": "vol-00100000000000000", "type": "gp2",      "size": "10" },
-    { "vendor": "google", "name": "my-disk-01-indeed",     "type": "standard", "size": "10" },
-    { "vendor": "google", "name": "instance-1-c",          "type": "standard", "size": "10" },
-    { "vendor": "google", "name": "instance-1-b",          "type": "standard", "size": "10" },
-    { "vendor": "google", "name": "instance-1",            "type": "balanced", "size": "10" }
+    { "vendor": "aws",    "name": "vol-00200000000000000", "status": "available", "type": "gp2",      "size":  "8" },
+    { "vendor": "aws",    "name": "vol-00100000000000000", "status": "available", "type": "gp2",      "size": "10" },
+    { "vendor": "google", "name": "my-disk-01-indeed",     "status": "READY",     "type": "standard", "size": "10" },
+    { "vendor": "google", "name": "instance-1-c",          "status": "READY",     "type": "standard", "size": "10" },
+    { "vendor": "google", "name": "instance-1-b",          "status": "READY",     "type": "standard", "size": "10" },
+    { "vendor": "google", "name": "instance-1",            "status": "READY",     "type": "balanced", "size": "10" }
 ]
