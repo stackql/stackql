@@ -80,7 +80,7 @@ func getNodeFormatter(name string) sqlparser.NodeFormatter {
 	if name == constants.SQLDialectPostgres {
 		return astformat.PostgresSelectExprsFormatter
 	}
-	return nil
+	return astformat.DefaultSelectExprsFormatter
 }
 
 func NewSQLSystem(sqlEngine sqlengine.SQLEngine, analyticsNamespaceLikeString string, controlAttributes sqlcontrol.ControlAttributes, sqlCfg dto.SQLBackendCfg, authCfg map[string]*dto.AuthCtx) (SQLSystem, error) {
