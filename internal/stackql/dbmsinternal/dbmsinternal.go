@@ -20,6 +20,7 @@ var (
 
 type DBMSInternalRouter interface {
 	CanRoute(node sqlparser.SQLNode) (constants.BackendQueryType, bool)
+	ExprIsRoutable(node sqlparser.SQLNode) bool
 }
 
 func GetDBMSInternalRouter(cfg dto.DBMSInternalCfg, sqlSystem sql_system.SQLSystem) (DBMSInternalRouter, error) {
@@ -116,6 +117,15 @@ func (pgr *standardDBMSInternalRouter) analyzeSelectExprs(selectExprs sqlparser.
 	return false
 }
 
+func (pgr *standardDBMSInternalRouter) analyzeSelectStatement(node sqlparser.SelectStatement) (constants.BackendQueryType, bool) {
+	switch node := node.(type) {
+	case *sqlparser.Select:
+		return pgr.analyzeSelect(node)
+	default:
+		return pgr.negative()
+	}
+}
+
 func (pgr *standardDBMSInternalRouter) analyzeSelect(node *sqlparser.Select) (constants.BackendQueryType, bool) {
 	if pgr.analyzeSelectExprs(node.SelectExprs) {
 		return pgr.affirmativeQuery()
@@ -141,12 +151,26 @@ func (pgr *standardDBMSInternalRouter) analyzeShow(node *sqlparser.Show) (consta
 	return pgr.negative()
 }
 
+func (pgr *standardDBMSInternalRouter) ExprIsRoutable(node sqlparser.SQLNode) bool {
+	switch node := node.(type) {
+	case sqlparser.TableExpr:
+		return pgr.analyzeTableExpr(node)
+	case sqlparser.TableName:
+		return pgr.analyzeTableName(node)
+	default:
+		return false
+	}
+}
+
 func (pgr *standardDBMSInternalRouter) analyzeTableExpr(node sqlparser.TableExpr) bool {
 	switch node := node.(type) {
 	case *sqlparser.AliasedTableExpr:
 		switch expr := node.Expr.(type) {
 		case sqlparser.TableName:
 			return pgr.analyzeTableName(expr)
+		case *sqlparser.Subquery:
+			_, rv := pgr.CanRoute(expr.Select)
+			return rv
 		}
 	case *sqlparser.JoinTableExpr:
 		lhs := pgr.analyzeTableExpr(node.LeftExpr)
