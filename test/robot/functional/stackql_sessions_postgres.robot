@@ -31,10 +31,11 @@ SQLAlchemy Session Postgres PID Function
     [Teardown]    NONE
 
 SQLAlchemy Session Postgres Intel Views Exist
+    Log    This test expects exactly 4 results per query in the sequence
     Pass Execution If    "${SQL_BACKEND}" != "postgres_tcp"    This is a postgres only test
     Should SQLALchemy Raw Session Inline Have Length Greater Than Or Equal To
     ...    ${POSTGRES_URL_UNENCRYPTED_CONN}
     ...    ${SELECT_ACCELERATOR_TYPES_DESC_SEQUENCE}
-    ...    8
+    ...    12
     ...    stdout=${CURDIR}/tmp/SQLAlchemy-Session-Postgres-Intel-Views-Exist.tmp
     [Teardown]    NONE

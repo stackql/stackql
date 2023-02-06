@@ -71,4 +71,5 @@ const (
 	BackendExec BackendQueryType = iota
 	BackendQuery
 	BackendNop
+	BackendTableObject
 )

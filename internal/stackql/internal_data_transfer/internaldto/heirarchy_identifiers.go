@@ -22,6 +22,8 @@ type HeirarchyIdentifiers interface {
 	GetTableName() string
 	GetView() (ViewDTO, bool)
 	GetSubAST() sqlparser.Statement
+	ContainsNativeDBMSTable() bool
+	SetContainsNativeDBMSTable(bool)
 	SetSubAST(sqlparser.Statement)
 	SetMethodStr(string)
 	WithView(ViewDTO) HeirarchyIdentifiers
@@ -37,10 +39,19 @@ type standardHeirarchyIdentifiers struct {
 	methodStr         string
 	viewDTO           ViewDTO
 	viewAST           sqlparser.Statement
+	containsDBMSTable bool
 }
 
 func (hi *standardHeirarchyIdentifiers) SetMethodStr(mStr string) {
 	hi.methodStr = mStr
+}
+
+func (hi *standardHeirarchyIdentifiers) ContainsNativeDBMSTable() bool {
+	return hi.containsDBMSTable
+}
+
+func (hi *standardHeirarchyIdentifiers) SetContainsNativeDBMSTable(containsDBMSTable bool) {
+	hi.containsDBMSTable = containsDBMSTable
 }
 
 func (hi *standardHeirarchyIdentifiers) SetSubAST(viewAST sqlparser.Statement) {

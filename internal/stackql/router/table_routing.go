@@ -55,7 +55,7 @@ func (v *standardTableRouteAstVisitor) analyzeAliasedTable(tb *sqlparser.Aliased
 		}
 		return v.router.Route(tb, v.handlerCtx)
 	default:
-		return nil, fmt.Errorf("table of type '%T' not curently supported", ex)
+		return nil, fmt.Errorf("table of type '%T' not currently supported", ex)
 	}
 }
 
