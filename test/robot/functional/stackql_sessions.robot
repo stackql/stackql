@@ -132,7 +132,7 @@ PG Session Server Survives Defective Query
     [Teardown]    NONE
 
 PG Session Postgres Client V2 Typed Queries
-    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test likely due to case sensitivity and incorrect XML property aliasing
+    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"     TODO: FIX THIS... Skipping postgres backend test likely due to case sensitivity and incorrect XML property aliasing
     Should PG Client V2 Session Inline Equal
     ...    ${PSQL_MTLS_CONN_STR_UNIX}
     ...    ${SELECT_AWS_CLOUD_CONTROL_EVENTS_MINIMAL}
