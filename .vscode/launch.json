@@ -47,7 +47,10 @@
         "select role_name from pgi.information_schema.applicable_roles where role_name = 'pg_database_owner';",
         "select r1.role_name from pgi.information_schema.applicable_roles r1 inner join pgi.information_schema.applicable_roles r2 on r1.role_name = r2.role_name order by r1.role_name desc;",
         "select rtg.table_catalog, rtg.table_schema, rtg.table_name, rtg.privilege_type, rtg.is_grantable, ar.is_grantable as role_is_grantable from pgi.information_schema.role_table_grants rtg inner join pgi.information_schema.applicable_roles ar on rtg.grantee = ar.grantee where rtg.table_name = 'pg_statistic' order by privilege_type desc;",
-        "SELECT zone AS zone, count(kind) AS \"COUNT(kind)\" FROM (SELECT *    from stackql_intel.\"google.compute.acceleratorTypes\"    limit 3) AS virtual_table GROUP BY zone ORDER BY \"COUNT(kind)\" DESC LIMIT 1000;"
+        "SELECT zone AS zone, count(kind) AS \"COUNT(kind)\" FROM (SELECT *    from stackql_intel.\"google.compute.acceleratorTypes\"    limit 3) AS virtual_table GROUP BY zone ORDER BY \"COUNT(kind)\" DESC LIMIT 1000;",
+        "select * from (select VolumeId, Encrypted, Size from aws.ec2.volumes where region = 'ap-southeast-1' order by VolumeId asc) as zz;",
+        "select * from (select id, name, url from github.repos.repos where org = 'stackql') zz;",
+        "select * from zz1;"
       ],
       "default": "show providers;"
     },

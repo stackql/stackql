@@ -67,6 +67,10 @@ func (aa *standardAnnotatedAst) SetSelectMetadata(selNode *sqlparser.Select, met
 func (aa *standardAnnotatedAst) GetIndirect(node sqlparser.SQLNode) (astindirect.Indirect, bool) {
 	switch n := node.(type) {
 	case *sqlparser.AliasedTableExpr:
+		rv, ok := aa.tableIndirects[n.As.GetRawVal()]
+		if ok {
+			return rv, true
+		}
 		return aa.GetIndirect(n.Expr)
 	case sqlparser.TableName:
 		rv, ok := aa.tableIndirects[n.GetRawVal()]
@@ -84,6 +88,9 @@ func (aa *standardAnnotatedAst) SetIndirect(node sqlparser.SQLNode, indirect ast
 	switch n := node.(type) {
 	case sqlparser.TableName:
 		aa.tableIndirects[n.GetRawVal()] = indirect
+	case *sqlparser.AliasedTableExpr:
+		// this is for subqueries
+		aa.tableIndirects[n.As.GetRawVal()] = indirect
 	default:
 	}
 }

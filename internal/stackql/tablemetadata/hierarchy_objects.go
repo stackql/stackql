@@ -23,6 +23,7 @@ type HeirarchyObjects interface {
 	GetSelectSchemaAndObjectPath() (*openapistackql.Schema, string, error)
 	GetSQLDataSource() (sql_datasource.SQLDataSource, bool)
 	GetTableName() string
+	GetSubquery() (internaldto.SubqueryDTO, bool)
 	GetView() (internaldto.ViewDTO, bool)
 	LookupSelectItemsKey() string
 	SetProvider(provider.IProvider)
@@ -67,6 +68,10 @@ func (ho *standardHeirarchyObjects) SetSQLDataSource(sqlDataSource sql_datasourc
 
 func (ho *standardHeirarchyObjects) GetView() (internaldto.ViewDTO, bool) {
 	return ho.heirarchyIds.GetView()
+}
+
+func (ho *standardHeirarchyObjects) GetSubquery() (internaldto.SubqueryDTO, bool) {
+	return ho.heirarchyIds.GetSubquery()
 }
 
 func (ho *standardHeirarchyObjects) GetResource() *openapistackql.Resource {
