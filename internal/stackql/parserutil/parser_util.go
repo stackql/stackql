@@ -431,7 +431,7 @@ func inferColNameFromExpr(node *sqlparser.AliasedExpr, formatter sqlparser.NodeF
 	case *sqlparser.ColName:
 		retVal.Name = expr.Name.String()
 		retVal.Qualifier = expr.Qualifier.GetRawVal()
-		decoratedCol := expr.GetRawVal()
+		decoratedCol := astformat.String(expr, formatter)
 		// if decoratedCol != retVal.Name {
 		retVal.Alias = alias
 		retVal.DecoratedColumn = getDecoratedColRendition(decoratedCol, alias)
