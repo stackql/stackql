@@ -18,7 +18,8 @@ func obtainAnnotationCtx(
 ) (taxonomy.AnnotationCtx, error) {
 	_, isView := tbl.GetView()
 	_, isSQLDataSource := tbl.GetSQLDataSource()
-	if isView || isSQLDataSource {
+	_, isSubquery := tbl.GetSubquery()
+	if isView || isSQLDataSource || isSubquery {
 		// TODO: upgrade this flow; nil == YUCK!!!
 		return taxonomy.NewStaticStandardAnnotationCtx(nil, tbl.GetHeirarchyObjects().GetHeirarchyIds(), tbl, parameters), nil
 	}

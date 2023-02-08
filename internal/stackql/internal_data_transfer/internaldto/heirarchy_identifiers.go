@@ -20,6 +20,7 @@ type HeirarchyIdentifiers interface {
 	GetSQLDataSourceTableName() string
 	GetStackQLTableName() string
 	GetTableName() string
+	GetSubquery() (SubqueryDTO, bool)
 	GetView() (ViewDTO, bool)
 	GetSubAST() sqlparser.Statement
 	ContainsNativeDBMSTable() bool
@@ -27,6 +28,7 @@ type HeirarchyIdentifiers interface {
 	SetSubAST(sqlparser.Statement)
 	SetMethodStr(string)
 	WithView(ViewDTO) HeirarchyIdentifiers
+	withSubquery(SubqueryDTO) HeirarchyIdentifiers
 	WithProviderStr(string) HeirarchyIdentifiers
 	WithResponseSchemaStr(rss string) HeirarchyIdentifiers
 }
@@ -38,6 +40,7 @@ type standardHeirarchyIdentifiers struct {
 	responseSchemaStr string
 	methodStr         string
 	viewDTO           ViewDTO
+	subqueryDTO       SubqueryDTO
 	viewAST           sqlparser.Statement
 	containsDBMSTable bool
 }
@@ -74,6 +77,10 @@ func (hi *standardHeirarchyIdentifiers) GetView() (ViewDTO, bool) {
 	return hi.viewDTO, hi.viewDTO != nil
 }
 
+func (hi *standardHeirarchyIdentifiers) GetSubquery() (SubqueryDTO, bool) {
+	return hi.subqueryDTO, hi.subqueryDTO != nil
+}
+
 func (hi *standardHeirarchyIdentifiers) GetResourceStr() string {
 	return hi.resourceStr
 }
@@ -93,6 +100,11 @@ func (hi *standardHeirarchyIdentifiers) WithProviderStr(ps string) HeirarchyIden
 
 func (hi *standardHeirarchyIdentifiers) WithView(viewDTO ViewDTO) HeirarchyIdentifiers {
 	hi.viewDTO = viewDTO
+	return hi
+}
+
+func (hi *standardHeirarchyIdentifiers) withSubquery(subQuery SubqueryDTO) HeirarchyIdentifiers {
+	hi.subqueryDTO = subQuery
 	return hi
 }
 
@@ -161,4 +173,13 @@ func ResolveResourceTerminalHeirarchyIdentifiers(node sqlparser.TableName) Heira
 		iqlutil.SanitisePossibleTickEscapedTerm(node.Name.String()),
 		"",
 	)
+}
+
+func ObtainSubqueryHeirarchyIdentifiers(subQuery SubqueryDTO) HeirarchyIdentifiers {
+	return NewHeirarchyIdentifiers(
+		"",
+		"",
+		"",
+		"",
+	).withSubquery(subQuery)
 }

@@ -121,7 +121,9 @@ func (dp *standardDependencyPlanner) Plan() error {
 			}
 			tableExpr := unit.GetTableExpr()
 			annotation := unit.GetAnnotation()
-			if _, isView := annotation.GetView(); isView {
+			_, isView := annotation.GetView()
+			_, isSubquery := annotation.GetSubquery()
+			if isView || isSubquery {
 				dp.annMap[tableExpr] = annotation
 				continue
 			}

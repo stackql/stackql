@@ -31,13 +31,14 @@ func NewViewIndirect(viewDTO internaldto.ViewDTO) (Indirect, error) {
 	return rv, nil
 }
 
-func NewSubqueryIndirect(subQuery *sqlparser.Subquery) (Indirect, error) {
-	if subQuery == nil {
+func NewSubqueryIndirect(subQueryDTO internaldto.SubqueryDTO) (Indirect, error) {
+	if subQueryDTO == nil {
 		return nil, fmt.Errorf("cannot accomodate nil subquery")
 	}
 	rv := &subquery{
-		subQuery:              subQuery,
-		selectStmt:            subQuery.Select,
+		subQueryDTO:           subQueryDTO,
+		subQuery:              subQueryDTO.GetSubquery(),
+		selectStmt:            subQueryDTO.GetSubquery().Select,
 		underlyingSymbolTable: symtab.NewHashMapTreeSymTab(),
 	}
 	return rv, nil

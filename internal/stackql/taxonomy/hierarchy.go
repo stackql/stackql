@@ -37,6 +37,11 @@ func getHids(handlerCtx handler.HandlerContext, node sqlparser.SQLNode) (interna
 	case sqlparser.TableName:
 		hIds = internaldto.ResolveResourceTerminalHeirarchyIdentifiers(n)
 	case *sqlparser.AliasedTableExpr:
+		switch t := n.Expr.(type) {
+		case *sqlparser.Subquery:
+			sq := internaldto.NewSubqueryDTO(n, t)
+			return internaldto.ObtainSubqueryHeirarchyIdentifiers(sq), nil
+		}
 		return getHids(handlerCtx, n.Expr)
 	case *sqlparser.DescribeTable:
 		return getHids(handlerCtx, n.Table)
@@ -63,6 +68,9 @@ func getHids(handlerCtx handler.HandlerContext, node sqlparser.SQLNode) (interna
 			return nil, err
 		}
 		hIds = internaldto.ResolveResourceTerminalHeirarchyIdentifiers(*currentSvcRsc)
+	// case *sqlparser.Subquery:
+	// suq := internaldto
+	// hIds = internaldto.ObtainSubqueryHeirarchyIdentifiers()
 	default:
 		return nil, fmt.Errorf("cannot resolve taxonomy")
 	}
@@ -130,6 +138,11 @@ func GetHeirarchyFromStatement(handlerCtx handler.HandlerContext, node sqlparser
 	case *sqlparser.DescribeTable:
 	case sqlparser.TableName:
 	case *sqlparser.AliasedTableExpr:
+		switch n.Expr.(type) {
+		case *sqlparser.Subquery:
+			retVal := tablemetadata.NewHeirarchyObjects(hIds)
+			return retVal, nil
+		}
 		return GetHeirarchyFromStatement(handlerCtx, n.Expr, parameters)
 	case *sqlparser.Show:
 		switch strings.ToUpper(n.Type) {

@@ -46,6 +46,8 @@ func NewTableRouteAstVisitor(handlerCtx handler.HandlerContext, router Parameter
 
 func (v *standardTableRouteAstVisitor) analyzeAliasedTable(tb *sqlparser.AliasedTableExpr) (taxonomy.AnnotationCtx, error) {
 	switch ex := tb.Expr.(type) {
+	case *sqlparser.Subquery:
+		return v.router.Route(tb, v.handlerCtx)
 	case sqlparser.TableName:
 		hIDs, err := taxonomy.GetHeirarchyIDsFromParserNode(v.handlerCtx, ex)
 		if err != nil {
@@ -456,7 +458,9 @@ func (v *standardTableRouteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		}
 
 	case *sqlparser.AliasedTableExpr:
-		if node.Expr != nil {
+		switch node.Expr.(type) {
+		case nil:
+		default:
 			annotation, err := v.analyzeAliasedTable(node)
 			if err != nil {
 				return err

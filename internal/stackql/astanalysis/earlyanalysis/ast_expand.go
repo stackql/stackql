@@ -73,6 +73,53 @@ func newIndirectExpandAstVisitor(
 	return rv, nil
 }
 
+func (v *indirectExpandAstVisitor) processIndirect(node sqlparser.SQLNode, indirect astindirect.Indirect) error {
+	err := indirect.Parse()
+	if err != nil {
+		return nil
+	}
+	childAnalyzer, err := NewEarlyScreenerAnalyzer(v.primitiveGenerator, v.annotatedAST, v.whereParams.Clone())
+	if err != nil {
+		return err
+	}
+	childAnalyzer.SetIndirectionDepth(v.indirectionDepth + 1)
+	err = childAnalyzer.Analyze(indirect.GetSelectAST(), v.handlerCtx, v.tcc)
+	if err != nil {
+		return err
+	}
+	// Persist indirect for later retrieval
+	v.annotatedAST.SetIndirect(node, indirect)
+	indirectPrimitiveGenerator := v.primitiveGenerator.CreateIndirectPrimitiveGenerator(indirect.GetSelectAST(), v.handlerCtx)
+	err = indirectPrimitiveGenerator.AnalyzeSelectStatement(childAnalyzer.GetPlanBuilderInput())
+	if err != nil {
+		return err
+	}
+	maxIndirectCount := childAnalyzer.GetIndirectionDepth()
+	if maxIndirectCount > constants.LimitsIndirectMaxChainLength {
+		return fmt.Errorf("query error: indirection chain length %d > %d and is therefore disallowed; please do not cite views from within views", maxIndirectCount, constants.LimitsIndirectMaxChainLength)
+	}
+	indirectPrimitiveGenerator.GetPrimitiveComposer().GetAst()
+	selCtx := indirectPrimitiveGenerator.GetPrimitiveComposer().GetIndirectSelectPreparedStatementCtx()
+	underlyingSymTab := indirectPrimitiveGenerator.GetPrimitiveComposer().GetSymTab()
+	colz := selCtx.GetNonControlColumns()
+	for _, col := range colz {
+		colId := col.GetIdentifier()
+		colEntry := symtab.NewSymTabEntry(
+			indirectPrimitiveGenerator.GetPrimitiveComposer().GetDRMConfig().GetRelationalType(col.GetType()),
+			"",
+			"",
+		)
+		underlyingSymTab.SetSymbol(colId, colEntry)
+	}
+	indirect.SetUnderlyingSymTab(underlyingSymTab)
+	indirect.SetSelectContext(indirectPrimitiveGenerator.GetPrimitiveComposer().GetIndirectSelectPreparedStatementCtx())
+	assignedParams, ok := indirectPrimitiveGenerator.GetPrimitiveComposer().GetAssignedParameters()
+	if ok {
+		indirect.SetAssignedParameters(assignedParams)
+	}
+	return nil
+}
+
 func (v *indirectExpandAstVisitor) ContainsAnalyticsCacheMaterial() bool {
 	return v.containsAnalyticsCacheMaterial
 }
@@ -618,6 +665,20 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 	case *sqlparser.AliasedTableExpr:
 		if node.Expr != nil {
+			switch n := node.Expr.(type) {
+			case *sqlparser.Subquery:
+				sq := internaldto.NewSubqueryDTO(node, n)
+				indirect, err := astindirect.NewSubqueryIndirect(sq)
+				if err != nil {
+					return nil
+				}
+				err = v.processIndirect(node, indirect)
+				if err != nil {
+					return nil
+				}
+				return nil
+
+			}
 			err := node.Expr.Accept(v)
 			if err != nil {
 				return err
@@ -699,50 +760,11 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 		if isView {
 			indirect, err := astindirect.NewViewIndirect(viewDTO)
 			if err != nil {
-				return nil
-			}
-			err = indirect.Parse()
-			if err != nil {
-				return nil
-			}
-			childAnalyzer, err := NewEarlyScreenerAnalyzer(v.primitiveGenerator, v.annotatedAST, v.whereParams.Clone())
-			if err != nil {
 				return err
 			}
-			childAnalyzer.SetIndirectionDepth(v.indirectionDepth + 1)
-			err = childAnalyzer.Analyze(indirect.GetSelectAST(), v.handlerCtx, v.tcc)
+			err = v.processIndirect(node, indirect)
 			if err != nil {
 				return err
-			}
-			// Persist indirect for later retrieval
-			v.annotatedAST.SetIndirect(node, indirect)
-			indirectPrimitiveGenerator := v.primitiveGenerator.CreateIndirectPrimitiveGenerator(indirect.GetSelectAST(), v.handlerCtx)
-			err = indirectPrimitiveGenerator.AnalyzeSelectStatement(childAnalyzer.GetPlanBuilderInput())
-			if err != nil {
-				return err
-			}
-			maxIndirectCount := childAnalyzer.GetIndirectionDepth()
-			if maxIndirectCount > constants.LimitsIndirectMaxChainLength {
-				return fmt.Errorf("query error: indirection chain length %d > %d and is therefore disallowed; please do not cite views from within views", maxIndirectCount, constants.LimitsIndirectMaxChainLength)
-			}
-			indirectPrimitiveGenerator.GetPrimitiveComposer().GetAst()
-			selCtx := indirectPrimitiveGenerator.GetPrimitiveComposer().GetIndirectSelectPreparedStatementCtx()
-			underlyingSymTab := indirectPrimitiveGenerator.GetPrimitiveComposer().GetSymTab()
-			colz := selCtx.GetNonControlColumns()
-			for _, col := range colz {
-				colId := col.GetIdentifier()
-				colEntry := symtab.NewSymTabEntry(
-					indirectPrimitiveGenerator.GetPrimitiveComposer().GetDRMConfig().GetRelationalType(col.GetType()),
-					"",
-					"",
-				)
-				underlyingSymTab.SetSymbol(colId, colEntry)
-			}
-			indirect.SetUnderlyingSymTab(underlyingSymTab)
-			indirect.SetSelectContext(indirectPrimitiveGenerator.GetPrimitiveComposer().GetIndirectSelectPreparedStatementCtx())
-			assignedParams, ok := indirectPrimitiveGenerator.GetPrimitiveComposer().GetAssignedParameters()
-			if ok {
-				indirect.SetAssignedParameters(assignedParams)
 			}
 		}
 		return nil
@@ -873,54 +895,7 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 		buf.AstPrintf(node, "(%v)", sqlparser.Exprs(node))
 
 	case *sqlparser.Subquery:
-		indirect, err := astindirect.NewSubqueryIndirect(node)
-		if err != nil {
-			return nil
-		}
-		err = indirect.Parse()
-		if err != nil {
-			return nil
-		}
-		childAnalyzer, err := NewEarlyScreenerAnalyzer(v.primitiveGenerator, v.annotatedAST, v.whereParams.Clone())
-		if err != nil {
-			return err
-		}
-		childAnalyzer.SetIndirectionDepth(v.indirectionDepth + 1)
-		err = childAnalyzer.Analyze(indirect.GetSelectAST(), v.handlerCtx, v.tcc)
-		if err != nil {
-			return err
-		}
-		// Persist indirect for later retrieval
-		v.annotatedAST.SetIndirect(node, indirect)
-		indirectPrimitiveGenerator := v.primitiveGenerator.CreateIndirectPrimitiveGenerator(indirect.GetSelectAST(), v.handlerCtx)
-		err = indirectPrimitiveGenerator.AnalyzeSelectStatement(childAnalyzer.GetPlanBuilderInput())
-		if err != nil {
-			return err
-		}
-		maxIndirectCount := childAnalyzer.GetIndirectionDepth()
-		if maxIndirectCount > constants.LimitsIndirectMaxChainLength {
-			return fmt.Errorf("query error: indirection chain length %d > %d and is therefore disallowed; please do not cite views from within views", maxIndirectCount, constants.LimitsIndirectMaxChainLength)
-		}
-		indirectPrimitiveGenerator.GetPrimitiveComposer().GetAst()
-		selCtx := indirectPrimitiveGenerator.GetPrimitiveComposer().GetIndirectSelectPreparedStatementCtx()
-		underlyingSymTab := indirectPrimitiveGenerator.GetPrimitiveComposer().GetSymTab()
-		colz := selCtx.GetNonControlColumns()
-		for _, col := range colz {
-			colId := col.GetIdentifier()
-			colEntry := symtab.NewSymTabEntry(
-				indirectPrimitiveGenerator.GetPrimitiveComposer().GetDRMConfig().GetRelationalType(col.GetType()),
-				"",
-				"",
-			)
-			underlyingSymTab.SetSymbol(colId, colEntry)
-		}
-		indirect.SetUnderlyingSymTab(underlyingSymTab)
-		indirect.SetSelectContext(indirectPrimitiveGenerator.GetPrimitiveComposer().GetIndirectSelectPreparedStatementCtx())
-		assignedParams, ok := indirectPrimitiveGenerator.GetPrimitiveComposer().GetAssignedParameters()
-		if ok {
-			indirect.SetAssignedParameters(assignedParams)
-		}
-		buf.AstPrintf(node, "(%v)", node.Select)
+		return fmt.Errorf("invariant violation in query analysis: subquery should be eagerly analysed")
 
 	case sqlparser.ListArg:
 		buf.WriteArg(string(node))

@@ -17,6 +17,7 @@ type AnnotationCtx interface {
 	GetHIDs() internaldto.HeirarchyIdentifiers
 	IsDynamic() bool
 	GetView() (internaldto.ViewDTO, bool)
+	GetSubquery() (internaldto.SubqueryDTO, bool)
 	GetInputTableName() (string, error)
 	GetParameters() map[string]interface{}
 	GetSchema() *openapistackql.Schema
@@ -54,6 +55,10 @@ func (ac *standardAnnotationCtx) IsDynamic() bool {
 
 func (ac *standardAnnotationCtx) GetView() (internaldto.ViewDTO, bool) {
 	return ac.hIDs.GetView()
+}
+
+func (ac *standardAnnotationCtx) GetSubquery() (internaldto.SubqueryDTO, bool) {
+	return ac.hIDs.GetSubquery()
 }
 
 func (ac *standardAnnotationCtx) SetDynamic() {

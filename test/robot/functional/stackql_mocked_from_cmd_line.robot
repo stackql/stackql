@@ -735,6 +735,19 @@ Basic View Returns Results
     ...    dummyapp.io
     ...    stdout=${CURDIR}/tmp/Basic-View-Returns-Results.tmp
 
+Basic Subquery Returns Results
+    Should Stackql Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    SELECT * FROM (select id, name, url from github.repos.repos where org \= 'stackql') some_alias ;
+    ...    dummyapp.io
+    ...    stdout=${CURDIR}/tmp/Basic-Subquery-Returns-Results.tmp
+
 Basic View of Union Returns Results
     Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test likely due to case sensitivity and incorrect XML property aliasing
     Should Stackql Exec Inline Contain

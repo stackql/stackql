@@ -6,6 +6,7 @@ import (
 
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/astformat"
+	"github.com/stackql/stackql/internal/stackql/astindirect"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
@@ -634,7 +635,11 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			if indirect, isIndirect := anCtx.GetTableMeta().GetIndirect(); isIndirect {
 				//
 				alias := indirect.GetName()
-				templateString := fmt.Sprintf(` ( %%s ) AS "%s" `, alias)
+				indirectType := indirect.GetType()
+				templateString := ` ( %s ) `
+				if indirectType == astindirect.ViewType {
+					templateString = fmt.Sprintf(` ( %%s ) AS "%s" `, alias)
+				}
 				v.rewrittenQuery = templateString
 				v.indirectContexts = append(v.indirectContexts, indirect.GetSelectContext())
 

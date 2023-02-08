@@ -49,6 +49,7 @@ type ExtendedTableMetadata interface {
 	IsSimple() bool
 	GetIndirect() (astindirect.Indirect, bool)
 	GetView() (internaldto.ViewDTO, bool)
+	GetSubquery() (internaldto.SubqueryDTO, bool)
 	LookupSelectItemsKey() string
 	SetSelectItemsKey(string)
 	SetSQLDataSource(sql_datasource.SQLDataSource)
@@ -89,10 +90,7 @@ func (ex *standardExtendedTableMetadata) SetSQLDataSource(sqlDataSource sql_data
 }
 
 func (ex *standardExtendedTableMetadata) GetIndirect() (astindirect.Indirect, bool) {
-	if ex.indirect != nil {
-		return ex.indirect, true
-	}
-	return nil, false
+	return ex.indirect, ex.indirect != nil
 }
 
 func (ex *standardExtendedTableMetadata) GetSelectItemsKey() string {
@@ -161,6 +159,10 @@ func (ex *standardExtendedTableMetadata) GetAlias() string {
 
 func (ex *standardExtendedTableMetadata) IsSimple() bool {
 	return ex.isSimple()
+}
+
+func (ex *standardExtendedTableMetadata) GetSubquery() (internaldto.SubqueryDTO, bool) {
+	return ex.heirarchyObjects.GetSubquery()
 }
 
 func (ex *standardExtendedTableMetadata) GetView() (internaldto.ViewDTO, bool) {
