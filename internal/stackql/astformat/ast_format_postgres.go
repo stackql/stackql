@@ -14,6 +14,8 @@ var (
 
 func PostgresSelectExprsFormatter(buf *sqlparser.TrackedBuffer, node sqlparser.SQLNode) {
 	switch node := node.(type) {
+	case *sqlparser.ColName:
+		buf.WriteString(fmt.Sprintf(`"%s"`, node.GetRawVal()))
 	case sqlparser.ColIdent:
 		formatColIdent(node, buf)
 		return
