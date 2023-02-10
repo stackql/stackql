@@ -70,7 +70,7 @@ cd go/vt/sqlparser
 go run ./visitorgen/main -input=ast.go -output=rewriter.go
 ```
 
-## Outstading required Uplifts
+## Outstanding required Uplifts
 
 ### High level Tech debt / bugs for later
 

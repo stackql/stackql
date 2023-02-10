@@ -131,7 +131,7 @@ _PROD_REGISTRY_URL :str = "https://cdn.statically.io/gh/stackql/stackql-provider
 _DEV_REGISTRY_URL :str = "https://cdn.statically.io/gh/stackql/stackql-provider-registry/dev/providers"
 
 REPOSITORY_ROOT_UNIX = get_unix_path(REPOSITORY_ROOT)
-STACKQL_EXE     = get_unix_path(os.path.join(REPOSITORY_ROOT, 'build', _exe_name))
+STACKQL_EXE     = ' '.join(get_unix_path(os.path.join(REPOSITORY_ROOT, 'build', _exe_name)).splitlines())
 
 def get_registry_mocked(execution_env :str) -> RegistryCfg:
   return RegistryCfg(
@@ -694,6 +694,10 @@ SELECT_SUMOLOGIC_COLLECTORS_IDS_EXPECTED = get_output_from_local_file(os.path.jo
 GET_IAM_POLICY_AGG_ASC_INPUT_FILE = os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'input', 'select-exec-dependent-org-iam-policy.iql')
 GET_IAM_POLICY_AGG_ASC_INPUT_FILE_DOCKER = os.path.join('/opt', 'stackql', 'input', 'select-exec-dependent-org-iam-policy.iql')
 
+_FILE_QUERY_PARSER_TEST_POSTGRES_CASTING = os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'input', 'parser-testing', 'erroneous-query.sql')
+
+_QUERY_PARSER_TEST_POSTGRES_CASTING = get_output_from_local_file(_FILE_QUERY_PARSER_TEST_POSTGRES_CASTING)
+
 GET_IAM_POLICY_AGG_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aggregated-select', 'google', 'cloudresourcemanager', 'select-exec-getiampolicy-agg.csv'))
 
 SHOW_METHODS_GITHUB_REPOS_REPOS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'show', 'show-methods-github-repo-repo.txt'))
@@ -822,6 +826,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'PG_CLIENT_SETUP_QUERIES':                                                [ SHOW_TRANSACTION_ISOLATION_LEVEL, SELECT_HSTORE_DETAILS ],
     'PG_CLIENT_SETUP_QUERIES_JSON_EXPECTED':                                  SHOW_TRANSACTION_ISOLATION_LEVEL_JSON_EXPECTED + SELECT_HSTORE_DETAILS_JSON_EXPECTED,
     'PG_CLIENT_SETUP_QUERIES_TUPLES_EXPECTED':                                SHOW_TRANSACTION_ISOLATION_LEVEL_TUPLES_EXPECTED + SELECT_HSTORE_DETAILS_TUPLES_EXPECTED,
+    'QUERY_PARSER_TEST_POSTGRES_CASTING':                                     _QUERY_PARSER_TEST_POSTGRES_CASTING,
     'REGISTRY_GOOGLE_PROVIDER_LIST':                                          REGISTRY_GOOGLE_PROVIDER_LIST,
     'REGISTRY_GOOGLE_PROVIDER_LIST_EXPECTED':                                 REGISTRY_GOOGLE_PROVIDER_LIST_EXPECTED,
     'REGISTRY_LIST':                                                          REGISTRY_LIST,
