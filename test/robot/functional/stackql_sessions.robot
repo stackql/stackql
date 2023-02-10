@@ -82,6 +82,14 @@ PG Session Azure Compute Table Nomenclature Mutation Guard
     ...    stdout=${CURDIR}/tmp/PG-Session-Azure-Compute-Table-Nomenclature-Mutation-Guard.tmp
     [Teardown]    NONE
 
+Shell Session Azure Billing Path Interrogation Regression Guard
+    Should PG Client Session Inline Equal
+    ...    ${PSQL_MTLS_CONN_STR_UNIX}
+    ...    ${SHELL_COMMANDS_AZURE_BILLING_PATH_SPLIT_GUARD}
+    ...    ${SHELL_COMMANDS_AZURE_BILLING_PATH_SPLIT_GUARD_JSON_EXPECTED}
+    ...    stdout=${CURDIR}/tmp/PG-Session-Azure-Compute-Table-Nomenclature-Mutation-Guard.tmp
+    [Teardown]    NONE
+
 PG Session Anayltics Cache Behaviour Canonical
     Should PG Client Session Inline Equal
     ...    ${PSQL_MTLS_CONN_STR_UNIX_WITH_NAMESPACES}

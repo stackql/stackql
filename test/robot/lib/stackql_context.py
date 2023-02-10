@@ -544,6 +544,7 @@ SELECT_EXTERNAL_INFORMATION_SCHEMA_INNER_JOIN_EXPECTED = get_output_from_local_f
 
 SELECT_AZURE_COMPUTE_PUBLIC_KEYS_JSON_EXPECTED = get_json_from_local_file(os.path.join('test', 'assets', 'expected', 'azure', 'compute', 'ssh-public-keys-list.json'))
 SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_JSON_EXPECTED = get_json_from_local_file(os.path.join('test', 'assets', 'expected', 'azure', 'compute', 'vm-list.json'))
+SELECT_AZURE_COMPUTE_BILLING_ACCOUNTS_JSON_EXPECTED = get_json_from_local_file(os.path.join('test', 'assets', 'expected', 'azure', 'billing', 'billing-account-list.json'))
 
 SELECT_AWS_S3_BUCKET_LOCATIONS = "select LocationConstraint from aws.s3.bucket_locations where region = 'ap-southeast-1' and bucket = 'stackql-trial-bucket-01';"
 SELECT_AWS_S3_BUCKETS = "select Name, CreationDate from  aws.s3.buckets where region = 'ap-southeast-1' order by Name ASC;"
@@ -918,6 +919,8 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD':                            [ SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES, SELECT_AZURE_COMPUTE_PUBLIC_KEYS ],
     'SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD_EXPECTED':                   _SHELL_WELCOME_MSG + SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_EXPECTED + '\n' + SELECT_AZURE_COMPUTE_PUBLIC_KEYS_EXPECTED,
     'SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD_JSON_EXPECTED':              SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_JSON_EXPECTED + SELECT_AZURE_COMPUTE_PUBLIC_KEYS_JSON_EXPECTED,
+    'SHELL_COMMANDS_AZURE_BILLING_PATH_SPLIT_GUARD':                          [ "select name from azure.billing.accounts order by name desc;" ],
+    'SHELL_COMMANDS_AZURE_BILLING_PATH_SPLIT_GUARD_JSON_EXPECTED':            SELECT_AZURE_COMPUTE_BILLING_ACCOUNTS_JSON_EXPECTED,
     'SHELL_COMMANDS_DISKS_VIEW_ALIASED_SEQUENCE':                             [ CREATE_DISKS_VIEW_PRIMARY_ALIAS, "select * from cross_cloud_disks_aliased order by name desc;", "drop view cross_cloud_disks_aliased;" ],
     'SHELL_COMMANDS_DISKS_VIEW_ALIASED_SEQUENCE_JSON_EXPECTED':               [ { "message": "DDL execution completed" } ] + SELECT_CROSS_CLOUD_DISKS_VIEW_EXPECTED_JSON + [ { "message": "DDL execution completed" } ],
     'SHELL_COMMANDS_DISKS_VIEW_NOT_ALIASED_SEQUENCE':                         [ CREATE_DISKS_VIEW_NO_PRIMARY_ALIAS, "select * from cross_cloud_disks_not_aliased order by name desc;", "drop view cross_cloud_disks_not_aliased;" ],
