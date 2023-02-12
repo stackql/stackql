@@ -833,8 +833,8 @@ Basic View Select Star of Cloud Control Resource Returns Expected Result
     ...    ${CURDIR}/tmp/Basic-View-Select-Star-of-Cloud-Control-Resource-Returns-Expected-Result.tmp
 
 Postgres Casting query returns some non error result
-    Pass Execution If    "${SQL_BACKEND}" != "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test likely due to case sensitivity and incorrect XML property aliasing
-    Should Horrid Query StackQL Inline Be Empty
+    Pass Execution If    "${SQL_BACKEND}" != "postgres_tcp"    This is a dashboard query regression test for postgres backends only
+    Run Stackql Exec Command No Errors
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
     ...    ${GITHUB_SECRET_STR}
@@ -843,7 +843,20 @@ Postgres Casting query returns some non error result
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${QUERY_PARSER_TEST_POSTGRES_CASTING}
-    ...    ${CURDIR}/tmp/Postgres-Casting-query-returns-some-non-error-result.tmp    
+    ...    stdout=${CURDIR}/tmp/Postgres-Casting-query-returns-some-non-error-result.tmp    
+
+Keyword quoting query returns some non error result
+    Pass Execution If    "${SQL_BACKEND}" != "postgres_tcp"    This is a dashboard query regression test for postgres backends only
+    Run Stackql Exec Command No Errors
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}    
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${QUERY_PARSER_TEST_KEYWORD_QUOTING}
+    ...    stdout=${CURDIR}/tmp/Keyword-Quoting-query-returns-some-non-error-result.tmp  
 
 Parameterized View Select Star of Cloud Control Resource Returns Expected Result
     Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test likely due to case sensitivity and incorrect XML property aliasing
