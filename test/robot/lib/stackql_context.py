@@ -694,9 +694,11 @@ SELECT_SUMOLOGIC_COLLECTORS_IDS_EXPECTED = get_output_from_local_file(os.path.jo
 GET_IAM_POLICY_AGG_ASC_INPUT_FILE = os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'input', 'select-exec-dependent-org-iam-policy.iql')
 GET_IAM_POLICY_AGG_ASC_INPUT_FILE_DOCKER = os.path.join('/opt', 'stackql', 'input', 'select-exec-dependent-org-iam-policy.iql')
 
-_FILE_QUERY_PARSER_TEST_POSTGRES_CASTING = os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'input', 'parser-testing', 'erroneous-query.sql')
+_FILE_QUERY_PARSER_TEST_POSTGRES_CASTING = os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'input', 'parser-testing', 'postgres-casting-query.sql')
+_FILE_QUERY_PARSER_TEST_KEYWORD_QUOTING = os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'input', 'parser-testing', 'keyword-quoting-query.sql')
 
 _QUERY_PARSER_TEST_POSTGRES_CASTING = get_output_from_local_file(_FILE_QUERY_PARSER_TEST_POSTGRES_CASTING)
+_QUERY_PARSER_TEST_KEYWORD_QUOTING = get_output_from_local_file(_FILE_QUERY_PARSER_TEST_KEYWORD_QUOTING)
 
 GET_IAM_POLICY_AGG_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aggregated-select', 'google', 'cloudresourcemanager', 'select-exec-getiampolicy-agg.csv'))
 
@@ -826,6 +828,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'PG_CLIENT_SETUP_QUERIES':                                                [ SHOW_TRANSACTION_ISOLATION_LEVEL, SELECT_HSTORE_DETAILS ],
     'PG_CLIENT_SETUP_QUERIES_JSON_EXPECTED':                                  SHOW_TRANSACTION_ISOLATION_LEVEL_JSON_EXPECTED + SELECT_HSTORE_DETAILS_JSON_EXPECTED,
     'PG_CLIENT_SETUP_QUERIES_TUPLES_EXPECTED':                                SHOW_TRANSACTION_ISOLATION_LEVEL_TUPLES_EXPECTED + SELECT_HSTORE_DETAILS_TUPLES_EXPECTED,
+    'QUERY_PARSER_TEST_KEYWORD_QUOTING':                                      _QUERY_PARSER_TEST_KEYWORD_QUOTING,
     'QUERY_PARSER_TEST_POSTGRES_CASTING':                                     _QUERY_PARSER_TEST_POSTGRES_CASTING,
     'REGISTRY_GOOGLE_PROVIDER_LIST':                                          REGISTRY_GOOGLE_PROVIDER_LIST,
     'REGISTRY_GOOGLE_PROVIDER_LIST_EXPECTED':                                 REGISTRY_GOOGLE_PROVIDER_LIST_EXPECTED,
