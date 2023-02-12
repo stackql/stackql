@@ -2,10 +2,10 @@ package astindirect
 
 import (
 	"github.com/stackql/go-openapistackql/openapistackql"
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/symtab"
-	"vitess.io/vitess/go/vt/sqlparser"
 )
 
 type subquery struct {

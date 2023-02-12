@@ -26,7 +26,7 @@ import (
 	"github.com/stackql/stackql/pkg/preprocessor"
 	"github.com/stackql/stackql/pkg/txncounter"
 
-	lrucache "vitess.io/vitess/go/cache"
+	lrucache "github.com/stackql/stackql-parser/go/cache"
 )
 
 func BuildInputBundle(runtimeCtx dto.RuntimeCtx) (bundle.Bundle, error) {

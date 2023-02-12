@@ -1,6 +1,6 @@
 package parserutil
 
-import "vitess.io/vitess/go/vt/sqlparser"
+import "github.com/stackql/stackql-parser/go/vt/sqlparser"
 
 type TableExprMap map[sqlparser.TableName]sqlparser.TableExpr
 

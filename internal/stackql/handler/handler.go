@@ -24,9 +24,9 @@ import (
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"github.com/stackql/stackql/pkg/txncounter"
 
+	lrucache "github.com/stackql/stackql-parser/go/cache"
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"gopkg.in/yaml.v2"
-	lrucache "vitess.io/vitess/go/cache"
-	"vitess.io/vitess/go/vt/sqlparser"
 )
 
 var (

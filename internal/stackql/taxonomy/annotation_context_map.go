@@ -3,7 +3,7 @@ package taxonomy
 import (
 	"fmt"
 
-	"vitess.io/vitess/go/vt/sqlparser"
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
 
 type AnnotationCtxMap map[sqlparser.SQLNode]AnnotationCtx

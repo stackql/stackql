@@ -1,7 +1,7 @@
 package parserutil
 
 import (
-	"vitess.io/vitess/go/vt/sqlparser"
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
 
 type ColumnHandle struct {

@@ -3,6 +3,7 @@ package planbuilderinput
 import (
 	"fmt"
 
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/dataflow"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -10,7 +11,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/router"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
-	"vitess.io/vitess/go/vt/sqlparser"
 )
 
 type PlanBuilderInput interface {

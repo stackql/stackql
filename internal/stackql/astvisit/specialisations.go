@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
-	"vitess.io/vitess/go/vt/sqlparser"
 )
 
 func GenerateModifiedSelectSuffix(annotatedAST annotatedast.AnnotatedAst, node sqlparser.SQLNode, sqlSystem sql_system.SQLSystem, formatter sqlparser.NodeFormatter, namespaceCollection tablenamespace.TableNamespaceCollection) string {

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
@@ -17,7 +18,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/util"
 	"github.com/stackql/stackql/pkg/prettyprint"
-	"vitess.io/vitess/go/vt/sqlparser"
 )
 
 func NewUpdateableValsPrimitive(handlerCtx handler.HandlerContext, vals map[*sqlparser.ColName]interface{}) (primitive.IPrimitive, error) {

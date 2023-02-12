@@ -2,8 +2,8 @@ package dataflow
 
 import (
 	"github.com/stackql/go-openapistackql/openapistackql"
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"gonum.org/v1/gonum/graph"
-	"vitess.io/vitess/go/vt/sqlparser"
 )
 
 type DataFlowEdge interface {

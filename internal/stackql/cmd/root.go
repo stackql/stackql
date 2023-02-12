@@ -31,7 +31,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	lrucache "vitess.io/vitess/go/cache"
+	lrucache "github.com/stackql/stackql-parser/go/cache"
 )
 
 var (

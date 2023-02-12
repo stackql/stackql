@@ -21,7 +21,7 @@ import (
 	"github.com/stackql/stackql/internal/test/testhttpapi"
 	"github.com/stackql/stackql/internal/test/testobjects"
 
-	lrucache "vitess.io/vitess/go/cache"
+	lrucache "github.com/stackql/stackql-parser/go/cache"
 )
 
 func TestSelectOktaApplicationAppsDriver(t *testing.T) {

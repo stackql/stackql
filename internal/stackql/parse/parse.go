@@ -3,7 +3,7 @@ package parse
 import (
 	"fmt"
 
-	"vitess.io/vitess/go/vt/sqlparser"
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
 
 func specialiseParserError(err error, cmd string) error {

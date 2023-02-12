@@ -1,7 +1,7 @@
 package sqltypeutil
 
 import (
-	"vitess.io/vitess/go/sqltypes"
+	"github.com/stackql/stackql-parser/go/sqltypes"
 )
 
 func InterfaceToSQLType(val interface{}) (sqltypes.Value, error) {

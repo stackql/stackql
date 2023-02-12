@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/lib/pq/oid"
-	"vitess.io/vitess/go/vt/sqlparser"
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
 
 var (

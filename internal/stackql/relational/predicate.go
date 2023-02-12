@@ -6,9 +6,9 @@ import (
 
 	"github.com/stackql/go-openapistackql/openapistackql"
 
-	"vitess.io/vitess/go/sqltypes"
-	"vitess.io/vitess/go/vt/sqlparser"
-	"vitess.io/vitess/go/vt/vtgate/evalengine"
+	"github.com/stackql/stackql-parser/go/sqltypes"
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
+	"github.com/stackql/stackql-parser/go/vt/vtgate/evalengine"
 )
 
 func AndTableFilters(lhs, rhs func(openapistackql.ITable) (openapistackql.ITable, error)) func(openapistackql.ITable) (openapistackql.ITable, error) {

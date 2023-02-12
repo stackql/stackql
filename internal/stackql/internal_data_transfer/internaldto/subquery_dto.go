@@ -1,6 +1,6 @@
 package internaldto
 
-import "vitess.io/vitess/go/vt/sqlparser"
+import "github.com/stackql/stackql-parser/go/vt/sqlparser"
 
 var (
 	_ SubqueryDTO = &standardSubqueryDTO{}

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/astformat"
 	"github.com/stackql/stackql/internal/stackql/astfuncrewrite"
 	"github.com/stackql/stackql/internal/stackql/constants"
@@ -16,7 +17,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/relationaldto"
 	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
-	"vitess.io/vitess/go/vt/sqlparser"
 )
 
 type SQLSystem interface {
