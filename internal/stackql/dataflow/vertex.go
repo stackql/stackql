@@ -1,9 +1,9 @@
 package dataflow
 
 import (
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 	"gonum.org/v1/gonum/graph"
-	"vitess.io/vitess/go/vt/sqlparser"
 )
 
 type DataFlowVertex interface {

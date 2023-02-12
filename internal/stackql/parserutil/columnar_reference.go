@@ -3,7 +3,7 @@ package parserutil
 import (
 	"fmt"
 
-	"vitess.io/vitess/go/vt/sqlparser"
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
 
 // An abstract data type where the

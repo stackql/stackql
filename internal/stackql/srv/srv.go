@@ -16,7 +16,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/iqlerror"
 
-	lrucache "vitess.io/vitess/go/cache"
+	lrucache "github.com/stackql/stackql-parser/go/cache"
 )
 
 func handleConnection(c net.Conn, runtimeCtx dto.RuntimeCtx, lruCache *lrucache.LRUCache) {

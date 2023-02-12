@@ -1,12 +1,12 @@
 package primitivebuilder
 
 import (
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/asyncmonitor"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
-	"vitess.io/vitess/go/vt/sqlparser"
 )
 
 func composeAsyncMonitor(handlerCtx handler.HandlerContext, precursor primitive.IPrimitive, meta tablemetadata.ExtendedTableMetadata, commentDirectives sqlparser.CommentDirectives) (primitive.IPrimitive, error) {

@@ -14,7 +14,7 @@ import (
 
 	"strings"
 
-	"vitess.io/vitess/go/vt/sqlparser"
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
 
 func GetHeirarchyIDsFromParserNode(handlerCtx handler.HandlerContext, node sqlparser.SQLNode) (internaldto.HeirarchyIdentifiers, error) {

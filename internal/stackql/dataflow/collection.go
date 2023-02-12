@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"gonum.org/v1/gonum/graph"
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
-	"vitess.io/vitess/go/vt/sqlparser"
 )
 
 type DataFlowUnit interface {

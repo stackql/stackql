@@ -15,7 +15,7 @@ import (
 	"github.com/stackql/stackql/internal/test/stackqltestutil"
 	"github.com/stackql/stackql/internal/test/testobjects"
 
-	lrucache "vitess.io/vitess/go/cache"
+	lrucache "github.com/stackql/stackql-parser/go/cache"
 )
 
 func TestMain(m *testing.M) {

@@ -20,7 +20,7 @@ import (
 
 	"github.com/stackql/stackql/pkg/txncounter"
 
-	"vitess.io/vitess/go/vt/sqlparser"
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
 
 type PrimitiveComposer interface {

@@ -21,16 +21,16 @@ require (
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.1
-	github.com/stackql/go-openapistackql v0.0.10-beta37
+	github.com/stackql/go-openapistackql v0.0.11-alpha01
 	github.com/stackql/go-sqlite3 v0.0.2-stackqlbeta04
 	github.com/stackql/go-suffix-map v0.0.1-alpha01
+	github.com/stackql/stackql-parser v0.0.13-alpha04
 	github.com/xo/dburl v0.12.4
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
 	gonum.org/v1/gonum v0.11.0
 	gopkg.in/yaml.v2 v2.4.0
 	gotest.tools v2.2.0+incompatible
-	vitess.io/vitess v0.0.11-alpha04
 )
 
 require (
@@ -120,8 +120,8 @@ require (
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20211208223120-3a66f561d7aa // indirect
-	google.golang.org/grpc v1.44.0 // indirect
-	google.golang.org/protobuf v1.27.1 // indirect
+	google.golang.org/grpc v1.45.0 // indirect
+	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
@@ -129,7 +129,5 @@ require (
 replace github.com/chzyer/readline => github.com/stackql/readline v0.0.2-alpha05
 
 replace github.com/fatih/color => github.com/stackql/color v0.0.1-rc01
-
-replace vitess.io/vitess => github.com/stackql/vitess v0.0.12-alpha15
 
 replace github.com/jeroenrinzema/psql-wire => github.com/stackql/psql-wire v0.0.2-stackqlbeta14

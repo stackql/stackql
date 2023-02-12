@@ -3,8 +3,8 @@ package taxonomy
 import (
 	"fmt"
 
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
-	"vitess.io/vitess/go/vt/sqlparser"
 )
 
 type TblMap map[sqlparser.SQLNode]tablemetadata.ExtendedTableMetadata

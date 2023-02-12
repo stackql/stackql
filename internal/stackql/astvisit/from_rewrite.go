@@ -12,8 +12,8 @@ import (
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 
-	"vitess.io/vitess/go/sqltypes"
-	"vitess.io/vitess/go/vt/sqlparser"
+	"github.com/stackql/stackql-parser/go/sqltypes"
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
 
 var (

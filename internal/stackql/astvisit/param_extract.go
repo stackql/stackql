@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/stackql/stackql-parser/go/sqltypes"
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
-	"vitess.io/vitess/go/sqltypes"
-	"vitess.io/vitess/go/vt/sqlparser"
 )
 
 var (

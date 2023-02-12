@@ -21,8 +21,8 @@ import (
 
 	"github.com/stackql/go-openapistackql/openapistackql"
 
-	"vitess.io/vitess/go/sqltypes"
-	"vitess.io/vitess/go/vt/sqlparser"
+	"github.com/stackql/stackql-parser/go/sqltypes"
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
 
 var (

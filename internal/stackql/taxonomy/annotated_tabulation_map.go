@@ -1,8 +1,8 @@
 package taxonomy
 
 import (
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/util"
-	"vitess.io/vitess/go/vt/sqlparser"
 )
 
 type AnnotatedTabulationMap map[sqlparser.SQLNode]util.AnnotatedTabulation

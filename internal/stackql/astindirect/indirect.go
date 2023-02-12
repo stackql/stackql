@@ -7,8 +7,8 @@ import (
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/symtab"
 
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
-	"vitess.io/vitess/go/vt/sqlparser"
 )
 
 var (

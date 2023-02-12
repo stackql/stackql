@@ -1,9 +1,9 @@
 package selectmetadata
 
 import (
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/dataflow"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
-	"vitess.io/vitess/go/vt/sqlparser"
 )
 
 var (

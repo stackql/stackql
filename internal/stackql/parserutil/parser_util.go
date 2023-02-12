@@ -9,7 +9,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/astformat"
 	"github.com/stackql/stackql/internal/stackql/logging"
 
-	"vitess.io/vitess/go/vt/sqlparser"
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
 
 const (

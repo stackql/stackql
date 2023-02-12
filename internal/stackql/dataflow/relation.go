@@ -3,7 +3,7 @@ package dataflow
 import (
 	"fmt"
 
-	"vitess.io/vitess/go/vt/sqlparser"
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
 	"github.com/stackql/stackql/internal/stackql/logging"

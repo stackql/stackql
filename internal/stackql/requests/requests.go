@@ -7,10 +7,10 @@ import (
 	"encoding/json"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/provider"
-	"vitess.io/vitess/go/vt/sqlparser"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
 )

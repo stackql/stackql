@@ -3,8 +3,8 @@ package internaldto
 import (
 	"fmt"
 
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/iqlutil"
-	"vitess.io/vitess/go/vt/sqlparser"
 )
 
 var (

@@ -56,19 +56,8 @@ The following are potentially multi threaded:
 
 ## Rebuilding Parser
 
-First, go to the root of the vitess repository.
+Please consult [the parser repository](https://github.com/stackql/stackql-parser).
 
-```bash
-make -C go/vt/sqlparser
-```
-
-If you need to add new AST node types, make sure to add them to [go/vt/sqlparser/ast.go](https://github.com/stackql/vitess/blob/feature/stackql-develop/go/vt/sqlparser/ast.go) and then regenerate the file [go/vt/sqlparser/rewriter.go](https://github.com/stackql/vitess/blob/feature/stackql-develop/go/vt/sqlparser/rewriter.go) as follows:
-
-```
-cd go/vt/sqlparser
-
-go run ./visitorgen/main -input=ast.go -output=rewriter.go
-```
 
 ## Outstanding required Uplifts
 
@@ -166,46 +155,6 @@ Then, run test commands, such as:
 ```
 ~/Downloads/stackql --credentialsfilepath=$HOME/stackql/stackql-devel/keys/sa-key.json exec "select group_concat(substr(name, 0, 5)) || ' lalala' as cc from google.compute.disks where project = 'lab-kr-network-01' and zone = 'australia-southeast1-b';" -o text
 ```
-
-## Notes on vitess
-
-Vitess implements mysql client and sql driver interfaces.  The server backend listens over HTTP and RPC and implements methods for:
-
-  - "Execute"; execute a simple, single query.
-  - "StreamExecute"; tailored to execute a query returning a large result set.
-  - "ExecuteBatch"; execution of multiple queries inside a txn.
-
-Vitess maintains an LRU cache of query plans, searchable by query plaintext.  This model will likely work better for vitess thatn stackql; in the former routing is the main concern, in the latter "hotspots" in finer granularity is indicated.
-
-If we do choose to leverage vitess' server implementation, we may implement the vitess vtgate interface [as per vtgate/vtgateservice/interface.go](https://github.com/stackql/vitess/blob/feature/stackql-develop/go/vt/vtgate/vtgateservice/interface.go).
-
-### Low level vitess notes
-
-The various `main()` functions:
-
-  - [line 34 cmd/vtctld/main.go](https://github.com/stackql/vitess/blob/feature/stackql-develop/go/cmd/vtctld/main.go)
-  - [line 52 cmd/vtgate/vtgate.go](https://github.com/stackql/vitess/blob/feature/stackql-develop/go/cmd/vtgate/vtgate.go) 
-  - [line 106 cmd/vtcombo/main.go](https://github.com/stackql/vitess/blob/feature/stackql-develop/go/cmd/vtcombo/main.go)
-
-...aggregate all the requisite setup for the server.
-
-[Run(); line 33 run.go](https://github.com/stackql/vitess/blob/feature/stackql-develop/go/vt/servenv/run.go) sets up RPC and HTTP servers.
-
-[Init(); line 133 in vtgate.go](https://github.com/stackql/vitess/blob/feature/stackql-develop/go/vt/vtgate/vtgate.go) initialises the VT server singleton.
-
-Init() calls [NewExecutor(); line 108 in executor.go](https://github.com/stackql/vitess/blob/feature/stackql-develop/go/vt/vtgate/executor.go), a one-per-server object which includes an LRU cache of plans.
-
-In terms of handling individual queries:
-
-  - VTGate sessions [vtgateconn.go line 46](https://github.com/stackql/vitess/blob/feature/stackql-develop/go/vt/servenv/run.go) are passed in per request.
-  - On the client side, [conn.Query(); line 284 in driver.go](https://github.com/stackql/vitess/blob/feature/stackql-develop/go/vt/vitessdriver/driver.go) calls (for example) `conn.session.StreamExecute()`.
-  - Server side, [Conn.handleNextCommand(); line 759 mysql/conn.go](https://github.com/stackql/vitess/blob/feature/stackql-develop/go/mysql/conn.go)
-  - Server side, vt software; [VTGate.StreamExecute(); line 301 in vtgate.go](https://github.com/stackql/vitess/blob/feature/stackql-develop/go/vt/vtgate/vtgate.go).
-  - Then, (either directly or indirectly) [Executor.StreamExecute(); line 1128 in executor.go](https://github.com/stackql/vitess/blob/feature/stackql-develop/go/vt/vtgate/executor.go) handles synchronous `streaming` queries, and calls `Executor.getPlan()`.
-  - [Executor.getPlan(); in particular line 1352 in executor.go](https://github.com/stackql/vitess/blob/feature/stackql-develop/go/vt/vtgate/executor.go)
-is the guts of query processing.
-  - [Build(); line 265 in builder.go](https://github.com/stackql/vitess/blob/feature/stackql-develop/go/vt/vtgate/planbuilder/builder.go) is the driver for plan building.
-
 
 ## Profiling
 
