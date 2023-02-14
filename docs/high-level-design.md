@@ -31,7 +31,7 @@ Considering query execution in a bottom-up manner from backend execution to fron
     - creates a `Planbuilder` object and decorates it during analysis.
     - **may** generate some primitives.
     - generates, at the very least, a `Plan` stub.
-  - **Lexical and Syntax analysis**; using the machinery from Vitess, which is a lex / yacc style grammar, processed with golang libraries to emulate lex and yacc.  The [sqlparser](https://github.com/stackql/stackql-parser/main/go/vt/sqlparser) module, originally from [vitess](https://github.com/vitessio/vitess) contains the implementation.  The output is an AST.
+  - **Lexical and Syntax analysis**; using the machinery from Vitess, which is a lex / yacc style grammar, processed with golang libraries to emulate lex and yacc.  The [sqlparser](https://github.com/stackql/stackql-parser/tree/main/go/vt/sqlparser) module, originally from [vitess](https://github.com/vitessio/vitess) contains the implementation.  The output is an AST.
 
 The semantic analysis and latter phases are sensitive to the type and structure of provider backends.
 
