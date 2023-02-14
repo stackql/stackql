@@ -50,6 +50,14 @@ func (pp *PrettyPrinter) decrementCurrentIndentation() int {
 	return pp.setCurrentIndentation(pp.currentIndentation - pp.prettyPrintContext.Indentation)
 }
 
+func (pp *PrettyPrinter) peekDecrementedCurrentIndentation() int {
+	rv := pp.currentIndentation - pp.prettyPrintContext.Indentation
+	if rv < 0 {
+		rv = 0
+	}
+	return rv
+}
+
 func (pp *PrettyPrinter) setCurrentIndentation(indentation int) int {
 	pp.currentIndentation = indentation
 	return pp.currentIndentation
@@ -94,6 +102,14 @@ func (pp *PrettyPrinter) RenderTemplateVarNoDelimit(tv string) string {
 	return pp.baseIndentationNoDelimit(fmt.Sprintf("{{ .values.%s }}", tv))
 }
 
+func (pp *PrettyPrinter) RenderTemplateVarPlaceholderNoDelimit(tv string) string {
+	return pp.baseIndentationNoDelimit(fmt.Sprintf("%s: << %s >>", tv, tv))
+}
+
+func (pp *PrettyPrinter) RenderTemplateVarPlaceholderKeyNoDelimit(tv string) string {
+	return pp.baseIndentationNoDelimit(fmt.Sprintf("%s", tv))
+}
+
 func (pp *PrettyPrinter) PrintTemplatedJSON(body interface{}) (string, error) {
 	rv, err := pp.printTemplatedJSON(body)
 	if err != nil {
@@ -108,6 +124,25 @@ func (pp *PrettyPrinter) PrintTemplatedJSON(body interface{}) (string, error) {
 			return pp.baseIndentationNoDelimit(rv), err
 		}
 		return pp.baseIndentationAndDelimit(trimmed), err
+	default:
+		return "", fmt.Errorf("cannot perform PrintTemplatedJSON() for type = %T", rv)
+	}
+}
+
+func (pp *PrettyPrinter) PrintPlaceholderJSON(body interface{}) (string, error) {
+	rv, err := pp.printPlaceholderJSON(body)
+	if err != nil {
+		return "", err
+	}
+	switch body.(type) {
+	case map[string]interface{}, []interface{}:
+		return pp.baseIndentationNoDelimit(rv), err
+	case string:
+		trimmed := strings.TrimSuffix(strings.TrimPrefix(rv, `"`), `"`)
+		if rv == trimmed {
+			return pp.baseIndentationNoDelimit(rv), err
+		}
+		return pp.baseIndentationNoDelimit(trimmed), err
 	default:
 		return "", fmt.Errorf("cannot perform PrintTemplatedJSON() for type = %T", rv)
 	}
@@ -139,7 +174,7 @@ func (pp *PrettyPrinter) printTemplatedJSON(body interface{}) (string, error) {
 		if pp.prettyPrintContext.PrettyPrint {
 			terminalIndent := strings.Repeat(" ", startPos+len(pp.prettyPrintContext.Delimiter))
 			pp.setCurrentIndentation(startPos)
-			return fmt.Sprintf("{\n%s\n%s}", strings.Join(keyVals, fmt.Sprintf(",\n")), terminalIndent), nil
+			return fmt.Sprintf("{\n%s\n%s}", strings.Join(keyVals, ",\n"), terminalIndent), nil
 		}
 		return fmt.Sprintf(`{ %s }`, strings.Join(keyVals, ", ")), nil
 	case []interface{}:
@@ -152,7 +187,7 @@ func (pp *PrettyPrinter) printTemplatedJSON(body interface{}) (string, error) {
 				pp.setCurrentIndentation(startPos)
 				return "", err
 			}
-			vals = append(vals, fmt.Sprintf(`%s`, val))
+			vals = append(vals, val)
 		}
 		if pp.prettyPrintContext.PrettyPrint {
 			rv := fmt.Sprintf("[\n%s%s\n%s]",
@@ -173,5 +208,67 @@ func (pp *PrettyPrinter) printTemplatedJSON(body interface{}) (string, error) {
 	default:
 		return "", fmt.Errorf("cannot perform template marshal for type = %T", bt)
 	}
-	return "", fmt.Errorf("cannot perform template marshal")
+}
+
+func (pp *PrettyPrinter) printPlaceholderJSON(body interface{}) (string, error) {
+	startPos := pp.getCurrentIndentation()
+	switch bt := body.(type) {
+	case map[string]interface{}:
+		var keys []string
+		for k := range bt {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		var keyVals []string
+		kIndent := pp.incrementCurrentIndentation()
+		for _, k := range keys {
+			indent := ""
+			val, err := pp.printPlaceholderJSON(bt[k])
+			if err != nil {
+				pp.setCurrentIndentation(startPos)
+				return "", err
+			}
+			if pp.prettyPrintContext.PrettyPrint {
+				indent = strings.Repeat(" ", kIndent)
+			}
+			keyVals = append(keyVals, fmt.Sprintf(`%s%s: %s`, indent, k, val))
+		}
+		if pp.prettyPrintContext.PrettyPrint || true {
+			terminalIndent := strings.Repeat(" ", startPos+len(pp.prettyPrintContext.Delimiter))
+			decrementIndent := strings.Repeat(" ", startPos+len(pp.prettyPrintContext.Delimiter))
+			pp.setCurrentIndentation(startPos)
+			return fmt.Sprintf("{\n%s%s\n%s}", terminalIndent, strings.Join(keyVals, fmt.Sprintf(",\n%s", terminalIndent)), decrementIndent), nil
+		}
+		return fmt.Sprintf(` %s `, strings.Join(keyVals, ",\n")), nil
+	case []interface{}:
+		var vals []string
+		elemPos := pp.incrementCurrentIndentation()
+		for _, v := range bt {
+			val, err := pp.printPlaceholderJSON(v)
+			if err != nil {
+				pp.prettyPrintContext.Logger.Infof("%s\n", err.Error())
+				pp.setCurrentIndentation(startPos)
+				return "", err
+			}
+			vals = append(vals, val)
+		}
+		if pp.prettyPrintContext.PrettyPrint {
+			rv := fmt.Sprintf("[\n%s%s\n%s]",
+				strings.Repeat(" ", elemPos),
+				strings.Join(
+					vals,
+					",\n"+strings.Repeat(" ", elemPos),
+				),
+				strings.Repeat(" ", startPos+len(pp.prettyPrintContext.Delimiter)),
+			)
+			pp.setCurrentIndentation(startPos)
+			return rv, nil
+		}
+		pp.setCurrentIndentation(startPos)
+		return fmt.Sprintf("[ %s ]", strings.Join(vals, ", ")), nil
+	case string:
+		return bt, nil
+	default:
+		return "", fmt.Errorf("cannot perform template marshal for type = %T", bt)
+	}
 }

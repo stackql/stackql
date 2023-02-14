@@ -169,6 +169,9 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       query = query.decode("utf-8") 
     reg_location = registry_cfg.get_source_path_for_docker()
     supplied_args = []
+    if cfg.pop('stackql_H', False):
+      supplied_args.append('--output=text')
+      supplied_args.append('-H')
     registry_cfg_str = registry_cfg.get_config_str('docker')
     if registry_cfg_str != "":
       supplied_args.append(f"--registry='{registry_cfg_str}'")
@@ -238,6 +241,9 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
   ):
     reg_location = registry_cfg.get_source_path_for_docker()
     supplied_args = []
+    if cfg.pop('stackql_H', False):
+      supplied_args.append('--output=text')
+      supplied_args.append('-H')
     registry_cfg_str = registry_cfg.get_config_str('docker')
     if registry_cfg_str != "":
       supplied_args.append(f"--registry='{registry_cfg_str}'")
@@ -304,6 +310,9 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     self.set_environment_variable("AZ_ACCESS_TOKEN", f"{self._get_default_env().get('AZ_ACCESS_TOKEN')}")
     self.set_environment_variable("SUMO_CREDS", f"{self._get_default_env().get('SUMO_CREDS')}")
     supplied_args = [ stackql_exe, "exec" ]
+    if cfg.pop('stackql_H', False):
+      supplied_args.append('--output=text')
+      supplied_args.append('-H')
     registry_cfg_str = registry_cfg.get_config_str('native')
     if registry_cfg_str != "":
       supplied_args.append(f"--registry={registry_cfg_str}")
@@ -342,6 +351,9 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     self.set_environment_variable("AZ_ACCESS_TOKEN", f"{self._get_default_env().get('AZ_ACCESS_TOKEN')}")
     self.set_environment_variable("SUMO_CREDS", f"{self._get_default_env().get('SUMO_CREDS')}")
     supplied_args = [ stackql_exe, "shell" ]
+    if cfg.pop('stackql_H', False):
+      supplied_args.append('--output=text')
+      supplied_args.append('-H')
     registry_cfg_str = registry_cfg.get_config_str('native')
     if registry_cfg_str != "":
       supplied_args.append(f"--registry={registry_cfg_str}")

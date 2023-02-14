@@ -129,8 +129,9 @@ func NewShowInstructionExecutor(node *sqlparser.Show, prov provider.IProvider, t
 			return util.GenerateSimpleErroneousOutput(err)
 		}
 		pp := prettyprint.NewPrettyPrinter(ppCtx)
+		ppPlaceholder := prettyprint.NewPrettyPrinter(ppCtx)
 		requiredOnly := commentDirectives != nil && commentDirectives.IsSet("REQUIRED")
-		insertStmt, err := metadatavisitors.ToInsertStatement(node.Columns, meth, svc, extended, pp, requiredOnly)
+		insertStmt, err := metadatavisitors.ToInsertStatement(node.Columns, meth, svc, extended, pp, ppPlaceholder, requiredOnly)
 		tableName, _ := tbl.GetTableName()
 		if err != nil {
 			return util.GenerateSimpleErroneousOutput(fmt.Errorf("error creating insert statement for %s: %s", tableName, err.Error()))

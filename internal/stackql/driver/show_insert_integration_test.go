@@ -58,47 +58,6 @@ func TestSimpleShowInsertComputeAddressesRequired(t *testing.T) {
 
 }
 
-func TestSimpleShowInsertBiqueryDatasets(t *testing.T) {
-
-	testSubject := func(t *testing.T, outFile *bufio.Writer) {
-
-		runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSimpleShowInsertBiqueryDatasets")
-		if err != nil {
-			t.Fatalf("TestSimpleShowInsertBiqueryDatasets failed: %v", err)
-		}
-		inputBundle, err := stackqltestutil.BuildInputBundle(*runtimeCtx)
-		if err != nil {
-			t.Fatalf("Test failed: %v", err)
-		}
-		showInsertFile, err := util.GetFilePathFromRepositoryRoot(testobjects.ShowInsertBQDatasetsFile)
-		if err != nil {
-			t.Fatalf("TestSimpleShowInsertBiqueryDatasets failed: %v", err)
-		}
-		runtimeCtx.InfilePath = showInsertFile
-		runtimeCtx.CSVHeadersDisable = true
-
-		rdr, err := os.Open(runtimeCtx.InfilePath)
-		if err != nil {
-			t.Fatalf("Test failed: %v", err)
-		}
-
-		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, rdr, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.SetOutfile(os.Stdout)
-		handlerCtx.SetOutErrFile(os.Stderr)
-		if err != nil {
-			t.Fatalf("Test failed: %v", err)
-		}
-
-		handlerCtx.SetOutfile(outFile)
-		handlerCtx.SetOutErrFile(os.Stderr)
-
-		ProcessQuery(handlerCtx)
-	}
-
-	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedShowInsertBQDatasetsFile})
-
-}
-
 func TestSimpleShowInsertBiqueryDatasetsRequired(t *testing.T) {
 
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {

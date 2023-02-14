@@ -591,6 +591,9 @@ PURGE_CONSERVATIVE = "PURGE CONSERVATIVE;"
 
 PURGE_CONSERVATIVE_RESPONSE_JSON = [{'message': "PURGE of type 'conservative' successfully completed"}]
 
+_SHOW_INSERT_GOOGLE_BIGQUERY_DATASET = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'simple-templating', 'insert-bigquery-datasets.iql'))
+_SHOW_INSERT_GOOGLE_CONTAINER_CLUSTERS = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'simple-templating', 'insert-container-clusters.iql'))
+
 def get_native_query_row_count_from_table(table_name :str, sql_backend_str :str) -> str:
   if sql_backend_str == 'postgres_tcp':
     return f"NATIVEQUERY 'SELECT COUNT(*) as object_count FROM \"{_PG_SCHEMA_PHYSICAL_TABLES}\".\"{table_name}\"' ;"
@@ -946,6 +949,8 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR':                   SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR,
     'SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR':                   SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR,
     'SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR_EXPECTED':          SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR_EXPECTED,
+    'SHOW_INSERT_GOOGLE_BIGQUERY_DATASET':                                    _SHOW_INSERT_GOOGLE_BIGQUERY_DATASET,
+    'SHOW_INSERT_GOOGLE_CONTAINER_CLUSTERS':                                  _SHOW_INSERT_GOOGLE_CONTAINER_CLUSTERS,
     'SHOW_INSERT_GOOGLE_IAM_SERVICE_ACCOUNTS':                                SHOW_INSERT_GOOGLE_IAM_SERVICE_ACCOUNTS,
     'SHOW_INSERT_GOOGLE_IAM_SERVICE_ACCOUNTS':                                SHOW_INSERT_GOOGLE_IAM_SERVICE_ACCOUNTS,
     'SHOW_INSERT_GOOGLE_IAM_SERVICE_ACCOUNTS_EXPECTED':                       SHOW_INSERT_GOOGLE_IAM_SERVICE_ACCOUNTS_EXPECTED,
