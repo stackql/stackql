@@ -180,7 +180,7 @@ jobs:
         cat ./output.xml
     
     - name: Run robot integration tests
-      if: success() && startsWith(${{ steps.git_ref_parse.outputs.SOURCE_TAG }}, 'build-release')
+      if: env.AZURE_CLIENT_SECRET != '' && startsWith(steps.git_ref_parse.outputs.SOURCE_TAG, 'build-release')
       env:
         PSQL_EXE: C:\Program Files\PostgreSQL\13\bin\psql
         AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -332,7 +332,7 @@ jobs:
         cat ./test/robot/functional/output.xml
     
     - name: Run robot integration tests
-      if: success() && startsWith(${{ steps.git_ref_parse.outputs.SOURCE_TAG }}, 'build-release')
+      if: env.AZURE_CLIENT_SECRET != '' && startsWith(steps.git_ref_parse.outputs.SOURCE_TAG, 'build-release')
       env:
         AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
@@ -446,6 +446,10 @@ jobs:
     
     - shell: wsl-bash {0}
       name: Run robot integration tests
+      # This is a hack because if cannot directly access secrets
+      if: env.AZURE_CLIENT_SECRET != ''
+      env:
+        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }} 
       run: |
           . version.txt
           export AZURE_CLIENT_ID='${{ secrets.AZURE_CLIENT_ID }}'
@@ -581,7 +585,7 @@ jobs:
         cat ./output.xml
     
     - name: Run robot integration tests
-      if: success() && startsWith(${{ steps.git_ref_parse.outputs.SOURCE_TAG }}, 'build-release')
+      if: env.AZURE_CLIENT_SECRET != '' && startsWith(steps.git_ref_parse.outputs.SOURCE_TAG, 'build-release')
       env:
         AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
@@ -830,7 +834,7 @@ jobs:
         cat ./test/robot/functional/output.xml
 
     - name: Run robot integration tests
-      if: success() && startsWith(${{ steps.git_ref_parse.outputs.SOURCE_TAG }}, 'build-release')
+      if: env.AZURE_CLIENT_SECRET != '' && startsWith(steps.git_ref_parse.outputs.SOURCE_TAG, 'build-release')
       env:
         AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
