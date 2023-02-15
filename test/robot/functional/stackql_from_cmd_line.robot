@@ -35,6 +35,27 @@ Describe AWS EC2 Default KMS Key ID Exemplifies Top Level XPath for schema
 Show Methods GitHub
     Should StackQL Novel Exec Equal    ${SHOW_METHODS_GITHUB_REPOS_REPOS}   ${SHOW_METHODS_GITHUB_REPOS_REPOS_EXPECTED}
 
+Show Insert Google Container Clusters
+    Should StackQL Exec Contain    
+    ...    SHOW INSERT INTO google.container."projects.zones.clusters";
+    ...    ${SHOW_INSERT_GOOGLE_CONTAINER_CLUSTERS} 
+    ...    stackql_H=True
+    ...    stdout=${CURDIR}/tmp/Show-Insert-Google-Container-Clusters.tmp
+
+Show Extended Insert Google BQ Datasets
+    Should StackQL Exec Contain    
+    ...    SHOW EXTENDED INSERT INTO google.bigquery.datasets;
+    ...    ${SHOW_INSERT_GOOGLE_BIGQUERY_DATASET} 
+    ...    stackql_H=True
+    ...    stdout=${CURDIR}/tmp/Show-Extended-Insert-Google-BQ-Datasets.tmp   
+
+Show Insert Google BQ Datasets
+    Should StackQL Exec Contain    
+    ...    SHOW INSERT INTO google.bigquery.datasets;
+    ...    ${SHOW_INSERT_GOOGLE_BIGQUERY_DATASET} 
+    ...    stackql_H=True
+    ...    stdout=${CURDIR}/tmp/Show-Insert-Google-BQ-Datasets.tmp
+
 *** Keywords ***
 Should StackQL Exec Equal
     [Arguments]    ${_EXEC_CMD_STR}    ${_EXEC_CMD_EXPECTED_OUTPUT}    @{varargs}    &{kwargs}

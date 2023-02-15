@@ -1,3 +1,10 @@
+<<<jsonnet
+{
+   project: << project >>,
+   region: << region >>,
+   data__name:    << data__name >>
+}
+>>>
 INSERT INTO google.compute.addresses(
   project,
   region,

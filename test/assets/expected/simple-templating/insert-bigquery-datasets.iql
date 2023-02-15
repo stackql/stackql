@@ -1,3 +1,35 @@
+<<<jsonnet
+{
+   projectId: << projectId >>,
+   data__access:    [ {
+     dataset: << dataset >>,
+     domain: << domain >>,
+     groupByEmail: << groupByEmail >>,
+     iamMember: << iamMember >>,
+     role: << role >>,
+     routine: << routine >>,
+     specialGroup: << specialGroup >>,
+     userByEmail: << userByEmail >>,
+     view: << view >>
+     } ],
+   data__datasetReference:    {
+   datasetId: << datasetId >>,
+   projectId: << projectId >>
+   },
+   data__defaultEncryptionConfiguration:    {
+   kmsKeyName: << kmsKeyName >>
+   },
+   data__defaultPartitionExpirationMs:    << data__defaultPartitionExpirationMs >>,
+   data__defaultTableExpirationMs:    << data__defaultTableExpirationMs >>,
+   data__description:    << data__description >>,
+   data__friendlyName:    << data__friendlyName >>,
+   data__isCaseInsensitive:    << data__isCaseInsensitive >>,
+   data__labels:    {
+   << data__labels[0].key >>: << data__labels[0].val >>
+   },
+   data__location:    << data__location >>
+}
+>>>
 INSERT INTO google.bigquery.datasets(
   projectId,
   data__access,
