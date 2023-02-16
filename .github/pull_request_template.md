@@ -1,7 +1,7 @@
 
 ## Description
 
-Please provide a description of the change(s) implemented.
+<!-- Please provide a description of the change(s) implemented. -->
 
 ## Type of change
 
@@ -12,11 +12,11 @@ Please provide a description of the change(s) implemented.
 
 ## Issues referenced.
 
-Please add deep links to any issues impacted by this PR.
+<!-- Please add deep links to any issues impacted by this PR. -->
 
 ## Evidence
 
-Please add evidence (eg: test results, screen captures) that the changes are fit for purpose.
+<!-- Please add evidence (eg: test results, screen captures) that the changes are fit for purpose. -->
 
 ## Checklist:
 
@@ -26,8 +26,8 @@ Please add evidence (eg: test results, screen captures) that the changes are fit
 
 ### Variations
 
-Please add fulsome explanations for any variations to the checklist.
+<!-- Please add fulsome explanations for any variations to the checklist. -->
 
 ## Tech Debt
 
-If zero technical debt results from this change set, then please assert same here.  If, however, technical debt does result from this change set (the **strong** preference is that it does **not**), then please specify and justify.  Once assent is given in the PR conversation for the tech debt to be accrued, please include a link to an issue devoted to the tech debt, in the above issues section.  This should be done prior to merge.
+<!-- If zero technical debt results from this change set, then please assert same here.  If, however, technical debt does result from this change set (the **strong** preference is that it does **not**), then please specify and justify.  Once assent is given in the PR conversation for the tech debt to be accrued, please include a link to an issue devoted to the tech debt, in the above issues section.  This should be done prior to merge. -->
