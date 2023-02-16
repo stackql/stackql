@@ -1,205 +1,241 @@
+<!-- web assets -->
+[logo]: https://stackql.io/img/stackql-logo-bold.png "stackql logo"
+[homepage]: https://stackql.io/
+[docs]: https://stackql.io/docs
+[blog]: https://stackql.io/blog
+[registry]: https://github.com/stackql/stackql-provider-registry
+[variables]: https://stackql.io/docs/getting-started/variables
+[macpkg]: https://storage.googleapis.com/stackql-public-releases/latest/stackql_darwin_multiarch.pkg
+[winmsi]: https://releases.stackql.io/stackql/latest/stackql_windows_amd64.msi
+[winzip]: https://releases.stackql.io/stackql/latest/stackql_windows_amd64.zip
+[tuxzip]: https://releases.stackql.io/stackql/latest/stackql_linux_amd64.zip
+<!-- docker links -->
+[dockerhub]: https://hub.docker.com/u/stackql
+[dockerstackql]: https://hub.docker.com/r/stackql/stackql
+[dockerjupyter]: https://hub.docker.com/r/stackql/stackql-jupyter-demo
+<!-- github actions links -->
+[setupaction]: https://github.com/marketplace/actions/stackql-studios-setup-stackql
+[execaction]: https://github.com/marketplace/actions/stackql-studios-stackql-exec
+<!-- badges -->
+[badge1]: https://img.shields.io/badge/platform-windows%20macos%20linux-brightgreen "Platforms"
+[badge2]: https://github.com/stackql/stackql/workflows/Go/badge.svg "Go"
+[badge3]: https://img.shields.io/github/license/stackql/stackql "License"
+[badge4]: https://img.shields.io/tokei/lines/github/stackql/stackql "Lines"    
+<!-- github links -->
+[issues]: https://github.com/stackql/stackql/issues/new?assignees=&labels=bug&template=bug_report.md&title=%5BBUG%5D
+[features]: https://github.com/stackql/stackql/issues/new?assignees=&labels=enhancement&template=feature_request.md&title=%5BFEATURE%5D
+[developers]: /docs/developer_guide.md
+[registrycont]: /docs/registry_contribution.md
+[designdocs]: /docs/high-level-design.md
+[contributing]: /CONTRIBUTING.md
+[discussions]: https://github.com/orgs/stackql/discussions
+<!-- repo assets -->
+[darkmodeterm]: /images/stackql-light-term.gif#gh-dark-mode-only
+[lightmodeterm]: /images/stackql-dark-term.gif#gh-light-mode-only
+<!-- misc links -->
+[twitter]: https://twitter.com/stackql
+
 <!-- language: lang-none -->
+<div align="center">
 
-![Platforms](https://img.shields.io/badge/platform-windows%20macos%20linux-brightgreen)
-![Go](https://github.com/stackql/stackql/workflows/Go/badge.svg)
-![License](https://img.shields.io/github/license/stackql/stackql)
-![Lines](https://img.shields.io/tokei/lines/github/stackql/stackql)  
-[![StackQL](https://stackql.io/img/stackql-banner.png)](https://stackql.io/)  
+[![logo]][homepage]  
+![badge1]
+![badge2]
+![badge3]
+![badge4]
 
+</div>
+<div align="center">
 
-# Deploy, Manage and Query Cloud Infrastructure using SQL
+### Deploy, manage and query cloud resources and interact with APIs using SQL
+<!-- <h3 align="center">SQL based XOps, observability and middleware framework</h3> -->
 
-[[Documentation](https://docs.stackql.io/)]  [[Developer Guide](/docs/developer_guide.md)] [[BYO Providers](/docs/registry_contribution.md)]
+<p align="center">
 
-## Cloud infrastructure coding using SQL
+[__Read the docs »__][docs]  
+[Raise an Issue][issues] · 
+[Request a Feature][features] · 
+[Developer Guide][developers] · 
+[BYO Providers][registrycont]
 
-> StackQL allows you to create, modify and query the state of services and resources across all three major public cloud providers (Google, AWS and Azure) using a common, widely known DSL...SQL.
+</p>
+</div>
 
-----
-## Its as easy as...
-    SELECT * FROM google.compute.instances WHERE zone = 'australia-southeast1-b' AND project = 'my-project' ;
+<details open="open">
+<summary>Contents</summary>
+<ol>
+<li><a href="#about-the-project">About The Project</a></li>
+<li><a href="#installation">Installation</a></li>
+<li><a href="#usage">Usage</a></li>
+<!-- <li><a href="#roadmap">Roadmap</a></li> -->
+<li><a href="#contributing">Contributing</a></li>
+<li><a href="#license">License</a></li>
+<li><a href="#contact">Contact</a></li>
+<li><a href="#acknowledgements">Acknowledgements</a></li>
+</ol>
+</details>
 
-----
+## About The Project
 
+[__StackQL__][homepage] is an open-source project built with Golang that allows you to create, modify and query the state of services and resources across different cloud and SaaS providers (Google, AWS, Azure, Okta, GitHub, etc.) using SQL semantics
+<br />
+<br />
+
+![stackql-shell][darkmodeterm]
+![stackql-shell][lightmodeterm]
+
+### How it works
+
+StackQL is a standalone application that can be used in client mode (via __`exec`__ or __`shell`__) or accessed via a Postgres wire protocol client (`psycopg2`, etc.) using server mode (__`srv`__).  
+
+StackQL parses SQL statements and transpiles them into API requests to the cloud provider.  The API calls are then executed and the results are returned to the user.  
+
+StackQL provider definitions are defined in OpenAPI extensions to the providers specification.  These definitions are then used to generate the SQL schema and the API client.  The source for the provider definitions are stored in the [__StackQL Registry__][registry].  
+
+<details>
+<summary><b>StackQL Context Diagram</b></summary>
+<br />
+The following context diagram describes the StackQL architecture at a high level:  
+
+<!-- ![StackQL Context Diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/stackql/test-readme/main/puml/stackql-c4-context.iuml) -->
+
+```mermaid
+flowchart LR
+  subgraph StackQL
+    direction BT
+    subgraph ProviderDefs
+        Registry[Provider Registry Docs]    
+    end
+    subgraph App
+        Proc[$ stackql exec\n$ stackql shell\n$ stackql srv]
+        style Proc fill:#000,stroke:#000,color:#fff,text-align:left;
+
+        %% ,font-family:'Courier New', Courier, monospace
+    end
+  end
+  User((User)) <--> StackQL <--> Provider[Cloud Provider API]
+  ProviderDefs --> App
 ```
-select d1.name, d1.id, d2.name as d2_name, d2.status, d2.label, d2.id as d2_id from google.compute.disks d1 inner join okta.application.apps d2 on d1.name = d2.label where d1.project = 'lab-kr-network-01' and d1.zone = 'australia-southeast1-a' and d2.subdomain = 'dev-79923018-admin';
-```
 
-## Provider development
+More detailed design documentation can be found in the [here][designdocs].
 
-Keen to expose some new functionality though `stackql`?  We are very keen on this!  
+</details>
 
-Please see [registry_contribution.md](/docs/registry_contribution.md).
+## Installation
 
----
+StackQL is available for Windows, MacOS, Linux, Docker, GitHub Actions and more.  See the installation instructions below for your platform.  
 
-## Design
+<details>
+<summary><b>Installing on MacOS</b></summary>
 
-[HLDD](/docs/high-level-design.md)
+- Homebrew (`amd64` and `arm64`)
+  - `brew install stackql` *or* `brew tap stackql/tap && brew install stackql/tap/stackql`
+- MacOS PKG Installer (`amd64` and `arm64`)
+  - download the latest [MacOS PKG installer for StackQL][macpkg]
+  - run the installer and follow the prompts
 
+</details>
 
----
+<details>
+<summary><b>Installing on Windows</b></summary>
 
-## Providers
+- MSI Installer
+  - download the latest [MSI installer for StackQL][winmsi]
+  - run the installer and follow the prompts
+- Chocolatey
+  - install [Chocolatey](https://chocolatey.org/install)
+  - run `choco install stackql`
+- ZIP Archive
+  - download the latest [Windows ZIP archive for StackQL][winzip]
+  - extract the archive (code signed `stackql.exe` file) to a directory of your choice
+  - add the directory to your `PATH` environment variable (optional)
 
-Please see [the stackql-provider-registry repository](https://github.com/stackql/stackql-provider-registry)
+</details>
 
-Providers include:
+<details>
+<summary><b>Installing on Linux</b></summary>
 
-- Google.
-- Okta.
-- ...
+- ZIP Archive
+  - download the latest [Linux ZIP archive for StackQL][tuxzip]
+    - or via `curl -L https://bit.ly/stackql-zip -O && unzip stackql-zip`
+  - extract the archive (`stackql` file) to a directory of your choice
+  - add the directory to your `PATH` environment variable (optional)
 
----
+</details>
 
-## Build
+<details>
+<summary><b>Getting StackQL from DockerHub</b></summary>
 
-### Native Build
-
-#### In shell
+> View all available StackQL images on [__DockerHub__][dockerhub].  Images available include [__`stackql`__][dockerstackql], [__`stackql-jupyter-demo`__][dockerjupyter] and more.  Pull the latest StackQL base image using:  
 
 ```bash
-env CGO_ENABLED=1 go build \
-  --tags "json1 sqleanall" \
-  -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion=${BUILDMAJORVERSION:-1} \
-  -X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion=${BUILDMINORVERSION:-1} \
-  -X github.com/stackql/stackql/internal/stackql/cmd.BuildPatchVersion=${BUILDPATCHVERSION:-1} \
-  -X github.com/stackql/stackql/internal/stackql/cmd.BuildCommitSHA=$BUILDCOMMITSHA \
-  -X github.com/stackql/stackql/internal/stackql/cmd.BuildShortCommitSHA=$BUILDSHORTCOMMITSHA \
-  -X \"github.com/stackql/stackql/internal/stackql/cmd.BuildDate=$BUILDDATE\" \
-  -X \"stackql/internal/stackql/planbuilder.PlanCacheEnabled=$PLANCACHEENABLED\" \
-  -X github.com/stackql/stackql/internal/stackql/cmd.BuildPlatform=$BUILDPLATFORM" -o ./build ./stackql
-
-
+docker pull stackql/stackql
 ```
 
-#### System requirements
+</details>
 
-These are the system requirements for local development, build and test
+<details>
+<summary><b>Using StackQL with GitHub Actions</b></summary>
 
-- golang>=1.18
-- openssl>=1.1.1
-- python>=3.10
-    - python packages as per [the requirements file](/requirements.txt)
-- docker
+> Use StackQL in your GitHub Actions workflows to automate cloud infrastructure provisioning, IaC assurance, or compliance/security.  Available GitHub Actions include: [`setup-stackql`][setupaction], [`stackql-exec`][execaction] and more
 
-### Docker Build
+</details>
 
-```bash
-docker build -t stackql:${STACKQL_TAG} -t stackql:latest .
-```
+## Usage
 
-## Run
+StackQL can be used via the interactive REPL shell, or via the `exec` command or ran as a server using the [Postgres wire protocol](https://www.postgresql.org/docs/current/protocol.html).  
 
-### Native Run
+> ℹ️ StackQL does not require or install a database.
 
-#### Help message
+* Interactive Shell
+  ```sh
+  # run interactive stackql queries
+  stackql shell --auth="${AUTH}"
+  ```
+* Execute a statement or file
+  ```sh
+  stackql exec --auth="${AUTH}" -i myscript.iql --iqldata vars.jsonnet --output json
+  
+  # or
+  
+  stackql exec --auth="${AUTH}" "SELECT id, status FROM aws.ec2.instances WHERE region = 'us-east-1'"
+  ```
 
-```bash
-./build/stackql --help
+  > ℹ️ output options of `json`, `csv`, `table` and `text` are available for the `exec` command using the `--output` flag
 
-```
+  > ℹ️ StackQL supports passing parameters using `jsonnet` or `json`, see [__Using Variables__][variables]
+* Server
+  ```sh
+  # serve client requests over the Postgres wire protocol (psycopg2, etc.) 
+  stackql srv --auth="${AUTH}"
+  ```
 
-#### Shell
+_For more examples, please check our [Blog][blog]_
 
-```bash
+<!-- ## Roadmap
 
-# Amend STACKQL_AUTH as required, angle bracketed strings must be replaced.
-export STACKQL_AUTH='{ "google": { "credentialsfilepath": "</path/to/google/sa-key.json>", "type": "service_account" }, "okta": { "credentialsenvvar": "<OKTA_SECRET_KEY>", "type": "api_key" }, "github": { "type": "basic", "credentialsenvvar": "<GITHUB_CREDS>" }, "aws": { "type": "aws_signing_v4", "credentialsfilepath": "</path/to/aws/secret-key.txt>", "keyID": "<YOUR_AWS_KEY_NOT_A_SECRET>" }, "k8s": { "credentialsenvvar": "<K8S_TOKEN>", "type": "api_key", "valuePrefix": "Bearer " } }'
+See our [__roadmap__](https://github.com/othneildrew/Best-README-Template/issues) to see where we are going with the project. -->
 
-./build/stackql --auth="${STACKQL_AUTH}" shell
+## Contributing
 
-```
+Contributions are welcome and encouraged.  For more information on how to contribute, please see our [__contributing guide__][contributing].
 
-### Docker Run
+## License
 
-**NOTE**: on some docker versions, the argument `--security-opt seccomp=unconfined` is required as a hack for a [known issue in docker](https://github.com/containers/skopeo/issues/1501). 
+Distributed under the MIT License. See [`LICENSE`](https://github.com/stackql/stackql/blob/main/LICENSE) for more information.  Licenses for third party software we are using are included in the [/licenses](/licenses) directory.
 
-#### Docker single query
+## Contact
 
-```bash
-docker compose run --rm stackqlsrv "bash" "-c" "stackql exec 'show providers;'"
-```
-
-#### Docker interactive shell
-
-```bash
-
-export AWS_KEY_ID='<YOUR_AWS_KEY_ID_NOT_A_SECRET>'
-
-export DOCKER_AUTH_STR='{ "google": { "credentialsfilepath": "/opt/stackql/keys/sa-key.json", "type": "service_account" }, "okta": { "credentialsenvvar": "OKTA_SECRET_KEY", "type": "api_key" }, "github": { "type": "basic", "credentialsenvvar": "GITHUB_CREDS" }, "aws": { "type": "aws_signing_v4", "credentialsfilepath": "/opt/stackql/keys/integration/aws-secret-key.txt", "keyID": "'${AWS_KEY_ID}'" }, "k8s": { "credentialsenvvar": "K8S_TOKEN", "type": "api_key", "valuePrefix": "Bearer " } }'
-
-export DOCKER_REG_CFG='{ "url": "https://registry.stackql.app/providers" }'
-
-docker compose -p shellrun run --rm -e OKTA_SECRET_KEY=some-dummy-api-key -e GITHUB_SECRET_KEY=some-dummy-github-key -e K8S_SECRET_KEY=some-k8s-token -e REGISTRY_SRC=test/registry-mocked stackqlsrv bash -c "stackql shell --registry='${DOCKER_REG_CFG}' --auth='${DOCKER_AUTH_STR}'"
-```
-
-#### Docker PG Server
-
-#### mTLS Server Stock as a rock
-
-From the root directory of this repository...
-
-```bash
-docker compose -f docker-compose-credentials.yml run --rm credentialsgen 
-
-docker compose up stackqlsrv
-```
-
-Then...
-
-```bash
-psql -d "host=127.0.0.1 port=5576 user=myuser sslmode=verify-full sslcert=./vol/srv/credentials/pg_client_cert.pem sslkey=./vol/srv/credentials/pg_client_key.pem sslrootcert=./vol/srv/credentials/pg_server_cert.pem dbname=mydatabase"
-```
-
-When finished, clean up with:
-
-```bash
-docker compose down
-```
-
-
-
-## Examples
-
-```
-./stackql exec "show extended services from google where title = 'Service Directory API';"
-```
-
-More examples in [examples/examples.md](/examples/examples.md).
-
----
-
-## Developers
-
-- [docs/developer_guide.md](/docs/developer_guide.md).
-- [contributing](/CONTRIBUTING.md).
-
-## Testing
-
-- [test/README.md](/test/README.md).
-- [docs/integration_testing.md](/docs/integration_testing.md).
-
-## Server mode
-
-Please see [the server mode section of the developer docs](/docs/developer_guide.md#server-mode).
-
-## Alpha Features
-
-- [GC, cacheing and concurrent users](/docs/GC_cache_concurrency.md)
+Get in touch with us via Twitter at [__@stackql__][twitter], email us at [__info@stackql.io__](info@stackql.io) or start a conversation using [__discussions__][discussions].
 
 ## Acknowledgements
-
 Forks of the following support our work:
 
-  - [vitess](https://vitess.io/)
-  - [readline](https://github.com/chzyer/readline)
-  - [color](https://github.com/fatih/color)
+* [vitess](https://vitess.io/)
+* [kin-openapi](https://github.com/getkin/kin-openapi)
+* [gorilla/mux](https://github.com/gorilla/mux)
+* [readline](https://github.com/chzyer/readline)
+* [color](https://github.com/fatih/color)
 
 We gratefully acknowledge these pieces of work.
 
-## Licensing
-
-Please see the [stackql LICENSE](/LICENSE).
-
-Licenses for third party software we are using are included in the [/licenses](/licenses) directory.
