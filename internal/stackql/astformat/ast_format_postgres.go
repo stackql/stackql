@@ -9,7 +9,12 @@ import (
 )
 
 var (
-	_ sqlparser.NodeFormatter = PostgresSelectExprsFormatter
+	_              sqlparser.NodeFormatter = PostgresSelectExprsFormatter
+	sqliteKeywords map[string]struct{}     = map[string]struct{}{
+		"commit": {},
+		"key":    {},
+		"select": {},
+	}
 )
 
 func PostgresSelectExprsFormatter(buf *sqlparser.TrackedBuffer, node sqlparser.SQLNode) {
@@ -52,6 +57,23 @@ func formatColIdent(node sqlparser.ColIdent, buf *sqlparser.TrackedBuffer) {
 		return
 	}
 	buf.WriteString(fmt.Sprintf(`"%s"`, node.String()))
+}
+
+func isSqliteKeyword(term string) bool {
+	_, ok := sqliteKeywords[strings.ToLower(term)]
+	return ok
+}
+
+func formatColIdentCaseInsensitive(node sqlparser.ColIdent, buf *sqlparser.TrackedBuffer) {
+	if node.AtCount() > 0 {
+		sqlparser.FormatID(buf, node.String(), node.Lowered(), node.AtCount())
+		return
+	}
+	if isSqliteKeyword(node.String()) {
+		buf.WriteString(fmt.Sprintf(`"%s"`, node.String()))
+		return
+	}
+	buf.WriteString(fmt.Sprintf("%s", node.String()))
 }
 
 func formatColName(node *sqlparser.ColName, buf *sqlparser.TrackedBuffer) {

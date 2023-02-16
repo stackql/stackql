@@ -706,6 +706,17 @@ Basic Query mTLS Returns OK
     ...    ${SELECT_CONTAINER_SUBNET_AGG_ASC}
     ...    ipCidrRange
 
+Basic Error Query mTLS Returns Error Message
+    Should PG Client StdErr Inline Contain
+    ...    ${CURDIR}
+    ...    ${PSQL_EXE}
+    ...    ${PSQL_MTLS_CONN_STR}
+    ...    select fake_name from github.repos.branches where owner \= 'dummyorg' and repo \= 'dummyapp.io' order by name desc;
+    ...    column
+    ...    stdout=${CURDIR}/tmp/Basic-Error-Query-mTLS-Returns-Error-Message.tmp
+    ...    stderr=${CURDIR}/tmp/Basic-Error-Query-mTLS-Returns-Error-Message-stderr.tmp
+
+
 Basic Query unencrypted Returns OK
     Should PG Client Inline Contain
     ...    ${CURDIR}

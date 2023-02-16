@@ -33,7 +33,7 @@ Shell Session Azure Compute Table Nomenclature Mutation Guard
     [Teardown]    Stackql Per Test Teardown
 
 PG Session GC Manual Behaviour Canonical
-    Should PG Client Session Inline Equal
+    Should PG Client Session Inline Equal Strict
     ...    ${PSQL_MTLS_CONN_STR_UNIX}
     ...    ${SHELL_COMMANDS_GC_SEQUENCE_CANONICAL}
     ...    ${SHELL_COMMANDS_GC_SEQUENCE_CANONICAL_JSON_EXPECTED}
@@ -80,6 +80,14 @@ PG Session Azure Compute Table Nomenclature Mutation Guard
     ...    ${SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD}
     ...    ${SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD_JSON_EXPECTED}
     ...    stdout=${CURDIR}/tmp/PG-Session-Azure-Compute-Table-Nomenclature-Mutation-Guard.tmp
+    [Teardown]    NONE
+
+PG Session Wrongly Named Column error recovery Azure Compute Table Nomenclature
+    Should PG Client Session Inline Contain
+    ...    ${PSQL_MTLS_CONN_STR_UNIX}
+    ...    ${SHELL_SESSION_SIMPLE_COMMANDS_AFTER_ERROR}
+    ...    ${SHELL_SESSION_SIMPLE_COMMANDS_AFTER_ERROR_EXPECTED}
+    ...    stdout=${CURDIR}/tmp/PG-Session-Wrongly-Named-Column-error-recovery-Azure-Compute-Table-Nomenclature.tmp
     [Teardown]    NONE
 
 Shell Session Azure Billing Path Interrogation Regression Guard

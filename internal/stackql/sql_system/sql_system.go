@@ -80,6 +80,9 @@ func getNodeFormatter(name string) sqlparser.NodeFormatter {
 	if name == constants.SQLDialectPostgres {
 		return astformat.PostgresSelectExprsFormatter
 	}
+	if name == constants.SQLDialectSQLite3 {
+		return astformat.SQLiteSelectExprsFormatter
+	}
 	return astformat.DefaultSelectExprsFormatter
 }
 
