@@ -23,6 +23,14 @@ class PsycoPGClient(object):
     except Exception as err:
       return []
 
+  def _exec_query_strict(self, query :str) -> typing.List[typing.Dict]:  
+    try:
+      r = self._connection.execute(query)
+      return r.fetchall()
+    except Exception as err:
+      print(err)
+      raise err
+
 
   def _run_queries(self, queries :typing.List[str]) -> typing.List[typing.Dict]:
     ret_val = []
@@ -32,7 +40,20 @@ class PsycoPGClient(object):
         ret_val += nv
     return ret_val
 
+  
+  def _run_queries_strict(self, queries :typing.List[str]) -> typing.List[typing.Dict]:
+    ret_val = []
+    for q in queries:
+      nv = self._exec_query_strict(q)
+      if nv:
+        ret_val += nv
+    return ret_val
+
 
   def run_queries(self, queries :typing.List[str]) -> typing.List[typing.Dict]:
     return self._run_queries(queries)
+  
+
+  def run_queries_strict(self, queries :typing.List[str]) -> typing.List[typing.Dict]:
+    return self._run_queries_strict(queries)
 

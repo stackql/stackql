@@ -43,7 +43,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     self._counter = 0
 
 
-  def _run_PG_client_command(self, curdir :str, psql_exe :str, psql_conn_str :str, query :str):
+  def _run_PG_client_command(self, curdir :str, psql_exe :str, psql_conn_str :str, query :str, *args, **cfg):
     _mod_conn =  psql_conn_str.replace("\\", "/")
     # bi = BuiltIn().get_library_instance('Builtin')
     self.log_to_console(f"curdir = '{curdir}'")
@@ -51,7 +51,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     result = super().run_process(
       psql_exe, 
       '-d', _mod_conn, 
-      '-c', query
+      '-c', query,
+      **cfg,
     )
     self.log(result.stdout)
     self.log(result.stderr)
@@ -389,14 +390,27 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
 
 
   @keyword
-  def should_PG_client_inline_contain(self, curdir :str, psql_exe :str, psql_conn_str :str, query :str, expected_output :str):
+  def should_PG_client_inline_contain(self, curdir :str, psql_exe :str, psql_conn_str :str, query :str, expected_output :str, **cfg):
     result = self._run_PG_client_command(
       curdir,
       psql_exe,
       psql_conn_str,
-      query
+      query,
+      **cfg
     )
     return self.should_contain(result.stdout, expected_output)
+
+  
+  @keyword
+  def should_PG_client_stderr_inline_contain(self, curdir :str, psql_exe :str, psql_conn_str :str, query :str, expected_output :str, **cfg):
+    result = self._run_PG_client_command(
+      curdir,
+      psql_exe,
+      psql_conn_str,
+      query,
+      **cfg
+    )
+    return self.should_contain(result.stderr, expected_output)
 
 
   @keyword
@@ -418,6 +432,26 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     )
     self.log(result)
     return self.lists_should_be_equal(result, expected_output)
+  
+
+  @keyword
+  def should_PG_client_session_inline_equal_strict(self, conn_str :str, queries :typing.List[str], expected_output :typing.List[typing.Dict], **kwargs):
+    client = PsycoPGClient(conn_str)
+    result =  client.run_queries_strict(
+      queries
+    )
+    self.log(result)
+    return self.lists_should_be_equal(result, expected_output)
+
+  
+  @keyword
+  def should_PG_client_session_inline_contain(self, conn_str :str, queries :typing.List[str], expected_output :typing.List[typing.Dict], **kwargs):
+    client = PsycoPGClient(conn_str)
+    result =  client.run_queries(
+      queries
+    )
+    self.log(result)
+    return self.list_should_contain_sub_list(result, expected_output)
 
 
   @keyword

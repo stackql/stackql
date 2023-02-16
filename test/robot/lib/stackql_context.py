@@ -571,6 +571,7 @@ UPDATE_GITHUB_ORG = "update github.orgs.orgs set data__description = 'Some silly
 SELECT_GITHUB_REPOS_PAGES_SINGLE = "select url from github.repos.pages where owner = 'dummyorg' and repo = 'dummyapp.io';"
 SELECT_GITHUB_REPOS_IDS_ASC = "select id from github.repos.repos where org = 'dummyorg' order by id ASC;"
 SELECT_GITHUB_BRANCHES_NAMES_DESC = "select name from github.repos.branches where owner = 'dummyorg' and repo = 'dummyapp.io' order by name desc;"
+SELECT_GITHUB_BRANCHES_NAMES_DESC_WRONG_COLUMN = "select name_wrong from github.repos.branches where owner = 'dummyorg' and repo = 'dummyapp.io' order by name desc;"
 SELECT_GITHUB_REPOS_WITH_USEFUL_FUNCTIONS = "select name, split_part(teams_url, '/', 4) as extracted_team, regexp_replace((JSON_EXTRACT(owner, '$.url')), '^https://[^/]+/[^/]+/', 'username = ') as user_suffix, nlike('%docusaurus%', name) as is_docusaurus, unicode_version() as unicode_lib_version from github.repos.repos where org = 'dummyorg' order by name ASC;"
 SELECT_GITHUB_REPOS_FILTERED_SINGLE = "select id, name from github.repos.repos where org = 'dummyorg' and name = 'dummyapp.io';"
 SELECT_GITHUB_SCIM_USERS = "select JSON_EXTRACT(name, '$.givenName') || ' ' || JSON_EXTRACT(name, '$.familyName') as name, userName, externalId, id from github.scim.users where org = 'dummyorg' order by id asc;"
@@ -752,7 +753,7 @@ def get_db_setup_src(sql_backend_str :str) -> str:
 
 def get_variables(execution_env :str, sql_backend_str :str):
   NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_ONE = get_native_query_row_count_from_table('okta.application.apps.Application.generation_1', sql_backend_str)
-  NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_TWO = get_native_query_row_count_from_table('okta.application.apps.Application.generation_2', sql_backend_str)
+  NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_THREE = get_native_query_row_count_from_table('okta.application.apps.Application.generation_3', sql_backend_str)
   rv = {
     ## general config
     'AZURE_SECRET_STR':                               AZURE_SECRET_STR,
@@ -936,7 +937,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'SHELL_COMMANDS_DISKS_VIEW_ALIASED_SEQUENCE_JSON_EXPECTED':               [ { "message": "DDL execution completed" } ] + SELECT_CROSS_CLOUD_DISKS_VIEW_EXPECTED_JSON + [ { "message": "DDL execution completed" } ],
     'SHELL_COMMANDS_DISKS_VIEW_NOT_ALIASED_SEQUENCE':                         [ CREATE_DISKS_VIEW_NO_PRIMARY_ALIAS, "select * from cross_cloud_disks_not_aliased order by name desc;", "drop view cross_cloud_disks_not_aliased;" ],
     'SHELL_COMMANDS_DISKS_VIEW_NOT_ALIASED_SEQUENCE_JSON_EXPECTED':           [ { "message": "DDL execution completed" } ] + SELECT_CROSS_CLOUD_DISKS_VIEW_EXPECTED_JSON + [ { "message": "DDL execution completed" } ],
-    'SHELL_COMMANDS_GC_SEQUENCE_CANONICAL':                                   [ SELECT_OKTA_APPS, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_TWO, PURGE_CONSERVATIVE, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_TWO, SELECT_OKTA_APPS, SELECT_OKTA_APPS, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_TWO, PURGE_CONSERVATIVE, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_TWO ],
+    'SHELL_COMMANDS_GC_SEQUENCE_CANONICAL':                                   [ SELECT_OKTA_APPS, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_THREE, PURGE_CONSERVATIVE, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_THREE, SELECT_OKTA_APPS, SELECT_OKTA_APPS, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_THREE, PURGE_CONSERVATIVE, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_THREE ],
     'SHELL_COMMANDS_GC_SEQUENCE_CANONICAL_JSON_EXPECTED':                     SELECT_OKTA_APPS_ASC_EXPECTED_JSON + [ get_object_count_dict(5)] + PURGE_CONSERVATIVE_RESPONSE_JSON + [ get_object_count_dict(0) ] + SELECT_OKTA_APPS_ASC_EXPECTED_JSON + SELECT_OKTA_APPS_ASC_EXPECTED_JSON + [ get_object_count_dict(10)] + PURGE_CONSERVATIVE_RESPONSE_JSON + [get_object_count_dict(0) ],
     'SHELL_COMMANDS_GC_SEQUENCE_EAGER':                                       [ SELECT_OKTA_APPS, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_ONE, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_ONE, SELECT_OKTA_APPS, SELECT_OKTA_APPS, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_ONE, NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_ONE ],
     'SHELL_COMMANDS_GC_SEQUENCE_EAGER_JSON_EXPECTED':                         SELECT_OKTA_APPS_ASC_EXPECTED_JSON + [ get_object_count_dict(0)] + [ get_object_count_dict(0) ] + SELECT_OKTA_APPS_ASC_EXPECTED_JSON + SELECT_OKTA_APPS_ASC_EXPECTED_JSON + [ get_object_count_dict(0)] + [get_object_count_dict(0) ],
@@ -945,6 +946,8 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'SHELL_COMMANDS_VIEW_HANDLING_SEQUENCE':                                  [ _CREATE_SOME_VIEW, "select * from some_view;", "drop view some_view;" ],
     'SHELL_COMMANDS_VIEW_HANDLING_SEQUENCE_JSON_EXPECTED':                    [ { "message": "DDL execution completed" } ] + SELECT_SOME_VIEW_EXPECTED_JSON + [ { "message": "DDL execution completed" } ],
     'SHELL_SESSION_SIMPLE_COMMANDS':                                          [ SELECT_GITHUB_BRANCHES_NAMES_DESC ],
+    'SHELL_SESSION_SIMPLE_COMMANDS_AFTER_ERROR':                              [ SELECT_GITHUB_BRANCHES_NAMES_DESC_WRONG_COLUMN, SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES ],
+    'SHELL_SESSION_SIMPLE_COMMANDS_AFTER_ERROR_EXPECTED':                     SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_JSON_EXPECTED,
     'SHELL_SESSION_SIMPLE_EXPECTED':                                          _SHELL_WELCOME_MSG + SELECT_GITHUB_BRANCHES_NAMES_DESC_EXPECTED,
     'SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR':                   SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR,
     'SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR':                   SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR,
