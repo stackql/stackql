@@ -7,10 +7,14 @@ on:
       - develop
     tags:
       - build*
+    paths-ignore:
+      - "**/*.md"
   pull_request:
     branches:
       - main
       - develop
+    paths-ignore:
+      - "**/*.md"
 
 env:
   GOGETCMD: "go get -v -t -d ./..."
