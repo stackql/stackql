@@ -9,6 +9,21 @@ Please see [the contributing document](/CONTRIBUTING.md).
 
 See [the CICD documentation](/docs/CICD.md).
 
+## Building locally
+
+```bash
+env CGO_ENABLED=1 go build \
+  --tags "json1 sqleanall" \
+  -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion=${BUILDMAJORVERSION:-1} \
+  -X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion=${BUILDMINORVERSION:-1} \
+  -X github.com/stackql/stackql/internal/stackql/cmd.BuildPatchVersion=${BUILDPATCHVERSION:-1} \
+  -X github.com/stackql/stackql/internal/stackql/cmd.BuildCommitSHA=$BUILDCOMMITSHA \
+  -X github.com/stackql/stackql/internal/stackql/cmd.BuildShortCommitSHA=$BUILDSHORTCOMMITSHA \
+  -X \"github.com/stackql/stackql/internal/stackql/cmd.BuildDate=$BUILDDATE\" \
+  -X \"stackql/internal/stackql/planbuilder.PlanCacheEnabled=$PLANCACHEENABLED\" \
+  -X github.com/stackql/stackql/internal/stackql/cmd.BuildPlatform=$BUILDPLATFORM" -o ./build ./stackql
+```
+
 ## Provider development
 
 Keen to expose some new functionality though `stackql`?  We are very keen on this!  
