@@ -153,7 +153,7 @@ jobs:
           -X 'github.com/stackql/stackql/internal/stackql/cmd.BuildDate=$BuildDate' `
           -X 'stackql/internal/stackql/planbuilder.PlanCacheEnabled=$PlanCacheEnabled' `
           -X github.com/stackql/stackql/internal/stackql/cmd.BuildPlatform=$BuildPlatform" `
-          -o build/ ./...
+          -o build/ ./stackql
 
     - name: Test
       if: success()
@@ -306,7 +306,7 @@ jobs:
         -X \"github.com/stackql/stackql/internal/stackql/cmd.BuildDate=$BUILDDATE\" \
         -X \"stackql/internal/stackql/planbuilder.PlanCacheEnabled=$PLANCACHEENABLED\" \
         -X github.com/stackql/stackql/internal/stackql/cmd.BuildPlatform=$BUILDPLATFORM" \
-        -o build/ ./...
+        -o build/ ./stackql
       
     - name: Test
       if: success()
@@ -331,6 +331,16 @@ jobs:
         robot --variable SHOULD_RUN_DOCKER_EXTERNAL_TESTS:true -d test/robot/functional test/robot/functional
 
     - name: Output from mocked functional tests
+      if: always()
+      run: |
+        cat ./test/robot/functional/output.xml
+
+    - name: Run robot mocked functional tests with aggressive concurrency
+      if: success()
+      run: |
+        robot --variable SHOULD_RUN_DOCKER_EXTERNAL_TESTS:true --variable CONCURRENCY_LIMIT:-1 -d test/robot/functional test/robot/functional
+
+    - name: Output from mocked functional tests with aggressive concurrency
       if: always()
       run: |
         cat ./test/robot/functional/output.xml
@@ -559,7 +569,7 @@ jobs:
         -X \"github.com/stackql/stackql/internal/stackql/cmd.BuildDate=$BUILDDATE\" \
         -X \"stackql/internal/stackql/planbuilder.PlanCacheEnabled=$PLANCACHEENABLED\" \
         -X github.com/stackql/stackql/internal/stackql/cmd.BuildPlatform=$BUILDPLATFORM" \
-        -o build/ ./...
+        -o build/ ./stackql
 
     - name: Test
       if: success()
@@ -681,7 +691,7 @@ jobs:
         -X \"github.com/stackql/stackql/internal/stackql/cmd.BuildDate=$BUILDDATE\" \
         -X \"stackql/internal/stackql/planbuilder.PlanCacheEnabled=$PLANCACHEENABLED\" \
         -X github.com/stackql/stackql/internal/stackql/cmd.BuildPlatform=$BUILDPLATFORM" \
-        -o build/ ./...
+        -o build/ ./stackql
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v3

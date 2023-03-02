@@ -4,6 +4,7 @@ ${EXECUTION_PLATFORM}                  native   # to be overridden from command 
 ${SQL_BACKEND}                         sqlite_embedded   # to be overridden from command line, eg "postgres_tcp"
 ${IS_WSL}                              false   # to be overridden from command line, with string "true"
 ${SHOULD_RUN_DOCKER_EXTERNAL_TESTS}    false   # to be overridden from command line, with string "true"
+${CONCURRENCY_LIMIT}                   1       # to be overridden from command line, with integer value, -1 for no limit
 
 *** Settings ***
 Library           Process
@@ -12,7 +13,7 @@ Variables         ${LOCAL_LIB_HOME}/stackql_context.py    ${EXECUTION_PLATFORM} 
 Library           Process
 Library           OperatingSystem
 Library           String
-Library           ${LOCAL_LIB_HOME}/StackQLInterfaces.py    ${EXECUTION_PLATFORM}    ${SQL_BACKEND}
+Library           ${LOCAL_LIB_HOME}/StackQLInterfaces.py    ${EXECUTION_PLATFORM}    ${SQL_BACKEND}    ${CONCURRENCY_LIMIT}
 Library           ${LOCAL_LIB_HOME}/CloudIntegration.py
 
 *** Keywords ***
@@ -75,6 +76,7 @@ Start StackQL PG Server mTLS
                         ...  \-\-pgsrv\.tls    ${_MTLS_CFG_STR}
                         ...  \-\-namespaces\=${_NAMESPACES_CFG}
                         ...  \-\-gc\=${_GC_CFG}
+                        ...  \-\-execution\.concurrency\.limit\=${CONCURRENCY_LIMIT}
                         ...  \-\-sqlBackend\=${_SQL_BACKEND_CFG}
                         ...  \-\-dbInternal\=${DB_INTERNAL_CFG_LAX}
                         ...  stderr=${CURDIR}/tmp/stdout-stackql-srv-mtls-${_SRV_PORT_MTLS}.txt
@@ -87,7 +89,7 @@ Start StackQL PG Server mTLS
                         ...  stackqlsrv
                         ...  bash
                         ...  \-c
-                        ...  sleep 2 && stackql srv \-\-registry\='${REGISTRY_NO_VERIFY_CFG_STR.get_config_str('docker')}' \-\-auth\='${AUTH_CFG_STR}' \-\-namespaces\='${_NAMESPACES_CFG}' \-\-gc\='${_GC_CFG}' \-\-sqlBackend\='${_SQL_BACKEND_CFG}' \-\-dbInternal\='${DB_INTERNAL_CFG_LAX}' \-\-tls\.allowInsecure\=true \-\-pgsrv\.address\='0.0.0.0' \-\-pgsrv\.port\=${_DOCKER_PORT} \-\-pgsrv\.tls\='{\"keyFilePath\": \"/opt/stackql/srv/credentials/pg_server_key.pem\", \"certFilePath\": \"/opt/stackql/srv/credentials/pg_server_cert.pem\", \"clientCAs\": [\"'$(base64 -w 0 /opt/stackql/srv/credentials/pg_client_cert.pem)'\"]}'
+                        ...  sleep 2 && stackql srv \-\-execution\.concurrency\.limit\=${CONCURRENCY_LIMIT} \-\-registry\='${REGISTRY_NO_VERIFY_CFG_STR.get_config_str('docker')}' \-\-auth\='${AUTH_CFG_STR}' \-\-namespaces\='${_NAMESPACES_CFG}' \-\-gc\='${_GC_CFG}' \-\-sqlBackend\='${_SQL_BACKEND_CFG}' \-\-dbInternal\='${DB_INTERNAL_CFG_LAX}' \-\-tls\.allowInsecure\=true \-\-pgsrv\.address\='0.0.0.0' \-\-pgsrv\.port\=${_DOCKER_PORT} \-\-pgsrv\.tls\='{\"keyFilePath\": \"/opt/stackql/srv/credentials/pg_server_key.pem\", \"certFilePath\": \"/opt/stackql/srv/credentials/pg_server_cert.pem\", \"clientCAs\": [\"'$(base64 -w 0 /opt/stackql/srv/credentials/pg_client_cert.pem)'\"]}'
                         ...  stderr=${CURDIR}/tmp/stdout-stackql-srv-mtls-${_SRV_PORT_MTLS}.txt
                         ...  stdout=${CURDIR}/tmp/stderr-stackql-srv-mtls-${_SRV_PORT_MTLS}.txt
     END
@@ -105,6 +107,7 @@ Start StackQL PG Server unencrypted
                         ...  \-\-namespaces\=${_NAMESPACES_CFG}
                         ...  \-\-sqlBackend\=${_SQL_BACKEND_CFG}
                         ...  \-\-dbInternal\=${DB_INTERNAL_CFG_LAX}
+                        ...  \-\-execution\.concurrency\.limit\=${CONCURRENCY_LIMIT}
                         ...  stderr=${CURDIR}/tmp/stdout-stackql-srv-unencrypted-${_SRV_PORT_UNENCRYPTED}.txt
                         ...  stdout=${CURDIR}/tmp/stderr-stackql-srv-unencrypted-${_SRV_PORT_UNENCRYPTED}.txt
     ELSE IF    "${EXECUTION_PLATFORM}" == "docker"
@@ -115,7 +118,7 @@ Start StackQL PG Server unencrypted
                         ...  stackqlsrv
                         ...  bash
                         ...  \-c
-                        ...  sleep 2 && stackql srv \-\-registry\='${REGISTRY_NO_VERIFY_CFG_STR.get_config_str('docker')}' \-\-auth\='${AUTH_CFG_STR}' \-\-namespaces\='${_NAMESPACES_CFG}' \-\-sqlBackend\='${_SQL_BACKEND_CFG}' \-\-dbInternal\='${DB_INTERNAL_CFG_LAX}' \-\-tls\.allowInsecure\=true \-\-pgsrv\.address\=0.0.0.0 \-\-pgsrv\.port\=${PG_SRV_PORT_DOCKER_UNENCRYPTED}
+                        ...  sleep 2 && stackql srv \-\-execution\.concurrency\.limit\=${CONCURRENCY_LIMIT} \-\-registry\='${REGISTRY_NO_VERIFY_CFG_STR.get_config_str('docker')}' \-\-auth\='${AUTH_CFG_STR}' \-\-namespaces\='${_NAMESPACES_CFG}' \-\-sqlBackend\='${_SQL_BACKEND_CFG}' \-\-dbInternal\='${DB_INTERNAL_CFG_LAX}' \-\-tls\.allowInsecure\=true \-\-pgsrv\.address\=0.0.0.0 \-\-pgsrv\.port\=${PG_SRV_PORT_DOCKER_UNENCRYPTED}
                         ...  stderr=${CURDIR}/tmp/stdout-stackql-srv-unencrypted-${_SRV_PORT_UNENCRYPTED}.txt
                         ...  stdout=${CURDIR}/tmp/stderr-stackql-srv-unencrypted-${_SRV_PORT_UNENCRYPTED}.txt
     END

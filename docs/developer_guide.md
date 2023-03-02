@@ -24,6 +24,23 @@ env CGO_ENABLED=1 go build \
   -X github.com/stackql/stackql/internal/stackql/cmd.BuildPlatform=$BUILDPLATFORM" -o ./build ./stackql
 ```
 
+## Testing locally
+
+### Unit tests
+
+```bash
+go test -timeout 1200s --tags "json1 sqleanall" ./...
+```
+
+### Robot tests
+
+**Note**: this requires the local build (above) to have been completed successfully, which builds a binary in `./build/`.
+
+```bash
+robot --variable SHOULD_RUN_DOCKER_EXTERNAL_TESTS:true -d test/robot/functional test/robot/functional
+```
+
+
 ## Provider development
 
 Keen to expose some new functionality though `stackql`?  We are very keen on this!  
