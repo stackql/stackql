@@ -66,12 +66,50 @@ func (pr *standardPrimitiveGraph) GetInputFromAlias(string) (internaldto.Executo
 	return rv, false
 }
 
+// After each query execution, the graph needs to be reset.
+// This is so that cached queries can be re-executed.
+func (pg *standardPrimitiveGraph) reset() {
+	for _, node := range pg.sorted {
+		switch node := node.(type) {
+		case PrimitiveNode:
+			select {
+			case <-node.IsDone():
+			default:
+			}
+		}
+	}
+}
+
+// Execute() is the entry point for the execution of the graph.
+// It is responsible for executing the graph in a topological order.
+// This particular implementation:
+//   - Uses the errgroup package to execute the graph in parallel.
+//   - Blocks on any node that has a dependency that has not been executed.
 func (pg *standardPrimitiveGraph) Execute(ctx primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+	// Reset the graph.
+	// Absolutely necessary for re-execution
+	defer pg.reset()
 	var output internaldto.ExecutorOutput = internaldto.NewExecutorOutput(nil, nil, nil, nil, fmt.Errorf("empty execution graph"))
 	for _, node := range pg.sorted {
 		outChan := make(chan internaldto.ExecutorOutput, 1)
 		switch node := node.(type) {
-		case standardPrimitiveNode:
+		case PrimitiveNode:
+			incidentNodes := pg.g.To(node.ID())
+			for {
+				hasNext := incidentNodes.Next()
+				if !hasNext {
+					break
+				}
+				incidentNode := incidentNodes.Node()
+				switch incidentNode := incidentNode.(type) {
+				case PrimitiveNode:
+					// await completion of the incident node
+					// and replenish the IsDone() channel
+					incidentNode.SetIsDone(<-incidentNode.IsDone())
+				default:
+					return internaldto.NewExecutorOutput(nil, nil, nil, nil, fmt.Errorf("unknown execution primitive type: '%T'", incidentNode))
+				}
+			}
 			pg.errGroup.Go(
 				func() error {
 					output := node.GetPrimitive().Execute(ctx)
@@ -88,12 +126,13 @@ func (pg *standardPrimitiveGraph) Execute(ctx primitive.IPrimitiveCtx) internald
 				}
 				fromNode := destinationNodes.Node()
 				switch fromNode := fromNode.(type) {
-				case standardPrimitiveNode:
+				case PrimitiveNode:
 					fromNode.GetPrimitive().IncidentData(node.ID(), output)
 				}
 			}
+			node.SetIsDone(true)
 		default:
-			internaldto.NewExecutorOutput(nil, nil, nil, nil, fmt.Errorf("unknown execution primitive type: '%T'", node))
+			return internaldto.NewExecutorOutput(nil, nil, nil, nil, fmt.Errorf("unknown execution primitive type: '%T'", node))
 		}
 	}
 	if err := pg.errGroup.Wait(); err != nil {
@@ -110,7 +149,7 @@ func (pg *standardPrimitiveGraph) SetTxnId(id int) {
 		}
 		node := nodes.Node()
 		switch node := node.(type) {
-		case standardPrimitiveNode:
+		case PrimitiveNode:
 			node.GetPrimitive().SetTxnId(id)
 		}
 	}
@@ -141,34 +180,57 @@ func SortPlan(g PrimitiveGraph) (sorted []graph.Node, err error) {
 type PrimitiveNode interface {
 	GetPrimitive() primitive.IPrimitive
 	ID() int64
+	IsDone() chan (bool)
+	GetError() (error, bool)
+	SetError(error)
 	SetInputAlias(alias string, id int64) error
+	SetIsDone(bool)
 }
 
 type standardPrimitiveNode struct {
 	primitive primitive.IPrimitive
 	id        int64
+	isDone    chan bool
+	err       error
 }
 
 func (pg *standardPrimitiveGraph) CreatePrimitiveNode(pr primitive.IPrimitive) PrimitiveNode {
 	nn := pg.g.NewNode()
-	node := standardPrimitiveNode{
+	node := &standardPrimitiveNode{
 		primitive: pr,
 		id:        nn.ID(),
+		isDone:    make(chan bool, 1),
 	}
 	pg.g.AddNode(node)
 	return node
 }
 
-func (pn standardPrimitiveNode) ID() int64 {
+func (pn *standardPrimitiveNode) ID() int64 {
 	return pn.id
 }
 
-func (pn standardPrimitiveNode) GetPrimitive() primitive.IPrimitive {
+func (pn *standardPrimitiveNode) GetError() (error, bool) {
+	return pn.err, pn.err != nil
+}
+
+func (pn *standardPrimitiveNode) GetPrimitive() primitive.IPrimitive {
 	return pn.primitive
 }
 
-func (pn standardPrimitiveNode) SetInputAlias(alias string, id int64) error {
+func (pn *standardPrimitiveNode) IsDone() chan bool {
+	return pn.isDone
+}
+
+func (pn *standardPrimitiveNode) SetInputAlias(alias string, id int64) error {
 	return pn.GetPrimitive().SetInputAlias(alias, id)
+}
+
+func (pn *standardPrimitiveNode) SetIsDone(isDone bool) {
+	pn.isDone <- isDone
+}
+
+func (pn *standardPrimitiveNode) SetError(err error) {
+	pn.err = err
 }
 
 func NewPrimitiveGraph(concurrencyLimit int) PrimitiveGraph {

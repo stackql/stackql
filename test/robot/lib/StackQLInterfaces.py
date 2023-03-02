@@ -19,16 +19,18 @@ from sqlalchemy_client import SQLAlchemyClient
 
 SQL_BACKEND_CANONICAL_SQLITE_EMBEDDED :str = 'sqlite_embedded'
 SQL_BACKEND_POSTGRES_TCP :str = 'postgres_tcp'
+SQL_CONCURRENCT_LIMIT_DEFAULT :int = 1
 
 
 @library(scope='SUITE', version='0.1.0', doc_format='reST')
 class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
   ROBOT_LISTENER_API_VERSION = 2
 
-  def __init__(self, execution_platform='native', sql_backend=SQL_BACKEND_CANONICAL_SQLITE_EMBEDDED):
+  def __init__(self, execution_platform='native', sql_backend=SQL_BACKEND_CANONICAL_SQLITE_EMBEDDED, concurrency_limit=SQL_CONCURRENCT_LIMIT_DEFAULT):
     self._counter = 0
     self._execution_platform=execution_platform
     self._sql_backend=sql_backend
+    self._concurrency_limit=concurrency_limit
     self.ROBOT_LIBRARY_LISTENER = self
     Process.__init__(self)
 
@@ -181,6 +183,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     if sql_backend_cfg_str != "":
       supplied_args.append(f"--sqlBackend='{sql_backend_cfg_str}'")
     supplied_args.append("--tls.allowInsecure=true")
+    supplied_args.append(f"--execution.concurrency.limit={self._concurrency_limit}")
     transformed_args = self._docker_transform_args(*args)
     supplied_args = supplied_args + transformed_args
     query_escaped = query.replace("'", "'\"'\"'")
@@ -253,6 +256,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     if sql_backend_cfg_str != "":
       supplied_args.append(f"--sqlBackend='{sql_backend_cfg_str}'")
     supplied_args.append("--tls.allowInsecure=true")
+    supplied_args.append(f"--execution.concurrency.limit={self._concurrency_limit}")
     transformed_args = self._docker_transform_args(*args)
     supplied_args = supplied_args + transformed_args
     os.environ['REGISTRY_SRC']= f'./{reg_location}'
@@ -322,6 +326,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     if sql_backend_cfg_str != "":
       supplied_args.append(f"--sqlBackend={sql_backend_cfg_str}")
     supplied_args.append("--tls.allowInsecure=true")
+    supplied_args.append(f"--execution.concurrency.limit={self._concurrency_limit}")
     res = super().run_process(
       *supplied_args,
       query,
@@ -364,6 +369,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       supplied_args.append(f"--sqlBackend={sql_backend_cfg_str}")
     supplied_args.append("--tls.allowInsecure=true")
     supplied_args.append(f'--approot="{_TEST_APP_CACHE_ROOT}"')
+    supplied_args.append(f"--execution.concurrency.limit={self._concurrency_limit}")
     supplied_args = supplied_args + list(args)
     stdout = cfg.get('stdout', subprocess.PIPE)
     stderr = cfg.get('stderr', subprocess.PIPE)
