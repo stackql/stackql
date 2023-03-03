@@ -33,7 +33,6 @@ type InitialPassesScreener interface {
 	GetStatementType() sqlparser.StatementType
 	GetIndirectionDepth() int
 	IsCacheExemptMaterialDetected() bool
-	SetIndirectionDepth(int)
 }
 
 type InitialPassesScreenerAnalyzer interface {
@@ -45,11 +44,17 @@ var (
 	_ InitialPassesScreenerAnalyzer = &standardInitialPasses{}
 )
 
-func NewEarlyScreenerAnalyzer(primitiveGenerator primitivegenerator.PrimitiveGenerator, parentAnnotatedAST annotatedast.AnnotatedAst, parentWhereParams parserutil.ParameterMap) (InitialPassesScreenerAnalyzer, error) {
+func NewEarlyScreenerAnalyzer(
+	primitiveGenerator primitivegenerator.PrimitiveGenerator,
+	parentAnnotatedAST annotatedast.AnnotatedAst,
+	parentWhereParams parserutil.ParameterMap,
+	indirectDepth int,
+) (InitialPassesScreenerAnalyzer, error) {
 	return &standardInitialPasses{
 		primitiveGenerator: primitiveGenerator,
 		parentAnnotatedAST: parentAnnotatedAST,
 		parentWhereParams:  parentWhereParams,
+		indirectionDepth:   indirectDepth,
 	}, nil
 }
 
@@ -66,10 +71,6 @@ type standardInitialPasses struct {
 
 func (sp *standardInitialPasses) GetIndirectionDepth() int {
 	return sp.indirectionDepth
-}
-
-func (sp *standardInitialPasses) SetIndirectionDepth(indirectionDepth int) {
-	sp.indirectionDepth = indirectionDepth
 }
 
 func (sp *standardInitialPasses) GetInstructionType() InstructionType {
@@ -153,7 +154,7 @@ func (sp *standardInitialPasses) initialPasses(statement sqlparser.Statement, ha
 		handlerCtx.GetNamespaceCollection(),
 		whereParams,
 		tcc,
-		sp.indirectionDepth,
+		sp.GetIndirectionDepth(),
 	)
 	if err != nil {
 		return err

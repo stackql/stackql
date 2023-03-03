@@ -25,6 +25,7 @@ type RuntimeCtx struct {
 	HTTPProxyPort                int
 	HTTPProxyScheme              string
 	HTTPProxyUser                string
+	IndirectDepthMax             int
 	InfilePath                   string
 	LogLevelStr                  string
 	OutfilePath                  string
@@ -120,6 +121,8 @@ func (rc *RuntimeCtx) Set(key string, val string) error {
 		rc.HTTPProxyPassword = val
 	case HTTPProxyPortKey:
 		retVal = setInt(&rc.HTTPProxyPort, val)
+	case IndirectDepthMaxKey:
+		retVal = setInt(&rc.IndirectDepthMax, val)
 	case HTTPProxySchemeKey:
 		rc.HTTPProxyScheme = val
 	case HTTPProxyUserKey:
