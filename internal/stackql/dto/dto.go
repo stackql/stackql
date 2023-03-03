@@ -26,6 +26,7 @@ const (
 	CSVHeadersDisableKey            string = "hideheaders"
 	DelimiterKey                    string = "delimiter"
 	ErrorPresentationKey            string = "errorpresentation"
+	IndirectDepthMaxKey             string = "indirect.depth.max"
 	HTTPLogEnabledKey               string = "http.log.enabled"
 	HTTPMaxResultsKey               string = "http.response.maxResults"
 	HTTPPAgeLimitKey                string = "http.response.pageLimit"

@@ -995,7 +995,21 @@ Describe View of Cloud Control Resource Returns Expected Result
     ...    RestrictPublicBuckets
     ...    stdout=${CURDIR}/tmp/Describe-View-of-Cloud-Control-Resource-Returns-Expected-Result.tmp
 
-View Depth Limitation Upheld
+View Depth Expanded Limitation Respected
+    Should Stackql Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}    
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    create view zz1 as select name from stackql_repositories; create view zz2 as select name from zz1; create view zz3 as select name from zz2; create view zz4 as select name from zz3; select * from zz4;
+    ...    dummyapp.io
+    ...    stdout=${CURDIR}/tmp/View-Depth-Limitation-Upheld-stdout.tmp
+    ...    stderr=${CURDIR}/tmp/View-Depth-Limitation-Upheld-stderr.tmp
+
+View Depth Limitation Enforced
     Should Stackql Exec Inline Contain Stderr
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -1004,8 +1018,8 @@ View Depth Limitation Upheld
     ...    ${REGISTRY_NO_VERIFY_CFG_STR}    
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
-    ...    create view zz1 as select name from stackql_repositories; select * from zz1;
-    ...    please do not cite views from within views
+    ...    create view zz1 as select name from stackql_repositories; create view zz2 as select name from zz1; create view zz3 as select name from zz2; create view zz4 as select name from zz3; create view zz5 as select name from zz4; select * from zz5;
+    ...    please do not cite views at too deep a level
     ...    stdout=${CURDIR}/tmp/View-Depth-Limitation-Upheld-stdout.tmp
     ...    stderr=${CURDIR}/tmp/View-Depth-Limitation-Upheld-stderr.tmp
 

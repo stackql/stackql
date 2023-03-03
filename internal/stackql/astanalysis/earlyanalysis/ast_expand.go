@@ -78,11 +78,15 @@ func (v *indirectExpandAstVisitor) processIndirect(node sqlparser.SQLNode, indir
 	if err != nil {
 		return nil
 	}
-	childAnalyzer, err := NewEarlyScreenerAnalyzer(v.primitiveGenerator, v.annotatedAST, v.whereParams.Clone())
+	childAnalyzer, err := NewEarlyScreenerAnalyzer(
+		v.primitiveGenerator,
+		v.annotatedAST,
+		v.whereParams.Clone(),
+		v.indirectionDepth+1,
+	)
 	if err != nil {
 		return err
 	}
-	childAnalyzer.SetIndirectionDepth(v.indirectionDepth + 1)
 	err = childAnalyzer.Analyze(indirect.GetSelectAST(), v.handlerCtx, v.tcc)
 	if err != nil {
 		return err
@@ -95,8 +99,8 @@ func (v *indirectExpandAstVisitor) processIndirect(node sqlparser.SQLNode, indir
 		return err
 	}
 	maxIndirectCount := childAnalyzer.GetIndirectionDepth()
-	if maxIndirectCount > constants.LimitsIndirectMaxChainLength {
-		return fmt.Errorf("query error: indirection chain length %d > %d and is therefore disallowed; please do not cite views from within views", maxIndirectCount, constants.LimitsIndirectMaxChainLength)
+	if maxIndirectCount > v.handlerCtx.GetRuntimeContext().IndirectDepthMax {
+		return fmt.Errorf("query error: indirection chain length %d > %d and is therefore disallowed; please do not cite views at too deep a level", maxIndirectCount, constants.LimitsIndirectMaxChainLength)
 	}
 	indirectPrimitiveGenerator.GetPrimitiveComposer().GetAst()
 	selCtx := indirectPrimitiveGenerator.GetPrimitiveComposer().GetIndirectSelectPreparedStatementCtx()

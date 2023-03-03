@@ -122,42 +122,19 @@ jobs:
         $Version = convertfrom-stringdata (get-content ./version.txt -raw)
         $BuildMajorVersion = $Version.'MajorVersion'
         $BuildMinorVersion = $Version.'MinorVersion'
-        if("$env:BUILDBRANCH".EndsWith('develop')) {
-          $BuildPatchVersion = $env:BUILDPATCHVERSION
-        }else {
-          $BuildPatchVersion = $env:BUILDPATCHVERSION
-        }
-        $BuildCommitSHA = $env:BUILDCOMMITSHA
-        $BuildShortCommitSHA = "$BuildCommitSHA".Substring(0,6)
-        $BuildDate = (Get-Date -UFormat "%a %b %e %H:%M:%S UTC %Y").ToString()
-        $BuildPlatform = $env:BUILDPLATFORM
-        $PlanCacheEnabled = $env:PLANCACHEENABLED	
-            
-        Write-Output $BuildMajorVersion
-        Write-Output $BuildMinorVersion
-        Write-Output $BuildPatchVersion
-        Write-Output $BuildCommitSHA
-        Write-Output $BuildShortCommitSHA
-        Write-Output $BuildDate
-        Write-Output $BuildPlatform
-        
-        echo "BUILDMAJORVERSION=$BuildMajorVersion" >> $GITHUB_ENV
-        echo "BUILDMINORVERSION=$BuildMinorVersion" >> $GITHUB_ENV
-        echo "BUILDPATCHVERSION=$BuildPatchVersion" >> $GITHUB_ENV
 
-        go build -x -v --tags "json1 sqleanall" -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion=$BuildMajorVersion `
-          -X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion=$BuildMinorVersion `
-          -X github.com/stackql/stackql/internal/stackql/cmd.BuildPatchVersion=$BuildPatchVersion `
-          -X github.com/stackql/stackql/internal/stackql/cmd.BuildCommitSHA=$BuildCommitSHA `
-          -X github.com/stackql/stackql/internal/stackql/cmd.BuildShortCommitSHA=$BuildShortCommitSHA `
-          -X 'github.com/stackql/stackql/internal/stackql/cmd.BuildDate=$BuildDate' `
-          -X 'stackql/internal/stackql/planbuilder.PlanCacheEnabled=$PlanCacheEnabled' `
-          -X github.com/stackql/stackql/internal/stackql/cmd.BuildPlatform=$BuildPlatform" `
-          -o build/ ./stackql
+        $env:BUILDMAJORVERSION = $BuildMajorVersion
+        $env:BUILDMINORVERSION = $BuildMinorVersion
+        
+        echo "BUILDMAJORVERSION=$env:BUILDMAJORVERSION" >> $GITHUB_ENV
+        echo "BUILDMINORVERSION=$env:BUILDMINORVERSION" >> $GITHUB_ENV
+        echo "BUILDPATCHVERSION=$env:BUILDPATCHVERSION" >> $GITHUB_ENV
+
+        python cicd/python/build.py --verbose --build 
 
     - name: Test
       if: success()
-      run: go test -timeout 1200s --tags "json1 sqleanall" -v ./...
+      run: python cicd/python/build.py --verbose --test
 
     - name: Mock Server Download
       run: |
@@ -277,14 +254,14 @@ jobs:
         CGO_LDFLAGS: '-static'
       run: |
         source version.txt
-        BUILDMAJORVERSION=$MajorVersion
-        BUILDMINORVERSION=$MinorVersion
+        export BUILDMAJORVERSION=$MajorVersion
+        export BUILDMINORVERSION=$MinorVersion
         if [[ ! "$BUILDBRANCH" == *develop ]]
           then
-          BUILDPATCHVERSION="${BUILDPATCHVERSION}"
+          export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
         fi
-        BUILDSHORTCOMMITSHA=$(echo $BUILDCOMMITSHA | cut -c 1-7)
-        BUILDDATE=$(date)
+        export BUILDSHORTCOMMITSHA=$(echo $BUILDCOMMITSHA | cut -c 1-7)
+        export BUILDDATE=$(date)
         echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
         echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
         echo "BUILDPATCHVERSION: ${BUILDPATCHVERSION}"
@@ -298,19 +275,11 @@ jobs:
         echo "BUILDMINORVERSION=$BUILDMINORVERSION" >> $GITHUB_ENV
         echo "BUILDPATCHVERSION=$BUILDPATCHVERSION" >> $GITHUB_ENV
 
-        go build -x -v --tags "json1 sqleanall" -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion=$BUILDMAJORVERSION \
-        -X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion=$BUILDMINORVERSION \
-        -X github.com/stackql/stackql/internal/stackql/cmd.BuildPatchVersion=$BUILDPATCHVERSION \
-        -X github.com/stackql/stackql/internal/stackql/cmd.BuildCommitSHA=$BUILDCOMMITSHA \
-        -X github.com/stackql/stackql/internal/stackql/cmd.BuildShortCommitSHA=$BUILDSHORTCOMMITSHA \
-        -X \"github.com/stackql/stackql/internal/stackql/cmd.BuildDate=$BUILDDATE\" \
-        -X \"stackql/internal/stackql/planbuilder.PlanCacheEnabled=$PLANCACHEENABLED\" \
-        -X github.com/stackql/stackql/internal/stackql/cmd.BuildPlatform=$BUILDPLATFORM" \
-        -o build/ ./stackql
+        python cicd/python/build.py --verbose --build
       
     - name: Test
       if: success()
-      run: go test -timeout 1200s --tags "json1 sqleanall" -v ./...
+      run: python cicd/python/build.py --verbose --test
 
     - name: Mock Server Download
       run: |
@@ -540,14 +509,14 @@ jobs:
         CGO_ENABLED: 1
       run: |
         source version.txt
-        BUILDMAJORVERSION=$MajorVersion
-        BUILDMINORVERSION=$MinorVersion
+        export BUILDMAJORVERSION=$MajorVersion
+        export BUILDMINORVERSION=$MinorVersion
         if [[ ! "$BUILDBRANCH" == *develop ]]
           then
-          BUILDPATCHVERSION="${BUILDPATCHVERSION}"
+          export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
         fi
-        BUILDSHORTCOMMITSHA=$(echo $BUILDCOMMITSHA | cut -c 1-7)
-        BUILDDATE=$(date)
+        export BUILDSHORTCOMMITSHA=$(echo $BUILDCOMMITSHA | cut -c 1-7)
+        export BUILDDATE=$(date)
         echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
         echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
         echo "BUILDPATCHVERSION: ${BUILDPATCHVERSION}"
@@ -561,19 +530,11 @@ jobs:
         echo "BUILDMINORVERSION=$BUILDMINORVERSION" >> $GITHUB_ENV
         echo "BUILDPATCHVERSION=$BUILDPATCHVERSION" >> $GITHUB_ENV
 
-        go build -x -v --tags "json1 sqleanall" -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion=$BUILDMAJORVERSION \
-        -X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion=$BUILDMINORVERSION \
-        -X github.com/stackql/stackql/internal/stackql/cmd.BuildPatchVersion=$BUILDPATCHVERSION \
-        -X github.com/stackql/stackql/internal/stackql/cmd.BuildCommitSHA=$BUILDCOMMITSHA \
-        -X github.com/stackql/stackql/internal/stackql/cmd.BuildShortCommitSHA=$BUILDSHORTCOMMITSHA \
-        -X \"github.com/stackql/stackql/internal/stackql/cmd.BuildDate=$BUILDDATE\" \
-        -X \"stackql/internal/stackql/planbuilder.PlanCacheEnabled=$PLANCACHEENABLED\" \
-        -X github.com/stackql/stackql/internal/stackql/cmd.BuildPlatform=$BUILDPLATFORM" \
-        -o build/ ./stackql
+        python cicd/python/build.py --verbose --build 
 
     - name: Test
       if: success()
-      run: go test -timeout 1200s --tags "json1 sqleanall" -v ./...
+      run: python cicd/python/build.py --verbose --test
 
     - name: Mock Server Download
       run: |
@@ -633,6 +594,12 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v3
 
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        cache: pip
+        python-version: '3.11'
+
     - name: Set up Go 1.x
       uses: actions/setup-go@v3
       with:
@@ -660,14 +627,14 @@ jobs:
         CGO_ENABLED: 1
       run: |
         source version.txt
-        BUILDMAJORVERSION=$MajorVersion
-        BUILDMINORVERSION=$MinorVersion
+        export BUILDMAJORVERSION=$MajorVersion
+        export BUILDMINORVERSION=$MinorVersion
         if [[ ! "$BUILDBRANCH" == *develop ]]
           then
-          BUILDPATCHVERSION="${BUILDPATCHVERSION}"
+          export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
         fi
-        BUILDSHORTCOMMITSHA=$(echo $BUILDCOMMITSHA | cut -c 1-7)
-        BUILDDATE=$(date)
+        export BUILDSHORTCOMMITSHA=$(echo $BUILDCOMMITSHA | cut -c 1-7)
+        export BUILDDATE=$(date)
         echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
         echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
         echo "BUILDPATCHVERSION: ${BUILDPATCHVERSION}"
@@ -682,16 +649,9 @@ jobs:
         echo "BUILDMINORVERSION=$BUILDMINORVERSION" >> $GITHUB_ENV
         echo "BUILDPATCHVERSION=$BUILDPATCHVERSION" >> $GITHUB_ENV
 
-        GOOS=darwin GOARCH=arm64 \
-        go build -x -v --tags "json1 sqleanall" -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion=$BUILDMAJORVERSION \
-        -X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion=$BUILDMINORVERSION \
-        -X github.com/stackql/stackql/internal/stackql/cmd.BuildPatchVersion=$BUILDPATCHVERSION \
-        -X github.com/stackql/stackql/internal/stackql/cmd.BuildCommitSHA=$BUILDCOMMITSHA \
-        -X github.com/stackql/stackql/internal/stackql/cmd.BuildShortCommitSHA=$BUILDSHORTCOMMITSHA \
-        -X \"github.com/stackql/stackql/internal/stackql/cmd.BuildDate=$BUILDDATE\" \
-        -X \"stackql/internal/stackql/planbuilder.PlanCacheEnabled=$PLANCACHEENABLED\" \
-        -X github.com/stackql/stackql/internal/stackql/cmd.BuildPlatform=$BUILDPLATFORM" \
-        -o build/ ./stackql
+        export GOOS=darwin
+        export GOARCH=arm64
+        python cicd/python/build.py --verbose --build 
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v3
