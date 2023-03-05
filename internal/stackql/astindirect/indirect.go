@@ -13,6 +13,7 @@ import (
 
 var (
 	_ Indirect = &view{}
+	_ Indirect = &subquery{}
 )
 
 type IndirectType int

@@ -219,7 +219,8 @@ var shellCmd = &cobra.Command{
 					}
 					handlerCtx.SetRawQuery(queryToExecute)
 					l.WriteToHistory(rawQuery)
-					RunCommand(handlerCtx, outfile, outErrFile)
+					cr := newCommandRunner()
+					cr.RunCommand(handlerCtx, outfile, outErrFile)
 					sb.Reset()
 					sb.WriteString(line[semiColonIdx+1:])
 				} else {

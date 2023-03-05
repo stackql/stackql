@@ -1,4 +1,4 @@
-package parse
+package parser
 
 import (
 	"fmt"
@@ -16,7 +16,17 @@ func specialiseParserError(err error, cmd string) error {
 	return err
 }
 
-func ParseQuery(cmd string) (sqlparser.Statement, error) {
+type Parser interface {
+	ParseQuery(cmd string) (sqlparser.Statement, error)
+}
+
+func NewParser() (Parser, error) {
+	return &basicParser{}, nil
+}
+
+type basicParser struct{}
+
+func (p *basicParser) ParseQuery(cmd string) (sqlparser.Statement, error) {
 	statement, err := sqlparser.Parse(cmd)
 	return statement, specialiseParserError(err, cmd)
 }
