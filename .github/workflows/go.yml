@@ -9,12 +9,18 @@ on:
       - build*
     paths-ignore:
       - "**/*.md"
+      - "docs/**"
+      - "examples/**"
+      - "licenses/**"
   pull_request:
     branches:
       - main
       - develop
     paths-ignore:
       - "**/*.md"
+      - "docs/**"
+      - "examples/**"
+      - "licenses/**"
 
 env:
   GOGETCMD: "go get -v -t -d ./..."
