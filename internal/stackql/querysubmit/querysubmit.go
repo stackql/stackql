@@ -7,9 +7,24 @@ import (
 	"github.com/stackql/stackql/internal/stackql/planbuilder"
 )
 
-func SubmitQuery(handlerCtx handler.HandlerContext) internaldto.ExecutorOutput {
+var (
+	_ QuerySubmitter = &basicQuerySubmitter{}
+)
+
+type QuerySubmitter interface {
+	SubmitQuery(handlerCtx handler.HandlerContext) internaldto.ExecutorOutput
+}
+
+func NewQuerySubmitter() QuerySubmitter {
+	return &basicQuerySubmitter{}
+}
+
+type basicQuerySubmitter struct{}
+
+func (qs *basicQuerySubmitter) SubmitQuery(handlerCtx handler.HandlerContext) internaldto.ExecutorOutput {
 	logging.GetLogger().Debugln("SubmitQuery() invoked...")
-	plan, err := planbuilder.BuildPlanFromContext(handlerCtx)
+	pb := planbuilder.NewPlanBuilder()
+	plan, err := pb.BuildPlanFromContext(handlerCtx)
 	if err != nil {
 		return internaldto.NewExecutorOutput(nil, nil, nil, nil, err)
 	}

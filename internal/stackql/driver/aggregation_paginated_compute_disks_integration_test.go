@@ -42,11 +42,13 @@ func TestSelectComputeDisksOrderByCrtTmstpAscPaginated(t *testing.T) {
 		}
 
 		handlerCtx.SetQuery(testobjects.SelectGoogleComputeDisksOrderCreationTmstpAsc)
-		response := querysubmit.SubmitQuery(handlerCtx)
+		dr, _ := NewStackQLDriver(handlerCtx)
+		querySubmitter := querysubmit.NewQuerySubmitter()
+		response := querySubmitter.SubmitQuery(handlerCtx)
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 
-		ProcessQuery(handlerCtx)
+		dr.ProcessQuery(handlerCtx)
 	}
 
 	stackqltestutil.SetupSimpleSelectGoogleComputeDisksPaginated(t)
@@ -80,11 +82,13 @@ func TestSelectComputeDisksAggOrderBySizeAscPaginated(t *testing.T) {
 		}
 
 		handlerCtx.SetQuery(testobjects.SelectGoogleComputeDisksAggOrderSizeAsc)
-		response := querysubmit.SubmitQuery(handlerCtx)
+		dr, _ := NewStackQLDriver(handlerCtx)
+		querySubmitter := querysubmit.NewQuerySubmitter()
+		response := querySubmitter.SubmitQuery(handlerCtx)
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 
-		ProcessQuery(handlerCtx)
+		dr.ProcessQuery(handlerCtx)
 	}
 
 	stackqltestutil.SetupSimpleSelectGoogleComputeDisksPaginated(t)
@@ -118,11 +122,13 @@ func TestSelectComputeDisksAggOrderBySizeDescPaginated(t *testing.T) {
 		}
 
 		handlerCtx.SetQuery(testobjects.SelectGoogleComputeDisksAggOrderSizeDesc)
-		response := querysubmit.SubmitQuery(handlerCtx)
+		dr, _ := NewStackQLDriver(handlerCtx)
+		querySubmitter := querysubmit.NewQuerySubmitter()
+		response := querySubmitter.SubmitQuery(handlerCtx)
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 
-		ProcessQuery(handlerCtx)
+		dr.ProcessQuery(handlerCtx)
 	}
 
 	stackqltestutil.SetupSimpleSelectGoogleComputeDisksPaginated(t)
@@ -156,11 +162,13 @@ func TestSelectComputeDisksAggTotalSizePaginated(t *testing.T) {
 		}
 
 		handlerCtx.SetQuery(testobjects.SelectGoogleComputeDisksAggSizeTotal)
-		response := querysubmit.SubmitQuery(handlerCtx)
+		dr, _ := NewStackQLDriver(handlerCtx)
+		querySubmitter := querysubmit.NewQuerySubmitter()
+		response := querySubmitter.SubmitQuery(handlerCtx)
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 
-		ProcessQuery(handlerCtx)
+		dr.ProcessQuery(handlerCtx)
 	}
 
 	stackqltestutil.SetupSimpleSelectGoogleComputeDisksPaginated(t)
@@ -194,11 +202,13 @@ func TestSelectComputeDisksAggTotalStringPaginated(t *testing.T) {
 		}
 
 		handlerCtx.SetQuery(testobjects.SelectGoogleComputeDisksAggStringTotal)
-		response := querysubmit.SubmitQuery(handlerCtx)
+		dr, _ := NewStackQLDriver(handlerCtx)
+		querySubmitter := querysubmit.NewQuerySubmitter()
+		response := querySubmitter.SubmitQuery(handlerCtx)
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 
-		ProcessQuery(handlerCtx)
+		dr.ProcessQuery(handlerCtx)
 	}
 
 	stackqltestutil.SetupSimpleSelectGoogleComputeDisksPaginated(t)

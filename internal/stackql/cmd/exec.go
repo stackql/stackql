@@ -100,9 +100,11 @@ func RunCommand(handlerCtx handler.HandlerContext, outfile io.Writer, outErrFile
 	}
 	handlerCtx.SetOutfile(outfile)
 	handlerCtx.SetOutErrFile(outErrFile)
+	stackqlDriver, err := driver.NewStackQLDriver(handlerCtx)
+	iqlerror.PrintErrorAndExitOneIfError(err)
 	if handlerCtx.GetRuntimeContext().DryRunFlag {
-		driver.ProcessDryRun(handlerCtx)
+		stackqlDriver.ProcessDryRun(handlerCtx)
 		return
 	}
-	driver.ProcessQuery(handlerCtx)
+	stackqlDriver.ProcessQuery(handlerCtx)
 }

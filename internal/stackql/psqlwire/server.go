@@ -12,9 +12,9 @@ import (
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 
-	"github.com/jeroenrinzema/psql-wire/pkg/sqlbackend"
+	"github.com/stackql/psql-wire/pkg/sqlbackend"
 
-	wire "github.com/jeroenrinzema/psql-wire"
+	wire "github.com/stackql/psql-wire"
 )
 
 type IWireServer interface {

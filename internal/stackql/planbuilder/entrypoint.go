@@ -10,7 +10,21 @@ import (
 	"github.com/stackql/stackql/internal/stackql/primitivegenerator"
 )
 
-func BuildPlanFromContext(handlerCtx handler.HandlerContext) (*plan.Plan, error) {
+var (
+	_ PlanBuilder = &standardPlanBuilder{}
+)
+
+type PlanBuilder interface {
+	BuildPlanFromContext(handlerCtx handler.HandlerContext) (*plan.Plan, error)
+}
+
+func NewPlanBuilder() PlanBuilder {
+	return &standardPlanBuilder{}
+}
+
+type standardPlanBuilder struct{}
+
+func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerContext) (*plan.Plan, error) {
 	defer handlerCtx.GetGarbageCollector().Close()
 	tcc, err := internaldto.NewTxnControlCounters(handlerCtx.GetTxnCounterMgr())
 	handlerCtx.GetTxnStore().Put(tcc.GetTxnID())
@@ -45,9 +59,9 @@ func BuildPlanFromContext(handlerCtx handler.HandlerContext) (*plan.Plan, error)
 
 	pGBuilder := newPlanGraphBuilder(handlerCtx.GetRuntimeContext().ExecutionConcurrencyLimit)
 
-	primitiveGenerator := primitivegenerator.NewRootPrimitiveGenerator(statement, handlerCtx, pGBuilder.planGraph)
+	primitiveGenerator := primitivegenerator.NewRootPrimitiveGenerator(statement, handlerCtx, pGBuilder.getPlanGraph())
 
-	pGBuilder.rootPrimitiveGenerator = primitiveGenerator
+	pGBuilder.setRootPrimitiveGenerator(primitiveGenerator)
 
 	earlyPassScreenerAnalyzer, err := earlyanalysis.NewEarlyScreenerAnalyzer(primitiveGenerator, nil, nil, 0)
 	if err != nil {
@@ -67,7 +81,7 @@ func BuildPlanFromContext(handlerCtx handler.HandlerContext) (*plan.Plan, error)
 		if createInstructionError != nil {
 			return nil, createInstructionError
 		}
-		qPlan.Instructions = pGBuilder.planGraph
+		qPlan.Instructions = pGBuilder.getPlanGraph()
 
 		if qPlan.Instructions != nil {
 			err = qPlan.Instructions.Optimise()
@@ -88,11 +102,11 @@ func BuildPlanFromContext(handlerCtx handler.HandlerContext) (*plan.Plan, error)
 		}
 	}
 
-	if pGBuilder.planGraph.ContainsIndirect() {
+	if pGBuilder.getPlanGraph().ContainsIndirect() {
 		qPlan.SetCacheable(false)
 	}
 
-	qPlan.Instructions = pGBuilder.planGraph
+	qPlan.Instructions = pGBuilder.getPlanGraph()
 
 	if qPlan.Instructions != nil {
 		err = qPlan.Instructions.Optimise()

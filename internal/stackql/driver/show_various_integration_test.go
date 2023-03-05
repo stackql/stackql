@@ -52,7 +52,8 @@ func TestSimpleShowResourcesFiltered(t *testing.T) {
 		handlerCtx.SetOutfile(outFile)
 		handlerCtx.SetOutErrFile(os.Stderr)
 
-		ProcessQuery(handlerCtx)
+		dr, _ := NewStackQLDriver(handlerCtx)
+		dr.ProcessQuery(handlerCtx)
 	}
 
 	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedShowResourcesFilteredFile})
@@ -94,7 +95,8 @@ func TestSimpleShowBQDatasets(t *testing.T) {
 		handlerCtx.SetOutfile(outFile)
 		handlerCtx.SetOutErrFile(os.Stderr)
 
-		ProcessQuery(handlerCtx)
+		dr, _ := NewStackQLDriver(handlerCtx)
+		dr.ProcessQuery(handlerCtx)
 	}
 
 	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedShowMethodsGoogleBQDatasetsFile})
@@ -136,7 +138,8 @@ func TestSimpleShowGoogleStorageBuckets(t *testing.T) {
 		handlerCtx.SetOutfile(outFile)
 		handlerCtx.SetOutErrFile(os.Stderr)
 
-		ProcessQuery(handlerCtx)
+		dr, _ := NewStackQLDriver(handlerCtx)
+		dr.ProcessQuery(handlerCtx)
 	}
 
 	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedShowMethodsGoogleStorageBucketsFile})

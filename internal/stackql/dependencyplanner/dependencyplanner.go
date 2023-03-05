@@ -150,7 +150,8 @@ func (dp *standardDependencyPlanner) Plan() error {
 			}
 			logging.GetLogger().Infof("%v\n", edges)
 			edgeCount := len(edges)
-			if edgeCount > 1 {
+			// TODO: test this
+			if edgeCount > dp.handlerCtx.GetRuntimeContext().DataflowDependencyMax {
 				return fmt.Errorf("data flow: cannot accomodate table dependencies of this complexity: supplied = %d, max = 1", edgeCount)
 			}
 			idsVisited := make(map[int64]struct{})

@@ -12,7 +12,6 @@ require (
 	github.com/google/go-jsonnet v0.17.0
 	github.com/jackc/pgtype v1.10.0
 	github.com/jackc/pgx/v5 v5.0.4
-	github.com/jeroenrinzema/psql-wire v0.0.1-stackqlalpha3
 	github.com/lib/pq v1.10.4
 	github.com/magiconair/properties v1.8.6
 	github.com/olekukonko/tablewriter v0.0.0-20180130162743-b8a9be070da4
@@ -24,6 +23,7 @@ require (
 	github.com/stackql/go-openapistackql v0.0.11-alpha03
 	github.com/stackql/go-sqlite3 v0.0.2-stackqlbeta04
 	github.com/stackql/go-suffix-map v0.0.1-alpha01
+	github.com/stackql/psql-wire v0.1.0
 	github.com/stackql/stackql-parser v0.0.13-alpha04
 	github.com/xo/dburl v0.12.4
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
@@ -128,5 +128,3 @@ require (
 replace github.com/chzyer/readline => github.com/stackql/readline v0.0.2-alpha05
 
 replace github.com/fatih/color => github.com/stackql/color v0.0.1-rc01
-
-replace github.com/jeroenrinzema/psql-wire => github.com/stackql/psql-wire v0.0.2-stackqlbeta14

@@ -41,12 +41,13 @@ func handleConnection(c net.Conn, runtimeCtx dto.RuntimeCtx, lruCache *lrucache.
 		handlerContext, _ := handler.GetHandlerCtx(netData, runtimeCtx, lruCache, inputBundle)
 		handlerContext.SetOutfile(c)
 		handlerContext.SetOutErrFile(c)
+		dr, err := driver.NewStackQLDriver(handlerContext)
 		defer iqlerror.HandlePanic(c)
 		if handlerContext.GetRuntimeContext().DryRunFlag {
-			driver.ProcessDryRun(handlerContext)
+			dr.ProcessDryRun(handlerContext)
 			continue
 		}
-		driver.ProcessQuery(handlerContext)
+		dr.ProcessQuery(handlerContext)
 	}
 	c.Close()
 }

@@ -68,7 +68,8 @@ func TestSelectOktaApplicationAppsDriver(t *testing.T) {
 		t.Fatalf("Test failed: %v", err)
 	}
 
-	ProcessQuery(handlerCtx)
+	dr, _ := NewStackQLDriver(handlerCtx)
+	dr.ProcessQuery(handlerCtx)
 
 	t.Logf("simple select driver integration test passed")
 }
@@ -98,9 +99,10 @@ func TestSimpleSelectOktaApplicationAppsDriverOutput(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
-
+		querySubmitter := querysubmit.NewQuerySubmitter()
 		handlerCtx.SetQuery(testobjects.SimpleSelectOktaApplicationApps)
-		response := querysubmit.SubmitQuery(handlerCtx)
+
+		response := querySubmitter.SubmitQuery(handlerCtx)
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 	}

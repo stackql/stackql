@@ -5,16 +5,28 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jeroenrinzema/psql-wire/pkg/sqldata"
+	"github.com/stackql/psql-wire/pkg/sqldata"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/querysubmit"
 	"github.com/stackql/stackql/internal/stackql/responsehandler"
 	"github.com/stackql/stackql/internal/stackql/util"
+
+	sqlbackend "github.com/stackql/psql-wire/pkg/sqlbackend"
 )
 
-func ProcessDryRun(handlerCtx handler.HandlerContext) {
+var (
+	_ StackQLDriver = &basicStackQLDriver{}
+)
+
+type StackQLDriver interface {
+	sqlbackend.ISQLBackend
+	ProcessDryRun(handlerCtx handler.HandlerContext)
+	ProcessQuery(handlerCtx handler.HandlerContext)
+}
+
+func (dr *basicStackQLDriver) ProcessDryRun(handlerCtx handler.HandlerContext) {
 	resultMap := map[string]map[string]interface{}{
 		"1": {
 			"query": handlerCtx.GetRawQuery(),
@@ -30,7 +42,7 @@ func throwErr(err error, handlerCtx handler.HandlerContext) {
 	responsehandler.HandleResponse(handlerCtx, response)
 }
 
-func ProcessQuery(handlerCtx handler.HandlerContext) {
+func (dr *basicStackQLDriver) ProcessQuery(handlerCtx handler.HandlerContext) {
 	responses, ok := processQueryOrQueries(handlerCtx)
 	if ok {
 		for _, r := range responses {
@@ -39,11 +51,11 @@ func ProcessQuery(handlerCtx handler.HandlerContext) {
 	}
 }
 
-type StackQLBackend struct {
+type basicStackQLDriver struct {
 	handlerCtx handler.HandlerContext
 }
 
-func (sbs *StackQLBackend) HandleSimpleQuery(ctx context.Context, query string) (sqldata.ISQLResultStream, error) {
+func (sbs *basicStackQLDriver) HandleSimpleQuery(ctx context.Context, query string) (sqldata.ISQLResultStream, error) {
 	sbs.handlerCtx.SetRawQuery(query)
 	// if strings.Count(query, ";") > 1 {
 	// 	return nil, fmt.Errorf("only support single queries in server mode at this time")
@@ -59,7 +71,7 @@ func (sbs *StackQLBackend) HandleSimpleQuery(ctx context.Context, query string) 
 	return r.GetSQLResult(), nil
 }
 
-func (sb *StackQLBackend) SplitCompoundQuery(s string) ([]string, error) {
+func (sb *basicStackQLDriver) SplitCompoundQuery(s string) ([]string, error) {
 	res := []string{}
 	var beg int
 	var inDoubleQuotes bool
@@ -79,8 +91,8 @@ func (sb *StackQLBackend) SplitCompoundQuery(s string) ([]string, error) {
 	return append(res, s[beg:]), nil
 }
 
-func NewStackQLBackend(handlerCtx handler.HandlerContext) (*StackQLBackend, error) {
-	return &StackQLBackend{
+func NewStackQLDriver(handlerCtx handler.HandlerContext) (StackQLDriver, error) {
+	return &basicStackQLDriver{
 		handlerCtx: handlerCtx,
 	}, nil
 }
@@ -88,12 +100,13 @@ func NewStackQLBackend(handlerCtx handler.HandlerContext) (*StackQLBackend, erro
 func processQueryOrQueries(handlerCtx handler.HandlerContext) ([]internaldto.ExecutorOutput, bool) {
 	var retVal []internaldto.ExecutorOutput
 	cmdString := handlerCtx.GetRawQuery()
+	querySubmitter := querysubmit.NewQuerySubmitter()
 	for _, s := range strings.Split(cmdString, ";") {
 		if s == "" {
 			continue
 		}
 		handlerCtx.SetQuery(s)
-		retVal = append(retVal, querysubmit.SubmitQuery(handlerCtx))
+		retVal = append(retVal, querySubmitter.SubmitQuery(handlerCtx))
 	}
 	return retVal, true
 }
