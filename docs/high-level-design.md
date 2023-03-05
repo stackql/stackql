@@ -43,7 +43,7 @@ At a high level, the component relationships are such as represented in Figure A
 For brevity, the graph is simplified and much is omitted.
 Database connection details are initialised from user supplied context and then attached to the `HandlerContext`, which is passed through as required.
 
-![High Level Component Architecture](/docs/images/components-HLDD.drawio.svg)
+![High Level Component Architecture](/docs/diagrams/plantuml/hld-components.png)
 
 **Figure A1**: High Level Component Architecture.
 

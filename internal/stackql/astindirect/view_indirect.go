@@ -7,7 +7,7 @@ import (
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
-	"github.com/stackql/stackql/internal/stackql/parse"
+	"github.com/stackql/stackql/internal/stackql/parser"
 	"github.com/stackql/stackql/internal/stackql/symtab"
 )
 
@@ -77,7 +77,11 @@ func (v *view) GetTables() sqlparser.TableExprs {
 }
 
 func (v *view) getAST() (sqlparser.Statement, error) {
-	return parse.ParseQuery(v.viewDTO.GetRawQuery())
+	sqlParser, err := parser.NewParser()
+	if err != nil {
+		return nil, err
+	}
+	return sqlParser.ParseQuery(v.viewDTO.GetRawQuery())
 }
 
 func (v *view) GetSelectAST() sqlparser.SelectStatement {

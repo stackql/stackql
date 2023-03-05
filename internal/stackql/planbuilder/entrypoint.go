@@ -5,7 +5,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
-	"github.com/stackql/stackql/internal/stackql/parse"
+	"github.com/stackql/stackql/internal/stackql/parser"
 	"github.com/stackql/stackql/internal/stackql/plan"
 	"github.com/stackql/stackql/internal/stackql/primitivegenerator"
 )
@@ -52,7 +52,11 @@ func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerCo
 	)
 	var rowSort func(map[string]map[string]interface{}) []string
 
-	statement, err := parse.ParseQuery(handlerCtx.GetQuery())
+	sqlParser, err := parser.NewParser()
+	if err != nil {
+		return nil, err
+	}
+	statement, err := sqlParser.ParseQuery(handlerCtx.GetQuery())
 	if err != nil {
 		return createErroneousPlan(handlerCtx, qPlan, rowSort, err)
 	}

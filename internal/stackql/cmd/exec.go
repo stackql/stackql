@@ -75,7 +75,8 @@ stackql exec -i iqlscripts/create-disk.iql --credentialsfilepath /mnt/c/tmp/stac
 		handlerCtx, err := entryutil.BuildHandlerContext(runtimeCtx, rdr, queryCache, inputBundle)
 		iqlerror.PrintErrorAndExitOneIfError(err)
 		iqlerror.PrintErrorAndExitOneIfNil(handlerCtx, "Handler context error")
-		RunCommand(handlerCtx, nil, nil)
+		cr := newCommandRunner()
+		cr.RunCommand(handlerCtx, nil, nil)
 	},
 }
 
@@ -90,7 +91,18 @@ func getOutputFile(filename string) (*os.File, error) {
 	}
 }
 
-func RunCommand(handlerCtx handler.HandlerContext, outfile io.Writer, outErrFile io.Writer) {
+type commandRunner interface {
+	RunCommand(handlerCtx handler.HandlerContext, outfile io.Writer, outErrFile io.Writer)
+}
+
+func newCommandRunner() commandRunner {
+	return &commandRunnerImpl{}
+}
+
+type commandRunnerImpl struct {
+}
+
+func (cr *commandRunnerImpl) RunCommand(handlerCtx handler.HandlerContext, outfile io.Writer, outErrFile io.Writer) {
 	defer iqlerror.HandlePanic(outErrFile)
 	if outfile == nil {
 		outfile, _ = getOutputFile(handlerCtx.GetRuntimeContext().OutfilePath)

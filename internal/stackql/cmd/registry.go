@@ -80,7 +80,8 @@ var registryCmd = &cobra.Command{
 		handlerCtx, err := entryutil.BuildHandlerContext(runtimeCtx, rdr, queryCache, inputBundle)
 		iqlerror.PrintErrorAndExitOneIfError(err)
 		iqlerror.PrintErrorAndExitOneIfNil(handlerCtx, "Handler context error")
-		RunCommand(handlerCtx, nil, nil)
+		cr := newCommandRunner()
+		cr.RunCommand(handlerCtx, nil, nil)
 
 	},
 }

@@ -1,0 +1,32 @@
+@startuml
+
+node "Openapi-StackQL" as OpenapiStackQL
+node "StackQL Parser" as StackQLParser
+node "psql-wire" as PsqlWire
+
+[Shell] ..> [Command Runner]
+[Exec] ..> [Command Runner]
+[Command Runner] ..> [Driver]
+[Server] ..> [Driver]
+[Server] ..> [Wire Server]
+[Wire Server] ..> PsqlWire
+[Driver] ..> [Query Submitter]
+[Query Submitter] ..> [Plan Builder]
+[Plan Builder] ..> [Initial Passes Screener Analyzer] : Mature the AST
+[Initial Passes Screener Analyzer] ..> [Initial Passes Screener Analyzer] : Nested Indirection
+[Initial Passes Screener Analyzer] ..> [Indirect] : Indirect Expansion
+[Plan Builder] ..> [Parser]
+[Indirect] ..> [Parser]
+[Parser] ..> StackQLParser
+[Plan Builder] ..> [Route Pass]
+[Plan Builder] ..> [Primitive Builder]
+[Primitive Builder] ..> [Primitive Graph]
+[Plan Builder] ..> [Primitive Graph]
+[Primitive Builder] ..> OpenapiStackQL
+[Route Pass] ..> [Parameter Router]
+[Parameter Router] ..> OpenapiStackQL
+[Route Pass] ..> [Route Pass] : Nesting / Composition
+
+
+
+@enduml
