@@ -41,7 +41,7 @@ var srvCmd = &cobra.Command{
 		iqlerror.PrintErrorAndExitOneIfError(err)
 		handlerCtx, err := entryutil.BuildHandlerContextNoPreProcess(runtimeCtx, queryCache, inputBundle)
 		iqlerror.PrintErrorAndExitOneIfError(err)
-		sbe, err := driver.NewStackQLBackend(handlerCtx)
+		sbe, err := driver.NewStackQLDriver(handlerCtx)
 		iqlerror.PrintErrorAndExitOneIfError(err)
 		server, err := psqlwire.MakeWireServer(sbe, runtimeCtx)
 		iqlerror.PrintErrorAndExitOneIfError(err)

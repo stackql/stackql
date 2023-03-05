@@ -1,7 +1,7 @@
 package internaldto
 
 import (
-	"github.com/jeroenrinzema/psql-wire/pkg/sqldata"
+	"github.com/stackql/psql-wire/pkg/sqldata"
 	"github.com/stackql/stackql/internal/stackql/streaming"
 )
 

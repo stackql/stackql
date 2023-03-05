@@ -5,13 +5,13 @@ import (
 	"database/sql/driver"
 	"fmt"
 
-	postgreswire "github.com/jeroenrinzema/psql-wire"
 	"github.com/sirupsen/logrus"
+	postgreswire "github.com/stackql/psql-wire"
 
 	"github.com/jackc/pgtype"
-	"github.com/jeroenrinzema/psql-wire/pkg/sqlbackend"
-	"github.com/jeroenrinzema/psql-wire/pkg/sqldata"
 	"github.com/lib/pq/oid"
+	"github.com/stackql/psql-wire/pkg/sqlbackend"
+	"github.com/stackql/psql-wire/pkg/sqldata"
 )
 
 func MakeSQLStream() (sqlbackend.ISQLBackend, error) {

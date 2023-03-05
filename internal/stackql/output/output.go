@@ -16,8 +16,8 @@ import (
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/psqlwire"
 
-	"github.com/jeroenrinzema/psql-wire/pkg/sqldata"
 	"github.com/olekukonko/tablewriter"
+	"github.com/stackql/psql-wire/pkg/sqldata"
 )
 
 const (

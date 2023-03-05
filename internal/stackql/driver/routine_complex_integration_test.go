@@ -44,11 +44,13 @@ func TestUnionAllSelectComputeDisksOrderByCrtTmstpAscPlusCoalesceJsonExtract(t *
 		}
 
 		handlerCtx.SetQuery(testobjects.UnionSelectGoogleComputeDisksOrderCreationTmstpAscPlusJsonExtractCoalesce)
-		response := querysubmit.SubmitQuery(handlerCtx)
+		dr, _ := NewStackQLDriver(handlerCtx)
+		querySubmitter := querysubmit.NewQuerySubmitter()
+		response := querySubmitter.SubmitQuery(handlerCtx)
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 
-		ProcessQuery(handlerCtx)
+		dr.ProcessQuery(handlerCtx)
 	}
 
 	stackqltestutil.SetupSimpleSelectGoogleComputeDisks(t, 2)

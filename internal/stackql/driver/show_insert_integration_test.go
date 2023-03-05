@@ -51,7 +51,8 @@ func TestSimpleShowInsertComputeAddressesRequired(t *testing.T) {
 		handlerCtx.SetOutfile(outFile)
 		handlerCtx.SetOutErrFile(os.Stderr)
 
-		ProcessQuery(handlerCtx)
+		dr, _ := NewStackQLDriver(handlerCtx)
+		dr.ProcessQuery(handlerCtx)
 	}
 
 	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedShowInsertAddressesRequiredFile})
@@ -92,7 +93,8 @@ func TestSimpleShowInsertBiqueryDatasetsRequired(t *testing.T) {
 		handlerCtx.SetOutfile(outFile)
 		handlerCtx.SetOutErrFile(os.Stderr)
 
-		ProcessQuery(handlerCtx)
+		dr, _ := NewStackQLDriver(handlerCtx)
+		dr.ProcessQuery(handlerCtx)
 	}
 
 	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedShowInsertBQDatasetsRequiredFile})

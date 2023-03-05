@@ -116,6 +116,7 @@ func init() {
 	rootCmd.PersistentFlags().IntVar(&runtimeCtx.HTTPProxyPort, dto.HTTPProxyPortKey, -1, "http proxy port, any number <=0 will result in the default port for a given scheme (eg: http -> 80)")
 	rootCmd.PersistentFlags().IntVar(&runtimeCtx.ExecutionConcurrencyLimit, dto.ExecutionConcurrencyLimitKey, 1, "concurrency limit for query execution")
 	rootCmd.PersistentFlags().IntVar(&runtimeCtx.IndirectDepthMax, dto.IndirectDepthMaxKey, 5, "max depth for indirect queries: views and subqueries")
+	rootCmd.PersistentFlags().IntVar(&runtimeCtx.DataflowDependencyMax, dto.DataflowDependencyMaxKey, 1, "max dataflow dependency depth for a given query")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.HTTPProxyHost, dto.HTTPProxyHostKey, "", "http proxy host, empty means no proxy")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.HTTPProxyScheme, dto.HTTPProxySchemeKey, "http", "http proxy scheme, eg 'http'")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.HTTPProxyPassword, dto.HTTPProxyPasswordKey, "", "http proxy password")

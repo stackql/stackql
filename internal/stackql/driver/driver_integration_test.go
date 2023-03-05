@@ -54,11 +54,13 @@ func TestSimpleSelectGoogleComputeInstanceDriver(t *testing.T) {
 	handlerCtx.SetOutfile(os.Stdout)
 	handlerCtx.SetOutErrFile(os.Stderr)
 
+	dr, _ := NewStackQLDriver(handlerCtx)
+
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
 
-	ProcessQuery(handlerCtx)
+	dr.ProcessQuery(handlerCtx)
 
 	t.Logf("simple select driver integration test passed")
 }
@@ -90,7 +92,8 @@ func TestSimpleSelectGoogleComputeInstanceDriverOutput(t *testing.T) {
 		}
 
 		handlerCtx.SetQuery(testobjects.SimpleSelectGoogleComputeInstance)
-		response := querysubmit.SubmitQuery(handlerCtx)
+		querySubmitter := querysubmit.NewQuerySubmitter()
+		response := querySubmitter.SubmitQuery(handlerCtx)
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 	}
@@ -127,7 +130,8 @@ func TestSimpleSelectGoogleComputeInstanceDriverOutputRepeated(t *testing.T) {
 		}
 
 		handlerCtx.SetQuery(testobjects.SimpleSelectGoogleComputeInstance)
-		response := querysubmit.SubmitQuery(handlerCtx)
+		querySubmitter := querysubmit.NewQuerySubmitter()
+		response := querySubmitter.SubmitQuery(handlerCtx)
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 	}
@@ -164,7 +168,8 @@ func TestSimpleSelectGoogleContainerSubnetworksAllowedDriverOutput(t *testing.T)
 		}
 
 		handlerCtx.SetQuery(testobjects.SimpleSelectGoogleContainerSubnetworks)
-		response := querysubmit.SubmitQuery(handlerCtx)
+		querySubmitter := querysubmit.NewQuerySubmitter()
+		response := querySubmitter.SubmitQuery(handlerCtx)
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 	}
@@ -201,7 +206,8 @@ func TestSimpleInsertGoogleComputeNetworkAsync(t *testing.T) {
 		}
 
 		handlerCtx.SetQuery(testobjects.SimpleInsertComputeNetwork)
-		response := querysubmit.SubmitQuery(handlerCtx)
+		querySubmitter := querysubmit.NewQuerySubmitter()
+		response := querySubmitter.SubmitQuery(handlerCtx)
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 	}
@@ -248,8 +254,10 @@ func TestK8sTheHardWayAsync(t *testing.T) {
 			t.Fatalf("Test failed: %v", err)
 		}
 
+		dr, _ := NewStackQLDriver(handlerCtx)
+
 		handlerCtx.SetRawQuery(strings.TrimSpace(string(megaQueryConcat)))
-		ProcessQuery(handlerCtx)
+		dr.ProcessQuery(handlerCtx)
 	}
 
 	stackqltestutil.SetupK8sTheHardWayE2eSuccess(t)
@@ -297,7 +305,8 @@ func TestSimpleDryRunK8sTheHardWayDriver(t *testing.T) {
 		handlerCtx.SetOutfile(outFile)
 		handlerCtx.SetOutErrFile(os.Stderr)
 
-		ProcessDryRun(handlerCtx)
+		dr, _ := NewStackQLDriver(handlerCtx)
+		dr.ProcessDryRun(handlerCtx)
 	}
 
 	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedK8STheHardWayRenderedFile})

@@ -42,7 +42,8 @@ func TestSimpleAggGoogleContainerSubnetworksGroupedAllowedDriverOutputAsc(t *tes
 		}
 
 		handlerCtx.SetQuery(testobjects.SimpleAggCountGroupedGoogleContainerSubnetworkAsc)
-		response := querysubmit.SubmitQuery(handlerCtx)
+		querySubmitter := querysubmit.NewQuerySubmitter()
+		response := querySubmitter.SubmitQuery(handlerCtx)
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 	}
@@ -79,7 +80,8 @@ func TestSimpleAggGoogleContainerSubnetworksGroupedAllowedDriverOutputDesc(t *te
 		}
 
 		handlerCtx.SetQuery(testobjects.SimpleAggCountGroupedGoogleContainerSubnetworkDesc)
-		response := querysubmit.SubmitQuery(handlerCtx)
+		querySubmitter := querysubmit.NewQuerySubmitter()
+		response := querySubmitter.SubmitQuery(handlerCtx)
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 	}
