@@ -300,3 +300,7 @@ providerServices:
     title: GitHub v3 REST API - users
     version: v0.3.1
 openapi: 3.0.3
+config:
+  auth:
+    type: "basic"
+    credentialsenvvar: "GITHUB_CREDS"

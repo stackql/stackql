@@ -756,6 +756,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
   NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_THREE = get_native_query_row_count_from_table('okta.application.apps.Application.generation_3', sql_backend_str)
   rv = {
     ## general config
+    'AUTH_AZURE_FAULTY':                              '{ "azure": { "type": "service_account", "credentialsenvar": "SOME_RUBBISH_ENV_VAR" } }',
     'AZURE_SECRET_STR':                               AZURE_SECRET_STR,
     'BUILDMAJORVERSION':                              _BUILD_MAJOR_VERSION,
     'BUILDMINORVERSION':                              _BUILD_MINOR_VERSION,
