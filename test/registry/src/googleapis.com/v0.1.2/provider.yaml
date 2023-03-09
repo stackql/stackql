@@ -4374,3 +4374,7 @@ providerServices:
     version: v1
 title: google
 version: v1
+config:
+  auth:
+    credentialsenvvar: "GCP_SERVICE_ACCOUNT_KEY"
+    type: "service_account"

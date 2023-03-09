@@ -159,12 +159,12 @@ jobs:
       env:
         PSQL_EXE: C:\Program Files\PostgreSQL\13\bin\psql
       run: |
-        cmd /c "robot test\robot\functional"
+        python cicd/python/build.py --robot-test 
 
     - name: Output from mocked functional tests
       if: always()
       run: |
-        cat ./output.xml
+        cat ./test/robot/functional/output.xml
     
     - name: Run robot integration tests
       if: env.AZURE_CLIENT_SECRET != '' && startsWith(steps.git_ref_parse.outputs.SOURCE_TAG, 'build-release')
@@ -175,7 +175,7 @@ jobs:
         AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
         AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       run: |
-        robot -d test/robot/integration test/robot/integration
+        python cicd/python/build.py --robot-test-integration
     
     - name: Prepare Test DB
       if: success()
@@ -303,7 +303,7 @@ jobs:
     - name: Run robot mocked functional tests
       if: success()
       run: |
-        robot --variable SHOULD_RUN_DOCKER_EXTERNAL_TESTS:true -d test/robot/functional test/robot/functional
+        python cicd/python/build.py --robot-test  --config='{ "variables": { "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": "true" } }'
 
     - name: Output from mocked functional tests
       if: always()
@@ -313,7 +313,7 @@ jobs:
     - name: Run robot mocked functional tests with aggressive concurrency
       if: success()
       run: |
-        robot --variable SHOULD_RUN_DOCKER_EXTERNAL_TESTS:true --variable CONCURRENCY_LIMIT:-1 -d test/robot/functional test/robot/functional
+        python cicd/python/build.py --robot-test  --config='{ "variables": { "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": "true", "CONCURRENCY_LIMIT": -1  } }'
 
     - name: Output from mocked functional tests with aggressive concurrency
       if: always()
@@ -328,7 +328,7 @@ jobs:
         AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
         AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       run: |
-        robot -d test/robot/integration test/robot/integration
+        python cicd/python/build.py --robot-test-integration
     
     - name: Prepare Test DB
       if: success()
@@ -425,13 +425,13 @@ jobs:
             then
             export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
           fi
-          robot --variable IS_WSL:true test/robot/functional
+          python3 cicd/python/build.py --robot-test --config='{ "variables":  { "IS_WSL": true } }'
 
     - shell: wsl-bash {0}
       name: Output from mocked functional tests
       if: always()
       run: |
-          cat ./output.xml
+          cat ./test/robot/functional/output.xml
     
     - shell: wsl-bash {0}
       name: Run robot integration tests
@@ -457,7 +457,7 @@ jobs:
             then
             export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
           fi
-          robot --variable IS_WSL:true -d test/robot/integration test/robot/integration
+          python3 cicd/python/build.py --robot-test-integration --config='{ "variables":  { "IS_WSL": true } }'
 
 
   macosbuild:
@@ -558,12 +558,12 @@ jobs:
     - name: Run robot mocked functional tests
       if: success()
       run: |
-        robot test/robot/functional
+        python cicd/python/build.py --robot-test
 
     - name: Output from mocked functional tests
       if: always()
       run: |
-        cat ./output.xml
+        cat ./test/robot/functional/output.xml
     
     - name: Run robot integration tests
       if: env.AZURE_CLIENT_SECRET != '' && startsWith(steps.git_ref_parse.outputs.SOURCE_TAG, 'build-release')
@@ -573,7 +573,7 @@ jobs:
         AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
         AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       run: |
-        robot -d test/robot/integration test/robot/integration
+        python cicd/python/build.py --robot-test-integration
     
     - name: Prepare Test DB
       if: success()
@@ -800,13 +800,13 @@ jobs:
       if: success()
       timeout-minutes: 20
       run: |
-        robot --variable EXECUTION_PLATFORM:docker -d test/robot/functional test/robot/functional
+        python cicd/python/build.py --robot-test --config='{ "variables":  { "EXECUTION_PLATFORM": "docker" } }'
 
     - name: Run POSTGRES BACKEND robot mocked functional tests
       if: success()
       timeout-minutes: 20
       run: |
-        robot --variable EXECUTION_PLATFORM:docker --variable SQL_BACKEND:postgres_tcp --variable SHOULD_RUN_DOCKER_EXTERNAL_TESTS:true -d test/robot/functional test/robot/functional
+        python cicd/python/build.py --robot-test --config='{ "variables":  { "EXECUTION_PLATFORM": "docker", "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": true, "SQL_BACKEND": "postgres_tcp" } }'
 
     - name: Output from mocked functional tests
       if: always()
@@ -821,7 +821,7 @@ jobs:
         AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
         AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       run: |
-        robot  --variable EXECUTION_PLATFORM:docker -d test/robot/integration test/robot/integration
+        python cicd/python/build.py --robot-test-integration --config='{ "variables":  { "EXECUTION_PLATFORM": "docker" } }'
 
     - name: Login to Docker Hub
       if: ${{ success() && github.ref_type == 'branch' && github.ref_name == 'main' && github.repository == 'stackql/stackql' && github.event_name == 'push' }}

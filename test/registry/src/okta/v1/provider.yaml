@@ -220,3 +220,8 @@ providerServices:
     version: v1
 title: Okta Identity Provider
 version: v1
+config:
+  auth:
+    credentialsenvvar: "OKTA_SECRET_KEY"
+    type: "api_key"
+    valuePrefix: "SSWS "

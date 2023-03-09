@@ -2,6 +2,7 @@
 
 
 import argparse
+import json
 import os
 import subprocess
 
@@ -31,15 +32,29 @@ def unit_test_stackql(verbose :bool) -> int:
         shell=True
     )
 
+def sanitise_val(val :any) -> str:
+    if isinstance(val, bool):
+        return str(val).lower()
+    return str(val)
 
-def run_robot_mocked_functional_tests_stackql(should_run_docker_external_tests :bool, concurrency_limit :int) -> int:
-    should_run_docker_external_tests_str = 'true' if should_run_docker_external_tests else 'false'
+
+def run_robot_mocked_functional_tests_stackql(*args, **kwargs) -> int:
+    variables = ' '.join([f'--variable {key}:{sanitise_val(value)} ' for key, value in kwargs.get("variables", {}).items() ])
     return subprocess.call(
         'robot '
-        f'--variable SHOULD_RUN_DOCKER_EXTERNAL_TESTS:{should_run_docker_external_tests_str} '
-        f'--variable CONCURRENCY_LIMIT:{concurrency_limit} ' 
+        f'{variables} ' 
         '-d test/robot/functional '
         'test/robot/functional',
+        shell=True
+    )
+
+def run_robot_integration_tests_stackql(*args, **kwargs) -> int:
+    variables = ' '.join([f'--variable {key}:{sanitise_val(value)} ' for key, value in kwargs.get("variables", {}).items()])
+    return subprocess.call(
+        'robot '
+        f'{variables} ' 
+        '-d test/robot/integration '
+        'test/robot/integration',
         shell=True
     )
 
@@ -50,8 +65,8 @@ def main():
     parser.add_argument('--build', action='store_true')
     parser.add_argument('--test', action='store_true')
     parser.add_argument('--robot-test', action='store_true')
-    parser.add_argument('--robot-test-aggressively-concurrent', action='store_true')
-    parser.add_argument('--robot-test-docker-external', action='store_true')
+    parser.add_argument('--robot-test-integration', action='store_true')
+    parser.add_argument('--config', type=json.loads, default={})
     args = parser.parse_args()
     ret_code = 0
     if args.build:
@@ -63,7 +78,11 @@ def main():
         if ret_code != 0:
             exit(ret_code)
     if args.robot_test:
-        ret_code = run_robot_mocked_functional_tests_stackql(args.robot_test_docker_external, -1 if args.robot_test_aggressively_concurrent else 1)
+        ret_code = run_robot_mocked_functional_tests_stackql(**args.config)
+        if ret_code != 0:
+            exit(ret_code)
+    if args.robot_test_integration:
+        ret_code = run_robot_integration_tests_stackql(**args.config)
         if ret_code != 0:
             exit(ret_code)
     exit(ret_code)

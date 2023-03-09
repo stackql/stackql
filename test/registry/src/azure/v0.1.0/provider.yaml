@@ -1236,3 +1236,6 @@ providerServices:
     title: web_pub_sub (Microsoft.SignalRService)
     version: v0.1.0
 openapi: 3.0.0
+config:
+  auth:
+    type: "azure_default"

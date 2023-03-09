@@ -16,11 +16,25 @@ Azure Authenticated VM Sizes
     ...    ${GITHUB_SECRET_STR}
     ...    ${K8S_SECRET_STR}
     ...    ${REGISTRY_CANONICAL_NO_VERIFY_CFG_STR}
-    ...    ${AUTH_CFG_STR_INTEGRATION}
+    ...    {}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${AZURE_VM_SIZES_ENUMERATION}
     ...    Standard_
     ...    stdout=${CURDIR}/tmp/Azure-Authenticated-VM-Sizes.tmp
+
+Faulty Auth Azure Authenticated VM Sizes
+    Should Stackql Exec Inline Contain stderr
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_CANONICAL_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_AZURE_FAULTY}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${AZURE_VM_SIZES_ENUMERATION}
+    ...    credentials error
+    ...    stdout=${CURDIR}/tmp/Faulty-Azure-Authenticated-VM-Sizes.tmp
+    ...    stderr=${CURDIR}/tmp/Faulty-Azure-Authenticated-VM-Sizes-stderr.tmp
 
 *** Keywords ***
 Start Mock Server
