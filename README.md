@@ -236,6 +236,7 @@ Forks of the following support our work:
 * [gorilla/mux](https://github.com/gorilla/mux)
 * [readline](https://github.com/chzyer/readline)
 * [color](https://github.com/fatih/color)
+* [psql-wire](https://github.com/jeroenrinzema/psql-wire)
 
 We gratefully acknowledge these pieces of work.
 
