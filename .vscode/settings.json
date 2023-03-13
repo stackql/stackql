@@ -3,6 +3,10 @@
     "*.iql": "sql",
     "*.ddl": "sql"
   },
+  "go.lintTool": "golangci-lint",
+  "go.lintFlags": [
+    "--fast"
+  ],
   "editor.insertSpaces": true,
   "cmake.configureOnOpen": false,
   "go.buildFlags": [

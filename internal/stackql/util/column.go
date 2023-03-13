@@ -6,16 +6,16 @@ import (
 
 type Column interface {
 	GetName() string
-	GetSchema() *openapistackql.Schema
+	GetSchema() openapistackql.Schema
 	GetWidth() int
 }
 
 type simpleColumn struct {
 	name   string
-	schema *openapistackql.Schema
+	schema openapistackql.Schema
 }
 
-func newSimpleColumn(name string, schema *openapistackql.Schema) Column {
+func newSimpleColumn(name string, schema openapistackql.Schema) Column {
 	return &simpleColumn{
 		name:   name,
 		schema: schema,
@@ -30,6 +30,6 @@ func (sc simpleColumn) GetWidth() int {
 	return -1
 }
 
-func (sc simpleColumn) GetSchema() *openapistackql.Schema {
+func (sc simpleColumn) GetSchema() openapistackql.Schema {
 	return sc.schema
 }

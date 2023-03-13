@@ -186,19 +186,19 @@ func (sl *sqLiteSystem) registerExternalTable(connectionName string, tableDetail
 	if err != nil {
 		return err
 	}
-	for ord, col := range tableDetails.Columns {
+	for ord, col := range tableDetails.GetColumns() {
 		_, err := tx.Exec(
 			q,
 			connectionName,
-			tableDetails.CatalogName,
-			tableDetails.SchemaName,
-			tableDetails.Name,
-			col.Name,
-			col.Type,
+			tableDetails.GetCatalogName(),
+			tableDetails.GetSchemaName(),
+			tableDetails.GetName(),
+			col.GetName(),
+			col.GetType(),
 			ord,
-			col.Oid,
-			col.Width,
-			col.Precision,
+			col.GetOid(),
+			col.GetWidth(),
+			col.GetPrecision(),
 		)
 		if err != nil {
 			tx.Rollback()

@@ -6,7 +6,6 @@ import (
 
 	"encoding/json"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
@@ -57,8 +56,8 @@ func parseRequestBodyParam(k string, v interface{}) *requestBodyParam {
 	return nil
 }
 
-func SplitHttpParameters(prov provider.IProvider, sqlParamMap map[int]map[string]interface{}, method *openapistackql.OperationStore) ([]*openapistackql.HttpParameters, error) {
-	var retVal []*openapistackql.HttpParameters
+func SplitHttpParameters(prov provider.IProvider, sqlParamMap map[int]map[string]interface{}, method openapistackql.OperationStore) ([]openapistackql.HttpParameters, error) {
+	var retVal []openapistackql.HttpParameters
 	var rowKeys []int
 	requestSchema, _ := method.GetRequestBodySchema()
 	responseSchema, _ := method.GetRequestBodySchema()
@@ -76,14 +75,14 @@ func SplitHttpParameters(prov provider.IProvider, sqlParamMap map[int]map[string
 				if requestSchema != nil {
 					rbp := parseRequestBodyParam(k, v)
 					if rbp != nil {
-						reqMap.RequestBody[rbp.Key] = rbp.Val
+						reqMap.SetRequestBodyParam(rbp.Key, rbp.Val)
 						continue
 					}
 				}
-				reqMap.ServerParams[k] = openapistackql.NewParameterBinding(openapistackql.NewParameter(&openapi3.Parameter{In: "server"}, method.Service), v)
+				reqMap.SetServerParam(k, method.GetService(), v)
 			}
 			if responseSchema != nil && responseSchema.FindByPath(k, nil) != nil {
-				reqMap.ResponseBody[k] = v
+				reqMap.SetResponseBodyParam(k, v)
 			}
 		}
 		retVal = append(retVal, reqMap)

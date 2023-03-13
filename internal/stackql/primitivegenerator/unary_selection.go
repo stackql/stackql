@@ -23,7 +23,7 @@ func (p *standardPrimitiveGenerator) assembleUnarySelectionBuilder(
 	node sqlparser.SQLNode,
 	rewrittenWhere *sqlparser.Where,
 	hIds internaldto.HeirarchyIdentifiers,
-	schema *openapistackql.Schema,
+	schema openapistackql.Schema,
 	tbl tablemetadata.ExtendedTableMetadata,
 	selectTabulation *openapistackql.Tabulation,
 	insertTabulation *openapistackql.Tabulation,
@@ -45,7 +45,7 @@ func (p *standardPrimitiveGenerator) assembleUnarySelectionBuilder(
 		return err
 	}
 
-	_, err = docparser.OpenapiStackQLTabulationsPersistor(method, []util.AnnotatedTabulation{annotatedInsertTabulation}, p.PrimitiveComposer.GetSQLEngine(), prov.Name, handlerCtx.GetNamespaceCollection(), handlerCtx.GetControlAttributes(), handlerCtx.GetSQLSystem())
+	_, err = docparser.OpenapiStackQLTabulationsPersistor(method, []util.AnnotatedTabulation{annotatedInsertTabulation}, p.PrimitiveComposer.GetSQLEngine(), prov.GetName(), handlerCtx.GetNamespaceCollection(), handlerCtx.GetControlAttributes(), handlerCtx.GetSQLSystem())
 	if err != nil {
 		return err
 	}

@@ -388,14 +388,14 @@ func GetHandlerCtx(cmdString string, runtimeCtx dto.RuntimeCtx, lruCache *lrucac
 	return &rv, nil
 }
 
-func transformOpenapiStackqlAuthToLocal(authDTO *openapistackql.AuthDTO) *dto.AuthCtx {
+func transformOpenapiStackqlAuthToLocal(authDTO openapistackql.AuthDTO) *dto.AuthCtx {
 	return &dto.AuthCtx{
-		Scopes:      authDTO.Scopes,
-		Type:        authDTO.Type,
-		ValuePrefix: authDTO.ValuePrefix,
-		KeyID:       authDTO.KeyID,
-		KeyIDEnvVar: authDTO.KeyIDEnvVar,
-		KeyFilePath: authDTO.KeyFilePath,
-		KeyEnvVar:   authDTO.KeyEnvVar,
+		Scopes:      authDTO.GetScopes(),
+		Type:        authDTO.GetType(),
+		ValuePrefix: authDTO.GetValuePrefix(),
+		KeyID:       authDTO.GetKeyID(),
+		KeyIDEnvVar: authDTO.GetKeyIDEnvVar(),
+		KeyFilePath: authDTO.GetKeyFilePath(),
+		KeyEnvVar:   authDTO.GetKeyEnvVar(),
 	}
 }

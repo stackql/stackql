@@ -28,7 +28,7 @@ func getAuthenticatedClient(handlerCtx handler.HandlerContext, prov provider.IPr
 	return httpClient, nil
 }
 
-func HttpApiCallFromRequest(handlerCtx handler.HandlerContext, prov provider.IProvider, method *openapistackql.OperationStore, request *http.Request) (*http.Response, error) {
+func HttpApiCallFromRequest(handlerCtx handler.HandlerContext, prov provider.IProvider, method openapistackql.OperationStore, request *http.Request) (*http.Response, error) {
 	httpClient, httpClientErr := getAuthenticatedClient(handlerCtx, prov)
 	if httpClientErr != nil {
 		return nil, httpClientErr

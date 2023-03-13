@@ -20,7 +20,7 @@ type AnnotationCtx interface {
 	GetSubquery() (internaldto.SubqueryDTO, bool)
 	GetInputTableName() (string, error)
 	GetParameters() map[string]interface{}
-	GetSchema() *openapistackql.Schema
+	GetSchema() openapistackql.Schema
 	GetTableMeta() tablemetadata.ExtendedTableMetadata
 	Prepare(handlerCtx handler.HandlerContext, inStream streaming.MapStream) error
 	SetDynamic()
@@ -28,14 +28,14 @@ type AnnotationCtx interface {
 
 type standardAnnotationCtx struct {
 	isDynamic  bool
-	schema     *openapistackql.Schema
+	schema     openapistackql.Schema
 	hIDs       internaldto.HeirarchyIdentifiers
 	tableMeta  tablemetadata.ExtendedTableMetadata
 	parameters map[string]interface{}
 }
 
 func NewStaticStandardAnnotationCtx(
-	schema *openapistackql.Schema,
+	schema openapistackql.Schema,
 	hIds internaldto.HeirarchyIdentifiers,
 	tableMeta tablemetadata.ExtendedTableMetadata,
 	parameters map[string]interface{},
@@ -137,7 +137,7 @@ func (ac *standardAnnotationCtx) GetParameters() map[string]interface{} {
 	return ac.parameters
 }
 
-func (ac *standardAnnotationCtx) GetSchema() *openapistackql.Schema {
+func (ac *standardAnnotationCtx) GetSchema() openapistackql.Schema {
 	return ac.schema
 }
 

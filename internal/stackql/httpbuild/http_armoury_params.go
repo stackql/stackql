@@ -15,13 +15,13 @@ type HTTPArmouryParameters interface {
 	Encode() string
 	GetBodyBytes() []byte
 	GetHeader() http.Header
-	GetParameters() *openapistackql.HttpParameters
+	GetParameters() openapistackql.HttpParameters
 	GetQuery() url.Values
 	GetRequest() *http.Request
 	SetBodyBytes(b []byte)
 	SetHeaderKV(k string, v []string)
-	SetNextPage(ops *openapistackql.OperationStore, token string, tokenKey internaldto.HTTPElement) (*http.Request, error)
-	SetParameters(*openapistackql.HttpParameters)
+	SetNextPage(ops openapistackql.OperationStore, token string, tokenKey internaldto.HTTPElement) (*http.Request, error)
+	SetParameters(openapistackql.HttpParameters)
 	SetRawQuery(string)
 	SetRequest(*http.Request)
 	SetRequestBodyMap(openapistackql.BodyMap)
@@ -36,7 +36,7 @@ func NewHTTPArmouryParameters() HTTPArmouryParameters {
 
 type standardHTTPArmouryParameters struct {
 	header     http.Header
-	parameters *openapistackql.HttpParameters
+	parameters openapistackql.HttpParameters
 	request    *http.Request
 	bodyBytes  []byte
 }
@@ -58,14 +58,14 @@ func (hap *standardHTTPArmouryParameters) GetRequest() *http.Request {
 }
 
 func (hap *standardHTTPArmouryParameters) SetRequestBodyMap(body openapistackql.BodyMap) {
-	hap.parameters.RequestBody = body
+	hap.parameters.SetRequestBody(body)
 }
 
-func (hap *standardHTTPArmouryParameters) SetParameters(p *openapistackql.HttpParameters) {
+func (hap *standardHTTPArmouryParameters) SetParameters(p openapistackql.HttpParameters) {
 	hap.parameters = p
 }
 
-func (hap *standardHTTPArmouryParameters) GetParameters() *openapistackql.HttpParameters {
+func (hap *standardHTTPArmouryParameters) GetParameters() openapistackql.HttpParameters {
 	return hap.parameters
 }
 
@@ -103,7 +103,7 @@ func (hap *standardHTTPArmouryParameters) Encode() string {
 	return ""
 }
 
-func (hap *standardHTTPArmouryParameters) SetNextPage(ops *openapistackql.OperationStore, token string, tokenKey internaldto.HTTPElement) (*http.Request, error) {
+func (hap *standardHTTPArmouryParameters) SetNextPage(ops openapistackql.OperationStore, token string, tokenKey internaldto.HTTPElement) (*http.Request, error) {
 	rv := hap.request.Clone(hap.request.Context())
 	switch tokenKey.GetType() {
 	case internaldto.QueryParam:
@@ -120,12 +120,13 @@ func (hap *standardHTTPArmouryParameters) SetNextPage(ops *openapistackql.Operat
 		return rv, nil
 	case internaldto.BodyAttribute:
 		bm := make(map[string]interface{})
-		for k, v := range hap.parameters.RequestBody {
+		for k, v := range hap.parameters.GetRequestBody() {
 			bm[k] = v
 		}
 		tokenName := tokenKey.GetName()
 		bm[tokenName] = token
-		b, err := ops.MarshalBody(bm, ops.Request)
+		er, _ := ops.GetRequest()
+		b, err := ops.MarshalBody(bm, er)
 		if err != nil {
 			return nil, err
 		}

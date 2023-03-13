@@ -257,7 +257,7 @@ func (dp *standardDependencyPlanner) processOrphan(sqlNode sqlparser.SQLNode, an
 		return nil, nil, err
 	}
 	_, isSQLDataSource := annotationCtx.GetTableMeta().GetSQLDataSource()
-	var opStore *openapistackql.OperationStore
+	var opStore openapistackql.OperationStore
 	if !isSQLDataSource {
 		opStore, err = annotationCtx.GetTableMeta().GetMethod()
 		if err != nil {
@@ -384,7 +384,7 @@ func (dp *standardDependencyPlanner) processAcquire(
 	}
 	anTab := util.NewAnnotatedTabulation(tab, annotationCtx.GetHIDs(), inputTableName, annotationCtx.GetTableMeta().GetAlias())
 
-	discoGenId, err := docparser.OpenapiStackQLTabulationsPersistor(m, []util.AnnotatedTabulation{anTab}, dp.primitiveComposer.GetSQLEngine(), prov.Name, dp.handlerCtx.GetNamespaceCollection(), dp.handlerCtx.GetControlAttributes(), dp.handlerCtx.GetSQLSystem())
+	discoGenId, err := docparser.OpenapiStackQLTabulationsPersistor(m, []util.AnnotatedTabulation{anTab}, dp.primitiveComposer.GetSQLEngine(), prov.GetName(), dp.handlerCtx.GetNamespaceCollection(), dp.handlerCtx.GetControlAttributes(), dp.handlerCtx.GetSQLSystem())
 	if err != nil {
 		return util.NewAnnotatedTabulation(nil, nil, "", ""), nil, err
 	}

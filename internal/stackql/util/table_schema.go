@@ -8,11 +8,11 @@ type TableSchemaAnalyzer interface {
 }
 
 type simpleTableSchemaAnalyzer struct {
-	s *openapistackql.Schema
-	m *openapistackql.OperationStore
+	s openapistackql.Schema
+	m openapistackql.OperationStore
 }
 
-func NewTableSchemaAnalyzer(s *openapistackql.Schema, m *openapistackql.OperationStore) TableSchemaAnalyzer {
+func NewTableSchemaAnalyzer(s openapistackql.Schema, m openapistackql.OperationStore) TableSchemaAnalyzer {
 	return &simpleTableSchemaAnalyzer{
 		s: s,
 		m: m,

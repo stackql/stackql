@@ -13,14 +13,14 @@ var (
 )
 
 type Heirarchy interface {
-	GetServiceHdl() *openapistackql.Service
-	GetResource() *openapistackql.Resource
+	GetServiceHdl() openapistackql.Service
+	GetResource() openapistackql.Resource
 	GetMethodSet() openapistackql.MethodSet
-	GetMethod() *openapistackql.OperationStore
-	SetServiceHdl(*openapistackql.Service)
-	SetResource(*openapistackql.Resource)
+	GetMethod() openapistackql.OperationStore
+	SetServiceHdl(openapistackql.Service)
+	SetResource(openapistackql.Resource)
 	SetMethodSet(openapistackql.MethodSet)
-	SetMethod(*openapistackql.OperationStore)
+	SetMethod(openapistackql.OperationStore)
 	SetMethodStr(string)
 }
 
@@ -32,17 +32,17 @@ func NewHeirarchy(hIDs HeirarchyIdentifiers) Heirarchy {
 
 type standardHeirarchy struct {
 	hIDs       HeirarchyIdentifiers
-	serviceHdl *openapistackql.Service
-	resource   *openapistackql.Resource
+	serviceHdl openapistackql.Service
+	resource   openapistackql.Resource
 	methodSet  openapistackql.MethodSet
-	method     *openapistackql.OperationStore
+	method     openapistackql.OperationStore
 }
 
-func (hr *standardHeirarchy) SetServiceHdl(sh *openapistackql.Service) {
+func (hr *standardHeirarchy) SetServiceHdl(sh openapistackql.Service) {
 	hr.serviceHdl = sh
 }
 
-func (hr *standardHeirarchy) SetResource(r *openapistackql.Resource) {
+func (hr *standardHeirarchy) SetResource(r openapistackql.Resource) {
 	hr.resource = r
 }
 
@@ -54,15 +54,15 @@ func (hr *standardHeirarchy) SetMethodStr(mStr string) {
 	hr.hIDs.SetMethodStr(mStr)
 }
 
-func (hr *standardHeirarchy) SetMethod(ost *openapistackql.OperationStore) {
+func (hr *standardHeirarchy) SetMethod(ost openapistackql.OperationStore) {
 	hr.method = ost
 }
 
-func (hr *standardHeirarchy) GetServiceHdl() *openapistackql.Service {
+func (hr *standardHeirarchy) GetServiceHdl() openapistackql.Service {
 	return hr.serviceHdl
 }
 
-func (hr *standardHeirarchy) GetResource() *openapistackql.Resource {
+func (hr *standardHeirarchy) GetResource() openapistackql.Resource {
 	return hr.resource
 }
 
@@ -70,7 +70,7 @@ func (hr *standardHeirarchy) GetMethodSet() openapistackql.MethodSet {
 	return hr.methodSet
 }
 
-func (hr *standardHeirarchy) GetMethod() *openapistackql.OperationStore {
+func (hr *standardHeirarchy) GetMethod() openapistackql.OperationStore {
 	return hr.method
 }
 

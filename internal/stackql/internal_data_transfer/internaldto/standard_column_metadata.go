@@ -35,24 +35,24 @@ func (cd *standardColumnMetadata) GetIdentifier() string {
 
 func (cd *standardColumnMetadata) GetType() string {
 	if cd.column.Schema != nil {
-		return cd.column.Schema.Type
+		return cd.column.Schema.GetType()
 	}
 	return parserutil.ExtractStringRepresentationOfValueColumn(cd.column.Val)
 }
 
-func (cd *standardColumnMetadata) getOidForSchema(colSchema *openapistackql.Schema) oid.Oid {
+func (cd *standardColumnMetadata) getOidForSchema(colSchema openapistackql.Schema) oid.Oid {
 	return getOidForSchema(colSchema)
 }
 
-func GetOidForSchema(colSchema *openapistackql.Schema) oid.Oid {
+func GetOidForSchema(colSchema openapistackql.Schema) oid.Oid {
 	return getOidForSchema(colSchema)
 }
 
-func getOidForSchema(colSchema *openapistackql.Schema) oid.Oid {
+func getOidForSchema(colSchema openapistackql.Schema) oid.Oid {
 	if colSchema == nil {
 		return oid.T_text
 	}
-	switch colSchema.Type {
+	switch colSchema.GetType() {
 	case "object", "array":
 		return oid.T_text
 	// case "integer":
