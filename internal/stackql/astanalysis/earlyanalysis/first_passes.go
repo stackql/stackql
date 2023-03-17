@@ -1,4 +1,4 @@
-package earlyanalysis
+package earlyanalysis //nolint:cyclop // analysers are inherently complex, for now
 
 import (
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
@@ -89,12 +89,20 @@ func (sp *standardInitialPasses) IsCacheExemptMaterialDetected() bool {
 	return sp.isCacheExemptMaterialDetected
 }
 
-func (sp *standardInitialPasses) Analyze(statement sqlparser.Statement, handlerCtx handler.HandlerContext, tcc internaldto.TxnControlCounters) error {
+func (sp *standardInitialPasses) Analyze(
+	statement sqlparser.Statement,
+	handlerCtx handler.HandlerContext,
+	tcc internaldto.TxnControlCounters,
+) error {
 	return sp.initialPasses(statement, handlerCtx, tcc)
 }
 
-func (sp *standardInitialPasses) initialPasses(statement sqlparser.Statement, handlerCtx handler.HandlerContext, tcc internaldto.TxnControlCounters) error {
-
+//nolint:funlen,gocognit // this is a large function abstracting plenty
+func (sp *standardInitialPasses) initialPasses(
+	statement sqlparser.Statement,
+	handlerCtx handler.HandlerContext,
+	tcc internaldto.TxnControlCounters,
+) error {
 	result, err := sqlparser.RewriteAST(statement)
 	sp.result = result
 	if err != nil {
@@ -111,7 +119,7 @@ func (sp *standardInitialPasses) initialPasses(statement sqlparser.Statement, ha
 	if ok {
 		sp.instructionType = InternallyRoutableInstruction
 		logging.GetLogger().Debugf("%v", opType)
-		pbi, err := planbuilderinput.NewPlanBuilderInput(
+		pbi, pbiErr := planbuilderinput.NewPlanBuilderInput(
 			annotatedAST,
 			handlerCtx,
 			result.AST,
@@ -122,8 +130,8 @@ func (sp *standardInitialPasses) initialPasses(statement sqlparser.Statement, ha
 			nil,
 			tcc.Clone(),
 		)
-		if err != nil {
-			return err
+		if pbiErr != nil {
+			return pbiErr
 		}
 		sp.planBuilderInput = pbi
 		return nil
@@ -166,14 +174,20 @@ func (sp *standardInitialPasses) initialPasses(statement sqlparser.Statement, ha
 	annotatedAST = astExpandVisitor.GetAnnotatedAST()
 
 	// Second pass AST analysis; extract provider strings for auth.
-	provStrSlice, isCacheExemptMaterialDetected := astvisit.ExtractProviderStringsAndDetectCacheExemptMaterial(annotatedAST, annotatedAST.GetAST(), handlerCtx.GetSQLSystem(), handlerCtx.GetASTFormatter(), handlerCtx.GetNamespaceCollection())
+	provStrSlice, isCacheExemptMaterialDetected := astvisit.ExtractProviderStringsAndDetectCacheExemptMaterial(
+		annotatedAST,
+		annotatedAST.GetAST(),
+		handlerCtx.GetSQLSystem(),
+		handlerCtx.GetASTFormatter(),
+		handlerCtx.GetNamespaceCollection(),
+	)
 	sp.isCacheExemptMaterialDetected = isCacheExemptMaterialDetected
 	for _, p := range provStrSlice {
 		_, isSQLDataSource := handlerCtx.GetSQLDataSource(p)
 		if isSQLDataSource {
 			continue
 		}
-		_, err := handlerCtx.GetProvider(p)
+		_, err = handlerCtx.GetProvider(p)
 		if err != nil {
 			return err
 		}
@@ -184,7 +198,7 @@ func (sp *standardInitialPasses) initialPasses(statement sqlparser.Statement, ha
 	//   - parser objects representing tables.
 	//   - mapping of string aliases to tables.
 	tVis := astvisit.NewTableExtractAstVisitor(annotatedAST)
-	tVis.Visit(ast)
+	tVis.Visit(ast) //nolint:errcheck // TODO: fix this
 
 	// Fourth pass AST analysis.
 	// Accepts slice of parser table objects
@@ -194,7 +208,7 @@ func (sp *standardInitialPasses) initialPasses(statement sqlparser.Statement, ha
 	//   - Alias Map; mapping the "TableName" objects
 	//     defining aliases to table objects.
 	aVis := astvisit.NewTableAliasAstVisitor(annotatedAST, tVis.GetTables())
-	aVis.Visit(ast)
+	aVis.Visit(ast) //nolint:errcheck // TODO: fix this
 
 	// Fifth pass AST analysis.
 	// Extracts:
@@ -202,7 +216,7 @@ func (sp *standardInitialPasses) initialPasses(statement sqlparser.Statement, ha
 	//     Useful for method matching.
 	//     Especially for "Insert" queries.
 	tpv := astvisit.NewPlaceholderParamAstVisitor(annotatedAST, "", false)
-	tpv.Visit(ast)
+	tpv.Visit(ast) //nolint:errcheck // TODO: fix this
 
 	pbi, err := planbuilderinput.NewPlanBuilderInput(
 		annotatedAST,
@@ -219,10 +233,10 @@ func (sp *standardInitialPasses) initialPasses(statement sqlparser.Statement, ha
 		return err
 	}
 
-	if sel, ok := planbuilderinput.IsPGSetupQuery(pbi); ok {
+	if sel, selOk := planbuilderinput.IsPGSetupQuery(pbi); selOk {
 		if sel != nil {
 			sp.instructionType = DummiedPGInstruction
-			pbi, err := planbuilderinput.NewPlanBuilderInput(
+			pbi, err := planbuilderinput.NewPlanBuilderInput( //nolint:govet // defer analyser uplifts
 				annotatedAST,
 				handlerCtx,
 				result.AST,
@@ -238,25 +252,24 @@ func (sp *standardInitialPasses) initialPasses(statement sqlparser.Statement, ha
 			}
 			sp.planBuilderInput = pbi
 			return nil
-		} else {
-			sp.instructionType = NopInstruction
-			pbi, err := planbuilderinput.NewPlanBuilderInput(
-				annotatedAST,
-				handlerCtx,
-				nil,
-				nil,
-				nil,
-				nil,
-				nil,
-				nil,
-				tcc.Clone(),
-			)
-			if err != nil {
-				return err
-			}
-			sp.planBuilderInput = pbi
-			return nil
 		}
+		sp.instructionType = NopInstruction
+		otherPbi, otherPbiErr := planbuilderinput.NewPlanBuilderInput(
+			annotatedAST,
+			handlerCtx,
+			nil,
+			nil,
+			nil,
+			nil,
+			nil,
+			nil,
+			tcc.Clone(),
+		)
+		if otherPbiErr != nil {
+			return otherPbiErr
+		}
+		sp.planBuilderInput = otherPbi
+		return nil
 	}
 	switch node := ast.(type) {
 	case *sqlparser.Select:

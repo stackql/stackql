@@ -19,7 +19,7 @@ import (
 type Exec struct {
 	graph         primitivegraph.PrimitiveGraph
 	handlerCtx    handler.HandlerContext
-	drmCfg        drm.DRMConfig
+	drmCfg        drm.Config
 	root          primitivegraph.PrimitiveNode
 	tbl           tablemetadata.ExtendedTableMetadata
 	isAwait       bool
@@ -52,8 +52,8 @@ func (ss *Exec) GetTail() primitivegraph.PrimitiveNode {
 	return ss.root
 }
 
+//nolint:gocognit // probably a headache no matter which way you slice it
 func (ss *Exec) Build() error {
-
 	handlerCtx := ss.handlerCtx
 	tbl := ss.tbl
 	prov, err := tbl.GetProvider()
@@ -66,15 +66,14 @@ func (ss *Exec) Build() error {
 	}
 	var target map[string]interface{}
 	ex := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
-		var err error
 		var columnOrder []string
 		keys := make(map[string]map[string]interface{})
-		httpArmoury, err := tbl.GetHttpArmoury()
-		if err != nil {
-			return internaldto.NewErroneousExecutorOutput(err)
+		httpArmoury, httpArmouryErr := tbl.GetHTTPArmoury()
+		if httpArmouryErr != nil {
+			return internaldto.NewErroneousExecutorOutput(httpArmouryErr)
 		}
 		for i, req := range httpArmoury.GetRequestParams() {
-			response, apiErr := httpmiddleware.HttpApiCallFromRequest(handlerCtx.Clone(), prov, m, req.GetRequest())
+			response, apiErr := httpmiddleware.HTTPApiCallFromRequest(handlerCtx.Clone(), prov, m, req.GetRequest())
 			if apiErr != nil {
 				return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, nil, nil, nil, apiErr, nil))
 			}
@@ -93,11 +92,11 @@ func (ss *Exec) Build() error {
 			logging.GetLogger().Infoln(fmt.Sprintf("target = %v", target))
 			items, ok := target[tbl.LookupSelectItemsKey()]
 			if ok {
-				iArr, ok := items.([]interface{})
-				if ok && len(iArr) > 0 {
+				iArr, iOk := items.([]interface{})
+				if iOk && len(iArr) > 0 {
 					for i := range iArr {
-						item, ok := iArr[i].(map[string]interface{})
-						if ok {
+						item, itemOk := iArr[i].(map[string]interface{})
+						if itemOk {
 							keys[strconv.Itoa(i)] = item
 						}
 					}

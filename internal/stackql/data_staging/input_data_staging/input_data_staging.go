@@ -1,4 +1,4 @@
-package input_data_staging
+package input_data_staging //nolint:revive,stylecheck // package name is helpful
 
 import (
 	"database/sql"
@@ -18,10 +18,14 @@ type NativeResultSetPreparator interface {
 type naiveNativeResultSetPreparator struct {
 	rows                       *sql.Rows
 	insertPreparedStatementCtx drm.PreparedStatementCtx
-	drmCfg                     drm.DRMConfig
+	drmCfg                     drm.Config
 }
 
-func NewNaiveNativeResultSetPreparator(rows *sql.Rows, drmCfg drm.DRMConfig, insertPreparedStatementCtx drm.PreparedStatementCtx) NativeResultSetPreparator {
+func NewNaiveNativeResultSetPreparator(
+	rows *sql.Rows,
+	drmCfg drm.Config,
+	insertPreparedStatementCtx drm.PreparedStatementCtx,
+) NativeResultSetPreparator {
 	return &naiveNativeResultSetPreparator{
 		rows:                       rows,
 		insertPreparedStatementCtx: insertPreparedStatementCtx,
@@ -81,13 +85,15 @@ func (np *naiveNativeResultSetPreparator) PrepareNativeResultSet() internaldto.E
 		dataArr := sqldata.NewSQLRow(rowPtr)
 		outRows = append(outRows, dataArr)
 		if np.insertPreparedStatementCtx != nil {
-			insertInputMap, err := getRowDict(colz, dataArr.GetRowDataForPgWire())
-			if err != nil {
-				return nativeProtect(internaldto.NewErroneousExecutorOutput(err), []string{"error"})
+			insertInputMap, localErr := getRowDict(colz, dataArr.GetRowDataForPgWire())
+			if localErr != nil {
+				return nativeProtect(internaldto.NewErroneousExecutorOutput(localErr), []string{"error"})
 			}
-			_, err = np.drmCfg.ExecuteInsertDML(np.drmCfg.GetSQLSystem().GetSQLEngine(), np.insertPreparedStatementCtx, insertInputMap, "")
+			_, err = np.drmCfg.ExecuteInsertDML(
+				np.drmCfg.GetSQLSystem().GetSQLEngine(), np.insertPreparedStatementCtx, insertInputMap, "")
 			if err != nil {
-				return nativeProtect(internaldto.NewErroneousExecutorOutput(err), []string{"error"})
+				return nativeProtect(
+					internaldto.NewErroneousExecutorOutput(err), []string{"error"})
 			}
 		}
 	}
@@ -102,7 +108,7 @@ func (np *naiveNativeResultSetPreparator) PrepareNativeResultSet() internaldto.E
 	if len(outRows) == 0 {
 		outRows = append(outRows, sqldata.NewSQLRow([]interface{}{}))
 	}
-	resultStream.Write(sqldata.NewSQLResult(columns, 0, 0, outRows))
+	resultStream.Write(sqldata.NewSQLResult(columns, 0, 0, outRows)) //nolint:errcheck // output stream
 	resultStream.Close()
 	if len(outRows) == 0 {
 		nativeProtect(rv, colz)
@@ -165,13 +171,15 @@ func getOidForSQLDatabaseTypeName(typeName string) oid.Oid {
 	}
 }
 
-func getPlaceholderColumnForNativeResult(table sqldata.ISQLTable, colName string, colSchema *sql.ColumnType) sqldata.ISQLColumn {
+func getPlaceholderColumnForNativeResult(
+	table sqldata.ISQLTable,
+	colName string, colSchema *sql.ColumnType) sqldata.ISQLColumn {
 	return sqldata.NewSQLColumn(
 		table,
 		colName,
 		0,
 		uint32(getOidForSQLType(colSchema)),
-		1024,
+		1024, //nolint:gomnd // TODO: refactor
 		0,
 		"TextFormat",
 	)
@@ -206,7 +214,7 @@ func getPlaceholderColumn(table sqldata.ISQLTable, colName string, colOID oid.Oi
 		colName,
 		0,
 		uint32(colOID),
-		1024,
+		1024, //nolint:gomnd // TODO: refactor
 		0,
 		"TextFormat",
 	)

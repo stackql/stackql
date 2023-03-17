@@ -18,7 +18,7 @@ func (nc NamespaceCfg) GetRegex() (*regexp.Regexp, error) {
 }
 
 func (nc NamespaceCfg) GetTemplate() (*template.Template, error) {
-	tmpl, err := template.New("stackqlNamespaceTmpl").Parse(string(nc.NamespaceTemplate))
+	tmpl, err := template.New("stackqlNamespaceTmpl").Parse(nc.NamespaceTemplate)
 	if err != nil {
 		return nil, err
 	}

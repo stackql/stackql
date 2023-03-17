@@ -23,6 +23,5 @@ func (ss *StaticMapStream) Write(input []map[string]interface{}) error {
 }
 
 func (ss *StaticMapStream) Read() ([]map[string]interface{}, error) {
-
 	return ss.payload, io.EOF
 }

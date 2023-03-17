@@ -19,6 +19,7 @@ func generateSuccessMessagesFromHeirarchy(meta tablemetadata.ExtendedTableMetada
 	m, methodErr := meta.GetMethod()
 	prov, err := meta.GetProvider()
 	if methodErr == nil && err == nil && m != nil && prov != nil && prov.GetProviderString() == "google" {
+		//nolint:lll // long condiotion and long string
 		if m.GetAPIMethod() == "select" || m.GetAPIMethod() == "get" || m.GetAPIMethod() == "list" || m.GetAPIMethod() == "aggregatedList" {
 			successMsgs = []string{
 				fmt.Sprintf("%s, consider using a SELECT statement if you are performing an operation that returns data, see https://docs.stackql.io/language-spec/select for more information", baseSuccessString),
@@ -28,7 +29,13 @@ func generateSuccessMessagesFromHeirarchy(meta tablemetadata.ExtendedTableMetada
 	return successMsgs
 }
 
-func generateResultIfNeededfunc(resultMap map[string]map[string]interface{}, body map[string]interface{}, msg *internaldto.BackendMessages, err error, isShowResults bool) internaldto.ExecutorOutput {
+func generateResultIfNeededfunc(
+	resultMap map[string]map[string]interface{},
+	body map[string]interface{},
+	msg *internaldto.BackendMessages,
+	err error,
+	isShowResults bool,
+) internaldto.ExecutorOutput {
 	if isShowResults {
 		return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, resultMap, nil, nil, nil, nil))
 	}

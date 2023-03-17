@@ -22,11 +22,12 @@ type requestBodyParam struct {
 func parseRequestBodyParam(k string, v interface{}) *requestBodyParam {
 	trimmedKey := strings.TrimPrefix(k, constants.RequestBodyBaseKey)
 	var parsedVal interface{}
-	if trimmedKey != k {
+	if trimmedKey != k { //nolint:nestif // keep for now
 		switch vt := v.(type) {
 		case string:
 			var js map[string]interface{}
 			var jArr []interface{}
+			//nolint:gocritic // keep for now
 			if json.Unmarshal([]byte(vt), &js) == nil {
 				parsedVal = js
 			} else if json.Unmarshal([]byte(vt), &jArr) == nil {
@@ -56,12 +57,17 @@ func parseRequestBodyParam(k string, v interface{}) *requestBodyParam {
 	return nil
 }
 
-func SplitHttpParameters(prov provider.IProvider, sqlParamMap map[int]map[string]interface{}, method openapistackql.OperationStore) ([]openapistackql.HttpParameters, error) {
+//nolint:gocognit // not super complex
+func SplitHTTPParameters(
+	prov provider.IProvider,
+	sqlParamMap map[int]map[string]interface{},
+	method openapistackql.OperationStore,
+) ([]openapistackql.HttpParameters, error) {
 	var retVal []openapistackql.HttpParameters
 	var rowKeys []int
 	requestSchema, _ := method.GetRequestBodySchema()
 	responseSchema, _ := method.GetRequestBodySchema()
-	for idx, _ := range sqlParamMap {
+	for idx := range sqlParamMap {
 		rowKeys = append(rowKeys, idx)
 	}
 	sort.Ints(rowKeys)

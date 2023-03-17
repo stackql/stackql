@@ -16,7 +16,7 @@ func SanitisePossibleTickEscapedTerm(term string) string {
 	return strings.TrimSuffix(strings.TrimPrefix(term, "`"), "`")
 }
 
-func PrettyPrintSomeJson(body []byte) ([]byte, error) {
+func PrettyPrintSomeJSON(body []byte) ([]byte, error) {
 	var prettyJSON bytes.Buffer
 	err := json.Indent(&prettyJSON, body, "", "  ")
 	if err != nil {
@@ -27,7 +27,7 @@ func PrettyPrintSomeJson(body []byte) ([]byte, error) {
 
 func GetSortedKeysStringMap(m map[string]string) []string {
 	var retVal []string
-	for k, _ := range m {
+	for k := range m {
 		retVal = append(retVal, k)
 	}
 	sort.Strings(retVal)

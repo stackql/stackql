@@ -19,12 +19,12 @@ type SQLEngine interface {
 	ExecFileLocal(string) error
 	ExecFile(string) error
 	ExecInTxn(queries []string) error
-	GetCurrentGenerationId() (int, error)
-	GetNextGenerationId() (int, error)
-	GetCurrentSessionId(int) (int, error)
-	GetNextSessionId(int) (int, error)
-	GetCurrentDiscoveryGenerationId(discoveryID string) (int, error)
-	GetNextDiscoveryGenerationId(discoveryID string) (int, error)
+	GetCurrentGenerationID() (int, error)
+	GetNextGenerationID() (int, error)
+	GetCurrentSessionID(int) (int, error)
+	GetNextSessionID(int) (int, error)
+	GetCurrentDiscoveryGenerationID(discoveryID string) (int, error)
+	GetNextDiscoveryGenerationID(discoveryID string) (int, error)
 	CacheStoreGet(string) ([]byte, error)
 	CacheStoreGetAll() ([]internaldto.KeyVal, error)
 	CacheStorePut(string, []byte, string, int) error
@@ -32,14 +32,14 @@ type SQLEngine interface {
 }
 
 func NewSQLEngine(cfg dto.SQLBackendCfg, controlAttributes sqlcontrol.ControlAttributes) (SQLEngine, error) {
-	switch cfg.DbEngine {
-	case constants.DbEngineSQLite3Embedded:
+	switch cfg.DBEngine {
+	case constants.DBEngineSQLite3Embedded:
 		return newSQLiteEmbeddedEngine(cfg, controlAttributes)
-	case constants.DbEnginePostgresTCP:
-		return newPostgresTcpEngine(cfg, controlAttributes)
+	case constants.DBEnginePostgresTCP:
+		return newPostgresTCPEngine(cfg, controlAttributes)
 	case constants.SQLDialectSnowflake:
-		return newSnowflakeTcpEngine(cfg, controlAttributes)
+		return newSnowflakeTCPEngine(cfg, controlAttributes)
 	default:
-		return nil, fmt.Errorf(`SQL backend DB Engine of type '%s' is not permitted`, cfg.DbEngine)
+		return nil, fmt.Errorf(`SQL backend DB Engine of type '%s' is not permitted`, cfg.DBEngine)
 	}
 }

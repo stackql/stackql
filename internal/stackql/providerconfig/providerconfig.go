@@ -12,6 +12,6 @@ func ReadProviderConfig(filePath string) (map[string]interface{}, error) {
 		return nil, err
 	}
 	m := make(map[string]interface{})
-	err = yaml.Unmarshal([]byte(data), &m)
+	err = yaml.Unmarshal(data, &m)
 	return m, err
 }

@@ -20,14 +20,14 @@ type ExtendedTableMetadata interface {
 	GetAlias() string
 	GetGraphQL() (openapistackql.GraphQL, bool)
 	GetHeirarchyObjects() HeirarchyObjects
-	GetHttpArmoury() (httpbuild.HTTPArmoury, error)
+	GetHTTPArmoury() (httpbuild.HTTPArmoury, error)
 	GetInputTableName() (string, error)
 	GetMethod() (openapistackql.OperationStore, error)
 	GetMethodStr() (string, error)
 	GetProvider() (provider.IProvider, error)
 	GetProviderStr() (string, error)
 	GetProviderObject() (openapistackql.Provider, error)
-	GetQueryUniqueId() string
+	GetQueryUniqueID() string
 	GetRequestSchema() (openapistackql.Schema, error)
 	GetOptionalParameters() map[string]openapistackql.Addressable
 	GetRequiredParameters() map[string]openapistackql.Addressable
@@ -44,7 +44,7 @@ type ExtendedTableMetadata interface {
 	GetStackQLTableName() (string, error)
 	GetTableFilter() func(openapistackql.ITable) (openapistackql.ITable, error)
 	GetTableName() (string, error)
-	GetUniqueId() string
+	GetUniqueID() string
 	IsLocallyExecutable() bool
 	IsSimple() bool
 	GetIndirect() (astindirect.Indirect, bool)
@@ -54,7 +54,7 @@ type ExtendedTableMetadata interface {
 	SetSelectItemsKey(string)
 	SetSQLDataSource(sql_datasource.SQLDataSource)
 	SetTableFilter(f func(openapistackql.ITable) (openapistackql.ITable, error))
-	WithGetHttpArmoury(f func() (httpbuild.HTTPArmoury, error)) ExtendedTableMetadata
+	WithGetHTTPArmoury(f func() (httpbuild.HTTPArmoury, error)) ExtendedTableMetadata
 	WithIndirect(astindirect.Indirect) ExtendedTableMetadata
 	WithResponseSchemaStr(rss string) (ExtendedTableMetadata, error)
 }
@@ -64,7 +64,7 @@ type standardExtendedTableMetadata struct {
 	colsVisited         map[string]bool
 	heirarchyObjects    HeirarchyObjects
 	isLocallyExecutable bool
-	getHttpArmoury      func() (httpbuild.HTTPArmoury, error)
+	getHTTPArmoury      func() (httpbuild.HTTPArmoury, error)
 	selectItemsKey      string
 	alias               string
 	inputTableName      string
@@ -134,15 +134,17 @@ func (ex *standardExtendedTableMetadata) GetOptionalParameters() map[string]open
 	return ex.heirarchyObjects.GetMethod().GetOptionalParameters()
 }
 
-func (ex *standardExtendedTableMetadata) GetHttpArmoury() (httpbuild.HTTPArmoury, error) {
-	if ex.getHttpArmoury == nil {
+func (ex *standardExtendedTableMetadata) GetHTTPArmoury() (httpbuild.HTTPArmoury, error) {
+	if ex.getHTTPArmoury == nil {
 		return nil, fmt.Errorf("nil getHttpAroury() function in ExtendedTableMetadata object")
 	}
-	return ex.getHttpArmoury()
+	return ex.getHTTPArmoury()
 }
 
-func (ex *standardExtendedTableMetadata) WithGetHttpArmoury(f func() (httpbuild.HTTPArmoury, error)) ExtendedTableMetadata {
-	ex.getHttpArmoury = f
+func (ex *standardExtendedTableMetadata) WithGetHTTPArmoury(
+	f func() (httpbuild.HTTPArmoury, error),
+) ExtendedTableMetadata {
+	ex.getHTTPArmoury = f
 	return ex
 }
 
@@ -170,17 +172,18 @@ func (ex *standardExtendedTableMetadata) GetView() (internaldto.ViewDTO, bool) {
 }
 
 func (ex *standardExtendedTableMetadata) isSimple() bool {
+	//nolint:lll // complex boolean
 	return ex.heirarchyObjects != nil && (len(ex.heirarchyObjects.GetMethodSet()) > 0 || ex.heirarchyObjects.GetMethod() != nil)
 }
 
-func (ex *standardExtendedTableMetadata) GetUniqueId() string {
+func (ex *standardExtendedTableMetadata) GetUniqueID() string {
 	if ex.alias != "" {
 		return ex.alias
 	}
 	return ex.heirarchyObjects.GetTableName()
 }
 
-func (ex *standardExtendedTableMetadata) GetQueryUniqueId() string {
+func (ex *standardExtendedTableMetadata) GetQueryUniqueID() string {
 	if ex.alias != "" {
 		return ex.alias
 	}

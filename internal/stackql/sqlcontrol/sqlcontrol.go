@@ -9,25 +9,25 @@ var (
 )
 
 const (
-	gen_id_col_name         string = "iql_generation_id"
-	ssn_id_col_name         string = "iql_session_id"
-	txn_id_col_name         string = "iql_txn_id"
-	max_txn_id_col_name     string = "iql_max_txn_id"
-	ins_id_col_name         string = "iql_insert_id"
-	insert_endoded_col_name string = "iql_insert_encoded"
-	latest_update_col_name  string = "iql_last_modified"
-	gc_status_col_name      string = "iql_gc_status"
+	genIDColName         string = "iql_generation_id"
+	ssnIDColName         string = "iql_session_id"
+	txnIDColName         string = "iql_txn_id"
+	maxTxnIDColName      string = "iql_max_txn_id"
+	insIDColName         string = "iql_insert_id"
+	insertEndodedColName string = "iql_insert_encoded"
+	latestUpdateColName  string = "iql_last_modified"
+	gcStatusColName      string = "iql_gc_status"
 )
 
 type ControlAttributes interface {
 	GetControlGCStatusColumnName() string
-	GetControlGenIdColumnName() string
-	GetControlInsIdColumnName() string
-	GetControlInsertEncodedIdColumnName() string
+	GetControlGenIDColumnName() string
+	GetControlInsIDColumnName() string
+	GetControlInsertEncodedIDColumnName() string
 	GetControlLatestUpdateColumnName() string
 	GetControlMaxTxnColumnName() string
-	GetControlSsnIdColumnName() string
-	GetControlTxnIdColumnName() string
+	GetControlSsnIDColumnName() string
+	GetControlTxnIDColumnName() string
 }
 
 func GetControlAttributes(attrType string) ControlAttributes {
@@ -49,34 +49,34 @@ func getStandardControlAttributes() ControlAttributes {
 
 type standardControlAttributes struct{}
 
-func (ca *standardControlAttributes) GetControlGenIdColumnName() string {
-	return gen_id_col_name
+func (ca *standardControlAttributes) GetControlGenIDColumnName() string {
+	return genIDColName
 }
 
-func (ca *standardControlAttributes) GetControlSsnIdColumnName() string {
-	return ssn_id_col_name
+func (ca *standardControlAttributes) GetControlSsnIDColumnName() string {
+	return ssnIDColName
 }
 
-func (ca *standardControlAttributes) GetControlTxnIdColumnName() string {
-	return txn_id_col_name
+func (ca *standardControlAttributes) GetControlTxnIDColumnName() string {
+	return txnIDColName
 }
 
-func (ca *standardControlAttributes) GetControlInsIdColumnName() string {
-	return ins_id_col_name
+func (ca *standardControlAttributes) GetControlInsIDColumnName() string {
+	return insIDColName
 }
 
-func (ca *standardControlAttributes) GetControlInsertEncodedIdColumnName() string {
-	return insert_endoded_col_name
+func (ca *standardControlAttributes) GetControlInsertEncodedIDColumnName() string {
+	return insertEndodedColName
 }
 
 func (ca *standardControlAttributes) GetControlMaxTxnColumnName() string {
-	return max_txn_id_col_name
+	return maxTxnIDColName
 }
 
 func (ca *standardControlAttributes) GetControlLatestUpdateColumnName() string {
-	return latest_update_col_name
+	return latestUpdateColName
 }
 
 func (ca *standardControlAttributes) GetControlGCStatusColumnName() string {
-	return gc_status_col_name
+	return gcStatusColName
 }

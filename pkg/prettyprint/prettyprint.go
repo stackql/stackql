@@ -8,7 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type PrettyPrintContext struct {
+type Context struct {
 	PrettyPrint     bool
 	Indentation     int
 	BaseIndentation int
@@ -17,12 +17,18 @@ type PrettyPrintContext struct {
 }
 
 type PrettyPrinter struct {
-	prettyPrintContext PrettyPrintContext
+	prettyPrintContext Context
 	currentIndentation int
 }
 
-func NewPrettyPrintContext(isPrettyPrint bool, indentation int, baseIndentation int, delimiter string, logger *logrus.Logger) PrettyPrintContext {
-	return PrettyPrintContext{
+func NewPrettyPrintContext(
+	isPrettyPrint bool,
+	indentation int,
+	baseIndentation int,
+	delimiter string,
+	logger *logrus.Logger,
+) Context {
+	return Context{
 		PrettyPrint:     isPrettyPrint,
 		Indentation:     indentation,
 		BaseIndentation: baseIndentation,
@@ -31,7 +37,7 @@ func NewPrettyPrintContext(isPrettyPrint bool, indentation int, baseIndentation 
 	}
 }
 
-func NewPrettyPrinter(ppCtx PrettyPrintContext) *PrettyPrinter {
+func NewPrettyPrinter(ppCtx Context) *PrettyPrinter {
 	return &PrettyPrinter{
 		prettyPrintContext: ppCtx,
 		currentIndentation: ppCtx.BaseIndentation,
@@ -44,18 +50,6 @@ func (pp *PrettyPrinter) getCurrentIndentation() int {
 
 func (pp *PrettyPrinter) incrementCurrentIndentation() int {
 	return pp.setCurrentIndentation(pp.currentIndentation + pp.prettyPrintContext.Indentation)
-}
-
-func (pp *PrettyPrinter) decrementCurrentIndentation() int {
-	return pp.setCurrentIndentation(pp.currentIndentation - pp.prettyPrintContext.Indentation)
-}
-
-func (pp *PrettyPrinter) peekDecrementedCurrentIndentation() int {
-	rv := pp.currentIndentation - pp.prettyPrintContext.Indentation
-	if rv < 0 {
-		rv = 0
-	}
-	return rv
 }
 
 func (pp *PrettyPrinter) setCurrentIndentation(indentation int) int {
@@ -107,7 +101,7 @@ func (pp *PrettyPrinter) RenderTemplateVarPlaceholderNoDelimit(tv string) string
 }
 
 func (pp *PrettyPrinter) RenderTemplateVarPlaceholderKeyNoDelimit(tv string) string {
-	return pp.baseIndentationNoDelimit(fmt.Sprintf("%s", tv))
+	return pp.baseIndentationNoDelimit(tv)
 }
 
 func (pp *PrettyPrinter) PrintTemplatedJSON(body interface{}) (string, error) {
@@ -158,7 +152,7 @@ func (pp *PrettyPrinter) printTemplatedJSON(body interface{}) (string, error) {
 		}
 		sort.Strings(keys)
 		var keyVals []string
-		kIndent := pp.incrementCurrentIndentation()
+		keyIndent := pp.incrementCurrentIndentation()
 		for _, k := range keys {
 			indent := ""
 			val, err := pp.printTemplatedJSON(bt[k])
@@ -167,7 +161,7 @@ func (pp *PrettyPrinter) printTemplatedJSON(body interface{}) (string, error) {
 				return "", err
 			}
 			if pp.prettyPrintContext.PrettyPrint {
-				indent = strings.Repeat(" ", kIndent)
+				indent = strings.Repeat(" ", keyIndent)
 			}
 			keyVals = append(keyVals, fmt.Sprintf(`%s"%s": %s`, indent, k, val))
 		}
@@ -210,6 +204,7 @@ func (pp *PrettyPrinter) printTemplatedJSON(body interface{}) (string, error) {
 	}
 }
 
+//nolint:gocognit
 func (pp *PrettyPrinter) printPlaceholderJSON(body interface{}) (string, error) {
 	startPos := pp.getCurrentIndentation()
 	switch bt := body.(type) {
@@ -220,7 +215,7 @@ func (pp *PrettyPrinter) printPlaceholderJSON(body interface{}) (string, error) 
 		}
 		sort.Strings(keys)
 		var keyVals []string
-		kIndent := pp.incrementCurrentIndentation()
+		keyIndent := pp.incrementCurrentIndentation()
 		for _, k := range keys {
 			indent := ""
 			val, err := pp.printPlaceholderJSON(bt[k])
@@ -229,7 +224,7 @@ func (pp *PrettyPrinter) printPlaceholderJSON(body interface{}) (string, error) 
 				return "", err
 			}
 			if pp.prettyPrintContext.PrettyPrint {
-				indent = strings.Repeat(" ", kIndent)
+				indent = strings.Repeat(" ", keyIndent)
 			}
 			keyVals = append(keyVals, fmt.Sprintf(`%s%s: %s`, indent, k, val))
 		}
@@ -237,7 +232,11 @@ func (pp *PrettyPrinter) printPlaceholderJSON(body interface{}) (string, error) 
 			terminalIndent := strings.Repeat(" ", startPos+len(pp.prettyPrintContext.Delimiter))
 			decrementIndent := strings.Repeat(" ", startPos+len(pp.prettyPrintContext.Delimiter))
 			pp.setCurrentIndentation(startPos)
-			return fmt.Sprintf("{\n%s%s\n%s}", terminalIndent, strings.Join(keyVals, fmt.Sprintf(",\n%s", terminalIndent)), decrementIndent), nil
+			return fmt.Sprintf(
+				"{\n%s%s\n%s}",
+				terminalIndent,
+				strings.Join(keyVals, fmt.Sprintf(",\n%s", terminalIndent)),
+				decrementIndent), nil
 		}
 		return fmt.Sprintf(` %s `, strings.Join(keyVals, ",\n")), nil
 	case []interface{}:

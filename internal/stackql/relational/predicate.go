@@ -11,7 +11,10 @@ import (
 	"github.com/stackql/stackql-parser/go/vt/vtgate/evalengine"
 )
 
-func AndTableFilters(lhs, rhs func(openapistackql.ITable) (openapistackql.ITable, error)) func(openapistackql.ITable) (openapistackql.ITable, error) {
+func AndTableFilters(
+	lhs,
+	rhs func(openapistackql.ITable) (openapistackql.ITable, error),
+) func(openapistackql.ITable) (openapistackql.ITable, error) {
 	if lhs == nil {
 		return rhs
 	}
@@ -31,7 +34,10 @@ func AndTableFilters(lhs, rhs func(openapistackql.ITable) (openapistackql.ITable
 	}
 }
 
-func OrTableFilters(lhs, rhs func(openapistackql.ITable) (openapistackql.ITable, error)) func(openapistackql.ITable) (openapistackql.ITable, error) {
+func OrTableFilters(
+	lhs,
+	rhs func(openapistackql.ITable) (openapistackql.ITable, error),
+) func(openapistackql.ITable) (openapistackql.ITable, error) {
 	if lhs == nil {
 		return rhs
 	}
@@ -54,7 +60,9 @@ func OrTableFilters(lhs, rhs func(openapistackql.ITable) (openapistackql.ITable,
 	}
 }
 
-func ConstructTablePredicateFilter(colName string, rhs sqltypes.Value, operatorPredicate func(int) bool) func(openapistackql.ITable) (openapistackql.ITable, error) {
+func ConstructTablePredicateFilter(
+	colName string, rhs sqltypes.Value,
+	operatorPredicate func(int) bool) func(openapistackql.ITable) (openapistackql.ITable, error) {
 	return func(row openapistackql.ITable) (openapistackql.ITable, error) {
 		v, e := row.GetKeyAsSqlVal(colName)
 		if e != nil {
@@ -68,7 +76,9 @@ func ConstructTablePredicateFilter(colName string, rhs sqltypes.Value, operatorP
 	}
 }
 
-func ConstructLikePredicateFilter(colName string, rhs *regexp.Regexp, isNegating bool) func(openapistackql.ITable) (openapistackql.ITable, error) {
+func ConstructLikePredicateFilter(
+	colName string,
+	rhs *regexp.Regexp, isNegating bool) func(openapistackql.ITable) (openapistackql.ITable, error) {
 	return func(row openapistackql.ITable) (openapistackql.ITable, error) {
 		v, vErr := row.GetKey(colName)
 		if vErr != nil {

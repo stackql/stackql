@@ -35,7 +35,7 @@ type PrimitiveComposer interface {
 	GetChildren() []PrimitiveComposer
 	GetColumnOrder() []string
 	GetCommentDirectives() sqlparser.CommentDirectives
-	GetDRMConfig() drm.DRMConfig
+	GetDRMConfig() drm.Config
 	GetGraph() primitivegraph.PrimitiveGraph
 	GetInsertPreparedStatementCtx() drm.PreparedStatementCtx
 	GetInsertValOnlyRows() map[int]map[int]interface{}
@@ -48,12 +48,12 @@ type PrimitiveComposer interface {
 	GetIndirectSelectPreparedStatementCtx() drm.PreparedStatementCtx
 	GetSQLEngine() sqlengine.SQLEngine
 	GetSQLSystem() sql_system.SQLSystem
-	GetSymbol(k interface{}) (symtab.SymTabEntry, error)
+	GetSymbol(k interface{}) (symtab.Entry, error)
 	GetSymTab() symtab.SymTab
 	GetTable(node sqlparser.SQLNode) (tablemetadata.ExtendedTableMetadata, error)
 	GetTableFilter() func(openapistackql.ITable) (openapistackql.ITable, error)
 	GetTables() taxonomy.TblMap
-	GetTxnCounterManager() txncounter.TxnCounterManager
+	GetTxnCounterManager() txncounter.Manager
 	GetTxnCtrlCtrs() internaldto.TxnControlCounters
 	GetValOnlyCol(key int) map[string]interface{}
 	GetValOnlyColKeys() []int
@@ -76,7 +76,7 @@ type PrimitiveComposer interface {
 	SetProvider(prov provider.IProvider)
 	SetRoot(root primitivegraph.PrimitiveNode)
 	SetSelectPreparedStatementCtx(ctx drm.PreparedStatementCtx)
-	SetSymbol(k interface{}, v symtab.SymTabEntry) error
+	SetSymbol(k interface{}, v symtab.Entry) error
 	SetSymTab(symtab.SymTab)
 	SetTable(node sqlparser.SQLNode, table tablemetadata.ExtendedTableMetadata)
 	SetTableFilter(tableFilter func(openapistackql.ITable) (openapistackql.ITable, error))
@@ -104,7 +104,7 @@ type standardPrimitiveComposer struct {
 
 	graph primitivegraph.PrimitiveGraph
 
-	drmConfig drm.DRMConfig
+	drmConfig drm.Config
 
 	// needed globally for non-heirarchy queries, such as "SHOW SERVICES FROM google;"
 	prov            provider.IProvider
@@ -118,7 +118,7 @@ type standardPrimitiveComposer struct {
 	// per query
 	columnOrder       []string
 	commentDirectives sqlparser.CommentDirectives
-	txnCounterManager txncounter.TxnCounterManager
+	txnCounterManager txncounter.Manager
 	txnCtrlCtrs       internaldto.TxnControlCounters
 
 	// per query -- SELECT only
@@ -229,7 +229,7 @@ func (pb *standardPrimitiveComposer) AssignParameters() (internaldto.TableParame
 			continue
 		}
 		tbVisited[tb] = struct{}{}
-		tbID := tb.GetUniqueId()
+		tbID := tb.GetUniqueID()
 		var reqParams, tblOptParams map[string]openapistackql.Addressable
 		if view, isView := tb.GetIndirect(); isView {
 			// TODO: fill this out
@@ -288,7 +288,7 @@ func (pb *standardPrimitiveComposer) SetDataflowDependent(val PrimitiveComposer)
 	pb.dataflowDependent = val
 }
 
-func (pb *standardPrimitiveComposer) GetSymbol(k interface{}) (symtab.SymTabEntry, error) {
+func (pb *standardPrimitiveComposer) GetSymbol(k interface{}) (symtab.Entry, error) {
 	return pb.symTab.GetSymbol(k)
 }
 
@@ -296,7 +296,7 @@ func (pb *standardPrimitiveComposer) GetSymTab() symtab.SymTab {
 	return pb.symTab
 }
 
-func (pb *standardPrimitiveComposer) SetSymbol(k interface{}, v symtab.SymTabEntry) error {
+func (pb *standardPrimitiveComposer) SetSymbol(k interface{}, v symtab.Entry) error {
 	return pb.symTab.SetSymbol(k, v)
 }
 
@@ -312,12 +312,14 @@ func (pb *standardPrimitiveComposer) GetAst() sqlparser.SQLNode {
 	return pb.ast
 }
 
-func (pb *standardPrimitiveComposer) GetTxnCounterManager() txncounter.TxnCounterManager {
+func (pb *standardPrimitiveComposer) GetTxnCounterManager() txncounter.Manager {
 	return pb.txnCounterManager
 }
 
 func (pb *standardPrimitiveComposer) NewChildPrimitiveComposer(ast sqlparser.SQLNode) PrimitiveComposer {
-	child := NewPrimitiveComposer(pb, ast, pb.drmConfig, pb.txnCounterManager, pb.graph, pb.tables, pb.symTab, pb.sqlEngine, pb.sqlSystem, pb.formatter)
+	child := NewPrimitiveComposer(
+		pb, ast, pb.drmConfig, pb.txnCounterManager,
+		pb.graph, pb.tables, pb.symTab, pb.sqlEngine, pb.sqlSystem, pb.formatter)
 	pb.children = append(pb.children, child)
 	return child
 }
@@ -390,7 +392,8 @@ func (pb *standardPrimitiveComposer) GetTableFilter() func(openapistackql.ITable
 	return pb.tableFilter
 }
 
-func (pb *standardPrimitiveComposer) SetTableFilter(tableFilter func(openapistackql.ITable) (openapistackql.ITable, error)) {
+func (pb *standardPrimitiveComposer) SetTableFilter(
+	tableFilter func(openapistackql.ITable) (openapistackql.ITable, error)) {
 	pb.tableFilter = tableFilter
 }
 
@@ -439,7 +442,8 @@ func (pb *standardPrimitiveComposer) GetBuilder() primitivebuilder.Builder {
 			builders = append(builders, bldr)
 		}
 	}
-	simpleDiamond := primitivebuilder.NewDiamondBuilder(pb.builder, builders, pb.graph, pb.sqlSystem, pb.ShouldCollectGarbage())
+	simpleDiamond := primitivebuilder.NewDiamondBuilder(
+		pb.builder, builders, pb.graph, pb.sqlSystem, pb.ShouldCollectGarbage())
 	if len(pb.indirects) > 0 {
 		var indirectBuilders []primitivebuilder.Builder
 		for _, ind := range pb.indirects {
@@ -447,11 +451,14 @@ func (pb *standardPrimitiveComposer) GetBuilder() primitivebuilder.Builder {
 				indirectBuilders = append(indirectBuilders, bldr)
 			}
 		}
-		indirectDiamond := primitivebuilder.NewDiamondBuilder(pb.builder, indirectBuilders, pb.graph, pb.sqlSystem, pb.ShouldCollectGarbage())
-		return primitivebuilder.NewDependencySubDAGBuilder(pb.graph, []primitivebuilder.Builder{indirectDiamond}, simpleDiamond)
+		indirectDiamond := primitivebuilder.NewDiamondBuilder(
+			pb.builder, indirectBuilders, pb.graph, pb.sqlSystem,
+			pb.ShouldCollectGarbage())
+		return primitivebuilder.NewDependencySubDAGBuilder(
+			pb.graph,
+			[]primitivebuilder.Builder{indirectDiamond}, simpleDiamond)
 	}
 	return simpleDiamond
-
 }
 
 func (pb *standardPrimitiveComposer) SetBuilder(builder primitivebuilder.Builder) {
@@ -478,7 +485,7 @@ func (pb *standardPrimitiveComposer) GetTables() taxonomy.TblMap {
 	return pb.tables
 }
 
-func (pb *standardPrimitiveComposer) GetDRMConfig() drm.DRMConfig {
+func (pb *standardPrimitiveComposer) GetDRMConfig() drm.Config {
 	return pb.drmConfig
 }
 
@@ -490,7 +497,13 @@ func (pb *standardPrimitiveComposer) GetSQLSystem() sql_system.SQLSystem {
 	return pb.sqlSystem
 }
 
-func NewPrimitiveComposer(parent PrimitiveComposer, ast sqlparser.SQLNode, drmConfig drm.DRMConfig, txnCtrMgr txncounter.TxnCounterManager, graph primitivegraph.PrimitiveGraph, tblMap taxonomy.TblMap, symTab symtab.SymTab, sqlEngine sqlengine.SQLEngine, sqlSystem sql_system.SQLSystem, formatter sqlparser.NodeFormatter) PrimitiveComposer {
+func NewPrimitiveComposer(
+	parent PrimitiveComposer, ast sqlparser.SQLNode,
+	drmConfig drm.Config, txnCtrMgr txncounter.Manager,
+	graph primitivegraph.PrimitiveGraph,
+	tblMap taxonomy.TblMap, symTab symtab.SymTab,
+	sqlEngine sqlengine.SQLEngine, sqlSystem sql_system.SQLSystem,
+	formatter sqlparser.NodeFormatter) PrimitiveComposer {
 	return &standardPrimitiveComposer{
 		parent:            parent,
 		ast:               ast,

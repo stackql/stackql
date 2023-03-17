@@ -17,7 +17,7 @@ const (
 	TripleGreaterThanToken            string = ">>>"
 	DefaultDeclarationBlockStartToken string = TripleLessThanToken
 	DefaultDeclarationBlockEndToken   string = TripleGreaterThanToken
-	JsonBlockType                     string = "json"
+	JSONBlockType                     string = "json"
 	JsonnetBlockType                  string = "jsonnet"
 )
 
@@ -80,7 +80,7 @@ func NewDeclarationBlock(blockType string, contents []byte, filename string) (*D
 	ct := make(map[string]interface{})
 	var err error
 	switch blockType {
-	case JsonBlockType:
+	case JSONBlockType:
 
 		err = json.Unmarshal(bytes.TrimSpace(contents), &ct)
 		if err != nil {
@@ -88,7 +88,8 @@ func NewDeclarationBlock(blockType string, contents []byte, filename string) (*D
 		}
 	case JsonnetBlockType:
 		vm := jsonnet.MakeVM()
-		jsonStr, err := vm.EvaluateAnonymousSnippet(filename, string(bytes.TrimSpace(contents)))
+		var jsonStr string
+		jsonStr, err = vm.EvaluateAnonymousSnippet(filename, string(bytes.TrimSpace(contents)))
 		if err != nil {
 			return nil, err
 		}
@@ -121,19 +122,17 @@ func (pp *Preprocessor) inferBlock(block []byte, filename string) (*DeclarationB
 		i = j
 		typeStr += string(b)
 	}
-	return NewDeclarationBlock(typeStr, block[i+1:len(block)], filename)
+	return NewDeclarationBlock(typeStr, block[i+1:], filename)
 }
 
-func (pp *Preprocessor) mergeContents(declarationBlocks []DeclarationBlock) error {
+func (pp *Preprocessor) mergeContents(declarationBlocks []DeclarationBlock) {
 	contents := make(map[string]interface{})
-	var err error
 	for _, block := range declarationBlocks {
 		for k, v := range block.Contents {
 			contents[k] = v
 		}
 	}
 	pp.contents = printableMapFromMap(contents)
-	return err
 }
 
 func NewPreprocessor(declarationBlockStartToken, declarationBlockEndToken string) *Preprocessor {
@@ -159,7 +158,7 @@ func (pp *Preprocessor) Render(input io.Reader) (io.Reader, error) {
 		return nil, err
 	}
 	var tplWr bytes.Buffer
-	if err := tmpl.Execute(&tplWr, pp.contents); err != nil {
+	if err = tmpl.Execute(&tplWr, pp.contents); err != nil {
 		return nil, err
 	}
 	return bytes.NewReader(tplWr.Bytes()), nil
@@ -186,15 +185,16 @@ func (pp *Preprocessor) Prepare(infile io.Reader, infileName string) (io.Reader,
 		if startIdx > blockTermIdx {
 			return nil, fmt.Errorf("declaration block delimiters improperly placed")
 		}
-		db, err := pp.inferBlock(inContents[startIdx:blockTermIdx], infileName)
+		var db *DeclarationBlock
+		db, err = pp.inferBlock(inContents[startIdx:blockTermIdx], infileName)
 		if err != nil {
 			return nil, err
 		}
 		declarationBlocks = append(declarationBlocks, *db)
-		blockIdx = bytes.Index(inContents[i:len(inContents)], pp.declarationBlockStartToken)
+		blockIdx = bytes.Index(inContents[i:], pp.declarationBlockStartToken)
 	}
-	outContents = append(outContents, inContents[i:len(inContents)]...)
-	err = pp.mergeContents(declarationBlocks)
+	outContents = append(outContents, inContents[i:]...)
+	pp.mergeContents(declarationBlocks)
 	return bytes.NewReader(outContents), err
 }
 

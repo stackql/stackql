@@ -14,7 +14,10 @@ import (
 
 type IDiscoveryStore interface {
 	ProcessProviderDiscoveryDoc(string, string) (openapistackql.Provider, error)
-	processResourcesDiscoveryDoc(openapistackql.Provider, openapistackql.ProviderService, string) (openapistackql.ResourceRegister, error)
+	processResourcesDiscoveryDoc(
+		openapistackql.Provider,
+		openapistackql.ProviderService,
+		string) (openapistackql.ResourceRegister, error)
 	PersistServiceShard(openapistackql.Provider, openapistackql.ProviderService, string) (openapistackql.Service, error)
 }
 
@@ -36,7 +39,7 @@ type IDiscoveryAdapter interface {
 
 type BasicDiscoveryAdapter struct {
 	alias              string
-	apiDiscoveryDocUrl string
+	apiDiscoveryDocURL string
 	discoveryStore     IDiscoveryStore
 	runtimeCtx         *dto.RuntimeCtx
 	registry           openapistackql.RegistryAPI
@@ -45,7 +48,7 @@ type BasicDiscoveryAdapter struct {
 
 func NewBasicDiscoveryAdapter(
 	alias string,
-	apiDiscoveryDocUrl string,
+	apiDiscoveryDocURL string,
 	discoveryStore IDiscoveryStore,
 	runtimeCtx *dto.RuntimeCtx,
 	registry openapistackql.RegistryAPI,
@@ -53,7 +56,7 @@ func NewBasicDiscoveryAdapter(
 ) IDiscoveryAdapter {
 	return &BasicDiscoveryAdapter{
 		alias:              alias,
-		apiDiscoveryDocUrl: apiDiscoveryDocUrl,
+		apiDiscoveryDocURL: apiDiscoveryDocURL,
 		discoveryStore:     discoveryStore,
 		runtimeCtx:         runtimeCtx,
 		registry:           registry,
@@ -66,20 +69,29 @@ func (adp *BasicDiscoveryAdapter) getDicoveryStore() IDiscoveryStore {
 }
 
 func (adp *BasicDiscoveryAdapter) GetProvider(providerKey string) (openapistackql.Provider, error) {
-	return adp.discoveryStore.ProcessProviderDiscoveryDoc(adp.apiDiscoveryDocUrl, adp.alias)
+	return adp.discoveryStore.ProcessProviderDiscoveryDoc(adp.apiDiscoveryDocURL, adp.alias)
 }
 
-func (adp *BasicDiscoveryAdapter) GetServiceHandlesMap(prov openapistackql.Provider) (map[string]openapistackql.ProviderService, error) {
+func (adp *BasicDiscoveryAdapter) GetServiceHandlesMap(
+	prov openapistackql.Provider,
+) (map[string]openapistackql.ProviderService, error) {
 	return prov.GetProviderServices(), nil
 }
 
-func (adp *BasicDiscoveryAdapter) GetServiceHandle(prov openapistackql.Provider, serviceKey string) (openapistackql.ProviderService, error) {
+func (adp *BasicDiscoveryAdapter) GetServiceHandle(
+	prov openapistackql.Provider,
+	serviceKey string,
+) (openapistackql.ProviderService, error) {
 	return prov.GetProviderService(serviceKey)
 }
 
-func (adp *BasicDiscoveryAdapter) GetServiceShard(prov openapistackql.Provider, serviceKey, resourceKey string) (openapistackql.Service, error) {
-	serviceIdString := docparser.TranslateServiceKeyIqlToGenericProvider(serviceKey)
-	sh, err := adp.GetServiceHandle(prov, serviceIdString)
+func (adp *BasicDiscoveryAdapter) GetServiceShard(
+	prov openapistackql.Provider,
+	serviceKey,
+	resourceKey string,
+) (openapistackql.Service, error) {
+	serviceIDString := docparser.TranslateServiceKeyIqlToGenericProvider(serviceKey)
+	sh, err := adp.GetServiceHandle(prov, serviceIDString)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +108,7 @@ func (adp *BasicDiscoveryAdapter) GetServiceShard(prov openapistackql.Provider, 
 		viewName := rsc.GetID()
 		_, viewExists := adp.sqlSystem.GetViewByName(viewName)
 		if !viewExists {
-			err := adp.sqlSystem.CreateView(viewName, viewBodyDDL)
+			err = adp.sqlSystem.CreateView(viewName, viewBodyDDL)
 			if err != nil {
 				return nil, err
 			}
@@ -124,35 +136,43 @@ func (adp *BasicDiscoveryAdapter) PersistStaticExternalSQLDataSource(prov openap
 	return nil
 }
 
-func (adp *BasicDiscoveryAdapter) GetResourcesMap(prov openapistackql.Provider, serviceKey string) (map[string]openapistackql.Resource, error) {
+func (adp *BasicDiscoveryAdapter) GetResourcesMap(
+	prov openapistackql.Provider,
+	serviceKey string,
+) (map[string]openapistackql.Resource, error) {
 	component, err := adp.GetServiceHandle(prov, serviceKey)
 	if component == nil || err != nil {
 		return nil, err
 	}
 	if component.GetResourcesRefRef() != "" {
-		disDoc, err := adp.discoveryStore.processResourcesDiscoveryDoc(prov, component, fmt.Sprintf("%s.%s", adp.alias, serviceKey))
-		if err != nil {
-			return nil, err
+		disDoc, docErr := adp.discoveryStore.processResourcesDiscoveryDoc(
+			prov,
+			component,
+			fmt.Sprintf("%s.%s", adp.alias, serviceKey))
+		if docErr != nil {
+			return nil, docErr
 		}
 		return disDoc.GetResources(), nil
 	}
 	rr, err := adp.registry.GetResourcesShallowFromProviderService(component)
 	if err != nil {
-		svc, err := adp.registry.GetServiceFromProviderService(component)
-		if err != nil {
-			return nil, err
+		svc, svcErr := adp.registry.GetServiceFromProviderService(component)
+		if svcErr != nil {
+			return nil, svcErr
 		}
 		return svc.GetResources()
-	} else {
-		if len(rr.GetResources()) == 0 {
-			return nil, fmt.Errorf("no resources found for provider = '%s' and service = '%s'", prov.GetName(), serviceKey)
-		}
-		return rr.GetResources(), nil
 	}
-
+	if len(rr.GetResources()) == 0 {
+		return nil, fmt.Errorf("no resources found for provider = '%s' and service = '%s'", prov.GetName(), serviceKey)
+	}
+	return rr.GetResources(), nil
 }
 
-func NewTTLDiscoveryStore(sqlSystem sql_system.SQLSystem, registry openapistackql.RegistryAPI, runtimeCtx dto.RuntimeCtx) IDiscoveryStore {
+func NewTTLDiscoveryStore(
+	sqlSystem sql_system.SQLSystem,
+	registry openapistackql.RegistryAPI,
+	runtimeCtx dto.RuntimeCtx,
+) IDiscoveryStore {
 	return &TTLDiscoveryStore{
 		sqlSystem:  sqlSystem,
 		runtimeCtx: runtimeCtx,
@@ -165,7 +185,8 @@ func (store *TTLDiscoveryStore) ProcessProviderDiscoveryDoc(url string, alias st
 	case "https://www.googleapis.com/discovery/v1/apis":
 		ver, err := store.registry.GetLatestAvailableVersion("google")
 		if err != nil {
-			return nil, fmt.Errorf("locally stored providers not viable. Please try a pull from the registry.  Error: %s", err.Error())
+			return nil, fmt.Errorf(
+				"locally stored providers not viable. Please try a pull from the registry.  Error: %w", err)
 		}
 		return store.registry.LoadProviderByName("google", ver)
 	default:
@@ -175,13 +196,18 @@ func (store *TTLDiscoveryStore) ProcessProviderDiscoveryDoc(url string, alias st
 		}
 		ver, err := store.registry.GetLatestAvailableVersion(ds.Name)
 		if err != nil {
-			return nil, fmt.Errorf("locally stored providers not viable. Please try a pull from the registry.  Error: %s", err.Error())
+			return nil, fmt.Errorf(
+				"locally stored providers not viable. Please try a pull from the registry.  Error: %w", err)
 		}
 		return store.registry.LoadProviderByName(ds.Name, ver)
 	}
 }
 
-func (store *TTLDiscoveryStore) PersistServiceShard(pr openapistackql.Provider, serviceHandle openapistackql.ProviderService, resourceKey string) (openapistackql.Service, error) {
+func (store *TTLDiscoveryStore) PersistServiceShard(
+	pr openapistackql.Provider,
+	serviceHandle openapistackql.ProviderService,
+	resourceKey string,
+) (openapistackql.Service, error) {
 	k := fmt.Sprintf("services.%s.%s", pr.GetName(), serviceHandle.GetName())
 	svc, ok := serviceHandle.PeekServiceFragment(resourceKey)
 	if ok && svc != nil {
@@ -195,14 +221,16 @@ func (store *TTLDiscoveryStore) PersistServiceShard(pr openapistackql.Provider, 
 	if err != nil {
 		return nil, err
 	}
-	if err != nil {
-		return nil, err
-	}
 	serviceHandle.SetServiceRefVal(shard)
 	return shard, err
 }
 
-func (store *TTLDiscoveryStore) processResourcesDiscoveryDoc(prov openapistackql.Provider, serviceHandle openapistackql.ProviderService, alias string) (openapistackql.ResourceRegister, error) {
+//nolint:gocognit // complexity is fine
+func (store *TTLDiscoveryStore) processResourcesDiscoveryDoc(
+	prov openapistackql.Provider,
+	serviceHandle openapistackql.ProviderService,
+	alias string,
+) (openapistackql.ResourceRegister, error) {
 	providerKey := prov.GetName()
 	switch providerKey {
 	case "googleapis.com", "google":

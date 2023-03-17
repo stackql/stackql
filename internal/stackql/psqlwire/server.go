@@ -1,7 +1,6 @@
 package psqlwire
 
 import (
-	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
@@ -28,6 +27,7 @@ type SimpleWireServer struct {
 	tlsCfg dto.PgTLSCfg
 }
 
+//nolint:gocognit,nestif,nolintlint
 func MakeWireServer(sbe sqlbackend.ISQLBackend, cfg dto.RuntimeCtx) (IWireServer, error) {
 	logger := logging.GetLogger()
 
@@ -40,7 +40,8 @@ func MakeWireServer(sbe sqlbackend.ISQLBackend, cfg dto.RuntimeCtx) (IWireServer
 		if err != nil {
 			return nil, err
 		}
-		cert, err := tlsCfg.GetKeyPair()
+		var cert tls.Certificate
+		cert, err = tlsCfg.GetKeyPair()
 		if err != nil {
 			return nil, err
 		}
@@ -54,11 +55,12 @@ func MakeWireServer(sbe sqlbackend.ISQLBackend, cfg dto.RuntimeCtx) (IWireServer
 		if len(tlsCfg.ClientCAs) > 0 {
 			cp = x509.NewCertPool()
 			for _, pemStr := range tlsCfg.ClientCAs {
-				b, err := base64.RawStdEncoding.DecodeString(pemStr)
+				var b []byte
+				b, err = base64.RawStdEncoding.DecodeString(pemStr)
 				if err != nil {
 					return nil, err
 				}
-				ok := cp.AppendCertsFromPEM([]byte(b))
+				ok := cp.AppendCertsFromPEM(b)
 				if !ok {
 					logger.Error("failed loading Client CA")
 				}
@@ -84,12 +86,10 @@ func MakeWireServer(sbe sqlbackend.ISQLBackend, cfg dto.RuntimeCtx) (IWireServer
 }
 
 func (sws *SimpleWireServer) Serve() error {
-	sws.logger.Info(fmt.Sprintf("PostgreSQL server is up and running at [%s:%d]", sws.rtCtx.PGSrvAddress, sws.rtCtx.PGSrvPort))
+	sws.logger.Info(
+		fmt.Sprintf("PostgreSQL server is up and running at [%s:%d]",
+			sws.rtCtx.PGSrvAddress,
+			sws.rtCtx.PGSrvPort),
+	)
 	return sws.server.ListenAndServe(fmt.Sprintf("%s:%d", sws.rtCtx.PGSrvAddress, sws.rtCtx.PGSrvPort))
-}
-
-func handle(ctx context.Context, query string, writer wire.DataWriter) error {
-	fmt.Println(query)
-	// if
-	return writer.Complete("OK")
 }

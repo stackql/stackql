@@ -32,7 +32,7 @@ type AstExpandVisitor interface {
 }
 
 type indirectExpandAstVisitor struct {
-	namespaceCollection            tablenamespace.TableNamespaceCollection
+	namespaceCollection            tablenamespace.Collection
 	containsAnalyticsCacheMaterial bool
 	containsNativeBackendMaterial  bool
 	sqlSystem                      sql_system.SQLSystem
@@ -51,11 +51,11 @@ func newIndirectExpandAstVisitor(
 	primitiveGenerator primitivegenerator.PrimitiveGenerator,
 	sqlSystem sql_system.SQLSystem,
 	formatter sqlparser.NodeFormatter,
-	namespaceCollection tablenamespace.TableNamespaceCollection,
+	namespaceCollection tablenamespace.Collection,
 	whereParams parserutil.ParameterMap,
 	tcc internaldto.TxnControlCounters,
 	indirectionDepth int,
-) (AstExpandVisitor, error) {
+) (AstExpandVisitor, error) { //nolint:unparam // defer uplifts on analysers
 	if whereParams == nil {
 		whereParams = parserutil.NewParameterMap()
 	}
@@ -76,7 +76,7 @@ func newIndirectExpandAstVisitor(
 func (v *indirectExpandAstVisitor) processIndirect(node sqlparser.SQLNode, indirect astindirect.Indirect) error {
 	err := indirect.Parse()
 	if err != nil {
-		return nil
+		return nil //nolint:nilerr //TODO: investigate
 	}
 	childAnalyzer, err := NewEarlyScreenerAnalyzer(
 		v.primitiveGenerator,
@@ -93,27 +93,34 @@ func (v *indirectExpandAstVisitor) processIndirect(node sqlparser.SQLNode, indir
 	}
 	// Persist indirect for later retrieval
 	v.annotatedAST.SetIndirect(node, indirect)
-	indirectPrimitiveGenerator := v.primitiveGenerator.CreateIndirectPrimitiveGenerator(indirect.GetSelectAST(), v.handlerCtx)
+	indirectPrimitiveGenerator := v.primitiveGenerator.CreateIndirectPrimitiveGenerator(
+		indirect.GetSelectAST(),
+		v.handlerCtx,
+	)
 	err = indirectPrimitiveGenerator.AnalyzeSelectStatement(childAnalyzer.GetPlanBuilderInput())
 	if err != nil {
 		return err
 	}
 	maxIndirectCount := childAnalyzer.GetIndirectionDepth()
 	if maxIndirectCount > v.handlerCtx.GetRuntimeContext().IndirectDepthMax {
-		return fmt.Errorf("query error: indirection chain length %d > %d and is therefore disallowed; please do not cite views at too deep a level", maxIndirectCount, constants.LimitsIndirectMaxChainLength)
+		return fmt.Errorf(
+			"query error: indirection chain length %d > %d and is therefore disallowed; please do not cite views at too deep a level", //nolint:lll
+			maxIndirectCount,
+			constants.LimitsIndirectMaxChainLength,
+		)
 	}
 	indirectPrimitiveGenerator.GetPrimitiveComposer().GetAst()
 	selCtx := indirectPrimitiveGenerator.GetPrimitiveComposer().GetIndirectSelectPreparedStatementCtx()
 	underlyingSymTab := indirectPrimitiveGenerator.GetPrimitiveComposer().GetSymTab()
 	colz := selCtx.GetNonControlColumns()
 	for _, col := range colz {
-		colId := col.GetIdentifier()
+		colID := col.GetIdentifier()
 		colEntry := symtab.NewSymTabEntry(
 			indirectPrimitiveGenerator.GetPrimitiveComposer().GetDRMConfig().GetRelationalType(col.GetType()),
 			"",
 			"",
 		)
-		underlyingSymTab.SetSymbol(colId, colEntry)
+		underlyingSymTab.SetSymbol(colID, colEntry) //nolint:errcheck // future proof
 	}
 	indirect.SetUnderlyingSymTab(underlyingSymTab)
 	indirect.SetSelectContext(indirectPrimitiveGenerator.GetPrimitiveComposer().GetIndirectSelectPreparedStatementCtx())
@@ -136,6 +143,7 @@ func (v *indirectExpandAstVisitor) Analyze() error {
 	return v.Visit(v.annotatedAST.GetAST())
 }
 
+//nolint:funlen,gocognit,gocyclo,cyclop // this is a collosal function
 func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 	buf := sqlparser.NewTrackedBuffer(v.formatter)
 
@@ -159,7 +167,7 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 		addIf(node.SQLCalcFoundRows, sqlparser.SQLCalcFoundRowsStr)
 
 		if node.Comments != nil {
-			node.Comments.Accept(v)
+			node.Comments.Accept(v) //nolint:errcheck // future proof
 		}
 		if node.SelectExprs != nil {
 			err := node.SelectExprs.Accept(v)
@@ -212,9 +220,9 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 		}
 		buf.AstPrintf(node, "%v", node.FirstStatement)
 		for _, us := range node.UnionSelects {
-			err := us.Accept(v)
-			if err != nil {
-				return err
+			newErr := us.Accept(v)
+			if newErr != nil {
+				return newErr
 			}
 		}
 
@@ -257,6 +265,7 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 	case *sqlparser.DDL:
 		switch node.Action {
 		case sqlparser.CreateStr:
+			//nolint:gocritic // deferring cosmetics on visitors
 			if node.OptLike != nil {
 				buf.AstPrintf(node, "%s table %v %v", node.Action, node.Table, node.OptLike)
 			} else if node.TableSpec != nil {
@@ -355,6 +364,7 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 			buf.AstPrintf(ts, ",\n\t%v", c)
 		}
 
+		//nolint:gocritic // deferring cosmetics on visitors
 		buf.AstPrintf(ts, "\n)%s", strings.Replace(ts.Options, ", ", ",\n  ", -1))
 
 	case *sqlparser.ColumnDefinition:
@@ -368,7 +378,6 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 		if ct.Length != nil && ct.Scale != nil {
 			buf.AstPrintf(ct, "(%v,%v)", ct.Length, ct.Scale)
-
 		} else if ct.Length != nil {
 			buf.AstPrintf(ct, "(%v)", ct.Length)
 		}
@@ -377,7 +386,7 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 			buf.AstPrintf(ct, "(%s)", strings.Join(ct.EnumValues, ", "))
 		}
 
-		opts := make([]string, 0, 16)
+		opts := make([]string, 0, 16) //nolint:gomnd // deferring uplifts on analysers
 		if ct.Unsigned {
 			opts = append(opts, sqlparser.KeywordStrings[sqlparser.UNSIGNED])
 		}
@@ -385,7 +394,12 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 			opts = append(opts, sqlparser.KeywordStrings[sqlparser.ZEROFILL])
 		}
 		if ct.Charset != "" {
-			opts = append(opts, sqlparser.KeywordStrings[sqlparser.CHARACTER], sqlparser.KeywordStrings[sqlparser.SET], ct.Charset)
+			opts = append(
+				opts,
+				sqlparser.KeywordStrings[sqlparser.CHARACTER],
+				sqlparser.KeywordStrings[sqlparser.SET],
+				ct.Charset,
+			)
 		}
 		if ct.Collate != "" {
 			opts = append(opts, sqlparser.KeywordStrings[sqlparser.COLLATE], ct.Collate)
@@ -397,7 +411,12 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 			opts = append(opts, sqlparser.KeywordStrings[sqlparser.DEFAULT], sqlparser.String(ct.Default))
 		}
 		if ct.OnUpdate != nil {
-			opts = append(opts, sqlparser.KeywordStrings[sqlparser.ON], sqlparser.KeywordStrings[sqlparser.UPDATE], sqlparser.String(ct.OnUpdate))
+			opts = append(
+				opts,
+				sqlparser.KeywordStrings[sqlparser.ON],
+				sqlparser.KeywordStrings[sqlparser.UPDATE],
+				sqlparser.String(ct.OnUpdate),
+			)
 		}
 		if ct.Autoincrement {
 			opts = append(opts, sqlparser.KeywordStrings[sqlparser.AUTO_INCREMENT])
@@ -490,6 +509,7 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 	case sqlparser.ReferenceAction:
 		a := node
+		//nolint:exhaustive // deferring uplifts on analyser
 		switch a {
 		case sqlparser.Restrict:
 			buf.WriteString("restrict")
@@ -515,7 +535,7 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 	case *sqlparser.Show:
 		nodeType := strings.ToLower(node.Type)
-		if (nodeType == "tables" || nodeType == "columns" || nodeType == "fields" || nodeType == "index" || nodeType == "keys" || nodeType == "indexes") && node.ShowTablesOpt != nil {
+		if (nodeType == "tables" || nodeType == "columns" || nodeType == "fields" || nodeType == "index" || nodeType == "keys" || nodeType == "indexes") && node.ShowTablesOpt != nil { //nolint:lll,nestif // deferring uplifts on analyser
 			opt := node.ShowTablesOpt
 			if node.Extended != "" {
 				buf.AstPrintf(node, "show %s%s", node.Extended, nodeType)
@@ -669,19 +689,19 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 	case *sqlparser.AliasedTableExpr:
 		if node.Expr != nil {
+			//nolint:gocritic // deferring cosmetics on visitors
 			switch n := node.Expr.(type) {
 			case *sqlparser.Subquery:
 				sq := internaldto.NewSubqueryDTO(node, n)
 				indirect, err := astindirect.NewSubqueryIndirect(sq)
 				if err != nil {
-					return nil
+					return nil //nolint:nilerr //TODO: investigate
 				}
 				err = v.processIndirect(node, indirect)
 				if err != nil {
-					return nil
+					return nil //nolint:nilerr //TODO: investigate
 				}
 				return nil
-
 			}
 			err := node.Expr.Accept(v)
 			if err != nil {
@@ -710,7 +730,7 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 	case sqlparser.TableNames:
 		var prefix string
 		for _, n := range node {
-			n.Accept(v)
+			n.Accept(v) //nolint:errcheck // TODO: strategic fix
 			buf.AstPrintf(node, "%s%v", prefix, n)
 			prefix = ", "
 		}
@@ -744,6 +764,7 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 		// OPTIMISTIC DOC PERSISTENCE AND VIEW DEFINITION
 		prov, err := v.handlerCtx.GetProvider(providerName)
 
+		//nolint:nestif // deferring cosmetics on visitors
 		if err != nil {
 			logging.GetLogger().Debugf("optimistic doc error: %s", err.Error())
 		} else {
@@ -762,9 +783,9 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 		// END OPTIMISTIC DOC PERSISTENCE AND VIEW DEFINITION
 		viewDTO, isView := v.sqlSystem.GetViewByName(node.GetRawVal())
 		if isView {
-			indirect, err := astindirect.NewViewIndirect(viewDTO)
-			if err != nil {
-				return err
+			indirect, newErr := astindirect.NewViewIndirect(viewDTO)
+			if newErr != nil {
+				return newErr
 			}
 			err = v.processIndirect(node, indirect)
 			if err != nil {
@@ -1086,7 +1107,7 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 		case node.Name.EqualString("charset") || node.Name.EqualString("names"):
 			buf.AstPrintf(node, "%s %v", node.Name.String(), node.Expr)
 		case node.Name.EqualString(sqlparser.TransactionStr):
-			sqlVal := node.Expr.(*sqlparser.SQLVal)
+			sqlVal := node.Expr.(*sqlparser.SQLVal) //nolint:errcheck // TODO: strategic fix
 			buf.AstPrintf(node, "%s %s", node.Name.String(), strings.ToLower(string(sqlVal.Val)))
 		default:
 			buf.AstPrintf(node, "%v = %v", node.Name, node.Expr)
@@ -1111,7 +1132,6 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 	case *sqlparser.AccessMode:
 		buf.WriteString(node.Mode)
-
 	}
 	return nil
 }

@@ -11,10 +11,6 @@ func NewNopMapStream() MapStream {
 	return &StandardMapStream{}
 }
 
-func (ss *NopMapStream) iStackQLReader() {}
-
-func (ss *NopMapStream) iStackQLWriter() {}
-
 func (ss *NopMapStream) Write(input []map[string]interface{}) error {
 	return nil
 }

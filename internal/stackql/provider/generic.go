@@ -21,12 +21,12 @@ import (
 	"github.com/stackql/go-openapistackql/openapistackql"
 
 	"net/http"
-	"net/url"
 	"regexp"
 	"strings"
 )
 
 var (
+	//nolint:revive,unused // prefer declarative
 	gitHubLinksNextRegex *regexp.Regexp = regexp.MustCompile(`.*<(?P<nextURL>[^>]*)>;\ rel="next".*`)
 )
 
@@ -54,7 +54,11 @@ func (gp *GenericProvider) GetVersion() string {
 	return gp.apiVersion
 }
 
-func (gp *GenericProvider) GetServiceShard(serviceKey string, resourceKey string, runtimeCtx dto.RuntimeCtx) (openapistackql.Service, error) {
+func (gp *GenericProvider) GetServiceShard(
+	serviceKey string,
+	resourceKey string,
+	runtimeCtx dto.RuntimeCtx,
+) (openapistackql.Service, error) {
 	return gp.discoveryAdapter.GetServiceShard(gp.provider, serviceKey, resourceKey)
 }
 
@@ -67,8 +71,8 @@ func (gp *GenericProvider) inferAuthType(authCtx dto.AuthCtx, authTypeRequested 
 	switch ft {
 	case dto.AuthAzureDefaultStr:
 		return dto.AuthAzureDefaultStr
-	case dto.AuthApiKeyStr:
-		return dto.AuthApiKeyStr
+	case dto.AuthAPIKeyStr:
+		return dto.AuthAPIKeyStr
 	case dto.AuthBasicStr:
 		return dto.AuthBasicStr
 	case dto.AuthBearerStr:
@@ -88,11 +92,15 @@ func (gp *GenericProvider) inferAuthType(authCtx dto.AuthCtx, authTypeRequested 
 	return dto.AuthNullStr
 }
 
-func (gp *GenericProvider) Auth(authCtx *dto.AuthCtx, authTypeRequested string, enforceRevokeFirst bool) (*http.Client, error) {
+func (gp *GenericProvider) Auth(
+	authCtx *dto.AuthCtx,
+	authTypeRequested string,
+	enforceRevokeFirst bool,
+) (*http.Client, error) {
 	authCtx = authCtx.Clone()
 	at := gp.inferAuthType(*authCtx, authTypeRequested)
 	switch at {
-	case dto.AuthApiKeyStr:
+	case dto.AuthAPIKeyStr:
 		return gp.apiTokenFileAuth(authCtx, false)
 	case dto.AuthBearerStr:
 		return gp.apiTokenFileAuth(authCtx, true)
@@ -107,7 +115,7 @@ func (gp *GenericProvider) Auth(authCtx *dto.AuthCtx, authTypeRequested string, 
 	case dto.AuthAWSSigningv4Str:
 		return gp.awsSigningAuth(authCtx)
 	case dto.AuthNullStr:
-		return netutils.GetHttpClient(gp.runtimeCtx, http.DefaultClient), nil
+		return netutils.GetHTTPClient(gp.runtimeCtx, http.DefaultClient), nil
 	}
 	return nil, fmt.Errorf("could not infer auth type")
 }
@@ -126,7 +134,13 @@ func (gp *GenericProvider) AuthRevoke(authCtx *dto.AuthCtx) error {
 	return fmt.Errorf(`Auth revoke for Google Failed; improper auth method: "%s" specified`, authCtx.Type)
 }
 
-func (gp *GenericProvider) GetMethodForAction(serviceName string, resourceName string, iqlAction string, parameters parserutil.ColumnKeyedDatastore, runtimeCtx dto.RuntimeCtx) (openapistackql.OperationStore, string, error) {
+func (gp *GenericProvider) GetMethodForAction(
+	serviceName string,
+	resourceName string,
+	iqlAction string,
+	parameters parserutil.ColumnKeyedDatastore,
+	runtimeCtx dto.RuntimeCtx,
+) (openapistackql.OperationStore, string, error) {
 	rsc, err := gp.GetResource(serviceName, resourceName, runtimeCtx)
 	if err != nil {
 		return nil, "", err
@@ -134,7 +148,12 @@ func (gp *GenericProvider) GetMethodForAction(serviceName string, resourceName s
 	return gp.methodSelector.GetMethodForAction(rsc, iqlAction, parameters)
 }
 
-func (gp *GenericProvider) GetFirstMethodForAction(serviceName string, resourceName string, iqlAction string, runtimeCtx dto.RuntimeCtx) (openapistackql.OperationStore, string, error) {
+func (gp *GenericProvider) GetFirstMethodForAction(
+	serviceName string,
+	resourceName string,
+	iqlAction string,
+	runtimeCtx dto.RuntimeCtx,
+) (openapistackql.OperationStore, string, error) {
 	rsc, err := gp.GetResource(serviceName, resourceName, runtimeCtx)
 	if err != nil {
 		return nil, "", err
@@ -146,7 +165,9 @@ func (gp *GenericProvider) GetFirstMethodForAction(serviceName string, resourceN
 	return rv, str, nil
 }
 
-func (gp *GenericProvider) InferDescribeMethod(rsc openapistackql.Resource) (openapistackql.OperationStore, string, error) {
+func (gp *GenericProvider) InferDescribeMethod(
+	rsc openapistackql.Resource,
+) (openapistackql.OperationStore, string, error) {
 	if rsc == nil {
 		return nil, "", fmt.Errorf("cannot infer describe method from nil resource")
 	}
@@ -154,10 +175,16 @@ func (gp *GenericProvider) InferDescribeMethod(rsc openapistackql.Resource) (ope
 	if ok {
 		return m, mk, nil
 	}
-	return nil, "", fmt.Errorf("SELECT not supported for this resource, use SHOW METHODS to view available operations for the resource and then invoke a supported method using the EXEC command")
+	return nil, "", fmt.Errorf(
+		//nolint:lll // long message
+		"SELECT not supported for this resource, use SHOW METHODS to view available operations for the resource and then invoke a supported method using the EXEC command")
 }
 
-func (gp *GenericProvider) GetObjectSchema(serviceName string, resourceName string, schemaName string) (openapistackql.Schema, error) {
+func (gp *GenericProvider) GetObjectSchema(
+	serviceName string,
+	resourceName string,
+	schemaName string,
+) (openapistackql.Schema, error) {
 	svc, err := gp.GetServiceShard(serviceName, resourceName, gp.runtimeCtx)
 	if err != nil {
 		return nil, err
@@ -170,7 +197,7 @@ func (gp *GenericProvider) ShowAuth(authCtx *dto.AuthCtx) (*openapistackql.AuthM
 	var retVal *openapistackql.AuthMetadata
 	var authObj openapistackql.AuthMetadata
 	if authCtx == nil {
-		return nil, errors.New(constants.NotAuthenticatedShowStr)
+		return nil, errors.New(constants.NotAuthenticatedShowStr) //nolint:stylecheck // happy with message
 	}
 	switch gp.inferAuthType(*authCtx, authCtx.Type) {
 	case dto.AuthServiceAccountStr:
@@ -198,14 +225,14 @@ func (gp *GenericProvider) ShowAuth(authCtx *dto.AuthCtx) (*openapistackql.AuthM
 				retVal = &authObj
 				activateAuth(authCtx, principalStr, dto.AuthInteractiveStr)
 			} else {
-				err = errors.New(constants.NotAuthenticatedShowStr)
+				err = errors.New(constants.NotAuthenticatedShowStr) //nolint:stylecheck // happy with message
 			}
 		} else {
 			logging.GetLogger().Infoln(sdkErr)
-			err = errors.New(constants.NotAuthenticatedShowStr)
+			err = errors.New(constants.NotAuthenticatedShowStr) //nolint:stylecheck // happy with message
 		}
 	default:
-		err = errors.New(constants.NotAuthenticatedShowStr)
+		err = errors.New(constants.NotAuthenticatedShowStr) //nolint:stylecheck // happy with message
 	}
 	return retVal, err
 }
@@ -215,7 +242,7 @@ func (gp *GenericProvider) oAuth(authCtx *dto.AuthCtx, enforceRevokeFirst bool) 
 	var tokenBytes []byte
 	tokenBytes, err = google_sdk.GetAccessToken()
 	if enforceRevokeFirst && authCtx.Type == dto.AuthInteractiveStr && err == nil {
-		return nil, fmt.Errorf(constants.OAuthInteractiveAuthErrStr)
+		return nil, fmt.Errorf(constants.OAuthInteractiveAuthErrStr) //nolint:stylecheck // happy with message
 	}
 	if err != nil {
 		err = google_sdk.OAuthToGoogle()
@@ -227,7 +254,7 @@ func (gp *GenericProvider) oAuth(authCtx *dto.AuthCtx, enforceRevokeFirst bool) 
 		return nil, err
 	}
 	activateAuth(authCtx, "", dto.AuthInteractiveStr)
-	client := netutils.GetHttpClient(gp.runtimeCtx, nil)
+	client := netutils.GetHTTPClient(gp.runtimeCtx, nil)
 	tr, err := newTransport(tokenBytes, authTypeBearer, authCtx.ValuePrefix, locationHeader, "", client.Transport)
 	if err != nil {
 		return nil, err
@@ -262,21 +289,6 @@ func (gp *GenericProvider) azureDefaultAuth(authCtx *dto.AuthCtx) (*http.Client,
 	return azureDefaultAuth(authCtx, gp.runtimeCtx)
 }
 
-func (gp *GenericProvider) getServiceType(service openapistackql.Service) string {
-	specialServiceNamesMap := map[string]bool{
-		"storage": true,
-		"compute": true,
-		"dns":     true,
-		"sql":     true,
-	}
-	nameIsSpecial, ok := specialServiceNamesMap[service.GetName()]
-	cloudRegex := regexp.MustCompile(`(^https://.*cloud\.google\.com|^https://firebase\.google\.com)`)
-	if service.IsPreferred() && (cloudRegex.MatchString(service.GetContactURL()) || (ok && nameIsSpecial)) {
-		return "cloud"
-	}
-	return "developer"
-}
-
 func (gp *GenericProvider) GetLikeableColumns(tableName string) []string {
 	var retVal []string
 	switch tableName {
@@ -303,16 +315,22 @@ func (gp *GenericProvider) GetLikeableColumns(tableName string) []string {
 	return retVal
 }
 
-func (gp *GenericProvider) EnhanceMetadataFilter(metadataType string, metadataFilter func(openapistackql.ITable) (openapistackql.ITable, error), colsVisited map[string]bool) (func(openapistackql.ITable) (openapistackql.ITable, error), error) {
+func (gp *GenericProvider) EnhanceMetadataFilter(
+	metadataType string,
+	metadataFilter func(openapistackql.ITable) (openapistackql.ITable, error),
+	colsVisited map[string]bool,
+) (func(openapistackql.ITable) (openapistackql.ITable, error), error) {
 	typeVisited, typeOk := colsVisited["type"]
 	preferredVisited, preferredOk := colsVisited["preferred"]
 	sqlTrue, sqlTrueErr := sqltypeutil.InterfaceToSQLType(true)
 	sqlCloudStr, sqlCloudStrErr := sqltypeutil.InterfaceToSQLType("cloud")
 	equalsOperator, operatorErr := relational.GetOperatorPredicate("=")
 	if sqlTrueErr != nil || sqlCloudStrErr != nil || operatorErr != nil {
-		return nil, fmt.Errorf("typing and operator system broken!!!")
+		return nil,
+			//nolint:revive,stylecheck // exclamation marks for egregious error
+			fmt.Errorf("typing and operator system broken!!!")
 	}
-	switch metadataType {
+	switch metadataType { //nolint:gocritic // happy to have this as a switch
 	case "service":
 		if typeOk && typeVisited && preferredOk && preferredVisited {
 			return metadataFilter, nil
@@ -352,11 +370,18 @@ func (gp *GenericProvider) getProviderServices() (map[string]openapistackql.Prov
 	return retVal, nil
 }
 
-func (gp *GenericProvider) GetProviderServicesRedacted(runtimeCtx dto.RuntimeCtx, extended bool) (map[string]openapistackql.ProviderService, error) {
+func (gp *GenericProvider) GetProviderServicesRedacted(
+	runtimeCtx dto.RuntimeCtx,
+	extended bool,
+) (map[string]openapistackql.ProviderService, error) {
 	return gp.getProviderServices()
 }
 
-func (gp *GenericProvider) GetResourcesRedacted(currentService string, runtimeCtx dto.RuntimeCtx, extended bool) (map[string]openapistackql.Resource, error) {
+func (gp *GenericProvider) GetResourcesRedacted(
+	currentService string,
+	runtimeCtx dto.RuntimeCtx,
+	extended bool,
+) (map[string]openapistackql.Resource, error) {
 	svcDiscDocMap, err := gp.discoveryAdapter.GetResourcesMap(gp.provider, currentService)
 	return svcDiscDocMap, err
 }
@@ -366,34 +391,33 @@ func (gp *GenericProvider) CheckCredentialFile(authCtx *dto.AuthCtx) error {
 	case dto.AuthServiceAccountStr:
 		_, err := parseServiceAccountFile(authCtx)
 		return err
-	case dto.AuthApiKeyStr:
+	case dto.AuthAPIKeyStr:
 		_, err := authCtx.GetCredentialsBytes()
 		return err
 	}
 	return fmt.Errorf("auth type = '%s' not supported", authCtx.Type)
 }
 
-func (gp *GenericProvider) escapeUrlParameter(k string, v string, method openapistackql.OperationStore) string {
-	if storageObjectsRegex.MatchString(method.GetName()) {
-		return url.QueryEscape(v)
-	}
-	return v
-}
-
 func (gp *GenericProvider) SetCurrentService(serviceKey string) {
 	gp.currentService = serviceKey
-
 }
 
 func (gp *GenericProvider) GetCurrentService() string {
 	return gp.currentService
 }
 
-func (gp *GenericProvider) GetResourcesMap(serviceKey string, runtimeCtx dto.RuntimeCtx) (map[string]openapistackql.Resource, error) {
+func (gp *GenericProvider) GetResourcesMap(
+	serviceKey string,
+	runtimeCtx dto.RuntimeCtx,
+) (map[string]openapistackql.Resource, error) {
 	return gp.discoveryAdapter.GetResourcesMap(gp.provider, serviceKey)
 }
 
-func (gp *GenericProvider) GetResource(serviceKey string, resourceKey string, runtimeCtx dto.RuntimeCtx) (openapistackql.Resource, error) {
+func (gp *GenericProvider) GetResource(
+	serviceKey string,
+	resourceKey string,
+	runtimeCtx dto.RuntimeCtx,
+) (openapistackql.Resource, error) {
 	svc, err := gp.GetServiceShard(serviceKey, resourceKey, runtimeCtx)
 	if err != nil {
 		return nil, err
@@ -422,13 +446,13 @@ func (gp *GenericProvider) InferMaxResultsElement(openapistackql.OperationStore)
 func (gp *GenericProvider) InferNextPageRequestElement(ho internaldto.Heirarchy) internaldto.HTTPElement {
 	st, ok := gp.getPaginationRequestTokenSemantic(ho)
 	if ok {
-		if tp, err := internaldto.ExtractHttpElement(st.GetLocation()); err == nil {
+		if tp, err := internaldto.ExtractHTTPElement(st.GetLocation()); err == nil {
 			rv := internaldto.NewHTTPElement(
 				tp,
 				st.GetKey(),
 			)
-			transformer, err := st.GetTransformer()
-			if err == nil && transformer != nil {
+			transformer, tErr := st.GetTransformer()
+			if tErr == nil && transformer != nil {
 				rv.SetTransformer(transformer)
 			}
 			return rv
@@ -448,14 +472,18 @@ func (gp *GenericProvider) InferNextPageRequestElement(ho internaldto.Heirarchy)
 	}
 }
 
-func (gp *GenericProvider) getPaginationRequestTokenSemantic(ho internaldto.Heirarchy) (openapistackql.TokenSemantic, bool) {
+func (gp *GenericProvider) getPaginationRequestTokenSemantic(
+	ho internaldto.Heirarchy,
+) (openapistackql.TokenSemantic, bool) {
 	if ho.GetMethod() == nil {
 		return nil, false
 	}
 	return ho.GetMethod().GetPaginationRequestTokenSemantic()
 }
 
-func (gp *GenericProvider) getPaginationResponseTokenSemantic(ho internaldto.Heirarchy) (openapistackql.TokenSemantic, bool) {
+func (gp *GenericProvider) getPaginationResponseTokenSemantic(
+	ho internaldto.Heirarchy,
+) (openapistackql.TokenSemantic, bool) {
 	if ho.GetMethod() == nil {
 		return nil, false
 	}
@@ -465,13 +493,13 @@ func (gp *GenericProvider) getPaginationResponseTokenSemantic(ho internaldto.Hei
 func (gp *GenericProvider) InferNextPageResponseElement(ho internaldto.Heirarchy) internaldto.HTTPElement {
 	st, ok := gp.getPaginationResponseTokenSemantic(ho)
 	if ok {
-		if tp, err := internaldto.ExtractHttpElement(st.GetLocation()); err == nil {
+		if tp, err := internaldto.ExtractHTTPElement(st.GetLocation()); err == nil {
 			rv := internaldto.NewHTTPElement(
 				tp,
 				st.GetKey(),
 			)
-			transformer, err := st.GetTransformer()
-			if err == nil && transformer != nil {
+			transformer, tErr := st.GetTransformer()
+			if tErr == nil && transformer != nil {
 				rv.SetTransformer(transformer)
 			}
 			return rv

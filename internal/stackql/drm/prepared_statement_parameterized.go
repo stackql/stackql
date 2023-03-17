@@ -51,7 +51,11 @@ func (ps *standardPreparedStatementParameterized) GetCtx() PreparedStatementCtx 
 	return ps.ctx
 }
 
-func NewPreparedStatementParameterized(ctx PreparedStatementCtx, args map[string]interface{}, controlArgsRequired bool) PreparedStatementParameterized {
+func NewPreparedStatementParameterized(
+	ctx PreparedStatementCtx,
+	args map[string]interface{},
+	controlArgsRequired bool,
+) PreparedStatementParameterized {
 	children := make(map[int]PreparedStatementParameterized)
 	for i, ctx := range ctx.GetIndirectContexts() {
 		children[i] = NewPreparedStatementParameterized(ctx, nil, true)

@@ -1,71 +1,14 @@
 package psqlwire
 
 import (
-	"context"
 	"database/sql/driver"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
 	postgreswire "github.com/stackql/psql-wire"
 
 	"github.com/jackc/pgtype"
-	"github.com/lib/pq/oid"
-	"github.com/stackql/psql-wire/pkg/sqlbackend"
 	"github.com/stackql/psql-wire/pkg/sqldata"
 )
-
-func MakeSQLStream() (sqlbackend.ISQLBackend, error) {
-	cols := []sqldata.ISQLColumn{ //nolint:errcheck
-		sqldata.NewSQLColumn(
-			sqldata.NewSQLTable(0, ""),
-			"name",
-			0,
-			uint32(oid.T_text),
-			256,
-			0,
-			"TextFormat",
-		),
-		sqldata.NewSQLColumn(
-			sqldata.NewSQLTable(0, ""),
-			"member",
-			0,
-			uint32(oid.T_bool),
-			1,
-			0,
-			"TextFormat",
-		),
-		sqldata.NewSQLColumn(
-			sqldata.NewSQLTable(0, ""),
-			"age",
-			0,
-			uint32(oid.T_int4),
-			1,
-			0,
-			"TextFormat",
-		),
-	}
-
-	rows := []sqldata.ISQLRow{
-		sqldata.NewSQLRow([]interface{}{"John", true, 28}),   //nolint:errcheck
-		sqldata.NewSQLRow([]interface{}{"Marry", false, 21}), //nolint:errcheck
-	}
-
-	sr := sqldata.NewSQLResult(cols, 0, 0, rows)
-
-	sb := sqldata.NewSimpleSQLResultStream(sr)
-
-	qcb := func(context.Context, string) (sqldata.ISQLResultStream, error) {
-		return sb, nil
-	}
-
-	sqlBackend := sqlbackend.NewSimpleSQLBackend(qcb)
-
-	return sqlBackend, nil
-}
-
-func makePGServer(sqlBackend sqlbackend.ISQLBackend) (*postgreswire.Server, error) {
-	return postgreswire.NewServer(postgreswire.SQLBackend(sqlBackend), postgreswire.Logger(logrus.StandardLogger()))
-}
 
 func processRowElement(rowElement interface{}) interface{} {
 	switch re := rowElement.(type) {
@@ -108,6 +51,6 @@ func getFormatCode(fc string) (postgreswire.FormatCode, error) {
 	case "":
 		return postgreswire.BinaryFormat, nil
 	default:
-		return 3, fmt.Errorf("cannot find format code for '%s'", fc)
+		return -1, fmt.Errorf("cannot find format code for '%s'", fc)
 	}
 }

@@ -34,7 +34,14 @@ func NewDBTableAnalytics(name string, discoveryID int, hIDs HeirarchyIdentifiers
 	return newDBTable(name, name, name, discoveryID, hIDs, constants.AnalyticsPrefix)
 }
 
-func newDBTable(name string, nameStump string, baseName string, discoveryID int, hIDs HeirarchyIdentifiers, namespace string) DBTable {
+func newDBTable(
+	name string,
+	nameStump string,
+	baseName string,
+	discoveryID int,
+	hIDs HeirarchyIdentifiers,
+	namespace string,
+) DBTable {
 	return &standardDBTable{
 		name:        name,
 		nameStump:   nameStump,

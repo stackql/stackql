@@ -17,6 +17,7 @@ import (
 	lrucache "github.com/stackql/stackql-parser/go/cache"
 )
 
+//nolint:govet,lll // legacy test
 func TestSimpleInsertDependentGoogleComputeDiskAsync(t *testing.T) {
 	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSimpleInsertDependentGoogleComputeDiskAsync")
 	if err != nil {
@@ -33,7 +34,6 @@ func TestSimpleInsertDependentGoogleComputeDiskAsync(t *testing.T) {
 	}
 
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
-
 		rdr, err := os.Open(runtimeCtx.InfilePath)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
@@ -58,9 +58,9 @@ func TestSimpleInsertDependentGoogleComputeDiskAsync(t *testing.T) {
 
 	stackqltestutil.SetupDependentInsertGoogleComputeDisks(t)
 	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedComputeDisksDependentInsertAsyncFile})
-
 }
 
+//nolint:govet,lll // legacy test
 func TestSimpleInsertDependentGoogleComputeDiskAsyncReversed(t *testing.T) {
 	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSimpleInsertDependentGoogleComputeDiskAsyncReversed")
 	if err != nil {
@@ -77,7 +77,6 @@ func TestSimpleInsertDependentGoogleComputeDiskAsyncReversed(t *testing.T) {
 	}
 
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
-
 		rdr, err := os.Open(runtimeCtx.InfilePath)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
@@ -102,9 +101,9 @@ func TestSimpleInsertDependentGoogleComputeDiskAsyncReversed(t *testing.T) {
 
 	stackqltestutil.SetupDependentInsertGoogleComputeDisks(t)
 	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedComputeDisksDependentInsertAsyncFile})
-
 }
 
+//nolint:govet,lll // legacy test
 func TestSimpleInsertDependentGoogleBQDatasetAsync(t *testing.T) {
 	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSimpleInsertDependentGoogleBQDatasetAsync")
 	if err != nil {
@@ -121,7 +120,6 @@ func TestSimpleInsertDependentGoogleBQDatasetAsync(t *testing.T) {
 	}
 
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
-
 		rdr, err := os.Open(runtimeCtx.InfilePath)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
@@ -146,9 +144,9 @@ func TestSimpleInsertDependentGoogleBQDatasetAsync(t *testing.T) {
 
 	stackqltestutil.SetupDependentInsertGoogleBQDatasets(t)
 	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedBQDatasetsDependentInsertFile})
-
 }
 
+//nolint:govet,lll // legacy test
 func TestSimpleSelectExecDependentGoogleOrganizationsGetIamPolicy(t *testing.T) {
 	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "csv", "TestSimpleSelectExecDependentGoogleOrganizationsGetIamPolicy")
 	if err != nil {
@@ -165,7 +163,6 @@ func TestSimpleSelectExecDependentGoogleOrganizationsGetIamPolicy(t *testing.T) 
 	}
 
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
-
 		rdr, err := os.Open(runtimeCtx.InfilePath)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
@@ -190,5 +187,4 @@ func TestSimpleSelectExecDependentGoogleOrganizationsGetIamPolicy(t *testing.T) 
 
 	stackqltestutil.SetupExecGoogleOrganizationsGetIamPolicy(t)
 	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedSelectExecOrgGetIamPolicyAgg})
-
 }

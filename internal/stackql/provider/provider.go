@@ -16,14 +16,16 @@ import (
 )
 
 const (
-	ambiguousServiceErrorMessage string = "More than one service exists with this name, please use the id in the object name, or unset the --usenonpreferredapis flag"
+	ambiguousServiceErrorMessage string = "More than one service exists with this name, please use the id in the object name, or unset the --usenonpreferredapis flag" //nolint:lll // long string
 	SchemaDelimiter              string = docparser.SchemaDelimiter
 )
 
-var DummyAuth bool = false
+var (
+	DummyAuth bool = false //nolint:revive,gochecknoglobals // prefer declarative
+)
 
-type ProviderParam struct {
-	Id     string
+type ProviderParam struct { //nolint:revive // TODO: review
+	Id     string //nolint:revive,stylecheck // TODO: review
 	Type   string
 	Format string
 }
@@ -35,17 +37,29 @@ type IProvider interface {
 
 	CheckCredentialFile(authCtx *dto.AuthCtx) error
 
-	EnhanceMetadataFilter(string, func(openapistackql.ITable) (openapistackql.ITable, error), map[string]bool) (func(openapistackql.ITable) (openapistackql.ITable, error), error)
+	EnhanceMetadataFilter(
+		string,
+		func(openapistackql.ITable) (openapistackql.ITable, error),
+		map[string]bool) (func(openapistackql.ITable) (openapistackql.ITable, error), error)
 
 	GetCurrentService() string
 
 	GetDefaultKeyForDeleteItems() string
 
-	GetFirstMethodForAction(serviceName string, resourceName string, iqlAction string, runtimeCtx dto.RuntimeCtx) (openapistackql.OperationStore, string, error)
+	GetFirstMethodForAction(
+		serviceName string,
+		resourceName string,
+		iqlAction string,
+		runtimeCtx dto.RuntimeCtx) (openapistackql.OperationStore, string, error)
 
 	GetLikeableColumns(string) []string
 
-	GetMethodForAction(serviceName string, resourceName string, iqlAction string, parameters parserutil.ColumnKeyedDatastore, runtimeCtx dto.RuntimeCtx) (openapistackql.OperationStore, string, error)
+	GetMethodForAction(
+		serviceName string,
+		resourceName string,
+		iqlAction string,
+		parameters parserutil.ColumnKeyedDatastore,
+		runtimeCtx dto.RuntimeCtx) (openapistackql.OperationStore, string, error)
 
 	GetMethodSelector() methodselect.IMethodSelector
 
@@ -53,13 +67,20 @@ type IProvider interface {
 
 	GetProviderString() string
 
-	GetProviderServicesRedacted(runtimeCtx dto.RuntimeCtx, extended bool) (map[string]openapistackql.ProviderService, error)
+	GetProviderServicesRedacted(
+		runtimeCtx dto.RuntimeCtx,
+		extended bool) (map[string]openapistackql.ProviderService, error)
 
 	GetResource(serviceKey string, resourceKey string, runtimeCtx dto.RuntimeCtx) (openapistackql.Resource, error)
 
-	GetResourcesMap(serviceKey string, runtimeCtx dto.RuntimeCtx) (map[string]openapistackql.Resource, error)
+	GetResourcesMap(
+		serviceKey string,
+		runtimeCtx dto.RuntimeCtx) (map[string]openapistackql.Resource, error)
 
-	GetResourcesRedacted(currentService string, runtimeCtx dto.RuntimeCtx, extended bool) (map[string]openapistackql.Resource, error)
+	GetResourcesRedacted(
+		currentService string,
+		runtimeCtx dto.RuntimeCtx,
+		extended bool) (map[string]openapistackql.Resource, error)
 
 	GetServiceShard(serviceKey string, resourceKey string, runtimeCtx dto.RuntimeCtx) (openapistackql.Service, error)
 
@@ -82,14 +103,20 @@ type IProvider interface {
 	ShowAuth(authCtx *dto.AuthCtx) (*openapistackql.AuthMetadata, error)
 }
 
-func GetProvider(runtimeCtx dto.RuntimeCtx, providerStr, providerVersion string, reg openapistackql.RegistryAPI, sqlSystem sql_system.SQLSystem) (IProvider, error) {
-	switch providerStr {
+func GetProvider(
+	runtimeCtx dto.RuntimeCtx,
+	providerStr,
+	providerVersion string,
+	reg openapistackql.RegistryAPI,
+	sqlSystem sql_system.SQLSystem,
+) (IProvider, error) {
+	switch providerStr { //nolint:gocritic // TODO: review
 	default:
 		return newGenericProvider(runtimeCtx, providerStr, providerVersion, reg, sqlSystem)
 	}
 }
 
-func getUrl(prov string) (string, error) {
+func getURL(prov string) (string, error) { //nolint:unparam // TODO: review
 	switch prov {
 	case "google":
 		return constants.GoogleV1DiscoveryDoc, nil
@@ -98,20 +125,26 @@ func getUrl(prov string) (string, error) {
 	}
 }
 
-func newGenericProvider(rtCtx dto.RuntimeCtx, providerStr, versionStr string, reg openapistackql.RegistryAPI, sqlSystem sql_system.SQLSystem) (IProvider, error) {
+func newGenericProvider(
+	rtCtx dto.RuntimeCtx,
+	providerStr,
+	versionStr string,
+	reg openapistackql.RegistryAPI,
+	sqlSystem sql_system.SQLSystem,
+) (IProvider, error) {
 	methSel, err := methodselect.NewMethodSelector(providerStr, versionStr)
 	if err != nil {
 		return nil, err
 	}
 
-	rootUrl, err := getUrl(providerStr)
+	rootURL, err := getURL(providerStr)
 	if err != nil {
 		return nil, err
 	}
 
 	da := discovery.NewBasicDiscoveryAdapter(
 		providerStr,
-		rootUrl,
+		rootURL,
 		discovery.NewTTLDiscoveryStore(
 			sqlSystem,
 			reg,

@@ -16,7 +16,12 @@ type NopBuilder struct {
 	sqlEngine  sqlengine.SQLEngine
 }
 
-func NewNopBuilder(graph primitivegraph.PrimitiveGraph, txnControlCounters internaldto.TxnControlCounters, handlerCtx handler.HandlerContext, sqlEngine sqlengine.SQLEngine) Builder {
+func NewNopBuilder(
+	graph primitivegraph.PrimitiveGraph,
+	txnControlCounters internaldto.TxnControlCounters,
+	handlerCtx handler.HandlerContext,
+	sqlEngine sqlengine.SQLEngine,
+) Builder {
 	return &NopBuilder{
 		graph:      graph,
 		handlerCtx: handlerCtx,
@@ -25,7 +30,6 @@ func NewNopBuilder(graph primitivegraph.PrimitiveGraph, txnControlCounters inter
 }
 
 func (nb *NopBuilder) Build() error {
-
 	pr := primitive.NewLocalPrimitive(
 		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			return util.PrepareResultSet(

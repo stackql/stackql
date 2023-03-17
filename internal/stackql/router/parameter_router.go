@@ -55,7 +55,7 @@ type ParameterRouter interface {
 
 	GetOnConditionsToRewrite() map[*sqlparser.ComparisonExpr]struct{}
 
-	GetOnConditionDataFlows() (dataflow.DataFlowCollection, error)
+	GetOnConditionDataFlows() (dataflow.Collection, error)
 }
 
 type standardParameterRouter struct {
@@ -69,7 +69,7 @@ type standardParameterRouter struct {
 	tableToComparisonDependencies parserutil.ComparisonTableMap
 	tableToAnnotationCtx          map[sqlparser.TableExpr]taxonomy.AnnotationCtx
 	invalidatedParams             map[string]interface{}
-	namespaceCollection           tablenamespace.TableNamespaceCollection
+	namespaceCollection           tablenamespace.Collection
 	astFormatter                  sqlparser.NodeFormatter
 }
 
@@ -80,7 +80,7 @@ func NewParameterRouter(
 	whereParamMap parserutil.ParameterMap,
 	onParamMap parserutil.ParameterMap,
 	colRefs parserutil.ColTableMap,
-	namespaceCollection tablenamespace.TableNamespaceCollection,
+	namespaceCollection tablenamespace.Collection,
 	astFormatter sqlparser.NodeFormatter,
 ) ParameterRouter {
 	return &standardParameterRouter{
@@ -111,13 +111,15 @@ func (pr *standardParameterRouter) AnalyzeDependencies() error {
 // ...are guaranteed present in same table.
 func (pr *standardParameterRouter) GetOnConditionsToRewrite() map[*sqlparser.ComparisonExpr]struct{} {
 	rv := make(map[*sqlparser.ComparisonExpr]struct{})
-	for k, _ := range pr.comparisonToTableDependencies {
+	for k := range pr.comparisonToTableDependencies {
 		logging.GetLogger().Debugf("%v\n", k)
 	}
 	return rv
 }
 
-func (pr *standardParameterRouter) extractDataFlowDependency(input sqlparser.Expr) (taxonomy.AnnotationCtx, sqlparser.TableExpr, error) {
+func (pr *standardParameterRouter) extractDataFlowDependency(
+	input sqlparser.Expr,
+) (taxonomy.AnnotationCtx, sqlparser.TableExpr, error) {
 	switch l := input.(type) {
 	case *sqlparser.ColName:
 		// leave unknown for now -- bit of a mess
@@ -139,13 +141,15 @@ func (pr *standardParameterRouter) extractDataFlowDependency(input sqlparser.Exp
 	}
 }
 
-func (pr *standardParameterRouter) extractFromFunctionExpr(f *sqlparser.FuncExpr) (taxonomy.AnnotationCtx, sqlparser.TableExpr, error) {
+func (pr *standardParameterRouter) extractFromFunctionExpr(
+	f *sqlparser.FuncExpr,
+) (taxonomy.AnnotationCtx, sqlparser.TableExpr, error) {
 	sv := astvisit.NewLeftoverReferencesAstVisitor(
 		pr.annotatedAST,
 		pr.colRefs,
 		pr.tableToAnnotationCtx,
 	)
-	sv.Visit(f)
+	sv.Visit(f) //nolint:errcheck // TODO: review
 	tbz := sv.GetTablesFoundThisIteration()
 	if len(tbz) != 1 {
 		return nil, nil, fmt.Errorf("cannot accomodate this")
@@ -156,13 +160,15 @@ func (pr *standardParameterRouter) extractFromFunctionExpr(f *sqlparser.FuncExpr
 	return nil, nil, fmt.Errorf("cannot accomodate this")
 }
 
-func (pr *standardParameterRouter) GetOnConditionDataFlows() (dataflow.DataFlowCollection, error) {
+//nolint:funlen,gocognit // inherently complex functionality
+func (pr *standardParameterRouter) GetOnConditionDataFlows() (dataflow.Collection, error) {
 	rv := dataflow.NewStandardDataFlowCollection()
 	for k, destinationTable := range pr.comparisonToTableDependencies {
 		selfTableCited := false
 		destHierarchy, ok := pr.tableToAnnotationCtx[destinationTable]
 		if !ok {
-			return nil, fmt.Errorf("table expression '%s' has not been assigned to hierarchy", sqlparser.String(destinationTable))
+			return nil, fmt.Errorf(
+				"table expression '%s' has not been assigned to hierarchy", sqlparser.String(destinationTable))
 		}
 		var dependencyTable sqlparser.TableExpr
 		var dependency taxonomy.AnnotationCtx
@@ -241,7 +247,10 @@ func (pr *standardParameterRouter) GetOnConditionDataFlows() (dataflow.DataFlowC
 	return rv, nil
 }
 
-func (pr *standardParameterRouter) getAvailableParameters(tb sqlparser.TableExpr) parserutil.TableParameterCoupling {
+//nolint:gocognit // inherently complex functionality
+func (pr *standardParameterRouter) getAvailableParameters(
+	tb sqlparser.TableExpr,
+) parserutil.TableParameterCoupling {
 	rv := parserutil.NewTableParameterCoupling()
 	for k, v := range pr.whereParamMap.GetMap() {
 		key := k.String()
@@ -257,7 +266,7 @@ func (pr *standardParameterRouter) getAvailableParameters(tb sqlparser.TableExpr
 		if ok && ref != tb {
 			continue
 		}
-		rv.Add(k, v, parserutil.WhereParam)
+		rv.Add(k, v, parserutil.WhereParam) //nolint:errcheck // no issue
 	}
 	for k, v := range pr.onParamMap.GetMap() {
 		key := k.String()
@@ -274,29 +283,15 @@ func (pr *standardParameterRouter) getAvailableParameters(tb sqlparser.TableExpr
 			continue
 		}
 		val := v.GetVal()
-		switch val := val.(type) {
+		switch val := val.(type) { //nolint:gocritic // TODO: review
 		case *sqlparser.ColName:
 			logging.GetLogger().Debugf("%v\n", val)
 			rhsAlias := val.Qualifier.GetRawVal()
 			logging.GetLogger().Debugf("%v\n", rhsAlias)
-			foundTable, ok := pr.tablesAliasMap[rhsAlias]
-			if ok && foundTable != tb {
-				//
-			}
 		}
-		rv.Add(k, v, parserutil.JoinOnParam)
+		rv.Add(k, v, parserutil.JoinOnParam) //nolint:errcheck // no issue
 	}
 	return rv
-}
-
-func (pr *standardParameterRouter) invalidateParams(params map[string]interface{}) error {
-	for k, v := range params {
-		err := pr.invalidate(k, v)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func (pr *standardParameterRouter) isInvalidated(key string) bool {
@@ -304,25 +299,23 @@ func (pr *standardParameterRouter) isInvalidated(key string) bool {
 	return ok
 }
 
-func (pr *standardParameterRouter) invalidate(key string, val interface{}) error {
-	if pr.isInvalidated(key) {
-		return fmt.Errorf("parameter '%s' already invalidated", key)
-	}
-	pr.invalidatedParams[key] = val
-	return nil
-}
-
 // Route will map columnar input to a supplied
 // parser table object.
 // Columnar input may come from either where clause
 // or on conditions.
-// TODO: Get rid of the dead set mess that is where paramters in preference.
-
-func (pr *standardParameterRouter) Route(tb sqlparser.TableExpr, handlerCtx handler.HandlerContext) (taxonomy.AnnotationCtx, error) {
+func (pr *standardParameterRouter) Route(
+	tb sqlparser.TableExpr,
+	handlerCtx handler.HandlerContext,
+) (taxonomy.AnnotationCtx, error) {
 	return pr.route(tb, handlerCtx)
 }
 
-func (pr *standardParameterRouter) route(tb sqlparser.TableExpr, handlerCtx handler.HandlerContext) (taxonomy.AnnotationCtx, error) {
+//nolint:funlen,gocognit,govet // inherently complex functionality
+func (pr *standardParameterRouter) route(
+	tb sqlparser.TableExpr,
+	handlerCtx handler.HandlerContext,
+) (taxonomy.AnnotationCtx, error) {
+	// TODO: Get rid of the dead set mess that is where paramters in preference.
 	for k, v := range pr.whereParamMap.GetMap() {
 		logging.GetLogger().Infof("%v\n", v)
 		alias := k.Alias()
@@ -437,7 +430,9 @@ func (pr *standardParameterRouter) route(tb sqlparser.TableExpr, handlerCtx hand
 		p := kv.V.GetParent()
 		existingTable, ok := pr.comparisonToTableDependencies[p]
 		if ok {
-			return nil, fmt.Errorf("data flow violation detected: ON comparison expression '%s' is a  dependency for tables '%s' and '%s'", sqlparser.String(p), sqlparser.String(existingTable), sqlparser.String(tb))
+			return nil, fmt.Errorf(
+				"data flow violation detected: ON comparison expression '%s' is a  dependency for tables '%s' and '%s'",
+				sqlparser.String(p), sqlparser.String(existingTable), sqlparser.String(tb))
 		}
 		pr.comparisonToTableDependencies[p] = tb
 		logging.GetLogger().Infof("%v", kv)
@@ -454,7 +449,10 @@ func (pr *standardParameterRouter) route(tb sqlparser.TableExpr, handlerCtx hand
 			return nil, err
 		}
 	}
-	m := tablemetadata.NewExtendedTableMetadata(hr, taxonomy.GetTableNameFromStatement(tb, pr.astFormatter), taxonomy.GetAliasFromStatement(tb)).WithIndirect(indirect)
+	m := tablemetadata.NewExtendedTableMetadata(
+		hr,
+		taxonomy.GetTableNameFromStatement(tb, pr.astFormatter),
+		taxonomy.GetAliasFromStatement(tb)).WithIndirect(indirect)
 
 	// store relationship from sqlparser table expression to
 	// hierarchy.  This enables e2e relationship

@@ -66,8 +66,8 @@ func (ac *AuthCtx) GetKeyIDString() (string, error) {
 func (ac *AuthCtx) InferAuthType(authTypeRequested string) string {
 	ft := strings.ToLower(authTypeRequested)
 	switch ft {
-	case AuthApiKeyStr:
-		return AuthApiKeyStr
+	case AuthAPIKeyStr:
+		return AuthAPIKeyStr
 	case AuthServiceAccountStr:
 		return AuthServiceAccountStr
 	case AuthInteractiveStr:

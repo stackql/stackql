@@ -6,9 +6,9 @@ import (
 	"gonum.org/v1/gonum/graph"
 )
 
-type DataFlowVertex interface {
+type Vertex interface {
 	graph.Node
-	DataFlowUnit
+	Unit
 	GetAnnotation() taxonomy.AnnotationCtx
 	GetTableExpr() sqlparser.TableExpr
 }
@@ -22,7 +22,7 @@ type standardDataFlowVertex struct {
 func NewStandardDataFlowVertex(
 	annotation taxonomy.AnnotationCtx,
 	tableExpr sqlparser.TableExpr,
-	id int64) DataFlowVertex {
+	id int64) Vertex {
 	return &standardDataFlowVertex{
 		annotation: annotation,
 		tableExpr:  tableExpr,

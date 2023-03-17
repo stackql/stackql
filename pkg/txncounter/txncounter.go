@@ -4,51 +4,53 @@ import (
 	"sync"
 )
 
+//nolint:revive,gochecknoglobals // Explicit type declaration removes any ambiguity
 var (
+	//TODO: Remove global variables
 	txnCtrlMutex *sync.Mutex = &sync.Mutex{}
-	currentTxnId *int        = new(int)
+	currentTxnID *int        = new(int)
 )
 
-type TxnCounterManager interface {
-	GetCurrentGenerationId() (int, error)
-	GetCurrentSessionId() (int, error)
-	GetNextInsertId() (int, error)
-	GetNextTxnId() (int, error)
+type Manager interface {
+	GetCurrentGenerationID() (int, error)
+	GetCurrentSessionID() (int, error)
+	GetNextInsertID() (int, error)
+	GetNextTxnID() (int, error)
 }
 
 type standardTxnCounterManager struct {
 	perTxnMutex     *sync.Mutex
-	generationId    int
-	sessionId       int
-	currentInsertId int
+	generationID    int
+	sessionID       int
+	currentInsertID int
 }
 
-func NewTxnCounterManager(generationId, sessionId int) TxnCounterManager {
+func NewTxnCounterManager(generationID, sessionID int) Manager {
 	return &standardTxnCounterManager{
-		generationId: generationId,
-		sessionId:    sessionId,
+		generationID: generationID,
+		sessionID:    sessionID,
 		perTxnMutex:  &sync.Mutex{},
 	}
 }
 
-func (tc *standardTxnCounterManager) GetCurrentGenerationId() (int, error) {
-	return tc.generationId, nil
+func (tc *standardTxnCounterManager) GetCurrentGenerationID() (int, error) {
+	return tc.generationID, nil
 }
 
-func (tc *standardTxnCounterManager) GetCurrentSessionId() (int, error) {
-	return tc.sessionId, nil
+func (tc *standardTxnCounterManager) GetCurrentSessionID() (int, error) {
+	return tc.sessionID, nil
 }
 
-func (tc *standardTxnCounterManager) GetNextTxnId() (int, error) {
+func (tc *standardTxnCounterManager) GetNextTxnID() (int, error) {
 	txnCtrlMutex.Lock()
 	defer txnCtrlMutex.Unlock()
-	*currentTxnId++
-	return *currentTxnId, nil
+	*currentTxnID++
+	return *currentTxnID, nil
 }
 
-func (tc *standardTxnCounterManager) GetNextInsertId() (int, error) {
+func (tc *standardTxnCounterManager) GetNextInsertID() (int, error) {
 	tc.perTxnMutex.Lock()
 	defer tc.perTxnMutex.Unlock()
-	tc.currentInsertId++
-	return tc.currentInsertId, nil
+	tc.currentInsertID++
+	return tc.currentInsertID, nil
 }

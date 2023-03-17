@@ -103,9 +103,10 @@ func (hap *standardHTTPArmouryParameters) Encode() string {
 	return ""
 }
 
-func (hap *standardHTTPArmouryParameters) SetNextPage(ops openapistackql.OperationStore, token string, tokenKey internaldto.HTTPElement) (*http.Request, error) {
+func (hap *standardHTTPArmouryParameters) SetNextPage(
+	ops openapistackql.OperationStore, token string, tokenKey internaldto.HTTPElement) (*http.Request, error) {
 	rv := hap.request.Clone(hap.request.Context())
-	switch tokenKey.GetType() {
+	switch tokenKey.GetType() { //nolint:exhaustive	// acceptable for now
 	case internaldto.QueryParam:
 		q := hap.request.URL.Query()
 		q.Set(tokenKey.GetName(), token)

@@ -45,8 +45,8 @@ func (sp *standardSelectRoutePass) GetPlanBuilderInput() planbuilderinput.PlanBu
 	return sp.outputPbi
 }
 
+//nolint:funlen // defer uplifts on analysers
 func (sp *standardSelectRoutePass) RoutePass() error {
-
 	var node *sqlparser.Select
 
 	pbi := sp.inputPbi.Clone()
@@ -62,7 +62,11 @@ func (sp *standardSelectRoutePass) RoutePass() error {
 		sp.outputPbi = pbi
 		return err
 	case *sqlparser.Union:
-		lhsPbi, err := planbuilderinput.NewPlanBuilderInput(pbi.GetAnnotatedAST(), sp.handlerCtx, n.FirstStatement, nil, nil, nil, nil, nil, counters)
+		lhsPbi, err := planbuilderinput.NewPlanBuilderInput(
+			pbi.GetAnnotatedAST(),
+			sp.handlerCtx,
+			n.FirstStatement,
+			nil, nil, nil, nil, nil, counters)
 		if err != nil {
 			return err
 		}
@@ -73,11 +77,15 @@ func (sp *standardSelectRoutePass) RoutePass() error {
 		}
 		for _, s := range n.UnionSelects {
 			ctrClone := counters.CloneAndIncrementInsertID()
-			sPbi, err := planbuilderinput.NewPlanBuilderInput(sp.inputPbi.GetAnnotatedAST(), sp.handlerCtx, s.Statement, nil, nil, nil, nil, nil, ctrClone)
+			sPbi, err := planbuilderinput.NewPlanBuilderInput( //nolint:govet // defer cosmetics
+				sp.inputPbi.GetAnnotatedAST(),
+				sp.handlerCtx,
+				s.Statement,
+				nil, nil, nil, nil, nil, ctrClone)
 			if err != nil {
 				return err
 			}
-			routePass := NewSelectRoutePass(s.Statement, sPbi, sp.parentWhereParams)
+			routePass := NewSelectRoutePass(s.Statement, sPbi, sp.parentWhereParams) //nolint:govet // intentional shadow
 			err = routePass.RoutePass()
 			if err != nil {
 				return err

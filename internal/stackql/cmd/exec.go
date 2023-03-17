@@ -30,7 +30,9 @@ import (
 	"github.com/stackql/stackql/internal/stackql/writer"
 )
 
-// execCmd represents the exec command
+// execCmd represents the exec command.
+//
+//nolint:gochecknoglobals // cobra pattern
 var execCmd = &cobra.Command{
 	Use:   "exec",
 	Short: "Run one or more stackql commands or queries",
@@ -51,18 +53,19 @@ stackql exec -i iqlscripts/create-disk.iql --credentialsfilepath /mnt/c/tmp/stac
 		var rdr io.Reader
 
 		if runtimeCtx.CPUProfile != "" {
-			f, err := os.Create(runtimeCtx.CPUProfile)
+			var f *os.File
+			f, err = os.Create(runtimeCtx.CPUProfile)
 			if err != nil {
 				iqlerror.PrintErrorAndExitOneIfError(err)
 			}
-			pprof.StartCPUProfile(f)
+			pprof.StartCPUProfile(f) //nolint:errcheck // not important for dev option
 			defer pprof.StopCPUProfile()
 		}
 
 		switch runtimeCtx.InfilePath {
 		case "stdin":
 			if len(args) == 0 || args[0] == "" {
-				cmd.Help()
+				cmd.Help() //nolint:errcheck // not important
 				os.Exit(0)
 			}
 			rdr = bytes.NewReader([]byte(args[0]))

@@ -11,18 +11,21 @@ import (
 type IMethodSelector interface {
 	GetMethod(resource openapistackql.Resource, methodName string) (openapistackql.OperationStore, error)
 
-	GetMethodForAction(resource openapistackql.Resource, iqlAction string, parameters parserutil.ColumnKeyedDatastore) (openapistackql.OperationStore, string, error)
+	GetMethodForAction(
+		resource openapistackql.Resource,
+		iqlAction string,
+		parameters parserutil.ColumnKeyedDatastore) (openapistackql.OperationStore, string, error)
 }
 
 func NewMethodSelector(provider string, version string) (IMethodSelector, error) {
-	switch provider {
+	switch provider { //nolint:gocritic // acceptable
 	default:
 		return newGoogleMethodSelector(version)
 	}
 }
 
 func newGoogleMethodSelector(version string) (IMethodSelector, error) {
-	switch version {
+	switch version { //nolint:gocritic // acceptable
 	default:
 		return &DefaultMethodSelector{}, nil
 	}
@@ -31,7 +34,10 @@ func newGoogleMethodSelector(version string) (IMethodSelector, error) {
 type DefaultMethodSelector struct {
 }
 
-func (sel *DefaultMethodSelector) GetMethodForAction(resource openapistackql.Resource, iqlAction string, parameters parserutil.ColumnKeyedDatastore) (openapistackql.OperationStore, string, error) {
+func (sel *DefaultMethodSelector) GetMethodForAction(
+	resource openapistackql.Resource,
+	iqlAction string,
+	parameters parserutil.ColumnKeyedDatastore) (openapistackql.OperationStore, string, error) {
 	var methodName string
 	switch strings.ToLower(iqlAction) {
 	case "select":
@@ -43,17 +49,21 @@ func (sel *DefaultMethodSelector) GetMethodForAction(resource openapistackql.Res
 	case "update":
 		methodName = "update"
 	default:
-		return nil, "", fmt.Errorf("iql action = '%s' curently not supported, there is no method mapping possible for any resource", iqlAction)
+		return nil, "", fmt.Errorf(
+			"iql action = '%s' curently not supported, there is no method mapping possible for any resource",
+			iqlAction)
 	}
 	m, err := sel.getMethodByNameAndParameters(resource, methodName, parameters)
 	return m, methodName, err
 }
 
-func (sel *DefaultMethodSelector) GetMethod(resource openapistackql.Resource, methodName string) (openapistackql.OperationStore, error) {
+func (sel *DefaultMethodSelector) GetMethod(
+	resource openapistackql.Resource, methodName string) (openapistackql.OperationStore, error) {
 	return sel.getMethodByName(resource, methodName)
 }
 
-func (sel *DefaultMethodSelector) getMethodByName(resource openapistackql.Resource, methodName string) (openapistackql.OperationStore, error) {
+func (sel *DefaultMethodSelector) getMethodByName(
+	resource openapistackql.Resource, methodName string) (openapistackql.OperationStore, error) {
 	m, err := resource.FindMethod(methodName)
 	if err != nil {
 		return nil, fmt.Errorf("no method = '%s' for resource = '%s'", methodName, resource.GetName())
@@ -61,7 +71,9 @@ func (sel *DefaultMethodSelector) getMethodByName(resource openapistackql.Resour
 	return m, nil
 }
 
-func (sel *DefaultMethodSelector) getMethodByNameAndParameters(resource openapistackql.Resource, methodName string, parameters parserutil.ColumnKeyedDatastore) (openapistackql.OperationStore, error) {
+func (sel *DefaultMethodSelector) getMethodByNameAndParameters(
+	resource openapistackql.Resource, methodName string,
+	parameters parserutil.ColumnKeyedDatastore) (openapistackql.OperationStore, error) {
 	stringifiedParams := parameters.GetStringified()
 	m, remainingParams, ok := resource.GetFirstMethodMatchFromSQLVerb(methodName, stringifiedParams)
 	if !ok {

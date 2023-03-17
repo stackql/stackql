@@ -1,6 +1,7 @@
 package primitivebuilder
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"strconv"
@@ -18,12 +19,16 @@ import (
 type NativeSelect struct {
 	graph       primitivegraph.PrimitiveGraph
 	handlerCtx  handler.HandlerContext
-	drmCfg      drm.DRMConfig
+	drmCfg      drm.Config
 	selectQuery nativedb.Select
 	root        primitivegraph.PrimitiveNode
 }
 
-func NewNativeSelect(graph primitivegraph.PrimitiveGraph, handlerCtx handler.HandlerContext, selectQuery nativedb.Select) Builder {
+func NewNativeSelect(
+	graph primitivegraph.PrimitiveGraph,
+	handlerCtx handler.HandlerContext,
+	selectQuery nativedb.Select,
+) Builder {
 	return &NativeSelect{
 		graph:       graph,
 		handlerCtx:  handlerCtx,
@@ -40,10 +45,9 @@ func (ss *NativeSelect) GetTail() primitivegraph.PrimitiveNode {
 	return ss.root
 }
 
+//nolint:gocognit // probably a headache no matter which way you slice it
 func (ss *NativeSelect) Build() error {
-
 	selectEx := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
-
 		// select phase
 		logging.GetLogger().Infoln(fmt.Sprintf("running empty select with columns: %v", ss.selectQuery))
 
@@ -57,14 +61,14 @@ func (ss *NativeSelect) Build() error {
 			i := 0
 			for {
 				rows, err := rowStream.Read()
-				if err != nil && err != io.EOF {
+				if err != nil && !errors.Is(err, io.EOF) {
 					return internaldto.NewErroneousExecutorOutput(err)
 				}
 				for _, row := range rows {
 					rowMap[strconv.Itoa(i)] = row
 					i++
 				}
-				if err == io.EOF {
+				if errors.Is(err, io.EOF) {
 					break
 				}
 			}

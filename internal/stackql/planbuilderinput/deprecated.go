@@ -8,9 +8,10 @@ import (
 	"github.com/stackql/stackql/internal/stackql/sqlstream"
 )
 
+//nolint:revive // prefer declarative
 var (
 	multipleWhitespaceRegexp     *regexp.Regexp = regexp.MustCompile(`\s+`)
-	getOidsRegexp                *regexp.Regexp = regexp.MustCompile(`(?i)select\s+t\.oid,\s+(?:NULL|typarray)\s+from.*pg_type`)
+	getOidsRegexp                *regexp.Regexp = regexp.MustCompile(`(?i)select\s+t\.oid,\s+(?:NULL|typarray)\s+from.*pg_type`) //nolint:lll // long string
 	selectPGCatalogVersionRegexp *regexp.Regexp = regexp.MustCompile(`(?i)select\s+pg_catalog\.version\(\)`)
 	selectCurrentSchemaRegexp    *regexp.Regexp = regexp.MustCompile(`(?i)select\s+current_schema\(\)`)
 	showTxnIsolationLevelRegexp  *regexp.Regexp = regexp.MustCompile(`(?i)show\s+transaction\s+isolation\s+level`)
@@ -23,6 +24,7 @@ func IsPGSetupQuery(pbi PlanBuilderInput) (nativedb.Select, bool) {
 	routeType, canRoute := handlerCtx.GetDBMSInternalRouter().CanRoute(pbi.GetStatement())
 	logging.GetLogger().Debugf("canRoute = %t, routeType = %v\n", canRoute, routeType)
 	qStripped := multipleWhitespaceRegexp.ReplaceAllString(pbi.GetRawQuery(), " ")
+	//nolint:lll // long string
 	if qStripped == "select relname, nspname, relkind from pg_catalog.pg_class c, pg_catalog.pg_namespace n where relkind in ('r', 'v', 'm', 'f') and nspname not in ('pg_catalog', 'information_schema', 'pg_toast', 'pg_temp_1') and n.oid = relnamespace order by nspname, relname" {
 		return nil, true
 	}
@@ -39,6 +41,7 @@ func IsPGSetupQuery(pbi PlanBuilderInput) (nativedb.Select, bool) {
 		var colz []nativedb.Column
 		colz = append(colz, nativedb.NewColumn("version", "text"))
 		return nativedb.NewSelectWithRows(colz, sqlstream.NewStaticMapStream([]map[string]interface{}{
+			//nolint:lll // long string
 			{"version": "PostgreSQL 14.5 on x86_64-apple-darwin20.6.0, compiled by Apple clang version 13.0.0 (clang-1300.0.29.30), 64-bit"},
 		})), true
 	}

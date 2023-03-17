@@ -77,10 +77,10 @@ func NewDDL(graph primitivegraph.PrimitiveGraph, handlerCtx handler.HandlerConte
 	}
 }
 
-func (ss *ddl) GetRoot() primitivegraph.PrimitiveNode {
-	return ss.root
+func (un *ddl) GetRoot() primitivegraph.PrimitiveNode {
+	return un.root
 }
 
-func (ss *ddl) GetTail() primitivegraph.PrimitiveNode {
-	return ss.tail
+func (un *ddl) GetTail() primitivegraph.PrimitiveNode {
+	return un.tail
 }

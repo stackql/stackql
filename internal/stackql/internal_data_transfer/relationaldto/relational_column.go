@@ -68,6 +68,7 @@ func (rc *standardRelationalColumn) CanonicalSelectionString() string {
 }
 
 func (rc *standardRelationalColumn) DelimitedSelectionString(delim string) string {
+	//nolint:gocritic // acceptable
 	switch node := rc.sqlParserNode.(type) {
 	case *sqlparser.AliasedExpr:
 		switch node.Expr.(type) {

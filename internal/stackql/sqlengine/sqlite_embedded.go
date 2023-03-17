@@ -13,7 +13,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
 	"github.com/stackql/stackql/internal/stackql/util"
 
-	_ "github.com/stackql/go-sqlite3"
+	_ "github.com/stackql/go-sqlite3" //nolint:revive,nolintlint // anonymous import is a pattern for SQL drivers
 )
 
 var (
@@ -41,7 +41,10 @@ func (se *sqLiteEmbeddedEngine) GetTx() (*sql.Tx, error) {
 	return se.db.Begin()
 }
 
-func newSQLiteEmbeddedEngine(cfg dto.SQLBackendCfg, controlAttributes sqlcontrol.ControlAttributes) (*sqLiteEmbeddedEngine, error) {
+func newSQLiteEmbeddedEngine(
+	cfg dto.SQLBackendCfg,
+	controlAttributes sqlcontrol.ControlAttributes,
+) (*sqLiteEmbeddedEngine, error) {
 	// SQLite permeits empty DSN and can safely ignore the err
 	dsn := cfg.GetDSN()
 	if dsn == "" {
@@ -67,35 +70,32 @@ func newSQLiteEmbeddedEngine(cfg dto.SQLBackendCfg, controlAttributes sqlcontrol
 		return eng, err
 	}
 	logging.GetLogger().Infoln(fmt.Sprintf("opened db with file = '%s' and err  = '%v'", dsn, err))
-	if err != nil {
-		return eng, err
-	}
 	return eng, err
 }
 
-func (eng *sqLiteEmbeddedEngine) execFileSQLite(fileName string) error {
+func (se *sqLiteEmbeddedEngine) execFileSQLite(fileName string) error {
 	fileContents, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		return err
 	}
-	_, err = eng.db.Exec(string(fileContents))
+	_, err = se.db.Exec(string(fileContents))
 	return err
 }
 
-func (eng *sqLiteEmbeddedEngine) execFileLocal(fileName string) error {
+func (se *sqLiteEmbeddedEngine) execFileLocal(fileName string) error {
 	expF, err := util.GetFilePathFromRepositoryRoot(fileName)
 	if err != nil {
 		return err
 	}
-	return eng.execFileSQLite(expF)
+	return se.execFileSQLite(expF)
 }
 
-func (eng *sqLiteEmbeddedEngine) ExecFileLocal(fileName string) error {
-	return eng.execFileLocal(fileName)
+func (se *sqLiteEmbeddedEngine) ExecFileLocal(fileName string) error {
+	return se.execFileLocal(fileName)
 }
 
-func (eng *sqLiteEmbeddedEngine) ExecFile(fileName string) error {
-	return eng.execFileSQLite(fileName)
+func (se *sqLiteEmbeddedEngine) ExecFile(fileName string) error {
+	return se.execFileSQLite(fileName)
 }
 
 func (se sqLiteEmbeddedEngine) Exec(query string, varArgs ...interface{}) (sql.Result, error) {
@@ -113,6 +113,7 @@ func (se sqLiteEmbeddedEngine) ExecInTxn(queries []string) error {
 	for _, query := range queries {
 		_, err = txn.Exec(query)
 		if err != nil {
+			//nolint:errcheck // intentionally ignoring error TODO: publish variadic error(s)
 			txn.Rollback()
 			return err
 		}
@@ -121,44 +122,45 @@ func (se sqLiteEmbeddedEngine) ExecInTxn(queries []string) error {
 	return err
 }
 
-func (se sqLiteEmbeddedEngine) GetNextGenerationId() (int, error) {
+func (se sqLiteEmbeddedEngine) GetNextGenerationID() (int, error) {
 	se.ctrlMutex.Lock()
 	defer se.ctrlMutex.Unlock()
-	return se.getNextGenerationId()
+	return se.getNextGenerationID()
 }
 
-func (se sqLiteEmbeddedEngine) GetCurrentGenerationId() (int, error) {
+func (se sqLiteEmbeddedEngine) GetCurrentGenerationID() (int, error) {
 	se.ctrlMutex.Lock()
 	defer se.ctrlMutex.Unlock()
-	return se.getCurrentGenerationId()
+	return se.getCurrentGenerationID()
 }
 
-func (se sqLiteEmbeddedEngine) GetNextDiscoveryGenerationId(discoveryName string) (int, error) {
+func (se sqLiteEmbeddedEngine) GetNextDiscoveryGenerationID(discoveryName string) (int, error) {
 	se.discoveryMutex.Lock()
 	defer se.discoveryMutex.Unlock()
-	return se.getNextProviderGenerationId(discoveryName)
+	return se.getNextProviderGenerationID(discoveryName)
 }
 
-func (se sqLiteEmbeddedEngine) GetCurrentDiscoveryGenerationId(discoveryName string) (int, error) {
+func (se sqLiteEmbeddedEngine) GetCurrentDiscoveryGenerationID(discoveryName string) (int, error) {
 	se.discoveryMutex.Lock()
 	defer se.discoveryMutex.Unlock()
-	return se.getCurrentProviderGenerationId(discoveryName)
+	return se.getCurrentProviderGenerationID(discoveryName)
 }
 
-func (se sqLiteEmbeddedEngine) GetNextSessionId(generationId int) (int, error) {
+func (se sqLiteEmbeddedEngine) GetNextSessionID(generationID int) (int, error) {
 	se.sessionMutex.Lock()
 	defer se.sessionMutex.Unlock()
-	return se.getNextSessionId(generationId)
+	return se.getNextSessionID(generationID)
 }
 
-func (se sqLiteEmbeddedEngine) GetCurrentSessionId(generationId int) (int, error) {
+func (se sqLiteEmbeddedEngine) GetCurrentSessionID(generationID int) (int, error) {
 	se.sessionMutex.Lock()
 	defer se.sessionMutex.Unlock()
-	return se.getCurrentSessionId(generationId)
+	return se.getCurrentSessionID(generationID)
 }
 
-func (se sqLiteEmbeddedEngine) getCurrentGenerationId() (int, error) {
+func (se sqLiteEmbeddedEngine) getCurrentGenerationID() (int, error) {
 	var retVal int
+	//nolint:lll // long SQL query
 	res := se.db.QueryRow(`SELECT lhs.iql_generation_id FROM "__iql__.control.generation" lhs INNER JOIN (SELECT max(created_dttm) AS max_dttm FROM "__iql__.control.generation" WHERE collected_dttm IS null) rhs ON  lhs.created_dttm = rhs.max_dttm WHERE lhs.collected_dttm IS null`)
 	err := res.Scan(&retVal)
 	return retVal, err
@@ -169,39 +171,50 @@ func (se sqLiteEmbeddedEngine) QueryRow(query string, varArgs ...interface{}) *s
 	return res
 }
 
-func (se sqLiteEmbeddedEngine) getNextGenerationId() (int, error) {
+func (se sqLiteEmbeddedEngine) getNextGenerationID() (int, error) {
 	var retVal int
+	//nolint:lll,execinquery // long SQL query and `execinquery` is DEAD SET RUBBISH for INSERT... RETURNING
 	res := se.db.QueryRow(`INSERT INTO "__iql__.control.generation" (generation_description, created_dttm) VALUES ('', strftime('%s', 'now')) RETURNING iql_generation_id`)
 	err := res.Scan(&retVal)
 	return retVal, err
 }
 
-func (se sqLiteEmbeddedEngine) getCurrentProviderGenerationId(providerName string) (int, error) {
+func (se sqLiteEmbeddedEngine) getCurrentProviderGenerationID(providerName string) (int, error) {
 	var retVal int
+	//nolint:lll // long SQL query
 	res := se.db.QueryRow(`SELECT lhs.iql_discovery_generation_id FROM "__iql__.control.discovery_generation" lhs INNER JOIN (SELECT discovery_name, max(created_dttm) AS max_dttm FROM "__iql__.control.discovery_generation" WHERE collected_dttm IS null GROUP BY discovery_name) rhs ON  lhs.created_dttm = rhs.max_dttm AND lhs.discovery_name = rhs.discovery_name WHERE lhs.collected_dttm IS null AND lhs.discovery_name = ?`, providerName)
 	err := res.Scan(&retVal)
 	return retVal, err
 }
 
-func (se sqLiteEmbeddedEngine) getNextProviderGenerationId(providerName string) (int, error) {
+func (se sqLiteEmbeddedEngine) getNextProviderGenerationID(providerName string) (int, error) {
 	var retVal int
+	//nolint:lll,execinquery // long SQL query and `execinquery` is DEAD SET RUBBISH for INSERT... RETURNING
 	res := se.db.QueryRow(`INSERT INTO "__iql__.control.discovery_generation" (discovery_name, created_dttm) VALUES (?, strftime('%s', 'now')) RETURNING iql_discovery_generation_id`, providerName)
 	err := res.Scan(&retVal)
 	return retVal, err
 }
 
-func (se sqLiteEmbeddedEngine) getCurrentSessionId(generationId int) (int, error) {
+func (se sqLiteEmbeddedEngine) getCurrentSessionID(generationID int) (int, error) {
 	var retVal int
-	res := se.db.QueryRow(`SELECT lhs.iql_session_id FROM "__iql__.control.session" lhs INNER JOIN (SELECT max(created_dttm) AS max_dttm FROM "__iql__.control.session" WHERE collected_dttm IS null) rhs ON  lhs.created_dttm = rhs.max_dttm AND lhs.iql_genration_id = rhs.iql_generation_id WHERE lhs.iql_generation_id = ? AND lhs.collected_dttm IS null`, generationId)
+	//nolint:lll // long SQL query
+	res := se.db.QueryRow(`SELECT lhs.iql_session_id FROM "__iql__.control.session" lhs INNER JOIN (SELECT max(created_dttm) AS max_dttm FROM "__iql__.control.session" WHERE collected_dttm IS null) rhs ON  lhs.created_dttm = rhs.max_dttm AND lhs.iql_genration_id = rhs.iql_generation_id WHERE lhs.iql_generation_id = ? AND lhs.collected_dttm IS null`, generationID)
 	err := res.Scan(&retVal)
 	return retVal, err
 }
 
-func (se sqLiteEmbeddedEngine) getNextSessionId(generationId int) (int, error) {
+func (se sqLiteEmbeddedEngine) getNextSessionID(generationID int) (int, error) {
 	var retVal int
-	res := se.db.QueryRow(`INSERT INTO "__iql__.control.session" (iql_generation_id, created_dttm) VALUES (?, strftime('%s', 'now')) RETURNING iql_session_id`, generationId)
+	//nolint:lll,execinquery // long SQL query and `execinquery` is DEAD SET RUBBISH for INSERT... RETURNING
+	res := se.db.QueryRow(`INSERT INTO "__iql__.control.session" (iql_generation_id, created_dttm) VALUES (?, strftime('%s', 'now')) RETURNING iql_session_id`, generationID)
 	err := res.Scan(&retVal)
-	logging.GetLogger().Infoln(fmt.Sprintf("getNextSessionId(): generation id = %d, session id = %d", generationId, retVal))
+	logging.GetLogger().Infoln(
+		fmt.Sprintf(
+			"getNextSessionID(): generation id = %d, session id = %d",
+			generationID,
+			retVal,
+		),
+	)
 	return retVal, err
 }
 
@@ -218,6 +231,7 @@ func (se sqLiteEmbeddedEngine) CacheStoreGetAll() ([]internaldto.KeyVal, error) 
 	if err != nil {
 		return nil, err
 	}
+	defer res.Close()
 	for res.Next() {
 		var kv internaldto.KeyVal
 		err = res.Scan(&kv.K, &kv.V)
@@ -236,11 +250,19 @@ func (se sqLiteEmbeddedEngine) CacheStorePut(key string, val []byte, tablespace 
 	}
 	_, err = txn.Exec(`DELETE FROM "__iql__.cache.key_val" WHERE k = ?`, key)
 	if err != nil {
+		//nolint:errcheck // intentionally ignoring error TODO: publish variadic error(s)
 		txn.Rollback()
 		return err
 	}
-	_, err = txn.Exec(`INSERT INTO "__iql__.cache.key_val" (k, v, tablespace, tablespace_id) VALUES(?, ?, ?, ?)`, key, val, tablespace, tablespaceID)
+	_, err = txn.Exec(
+		`INSERT INTO "__iql__.cache.key_val" (k, v, tablespace, tablespace_id) VALUES(?, ?, ?, ?)`,
+		key,
+		val,
+		tablespace,
+		tablespaceID,
+	)
 	if err != nil {
+		//nolint:errcheck // intentionally ignoring error TODO: publish variadic error(s)
 		txn.Rollback()
 		return err
 	}

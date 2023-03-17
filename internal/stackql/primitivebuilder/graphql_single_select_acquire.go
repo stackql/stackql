@@ -1,6 +1,7 @@
 package primitivebuilder
 
 import (
+	"errors"
 	"fmt"
 	"io"
 
@@ -25,7 +26,7 @@ type GraphQLSingleSelectAcquire struct {
 	graph                      primitivegraph.PrimitiveGraph
 	handlerCtx                 handler.HandlerContext
 	tableMeta                  tablemetadata.ExtendedTableMetadata
-	drmCfg                     drm.DRMConfig
+	drmCfg                     drm.Config
 	insertPreparedStatementCtx drm.PreparedStatementCtx
 	insertionContainer         tableinsertioncontainer.TableInsertionContainer
 	txnCtrlCtr                 internaldto.TxnControlCounters
@@ -71,12 +72,13 @@ func (ss *GraphQLSingleSelectAcquire) GetTail() primitivegraph.PrimitiveNode {
 	return ss.root
 }
 
+//nolint:govet,funlen,gocognit,revive,errcheck,stylecheck // TODO: fix
 func (ss *GraphQLSingleSelectAcquire) Build() error {
 	prov, err := ss.tableMeta.GetProvider()
 	if err != nil {
 		return err
 	}
-	httpArmoury, err := ss.tableMeta.GetHttpArmoury()
+	httpArmoury, err := ss.tableMeta.GetHTTPArmoury()
 	if err != nil {
 		return err
 	}
@@ -105,14 +107,17 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 			}
 			responseJsonPath, ok := gql.GetResponseJSONPath()
 			if !ok {
-				return internaldto.NewErroneousExecutorOutput(fmt.Errorf("cannot perform graphql action without response json path"))
+				return internaldto.NewErroneousExecutorOutput(
+					fmt.Errorf("cannot perform graphql action without response json path"),
+				)
 			}
 			tableName, err := ss.tableMeta.GetTableName()
 			if err != nil {
 				return internaldto.NewErroneousExecutorOutput(err)
 			}
 			reqEncoding := reqCtx.Encode()
-			olderTcc, isMatch := ss.handlerCtx.GetNamespaceCollection().GetAnalyticsCacheTableNamespaceConfigurator().Match(tableName, reqEncoding, ss.drmCfg.GetControlAttributes().GetControlLatestUpdateColumnName(), ss.drmCfg.GetControlAttributes().GetControlInsertEncodedIdColumnName())
+			//nolint:lll // chained
+			olderTcc, isMatch := ss.handlerCtx.GetNamespaceCollection().GetAnalyticsCacheTableNamespaceConfigurator().Match(tableName, reqEncoding, ss.drmCfg.GetControlAttributes().GetControlLatestUpdateColumnName(), ss.drmCfg.GetControlAttributes().GetControlInsertEncodedIDColumnName())
 			if isMatch {
 				nonControlColumns := ss.insertPreparedStatementCtx.GetNonControlColumns()
 				var nonControlColumnNames []string
@@ -122,7 +127,8 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 				ss.handlerCtx.GetGarbageCollector().Update(tableName, olderTcc, currentTcc)
 				ss.insertionContainer.SetTableTxnCounters(tableName, olderTcc)
 				ss.insertPreparedStatementCtx.SetGCCtrlCtrs(olderTcc)
-				r, sqlErr := ss.handlerCtx.GetNamespaceCollection().GetAnalyticsCacheTableNamespaceConfigurator().Read(tableName, reqEncoding, ss.drmCfg.GetControlAttributes().GetControlInsertEncodedIdColumnName(), nonControlColumnNames)
+				//nolint:lll // chained
+				r, sqlErr := ss.handlerCtx.GetNamespaceCollection().GetAnalyticsCacheTableNamespaceConfigurator().Read(tableName, reqEncoding, ss.drmCfg.GetControlAttributes().GetControlInsertEncodedIDColumnName(), nonControlColumnNames)
 				if sqlErr != nil {
 					internaldto.NewErroneousExecutorOutput(sqlErr)
 				}
@@ -166,7 +172,7 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 						}
 					}
 				}
-				if err == io.EOF {
+				if errors.Is(err, io.EOF) {
 					break
 				}
 				if err != nil {

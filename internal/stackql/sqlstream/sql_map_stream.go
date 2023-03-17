@@ -12,7 +12,7 @@ import (
 type SimpleSQLMapStream struct {
 	selectCtx       drm.PreparedStatementCtx
 	insertContainer tableinsertioncontainer.TableInsertionContainer
-	drmCfg          drm.DRMConfig
+	drmCfg          drm.Config
 	sqlEngine       sqlengine.SQLEngine
 	// No buffering just yet; let us revisit soon
 	// store     []map[string]interface{}
@@ -21,7 +21,7 @@ type SimpleSQLMapStream struct {
 func NewSimpleSQLMapStream(
 	selectCtx drm.PreparedStatementCtx,
 	insertContainer tableinsertioncontainer.TableInsertionContainer,
-	drmCfg drm.DRMConfig,
+	drmCfg drm.Config,
 	sqlEngine sqlengine.SQLEngine,
 ) streaming.MapStream {
 	return &SimpleSQLMapStream{
@@ -46,6 +46,9 @@ func (ss *SimpleSQLMapStream) Read() ([]map[string]interface{}, error) {
 	if sqlErr != nil {
 		return nil, sqlErr
 	}
+	if r != nil {
+		defer r.Close()
+	}
 	i := 0
 	var keyArr []string
 	var ifArr []interface{}
@@ -57,7 +60,7 @@ func (ss *SimpleSQLMapStream) Read() ([]map[string]interface{}, error) {
 		i++
 	}
 	if r != nil {
-		i := 0
+		i := 0 //nolint:govet // ok with this
 		for r.Next() {
 			errScan := r.Scan(ifArr...)
 			if errScan != nil {

@@ -27,8 +27,9 @@ import (
 const MIN = 1
 const MAX = 100
 
-const DEFAULT_PORT_NO = 3406
+const DEFAULT_PORT_NO = 3406 //nolint:revive,stylecheck // legacy
 
+//nolint:gochecknoglobals // cobra pattern
 var srvCmd = &cobra.Command{
 	Use:   "srv",
 	Short: "run postgres wire server",
@@ -45,6 +46,6 @@ var srvCmd = &cobra.Command{
 		iqlerror.PrintErrorAndExitOneIfError(err)
 		server, err := psqlwire.MakeWireServer(sbe, runtimeCtx)
 		iqlerror.PrintErrorAndExitOneIfError(err)
-		server.Serve()
+		server.Serve() //nolint:errcheck // TODO: investigate
 	},
 }

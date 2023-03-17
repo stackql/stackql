@@ -1,4 +1,4 @@
-package astvisit
+package astvisit //nolint:cyclop // defer analyser uplifts
 
 import (
 	"fmt"
@@ -47,6 +47,7 @@ func (v *standardParserTableExtractAstVisitor) MergeTableExprs() sqlparser.Table
 	return v.tables
 }
 
+//nolint:dupl,funlen,gocognit,gocyclo,cyclop,errcheck,staticcheck,gocritic,lll,exhaustive,nestif,gomnd // defer uplifts on analysers
 func (v *standardParserTableExtractAstVisitor) Visit(node sqlparser.SQLNode) error {
 	var err error
 
@@ -415,7 +416,7 @@ func (v *standardParserTableExtractAstVisitor) Visit(node sqlparser.SQLNode) err
 					return err
 				}
 			default:
-				err = n.Accept(v)
+				err = n.Accept(v) //nolint:ineffassign // defer uplifts
 				err = v.Visit(n)
 				if err != nil {
 					return err

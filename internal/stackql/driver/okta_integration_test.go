@@ -24,6 +24,7 @@ import (
 	lrucache "github.com/stackql/stackql-parser/go/cache"
 )
 
+//nolint:lll // legacy test
 func TestSelectOktaApplicationAppsDriver(t *testing.T) {
 	// SimpleOktaApplicationsAppsListResponseFile
 
@@ -74,6 +75,7 @@ func TestSelectOktaApplicationAppsDriver(t *testing.T) {
 	t.Logf("simple select driver integration test passed")
 }
 
+//nolint:govet,lll,errcheck // legacy test
 func TestSimpleSelectOktaApplicationAppsDriverOutput(t *testing.T) {
 	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSimpleSelectOktaApplicationAppsDriverOutput")
 	if err != nil {
@@ -85,7 +87,6 @@ func TestSimpleSelectOktaApplicationAppsDriverOutput(t *testing.T) {
 	}
 
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
-
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
 		handlerCtx.SetOutfile(os.Stdout)
 		handlerCtx.SetOutErrFile(os.Stderr)
@@ -108,6 +109,5 @@ func TestSimpleSelectOktaApplicationAppsDriverOutput(t *testing.T) {
 	}
 
 	stackqltestutil.SetupSelectOktaApplicationApps(t)
-	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedSelectOktaApplicationAppsJson})
-
+	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedSelectOktaApplicationAppsJSON})
 }

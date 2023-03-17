@@ -31,9 +31,10 @@ const (
 	forbiddenRegistryCharacters string = ` ;\`
 )
 
+//nolint:gochecknoglobals // cobra pattern
 var registryCmd = &cobra.Command{
 	Use:   "registry",
-	Short: "Interaction with the stackql provider registry, as configured at initialisation time.  Usage: stackql registry {subcommand} [{arg}]",
+	Short: "Interaction with the stackql provider registry, as configured at initialisation time.  Usage: stackql registry {subcommand} [{arg}]", //nolint:lll // long string
 	Long: `
 	Interaction with the provider registry, as configured at initialisation time. Usage: stackql registry {subcommand}
 	Currently supported subcommands:
@@ -54,13 +55,18 @@ var registryCmd = &cobra.Command{
 		subCommand := strings.ToLower(args[0])
 		switch subCommand {
 		case "pull":
-			if len(args) != 3 {
+			if len(args) != 3 { //nolint:gomnd // TODO: investigate
 				iqlerror.PrintErrorAndExitOneWithMessage(usagemsg)
 			}
 			providerName := args[1]
 			providerVersion := args[2]
 
-			if strings.ContainsAny(providerName, forbiddenRegistryCharacters) || strings.ContainsAny(providerVersion, forbiddenRegistryCharacters) {
+			if strings.ContainsAny(
+				providerName,
+				forbiddenRegistryCharacters) || strings.ContainsAny(
+				providerVersion,
+				forbiddenRegistryCharacters,
+			) {
 				iqlerror.PrintErrorAndExitOneWithMessage("forbidden characters detected")
 			}
 			rdr = bytes.NewReader([]byte(fmt.Sprintf("registry pull %s %s;", providerName, providerVersion)))
@@ -68,10 +74,11 @@ var registryCmd = &cobra.Command{
 			switch len(args) {
 			case 1:
 				rdr = bytes.NewReader([]byte("registry list;"))
-			case 2:
+			case 2: //nolint:gomnd // TODO: investigate
 				rdr = bytes.NewReader([]byte(fmt.Sprintf("registry list %s;", args[1])))
 			default:
-				iqlerror.PrintErrorAndExitOneWithMessage(fmt.Sprintf("invalid arg count = %d for registry list commmand", len(args)))
+				iqlerror.PrintErrorAndExitOneWithMessage(
+					fmt.Sprintf("invalid arg count = %d for registry list commmand", len(args)))
 			}
 		}
 

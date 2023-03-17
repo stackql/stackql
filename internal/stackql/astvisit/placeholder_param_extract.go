@@ -28,7 +28,11 @@ type standardParserPlaceholderParamAstVisitor struct {
 	annotatedAST annotatedast.AnnotatedAst
 }
 
-func NewPlaceholderParamAstVisitor(annotatedAST annotatedast.AnnotatedAst, iDColumnName string, shouldCollectTables bool) ParserPlaceholderParamAstVisitor {
+func NewPlaceholderParamAstVisitor(
+	annotatedAST annotatedast.AnnotatedAst,
+	iDColumnName string,
+	shouldCollectTables bool,
+) ParserPlaceholderParamAstVisitor {
 	return &standardParserPlaceholderParamAstVisitor{
 		annotatedAST: annotatedAST,
 		params:       parserutil.NewParameterMap(),
@@ -47,6 +51,7 @@ func (v *standardParserPlaceholderParamAstVisitor) GetStringifiedParameters() ma
 	return rv
 }
 
+//nolint:dupl,funlen,gocognit,gocyclo,cyclop,errcheck,gocritic,lll,govet,exhaustive,nestif,gomnd // defer uplifts on analysers
 func (v *standardParserPlaceholderParamAstVisitor) Visit(node sqlparser.SQLNode) error {
 	buf := sqlparser.NewTrackedBuffer(nil)
 	var err error
@@ -313,7 +318,6 @@ func (v *standardParserPlaceholderParamAstVisitor) Visit(node sqlparser.SQLNode)
 
 		if ct.Length != nil && ct.Scale != nil {
 			buf.AstPrintf(ct, "(%v,%v)", ct.Length, ct.Scale)
-
 		} else if ct.Length != nil {
 			buf.AstPrintf(ct, "(%v)", ct.Length)
 		}

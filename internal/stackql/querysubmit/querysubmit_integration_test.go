@@ -21,7 +21,8 @@ import (
 )
 
 func TestSimpleSelectGoogleComputeInstanceQuerySubmit(t *testing.T) {
-	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSimpleSelectGoogleComputeInstanceQuerySubmit")
+	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(
+		testobjects.GetGoogleProviderString(), "text", "TestSimpleSelectGoogleComputeInstanceQuerySubmit")
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
@@ -29,7 +30,8 @@ func TestSimpleSelectGoogleComputeInstanceQuerySubmit(t *testing.T) {
 	url := &url.URL{
 		Path: path,
 	}
-	ex := testhttpapi.NewHTTPRequestExpectations(nil, nil, "GET", url, testobjects.GoogleComputeHost, testobjects.SimpleSelectGoogleComputeInstanceResponse, nil)
+	ex := testhttpapi.NewHTTPRequestExpectations(
+		nil, nil, "GET", url, testobjects.GoogleComputeHost, testobjects.SimpleSelectGoogleComputeInstanceResponse, nil)
 	exp := testhttpapi.NewExpectationStore(1)
 	exp.Put(testobjects.GoogleComputeHost+path, ex)
 
@@ -42,7 +44,10 @@ func TestSimpleSelectGoogleComputeInstanceQuerySubmit(t *testing.T) {
 		t.Fatalf("Test failed: %v", err)
 	}
 
-	handlerCtx, err := handler.GetHandlerCtx(testobjects.SimpleSelectGoogleComputeInstance, *runtimeCtx, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
+	handlerCtx, err := handler.GetHandlerCtx(
+		testobjects.SimpleSelectGoogleComputeInstance,
+		*runtimeCtx,
+		lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
 	handlerCtx.SetOutfile(os.Stdout)
 	handlerCtx.SetOutErrFile(os.Stderr)
 

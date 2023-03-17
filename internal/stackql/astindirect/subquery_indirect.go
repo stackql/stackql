@@ -74,10 +74,6 @@ func (v *subquery) GetTables() sqlparser.TableExprs {
 	return nil
 }
 
-func (v *subquery) getAST() (sqlparser.Statement, error) {
-	return v.subQuery.Select, nil
-}
-
 func (v *subquery) GetSelectAST() sqlparser.SelectStatement {
 	return v.selectStmt
 }

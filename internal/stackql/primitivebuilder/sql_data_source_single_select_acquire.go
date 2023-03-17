@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/stackql/stackql/internal/stackql/data_staging/input_data_staging"
-	"github.com/stackql/stackql/internal/stackql/datasource/sql_datasource"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
@@ -25,14 +24,13 @@ type sqlDataSourceSingleSelectAcquire struct {
 	graph                      primitivegraph.PrimitiveGraph
 	handlerCtx                 handler.HandlerContext
 	tableMeta                  tablemetadata.ExtendedTableMetadata
-	drmCfg                     drm.DRMConfig
+	drmCfg                     drm.Config
 	insertPreparedStatementCtx drm.PreparedStatementCtx
 	insertionContainer         tableinsertioncontainer.TableInsertionContainer
 	txnCtrlCtr                 internaldto.TxnControlCounters
 	rowSort                    func(map[string]map[string]interface{}) []string
 	root                       primitivegraph.PrimitiveNode
 	stream                     streaming.MapStream
-	sqlDataSource              sql_datasource.SQLDataSource
 }
 
 func NewSQLDataSourceSingleSelectAcquire(
@@ -113,15 +111,20 @@ func (ss *sqlDataSourceSingleSelectAcquire) Build() error {
 	// inputQuery := fmt.Sprintf(`INSERT INTO %s ( %s ) VALUES ( ?,  )`, targetTableName, projectionStr, tableName)
 	ex := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 		// ss.tableMeta.GetP
-		rows, err := sqlDB.Query(ss.query, ss.queryArgs...)
-		if err != nil {
-			return internaldto.NewErroneousExecutorOutput(err)
+		rows, rowsErr := sqlDB.Query(ss.query, ss.queryArgs...)
+		if rowsErr != nil {
+			return internaldto.NewErroneousExecutorOutput(rowsErr)
 		}
 		currentTcc := ss.insertPreparedStatementCtx.GetGCCtrlCtrs().Clone()
 		ss.graph.AddTxnControlCounters(currentTcc)
 		currentTcc.SetTableName(tableName)
+		//nolint:errcheck // TODO: fix
 		ss.insertionContainer.SetTableTxnCounters(tableName, currentTcc)
-		preparator := input_data_staging.NewNaiveNativeResultSetPreparator(rows, ss.handlerCtx.GetDrmConfig(), ss.insertPreparedStatementCtx)
+		preparator := input_data_staging.NewNaiveNativeResultSetPreparator(
+			rows,
+			ss.handlerCtx.GetDrmConfig(),
+			ss.insertPreparedStatementCtx,
+		)
 		return preparator.PrepareNativeResultSet()
 	}
 

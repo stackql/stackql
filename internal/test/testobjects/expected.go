@@ -1,7 +1,8 @@
 package testobjects
 
+//nolint:lll,revive,stylecheck // This is a test file
 const (
-	ExpectedSelectOktaApplicationAppsJson                                     string = "test/assets/expected/okta/select-apps.csv"
+	ExpectedSelectOktaApplicationAppsJSON                                     string = "test/assets/expected/okta/select-apps.csv"
 	ExpectedSimpleSelectGoogleComputeInstanceTableFile01                      string = "test/assets/expected/simple-select/google/compute/instances/table/simple-select-variant-01.txt"
 	ExpectedSimpleSelectGoogleComputeInstanceTableFile02                      string = "test/assets/expected/simple-select/google/compute/instances/table/simple-select-variant-02.txt"
 	ExpectedSimpleSelectGoogleComputeInstanceTextFile01                       string = "test/assets/expected/simple-select/google/compute/instances/text/simple-select-variant-01.csv"

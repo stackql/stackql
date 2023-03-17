@@ -38,7 +38,7 @@ func BuildInputBundle(runtimeCtx dto.RuntimeCtx) (bundle.Bundle, error) {
 	ac := make(map[string]*dto.AuthCtx)
 	err = yaml.Unmarshal([]byte(runtimeCtx.AuthRaw), ac)
 	if err != nil {
-		return nil, fmt.Errorf("error unmarshalling auth: %s", err.Error())
+		return nil, fmt.Errorf("error unmarshalling auth: %w", err)
 	}
 	se, err := buildSQLEngine(sqlCfg, controlAttributes)
 	if err != nil {
@@ -56,7 +56,10 @@ func BuildInputBundle(runtimeCtx dto.RuntimeCtx) (bundle.Bundle, error) {
 	if err != nil {
 		return nil, err
 	}
-	system, err := sql_system.NewSQLSystem(se, namespaces.GetAnalyticsCacheTableNamespaceConfigurator().GetLikeString(), controlAttributes, sqlCfg, ac)
+	system, err := sql_system.NewSQLSystem(
+		se,
+		namespaces.GetAnalyticsCacheTableNamespaceConfigurator().GetLikeString(),
+		controlAttributes, sqlCfg, ac)
 	if err != nil {
 		return nil, err
 	}
@@ -65,6 +68,9 @@ func BuildInputBundle(runtimeCtx dto.RuntimeCtx) (bundle.Bundle, error) {
 		return nil, err
 	}
 	pgInternal, err := dbmsinternal.GetDBMSInternalRouter(pgInternalCfg, system)
+	if err != nil {
+		return nil, err
+	}
 	namespaces, err = namespaces.WithSQLSystem(system)
 	if err != nil {
 		return nil, err
@@ -84,9 +90,19 @@ func BuildInputBundle(runtimeCtx dto.RuntimeCtx) (bundle.Bundle, error) {
 	}
 	sqlDataSources, err := initSQLDataSources(ac)
 	if err != nil {
-		return nil, fmt.Errorf("error initializing SQL data sources: %s", err.Error())
+		return nil, fmt.Errorf("error initializing SQL data sources: %w", err)
 	}
-	return bundle.NewBundle(gc, namespaces, se, system, pgInternal, controlAttributes, txnStore, txnCtrMgr, ac, sqlDataSources), nil
+	return bundle.NewBundle(
+		gc,
+		namespaces,
+		se,
+		system,
+		pgInternal,
+		controlAttributes,
+		txnStore,
+		txnCtrMgr,
+		ac,
+		sqlDataSources), nil
 }
 
 func initSQLDataSources(authContextMap map[string]*dto.AuthCtx) (map[string]sql_datasource.SQLDataSource, error) {
@@ -104,7 +120,10 @@ func initSQLDataSources(authContextMap map[string]*dto.AuthCtx) (map[string]sql_
 	return rv, nil
 }
 
-func initNamespaces(namespaceCfgRaw string, sqlEngine sqlengine.SQLEngine) (tablenamespace.TableNamespaceCollection, error) {
+func initNamespaces(
+	namespaceCfgRaw string,
+	sqlEngine sqlengine.SQLEngine,
+) (tablenamespace.Collection, error) {
 	cfgs, err := dto.GetNamespaceCfg(namespaceCfgRaw)
 	if err != nil {
 		return nil, err
@@ -112,31 +131,43 @@ func initNamespaces(namespaceCfgRaw string, sqlEngine sqlengine.SQLEngine) (tabl
 	return tablenamespace.NewStandardTableNamespaceCollection(cfgs, sqlEngine)
 }
 
-func buildSQLEngine(sqlCfg dto.SQLBackendCfg, controlAttributes sqlcontrol.ControlAttributes) (sqlengine.SQLEngine, error) {
+func buildSQLEngine(
+	sqlCfg dto.SQLBackendCfg,
+	controlAttributes sqlcontrol.ControlAttributes,
+) (sqlengine.SQLEngine, error) {
 	return sqlengine.NewSQLEngine(sqlCfg, controlAttributes)
 }
 
-func buildGCExec(sqlEngine sqlengine.SQLEngine, namespaces tablenamespace.TableNamespaceCollection, system sql_system.SQLSystem, txnStore kstore.KStore) (gcexec.GarbageCollectorExecutor, error) {
+func buildGCExec(
+	sqlEngine sqlengine.SQLEngine,
+	namespaces tablenamespace.Collection,
+	system sql_system.SQLSystem,
+	txnStore kstore.KStore,
+) (gcexec.GarbageCollectorExecutor, error) {
 	return gcexec.GetGarbageCollectorExecutorInstance(sqlEngine, namespaces, system, txnStore)
 }
 
-func buildGC(gcExec gcexec.GarbageCollectorExecutor, gcCfg dto.GCCfg, sqlEngine sqlengine.SQLEngine) garbagecollector.GarbageCollector {
+func buildGC(
+	gcExec gcexec.GarbageCollectorExecutor,
+	gcCfg dto.GCCfg,
+	sqlEngine sqlengine.SQLEngine,
+) garbagecollector.GarbageCollector {
 	return garbagecollector.NewGarbageCollector(gcExec, gcCfg, sqlEngine)
 }
 
-func getTxnCounterManager(sqlEngine sqlengine.SQLEngine) (txncounter.TxnCounterManager, error) {
-	genId, err := sqlEngine.GetCurrentGenerationId()
+func getTxnCounterManager(sqlEngine sqlengine.SQLEngine) (txncounter.Manager, error) {
+	genID, err := sqlEngine.GetCurrentGenerationID()
 	if err != nil {
-		genId, err = sqlEngine.GetNextGenerationId()
+		genID, err = sqlEngine.GetNextGenerationID()
 		if err != nil {
 			return nil, err
 		}
 	}
-	sessionId, err := sqlEngine.GetNextSessionId(genId)
+	sessionID, err := sqlEngine.GetNextSessionID(genID)
 	if err != nil {
 		return nil, err
 	}
-	return txncounter.NewTxnCounterManager(genId, sessionId), nil
+	return txncounter.NewTxnCounterManager(genID, sessionID), nil
 }
 
 func PreprocessInline(runtimeCtx dto.RuntimeCtx, s string) (string, error) {
@@ -166,7 +197,11 @@ func assemblePreprocessor(runtimeCtx dto.RuntimeCtx, rdr io.Reader) ([]byte, err
 			return nil, err
 		}
 		prepRd = rdr
-		err = pp.PrepareExternal(strings.Trim(strings.ToLower(filepath.Ext(runtimeCtx.TemplateCtxFilePath)), "."), externalTmplRdr, runtimeCtx.TemplateCtxFilePath)
+		err = pp.PrepareExternal(
+			strings.Trim(
+				strings.ToLower(filepath.Ext(runtimeCtx.TemplateCtxFilePath)), "."),
+			externalTmplRdr,
+			runtimeCtx.TemplateCtxFilePath)
 	}
 	if err != nil {
 		return nil, err
@@ -180,12 +215,21 @@ func assemblePreprocessor(runtimeCtx dto.RuntimeCtx, rdr io.Reader) ([]byte, err
 	return bb, err
 }
 
-func BuildHandlerContext(runtimeCtx dto.RuntimeCtx, rdr io.Reader, lruCache *lrucache.LRUCache, inputBundle bundle.Bundle) (handler.HandlerContext, error) {
+func BuildHandlerContext(
+	runtimeCtx dto.RuntimeCtx,
+	rdr io.Reader,
+	lruCache *lrucache.LRUCache,
+	inputBundle bundle.Bundle,
+) (handler.HandlerContext, error) {
 	bb, err := assemblePreprocessor(runtimeCtx, rdr)
 	iqlerror.PrintErrorAndExitOneIfError(err)
 	return handler.GetHandlerCtx(strings.TrimSpace(string(bb)), runtimeCtx, lruCache, inputBundle)
 }
 
-func BuildHandlerContextNoPreProcess(runtimeCtx dto.RuntimeCtx, lruCache *lrucache.LRUCache, inputBundle bundle.Bundle) (handler.HandlerContext, error) {
+func BuildHandlerContextNoPreProcess(
+	runtimeCtx dto.RuntimeCtx,
+	lruCache *lrucache.LRUCache,
+	inputBundle bundle.Bundle,
+) (handler.HandlerContext, error) {
 	return handler.GetHandlerCtx("", runtimeCtx, lruCache, inputBundle)
 }

@@ -17,13 +17,16 @@ type BasicPrimitiveContext interface {
 }
 
 type standardBasicPrimitiveContext struct {
-	body      map[string]interface{}
 	authCtx   func(string) (*dto.AuthCtx, error)
 	writer    io.Writer
 	errWriter io.Writer
 }
 
-func NewBasicPrimitiveContext(authCtx func(string) (*dto.AuthCtx, error), writer io.Writer, errWriter io.Writer) BasicPrimitiveContext {
+func NewBasicPrimitiveContext(
+	authCtx func(string) (*dto.AuthCtx, error),
+	writer io.Writer,
+	errWriter io.Writer,
+) BasicPrimitiveContext {
 	return &standardBasicPrimitiveContext{
 		authCtx:   authCtx,
 		writer:    writer,

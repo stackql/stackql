@@ -16,11 +16,12 @@ const (
 	FloatBitSize int = 64
 )
 
-// These null "dual" tables are some vitess artifact
+// These null "dual" tables are some vitess artifact.
 func IsNullTable(node sqlparser.TableExpr) bool {
 	return isNullTable(node)
 }
 
+//nolint:gocritic // TODO: review
 func isNullTable(node sqlparser.TableExpr) bool {
 	switch node := node.(type) {
 	case *sqlparser.AliasedTableExpr:
@@ -34,6 +35,7 @@ func isNullTable(node sqlparser.TableExpr) bool {
 	return false
 }
 
+//nolint:gocritic // TODO: review
 func GetTableNameFromTableExpr(node sqlparser.TableExpr) (sqlparser.TableName, error) {
 	switch tt := node.(type) {
 	case *sqlparser.AliasedTableExpr:
@@ -55,13 +57,12 @@ func ExtractSelectColumnNames(selStmt *sqlparser.Select, formatter sqlparser.Nod
 	for _, node := range selStmt.SelectExprs {
 		switch node := node.(type) {
 		case *sqlparser.AliasedExpr:
-			cn, err := inferColNameFromExpr(node, formatter)
-			if err != nil {
-				return nil, err
+			cn, cErr := inferColNameFromExpr(node, formatter)
+			if cErr != nil {
+				return nil, cErr
 			}
 			colNames = append(colNames, cn)
 		case *sqlparser.StarExpr:
-
 		}
 	}
 	return colNames, err
@@ -76,6 +77,7 @@ func ExtractInsertColumnNames(insertStmt *sqlparser.Insert) ([]string, error) {
 	return colNames, err
 }
 
+//nolint:gocritic,exhaustive // TODO: review
 func ExtractAliasedValColumnData(aliasedExpr *sqlparser.AliasedExpr) (map[string]interface{}, error) {
 	alias := aliasedExpr.As.GetRawVal()
 	switch expr := aliasedExpr.Expr.(type) {
@@ -98,6 +100,7 @@ func ExtractStringRepresentationOfValueColumn(expr *sqlparser.SQLVal) string {
 	if expr == nil {
 		return ""
 	}
+	//nolint:exhaustive // TODO: review
 	switch expr.Type {
 	case sqlparser.StrVal:
 		return fmt.Sprintf(`'%s'`, string(expr.Val))
@@ -108,6 +111,7 @@ func ExtractStringRepresentationOfValueColumn(expr *sqlparser.SQLVal) string {
 	}
 }
 
+//nolint:gocritic,exhaustive,govet // TODO: review
 func ExtractValuesColumnData(values sqlparser.Values) (map[int]map[int]interface{}, int, error) {
 	retVal := make(map[int]map[int]interface{})
 	var nonValCount int
@@ -123,13 +127,13 @@ func ExtractValuesColumnData(values sqlparser.Values) (map[int]map[int]interface
 				case sqlparser.IntVal:
 					rv, err := strconv.Atoi(string(expr.Val))
 					if err != nil {
-						return nil, nonValCount, fmt.Errorf("error extracting Values integer: %s", err.Error())
+						return nil, nonValCount, fmt.Errorf("error extracting Values integer: %w", err)
 					}
 					row[innerIdx] = rv
 				case sqlparser.FloatVal:
 					rv, err := strconv.ParseFloat(string(expr.Val), FloatBitSize)
 					if err != nil {
-						return nil, nonValCount, fmt.Errorf("error extracting Values float: %s", err.Error())
+						return nil, nonValCount, fmt.Errorf("error extracting Values float: %w", err)
 					}
 					row[innerIdx] = rv
 				default:
@@ -200,7 +204,9 @@ func ExtractInsertValColumns(insStmt *sqlparser.Insert) (map[int]map[int]interfa
 	return extractInsertValColumns(insStmt, false)
 }
 
-func ExtractUpdateValColumns(upStmt *sqlparser.Update) (map[*sqlparser.ColName]interface{}, []*sqlparser.ColName, error) {
+func ExtractUpdateValColumns(
+	upStmt *sqlparser.Update,
+) (map[*sqlparser.ColName]interface{}, []*sqlparser.ColName, error) {
 	return extractUpdateValColumns(upStmt, false)
 }
 
@@ -208,7 +214,10 @@ func ExtractInsertValColumnsPlusPlaceHolders(insStmt *sqlparser.Insert) (map[int
 	return extractInsertValColumns(insStmt, false)
 }
 
-func extractInsertValColumns(insStmt *sqlparser.Insert, includePlaceholders bool) (map[int]map[int]interface{}, int, error) {
+func extractInsertValColumns(
+	insStmt *sqlparser.Insert,
+	includePlaceholders bool,
+) (map[int]map[int]interface{}, int, error) {
 	var nonValCount int
 	var err error
 	switch node := insStmt.Rows.(type) {
@@ -221,7 +230,7 @@ func extractInsertValColumns(insStmt *sqlparser.Insert, includePlaceholders bool
 					transformedRow[k] = c
 					break
 				}
-			} else {
+			} else { //nolint:gocritic // TODO: review
 				if includePlaceholders {
 					nvc = 0
 					transformedRow[k] = nil
@@ -239,7 +248,11 @@ func extractInsertValColumns(insStmt *sqlparser.Insert, includePlaceholders bool
 	return nil, nonValCount, err
 }
 
-func extractUpdateValColumns(updateStmt *sqlparser.Update, includePlaceholders bool) (map[*sqlparser.ColName]interface{}, []*sqlparser.ColName, error) {
+//nolint:gocognit,gocritic // not overly complex
+func extractUpdateValColumns(
+	updateStmt *sqlparser.Update,
+	includePlaceholders bool, //nolint:unparam // TODO: review
+) (map[*sqlparser.ColName]interface{}, []*sqlparser.ColName, error) {
 	var nonValCols []*sqlparser.ColName
 	retVal := make(map[*sqlparser.ColName]interface{})
 	for _, ex := range updateStmt.Exprs {
@@ -300,10 +313,11 @@ func extractUpdateValColumns(updateStmt *sqlparser.Update, includePlaceholders b
 	return retVal, nonValCols, nil
 }
 
+//nolint:gocritic // TODO: review
 func ExtractWhereColNames(statement *sqlparser.Where) ([]string, error) {
 	var whereNames []string
 	var err error
-	sqlparser.Walk(func(node sqlparser.SQLNode) (bool, error) {
+	sqlparser.Walk(func(node sqlparser.SQLNode) (bool, error) { //nolint:errcheck // TODO: review
 		switch node := node.(type) {
 		case *sqlparser.ColName:
 			whereNames = append(whereNames, node.Name.String())
@@ -313,13 +327,14 @@ func ExtractWhereColNames(statement *sqlparser.Where) ([]string, error) {
 	return whereNames, err
 }
 
+//nolint:gocritic // TODO: review
 func ExtractShowColNames(statement *sqlparser.ShowTablesOpt) ([]string, error) {
 	var whereNames []string
 	var err error
 	if statement == nil || statement.Filter == nil {
 		return whereNames, err
 	}
-	sqlparser.Walk(func(node sqlparser.SQLNode) (bool, error) {
+	sqlparser.Walk(func(node sqlparser.SQLNode) (bool, error) { //nolint:errcheck // TODO: review
 		switch node := node.(type) {
 		case *sqlparser.ColName:
 			whereNames = append(whereNames, node.Name.String())
@@ -338,6 +353,7 @@ func ExtractShowColUsage(statement *sqlparser.ShowTablesOpt) ([]ColumnUsageMetad
 	return GetColumnUsageTypes(statement.Filter.Filter)
 }
 
+//nolint:gocritic,exhaustive // TODO: review
 func ExtractSleepDuration(statement *sqlparser.Sleep) (int, error) {
 	var retVal int
 	if statement == nil || statement.Duration == nil {
@@ -354,7 +370,7 @@ func CheckColUsagesAgainstTable(colUsages []ColumnUsageMetadata, table openapist
 	for _, colUsage := range colUsages {
 		param, ok := table.GetParameter(colUsage.ColName.Name.GetRawVal())
 		if ok {
-			usageErr := CheckSqlParserTypeVsColumn(colUsage, param.ConditionIsValid)
+			usageErr := CheckSQLParserTypeVsColumn(colUsage, param.ConditionIsValid)
 			if usageErr != nil {
 				return usageErr
 			}
@@ -364,10 +380,11 @@ func CheckColUsagesAgainstTable(colUsages []ColumnUsageMetadata, table openapist
 	return nil
 }
 
+//nolint:gocritic // TODO: review
 func GetColumnUsageTypes(statement sqlparser.Expr) ([]ColumnUsageMetadata, error) {
 	var colMetaSlice []ColumnUsageMetadata
 	var err error
-	sqlparser.Walk(func(node sqlparser.SQLNode) (bool, error) {
+	sqlparser.Walk(func(node sqlparser.SQLNode) (bool, error) { //nolint:errcheck // TODO: review
 		switch node := node.(type) {
 		case *sqlparser.ComparisonExpr:
 			colMeta := ColumnUsageMetadata{}
@@ -410,6 +427,7 @@ func InferColNameFromExpr(node *sqlparser.AliasedExpr, formatter sqlparser.NodeF
 
 func GetStringFromStringFunc(fe *sqlparser.FuncExpr) (string, error) {
 	if strings.ToLower(fe.Name.GetRawVal()) == "string" && len(fe.Exprs) == 1 {
+		//nolint:gocritic // acceptable
 		switch et := fe.Exprs[0].(type) {
 		case *sqlparser.AliasedExpr:
 			switch et2 := et.Expr.(type) {
@@ -421,7 +439,11 @@ func GetStringFromStringFunc(fe *sqlparser.FuncExpr) (string, error) {
 	return "", fmt.Errorf("cannot extract string from func '%s'", fe.Name)
 }
 
-func inferColNameFromExpr(node *sqlparser.AliasedExpr, formatter sqlparser.NodeFormatter) (ColumnHandle, error) {
+//nolint:funlen,gocognit,gocritic // not overly complex
+func inferColNameFromExpr(
+	node *sqlparser.AliasedExpr,
+	formatter sqlparser.NodeFormatter,
+) (ColumnHandle, error) {
 	alias := node.As.GetRawVal()
 	retVal := ColumnHandle{
 		Alias: alias,
@@ -510,7 +532,9 @@ func inferColNameFromExpr(node *sqlparser.AliasedExpr, formatter sqlparser.NodeF
 				Alias: "",
 				Expr:  ex,
 			}
-			decoratedColumn := fmt.Sprintf("CAST(%s AS %s)", astformat.String(ex, formatter), astformat.String(expr.Type, formatter))
+			decoratedColumn := fmt.Sprintf(
+				"CAST(%s AS %s)",
+				astformat.String(ex, formatter), astformat.String(expr.Type, formatter))
 			rv.DecoratedColumn = getDecoratedColRendition(decoratedColumn, alias)
 			rv.Alias = alias
 			return rv, nil
@@ -538,15 +562,18 @@ func getDecoratedColRendition(baseDecoratedColumn, alias string) string {
 	return baseDecoratedColumn
 }
 
-func CheckSqlParserTypeVsServiceColumn(colUsage ColumnUsageMetadata) error {
-	return CheckSqlParserTypeVsColumn(colUsage, openapistackql.ServiceConditionIsValid)
+func CheckSQLParserTypeVsServiceColumn(
+	colUsage ColumnUsageMetadata) error {
+	return CheckSQLParserTypeVsColumn(colUsage, openapistackql.ServiceConditionIsValid)
 }
 
-func CheckSqlParserTypeVsResourceColumn(colUsage ColumnUsageMetadata) error {
-	return CheckSqlParserTypeVsColumn(colUsage, openapistackql.ResourceConditionIsValid)
+func CheckSQLParserTypeVsResourceColumn(
+	colUsage ColumnUsageMetadata) error {
+	return CheckSQLParserTypeVsColumn(colUsage, openapistackql.ResourceConditionIsValid)
 }
 
-func CheckSqlParserTypeVsColumn(colUsage ColumnUsageMetadata, verifyCallback func(string, interface{}) bool) error {
+//nolint:gomnd // TODO: remove this
+func CheckSQLParserTypeVsColumn(colUsage ColumnUsageMetadata, verifyCallback func(string, interface{}) bool) error {
 	switch colUsage.ColVal.Type {
 	case sqlparser.StrVal:
 		if !verifyCallback(colUsage.ColName.Name.String(), "") {

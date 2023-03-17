@@ -29,6 +29,7 @@ func PrintErrorAndExitOneIfError(err error) {
 	}
 }
 
+//nolint:errcheck,forbidigo // This is a panic handler, so we don't want to return an error
 func HandlePanic(outFile io.Writer) {
 	if r := recover(); r != nil {
 		msg := fmt.Sprintln("Error: Recovered in HandlePanic():", r)

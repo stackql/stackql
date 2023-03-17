@@ -28,9 +28,6 @@ type StandardColumnarReference struct {
 }
 
 func (cr StandardColumnarReference) Abbreviate() (string, bool) {
-	if cr.SourceType() == JoinOnParam {
-		// return "", false
-	}
 	switch kv := cr.Value().(type) {
 	case *sqlparser.ColName:
 		return kv.Name.GetRawVal(), true
@@ -80,7 +77,7 @@ func (cr StandardColumnarReference) String() string {
 	}
 }
 
-func (pk StandardColumnarReference) iColumnarReference() {}
+func (cr StandardColumnarReference) iColumnarReference() {}
 
 func NewUnknownTypeColumnarReference(k interface{}) (ColumnarReference, error) {
 	return newColumnarReference(k, UnknownParam)

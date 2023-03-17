@@ -1,3 +1,4 @@
+//nolint:lll,gomnd,dupl // test boilerplate
 package stackqltestutil
 
 import (
@@ -476,7 +477,6 @@ func getNetworkDeleteSuccessExpectations() map[string]testhttpapi.HTTPRequestExp
 }
 
 func SetupSimpleInsertGoogleComputeNetworks(t *testing.T) {
-
 	expectations := testhttpapi.NewExpectationStore(3)
 	for k, v := range getNetworkInsertSuccessExpectations() {
 		expectations.Put(k, v)
@@ -487,7 +487,6 @@ func SetupSimpleInsertGoogleComputeNetworks(t *testing.T) {
 }
 
 func SetupDependentInsertGoogleComputeDisks(t *testing.T) {
-
 	expectations := testhttpapi.NewExpectationStore(5)
 	for k, v := range getDisksSelectExpectations(t) {
 		expectations.Put(k, v)
@@ -504,7 +503,6 @@ func SetupDependentInsertGoogleComputeDisks(t *testing.T) {
 }
 
 func SetupExecGoogleOrganizationsGetIamPolicy(t *testing.T) {
-
 	expectations := testhttpapi.NewExpectationStore(1)
 	for k, v := range getCloudResourceManagerOrganizationsGetIamPolicyExpectations(t) {
 		expectations.Put(k, v)
@@ -514,7 +512,6 @@ func SetupExecGoogleOrganizationsGetIamPolicy(t *testing.T) {
 }
 
 func SetupDependentInsertGoogleComputeDisksReversed(t *testing.T) {
-
 	expectations := testhttpapi.NewExpectationStore(5)
 	for k, v := range getCloudResourceManagerProjectSelectExpectations(t) {
 		expectations.Put(k, v)
@@ -531,7 +528,6 @@ func SetupDependentInsertGoogleComputeDisksReversed(t *testing.T) {
 }
 
 func SetupDependentInsertGoogleBQDatasets(t *testing.T) {
-
 	expectations := testhttpapi.NewExpectationStore(3)
 	for k, v := range getCloudResourceManagerProjectSelectExpectations(t) {
 		expectations.Put(k, v)
@@ -564,7 +560,6 @@ func SetupDependentInsertGoogleBQDatasets(t *testing.T) {
 }
 
 func SetupSimpleDeleteGoogleComputeNetworks(t *testing.T) {
-
 	expectations := testhttpapi.NewExpectationStore(3)
 	for k, v := range getNetworkDeleteSuccessExpectations() {
 		expectations.Put(k, v)
@@ -575,7 +570,6 @@ func SetupSimpleDeleteGoogleComputeNetworks(t *testing.T) {
 }
 
 func SetupK8sTheHardWayE2eSuccess(t *testing.T) {
-
 	computeControllerInstanceCount := 3
 	computeWorkerInstanceCount := 3
 
@@ -611,7 +605,6 @@ func SetupK8sTheHardWayE2eSuccess(t *testing.T) {
 }
 
 func SetupInsertDependentComputeDiskSuccess(t *testing.T) {
-
 	computeControllerInstanceCount := 3
 	computeWorkerInstanceCount := 3
 

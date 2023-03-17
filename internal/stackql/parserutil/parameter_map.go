@@ -65,7 +65,7 @@ func (pm standardParameterMap) GetByString(s string) ([]ParameterMapKeyVal, bool
 }
 
 func (pm standardParameterMap) DeleteByString(s string) bool {
-	for k, _ := range pm.m {
+	for k := range pm.m {
 		if k.GetStringKey() == s {
 			delete(pm.m, k)
 		}
@@ -73,8 +73,8 @@ func (pm standardParameterMap) DeleteByString(s string) bool {
 	return true
 }
 
-func (pm standardParameterMap) deleteByAbbreviatedString(s string) bool {
-	for k, _ := range pm.m {
+func (pm standardParameterMap) deleteByAbbreviatedString(s string) bool { //nolint:unparam // TODO: review
+	for k := range pm.m {
 		abbreviation, ok := k.Abbreviate()
 		if !ok {
 			continue
@@ -88,7 +88,7 @@ func (pm standardParameterMap) deleteByAbbreviatedString(s string) bool {
 
 func (pm standardParameterMap) AndStringMap(rhs map[string]interface{}) ColumnKeyedDatastore {
 	abbreviatedMap := pm.GetAbbreviatedStringified()
-	for k, _ := range abbreviatedMap {
+	for k := range abbreviatedMap {
 		if _, ok := rhs[k]; !ok {
 			pm.deleteByAbbreviatedString(k)
 		}
@@ -98,7 +98,7 @@ func (pm standardParameterMap) AndStringMap(rhs map[string]interface{}) ColumnKe
 
 func (pm standardParameterMap) DeleteStringMap(rhs map[string]interface{}) ColumnKeyedDatastore {
 	abbreviatedMap := pm.GetAbbreviatedStringified()
-	for k, _ := range abbreviatedMap {
+	for k := range abbreviatedMap {
 		if _, ok := rhs[k]; ok {
 			pm.deleteByAbbreviatedString(k)
 		}
@@ -107,7 +107,7 @@ func (pm standardParameterMap) DeleteStringMap(rhs map[string]interface{}) Colum
 }
 
 func (pm standardParameterMap) ContainsString(s string) bool {
-	for k, _ := range pm.m {
+	for k := range pm.m {
 		if k.GetStringKey() == s {
 			return true
 		}
@@ -152,9 +152,6 @@ func (pm standardParameterMap) GetStringified() map[string]interface{} {
 func (pm standardParameterMap) GetAbbreviatedStringified() map[string]interface{} {
 	rv := make(map[string]interface{})
 	for k, v := range pm.m {
-		if k.SourceType() == JoinOnParam {
-			// continue
-		}
 		switch kv := k.Value().(type) {
 		case *sqlparser.ColName:
 			rv[kv.Name.GetRawVal()] = v
@@ -190,9 +187,9 @@ func (pm standardParameterMap) Get(k ColumnarReference) (ParameterMetadata, bool
 	}
 }
 
-func (tm standardParameterMap) ToStringMap() map[string]interface{} {
+func (pm standardParameterMap) ToStringMap() map[string]interface{} {
 	rv := make(map[string]interface{})
-	for k, v := range tm.m {
+	for k, v := range pm.m {
 		rv[k.GetStringKey()] = v
 	}
 	return rv

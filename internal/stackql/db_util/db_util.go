@@ -1,4 +1,4 @@
-package db_util
+package db_util //nolint:revive,stylecheck // decent package name
 
 import (
 	"database/sql"
@@ -25,9 +25,11 @@ func GetDB(driverName string, dbName string, cfg dto.SQLBackendCfg) (*sql.DB, er
 		retryCount++
 	}
 	if err != nil {
-		return nil, fmt.Errorf("%s db object setup error = '%s'", driverName, err.Error())
+		return nil, fmt.Errorf("%s db object setup error = '%w'", driverName, err)
 	}
-	logging.GetLogger().Debugln(fmt.Sprintf("opened %s TCP db with connection string = '%s' and err  = '%v'", dbName, dsn, err))
+	logging.GetLogger().Debugln(
+		fmt.Sprintf("opened %s TCP db with connection string = '%s' and err  = '%v'",
+			dbName, dsn, err))
 	pingErr := db.Ping()
 	retryCount = 0
 	for {
@@ -39,8 +41,11 @@ func GetDB(driverName string, dbName string, cfg dto.SQLBackendCfg) (*sql.DB, er
 		retryCount++
 	}
 	if pingErr != nil {
-		return nil, fmt.Errorf("%s connection setup ping error = '%s'", dbName, pingErr.Error())
+		return nil, fmt.Errorf("%s connection setup ping error = '%w'", dbName, pingErr)
 	}
-	logging.GetLogger().Debugln(fmt.Sprintf("opened and pinged %s TCP db with connection string = '%s' and err  = '%v'", dbName, dsn, err))
+	logging.GetLogger().Debugln(
+		fmt.Sprintf(
+			"opened and pinged %s TCP db with connection string = '%s' and err  = '%v'",
+			dbName, dsn, err))
 	return db, nil
 }

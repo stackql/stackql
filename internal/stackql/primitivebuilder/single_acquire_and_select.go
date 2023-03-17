@@ -15,11 +15,29 @@ type SingleAcquireAndSelect struct {
 	selectBuilder  Builder
 }
 
-func NewSingleAcquireAndSelect(graph primitivegraph.PrimitiveGraph, txnControlCounters internaldto.TxnControlCounters, handlerCtx handler.HandlerContext, insertContainer tableinsertioncontainer.TableInsertionContainer, insertCtx drm.PreparedStatementCtx, selectCtx drm.PreparedStatementCtx, rowSort func(map[string]map[string]interface{}) []string) Builder {
+func NewSingleAcquireAndSelect(
+	graph primitivegraph.PrimitiveGraph,
+	txnControlCounters internaldto.TxnControlCounters,
+	handlerCtx handler.HandlerContext,
+	insertContainer tableinsertioncontainer.TableInsertionContainer,
+	insertCtx drm.PreparedStatementCtx,
+	selectCtx drm.PreparedStatementCtx,
+	rowSort func(map[string]map[string]interface{}) []string,
+) Builder {
 	return &SingleAcquireAndSelect{
-		graph:          graph,
-		acquireBuilder: NewSingleSelectAcquire(graph, handlerCtx, insertContainer, insertCtx, rowSort, nil),
-		selectBuilder:  NewSingleSelect(graph, handlerCtx, selectCtx, []tableinsertioncontainer.TableInsertionContainer{insertContainer}, rowSort, streaming.NewNopMapStream()),
+		graph: graph,
+		acquireBuilder: NewSingleSelectAcquire(
+			graph,
+			handlerCtx,
+			insertContainer,
+			insertCtx,
+			rowSort,
+			nil),
+		selectBuilder: NewSingleSelect(
+			graph, handlerCtx, selectCtx,
+			[]tableinsertioncontainer.TableInsertionContainer{insertContainer},
+			rowSort,
+			streaming.NewNopMapStream()),
 	}
 }
 

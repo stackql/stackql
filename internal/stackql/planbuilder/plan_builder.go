@@ -26,8 +26,8 @@ import (
 )
 
 var (
-	// only string "false" will disable
-	PlanCacheEnabled string           = "true"
+	// only string "false" will disable.
+	PlanCacheEnabled string           = "true" //nolint:revive,gochecknoglobals // acceptable
 	_                planGraphBuilder = &standardPlanGraphBuilder{}
 )
 
@@ -48,7 +48,8 @@ type standardPlanGraphBuilder struct {
 	rootPrimitiveGenerator primitivegenerator.PrimitiveGenerator
 }
 
-func (pgb *standardPlanGraphBuilder) setRootPrimitiveGenerator(primitiveGenerator primitivegenerator.PrimitiveGenerator) {
+func (pgb *standardPlanGraphBuilder) setRootPrimitiveGenerator(
+	primitiveGenerator primitivegenerator.PrimitiveGenerator) {
 	pgb.rootPrimitiveGenerator = primitiveGenerator
 }
 
@@ -62,6 +63,7 @@ func newPlanGraphBuilder(concurrencyLimit int) planGraphBuilder {
 	}
 }
 
+//nolint:funlen // no big deal
 func (pgb *standardPlanGraphBuilder) createInstructionFor(pbi planbuilderinput.PlanBuilderInput) error {
 	stmt := pbi.GetStatement()
 	switch stmt := stmt.(type) {
@@ -183,7 +185,7 @@ func (pgb *standardPlanGraphBuilder) handleAuth(pbi planbuilderinput.PlanBuilder
 			if node.KeyEnvVar != "" {
 				authCtx.KeyEnvVar = node.KeyEnvVar
 			}
-			_, err := prov.Auth(authCtx, authType, true)
+			_, err = prov.Auth(authCtx, authType, true)
 			return internaldto.NewExecutorOutput(nil, nil, nil, nil, err)
 		})
 	pgb.planGraph.CreatePrimitiveNode(pr)
@@ -238,12 +240,12 @@ func (pgb *standardPlanGraphBuilder) handleDescribe(pbi planbuilderinput.PlanBui
 	if err != nil {
 		return err
 	}
-	var extended bool = strings.TrimSpace(strings.ToUpper(node.Extended)) == "EXTENDED"
-	var full bool = strings.TrimSpace(strings.ToUpper(node.Full)) == "FULL"
+	var extended bool = strings.TrimSpace(strings.ToUpper(node.Extended)) == "EXTENDED" //nolint:revive // acceptable
+	var full bool = strings.TrimSpace(strings.ToUpper(node.Full)) == "FULL"             //nolint:revive // acceptable
 	_, isView := md.GetHeirarchyObjects().GetHeirarchyIds().GetView()
 	if isView {
-		stmtCtx, ok := primitiveGenerator.GetPrimitiveComposer().GetIndirectDescribeSelectCtx()
-		if !ok || stmtCtx == nil {
+		stmtCtx, sOk := primitiveGenerator.GetPrimitiveComposer().GetIndirectDescribeSelectCtx()
+		if !sOk || stmtCtx == nil {
 			return fmt.Errorf("cannot describe view without context")
 		}
 		nonControlColummns := stmtCtx.GetNonControlColumns()
@@ -285,13 +287,16 @@ func (pgb *standardPlanGraphBuilder) handleDDL(pbi planbuilderinput.PlanBuilderI
 	return nil
 }
 
-func (pgb *standardPlanGraphBuilder) handleSelect(pbi planbuilderinput.PlanBuilderInput) (primitivegraph.PrimitiveNode, primitivegraph.PrimitiveNode, error) {
+//nolint:gocognit,unparam // acceptable
+func (pgb *standardPlanGraphBuilder) handleSelect(
+	pbi planbuilderinput.PlanBuilderInput,
+) (primitivegraph.PrimitiveNode, primitivegraph.PrimitiveNode, error) {
 	handlerCtx := pbi.GetHandlerCtx()
 	node, ok := pbi.GetSelect()
 	if !ok {
 		return nil, nil, fmt.Errorf("could not cast statement of type '%T' to required Select", pbi.GetStatement())
 	}
-	if !handlerCtx.GetRuntimeContext().TestWithoutApiCalls {
+	if !handlerCtx.GetRuntimeContext().TestWithoutAPICalls { //nolint:nestif // acceptable
 		primitiveGenerator := pgb.rootPrimitiveGenerator
 		err := primitiveGenerator.AnalyzeStatement(pbi)
 		if err != nil {
@@ -315,8 +320,8 @@ func (pgb *standardPlanGraphBuilder) handleSelect(pbi planbuilderinput.PlanBuild
 				col := primitiveGenerator.GetPrimitiveComposer().GetValOnlyCol(idx)
 				colz = append(colz, col)
 			}
-			pr, err := primitivebuilder.NewLocalSelectExecutor(handlerCtx, node, util.DefaultRowSort, colz)
-			if err != nil {
+			pr, prErr := primitivebuilder.NewLocalSelectExecutor(handlerCtx, node, util.DefaultRowSort, colz)
+			if prErr != nil {
 				return nil, nil, err
 			}
 			rv := pgb.planGraph.CreatePrimitiveNode(pr)
@@ -338,7 +343,8 @@ func (pgb *standardPlanGraphBuilder) handleSelect(pbi planbuilderinput.PlanBuild
 	return rv, rv, nil
 }
 
-func (pgb *standardPlanGraphBuilder) handleUnion(pbi planbuilderinput.PlanBuilderInput) (primitivegraph.PrimitiveNode, primitivegraph.PrimitiveNode, error) {
+func (pgb *standardPlanGraphBuilder) handleUnion(
+	pbi planbuilderinput.PlanBuilderInput) (primitivegraph.PrimitiveNode, primitivegraph.PrimitiveNode, error) {
 	// handlerCtx := pbi.GetHandlerCtx()
 	_, ok := pbi.GetUnion()
 	if !ok {
@@ -373,7 +379,7 @@ func (pgb *standardPlanGraphBuilder) handleDelete(pbi planbuilderinput.PlanBuild
 	if !ok {
 		return fmt.Errorf("could not cast node of type '%T' to required Delete", pbi.GetStatement())
 	}
-	if !handlerCtx.GetRuntimeContext().TestWithoutApiCalls {
+	if !handlerCtx.GetRuntimeContext().TestWithoutAPICalls {
 		primitiveGenerator := pgb.rootPrimitiveGenerator
 		err := primitiveGenerator.AnalyzeStatement(pbi)
 		if err != nil {
@@ -396,14 +402,16 @@ func (pgb *standardPlanGraphBuilder) handleDelete(pbi planbuilderinput.PlanBuild
 			return err
 		}
 		return nil
-	} else {
-		pr := primitive.NewHTTPRestPrimitive(nil, nil, nil, nil)
-		pgb.planGraph.CreatePrimitiveNode(pr)
-		return nil
 	}
+	pr := primitive.NewHTTPRestPrimitive(nil, nil, nil, nil)
+	pgb.planGraph.CreatePrimitiveNode(pr)
+	return nil
 }
 
-func (pgb *standardPlanGraphBuilder) handleRegistry(pbi planbuilderinput.PlanBuilderInput) error {
+//nolint:gocognit // acceptable
+func (pgb *standardPlanGraphBuilder) handleRegistry(
+	pbi planbuilderinput.PlanBuilderInput,
+) error {
 	handlerCtx := pbi.GetHandlerCtx()
 	node, ok := pbi.GetRegistry()
 	if !ok {
@@ -422,7 +430,6 @@ func (pgb *standardPlanGraphBuilder) handleRegistry(pbi planbuilderinput.PlanBui
 		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			switch at := strings.ToLower(node.ActionType); at {
 			case "pull":
-				var err error
 				providerVersion := node.ProviderVersion
 				if providerVersion == "" {
 					providerVersion, err = reg.GetLatestPublishedVersion(node.ProviderId)
@@ -434,7 +441,13 @@ func (pgb *standardPlanGraphBuilder) handleRegistry(pbi planbuilderinput.PlanBui
 				if err != nil {
 					return internaldto.NewErroneousExecutorOutput(err)
 				}
-				return util.PrepareResultSet(internaldto.NewPrepareResultSetPlusRawDTO(nil, nil, nil, nil, nil, &internaldto.BackendMessages{WorkingMessages: []string{fmt.Sprintf("%s provider, version '%s' successfully installed", node.ProviderId, providerVersion)}}, nil))
+				return util.PrepareResultSet(
+					internaldto.NewPrepareResultSetPlusRawDTO(
+						nil, nil, nil, nil, nil,
+						&internaldto.BackendMessages{
+							WorkingMessages: []string{fmt.Sprintf(
+								"%s provider, version '%s' successfully installed",
+								node.ProviderId, providerVersion)}}, nil))
 			case "list":
 				var colz []string
 				var provz map[string]openapistackql.ProviderDescription
@@ -446,7 +459,7 @@ func (pgb *standardPlanGraphBuilder) handleRegistry(pbi planbuilderinput.PlanBui
 					}
 					colz = []string{"provider", "version"}
 					var dks []string
-					for k, _ := range provz {
+					for k := range provz {
 						dks = append(dks, k)
 					}
 					sort.Strings(dks)
@@ -506,7 +519,7 @@ func (pgb *standardPlanGraphBuilder) handlePurge(pbi planbuilderinput.PlanBuilde
 						nil,
 						nil,
 						&internaldto.BackendMessages{
-							WorkingMessages: []string{fmt.Sprintf("Global PURGE successfully completed")}},
+							WorkingMessages: []string{"Global PURGE successfully completed"}},
 						nil,
 					),
 				)
@@ -576,13 +589,14 @@ func (pgb *standardPlanGraphBuilder) handleNativeQuery(pbi planbuilderinput.Plan
 	return nil
 }
 
+//nolint:gocognit // acceptable complexity
 func (pgb *standardPlanGraphBuilder) handleInsert(pbi planbuilderinput.PlanBuilderInput) error {
 	handlerCtx := pbi.GetHandlerCtx()
 	node, ok := pbi.GetInsert()
 	if !ok {
 		return fmt.Errorf("could not cast statement of type '%T' to required Insert", pbi.GetStatement())
 	}
-	if !handlerCtx.GetRuntimeContext().TestWithoutApiCalls {
+	if !handlerCtx.GetRuntimeContext().TestWithoutAPICalls { //nolint:nestif // acceptable complexity
 		primitiveGenerator := primitivegenerator.NewRootPrimitiveGenerator(node, handlerCtx, pgb.planGraph)
 		err := primitiveGenerator.AnalyzeInsert(pbi)
 		if err != nil {
@@ -598,9 +612,18 @@ func (pgb *standardPlanGraphBuilder) handleInsert(pbi planbuilderinput.PlanBuild
 		if nonValCols > 0 {
 			switch rowsNode := node.Rows.(type) {
 			case *sqlparser.Select:
-				selPbi, err := planbuilderinput.NewPlanBuilderInput(pbi.GetAnnotatedAST(), pbi.GetHandlerCtx(), rowsNode, pbi.GetTableExprs(), pbi.GetAssignedAliasedColumns(), pbi.GetAliasedTables(), pbi.GetColRefs(), pbi.GetPlaceholderParams(), pbi.GetTxnCtrlCtrs())
-				if err != nil {
-					return err
+				selPbi, selErr := planbuilderinput.NewPlanBuilderInput(
+					pbi.GetAnnotatedAST(),
+					pbi.GetHandlerCtx(),
+					rowsNode,
+					pbi.GetTableExprs(),
+					pbi.GetAssignedAliasedColumns(),
+					pbi.GetAliasedTables(),
+					pbi.GetColRefs(),
+					pbi.GetPlaceholderParams(),
+					pbi.GetTxnCtrlCtrs())
+				if selErr != nil {
+					return selErr
 				}
 				sr := routeanalysis.NewSelectRoutePass(rowsNode, selPbi, nil)
 				err = sr.RoutePass()
@@ -643,11 +666,9 @@ func (pgb *standardPlanGraphBuilder) handleInsert(pbi planbuilderinput.PlanBuild
 			return err
 		}
 		return nil
-	} else {
-		pr := primitive.NewHTTPRestPrimitive(nil, nil, nil, nil)
-		pgb.planGraph.CreatePrimitiveNode(pr)
-		return nil
 	}
+	pr := primitive.NewHTTPRestPrimitive(nil, nil, nil, nil)
+	pgb.planGraph.CreatePrimitiveNode(pr)
 	return nil
 }
 
@@ -657,7 +678,7 @@ func (pgb *standardPlanGraphBuilder) handleUpdate(pbi planbuilderinput.PlanBuild
 	if !ok {
 		return fmt.Errorf("could not cast statement of type '%T' to required Insert", pbi.GetStatement())
 	}
-	if !handlerCtx.GetRuntimeContext().TestWithoutApiCalls {
+	if !handlerCtx.GetRuntimeContext().TestWithoutAPICalls { //nolint:nestif // acceptable complexity
 		primitiveGenerator := pgb.rootPrimitiveGenerator
 		err := primitiveGenerator.AnalyzeUpdate(pbi)
 		if err != nil {
@@ -673,14 +694,13 @@ func (pgb *standardPlanGraphBuilder) handleUpdate(pbi planbuilderinput.PlanBuild
 		if len(nonValCols) > 0 {
 			// TODO: support dynamic content
 			return fmt.Errorf("update does not currently support dynamic content")
-		} else {
-			selectPrimitive, err = primitivebuilder.NewUpdateableValsPrimitive(handlerCtx, insertValOnlyRows)
-			if err != nil {
-				return err
-			}
-			sn := pgb.planGraph.CreatePrimitiveNode(selectPrimitive)
-			selectPrimitiveNode = sn
 		}
+		selectPrimitive, err = primitivebuilder.NewUpdateableValsPrimitive(handlerCtx, insertValOnlyRows)
+		if err != nil {
+			return err
+		}
+		sn := pgb.planGraph.CreatePrimitiveNode(selectPrimitive)
+		selectPrimitiveNode = sn
 		if selectPrimitiveNode == nil {
 			return fmt.Errorf("nil selection for insert -- cannot work")
 		}
@@ -702,11 +722,10 @@ func (pgb *standardPlanGraphBuilder) handleUpdate(pbi planbuilderinput.PlanBuild
 			return err
 		}
 		return nil
-	} else {
-		pr := primitive.NewHTTPRestPrimitive(nil, nil, nil, nil)
-		pgb.planGraph.CreatePrimitiveNode(pr)
-		return nil
 	}
+	pr := primitive.NewHTTPRestPrimitive(nil, nil, nil, nil)
+	pgb.planGraph.CreatePrimitiveNode(pr)
+	return nil
 }
 
 func (pgb *standardPlanGraphBuilder) handleExec(pbi planbuilderinput.PlanBuilderInput) error {
@@ -715,7 +734,7 @@ func (pgb *standardPlanGraphBuilder) handleExec(pbi planbuilderinput.PlanBuilder
 	if !ok {
 		return fmt.Errorf("could not cast node of type '%T' to required Exec", pbi.GetStatement())
 	}
-	if !handlerCtx.GetRuntimeContext().TestWithoutApiCalls {
+	if !handlerCtx.GetRuntimeContext().TestWithoutAPICalls { //nolint:nestif // acceptable complexity
 		primitiveGenerator := pgb.rootPrimitiveGenerator
 		err := primitiveGenerator.AnalyzeStatement(pbi)
 		if err != nil {
@@ -723,7 +742,7 @@ func (pgb *standardPlanGraphBuilder) handleExec(pbi planbuilderinput.PlanBuilder
 		}
 		//
 		if primitiveGenerator.IsShowResults() && primitiveGenerator.GetPrimitiveComposer().GetBuilder() != nil {
-			err := primitiveGenerator.GetPrimitiveComposer().GetBuilder().Build()
+			err = primitiveGenerator.GetPrimitiveComposer().GetBuilder().Build()
 			if err != nil {
 				return err
 			}
@@ -770,7 +789,7 @@ func (pgb *standardPlanGraphBuilder) handleShow(pbi planbuilderinput.PlanBuilder
 		builder := primitiveGenerator.GetPrimitiveComposer().GetBuilder()
 		_, isNativeSelect := builder.(*primitivebuilder.NativeSelect)
 		if isNativeSelect {
-			err := builder.Build()
+			err = builder.Build()
 			return err
 		}
 		return fmt.Errorf("improper usage of 'show transaction isolation level'")
@@ -780,10 +799,7 @@ func (pgb *standardPlanGraphBuilder) handleShow(pbi planbuilderinput.PlanBuilder
 			return err
 		}
 	case "METHODS":
-		tbl, err = primitiveGenerator.GetPrimitiveComposer().GetTable(node.OnTable)
-		if err != nil {
-			// TODO: fix this for readability
-		}
+		tbl, err = primitiveGenerator.GetPrimitiveComposer().GetTable(node.OnTable) //nolint:ineffassign,staticcheck,lll // TODO: fix this
 	}
 	prov := primitiveGenerator.GetPrimitiveComposer().GetProvider()
 	pr := primitive.NewMetaDataPrimitive(
@@ -837,7 +853,12 @@ func (pgb *standardPlanGraphBuilder) handleUse(pbi planbuilderinput.PlanBuilderI
 	return nil
 }
 
-func createErroneousPlan(handlerCtx handler.HandlerContext, qPlan *plan.Plan, rowSort func(map[string]map[string]interface{}) []string, err error) (*plan.Plan, error) {
+//nolint:unparam // TODO: fix this
+func createErroneousPlan(
+	handlerCtx handler.HandlerContext,
+	qPlan *plan.Plan,
+	rowSort func(map[string]map[string]interface{}) []string,
+	err error) (*plan.Plan, error) {
 	qPlan.Instructions = primitive.NewLocalPrimitive(func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 		return util.PrepareResultSet(
 			internaldto.PrepareResultSetDTO{

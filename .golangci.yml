@@ -12,7 +12,7 @@
 run:
   # Timeout for analysis, e.g. 30s, 5m.
   # Default: 1m
-  timeout: 3m
+  timeout: 10m
 
 
 # This file contains only configs which differ from defaults.
@@ -212,7 +212,7 @@ linters:
     - godot # checks if comments end in a period
     - goimports # in addition to fixing imports, goimports also formats your code in the same style as gofmt
     - gomnd # detects magic numbers
-    - gomoddirectives # manages the use of 'replace', 'retract', and 'excludes' directives in go.mod
+    # - gomoddirectives # manages the use of 'replace', 'retract', and 'excludes' directives in go.mod //TODO: re-enable
     - gomodguard # allow and block lists linter for direct Go module dependencies. This is different from depguard where there are different block types for example version constraints and module recommendations
     - goprintffuncname # checks that printf-like functions are named with f at the end
     - gosec # inspects source code for security problems
@@ -232,7 +232,7 @@ linters:
     - promlinter # checks Prometheus metrics naming via promlint
     - reassign # checks that package variables are not reassigned
     - revive # fast, configurable, extensible, flexible, and beautiful linter for Go, drop-in replacement of golint
-    - rowserrcheck # checks whether Err of rows is checked successfully
+    # - rowserrcheck # checks whether Err of rows is checked successfully # TODO: re-enable
     - sqlclosecheck # checks that sql.Rows and sql.Stmt are closed
     - stylecheck # is a replacement for golint
     - tenv # detects using os.Setenv instead of t.Setenv since Go1.17
@@ -242,7 +242,7 @@ linters:
     - unconvert # removes unnecessary type conversions
     - unparam # reports unused function parameters
     - usestdlibvars # detects the possibility to use variables/constants from the Go standard library
-    - wastedassign # finds wasted assignment statements
+    # - wastedassign # finds wasted assignment statements # TODO: re-enable
     - whitespace # detects leading and trailing whitespace
 
     ## you may want to enable

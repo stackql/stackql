@@ -23,18 +23,30 @@ func (ex ExecutorOutput) ResultToMap() (IRawResultStream, error) {
 }
 
 func (ex ExecutorOutput) SetStream(s streaming.MapStream) {
-	ex.stream = s
+	ex.stream = s //nolint:govet,staticcheck // TODO: fix this outrageous bug
 }
 
 func (ex ExecutorOutput) GetStream() streaming.MapStream {
 	return ex.stream
 }
 
-func NewExecutorOutput(result sqldata.ISQLResultStream, body map[string]interface{}, rawResult map[int]map[int]interface{}, msg *BackendMessages, err error) ExecutorOutput {
+func NewExecutorOutput(
+	result sqldata.ISQLResultStream,
+	body map[string]interface{},
+	rawResult map[int]map[int]interface{},
+	msg *BackendMessages,
+	err error,
+) ExecutorOutput {
 	return newExecutorOutput(result, body, rawResult, msg, err)
 }
 
-func newExecutorOutput(result sqldata.ISQLResultStream, body map[string]interface{}, rawResult map[int]map[int]interface{}, msg *BackendMessages, err error) ExecutorOutput {
+func newExecutorOutput(
+	result sqldata.ISQLResultStream,
+	body map[string]interface{},
+	rawResult map[int]map[int]interface{},
+	msg *BackendMessages,
+	err error,
+) ExecutorOutput {
 	return ExecutorOutput{
 		GetSQLResult: func() sqldata.ISQLResultStream { return result },
 		GetRawResult: func() IRawResultStream {

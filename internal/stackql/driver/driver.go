@@ -34,19 +34,14 @@ func (dr *basicStackQLDriver) ProcessDryRun(handlerCtx handler.HandlerContext) {
 	}
 	logging.GetLogger().Debugln("dryrun query underway...")
 	response := util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, resultMap, nil, nil, nil, nil))
-	responsehandler.HandleResponse(handlerCtx, response)
-}
-
-func throwErr(err error, handlerCtx handler.HandlerContext) {
-	response := internaldto.NewExecutorOutput(nil, nil, nil, nil, err)
-	responsehandler.HandleResponse(handlerCtx, response)
+	responsehandler.HandleResponse(handlerCtx, response) //nolint:errcheck // TODO: investigate
 }
 
 func (dr *basicStackQLDriver) ProcessQuery(handlerCtx handler.HandlerContext) {
 	responses, ok := processQueryOrQueries(handlerCtx)
 	if ok {
 		for _, r := range responses {
-			responsehandler.HandleResponse(handlerCtx, r)
+			responsehandler.HandleResponse(handlerCtx, r) //nolint:errcheck // TODO: investigate
 		}
 	}
 }
@@ -55,12 +50,12 @@ type basicStackQLDriver struct {
 	handlerCtx handler.HandlerContext
 }
 
-func (sbs *basicStackQLDriver) HandleSimpleQuery(ctx context.Context, query string) (sqldata.ISQLResultStream, error) {
-	sbs.handlerCtx.SetRawQuery(query)
+func (dr *basicStackQLDriver) HandleSimpleQuery(ctx context.Context, query string) (sqldata.ISQLResultStream, error) {
+	dr.handlerCtx.SetRawQuery(query)
 	// if strings.Count(query, ";") > 1 {
 	// 	return nil, fmt.Errorf("only support single queries in server mode at this time")
 	// }
-	res, ok := processQueryOrQueries(sbs.handlerCtx)
+	res, ok := processQueryOrQueries(dr.handlerCtx)
 	if !ok {
 		return nil, fmt.Errorf("no SQLresults available")
 	}
@@ -71,7 +66,7 @@ func (sbs *basicStackQLDriver) HandleSimpleQuery(ctx context.Context, query stri
 	return r.GetSQLResult(), nil
 }
 
-func (sb *basicStackQLDriver) SplitCompoundQuery(s string) ([]string, error) {
+func (dr *basicStackQLDriver) SplitCompoundQuery(s string) ([]string, error) {
 	res := []string{}
 	var beg int
 	var inDoubleQuotes bool

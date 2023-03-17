@@ -77,7 +77,11 @@ func (tpc *standardTableParameterCoupling) GetAllParameters() []ParameterMapKeyV
 	return tpc.paramMap.GetAll()
 }
 
-func (tpc *standardTableParameterCoupling) Add(col ColumnarReference, val ParameterMetadata, paramType ParamSourceType) error {
+func (tpc *standardTableParameterCoupling) Add(
+	col ColumnarReference,
+	val ParameterMetadata,
+	paramType ParamSourceType,
+) error {
 	colTyped, err := NewColumnarReference(col.Value(), paramType)
 	if err != nil {
 		return err
@@ -123,7 +127,7 @@ func (tpc *standardTableParameterCoupling) GetOnCoupling() TableParameterCouplin
 	m := tpc.paramMap.GetMap()
 	for k, v := range m {
 		if k.SourceType() == JoinOnParam {
-			retVal.Add(k, v, k.SourceType())
+			retVal.Add(k, v, k.SourceType()) //nolint:errcheck // TODO: review
 		}
 	}
 	return retVal
@@ -134,7 +138,7 @@ func (tpc *standardTableParameterCoupling) GetNotOnCoupling() TableParameterCoup
 	m := tpc.paramMap.GetMap()
 	for k, v := range m {
 		if k.SourceType() != JoinOnParam {
-			retVal.Add(k, v, k.SourceType())
+			retVal.Add(k, v, k.SourceType()) //nolint:errcheck // TODO: review
 		}
 	}
 	return retVal
@@ -144,11 +148,12 @@ func (tpc *standardTableParameterCoupling) clone() TableParameterCoupling {
 	retVal := NewTableParameterCoupling()
 	m := tpc.paramMap.GetMap()
 	for k, v := range m {
-		retVal.Add(k, v, k.SourceType())
+		retVal.Add(k, v, k.SourceType()) //nolint:errcheck // TODO: review
 	}
 	return retVal
 }
 
+//nolint:gocritic // TODO: review
 func (tpc *standardTableParameterCoupling) ReconstituteConsumedParams(
 	returnedMap map[string]interface{},
 ) (TableParameterCoupling, error) {
@@ -172,7 +177,6 @@ func (tpc *standardTableParameterCoupling) ReconstituteConsumedParams(
 				return nil, fmt.Errorf("cannot process consumed params: attempt to delete non existing key")
 			}
 		}
-
 	}
 	return retVal, nil
 }

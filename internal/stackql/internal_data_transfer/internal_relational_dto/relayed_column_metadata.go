@@ -1,4 +1,4 @@
-package internal_relational_dto
+package internal_relational_dto //nolint:revive,stylecheck // package name is helpful
 
 import (
 	"reflect"

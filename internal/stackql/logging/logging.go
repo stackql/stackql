@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	logger *logrus.Logger
+	logger *logrus.Logger //nolint:gochecknoglobals // This is convenient as a global variable
 )
 
 func SetLogger(logLevelStr string) {

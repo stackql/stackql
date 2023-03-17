@@ -34,6 +34,7 @@ import (
 	lrucache "github.com/stackql/stackql-parser/go/cache"
 )
 
+//nolint:revive,gochecknoglobals // explicit preferred
 var (
 	BuildMajorVersion   string = ""
 	BuildMinorVersion   string = ""
@@ -45,18 +46,20 @@ var (
 )
 
 const (
-	defaultRegistryUrlString string = "https://registry.stackql.app/providers"
+	defaultRegistryURLString string = "https://registry.stackql.app/providers"
 )
 
-var SemVersion string = fmt.Sprintf("%s.%s.%s", BuildMajorVersion, BuildMinorVersion, BuildPatchVersion)
-
+//nolint:revive,gochecknoglobals // global vars are a pattern for this lib
 var (
 	runtimeCtx      dto.RuntimeCtx
 	queryCache      *lrucache.LRUCache
-	replicateCtrMgr bool = false
+	SemVersion      string = fmt.Sprintf("%s.%s.%s", BuildMajorVersion, BuildMinorVersion, BuildPatchVersion)
+	replicateCtrMgr bool   = false //nolint:unused // TODO: investigate and test then remove if possible
 )
 
-// rootCmd represents the base command when called without any subcommands
+// rootCmd represents the base command when called without any subcommands.
+//
+//nolint:gochecknoglobals // global vars are a pattern for this lib
 var rootCmd = &cobra.Command{
 	Use:     "stackql",
 	Version: SemVersion,
@@ -75,7 +78,7 @@ WHERE project = 'my-project' AND zone = 'us-west1-b';`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// in the root command is executed with no arguments, print the help message
 		usagemsg := cmd.Long + "\n\n" + cmd.UsageString()
-		fmt.Println(usagemsg)
+		fmt.Println(usagemsg) //nolint:forbidigo // legacy
 	},
 }
 
@@ -85,6 +88,7 @@ func Execute() error {
 	return rootCmd.Execute()
 }
 
+//nolint:lll,funlen,gochecknoinits // init is a pattern for this lib
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.SetVersionTemplate("stackql v{{.Version}} " + BuildPlatform + " (" + BuildShortCommitSHA + ")\nBuildDate: " + BuildDate + "\nhttps://stackql.io\n")
@@ -100,22 +104,22 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.NamespaceCfgRaw, dto.NamespaceCfgRawKey, "{}", "JSON / YAML string representing namespaces for cacheing, views etc")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.StoreTxnCfgRaw, dto.StoreTxnCfgRawKey, "{}", "JSON / YAML string representing Txn store config")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.GCCfgRaw, dto.GCCfgRawKey, "{}", "JSON / YAML string representing GC config")
-	rootCmd.PersistentFlags().IntVar(&runtimeCtx.APIRequestTimeout, dto.APIRequestTimeoutKey, 45, "API request timeout in seconds, 0 for no timeout.")
+	rootCmd.PersistentFlags().IntVar(&runtimeCtx.APIRequestTimeout, dto.APIRequestTimeoutKey, 45, "API request timeout in seconds, 0 for no timeout.") //nolint:gomnd // TODO: investigate
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.ColorScheme, dto.ColorSchemeKey, config.GetDefaultColorScheme(), fmt.Sprintf("Color scheme, must be one of {'%s', '%s', '%s'}", dto.DarkColorScheme, dto.LightColorScheme, dto.NullColorScheme))
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.CABundle, dto.CABundleKey, "", "Path to CA bundle, if not specified then system defaults used.")
 	rootCmd.PersistentFlags().BoolVar(&runtimeCtx.AllowInsecure, dto.AllowInsecureKey, false, "Allow trust of insecure certificates (not recommended)")
-	rootCmd.PersistentFlags().StringVar(&runtimeCtx.ConfigFilePath, dto.ConfigFilePathKey, config.GetDefaultConfigFilePath(), fmt.Sprintf("Config file full path; defaults to current dir"))
+	rootCmd.PersistentFlags().StringVar(&runtimeCtx.ConfigFilePath, dto.ConfigFilePathKey, config.GetDefaultConfigFilePath(), "Config file full path; defaults to current dir")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.ApplicationFilesRootPath, dto.ApplicationFilesRootPathKey, config.GetDefaultApplicationFilesRoot(), "Application config and cache root path")
 	rootCmd.PersistentFlags().Uint32Var(&runtimeCtx.ApplicationFilesRootPathMode, dto.ApplicationFilesRootPathModeKey, config.GetDefaultProviderCacheDirFileMode(), "Application config and cache file mode")
-	rootCmd.PersistentFlags().StringVar(&runtimeCtx.ViperCfgFileName, dto.ViperCfgFileNameKey, config.GetDefaultViperConfigFileName(), fmt.Sprintf("Config filename"))
+	rootCmd.PersistentFlags().StringVar(&runtimeCtx.ViperCfgFileName, dto.ViperCfgFileNameKey, config.GetDefaultViperConfigFileName(), "Config filename")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.AuthRaw, dto.AuthCtxKey, "", `auth contexts keyvals in json form, eg: '{ "google": { "credentialsfilepath": "/path/to/google/sevice/account/key.json",  "type": "service_account" }, "okta": { "credentialsenvvar": "OKTA_SECRET_KEY",  "type": "api_key" } }'`)
-	rootCmd.PersistentFlags().StringVar(&runtimeCtx.RegistryRaw, dto.RegistryRawKey, fmt.Sprintf(`{ "url": "%s", "localDocRoot": "%s" }`, defaultRegistryUrlString, strings.ReplaceAll(path.Join(runtimeCtx.ApplicationFilesRootPath), `\`, `\\`)), fmt.Sprintf(`openapi registry context keyvals in json form, eg: '{ "url": "%s" }'.`, defaultRegistryUrlString))
+	rootCmd.PersistentFlags().StringVar(&runtimeCtx.RegistryRaw, dto.RegistryRawKey, fmt.Sprintf(`{ "url": "%s", "localDocRoot": "%s" }`, defaultRegistryURLString, strings.ReplaceAll(path.Join(runtimeCtx.ApplicationFilesRootPath), `\`, `\\`)), fmt.Sprintf(`openapi registry context keyvals in json form, eg: '{ "url": "%s" }'.`, defaultRegistryURLString))
 	rootCmd.PersistentFlags().BoolVar(&runtimeCtx.HTTPLogEnabled, dto.HTTPLogEnabledKey, false, "Display http request info in terminal")
 	rootCmd.PersistentFlags().IntVar(&runtimeCtx.HTTPMaxResults, dto.HTTPMaxResultsKey, -1, "Max results per http request, any number <=0 results in no limitation")
-	rootCmd.PersistentFlags().IntVar(&runtimeCtx.HTTPPageLimit, dto.HTTPPAgeLimitKey, 20, "Max pages of results that will be returned per resource, any number <=0 results in no limitation")
+	rootCmd.PersistentFlags().IntVar(&runtimeCtx.HTTPPageLimit, dto.HTTPPAgeLimitKey, 20, "Max pages of results that will be returned per resource, any number <=0 results in no limitation") //nolint:gomnd // TODO: investigate
 	rootCmd.PersistentFlags().IntVar(&runtimeCtx.HTTPProxyPort, dto.HTTPProxyPortKey, -1, "http proxy port, any number <=0 will result in the default port for a given scheme (eg: http -> 80)")
 	rootCmd.PersistentFlags().IntVar(&runtimeCtx.ExecutionConcurrencyLimit, dto.ExecutionConcurrencyLimitKey, 1, "concurrency limit for query execution")
-	rootCmd.PersistentFlags().IntVar(&runtimeCtx.IndirectDepthMax, dto.IndirectDepthMaxKey, 5, "max depth for indirect queries: views and subqueries")
+	rootCmd.PersistentFlags().IntVar(&runtimeCtx.IndirectDepthMax, dto.IndirectDepthMaxKey, 5, "max depth for indirect queries: views and subqueries") //nolint:gomnd // TODO: investigate
 	rootCmd.PersistentFlags().IntVar(&runtimeCtx.DataflowDependencyMax, dto.DataflowDependencyMaxKey, 1, "max dataflow dependency depth for a given query")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.HTTPProxyHost, dto.HTTPProxyHostKey, "", "http proxy host, empty means no proxy")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.HTTPProxyScheme, dto.HTTPProxySchemeKey, "http", "http proxy scheme, eg 'http'")
@@ -132,21 +136,21 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&runtimeCtx.TemplateCtxFilePath, dto.TemplateCtxFilePathKey, "q", "", "Context file for templating")
 	rootCmd.PersistentFlags().IntVar(&runtimeCtx.QueryCacheSize, dto.QueryCacheSizeKey, constants.DefaultQueryCacheSize, "Size in number of entries of LRU cache for query plans")
 	rootCmd.PersistentFlags().StringVarP(&runtimeCtx.Delimiter, dto.DelimiterKey, "d", ",", "Delimiter for csv output;  single character only, ignored for all non-csv output")
-	rootCmd.PersistentFlags().IntVar(&runtimeCtx.CacheKeyCount, dto.CacheKeyCountKey, 100, "Cache initial key count")
-	rootCmd.PersistentFlags().IntVar(&runtimeCtx.CacheTTL, dto.CacheTTLKey, 3600, "TTL for cached metadata documents, in seconds")
-	rootCmd.PersistentFlags().BoolVar(&runtimeCtx.TestWithoutApiCalls, dto.TestWithoutApiCallsKey, false, "Flag to omit api calls for testing")
+	rootCmd.PersistentFlags().IntVar(&runtimeCtx.CacheKeyCount, dto.CacheKeyCountKey, 100, "Cache initial key count")              //nolint:gomnd // TODO: investigate
+	rootCmd.PersistentFlags().IntVar(&runtimeCtx.CacheTTL, dto.CacheTTLKey, 3600, "TTL for cached metadata documents, in seconds") //nolint:gomnd // TODO: investigate
+	rootCmd.PersistentFlags().BoolVar(&runtimeCtx.TestWithoutAPICalls, dto.TestWithoutAPICallsKey, false, "Flag to omit api calls for testing")
 	rootCmd.PersistentFlags().BoolVar(&runtimeCtx.UseNonPreferredAPIs, dto.UseNonPreferredAPIsKEy, false, "Flag to enable non-preferred APIs")
-	rootCmd.PersistentFlags().StringVar(&runtimeCtx.LogLevelStr, dto.LogLevelStrKey, config.GetDefaultLogLevelString(), fmt.Sprintf(`Log level`))
-	rootCmd.PersistentFlags().StringVar(&runtimeCtx.ErrorPresentation, dto.ErrorPresentationKey, config.GetDefaultErrorPresentationString(), fmt.Sprintf(`Error presentation, options are: {"stderr", "record"}`))
+	rootCmd.PersistentFlags().StringVar(&runtimeCtx.LogLevelStr, dto.LogLevelStrKey, config.GetDefaultLogLevelString(), "Log level")
+	rootCmd.PersistentFlags().StringVar(&runtimeCtx.ErrorPresentation, dto.ErrorPresentationKey, config.GetDefaultErrorPresentationString(), `Error presentation, options are: {"stderr", "record"}`)
 
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.PGSrvAddress, dto.PgSrvAddressKey, "0.0.0.0", "server address, for server mode only")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.PGSrvLogLevel, dto.PgSrvLogLevelKey, "WARN", "Log level, for server mode only")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.PGSrvRawTLSCfg, dto.PgSrvRawTLSCfgKey, "", "tls config for server, for server mode only")
-	rootCmd.PersistentFlags().IntVar(&runtimeCtx.PGSrvPort, dto.PgSrvPortKey, 5466, "TCP server port, for server mode only")
+	rootCmd.PersistentFlags().IntVar(&runtimeCtx.PGSrvPort, dto.PgSrvPortKey, 5466, "TCP server port, for server mode only") //nolint:gomnd // TODO: investigate
 
-	rootCmd.PersistentFlags().MarkHidden(dto.TestWithoutApiCallsKey)
-	rootCmd.PersistentFlags().MarkHidden(dto.ViperCfgFileNameKey)
-	rootCmd.PersistentFlags().MarkHidden(dto.ErrorPresentationKey)
+	rootCmd.PersistentFlags().MarkHidden(dto.TestWithoutAPICallsKey) //nolint:errcheck // TODO: investigate
+	rootCmd.PersistentFlags().MarkHidden(dto.ViperCfgFileNameKey)    //nolint:errcheck // TODO: investigate
+	rootCmd.PersistentFlags().MarkHidden(dto.ErrorPresentationKey)   //nolint:errcheck // TODO: investigate
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -159,7 +163,6 @@ func init() {
 	rootCmd.AddCommand(shellCmd)
 	rootCmd.AddCommand(registryCmd)
 	rootCmd.AddCommand(srvCmd)
-
 }
 
 func mergeConfigFromFile(runtimeCtx *dto.RuntimeCtx, flagSet pflag.FlagSet) {
@@ -168,7 +171,7 @@ func mergeConfigFromFile(runtimeCtx *dto.RuntimeCtx, flagSet pflag.FlagSet) {
 		propertiesMap := props.Map()
 		for k, v := range propertiesMap {
 			if flagSet.Lookup(k) != nil && !flagSet.Lookup(k).Changed {
-				runtimeCtx.Set(k, v)
+				runtimeCtx.Set(k, v) //nolint:errcheck // TODO: investigate
 			}
 		}
 	}
@@ -176,13 +179,12 @@ func mergeConfigFromFile(runtimeCtx *dto.RuntimeCtx, flagSet pflag.FlagSet) {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-
 	mergeConfigFromFile(&runtimeCtx, *rootCmd.PersistentFlags())
 
 	logging.SetLogger(runtimeCtx.LogLevelStr)
-	config.CreateDirIfNotExists(runtimeCtx.ApplicationFilesRootPath, os.FileMode(runtimeCtx.ApplicationFilesRootPathMode))
-	config.CreateDirIfNotExists(path.Join(runtimeCtx.ApplicationFilesRootPath, runtimeCtx.ProviderStr), os.FileMode(runtimeCtx.ApplicationFilesRootPathMode))
-	config.CreateDirIfNotExists(config.GetReadlineDirPath(runtimeCtx), os.FileMode(runtimeCtx.ApplicationFilesRootPathMode))
+	config.CreateDirIfNotExists(runtimeCtx.ApplicationFilesRootPath, os.FileMode(runtimeCtx.ApplicationFilesRootPathMode))                                    //nolint:errcheck,lll // TODO: investigate
+	config.CreateDirIfNotExists(path.Join(runtimeCtx.ApplicationFilesRootPath, runtimeCtx.ProviderStr), os.FileMode(runtimeCtx.ApplicationFilesRootPathMode)) //nolint:errcheck,lll // TODO: investigate
+	config.CreateDirIfNotExists(config.GetReadlineDirPath(runtimeCtx), os.FileMode(runtimeCtx.ApplicationFilesRootPathMode))                                  //nolint:errcheck,lll // TODO: investigate
 	viper.SetConfigFile(path.Join(runtimeCtx.ApplicationFilesRootPath, runtimeCtx.ViperCfgFileName))
 	viper.AddConfigPath(runtimeCtx.ApplicationFilesRootPath)
 
@@ -190,6 +192,6 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
+		fmt.Println("Using config file:", viper.ConfigFileUsed()) //nolint:forbidigo // legacy
 	}
 }

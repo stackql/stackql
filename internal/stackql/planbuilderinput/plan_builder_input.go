@@ -61,7 +61,7 @@ type StandardPlanBuilderInput struct {
 	tcc                    internaldto.TxnControlCounters
 	paramRouter            router.ParameterRouter
 	tableRouteVisitor      router.TableRouteAstVisitor
-	onConditionDataFlows   dataflow.DataFlowCollection
+	onConditionDataFlows   dataflow.Collection
 	onConditionsToRewrite  map[*sqlparser.ComparisonExpr]struct{}
 	tccSetAheadOfTime      bool
 }
@@ -148,15 +148,16 @@ func (pbi *StandardPlanBuilderInput) SetIsTccSetAheadOfTime(tccSetAheadOfTime bo
 	pbi.tccSetAheadOfTime = tccSetAheadOfTime
 }
 
-func (pbi *StandardPlanBuilderInput) GetOnConditionDataFlows() (dataflow.DataFlowCollection, bool) {
+func (pbi *StandardPlanBuilderInput) GetOnConditionDataFlows() (dataflow.Collection, bool) {
 	return pbi.onConditionDataFlows, pbi.onConditionDataFlows != nil
 }
 
-func (pbi *StandardPlanBuilderInput) SetOnConditionsToRewrite(onConditionsToRewrite map[*sqlparser.ComparisonExpr]struct{}) {
+func (pbi *StandardPlanBuilderInput) SetOnConditionsToRewrite(
+	onConditionsToRewrite map[*sqlparser.ComparisonExpr]struct{}) {
 	pbi.onConditionsToRewrite = onConditionsToRewrite
 }
 
-func (pbi *StandardPlanBuilderInput) SetOnConditionDataFlows(onConditionDataFlows dataflow.DataFlowCollection) {
+func (pbi *StandardPlanBuilderInput) SetOnConditionDataFlows(onConditionDataFlows dataflow.Collection) {
 	pbi.onConditionDataFlows = onConditionDataFlows
 }
 
@@ -174,7 +175,8 @@ func (pbi *StandardPlanBuilderInput) GetAnnotations() (taxonomy.AnnotationCtxMap
 	return nil, false
 }
 
-func (pbi *StandardPlanBuilderInput) WithTableRouteVisitor(tableRouteVisitor router.TableRouteAstVisitor) PlanBuilderInput {
+func (pbi *StandardPlanBuilderInput) WithTableRouteVisitor(
+	tableRouteVisitor router.TableRouteAstVisitor) PlanBuilderInput {
 	pbi.tableRouteVisitor = tableRouteVisitor
 	return pbi
 }
@@ -183,7 +185,7 @@ func (pbi *StandardPlanBuilderInput) GetRawQuery() string {
 	return pbi.handlerCtx.GetRawQuery()
 }
 
-// router.ParameterRouter
+// router.ParameterRouter.
 func (pbi *StandardPlanBuilderInput) GetParameterRouter() (router.ParameterRouter, bool) {
 	return pbi.paramRouter, true
 }

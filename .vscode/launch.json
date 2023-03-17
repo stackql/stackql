@@ -59,7 +59,9 @@
         "SELECT a.attname, (SELECT s.seqstart FROM pg_catalog.pg_sequence s WHERE s.seqrelid = pg_catalog.pg_get_serial_sequence( a.attrelid::regclass::text, a.attname )::regclass::oid ) as identity_options FROM pg_catalog.pg_attribute a ORDER BY a.attnum ;",
         "SELECT     cons.conname as name,     cons.conkey as key,     a.attnum as col_num,     a.attname as col_name FROM     pg_catalog.pg_constraint cons     join pg_attribute a       on cons.conrelid = a.attrelid AND         a.attnum = ANY(cons.conkey) WHERE     cons.conrelid = '16709' AND     cons.contype = 'u' ;",
         "select * from aws.ec2.instances where region = 'us-east-1';",
-        "insert into aws.ec2.volumes(AvailabilityZone, Size, region, TagSpecification) select 'ap-southeast-1a', JSON(10), 'ap-southeast-1', JSON('[ { \"ResourceType\": \"volume\", \"Tag\": [ { \"Key\": \"stack\", \"Value\": \"production\" }, { \"Key\": \"name\", \"Value\": \"multi-tag-volume\" } ] } ]');"
+        "insert into aws.ec2.volumes(AvailabilityZone, Size, region, TagSpecification) select 'ap-southeast-1a', JSON(10), 'ap-southeast-1', JSON('[ { \"ResourceType\": \"volume\", \"Tag\": [ { \"Key\": \"stack\", \"Value\": \"production\" }, { \"Key\": \"name\", \"Value\": \"multi-tag-volume\" } ] } ]');",
+        "select d1.name as n, d1.id, d2.id as d2_id from google.compute.disks d1 inner join google.compute.disks d2 on d1.id = d2.id where d1.project = 'testing-project' and d1.zone = 'australia-southeast1-b' and d2.project = 'testing-project' and d2.zone = 'australia-southeast1-b' order by d1.name ASC;",
+        "show insert into google.compute.instances_iam_policies;"
       ],
       "default": "show providers;"
     },

@@ -9,7 +9,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/logging"
 )
 
-type DataFlowRelation interface {
+type Relation interface {
 	GetProjection() (string, string, error)
 	GetSelectExpr() (sqlparser.SelectExpr, error)
 	GetColumnDescriptor() (openapistackql.ColumnDescriptor, error)
@@ -26,7 +26,7 @@ func NewStandardDataFlowRelation(
 	comparisonExpr *sqlparser.ComparisonExpr,
 	destColumn *sqlparser.ColName,
 	sourceExpr sqlparser.Expr,
-) DataFlowRelation {
+) Relation {
 	return &standardDataFlowRelation{
 		comparisonExpr: comparisonExpr,
 		destColumn:     destColumn,

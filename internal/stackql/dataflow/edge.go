@@ -6,33 +6,33 @@ import (
 	"gonum.org/v1/gonum/graph"
 )
 
-type DataFlowEdge interface {
+type Edge interface {
 	graph.WeightedEdge
-	AddRelation(DataFlowRelation)
+	AddRelation(Relation)
 	GetColumnDescriptors() ([]openapistackql.ColumnDescriptor, error)
-	GetDest() DataFlowVertex
+	GetDest() Vertex
 	GetProjection() (map[string]string, error)
 	GetSelectExprs() (sqlparser.SelectExprs, error)
-	GetSource() DataFlowVertex
+	GetSource() Vertex
 	IsSQL() bool
 }
 
 type standardDataFlowEdge struct {
-	source, dest DataFlowVertex
-	relations    []DataFlowRelation
+	source, dest Vertex
+	relations    []Relation
 }
 
 func NewStandardDataFlowEdge(
-	source DataFlowVertex,
-	dest DataFlowVertex,
+	source Vertex,
+	dest Vertex,
 	comparisonExpr *sqlparser.ComparisonExpr,
 	sourceExpr sqlparser.Expr,
 	destColumn *sqlparser.ColName,
-) DataFlowEdge {
+) Edge {
 	return &standardDataFlowEdge{
 		source: source,
 		dest:   dest,
-		relations: []DataFlowRelation{
+		relations: []Relation{
 			NewStandardDataFlowRelation(
 				comparisonExpr,
 				destColumn,
@@ -42,7 +42,7 @@ func NewStandardDataFlowEdge(
 	}
 }
 
-func (de *standardDataFlowEdge) AddRelation(rel DataFlowRelation) {
+func (de *standardDataFlowEdge) AddRelation(rel Relation) {
 	de.relations = append(de.relations, rel)
 }
 
@@ -65,7 +65,7 @@ func (de *standardDataFlowEdge) Weight() float64 {
 	return 1.0
 }
 
-func (de *standardDataFlowEdge) GetSource() DataFlowVertex {
+func (de *standardDataFlowEdge) GetSource() Vertex {
 	return de.source
 }
 
@@ -78,13 +78,13 @@ func (de *standardDataFlowEdge) IsSQL() bool {
 	return false
 }
 
-func (de *standardDataFlowEdge) GetDest() DataFlowVertex {
+func (de *standardDataFlowEdge) GetDest() Vertex {
 	return de.dest
 }
 
-func (dv *standardDataFlowEdge) GetProjection() (map[string]string, error) {
+func (de *standardDataFlowEdge) GetProjection() (map[string]string, error) {
 	rv := make(map[string]string)
-	for _, rel := range dv.relations {
+	for _, rel := range de.relations {
 		src, dst, err := rel.GetProjection()
 		if err != nil {
 			return nil, err
@@ -94,9 +94,9 @@ func (dv *standardDataFlowEdge) GetProjection() (map[string]string, error) {
 	return rv, nil
 }
 
-func (dv *standardDataFlowEdge) GetSelectExprs() (sqlparser.SelectExprs, error) {
+func (de *standardDataFlowEdge) GetSelectExprs() (sqlparser.SelectExprs, error) {
 	var rv sqlparser.SelectExprs
-	for _, rel := range dv.relations {
+	for _, rel := range de.relations {
 		selExpr, err := rel.GetSelectExpr()
 		if err != nil {
 			return nil, err
@@ -106,9 +106,9 @@ func (dv *standardDataFlowEdge) GetSelectExprs() (sqlparser.SelectExprs, error) 
 	return rv, nil
 }
 
-func (dv *standardDataFlowEdge) GetColumnDescriptors() ([]openapistackql.ColumnDescriptor, error) {
+func (de *standardDataFlowEdge) GetColumnDescriptors() ([]openapistackql.ColumnDescriptor, error) {
 	var rv []openapistackql.ColumnDescriptor
-	for _, rel := range dv.relations {
+	for _, rel := range de.relations {
 		d, err := rel.GetColumnDescriptor()
 		if err != nil {
 			return nil, err

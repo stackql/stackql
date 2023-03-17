@@ -8,6 +8,10 @@ import (
 	"github.com/stackql/stackql/internal/stackql/constants"
 )
 
+const (
+	funcJSONExtractPostgresArgLen = 2
+)
+
 type ASTFuncRewriter interface {
 	RewriteFunc(funcExpr *sqlparser.FuncExpr) (*sqlparser.FuncExpr, error)
 }
@@ -50,7 +54,7 @@ func (fr *postgresFuncRewriter) applyJSONConvIdempotent(funcArg sqlparser.Select
 
 func (fr *postgresFuncRewriter) rewriteJSONExtract(funcExpr *sqlparser.FuncExpr) (*sqlparser.FuncExpr, error) {
 	funcExpr.Name = sqlparser.NewColIdent(constants.SQLFuncJSONExtractPostgres)
-	if len(funcExpr.Exprs) != 2 {
+	if len(funcExpr.Exprs) != funcJSONExtractPostgresArgLen {
 		return nil, fmt.Errorf("cannot translate 'json_extract' function with arg count = %d", len(funcExpr.Exprs))
 	}
 
@@ -89,6 +93,7 @@ func (fr *postgresFuncRewriter) rewriteJSONExtract(funcExpr *sqlparser.FuncExpr)
 
 func (fr *postgresFuncRewriter) RewriteFunc(funcExpr *sqlparser.FuncExpr) (*sqlparser.FuncExpr, error) {
 	if funcExpr == nil {
+		//nolint:nilnil // TODO: fix this
 		return nil, nil
 	}
 	funcNameLowered := strings.ToLower(funcExpr.Name.GetRawVal())

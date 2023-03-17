@@ -9,16 +9,16 @@ import (
 )
 
 var (
-	_ TableNamespaceConfiguratorBuilder = &standardTableNamespaceConfiguratorBuilder{}
+	_ ConfiguratorBuilder = &standardTableNamespaceConfiguratorBuilder{}
 )
 
-type TableNamespaceConfiguratorBuilder interface {
-	Build() (TableNamespaceConfigurator, error)
-	WithLikeString(likeString string) TableNamespaceConfiguratorBuilder
-	WithTTL(ttl int) TableNamespaceConfiguratorBuilder
-	WithRegexp(regex *regexp.Regexp) TableNamespaceConfiguratorBuilder
-	WithSQLEngine(sqlEngine sqlengine.SQLEngine) TableNamespaceConfiguratorBuilder
-	WithTemplate(tmpl *template.Template) TableNamespaceConfiguratorBuilder
+type ConfiguratorBuilder interface {
+	Build() (Configurator, error)
+	WithLikeString(likeString string) ConfiguratorBuilder
+	WithTTL(ttl int) ConfiguratorBuilder
+	WithRegexp(regex *regexp.Regexp) ConfiguratorBuilder
+	WithSQLEngine(sqlEngine sqlengine.SQLEngine) ConfiguratorBuilder
+	WithTemplate(tmpl *template.Template) ConfiguratorBuilder
 }
 
 type standardTableNamespaceConfiguratorBuilder struct {
@@ -29,36 +29,42 @@ type standardTableNamespaceConfiguratorBuilder struct {
 	ttl        int
 }
 
-func newTableNamespaceConfiguratorBuilder() TableNamespaceConfiguratorBuilder {
+func newTableNamespaceConfiguratorBuilder() ConfiguratorBuilder {
 	return &standardTableNamespaceConfiguratorBuilder{}
 }
 
-func (b *standardTableNamespaceConfiguratorBuilder) WithRegexp(regex *regexp.Regexp) TableNamespaceConfiguratorBuilder {
+func (b *standardTableNamespaceConfiguratorBuilder) WithRegexp(regex *regexp.Regexp) ConfiguratorBuilder {
 	b.regex = regex
 	return b
 }
 
-func (b *standardTableNamespaceConfiguratorBuilder) WithLikeString(likeString string) TableNamespaceConfiguratorBuilder {
+func (b *standardTableNamespaceConfiguratorBuilder) WithLikeString(
+	likeString string,
+) ConfiguratorBuilder {
 	b.likeString = likeString
 	return b
 }
 
-func (b *standardTableNamespaceConfiguratorBuilder) WithTemplate(tmpl *template.Template) TableNamespaceConfiguratorBuilder {
+func (b *standardTableNamespaceConfiguratorBuilder) WithTemplate(
+	tmpl *template.Template,
+) ConfiguratorBuilder {
 	b.tmpl = tmpl
 	return b
 }
 
-func (b *standardTableNamespaceConfiguratorBuilder) WithTTL(ttl int) TableNamespaceConfiguratorBuilder {
+func (b *standardTableNamespaceConfiguratorBuilder) WithTTL(ttl int) ConfiguratorBuilder {
 	b.ttl = ttl
 	return b
 }
 
-func (b *standardTableNamespaceConfiguratorBuilder) WithSQLEngine(sqlEngine sqlengine.SQLEngine) TableNamespaceConfiguratorBuilder {
+func (b *standardTableNamespaceConfiguratorBuilder) WithSQLEngine(
+	sqlEngine sqlengine.SQLEngine,
+) ConfiguratorBuilder {
 	b.sqlEngine = sqlEngine
 	return b
 }
 
-func (b *standardTableNamespaceConfiguratorBuilder) Build() (TableNamespaceConfigurator, error) {
+func (b *standardTableNamespaceConfiguratorBuilder) Build() (Configurator, error) {
 	tmplCfg, err := templatenamespace.NewTemplateNamespaceConfigurator(
 		b.regex,
 		b.tmpl,

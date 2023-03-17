@@ -27,7 +27,7 @@ type SingleSelectAcquire struct {
 	graph                      primitivegraph.PrimitiveGraph
 	handlerCtx                 handler.HandlerContext
 	tableMeta                  tablemetadata.ExtendedTableMetadata
-	drmCfg                     drm.DRMConfig
+	drmCfg                     drm.Config
 	insertPreparedStatementCtx drm.PreparedStatementCtx
 	insertionContainer         tableinsertioncontainer.TableInsertionContainer
 	txnCtrlCtr                 internaldto.TxnControlCounters
@@ -105,6 +105,7 @@ func (ss *SingleSelectAcquire) GetTail() primitivegraph.PrimitiveNode {
 	return ss.root
 }
 
+//nolint:funlen,gocognit,gocyclo,cyclop // TODO: investigate
 func (ss *SingleSelectAcquire) Build() error {
 	prov, err := ss.tableMeta.GetProvider()
 	if err != nil {
@@ -123,9 +124,9 @@ func (ss *SingleSelectAcquire) Build() error {
 		ss.graph.AddTxnControlCounters(currentTcc)
 		mr := prov.InferMaxResultsElement(m)
 		// TODO: instrument for view
-		httpArmoury, err := ss.tableMeta.GetHttpArmoury()
-		if err != nil {
-			return internaldto.NewErroneousExecutorOutput(err)
+		httpArmoury, armouryErr := ss.tableMeta.GetHTTPArmoury()
+		if armouryErr != nil {
+			return internaldto.NewErroneousExecutorOutput(armouryErr)
 		}
 		if mr != nil {
 			// TODO: infer param position and act accordingly
@@ -143,22 +144,30 @@ func (ss *SingleSelectAcquire) Build() error {
 			}
 		}
 		for _, reqCtx := range httpArmoury.GetRequestParams() {
-			paramsUsed, err := reqCtx.ToFlatMap()
-			if err != nil {
-				return internaldto.NewErroneousExecutorOutput(err)
+			paramsUsed, paramErr := reqCtx.ToFlatMap()
+			if paramErr != nil {
+				return internaldto.NewErroneousExecutorOutput(paramErr)
 			}
 			reqEncoding := reqCtx.Encode()
-			olderTcc, isMatch := ss.handlerCtx.GetNamespaceCollection().GetAnalyticsCacheTableNamespaceConfigurator().Match(tableName, reqEncoding, ss.drmCfg.GetControlAttributes().GetControlLatestUpdateColumnName(), ss.drmCfg.GetControlAttributes().GetControlInsertEncodedIdColumnName())
+			//nolint:lll // chaining
+			olderTcc, isMatch := ss.handlerCtx.GetNamespaceCollection().GetAnalyticsCacheTableNamespaceConfigurator().Match(tableName, reqEncoding, ss.drmCfg.GetControlAttributes().GetControlLatestUpdateColumnName(), ss.drmCfg.GetControlAttributes().GetControlInsertEncodedIDColumnName())
 			if isMatch {
 				nonControlColumns := ss.insertPreparedStatementCtx.GetNonControlColumns()
 				var nonControlColumnNames []string
 				for _, c := range nonControlColumns {
 					nonControlColumnNames = append(nonControlColumnNames, c.GetName())
 				}
-				ss.handlerCtx.GetGarbageCollector().Update(tableName, olderTcc.Clone(), currentTcc)
+				//nolint:errcheck // TODO: fix
+				ss.handlerCtx.GetGarbageCollector().Update(
+					tableName,
+					olderTcc.Clone(),
+					currentTcc,
+				)
+				//nolint:errcheck // TODO: fix
 				ss.insertionContainer.SetTableTxnCounters(tableName, olderTcc)
 				ss.insertPreparedStatementCtx.SetGCCtrlCtrs(olderTcc)
-				r, sqlErr := ss.handlerCtx.GetNamespaceCollection().GetAnalyticsCacheTableNamespaceConfigurator().Read(tableName, reqEncoding, ss.drmCfg.GetControlAttributes().GetControlInsertEncodedIdColumnName(), nonControlColumnNames)
+				//nolint:lll // chained
+				r, sqlErr := ss.handlerCtx.GetNamespaceCollection().GetAnalyticsCacheTableNamespaceConfigurator().Read(tableName, reqEncoding, ss.drmCfg.GetControlAttributes().GetControlInsertEncodedIDColumnName(), nonControlColumnNames)
 				if sqlErr != nil {
 					internaldto.NewErroneousExecutorOutput(sqlErr)
 				}
@@ -166,7 +175,14 @@ func (ss *SingleSelectAcquire) Build() error {
 				return internaldto.ExecutorOutput{}
 			}
 			// TODO: fix cloning ops
-			response, apiErr := httpmiddleware.HttpApiCallFromRequest(ss.handlerCtx.Clone(), prov, m, reqCtx.GetRequest().Clone(reqCtx.GetRequest().Context()))
+			response, apiErr := httpmiddleware.HTTPApiCallFromRequest(
+				ss.handlerCtx.Clone(),
+				prov,
+				m,
+				reqCtx.GetRequest().Clone(
+					reqCtx.GetRequest().Context(),
+				),
+			)
 			housekeepingDone := false
 			npt := prov.InferNextPageResponseElement(ss.tableMeta.GetHeirarchyObjects())
 			nptRequest := prov.InferNextPageRequestElement(ss.tableMeta.GetHeirarchyObjects())
@@ -175,14 +191,11 @@ func (ss *SingleSelectAcquire) Build() error {
 				if apiErr != nil {
 					return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, nil, nil, ss.rowSort, apiErr, nil))
 				}
-				res, err := m.ProcessResponse(response)
-				if err != nil {
-					return internaldto.NewErroneousExecutorOutput(err)
+				res, resErr := m.ProcessResponse(response)
+				if resErr != nil {
+					return internaldto.NewErroneousExecutorOutput(resErr)
 				}
 				ss.handlerCtx.LogHTTPResponseMap(res.GetProcessedBody())
-				if err != nil {
-					return internaldto.NewErroneousExecutorOutput(err)
-				}
 				logging.GetLogger().Infoln(fmt.Sprintf("target = %v", res))
 				var items interface{}
 				var ok bool
@@ -215,10 +228,11 @@ func (ss *SingleSelectAcquire) Build() error {
 				}
 				keys := make(map[string]map[string]interface{})
 
+				//nolint:nestif // TODO: fix
 				if ok {
-					iArr, err := castItemsArray(items)
-					if err != nil {
-						return internaldto.NewErroneousExecutorOutput(err)
+					iArr, iErr := castItemsArray(items)
+					if iErr != nil {
+						return internaldto.NewErroneousExecutorOutput(iErr)
 					}
 					err = ss.stream.Write(iArr)
 					if err != nil {
@@ -229,6 +243,7 @@ func (ss *SingleSelectAcquire) Build() error {
 							_, err = ss.handlerCtx.GetSQLEngine().Exec(ss.insertPreparedStatementCtx.GetGCHousekeepingQueries())
 							tcc := ss.insertPreparedStatementCtx.GetGCCtrlCtrs()
 							tcc.SetTableName(tableName)
+							//nolint:errcheck // TODO: fix
 							ss.insertionContainer.SetTableTxnCounters(tableName, tcc)
 							housekeepingDone = true
 						}
@@ -238,20 +253,41 @@ func (ss *SingleSelectAcquire) Build() error {
 
 						for i, item := range iArr {
 							if item != nil {
-
 								if err == nil {
 									for k, v := range paramsUsed {
-										if _, ok := item[k]; !ok {
+										if _, itemOk := item[k]; !itemOk {
 											item[k] = v
 										}
 									}
 								}
 
-								logging.GetLogger().Infoln(fmt.Sprintf("running insert with control parameters: %v", ss.insertPreparedStatementCtx.GetGCCtrlCtrs()))
-								r, err := ss.drmCfg.ExecuteInsertDML(ss.handlerCtx.GetSQLEngine(), ss.insertPreparedStatementCtx, item, reqEncoding)
-								logging.GetLogger().Infoln(fmt.Sprintf("insert result = %v, error = %v", r, err))
-								if err != nil {
-									return internaldto.NewErroneousExecutorOutput(fmt.Errorf("sql insert error: '%s' from query: %s", err.Error(), ss.insertPreparedStatementCtx.GetQuery()))
+								logging.GetLogger().Infoln(
+									fmt.Sprintf(
+										"running insert with control parameters: %v",
+										ss.insertPreparedStatementCtx.GetGCCtrlCtrs(),
+									),
+								)
+								r, rErr := ss.drmCfg.ExecuteInsertDML(
+									ss.handlerCtx.GetSQLEngine(),
+									ss.insertPreparedStatementCtx,
+									item,
+									reqEncoding,
+								)
+								logging.GetLogger().Infoln(
+									fmt.Sprintf(
+										"insert result = %v, error = %v",
+										r,
+										rErr,
+									),
+								)
+								if rErr != nil {
+									return internaldto.NewErroneousExecutorOutput(
+										fmt.Errorf(
+											"sql insert error: '%w' from query: %s",
+											rErr,
+											ss.insertPreparedStatementCtx.GetQuery(),
+										),
+									)
 								}
 								keys[strconv.Itoa(i)] = item
 							}
@@ -262,15 +298,16 @@ func (ss *SingleSelectAcquire) Build() error {
 					break
 				}
 				tk := extractNextPageToken(res, npt)
+				//nolint:lll // long conditional
 				if tk == "" || tk == "<nil>" || tk == "[]" || (ss.handlerCtx.GetRuntimeContext().HTTPPageLimit > 0 && pageCount >= ss.handlerCtx.GetRuntimeContext().HTTPPageLimit) {
 					break
 				}
 				pageCount++
-				req, err := reqCtx.SetNextPage(m, tk, nptRequest)
-				if err != nil {
-					return internaldto.NewErroneousExecutorOutput(err)
+				req, reqErr := reqCtx.SetNextPage(m, tk, nptRequest)
+				if reqErr != nil {
+					return internaldto.NewErroneousExecutorOutput(reqErr)
 				}
-				response, apiErr = httpmiddleware.HttpApiCallFromRequest(ss.handlerCtx.Clone(), prov, m, req)
+				response, apiErr = httpmiddleware.HTTPApiCallFromRequest(ss.handlerCtx.Clone(), prov, m, req)
 			}
 			if reqCtx.GetRequest() != nil {
 				q := reqCtx.GetRequest().URL.Query()
@@ -298,6 +335,7 @@ func (ss *SingleSelectAcquire) Build() error {
 }
 
 func extractNextPageToken(res *response.Response, tokenKey internaldto.HTTPElement) string {
+	//nolint:exhaustive // TODO: review
 	switch tokenKey.GetType() {
 	case internaldto.BodyAttribute:
 		return extractNextPageTokenFromBody(res, tokenKey)
@@ -334,8 +372,8 @@ func extractNextPageTokenFromHeader(res *response.Response, tokenKey internaldto
 func extractNextPageTokenFromBody(res *response.Response, tokenKey internaldto.HTTPElement) string {
 	elem, err := httpelement.NewHTTPElement(tokenKey.GetName(), "body")
 	if err == nil {
-		rawVal, err := res.ExtractElement(elem)
-		if err == nil {
+		rawVal, rawErr := res.ExtractElement(elem)
+		if rawErr == nil {
 			switch v := rawVal.(type) {
 			case []interface{}:
 				if len(v) == 1 {
@@ -347,7 +385,7 @@ func extractNextPageTokenFromBody(res *response.Response, tokenKey internaldto.H
 		}
 	}
 	body := res.GetProcessedBody()
-	switch target := body.(type) {
+	switch target := body.(type) { //nolint:gocritic // TODO: review
 	case map[string]interface{}:
 		tokenName := tokenKey.GetName()
 		nextPageToken, ok := target[tokenName]

@@ -21,11 +21,19 @@ type GarbageCollector interface {
 	Update(string, internaldto.TxnControlCounters, internaldto.TxnControlCounters) error
 }
 
-func NewGarbageCollector(gcExecutor gcexec.GarbageCollectorExecutor, gcCfg dto.GCCfg, sqlEngine sqlengine.SQLEngine) GarbageCollector {
+func NewGarbageCollector(
+	gcExecutor gcexec.GarbageCollectorExecutor,
+	gcCfg dto.GCCfg,
+	sqlEngine sqlengine.SQLEngine,
+) GarbageCollector {
 	return newStandardGarbageCollector(gcExecutor, gcCfg, sqlEngine)
 }
 
-func newStandardGarbageCollector(gcExecutor gcexec.GarbageCollectorExecutor, policy dto.GCCfg, sqlEngine sqlengine.SQLEngine) GarbageCollector {
+func newStandardGarbageCollector(
+	gcExecutor gcexec.GarbageCollectorExecutor,
+	policy dto.GCCfg,
+	sqlEngine sqlengine.SQLEngine,
+) GarbageCollector {
 	return &standardGarbageCollector{
 		gcExecutor: gcExecutor,
 		isEager:    policy.IsEager,

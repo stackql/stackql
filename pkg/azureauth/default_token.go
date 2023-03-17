@@ -28,7 +28,7 @@ func (ats *standardAzureTokenSource) GetToken(ctx context.Context) (azcore.Acces
 	var token azcore.AccessToken
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
-		return token, fmt.Errorf("azure credential acquire error = '%s'", err.Error())
+		return token, fmt.Errorf("azure credential acquire error = '%w'", err)
 	}
 	tokenRequestOptions := policy.TokenRequestOptions{
 		Scopes: []string{
@@ -37,7 +37,7 @@ func (ats *standardAzureTokenSource) GetToken(ctx context.Context) (azcore.Acces
 	}
 	token, err = cred.GetToken(ctx, tokenRequestOptions)
 	if err != nil {
-		return token, fmt.Errorf("azure token get error = '%s'", err.Error())
+		return token, fmt.Errorf("azure token get error = '%w'", err)
 	}
 	return token, nil
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 )
 
+//nolint:lll // This is a test file
 const (
 	CreateGoogleComputeDiskRequestPayload01  string = `{"name":"demo-disk-qq1-new16"}`
 	CreateGoogleComputeDiskRequestPayload02  string = `{"name":"demo-disk-qq2-new16"}`
@@ -63,6 +64,7 @@ const (
 	`
 )
 
+//nolint:revive,gochecknoglobals // This is a test file
 var (
 	CreateGoogleBQDatasetRequestPayload01 string = fmt.Sprintf(`
 	{
