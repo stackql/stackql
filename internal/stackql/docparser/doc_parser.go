@@ -31,7 +31,7 @@ func TranslateServiceKeyIqlToGenericProvider(serviceKey string) string {
 }
 
 func OpenapiStackQLTabulationsPersistor(
-	m *openapistackql.OperationStore,
+	m openapistackql.OperationStore,
 	tabluationsAnnotated []util.AnnotatedTabulation,
 	dbEngine sqlengine.SQLEngine,
 	prefix string,

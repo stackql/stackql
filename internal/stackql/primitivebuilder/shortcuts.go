@@ -143,7 +143,7 @@ func NewShowInstructionExecutor(node *sqlparser.Show, prov provider.IProvider, t
 			},
 		}
 	case "METHODS":
-		var rsc *openapistackql.Resource
+		var rsc openapistackql.Resource
 		rsc, err = prov.GetResource(node.OnTable.Qualifier.GetRawVal(), node.OnTable.Name.GetRawVal(), handlerCtx.GetRuntimeContext())
 		methods := rsc.GetMethodsMatched()
 		var filter func(openapistackql.ITable) (openapistackql.ITable, error)
@@ -186,7 +186,7 @@ func NewShowInstructionExecutor(node *sqlparser.Show, prov provider.IProvider, t
 		if svcName == "" {
 			return prepareErroneousResultSet(keys, columnOrder, fmt.Errorf("no service designated from which to resolve resources"))
 		}
-		var resources map[string]*openapistackql.Resource
+		var resources map[string]openapistackql.Resource
 		resources, err = prov.GetResourcesRedacted(svcName, handlerCtx.GetRuntimeContext(), extended)
 		if err != nil {
 			return prepareErroneousResultSet(keys, columnOrder, err)
@@ -208,7 +208,7 @@ func NewShowInstructionExecutor(node *sqlparser.Show, prov provider.IProvider, t
 		}
 	case "SERVICES":
 		logging.GetLogger().Infoln(fmt.Sprintf("Show For node.Type = '%s': Displaying services for provider = '%s'", node.Type, prov.GetProviderString()))
-		var services map[string]*openapistackql.ProviderService
+		var services map[string]openapistackql.ProviderService
 		services, err = prov.GetProviderServicesRedacted(handlerCtx.GetRuntimeContext(), extended)
 		if err != nil {
 			return prepareErroneousResultSet(keys, columnOrder, err)
@@ -223,14 +223,14 @@ func NewShowInstructionExecutor(node *sqlparser.Show, prov provider.IProvider, t
 	return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, err, nil))
 }
 
-func filterResources(resources map[string]*openapistackql.Resource, tableFilter func(openapistackql.ITable) (openapistackql.ITable, error)) (map[string]*openapistackql.Resource, error) {
+func filterResources(resources map[string]openapistackql.Resource, tableFilter func(openapistackql.ITable) (openapistackql.ITable, error)) (map[string]openapistackql.Resource, error) {
 	var err error
 	if tableFilter != nil {
-		filteredResources := make(map[string]*openapistackql.Resource)
+		filteredResources := make(map[string]openapistackql.Resource)
 		for k, rsc := range resources {
 			filteredResource, filterErr := tableFilter(rsc)
 			if filterErr == nil && filteredResource != nil {
-				filteredResources[k] = filteredResource.(*openapistackql.Resource)
+				filteredResources[k] = filteredResource.(openapistackql.Resource)
 			}
 			if filterErr != nil {
 				err = filterErr
@@ -243,34 +243,34 @@ func filterResources(resources map[string]*openapistackql.Resource, tableFilter 
 
 func getProviderServiceMap(item openapistackql.ProviderService, extended bool) map[string]interface{} {
 	retVal := map[string]interface{}{
-		"id":    item.ID,
-		"name":  item.Name,
-		"title": item.Title,
+		"id":    item.GetID(),
+		"name":  item.GetName(),
+		"title": item.GetTitle(),
 	}
 	if extended {
-		retVal["description"] = item.Description
-		retVal["version"] = item.Version
+		retVal["description"] = item.GetDescription()
+		retVal["version"] = item.GetVersion()
 	}
 	return retVal
 }
 
-func convertProviderServicesToMap(services map[string]*openapistackql.ProviderService, extended bool) map[string]map[string]interface{} {
+func convertProviderServicesToMap(services map[string]openapistackql.ProviderService, extended bool) map[string]map[string]interface{} {
 	retVal := make(map[string]map[string]interface{})
 	for k, v := range services {
-		retVal[k] = getProviderServiceMap(*v, extended)
+		retVal[k] = getProviderServiceMap(v, extended)
 	}
 	return retVal
 }
 
-func filterServices(services map[string]*openapistackql.ProviderService, tableFilter func(openapistackql.ITable) (openapistackql.ITable, error), useNonPreferredAPIs bool) (map[string]*openapistackql.ProviderService, error) {
+func filterServices(services map[string]openapistackql.ProviderService, tableFilter func(openapistackql.ITable) (openapistackql.ITable, error), useNonPreferredAPIs bool) (map[string]openapistackql.ProviderService, error) {
 	var err error
 	if tableFilter != nil {
-		filteredServices := make(map[string]*openapistackql.ProviderService)
+		filteredServices := make(map[string]openapistackql.ProviderService)
 		for k, svc := range services {
-			if useNonPreferredAPIs || svc.Preferred {
+			if useNonPreferredAPIs || svc.IsPreferred() {
 				filteredService, filterErr := tableFilter(svc)
 				if filterErr == nil && filteredService != nil {
-					filteredServices[k] = (filteredService.(*openapistackql.ProviderService))
+					filteredServices[k] = (filteredService.(openapistackql.ProviderService))
 				}
 				if filterErr != nil {
 					err = filterErr

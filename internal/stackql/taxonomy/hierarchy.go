@@ -207,7 +207,7 @@ func GetHeirarchyFromStatement(handlerCtx handler.HandlerContext, node sqlparser
 		hIds = hIds.WithView(viewDTO)
 		return retVal, nil
 	}
-	var method *openapistackql.OperationStore
+	var method openapistackql.OperationStore
 	switch node.(type) {
 	case *sqlparser.Exec, *sqlparser.ExecSubquery:
 		method, err = rsc.FindMethod(hIds.GetMethodStr())
@@ -231,7 +231,7 @@ func GetHeirarchyFromStatement(handlerCtx handler.HandlerContext, node sqlparser
 		if methodAction == "" {
 			methodAction = "select"
 		}
-		var meth *openapistackql.OperationStore
+		var meth openapistackql.OperationStore
 		var methStr string
 		if getFirstAvailableMethod {
 			meth, methStr, err = prov.GetFirstMethodForAction(retVal.GetHeirarchyIds().GetServiceStr(), retVal.GetHeirarchyIds().GetResourceStr(), methodAction, handlerCtx.GetRuntimeContext())
@@ -241,7 +241,7 @@ func GetHeirarchyFromStatement(handlerCtx handler.HandlerContext, node sqlparser
 				return nil, fmt.Errorf("cannot find matching operation, possible causes include missing required parameters or an unsupported method for the resource, to find required parameters for supported methods run SHOW METHODS IN %s: %s", retVal.GetHeirarchyIds().GetTableName(), err.Error())
 			}
 		}
-		for _, srv := range svcHdl.Servers {
+		for _, srv := range svcHdl.GetServers() {
 			for k := range srv.Variables {
 				logging.GetLogger().Debugf("server parameter = '%s'\n", k)
 			}

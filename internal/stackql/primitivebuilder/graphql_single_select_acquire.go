@@ -133,7 +133,7 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 				client,
 				req,
 				ss.handlerCtx.GetRuntimeContext().HTTPPageLimit,
-				gql.Query,
+				gql.GetQuery(),
 				paramMap,
 				"",
 				responseJsonPath,

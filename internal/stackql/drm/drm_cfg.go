@@ -37,7 +37,7 @@ type DRMConfig interface {
 	ExtractObjectFromSQLRows(r *sql.Rows, nonControlColumns []internaldto.ColumnMetadata, stream streaming.MapStream) (map[string]map[string]interface{}, map[int]map[int]interface{})
 	GetCurrentTable(internaldto.HeirarchyIdentifiers) (internaldto.DBTable, error)
 	GetRelationalType(string) string
-	GenerateDDL(util.AnnotatedTabulation, *openapistackql.OperationStore, int, bool) ([]string, error)
+	GenerateDDL(util.AnnotatedTabulation, openapistackql.OperationStore, int, bool) ([]string, error)
 	GetControlAttributes() sqlcontrol.ControlAttributes
 	GetGolangValue(string) interface{}
 	GetGolangSlices([]internaldto.ColumnMetadata) ([]interface{}, []string)
@@ -45,7 +45,7 @@ type DRMConfig interface {
 	GetParserTableName(internaldto.HeirarchyIdentifiers, int) sqlparser.TableName
 	GetSQLSystem() sql_system.SQLSystem
 	GetTable(internaldto.HeirarchyIdentifiers, int) (internaldto.DBTable, error)
-	GenerateInsertDML(util.AnnotatedTabulation, *openapistackql.OperationStore, internaldto.TxnControlCounters) (PreparedStatementCtx, error)
+	GenerateInsertDML(util.AnnotatedTabulation, openapistackql.OperationStore, internaldto.TxnControlCounters) (PreparedStatementCtx, error)
 	GenerateSelectDML(util.AnnotatedTabulation, internaldto.TxnControlCounters, string, string) (PreparedStatementCtx, error)
 	ExecuteInsertDML(sqlengine.SQLEngine, PreparedStatementCtx, map[string]interface{}, string) (sql.Result, error)
 	OpenapiColumnsToRelationalColumns(cols []openapistackql.ColumnDescriptor) []relationaldto.RelationalColumn
@@ -74,7 +74,7 @@ func (dc *staticDRMConfig) OpenapiColumnsToRelationalColumns(cols []openapistack
 		var typeStr string
 		schemaExists := false
 		if col.Schema != nil {
-			typeStr = dc.GetRelationalType(col.Schema.Type)
+			typeStr = dc.GetRelationalType(col.Schema.GetType())
 			schemaExists = true
 		} else {
 			if col.Val != nil {
@@ -103,7 +103,7 @@ func (dc *staticDRMConfig) OpenapiColumnsToRelationalColumn(col openapistackql.C
 	var typeStr string
 	schemaExists := false
 	if col.Schema != nil {
-		typeStr = dc.GetRelationalType(col.Schema.Type)
+		typeStr = dc.GetRelationalType(col.Schema.GetType())
 		schemaExists = true
 	} else {
 		if col.Val != nil {
@@ -300,8 +300,8 @@ func (dc *staticDRMConfig) getParserTableName(hIds internaldto.HeirarchyIdentifi
 func (dc *staticDRMConfig) inferColType(col util.Column) string {
 	relationalType := "text"
 	schema := col.GetSchema()
-	if schema != nil && schema.Type != "" {
-		relationalType = dc.GetRelationalType(schema.Type)
+	if schema != nil && schema.GetType() != "" {
+		relationalType = dc.GetRelationalType(schema.GetType())
 	}
 	return relationalType
 }
@@ -338,7 +338,7 @@ func (dc *staticDRMConfig) genRelationalColumnsFromExternalSQLTable(tabAnn util.
 	return relationalTable, nil
 }
 
-func (dc *staticDRMConfig) genRelationalTable(tabAnn util.AnnotatedTabulation, m *openapistackql.OperationStore, discoveryGenerationID int) (relationaldto.RelationalTable, error) {
+func (dc *staticDRMConfig) genRelationalTable(tabAnn util.AnnotatedTabulation, m openapistackql.OperationStore, discoveryGenerationID int) (relationaldto.RelationalTable, error) {
 	tableName, err := dc.getTableName(tabAnn.GetHeirarchyIdentifiers(), discoveryGenerationID)
 	if err != nil {
 		return nil, err
@@ -365,7 +365,7 @@ func (dc *staticDRMConfig) genRelationalTable(tabAnn util.AnnotatedTabulation, m
 	return relationalTable, nil
 }
 
-func (dc *staticDRMConfig) GenerateDDL(tabAnn util.AnnotatedTabulation, m *openapistackql.OperationStore, discoveryGenerationID int, dropTable bool) ([]string, error) {
+func (dc *staticDRMConfig) GenerateDDL(tabAnn util.AnnotatedTabulation, m openapistackql.OperationStore, discoveryGenerationID int, dropTable bool) ([]string, error) {
 	relationalTable, err := dc.genRelationalTable(tabAnn, m, discoveryGenerationID)
 	if err != nil {
 		return nil, err
@@ -373,7 +373,7 @@ func (dc *staticDRMConfig) GenerateDDL(tabAnn util.AnnotatedTabulation, m *opena
 	return dc.sqlSystem.GenerateDDL(relationalTable, dropTable)
 }
 
-func (dc *staticDRMConfig) GenerateInsertDML(tabAnnotated util.AnnotatedTabulation, method *openapistackql.OperationStore, tcc internaldto.TxnControlCounters) (PreparedStatementCtx, error) {
+func (dc *staticDRMConfig) GenerateInsertDML(tabAnnotated util.AnnotatedTabulation, method openapistackql.OperationStore, tcc internaldto.TxnControlCounters) (PreparedStatementCtx, error) {
 	var columns []internaldto.ColumnMetadata
 	_, isSQLDataSource := tabAnnotated.GetSQLDataSource()
 	var tableName string
@@ -419,8 +419,8 @@ func (dc *staticDRMConfig) GenerateInsertDML(tabAnnotated util.AnnotatedTabulati
 		for _, col := range tableColumns {
 			relationalType := "text"
 			schema := col.Schema
-			if schema != nil && schema.Type != "" {
-				relationalType = dc.GetRelationalType(schema.Type)
+			if schema != nil && schema.GetType() != "" {
+				relationalType = dc.GetRelationalType(schema.GetType())
 			}
 			columns = append(columns, internaldto.NewColDescriptor(col, relationalType))
 			relationalColumn := relationaldto.NewRelationalColumn(col.Name, relationalType).WithParserNode(col.Node)
@@ -466,7 +466,7 @@ func (dc *staticDRMConfig) GenerateSelectDML(tabAnnotated util.AnnotatedTabulati
 	for _, col := range tabAnnotated.GetTabulation().GetColumns() {
 		var typeStr string
 		if col.Schema != nil {
-			typeStr = dc.GetRelationalType(col.Schema.Type)
+			typeStr = dc.GetRelationalType(col.Schema.GetType())
 		} else {
 			if col.Val != nil {
 				switch col.Val.Type {
