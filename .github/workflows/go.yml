@@ -23,7 +23,6 @@ on:
       - "licenses/**"
 
 env:
-  GOGETCMD: "go get -v -t -d ./..."
   GOTESTCMD: "go test -timeout 1200s --tags \"json1 sqleanall\" -v ./..."
   TESTSCRIPT: "test/python/main.py"
   GOPRIVATE: github.com/stackql/*
@@ -89,9 +88,11 @@ jobs:
     - name: Git Ref Parse
       id: git_ref_parse
       run: |
-          echo "SOURCE_NAME=${GITHUB_REF#refs/*/}" >> $GITHUB_STATE
-          echo "SOURCE_BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_STATE
-          echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_STATE
+        {
+          echo "SOURCE_NAME=${GITHUB_REF#refs/*/}"
+          echo "SOURCE_BRANCH=${GITHUB_REF#refs/heads/}"
+          echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}"
+        } >> "${GITHUB_STATE}"
 
     - name: Install Python dependencies
       run: |
@@ -109,7 +110,6 @@ jobs:
         git --no-pager config --list
         go get -v -t -d ./...
       env:
-        GOGETCMD: ${{env.GOGETCMD}}
         CGO_ENABLED: 1
         GHACCESSTOKEN: ${{env.GH_ACCESS_TOKEN}}
         GOPRIVATE: ${{env.GOPRIVATE}}
@@ -222,10 +222,12 @@ jobs:
     - name: Git Ref Parse
       id: git_ref_parse
       run: |
-          echo "SOURCE_NAME=${GITHUB_REF#refs/*/}" >> $GITHUB_STATE
-          echo "SOURCE_BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_STATE
-          echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_STATE
-    
+          {
+            echo "SOURCE_NAME=${GITHUB_REF#refs/*/}"
+            echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}"
+            echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}"
+          } >> "${GITHUB_STATE}"
+
     - name: Set up GCC
       uses: egor-tensin/setup-gcc@v1
       id: gccsetup
@@ -248,10 +250,9 @@ jobs:
       
     - name: Get dependencies
       run: |
-        git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
-        $GOGETCMD
+        git config --global "url.https://${GH_ACCESS_TOKEN}@github.com/.insteadOf" https://github.com/
+        go get -v -t -d ./...
       env:
-        GOGETCMD: ${{env.GOGETCMD}}
         GH_ACCESS_TOKEN: ${{env.GH_ACCESS_TOKEN}}
         GOPRIVATE: ${{env.GOPRIVATE}}
 
@@ -265,14 +266,17 @@ jobs:
         CGO_LDFLAGS: '-static'
       run: |
         source version.txt
-        export BUILDMAJORVERSION=$MajorVersion
-        export BUILDMINORVERSION=$MinorVersion
-        if [[ ! "$BUILDBRANCH" == *develop ]]
+        export BUILDMAJORVERSION="$MajorVersion"
+        export BUILDMINORVERSION="$MinorVersion"
+        if [[ ! "$BUILDBRANCH" == "*develop" ]]
           then
+          # shellcheck disable=2269
           export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
         fi
-        export BUILDSHORTCOMMITSHA=$(echo $BUILDCOMMITSHA | cut -c 1-7)
-        export BUILDDATE=$(date)
+        BUILDSHORTCOMMITSHA="$(echo "${BUILDCOMMITSHA}" | cut -c 1-7)"
+        export BUILDSHORTCOMMITSHA
+        BUILDDATE="$(date)"
+        export BUILDDATE
         echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
         echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
         echo "BUILDPATCHVERSION: ${BUILDPATCHVERSION}"
@@ -282,10 +286,11 @@ jobs:
         echo "BUILDDATE: ${BUILDDATE}"
         echo "BUILDPLATFORM: ${BUILDPLATFORM}"
 
-        echo "BUILDMAJORVERSION=$BUILDMAJORVERSION" >> $GITHUB_ENV
-        echo "BUILDMINORVERSION=$BUILDMINORVERSION" >> $GITHUB_ENV
-        echo "BUILDPATCHVERSION=$BUILDPATCHVERSION" >> $GITHUB_ENV
-
+        {
+          echo "BUILDMAJORVERSION=${BUILDMAJORVERSION}"
+          echo "BUILDMINORVERSION=${BUILDMINORVERSION}"
+          echo "BUILDPATCHVERSION=${BUILDPATCHVERSION}"
+        } >> "${GITHUB_ENV}"
         python cicd/python/build.py --verbose --build
       
     - name: Test
@@ -341,7 +346,7 @@ jobs:
 
     - name: Test Script
       if: success()
-      run: python3 $TESTSCRIPT
+      run: python3 "${TESTSCRIPT}"
       env:
         TESTSCRIPT: ${{env.TESTSCRIPT}}
 
@@ -426,7 +431,7 @@ jobs:
           echo "BUILDMAJORVERSION=$BUILDMAJORVERSION"
           echo "BUILDMINORVERSION=$BUILDMINORVERSION"
           echo "BUILDPATCHVERSION=$BUILDPATCHVERSION"
-          if [[ ! "$BUILDBRANCH" == *develop ]]
+          if [[ ! "$BUILDBRANCH" == "*develop" ]]
             then
             export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
           fi
@@ -458,12 +463,11 @@ jobs:
           echo "BUILDMAJORVERSION=$BUILDMAJORVERSION"
           echo "BUILDMINORVERSION=$BUILDMINORVERSION"
           echo "BUILDPATCHVERSION=$BUILDPATCHVERSION"
-          if [[ ! "$BUILDBRANCH" == *develop ]]
+          if [[ ! "$BUILDBRANCH" == "*develop" ]]
             then
             export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
           fi
           python3 cicd/python/build.py --robot-test-integration --config='{ "variables":  { "IS_WSL": true } }'
-
 
   macosbuild:
     name: MacOS Build
@@ -489,9 +493,11 @@ jobs:
     - name: Git Ref Parse
       id: git_ref_parse
       run: |
-          echo "SOURCE_NAME=${GITHUB_REF#refs/*/}" >> $GITHUB_STATE
-          echo "SOURCE_BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_STATE
-          echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_STATE
+          {
+            echo "SOURCE_NAME=${GITHUB_REF#refs/*/}"
+            echo "SOURCE_BRANCH=${GITHUB_REF#refs/heads/}"
+            echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}"
+          } >> "${GITHUB_STATE}"
 
     - name: Install Python dependencies
       run: |
@@ -503,10 +509,9 @@ jobs:
 
     - name: Get dependencies
       run: |
-        git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
-        $GOGETCMD
+        git config --global "url.https://${GH_ACCESS_TOKEN}@github.com/.insteadOf" https://github.com/
+        go get -v -t -d ./...
       env:
-        GOGETCMD: ${{env.GOGETCMD}}
         CGO_ENABLED: 1
         GH_ACCESS_TOKEN: ${{env.GH_ACCESS_TOKEN}}
         GOPRIVATE: ${{env.GOPRIVATE}}
@@ -520,14 +525,17 @@ jobs:
         CGO_ENABLED: 1
       run: |
         source version.txt
-        export BUILDMAJORVERSION=$MajorVersion
-        export BUILDMINORVERSION=$MinorVersion
-        if [[ ! "$BUILDBRANCH" == *develop ]]
+        export BUILDMAJORVERSION="$MajorVersion"
+        export BUILDMINORVERSION="$MinorVersion"
+        if [[ ! "$BUILDBRANCH" == "*develop" ]]
           then
+          # shellcheck disable=2269
           export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
         fi
-        export BUILDSHORTCOMMITSHA=$(echo $BUILDCOMMITSHA | cut -c 1-7)
-        export BUILDDATE=$(date)
+        BUILDSHORTCOMMITSHA="$(echo "$BUILDCOMMITSHA" | cut -c 1-7)"
+        export BUILDSHORTCOMMITSHA
+        BUILDDATE="$(date)"
+        export BUILDDATE
         echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
         echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
         echo "BUILDPATCHVERSION: ${BUILDPATCHVERSION}"
@@ -537,9 +545,11 @@ jobs:
         echo "BUILDDATE: ${BUILDDATE}"
         echo "BUILDPLATFORM: ${BUILDPLATFORM}"
 
-        echo "BUILDMAJORVERSION=$BUILDMAJORVERSION" >> $GITHUB_ENV
-        echo "BUILDMINORVERSION=$BUILDMINORVERSION" >> $GITHUB_ENV
-        echo "BUILDPATCHVERSION=$BUILDPATCHVERSION" >> $GITHUB_ENV
+        {
+          echo "BUILDMAJORVERSION=$BUILDMAJORVERSION"
+          echo "BUILDMINORVERSION=$BUILDMINORVERSION"
+          echo "BUILDPATCHVERSION=$BUILDPATCHVERSION"
+        } >> "${GITHUB_ENV}"
 
         python cicd/python/build.py --verbose --build 
 
@@ -586,7 +596,7 @@ jobs:
         
     - name: Test Script
       if: success()
-      run: python3 $TESTSCRIPT
+      run: python3 "${TESTSCRIPT}"
       env:
         TESTSCRIPT: ${{env.TESTSCRIPT}}
 
@@ -621,10 +631,9 @@ jobs:
 
     - name: Get dependencies
       run: |
-        git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
-        $GOGETCMD
+        git config --global "url.https://${GH_ACCESS_TOKEN}@github.com/.insteadOf" https://github.com/
+        go get -v -t -d ./...
       env:
-        GOGETCMD: ${{env.GOGETCMD}}
         CGO_ENABLED: 1
         GH_ACCESS_TOKEN: ${{env.GH_ACCESS_TOKEN}}
         GOPRIVATE: ${{env.GOPRIVATE}}
@@ -638,14 +647,17 @@ jobs:
         CGO_ENABLED: 1
       run: |
         source version.txt
-        export BUILDMAJORVERSION=$MajorVersion
-        export BUILDMINORVERSION=$MinorVersion
-        if [[ ! "$BUILDBRANCH" == *develop ]]
+        export BUILDMAJORVERSION="$MajorVersion"
+        export BUILDMINORVERSION="$MinorVersion"
+        if [[ ! "$BUILDBRANCH" == "*develop" ]]
           then
+          # shellcheck disable=2269
           export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
         fi
-        export BUILDSHORTCOMMITSHA=$(echo $BUILDCOMMITSHA | cut -c 1-7)
-        export BUILDDATE=$(date)
+        BUILDSHORTCOMMITSHA="$(echo "$BUILDCOMMITSHA" | cut -c 1-7)"
+        export BUILDSHORTCOMMITSHA
+        BUILDDATE="$(date)"
+        export BUILDDATE
         echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
         echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
         echo "BUILDPATCHVERSION: ${BUILDPATCHVERSION}"
@@ -655,13 +667,14 @@ jobs:
         echo "BUILDDATE: ${BUILDDATE}"
         echo "BUILDPLATFORM: ${BUILDPLATFORM}"
 
+        {
+          echo "BUILDMAJORVERSION=$BUILDMAJORVERSION"
+          echo "BUILDMINORVERSION=$BUILDMINORVERSION"
+          echo "BUILDPATCHVERSION=$BUILDPATCHVERSION"
+        } >> "${GITHUB_ENV}"
 
-        echo "BUILDMAJORVERSION=$BUILDMAJORVERSION" >> $GITHUB_ENV
-        echo "BUILDMINORVERSION=$BUILDMINORVERSION" >> $GITHUB_ENV
-        echo "BUILDPATCHVERSION=$BUILDPATCHVERSION" >> $GITHUB_ENV
-
-        export GOOS=darwin
-        export GOARCH=arm64
+        export GOOS="darwin"
+        export GOARCH="arm64"
         python cicd/python/build.py --verbose --build 
 
     - name: Upload Artifact
@@ -688,9 +701,11 @@ jobs:
     - name: Git Ref Parse
       id: git_ref_parse
       run: |
-          echo "SOURCE_NAME=${GITHUB_REF#refs/*/}" >> $GITHUB_STATE
-          echo "SOURCE_BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_STATE
-          echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_STATE
+          {
+            echo "SOURCE_NAME=${GITHUB_REF#refs/*/}"
+            echo "SOURCE_BRANCH=${GITHUB_REF#refs/heads/}"
+            echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}"
+          } >> "${GITHUB_STATE}"
     
     - name: Install psql
       run: |
@@ -712,14 +727,15 @@ jobs:
         BUILDPATCHVERSION: ${{github.run_number}}
       run: |
         source version.txt
-        BUILDMAJORVERSION=$MajorVersion
-        BUILDMINORVERSION=$MinorVersion
-        if [[ ! "$BUILDBRANCH" == *develop ]]
-          then
+        BUILDMAJORVERSION=${MajorVersion}
+        BUILDMINORVERSION=${MinorVersion}
+        if [[ ! "$BUILDBRANCH" == "*develop" ]]; then
+          # shellcheck disable=2269
           BUILDPATCHVERSION="${BUILDPATCHVERSION}"
         fi
-        BUILDSHORTCOMMITSHA=$(echo $BUILDCOMMITSHA | cut -c 1-7)
-        BUILDDATE=$(date)
+        BUILDSHORTCOMMITSHA="$(echo "${BUILDCOMMITSHA}" | cut -c 1-7)"
+        BUILDDATE="$(date)"
+        export BUILDDATE
         echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
         echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
         echo "BUILDPATCHVERSION: ${BUILDPATCHVERSION}"
@@ -729,9 +745,11 @@ jobs:
         echo "BUILDDATE: ${BUILDDATE}"
         echo "BUILDPLATFORM: ${BUILDPLATFORM}"
 
-        echo "BUILDMAJORVERSION=$BUILDMAJORVERSION" >> $GITHUB_ENV
-        echo "BUILDMINORVERSION=$BUILDMINORVERSION" >> $GITHUB_ENV
-        echo "BUILDPATCHVERSION=$BUILDPATCHVERSION" >> $GITHUB_ENV
+        {
+          echo "BUILDMAJORVERSION=$BUILDMAJORVERSION"
+          echo "BUILDMINORVERSION=$BUILDMINORVERSION"
+          echo "BUILDPATCHVERSION=$BUILDPATCHVERSION"
+        } >> "${GITHUB_ENV}"
     
     - name: Generate rewritten registry for simulations
       run: |
