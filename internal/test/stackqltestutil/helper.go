@@ -22,7 +22,7 @@ func RunStdOutTestAgainstFiles(t *testing.T, testSubject func(*testing.T), possi
 	// copy the output in a separate goroutine so printing can't block indefinitely
 	go func() {
 		var buf bytes.Buffer
-		io.Copy(&buf, r)
+		io.Copy(&buf, r) //nolint:errcheck // ok for testing
 		outC <- buf.String()
 	}()
 	w.Close()
@@ -31,7 +31,6 @@ func RunStdOutTestAgainstFiles(t *testing.T, testSubject func(*testing.T), possi
 	t.Logf("outC = %s", out)
 
 	checkPossibleMatchFiles(t, out, possibleExpectedOutputFiles)
-
 }
 
 func checkPossibleMatchFiles(t *testing.T, subject string, possibleExpectedOutputFiles []string) {
@@ -42,10 +41,12 @@ func checkPossibleMatchFiles(t *testing.T, subject string, possibleExpectedOutpu
 			t.Fatalf("test failed: %v", err)
 		}
 		if !testutil.StringEqualsFileContents(t, subject, expF, false) {
-			t.Logf("NOT THIS TIME: processed response did NOT match expected file contents as per: %s, contents = '%s'", expectedOpFile, subject)
+			t.Logf("NOT THIS TIME: processed response did NOT match expected file contents as per: %s, contents = '%s'",
+				expectedOpFile, subject)
 			continue
 		}
-		t.Logf("SUCCESS: processed response did match expected file contents as per: %s, contents = '%s'", expectedOpFile, subject)
+		t.Logf("SUCCESS: processed response did match expected file contents as per: %s, contents = '%s'",
+			expectedOpFile, subject)
 		hasMatchedExpected = true
 		break
 	}
@@ -57,8 +58,9 @@ func checkPossibleMatchFiles(t *testing.T, subject string, possibleExpectedOutpu
 	t.Logf("simple select integration test passed")
 }
 
-func RunCaptureTestAgainstFiles(t *testing.T, testSubject func(*testing.T, *bufio.Writer), possibleExpectedOutputFiles []string) {
-
+func RunCaptureTestAgainstFiles(
+	t *testing.T, testSubject func(*testing.T, *bufio.Writer),
+	possibleExpectedOutputFiles []string) {
 	var b bytes.Buffer
 	outFile := bufio.NewWriter(&b)
 

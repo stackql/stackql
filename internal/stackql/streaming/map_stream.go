@@ -4,13 +4,9 @@ import (
 	"io"
 )
 
-type StackQLReader interface {
-	// iStackQLReader()
-}
+type StackQLReader interface{}
 
-type StackQLWriter interface {
-	// iStackQLWriter()
-}
+type StackQLWriter interface{}
 
 type StackQLReadWriter interface {
 	StackQLReader
@@ -39,10 +35,6 @@ type MapStream interface {
 func NewStandardMapStream() MapStream {
 	return &StandardMapStream{}
 }
-
-func (ss *StandardMapStream) iStackQLReader() {}
-
-func (ss *StandardMapStream) iStackQLWriter() {}
 
 func (ss *StandardMapStream) Write(input []map[string]interface{}) error {
 	ss.store = append(ss.store, input...)

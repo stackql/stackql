@@ -6,13 +6,13 @@ import (
 	"gonum.org/v1/gonum/graph"
 )
 
-type DataFlowWeaklyConnectedComponent interface {
-	DataFlowUnit
-	AddEdge(DataFlowEdge)
+type WeaklyConnectedComponent interface {
+	Unit
+	AddEdge(Edge)
 	Analyze() error
-	GetEdges() ([]DataFlowEdge, error)
-	GetOrderedNodes() ([]DataFlowVertex, error)
-	PushBack(DataFlowVertex)
+	GetEdges() ([]Edge, error)
+	GetOrderedNodes() ([]Vertex, error)
+	PushBack(Vertex)
 }
 
 type standardDataFlowWeaklyConnectedComponent struct {
@@ -26,7 +26,7 @@ type standardDataFlowWeaklyConnectedComponent struct {
 func NewStandardDataFlowWeaklyConnectedComponent(
 	collection *standardDataFlowCollection,
 	root graph.Node,
-) DataFlowWeaklyConnectedComponent {
+) WeaklyConnectedComponent {
 	return &standardDataFlowWeaklyConnectedComponent{
 		collection: collection,
 		root:       root,
@@ -39,11 +39,11 @@ func NewStandardDataFlowWeaklyConnectedComponent(
 	}
 }
 
-func (wc *standardDataFlowWeaklyConnectedComponent) GetOrderedNodes() ([]DataFlowVertex, error) {
-	var rv []DataFlowVertex
+func (wc *standardDataFlowWeaklyConnectedComponent) GetOrderedNodes() ([]Vertex, error) {
+	var rv []Vertex
 	for _, n := range wc.orderedNodes {
 		switch n := n.(type) {
-		case DataFlowVertex:
+		case Vertex:
 			rv = append(rv, n)
 		default:
 			return nil, fmt.Errorf("data flow error: weakly connected components cannot accomodate nodes of type '%T'", n)
@@ -52,11 +52,11 @@ func (wc *standardDataFlowWeaklyConnectedComponent) GetOrderedNodes() ([]DataFlo
 	return rv, nil
 }
 
-func (wc *standardDataFlowWeaklyConnectedComponent) GetEdges() ([]DataFlowEdge, error) {
-	var rv []DataFlowEdge
+func (wc *standardDataFlowWeaklyConnectedComponent) GetEdges() ([]Edge, error) {
+	var rv []Edge
 	for _, n := range wc.edges {
 		switch n := n.(type) {
-		case DataFlowEdge:
+		case Edge:
 			rv = append(rv, n)
 		default:
 			return nil, fmt.Errorf("data flow error: weakly connected components cannot accomodate edges of type '%T'", n)
@@ -74,7 +74,9 @@ func (wc *standardDataFlowWeaklyConnectedComponent) Analyze() error {
 		incidentNodes := wc.collection.g.To(node.ID())
 		wc.idsVisited[node.ID()] = struct{}{}
 		if incidentNodes.Len() > 1 {
-			return fmt.Errorf("data flow: too complex for now; %d dependencies detected when max allowed = 1", incidentNodes.Len())
+			return fmt.Errorf(
+				"data flow: too complex for now; %d dependencies detected when max allowed = 1",
+				incidentNodes.Len())
 		}
 		for {
 			itemPresent := incidentNodes.Next()
@@ -93,18 +95,20 @@ func (wc *standardDataFlowWeaklyConnectedComponent) Analyze() error {
 				wc.edges = append(wc.edges, incidentEdge)
 			} else {
 				// TODO: improve error, or obviate with superior algorithm
-				return fmt.Errorf("data flow: error: complexity not yet supported; only single data flow dependencies allowed at present")
+				return fmt.Errorf(
+					"data flow: error: complexity not yet supported; only single data flow dependencies allowed at present",
+				)
 			}
 		}
 	}
 	return nil
 }
 
-func (wc *standardDataFlowWeaklyConnectedComponent) AddEdge(e DataFlowEdge) {
+func (wc *standardDataFlowWeaklyConnectedComponent) AddEdge(e Edge) {
 	wc.edges = append(wc.edges, e)
 }
 
-func (wc *standardDataFlowWeaklyConnectedComponent) PushBack(v DataFlowVertex) {
+func (wc *standardDataFlowWeaklyConnectedComponent) PushBack(v Vertex) {
 	wc.orderedNodes = append(wc.orderedNodes, v)
 }
 

@@ -97,31 +97,29 @@ func (ac *standardAnnotationCtx) Prepare(
 		if isView {
 			logging.GetLogger().Debugf("viewDTO = %v\n", viewDTO)
 		}
-		ac.tableMeta.WithGetHttpArmoury(
+		ac.tableMeta.WithGetHTTPArmoury(
 			func() (httpbuild.HTTPArmoury, error) {
-				httpArmoury, err := httpbuild.BuildHTTPRequestCtxFromAnnotation(stream, pr, opStore, svc, nil, nil)
-				return httpArmoury, err
+				httpArmoury, armouryErr := httpbuild.BuildHTTPRequestCtxFromAnnotation(stream, pr, opStore, svc, nil, nil)
+				return httpArmoury, armouryErr
 			},
 		)
 		return nil
-	} else {
-		// moved out of here so stream is dynamically generated
 	}
-	ac.tableMeta.WithGetHttpArmoury(
+	ac.tableMeta.WithGetHTTPArmoury(
 		func() (httpbuild.HTTPArmoury, error) {
 			// need to dynamically generate stream, otherwise repeated calls result in empty body
-			parametersCleaned, err := util.TransformSQLRawParameters(ac.GetParameters())
-			if err != nil {
-				return nil, err
+			parametersCleaned, cleanErr := util.TransformSQLRawParameters(ac.GetParameters())
+			if cleanErr != nil {
+				return nil, cleanErr
 			}
-			stream.Write(
+			stream.Write( //nolint:errcheck // TODO: handle error
 				[]map[string]interface{}{
 					parametersCleaned,
 				},
 			)
-			httpArmoury, err := httpbuild.BuildHTTPRequestCtxFromAnnotation(stream, pr, opStore, svc, nil, nil)
+			httpArmoury, armouryErr := httpbuild.BuildHTTPRequestCtxFromAnnotation(stream, pr, opStore, svc, nil, nil)
 			if err != nil {
-				return nil, err
+				return nil, armouryErr
 			}
 			return httpArmoury, nil
 		},

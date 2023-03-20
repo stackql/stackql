@@ -8,9 +8,9 @@ import (
 )
 
 var (
-	once             sync.Once
-	kvStoreSingleton KStore
-	_                KStore = &standardKStore{}
+	once             sync.Once //nolint:gochecknoglobals // singleton
+	kvStoreSingleton KStore    //nolint:gochecknoglobals // singleton
+	_                KStore    = &standardKStore{}
 )
 
 type KStore interface {

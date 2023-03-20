@@ -38,7 +38,12 @@ type PrimitiveGenerator interface {
 	AnalyzeRegistry(pbi planbuilderinput.PlanBuilderInput) error
 	AnalyzeSelectStatement(pbi planbuilderinput.PlanBuilderInput) error
 	AnalyzeStatement(pbi planbuilderinput.PlanBuilderInput) error
-	AnalyzeUnaryExec(pbi planbuilderinput.PlanBuilderInput, handlerCtx handler.HandlerContext, node *sqlparser.Exec, selectNode *sqlparser.Select, cols []parserutil.ColumnHandle) (tablemetadata.ExtendedTableMetadata, error)
+	AnalyzeUnaryExec(
+		pbi planbuilderinput.PlanBuilderInput,
+		handlerCtx handler.HandlerContext,
+		node *sqlparser.Exec,
+		selectNode *sqlparser.Select,
+		cols []parserutil.ColumnHandle) (tablemetadata.ExtendedTableMetadata, error)
 	CreateIndirectPrimitiveGenerator(ast sqlparser.SQLNode, handlerCtx handler.HandlerContext) PrimitiveGenerator
 	GetPrimitiveComposer() primitivecomposer.PrimitiveComposer
 	SetIsIndirect(isIndirect bool)
@@ -54,15 +59,25 @@ type standardPrimitiveGenerator struct {
 	PrimitiveComposer primitivecomposer.PrimitiveComposer
 }
 
-func NewRootPrimitiveGenerator(ast sqlparser.SQLNode, handlerCtx handler.HandlerContext, graph primitivegraph.PrimitiveGraph) PrimitiveGenerator {
+func NewRootPrimitiveGenerator(
+	ast sqlparser.SQLNode,
+	handlerCtx handler.HandlerContext, graph primitivegraph.PrimitiveGraph) PrimitiveGenerator {
 	tblMap := make(taxonomy.TblMap)
 	symTab := symtab.NewHashMapTreeSymTab()
 	return &standardPrimitiveGenerator{
-		PrimitiveComposer: primitivecomposer.NewPrimitiveComposer(nil, ast, handlerCtx.GetDrmConfig(), handlerCtx.GetTxnCounterMgr(), graph, tblMap, symTab, handlerCtx.GetSQLEngine(), handlerCtx.GetSQLSystem(), handlerCtx.GetASTFormatter()),
+		PrimitiveComposer: primitivecomposer.NewPrimitiveComposer(
+			nil,
+			ast,
+			handlerCtx.GetDrmConfig(),
+			handlerCtx.GetTxnCounterMgr(),
+			graph, tblMap, symTab,
+			handlerCtx.GetSQLEngine(), handlerCtx.GetSQLSystem(),
+			handlerCtx.GetASTFormatter()),
 	}
 }
 
-func (pb *standardPrimitiveGenerator) WithDataFlowDependentPrimitiveGenerator(dependent PrimitiveGenerator) PrimitiveGenerator {
+func (pb *standardPrimitiveGenerator) WithDataFlowDependentPrimitiveGenerator(
+	dependent PrimitiveGenerator) PrimitiveGenerator {
 	pb.dataflowDependent = dependent
 	return pb
 }
@@ -75,8 +90,12 @@ func (pb *standardPrimitiveGenerator) SetIsIndirect(isIndirect bool) {
 	pb.PrimitiveComposer.SetIsIndirect(isIndirect)
 }
 
-func (pb *standardPrimitiveGenerator) CreateIndirectPrimitiveGenerator(ast sqlparser.SQLNode, handlerCtx handler.HandlerContext) PrimitiveGenerator {
-	rv := NewRootPrimitiveGenerator(ast, handlerCtx, pb.PrimitiveComposer.GetGraph()).WithDataFlowDependentPrimitiveGenerator(pb)
+func (pb *standardPrimitiveGenerator) CreateIndirectPrimitiveGenerator(
+	ast sqlparser.SQLNode,
+	handlerCtx handler.HandlerContext) PrimitiveGenerator {
+	rv := NewRootPrimitiveGenerator(
+		ast, handlerCtx, pb.PrimitiveComposer.GetGraph(),
+	).WithDataFlowDependentPrimitiveGenerator(pb)
 	pb.indirects = append(pb.indirects, rv)
 	pb.PrimitiveComposer.GetGraph().SetContainsIndirect(true)
 	pb.PrimitiveComposer.AddIndirect(rv.GetPrimitiveComposer())
@@ -84,9 +103,10 @@ func (pb *standardPrimitiveGenerator) CreateIndirectPrimitiveGenerator(ast sqlpa
 	return rv
 }
 
-func (pb *standardPrimitiveGenerator) AddChildPrimitiveGenerator(ast sqlparser.SQLNode, leaf symtab.SymTab) PrimitiveGenerator {
+func (pb *standardPrimitiveGenerator) AddChildPrimitiveGenerator(
+	ast sqlparser.SQLNode, leaf symtab.SymTab) PrimitiveGenerator {
 	tables := pb.PrimitiveComposer.GetTables()
-	switch node := ast.(type) {
+	switch node := ast.(type) { //nolint:gocritic // acceptable
 	case sqlparser.Statement:
 		logging.GetLogger().Infoln(fmt.Sprintf("creating new table map for node = %v", node))
 		tables = make(taxonomy.TblMap)
@@ -111,7 +131,12 @@ func (pb *standardPrimitiveGenerator) AddChildPrimitiveGenerator(ast sqlparser.S
 	return retVal
 }
 
-func (pb *standardPrimitiveGenerator) comparisonExprToFilterFunc(table openapistackql.ITable, parentNode *sqlparser.Show, expr *sqlparser.ComparisonExpr) (func(openapistackql.ITable) (openapistackql.ITable, error), error) {
+//nolint:gocognit,unparam // acceptable
+func (pb *standardPrimitiveGenerator) comparisonExprToFilterFunc(
+	table openapistackql.ITable,
+	parentNode *sqlparser.Show,
+	expr *sqlparser.ComparisonExpr,
+) (func(openapistackql.ITable) (openapistackql.ITable, error), error) {
 	qualifiedName, ok := expr.Left.(*sqlparser.ColName)
 	if !ok {
 		return nil, fmt.Errorf("unexpected: %v", sqlparser.String(expr))
@@ -146,7 +171,7 @@ func (pb *standardPrimitiveGenerator) comparisonExprToFilterFunc(table openapist
 		}
 	case sqlparser.BoolVal:
 		var resErr error
-		resolved, resErr = sqltypeutil.InterfaceToSQLType(right == true)
+		resolved, resErr = sqltypeutil.InterfaceToSQLType(right == true) //nolint:gosimple // test later
 		if resErr != nil {
 			return nil, resErr
 		}
@@ -173,7 +198,9 @@ func (pb *standardPrimitiveGenerator) comparisonExprToFilterFunc(table openapist
 	return relational.ConstructTablePredicateFilter(colName, resolved, operatorPredicate), nil
 }
 
-func (pb *standardPrimitiveGenerator) inferProviderForShow(node *sqlparser.Show, handlerCtx handler.HandlerContext) error {
+func (pb *standardPrimitiveGenerator) inferProviderForShow(
+	node *sqlparser.Show,
+	handlerCtx handler.HandlerContext) error {
 	nodeTypeUpperCase := strings.ToUpper(node.Type)
 	switch nodeTypeUpperCase {
 	case "AUTH":
@@ -220,5 +247,6 @@ func (pb *standardPrimitiveGenerator) IsShowResults() bool {
 }
 
 func (pb *standardPrimitiveGenerator) isShowResults() bool {
+	//nolint:lll // acceptable
 	return pb.PrimitiveComposer.GetCommentDirectives() != nil && pb.PrimitiveComposer.GetCommentDirectives().IsSet("SHOWRESULTS")
 }

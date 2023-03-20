@@ -10,9 +10,9 @@ import (
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 )
 
-type SQLRewriteInput interface {
-	GetNamespaceCollection() tablenamespace.TableNamespaceCollection
-	GetDRMConfig() drm.DRMConfig
+type SQLRewriteInput interface { //nolint:revive //TODO: review
+	GetNamespaceCollection() tablenamespace.Collection
+	GetDRMConfig() drm.Config
 	GetColumnDescriptors() []relationaldto.RelationalColumn
 	GetBaseControlCounters() internaldto.TxnControlCounters
 	GetFromString() string
@@ -26,7 +26,7 @@ type SQLRewriteInput interface {
 }
 
 type StandardSQLRewriteInput struct {
-	dc                       drm.DRMConfig
+	dc                       drm.Config
 	columnDescriptors        []relationaldto.RelationalColumn
 	baseControlCounters      internaldto.TxnControlCounters
 	selectSuffix             string
@@ -35,12 +35,12 @@ type StandardSQLRewriteInput struct {
 	tables                   taxonomy.TblMap
 	fromString               string
 	tableInsertionContainers []tableinsertioncontainer.TableInsertionContainer
-	namespaceCollection      tablenamespace.TableNamespaceCollection
+	namespaceCollection      tablenamespace.Collection
 	indirectContexts         []drm.PreparedStatementCtx
 }
 
 func NewStandardSQLRewriteInput(
-	dc drm.DRMConfig,
+	dc drm.Config,
 	columnDescriptors []relationaldto.RelationalColumn,
 	baseControlCounters internaldto.TxnControlCounters,
 	selectSuffix string,
@@ -49,7 +49,7 @@ func NewStandardSQLRewriteInput(
 	tables taxonomy.TblMap,
 	fromString string,
 	tableInsertionContainers []tableinsertioncontainer.TableInsertionContainer,
-	namespaceCollection tablenamespace.TableNamespaceCollection,
+	namespaceCollection tablenamespace.Collection,
 ) SQLRewriteInput {
 	return &StandardSQLRewriteInput{
 		dc:                       dc,
@@ -65,7 +65,7 @@ func NewStandardSQLRewriteInput(
 	}
 }
 
-func (ri *StandardSQLRewriteInput) GetDRMConfig() drm.DRMConfig {
+func (ri *StandardSQLRewriteInput) GetDRMConfig() drm.Config {
 	return ri.dc
 }
 
@@ -78,7 +78,7 @@ func (ri *StandardSQLRewriteInput) GetIndirectContexts() []drm.PreparedStatement
 	return ri.indirectContexts
 }
 
-func (ri *StandardSQLRewriteInput) GetNamespaceCollection() tablenamespace.TableNamespaceCollection {
+func (ri *StandardSQLRewriteInput) GetNamespaceCollection() tablenamespace.Collection {
 	return ri.namespaceCollection
 }
 
@@ -126,15 +126,18 @@ func GenerateSelectDML(input SQLRewriteInput) (drm.PreparedStatementCtx, error) 
 	var tableAliases []string
 	for _, col := range cols {
 		relationalColumn := col
-		columns = append(columns, internal_relational_dto.NewRelayedColDescriptor(relationalColumn, relationalColumn.GetType()))
+		columns = append(
+			columns,
+			internal_relational_dto.NewRelayedColDescriptor(
+				relationalColumn, relationalColumn.GetType()))
 		// TODO: Need a way to handle postgres differences. This is a fragile point
 		relationalColumns = append(relationalColumns, relationalColumn)
 	}
-	genIdColName := dc.GetControlAttributes().GetControlGenIdColumnName()
-	sessionIDColName := dc.GetControlAttributes().GetControlSsnIdColumnName()
-	txnIdColName := dc.GetControlAttributes().GetControlTxnIdColumnName()
-	insIdColName := dc.GetControlAttributes().GetControlInsIdColumnName()
-	insEncodedColName := dc.GetControlAttributes().GetControlInsertEncodedIdColumnName()
+	genIDColName := dc.GetControlAttributes().GetControlGenIDColumnName()
+	sessionIDColName := dc.GetControlAttributes().GetControlSsnIDColumnName()
+	txnIDColName := dc.GetControlAttributes().GetControlTxnIDColumnName()
+	insIDColName := dc.GetControlAttributes().GetControlInsIDColumnName()
+	insEncodedColName := dc.GetControlAttributes().GetControlInsertEncodedIDColumnName()
 	inputContainers := input.GetTableInsertionContainers()
 	if len(inputContainers) > 0 {
 		_, txnCtrlCtrs = inputContainers[0].GetTableTxnCounters()
@@ -154,18 +157,20 @@ func GenerateSelectDML(input SQLRewriteInput) (drm.PreparedStatementCtx, error) 
 		i++
 	}
 
-	query, err := dc.GetSQLSystem().ComposeSelectQuery(relationalColumns, tableAliases, input.GetFromString(), rewrittenWhere, selectSuffix)
+	query, err := dc.GetSQLSystem().ComposeSelectQuery(
+		relationalColumns, tableAliases, input.GetFromString(),
+		rewrittenWhere, selectSuffix)
 	if err != nil {
 		return nil, err
 	}
 	rv := drm.NewPreparedStatementCtx(
 		query,
 		"",
-		genIdColName,
+		genIDColName,
 		sessionIDColName,
 		nil,
-		txnIdColName,
-		insIdColName,
+		txnIDColName,
+		insIDColName,
 		insEncodedColName,
 		columns,
 		len(input.GetTables()),

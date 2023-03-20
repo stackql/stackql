@@ -12,7 +12,7 @@ func (am AnnotationCtxMap) AssignParams() error {
 	rv := make(map[string]interface{})
 	for k, v := range am {
 		for p, pVal := range v.GetParameters() {
-			switch pVal.(type) {
+			switch pVal.(type) { //nolint:gocritic // low impact
 			case *sqlparser.ColName:
 			}
 			aliasedName, ok := k.(*sqlparser.AliasedTableExpr)

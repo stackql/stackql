@@ -30,13 +30,20 @@ type standardFramentRewriteAstVisitor struct {
 	rewrittenQuery      string
 	tablesCited         map[*sqlparser.AliasedTableExpr]sqlparser.TableName
 	shouldCollectTables bool
-	namespaceCollection tablenamespace.TableNamespaceCollection
+	namespaceCollection tablenamespace.Collection
 	sqlSystem           sql_system.SQLSystem
 	formatter           sqlparser.NodeFormatter
 	annotatedAST        annotatedast.AnnotatedAst
 }
 
-func NewFramentRewriteAstVisitor(annotatedAST annotatedast.AnnotatedAst, iDColumnName string, shouldCollectTables bool, sqlSystem sql_system.SQLSystem, formatter sqlparser.NodeFormatter, namespaceCollection tablenamespace.TableNamespaceCollection) FramentRewriteAstVisitor {
+func NewFramentRewriteAstVisitor(
+	annotatedAST annotatedast.AnnotatedAst,
+	iDColumnName string,
+	shouldCollectTables bool,
+	sqlSystem sql_system.SQLSystem,
+	formatter sqlparser.NodeFormatter,
+	namespaceCollection tablenamespace.Collection,
+) FramentRewriteAstVisitor {
 	return &standardFramentRewriteAstVisitor{
 		iDColumnName:        iDColumnName,
 		tablesCited:         make(map[*sqlparser.AliasedTableExpr]sqlparser.TableName),
@@ -95,6 +102,7 @@ func (v *standardFramentRewriteAstVisitor) ComputeQIDWhereSubTree() (sqlparser.E
 	return retVal, nil
 }
 
+//nolint:dupl,funlen,gocognit,gocyclo,cyclop,errcheck,goconst,gocritic,lll,exhaustive,nestif,gomnd // defer uplifts on analysers
 func (v *standardFramentRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 	buf := sqlparser.NewTrackedBuffer(v.formatter)
 
@@ -135,17 +143,17 @@ func (v *standardFramentRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			v.tablesCited = fromTablesCitedVisitor.GetParserTablesCited()
 			fromStr = fromVis.GetRewrittenQuery()
 		}
-		qIdSubtree, _ := fromVis.ComputeQIDWhereSubTree()
+		qIDSubtree, _ := fromVis.ComputeQIDWhereSubTree()
 		augmentedWhere := node.Where
-		if qIdSubtree != nil {
+		if qIDSubtree != nil {
 			if augmentedWhere != nil {
 				newWhereExpr := &sqlparser.AndExpr{
 					Left:  node.Where.Expr,
-					Right: qIdSubtree,
+					Right: qIDSubtree,
 				}
 				augmentedWhere = sqlparser.NewWhere(sqlparser.WhereStr, newWhereExpr)
 			} else {
-				augmentedWhere = sqlparser.NewWhere(sqlparser.WhereStr, qIdSubtree)
+				augmentedWhere = sqlparser.NewWhere(sqlparser.WhereStr, qIDSubtree)
 			}
 		}
 		augmentedWhere.Accept(v)
@@ -181,19 +189,19 @@ func (v *standardFramentRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		v.rewrittenQuery = rq
 
 	case *sqlparser.Auth:
-		var stackql_opt string
+		var stackqlOpt string
 		if node.SessionAuth {
-			stackql_opt = "stackql "
+			stackqlOpt = "stackql "
 		}
-		rq := fmt.Sprintf("%sAUTH %v %s %v %v", stackql_opt, node.Provider, node.Type, node.KeyFilePath, node.KeyEnvVar)
+		rq := fmt.Sprintf("%sAUTH %v %s %v %v", stackqlOpt, node.Provider, node.Type, node.KeyFilePath, node.KeyEnvVar)
 		v.rewrittenQuery = rq
 
 	case *sqlparser.AuthRevoke:
-		var stackql_opt string
+		var stackqlOpt string
 		if node.SessionAuth {
-			stackql_opt = "stackql "
+			stackqlOpt = "stackql "
 		}
-		rq := fmt.Sprintf("%sauth revoke %v", stackql_opt, node.Provider)
+		rq := fmt.Sprintf("%sauth revoke %v", stackqlOpt, node.Provider)
 		v.rewrittenQuery = rq
 
 	case *sqlparser.Sleep:
@@ -390,7 +398,6 @@ func (v *standardFramentRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 		if ct.Length != nil && ct.Scale != nil {
 			buf.AstPrintf(ct, "(%v,%v)", ct.Length, ct.Scale)
-
 		} else if ct.Length != nil {
 			buf.AstPrintf(ct, "(%v)", ct.Length)
 		}

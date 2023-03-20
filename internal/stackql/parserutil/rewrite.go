@@ -12,7 +12,7 @@ func naiveRewriteComparisonExpr(ex *sqlparser.ComparisonExpr) {
 }
 
 func NaiveRewriteComparisonExprs(m map[*sqlparser.ComparisonExpr]struct{}) {
-	for k, _ := range m {
+	for k := range m {
 		naiveRewriteComparisonExpr(k)
 	}
 }

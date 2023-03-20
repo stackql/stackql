@@ -10,20 +10,21 @@ import (
 	"github.com/stackql/stackql/internal/stackql/sql_system"
 )
 
+//nolint:lll,revive // complex regex
 var (
-	_                      DBMSInternalRouter = &standardDBMSInternalRouter{}
-	internalTableRegexp    *regexp.Regexp     = regexp.MustCompile(`(?i)^(?:public\.)?(?:pg_type|pg_namespace|pg_catalog.*|current_schema)`)
-	showHousekeepingRegexp *regexp.Regexp     = regexp.MustCompile(`(?i)(?:\s+transaction\s+isolation\s+level|standard_conforming_strings)`)
-	funcNameRegexp         *regexp.Regexp     = regexp.MustCompile(`(?i)(?:pg_.*)`)
-	internalSchemaRegexp   *regexp.Regexp     = regexp.MustCompile(`(?i)^(?:stackql_intel|stackql_history)`)
+	_                      Router         = &standardDBMSInternalRouter{}
+	internalTableRegexp    *regexp.Regexp = regexp.MustCompile(`(?i)^(?:public\.)?(?:pg_type|pg_namespace|pg_catalog.*|current_schema)`)
+	showHousekeepingRegexp *regexp.Regexp = regexp.MustCompile(`(?i)(?:\s+transaction\s+isolation\s+level|standard_conforming_strings)`)
+	funcNameRegexp         *regexp.Regexp = regexp.MustCompile(`(?i)(?:pg_.*)`)
+	internalSchemaRegexp   *regexp.Regexp = regexp.MustCompile(`(?i)^(?:stackql_intel|stackql_history)`)
 )
 
-type DBMSInternalRouter interface {
+type Router interface {
 	CanRoute(node sqlparser.SQLNode) (constants.BackendQueryType, bool)
 	ExprIsRoutable(node sqlparser.SQLNode) bool
 }
 
-func GetDBMSInternalRouter(cfg dto.DBMSInternalCfg, sqlSystem sql_system.SQLSystem) (DBMSInternalRouter, error) {
+func GetDBMSInternalRouter(cfg dto.DBMSInternalCfg, sqlSystem sql_system.SQLSystem) (Router, error) {
 	showRegexp := showHousekeepingRegexp
 	tableRegexp := internalTableRegexp
 	funcRegexp := funcNameRegexp
@@ -104,6 +105,7 @@ func (pgr *standardDBMSInternalRouter) affirmativeExec() (constants.BackendQuery
 
 func (pgr *standardDBMSInternalRouter) analyzeSelectExprs(selectExprs sqlparser.SelectExprs) bool {
 	for _, n := range selectExprs {
+		//nolint:gocritic // TODO: investigate
 		switch n := n.(type) {
 		case *sqlparser.AliasedExpr:
 			switch et := n.Expr.(type) {
@@ -115,15 +117,6 @@ func (pgr *standardDBMSInternalRouter) analyzeSelectExprs(selectExprs sqlparser.
 		}
 	}
 	return false
-}
-
-func (pgr *standardDBMSInternalRouter) analyzeSelectStatement(node sqlparser.SelectStatement) (constants.BackendQueryType, bool) {
-	switch node := node.(type) {
-	case *sqlparser.Select:
-		return pgr.analyzeSelect(node)
-	default:
-		return pgr.negative()
-	}
 }
 
 func (pgr *standardDBMSInternalRouter) analyzeSelect(node *sqlparser.Select) (constants.BackendQueryType, bool) {
@@ -186,6 +179,7 @@ func (pgr *standardDBMSInternalRouter) analyzeTableExpr(node sqlparser.TableExpr
 }
 
 func (pgr *standardDBMSInternalRouter) analyzeTableName(node sqlparser.TableName) bool {
+	//nolint:lll // long conditional
 	if node.QualifierSecond.GetRawVal() == "" && node.QualifierThird.GetRawVal() == "" && node.Qualifier.GetRawVal() != "" {
 		if pgr.analyzeTableIdentForSchema(node.Qualifier) {
 			return true

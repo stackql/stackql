@@ -6,13 +6,16 @@ import (
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 )
 
-type TableNamespaceCollection interface {
-	GetAnalyticsCacheTableNamespaceConfigurator() TableNamespaceConfigurator
-	GetViewsTableNamespaceConfigurator() TableNamespaceConfigurator
-	WithSQLSystem(sql_system.SQLSystem) (TableNamespaceCollection, error)
+type Collection interface {
+	GetAnalyticsCacheTableNamespaceConfigurator() Configurator
+	GetViewsTableNamespaceConfigurator() Configurator
+	WithSQLSystem(sql_system.SQLSystem) (Collection, error)
 }
 
-func NewStandardTableNamespaceCollection(cfg map[string]dto.NamespaceCfg, sqlEngine sqlengine.SQLEngine) (TableNamespaceCollection, error) {
+func NewStandardTableNamespaceCollection(
+	cfg map[string]dto.NamespaceCfg,
+	sqlEngine sqlengine.SQLEngine,
+) (Collection, error) {
 	// nil dereference protect
 	if cfg == nil {
 		cfg = map[string]dto.NamespaceCfg{}
@@ -36,20 +39,22 @@ func NewStandardTableNamespaceCollection(cfg map[string]dto.NamespaceCfg, sqlEng
 }
 
 type StandardTableNamespaceCollection struct {
-	analyticsCfg TableNamespaceConfigurator
-	viewCfg      TableNamespaceConfigurator
+	analyticsCfg Configurator
+	viewCfg      Configurator
 	sqlEngine    sqlengine.SQLEngine
 }
 
-func (col *StandardTableNamespaceCollection) GetAnalyticsCacheTableNamespaceConfigurator() TableNamespaceConfigurator {
+func (col *StandardTableNamespaceCollection) GetAnalyticsCacheTableNamespaceConfigurator() Configurator {
 	return col.analyticsCfg
 }
 
-func (col *StandardTableNamespaceCollection) GetViewsTableNamespaceConfigurator() TableNamespaceConfigurator {
+func (col *StandardTableNamespaceCollection) GetViewsTableNamespaceConfigurator() Configurator {
 	return col.viewCfg
 }
 
-func (col *StandardTableNamespaceCollection) WithSQLSystem(sqlSystem sql_system.SQLSystem) (TableNamespaceCollection, error) {
+func (col *StandardTableNamespaceCollection) WithSQLSystem(
+	sqlSystem sql_system.SQLSystem,
+) (Collection, error) {
 	_, err := col.analyticsCfg.WithSQLSystem(sqlSystem)
 	if err != nil {
 		return nil, err

@@ -34,12 +34,12 @@ var (
 	_ HandlerContext = &standardHandlerContext{}
 )
 
-type HandlerContext interface {
+type HandlerContext interface { //nolint:revive // don't mind stuttering this one
 	Clone() HandlerContext
 	//
 	GetASTFormatter() sqlparser.NodeFormatter
 	GetAuthContext(providerName string) (*dto.AuthCtx, error)
-	GetDBMSInternalRouter() dbmsinternal.DBMSInternalRouter
+	GetDBMSInternalRouter() dbmsinternal.Router
 	GetProvider(providerName string) (provider.IProvider, error)
 	GetSupportedProviders(extended bool) (map[string]map[string]interface{}, error)
 	LogHTTPResponseMap(target interface{})
@@ -60,12 +60,12 @@ type HandlerContext interface {
 	GetSQLEngine() sqlengine.SQLEngine
 	GetSQLSystem() sql_system.SQLSystem
 	GetGarbageCollector() garbagecollector.GarbageCollector
-	GetDrmConfig() drm.DRMConfig
-	GetTxnCounterMgr() txncounter.TxnCounterManager
+	GetDrmConfig() drm.Config
+	GetTxnCounterMgr() txncounter.Manager
 	GetTxnStore() kstore.KStore
-	GetNamespaceCollection() tablenamespace.TableNamespaceCollection
+	GetNamespaceCollection() tablenamespace.Collection
 	GetFormatter() sqlparser.NodeFormatter
-	GetPGInternalRouter() dbmsinternal.DBMSInternalRouter
+	GetPGInternalRouter() dbmsinternal.Router
 	//
 	SetCurrentProvider(string)
 	SetOutfile(io.Writer)
@@ -95,12 +95,12 @@ type standardHandlerContext struct {
 	sqlEngine           sqlengine.SQLEngine
 	sqlSystem           sql_system.SQLSystem
 	garbageCollector    garbagecollector.GarbageCollector
-	drmConfig           drm.DRMConfig
-	txnCounterMgr       txncounter.TxnCounterManager
+	drmConfig           drm.Config
+	txnCounterMgr       txncounter.Manager
 	txnStore            kstore.KStore
-	namespaceCollection tablenamespace.TableNamespaceCollection
+	namespaceCollection tablenamespace.Collection
 	formatter           sqlparser.NodeFormatter
-	pgInternalRouter    dbmsinternal.DBMSInternalRouter
+	pgInternalRouter    dbmsinternal.Router
 }
 
 func (hc *standardHandlerContext) SetCurrentProvider(p string) {
@@ -143,23 +143,24 @@ func (hc *standardHandlerContext) GetSQLSystem() sql_system.SQLSystem      { ret
 func (hc *standardHandlerContext) GetGarbageCollector() garbagecollector.GarbageCollector {
 	return hc.garbageCollector
 }
-func (hc *standardHandlerContext) GetDrmConfig() drm.DRMConfig { return hc.drmConfig }
-func (hc *standardHandlerContext) GetTxnCounterMgr() txncounter.TxnCounterManager {
+func (hc *standardHandlerContext) GetDrmConfig() drm.Config { return hc.drmConfig }
+func (hc *standardHandlerContext) GetTxnCounterMgr() txncounter.Manager {
 	return hc.txnCounterMgr
 }
 func (hc *standardHandlerContext) GetTxnStore() kstore.KStore { return hc.txnStore }
 
-//	func (hc *standardHandlerContext) GetNamespaceCollection() tablenamespace.TableNamespaceCollection {
+//	func (hc *standardHandlerContext) GetNamespaceCollection() tablenamespace.Collection {
 //		return hc.namespaceCollection
 //	}
 func (hc *standardHandlerContext) GetFormatter() sqlparser.NodeFormatter { return hc.formatter }
-func (hc *standardHandlerContext) GetPGInternalRouter() dbmsinternal.DBMSInternalRouter {
+func (hc *standardHandlerContext) GetPGInternalRouter() dbmsinternal.Router {
 	return hc.pgInternalRouter
 }
 
 func getProviderMap(providerName string, providerDesc openapistackql.ProviderDescription) map[string]interface{} {
 	latestVersion, err := providerDesc.GetLatestVersion()
 	if err != nil {
+		//nolint:lll // long message
 		latestVersion = fmt.Sprintf("could not infer latest version due to error.  Suggested action is that you wipe the local provider directory.  Error =  '%s'", err.Error())
 	}
 	googleMap := map[string]interface{}{
@@ -169,7 +170,10 @@ func getProviderMap(providerName string, providerDesc openapistackql.ProviderDes
 	return googleMap
 }
 
-func getProviderMapExtended(providerName string, providerDesc openapistackql.ProviderDescription) map[string]interface{} {
+func getProviderMapExtended(
+	providerName string,
+	providerDesc openapistackql.ProviderDescription,
+) map[string]interface{} {
 	return getProviderMap(providerName, providerDesc)
 }
 
@@ -183,12 +187,11 @@ func (hc *standardHandlerContext) GetSupportedProviders(extended bool) (map[stri
 	provs := hc.registry.ListLocallyAvailableProviders()
 	// Supporting SQL data sources
 	// These will be overwritten by any documented providers with the same name
-	for k, _ := range hc.sqlDataSources {
+	for k := range hc.sqlDataSources {
 		pn := k
 		retVal[pn] = map[string]interface{}{
 			"name": pn,
 		}
-
 	}
 	for k, pd := range provs {
 		pn := k
@@ -221,14 +224,15 @@ func (hc *standardHandlerContext) GetProvider(providerName string) (provider.IPr
 		return nil, err
 	}
 	prov, ok := hc.providers[providerName]
+	//nolint:nestif // TODO: review
 	if !ok {
 		prov, err = provider.GetProvider(hc.runtimeContext, ds.Name, ds.Tag, hc.registry, hc.sqlSystem)
 		if err == nil {
 			hc.providers[providerName] = prov
 			// update auth info with provider default if auth not already present
-			pr, err := prov.GetProvider()
-			if err != nil {
-				return prov, err
+			pr, prErr := prov.GetProvider()
+			if prErr != nil {
+				return prov, prErr
 			}
 			authDTO, exists := pr.GetAuth()
 			if exists {
@@ -237,34 +241,51 @@ func (hc *standardHandlerContext) GetProvider(providerName string) (provider.IPr
 			}
 			return prov, nil
 		}
-		err = fmt.Errorf("cannot find provider = '%s': %s", providerName, err.Error())
+		err = fmt.Errorf("cannot find provider = '%s': %w", providerName, err)
 	}
 	return prov, err
 }
 
 func (hc *standardHandlerContext) LogHTTPResponseMap(target interface{}) {
 	if target == nil {
-		hc.outErrFile.Write([]byte("processed http response body not present\n"))
+		//nolint:errcheck // ignore error on output stream
+		hc.outErrFile.Write(
+			[]byte("processed http response body not present\n"))
 		return
 	}
+	//nolint:nestif // ignore nested if
 	if hc.runtimeContext.HTTPLogEnabled {
 		switch target := target.(type) {
 		case map[string]interface{}, []interface{}:
 			b, err := json.MarshalIndent(target, "", "  ")
 			if err != nil {
-				hc.outErrFile.Write([]byte(fmt.Sprintf("processed http response body map '%v' colud not be marshalled; error: %s\n", target, err.Error())))
+				//nolint:errcheck // ignore error on output stream
+				hc.outErrFile.Write(
+					[]byte(
+						fmt.Sprintf(
+							"processed http response body map '%v' colud not be marshalled; error: %s\n",
+							target, err.Error())))
 				return
 			}
-			if target != nil {
-				hc.outErrFile.Write([]byte(fmt.Sprintf("processed http response body object: %s\n", string(b))))
+			if target != nil { //nolint:govet // TODO: review
+				//nolint:errcheck // ignore error on output stream
+				hc.outErrFile.Write(
+					[]byte(fmt.Sprintf("processed http response body object: %s\n", string(b))))
 			} else {
-				hc.outErrFile.Write([]byte("processed http response body not present\n"))
+				//nolint:errcheck // ignore error on output stream
+				hc.outErrFile.Write(
+					[]byte("processed http response body not present\n"))
 			}
 		default:
-			if target != nil {
-				hc.outErrFile.Write([]byte(fmt.Sprintf("processed http response body object: %v\n", target)))
+			if target != nil { //nolint:govet // TODO: review
+				//nolint:errcheck // ignore error on output stream
+				hc.outErrFile.Write(
+					[]byte(
+						fmt.Sprintf("processed http response body object: %v\n", target)))
 			} else {
-				hc.outErrFile.Write([]byte("processed http response body not present\n"))
+				//nolint:errcheck // ignore error on output stream
+				hc.outErrFile.Write(
+					[]byte("processed http response body not present\n"))
 			}
 		}
 	}
@@ -294,11 +315,11 @@ func (hc *standardHandlerContext) updateAuthContextIfNotExists(providerName stri
 	hc.authContexts[providerName] = authCtx
 }
 
-func (hc *standardHandlerContext) GetNamespaceCollection() tablenamespace.TableNamespaceCollection {
+func (hc *standardHandlerContext) GetNamespaceCollection() tablenamespace.Collection {
 	return hc.namespaceCollection
 }
 
-func (hc *standardHandlerContext) GetDBMSInternalRouter() dbmsinternal.DBMSInternalRouter {
+func (hc *standardHandlerContext) GetDBMSInternalRouter() dbmsinternal.Router {
 	return hc.pgInternalRouter
 }
 
@@ -349,15 +370,17 @@ func (hc *standardHandlerContext) Clone() HandlerContext {
 	return &rv
 }
 
-func GetHandlerCtx(cmdString string, runtimeCtx dto.RuntimeCtx, lruCache *lrucache.LRUCache, inputBundle bundle.Bundle) (HandlerContext, error) {
+func GetHandlerCtx(
+	cmdString string,
+	runtimeCtx dto.RuntimeCtx,
+	lruCache *lrucache.LRUCache,
+	inputBundle bundle.Bundle,
+) (HandlerContext, error) {
 	reg, err := getRegistry(runtimeCtx)
 	if err != nil {
 		return nil, err
 	}
 	providers := make(map[string]provider.IProvider)
-	if err != nil {
-		return nil, err
-	}
 	controlAttributes := inputBundle.GetControlAttributes()
 	sqlEngine := inputBundle.GetSQLEngine()
 	rv := standardHandlerContext{

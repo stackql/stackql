@@ -1,4 +1,4 @@
-package sql_system
+package sql_system //nolint:revive,stylecheck // package name is meaningful and readable
 
 import _ "embed"
 

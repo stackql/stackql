@@ -28,7 +28,13 @@ func getAuthenticatedClient(handlerCtx handler.HandlerContext, prov provider.IPr
 	return httpClient, nil
 }
 
-func HttpApiCallFromRequest(handlerCtx handler.HandlerContext, prov provider.IProvider, method openapistackql.OperationStore, request *http.Request) (*http.Response, error) {
+//nolint:gocognit // acceptable
+func HTTPApiCallFromRequest(
+	handlerCtx handler.HandlerContext,
+	prov provider.IProvider,
+	method openapistackql.OperationStore,
+	request *http.Request,
+) (*http.Response, error) {
 	httpClient, httpClientErr := getAuthenticatedClient(handlerCtx, prov)
 	if httpClientErr != nil {
 		return nil, httpClientErr
@@ -49,39 +55,48 @@ func HttpApiCallFromRequest(handlerCtx handler.HandlerContext, prov provider.IPr
 			urlStr = translatedRequest.URL.String()
 			methodStr = translatedRequest.Method
 		}
+		//nolint:errcheck // output stream
 		handlerCtx.GetOutErrFile().Write([]byte(fmt.Sprintf("http request url: '%s', method: '%s'\n", urlStr, methodStr)))
 		body := translatedRequest.Body
 		if body != nil {
-			b, err := io.ReadAll(body)
-			if err != nil {
-				handlerCtx.GetOutErrFile().Write([]byte(fmt.Sprintf("error inpecting http request body: %s\n", err.Error())))
+			b, bErr := io.ReadAll(body)
+			if bErr != nil {
+				//nolint:errcheck // output stream
+				handlerCtx.GetOutErrFile().Write([]byte(fmt.Sprintf("error inpecting http request body: %s\n", bErr.Error())))
 			}
 			bodyStr := string(b)
 			translatedRequest.Body = io.NopCloser(bytes.NewBuffer(b))
+			//nolint:errcheck // output stream
 			handlerCtx.GetOutErrFile().Write([]byte(fmt.Sprintf("http request body = '%s'\n", bodyStr)))
 		}
 	}
 	r, err := httpClient.Do(translatedRequest)
-	if handlerCtx.GetRuntimeContext().HTTPLogEnabled {
+	if handlerCtx.GetRuntimeContext().HTTPLogEnabled { //nolint:nestif // acceptable
 		if r != nil {
+			//nolint:errcheck // output stream
 			handlerCtx.GetOutErrFile().Write([]byte(fmt.Sprintf("http response status: %s\n", r.Status)))
 			if r.StatusCode >= 300 || handlerCtx.GetRuntimeContext().VerboseFlag {
 				if r.Body != nil {
-					bodyBytes, err := io.ReadAll(r.Body)
-					if err != nil {
-						return nil, err
+					bodyBytes, bErr := io.ReadAll(r.Body)
+					if bErr != nil {
+						return nil, bErr
 					}
+					//nolint:errcheck // output stream
 					handlerCtx.GetOutErrFile().Write([]byte(fmt.Sprintf("http error response body: %s\n", string(bodyBytes))))
 					r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 				}
 			}
 		} else {
+			//nolint:errcheck // output stream
 			handlerCtx.GetOutErrFile().Write([]byte("http response came buck null\n"))
 		}
 	}
 	if err != nil {
 		if handlerCtx.GetRuntimeContext().HTTPLogEnabled {
-			handlerCtx.GetOutErrFile().Write([]byte(fmt.Sprintln(fmt.Sprintf("http response error: %s", err.Error()))))
+			//nolint:errcheck // output stream
+			handlerCtx.GetOutErrFile().Write([]byte(
+				fmt.Sprintln(fmt.Sprintf("http response error: %s", err.Error()))), //nolint:gosimple,lll // TODO: sweep through this sort of nonsense
+			)
 		}
 		return nil, err
 	}

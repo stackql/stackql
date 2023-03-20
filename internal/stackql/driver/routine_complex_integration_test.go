@@ -19,8 +19,8 @@ import (
 	lrucache "github.com/stackql/stackql-parser/go/cache"
 )
 
+//nolint:govet,lll,errcheck // legacy test
 func TestUnionAllSelectComputeDisksOrderByCrtTmstpAscPlusCoalesceJsonExtract(t *testing.T) {
-
 	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "csv", "TestUnionAllSelectComputeDisksOrderByCrtTmstpAscPlusCoalesceJsonExtract")
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
@@ -31,7 +31,6 @@ func TestUnionAllSelectComputeDisksOrderByCrtTmstpAscPlusCoalesceJsonExtract(t *
 	}
 
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
-
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
 		handlerCtx.SetOutfile(os.Stdout)
 		handlerCtx.SetOutErrFile(os.Stderr)
@@ -55,5 +54,4 @@ func TestUnionAllSelectComputeDisksOrderByCrtTmstpAscPlusCoalesceJsonExtract(t *
 
 	stackqltestutil.SetupSimpleSelectGoogleComputeDisks(t, 2)
 	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedUnionAllSelectComputeDisksOrderCrtTmstpAscPlusJsonExtractCoalesce})
-
 }

@@ -4,8 +4,8 @@ import "github.com/stackql/stackql-parser/go/vt/sqlparser"
 
 type TableExprMap map[sqlparser.TableName]sqlparser.TableExpr
 
-func (tem TableExprMap) GetByAlias(alias string) (sqlparser.TableExpr, bool) {
-	for k, v := range tem {
+func (tm TableExprMap) GetByAlias(alias string) (sqlparser.TableExpr, bool) {
+	for k, v := range tm {
 		if k.GetRawVal() == alias {
 			return v, true
 		}

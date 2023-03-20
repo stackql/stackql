@@ -1,3 +1,4 @@
+//nolint:cyclop // inherently complex functionality
 package router
 
 import (
@@ -44,16 +45,16 @@ func NewTableRouteAstVisitor(handlerCtx handler.HandlerContext, router Parameter
 	}
 }
 
-func (v *standardTableRouteAstVisitor) analyzeAliasedTable(tb *sqlparser.AliasedTableExpr) (taxonomy.AnnotationCtx, error) {
+func (v *standardTableRouteAstVisitor) analyzeAliasedTable(
+	tb *sqlparser.AliasedTableExpr,
+) (taxonomy.AnnotationCtx, error) {
 	switch ex := tb.Expr.(type) {
 	case *sqlparser.Subquery:
 		return v.router.Route(tb, v.handlerCtx)
 	case sqlparser.TableName:
-		hIDs, err := taxonomy.GetHeirarchyIDsFromParserNode(v.handlerCtx, ex)
+		_, err := taxonomy.GetHeirarchyIDsFromParserNode(v.handlerCtx, ex)
 		if err != nil {
 			return nil, err
-		}
-		if _, isView := hIDs.GetView(); isView {
 		}
 		return v.router.Route(tb, v.handlerCtx)
 	default:
@@ -65,7 +66,9 @@ func (v *standardTableRouteAstVisitor) GetParameterRouter() ParameterRouter {
 	return v.router
 }
 
-func (v *standardTableRouteAstVisitor) analyzeExecTableName(tb *sqlparser.ExecSubquery) (taxonomy.AnnotationCtx, error) {
+func (v *standardTableRouteAstVisitor) analyzeExecTableName(
+	tb *sqlparser.ExecSubquery,
+) (taxonomy.AnnotationCtx, error) {
 	// cannot be recursive
 	return v.router.Route(tb, v.handlerCtx)
 }
@@ -86,6 +89,7 @@ func (v *standardTableRouteAstVisitor) GetAnnotationSlice() []taxonomy.Annotatio
 	return v.annotationSlice
 }
 
+//nolint:funlen,gocognit,cyclop,gocyclo,staticcheck,gocritic,errcheck,govet // inherently complex functionality
 func (v *standardTableRouteAstVisitor) Visit(node sqlparser.SQLNode) error {
 	var err error
 
@@ -109,36 +113,36 @@ func (v *standardTableRouteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		addIf(node.SQLCalcFoundRows, sqlparser.SQLCalcFoundRowsStr)
 
 		if node.Comments != nil {
-			node.Comments.Accept(v)
+			node.Comments.Accept(v) //nolint:errcheck // TODO: review
 		}
 		if node.SelectExprs != nil {
-			node.SelectExprs.Accept(v)
+			node.SelectExprs.Accept(v) //nolint:errcheck // TODO: review
 		}
 		if node.From != nil {
-			err := node.From.Accept(v)
-			if err != nil {
-				return err
+			fErr := node.From.Accept(v)
+			if fErr != nil {
+				return fErr
 			}
 		}
 		if node.Where != nil {
-			node.Where.Accept(v)
+			node.Where.Accept(v) //nolint:errcheck // TODO: review
 		}
 		if node.GroupBy != nil {
-			node.GroupBy.Accept(v)
+			node.GroupBy.Accept(v) //nolint:errcheck // TODO: review
 		}
 		if node.Having != nil {
-			node.Having.Accept(v)
+			node.Having.Accept(v) //nolint:errcheck // TODO: review
 		}
 		if node.OrderBy != nil {
-			node.OrderBy.Accept(v)
+			node.OrderBy.Accept(v) //nolint:errcheck // TODO: review
 		}
 		if node.Limit != nil {
-			node.Limit.Accept(v)
+			node.Limit.Accept(v) //nolint:errcheck // TODO: review
 		}
 		return nil
 
 	case *sqlparser.ParenSelect:
-		node.Accept(v)
+		node.Accept(v) //nolint:errcheck // TODO: review
 
 	case *sqlparser.Auth:
 		return nil
@@ -146,9 +150,9 @@ func (v *standardTableRouteAstVisitor) Visit(node sqlparser.SQLNode) error {
 	case *sqlparser.AuthRevoke:
 		return nil
 	case *sqlparser.ExecSubquery:
-		annotation, err := v.analyzeExecTableName(node)
-		if err != nil {
-			return err
+		annotation, aErr := v.analyzeExecTableName(node)
+		if aErr != nil {
+			return aErr
 		}
 		v.annotations[node] = annotation
 		v.annotationSlice = append(v.annotationSlice, annotation)
@@ -246,7 +250,7 @@ func (v *standardTableRouteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		if ct.EnumValues != nil {
 		}
 
-		opts := make([]string, 0, 16)
+		opts := make([]string, 0, 16) //nolint:gomnd // TODO: review
 		if ct.Unsigned {
 			opts = append(opts, sqlparser.KeywordStrings[sqlparser.UNSIGNED])
 		}
@@ -254,7 +258,11 @@ func (v *standardTableRouteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			opts = append(opts, sqlparser.KeywordStrings[sqlparser.ZEROFILL])
 		}
 		if ct.Charset != "" {
-			opts = append(opts, sqlparser.KeywordStrings[sqlparser.CHARACTER], sqlparser.KeywordStrings[sqlparser.SET], ct.Charset)
+			opts = append(
+				opts,
+				sqlparser.KeywordStrings[sqlparser.CHARACTER],
+				sqlparser.KeywordStrings[sqlparser.SET],
+				ct.Charset)
 		}
 		if ct.Collate != "" {
 			opts = append(opts, sqlparser.KeywordStrings[sqlparser.COLLATE], ct.Collate)
@@ -266,7 +274,11 @@ func (v *standardTableRouteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			opts = append(opts, sqlparser.KeywordStrings[sqlparser.DEFAULT], sqlparser.String(ct.Default))
 		}
 		if ct.OnUpdate != nil {
-			opts = append(opts, sqlparser.KeywordStrings[sqlparser.ON], sqlparser.KeywordStrings[sqlparser.UPDATE], sqlparser.String(ct.OnUpdate))
+			opts = append(
+				opts,
+				sqlparser.KeywordStrings[sqlparser.ON],
+				sqlparser.KeywordStrings[sqlparser.UPDATE],
+				sqlparser.String(ct.OnUpdate))
 		}
 		if ct.Autoincrement {
 			opts = append(opts, sqlparser.KeywordStrings[sqlparser.AUTO_INCREMENT])
@@ -339,7 +351,7 @@ func (v *standardTableRouteAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 	case sqlparser.ReferenceAction:
 		a := node
-		switch a {
+		switch a { //nolint:exhaustive // TODO: review
 		case sqlparser.Restrict:
 		case sqlparser.Cascade:
 		case sqlparser.NoAction:
@@ -356,6 +368,7 @@ func (v *standardTableRouteAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 	case *sqlparser.Show:
 		nodeType := strings.ToLower(node.Type)
+		//nolint:lll,nestif // TODO: review
 		if (nodeType == "tables" || nodeType == "columns" || nodeType == "fields" || nodeType == "index" || nodeType == "keys" || nodeType == "indexes") && node.ShowTablesOpt != nil {
 			opt := node.ShowTablesOpt
 			if node.Extended != "" {

@@ -21,7 +21,7 @@ const (
 	RequestStringStr string = "request"
 )
 
-func ExtractHttpElement(s string) (HTTPElementType, error) {
+func ExtractHTTPElement(s string) (HTTPElementType, error) {
 	switch strings.ToLower(s) {
 	case QueryParamStr:
 		return QueryParam, nil

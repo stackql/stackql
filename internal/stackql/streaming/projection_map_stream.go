@@ -18,10 +18,6 @@ func NewSimpleProjectionMapStream(projection map[string]string, staticStore map[
 	}
 }
 
-func (ss *SimpleProjectionMapStream) iStackQLReader() {}
-
-func (ss *SimpleProjectionMapStream) iStackQLWriter() {}
-
 func (ss *SimpleProjectionMapStream) Write(input []map[string]interface{}) error {
 	ss.dynamicStore = append(ss.dynamicStore, input...)
 	return nil

@@ -10,6 +10,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 )
 
+//nolint:gochecknoglobals // supporting singleton
 var (
 	once                     sync.Once
 	garbageCollectorExecutor GarbageCollectorExecutor
@@ -34,7 +35,11 @@ type GarbageCollectorExecutor interface {
 
 // Idiomatic golang singleton
 // Credit to http://marcio.io/2015/07/singleton-pattern-in-go/
-func GetGarbageCollectorExecutorInstance(sqlEngine sqlengine.SQLEngine, ns tablenamespace.TableNamespaceCollection, system sql_system.SQLSystem, txnStore kstore.KStore) (GarbageCollectorExecutor, error) {
+func GetGarbageCollectorExecutorInstance(
+	sqlEngine sqlengine.SQLEngine,
+	ns tablenamespace.Collection,
+	system sql_system.SQLSystem, txnStore kstore.KStore,
+) (GarbageCollectorExecutor, error) {
 	var err error
 	once.Do(func() {
 		if err != nil {
@@ -45,7 +50,11 @@ func GetGarbageCollectorExecutorInstance(sqlEngine sqlengine.SQLEngine, ns table
 	return garbageCollectorExecutor, err
 }
 
-func newBasicGarbageCollectorExecutor(system sql_system.SQLSystem, ns tablenamespace.TableNamespaceCollection, txnStore kstore.KStore) (GarbageCollectorExecutor, error) {
+func newBasicGarbageCollectorExecutor(
+	system sql_system.SQLSystem,
+	ns tablenamespace.Collection,
+	txnStore kstore.KStore,
+) (GarbageCollectorExecutor, error) { //nolint:unparam // future proofing
 	return &basicGarbageCollectorExecutor{
 		gcMutex:   &sync.Mutex{},
 		ns:        ns,
@@ -58,7 +67,7 @@ func newBasicGarbageCollectorExecutor(system sql_system.SQLSystem, ns tablenames
 //   - `Collect()` will reclaim resources from all txns **not** < supplied min ID.
 type basicGarbageCollectorExecutor struct {
 	gcMutex   *sync.Mutex
-	ns        tablenamespace.TableNamespaceCollection
+	ns        tablenamespace.Collection
 	sqlSystem sql_system.SQLSystem
 	txnStore  kstore.KStore
 }
@@ -87,11 +96,11 @@ func (rc *basicGarbageCollectorExecutor) Update(tableName string, parentTcc, tcc
 func (rc *basicGarbageCollectorExecutor) Collect() error {
 	rc.gcMutex.Lock()
 	defer rc.gcMutex.Unlock()
-	minId, minValid := rc.txnStore.Min()
+	minID, minValid := rc.txnStore.Min()
 	if !minValid {
 		return rc.sqlSystem.GCCollectAll()
 	}
-	return rc.sqlSystem.GCCollectObsoleted(minId)
+	return rc.sqlSystem.GCCollectObsoleted(minID)
 }
 
 // Algorithm, **must be done during pause**:

@@ -12,8 +12,8 @@ import (
 	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
 )
 
-func (p *standardPrimitiveGenerator) analyzeSelect(pbi planbuilderinput.PlanBuilderInput) error {
-
+//nolint:errcheck,funlen,gocognit,govet // TODO: review
+func (pb *standardPrimitiveGenerator) analyzeSelect(pbi planbuilderinput.PlanBuilderInput) error {
 	annotatedAST := pbi.GetAnnotatedAST()
 
 	handlerCtx := pbi.GetHandlerCtx()
@@ -26,11 +26,11 @@ func (p *standardPrimitiveGenerator) analyzeSelect(pbi planbuilderinput.PlanBuil
 	// We need not emulate postgres for other backends at this stage.
 	if sel, ok := planbuilderinput.IsPGSetupQuery(pbi); ok {
 		if sel != nil {
-			bldr := primitivebuilder.NewNativeSelect(p.PrimitiveComposer.GetGraph(), handlerCtx, sel)
-			p.PrimitiveComposer.SetBuilder(bldr)
+			bldr := primitivebuilder.NewNativeSelect(pb.PrimitiveComposer.GetGraph(), handlerCtx, sel)
+			pb.PrimitiveComposer.SetBuilder(bldr)
 			return nil
 		}
-		return p.AnalyzeNop(pbi)
+		return pb.AnalyzeNop(pbi)
 	}
 
 	selectMetadata, ok := annotatedAST.GetSelectMetadata(node)
@@ -75,26 +75,26 @@ func (p *standardPrimitiveGenerator) analyzeSelect(pbi planbuilderinput.PlanBuil
 	}
 
 	for k, v := range tblz {
-		p.PrimitiveComposer.SetTable(k, v)
+		pb.PrimitiveComposer.SetTable(k, v)
 	}
 
 	for i, fromExpr := range node.From {
 		var leafKey interface{} = i
-		switch from := fromExpr.(type) {
+		switch from := fromExpr.(type) { //nolint:gocritic // TODO: review
 		case *sqlparser.AliasedTableExpr:
 			if from.As.GetRawVal() != "" {
 				leafKey = from.As.GetRawVal()
 			}
 		}
 
-		leaf, err := p.PrimitiveComposer.GetSymTab().NewLeaf(leafKey)
+		leaf, err := pb.PrimitiveComposer.GetSymTab().NewLeaf(leafKey)
 		if err != nil {
 			return err
 		}
-		pChild = p.AddChildPrimitiveGenerator(fromExpr, leaf)
+		pChild = pb.AddChildPrimitiveGenerator(fromExpr, leaf)
 
 		for _, tbl := range tblz {
-			err := p.expandTable(tbl)
+			err := pb.expandTable(tbl)
 			if err != nil {
 				return err
 			}
@@ -112,17 +112,17 @@ func (p *standardPrimitiveGenerator) analyzeSelect(pbi planbuilderinput.PlanBuil
 		case *sqlparser.ExecSubquery:
 			logging.GetLogger().Infoln(fmt.Sprintf("%v", ft))
 		default:
-			rewrittenWhere, paramsPresent, err = p.analyzeWhere(node.Where, existingParams)
+			rewrittenWhere, paramsPresent, err = pb.analyzeWhere(node.Where, existingParams)
 			if err != nil {
 				return err
 			}
-			p.PrimitiveComposer.SetWhere(rewrittenWhere)
+			pb.PrimitiveComposer.SetWhere(rewrittenWhere)
 		}
 	}
 	logging.GetLogger().Debugf("len(paramsPresent) = %d\n", len(paramsPresent))
 	// END_BLOCK REWRITE_WHERE
 
-	if len(node.From) == 1 {
+	if len(node.From) == 1 { //nolint:nestif //	TODO: review
 		switch ft := node.From[0].(type) {
 		case *sqlparser.JoinTableExpr, *sqlparser.AliasedTableExpr:
 			tcc := pbi.GetTxnCtrlCtrs()
@@ -135,7 +135,7 @@ func (p *standardPrimitiveGenerator) analyzeSelect(pbi planbuilderinput.PlanBuil
 				rewrittenWhere,
 				pbi.GetStatement(),
 				tblz,
-				p.PrimitiveComposer,
+				pb.PrimitiveComposer,
 				tcc,
 				tccAheadOfTime,
 			)
@@ -149,7 +149,7 @@ func (p *standardPrimitiveGenerator) analyzeSelect(pbi planbuilderinput.PlanBuil
 			bld := dp.GetBldr()
 			selCtx := dp.GetSelectCtx()
 			pChild.GetPrimitiveComposer().SetBuilder(bld)
-			p.PrimitiveComposer.SetSelectPreparedStatementCtx(selCtx)
+			pb.PrimitiveComposer.SetSelectPreparedStatementCtx(selCtx)
 			return nil
 		case *sqlparser.ExecSubquery:
 			cols, err := parserutil.ExtractSelectColumnNames(node, handlerCtx.GetASTFormatter())
@@ -164,10 +164,17 @@ func (p *standardPrimitiveGenerator) analyzeSelect(pbi planbuilderinput.PlanBuil
 			if err != nil {
 				return err
 			}
-			pChild.GetPrimitiveComposer().SetBuilder(primitivebuilder.NewSingleAcquireAndSelect(pChild.GetPrimitiveComposer().GetGraph(), pChild.GetPrimitiveComposer().GetTxnCtrlCtrs(), handlerCtx, insertionContainer, pChild.GetPrimitiveComposer().GetInsertPreparedStatementCtx(), pChild.GetPrimitiveComposer().GetSelectPreparedStatementCtx(), nil))
+			pChild.GetPrimitiveComposer().SetBuilder(
+				primitivebuilder.NewSingleAcquireAndSelect(
+					pChild.GetPrimitiveComposer().GetGraph(),
+					pChild.GetPrimitiveComposer().GetTxnCtrlCtrs(),
+					handlerCtx,
+					insertionContainer,
+					pChild.GetPrimitiveComposer().GetInsertPreparedStatementCtx(),
+					pChild.GetPrimitiveComposer().GetSelectPreparedStatementCtx(),
+					nil))
 			return nil
 		}
-
 	}
 	return fmt.Errorf("cannot process cartesian join select just yet")
 }

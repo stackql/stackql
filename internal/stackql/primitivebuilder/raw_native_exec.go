@@ -42,9 +42,7 @@ func (ss *RawNativeExec) GetTail() primitivegraph.PrimitiveNode {
 }
 
 func (ss *RawNativeExec) Build() error {
-
 	selectEx := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
-
 		// select phase
 		logging.GetLogger().Infoln(fmt.Sprintf("running native query: '''%s''' ", ss.nativeQuery))
 

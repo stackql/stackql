@@ -15,6 +15,7 @@ import (
 	lrucache "github.com/stackql/stackql-parser/go/cache"
 )
 
+//nolint:govet,lll,errcheck // legacy test
 func TestSimpleAggGoogleContainerSubnetworksGroupedAllowedDriverOutputAsc(t *testing.T) {
 	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "table", "TestSimpleAggGoogleContainerSubnetworksGroupedAllowedDriverOutputAsc")
 	if err != nil {
@@ -26,7 +27,6 @@ func TestSimpleAggGoogleContainerSubnetworksGroupedAllowedDriverOutputAsc(t *tes
 	}
 
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
-
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
 		handlerCtx.SetOutfile(os.Stdout)
 		handlerCtx.SetOutErrFile(os.Stderr)
@@ -50,9 +50,9 @@ func TestSimpleAggGoogleContainerSubnetworksGroupedAllowedDriverOutputAsc(t *tes
 
 	stackqltestutil.SetupSimpleSelectGoogleContainerAggAllowedSubnetworks(t)
 	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedSimpleAggCountGroupedGoogleCotainerSubnetworkTableFileAsc})
-
 }
 
+//nolint:govet,lll,errcheck // legacy test
 func TestSimpleAggGoogleContainerSubnetworksGroupedAllowedDriverOutputDesc(t *testing.T) {
 	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "table", "TestSimpleAggGoogleContainerSubnetworksGroupedAllowedDriverOutputDesc")
 	if err != nil {
@@ -64,7 +64,6 @@ func TestSimpleAggGoogleContainerSubnetworksGroupedAllowedDriverOutputDesc(t *te
 	}
 
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
-
 		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
 		handlerCtx.SetOutfile(os.Stdout)
 		handlerCtx.SetOutErrFile(os.Stderr)
@@ -88,5 +87,4 @@ func TestSimpleAggGoogleContainerSubnetworksGroupedAllowedDriverOutputDesc(t *te
 
 	stackqltestutil.SetupSimpleSelectGoogleContainerAggAllowedSubnetworks(t)
 	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedSimpleAggCountGroupedGoogleCotainerSubnetworkTableFileDesc})
-
 }

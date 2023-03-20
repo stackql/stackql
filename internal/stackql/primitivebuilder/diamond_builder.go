@@ -1,7 +1,6 @@
 package primitivebuilder
 
 import (
-	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
@@ -14,10 +13,15 @@ type DiamondBuilder struct {
 	root, tailRoot, tailTail primitivegraph.PrimitiveNode
 	sqlSystem                sql_system.SQLSystem
 	shouldCollectGarbage     bool
-	txnControlCounterSlice   []internaldto.TxnControlCounters
 }
 
-func NewDiamondBuilder(parent Builder, children []Builder, graph primitivegraph.PrimitiveGraph, sqlSystem sql_system.SQLSystem, shouldCollectGarbage bool) Builder {
+func NewDiamondBuilder(
+	parent Builder,
+	children []Builder,
+	graph primitivegraph.PrimitiveGraph,
+	sqlSystem sql_system.SQLSystem,
+	shouldCollectGarbage bool,
+) Builder {
 	return &DiamondBuilder{
 		SubTreeBuilder:       SubTreeBuilder{children: children},
 		parentBuilder:        parent,
@@ -34,7 +38,13 @@ func (db *DiamondBuilder) Build() error {
 			return err
 		}
 	}
-	db.root = db.graph.CreatePrimitiveNode(primitive.NewPassThroughPrimitive(db.sqlSystem, db.graph.GetTxnControlCounterSlice(), false))
+	db.root = db.graph.CreatePrimitiveNode(
+		primitive.NewPassThroughPrimitive(
+			db.sqlSystem,
+			db.graph.GetTxnControlCounterSlice(),
+			false,
+		),
+	)
 	if db.parentBuilder != nil {
 		err := db.parentBuilder.Build()
 		if err != nil {
@@ -43,7 +53,13 @@ func (db *DiamondBuilder) Build() error {
 		db.tailRoot = db.parentBuilder.GetRoot()
 		db.tailTail = db.parentBuilder.GetTail()
 	} else {
-		db.tailRoot = db.graph.CreatePrimitiveNode(primitive.NewPassThroughPrimitive(db.sqlSystem, db.graph.GetTxnControlCounterSlice(), db.shouldCollectGarbage))
+		db.tailRoot = db.graph.CreatePrimitiveNode(
+			primitive.NewPassThroughPrimitive(
+				db.sqlSystem,
+				db.graph.GetTxnControlCounterSlice(),
+				db.shouldCollectGarbage,
+			),
+		)
 		db.tailTail = db.tailRoot
 	}
 	for _, child := range db.children {

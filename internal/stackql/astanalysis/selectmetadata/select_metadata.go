@@ -11,7 +11,7 @@ var (
 )
 
 func NewSelectMetadata(
-	onConditionDataFlows dataflow.DataFlowCollection,
+	onConditionDataFlows dataflow.Collection,
 	onConditionsToRewrite map[*sqlparser.ComparisonExpr]struct{},
 	tableMap taxonomy.TblMap,
 	annotations taxonomy.AnnotationCtxMap,
@@ -26,13 +26,13 @@ func NewSelectMetadata(
 
 type SelectMetadata interface {
 	GetAnnotations() (taxonomy.AnnotationCtxMap, bool)
-	GetOnConditionDataFlows() (dataflow.DataFlowCollection, bool)
+	GetOnConditionDataFlows() (dataflow.Collection, bool)
 	GetOnConditionsToRewrite() map[*sqlparser.ComparisonExpr]struct{}
 	GetTableMap() (taxonomy.TblMap, bool)
 }
 
 type standardSelectMetadata struct {
-	onConditionDataFlows  dataflow.DataFlowCollection
+	onConditionDataFlows  dataflow.Collection
 	onConditionsToRewrite map[*sqlparser.ComparisonExpr]struct{}
 	tableMap              taxonomy.TblMap
 	annotations           taxonomy.AnnotationCtxMap
@@ -50,6 +50,6 @@ func (sm *standardSelectMetadata) GetOnConditionsToRewrite() map[*sqlparser.Comp
 	return sm.onConditionsToRewrite
 }
 
-func (sm *standardSelectMetadata) GetOnConditionDataFlows() (dataflow.DataFlowCollection, bool) {
+func (sm *standardSelectMetadata) GetOnConditionDataFlows() (dataflow.Collection, bool) {
 	return sm.onConditionDataFlows, sm.onConditionDataFlows != nil
 }

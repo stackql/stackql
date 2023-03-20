@@ -32,12 +32,17 @@ type standardProviderStringAstVisitor struct {
 	sqlSystem                      sql_system.SQLSystem
 	formatter                      sqlparser.NodeFormatter
 	annotatedAST                   annotatedast.AnnotatedAst
-	namespaceCollection            tablenamespace.TableNamespaceCollection
+	namespaceCollection            tablenamespace.Collection
 	containsAnalyticsCacheMaterial bool
 	containsNativeBackendMaterial  bool
 }
 
-func NewProviderStringAstVisitor(annotatedAST annotatedast.AnnotatedAst, sqlSystem sql_system.SQLSystem, formatter sqlparser.NodeFormatter, namespaceCollection tablenamespace.TableNamespaceCollection) ProviderStringAstVisitor {
+func NewProviderStringAstVisitor(
+	annotatedAST annotatedast.AnnotatedAst,
+	sqlSystem sql_system.SQLSystem,
+	formatter sqlparser.NodeFormatter,
+	namespaceCollection tablenamespace.Collection,
+) ProviderStringAstVisitor {
 	return &standardProviderStringAstVisitor{
 		tablesCited:         make(map[*sqlparser.AliasedTableExpr]sqlparser.TableName),
 		sqlSystem:           sqlSystem,
@@ -74,6 +79,7 @@ func (v *standardProviderStringAstVisitor) GetProviderStrings() []string {
 	return retVal
 }
 
+//nolint:dupl,funlen,gocognit,gocyclo,cyclop,errcheck,staticcheck,gocritic,lll,ineffassign,exhaustive,nestif,gomnd // defer uplifts on analysers
 func (v *standardProviderStringAstVisitor) Visit(node sqlparser.SQLNode) error {
 	buf := sqlparser.NewTrackedBuffer(v.formatter)
 
@@ -323,7 +329,6 @@ func (v *standardProviderStringAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 		if ct.Length != nil && ct.Scale != nil {
 			buf.AstPrintf(ct, "(%v,%v)", ct.Length, ct.Scale)
-
 		} else if ct.Length != nil {
 			buf.AstPrintf(ct, "(%v)", ct.Length)
 		}

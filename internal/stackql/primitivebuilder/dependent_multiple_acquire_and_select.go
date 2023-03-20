@@ -1,4 +1,4 @@
-package primitivebuilder
+package primitivebuilder //nolint:dupl // TODO: fix
 
 import (
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
@@ -10,7 +10,11 @@ type DependentMultipleAcquireAndSelect struct {
 	selectBuilder   Builder
 }
 
-func NewDependentMultipleAcquireAndSelect(graph primitivegraph.PrimitiveGraph, acquireBuilders []Builder, selectBuilder Builder) Builder {
+func NewDependentMultipleAcquireAndSelect(
+	graph primitivegraph.PrimitiveGraph,
+	acquireBuilders []Builder,
+	selectBuilder Builder,
+) Builder {
 	return &DependentMultipleAcquireAndSelect{
 		graph:           graph,
 		acquireBuilders: acquireBuilders,

@@ -8,9 +8,11 @@ import (
 	"github.com/stackql/stackql/internal/stackql/constants"
 )
 
+//nolint:revive // Explicit type declaration removes any ambiguity
 var (
-	_              sqlparser.NodeFormatter = PostgresSelectExprsFormatter
-	sqliteKeywords map[string]struct{}     = map[string]struct{}{
+	_ sqlparser.NodeFormatter = PostgresSelectExprsFormatter
+	//nolint:gochecknoglobals // Convenient to have this as a global variable
+	sqliteKeywords map[string]struct{} = map[string]struct{}{
 		"commit": {},
 		"key":    {},
 		"select": {},
@@ -73,7 +75,7 @@ func formatColIdentCaseInsensitive(node sqlparser.ColIdent, buf *sqlparser.Track
 		buf.WriteString(fmt.Sprintf(`"%s"`, node.String()))
 		return
 	}
-	buf.WriteString(fmt.Sprintf("%s", node.String()))
+	buf.WriteString(node.String())
 }
 
 func formatColName(node *sqlparser.ColName, buf *sqlparser.TrackedBuffer) {

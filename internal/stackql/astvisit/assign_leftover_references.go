@@ -1,3 +1,4 @@
+//nolint:dupl,cyclop // defer uplifts on analysers
 package astvisit
 
 import (
@@ -46,11 +47,15 @@ func NewLeftoverReferencesAstVisitor(
 	}
 }
 
+//nolint:lll // defer analyser uplifts
 func (v *standardLeftoverReferencesAstVisitor) GetTablesFoundThisIteration() map[sqlparser.TableExpr]taxonomy.AnnotationCtx {
 	return v.thisIterationTableToAnnotationCtx
 }
 
-func (v *standardLeftoverReferencesAstVisitor) findTableLeftover(colName *sqlparser.ColName) (sqlparser.TableExpr, error) {
+//nolint:govet,ineffassign,staticcheck // defer analyser uplifts
+func (v *standardLeftoverReferencesAstVisitor) findTableLeftover(
+	colName *sqlparser.ColName,
+) (sqlparser.TableExpr, error) {
 	for tb, md := range v.tableToAnnotationCtx {
 		// TODO: make recursive for views
 		tm := md.GetTableMeta()
@@ -62,7 +67,7 @@ func (v *standardLeftoverReferencesAstVisitor) findTableLeftover(colName *sqlpar
 			return nil, err
 		}
 		properties, err := selectable.GetProperties()
-		for k, _ := range properties {
+		for k := range properties {
 			if k == colName.GetRawVal() {
 				ref, err := parserutil.NewUnknownTypeColumnarReference(k)
 				if err != nil {
@@ -76,6 +81,7 @@ func (v *standardLeftoverReferencesAstVisitor) findTableLeftover(colName *sqlpar
 	return nil, fmt.Errorf("could not locate table corresponding to expression '%s'", colName.GetRawVal())
 }
 
+//nolint:dupl,funlen,gocognit,gocyclo,cyclop,errcheck,staticcheck,goconst,gocritic,lll,nestif,govet,gomnd,exhaustive // defer uplifts on analysers
 func (v *standardLeftoverReferencesAstVisitor) Visit(node sqlparser.SQLNode) error {
 	var err error
 
@@ -98,27 +104,35 @@ func (v *standardLeftoverReferencesAstVisitor) Visit(node sqlparser.SQLNode) err
 		addIf(node.StraightJoinHint, sqlparser.StraightJoinHint)
 		addIf(node.SQLCalcFoundRows, sqlparser.SQLCalcFoundRowsStr)
 
+		//nolint:errcheck // defer uplifts on analysers
 		if node.Comments != nil {
 			node.Comments.Accept(v)
 		}
+		//nolint:errcheck // defer uplifts on analysers
 		if node.SelectExprs != nil {
 			node.SelectExprs.Accept(v)
 		}
+		//nolint:errcheck // defer uplifts on analysers
 		if node.From != nil {
 			node.From.Accept(v)
 		}
+		//nolint:errcheck // defer uplifts on analysers
 		if node.Where != nil {
 			node.Where.Accept(v)
 		}
+		//nolint:errcheck // defer uplifts on analysers
 		if node.GroupBy != nil {
 			node.GroupBy.Accept(v)
 		}
+		//nolint:errcheck // defer uplifts on analysers
 		if node.Having != nil {
 			node.Having.Accept(v)
 		}
+		//nolint:errcheck // defer uplifts on analysers
 		if node.OrderBy != nil {
 			node.OrderBy.Accept(v)
 		}
+		//nolint:errcheck // defer uplifts on analysers
 		if node.Limit != nil {
 			node.Limit.Accept(v)
 		}

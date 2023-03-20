@@ -21,14 +21,14 @@ type PrimitiveGraph interface {
 	CreatePrimitiveNode(pr primitive.IPrimitive) PrimitiveNode
 	Execute(ctx primitive.IPrimitiveCtx) internaldto.ExecutorOutput
 	GetInputFromAlias(string) (internaldto.ExecutorOutput, bool)
-	IncidentData(fromId int64, input internaldto.ExecutorOutput) error
+	IncidentData(fromID int64, input internaldto.ExecutorOutput) error
 	GetTxnControlCounterSlice() []internaldto.TxnControlCounters
 	NewDependency(from PrimitiveNode, to PrimitiveNode, weight float64)
 	Optimise() error
 	SetContainsIndirect(containsView bool)
 	SetExecutor(func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput) error
 	SetInputAlias(alias string, id int64) error
-	SetTxnId(id int)
+	SetTxnID(id int)
 	Sort() (sorted []graph.Node, err error)
 }
 
@@ -61,7 +61,7 @@ func (pg *standardPrimitiveGraph) SetContainsIndirect(containsView bool) {
 	pg.containsView = containsView
 }
 
-func (pr *standardPrimitiveGraph) GetInputFromAlias(string) (internaldto.ExecutorOutput, bool) {
+func (pg *standardPrimitiveGraph) GetInputFromAlias(string) (internaldto.ExecutorOutput, bool) {
 	var rv internaldto.ExecutorOutput
 	return rv, false
 }
@@ -70,7 +70,7 @@ func (pr *standardPrimitiveGraph) GetInputFromAlias(string) (internaldto.Executo
 // This is so that cached queries can be re-executed.
 func (pg *standardPrimitiveGraph) reset() {
 	for _, node := range pg.sorted {
-		switch node := node.(type) {
+		switch node := node.(type) { //nolint:gocritic // acceptable
 		case PrimitiveNode:
 			select {
 			case <-node.IsDone():
@@ -85,11 +85,15 @@ func (pg *standardPrimitiveGraph) reset() {
 // This particular implementation:
 //   - Uses the errgroup package to execute the graph in parallel.
 //   - Blocks on any node that has a dependency that has not been executed.
+//
+//nolint:gocognit // inherent complexity
 func (pg *standardPrimitiveGraph) Execute(ctx primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 	// Reset the graph.
 	// Absolutely necessary for re-execution
 	defer pg.reset()
-	var output internaldto.ExecutorOutput = internaldto.NewExecutorOutput(nil, nil, nil, nil, fmt.Errorf("empty execution graph"))
+	//nolint:stylecheck // prefer declarative
+	var output internaldto.ExecutorOutput = internaldto.NewExecutorOutput(
+		nil, nil, nil, nil, fmt.Errorf("empty execution graph"))
 	for _, node := range pg.sorted {
 		outChan := make(chan internaldto.ExecutorOutput, 1)
 		switch node := node.(type) {
@@ -107,12 +111,14 @@ func (pg *standardPrimitiveGraph) Execute(ctx primitive.IPrimitiveCtx) internald
 					// and replenish the IsDone() channel
 					incidentNode.SetIsDone(<-incidentNode.IsDone())
 				default:
-					return internaldto.NewExecutorOutput(nil, nil, nil, nil, fmt.Errorf("unknown execution primitive type: '%T'", incidentNode))
+					return internaldto.NewExecutorOutput(
+						nil, nil, nil, nil,
+						fmt.Errorf("unknown execution primitive type: '%T'", incidentNode))
 				}
 			}
 			pg.errGroup.Go(
 				func() error {
-					output := node.GetPrimitive().Execute(ctx)
+					output := node.GetPrimitive().Execute(ctx) //nolint:govet // intentional
 					outChan <- output
 					close(outChan)
 					return output.Err
@@ -125,9 +131,9 @@ func (pg *standardPrimitiveGraph) Execute(ctx primitive.IPrimitiveCtx) internald
 					break
 				}
 				fromNode := destinationNodes.Node()
-				switch fromNode := fromNode.(type) {
+				switch fromNode := fromNode.(type) { //nolint:gocritic // acceptable
 				case PrimitiveNode:
-					fromNode.GetPrimitive().IncidentData(node.ID(), output)
+					fromNode.GetPrimitive().IncidentData(node.ID(), output) //nolint:errcheck // TODO: consider design options
 				}
 			}
 			node.SetIsDone(true)
@@ -141,16 +147,16 @@ func (pg *standardPrimitiveGraph) Execute(ctx primitive.IPrimitiveCtx) internald
 	return output
 }
 
-func (pg *standardPrimitiveGraph) SetTxnId(id int) {
+func (pg *standardPrimitiveGraph) SetTxnID(id int) {
 	nodes := pg.g.Nodes()
 	for {
 		if !nodes.Next() {
 			return
 		}
 		node := nodes.Node()
-		switch node := node.(type) {
+		switch node := node.(type) { //nolint:gocritic // acceptable
 		case PrimitiveNode:
-			node.GetPrimitive().SetTxnId(id)
+			node.GetPrimitive().SetTxnID(id)
 		}
 	}
 }
@@ -161,20 +167,20 @@ func (pg *standardPrimitiveGraph) Optimise() error {
 	return err
 }
 
-func (pg *standardPrimitiveGraph) IncidentData(fromId int64, input internaldto.ExecutorOutput) error {
+func (pg *standardPrimitiveGraph) IncidentData(fromID int64, input internaldto.ExecutorOutput) error {
 	return nil
 }
 
-func (pr *standardPrimitiveGraph) SetInputAlias(alias string, id int64) error {
+func (pg *standardPrimitiveGraph) SetInputAlias(alias string, id int64) error {
 	return nil
 }
 
-func (g *standardPrimitiveGraph) Sort() (sorted []graph.Node, err error) {
-	return topo.Sort(g.g)
+func (pg *standardPrimitiveGraph) Sort() ([]graph.Node, error) {
+	return topo.Sort(pg.g)
 }
 
-func SortPlan(g PrimitiveGraph) (sorted []graph.Node, err error) {
-	return g.Sort()
+func SortPlan(pg PrimitiveGraph) ([]graph.Node, error) {
+	return pg.Sort()
 }
 
 type PrimitiveNode interface {
@@ -209,6 +215,7 @@ func (pn *standardPrimitiveNode) ID() int64 {
 	return pn.id
 }
 
+//nolint:revive // TODO: consider API change
 func (pn *standardPrimitiveNode) GetError() (error, bool) {
 	return pn.err, pn.err != nil
 }

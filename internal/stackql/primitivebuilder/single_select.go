@@ -15,16 +15,15 @@ import (
 )
 
 type SingleSelect struct {
-	graph                         primitivegraph.PrimitiveGraph
-	handlerCtx                    handler.HandlerContext
-	drmCfg                        drm.DRMConfig
-	selectPreparedStatementCtx    drm.PreparedStatementCtx
-	indirectPreparedStatementCtxs []drm.PreparedStatementCtx
-	insertionContainers           []tableinsertioncontainer.TableInsertionContainer
-	txnCtrlCtr                    internaldto.TxnControlCounters
-	rowSort                       func(map[string]map[string]interface{}) []string
-	root                          primitivegraph.PrimitiveNode
-	stream                        streaming.MapStream
+	graph                      primitivegraph.PrimitiveGraph
+	handlerCtx                 handler.HandlerContext
+	drmCfg                     drm.Config
+	selectPreparedStatementCtx drm.PreparedStatementCtx
+	insertionContainers        []tableinsertioncontainer.TableInsertionContainer
+	txnCtrlCtr                 internaldto.TxnControlCounters
+	rowSort                    func(map[string]map[string]interface{}) []string
+	root                       primitivegraph.PrimitiveNode
+	stream                     streaming.MapStream
 }
 
 func NewSingleSelect(
@@ -56,11 +55,14 @@ func (ss *SingleSelect) GetTail() primitivegraph.PrimitiveNode {
 }
 
 func (ss *SingleSelect) Build() error {
-
 	selectEx := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
-
 		// select phase
-		logging.GetLogger().Infoln(fmt.Sprintf("running select with control parameters: %v", ss.selectPreparedStatementCtx.GetGCCtrlCtrs()))
+		logging.GetLogger().Infoln(
+			fmt.Sprintf(
+				"running select with control parameters: %v",
+				ss.selectPreparedStatementCtx.GetGCCtrlCtrs(),
+			),
+		)
 
 		outputter := output_data_staging.NewNaiveOutputter(
 			output_data_staging.NewNaivePacketPreparator(

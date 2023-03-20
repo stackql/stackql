@@ -29,7 +29,10 @@ func (ic *StandardTableInsertionContainer) GetTableMetadata() tablemetadata.Exte
 	return ic.tm
 }
 
-func (ic *StandardTableInsertionContainer) SetTableTxnCounters(tableName string, tcc internaldto.TxnControlCounters) error {
+func (ic *StandardTableInsertionContainer) SetTableTxnCounters(
+	tableName string,
+	tcc internaldto.TxnControlCounters,
+) error {
 	ic.tableName = tableName
 	ic.tcc.Copy(tcc)
 	ic.tcc.SetTableName(tableName)
@@ -45,7 +48,10 @@ func (ic *StandardTableInsertionContainer) IsCountersSet() bool {
 	return ic.isCountersSet
 }
 
-func NewTableInsertionContainer(tm tablemetadata.ExtendedTableMetadata, sqlEngine sqlengine.SQLEngine) (TableInsertionContainer, error) {
+func NewTableInsertionContainer(
+	tm tablemetadata.ExtendedTableMetadata,
+	sqlEngine sqlengine.SQLEngine,
+) (TableInsertionContainer, error) {
 	tcc, err := internaldto.NewTxnControlCounters(nil)
 	if err != nil {
 		return nil, err

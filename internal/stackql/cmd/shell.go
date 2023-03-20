@@ -16,6 +16,7 @@ limitations under the License.
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"runtime"
@@ -37,16 +38,15 @@ import (
 	"github.com/chzyer/readline"
 )
 
+//nolint:lll // contains long string constants
 const (
 	shellLongStr string = `stackql Command Shell %s
 Copyright (c) 2021, stackql studios. All rights reserved.
 Welcome to the interactive shell for running stackql commands.
 ---`
 
-	// Auth messages
+	// Auth messages.
 	interactiveSuccessMsgTmpl string = `Authenticated interactively to google as %s, to change the authenticated user, use AUTH REVOKE followed by AUTH LOGIN, see https://docs.stackql.io/language-spec/auth`
-
-	notAuthenticatedMsg string = `Not authenticated, to authenticate to a provider use the AUTH LOGIN command, see https://docs.stackql.io/language-spec/auth`
 
 	saFileErrorMsgTmpl string = `Not authenticated, credentials referenced in %s do not exist, authenticate interactively using AUTH LOGIN, for more information see https://docs.stackql.io/language-spec/auth`
 
@@ -60,10 +60,10 @@ func getShellIntroLong() string {
 }
 
 func usage(w io.Writer) {
-	io.WriteString(w, getShellIntroLong()+"\r\n")
+	io.WriteString(w, getShellIntroLong()+"\r\n") //nolint:errcheck // TODO: investigate
 }
 
-func getShellPRompt(authCtx *dto.AuthCtx, cd *color.ColorDriver) string {
+func getShellPRompt(authCtx *dto.AuthCtx, cd *color.Driver) string {
 	if runtime.GOOS == "windows" {
 		return "stackql  >>"
 	}
@@ -84,7 +84,7 @@ func getIntroAuthMsg(authCtx *dto.AuthCtx, prov provider.IProvider) string {
 			switch authCtx.Type {
 			case dto.AuthInteractiveStr:
 				return fmt.Sprintf(interactiveSuccessMsgTmpl, authCtx.ID)
-			case dto.AuthServiceAccountStr, dto.AuthApiKeyStr:
+			case dto.AuthServiceAccountStr, dto.AuthAPIKeyStr:
 				return fmt.Sprintf(saSuccessMsgTmpl, authCtx.GetCredentialsSourceDescriptorString(), authCtx.Type)
 			}
 		} else if prov != nil {
@@ -93,7 +93,7 @@ func getIntroAuthMsg(authCtx *dto.AuthCtx, prov provider.IProvider) string {
 			}
 		}
 		switch authCtx.Type {
-		case dto.AuthServiceAccountStr, dto.AuthApiKeyStr:
+		case dto.AuthServiceAccountStr, dto.AuthAPIKeyStr:
 			return fmt.Sprintf(credentialProvidedMsgTmpl, authCtx.GetCredentialsSourceDescriptorString(), authCtx.Type)
 		}
 	}
@@ -104,7 +104,9 @@ func colorIsNull(runtimeCtx dto.RuntimeCtx) bool {
 	return runtimeCtx.ColorScheme == dto.NullColorScheme || runtime.GOOS == "windows"
 }
 
-// shellCmd represents the shell command
+// shellCmd represents the shell command.
+//
+//nolint:gochecknoglobals // cobra command
 var shellCmd = &cobra.Command{
 	Use:   "shell",
 	Short: "Interactive shell for running stackql commands",
@@ -126,7 +128,11 @@ var shellCmd = &cobra.Command{
 
 		handlerCtx, handlerrErr := handler.GetHandlerCtx("", runtimeCtx, queryCache, inputBundle)
 		if handlerrErr != nil {
-			fmt.Fprintln(outErrFile, fmt.Sprintf("Error setting up handler context for provider '%s': \"%s\"", runtimeCtx.ProviderStr, handlerrErr))
+			fmt.Fprintln( //nolint:gosimple // legacy
+				outErrFile,
+				fmt.Sprintf(
+					"Error setting up handler context for provider '%s': \"%s\"",
+					runtimeCtx.ProviderStr, handlerrErr))
 		}
 		var authCtx *dto.AuthCtx
 		var prov provider.IProvider
@@ -135,12 +141,22 @@ var shellCmd = &cobra.Command{
 			prov, pErr = handlerCtx.GetProvider(handlerCtx.GetRuntimeContext().ProviderStr)
 			authCtx, authErr = handlerCtx.GetAuthContext(prov.GetProviderString())
 			if authErr != nil {
-				fmt.Fprintln(outErrFile, fmt.Sprintf("Error setting up AUTH for provider '%s'", handlerCtx.GetRuntimeContext().ProviderStr))
+				fmt.Fprintln( //nolint:gosimple // legacy
+					outErrFile,
+					fmt.Sprintf(
+						"Error setting up AUTH for provider '%s'",
+						handlerCtx.GetRuntimeContext().ProviderStr))
 			}
 			if pErr == nil {
-				prov.ShowAuth(authCtx)
+				prov.ShowAuth(authCtx) //nolint:errcheck // TODO: investigate
 			} else {
-				fmt.Fprintln(outErrFile, fmt.Sprintf("Error setting up API for provider '%s'", handlerCtx.GetRuntimeContext().ProviderStr))
+				fmt.Fprintln( //nolint:gosimple // legacy
+					outErrFile,
+					fmt.Sprintf(
+						"Error setting up API for provider '%s'",
+						handlerCtx.GetRuntimeContext().ProviderStr,
+					),
+				)
 			}
 		}
 
@@ -181,14 +197,15 @@ var shellCmd = &cobra.Command{
 
 		for {
 			l.SetPrompt(getShellPRompt(authCtx, cd))
-			rawLine, err := l.Readline()
-			if err == readline.ErrInterrupt {
+			var rawLine string
+			rawLine, err = l.Readline()
+			if errors.Is(err, readline.ErrInterrupt) {
 				if len(rawLine) == 0 {
 					break
 				} else {
 					continue
 				}
-			} else if err == io.EOF {
+			} else if errors.Is(err, io.EOF) {
 				break
 			}
 
@@ -197,7 +214,7 @@ var shellCmd = &cobra.Command{
 			case line == "help":
 				usage(outErrFile)
 			case line == "clear":
-				readline.ClearScreen(l.Stdout())
+				readline.ClearScreen(l.Stdout()) //nolint:errcheck // TODO: investigate
 			case line == "exit" || line == `\q` || line == "quit":
 				goto exit
 			case line == "":
@@ -210,19 +227,19 @@ var shellCmd = &cobra.Command{
 				semiColonIdx := strings.Index(line, ";")
 				if semiColonIdx > -1 {
 					line = strings.TrimSpace(line[:semiColonIdx+1])
-					semiColonIdx := strings.Index(line, ";")
-					sb.WriteString(" " + line[:semiColonIdx+1])
+					subSemiColonIdx := strings.Index(line, ";")
+					sb.WriteString(" " + line[:subSemiColonIdx+1])
 					rawQuery := sb.String()
-					queryToExecute, err := entryutil.PreprocessInline(runtimeCtx, rawQuery)
-					if err != nil {
-						io.WriteString(outErrFile, "\r\n"+err.Error()+"\r\n")
+					queryToExecute, qErr := entryutil.PreprocessInline(runtimeCtx, rawQuery)
+					if qErr != nil {
+						io.WriteString(outErrFile, "\r\n"+qErr.Error()+"\r\n") //nolint:errcheck // TODO: investigate
 					}
 					handlerCtx.SetRawQuery(queryToExecute)
-					l.WriteToHistory(rawQuery)
+					l.WriteToHistory(rawQuery) //nolint:errcheck // TODO: investigate
 					cr := newCommandRunner()
 					cr.RunCommand(handlerCtx, outfile, outErrFile)
 					sb.Reset()
-					sb.WriteString(line[semiColonIdx+1:])
+					sb.WriteString(line[subSemiColonIdx+1:])
 				} else {
 					sb.WriteString(" " + line)
 				}

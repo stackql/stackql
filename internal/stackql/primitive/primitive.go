@@ -20,7 +20,7 @@ type IPrimitive interface {
 
 	SetExecutor(func(pc IPrimitiveCtx) internaldto.ExecutorOutput) error
 
-	SetTxnId(int)
+	SetTxnID(int)
 
 	IncidentData(int64, internaldto.ExecutorOutput) error
 

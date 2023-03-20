@@ -7,16 +7,19 @@ import (
 )
 
 var (
-	_ TemplateNamespaceConfigurator = &standardTemplateNamespaceConfigurator{}
+	_ Configurator = &standardTemplateNamespaceConfigurator{}
 )
 
-type TemplateNamespaceConfigurator interface {
+type Configurator interface {
 	GetObjectName(string) string
 	IsAllowed(string) bool
 	RenderTemplate(string) (string, error)
 }
 
-func NewTemplateNamespaceConfigurator(regex *regexp.Regexp, tmpl *template.Template) (TemplateNamespaceConfigurator, error) {
+func NewTemplateNamespaceConfigurator(
+	regex *regexp.Regexp,
+	tmpl *template.Template,
+) (Configurator, error) {
 	return &standardTemplateNamespaceConfigurator{
 		regex:    regex,
 		template: tmpl,

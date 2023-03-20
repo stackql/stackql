@@ -1,7 +1,7 @@
 package dto
 
 const (
-	AuthApiKeyStr                   string = "api_key"
+	AuthAPIKeyStr                   string = "api_key"
 	AuthAWSSigningv4Str             string = "aws_signing_v4"
 	AuthAzureDefaultStr             string = "azure_default"
 	AuthBasicStr                    string = "basic"
@@ -32,7 +32,7 @@ const (
 	HTTPMaxResultsKey               string = "http.response.maxResults"
 	HTTPPAgeLimitKey                string = "http.response.pageLimit"
 	HTTPProxyHostKey                string = "http.proxy.host"
-	HTTPProxyPasswordKey            string = "http.proxy.password"
+	HTTPProxyPasswordKey            string = "http.proxy.password" //nolint:gosec // no hardcoded credentials
 	HTTPProxyPortKey                string = "http.proxy.port"
 	HTTPProxySchemeKey              string = "http.proxy.scheme"
 	HTTPProxyUserKey                string = "http.proxy.user"
@@ -57,7 +57,7 @@ const (
 	DBInternalCfgRawKey             string = "dbInternal"
 	StoreTxnCfgRawKey               string = "store.txn"
 	TemplateCtxFilePathKey          string = "iqldata"
-	TestWithoutApiCallsKey          string = "testwithoutapicalls"
+	TestWithoutAPICallsKey          string = "TestWithoutAPICalls"
 	UseNonPreferredAPIsKEy          string = "usenonpreferredapis"
 	VerboseFlagKey                  string = "verbose"
 	ViperCfgFileNameKey             string = "viperconfigfilename"

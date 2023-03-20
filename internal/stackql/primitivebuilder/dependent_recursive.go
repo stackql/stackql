@@ -1,4 +1,4 @@
-package primitivebuilder
+package primitivebuilder //nolint:dupl // TODO: fix
 
 import (
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
@@ -10,7 +10,11 @@ type DependencySubDAGBuilder struct {
 	dependentBuilder   Builder
 }
 
-func NewDependencySubDAGBuilder(graph primitivegraph.PrimitiveGraph, dependencyBuilders []Builder, dependentBuilder Builder) Builder {
+func NewDependencySubDAGBuilder(
+	graph primitivegraph.PrimitiveGraph,
+	dependencyBuilders []Builder,
+	dependentBuilder Builder,
+) Builder {
 	return &DependencySubDAGBuilder{
 		graph:              graph,
 		dependencyBuilders: dependencyBuilders,

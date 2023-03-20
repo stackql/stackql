@@ -23,7 +23,12 @@ type standardAnnotatedTabulation struct {
 	sqlDataSource  sql_datasource.SQLDataSource
 }
 
-func NewAnnotatedTabulation(tab *openapistackql.Tabulation, hIds internaldto.HeirarchyIdentifiers, inputTableName string, alias string) AnnotatedTabulation {
+func NewAnnotatedTabulation(
+	tab *openapistackql.Tabulation,
+	hIds internaldto.HeirarchyIdentifiers,
+	inputTableName string,
+	alias string,
+) AnnotatedTabulation {
 	return &standardAnnotatedTabulation{
 		tab:            tab,
 		hIds:           hIds,

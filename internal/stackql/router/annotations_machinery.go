@@ -14,7 +14,7 @@ func obtainAnnotationCtx(
 	sqlSystem sql_system.SQLSystem,
 	tbl tablemetadata.ExtendedTableMetadata,
 	parameters map[string]interface{},
-	namespaceCollection tablenamespace.TableNamespaceCollection,
+	namespaceCollection tablenamespace.Collection,
 ) (taxonomy.AnnotationCtx, error) {
 	_, isView := tbl.GetView()
 	_, isSQLDataSource := tbl.GetSQLDataSource()
@@ -43,7 +43,7 @@ func obtainAnnotationCtx(
 	name := itemObjS.GetSelectionName()
 	tbl, err = tbl.WithResponseSchemaStr(name)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %s", unsuitableSchemaMsg, err.Error())
+		return nil, fmt.Errorf("%s: %w", unsuitableSchemaMsg, err)
 	}
 	tn, err := tbl.GetTableName()
 	if err == nil && namespaceCollection.GetAnalyticsCacheTableNamespaceConfigurator().IsAllowed(tn) {

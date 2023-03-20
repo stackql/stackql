@@ -40,6 +40,7 @@ func (tm TblMap) GetTableLoose(node sqlparser.SQLNode) (tablemetadata.ExtendedTa
 		return tbl, nil
 	}
 	searchAlias := ""
+	//nolint:gocritic // this is expresssive enough
 	switch node := node.(type) {
 	case *sqlparser.AliasedExpr:
 		switch expr := node.Expr.(type) {
@@ -49,7 +50,7 @@ func (tm TblMap) GetTableLoose(node sqlparser.SQLNode) (tablemetadata.ExtendedTa
 	}
 	if searchAlias != "" {
 		for k, v := range tm {
-			switch k := k.(type) {
+			switch k := k.(type) { //nolint:gocritic // this is expresssive enough
 			case *sqlparser.AliasedTableExpr:
 				alias := k.As.GetRawVal()
 				if searchAlias == alias {
@@ -59,7 +60,7 @@ func (tm TblMap) GetTableLoose(node sqlparser.SQLNode) (tablemetadata.ExtendedTa
 		}
 	}
 	if searchAlias == "" && tm.getUniqueCount() == 1 {
-		if first, ok := tm.getFirst(); ok {
+		if first, fOk := tm.getFirst(); fOk {
 			return first, nil
 		}
 	}

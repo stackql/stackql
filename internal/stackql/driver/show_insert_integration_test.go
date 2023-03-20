@@ -17,10 +17,9 @@ import (
 	lrucache "github.com/stackql/stackql-parser/go/cache"
 )
 
+//nolint:lll // legacy test
 func TestSimpleShowInsertComputeAddressesRequired(t *testing.T) {
-
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
-
 		runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSimpleShowInsertComputeAddressesRequired")
 		if err != nil {
 			t.Fatalf("TestSimpleTemplateComputeAddressesRequired failed: %v", err)
@@ -56,13 +55,11 @@ func TestSimpleShowInsertComputeAddressesRequired(t *testing.T) {
 	}
 
 	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedShowInsertAddressesRequiredFile})
-
 }
 
+//nolint:lll // legacy test
 func TestSimpleShowInsertBiqueryDatasetsRequired(t *testing.T) {
-
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
-
 		runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSimpleShowInsertBiqueryDatasetsRequired")
 		if err != nil {
 			t.Fatalf("TestSimpleShowInsertBiqueryDatasetsRequired failed: %v", err)
@@ -98,5 +95,4 @@ func TestSimpleShowInsertBiqueryDatasetsRequired(t *testing.T) {
 	}
 
 	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedShowInsertBQDatasetsRequiredFile})
-
 }

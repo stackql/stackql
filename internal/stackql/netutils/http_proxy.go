@@ -33,14 +33,14 @@ func getRoundTripper(runtimeCtx dto.RuntimeCtx, existingTransport http.RoundTrip
 		rootCAs, err := getCertPool(runtimeCtx.CABundle)
 		if err == nil {
 			config := &tls.Config{
-				InsecureSkipVerify: runtimeCtx.AllowInsecure,
+				InsecureSkipVerify: runtimeCtx.AllowInsecure, //nolint:gosec // intenttional, if contraindicated
 				RootCAs:            rootCAs,
 			}
 			tr.TLSClientConfig = config
 		}
 	} else if runtimeCtx.AllowInsecure {
 		config := &tls.Config{
-			InsecureSkipVerify: runtimeCtx.AllowInsecure,
+			InsecureSkipVerify: runtimeCtx.AllowInsecure, //nolint:gosec // intenttional, if contraindicated
 		}
 		tr.TLSClientConfig = config
 	}
@@ -53,13 +53,13 @@ func getRoundTripper(runtimeCtx dto.RuntimeCtx, existingTransport http.RoundTrip
 		if runtimeCtx.HTTPProxyUser != "" {
 			usr = url.UserPassword(runtimeCtx.HTTPProxyUser, runtimeCtx.HTTPProxyPassword)
 		}
-		proxyUrl := &url.URL{
+		proxyURL := &url.URL{
 			Host:   host,
 			Scheme: runtimeCtx.HTTPProxyScheme,
 			User:   usr,
 		}
 		if tr != nil {
-			tr.Proxy = http.ProxyURL(proxyUrl)
+			tr.Proxy = http.ProxyURL(proxyURL)
 		}
 	}
 	if tr != nil {
@@ -68,11 +68,11 @@ func getRoundTripper(runtimeCtx dto.RuntimeCtx, existingTransport http.RoundTrip
 	return rt
 }
 
-func GetHttpClient(runtimeCtx dto.RuntimeCtx, existingClient *http.Client) *http.Client {
-	return getHttpClient(runtimeCtx, existingClient)
+func GetHTTPClient(runtimeCtx dto.RuntimeCtx, existingClient *http.Client) *http.Client {
+	return getHTTPClient(runtimeCtx, existingClient)
 }
 
-func getHttpClient(runtimeCtx dto.RuntimeCtx, existingClient *http.Client) *http.Client {
+func getHTTPClient(runtimeCtx dto.RuntimeCtx, existingClient *http.Client) *http.Client {
 	var rt http.RoundTripper
 	if existingClient != nil && existingClient.Transport != nil {
 		rt = existingClient.Transport

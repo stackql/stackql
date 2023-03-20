@@ -41,7 +41,9 @@ func (ta *simpleTableSchemaAnalyzer) GetColumns() ([]Column, error) {
 	return rv, nil
 }
 
-func (ta *simpleTableSchemaAnalyzer) GetColumnDescriptors(tabAnnotated AnnotatedTabulation) ([]openapistackql.ColumnDescriptor, error) {
+func (ta *simpleTableSchemaAnalyzer) GetColumnDescriptors(
+	tabAnnotated AnnotatedTabulation,
+) ([]openapistackql.ColumnDescriptor, error) {
 	existingColumns := make(map[string]struct{})
 	var rv []openapistackql.ColumnDescriptor
 	for _, col := range tabAnnotated.GetTabulation().GetColumns() {

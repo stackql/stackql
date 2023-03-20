@@ -17,7 +17,7 @@ import (
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
 
-func (p *standardPrimitiveGenerator) assembleUnarySelectionBuilder(
+func (pb *standardPrimitiveGenerator) assembleUnarySelectionBuilder(
 	pbi planbuilderinput.PlanBuilderInput,
 	handlerCtx handler.HandlerContext,
 	node sqlparser.SQLNode,
@@ -45,43 +45,72 @@ func (p *standardPrimitiveGenerator) assembleUnarySelectionBuilder(
 		return err
 	}
 
-	_, err = docparser.OpenapiStackQLTabulationsPersistor(method, []util.AnnotatedTabulation{annotatedInsertTabulation}, p.PrimitiveComposer.GetSQLEngine(), prov.GetName(), handlerCtx.GetNamespaceCollection(), handlerCtx.GetControlAttributes(), handlerCtx.GetSQLSystem())
+	_, err = docparser.OpenapiStackQLTabulationsPersistor(
+		method, []util.AnnotatedTabulation{annotatedInsertTabulation},
+		pb.PrimitiveComposer.GetSQLEngine(),
+		prov.GetName(),
+		handlerCtx.GetNamespaceCollection(),
+		handlerCtx.GetControlAttributes(),
+		handlerCtx.GetSQLSystem())
 	if err != nil {
 		return err
 	}
 	ctrs := pbi.GetTxnCtrlCtrs()
-	insPsc, err := p.PrimitiveComposer.GetDRMConfig().GenerateInsertDML(annotatedInsertTabulation, method, ctrs)
+	insPsc, err := pb.PrimitiveComposer.GetDRMConfig().GenerateInsertDML(annotatedInsertTabulation, method, ctrs)
 	if err != nil {
 		return err
 	}
-	p.PrimitiveComposer.SetTxnCtrlCtrs(insPsc.GetGCCtrlCtrs())
+	pb.PrimitiveComposer.SetTxnCtrlCtrs(insPsc.GetGCCtrlCtrs())
 	for _, col := range cols {
 		foundSchema := schema.FindByPath(col.Name, nil)
 		cc, ok := method.GetParameter(col.Name)
 		if foundSchema == nil && col.IsColumn {
 			if !(ok && cc.GetName() == col.Name) {
-				return fmt.Errorf("column = '%s' is NOT present in either:  - data returned from provider, - acceptable parameters, use the DESCRIBE command to view available fields for SELECT operations", col.Name)
+				return fmt.Errorf(
+					"column = '%s' is NOT present in either:  - data returned from provider, - acceptable parameters, use the DESCRIBE command to view available fields for SELECT operations", //nolint:lll // long string
+					col.Name)
 			}
 		}
-		selectTabulation.PushBackColumn(openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, col.Expr, foundSchema, col.Val))
+		selectTabulation.PushBackColumn(
+			openapistackql.NewColumnDescriptor(
+				col.Alias,
+				col.Name,
+				col.Qualifier,
+				col.DecoratedColumn,
+				col.Expr,
+				foundSchema,
+				col.Val,
+			),
+		)
 	}
-	selectSuffix := astvisit.GenerateModifiedSelectSuffix(pbi.GetAnnotatedAST(), node, handlerCtx.GetSQLSystem(), handlerCtx.GetASTFormatter(), handlerCtx.GetNamespaceCollection())
-	selPsc, err := p.PrimitiveComposer.GetDRMConfig().GenerateSelectDML(
+	selectSuffix := astvisit.GenerateModifiedSelectSuffix(
+		pbi.GetAnnotatedAST(),
+		node,
+		handlerCtx.GetSQLSystem(),
+		handlerCtx.GetASTFormatter(),
+		handlerCtx.GetNamespaceCollection(),
+	)
+	selPsc, err := pb.PrimitiveComposer.GetDRMConfig().GenerateSelectDML(
 		util.NewAnnotatedTabulation(selectTabulation, hIds, inputTableName, tbl.GetAlias()),
 		insPsc.GetGCCtrlCtrs(),
 		selectSuffix,
-		astvisit.GenerateModifiedWhereClause(pbi.GetAnnotatedAST(), rewrittenWhere, handlerCtx.GetSQLSystem(), handlerCtx.GetASTFormatter(), handlerCtx.GetNamespaceCollection()),
+		astvisit.GenerateModifiedWhereClause(
+			pbi.GetAnnotatedAST(),
+			rewrittenWhere,
+			handlerCtx.GetSQLSystem(),
+			handlerCtx.GetASTFormatter(),
+			handlerCtx.GetNamespaceCollection()),
 	)
 	if err != nil {
 		return err
 	}
-	p.PrimitiveComposer.SetInsertPreparedStatementCtx(insPsc)
-	p.PrimitiveComposer.SetSelectPreparedStatementCtx(selPsc)
-	p.PrimitiveComposer.SetColumnOrder(cols)
+	pb.PrimitiveComposer.SetInsertPreparedStatementCtx(insPsc)
+	pb.PrimitiveComposer.SetSelectPreparedStatementCtx(selPsc)
+	pb.PrimitiveComposer.SetColumnOrder(cols)
 	return nil
 }
 
-func (p *standardPrimitiveGenerator) analyzeUnarySelection(
+func (pb *standardPrimitiveGenerator) analyzeUnarySelection(
 	pbi planbuilderinput.PlanBuilderInput,
 	handlerCtx handler.HandlerContext,
 	node sqlparser.SQLNode,
@@ -115,9 +144,9 @@ func (p *standardPrimitiveGenerator) analyzeUnarySelection(
 	}
 	if len(cols) == 0 {
 		tsa := util.NewTableSchemaAnalyzer(schema, method)
-		colz, err := tsa.GetColumns()
-		if err != nil {
-			return err
+		colz, localErr := tsa.GetColumns()
+		if localErr != nil {
+			return localErr
 		}
 		for _, v := range colz {
 			cols = append(cols, parserutil.NewUnaliasedColumnHandle(v.GetName()))
@@ -132,7 +161,7 @@ func (p *standardPrimitiveGenerator) analyzeUnarySelection(
 	}
 	selectTabulation := itemObjS.Tabulate(true)
 
-	return p.assembleUnarySelectionBuilder(
+	return pb.assembleUnarySelectionBuilder(
 		pbi,
 		handlerCtx,
 		node,

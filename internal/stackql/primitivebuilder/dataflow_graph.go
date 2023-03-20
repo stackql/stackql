@@ -12,7 +12,7 @@ import (
 
 type DataflowGraphBuilder struct {
 	graph         primitivegraph.PrimitiveGraph
-	dataflowGraph dataflow.DataFlowWeaklyConnectedComponent
+	dataflowGraph dataflow.WeaklyConnectedComponent
 	handlerCtx    handler.HandlerContext
 	root          primitivegraph.PrimitiveNode
 	sqlEngine     sqlengine.SQLEngine
@@ -20,7 +20,7 @@ type DataflowGraphBuilder struct {
 
 func NewDataflowGraphBuilder(
 	graph primitivegraph.PrimitiveGraph,
-	dataflowGraph dataflow.DataFlowWeaklyConnectedComponent,
+	dataflowGraph dataflow.WeaklyConnectedComponent,
 	txnControlCounters *internaldto.TxnControlCounters,
 	handlerCtx handler.HandlerContext,
 	sqlEngine sqlengine.SQLEngine,
@@ -34,7 +34,6 @@ func NewDataflowGraphBuilder(
 }
 
 func (nb *DataflowGraphBuilder) Build() error {
-
 	pr := primitive.NewLocalPrimitive(
 		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			return util.PrepareResultSet(

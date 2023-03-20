@@ -207,6 +207,11 @@ jobs:
         check-latest: true
         cache: true
       id: go
+
+    - name: golangci-lint
+      uses: golangci/golangci-lint-action@v3
+      with:
+        version: 'v1.51.2'
     
     - name: Setup Python
       uses: actions/setup-python@v4

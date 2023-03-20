@@ -1,4 +1,4 @@
-package sql_datasource
+package sql_datasource //nolint:revive,stylecheck // package name is helpful
 
 import (
 	"database/sql"
@@ -23,10 +23,20 @@ func NewDataSource(authCtx *dto.AuthCtx) (SQLDataSource, error) {
 	if authCtx == nil {
 		return nil, fmt.Errorf("cannot create sql data source from nil auth context")
 	}
-	if authCtx.Type == fmt.Sprintf("%s%s%s", constants.AuthTypeSQLDataSourcePrefix, constants.AuthTypeDelimiter, "snowflake") {
+	if authCtx.Type == fmt.Sprintf(
+		"%s%s%s",
+		constants.AuthTypeSQLDataSourcePrefix,
+		constants.AuthTypeDelimiter,
+		"snowflake",
+	) {
 		return newGenericSQLDataSource(authCtx, "snowflake", "snowflake")
 	}
-	if authCtx.Type == fmt.Sprintf("%s%s%s", constants.AuthTypeSQLDataSourcePrefix, constants.AuthTypeDelimiter, "postgres") {
+	if authCtx.Type == fmt.Sprintf(
+		"%s%s%s",
+		constants.AuthTypeSQLDataSourcePrefix,
+		constants.AuthTypeDelimiter,
+		"postgres",
+	) {
 		return newGenericSQLDataSource(authCtx, "pgx", "postgres")
 	}
 	return nil, fmt.Errorf("sql data source of type '%s' not supported", authCtx.Type)

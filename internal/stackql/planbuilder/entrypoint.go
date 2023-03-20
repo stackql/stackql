@@ -24,6 +24,7 @@ func NewPlanBuilder() PlanBuilder {
 
 type standardPlanBuilder struct{}
 
+//nolint:funlen,gocognit // no big deal
 func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerContext) (*plan.Plan, error) {
 	defer handlerCtx.GetGarbageCollector().Close()
 	tcc, err := internaldto.NewTxnControlCounters(handlerCtx.GetTxnCounterMgr())
@@ -36,13 +37,13 @@ func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerCo
 	planKey := handlerCtx.GetQuery()
 	if qp, ok := handlerCtx.GetLRUCache().Get(planKey); ok && isPlanCacheEnabled() {
 		logging.GetLogger().Infoln("retrieving query plan from cache")
-		pl, ok := qp.(*plan.Plan)
-		if ok {
-			txnId, err := handlerCtx.GetTxnCounterMgr().GetNextTxnId()
-			if err != nil {
-				return nil, err
+		pl, plOk := qp.(*plan.Plan)
+		if plOk {
+			txnID, tErr := handlerCtx.GetTxnCounterMgr().GetNextTxnID()
+			if tErr != nil {
+				return nil, tErr
 			}
-			pl.Instructions.SetTxnId(txnId)
+			pl.Instructions.SetTxnID(txnID)
 			return pl, nil
 		}
 		return qp.(*plan.Plan), nil
@@ -79,7 +80,7 @@ func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerCo
 	statementType := earlyPassScreenerAnalyzer.GetStatementType()
 	qPlan.Type = statementType
 
-	switch earlyPassScreenerAnalyzer.GetInstructionType() {
+	switch earlyPassScreenerAnalyzer.GetInstructionType() { //nolint:exhaustive // acceptable
 	case earlyanalysis.InternallyRoutableInstruction:
 		createInstructionError := pGBuilder.pgInternal(earlyPassScreenerAnalyzer.GetPlanBuilderInput())
 		if createInstructionError != nil {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 )
 
+//nolint:lll // This is a test file
 const (
 	SimpleSelectGoogleComputeInstanceResponse string = `{
 		"id": "projects/testing-project/zones/australia-southeast1-b/instances",
@@ -133,6 +134,7 @@ const (
 		]
 	}
 	`
+	//nolint:gosec // this is a test token
 	GoogleAuthTokenResponse string = `{
 		"access_token": "some-access-token",
 		"token_type": "access_token",

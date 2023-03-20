@@ -1,11 +1,11 @@
-package sql_datasource
+package sql_datasource //nolint:revive,stylecheck // package name is helpful
 
 import (
 	"database/sql"
 	"fmt"
 
-	_ "github.com/jackc/pgx/v5/stdlib"
-	_ "github.com/snowflakedb/gosnowflake"
+	_ "github.com/jackc/pgx/v5/stdlib"     //nolint:revive,nolintlint // this is a DB driver pattern
+	_ "github.com/snowflakedb/gosnowflake" //nolint:revive,nolintlint // this is a DB driver pattern
 
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/datasource/sql_table"
@@ -68,7 +68,6 @@ func (ds *genericSQLDataSource) Begin() (*sql.Tx, error) {
 }
 
 func (ds *genericSQLDataSource) GetTableMetadata(args ...string) (sql_table.SQLTable, error) {
-
 	return nil, fmt.Errorf("could not obtain sql data source table metadata for args = '%v'", args)
 }
 

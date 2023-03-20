@@ -33,7 +33,7 @@ type QueryRewriteAstVisitor interface {
 
 type standardQueryRewriteAstVisitor struct {
 	handlerCtx            handler.HandlerContext
-	dc                    drm.DRMConfig
+	dc                    drm.Config
 	tables                taxonomy.TblMap
 	annotations           taxonomy.AnnotationCtxMap
 	discoGenIDs           map[sqlparser.SQLNode]int
@@ -46,7 +46,7 @@ type standardQueryRewriteAstVisitor struct {
 	columnDescriptors     []openapistackql.ColumnDescriptor
 	relationalColumns     []relationaldto.RelationalColumn
 	tableSlice            []tableinsertioncontainer.TableInsertionContainer
-	namespaceCollection   tablenamespace.TableNamespaceCollection
+	namespaceCollection   tablenamespace.Collection
 	formatter             sqlparser.NodeFormatter
 	annotatedAST          annotatedast.AnnotatedAst
 	//
@@ -67,11 +67,11 @@ func NewQueryRewriteAstVisitor(
 	annotations taxonomy.AnnotationCtxMap,
 	discoGenIDs map[sqlparser.SQLNode]int,
 	colRefs parserutil.ColTableMap,
-	dc drm.DRMConfig,
+	dc drm.Config,
 	txnCtrlCtrs internaldto.TxnControlCounters,
 	secondaryTccs []internaldto.TxnControlCounters,
 	rewrittenWhere string,
-	namespaceCollection tablenamespace.TableNamespaceCollection,
+	namespaceCollection tablenamespace.Collection,
 ) QueryRewriteAstVisitor {
 	rv := &standardQueryRewriteAstVisitor{
 		annotatedAST:          annotatedAST,
@@ -124,7 +124,18 @@ func (v *standardQueryRewriteAstVisitor) getStarColumns(
 	}
 	var columnDescriptors []openapistackql.ColumnDescriptor
 	for _, col := range cols {
-		columnDescriptors = append(columnDescriptors, openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, nil, schema, col.Val))
+		columnDescriptors = append(
+			columnDescriptors,
+			openapistackql.NewColumnDescriptor(
+				col.Alias,
+				col.Name,
+				col.Qualifier,
+				col.DecoratedColumn,
+				nil,
+				schema,
+				col.Val,
+			),
+		)
 	}
 	relationalColumns := v.dc.OpenapiColumnsToRelationalColumns(columnDescriptors)
 	return relationalColumns, nil
@@ -169,6 +180,7 @@ func (v *standardQueryRewriteAstVisitor) GetSelectContext() (drm.PreparedStateme
 	return nil, false
 }
 
+//nolint:dupl,funlen,gocognit,gocyclo,cyclop,errcheck,staticcheck,gocritic,lll,govet,nestif,exhaustive,gomnd // defer uplifts on analysers
 func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 	var err error
 

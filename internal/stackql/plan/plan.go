@@ -1,7 +1,6 @@
 package plan
 
 import (
-	"sync"
 	"time"
 
 	"github.com/stackql/stackql/internal/stackql/primitive"
@@ -15,7 +14,6 @@ type Plan struct {
 	Instructions           primitive.IPrimitive    // Instructions contains the instructions needed to fulfil the query.
 	sqlparser.BindVarNeeds                         // Stores BindVars needed to be provided as part of expression rewriting
 
-	mu           sync.Mutex    // Mutex to protect the fields below
 	ExecCount    uint64        // Count of times this plan was executed
 	ExecTime     time.Duration // Total execution time
 	ShardQueries uint64        // Total number of shard queries
@@ -39,7 +37,7 @@ func (p *Plan) Size() int {
 	return 1
 }
 
-// Signals whether the plan is worthy to place in `cache.LRUCache`
+// Signals whether the plan is worthy to place in `cache.LRUCache`.
 func (p *Plan) IsCacheable() bool {
 	return p.isCacheable
 }

@@ -12,7 +12,10 @@ type TableParameterCollection interface {
 	GetRequiredParams() suffix.ParameterSuffixMap
 }
 
-func NewTableParameterCollection(requiredParams, optionalParams, remainingRequiredParameters suffix.ParameterSuffixMap) TableParameterCollection {
+func NewTableParameterCollection(
+	requiredParams, optionalParams,
+	remainingRequiredParameters suffix.ParameterSuffixMap,
+) TableParameterCollection {
 	return &standardTableParameterCollection{
 		requiredParams:              requiredParams,
 		optionalParams:              optionalParams,

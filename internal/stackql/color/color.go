@@ -3,18 +3,17 @@ package color
 import (
 	fc "github.com/fatih/color"
 	"github.com/stackql/stackql/internal/stackql/dto"
-	// log "github.com/sirupsen/logrus"
 )
 
 type Attribute fc.Attribute
 
-type ColorDriver struct {
+type Driver struct {
 	stack      *fc.ColorStack
 	runtimeCtx dto.RuntimeCtx
 }
 
-func NewColorDriver(runtimeCtx dto.RuntimeCtx) *ColorDriver {
-	cd := &ColorDriver{
+func NewColorDriver(runtimeCtx dto.RuntimeCtx) *Driver {
+	cd := &Driver{
 		stack:      fc.InitColorStack(),
 		runtimeCtx: runtimeCtx,
 	}
@@ -22,7 +21,7 @@ func NewColorDriver(runtimeCtx dto.RuntimeCtx) *ColorDriver {
 	return cd
 }
 
-func (cd *ColorDriver) New(value ...Attribute) {
+func (cd *Driver) New(value ...Attribute) {
 	attr := make([]fc.Attribute, len(value))
 	for i := range value {
 		attr[i] = fc.Attribute(value[i])
@@ -30,52 +29,52 @@ func (cd *ColorDriver) New(value ...Attribute) {
 	cd.stack.NewColor(attr...)
 }
 
-func (cd *ColorDriver) Peek() *fc.Color {
+func (cd *Driver) Peek() *fc.Color {
 	return cd.stack.Peek()
 }
 
-func (cd *ColorDriver) PeekBelow() *fc.Color {
+func (cd *Driver) PeekBelow() *fc.Color {
 	return cd.stack.SeekBelow(1)
 }
 
-func (cd *ColorDriver) Pop() (*fc.Color, error) {
+func (cd *Driver) Pop() (*fc.Color, error) {
 	return cd.stack.Pop()
 }
 
-func (cd *ColorDriver) SprintFunc() func(a ...interface{}) string {
+func (cd *Driver) SprintFunc() func(a ...interface{}) string {
 	return cd.stack.Peek().SprintFunc()
 }
 
-func (cd *ColorDriver) setupDarkColorScheme() {
+func (cd *Driver) setupDarkColorScheme() {
 	cd.New(Attribute(fc.FgWhite), Attribute(fc.BgBlack))
 }
 
-func (cd *ColorDriver) setupLightColorScheme() {
-	cd.New(Attribute(fc.FgBlack), 48, 5, 231)
+func (cd *Driver) setupLightColorScheme() {
+	cd.New(Attribute(fc.FgBlack), 48, 5, 231) //nolint:gomnd // color functionality is mothballed
 }
 
-func (cd *ColorDriver) setupDarkPromptColorScheme() {
+func (cd *Driver) setupDarkPromptColorScheme() {
 	cd.New(Attribute(fc.FgYellow))
 }
 
-func (cd *ColorDriver) setupLightPromptColorScheme() {
+func (cd *Driver) setupLightPromptColorScheme() {
 	cd.New(Attribute(fc.FgMagenta))
 }
 
-func (cd *ColorDriver) getDarkErrorColorAttributes() []Attribute {
+func (cd *Driver) getDarkErrorColorAttributes() []Attribute {
 	return []Attribute{
 		Attribute(fc.FgMagenta),
 		Attribute(fc.BgBlack),
 	}
 }
 
-func (cd *ColorDriver) getLightErrorColorAttributes() []Attribute {
+func (cd *Driver) getLightErrorColorAttributes() []Attribute {
 	return []Attribute{
 		Attribute(fc.FgRed), 48, 5, 231,
 	}
 }
 
-func (cd *ColorDriver) GetErrorColorAttributes(runtimeCtx dto.RuntimeCtx) []Attribute {
+func (cd *Driver) GetErrorColorAttributes(runtimeCtx dto.RuntimeCtx) []Attribute {
 	var retVal []Attribute
 	switch cd.runtimeCtx.ColorScheme {
 	case dto.LightColorScheme:
@@ -89,7 +88,7 @@ func (cd *ColorDriver) GetErrorColorAttributes(runtimeCtx dto.RuntimeCtx) []Attr
 	return retVal
 }
 
-func (cd *ColorDriver) setupColor() {
+func (cd *Driver) setupColor() {
 	switch cd.runtimeCtx.ColorScheme {
 	case dto.LightColorScheme:
 		cd.setupLightColorScheme()
@@ -101,7 +100,7 @@ func (cd *ColorDriver) setupColor() {
 	}
 }
 
-func (cd *ColorDriver) setupPromptColor() {
+func (cd *Driver) setupPromptColor() {
 	switch cd.runtimeCtx.ColorScheme {
 	case dto.LightColorScheme:
 		cd.setupLightPromptColorScheme()
@@ -113,17 +112,17 @@ func (cd *ColorDriver) setupPromptColor() {
 	}
 }
 
-func (cd *ColorDriver) ResetColorScheme() {
+func (cd *Driver) ResetColorScheme() {
 	cd.stack = fc.InitColorStack()
 	cd.New(Attribute(fc.Reset))
 }
 
-func (cd *ColorDriver) ShellColorPrint(s string) string {
+func (cd *Driver) ShellColorPrint(s string) string {
 	if cd.stack.Peek() == nil {
 		return s
 	}
 	cd.setupPromptColor() // comes with implicit Push()
 	rv := cd.SprintFunc()(s)
-	cd.Pop()
+	cd.Pop() //nolint:errcheck // we don't care about the error
 	return rv
 }

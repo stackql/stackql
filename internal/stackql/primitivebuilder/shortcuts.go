@@ -20,7 +20,10 @@ import (
 	"github.com/stackql/stackql/pkg/prettyprint"
 )
 
-func NewUpdateableValsPrimitive(handlerCtx handler.HandlerContext, vals map[*sqlparser.ColName]interface{}) (primitive.IPrimitive, error) {
+func NewUpdateableValsPrimitive(
+	handlerCtx handler.HandlerContext,
+	vals map[*sqlparser.ColName]interface{},
+) (primitive.IPrimitive, error) {
 	return primitive.NewLocalPrimitive(
 		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			keys := make(map[string]map[string]interface{})
@@ -29,7 +32,7 @@ func NewUpdateableValsPrimitive(handlerCtx handler.HandlerContext, vals map[*sql
 			var columnOrder []string
 			i := 0
 			lookupMap := make(map[string]*sqlparser.ColName)
-			for k, _ := range vals {
+			for k := range vals {
 				columnOrder = append(columnOrder, k.Name.GetRawVal())
 				lookupMap[k.Name.GetRawVal()] = k
 			}
@@ -45,11 +48,17 @@ func NewUpdateableValsPrimitive(handlerCtx handler.HandlerContext, vals map[*sql
 			rawRows := map[int]map[int]interface{}{
 				0: rawRow,
 			}
-			return util.PrepareResultSet(internaldto.NewPrepareResultSetPlusRawDTO(nil, keys, columnOrder, nil, nil, nil, rawRows))
+			return util.PrepareResultSet(
+				internaldto.NewPrepareResultSetPlusRawDTO(
+					nil, keys, columnOrder, nil, nil, nil, rawRows),
+			)
 		}), nil
 }
 
-func NewInsertableValsPrimitive(handlerCtx handler.HandlerContext, vals map[int]map[int]interface{}) (primitive.IPrimitive, error) {
+func NewInsertableValsPrimitive(
+	handlerCtx handler.HandlerContext,
+	vals map[int]map[int]interface{},
+) (primitive.IPrimitive, error) {
 	return primitive.NewLocalPrimitive(
 		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			keys := make(map[string]map[string]interface{})
@@ -57,11 +66,11 @@ func NewInsertableValsPrimitive(handlerCtx handler.HandlerContext, vals map[int]
 			var rowKeys []int
 			var colKeys []int
 			var columnOrder []string
-			for k, _ := range vals {
+			for k := range vals {
 				rowKeys = append(rowKeys, k)
 			}
 			for _, v := range vals {
-				for ck, _ := range v {
+				for ck := range v {
 					colKeys = append(colKeys, ck)
 				}
 				break
@@ -81,7 +90,16 @@ func NewInsertableValsPrimitive(handlerCtx handler.HandlerContext, vals map[int]
 		}), nil
 }
 
-func NewShowInstructionExecutor(node *sqlparser.Show, prov provider.IProvider, tbl tablemetadata.ExtendedTableMetadata, handlerCtx handler.HandlerContext, commentDirectives sqlparser.CommentDirectives, tableFilter func(openapistackql.ITable) (openapistackql.ITable, error)) internaldto.ExecutorOutput {
+//nolint:funlen,gocognit // permissable
+func NewShowInstructionExecutor(
+	node *sqlparser.Show,
+	prov provider.IProvider,
+	tbl tablemetadata.ExtendedTableMetadata,
+	handlerCtx handler.HandlerContext,
+	commentDirectives sqlparser.CommentDirectives,
+	tableFilter func(openapistackql.ITable,
+	) (openapistackql.ITable, error),
+) internaldto.ExecutorOutput {
 	extended := strings.TrimSpace(strings.ToUpper(node.Extended)) == "EXTENDED"
 	nodeTypeUpperCase := strings.ToUpper(node.Type)
 	var keys map[string]map[string]interface{}
@@ -92,17 +110,15 @@ func NewShowInstructionExecutor(node *sqlparser.Show, prov provider.IProvider, t
 	switch nodeTypeUpperCase {
 	case "AUTH":
 		logging.GetLogger().Infoln(fmt.Sprintf("Show For node.Type = '%s'", node.Type))
-		if err == nil {
-			authCtx, err := handlerCtx.GetAuthContext(prov.GetProviderString())
+		authCtx, authErr := handlerCtx.GetAuthContext(prov.GetProviderString())
+		if authErr == nil {
+			var authMeta *openapistackql.AuthMetadata
+			authMeta, err = prov.ShowAuth(authCtx)
 			if err == nil {
-				var authMeta *openapistackql.AuthMetadata
-				authMeta, err = prov.ShowAuth(authCtx)
-				if err == nil {
-					keys = map[string]map[string]interface{}{
-						"1": authMeta.ToMap(),
-					}
-					columnOrder = authMeta.GetHeaders()
+				keys = map[string]map[string]interface{}{
+					"1": authMeta.ToMap(),
 				}
+				columnOrder = authMeta.GetHeaders()
 			}
 		}
 	case "INSERT":
@@ -113,28 +129,33 @@ func NewShowInstructionExecutor(node *sqlparser.Show, prov provider.IProvider, t
 			"'",
 			logging.GetLogger(),
 		)
-		if err != nil {
-			return util.GenerateSimpleErroneousOutput(err)
-		}
-		meth, err := tbl.GetMethod()
-		if err != nil {
+		meth, methErr := tbl.GetMethod()
+		if methErr != nil {
 			tblName, tblErr := tbl.GetStackQLTableName()
 			if tblErr != nil {
-				return util.GenerateSimpleErroneousOutput(fmt.Errorf("Cannot find matching operation, possible causes include missing required parameters or an unsupported method for the resource, to find required parameters for supported methods run SHOW METHODS: %s", err.Error()))
+				return util.GenerateSimpleErroneousOutput(
+					fmt.Errorf(
+						"cannot find matching operation, possible causes include missing required parameters or an unsupported method for the resource, to find required parameters for supported methods run SHOW METHODS: %w", //nolint:lll // prescribed message
+						methErr))
 			}
-			return util.GenerateSimpleErroneousOutput(fmt.Errorf("Cannot find matching operation, possible causes include missing required parameters or an unsupported method for the resource, to find required parameters for supported methods run SHOW METHODS IN %s: %s", tblName, err.Error()))
+			return util.GenerateSimpleErroneousOutput(
+				fmt.Errorf(
+					"cannot find matching operation, possible causes include missing required parameters or an unsupported method for the resource, to find required parameters for supported methods run SHOW METHODS IN %s: %w", //nolint:lll // prescribed message
+					tblName, methErr))
 		}
-		svc, err := tbl.GetService()
-		if err != nil {
-			return util.GenerateSimpleErroneousOutput(err)
+		svc, svcErr := tbl.GetService()
+		if svcErr != nil {
+			return util.GenerateSimpleErroneousOutput(svcErr)
 		}
 		pp := prettyprint.NewPrettyPrinter(ppCtx)
 		ppPlaceholder := prettyprint.NewPrettyPrinter(ppCtx)
 		requiredOnly := commentDirectives != nil && commentDirectives.IsSet("REQUIRED")
-		insertStmt, err := metadatavisitors.ToInsertStatement(node.Columns, meth, svc, extended, pp, ppPlaceholder, requiredOnly)
+		insertStmt, insertErr := metadatavisitors.ToInsertStatement(
+			node.Columns, meth, svc, extended, pp, ppPlaceholder, requiredOnly)
 		tableName, _ := tbl.GetTableName()
-		if err != nil {
-			return util.GenerateSimpleErroneousOutput(fmt.Errorf("error creating insert statement for %s: %s", tableName, err.Error()))
+		if insertErr != nil {
+			return util.GenerateSimpleErroneousOutput(
+				fmt.Errorf("error creating insert statement for %s: %w", tableName, insertErr))
 		}
 		stmtStr := fmt.Sprintf(insertStmt, tableName)
 		keys = map[string]map[string]interface{}{
@@ -144,11 +165,18 @@ func NewShowInstructionExecutor(node *sqlparser.Show, prov provider.IProvider, t
 		}
 	case "METHODS":
 		var rsc openapistackql.Resource
-		rsc, err = prov.GetResource(node.OnTable.Qualifier.GetRawVal(), node.OnTable.Name.GetRawVal(), handlerCtx.GetRuntimeContext())
+		rsc, err = prov.GetResource(
+			node.OnTable.Qualifier.GetRawVal(),
+			node.OnTable.Name.GetRawVal(),
+			handlerCtx.GetRuntimeContext())
+		if err != nil {
+			return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, err, nil))
+		}
 		methods := rsc.GetMethodsMatched()
 		var filter func(openapistackql.ITable) (openapistackql.ITable, error)
 		if tbl == nil {
-			logging.GetLogger().Infoln(fmt.Sprintf("table and therefore filter not found for AST, shall procede nil filter"))
+			logging.GetLogger().Infoln(
+				"table and therefore filter not found for AST, shall procede nil filter")
 		} else {
 			filter = tbl.GetTableFilter()
 		}
@@ -156,9 +184,9 @@ func NewShowInstructionExecutor(node *sqlparser.Show, prov provider.IProvider, t
 		if err != nil {
 			return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, err, nil))
 		}
-		mOrd, err := methods.OrderMethods()
-		if err != nil {
-			return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, err, nil))
+		mOrd, mErr := methods.OrderMethods()
+		if mErr != nil {
+			return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, mErr, nil))
 		}
 		methodKeys := make(map[string]map[string]interface{})
 		for i, k := range mOrd {
@@ -184,7 +212,11 @@ func NewShowInstructionExecutor(node *sqlparser.Show, prov provider.IProvider, t
 	case "RESOURCES":
 		svcName := node.OnTable.Name.GetRawVal()
 		if svcName == "" {
-			return prepareErroneousResultSet(keys, columnOrder, fmt.Errorf("no service designated from which to resolve resources"))
+			return prepareErroneousResultSet(
+				keys,
+				columnOrder,
+				fmt.Errorf("no service designated from which to resolve resources"),
+			)
 		}
 		var resources map[string]openapistackql.Resource
 		resources, err = prov.GetResourcesRedacted(svcName, handlerCtx.GetRuntimeContext(), extended)
@@ -193,11 +225,7 @@ func NewShowInstructionExecutor(node *sqlparser.Show, prov provider.IProvider, t
 		}
 		columnOrder = openapistackql.GetResourcesHeader(extended)
 		var filter func(openapistackql.ITable) (openapistackql.ITable, error)
-		if err != nil {
-			logging.GetLogger().Infoln(fmt.Sprintf("table and therefore filter not found for AST, shall procede nil filter"))
-		} else {
-			filter = tableFilter
-		}
+		filter = tableFilter
 		resources, err = filterResources(resources, filter)
 		if err != nil {
 			return prepareErroneousResultSet(keys, columnOrder, err)
@@ -207,7 +235,13 @@ func NewShowInstructionExecutor(node *sqlparser.Show, prov provider.IProvider, t
 			keys[k] = v.ToMap(extended)
 		}
 	case "SERVICES":
-		logging.GetLogger().Infoln(fmt.Sprintf("Show For node.Type = '%s': Displaying services for provider = '%s'", node.Type, prov.GetProviderString()))
+		logging.GetLogger().Infoln(
+			fmt.Sprintf(
+				"Show For node.Type = '%s': Displaying services for provider = '%s'",
+				node.Type,
+				prov.GetProviderString(),
+			),
+		)
 		var services map[string]openapistackql.ProviderService
 		services, err = prov.GetProviderServicesRedacted(handlerCtx.GetRuntimeContext(), extended)
 		if err != nil {
@@ -223,7 +257,11 @@ func NewShowInstructionExecutor(node *sqlparser.Show, prov provider.IProvider, t
 	return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, err, nil))
 }
 
-func filterResources(resources map[string]openapistackql.Resource, tableFilter func(openapistackql.ITable) (openapistackql.ITable, error)) (map[string]openapistackql.Resource, error) {
+//nolint:errcheck // future proofing
+func filterResources(
+	resources map[string]openapistackql.Resource,
+	tableFilter func(openapistackql.ITable) (openapistackql.ITable, error),
+) (map[string]openapistackql.Resource, error) {
 	var err error
 	if tableFilter != nil {
 		filteredResources := make(map[string]openapistackql.Resource)
@@ -254,7 +292,10 @@ func getProviderServiceMap(item openapistackql.ProviderService, extended bool) m
 	return retVal
 }
 
-func convertProviderServicesToMap(services map[string]openapistackql.ProviderService, extended bool) map[string]map[string]interface{} {
+func convertProviderServicesToMap(
+	services map[string]openapistackql.ProviderService,
+	extended bool,
+) map[string]map[string]interface{} {
 	retVal := make(map[string]map[string]interface{})
 	for k, v := range services {
 		retVal[k] = getProviderServiceMap(v, extended)
@@ -262,8 +303,13 @@ func convertProviderServicesToMap(services map[string]openapistackql.ProviderSer
 	return retVal
 }
 
-func filterServices(services map[string]openapistackql.ProviderService, tableFilter func(openapistackql.ITable) (openapistackql.ITable, error), useNonPreferredAPIs bool) (map[string]openapistackql.ProviderService, error) {
+func filterServices(
+	services map[string]openapistackql.ProviderService,
+	tableFilter func(openapistackql.ITable) (openapistackql.ITable, error),
+	useNonPreferredAPIs bool,
+) (map[string]openapistackql.ProviderService, error) {
 	var err error
+	//nolint:nestif // TODO: refactor
 	if tableFilter != nil {
 		filteredServices := make(map[string]openapistackql.ProviderService)
 		for k, svc := range services {
@@ -282,14 +328,18 @@ func filterServices(services map[string]openapistackql.ProviderService, tableFil
 	return services, err
 }
 
-func filterMethods(methods openapistackql.Methods, tableFilter func(openapistackql.ITable) (openapistackql.ITable, error)) (openapistackql.Methods, error) {
+func filterMethods(
+	methods openapistackql.Methods,
+	tableFilter func(openapistackql.ITable) (openapistackql.ITable, error),
+) (openapistackql.Methods, error) {
 	var err error
 	if tableFilter != nil {
 		filteredMethods := make(openapistackql.Methods)
 		for k, m := range methods {
-			filteredMethod, filterErr := tableFilter(&m)
+			pm := m
+			filteredMethod, filterErr := tableFilter(&pm)
 			if filterErr == nil && filteredMethod != nil {
-				filteredMethods[k] = m
+				filteredMethods[k] = pm
 			}
 			if filterErr != nil {
 				err = filterErr
@@ -300,7 +350,11 @@ func filterMethods(methods openapistackql.Methods, tableFilter func(openapistack
 	return methods, err
 }
 
-func prepareErroneousResultSet(rowMap map[string]map[string]interface{}, columnOrder []string, err error) internaldto.ExecutorOutput {
+func prepareErroneousResultSet(
+	rowMap map[string]map[string]interface{}, //nolint:unparam // future proofing
+	columnOrder []string,
+	err error,
+) internaldto.ExecutorOutput {
 	return util.PrepareResultSet(
 		internaldto.NewPrepareResultSetDTO(
 			nil,
@@ -313,7 +367,12 @@ func prepareErroneousResultSet(rowMap map[string]map[string]interface{}, columnO
 	)
 }
 
-func NewDescribeTableInstructionExecutor(handlerCtx handler.HandlerContext, tbl tablemetadata.ExtendedTableMetadata, extended bool, full bool) internaldto.ExecutorOutput {
+func NewDescribeTableInstructionExecutor(
+	handlerCtx handler.HandlerContext,
+	tbl tablemetadata.ExtendedTableMetadata,
+	extended bool,
+	full bool,
+) internaldto.ExecutorOutput {
 	schema, err := tbl.GetSelectableObjectSchema()
 	if err != nil {
 		return internaldto.NewErroneousExecutorOutput(err)
@@ -322,25 +381,49 @@ func NewDescribeTableInstructionExecutor(handlerCtx handler.HandlerContext, tbl 
 	descriptionMap := schema.ToDescriptionMap(extended)
 	keys := make(map[string]map[string]interface{})
 	for k, v := range descriptionMap {
-		switch val := v.(type) {
+		switch val := v.(type) { //nolint:gocritic // review later
 		case map[string]interface{}:
 			keys[k] = val
 		}
 	}
-	return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, util.DescribeRowSort, err, nil))
+	return util.PrepareResultSet(
+		internaldto.NewPrepareResultSetDTO(
+			nil,
+			keys,
+			columnOrder,
+			util.DescribeRowSort,
+			err,
+			nil,
+		),
+	)
 }
 
-func NewDescribeViewInstructionExecutor(handlerCtx handler.HandlerContext, tbl tablemetadata.ExtendedTableMetadata, nonControlColumns []internaldto.ColumnMetadata, extended bool, full bool) internaldto.ExecutorOutput {
+func NewDescribeViewInstructionExecutor(
+	handlerCtx handler.HandlerContext,
+	tbl tablemetadata.ExtendedTableMetadata,
+	nonControlColumns []internaldto.ColumnMetadata,
+	extended bool,
+	full bool,
+) internaldto.ExecutorOutput {
 	columnOrder := openapistackql.GetDescribeHeader(extended)
 	descriptionMap := columnsToFlatDescriptionMap(nonControlColumns, extended)
 	keys := make(map[string]map[string]interface{})
 	for k, v := range descriptionMap {
-		switch val := v.(type) {
+		switch val := v.(type) { //nolint:gocritic // TODO: review
 		case map[string]interface{}:
 			keys[k] = val
 		}
 	}
-	return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, util.DescribeRowSort, nil, nil))
+	return util.PrepareResultSet(
+		internaldto.NewPrepareResultSetDTO(
+			nil,
+			keys,
+			columnOrder,
+			util.DescribeRowSort,
+			nil,
+			nil,
+		),
+	)
 }
 
 func columnsToFlatDescriptionMap(colz []internaldto.ColumnMetadata, extended bool) map[string]interface{} {
@@ -358,7 +441,12 @@ func columnsToFlatDescriptionMap(colz []internaldto.ColumnMetadata, extended boo
 	return retVal
 }
 
-func NewLocalSelectExecutor(handlerCtx handler.HandlerContext, node *sqlparser.Select, rowSort func(map[string]map[string]interface{}) []string, colz []map[string]interface{}) (primitive.IPrimitive, error) {
+func NewLocalSelectExecutor(
+	handlerCtx handler.HandlerContext,
+	node *sqlparser.Select,
+	rowSort func(map[string]map[string]interface{}) []string,
+	colz []map[string]interface{},
+) (primitive.IPrimitive, error) {
 	return primitive.NewLocalPrimitive(
 		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			var columnOrder []string

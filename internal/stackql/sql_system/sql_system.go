@@ -1,4 +1,4 @@
-package sql_system
+package sql_system //nolint:revive,stylecheck // package name is meaningful and readable
 
 import (
 	"database/sql"
@@ -72,8 +72,13 @@ type SQLSystem interface {
 
 	// External SQL data sources
 	RegisterExternalTable(connectionName string, tableDetails openapistackql.SQLExternalTable) error
-	ObtainRelationalColumnFromExternalSQLtable(hierarchyIDs internaldto.HeirarchyIdentifiers, colName string) (relationaldto.RelationalColumn, error)
-	ObtainRelationalColumnsFromExternalSQLtable(hierarchyIDs internaldto.HeirarchyIdentifiers) ([]relationaldto.RelationalColumn, error)
+	ObtainRelationalColumnFromExternalSQLtable(
+		hierarchyIDs internaldto.HeirarchyIdentifiers,
+		colName string,
+	) (relationaldto.RelationalColumn, error)
+	ObtainRelationalColumnsFromExternalSQLtable(
+		hierarchyIDs internaldto.HeirarchyIdentifiers,
+	) ([]relationaldto.RelationalColumn, error)
 }
 
 func getNodeFormatter(name string) sqlparser.NodeFormatter {
@@ -86,7 +91,13 @@ func getNodeFormatter(name string) sqlparser.NodeFormatter {
 	return astformat.DefaultSelectExprsFormatter
 }
 
-func NewSQLSystem(sqlEngine sqlengine.SQLEngine, analyticsNamespaceLikeString string, controlAttributes sqlcontrol.ControlAttributes, sqlCfg dto.SQLBackendCfg, authCfg map[string]*dto.AuthCtx) (SQLSystem, error) {
+func NewSQLSystem(
+	sqlEngine sqlengine.SQLEngine,
+	analyticsNamespaceLikeString string,
+	controlAttributes sqlcontrol.ControlAttributes,
+	sqlCfg dto.SQLBackendCfg,
+	authCfg map[string]*dto.AuthCtx,
+) (SQLSystem, error) {
 	name := sqlCfg.SQLSystem
 	nameLowered := strings.ToLower(name)
 	formatter := getNodeFormatter(nameLowered)

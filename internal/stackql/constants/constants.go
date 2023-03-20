@@ -1,5 +1,6 @@
 package constants
 
+//nolint:lll
 const (
 	AnalyticsPrefix                    string = "stackql_analytics"
 	AuthTypeDelimiter                  string = "::"
@@ -13,16 +14,16 @@ const (
 	ServiceAccountPathErrStr           string = `[ERROR] credentialsfilepath not supplied or key file does not exist.`
 	OAuthInteractiveAuthErrStr         string = `[INFO] Interactive credentials must be revoked before logging in with a different user, use the AUTH REVOKE command before attempting to authenticate again.`
 	NotAuthenticatedShowStr            string = `[INFO] Not authenticated, use the AUTH command to authenticate to a provider.`
-	JsonStr                            string = "json"
+	JSONStr                            string = "json"
 	TableStr                           string = "table"
 	CSVStr                             string = "csv"
 	TextStr                            string = "text"
 	PostgresIDMaxWidth                 int    = 63
 	PrettyTextStr                      string = "pptext"
-	DbEngineSQLite3Embedded            string = "sqlite3_embedded"
-	DbEnginePostgresTCP                string = "postgres_tcp"
-	DbEngineSnowflakeTCP               string = "snowflake_tcp"
-	DbEngineDefault                    string = DbEngineSQLite3Embedded
+	DBEngineSQLite3Embedded            string = "sqlite3_embedded"
+	DBEnginePostgresTCP                string = "postgres_tcp"
+	DBEngineSnowflakeTCP               string = "snowflake_tcp"
+	DBEngineDefault                    string = DBEngineSQLite3Embedded
 	SQLDialectSQLite3                  string = "sqlite3"
 	SQLDialectPostgres                 string = "postgres"
 	SQLDialectSnowflake                string = "snowflake"
@@ -34,7 +35,7 @@ const (
 	SQLFuncGroupConcatSQLite           string = "group_concat"
 	SQLFuncGroupConcatPostgres         string = "string_agg"
 	SQLFuncGroupConcatConformed        string = SQLFuncGroupConcatSQLite
-	DefaulHttpBodyFormat               string = JsonStr
+	DefaulHTTPBodyFormat               string = JSONStr
 	RequestBodyKeyPrefix               string = "data"
 	RequestBodyKeyDelimiter            string = "__"
 	RequestBodyBaseKey                 string = RequestBodyKeyPrefix + RequestBodyKeyDelimiter

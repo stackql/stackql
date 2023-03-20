@@ -23,10 +23,12 @@ const (
 )
 
 func TranslateServiceKeyGenericProviderToIql(serviceKey string) string {
+	//nolint:gocritic // TODO: review
 	return strings.Replace(serviceKey, googleServiceKeyDelimiter, stackqlServiceKeyDelimiter, -1)
 }
 
 func TranslateServiceKeyIqlToGenericProvider(serviceKey string) string {
+	//nolint:gocritic // TODO: review
 	return strings.Replace(serviceKey, stackqlServiceKeyDelimiter, googleServiceKeyDelimiter, -1)
 }
 
@@ -35,7 +37,7 @@ func OpenapiStackQLTabulationsPersistor(
 	tabluationsAnnotated []util.AnnotatedTabulation,
 	dbEngine sqlengine.SQLEngine,
 	prefix string,
-	namespaceCollection tablenamespace.TableNamespaceCollection,
+	namespaceCollection tablenamespace.Collection,
 	controlAttributes sqlcontrol.ControlAttributes,
 	sqlSystem sql_system.SQLSystem,
 ) (int, error) {
@@ -43,42 +45,42 @@ func OpenapiStackQLTabulationsPersistor(
 	if err != nil {
 		return 0, err
 	}
-	discoveryGenerationId, err := dbEngine.GetCurrentDiscoveryGenerationId(prefix)
+	discoveryGenerationID, err := dbEngine.GetCurrentDiscoveryGenerationID(prefix)
 	if err != nil {
-		discoveryGenerationId, err = dbEngine.GetNextDiscoveryGenerationId(prefix)
+		discoveryGenerationID, err = dbEngine.GetNextDiscoveryGenerationID(prefix)
 		if err != nil {
-			return discoveryGenerationId, err
+			return discoveryGenerationID, err
 		}
 	}
 	db, err := dbEngine.GetDB()
 	if err != nil {
-		return discoveryGenerationId, err
+		return discoveryGenerationID, err
 	}
 	txn, err := db.Begin()
 	if err != nil {
-		return discoveryGenerationId, err
+		return discoveryGenerationID, err
 	}
 	for _, tblt := range tabluationsAnnotated {
-		ddl, err := drmCfg.GenerateDDL(tblt, m, discoveryGenerationId, false)
-		if err != nil {
-			displayErr := fmt.Errorf("error generating DDL: %s", err.Error())
+		ddl, ddlErr := drmCfg.GenerateDDL(tblt, m, discoveryGenerationID, false)
+		if ddlErr != nil {
+			displayErr := fmt.Errorf("error generating DDL: %w", err)
 			logging.GetLogger().Infoln(displayErr.Error())
-			txn.Rollback()
-			return discoveryGenerationId, displayErr
+			txn.Rollback() //nolint:errcheck // TODO: investigate
+			return discoveryGenerationID, displayErr
 		}
 		for _, q := range ddl {
 			_, err = txn.Exec(q)
 			if err != nil {
-				displayErr := fmt.Errorf("aborting DDL run for query '''%s''' with error: %s", q, err.Error())
+				displayErr := fmt.Errorf("aborting DDL run for query '''%s''' with error: %w", q, err)
 				logging.GetLogger().Infof("aborting DDL run for query '''%s''' with error: %s\n", q, err.Error())
-				txn.Rollback()
-				return discoveryGenerationId, displayErr
+				txn.Rollback() //nolint:errcheck // TODO: investigate
+				return discoveryGenerationID, displayErr
 			}
 		}
 	}
 	err = txn.Commit()
 	if err != nil {
-		return discoveryGenerationId, err
+		return discoveryGenerationID, err
 	}
-	return discoveryGenerationId, nil
+	return discoveryGenerationID, nil
 }

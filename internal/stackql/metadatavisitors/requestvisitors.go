@@ -20,6 +20,12 @@ var (
 	_ TemplatedProduct = &standardTemplatedProduct{}
 )
 
+const (
+	strType    = "string"
+	objectType = "object"
+	arrayType  = "array"
+)
+
 type TemplatedProduct interface {
 	GetBody() string
 	GetPlaceholder() string
@@ -54,7 +60,11 @@ type SchemaRequestTemplateVisitor struct {
 	requiredOnly             bool
 }
 
-func NewSchemaRequestTemplateVisitor(maxDepth int, strategy string, prettyPrinter, placeHolderPrettyPrinter *prettyprint.PrettyPrinter, requiredOnly bool) *SchemaRequestTemplateVisitor {
+func NewSchemaRequestTemplateVisitor(
+	maxDepth int,
+	strategy string,
+	prettyPrinter, placeHolderPrettyPrinter *prettyprint.PrettyPrinter,
+	requiredOnly bool) *SchemaRequestTemplateVisitor {
 	return &SchemaRequestTemplateVisitor{
 		MaxDepth:                 maxDepth,
 		Strategy:                 strategy,
@@ -100,7 +110,6 @@ func getColsMap(columns sqlparser.Columns) map[string]bool {
 		retVal[col.GetRawVal()] = true
 	}
 	return retVal
-
 }
 
 func isColIncludable(key string, columns sqlparser.Columns, colMap map[string]bool) bool {
@@ -115,7 +124,15 @@ func isBodyParam(paramName string) bool {
 	return strings.HasPrefix(paramName, constants.RequestBodyBaseKey)
 }
 
-func ToInsertStatement(columns sqlparser.Columns, m openapistackql.OperationStore, svc openapistackql.Service, extended bool, prettyPrinter, placeHolderPrettyPrinter *prettyprint.PrettyPrinter, requiredOnly bool) (string, error) {
+//nolint:funlen,gocognit // acceptable
+func ToInsertStatement(
+	columns sqlparser.Columns,
+	m openapistackql.OperationStore,
+	svc openapistackql.Service,
+	extended bool, prettyPrinter,
+	placeHolderPrettyPrinter *prettyprint.PrettyPrinter,
+	requiredOnly bool,
+) (string, error) {
 	paramsToInclude := m.GetNonBodyParameters()
 	successfullyIncludedCols := make(map[string]bool)
 	if !extended {
@@ -141,7 +158,7 @@ func ToInsertStatement(columns sqlparser.Columns, m openapistackql.OperationStor
 		}
 	}
 	var includedParamNames []string
-	for k, _ := range paramsToInclude {
+	for k := range paramsToInclude {
 		includedParamNames = append(includedParamNames, k)
 	}
 	sort.Strings(includedParamNames)
@@ -153,7 +170,7 @@ func ToInsertStatement(columns sqlparser.Columns, m openapistackql.OperationStor
 		}
 		columnList = append(columnList, prettyPrinter.RenderColumnName(s))
 		switch p.GetType() {
-		case "string":
+		case strType:
 			exprList = append(exprList, prettyPrinter.RenderTemplateVarAndDelimit(s))
 		default:
 			exprList = append(exprList, prettyPrinter.RenderTemplateVarNoDelimit(s))
@@ -168,11 +185,13 @@ func ToInsertStatement(columns sqlparser.Columns, m openapistackql.OperationStor
 	}
 
 	if sch == nil {
-		err := checkAllColumnsPresent(columns, successfullyIncludedCols)
+		err = checkAllColumnsPresent(columns, successfullyIncludedCols)
+		//nolint:lll // acceptable
 		return "<<<jsonnet\n{\n" + strings.Join(jsonnetPlaholderList, ",\n") + "\n}\n>>>\nINSERT INTO %s" + "(\n" + strings.Join(columnList, ",\n") +
 			"\n)\n" + "SELECT\n" + strings.Join(exprList, ",\n") + "\n;\n", err
 	}
 
+	//nolint:gomnd // acceptable
 	schemaVisitor := NewSchemaRequestTemplateVisitor(2, "", prettyPrinter, placeHolderPrettyPrinter, requiredOnly)
 
 	tVal, _ := schemaVisitor.RetrieveTemplate(sch, m, extended)
@@ -208,27 +227,39 @@ func ToInsertStatement(columns sqlparser.Columns, m openapistackql.OperationStor
 	}
 
 	err = checkAllColumnsPresent(columns, successfullyIncludedCols)
+	//nolint:lll // acceptable
 	retVal := "<<<jsonnet\n{\n" + strings.Join(jsonnetPlaholderList, ",\n") + "\n}\n>>>\nINSERT INTO %s" + "(\n" + strings.Join(columnList, ",\n") +
 		"\n)\n" + "SELECT\n" + strings.Join(exprList, ",\n") + "\n;\n"
 	return retVal, err
 }
 
-func (sv *SchemaRequestTemplateVisitor) processSubSchemasMap(sc openapistackql.Schema, method openapistackql.OperationStore, properties map[string]openapistackql.Schema) (map[string]TemplatedProduct, error) {
+//nolint:gocognit // acceptable
+func (sv *SchemaRequestTemplateVisitor) processSubSchemasMap(
+	sc openapistackql.Schema,
+	method openapistackql.OperationStore,
+	properties map[string]openapistackql.Schema,
+) (map[string]TemplatedProduct, error) {
 	retVal := make(map[string]TemplatedProduct)
 	for k, ss := range properties {
 		logging.GetLogger().Infoln(fmt.Sprintf("RetrieveTemplate() k = '%s', ss is nil ? '%t'", k, ss == nil))
-		if ss != nil && (k == "" || !sv.isVisited(k, nil)) {
+		if ss != nil && (k == "" || !sv.isVisited(k, nil)) { //nolint:nestif // acceptable
 			localSchemaVisitedMap := make(map[string]bool)
 			localSchemaVisitedMap[k] = true
 			if !method.IsRequiredRequestBodyProperty(k) && (ss.IsReadOnly() || (sv.requiredOnly && !sc.IsRequired(k))) {
 				logging.GetLogger().Infoln(fmt.Sprintf("property = '%s' will be skipped", k))
 				continue
 			}
-			rv, err := sv.retrieveTemplateVal(ss, method.GetService(), ".values."+constants.RequestBodyBaseKey+k, localSchemaVisitedMap)
+			rv, err := sv.retrieveTemplateVal(
+				ss,
+				method.GetService(),
+				".values."+constants.RequestBodyBaseKey+k,
+				localSchemaVisitedMap)
 			if err != nil {
 				return nil, err
 			}
-			pl, err := sv.retrieveJsonnetPlaceholderVal(ss, method.GetService(), constants.RequestBodyBaseKey+k, localSchemaVisitedMap)
+			pl, err := sv.retrieveJsonnetPlaceholderVal(
+				ss, method.GetService(), constants.RequestBodyBaseKey+k,
+				localSchemaVisitedMap)
 			if err != nil {
 				return nil, err
 			}
@@ -257,17 +288,22 @@ func (sv *SchemaRequestTemplateVisitor) processSubSchemasMap(sc openapistackql.S
 			default:
 				return nil, fmt.Errorf("error processing placeholder template key '%s' with disallowed type '%T'", k, plt)
 			}
-			retVal[k] = NewTemplatedProduct(string(bodyBytes), string(placeholderBytes))
+			retVal[k] = NewTemplatedProduct(bodyBytes, placeholderBytes)
 		}
 	}
 	return retVal, nil
 }
 
-func (sv *SchemaRequestTemplateVisitor) RetrieveTemplate(sc openapistackql.Schema, method openapistackql.OperationStore, extended bool) (map[string]TemplatedProduct, error) {
-	retVal := make(map[string]TemplatedProduct)
+func (sv *SchemaRequestTemplateVisitor) RetrieveTemplate(
+	sc openapistackql.Schema,
+	method openapistackql.OperationStore,
+	extended bool,
+) (map[string]TemplatedProduct, error) {
+	retVal := make(map[string]TemplatedProduct) //nolint:ineffassign,staticcheck // TODO: review
 	sv.recordSchemaVisited(sc.GetName())
+	//nolint:gocritic // TODO: review
 	switch sc.GetType() {
-	case "object":
+	case objectType:
 		prop, err := sc.GetProperties()
 		if err != nil {
 			return nil, err
@@ -282,17 +318,23 @@ func (sv *SchemaRequestTemplateVisitor) RetrieveTemplate(sc openapistackql.Schem
 			retVal, err = sv.processSubSchemasMap(sc, method, map[string]openapistackql.Schema{"k1": additionalProperties})
 		}
 		if len(retVal) == 0 {
-			return nil, nil
+			return nil, nil //nolint:nilnil // TODO: review
 		}
 		return retVal, err
 	}
 	return nil, fmt.Errorf("templating of request body only supported for object type payload")
 }
 
-func (sv *SchemaRequestTemplateVisitor) retrieveTemplateVal(sc openapistackql.Schema, svc openapistackql.Service, objectKey string, localSchemaVisitedMap map[string]bool) (interface{}, error) {
+//nolint:funlen,gocognit // acceptable
+func (sv *SchemaRequestTemplateVisitor) retrieveTemplateVal(
+	sc openapistackql.Schema,
+	svc openapistackql.Service, //nolint:unparam // TODO: review
+	objectKey string,
+	localSchemaVisitedMap map[string]bool,
+) (interface{}, error) {
 	sSplit := strings.Split(objectKey, ".")
 	oKey := sSplit[len(sSplit)-1]
-	oPrefix := objectKey
+	oPrefix := objectKey //nolint:ineffassign // TODO: review
 	if len(sSplit) > 1 {
 		oPrefix = strings.TrimSuffix(objectKey, "."+oKey)
 	} else {
@@ -308,7 +350,7 @@ func (sv *SchemaRequestTemplateVisitor) retrieveTemplateVal(sc openapistackql.Sc
 		initialLocalSchemaVisitedMap[k] = v
 	}
 	switch sc.GetType() {
-	case "object":
+	case objectType:
 		rv := make(map[string]interface{})
 		props, err := sc.GetProperties()
 		if err != nil {
@@ -319,28 +361,28 @@ func (sv *SchemaRequestTemplateVisitor) retrieveTemplateVal(sc openapistackql.Sc
 			for k, v := range initialLocalSchemaVisitedMap {
 				propertyLocalSchemaVisitedMap[k] = v
 			}
-			if ss != nil && ((ss.GetType() != "array") || !sv.isVisited(ss.GetTitle(), propertyLocalSchemaVisitedMap)) {
+			if ss != nil && ((ss.GetType() != arrayType) || !sv.isVisited(ss.GetTitle(), propertyLocalSchemaVisitedMap)) {
 				if propertyLocalSchemaVisitedMap[ss.GetTitle()] {
 					return "\"{{ " + templateValName + " }}\"", nil
 				}
 				propertyLocalSchemaVisitedMap[ss.GetTitle()] = true
-				sv, err := sv.retrieveTemplateVal(ss, svc, templateValName+"."+k, propertyLocalSchemaVisitedMap)
-				if err != nil {
-					return nil, err
+				sv, svErr := sv.retrieveTemplateVal(ss, svc, templateValName+"."+k, propertyLocalSchemaVisitedMap)
+				if svErr != nil {
+					return nil, svErr
 				}
 				if sv != nil {
 					rv[k] = sv
 				}
 			}
 		}
-		if len(rv) == 0 {
+		if len(rv) == 0 { //nolint:nestif // acceptable
 			additionalProperties, additionalProprtiesExist := sc.GetAdditionalProperties()
 			if additionalProprtiesExist {
 				if additionalProperties != nil {
 					hasProperties := false
-					propz, err := additionalProperties.GetProperties()
-					if err != nil {
-						return nil, err
+					propz, pErr := additionalProperties.GetProperties()
+					if pErr != nil {
+						return nil, pErr
 					}
 					for k, v := range propz {
 						hasProperties = true
@@ -358,10 +400,10 @@ func (sv *SchemaRequestTemplateVisitor) retrieveTemplateVal(sc openapistackql.Sc
 			}
 		}
 		if len(rv) == 0 {
-			return nil, nil
+			return nil, nil //nolint:nilnil // TODO: review
 		}
 		return rv, nil
-	case "array":
+	case arrayType:
 		var arr []interface{}
 		iSch, err := sc.GetItemsSchema()
 		if err != nil {
@@ -377,17 +419,23 @@ func (sv *SchemaRequestTemplateVisitor) retrieveTemplateVal(sc openapistackql.Sc
 			return nil, err
 		}
 		return arr, nil
-	case "string":
+	case strType:
 		return "\"{{ " + templateValName + " }}\"", nil
 	default:
 		return "{{ " + templateValName + " }}", nil
 	}
 }
 
-func (sv *SchemaRequestTemplateVisitor) retrieveJsonnetPlaceholderVal(sc openapistackql.Schema, svc openapistackql.Service, objectKey string, localSchemaVisitedMap map[string]bool) (interface{}, error) {
+//nolint:funlen,gocognit // acceptable
+func (sv *SchemaRequestTemplateVisitor) retrieveJsonnetPlaceholderVal(
+	sc openapistackql.Schema,
+	svc openapistackql.Service, //nolint:unparam // TODO: review
+	objectKey string,
+	localSchemaVisitedMap map[string]bool,
+) (interface{}, error) {
 	sSplit := strings.Split(objectKey, ".")
 	oKey := sSplit[len(sSplit)-1]
-	oPrefix := objectKey
+	oPrefix := objectKey //nolint:ineffassign // TODO: review
 	if len(sSplit) > 1 {
 		oPrefix = strings.TrimSuffix(objectKey, "."+oKey)
 	} else {
@@ -403,7 +451,7 @@ func (sv *SchemaRequestTemplateVisitor) retrieveJsonnetPlaceholderVal(sc openapi
 		initialLocalSchemaVisitedMap[k] = v
 	}
 	switch sc.GetType() {
-	case "object":
+	case objectType:
 		rv := make(map[string]interface{})
 		props, err := sc.GetProperties()
 		if err != nil {
@@ -414,27 +462,27 @@ func (sv *SchemaRequestTemplateVisitor) retrieveJsonnetPlaceholderVal(sc openapi
 			for k, v := range initialLocalSchemaVisitedMap {
 				propertyLocalSchemaVisitedMap[k] = v
 			}
-			if ss != nil && ((ss.GetType() != "array") || !sv.isVisited(ss.GetTitle(), propertyLocalSchemaVisitedMap)) {
+			if ss != nil && ((ss.GetType() != arrayType) || !sv.isVisited(ss.GetTitle(), propertyLocalSchemaVisitedMap)) {
 				if propertyLocalSchemaVisitedMap[ss.GetTitle()] {
 					return "<< " + templateValName + " >>", nil
 				}
 				propertyLocalSchemaVisitedMap[ss.GetTitle()] = true
-				sv, err := sv.retrieveJsonnetPlaceholderVal(ss, svc, templateValName+"."+k, propertyLocalSchemaVisitedMap)
-				if err != nil {
-					return nil, err
+				sv, svErr := sv.retrieveJsonnetPlaceholderVal(ss, svc, templateValName+"."+k, propertyLocalSchemaVisitedMap)
+				if svErr != nil {
+					return nil, svErr
 				}
 				if sv != nil {
 					rv[k] = sv
 				}
 			}
 		}
-		if len(rv) == 0 {
+		if len(rv) == 0 { //nolint:nestif // acceptable
 			additionalProperties, additionalProprtiesExist := sc.GetAdditionalProperties()
 			if additionalProprtiesExist {
 				hasProperties := false
-				propz, err := additionalProperties.GetProperties()
-				if err != nil {
-					return nil, err
+				propz, pErr := additionalProperties.GetProperties()
+				if pErr != nil {
+					return nil, pErr
 				}
 				for k, v := range propz {
 					hasProperties = true
@@ -448,14 +496,13 @@ func (sv *SchemaRequestTemplateVisitor) retrieveJsonnetPlaceholderVal(sc openapi
 					key := fmt.Sprintf("<< %s[0].%s >>", templateValName, "key")
 					rv[key] = getAdditionalStuffPlaceholder(additionalProperties, templateValName)
 				}
-
 			}
 		}
 		if len(rv) == 0 {
-			return nil, nil
+			return nil, nil //nolint:nilnil // TODO: review
 		}
 		return rv, nil
-	case "array":
+	case arrayType:
 		var arr []interface{}
 		iSch, err := sc.GetItemsSchema()
 		if err != nil {
@@ -471,7 +518,7 @@ func (sv *SchemaRequestTemplateVisitor) retrieveJsonnetPlaceholderVal(sc openapi
 			return nil, err
 		}
 		return arr, nil
-	case "string":
+	case strType:
 		return "<< " + templateValName + " >>", nil
 	default:
 		return "<< " + templateValName + " >>", nil
@@ -481,7 +528,7 @@ func (sv *SchemaRequestTemplateVisitor) retrieveJsonnetPlaceholderVal(sc openapi
 func getAdditionalStuff(ss openapistackql.Schema, templateValName string) string {
 	valBase := fmt.Sprintf("{{ %s[0].val }}", templateValName)
 	switch ss.GetType() {
-	case "string":
+	case strType:
 		return fmt.Sprintf(`"%s"`, valBase)
 	case "number", "int", "int32", "int64":
 		return valBase
@@ -493,8 +540,8 @@ func getAdditionalStuff(ss openapistackql.Schema, templateValName string) string
 func getAdditionalStuffPlaceholder(ss openapistackql.Schema, templateValName string) string {
 	valBase := fmt.Sprintf("<< %s[0].val >>", templateValName)
 	switch ss.GetType() {
-	case "string":
-		return fmt.Sprintf(`%s`, valBase)
+	case strType:
+		return valBase
 	case "number", "int", "int32", "int64":
 		return valBase
 	default:
@@ -504,7 +551,7 @@ func getAdditionalStuffPlaceholder(ss openapistackql.Schema, templateValName str
 
 func getSortedKeysTmplMap(m map[string]TemplatedProduct) []string {
 	var retVal []string
-	for k, _ := range m {
+	for k := range m {
 		retVal = append(retVal, k)
 	}
 	sort.Strings(retVal)

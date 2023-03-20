@@ -9,7 +9,12 @@ import (
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 )
 
-func composeAsyncMonitor(handlerCtx handler.HandlerContext, precursor primitive.IPrimitive, meta tablemetadata.ExtendedTableMetadata, commentDirectives sqlparser.CommentDirectives) (primitive.IPrimitive, error) {
+func composeAsyncMonitor(
+	handlerCtx handler.HandlerContext,
+	precursor primitive.IPrimitive,
+	meta tablemetadata.ExtendedTableMetadata,
+	commentDirectives sqlparser.CommentDirectives,
+) (primitive.IPrimitive, error) {
 	prov, err := meta.GetProvider()
 	if err != nil {
 		return nil, err

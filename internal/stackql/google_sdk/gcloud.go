@@ -8,11 +8,12 @@ import (
 	"regexp"
 )
 
+//nolint:lll
 const (
 	gcloudErrFmt          string = "gcloud error: %s"
 	gcloudInstallInfo     string = `Visit https://cloud.google.com/sdk to download the SDK or alternatively use service_account mode, see https://docs.stackql.io/language-spec/auth for more information`
-	gcloudNotPresentError string = `Interactive mode requires the Google Cloud SDK to be installed on the system being used for stackql. ` + gcloudInstallInfo
-	gcloudRevokeError     string = "Error revoking gcloud credentials.  Please ensure that gcloud is installed and credentials are valid before running this command. " + gcloudInstallInfo
+	gcloudNotPresentError string = `interactive mode requires the Google Cloud SDK to be installed on the system being used for stackql. ` + gcloudInstallInfo
+	gcloudRevokeError     string = "error revoking gcloud credentials.  Please ensure that gcloud is installed and credentials are valid before running this command. " + gcloudInstallInfo
 )
 
 func waitErrWrapper(cmd *exec.Cmd, prefixStr string) error {

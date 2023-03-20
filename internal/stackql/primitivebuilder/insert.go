@@ -19,7 +19,7 @@ import (
 type Insert struct {
 	graph               primitivegraph.PrimitiveGraph
 	handlerCtx          handler.HandlerContext
-	drmCfg              drm.DRMConfig
+	drmCfg              drm.Config
 	root                primitivegraph.PrimitiveNode
 	tbl                 tablemetadata.ExtendedTableMetadata
 	node                sqlparser.SQLNode
@@ -57,8 +57,8 @@ func (ss *Insert) GetTail() primitivegraph.PrimitiveNode {
 	return ss.root
 }
 
+//nolint:funlen,errcheck,gocognit,gocyclo,cyclop // TODO: fix this
 func (ss *Insert) Build() error {
-
 	node := ss.node
 	tbl := ss.tbl
 	handlerCtx := ss.handlerCtx
@@ -97,21 +97,21 @@ func (ss *Insert) Build() error {
 		if !inputExists {
 			return internaldto.NewErroneousExecutorOutput(fmt.Errorf("input does not exist"))
 		}
-		inputStream, err := input.ResultToMap()
-		if err != nil {
-			return internaldto.NewErroneousExecutorOutput(err)
+		inputStream, inputErr := input.ResultToMap()
+		if inputErr != nil {
+			return internaldto.NewErroneousExecutorOutput(inputErr)
 		}
-		rr, err := inputStream.Read()
-		if err != nil {
-			return internaldto.NewErroneousExecutorOutput(err)
+		rr, rrErr := inputStream.Read()
+		if rrErr != nil {
+			return internaldto.NewErroneousExecutorOutput(rrErr)
 		}
-		inputMap, err := rr.GetMap()
-		if err != nil {
-			return internaldto.NewErroneousExecutorOutput(err)
+		inputMap, inputErr := rr.GetMap()
+		if inputErr != nil {
+			return internaldto.NewErroneousExecutorOutput(inputErr)
 		}
-		httpArmoury, err := httpbuild.BuildHTTPRequestCtx(node, prov, m, svc, inputMap, nil)
-		if err != nil {
-			return internaldto.NewErroneousExecutorOutput(err)
+		httpArmoury, httpErr := httpbuild.BuildHTTPRequestCtx(node, prov, m, svc, inputMap, nil)
+		if httpErr != nil {
+			return internaldto.NewErroneousExecutorOutput(httpErr)
 		}
 
 		var zeroArityExecutors []func() internaldto.ExecutorOutput
@@ -121,7 +121,7 @@ func (ss *Insert) Build() error {
 				// logging.GetLogger().Infoln(fmt.Sprintf("req.BodyBytes = %s", string(req.BodyBytes)))
 				// req.Context.SetBody(bytes.NewReader(req.BodyBytes))
 				// logging.GetLogger().Infoln(fmt.Sprintf("req.Context = %v", req.Context))
-				response, apiErr := httpmiddleware.HttpApiCallFromRequest(handlerCtx.Clone(), prov, m, req.GetRequest())
+				response, apiErr := httpmiddleware.HTTPApiCallFromRequest(handlerCtx.Clone(), prov, m, req.GetRequest())
 				if apiErr != nil {
 					return internaldto.NewErroneousExecutorOutput(apiErr)
 				}
@@ -139,11 +139,11 @@ func (ss *Insert) Build() error {
 				items, ok := target[tbl.LookupSelectItemsKey()]
 				keys := make(map[string]map[string]interface{})
 				if ok {
-					iArr, ok := items.([]interface{})
-					if ok && len(iArr) > 0 {
+					iArr, iOk := items.([]interface{})
+					if iOk && len(iArr) > 0 {
 						for i := range iArr {
-							item, ok := iArr[i].(map[string]interface{})
-							if ok {
+							item, itemOk := iArr[i].(map[string]interface{})
+							if itemOk {
 								keys[strconv.Itoa(i)] = item
 							}
 						}
@@ -166,9 +166,7 @@ func (ss *Insert) Build() error {
 				execInstance := ei
 				resultSet = execInstance()
 				if resultSet.Msg != nil && resultSet.Msg.WorkingMessages != nil && len(resultSet.Msg.WorkingMessages) > 0 {
-					for _, m := range resultSet.Msg.WorkingMessages {
-						msgs.WorkingMessages = append(msgs.WorkingMessages, m)
-					}
+					msgs.WorkingMessages = append(msgs.WorkingMessages, resultSet.Msg.WorkingMessages...)
 				}
 				if resultSet.Err != nil {
 					resultSet.Msg = &msgs
@@ -192,9 +190,9 @@ func (ss *Insert) Build() error {
 			if err != nil {
 				return internaldto.NewErroneousExecutorOutput(err)
 			}
-			execPrim, err := composeAsyncMonitor(handlerCtx, dependentInsertPrimitive, tbl, commentDirectives)
-			if err != nil {
-				return internaldto.NewErroneousExecutorOutput(err)
+			execPrim, execErr := composeAsyncMonitor(handlerCtx, dependentInsertPrimitive, tbl, commentDirectives)
+			if execErr != nil {
+				return internaldto.NewErroneousExecutorOutput(execErr)
 			}
 			resultSet = execPrim.Execute(pc)
 			if resultSet.Err != nil {

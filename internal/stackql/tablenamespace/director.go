@@ -13,8 +13,8 @@ import (
 var (
 	defaultAnalyticsCacheRegexp = regexp.MustCompile(constants.DefaultAnalyticsRegexpString)
 	defaultViewsRegexp          = regexp.MustCompile(constants.DefaultViewsRegexpString)
-	defaultAnalyticsTemplate    = templateParseOrPanic("defaultAnalyticsTmpl", constants.DefaultAnalyticsTemplateString)
-	defaultViewsTemplate        = templateParseOrPanic("defaultViewsTmpl", constants.DefaultViewsTemplateString)
+	defaultAnalyticsTemplate    = templateParseOrPanic("defaultAnalyticsTmpl", constants.DefaultAnalyticsTemplateString) //nolint:gochecknoglobals,lll // local visibility only
+	defaultViewsTemplate        = templateParseOrPanic("defaultViewsTmpl", constants.DefaultViewsTemplateString)         //nolint:gochecknoglobals,lll // local visibility only
 )
 
 func templateParseOrPanic(tmplName, tmplBody string) *template.Template {
@@ -25,12 +25,15 @@ func templateParseOrPanic(tmplName, tmplBody string) *template.Template {
 	return rv
 }
 
-type TableNamespaceConfiguratorBuilderDirector interface {
+type ConfiguratorBuilderDirector interface {
 	Construct() error
-	GetResult() TableNamespaceConfigurator
+	GetResult() Configurator
 }
 
-func getViewsTableNamespaceConfiguratorBuilderDirector(cfg dto.NamespaceCfg, sqlEngine sqlengine.SQLEngine) TableNamespaceConfiguratorBuilderDirector {
+func getViewsTableNamespaceConfiguratorBuilderDirector(
+	cfg dto.NamespaceCfg,
+	sqlEngine sqlengine.SQLEngine,
+) ConfiguratorBuilderDirector {
 	return &configuratorBuilderDirector{
 		sqlEngine:         sqlEngine,
 		cfg:               cfg,
@@ -40,7 +43,10 @@ func getViewsTableNamespaceConfiguratorBuilderDirector(cfg dto.NamespaceCfg, sql
 	}
 }
 
-func getAnalyticsCacheTableNamespaceConfiguratorBuilderDirector(cfg dto.NamespaceCfg, sqlEngine sqlengine.SQLEngine) TableNamespaceConfiguratorBuilderDirector {
+func getAnalyticsCacheTableNamespaceConfiguratorBuilderDirector(
+	cfg dto.NamespaceCfg,
+	sqlEngine sqlengine.SQLEngine,
+) ConfiguratorBuilderDirector {
 	return &configuratorBuilderDirector{
 		sqlEngine:         sqlEngine,
 		cfg:               cfg,
@@ -56,7 +62,7 @@ type configuratorBuilderDirector struct {
 	defaultRegexp     *regexp.Regexp
 	defaultTemplate   *template.Template
 	defaultLikeString string
-	configurator      TableNamespaceConfigurator
+	configurator      Configurator
 }
 
 func (dr *configuratorBuilderDirector) Construct() error {
@@ -77,6 +83,7 @@ func (dr *configuratorBuilderDirector) Construct() error {
 		}
 		likeString = textutil.GetTemplateLikeString(dr.cfg.NamespaceTemplate)
 	}
+	//nolint:lll // chaining
 	bldr := newTableNamespaceConfiguratorBuilder().WithRegexp(cfgRegexp).WithLikeString(likeString).WithTTL(dr.cfg.TTL).WithTemplate(cfgTemplate).WithSQLEngine(dr.sqlEngine)
 	configurator, err := bldr.Build()
 	if err != nil {
@@ -86,6 +93,6 @@ func (dr *configuratorBuilderDirector) Construct() error {
 	return nil
 }
 
-func (dr *configuratorBuilderDirector) GetResult() TableNamespaceConfigurator {
+func (dr *configuratorBuilderDirector) GetResult() Configurator {
 	return dr.configurator
 }

@@ -32,11 +32,11 @@ type standardFromRewriteAstVisitor struct {
 	iDColumnName           string
 	rewrittenQuery         string
 	shouldCollectTables    bool
-	namespaceCollection    tablenamespace.TableNamespaceCollection
+	namespaceCollection    tablenamespace.Collection
 	sqlSystem              sql_system.SQLSystem
 	formatter              sqlparser.NodeFormatter
 	annotations            taxonomy.AnnotationCtxMap
-	dc                     drm.DRMConfig
+	dc                     drm.Config
 	annotatedAST           annotatedast.AnnotatedAst
 	indirectContexts       []drm.PreparedStatementCtx
 	isAvoidSQLSourceNaming bool
@@ -48,9 +48,9 @@ func NewFromRewriteAstVisitor(
 	shouldCollectTables bool,
 	sqlSystem sql_system.SQLSystem,
 	formatter sqlparser.NodeFormatter,
-	namespaceCollection tablenamespace.TableNamespaceCollection,
+	namespaceCollection tablenamespace.Collection,
 	annotations taxonomy.AnnotationCtxMap,
-	dc drm.DRMConfig,
+	dc drm.Config,
 ) FromRewriteAstVisitor {
 	return &standardFromRewriteAstVisitor{
 		annotatedAST:        annotatedAST,
@@ -76,6 +76,7 @@ func (v *standardFromRewriteAstVisitor) GetIndirectContexts() []drm.PreparedStat
 	return v.indirectContexts
 }
 
+//nolint:dupl,funlen,gocognit,gocyclo,cyclop,errcheck,gocritic,lll,exhaustive,nestif,gomnd // defer uplifts on analysers
 func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 	buf := sqlparser.NewTrackedBuffer(v.formatter)
 
@@ -90,19 +91,19 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		v.rewrittenQuery = rq
 
 	case *sqlparser.Auth:
-		var stackql_opt string
+		var stackqlOpt string
 		if node.SessionAuth {
-			stackql_opt = "stackql "
+			stackqlOpt = "stackql "
 		}
-		rq := fmt.Sprintf("%sAUTH %v %s %v %v", stackql_opt, node.Provider, node.Type, node.KeyFilePath, node.KeyEnvVar)
+		rq := fmt.Sprintf("%sAUTH %v %s %v %v", stackqlOpt, node.Provider, node.Type, node.KeyFilePath, node.KeyEnvVar)
 		v.rewrittenQuery = rq
 
 	case *sqlparser.AuthRevoke:
-		var stackql_opt string
+		var stackqlOpt string
 		if node.SessionAuth {
-			stackql_opt = "stackql "
+			stackqlOpt = "stackql "
 		}
-		rq := fmt.Sprintf("%sauth revoke %v", stackql_opt, node.Provider)
+		rq := fmt.Sprintf("%sauth revoke %v", stackqlOpt, node.Provider)
 		v.rewrittenQuery = rq
 
 	case *sqlparser.Sleep:
@@ -299,7 +300,6 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 		if ct.Length != nil && ct.Scale != nil {
 			buf.AstPrintf(ct, "(%v,%v)", ct.Length, ct.Scale)
-
 		} else if ct.Length != nil {
 			buf.AstPrintf(ct, "(%v)", ct.Length)
 		}
@@ -642,7 +642,6 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 				}
 				v.rewrittenQuery = templateString
 				v.indirectContexts = append(v.indirectContexts, indirect.GetSelectContext())
-
 			} else {
 				switch ex := node.Expr.(type) {
 				case sqlparser.TableName:

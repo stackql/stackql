@@ -14,9 +14,7 @@ type Union struct {
 	graph      primitivegraph.PrimitiveGraph
 	unionCtx   drm.PreparedStatementCtx
 	handlerCtx handler.HandlerContext
-	drmCfg     drm.DRMConfig
-	lhs        drm.PreparedStatementCtx
-	rhs        []drm.PreparedStatementCtx
+	drmCfg     drm.Config
 	root, tail primitivegraph.PrimitiveNode
 }
 
@@ -45,7 +43,11 @@ func (un *Union) Build() error {
 	return nil
 }
 
-func NewUnion(graph primitivegraph.PrimitiveGraph, handlerCtx handler.HandlerContext, unionCtx drm.PreparedStatementCtx) Builder {
+func NewUnion(
+	graph primitivegraph.PrimitiveGraph,
+	handlerCtx handler.HandlerContext,
+	unionCtx drm.PreparedStatementCtx,
+) Builder {
 	return &Union{
 		graph:      graph,
 		handlerCtx: handlerCtx,
@@ -54,10 +56,10 @@ func NewUnion(graph primitivegraph.PrimitiveGraph, handlerCtx handler.HandlerCon
 	}
 }
 
-func (ss *Union) GetRoot() primitivegraph.PrimitiveNode {
-	return ss.root
+func (un *Union) GetRoot() primitivegraph.PrimitiveNode {
+	return un.root
 }
 
-func (ss *Union) GetTail() primitivegraph.PrimitiveNode {
-	return ss.tail
+func (un *Union) GetTail() primitivegraph.PrimitiveNode {
+	return un.tail
 }

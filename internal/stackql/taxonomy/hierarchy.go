@@ -17,10 +17,14 @@ import (
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
 
-func GetHeirarchyIDsFromParserNode(handlerCtx handler.HandlerContext, node sqlparser.SQLNode) (internaldto.HeirarchyIdentifiers, error) {
+func GetHeirarchyIDsFromParserNode(
+	handlerCtx handler.HandlerContext,
+	node sqlparser.SQLNode,
+) (internaldto.HeirarchyIdentifiers, error) {
 	return getHids(handlerCtx, node)
 }
 
+//nolint:funlen // lots of moving parts
 func getHids(handlerCtx handler.HandlerContext, node sqlparser.SQLNode) (internaldto.HeirarchyIdentifiers, error) {
 	var hIds internaldto.HeirarchyIdentifiers
 	switch n := node.(type) {
@@ -37,7 +41,7 @@ func getHids(handlerCtx handler.HandlerContext, node sqlparser.SQLNode) (interna
 	case sqlparser.TableName:
 		hIds = internaldto.ResolveResourceTerminalHeirarchyIdentifiers(n)
 	case *sqlparser.AliasedTableExpr:
-		switch t := n.Expr.(type) {
+		switch t := n.Expr.(type) { //nolint:gocritic // this is expressive enough
 		case *sqlparser.Subquery:
 			sq := internaldto.NewSubqueryDTO(n, t)
 			return internaldto.ObtainSubqueryHeirarchyIdentifiers(sq), nil
@@ -122,7 +126,13 @@ func GetTableNameFromStatement(node sqlparser.SQLNode, formatter sqlparser.NodeF
 //   - Hierarchy
 //   - Supplied parameters that are **not** consumed in Hierarchy inference
 //   - Error if applicable.
-func GetHeirarchyFromStatement(handlerCtx handler.HandlerContext, node sqlparser.SQLNode, parameters parserutil.ColumnKeyedDatastore) (tablemetadata.HeirarchyObjects, error) {
+//
+//nolint:funlen,gocognit,gocyclo,cyclop // lots of moving parts
+func GetHeirarchyFromStatement(
+	handlerCtx handler.HandlerContext,
+	node sqlparser.SQLNode,
+	parameters parserutil.ColumnKeyedDatastore,
+) (tablemetadata.HeirarchyObjects, error) {
 	var hIds internaldto.HeirarchyIdentifiers
 	getFirstAvailableMethod := false
 	hIds, err := getHids(handlerCtx, node)
@@ -138,7 +148,7 @@ func GetHeirarchyFromStatement(handlerCtx handler.HandlerContext, node sqlparser
 	case *sqlparser.DescribeTable:
 	case sqlparser.TableName:
 	case *sqlparser.AliasedTableExpr:
-		switch n.Expr.(type) {
+		switch n.Expr.(type) { //nolint:gocritic // this is expressive enough
 		case *sqlparser.Subquery:
 			retVal := tablemetadata.NewHeirarchyObjects(hIds)
 			return retVal, nil
@@ -189,22 +199,24 @@ func GetHeirarchyFromStatement(handlerCtx handler.HandlerContext, node sqlparser
 		return nil, err
 	}
 	retVal.SetResource(rsc)
-	if viewBodyDDL, ok := rsc.GetViewBodyDDLForSQLDialect(handlerCtx.GetSQLSystem().GetName()); ok {
+	//nolint:nestif // not overly complex
+	if viewBodyDDL, ok := rsc.GetViewBodyDDLForSQLDialect(
+		handlerCtx.GetSQLSystem().GetName()); ok {
 		viewName := hIds.GetStackQLTableName()
 		// TODO: mutex required or some other strategy
-		viewDTO, viewExists := handlerCtx.GetSQLSystem().GetViewByName(viewName)
+		viewDTO, viewExists := handlerCtx.GetSQLSystem().GetViewByName(viewName) //nolint:govet // acceptable shadow
 		if !viewExists {
-			err := handlerCtx.GetSQLSystem().CreateView(viewName, viewBodyDDL)
+			err = handlerCtx.GetSQLSystem().CreateView(viewName, viewBodyDDL)
 			if err != nil {
 				return nil, err
 			}
-			viewDTO, isView := handlerCtx.GetSQLSystem().GetViewByName(hIds.GetTableName())
+			viewDTO, isView := handlerCtx.GetSQLSystem().GetViewByName(hIds.GetTableName()) //nolint:govet // acceptable shadow
 			if isView {
-				hIds = hIds.WithView(viewDTO)
+				hIds = hIds.WithView(viewDTO) //nolint:staticcheck // TODO: fix this
 			}
 			return retVal, nil
 		}
-		hIds = hIds.WithView(viewDTO)
+		hIds = hIds.WithView(viewDTO) //nolint:staticcheck // TODO: fix this
 		return retVal, nil
 	}
 	var method openapistackql.OperationStore
@@ -217,12 +229,12 @@ func GetHeirarchyFromStatement(handlerCtx handler.HandlerContext, node sqlparser
 		retVal.SetMethod(method)
 		return retVal, nil
 	}
-	if methodRequired {
-		switch node.(type) {
+	if methodRequired { //nolint:nestif // not overly complex
+		switch node.(type) { //nolint:gocritic // this is expressive enough
 		case *sqlparser.DescribeTable:
-			m, mStr, err := prov.InferDescribeMethod(rsc)
-			if err != nil {
-				return nil, err
+			m, mStr, mErr := prov.InferDescribeMethod(rsc)
+			if mErr != nil {
+				return nil, mErr
 			}
 			retVal.SetMethod(m)
 			retVal.SetMethodStr(mStr)
@@ -234,11 +246,22 @@ func GetHeirarchyFromStatement(handlerCtx handler.HandlerContext, node sqlparser
 		var meth openapistackql.OperationStore
 		var methStr string
 		if getFirstAvailableMethod {
-			meth, methStr, err = prov.GetFirstMethodForAction(retVal.GetHeirarchyIds().GetServiceStr(), retVal.GetHeirarchyIds().GetResourceStr(), methodAction, handlerCtx.GetRuntimeContext())
+			meth, methStr, err = prov.GetFirstMethodForAction( //nolint:staticcheck,ineffassign // TODO: fix this
+				retVal.GetHeirarchyIds().GetServiceStr(),
+				retVal.GetHeirarchyIds().GetResourceStr(),
+				methodAction,
+				handlerCtx.GetRuntimeContext())
 		} else {
-			meth, methStr, err = prov.GetMethodForAction(retVal.GetHeirarchyIds().GetServiceStr(), retVal.GetHeirarchyIds().GetResourceStr(), methodAction, parameters, handlerCtx.GetRuntimeContext())
+			meth, methStr, err = prov.GetMethodForAction(
+				retVal.GetHeirarchyIds().GetServiceStr(),
+				retVal.GetHeirarchyIds().GetResourceStr(),
+				methodAction,
+				parameters,
+				handlerCtx.GetRuntimeContext())
 			if err != nil {
-				return nil, fmt.Errorf("cannot find matching operation, possible causes include missing required parameters or an unsupported method for the resource, to find required parameters for supported methods run SHOW METHODS IN %s: %s", retVal.GetHeirarchyIds().GetTableName(), err.Error())
+				return nil, fmt.Errorf(
+					"cannot find matching operation, possible causes include missing required parameters or an unsupported method for the resource, to find required parameters for supported methods run SHOW METHODS IN %s: %w", //nolint:lll // long string
+					retVal.GetHeirarchyIds().GetTableName(), err)
 			}
 		}
 		for _, srv := range svcHdl.GetServers() {

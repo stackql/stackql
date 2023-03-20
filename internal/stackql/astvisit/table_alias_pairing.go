@@ -30,7 +30,10 @@ type standardParserTableAliasPairingAstVisitor struct {
 	annotatedAST   annotatedast.AnnotatedAst
 }
 
-func NewTableAliasAstVisitor(annotatedAST annotatedast.AnnotatedAst, tables sqlparser.TableExprs) ParserTableAliasPairingAstVisitor {
+func NewTableAliasAstVisitor(
+	annotatedAST annotatedast.AnnotatedAst,
+	tables sqlparser.TableExprs,
+) ParserTableAliasPairingAstVisitor {
 	return &standardParserTableAliasPairingAstVisitor{
 		aliasedColumns: make(parserutil.TableExprMap),
 		aliasMap:       make(parserutil.TableAliasMap),
@@ -42,6 +45,7 @@ func NewTableAliasAstVisitor(annotatedAST annotatedast.AnnotatedAst, tables sqlp
 
 func tableExprMatchesQualifier(expr sqlparser.TableExpr, qualifier sqlparser.TableName) bool {
 	q := qualifier.GetRawVal()
+	//nolint:gocritic // we only care about the cases we handle
 	switch expr := expr.(type) {
 	case *sqlparser.AliasedTableExpr:
 		if expr.As.GetRawVal() == q {
@@ -59,7 +63,9 @@ func tableExprMatchesQualifier(expr sqlparser.TableExpr, qualifier sqlparser.Tab
 	return false
 }
 
-func (v *standardParserTableAliasPairingAstVisitor) findTableFromQualifier(qualifier sqlparser.TableName) (sqlparser.TableExpr, error) {
+func (v *standardParserTableAliasPairingAstVisitor) findTableFromQualifier(
+	qualifier sqlparser.TableName,
+) (sqlparser.TableExpr, error) {
 	for _, tb := range v.tables {
 		if tableExprMatchesQualifier(tb, qualifier) {
 			v.aliasedColumns[qualifier] = tb
@@ -81,6 +87,7 @@ func (v *standardParserTableAliasPairingAstVisitor) GetColRefs() parserutil.ColT
 	return v.colRefs
 }
 
+//nolint:dupl,funlen,gocognit,gocyclo,cyclop,staticcheck,errcheck,gocritic,govet,lll,exhaustive,nestif,gomnd // defer uplifts on analysers
 func (v *standardParserTableAliasPairingAstVisitor) Visit(node sqlparser.SQLNode) error {
 	var err error
 

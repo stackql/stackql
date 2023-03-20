@@ -12,7 +12,11 @@ type OutputPacket interface {
 }
 
 func NewStandardOutputPacket(
-	rowMaps map[string]map[string]interface{}, rawRows map[int]map[int]interface{}, columnNames []string, columnOIDs []oid.Oid) OutputPacket {
+	rowMaps map[string]map[string]interface{},
+	rawRows map[int]map[int]interface{},
+	columnNames []string,
+	columnOIDs []oid.Oid,
+) OutputPacket {
 	return &standardOutputPacket{
 		rowMaps:     rowMaps,
 		rawRows:     rawRows,

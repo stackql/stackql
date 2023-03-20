@@ -1,4 +1,4 @@
-package sql_table
+package sql_table //nolint:revive,stylecheck // decent package name
 
 import (
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/relationaldto"

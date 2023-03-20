@@ -16,17 +16,19 @@ import (
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
 
-var defaultColSortArr []string = []string{
-	"id",
-	"name",
-	"description",
-}
-
-var describeRowSortArr []string = []string{
-	"id",
-	"name",
-	"description",
-}
+//nolint:revive,gochecknoglobals // prefer declarative
+var (
+	defaultColSortArr []string = []string{
+		"id",
+		"name",
+		"description",
+	}
+	describeRowSortArr []string = []string{
+		"id",
+		"name",
+		"description",
+	}
+)
 
 func extractExecParams(node *sqlparser.Exec) (map[string]interface{}, error) {
 	paramMap := make(map[string]interface{})
@@ -43,7 +45,10 @@ func extractExecParams(node *sqlparser.Exec) (map[string]interface{}, error) {
 	return paramMap, err
 }
 
-func extractInsertParams(insert *sqlparser.Insert, insertValOnlyRows map[int]map[int]interface{}) (map[int]map[string]interface{}, error) {
+func extractInsertParams(
+	insert *sqlparser.Insert,
+	insertValOnlyRows map[int]map[int]interface{},
+) (map[int]map[string]interface{}, error) {
 	retVal := make(map[int]map[string]interface{})
 	var err error
 	if len(insertValOnlyRows) < 1 {
@@ -65,7 +70,10 @@ func extractInsertParams(insert *sqlparser.Insert, insertValOnlyRows map[int]map
 	return retVal, err
 }
 
-func extractUpdateParams(update *sqlparser.Update, insertValOnlyRows map[int]map[int]interface{}) (map[int]map[string]interface{}, error) {
+func extractUpdateParams(
+	update *sqlparser.Update,
+	insertValOnlyRows map[int]map[int]interface{},
+) (map[int]map[string]interface{}, error) {
 	retVal := make(map[int]map[string]interface{})
 	var err error
 	if len(insertValOnlyRows) < 1 {
@@ -77,8 +85,8 @@ func extractUpdateParams(update *sqlparser.Update, insertValOnlyRows map[int]map
 		lookupMap[row.Name.GetRawVal()] = row.Name
 		columnOrder = append(columnOrder, row.Name.GetRawVal())
 	}
-	sqlparser.Walk(func(node sqlparser.SQLNode) (bool, error) {
-		switch node := node.(type) {
+	sqlparser.Walk(func(node sqlparser.SQLNode) (bool, error) { //nolint:errcheck // TODO: review
+		switch node := node.(type) { //nolint:gocritic // understandable
 		case *sqlparser.ComparisonExpr:
 			if node.Operator == sqlparser.EqualStr {
 				switch l := node.Left.(type) {
@@ -117,7 +125,10 @@ func extractUpdateParams(update *sqlparser.Update, insertValOnlyRows map[int]map
 	return retVal, err
 }
 
-func ExtractSQLNodeParams(statement sqlparser.SQLNode, insertValOnlyRows map[int]map[int]interface{}) (map[int]map[string]interface{}, error) {
+func ExtractSQLNodeParams(
+	statement sqlparser.SQLNode,
+	insertValOnlyRows map[int]map[int]interface{},
+) (map[int]map[string]interface{}, error) {
 	switch stmt := statement.(type) {
 	case *sqlparser.Exec:
 		val, err := extractExecParams(stmt)
@@ -129,8 +140,8 @@ func ExtractSQLNodeParams(statement sqlparser.SQLNode, insertValOnlyRows map[int
 	}
 	paramMap := make(map[string]interface{})
 	var err error
-	sqlparser.Walk(func(node sqlparser.SQLNode) (bool, error) {
-		switch node := node.(type) {
+	sqlparser.Walk(func(node sqlparser.SQLNode) (bool, error) { //nolint:errcheck // TODO: review
+		switch node := node.(type) { //nolint:gocritic // understandable
 		case *sqlparser.ComparisonExpr:
 			if node.Operator == sqlparser.EqualStr {
 				switch l := node.Left.(type) {
@@ -167,7 +178,7 @@ func TransformSQLRawParameters(input map[string]interface{}) (map[string]interfa
 			logging.GetLogger().Infof("%v\n", v)
 			continue
 		case parserutil.ParameterMetadata:
-			switch t := v.GetVal().(type) {
+			switch t := v.GetVal().(type) { //nolint:gocritic // understandable
 			case *sqlparser.FuncExpr:
 				logging.GetLogger().Infof("%v\n", t)
 				continue
@@ -198,7 +209,12 @@ func extractRaw(raw interface{}) (string, error) {
 	}
 }
 
-func arrangeOrderedColumnRow(row map[string]interface{}, columns []sqldata.ISQLColumn, columnOrder []string, colNumber int) []interface{} {
+func arrangeOrderedColumnRow(
+	row map[string]interface{},
+	columns []sqldata.ISQLColumn, //nolint:unparam // TODO: review
+	columnOrder []string,
+	colNumber int,
+) []interface{} {
 	rowVals := make([]interface{}, colNumber)
 	for j := range columnOrder {
 		rowVals[j] = openapistackql_util.InterfaceToBytes(row[columnOrder[j]], strings.ToLower(columnOrder[j]) == "error")
@@ -231,7 +247,10 @@ func GenerateSimpleErroneousOutput(err error) internaldto.ExecutorOutput {
 	)
 }
 
-func PrepareResultSet(payload internaldto.PrepareResultSetDTO) internaldto.ExecutorOutput {
+//nolint:funlen,gocognit // not overly complex
+func PrepareResultSet(
+	payload internaldto.PrepareResultSetDTO,
+) internaldto.ExecutorOutput {
 	if payload.Err != nil {
 		return internaldto.NewExecutorOutput(
 			nil,
@@ -272,6 +291,7 @@ func PrepareResultSet(payload internaldto.PrepareResultSetDTO) internaldto.Execu
 	rows := make([]sqldata.ISQLRow, len(payload.RowMap))
 
 	rowsVisited := make(map[string]bool, len(payload.RowMap))
+	//nolint:nestif // understandable
 	if payload.ColumnOrder != nil && len(payload.ColumnOrder) > 0 {
 		for f := range columns {
 			colOID := getDefaultOID()
@@ -354,44 +374,8 @@ func PrepareResultSet(payload internaldto.PrepareResultSetDTO) internaldto.Execu
 		payload.Msg,
 		payload.Err,
 	)
-	resultStream.Write(sqldata.NewSQLResult(columns, 0, 0, rows))
+	resultStream.Write(sqldata.NewSQLResult(columns, 0, 0, rows)) //nolint:errcheck // TODO: handle error
 	resultStream.Close()
-	return rv
-}
-
-func getColumnArr(colTypes []*sql.ColumnType) []sqldata.ISQLColumn {
-	var columns []sqldata.ISQLColumn
-
-	table := sqldata.NewSQLTable(0, "meta_table")
-
-	for _, col := range colTypes {
-		columns = append(columns, getPlaceholderColumnForNativeResult(table, col.Name(), col))
-	}
-	return columns
-}
-
-func getRowPointers(colTypes []*sql.ColumnType) []any {
-	var rowPtr []any
-
-	for _, col := range colTypes {
-		rowPtr = append(rowPtr, getScannableObjectForNativeResult(col))
-	}
-	return rowPtr
-}
-
-func nativeProtect(rv internaldto.ExecutorOutput, columns []string) internaldto.ExecutorOutput {
-	if rv.GetSQLResult() == nil {
-		table := sqldata.NewSQLTable(0, "meta_table")
-		rCols := make([]sqldata.ISQLColumn, len(columns))
-		for f := range rCols {
-			rCols[f] = getPlaceholderColumn(table, columns[f], getDefaultOID())
-		}
-		rv.GetSQLResult = func() sqldata.ISQLResultStream {
-			return sqldata.NewSimpleSQLResultStream(sqldata.NewSQLResult(rCols, 0, 0, []sqldata.ISQLRow{
-				sqldata.NewSQLRow([]interface{}{}),
-			}))
-		}
-	}
 	return rv
 }
 
@@ -424,6 +408,7 @@ func DescribeRowSort(rows map[string]map[string]interface{}) []string {
 	return describeRowSortArr
 }
 
+//nolint:unused,nolintlint // false positive + future proofing
 func getOidForSQLType(colType *sql.ColumnType) oid.Oid {
 	if colType == nil {
 		return oid.T_text
@@ -459,39 +444,10 @@ func getPlaceholderColumn(table sqldata.ISQLTable, colName string, colOID oid.Oi
 		colName,
 		0,
 		uint32(colOID),
-		1024,
+		1024, //nolint:gomnd // TODO: fix this
 		0,
 		"TextFormat",
 	)
-}
-
-func getPlaceholderColumnForNativeResult(table sqldata.ISQLTable, colName string, colSchema *sql.ColumnType) sqldata.ISQLColumn {
-	return sqldata.NewSQLColumn(
-		table,
-		colName,
-		0,
-		uint32(getOidForSQLType(colSchema)),
-		1024,
-		0,
-		"TextFormat",
-	)
-}
-
-func getScannableObjectForNativeResult(colSchema *sql.ColumnType) any {
-	switch strings.ToLower(colSchema.DatabaseTypeName()) {
-	case "int", "int32", "smallint", "tinyint":
-		return new(sql.NullInt32)
-	case "uint", "uint32":
-		return new(sql.NullInt64)
-	case "int64", "bigint":
-		return new(sql.NullInt64)
-	case "numeric", "decimal", "float", "float32", "float64":
-		return new(sql.NullFloat64)
-	case "bool":
-		return new(sql.NullBool)
-	default:
-		return new(sql.NullString)
-	}
 }
 
 func GetHeaderOnlyResultStream(colz []string) sqldata.ISQLResultStream {
@@ -501,5 +457,4 @@ func GetHeaderOnlyResultStream(colz []string) sqldata.ISQLResultStream {
 		columns[i] = getPlaceholderColumn(table, colz[i], getDefaultOID())
 	}
 	return sqldata.NewSimpleSQLResultStream(sqldata.NewSQLResult(columns, 0, 0, nil))
-
 }
