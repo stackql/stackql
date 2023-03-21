@@ -25,8 +25,8 @@ func (pb *standardPrimitiveGenerator) assembleUnarySelectionBuilder(
 	hIds internaldto.HeirarchyIdentifiers,
 	schema openapistackql.Schema,
 	tbl tablemetadata.ExtendedTableMetadata,
-	selectTabulation *openapistackql.Tabulation,
-	insertTabulation *openapistackql.Tabulation,
+	selectTabulation openapistackql.Tabulation,
+	insertTabulation openapistackql.Tabulation,
 	cols []parserutil.ColumnHandle,
 ) error {
 	inputTableName, err := tbl.GetInputTableName()

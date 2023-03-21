@@ -18,15 +18,15 @@ type standardColumnMetadata struct {
 }
 
 func (cd *standardColumnMetadata) GetColumnOID() oid.Oid {
-	return cd.getOidForSchema(cd.column.Schema)
+	return cd.getOidForSchema(cd.column.GetSchema())
 }
 
 func (cd *standardColumnMetadata) GetName() string {
-	return cd.column.Name
+	return cd.column.GetName()
 }
 
 func (cd *standardColumnMetadata) GetDecorated() string {
-	return cd.column.DecoratedCol
+	return cd.column.GetDecoratedCol()
 }
 
 func (cd *standardColumnMetadata) GetIdentifier() string {
@@ -34,10 +34,10 @@ func (cd *standardColumnMetadata) GetIdentifier() string {
 }
 
 func (cd *standardColumnMetadata) GetType() string {
-	if cd.column.Schema != nil {
-		return cd.column.Schema.GetType()
+	if cd.column.GetSchema() != nil {
+		return cd.column.GetSchema().GetType()
 	}
-	return parserutil.ExtractStringRepresentationOfValueColumn(cd.column.Val)
+	return parserutil.ExtractStringRepresentationOfValueColumn(cd.column.GetVal())
 }
 
 func (cd *standardColumnMetadata) getOidForSchema(colSchema openapistackql.Schema) oid.Oid {

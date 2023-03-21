@@ -52,6 +52,12 @@ Sumologic mocks:
 java  -Dfile.encoding=UTF-8 -Dmockserver.initializationJsonPath=${HOME}/stackql/stackql-devel/test/mockserver/expectations/static-sumologic-expectations.json -jar ${HOME}/stackql/stackql-devel/test/downloads/mockserver-netty-5.12.0-shaded.jar  -serverPort 1096 -logLevel INFO
 ```
 
+Digitalocean mocks:
+
+```bash
+java  -Dfile.encoding=UTF-8 -Dmockserver.initializationJsonPath=${HOME}/stackql/stackql-devel/test/mockserver/expectations/static-digitalocean-expectations.json -jar ${HOME}/stackql/stackql-devel/test/downloads/mockserver-netty-5.12.0-shaded.jar  -serverPort 1097 -logLevel INFO
+```
+
 
 ### Expectations from local file
 

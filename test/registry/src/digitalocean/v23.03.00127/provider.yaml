@@ -1,0 +1,260 @@
+id: digitalocean
+name: digitalocean
+version: v23.03.00127
+providerServices:
+  account:
+    description: Account
+    id: 'account:v23.03.00127'
+    name: account
+    preferred: true
+    service:
+      $ref: digitalocean/v23.03.00127/services/account.yaml
+    title: DigitalOcean API - Account
+    version: v23.03.00127
+  actions:
+    description: Actions
+    id: 'actions:v23.03.00127'
+    name: actions
+    preferred: true
+    service:
+      $ref: digitalocean/v23.03.00127/services/actions.yaml
+    title: DigitalOcean API - Actions
+    version: v23.03.00127
+  apps:
+    description: Apps
+    id: 'apps:v23.03.00127'
+    name: apps
+    preferred: true
+    service:
+      $ref: digitalocean/v23.03.00127/services/apps.yaml
+    title: DigitalOcean API - Apps
+    version: v23.03.00127
+  billing:
+    description: Billing
+    id: 'billing:v23.03.00127'
+    name: billing
+    preferred: true
+    service:
+      $ref: digitalocean/v23.03.00127/services/billing.yaml
+    title: DigitalOcean API - Billing
+    version: v23.03.00127
+  block_storage:
+    description: Block Storage
+    id: 'block_storage:v23.03.00127'
+    name: block_storage
+    preferred: true
+    service:
+      $ref: digitalocean/v23.03.00127/services/block_storage.yaml
+    title: DigitalOcean API - Block Storage
+    version: v23.03.00127
+  cdn:
+    description: CDN Endpoints
+    id: 'cdn:v23.03.00127'
+    name: cdn
+    preferred: true
+    service:
+      $ref: digitalocean/v23.03.00127/services/cdn.yaml
+    title: DigitalOcean API - Cdn
+    version: v23.03.00127
+  certificates:
+    description: Certificates
+    id: 'certificates:v23.03.00127'
+    name: certificates
+    preferred: true
+    service:
+      $ref: digitalocean/v23.03.00127/services/certificates.yaml
+    title: DigitalOcean API - Certificates
+    version: v23.03.00127
+  container_registry:
+    description: Container Registry
+    id: 'container_registry:v23.03.00127'
+    name: container_registry
+    preferred: true
+    service:
+      $ref: digitalocean/v23.03.00127/services/container_registry.yaml
+    title: DigitalOcean API - Container Registry
+    version: v23.03.00127
+  databases:
+    description: Databases
+    id: 'databases:v23.03.00127'
+    name: databases
+    preferred: true
+    service:
+      $ref: digitalocean/v23.03.00127/services/databases.yaml
+    title: DigitalOcean API - Databases
+    version: v23.03.00127
+  domains:
+    description: Domains
+    id: 'domains:v23.03.00127'
+    name: domains
+    preferred: true
+    service:
+      $ref: digitalocean/v23.03.00127/services/domains.yaml
+    title: DigitalOcean API - Domains
+    version: v23.03.00127
+  droplets:
+    description: Droplets
+    id: 'droplets:v23.03.00127'
+    name: droplets
+    preferred: true
+    service:
+      $ref: digitalocean/v23.03.00127/services/droplets.yaml
+    title: DigitalOcean API - Droplets
+    version: v23.03.00127
+  firewalls:
+    description: Firewalls
+    id: 'firewalls:v23.03.00127'
+    name: firewalls
+    preferred: true
+    service:
+      $ref: digitalocean/v23.03.00127/services/firewalls.yaml
+    title: DigitalOcean API - Firewalls
+    version: v23.03.00127
+  floating_ips:
+    description: Floating IPs
+    id: 'floating_ips:v23.03.00127'
+    name: floating_ips
+    preferred: true
+    service:
+      $ref: digitalocean/v23.03.00127/services/floating_ips.yaml
+    title: DigitalOcean API - Floating Ips
+    version: v23.03.00127
+  functions:
+    description: Functions
+    id: 'functions:v23.03.00127'
+    name: functions
+    preferred: true
+    service:
+      $ref: digitalocean/v23.03.00127/services/functions.yaml
+    title: DigitalOcean API - Functions
+    version: v23.03.00127
+  images:
+    description: Images
+    id: 'images:v23.03.00127'
+    name: images
+    preferred: true
+    service:
+      $ref: digitalocean/v23.03.00127/services/images.yaml
+    title: DigitalOcean API - Images
+    version: v23.03.00127
+  kubernetes:
+    description: Kubernetes
+    id: 'kubernetes:v23.03.00127'
+    name: kubernetes
+    preferred: true
+    service:
+      $ref: digitalocean/v23.03.00127/services/kubernetes.yaml
+    title: DigitalOcean API - Kubernetes
+    version: v23.03.00127
+  load_balancers:
+    description: Load Balancers
+    id: 'load_balancers:v23.03.00127'
+    name: load_balancers
+    preferred: true
+    service:
+      $ref: digitalocean/v23.03.00127/services/load_balancers.yaml
+    title: DigitalOcean API - Load Balancers
+    version: v23.03.00127
+  monitoring:
+    description: Monitoring
+    id: 'monitoring:v23.03.00127'
+    name: monitoring
+    preferred: true
+    service:
+      $ref: digitalocean/v23.03.00127/services/monitoring.yaml
+    title: DigitalOcean API - Monitoring
+    version: v23.03.00127
+  one_click_applications:
+    description: 1 Click Applications
+    id: 'one_click_applications:v23.03.00127'
+    name: one_click_applications
+    preferred: true
+    service:
+      $ref: digitalocean/v23.03.00127/services/one_click_applications.yaml
+    title: DigitalOcean API - One Click Applications
+    version: v23.03.00127
+  projects:
+    description: Projects
+    id: 'projects:v23.03.00127'
+    name: projects
+    preferred: true
+    service:
+      $ref: digitalocean/v23.03.00127/services/projects.yaml
+    title: DigitalOcean API - Projects
+    version: v23.03.00127
+  regions:
+    description: Regions
+    id: 'regions:v23.03.00127'
+    name: regions
+    preferred: true
+    service:
+      $ref: digitalocean/v23.03.00127/services/regions.yaml
+    title: DigitalOcean API - Regions
+    version: v23.03.00127
+  reserved_ips:
+    description: Reserved IPs
+    id: 'reserved_ips:v23.03.00127'
+    name: reserved_ips
+    preferred: true
+    service:
+      $ref: digitalocean/v23.03.00127/services/reserved_ips.yaml
+    title: DigitalOcean API - Reserved Ips
+    version: v23.03.00127
+  sizes:
+    description: Sizes
+    id: 'sizes:v23.03.00127'
+    name: sizes
+    preferred: true
+    service:
+      $ref: digitalocean/v23.03.00127/services/sizes.yaml
+    title: DigitalOcean API - Sizes
+    version: v23.03.00127
+  snapshots:
+    description: Snapshots
+    id: 'snapshots:v23.03.00127'
+    name: snapshots
+    preferred: true
+    service:
+      $ref: digitalocean/v23.03.00127/services/snapshots.yaml
+    title: DigitalOcean API - Snapshots
+    version: v23.03.00127
+  ssh_keys:
+    description: SSH Keys
+    id: 'ssh_keys:v23.03.00127'
+    name: ssh_keys
+    preferred: true
+    service:
+      $ref: digitalocean/v23.03.00127/services/ssh_keys.yaml
+    title: DigitalOcean API - Ssh Keys
+    version: v23.03.00127
+  tags:
+    description: Tags
+    id: 'tags:v23.03.00127'
+    name: tags
+    preferred: true
+    service:
+      $ref: digitalocean/v23.03.00127/services/tags.yaml
+    title: DigitalOcean API - Tags
+    version: v23.03.00127
+  uptime:
+    description: Uptime
+    id: 'uptime:v23.03.00127'
+    name: uptime
+    preferred: true
+    service:
+      $ref: digitalocean/v23.03.00127/services/uptime.yaml
+    title: DigitalOcean API - Uptime
+    version: v23.03.00127
+  vpcs:
+    description: VPCs
+    id: 'vpcs:v23.03.00127'
+    name: vpcs
+    preferred: true
+    service:
+      $ref: digitalocean/v23.03.00127/services/vpcs.yaml
+    title: DigitalOcean API - Vpcs
+    version: v23.03.00127
+config:
+  auth:
+    type: bearer
+    credentialsenvvar: DIGITALOCEAN_TOKEN
