@@ -420,6 +420,10 @@ func transformOpenapiStackqlAuthToLocal(authDTO openapistackql.AuthDTO) *dto.Aut
 		KeyIDEnvVar:             authDTO.GetKeyIDEnvVar(),
 		KeyFilePath:             authDTO.GetKeyFilePath(),
 		KeyEnvVar:               authDTO.GetKeyEnvVar(),
+		EnvVarAPIKeyStr:         authDTO.GetEnvVarAPIKeyStr(),
+		EnvVarAPISecretStr:      authDTO.GetEnvVarAPISecretStr(),
+		EnvVarUsername:          authDTO.GetEnvVarUsername(),
+		EnvVarPassword:          authDTO.GetEnvVarPassword(),
 		EncodedBasicCredentials: authDTO.GetInlineBasicCredentials(),
 	}
 }

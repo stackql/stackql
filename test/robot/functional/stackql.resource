@@ -48,6 +48,8 @@ Prepare StackQL Environment
     Set Environment Variable    AZ_ACCESS_TOKEN    ${AZURE_SECRET_STR}
     Set Environment Variable    SUMO_CREDS    ${SUMOLOGIC_SECRET_STR}
     Set Environment Variable    DIGITALOCEAN_TOKEN    ${DIGITALOCEAN_SECRET_STR}
+    Set Environment Variable    DUMMY_DIGITALOCEAN_USERNAME    ${DUMMY_DIGITALOCEAN_USERNAME_STR}
+    Set Environment Variable    DUMMY_DIGITALOCEAN_PASSWORD    ${DUMMY_DIGITALOCEAN_PASSWORD_STR}
     Set Environment Variable    DB_SETUP_SRC    ${DB_SETUP_SRC}
     Start All Mock Servers
     Generate Container Credentials for StackQL PG Server mTLS

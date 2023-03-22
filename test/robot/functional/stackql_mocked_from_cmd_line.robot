@@ -619,7 +619,7 @@ Registry Pull Google Provider Specific Version
     ...    registry pull google v0.1.2 ; 
     ...    successfully installed
 
-Basic Floating Point Projection Display Plus Basic Auth Encoding
+Basic Floating Point Projection Display Plus Bearer And User Password Auth Encoding
     Should Stackql Exec Inline Contain
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -630,7 +630,46 @@ Basic Floating Point Projection Display Plus Basic Auth Encoding
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select price_monthly, price_hourly from digitalocean.sizes.sizes where price_monthly \= 48.0 ;
     ...    0.07143
-    ...    stdout=${CURDIR}/tmp/Basic-Floating-Point-Projection-Display-Plus-Basic-Auth-Encoding.tmp
+    ...    stdout=${CURDIR}/tmp/Basic-Floating-Point-Projection-Display-Plus-Bearer-And-User-Password-Auth-Encoding.tmp
+   
+Basic Floating Point Projection Display Plus Basic Auth Encoding
+    Should Stackql Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    {"digitalocean": { "username": "myusername", "password": "mypassword", "type": "basic"}}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select price_monthly, price_hourly from digitalocean.sizes.sizes where price_monthly \= 48.0 ;
+    ...    0.07143
+    ...    stdout=${CURDIR}/tmp/Basic-Floating-Point-Projection-Display-Plus-Basic-Auth-Encoding.tmp  
+
+Basic Floating Point Projection Display Plus Custom Basic Auth Encoding
+    Should Stackql Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    {"digitalocean": { "username": "myusername", "password": "mypassword", "type": "basic", "valuePrefix": "CUSTOM "}}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select price_monthly, price_hourly from digitalocean.sizes.sizes where price_monthly \= 48.0 ;
+    ...    0.07143
+    ...    stdout=${CURDIR}/tmp/Basic-Floating-Point-Projection-Display-Plus-Custom-Basic-Auth-Encoding.tmp
+   
+Basic Floating Point Projection Display Plus Custom Env Var Basic Auth Encoding
+    Should Stackql Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    {"digitalocean": { "username_var": "DUMMY_DIGITALOCEAN_USERNAME", "password_var": "DUMMY_DIGITALOCEAN_PASSWORD", "type": "basic", "valuePrefix": "TOTALLY_CONTRIVED "}}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select price_monthly, price_hourly from digitalocean.sizes.sizes where price_monthly \= 48.0 ;
+    ...    0.07143
+    ...    stdout=${CURDIR}/tmp/Basic-Floating-Point-Projection-Display-Plus-Custom-Env-Var-Basic-Auth-Encoding.tmp
 
 Registry Pull Google Provider Specific Version Prerelease
     Should Stackql Exec Inline Contain
