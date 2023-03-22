@@ -2,7 +2,10 @@
   {
     "httpRequest": {
       "method": "GET",
-      "path": "/v2/sizes"
+      "path": "/v2/sizes",
+      "headers": {
+        "Authorization": ["^Bearer\\ bXl1c2VybmFtZTpteXBhc3N3b3Jk$" ]
+      }
     },
     "httpResponse": {
       "body": {

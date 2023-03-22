@@ -211,9 +211,9 @@ _AUTH_CFG={
   },
   "digitalocean": {
     "type": "bearer",
-    "credentialsenvvar": "DIGITALOCEAN_TOKEN"
+    "username": "myusername",
+    "password": "mypassword"
   }
-
 }
 
 _AUTH_PLUS_EXTERNAL_POSTGRES = copy.deepcopy(_AUTH_CFG)
@@ -259,7 +259,8 @@ _AUTH_CFG_DOCKER={
   },
   "digitalocean": {
     "type": "bearer",
-    "credentialsenvvar": "DIGITALOCEAN_TOKEN"
+    "username": "myusername",
+    "password": "mypassword"
   }
 }
 
@@ -304,7 +305,8 @@ _AUTH_CFG_INTEGRATION={
   },
   "digitalocean": {
     "type": "bearer",
-    "credentialsenvvar": "DIGITALOCEAN_TOKEN"
+    "username": "myusername",
+    "password": "mypassword"
   }
 }
 _AUTH_CFG_INTEGRATION_DOCKER={ 
@@ -339,7 +341,8 @@ _AUTH_CFG_INTEGRATION_DOCKER={
   },
   "digitalocean": {
     "type": "bearer",
-    "credentialsenvvar": "DIGITALOCEAN_TOKEN"
+    "username": "myusername",
+    "password": "mypassword"
   }
 }
 STACKQL_PG_SERVER_KEY_PATH   :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "test", "server", "mtls", "credentials", "pg_server_key.pem"))
