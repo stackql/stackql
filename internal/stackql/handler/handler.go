@@ -413,12 +413,13 @@ func GetHandlerCtx(
 
 func transformOpenapiStackqlAuthToLocal(authDTO openapistackql.AuthDTO) *dto.AuthCtx {
 	return &dto.AuthCtx{
-		Scopes:      authDTO.GetScopes(),
-		Type:        authDTO.GetType(),
-		ValuePrefix: authDTO.GetValuePrefix(),
-		KeyID:       authDTO.GetKeyID(),
-		KeyIDEnvVar: authDTO.GetKeyIDEnvVar(),
-		KeyFilePath: authDTO.GetKeyFilePath(),
-		KeyEnvVar:   authDTO.GetKeyEnvVar(),
+		Scopes:                  authDTO.GetScopes(),
+		Type:                    authDTO.GetType(),
+		ValuePrefix:             authDTO.GetValuePrefix(),
+		KeyID:                   authDTO.GetKeyID(),
+		KeyIDEnvVar:             authDTO.GetKeyIDEnvVar(),
+		KeyFilePath:             authDTO.GetKeyFilePath(),
+		KeyEnvVar:               authDTO.GetKeyEnvVar(),
+		EncodedBasicCredentials: authDTO.GetInlineBasicCredentials(),
 	}
 }

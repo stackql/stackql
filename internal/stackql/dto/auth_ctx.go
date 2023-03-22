@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -8,16 +9,21 @@ import (
 )
 
 type AuthCtx struct {
-	Scopes      []string       `json:"scopes,omitempty" yaml:"scopes,omitempty"`
-	SQLCfg      *SQLBackendCfg `json:"sqlDataSource" yaml:"sqlDataSource"`
-	Type        string         `json:"type" yaml:"type"`
-	ValuePrefix string         `json:"valuePrefix" yaml:"valuePrefix"`
-	ID          string         `json:"-" yaml:"-"`
-	KeyID       string         `json:"keyID" yaml:"keyID"`
-	KeyIDEnvVar string         `json:"keyIDenvvar" yaml:"keyIDenvvar"`
-	KeyFilePath string         `json:"credentialsfilepath" yaml:"credentialsfilepath"`
-	KeyEnvVar   string         `json:"credentialsenvvar" yaml:"credentialsenvvar"`
-	Active      bool           `json:"-" yaml:"-"`
+	Scopes                  []string       `json:"scopes,omitempty" yaml:"scopes,omitempty"`
+	SQLCfg                  *SQLBackendCfg `json:"sqlDataSource" yaml:"sqlDataSource"`
+	Type                    string         `json:"type" yaml:"type"`
+	ValuePrefix             string         `json:"valuePrefix" yaml:"valuePrefix"`
+	ID                      string         `json:"-" yaml:"-"`
+	KeyID                   string         `json:"keyID" yaml:"keyID"`
+	KeyIDEnvVar             string         `json:"keyIDenvvar" yaml:"keyIDenvvar"`
+	KeyFilePath             string         `json:"credentialsfilepath" yaml:"credentialsfilepath"`
+	KeyEnvVar               string         `json:"credentialsenvvar" yaml:"credentialsenvvar"`
+	APIKeyStr               string         `json:"api_key" yaml:"api_key"`
+	APISecretStr            string         `json:"api_secret" yaml:"api_secret"`
+	Username                string         `json:"username" yaml:"username"`
+	Password                string         `json:"password" yaml:"password"`
+	EncodedBasicCredentials string         `json:"-" yaml:"-"`
+	Active                  bool           `json:"-" yaml:"-"`
 }
 
 func (ac *AuthCtx) GetSQLCfg() (SQLBackendCfg, bool) {
@@ -32,17 +38,36 @@ func (ac *AuthCtx) Clone() *AuthCtx {
 	var scopesCopy []string
 	scopesCopy = append(scopesCopy, ac.Scopes...)
 	rv := &AuthCtx{
-		Scopes:      scopesCopy,
-		Type:        ac.Type,
-		ValuePrefix: ac.ValuePrefix,
-		ID:          ac.ID,
-		KeyID:       ac.KeyID,
-		KeyIDEnvVar: ac.KeyIDEnvVar,
-		KeyFilePath: ac.KeyFilePath,
-		KeyEnvVar:   ac.KeyEnvVar,
-		Active:      ac.Active,
+		Scopes:                  scopesCopy,
+		Type:                    ac.Type,
+		ValuePrefix:             ac.ValuePrefix,
+		ID:                      ac.ID,
+		KeyID:                   ac.KeyID,
+		KeyIDEnvVar:             ac.KeyIDEnvVar,
+		KeyFilePath:             ac.KeyFilePath,
+		KeyEnvVar:               ac.KeyEnvVar,
+		Active:                  ac.Active,
+		Username:                ac.Username,
+		Password:                ac.Password,
+		APIKeyStr:               ac.APIKeyStr,
+		APISecretStr:            ac.APISecretStr,
+		EncodedBasicCredentials: ac.EncodedBasicCredentials,
 	}
 	return rv
+}
+
+func (ac *AuthCtx) GetInlineBasicCredentials() string {
+	if ac.Username != "" && ac.Password != "" {
+		plaintext := fmt.Sprintf("%s:%s", ac.Username, ac.Password)
+		encoded := base64.StdEncoding.EncodeToString([]byte(plaintext))
+		return encoded
+	}
+	if ac.APIKeyStr != "" && ac.APISecretStr != "" {
+		plaintext := fmt.Sprintf("%s:%s", ac.APIKeyStr, ac.APISecretStr)
+		encoded := base64.StdEncoding.EncodeToString([]byte(plaintext))
+		return encoded
+	}
+	return ""
 }
 
 func (ac *AuthCtx) HasKey() bool {
@@ -88,7 +113,16 @@ func (ac *AuthCtx) GetCredentialsBytes() ([]byte, error) {
 		return []byte(rv), nil
 	}
 	credentialFile := ac.KeyFilePath
-	return ioutil.ReadFile(credentialFile)
+	if credentialFile != "" {
+		return ioutil.ReadFile(credentialFile)
+	}
+	if ac.GetInlineBasicCredentials() != "" {
+		return []byte(ac.GetInlineBasicCredentials()), nil
+	}
+	if ac.EncodedBasicCredentials != "" {
+		return []byte(ac.EncodedBasicCredentials), nil
+	}
+	return nil, fmt.Errorf("no credentials found")
 }
 
 func (ac *AuthCtx) GetCredentialsSourceDescriptorString() string {

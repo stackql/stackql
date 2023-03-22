@@ -619,7 +619,7 @@ Registry Pull Google Provider Specific Version
     ...    registry pull google v0.1.2 ; 
     ...    successfully installed
 
-Basic Floating Point Projection Display
+Basic Floating Point Projection Display Plus Basic Auth Encoding
     Should Stackql Exec Inline Contain
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -630,7 +630,7 @@ Basic Floating Point Projection Display
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select price_monthly, price_hourly from digitalocean.sizes.sizes where price_monthly \= 48.0 ;
     ...    0.07143
-    ...    stdout=${CURDIR}/tmp/Basic-Floating-Point-Projection-Display.tmp
+    ...    stdout=${CURDIR}/tmp/Basic-Floating-Point-Projection-Display-Plus-Basic-Auth-Encoding.tmp
 
 Registry Pull Google Provider Specific Version Prerelease
     Should Stackql Exec Inline Contain
