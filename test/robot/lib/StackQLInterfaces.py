@@ -228,6 +228,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
         rv[k] = v
     rv["AZ_ACCESS_TOKEN"] = os.environ.get('AZ_ACCESS_TOKEN', "az_access_dummy_secret")
     rv["SUMO_CREDS"] = os.environ.get('SUMO_CREDS', "sumologicdummysecret")
+    rv["DIGITALOCEAN_TOKEN"] = os.environ.get('DIGITALOCEAN_TOKEN', "digitaloceandummysecret")
     return rv
 
 
@@ -277,6 +278,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       f"AZ_ACCESS_TOKEN={self._get_default_env().get('AZ_ACCESS_TOKEN')}",
       "-e",
       f"SUMO_CREDS={self._get_default_env().get('SUMO_CREDS')}",
+      "-e",
+      f"DIGITALOCEAN_TOKEN={self._get_default_env().get('DIGITALOCEAN_TOKEN')}",
       "stackqlsrv",
       "bash",
       "-c",
@@ -314,6 +317,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     self.set_environment_variable("K8S_SECRET_KEY", k8s_secret_str)
     self.set_environment_variable("AZ_ACCESS_TOKEN", f"{self._get_default_env().get('AZ_ACCESS_TOKEN')}")
     self.set_environment_variable("SUMO_CREDS", f"{self._get_default_env().get('SUMO_CREDS')}")
+    self.set_environment_variable("DIGITALOCEAN_TOKEN", f"{self._get_default_env().get('DIGITALOCEAN_TOKEN')}")
     supplied_args = [ stackql_exe, "exec" ]
     if cfg.pop('stackql_H', False):
       supplied_args.append('--output=text')
@@ -356,6 +360,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     self.set_environment_variable("K8S_SECRET_KEY", k8s_secret_str)
     self.set_environment_variable("AZ_ACCESS_TOKEN", f"{self._get_default_env().get('AZ_ACCESS_TOKEN')}")
     self.set_environment_variable("SUMO_CREDS", f"{self._get_default_env().get('SUMO_CREDS')}")
+    self.set_environment_variable("DIGITALOCEAN_TOKEN", f"{self._get_default_env().get('DIGITALOCEAN_TOKEN')}")
     supplied_args = [ stackql_exe, "shell" ]
     if cfg.pop('stackql_H', False):
       supplied_args.append('--output=text')

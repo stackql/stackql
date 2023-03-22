@@ -208,7 +208,12 @@ _AUTH_CFG={
   "sumologic": {
     "type": "basic",
     "credentialsenvvar": "SUMO_CREDS"
+  },
+  "digitalocean": {
+    "type": "bearer",
+    "credentialsenvvar": "DIGITALOCEAN_TOKEN"
   }
+
 }
 
 _AUTH_PLUS_EXTERNAL_POSTGRES = copy.deepcopy(_AUTH_CFG)
@@ -251,6 +256,10 @@ _AUTH_CFG_DOCKER={
   "sumologic": {
     "type": "basic",
     "credentialsenvvar": "SUMO_CREDS"
+  },
+  "digitalocean": {
+    "type": "bearer",
+    "credentialsenvvar": "DIGITALOCEAN_TOKEN"
   }
 }
 
@@ -292,6 +301,10 @@ _AUTH_CFG_INTEGRATION={
   "sumologic": {
     "type": "basic",
     "credentialsenvvar": "SUMO_CREDS"
+  },
+  "digitalocean": {
+    "type": "bearer",
+    "credentialsenvvar": "DIGITALOCEAN_TOKEN"
   }
 }
 _AUTH_CFG_INTEGRATION_DOCKER={ 
@@ -323,6 +336,10 @@ _AUTH_CFG_INTEGRATION_DOCKER={
   "sumologic": {
     "type": "basic",
     "credentialsenvvar": "SUMO_CREDS"
+  },
+  "digitalocean": {
+    "type": "bearer",
+    "credentialsenvvar": "DIGITALOCEAN_TOKEN"
   }
 }
 STACKQL_PG_SERVER_KEY_PATH   :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "test", "server", "mtls", "credentials", "pg_server_key.pem"))
@@ -436,6 +453,9 @@ with open(os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'credentials', 'dummy'
 with open(os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'credentials', 'dummy', 'sumologic', 'sumologic-token.txt'), 'r') as f:
     SUMOLOGIC_SECRET_STR = f.read()
 
+with open(os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'credentials', 'dummy', 'digitalocean', 'digitalocean-token.txt'), 'r') as f:
+    DIGITALOCEAN_SECRET_STR = f.read()
+
 REGISTRY_PROD_CFG_STR = json.dumps(get_registry_cfg(_PROD_REGISTRY_URL, ROBOT_PROD_REG_DIR, False))
 REGISTRY_DEV_CFG_STR = json.dumps(get_registry_cfg(_DEV_REGISTRY_URL, ROBOT_DEV_REG_DIR, False))
 
@@ -474,6 +494,9 @@ MOCKSERVER_PORT_AZURE = 1095
 
 JSON_INIT_FILE_PATH_SUMOLOGIC = os.path.join(REPOSITORY_ROOT, 'test', 'mockserver', 'expectations', 'static-sumologic-expectations.json')
 MOCKSERVER_PORT_SUMOLOGIC = 1096
+
+JSON_INIT_FILE_PATH_DIGITALOCEAN = os.path.join(REPOSITORY_ROOT, 'test', 'mockserver', 'expectations', 'static-digitalocean-expectations.json')
+MOCKSERVER_PORT_DIGITALOCEAN = 1097
 
 JSON_INIT_FILE_PATH_REGISTRY = os.path.join(REPOSITORY_ROOT, 'test', 'mockserver', 'expectations', 'static-registry-expectations.json')
 
@@ -763,6 +786,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'BUILDPATCHVERSION':                              _BUILD_PATCH_VERSION,
     'DB_INTERNAL_CFG_LAX':                            DB_INTERNAL_CFG_LAX,
     'DB_SETUP_SRC':                                   get_db_setup_src(sql_backend_str),
+    'DIGITALOCEAN_SECRET_STR':                        DIGITALOCEAN_SECRET_STR,
     'GC_CFG_EAGER':                                   _GC_CFG_EAGER,
     'GITHUB_SECRET_STR':                              GITHUB_SECRET_STR,
     'IS_WINDOWS':                                     IS_WINDOWS,
@@ -776,6 +800,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'MOCKSERVER_PORT_OKTA':                           MOCKSERVER_PORT_OKTA,
     'MOCKSERVER_PORT_REGISTRY':                       MOCKSERVER_PORT_REGISTRY,
     'MOCKSERVER_PORT_SUMOLOGIC':                      MOCKSERVER_PORT_SUMOLOGIC,
+    'MOCKSERVER_PORT_DIGITALOCEAN':                   MOCKSERVER_PORT_DIGITALOCEAN,
     'NAMESPACES_TTL_SIMPLE':                          NAMESPACES_TTL_SIMPLE,
     'NAMESPACES_TTL_SPECIALCASE_TRANSPARENT':         NAMESPACES_TTL_SPECIALCASE_TRANSPARENT,
     'NAMESPACES_TTL_TRANSPARENT':                     NAMESPACES_TTL_TRANSPARENT,
@@ -976,6 +1001,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     rv['GET_IAM_POLICY_AGG_ASC_INPUT_FILE']             = GET_IAM_POLICY_AGG_ASC_INPUT_FILE_DOCKER
     rv['JSON_INIT_FILE_PATH_AWS']                       = JSON_INIT_FILE_PATH_AWS
     rv['JSON_INIT_FILE_PATH_AZURE']                     = JSON_INIT_FILE_PATH_AZURE
+    rv['JSON_INIT_FILE_PATH_DIGITALOCEAN']              = JSON_INIT_FILE_PATH_DIGITALOCEAN
     rv['JSON_INIT_FILE_PATH_GITHUB']                    = JSON_INIT_FILE_PATH_GITHUB
     rv['JSON_INIT_FILE_PATH_GOOGLE']                    = JSON_INIT_FILE_PATH_GOOGLE
     rv['JSON_INIT_FILE_PATH_K8S']                       = JSON_INIT_FILE_PATH_K8S
@@ -998,6 +1024,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     rv['GET_IAM_POLICY_AGG_ASC_INPUT_FILE']             = GET_IAM_POLICY_AGG_ASC_INPUT_FILE
     rv['JSON_INIT_FILE_PATH_AWS']                       = JSON_INIT_FILE_PATH_AWS
     rv['JSON_INIT_FILE_PATH_AZURE']                     = JSON_INIT_FILE_PATH_AZURE
+    rv['JSON_INIT_FILE_PATH_DIGITALOCEAN']              = JSON_INIT_FILE_PATH_DIGITALOCEAN
     rv['JSON_INIT_FILE_PATH_GITHUB']                    = JSON_INIT_FILE_PATH_GITHUB
     rv['JSON_INIT_FILE_PATH_GOOGLE']                    = JSON_INIT_FILE_PATH_GOOGLE
     rv['JSON_INIT_FILE_PATH_K8S']                       = JSON_INIT_FILE_PATH_K8S

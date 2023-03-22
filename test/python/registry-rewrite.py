@@ -21,6 +21,7 @@ K8S_DEFAULT_PORT = 1092
 GITHUB_DEFAULT_PORT = 1093
 AZURE_DEFAULT_PORT = 1095
 SUMOLOGIC_DEFAULT_PORT = 1096
+DIGITALOCEAN_DEFAULT_PORT = 1097
 
 
 
@@ -90,6 +91,12 @@ parser.add_argument(
     type=int,
     default=SUMOLOGIC_DEFAULT_PORT,
     help='port for sumologic mock service'
+)
+parser.add_argument(
+    '--digitalocean-port',
+    type=int,
+    default=DIGITALOCEAN_DEFAULT_PORT,
+    help='port for digitalocean mock service'
 )
 
 class ProviderArgs:
@@ -167,6 +174,9 @@ class ProviderCfgMapping:
       },
       "sumologic": {
         "port": processed_args.sumologic_port
+      },
+      "digitalocean": {
+        "port": processed_args.digitalocean_port
       },
       "__default__": {
         "port": processed_args.default_port

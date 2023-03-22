@@ -95,22 +95,24 @@ func (dc *staticDRMConfig) OpenapiColumnsToRelationalColumns(
 	for _, col := range cols {
 		var typeStr string
 		schemaExists := false
-		if col.Schema != nil {
-			typeStr = dc.GetRelationalType(col.Schema.GetType())
+		if col.GetSchema() != nil {
+			typeStr = dc.GetRelationalType(col.GetSchema().GetType())
 			schemaExists = true
 		} else { //nolint:gocritic // defer fix
-			if col.Val != nil {
-				switch col.Val.Type { //nolint:gocritic,exhaustive // defer fix
+			if col.GetVal() != nil {
+				switch col.GetVal().Type { //nolint:gocritic,exhaustive // defer fix
 				case sqlparser.BitVal:
 				}
 			}
 		}
 		relationalColumn := relationaldto.NewRelationalColumn(
-			col.Name,
+			col.GetName(),
 			typeStr,
-		).WithQualifier(col.Qualifier).WithAlias(col.Alias).WithDecorated(col.DecoratedCol).WithParserNode(col.Node)
+		).WithQualifier(
+			col.GetQualifier(),
+		).WithAlias(col.GetAlias()).WithDecorated(col.GetDecoratedCol()).WithParserNode(col.GetNode())
 		if schemaExists {
-			inferredOID := internaldto.GetOidForSchema(col.Schema)
+			inferredOID := internaldto.GetOidForSchema(col.GetSchema())
 			relationalColumn = relationalColumn.WithOID(inferredOID)
 		}
 		// TODO: Need a way to handle postgres differences. This is a fragile point
@@ -132,26 +134,26 @@ func (dc *staticDRMConfig) OpenapiColumnsToRelationalColumn(
 	var typeStr string
 	schemaExists := false
 	//nolint:gocritic,exhaustive // defer fix
-	if col.Schema != nil {
-		typeStr = dc.GetRelationalType(col.Schema.GetType())
+	if col.GetSchema() != nil {
+		typeStr = dc.GetRelationalType(col.GetSchema().GetType())
 		schemaExists = true
 	} else {
-		if col.Val != nil {
-			switch col.Val.Type {
+		if col.GetVal() != nil {
+			switch col.GetVal().Type {
 			case sqlparser.BitVal:
 			}
 		}
 	}
-	decoratedCol := col.DecoratedCol
+	decoratedCol := col.GetDecoratedCol()
 	// if col.Alias != "" {
 	// 	decoratedCol = fmt.Sprintf(`%s AS "%s"`, decoratedCol, col.Alias)
 	// }
 	relationalColumn := relationaldto.NewRelationalColumn(
-		col.Name,
+		col.GetName(),
 		typeStr,
-	).WithQualifier(col.Qualifier).WithAlias(col.Alias).WithDecorated(decoratedCol).WithParserNode(col.Node)
+	).WithQualifier(col.GetQualifier()).WithAlias(col.GetAlias()).WithDecorated(decoratedCol).WithParserNode(col.GetNode())
 	if schemaExists {
-		inferredOID := internaldto.GetOidForSchema(col.Schema)
+		inferredOID := internaldto.GetOidForSchema(col.GetSchema())
 		relationalColumn = relationalColumn.WithOID(inferredOID)
 	}
 	// TODO: Need a way to handle postgres differences
@@ -506,12 +508,12 @@ func (dc *staticDRMConfig) GenerateInsertDML(
 		}
 		for _, col := range tableColumns {
 			relationalType := textStr
-			schema := col.Schema
+			schema := col.GetSchema()
 			if schema != nil && schema.GetType() != "" {
 				relationalType = dc.GetRelationalType(schema.GetType())
 			}
 			columns = append(columns, internaldto.NewColDescriptor(col, relationalType))
-			relationalColumn := relationaldto.NewRelationalColumn(col.Name, relationalType).WithParserNode(col.Node)
+			relationalColumn := relationaldto.NewRelationalColumn(col.GetName(), relationalType).WithParserNode(col.GetNode())
 			relationalTable.PushBackColumn(relationalColumn)
 		}
 	}
@@ -564,11 +566,11 @@ func (dc *staticDRMConfig) GenerateSelectDML(
 	for _, col := range tabAnnotated.GetTabulation().GetColumns() {
 		var typeStr string
 		//nolint:gocritic,exhaustive // TODO: fix
-		if col.Schema != nil {
-			typeStr = dc.GetRelationalType(col.Schema.GetType())
+		if col.GetSchema() != nil {
+			typeStr = dc.GetRelationalType(col.GetSchema().GetType())
 		} else {
-			if col.Val != nil {
-				switch col.Val.Type {
+			if col.GetVal() != nil {
+				switch col.GetVal().Type {
 				case sqlparser.BitVal:
 				}
 			}
@@ -576,15 +578,15 @@ func (dc *staticDRMConfig) GenerateSelectDML(
 		columns = append(columns, internaldto.NewColDescriptor(col, typeStr))
 		// TODO: logic to infer column width
 		relationalColumn := relationaldto.NewRelationalColumn(
-			col.Name,
+			col.GetName(),
 			typeStr,
-		).WithQualifier(col.Qualifier).WithParserNode(col.Node)
-		if col.DecoratedCol == "" {
-			if col.Alias != "" {
-				relationalColumn = relationalColumn.WithAlias(col.Alias)
+		).WithQualifier(col.GetQualifier()).WithParserNode(col.GetNode())
+		if col.GetDecoratedCol() == "" {
+			if col.GetAlias() != "" {
+				relationalColumn = relationalColumn.WithAlias(col.GetAlias())
 			}
 		} else {
-			relationalColumn = relationalColumn.WithDecorated(col.DecoratedCol)
+			relationalColumn = relationalColumn.WithDecorated(col.GetDecoratedCol())
 		}
 		relationalTable.PushBackColumn(relationalColumn)
 		quotedColNames = append( //nolint:staticcheck // TODO: fix

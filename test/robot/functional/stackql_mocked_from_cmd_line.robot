@@ -619,6 +619,19 @@ Registry Pull Google Provider Specific Version
     ...    registry pull google v0.1.2 ; 
     ...    successfully installed
 
+Basic Floating Point Projection Display
+    Should Stackql Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select price_monthly, price_hourly from digitalocean.sizes.sizes where price_monthly \= 48.0 ;
+    ...    0.07143
+    ...    stdout=${CURDIR}/tmp/Basic-Floating-Point-Projection-Display.tmp
+
 Registry Pull Google Provider Specific Version Prerelease
     Should Stackql Exec Inline Contain
     ...    ${STACKQL_EXE}

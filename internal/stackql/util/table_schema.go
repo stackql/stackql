@@ -24,8 +24,8 @@ func (ta *simpleTableSchemaAnalyzer) GetColumns() ([]Column, error) {
 	tableColumns := ta.s.Tabulate(false).GetColumns()
 	existingColumns := make(map[string]struct{})
 	for _, col := range tableColumns {
-		existingColumns[col.Name] = struct{}{}
-		rv = append(rv, newSimpleColumn(col.Name, col.Schema))
+		existingColumns[col.GetName()] = struct{}{}
+		rv = append(rv, newSimpleColumn(col.GetName(), col.GetSchema()))
 	}
 	unionedRequiredParams, err := ta.m.GetUnionRequiredParameters()
 	if err != nil {
@@ -47,7 +47,7 @@ func (ta *simpleTableSchemaAnalyzer) GetColumnDescriptors(
 	existingColumns := make(map[string]struct{})
 	var rv []openapistackql.ColumnDescriptor
 	for _, col := range tabAnnotated.GetTabulation().GetColumns() {
-		colName := col.Name
+		colName := col.GetName()
 		existingColumns[colName] = struct{}{}
 		rv = append(rv, col)
 	}

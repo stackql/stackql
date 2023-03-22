@@ -41,6 +41,7 @@ services:
       - K8S_SECRET_KEY=${K8S_SECRET_STR:-some-junk}
       - AZ_ACCESS_TOKEN=${AZ_ACCESS_TOKEN:-some_junk}
       - SUMO_CREDS=${SUMO_CREDS:-some_junk}
+      - DIGITALOCEAN_TOKEN=${DIGITALOCEAN_TOKEN:-some_junk}
       - BUILDMAJORVERSION=${BUILDMAJORVERSION:-1}
       - BUILDMINORVERSION=${BUILDMINORVERSION:-1}
       - BUILDPATCHVERSION=${BUILDPATCHVERSION:-1}
@@ -65,6 +66,7 @@ services:
       - MOCKSERVER_PORT_REGISTRY=${MOCKSERVER_PORT_REGISTRY:-1094}
       - MOCKSERVER_PORT_AZURE=${MOCKSERVER_PORT_AZURE:-1095}
       - MOCKSERVER_PORT_SUMOLOGIC=${MOCKSERVER_PORT_SUMOLOGIC:-1096}
+      - MOCKSERVER_PORT_DIGITALOCEAN=${MOCKSERVER_PORT_DIGITALOCEAN:-1097}
     ports:
       - "${MOCKSERVER_PORT_GOOGLE:-1080}/tcp"
       - "${MOCKSERVER_PORT_OKTA:-1090}/tcp"
@@ -74,6 +76,7 @@ services:
       - "${MOCKSERVER_PORT_REGISTRY:-1094}/tcp"
       - "${MOCKSERVER_PORT_AZURE:-1095}/tcp"
       - "${MOCKSERVER_PORT_SUMOLOGIC:-1096}/tcp"
+      - "${MOCKSERVER_PORT_DIGITALOCEAN:-1097}/tcp"
     command: 
       - bash
       - -c
@@ -122,6 +125,12 @@ services:
           -Droot.logLevel=OFF \
           -jar    $${MOCKSERVER_JAR} \
           -serverPort    $${MOCKSERVER_PORT_SUMOLOGIC}&
+        java    -Dfile.encoding=UTF-8 \
+          -Dmockserver.initializationJsonPath=$${JSON_INIT_FILE_DIR}/static-digitalocean-expectations.json \
+          -Dmockserver.logLevel=OFF \
+          -Droot.logLevel=OFF \
+          -jar    $${MOCKSERVER_JAR} \
+          -serverPort    $${MOCKSERVER_PORT_DIGITALOCEAN}&
         java    -Dfile.encoding=UTF-8 \
           -Dmockserver.initializationJsonPath=$${JSON_INIT_FILE_DIR}/static-azure-expectations.json \
           -Dmockserver.logLevel=OFF \

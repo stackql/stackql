@@ -11,12 +11,12 @@ type AnnotatedTabulation interface {
 	GetHeirarchyIdentifiers() internaldto.HeirarchyIdentifiers
 	GetInputTableName() string
 	GetSQLDataSource() (sql_datasource.SQLDataSource, bool)
-	GetTabulation() *openapistackql.Tabulation
+	GetTabulation() openapistackql.Tabulation
 	SetSQLDataSource(sql_datasource.SQLDataSource)
 }
 
 type standardAnnotatedTabulation struct {
-	tab            *openapistackql.Tabulation
+	tab            openapistackql.Tabulation
 	hIds           internaldto.HeirarchyIdentifiers
 	inputTableName string
 	alias          string
@@ -24,7 +24,7 @@ type standardAnnotatedTabulation struct {
 }
 
 func NewAnnotatedTabulation(
-	tab *openapistackql.Tabulation,
+	tab openapistackql.Tabulation,
 	hIds internaldto.HeirarchyIdentifiers,
 	inputTableName string,
 	alias string,
@@ -37,7 +37,7 @@ func NewAnnotatedTabulation(
 	}
 }
 
-func (at *standardAnnotatedTabulation) GetTabulation() *openapistackql.Tabulation {
+func (at *standardAnnotatedTabulation) GetTabulation() openapistackql.Tabulation {
 	return at.tab
 }
 
