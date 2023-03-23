@@ -229,6 +229,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     rv["AZ_ACCESS_TOKEN"] = os.environ.get('AZ_ACCESS_TOKEN', "az_access_dummy_secret")
     rv["SUMO_CREDS"] = os.environ.get('SUMO_CREDS', "sumologicdummysecret")
     rv["DIGITALOCEAN_TOKEN"] = os.environ.get('DIGITALOCEAN_TOKEN', "digitaloceandummysecret")
+    rv["DUMMY_DIGITALOCEAN_USERNAME"] = os.environ.get('DUMMY_DIGITALOCEAN_USERNAME', "myusername")
+    rv["DUMMY_DIGITALOCEAN_PASSWORD"] = os.environ.get('DUMMY_DIGITALOCEAN_PASSWORD', "mypassword")
     return rv
 
 
@@ -280,6 +282,10 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       f"SUMO_CREDS={self._get_default_env().get('SUMO_CREDS')}",
       "-e",
       f"DIGITALOCEAN_TOKEN={self._get_default_env().get('DIGITALOCEAN_TOKEN')}",
+      "-e",
+      f"DUMMY_DIGITALOCEAN_USERNAME={self._get_default_env().get('DUMMY_DIGITALOCEAN_USERNAME')}",
+      "-e",
+      f"DUMMY_DIGITALOCEAN_PASSWORD={self._get_default_env().get('DUMMY_DIGITALOCEAN_PASSWORD')}",
       "stackqlsrv",
       "bash",
       "-c",
@@ -318,6 +324,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     self.set_environment_variable("AZ_ACCESS_TOKEN", f"{self._get_default_env().get('AZ_ACCESS_TOKEN')}")
     self.set_environment_variable("SUMO_CREDS", f"{self._get_default_env().get('SUMO_CREDS')}")
     self.set_environment_variable("DIGITALOCEAN_TOKEN", f"{self._get_default_env().get('DIGITALOCEAN_TOKEN')}")
+    self.set_environment_variable("DUMMY_DIGITALOCEAN_USERNAME", f"{self._get_default_env().get('DUMMY_DIGITALOCEAN_USERNAME')}")
+    self.set_environment_variable("DUMMY_DIGITALOCEAN_PASSWORD", f"{self._get_default_env().get('DUMMY_DIGITALOCEAN_PASSWORD')}")
     supplied_args = [ stackql_exe, "exec" ]
     if cfg.pop('stackql_H', False):
       supplied_args.append('--output=text')
@@ -361,6 +369,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     self.set_environment_variable("AZ_ACCESS_TOKEN", f"{self._get_default_env().get('AZ_ACCESS_TOKEN')}")
     self.set_environment_variable("SUMO_CREDS", f"{self._get_default_env().get('SUMO_CREDS')}")
     self.set_environment_variable("DIGITALOCEAN_TOKEN", f"{self._get_default_env().get('DIGITALOCEAN_TOKEN')}")
+    self.set_environment_variable("DUMMY_DIGITALOCEAN_USERNAME", f"{self._get_default_env().get('DUMMY_DIGITALOCEAN_USERNAME')}")
+    self.set_environment_variable("DUMMY_DIGITALOCEAN_PASSWORD", f"{self._get_default_env().get('DUMMY_DIGITALOCEAN_PASSWORD')}")
     supplied_args = [ stackql_exe, "shell" ]
     if cfg.pop('stackql_H', False):
       supplied_args.append('--output=text')

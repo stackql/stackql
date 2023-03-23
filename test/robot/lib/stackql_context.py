@@ -105,6 +105,9 @@ _NAMESPACES_TTL_SIMPLE = '{ "analytics": { "ttl": 86400, "regex": "^(?:stackql_a
 _NAMESPACES_TTL_TRANSPARENT = '{ "analytics": { "ttl": 86400, "regex": "^(?P<objectName>.*)$", "template": "stackql_analytics_{{ .objectName }}" } }'
 _NAMESPACES_TTL_SPECIALCASE_TRANSPARENT = '{ "analytics": { "ttl": 86400, "regex": "^(?P<objectName>github.*)$", "template": "stackql_analytics_{{ .objectName }}" } }'
 
+DUMMY_DIGITALOCEAN_USERNAME_STR = 'myusername'
+DUMMY_DIGITALOCEAN_PASSWORD_STR = 'mypassword'
+
 _GC_CFG_EAGER = '{ "isEager": true }'
 
 _SQL_BACKEND = '{ "isEager": true }'
@@ -790,6 +793,8 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'DB_INTERNAL_CFG_LAX':                            DB_INTERNAL_CFG_LAX,
     'DB_SETUP_SRC':                                   get_db_setup_src(sql_backend_str),
     'DIGITALOCEAN_SECRET_STR':                        DIGITALOCEAN_SECRET_STR,
+    'DUMMY_DIGITALOCEAN_USERNAME_STR':                DUMMY_DIGITALOCEAN_USERNAME_STR,
+    'DUMMY_DIGITALOCEAN_PASSWORD_STR':                DUMMY_DIGITALOCEAN_PASSWORD_STR,
     'GC_CFG_EAGER':                                   _GC_CFG_EAGER,
     'GITHUB_SECRET_STR':                              GITHUB_SECRET_STR,
     'IS_WINDOWS':                                     IS_WINDOWS,

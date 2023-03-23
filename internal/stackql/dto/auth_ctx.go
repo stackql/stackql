@@ -22,6 +22,10 @@ type AuthCtx struct {
 	APISecretStr            string         `json:"api_secret" yaml:"api_secret"`
 	Username                string         `json:"username" yaml:"username"`
 	Password                string         `json:"password" yaml:"password"`
+	EnvVarAPIKeyStr         string         `json:"api_key_var" yaml:"api_key_var"`
+	EnvVarAPISecretStr      string         `json:"api_secret_var" yaml:"api_secret_var"`
+	EnvVarUsername          string         `json:"username_var" yaml:"username_var"`
+	EnvVarPassword          string         `json:"password_var" yaml:"password_var"`
 	EncodedBasicCredentials string         `json:"-" yaml:"-"`
 	Active                  bool           `json:"-" yaml:"-"`
 }
@@ -51,6 +55,10 @@ func (ac *AuthCtx) Clone() *AuthCtx {
 		Password:                ac.Password,
 		APIKeyStr:               ac.APIKeyStr,
 		APISecretStr:            ac.APISecretStr,
+		EnvVarAPIKeyStr:         ac.EnvVarAPIKeyStr,
+		EnvVarAPISecretStr:      ac.EnvVarAPISecretStr,
+		EnvVarUsername:          ac.EnvVarUsername,
+		EnvVarPassword:          ac.EnvVarPassword,
 		EncodedBasicCredentials: ac.EncodedBasicCredentials,
 	}
 	return rv
@@ -64,6 +72,24 @@ func (ac *AuthCtx) GetInlineBasicCredentials() string {
 	}
 	if ac.APIKeyStr != "" && ac.APISecretStr != "" {
 		plaintext := fmt.Sprintf("%s:%s", ac.APIKeyStr, ac.APISecretStr)
+		encoded := base64.StdEncoding.EncodeToString([]byte(plaintext))
+		return encoded
+	}
+	return ""
+}
+
+func (ac *AuthCtx) getEnvVarBasicCredentials() string {
+	if ac.EnvVarUsername != "" && ac.EnvVarPassword != "" {
+		userName := os.Getenv(ac.EnvVarUsername)
+		passWord := os.Getenv(ac.EnvVarPassword)
+		plaintext := fmt.Sprintf("%s:%s", userName, passWord)
+		encoded := base64.StdEncoding.EncodeToString([]byte(plaintext))
+		return encoded
+	}
+	if ac.EnvVarAPIKeyStr != "" && ac.EnvVarAPISecretStr != "" {
+		userName := os.Getenv(ac.EnvVarAPIKeyStr)
+		passWord := os.Getenv(ac.EnvVarAPISecretStr)
+		plaintext := fmt.Sprintf("%s:%s", userName, passWord)
 		encoded := base64.StdEncoding.EncodeToString([]byte(plaintext))
 		return encoded
 	}
@@ -115,6 +141,9 @@ func (ac *AuthCtx) GetCredentialsBytes() ([]byte, error) {
 	credentialFile := ac.KeyFilePath
 	if credentialFile != "" {
 		return ioutil.ReadFile(credentialFile)
+	}
+	if ac.getEnvVarBasicCredentials() != "" {
+		return []byte(ac.getEnvVarBasicCredentials()), nil
 	}
 	if ac.GetInlineBasicCredentials() != "" {
 		return []byte(ac.GetInlineBasicCredentials()), nil
