@@ -395,11 +395,11 @@ func emptyProtectResultSet(rv internaldto.ExecutorOutput, columns []string) inte
 		for f := range rCols {
 			rCols[f] = getPlaceholderColumn(table, columns[f], getDefaultOID())
 		}
-		rv.GetSQLResult = func() sqldata.ISQLResultStream {
+		rv.SetSQLResultFn(func() sqldata.ISQLResultStream {
 			return sqldata.NewSimpleSQLResultStream(sqldata.NewSQLResult(rCols, 0, 0, []sqldata.ISQLRow{
 				sqldata.NewSQLRow([]interface{}{}),
 			}))
-		}
+		})
 	}
 	return rv
 }

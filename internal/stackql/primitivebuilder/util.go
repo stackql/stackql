@@ -32,7 +32,7 @@ func generateSuccessMessagesFromHeirarchy(meta tablemetadata.ExtendedTableMetada
 func generateResultIfNeededfunc(
 	resultMap map[string]map[string]interface{},
 	body map[string]interface{},
-	msg *internaldto.BackendMessages,
+	msg internaldto.BackendMessages,
 	err error,
 	isShowResults bool,
 ) internaldto.ExecutorOutput {

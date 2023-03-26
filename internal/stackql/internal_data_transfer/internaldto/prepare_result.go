@@ -6,7 +6,7 @@ import (
 
 type PrepareResultSetDTO struct {
 	OutputBody  map[string]interface{}
-	Msg         *BackendMessages
+	Msg         BackendMessages
 	RawRows     map[int]map[int]interface{}
 	RowMap      map[string]map[string]interface{}
 	ColumnOrder []string
@@ -21,7 +21,7 @@ func NewPrepareResultSetDTO(
 	columnOrder []string,
 	rowSort func(map[string]map[string]interface{}) []string,
 	err error,
-	msg *BackendMessages,
+	msg BackendMessages,
 ) PrepareResultSetDTO {
 	return PrepareResultSetDTO{
 		OutputBody:  body,
@@ -40,7 +40,7 @@ func NewPrepareResultSetPlusRawDTO(
 	columnOrder []string,
 	rowSort func(map[string]map[string]interface{}) []string,
 	err error,
-	msg *BackendMessages,
+	msg BackendMessages,
 	rawRows map[int]map[int]interface{},
 ) PrepareResultSetDTO {
 	return PrepareResultSetDTO{
@@ -61,7 +61,7 @@ func NewPrepareResultSetPlusRawAndTypesDTO(
 	columnOIDs []oid.Oid,
 	rowSort func(map[string]map[string]interface{}) []string,
 	err error,
-	msg *BackendMessages,
+	msg BackendMessages,
 	rawRows map[int]map[int]interface{},
 ) PrepareResultSetDTO {
 	return PrepareResultSetDTO{

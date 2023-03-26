@@ -1219,12 +1219,13 @@ func (pb *standardPrimitiveGenerator) analyzeSleep(pbi planbuilderinput.PlanBuil
 			primitive.NewLocalPrimitive(
 				func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 					time.Sleep(time.Duration(sleepDuration) * time.Millisecond)
-					msgs := internaldto.BackendMessages{
-						WorkingMessages: []string{
-							fmt.Sprintf("Success: slept for %d milliseconds", sleepDuration),
-						},
-					}
-					return internaldto.NewExecutorOutput(nil, nil, nil, &msgs, nil)
+					return internaldto.NewExecutorOutput(
+						nil, nil, nil,
+						internaldto.NewBackendMessages(
+							[]string{
+								fmt.Sprintf("Success: slept for %d milliseconds", sleepDuration),
+							},
+						), nil)
 				},
 			),
 		),

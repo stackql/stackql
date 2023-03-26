@@ -68,7 +68,7 @@ func (ss *RawNativeExec) Build() error {
 				nil,
 				nil,
 				nil,
-				&internaldto.BackendMessages{WorkingMessages: []string{"exec completed"}}, nil),
+				internaldto.NewBackendMessages([]string{"exec completed"}), nil),
 		)
 	}
 

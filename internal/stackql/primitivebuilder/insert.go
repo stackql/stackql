@@ -57,7 +57,7 @@ func (ss *Insert) GetTail() primitivegraph.PrimitiveNode {
 	return ss.root
 }
 
-//nolint:funlen,errcheck,gocognit,gocyclo,cyclop // TODO: fix this
+//nolint:funlen,errcheck,gocognit,cyclop // TODO: fix this
 func (ss *Insert) Build() error {
 	node := ss.node
 	tbl := ss.tbl
@@ -81,17 +81,17 @@ func (ss *Insert) Build() error {
 	if err != nil {
 		return err
 	}
-	_, _, err = tbl.GetResponseSchemaAndMediaType()
-	if err != nil {
-		return err
-	}
+	_, _, responseAnalysisErr := tbl.GetResponseSchemaAndMediaType()
+	// if err != nil {
+	// 	return err
+	// }
 	insertPrimitive := primitive.NewHTTPRestPrimitive(
 		prov,
 		nil,
 		nil,
 		nil,
 	)
-	var target map[string]interface{}
+	target := make(map[string]interface{})
 	ex := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 		input, inputExists := insertPrimitive.GetInputFromAlias("")
 		if !inputExists {
@@ -126,10 +126,12 @@ func (ss *Insert) Build() error {
 					return internaldto.NewErroneousExecutorOutput(apiErr)
 				}
 
-				target, err = m.DeprecatedProcessResponse(response)
-				handlerCtx.LogHTTPResponseMap(target)
-				if err != nil {
-					return internaldto.NewErroneousExecutorOutput(err)
+				if responseAnalysisErr == nil {
+					target, err = m.DeprecatedProcessResponse(response)
+					handlerCtx.LogHTTPResponseMap(target)
+					if err != nil {
+						return internaldto.NewErroneousExecutorOutput(err)
+					}
 				}
 				composeAsyncMonitor(handlerCtx, insertPrimitive, tbl, commentDirectives)
 				if err != nil {
@@ -149,31 +151,50 @@ func (ss *Insert) Build() error {
 						}
 					}
 				}
-				msgs := internaldto.BackendMessages{}
 				if err == nil {
-					msgs.WorkingMessages = generateSuccessMessagesFromHeirarchy(tbl, isAwait)
-				} else {
-					msgs.WorkingMessages = []string{err.Error()}
+					if response.StatusCode < 300 { //nolint:gomnd // TODO: fix this
+						msgs := internaldto.NewBackendMessages(
+							generateSuccessMessagesFromHeirarchy(tbl, isAwait),
+						)
+						return internaldto.NewExecutorOutput(
+							nil,
+							target,
+							nil,
+							msgs,
+							nil,
+						)
+					}
+					generatedErr := fmt.Errorf("insert over HTTP error: %s", response.Status)
+					return internaldto.NewExecutorOutput(
+						nil,
+						target,
+						nil,
+						nil,
+						generatedErr,
+					)
 				}
-				return internaldto.NewExecutorOutput(nil, target, nil, &msgs, err)
+				return internaldto.NewExecutorOutput(
+					nil,
+					target,
+					nil,
+					nil,
+					err,
+				)
 			}
+
 			zeroArityExecutors = append(zeroArityExecutors, zeroArityEx)
 		}
 		resultSet := internaldto.NewErroneousExecutorOutput(fmt.Errorf("no executions detected"))
-		msgs := internaldto.BackendMessages{}
 		if !isAwait {
 			for _, ei := range zeroArityExecutors {
 				execInstance := ei
+				aPrioriMessages := resultSet.GetMessages()
 				resultSet = execInstance()
-				if resultSet.Msg != nil && resultSet.Msg.WorkingMessages != nil && len(resultSet.Msg.WorkingMessages) > 0 {
-					msgs.WorkingMessages = append(msgs.WorkingMessages, resultSet.Msg.WorkingMessages...)
-				}
-				if resultSet.Err != nil {
-					resultSet.Msg = &msgs
+				resultSet.AppendMessages(aPrioriMessages)
+				if resultSet.GetError() != nil {
 					return resultSet
 				}
 			}
-			resultSet.Msg = &msgs
 			return resultSet
 		}
 		for _, eI := range zeroArityExecutors {
@@ -195,7 +216,7 @@ func (ss *Insert) Build() error {
 				return internaldto.NewErroneousExecutorOutput(execErr)
 			}
 			resultSet = execPrim.Execute(pc)
-			if resultSet.Err != nil {
+			if resultSet.GetError() != nil {
 				return resultSet
 			}
 		}

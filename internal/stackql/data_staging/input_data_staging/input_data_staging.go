@@ -52,7 +52,7 @@ func (np *naiveNativeResultSetPreparator) PrepareNativeResultSet() internaldto.E
 			nil,
 			nil,
 			nil,
-			&internaldto.BackendMessages{WorkingMessages: []string{"native sql nil result set"}},
+			internaldto.NewBackendMessages([]string{"native sql nil result set"}),
 			nil,
 		)
 		return nativeProtect(emptyResult, []string{"error"})
@@ -199,11 +199,11 @@ func nativeProtect(rv internaldto.ExecutorOutput, columns []string) internaldto.
 		for f := range rCols {
 			rCols[f] = getPlaceholderColumn(table, columns[f], getDefaultOID())
 		}
-		rv.GetSQLResult = func() sqldata.ISQLResultStream {
+		rv.SetSQLResultFn(func() sqldata.ISQLResultStream {
 			return sqldata.NewSimpleSQLResultStream(sqldata.NewSQLResult(rCols, 0, 0, []sqldata.ISQLRow{
 				sqldata.NewSQLRow([]interface{}{}),
 			}))
-		}
+		})
 	}
 	return rv
 }

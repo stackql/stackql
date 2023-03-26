@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/stackql/stackql/internal/stackql/acid/transact"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 
@@ -118,10 +119,10 @@ func (pg *standardPrimitiveGraph) Execute(ctx primitive.IPrimitiveCtx) internald
 			}
 			pg.errGroup.Go(
 				func() error {
-					output := node.GetPrimitive().Execute(ctx) //nolint:govet // intentional
+					output := node.GetOperation().Execute(ctx) //nolint:govet // intentional
 					outChan <- output
 					close(outChan)
-					return output.Err
+					return output.GetError()
 				},
 			)
 			destinationNodes := pg.g.From(node.ID())
@@ -133,7 +134,7 @@ func (pg *standardPrimitiveGraph) Execute(ctx primitive.IPrimitiveCtx) internald
 				fromNode := destinationNodes.Node()
 				switch fromNode := fromNode.(type) { //nolint:gocritic // acceptable
 				case PrimitiveNode:
-					fromNode.GetPrimitive().IncidentData(node.ID(), output) //nolint:errcheck // TODO: consider design options
+					fromNode.GetOperation().IncidentData(node.ID(), output) //nolint:errcheck // TODO: consider design options
 				}
 			}
 			node.SetIsDone(true)
@@ -156,7 +157,7 @@ func (pg *standardPrimitiveGraph) SetTxnID(id int) {
 		node := nodes.Node()
 		switch node := node.(type) { //nolint:gocritic // acceptable
 		case PrimitiveNode:
-			node.GetPrimitive().SetTxnID(id)
+			node.GetOperation().SetTxnID(id)
 		}
 	}
 }
@@ -184,7 +185,7 @@ func SortPlan(pg PrimitiveGraph) ([]graph.Node, error) {
 }
 
 type PrimitiveNode interface {
-	GetPrimitive() primitive.IPrimitive
+	GetOperation() transact.Operation
 	ID() int64
 	IsDone() chan (bool)
 	GetError() (error, bool)
@@ -194,18 +195,18 @@ type PrimitiveNode interface {
 }
 
 type standardPrimitiveNode struct {
-	primitive primitive.IPrimitive
-	id        int64
-	isDone    chan bool
-	err       error
+	op     transact.Operation
+	id     int64
+	isDone chan bool
+	err    error
 }
 
 func (pg *standardPrimitiveGraph) CreatePrimitiveNode(pr primitive.IPrimitive) PrimitiveNode {
 	nn := pg.g.NewNode()
 	node := &standardPrimitiveNode{
-		primitive: pr,
-		id:        nn.ID(),
-		isDone:    make(chan bool, 1),
+		op:     transact.NewIrreversibleOperation(pr),
+		id:     nn.ID(),
+		isDone: make(chan bool, 1),
 	}
 	pg.g.AddNode(node)
 	return node
@@ -220,8 +221,8 @@ func (pn *standardPrimitiveNode) GetError() (error, bool) {
 	return pn.err, pn.err != nil
 }
 
-func (pn *standardPrimitiveNode) GetPrimitive() primitive.IPrimitive {
-	return pn.primitive
+func (pn *standardPrimitiveNode) GetOperation() transact.Operation {
+	return pn.op
 }
 
 func (pn *standardPrimitiveNode) IsDone() chan bool {
@@ -229,7 +230,7 @@ func (pn *standardPrimitiveNode) IsDone() chan bool {
 }
 
 func (pn *standardPrimitiveNode) SetInputAlias(alias string, id int64) error {
-	return pn.GetPrimitive().SetInputAlias(alias, id)
+	return pn.GetOperation().SetInputAlias(alias, id)
 }
 
 func (pn *standardPrimitiveNode) SetIsDone(isDone bool) {
