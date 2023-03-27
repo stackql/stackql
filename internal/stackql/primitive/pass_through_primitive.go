@@ -60,5 +60,5 @@ func (pr *PassThroughPrimitive) Execute(pc IPrimitiveCtx) internaldto.ExecutorOu
 	for _, input := range pr.Inputs {
 		return input
 	}
-	return internaldto.ExecutorOutput{}
+	return internaldto.NewEmptyExecutorOutput()
 }

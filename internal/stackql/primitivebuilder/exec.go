@@ -109,11 +109,12 @@ func (ss *Exec) Build() error {
 			logging.GetLogger().Debugln(fmt.Sprintf("keys = %v", keys))
 			logging.GetLogger().Debugln(fmt.Sprintf("columnOrder = %v", columnOrder))
 		}
-		msgs := internaldto.BackendMessages{}
-		if err == nil {
-			msgs.WorkingMessages = generateSuccessMessagesFromHeirarchy(tbl, ss.isAwait)
-		}
-		return generateResultIfNeededfunc(keys, target, &msgs, err, ss.isShowResults)
+		return generateResultIfNeededfunc(
+			keys, target,
+			internaldto.NewBackendMessages(
+				generateSuccessMessagesFromHeirarchy(tbl, ss.isAwait),
+			),
+			err, ss.isShowResults)
 	}
 	execPrimitive := primitive.NewHTTPRestPrimitive(
 		prov,

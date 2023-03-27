@@ -43,7 +43,7 @@ func (nb *DataflowGraphBuilder) Build() error {
 					nil,
 					nil,
 					nil,
-					&internaldto.BackendMessages{WorkingMessages: []string{"nop completed"}}, nil),
+					internaldto.NewBackendMessages([]string{"nop completed"}), nil),
 			)
 		},
 	)

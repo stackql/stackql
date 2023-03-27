@@ -60,8 +60,8 @@ func (dr *basicStackQLDriver) HandleSimpleQuery(ctx context.Context, query strin
 		return nil, fmt.Errorf("no SQLresults available")
 	}
 	r := res[0]
-	if r.Err != nil {
-		return nil, r.Err
+	if r.GetError() != nil {
+		return nil, r.GetError()
 	}
 	return r.GetSQLResult(), nil
 }

@@ -66,7 +66,7 @@ func (pr *AsyncHTTPMonitorPrimitive) Execute(pc primitive.IPrimitiveCtx) interna
 			pc = pr.initialCtx
 		}
 		subPr := pr.precursor.Execute(pc)
-		if subPr.Err != nil || pr.executor == nil {
+		if subPr.GetError() != nil || pr.executor == nil {
 			return subPr
 		}
 		prStr := pr.heirarchy.GetProvider().GetProviderString()

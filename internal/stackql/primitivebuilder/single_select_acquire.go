@@ -172,7 +172,7 @@ func (ss *SingleSelectAcquire) Build() error {
 					internaldto.NewErroneousExecutorOutput(sqlErr)
 				}
 				ss.drmCfg.ExtractObjectFromSQLRows(r, nonControlColumns, ss.stream)
-				return internaldto.ExecutorOutput{}
+				return internaldto.NewEmptyExecutorOutput()
 			}
 			// TODO: fix cloning ops
 			response, apiErr := httpmiddleware.HTTPApiCallFromRequest(
@@ -224,7 +224,7 @@ func (ss *SingleSelectAcquire) Build() error {
 					items = pl
 					ok = true
 				case nil:
-					return internaldto.ExecutorOutput{}
+					return internaldto.NewEmptyExecutorOutput()
 				}
 				keys := make(map[string]map[string]interface{})
 
@@ -315,7 +315,7 @@ func (ss *SingleSelectAcquire) Build() error {
 				reqCtx.SetRawQuery(q.Encode())
 			}
 		}
-		return internaldto.ExecutorOutput{}
+		return internaldto.NewEmptyExecutorOutput()
 	}
 
 	prep := func() drm.PreparedStatementCtx {

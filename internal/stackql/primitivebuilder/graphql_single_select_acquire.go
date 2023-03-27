@@ -133,7 +133,7 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 					internaldto.NewErroneousExecutorOutput(sqlErr)
 				}
 				ss.drmCfg.ExtractObjectFromSQLRows(r, nonControlColumns, ss.stream)
-				return internaldto.ExecutorOutput{}
+				return internaldto.NewEmptyExecutorOutput()
 			}
 			graphQLReader, err := graphql.NewStandardGQLReader(
 				client,
@@ -180,7 +180,7 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 				}
 			}
 		}
-		return internaldto.ExecutorOutput{}
+		return internaldto.NewEmptyExecutorOutput()
 	}
 
 	prep := func() drm.PreparedStatementCtx {

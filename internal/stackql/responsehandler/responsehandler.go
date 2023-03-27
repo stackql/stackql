@@ -25,13 +25,13 @@ func HandleResponse(handlerCtx handler.HandlerContext, response internaldto.Exec
 	var outputWriter output.IOutputWriter
 	var err error
 	logging.GetLogger().Debugln(fmt.Sprintf("response from query = '%v'", response.GetSQLResult()))
-	if response.Msg != nil {
-		for _, msg := range response.Msg.WorkingMessages {
+	if response.GetMessages() != nil {
+		for _, msg := range response.GetMessages() {
 			handlerCtx.GetOutfile().Write([]byte(msg + fmt.Sprintln(""))) //nolint:errcheck // outstream write
 		}
 	}
 	//nolint:staticcheck // TODO: review
-	if response.GetSQLResult() != nil && response.GetSQLResult() != nil && response.Err == nil {
+	if response.GetSQLResult() != nil && response.GetSQLResult() != nil && response.GetError() == nil {
 		outputWriter, err = output.GetOutputWriter(
 			handlerCtx.GetOutfile(),
 			handlerCtx.GetOutErrFile(),
@@ -45,7 +45,7 @@ func HandleResponse(handlerCtx handler.HandlerContext, response internaldto.Exec
 			return err
 		}
 		outputWriter.Write(response.GetSQLResult()) //nolint:errcheck // outstream write
-	} else if response.Err != nil {
+	} else if response.GetError() != nil {
 		outputWriter, err = output.GetOutputWriter(
 			handlerCtx.GetOutfile(),
 			handlerCtx.GetOutErrFile(),
@@ -56,10 +56,10 @@ func HandleResponse(handlerCtx handler.HandlerContext, response internaldto.Exec
 		)
 		if outputWriter == nil || err != nil {
 			handleEmptyWriter(outputWriter, err)
-			return response.Err
+			return response.GetError()
 		}
-		outputWriter.WriteError(response.Err, handlerCtx.GetErrorPresentation()) //nolint:errcheck // outstream write
-		return response.Err
+		outputWriter.WriteError(response.GetError(), handlerCtx.GetErrorPresentation()) //nolint:errcheck // outstream write
+		return response.GetError()
 	}
 	return err
 }

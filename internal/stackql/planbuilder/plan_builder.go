@@ -444,10 +444,10 @@ func (pgb *standardPlanGraphBuilder) handleRegistry(
 				return util.PrepareResultSet(
 					internaldto.NewPrepareResultSetPlusRawDTO(
 						nil, nil, nil, nil, nil,
-						&internaldto.BackendMessages{
-							WorkingMessages: []string{fmt.Sprintf(
-								"%s provider, version '%s' successfully installed",
-								node.ProviderId, providerVersion)}}, nil))
+						internaldto.NewBackendMessages([]string{fmt.Sprintf(
+							"%s provider, version '%s' successfully installed",
+							node.ProviderId, providerVersion)}),
+						nil))
 			case "list":
 				var colz []string
 				var provz map[string]openapistackql.ProviderDescription
@@ -518,8 +518,9 @@ func (pgb *standardPlanGraphBuilder) handlePurge(pbi planbuilderinput.PlanBuilde
 						[]string{"message"},
 						nil,
 						nil,
-						&internaldto.BackendMessages{
-							WorkingMessages: []string{"Global PURGE successfully completed"}},
+						internaldto.NewBackendMessages(
+							[]string{"Global PURGE successfully completed"},
+						),
 						nil,
 					),
 				)

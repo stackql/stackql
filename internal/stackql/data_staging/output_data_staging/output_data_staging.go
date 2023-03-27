@@ -150,7 +150,9 @@ func (st *naiveOutputter) OutputExecutorResult() internaldto.ExecutorOutput {
 		for _, col := range st.nonControlColumns {
 			colz = append(colz, col.GetIdentifier())
 		}
-		rv.GetSQLResult = func() sqldata.ISQLResultStream { return util.GetHeaderOnlyResultStream(colz) }
+		rv.SetSQLResultFn(
+			func() sqldata.ISQLResultStream { return util.GetHeaderOnlyResultStream(colz) },
+		)
 	}
 	return rv
 }
