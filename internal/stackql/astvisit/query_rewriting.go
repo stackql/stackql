@@ -180,7 +180,7 @@ func (v *standardQueryRewriteAstVisitor) GetSelectContext() (drm.PreparedStateme
 	return nil, false
 }
 
-//nolint:dupl,funlen,gocognit,gocyclo,cyclop,errcheck,staticcheck,gocritic,lll,govet,nestif,exhaustive,gomnd // defer uplifts on analysers
+//nolint:dupl,funlen,gocognit,gocyclo,cyclop,errcheck,staticcheck,gocritic,lll,govet,nestif,exhaustive,gomnd,revive // defer uplifts on analysers
 func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 	var err error
 

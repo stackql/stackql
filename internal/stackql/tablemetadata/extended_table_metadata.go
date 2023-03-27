@@ -5,7 +5,6 @@ import (
 
 	"github.com/stackql/stackql/internal/stackql/astindirect"
 	"github.com/stackql/stackql/internal/stackql/datasource/sql_datasource"
-	"github.com/stackql/stackql/internal/stackql/httpbuild"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/provider"
 
@@ -20,7 +19,7 @@ type ExtendedTableMetadata interface {
 	GetAlias() string
 	GetGraphQL() (openapistackql.GraphQL, bool)
 	GetHeirarchyObjects() HeirarchyObjects
-	GetHTTPArmoury() (httpbuild.HTTPArmoury, error)
+	GetHTTPArmoury() (openapistackql.HTTPArmoury, error)
 	GetInputTableName() (string, error)
 	GetMethod() (openapistackql.OperationStore, error)
 	GetMethodStr() (string, error)
@@ -54,7 +53,7 @@ type ExtendedTableMetadata interface {
 	SetSelectItemsKey(string)
 	SetSQLDataSource(sql_datasource.SQLDataSource)
 	SetTableFilter(f func(openapistackql.ITable) (openapistackql.ITable, error))
-	WithGetHTTPArmoury(f func() (httpbuild.HTTPArmoury, error)) ExtendedTableMetadata
+	WithGetHTTPArmoury(f func() (openapistackql.HTTPArmoury, error)) ExtendedTableMetadata
 	WithIndirect(astindirect.Indirect) ExtendedTableMetadata
 	WithResponseSchemaStr(rss string) (ExtendedTableMetadata, error)
 }
@@ -64,7 +63,7 @@ type standardExtendedTableMetadata struct {
 	colsVisited         map[string]bool
 	heirarchyObjects    HeirarchyObjects
 	isLocallyExecutable bool
-	getHTTPArmoury      func() (httpbuild.HTTPArmoury, error)
+	getHTTPArmoury      func() (openapistackql.HTTPArmoury, error)
 	selectItemsKey      string
 	alias               string
 	inputTableName      string
@@ -134,7 +133,7 @@ func (ex *standardExtendedTableMetadata) GetOptionalParameters() map[string]open
 	return ex.heirarchyObjects.GetMethod().GetOptionalParameters()
 }
 
-func (ex *standardExtendedTableMetadata) GetHTTPArmoury() (httpbuild.HTTPArmoury, error) {
+func (ex *standardExtendedTableMetadata) GetHTTPArmoury() (openapistackql.HTTPArmoury, error) {
 	if ex.getHTTPArmoury == nil {
 		return nil, fmt.Errorf("nil getHttpAroury() function in ExtendedTableMetadata object")
 	}
@@ -142,7 +141,7 @@ func (ex *standardExtendedTableMetadata) GetHTTPArmoury() (httpbuild.HTTPArmoury
 }
 
 func (ex *standardExtendedTableMetadata) WithGetHTTPArmoury(
-	f func() (httpbuild.HTTPArmoury, error),
+	f func() (openapistackql.HTTPArmoury, error),
 ) ExtendedTableMetadata {
 	ex.getHTTPArmoury = f
 	return ex

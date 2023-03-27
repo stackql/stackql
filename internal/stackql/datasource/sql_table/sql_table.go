@@ -15,7 +15,7 @@ type standardSQLTable struct {
 	colz   []relationaldto.RelationalColumn
 }
 
-func NewStandardSQLTable(colz []relationaldto.RelationalColumn) (SQLTable, error) {
+func NewStandardSQLTable(_ []relationaldto.RelationalColumn) (SQLTable, error) {
 	rv := &standardSQLTable{
 		symTab: symtab.NewHashMapTreeSymTab(),
 	}

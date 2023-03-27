@@ -21,7 +21,7 @@ type DataflowGraphBuilder struct {
 func NewDataflowGraphBuilder(
 	graph primitivegraph.PrimitiveGraph,
 	dataflowGraph dataflow.WeaklyConnectedComponent,
-	txnControlCounters *internaldto.TxnControlCounters,
+	txnControlCounters *internaldto.TxnControlCounters, //nolint:revive // future proofing
 	handlerCtx handler.HandlerContext,
 	sqlEngine sqlengine.SQLEngine,
 ) Builder {

@@ -28,6 +28,7 @@ type standardParserPlaceholderParamAstVisitor struct {
 	annotatedAST annotatedast.AnnotatedAst
 }
 
+//nolint:revive // defer uplifts on analysers
 func NewPlaceholderParamAstVisitor(
 	annotatedAST annotatedast.AnnotatedAst,
 	iDColumnName string,

@@ -21,7 +21,7 @@ import (
 )
 
 func NewUpdateableValsPrimitive(
-	handlerCtx handler.HandlerContext,
+	handlerCtx handler.HandlerContext, //nolint:revive // future proofing
 	vals map[*sqlparser.ColName]interface{},
 ) (primitive.IPrimitive, error) {
 	return primitive.NewLocalPrimitive(
@@ -56,7 +56,7 @@ func NewUpdateableValsPrimitive(
 }
 
 func NewInsertableValsPrimitive(
-	handlerCtx handler.HandlerContext,
+	handlerCtx handler.HandlerContext, //nolint:revive // future proofing
 	vals map[int]map[int]interface{},
 ) (primitive.IPrimitive, error) {
 	return primitive.NewLocalPrimitive(
@@ -368,10 +368,10 @@ func prepareErroneousResultSet(
 }
 
 func NewDescribeTableInstructionExecutor(
-	handlerCtx handler.HandlerContext,
+	handlerCtx handler.HandlerContext, //nolint:revive // future proofing
 	tbl tablemetadata.ExtendedTableMetadata,
 	extended bool,
-	full bool,
+	full bool, //nolint:revive // future proofing
 ) internaldto.ExecutorOutput {
 	schema, err := tbl.GetSelectableObjectSchema()
 	if err != nil {
@@ -398,6 +398,7 @@ func NewDescribeTableInstructionExecutor(
 	)
 }
 
+//nolint:revive // future proofing
 func NewDescribeViewInstructionExecutor(
 	handlerCtx handler.HandlerContext,
 	tbl tablemetadata.ExtendedTableMetadata,
@@ -441,6 +442,7 @@ func columnsToFlatDescriptionMap(colz []internaldto.ColumnMetadata, extended boo
 	return retVal
 }
 
+//nolint:revive // future proofing
 func NewLocalSelectExecutor(
 	handlerCtx handler.HandlerContext,
 	node *sqlparser.Select,

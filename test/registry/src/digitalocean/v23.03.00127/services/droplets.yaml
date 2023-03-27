@@ -7650,7 +7650,7 @@ components:
             $ref: '#/paths/~1v2~1droplets/post'
           response:
             mediaType: application/json
-            openAPIDocKey: '200'
+            openAPIDocKey: '202'
         destroy_byTag:
           operation:
             $ref: '#/paths/~1v2~1droplets/delete'

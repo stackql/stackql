@@ -26,10 +26,10 @@ func NewPassThroughPrimitive(
 	}
 }
 
-func (pr *PassThroughPrimitive) SetTxnID(id int) {
+func (pr *PassThroughPrimitive) SetTxnID(_ int) {
 }
 
-func (pr *PassThroughPrimitive) SetInputAlias(alias string, id int64) error {
+func (pr *PassThroughPrimitive) SetInputAlias(_ string, _ int64) error {
 	return nil
 }
 
@@ -55,7 +55,7 @@ func (pr *PassThroughPrimitive) collectGarbage() {
 	// placeholder
 }
 
-func (pr *PassThroughPrimitive) Execute(pc IPrimitiveCtx) internaldto.ExecutorOutput {
+func (pr *PassThroughPrimitive) Execute(_ IPrimitiveCtx) internaldto.ExecutorOutput {
 	defer pr.collectGarbage()
 	for _, input := range pr.Inputs {
 		return input

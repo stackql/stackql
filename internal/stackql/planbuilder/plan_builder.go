@@ -800,6 +800,7 @@ func (pgb *standardPlanGraphBuilder) handleShow(pbi planbuilderinput.PlanBuilder
 			return err
 		}
 	case "METHODS":
+		//nolint:wastedassign // TODO: fix this
 		tbl, err = primitiveGenerator.GetPrimitiveComposer().GetTable(node.OnTable) //nolint:ineffassign,staticcheck,lll // TODO: fix this
 	}
 	prov := primitiveGenerator.GetPrimitiveComposer().GetProvider()
@@ -854,23 +855,26 @@ func (pgb *standardPlanGraphBuilder) handleUse(pbi planbuilderinput.PlanBuilderI
 	return nil
 }
 
-//nolint:unparam // TODO: fix this
+//nolint:unparam,revive // TODO: fix this
 func createErroneousPlan(
 	handlerCtx handler.HandlerContext,
-	qPlan *plan.Plan,
+	qPlan plan.Plan,
 	rowSort func(map[string]map[string]interface{}) []string,
-	err error) (*plan.Plan, error) {
-	qPlan.Instructions = primitive.NewLocalPrimitive(func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
-		return util.PrepareResultSet(
-			internaldto.PrepareResultSetDTO{
-				OutputBody:  nil,
-				Msg:         nil,
-				RowMap:      nil,
-				ColumnOrder: nil,
-				RowSort:     rowSort,
-				Err:         err,
-			},
-		)
-	})
+	err error) (plan.Plan, error) {
+	qPlan.SetInstructions(
+		primitive.NewLocalPrimitive(func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+			return util.PrepareResultSet(
+				internaldto.PrepareResultSetDTO{
+					OutputBody:  nil,
+					Msg:         nil,
+					RowMap:      nil,
+					ColumnOrder: nil,
+					RowSort:     rowSort,
+					Err:         err,
+				},
+			)
+		},
+		),
+	)
 	return qPlan, err
 }

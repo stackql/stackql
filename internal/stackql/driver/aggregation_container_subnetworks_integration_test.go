@@ -43,7 +43,11 @@ func TestSimpleAggGoogleContainerSubnetworksGroupedAllowedDriverOutputAsc(t *tes
 
 		handlerCtx.SetQuery(testobjects.SimpleAggCountGroupedGoogleContainerSubnetworkAsc)
 		querySubmitter := querysubmit.NewQuerySubmitter()
-		response := querySubmitter.SubmitQuery(handlerCtx)
+		prepareErr := querySubmitter.PrepareQuery(handlerCtx)
+		if prepareErr != nil {
+			t.Fatalf("Test failed: %v", prepareErr)
+		}
+		response := querySubmitter.SubmitQuery()
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 	}
@@ -80,7 +84,11 @@ func TestSimpleAggGoogleContainerSubnetworksGroupedAllowedDriverOutputDesc(t *te
 
 		handlerCtx.SetQuery(testobjects.SimpleAggCountGroupedGoogleContainerSubnetworkDesc)
 		querySubmitter := querysubmit.NewQuerySubmitter()
-		response := querySubmitter.SubmitQuery(handlerCtx)
+		prepareErr := querySubmitter.PrepareQuery(handlerCtx)
+		if prepareErr != nil {
+			t.Fatalf("Test failed: %v", prepareErr)
+		}
+		response := querySubmitter.SubmitQuery()
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 	}

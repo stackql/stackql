@@ -50,6 +50,7 @@ func (kv *standardKStore) Min() (int, bool) {
 	return arr[0], true
 }
 
+//nolint:revive // future proofing
 func GetKStore(cfg dto.KStoreCfg) (KStore, error) {
 	once.Do(func() {
 		kvStoreSingleton = &standardKStore{

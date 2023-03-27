@@ -3,7 +3,6 @@ package taxonomy
 import (
 	"github.com/stackql/go-openapistackql/openapistackql"
 	"github.com/stackql/stackql/internal/stackql/handler"
-	"github.com/stackql/stackql/internal/stackql/httpbuild"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/streaming"
@@ -66,7 +65,7 @@ func (ac *standardAnnotationCtx) SetDynamic() {
 }
 
 func (ac *standardAnnotationCtx) Prepare(
-	handlerCtx handler.HandlerContext,
+	handlerCtx handler.HandlerContext, //nolint:revive // future proofing
 	stream streaming.MapStream,
 ) error {
 	// TODO: accomodate SQL data source
@@ -97,16 +96,30 @@ func (ac *standardAnnotationCtx) Prepare(
 		if isView {
 			logging.GetLogger().Debugf("viewDTO = %v\n", viewDTO)
 		}
+		prov, provErr := pr.GetProvider()
+		if provErr != nil {
+			return provErr
+		}
 		ac.tableMeta.WithGetHTTPArmoury(
-			func() (httpbuild.HTTPArmoury, error) {
-				httpArmoury, armouryErr := httpbuild.BuildHTTPRequestCtxFromAnnotation(stream, pr, opStore, svc, nil, nil)
+			func() (openapistackql.HTTPArmoury, error) {
+				httpPreparator := openapistackql.NewHTTPPreparator(
+					prov,
+					svc,
+					opStore,
+					nil,
+					nil,
+					stream,
+					nil,
+					logging.GetLogger(),
+				)
+				httpArmoury, armouryErr := httpPreparator.BuildHTTPRequestCtxFromAnnotation()
 				return httpArmoury, armouryErr
 			},
 		)
 		return nil
 	}
 	ac.tableMeta.WithGetHTTPArmoury(
-		func() (httpbuild.HTTPArmoury, error) {
+		func() (openapistackql.HTTPArmoury, error) {
 			// need to dynamically generate stream, otherwise repeated calls result in empty body
 			parametersCleaned, cleanErr := util.TransformSQLRawParameters(ac.GetParameters())
 			if cleanErr != nil {
@@ -117,8 +130,22 @@ func (ac *standardAnnotationCtx) Prepare(
 					parametersCleaned,
 				},
 			)
-			httpArmoury, armouryErr := httpbuild.BuildHTTPRequestCtxFromAnnotation(stream, pr, opStore, svc, nil, nil)
-			if err != nil {
+			prov, provErr := pr.GetProvider()
+			if provErr != nil {
+				return nil, provErr
+			}
+			httpPreparator := openapistackql.NewHTTPPreparator(
+				prov,
+				svc,
+				opStore,
+				nil,
+				nil,
+				stream,
+				nil,
+				logging.GetLogger(),
+			)
+			httpArmoury, armouryErr := httpPreparator.BuildHTTPRequestCtxFromAnnotation()
+			if armouryErr != nil {
 				return nil, armouryErr
 			}
 			return httpArmoury, nil

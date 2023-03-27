@@ -240,7 +240,7 @@ func (eng *postgresSystem) obtainRelationalColumnsFromExternalSQLtable(
 	catalogName := ""
 	schemaName := hierarchyIDs.GetServiceStr()
 	tableName := hierarchyIDs.GetResourceStr()
-	rows, err := eng.sqlEngine.Query(
+	rows, err := eng.sqlEngine.Query( //nolint:rowserrcheck // TODO: fix this
 		q,
 		connectionName,
 		catalogName,
@@ -621,7 +621,7 @@ func (eng *postgresSystem) GenerateInsertDML(
 //nolint:unparam // future proof
 func (eng *postgresSystem) generateInsertDML(
 	relationalTable relationaldto.RelationalTable,
-	tcc internaldto.TxnControlCounters,
+	tcc internaldto.TxnControlCounters, //nolint:revive // future proof
 ) (string, error) {
 	var q strings.Builder
 	var quotedColNames, vals []string
@@ -671,7 +671,7 @@ func (eng *postgresSystem) GenerateSelectDML(
 
 func (eng *postgresSystem) generateSelectDML(
 	relationalTable relationaldto.RelationalTable,
-	txnCtrlCtrs internaldto.TxnControlCounters, //nolint:unparam // future proof
+	txnCtrlCtrs internaldto.TxnControlCounters, //nolint:unparam,revive // future proof
 	selectSuffix,
 	rewrittenWhere string,
 ) (string, error) {
@@ -730,7 +730,11 @@ func (eng *postgresSystem) generateSelectDML(
 	return q.String(), nil
 }
 
-func (eng *postgresSystem) GCAdd(tableName string, parentTcc, lockableTcc internaldto.TxnControlCounters) error {
+func (eng *postgresSystem) GCAdd(
+	tableName string,
+	parentTcc, //nolint:revive // future proof
+	lockableTcc internaldto.TxnControlCounters,
+) error {
 	maxTxnColName := eng.controlAttributes.GetControlMaxTxnColumnName()
 	q := fmt.Sprintf(
 		`
@@ -839,8 +843,12 @@ func (eng *postgresSystem) GCControlTablesPurge() error {
 	return eng.gcControlTablesPurge()
 }
 
-func (eng *postgresSystem) IsTablePresent(tableName string, requestEncoding string, colName string) bool {
-	rows, err := eng.sqlEngine.Query(
+func (eng *postgresSystem) IsTablePresent(
+	tableName string,
+	requestEncoding string,
+	colName string, //nolint:revive // future proof
+) bool {
+	rows, err := eng.sqlEngine.Query( //nolint:rowserrcheck // TODO: fix this
 		fmt.Sprintf(
 			`SELECT count(*) as ct FROM "%s"."%s" WHERE iql_insert_encoded = $1 `,
 			eng.tableSchema,
@@ -874,7 +882,7 @@ func (eng *postgresSystem) TableOldestUpdateUTC(
 	ssnIDColName := eng.controlAttributes.GetControlSsnIDColumnName()
 	txnIDColName := eng.controlAttributes.GetControlTxnIDColumnName()
 	insIDColName := eng.controlAttributes.GetControlInsIDColumnName()
-	rows, err := eng.sqlEngine.Query(
+	rows, err := eng.sqlEngine.Query( //nolint:rowserrcheck // TODO: fix this
 		fmt.Sprintf(
 			"SELECT min(%s) as oldest_update, %s, %s, %s, %s FROM \"%s\".\"%s\" WHERE %s = '%s' GROUP BY %s, %s, %s, %s;",
 			updateColName,

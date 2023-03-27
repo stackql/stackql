@@ -6,7 +6,7 @@ import (
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
 
-//nolint:unparam // The unused cmd is retained as a future proofing measure
+//nolint:unparam,revive // The unused cmd is retained as a future proofing measure
 func specialiseParserError(err error, cmd string) error {
 	if err != nil {
 		return fmt.Errorf(

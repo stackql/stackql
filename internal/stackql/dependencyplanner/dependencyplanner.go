@@ -360,7 +360,7 @@ func (dp *standardDependencyPlanner) orchestrate(
 func (dp *standardDependencyPlanner) processAcquire(
 	sqlNode sqlparser.SQLNode,
 	annotationCtx taxonomy.AnnotationCtx,
-	stream streaming.MapStream, //nolint:unparam // TODO: remove this
+	stream streaming.MapStream, //nolint:unparam,revive // TODO: remove this
 ) (util.AnnotatedTabulation, internaldto.TxnControlCounters, error) {
 	inputTableName, err := annotationCtx.GetInputTableName()
 	inputProviderString := annotationCtx.GetHIDs().GetProviderStr()

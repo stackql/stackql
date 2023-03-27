@@ -57,7 +57,7 @@ func parseRequestBodyParam(k string, v interface{}) *requestBodyParam {
 	return nil
 }
 
-//nolint:gocognit // not super complex
+//nolint:gocognit,revive // not super complex
 func SplitHTTPParameters(
 	prov provider.IProvider,
 	sqlParamMap map[int]map[string]interface{},

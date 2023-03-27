@@ -227,6 +227,7 @@ func (se postgresTCPEngine) CacheStoreGet(key string) ([]byte, error) {
 
 func (se postgresTCPEngine) CacheStoreGetAll() ([]internaldto.KeyVal, error) {
 	var retVal []internaldto.KeyVal
+	//nolint:rowserrcheck // TODO: fix this
 	res, err := se.db.Query(`SELECT k, v FROM "__iql__.cache.key_val"`)
 	if err != nil {
 		return nil, err

@@ -103,7 +103,11 @@ func TestSimpleSelectOktaApplicationAppsDriverOutput(t *testing.T) {
 		querySubmitter := querysubmit.NewQuerySubmitter()
 		handlerCtx.SetQuery(testobjects.SimpleSelectOktaApplicationApps)
 
-		response := querySubmitter.SubmitQuery(handlerCtx)
+		prepareErr := querySubmitter.PrepareQuery(handlerCtx)
+		if prepareErr != nil {
+			t.Fatalf("Test failed: %v", prepareErr)
+		}
+		response := querySubmitter.SubmitQuery()
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 	}

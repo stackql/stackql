@@ -36,7 +36,7 @@ type GarbageCollectorExecutor interface {
 // Idiomatic golang singleton
 // Credit to http://marcio.io/2015/07/singleton-pattern-in-go/
 func GetGarbageCollectorExecutorInstance(
-	sqlEngine sqlengine.SQLEngine,
+	sqlEngine sqlengine.SQLEngine, //nolint:revive // future proofing
 	ns tablenamespace.Collection,
 	system sql_system.SQLSystem, txnStore kstore.KStore,
 ) (GarbageCollectorExecutor, error) {

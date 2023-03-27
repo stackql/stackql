@@ -26,7 +26,7 @@ func newSQLiteSystem(
 	analyticsNamespaceLikeString string,
 	controlAttributes sqlcontrol.ControlAttributes,
 	formatter sqlparser.NodeFormatter,
-	sqlCfg dto.SQLBackendCfg, //nolint:unparam // future proof
+	sqlCfg dto.SQLBackendCfg, //nolint:unparam,revive // future proof
 	authCfg map[string]*dto.AuthCtx,
 ) (SQLSystem, error) {
 	rv := &sqLiteSystem{
@@ -157,7 +157,11 @@ func (eng *sqLiteSystem) GetASTFuncRewriter() astfuncrewrite.ASTFuncRewriter {
 	return astfuncrewrite.GetNopFuncRewriter()
 }
 
-func (eng *sqLiteSystem) GCAdd(tableName string, parentTcc, lockableTcc internaldto.TxnControlCounters) error {
+//nolint:revive // future proof
+func (eng *sqLiteSystem) GCAdd(
+	tableName string, parentTcc,
+	lockableTcc internaldto.TxnControlCounters,
+) error {
 	maxTxnColName := eng.controlAttributes.GetControlMaxTxnColumnName()
 	q := fmt.Sprintf(
 		`
@@ -319,7 +323,7 @@ func (eng *sqLiteSystem) obtainRelationalColumnsFromExternalSQLtable(
 	catalogName := ""
 	schemaName := hierarchyIDs.GetServiceStr()
 	tableName := hierarchyIDs.GetResourceStr()
-	rows, err := eng.sqlEngine.Query(
+	rows, err := eng.sqlEngine.Query( //nolint:rowserrcheck // TODO: fix this
 		q,
 		connectionName,
 		catalogName,
@@ -588,8 +592,12 @@ func (eng *sqLiteSystem) generateViewDDL(relationalTable relationaldto.Relationa
 	return retVal, nil
 }
 
-func (eng *sqLiteSystem) IsTablePresent(tableName string, requestEncoding string, colName string) bool {
-	rows, err := eng.sqlEngine.Query(
+func (eng *sqLiteSystem) IsTablePresent(
+	tableName string,
+	requestEncoding string,
+	colName string, //nolint:revive // future proof
+) bool {
+	rows, err := eng.sqlEngine.Query( //nolint:rowserrcheck // TODO: fix this
 		fmt.Sprintf(`SELECT count(*) as ct FROM "%s" WHERE iql_insert_encoded=?;`, tableName),
 		requestEncoding,
 	)
@@ -628,7 +636,7 @@ func (eng *sqLiteSystem) TableOldestUpdateUTC(
 	ssnIDColName := eng.controlAttributes.GetControlSsnIDColumnName()
 	txnIDColName := eng.controlAttributes.GetControlTxnIDColumnName()
 	insIDColName := eng.controlAttributes.GetControlInsIDColumnName()
-	rows, err := eng.sqlEngine.Query(
+	rows, err := eng.sqlEngine.Query( //nolint:rowserrcheck // TODO: fix this
 		fmt.Sprintf(
 			"SELECT strftime('%%Y-%%m-%%dT%%H:%%M:%%S', min(%s)) as oldest_update, %s, %s, %s, %s FROM \"%s\" WHERE %s = '%s';",
 			updateColName,
@@ -789,7 +797,7 @@ func (eng *sqLiteSystem) GenerateInsertDML(
 
 func (eng *sqLiteSystem) generateInsertDML(
 	relationalTable relationaldto.RelationalTable,
-	tcc internaldto.TxnControlCounters, //nolint:unparam // future proof
+	tcc internaldto.TxnControlCounters, //nolint:unparam,revive // future proof
 ) (string, error) {
 	var q strings.Builder
 	var quotedColNames, vals []string
@@ -833,7 +841,7 @@ func (eng *sqLiteSystem) GenerateSelectDML(
 
 func (eng *sqLiteSystem) generateSelectDML(
 	relationalTable relationaldto.RelationalTable,
-	txnCtrlCtrs internaldto.TxnControlCounters, //nolint:unparam // future proof
+	txnCtrlCtrs internaldto.TxnControlCounters, //nolint:unparam,revive // future proof
 	selectSuffix, rewrittenWhere string,
 ) (string, error) {
 	var q strings.Builder

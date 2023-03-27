@@ -68,6 +68,7 @@ func (pm PlaceholderParameterMetadata) GetTable() sqlparser.SQLNode {
 	return nil
 }
 
+//nolint:revive // The unused cmd is retained as a future proofing measure
 func (pm PlaceholderParameterMetadata) SetTable(tb sqlparser.SQLNode) error {
 	return fmt.Errorf("placeholder parameter metadata does not support set table")
 }

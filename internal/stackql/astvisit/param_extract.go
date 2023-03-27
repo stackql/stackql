@@ -26,6 +26,7 @@ type standardParserParamAstVisitor struct {
 	annotatedAST annotatedast.AnnotatedAst
 }
 
+//nolint:revive // defer analyser uplifts
 func NewParamAstVisitor(
 	annotatedAST annotatedast.AnnotatedAst,
 	iDColumnName string,

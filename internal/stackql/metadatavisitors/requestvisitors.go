@@ -124,7 +124,7 @@ func isBodyParam(paramName string) bool {
 	return strings.HasPrefix(paramName, constants.RequestBodyBaseKey)
 }
 
-//nolint:funlen,gocognit // acceptable
+//nolint:funlen,gocognit,revive // acceptable
 func ToInsertStatement(
 	columns sqlparser.Columns,
 	m openapistackql.OperationStore,
@@ -297,9 +297,9 @@ func (sv *SchemaRequestTemplateVisitor) processSubSchemasMap(
 func (sv *SchemaRequestTemplateVisitor) RetrieveTemplate(
 	sc openapistackql.Schema,
 	method openapistackql.OperationStore,
-	extended bool,
+	extended bool, //nolint:revive // TODO: review
 ) (map[string]TemplatedProduct, error) {
-	retVal := make(map[string]TemplatedProduct) //nolint:ineffassign,staticcheck // TODO: review
+	retVal := make(map[string]TemplatedProduct) //nolint:ineffassign,staticcheck,wastedassign // TODO: review
 	sv.recordSchemaVisited(sc.GetName())
 	//nolint:gocritic // TODO: review
 	switch sc.GetType() {
@@ -334,7 +334,7 @@ func (sv *SchemaRequestTemplateVisitor) retrieveTemplateVal(
 ) (interface{}, error) {
 	sSplit := strings.Split(objectKey, ".")
 	oKey := sSplit[len(sSplit)-1]
-	oPrefix := objectKey //nolint:ineffassign // TODO: review
+	oPrefix := objectKey //nolint:ineffassign,wastedassign // TODO: review
 	if len(sSplit) > 1 {
 		oPrefix = strings.TrimSuffix(objectKey, "."+oKey)
 	} else {
@@ -435,7 +435,7 @@ func (sv *SchemaRequestTemplateVisitor) retrieveJsonnetPlaceholderVal(
 ) (interface{}, error) {
 	sSplit := strings.Split(objectKey, ".")
 	oKey := sSplit[len(sSplit)-1]
-	oPrefix := objectKey //nolint:ineffassign // TODO: review
+	oPrefix := objectKey //nolint:ineffassign,wastedassign // TODO: review
 	if len(sSplit) > 1 {
 		oPrefix = strings.TrimSuffix(objectKey, "."+oKey)
 	} else {

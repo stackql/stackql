@@ -57,7 +57,11 @@ func TestSimpleSelectGoogleComputeInstanceQuerySubmit(t *testing.T) {
 
 	handlerCtx.SetQuery(testobjects.SimpleSelectGoogleComputeInstance)
 	qs := NewQuerySubmitter()
-	response := qs.SubmitQuery(handlerCtx)
+	prepareErr := qs.PrepareQuery(handlerCtx)
+	if prepareErr != nil {
+		t.Fatalf("Test failed: %v", prepareErr)
+	}
+	response := qs.SubmitQuery()
 
 	if response.GetSQLResult() == nil {
 		t.Fatalf("response is unexpectedly nil")

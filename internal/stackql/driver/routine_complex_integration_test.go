@@ -45,7 +45,11 @@ func TestUnionAllSelectComputeDisksOrderByCrtTmstpAscPlusCoalesceJsonExtract(t *
 		handlerCtx.SetQuery(testobjects.UnionSelectGoogleComputeDisksOrderCreationTmstpAscPlusJsonExtractCoalesce)
 		dr, _ := NewStackQLDriver(handlerCtx)
 		querySubmitter := querysubmit.NewQuerySubmitter()
-		response := querySubmitter.SubmitQuery(handlerCtx)
+		prepareErr := querySubmitter.PrepareQuery(handlerCtx)
+		if prepareErr != nil {
+			t.Fatalf("Test failed: %v", prepareErr)
+		}
+		response := querySubmitter.SubmitQuery()
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 

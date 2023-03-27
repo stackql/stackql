@@ -94,7 +94,11 @@ func TestSimpleSelectGoogleComputeInstanceDriverOutput(t *testing.T) {
 
 		handlerCtx.SetQuery(testobjects.SimpleSelectGoogleComputeInstance)
 		querySubmitter := querysubmit.NewQuerySubmitter()
-		response := querySubmitter.SubmitQuery(handlerCtx)
+		prepareErr := querySubmitter.PrepareQuery(handlerCtx)
+		if prepareErr != nil {
+			t.Fatalf("Test failed: %v", prepareErr)
+		}
+		response := querySubmitter.SubmitQuery()
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 	}
@@ -131,7 +135,11 @@ func TestSimpleSelectGoogleComputeInstanceDriverOutputRepeated(t *testing.T) {
 
 		handlerCtx.SetQuery(testobjects.SimpleSelectGoogleComputeInstance)
 		querySubmitter := querysubmit.NewQuerySubmitter()
-		response := querySubmitter.SubmitQuery(handlerCtx)
+		prepareErr := querySubmitter.PrepareQuery(handlerCtx)
+		if prepareErr != nil {
+			t.Fatalf("Test failed: %v", prepareErr)
+		}
+		response := querySubmitter.SubmitQuery()
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 	}
@@ -168,7 +176,11 @@ func TestSimpleSelectGoogleContainerSubnetworksAllowedDriverOutput(t *testing.T)
 
 		handlerCtx.SetQuery(testobjects.SimpleSelectGoogleContainerSubnetworks)
 		querySubmitter := querysubmit.NewQuerySubmitter()
-		response := querySubmitter.SubmitQuery(handlerCtx)
+		prepareErr := querySubmitter.PrepareQuery(handlerCtx)
+		if prepareErr != nil {
+			t.Fatalf("Test failed: %v", prepareErr)
+		}
+		response := querySubmitter.SubmitQuery()
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 	}
@@ -205,7 +217,11 @@ func TestSimpleInsertGoogleComputeNetworkAsync(t *testing.T) {
 
 		handlerCtx.SetQuery(testobjects.SimpleInsertComputeNetwork)
 		querySubmitter := querysubmit.NewQuerySubmitter()
-		response := querySubmitter.SubmitQuery(handlerCtx)
+		prepareErr := querySubmitter.PrepareQuery(handlerCtx)
+		if prepareErr != nil {
+			t.Fatalf("Test failed: %v", prepareErr)
+		}
+		response := querySubmitter.SubmitQuery()
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 	}

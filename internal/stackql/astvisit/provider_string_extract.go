@@ -79,7 +79,7 @@ func (v *standardProviderStringAstVisitor) GetProviderStrings() []string {
 	return retVal
 }
 
-//nolint:dupl,funlen,gocognit,gocyclo,cyclop,errcheck,staticcheck,gocritic,lll,ineffassign,exhaustive,nestif,gomnd // defer uplifts on analysers
+//nolint:dupl,funlen,gocognit,gocyclo,cyclop,errcheck,staticcheck,gocritic,lll,ineffassign,exhaustive,nestif,gomnd,revive // defer uplifts on analysers
 func (v *standardProviderStringAstVisitor) Visit(node sqlparser.SQLNode) error {
 	buf := sqlparser.NewTrackedBuffer(v.formatter)
 
@@ -694,6 +694,7 @@ func (v *standardProviderStringAstVisitor) Visit(node sqlparser.SQLNode) error {
 		if v.namespaceCollection.GetAnalyticsCacheTableNamespaceConfigurator().IsAllowed(str) {
 			v.containsAnalyticsCacheMaterial = true
 			var err error
+			//nolint:wastedassign // TODO: review
 			str, err = v.namespaceCollection.GetAnalyticsCacheTableNamespaceConfigurator().RenderTemplate(str)
 			if err != nil {
 				return err

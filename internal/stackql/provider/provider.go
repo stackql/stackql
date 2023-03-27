@@ -13,6 +13,8 @@ import (
 	"github.com/stackql/stackql/internal/stackql/sql_system"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
+
+	sdk_internal_dto "github.com/stackql/go-openapistackql/pkg/internaldto"
 )
 
 const (
@@ -90,11 +92,11 @@ type IProvider interface {
 
 	InferDescribeMethod(openapistackql.Resource) (openapistackql.OperationStore, string, error)
 
-	InferMaxResultsElement(openapistackql.OperationStore) internaldto.HTTPElement
+	InferMaxResultsElement(openapistackql.OperationStore) sdk_internal_dto.HTTPElement
 
-	InferNextPageRequestElement(internaldto.Heirarchy) internaldto.HTTPElement
+	InferNextPageRequestElement(internaldto.Heirarchy) sdk_internal_dto.HTTPElement
 
-	InferNextPageResponseElement(internaldto.Heirarchy) internaldto.HTTPElement
+	InferNextPageResponseElement(internaldto.Heirarchy) sdk_internal_dto.HTTPElement
 
 	PersistStaticExternalSQLDataSource(dto.RuntimeCtx) error
 

@@ -4,16 +4,17 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/stackql/go-openapistackql/openapistackql"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/handler"
-	"github.com/stackql/stackql/internal/stackql/httpbuild"
 	"github.com/stackql/stackql/internal/stackql/httpmiddleware"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
+	"github.com/stackql/stackql/internal/stackql/util"
 )
 
 type Insert struct {
@@ -57,7 +58,7 @@ func (ss *Insert) GetTail() primitivegraph.PrimitiveNode {
 	return ss.root
 }
 
-//nolint:funlen,errcheck,gocognit,cyclop // TODO: fix this
+//nolint:funlen,errcheck,gocognit,cyclop,gocyclo // TODO: fix this
 func (ss *Insert) Build() error {
 	node := ss.node
 	tbl := ss.tbl
@@ -82,9 +83,6 @@ func (ss *Insert) Build() error {
 		return err
 	}
 	_, _, responseAnalysisErr := tbl.GetResponseSchemaAndMediaType()
-	// if err != nil {
-	// 	return err
-	// }
 	insertPrimitive := primitive.NewHTTPRestPrimitive(
 		prov,
 		nil,
@@ -109,15 +107,33 @@ func (ss *Insert) Build() error {
 		if inputErr != nil {
 			return internaldto.NewErroneousExecutorOutput(inputErr)
 		}
-		httpArmoury, httpErr := httpbuild.BuildHTTPRequestCtx(node, prov, m, svc, inputMap, nil)
+		pr, prErr := prov.GetProvider()
+		if prErr != nil {
+			return internaldto.NewErroneousExecutorOutput(prErr)
+		}
+		paramMap, paramErr := util.ExtractSQLNodeParams(node, inputMap)
+		if err != nil {
+			return internaldto.NewErroneousExecutorOutput(paramErr)
+		}
+		httpPreparator := openapistackql.NewHTTPPreparator(
+			pr,
+			svc,
+			m,
+			inputMap,
+			paramMap,
+			nil,
+			nil,
+			logging.GetLogger(),
+		)
+		httpArmoury, httpErr := httpPreparator.BuildHTTPRequestCtx()
 		if httpErr != nil {
 			return internaldto.NewErroneousExecutorOutput(httpErr)
 		}
 
-		var zeroArityExecutors []func() internaldto.ExecutorOutput
+		var nullaryExecutors []func() internaldto.ExecutorOutput
 		for _, r := range httpArmoury.GetRequestParams() {
 			req := r
-			zeroArityEx := func() internaldto.ExecutorOutput {
+			nullaryEx := func() internaldto.ExecutorOutput {
 				// logging.GetLogger().Infoln(fmt.Sprintf("req.BodyBytes = %s", string(req.BodyBytes)))
 				// req.Context.SetBody(bytes.NewReader(req.BodyBytes))
 				// logging.GetLogger().Infoln(fmt.Sprintf("req.Context = %v", req.Context))
@@ -133,7 +149,6 @@ func (ss *Insert) Build() error {
 						return internaldto.NewErroneousExecutorOutput(err)
 					}
 				}
-				composeAsyncMonitor(handlerCtx, insertPrimitive, tbl, commentDirectives)
 				if err != nil {
 					return internaldto.NewErroneousExecutorOutput(err)
 				}
@@ -182,11 +197,11 @@ func (ss *Insert) Build() error {
 				)
 			}
 
-			zeroArityExecutors = append(zeroArityExecutors, zeroArityEx)
+			nullaryExecutors = append(nullaryExecutors, nullaryEx)
 		}
 		resultSet := internaldto.NewErroneousExecutorOutput(fmt.Errorf("no executions detected"))
 		if !isAwait {
-			for _, ei := range zeroArityExecutors {
+			for _, ei := range nullaryExecutors {
 				execInstance := ei
 				aPrioriMessages := resultSet.GetMessages()
 				resultSet = execInstance()
@@ -197,7 +212,7 @@ func (ss *Insert) Build() error {
 			}
 			return resultSet
 		}
-		for _, eI := range zeroArityExecutors {
+		for _, eI := range nullaryExecutors {
 			execInstance := eI
 			dependentInsertPrimitive := primitive.NewHTTPRestPrimitive(
 				prov,
