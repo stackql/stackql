@@ -249,7 +249,7 @@ func (tw *TableWriter) Write(res sqldata.ISQLResultStream) error {
 					header := tw.getHeader(r)
 					table = tablewriter.NewWriter(tw.writer)
 					table.SetHeader(header)
-					isHeaderRead = true //nolint:ineffassign // looks false positive
+					isHeaderRead = true //nolint:ineffassign,wastedassign // looks false positive
 				}
 				rowsArr, err = tabulateResults(r, tw.ci)
 				if err != nil {
@@ -336,7 +336,7 @@ func (csvw *CSVWriter) Write(res sqldata.ISQLResultStream) error {
 					if !csvw.outputCtx.RuntimeContext.CSVHeadersDisable {
 						w.Write(header) //nolint:errcheck // output stream is not critical
 					}
-					isHeaderRead = true //nolint:ineffassign // looks false +ve
+					isHeaderRead = true //nolint:ineffassign,wastedassign // looks false +ve
 				}
 				rowsArr, err = tabulateResults(r, csvw.ci)
 				if err != nil {
@@ -386,7 +386,7 @@ func (rw *RawWriter) Write(res sqldata.ISQLResultStream) error {
 						//nolint:errcheck // output stream is not critical
 						w.Write([]byte(fmt.Sprintf("%s%s", strings.Join(header, ","), fmt.Sprintln(""))))
 					}
-					isHeaderRead = true //nolint:ineffassign // looks false +ve
+					isHeaderRead = true //nolint:ineffassign,wastedassign // looks false +ve
 				}
 				rowsArr, err = tabulateResults(r, rw.ci)
 				if err != nil {
@@ -437,7 +437,7 @@ func (rw *PrettyWriter) Write(res sqldata.ISQLResultStream) error {
 						//nolint:errcheck // output stream is not critical
 						w.Write([]byte(fmt.Sprintf("%s%s", strings.Join(header, ","), fmt.Sprintln(""))))
 					}
-					isHeaderRead = true //nolint:ineffassign // looks false +ve
+					isHeaderRead = true //nolint:ineffassign,wastedassign // looks false +ve
 				}
 				rowsArr, err = tabulateResults(r, rw.ci)
 				if err != nil {

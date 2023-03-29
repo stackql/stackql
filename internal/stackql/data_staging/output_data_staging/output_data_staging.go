@@ -73,6 +73,7 @@ type naivePacketPreparator struct {
 }
 
 func (st *naivePacketPreparator) PrepareOutputPacket() (dto.OutputPacket, error) {
+	//nolint:rowserrcheck // TODO: fix this
 	r, err := st.source.SourceSQLRows()
 	logging.GetLogger().Infoln(fmt.Sprintf("select result = %v, error = %v", r, err))
 	if err != nil {

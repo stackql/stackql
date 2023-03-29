@@ -20,6 +20,8 @@ import (
 
 	"github.com/stackql/go-openapistackql/openapistackql"
 
+	sdk_internal_dto "github.com/stackql/go-openapistackql/pkg/internaldto"
+
 	"net/http"
 	"regexp"
 	"strings"
@@ -57,11 +59,12 @@ func (gp *GenericProvider) GetVersion() string {
 func (gp *GenericProvider) GetServiceShard(
 	serviceKey string,
 	resourceKey string,
-	runtimeCtx dto.RuntimeCtx,
+	runtimeCtx dto.RuntimeCtx, //nolint:revive // future proofing
 ) (openapistackql.Service, error) {
 	return gp.discoveryAdapter.GetServiceShard(gp.provider, serviceKey, resourceKey)
 }
 
+//nolint:revive // future proofing
 func (gp *GenericProvider) PersistStaticExternalSQLDataSource(runtimeCtx dto.RuntimeCtx) error {
 	return gp.discoveryAdapter.PersistStaticExternalSQLDataSource(gp.provider)
 }
@@ -370,6 +373,7 @@ func (gp *GenericProvider) getProviderServices() (map[string]openapistackql.Prov
 	return retVal, nil
 }
 
+//nolint:revive // future proofing
 func (gp *GenericProvider) GetProviderServicesRedacted(
 	runtimeCtx dto.RuntimeCtx,
 	extended bool,
@@ -377,6 +381,7 @@ func (gp *GenericProvider) GetProviderServicesRedacted(
 	return gp.getProviderServices()
 }
 
+//nolint:revive // future proofing
 func (gp *GenericProvider) GetResourcesRedacted(
 	currentService string,
 	runtimeCtx dto.RuntimeCtx,
@@ -406,6 +411,7 @@ func (gp *GenericProvider) GetCurrentService() string {
 	return gp.currentService
 }
 
+//nolint:revive // future proofing
 func (gp *GenericProvider) GetResourcesMap(
 	serviceKey string,
 	runtimeCtx dto.RuntimeCtx,
@@ -436,18 +442,18 @@ func (gp *GenericProvider) GetProvider() (openapistackql.Provider, error) {
 	return gp.provider, nil
 }
 
-func (gp *GenericProvider) InferMaxResultsElement(openapistackql.OperationStore) internaldto.HTTPElement {
-	return internaldto.NewHTTPElement(
-		internaldto.QueryParam,
+func (gp *GenericProvider) InferMaxResultsElement(openapistackql.OperationStore) sdk_internal_dto.HTTPElement {
+	return sdk_internal_dto.NewHTTPElement(
+		sdk_internal_dto.QueryParam,
 		"maxResults",
 	)
 }
 
-func (gp *GenericProvider) InferNextPageRequestElement(ho internaldto.Heirarchy) internaldto.HTTPElement {
+func (gp *GenericProvider) InferNextPageRequestElement(ho internaldto.Heirarchy) sdk_internal_dto.HTTPElement {
 	st, ok := gp.getPaginationRequestTokenSemantic(ho)
 	if ok {
-		if tp, err := internaldto.ExtractHTTPElement(st.GetLocation()); err == nil {
-			rv := internaldto.NewHTTPElement(
+		if tp, err := sdk_internal_dto.ExtractHTTPElement(st.GetLocation()); err == nil {
+			rv := sdk_internal_dto.NewHTTPElement(
 				tp,
 				st.GetKey(),
 			)
@@ -460,13 +466,13 @@ func (gp *GenericProvider) InferNextPageRequestElement(ho internaldto.Heirarchy)
 	}
 	switch gp.GetProviderString() {
 	case "github", "okta":
-		return internaldto.NewHTTPElement(
-			internaldto.RequestString,
+		return sdk_internal_dto.NewHTTPElement(
+			sdk_internal_dto.RequestString,
 			"",
 		)
 	default:
-		return internaldto.NewHTTPElement(
-			internaldto.QueryParam,
+		return sdk_internal_dto.NewHTTPElement(
+			sdk_internal_dto.QueryParam,
 			"pageToken",
 		)
 	}
@@ -490,11 +496,11 @@ func (gp *GenericProvider) getPaginationResponseTokenSemantic(
 	return ho.GetMethod().GetPaginationResponseTokenSemantic()
 }
 
-func (gp *GenericProvider) InferNextPageResponseElement(ho internaldto.Heirarchy) internaldto.HTTPElement {
+func (gp *GenericProvider) InferNextPageResponseElement(ho internaldto.Heirarchy) sdk_internal_dto.HTTPElement {
 	st, ok := gp.getPaginationResponseTokenSemantic(ho)
 	if ok {
-		if tp, err := internaldto.ExtractHTTPElement(st.GetLocation()); err == nil {
-			rv := internaldto.NewHTTPElement(
+		if tp, err := sdk_internal_dto.ExtractHTTPElement(st.GetLocation()); err == nil {
+			rv := sdk_internal_dto.NewHTTPElement(
 				tp,
 				st.GetKey(),
 			)
@@ -507,15 +513,15 @@ func (gp *GenericProvider) InferNextPageResponseElement(ho internaldto.Heirarchy
 	}
 	switch gp.GetProviderString() {
 	case "github", "okta":
-		rv := internaldto.NewHTTPElement(
-			internaldto.Header,
+		rv := sdk_internal_dto.NewHTTPElement(
+			sdk_internal_dto.Header,
 			"Link",
 		)
 		rv.SetTransformer(openapistackql.DefaultLinkHeaderTransformer)
 		return rv
 	default:
-		return internaldto.NewHTTPElement(
-			internaldto.BodyAttribute,
+		return sdk_internal_dto.NewHTTPElement(
+			sdk_internal_dto.BodyAttribute,
 			"nextPageToken",
 		)
 	}

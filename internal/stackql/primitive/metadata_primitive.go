@@ -15,14 +15,14 @@ type MetaDataPrimitive struct {
 	id         int64
 }
 
-func (pr *MetaDataPrimitive) SetTxnID(id int) {
+func (pr *MetaDataPrimitive) SetTxnID(_ int) {
 }
 
-func (pr *MetaDataPrimitive) IncidentData(fromID int64, input internaldto.ExecutorOutput) error {
+func (pr *MetaDataPrimitive) IncidentData(_ int64, _ internaldto.ExecutorOutput) error {
 	return fmt.Errorf("MetaDataPrimitive cannot handle IncidentData")
 }
 
-func (pr *MetaDataPrimitive) SetInputAlias(alias string, id int64) error {
+func (pr *MetaDataPrimitive) SetInputAlias(_ string, _ int64) error {
 	return nil
 }
 

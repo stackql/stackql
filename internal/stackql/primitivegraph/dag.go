@@ -168,10 +168,12 @@ func (pg *standardPrimitiveGraph) Optimise() error {
 	return err
 }
 
+//nolint:revive // future proofing
 func (pg *standardPrimitiveGraph) IncidentData(fromID int64, input internaldto.ExecutorOutput) error {
 	return nil
 }
 
+//nolint:revive // future proofing
 func (pg *standardPrimitiveGraph) SetInputAlias(alias string, id int64) error {
 	return nil
 }

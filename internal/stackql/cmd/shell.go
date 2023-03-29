@@ -202,7 +202,7 @@ var shellCmd = &cobra.Command{
 			if errors.Is(err, readline.ErrInterrupt) {
 				if len(rawLine) == 0 {
 					break
-				} else {
+				} else { //nolint:revive // TODO: investigate
 					continue
 				}
 			} else if errors.Is(err, io.EOF) {

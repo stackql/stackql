@@ -17,7 +17,7 @@ type SingleAcquireAndSelect struct {
 
 func NewSingleAcquireAndSelect(
 	graph primitivegraph.PrimitiveGraph,
-	txnControlCounters internaldto.TxnControlCounters,
+	txnControlCounters internaldto.TxnControlCounters, //nolint:revive // future proofing
 	handlerCtx handler.HandlerContext,
 	insertContainer tableinsertioncontainer.TableInsertionContainer,
 	insertCtx drm.PreparedStatementCtx,

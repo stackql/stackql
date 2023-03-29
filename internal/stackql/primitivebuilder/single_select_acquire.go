@@ -17,6 +17,8 @@ import (
 	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/util"
+
+	sdk_internal_dto "github.com/stackql/go-openapistackql/pkg/internaldto"
 )
 
 // SingleSelectAcquire implements the Builder interface
@@ -166,8 +168,11 @@ func (ss *SingleSelectAcquire) Build() error {
 				//nolint:errcheck // TODO: fix
 				ss.insertionContainer.SetTableTxnCounters(tableName, olderTcc)
 				ss.insertPreparedStatementCtx.SetGCCtrlCtrs(olderTcc)
-				//nolint:lll // chained
-				r, sqlErr := ss.handlerCtx.GetNamespaceCollection().GetAnalyticsCacheTableNamespaceConfigurator().Read(tableName, reqEncoding, ss.drmCfg.GetControlAttributes().GetControlInsertEncodedIDColumnName(), nonControlColumnNames)
+				//nolint:rowserrcheck // TODO: fix this
+				r, sqlErr := ss.handlerCtx.GetNamespaceCollection().GetAnalyticsCacheTableNamespaceConfigurator().Read(
+					tableName, reqEncoding,
+					ss.drmCfg.GetControlAttributes().GetControlInsertEncodedIDColumnName(),
+					nonControlColumnNames)
 				if sqlErr != nil {
 					internaldto.NewErroneousExecutorOutput(sqlErr)
 				}
@@ -334,18 +339,18 @@ func (ss *SingleSelectAcquire) Build() error {
 	return nil
 }
 
-func extractNextPageToken(res *response.Response, tokenKey internaldto.HTTPElement) string {
+func extractNextPageToken(res response.Response, tokenKey sdk_internal_dto.HTTPElement) string {
 	//nolint:exhaustive // TODO: review
 	switch tokenKey.GetType() {
-	case internaldto.BodyAttribute:
+	case sdk_internal_dto.BodyAttribute:
 		return extractNextPageTokenFromBody(res, tokenKey)
-	case internaldto.Header:
+	case sdk_internal_dto.Header:
 		return extractNextPageTokenFromHeader(res, tokenKey)
 	}
 	return ""
 }
 
-func extractNextPageTokenFromHeader(res *response.Response, tokenKey internaldto.HTTPElement) string {
+func extractNextPageTokenFromHeader(res response.Response, tokenKey sdk_internal_dto.HTTPElement) string {
 	r := res.GetHttpResponse()
 	if r == nil {
 		return ""
@@ -369,7 +374,7 @@ func extractNextPageTokenFromHeader(res *response.Response, tokenKey internaldto
 	return ""
 }
 
-func extractNextPageTokenFromBody(res *response.Response, tokenKey internaldto.HTTPElement) string {
+func extractNextPageTokenFromBody(res response.Response, tokenKey sdk_internal_dto.HTTPElement) string {
 	elem, err := httpelement.NewHTTPElement(tokenKey.GetName(), "body")
 	if err == nil {
 		rawVal, rawErr := res.ExtractElement(elem)

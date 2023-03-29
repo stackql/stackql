@@ -18,7 +18,7 @@ func NewStaticMapStream(
 	}
 }
 
-func (ss *StaticMapStream) Write(input []map[string]interface{}) error {
+func (ss *StaticMapStream) Write(_ []map[string]interface{}) error {
 	return nil
 }
 

@@ -251,7 +251,7 @@ func extractInsertValColumns(
 //nolint:gocognit,gocritic // not overly complex
 func extractUpdateValColumns(
 	updateStmt *sqlparser.Update,
-	includePlaceholders bool, //nolint:unparam // TODO: review
+	includePlaceholders bool, //nolint:unparam,revive // TODO: review
 ) (map[*sqlparser.ColName]interface{}, []*sqlparser.ColName, error) {
 	var nonValCols []*sqlparser.ColName
 	retVal := make(map[*sqlparser.ColName]interface{})

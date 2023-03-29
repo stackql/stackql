@@ -211,13 +211,18 @@ func extractRaw(raw interface{}) (string, error) {
 
 func arrangeOrderedColumnRow(
 	row map[string]interface{},
-	columns []sqldata.ISQLColumn, //nolint:unparam // TODO: review
+	columns []sqldata.ISQLColumn, //nolint:unparam,revive // TODO: review
 	columnOrder []string,
 	colNumber int,
 ) []interface{} {
 	rowVals := make([]interface{}, colNumber)
 	for j := range columnOrder {
-		rowVals[j] = openapistackql_util.InterfaceToBytes(row[columnOrder[j]], strings.ToLower(columnOrder[j]) == "error")
+		v := row[columnOrder[j]]
+		switch u := v.(type) { //nolint:gocritic // shim to excise sqlparser from go-openapistackql
+		case sqlparser.BoolVal:
+			v = bool(u)
+		}
+		rowVals[j] = openapistackql_util.InterfaceToBytes(v, strings.ToLower(columnOrder[j]) == "error")
 	}
 	return rowVals
 }
@@ -404,7 +409,7 @@ func emptyProtectResultSet(rv internaldto.ExecutorOutput, columns []string) inte
 	return rv
 }
 
-func DescribeRowSort(rows map[string]map[string]interface{}) []string {
+func DescribeRowSort(_ map[string]map[string]interface{}) []string {
 	return describeRowSortArr
 }
 

@@ -47,7 +47,7 @@ func (v *standardParserTableExtractAstVisitor) MergeTableExprs() sqlparser.Table
 	return v.tables
 }
 
-//nolint:dupl,funlen,gocognit,gocyclo,cyclop,errcheck,staticcheck,gocritic,lll,exhaustive,nestif,gomnd // defer uplifts on analysers
+//nolint:dupl,funlen,gocognit,gocyclo,cyclop,errcheck,staticcheck,gocritic,lll,exhaustive,nestif,gomnd,revive // defer uplifts on analysers
 func (v *standardParserTableExtractAstVisitor) Visit(node sqlparser.SQLNode) error {
 	var err error
 
@@ -416,7 +416,7 @@ func (v *standardParserTableExtractAstVisitor) Visit(node sqlparser.SQLNode) err
 					return err
 				}
 			default:
-				err = n.Accept(v) //nolint:ineffassign // defer uplifts
+				err = n.Accept(v) //nolint:ineffassign,wastedassign // defer uplifts
 				err = v.Visit(n)
 				if err != nil {
 					return err

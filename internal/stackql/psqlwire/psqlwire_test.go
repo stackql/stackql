@@ -1,3 +1,4 @@
+//nolint:revive // pristing testing code not a priority
 package psqlwire_test
 
 import (

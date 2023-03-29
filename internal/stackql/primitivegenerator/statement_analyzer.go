@@ -12,7 +12,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
-	"github.com/stackql/stackql/internal/stackql/httpbuild"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/iqlerror"
 	"github.com/stackql/stackql/internal/stackql/iqlutil"
@@ -618,7 +617,7 @@ func (pb *standardPrimitiveGenerator) AnalyzeUnaryExec(
 	if err != nil {
 		return nil, err
 	}
-	_, err = pb.buildRequestContext(handlerCtx, node, meta, httpbuild.NewExecContext(execPayload, rsc), nil)
+	_, err = pb.buildRequestContext(handlerCtx, node, meta, openapistackql.NewExecContext(execPayload, rsc), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -654,7 +653,7 @@ func (pb *standardPrimitiveGenerator) analyzeExec(pbi planbuilderinput.PlanBuild
 	if !ok {
 		return fmt.Errorf("could not cast node of type '%T' to required Exec", pbi.GetStatement())
 	}
-	tbl, err := pb.AnalyzeUnaryExec(pbi, handlerCtx, node, nil, nil) //nolint:ineffassign,staticcheck,lll // TODO: handle error
+	tbl, err := pb.AnalyzeUnaryExec(pbi, handlerCtx, node, nil, nil) //nolint:ineffassign,staticcheck,lll,wastedassign // TODO: handle error
 	insertionContainer, err := tableinsertioncontainer.NewTableInsertionContainer(tbl, handlerCtx.GetSQLEngine())
 	if err != nil {
 		return err
@@ -894,14 +893,14 @@ func (pb *standardPrimitiveGenerator) expandTable(
 	return nil
 }
 
-//nolint:unparam // TODO: review
+//nolint:unparam,revive // TODO: review
 func (pb *standardPrimitiveGenerator) buildRequestContext(
 	handlerCtx handler.HandlerContext,
 	node sqlparser.SQLNode,
 	meta tablemetadata.ExtendedTableMetadata,
-	execContext httpbuild.ExecContext,
+	execContext openapistackql.ExecContext,
 	rowsToInsert map[int]map[int]interface{},
-) (httpbuild.HTTPArmoury, error) {
+) (openapistackql.HTTPArmoury, error) {
 	m, err := meta.GetMethod()
 	if err != nil {
 		return nil, err
@@ -914,11 +913,29 @@ func (pb *standardPrimitiveGenerator) buildRequestContext(
 	if err != nil {
 		return nil, err
 	}
-	httpArmoury, err := httpbuild.BuildHTTPRequestCtx(node, prov, m, svc, rowsToInsert, execContext)
-	if err != nil {
+	pr, prErr := prov.GetProvider()
+	if prErr != nil {
+		return nil, prErr
+	}
+	paramMap, paramErr := util.ExtractSQLNodeParams(node, rowsToInsert)
+	if paramErr != nil {
+		return nil, paramErr
+	}
+	httpPreparator := openapistackql.NewHTTPPreparator(
+		pr,
+		svc,
+		m,
+		rowsToInsert,
+		paramMap,
+		nil,
+		execContext,
+		logging.GetLogger(),
+	)
+	httpArmoury, httpErr := httpPreparator.BuildHTTPRequestCtx()
+	if httpErr != nil {
 		return nil, err
 	}
-	meta.WithGetHTTPArmoury(func() (httpbuild.HTTPArmoury, error) { return httpArmoury, nil })
+	meta.WithGetHTTPArmoury(func() (openapistackql.HTTPArmoury, error) { return httpArmoury, nil })
 	return httpArmoury, err
 }
 

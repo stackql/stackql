@@ -43,7 +43,11 @@ func TestSelectComputeDisksOrderByCrtTmstpAscPaginated(t *testing.T) {
 		handlerCtx.SetQuery(testobjects.SelectGoogleComputeDisksOrderCreationTmstpAsc)
 		dr, _ := NewStackQLDriver(handlerCtx)
 		querySubmitter := querysubmit.NewQuerySubmitter()
-		response := querySubmitter.SubmitQuery(handlerCtx)
+		prepareErr := querySubmitter.PrepareQuery(handlerCtx)
+		if prepareErr != nil {
+			t.Fatalf("Test failed: %v", prepareErr)
+		}
+		response := querySubmitter.SubmitQuery()
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 
@@ -81,7 +85,11 @@ func TestSelectComputeDisksAggOrderBySizeAscPaginated(t *testing.T) {
 		handlerCtx.SetQuery(testobjects.SelectGoogleComputeDisksAggOrderSizeAsc)
 		dr, _ := NewStackQLDriver(handlerCtx)
 		querySubmitter := querysubmit.NewQuerySubmitter()
-		response := querySubmitter.SubmitQuery(handlerCtx)
+		prepareErr := querySubmitter.PrepareQuery(handlerCtx)
+		if prepareErr != nil {
+			t.Fatalf("Test failed: %v", prepareErr)
+		}
+		response := querySubmitter.SubmitQuery()
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 
@@ -119,7 +127,11 @@ func TestSelectComputeDisksAggOrderBySizeDescPaginated(t *testing.T) {
 		handlerCtx.SetQuery(testobjects.SelectGoogleComputeDisksAggOrderSizeDesc)
 		dr, _ := NewStackQLDriver(handlerCtx)
 		querySubmitter := querysubmit.NewQuerySubmitter()
-		response := querySubmitter.SubmitQuery(handlerCtx)
+		prepareErr := querySubmitter.PrepareQuery(handlerCtx)
+		if prepareErr != nil {
+			t.Fatalf("Test failed: %v", prepareErr)
+		}
+		response := querySubmitter.SubmitQuery()
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 
@@ -157,7 +169,11 @@ func TestSelectComputeDisksAggTotalSizePaginated(t *testing.T) {
 		handlerCtx.SetQuery(testobjects.SelectGoogleComputeDisksAggSizeTotal)
 		dr, _ := NewStackQLDriver(handlerCtx)
 		querySubmitter := querysubmit.NewQuerySubmitter()
-		response := querySubmitter.SubmitQuery(handlerCtx)
+		prepareErr := querySubmitter.PrepareQuery(handlerCtx)
+		if prepareErr != nil {
+			t.Fatalf("Test failed: %v", prepareErr)
+		}
+		response := querySubmitter.SubmitQuery()
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 
@@ -195,7 +211,11 @@ func TestSelectComputeDisksAggTotalStringPaginated(t *testing.T) {
 		handlerCtx.SetQuery(testobjects.SelectGoogleComputeDisksAggStringTotal)
 		dr, _ := NewStackQLDriver(handlerCtx)
 		querySubmitter := querysubmit.NewQuerySubmitter()
-		response := querySubmitter.SubmitQuery(handlerCtx)
+		prepareErr := querySubmitter.PrepareQuery(handlerCtx)
+		if prepareErr != nil {
+			t.Fatalf("Test failed: %v", prepareErr)
+		}
+		response := querySubmitter.SubmitQuery()
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 

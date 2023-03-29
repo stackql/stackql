@@ -45,7 +45,11 @@ func TestSelectComputeDisksOrderByCrtTmstpAscPlusJsonExtract(t *testing.T) {
 		handlerCtx.SetQuery(testobjects.SelectGoogleComputeDisksOrderCreationTmstpAscPlusJSONExtract)
 		dr, _ := NewStackQLDriver(handlerCtx)
 		querySubmitter := querysubmit.NewQuerySubmitter()
-		response := querySubmitter.SubmitQuery(handlerCtx)
+		prepareErr := querySubmitter.PrepareQuery(handlerCtx)
+		if prepareErr != nil {
+			t.Fatalf("Test failed: %v", prepareErr)
+		}
+		response := querySubmitter.SubmitQuery()
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 
@@ -82,7 +86,11 @@ func TestSelectComputeDisksOrderByCrtTmstpAscPlusCoalesceJsonExtract(t *testing.
 		handlerCtx.SetQuery(testobjects.SelectGoogleComputeDisksOrderCreationTmstpAscPlusJSONExtractCoalesce)
 		dr, _ := NewStackQLDriver(handlerCtx)
 		querySubmitter := querysubmit.NewQuerySubmitter()
-		response := querySubmitter.SubmitQuery(handlerCtx)
+		prepareErr := querySubmitter.PrepareQuery(handlerCtx)
+		if prepareErr != nil {
+			t.Fatalf("Test failed: %v", prepareErr)
+		}
+		response := querySubmitter.SubmitQuery()
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 
@@ -119,7 +127,11 @@ func TestSelectComputeDisksOrderByCrtTmstpAscPlusCoalesceJsonInstr(t *testing.T)
 		handlerCtx.SetQuery(testobjects.SelectGoogleComputeDisksOrderCreationTmstpAscPlusJsonExtractInstr)
 		dr, _ := NewStackQLDriver(handlerCtx)
 		querySubmitter := querysubmit.NewQuerySubmitter()
-		response := querySubmitter.SubmitQuery(handlerCtx)
+		prepareErr := querySubmitter.PrepareQuery(handlerCtx)
+		if prepareErr != nil {
+			t.Fatalf("Test failed: %v", prepareErr)
+		}
+		response := querySubmitter.SubmitQuery()
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 

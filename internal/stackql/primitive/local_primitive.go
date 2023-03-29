@@ -19,7 +19,7 @@ func NewLocalPrimitive(executor func(pc IPrimitiveCtx) internaldto.ExecutorOutpu
 	}
 }
 
-func (pr *LocalPrimitive) SetTxnID(id int) {
+func (pr *LocalPrimitive) SetTxnID(_ int) {
 }
 
 func (pr *LocalPrimitive) IncidentData(fromID int64, input internaldto.ExecutorOutput) error {
@@ -27,7 +27,7 @@ func (pr *LocalPrimitive) IncidentData(fromID int64, input internaldto.ExecutorO
 	return nil
 }
 
-func (pr *LocalPrimitive) SetInputAlias(alias string, id int64) error {
+func (pr *LocalPrimitive) SetInputAlias(_ string, _ int64) error {
 	return nil
 }
 

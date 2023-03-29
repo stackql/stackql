@@ -45,7 +45,7 @@ type AsyncHTTPMonitorPrimitive struct {
 	comments            sqlparser.CommentDirectives
 }
 
-func (pr *AsyncHTTPMonitorPrimitive) SetTxnID(id int) {
+func (pr *AsyncHTTPMonitorPrimitive) SetTxnID(_ int) {
 }
 
 func (pr *AsyncHTTPMonitorPrimitive) IncidentData(fromID int64, input internaldto.ExecutorOutput) error {
@@ -95,7 +95,7 @@ func (pr *AsyncHTTPMonitorPrimitive) GetInputFromAlias(string) (internaldto.Exec
 	return rv, false
 }
 
-func (pr *AsyncHTTPMonitorPrimitive) SetExecutor(ex func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput) error {
+func (pr *AsyncHTTPMonitorPrimitive) SetExecutor(_ func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput) error {
 	return fmt.Errorf("AsyncHTTPMonitorPrimitive does not support SetExecutor()")
 }
 

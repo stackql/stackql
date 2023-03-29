@@ -89,7 +89,7 @@ func (v *standardTableRouteAstVisitor) GetAnnotationSlice() []taxonomy.Annotatio
 	return v.annotationSlice
 }
 
-//nolint:funlen,gocognit,cyclop,gocyclo,staticcheck,gocritic,errcheck,govet // inherently complex functionality
+//nolint:funlen,gocognit,cyclop,gocyclo,staticcheck,gocritic,errcheck,govet,revive // inherently complex functionality
 func (v *standardTableRouteAstVisitor) Visit(node sqlparser.SQLNode) error {
 	var err error
 

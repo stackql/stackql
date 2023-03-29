@@ -74,7 +74,7 @@ func (cd *Driver) getLightErrorColorAttributes() []Attribute {
 	}
 }
 
-func (cd *Driver) GetErrorColorAttributes(runtimeCtx dto.RuntimeCtx) []Attribute {
+func (cd *Driver) GetErrorColorAttributes(_ dto.RuntimeCtx) []Attribute {
 	var retVal []Attribute
 	switch cd.runtimeCtx.ColorScheme {
 	case dto.LightColorScheme:

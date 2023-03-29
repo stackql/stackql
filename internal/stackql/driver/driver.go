@@ -38,7 +38,7 @@ func (dr *basicStackQLDriver) ProcessDryRun(handlerCtx handler.HandlerContext) {
 }
 
 func (dr *basicStackQLDriver) ProcessQuery(handlerCtx handler.HandlerContext) {
-	responses, ok := processQueryOrQueries(handlerCtx)
+	responses, ok := dr.processQueryOrQueries(handlerCtx)
 	if ok {
 		for _, r := range responses {
 			responsehandler.HandleResponse(handlerCtx, r) //nolint:errcheck // TODO: investigate
@@ -50,12 +50,13 @@ type basicStackQLDriver struct {
 	handlerCtx handler.HandlerContext
 }
 
+//nolint:revive // TODO: review
 func (dr *basicStackQLDriver) HandleSimpleQuery(ctx context.Context, query string) (sqldata.ISQLResultStream, error) {
 	dr.handlerCtx.SetRawQuery(query)
 	// if strings.Count(query, ";") > 1 {
 	// 	return nil, fmt.Errorf("only support single queries in server mode at this time")
 	// }
-	res, ok := processQueryOrQueries(dr.handlerCtx)
+	res, ok := dr.processQueryOrQueries(dr.handlerCtx)
 	if !ok {
 		return nil, fmt.Errorf("no SQLresults available")
 	}
@@ -92,7 +93,9 @@ func NewStackQLDriver(handlerCtx handler.HandlerContext) (StackQLDriver, error) 
 	}, nil
 }
 
-func processQueryOrQueries(handlerCtx handler.HandlerContext) ([]internaldto.ExecutorOutput, bool) {
+func (dr *basicStackQLDriver) processQueryOrQueries(
+	handlerCtx handler.HandlerContext,
+) ([]internaldto.ExecutorOutput, bool) {
 	var retVal []internaldto.ExecutorOutput
 	cmdString := handlerCtx.GetRawQuery()
 	querySubmitter := querysubmit.NewQuerySubmitter()
@@ -101,7 +104,12 @@ func processQueryOrQueries(handlerCtx handler.HandlerContext) ([]internaldto.Exe
 			continue
 		}
 		handlerCtx.SetQuery(s)
-		retVal = append(retVal, querySubmitter.SubmitQuery(handlerCtx))
+		err := querySubmitter.PrepareQuery(handlerCtx)
+		if err != nil {
+			retVal = append(retVal, internaldto.NewErroneousExecutorOutput(err))
+			continue
+		}
+		retVal = append(retVal, querySubmitter.SubmitQuery())
 	}
 	return retVal, true
 }

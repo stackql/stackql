@@ -87,7 +87,7 @@ func (v *standardParserTableAliasPairingAstVisitor) GetColRefs() parserutil.ColT
 	return v.colRefs
 }
 
-//nolint:dupl,funlen,gocognit,gocyclo,cyclop,staticcheck,errcheck,gocritic,govet,lll,exhaustive,nestif,gomnd // defer uplifts on analysers
+//nolint:dupl,funlen,gocognit,gocyclo,cyclop,staticcheck,errcheck,gocritic,govet,lll,exhaustive,nestif,gomnd,revive // defer uplifts on analysers
 func (v *standardParserTableAliasPairingAstVisitor) Visit(node sqlparser.SQLNode) error {
 	var err error
 

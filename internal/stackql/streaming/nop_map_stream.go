@@ -11,7 +11,7 @@ func NewNopMapStream() MapStream {
 	return &StandardMapStream{}
 }
 
-func (ss *NopMapStream) Write(input []map[string]interface{}) error {
+func (ss *NopMapStream) Write(_ []map[string]interface{}) error {
 	return nil
 }
 

@@ -31,6 +31,7 @@ type InitialPassesScreener interface {
 	GetInstructionType() InstructionType
 	GetPlanBuilderInput() planbuilderinput.PlanBuilderInput
 	GetStatementType() sqlparser.StatementType
+	GetStatement() sqlparser.Statement
 	GetIndirectionDepth() int
 	IsCacheExemptMaterialDetected() bool
 }
@@ -83,6 +84,10 @@ func (sp *standardInitialPasses) GetPlanBuilderInput() planbuilderinput.PlanBuil
 
 func (sp *standardInitialPasses) GetStatementType() sqlparser.StatementType {
 	return sqlparser.ASTToStatementType(sp.result.AST)
+}
+
+func (sp *standardInitialPasses) GetStatement() sqlparser.Statement {
+	return sp.result.AST
 }
 
 func (sp *standardInitialPasses) IsCacheExemptMaterialDetected() bool {

@@ -127,8 +127,11 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 				ss.handlerCtx.GetGarbageCollector().Update(tableName, olderTcc, currentTcc)
 				ss.insertionContainer.SetTableTxnCounters(tableName, olderTcc)
 				ss.insertPreparedStatementCtx.SetGCCtrlCtrs(olderTcc)
-				//nolint:lll // chained
-				r, sqlErr := ss.handlerCtx.GetNamespaceCollection().GetAnalyticsCacheTableNamespaceConfigurator().Read(tableName, reqEncoding, ss.drmCfg.GetControlAttributes().GetControlInsertEncodedIDColumnName(), nonControlColumnNames)
+				//nolint:rowserrcheck // TODO: fix this
+				r, sqlErr := ss.handlerCtx.GetNamespaceCollection().GetAnalyticsCacheTableNamespaceConfigurator().Read(
+					tableName, reqEncoding,
+					ss.drmCfg.GetControlAttributes().GetControlInsertEncodedIDColumnName(),
+					nonControlColumnNames)
 				if sqlErr != nil {
 					internaldto.NewErroneousExecutorOutput(sqlErr)
 				}

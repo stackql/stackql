@@ -212,11 +212,11 @@ func GetHeirarchyFromStatement(
 			}
 			viewDTO, isView := handlerCtx.GetSQLSystem().GetViewByName(hIds.GetTableName()) //nolint:govet // acceptable shadow
 			if isView {
-				hIds = hIds.WithView(viewDTO) //nolint:staticcheck // TODO: fix this
+				hIds = hIds.WithView(viewDTO) //nolint:staticcheck,wastedassign // TODO: fix this
 			}
 			return retVal, nil
 		}
-		hIds = hIds.WithView(viewDTO) //nolint:staticcheck // TODO: fix this
+		hIds = hIds.WithView(viewDTO) //nolint:staticcheck,wastedassign // TODO: fix this
 		return retVal, nil
 	}
 	var method openapistackql.OperationStore
@@ -246,7 +246,7 @@ func GetHeirarchyFromStatement(
 		var meth openapistackql.OperationStore
 		var methStr string
 		if getFirstAvailableMethod {
-			meth, methStr, err = prov.GetFirstMethodForAction( //nolint:staticcheck,ineffassign // TODO: fix this
+			meth, methStr, err = prov.GetFirstMethodForAction( //nolint:staticcheck,ineffassign,wastedassign // TODO: fix this
 				retVal.GetHeirarchyIds().GetServiceStr(),
 				retVal.GetHeirarchyIds().GetResourceStr(),
 				methodAction,

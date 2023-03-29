@@ -29,7 +29,7 @@ type Exec struct {
 func NewExec(
 	graph primitivegraph.PrimitiveGraph,
 	handlerCtx handler.HandlerContext,
-	node sqlparser.SQLNode,
+	node sqlparser.SQLNode, //nolint:revive // future proofing
 	tbl tablemetadata.ExtendedTableMetadata,
 	isAwait bool,
 	isShowResults bool,

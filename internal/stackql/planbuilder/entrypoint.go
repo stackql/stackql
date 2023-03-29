@@ -15,7 +15,7 @@ var (
 )
 
 type PlanBuilder interface {
-	BuildPlanFromContext(handlerCtx handler.HandlerContext) (*plan.Plan, error)
+	BuildPlanFromContext(handlerCtx handler.HandlerContext) (plan.Plan, error)
 }
 
 func NewPlanBuilder() PlanBuilder {
@@ -25,7 +25,7 @@ func NewPlanBuilder() PlanBuilder {
 type standardPlanBuilder struct{}
 
 //nolint:funlen,gocognit // no big deal
-func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerContext) (*plan.Plan, error) {
+func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerContext) (plan.Plan, error) {
 	defer handlerCtx.GetGarbageCollector().Close()
 	tcc, err := internaldto.NewTxnControlCounters(handlerCtx.GetTxnCounterMgr())
 	handlerCtx.GetTxnStore().Put(tcc.GetTxnID())
@@ -37,16 +37,16 @@ func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerCo
 	planKey := handlerCtx.GetQuery()
 	if qp, ok := handlerCtx.GetLRUCache().Get(planKey); ok && isPlanCacheEnabled() {
 		logging.GetLogger().Infoln("retrieving query plan from cache")
-		pl, plOk := qp.(*plan.Plan)
+		pl, plOk := qp.(plan.Plan)
 		if plOk {
 			txnID, tErr := handlerCtx.GetTxnCounterMgr().GetNextTxnID()
 			if tErr != nil {
 				return nil, tErr
 			}
-			pl.Instructions.SetTxnID(txnID)
+			pl.SetTxnID(txnID)
 			return pl, nil
 		}
-		return qp.(*plan.Plan), nil
+		return qp.(plan.Plan), nil
 	}
 	qPlan := plan.NewPlan(
 		handlerCtx.GetRawQuery(),
@@ -78,7 +78,9 @@ func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerCo
 	}
 	// TODO: full analysis of view, which will become child of top level query
 	statementType := earlyPassScreenerAnalyzer.GetStatementType()
-	qPlan.Type = statementType
+	qPlan.SetType(statementType)
+
+	qPlan.SetStatement(earlyPassScreenerAnalyzer.GetStatement())
 
 	switch earlyPassScreenerAnalyzer.GetInstructionType() { //nolint:exhaustive // acceptable
 	case earlyanalysis.InternallyRoutableInstruction:
@@ -86,10 +88,10 @@ func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerCo
 		if createInstructionError != nil {
 			return nil, createInstructionError
 		}
-		qPlan.Instructions = pGBuilder.getPlanGraph()
+		qPlan.SetInstructions(pGBuilder.getPlanGraph())
 
-		if qPlan.Instructions != nil {
-			err = qPlan.Instructions.Optimise()
+		if qPlan.GetInstructions() != nil {
+			err = qPlan.GetInstructions().Optimise()
 			if err != nil {
 				return createErroneousPlan(handlerCtx, qPlan, rowSort, err)
 			}
@@ -111,10 +113,10 @@ func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerCo
 		qPlan.SetCacheable(false)
 	}
 
-	qPlan.Instructions = pGBuilder.getPlanGraph()
+	qPlan.SetInstructions(pGBuilder.getPlanGraph())
 
-	if qPlan.Instructions != nil {
-		err = qPlan.Instructions.Optimise()
+	if qPlan.GetInstructions() != nil {
+		err = qPlan.GetInstructions().Optimise()
 		if err != nil {
 			return createErroneousPlan(handlerCtx, qPlan, rowSort, err)
 		}
