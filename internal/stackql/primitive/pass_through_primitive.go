@@ -3,6 +3,7 @@ package primitive
 import (
 	"fmt"
 
+	"github.com/stackql/stackql/internal/stackql/acid/binlog"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
 )
@@ -27,6 +28,18 @@ func NewPassThroughPrimitive(
 }
 
 func (pr *PassThroughPrimitive) SetTxnID(_ int) {
+}
+
+func (pr *PassThroughPrimitive) IsNotMutating() bool {
+	return true
+}
+
+func (pr *PassThroughPrimitive) GetRedoLog() (binlog.LogEntry, bool) {
+	return nil, false
+}
+
+func (pr *PassThroughPrimitive) GetUndoLog() (binlog.LogEntry, bool) {
+	return nil, false
 }
 
 func (pr *PassThroughPrimitive) SetInputAlias(_ string, _ int64) error {

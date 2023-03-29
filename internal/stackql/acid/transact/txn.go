@@ -10,6 +10,7 @@ var (
 	coordinatorOnce      sync.Once
 	coordinatorSingleton Coordinator
 	_                    Coordinator = &standardCoordinator{}
+	_                    Manager     = &basicTransactionManager{}
 )
 
 // The transaction coordinator is singleton
@@ -52,7 +53,55 @@ type Manager interface {
 	// in the case that the transaction
 	// context disallows a particular
 	// operation or type of operation.
-	Enqueue(op Operation) error
+	Enqueue(Statement) error
 	// Get the depth of transaction nesting.
 	Depth() int
+}
+
+type basicTransactionManager struct {
+	parent            Manager
+	statementSequence []Statement
+}
+
+func newBasicTransactionManager(parent Manager) Manager {
+	return &basicTransactionManager{
+		parent: parent,
+	}
+}
+
+func NewManager() Manager {
+	return newBasicTransactionManager(nil)
+}
+
+func (m *basicTransactionManager) Begin() (Manager, error) {
+	if m.Depth() >= 1 {
+		return nil, fmt.Errorf("cannot begin nested transaction")
+	}
+	return newBasicTransactionManager(m), nil
+}
+
+func (m *basicTransactionManager) Commit() error {
+	for _, stmt := range m.statementSequence {
+		coDomain := stmt.Execute()
+		err := coDomain.GetError()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (m *basicTransactionManager) Rollback() error {
+	return fmt.Errorf("not implemented")
+}
+
+func (m *basicTransactionManager) Enqueue(_ Statement) error {
+	return fmt.Errorf("not implemented")
+}
+
+func (m *basicTransactionManager) Depth() int {
+	if m.parent != nil {
+		return m.parent.Depth() + 1
+	}
+	return 0
 }

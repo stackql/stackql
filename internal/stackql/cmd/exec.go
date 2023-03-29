@@ -118,8 +118,8 @@ func (cr *commandRunnerImpl) RunCommand(handlerCtx handler.HandlerContext, outfi
 	stackqlDriver, err := driver.NewStackQLDriver(handlerCtx)
 	iqlerror.PrintErrorAndExitOneIfError(err)
 	if handlerCtx.GetRuntimeContext().DryRunFlag {
-		stackqlDriver.ProcessDryRun(handlerCtx)
+		stackqlDriver.ProcessDryRun(handlerCtx.GetRawQuery())
 		return
 	}
-	stackqlDriver.ProcessQuery(handlerCtx)
+	stackqlDriver.ProcessQuery(handlerCtx.GetRawQuery())
 }

@@ -3,6 +3,7 @@ package primitive
 import (
 	"fmt"
 
+	"github.com/stackql/stackql/internal/stackql/acid/binlog"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/provider"
@@ -16,6 +17,18 @@ type MetaDataPrimitive struct {
 }
 
 func (pr *MetaDataPrimitive) SetTxnID(_ int) {
+}
+
+func (pr *MetaDataPrimitive) IsNotMutating() bool {
+	return true
+}
+
+func (pr *MetaDataPrimitive) GetRedoLog() (binlog.LogEntry, bool) {
+	return nil, false
+}
+
+func (pr *MetaDataPrimitive) GetUndoLog() (binlog.LogEntry, bool) {
+	return nil, false
 }
 
 func (pr *MetaDataPrimitive) IncidentData(_ int64, _ internaldto.ExecutorOutput) error {

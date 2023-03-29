@@ -25,6 +25,7 @@ import (
 
 	"github.com/stackql/stackql/internal/stackql/color"
 	"github.com/stackql/stackql/internal/stackql/config"
+	"github.com/stackql/stackql/internal/stackql/driver"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/entryutil"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -184,6 +185,13 @@ var shellCmd = &cobra.Command{
 			}
 		}
 
+		sessionRunnerInstance, sessionErr := newSessionRunner(
+			handlerCtx,
+			outfile,
+			outfile,
+		)
+		iqlerror.PrintErrorAndExitOneIfError(sessionErr)
+
 		l, err := readline.NewEx(readlineCfg)
 		if err != nil {
 			panic(err)
@@ -234,10 +242,8 @@ var shellCmd = &cobra.Command{
 					if qErr != nil {
 						io.WriteString(outErrFile, "\r\n"+qErr.Error()+"\r\n") //nolint:errcheck // TODO: investigate
 					}
-					handlerCtx.SetRawQuery(queryToExecute)
 					l.WriteToHistory(rawQuery) //nolint:errcheck // TODO: investigate
-					cr := newCommandRunner()
-					cr.RunCommand(handlerCtx, outfile, outErrFile)
+					sessionRunnerInstance.RunCommand(queryToExecute)
 					sb.Reset()
 					sb.WriteString(line[subSemiColonIdx+1:])
 				} else {
@@ -260,4 +266,60 @@ var shellCmd = &cobra.Command{
 		l.Config.Stdout = outfile
 		l.Config.Stderr = outErrFile
 	},
+}
+
+type sessionRunner interface {
+	RunCommand(command string)
+}
+
+func newSessionRunner(
+	handlerCtx handler.HandlerContext,
+	outfile io.Writer,
+	outErrFile io.Writer,
+) (sessionRunner, error) {
+	var err error
+	if outfile == nil {
+		outfile, err = getOutputFile(handlerCtx.GetRuntimeContext().OutfilePath)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if outErrFile == nil {
+		outErrFile, err = getOutputFile(writer.StdErrStr)
+		if err != nil {
+			return nil, err
+		}
+	}
+	handlerCtx.SetOutfile(outfile)
+	handlerCtx.SetOutErrFile(outErrFile)
+	stackqlDriver, driverErr := driver.NewStackQLDriver(handlerCtx)
+	if driverErr != nil {
+		return nil, driverErr
+	}
+	return &sessionRunnerImpl{
+		handlerCtx: handlerCtx,
+		outfile:    outfile,
+		outErrFile: outErrFile,
+		drv:        stackqlDriver,
+	}, nil
+}
+
+type sessionRunnerImpl struct {
+	handlerCtx handler.HandlerContext
+	outfile    io.Writer
+	outErrFile io.Writer
+	drv        driver.StackQLDriver
+}
+
+func (cr *sessionRunnerImpl) RunCommand(
+	query string,
+) {
+	defer iqlerror.HandlePanic(cr.handlerCtx.GetOutErrFile())
+	cloneCtx := cr.handlerCtx.Clone()
+	cloneCtx.SetRawQuery(query)
+	if cloneCtx.GetRuntimeContext().DryRunFlag {
+		cr.drv.ProcessDryRun(query)
+		return
+	}
+	cr.drv.ProcessQuery(query)
 }

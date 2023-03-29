@@ -11,6 +11,15 @@ providerServices:
       $ref: aws/v0.1.0/services/cloud_control.yaml
     title: Cloud Control API
     version: v0.1.0
+  cloud_watch:
+    description: cloud_watch
+    id: cloud_watch:v0.1.0
+    name: cloud_watch
+    preferred: true
+    service:
+      $ref: aws/v0.1.0/services/cloudwatch.yaml
+    title: Cloud Control API
+    version: v0.1.0
   ec2:
     description: ec2
     id: ec2:v0.1.0

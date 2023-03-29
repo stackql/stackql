@@ -10,6 +10,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/httpmiddleware"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/primitive_context"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
@@ -36,6 +37,7 @@ type SingleSelectAcquire struct {
 	rowSort                    func(map[string]map[string]interface{}) []string
 	root                       primitivegraph.PrimitiveNode
 	stream                     streaming.MapStream
+	isNotMutating              bool //nolint:unused // TODO: build out
 }
 
 func NewSingleSelectAcquire(
@@ -326,11 +328,14 @@ func (ss *SingleSelectAcquire) Build() error {
 	prep := func() drm.PreparedStatementCtx {
 		return ss.insertPreparedStatementCtx
 	}
+	primitiveCtx := primitive_context.NewPrimitiveContext()
+	primitiveCtx.SetIsNotMutating(true)
 	insertPrim := primitive.NewHTTPRestPrimitive(
 		prov,
 		ex,
 		prep,
 		ss.txnCtrlCtr,
+		primitiveCtx,
 	)
 	graph := ss.graph
 	insertNode := graph.CreatePrimitiveNode(insertPrim)

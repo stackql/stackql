@@ -9,6 +9,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/httpmiddleware"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/primitive_context"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
@@ -132,6 +133,7 @@ func (ss *Delete) Build() error {
 		ex,
 		nil,
 		nil,
+		primitive_context.NewPrimitiveContext(),
 	)
 	if ss.isAwait {
 		deletePrimitive, err = composeAsyncMonitor(handlerCtx, deletePrimitive, tbl, nil)

@@ -70,7 +70,7 @@ func TestSelectOktaApplicationAppsDriver(t *testing.T) {
 	}
 
 	dr, _ := NewStackQLDriver(handlerCtx)
-	dr.ProcessQuery(handlerCtx)
+	dr.ProcessQuery(handlerCtx.GetRawQuery())
 
 	t.Logf("simple select driver integration test passed")
 }

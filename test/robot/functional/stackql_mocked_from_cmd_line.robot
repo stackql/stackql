@@ -922,6 +922,21 @@ Select Star of EC2 Instances Returns Expected Result
     ...    vol-1234567890abcdef0
     ...    stdout=${CURDIR}/tmp/Select-Star-of-EC2-Instances-Returns-Expected-Result.tmp
 
+# This also tests passing integers in request body parameters
+Select Projection of CloudWatch Log Events Returns Expected Result
+    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test likely due to case sensitivity and incorrect XML property aliasing
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}    
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select timestamp, message from aws.cloud_watch.log_events where region \= 'ap-southeast-1' and data__logGroupName \= 'LogGroupResourceExample' and data__logStreamName \= 'test-01' and data__startTime \= 1680528971190 and data__limit \= 2 ;
+    ...    some rubbish 02
+    ...    stdout=${CURDIR}/tmp/Select-Projection-of-CloudWatch-Log-Events-Returns-Expected-Result.tmp
+
 Postgres Casting query returns some non error result
     Pass Execution If    "${SQL_BACKEND}" != "postgres_tcp"    This is a dashboard query regression test for postgres backends only
     Run Stackql Exec Command No Errors

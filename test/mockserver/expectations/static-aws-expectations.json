@@ -241,6 +241,50 @@
       "method": "POST",
       "path": "/",
       "headers": {
+        "Authorization": ["^.*SignedHeaders=content-encoding;content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target": [ "Logs_20140328.GetLogEvents" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "logGroupName": "LogGroupResourceExample",
+          "logStreamName": "test-01",
+          "startTime": 1680528971190,
+          "limit": 2
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/json" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "events": [
+          {
+            "eventId": "10000000000000000000000000000000000000000000000000000001",
+            "ingestionTime": 1680528971832,
+            "message": "some rubbish 01",
+            "timestamp": 1680528971193
+          },
+          {
+            "eventId": "10000000000000000000000000000000000000000000000000000002",
+            "ingestionTime": 1680528972832,
+            "message": "some rubbish 02",
+            "timestamp": 1680528972193
+          }
+        ],
+        "nextBackwardToken": "b/31132629274945519779805322857203735586714454643391594505",
+        "nextForwardToken": "f/31132629323784151764587387538205132201699397759403884544"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
         "Authorization": ["^.*SignedHeaders.*content-type;host;x-amz-date;x-amz-target.*$" ],
         "X-Amz-Target": [ "CloudApiService.GetResource" ]
       },
