@@ -57,7 +57,7 @@ func TestSelectComputeDisksOrderByCrtTmstpAsc(t *testing.T) {
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 
-		dr.ProcessQuery(handlerCtx)
+		dr.ProcessQuery(handlerCtx.GetRawQuery())
 	}
 
 	stackqltestutil.SetupSimpleSelectGoogleComputeDisks(t, 1)
@@ -98,7 +98,7 @@ func TestSelectComputeDisksAggOrderBySizeAsc(t *testing.T) {
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 
-		dr.ProcessQuery(handlerCtx)
+		dr.ProcessQuery(handlerCtx.GetRawQuery())
 	}
 
 	stackqltestutil.SetupSimpleSelectGoogleComputeDisks(t, 1)
@@ -139,7 +139,7 @@ func TestSelectComputeDisksAggOrderBySizeDesc(t *testing.T) {
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 
-		dr.ProcessQuery(handlerCtx)
+		dr.ProcessQuery(handlerCtx.GetRawQuery())
 	}
 
 	stackqltestutil.SetupSimpleSelectGoogleComputeDisks(t, 1)
@@ -180,7 +180,7 @@ func TestSelectComputeDisksAggTotalSize(t *testing.T) {
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 
-		dr.ProcessQuery(handlerCtx)
+		dr.ProcessQuery(handlerCtx.GetRawQuery())
 	}
 
 	stackqltestutil.SetupSimpleSelectGoogleComputeDisks(t, 1)
@@ -221,7 +221,7 @@ func TestSelectComputeDisksAggTotalString(t *testing.T) {
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 
-		dr.ProcessQuery(handlerCtx)
+		dr.ProcessQuery(handlerCtx.GetRawQuery())
 	}
 
 	stackqltestutil.SetupSimpleSelectGoogleComputeDisks(t, 1)

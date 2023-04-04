@@ -51,7 +51,7 @@ func TestSelectComputeDisksOrderByCrtTmstpAscPaginated(t *testing.T) {
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 
-		dr.ProcessQuery(handlerCtx)
+		dr.ProcessQuery(handlerCtx.GetRawQuery())
 	}
 
 	stackqltestutil.SetupSimpleSelectGoogleComputeDisksPaginated(t)
@@ -93,7 +93,7 @@ func TestSelectComputeDisksAggOrderBySizeAscPaginated(t *testing.T) {
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 
-		dr.ProcessQuery(handlerCtx)
+		dr.ProcessQuery(handlerCtx.GetRawQuery())
 	}
 
 	stackqltestutil.SetupSimpleSelectGoogleComputeDisksPaginated(t)
@@ -135,7 +135,7 @@ func TestSelectComputeDisksAggOrderBySizeDescPaginated(t *testing.T) {
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 
-		dr.ProcessQuery(handlerCtx)
+		dr.ProcessQuery(handlerCtx.GetRawQuery())
 	}
 
 	stackqltestutil.SetupSimpleSelectGoogleComputeDisksPaginated(t)
@@ -177,7 +177,7 @@ func TestSelectComputeDisksAggTotalSizePaginated(t *testing.T) {
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 
-		dr.ProcessQuery(handlerCtx)
+		dr.ProcessQuery(handlerCtx.GetRawQuery())
 	}
 
 	stackqltestutil.SetupSimpleSelectGoogleComputeDisksPaginated(t)
@@ -219,7 +219,7 @@ func TestSelectComputeDisksAggTotalStringPaginated(t *testing.T) {
 		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 
-		dr.ProcessQuery(handlerCtx)
+		dr.ProcessQuery(handlerCtx.GetRawQuery())
 	}
 
 	stackqltestutil.SetupSimpleSelectGoogleComputeDisksPaginated(t)

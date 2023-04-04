@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/lib/pq/oid"
@@ -193,11 +194,24 @@ func TransformSQLRawParameters(input map[string]interface{}) (map[string]interfa
 	return rv, nil
 }
 
-func extractRaw(raw interface{}) (string, error) {
+func extractRaw(raw interface{}) (interface{}, error) {
 	switch r := raw.(type) {
 	case *sqlparser.SQLVal:
-		val := string(r.Val)
-		return val, nil
+		switch r.Type { //nolint:exhaustive // TODO: review
+		case sqlparser.StrVal:
+			val := string(r.Val)
+			return val, nil
+		case sqlparser.IntVal:
+			val, err := strconv.Atoi(string(r.Val))
+			return val, err
+		case sqlparser.FloatVal:
+			val := string(r.Val)
+			return val, nil
+		default:
+			val := string(r.Val)
+			return val, nil
+		}
+
 	case *sqlparser.ColName:
 		kr := r.Name.GetRawVal()
 		return kr, nil

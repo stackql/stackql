@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/stackql/stackql/internal/stackql/acid/binlog"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/httpmiddleware"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
@@ -46,6 +47,18 @@ type AsyncHTTPMonitorPrimitive struct {
 }
 
 func (pr *AsyncHTTPMonitorPrimitive) SetTxnID(_ int) {
+}
+
+func (pr *AsyncHTTPMonitorPrimitive) IsNotMutating() bool {
+	return false
+}
+
+func (pr *AsyncHTTPMonitorPrimitive) GetRedoLog() (binlog.LogEntry, bool) {
+	return nil, false
+}
+
+func (pr *AsyncHTTPMonitorPrimitive) GetUndoLog() (binlog.LogEntry, bool) {
+	return nil, false
 }
 
 func (pr *AsyncHTTPMonitorPrimitive) IncidentData(fromID int64, input internaldto.ExecutorOutput) error {

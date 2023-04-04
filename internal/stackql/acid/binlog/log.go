@@ -1,4 +1,4 @@
-package transact
+package binlog
 
 type LogEntry interface {
 	// Get bytes

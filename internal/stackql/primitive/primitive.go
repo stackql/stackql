@@ -3,6 +3,7 @@ package primitive
 import (
 	"io"
 
+	"github.com/stackql/stackql/internal/stackql/acid/binlog"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 )
@@ -21,6 +22,13 @@ type IPrimitive interface {
 	SetExecutor(func(pc IPrimitiveCtx) internaldto.ExecutorOutput) error
 
 	SetTxnID(int)
+	//
+	IsNotMutating() bool
+
+	// Get the redo log entry.
+	GetRedoLog() (binlog.LogEntry, bool)
+	// Get the undo log entry.
+	GetUndoLog() (binlog.LogEntry, bool)
 
 	IncidentData(int64, internaldto.ExecutorOutput) error
 

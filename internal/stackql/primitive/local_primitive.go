@@ -1,6 +1,7 @@
 package primitive
 
 import (
+	"github.com/stackql/stackql/internal/stackql/acid/binlog"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 )
@@ -17,6 +18,18 @@ func NewLocalPrimitive(executor func(pc IPrimitiveCtx) internaldto.ExecutorOutpu
 		Executor: executor,
 		Inputs:   make(map[int64]internaldto.ExecutorOutput),
 	}
+}
+
+func (pr *LocalPrimitive) IsNotMutating() bool {
+	return false
+}
+
+func (pr *LocalPrimitive) GetRedoLog() (binlog.LogEntry, bool) {
+	return nil, false
+}
+
+func (pr *LocalPrimitive) GetUndoLog() (binlog.LogEntry, bool) {
+	return nil, false
 }
 
 func (pr *LocalPrimitive) SetTxnID(_ int) {

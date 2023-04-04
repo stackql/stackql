@@ -61,7 +61,7 @@ func TestSimpleSelectGoogleComputeInstanceDriver(t *testing.T) {
 		t.Fatalf("Test failed: %v", err)
 	}
 
-	dr.ProcessQuery(handlerCtx)
+	dr.ProcessQuery(handlerCtx.GetRawQuery())
 
 	t.Logf("simple select driver integration test passed")
 }
@@ -262,6 +262,7 @@ func TestK8sTheHardWayAsync(t *testing.T) {
 
 		handlerCtx.SetOutfile(outFile)
 		handlerCtx.SetOutErrFile(os.Stderr)
+		handlerCtx.SetCurrentProvider("google")
 
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
@@ -270,7 +271,7 @@ func TestK8sTheHardWayAsync(t *testing.T) {
 		dr, _ := NewStackQLDriver(handlerCtx)
 
 		handlerCtx.SetRawQuery(strings.TrimSpace(string(megaQueryConcat)))
-		dr.ProcessQuery(handlerCtx)
+		dr.ProcessQuery(handlerCtx.GetRawQuery())
 	}
 
 	stackqltestutil.SetupK8sTheHardWayE2eSuccess(t)
@@ -317,7 +318,7 @@ func TestSimpleDryRunK8sTheHardWayDriver(t *testing.T) {
 		handlerCtx.SetOutErrFile(os.Stderr)
 
 		dr, _ := NewStackQLDriver(handlerCtx)
-		dr.ProcessDryRun(handlerCtx)
+		dr.ProcessDryRun(handlerCtx.GetRawQuery())
 	}
 
 	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedK8STheHardWayRenderedFile})

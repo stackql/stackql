@@ -10,6 +10,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/httpmiddleware"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/primitive_context"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
@@ -88,6 +89,7 @@ func (ss *Insert) Build() error {
 		nil,
 		nil,
 		nil,
+		primitive_context.NewPrimitiveContext(),
 	)
 	target := make(map[string]interface{})
 	ex := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
@@ -219,6 +221,7 @@ func (ss *Insert) Build() error {
 				nil,
 				nil,
 				nil,
+				primitive_context.NewPrimitiveContext(),
 			)
 			err = dependentInsertPrimitive.SetExecutor(func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 				return execInstance()

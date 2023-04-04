@@ -53,7 +53,7 @@ func TestSimpleInsertDependentGoogleComputeDiskAsync(t *testing.T) {
 		}
 
 		dr, _ := NewStackQLDriver(handlerCtx)
-		dr.ProcessQuery(handlerCtx)
+		dr.ProcessQuery(handlerCtx.GetRawQuery())
 	}
 
 	stackqltestutil.SetupDependentInsertGoogleComputeDisks(t)
@@ -96,7 +96,7 @@ func TestSimpleInsertDependentGoogleComputeDiskAsyncReversed(t *testing.T) {
 		}
 
 		dr, _ := NewStackQLDriver(handlerCtx)
-		dr.ProcessQuery(handlerCtx)
+		dr.ProcessQuery(handlerCtx.GetRawQuery())
 	}
 
 	stackqltestutil.SetupDependentInsertGoogleComputeDisks(t)
@@ -139,7 +139,7 @@ func TestSimpleInsertDependentGoogleBQDatasetAsync(t *testing.T) {
 		}
 
 		dr, _ := NewStackQLDriver(handlerCtx)
-		dr.ProcessQuery(handlerCtx)
+		dr.ProcessQuery(handlerCtx.GetRawQuery())
 	}
 
 	stackqltestutil.SetupDependentInsertGoogleBQDatasets(t)
@@ -182,7 +182,7 @@ func TestSimpleSelectExecDependentGoogleOrganizationsGetIamPolicy(t *testing.T) 
 		}
 
 		dr, _ := NewStackQLDriver(handlerCtx)
-		dr.ProcessQuery(handlerCtx)
+		dr.ProcessQuery(handlerCtx.GetRawQuery())
 	}
 
 	stackqltestutil.SetupExecGoogleOrganizationsGetIamPolicy(t)

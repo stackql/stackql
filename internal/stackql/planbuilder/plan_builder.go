@@ -7,9 +7,11 @@ import (
 	"strings"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
+	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/routeanalysis"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/primitive_context"
 	"github.com/stackql/stackql/internal/stackql/iqlerror"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
@@ -46,6 +48,7 @@ type planGraphBuilder interface {
 type standardPlanGraphBuilder struct {
 	planGraph              primitivegraph.PrimitiveGraph
 	rootPrimitiveGenerator primitivegenerator.PrimitiveGenerator
+	transactionContext     txn_context.ITransactionContext
 }
 
 func (pgb *standardPlanGraphBuilder) setRootPrimitiveGenerator(
@@ -57,9 +60,10 @@ func (pgb *standardPlanGraphBuilder) getPlanGraph() primitivegraph.PrimitiveGrap
 	return pgb.planGraph
 }
 
-func newPlanGraphBuilder(concurrencyLimit int) planGraphBuilder {
+func newPlanGraphBuilder(concurrencyLimit int, transactionContext txn_context.ITransactionContext) planGraphBuilder {
 	return &standardPlanGraphBuilder{
-		planGraph: primitivegraph.NewPrimitiveGraph(concurrencyLimit),
+		planGraph:          primitivegraph.NewPrimitiveGraph(concurrencyLimit),
+		transactionContext: transactionContext,
 	}
 }
 
@@ -403,7 +407,7 @@ func (pgb *standardPlanGraphBuilder) handleDelete(pbi planbuilderinput.PlanBuild
 		}
 		return nil
 	}
-	pr := primitive.NewHTTPRestPrimitive(nil, nil, nil, nil)
+	pr := primitive.NewHTTPRestPrimitive(nil, nil, nil, nil, primitive_context.NewPrimitiveContext())
 	pgb.planGraph.CreatePrimitiveNode(pr)
 	return nil
 }
@@ -668,7 +672,7 @@ func (pgb *standardPlanGraphBuilder) handleInsert(pbi planbuilderinput.PlanBuild
 		}
 		return nil
 	}
-	pr := primitive.NewHTTPRestPrimitive(nil, nil, nil, nil)
+	pr := primitive.NewHTTPRestPrimitive(nil, nil, nil, nil, primitive_context.NewPrimitiveContext())
 	pgb.planGraph.CreatePrimitiveNode(pr)
 	return nil
 }
@@ -724,7 +728,7 @@ func (pgb *standardPlanGraphBuilder) handleUpdate(pbi planbuilderinput.PlanBuild
 		}
 		return nil
 	}
-	pr := primitive.NewHTTPRestPrimitive(nil, nil, nil, nil)
+	pr := primitive.NewHTTPRestPrimitive(nil, nil, nil, nil, primitive_context.NewPrimitiveContext())
 	pgb.planGraph.CreatePrimitiveNode(pr)
 	return nil
 }
@@ -767,7 +771,7 @@ func (pgb *standardPlanGraphBuilder) handleExec(pbi planbuilderinput.PlanBuilder
 		}
 		return nil
 	}
-	pr := primitive.NewHTTPRestPrimitive(nil, nil, nil, nil)
+	pr := primitive.NewHTTPRestPrimitive(nil, nil, nil, nil, primitive_context.NewPrimitiveContext())
 	pgb.planGraph.CreatePrimitiveNode(pr)
 	return nil
 }

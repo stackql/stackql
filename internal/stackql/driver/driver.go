@@ -6,48 +6,120 @@ import (
 	"strings"
 
 	"github.com/stackql/psql-wire/pkg/sqldata"
+	"github.com/stackql/stackql/internal/stackql/acid/transact"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/querysubmit"
 	"github.com/stackql/stackql/internal/stackql/responsehandler"
+	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/util"
+	"github.com/stackql/stackql/pkg/txncounter"
 
 	sqlbackend "github.com/stackql/psql-wire/pkg/sqlbackend"
 )
 
 var (
-	_ StackQLDriver = &basicStackQLDriver{}
+	_ StackQLDriver                = &basicStackQLDriver{}
+	_ sqlbackend.SQLBackendFactory = &basicStackQLDriverFactory{}
+	_ StackQLDriverFactory         = &basicStackQLDriverFactory{}
 )
 
-type StackQLDriver interface {
-	sqlbackend.ISQLBackend
-	ProcessDryRun(handlerCtx handler.HandlerContext)
-	ProcessQuery(handlerCtx handler.HandlerContext)
+type StackQLDriverFactory interface {
+	NewSQLDriver() (StackQLDriver, error)
 }
 
-func (dr *basicStackQLDriver) ProcessDryRun(handlerCtx handler.HandlerContext) {
+type basicStackQLDriverFactory struct {
+	handlerCtx handler.HandlerContext
+}
+
+func (sdf *basicStackQLDriverFactory) NewSQLBackend() (sqlbackend.ISQLBackend, error) {
+	return sdf.newSQLDriver()
+}
+
+func (sdf *basicStackQLDriverFactory) NewSQLDriver() (StackQLDriver, error) {
+	return sdf.newSQLDriver()
+}
+
+func (sdf *basicStackQLDriverFactory) newSQLDriver() (StackQLDriver, error) {
+	txCtr, err := getTxnCounterManager(sdf.handlerCtx.GetSQLEngine())
+	if err != nil {
+		return nil, err
+	}
+	txnCoordinator, txnCoordinatorErr := transact.GetCoordinatorInstance()
+	if txnCoordinatorErr != nil {
+		return nil, txnCoordinatorErr
+	}
+	clonedCtx := sdf.handlerCtx.Clone()
+	clonedCtx.SetTxnCounterMgr(txCtr)
+	rv := &basicStackQLDriver{
+		handlerCtx:     clonedCtx,
+		txnCoordinator: txnCoordinator,
+	}
+	return rv, nil
+}
+
+func NewStackQLDriverFactory(handlerCtx handler.HandlerContext) sqlbackend.SQLBackendFactory {
+	return &basicStackQLDriverFactory{
+		handlerCtx: handlerCtx,
+	}
+}
+
+func getTxnCounterManager(sqlEngine sqlengine.SQLEngine) (txncounter.Manager, error) {
+	genID, err := sqlEngine.GetCurrentGenerationID()
+	if err != nil {
+		genID, err = sqlEngine.GetNextGenerationID()
+		if err != nil {
+			return nil, err
+		}
+	}
+	sessionID, err := sqlEngine.GetNextSessionID(genID)
+	if err != nil {
+		return nil, err
+	}
+	return txncounter.NewTxnCounterManager(genID, sessionID), nil
+}
+
+// StackQLDriver lifetimes map to the concept of "session".
+// It is responsible for handling queries
+// and their bounding transactions.
+type StackQLDriver interface {
+	sqlbackend.ISQLBackend
+	ProcessDryRun(string)
+	ProcessQuery(string)
+}
+
+func (dr *basicStackQLDriver) ProcessDryRun(query string) {
 	resultMap := map[string]map[string]interface{}{
 		"1": {
-			"query": handlerCtx.GetRawQuery(),
+			"query": query,
 		},
 	}
 	logging.GetLogger().Debugln("dryrun query underway...")
 	response := util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, resultMap, nil, nil, nil, nil))
-	responsehandler.HandleResponse(handlerCtx, response) //nolint:errcheck // TODO: investigate
+	responsehandler.HandleResponse(dr.handlerCtx, response) //nolint:errcheck // TODO: investigate
 }
 
-func (dr *basicStackQLDriver) ProcessQuery(handlerCtx handler.HandlerContext) {
-	responses, ok := dr.processQueryOrQueries(handlerCtx)
+func (dr *basicStackQLDriver) ProcessQuery(query string) {
+	clonedCtx := dr.handlerCtx.Clone()
+	clonedCtx.SetRawQuery(query)
+	responses, ok := dr.processQueryOrQueries(clonedCtx)
 	if ok {
 		for _, r := range responses {
-			responsehandler.HandleResponse(handlerCtx, r) //nolint:errcheck // TODO: investigate
+			responsehandler.HandleResponse(clonedCtx, r) //nolint:errcheck // TODO: investigate
 		}
 	}
 }
 
 type basicStackQLDriver struct {
-	handlerCtx handler.HandlerContext
+	handlerCtx     handler.HandlerContext
+	txnCoordinator transact.Coordinator
+}
+
+func (dr *basicStackQLDriver) CloneSQLBackend() sqlbackend.ISQLBackend {
+	return &basicStackQLDriver{
+		handlerCtx: dr.handlerCtx.Clone(),
+	}
 }
 
 //nolint:revive // TODO: review
@@ -103,8 +175,9 @@ func (dr *basicStackQLDriver) processQueryOrQueries(
 		if s == "" {
 			continue
 		}
-		handlerCtx.SetQuery(s)
-		err := querySubmitter.PrepareQuery(handlerCtx)
+		clonedCtx := handlerCtx.Clone()
+		clonedCtx.SetQuery(s)
+		err := querySubmitter.PrepareQuery(clonedCtx)
 		if err != nil {
 			retVal = append(retVal, internaldto.NewErroneousExecutorOutput(err))
 			continue

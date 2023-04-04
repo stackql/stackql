@@ -1,6 +1,7 @@
 package planbuilder
 
 import (
+	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/earlyanalysis"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
@@ -18,11 +19,15 @@ type PlanBuilder interface {
 	BuildPlanFromContext(handlerCtx handler.HandlerContext) (plan.Plan, error)
 }
 
-func NewPlanBuilder() PlanBuilder {
-	return &standardPlanBuilder{}
+func NewPlanBuilder(transactionContext txn_context.ITransactionContext) PlanBuilder {
+	return &standardPlanBuilder{
+		transactionContext: transactionContext,
+	}
 }
 
-type standardPlanBuilder struct{}
+type standardPlanBuilder struct {
+	transactionContext txn_context.ITransactionContext
+}
 
 //nolint:funlen,gocognit // no big deal
 func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerContext) (plan.Plan, error) {
@@ -62,7 +67,7 @@ func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerCo
 		return createErroneousPlan(handlerCtx, qPlan, rowSort, err)
 	}
 
-	pGBuilder := newPlanGraphBuilder(handlerCtx.GetRuntimeContext().ExecutionConcurrencyLimit)
+	pGBuilder := newPlanGraphBuilder(handlerCtx.GetRuntimeContext().ExecutionConcurrencyLimit, pb.transactionContext)
 
 	primitiveGenerator := primitivegenerator.NewRootPrimitiveGenerator(statement, handlerCtx, pGBuilder.getPlanGraph())
 

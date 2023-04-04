@@ -28,7 +28,7 @@ type SimpleWireServer struct {
 }
 
 //nolint:gocognit,nestif,nolintlint
-func MakeWireServer(sbe sqlbackend.ISQLBackend, cfg dto.RuntimeCtx) (IWireServer, error) {
+func MakeWireServer(sbe sqlbackend.SQLBackendFactory, cfg dto.RuntimeCtx) (IWireServer, error) {
 	logger := logging.GetLogger()
 
 	var tlsCfg dto.PgTLSCfg
@@ -47,7 +47,7 @@ func MakeWireServer(sbe sqlbackend.ISQLBackend, cfg dto.RuntimeCtx) (IWireServer
 		}
 		certs := []tls.Certificate{cert}
 		server, err = wire.NewServer(
-			wire.SQLBackend(sbe),
+			wire.SQLBackendFactory(sbe),
 			wire.Certificates(certs),
 			wire.Logger(logging.GetLogger()),
 		)
@@ -72,7 +72,7 @@ func MakeWireServer(sbe sqlbackend.ISQLBackend, cfg dto.RuntimeCtx) (IWireServer
 			return nil, err
 		}
 	} else {
-		server, err = wire.NewServer(wire.SQLBackend(sbe))
+		server, err = wire.NewServer(wire.SQLBackendFactory(sbe))
 		if err != nil {
 			return nil, err
 		}

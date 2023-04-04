@@ -7,6 +7,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/primitive_context"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 	"github.com/stackql/stackql/internal/stackql/streaming"
@@ -131,11 +132,14 @@ func (ss *sqlDataSourceSingleSelectAcquire) Build() error {
 	prep := func() drm.PreparedStatementCtx {
 		return ss.insertPreparedStatementCtx
 	}
+	primitiveCtx := primitive_context.NewPrimitiveContext()
+	primitiveCtx.SetIsNotMutating(true)
 	insertPrim := primitive.NewHTTPRestPrimitive(
 		nil,
 		ex,
 		prep,
 		ss.txnCtrlCtr,
+		primitiveCtx,
 	)
 	graph := ss.graph
 	insertNode := graph.CreatePrimitiveNode(insertPrim)

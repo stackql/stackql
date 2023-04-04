@@ -22,7 +22,7 @@ require (
 	github.com/stackql/go-openapistackql v0.1.2-alpha01
 	github.com/stackql/go-sqlite3 v0.0.2-stackqlbeta04
 	github.com/stackql/go-suffix-map v0.0.1-alpha01
-	github.com/stackql/psql-wire v0.1.0
+	github.com/stackql/psql-wire v0.1.1-alpha04
 	github.com/stackql/stackql-parser v0.0.13-alpha04
 	github.com/xo/dburl v0.12.4
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8

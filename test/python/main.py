@@ -343,6 +343,7 @@ def simple_test_suite():
     integration_test(
         *INVOCATION_BASE_ARGS,
         '-o=json',
+        '--provider=google',
         '-i={}'.format(_DESCRIBE_RESOURCE_INPUT_FILE),
         '-f={}'.format(_DESCRIBE_RESOURCE_OUTPUT_FILE),
         'exec',

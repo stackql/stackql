@@ -10,6 +10,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/httpmiddleware"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/primitive_context"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
@@ -194,6 +195,7 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 		ex,
 		prep,
 		ss.txnCtrlCtr,
+		primitive_context.NewPrimitiveContext(),
 	)
 	graph := ss.graph
 	insertNode := graph.CreatePrimitiveNode(insertPrim)

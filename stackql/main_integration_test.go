@@ -69,6 +69,7 @@ func TestK8STemplatedE2eSuccess(t *testing.T) {
 		fmt.Sprintf("--auth=%s", runtimeCtx.AuthRaw),
 		fmt.Sprintf("--registry=%s", runtimeCtx.RegistryRaw),
 		fmt.Sprintf("--sqlBackend=%s", runtimeCtx.SQLBackendCfgRaw),
+		fmt.Sprintf("--provider=%s", runtimeCtx.ProviderStr),
 		fmt.Sprintf("-i=%s", k8sthwRenderedFile),
 		"exec",
 	}

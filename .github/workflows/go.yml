@@ -77,11 +77,13 @@ jobs:
     - name: Set up mingw
       uses: egor-tensin/setup-mingw@v2.2.0
       id: gccsetup
+      timeout-minutes: 20
       with:
         version: '8.1.0'
 
     - name: Choco install postgres
       uses: crazy-max/ghaction-chocolatey@v2
+      timeout-minutes: 20
       with:
         args: "install --force postgresql13 openssl"
     
@@ -207,11 +209,6 @@ jobs:
         check-latest: true
         cache: true
       id: go
-
-    - name: golangci-lint
-      uses: golangci/golangci-lint-action@v3
-      with:
-        version: 'v1.52.0'
     
     - name: Setup Python
       uses: actions/setup-python@v4

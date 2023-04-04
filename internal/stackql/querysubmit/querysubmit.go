@@ -2,6 +2,7 @@ package querysubmit
 
 import (
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
+	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
@@ -17,6 +18,7 @@ type QuerySubmitter interface {
 	GetStatement() sqlparser.Statement
 	PrepareQuery(handlerCtx handler.HandlerContext) error
 	SubmitQuery() internaldto.ExecutorOutput
+	WithTransactionContext(transactionContext txn_context.ITransactionContext) QuerySubmitter
 }
 
 func NewQuerySubmitter() QuerySubmitter {
@@ -24,8 +26,9 @@ func NewQuerySubmitter() QuerySubmitter {
 }
 
 type basicQuerySubmitter struct {
-	queryPlan  plan.Plan
-	handlerCtx handler.HandlerContext
+	queryPlan          plan.Plan
+	handlerCtx         handler.HandlerContext
+	transactionContext txn_context.ITransactionContext
 }
 
 func (qs *basicQuerySubmitter) GetStatement() sqlparser.Statement {
@@ -35,10 +38,17 @@ func (qs *basicQuerySubmitter) GetStatement() sqlparser.Statement {
 	return qs.queryPlan.GetStatement()
 }
 
+func (qs *basicQuerySubmitter) WithTransactionContext(
+	transactionContext txn_context.ITransactionContext,
+) QuerySubmitter {
+	qs.transactionContext = transactionContext
+	return qs
+}
+
 func (qs *basicQuerySubmitter) PrepareQuery(handlerCtx handler.HandlerContext) error {
 	qs.handlerCtx = handlerCtx
 	logging.GetLogger().Debugln("PrepareQuery() invoked...")
-	pb := planbuilder.NewPlanBuilder()
+	pb := planbuilder.NewPlanBuilder(qs.transactionContext)
 	plan, err := pb.BuildPlanFromContext(handlerCtx)
 	qs.queryPlan = plan
 	return err
