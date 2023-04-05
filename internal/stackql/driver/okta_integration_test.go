@@ -2,7 +2,6 @@ package driver_test
 
 import (
 	"bufio"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"strings"
@@ -32,7 +31,7 @@ func TestSelectOktaApplicationAppsDriver(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
-	responseBytes1, err := ioutil.ReadFile(responseFile1)
+	responseBytes1, err := os.ReadFile(responseFile1)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}

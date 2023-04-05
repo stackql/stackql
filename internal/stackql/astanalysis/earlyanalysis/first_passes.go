@@ -34,6 +34,7 @@ type InitialPassesScreener interface {
 	GetStatement() sqlparser.Statement
 	GetIndirectionDepth() int
 	IsCacheExemptMaterialDetected() bool
+	IsReadOnly() bool
 }
 
 type InitialPassesScreenerAnalyzer interface {
@@ -68,6 +69,7 @@ type standardInitialPasses struct {
 	parentAnnotatedAST            annotatedast.AnnotatedAst
 	parentWhereParams             parserutil.ParameterMap
 	indirectionDepth              int
+	isReadOnly                    bool
 }
 
 func (sp *standardInitialPasses) GetIndirectionDepth() int {
@@ -76,6 +78,10 @@ func (sp *standardInitialPasses) GetIndirectionDepth() int {
 
 func (sp *standardInitialPasses) GetInstructionType() InstructionType {
 	return sp.instructionType
+}
+
+func (sp *standardInitialPasses) IsReadOnly() bool {
+	return sp.isReadOnly
 }
 
 func (sp *standardInitialPasses) GetPlanBuilderInput() planbuilderinput.PlanBuilderInput {
@@ -176,6 +182,7 @@ func (sp *standardInitialPasses) initialPasses(
 	if err != nil {
 		return err
 	}
+	sp.isReadOnly = astExpandVisitor.IsReadOnly()
 	annotatedAST = astExpandVisitor.GetAnnotatedAST()
 
 	// Second pass AST analysis; extract provider strings for auth.
@@ -234,11 +241,14 @@ func (sp *standardInitialPasses) initialPasses(
 		tpv.GetParameters(),
 		tcc.Clone(),
 	)
+	pbi.SetReadOnly(astExpandVisitor.IsReadOnly())
 	if err != nil {
 		return err
 	}
 
-	if sel, selOk := planbuilderinput.IsPGSetupQuery(pbi); selOk {
+	sel, selOk := planbuilderinput.IsPGSetupQuery(pbi)
+	if selOk {
+		sp.isReadOnly = true
 		if sel != nil {
 			sp.instructionType = DummiedPGInstruction
 			pbi, err := planbuilderinput.NewPlanBuilderInput( //nolint:govet // defer analyser uplifts

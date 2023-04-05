@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"text/template"
 	"unicode"
 
@@ -149,7 +148,7 @@ func NewPreprocessor(declarationBlockStartToken, declarationBlockEndToken string
 }
 
 func (pp *Preprocessor) Render(input io.Reader) (io.Reader, error) {
-	inContents, err := ioutil.ReadAll(input)
+	inContents, err := io.ReadAll(input)
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +166,7 @@ func (pp *Preprocessor) Render(input io.Reader) (io.Reader, error) {
 func (pp *Preprocessor) Prepare(infile io.Reader, infileName string) (io.Reader, error) {
 	var outContents []byte
 	var declarationBlocks []DeclarationBlock
-	inContents, err := ioutil.ReadAll(infile)
+	inContents, err := io.ReadAll(infile)
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +198,7 @@ func (pp *Preprocessor) Prepare(infile io.Reader, infileName string) (io.Reader,
 }
 
 func (pp *Preprocessor) PrepareExternal(infileType string, infile io.Reader, infileName string) error {
-	inContents, err := ioutil.ReadAll(infile)
+	inContents, err := io.ReadAll(infile)
 	if err != nil {
 		return err
 	}

@@ -49,7 +49,7 @@ type AsyncHTTPMonitorPrimitive struct {
 func (pr *AsyncHTTPMonitorPrimitive) SetTxnID(_ int) {
 }
 
-func (pr *AsyncHTTPMonitorPrimitive) IsNotMutating() bool {
+func (pr *AsyncHTTPMonitorPrimitive) IsReadOnly() bool {
 	return false
 }
 

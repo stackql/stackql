@@ -29,6 +29,7 @@ type AstExpandVisitor interface {
 	GetAnnotatedAST() annotatedast.AnnotatedAst
 	Analyze() error
 	ContainsAnalyticsCacheMaterial() bool
+	IsReadOnly() bool
 }
 
 type indirectExpandAstVisitor struct {
@@ -43,6 +44,8 @@ type indirectExpandAstVisitor struct {
 	primitiveGenerator             primitivegenerator.PrimitiveGenerator
 	whereParams                    parserutil.ParameterMap
 	indirectionDepth               int
+	selectCount                    int
+	mutateCount                    int
 }
 
 func newIndirectExpandAstVisitor(
@@ -131,6 +134,10 @@ func (v *indirectExpandAstVisitor) processIndirect(node sqlparser.SQLNode, indir
 	return nil
 }
 
+func (v *indirectExpandAstVisitor) IsReadOnly() bool {
+	return v.selectCount > 0 && v.mutateCount == 0
+}
+
 func (v *indirectExpandAstVisitor) ContainsAnalyticsCacheMaterial() bool {
 	return v.containsAnalyticsCacheMaterial
 }
@@ -149,6 +156,7 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 	switch node := node.(type) {
 	case *sqlparser.Select:
+		v.selectCount++
 		var options string
 		addIf := func(b bool, s string) {
 			if b {
@@ -235,18 +243,21 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 	case *sqlparser.Stream:
 
 	case *sqlparser.Insert:
+		v.mutateCount++
 		err := node.Table.Accept(v)
 		if err != nil {
 			return err
 		}
 
 	case *sqlparser.Update:
+		v.mutateCount++
 		err := node.TableExprs.Accept(v)
 		if err != nil {
 			return err
 		}
 
 	case *sqlparser.Delete:
+		v.mutateCount++
 		err := node.TableExprs.Accept(v)
 		if err != nil {
 			return err
@@ -909,6 +920,9 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 		} else {
 			buf.AstPrintf(node, "false")
 		}
+
+	case *sqlparser.Exec:
+		v.mutateCount++
 
 	case *sqlparser.ColName:
 		if !node.Qualifier.IsEmpty() {

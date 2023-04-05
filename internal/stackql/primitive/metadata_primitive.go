@@ -19,7 +19,7 @@ type MetaDataPrimitive struct {
 func (pr *MetaDataPrimitive) SetTxnID(_ int) {
 }
 
-func (pr *MetaDataPrimitive) IsNotMutating() bool {
+func (pr *MetaDataPrimitive) IsReadOnly() bool {
 	return true
 }
 

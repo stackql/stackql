@@ -40,7 +40,7 @@ type Operation interface {
 	//
 	SetInputAlias(alias string, id int64) error
 	//
-	IsNotMutating() bool
+	IsReadOnly() bool
 }
 
 type reversibleOperation struct {
@@ -75,8 +75,8 @@ func (op *reversibleOperation) Redo() error {
 }
 
 // TODO: interrogate the primitive
-func (op *reversibleOperation) IsNotMutating() bool {
-	return op.pr.IsNotMutating()
+func (op *reversibleOperation) IsReadOnly() bool {
+	return op.pr.IsReadOnly()
 }
 
 func (op *reversibleOperation) GetRedoLog() (binlog.LogEntry, bool) {
@@ -118,8 +118,8 @@ func (op *irreversibleOperation) Redo() error {
 }
 
 // TODO: interrogate the primitive
-func (op *irreversibleOperation) IsNotMutating() bool {
-	return op.pr.IsNotMutating()
+func (op *irreversibleOperation) IsReadOnly() bool {
+	return op.pr.IsReadOnly()
 }
 
 func (op *irreversibleOperation) GetRedoLog() (binlog.LogEntry, bool) {

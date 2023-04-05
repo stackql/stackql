@@ -52,6 +52,7 @@ const (
 	QueryCacheSizeKey               string = "querycachesize"
 	RegistryRawKey                  string = "registry"
 	GCCfgRawKey                     string = "gc"
+	ACIDCfgRawKey                   string = "acid"
 	NamespaceCfgRawKey              string = "namespaces"
 	SQLBackendCfgRawKey             string = "sqlBackend"
 	DBInternalCfgRawKey             string = "dbInternal"

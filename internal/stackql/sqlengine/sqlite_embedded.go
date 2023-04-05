@@ -3,7 +3,7 @@ package sqlengine
 import (
 	"database/sql"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 	"sync"
 
@@ -74,7 +74,7 @@ func newSQLiteEmbeddedEngine(
 }
 
 func (se *sqLiteEmbeddedEngine) execFileSQLite(fileName string) error {
-	fileContents, err := ioutil.ReadFile(fileName)
+	fileContents, err := os.ReadFile(fileName)
 	if err != nil {
 		return err
 	}

@@ -2,6 +2,7 @@ package bundle
 
 import (
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
+	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/datasource/sql_datasource"
 	"github.com/stackql/stackql/internal/stackql/dbmsinternal"
 	"github.com/stackql/stackql/internal/stackql/dto"
@@ -25,6 +26,7 @@ type Bundle interface {
 	GetSQLEngine() sqlengine.SQLEngine
 	GetTxnCounterManager() txncounter.Manager
 	GetTxnStore() kstore.KStore
+	GetTxnCoordinatorContext() txn_context.ITransactionCoordinatorContext
 }
 
 func NewBundle(
@@ -38,34 +40,41 @@ func NewBundle(
 	txnCtrMgr txncounter.Manager,
 	authContexts map[string]*dto.AuthCtx,
 	sqlDataSources map[string]sql_datasource.SQLDataSource,
+	txnCoordintatorContext txn_context.ITransactionCoordinatorContext,
 ) Bundle {
 	return &simpleBundle{
-		garbageCollector:  garbageCollector,
-		namespaces:        namespaces,
-		sqlEngine:         sqlEngine,
-		sqlSystem:         sqlSystem,
-		controlAttributes: controlAttributes,
-		txnStore:          txnStore,
-		txnCtrMgr:         txnCtrMgr,
-		formatter:         sqlSystem.GetASTFormatter(),
-		pgInternalRouter:  pgInternalRouter,
-		authContexts:      authContexts,
-		sqlDataSources:    sqlDataSources,
+		garbageCollector:       garbageCollector,
+		namespaces:             namespaces,
+		sqlEngine:              sqlEngine,
+		sqlSystem:              sqlSystem,
+		controlAttributes:      controlAttributes,
+		txnStore:               txnStore,
+		txnCtrMgr:              txnCtrMgr,
+		formatter:              sqlSystem.GetASTFormatter(),
+		pgInternalRouter:       pgInternalRouter,
+		authContexts:           authContexts,
+		sqlDataSources:         sqlDataSources,
+		txnCoordintatorContext: txnCoordintatorContext,
 	}
 }
 
 type simpleBundle struct {
-	controlAttributes sqlcontrol.ControlAttributes
-	garbageCollector  garbagecollector.GarbageCollector
-	namespaces        tablenamespace.Collection
-	sqlEngine         sqlengine.SQLEngine
-	sqlSystem         sql_system.SQLSystem
-	txnStore          kstore.KStore
-	txnCtrMgr         txncounter.Manager
-	formatter         sqlparser.NodeFormatter
-	pgInternalRouter  dbmsinternal.Router
-	sqlDataSources    map[string]sql_datasource.SQLDataSource
-	authContexts      map[string]*dto.AuthCtx
+	controlAttributes      sqlcontrol.ControlAttributes
+	garbageCollector       garbagecollector.GarbageCollector
+	namespaces             tablenamespace.Collection
+	sqlEngine              sqlengine.SQLEngine
+	sqlSystem              sql_system.SQLSystem
+	txnStore               kstore.KStore
+	txnCtrMgr              txncounter.Manager
+	formatter              sqlparser.NodeFormatter
+	pgInternalRouter       dbmsinternal.Router
+	sqlDataSources         map[string]sql_datasource.SQLDataSource
+	authContexts           map[string]*dto.AuthCtx
+	txnCoordintatorContext txn_context.ITransactionCoordinatorContext
+}
+
+func (sb *simpleBundle) GetTxnCoordinatorContext() txn_context.ITransactionCoordinatorContext {
+	return sb.txnCoordintatorContext
 }
 
 func (sb *simpleBundle) GetSQLDataSources() map[string]sql_datasource.SQLDataSource {

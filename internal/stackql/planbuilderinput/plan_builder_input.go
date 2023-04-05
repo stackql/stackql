@@ -45,8 +45,12 @@ type PlanBuilderInput interface {
 	IsTccSetAheadOfTime() bool
 	SetIsTccSetAheadOfTime(bool)
 
+	GetMessages() []string
+	WithMessages(messages []string) PlanBuilderInput
 	WithParameterRouter(router.ParameterRouter) PlanBuilderInput
 	WithTableRouteVisitor(tableRouteVisitor router.TableRouteAstVisitor) PlanBuilderInput
+	SetReadOnly(bool)
+	IsReadOnly() bool
 }
 
 type StandardPlanBuilderInput struct {
@@ -64,6 +68,8 @@ type StandardPlanBuilderInput struct {
 	onConditionDataFlows   dataflow.Collection
 	onConditionsToRewrite  map[*sqlparser.ComparisonExpr]struct{}
 	tccSetAheadOfTime      bool
+	messages               []string
+	readOnly               bool
 }
 
 func NewPlanBuilderInput(
@@ -133,7 +139,25 @@ func (pbi *StandardPlanBuilderInput) Clone() PlanBuilderInput {
 		pbi.paramsPlaceheld,
 		pbi.tcc,
 	)
+	clonedPbi.SetReadOnly(pbi.IsReadOnly())
 	return clonedPbi
+}
+
+func (pbi *StandardPlanBuilderInput) SetReadOnly(readOnly bool) {
+	pbi.readOnly = readOnly
+}
+
+func (pbi *StandardPlanBuilderInput) IsReadOnly() bool {
+	return pbi.readOnly
+}
+
+func (pbi *StandardPlanBuilderInput) WithMessages(messages []string) PlanBuilderInput {
+	pbi.messages = messages
+	return pbi
+}
+
+func (pbi *StandardPlanBuilderInput) GetMessages() []string {
+	return pbi.messages
 }
 
 func (pbi *StandardPlanBuilderInput) GetOnConditionsToRewrite() map[*sqlparser.ComparisonExpr]struct{} {

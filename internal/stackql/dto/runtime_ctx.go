@@ -44,6 +44,7 @@ type RuntimeCtx struct {
 	NamespaceCfgRaw              string
 	StoreTxnCfgRaw               string
 	GCCfgRaw                     string
+	ACIDCfgRaw                   string
 	QueryCacheSize               int
 	TemplateCtxFilePath          string
 	TestWithoutAPICalls          bool
@@ -141,6 +142,8 @@ func (rc *RuntimeCtx) Set(key string, val string) error {
 		rc.StoreTxnCfgRaw = val
 	case GCCfgRawKey:
 		rc.GCCfgRaw = val
+	case ACIDCfgRawKey:
+		rc.ACIDCfgRaw = val
 	case OutfilePathKey:
 		rc.OutfilePath = val
 	case OutputFormatKey:

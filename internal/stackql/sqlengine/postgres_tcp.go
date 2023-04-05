@@ -4,7 +4,7 @@ package sqlengine
 import (
 	"database/sql"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"sync"
 
 	"github.com/stackql/stackql/internal/stackql/db_util"
@@ -73,7 +73,7 @@ func newPostgresTCPEngine(
 }
 
 func (se *postgresTCPEngine) execFile(fileName string) error {
-	fileContents, err := ioutil.ReadFile(fileName)
+	fileContents, err := os.ReadFile(fileName)
 	if err != nil {
 		return err
 	}

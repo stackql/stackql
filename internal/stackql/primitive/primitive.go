@@ -23,7 +23,7 @@ type IPrimitive interface {
 
 	SetTxnID(int)
 	//
-	IsNotMutating() bool
+	IsReadOnly() bool
 
 	// Get the redo log entry.
 	GetRedoLog() (binlog.LogEntry, bool)

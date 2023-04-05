@@ -642,6 +642,7 @@ func (pb *standardPrimitiveGenerator) AnalyzeNop(
 			pb.PrimitiveComposer.GetTxnCtrlCtrs(),
 			handlerCtx,
 			handlerCtx.GetSQLEngine(),
+			pbi.GetMessages(),
 		),
 	)
 	return nil

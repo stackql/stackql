@@ -9,11 +9,16 @@ import (
 	"github.com/stackql/stackql/internal/stackql/util"
 )
 
+var (
+	defaultNopMessages []string = []string{"OK"} //nolint:revive,gochecknoglobals // prefer declarative
+)
+
 type NopBuilder struct {
 	graph      primitivegraph.PrimitiveGraph
 	handlerCtx handler.HandlerContext
 	root       primitivegraph.PrimitiveNode
 	sqlEngine  sqlengine.SQLEngine
+	messages   []string
 }
 
 func NewNopBuilder(
@@ -21,11 +26,16 @@ func NewNopBuilder(
 	txnControlCounters internaldto.TxnControlCounters, //nolint:revive // future proofing
 	handlerCtx handler.HandlerContext,
 	sqlEngine sqlengine.SQLEngine,
+	messages []string,
 ) Builder {
+	if len(messages) == 0 {
+		messages = defaultNopMessages
+	}
 	return &NopBuilder{
 		graph:      graph,
 		handlerCtx: handlerCtx,
 		sqlEngine:  sqlEngine,
+		messages:   messages,
 	}
 }
 
@@ -39,7 +49,7 @@ func (nb *NopBuilder) Build() error {
 					nil,
 					nil,
 					nil,
-					internaldto.NewBackendMessages([]string{"nop completed"}), nil),
+					internaldto.NewBackendMessages(nb.messages), nil),
 			)
 		},
 	)

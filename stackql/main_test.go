@@ -1,7 +1,7 @@
 package main
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
 	"testing"
 
@@ -9,7 +9,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	logging.GetLogger().SetOutput(ioutil.Discard)
+	logging.GetLogger().SetOutput(io.Discard)
 	os.Exit(m.Run())
 }
 

@@ -2,17 +2,17 @@ package testutil
 
 import (
 	"io"
-	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 )
 
 func CreateReadCloserFromString(s string) io.ReadCloser {
-	return ioutil.NopCloser(strings.NewReader(s))
+	return io.NopCloser(strings.NewReader(s))
 }
 
 func StringEqualsFileContents(t *testing.T, s string, filePath string, stringent bool) bool {
-	fileContents, err := ioutil.ReadFile(filePath)
+	fileContents, err := os.ReadFile(filePath)
 	fileContentsString := string(fileContents)
 	if err == nil {
 		t.Logf("file contents for testing = %s", fileContentsString)

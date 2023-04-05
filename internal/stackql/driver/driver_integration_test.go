@@ -1,7 +1,6 @@
 package driver_test
 
 import (
-	"io/ioutil"
 	"net/url"
 	"os"
 	"strings"
@@ -246,7 +245,7 @@ func TestK8sTheHardWayAsync(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
-		megaQueryConcat, err := ioutil.ReadFile(k8sthwRenderedFile)
+		megaQueryConcat, err := os.ReadFile(k8sthwRenderedFile)
 		if err != nil {
 			t.Fatalf("%v", err)
 		}

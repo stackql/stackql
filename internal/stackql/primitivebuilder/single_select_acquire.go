@@ -37,7 +37,7 @@ type SingleSelectAcquire struct {
 	rowSort                    func(map[string]map[string]interface{}) []string
 	root                       primitivegraph.PrimitiveNode
 	stream                     streaming.MapStream
-	isNotMutating              bool //nolint:unused // TODO: build out
+	isReadOnly                 bool //nolint:unused // TODO: build out
 }
 
 func NewSingleSelectAcquire(
@@ -329,7 +329,7 @@ func (ss *SingleSelectAcquire) Build() error {
 		return ss.insertPreparedStatementCtx
 	}
 	primitiveCtx := primitive_context.NewPrimitiveContext()
-	primitiveCtx.SetIsNotMutating(true)
+	primitiveCtx.SetIsReadOnly(true)
 	insertPrim := primitive.NewHTTPRestPrimitive(
 		prov,
 		ex,

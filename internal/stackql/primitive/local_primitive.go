@@ -20,7 +20,7 @@ func NewLocalPrimitive(executor func(pc IPrimitiveCtx) internaldto.ExecutorOutpu
 	}
 }
 
-func (pr *LocalPrimitive) IsNotMutating() bool {
+func (pr *LocalPrimitive) IsReadOnly() bool {
 	return false
 }
 

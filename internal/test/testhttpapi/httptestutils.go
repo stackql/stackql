@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -215,11 +214,11 @@ func compareHTTPBodyToExpected(req *http.Request, expectations *HTTPRequestExpec
 	var retVal io.ReadCloser
 	//nolint:govet // apathy on shadowing
 	if expectations.Body != nil {
-		actualBodyBytes, err = ioutil.ReadAll(req.Body)
+		actualBodyBytes, err = io.ReadAll(req.Body)
 		if err != nil {
 			return nil, fmt.Errorf("error reading actual body")
 		}
-		expectedBodyBytes, err = ioutil.ReadAll(expectations.Body)
+		expectedBodyBytes, err = io.ReadAll(expectations.Body)
 		if err != nil {
 			return nil, fmt.Errorf("error reading expected body")
 		}
@@ -235,8 +234,8 @@ func compareHTTPBodyToExpected(req *http.Request, expectations *HTTPRequestExpec
 		if !reflect.DeepEqual(actualBodyMap, expectedBodyMap) {
 			return nil, fmt.Errorf("http request body: actual != expected: '%s' != '%s'", string(actualBodyBytes), string(expectedBodyBytes))
 		}
-		expectations.Body = ioutil.NopCloser(bytes.NewReader(expectedBodyBytes))
-		retVal = ioutil.NopCloser(bytes.NewReader(actualBodyBytes))
+		expectations.Body = io.NopCloser(bytes.NewReader(expectedBodyBytes))
+		retVal = io.NopCloser(bytes.NewReader(actualBodyBytes))
 		fmt.Fprintln(os.Stderr, "body check completed successfully!")
 		fmt.Fprintln(os.Stderr, "")
 		fmt.Fprintln(os.Stderr, fmt.Sprintf("body = '%s'", string(actualBodyBytes)))
@@ -466,7 +465,7 @@ func (w *PipeResponseWriter) WriteHeader(status int) {
 func ValidateHTTPResponseAndErr(t *testing.T, response *http.Response, err error) {
 	if err == nil {
 		if response.Body != nil {
-			bb, bErr := ioutil.ReadAll(response.Body)
+			bb, bErr := io.ReadAll(response.Body)
 			if bErr != nil {
 				t.Fatalf("could not read body: %v", bErr)
 			}

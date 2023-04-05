@@ -3,7 +3,7 @@ package stackqltestutil
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"net/url"
 	"testing"
@@ -34,7 +34,7 @@ func SetupSelectOktaApplicationApps(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
-	responseBytes1, err := ioutil.ReadFile(responseFile1)
+	responseBytes1, err := os.ReadFile(responseFile1)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -58,7 +58,7 @@ func getDisksSelectExpectations(t *testing.T) map[string]testhttpapi.HTTPRequest
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
-	responseBytes, err := ioutil.ReadFile(responseFile)
+	responseBytes, err := os.ReadFile(responseFile)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -79,7 +79,7 @@ func getCloudResourceManagerOrganizationsGetIamPolicyExpectations(t *testing.T) 
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
-	responseBytes, err := ioutil.ReadFile(responseFile)
+	responseBytes, err := os.ReadFile(responseFile)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -100,7 +100,7 @@ func getCloudResourceManagerProjectSelectExpectations(t *testing.T) map[string]t
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
-	responseBytes, err := ioutil.ReadFile(responseFile)
+	responseBytes, err := os.ReadFile(responseFile)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -134,7 +134,7 @@ func SetupSimpleSelectGoogleComputeDisksPaginated(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
-	responseBytes1, err := ioutil.ReadFile(responseFile1)
+	responseBytes1, err := os.ReadFile(responseFile1)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -148,7 +148,7 @@ func SetupSimpleSelectGoogleComputeDisksPaginated(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
-	responseBytes2, err := ioutil.ReadFile(responseFile2)
+	responseBytes2, err := os.ReadFile(responseFile2)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -162,7 +162,7 @@ func SetupSimpleSelectGoogleComputeDisksPaginated(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
-	responseBytes3, err := ioutil.ReadFile(responseFile3)
+	responseBytes3, err := os.ReadFile(responseFile3)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -536,7 +536,7 @@ func SetupDependentInsertGoogleBQDatasets(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
-	responseBytes01, err := ioutil.ReadFile(responseFile01)
+	responseBytes01, err := os.ReadFile(responseFile01)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -544,7 +544,7 @@ func SetupDependentInsertGoogleBQDatasets(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
 	}
-	responseBytes02, err := ioutil.ReadFile(responseFile02)
+	responseBytes02, err := os.ReadFile(responseFile02)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
