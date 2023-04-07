@@ -1,7 +1,7 @@
 package logging
 
 import (
-	"io/ioutil"
+	"io"
 
 	"github.com/sirupsen/logrus"
 )
@@ -24,6 +24,6 @@ func GetLogger() *logrus.Logger {
 		return logger
 	}
 	tmpLogger := logrus.New()
-	tmpLogger.SetOutput(ioutil.Discard)
+	tmpLogger.SetOutput(io.Discard)
 	return tmpLogger
 }

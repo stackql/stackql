@@ -10,6 +10,7 @@ import (
 
 	"github.com/stackql/go-openapistackql/openapistackql"
 	"github.com/stackql/go-openapistackql/pkg/nomenclature"
+	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/bundle"
 	"github.com/stackql/stackql/internal/stackql/datasource/sql_datasource"
 	"github.com/stackql/stackql/internal/stackql/dbmsinternal"
@@ -74,6 +75,7 @@ type HandlerContext interface { //nolint:revive // don't mind stuttering this on
 	SetQuery(string)
 	SetRawQuery(string)
 	//
+	GetTxnCoordinatorCtx() txn_context.ITransactionCoordinatorContext
 }
 
 type standardHandlerContext struct {
@@ -102,6 +104,11 @@ type standardHandlerContext struct {
 	namespaceCollection tablenamespace.Collection
 	formatter           sqlparser.NodeFormatter
 	pgInternalRouter    dbmsinternal.Router
+	txnCoordinatorCtx   txn_context.ITransactionCoordinatorContext
+}
+
+func (hc *standardHandlerContext) GetTxnCoordinatorCtx() txn_context.ITransactionCoordinatorContext {
+	return hc.txnCoordinatorCtx
 }
 
 func (hc *standardHandlerContext) SetCurrentProvider(p string) {
@@ -373,6 +380,7 @@ func (hc *standardHandlerContext) Clone() HandlerContext {
 		namespaceCollection: hc.namespaceCollection,
 		formatter:           hc.formatter,
 		pgInternalRouter:    hc.pgInternalRouter,
+		txnCoordinatorCtx:   hc.txnCoordinatorCtx,
 	}
 	return &rv
 }
@@ -410,6 +418,7 @@ func GetHandlerCtx(
 		formatter:           inputBundle.GetSQLSystem().GetASTFormatter(),
 		pgInternalRouter:    inputBundle.GetDBMSInternalRouter(),
 		currentProvider:     runtimeCtx.ProviderStr,
+		txnCoordinatorCtx:   inputBundle.GetTxnCoordinatorContext(),
 	}
 	drmCfg, err := drm.GetDRMConfig(inputBundle.GetSQLSystem(), rv.namespaceCollection, controlAttributes)
 	if err != nil {

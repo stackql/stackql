@@ -7,10 +7,10 @@ import (
 
 	"github.com/stackql/psql-wire/pkg/sqldata"
 	"github.com/stackql/stackql/internal/stackql/acid/transact"
+	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
-	"github.com/stackql/stackql/internal/stackql/querysubmit"
 	"github.com/stackql/stackql/internal/stackql/responsehandler"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/util"
@@ -20,9 +20,10 @@ import (
 )
 
 var (
-	_ StackQLDriver                = &basicStackQLDriver{}
-	_ sqlbackend.SQLBackendFactory = &basicStackQLDriverFactory{}
-	_ StackQLDriverFactory         = &basicStackQLDriverFactory{}
+	_               StackQLDriver                = &basicStackQLDriver{}
+	_               sqlbackend.SQLBackendFactory = &basicStackQLDriverFactory{}
+	_               StackQLDriverFactory         = &basicStackQLDriverFactory{}
+	noParentMessage string                       = "no parent transaction manager available" //nolint:gochecknoglobals,revive,lll // permissable
 )
 
 type StackQLDriverFactory interface {
@@ -46,15 +47,19 @@ func (sdf *basicStackQLDriverFactory) newSQLDriver() (StackQLDriver, error) {
 	if err != nil {
 		return nil, err
 	}
-	txnCoordinator, txnCoordinatorErr := transact.GetCoordinatorInstance()
+	txnCoordinator, txnCoordinatorErr := transact.GetCoordinatorInstance(sdf.handlerCtx.GetTxnCoordinatorCtx())
 	if txnCoordinatorErr != nil {
 		return nil, txnCoordinatorErr
+	}
+	txnManager, txnManagerErr := txnCoordinator.NewTxnManager()
+	if txnManagerErr != nil {
+		return nil, txnManagerErr
 	}
 	clonedCtx := sdf.handlerCtx.Clone()
 	clonedCtx.SetTxnCounterMgr(txCtr)
 	rv := &basicStackQLDriver{
-		handlerCtx:     clonedCtx,
-		txnCoordinator: txnCoordinator,
+		handlerCtx: clonedCtx,
+		txnManager: txnManager,
 	}
 	return rv, nil
 }
@@ -112,8 +117,8 @@ func (dr *basicStackQLDriver) ProcessQuery(query string) {
 }
 
 type basicStackQLDriver struct {
-	handlerCtx     handler.HandlerContext
-	txnCoordinator transact.Coordinator
+	handlerCtx handler.HandlerContext
+	txnManager transact.Manager
 }
 
 func (dr *basicStackQLDriver) CloneSQLBackend() sqlbackend.ISQLBackend {
@@ -160,29 +165,93 @@ func (dr *basicStackQLDriver) SplitCompoundQuery(s string) ([]string, error) {
 }
 
 func NewStackQLDriver(handlerCtx handler.HandlerContext) (StackQLDriver, error) {
+	txnCoordinator, txnCoordinatorErr := transact.GetCoordinatorInstance(
+		handlerCtx.GetTxnCoordinatorCtx())
+	if txnCoordinatorErr != nil {
+		return nil, txnCoordinatorErr
+	}
+	txnManager, txnManagerErr := txnCoordinator.NewTxnManager()
+	if txnManagerErr != nil {
+		return nil, txnManagerErr
+	}
 	return &basicStackQLDriver{
 		handlerCtx: handlerCtx,
+		txnManager: txnManager,
 	}, nil
 }
 
+//nolint:gocognit // TODO: review
 func (dr *basicStackQLDriver) processQueryOrQueries(
 	handlerCtx handler.HandlerContext,
 ) ([]internaldto.ExecutorOutput, bool) {
 	var retVal []internaldto.ExecutorOutput
 	cmdString := handlerCtx.GetRawQuery()
-	querySubmitter := querysubmit.NewQuerySubmitter()
 	for _, s := range strings.Split(cmdString, ";") {
 		if s == "" {
 			continue
 		}
 		clonedCtx := handlerCtx.Clone()
 		clonedCtx.SetQuery(s)
-		err := querySubmitter.PrepareQuery(clonedCtx)
-		if err != nil {
-			retVal = append(retVal, internaldto.NewErroneousExecutorOutput(err))
+		transactStatement := transact.NewStatement(s, clonedCtx, txn_context.NewTransactionContext(dr.txnManager.Depth()))
+		prepareErr := transactStatement.Prepare()
+		if prepareErr != nil {
+			retVal = append(retVal, internaldto.NewErroneousExecutorOutput(prepareErr))
 			continue
 		}
-		retVal = append(retVal, querySubmitter.SubmitQuery())
+		isReadOnly := transactStatement.IsReadOnly()
+		// TODO: implement eager execution for non-mutating statements
+		//       and lazy execution for mutating statements.
+		// TODO: implement transaction stack.
+		if transactStatement.IsBegin() { //nolint:gocritic,nestif // TODO: review
+			txnManager, beginErr := dr.txnManager.Begin()
+			if beginErr != nil {
+				retVal = append(retVal, internaldto.NewErroneousExecutorOutput(beginErr))
+				continue
+			}
+			dr.txnManager = txnManager
+			retVal = append(retVal, internaldto.NewNopEmptyExecutorOutput([]string{"OK"}))
+			continue
+		} else if transactStatement.IsCommit() {
+			resultSets, commitErr := dr.txnManager.Commit()
+			if commitErr != nil {
+				retVal = append(retVal, internaldto.NewErroneousExecutorOutput(commitErr))
+				continue
+			}
+			retVal = append(retVal, resultSets...)
+			parent, hasParent := dr.txnManager.GetParent()
+			if hasParent {
+				dr.txnManager = parent
+				retVal = append(retVal, internaldto.NewNopEmptyExecutorOutput([]string{"OK"}))
+				continue
+			}
+			noParentErr := fmt.Errorf(noParentMessage)
+			retVal = append(retVal, internaldto.NewErroneousExecutorOutput(noParentErr))
+			continue
+		} else if transactStatement.IsRollback() {
+			rollbackErr := dr.txnManager.Rollback()
+			if rollbackErr != nil {
+				retVal = append(retVal, internaldto.NewErroneousExecutorOutput(rollbackErr))
+			}
+			parent, hasParent := dr.txnManager.GetParent()
+			if hasParent {
+				dr.txnManager = parent
+				retVal = append(retVal, internaldto.NewNopEmptyExecutorOutput([]string{"Rollback OK"}))
+				continue
+			}
+			retVal = append(
+				retVal,
+				internaldto.NewErroneousExecutorOutput(
+					fmt.Errorf(noParentMessage)),
+			)
+			continue
+		}
+		if isReadOnly || dr.txnManager.IsRoot() {
+			stmtOutput := transactStatement.Execute()
+			retVal = append(retVal, stmtOutput)
+		} else {
+			dr.txnManager.Enqueue(transactStatement) //nolint:errcheck // TODO: investigate
+			retVal = append(retVal, internaldto.NewNopEmptyExecutorOutput([]string{"mutating statement queued"}))
+		}
 	}
-	return retVal, true
+	return retVal, len(retVal) > 0
 }

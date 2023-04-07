@@ -133,7 +133,7 @@ func (ss *sqlDataSourceSingleSelectAcquire) Build() error {
 		return ss.insertPreparedStatementCtx
 	}
 	primitiveCtx := primitive_context.NewPrimitiveContext()
-	primitiveCtx.SetIsNotMutating(true)
+	primitiveCtx.SetIsReadOnly(true)
 	insertPrim := primitive.NewHTTPRestPrimitive(
 		nil,
 		ex,

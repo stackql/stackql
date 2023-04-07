@@ -3,7 +3,7 @@ package stackqltestutil
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/stackql/stackql/internal/stackql/bundle"
 	"github.com/stackql/stackql/internal/stackql/dto"
@@ -50,7 +50,7 @@ func getBytesFromLocalPath(path string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return ioutil.ReadFile(fullPath)
+	return os.ReadFile(fullPath)
 }
 
 func BuildInputBundle(runtimeCtx dto.RuntimeCtx) (bundle.Bundle, error) {

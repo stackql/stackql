@@ -2,7 +2,7 @@ package driver_test
 
 import (
 	"bufio"
-	"io/ioutil"
+	"io"
 	"os"
 	"strings"
 	"testing"
@@ -19,7 +19,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	logging.GetLogger().SetOutput(ioutil.Discard)
+	logging.GetLogger().SetOutput(io.Discard)
 	os.Exit(m.Run())
 }
 

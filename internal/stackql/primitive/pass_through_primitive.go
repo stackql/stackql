@@ -30,7 +30,7 @@ func NewPassThroughPrimitive(
 func (pr *PassThroughPrimitive) SetTxnID(_ int) {
 }
 
-func (pr *PassThroughPrimitive) IsNotMutating() bool {
+func (pr *PassThroughPrimitive) IsReadOnly() bool {
 	return true
 }
 

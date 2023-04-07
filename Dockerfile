@@ -1,4 +1,4 @@
-FROM golang:1.18.4-bullseye AS sourceprep
+FROM golang:1.20.3-bullseye AS sourceprep
 
 ENV SRC_DIR=/work/stackql/src
 

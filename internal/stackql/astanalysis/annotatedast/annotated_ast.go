@@ -31,6 +31,7 @@ type AnnotatedAst interface {
 	SetSQLDataSource(node sqlparser.SQLNode, sqlDataSource sql_datasource.SQLDataSource)
 	SetWhereParamMapsEntry(*sqlparser.Where, parserutil.ParameterMap)
 	GetWhereParamMapsEntry(*sqlparser.Where) (parserutil.ParameterMap, bool)
+	IsReadOnly() bool
 }
 
 type standardAnnotatedAst struct {
@@ -53,6 +54,10 @@ func (aa *standardAnnotatedAst) GetWhereParamMapsEntry(node *sqlparser.Where) (p
 
 func (aa *standardAnnotatedAst) GetAST() sqlparser.Statement {
 	return aa.ast
+}
+
+func (aa *standardAnnotatedAst) IsReadOnly() bool {
+	return false
 }
 
 func (aa *standardAnnotatedAst) GetSelectMetadata(selNode *sqlparser.Select) (selectmetadata.SelectMetadata, bool) {

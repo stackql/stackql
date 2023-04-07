@@ -5,22 +5,22 @@ var (
 )
 
 type IPrimitiveCtx interface {
-	IsNotMutating() bool
-	SetIsNotMutating(bool)
+	IsReadOnly() bool
+	SetIsReadOnly(bool)
 }
 
 type primitiveCtx struct {
-	isNotMutating bool
+	isReadOnly bool
 }
 
 func NewPrimitiveContext() IPrimitiveCtx {
 	return &primitiveCtx{}
 }
 
-func (pc *primitiveCtx) IsNotMutating() bool {
-	return pc.isNotMutating
+func (pc *primitiveCtx) IsReadOnly() bool {
+	return pc.isReadOnly
 }
 
-func (pc *primitiveCtx) SetIsNotMutating(isNotMutating bool) {
-	pc.isNotMutating = isNotMutating
+func (pc *primitiveCtx) SetIsReadOnly(isReadOnly bool) {
+	pc.isReadOnly = isReadOnly
 }

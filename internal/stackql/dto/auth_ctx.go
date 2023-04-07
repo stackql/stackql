@@ -3,7 +3,6 @@ package dto
 import (
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 )
@@ -140,7 +139,7 @@ func (ac *AuthCtx) GetCredentialsBytes() ([]byte, error) {
 	}
 	credentialFile := ac.KeyFilePath
 	if credentialFile != "" {
-		return ioutil.ReadFile(credentialFile)
+		return os.ReadFile(credentialFile)
 	}
 	if ac.getEnvVarBasicCredentials() != "" {
 		return []byte(ac.getEnvVarBasicCredentials()), nil

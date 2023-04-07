@@ -16,7 +16,7 @@ type HTTPRestPrimitive struct {
 	Inputs        map[int64]internaldto.ExecutorOutput
 	InputAliases  map[string]int64
 	id            int64
-	isNotMutating bool
+	isReadOnly    bool
 }
 
 func NewHTTPRestPrimitive(
@@ -33,7 +33,7 @@ func NewHTTPRestPrimitive(
 		TxnControlCtr: txnCtrlCtr,
 		Inputs:        make(map[int64]internaldto.ExecutorOutput),
 		InputAliases:  make(map[string]int64),
-		isNotMutating: primitiveCtx.IsNotMutating(),
+		isReadOnly:    primitiveCtx.IsReadOnly(),
 	}
 }
 
@@ -43,8 +43,8 @@ func (pr *HTTPRestPrimitive) SetTxnID(id int) {
 	}
 }
 
-func (pr *HTTPRestPrimitive) IsNotMutating() bool {
-	return pr.isNotMutating
+func (pr *HTTPRestPrimitive) IsReadOnly() bool {
+	return pr.isReadOnly
 }
 
 func (pr *HTTPRestPrimitive) GetRedoLog() (binlog.LogEntry, bool) {

@@ -49,7 +49,7 @@ type standardPrimitiveGraph struct {
 	containsView           bool
 }
 
-func (pg *standardPrimitiveGraph) IsNotMutating() bool {
+func (pg *standardPrimitiveGraph) IsReadOnly() bool {
 	nodes := pg.g.Nodes()
 	for nodes.Next() {
 		node := nodes.Node()
@@ -57,7 +57,7 @@ func (pg *standardPrimitiveGraph) IsNotMutating() bool {
 		if !isPrimNode {
 			continue
 		}
-		if !primNode.GetOperation().IsNotMutating() {
+		if !primNode.GetOperation().IsReadOnly() {
 			return false
 		}
 	}
