@@ -64,11 +64,32 @@ func (pg *standardPrimitiveGraph) IsReadOnly() bool {
 	return true
 }
 
+func (pg *standardPrimitiveGraph) SetRedoLog(binlog.LogEntry) {
+}
+
+func (pg *standardPrimitiveGraph) SetUndoLog(binlog.LogEntry) {
+}
+
 func (pg *standardPrimitiveGraph) GetRedoLog() (binlog.LogEntry, bool) {
 	return nil, false
 }
 
 func (pg *standardPrimitiveGraph) GetUndoLog() (binlog.LogEntry, bool) {
+	rv := binlog.NewSimpleLogEntry(nil, nil)
+	for _, node := range pg.sorted {
+		primNode, isPrimNode := node.(PrimitiveNode)
+		if !isPrimNode {
+			continue
+		}
+		op := primNode.GetOperation()
+		undoLog, undoLogExists := op.GetUndoLog()
+		if undoLogExists && undoLog != nil {
+			rv.AppendRaw(undoLog.GetRaw())
+			for _, h := range undoLog.GetHumanReadable() {
+				rv.AppendHumanReadable(h)
+			}
+		}
+	}
 	return nil, false
 }
 
@@ -164,7 +185,8 @@ func (pg *standardPrimitiveGraph) Execute(ctx primitive.IPrimitiveCtx) internald
 				fromNode := destinationNodes.Node()
 				switch fromNode := fromNode.(type) { //nolint:gocritic // acceptable
 				case PrimitiveNode:
-					fromNode.GetOperation().IncidentData(node.ID(), output) //nolint:errcheck // TODO: consider design options
+					op := fromNode.GetOperation()
+					op.IncidentData(node.ID(), output) //nolint:errcheck // TODO: consider design options
 				}
 			}
 			node.SetIsDone(true)
@@ -173,7 +195,8 @@ func (pg *standardPrimitiveGraph) Execute(ctx primitive.IPrimitiveCtx) internald
 		}
 	}
 	if err := pg.errGroup.Wait(); err != nil {
-		return internaldto.NewExecutorOutput(nil, nil, nil, nil, err)
+		undoLog, _ := output.GetUndoLog()
+		return internaldto.NewExecutorOutput(nil, nil, nil, nil, err).WithUndoLog(undoLog)
 	}
 	return output
 }
@@ -236,7 +259,7 @@ type standardPrimitiveNode struct {
 func (pg *standardPrimitiveGraph) CreatePrimitiveNode(pr primitive.IPrimitive) PrimitiveNode {
 	nn := pg.g.NewNode()
 	node := &standardPrimitiveNode{
-		op:     operation.NewIrreversibleOperation(pr),
+		op:     operation.NewReversibleOperation(pr),
 		id:     nn.ID(),
 		isDone: make(chan bool, 1),
 	}
@@ -262,7 +285,8 @@ func (pn *standardPrimitiveNode) IsDone() chan bool {
 }
 
 func (pn *standardPrimitiveNode) SetInputAlias(alias string, id int64) error {
-	return pn.GetOperation().SetInputAlias(alias, id)
+	op := pn.GetOperation()
+	return op.SetInputAlias(alias, id)
 }
 
 func (pn *standardPrimitiveNode) SetIsDone(isDone bool) {

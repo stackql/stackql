@@ -3,6 +3,7 @@ package plan
 import (
 	"time"
 
+	"github.com/stackql/stackql/internal/stackql/acid/binlog"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
@@ -23,6 +24,11 @@ type Plan interface {
 
 	// Signals whether the plan is worthy to place in `cache.LRUCache`.
 	IsCacheable() bool
+
+	// Get the redo log entry.
+	GetRedoLog() (binlog.LogEntry, bool)
+	// Get the undo log entry.
+	GetUndoLog() (binlog.LogEntry, bool)
 
 	// Setters
 	SetType(t sqlparser.StatementType)
@@ -65,6 +71,20 @@ func NewPlan(
 		Original:    rawQuery,
 		isCacheable: true,
 	}
+}
+
+func (p *standardPlan) GetRedoLog() (binlog.LogEntry, bool) {
+	if p.Instructions == nil {
+		return nil, false
+	}
+	return p.Instructions.GetRedoLog()
+}
+
+func (p *standardPlan) GetUndoLog() (binlog.LogEntry, bool) {
+	if p.Instructions == nil {
+		return nil, false
+	}
+	return p.Instructions.GetUndoLog()
 }
 
 func (p *standardPlan) SetReadOnly(isReadOnly bool) {

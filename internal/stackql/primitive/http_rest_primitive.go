@@ -17,6 +17,8 @@ type HTTPRestPrimitive struct {
 	InputAliases  map[string]int64
 	id            int64
 	isReadOnly    bool
+	undoLog       binlog.LogEntry
+	redoLog       binlog.LogEntry
 }
 
 func NewHTTPRestPrimitive(
@@ -37,6 +39,22 @@ func NewHTTPRestPrimitive(
 	}
 }
 
+func (pr *HTTPRestPrimitive) SetUndoLog(log binlog.LogEntry) {
+	pr.undoLog = log
+}
+
+func (pr *HTTPRestPrimitive) SetRedoLog(log binlog.LogEntry) {
+	pr.redoLog = log
+}
+
+func (pr *HTTPRestPrimitive) GetRedoLog() (binlog.LogEntry, bool) {
+	return pr.redoLog, pr.redoLog != nil
+}
+
+func (pr *HTTPRestPrimitive) GetUndoLog() (binlog.LogEntry, bool) {
+	return pr.undoLog, pr.undoLog != nil
+}
+
 func (pr *HTTPRestPrimitive) SetTxnID(id int) {
 	if pr.TxnControlCtr != nil {
 		pr.TxnControlCtr.SetTxnID(id)
@@ -45,14 +63,6 @@ func (pr *HTTPRestPrimitive) SetTxnID(id int) {
 
 func (pr *HTTPRestPrimitive) IsReadOnly() bool {
 	return pr.isReadOnly
-}
-
-func (pr *HTTPRestPrimitive) GetRedoLog() (binlog.LogEntry, bool) {
-	return nil, false
-}
-
-func (pr *HTTPRestPrimitive) GetUndoLog() (binlog.LogEntry, bool) {
-	return nil, false
 }
 
 func (pr *HTTPRestPrimitive) IncidentData(fromID int64, input internaldto.ExecutorOutput) error {

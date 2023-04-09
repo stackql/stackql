@@ -657,7 +657,7 @@ func (pgb *standardPlanGraphBuilder) handleInsert(pbi planbuilderinput.PlanBuild
 		if err != nil {
 			return err
 		}
-		bldr := primitivebuilder.NewInsert(
+		bldr := primitivebuilder.NewInsertOrUpdate(
 			pgb.planGraph,
 			handlerCtx,
 			node,
@@ -665,6 +665,7 @@ func (pgb *standardPlanGraphBuilder) handleInsert(pbi planbuilderinput.PlanBuild
 			selectPrimitiveNode,
 			primitiveGenerator.GetPrimitiveComposer().GetCommentDirectives(),
 			primitiveGenerator.GetPrimitiveComposer().IsAwait(),
+			"insert",
 		)
 		err = bldr.Build()
 		if err != nil {
@@ -713,7 +714,7 @@ func (pgb *standardPlanGraphBuilder) handleUpdate(pbi planbuilderinput.PlanBuild
 		if err != nil {
 			return err
 		}
-		bldr := primitivebuilder.NewInsert(
+		bldr := primitivebuilder.NewInsertOrUpdate(
 			pgb.planGraph,
 			handlerCtx,
 			node,
@@ -721,6 +722,7 @@ func (pgb *standardPlanGraphBuilder) handleUpdate(pbi planbuilderinput.PlanBuild
 			selectPrimitiveNode,
 			primitiveGenerator.GetPrimitiveComposer().GetCommentDirectives(),
 			primitiveGenerator.GetPrimitiveComposer().IsAwait(),
+			"update",
 		)
 		err = bldr.Build()
 		if err != nil {

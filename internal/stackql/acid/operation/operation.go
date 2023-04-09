@@ -44,9 +44,7 @@ type Operation interface {
 }
 
 type reversibleOperation struct {
-	redoLog binlog.LogEntry
-	undoLog binlog.LogEntry
-	pr      primitive.IPrimitive
+	pr primitive.IPrimitive
 }
 
 func (op *reversibleOperation) Execute(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
@@ -80,16 +78,15 @@ func (op *reversibleOperation) IsReadOnly() bool {
 }
 
 func (op *reversibleOperation) GetRedoLog() (binlog.LogEntry, bool) {
-	return op.redoLog, true
+	return op.pr.GetRedoLog()
 }
 
 func (op *reversibleOperation) GetUndoLog() (binlog.LogEntry, bool) {
-	return op.undoLog, true
+	return op.pr.GetUndoLog()
 }
 
 type irreversibleOperation struct {
-	redoLog binlog.LogEntry
-	pr      primitive.IPrimitive
+	pr primitive.IPrimitive
 }
 
 func (op *irreversibleOperation) Execute(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
@@ -123,15 +120,15 @@ func (op *irreversibleOperation) IsReadOnly() bool {
 }
 
 func (op *irreversibleOperation) GetRedoLog() (binlog.LogEntry, bool) {
-	return op.redoLog, true
+	return op.pr.GetRedoLog()
 }
 
 func (op *irreversibleOperation) GetUndoLog() (binlog.LogEntry, bool) {
 	return nil, false
 }
 
-func NewIrreversibleOperation(pr primitive.IPrimitive) Operation {
-	return &irreversibleOperation{
+func NewReversibleOperation(pr primitive.IPrimitive) Operation {
+	return &reversibleOperation{
 		pr: pr,
 	}
 }

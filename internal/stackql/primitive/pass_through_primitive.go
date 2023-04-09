@@ -13,6 +13,8 @@ type PassThroughPrimitive struct {
 	sqlSystem              sql_system.SQLSystem
 	shouldCollectGarbage   bool
 	txnControlCounterSlice []internaldto.TxnControlCounters
+	undoLog                binlog.LogEntry
+	redoLog                binlog.LogEntry
 }
 
 func NewPassThroughPrimitive(
@@ -34,12 +36,20 @@ func (pr *PassThroughPrimitive) IsReadOnly() bool {
 	return true
 }
 
+func (pr *PassThroughPrimitive) SetUndoLog(log binlog.LogEntry) {
+	pr.undoLog = log
+}
+
+func (pr *PassThroughPrimitive) SetRedoLog(log binlog.LogEntry) {
+	pr.redoLog = log
+}
+
 func (pr *PassThroughPrimitive) GetRedoLog() (binlog.LogEntry, bool) {
-	return nil, false
+	return pr.redoLog, pr.redoLog != nil
 }
 
 func (pr *PassThroughPrimitive) GetUndoLog() (binlog.LogEntry, bool) {
-	return nil, false
+	return pr.undoLog, pr.undoLog != nil
 }
 
 func (pr *PassThroughPrimitive) SetInputAlias(_ string, _ int64) error {

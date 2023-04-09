@@ -5,7 +5,9 @@ import (
 	"strconv"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
+	pkg_response "github.com/stackql/go-openapistackql/pkg/response"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
+	"github.com/stackql/stackql/internal/stackql/acid/binlog"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/httpmiddleware"
@@ -18,7 +20,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/util"
 )
 
-type Insert struct {
+type InsertOrUpdate struct {
 	graph               primitivegraph.PrimitiveGraph
 	handlerCtx          handler.HandlerContext
 	drmCfg              drm.Config
@@ -28,9 +30,10 @@ type Insert struct {
 	commentDirectives   sqlparser.CommentDirectives
 	selectPrimitiveNode primitivegraph.PrimitiveNode
 	isAwait             bool
+	verb                string // may be "insert" or "update"
 }
 
-func NewInsert(
+func NewInsertOrUpdate(
 	graph primitivegraph.PrimitiveGraph,
 	handlerCtx handler.HandlerContext,
 	node sqlparser.SQLNode,
@@ -38,8 +41,9 @@ func NewInsert(
 	selectPrimitiveNode primitivegraph.PrimitiveNode,
 	commentDirectives sqlparser.CommentDirectives,
 	isAwait bool,
+	verb string,
 ) Builder {
-	return &Insert{
+	return &InsertOrUpdate{
 		graph:               graph,
 		handlerCtx:          handlerCtx,
 		drmCfg:              handlerCtx.GetDrmConfig(),
@@ -48,19 +52,32 @@ func NewInsert(
 		commentDirectives:   commentDirectives,
 		selectPrimitiveNode: selectPrimitiveNode,
 		isAwait:             isAwait,
+		verb:                verb,
 	}
 }
 
-func (ss *Insert) GetRoot() primitivegraph.PrimitiveNode {
+func (ss *InsertOrUpdate) GetRoot() primitivegraph.PrimitiveNode {
 	return ss.root
 }
 
-func (ss *Insert) GetTail() primitivegraph.PrimitiveNode {
+func (ss *InsertOrUpdate) GetTail() primitivegraph.PrimitiveNode {
 	return ss.root
+}
+
+func (ss *InsertOrUpdate) decorateOutput(op internaldto.ExecutorOutput, tableName string) internaldto.ExecutorOutput {
+	op.SetUndoLog(
+		binlog.NewSimpleLogEntry(
+			nil,
+			[]string{
+				fmt.Sprintf("Undo the %s on %s", ss.verb, tableName),
+			},
+		),
+	)
+	return op
 }
 
 //nolint:funlen,errcheck,gocognit,cyclop,gocyclo // TODO: fix this
-func (ss *Insert) Build() error {
+func (ss *InsertOrUpdate) Build() error {
 	node := ss.node
 	tbl := ss.tbl
 	handlerCtx := ss.handlerCtx
@@ -132,23 +149,27 @@ func (ss *Insert) Build() error {
 			return internaldto.NewErroneousExecutorOutput(httpErr)
 		}
 
+		tableName, _ := tbl.GetTableName()
+
 		var nullaryExecutors []func() internaldto.ExecutorOutput
 		for _, r := range httpArmoury.GetRequestParams() {
 			req := r
 			nullaryEx := func() internaldto.ExecutorOutput {
-				// logging.GetLogger().Infoln(fmt.Sprintf("req.BodyBytes = %s", string(req.BodyBytes)))
-				// req.Context.SetBody(bytes.NewReader(req.BodyBytes))
-				// logging.GetLogger().Infoln(fmt.Sprintf("req.Context = %v", req.Context))
 				response, apiErr := httpmiddleware.HTTPApiCallFromRequest(handlerCtx.Clone(), prov, m, req.GetRequest())
 				if apiErr != nil {
 					return internaldto.NewErroneousExecutorOutput(apiErr)
 				}
 
 				if responseAnalysisErr == nil {
-					target, err = m.DeprecatedProcessResponse(response)
-					handlerCtx.LogHTTPResponseMap(target)
+					var resp pkg_response.Response
+					resp, err = m.ProcessResponse(response)
 					if err != nil {
 						return internaldto.NewErroneousExecutorOutput(err)
+					}
+					processedBody := resp.GetProcessedBody()
+					switch processedBody := processedBody.(type) { //nolint:gocritic // TODO: fix this
+					case map[string]interface{}:
+						target = processedBody
 					}
 				}
 				if err != nil {
@@ -173,12 +194,15 @@ func (ss *Insert) Build() error {
 						msgs := internaldto.NewBackendMessages(
 							generateSuccessMessagesFromHeirarchy(tbl, isAwait),
 						)
-						return internaldto.NewExecutorOutput(
-							nil,
-							target,
-							nil,
-							msgs,
-							nil,
+						return ss.decorateOutput(
+							internaldto.NewExecutorOutput(
+								nil,
+								target,
+								nil,
+								msgs,
+								nil,
+							),
+							tableName,
 						)
 					}
 					generatedErr := fmt.Errorf("insert over HTTP error: %s", response.Status)
@@ -238,7 +262,10 @@ func (ss *Insert) Build() error {
 				return resultSet
 			}
 		}
-		return resultSet
+		return ss.decorateOutput(
+			resultSet,
+			tableName,
+		)
 	}
 	err = insertPrimitive.SetExecutor(ex)
 	if err != nil {

@@ -10,18 +10,18 @@ type LogEntry interface {
 	AppendHumanReadable(string)
 	AppendRaw([]byte)
 	Clone() LogEntry
-	GetHumanReadable() string
+	GetHumanReadable() []string
 	GetRaw() []byte
 }
 
 type simpleLogEntry struct {
 	raw           []byte
-	humanReadable string
+	humanReadable []string
 }
 
 func NewSimpleLogEntry(
 	raw []byte,
-	humanReadable string,
+	humanReadable []string,
 ) LogEntry {
 	return &simpleLogEntry{
 		raw:           raw,
@@ -32,7 +32,10 @@ func NewSimpleLogEntry(
 func (l *simpleLogEntry) Clone() LogEntry {
 	rawCopy := make([]byte, len(l.raw))
 	copy(rawCopy, l.raw)
-	humanReadableCopy := strings.Clone(l.humanReadable)
+	var humanReadableCopy []string
+	for _, s := range l.humanReadable {
+		humanReadableCopy = append(humanReadableCopy, strings.Clone(s))
+	}
 	return NewSimpleLogEntry(rawCopy, humanReadableCopy)
 }
 
@@ -44,10 +47,10 @@ func (l *simpleLogEntry) AppendRaw(b []byte) {
 	l.raw = append(l.raw, b...)
 }
 
-func (l *simpleLogEntry) GetHumanReadable() string {
+func (l *simpleLogEntry) GetHumanReadable() []string {
 	return l.humanReadable
 }
 
 func (l *simpleLogEntry) AppendHumanReadable(s string) {
-	l.humanReadable += s
+	l.humanReadable = append(l.humanReadable, s)
 }

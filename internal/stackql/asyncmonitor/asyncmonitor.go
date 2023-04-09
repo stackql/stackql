@@ -61,6 +61,12 @@ func (pr *AsyncHTTPMonitorPrimitive) GetUndoLog() (binlog.LogEntry, bool) {
 	return nil, false
 }
 
+func (pr *AsyncHTTPMonitorPrimitive) SetUndoLog(_ binlog.LogEntry) {
+}
+
+func (pr *AsyncHTTPMonitorPrimitive) SetRedoLog(_ binlog.LogEntry) {
+}
+
 func (pr *AsyncHTTPMonitorPrimitive) IncidentData(fromID int64, input internaldto.ExecutorOutput) error {
 	return pr.precursor.IncidentData(fromID, input)
 }

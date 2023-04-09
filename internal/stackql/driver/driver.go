@@ -47,19 +47,19 @@ func (sdf *basicStackQLDriverFactory) newSQLDriver() (StackQLDriver, error) {
 	if err != nil {
 		return nil, err
 	}
-	txnCoordinator, txnCoordinatorErr := transact.GetCoordinatorInstance(sdf.handlerCtx.GetTxnCoordinatorCtx())
+	txnProvider, txnProviderErr := transact.GetProviderInstance(sdf.handlerCtx.GetTxnCoordinatorCtx())
+	if txnProviderErr != nil {
+		return nil, txnProviderErr
+	}
+	txnCoordinator, txnCoordinatorErr := txnProvider.NewTxnCoordinator()
 	if txnCoordinatorErr != nil {
 		return nil, txnCoordinatorErr
-	}
-	txnManager, txnManagerErr := txnCoordinator.NewTxnManager()
-	if txnManagerErr != nil {
-		return nil, txnManagerErr
 	}
 	clonedCtx := sdf.handlerCtx.Clone()
 	clonedCtx.SetTxnCounterMgr(txCtr)
 	rv := &basicStackQLDriver{
-		handlerCtx: clonedCtx,
-		txnManager: txnManager,
+		handlerCtx:     clonedCtx,
+		txnCoordinator: txnCoordinator,
 	}
 	return rv, nil
 }
@@ -117,8 +117,8 @@ func (dr *basicStackQLDriver) ProcessQuery(query string) {
 }
 
 type basicStackQLDriver struct {
-	handlerCtx handler.HandlerContext
-	txnManager transact.Manager
+	handlerCtx     handler.HandlerContext
+	txnCoordinator transact.Coordinator
 }
 
 func (dr *basicStackQLDriver) CloneSQLBackend() sqlbackend.ISQLBackend {
@@ -165,18 +165,18 @@ func (dr *basicStackQLDriver) SplitCompoundQuery(s string) ([]string, error) {
 }
 
 func NewStackQLDriver(handlerCtx handler.HandlerContext) (StackQLDriver, error) {
-	txnCoordinator, txnCoordinatorErr := transact.GetCoordinatorInstance(
+	txnProvider, txnProviderErr := transact.GetProviderInstance(
 		handlerCtx.GetTxnCoordinatorCtx())
+	if txnProviderErr != nil {
+		return nil, txnProviderErr
+	}
+	txnCoordinator, txnCoordinatorErr := txnProvider.NewTxnCoordinator()
 	if txnCoordinatorErr != nil {
 		return nil, txnCoordinatorErr
 	}
-	txnManager, txnManagerErr := txnCoordinator.NewTxnManager()
-	if txnManagerErr != nil {
-		return nil, txnManagerErr
-	}
 	return &basicStackQLDriver{
-		handlerCtx: handlerCtx,
-		txnManager: txnManager,
+		handlerCtx:     handlerCtx,
+		txnCoordinator: txnCoordinator,
 	}, nil
 }
 
@@ -192,7 +192,7 @@ func (dr *basicStackQLDriver) processQueryOrQueries(
 		}
 		clonedCtx := handlerCtx.Clone()
 		clonedCtx.SetQuery(s)
-		transactStatement := transact.NewStatement(s, clonedCtx, txn_context.NewTransactionContext(dr.txnManager.Depth()))
+		transactStatement := transact.NewStatement(s, clonedCtx, txn_context.NewTransactionContext(dr.txnCoordinator.Depth()))
 		prepareErr := transactStatement.Prepare()
 		if prepareErr != nil {
 			retVal = append(retVal, internaldto.NewErroneousExecutorOutput(prepareErr))
@@ -203,24 +203,36 @@ func (dr *basicStackQLDriver) processQueryOrQueries(
 		//       and lazy execution for mutating statements.
 		// TODO: implement transaction stack.
 		if transactStatement.IsBegin() { //nolint:gocritic,nestif // TODO: review
-			txnManager, beginErr := dr.txnManager.Begin()
+			txnCoordinator, beginErr := dr.txnCoordinator.Begin()
 			if beginErr != nil {
 				retVal = append(retVal, internaldto.NewErroneousExecutorOutput(beginErr))
 				continue
 			}
-			dr.txnManager = txnManager
+			dr.txnCoordinator = txnCoordinator
 			retVal = append(retVal, internaldto.NewNopEmptyExecutorOutput([]string{"OK"}))
 			continue
 		} else if transactStatement.IsCommit() {
-			resultSets, commitErr := dr.txnManager.Commit()
-			if commitErr != nil {
+			commitCoDomain := dr.txnCoordinator.Commit()
+			commitErr, commitErrExists := commitCoDomain.GetError()
+			if commitErrExists {
 				retVal = append(retVal, internaldto.NewErroneousExecutorOutput(commitErr))
+				undoLog, undoLogExists := commitCoDomain.GetUndoLog()
+				if undoLogExists && undoLog != nil {
+					humanReadable := undoLog.GetHumanReadable()
+					if len(humanReadable) > 0 {
+						displayUndoLogs := make([]string, len(humanReadable))
+						for i, h := range humanReadable {
+							displayUndoLogs[i] = fmt.Sprintf("UNDO required: %s", h)
+						}
+						retVal = append(retVal, internaldto.NewNopEmptyExecutorOutput(displayUndoLogs))
+					}
+				}
 				continue
 			}
-			retVal = append(retVal, resultSets...)
-			parent, hasParent := dr.txnManager.GetParent()
+			retVal = append(retVal, commitCoDomain.GetExecutorOutput()...)
+			parent, hasParent := dr.txnCoordinator.GetParent()
 			if hasParent {
-				dr.txnManager = parent
+				dr.txnCoordinator = parent
 				retVal = append(retVal, internaldto.NewNopEmptyExecutorOutput([]string{"OK"}))
 				continue
 			}
@@ -228,13 +240,13 @@ func (dr *basicStackQLDriver) processQueryOrQueries(
 			retVal = append(retVal, internaldto.NewErroneousExecutorOutput(noParentErr))
 			continue
 		} else if transactStatement.IsRollback() {
-			rollbackErr := dr.txnManager.Rollback()
+			rollbackErr := dr.txnCoordinator.Rollback()
 			if rollbackErr != nil {
 				retVal = append(retVal, internaldto.NewErroneousExecutorOutput(rollbackErr))
 			}
-			parent, hasParent := dr.txnManager.GetParent()
+			parent, hasParent := dr.txnCoordinator.GetParent()
 			if hasParent {
-				dr.txnManager = parent
+				dr.txnCoordinator = parent
 				retVal = append(retVal, internaldto.NewNopEmptyExecutorOutput([]string{"Rollback OK"}))
 				continue
 			}
@@ -245,11 +257,11 @@ func (dr *basicStackQLDriver) processQueryOrQueries(
 			)
 			continue
 		}
-		if isReadOnly || dr.txnManager.IsRoot() {
+		if isReadOnly || dr.txnCoordinator.IsRoot() {
 			stmtOutput := transactStatement.Execute()
 			retVal = append(retVal, stmtOutput)
 		} else {
-			dr.txnManager.Enqueue(transactStatement) //nolint:errcheck // TODO: investigate
+			dr.txnCoordinator.Enqueue(transactStatement) //nolint:errcheck // TODO: investigate
 			retVal = append(retVal, internaldto.NewNopEmptyExecutorOutput([]string{"mutating statement queued"}))
 		}
 	}
