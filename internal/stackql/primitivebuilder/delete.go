@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
+	"github.com/stackql/stackql/internal/stackql/acid/binlog"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/httpmiddleware"
@@ -67,6 +68,7 @@ func (ss *Delete) Build() error {
 	if err != nil {
 		return err
 	}
+	tableName, _ := tbl.GetTableName()
 	ex := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 		var target map[string]interface{}
 		keys := make(map[string]map[string]interface{})
@@ -90,7 +92,14 @@ func (ss *Delete) Build() error {
 					internaldto.NewBackendMessages(
 						generateSuccessMessagesFromHeirarchy(tbl, ss.isAwait),
 					),
-				))
+				)).WithUndoLog(
+					binlog.NewSimpleLogEntry(
+						nil,
+						[]string{
+							"Undo the delete on " + tableName,
+						},
+					),
+				)
 			}
 			handlerCtx.LogHTTPResponseMap(target)
 

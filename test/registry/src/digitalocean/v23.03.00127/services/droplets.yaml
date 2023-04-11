@@ -7651,6 +7651,14 @@ components:
           response:
             mediaType: application/json
             openAPIDocKey: '202'
+          undo:
+            type: stackqlAction::droplets::delete
+            stackqlAction:
+              $ref: '#/components/x-stackQL-resources/droplets/sqlVerbs/delete'
+            context:
+              droplet_id:
+                type: responseBodyProperty
+                jsonPath: '$.droplet.id'
         destroy_byTag:
           operation:
             $ref: '#/paths/~1v2~1droplets/delete'
@@ -7675,7 +7683,7 @@ components:
             $ref: '#/paths/~1v2~1droplets~1{droplet_id}/delete'
           response:
             mediaType: application/json
-            openAPIDocKey: '200'
+            openAPIDocKey: '204'
         list_associatedResources:
           operation:
             $ref: '#/paths/~1v2~1droplets~1{droplet_id}~1destroy_with_associated_resources/get'
@@ -7719,7 +7727,8 @@ components:
         insert:
           - $ref: '#/components/x-stackQL-resources/droplets/methods/create'
         update: []
-        delete: []
+        delete:
+          - $ref: '#/components/x-stackQL-resources/droplets/methods/destroy'
     backups:
       id: digitalocean.droplets.backups
       name: backups

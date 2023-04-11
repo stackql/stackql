@@ -71,3 +71,13 @@ This will obviously only occur in testing.
 ```
 "select ipCidrRange, sum(5) cc  from  google.container.`projects.aggregated.usableSubnetworks` where projectsId = 'testing-project' group by \"ipCidrRange\" having sum(5) >= 5 order by ipCidrRange desc;"
 ```
+
+
+### Manually testing mocks
+
+
+```
+export workspaceFolder='/path/to/repository/root'  # change this
+
+stackql --registry="{ \"url\": \"file://${workspaceFolder}/test/registry-mocked\", \"localDocRoot\": \"${workspaceFolder}/test/registry-mocked\", \"verifyConfig\": { \"nopVerify\": true } }" --tls.allowInsecure shell
+```

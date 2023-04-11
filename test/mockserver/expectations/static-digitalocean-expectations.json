@@ -682,5 +682,29 @@
           }
         }
       }
+    },
+    {
+      "httpRequest": {
+        "method": "POST",
+        "path": "/v2/droplets",
+        "headers": {
+          "Authorization": ["^(Bearer|BASIC|CUSTOM|TOTALLY_CONTRIVED)\\ bXl1c2VybmFtZTpteXBhc3N3b3Jk$" ]
+        },
+        "body" : {
+          "type" : "JSON",
+          "json": {
+            "name": "error.example.com",
+            "region": "nyc3" 
+          },
+          "matchType": "ONLY_MATCHING_FIELDS"
+        }
+      },
+      "httpResponse": {
+        "statusCode": 500,
+        "body": {
+          "id": "server_error",
+          "message": "Unexpected server-side error"
+        }
+      }
     }
 ]

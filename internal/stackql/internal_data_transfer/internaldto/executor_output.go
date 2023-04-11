@@ -55,6 +55,8 @@ type ExecutorOutput interface {
 	GetRedoLog() (binlog.LogEntry, bool)
 	SetUndoLog(binlog.LogEntry)
 	SetRedoLog(binlog.LogEntry)
+	WithUndoLog(binlog.LogEntry) ExecutorOutput
+	WithRedoLog(binlog.LogEntry) ExecutorOutput
 }
 
 type standardExecutorOutput struct {
@@ -74,6 +76,16 @@ func (ex *standardExecutorOutput) SetRedoLog(log binlog.LogEntry) {
 
 func (ex *standardExecutorOutput) SetUndoLog(log binlog.LogEntry) {
 	ex.undoLog = log
+}
+
+func (ex *standardExecutorOutput) WithUndoLog(log binlog.LogEntry) ExecutorOutput {
+	ex.undoLog = log
+	return ex
+}
+
+func (ex *standardExecutorOutput) WithRedoLog(log binlog.LogEntry) ExecutorOutput {
+	ex.redoLog = log
+	return ex
 }
 
 func (ex *standardExecutorOutput) GetRedoLog() (binlog.LogEntry, bool) {

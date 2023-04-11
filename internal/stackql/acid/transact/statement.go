@@ -16,8 +16,6 @@ type Statement interface {
 	GetUndoLog() (binlog.LogEntry, bool)
 	GetRedoLog() (binlog.LogEntry, bool)
 	IsReadOnly() bool
-	SetUndoLog(binlog.LogEntry)
-	SetRedoLog(binlog.LogEntry)
 	IsBegin() bool
 	IsCommit() bool
 	IsRollback() bool
@@ -28,8 +26,6 @@ type basicStatement struct {
 	handlerCtx         handler.HandlerContext
 	querySubmitter     querysubmit.QuerySubmitter
 	transactionContext txn_context.ITransactionContext
-	undoLog            binlog.LogEntry
-	redoLog            binlog.LogEntry
 }
 
 func NewStatement(
@@ -79,20 +75,18 @@ func (st *basicStatement) IsReadOnly() bool {
 	return st.querySubmitter.IsReadOnly()
 }
 
-func (st *basicStatement) SetUndoLog(log binlog.LogEntry) {
-	st.undoLog = log
-}
-
-func (st *basicStatement) SetRedoLog(log binlog.LogEntry) {
-	st.redoLog = log
-}
-
 func (st *basicStatement) GetUndoLog() (binlog.LogEntry, bool) {
-	return st.undoLog, st.undoLog != nil
+	if st.querySubmitter != nil {
+		st.querySubmitter.GetUndoLog()
+	}
+	return nil, false
 }
 
 func (st *basicStatement) GetRedoLog() (binlog.LogEntry, bool) {
-	return st.redoLog, st.redoLog != nil
+	if st.querySubmitter != nil {
+		st.querySubmitter.GetRedoLog()
+	}
+	return nil, false
 }
 
 func (st *basicStatement) Prepare() error {

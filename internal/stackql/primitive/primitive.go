@@ -30,6 +30,11 @@ type IPrimitive interface {
 	// Get the undo log entry.
 	GetUndoLog() (binlog.LogEntry, bool)
 
+	// Get the redo log entry.
+	SetRedoLog(binlog.LogEntry)
+	// Get the undo log entry.
+	SetUndoLog(binlog.LogEntry)
+
 	IncidentData(int64, internaldto.ExecutorOutput) error
 
 	SetInputAlias(string, int64) error

@@ -2,6 +2,7 @@ package querysubmit
 
 import (
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
+	"github.com/stackql/stackql/internal/stackql/acid/binlog"
 	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
@@ -20,6 +21,10 @@ type QuerySubmitter interface {
 	SubmitQuery() internaldto.ExecutorOutput
 	WithTransactionContext(transactionContext txn_context.ITransactionContext) QuerySubmitter
 	IsReadOnly() bool
+	// Get the redo log entry.
+	GetRedoLog() (binlog.LogEntry, bool)
+	// Get the undo log entry.
+	GetUndoLog() (binlog.LogEntry, bool)
 }
 
 func NewQuerySubmitter() QuerySubmitter {
@@ -30,6 +35,20 @@ type basicQuerySubmitter struct {
 	queryPlan          plan.Plan
 	handlerCtx         handler.HandlerContext
 	transactionContext txn_context.ITransactionContext
+}
+
+func (qs *basicQuerySubmitter) GetRedoLog() (binlog.LogEntry, bool) {
+	if qs.queryPlan == nil {
+		return nil, false
+	}
+	return qs.queryPlan.GetRedoLog()
+}
+
+func (qs *basicQuerySubmitter) GetUndoLog() (binlog.LogEntry, bool) {
+	if qs.queryPlan == nil {
+		return nil, false
+	}
+	return qs.queryPlan.GetUndoLog()
 }
 
 func (qs *basicQuerySubmitter) IsReadOnly() bool {

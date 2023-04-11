@@ -155,6 +155,14 @@ Automated functional and integration testing are done largely through robot fram
 
 There is some legacy, deprecated [manual python testing](/test/python/main.py) which will be migrated to robot and decommissioned.
 
+### Linting
+
+We use `golangci-lint`.
+
+The linting of go files (and also Actions) for CI is defined in [.github/workflows/lint.yml](/.github/workflows/lint.yml).
+
+To run the linter locally, first ensure you have the same version of `golangci-lint` as the CI and then: `golangci-lint run > log/lint.log 2>&1`.
+
 ## Cross Compilation locally
 
 ### From mac

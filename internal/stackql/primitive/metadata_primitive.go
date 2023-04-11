@@ -14,6 +14,8 @@ type MetaDataPrimitive struct {
 	Executor   func(pc IPrimitiveCtx) internaldto.ExecutorOutput
 	Preparator func() *drm.PreparedStatementCtx
 	id         int64
+	undoLog    binlog.LogEntry
+	redoLog    binlog.LogEntry
 }
 
 func (pr *MetaDataPrimitive) SetTxnID(_ int) {
@@ -23,12 +25,20 @@ func (pr *MetaDataPrimitive) IsReadOnly() bool {
 	return true
 }
 
+func (pr *MetaDataPrimitive) SetUndoLog(log binlog.LogEntry) {
+	pr.undoLog = log
+}
+
+func (pr *MetaDataPrimitive) SetRedoLog(log binlog.LogEntry) {
+	pr.redoLog = log
+}
+
 func (pr *MetaDataPrimitive) GetRedoLog() (binlog.LogEntry, bool) {
-	return nil, false
+	return pr.redoLog, pr.redoLog != nil
 }
 
 func (pr *MetaDataPrimitive) GetUndoLog() (binlog.LogEntry, bool) {
-	return nil, false
+	return pr.undoLog, pr.undoLog != nil
 }
 
 func (pr *MetaDataPrimitive) IncidentData(_ int64, _ internaldto.ExecutorOutput) error {

@@ -11,6 +11,8 @@ type LocalPrimitive struct {
 	Preparator func() *drm.PreparedStatementCtx
 	Inputs     map[int64]internaldto.ExecutorOutput
 	id         int64
+	undoLog    binlog.LogEntry
+	redoLog    binlog.LogEntry
 }
 
 func NewLocalPrimitive(executor func(pc IPrimitiveCtx) internaldto.ExecutorOutput) IPrimitive {
@@ -24,12 +26,20 @@ func (pr *LocalPrimitive) IsReadOnly() bool {
 	return false
 }
 
+func (pr *LocalPrimitive) SetUndoLog(log binlog.LogEntry) {
+	pr.undoLog = log
+}
+
+func (pr *LocalPrimitive) SetRedoLog(log binlog.LogEntry) {
+	pr.redoLog = log
+}
+
 func (pr *LocalPrimitive) GetRedoLog() (binlog.LogEntry, bool) {
-	return nil, false
+	return pr.redoLog, pr.redoLog != nil
 }
 
 func (pr *LocalPrimitive) GetUndoLog() (binlog.LogEntry, bool) {
-	return nil, false
+	return pr.undoLog, pr.undoLog != nil
 }
 
 func (pr *LocalPrimitive) SetTxnID(_ int) {

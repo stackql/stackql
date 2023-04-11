@@ -361,6 +361,34 @@ resources:
         response:
           mediaType: application/json
           openAPIDocKey: '200'
+          await:
+            condition: 'containsNonEmpty("endTime")'
+        undo:
+          type: stackqlAction
+          config:
+            $ref: '#/resources/disks/methods/delete'
+            context:
+              disk:
+                type: responseBodyPropertyAwait
+                awaitCondition: 'containsNonEmpty("endTime")'
+                jsonPath: '$.targetLink'
+                transform: 
+                  type: extractRegex
+                  regex: 'https://www.googleapis.com/compute/v1/projects/[^/]+/zones/[^/]+/disks/([^/]+)'
+              project:
+                type: responseBodyPropertyAwait
+                awaitCondition: 'containsNonEmpty("endTime")'
+                jsonPath: '$.targetLink'
+                transform: 
+                  type: extractRegex
+                  regex: 'https://www.googleapis.com/compute/v1/projects/([^/]+)/zones/[^/]+/disks/[^/]+'
+              zone:
+                type: responseBodyPropertyAwait
+                awaitCondition: 'containsNonEmpty("endTime")'
+                jsonPath: '$.targetLink'
+                transform: 
+                  type: extractRegex
+                  regex: 'https://www.googleapis.com/compute/v1/projects/[^/]+/zones/([^/]+)/disks/[^/]+'
       list:
         operation:
           $ref: 'googleapis.com/v0.1.2/services-split/compute/compute-disks-v1.yaml#/paths/~1projects~1{project}~1zones~1{zone}~1disks/get'
@@ -1548,6 +1576,34 @@ resources:
         response:
           mediaType: application/json
           openAPIDocKey: '200'
+          await:
+            condition: 'containsNonEmpty("endTime")'
+        undo:
+          type: stackqlAction
+          config:
+            $ref: '#/resources/instances/methods/delete'
+            context:
+              instance:
+                type: responseBodyPropertyAwait
+                awaitCondition: 'containsNonEmpty("endTime")'
+                jsonPath: '$.targetLink'
+                transform: 
+                  type: extractRegex
+                  regex: 'https://www.googleapis.com/compute/v1/projects/[^/]+/zones/[^/]+/instances/([^/]+)'
+              project:
+                type: responseBodyPropertyAwait
+                awaitCondition: 'containsNonEmpty("endTime")'
+                jsonPath: '$.targetLink'
+                transform: 
+                  type: extractRegex
+                  regex: 'https://www.googleapis.com/compute/v1/projects/([^/]+)/zones/[^/]+/instances/[^/]+'
+              zone:
+                type: responseBodyPropertyAwait
+                awaitCondition: 'containsNonEmpty("endTime")'
+                jsonPath: '$.targetLink'
+                transform: 
+                  type: extractRegex
+                  regex: 'https://www.googleapis.com/compute/v1/projects/[^/]+/zones/([^/]+)/instances/[^/]+'
       list:
         operation:
           $ref: 'googleapis.com/v0.1.2/services-split/compute/compute-v1.yaml#/paths/~1projects~1{project}~1zones~1{zone}~1instances/get'
