@@ -163,7 +163,7 @@ func getOidForSQLDatabaseTypeName(typeName string) oid.Oid {
 	case "object", "array":
 		return oid.T_text
 	case "boolean", "bool":
-		return oid.T_text
+		return oid.T_bool
 	case "number", "int", "bigint", "smallint", "tinyint":
 		return oid.T_numeric
 	default:

@@ -9,3 +9,20 @@ services:
       - POSTGRES_USER=stackql
     ports:
       - "8432:5432/tcp"
+  postgres_backend_dashboard:
+    image: postgres:14.5-bullseye
+    hostname: postgres_external_data_source
+    environment:
+      - POSTGRES_PASSWORD=stackql
+      - POSTGRES_USER=stackql
+    ports:
+      - "9432:5432/tcp"
+  postgres_stackql:
+    image: postgres:14.5-bullseye
+    hostname: postgres_stackql
+    volumes:
+      - ./vol/postgres/setup:/docker-entrypoint-initdb.d:ro
+    environment:
+      - POSTGRES_PASSWORD=stackql
+    ports:
+      - "7432:5432/tcp"

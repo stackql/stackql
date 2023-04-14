@@ -25,6 +25,7 @@ type TableRouteAstVisitor interface {
 	GetTableMap() taxonomy.TblMap
 	GetTableMetaArray() []tablemetadata.ExtendedTableMetadata
 	Visit(node sqlparser.SQLNode) error
+	IsPgInternalOnly() bool
 }
 
 type standardTableRouteAstVisitor struct {
@@ -43,6 +44,15 @@ func NewTableRouteAstVisitor(handlerCtx handler.HandlerContext, router Parameter
 		tables:      make(taxonomy.TblMap),
 		annotations: make(taxonomy.AnnotationCtxMap),
 	}
+}
+
+func (v *standardTableRouteAstVisitor) IsPgInternalOnly() bool {
+	for _, tbl := range v.tables {
+		if !tbl.IsPGInternalObject() {
+			return false
+		}
+	}
+	return len(v.tables) > 0
 }
 
 func (v *standardTableRouteAstVisitor) analyzeAliasedTable(

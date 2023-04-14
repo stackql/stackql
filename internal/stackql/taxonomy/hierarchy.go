@@ -179,6 +179,11 @@ func GetHeirarchyFromStatement(
 		retVal.SetSQLDataSource(sqlDataSource)
 		return retVal, nil
 	}
+	// TODO: accomodate complex PG internal queries
+	isPgInternal := hIds.IsPgInternalObject()
+	if isPgInternal {
+		return retVal, nil
+	}
 	prov, err := handlerCtx.GetProvider(hIds.GetProviderStr())
 	retVal.SetProvider(prov)
 	viewDTO, isView := retVal.GetView()

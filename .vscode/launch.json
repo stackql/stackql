@@ -66,7 +66,13 @@
         "select price_monthly from digitalocean.sizes.sizes ;",
         "INSERT INTO digitalocean.droplets.droplets ( data__name, data__region, data__size, data__image, data__backups, data__ipv6, data__monitoring, data__tags ) SELECT 'some.example.com', 'nyc3', 's-1vcpu-1gb', 'ubuntu-20-04-x64', true, true, true, '[\"env:prod\", \"web\"]';",
         "select * from aws.cloud_watch.log_events where region = 'ap-southeast-1' and data__logGroupName = 'LogGroupResourceExample' and data__logStreamName = 'test-01' and data__startTime = 1680528971832 ;",
-        "begin; INSERT INTO digitalocean.droplets.droplets ( data__name, data__region, data__size, data__image, data__backups, data__ipv6, data__monitoring, data__tags ) SELECT 'some.example.com', 'nyc3', 's-1vcpu-1gb', 'ubuntu-20-04-x64', true, true, true, '[\"env:prod\", \"web\"]' ; INSERT INTO digitalocean.droplets.droplets ( data__name, data__region, data__size, data__image, data__backups, data__ipv6, data__monitoring, data__tags ) SELECT 'some.example.com', 'nyc3', 's-1vcpu-1gb', 'ubuntu-20-04-x64', true, true, true, '[\"env:prod\", \"web\"]' ; INSERT INTO digitalocean.droplets.droplets ( data__name, data__region, data__size, data__image, data__backups, data__ipv6, data__monitoring, data__tags ) SELECT 'error.example.com', 'nyc3', 's-1vcpu-1gb', 'ubuntu-20-04-x64', true, true, true, '[\"env:prod\", \"web\"]' ; commit;"
+        "begin; INSERT INTO digitalocean.droplets.droplets ( data__name, data__region, data__size, data__image, data__backups, data__ipv6, data__monitoring, data__tags ) SELECT 'some.example.com', 'nyc3', 's-1vcpu-1gb', 'ubuntu-20-04-x64', true, true, true, '[\"env:prod\", \"web\"]' ; INSERT INTO digitalocean.droplets.droplets ( data__name, data__region, data__size, data__image, data__backups, data__ipv6, data__monitoring, data__tags ) SELECT 'some.example.com', 'nyc3', 's-1vcpu-1gb', 'ubuntu-20-04-x64', true, true, true, '[\"env:prod\", \"web\"]' ; INSERT INTO digitalocean.droplets.droplets ( data__name, data__region, data__size, data__image, data__backups, data__ipv6, data__monitoring, data__tags ) SELECT 'error.example.com', 'nyc3', 's-1vcpu-1gb', 'ubuntu-20-04-x64', true, true, true, '[\"env:prod\", \"web\"]' ; commit;",
+        "select 1;",
+        "SELECT c.oid FROM pg_catalog.pg_class c LEFT JOIN pg_catalog.pg_namespace n  ON n.oid = c.relnamespace WHERE (n.nspname = 'information_schema') AND c.relname = 'attributes' AND c.relkind in ('r', 'v', 'm', 'f', 'p') ; ",
+        "SELECT c.oid\n            FROM pg_catalog.pg_class c\n            LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n            WHERE (n.nspname = 'information_schema')\n            AND c.relname = 'attributes' AND c.relkind in\n            ('r', 'v', 'm', 'f', 'p')\n        ",
+        "SELECT a.attname,\n              pg_catalog.format_type(a.atttypid, a.atttypmod),\n              (\n                SELECT pg_catalog.pg_get_expr(d.adbin, d.adrelid)\n                FROM pg_catalog.pg_attrdef d\n                WHERE d.adrelid = a.attrelid AND d.adnum = a.attnum\n                AND a.atthasdef\n              ) AS DEFAULT,\n              a.attnotnull,\n              a.attrelid as table_oid,\n              pgd.description as comment,\n              a.attgenerated as generated,\n                              (SELECT json_build_object(\n                    'always', a.attidentity = 'a',\n                    'start', s.seqstart,\n                    'increment', s.seqincrement,\n                    'minvalue', s.seqmin,\n                    'maxvalue', s.seqmax,\n                    'cache', s.seqcache,\n                    'cycle', s.seqcycle)\n                FROM pg_catalog.pg_sequence s\n                JOIN pg_catalog.pg_class c on s.seqrelid = c.\"oid\"\n                WHERE c.relkind = 'S'\n                AND a.attidentity != ''\n                AND s.seqrelid = pg_catalog.pg_get_serial_sequence(\n                    a.attrelid::regclass::text, a.attname\n                )::regclass::oid\n                ) as identity_options                \n            FROM pg_catalog.pg_attribute a\n            LEFT JOIN pg_catalog.pg_description pgd ON (\n                pgd.objoid = a.attrelid AND pgd.objsubid = a.attnum)\n            WHERE a.attrelid = '13429'\n            AND a.attnum > 0 AND NOT a.attisdropped\n            ORDER BY a.attnum\n        ",
+        "SELECT t.typname as \"name\",\n               pg_catalog.format_type(t.typbasetype, t.typtypmod) as \"attype\",\n               not t.typnotnull as \"nullable\",\n               t.typdefault as \"default\",\n               pg_catalog.pg_type_is_visible(t.oid) as \"visible\",\n               n.nspname as \"schema\"\n            FROM pg_catalog.pg_type t\n               LEFT JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace\n            WHERE t.typtype = 'd'\n        ",
+        "SELECT t.typname as \"name\",\n               -- no enum defaults in 8.4 at least\n               -- t.typdefault as \"default\",\n               pg_catalog.pg_type_is_visible(t.oid) as \"visible\",\n               n.nspname as \"schema\",\n               e.enumlabel as \"label\"\n            FROM pg_catalog.pg_type t\n                 LEFT JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace\n                 LEFT JOIN pg_catalog.pg_enum e ON t.oid = e.enumtypid\n            WHERE t.typtype = 'e'\n        ORDER BY \"schema\", \"name\", e.oid"
       ],
       "default": "show providers;"
     },
@@ -606,6 +612,24 @@
         "--registry=${input:registryString}",
         "--namespaces=${input:namespaceString}",
         "--sqlBackend=${input:sqlBackendString}",
+        "--dbInternal=${input:dbInternalString}"
+      ],
+    },
+    {
+      "name": "run server for superset",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "srv",
+        "--pgsrv.port=5999",
+        "--tls.allowInsecure",
+        "--auth=${input:authString}",
+        "--gc=${input:gcString}",
+        "--registry=${input:registryString}",
+        "--namespaces=${input:namespaceString}",
+        "--sqlBackend={ \"dbEngine\": \"postgres_tcp\", \"sqlDialect\": \"postgres\", \"dsn\": \"postgres://stackql:stackql@127.0.0.1:7432/stackql\" }",
         "--dbInternal=${input:dbInternalString}"
       ],
     },

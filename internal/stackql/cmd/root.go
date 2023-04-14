@@ -104,7 +104,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.NamespaceCfgRaw, dto.NamespaceCfgRawKey, "{}", "JSON / YAML string representing namespaces for cacheing, views etc")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.StoreTxnCfgRaw, dto.StoreTxnCfgRawKey, "{}", "JSON / YAML string representing Txn store config")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.GCCfgRaw, dto.GCCfgRawKey, "{}", "JSON / YAML string representing GC config")
-	rootCmd.PersistentFlags().StringVar(&runtimeCtx.ACIDCfgRaw, dto.ACIDCfgRawKey, "{}", "JSON / YAML string representing GC config")
+	rootCmd.PersistentFlags().StringVar(&runtimeCtx.ACIDCfgRaw, dto.ACIDCfgRawKey, "{}", "JSON / YAML string representing ACID config")
 	rootCmd.PersistentFlags().IntVar(&runtimeCtx.APIRequestTimeout, dto.APIRequestTimeoutKey, 45, "API request timeout in seconds, 0 for no timeout.") //nolint:gomnd // TODO: investigate
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.ColorScheme, dto.ColorSchemeKey, config.GetDefaultColorScheme(), fmt.Sprintf("Color scheme, must be one of {'%s', '%s', '%s'}", dto.DarkColorScheme, dto.LightColorScheme, dto.NullColorScheme))
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.CABundle, dto.CABundleKey, "", "Path to CA bundle, if not specified then system defaults used.")

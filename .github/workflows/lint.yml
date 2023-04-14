@@ -5,7 +5,7 @@ on:
     branches:
       - main
     tags:
-      - actionlint*
+      - lint*
       - build*
   pull_request:
 

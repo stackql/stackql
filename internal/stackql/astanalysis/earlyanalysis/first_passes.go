@@ -1,10 +1,13 @@
 package earlyanalysis //nolint:cyclop // analysers are inherently complex, for now
 
 import (
+	"fmt"
+
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/routeanalysis"
 	"github.com/stackql/stackql/internal/stackql/astvisit"
+	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
@@ -21,6 +24,11 @@ const (
 	InternallyRoutableInstruction
 	DummiedPGInstruction
 	NopInstruction
+)
+
+var (
+	//nolint:revive // prefer declarative
+	errPgOnly error = fmt.Errorf("cannot accomodate PG-only statement when backend is not matched to PG")
 )
 
 type Analyzer interface {
@@ -129,6 +137,7 @@ func (sp *standardInitialPasses) initialPasses(
 	opType, ok := handlerCtx.GetDBMSInternalRouter().CanRoute(ast)
 	if ok {
 		sp.instructionType = InternallyRoutableInstruction
+		sp.isReadOnly = true
 		logging.GetLogger().Debugf("%v", opType)
 		pbi, pbiErr := planbuilderinput.NewPlanBuilderInput(
 			annotatedAST,
@@ -293,6 +302,12 @@ func (sp *standardInitialPasses) initialPasses(
 		if err != nil {
 			return err
 		}
+		if routeAnalyzer.IsPGInternalOnly() {
+			if sp.primitiveGenerator.GetPrimitiveComposer().GetSQLSystem().GetName() != constants.SQLDialectPostgres {
+				return errPgOnly
+			}
+			sp.instructionType = InternallyRoutableInstruction
+		}
 		pbi = routeAnalyzer.GetPlanBuilderInput()
 	case *sqlparser.ParenSelect:
 		routeAnalyzer := routeanalysis.NewSelectRoutePass(node.Select, pbi, whereParams)
@@ -300,12 +315,24 @@ func (sp *standardInitialPasses) initialPasses(
 		if err != nil {
 			return err
 		}
+		if routeAnalyzer.IsPGInternalOnly() {
+			if sp.primitiveGenerator.GetPrimitiveComposer().GetSQLSystem().GetName() != constants.SQLDialectPostgres {
+				return errPgOnly
+			}
+			sp.instructionType = InternallyRoutableInstruction
+		}
 		pbi = routeAnalyzer.GetPlanBuilderInput()
 	case *sqlparser.Union:
 		routeAnalyzer := routeanalysis.NewSelectRoutePass(node, pbi, whereParams)
 		err = routeAnalyzer.RoutePass()
 		if err != nil {
 			return err
+		}
+		if routeAnalyzer.IsPGInternalOnly() {
+			if sp.primitiveGenerator.GetPrimitiveComposer().GetSQLSystem().GetName() != constants.SQLDialectPostgres {
+				return errPgOnly
+			}
+			sp.instructionType = InternallyRoutableInstruction
 		}
 		pbi = routeAnalyzer.GetPlanBuilderInput()
 	}
