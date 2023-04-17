@@ -13,9 +13,9 @@ import (
 //nolint:lll,revive // complex regex
 var (
 	_                      Router         = &standardDBMSInternalRouter{}
-	internalTableRegexp    *regexp.Regexp = regexp.MustCompile(`(?i)^(?:public\.)?(?:pg_type|pg_namespace|pg_catalog.*|current_schema)`)
+	internalTableRegexp    *regexp.Regexp = regexp.MustCompile(`(?i)^(?:public\.)?(?:pg_type|pg_namespace|pg_catalog.*|current_schema|pg_.*|information_schema.*)`)
 	showHousekeepingRegexp *regexp.Regexp = regexp.MustCompile(`(?i)(?:\s+transaction\s+isolation\s+level|standard_conforming_strings)`)
-	funcNameRegexp         *regexp.Regexp = regexp.MustCompile(`(?i)(?:pg_.*)`)
+	funcNameRegexp         *regexp.Regexp = regexp.MustCompile(`(?i)(?:pg_.*|information_schema.*)`)
 	internalSchemaRegexp   *regexp.Regexp = regexp.MustCompile(`(?i)^(?:stackql_intel|stackql_history)`)
 )
 
