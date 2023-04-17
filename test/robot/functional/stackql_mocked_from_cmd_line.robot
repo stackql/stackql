@@ -742,7 +742,26 @@ Transaction Abort Attempted Commit Digitalocean Insert Droplet
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${inputStr}
     ...    ${outputStr}
-    ...    stdout=${CURDIR}/tmp/Digitalocean-Insert-Droplet.tmp
+    ...    stdout=${CURDIR}/tmp/Transaction-Abort-Attempted-Commit-Digitalocean-Insert-Droplet.tmp
+
+Scalar Select Verify 
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |---|---|-------|
+    ...    | 1 | 2 | three |
+    ...    |---|---|-------|
+    ...    | 1 | 2 | three |
+    ...    |---|---|-------|
+    Should Stackql Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    {"digitalocean": { "username_var": "DUMMY_DIGITALOCEAN_USERNAME", "password_var": "DUMMY_DIGITALOCEAN_PASSWORD", "type": "basic", "valuePrefix": "TOTALLY_CONTRIVED "}}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select 1 as "1", 2 as "2", 'three' as three;
+    ...    ${outputStr}
+    ...    stdout=${CURDIR}/tmp/Scalar-Select-Verify.tmp
 
 Transaction Commit Eager Show and Lazy Digitalocean Insert Droplet
     Should Stackql Exec Inline Equal

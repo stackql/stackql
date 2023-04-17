@@ -38,6 +38,7 @@ type HeirarchyObjects interface {
 	SetMethodStr(string)
 	SetResource(openapistackql.Resource)
 	SetServiceHdl(openapistackql.Service)
+	IsPGInternalObject() bool
 }
 
 func NewHeirarchyObjects(hIDs internaldto.HeirarchyIdentifiers) HeirarchyObjects {
@@ -52,6 +53,10 @@ type standardHeirarchyObjects struct {
 	heirarchyIds  internaldto.HeirarchyIdentifiers
 	prov          provider.IProvider
 	sqlDataSource sql_datasource.SQLDataSource
+}
+
+func (ho *standardHeirarchyObjects) IsPGInternalObject() bool {
+	return ho.heirarchyIds.IsPgInternalObject()
 }
 
 func (ho *standardHeirarchyObjects) GetServiceHdl() openapistackql.Service {

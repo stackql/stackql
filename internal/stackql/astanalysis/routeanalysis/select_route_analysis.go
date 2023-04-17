@@ -18,6 +18,7 @@ var (
 type RoutePass interface {
 	RoutePass() error
 	GetPlanBuilderInput() planbuilderinput.PlanBuilderInput
+	IsPGInternalOnly() bool
 }
 
 func NewSelectRoutePass(
@@ -39,13 +40,18 @@ type standardSelectRoutePass struct {
 	handlerCtx        handler.HandlerContext
 	node              sqlparser.SelectStatement
 	parentWhereParams parserutil.ParameterMap
+	isPGInternalOnly  bool
+}
+
+func (sp *standardSelectRoutePass) IsPGInternalOnly() bool {
+	return sp.isPGInternalOnly
 }
 
 func (sp *standardSelectRoutePass) GetPlanBuilderInput() planbuilderinput.PlanBuilderInput {
 	return sp.outputPbi
 }
 
-//nolint:funlen // defer uplifts on analysers
+//nolint:funlen,gocognit // defer uplifts on analysers
 func (sp *standardSelectRoutePass) RoutePass() error {
 	var node *sqlparser.Select
 
@@ -59,6 +65,7 @@ func (sp *standardSelectRoutePass) RoutePass() error {
 	case *sqlparser.ParenSelect:
 		routePass := NewSelectRoutePass(n.Select, sp.inputPbi, sp.parentWhereParams)
 		err := routePass.RoutePass()
+		sp.isPGInternalOnly = routePass.IsPGInternalOnly()
 		sp.outputPbi = pbi
 		return err
 	case *sqlparser.Union:
@@ -75,6 +82,10 @@ func (sp *standardSelectRoutePass) RoutePass() error {
 		if err != nil {
 			return err
 		}
+		lhsPGInternalOnly := routePass.IsPGInternalOnly()
+		// TODO: eventualy accomodate sharing pg native stuff to
+		//       mix and match with stackql stuff.
+		var rhsNonPGInternalDetected bool
 		for _, s := range n.UnionSelects {
 			ctrClone := counters.CloneAndIncrementInsertID()
 			sPbi, err := planbuilderinput.NewPlanBuilderInput( //nolint:govet // defer cosmetics
@@ -90,7 +101,12 @@ func (sp *standardSelectRoutePass) RoutePass() error {
 			if err != nil {
 				return err
 			}
+			if !routePass.IsPGInternalOnly() {
+				rhsNonPGInternalDetected = true
+			}
 		}
+
+		sp.isPGInternalOnly = lhsPGInternalOnly && !rhsNonPGInternalDetected && len(n.UnionSelects) > 0
 		sp.outputPbi = pbi
 		return nil
 	}

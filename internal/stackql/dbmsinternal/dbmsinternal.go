@@ -75,11 +75,23 @@ type standardDBMSInternalRouter struct {
 
 func (pgr *standardDBMSInternalRouter) CanRoute(node sqlparser.SQLNode) (constants.BackendQueryType, bool) {
 	if pgr.sqlSystem.GetName() != constants.SQLDialectPostgres {
-		return pgr.negative()
+		switch node := node.(type) {
+		case *sqlparser.Select:
+			logging.GetLogger().Debugf("node = %v\n", node)
+			if pgr.analyzeTableExprAllRDBMS(node.From[0]) {
+				return pgr.affirmativeQuery()
+			}
+			return pgr.negative()
+		default:
+			return pgr.negative()
+		}
 	}
 	switch node := node.(type) {
 	case *sqlparser.Select:
 		logging.GetLogger().Debugf("node = %v\n", node)
+		if pgr.analyzeTableExprAllRDBMS(node.From[0]) {
+			return pgr.affirmativeQuery()
+		}
 		return pgr.analyzeSelect(node)
 	case *sqlparser.Set:
 		return pgr.affirmativeExec()
@@ -120,6 +132,7 @@ func (pgr *standardDBMSInternalRouter) analyzeSelectExprs(selectExprs sqlparser.
 }
 
 func (pgr *standardDBMSInternalRouter) analyzeSelect(node *sqlparser.Select) (constants.BackendQueryType, bool) {
+	// TODO: need to add check for subqueries
 	if pgr.analyzeSelectExprs(node.SelectExprs) {
 		return pgr.affirmativeQuery()
 	}
@@ -178,6 +191,29 @@ func (pgr *standardDBMSInternalRouter) analyzeTableExpr(node sqlparser.TableExpr
 	return false
 }
 
+func (pgr *standardDBMSInternalRouter) analyzeTableExprAllRDBMS(node sqlparser.TableExpr) bool {
+	switch node := node.(type) {
+	case *sqlparser.AliasedTableExpr:
+		switch expr := node.Expr.(type) {
+		case sqlparser.TableName:
+			return pgr.analyzeTableNameAllRDBMS(expr)
+		case *sqlparser.Subquery:
+			_, rv := pgr.CanRoute(expr.Select)
+			return rv
+		}
+	case *sqlparser.JoinTableExpr:
+		lhs := pgr.analyzeTableExprAllRDBMS(node.LeftExpr)
+		if lhs {
+			return true
+		}
+		rhs := pgr.analyzeTableExprAllRDBMS(node.RightExpr)
+		if rhs {
+			return true
+		}
+	}
+	return false
+}
+
 func (pgr *standardDBMSInternalRouter) analyzeTableName(node sqlparser.TableName) bool {
 	//nolint:lll // long conditional
 	if node.QualifierSecond.GetRawVal() == "" && node.QualifierThird.GetRawVal() == "" && node.Qualifier.GetRawVal() != "" {
@@ -187,6 +223,16 @@ func (pgr *standardDBMSInternalRouter) analyzeTableName(node sqlparser.TableName
 	}
 	rawName := node.GetRawVal()
 	return pgr.tableRegexp.MatchString(rawName)
+}
+
+func (pgr *standardDBMSInternalRouter) analyzeTableNameAllRDBMS(node sqlparser.TableName) bool {
+	//nolint:lll // long conditional
+	if node.QualifierSecond.GetRawVal() == "" && node.QualifierThird.GetRawVal() == "" && node.Qualifier.GetRawVal() == "" {
+		if node.Name.GetRawVal() == "dual" {
+			return true
+		}
+	}
+	return false
 }
 
 func (pgr *standardDBMSInternalRouter) analyzeTableIdentForSchema(node sqlparser.TableIdent) bool {

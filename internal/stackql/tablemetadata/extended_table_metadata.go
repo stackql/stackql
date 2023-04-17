@@ -56,6 +56,7 @@ type ExtendedTableMetadata interface {
 	WithGetHTTPArmoury(f func() (openapistackql.HTTPArmoury, error)) ExtendedTableMetadata
 	WithIndirect(astindirect.Indirect) ExtendedTableMetadata
 	WithResponseSchemaStr(rss string) (ExtendedTableMetadata, error)
+	IsPGInternalObject() bool
 }
 
 type standardExtendedTableMetadata struct {
@@ -69,6 +70,10 @@ type standardExtendedTableMetadata struct {
 	inputTableName      string
 	indirect            astindirect.Indirect
 	sqlDataSource       sql_datasource.SQLDataSource
+}
+
+func (ex *standardExtendedTableMetadata) IsPGInternalObject() bool {
+	return ex.heirarchyObjects.IsPGInternalObject()
 }
 
 func (ex *standardExtendedTableMetadata) IsLocallyExecutable() bool {

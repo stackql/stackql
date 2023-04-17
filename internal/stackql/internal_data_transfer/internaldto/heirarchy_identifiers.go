@@ -2,13 +2,15 @@ package internaldto
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/iqlutil"
 )
 
 var (
-	_ HeirarchyIdentifiers = &standardHeirarchyIdentifiers{}
+	_                     HeirarchyIdentifiers = &standardHeirarchyIdentifiers{}
+	pgInternalObjectRegex *regexp.Regexp       = regexp.MustCompile(`^pg_.*`) //nolint:revive // prefer declarative
 )
 
 type HeirarchyIdentifiers interface {
@@ -31,6 +33,7 @@ type HeirarchyIdentifiers interface {
 	withSubquery(SubqueryDTO) HeirarchyIdentifiers
 	WithProviderStr(string) HeirarchyIdentifiers
 	WithResponseSchemaStr(rss string) HeirarchyIdentifiers
+	IsPgInternalObject() bool
 }
 
 type standardHeirarchyIdentifiers struct {
@@ -43,6 +46,11 @@ type standardHeirarchyIdentifiers struct {
 	subqueryDTO       SubqueryDTO
 	viewAST           sqlparser.Statement
 	containsDBMSTable bool
+}
+
+func (hi *standardHeirarchyIdentifiers) IsPgInternalObject() bool {
+	isMatch := pgInternalObjectRegex.MatchString(hi.GetTableName())
+	return isMatch
 }
 
 func (hi *standardHeirarchyIdentifiers) SetMethodStr(mStr string) {
