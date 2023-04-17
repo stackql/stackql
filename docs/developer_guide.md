@@ -117,7 +117,7 @@ Really high level stuff:
 
   - Failure modes and possible multiple errors... how to communicate cause and final state to user.  Need some overall philosophy that is extensible to transactions.
   - Need reasoned view of primitives and optimisations, default extensible method map approach.
-  - Paral;elisation of "atomic" DML ops.
+  - Parallelisation of "atomic" DML ops.
 
 
 ## Tests

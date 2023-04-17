@@ -139,3 +139,44 @@ Select Enums Returns Header Only
     ...    visible
     ...    stdout=${CURDIR}/tmp/Select-Enums-Returns-Header-Only.tmp
 
+Select pg_attribute Returns Header Only
+    Pass Execution If    "${SQL_BACKEND}" != "postgres_tcp"    This is a postgres only test
+    ${inputStr} =    Catenate
+    ...    SELECT a.attname 
+    ...    FROM pg_attribute a 
+    ...    JOIN ( 
+    ...    SELECT unnest(ix.indkey) attnum, generate_subscripts(ix.indkey, 1) ord FROM pg_index ix WHERE ix.indrelid \= '13420' AND ix.indisprimary 
+    ...    ) k 
+    ...    ON a.attnum \= k.attnum 
+    ...    WHERE a.attrelid \= '13420'  
+    ...    ORDER BY k.ord
+    ...    ;
+    Should Stackql Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    {"digitalocean": { "username_var": "DUMMY_DIGITALOCEAN_USERNAME", "password_var": "DUMMY_DIGITALOCEAN_PASSWORD", "type": "basic", "valuePrefix": "TOTALLY_CONTRIVED "}}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    attname
+    ...    stdout=${CURDIR}/tmp/Select-pg_attribute-Returns-Header-Only.tmp
+
+Information Schema Schemata Returns Data
+    Pass Execution If    "${SQL_BACKEND}" != "postgres_tcp"    This is a postgres only test
+    ${inputStr} =    Catenate
+    ...    SELECT * 
+    ...    FROM information_schema.schemata
+    ...    ;
+    Should Stackql Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    {"digitalocean": { "username_var": "DUMMY_DIGITALOCEAN_USERNAME", "password_var": "DUMMY_DIGITALOCEAN_PASSWORD", "type": "basic", "valuePrefix": "TOTALLY_CONTRIVED "}}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    stackql
+    ...    stdout=${CURDIR}/tmp/Information-Schema-Schemata-Returns-Data.tmp
