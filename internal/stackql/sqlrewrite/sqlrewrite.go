@@ -17,12 +17,14 @@ type SQLRewriteInput interface { //nolint:revive //TODO: review
 	GetBaseControlCounters() internaldto.TxnControlCounters
 	GetFromString() string
 	GetIndirectContexts() []drm.PreparedStatementCtx
+	GetPrepStmtOffset() int
 	GetSelectSuffix() string
 	GetRewrittenWhere() string
 	GetSecondaryCtrlCounters() []internaldto.TxnControlCounters
 	GetTables() taxonomy.TblMap
 	GetTableInsertionContainers() []tableinsertioncontainer.TableInsertionContainer
 	WithIndirectContexts(indirectContexts []drm.PreparedStatementCtx) SQLRewriteInput
+	WithPrepStmtOffset(offset int) SQLRewriteInput
 }
 
 type StandardSQLRewriteInput struct {
@@ -37,6 +39,7 @@ type StandardSQLRewriteInput struct {
 	tableInsertionContainers []tableinsertioncontainer.TableInsertionContainer
 	namespaceCollection      tablenamespace.Collection
 	indirectContexts         []drm.PreparedStatementCtx
+	prepStmtOffset           int
 }
 
 func NewStandardSQLRewriteInput(
@@ -63,6 +66,15 @@ func NewStandardSQLRewriteInput(
 		tableInsertionContainers: tableInsertionContainers,
 		namespaceCollection:      namespaceCollection,
 	}
+}
+
+func (ri *StandardSQLRewriteInput) GetPrepStmtOffset() int {
+	return ri.prepStmtOffset
+}
+
+func (ri *StandardSQLRewriteInput) WithPrepStmtOffset(offset int) SQLRewriteInput {
+	ri.prepStmtOffset = offset
+	return ri
 }
 
 func (ri *StandardSQLRewriteInput) GetDRMConfig() drm.Config {
@@ -159,7 +171,7 @@ func GenerateSelectDML(input SQLRewriteInput) (drm.PreparedStatementCtx, error) 
 
 	query, err := dc.GetSQLSystem().ComposeSelectQuery(
 		relationalColumns, tableAliases, input.GetFromString(),
-		rewrittenWhere, selectSuffix)
+		rewrittenWhere, selectSuffix, input.GetPrepStmtOffset())
 	if err != nil {
 		return nil, err
 	}

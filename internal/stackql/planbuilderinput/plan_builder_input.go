@@ -44,6 +44,7 @@ type PlanBuilderInput interface {
 	GetUse() (*sqlparser.Use, bool)
 	IsTccSetAheadOfTime() bool
 	SetIsTccSetAheadOfTime(bool)
+	SetPrepStmtOffset(int)
 
 	GetMessages() []string
 	WithMessages(messages []string) PlanBuilderInput
@@ -70,6 +71,7 @@ type StandardPlanBuilderInput struct {
 	tccSetAheadOfTime      bool
 	messages               []string
 	readOnly               bool
+	prepStmtOffset         int
 }
 
 func NewPlanBuilderInput(
@@ -139,8 +141,13 @@ func (pbi *StandardPlanBuilderInput) Clone() PlanBuilderInput {
 		pbi.paramsPlaceheld,
 		pbi.tcc,
 	)
+	clonedPbi.SetPrepStmtOffset(pbi.prepStmtOffset)
 	clonedPbi.SetReadOnly(pbi.IsReadOnly())
 	return clonedPbi
+}
+
+func (pbi *StandardPlanBuilderInput) SetPrepStmtOffset(offset int) {
+	pbi.prepStmtOffset = offset
 }
 
 func (pbi *StandardPlanBuilderInput) SetReadOnly(readOnly bool) {

@@ -47,6 +47,7 @@ const (
 	DefaultViewsTemplateString         string = "stackql_views.{{ .objectName }}"
 	DefaultAnalyticsRegexpString       string = `^stackql_analytics_(?P<objectName>.*)$`
 	DefaultViewsRegexpString           string = `^stackql_views\.(?P<objectName>.*)$`
+	ControlColumnCount                 int    = 4
 )
 
 const (

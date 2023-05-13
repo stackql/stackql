@@ -110,7 +110,7 @@ func (pb *standardPrimitiveGenerator) analyzeUse(
 	return nil
 }
 
-//nolint:govet // this is a beast
+//nolint:govet,funlen // this is a beast
 func (pb *standardPrimitiveGenerator) analyzeUnion(
 	pbi planbuilderinput.PlanBuilderInput) error {
 	handlerCtx := pbi.GetHandlerCtx()
@@ -144,6 +144,7 @@ func (pb *standardPrimitiveGenerator) analyzeUnion(
 	if err != nil {
 		return err
 	}
+	pChild.SetElideRead(true)
 	var selectStatementContexts []drm.PreparedStatementCtx
 
 	ctx := pChild.GetPrimitiveComposer().GetSelectPreparedStatementCtx()
@@ -155,13 +156,16 @@ func (pb *standardPrimitiveGenerator) analyzeUnion(
 
 	ctrClone := counters.Clone()
 
+	pb.prepStmtOffset = ctx.GetCtrlColumnRepeats()
+
 	for _, rhsStmt := range node.UnionSelects {
 		i++
 		leaf, err := pb.PrimitiveComposer.GetSymTab().NewLeaf(i)
 		if err != nil {
 			return err
 		}
-		pChild := pb.AddChildPrimitiveGenerator(rhsStmt.Statement, leaf)
+		pChild := pb.AddChildPrimitiveGenerator(rhsStmt.Statement, leaf).WithPrepStmtOffset(pb.prepStmtOffset)
+		pChild.SetElideRead(true)
 		ctrClone = ctrClone.CloneAndIncrementInsertID()
 		sPbi, err := planbuilderinput.NewPlanBuilderInput(
 			pbi.GetAnnotatedAST(),
@@ -172,6 +176,7 @@ func (pb *standardPrimitiveGenerator) analyzeUnion(
 			return err
 		}
 		sPbi.SetIsTccSetAheadOfTime(true)
+		sPbi.SetPrepStmtOffset(pb.prepStmtOffset)
 		err = pChild.AnalyzeSelectStatement(sPbi)
 		if err != nil {
 			return err
@@ -180,6 +185,7 @@ func (pb *standardPrimitiveGenerator) analyzeUnion(
 		ctx.SetKind(rhsStmt.Type)
 		ctx.SetGCCtrlCtrs(ctrClone)
 		selectStatementContexts = append(selectStatementContexts, ctx)
+		pb.prepStmtOffset += ctx.GetCtrlColumnRepeats()
 		// unionSelectCtx
 	}
 	unionSelectCtx.SetIndirectContexts(selectStatementContexts)

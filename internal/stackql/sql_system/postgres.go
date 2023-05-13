@@ -542,8 +542,9 @@ func (eng *postgresSystem) ComposeSelectQuery(
 	fromString string,
 	rewrittenWhere string,
 	selectSuffix string,
+	parameterOffset int,
 ) (string, error) {
-	return eng.composeSelectQuery(columns, tableAliases, fromString, rewrittenWhere, selectSuffix)
+	return eng.composeSelectQuery(columns, tableAliases, fromString, rewrittenWhere, selectSuffix, parameterOffset)
 }
 
 func (eng *postgresSystem) composeSelectQuery(
@@ -552,6 +553,7 @@ func (eng *postgresSystem) composeSelectQuery(
 	fromString string,
 	rewrittenWhere string,
 	selectSuffix string,
+	parameterOffset int,
 ) (string, error) {
 	var q strings.Builder
 	var quotedColNames []string
@@ -564,9 +566,9 @@ func (eng *postgresSystem) composeSelectQuery(
 	insIDColName := eng.controlAttributes.GetControlInsIDColumnName()
 	var wq strings.Builder
 	var controlWhereComparisons []string
-	i := 0
+	i := parameterOffset
 	for _, alias := range tableAliases {
-		j := i * 4 //nolint:gomnd // the magic number is an offset
+		j := i * constants.ControlColumnCount
 		if alias != "" {
 			gIDcn := fmt.Sprintf(`"%s"."%s"`, alias, genIDColName)
 			sIDcn := fmt.Sprintf(`"%s"."%s"`, alias, sessionIDColName)

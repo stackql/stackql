@@ -12,6 +12,7 @@ type PreparedStatementCtx interface {
 	GetAllCtrlCtrs() []internaldto.TxnControlCounters
 	GetGCCtrlCtrs() internaldto.TxnControlCounters
 	GetIndirectContexts() []PreparedStatementCtx
+	GetCtrlColumnRepeats() int
 	GetNonControlColumns() []internaldto.ColumnMetadata
 	GetGCHousekeepingQueries() string
 	GetQuery() string
@@ -44,6 +45,10 @@ func (ps *standardPreparedStatementCtx) SetIndirectContexts(indirectContexts []P
 
 func (ps *standardPreparedStatementCtx) GetIndirectContexts() []PreparedStatementCtx {
 	return ps.indirectContexts
+}
+
+func (ps *standardPreparedStatementCtx) GetCtrlColumnRepeats() int {
+	return ps.ctrlColumnRepeats
 }
 
 func (ps *standardPreparedStatementCtx) SetKind(kind string) {
