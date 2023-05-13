@@ -156,7 +156,6 @@ Okta Users Select Simple Paginated
     ...    ${CURDIR}/tmp/Okta-Users-Select-Simple-Paginated.tmp
 
 AWS EC2 Volumes Select Simple
-    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test likely due to case sensitivity and incorrect XML property aliasing 
     Should StackQL Exec Inline Equal
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -917,7 +916,6 @@ Basic Subquery Returns Results
     ...    stdout=${CURDIR}/tmp/Basic-Subquery-Returns-Results.tmp
 
 Basic View of Union Returns Results
-    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test likely due to case sensitivity and incorrect XML property aliasing
     Should Stackql Exec Inline Contain
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -926,12 +924,11 @@ Basic View of Union Returns Results
     ...    ${REGISTRY_NO_VERIFY_CFG_STR}
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
-    ...    select aws_region, VolumeId, Encrypted, Size from aws_ec2_all_volumes ;
+    ...    select aws_region, volumeId, encrypted, size from aws_ec2_all_volumes ;
     ...    sa\-east\-1
     ...    stdout=${CURDIR}/tmp/Basic-View-of-Union-Returns-Results.tmp
 
 Basic View Select Star of Union Returns Results
-    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test likely due to case sensitivity and incorrect XML property aliasing
     Should Stackql Exec Inline Contain
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -945,7 +942,6 @@ Basic View Select Star of Union Returns Results
     ...    stdout=${CURDIR}/tmp/Basic-View-Select-Star-of-Union-Returns-Results.tmp
 
 Basic Count of View of Union Returns Expected Result
-    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test likely due to case sensitivity and incorrect XML property aliasing
     Should Stackql Exec Inline Contain
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -954,7 +950,7 @@ Basic Count of View of Union Returns Expected Result
     ...    ${REGISTRY_NO_VERIFY_CFG_STR}
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
-    ...    select count(VolumeId) as ct from aws_ec2_all_volumes ;
+    ...    select count(volumeId) as ct from aws_ec2_all_volumes ;
     ...    34
     ...    stdout=${CURDIR}/tmp/Basic-Count-of-View-of-Union-Returns-Expected-Result.tmp
 
@@ -1001,7 +997,6 @@ Basic View Select Star of Cloud Control Resource Returns Expected Result
     ...    ${CURDIR}/tmp/Basic-View-Select-Star-of-Cloud-Control-Resource-Returns-Expected-Result.tmp
 
 Select Star of EC2 Instances Returns Expected Result
-    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test likely due to case sensitivity and incorrect XML property aliasing
     Should StackQL Exec Inline Contain
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
