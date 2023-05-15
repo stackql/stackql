@@ -62,3 +62,10 @@ func (ss *SingleAcquireAndSelect) Build() error {
 	graph.NewDependency(ss.acquireBuilder.GetTail(), ss.selectBuilder.GetRoot(), 1.0)
 	return nil
 }
+
+func (ss *SingleAcquireAndSelect) SetWriteOnly(_ bool) {
+}
+
+func (ss *SingleAcquireAndSelect) IsWriteOnly() bool {
+	return false
+}

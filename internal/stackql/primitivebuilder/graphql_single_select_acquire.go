@@ -203,3 +203,10 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 
 	return nil
 }
+
+func (ss *GraphQLSingleSelectAcquire) SetWriteOnly(_ bool) {
+}
+
+func (ss *GraphQLSingleSelectAcquire) IsWriteOnly() bool {
+	return false
+}

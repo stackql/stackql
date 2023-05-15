@@ -79,3 +79,10 @@ func (db *DiamondBuilder) GetRoot() primitivegraph.PrimitiveNode {
 func (db *DiamondBuilder) GetTail() primitivegraph.PrimitiveNode {
 	return db.tailTail
 }
+
+func (db *DiamondBuilder) SetWriteOnly(_ bool) {
+}
+
+func (db *DiamondBuilder) IsWriteOnly() bool {
+	return false
+}

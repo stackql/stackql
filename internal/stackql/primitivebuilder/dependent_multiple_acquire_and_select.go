@@ -8,6 +8,7 @@ type DependentMultipleAcquireAndSelect struct {
 	graph           primitivegraph.PrimitiveGraph
 	acquireBuilders []Builder
 	selectBuilder   Builder
+	isWriteOnly     bool
 }
 
 func NewDependentMultipleAcquireAndSelect(
@@ -53,4 +54,12 @@ func (ss *DependentMultipleAcquireAndSelect) Build() error {
 		}
 	}
 	return nil
+}
+
+func (ss *DependentMultipleAcquireAndSelect) SetWriteOnly(isWriteOnly bool) {
+	ss.isWriteOnly = isWriteOnly
+}
+
+func (ss *DependentMultipleAcquireAndSelect) IsWriteOnly() bool {
+	return ss.isWriteOnly
 }

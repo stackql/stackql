@@ -66,3 +66,10 @@ func (ss *RawNativeSelect) Build() error {
 
 	return nil
 }
+
+func (ss *RawNativeSelect) SetWriteOnly(_ bool) {
+}
+
+func (ss *RawNativeSelect) IsWriteOnly() bool {
+	return false
+}

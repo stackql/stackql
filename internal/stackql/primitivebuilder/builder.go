@@ -11,6 +11,10 @@ import (
 type Builder interface {
 	Build() error
 
+	SetWriteOnly(bool)
+
+	IsWriteOnly() bool
+
 	GetRoot() primitivegraph.PrimitiveNode
 
 	GetTail() primitivegraph.PrimitiveNode

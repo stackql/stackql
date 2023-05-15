@@ -53,3 +53,10 @@ func (ss *DependencySubDAGBuilder) Build() error {
 	}
 	return nil
 }
+
+func (ss *DependencySubDAGBuilder) SetWriteOnly(_ bool) {
+}
+
+func (ss *DependencySubDAGBuilder) IsWriteOnly() bool {
+	return false
+}

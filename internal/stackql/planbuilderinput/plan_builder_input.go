@@ -44,12 +44,15 @@ type PlanBuilderInput interface {
 	GetUse() (*sqlparser.Use, bool)
 	IsTccSetAheadOfTime() bool
 	SetIsTccSetAheadOfTime(bool)
+	SetPrepStmtOffset(int)
 
 	GetMessages() []string
 	WithMessages(messages []string) PlanBuilderInput
 	WithParameterRouter(router.ParameterRouter) PlanBuilderInput
 	WithTableRouteVisitor(tableRouteVisitor router.TableRouteAstVisitor) PlanBuilderInput
 	SetReadOnly(bool)
+	SetNop(bool)
+	IsNop() bool
 	IsReadOnly() bool
 }
 
@@ -70,6 +73,8 @@ type StandardPlanBuilderInput struct {
 	tccSetAheadOfTime      bool
 	messages               []string
 	readOnly               bool
+	isNop                  bool // for lazy eval on views and unions etc
+	prepStmtOffset         int
 }
 
 func NewPlanBuilderInput(
@@ -139,12 +144,26 @@ func (pbi *StandardPlanBuilderInput) Clone() PlanBuilderInput {
 		pbi.paramsPlaceheld,
 		pbi.tcc,
 	)
+	clonedPbi.SetPrepStmtOffset(pbi.prepStmtOffset)
 	clonedPbi.SetReadOnly(pbi.IsReadOnly())
+	clonedPbi.SetNop(pbi.IsNop())
 	return clonedPbi
+}
+
+func (pbi *StandardPlanBuilderInput) SetPrepStmtOffset(offset int) {
+	pbi.prepStmtOffset = offset
 }
 
 func (pbi *StandardPlanBuilderInput) SetReadOnly(readOnly bool) {
 	pbi.readOnly = readOnly
+}
+
+func (pbi *StandardPlanBuilderInput) SetNop(nop bool) {
+	pbi.readOnly = nop
+}
+
+func (pbi *StandardPlanBuilderInput) IsNop() bool {
+	return pbi.isNop
 }
 
 func (pbi *StandardPlanBuilderInput) IsReadOnly() bool {

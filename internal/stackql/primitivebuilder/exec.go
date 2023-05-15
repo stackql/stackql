@@ -135,3 +135,10 @@ func (ss *Exec) Build() error {
 	ss.graph.CreatePrimitiveNode(pr)
 	return nil
 }
+
+func (ss *Exec) SetWriteOnly(_ bool) {
+}
+
+func (ss *Exec) IsWriteOnly() bool {
+	return false
+}

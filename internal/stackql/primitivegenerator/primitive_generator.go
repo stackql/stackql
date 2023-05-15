@@ -48,6 +48,10 @@ type PrimitiveGenerator interface {
 	GetPrimitiveComposer() primitivecomposer.PrimitiveComposer
 	SetIsIndirect(isIndirect bool)
 	WithDataFlowDependentPrimitiveGenerator(PrimitiveGenerator) PrimitiveGenerator
+	WithPrepStmtOffset(offset int) PrimitiveGenerator
+	GetPrepStmtOffset() int
+	SetElideRead(bool)
+	IsElideRead() bool
 	IsShowResults() bool
 }
 
@@ -56,7 +60,9 @@ type standardPrimitiveGenerator struct {
 	dataflowDependent PrimitiveGenerator
 	Children          []PrimitiveGenerator
 	indirects         []PrimitiveGenerator
+	prepStmtOffset    int
 	PrimitiveComposer primitivecomposer.PrimitiveComposer
+	isElideRead       bool
 }
 
 func NewRootPrimitiveGenerator(
@@ -79,6 +85,23 @@ func NewRootPrimitiveGenerator(
 func (pb *standardPrimitiveGenerator) WithDataFlowDependentPrimitiveGenerator(
 	dependent PrimitiveGenerator) PrimitiveGenerator {
 	pb.dataflowDependent = dependent
+	return pb
+}
+
+func (pb *standardPrimitiveGenerator) SetElideRead(isElideRead bool) {
+	pb.isElideRead = isElideRead
+}
+
+func (pb *standardPrimitiveGenerator) IsElideRead() bool {
+	return pb.isElideRead
+}
+
+func (pb *standardPrimitiveGenerator) GetPrepStmtOffset() int {
+	return pb.prepStmtOffset
+}
+
+func (pb *standardPrimitiveGenerator) WithPrepStmtOffset(offset int) PrimitiveGenerator {
+	pb.prepStmtOffset = offset
 	return pb
 }
 

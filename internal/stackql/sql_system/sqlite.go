@@ -692,6 +692,7 @@ func (eng *sqLiteSystem) ComposeSelectQuery(
 	fromString string,
 	rewrittenWhere string,
 	selectSuffix string,
+	parameterOffset int,
 ) (string, error) {
 	return eng.composeSelectQuery(columns, tableAliases, fromString, rewrittenWhere, selectSuffix)
 }

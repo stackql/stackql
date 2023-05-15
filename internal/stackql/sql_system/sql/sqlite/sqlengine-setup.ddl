@@ -241,7 +241,7 @@ VALUES (
     size 
   from aws.ec2.volumes 
   where region = ''eu-west-3''
-  ORDER BY Size DESC
+  ORDER BY size DESC
   ;'
 )
 ;

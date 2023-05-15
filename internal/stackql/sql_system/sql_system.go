@@ -20,7 +20,7 @@ import (
 )
 
 type SQLSystem interface {
-	ComposeSelectQuery([]relationaldto.RelationalColumn, []string, string, string, string) (string, error)
+	ComposeSelectQuery([]relationaldto.RelationalColumn, []string, string, string, string, int) (string, error)
 	DelimitGroupByColumn(term string) string
 	DelimitOrderByColumn(term string) string
 	// GCAdd() will record a Txn as active

@@ -84,3 +84,10 @@ func (un *ddl) GetRoot() primitivegraph.PrimitiveNode {
 func (un *ddl) GetTail() primitivegraph.PrimitiveNode {
 	return un.tail
 }
+
+func (un *ddl) SetWriteOnly(_ bool) {
+}
+
+func (un *ddl) IsWriteOnly() bool {
+	return false
+}

@@ -78,3 +78,10 @@ func (ss *RawNativeExec) Build() error {
 
 	return nil
 }
+
+func (ss *RawNativeExec) SetWriteOnly(_ bool) {
+}
+
+func (ss *RawNativeExec) IsWriteOnly() bool {
+	return false
+}

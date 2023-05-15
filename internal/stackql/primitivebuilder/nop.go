@@ -64,3 +64,10 @@ func (nb *NopBuilder) GetRoot() primitivegraph.PrimitiveNode {
 func (nb *NopBuilder) GetTail() primitivegraph.PrimitiveNode {
 	return nb.root
 }
+
+func (nb *NopBuilder) SetWriteOnly(_ bool) {
+}
+
+func (nb *NopBuilder) IsWriteOnly() bool {
+	return false
+}

@@ -107,6 +107,7 @@ VALUES (
 ON CONFLICT (view_name) DO NOTHING
 ;
 
+
 INSERT INTO "__iql__.views" (
   view_name,
   view_ddl
@@ -248,7 +249,7 @@ VALUES (
     size 
   from aws.ec2.volumes 
   where region = ''eu-west-3''
-  ORDER BY Size DESC
+  ORDER BY size DESC
   ;'
 )
 ON CONFLICT (view_name) DO NOTHING

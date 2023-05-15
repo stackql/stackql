@@ -142,11 +142,17 @@ func (pb *standardPrimitiveGenerator) analyzeSelect(pbi planbuilderinput.PlanBui
 			if err != nil {
 				return err
 			}
+			dp = dp.WithPrepStmtOffset(pb.prepStmtOffset)
+			dp = dp.WithElideRead(pb.IsElideRead())
 			err = dp.Plan()
 			if err != nil {
 				return err
 			}
 			bld := dp.GetBldr()
+			// if generator is elide read then do so
+			if pb.IsElideRead() {
+				bld.SetWriteOnly(true)
+			}
 			selCtx := dp.GetSelectCtx()
 			pChild.GetPrimitiveComposer().SetBuilder(bld)
 			pb.PrimitiveComposer.SetSelectPreparedStatementCtx(selCtx)
