@@ -31,6 +31,8 @@ type DependencyPlanner interface {
 	Plan() error
 	GetBldr() primitivebuilder.Builder
 	GetSelectCtx() drm.PreparedStatementCtx
+	WithPrepStmtOffset(offset int) DependencyPlanner
+	WithElideRead(isElideRead bool) DependencyPlanner
 }
 
 type standardDependencyPlanner struct {
@@ -54,6 +56,10 @@ type standardDependencyPlanner struct {
 	selCtx        drm.PreparedStatementCtx
 	defaultStream streaming.MapStream
 	annMap        taxonomy.AnnotationCtxMap
+	//
+	prepStmtOffset int
+	//
+	isElideRead bool
 }
 
 func NewStandardDependencyPlanner(
@@ -86,6 +92,16 @@ func NewStandardDependencyPlanner(
 		tcc:                tcc,
 		tccSetAheadOfTime:  tccSetAheadOfTime,
 	}, nil
+}
+
+func (dp *standardDependencyPlanner) WithPrepStmtOffset(offset int) DependencyPlanner {
+	dp.prepStmtOffset = offset
+	return dp
+}
+
+func (dp *standardDependencyPlanner) WithElideRead(isElideRead bool) DependencyPlanner {
+	dp.isElideRead = isElideRead
+	return dp
 }
 
 func (dp *standardDependencyPlanner) GetBldr() primitivebuilder.Builder {
@@ -242,7 +258,7 @@ func (dp *standardDependencyPlanner) Plan() error {
 		dp.secondaryTccs,
 		rewrittenWhereStr,
 		drmCfg.GetNamespaceCollection(),
-	).WithFormatter(drmCfg.GetSQLSystem().GetASTFormatter())
+	).WithFormatter(drmCfg.GetSQLSystem().GetASTFormatter()).WithPrepStmtOffset(dp.prepStmtOffset)
 	err = v.Visit(dp.sqlStatement)
 	if err != nil {
 		return err
@@ -259,6 +275,15 @@ func (dp *standardDependencyPlanner) Plan() error {
 		nil,
 		streaming.NewNopMapStream(),
 	)
+	if dp.isElideRead {
+		selBld = primitivebuilder.NewNopBuilder(
+			dp.primitiveComposer.GetGraph(),
+			dp.primitiveComposer.GetTxnCtrlCtrs(),
+			dp.handlerCtx,
+			dp.handlerCtx.GetSQLEngine(),
+			[]string{},
+		)
+	}
 	// TODO: make this finer grained STAT
 	dp.bldr = primitivebuilder.NewDependentMultipleAcquireAndSelect(dp.primitiveComposer.GetGraph(), dp.execSlice, selBld)
 	dp.selCtx = selCtx

@@ -35,6 +35,7 @@ type PrimitiveComposer interface {
 	GetChildren() []PrimitiveComposer
 	GetColumnOrder() []string
 	GetCommentDirectives() sqlparser.CommentDirectives
+	GetCtrlColumnRepeats() int
 	GetDRMConfig() drm.Config
 	GetGraph() primitivegraph.PrimitiveGraph
 	GetInsertPreparedStatementCtx() drm.PreparedStatementCtx
@@ -148,6 +149,10 @@ type standardPrimitiveComposer struct {
 	paramCollection internaldto.TableParameterCollection
 
 	isIndirect bool
+}
+
+func (pb *standardPrimitiveComposer) GetCtrlColumnRepeats() int {
+	return pb.selectPreparedStatementCtx.GetCtrlColumnRepeats()
 }
 
 func (pb *standardPrimitiveComposer) ContainsSQLDataSource() bool {

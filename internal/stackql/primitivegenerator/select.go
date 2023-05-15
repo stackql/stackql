@@ -142,6 +142,8 @@ func (pb *standardPrimitiveGenerator) analyzeSelect(pbi planbuilderinput.PlanBui
 			if err != nil {
 				return err
 			}
+			dp = dp.WithPrepStmtOffset(pb.prepStmtOffset)
+			dp = dp.WithElideRead(pb.IsElideRead())
 			err = dp.Plan()
 			if err != nil {
 				return err

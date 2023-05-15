@@ -29,6 +29,7 @@ type QueryRewriteAstVisitor interface {
 	sqlparser.SQLAstVisitor
 	GenerateSelectDML() (drm.PreparedStatementCtx, error)
 	WithFormatter(formatter sqlparser.NodeFormatter) QueryRewriteAstVisitor
+	WithPrepStmtOffset(int) QueryRewriteAstVisitor
 }
 
 type standardQueryRewriteAstVisitor struct {
@@ -57,6 +58,8 @@ type standardQueryRewriteAstVisitor struct {
 	anonColCounter int
 	//
 	indirectContexts []drm.PreparedStatementCtx
+	//
+	prepStmtOffset int
 }
 
 func NewQueryRewriteAstVisitor(
@@ -89,6 +92,11 @@ func NewQueryRewriteAstVisitor(
 		namespaceCollection:   namespaceCollection,
 	}
 	return rv
+}
+
+func (v *standardQueryRewriteAstVisitor) WithPrepStmtOffset(offset int) QueryRewriteAstVisitor {
+	v.prepStmtOffset = offset
+	return v
 }
 
 func (v *standardQueryRewriteAstVisitor) getNextAlias() string {
@@ -154,7 +162,7 @@ func (v *standardQueryRewriteAstVisitor) GenerateSelectDML() (drm.PreparedStatem
 		v.fromStr,
 		v.tableSlice,
 		v.namespaceCollection,
-	).WithIndirectContexts(v.indirectContexts)
+	).WithIndirectContexts(v.indirectContexts).WithPrepStmtOffset(v.prepStmtOffset)
 	return sqlrewrite.GenerateSelectDML(rewriteInput)
 }
 

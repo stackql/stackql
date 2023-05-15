@@ -56,7 +56,8 @@ func (v *view) GetRequiredParameters() map[string]openapistackql.Addressable {
 }
 
 func (v *view) GetColumnByName(name string) (internaldto.ColumnMetadata, bool) {
-	for _, col := range v.selCtx.GetNonControlColumns() {
+	nccs := v.selCtx.GetNonControlColumns()
+	for _, col := range nccs {
 		if col.GetIdentifier() == name {
 			return col, true
 		}

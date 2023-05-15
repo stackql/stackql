@@ -686,12 +686,14 @@ func (eng *sqLiteSystem) getGCHousekeepingQuery(tableName string, tcc internaldt
 	return fmt.Sprintf(templateQuery, tcc.GetGenID(), tcc.GetSessionID(), tcc.GetTxnID(), tableName)
 }
 
+//nolint:revive // Liskov substitution principle
 func (eng *sqLiteSystem) ComposeSelectQuery(
 	columns []relationaldto.RelationalColumn,
 	tableAliases []string,
 	fromString string,
 	rewrittenWhere string,
 	selectSuffix string,
+	parameterOffset int,
 ) (string, error) {
 	return eng.composeSelectQuery(columns, tableAliases, fromString, rewrittenWhere, selectSuffix)
 }
