@@ -76,6 +76,9 @@
         "SELECT a.attname FROM pg_attribute a JOIN ( SELECT unnest(ix.indkey) attnum, generate_subscripts(ix.indkey, 1) ord FROM pg_index ix WHERE ix.indrelid = '13420' AND ix.indisprimary ) k ON a.attnum=k.attnum WHERE a.attrelid = '13420'  ORDER BY k.ord ;",
         "select aws_region, volumeId, encrypted, size from aws_ec2_all_volumes ;",
         "select d1.name as n, d1.id, n1.description, s1.description as s1_description from google.compute.disks d1 inner join google.compute.networks n1 on d1.name = n1.name inner join google.compute.subnetworks s1 on d1.name = s1.name where d1.project = 'stackql-demo' and d1.zone = 'australia-southeast1-b' and n1.project = 'stackql-demo' and s1.project = 'stackql-demo' and s1.region = 'australia-southeast1' ;",
+        "select Properties FROM aws.cloud_control.resources WHERE region = 'ap-southeast-1' and data__TypeName = 'AWS::S3::Bucket';",
+        "select bucket_name from vvzz;",
+        "create view vvzz as select json_extract_path_text(Properties, 'BucketName') bucket_name, json_extract_path_text(Properties, 'VersioningConfiguration', 'Status') versioning FROM aws.cloud_control.resources WHERE region = 'ap-southeast-1' and data__TypeName = 'AWS::S3::Bucket' and data__Identifier = 'stackql-registry-artifacts';"
       ],
       "default": "show providers;"
     },

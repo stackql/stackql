@@ -178,7 +178,7 @@ func (sp *standardInitialPasses) initialPasses(
 		annotatedAST,
 		sp.primitiveGenerator,
 		handlerCtx.GetSQLSystem(),
-		handlerCtx.GetASTFormatter(),
+		nil, // minimal formatting prior to view storage
 		handlerCtx.GetNamespaceCollection(),
 		whereParams,
 		tcc,

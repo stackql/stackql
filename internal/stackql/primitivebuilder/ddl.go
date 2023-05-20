@@ -34,7 +34,8 @@ func (un *ddl) Build() error {
 		switch actionLowered {
 		case "create":
 			tableName := strings.Trim(astformat.String(unionObj.Table, sqlSystem.GetASTFormatter()), `"`)
-			viewDDL := strings.ReplaceAll(astformat.String(unionObj.SelectStatement, sqlSystem.GetASTFormatter()), `"`, "")
+			viewDDL := strings.ReplaceAll(
+				astformat.String(unionObj.SelectStatement, astformat.DefaultSelectExprsFormatter), `"`, "")
 			err := sqlSystem.CreateView(tableName, viewDDL)
 			if err != nil {
 				return internaldto.NewErroneousExecutorOutput(err)
