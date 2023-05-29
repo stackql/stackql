@@ -76,6 +76,7 @@ type DeclarationBlock struct {
 	Contents map[string]interface{}
 }
 
+//nolint:gomnd //these invariants are ad-hoc
 func parseVarList(varList []string) (map[string]string, error) {
 	vars := make(map[string]string)
 	for _, v := range varList {
@@ -87,8 +88,8 @@ func parseVarList(varList []string) (map[string]string, error) {
 			return nil, fmt.Errorf("invalid variable declaration '%s'", v)
 		}
 		k := parts[0]
-		v := parts[1]
-		vars[k] = v
+		val := parts[1]
+		vars[k] = val
 	}
 	return vars, nil
 }
