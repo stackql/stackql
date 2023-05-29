@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 	"text/template"
 	"unicode"
 
@@ -75,18 +76,46 @@ type DeclarationBlock struct {
 	Contents map[string]interface{}
 }
 
-func NewDeclarationBlock(blockType string, contents []byte, filename string) (*DeclarationBlock, error) {
+//nolint:gomnd //these invariants are ad-hoc
+func parseVarList(varList []string) (map[string]string, error) {
+	vars := make(map[string]string)
+	for _, v := range varList {
+		if v == "" {
+			return nil, fmt.Errorf("invalid empty variable declaration")
+		}
+		parts := strings.SplitN(v, "=", 2)
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("invalid variable declaration '%s'", v)
+		}
+		k := parts[0]
+		val := parts[1]
+		vars[k] = val
+	}
+	return vars, nil
+}
+
+func newDeclarationBlock(
+	blockType string,
+	contents []byte,
+	filename string,
+	varList []string,
+) (*DeclarationBlock, error) {
 	ct := make(map[string]interface{})
-	var err error
 	switch blockType {
 	case JSONBlockType:
-
-		err = json.Unmarshal(bytes.TrimSpace(contents), &ct)
+		err := json.Unmarshal(bytes.TrimSpace(contents), &ct)
 		if err != nil {
 			return nil, err
 		}
 	case JsonnetBlockType:
+		vars, err := parseVarList(varList)
+		if err != nil {
+			return nil, err
+		}
 		vm := jsonnet.MakeVM()
+		for k, v := range vars {
+			vm.ExtVar(k, v)
+		}
 		var jsonStr string
 		jsonStr, err = vm.EvaluateAnonymousSnippet(filename, string(bytes.TrimSpace(contents)))
 		if err != nil {
@@ -111,7 +140,7 @@ type Preprocessor struct {
 	contents                   printableMap
 }
 
-func (pp *Preprocessor) inferBlock(block []byte, filename string) (*DeclarationBlock, error) {
+func (pp *Preprocessor) inferBlock(block []byte, filename string, varList []string) (*DeclarationBlock, error) {
 	var typeStr string
 	var i int
 	for j, b := range block {
@@ -121,7 +150,7 @@ func (pp *Preprocessor) inferBlock(block []byte, filename string) (*DeclarationB
 		i = j
 		typeStr += string(b)
 	}
-	return NewDeclarationBlock(typeStr, block[i+1:], filename)
+	return newDeclarationBlock(typeStr, block[i+1:], filename, varList)
 }
 
 func (pp *Preprocessor) mergeContents(declarationBlocks []DeclarationBlock) {
@@ -163,7 +192,7 @@ func (pp *Preprocessor) Render(input io.Reader) (io.Reader, error) {
 	return bytes.NewReader(tplWr.Bytes()), nil
 }
 
-func (pp *Preprocessor) Prepare(infile io.Reader, infileName string) (io.Reader, error) {
+func (pp *Preprocessor) Prepare(infile io.Reader, infileName string, varList []string) (io.Reader, error) {
 	var outContents []byte
 	var declarationBlocks []DeclarationBlock
 	inContents, err := io.ReadAll(infile)
@@ -185,7 +214,7 @@ func (pp *Preprocessor) Prepare(infile io.Reader, infileName string) (io.Reader,
 			return nil, fmt.Errorf("declaration block delimiters improperly placed")
 		}
 		var db *DeclarationBlock
-		db, err = pp.inferBlock(inContents[startIdx:blockTermIdx], infileName)
+		db, err = pp.inferBlock(inContents[startIdx:blockTermIdx], infileName, varList)
 		if err != nil {
 			return nil, err
 		}
@@ -197,12 +226,17 @@ func (pp *Preprocessor) Prepare(infile io.Reader, infileName string) (io.Reader,
 	return bytes.NewReader(outContents), err
 }
 
-func (pp *Preprocessor) PrepareExternal(infileType string, infile io.Reader, infileName string) error {
+func (pp *Preprocessor) PrepareExternal(
+	infileType string,
+	infile io.Reader,
+	infileName string,
+	varList []string,
+) error {
 	inContents, err := io.ReadAll(infile)
 	if err != nil {
 		return err
 	}
-	db, err := NewDeclarationBlock(infileType, inContents, infileName)
+	db, err := newDeclarationBlock(infileType, inContents, infileName, varList)
 	if err != nil {
 		return err
 	}

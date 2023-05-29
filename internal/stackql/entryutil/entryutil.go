@@ -193,7 +193,7 @@ func assemblePreprocessor(runtimeCtx dto.RuntimeCtx, rdr io.Reader) ([]byte, err
 		return nil, fmt.Errorf("preprocessor error")
 	}
 	if runtimeCtx.TemplateCtxFilePath == "" {
-		prepRd, err = pp.Prepare(rdr, runtimeCtx.InfilePath)
+		prepRd, err = pp.Prepare(rdr, runtimeCtx.InfilePath, runtimeCtx.VarList)
 		if err != nil {
 			return nil, err
 		}
@@ -207,7 +207,9 @@ func assemblePreprocessor(runtimeCtx dto.RuntimeCtx, rdr io.Reader) ([]byte, err
 			strings.Trim(
 				strings.ToLower(filepath.Ext(runtimeCtx.TemplateCtxFilePath)), "."),
 			externalTmplRdr,
-			runtimeCtx.TemplateCtxFilePath)
+			runtimeCtx.TemplateCtxFilePath,
+			runtimeCtx.VarList,
+		)
 	}
 	if err != nil {
 		return nil, err

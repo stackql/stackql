@@ -564,6 +564,13 @@ SELECT_HSTORE_DETAILS_TUPLES_EXPECTED = []
 
 SELECT_POSTGRES_CATALOG_JOIN_TUPLE_EXPECTED = ("__iql__.control.gc.rings",)
 
+
+_JSONNET_PLUS_ENV_VARS_QUERY_FILE = os.path.join(REPOSITORY_ROOT_UNIX, 'test', 'assets', 'input', 'env-var-input', 'env-var-input.iql')
+_JSONNET_PLUS_ENV_VARS_VAR_FILE = os.path.join(REPOSITORY_ROOT_UNIX, 'test', 'assets', 'input', 'env-var-input', 'vars.jsonnet')
+_JSONNET_PLUS_ENV_VARS_QUERY_FILE_DOCKER = os.path.join('/opt', 'stackql', 'input', 'env-var-input', 'env-var-input.iql')
+_JSONNET_PLUS_ENV_VARS_VAR_FILE_DOCKER = os.path.join('/opt', 'stackql', 'input', 'env-var-input', 'vars.jsonnet')
+_JSONNET_PLUS_ENV_VARS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'env-var-input', 'env-var-input-expected.iql'))
+
 SELECT_AZURE_COMPUTE_PUBLIC_KEYS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'azure', 'compute', 'ssh-public-keys-list.txt'))
 SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'azure', 'compute', 'vm-list.txt'))
 
@@ -798,6 +805,9 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'GC_CFG_EAGER':                                   _GC_CFG_EAGER,
     'GITHUB_SECRET_STR':                              GITHUB_SECRET_STR,
     'IS_WINDOWS':                                     IS_WINDOWS,
+    'JSONNET_PLUS_ENV_VARS_EXPECTED':                 _JSONNET_PLUS_ENV_VARS_EXPECTED,
+    'JSONNET_PLUS_ENV_VARS_QUERY_FILE':               _JSONNET_PLUS_ENV_VARS_QUERY_FILE,
+    'JSONNET_PLUS_ENV_VARS_VAR_FILE':                 _JSONNET_PLUS_ENV_VARS_VAR_FILE,
     'K8S_SECRET_STR':                                 K8S_SECRET_STR,
     'MOCKSERVER_JAR':                                 MOCKSERVER_JAR,
     'MOCKSERVER_PORT_AWS':                            MOCKSERVER_PORT_AWS,
@@ -1016,6 +1026,8 @@ def get_variables(execution_env :str, sql_backend_str :str):
     rv['JSON_INIT_FILE_PATH_OKTA']                      = JSON_INIT_FILE_PATH_OKTA
     rv['JSON_INIT_FILE_PATH_REGISTRY']                  = JSON_INIT_FILE_PATH_REGISTRY
     rv['JSON_INIT_FILE_PATH_SUMOLOGIC']                 = JSON_INIT_FILE_PATH_SUMOLOGIC
+    rv['JSONNET_PLUS_ENV_VARS_QUERY_FILE']              = _JSONNET_PLUS_ENV_VARS_QUERY_FILE_DOCKER
+    rv['JSONNET_PLUS_ENV_VARS_VAR_FILE']                = _JSONNET_PLUS_ENV_VARS_VAR_FILE_DOCKER
     rv['PG_SRV_MTLS_CFG_STR']                           = PG_SRV_MTLS_CFG_STR
     rv['PSQL_MTLS_CONN_STR']                            = PSQL_MTLS_CONN_STR_DOCKER
     rv['PSQL_MTLS_CONN_STR_UNIX']                       = PSQL_MTLS_CONN_STR_DOCKER

@@ -42,6 +42,7 @@ func GetRuntimeCtx(providerStr string, outputFmtStr string, testName string) (*d
 		OutputFormat:              outputFmtStr,
 		SQLBackendCfgRaw:          fmt.Sprintf(`{ "dbInitFilepath": "%s", "dsn": "file:%s?mode=memory&cache=shared" }`, dbInitFilePath, testName),
 		ExecutionConcurrencyLimit: 1,
+		VarList:                   []string{"test_var=test_value"},
 	}, nil
 }
 
