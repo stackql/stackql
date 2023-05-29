@@ -471,6 +471,12 @@ github.com/stackql/color v0.0.1-rc01 h1:fq3Gj6gwskaZnQrDXfFYnDP6JyayGHy6Dp7I5P/V
 github.com/stackql/color v0.0.1-rc01/go.mod h1:ELkj/draVOlAH/xkhN6mQ50Qd0MPOk5AAr3maGEBuJM=
 github.com/stackql/go-openapistackql v0.1.2-alpha01 h1:iyxNqLCAHonFOHdaRCyfqmISVhnKOlQif6ehcxa9JnE=
 github.com/stackql/go-openapistackql v0.1.2-alpha01/go.mod h1:Nsfr5QmHl0/wd2dP0lzgvCn+3wuOwJjoLA+Amrneigk=
+github.com/stackql/go-openapistackql v0.1.2-alpha02 h1:EvMXna9Sun7pyZkXUeNMJcoyVd6ZU8qdVI4PntezYOw=
+github.com/stackql/go-openapistackql v0.1.2-alpha02/go.mod h1:Nsfr5QmHl0/wd2dP0lzgvCn+3wuOwJjoLA+Amrneigk=
+github.com/stackql/go-openapistackql v0.1.2-alpha03 h1:+RFUQR3H6WRMsiM4sminS4YwIrgKmf5GBX3bHeKUNMM=
+github.com/stackql/go-openapistackql v0.1.2-alpha03/go.mod h1:Nsfr5QmHl0/wd2dP0lzgvCn+3wuOwJjoLA+Amrneigk=
+github.com/stackql/go-openapistackql v0.1.2-alpha04 h1:m5zaI3skH1uoO34fnQqd20Yv5BwqhpsQlBJO4XCYO00=
+github.com/stackql/go-openapistackql v0.1.2-alpha04/go.mod h1:Nsfr5QmHl0/wd2dP0lzgvCn+3wuOwJjoLA+Amrneigk=
 github.com/stackql/go-sqlite3 v0.0.2-stackqlbeta04 h1:OjtVf98ZZ8DJ0kWuV1J03hCxkfplPjpa8DDgENzHSyA=
 github.com/stackql/go-sqlite3 v0.0.2-stackqlbeta04/go.mod h1:JHMGM3Hu7TcW8NBiJMFSBCHaUkhm1VjGZD5/uDaUDf4=
 github.com/stackql/go-suffix-map v0.0.1-alpha01 h1:TDUDS8bySu41Oo9p0eniUeCm43mnRM6zFEd6j6VUaz8=
