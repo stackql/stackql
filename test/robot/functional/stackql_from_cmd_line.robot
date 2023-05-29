@@ -35,6 +35,21 @@ Describe AWS EC2 Default KMS Key ID Exemplifies Top Level XPath for schema
 Show Methods GitHub
     Should StackQL Novel Exec Equal    ${SHOW_METHODS_GITHUB_REPOS_REPOS}   ${SHOW_METHODS_GITHUB_REPOS_REPOS_EXPECTED}
 
+Show Methods including server params AWS 
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |---------------|----------------|---------|
+    ...    |${SPACE}${SPACE}MethodName${SPACE}${SPACE}${SPACE}|${SPACE}RequiredParams${SPACE}|${SPACE}SQLVerb${SPACE}|
+    ...    |---------------|----------------|---------|
+    ...    |${SPACE}vpcs_Describe${SPACE}|${SPACE}region${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}SELECT${SPACE}${SPACE}|
+    ...    |---------------|----------------|---------|
+    ...    |${SPACE}vpc_Create${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}region${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}INSERT${SPACE}${SPACE}|
+    ...    |---------------|----------------|---------|
+    ...    |${SPACE}vpc_Delete${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}VpcId,${SPACE}region${SPACE}${SPACE}|${SPACE}DELETE${SPACE}${SPACE}|
+    ...    |---------------|----------------|---------|
+    Should StackQL Current Exec Equal    
+    ...    show methods in aws.ec2.vpcs;
+    ...    ${outputStr}
+
 Show Insert Google Container Clusters
     Should StackQL Exec Contain    
     ...    SHOW INSERT INTO google.container."projects.zones.clusters";
@@ -105,6 +120,20 @@ Should StackQL Exec Equal
     ...    ${_EXEC_CMD_EXPECTED_OUTPUT}
     ...    &{kwargs}
 
+Should StackQL Current Exec Equal
+    [Arguments]    ${_EXEC_CMD_STR}    ${_EXEC_CMD_EXPECTED_OUTPUT}    @{varargs}    &{kwargs}
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${_EXEC_CMD_STR}
+    ...    ${_EXEC_CMD_EXPECTED_OUTPUT}
+    ...    &{kwargs}
+
 Should StackQL Novel Exec Equal
     [Arguments]    ${_EXEC_CMD_STR}    ${_EXEC_CMD_EXPECTED_OUTPUT}    @{varargs}    &{kwargs}
     Should StackQL Exec Inline Equal
@@ -129,6 +158,7 @@ Should StackQL Novel Exec Equal
     ...    ${_EXEC_CMD_STR}
     ...    ${_EXEC_CMD_EXPECTED_OUTPUT}
     ...    &{kwargs}
+
 Should StackQL Exec Contain
     [Arguments]    ${_EXEC_CMD_STR}    ${_EXEC_CMD_EXPECTED_OUTPUT}    @{varargs}    &{kwargs}
     Should StackQL Exec Inline Contain
