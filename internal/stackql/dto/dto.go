@@ -60,6 +60,7 @@ const (
 	TemplateCtxFilePathKey          string = "iqldata"
 	TestWithoutAPICallsKey          string = "TestWithoutAPICalls"
 	UseNonPreferredAPIsKEy          string = "usenonpreferredapis"
+	VarListKey                      string = "var"
 	VerboseFlagKey                  string = "verbose"
 	ViperCfgFileNameKey             string = "viperconfigfilename"
 	WorkOfflineKey                  string = "offline"

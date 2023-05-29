@@ -175,6 +175,18 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     if cfg.pop('stackql_H', False):
       supplied_args.append('--output=text')
       supplied_args.append('-H')
+    if cfg.pop('stackql_dryrun', False):
+      supplied_args.append('--dryrun')
+    query_from_input_file_path = cfg.pop('stackql_i', False)
+    if query_from_input_file_path:
+      supplied_args.append(f'--infile={query_from_input_file_path}')
+    query_from_input_file_data_path = cfg.pop('stackql_iqldata', False)
+    if query_from_input_file_data_path:
+      supplied_args.append(f'--iqldata={query_from_input_file_data_path}')
+    query_var_list = cfg.pop('stackql_vars', False)
+    if query_var_list:
+      for q_var in query_var_list:
+        supplied_args.append(f'--var={q_var}')
     registry_cfg_str = registry_cfg.get_config_str('docker')
     if registry_cfg_str != "":
       supplied_args.append(f"--registry='{registry_cfg_str}'")
@@ -192,6 +204,9 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       os.environ['DB_SETUP_SRC']= f'./test/db/postgres'
     sleep_prefix = '' if self._sql_backend == SQL_BACKEND_CANONICAL_SQLITE_EMBEDDED else 'sleep 2 && '
     env_args_to_docker = self._expand_docker_env_args(okta_secret_str, github_secret_str, k8s_secret_str)
+    invocation_str = f"{sleep_prefix}stackql exec {' '.join(supplied_args)} '{query_escaped}'"
+    if query_from_input_file_path:
+      invocation_str = f"{sleep_prefix}stackql exec {' '.join(supplied_args)}"
     res = super().run_process(
       "docker",
       "compose",
@@ -203,7 +218,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       "stackqlsrv",
       "bash",
       "-c",
-      f"{sleep_prefix}stackql exec {' '.join(supplied_args)} '{query_escaped}'",
+      invocation_str,
       **cfg
     )
     self.log(res.stdout)
@@ -330,6 +345,18 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     if cfg.pop('stackql_H', False):
       supplied_args.append('--output=text')
       supplied_args.append('-H')
+    if cfg.pop('stackql_dryrun', False):
+      supplied_args.append('--dryrun')
+    query_from_input_file_path = cfg.pop('stackql_i', False)
+    if query_from_input_file_path:
+      supplied_args.append(f'--infile={query_from_input_file_path}')
+    query_from_input_file_data_path = cfg.pop('stackql_iqldata', False)
+    if query_from_input_file_data_path:
+      supplied_args.append(f'--iqldata={query_from_input_file_data_path}')
+    query_var_list = cfg.pop('stackql_vars', False)
+    if query_var_list:
+      for q_var in query_var_list:
+        supplied_args.append(f'--var={q_var}')
     registry_cfg_str = registry_cfg.get_config_str('native')
     if registry_cfg_str != "":
       supplied_args.append(f"--registry={registry_cfg_str}")
@@ -339,9 +366,10 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       supplied_args.append(f"--sqlBackend={sql_backend_cfg_str}")
     supplied_args.append("--tls.allowInsecure=true")
     supplied_args.append(f"--execution.concurrency.limit={self._concurrency_limit}")
+    if not query_from_input_file_path:
+      supplied_args.append(query)
     res = super().run_process(
       *supplied_args,
-      query,
       *args,
       **cfg
     )

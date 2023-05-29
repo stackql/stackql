@@ -49,6 +49,7 @@ type RuntimeCtx struct {
 	TemplateCtxFilePath          string
 	TestWithoutAPICalls          bool
 	UseNonPreferredAPIs          bool
+	VarList                      []string
 	VerboseFlag                  bool
 	ViperCfgFileName             string
 	WorkOffline                  bool
@@ -170,6 +171,8 @@ func (rc *RuntimeCtx) Set(key string, val string) error {
 		retVal = setBool(&rc.TestWithoutAPICalls, val)
 	case UseNonPreferredAPIsKEy:
 		retVal = setBool(&rc.UseNonPreferredAPIs, val)
+	case VarListKey:
+		rc.VarList = append(rc.VarList, val)
 	case VerboseFlagKey:
 		retVal = setBool(&rc.VerboseFlag, val)
 	case ViperCfgFileNameKey:

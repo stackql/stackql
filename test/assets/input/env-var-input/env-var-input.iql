@@ -1,0 +1,37 @@
+--
+-- create VPC 
+--
+
+INSERT /*+ AWAIT  */ INTO google.compute.networks
+(
+ project,
+ data__name,
+ data__autoCreateSubnetworks,
+ data__routingConfig
+) 
+SELECT
+'{{ .global.project }}',
+'{{ .network.name }}',
+{{ .network.autoCreateSubnetworks }},
+'{{ .network.routingConfig }}';
+
+--
+-- create subnetwork
+--
+INSERT /*+ AWAIT  */ INTO google.compute.subnetworks
+(
+ project,
+ region,
+ data__name,
+ data__network,
+ data__ipCidrRange,
+ data__privateIpGoogleAccess
+) 
+SELECT
+'{{ .global.project }}',
+'{{ .global.region }}',
+'{{ .subnetwork.name }}',
+'{{ .subnetwork.network }}',
+'{{ .subnetwork.ipCidrRange }}',
+ {{ .subnetwork.privateIpGoogleAccess }};
+

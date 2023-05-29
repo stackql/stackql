@@ -1,0 +1,36 @@
+--
+-- create VPC 
+--
+
+INSERT /*+ AWAIT  */ INTO google.compute.networks
+(
+ project,
+ data__name,
+ data__autoCreateSubnetworks,
+ data__routingConfig
+) 
+SELECT
+'stackql-demo',
+'env-var-input-demo-vpc',
+false,
+'{"routingMode":"REGIONAL"}';
+
+--
+-- create subnetwork
+--
+INSERT /*+ AWAIT  */ INTO google.compute.subnetworks
+(
+ project,
+ region,
+ data__name,
+ data__network,
+ data__ipCidrRange,
+ data__privateIpGoogleAccess
+) 
+SELECT
+'stackql-demo',
+'australia-southeast1',
+'env-var-input-demo-subnet',
+'https://compute.googleapis.com/compute/v1/projects/stackql-demo/global/networks/env-var-input-demo-vpc',
+'10.240.0.0/24',
+ false;

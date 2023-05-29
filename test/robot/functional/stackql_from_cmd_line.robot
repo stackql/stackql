@@ -41,6 +41,18 @@ Show Insert Google Container Clusters
     ...    ${SHOW_INSERT_GOOGLE_CONTAINER_CLUSTERS} 
     ...    stackql_H=True
     ...    stdout=${CURDIR}/tmp/Show-Insert-Google-Container-Clusters.tmp
+    
+JSONNET Plus Env Vars
+    ${varList}=    Create List    project=stackql-demo    region=australia-southeast1
+    Should StackQL Exec Equal    
+    ...    ""
+    ...    ${JSONNET_PLUS_ENV_VARS_EXPECTED} 
+    ...    stackql_H=True 
+    ...    stackql_dryrun=True
+    ...    stackql_i=${JSONNET_PLUS_ENV_VARS_QUERY_FILE}
+    ...    stackql_vars=${varList}
+    ...    stackql_iqldata=${JSONNET_PLUS_ENV_VARS_VAR_FILE}
+    ...    stdout=${CURDIR}/tmp/JSONNET-Plus-Env-Vars.tmp
 
 Show Extended Insert Google BQ Datasets
     Should StackQL Exec Contain    

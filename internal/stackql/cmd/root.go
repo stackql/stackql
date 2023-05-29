@@ -149,6 +149,8 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.PGSrvRawTLSCfg, dto.PgSrvRawTLSCfgKey, "", "tls config for server, for server mode only")
 	rootCmd.PersistentFlags().IntVar(&runtimeCtx.PGSrvPort, dto.PgSrvPortKey, 5466, "TCP server port, for server mode only") //nolint:gomnd // TODO: investigate
 
+	rootCmd.PersistentFlags().StringSliceVar(&runtimeCtx.VarList, dto.VarListKey, []string{}, "list of variables to be used in queries")
+
 	rootCmd.PersistentFlags().MarkHidden(dto.TestWithoutAPICallsKey) //nolint:errcheck // TODO: investigate
 	rootCmd.PersistentFlags().MarkHidden(dto.ViperCfgFileNameKey)    //nolint:errcheck // TODO: investigate
 	rootCmd.PersistentFlags().MarkHidden(dto.ErrorPresentationKey)   //nolint:errcheck // TODO: investigate
