@@ -109,7 +109,8 @@ func (adp *BasicDiscoveryAdapter) GetServiceShard(
 		viewName := rsc.GetID()
 		_, viewExists := adp.sqlSystem.GetViewByName(viewName)
 		if !viewExists {
-			err = adp.sqlSystem.CreateView(viewName, viewBodyDDL)
+			// TODO: resolve any possible data race
+			err = adp.sqlSystem.CreateView(viewName, viewBodyDDL, true)
 			if err != nil {
 				return nil, err
 			}

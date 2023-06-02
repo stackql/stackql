@@ -211,7 +211,8 @@ func GetHeirarchyFromStatement(
 		// TODO: mutex required or some other strategy
 		viewDTO, viewExists := handlerCtx.GetSQLSystem().GetViewByName(viewName) //nolint:govet // acceptable shadow
 		if !viewExists {
-			err = handlerCtx.GetSQLSystem().CreateView(viewName, viewBodyDDL)
+			// TODO: resolve any possible data race
+			err = handlerCtx.GetSQLSystem().CreateView(viewName, viewBodyDDL, true)
 			if err != nil {
 				return nil, err
 			}

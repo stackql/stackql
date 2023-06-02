@@ -678,6 +678,7 @@ SELECT_OKTA_USERS_ASC_EXPECTED = get_output_from_local_file(os.path.join('test',
 
 
 SELECT_SOME_VIEW_EXPECTED_JSON = get_json_from_local_file(os.path.join('test', 'assets', 'expected', 'views', 'select-some-view.json'))
+SELECT_SOME_VIEW_RECREATED_EXPECTED_JSON = get_json_from_local_file(os.path.join('test', 'assets', 'expected', 'views', 'select-some-view-recreated.json'))
 
 SELECT_CROSS_CLOUD_DISKS_VIEW_EXPECTED_JSON = get_json_from_local_file(os.path.join('test', 'assets', 'expected', 'views', 'select-cross-cloud-disks.json'))
 
@@ -759,6 +760,8 @@ SELECT_GOOGLE_JOIN_CONCATENATED_SELECT_EXPRESSIONS :bytes =  b"""SELECT i.zone, 
 SELECT_GOOGLE_JOIN_CONCATENATED_SELECT_EXPRESSIONS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'google', 'joins', 'disks-instances-rewritten.txt'))
 
 _CREATE_SOME_VIEW = "create or replace view some_view as select id, name, url from github.repos.repos where org = 'stackql' order by name;"
+
+_RECREATE_SOME_VIEW = "create or replace view some_view as select id, name from github.repos.repos where org = 'stackql' order by name;"
 
 def get_select_k8s_nodes_asc(execution_env :str) -> str:
   k8s_host = '127.0.0.1'
@@ -989,6 +992,8 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'SHELL_COMMANDS_SPECIALCASE_REPEATED_CACHED_JSON_EXPECTED':               SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_SPECIALCASE_JSON_EXPECTED + SELECT_ANALYTICS_CACHE_GITHUB_REPOSITORIES_COLLABORATORS_SPECIALCASE_JSON_EXPECTED,
     'SHELL_COMMANDS_VIEW_HANDLING_SEQUENCE':                                  [ _CREATE_SOME_VIEW, "select * from some_view;", "drop view some_view;" ],
     'SHELL_COMMANDS_VIEW_HANDLING_SEQUENCE_JSON_EXPECTED':                    [ { "message": "DDL execution completed" } ] + SELECT_SOME_VIEW_EXPECTED_JSON + [ { "message": "DDL execution completed" } ],
+    'SHELL_COMMANDS_VIEW_HANDLING_WITH_REPLACEMENT_SEQUENCE':                                  [ _CREATE_SOME_VIEW, "select * from some_view;", _RECREATE_SOME_VIEW, "select * from some_view;" ],
+    'SHELL_COMMANDS_VIEW_HANDLING_WITH_REPLACEMENT_SEQUENCE_JSON_EXPECTED':                    [ { "message": "DDL execution completed" } ] + SELECT_SOME_VIEW_EXPECTED_JSON + [ { "message": "DDL execution completed" } ] + SELECT_SOME_VIEW_RECREATED_EXPECTED_JSON,
     'SHELL_SESSION_SIMPLE_COMMANDS':                                          [ SELECT_GITHUB_BRANCHES_NAMES_DESC ],
     'SHELL_SESSION_SIMPLE_COMMANDS_AFTER_ERROR':                              [ SELECT_GITHUB_BRANCHES_NAMES_DESC_WRONG_COLUMN, SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES ],
     'SHELL_SESSION_SIMPLE_COMMANDS_AFTER_ERROR_EXPECTED':                     SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_JSON_EXPECTED,

@@ -470,11 +470,11 @@ func (eng *postgresSystem) DropView(viewName string) error {
 	return err
 }
 
-func (eng *postgresSystem) CreateView(viewName string, rawDDL string) error {
-	return eng.createView(viewName, rawDDL)
+func (eng *postgresSystem) CreateView(viewName string, rawDDL string, replaceAllowed bool) error {
+	return eng.createView(viewName, rawDDL, replaceAllowed)
 }
 
-func (eng *postgresSystem) createView(viewName string, rawDDL string) error {
+func (eng *postgresSystem) createView(viewName string, rawDDL string, replaceAllowed bool) error {
 	q := `
 	INSERT INTO "__iql__.views" (
 		view_name,
@@ -485,6 +485,13 @@ func (eng *postgresSystem) createView(viewName string, rawDDL string) error {
 		$2
 	  )
 	`
+	if replaceAllowed {
+		q += `
+		  ON CONFLICT(view_name)
+		  DO
+		    UPDATE SET view_ddl = EXCLUDED.view_ddl
+		`
+	}
 	_, err := eng.sqlEngine.Exec(q, viewName, rawDDL)
 	return err
 }
