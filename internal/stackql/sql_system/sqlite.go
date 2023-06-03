@@ -553,11 +553,11 @@ func (eng *sqLiteSystem) DropView(viewName string) error {
 	return err
 }
 
-func (eng *sqLiteSystem) CreateView(viewName string, rawDDL string) error {
-	return eng.createView(viewName, rawDDL)
+func (eng *sqLiteSystem) CreateView(viewName string, rawDDL string, replaceAllowed bool) error {
+	return eng.createView(viewName, rawDDL, replaceAllowed)
 }
 
-func (eng *sqLiteSystem) createView(viewName string, rawDDL string) error {
+func (eng *sqLiteSystem) createView(viewName string, rawDDL string, replaceAllowed bool) error {
 	q := `
 	INSERT INTO "__iql__.views" (
 		view_name,
@@ -568,6 +568,13 @@ func (eng *sqLiteSystem) createView(viewName string, rawDDL string) error {
 		?
 	  )
 	`
+	if replaceAllowed {
+		q += `
+		  ON CONFLICT(view_name)
+		  DO
+		    UPDATE SET view_ddl = EXCLUDED.view_ddl
+		`
+	}
 	_, err := eng.sqlEngine.Exec(q, viewName, rawDDL)
 	return err
 }

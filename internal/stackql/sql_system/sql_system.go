@@ -66,7 +66,7 @@ type SQLSystem interface {
 	GetTable(internaldto.HeirarchyIdentifiers, int) (internaldto.DBTable, error)
 
 	// Views
-	CreateView(viewName string, rawDDL string) error
+	CreateView(viewName string, rawDDL string, replaceAllowed bool) error
 	DropView(viewName string) error
 	GetViewByName(viewName string) (internaldto.ViewDTO, bool)
 

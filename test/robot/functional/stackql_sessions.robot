@@ -56,6 +56,14 @@ PG Session View Handling Behaviour Canonical
     ...    stdout=${CURDIR}/tmp/PG-Session-View-Handling-Behaviour-Canonical.tmp
     [Teardown]    NONE
 
+PG Session View Handling With Replacement Behaviour Canonical
+    Should PG Client Session Inline Equal
+    ...    ${PSQL_MTLS_CONN_STR_UNIX_WITH_EAGER_GC}
+    ...    ${SHELL_COMMANDS_VIEW_HANDLING_WITH_REPLACEMENT_SEQUENCE}
+    ...    ${SHELL_COMMANDS_VIEW_HANDLING_WITH_REPLACEMENT_SEQUENCE_JSON_EXPECTED}
+    ...    stdout=${CURDIR}/tmp/PG-Session-View-Handling-With-Replacement-Behaviour-Canonical.tmp
+    [Teardown]    NONE
+
 PG Session Aliased Cross Cloud Disks View Handling Behaviour Canonical
     Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test due to split_part function
     Should PG Client Session Inline Equal
