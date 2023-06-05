@@ -1,4 +1,4 @@
-package internaldto
+package typing
 
 import (
 	"reflect"
@@ -13,7 +13,7 @@ var (
 )
 
 type standardColumnMetadata struct {
-	coupling DRMCoupling
+	coupling ORMCoupling
 	column   openapistackql.ColumnDescriptor
 }
 
@@ -72,7 +72,7 @@ func (cd *standardColumnMetadata) GetRelationalType() string {
 
 func NewColDescriptor(col openapistackql.ColumnDescriptor, relTypeStr string) ColumnMetadata {
 	return &standardColumnMetadata{
-		coupling: NewDRMCoupling(relTypeStr, reflect.String),
+		coupling: NewORMCoupling(relTypeStr, reflect.String),
 		column:   col,
 	}
 }

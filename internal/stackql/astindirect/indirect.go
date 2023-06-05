@@ -6,6 +6,7 @@ import (
 	"github.com/stackql/go-openapistackql/openapistackql"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/symtab"
+	"github.com/stackql/stackql/internal/stackql/typing"
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
@@ -48,8 +49,8 @@ func NewSubqueryIndirect(subQueryDTO internaldto.SubqueryDTO) (Indirect, error) 
 type Indirect interface {
 	Parse() error
 	GetAssignedParameters() (internaldto.TableParameterCollection, bool)
-	GetColumnByName(name string) (internaldto.ColumnMetadata, bool)
-	GetColumns() []internaldto.ColumnMetadata
+	GetColumnByName(name string) (typing.ColumnMetadata, bool)
+	GetColumns() []typing.ColumnMetadata
 	GetName() string
 	GetOptionalParameters() map[string]openapistackql.Addressable
 	GetRequiredParameters() map[string]openapistackql.Addressable

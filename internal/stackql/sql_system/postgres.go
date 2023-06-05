@@ -19,6 +19,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
+	"github.com/stackql/stackql/internal/stackql/typing"
 )
 
 func newPostgresSystem(
@@ -28,6 +29,7 @@ func newPostgresSystem(
 	formatter sqlparser.NodeFormatter,
 	sqlCfg dto.SQLBackendCfg,
 	authCfg map[string]*dto.AuthCtx,
+	typCfg typing.Config,
 ) (SQLSystem, error) {
 	catalogName, err := sqlCfg.GetDatabaseName()
 	if err != nil {
@@ -38,18 +40,9 @@ func newPostgresSystem(
 		tableSchemaName = "public"
 	}
 	rv := &postgresSystem{
-		defaultGolangKind:     reflect.String,
-		defaultRelationalType: "text",
-		typeMappings: map[string]internaldto.DRMCoupling{
-			"array":   internaldto.NewDRMCoupling("text", reflect.Slice),
-			"boolean": internaldto.NewDRMCoupling("boolean", reflect.Bool),
-			"int":     internaldto.NewDRMCoupling("bigint", reflect.Int64),
-			"integer": internaldto.NewDRMCoupling("bigint", reflect.Int64),
-			"object":  internaldto.NewDRMCoupling("text", reflect.Map),
-			"string":  internaldto.NewDRMCoupling("text", reflect.String),
-			"number":  internaldto.NewDRMCoupling("numeric", reflect.Float64),
-			"numeric": internaldto.NewDRMCoupling("numeric", reflect.Float64),
-		},
+		defaultGolangKind:            reflect.String,
+		defaultRelationalType:        "text",
+		typeCfg:                      typCfg,
 		controlAttributes:            controlAttributes,
 		analyticsNamespaceLikeString: analyticsNamespaceLikeString,
 		sqlEngine:                    sqlEngine,
@@ -88,7 +81,7 @@ type postgresSystem struct {
 	analyticsNamespaceLikeString string
 	sqlEngine                    sqlengine.SQLEngine
 	formatter                    sqlparser.NodeFormatter
-	typeMappings                 map[string]internaldto.DRMCoupling
+	typeCfg                      typing.Config
 	defaultRelationalType        string
 	defaultGolangKind            reflect.Kind
 	tableSchema                  string
@@ -1062,11 +1055,7 @@ func (eng *postgresSystem) GetRelationalType(discoType string) string {
 }
 
 func (eng *postgresSystem) getRelationalType(discoType string) string {
-	rv, ok := eng.typeMappings[discoType]
-	if ok {
-		return rv.GetRelationalType()
-	}
-	return eng.defaultRelationalType
+	return eng.typeCfg.GetRelationalType(discoType)
 }
 
 func (eng *postgresSystem) GetGolangValue(discoType string) interface{} {
@@ -1074,42 +1063,11 @@ func (eng *postgresSystem) GetGolangValue(discoType string) interface{} {
 }
 
 func (eng *postgresSystem) getGolangValue(discoType string) interface{} {
-	rv, ok := eng.typeMappings[discoType]
-	if !ok {
-		return eng.getDefaultGolangValue()
-	}
-	//nolint:exhaustive //TODO: address this
-	switch rv.GetGolangKind() {
-	case reflect.String:
-		return &sql.NullString{}
-	case reflect.Array:
-		return &sql.NullString{}
-	case reflect.Bool:
-		return &sql.NullBool{}
-	case reflect.Map:
-		return &sql.NullString{}
-	case reflect.Int, reflect.Int64:
-		return &sql.NullInt64{}
-	case reflect.Float64:
-		return &sql.NullFloat64{}
-	}
-	return eng.getDefaultGolangValue()
-}
-
-func (eng *postgresSystem) getDefaultGolangValue() interface{} {
-	return &sql.NullString{}
+	return eng.typeCfg.GetGolangValue(discoType)
 }
 
 func (eng *postgresSystem) GetGolangKind(discoType string) reflect.Kind {
-	rv, ok := eng.typeMappings[discoType]
-	if !ok {
-		return eng.getDefaultGolangKind()
-	}
-	return rv.GetGolangKind()
-}
-
-func (eng *postgresSystem) getDefaultGolangKind() reflect.Kind {
-	return eng.defaultGolangKind
+	return eng.typeCfg.GetGolangKind(discoType)
 }
 
 func (eng *postgresSystem) QueryNamespaced(

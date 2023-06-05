@@ -9,6 +9,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/parser"
 	"github.com/stackql/stackql/internal/stackql/symtab"
+	"github.com/stackql/stackql/internal/stackql/typing"
 )
 
 type view struct {
@@ -43,7 +44,7 @@ func (v *view) GetName() string {
 	return v.viewDTO.GetName()
 }
 
-func (v *view) GetColumns() []internaldto.ColumnMetadata {
+func (v *view) GetColumns() []typing.ColumnMetadata {
 	return v.selCtx.GetNonControlColumns()
 }
 
@@ -55,7 +56,7 @@ func (v *view) GetRequiredParameters() map[string]openapistackql.Addressable {
 	return nil
 }
 
-func (v *view) GetColumnByName(name string) (internaldto.ColumnMetadata, bool) {
+func (v *view) GetColumnByName(name string) (typing.ColumnMetadata, bool) {
 	nccs := v.selCtx.GetNonControlColumns()
 	for _, col := range nccs {
 		if col.GetIdentifier() == name {

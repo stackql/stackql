@@ -16,6 +16,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/provider"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
+	"github.com/stackql/stackql/internal/stackql/typing"
 	"github.com/stackql/stackql/internal/stackql/util"
 	"github.com/stackql/stackql/pkg/prettyprint"
 )
@@ -402,7 +403,7 @@ func NewDescribeTableInstructionExecutor(
 func NewDescribeViewInstructionExecutor(
 	handlerCtx handler.HandlerContext,
 	tbl tablemetadata.ExtendedTableMetadata,
-	nonControlColumns []internaldto.ColumnMetadata,
+	nonControlColumns []typing.ColumnMetadata,
 	extended bool,
 	full bool,
 ) internaldto.ExecutorOutput {
@@ -427,7 +428,7 @@ func NewDescribeViewInstructionExecutor(
 	)
 }
 
-func columnsToFlatDescriptionMap(colz []internaldto.ColumnMetadata, extended bool) map[string]interface{} {
+func columnsToFlatDescriptionMap(colz []typing.ColumnMetadata, extended bool) map[string]interface{} {
 	retVal := make(map[string]interface{})
 	for _, col := range colz {
 		colName := col.GetIdentifier()

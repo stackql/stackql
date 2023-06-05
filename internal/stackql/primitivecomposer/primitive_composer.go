@@ -15,6 +15,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/symtab"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
+	"github.com/stackql/stackql/internal/stackql/typing"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
 
@@ -142,7 +143,7 @@ type standardPrimitiveComposer struct {
 
 	formatter sqlparser.NodeFormatter
 
-	unionNonControlColumns []internaldto.ColumnMetadata
+	unionNonControlColumns []typing.ColumnMetadata
 
 	tccSetAheadOfTime bool
 
@@ -181,7 +182,7 @@ func (pb *standardPrimitiveComposer) SetSymTab(symTab symtab.SymTab) {
 	pb.symTab = symTab
 }
 
-func (pb *standardPrimitiveComposer) GetNonControlColumns() []internaldto.ColumnMetadata {
+func (pb *standardPrimitiveComposer) GetNonControlColumns() []typing.ColumnMetadata {
 	if pb.GetSelectPreparedStatementCtx() != nil {
 		return pb.GetSelectPreparedStatementCtx().GetNonControlColumns()
 	}

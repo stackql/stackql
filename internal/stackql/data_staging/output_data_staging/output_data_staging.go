@@ -14,6 +14,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/sqlmachinery"
 	"github.com/stackql/stackql/internal/stackql/streaming"
+	"github.com/stackql/stackql/internal/stackql/typing"
 	"github.com/stackql/stackql/internal/stackql/util"
 )
 
@@ -53,7 +54,7 @@ type PacketPreparator interface {
 
 func NewNaivePacketPreparator(
 	source Source,
-	nonControlColumns []internaldto.ColumnMetadata,
+	nonControlColumns []typing.ColumnMetadata,
 	stream streaming.MapStream,
 	drmCfg drm.Config,
 ) PacketPreparator {
@@ -67,7 +68,7 @@ func NewNaivePacketPreparator(
 
 type naivePacketPreparator struct {
 	source            Source
-	nonControlColumns []internaldto.ColumnMetadata
+	nonControlColumns []typing.ColumnMetadata
 	stream            streaming.MapStream
 	drmCfg            drm.Config
 }
@@ -98,7 +99,7 @@ type Outputter interface {
 	OutputExecutorResult() internaldto.ExecutorOutput
 }
 
-func NewNaiveOutputter(packetPreparator PacketPreparator, nonControlColumns []internaldto.ColumnMetadata) Outputter {
+func NewNaiveOutputter(packetPreparator PacketPreparator, nonControlColumns []typing.ColumnMetadata) Outputter {
 	return &naiveOutputter{
 		packetPreparator:  packetPreparator,
 		nonControlColumns: nonControlColumns,
@@ -107,7 +108,7 @@ func NewNaiveOutputter(packetPreparator PacketPreparator, nonControlColumns []in
 
 type naiveOutputter struct {
 	packetPreparator  PacketPreparator
-	nonControlColumns []internaldto.ColumnMetadata
+	nonControlColumns []typing.ColumnMetadata
 }
 
 func (st *naiveOutputter) OutputExecutorResult() internaldto.ExecutorOutput {

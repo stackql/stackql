@@ -1,20 +1,19 @@
-package internal_relational_dto //nolint:revive,stylecheck // package name is helpful
+package typing
 
 import (
 	"reflect"
 	"strings"
 
 	"github.com/lib/pq/oid"
-	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/relationaldto"
 )
 
 var (
-	_ internaldto.ColumnMetadata = &relayedColumnMetadata{}
+	_ ColumnMetadata = &relayedColumnMetadata{}
 )
 
 type relayedColumnMetadata struct {
-	coupling internaldto.DRMCoupling
+	coupling ORMCoupling
 	column   relationaldto.RelationalColumn
 }
 
@@ -65,9 +64,9 @@ func (cd *relayedColumnMetadata) getOidForRelationalType(relType string) oid.Oid
 	}
 }
 
-func NewRelayedColDescriptor(col relationaldto.RelationalColumn, relTypeStr string) internaldto.ColumnMetadata {
+func NewRelayedColDescriptor(col relationaldto.RelationalColumn, relTypeStr string) ColumnMetadata {
 	return &relayedColumnMetadata{
-		coupling: internaldto.NewDRMCoupling(relTypeStr, reflect.String),
+		coupling: NewORMCoupling(relTypeStr, reflect.String),
 		column:   col,
 	}
 }

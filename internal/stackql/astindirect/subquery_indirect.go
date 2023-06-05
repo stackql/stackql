@@ -6,6 +6,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/symtab"
+	"github.com/stackql/stackql/internal/stackql/typing"
 )
 
 type subquery struct {
@@ -41,7 +42,7 @@ func (v *subquery) GetName() string {
 	return v.subQueryDTO.GetAlias().GetRawVal()
 }
 
-func (v *subquery) GetColumns() []internaldto.ColumnMetadata {
+func (v *subquery) GetColumns() []typing.ColumnMetadata {
 	return v.selCtx.GetNonControlColumns()
 }
 
@@ -53,7 +54,7 @@ func (v *subquery) GetRequiredParameters() map[string]openapistackql.Addressable
 	return nil
 }
 
-func (v *subquery) GetColumnByName(name string) (internaldto.ColumnMetadata, bool) {
+func (v *subquery) GetColumnByName(name string) (typing.ColumnMetadata, bool) {
 	for _, col := range v.selCtx.GetNonControlColumns() {
 		if col.GetIdentifier() == name {
 			return col, true
