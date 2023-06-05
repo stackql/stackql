@@ -240,6 +240,7 @@ func (dp *standardDependencyPlanner) Plan() error {
 	logging.GetLogger().Debugf("rewrittenWhereStr = '%s'", rewrittenWhereStr)
 	drmCfg, err := drm.GetDRMConfig(
 		dp.handlerCtx.GetSQLSystem(),
+		dp.handlerCtx.GetTypingConfig(),
 		dp.handlerCtx.GetNamespaceCollection(),
 		dp.handlerCtx.GetControlAttributes())
 	if err != nil {
@@ -440,7 +441,9 @@ func (dp *standardDependencyPlanner) processAcquire(
 		prov.GetName(),
 		dp.handlerCtx.GetNamespaceCollection(),
 		dp.handlerCtx.GetControlAttributes(),
-		dp.handlerCtx.GetSQLSystem())
+		dp.handlerCtx.GetSQLSystem(),
+		dp.handlerCtx.GetTypingConfig(),
+	)
 	if err != nil {
 		return util.NewAnnotatedTabulation(nil, nil, "", ""), nil, err
 	}

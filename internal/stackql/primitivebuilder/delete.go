@@ -56,7 +56,7 @@ func (ss *Delete) GetTail() primitivegraph.PrimitiveNode {
 	return ss.root
 }
 
-//nolint:gocognit // probably a headache no matter which way you slice it
+//nolint:gocognit,funlen // probably a headache no matter which way you slice it
 func (ss *Delete) Build() error {
 	tbl := ss.tbl
 	handlerCtx := ss.handlerCtx
@@ -74,12 +74,16 @@ func (ss *Delete) Build() error {
 		keys := make(map[string]map[string]interface{})
 		httpArmoury, httpErr := tbl.GetHTTPArmoury()
 		if httpErr != nil {
-			return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, nil, nil, nil, httpErr, nil))
+			return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, nil, nil, nil, httpErr, nil,
+				ss.handlerCtx.GetTypingConfig(),
+			))
 		}
 		for _, req := range httpArmoury.GetRequestParams() {
 			response, apiErr := httpmiddleware.HTTPApiCallFromRequest(handlerCtx.Clone(), prov, m, req.GetRequest())
 			if apiErr != nil {
-				return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, nil, nil, nil, apiErr, nil))
+				return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, nil, nil, nil, apiErr, nil,
+					ss.handlerCtx.GetTypingConfig(),
+				))
 			}
 			target, err = m.DeprecatedProcessResponse(response)
 			if response.StatusCode < 300 && len(target) < 1 {
@@ -92,6 +96,7 @@ func (ss *Delete) Build() error {
 					internaldto.NewBackendMessages(
 						generateSuccessMessagesFromHeirarchy(tbl, ss.isAwait),
 					),
+					ss.handlerCtx.GetTypingConfig(),
 				)).WithUndoLog(
 					binlog.NewSimpleLogEntry(
 						nil,
@@ -112,6 +117,7 @@ func (ss *Delete) Build() error {
 					nil,
 					err,
 					nil,
+					ss.handlerCtx.GetTypingConfig(),
 				))
 			}
 			logging.GetLogger().Infoln(fmt.Sprintf("target = %v", target))
@@ -135,6 +141,7 @@ func (ss *Delete) Build() error {
 				generateSuccessMessagesFromHeirarchy(tbl, ss.isAwait)),
 			err,
 			false,
+			ss.handlerCtx.GetTypingConfig(),
 		)
 	}
 	deletePrimitive := primitive.NewHTTPRestPrimitive(

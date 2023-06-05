@@ -451,7 +451,8 @@ func (pgb *standardPlanGraphBuilder) handleRegistry(
 						internaldto.NewBackendMessages([]string{fmt.Sprintf(
 							"%s provider, version '%s' successfully installed",
 							node.ProviderId, providerVersion)}),
-						nil))
+						nil,
+						pbi.GetHandlerCtx().GetTypingConfig()))
 			case "list":
 				var colz []string
 				var provz map[string]openapistackql.ProviderDescription
@@ -491,7 +492,10 @@ func (pgb *standardPlanGraphBuilder) handleRegistry(
 						i++
 					}
 				}
-				return util.PrepareResultSet(internaldto.NewPrepareResultSetPlusRawDTO(nil, keys, colz, nil, nil, nil, nil))
+				return util.PrepareResultSet(
+					internaldto.NewPrepareResultSetPlusRawDTO(
+						nil, keys, colz, nil, nil, nil, nil,
+						pbi.GetHandlerCtx().GetTypingConfig()))
 			default:
 				return internaldto.NewErroneousExecutorOutput(fmt.Errorf("registry action '%s' no supported", at))
 			}
@@ -526,6 +530,7 @@ func (pgb *standardPlanGraphBuilder) handlePurge(pbi planbuilderinput.PlanBuilde
 							[]string{"Global PURGE successfully completed"},
 						),
 						nil,
+						pbi.GetHandlerCtx().GetTypingConfig(),
 					),
 				)
 			}
@@ -568,6 +573,7 @@ func (pgb *standardPlanGraphBuilder) handlePurge(pbi planbuilderinput.PlanBuilde
 					// &internaldto.BackendMessages{
 					// 	WorkingMessages: []string{fmt.Sprintf("PURGE of type '%s' successfully completed", targetStr)}},
 					nil,
+					pbi.GetHandlerCtx().GetTypingConfig(),
 				),
 			)
 		},

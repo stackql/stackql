@@ -9,6 +9,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
+	"github.com/stackql/stackql/internal/stackql/typing"
 	"github.com/stackql/stackql/internal/stackql/util"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
@@ -40,8 +41,9 @@ func OpenapiStackQLTabulationsPersistor(
 	namespaceCollection tablenamespace.Collection,
 	controlAttributes sqlcontrol.ControlAttributes,
 	sqlSystem sql_system.SQLSystem,
+	typCfg typing.Config,
 ) (int, error) {
-	drmCfg, err := drm.GetDRMConfig(sqlSystem, namespaceCollection, controlAttributes)
+	drmCfg, err := drm.GetDRMConfig(sqlSystem, typCfg, namespaceCollection, controlAttributes)
 	if err != nil {
 		return 0, err
 	}

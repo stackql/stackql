@@ -76,7 +76,9 @@ func (ss *Exec) Build() error {
 		for i, req := range httpArmoury.GetRequestParams() {
 			response, apiErr := httpmiddleware.HTTPApiCallFromRequest(handlerCtx.Clone(), prov, m, req.GetRequest())
 			if apiErr != nil {
-				return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, nil, nil, nil, apiErr, nil))
+				return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, nil, nil, nil, apiErr, nil,
+					handlerCtx.GetTypingConfig(),
+				))
 			}
 			target, err = m.DeprecatedProcessResponse(response)
 			handlerCtx.LogHTTPResponseMap(target)
@@ -88,6 +90,7 @@ func (ss *Exec) Build() error {
 					nil,
 					err,
 					nil,
+					handlerCtx.GetTypingConfig(),
 				))
 			}
 			logging.GetLogger().Infoln(fmt.Sprintf("target = %v", target))
@@ -115,7 +118,9 @@ func (ss *Exec) Build() error {
 			internaldto.NewBackendMessages(
 				generateSuccessMessagesFromHeirarchy(tbl, ss.isAwait),
 			),
-			err, ss.isShowResults)
+			err, ss.isShowResults,
+			ss.handlerCtx.GetTypingConfig(),
+		)
 	}
 	execPrimitive := primitive.NewHTTPRestPrimitive(
 		prov,

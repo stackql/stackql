@@ -76,6 +76,7 @@ func (ss *SingleSelect) Build() error {
 				ss.drmCfg,
 			),
 			ss.selectPreparedStatementCtx.GetNonControlColumns(),
+			ss.handlerCtx.GetTypingConfig(),
 		)
 		return outputter.OutputExecutorResult()
 	}

@@ -2,6 +2,7 @@ package relationaldto
 
 import (
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
+	"github.com/stackql/stackql/internal/stackql/typing"
 )
 
 var (
@@ -11,10 +12,10 @@ var (
 type RelationalTable interface {
 	GetAlias() string
 	GetBaseName() string
-	GetColumns() []RelationalColumn
+	GetColumns() []typing.RelationalColumn
 	GetName() (string, error)
 	GetView() (internaldto.ViewDTO, bool)
-	PushBackColumn(RelationalColumn)
+	PushBackColumn(typing.RelationalColumn)
 	WithAlias(alias string) RelationalTable
 }
 

@@ -196,7 +196,9 @@ func (ss *SingleSelectAcquire) Build() error {
 			pageCount := 1
 			for {
 				if apiErr != nil {
-					return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, nil, nil, ss.rowSort, apiErr, nil))
+					return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, nil, nil, ss.rowSort, apiErr, nil,
+						ss.handlerCtx.GetTypingConfig(),
+					))
 				}
 				res, resErr := m.ProcessResponse(response)
 				if resErr != nil {

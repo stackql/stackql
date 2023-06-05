@@ -4,7 +4,10 @@ import (
 	"database/sql"
 	"fmt"
 	"reflect"
+	"strings"
 
+	"github.com/lib/pq/oid"
+	"github.com/stackql/psql-wire/pkg/sqldata"
 	"github.com/stackql/stackql/internal/stackql/constants"
 )
 
@@ -120,8 +123,58 @@ func (tc *genericTypingConfig) GetGolangKind(discoType string) reflect.Kind {
 	return rv.GetGolangKind()
 }
 
+func (tc *genericTypingConfig) GetOidForSQLType(colType *sql.ColumnType) oid.Oid {
+	return getOidForSQLType(colType)
+}
+
 func (tc *genericTypingConfig) getDefaultGolangKind() reflect.Kind {
 	return tc.defaultGolangKind
+}
+
+func (tc *genericTypingConfig) GetPlaceholderColumn(
+	table sqldata.ISQLTable, colName string, colOID oid.Oid) sqldata.ISQLColumn {
+	return tc.getPlaceholderColumn(table, colName, colOID)
+}
+
+func (tc *genericTypingConfig) getPlaceholderColumn(
+	table sqldata.ISQLTable, colName string, colOID oid.Oid) sqldata.ISQLColumn {
+	return sqldata.NewSQLColumn(
+		table,
+		colName,
+		0,
+		uint32(colOID),
+		1024, //nolint:gomnd // TODO: refactor
+		0,
+		"TextFormat",
+	)
+}
+
+func (tc *genericTypingConfig) GetPlaceholderColumnForNativeResult(
+	table sqldata.ISQLTable,
+	colName string, colSchema *sql.ColumnType) sqldata.ISQLColumn {
+	return tc.getPlaceholderColumnForNativeResult(
+		table,
+		colName,
+		colSchema,
+	)
+}
+
+func (tc *genericTypingConfig) GetDefaultOID() oid.Oid {
+	return oid.T_text
+}
+
+func (tc *genericTypingConfig) getPlaceholderColumnForNativeResult(
+	table sqldata.ISQLTable,
+	colName string, colSchema *sql.ColumnType) sqldata.ISQLColumn {
+	return sqldata.NewSQLColumn(
+		table,
+		colName,
+		0,
+		uint32(tc.GetOidForSQLType(colSchema)),
+		1024, //nolint:gomnd // TODO: refactor
+		0,
+		"TextFormat",
+	)
 }
 
 func newTypingConfig(sqlDialect string) (Config, error) {
@@ -136,4 +189,70 @@ func newTypingConfig(sqlDialect string) (Config, error) {
 		defaultRelationalType: defaultRelationalType,
 		defaultGolangKind:     defaultGolangKind,
 	}, nil
+}
+
+//nolint:goconst // defer cleanup
+func getOidForSQLDatabaseTypeName(typeName string) oid.Oid {
+	typeNameLowered := strings.ToLower(typeName)
+	switch strings.ToLower(typeNameLowered) {
+	case "object", "array":
+		return oid.T_text
+	case "boolean", "bool":
+		return oid.T_bool
+	case "number", "int", "bigint", "smallint", "tinyint":
+		return oid.T_numeric
+	default:
+		return oid.T_text
+	}
+}
+
+func getOidForSQLType(colType *sql.ColumnType) oid.Oid {
+	if colType == nil {
+		return oid.T_text
+	}
+	return getOidForSQLDatabaseTypeName(colType.DatabaseTypeName())
+}
+
+func (tc *genericTypingConfig) ExtractFromGolangValue(val interface{}) interface{} {
+	return tc.extractFromGolangValue(val)
+}
+
+func (tc *genericTypingConfig) extractFromGolangValue(val interface{}) interface{} {
+	if val == nil {
+		return nil
+	}
+	var retVal interface{}
+	//nolint:gocritic // TODO: fix
+	switch v := val.(type) {
+	case *sql.NullString:
+		retVal, _ = (*v).Value()
+	case *sql.NullBool:
+		retVal, _ = (*v).Value()
+	case *sql.NullInt64:
+		retVal, _ = (*v).Value()
+	case *sql.NullFloat64:
+		retVal, _ = (*v).Value()
+	}
+	return retVal
+}
+
+func (tc *genericTypingConfig) GetScannableObjectForNativeResult(colSchema *sql.ColumnType) any {
+	return tc.getScannableObjectForNativeResult(colSchema)
+}
+
+func (tc *genericTypingConfig) getScannableObjectForNativeResult(colSchema *sql.ColumnType) any {
+	switch strings.ToLower(colSchema.DatabaseTypeName()) {
+	case "int", "int32", "smallint", "tinyint":
+		return new(sql.NullInt32)
+	case "uint", "uint32":
+		return new(sql.NullInt64)
+	case "int64", "bigint":
+		return new(sql.NullInt64)
+	case "numeric", "decimal", "float", "float32", "float64":
+		return new(sql.NullFloat64)
+	case "bool":
+		return new(sql.NullBool)
+	default:
+		return new(sql.NullString)
+	}
 }

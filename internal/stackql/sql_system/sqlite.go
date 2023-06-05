@@ -263,14 +263,14 @@ func (eng *sqLiteSystem) registerExternalTable(
 
 func (eng *sqLiteSystem) ObtainRelationalColumnsFromExternalSQLtable(
 	hierarchyIDs internaldto.HeirarchyIdentifiers,
-) ([]relationaldto.RelationalColumn, error) {
+) ([]typing.RelationalColumn, error) {
 	return eng.obtainRelationalColumnsFromExternalSQLtable(hierarchyIDs)
 }
 
 func (eng *sqLiteSystem) ObtainRelationalColumnFromExternalSQLtable(
 	hierarchyIDs internaldto.HeirarchyIdentifiers,
 	colName string,
-) (relationaldto.RelationalColumn, error) {
+) (typing.RelationalColumn, error) {
 	return eng.obtainRelationalColumnFromExternalSQLtable(hierarchyIDs, colName)
 }
 
@@ -293,7 +293,7 @@ func (eng *sqLiteSystem) getSQLExternalSchema(providerName string) string {
 
 func (eng *sqLiteSystem) obtainRelationalColumnsFromExternalSQLtable(
 	hierarchyIDs internaldto.HeirarchyIdentifiers,
-) ([]relationaldto.RelationalColumn, error) {
+) ([]typing.RelationalColumn, error) {
 	q := `
 	SELECT
 		column_name 
@@ -330,7 +330,7 @@ func (eng *sqLiteSystem) obtainRelationalColumnsFromExternalSQLtable(
 	}
 	defer rows.Close()
 	hasRow := false
-	var rv []relationaldto.RelationalColumn
+	var rv []typing.RelationalColumn
 	for {
 		if !rows.Next() {
 			break
@@ -342,7 +342,7 @@ func (eng *sqLiteSystem) obtainRelationalColumnsFromExternalSQLtable(
 		if err != nil {
 			return nil, err
 		}
-		relationalColumn := relationaldto.NewRelationalColumn(
+		relationalColumn := typing.NewRelationalColumn(
 			columnName,
 			columnType).WithWidth(colWidth).WithOID(oid.Oid(oID))
 		rv = append(rv, relationalColumn)
@@ -359,7 +359,7 @@ func (eng *sqLiteSystem) obtainRelationalColumnsFromExternalSQLtable(
 func (eng *sqLiteSystem) obtainRelationalColumnFromExternalSQLtable(
 	hierarchyIDs internaldto.HeirarchyIdentifiers,
 	colName string,
-) (relationaldto.RelationalColumn, error) {
+) (typing.RelationalColumn, error) {
 	q := `
 	SELECT
 		column_name 
@@ -400,7 +400,7 @@ func (eng *sqLiteSystem) obtainRelationalColumnFromExternalSQLtable(
 	if err != nil {
 		return nil, err
 	}
-	relationalColumn := relationaldto.NewRelationalColumn(columnName, columnType).WithWidth(colWidth).WithOID(oid.Oid(oID))
+	relationalColumn := typing.NewRelationalColumn(columnName, columnType).WithWidth(colWidth).WithOID(oid.Oid(oID))
 	return relationalColumn, nil
 }
 
@@ -690,7 +690,7 @@ func (eng *sqLiteSystem) getGCHousekeepingQuery(tableName string, tcc internaldt
 
 //nolint:revive // Liskov substitution principle
 func (eng *sqLiteSystem) ComposeSelectQuery(
-	columns []relationaldto.RelationalColumn,
+	columns []typing.RelationalColumn,
 	tableAliases []string,
 	fromString string,
 	rewrittenWhere string,
@@ -701,7 +701,7 @@ func (eng *sqLiteSystem) ComposeSelectQuery(
 }
 
 func (eng *sqLiteSystem) composeSelectQuery(
-	columns []relationaldto.RelationalColumn,
+	columns []typing.RelationalColumn,
 	tableAliases []string,
 	fromString string,
 	rewrittenWhere string,

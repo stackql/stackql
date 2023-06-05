@@ -1,18 +1,17 @@
 package util
 
 import (
-	"database/sql"
 	"fmt"
 	"sort"
 	"strconv"
 	"strings"
 
-	"github.com/lib/pq/oid"
 	openapistackql_util "github.com/stackql/go-openapistackql/pkg/util"
 	"github.com/stackql/psql-wire/pkg/sqldata"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
+	"github.com/stackql/stackql/internal/stackql/typing"
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
@@ -253,7 +252,10 @@ func DefaultRowSort(rowMap map[string]map[string]interface{}) []string {
 	return []string{}
 }
 
-func GenerateSimpleErroneousOutput(err error) internaldto.ExecutorOutput {
+func GenerateSimpleErroneousOutput(
+	err error,
+	typCfg typing.Config,
+) internaldto.ExecutorOutput {
 	return PrepareResultSet(
 		internaldto.NewPrepareResultSetDTO(
 			nil,
@@ -262,6 +264,7 @@ func GenerateSimpleErroneousOutput(err error) internaldto.ExecutorOutput {
 			nil,
 			err,
 			nil,
+			typCfg,
 		),
 	)
 }
@@ -270,6 +273,7 @@ func GenerateSimpleErroneousOutput(err error) internaldto.ExecutorOutput {
 func PrepareResultSet(
 	payload internaldto.PrepareResultSetDTO,
 ) internaldto.ExecutorOutput {
+	typCfg := payload.TypCfg
 	if payload.Err != nil {
 		return internaldto.NewExecutorOutput(
 			nil,
@@ -313,11 +317,11 @@ func PrepareResultSet(
 	//nolint:nestif // understandable
 	if payload.ColumnOrder != nil && len(payload.ColumnOrder) > 0 {
 		for f := range columns {
-			colOID := getDefaultOID()
+			colOID := typCfg.GetDefaultOID()
 			if len(columns) == len(payload.ColumnOIDs) {
 				colOID = payload.ColumnOIDs[f]
 			}
-			columns[f] = getPlaceholderColumn(table, payload.ColumnOrder[f], colOID)
+			columns[f] = typCfg.GetPlaceholderColumn(table, payload.ColumnOrder[f], colOID)
 		}
 		i := 0
 		for _, key := range payload.RowSort(payload.RowMap) {
@@ -345,11 +349,11 @@ func PrepareResultSet(
 		}
 		for _, k := range defaultColSortArr {
 			if _, isPresent := sampleRow[k]; isPresent {
-				colOID := getDefaultOID()
+				colOID := typCfg.GetDefaultOID()
 				if len(columns) == len(payload.ColumnOIDs) {
 					colOID = payload.ColumnOIDs[colIdx]
 				}
-				columns[colIdx] = getPlaceholderColumn(table, k, colOID)
+				columns[colIdx] = typCfg.GetPlaceholderColumn(table, k, colOID)
 				payload.ColumnOrder[colIdx] = k
 				colIdx++
 				colSet[k] = true
@@ -357,11 +361,11 @@ func PrepareResultSet(
 		}
 		for k := range sampleRow {
 			if !colSet[k] {
-				colOID := getDefaultOID()
+				colOID := typCfg.GetDefaultOID()
 				if len(columns) == len(payload.ColumnOIDs) {
 					colOID = payload.ColumnOIDs[colIdx]
 				}
-				columns[colIdx] = getPlaceholderColumn(table, k, colOID)
+				columns[colIdx] = typCfg.GetPlaceholderColumn(table, k, colOID)
 				payload.ColumnOrder[colIdx] = k
 				colIdx++
 				colSet[k] = true
@@ -398,21 +402,24 @@ func PrepareResultSet(
 	return rv
 }
 
-func EmptyProtectResultSet(rv internaldto.ExecutorOutput, columns []string) internaldto.ExecutorOutput {
-	return emptyProtectResultSet(rv, columns)
+func EmptyProtectResultSet(
+	rv internaldto.ExecutorOutput,
+	columns []string,
+	typCfg typing.Config,
+) internaldto.ExecutorOutput {
+	return emptyProtectResultSet(rv, columns, typCfg)
 }
 
-func NewEmptyListResultSet(columns []string) internaldto.ExecutorOutput {
-	rv := internaldto.NewExecutorOutput(nil, nil, nil, nil, nil)
-	return emptyProtectResultSet(rv, columns)
-}
-
-func emptyProtectResultSet(rv internaldto.ExecutorOutput, columns []string) internaldto.ExecutorOutput {
+func emptyProtectResultSet(
+	rv internaldto.ExecutorOutput,
+	columns []string,
+	typCfg typing.Config,
+) internaldto.ExecutorOutput {
 	if rv.GetRawResult().IsNil() {
 		table := sqldata.NewSQLTable(0, "meta_table")
 		rCols := make([]sqldata.ISQLColumn, len(columns))
 		for f := range rCols {
-			rCols[f] = getPlaceholderColumn(table, columns[f], getDefaultOID())
+			rCols[f] = typCfg.GetPlaceholderColumn(table, columns[f], typCfg.GetDefaultOID())
 		}
 		rv.SetSQLResultFn(func() sqldata.ISQLResultStream {
 			return sqldata.NewSimpleSQLResultStream(sqldata.NewSQLResult(rCols, 0, 0, []sqldata.ISQLRow{
@@ -427,53 +434,14 @@ func DescribeRowSort(_ map[string]map[string]interface{}) []string {
 	return describeRowSortArr
 }
 
-//nolint:unused,nolintlint // false positive + future proofing
-func getOidForSQLType(colType *sql.ColumnType) oid.Oid {
-	if colType == nil {
-		return oid.T_text
-	}
-	return getOidForSQLDatabaseTypeName(colType.DatabaseTypeName())
-}
-
-func GetOidForSQLDatabaseTypeName(typeName string) oid.Oid {
-	return getOidForSQLDatabaseTypeName(typeName)
-}
-
-func getOidForSQLDatabaseTypeName(typeName string) oid.Oid {
-	typeNameLowered := strings.ToLower(typeName)
-	switch strings.ToLower(typeNameLowered) {
-	case "object", "array":
-		return oid.T_text
-	case "boolean", "bool":
-		return oid.T_text
-	case "number", "int", "bigint", "smallint", "tinyint":
-		return oid.T_numeric
-	default:
-		return oid.T_text
-	}
-}
-
-func getDefaultOID() oid.Oid {
-	return oid.T_text
-}
-
-func getPlaceholderColumn(table sqldata.ISQLTable, colName string, colOID oid.Oid) sqldata.ISQLColumn {
-	return sqldata.NewSQLColumn(
-		table,
-		colName,
-		0,
-		uint32(colOID),
-		1024, //nolint:gomnd // TODO: fix this
-		0,
-		"TextFormat",
-	)
-}
-
-func GetHeaderOnlyResultStream(colz []string) sqldata.ISQLResultStream {
+func GetHeaderOnlyResultStream(
+	colz []string,
+	typCfg typing.Config,
+) sqldata.ISQLResultStream {
 	table := sqldata.NewSQLTable(0, "table_meta")
 	columns := make([]sqldata.ISQLColumn, len(colz))
 	for i := range colz {
-		columns[i] = getPlaceholderColumn(table, colz[i], getDefaultOID())
+		columns[i] = typCfg.GetPlaceholderColumn(table, colz[i], typCfg.GetDefaultOID())
 	}
 	return sqldata.NewSimpleSQLResultStream(sqldata.NewSQLResult(columns, 0, 0, nil))
 }

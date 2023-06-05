@@ -22,7 +22,7 @@ import (
 )
 
 func NewUpdateableValsPrimitive(
-	handlerCtx handler.HandlerContext, //nolint:revive // future proofing
+	handlerCtx handler.HandlerContext,
 	vals map[*sqlparser.ColName]interface{},
 ) (primitive.IPrimitive, error) {
 	return primitive.NewLocalPrimitive(
@@ -51,13 +51,14 @@ func NewUpdateableValsPrimitive(
 			}
 			return util.PrepareResultSet(
 				internaldto.NewPrepareResultSetPlusRawDTO(
-					nil, keys, columnOrder, nil, nil, nil, rawRows),
+					nil, keys, columnOrder, nil, nil, nil, rawRows,
+					handlerCtx.GetTypingConfig()),
 			)
 		}), nil
 }
 
 func NewInsertableValsPrimitive(
-	handlerCtx handler.HandlerContext, //nolint:revive // future proofing
+	handlerCtx handler.HandlerContext,
 	vals map[int]map[int]interface{},
 ) (primitive.IPrimitive, error) {
 	return primitive.NewLocalPrimitive(
@@ -87,7 +88,8 @@ func NewInsertableValsPrimitive(
 				row[colName] = col
 			}
 			keys["0"] = row
-			return util.PrepareResultSet(internaldto.NewPrepareResultSetPlusRawDTO(nil, keys, columnOrder, nil, nil, nil, vals))
+			return util.PrepareResultSet(internaldto.NewPrepareResultSetPlusRawDTO(nil, keys, columnOrder, nil, nil, nil, vals,
+				handlerCtx.GetTypingConfig()))
 		}), nil
 }
 
@@ -137,16 +139,22 @@ func NewShowInstructionExecutor(
 				return util.GenerateSimpleErroneousOutput(
 					fmt.Errorf(
 						"cannot find matching operation, possible causes include missing required parameters or an unsupported method for the resource, to find required parameters for supported methods run SHOW METHODS: %w", //nolint:lll // prescribed message
-						methErr))
+						methErr),
+					handlerCtx.GetTypingConfig(),
+				)
 			}
 			return util.GenerateSimpleErroneousOutput(
 				fmt.Errorf(
 					"cannot find matching operation, possible causes include missing required parameters or an unsupported method for the resource, to find required parameters for supported methods run SHOW METHODS IN %s: %w", //nolint:lll // prescribed message
-					tblName, methErr))
+					tblName, methErr),
+				handlerCtx.GetTypingConfig(),
+			)
 		}
 		svc, svcErr := tbl.GetService()
 		if svcErr != nil {
-			return util.GenerateSimpleErroneousOutput(svcErr)
+			return util.GenerateSimpleErroneousOutput(svcErr,
+				handlerCtx.GetTypingConfig(),
+			)
 		}
 		pp := prettyprint.NewPrettyPrinter(ppCtx)
 		ppPlaceholder := prettyprint.NewPrettyPrinter(ppCtx)
@@ -156,7 +164,9 @@ func NewShowInstructionExecutor(
 		tableName, _ := tbl.GetTableName()
 		if insertErr != nil {
 			return util.GenerateSimpleErroneousOutput(
-				fmt.Errorf("error creating insert statement for %s: %w", tableName, insertErr))
+				fmt.Errorf("error creating insert statement for %s: %w", tableName, insertErr),
+				handlerCtx.GetTypingConfig(),
+			)
 		}
 		stmtStr := fmt.Sprintf(insertStmt, tableName)
 		keys = map[string]map[string]interface{}{
@@ -171,7 +181,8 @@ func NewShowInstructionExecutor(
 			node.OnTable.Name.GetRawVal(),
 			handlerCtx.GetRuntimeContext())
 		if err != nil {
-			return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, err, nil))
+			return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, err, nil,
+				handlerCtx.GetTypingConfig()))
 		}
 		methods := rsc.GetMethodsMatched()
 		var filter func(openapistackql.ITable) (openapistackql.ITable, error)
@@ -183,11 +194,13 @@ func NewShowInstructionExecutor(
 		}
 		methods, err = filterMethods(methods, filter)
 		if err != nil {
-			return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, err, nil))
+			return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, err, nil,
+				handlerCtx.GetTypingConfig()))
 		}
 		mOrd, mErr := methods.OrderMethods()
 		if mErr != nil {
-			return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, mErr, nil))
+			return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, mErr, nil,
+				handlerCtx.GetTypingConfig()))
 		}
 		methodKeys := make(map[string]map[string]interface{})
 		for i, k := range mOrd {
@@ -202,11 +215,13 @@ func NewShowInstructionExecutor(
 		if err != nil {
 			return internaldto.NewErroneousExecutorOutput(err)
 		}
-		rv := util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, err, nil))
+		rv := util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, err, nil,
+			handlerCtx.GetTypingConfig()))
 		if len(keys) == 0 {
 			rv = util.EmptyProtectResultSet(
 				rv,
 				[]string{"name", "version"},
+				handlerCtx.GetTypingConfig(),
 			)
 		}
 		return rv
@@ -217,19 +232,23 @@ func NewShowInstructionExecutor(
 				keys,
 				columnOrder,
 				fmt.Errorf("no service designated from which to resolve resources"),
+				handlerCtx.GetTypingConfig(),
 			)
 		}
 		var resources map[string]openapistackql.Resource
 		resources, err = prov.GetResourcesRedacted(svcName, handlerCtx.GetRuntimeContext(), extended)
 		if err != nil {
-			return prepareErroneousResultSet(keys, columnOrder, err)
+			return prepareErroneousResultSet(keys, columnOrder, err,
+				handlerCtx.GetTypingConfig())
 		}
 		columnOrder = openapistackql.GetResourcesHeader(extended)
 		var filter func(openapistackql.ITable) (openapistackql.ITable, error)
 		filter = tableFilter
 		resources, err = filterResources(resources, filter)
 		if err != nil {
-			return prepareErroneousResultSet(keys, columnOrder, err)
+			return prepareErroneousResultSet(keys, columnOrder, err,
+				handlerCtx.GetTypingConfig(),
+			)
 		}
 		keys = make(map[string]map[string]interface{})
 		for k, v := range resources {
@@ -246,16 +265,20 @@ func NewShowInstructionExecutor(
 		var services map[string]openapistackql.ProviderService
 		services, err = prov.GetProviderServicesRedacted(handlerCtx.GetRuntimeContext(), extended)
 		if err != nil {
-			return prepareErroneousResultSet(keys, columnOrder, err)
+			return prepareErroneousResultSet(keys, columnOrder, err,
+				handlerCtx.GetTypingConfig(),
+			)
 		}
 		columnOrder = openapistackql.GetServicesHeader(extended)
 		services, err = filterServices(services, tableFilter, handlerCtx.GetRuntimeContext().UseNonPreferredAPIs)
 		if err != nil {
-			return prepareErroneousResultSet(keys, columnOrder, err)
+			return prepareErroneousResultSet(keys, columnOrder, err,
+				handlerCtx.GetTypingConfig())
 		}
 		keys = convertProviderServicesToMap(services, extended)
 	}
-	return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, err, nil))
+	return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, err, nil,
+		handlerCtx.GetTypingConfig()))
 }
 
 //nolint:errcheck // future proofing
@@ -355,6 +378,7 @@ func prepareErroneousResultSet(
 	rowMap map[string]map[string]interface{}, //nolint:unparam // future proofing
 	columnOrder []string,
 	err error,
+	typCfg typing.Config,
 ) internaldto.ExecutorOutput {
 	return util.PrepareResultSet(
 		internaldto.NewPrepareResultSetDTO(
@@ -364,12 +388,13 @@ func prepareErroneousResultSet(
 			nil,
 			err,
 			nil,
+			typCfg,
 		),
 	)
 }
 
 func NewDescribeTableInstructionExecutor(
-	handlerCtx handler.HandlerContext, //nolint:revive // future proofing
+	handlerCtx handler.HandlerContext,
 	tbl tablemetadata.ExtendedTableMetadata,
 	extended bool,
 	full bool, //nolint:revive // future proofing
@@ -395,6 +420,7 @@ func NewDescribeTableInstructionExecutor(
 			util.DescribeRowSort,
 			err,
 			nil,
+			handlerCtx.GetTypingConfig(),
 		),
 	)
 }
@@ -424,6 +450,7 @@ func NewDescribeViewInstructionExecutor(
 			util.DescribeRowSort,
 			nil,
 			nil,
+			handlerCtx.GetTypingConfig(),
 		),
 	)
 }
@@ -473,6 +500,8 @@ func NewLocalSelectExecutor(
 				}
 			}
 			keys["0"] = row
-			return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, rowSort, nil, nil))
+			return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, rowSort, nil, nil,
+				handlerCtx.GetTypingConfig(),
+			))
 		}), nil
 }

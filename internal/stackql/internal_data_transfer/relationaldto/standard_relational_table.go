@@ -1,6 +1,9 @@
 package relationaldto
 
-import "github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
+import (
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
+	"github.com/stackql/stackql/internal/stackql/typing"
+)
 
 type standardRelationalTable struct {
 	alias       string
@@ -9,7 +12,7 @@ type standardRelationalTable struct {
 	discoveryID int
 	hIDs        internaldto.HeirarchyIdentifiers
 	viewDTO     internaldto.ViewDTO
-	columns     []RelationalColumn
+	columns     []typing.RelationalColumn
 }
 
 func (rt *standardRelationalTable) WithView(viewDTO internaldto.ViewDTO) RelationalTable {
@@ -42,10 +45,10 @@ func (rt *standardRelationalTable) GetView() (internaldto.ViewDTO, bool) {
 	return rt.viewDTO, rt.viewDTO != nil
 }
 
-func (rt *standardRelationalTable) GetColumns() []RelationalColumn {
+func (rt *standardRelationalTable) GetColumns() []typing.RelationalColumn {
 	return rt.columns
 }
 
-func (rt *standardRelationalTable) PushBackColumn(col RelationalColumn) {
+func (rt *standardRelationalTable) PushBackColumn(col typing.RelationalColumn) {
 	rt.columns = append(rt.columns, col)
 }

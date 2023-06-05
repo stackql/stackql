@@ -35,8 +35,8 @@ var (
 )
 
 type Config interface {
-	ColumnsToRelationalColumns(cols []typing.ColumnMetadata) []relationaldto.RelationalColumn
-	ColumnToRelationalColumn(cols typing.ColumnMetadata) relationaldto.RelationalColumn
+	ColumnsToRelationalColumns(cols []typing.ColumnMetadata) []typing.RelationalColumn
+	ColumnToRelationalColumn(cols typing.ColumnMetadata) typing.RelationalColumn
 	ExtractFromGolangValue(interface{}) interface{}
 	ExtractObjectFromSQLRows(
 		r *sql.Rows,
@@ -65,8 +65,8 @@ type Config interface {
 		string,
 	) (PreparedStatementCtx, error)
 	ExecuteInsertDML(sqlengine.SQLEngine, PreparedStatementCtx, map[string]interface{}, string) (sql.Result, error)
-	OpenapiColumnsToRelationalColumns(cols []openapistackql.ColumnDescriptor) []relationaldto.RelationalColumn
-	OpenapiColumnsToRelationalColumn(col openapistackql.ColumnDescriptor) relationaldto.RelationalColumn
+	OpenapiColumnsToRelationalColumns(cols []openapistackql.ColumnDescriptor) []typing.RelationalColumn
+	OpenapiColumnsToRelationalColumn(col openapistackql.ColumnDescriptor) typing.RelationalColumn
 	QueryDML(sqlmachinery.Querier, PreparedStatementParameterized) (*sql.Rows, error)
 }
 
@@ -75,6 +75,7 @@ type staticDRMConfig struct {
 	controlAttributes   sqlcontrol.ControlAttributes
 	sqlEngine           sqlengine.SQLEngine
 	sqlSystem           sql_system.SQLSystem
+	typCfg              typing.Config
 }
 
 func (dc *staticDRMConfig) GetSQLSystem() sql_system.SQLSystem {
@@ -90,8 +91,8 @@ func (dc *staticDRMConfig) GetTable(
 
 func (dc *staticDRMConfig) OpenapiColumnsToRelationalColumns(
 	cols []openapistackql.ColumnDescriptor,
-) []relationaldto.RelationalColumn {
-	var relationalColumns []relationaldto.RelationalColumn
+) []typing.RelationalColumn {
+	var relationalColumns []typing.RelationalColumn
 	for _, col := range cols {
 		var typeStr string
 		schemaExists := false
@@ -105,7 +106,7 @@ func (dc *staticDRMConfig) OpenapiColumnsToRelationalColumns(
 				}
 			}
 		}
-		relationalColumn := relationaldto.NewRelationalColumn(
+		relationalColumn := typing.NewRelationalColumn(
 			col.GetName(),
 			typeStr,
 		).WithQualifier(
@@ -124,13 +125,13 @@ func (dc *staticDRMConfig) OpenapiColumnsToRelationalColumns(
 func (dc *staticDRMConfig) ToExternalSQLRelationalColumn(
 	tabAnn util.AnnotatedTabulation,
 	colName string,
-) (relationaldto.RelationalColumn, error) {
+) (typing.RelationalColumn, error) {
 	return nil, fmt.Errorf("cannot find column '%s' for external SQL table '%s'", colName, tabAnn.GetInputTableName())
 }
 
 func (dc *staticDRMConfig) OpenapiColumnsToRelationalColumn(
 	col openapistackql.ColumnDescriptor,
-) relationaldto.RelationalColumn {
+) typing.RelationalColumn {
 	var typeStr string
 	schemaExists := false
 	//nolint:gocritic,exhaustive // defer fix
@@ -148,7 +149,7 @@ func (dc *staticDRMConfig) OpenapiColumnsToRelationalColumn(
 	// if col.Alias != "" {
 	// 	decoratedCol = fmt.Sprintf(`%s AS "%s"`, decoratedCol, col.Alias)
 	// }
-	relationalColumn := relationaldto.NewRelationalColumn(
+	relationalColumn := typing.NewRelationalColumn(
 		col.GetName(),
 		typeStr,
 	).WithQualifier(col.GetQualifier()).WithAlias(col.GetAlias()).WithDecorated(decoratedCol).WithParserNode(col.GetNode())
@@ -163,10 +164,10 @@ func (dc *staticDRMConfig) OpenapiColumnsToRelationalColumn(
 
 func (dc *staticDRMConfig) ColumnsToRelationalColumns(
 	cols []typing.ColumnMetadata,
-) []relationaldto.RelationalColumn {
-	var relationalColumns []relationaldto.RelationalColumn
+) []typing.RelationalColumn {
+	var relationalColumns []typing.RelationalColumn
 	for _, col := range cols {
-		relationalColumn := relationaldto.NewRelationalColumn(
+		relationalColumn := typing.NewRelationalColumn(
 			col.GetIdentifier(), col.GetRelationalType()).WithAlias(col.GetIdentifier()).WithDecorated(col.GetIdentifier())
 		relationalColumns = append(relationalColumns, relationalColumn)
 	}
@@ -175,8 +176,8 @@ func (dc *staticDRMConfig) ColumnsToRelationalColumns(
 
 func (dc *staticDRMConfig) ColumnToRelationalColumn(
 	col typing.ColumnMetadata,
-) relationaldto.RelationalColumn {
-	relationalColumn := relationaldto.NewRelationalColumn(
+) typing.RelationalColumn {
+	relationalColumn := typing.NewRelationalColumn(
 		col.GetName(),
 		col.GetRelationalType(),
 	).WithAlias(col.GetIdentifier())
@@ -283,26 +284,7 @@ func (dc *staticDRMConfig) GetGolangValue(discoType string) interface{} {
 }
 
 func (dc *staticDRMConfig) ExtractFromGolangValue(val interface{}) interface{} {
-	return dc.extractFromGolangValue(val)
-}
-
-func (dc *staticDRMConfig) extractFromGolangValue(val interface{}) interface{} {
-	if val == nil {
-		return nil
-	}
-	var retVal interface{}
-	//nolint:gocritic // TODO: fix
-	switch v := val.(type) {
-	case *sql.NullString:
-		retVal, _ = (*v).Value()
-	case *sql.NullBool:
-		retVal, _ = (*v).Value()
-	case *sql.NullInt64:
-		retVal, _ = (*v).Value()
-	case *sql.NullFloat64:
-		retVal, _ = (*v).Value()
-	}
-	return retVal
+	return dc.typCfg.ExtractFromGolangValue(val)
 }
 
 func (dc *staticDRMConfig) GetGolangKind(discoType string) reflect.Kind {
@@ -434,7 +416,7 @@ func (dc *staticDRMConfig) genRelationalTable(
 		// relationalType := dc.GetRelationalType(colType)
 		// TODO: add drm logic to infer / transform width as suplied by openapi doc
 		colWidth := col.GetWidth()
-		relationalColumn := relationaldto.NewRelationalColumn(colName, colType).WithWidth(colWidth)
+		relationalColumn := typing.NewRelationalColumn(colName, colType).WithWidth(colWidth)
 		relationalTable.PushBackColumn(relationalColumn)
 	}
 	return relationalTable, nil
@@ -513,7 +495,7 @@ func (dc *staticDRMConfig) GenerateInsertDML(
 				relationalType = dc.GetRelationalType(schema.GetType())
 			}
 			columns = append(columns, typing.NewColDescriptor(col, relationalType))
-			relationalColumn := relationaldto.NewRelationalColumn(col.GetName(), relationalType).WithParserNode(col.GetNode())
+			relationalColumn := typing.NewRelationalColumn(col.GetName(), relationalType).WithParserNode(col.GetNode())
 			relationalTable.PushBackColumn(relationalColumn)
 		}
 	}
@@ -577,7 +559,7 @@ func (dc *staticDRMConfig) GenerateSelectDML(
 		}
 		columns = append(columns, typing.NewColDescriptor(col, typeStr))
 		// TODO: logic to infer column width
-		relationalColumn := relationaldto.NewRelationalColumn(
+		relationalColumn := typing.NewRelationalColumn(
 			col.GetName(),
 			typeStr,
 		).WithQualifier(col.GetQualifier()).WithParserNode(col.GetNode())
@@ -738,6 +720,7 @@ func (dc *staticDRMConfig) QueryDML(
 
 func GetDRMConfig(
 	sqlSystem sql_system.SQLSystem,
+	typCfg typing.Config,
 	namespaceCollection tablenamespace.Collection,
 	controlAttributes sqlcontrol.ControlAttributes,
 ) (Config, error) {
@@ -746,6 +729,7 @@ func GetDRMConfig(
 		controlAttributes:   controlAttributes,
 		sqlEngine:           sqlSystem.GetSQLEngine(),
 		sqlSystem:           sqlSystem,
+		typCfg:              typCfg,
 	}
 	return rv, nil
 }

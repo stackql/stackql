@@ -3,7 +3,6 @@ package sqlrewrite
 import (
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
-	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/relationaldto"
 	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
@@ -13,7 +12,7 @@ import (
 type SQLRewriteInput interface { //nolint:revive //TODO: review
 	GetNamespaceCollection() tablenamespace.Collection
 	GetDRMConfig() drm.Config
-	GetColumnDescriptors() []relationaldto.RelationalColumn
+	GetColumnDescriptors() []typing.RelationalColumn
 	GetBaseControlCounters() internaldto.TxnControlCounters
 	GetFromString() string
 	GetIndirectContexts() []drm.PreparedStatementCtx
@@ -29,7 +28,7 @@ type SQLRewriteInput interface { //nolint:revive //TODO: review
 
 type StandardSQLRewriteInput struct {
 	dc                       drm.Config
-	columnDescriptors        []relationaldto.RelationalColumn
+	columnDescriptors        []typing.RelationalColumn
 	baseControlCounters      internaldto.TxnControlCounters
 	selectSuffix             string
 	rewrittenWhere           string
@@ -44,7 +43,7 @@ type StandardSQLRewriteInput struct {
 
 func NewStandardSQLRewriteInput(
 	dc drm.Config,
-	columnDescriptors []relationaldto.RelationalColumn,
+	columnDescriptors []typing.RelationalColumn,
 	baseControlCounters internaldto.TxnControlCounters,
 	selectSuffix string,
 	rewrittenWhere string,
@@ -94,7 +93,7 @@ func (ri *StandardSQLRewriteInput) GetNamespaceCollection() tablenamespace.Colle
 	return ri.namespaceCollection
 }
 
-func (ri *StandardSQLRewriteInput) GetColumnDescriptors() []relationaldto.RelationalColumn {
+func (ri *StandardSQLRewriteInput) GetColumnDescriptors() []typing.RelationalColumn {
 	return ri.columnDescriptors
 }
 
@@ -134,7 +133,7 @@ func GenerateSelectDML(input SQLRewriteInput) (drm.PreparedStatementCtx, error) 
 	selectSuffix := input.GetSelectSuffix()
 	rewrittenWhere := input.GetRewrittenWhere()
 	var columns []typing.ColumnMetadata
-	var relationalColumns []relationaldto.RelationalColumn
+	var relationalColumns []typing.RelationalColumn
 	var tableAliases []string
 	for _, col := range cols {
 		relationalColumn := col

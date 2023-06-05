@@ -68,7 +68,8 @@ func (ss *RawNativeExec) Build() error {
 				nil,
 				nil,
 				nil,
-				internaldto.NewBackendMessages([]string{"exec completed"}), nil),
+				internaldto.NewBackendMessages([]string{"exec completed"}), nil,
+				ss.handlerCtx.GetTypingConfig()),
 		)
 	}
 

@@ -101,7 +101,9 @@ func (dr *basicStackQLDriver) ProcessDryRun(query string) {
 		},
 	}
 	logging.GetLogger().Debugln("dryrun query underway...")
-	response := util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, resultMap, nil, nil, nil, nil))
+	response := util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, resultMap, nil, nil, nil, nil,
+		dr.handlerCtx.GetTypingConfig(),
+	))
 	responsehandler.HandleResponse(dr.handlerCtx, response) //nolint:errcheck // TODO: investigate
 }
 

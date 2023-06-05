@@ -33,6 +33,7 @@ func (un *Union) Build() error {
 				un.drmCfg,
 			),
 			un.unionCtx.GetNonControlColumns(),
+			un.handlerCtx.GetTypingConfig(),
 		)
 		return outputter.OutputExecutorResult()
 	}

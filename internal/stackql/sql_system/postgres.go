@@ -195,20 +195,20 @@ func (eng *postgresSystem) registerExternalTable(
 
 func (eng *postgresSystem) ObtainRelationalColumnsFromExternalSQLtable(
 	hierarchyIDs internaldto.HeirarchyIdentifiers,
-) ([]relationaldto.RelationalColumn, error) {
+) ([]typing.RelationalColumn, error) {
 	return eng.obtainRelationalColumnsFromExternalSQLtable(hierarchyIDs)
 }
 
 func (eng *postgresSystem) ObtainRelationalColumnFromExternalSQLtable(
 	hierarchyIDs internaldto.HeirarchyIdentifiers,
 	colName string,
-) (relationaldto.RelationalColumn, error) {
+) (typing.RelationalColumn, error) {
 	return eng.obtainRelationalColumnFromExternalSQLtable(hierarchyIDs, colName)
 }
 
 func (eng *postgresSystem) obtainRelationalColumnsFromExternalSQLtable(
 	hierarchyIDs internaldto.HeirarchyIdentifiers,
-) ([]relationaldto.RelationalColumn, error) {
+) ([]typing.RelationalColumn, error) {
 	q := `
 	SELECT
 		column_name 
@@ -245,7 +245,7 @@ func (eng *postgresSystem) obtainRelationalColumnsFromExternalSQLtable(
 	}
 	defer rows.Close()
 	hasRow := false
-	var rv []relationaldto.RelationalColumn
+	var rv []typing.RelationalColumn
 	for {
 		if !rows.Next() {
 			break
@@ -258,7 +258,7 @@ func (eng *postgresSystem) obtainRelationalColumnsFromExternalSQLtable(
 			return nil, err
 		}
 		//nolint:lll // chained method calls
-		relationalColumn := relationaldto.NewRelationalColumn(columnName, columnType).WithWidth(colWidth).WithOID(oid.Oid(oID))
+		relationalColumn := typing.NewRelationalColumn(columnName, columnType).WithWidth(colWidth).WithOID(oid.Oid(oID))
 		rv = append(rv, relationalColumn)
 	}
 	if !hasRow {
@@ -290,7 +290,7 @@ func (eng *postgresSystem) getSQLExternalSchema(providerName string) string {
 func (eng *postgresSystem) obtainRelationalColumnFromExternalSQLtable(
 	hierarchyIDs internaldto.HeirarchyIdentifiers,
 	colName string,
-) (relationaldto.RelationalColumn, error) {
+) (typing.RelationalColumn, error) {
 	q := `
 	SELECT
 		column_name 
@@ -331,7 +331,7 @@ func (eng *postgresSystem) obtainRelationalColumnFromExternalSQLtable(
 	if err != nil {
 		return nil, err
 	}
-	relationalColumn := relationaldto.NewRelationalColumn(columnName, columnType).WithWidth(colWidth).WithOID(oid.Oid(oID))
+	relationalColumn := typing.NewRelationalColumn(columnName, columnType).WithWidth(colWidth).WithOID(oid.Oid(oID))
 	return relationalColumn, nil
 }
 
@@ -537,7 +537,7 @@ func (eng *postgresSystem) quoteWrapTerm(term string) string {
 }
 
 func (eng *postgresSystem) ComposeSelectQuery(
-	columns []relationaldto.RelationalColumn,
+	columns []typing.RelationalColumn,
 	tableAliases []string,
 	fromString string,
 	rewrittenWhere string,
@@ -548,7 +548,7 @@ func (eng *postgresSystem) ComposeSelectQuery(
 }
 
 func (eng *postgresSystem) composeSelectQuery(
-	columns []relationaldto.RelationalColumn,
+	columns []typing.RelationalColumn,
 	tableAliases []string,
 	fromString string,
 	rewrittenWhere string,
