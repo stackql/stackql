@@ -17,6 +17,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/relationaldto"
 	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
+	"github.com/stackql/stackql/internal/stackql/typing"
 )
 
 type SQLSystem interface {
@@ -97,15 +98,32 @@ func NewSQLSystem(
 	controlAttributes sqlcontrol.ControlAttributes,
 	sqlCfg dto.SQLBackendCfg,
 	authCfg map[string]*dto.AuthCtx,
+	typCfg typing.Config,
 ) (SQLSystem, error) {
 	name := sqlCfg.SQLSystem
 	nameLowered := strings.ToLower(name)
 	formatter := getNodeFormatter(nameLowered)
 	switch nameLowered {
 	case constants.SQLDialectSQLite3:
-		return newSQLiteSystem(sqlEngine, analyticsNamespaceLikeString, controlAttributes, formatter, sqlCfg, authCfg)
+		return newSQLiteSystem(
+			sqlEngine,
+			analyticsNamespaceLikeString,
+			controlAttributes,
+			formatter,
+			sqlCfg,
+			authCfg,
+			typCfg,
+		)
 	case constants.SQLDialectPostgres:
-		return newPostgresSystem(sqlEngine, analyticsNamespaceLikeString, controlAttributes, formatter, sqlCfg, authCfg)
+		return newPostgresSystem(
+			sqlEngine,
+			analyticsNamespaceLikeString,
+			controlAttributes,
+			formatter,
+			sqlCfg,
+			authCfg,
+			typCfg,
+		)
 	default:
 		return nil, fmt.Errorf("cannot initialise sql system: cannot accomodate sql dialect '%s'", name)
 	}

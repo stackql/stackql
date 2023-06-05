@@ -1,4 +1,4 @@
-package internaldto
+package typing
 
 import (
 	"github.com/lib/pq/oid"

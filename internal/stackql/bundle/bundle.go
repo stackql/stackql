@@ -12,6 +12,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
+	"github.com/stackql/stackql/internal/stackql/typing"
 	"github.com/stackql/stackql/pkg/txncounter"
 )
 
@@ -41,6 +42,7 @@ func NewBundle(
 	authContexts map[string]*dto.AuthCtx,
 	sqlDataSources map[string]sql_datasource.SQLDataSource,
 	txnCoordintatorContext txn_context.ITransactionCoordinatorContext,
+	typCfg typing.Config,
 ) Bundle {
 	return &simpleBundle{
 		garbageCollector:       garbageCollector,
@@ -55,6 +57,7 @@ func NewBundle(
 		authContexts:           authContexts,
 		sqlDataSources:         sqlDataSources,
 		txnCoordintatorContext: txnCoordintatorContext,
+		typCfg:                 typCfg,
 	}
 }
 
@@ -66,6 +69,7 @@ type simpleBundle struct {
 	sqlSystem              sql_system.SQLSystem
 	txnStore               kstore.KStore
 	txnCtrMgr              txncounter.Manager
+	typCfg                 typing.Config
 	formatter              sqlparser.NodeFormatter
 	pgInternalRouter       dbmsinternal.Router
 	sqlDataSources         map[string]sql_datasource.SQLDataSource
@@ -103,6 +107,10 @@ func (sb *simpleBundle) GetTxnStore() kstore.KStore {
 
 func (sb *simpleBundle) GetTxnCounterManager() txncounter.Manager {
 	return sb.txnCtrMgr
+}
+
+func (sb *simpleBundle) GetTypingConfig() typing.Config {
+	return sb.typCfg
 }
 
 func (sb *simpleBundle) GetGC() garbagecollector.GarbageCollector {

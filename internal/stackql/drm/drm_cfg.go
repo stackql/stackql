@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/stackql/stackql/internal/stackql/constants"
-	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internal_relational_dto"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/relationaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
@@ -19,6 +18,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/sqlmachinery"
 	"github.com/stackql/stackql/internal/stackql/streaming"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
+	"github.com/stackql/stackql/internal/stackql/typing"
 	"github.com/stackql/stackql/internal/stackql/util"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
@@ -35,12 +35,12 @@ var (
 )
 
 type Config interface {
-	ColumnsToRelationalColumns(cols []internaldto.ColumnMetadata) []relationaldto.RelationalColumn
-	ColumnToRelationalColumn(cols internaldto.ColumnMetadata) relationaldto.RelationalColumn
+	ColumnsToRelationalColumns(cols []typing.ColumnMetadata) []relationaldto.RelationalColumn
+	ColumnToRelationalColumn(cols typing.ColumnMetadata) relationaldto.RelationalColumn
 	ExtractFromGolangValue(interface{}) interface{}
 	ExtractObjectFromSQLRows(
 		r *sql.Rows,
-		nonControlColumns []internaldto.ColumnMetadata,
+		nonControlColumns []typing.ColumnMetadata,
 		stream streaming.MapStream,
 	) (map[string]map[string]interface{}, map[int]map[int]interface{})
 	GetCurrentTable(internaldto.HeirarchyIdentifiers) (internaldto.DBTable, error)
@@ -48,7 +48,7 @@ type Config interface {
 	GenerateDDL(util.AnnotatedTabulation, openapistackql.OperationStore, int, bool) ([]string, error)
 	GetControlAttributes() sqlcontrol.ControlAttributes
 	GetGolangValue(string) interface{}
-	GetGolangSlices([]internaldto.ColumnMetadata) ([]interface{}, []string)
+	GetGolangSlices([]typing.ColumnMetadata) ([]interface{}, []string)
 	GetNamespaceCollection() tablenamespace.Collection
 	GetParserTableName(internaldto.HeirarchyIdentifiers, int) sqlparser.TableName
 	GetSQLSystem() sql_system.SQLSystem
@@ -112,7 +112,7 @@ func (dc *staticDRMConfig) OpenapiColumnsToRelationalColumns(
 			col.GetQualifier(),
 		).WithAlias(col.GetAlias()).WithDecorated(col.GetDecoratedCol()).WithParserNode(col.GetNode())
 		if schemaExists {
-			inferredOID := internaldto.GetOidForSchema(col.GetSchema())
+			inferredOID := typing.GetOidForSchema(col.GetSchema())
 			relationalColumn = relationalColumn.WithOID(inferredOID)
 		}
 		// TODO: Need a way to handle postgres differences. This is a fragile point
@@ -153,7 +153,7 @@ func (dc *staticDRMConfig) OpenapiColumnsToRelationalColumn(
 		typeStr,
 	).WithQualifier(col.GetQualifier()).WithAlias(col.GetAlias()).WithDecorated(decoratedCol).WithParserNode(col.GetNode())
 	if schemaExists {
-		inferredOID := internaldto.GetOidForSchema(col.GetSchema())
+		inferredOID := typing.GetOidForSchema(col.GetSchema())
 		relationalColumn = relationalColumn.WithOID(inferredOID)
 	}
 	// TODO: Need a way to handle postgres differences
@@ -162,7 +162,7 @@ func (dc *staticDRMConfig) OpenapiColumnsToRelationalColumn(
 }
 
 func (dc *staticDRMConfig) ColumnsToRelationalColumns(
-	cols []internaldto.ColumnMetadata,
+	cols []typing.ColumnMetadata,
 ) []relationaldto.RelationalColumn {
 	var relationalColumns []relationaldto.RelationalColumn
 	for _, col := range cols {
@@ -174,7 +174,7 @@ func (dc *staticDRMConfig) ColumnsToRelationalColumns(
 }
 
 func (dc *staticDRMConfig) ColumnToRelationalColumn(
-	col internaldto.ColumnMetadata,
+	col typing.ColumnMetadata,
 ) relationaldto.RelationalColumn {
 	relationalColumn := relationaldto.NewRelationalColumn(
 		col.GetName(),
@@ -191,13 +191,13 @@ func (dc *staticDRMConfig) getControlAttributes() sqlcontrol.ControlAttributes {
 	return dc.controlAttributes
 }
 
-func (dc *staticDRMConfig) GetGolangSlices(nonControlColumns []internaldto.ColumnMetadata) ([]interface{}, []string) {
+func (dc *staticDRMConfig) GetGolangSlices(nonControlColumns []typing.ColumnMetadata) ([]interface{}, []string) {
 	return dc.getGolangSlices(nonControlColumns)
 }
 
 func (dc *staticDRMConfig) ExtractObjectFromSQLRows(
 	r *sql.Rows,
-	nonControlColumns []internaldto.ColumnMetadata,
+	nonControlColumns []typing.ColumnMetadata,
 	stream streaming.MapStream,
 ) (map[string]map[string]interface{}, map[int]map[int]interface{}) {
 	return dc.extractObjectFromSQLRows(r, nonControlColumns, stream)
@@ -205,7 +205,7 @@ func (dc *staticDRMConfig) ExtractObjectFromSQLRows(
 
 func (dc *staticDRMConfig) extractObjectFromSQLRows(
 	r *sql.Rows,
-	nonControlColumns []internaldto.ColumnMetadata,
+	nonControlColumns []typing.ColumnMetadata,
 	stream streaming.MapStream,
 ) (map[string]map[string]interface{}, map[int]map[int]interface{}) {
 	if r != nil {
@@ -256,7 +256,7 @@ func (dc *staticDRMConfig) extractObjectFromSQLRows(
 	return altKeys, rawRows
 }
 
-func (dc *staticDRMConfig) getGolangSlices(nonControlColumns []internaldto.ColumnMetadata) ([]interface{}, []string) {
+func (dc *staticDRMConfig) getGolangSlices(nonControlColumns []typing.ColumnMetadata) ([]interface{}, []string) {
 	i := 0
 	var keyArr []string
 	var ifArr []interface{}
@@ -459,7 +459,7 @@ func (dc *staticDRMConfig) GenerateInsertDML(
 	method openapistackql.OperationStore,
 	tcc internaldto.TxnControlCounters,
 ) (PreparedStatementCtx, error) {
-	var columns []internaldto.ColumnMetadata
+	var columns []typing.ColumnMetadata
 	_, isSQLDataSource := tabAnnotated.GetSQLDataSource()
 	var tableName string
 	var discoverID int
@@ -497,7 +497,7 @@ func (dc *staticDRMConfig) GenerateInsertDML(
 			return nil, err
 		}
 		for _, col := range tableColumns {
-			columns = append(columns, internal_relational_dto.NewRelayedColDescriptor(col, col.GetType()))
+			columns = append(columns, typing.NewRelayedColDescriptor(col, col.GetType()))
 			relationalTable.PushBackColumn(col)
 		}
 	} else {
@@ -512,7 +512,7 @@ func (dc *staticDRMConfig) GenerateInsertDML(
 			if schema != nil && schema.GetType() != "" {
 				relationalType = dc.GetRelationalType(schema.GetType())
 			}
-			columns = append(columns, internaldto.NewColDescriptor(col, relationalType))
+			columns = append(columns, typing.NewColDescriptor(col, relationalType))
 			relationalColumn := relationaldto.NewRelationalColumn(col.GetName(), relationalType).WithParserNode(col.GetNode())
 			relationalTable.PushBackColumn(relationalColumn)
 		}
@@ -547,7 +547,7 @@ func (dc *staticDRMConfig) GenerateSelectDML(
 	rewrittenWhere string,
 ) (PreparedStatementCtx, error) {
 	var quotedColNames []string
-	var columns []internaldto.ColumnMetadata
+	var columns []typing.ColumnMetadata
 
 	aliasStr := ""
 	if tabAnnotated.GetAlias() != "" {
@@ -575,7 +575,7 @@ func (dc *staticDRMConfig) GenerateSelectDML(
 				}
 			}
 		}
-		columns = append(columns, internaldto.NewColDescriptor(col, typeStr))
+		columns = append(columns, typing.NewColDescriptor(col, typeStr))
 		// TODO: logic to infer column width
 		relationalColumn := relationaldto.NewRelationalColumn(
 			col.GetName(),

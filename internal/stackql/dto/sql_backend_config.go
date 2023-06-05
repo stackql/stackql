@@ -40,6 +40,10 @@ func (sqlCfg SQLBackendCfg) GetSchemaType() string {
 	return sqlCfg.SchemaType
 }
 
+func (sqlCfg SQLBackendCfg) GetSQLDialect() string {
+	return sqlCfg.SQLSystem
+}
+
 func (sqlCfg SQLBackendCfg) GetDatabaseName() (string, error) {
 	dsn := sqlCfg.GetDSN()
 	if dsn == "" {

@@ -21,6 +21,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
+	"github.com/stackql/stackql/internal/stackql/typing"
 	"gopkg.in/yaml.v2"
 
 	"github.com/stackql/stackql/pkg/preprocessor"
@@ -29,9 +30,14 @@ import (
 	lrucache "github.com/stackql/stackql-parser/go/cache"
 )
 
+//nolint:funlen // let us not worry about tidyness in this boilerplate
 func BuildInputBundle(runtimeCtx dto.RuntimeCtx) (bundle.Bundle, error) {
 	controlAttributes := sqlcontrol.GetControlAttributes("standard")
 	sqlCfg, err := dto.GetSQLBackendCfg(runtimeCtx.SQLBackendCfgRaw)
+	if err != nil {
+		return nil, err
+	}
+	typCfg, err := typing.NewTypingConfig(sqlCfg.GetSQLDialect())
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +65,9 @@ func BuildInputBundle(runtimeCtx dto.RuntimeCtx) (bundle.Bundle, error) {
 	system, err := sql_system.NewSQLSystem(
 		se,
 		namespaces.GetAnalyticsCacheTableNamespaceConfigurator().GetLikeString(),
-		controlAttributes, sqlCfg, ac)
+		controlAttributes,
+		sqlCfg,
+		ac, typCfg)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +116,9 @@ func BuildInputBundle(runtimeCtx dto.RuntimeCtx) (bundle.Bundle, error) {
 		txnCtrMgr,
 		ac,
 		sqlDataSources,
-		txnCoordinatorCtx), nil
+		txnCoordinatorCtx,
+		typCfg,
+	), nil
 }
 
 func initSQLDataSources(authContextMap map[string]*dto.AuthCtx) (map[string]sql_datasource.SQLDataSource, error) {

@@ -6,6 +6,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
+	"github.com/stackql/stackql/internal/stackql/typing"
 )
 
 type PreparedStatementCtx interface {
@@ -13,7 +14,7 @@ type PreparedStatementCtx interface {
 	GetGCCtrlCtrs() internaldto.TxnControlCounters
 	GetIndirectContexts() []PreparedStatementCtx
 	GetCtrlColumnRepeats() int
-	GetNonControlColumns() []internaldto.ColumnMetadata
+	GetNonControlColumns() []typing.ColumnMetadata
 	GetGCHousekeepingQueries() string
 	GetQuery() string
 	SetGCCtrlCtrs(tcc internaldto.TxnControlCounters)
@@ -30,7 +31,7 @@ type standardPreparedStatementCtx struct {
 	txnIDControlColName     string
 	insIDControlColName     string
 	insEncodedColName       string
-	nonControlColumns       []internaldto.ColumnMetadata
+	nonControlColumns       []typing.ColumnMetadata
 	ctrlColumnRepeats       int
 	txnCtrlCtrs             internaldto.TxnControlCounters
 	selectTxnCtrlCtrs       []internaldto.TxnControlCounters
@@ -67,7 +68,7 @@ func (ps *standardPreparedStatementCtx) SetGCCtrlCtrs(tcc internaldto.TxnControl
 	ps.txnCtrlCtrs = tcc
 }
 
-func (ps *standardPreparedStatementCtx) GetNonControlColumns() []internaldto.ColumnMetadata {
+func (ps *standardPreparedStatementCtx) GetNonControlColumns() []typing.ColumnMetadata {
 	return ps.nonControlColumns
 }
 
@@ -87,7 +88,7 @@ func NewPreparedStatementCtx(
 	txnIDControlColName string,
 	insIDControlColName string,
 	insEncodedColName string,
-	nonControlColumns []internaldto.ColumnMetadata,
+	nonControlColumns []typing.ColumnMetadata,
 	ctrlColumnRepeats int,
 	txnCtrlCtrs internaldto.TxnControlCounters,
 	secondaryCtrs []internaldto.TxnControlCounters,
@@ -112,7 +113,7 @@ func NewPreparedStatementCtx(
 	}
 }
 
-func NewQueryOnlyPreparedStatementCtx(query string, nonControlCols []internaldto.ColumnMetadata) PreparedStatementCtx {
+func NewQueryOnlyPreparedStatementCtx(query string, nonControlCols []typing.ColumnMetadata) PreparedStatementCtx {
 	return &standardPreparedStatementCtx{query: query, nonControlColumns: nonControlCols, ctrlColumnRepeats: 0}
 }
 
