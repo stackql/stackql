@@ -49,7 +49,8 @@ func (nb *NopBuilder) Build() error {
 					nil,
 					nil,
 					nil,
-					internaldto.NewBackendMessages(nb.messages), nil),
+					internaldto.NewBackendMessages(nb.messages), nil,
+					nb.handlerCtx.GetTypingConfig()),
 			)
 		},
 	)

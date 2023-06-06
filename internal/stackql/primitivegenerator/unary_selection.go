@@ -51,7 +51,9 @@ func (pb *standardPrimitiveGenerator) assembleUnarySelectionBuilder(
 		prov.GetName(),
 		handlerCtx.GetNamespaceCollection(),
 		handlerCtx.GetControlAttributes(),
-		handlerCtx.GetSQLSystem())
+		handlerCtx.GetSQLSystem(),
+		handlerCtx.GetTypingConfig(),
+	)
 	if err != nil {
 		return err
 	}

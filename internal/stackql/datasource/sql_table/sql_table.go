@@ -1,21 +1,21 @@
 package sql_table //nolint:revive,stylecheck // decent package name
 
 import (
-	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/relationaldto"
 	"github.com/stackql/stackql/internal/stackql/symtab"
+	"github.com/stackql/stackql/internal/stackql/typing"
 )
 
 type SQLTable interface {
-	GetColumns() []relationaldto.RelationalColumn
+	GetColumns() []typing.RelationalColumn
 	GetSymTab() symtab.SymTab
 }
 
 type standardSQLTable struct {
 	symTab symtab.SymTab
-	colz   []relationaldto.RelationalColumn
+	colz   []typing.RelationalColumn
 }
 
-func NewStandardSQLTable(_ []relationaldto.RelationalColumn) (SQLTable, error) {
+func NewStandardSQLTable(_ []typing.RelationalColumn) (SQLTable, error) {
 	rv := &standardSQLTable{
 		symTab: symtab.NewHashMapTreeSymTab(),
 	}
@@ -26,6 +26,6 @@ func (sqt *standardSQLTable) GetSymTab() symtab.SymTab {
 	return sqt.symTab
 }
 
-func (sqt *standardSQLTable) GetColumns() []relationaldto.RelationalColumn {
+func (sqt *standardSQLTable) GetColumns() []typing.RelationalColumn {
 	return sqt.colz
 }

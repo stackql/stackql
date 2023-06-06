@@ -2,6 +2,7 @@ package internaldto
 
 import (
 	"github.com/lib/pq/oid"
+	"github.com/stackql/stackql/internal/stackql/typing"
 )
 
 type PrepareResultSetDTO struct {
@@ -13,6 +14,7 @@ type PrepareResultSetDTO struct {
 	ColumnOIDs  []oid.Oid
 	RowSort     func(map[string]map[string]interface{}) []string
 	Err         error
+	TypCfg      typing.Config
 }
 
 func NewPrepareResultSetDTO(
@@ -22,6 +24,7 @@ func NewPrepareResultSetDTO(
 	rowSort func(map[string]map[string]interface{}) []string,
 	err error,
 	msg BackendMessages,
+	typCfg typing.Config,
 ) PrepareResultSetDTO {
 	return PrepareResultSetDTO{
 		OutputBody:  body,
@@ -31,6 +34,7 @@ func NewPrepareResultSetDTO(
 		Err:         err,
 		Msg:         msg,
 		RawRows:     map[int]map[int]interface{}{},
+		TypCfg:      typCfg,
 	}
 }
 
@@ -42,6 +46,7 @@ func NewPrepareResultSetPlusRawDTO(
 	err error,
 	msg BackendMessages,
 	rawRows map[int]map[int]interface{},
+	typCfg typing.Config,
 ) PrepareResultSetDTO {
 	return PrepareResultSetDTO{
 		OutputBody:  body,
@@ -51,6 +56,7 @@ func NewPrepareResultSetPlusRawDTO(
 		Err:         err,
 		Msg:         msg,
 		RawRows:     rawRows,
+		TypCfg:      typCfg,
 	}
 }
 
@@ -63,6 +69,7 @@ func NewPrepareResultSetPlusRawAndTypesDTO(
 	err error,
 	msg BackendMessages,
 	rawRows map[int]map[int]interface{},
+	typCfg typing.Config,
 ) PrepareResultSetDTO {
 	return PrepareResultSetDTO{
 		OutputBody:  body,
@@ -73,5 +80,6 @@ func NewPrepareResultSetPlusRawAndTypesDTO(
 		Err:         err,
 		Msg:         msg,
 		RawRows:     rawRows,
+		TypCfg:      typCfg,
 	}
 }

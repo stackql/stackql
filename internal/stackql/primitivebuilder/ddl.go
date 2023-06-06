@@ -60,6 +60,7 @@ func (un *ddl) Build() error {
 				nil,
 				nil,
 				nil,
+				un.handlerCtx.GetTypingConfig(),
 			),
 		)
 	}

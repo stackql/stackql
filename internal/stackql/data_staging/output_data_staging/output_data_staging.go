@@ -99,16 +99,22 @@ type Outputter interface {
 	OutputExecutorResult() internaldto.ExecutorOutput
 }
 
-func NewNaiveOutputter(packetPreparator PacketPreparator, nonControlColumns []typing.ColumnMetadata) Outputter {
+func NewNaiveOutputter(
+	packetPreparator PacketPreparator,
+	nonControlColumns []typing.ColumnMetadata,
+	typCfg typing.Config,
+) Outputter {
 	return &naiveOutputter{
 		packetPreparator:  packetPreparator,
 		nonControlColumns: nonControlColumns,
+		typCfg:            typCfg,
 	}
 }
 
 type naiveOutputter struct {
 	packetPreparator  PacketPreparator
 	nonControlColumns []typing.ColumnMetadata
+	typCfg            typing.Config
 }
 
 func (st *naiveOutputter) OutputExecutorResult() internaldto.ExecutorOutput {
@@ -144,6 +150,7 @@ func (st *naiveOutputter) OutputExecutorResult() internaldto.ExecutorOutput {
 			nil,
 			nil,
 			rawRows,
+			st.typCfg,
 		),
 	)
 
@@ -153,7 +160,7 @@ func (st *naiveOutputter) OutputExecutorResult() internaldto.ExecutorOutput {
 			colz = append(colz, col.GetIdentifier())
 		}
 		rv.SetSQLResultFn(
-			func() sqldata.ISQLResultStream { return util.GetHeaderOnlyResultStream(colz) },
+			func() sqldata.ISQLResultStream { return util.GetHeaderOnlyResultStream(colz, st.typCfg) },
 		)
 	}
 	return rv

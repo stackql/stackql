@@ -28,6 +28,7 @@ type Bundle interface {
 	GetTxnCounterManager() txncounter.Manager
 	GetTxnStore() kstore.KStore
 	GetTxnCoordinatorContext() txn_context.ITransactionCoordinatorContext
+	GetTypingConfig() typing.Config
 }
 
 func NewBundle(

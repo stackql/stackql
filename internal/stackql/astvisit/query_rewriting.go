@@ -11,7 +11,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
-	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/relationaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/sqlrewrite"
@@ -19,6 +18,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
+	"github.com/stackql/stackql/internal/stackql/typing"
 )
 
 var (
@@ -45,7 +45,7 @@ type standardQueryRewriteAstVisitor struct {
 	colRefs               parserutil.ColTableMap
 	columnNames           []parserutil.ColumnHandle
 	columnDescriptors     []openapistackql.ColumnDescriptor
-	relationalColumns     []relationaldto.RelationalColumn
+	relationalColumns     []typing.RelationalColumn
 	tableSlice            []tableinsertioncontainer.TableInsertionContainer
 	namespaceCollection   tablenamespace.Collection
 	formatter             sqlparser.NodeFormatter
@@ -107,7 +107,7 @@ func (v *standardQueryRewriteAstVisitor) getNextAlias() string {
 
 func (v *standardQueryRewriteAstVisitor) getStarColumns(
 	tbl tablemetadata.ExtendedTableMetadata,
-) ([]relationaldto.RelationalColumn, error) {
+) ([]typing.RelationalColumn, error) {
 	if indirect, isIndirect := tbl.GetIndirect(); isIndirect {
 		rv := v.dc.ColumnsToRelationalColumns(indirect.GetColumns())
 		return rv, nil
@@ -592,7 +592,7 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			if !ok {
 				return fmt.Errorf("query rewriting for indirection: cannot find col = '%s'", col.Name)
 			}
-			rv := relationaldto.NewRelationalColumn(col.Name, r.GetType()).WithDecorated(col.DecoratedColumn)
+			rv := typing.NewRelationalColumn(col.Name, r.GetType()).WithDecorated(col.DecoratedColumn)
 			v.relationalColumns = append(v.relationalColumns, rv)
 			return nil
 		}

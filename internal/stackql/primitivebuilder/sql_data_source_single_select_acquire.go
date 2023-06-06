@@ -124,6 +124,7 @@ func (ss *sqlDataSourceSingleSelectAcquire) Build() error {
 		preparator := input_data_staging.NewNaiveNativeResultSetPreparator(
 			rows,
 			ss.handlerCtx.GetDrmConfig(),
+			ss.handlerCtx.GetTypingConfig(),
 			ss.insertPreparedStatementCtx,
 		)
 		return preparator.PrepareNativeResultSet()

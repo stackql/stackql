@@ -5,6 +5,7 @@ import (
 
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
+	"github.com/stackql/stackql/internal/stackql/typing"
 	"github.com/stackql/stackql/internal/stackql/util"
 )
 
@@ -35,9 +36,12 @@ func generateResultIfNeededfunc(
 	msg internaldto.BackendMessages,
 	err error,
 	isShowResults bool,
+	typCfg typing.Config,
 ) internaldto.ExecutorOutput {
 	if isShowResults {
-		return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, resultMap, nil, nil, nil, nil))
+		return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, resultMap, nil, nil, nil, nil,
+			typCfg,
+		))
 	}
 	return internaldto.NewExecutorOutput(nil, body, nil, msg, err)
 }

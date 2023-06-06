@@ -73,13 +73,16 @@ func (ss *NativeSelect) Build() error {
 				}
 			}
 		}
-		rv := util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, rowMap, colz, nil, nil, nil))
+		rv := util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, rowMap, colz, nil, nil, nil,
+			ss.handlerCtx.GetTypingConfig(),
+		))
 		if len(rowMap) > 0 {
 			return rv
 		}
 		return util.EmptyProtectResultSet(
 			rv,
 			colz,
+			ss.handlerCtx.GetTypingConfig(),
 		)
 	}
 	graph := ss.graph

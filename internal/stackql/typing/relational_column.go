@@ -1,4 +1,4 @@
-package relationaldto
+package typing
 
 import (
 	"fmt"

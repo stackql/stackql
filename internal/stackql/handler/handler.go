@@ -24,6 +24,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
+	"github.com/stackql/stackql/internal/stackql/typing"
 	"github.com/stackql/stackql/pkg/txncounter"
 
 	lrucache "github.com/stackql/stackql-parser/go/cache"
@@ -76,6 +77,8 @@ type HandlerContext interface { //nolint:revive // don't mind stuttering this on
 	SetRawQuery(string)
 	//
 	GetTxnCoordinatorCtx() txn_context.ITransactionCoordinatorContext
+
+	GetTypingConfig() typing.Config
 }
 
 type standardHandlerContext struct {
@@ -105,10 +108,15 @@ type standardHandlerContext struct {
 	formatter           sqlparser.NodeFormatter
 	pgInternalRouter    dbmsinternal.Router
 	txnCoordinatorCtx   txn_context.ITransactionCoordinatorContext
+	typCfg              typing.Config
 }
 
 func (hc *standardHandlerContext) GetTxnCoordinatorCtx() txn_context.ITransactionCoordinatorContext {
 	return hc.txnCoordinatorCtx
+}
+
+func (hc *standardHandlerContext) GetTypingConfig() typing.Config {
+	return hc.typCfg
 }
 
 func (hc *standardHandlerContext) SetCurrentProvider(p string) {
@@ -381,6 +389,7 @@ func (hc *standardHandlerContext) Clone() HandlerContext {
 		formatter:           hc.formatter,
 		pgInternalRouter:    hc.pgInternalRouter,
 		txnCoordinatorCtx:   hc.txnCoordinatorCtx,
+		typCfg:              hc.typCfg,
 	}
 	return &rv
 }
@@ -419,8 +428,11 @@ func GetHandlerCtx(
 		pgInternalRouter:    inputBundle.GetDBMSInternalRouter(),
 		currentProvider:     runtimeCtx.ProviderStr,
 		txnCoordinatorCtx:   inputBundle.GetTxnCoordinatorContext(),
+		typCfg:              inputBundle.GetTypingConfig(),
 	}
-	drmCfg, err := drm.GetDRMConfig(inputBundle.GetSQLSystem(), rv.namespaceCollection, controlAttributes)
+	drmCfg, err := drm.GetDRMConfig(inputBundle.GetSQLSystem(),
+		inputBundle.GetTypingConfig(),
+		rv.namespaceCollection, controlAttributes)
 	if err != nil {
 		return nil, err
 	}
