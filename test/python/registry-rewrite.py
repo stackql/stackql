@@ -15,6 +15,7 @@ DEFAULT_SRC_DIR = os.path.join(TEST_ROOT_DIR, 'registry', 'src')
 DEFAULT_DST_DIR = os.path.join(TEST_ROOT_DIR, 'registry-mocked', 'src')
 DEFAULT_PORT = 1070
 GOOGLE_DEFAULT_PORT = 1080
+GOOGLEADMIN_DEFAULT_PORT = 1098
 OKTA_DEFAULT_PORT = 1090
 AWS_DEFAULT_PORT = 1091
 K8S_DEFAULT_PORT = 1092
@@ -54,6 +55,12 @@ parser.add_argument(
     '--google-port',
     type=int,
     default=GOOGLE_DEFAULT_PORT,
+    help='port for google mock service'
+)
+parser.add_argument(
+    '--googleadmin-port',
+    type=int,
+    default=GOOGLEADMIN_DEFAULT_PORT,
     help='port for google mock service'
 )
 parser.add_argument(
@@ -162,6 +169,9 @@ class ProviderCfgMapping:
       },
       "github": {
         "port": processed_args.github_port
+      },
+      "googleadmin": {
+        "port": processed_args.googleadmin_port
       },
       "googleapis.com": {
         "port": processed_args.google_port

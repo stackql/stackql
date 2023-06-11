@@ -276,9 +276,10 @@ _AUTH_PLUS_EXTERNAL_POSTGRES_DOCKER["pgi"] = {
   } 
 }
 
+_GOOGLE_DUMMY_CREDENTIALS_PATH = os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'credentials', 'dummy', 'google', 'functional-test-dummy-sa-key.json')
 _AUTH_CFG_INTEGRATION={ 
   "google": { 
-    "credentialsfilepath": get_unix_path(os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'credentials', 'dummy', 'google', 'functional-test-dummy-sa-key.json')),
+    "credentialsfilepath": get_unix_path(_GOOGLE_DUMMY_CREDENTIALS_PATH),
     "type": "service_account"
   }, 
   "okta": { 
@@ -312,9 +313,10 @@ _AUTH_CFG_INTEGRATION={
     "password": "mypassword"
   }
 }
+_GOOGLE_DUMMY_CREDENTIALS_PATH_DOCKER = os.path.join('/opt', 'stackql', 'credentials', 'dummy', 'google', 'docker-functional-test-dummy-sa-key.json')
 _AUTH_CFG_INTEGRATION_DOCKER={ 
   "google": { 
-    "credentialsfilepath": get_unix_path(os.path.join('/opt', 'stackql', 'credentials', 'dummy', 'google', 'docker-functional-test-dummy-sa-key.json')),
+    "credentialsfilepath": get_unix_path(_GOOGLE_DUMMY_CREDENTIALS_PATH_DOCKER),
     "type": "service_account"
   }, 
   "okta": { 
@@ -482,6 +484,9 @@ MOCKSERVER_JAR = os.path.join(REPOSITORY_ROOT, 'test', 'downloads', 'mockserver-
 
 JSON_INIT_FILE_PATH_GOOGLE = os.path.join(REPOSITORY_ROOT, 'test', 'mockserver', 'expectations', 'static-gcp-expectations.json')
 MOCKSERVER_PORT_GOOGLE = 1080
+
+JSON_INIT_FILE_PATH_GOOGLEADMIN = os.path.join(REPOSITORY_ROOT, 'test', 'mockserver', 'expectations', 'static-google-admin-expectations.json')
+MOCKSERVER_PORT_GOOGLEADMIN = 1098
 
 JSON_INIT_FILE_PATH_OKTA = os.path.join(REPOSITORY_ROOT, 'test', 'mockserver', 'expectations', 'static-okta-expectations.json')
 MOCKSERVER_PORT_OKTA = 1090
@@ -817,6 +822,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'MOCKSERVER_PORT_AZURE':                          MOCKSERVER_PORT_AZURE,
     'MOCKSERVER_PORT_GITHUB':                         MOCKSERVER_PORT_GITHUB,
     'MOCKSERVER_PORT_GOOGLE':                         MOCKSERVER_PORT_GOOGLE,
+    'MOCKSERVER_PORT_GOOGLEADMIN':                    MOCKSERVER_PORT_GOOGLEADMIN,
     'MOCKSERVER_PORT_K8S':                            MOCKSERVER_PORT_K8S,
     'MOCKSERVER_PORT_OKTA':                           MOCKSERVER_PORT_OKTA,
     'MOCKSERVER_PORT_REGISTRY':                       MOCKSERVER_PORT_REGISTRY,
@@ -1022,11 +1028,13 @@ def get_variables(execution_env :str, sql_backend_str :str):
     rv['AUTH_PLUS_EXTERNAL_POSTGRES']                   = AUTH_PLUS_EXTERNAL_POSTGRES_DOCKER
     rv['AUTH_CFG_STR_INTEGRATION']                      = AUTH_CFG_INTEGRATION_STR_DOCKER
     rv['GET_IAM_POLICY_AGG_ASC_INPUT_FILE']             = GET_IAM_POLICY_AGG_ASC_INPUT_FILE_DOCKER
+    rv['GOOGLE_APPLICATION_CREDENTIALS']                = _GOOGLE_DUMMY_CREDENTIALS_PATH_DOCKER
     rv['JSON_INIT_FILE_PATH_AWS']                       = JSON_INIT_FILE_PATH_AWS
     rv['JSON_INIT_FILE_PATH_AZURE']                     = JSON_INIT_FILE_PATH_AZURE
     rv['JSON_INIT_FILE_PATH_DIGITALOCEAN']              = JSON_INIT_FILE_PATH_DIGITALOCEAN
     rv['JSON_INIT_FILE_PATH_GITHUB']                    = JSON_INIT_FILE_PATH_GITHUB
     rv['JSON_INIT_FILE_PATH_GOOGLE']                    = JSON_INIT_FILE_PATH_GOOGLE
+    rv['JSON_INIT_FILE_PATH_GOOGLEADMIN']               = JSON_INIT_FILE_PATH_GOOGLEADMIN
     rv['JSON_INIT_FILE_PATH_K8S']                       = JSON_INIT_FILE_PATH_K8S
     rv['JSON_INIT_FILE_PATH_OKTA']                      = JSON_INIT_FILE_PATH_OKTA
     rv['JSON_INIT_FILE_PATH_REGISTRY']                  = JSON_INIT_FILE_PATH_REGISTRY
@@ -1047,11 +1055,13 @@ def get_variables(execution_env :str, sql_backend_str :str):
     rv['AUTH_PLUS_EXTERNAL_POSTGRES']                   = AUTH_PLUS_EXTERNAL_POSTGRES
     rv['AUTH_CFG_STR_INTEGRATION']                      = AUTH_CFG_INTEGRATION_STR
     rv['GET_IAM_POLICY_AGG_ASC_INPUT_FILE']             = GET_IAM_POLICY_AGG_ASC_INPUT_FILE
+    rv['GOOGLE_APPLICATION_CREDENTIALS']                = _GOOGLE_DUMMY_CREDENTIALS_PATH
     rv['JSON_INIT_FILE_PATH_AWS']                       = JSON_INIT_FILE_PATH_AWS
     rv['JSON_INIT_FILE_PATH_AZURE']                     = JSON_INIT_FILE_PATH_AZURE
     rv['JSON_INIT_FILE_PATH_DIGITALOCEAN']              = JSON_INIT_FILE_PATH_DIGITALOCEAN
     rv['JSON_INIT_FILE_PATH_GITHUB']                    = JSON_INIT_FILE_PATH_GITHUB
     rv['JSON_INIT_FILE_PATH_GOOGLE']                    = JSON_INIT_FILE_PATH_GOOGLE
+    rv['JSON_INIT_FILE_PATH_GOOGLEADMIN']               = JSON_INIT_FILE_PATH_GOOGLEADMIN
     rv['JSON_INIT_FILE_PATH_K8S']                       = JSON_INIT_FILE_PATH_K8S
     rv['JSON_INIT_FILE_PATH_OKTA']                      = JSON_INIT_FILE_PATH_OKTA
     rv['JSON_INIT_FILE_PATH_REGISTRY']                  = JSON_INIT_FILE_PATH_REGISTRY
