@@ -1,0 +1,204 @@
+info:
+  contact:
+    name: Google
+    url: https://google.com
+  description: Google Admin Directory
+  license:
+    name: Creative Commons Attribution 3.0
+    url: http://creativecommons.org/licenses/by/3.0/
+  termsOfService: https://developers.google.com/terms/
+  title: Admin Directory API
+  version: v2
+  x-apiClientRegistration:
+    url: https://console.developers.google.com
+  x-providerName: googleadmin
+  x-serviceName: directory
+components:
+  x-stackQL-resources:
+    users:
+      id: googleadmin.directory.users
+      methods:
+        get:
+          operation:
+            $ref: '#/paths/~1admin~1directory~1v1~1users~1{userKey}/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: '#/paths/~1admin~1directory~1v1~1users/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: users
+      name: users
+      title: users
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/users/methods/get'
+          - $ref: '#/components/x-stackQL-resources/users/methods/list'
+  schemas:
+    User:
+      description: A user entity in google directory
+      id: DirectoryUser
+      properties:
+        kind:
+          type: string
+        id:
+          type: string
+        etag:
+          type: string
+        primaryEmail:
+          type: string
+        name:
+          type: object
+          properties:
+            givenName:
+              type: string
+            familyName:
+              type: string
+            fullName:
+              type: string
+        isAdmin:
+          type: boolean
+        isDelegatedAdmin:
+          type: boolean
+        lastLoginTime:
+          type: string
+        creationTime:
+          type: string
+        agreedToTerms:
+          type: boolean
+        suspended:
+          type: boolean
+        archived:
+          type: boolean
+        changePasswordAtNextLogin:
+          type: boolean
+        ipWhitelisted:
+          type: boolean
+        emails:
+          type: list
+          items:
+            type: object
+            properties:
+              address:
+                type: string
+              type:
+                type: string
+        phones:
+          type: list
+          items:
+            type: object
+            properties:
+              value:
+                type: string
+              type:
+                type: string
+        languages:
+          type: list
+          items:
+            type: object
+            properties:
+              languageCode:
+                type: string
+              preference:
+                type: string
+        nonEditableAliases:
+          type: list
+          items:
+            type: string
+        customerId:
+          type: string
+        orgUnitPath:
+          type: string
+        isMailboxSetup:
+          type: boolean
+        isEnrolledIn2Sv:
+          type: boolean
+        isEnforcedIn2Sv:
+          type: boolean
+        includeInGlobalAddressList:
+          type: boolean
+      type: object
+paths:
+  /admin/directory/v1/users:
+    get:
+      parameters:
+        - description: Customer ID
+          in: query
+          name: customer
+          schema:
+            type: string
+            default: my_customer
+        - description: Domain
+          in: query
+          name: domain
+          required: true
+          schema:
+            type: string
+        - description: Next page token
+          in: query
+          name: pageToken
+          required: false
+          schema:
+            type: string
+      description: Retrieves a report which is a collection of properties and statistics for a set of users with the account. For more information, see the User Usage Report guide. For more information about the user report's parameters, see the Users Usage parameters reference guides.
+      operationId: adminDirectory.users.list
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                  trigger_event:
+                    type: string
+                  etag:
+                    type: string
+                  nextPageToken:
+                    type: string
+                  users:
+                    type: list
+                    items: 
+                      $ref: '#/components/schemas/User'
+  /admin/directory/v1/users/{userKey}:
+    get:
+      parameters:
+        - description: Customer ID
+          in: query
+          name: customer
+          schema:
+            type: string
+            default: my_customer
+        - description: User ID of the directory user to be listed
+          in: path
+          name: userKey
+          required: true
+          schema:
+            type: string
+        - description: Domain
+          in: query
+          name: domain
+          schema:
+            type: string
+        - description: Next page token
+          in: query
+          name: pageToken
+          required: false
+          schema:
+            type: string
+      description: Retrieves a report which is a collection of properties and statistics for a set of users with the account. For more information, see the User Usage Report guide. For more information about the user report's parameters, see the Users Usage parameters reference guides.
+      operationId: adminDirectory.users.get
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+servers:
+- url: https://admin.googleapis.com

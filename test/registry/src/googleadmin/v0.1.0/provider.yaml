@@ -1,0 +1,20 @@
+id: googleadmin
+name: googleadmin
+providerServices:
+  directory:
+    description: Google Directory Service
+    id: directory:v1
+    kind: discovery#directoryItem
+    name: directory
+    preferred: true
+    service:
+      $ref: googleadmin/v0.1.0/services/admin-directory.yaml
+    title: Google Org Directory
+    version: v1
+config:
+  auth:
+    credentialsfilepathenvvar: "GOOGLE_APPLICATION_CREDENTIALS"
+    type: "service_account"
+    scopes:
+      - https://www.googleapis.com/auth/cloud-platform
+      - https://www.googleapis.com/auth/admin.directory.user.readonly

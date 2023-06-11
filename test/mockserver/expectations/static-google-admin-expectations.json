@@ -1,0 +1,124 @@
+[
+  {
+    "httpRequest": {
+      "headers": {
+        "accept": [ "application/json" ],
+        "Authorization" : [ 
+          ".+" 
+        ]
+      },
+      "method": "GET",
+      "path": "/admin/directory/v1/users",
+      "queryStringParameters": {
+        "domain": ["[A-Za-z0-9-.]+"] 
+      }
+    },
+    "httpResponse": {
+      "body": {
+        "kind": "admin#directory#users",
+        "etag": "\"some-etag-prefix/some-etag-suffix\"",
+        "users": [
+          {
+            "kind": "admin#directory#user",
+            "id": "110000000000000000008",
+            "etag": "\"some-other-etag-prefix/some-other-etag-suffix\"",
+            "primaryEmail": "info@grubit.com",
+            "name": {
+              "givenName": "Info",
+              "familyName": "Contact",
+              "fullName": "Info Contact"
+            },
+            "isAdmin": false,
+            "isDelegatedAdmin": false,
+            "lastLoginTime": "2022-04-16T22:02:00.000Z",
+            "creationTime": "2022-02-05T03:27:37.000Z",
+            "agreedToTerms": true,
+            "suspended": false,
+            "archived": false,
+            "changePasswordAtNextLogin": false,
+            "ipWhitelisted": false,
+            "emails": [
+              {
+                "address": "joeblow@jmail.com",
+                "type": "work"
+              },
+              {
+                "address": "info@grubit.com",
+                "primary": true
+              },
+              {
+                "address": "info@grubit.com.test-google-a.com"
+              }
+            ],
+            "phones": [
+              {
+                "value": "+61432999999",
+                "type": "work"
+              }
+            ],
+            "languages": [
+              {
+                "languageCode": "en",
+                "preference": "preferred"
+              }
+            ],
+            "nonEditableAliases": [
+              "info@grubit.com.test-google-a.com"
+            ],
+            "customerId": "C11a1a111",
+            "orgUnitPath": "/",
+            "isMailboxSetup": true,
+            "isEnrolledIn2Sv": false,
+            "isEnforcedIn2Sv": false,
+            "includeInGlobalAddressList": true
+          },
+          {
+            "kind": "admin#directory#user",
+            "id": "10000000000000000006",
+            "etag": "\"yet-another-etag-prefix/yet-another-etag-suffix\"",
+            "primaryEmail": "joeblow@grubit.com",
+            "name": {
+              "givenName": "Joe",
+              "familyName": "Blow",
+              "fullName": "Joe Blow"
+            },
+            "isAdmin": true,
+            "isDelegatedAdmin": false,
+            "lastLoginTime": "2022-06-07T07:52:37.000Z",
+            "creationTime": "2022-02-04T02:04:41.000Z",
+            "agreedToTerms": true,
+            "suspended": false,
+            "archived": false,
+            "changePasswordAtNextLogin": false,
+            "ipWhitelisted": false,
+            "emails": [
+              {
+                "address": "joeblow@grubit.com",
+                "primary": true
+              },
+              {
+                "address": "joeblow@grubit.com.test-google-a.com"
+              }
+            ],
+            "languages": [
+              {
+                "languageCode": "en",
+                "preference": "preferred"
+              }
+            ],
+            "nonEditableAliases": [
+              "joeblow@grubit.com.test-google-a.com"
+            ],
+            "customerId": "C11a1a111",
+            "orgUnitPath": "/",
+            "isMailboxSetup": true,
+            "isEnrolledIn2Sv": false,
+            "isEnforcedIn2Sv": false,
+            "includeInGlobalAddressList": true,
+            "recoveryEmail": "joeblow@jmail.com"
+          }
+        ]
+      }
+    }
+  }
+]

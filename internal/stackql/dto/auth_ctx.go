@@ -16,6 +16,7 @@ type AuthCtx struct {
 	KeyID                   string         `json:"keyID" yaml:"keyID"`
 	KeyIDEnvVar             string         `json:"keyIDenvvar" yaml:"keyIDenvvar"`
 	KeyFilePath             string         `json:"credentialsfilepath" yaml:"credentialsfilepath"`
+	KeyFilePathEnvVar       string         `json:"credentialsfilepathenvvar" yaml:"credentialsfilepathenvvar"`
 	KeyEnvVar               string         `json:"credentialsenvvar" yaml:"credentialsenvvar"`
 	APIKeyStr               string         `json:"api_key" yaml:"api_key"`
 	APISecretStr            string         `json:"api_secret" yaml:"api_secret"`
@@ -48,6 +49,7 @@ func (ac *AuthCtx) Clone() *AuthCtx {
 		KeyID:                   ac.KeyID,
 		KeyIDEnvVar:             ac.KeyIDEnvVar,
 		KeyFilePath:             ac.KeyFilePath,
+		KeyFilePathEnvVar:       ac.KeyFilePathEnvVar,
 		KeyEnvVar:               ac.KeyEnvVar,
 		Active:                  ac.Active,
 		Username:                ac.Username,
@@ -123,7 +125,7 @@ func (ac *AuthCtx) InferAuthType(authTypeRequested string) string {
 	case AuthInteractiveStr:
 		return AuthInteractiveStr
 	}
-	if ac.KeyFilePath != "" || ac.KeyEnvVar != "" {
+	if ac.KeyFilePath != "" || ac.KeyEnvVar != "" || ac.KeyFilePathEnvVar != "" {
 		return AuthServiceAccountStr
 	}
 	return AuthInteractiveStr
@@ -136,6 +138,10 @@ func (ac *AuthCtx) GetCredentialsBytes() ([]byte, error) {
 			return nil, fmt.Errorf("credentialsenvvar references empty string")
 		}
 		return []byte(rv), nil
+	}
+	if ac.KeyFilePathEnvVar != "" {
+		credentialFile := os.Getenv(ac.KeyFilePathEnvVar)
+		return os.ReadFile(credentialFile)
 	}
 	credentialFile := ac.KeyFilePath
 	if credentialFile != "" {

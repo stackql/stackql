@@ -59,6 +59,7 @@ services:
       - DIGITALOCEAN_TOKEN=${DIGITALOCEAN_TOKEN:-some_junk}
       - DUMMY_DIGITALOCEAN_USERNAME=${DUMMY_DIGITALOCEAN_USERNAME:-myusername}
       - DUMMY_DIGITALOCEAN_PASSWORD=${DUMMY_DIGITALOCEAN_PASSWORD:-mypassword}
+      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS:-/opt/stackql/credentials/dummy/google/docker-functional-test-dummy-sa-key.json}
       - BUILDMAJORVERSION=${BUILDMAJORVERSION:-1}
       - BUILDMINORVERSION=${BUILDMINORVERSION:-1}
       - BUILDPATCHVERSION=${BUILDPATCHVERSION:-1}
@@ -83,6 +84,7 @@ services:
       - MOCKSERVER_PORT_AZURE=${MOCKSERVER_PORT_AZURE:-1095}
       - MOCKSERVER_PORT_SUMOLOGIC=${MOCKSERVER_PORT_SUMOLOGIC:-1096}
       - MOCKSERVER_PORT_DIGITALOCEAN=${MOCKSERVER_PORT_DIGITALOCEAN:-1097}
+      - MOCKSERVER_PORT_GOOGLEADMIN=${MOCKSERVER_PORT_GOOGLEADMIN:-1098}
     ports:
       - "${MOCKSERVER_PORT_GOOGLE:-1080}/tcp"
       - "${MOCKSERVER_PORT_OKTA:-1090}/tcp"
@@ -93,6 +95,7 @@ services:
       - "${MOCKSERVER_PORT_AZURE:-1095}/tcp"
       - "${MOCKSERVER_PORT_SUMOLOGIC:-1096}/tcp"
       - "${MOCKSERVER_PORT_DIGITALOCEAN:-1097}/tcp"
+      - "${MOCKSERVER_PORT_GOOGLEADMIN:-1098}/tcp"
     command: 
       - bash
       - -c
@@ -152,7 +155,13 @@ services:
           -Dmockserver.logLevel=OFF \
           -Droot.logLevel=OFF \
           -jar    $${MOCKSERVER_JAR} \
-          -serverPort    $${MOCKSERVER_PORT_AZURE}
+          -serverPort    $${MOCKSERVER_PORT_AZURE}&
+        java    -Dfile.encoding=UTF-8 \
+          -Dmockserver.initializationJsonPath=$${JSON_INIT_FILE_DIR}/static-google-admin-expectations.json \
+          -Dmockserver.logLevel=OFF \
+          -Droot.logLevel=OFF \
+          -jar    $${MOCKSERVER_JAR} \
+          -serverPort    $${MOCKSERVER_PORT_GOOGLEADMIN}
   postgres_stackql:
     image: postgres:14.5-bullseye
     hostname: postgres_stackql

@@ -743,6 +743,35 @@ Transaction Abort Attempted Commit Digitalocean Insert Droplet
     ...    ${outputStr}
     ...    stdout=${CURDIR}/tmp/Transaction-Abort-Attempted-Commit-Digitalocean-Insert-Droplet.tmp
 
+Google Admin Directory Small Response Also De Facto Credentials Path Env Var
+    Set Environment Variable    GOOGLE_APPLICATION_CREDENTIALS    ${GOOGLE_APPLICATION_CREDENTIALS}
+    ${inputStr} =    Catenate
+    ...    select 
+    ...    json_extract(name, '$.fullName') as fullName, 
+    ...    primaryEmail, 
+    ...    isAdmin 
+    ...    from googleadmin.directory.users 
+    ...    where domain \= 'grubit.com';
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |--------------|--------------------|---------|
+    ...    |${SPACE}${SPACE}${SPACE}fullName${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}primaryEmail${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}isAdmin${SPACE}|
+    ...    |--------------|--------------------|---------|
+    ...    |${SPACE}Info${SPACE}Contact${SPACE}|${SPACE}info@grubit.com${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}false${SPACE}${SPACE}${SPACE}|
+    ...    |--------------|--------------------|---------|
+    ...    |${SPACE}Joe${SPACE}Blow${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}joeblow@grubit.com${SPACE}|${SPACE}true${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |--------------|--------------------|---------|
+    Should Stackql Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    {"digitalocean": { "username_var": "DUMMY_DIGITALOCEAN_USERNAME", "password_var": "DUMMY_DIGITALOCEAN_PASSWORD", "type": "basic", "valuePrefix": "TOTALLY_CONTRIVED "}}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    stdout=${CURDIR}/tmp/Google-Admin-Directory-Small-Response-Also-De-Facto-Credentials-Path-Env-Var.tmp
+
 Scalar Select Verify 
     ${outputStr} =    Catenate    SEPARATOR=\n
     ...    |---|---|-------|
