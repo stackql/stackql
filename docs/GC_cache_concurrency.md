@@ -21,14 +21,14 @@ If we want to implement a large result set / analytics cache, then:
         - **If** existing data is to be consumed, then the set of control predicates must be enforced.
         - **Else If** new data is added, control predicates used identically.
         - For either case, the relationship between active txn and control params must be updated atomically and the analyzer must accumulate the parameters for use during selection.
-        - Naive assumption is that perdicate sets apply only to individual insertion sets.
+        - Naive assumption is that predicate sets apply only to individual insertion sets.
     - This means that complex queries effectively possess a list of `{ Table, ControlPredicate }` pairs.  The `Table` is early-bound, the `ControlPredicate` is late-bound.
     - In a `query` (that is a simple SQL query, subquery or CTE), **all** of the tables analyzed must have control parameters persisted for the selection to later use.  This feature is not yet implemented.  The RW on control parameters must be thread safe, either using locking primitives or ordering invariants.
 
 
 ### Cache ideation
 
-- Async query priming annotation (directive in MySQL parlance).
+- ~~Async query priming annotation (directive in MySQL parlance).~~ If cache is not primed, then initial queries run online.
 - Scheduling via config (or extensible to same).
 - Query accesses cache if allowed, TTL alive, and/or some annotation in place.
 - TTL, schedule, access policy all configurable.
@@ -79,9 +79,9 @@ If `txn_running_min_id` > `txn_max_id` then the record can safely be removed.  T
 
 A **hard requirement** of this in-row pattern is that row updates in the database backend can be done atomically.  This is definitely the case for SQLite, Postgres, MySQL, etc but may not hold up for all future backends.  It will be adequate for `v1`.
 
-Long lived or dormant `phantom` Txns must be killable through some aspect of the GC process.  This is because otherwise `txn_running_min_id` will not advance and exentually the required monotonic Txn counter invariant will fail.  This we can initialy address by killing all transactions older than some threshold timestamp or the timestamp corresponding to Txn ID of some threshold count.  It can be improved upon later.
+Long lived or dormant `phantom` Txns must be killable through some aspect of the GC process.  This is because otherwise `txn_running_min_id` will not advance and eventually the required monotonic Txn counter invariant will fail.  This we can initially address by killing all transactions older than some threshold timestamp or the timestamp corresponding to Txn ID of some threshold count.  It can be improved upon later.
 
-A sensible `v1` approach to concurrency and GC in stackql is therefore:
+A sensible `v1` approach to concurrency and GC in `stackql` is therefore:
 
 - A Txn ID, such as may be required in various aspects of the system, is a monotonically increasing counter.  The chosen implementation is fixed size integer type used as a ring and periodically re-zeroed.  **Update**: this will be implemented in the DB backend, through SQL.  **TBD**: The re-zero logic is yet to be implemented at this early *alpha* stage.  
 - A global list of live (Txn ID, timestamp begun) tuples must be maintained. `txn_running_min_id` can be inferred from this list.  This is a la Postgres.  **TBD**: the Txn ID store is completed, however timestamps are not yet persisted, so ***old*** Txns are effectively invisible.

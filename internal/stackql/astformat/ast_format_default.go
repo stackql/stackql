@@ -9,7 +9,6 @@ func DefaultSelectExprsFormatter(buf *sqlparser.TrackedBuffer, node sqlparser.SQ
 	case sqlparser.ColIdent:
 		formatColIdent(node, buf)
 		return
-
 	default:
 		node.Format(buf)
 		return
