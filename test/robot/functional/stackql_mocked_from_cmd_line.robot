@@ -743,6 +743,48 @@ Transaction Abort Attempted Commit Digitalocean Insert Droplet
     ...    ${outputStr}
     ...    stdout=${CURDIR}/tmp/Transaction-Abort-Attempted-Commit-Digitalocean-Insert-Droplet.tmp
 
+Recently Active Logic Multi Backend
+    ${sqliteInputStr} =    Catenate
+    ...    select 
+    ...    UserName, 
+    ...    CASE WHEN ( 
+    ...      strftime('%Y-%m-%d %H:%M:%SZ', PasswordLastUsed) 
+    ...      > ( datetime('now', '-20 days' ) ) ) 
+    ...     then 'true' else 'false' end as active 
+    ...    from aws.iam.users 
+    ...    WHERE region = 'us-east-1' and PasswordLastUsed is not null
+    ...    order by UserName asc;
+    ${postgresInputStr} =    Catenate
+    ...    select 
+    ...    UserName,
+    ...    CASE WHEN ( 
+    ...      TO_TIMESTAMP(PasswordLastUsed, 'YYYY-MM-DDTHH:MI:SSZ') 
+    ...      > (now() - interval '7 days' ) )
+    ...     then 'true' else 'false' end as active 
+    ...    from aws.iam.users 
+    ...    WHERE region = 'us-east-1' and PasswordLastUsed is not null
+    ...    order by UserName asc;
+    ${inputStr} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"     ${postgresInputStr}    ${sqliteInputStr}
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |----------|--------|
+    ...    |${SPACE}UserName${SPACE}|${SPACE}active${SPACE}|
+    ...    |----------|--------|
+    ...    |${SPACE}Andrew${SPACE}${SPACE}${SPACE}|${SPACE}false${SPACE}${SPACE}|
+    ...    |----------|--------|
+    ...    |${SPACE}Jackie${SPACE}${SPACE}${SPACE}|${SPACE}true${SPACE}${SPACE}${SPACE}|
+    ...    |----------|--------|
+    Should Stackql Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    stdout=${CURDIR}/tmp/Recently-Active-Logic-Multi-Backend.tmp
+
 Google Admin Directory Small Response Also De Facto Credentials Path Env Var
     Set Environment Variable    GOOGLE_APPLICATION_CREDENTIALS    ${GOOGLE_APPLICATION_CREDENTIALS}
     ${inputStr} =    Catenate

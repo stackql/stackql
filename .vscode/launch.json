@@ -80,6 +80,8 @@
         "select bucket_name from vvzz;",
         "create or replace view vvzz as select json_extract_path_text(Properties, 'BucketName') bucket_name, json_extract_path_text(Properties, 'VersioningConfiguration', 'Status') versioning FROM aws.cloud_control.resources WHERE region = 'ap-southeast-1' and data__TypeName = 'AWS::S3::Bucket' and data__Identifier = 'stackql-registry-artifacts';",
         "create or replace view sv_01 as select name, watchers from github.repos.repos where org = 'stackql' and watchers > 5;",
+        "select UserName, PasswordLastUsed, CASE WHEN ( TO_TIMESTAMP(PasswordLastUsed, 'YYYY-MM-DDTHH:MI:SSZ') > (now() - interval '7 days' ) ) then true else false end as inactive from aws.iam.users WHERE region = 'us-east-1' and PasswordLastUsed is not null;",
+        "select UserName, PasswordLastUsed, CASE WHEN ( strftime('%Y-%m-%d %H:%M:%SZ', PasswordLastUsed) > ( datetime('now', '-7 days' ) ) ) then true else false end as inactive from aws.iam.users WHERE region = 'us-east-1' and PasswordLastUsed is not null;",
       ],
       "default": "show providers;"
     },
