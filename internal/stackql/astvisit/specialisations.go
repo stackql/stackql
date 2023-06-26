@@ -19,7 +19,7 @@ func GenerateModifiedSelectSuffix(
 	formatter sqlparser.NodeFormatter,
 	namespaceCollection tablenamespace.Collection,
 ) string {
-	v := NewFramentRewriteAstVisitor(annotatedAST, "", false, sqlSystem, formatter, namespaceCollection)
+	v := NewFragmentRewriteAstVisitor(annotatedAST, "", false, sqlSystem, formatter, namespaceCollection)
 	switch node := node.(type) { //nolint:gocritic // defer analyser uplifts
 	case *sqlparser.Select:
 		var options string
@@ -72,7 +72,7 @@ func GenerateUnionTemplateQuery(
 	formatter sqlparser.NodeFormatter,
 	namespaceCollection tablenamespace.Collection,
 ) string {
-	v := NewFramentRewriteAstVisitor(annotatedAST, "", false, sqlSystem, formatter, namespaceCollection)
+	v := NewFragmentRewriteAstVisitor(annotatedAST, "", false, sqlSystem, formatter, namespaceCollection)
 
 	var sb strings.Builder
 	sb.WriteString("%s ")
@@ -107,7 +107,7 @@ func GenerateModifiedWhereClause(
 	formatter sqlparser.NodeFormatter,
 	namespaceCollection tablenamespace.Collection,
 ) string {
-	v := NewFramentRewriteAstVisitor(annotatedAST, "", false, sqlSystem, formatter, namespaceCollection)
+	v := NewFragmentRewriteAstVisitor(annotatedAST, "", false, sqlSystem, formatter, namespaceCollection)
 	var whereStr string
 	if node != nil && node.Expr != nil {
 		node.Expr.Accept(v) //nolint:errcheck // defer analyser uplifts

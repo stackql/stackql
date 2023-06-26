@@ -783,7 +783,67 @@ Recently Active Logic Multi Backend
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${inputStr}
     ...    ${outputStr}
-    ...    stdout=${CURDIR}/tmp/Recently-Active-Logic-Multi-Backend.tmp
+    ...    stdout=${CURDIR}/tmp/Recently-Active-Logic-Multi-Backend.tmp    
+
+Left Outer Join Users
+    ${sqliteInputStr} =    Catenate
+    ...    select 
+    ...       aid.UserName as aws_user_name
+    ...      ,json_extract(gad.name, '$.fullName') as gcp_user_name
+    ...      ,lower(substr(aid.UserName, 1, 5)) as aws_fuzz_name 
+    ...      ,lower(substr(json_extract(gad.name, '$.fullName'), 1, 5)) as gcp_fuzz_name
+    ...    from 
+    ...      aws.iam.users aid 
+    ...    LEFT OUTER JOIN 
+    ...      googleadmin.directory.users gad 
+    ...    ON 
+    ...      lower(substr(aid.UserName, 1, 5)) = lower(substr(json_extract(gad.name, '$.fullName'), 1, 5)) 
+    ...    WHERE 
+    ...      aid.region = 'us-east-1' 
+    ...    AND 
+    ...      gad.domain = 'grubit.com'
+    ...    ORDER BY 
+    ...      aws_user_name DESC
+    ...    ;
+    ${postgresInputStr} =    Catenate
+    ...    select 
+    ...       aid.UserName as aws_user_name
+    ...      ,json_extract_path_text(gad.name, 'fullName') as gcp_user_name
+    ...      ,lower(substr(aid.UserName, 1, 5)) as aws_fuzz_name 
+    ...      ,lower(substr(json_extract_path_text(gad.name, 'fullName'), 1, 5)) as gcp_fuzz_name
+    ...    from 
+    ...      aws.iam.users aid 
+    ...    LEFT OUTER JOIN 
+    ...      googleadmin.directory.users gad 
+    ...    ON 
+    ...      lower(substr(aid.UserName, 1, 5)) = lower(substr(json_extract_path_text(gad.name, 'fullName'), 1, 5)) 
+    ...    WHERE 
+    ...      aid.region = 'us-east-1' 
+    ...    AND 
+    ...      gad.domain = 'grubit.com'
+    ...    ORDER BY 
+    ...      aws_user_name DESC
+    ...    ;
+    ${inputStr} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"     ${postgresInputStr}    ${sqliteInputStr}
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |---------------|----------------|---------------|---------------|
+    ...    |${SPACE}aws_user_name${SPACE}|${SPACE}gcp_user_name${SPACE}${SPACE}|${SPACE}aws_fuzz_name${SPACE}|${SPACE}gcp_fuzz_name${SPACE}|
+    ...    |---------------|----------------|---------------|---------------|
+    ...    |${SPACE}Jackie${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Jackie${SPACE}Citizen${SPACE}|${SPACE}jacki${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}jacki${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------|----------------|---------------|---------------|
+    ...    |${SPACE}Andrew${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}andre${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------|----------------|---------------|---------------|
+    Should Stackql Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    stdout=${CURDIR}/tmp/Left-Outer-Join-Users.tmp
 
 Google Admin Directory Small Response Also De Facto Credentials Path Env Var
     Set Environment Variable    GOOGLE_APPLICATION_CREDENTIALS    ${GOOGLE_APPLICATION_CREDENTIALS}
@@ -793,15 +853,18 @@ Google Admin Directory Small Response Also De Facto Credentials Path Env Var
     ...    primaryEmail, 
     ...    isAdmin 
     ...    from googleadmin.directory.users 
-    ...    where domain \= 'grubit.com';
+    ...    where domain = 'grubit.com'
+    ...    order by primaryEmail desc;
     ${outputStr} =    Catenate    SEPARATOR=\n
-    ...    |--------------|--------------------|---------|
-    ...    |${SPACE}${SPACE}${SPACE}fullName${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}primaryEmail${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}isAdmin${SPACE}|
-    ...    |--------------|--------------------|---------|
-    ...    |${SPACE}Info${SPACE}Contact${SPACE}|${SPACE}info@grubit.com${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}false${SPACE}${SPACE}${SPACE}|
-    ...    |--------------|--------------------|---------|
-    ...    |${SPACE}Joe${SPACE}Blow${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}joeblow@grubit.com${SPACE}|${SPACE}true${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |--------------|--------------------|---------|
+    ...    |----------------|--------------------------|---------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}fullName${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}primaryEmail${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}isAdmin${SPACE}|
+    ...    |----------------|--------------------------|---------|
+    ...    |${SPACE}Joe${SPACE}Blow${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}joeblow@grubit.com${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}true${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |----------------|--------------------------|---------|
+    ...    |${SPACE}Jackie${SPACE}Citizen${SPACE}|${SPACE}jackiecitizen@grubit.com${SPACE}|${SPACE}true${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |----------------|--------------------------|---------|
+    ...    |${SPACE}Info${SPACE}Contact${SPACE}${SPACE}${SPACE}|${SPACE}info@grubit.com${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}false${SPACE}${SPACE}${SPACE}|
+    ...    |----------------|--------------------------|---------|
     Should Stackql Exec Inline Equal
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}

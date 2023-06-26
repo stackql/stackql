@@ -116,6 +116,51 @@
             "isEnforcedIn2Sv": false,
             "includeInGlobalAddressList": true,
             "recoveryEmail": "joeblow@jmail.com"
+          },
+          {
+            "kind": "admin#directory#user",
+            "id": "10000000000000000009",
+            "etag": "\"yet-another-jc-etag-prefix/yet-another-jc-etag-suffix\"",
+            "primaryEmail": "jackiecitizen@grubit.com",
+            "name": {
+              "givenName": "Jackie",
+              "familyName": "Citien",
+              "fullName": "Jackie Citizen"
+            },
+            "isAdmin": true,
+            "isDelegatedAdmin": false,
+            "lastLoginTime": "2022-06-07T07:52:37.000Z",
+            "creationTime": "2022-02-04T02:04:41.000Z",
+            "agreedToTerms": true,
+            "suspended": false,
+            "archived": false,
+            "changePasswordAtNextLogin": false,
+            "ipWhitelisted": false,
+            "emails": [
+              {
+                "address": "jackiecitizen@grubit.com",
+                "primary": true
+              },
+              {
+                "address": "jackiecitizen@grubit.com.test-google-a.com"
+              }
+            ],
+            "languages": [
+              {
+                "languageCode": "en",
+                "preference": "preferred"
+              }
+            ],
+            "nonEditableAliases": [
+              "jackiecitizen@grubit.com.test-google-a.com"
+            ],
+            "customerId": "C11j1j111",
+            "orgUnitPath": "/",
+            "isMailboxSetup": true,
+            "isEnrolledIn2Sv": false,
+            "isEnforcedIn2Sv": false,
+            "includeInGlobalAddressList": true,
+            "recoveryEmail": "jackiecitizen@grubit.com"
           }
         ]
       }

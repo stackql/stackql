@@ -536,20 +536,46 @@ func (eng *postgresSystem) quoteWrapTerm(term string) string {
 	return fmt.Sprintf(`"%s"`, term)
 }
 
+func (eng *postgresSystem) render(alias string, controlIterationCount int) string {
+	j := controlIterationCount * constants.ControlColumnCount
+	genIDColName := eng.controlAttributes.GetControlGenIDColumnName()
+	sessionIDColName := eng.controlAttributes.GetControlSsnIDColumnName()
+	txnIDColName := eng.controlAttributes.GetControlTxnIDColumnName()
+	insIDColName := eng.controlAttributes.GetControlInsIDColumnName()
+	if alias != "" {
+		gIDcn := fmt.Sprintf(`"%s"."%s"`, alias, genIDColName)
+		sIDcn := fmt.Sprintf(`"%s"."%s"`, alias, sessionIDColName)
+		tIDcn := fmt.Sprintf(`"%s"."%s"`, alias, txnIDColName)
+		iIDcn := fmt.Sprintf(`"%s"."%s"`, alias, insIDColName)
+		//nolint:lll // better expressed compactly
+		return fmt.Sprintf(`%s = $%d AND %s = $%d AND %s = $%d AND %s = $%d`, gIDcn, j+1, sIDcn, j+2, tIDcn, j+3, iIDcn, j+4) //nolint:gomnd // the magic numbers are offsets
+	}
+	gIDcn := fmt.Sprintf(`"%s"`, genIDColName)
+	sIDcn := fmt.Sprintf(`"%s"`, sessionIDColName)
+	tIDcn := fmt.Sprintf(`"%s"`, txnIDColName)
+	iIDcn := fmt.Sprintf(`"%s"`, insIDColName)
+	//nolint:lll // better expressed compactly
+	return fmt.Sprintf(`%s = $%d AND %s = $%d AND %s = $%d AND %s = $%d`, gIDcn, j+1, sIDcn, j+2, tIDcn, j+3, iIDcn, j+4) //nolint:gomnd // the magic numbers are offsets
+}
+
 func (eng *postgresSystem) ComposeSelectQuery(
 	columns []typing.RelationalColumn,
 	tableAliases []string,
+	hoistedTableAliases []string,
 	fromString string,
 	rewrittenWhere string,
 	selectSuffix string,
 	parameterOffset int,
 ) (string, error) {
-	return eng.composeSelectQuery(columns, tableAliases, fromString, rewrittenWhere, selectSuffix, parameterOffset)
+	return eng.composeSelectQuery(
+		columns, tableAliases,
+		hoistedTableAliases, fromString, rewrittenWhere, selectSuffix, parameterOffset)
 }
 
 func (eng *postgresSystem) composeSelectQuery(
 	columns []typing.RelationalColumn,
 	tableAliases []string,
+	hoistedTableAliases []string,
 	fromString string,
 	rewrittenWhere string,
 	selectSuffix string,
@@ -560,30 +586,22 @@ func (eng *postgresSystem) composeSelectQuery(
 	for _, col := range columns {
 		quotedColNames = append(quotedColNames, col.DelimitedSelectionString(`"`))
 	}
-	genIDColName := eng.controlAttributes.GetControlGenIDColumnName()
-	sessionIDColName := eng.controlAttributes.GetControlSsnIDColumnName()
-	txnIDColName := eng.controlAttributes.GetControlTxnIDColumnName()
-	insIDColName := eng.controlAttributes.GetControlInsIDColumnName()
 	var wq strings.Builder
 	var controlWhereComparisons []string
 	i := parameterOffset
-	for _, alias := range tableAliases {
-		j := i * constants.ControlColumnCount
-		if alias != "" {
-			gIDcn := fmt.Sprintf(`"%s"."%s"`, alias, genIDColName)
-			sIDcn := fmt.Sprintf(`"%s"."%s"`, alias, sessionIDColName)
-			tIDcn := fmt.Sprintf(`"%s"."%s"`, alias, txnIDColName)
-			iIDcn := fmt.Sprintf(`"%s"."%s"`, alias, insIDColName)
-			//nolint:lll // better expressed compactly
-			controlWhereComparisons = append(controlWhereComparisons, fmt.Sprintf(`%s = $%d AND %s = $%d AND %s = $%d AND %s = $%d`, gIDcn, j+1, sIDcn, j+2, tIDcn, j+3, iIDcn, j+4)) //nolint:gomnd // the magic numbers are offsets
-		} else {
-			gIDcn := fmt.Sprintf(`"%s"`, genIDColName)
-			sIDcn := fmt.Sprintf(`"%s"`, sessionIDColName)
-			tIDcn := fmt.Sprintf(`"%s"`, txnIDColName)
-			iIDcn := fmt.Sprintf(`"%s"`, insIDColName)
-			//nolint:lll // better expressed compactly
-			controlWhereComparisons = append(controlWhereComparisons, fmt.Sprintf(`%s = $%d AND %s = $%d AND %s = $%d AND %s = $%d`, gIDcn, j+1, sIDcn, j+2, tIDcn, j+3, iIDcn, j+4)) //nolint:gomnd // the magic numbers are offsets
+	var hoistedControlOnComparisons []any
+	if len(hoistedTableAliases) > 0 {
+		for _, alias := range hoistedTableAliases {
+			hoistedControlOnComparisons = append(
+				hoistedControlOnComparisons,
+				eng.render(alias, i),
+			)
+			i++
 		}
+		fromString = fmt.Sprintf(fromString, hoistedControlOnComparisons...)
+	}
+	for _, alias := range tableAliases {
+		controlWhereComparisons = append(controlWhereComparisons, eng.render(alias, i))
 		i++
 	}
 	if len(controlWhereComparisons) > 0 {

@@ -10,7 +10,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
-	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 )
 
@@ -20,21 +19,17 @@ var (
 
 type TableRouteAstVisitor interface {
 	GetAnnotations() taxonomy.AnnotationCtxMap
-	GetAnnotationSlice() []taxonomy.AnnotationCtx
 	GetParameterRouter() ParameterRouter
 	GetTableMap() taxonomy.TblMap
-	GetTableMetaArray() []tablemetadata.ExtendedTableMetadata
 	Visit(node sqlparser.SQLNode) error
 	IsPgInternalOnly() bool
 }
 
 type standardTableRouteAstVisitor struct {
-	handlerCtx      handler.HandlerContext
-	router          ParameterRouter
-	tableMetaSlice  []tablemetadata.ExtendedTableMetadata
-	tables          taxonomy.TblMap
-	annotations     taxonomy.AnnotationCtxMap
-	annotationSlice []taxonomy.AnnotationCtx
+	handlerCtx  handler.HandlerContext
+	router      ParameterRouter
+	tables      taxonomy.TblMap
+	annotations taxonomy.AnnotationCtxMap
 }
 
 func NewTableRouteAstVisitor(handlerCtx handler.HandlerContext, router ParameterRouter) TableRouteAstVisitor {
@@ -83,20 +78,12 @@ func (v *standardTableRouteAstVisitor) analyzeExecTableName(
 	return v.router.Route(tb, v.handlerCtx)
 }
 
-func (v *standardTableRouteAstVisitor) GetTableMetaArray() []tablemetadata.ExtendedTableMetadata {
-	return v.tableMetaSlice
-}
-
 func (v *standardTableRouteAstVisitor) GetTableMap() taxonomy.TblMap {
 	return v.tables
 }
 
 func (v *standardTableRouteAstVisitor) GetAnnotations() taxonomy.AnnotationCtxMap {
 	return v.annotations
-}
-
-func (v *standardTableRouteAstVisitor) GetAnnotationSlice() []taxonomy.AnnotationCtx {
-	return v.annotationSlice
 }
 
 //nolint:funlen,gocognit,cyclop,gocyclo,staticcheck,gocritic,errcheck,govet,revive // inherently complex functionality
@@ -165,12 +152,10 @@ func (v *standardTableRouteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			return aErr
 		}
 		v.annotations[node] = annotation
-		v.annotationSlice = append(v.annotationSlice, annotation)
 		t := annotation.GetTableMeta()
 		if t == nil {
 			return fmt.Errorf("nil table returned")
 		}
-		v.tableMetaSlice = append(v.tableMetaSlice, t)
 		v.tables[node] = t
 	case *sqlparser.Exec:
 		return node.MethodName.Accept(v)
@@ -489,12 +474,10 @@ func (v *standardTableRouteAstVisitor) Visit(node sqlparser.SQLNode) error {
 				return err
 			}
 			v.annotations[node] = annotation
-			v.annotationSlice = append(v.annotationSlice, annotation)
 			t := annotation.GetTableMeta()
 			if t == nil {
 				return fmt.Errorf("nil table returned")
 			}
-			v.tableMetaSlice = append(v.tableMetaSlice, t)
 			v.tables[node] = t
 		}
 		if node.Partitions != nil {
@@ -539,6 +522,35 @@ func (v *standardTableRouteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		err = node.RightExpr.Accept(v)
 		if err != nil {
 			return err
+		}
+		//       If this is an OUTER JOIN
+		//       then add some data to the annotation
+		//       so that later passes can rewrite
+		//       the ON clause with control
+		//       attributes
+		//       and also so that
+		//       these are omitted from the WHERE clause.
+		switch node.Join {
+		case sqlparser.LeftJoinStr:
+		case sqlparser.RightJoinStr:
+		case sqlparser.StraightJoinStr:
+		case sqlparser.JoinStr:
+		case sqlparser.LeftOuterJoinStr:
+			rhs := v.tables[node.RightExpr]
+			if rhs == nil {
+				return fmt.Errorf("table routing: nil RHS table in left outer join")
+			}
+			rhs.SetIsOnClauseHoistable(true)
+		case sqlparser.RightOuterJoinStr:
+			lhs := v.tables[node.LeftExpr]
+			if lhs == nil {
+				return fmt.Errorf("table routing: nil LHS table in right outer join")
+			}
+			lhs.SetIsOnClauseHoistable(true)
+		case sqlparser.NaturalLeftJoinStr:
+		case sqlparser.NaturalRightJoinStr:
+		default:
+			return fmt.Errorf("table routing: unknown join type: %v", node.Join)
 		}
 
 	case *sqlparser.IndexHints:

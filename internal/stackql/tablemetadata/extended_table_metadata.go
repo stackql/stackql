@@ -57,6 +57,8 @@ type ExtendedTableMetadata interface {
 	WithIndirect(astindirect.Indirect) ExtendedTableMetadata
 	WithResponseSchemaStr(rss string) (ExtendedTableMetadata, error)
 	IsPGInternalObject() bool
+	SetIsOnClauseHoistable(bool)
+	IsOnClauseHoistable() bool
 }
 
 type standardExtendedTableMetadata struct {
@@ -70,6 +72,15 @@ type standardExtendedTableMetadata struct {
 	inputTableName      string
 	indirect            astindirect.Indirect
 	sqlDataSource       sql_datasource.SQLDataSource
+	isOnClauseHoistable bool
+}
+
+func (ex *standardExtendedTableMetadata) SetIsOnClauseHoistable(isOnClauseHoistable bool) {
+	ex.isOnClauseHoistable = isOnClauseHoistable
+}
+
+func (ex *standardExtendedTableMetadata) IsOnClauseHoistable() bool {
+	return ex.isOnClauseHoistable
 }
 
 func (ex *standardExtendedTableMetadata) IsPGInternalObject() bool {
