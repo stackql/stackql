@@ -788,16 +788,16 @@ Recently Active Logic Multi Backend
 Left Outer Join Users
     ${sqliteInputStr} =    Catenate
     ...    select 
-    ...       aid.UserName as aws_user_name
-    ...      ,json_extract(gad.name, '$.fullName') as gcp_user_name
-    ...      ,lower(substr(aid.UserName, 1, 5)) as aws_fuzz_name 
-    ...      ,lower(substr(json_extract(gad.name, '$.fullName'), 1, 5)) as gcp_fuzz_name
+    ...    aid.UserName as aws_user_name
+    ...    ,json_extract(gad.name, '$.fullName') as gcp_user_name
+    ...    ,lower( substr(aid.UserName, 1, 5) ) as aws_fuzz_name 
+    ...    ,lower( substr(json_extract(gad.name, '$.fullName'), 1, 5) ) as gcp_fuzz_name
     ...    from 
     ...      aws.iam.users aid 
     ...    LEFT OUTER JOIN 
     ...      googleadmin.directory.users gad 
     ...    ON 
-    ...      lower(substr(aid.UserName, 1, 5)) = lower(substr(json_extract(gad.name, '$.fullName'), 1, 5)) 
+    ...    lower(substr(aid.UserName, 1, 5) ) = lower(substr(json_extract(gad.name, '$.fullName'), 1, 5) ) 
     ...    WHERE 
     ...      aid.region = 'us-east-1' 
     ...    AND 
