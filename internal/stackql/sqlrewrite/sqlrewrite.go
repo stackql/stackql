@@ -165,9 +165,7 @@ func GenerateRewrittenSelectDML(input SQLRewriteInput) (drm.PreparedStatementCtx
 	hoistedOnClauseTables := input.GetHoistedOnClauseTables()
 	hoistedTableAliases := make([]string, len(input.GetHoistedOnClauseTables()))
 	tblMap := input.GetTables()
-	if len(inputContainers) > 0 {
-		_, txnCtrlCtrs = inputContainers[0].GetTableTxnCounters()
-	} else {
+	if len(inputContainers) == 0 {
 		txnCtrlCtrs = input.GetBaseControlCounters()
 		secondaryCtrlCounters = input.GetSecondaryCtrlCounters()
 	}
@@ -196,6 +194,10 @@ func GenerateRewrittenSelectDML(input SQLRewriteInput) (drm.PreparedStatementCtx
 		if !aliasFound {
 			return nil, fmt.Errorf("could not find alias for hoisted table")
 		}
+		// This is required because of TOPO SORT
+		if foundIdx == 0 && txnCtrlCtrs == nil {
+			_, txnCtrlCtrs = tb.GetTableTxnCounters()
+		}
 		if foundIdx > 0 {
 			_, secondaryCtr := tb.GetTableTxnCounters()
 			secondaryCtrlCounters = append(secondaryCtrlCounters, secondaryCtr)
@@ -208,6 +210,10 @@ func GenerateRewrittenSelectDML(input SQLRewriteInput) (drm.PreparedStatementCtx
 		isOnClauseHoistable := v.IsOnClauseHoistable()
 		if isOnClauseHoistable {
 			continue
+		}
+		// This is required because of TOPO SORT
+		if txnCtrlCtrs == nil {
+			_, txnCtrlCtrs = tb.GetTableTxnCounters()
 		}
 		if i > 0 {
 			_, secondaryCtr := tb.GetTableTxnCounters()
