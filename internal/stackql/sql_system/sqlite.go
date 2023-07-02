@@ -688,21 +688,42 @@ func (eng *sqLiteSystem) getGCHousekeepingQuery(tableName string, tcc internaldt
 	return fmt.Sprintf(templateQuery, tcc.GetGenID(), tcc.GetSessionID(), tcc.GetTxnID(), tableName)
 }
 
+func (eng *sqLiteSystem) render(alias string) string {
+	genIDColName := eng.controlAttributes.GetControlGenIDColumnName()
+	sessionIDColName := eng.controlAttributes.GetControlSsnIDColumnName()
+	txnIDColName := eng.controlAttributes.GetControlTxnIDColumnName()
+	insIDColName := eng.controlAttributes.GetControlInsIDColumnName()
+	if alias != "" {
+		gIDcn := fmt.Sprintf(`"%s"."%s"`, alias, genIDColName)
+		sIDcn := fmt.Sprintf(`"%s"."%s"`, alias, sessionIDColName)
+		tIDcn := fmt.Sprintf(`"%s"."%s"`, alias, txnIDColName)
+		iIDcn := fmt.Sprintf(`"%s"."%s"`, alias, insIDColName)
+		return fmt.Sprintf(`%s = ? AND %s = ? AND %s = ? AND %s = ?`, gIDcn, sIDcn, tIDcn, iIDcn)
+	}
+	gIDcn := fmt.Sprintf(`"%s"`, genIDColName)
+	sIDcn := fmt.Sprintf(`"%s"`, sessionIDColName)
+	tIDcn := fmt.Sprintf(`"%s"`, txnIDColName)
+	iIDcn := fmt.Sprintf(`"%s"`, insIDColName)
+	return fmt.Sprintf(`%s = ? AND %s = ? AND %s = ? AND %s = ?`, gIDcn, sIDcn, tIDcn, iIDcn)
+}
+
 //nolint:revive // Liskov substitution principle
 func (eng *sqLiteSystem) ComposeSelectQuery(
 	columns []typing.RelationalColumn,
 	tableAliases []string,
+	hoistedTableAliases []string,
 	fromString string,
 	rewrittenWhere string,
 	selectSuffix string,
 	parameterOffset int,
 ) (string, error) {
-	return eng.composeSelectQuery(columns, tableAliases, fromString, rewrittenWhere, selectSuffix)
+	return eng.composeSelectQuery(columns, tableAliases, hoistedTableAliases, fromString, rewrittenWhere, selectSuffix)
 }
 
 func (eng *sqLiteSystem) composeSelectQuery(
 	columns []typing.RelationalColumn,
 	tableAliases []string,
+	hoistedTableAliases []string,
 	fromString string,
 	rewrittenWhere string,
 	selectSuffix string,
@@ -712,33 +733,25 @@ func (eng *sqLiteSystem) composeSelectQuery(
 	for _, col := range columns {
 		quotedColNames = append(quotedColNames, col.CanonicalSelectionString())
 	}
-	genIDColName := eng.controlAttributes.GetControlGenIDColumnName()
-	sessionIDColName := eng.controlAttributes.GetControlSsnIDColumnName()
-	txnIDColName := eng.controlAttributes.GetControlTxnIDColumnName()
-	insIDColName := eng.controlAttributes.GetControlInsIDColumnName()
 	var wq strings.Builder
-	var controlWhereComparisons []string
+	var hoistedControlOnComparisons []any
 	i := 0
-	for _, alias := range tableAliases {
-		if alias != "" {
-			gIDcn := fmt.Sprintf(`"%s"."%s"`, alias, genIDColName)
-			sIDcn := fmt.Sprintf(`"%s"."%s"`, alias, sessionIDColName)
-			tIDcn := fmt.Sprintf(`"%s"."%s"`, alias, txnIDColName)
-			iIDcn := fmt.Sprintf(`"%s"."%s"`, alias, insIDColName)
-			controlWhereComparisons = append(
-				controlWhereComparisons,
-				fmt.Sprintf(`%s = ? AND %s = ? AND %s = ? AND %s = ?`, gIDcn, sIDcn, tIDcn, iIDcn),
+	if len(hoistedTableAliases) > 0 {
+		for _, alias := range hoistedTableAliases {
+			hoistedControlOnComparisons = append(
+				hoistedControlOnComparisons,
+				eng.render(alias),
 			)
-		} else {
-			gIDcn := fmt.Sprintf(`"%s"`, genIDColName)
-			sIDcn := fmt.Sprintf(`"%s"`, sessionIDColName)
-			tIDcn := fmt.Sprintf(`"%s"`, txnIDColName)
-			iIDcn := fmt.Sprintf(`"%s"`, insIDColName)
-			controlWhereComparisons = append(
-				controlWhereComparisons,
-				fmt.Sprintf(`%s = ? AND %s = ? AND %s = ? AND %s = ?`, gIDcn, sIDcn, tIDcn, iIDcn),
-			)
+			i++
 		}
+		fromString = fmt.Sprintf(fromString, hoistedControlOnComparisons...)
+	}
+	var controlWhereComparisons []string
+	for _, alias := range tableAliases {
+		controlWhereComparisons = append(
+			controlWhereComparisons,
+			eng.render(alias),
+		)
 		i++
 	}
 	if len(controlWhereComparisons) > 0 {

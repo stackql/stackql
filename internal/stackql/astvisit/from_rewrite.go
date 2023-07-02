@@ -25,6 +25,7 @@ type FromRewriteAstVisitor interface {
 	GetIndirectContexts() []drm.PreparedStatementCtx
 	GetRewrittenQuery() string
 	SetAvoidSQLSourceNaming(bool)
+	GetHoistedOnClauseTables() []sqlparser.SQLNode
 }
 
 // Need not be view-aware.
@@ -40,6 +41,7 @@ type standardFromRewriteAstVisitor struct {
 	annotatedAST           annotatedast.AnnotatedAst
 	indirectContexts       []drm.PreparedStatementCtx
 	isAvoidSQLSourceNaming bool
+	hoistedOnClauseTables  []sqlparser.SQLNode
 }
 
 func NewFromRewriteAstVisitor(
@@ -62,6 +64,10 @@ func NewFromRewriteAstVisitor(
 		annotations:         annotations,
 		dc:                  dc,
 	}
+}
+
+func (v *standardFromRewriteAstVisitor) GetHoistedOnClauseTables() []sqlparser.SQLNode {
+	return v.hoistedOnClauseTables
 }
 
 func (v *standardFromRewriteAstVisitor) SetAvoidSQLSourceNaming(isAvoidSQLSourceNaming bool) {
@@ -632,6 +638,9 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			if !ok {
 				return fmt.Errorf("cannot find annotated tabulation for table object")
 			}
+			if anCtx.GetTableMeta().IsOnClauseHoistable() {
+				v.hoistedOnClauseTables = append(v.hoistedOnClauseTables, node)
+			}
 			if indirect, isIndirect := anCtx.GetTableMeta().GetIndirect(); isIndirect {
 				//
 				alias := indirect.GetName()
@@ -714,7 +723,7 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 	case sqlparser.JoinCondition:
 		v.Visit(node.On)
 		if node.On != nil {
-			buf.AstPrintf(node, " on %v", node.On)
+			buf.AstPrintf(node, " %v", node.On)
 		}
 		if node.Using != nil {
 			buf.AstPrintf(node, " using %v", node.Using)
@@ -731,9 +740,16 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		conditionVis := NewFromRewriteAstVisitor(v.annotatedAST, "", true, v.sqlSystem, v.formatter, v.namespaceCollection, v.annotations, v.dc)
 		conditionVis.SetAvoidSQLSourceNaming(v.isAvoidSQLSourceNaming)
 		node.Condition.Accept(conditionVis)
-		buf.AstPrintf(node, "%s %s %s %s", lVis.GetRewrittenQuery(), node.Join, rVis.GetRewrittenQuery(), conditionVis.GetRewrittenQuery())
-		bs := buf.String()
-		v.rewrittenQuery = bs
+		lhsHoistedIntoOn := lVis.GetHoistedOnClauseTables()
+		rhsHoistedIntoOn := rVis.GetHoistedOnClauseTables()
+		// accumulate hoisted tables
+		v.hoistedOnClauseTables = append(v.hoistedOnClauseTables, lhsHoistedIntoOn...)
+		v.hoistedOnClauseTables = append(v.hoistedOnClauseTables, rhsHoistedIntoOn...)
+		if len(v.hoistedOnClauseTables) > 0 {
+			v.rewrittenQuery = fmt.Sprintf("%s %s %s ON ( %%s ) AND %s", lVis.GetRewrittenQuery(), node.Join, rVis.GetRewrittenQuery(), conditionVis.GetRewrittenQuery())
+		} else {
+			v.rewrittenQuery = fmt.Sprintf("%s %s %s ON %s", lVis.GetRewrittenQuery(), node.Join, rVis.GetRewrittenQuery(), conditionVis.GetRewrittenQuery())
+		}
 
 	case *sqlparser.IndexHints:
 		buf.AstPrintf(node, " %sindex ", node.Type)

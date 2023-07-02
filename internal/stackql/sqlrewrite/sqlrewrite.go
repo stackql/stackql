@@ -1,6 +1,9 @@
 package sqlrewrite
 
 import (
+	"fmt"
+
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
@@ -13,6 +16,7 @@ type SQLRewriteInput interface { //nolint:revive //TODO: review
 	GetNamespaceCollection() tablenamespace.Collection
 	GetDRMConfig() drm.Config
 	GetColumnDescriptors() []typing.RelationalColumn
+	GetHoistedOnClauseTables() []sqlparser.SQLNode
 	GetBaseControlCounters() internaldto.TxnControlCounters
 	GetFromString() string
 	GetIndirectContexts() []drm.PreparedStatementCtx
@@ -39,6 +43,7 @@ type StandardSQLRewriteInput struct {
 	namespaceCollection      tablenamespace.Collection
 	indirectContexts         []drm.PreparedStatementCtx
 	prepStmtOffset           int
+	hoistedOnClauseTables    []sqlparser.SQLNode
 }
 
 func NewStandardSQLRewriteInput(
@@ -52,6 +57,7 @@ func NewStandardSQLRewriteInput(
 	fromString string,
 	tableInsertionContainers []tableinsertioncontainer.TableInsertionContainer,
 	namespaceCollection tablenamespace.Collection,
+	hoistedOnClauseTables []sqlparser.SQLNode,
 ) SQLRewriteInput {
 	return &StandardSQLRewriteInput{
 		dc:                       dc,
@@ -64,7 +70,12 @@ func NewStandardSQLRewriteInput(
 		fromString:               fromString,
 		tableInsertionContainers: tableInsertionContainers,
 		namespaceCollection:      namespaceCollection,
+		hoistedOnClauseTables:    hoistedOnClauseTables,
 	}
+}
+
+func (ri *StandardSQLRewriteInput) GetHoistedOnClauseTables() []sqlparser.SQLNode {
+	return ri.hoistedOnClauseTables
 }
 
 func (ri *StandardSQLRewriteInput) GetPrepStmtOffset() int {
@@ -125,7 +136,8 @@ func (ri *StandardSQLRewriteInput) GetTables() taxonomy.TblMap {
 	return ri.tables
 }
 
-func GenerateSelectDML(input SQLRewriteInput) (drm.PreparedStatementCtx, error) {
+//nolint:funlen,gocognit //TODO: review
+func GenerateRewrittenSelectDML(input SQLRewriteInput) (drm.PreparedStatementCtx, error) {
 	dc := input.GetDRMConfig()
 	cols := input.GetColumnDescriptors()
 	var txnCtrlCtrs internaldto.TxnControlCounters
@@ -150,6 +162,9 @@ func GenerateSelectDML(input SQLRewriteInput) (drm.PreparedStatementCtx, error) 
 	insIDColName := dc.GetControlAttributes().GetControlInsIDColumnName()
 	insEncodedColName := dc.GetControlAttributes().GetControlInsertEncodedIDColumnName()
 	inputContainers := input.GetTableInsertionContainers()
+	hoistedOnClauseTables := input.GetHoistedOnClauseTables()
+	hoistedTableAliases := make([]string, len(input.GetHoistedOnClauseTables()))
+	tblMap := input.GetTables()
 	if len(inputContainers) > 0 {
 		_, txnCtrlCtrs = inputContainers[0].GetTableTxnCounters()
 	} else {
@@ -157,19 +172,55 @@ func GenerateSelectDML(input SQLRewriteInput) (drm.PreparedStatementCtx, error) 
 		secondaryCtrlCounters = input.GetSecondaryCtrlCounters()
 	}
 	i := 0
+	// TODO: Only add control stuff to where clause if not
+	//       already in
+	//       an ON clause
+	// First pass; deal with ON clause hoisted tables
 	for _, tb := range inputContainers {
+		v := tb.GetTableMetadata()
+		isOnClauseHoistable := v.IsOnClauseHoistable()
+		if !isOnClauseHoistable {
+			continue
+		}
+		var aliasFound bool
+		var foundIdx int
+		for idx, node := range hoistedOnClauseTables {
+			t := tblMap[node]
+			if v.GetAlias() == t.GetAlias() {
+				hoistedTableAliases[idx] = t.GetAlias()
+				aliasFound = true
+				foundIdx = idx
+				break
+			}
+		}
+		if !aliasFound {
+			return nil, fmt.Errorf("could not find alias for hoisted table")
+		}
+		if foundIdx > 0 {
+			_, secondaryCtr := tb.GetTableTxnCounters()
+			secondaryCtrlCounters = append(secondaryCtrlCounters, secondaryCtr)
+		}
+		i++
+	}
+	// Second pass; deal with non-hoisted tables
+	for _, tb := range inputContainers {
+		v := tb.GetTableMetadata()
+		isOnClauseHoistable := v.IsOnClauseHoistable()
+		if isOnClauseHoistable {
+			continue
+		}
 		if i > 0 {
 			_, secondaryCtr := tb.GetTableTxnCounters()
 			secondaryCtrlCounters = append(secondaryCtrlCounters, secondaryCtr)
 		}
-		v := tb.GetTableMetadata()
 		alias := v.GetAlias()
 		tableAliases = append(tableAliases, alias)
 		i++
 	}
 
+	// TODO add in some handle for ON clause predicates
 	query, err := dc.GetSQLSystem().ComposeSelectQuery(
-		relationalColumns, tableAliases, input.GetFromString(),
+		relationalColumns, tableAliases, hoistedTableAliases, input.GetFromString(),
 		rewrittenWhere, selectSuffix, input.GetPrepStmtOffset())
 	if err != nil {
 		return nil, err
