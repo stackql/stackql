@@ -845,6 +845,52 @@ Left Outer Join Users
     ...    ${outputStr}
     ...    stdout=${CURDIR}/tmp/Left-Outer-Join-Users.tmp
 
+Left Outer Join Network Infra
+    ${inputStr} =    Catenate
+    ...    select 
+    ...    nw.name as network_name, 
+    ...    sn.name as subnetwork_name, 
+    ...    split_part(sn.network, '/', 10) as sn_fuzz  
+    ...    from 
+    ...    google.compute.networks nw 
+    ...    LEFT OUTER JOIN 
+    ...    google.compute.subnetworks sn  
+    ...    on 
+    ...    lower(nw.name) = lower(split_part(sn.network, '/', 10))    
+    ...    where nw.project = 'testing-project' and sn.region = 'australia-southeast1' 
+    ...    and 
+    ...    sn.project = 'testing-project' 
+    ...    order by 
+    ...    network_name, subnetwork_name
+    ...    ;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |------------------------------|-----------------|---------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}network_name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}subnetwork_name${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}sn_fuzz${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------------|-----------------|---------------|
+    ...    |${SPACE}demo-disk-xx5${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}demo-disk-xx5${SPACE}${SPACE}${SPACE}|${SPACE}demo-disk-xx5${SPACE}|
+    ...    |------------------------------|-----------------|---------------|
+    ...    |${SPACE}k8s-01-vpc${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------------|-----------------|---------------|
+    ...    |${SPACE}kr-vpc-01${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}aus-sn-01${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}kr-vpc-01${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------------|-----------------|---------------|
+    ...    |${SPACE}kr-vpc-01${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}aus-sn-02${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}kr-vpc-01${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------------|-----------------|---------------|
+    ...    |${SPACE}kubernetes-the-hard-way-vpc2${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------------|-----------------|---------------|
+    ...    |${SPACE}testing-network-01${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------------|-----------------|---------------|
+    Should Stackql Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    stdout=${CURDIR}/tmp/Left-Outer-Join-Network-Infra.tmp
+
 Left Inner Join Users
     ${sqliteInputStr} =    Catenate
     ...    select 

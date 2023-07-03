@@ -377,7 +377,6 @@ func (pb *standardPrimitiveGenerator) traverseWhereFilter(
 	}
 }
 
-//nolint:revive,gocritic // TODO: refactor
 func (pb *standardPrimitiveGenerator) whereComparisonExprCopyAndReWrite(
 	expr *sqlparser.ComparisonExpr,
 	requiredParameters,
@@ -414,47 +413,6 @@ func (pb *standardPrimitiveGenerator) whereComparisonExprCopyAndReWrite(
 				Escape:   expr.Escape,
 			}, colName, nil
 		}
-		paramMAtchStr := ""
-		switch rhs := expr.Right.(type) {
-		case *sqlparser.SQLVal:
-			paramMAtchStr = string(rhs.Val)
-		}
-		switch rhs := expr.Left.(type) {
-		case *sqlparser.SQLVal:
-			paramMAtchStr = string(rhs.Val)
-		}
-		newRhs := &sqlparser.SQLVal{
-			Type: sqlparser.StrVal,
-			Val:  []byte(fmt.Sprintf("%%%s%%", paramMAtchStr)),
-		}
-		return &sqlparser.OrExpr{
-			Left: &sqlparser.ComparisonExpr{
-				Left:     expr.Left,
-				Right:    newRhs,
-				Operator: sqlparser.LikeStr,
-				Escape:   nil,
-			},
-			Right: &sqlparser.ComparisonExpr{
-				Left: expr.Right,
-				Right: &sqlparser.BinaryExpr{
-					Left: &sqlparser.BinaryExpr{
-						Left: &sqlparser.SQLVal{
-							Type: sqlparser.StrVal,
-							Val:  []byte("%"),
-						},
-						Right:    expr.Left,
-						Operator: sqlparser.BitOrStr,
-					},
-					Right: &sqlparser.SQLVal{
-						Type: sqlparser.StrVal,
-						Val:  []byte("%"),
-					},
-					Operator: sqlparser.BitOrStr,
-				},
-				Operator: sqlparser.LikeStr,
-				Escape:   nil,
-			},
-		}, colName, nil
 	}
 	return &sqlparser.ComparisonExpr{
 		Left:     &sqlparser.SQLVal{Type: sqlparser.IntVal, Val: []byte("1")},
