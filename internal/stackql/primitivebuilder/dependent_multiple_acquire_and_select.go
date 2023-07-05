@@ -5,13 +5,13 @@ import (
 )
 
 type DependentMultipleAcquireAndSelect struct {
-	graph           primitivegraph.PrimitiveGraph
+	graph           primitivegraph.PrimitiveGraphHolder
 	acquireBuilders []Builder
 	selectBuilder   Builder
 }
 
 func NewDependentMultipleAcquireAndSelect(
-	graph primitivegraph.PrimitiveGraph,
+	graph primitivegraph.PrimitiveGraphHolder,
 	acquireBuilders []Builder,
 	selectBuilder Builder,
 ) Builder {

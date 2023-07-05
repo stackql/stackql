@@ -12,6 +12,7 @@ import (
 	"github.com/stackql/go-openapistackql/pkg/nomenclature"
 	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/bundle"
+	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/datasource/sql_datasource"
 	"github.com/stackql/stackql/internal/stackql/dbmsinternal"
 	"github.com/stackql/stackql/internal/stackql/drm"
@@ -79,12 +80,18 @@ type HandlerContext interface { //nolint:revive // don't mind stuttering this on
 	GetTxnCoordinatorCtx() txn_context.ITransactionCoordinatorContext
 
 	GetTypingConfig() typing.Config
+	GetIsolationLevel() constants.IsolationLevel
+	UpdateIsolationLevel(isolationLevelStr string) error
+
+	GetRollbackType() constants.RollbackType
+	UpdateRollbackType(rollbackTypeStr string) error
 }
 
 type standardHandlerContext struct {
 	// mutex to protect auth context map
 	// must be a pointer dure to clonability
 	authMapMutex        *sync.Mutex
+	sessionCtxMutex     *sync.Mutex
 	rawQuery            string
 	query               string
 	runtimeContext      dto.RuntimeCtx
@@ -109,6 +116,7 @@ type standardHandlerContext struct {
 	pgInternalRouter    dbmsinternal.Router
 	txnCoordinatorCtx   txn_context.ITransactionCoordinatorContext
 	typCfg              typing.Config
+	sessionContext      dto.SessionContext
 }
 
 func (hc *standardHandlerContext) GetTxnCoordinatorCtx() txn_context.ITransactionCoordinatorContext {
@@ -325,6 +333,30 @@ func (hc *standardHandlerContext) GetAuthContext(providerName string) (*dto.Auth
 	return authCtx, err
 }
 
+func (hc *standardHandlerContext) UpdateIsolationLevel(isolationLevelStr string) error {
+	hc.sessionCtxMutex.Lock()
+	defer hc.sessionCtxMutex.Unlock()
+	return hc.sessionContext.UpdateIsolationLevel(isolationLevelStr)
+}
+
+func (hc *standardHandlerContext) GetIsolationLevel() constants.IsolationLevel {
+	hc.sessionCtxMutex.Lock()
+	defer hc.sessionCtxMutex.Unlock()
+	return hc.sessionContext.GetIsolationLevel()
+}
+
+func (hc *standardHandlerContext) UpdateRollbackType(rollbackTypeStr string) error {
+	hc.sessionCtxMutex.Lock()
+	defer hc.sessionCtxMutex.Unlock()
+	return hc.sessionContext.UpdateIsolationLevel(rollbackTypeStr)
+}
+
+func (hc *standardHandlerContext) GetRollbackType() constants.RollbackType {
+	hc.sessionCtxMutex.Lock()
+	defer hc.sessionCtxMutex.Unlock()
+	return hc.sessionContext.GetRollbackType()
+}
+
 func (hc *standardHandlerContext) updateAuthContextIfNotExists(providerName string, authCtx *dto.AuthCtx) {
 	hc.authMapMutex.Lock()
 	defer hc.authMapMutex.Unlock()
@@ -367,6 +399,7 @@ func getRegistry(runtimeCtx dto.RuntimeCtx) (openapistackql.RegistryAPI, error) 
 func (hc *standardHandlerContext) Clone() HandlerContext {
 	rv := standardHandlerContext{
 		authMapMutex:        hc.authMapMutex,
+		sessionCtxMutex:     hc.sessionCtxMutex,
 		drmConfig:           hc.drmConfig,
 		rawQuery:            hc.rawQuery,
 		runtimeContext:      hc.runtimeContext,
@@ -390,6 +423,7 @@ func (hc *standardHandlerContext) Clone() HandlerContext {
 		pgInternalRouter:    hc.pgInternalRouter,
 		txnCoordinatorCtx:   hc.txnCoordinatorCtx,
 		typCfg:              hc.typCfg,
+		sessionContext:      hc.sessionContext,
 	}
 	return &rv
 }
@@ -409,6 +443,7 @@ func GetHandlerCtx(
 	sqlEngine := inputBundle.GetSQLEngine()
 	rv := standardHandlerContext{
 		authMapMutex:        &sync.Mutex{},
+		sessionCtxMutex:     &sync.Mutex{},
 		rawQuery:            cmdString,
 		runtimeContext:      runtimeCtx,
 		providers:           providers,
@@ -429,6 +464,7 @@ func GetHandlerCtx(
 		currentProvider:     runtimeCtx.ProviderStr,
 		txnCoordinatorCtx:   inputBundle.GetTxnCoordinatorContext(),
 		typCfg:              inputBundle.GetTypingConfig(),
+		sessionContext:      inputBundle.GetSessionContext(),
 	}
 	drmCfg, err := drm.GetDRMConfig(inputBundle.GetSQLSystem(),
 		inputBundle.GetTypingConfig(),

@@ -6,6 +6,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
+	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 	"github.com/stackql/stackql/internal/stackql/querysubmit"
 )
 
@@ -13,12 +14,15 @@ type Statement interface {
 	Prepare() error
 	Execute() internaldto.ExecutorOutput
 	GetAST() (sqlparser.Statement, bool)
+	GetPrimitiveGraphHolder() (primitivegraph.PrimitiveGraphHolder, bool)
 	GetUndoLog() (binlog.LogEntry, bool)
 	GetRedoLog() (binlog.LogEntry, bool)
 	IsReadOnly() bool
 	IsBegin() bool
 	IsCommit() bool
+	IsExecuted() bool
 	IsRollback() bool
+	GetQuery() string
 }
 
 type basicStatement struct {
@@ -26,6 +30,7 @@ type basicStatement struct {
 	handlerCtx         handler.HandlerContext
 	querySubmitter     querysubmit.QuerySubmitter
 	transactionContext txn_context.ITransactionContext
+	isExecuted         bool
 }
 
 func NewStatement(
@@ -39,6 +44,10 @@ func NewStatement(
 		querySubmitter:     querysubmit.NewQuerySubmitter(),
 		transactionContext: transactionContext,
 	}
+}
+
+func (st *basicStatement) GetQuery() string {
+	return st.query
 }
 
 func (st *basicStatement) IsBegin() bool {
@@ -100,9 +109,18 @@ func (st *basicStatement) Prepare() error {
 }
 
 func (st *basicStatement) Execute() internaldto.ExecutorOutput {
+	st.isExecuted = true
 	return st.querySubmitter.SubmitQuery()
+}
+
+func (st *basicStatement) IsExecuted() bool {
+	return st.isExecuted
 }
 
 func (st *basicStatement) GetAST() (sqlparser.Statement, bool) {
 	return st.querySubmitter.GetStatement()
+}
+
+func (st *basicStatement) GetPrimitiveGraphHolder() (primitivegraph.PrimitiveGraphHolder, bool) {
+	return st.querySubmitter.GetPrimitiveGraphHolder()
 }

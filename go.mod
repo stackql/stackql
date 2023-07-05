@@ -19,7 +19,7 @@ require (
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.1
-	github.com/stackql/go-openapistackql v0.1.2-alpha05
+	github.com/stackql/go-openapistackql v0.1.3-alpha18
 	github.com/stackql/go-sqlite3 v0.0.2-stackqlbeta04
 	github.com/stackql/go-suffix-map v0.0.1-alpha01
 	github.com/stackql/psql-wire v0.1.1-alpha04
@@ -29,6 +29,7 @@ require (
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
 	gonum.org/v1/gonum v0.11.0
 	gopkg.in/yaml.v2 v2.4.0
+	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools v2.2.0+incompatible
 )
 
@@ -122,7 +123,6 @@ require (
 	google.golang.org/grpc v1.45.0 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 replace github.com/chzyer/readline => github.com/stackql/readline v0.0.2-alpha05

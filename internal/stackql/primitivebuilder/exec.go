@@ -18,7 +18,7 @@ import (
 )
 
 type Exec struct {
-	graph         primitivegraph.PrimitiveGraph
+	graph         primitivegraph.PrimitiveGraphHolder
 	handlerCtx    handler.HandlerContext
 	drmCfg        drm.Config
 	root          primitivegraph.PrimitiveNode
@@ -28,7 +28,7 @@ type Exec struct {
 }
 
 func NewExec(
-	graph primitivegraph.PrimitiveGraph,
+	graph primitivegraph.PrimitiveGraphHolder,
 	handlerCtx handler.HandlerContext,
 	node sqlparser.SQLNode, //nolint:revive // future proofing
 	tbl tablemetadata.ExtendedTableMetadata,
@@ -133,7 +133,7 @@ func (ss *Exec) Build() error {
 		ss.graph.CreatePrimitiveNode(execPrimitive)
 		return nil
 	}
-	pr, err := composeAsyncMonitor(handlerCtx, execPrimitive, tbl, nil)
+	pr, err := composeAsyncMonitor(handlerCtx, execPrimitive, prov, m, nil)
 	if err != nil {
 		return err
 	}

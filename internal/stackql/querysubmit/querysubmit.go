@@ -9,6 +9,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/plan"
 	"github.com/stackql/stackql/internal/stackql/planbuilder"
+	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 )
 
 var (
@@ -25,6 +26,7 @@ type QuerySubmitter interface {
 	GetRedoLog() (binlog.LogEntry, bool)
 	// Get the undo log entry.
 	GetUndoLog() (binlog.LogEntry, bool)
+	GetPrimitiveGraphHolder() (primitivegraph.PrimitiveGraphHolder, bool)
 }
 
 func NewQuerySubmitter() QuerySubmitter {
@@ -33,6 +35,8 @@ func NewQuerySubmitter() QuerySubmitter {
 
 type basicQuerySubmitter struct {
 	queryPlan          plan.Plan
+	undoPlan           plan.Plan
+	undoHandlerCtx     handler.HandlerContext
 	handlerCtx         handler.HandlerContext
 	transactionContext txn_context.ITransactionContext
 }
@@ -42,6 +46,10 @@ func (qs *basicQuerySubmitter) GetRedoLog() (binlog.LogEntry, bool) {
 		return nil, false
 	}
 	return qs.queryPlan.GetRedoLog()
+}
+
+func (qs *basicQuerySubmitter) GetPrimitiveGraphHolder() (primitivegraph.PrimitiveGraphHolder, bool) {
+	return qs.queryPlan.GetInstructions(), true
 }
 
 func (qs *basicQuerySubmitter) GetUndoLog() (binlog.LogEntry, bool) {
@@ -88,5 +96,24 @@ func (qs *basicQuerySubmitter) SubmitQuery() internaldto.ExecutorOutput {
 		qs.handlerCtx.GetOutfile(),
 		qs.handlerCtx.GetOutErrFile(),
 	)
-	return qs.queryPlan.GetInstructions().Execute(pl)
+	return qs.queryPlan.GetInstructions().GetPrimitiveGraph().Execute(pl)
+}
+
+func (qs *basicQuerySubmitter) PrepareUndoQuery(handlerCtx handler.HandlerContext) error {
+	qs.undoHandlerCtx = handlerCtx
+	logging.GetLogger().Debugln("PrepareQuery() invoked...")
+	pb := planbuilder.NewPlanBuilder(qs.transactionContext)
+	plan, err := pb.BuildPlanFromContext(handlerCtx)
+	qs.undoPlan = plan
+	return err
+}
+
+func (qs *basicQuerySubmitter) UndoQuery() internaldto.ExecutorOutput {
+	logging.GetLogger().Debugln("UndoQuery() invoked...")
+	pl := internaldto.NewBasicPrimitiveContext(
+		nil,
+		qs.handlerCtx.GetOutfile(),
+		qs.handlerCtx.GetOutErrFile(),
+	)
+	return qs.queryPlan.GetInstructions().GetInversePrimitiveGraph().Execute(pl)
 }

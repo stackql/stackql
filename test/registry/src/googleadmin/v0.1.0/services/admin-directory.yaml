@@ -31,12 +31,37 @@ components:
             mediaType: application/json
             openAPIDocKey: '200'
             objectKey: users
+        create:
+          operation:
+            $ref: '#/paths/~1admin~1directory~1v1~1users/post'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+          inverse: 
+            sqlVerb:
+              $ref: '#/components/x-stackQL-resources/users/methods/delete'
+            tokens:
+              userKey:
+                key: id
+                location: body
+                args: {}
+                algorithm: toString
+        delete:
+          operation:
+            $ref: '#/paths/~1admin~1directory~1v1~1users~1{userKey}/delete'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
       name: users
       title: users
       sqlVerbs:
         select:
           - $ref: '#/components/x-stackQL-resources/users/methods/get'
           - $ref: '#/components/x-stackQL-resources/users/methods/list'
+        insert:
+          - $ref: '#/components/x-stackQL-resources/users/methods/create'
+        delete:
+          - $ref: '#/components/x-stackQL-resources/users/methods/delete'
   schemas:
     User:
       description: A user entity in google directory
@@ -165,6 +190,22 @@ paths:
                     type: list
                     items: 
                       $ref: '#/components/schemas/User'
+    post:
+      description: Create a new user.
+      operationId: adminDirectory.users.insert
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+      
   /admin/directory/v1/users/{userKey}:
     get:
       parameters:
@@ -200,5 +241,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+    delete:
+      parameters:
+        - description: User ID of the directory user to be deleted
+          in: path
+          name: userKey
+          required: true
+          schema:
+            type: string
+      description: Retrieves a report which is a collection of properties and statistics for a set of users with the account. For more information, see the User Usage Report guide. For more information about the user report's parameters, see the Users Usage parameters reference guides.
+      operationId: adminDirectory.users.get
+      responses:
+        '200':
+          description: Successful response
+          content: {}
 servers:
 - url: https://admin.googleapis.com

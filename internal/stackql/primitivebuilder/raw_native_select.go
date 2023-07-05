@@ -12,7 +12,7 @@ import (
 )
 
 type RawNativeSelect struct {
-	graph       primitivegraph.PrimitiveGraph
+	graph       primitivegraph.PrimitiveGraphHolder
 	handlerCtx  handler.HandlerContext
 	txnCtrlCtr  internaldto.TxnControlCounters
 	root        primitivegraph.PrimitiveNode
@@ -20,7 +20,7 @@ type RawNativeSelect struct {
 }
 
 func NewRawNativeSelect(
-	graph primitivegraph.PrimitiveGraph,
+	graph primitivegraph.PrimitiveGraphHolder,
 	handlerCtx handler.HandlerContext,
 	txnCtrlCtr internaldto.TxnControlCounters,
 	nativeQuery string,

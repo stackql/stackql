@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
-	"github.com/stackql/stackql/internal/stackql/primitive"
+	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
@@ -19,7 +19,7 @@ type Plan interface {
 	GetType() sqlparser.StatementType
 	GetStatement() (sqlparser.Statement, bool)
 	GetOriginal() string
-	GetInstructions() primitive.IPrimitive
+	GetInstructions() primitivegraph.PrimitiveGraphHolder
 	GetBindVarNeeds() sqlparser.BindVarNeeds
 
 	// Signals whether the plan is worthy to place in `cache.LRUCache`.
@@ -34,7 +34,7 @@ type Plan interface {
 	SetType(t sqlparser.StatementType)
 	SetStatement(statement sqlparser.Statement)
 	SetOriginal(original string)
-	SetInstructions(instructions primitive.IPrimitive)
+	SetInstructions(instructions primitivegraph.PrimitiveGraphHolder)
 	SetBindVarNeeds(bindVarNeeds sqlparser.BindVarNeeds)
 	SetCacheable(isCacheable bool)
 	SetTxnID(txnID int)
@@ -46,14 +46,18 @@ type Plan interface {
 	// Size is defined so that Plan can be given to a cache.LRUCache,
 	// which requires its objects to define a Size function.
 	Size() int
+
+	GetPrimitiveGraphHolder() (primitivegraph.PrimitiveGraphHolder, bool)
 }
 
 type standardPlan struct {
-	Type                   sqlparser.StatementType // The type of query we have
-	RewrittenStatement     sqlparser.Statement
-	Original               string               // Original is the original query.
-	Instructions           primitive.IPrimitive // Instructions contains the instructions needed to fulfil the query.
-	sqlparser.BindVarNeeds                      // Stores BindVars needed to be provided as part of expression rewriting
+	Type               sqlparser.StatementType // The type of query we have
+	RewrittenStatement sqlparser.Statement
+	Original           string // Original is the original query.
+	// Instructions contains the instructions needed to fulfil the query.
+	Instructions primitivegraph.PrimitiveGraphHolder
+	// Stores BindVars needed to be provided as part of expression rewriting
+	sqlparser.BindVarNeeds
 
 	ExecCount    uint64        // Count of times this plan was executed
 	ExecTime     time.Duration // Total execution time
@@ -77,14 +81,21 @@ func (p *standardPlan) GetRedoLog() (binlog.LogEntry, bool) {
 	if p.Instructions == nil {
 		return nil, false
 	}
-	return p.Instructions.GetRedoLog()
+	return p.Instructions.GetPrimitiveGraph().GetRedoLog()
+}
+
+func (p *standardPlan) GetPrimitiveGraphHolder() (primitivegraph.PrimitiveGraphHolder, bool) {
+	if p.Instructions == nil {
+		return nil, false
+	}
+	return p.Instructions, true
 }
 
 func (p *standardPlan) GetUndoLog() (binlog.LogEntry, bool) {
 	if p.Instructions == nil {
 		return nil, false
 	}
-	return p.Instructions.GetUndoLog()
+	return p.Instructions.GetPrimitiveGraph().GetUndoLog()
 }
 
 func (p *standardPlan) SetReadOnly(isReadOnly bool) {
@@ -98,7 +109,7 @@ func (p *standardPlan) IsReadOnly() bool {
 	if p.isReadOnly {
 		return true
 	}
-	return p.Instructions.IsReadOnly()
+	return p.Instructions.GetPrimitiveGraph().IsReadOnly()
 }
 
 func (p *standardPlan) SetTxnID(txnID int) {
@@ -117,7 +128,7 @@ func (p *standardPlan) GetOriginal() string {
 	return p.Original
 }
 
-func (p *standardPlan) GetInstructions() primitive.IPrimitive {
+func (p *standardPlan) GetInstructions() primitivegraph.PrimitiveGraphHolder {
 	return p.Instructions
 }
 
@@ -137,7 +148,7 @@ func (p *standardPlan) SetOriginal(original string) {
 	p.Original = original
 }
 
-func (p *standardPlan) SetInstructions(instructions primitive.IPrimitive) {
+func (p *standardPlan) SetInstructions(instructions primitivegraph.PrimitiveGraphHolder) {
 	p.Instructions = instructions
 }
 

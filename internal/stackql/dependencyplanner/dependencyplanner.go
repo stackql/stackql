@@ -269,7 +269,7 @@ func (dp *standardDependencyPlanner) Plan() error {
 		return err
 	}
 	selBld := primitivebuilder.NewSingleSelect(
-		dp.primitiveComposer.GetGraph(),
+		dp.primitiveComposer.GetGraphHolder(),
 		dp.handlerCtx,
 		selCtx,
 		dp.tableSlice,
@@ -278,7 +278,7 @@ func (dp *standardDependencyPlanner) Plan() error {
 	)
 	if dp.isElideRead {
 		selBld = primitivebuilder.NewNopBuilder(
-			dp.primitiveComposer.GetGraph(),
+			dp.primitiveComposer.GetGraphHolder(),
 			dp.primitiveComposer.GetTxnCtrlCtrs(),
 			dp.handlerCtx,
 			dp.handlerCtx.GetSQLEngine(),
@@ -286,7 +286,11 @@ func (dp *standardDependencyPlanner) Plan() error {
 		)
 	}
 	// TODO: make this finer grained STAT
-	dp.bldr = primitivebuilder.NewDependentMultipleAcquireAndSelect(dp.primitiveComposer.GetGraph(), dp.execSlice, selBld)
+	dp.bldr = primitivebuilder.NewDependentMultipleAcquireAndSelect(
+		dp.primitiveComposer.GetGraphHolder(),
+		dp.execSlice,
+		selBld,
+	)
 	dp.selCtx = selCtx
 	return nil
 }
@@ -358,7 +362,7 @@ func (dp *standardDependencyPlanner) orchestrate(
 			query = strings.ReplaceAll(query, `"`, ``)
 		}
 		builder = primitivebuilder.NewSQLDataSourceSingleSelectAcquire(
-			dp.primitiveComposer.GetGraph(),
+			dp.primitiveComposer.GetGraphHolder(),
 			dp.handlerCtx,
 			rc,
 			query,
@@ -369,7 +373,7 @@ func (dp *standardDependencyPlanner) orchestrate(
 		)
 	} else {
 		builder = primitivebuilder.NewSingleSelectAcquire(
-			dp.primitiveComposer.GetGraph(),
+			dp.primitiveComposer.GetGraphHolder(),
 			dp.handlerCtx,
 			rc,
 			insPsc,

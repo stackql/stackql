@@ -125,6 +125,14 @@ func (ho *standardHeirarchyObjects) SetMethodStr(mStr string) {
 
 func (ho *standardHeirarchyObjects) LookupSelectItemsKey() string {
 	method := ho.GetMethod()
+	return lookupSelectItemsKey(method)
+}
+
+func LookupSelectItemsKey(method openapistackql.OperationStore) string {
+	return lookupSelectItemsKey(method)
+}
+
+func lookupSelectItemsKey(method openapistackql.OperationStore) string {
 	if method == nil {
 		return defaultSelectItemsKey
 	}

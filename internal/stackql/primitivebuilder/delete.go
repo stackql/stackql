@@ -19,7 +19,7 @@ import (
 )
 
 type Delete struct {
-	graph             primitivegraph.PrimitiveGraph
+	graph             primitivegraph.PrimitiveGraphHolder
 	handlerCtx        handler.HandlerContext
 	drmCfg            drm.Config
 	root              primitivegraph.PrimitiveNode
@@ -30,7 +30,7 @@ type Delete struct {
 }
 
 func NewDelete(
-	graph primitivegraph.PrimitiveGraph,
+	graph primitivegraph.PrimitiveGraphHolder,
 	handlerCtx handler.HandlerContext,
 	node sqlparser.SQLNode,
 	tbl tablemetadata.ExtendedTableMetadata,
@@ -152,7 +152,7 @@ func (ss *Delete) Build() error {
 		primitive_context.NewPrimitiveContext(),
 	)
 	if ss.isAwait {
-		deletePrimitive, err = composeAsyncMonitor(handlerCtx, deletePrimitive, tbl, nil)
+		deletePrimitive, err = composeAsyncMonitor(handlerCtx, deletePrimitive, prov, m, nil)
 	}
 	if err != nil {
 		return err

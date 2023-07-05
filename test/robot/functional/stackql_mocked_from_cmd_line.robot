@@ -743,6 +743,55 @@ Transaction Abort Attempted Commit Digitalocean Insert Droplet
     ...    ${outputStr}
     ...    stdout=${CURDIR}/tmp/Transaction-Abort-Attempted-Commit-Digitalocean-Insert-Droplet.tmp
 
+Transaction Rollback Eager Idealised Google Admin Directory User
+    ${inputStr} =    Catenate
+    ...    begin; 
+    ...    insert into googleadmin.directory.users(data__primaryEmail)
+    ...    values ('somejimbo@grubit.com');
+    ...    rollback;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    OK
+    ...    The operation was despatched successfully
+    ...    Rollback OK
+    Should Stackql Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    {"digitalocean": { "username_var": "DUMMY_DIGITALOCEAN_USERNAME", "password_var": "DUMMY_DIGITALOCEAN_PASSWORD", "type": "basic", "valuePrefix": "TOTALLY_CONTRIVED "}}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    stackql_rollback_eager=True
+    ...    stdout=${CURDIR}/tmp/Transaction-Rollback-Eager-Idealised-Google-Admin-Directory-User.tmp
+
+Transaction Rollback Failure Eager Idealised Google Admin Directory User
+    ${inputStr} =    Catenate
+    ...    begin; 
+    ...    insert into googleadmin.directory.users(data__primaryEmail)
+    ...    values ('joeblow@grubit.com');
+    ...    rollback;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    OK
+    ...    The operation was despatched successfully
+    ${stderrOutputStr} =    Catenate    SEPARATOR=\n
+    ...    undo over HTTP error: 404 Not Found
+    ...    Rollback failed
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    {"digitalocean": { "username_var": "DUMMY_DIGITALOCEAN_USERNAME", "password_var": "DUMMY_DIGITALOCEAN_PASSWORD", "type": "basic", "valuePrefix": "TOTALLY_CONTRIVED "}}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${stderrOutputStr}
+    ...    stackql_rollback_eager=True
+    ...    stdout=${CURDIR}/tmp/Transaction-Rollback-Failure-Eager-Idealised-Google-Admin-Directory-User.tmp
+
 Recently Active Logic Multi Backend
     ${sqliteInputStr} =    Catenate
     ...    select 

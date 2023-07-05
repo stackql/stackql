@@ -59,6 +59,11 @@ const (
 	LimitsIndirectMaxChainLength int = 1
 )
 
+const (
+	ReversalStreamAlias string = "reversal_stream"
+	ReversalStreamID    int64  = -1
+)
+
 type GCStatus int
 
 const (

@@ -14,7 +14,7 @@ var (
 )
 
 type NopBuilder struct {
-	graph      primitivegraph.PrimitiveGraph
+	graph      primitivegraph.PrimitiveGraphHolder
 	handlerCtx handler.HandlerContext
 	root       primitivegraph.PrimitiveNode
 	sqlEngine  sqlengine.SQLEngine
@@ -22,7 +22,7 @@ type NopBuilder struct {
 }
 
 func NewNopBuilder(
-	graph primitivegraph.PrimitiveGraph,
+	graph primitivegraph.PrimitiveGraphHolder,
 	txnControlCounters internaldto.TxnControlCounters, //nolint:revive // future proofing
 	handlerCtx handler.HandlerContext,
 	sqlEngine sqlengine.SQLEngine,

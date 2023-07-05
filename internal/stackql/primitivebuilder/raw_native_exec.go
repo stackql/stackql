@@ -12,7 +12,7 @@ import (
 )
 
 type RawNativeExec struct {
-	graph       primitivegraph.PrimitiveGraph
+	graph       primitivegraph.PrimitiveGraphHolder
 	handlerCtx  handler.HandlerContext
 	txnCtrlCtr  internaldto.TxnControlCounters
 	root        primitivegraph.PrimitiveNode
@@ -20,7 +20,7 @@ type RawNativeExec struct {
 }
 
 func NewRawNativeExec(
-	graph primitivegraph.PrimitiveGraph,
+	graph primitivegraph.PrimitiveGraphHolder,
 	handlerCtx handler.HandlerContext,
 	txnCtrlCtr internaldto.TxnControlCounters,
 	nativeQuery string,

@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
-	"github.com/stackql/stackql/internal/stackql/acid/operation"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 
@@ -18,29 +17,10 @@ import (
 )
 
 var (
-	_ PrimitiveGraph       = (*standardPrimitiveGraph)(nil)
-	_ primitive.IPrimitive = (*standardPrimitiveGraph)(nil)
+	_ BasePrimitiveGraph = (*standardBasePrimitiveGraph)(nil)
 )
 
-type PrimitiveGraph interface {
-	primitive.IPrimitive
-	AddTxnControlCounters(t internaldto.TxnControlCounters)
-	ContainsIndirect() bool
-	CreatePrimitiveNode(pr primitive.IPrimitive) PrimitiveNode
-	Execute(ctx primitive.IPrimitiveCtx) internaldto.ExecutorOutput
-	GetInputFromAlias(string) (internaldto.ExecutorOutput, bool)
-	IncidentData(fromID int64, input internaldto.ExecutorOutput) error
-	GetTxnControlCounterSlice() []internaldto.TxnControlCounters
-	NewDependency(from PrimitiveNode, to PrimitiveNode, weight float64)
-	Optimise() error
-	SetContainsIndirect(containsView bool)
-	SetExecutor(func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput) error
-	SetInputAlias(alias string, id int64) error
-	SetTxnID(id int)
-	Sort() (sorted []graph.Node, err error)
-}
-
-type standardPrimitiveGraph struct {
+type standardBasePrimitiveGraph struct {
 	g                      *simple.WeightedDirectedGraph
 	sorted                 []graph.Node
 	txnControlCounterSlice []internaldto.TxnControlCounters
@@ -49,7 +29,11 @@ type standardPrimitiveGraph struct {
 	containsView           bool
 }
 
-func (pg *standardPrimitiveGraph) IsReadOnly() bool {
+func (pg *standardBasePrimitiveGraph) Size() int {
+	return pg.g.Nodes().Len()
+}
+
+func (pg *standardBasePrimitiveGraph) IsReadOnly() bool {
 	nodes := pg.g.Nodes()
 	for nodes.Next() {
 		node := nodes.Node()
@@ -64,17 +48,17 @@ func (pg *standardPrimitiveGraph) IsReadOnly() bool {
 	return true
 }
 
-func (pg *standardPrimitiveGraph) SetRedoLog(binlog.LogEntry) {
+func (pg *standardBasePrimitiveGraph) SetRedoLog(binlog.LogEntry) {
 }
 
-func (pg *standardPrimitiveGraph) SetUndoLog(binlog.LogEntry) {
+func (pg *standardBasePrimitiveGraph) SetUndoLog(binlog.LogEntry) {
 }
 
-func (pg *standardPrimitiveGraph) GetRedoLog() (binlog.LogEntry, bool) {
+func (pg *standardBasePrimitiveGraph) GetRedoLog() (binlog.LogEntry, bool) {
 	return nil, false
 }
 
-func (pg *standardPrimitiveGraph) GetUndoLog() (binlog.LogEntry, bool) {
+func (pg *standardBasePrimitiveGraph) GetUndoLog() (binlog.LogEntry, bool) {
 	rv := binlog.NewSimpleLogEntry(nil, nil)
 	for _, node := range pg.sorted {
 		primNode, isPrimNode := node.(PrimitiveNode)
@@ -93,34 +77,34 @@ func (pg *standardPrimitiveGraph) GetUndoLog() (binlog.LogEntry, bool) {
 	return nil, false
 }
 
-func (pg *standardPrimitiveGraph) AddTxnControlCounters(t internaldto.TxnControlCounters) {
+func (pg *standardBasePrimitiveGraph) AddTxnControlCounters(t internaldto.TxnControlCounters) {
 	pg.txnControlCounterSlice = append(pg.txnControlCounterSlice, t)
 }
 
-func (pg *standardPrimitiveGraph) GetTxnControlCounterSlice() []internaldto.TxnControlCounters {
+func (pg *standardBasePrimitiveGraph) GetTxnControlCounterSlice() []internaldto.TxnControlCounters {
 	return pg.txnControlCounterSlice
 }
 
-func (pg *standardPrimitiveGraph) SetExecutor(func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput) error {
+func (pg *standardBasePrimitiveGraph) SetExecutor(func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput) error {
 	return fmt.Errorf("pass through primitive does not support SetExecutor()")
 }
 
-func (pg *standardPrimitiveGraph) ContainsIndirect() bool {
+func (pg *standardBasePrimitiveGraph) ContainsIndirect() bool {
 	return pg.containsView
 }
 
-func (pg *standardPrimitiveGraph) SetContainsIndirect(containsView bool) {
+func (pg *standardBasePrimitiveGraph) SetContainsIndirect(containsView bool) {
 	pg.containsView = containsView
 }
 
-func (pg *standardPrimitiveGraph) GetInputFromAlias(string) (internaldto.ExecutorOutput, bool) {
+func (pg *standardBasePrimitiveGraph) GetInputFromAlias(string) (internaldto.ExecutorOutput, bool) {
 	var rv internaldto.ExecutorOutput
 	return rv, false
 }
 
 // After each query execution, the graph needs to be reset.
 // This is so that cached queries can be re-executed.
-func (pg *standardPrimitiveGraph) reset() {
+func (pg *standardBasePrimitiveGraph) reset() {
 	for _, node := range pg.sorted {
 		switch node := node.(type) { //nolint:gocritic // acceptable
 		case PrimitiveNode:
@@ -139,7 +123,7 @@ func (pg *standardPrimitiveGraph) reset() {
 //   - Blocks on any node that has a dependency that has not been executed.
 //
 //nolint:gocognit // inherent complexity
-func (pg *standardPrimitiveGraph) Execute(ctx primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+func (pg *standardBasePrimitiveGraph) Execute(ctx primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 	// Reset the graph.
 	// Absolutely necessary for re-execution
 	defer pg.reset()
@@ -201,7 +185,7 @@ func (pg *standardPrimitiveGraph) Execute(ctx primitive.IPrimitiveCtx) internald
 	return output
 }
 
-func (pg *standardPrimitiveGraph) SetTxnID(id int) {
+func (pg *standardBasePrimitiveGraph) SetTxnID(id int) {
 	nodes := pg.g.Nodes()
 	for {
 		if !nodes.Next() {
@@ -215,99 +199,32 @@ func (pg *standardPrimitiveGraph) SetTxnID(id int) {
 	}
 }
 
-func (pg *standardPrimitiveGraph) Optimise() error {
+func (pg *standardBasePrimitiveGraph) Optimise() error {
 	var err error
 	pg.sorted, err = topo.Sort(pg.g)
 	return err
 }
 
 //nolint:revive // future proofing
-func (pg *standardPrimitiveGraph) IncidentData(fromID int64, input internaldto.ExecutorOutput) error {
+func (pg *standardBasePrimitiveGraph) IncidentData(fromID int64, input internaldto.ExecutorOutput) error {
 	return nil
 }
 
 //nolint:revive // future proofing
-func (pg *standardPrimitiveGraph) SetInputAlias(alias string, id int64) error {
+func (pg *standardBasePrimitiveGraph) SetInputAlias(alias string, id int64) error {
 	return nil
 }
 
-func (pg *standardPrimitiveGraph) Sort() ([]graph.Node, error) {
+func (pg *standardBasePrimitiveGraph) Sort() ([]graph.Node, error) {
 	return topo.Sort(pg.g)
 }
 
-func SortPlan(pg PrimitiveGraph) ([]graph.Node, error) {
-	return pg.Sort()
-}
-
-type PrimitiveNode interface {
-	GetOperation() operation.Operation
-	ID() int64
-	IsDone() chan (bool)
-	GetError() (error, bool)
-	SetError(error)
-	SetInputAlias(alias string, id int64) error
-	SetIsDone(bool)
-}
-
-type standardPrimitiveNode struct {
-	op     operation.Operation
-	id     int64
-	isDone chan bool
-	err    error
-}
-
-func (pg *standardPrimitiveGraph) CreatePrimitiveNode(pr primitive.IPrimitive) PrimitiveNode {
-	nn := pg.g.NewNode()
-	node := &standardPrimitiveNode{
-		op:     operation.NewReversibleOperation(pr),
-		id:     nn.ID(),
-		isDone: make(chan bool, 1),
-	}
-	pg.g.AddNode(node)
-	return node
-}
-
-func (pn *standardPrimitiveNode) ID() int64 {
-	return pn.id
-}
-
-//nolint:revive // TODO: consider API change
-func (pn *standardPrimitiveNode) GetError() (error, bool) {
-	return pn.err, pn.err != nil
-}
-
-func (pn *standardPrimitiveNode) GetOperation() operation.Operation {
-	return pn.op
-}
-
-func (pn *standardPrimitiveNode) IsDone() chan bool {
-	return pn.isDone
-}
-
-func (pn *standardPrimitiveNode) SetInputAlias(alias string, id int64) error {
-	op := pn.GetOperation()
-	return op.SetInputAlias(alias, id)
-}
-
-func (pn *standardPrimitiveNode) SetIsDone(isDone bool) {
-	pn.isDone <- isDone
-}
-
-func (pn *standardPrimitiveNode) SetError(err error) {
-	pn.err = err
-}
-
-func NewPrimitiveGraph(concurrencyLimit int) PrimitiveGraph {
+func newBasePrimitiveGraph(concurrencyLimit int) standardBasePrimitiveGraph {
 	eg, egCtx := errgroup.WithContext(context.Background())
 	eg.SetLimit(concurrencyLimit)
-	return &standardPrimitiveGraph{
+	return standardBasePrimitiveGraph{
 		g:           simple.NewWeightedDirectedGraph(0.0, 0.0),
 		errGroup:    eg,
 		errGroupCtx: egCtx,
 	}
-}
-
-func (pg *standardPrimitiveGraph) NewDependency(from PrimitiveNode, to PrimitiveNode, weight float64) {
-	e := pg.g.NewWeightedEdge(from, to, weight)
-	pg.g.SetWeightedEdge(e)
 }

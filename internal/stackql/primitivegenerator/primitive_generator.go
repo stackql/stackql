@@ -67,7 +67,7 @@ type standardPrimitiveGenerator struct {
 
 func NewRootPrimitiveGenerator(
 	ast sqlparser.SQLNode,
-	handlerCtx handler.HandlerContext, graph primitivegraph.PrimitiveGraph) PrimitiveGenerator {
+	handlerCtx handler.HandlerContext, graph primitivegraph.PrimitiveGraphHolder) PrimitiveGenerator {
 	tblMap := make(taxonomy.TblMap)
 	symTab := symtab.NewHashMapTreeSymTab()
 	return &standardPrimitiveGenerator{
@@ -117,10 +117,10 @@ func (pb *standardPrimitiveGenerator) CreateIndirectPrimitiveGenerator(
 	ast sqlparser.SQLNode,
 	handlerCtx handler.HandlerContext) PrimitiveGenerator {
 	rv := NewRootPrimitiveGenerator(
-		ast, handlerCtx, pb.PrimitiveComposer.GetGraph(),
+		ast, handlerCtx, pb.PrimitiveComposer.GetGraphHolder(),
 	).WithDataFlowDependentPrimitiveGenerator(pb)
 	pb.indirects = append(pb.indirects, rv)
-	pb.PrimitiveComposer.GetGraph().SetContainsIndirect(true)
+	pb.PrimitiveComposer.GetGraphHolder().SetContainsIndirect(true)
 	pb.PrimitiveComposer.AddIndirect(rv.GetPrimitiveComposer())
 	rv.SetIsIndirect(true)
 	return rv
@@ -141,7 +141,7 @@ func (pb *standardPrimitiveGenerator) AddChildPrimitiveGenerator(
 			ast,
 			pb.PrimitiveComposer.GetDRMConfig(),
 			pb.PrimitiveComposer.GetTxnCounterManager(),
-			pb.PrimitiveComposer.GetGraph(),
+			pb.PrimitiveComposer.GetGraphHolder(),
 			tables,
 			leaf,
 			pb.PrimitiveComposer.GetSQLEngine(),

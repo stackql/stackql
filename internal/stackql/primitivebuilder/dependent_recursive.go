@@ -5,13 +5,13 @@ import (
 )
 
 type DependencySubDAGBuilder struct {
-	graph              primitivegraph.PrimitiveGraph
+	graph              primitivegraph.PrimitiveGraphHolder
 	dependencyBuilders []Builder
 	dependentBuilder   Builder
 }
 
 func NewDependencySubDAGBuilder(
-	graph primitivegraph.PrimitiveGraph,
+	graph primitivegraph.PrimitiveGraphHolder,
 	dependencyBuilders []Builder,
 	dependentBuilder Builder,
 ) Builder {

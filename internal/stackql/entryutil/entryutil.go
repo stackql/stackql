@@ -104,6 +104,10 @@ func BuildInputBundle(runtimeCtx dto.RuntimeCtx) (bundle.Bundle, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error initializing Transaction Coordinator config: %w", err)
 	}
+	sessionConfig, sessionConfigErr := dto.NewSessionContext(runtimeCtx.SessionCtxRaw)
+	if sessionConfigErr != nil {
+		return nil, fmt.Errorf("error initializing session config: %w", sessionConfigErr)
+	}
 	txnCoordinatorCtx := txn_context.NewTransactionCoordinatorContext(txnCoordinatorCfg.GetMaxTxnDepth())
 	return bundle.NewBundle(
 		gc,
@@ -118,6 +122,7 @@ func BuildInputBundle(runtimeCtx dto.RuntimeCtx) (bundle.Bundle, error) {
 		sqlDataSources,
 		txnCoordinatorCtx,
 		typCfg,
+		sessionConfig,
 	), nil
 }
 

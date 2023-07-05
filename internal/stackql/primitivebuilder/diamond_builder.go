@@ -9,7 +9,7 @@ import (
 type DiamondBuilder struct {
 	SubTreeBuilder
 	parentBuilder            Builder
-	graph                    primitivegraph.PrimitiveGraph
+	graphHolder              primitivegraph.PrimitiveGraphHolder
 	root, tailRoot, tailTail primitivegraph.PrimitiveNode
 	sqlSystem                sql_system.SQLSystem
 	shouldCollectGarbage     bool
@@ -18,14 +18,14 @@ type DiamondBuilder struct {
 func NewDiamondBuilder(
 	parent Builder,
 	children []Builder,
-	graph primitivegraph.PrimitiveGraph,
+	graphHolder primitivegraph.PrimitiveGraphHolder,
 	sqlSystem sql_system.SQLSystem,
 	shouldCollectGarbage bool,
 ) Builder {
 	return &DiamondBuilder{
 		SubTreeBuilder:       SubTreeBuilder{children: children},
 		parentBuilder:        parent,
-		graph:                graph,
+		graphHolder:          graphHolder,
 		sqlSystem:            sqlSystem,
 		shouldCollectGarbage: shouldCollectGarbage,
 	}
@@ -38,10 +38,10 @@ func (db *DiamondBuilder) Build() error {
 			return err
 		}
 	}
-	db.root = db.graph.CreatePrimitiveNode(
+	db.root = db.graphHolder.CreatePrimitiveNode(
 		primitive.NewPassThroughPrimitive(
 			db.sqlSystem,
-			db.graph.GetTxnControlCounterSlice(),
+			db.graphHolder.GetTxnControlCounterSlice(),
 			false,
 		),
 	)
@@ -53,10 +53,10 @@ func (db *DiamondBuilder) Build() error {
 		db.tailRoot = db.parentBuilder.GetRoot()
 		db.tailTail = db.parentBuilder.GetTail()
 	} else {
-		db.tailRoot = db.graph.CreatePrimitiveNode(
+		db.tailRoot = db.graphHolder.CreatePrimitiveNode(
 			primitive.NewPassThroughPrimitive(
 				db.sqlSystem,
-				db.graph.GetTxnControlCounterSlice(),
+				db.graphHolder.GetTxnControlCounterSlice(),
 				db.shouldCollectGarbage,
 			),
 		)
@@ -65,8 +65,8 @@ func (db *DiamondBuilder) Build() error {
 	for _, child := range db.children {
 		root := child.GetRoot()
 		tail := child.GetTail()
-		db.graph.NewDependency(db.root, root, 1.0)
-		db.graph.NewDependency(tail, db.tailRoot, 1.0)
+		db.graphHolder.NewDependency(db.root, root, 1.0)
+		db.graphHolder.NewDependency(tail, db.tailRoot, 1.0)
 		// db.tail.Primitive = child.GetTail().Primitive
 	}
 	return nil

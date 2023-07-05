@@ -172,6 +172,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       query = query.decode("utf-8") 
     reg_location = registry_cfg.get_source_path_for_docker()
     supplied_args = []
+    if cfg.pop('stackql_rollback_eager', False):
+      supplied_args.append("--session='{\"rollback_type\":\"eager\"}'")
     if cfg.pop('stackql_H', False):
       supplied_args.append('--output=text')
       supplied_args.append('-H')
@@ -263,6 +265,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
   ):
     reg_location = registry_cfg.get_source_path_for_docker()
     supplied_args = []
+    if cfg.pop('stackql_rollback_eager', False):
+      supplied_args.append("--session={\"rollback_type\":\"eager\"}")
     if cfg.pop('stackql_H', False):
       supplied_args.append('--output=text')
       supplied_args.append('-H')
@@ -342,6 +346,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     self.set_environment_variable("DUMMY_DIGITALOCEAN_USERNAME", f"{self._get_default_env().get('DUMMY_DIGITALOCEAN_USERNAME')}")
     self.set_environment_variable("DUMMY_DIGITALOCEAN_PASSWORD", f"{self._get_default_env().get('DUMMY_DIGITALOCEAN_PASSWORD')}")
     supplied_args = [ stackql_exe, "exec" ]
+    if cfg.pop('stackql_rollback_eager', False):
+      supplied_args.append("--session={\"rollback_type\":\"eager\"}")
     if cfg.pop('stackql_H', False):
       supplied_args.append('--output=text')
       supplied_args.append('-H')
@@ -400,6 +406,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     self.set_environment_variable("DUMMY_DIGITALOCEAN_USERNAME", f"{self._get_default_env().get('DUMMY_DIGITALOCEAN_USERNAME')}")
     self.set_environment_variable("DUMMY_DIGITALOCEAN_PASSWORD", f"{self._get_default_env().get('DUMMY_DIGITALOCEAN_PASSWORD')}")
     supplied_args = [ stackql_exe, "shell" ]
+    if cfg.pop('stackql_rollback_eager', False):
+      supplied_args.append("--session={\"rollback_type\":\"eager\"}")
     if cfg.pop('stackql_H', False):
       supplied_args.append('--output=text')
       supplied_args.append('-H')
@@ -643,6 +651,43 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       **cfg
     )
     return self.should_be_equal(result.stdout, expected_output)
+  
+
+  @keyword
+  def should_stackql_exec_inline_equal_both_streams(
+    self, 
+    stackql_exe :str, 
+    okta_secret_str :str,
+    github_secret_str :str,
+    k8s_secret_str :str,
+    registry_cfg :RegistryCfg, 
+    auth_cfg_str :str, 
+    sql_backend_cfg_str :str,
+    query :str,
+    expected_output :str,
+    expected_stderr_output :str,
+    *args,
+    **cfg
+  ):
+    result = self._run_stackql_exec_command(
+      stackql_exe, 
+      okta_secret_str,
+      github_secret_str,
+      k8s_secret_str,
+      registry_cfg, 
+      auth_cfg_str, 
+      sql_backend_cfg_str,
+      query,
+      *args,
+      **cfg
+    )
+    stdout_ok = self.should_be_equal(result.stdout, expected_output)
+    if self._execution_platform == "docker":
+      # cannot silence stupid compose status logs
+      stderr_ok = self.should_contain(result.stderr, expected_stderr_output)
+      return stdout_ok and stderr_ok
+    stderr_ok = self.should_be_equal(result.stderr, expected_stderr_output)
+    return stdout_ok and stderr_ok
 
 
   @keyword

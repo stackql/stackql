@@ -39,6 +39,7 @@ type RuntimeCtx struct {
 	PGSrvRawTLSCfg               string
 	ProviderStr                  string
 	RegistryRaw                  string
+	SessionCtxRaw                string
 	SQLBackendCfgRaw             string
 	DBInternalCfgRaw             string
 	NamespaceCfgRaw              string
@@ -165,6 +166,8 @@ func (rc *RuntimeCtx) Set(key string, val string) error {
 		retVal = setInt(&rc.QueryCacheSize, val)
 	case RegistryRawKey:
 		rc.RegistryRaw = val
+	case SessionCtxKey:
+		rc.SessionCtxRaw = val
 	case TemplateCtxFilePathKey:
 		rc.TemplateCtxFilePath = val
 	case TestWithoutAPICallsKey:

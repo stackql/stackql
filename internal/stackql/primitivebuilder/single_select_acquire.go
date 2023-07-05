@@ -27,7 +27,7 @@ import (
 // and then persisting that data into a table.
 // This data would then subsequently be queried by later execution phases.
 type SingleSelectAcquire struct {
-	graph                      primitivegraph.PrimitiveGraph
+	graphHolder                primitivegraph.PrimitiveGraphHolder
 	handlerCtx                 handler.HandlerContext
 	tableMeta                  tablemetadata.ExtendedTableMetadata
 	drmCfg                     drm.Config
@@ -41,7 +41,7 @@ type SingleSelectAcquire struct {
 }
 
 func NewSingleSelectAcquire(
-	graph primitivegraph.PrimitiveGraph,
+	graphHolder primitivegraph.PrimitiveGraphHolder,
 	handlerCtx handler.HandlerContext,
 	insertionContainer tableinsertioncontainer.TableInsertionContainer,
 	insertCtx drm.PreparedStatementCtx,
@@ -52,7 +52,7 @@ func NewSingleSelectAcquire(
 	_, isGraphQL := tableMeta.GetGraphQL()
 	if isGraphQL {
 		return newGraphQLSingleSelectAcquire(
-			graph,
+			graphHolder,
 			handlerCtx,
 			tableMeta,
 			insertCtx,
@@ -62,7 +62,7 @@ func NewSingleSelectAcquire(
 		)
 	}
 	return newSingleSelectAcquire(
-		graph,
+		graphHolder,
 		handlerCtx,
 		tableMeta,
 		insertCtx,
@@ -73,7 +73,7 @@ func NewSingleSelectAcquire(
 }
 
 func newSingleSelectAcquire(
-	graph primitivegraph.PrimitiveGraph,
+	graphHolder primitivegraph.PrimitiveGraphHolder,
 	handlerCtx handler.HandlerContext,
 	tableMeta tablemetadata.ExtendedTableMetadata,
 	insertCtx drm.PreparedStatementCtx,
@@ -89,7 +89,7 @@ func newSingleSelectAcquire(
 		stream = streaming.NewNopMapStream()
 	}
 	return &SingleSelectAcquire{
-		graph:                      graph,
+		graphHolder:                graphHolder,
 		handlerCtx:                 handlerCtx,
 		tableMeta:                  tableMeta,
 		rowSort:                    rowSort,
@@ -125,7 +125,7 @@ func (ss *SingleSelectAcquire) Build() error {
 	}
 	ex := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 		currentTcc := ss.insertPreparedStatementCtx.GetGCCtrlCtrs().Clone()
-		ss.graph.AddTxnControlCounters(currentTcc)
+		ss.graphHolder.AddTxnControlCounters(currentTcc)
 		mr := prov.InferMaxResultsElement(m)
 		// TODO: instrument for view
 		httpArmoury, armouryErr := ss.tableMeta.GetHTTPArmoury()
@@ -200,9 +200,13 @@ func (ss *SingleSelectAcquire) Build() error {
 						ss.handlerCtx.GetTypingConfig(),
 					))
 				}
-				res, resErr := m.ProcessResponse(response)
+				processed, resErr := m.ProcessResponse(response)
 				if resErr != nil {
 					return internaldto.NewErroneousExecutorOutput(resErr)
+				}
+				res, respOk := processed.GetResponse()
+				if !respOk {
+					return internaldto.NewErroneousExecutorOutput(fmt.Errorf("response is not a valid response"))
 				}
 				ss.handlerCtx.LogHTTPResponseMap(res.GetProcessedBody())
 				logging.GetLogger().Infoln(fmt.Sprintf("target = %v", res))
@@ -339,8 +343,8 @@ func (ss *SingleSelectAcquire) Build() error {
 		ss.txnCtrlCtr,
 		primitiveCtx,
 	)
-	graph := ss.graph
-	insertNode := graph.CreatePrimitiveNode(insertPrim)
+	graphHolder := ss.graphHolder
+	insertNode := graphHolder.CreatePrimitiveNode(insertPrim)
 	ss.root = insertNode
 
 	return nil
