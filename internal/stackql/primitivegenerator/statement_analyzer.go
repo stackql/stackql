@@ -191,7 +191,7 @@ func (pb *standardPrimitiveGenerator) analyzeUnion(
 	unionSelectCtx.SetIndirectContexts(selectStatementContexts)
 
 	bldr := primitivebuilder.NewUnion(
-		pb.PrimitiveComposer.GetGraph(),
+		pb.PrimitiveComposer.GetGraphHolder(),
 		handlerCtx,
 		unionSelectCtx,
 	)
@@ -484,7 +484,10 @@ func extractVarDefFromExec(node *sqlparser.Exec, argName string) (*sqlparser.Exe
 func (pb *standardPrimitiveGenerator) parseComments(comments sqlparser.Comments) {
 	if comments != nil {
 		pb.PrimitiveComposer.SetCommentDirectives(sqlparser.ExtractCommentDirectives(comments))
-		pb.PrimitiveComposer.SetAwait(pb.PrimitiveComposer.GetCommentDirectives().IsSet("AWAIT"))
+		// This pattern supports preset.
+		if pb.PrimitiveComposer.GetCommentDirectives().IsSet("AWAIT") {
+			pb.PrimitiveComposer.SetAwait(true)
+		}
 	}
 }
 
@@ -602,7 +605,7 @@ func (pb *standardPrimitiveGenerator) AnalyzeNop(
 	handlerCtx := pbi.GetHandlerCtx()
 	pb.PrimitiveComposer.SetBuilder(
 		primitivebuilder.NewNopBuilder(
-			pb.PrimitiveComposer.GetGraph(),
+			pb.PrimitiveComposer.GetGraphHolder(),
 			pb.PrimitiveComposer.GetTxnCtrlCtrs(),
 			handlerCtx,
 			handlerCtx.GetSQLEngine(),
@@ -630,7 +633,7 @@ func (pb *standardPrimitiveGenerator) analyzeExec(pbi planbuilderinput.PlanBuild
 	if m.IsNullary() && !pb.PrimitiveComposer.IsAwait() {
 		pb.PrimitiveComposer.SetBuilder(
 			primitivebuilder.NewSingleSelectAcquire(
-				pb.PrimitiveComposer.GetGraph(),
+				pb.PrimitiveComposer.GetGraphHolder(),
 				handlerCtx,
 				insertionContainer,
 				pb.PrimitiveComposer.GetInsertPreparedStatementCtx(),
@@ -639,7 +642,7 @@ func (pb *standardPrimitiveGenerator) analyzeExec(pbi planbuilderinput.PlanBuild
 	}
 	pb.PrimitiveComposer.SetBuilder(
 		primitivebuilder.NewSingleAcquireAndSelect(
-			pb.PrimitiveComposer.GetGraph(),
+			pb.PrimitiveComposer.GetGraphHolder(),
 			pb.PrimitiveComposer.GetTxnCtrlCtrs(),
 			handlerCtx,
 			insertionContainer,
@@ -779,14 +782,14 @@ func (pb *standardPrimitiveGenerator) AnalyzePGInternal(
 	if backendQueryType, ok := handlerCtx.GetDBMSInternalRouter().CanRoute(pbi.GetStatement()); ok {
 		if backendQueryType == constants.BackendQuery {
 			bldr := primitivebuilder.NewRawNativeSelect(
-				pb.PrimitiveComposer.GetGraph(), handlerCtx, pbi.GetTxnCtrlCtrs(),
+				pb.PrimitiveComposer.GetGraphHolder(), handlerCtx, pbi.GetTxnCtrlCtrs(),
 				pbi.GetRawQuery())
 			pb.PrimitiveComposer.SetBuilder(bldr)
 			return nil
 		}
 		if backendQueryType == constants.BackendExec {
 			bldr := primitivebuilder.NewRawNativeExec(
-				pb.PrimitiveComposer.GetGraph(),
+				pb.PrimitiveComposer.GetGraphHolder(),
 				handlerCtx,
 				pbi.GetTxnCtrlCtrs(),
 				pbi.GetRawQuery())
@@ -890,7 +893,6 @@ func (pb *standardPrimitiveGenerator) buildRequestContext(
 		pr,
 		svc,
 		m,
-		rowsToInsert,
 		paramMap,
 		nil,
 		execContext,
@@ -1195,7 +1197,7 @@ func (pb *standardPrimitiveGenerator) analyzeSleep(pbi planbuilderinput.PlanBuil
 	if sleepDuration <= 0 {
 		return fmt.Errorf("sleep duration %d not allowed, must be > 0", sleepDuration)
 	}
-	graph := pb.PrimitiveComposer.GetGraph()
+	graph := pb.PrimitiveComposer.GetGraphHolder()
 	pb.PrimitiveComposer.SetRoot(
 		graph.CreatePrimitiveNode(
 			primitive.NewLocalPrimitive(
@@ -1234,7 +1236,7 @@ func (pb *standardPrimitiveGenerator) analyzeShow(
 	}
 	if sel, ok := planbuilderinput.IsPGSetupQuery(pbi); ok {
 		if sel != nil {
-			bldr := primitivebuilder.NewNativeSelect(pb.PrimitiveComposer.GetGraph(), handlerCtx, sel)
+			bldr := primitivebuilder.NewNativeSelect(pb.PrimitiveComposer.GetGraphHolder(), handlerCtx, sel)
 			pb.PrimitiveComposer.SetBuilder(bldr)
 			return nil
 		}

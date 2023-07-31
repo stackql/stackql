@@ -51,6 +51,7 @@ const (
 	ProviderStrKey                  string = "provider"
 	QueryCacheSizeKey               string = "querycachesize"
 	RegistryRawKey                  string = "registry"
+	SessionCtxKey                   string = "session"
 	GCCfgRawKey                     string = "gc"
 	ACIDCfgRawKey                   string = "acid"
 	NamespaceCfgRawKey              string = "namespaces"

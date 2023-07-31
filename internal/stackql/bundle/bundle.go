@@ -29,6 +29,7 @@ type Bundle interface {
 	GetTxnStore() kstore.KStore
 	GetTxnCoordinatorContext() txn_context.ITransactionCoordinatorContext
 	GetTypingConfig() typing.Config
+	GetSessionContext() dto.SessionContext
 }
 
 func NewBundle(
@@ -44,6 +45,7 @@ func NewBundle(
 	sqlDataSources map[string]sql_datasource.SQLDataSource,
 	txnCoordintatorContext txn_context.ITransactionCoordinatorContext,
 	typCfg typing.Config,
+	sessionCtx dto.SessionContext,
 ) Bundle {
 	return &simpleBundle{
 		garbageCollector:       garbageCollector,
@@ -59,6 +61,7 @@ func NewBundle(
 		sqlDataSources:         sqlDataSources,
 		txnCoordintatorContext: txnCoordintatorContext,
 		typCfg:                 typCfg,
+		sessionCtx:             sessionCtx,
 	}
 }
 
@@ -76,6 +79,11 @@ type simpleBundle struct {
 	sqlDataSources         map[string]sql_datasource.SQLDataSource
 	authContexts           map[string]*dto.AuthCtx
 	txnCoordintatorContext txn_context.ITransactionCoordinatorContext
+	sessionCtx             dto.SessionContext
+}
+
+func (sb *simpleBundle) GetSessionContext() dto.SessionContext {
+	return sb.sessionCtx
 }
 
 func (sb *simpleBundle) GetTxnCoordinatorContext() txn_context.ITransactionCoordinatorContext {

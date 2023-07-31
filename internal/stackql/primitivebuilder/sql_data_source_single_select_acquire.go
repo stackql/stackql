@@ -22,7 +22,7 @@ import (
 type sqlDataSourceSingleSelectAcquire struct {
 	query                      string
 	queryArgs                  []interface{}
-	graph                      primitivegraph.PrimitiveGraph
+	graph                      primitivegraph.PrimitiveGraphHolder
 	handlerCtx                 handler.HandlerContext
 	tableMeta                  tablemetadata.ExtendedTableMetadata
 	drmCfg                     drm.Config
@@ -35,7 +35,7 @@ type sqlDataSourceSingleSelectAcquire struct {
 }
 
 func NewSQLDataSourceSingleSelectAcquire(
-	graph primitivegraph.PrimitiveGraph,
+	graph primitivegraph.PrimitiveGraphHolder,
 	handlerCtx handler.HandlerContext,
 	insertionContainer tableinsertioncontainer.TableInsertionContainer,
 	query string,
@@ -59,7 +59,7 @@ func NewSQLDataSourceSingleSelectAcquire(
 }
 
 func newSQLDataSourceSingleSelectAcquire(
-	graph primitivegraph.PrimitiveGraph,
+	graph primitivegraph.PrimitiveGraphHolder,
 	handlerCtx handler.HandlerContext,
 	tableMeta tablemetadata.ExtendedTableMetadata,
 	insertCtx drm.PreparedStatementCtx,

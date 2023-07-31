@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/stackql/go-openapistackql/openapistackql"
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/httpmiddleware"
@@ -14,7 +15,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/provider"
-	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/util"
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
@@ -26,7 +26,8 @@ var (
 
 type IAsyncMonitor interface {
 	GetMonitorPrimitive(
-		heirarchy tablemetadata.HeirarchyObjects,
+		prov provider.IProvider,
+		op openapistackql.OperationStore,
 		precursor primitive.IPrimitive,
 		initialCtx primitive.IPrimitiveCtx,
 		comments sqlparser.CommentDirectives,
@@ -35,7 +36,8 @@ type IAsyncMonitor interface {
 
 type AsyncHTTPMonitorPrimitive struct {
 	handlerCtx          handler.HandlerContext
-	heirarchy           tablemetadata.HeirarchyObjects
+	prov                provider.IProvider
+	op                  openapistackql.OperationStore
 	initialCtx          primitive.IPrimitiveCtx
 	precursor           primitive.IPrimitive
 	executor            func(pc primitive.IPrimitiveCtx, initalBody interface{}) internaldto.ExecutorOutput
@@ -88,7 +90,7 @@ func (pr *AsyncHTTPMonitorPrimitive) Execute(pc primitive.IPrimitiveCtx) interna
 		if subPr.GetError() != nil || pr.executor == nil {
 			return subPr
 		}
-		prStr := pr.heirarchy.GetProvider().GetProviderString()
+		prStr := pr.prov.GetProviderString()
 		// seems pointless
 		_, err := pr.initialCtx.GetAuthContext(prStr)
 		if err != nil {
@@ -118,11 +120,15 @@ func (pr *AsyncHTTPMonitorPrimitive) SetExecutor(_ func(pc primitive.IPrimitiveC
 	return fmt.Errorf("AsyncHTTPMonitorPrimitive does not support SetExecutor()")
 }
 
-func NewAsyncMonitor(handlerCtx handler.HandlerContext, prov provider.IProvider) (IAsyncMonitor, error) {
+func NewAsyncMonitor(
+	handlerCtx handler.HandlerContext,
+	prov provider.IProvider,
+	op openapistackql.OperationStore,
+) (IAsyncMonitor, error) {
 	//nolint:gocritic //TODO: refactor
 	switch prov.GetProviderString() {
 	case "google":
-		return newGoogleAsyncMonitor(handlerCtx, prov, prov.GetVersion())
+		return newGoogleAsyncMonitor(handlerCtx, prov, op, prov.GetVersion())
 	}
 	return nil, fmt.Errorf(
 		"async operation monitor for provider = '%s', api version = '%s' currently not supported",
@@ -132,6 +138,7 @@ func NewAsyncMonitor(handlerCtx handler.HandlerContext, prov provider.IProvider)
 func newGoogleAsyncMonitor(
 	handlerCtx handler.HandlerContext,
 	prov provider.IProvider,
+	op openapistackql.OperationStore,
 	version string, //nolint:unparam // TODO: refactor
 ) (IAsyncMonitor, error) {
 	//nolint:gocritic //TODO: refactor
@@ -139,26 +146,29 @@ func newGoogleAsyncMonitor(
 	default:
 		return &DefaultGoogleAsyncMonitor{
 			handlerCtx: handlerCtx,
-			provider:   prov,
+			prov:       prov,
+			op:         op,
 		}, nil
 	}
 }
 
 type DefaultGoogleAsyncMonitor struct {
 	handlerCtx handler.HandlerContext
-	provider   provider.IProvider
+	prov       provider.IProvider
+	op         openapistackql.OperationStore
 }
 
 func (gm *DefaultGoogleAsyncMonitor) GetMonitorPrimitive(
-	heirarchy tablemetadata.HeirarchyObjects,
+	prov provider.IProvider,
+	op openapistackql.OperationStore,
 	precursor primitive.IPrimitive,
 	initialCtx primitive.IPrimitiveCtx,
 	comments sqlparser.CommentDirectives,
 ) (primitive.IPrimitive, error) {
 	//nolint:gocritic,staticcheck //TODO: refactor
-	switch strings.ToLower(heirarchy.GetProvider().GetVersion()) {
+	switch strings.ToLower(prov.GetVersion()) {
 	default:
-		return gm.getV1Monitor(heirarchy, precursor, initialCtx, comments)
+		return gm.getV1Monitor(prov, op, precursor, initialCtx, comments)
 	}
 }
 
@@ -183,14 +193,16 @@ func getOperationDescriptor(body map[string]interface{}) string {
 
 //nolint:gocognit,funlen // review later
 func (gm *DefaultGoogleAsyncMonitor) getV1Monitor(
-	heirarchy tablemetadata.HeirarchyObjects,
+	prov provider.IProvider,
+	op openapistackql.OperationStore,
 	precursor primitive.IPrimitive,
 	initialCtx primitive.IPrimitiveCtx,
 	comments sqlparser.CommentDirectives,
 ) (primitive.IPrimitive, error) {
 	asyncPrim := AsyncHTTPMonitorPrimitive{
 		handlerCtx:          gm.handlerCtx,
-		heirarchy:           heirarchy,
+		prov:                prov,
+		op:                  op,
 		initialCtx:          initialCtx,
 		precursor:           precursor,
 		elapsedSeconds:      0,
@@ -200,7 +212,7 @@ func (gm *DefaultGoogleAsyncMonitor) getV1Monitor(
 	if comments != nil {
 		asyncPrim.noStatus = comments.IsSet("NOSTATUS")
 	}
-	m := heirarchy.GetMethod()
+	m := gm.op
 	if m.IsAwaitable() { //nolint:nestif // encapulation probably sufficient
 		asyncPrim.executor = func(pc primitive.IPrimitiveCtx, bd interface{}) internaldto.ExecutorOutput {
 			body, ok := bd.(map[string]interface{})
@@ -236,7 +248,7 @@ func (gm *DefaultGoogleAsyncMonitor) getV1Monitor(
 					fmt.Errorf("cannot execute monitor: no 'selfLink' property present"),
 				)
 			}
-			prStr := heirarchy.GetProvider().GetProviderString()
+			prStr := gm.prov.GetProviderString()
 			authCtx, err := pc.GetAuthContext(prStr)
 			if err != nil {
 				return internaldto.NewExecutorOutput(nil, nil, nil, nil, err)
@@ -265,14 +277,14 @@ func (gm *DefaultGoogleAsyncMonitor) getV1Monitor(
 			if err != nil {
 				return internaldto.NewExecutorOutput(nil, nil, nil, nil, err)
 			}
-			response, apiErr := httpmiddleware.HTTPApiCallFromRequest(gm.handlerCtx.Clone(), gm.provider, m, req)
+			response, apiErr := httpmiddleware.HTTPApiCallFromRequest(gm.handlerCtx.Clone(), gm.prov, m, req)
 			if response != nil && response.Body != nil {
 				defer response.Body.Close()
 			}
 			if apiErr != nil {
 				return internaldto.NewExecutorOutput(nil, nil, nil, nil, apiErr)
 			}
-			target, err := heirarchy.GetMethod().DeprecatedProcessResponse(response)
+			target, err := m.DeprecatedProcessResponse(response)
 			gm.handlerCtx.LogHTTPResponseMap(target)
 			if err != nil {
 				return internaldto.NewExecutorOutput(nil, nil, nil, nil, err)
@@ -286,7 +298,7 @@ func (gm *DefaultGoogleAsyncMonitor) getV1Monitor(
 		}
 		return &asyncPrim, nil
 	}
-	return nil, fmt.Errorf("method %s is not awaitable", heirarchy.GetMethod().GetName())
+	return nil, fmt.Errorf("method %s is not awaitable", m.GetName())
 }
 
 func prepareReultSet(

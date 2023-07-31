@@ -17,7 +17,7 @@ import (
 )
 
 type NativeSelect struct {
-	graph       primitivegraph.PrimitiveGraph
+	graph       primitivegraph.PrimitiveGraphHolder
 	handlerCtx  handler.HandlerContext
 	drmCfg      drm.Config
 	selectQuery nativedb.Select
@@ -25,7 +25,7 @@ type NativeSelect struct {
 }
 
 func NewNativeSelect(
-	graph primitivegraph.PrimitiveGraph,
+	graph primitivegraph.PrimitiveGraphHolder,
 	handlerCtx handler.HandlerContext,
 	selectQuery nativedb.Select,
 ) Builder {

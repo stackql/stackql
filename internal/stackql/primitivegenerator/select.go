@@ -26,7 +26,7 @@ func (pb *standardPrimitiveGenerator) analyzeSelect(pbi planbuilderinput.PlanBui
 	// We need not emulate postgres for other backends at this stage.
 	if sel, ok := planbuilderinput.IsPGSetupQuery(pbi); ok {
 		if sel != nil {
-			bldr := primitivebuilder.NewNativeSelect(pb.PrimitiveComposer.GetGraph(), handlerCtx, sel)
+			bldr := primitivebuilder.NewNativeSelect(pb.PrimitiveComposer.GetGraphHolder(), handlerCtx, sel)
 			pb.PrimitiveComposer.SetBuilder(bldr)
 			return nil
 		}
@@ -168,7 +168,7 @@ func (pb *standardPrimitiveGenerator) analyzeSelect(pbi planbuilderinput.PlanBui
 			}
 			pChild.GetPrimitiveComposer().SetBuilder(
 				primitivebuilder.NewSingleAcquireAndSelect(
-					pChild.GetPrimitiveComposer().GetGraph(),
+					pChild.GetPrimitiveComposer().GetGraphHolder(),
 					pChild.GetPrimitiveComposer().GetTxnCtrlCtrs(),
 					handlerCtx,
 					insertionContainer,

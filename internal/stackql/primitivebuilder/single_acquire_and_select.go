@@ -10,13 +10,13 @@ import (
 )
 
 type SingleAcquireAndSelect struct {
-	graph          primitivegraph.PrimitiveGraph
+	graph          primitivegraph.PrimitiveGraphHolder
 	acquireBuilder Builder
 	selectBuilder  Builder
 }
 
 func NewSingleAcquireAndSelect(
-	graph primitivegraph.PrimitiveGraph,
+	graph primitivegraph.PrimitiveGraphHolder,
 	txnControlCounters internaldto.TxnControlCounters, //nolint:revive // future proofing
 	handlerCtx handler.HandlerContext,
 	insertContainer tableinsertioncontainer.TableInsertionContainer,

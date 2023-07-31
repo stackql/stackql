@@ -10,8 +10,10 @@ type LogEntry interface {
 	AppendHumanReadable(string)
 	AppendRaw([]byte)
 	Clone() LogEntry
+	Concatenate(LogEntry) LogEntry
 	GetHumanReadable() []string
 	GetRaw() []byte
+	Size() int
 }
 
 type simpleLogEntry struct {
@@ -23,10 +25,28 @@ func NewSimpleLogEntry(
 	raw []byte,
 	humanReadable []string,
 ) LogEntry {
+	return newSimpleLogEntry(raw, humanReadable)
+}
+
+func newSimpleLogEntry(
+	raw []byte,
+	humanReadable []string,
+) LogEntry {
 	return &simpleLogEntry{
 		raw:           raw,
 		humanReadable: humanReadable,
 	}
+}
+
+func (l *simpleLogEntry) Concatenate(other LogEntry) LogEntry {
+	return newSimpleLogEntry(
+		append(l.raw, other.GetRaw()...),
+		append(l.humanReadable, other.GetHumanReadable()...),
+	)
+}
+
+func (l *simpleLogEntry) Size() int {
+	return len(l.raw)
 }
 
 func (l *simpleLogEntry) Clone() LogEntry {

@@ -29,6 +29,10 @@ type standardPlanBuilder struct {
 	transactionContext txn_context.ITransactionContext
 }
 
+func (pb *standardPlanBuilder) BuildUndoPlanFromContext(_ handler.HandlerContext) (plan.Plan, error) {
+	return nil, nil
+}
+
 //nolint:funlen,gocognit // no big deal
 func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerContext) (plan.Plan, error) {
 	defer handlerCtx.GetGarbageCollector().Close()
@@ -69,7 +73,8 @@ func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerCo
 
 	pGBuilder := newPlanGraphBuilder(handlerCtx.GetRuntimeContext().ExecutionConcurrencyLimit, pb.transactionContext)
 
-	primitiveGenerator := primitivegenerator.NewRootPrimitiveGenerator(statement, handlerCtx, pGBuilder.getPlanGraph())
+	primitiveGenerator := primitivegenerator.NewRootPrimitiveGenerator(
+		statement, handlerCtx, pGBuilder.getPlanGraphHolder())
 
 	pGBuilder.setRootPrimitiveGenerator(primitiveGenerator)
 
@@ -97,10 +102,10 @@ func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerCo
 		if createInstructionError != nil {
 			return nil, createInstructionError
 		}
-		qPlan.SetInstructions(pGBuilder.getPlanGraph())
+		qPlan.SetInstructions(pGBuilder.getPlanGraphHolder())
 
 		if qPlan.GetInstructions() != nil {
-			err = qPlan.GetInstructions().Optimise()
+			err = qPlan.GetInstructions().GetPrimitiveGraph().Optimise()
 			if err != nil {
 				return createErroneousPlan(handlerCtx, qPlan, rowSort, err)
 			}
@@ -125,14 +130,14 @@ func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerCo
 		}
 	}
 
-	if pGBuilder.getPlanGraph().ContainsIndirect() {
+	if pGBuilder.getPlanGraphHolder().ContainsIndirect() {
 		qPlan.SetCacheable(false)
 	}
 
-	qPlan.SetInstructions(pGBuilder.getPlanGraph())
+	qPlan.SetInstructions(pGBuilder.getPlanGraphHolder())
 
 	if qPlan.GetInstructions() != nil {
-		err = qPlan.GetInstructions().Optimise()
+		err = qPlan.GetInstructions().GetPrimitiveGraph().Optimise()
 		if err != nil {
 			return createErroneousPlan(handlerCtx, qPlan, rowSort, err)
 		}

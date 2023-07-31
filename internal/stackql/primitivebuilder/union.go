@@ -11,7 +11,7 @@ import (
 )
 
 type Union struct {
-	graph      primitivegraph.PrimitiveGraph
+	graph      primitivegraph.PrimitiveGraphHolder
 	unionCtx   drm.PreparedStatementCtx
 	handlerCtx handler.HandlerContext
 	drmCfg     drm.Config
@@ -45,7 +45,7 @@ func (un *Union) Build() error {
 }
 
 func NewUnion(
-	graph primitivegraph.PrimitiveGraph,
+	graph primitivegraph.PrimitiveGraphHolder,
 	handlerCtx handler.HandlerContext,
 	unionCtx drm.PreparedStatementCtx,
 ) Builder {

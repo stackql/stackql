@@ -1,4 +1,4 @@
-package router
+package obtain_context //nolint:revive,cyclop,stylecheck // TODO: allow
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 )
 
-func obtainAnnotationCtx(
+func ObtainAnnotationCtx(
 	sqlSystem sql_system.SQLSystem,
 	tbl tablemetadata.ExtendedTableMetadata,
 	parameters map[string]interface{},

@@ -1,25 +1,23 @@
 package primitivebuilder
 
 import (
+	"github.com/stackql/go-openapistackql/openapistackql"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/asyncmonitor"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/primitive"
-	"github.com/stackql/stackql/internal/stackql/tablemetadata"
+	"github.com/stackql/stackql/internal/stackql/provider"
 )
 
 func composeAsyncMonitor(
 	handlerCtx handler.HandlerContext,
 	precursor primitive.IPrimitive,
-	meta tablemetadata.ExtendedTableMetadata,
+	prov provider.IProvider,
+	method openapistackql.OperationStore,
 	commentDirectives sqlparser.CommentDirectives,
 ) (primitive.IPrimitive, error) {
-	prov, err := meta.GetProvider()
-	if err != nil {
-		return nil, err
-	}
-	asm, err := asyncmonitor.NewAsyncMonitor(handlerCtx, prov)
+	asm, err := asyncmonitor.NewAsyncMonitor(handlerCtx, prov, method)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +32,7 @@ func composeAsyncMonitor(
 		handlerCtx.GetOutfile(),
 		handlerCtx.GetOutErrFile(),
 	)
-	primitive, err := asm.GetMonitorPrimitive(meta.GetHeirarchyObjects(), precursor, pl, commentDirectives)
+	primitive, err := asm.GetMonitorPrimitive(prov, method, precursor, pl, commentDirectives)
 	if err != nil {
 		return nil, err
 	}

@@ -38,7 +38,7 @@ type PrimitiveComposer interface {
 	GetCommentDirectives() sqlparser.CommentDirectives
 	GetCtrlColumnRepeats() int
 	GetDRMConfig() drm.Config
-	GetGraph() primitivegraph.PrimitiveGraph
+	GetGraphHolder() primitivegraph.PrimitiveGraphHolder
 	GetInsertPreparedStatementCtx() drm.PreparedStatementCtx
 	GetInsertValOnlyRows() map[int]map[int]interface{}
 	GetLikeAbleColumns() []string
@@ -104,7 +104,7 @@ type standardPrimitiveComposer struct {
 
 	builder primitivebuilder.Builder
 
-	graph primitivegraph.PrimitiveGraph
+	graphHolder primitivegraph.PrimitiveGraphHolder
 
 	drmConfig drm.Config
 
@@ -209,8 +209,8 @@ func (pb *standardPrimitiveComposer) GetTxnCtrlCtrs() internaldto.TxnControlCoun
 	return pb.txnCtrlCtrs
 }
 
-func (pb *standardPrimitiveComposer) GetGraph() primitivegraph.PrimitiveGraph {
-	return pb.graph
+func (pb *standardPrimitiveComposer) GetGraphHolder() primitivegraph.PrimitiveGraphHolder {
+	return pb.graphHolder
 }
 
 func (pb *standardPrimitiveComposer) GetASTFormatter() sqlparser.NodeFormatter {
@@ -325,7 +325,7 @@ func (pb *standardPrimitiveComposer) GetTxnCounterManager() txncounter.Manager {
 func (pb *standardPrimitiveComposer) NewChildPrimitiveComposer(ast sqlparser.SQLNode) PrimitiveComposer {
 	child := NewPrimitiveComposer(
 		pb, ast, pb.drmConfig, pb.txnCounterManager,
-		pb.graph, pb.tables, pb.symTab, pb.sqlEngine, pb.sqlSystem, pb.formatter)
+		pb.graphHolder, pb.tables, pb.symTab, pb.sqlEngine, pb.sqlSystem, pb.formatter)
 	pb.children = append(pb.children, child)
 	return child
 }
@@ -449,7 +449,7 @@ func (pb *standardPrimitiveComposer) GetBuilder() primitivebuilder.Builder {
 		}
 	}
 	simpleDiamond := primitivebuilder.NewDiamondBuilder(
-		pb.builder, builders, pb.graph, pb.sqlSystem, pb.ShouldCollectGarbage())
+		pb.builder, builders, pb.graphHolder, pb.sqlSystem, pb.ShouldCollectGarbage())
 	if len(pb.indirects) > 0 {
 		var indirectBuilders []primitivebuilder.Builder
 		for _, ind := range pb.indirects {
@@ -458,10 +458,10 @@ func (pb *standardPrimitiveComposer) GetBuilder() primitivebuilder.Builder {
 			}
 		}
 		indirectDiamond := primitivebuilder.NewDiamondBuilder(
-			pb.builder, indirectBuilders, pb.graph, pb.sqlSystem,
+			pb.builder, indirectBuilders, pb.graphHolder, pb.sqlSystem,
 			pb.ShouldCollectGarbage())
 		return primitivebuilder.NewDependencySubDAGBuilder(
-			pb.graph,
+			pb.graphHolder,
 			[]primitivebuilder.Builder{indirectDiamond}, simpleDiamond)
 	}
 	return simpleDiamond
@@ -506,7 +506,7 @@ func (pb *standardPrimitiveComposer) GetSQLSystem() sql_system.SQLSystem {
 func NewPrimitiveComposer(
 	parent PrimitiveComposer, ast sqlparser.SQLNode,
 	drmConfig drm.Config, txnCtrMgr txncounter.Manager,
-	graph primitivegraph.PrimitiveGraph,
+	graphHolder primitivegraph.PrimitiveGraphHolder,
 	tblMap taxonomy.TblMap, symTab symtab.SymTab,
 	sqlEngine sqlengine.SQLEngine, sqlSystem sql_system.SQLSystem,
 	formatter sqlparser.NodeFormatter) PrimitiveComposer {
@@ -520,7 +520,7 @@ func NewPrimitiveComposer(
 		colsVisited:       make(map[string]bool),
 		txnCounterManager: txnCtrMgr,
 		symTab:            symTab,
-		graph:             graph,
+		graphHolder:       graphHolder,
 		sqlEngine:         sqlEngine,
 		sqlSystem:         sqlSystem,
 		formatter:         formatter,

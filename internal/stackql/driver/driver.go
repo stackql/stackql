@@ -3,11 +3,9 @@ package driver
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/stackql/psql-wire/pkg/sqldata"
 	"github.com/stackql/stackql/internal/stackql/acid/transact"
-	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
@@ -20,10 +18,9 @@ import (
 )
 
 var (
-	_               StackQLDriver                = &basicStackQLDriver{}
-	_               sqlbackend.SQLBackendFactory = &basicStackQLDriverFactory{}
-	_               StackQLDriverFactory         = &basicStackQLDriverFactory{}
-	noParentMessage string                       = "no parent transaction manager available" //nolint:gochecknoglobals,revive,lll // permissable
+	_ StackQLDriver                = &basicStackQLDriver{}
+	_ sqlbackend.SQLBackendFactory = &basicStackQLDriverFactory{}
+	_ StackQLDriverFactory         = &basicStackQLDriverFactory{}
 )
 
 type StackQLDriverFactory interface {
@@ -51,15 +48,15 @@ func (sdf *basicStackQLDriverFactory) newSQLDriver() (StackQLDriver, error) {
 	if txnProviderErr != nil {
 		return nil, txnProviderErr
 	}
-	txnCoordinator, txnCoordinatorErr := txnProvider.NewTxnCoordinator()
-	if txnCoordinatorErr != nil {
-		return nil, txnCoordinatorErr
+	txnOrchestrator, orcErr := txnProvider.GetOrchestrator(sdf.handlerCtx)
+	if orcErr != nil {
+		return nil, orcErr
 	}
 	clonedCtx := sdf.handlerCtx.Clone()
 	clonedCtx.SetTxnCounterMgr(txCtr)
 	rv := &basicStackQLDriver{
-		handlerCtx:     clonedCtx,
-		txnCoordinator: txnCoordinator,
+		handlerCtx:      clonedCtx,
+		txnOrchestrator: txnOrchestrator,
 	}
 	return rv, nil
 }
@@ -119,8 +116,8 @@ func (dr *basicStackQLDriver) ProcessQuery(query string) {
 }
 
 type basicStackQLDriver struct {
-	handlerCtx     handler.HandlerContext
-	txnCoordinator transact.Coordinator
+	handlerCtx      handler.HandlerContext
+	txnOrchestrator transact.Orchestrator
 }
 
 func (dr *basicStackQLDriver) CloneSQLBackend() sqlbackend.ISQLBackend {
@@ -172,100 +169,18 @@ func NewStackQLDriver(handlerCtx handler.HandlerContext) (StackQLDriver, error) 
 	if txnProviderErr != nil {
 		return nil, txnProviderErr
 	}
-	txnCoordinator, txnCoordinatorErr := txnProvider.NewTxnCoordinator()
-	if txnCoordinatorErr != nil {
-		return nil, txnCoordinatorErr
+	txnOrchestrator, orcErr := txnProvider.GetOrchestrator(handlerCtx)
+	if orcErr != nil {
+		return nil, orcErr
 	}
 	return &basicStackQLDriver{
-		handlerCtx:     handlerCtx,
-		txnCoordinator: txnCoordinator,
+		handlerCtx:      handlerCtx,
+		txnOrchestrator: txnOrchestrator,
 	}, nil
 }
 
-//nolint:gocognit // TODO: review
 func (dr *basicStackQLDriver) processQueryOrQueries(
 	handlerCtx handler.HandlerContext,
 ) ([]internaldto.ExecutorOutput, bool) {
-	var retVal []internaldto.ExecutorOutput
-	cmdString := handlerCtx.GetRawQuery()
-	for _, s := range strings.Split(cmdString, ";") {
-		if s == "" {
-			continue
-		}
-		clonedCtx := handlerCtx.Clone()
-		clonedCtx.SetQuery(s)
-		transactStatement := transact.NewStatement(s, clonedCtx, txn_context.NewTransactionContext(dr.txnCoordinator.Depth()))
-		prepareErr := transactStatement.Prepare()
-		if prepareErr != nil {
-			retVal = append(retVal, internaldto.NewErroneousExecutorOutput(prepareErr))
-			continue
-		}
-		isReadOnly := transactStatement.IsReadOnly()
-		// TODO: implement eager execution for non-mutating statements
-		//       and lazy execution for mutating statements.
-		// TODO: implement transaction stack.
-		if transactStatement.IsBegin() { //nolint:gocritic,nestif // TODO: review
-			txnCoordinator, beginErr := dr.txnCoordinator.Begin()
-			if beginErr != nil {
-				retVal = append(retVal, internaldto.NewErroneousExecutorOutput(beginErr))
-				continue
-			}
-			dr.txnCoordinator = txnCoordinator
-			retVal = append(retVal, internaldto.NewNopEmptyExecutorOutput([]string{"OK"}))
-			continue
-		} else if transactStatement.IsCommit() {
-			commitCoDomain := dr.txnCoordinator.Commit()
-			commitErr, commitErrExists := commitCoDomain.GetError()
-			if commitErrExists {
-				retVal = append(retVal, internaldto.NewErroneousExecutorOutput(commitErr))
-				undoLog, undoLogExists := commitCoDomain.GetUndoLog()
-				if undoLogExists && undoLog != nil {
-					humanReadable := undoLog.GetHumanReadable()
-					if len(humanReadable) > 0 {
-						displayUndoLogs := make([]string, len(humanReadable))
-						for i, h := range humanReadable {
-							displayUndoLogs[i] = fmt.Sprintf("UNDO required: %s", h)
-						}
-						retVal = append(retVal, internaldto.NewNopEmptyExecutorOutput(displayUndoLogs))
-					}
-				}
-				continue
-			}
-			retVal = append(retVal, commitCoDomain.GetExecutorOutput()...)
-			parent, hasParent := dr.txnCoordinator.GetParent()
-			if hasParent {
-				dr.txnCoordinator = parent
-				retVal = append(retVal, internaldto.NewNopEmptyExecutorOutput([]string{"OK"}))
-				continue
-			}
-			noParentErr := fmt.Errorf(noParentMessage)
-			retVal = append(retVal, internaldto.NewErroneousExecutorOutput(noParentErr))
-			continue
-		} else if transactStatement.IsRollback() {
-			rollbackErr := dr.txnCoordinator.Rollback()
-			if rollbackErr != nil {
-				retVal = append(retVal, internaldto.NewErroneousExecutorOutput(rollbackErr))
-			}
-			parent, hasParent := dr.txnCoordinator.GetParent()
-			if hasParent {
-				dr.txnCoordinator = parent
-				retVal = append(retVal, internaldto.NewNopEmptyExecutorOutput([]string{"Rollback OK"}))
-				continue
-			}
-			retVal = append(
-				retVal,
-				internaldto.NewErroneousExecutorOutput(
-					fmt.Errorf(noParentMessage)),
-			)
-			continue
-		}
-		if isReadOnly || dr.txnCoordinator.IsRoot() {
-			stmtOutput := transactStatement.Execute()
-			retVal = append(retVal, stmtOutput)
-		} else {
-			dr.txnCoordinator.Enqueue(transactStatement) //nolint:errcheck // TODO: investigate
-			retVal = append(retVal, internaldto.NewNopEmptyExecutorOutput([]string{"mutating statement queued"}))
-		}
-	}
-	return retVal, len(retVal) > 0
+	return dr.txnOrchestrator.ProcessQueryOrQueries(handlerCtx)
 }
