@@ -89,6 +89,8 @@
         "select nw.name as network_name, split_part(sn.network, '/', 10) as sn_fuzz  from google.compute.networks nw LEFT OUTER JOIN google.compute.subnetworks sn  on lower(nw.name) = lower(split_part(sn.network, '/', 10))    where nw.project = 'testing-project' and sn.region = 'australia-southeast1' and sn.project = 'testing-project' order by network_name; commit;",
         "begin; insert into googleadmin.directory.users(data__primaryEmail) values ('somejimbo@grubit.com'); rollback;",
         "begin; insert into googleadmin.directory.users(data__primaryEmail) values ('joeblow@grubit.com'); rollback;",
+        "select count(*) from stackql_repositories;",
+        "select count(*) as repository_count from stackql_repositories;",
       ],
       "default": "show providers;"
     },

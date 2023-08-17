@@ -11,6 +11,7 @@ type ColumnHandle struct {
 	Qualifier       string
 	DecoratedColumn string
 	IsColumn        bool
+	IsAggregateExpr bool
 	Type            sqlparser.ValType
 	Val             *sqlparser.SQLVal
 }

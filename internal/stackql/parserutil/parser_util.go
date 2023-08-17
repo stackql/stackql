@@ -439,6 +439,36 @@ func GetStringFromStringFunc(fe *sqlparser.FuncExpr) (string, error) {
 	return "", fmt.Errorf("cannot extract string from func '%s'", fe.Name)
 }
 
+type aggregatedCol interface {
+	getReturnType() sqlparser.ValType
+	getName() string
+}
+
+type simpleAggSQLCol struct {
+	name       string
+	returnType sqlparser.ValType
+}
+
+func (s simpleAggSQLCol) getReturnType() sqlparser.ValType {
+	return s.returnType
+}
+
+func (s simpleAggSQLCol) getName() string {
+	return s.name
+}
+
+func inferAggregatedCol(funcNameLowered string) (aggregatedCol, bool) {
+	switch funcNameLowered {
+	case "count":
+		return simpleAggSQLCol{
+			name:       funcNameLowered,
+			returnType: sqlparser.IntVal,
+		}, true
+	default:
+		return nil, false
+	}
+}
+
 //nolint:funlen,gocognit,gocritic // not overly complex
 func inferColNameFromExpr(
 	node *sqlparser.AliasedExpr,
@@ -478,6 +508,11 @@ func inferColNameFromExpr(
 		// As a shortcut, functions are integral types
 		funcNameLowered := expr.Name.Lowered()
 		retVal.Name = astformat.String(expr, formatter)
+		aggCol, isAggCol := inferAggregatedCol(funcNameLowered)
+		if isAggCol {
+			retVal.IsAggregateExpr = true
+			retVal.Type = aggCol.getReturnType()
+		}
 		if len(funcNameLowered) >= 4 && funcNameLowered[0:4] == "json" {
 			decoratedColumn := strings.ReplaceAll(retVal.Name, `\"`, `"`)
 			retVal.DecoratedColumn = getDecoratedColRendition(decoratedColumn, alias)

@@ -1189,6 +1189,44 @@ Basic View Returns Results
     ...    dummyapp.io
     ...    stdout=${CURDIR}/tmp/Basic-View-Returns-Results.tmp
 
+Basic Count Star From View Returns Expected Result
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |----------|
+    ...    |${SPACE}count(*)${SPACE}|
+    ...    |----------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}3${SPACE}|
+    ...    |----------|
+    Should Stackql Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    SELECT count(*) FROM stackql_repositories ;
+    ...    ${outputStr}
+    ...    stdout=${CURDIR}/tmp/Basic-Count-Star-From-View-Returns-Expected-Result.tmp
+
+Basic Aliased Count Star From View Returns Expected Result
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |------------------|
+    ...    |${SPACE}repository_count${SPACE}|
+    ...    |------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}3${SPACE}|
+    ...    |------------------|
+    Should Stackql Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    SELECT count(*) as repository_count FROM stackql_repositories ;
+    ...    ${outputStr}
+    ...    stdout=${CURDIR}/tmp/Basic-Aliased-Count-Star-From-View-Returns-Expected-Result.tmp
+
 Basic Subquery Returns Results
     Should Stackql Exec Inline Contain
     ...    ${STACKQL_EXE}
