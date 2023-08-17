@@ -24,6 +24,7 @@ type RelationalColumn interface {
 	GetWidth() int
 	WithAlias(string) RelationalColumn
 	WithDecorated(string) RelationalColumn
+	WithUnquote(bool) RelationalColumn
 	WithParserNode(sqlparser.SQLNode) RelationalColumn
 	WithQualifier(string) RelationalColumn
 	WithWidth(int) RelationalColumn
@@ -46,6 +47,12 @@ type standardRelationalColumn struct {
 	width         int
 	oID           *oid.Oid
 	sqlParserNode sqlparser.SQLNode
+	unquote       bool
+}
+
+func (rc *standardRelationalColumn) WithUnquote(unquote bool) RelationalColumn {
+	rc.unquote = unquote
+	return rc
 }
 
 func (rc *standardRelationalColumn) CanonicalSelectionString() string {
@@ -67,8 +74,12 @@ func (rc *standardRelationalColumn) CanonicalSelectionString() string {
 	return colStringBuilder.String()
 }
 
+//nolint:gocritic // acceptable
 func (rc *standardRelationalColumn) DelimitedSelectionString(delim string) string {
-	//nolint:gocritic // acceptable
+	aliasDelim := delim
+	if rc.unquote {
+		delim = ""
+	}
 	switch node := rc.sqlParserNode.(type) {
 	case *sqlparser.AliasedExpr:
 		switch node.Expr.(type) {
@@ -96,7 +107,7 @@ func (rc *standardRelationalColumn) DelimitedSelectionString(delim string) strin
 	}
 
 	if rc.alias != "" {
-		colStringBuilder.WriteString(fmt.Sprintf(` AS %s%s%s`, delim, rc.alias, delim))
+		colStringBuilder.WriteString(fmt.Sprintf(` AS %s%s%s`, aliasDelim, rc.alias, aliasDelim))
 	}
 	return colStringBuilder.String()
 }
