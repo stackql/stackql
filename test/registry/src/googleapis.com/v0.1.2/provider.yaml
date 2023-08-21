@@ -794,7 +794,7 @@ providerServices:
     name: cloudasset
     preferred: true
     service:
-      $ref: googleapis.com/v0.1.2/services/cloudasset-v1.yaml
+      $ref: googleapis.com/v0.1.2/services/cloudasset.yaml
     title: Cloud Asset API
     version: v1
   cloudasset:v1beta1:
