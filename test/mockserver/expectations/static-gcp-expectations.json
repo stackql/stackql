@@ -3520,5 +3520,1784 @@
         "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/aggregated/instances"
       }
     }
+  },
+  {
+    "httpRequest": {
+      "method": "GET",
+      "path": "/v1/projects/testing-project/assets",
+      "queryStringParameters": { 
+        "pageToken": [ "GETAROUNDPAGETWO" ]
+      }
+    },
+    "httpResponse": {
+      "body": {
+        "readTime": "2023-08-21T10:05:28.701683596Z",
+        "assets": [
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/europe-west4/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-22T01:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/europe-west6/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-22T01:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/europe-west8/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/europe-west9/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/me-central1/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-04-07T13:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/me-west1/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/northamerica-northeast1/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T13:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/northamerica-northeast2/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T19:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/southamerica-east1/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T13:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/southamerica-west1/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/us-central1/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/us-east1/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T19:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/us-east4/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T19:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/us-east5/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/us-east7/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-02-14T14:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/us-south1/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T19:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/us-west1/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-22T01:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/us-west2/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-22T01:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/us-west3/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/us-west4/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T13:00:00Z"
+          },
+          {
+            "name": "//firestore.googleapis.com/projects/11111111111111/databases/(default)",
+            "assetType": "firestore.googleapis.com/Database",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-02-26T10:14:46Z"
+          },
+          {
+            "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/102430966964460311783/keys/17710a6b5a39d8d4beb1eb21f66c48b833e5c7a9",
+            "assetType": "iam.googleapis.com/ServiceAccountKey",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-04-26T14:02:54Z"
+          },
+          {
+            "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/102430966964460311783/keys/4572c8edea32b6a1f114a33808e197e809e9a4d8",
+            "assetType": "iam.googleapis.com/ServiceAccountKey",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-02-27T05:50:00Z"
+          },
+          {
+            "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/102430966964460311783/keys/a8400e589f8eef038b5f0d00b2a14f32754983ab",
+            "assetType": "iam.googleapis.com/ServiceAccountKey",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-03-07T05:36:13Z"
+          },
+          {
+            "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/102430966964460311783/keys/e6b29865d0bc8c625c6f1d548a96a30749e0c0ec",
+            "assetType": "iam.googleapis.com/ServiceAccountKey",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-07-19T23:19:43Z"
+          },
+          {
+            "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/105027669845114844382/keys/a6aed87bc30d998a861e1ae55ef2e84760c370df",
+            "assetType": "iam.googleapis.com/ServiceAccountKey",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-07-19T23:19:43Z"
+          },
+          {
+            "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/110323505484004687375/keys/9af5de16cabc8f2e64b8f6bde702a6f3494184b8",
+            "assetType": "iam.googleapis.com/ServiceAccountKey",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-07-19T23:19:43Z"
+          },
+          {
+            "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/113605357442065327031/keys/3779b2392caf70e02df2f1d7089d775220f367d3",
+            "assetType": "iam.googleapis.com/ServiceAccountKey",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-07-19T23:19:43Z"
+          },
+          {
+            "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/113605357442065327031/keys/7023824dc9945260f219dae0a814331430167370",
+            "assetType": "iam.googleapis.com/ServiceAccountKey",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-03-18T08:00:04Z"
+          },
+          {
+            "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/114858367317979947628/keys/0a074d723b6017bd7202c51e78fce4a6c8b4dad4",
+            "assetType": "iam.googleapis.com/ServiceAccountKey",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-07-19T23:19:43Z"
+          },
+          {
+            "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/114858367317979947628/keys/103061c5847504116ace18c3d2b79d4d356a760b",
+            "assetType": "iam.googleapis.com/ServiceAccountKey",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-02-01T05:43:49Z"
+          },
+          {
+            "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/116118831870983692040/keys/667a8c1ac6d6f7291d6aa0b7b9d8683cde809a21",
+            "assetType": "iam.googleapis.com/ServiceAccountKey",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-07-19T23:19:43Z"
+          },
+          {
+            "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/116118831870983692040/keys/a590baf7721014d819ea3f39ddfe9f5b6acd3c59",
+            "assetType": "iam.googleapis.com/ServiceAccountKey",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T08:42:01Z"
+          },
+          {
+            "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/102430966964460311783",
+            "assetType": "iam.googleapis.com/ServiceAccount",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T14:48:59Z"
+          },
+          {
+            "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/105027669845114844382",
+            "assetType": "iam.googleapis.com/ServiceAccount",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-02-26T08:35:30Z"
+          },
+          {
+            "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/110323505484004687375",
+            "assetType": "iam.googleapis.com/ServiceAccount",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T20:57:14Z"
+          },
+          {
+            "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/113605357442065327031",
+            "assetType": "iam.googleapis.com/ServiceAccount",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-03-17T21:19:57Z"
+          },
+          {
+            "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/114858367317979947628",
+            "assetType": "iam.googleapis.com/ServiceAccount",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-01-31T01:23:09Z"
+          },
+          {
+            "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/116118831870983692040",
+            "assetType": "iam.googleapis.com/ServiceAccount",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T20:57:14Z"
+          },
+          {
+            "name": "//logging.googleapis.com/projects/11111111111111/locations/global/buckets/_Default",
+            "assetType": "logging.googleapis.com/LogBucket",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-23T06:56:19Z"
+          },
+          {
+            "name": "//logging.googleapis.com/projects/11111111111111/locations/global/buckets/_Required",
+            "assetType": "logging.googleapis.com/LogBucket",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-23T06:56:19Z"
+          },
+          {
+            "name": "//logging.googleapis.com/projects/11111111111111/sinks/_Default",
+            "assetType": "logging.googleapis.com/LogSink",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-24T06:56:10Z"
+          },
+          {
+            "name": "//logging.googleapis.com/projects/11111111111111/sinks/_Required",
+            "assetType": "logging.googleapis.com/LogSink",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-24T06:56:10Z"
+          },
+          {
+            "name": "//pubsub.googleapis.com/projects/stackql-demo/topics/container-analysis-notes-v1",
+            "assetType": "pubsub.googleapis.com/Topic",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-04-20T03:27:08.929763Z"
+          },
+          {
+            "name": "//pubsub.googleapis.com/projects/stackql-demo/topics/container-analysis-notes-v1beta1",
+            "assetType": "pubsub.googleapis.com/Topic",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-04-20T23:21:36.640368Z"
+          },
+          {
+            "name": "//pubsub.googleapis.com/projects/stackql-demo/topics/container-analysis-occurrences-v1",
+            "assetType": "pubsub.googleapis.com/Topic",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-04-25T10:03:33.329070Z"
+          },
+          {
+            "name": "//pubsub.googleapis.com/projects/stackql-demo/topics/container-analysis-occurrences-v1beta1",
+            "assetType": "pubsub.googleapis.com/Topic",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-04-24T15:09:10.573597Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/appenginereporting.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/autoscaling.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/bigquery.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/bigqueryconnection.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/bigquerymigration.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/bigquerystorage.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/cloudapis.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/clouddebugger.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/cloudidentity.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/cloudkms.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/cloudresourcemanager.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/cloudtrace.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/compute.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/container.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/containeranalysis.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/containerfilesystem.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/containerregistry.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/datafusion.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/dataproc-control.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/dataproc.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/datastore.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/deploymentmanager.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/dns.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/firebaserules.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/firestore.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/iam.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/iamcredentials.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/logging.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/monitoring.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/networkconnectivity.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-08-03T18:05:33.294163Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/osconfig.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/oslogin.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/pubsub.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/runtimeconfig.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/servicemanagement.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/serviceusage.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/sql-component.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/storage-api.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/storage-component.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//serviceusage.googleapis.com/projects/11111111111111/services/storage.googleapis.com",
+            "assetType": "serviceusage.googleapis.com/Service",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-31T02:40:41.277389Z"
+          },
+          {
+            "name": "//storage.googleapis.com/demo-app-bucket1",
+            "assetType": "storage.googleapis.com/Bucket",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-04-25T20:36:50.827Z"
+          },
+          {
+            "name": "//storage.googleapis.com/demo-app-bucket2",
+            "assetType": "storage.googleapis.com/Bucket",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-04-25T20:36:50.827Z"
+          },
+          {
+            "name": "//storage.googleapis.com/stackql-demo-bucket",
+            "assetType": "storage.googleapis.com/Bucket",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-04-25T12:37:01.143Z"
+          },
+          {
+            "name": "//storage.googleapis.com/stackql-demo-src-bucket",
+            "assetType": "storage.googleapis.com/Bucket",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-04-24T12:36:09.746Z"
+          },
+          {
+            "name": "//storage.googleapis.com/stackql-demo.appspot.com",
+            "assetType": "storage.googleapis.com/Bucket",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-04-24T12:36:09.746Z"
+          },
+          {
+            "name": "//storage.googleapis.com/stackql-encrypted-bucket-1",
+            "assetType": "storage.googleapis.com/Bucket",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-04-24T12:36:09.746Z"
+          },
+          {
+            "name": "//storage.googleapis.com/staging.stackql-demo.appspot.com",
+            "assetType": "storage.googleapis.com/Bucket",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-04-25T12:37:01.143Z"
+          }
+        ]
+      }    
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "GET",
+      "path": "/v1/projects/testing-project/assets",
+      "queryStringParameters": { 
+        "pageToken": []
+      }
+    },
+    "httpResponse": {
+      "body": {
+        "readTime": "2023-08-21T10:05:28.701683596Z",
+        "assets": [
+          {
+            "name": "//appengine.googleapis.com/apps/stackql-demo",
+            "assetType": "appengine.googleapis.com/Application",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-02-26T12:42:25.686Z"
+          },
+          {
+            "name": "//bigquery.googleapis.com/projects/stackql-demo/datasets/fivetran_googleanalytics",
+            "assetType": "bigquery.googleapis.com/Dataset",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-03-17T21:22:50.238129Z"
+          },
+          {
+            "name": "//cloudbilling.googleapis.com/projects/stackql-demo/billingInfo",
+            "assetType": "cloudbilling.googleapis.com/ProjectBillingInfo",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T01:00:39.877641Z"
+          },
+          {
+            "name": "//cloudkms.googleapis.com/projects/stackql-demo/locations/global/keyRings/stackql/cryptoKeys/stackql-demo-key",
+            "assetType": "cloudkms.googleapis.com/CryptoKey",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-28T14:00:00.152993Z"
+          },
+          {
+            "name": "//cloudkms.googleapis.com/projects/stackql-demo/locations/us/keyRings/stackql-us/cryptoKeys/stackql-us-demo-key",
+            "assetType": "cloudkms.googleapis.com/CryptoKey",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-28T14:00:00.321710Z"
+          },
+          {
+            "name": "//cloudkms.googleapis.com/projects/stackql-demo/locations/global/keyRings/stackql/cryptoKeys/stackql-demo-key/cryptoKeyVersions/1",
+            "assetType": "cloudkms.googleapis.com/CryptoKeyVersion",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-02-28T13:41:58.143062040Z"
+          },
+          {
+            "name": "//cloudkms.googleapis.com/projects/stackql-demo/locations/global/keyRings/stackql/cryptoKeys/stackql-demo-key/cryptoKeyVersions/2",
+            "assetType": "cloudkms.googleapis.com/CryptoKeyVersion",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-28T14:00:00.152993Z"
+          },
+          {
+            "name": "//cloudkms.googleapis.com/projects/stackql-demo/locations/us/keyRings/stackql-us/cryptoKeys/stackql-us-demo-key/cryptoKeyVersions/1",
+            "assetType": "cloudkms.googleapis.com/CryptoKeyVersion",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-02-28T13:41:58.143062040Z"
+          },
+          {
+            "name": "//cloudkms.googleapis.com/projects/stackql-demo/locations/us/keyRings/stackql-us/cryptoKeys/stackql-us-demo-key/cryptoKeyVersions/2",
+            "assetType": "cloudkms.googleapis.com/CryptoKeyVersion",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-05-28T14:00:00.321710Z"
+          },
+          {
+            "name": "//cloudkms.googleapis.com/projects/stackql-demo/locations/global/keyRings/stackql",
+            "assetType": "cloudkms.googleapis.com/KeyRing",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-02-28T03:14:21.504088953Z"
+          },
+          {
+            "name": "//cloudkms.googleapis.com/projects/stackql-demo/locations/us/keyRings/stackql-us",
+            "assetType": "cloudkms.googleapis.com/KeyRing",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-02-28T03:17:47.078425091Z"
+          },
+          {
+            "name": "//cloudresourcemanager.googleapis.com/projects/11111111111111",
+            "assetType": "cloudresourcemanager.googleapis.com/Project",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T01:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/zones/australia-southeast1-a/disks/stackql-demo-001",
+            "assetType": "compute.googleapis.com/Disk",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T13:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/zones/australia-southeast1-a/disks/stackql-demo-002",
+            "assetType": "compute.googleapis.com/Disk",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/zones/australia-southeast1-a/disks/stackql-demo-003",
+            "assetType": "compute.googleapis.com/Disk",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T19:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/zones/australia-southeast1-a/disks/stackql-demo-004",
+            "assetType": "compute.googleapis.com/Disk",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/zones/australia-southeast1-a/disks/stackql-demo-013",
+            "assetType": "compute.googleapis.com/Disk",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-02-24T08:12:47.746925Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/zones/australia-southeast1-a/disks/stackql-demo-014",
+            "assetType": "compute.googleapis.com/Disk",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-02-24T08:13:06.359457Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/zones/australia-southeast1-b/disks/instance-1",
+            "assetType": "compute.googleapis.com/Disk",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-03-30T02:52:41.229035Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/firewalls/allow-spark-ui",
+            "assetType": "compute.googleapis.com/Firewall",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T19:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/firewalls/default-allow-http",
+            "assetType": "compute.googleapis.com/Firewall",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-22T01:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/firewalls/default-allow-https",
+            "assetType": "compute.googleapis.com/Firewall",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T13:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/firewalls/default-allow-icmp",
+            "assetType": "compute.googleapis.com/Firewall",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T19:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/firewalls/default-allow-internal",
+            "assetType": "compute.googleapis.com/Firewall",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/firewalls/default-allow-rdp",
+            "assetType": "compute.googleapis.com/Firewall",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T13:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/firewalls/default-allow-ssh",
+            "assetType": "compute.googleapis.com/Firewall",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T13:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/healthChecks/gke-helth-check",
+            "assetType": "compute.googleapis.com/HealthCheck",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/zones/australia-southeast1-a/instances/stackql-demo-001",
+            "assetType": "compute.googleapis.com/Instance",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-07-20T08:55:18.028764Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/zones/australia-southeast1-a/instances/stackql-demo-002",
+            "assetType": "compute.googleapis.com/Instance",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-06-14T09:10:29.427325Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/zones/australia-southeast1-a/instances/stackql-demo-003",
+            "assetType": "compute.googleapis.com/Instance",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-06-14T09:10:25.091537Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/zones/australia-southeast1-a/instances/stackql-demo-004",
+            "assetType": "compute.googleapis.com/Instance",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-06-14T09:10:25.091537Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/zones/australia-southeast1-a/instances/stackql-demo-013",
+            "assetType": "compute.googleapis.com/Instance",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-06-14T09:10:29.427325Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/zones/australia-southeast1-a/instances/stackql-demo-014",
+            "assetType": "compute.googleapis.com/Instance",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-06-14T09:10:29.427325Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/zones/australia-southeast1-b/instances/instance-1",
+            "assetType": "compute.googleapis.com/Instance",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-03-30T03:15:31.004791Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/networks/default",
+            "assetType": "compute.googleapis.com/Network",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-07-22T19:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/networks/demo-golang-melb-01",
+            "assetType": "compute.googleapis.com/Network",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-02-21T05:59:18.302042Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/networks/demo-golang-melb-02",
+            "assetType": "compute.googleapis.com/Network",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-02-21T07:08:05.320122Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/networks/demo-network-gcp-01",
+            "assetType": "compute.googleapis.com/Network",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-01-18T08:32:14.446157Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo",
+            "assetType": "compute.googleapis.com/Project",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-03-27T19:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-04542325b991b3c1",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T13:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-04d7649fbb395129",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-10f3140d9cf3e98a",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-164adef5d2d29c42",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T13:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-17bcf20461172a50",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T13:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-1c351a03c22657d0",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T19:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-34f868a900e7e22a",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-22T13:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-44121b336f9dc5f6",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-22T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-44f9116836a0d050",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T19:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-4e80a1e67b129dd9",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-510c9a8524c5ce1b",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T19:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-517a8d662d8932af",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-02-21T05:59:24.535752Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-5579ab3290497518",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-599d19563a76824f",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T13:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-5ed3861f7545aa13",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-5f49ac24af544592",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-70d418bdc5a03c91",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-22T01:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-7424c5f7e290f4e5",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T13:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-75672e7ed41aefb2",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-07-04T21:58:45.484203Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-7ad52ba9af270cef",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-7af7f0a63a18e1e7",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-8e1ae3de199cd713",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-01-18T08:32:18.059259Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-966f71f22324499c",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-22T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-a2ee9cbc2e3d076f",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-a75c1e6982e312a8",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T19:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-a9d54d0be3256cef",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-01-31T18:36:05.318336Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-ac8f67d89cab85d9",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-b0055e562d036bba",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T13:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-b128fd40d948390d",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T13:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-b2fe14427a9e4824",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-02-21T07:08:08.544737Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-b6b033d9a3fb943f",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T19:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-c04b6592b3697e58",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T13:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-d65849196637cf07",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T13:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-da42c7df8f6fa91f",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T13:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-dcaa0bacb7d77b26",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T19:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-e35ad61c28f8c728",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-22T01:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-e69d9660c418648c",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T13:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-eae20ca2c9df21c7",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T19:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-ed44ebb899f8dbcb",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-efe8f095a566346f",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T13:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-f94a3f1ccd0a7475",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-02-04T15:01:38.776974Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-fe11681c23906522",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-22T01:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/global/routes/default-route-feba03cbe78b98fd",
+            "assetType": "compute.googleapis.com/Route",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T19:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/asia-east1/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T13:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/asia-east2/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/asia-northeast1/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/asia-northeast2/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/asia-northeast3/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-22T01:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/asia-south1/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/asia-south2/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/asia-southeast1/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/asia-southeast2/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T19:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/australia-southeast1/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-03-09T23:01:39.222211Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/australia-southeast2/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T13:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/europe-central2/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T13:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/europe-north1/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/europe-southwest1/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T19:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/europe-west1/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T07:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/europe-west12/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2023-04-07T13:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/europe-west2/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T19:00:00Z"
+          },
+          {
+            "name": "//compute.googleapis.com/projects/stackql-demo/regions/europe-west3/subnetworks/default",
+            "assetType": "compute.googleapis.com/Subnetwork",
+            "ancestors": [
+              "projects/11111111111111",
+              "organizations/11111111111111"
+            ],
+            "updateTime": "2022-10-21T07:00:00Z"
+          }
+        ],
+        "nextPageToken": "GETAROUNDPAGETWO"
+      }
+    }
   }
 ]

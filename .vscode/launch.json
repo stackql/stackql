@@ -92,6 +92,7 @@
         "select count(*) from stackql_repositories;",
         "select count(*) as repository_count from stackql_repositories;",
         "select * from google.compute.instances where project = 'stackql-demo';",
+        "SELECT * FROM google.cloudasset.assets WHERE parent = 'projects/stackql-demo';",
       ],
       "default": "show providers;"
     },
