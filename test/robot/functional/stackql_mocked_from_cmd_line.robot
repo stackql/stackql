@@ -1049,6 +1049,37 @@ Scalar Select Verify
     ...    ${outputStr}
     ...    stdout=${CURDIR}/tmp/Scalar-Select-Verify.tmp
 
+Aggregated List JSON Path on additionalProperties Verify 
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |---------------------|------------------|---------------------------------------------------------------------------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}zone${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------------|------------------|---------------------------------------------------------------------------------------------|
+    ...    |${SPACE}testing-project-014${SPACE}|${SPACE}1000000000000006${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a${SPACE}|
+    ...    |---------------------|------------------|---------------------------------------------------------------------------------------------|
+    ...    |${SPACE}testing-project-013${SPACE}|${SPACE}1000000000000005${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a${SPACE}|
+    ...    |---------------------|------------------|---------------------------------------------------------------------------------------------|
+    ...    |${SPACE}testing-project-004${SPACE}|${SPACE}1000000000000004${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a${SPACE}|
+    ...    |---------------------|------------------|---------------------------------------------------------------------------------------------|
+    ...    |${SPACE}testing-project-003${SPACE}|${SPACE}1000000000000003${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a${SPACE}|
+    ...    |---------------------|------------------|---------------------------------------------------------------------------------------------|
+    ...    |${SPACE}testing-project-002${SPACE}|${SPACE}1000000000000002${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a${SPACE}|
+    ...    |---------------------|------------------|---------------------------------------------------------------------------------------------|
+    ...    |${SPACE}testing-project-001${SPACE}|${SPACE}1000000000000001${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a${SPACE}|
+    ...    |---------------------|------------------|---------------------------------------------------------------------------------------------|
+    ...    |${SPACE}instance-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}222222222222${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-b${SPACE}|
+    ...    |---------------------|------------------|---------------------------------------------------------------------------------------------|
+    Should Stackql Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select name, id, zone from google.compute.instances where project \= 'testing-project' order by name desc;
+    ...    ${outputStr}
+    ...    stdout=${CURDIR}/tmp/Aggregated-List-JSON-Path-on-additionalProperties-Verify.tmp
+
 Transaction Commit Eager Show and Lazy Digitalocean Insert Droplet
     Should Stackql Exec Inline Equal
     ...    ${STACKQL_EXE}
