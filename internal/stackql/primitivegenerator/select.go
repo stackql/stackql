@@ -9,10 +9,11 @@ import (
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/planbuilderinput"
 	"github.com/stackql/stackql/internal/stackql/primitivebuilder"
+	"github.com/stackql/stackql/internal/stackql/symtab"
 	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
 )
 
-//nolint:errcheck,funlen,gocognit,govet // TODO: review
+//nolint:errcheck,funlen,gocognit,govet,gocyclo,cyclop // TODO: review
 func (pb *standardPrimitiveGenerator) analyzeSelect(pbi planbuilderinput.PlanBuilderInput) error {
 	annotatedAST := pbi.GetAnnotatedAST()
 
@@ -92,6 +93,23 @@ func (pb *standardPrimitiveGenerator) analyzeSelect(pbi planbuilderinput.PlanBui
 			return err
 		}
 		pChild = pb.AddChildPrimitiveGenerator(fromExpr, leaf)
+
+		for _, selectExpr := range node.SelectExprs {
+			//nolint:gocritic // experimental
+			switch expr := selectExpr.(type) {
+			case *sqlparser.AliasedExpr:
+				alias := expr.As.GetRawVal()
+				if alias == "" {
+					continue
+				}
+				entry := symtab.NewSymTabEntry(
+					pb.PrimitiveComposer.GetDRMConfig().GetRelationalType("string"),
+					"",
+					alias,
+				)
+				pb.PrimitiveComposer.SetSymbol(alias, entry)
+			}
+		}
 
 		for _, tbl := range tblz {
 			err := pb.expandTable(tbl)

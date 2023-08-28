@@ -1334,6 +1334,113 @@ Basic Subquery Returns Results
     ...    dummyapp.io
     ...    stdout=${CURDIR}/tmp/Basic-Subquery-Returns-Results.tmp
 
+
+Select Expression Function Expression Alias Reference Alongside Wildcard Returns Results
+    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    This is a genuine case of difference. Postgres does not support aliased colummns in where clauses.
+    ${inputStr} =    CATENATE    select *, JSON_EXTRACT(sourceRanges, '$[0]') sr from google.compute.firewalls where project = 'testing-project' and sr = '0.0.0.0/0';
+    Should Stackql Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select *, JSON_EXTRACT(sourceRanges, '$[0]') sr from google.compute.firewalls where project \= 'testing-project' and sr \= '0.0.0.0/0';
+    ...    default-allow-ssh
+    ...    stdout=${CURDIR}/tmp/Select-Expression-Function-Expression-Alias-Reference-Alongside-Wildcard-Returns-Results.tmp
+
+Select Expression Function Expression Alias Reference Alongside Projection Returns Expected Results
+    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    This is a genuine case of difference. Postgres does not support aliased colummns in where clauses.
+    ${inputStr} =    Catenate
+    ...    select name, direction, denied, allowed, JSON_EXTRACT(sourceRanges, '$[0]') sr  
+    ...    from google.compute.firewalls 
+    ...    where project = 'testing-project' and sr = '0.0.0.0/0' and denied is null and allowed is not null 
+    ...    order by name desc;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |---------------------|-----------|--------|-----------------------------------------|-----------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}direction${SPACE}|${SPACE}denied${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}allowed${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}sr${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------------|-----------|--------|-----------------------------------------|-----------|
+    ...    |${SPACE}default-allow-ssh${SPACE}${SPACE}${SPACE}|${SPACE}INGRESS${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}|${SPACE}\[{"IPProtocol":"tcp","ports":["22"]}]${SPACE}${SPACE}${SPACE}|${SPACE}0.0.0.0/0${SPACE}|
+    ...    |---------------------|-----------|--------|-----------------------------------------|-----------|
+    ...    |${SPACE}default-allow-rdp${SPACE}${SPACE}${SPACE}|${SPACE}INGRESS${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}|${SPACE}\[{"IPProtocol":"tcp","ports":["3389"]}]${SPACE}|${SPACE}0.0.0.0/0${SPACE}|
+    ...    |---------------------|-----------|--------|-----------------------------------------|-----------|
+    ...    |${SPACE}default-allow-icmp${SPACE}${SPACE}|${SPACE}INGRESS${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}|${SPACE}\[{"IPProtocol":"icmp"}]${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}0.0.0.0/0${SPACE}|
+    ...    |---------------------|-----------|--------|-----------------------------------------|-----------|
+    ...    |${SPACE}default-allow-https${SPACE}|${SPACE}INGRESS${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}|${SPACE}\[{"IPProtocol":"tcp","ports":["443"]}]${SPACE}${SPACE}|${SPACE}0.0.0.0/0${SPACE}|
+    ...    |---------------------|-----------|--------|-----------------------------------------|-----------|
+    ...    |${SPACE}default-allow-http${SPACE}${SPACE}|${SPACE}INGRESS${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}|${SPACE}\[{"IPProtocol":"tcp","ports":["80"]}]${SPACE}${SPACE}${SPACE}|${SPACE}0.0.0.0/0${SPACE}|
+    ...    |---------------------|-----------|--------|-----------------------------------------|-----------|
+    ...    |${SPACE}allow-spark-ui${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}INGRESS${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}|${SPACE}\[{"IPProtocol":"tcp","ports":["4040"]}]${SPACE}|${SPACE}0.0.0.0/0${SPACE}|
+    ...    |---------------------|-----------|--------|-----------------------------------------|-----------|
+    Should Stackql Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    stdout=${CURDIR}/tmp/Select-Expression-Function-Expression-Alias-Reference-Alongside-Projection-Returns-Results.tmp
+
+Function Expression And Where Clause Function Expression Predicate Alongside Wildcard Returns Results
+    ${sqliteInputStr} =    CATENATE    select *, JSON_EXTRACT(sourceRanges, '$[0]') sr from google.compute.firewalls where project = 'testing-project' and JSON_EXTRACT(sourceRanges, '$[0]') = '0.0.0.0/0';
+    ${postgresInputStr} =    CATENATE    select *, json_extract_path_text(sourceRanges, '0') sr from google.compute.firewalls where project = 'testing-project' and json_extract_path_text(sourceRanges, '0') = '0.0.0.0/0';
+    ${inputStr} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"     ${postgresInputStr}    ${sqliteInputStr}
+    Should Stackql Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    default-allow-ssh
+    ...    stdout=${CURDIR}/tmp/Function-Expression-And-Where-Clause-Function-Expression-Predicate-Alongside-Wildcard-Returns-Results.tmp
+
+Function Expression And Where Clause Function Expression Predicate Alongside Projection Returns Expected Results
+    ${sqliteInputStr} =    Catenate
+    ...    select name, direction, denied, allowed, JSON_EXTRACT(sourceRanges, '$[0]') sr  
+    ...    from google.compute.firewalls 
+    ...    where project = 'testing-project' and sr = '0.0.0.0/0' and denied is null and allowed is not null 
+    ...    order by name desc;
+    ${postgresInputStr} =    Catenate
+    ...    select name, direction, denied, allowed, json_extract_path_text(sourceRanges, '0') sr  
+    ...    from google.compute.firewalls 
+    ...    where project = 'testing-project' and json_extract_path_text(sourceRanges, '0') = '0.0.0.0/0' and denied is null and allowed is not null 
+    ...    order by name desc;
+    ${inputStr} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"     ${postgresInputStr}    ${sqliteInputStr}
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |---------------------|-----------|--------|-----------------------------------------|-----------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}direction${SPACE}|${SPACE}denied${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}allowed${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}sr${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------------|-----------|--------|-----------------------------------------|-----------|
+    ...    |${SPACE}default-allow-ssh${SPACE}${SPACE}${SPACE}|${SPACE}INGRESS${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}|${SPACE}\[{"IPProtocol":"tcp","ports":["22"]}]${SPACE}${SPACE}${SPACE}|${SPACE}0.0.0.0/0${SPACE}|
+    ...    |---------------------|-----------|--------|-----------------------------------------|-----------|
+    ...    |${SPACE}default-allow-rdp${SPACE}${SPACE}${SPACE}|${SPACE}INGRESS${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}|${SPACE}\[{"IPProtocol":"tcp","ports":["3389"]}]${SPACE}|${SPACE}0.0.0.0/0${SPACE}|
+    ...    |---------------------|-----------|--------|-----------------------------------------|-----------|
+    ...    |${SPACE}default-allow-icmp${SPACE}${SPACE}|${SPACE}INGRESS${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}|${SPACE}\[{"IPProtocol":"icmp"}]${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}0.0.0.0/0${SPACE}|
+    ...    |---------------------|-----------|--------|-----------------------------------------|-----------|
+    ...    |${SPACE}default-allow-https${SPACE}|${SPACE}INGRESS${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}|${SPACE}\[{"IPProtocol":"tcp","ports":["443"]}]${SPACE}${SPACE}|${SPACE}0.0.0.0/0${SPACE}|
+    ...    |---------------------|-----------|--------|-----------------------------------------|-----------|
+    ...    |${SPACE}default-allow-http${SPACE}${SPACE}|${SPACE}INGRESS${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}|${SPACE}\[{"IPProtocol":"tcp","ports":["80"]}]${SPACE}${SPACE}${SPACE}|${SPACE}0.0.0.0/0${SPACE}|
+    ...    |---------------------|-----------|--------|-----------------------------------------|-----------|
+    ...    |${SPACE}allow-spark-ui${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}INGRESS${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}|${SPACE}\[{"IPProtocol":"tcp","ports":["4040"]}]${SPACE}|${SPACE}0.0.0.0/0${SPACE}|
+    ...    |---------------------|-----------|--------|-----------------------------------------|-----------|
+    Should Stackql Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    stdout=${CURDIR}/tmp/Function-Expression-And-Where-Clause-Function-Expression-Predicate-Alongside-Projection-Returns-Expected-Results.tmp
+
 Basic View of Union Returns Results
     Should Stackql Exec Inline Contain
     ...    ${STACKQL_EXE}

@@ -93,6 +93,10 @@
         "select count(*) as repository_count from stackql_repositories;",
         "select * from google.compute.instances where project = 'stackql-demo';",
         "SELECT * FROM google.cloudasset.assets WHERE parent = 'projects/stackql-demo';",
+        "select sn.name from google.compute.subnetworks_iam_policies ip join google.compute.subnetworks sn  on ip.resource = sn.name and ip.region = split_part(sn.region, '/', 8) where ip.project = 'stackql-demo' and sn.project = 'stackql-demo' ;",
+        "select * from google.compute.firewalls where project = 'stackql-demo' and JSON_EXTRACT(sourceRanges, '$[0]') = '0.0.0.0/0';",
+        "select *, JSON_EXTRACT(sourceRanges, '$[0]') sr  from google.compute.firewalls where project = 'stackql-demo' and sr = '0.0.0.0/0';",
+        "select *, json_extract_path_text(sourceRanges, '0') as sr from google.compute.firewalls where project = 'stackql-demo' and json_extract_path_text(sourceRanges, '0') = '0.0.0.0/0';",
       ],
       "default": "show providers;"
     },
