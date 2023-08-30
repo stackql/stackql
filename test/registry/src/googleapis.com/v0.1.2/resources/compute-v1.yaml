@@ -3887,6 +3887,16 @@ resources:
     title: sslPolicies
   subnetworks:
     id: google.compute.subnetworks
+    sqlVerbs:
+      select:
+        - $ref: '#/resources/subnetworks/methods/get'
+        - $ref: '#/resources/subnetworks/methods/list'
+        - $ref: '#/resources/subnetworks/methods/aggregatedList'
+      insert:
+        - $ref: '#/resources/subnetworks/methods/insert'
+      update: []
+      delete:
+        - $ref: '#/resources/subnetworks/methods/delete'
     methods:
       aggregatedList:
         operation:
@@ -3894,6 +3904,7 @@ resources:
         response:
           mediaType: application/json
           openAPIDocKey: '200'
+          objectKey: '$.items[*].subnetworks[*]'
       delete:
         operation:
           $ref: 'googleapis.com/v0.1.2/services-split/compute/compute-v1.yaml#/paths/~1projects~1{project}~1regions~1{region}~1subnetworks~1{subnetwork}/delete'

@@ -384,6 +384,15 @@ func (pb *standardPrimitiveGenerator) whereComparisonExprCopyAndReWrite(
 ) (sqlparser.Expr, string, error) {
 	qualifiedName, ok := expr.Left.(*sqlparser.ColName)
 	if !ok {
+		if qualifiedLHSName, lhsOk := expr.Left.(*sqlparser.FuncExpr); lhsOk {
+			funcName := strings.ToLower(qualifiedLHSName.Name.GetRawVal())
+			logging.GetLogger().Infoln(fmt.Sprintf("funcName = %s", funcName))
+			return expr, "", nil
+		} else if qualifiedRHSName, rhsOk := expr.Right.(*sqlparser.FuncExpr); rhsOk {
+			funcName := strings.ToLower(qualifiedRHSName.Name.GetRawVal())
+			logging.GetLogger().Infoln(fmt.Sprintf("funcName = %s", funcName))
+			return expr, "", nil
+		}
 		return nil, "", fmt.Errorf("unexpected: %v", sqlparser.String(expr))
 	}
 	colName := internaldto.GeneratePutativelyUniqueColumnID(qualifiedName.Qualifier, qualifiedName.Name.GetRawVal())
