@@ -5503,6 +5503,39 @@
             },
             "disabled": false,
             "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/global/firewalls/default-allow-ssh"
+          },
+          {
+            "kind": "compute#firewall",
+            "id": "8888888888888",
+            "creationTimestamp": "2022-02-08T15:05:18.476-08:00",
+            "name": "selected-allow-rdesk",
+            "description": "Allow RDESK from selected address spaces",
+            "network": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default",
+            "priority": 65534,
+            "sourceRanges": [
+              "10.128.0.0/9",
+              "10.0.0.0/16"
+            ],
+            "allowed": [
+              {
+                "IPProtocol": "tcp",
+                "ports": [
+                  "3389"
+                ]
+              },
+              {
+                "IPProtocol": "udp",
+                "ports": [
+                  "3389"
+                ]
+              }
+            ],
+            "direction": "INGRESS",
+            "logConfig": {
+              "enable": false
+            },
+            "disabled": false,
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/global/firewalls/selected-allow-rdesk"
           }
         ],
         "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/global/firewalls"
