@@ -19,6 +19,7 @@ var (
 	}
 )
 
+//nolint:gocognit // tactical
 func PostgresSelectExprsFormatter(buf *sqlparser.TrackedBuffer, node sqlparser.SQLNode) {
 	switch node := node.(type) {
 	case *sqlparser.ColName:
@@ -29,10 +30,33 @@ func PostgresSelectExprsFormatter(buf *sqlparser.TrackedBuffer, node sqlparser.S
 	case *sqlparser.FuncExpr:
 		if strings.ToLower(node.Name.GetRawVal()) == constants.SQLFuncJSONExtractPostgres && len(node.Exprs) > 1 {
 			sb := sqlparser.NewTrackedBuffer(PostgresSelectExprsFormatter)
-			lhsSuffix := "::json"
-			sb.AstPrintf(node, "%s(%v%s, %v", constants.SQLFuncJSONExtractPostgres, node.Exprs[0], lhsSuffix, node.Exprs[1])
+			sb.AstPrintf(
+				node,
+				"%s(%v%s, %v",
+				constants.SQLFuncJSONExtractPostgres,
+				node.Exprs[0],
+				constants.PostgresJSONCastSuffix,
+				node.Exprs[1])
 			for _, val := range node.Exprs[2:] {
 				sb.AstPrintf(node, ", %v", val)
+			}
+			sb.AstPrintf(node, ")")
+			buf.WriteString(sb.String())
+			return
+		}
+		if strings.ToLower(node.Name.GetRawVal()) == sqlparser.JsonArrayElementsTextStr && len(node.Exprs) >= 1 {
+			sb := sqlparser.NewTrackedBuffer(PostgresSelectExprsFormatter)
+			sb.AstPrintf(
+				node,
+				"%s(%v%s",
+				sqlparser.JsonArrayElementsTextStr,
+				node.Exprs[0],
+				constants.PostgresJSONCastSuffix,
+			)
+			if len(node.Exprs) > 1 {
+				for _, val := range node.Exprs[1:] {
+					sb.AstPrintf(node, ", %v", val)
+				}
 			}
 			sb.AstPrintf(node, ")")
 			buf.WriteString(sb.String())

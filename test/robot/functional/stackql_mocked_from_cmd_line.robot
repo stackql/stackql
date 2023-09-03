@@ -1385,13 +1385,18 @@ Select Expression Function Expression Alias Reference Alongside Projection Retur
     ...    ${outputStr}
     ...    stdout=${CURDIR}/tmp/Select-Expression-Function-Expression-Alias-Reference-Alongside-Projection-Returns-Results.tmp
 
-SQLite Table Valued Function Plus Projection Returns Expected Results
-    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    This is for sqlite table valued finctions only. This is a genuine case of difference.
-    ${inputStr} =    Catenate
+Table Valued Function Plus Projection Returns Expected Results
+    ${sqliteInputStr} =    Catenate
     ...    select fw.id, fw.name, json_each.value as source_range, json_each.value = '0.0.0.0/0' as is_entire_network 
     ...    from google.compute.firewalls fw, json_each(sourceRanges) 
     ...    where project = 'testing-project' 
     ...    order by name desc, source_range desc;
+    ${postgresInputStr} =    Catenate
+    ...    select fw.id, fw.name, rd.value as source_range, case when rd.value = '0.0.0.0/0' then 1 else 0 end as is_entire_network 
+    ...    from google.compute.firewalls fw, json_array_elements_text(sourceRanges) as rd
+    ...    where project = 'testing-project' 
+    ...    order by name desc, source_range desc;
+    ${inputStr} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"     ${postgresInputStr}    ${sqliteInputStr}
     ${outputStr} =    Catenate    SEPARATOR=\n
     ...    |---------------|------------------------|--------------|-------------------|
     ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}source_range${SPACE}|${SPACE}is_entire_network${SPACE}|
