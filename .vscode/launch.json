@@ -102,6 +102,7 @@
         "select *, JSON_EXTRACT(sourceRanges, '$[0]') sr  from google.compute.firewalls, json_each(sourceRanges) where project = 'stackql-demo';",
         "select fw.id, JSON_EXTRACT(fw.sourceRanges, '$[0]') sr  from google.compute.firewalls fw, json_each(sourceRanges) where project = 'stackql-demo';",
         "select fw.id, JSON_EXTRACT(fw.sourceRanges, '$[0]') sr, json_each.value as source_range  from google.compute.firewalls fw, json_each(sourceRanges) where project = 'stackql-demo';",
+        "select fw.id, rd.value as source_range  from google.compute.firewalls fw, json_array_elements_text(sourceRanges) as rd where project = 'stackql-demo';",
       ],
       "default": "show providers;"
     },

@@ -19,6 +19,7 @@ const (
 	CSVStr                             string = "csv"
 	TextStr                            string = "text"
 	PostgresIDMaxWidth                 int    = 63
+	PostgresJSONCastSuffix             string = "::json"
 	PrettyTextStr                      string = "pptext"
 	DBEngineSQLite3Embedded            string = "sqlite3_embedded"
 	DBEnginePostgresTCP                string = "postgres_tcp"
