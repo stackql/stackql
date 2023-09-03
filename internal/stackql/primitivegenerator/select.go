@@ -140,8 +140,10 @@ func (pb *standardPrimitiveGenerator) analyzeSelect(pbi planbuilderinput.PlanBui
 	logging.GetLogger().Debugf("len(paramsPresent) = %d\n", len(paramsPresent))
 	// END_BLOCK REWRITE_WHERE
 
-	if len(node.From) == 1 { //nolint:nestif //	TODO: review
-		switch ft := node.From[0].(type) {
+	isSimpleFrom := parserutil.IsFromExprSimple(node.From)
+
+	if len(node.From) >= 1 && isSimpleFrom {
+		switch node.From[0].(type) {
 		case *sqlparser.JoinTableExpr, *sqlparser.AliasedTableExpr:
 			tcc := pbi.GetTxnCtrlCtrs()
 			tccAheadOfTime := pbi.IsTccSetAheadOfTime()
@@ -171,6 +173,11 @@ func (pb *standardPrimitiveGenerator) analyzeSelect(pbi planbuilderinput.PlanBui
 			pChild.GetPrimitiveComposer().SetBuilder(bld)
 			pb.PrimitiveComposer.SetSelectPreparedStatementCtx(selCtx)
 			return nil
+		}
+	}
+	//nolint:gocritic // tactical
+	if len(node.From) == 1 {
+		switch ft := node.From[0].(type) {
 		case *sqlparser.ExecSubquery:
 			cols, err := parserutil.ExtractSelectColumnNames(node, handlerCtx.GetASTFormatter())
 			if err != nil {

@@ -97,6 +97,11 @@
         "select * from google.compute.firewalls where project = 'stackql-demo' and JSON_EXTRACT(sourceRanges, '$[0]') = '0.0.0.0/0';",
         "select *, JSON_EXTRACT(sourceRanges, '$[0]') sr  from google.compute.firewalls where project = 'stackql-demo' and sr = '0.0.0.0/0';",
         "select *, json_extract_path_text(sourceRanges, '0') as sr from google.compute.firewalls where project = 'stackql-demo' and json_extract_path_text(sourceRanges, '0') = '0.0.0.0/0';",
+        "select *, JSON_EXTRACT(sourceRanges, '$[0]') sr  from google.compute.firewalls, json_each(sourceRanges) where project = 'stackql-demo' and JSON_EXTRACT(sourceRanges, '$[0]') = '0.0.0.0/0';",
+        "select count(*) from stackql_repositories;",
+        "select *, JSON_EXTRACT(sourceRanges, '$[0]') sr  from google.compute.firewalls, json_each(sourceRanges) where project = 'stackql-demo';",
+        "select fw.id, JSON_EXTRACT(fw.sourceRanges, '$[0]') sr  from google.compute.firewalls fw, json_each(sourceRanges) where project = 'stackql-demo';",
+        "select fw.id, JSON_EXTRACT(fw.sourceRanges, '$[0]') sr, json_each.value as source_range  from google.compute.firewalls fw, json_each(sourceRanges) where project = 'stackql-demo';",
       ],
       "default": "show providers;"
     },

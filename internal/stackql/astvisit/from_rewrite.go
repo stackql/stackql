@@ -622,11 +622,26 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		buf.WriteString(")")
 		v.rewrittenQuery = buf.String()
 
+	case *sqlparser.TableValuedFuncTableExpr:
+		buf.AstPrintf(node, "%v", node)
+		v.rewrittenQuery = buf.String()
+		// return nil
+
 	case sqlparser.TableExprs:
 		var exprs []string
-		for _, n := range node {
-			n.Accept(v)
-			s := v.GetRewrittenQuery()
+		for i, n := range node {
+			var s string
+			// TODO: fix this hack
+			//     prevents indirect expansion
+			//     except on first TableExpr
+			if i == 0 {
+				n.Accept(v)
+				s = v.GetRewrittenQuery()
+			} else {
+				nodeVis := NewFromRewriteAstVisitor(v.annotatedAST, "", true, v.sqlSystem, v.formatter, v.namespaceCollection, v.annotations, v.dc)
+				n.Accept(nodeVis)
+				s = nodeVis.GetRewrittenQuery()
+			}
 			exprs = append(exprs, s)
 		}
 		v.rewrittenQuery = strings.Join(exprs, ", ")

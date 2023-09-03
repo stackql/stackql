@@ -672,3 +672,24 @@ func TableFromSelectNode(sel *sqlparser.Select) (sqlparser.TableName, error) {
 	}
 	return tableName, nil
 }
+
+func IsFromExprSimple(from sqlparser.TableExprs) bool {
+	for i, node := range from {
+		if i == 0 {
+			switch node.(type) {
+			case *sqlparser.JoinTableExpr, *sqlparser.AliasedTableExpr:
+				continue
+			default:
+				return false
+			}
+		} else {
+			switch node.(type) {
+			case *sqlparser.TableValuedFuncTableExpr:
+				continue
+			default:
+				return false
+			}
+		}
+	}
+	return true
+}
