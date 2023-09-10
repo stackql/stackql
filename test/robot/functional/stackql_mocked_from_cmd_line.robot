@@ -459,6 +459,72 @@ GitHub Repository With Functions Select
     ...    ${SELECT_GITHUB_REPOS_WITH_USEFUL_FUNCTIONS_EXPECTED}
     ...    ${CURDIR}/tmp/GitHub-Repository-With-Functions-Select.tmp
 
+Split Part Simple Invocation Working
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}network${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}network_region${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}selected-allow-rdesk${SPACE}${SPACE}${SPACE}|${SPACE}8888888888888${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}default-allow-ssh${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}777777777777${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}default-allow-rdp${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}6666666666${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}default-allow-internal${SPACE}|${SPACE}5555555555555${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}default-allow-icmp${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}4444444444444${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}default-allow-https${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}33333333${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}default-allow-http${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}22222222222${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}allow-spark-ui${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}111111111111${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    Should Horrid Query StackQL Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select name, id, network, split_part(network, '/', 8) as network_region from google.compute.firewalls where project \= 'testing-project' order by id desc;
+    ...    ${outputStr}
+    ...    ${CURDIR}/tmp/Split-Part-Simple-Invocation-Working.tmp
+
+Split Part Negative Index Invocation Working
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}network${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}network_region${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}selected-allow-rdesk${SPACE}${SPACE}${SPACE}|${SPACE}8888888888888${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}default-allow-ssh${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}777777777777${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}default-allow-rdp${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}6666666666${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}default-allow-internal${SPACE}|${SPACE}5555555555555${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}default-allow-icmp${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}4444444444444${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}default-allow-https${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}33333333${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}default-allow-http${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}22222222222${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}allow-spark-ui${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}111111111111${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    Should Horrid Query StackQL Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select name, id, network, split_part(network, '/', -3) as network_region from google.compute.firewalls where project \= 'testing-project' order by id desc;
+    ...    ${outputStr}
+    ...    ${CURDIR}/tmp/Split-Part-Negative-Index-Invocation-Working.tmp
+
 GitHub Join Input Params Select
     Should Horrid Query StackQL Inline Equal
     ...    ${STACKQL_EXE}
@@ -1429,7 +1495,7 @@ Table Valued Function Plus Projection Returns Expected Results
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${inputStr}
     ...    ${outputStr}
-    ...    stdout=${CURDIR}/tmp/SQLite-Table-Valued-Function-Plus-Projection-Returns-Expected-Results.tmp
+    ...    stdout=${CURDIR}/tmp/Table-Valued-Function-Plus-Projection-Returns-Expected-Results.tmp
 
 Function Expression And Where Clause Function Expression Predicate Alongside Wildcard Returns Results
     ${sqliteInputStr} =    CATENATE    select *, JSON_EXTRACT(sourceRanges, '$[0]') sr from google.compute.firewalls where project = 'testing-project' and JSON_EXTRACT(sourceRanges, '$[0]') = '0.0.0.0/0';
