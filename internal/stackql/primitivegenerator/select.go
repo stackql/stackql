@@ -2,8 +2,11 @@ package primitivegenerator
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
+	"github.com/stackql/stackql/internal/stackql/astformat"
+	"github.com/stackql/stackql/internal/stackql/astvisit"
 	"github.com/stackql/stackql/internal/stackql/dependencyplanner"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
@@ -21,6 +24,44 @@ func (pb *standardPrimitiveGenerator) analyzeSelect(pbi planbuilderinput.PlanBui
 	node, ok := pbi.GetSelect()
 	if !ok {
 		return fmt.Errorf("could not cast statement of type '%T' to required Select", pbi.GetStatement())
+	}
+
+	// Before analysing AST, see if we can pass straight to SQL backend
+	_, isInternallyRoutable := handlerCtx.GetDBMSInternalRouter().CanRoute(annotatedAST.GetAST())
+	if isInternallyRoutable { //nolint:nestif // acceptable
+		selQuery := strings.ReplaceAll(astformat.String(node, handlerCtx.GetASTFormatter()), "from \"dual\"", "")
+		v := astvisit.NewInternallyRoutableTypingAstVisitor(
+			selQuery,
+			annotatedAST,
+			handlerCtx,
+			nil,
+			handlerCtx.GetDrmConfig(),
+			handlerCtx.GetNamespaceCollection(),
+		)
+		visitErr := v.Visit(annotatedAST.GetAST())
+		if visitErr != nil {
+			return visitErr
+		}
+		selCtx, selCtxExists := v.GetSelectContext()
+		if !selCtxExists {
+			return fmt.Errorf("internal routing error: could not obtain select context")
+		}
+		pb.PrimitiveComposer.SetSelectPreparedStatementCtx(selCtx)
+		primitiveGenerator := pb
+		clonedPbi := pbi.Clone()
+		clonedPbi.SetRawQuery(selQuery)
+		err := primitiveGenerator.AnalyzePGInternal(clonedPbi)
+		if err != nil {
+			return err
+		}
+		builder := primitiveGenerator.GetPrimitiveComposer().GetBuilder()
+		if builder == nil {
+			return fmt.Errorf("nil pg internal builder")
+		}
+		if pb.PrimitiveComposer.IsIndirect() {
+			pb.SetIndirectCreateTailBuilder(builder)
+		}
+		return nil
 	}
 
 	// TODO: get rid of this and dependent tests.
@@ -169,6 +210,9 @@ func (pb *standardPrimitiveGenerator) analyzeSelect(pbi planbuilderinput.PlanBui
 				return err
 			}
 			bld := dp.GetBldr()
+			if pb.PrimitiveComposer.IsIndirect() {
+				pb.SetIndirectCreateTailBuilder(bld)
+			}
 			selCtx := dp.GetSelectCtx()
 			pChild.GetPrimitiveComposer().SetBuilder(bld)
 			pb.PrimitiveComposer.SetSelectPreparedStatementCtx(selCtx)

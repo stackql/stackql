@@ -47,7 +47,7 @@ type ExtendedTableMetadata interface {
 	IsLocallyExecutable() bool
 	IsSimple() bool
 	GetIndirect() (astindirect.Indirect, bool)
-	GetView() (internaldto.ViewDTO, bool)
+	GetView() (internaldto.RelationDTO, bool)
 	GetSubquery() (internaldto.SubqueryDTO, bool)
 	LookupSelectItemsKey() string
 	SetSelectItemsKey(string)
@@ -182,7 +182,7 @@ func (ex *standardExtendedTableMetadata) GetSubquery() (internaldto.SubqueryDTO,
 	return ex.heirarchyObjects.GetSubquery()
 }
 
-func (ex *standardExtendedTableMetadata) GetView() (internaldto.ViewDTO, bool) {
+func (ex *standardExtendedTableMetadata) GetView() (internaldto.RelationDTO, bool) {
 	return ex.heirarchyObjects.GetView()
 }
 

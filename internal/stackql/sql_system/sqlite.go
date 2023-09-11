@@ -525,22 +525,23 @@ func (eng *sqLiteSystem) generateDDL(relationalTable relationaldto.RelationalTab
 	return retVal, nil
 }
 
-func (eng *sqLiteSystem) GetViewByName(viewName string) (internaldto.ViewDTO, bool) {
+func (eng *sqLiteSystem) GetViewByName(viewName string) (internaldto.RelationDTO, bool) {
 	return eng.getViewByName(viewName)
 }
 
-func (eng *sqLiteSystem) getViewByName(viewName string) (internaldto.ViewDTO, bool) {
+func (eng *sqLiteSystem) getViewByName(viewName string) (internaldto.RelationDTO, bool) {
 	q := `SELECT view_ddl FROM "__iql__.views" WHERE view_name = ? and deleted_dttm IS NULL`
 	row := eng.sqlEngine.QueryRow(q, viewName)
-	if row != nil {
-		var viewDDL string
-		err := row.Scan(&viewDDL)
-		if err != nil {
-			return nil, false
-		}
-		return internaldto.NewViewDTO(viewName, viewDDL), true
+	if row == nil {
+		return nil, false
 	}
-	return nil, false
+	var viewDDL string
+	err := row.Scan(&viewDDL)
+	if err != nil {
+		return nil, false
+	}
+	rv := internaldto.NewViewDTO(viewName, viewDDL)
+	return rv, true
 }
 
 func (eng *sqLiteSystem) DropView(viewName string) error {
@@ -592,6 +593,328 @@ func (eng *sqLiteSystem) generateViewDDL(relationalTable relationaldto.Relationa
 	createViewBuilder.WriteString(fmt.Sprintf(`select %s from "%s" ;`, strings.Join(colNames, ", "), tableName))
 	retVal = append(retVal, createViewBuilder.String())
 	return retVal, nil
+}
+
+//nolint:unparam,revive // future proof
+func (eng *sqLiteSystem) CreateMaterializedView(
+	relationName string,
+	colz []typing.RelationalColumn,
+	rawDDL string,
+	replaceAllowed bool,
+	selectQuery string,
+	varargs ...any,
+) error {
+	return eng.runMaterializedViewCreate(
+		relationName,
+		colz,
+		rawDDL,
+		selectQuery,
+		varargs...,
+	)
+}
+
+//nolint:errcheck,revive,staticcheck // TODO: establish pattern
+func (eng *sqLiteSystem) RefreshMaterializedView(viewName string,
+	colz []typing.RelationalColumn,
+	selectQuery string,
+	varargs ...any) error {
+	//nolint:gosec // no viable alternative
+	deleteQuery := fmt.Sprintf(`
+		DELETE FROM "%s"`,
+		viewName,
+	)
+	txn, err := eng.sqlEngine.GetTx()
+	if err != nil {
+		return err
+	}
+	_, err = txn.Exec(deleteQuery)
+	if err != nil {
+		txn.Rollback()
+		return err
+	}
+	// TODO: check colz against DTO
+	relationDTO, relationDTOok := eng.getMaterializedViewByName(viewName, txn)
+	if !relationDTOok {
+		if len(relationDTO.GetColumns()) == 0 {
+		}
+		// no need to rollbak; assumed already done
+		return fmt.Errorf("cannot refresh materialized view = '%s': not found", viewName)
+	}
+	insertQuery := eng.generateTableInsertDMLFromViewSelect(viewName, selectQuery, colz)
+	_, err = txn.Exec(insertQuery, varargs...)
+	if err != nil {
+		txn.Rollback()
+		return err
+	}
+	commitErr := txn.Commit()
+	return commitErr
+}
+
+//nolint:errcheck // TODO: establish pattern
+func (eng *sqLiteSystem) DropMaterializedView(viewName string) error {
+	dropRefQuery := `
+	DELETE FROM "__iql__.materialized_views"
+	WHERE view_name = ?
+	`
+	dropColsQuery := `
+	DELETE
+	FROM
+	  "__iql__.materialized_views.columns"
+	WHERE
+	  view_name = ?
+	`
+	dropTableQuery := fmt.Sprintf(`
+	DROP TABLE IF EXISTS "%s"
+	`, viewName)
+	tx, err := eng.sqlEngine.GetTx()
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(dropRefQuery, viewName)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	_, err = tx.Exec(dropColsQuery, viewName)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	_, err = tx.Exec(dropTableQuery)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	commitErr := tx.Commit()
+	return commitErr
+}
+
+//nolint:errcheck // TODO: establish pattern
+func (eng *sqLiteSystem) GetMaterializedViewByName(viewName string) (internaldto.RelationDTO, bool) {
+	txn, err := eng.sqlEngine.GetTx()
+	if err != nil {
+		return nil, false
+	}
+	rv, ok := eng.getMaterializedViewByName(viewName, txn)
+	txn.Commit()
+	return rv, ok
+}
+
+//nolint:errcheck // TODO: establish pattern
+func (eng *sqLiteSystem) getMaterializedViewByName(viewName string, txn *sql.Tx) (internaldto.RelationDTO, bool) {
+	q := `SELECT view_ddl FROM "__iql__.materialized_views" WHERE view_name = ? and deleted_dttm IS NULL`
+	colQuery := `
+	SELECT
+		column_name 
+	   ,column_type
+	   ,"oid" 
+	   ,column_width 
+	   ,column_precision 
+	FROM
+	  "__iql__.materialized_views.columns"
+	WHERE
+	  view_name = ?
+	ORDER BY ordinal_position ASC
+	`
+	// txn, txnErr := eng.sqlEngine.GetTx()
+	// if txnErr != nil {
+	// 	return nil, false
+	// }
+	row := txn.QueryRow(q, viewName)
+	if row == nil {
+		txn.Rollback()
+		return nil, false
+	}
+	var viewDDL string
+	err := row.Scan(&viewDDL)
+	if err != nil {
+		txn.Rollback()
+		return nil, false
+	}
+	rv := internaldto.NewMaterializedViewDTO(viewName, viewDDL)
+	rows, err := txn.Query(colQuery, viewName)
+	if err != nil || rows == nil || rows.Err() != nil {
+		txn.Rollback()
+		return nil, false
+	}
+	defer rows.Close()
+	hasRow := false
+	var columns []typing.RelationalColumn
+	for {
+		if !rows.Next() {
+			break
+		}
+		hasRow = true
+		var columnName, columnType string
+		var oID, colWidth, colPrecision int
+		err = rows.Scan(&columnName, &columnType, &oID, &colWidth, &colPrecision)
+		if err != nil {
+			txn.Rollback()
+			return nil, false
+		}
+		relationalColumn := typing.NewRelationalColumn(
+			columnName,
+			columnType).WithWidth(colWidth).WithOID(oid.Oid(oID))
+		columns = append(columns, relationalColumn)
+	}
+	rv.SetColumns(columns)
+	if !hasRow {
+		txn.Rollback()
+		return nil, false
+	}
+	return rv, true
+}
+
+func (eng *sqLiteSystem) GetTableByName(
+	tableName string, tcc internaldto.TxnControlCounters) (internaldto.RelationDTO, bool) {
+	return eng.getTableByName(tableName, tcc)
+}
+
+// TODO: implement temp tables
+func (eng *sqLiteSystem) getTableByName(
+	viewName string,
+	tcc internaldto.TxnControlCounters, //nolint:revive,unparam // future proof
+) (internaldto.RelationDTO, bool) {
+	q := `SELECT table_ddl FROM "__iql__.tables" WHERE table_name = ? and deleted_dttm IS NULL`
+	colQuery := `
+	SELECT
+		column_name 
+	   ,column_type
+	   ,"oid" 
+	   ,column_width 
+	   ,column_precision 
+	FROM
+	  "__iql__.tables.columns"
+	WHERE
+	  table_name = ?
+	ORDER BY ordinal_position ASC
+	`
+	row := eng.sqlEngine.QueryRow(q, viewName)
+	if row == nil {
+		return nil, false
+	}
+	var viewDDL string
+	err := row.Scan(&viewDDL)
+	if err != nil {
+		return nil, false
+	}
+	rv := internaldto.NewPhysicalTableDTO(viewName, viewDDL)
+	rows, err := eng.sqlEngine.Query(colQuery, viewName)
+	if err != nil || rows == nil || rows.Err() != nil {
+		return nil, false
+	}
+	defer rows.Close()
+	hasRow := false
+	var columns []typing.RelationalColumn
+	for {
+		if !rows.Next() {
+			break
+		}
+		hasRow = true
+		var columnName, columnType string
+		var oID, colWidth, colPrecision int
+		err = rows.Scan(&columnName, &columnType, &oID, &colWidth, &colPrecision)
+		if err != nil {
+			return nil, false
+		}
+		relationalColumn := typing.NewRelationalColumn(
+			columnName,
+			columnType).WithWidth(colWidth).WithOID(oid.Oid(oID))
+		columns = append(columns, relationalColumn)
+	}
+	rv.SetColumns(columns)
+	if !hasRow {
+		return nil, false
+	}
+	return rv, true
+}
+
+// TODO: implement temp table drop
+func (eng *sqLiteSystem) DropTable(tableName string,
+	ifExists bool,
+	tcc internaldto.TxnControlCounters, //nolint:revive // future proof
+) error {
+	dropRefQuery := `
+	DELETE FROM "__iql__.tables"
+	WHERE table_name = ?
+	`
+	dropTableQuery := fmt.Sprintf(`
+	DROP TABLE "%s"
+	`, tableName)
+	if ifExists {
+		dropTableQuery = fmt.Sprintf(`
+		DROP TABLE IF EXISTS "%s"
+		`, tableName)
+	}
+	tx, err := eng.sqlEngine.GetTx()
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(dropRefQuery, tableName)
+	if err != nil {
+		//nolint:errcheck // TODO: merge variadic error(s) into one
+		tx.Rollback()
+		return err
+	}
+	_, err = tx.Exec(dropTableQuery)
+	if err != nil {
+		//nolint:errcheck // TODO: merge variadic error(s) into one
+		tx.Rollback()
+		return err
+	}
+	commitErr := tx.Commit()
+	return commitErr
+}
+
+// TODO: implement temp table creation
+func (eng *sqLiteSystem) CreateTable(
+	tableName string, rawDDL string, translatedDDL string, loadDML string, ifNotExists bool,
+	tcc internaldto.TxnControlCounters, //nolint:revive // future proof
+) error {
+	q := `
+	INSERT INTO "__iql__.tables" (
+		table_name,
+		table_ddl,
+		translated_ddl
+	  ) 
+	  VALUES (
+		?,
+		?,
+		?
+	  )
+	`
+	if !ifNotExists {
+		q += `
+		  ON CONFLICT(table_name)
+		  DO
+		    UPDATE SET table_ddl = EXCLUDED.table_ddl,
+			           translated_ddl = EXCLUDED.translated_ddl
+		`
+	}
+	tx, err := eng.sqlEngine.GetTx()
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(q, tableName, rawDDL)
+	if err != nil {
+		//nolint:errcheck // TODO: merge variadic error(s) into one
+		tx.Rollback()
+		return err
+	}
+	_, err = tx.Exec(translatedDDL)
+	if err != nil {
+		//nolint:errcheck // TODO: merge variadic error(s) into one
+		tx.Rollback()
+		return err
+	}
+	_, err = tx.Exec(loadDML)
+	if err != nil {
+		//nolint:errcheck // TODO: merge variadic error(s) into one
+		tx.Rollback()
+		return err
+	}
+	commitErr := tx.Commit()
+	return commitErr
 }
 
 func (eng *sqLiteSystem) IsTablePresent(
@@ -1061,4 +1384,145 @@ func (eng *sqLiteSystem) QueryNamespaced(
 		),
 		requestEncoding,
 	)
+}
+
+func (eng *sqLiteSystem) QueryMaterializedView(
+	colzString,
+	actualRelationName,
+	whereClause string,
+) (*sql.Rows, error) {
+	return eng.sqlEngine.Query(
+		fmt.Sprintf(
+			`SELECT %s FROM "%s" WHERE %s`,
+			colzString,
+			actualRelationName,
+			whereClause,
+		),
+	)
+}
+
+func (eng *sqLiteSystem) generateTableDDL(
+	relationName string,
+	colz []typing.RelationalColumn,
+) string {
+	sb := strings.Builder{}
+	sb.WriteString(fmt.Sprintf(`CREATE TABLE "%s" ( `, relationName))
+	var colzString []string
+	for _, col := range colz {
+		colzString = append(colzString, fmt.Sprintf(`"%s" %s`, col.GetName(), col.GetType()))
+	}
+	sb.WriteString(strings.Join(colzString, ", "))
+	sb.WriteString(" ) ")
+	return sb.String()
+}
+
+func (eng *sqLiteSystem) generateTableInsertDMLFromViewSelect(
+	relationName string,
+	selectQuery string,
+	colz []typing.RelationalColumn,
+) string {
+	sb := strings.Builder{}
+	sb.WriteString(fmt.Sprintf(`INSERT INTO "%s" ( `, relationName))
+	var colzString []string
+	for _, col := range colz {
+		colzString = append(colzString, fmt.Sprintf(`"%s"`, col.GetName()))
+	}
+	sb.WriteString(strings.Join(colzString, ", "))
+	sb.WriteString(" ) ")
+	sb.WriteString(selectQuery)
+	return sb.String()
+}
+
+//nolint:errcheck // TODO: establish pattern
+func (eng *sqLiteSystem) runMaterializedViewCreate(
+	relationName string,
+	colz []typing.RelationalColumn,
+	rawDDL string,
+	selectQuery string,
+	varargs ...any,
+) error {
+	txn, txnErr := eng.sqlEngine.GetTx()
+	if txnErr != nil {
+		return txnErr
+	}
+	columnQuery := `
+	INSERT INTO "__iql__.materialized_views.columns" (
+		view_name,
+		column_name,
+		column_type,
+		ordinal_position,
+		"oid",
+		column_width,
+		column_precision
+	  ) 
+	  VALUES (
+		?,
+		?,
+		?,
+		?,
+		?,
+		?,
+		?
+	  )
+	  ;
+	`
+	for i, col := range colz {
+		oid, oidExists := col.GetOID()
+		if !oidExists {
+			oid = 25
+		}
+		_, err := txn.Exec(
+			columnQuery,
+			relationName,
+			col.GetName(),
+			col.GetType(),
+			i+1,
+			oid,
+			col.GetWidth(),
+			0, // TODO: implement precision record
+		)
+		if err != nil {
+			txn.Rollback()
+			return err
+		}
+	}
+	tableDDL := eng.generateTableDDL(relationName, colz)
+	_, err := txn.Exec(tableDDL)
+	if err != nil {
+		txn.Rollback()
+		return err
+	}
+	insertQuery := eng.generateTableInsertDMLFromViewSelect(relationName, selectQuery, colz)
+	_, err = txn.Exec(insertQuery, varargs...)
+	if err != nil {
+		txn.Rollback()
+		return err
+	}
+	relationCatalogueQuery := `
+	INSERT INTO "__iql__.materialized_views" (
+		view_name,
+		view_ddl,
+		translated_ddl,
+		translated_inline_dml
+	  ) 
+	  VALUES (
+		?,
+		?,
+		?,
+		''
+	  )
+	  ;
+	  `
+	_, err = txn.Exec(
+		relationCatalogueQuery,
+		relationName,
+		rawDDL,
+		tableDDL,
+	)
+	if err != nil {
+		txn.Rollback()
+		return err
+	}
+	commitErr := txn.Commit()
+	return commitErr
 }

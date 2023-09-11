@@ -27,6 +27,10 @@ type PrimitiveGraphHolder interface {
 	SetInverseContainsIndirect(bool)
 	SetTxnID(int)
 	SetInverseTxnID(int)
+	SetInverseContainsUserManagedRelation(containsUserRelation bool)
+	SetContainsUserManagedRelation(containsUserRelation bool)
+	InverseContainsUserManagedRelation() bool
+	ContainsUserManagedRelation() bool
 }
 
 type standardPrimitiveGraphHolder struct {
@@ -78,12 +82,28 @@ func (pgh *standardPrimitiveGraphHolder) SetContainsIndirect(containsView bool) 
 	pgh.pg.SetContainsIndirect(containsView)
 }
 
+func (pgh *standardPrimitiveGraphHolder) SetContainsUserManagedRelation(containsUserRelation bool) {
+	pgh.pg.SetContainsUserManagedRelation(containsUserRelation)
+}
+
+func (pgh *standardPrimitiveGraphHolder) SetInverseContainsUserManagedRelation(containsUserRelation bool) {
+	pgh.ipg.SetContainsUserManagedRelation(containsUserRelation)
+}
+
 func (pgh *standardPrimitiveGraphHolder) ContainsIndirect() bool {
 	return pgh.pg.ContainsIndirect()
 }
 
 func (pgh *standardPrimitiveGraphHolder) InverseContainsIndirect() bool {
 	return pgh.ipg.ContainsIndirect()
+}
+
+func (pgh *standardPrimitiveGraphHolder) ContainsUserManagedRelation() bool {
+	return pgh.pg.ContainsUserManagedRelation()
+}
+
+func (pgh *standardPrimitiveGraphHolder) InverseContainsUserManagedRelation() bool {
+	return pgh.ipg.ContainsUserManagedRelation()
 }
 
 func (pgh *standardPrimitiveGraphHolder) GetTxnControlCounterSlice() []internaldto.TxnControlCounters {

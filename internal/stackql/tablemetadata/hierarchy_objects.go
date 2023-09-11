@@ -24,7 +24,7 @@ type HeirarchyObjects interface {
 	GetSQLDataSource() (sql_datasource.SQLDataSource, bool)
 	GetTableName() string
 	GetSubquery() (internaldto.SubqueryDTO, bool)
-	GetView() (internaldto.ViewDTO, bool)
+	GetView() (internaldto.RelationDTO, bool)
 	LookupSelectItemsKey() string
 	SetProvider(provider.IProvider)
 	SetSQLDataSource(sql_datasource.SQLDataSource)
@@ -71,7 +71,7 @@ func (ho *standardHeirarchyObjects) SetSQLDataSource(sqlDataSource sql_datasourc
 	ho.sqlDataSource = sqlDataSource
 }
 
-func (ho *standardHeirarchyObjects) GetView() (internaldto.ViewDTO, bool) {
+func (ho *standardHeirarchyObjects) GetView() (internaldto.RelationDTO, bool) {
 	return ho.heirarchyIds.GetView()
 }
 

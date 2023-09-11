@@ -24,7 +24,7 @@ func GetHeirarchyIDsFromParserNode(
 	return getHids(handlerCtx, node)
 }
 
-//nolint:funlen // lots of moving parts
+//nolint:funlen,gocognit // lots of moving parts
 func getHids(handlerCtx handler.HandlerContext, node sqlparser.SQLNode) (internaldto.HeirarchyIdentifiers, error) {
 	var hIds internaldto.HeirarchyIdentifiers
 	switch n := node.(type) {
@@ -82,12 +82,21 @@ func getHids(handlerCtx handler.HandlerContext, node sqlparser.SQLNode) (interna
 	if isView {
 		hIds = hIds.WithView(viewDTO)
 	}
+	materializedViewDTO, isMaterializedView := handlerCtx.GetSQLSystem().GetMaterializedViewByName(hIds.GetTableName())
+	if isMaterializedView {
+		hIds = hIds.WithView(materializedViewDTO)
+	}
+	// TODO: pass in current counters
+	physicalTableDTO, isPhysicalTable := handlerCtx.GetSQLSystem().GetTableByName(hIds.GetTableName(), nil)
+	if isPhysicalTable {
+		hIds = hIds.WithView(physicalTableDTO)
+	}
 	isInternallyRoutable := handlerCtx.GetPGInternalRouter().ExprIsRoutable(node)
 	if isInternallyRoutable {
 		hIds.SetContainsNativeDBMSTable(true)
 		return hIds, nil
 	}
-	if !(isView) && hIds.GetProviderStr() == "" {
+	if !(isView || isMaterializedView || isPhysicalTable) && hIds.GetProviderStr() == "" {
 		if handlerCtx.GetCurrentProvider() == "" {
 			return nil, fmt.Errorf("could not locate table '%s'", hIds.GetTableName())
 		}

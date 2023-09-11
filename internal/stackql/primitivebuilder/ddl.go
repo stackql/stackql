@@ -5,49 +5,92 @@ import (
 	"strings"
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
+	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/astformat"
+	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/builder_input"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
+	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 	"github.com/stackql/stackql/internal/stackql/util"
 )
 
 type ddl struct {
-	graph      primitivegraph.PrimitiveGraphHolder
-	ddlObject  *sqlparser.DDL
-	handlerCtx handler.HandlerContext
-	root, tail primitivegraph.PrimitiveNode
+	graph        primitivegraph.PrimitiveGraphHolder
+	ddlObject    *sqlparser.DDL
+	handlerCtx   handler.HandlerContext
+	root, tail   primitivegraph.PrimitiveNode
+	annotatedAst annotatedast.AnnotatedAst
+	bldrInput    builder_input.BuilderInput
 }
 
-func (un *ddl) Build() error {
-	sqlSystem := un.handlerCtx.GetSQLSystem()
+//nolint:gocognit,nestif // acceptable
+func (ddo *ddl) Build() error {
+	sqlSystem := ddo.handlerCtx.GetSQLSystem()
 	if sqlSystem == nil {
 		return fmt.Errorf("cannot proceed DDL execution with nil sql system object")
 	}
-	unionObj := un.ddlObject
+	parserDDLObj := ddo.ddlObject
 	if sqlSystem == nil {
 		return fmt.Errorf("cannot proceed DDL execution with nil ddl object")
 	}
 	unionEx := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
-		actionLowered := strings.ToLower(unionObj.Action)
+		actionLowered := strings.ToLower(parserDDLObj.Action)
 		switch actionLowered {
 		case "create":
-			tableName := strings.Trim(astformat.String(unionObj.Table, sqlSystem.GetASTFormatter()), `"`)
-			viewDDL := strings.ReplaceAll(
-				astformat.String(unionObj.SelectStatement, astformat.DefaultSelectExprsFormatter), `"`, "")
-			err := sqlSystem.CreateView(tableName, viewDDL, unionObj.OrReplace)
-			if err != nil {
-				return internaldto.NewErroneousExecutorOutput(err)
+			tableName := strings.Trim(astformat.String(parserDDLObj.Table, sqlSystem.GetASTFormatter()), `"`)
+			isTable := parserutil.IsCreatePhysicalTable(parserDDLObj)
+			isTempTable := parserutil.IsCreateTemporaryPhysicalTable(parserDDLObj)
+			isMaterializedView := parserutil.IsCreateMaterializedView(parserDDLObj)
+			if isTable || isTempTable { // TODO: support for create tables
+				return internaldto.NewErroneousExecutorOutput(fmt.Errorf("create table is not supported"))
+			}
+			if isMaterializedView { // TODO: support for create materialized views
+				indirect, indirectExists := ddo.annotatedAst.GetIndirect(ddo.ddlObject)
+				if !indirectExists {
+					return internaldto.NewErroneousExecutorOutput(fmt.Errorf("cannot find indirect object for materialized view"))
+				}
+				drmCfg := ddo.handlerCtx.GetDrmConfig()
+
+				selStr := parserutil.RenderDDLSelectStmt(ddo.ddlObject)
+				rawDDL := fmt.Sprintf(`CREATE MATERIALIZED VIEW "%s" AS %s`, tableName, selStr)
+				if ddo.ddlObject.OrReplace {
+					rawDDL = fmt.Sprintf(`CREATE OR REPLACE MATERIALIZED VIEW "%s" AS %s`, tableName, selStr)
+				}
+				selCtx := indirect.GetSelectContext()
+				materializedViewCreateError := drmCfg.CreateMaterializedView(
+					tableName,
+					rawDDL,
+					drm.NewPreparedStatementParameterized(selCtx, nil, true),
+					ddo.ddlObject.OrReplace,
+				)
+				if materializedViewCreateError != nil {
+					return internaldto.NewErroneousExecutorOutput(materializedViewCreateError)
+				}
+			} else {
+				relationDDL := parserutil.RenderDDLSelectStmt(parserDDLObj)
+				err := sqlSystem.CreateView(tableName, relationDDL, parserDDLObj.OrReplace)
+				if err != nil {
+					return internaldto.NewErroneousExecutorOutput(err)
+				}
 			}
 		case "drop":
-			if tl := len(unionObj.FromTables); tl != 1 {
+			if tl := len(parserDDLObj.FromTables); tl != 1 {
 				return internaldto.NewErroneousExecutorOutput(fmt.Errorf("cannot drop table with supplied table count = %d", tl))
 			}
-			tableName := strings.Trim(astformat.String(unionObj.FromTables[0], sqlSystem.GetASTFormatter()), `"`)
-			err := sqlSystem.DropView(tableName)
-			if err != nil {
-				return internaldto.NewErroneousExecutorOutput(err)
+			tableName := strings.Trim(astformat.String(parserDDLObj.FromTables[0], sqlSystem.GetASTFormatter()), `"`)
+			if parserutil.IsDropMaterializedView(parserDDLObj) {
+				err := sqlSystem.DropMaterializedView(tableName)
+				if err != nil {
+					return internaldto.NewErroneousExecutorOutput(err)
+				}
+			} else {
+				err := sqlSystem.DropView(tableName)
+				if err != nil {
+					return internaldto.NewErroneousExecutorOutput(err)
+				}
 			}
 		default:
 		}
@@ -60,33 +103,61 @@ func (un *ddl) Build() error {
 				nil,
 				nil,
 				nil,
-				un.handlerCtx.GetTypingConfig(),
+				ddo.handlerCtx.GetTypingConfig(),
 			),
 		)
 	}
-	graph := un.graph
-	unionNode := graph.CreatePrimitiveNode(primitive.NewLocalPrimitive(unionEx))
-	un.root = unionNode
-	un.tail = unionNode
+	graph := ddo.graph
+	ddlGraphNode := graph.CreatePrimitiveNode(primitive.NewLocalPrimitive(unionEx))
+
+	ddo.root = ddlGraphNode
+	ddo.tail = ddlGraphNode
+	dependencyNode, dependencyNodeExists := ddo.bldrInput.GetDependencyNode()
+	if dependencyNodeExists {
+		//nolint:errcheck // TODO: fix this
+		ddlGraphNode.SetInputAlias("", dependencyNode.ID())
+		ddo.graph.NewDependency(dependencyNode, ddlGraphNode, 1.0)
+		ddo.root = dependencyNode
+	}
 	return nil
 }
 
 func NewDDL(
-	graph primitivegraph.PrimitiveGraphHolder,
-	handlerCtx handler.HandlerContext,
-	ddlObject *sqlparser.DDL,
-) Builder {
-	return &ddl{
-		graph:      graph,
-		handlerCtx: handlerCtx,
-		ddlObject:  ddlObject,
+	bldrInput builder_input.BuilderInput,
+) (Builder, error) {
+	graphHolder, graphHolderExists := bldrInput.GetGraphHolder()
+	if !graphHolderExists {
+		return nil, fmt.Errorf("DDL builder cannot accomodate nil graph holder")
 	}
+	handlerCtx, handlerCtxExists := bldrInput.GetHandlerContext()
+	if !handlerCtxExists {
+		return nil, fmt.Errorf("DDL builder cannot accomodate nil handler context")
+	}
+	node, nodeExists := bldrInput.GetParserNode()
+	if !nodeExists {
+		return nil, fmt.Errorf("DDL builder cannot accomodate nil node")
+	}
+	ddlObject, isDDLObject := node.(*sqlparser.DDL)
+	if !isDDLObject {
+		return nil, fmt.Errorf("DDL builder cannot accomodate nil or non-DDL object")
+	}
+	annotatedAst, annotatedASTExists := bldrInput.GetAnnotatedAST()
+	if !annotatedASTExists {
+		return nil, fmt.Errorf("DDL builder cannot accomodate nil annotated AST")
+	}
+	return &ddl{
+		graph:        graphHolder,
+		handlerCtx:   handlerCtx,
+		ddlObject:    ddlObject,
+		annotatedAst: annotatedAst,
+		bldrInput:    bldrInput,
+	}, nil
 }
 
-func (un *ddl) GetRoot() primitivegraph.PrimitiveNode {
-	return un.root
+func (ddo *ddl) GetRoot() primitivegraph.PrimitiveNode {
+	return ddo.root
 }
 
-func (un *ddl) GetTail() primitivegraph.PrimitiveNode {
-	return un.tail
+func (ddo *ddl) GetTail() primitivegraph.PrimitiveNode {
+	return ddo.tail
 }

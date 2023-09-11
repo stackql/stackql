@@ -10,11 +10,8 @@ import (
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/handler"
-	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
-	"github.com/stackql/stackql/internal/stackql/sqlrewrite"
-	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
@@ -22,107 +19,77 @@ import (
 )
 
 var (
-	_ QueryRewriteAstVisitor = &standardQueryRewriteAstVisitor{}
+	_ InternallyRoutableTypingAstVisitor = &standardInternallyRoutableTypingAstVisitor{}
 )
 
-type QueryRewriteAstVisitor interface {
+type InternallyRoutableTypingAstVisitor interface {
 	sqlparser.SQLAstVisitor
-	GenerateSelectDML() (drm.PreparedStatementCtx, error)
-	WithFormatter(formatter sqlparser.NodeFormatter) QueryRewriteAstVisitor
-	WithPrepStmtOffset(int) QueryRewriteAstVisitor
+	GetSelectContext() (drm.PreparedStatementCtx, bool)
+	WithFormatter(formatter sqlparser.NodeFormatter) InternallyRoutableTypingAstVisitor
 }
 
-type standardQueryRewriteAstVisitor struct {
-	handlerCtx            handler.HandlerContext
-	dc                    drm.Config
-	tables                taxonomy.TblMap
-	annotations           taxonomy.AnnotationCtxMap
-	discoGenIDs           map[sqlparser.SQLNode]int
-	annotatedTabulations  taxonomy.AnnotatedTabulationMap
-	selectCtx             drm.PreparedStatementCtx
-	baseCtrlCounters      internaldto.TxnControlCounters
-	secondaryCtrlCounters []internaldto.TxnControlCounters
-	colRefs               parserutil.ColTableMap
-	columnNames           []parserutil.ColumnHandle
-	columnDescriptors     []openapistackql.ColumnDescriptor
-	relationalColumns     []typing.RelationalColumn
-	tableSlice            []tableinsertioncontainer.TableInsertionContainer
-	namespaceCollection   tablenamespace.Collection
-	formatter             sqlparser.NodeFormatter
-	annotatedAST          annotatedast.AnnotatedAst
+type standardInternallyRoutableTypingAstVisitor struct {
+	handlerCtx           handler.HandlerContext
+	rawQuery             string
+	dc                   drm.Config
+	tables               taxonomy.TblMap
+	annotations          taxonomy.AnnotationCtxMap
+	discoGenIDs          map[sqlparser.SQLNode]int
+	annotatedTabulations taxonomy.AnnotatedTabulationMap
+	columnNames          []parserutil.ColumnHandle
+	columnDescriptors    []openapistackql.ColumnDescriptor
+	relationalColumns    []typing.RelationalColumn
+	namespaceCollection  tablenamespace.Collection
+	formatter            sqlparser.NodeFormatter
+	annotatedAST         annotatedast.AnnotatedAst
 	//
-	fromStr       string
-	whereExprsStr string
-	selectSuffix  string
-	// singe threaded, so no mutex protection
+	// single threaded, so no mutex protection
 	anonColCounter int
-	//
-	indirectContexts []drm.PreparedStatementCtx
-	//
-	prepStmtOffset        int
-	hoistedOnClauseTables []sqlparser.SQLNode
 }
 
-func NewQueryRewriteAstVisitor(
+func NewInternallyRoutableTypingAstVisitor(
+	rawQuery string,
 	annotatedAST annotatedast.AnnotatedAst,
 	handlerCtx handler.HandlerContext,
 	tables taxonomy.TblMap,
-	tableSlice []tableinsertioncontainer.TableInsertionContainer,
-	annotations taxonomy.AnnotationCtxMap,
-	discoGenIDs map[sqlparser.SQLNode]int,
-	colRefs parserutil.ColTableMap,
 	dc drm.Config,
-	txnCtrlCtrs internaldto.TxnControlCounters,
-	secondaryTccs []internaldto.TxnControlCounters,
-	rewrittenWhere string,
 	namespaceCollection tablenamespace.Collection,
-) QueryRewriteAstVisitor {
-	rv := &standardQueryRewriteAstVisitor{
-		annotatedAST:          annotatedAST,
-		handlerCtx:            handlerCtx,
-		tables:                tables,
-		tableSlice:            tableSlice,
-		annotations:           annotations,
-		discoGenIDs:           discoGenIDs,
-		annotatedTabulations:  make(taxonomy.AnnotatedTabulationMap),
-		colRefs:               colRefs,
-		dc:                    dc,
-		baseCtrlCounters:      txnCtrlCtrs,
-		secondaryCtrlCounters: secondaryTccs,
-		whereExprsStr:         rewrittenWhere,
-		namespaceCollection:   namespaceCollection,
+) InternallyRoutableTypingAstVisitor {
+	rv := &standardInternallyRoutableTypingAstVisitor{
+		rawQuery:             rawQuery,
+		annotatedAST:         annotatedAST,
+		handlerCtx:           handlerCtx,
+		tables:               tables,
+		annotatedTabulations: make(taxonomy.AnnotatedTabulationMap),
+		dc:                   dc,
+		namespaceCollection:  namespaceCollection,
 	}
 	return rv
 }
 
 // TODO: introduce dependency on RDBMS
-func (v *standardQueryRewriteAstVisitor) getTypeFromParserType(t sqlparser.ValType) string {
+func (v *standardInternallyRoutableTypingAstVisitor) getTypeFromParserType(t sqlparser.ValType) string {
 	//nolint:exhaustive // acceptable
 	switch t {
 	case sqlparser.StrVal:
-		return "string"
+		return "TEXT"
 	case sqlparser.IntVal:
-		return "int"
+		return "INT"
 	case sqlparser.FloatVal:
-		return "float"
+		return "NUMERIC"
 	default:
-		return "string"
+		return "TEXT"
 	}
 }
 
-func (v *standardQueryRewriteAstVisitor) WithPrepStmtOffset(offset int) QueryRewriteAstVisitor {
-	v.prepStmtOffset = offset
-	return v
-}
-
-func (v *standardQueryRewriteAstVisitor) getNextAlias() string {
+func (v *standardInternallyRoutableTypingAstVisitor) getNextAlias() string {
 	v.anonColCounter++
 	i := v.anonColCounter
 	return fmt.Sprintf("col_%d", i)
 }
 
-//nolint:dupl // TODO: fix this
-func (v *standardQueryRewriteAstVisitor) getStarColumns(
+//nolint:dupl,lll // TODO: fix this
+func (v *standardInternallyRoutableTypingAstVisitor) getStarColumns(
 	tbl tablemetadata.ExtendedTableMetadata,
 ) ([]typing.RelationalColumn, error) {
 	if indirect, isIndirect := tbl.GetIndirect(); isIndirect {
@@ -139,7 +106,7 @@ func (v *standardQueryRewriteAstVisitor) getStarColumns(
 	}
 	itemObjS, selectItemsKey, err := tbl.GetSelectSchemaAndObjectPath()
 	tbl.SetSelectItemsKey(selectItemsKey)
-	unsuitableSchemaMsg := "standardQueryRewriteAstVisitor.getStarColumns(): schema unsuitable for select query"
+	unsuitableSchemaMsg := "standardInternallyRoutableTypingAstVisitor.getStarColumns(): schema unsuitable for select query"
 	if err != nil {
 		return nil, fmt.Errorf(unsuitableSchemaMsg)
 	}
@@ -170,73 +137,36 @@ func (v *standardQueryRewriteAstVisitor) getStarColumns(
 	return relationalColumns, nil
 }
 
-func (v *standardQueryRewriteAstVisitor) GenerateSelectDML() (drm.PreparedStatementCtx, error) {
-	relationalColumns := v.relationalColumns
-	rewriteInput := sqlrewrite.NewStandardSQLRewriteInput(
-		v.dc,
-		relationalColumns,
-		v.baseCtrlCounters,
-		v.selectSuffix,
-		v.whereExprsStr,
-		v.secondaryCtrlCounters,
-		v.tables,
-		v.fromStr,
-		v.tableSlice,
-		v.namespaceCollection,
-		v.hoistedOnClauseTables,
-	).WithIndirectContexts(v.indirectContexts).WithPrepStmtOffset(v.prepStmtOffset)
-	return sqlrewrite.GenerateRewrittenSelectDML(rewriteInput)
-}
-
 // Need not be view-aware.
 
-func (v *standardQueryRewriteAstVisitor) WithFormatter(formatter sqlparser.NodeFormatter) QueryRewriteAstVisitor {
+func (v *standardInternallyRoutableTypingAstVisitor) WithFormatter(
+	formatter sqlparser.NodeFormatter) InternallyRoutableTypingAstVisitor {
 	v.formatter = formatter
 	return v
 }
 
-func (v *standardQueryRewriteAstVisitor) GetTableMap() taxonomy.TblMap {
-	return v.tables
-}
-
-func (v *standardQueryRewriteAstVisitor) GetColumnDescriptors() []openapistackql.ColumnDescriptor {
-	return v.columnDescriptors
-}
-
-func (v *standardQueryRewriteAstVisitor) GetSelectContext() (drm.PreparedStatementCtx, bool) {
-	if v.selectCtx != nil {
-		return v.selectCtx, true
+func (v *standardInternallyRoutableTypingAstVisitor) GetSelectContext() (drm.PreparedStatementCtx, bool) {
+	if len(v.relationalColumns) > 0 {
+		var columns []typing.ColumnMetadata
+		for _, col := range v.relationalColumns {
+			relationalColumn := col
+			columns = append(
+				columns,
+				typing.NewRelayedColDescriptor(
+					relationalColumn, relationalColumn.GetType()))
+		}
+		rv := drm.NewQueryOnlyPreparedStatementCtx(v.rawQuery, columns)
+		return rv, true
 	}
 	return nil, false
 }
 
 //nolint:dupl,funlen,gocognit,gocyclo,cyclop,errcheck,staticcheck,gocritic,lll,govet,nestif,exhaustive,gomnd,revive // defer uplifts on analysers
-func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
+func (v *standardInternallyRoutableTypingAstVisitor) Visit(node sqlparser.SQLNode) error {
 	var err error
 
 	switch node := node.(type) {
 	case *sqlparser.Select:
-		v.selectSuffix = GenerateModifiedSelectSuffix(v.annotatedAST, node, v.handlerCtx.GetSQLSystem(), v.handlerCtx.GetASTFormatter(), v.namespaceCollection)
-		var options string
-		addIf := func(b bool, s string) {
-			if b {
-				options += s
-			}
-		}
-		addIf(node.Distinct, sqlparser.DistinctStr)
-		if node.Cache != nil {
-			if *node.Cache {
-				options += sqlparser.SQLCacheStr
-			} else {
-				options += sqlparser.SQLNoCacheStr
-			}
-		}
-		addIf(node.StraightJoinHint, sqlparser.StraightJoinHint)
-		addIf(node.SQLCalcFoundRows, sqlparser.SQLCalcFoundRowsStr)
-
-		if node.Comments != nil {
-			node.Comments.Accept(v)
-		}
 		if node.SelectExprs != nil {
 			err = node.SelectExprs.Accept(v)
 			if err != nil {
@@ -248,14 +178,6 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			if err != nil {
 				return err
 			}
-			fromVis := NewFromRewriteAstVisitor(v.annotatedAST, "", true, v.handlerCtx.GetSQLSystem(), v.formatter, v.namespaceCollection, v.annotations, v.dc)
-			fromVis.SetAvoidSQLSourceNaming(true)
-			if node.From != nil {
-				node.From.Accept(fromVis)
-				v.fromStr = fromVis.GetRewrittenQuery()
-				v.hoistedOnClauseTables = append(v.hoistedOnClauseTables, fromVis.GetHoistedOnClauseTables()...)
-			}
-			v.indirectContexts = fromVis.GetIndirectContexts()
 		}
 		if node.Where != nil {
 			node.Where.Accept(v)
@@ -601,9 +523,25 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 				col.Alias = v.getNextAlias()
 			}
 			v.columnNames = append(v.columnNames, col)
-			cd := openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, node, nil, col.Val)
-			v.columnDescriptors = append(v.columnDescriptors, cd)
-			v.relationalColumns = append(v.relationalColumns, v.dc.OpenapiColumnsToRelationalColumn(cd))
+			// broadcastType := "TEXT"
+			// switch expr := node.Expr.(type) {
+			// case *sqlparser.SQLVal:
+			// 	broadcastType = v.getTypeFromParserType(expr.Type)
+			// default:
+			// }
+			// cd := openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, node, nil, col.Val)
+			// v.columnDescriptors = append(v.columnDescriptors, cd)
+			// relCol := v.dc.OpenapiColumnsToRelationalColumn(cd)
+			rv := typing.NewRelationalColumn(
+				col.Name,
+				v.getTypeFromParserType(col.Type),
+			).WithDecorated(
+				col.DecoratedColumn,
+			).WithAlias(
+				col.Alias,
+			).WithUnquote(true)
+			v.relationalColumns = append(v.relationalColumns, rv)
+			// v.relationalColumns = append(v.relationalColumns, relCol)
 			return nil
 		}
 		if indirect, isIndirect := tbl.GetIndirect(); isIndirect {

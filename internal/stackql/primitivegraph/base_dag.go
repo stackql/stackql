@@ -27,6 +27,7 @@ type standardBasePrimitiveGraph struct {
 	errGroup               *errgroup.Group
 	errGroupCtx            context.Context
 	containsView           bool
+	containsUserRelation   bool // for tables and materialized views
 }
 
 func (pg *standardBasePrimitiveGraph) Size() int {
@@ -95,6 +96,14 @@ func (pg *standardBasePrimitiveGraph) ContainsIndirect() bool {
 
 func (pg *standardBasePrimitiveGraph) SetContainsIndirect(containsView bool) {
 	pg.containsView = containsView
+}
+
+func (pg *standardBasePrimitiveGraph) ContainsUserManagedRelation() bool {
+	return pg.containsUserRelation
+}
+
+func (pg *standardBasePrimitiveGraph) SetContainsUserManagedRelation(containsUserRelation bool) {
+	pg.containsUserRelation = containsUserRelation
 }
 
 func (pg *standardBasePrimitiveGraph) GetInputFromAlias(string) (internaldto.ExecutorOutput, bool) {

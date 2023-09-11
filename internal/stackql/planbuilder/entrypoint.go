@@ -1,12 +1,16 @@
 package planbuilder
 
 import (
+	"fmt"
+
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/earlyanalysis"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parser"
+	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/plan"
 	"github.com/stackql/stackql/internal/stackql/primitivegenerator"
 )
@@ -70,6 +74,30 @@ func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerCo
 	if err != nil {
 		return createErroneousPlan(handlerCtx, qPlan, rowSort, err)
 	}
+	//nolint:gocritic // acceptable
+	switch stmt := statement.(type) {
+	case *sqlparser.RefreshMaterializedView:
+		relationName := stmt.ViewName.GetRawVal()
+		catalogueEntry, catalogueEntryExists := handlerCtx.GetSQLSystem().GetMaterializedViewByName(relationName)
+		if !catalogueEntryExists {
+			return createErroneousPlan(
+				handlerCtx, qPlan, rowSort,
+				fmt.Errorf("could not find materialized view '%s' to refresh", relationName))
+		}
+		rawQuery := catalogueEntry.GetRawQuery()
+		implicitStatement, stmtErr := sqlParser.ParseQuery(rawQuery)
+		if stmtErr != nil {
+			return createErroneousPlan(handlerCtx, qPlan, rowSort, stmtErr)
+		}
+		implicitSelectStatement, isSelect := parserutil.ExtractSelectStatmentFromDDL(implicitStatement)
+		if !isSelect {
+			return createErroneousPlan(
+				handlerCtx, qPlan, rowSort,
+				fmt.Errorf("could not find implicit select statement for materialized view '%s' to refresh", relationName))
+		}
+		stmt.ImplicitSelect = implicitSelectStatement
+		statement = stmt
+	}
 
 	pGBuilder := newPlanGraphBuilder(handlerCtx.GetRuntimeContext().ExecutionConcurrencyLimit, pb.transactionContext)
 
@@ -85,6 +113,10 @@ func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerCo
 	err = earlyPassScreenerAnalyzer.Analyze(statement, handlerCtx, tcc)
 	if err != nil {
 		return createErroneousPlan(handlerCtx, qPlan, rowSort, err)
+	}
+	prebuiltIndirect, prebuiltIndirectExists := earlyPassScreenerAnalyzer.GetIndirectCreateTail()
+	if prebuiltIndirectExists {
+		pGBuilder.setPrebuiltIndirect(prebuiltIndirect)
 	}
 	// TODO: full analysis of view, which will become child of top level query
 	statementType := earlyPassScreenerAnalyzer.GetStatementType()
@@ -131,6 +163,10 @@ func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerCo
 	}
 
 	if pGBuilder.getPlanGraphHolder().ContainsIndirect() {
+		qPlan.SetCacheable(false)
+	}
+
+	if pGBuilder.getPlanGraphHolder().ContainsUserManagedRelation() {
 		qPlan.SetCacheable(false)
 	}
 

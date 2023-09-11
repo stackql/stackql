@@ -10,6 +10,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/planbuilderinput"
+	"github.com/stackql/stackql/internal/stackql/primitivebuilder"
 	"github.com/stackql/stackql/internal/stackql/primitivecomposer"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 	"github.com/stackql/stackql/internal/stackql/relational"
@@ -47,22 +48,26 @@ type PrimitiveGenerator interface {
 	CreateIndirectPrimitiveGenerator(ast sqlparser.SQLNode, handlerCtx handler.HandlerContext) PrimitiveGenerator
 	GetPrimitiveComposer() primitivecomposer.PrimitiveComposer
 	SetIsIndirect(isIndirect bool)
+	SetContainsUserManagedRelation(bool)
 	WithDataFlowDependentPrimitiveGenerator(PrimitiveGenerator) PrimitiveGenerator
 	WithPrepStmtOffset(offset int) PrimitiveGenerator
 	GetPrepStmtOffset() int
 	SetElideRead(bool)
 	IsElideRead() bool
 	IsShowResults() bool
+	GetIndirectCreateTailBuilder() (primitivebuilder.Builder, bool)
+	SetIndirectCreateTailBuilder(builder primitivebuilder.Builder)
 }
 
 type standardPrimitiveGenerator struct {
-	Parent            PrimitiveGenerator
-	dataflowDependent PrimitiveGenerator
-	Children          []PrimitiveGenerator
-	indirects         []PrimitiveGenerator
-	prepStmtOffset    int
-	PrimitiveComposer primitivecomposer.PrimitiveComposer
-	isElideRead       bool
+	Parent                    PrimitiveGenerator
+	dataflowDependent         PrimitiveGenerator
+	Children                  []PrimitiveGenerator
+	indirects                 []PrimitiveGenerator
+	prepStmtOffset            int
+	PrimitiveComposer         primitivecomposer.PrimitiveComposer
+	isElideRead               bool
+	indirectCreateTailBuilder primitivebuilder.Builder
 }
 
 func NewRootPrimitiveGenerator(
@@ -80,6 +85,14 @@ func NewRootPrimitiveGenerator(
 			handlerCtx.GetSQLEngine(), handlerCtx.GetSQLSystem(),
 			handlerCtx.GetASTFormatter()),
 	}
+}
+
+func (pb *standardPrimitiveGenerator) GetIndirectCreateTailBuilder() (primitivebuilder.Builder, bool) {
+	return pb.indirectCreateTailBuilder, pb.indirectCreateTailBuilder != nil
+}
+
+func (pb *standardPrimitiveGenerator) SetIndirectCreateTailBuilder(builder primitivebuilder.Builder) {
+	pb.indirectCreateTailBuilder = builder
 }
 
 func (pb *standardPrimitiveGenerator) WithDataFlowDependentPrimitiveGenerator(
@@ -111,6 +124,11 @@ func (pb *standardPrimitiveGenerator) GetPrimitiveComposer() primitivecomposer.P
 
 func (pb *standardPrimitiveGenerator) SetIsIndirect(isIndirect bool) {
 	pb.PrimitiveComposer.SetIsIndirect(isIndirect)
+}
+
+func (pb *standardPrimitiveGenerator) SetContainsUserManagedRelation(containsUserRelation bool) {
+	pb.PrimitiveComposer.SetContainsUserRelation(containsUserRelation)
+	pb.PrimitiveComposer.GetGraphHolder().SetContainsUserManagedRelation(containsUserRelation)
 }
 
 func (pb *standardPrimitiveGenerator) CreateIndirectPrimitiveGenerator(

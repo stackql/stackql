@@ -80,9 +80,20 @@ This will obviously only occur in testing.
 
 ### Manually testing mocks
 
+With embedded `sqlite` (default):
 
-```
+```bash
 export workspaceFolder='/path/to/repository/root'  # change this
 
 stackql --registry="{ \"url\": \"file://${workspaceFolder}/test/registry-mocked\", \"localDocRoot\": \"${workspaceFolder}/test/registry-mocked\", \"verifyConfig\": { \"nopVerify\": true } }" --tls.allowInsecure shell
+```
+
+With `postgres`:
+
+```bash
+docker compose -f docker-compose-externals.yml up postgres_stackql -d
+
+export workspaceFolder='/path/to/repository/root'  # change this
+
+stackql --registry="{ \"url\": \"file://${workspaceFolder}/test/registry-mocked\", \"localDocRoot\": \"${workspaceFolder}/test/registry-mocked\", \"verifyConfig\": { \"nopVerify\": true } }" --tls.allowInsecure --sqlBackend="{ \"dbEngine\": \"postgres_tcp\", \"sqlDialect\": \"postgres\", \"dsn\": \"postgres://stackql:stackql@127.0.0.1:7432/stackql\" }" shell
 ```

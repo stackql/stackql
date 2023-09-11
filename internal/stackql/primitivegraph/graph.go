@@ -22,6 +22,8 @@ type BasePrimitiveGraph interface {
 	SetTxnID(id int)
 	Sort() (sorted []graph.Node, err error)
 	Size() int
+	ContainsUserManagedRelation() bool
+	SetContainsUserManagedRelation(containsUserRelation bool)
 }
 
 type PrimitiveGraph interface {

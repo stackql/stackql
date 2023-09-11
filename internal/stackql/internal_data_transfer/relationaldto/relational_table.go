@@ -14,7 +14,7 @@ type RelationalTable interface {
 	GetBaseName() string
 	GetColumns() []typing.RelationalColumn
 	GetName() (string, error)
-	GetView() (internaldto.ViewDTO, bool)
+	GetView() (internaldto.RelationDTO, bool)
 	PushBackColumn(typing.RelationalColumn)
 	WithAlias(alias string) RelationalTable
 }
@@ -28,7 +28,7 @@ func NewRelationalTable(hIDs internaldto.HeirarchyIdentifiers, discoveryID int, 
 	}
 }
 
-func NewRelationalView(viewDTO internaldto.ViewDTO) RelationalTable {
+func NewRelationalView(viewDTO internaldto.RelationDTO) RelationalTable {
 	return &standardRelationalTable{
 		viewDTO: viewDTO,
 	}

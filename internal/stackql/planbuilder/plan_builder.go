@@ -44,12 +44,23 @@ type planGraphBuilder interface {
 	createInstructionFor(planbuilderinput.PlanBuilderInput) error
 	nop(planbuilderinput.PlanBuilderInput) error
 	getPlanGraphHolder() primitivegraph.PrimitiveGraphHolder
+	setPrebuiltIndirect(primitivebuilder.Builder)
+	getPrebuiltIndirect() (primitivebuilder.Builder, bool)
 }
 
 type standardPlanGraphBuilder struct {
 	planGraphHolder        primitivegraph.PrimitiveGraphHolder
 	rootPrimitiveGenerator primitivegenerator.PrimitiveGenerator
 	transactionContext     txn_context.ITransactionContext
+	preBuiltIndirect       primitivebuilder.Builder
+}
+
+func (pgb *standardPlanGraphBuilder) getPrebuiltIndirect() (primitivebuilder.Builder, bool) {
+	return pgb.preBuiltIndirect, pgb.preBuiltIndirect != nil
+}
+
+func (pgb *standardPlanGraphBuilder) setPrebuiltIndirect(builder primitivebuilder.Builder) {
+	pgb.preBuiltIndirect = builder
 }
 
 func (pgb *standardPlanGraphBuilder) setRootPrimitiveGenerator(
@@ -100,6 +111,8 @@ func (pgb *standardPlanGraphBuilder) createInstructionFor(pbi planbuilderinput.P
 		return iqlerror.GetStatementNotSupportedError("OTHER")
 	case *sqlparser.Purge:
 		return pgb.handlePurge(pbi)
+	case *sqlparser.RefreshMaterializedView:
+		return pgb.handleRefreshMaterializedView(pbi)
 	case *sqlparser.Registry:
 		return pgb.handleRegistry(pbi)
 	case *sqlparser.Rollback:
@@ -280,11 +293,119 @@ func (pgb *standardPlanGraphBuilder) handleDDL(pbi planbuilderinput.PlanBuilderI
 	if !ok {
 		return fmt.Errorf("could not cast node of type '%T' to required DDL", pbi.GetStatement())
 	}
-	bldr := primitivebuilder.NewDDL(
+	bldrInput := builder_input.NewBuilderInput(
 		pgb.planGraphHolder,
 		handlerCtx,
-		node,
+		nil,
 	)
+	bldrInput.SetParserNode(node)
+	//nolint:nestif // TODO: refactor
+	if node.SelectStatement != nil && parserutil.IsCreateMaterializedView(node) {
+		prebuiltIndirect, prebuildIndirectExists := pgb.getPrebuiltIndirect()
+		var selectPrimitiveNode primitivegraph.PrimitiveNode
+		if prebuildIndirectExists {
+			buildErr := prebuiltIndirect.Build()
+			if buildErr != nil {
+				return buildErr
+			}
+			tailNode := prebuiltIndirect.GetTail()
+			if tailNode != nil {
+				selectPrimitiveNode = tailNode
+			} else {
+				return fmt.Errorf("could not obtain tail node from prebuilt indirect")
+			}
+		} else {
+			selPbi, selErr := planbuilderinput.NewPlanBuilderInput(
+				pbi.GetAnnotatedAST(),
+				pbi.GetHandlerCtx(),
+				node.SelectStatement,
+				pbi.GetTableExprs(),
+				pbi.GetAssignedAliasedColumns(),
+				pbi.GetAliasedTables(),
+				pbi.GetColRefs(),
+				pbi.GetPlaceholderParams(),
+				pbi.GetTxnCtrlCtrs())
+			if selErr != nil {
+				return selErr
+			}
+			var err error
+			_, selectPrimitiveNode, err = pgb.handleSelect(selPbi)
+			if err != nil {
+				return err
+			}
+		}
+		bldrInput.SetDependencyNode(selectPrimitiveNode)
+	}
+	bldrInput.SetAnnotatedAST(pbi.GetAnnotatedAST())
+	bldr, bldrErr := primitivebuilder.NewDDL(
+		bldrInput,
+	)
+	if bldrErr != nil {
+		return bldrErr
+	}
+	err := bldr.Build()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (pgb *standardPlanGraphBuilder) handleRefreshMaterializedView(pbi planbuilderinput.PlanBuilderInput) error {
+	handlerCtx := pbi.GetHandlerCtx()
+	node, ok := pbi.GetRefreshedMaterializedView()
+	if !ok {
+		return fmt.Errorf("could not cast node of type '%T' to required DDL", pbi.GetStatement())
+	}
+	bldrInput := builder_input.NewBuilderInput(
+		pgb.planGraphHolder,
+		handlerCtx,
+		nil,
+	)
+	bldrInput.SetParserNode(node)
+	//nolint:nestif // acceptable
+	if node.ImplicitSelect != nil {
+		prebuiltIndirect, prebuildIndirectExists := pgb.getPrebuiltIndirect()
+		var selectPrimitiveNode primitivegraph.PrimitiveNode
+		if prebuildIndirectExists {
+			buildErr := prebuiltIndirect.Build()
+			if buildErr != nil {
+				return buildErr
+			}
+			tailNode := prebuiltIndirect.GetTail()
+			if tailNode != nil {
+				selectPrimitiveNode = tailNode
+			} else {
+				return fmt.Errorf("could not obtain tail node from prebuilt indirect")
+			}
+		} else {
+			selPbi, selErr := planbuilderinput.NewPlanBuilderInput(
+				pbi.GetAnnotatedAST(),
+				pbi.GetHandlerCtx(),
+				node.ImplicitSelect,
+				pbi.GetTableExprs(),
+				pbi.GetAssignedAliasedColumns(),
+				pbi.GetAliasedTables(),
+				pbi.GetColRefs(),
+				pbi.GetPlaceholderParams(),
+				pbi.GetTxnCtrlCtrs())
+			if selErr != nil {
+				return selErr
+			}
+			var err error
+			_, selectPrimitiveNode, err = pgb.handleSelect(selPbi)
+			if err != nil {
+				return err
+			}
+		}
+		bldrInput.SetDependencyNode(selectPrimitiveNode)
+	}
+	bldrInput.SetAnnotatedAST(pbi.GetAnnotatedAST())
+	bldr, bldrErr := primitivebuilder.NewRefreshMaterializedView(
+		bldrInput,
+	)
+	if bldrErr != nil {
+		return bldrErr
+	}
 	err := bldr.Build()
 	if err != nil {
 		return err

@@ -3,6 +3,7 @@ package builder_input //nolint:revive,stylecheck // permissable deviation from n
 import (
 	"github.com/stackql/go-openapistackql/openapistackql"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
+	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 	"github.com/stackql/stackql/internal/stackql/provider"
@@ -39,6 +40,8 @@ type BuilderInput interface {
 	SetDependencyNode(dependencyNode primitivegraph.PrimitiveNode)
 	SetParserNode(node sqlparser.SQLNode)
 	SetParamMap(paramMap map[int]map[string]interface{})
+	GetAnnotatedAST() (annotatedast.AnnotatedAst, bool)
+	SetAnnotatedAST(annotatedAST annotatedast.AnnotatedAst)
 	SetParamMapStream(streaming.MapStream)
 	SetVerb(verb string)
 	Clone() BuilderInput
@@ -62,6 +65,7 @@ type builderInput struct {
 	httpPrepStream    http_preparator_stream.HttpPreparatorStream
 	op                openapistackql.OperationStore
 	prov              provider.IProvider
+	annotatedAst      annotatedast.AnnotatedAst
 }
 
 func NewBuilderInput(
@@ -76,6 +80,14 @@ func NewBuilderInput(
 		commentDirectives: sqlparser.CommentDirectives{},
 		inputAlias:        "", // this default is explicit for emphasisis
 	}
+}
+
+func (bi *builderInput) SetAnnotatedAST(annotatedAST annotatedast.AnnotatedAst) {
+	bi.annotatedAst = annotatedAST
+}
+
+func (bi *builderInput) GetAnnotatedAST() (annotatedast.AnnotatedAst, bool) {
+	return bi.annotatedAst, bi.annotatedAst != nil
 }
 
 func (bi *builderInput) GetProvider() (provider.IProvider, bool) {
