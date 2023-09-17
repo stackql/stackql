@@ -40,6 +40,10 @@ go test -timeout 1200s --tags "json1 sqleanall" ./...
 robot --variable SHOULD_RUN_DOCKER_EXTERNAL_TESTS:true -d test/robot/functional test/robot/functional
 ```
 
+### Manually Testing
+
+Please see [the mock testing doco](/test/mockserver/README.md#manually-testing-mocks).
+
 
 ## Provider development
 

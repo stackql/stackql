@@ -23,13 +23,13 @@ type HeirarchyIdentifiers interface {
 	GetStackQLTableName() string
 	GetTableName() string
 	GetSubquery() (SubqueryDTO, bool)
-	GetView() (ViewDTO, bool)
+	GetView() (RelationDTO, bool)
 	GetSubAST() sqlparser.Statement
 	ContainsNativeDBMSTable() bool
 	SetContainsNativeDBMSTable(bool)
 	SetSubAST(sqlparser.Statement)
 	SetMethodStr(string)
-	WithView(ViewDTO) HeirarchyIdentifiers
+	WithView(RelationDTO) HeirarchyIdentifiers
 	withSubquery(SubqueryDTO) HeirarchyIdentifiers
 	WithProviderStr(string) HeirarchyIdentifiers
 	WithResponseSchemaStr(rss string) HeirarchyIdentifiers
@@ -42,7 +42,7 @@ type standardHeirarchyIdentifiers struct {
 	resourceStr       string
 	responseSchemaStr string
 	methodStr         string
-	viewDTO           ViewDTO
+	viewDTO           RelationDTO
 	subqueryDTO       SubqueryDTO
 	viewAST           sqlparser.Statement
 	containsDBMSTable bool
@@ -81,7 +81,7 @@ func (hi *standardHeirarchyIdentifiers) GetServiceStr() string {
 	return hi.serviceStr
 }
 
-func (hi *standardHeirarchyIdentifiers) GetView() (ViewDTO, bool) {
+func (hi *standardHeirarchyIdentifiers) GetView() (RelationDTO, bool) {
 	return hi.viewDTO, hi.viewDTO != nil
 }
 
@@ -106,7 +106,7 @@ func (hi *standardHeirarchyIdentifiers) WithProviderStr(ps string) HeirarchyIden
 	return hi
 }
 
-func (hi *standardHeirarchyIdentifiers) WithView(viewDTO ViewDTO) HeirarchyIdentifiers {
+func (hi *standardHeirarchyIdentifiers) WithView(viewDTO RelationDTO) HeirarchyIdentifiers {
 	hi.viewDTO = viewDTO
 	return hi
 }

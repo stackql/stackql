@@ -13,7 +13,7 @@ import (
 )
 
 type view struct {
-	viewDTO               internaldto.ViewDTO
+	viewDTO               internaldto.RelationDTO
 	selectStmt            sqlparser.SelectStatement
 	selCtx                drm.PreparedStatementCtx
 	paramCollection       internaldto.TableParameterCollection
@@ -22,6 +22,10 @@ type view struct {
 
 func (v *view) GetType() IndirectType {
 	return ViewType
+}
+
+func (v *view) GetRelationalColumns() []typing.RelationalColumn {
+	return nil
 }
 
 func (v *view) GetAssignedParameters() (internaldto.TableParameterCollection, bool) {
@@ -68,6 +72,18 @@ func (v *view) GetColumnByName(name string) (typing.ColumnMetadata, bool) {
 
 func (v *view) SetSelectContext(selCtx drm.PreparedStatementCtx) {
 	v.selCtx = selCtx
+}
+
+func (v *view) GetTranslatedDDL() (string, bool) {
+	return "", false
+}
+
+func (v *view) GetLoadDML() (string, bool) {
+	return "", false
+}
+
+func (v *view) GetRelationalColumnByIdentifier(_ string) (typing.RelationalColumn, bool) {
+	return nil, false
 }
 
 func (v *view) GetSelectContext() drm.PreparedStatementCtx {

@@ -11,6 +11,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
+	"github.com/stackql/stackql/internal/stackql/primitivebuilder"
 	"github.com/stackql/stackql/internal/stackql/primitivegenerator"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/symtab"
@@ -30,6 +31,7 @@ type AstExpandVisitor interface {
 	Analyze() error
 	ContainsAnalyticsCacheMaterial() bool
 	IsReadOnly() bool
+	GetCreateBuilder() (primitivebuilder.Builder, bool)
 }
 
 type indirectExpandAstVisitor struct {
@@ -46,6 +48,7 @@ type indirectExpandAstVisitor struct {
 	indirectionDepth               int
 	selectCount                    int
 	mutateCount                    int
+	createBuilder                  primitivebuilder.Builder
 }
 
 func newIndirectExpandAstVisitor(
@@ -76,6 +79,18 @@ func newIndirectExpandAstVisitor(
 	return rv, nil
 }
 
+func (v *indirectExpandAstVisitor) GetCreateBuilder() (primitivebuilder.Builder, bool) {
+	return v.createBuilder, v.createBuilder != nil
+}
+
+func (v *indirectExpandAstVisitor) processMaterializedView(
+	node sqlparser.SQLNode,
+	indirect astindirect.Indirect) error {
+	v.primitiveGenerator.SetContainsUserManagedRelation(true)
+	v.annotatedAST.SetMaterializedView(node, indirect)
+	return nil
+}
+
 func (v *indirectExpandAstVisitor) processIndirect(node sqlparser.SQLNode, indirect astindirect.Indirect) error {
 	err := indirect.Parse()
 	if err != nil {
@@ -100,6 +115,7 @@ func (v *indirectExpandAstVisitor) processIndirect(node sqlparser.SQLNode, indir
 		indirect.GetSelectAST(),
 		v.handlerCtx,
 	)
+	indirectPrimitiveGenerator.SetIsIndirect(true)
 	err = indirectPrimitiveGenerator.AnalyzeSelectStatement(childAnalyzer.GetPlanBuilderInput())
 	if err != nil {
 		return err
@@ -131,6 +147,14 @@ func (v *indirectExpandAstVisitor) processIndirect(node sqlparser.SQLNode, indir
 	if ok {
 		indirect.SetAssignedParameters(assignedParams)
 	}
+	createBuilder, createBuilderExists := indirectPrimitiveGenerator.GetIndirectCreateTailBuilder()
+	if createBuilderExists {
+		v.createBuilder = createBuilder
+	}
+	// createBuilder, createBuilderExists := childAnalyzer.GetIndirectCreateTail()
+	// if createBuilderExists {
+	// 	v.createBuilder = createBuilder
+	// }
 	return nil
 }
 
@@ -273,6 +297,23 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 		case sqlparser.DropStr:
 		}
 
+	case *sqlparser.RefreshMaterializedView:
+		if node.ImplicitSelect != nil {
+			buf.AstPrintf(node, " as %v", node.ImplicitSelect)
+			tableName := node.ViewName.GetRawVal()
+			selectStr := parserutil.RenderRefreshMaterializedViewSelectStmt(node)
+			viewDTO := internaldto.NewViewDTO(tableName, selectStr)
+			indirect, err := astindirect.NewViewIndirect(viewDTO)
+			if err != nil {
+				return nil //nolint:nilerr //TODO: investigate
+			}
+			err = v.processIndirect(node, indirect)
+			if err != nil {
+				return nil //nolint:nilerr //TODO: investigate
+			}
+			return nil
+		}
+
 	case *sqlparser.DDL:
 		switch node.Action {
 		case sqlparser.CreateStr:
@@ -283,6 +324,21 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 				buf.AstPrintf(node, "%s table %v %v", node.Action, node.Table, node.TableSpec)
 			} else {
 				buf.AstPrintf(node, "%s table %v", node.Action, node.Table)
+			}
+			if node.SelectStatement != nil && parserutil.IsCreateMaterializedView(node) {
+				buf.AstPrintf(node, " as %v", node.SelectStatement)
+				tableName := node.Table.GetRawVal()
+				selectStr := parserutil.RenderDDLSelectStmt(node)
+				viewDTO := internaldto.NewViewDTO(tableName, selectStr)
+				indirect, err := astindirect.NewViewIndirect(viewDTO)
+				if err != nil {
+					return nil //nolint:nilerr //TODO: investigate
+				}
+				err = v.processIndirect(node, indirect)
+				if err != nil {
+					return nil //nolint:nilerr //TODO: investigate
+				}
+				return nil
 			}
 		case sqlparser.DropStr:
 			exists := ""
@@ -793,7 +849,9 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 		}
 		// END OPTIMISTIC DOC PERSISTENCE AND VIEW DEFINITION
 		viewDTO, isView := v.sqlSystem.GetViewByName(node.GetRawVal())
-		if isView {
+		materializedViewDTO, isMaterializedView := v.sqlSystem.GetMaterializedViewByName(node.GetRawVal())
+		tableDTO, isTable := v.sqlSystem.GetTableByName(node.GetRawVal(), v.tcc)
+		if isView { //nolint:nestif,gocritic // acceptable
 			indirect, newErr := astindirect.NewViewIndirect(viewDTO)
 			if newErr != nil {
 				return newErr
@@ -802,6 +860,27 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 			if err != nil {
 				return err
 			}
+			return nil
+		} else if isMaterializedView {
+			indirect, newErr := astindirect.NewMaterializedViewIndirect(materializedViewDTO, v.sqlSystem)
+			if newErr != nil {
+				return newErr
+			}
+			err = v.processMaterializedView(node, indirect)
+			if err != nil {
+				return err
+			}
+			return nil
+		} else if isTable {
+			indirect, newErr := astindirect.NewPhysicalTableIndirect(tableDTO, v.sqlSystem)
+			if newErr != nil {
+				return newErr
+			}
+			err = v.processMaterializedView(node, indirect)
+			if err != nil {
+				return err
+			}
+			return nil
 		}
 		return nil
 

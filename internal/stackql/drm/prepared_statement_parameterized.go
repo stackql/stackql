@@ -1,5 +1,7 @@
 package drm
 
+import "github.com/stackql/stackql/internal/stackql/typing"
+
 var (
 	_ PreparedStatementParameterized = &standardPreparedStatementParameterized{}
 )
@@ -12,6 +14,7 @@ type PreparedStatementParameterized interface {
 	GetRequestEncoding() string
 	IsControlArgsRequired() bool
 	WithRequestEncoding(string) PreparedStatementParameterized
+	GetNonControlColumns() []typing.ColumnMetadata
 }
 
 type standardPreparedStatementParameterized struct {
@@ -29,6 +32,10 @@ func (ps *standardPreparedStatementParameterized) WithRequestEncoding(reqEnc str
 
 func (ps *standardPreparedStatementParameterized) GetRequestEncoding() string {
 	return ps.requestEncoding
+}
+
+func (ps *standardPreparedStatementParameterized) GetNonControlColumns() []typing.ColumnMetadata {
+	return ps.ctx.GetNonControlColumns()
 }
 
 func (ps *standardPreparedStatementParameterized) IsControlArgsRequired() bool {

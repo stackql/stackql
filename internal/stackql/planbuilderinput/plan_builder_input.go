@@ -32,6 +32,8 @@ type PlanBuilderInput interface {
 	GetPlaceholderParams() parserutil.ParameterMap
 	GetPurge() (*sqlparser.Purge, bool)
 	GetRawQuery() string
+	SetRawQuery(string)
+	GetRefreshedMaterializedView() (*sqlparser.RefreshMaterializedView, bool)
 	GetRegistry() (*sqlparser.Registry, bool)
 	GetSelect() (*sqlparser.Select, bool)
 	GetShow() (*sqlparser.Show, bool)
@@ -46,6 +48,9 @@ type PlanBuilderInput interface {
 	SetIsTccSetAheadOfTime(bool)
 	SetPrepStmtOffset(int)
 
+	SetCreateMaterializedView(bool)
+	IsCreateMaterializedView() bool
+
 	GetMessages() []string
 	WithMessages(messages []string) PlanBuilderInput
 	WithParameterRouter(router.ParameterRouter) PlanBuilderInput
@@ -55,23 +60,25 @@ type PlanBuilderInput interface {
 }
 
 type StandardPlanBuilderInput struct {
-	annotatedAST           annotatedast.AnnotatedAst
-	handlerCtx             handler.HandlerContext
-	stmt                   sqlparser.SQLNode
-	colRefs                parserutil.ColTableMap
-	aliasedTables          parserutil.TableAliasMap
-	assignedAliasedColumns parserutil.TableExprMap
-	tables                 sqlparser.TableExprs
-	paramsPlaceheld        parserutil.ParameterMap
-	tcc                    internaldto.TxnControlCounters
-	paramRouter            router.ParameterRouter
-	tableRouteVisitor      router.TableRouteAstVisitor
-	onConditionDataFlows   dataflow.Collection
-	onConditionsToRewrite  map[*sqlparser.ComparisonExpr]struct{}
-	tccSetAheadOfTime      bool
-	messages               []string
-	readOnly               bool
-	prepStmtOffset         int
+	annotatedAST             annotatedast.AnnotatedAst
+	handlerCtx               handler.HandlerContext
+	stmt                     sqlparser.SQLNode
+	colRefs                  parserutil.ColTableMap
+	aliasedTables            parserutil.TableAliasMap
+	assignedAliasedColumns   parserutil.TableExprMap
+	tables                   sqlparser.TableExprs
+	paramsPlaceheld          parserutil.ParameterMap
+	tcc                      internaldto.TxnControlCounters
+	paramRouter              router.ParameterRouter
+	tableRouteVisitor        router.TableRouteAstVisitor
+	onConditionDataFlows     dataflow.Collection
+	onConditionsToRewrite    map[*sqlparser.ComparisonExpr]struct{}
+	tccSetAheadOfTime        bool
+	messages                 []string
+	readOnly                 bool
+	prepStmtOffset           int
+	isCreateMaterializedView bool
+	rawQuery                 string
 }
 
 func NewPlanBuilderInput(
@@ -143,7 +150,16 @@ func (pbi *StandardPlanBuilderInput) Clone() PlanBuilderInput {
 	)
 	clonedPbi.SetPrepStmtOffset(pbi.prepStmtOffset)
 	clonedPbi.SetReadOnly(pbi.IsReadOnly())
+	clonedPbi.SetCreateMaterializedView(pbi.isCreateMaterializedView)
 	return clonedPbi
+}
+
+func (pbi *StandardPlanBuilderInput) SetCreateMaterializedView(isCreateMaterializedView bool) {
+	pbi.isCreateMaterializedView = isCreateMaterializedView
+}
+
+func (pbi *StandardPlanBuilderInput) IsCreateMaterializedView() bool {
+	return pbi.isCreateMaterializedView
 }
 
 func (pbi *StandardPlanBuilderInput) SetPrepStmtOffset(offset int) {
@@ -213,7 +229,14 @@ func (pbi *StandardPlanBuilderInput) WithTableRouteVisitor(
 }
 
 func (pbi *StandardPlanBuilderInput) GetRawQuery() string {
+	if pbi.rawQuery != "" {
+		return pbi.rawQuery
+	}
 	return pbi.handlerCtx.GetRawQuery()
+}
+
+func (pbi *StandardPlanBuilderInput) SetRawQuery(rawQuery string) {
+	pbi.rawQuery = rawQuery
 }
 
 // router.ParameterRouter.
@@ -290,6 +313,11 @@ func (pbi *StandardPlanBuilderInput) GetInsert() (*sqlparser.Insert, bool) {
 
 func (pbi *StandardPlanBuilderInput) GetDDL() (*sqlparser.DDL, bool) {
 	rv, ok := pbi.stmt.(*sqlparser.DDL)
+	return rv, ok
+}
+
+func (pbi *StandardPlanBuilderInput) GetRefreshedMaterializedView() (*sqlparser.RefreshMaterializedView, bool) {
+	rv, ok := pbi.stmt.(*sqlparser.RefreshMaterializedView)
 	return rv, ok
 }
 

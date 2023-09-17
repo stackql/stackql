@@ -15,7 +15,7 @@ import (
 type AnnotationCtx interface {
 	GetHIDs() internaldto.HeirarchyIdentifiers
 	IsDynamic() bool
-	GetView() (internaldto.ViewDTO, bool)
+	GetView() (internaldto.RelationDTO, bool)
 	GetSubquery() (internaldto.SubqueryDTO, bool)
 	GetInputTableName() (string, error)
 	GetParameters() map[string]interface{}
@@ -52,7 +52,7 @@ func (ac *standardAnnotationCtx) IsDynamic() bool {
 	return ac.isDynamic
 }
 
-func (ac *standardAnnotationCtx) GetView() (internaldto.ViewDTO, bool) {
+func (ac *standardAnnotationCtx) GetView() (internaldto.RelationDTO, bool) {
 	return ac.hIDs.GetView()
 }
 

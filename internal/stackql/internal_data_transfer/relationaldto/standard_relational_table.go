@@ -11,11 +11,11 @@ type standardRelationalTable struct {
 	baseName    string
 	discoveryID int
 	hIDs        internaldto.HeirarchyIdentifiers
-	viewDTO     internaldto.ViewDTO
+	viewDTO     internaldto.RelationDTO
 	columns     []typing.RelationalColumn
 }
 
-func (rt *standardRelationalTable) WithView(viewDTO internaldto.ViewDTO) RelationalTable {
+func (rt *standardRelationalTable) WithView(viewDTO internaldto.RelationDTO) RelationalTable {
 	rt.viewDTO = viewDTO
 	return rt
 }
@@ -41,7 +41,7 @@ func (rt *standardRelationalTable) WithAlias(alias string) RelationalTable {
 	return rt
 }
 
-func (rt *standardRelationalTable) GetView() (internaldto.ViewDTO, bool) {
+func (rt *standardRelationalTable) GetView() (internaldto.RelationDTO, bool) {
 	return rt.viewDTO, rt.viewDTO != nil
 }
 

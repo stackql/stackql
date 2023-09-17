@@ -13,6 +13,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/planbuilderinput"
+	"github.com/stackql/stackql/internal/stackql/primitivebuilder"
 	"github.com/stackql/stackql/internal/stackql/primitivegenerator"
 )
 
@@ -48,6 +49,8 @@ type InitialPassesScreener interface {
 type InitialPassesScreenerAnalyzer interface {
 	Analyzer
 	InitialPassesScreener
+	GetIndirectCreateTail() (primitivebuilder.Builder, bool)
+	SetIndirectCreateTail(indirectCreateTail primitivebuilder.Builder)
 }
 
 var (
@@ -78,10 +81,19 @@ type standardInitialPasses struct {
 	parentWhereParams             parserutil.ParameterMap
 	indirectionDepth              int
 	isReadOnly                    bool
+	indirectCreateTail            primitivebuilder.Builder
 }
 
 func (sp *standardInitialPasses) GetIndirectionDepth() int {
 	return sp.indirectionDepth
+}
+
+func (sp *standardInitialPasses) GetIndirectCreateTail() (primitivebuilder.Builder, bool) {
+	return sp.indirectCreateTail, sp.indirectCreateTail != nil
+}
+
+func (sp *standardInitialPasses) SetIndirectCreateTail(indirectCreateTail primitivebuilder.Builder) {
+	sp.indirectCreateTail = indirectCreateTail
 }
 
 func (sp *standardInitialPasses) GetInstructionType() InstructionType {
@@ -116,7 +128,7 @@ func (sp *standardInitialPasses) Analyze(
 	return sp.initialPasses(statement, handlerCtx, tcc)
 }
 
-//nolint:funlen,gocognit // this is a large function abstracting plenty
+//nolint:funlen,gocognit,gocyclo,cyclop // this is a large function abstracting plenty
 func (sp *standardInitialPasses) initialPasses(
 	statement sqlparser.Statement,
 	handlerCtx handler.HandlerContext,
@@ -139,10 +151,16 @@ func (sp *standardInitialPasses) initialPasses(
 		sp.instructionType = InternallyRoutableInstruction
 		sp.isReadOnly = true
 		logging.GetLogger().Debugf("%v", opType)
+		subjectAST := result.AST
+		//nolint:gocritic // prefer switch
+		switch node := subjectAST.(type) {
+		case *sqlparser.DDL:
+			subjectAST = node.SelectStatement
+		}
 		pbi, pbiErr := planbuilderinput.NewPlanBuilderInput(
 			annotatedAST,
 			handlerCtx,
-			result.AST,
+			subjectAST,
 			nil,
 			nil,
 			nil,
@@ -190,6 +208,10 @@ func (sp *standardInitialPasses) initialPasses(
 	err = astExpandVisitor.Analyze()
 	if err != nil {
 		return err
+	}
+	bldr, createBldrExists := astExpandVisitor.GetCreateBuilder()
+	if createBldrExists {
+		sp.SetIndirectCreateTail(bldr)
 	}
 	sp.isReadOnly = astExpandVisitor.IsReadOnly()
 	annotatedAST = astExpandVisitor.GetAnnotatedAST()
@@ -250,10 +272,12 @@ func (sp *standardInitialPasses) initialPasses(
 		tpv.GetParameters(),
 		tcc.Clone(),
 	)
-	pbi.SetReadOnly(astExpandVisitor.IsReadOnly())
 	if err != nil {
 		return err
 	}
+	pbi.SetReadOnly(astExpandVisitor.IsReadOnly())
+	isCreateMAterializedView := parserutil.IsCreateMaterializedView(ast)
+	pbi.SetCreateMaterializedView(isCreateMAterializedView)
 
 	sel, selOk := planbuilderinput.IsPGSetupQuery(pbi)
 	if selOk {
@@ -295,7 +319,16 @@ func (sp *standardInitialPasses) initialPasses(
 		sp.planBuilderInput = otherPbi
 		return nil
 	}
-	switch node := ast.(type) {
+	astToAnalyse := ast
+	if isCreateMAterializedView {
+		switch node := astToAnalyse.(type) {
+		case *sqlparser.DDL:
+			astToAnalyse = node.SelectStatement
+		default:
+			return fmt.Errorf("expected DDL statement in analysing 'create materialized view' statement")
+		}
+	}
+	switch node := astToAnalyse.(type) {
 	case *sqlparser.Select:
 		routeAnalyzer := routeanalysis.NewSelectRoutePass(node, pbi, whereParams)
 		err = routeAnalyzer.RoutePass()
@@ -336,6 +369,7 @@ func (sp *standardInitialPasses) initialPasses(
 		}
 		pbi = routeAnalyzer.GetPlanBuilderInput()
 	}
+	pbi.SetCreateMaterializedView(isCreateMAterializedView)
 
 	sp.instructionType = StandardInstruction
 	sp.planBuilderInput = pbi

@@ -30,6 +30,14 @@ func (v *subquery) SetAssignedParameters(paramCollection internaldto.TableParame
 	v.paramCollection = paramCollection
 }
 
+func (v *subquery) GetRelationalColumns() []typing.RelationalColumn {
+	return nil
+}
+
+func (v *subquery) GetRelationalColumnByIdentifier(_ string) (typing.RelationalColumn, bool) {
+	return nil, false
+}
+
 func (v *subquery) GetUnderlyingSymTab() symtab.SymTab {
 	return v.underlyingSymbolTable
 }
@@ -85,4 +93,12 @@ func (v *subquery) GetSelectionCtx() (drm.PreparedStatementCtx, error) {
 
 func (v *subquery) Parse() error {
 	return nil
+}
+
+func (v *subquery) GetTranslatedDDL() (string, bool) {
+	return "", false
+}
+
+func (v *subquery) GetLoadDML() (string, bool) {
+	return "", false
 }

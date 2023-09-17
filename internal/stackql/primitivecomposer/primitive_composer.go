@@ -62,6 +62,8 @@ type PrimitiveComposer interface {
 	GetWhere() *sqlparser.Where
 	IsAwait() bool
 	IsIndirect() bool
+	ContainsUserRelation() bool
+	SetContainsUserRelation(bool)
 	IsTccSetAheadOfTime() bool
 	NewChildPrimitiveComposer(ast sqlparser.SQLNode) PrimitiveComposer
 	SetAwait(await bool)
@@ -150,6 +152,16 @@ type standardPrimitiveComposer struct {
 	paramCollection internaldto.TableParameterCollection
 
 	isIndirect bool
+
+	containsUserRelation bool
+}
+
+func (pb *standardPrimitiveComposer) SetContainsUserRelation(containsUserRelation bool) {
+	pb.containsUserRelation = containsUserRelation
+}
+
+func (pb *standardPrimitiveComposer) ContainsUserRelation() bool {
+	return pb.containsUserRelation
 }
 
 func (pb *standardPrimitiveComposer) GetCtrlColumnRepeats() int {
