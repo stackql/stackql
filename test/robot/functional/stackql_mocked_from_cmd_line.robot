@@ -271,7 +271,7 @@ AWS Cloud Control Operations Select Simple
     ...    ${CURDIR}/tmp/AWS-Cloud-Control-Operations-Select-Simple.tmp
 
 AWS EC2 Volume Insert Simple
-    Should StackQL Exec Inline Equal
+    Should StackQL Exec Inline Equal Stderr
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
     ...    ${GITHUB_SECRET_STR}
@@ -283,7 +283,7 @@ AWS EC2 Volume Insert Simple
     ...    The operation was despatched successfully
 
 AWS EC2 Volume Update Simple
-    Should StackQL Exec Inline Equal
+    Should StackQL Exec Inline Equal Stderr
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
     ...    ${GITHUB_SECRET_STR}
@@ -295,7 +295,7 @@ AWS EC2 Volume Update Simple
     ...    The operation was despatched successfully
 
 GitHub Orgs Org Update Simple
-    Should StackQL Exec Inline Equal
+    Should StackQL Exec Inline Equal Stderr
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
     ...    ${GITHUB_SECRET_STR}
@@ -307,7 +307,7 @@ GitHub Orgs Org Update Simple
     ...    The operation was despatched successfully
 
 AWS Cloud Control Log Group Insert Simple
-    Should StackQL Exec Inline Equal
+    Should StackQL Exec Inline Equal Stderr
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
     ...    ${GITHUB_SECRET_STR}
@@ -319,7 +319,7 @@ AWS Cloud Control Log Group Insert Simple
     ...    The operation was despatched successfully
 
 AWS Cloud Control Log Group Delete Simple
-    Should StackQL Exec Inline Equal
+    Should StackQL Exec Inline Equal Stderr
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
     ...    ${GITHUB_SECRET_STR}
@@ -331,7 +331,7 @@ AWS Cloud Control Log Group Delete Simple
     ...    The operation was despatched successfully
 
 AWS Cloud Control Log Group Update Simple
-    Should StackQL Exec Inline Equal
+    Should StackQL Exec Inline Equal Stderr
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
     ...    ${GITHUB_SECRET_STR}
@@ -554,27 +554,27 @@ Create Static Materialized View Scenario Working
     ...    refresh materialized view mv_one;
     ...    select * from mv_one;
     ${outputStr} =    Catenate    SEPARATOR=\n
-    ...    DDL Execution Completed
     ...    |-----|
     ...    |${SPACE}one${SPACE}|
     ...    |-----|
     ...    |${SPACE}${SPACE}${SPACE}1${SPACE}|
     ...    |-----|
-    ...    DDL Execution Completed
-    ...    DDL Execution Completed
     ...    |-----|
     ...    |${SPACE}one${SPACE}|
     ...    |-----|
     ...    |${SPACE}${SPACE}${SPACE}1${SPACE}|
     ...    |-----|
-    ...    refresh materialized view completed
     ...    |-----|
     ...    |${SPACE}one${SPACE}|
     ...    |-----|
     ...    |${SPACE}${SPACE}${SPACE}1${SPACE}|
     ...    |-----|
     ${stdErrStr} =    Catenate    SEPARATOR=\n
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
     ...    could not locate table 'mv_one'
+    ...    DDL Execution Completed
+    ...    refresh materialized view completed
     Should Stackql Exec Inline Equal Both Streams
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -600,7 +600,6 @@ Create Dynamic Materialized View Scenario Working
     ...    refresh materialized view silly_mv;
     ...    select name, id from silly_mv order by name desc, id desc;
     ${outputStr} =    Catenate    SEPARATOR=\n
-    ...    DDL Execution Completed
     ...    |------------------------|---------------|
     ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
     ...    |------------------------|---------------|
@@ -620,8 +619,6 @@ Create Dynamic Materialized View Scenario Working
     ...    |------------------------|---------------|
     ...    |${SPACE}allow-spark-ui${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}111111111111${SPACE}|
     ...    |------------------------|---------------|
-    ...    DDL Execution Completed
-    ...    DDL Execution Completed
     ...    |------------------------|---------------|
     ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
     ...    |------------------------|---------------|
@@ -641,7 +638,6 @@ Create Dynamic Materialized View Scenario Working
     ...    |------------------------|---------------|
     ...    |${SPACE}allow-spark-ui${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}111111111111${SPACE}|
     ...    |------------------------|---------------|
-    ...    refresh materialized view completed
     ...    |------------------------|---------------|
     ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
     ...    |------------------------|---------------|
@@ -662,7 +658,11 @@ Create Dynamic Materialized View Scenario Working
     ...    |${SPACE}allow-spark-ui${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}111111111111${SPACE}|
     ...    |------------------------|---------------|
     ${stdErrStr} =    Catenate    SEPARATOR=\n
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
     ...    could not locate table 'silly_mv'
+    ...    DDL Execution Completed
+    ...    refresh materialized view completed
     Should Stackql Exec Inline Equal Both Streams
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -688,7 +688,6 @@ Create Changing Dynamic Materialized View Scenario Working
     ...    refresh materialized view silly_changing_mv;
     ...    select name, id from silly_changing_mv order by name desc, id desc;
     ${outputStr} =    Catenate    SEPARATOR=\n
-    ...    DDL Execution Completed
     ...    |------------------------|---------------|
     ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
     ...    |------------------------|---------------|
@@ -708,8 +707,6 @@ Create Changing Dynamic Materialized View Scenario Working
     ...    |------------------------|---------------|
     ...    |${SPACE}allow-spark-ui${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}111111111111${SPACE}|
     ...    |------------------------|---------------|
-    ...    DDL Execution Completed
-    ...    DDL Execution Completed
     ...    |------------------------|---------------|
     ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
     ...    |------------------------|---------------|
@@ -729,7 +726,6 @@ Create Changing Dynamic Materialized View Scenario Working
     ...    |------------------------|---------------|
     ...    |${SPACE}allow-spark-ui${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}111111111111${SPACE}|
     ...    |------------------------|---------------|
-    ...    refresh materialized view completed
     ...    |--------------------------------|---------------|
     ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
     ...    |--------------------------------|---------------|
@@ -750,7 +746,11 @@ Create Changing Dynamic Materialized View Scenario Working
     ...    |${SPACE}altered-allow-spark-ui${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}111111111111${SPACE}|
     ...    |--------------------------------|---------------|
     ${stdErrStr} =    Catenate    SEPARATOR=\n
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
     ...    could not locate table 'silly_changing_mv'
+    ...    DDL Execution Completed
+    ...    refresh materialized view completed
     Should Stackql Exec Inline Equal Both Streams
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -913,7 +913,7 @@ Registry List Google Provider
     ...    ${REGISTRY_GOOGLE_PROVIDER_LIST_EXPECTED}
 
 Registry Pull Google Provider Specific Version
-    Should Stackql Exec Inline Contain
+    Should Stackql Exec Inline Contain Stderr
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
     ...    ${GITHUB_SECRET_STR}
@@ -977,7 +977,7 @@ Basic Floating Point Projection Display Plus Custom Env Var Basic Auth Encoding
     ...    stdout=${CURDIR}/tmp/Basic-Floating-Point-Projection-Display-Plus-Custom-Env-Var-Basic-Auth-Encoding.tmp
 
 Digitalocean Insert Droplet
-    Should Stackql Exec Inline Equal
+    Should Stackql Exec Inline Equal Stderr
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
     ...    ${GITHUB_SECRET_STR}
@@ -987,10 +987,17 @@ Digitalocean Insert Droplet
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    INSERT INTO digitalocean.droplets.droplets ( data__name, data__region, data__size, data__image, data__backups, data__ipv6, data__monitoring, data__tags ) SELECT 'some.example.com', 'nyc3', 's-1vcpu-1gb', 'ubuntu-20-04-x64', true, true, true, '["env:prod", "web"]' ;
     ...    The operation was despatched successfully
-    ...    stdout=${CURDIR}/tmp/Digitalocean-Insert-Droplet.tmp
+    ...    stderr=${CURDIR}/tmp/Digitalocean-Insert-Droplet.tmp
 
 Transaction Rollback Digitalocean Insert Droplet
-    Should Stackql Exec Inline Equal
+    ${nativeOutputStr} =    Catenate    SEPARATOR=\n
+    ...    OK
+    ...    mutating statement queued
+    ...    Rollback OK
+    ${dockerOutputStr} =    Catenate    SEPARATOR=\n
+    ...    Rollback OK
+    ${outputStr} =    Set Variable If    "${EXECUTION_PLATFORM}" == "docker"     ${dockerOutputStr}    ${nativeOutputStr}
+    Should Stackql Exec Inline Equal Stderr
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
     ...    ${GITHUB_SECRET_STR}
@@ -999,8 +1006,8 @@ Transaction Rollback Digitalocean Insert Droplet
     ...    {"digitalocean": { "username_var": "DUMMY_DIGITALOCEAN_USERNAME", "password_var": "DUMMY_DIGITALOCEAN_PASSWORD", "type": "basic", "valuePrefix": "TOTALLY_CONTRIVED "}}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    begin; INSERT INTO digitalocean.droplets.droplets ( data__name, data__region, data__size, data__image, data__backups, data__ipv6, data__monitoring, data__tags ) SELECT 'some.example.com', 'nyc3', 's-1vcpu-1gb', 'ubuntu-20-04-x64', true, true, true, '["env:prod", "web"]' ; rollback;
-    ...    OK\nmutating statement queued\nRollback OK
-    ...    stdout=${CURDIR}/tmp/Digitalocean-Insert-Droplet.tmp
+    ...    ${outputStr}
+    ...    stderr=${CURDIR}/tmp/Digitalocean-Insert-Droplet.tmp
 
 Transaction Abort Attempted Commit Digitalocean Insert Droplet
     ${inputStr} =    Catenate
@@ -1030,14 +1037,18 @@ Transaction Abort Attempted Commit Digitalocean Insert Droplet
     ...    'ubuntu-20-04-x64', true, true, true, 
     ...    '["env:prod", "web"]' ;
     ...    commit;
-    ${outputStr} =    Catenate    SEPARATOR=\n
+    ${nativeOutputStr} =    Catenate    SEPARATOR=\n
     ...    OK
     ...    mutating statement queued
     ...    mutating statement queued
     ...    mutating statement queued
+    ...    insert over HTTP error: 500 Internal Server Error
     ...    UNDO required: Undo the insert on digitalocean.droplets.droplets
     ...    UNDO required: Undo the insert on digitalocean.droplets.droplets
-    Should Stackql Exec Inline Equal
+    ${dockerOutputStr} =    Catenate    SEPARATOR=\n
+    ...    UNDO required: Undo the insert on digitalocean.droplets.droplets
+    ${outputStr} =    Set Variable If    "${EXECUTION_PLATFORM}" == "docker"     ${dockerOutputStr}    ${nativeOutputStr}
+    Should Stackql Exec Inline Equal Stderr
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
     ...    ${GITHUB_SECRET_STR}
@@ -1047,7 +1058,7 @@ Transaction Abort Attempted Commit Digitalocean Insert Droplet
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${inputStr}
     ...    ${outputStr}
-    ...    stdout=${CURDIR}/tmp/Transaction-Abort-Attempted-Commit-Digitalocean-Insert-Droplet.tmp
+    ...    stderr=${CURDIR}/tmp/Transaction-Abort-Attempted-Commit-Digitalocean-Insert-Droplet.tmp
 
 Transaction Rollback Eager Idealised Google Admin Directory User
     ${inputStr} =    Catenate
@@ -1055,11 +1066,14 @@ Transaction Rollback Eager Idealised Google Admin Directory User
     ...    insert into googleadmin.directory.users(data__primaryEmail)
     ...    values ('somejimbo@grubit.com');
     ...    rollback;
-    ${outputStr} =    Catenate    SEPARATOR=\n
+    ${nativeOutputStr} =    Catenate    SEPARATOR=\n
     ...    OK
     ...    The operation was despatched successfully
     ...    Rollback OK
-    Should Stackql Exec Inline Equal
+    ${dockerOutputStr} =    Catenate    SEPARATOR=\n
+    ...    Rollback OK
+    ${outputStr} =    Set Variable If    "${EXECUTION_PLATFORM}" == "docker"     ${dockerOutputStr}    ${nativeOutputStr}
+    Should Stackql Exec Inline Equal Stderr
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
     ...    ${GITHUB_SECRET_STR}
@@ -1070,7 +1084,7 @@ Transaction Rollback Eager Idealised Google Admin Directory User
     ...    ${inputStr}
     ...    ${outputStr}
     ...    stackql_rollback_eager=True
-    ...    stdout=${CURDIR}/tmp/Transaction-Rollback-Eager-Idealised-Google-Admin-Directory-User.tmp
+    ...    stderr=${CURDIR}/tmp/Transaction-Rollback-Eager-Idealised-Google-Admin-Directory-User.tmp
 
 Transaction Rollback Failure Eager Idealised Google Admin Directory User
     ${inputStr} =    Catenate
@@ -1078,10 +1092,9 @@ Transaction Rollback Failure Eager Idealised Google Admin Directory User
     ...    insert into googleadmin.directory.users(data__primaryEmail)
     ...    values ('joeblow@grubit.com');
     ...    rollback;
-    ${outputStr} =    Catenate    SEPARATOR=\n
+    ${stderrOutputStr} =    Catenate    SEPARATOR=\n
     ...    OK
     ...    The operation was despatched successfully
-    ${stderrOutputStr} =    Catenate    SEPARATOR=\n
     ...    undo over HTTP error: 404 Not Found
     ...    Rollback failed
     Should Stackql Exec Inline Equal Both Streams
@@ -1093,10 +1106,10 @@ Transaction Rollback Failure Eager Idealised Google Admin Directory User
     ...    {"digitalocean": { "username_var": "DUMMY_DIGITALOCEAN_USERNAME", "password_var": "DUMMY_DIGITALOCEAN_PASSWORD", "type": "basic", "valuePrefix": "TOTALLY_CONTRIVED "}}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${inputStr}
-    ...    ${outputStr}
+    ...    ${EMPTY}
     ...    ${stderrOutputStr}
     ...    stackql_rollback_eager=True
-    ...    stdout=${CURDIR}/tmp/Transaction-Rollback-Failure-Eager-Idealised-Google-Admin-Directory-User.tmp
+    ...    stderr=${CURDIR}/tmp/Transaction-Rollback-Failure-Eager-Idealised-Google-Admin-Directory-User.tmp
 
 Recently Active Logic Multi Backend
     ${sqliteInputStr} =    Catenate
@@ -1450,7 +1463,7 @@ Google Asset List Aggregate Verify
     ...    stdout=${CURDIR}/tmp/Google-Asset-List-Aggregate-Verify.tmp
 
 Transaction Commit Eager Show and Lazy Digitalocean Insert Droplet
-    Should Stackql Exec Inline Equal
+    Should Stackql Exec Inline Equal Both Streams
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
     ...    ${GITHUB_SECRET_STR}
@@ -1459,11 +1472,12 @@ Transaction Commit Eager Show and Lazy Digitalocean Insert Droplet
     ...    {"digitalocean": { "username_var": "DUMMY_DIGITALOCEAN_USERNAME", "password_var": "DUMMY_DIGITALOCEAN_PASSWORD", "type": "basic", "valuePrefix": "TOTALLY_CONTRIVED "}}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    begin; INSERT INTO digitalocean.droplets.droplets ( data__name, data__region, data__size, data__image, data__backups, data__ipv6, data__monitoring, data__tags ) SELECT 'some.example.com', 'nyc3', 's-1vcpu-1gb', 'ubuntu-20-04-x64', true, true, true, '["env:prod", "web"]' ; show services in digitalocean like 'droplets'; commit;
-    ...    OK\nmutating${SPACE}statement${SPACE}queued\n|-----------------------|----------|-----------------------------|\n|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}title${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|\n|-----------------------|----------|-----------------------------|\n|${SPACE}droplets:v23.03.00127${SPACE}|${SPACE}droplets${SPACE}|${SPACE}DigitalOcean${SPACE}API${SPACE}-${SPACE}Droplets${SPACE}|\n|-----------------------|----------|-----------------------------|\nThe${SPACE}operation${SPACE}was${SPACE}despatched${SPACE}successfully\nOK
+    ...    |-----------------------|----------|-----------------------------|\n|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}title${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|\n|-----------------------|----------|-----------------------------|\n|${SPACE}droplets:v23.03.00127${SPACE}|${SPACE}droplets${SPACE}|${SPACE}DigitalOcean${SPACE}API${SPACE}-${SPACE}Droplets${SPACE}|\n|-----------------------|----------|-----------------------------|
+    ...    OK\nmutating${SPACE}statement${SPACE}queued\nThe${SPACE}operation${SPACE}was${SPACE}despatched${SPACE}successfully\nOK
     ...    stdout=${CURDIR}/tmp/Digitalocean-Insert-Droplet.tmp
 
 Registry Pull Google Provider Specific Version Prerelease
-    Should Stackql Exec Inline Contain
+    Should Stackql Exec Inline Contain Stderr
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
     ...    ${GITHUB_SECRET_STR}
@@ -1475,7 +1489,7 @@ Registry Pull Google Provider Specific Version Prerelease
     ...    successfully installed
 
 Registry Pull Google Provider Implicit Latest Version
-    Should Stackql Exec Inline Contain
+    Should Stackql Exec Inline Contain Stderr
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
     ...    ${GITHUB_SECRET_STR}

@@ -27,7 +27,7 @@ func HandleResponse(handlerCtx handler.HandlerContext, response internaldto.Exec
 	logging.GetLogger().Debugln(fmt.Sprintf("response from query = '%v'", response.GetSQLResult()))
 	if response.GetMessages() != nil {
 		for _, msg := range response.GetMessages() {
-			handlerCtx.GetOutfile().Write([]byte(msg + fmt.Sprintln(""))) //nolint:errcheck // outstream write
+			handlerCtx.GetOutErrFile().Write([]byte(msg + fmt.Sprintln(""))) //nolint:errcheck // outstream write
 		}
 	}
 	//nolint:staticcheck // TODO: review
