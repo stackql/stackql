@@ -554,42 +554,27 @@ Create Static Materialized View Scenario Working
     ...    refresh materialized view mv_one;
     ...    select * from mv_one;
     ${outputStr} =    Catenate    SEPARATOR=\n
-    ...    |-------------------------|
-    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}message${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------------------------|
-    ...    |${SPACE}DDL${SPACE}execution${SPACE}completed${SPACE}|
-    ...    |-------------------------|
+    ...    DDL Execution Completed
     ...    |-----|
     ...    |${SPACE}one${SPACE}|
     ...    |-----|
     ...    |${SPACE}${SPACE}${SPACE}1${SPACE}|
     ...    |-----|
-    ...    |-------------------------|
-    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}message${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------------------------|
-    ...    |${SPACE}DDL${SPACE}execution${SPACE}completed${SPACE}|
-    ...    |-------------------------|
-    ...    |-------------------------|
-    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}message${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------------------------|
-    ...    |${SPACE}DDL${SPACE}execution${SPACE}completed${SPACE}|
-    ...    |-------------------------|
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
     ...    |-----|
     ...    |${SPACE}one${SPACE}|
     ...    |-----|
     ...    |${SPACE}${SPACE}${SPACE}1${SPACE}|
     ...    |-----|
-    ...    |--------------------------------|
-    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}message${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |--------------------------------|
-    ...    |${SPACE}refresh${SPACE}materialized${SPACE}view${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |${SPACE}completed${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |--------------------------------|
+    ...    refresh materialized view completed
     ...    |-----|
     ...    |${SPACE}one${SPACE}|
     ...    |-----|
     ...    |${SPACE}${SPACE}${SPACE}1${SPACE}|
     ...    |-----|
+    ${stdErrStr} =    Catenate    SEPARATOR=\n
+    ...    could not locate table 'mv_one'
     Should Stackql Exec Inline Equal Both Streams
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -600,7 +585,7 @@ Create Static Materialized View Scenario Working
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${inputStr}
     ...    ${outputStr}
-    ...    could not locate table 'mv_one'
+    ...    ${stdErrStr}
     ...    stdout=${CURDIR}/tmp/Create-Static-Materialized-Scenario-Working.tmp
     ...    stderr=${CURDIR}/tmp/Create-Static-Materialized-Scenario-Working-stderr.tmp
 
@@ -615,11 +600,7 @@ Create Dynamic Materialized View Scenario Working
     ...    refresh materialized view silly_mv;
     ...    select name, id from silly_mv order by name desc, id desc;
     ${outputStr} =    Catenate    SEPARATOR=\n
-    ...    |-------------------------|
-    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}message${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------------------------|
-    ...    |${SPACE}DDL${SPACE}execution${SPACE}completed${SPACE}|
-    ...    |-------------------------|
+    ...    DDL Execution Completed
     ...    |------------------------|---------------|
     ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
     ...    |------------------------|---------------|
@@ -639,16 +620,8 @@ Create Dynamic Materialized View Scenario Working
     ...    |------------------------|---------------|
     ...    |${SPACE}allow-spark-ui${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}111111111111${SPACE}|
     ...    |------------------------|---------------|
-    ...    |-------------------------|
-    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}message${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------------------------|
-    ...    |${SPACE}DDL${SPACE}execution${SPACE}completed${SPACE}|
-    ...    |-------------------------|
-    ...    |-------------------------|
-    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}message${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------------------------|
-    ...    |${SPACE}DDL${SPACE}execution${SPACE}completed${SPACE}|
-    ...    |-------------------------|
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
     ...    |------------------------|---------------|
     ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
     ...    |------------------------|---------------|
@@ -668,12 +641,7 @@ Create Dynamic Materialized View Scenario Working
     ...    |------------------------|---------------|
     ...    |${SPACE}allow-spark-ui${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}111111111111${SPACE}|
     ...    |------------------------|---------------|
-    ...    |--------------------------------|
-    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}message${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |--------------------------------|
-    ...    |${SPACE}refresh${SPACE}materialized${SPACE}view${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |${SPACE}completed${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |--------------------------------|
+    ...    refresh materialized view completed
     ...    |------------------------|---------------|
     ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
     ...    |------------------------|---------------|
@@ -693,6 +661,8 @@ Create Dynamic Materialized View Scenario Working
     ...    |------------------------|---------------|
     ...    |${SPACE}allow-spark-ui${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}111111111111${SPACE}|
     ...    |------------------------|---------------|
+    ${stdErrStr} =    Catenate    SEPARATOR=\n
+    ...    could not locate table 'silly_mv'
     Should Stackql Exec Inline Equal Both Streams
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -703,7 +673,7 @@ Create Dynamic Materialized View Scenario Working
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${inputStr}
     ...    ${outputStr}
-    ...    could not locate table 'silly_mv'
+    ...    ${stdErrStr}
     ...    stdout=${CURDIR}/tmp/Create-Dynamic-Materialized-Scenario-Working.tmp
     ...    stderr=${CURDIR}/tmp/Create-Dynamic-Materialized-Scenario-Working-stderr.tmp
 
@@ -718,11 +688,7 @@ Create Changing Dynamic Materialized View Scenario Working
     ...    refresh materialized view silly_changing_mv;
     ...    select name, id from silly_changing_mv order by name desc, id desc;
     ${outputStr} =    Catenate    SEPARATOR=\n
-    ...    |-------------------------|
-    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}message${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------------------------|
-    ...    |${SPACE}DDL${SPACE}execution${SPACE}completed${SPACE}|
-    ...    |-------------------------|
+    ...    DDL Execution Completed
     ...    |------------------------|---------------|
     ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
     ...    |------------------------|---------------|
@@ -742,16 +708,8 @@ Create Changing Dynamic Materialized View Scenario Working
     ...    |------------------------|---------------|
     ...    |${SPACE}allow-spark-ui${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}111111111111${SPACE}|
     ...    |------------------------|---------------|
-    ...    |-------------------------|
-    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}message${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------------------------|
-    ...    |${SPACE}DDL${SPACE}execution${SPACE}completed${SPACE}|
-    ...    |-------------------------|
-    ...    |-------------------------|
-    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}message${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |-------------------------|
-    ...    |${SPACE}DDL${SPACE}execution${SPACE}completed${SPACE}|
-    ...    |-------------------------|
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
     ...    |------------------------|---------------|
     ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
     ...    |------------------------|---------------|
@@ -771,12 +729,7 @@ Create Changing Dynamic Materialized View Scenario Working
     ...    |------------------------|---------------|
     ...    |${SPACE}allow-spark-ui${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}111111111111${SPACE}|
     ...    |------------------------|---------------|
-    ...    |--------------------------------|
-    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}message${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |--------------------------------|
-    ...    |${SPACE}refresh${SPACE}materialized${SPACE}view${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |${SPACE}completed${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
-    ...    |--------------------------------|
+    ...    refresh materialized view completed
     ...    |--------------------------------|---------------|
     ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
     ...    |--------------------------------|---------------|
@@ -796,6 +749,8 @@ Create Changing Dynamic Materialized View Scenario Working
     ...    |--------------------------------|---------------|
     ...    |${SPACE}altered-allow-spark-ui${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}111111111111${SPACE}|
     ...    |--------------------------------|---------------|
+    ${stdErrStr} =    Catenate    SEPARATOR=\n
+    ...    could not locate table 'silly_changing_mv'
     Should Stackql Exec Inline Equal Both Streams
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -806,7 +761,7 @@ Create Changing Dynamic Materialized View Scenario Working
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${inputStr}
     ...    ${outputStr}
-    ...    could not locate table 'silly_changing_mv'
+    ...    ${stdErrStr}
     ...    stdout=${CURDIR}/tmp/Create-Changing-Dynamic-Materialized-Scenario-Working.tmp
     ...    stderr=${CURDIR}/tmp/Create-Changing-Dynamic-Materialized-Scenario-Working-stderr.tmp
 
