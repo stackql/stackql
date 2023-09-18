@@ -131,8 +131,8 @@ func TestSimpleInsertDependentGoogleBQDatasetAsync(t *testing.T) {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		handlerCtx.SetOutfile(outFile)
-		handlerCtx.SetOutErrFile(os.Stderr)
+		handlerCtx.SetOutfile(os.Stderr)
+		handlerCtx.SetOutErrFile(outFile)
 
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
