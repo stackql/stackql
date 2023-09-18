@@ -97,11 +97,13 @@ func (ddo *ddl) Build() error {
 		return util.PrepareResultSet(
 			internaldto.NewPrepareResultSetPlusRawDTO(
 				nil,
-				map[string]map[string]interface{}{"0": {"message": "DDL execution completed"}},
-				[]string{"message"},
+				map[string]map[string]interface{}{},
+				[]string{},
 				nil,
 				nil,
-				nil,
+				internaldto.NewBackendMessages(
+					[]string{"DDL Execution Completed"},
+				),
 				nil,
 				ddo.handlerCtx.GetTypingConfig(),
 			),

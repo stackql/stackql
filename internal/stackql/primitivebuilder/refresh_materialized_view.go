@@ -53,11 +53,13 @@ func (ddo *refreshMaterializedView) Build() error {
 		return util.PrepareResultSet(
 			internaldto.NewPrepareResultSetPlusRawDTO(
 				nil,
-				map[string]map[string]interface{}{"0": {"message": "refresh materialized view completed"}},
-				[]string{"message"},
+				map[string]map[string]interface{}{},
+				[]string{},
 				nil,
 				nil,
-				nil,
+				internaldto.NewBackendMessages(
+					[]string{"refresh materialized view completed"},
+				),
 				nil,
 				ddo.handlerCtx.GetTypingConfig(),
 			),
