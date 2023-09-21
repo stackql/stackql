@@ -59,6 +59,7 @@ type ExtendedTableMetadata interface {
 	IsPGInternalObject() bool
 	SetIsOnClauseHoistable(bool)
 	IsOnClauseHoistable() bool
+	IsPhysicalTable() bool
 }
 
 type standardExtendedTableMetadata struct {
@@ -73,6 +74,13 @@ type standardExtendedTableMetadata struct {
 	indirect            astindirect.Indirect
 	sqlDataSource       sql_datasource.SQLDataSource
 	isOnClauseHoistable bool
+}
+
+func (ex *standardExtendedTableMetadata) IsPhysicalTable() bool {
+	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetHeirarchyIds() == nil {
+		return false
+	}
+	return ex.heirarchyObjects.GetHeirarchyIds().IsPhysicalTable()
 }
 
 func (ex *standardExtendedTableMetadata) SetIsOnClauseHoistable(isOnClauseHoistable bool) {

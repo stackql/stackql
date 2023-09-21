@@ -712,6 +712,15 @@ func IsDropMaterializedView(stmt sqlparser.Statement) bool {
 	}
 }
 
+func IsDropPhysicalTable(stmt sqlparser.Statement) bool {
+	switch st := stmt.(type) {
+	case *sqlparser.DDL:
+		return isDropPhysicalTable(st)
+	default:
+		return false
+	}
+}
+
 func isCreateMaterializedView(ddl *sqlparser.DDL) bool {
 	switch ddl.Action {
 	case sqlparser.CreateStr:
@@ -731,6 +740,20 @@ func isDropMaterializedView(ddl *sqlparser.DDL) bool {
 	case sqlparser.DropStr:
 		switch strings.ToLower(ddl.Modifier) {
 		case "materialized":
+			return true
+		default:
+			return false
+		}
+	default:
+		return false
+	}
+}
+
+func isDropPhysicalTable(ddl *sqlparser.DDL) bool {
+	switch ddl.Action {
+	case sqlparser.DropStr:
+		switch strings.ToLower(ddl.Modifier) {
+		case "table":
 			return true
 		default:
 			return false
@@ -782,6 +805,15 @@ func isCreatePhysicalTable(ddl *sqlparser.DDL) bool {
 	default:
 		return false
 	}
+}
+
+func RenderDDLStmt(ddl *sqlparser.DDL) string {
+	return renderDDLStmt(ddl)
+}
+
+func renderDDLStmt(ddl *sqlparser.DDL) string {
+	return strings.ReplaceAll(
+		astformat.String(ddl, astformat.DefaultSelectExprsFormatter), `"`, "")
 }
 
 func RenderDDLSelectStmt(ddl *sqlparser.DDL) string {

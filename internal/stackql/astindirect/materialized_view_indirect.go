@@ -1,4 +1,3 @@
-//nolint:dupl // TODO: refactor
 package astindirect
 
 import (
@@ -59,7 +58,7 @@ func (v *materializedView) GetRelationalColumnByIdentifier(name string) (typing.
 		if col.GetName() == name {
 			return col, true
 		}
-		if col.GetAlias() == name {
+		if col.GetAlias() != "" && col.GetAlias() == name {
 			return col, true
 		}
 	}

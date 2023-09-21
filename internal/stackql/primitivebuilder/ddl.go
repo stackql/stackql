@@ -26,7 +26,7 @@ type ddl struct {
 	bldrInput    builder_input.BuilderInput
 }
 
-//nolint:gocognit,nestif // acceptable
+//nolint:gocognit,nestif,funlen // acceptable
 func (ddo *ddl) Build() error {
 	sqlSystem := ddo.handlerCtx.GetSQLSystem()
 	if sqlSystem == nil {
@@ -44,10 +44,23 @@ func (ddo *ddl) Build() error {
 			isTable := parserutil.IsCreatePhysicalTable(parserDDLObj)
 			isTempTable := parserutil.IsCreateTemporaryPhysicalTable(parserDDLObj)
 			isMaterializedView := parserutil.IsCreateMaterializedView(parserDDLObj)
+			//nolint:gocritic // apathy
 			if isTable || isTempTable { // TODO: support for create tables
-				return internaldto.NewErroneousExecutorOutput(fmt.Errorf("create table is not supported"))
-			}
-			if isMaterializedView { // TODO: support for create materialized views
+				if isTempTable {
+					return internaldto.NewErroneousExecutorOutput(fmt.Errorf("create temp table is not supported"))
+				}
+				drmCfg := ddo.handlerCtx.GetDrmConfig()
+				createTableErr := drmCfg.CreatePhysicalTable(
+					tableName,
+					parserutil.RenderDDLStmt(parserDDLObj),
+					parserDDLObj.TableSpec,
+					parserDDLObj.IfNotExists,
+				)
+				if createTableErr != nil {
+					return internaldto.NewErroneousExecutorOutput(createTableErr)
+				}
+				// return internaldto.NewErroneousExecutorOutput(fmt.Errorf("create table is not supported"))
+			} else if isMaterializedView { // TODO: support for create materialized views
 				indirect, indirectExists := ddo.annotatedAst.GetIndirect(ddo.ddlObject)
 				if !indirectExists {
 					return internaldto.NewErroneousExecutorOutput(fmt.Errorf("cannot find indirect object for materialized view"))
@@ -81,8 +94,13 @@ func (ddo *ddl) Build() error {
 				return internaldto.NewErroneousExecutorOutput(fmt.Errorf("cannot drop table with supplied table count = %d", tl))
 			}
 			tableName := strings.Trim(astformat.String(parserDDLObj.FromTables[0], sqlSystem.GetASTFormatter()), `"`)
-			if parserutil.IsDropMaterializedView(parserDDLObj) {
+			if parserutil.IsDropMaterializedView(parserDDLObj) { //nolint:gocritic // apathy
 				err := sqlSystem.DropMaterializedView(tableName)
+				if err != nil {
+					return internaldto.NewErroneousExecutorOutput(err)
+				}
+			} else if parserutil.IsDropPhysicalTable(parserDDLObj) {
+				err := sqlSystem.DropPhysicalTable(tableName, parserDDLObj.IfExists)
 				if err != nil {
 					return internaldto.NewErroneousExecutorOutput(err)
 				}

@@ -34,6 +34,8 @@ type HeirarchyIdentifiers interface {
 	WithProviderStr(string) HeirarchyIdentifiers
 	WithResponseSchemaStr(rss string) HeirarchyIdentifiers
 	IsPgInternalObject() bool
+	IsPhysicalTable() bool
+	SetIsPhysicalTable(isPhysical bool)
 }
 
 type standardHeirarchyIdentifiers struct {
@@ -46,6 +48,15 @@ type standardHeirarchyIdentifiers struct {
 	subqueryDTO       SubqueryDTO
 	viewAST           sqlparser.Statement
 	containsDBMSTable bool
+	isPhysicalTable   bool
+}
+
+func (hi *standardHeirarchyIdentifiers) IsPhysicalTable() bool {
+	return hi.isPhysicalTable
+}
+
+func (hi *standardHeirarchyIdentifiers) SetIsPhysicalTable(isPhysical bool) {
+	hi.isPhysicalTable = isPhysical
 }
 
 func (hi *standardHeirarchyIdentifiers) IsPgInternalObject() bool {

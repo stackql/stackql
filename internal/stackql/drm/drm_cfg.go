@@ -82,6 +82,17 @@ type Config interface {
 		relationName string,
 		ctxParameterized PreparedStatementParameterized,
 	) error
+	CreatePhysicalTable(
+		relationName string,
+		rawDDL string,
+		tableSpec *sqlparser.TableSpec,
+		ifNotExists bool,
+	) error
+	InsertIntoPhysicalTable(
+		relationName string,
+		insertColumnsString string,
+		ctxParameterized PreparedStatementParameterized,
+	) error
 }
 
 type staticDRMConfig struct {
@@ -174,6 +185,24 @@ func (dc *staticDRMConfig) OpenapiColumnsToRelationalColumn(
 	// TODO: Need a way to handle postgres differences
 
 	return relationalColumn
+}
+
+func (dc *staticDRMConfig) translateColDefTypeToRelationalType(
+	col *sqlparser.ColumnDefinition) typing.RelationalColumn {
+	relationalColumn := typing.NewRelationalColumn(
+		col.Name.GetRawVal(),
+		col.Type.Type,
+	).WithOID(typing.GetOidForParserColType(col.Type))
+	return relationalColumn
+}
+
+func (dc *staticDRMConfig) translateColumns(colz []*sqlparser.ColumnDefinition) []typing.RelationalColumn {
+	var relationalColumns []typing.RelationalColumn
+	for _, col := range colz {
+		relationalColumn := dc.translateColDefTypeToRelationalType(col)
+		relationalColumns = append(relationalColumns, relationalColumn)
+	}
+	return relationalColumns
 }
 
 func (dc *staticDRMConfig) ColumnsToRelationalColumns(
@@ -780,6 +809,21 @@ func (dc *staticDRMConfig) CreateMaterializedView(
 	)
 }
 
+func (dc *staticDRMConfig) CreatePhysicalTable(
+	relationName string,
+	rawDDL string,
+	tableSpec *sqlparser.TableSpec,
+	ifNotExists bool,
+) error {
+	relationalColumns := dc.translateColumns(tableSpec.Columns)
+	return dc.sqlSystem.CreatePhysicalTable(
+		relationName,
+		relationalColumns,
+		rawDDL,
+		ifNotExists,
+	)
+}
+
 func (dc *staticDRMConfig) RefreshMaterializedView(
 	relationName string,
 	ctxParameterized PreparedStatementParameterized,
@@ -795,6 +839,26 @@ func (dc *staticDRMConfig) RefreshMaterializedView(
 	return dc.sqlSystem.RefreshMaterializedView(
 		relationName,
 		relationalColumns,
+		query,
+		varArgs...,
+	)
+}
+
+func (dc *staticDRMConfig) InsertIntoPhysicalTable(
+	relationName string,
+	insertColumnsString string,
+	ctxParameterized PreparedStatementParameterized,
+) error {
+	prepStmt, err := dc.prepareCtx(ctxParameterized)
+	if err != nil {
+		return err
+	}
+	query := prepStmt.GetRawQuery()
+	varArgs := prepStmt.GetArgs()
+	logging.GetLogger().Infoln(fmt.Sprintf("query = %s", query))
+	return dc.sqlSystem.InsertIntoPhysicalTable(
+		relationName,
+		insertColumnsString,
 		query,
 		varArgs...,
 	)

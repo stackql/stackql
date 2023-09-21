@@ -45,6 +45,7 @@ type standardInternallyRoutableTypingAstVisitor struct {
 	//
 	// single threaded, so no mutex protection
 	anonColCounter int
+	valuesCtx      drm.PreparedStatementCtx
 }
 
 func NewInternallyRoutableTypingAstVisitor(
@@ -137,8 +138,6 @@ func (v *standardInternallyRoutableTypingAstVisitor) getStarColumns(
 	return relationalColumns, nil
 }
 
-// Need not be view-aware.
-
 func (v *standardInternallyRoutableTypingAstVisitor) WithFormatter(
 	formatter sqlparser.NodeFormatter) InternallyRoutableTypingAstVisitor {
 	v.formatter = formatter
@@ -146,6 +145,9 @@ func (v *standardInternallyRoutableTypingAstVisitor) WithFormatter(
 }
 
 func (v *standardInternallyRoutableTypingAstVisitor) GetSelectContext() (drm.PreparedStatementCtx, bool) {
+	if v.valuesCtx != nil {
+		return v.valuesCtx, true
+	}
 	if len(v.relationalColumns) > 0 {
 		var columns []typing.ColumnMetadata
 		for _, col := range v.relationalColumns {
@@ -235,6 +237,10 @@ func (v *standardInternallyRoutableTypingAstVisitor) Visit(node sqlparser.SQLNod
 		return node.Table.Accept(v)
 
 	case *sqlparser.Insert:
+		err = node.Rows.Accept(v)
+		if err != nil {
+			return err
+		}
 
 	case *sqlparser.Update:
 
@@ -541,7 +547,6 @@ func (v *standardInternallyRoutableTypingAstVisitor) Visit(node sqlparser.SQLNod
 				col.Alias,
 			).WithUnquote(true)
 			v.relationalColumns = append(v.relationalColumns, rv)
-			// v.relationalColumns = append(v.relationalColumns, relCol)
 			return nil
 		}
 		if indirect, isIndirect := tbl.GetIndirect(); isIndirect {
@@ -781,6 +786,13 @@ func (v *standardInternallyRoutableTypingAstVisitor) Visit(node sqlparser.SQLNod
 		}
 
 	case sqlparser.ValTuple:
+		v.valuesCtx = drm.NewQueryOnlyPreparedStatementCtx(v.rawQuery, nil)
+		for _, n := range node {
+			err = n.Accept(v)
+			if err != nil {
+				return err
+			}
+		}
 
 	case *sqlparser.Subquery:
 
@@ -895,7 +907,11 @@ func (v *standardInternallyRoutableTypingAstVisitor) Visit(node sqlparser.SQLNod
 
 	case sqlparser.Values:
 		for _, n := range node {
-			logging.GetLogger().Debugf("%v\n", n)
+			err = n.Accept(v)
+			if err != nil {
+				return err
+			}
+			return nil // first row defines typing
 		}
 
 	case sqlparser.UpdateExprs:

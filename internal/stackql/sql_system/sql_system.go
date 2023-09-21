@@ -89,17 +89,23 @@ type SQLSystem interface {
 	QueryMaterializedView(colzString, actualRelationName, whereClause string) (*sql.Rows, error)
 
 	// Tables, both permanent and temp
-	CreateTable(
-		tableName string, rawDDL string, translatedDDL string, loadDML string, ifNotExists bool,
-		tcc internaldto.TxnControlCounters,
+	CreatePhysicalTable(
+		relationName string,
+		colz []typing.RelationalColumn,
+		rawDDL string,
+		ifNotExists bool,
 	) error
-	DropTable(tableName string,
+	DropPhysicalTable(
+		tableName string,
 		ifExists bool,
-		tcc internaldto.TxnControlCounters,
 	) error
-	GetTableByName(
-		tableName string, tcc internaldto.TxnControlCounters,
+	GetPhysicalTableByName(
+		tableName string,
 	) (internaldto.RelationDTO, bool)
+	InsertIntoPhysicalTable(tableName string,
+		insertClause string,
+		selectQuery string,
+		varargs ...any) error
 
 	// External SQL data sources
 	RegisterExternalTable(connectionName string, tableDetails openapistackql.SQLExternalTable) error

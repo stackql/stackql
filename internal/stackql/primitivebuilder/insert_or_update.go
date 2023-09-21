@@ -43,19 +43,25 @@ func (ss *InsertOrUpdate) Build() error {
 	default:
 		return fmt.Errorf("mutation executor: cannnot accomodate node of type '%T'", node)
 	}
+	var genericBldr Builder
+	var genericBldrSetupErr error
+	if mutableInput.IsTargetPhysicalTable() {
+		genericBldr, genericBldrSetupErr = newInsertIntoPhysicalTable(
+			mutableInput,
+		)
+	} else {
+		genericBldr, genericBldrSetupErr = newGenericHTTPStreamInput(
+			mutableInput,
+		)
+	}
 
-	genericBldr, genericBldrSetupErr := newGenericHTTPStreamInput(
-		mutableInput,
-	)
 	if genericBldrSetupErr != nil {
 		return genericBldrSetupErr
 	}
-
 	genericBldrErr := genericBldr.Build()
 	if genericBldrErr != nil {
 		return genericBldrErr
 	}
-
 	ss.root = genericBldr.GetRoot()
 
 	return nil

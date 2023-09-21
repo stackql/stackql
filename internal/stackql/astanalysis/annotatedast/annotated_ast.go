@@ -17,6 +17,10 @@ func NewAnnotatedAst(parent AnnotatedAst, ast sqlparser.Statement) (AnnotatedAst
 		tableSQLDataSources:  make(map[string]sql_datasource.SQLDataSource),
 		selectMetadataMap:    make(map[*sqlparser.Select]selectmetadata.SelectMetadata),
 		whereParamMaps:       make(map[*sqlparser.Where]parserutil.ParameterMap),
+		insertRowsIndirect:   make(map[*sqlparser.Insert]astindirect.Indirect),
+		selectIndirectCache:  make(map[*sqlparser.Select]astindirect.Indirect),
+		execIndirectCache:    make(map[*sqlparser.Exec]astindirect.Indirect),
+		unionIndirectCache:   make(map[*sqlparser.Union]astindirect.Indirect),
 	}
 	return rv, nil
 }
@@ -37,6 +41,12 @@ type AnnotatedAst interface {
 	SetWhereParamMapsEntry(*sqlparser.Where, parserutil.ParameterMap)
 	GetWhereParamMapsEntry(*sqlparser.Where) (parserutil.ParameterMap, bool)
 	IsReadOnly() bool
+	SetInsertRowsIndirect(node *sqlparser.Insert, indirect astindirect.Indirect)
+	GetInsertRowsIndirect(*sqlparser.Insert) (astindirect.Indirect, bool)
+	GetSelectIndirect(selNode *sqlparser.Select) (astindirect.Indirect, bool)
+	SetSelectIndirect(selNode *sqlparser.Select, indirect astindirect.Indirect)
+	GetExecIndirect(selNode *sqlparser.Exec) (astindirect.Indirect, bool)
+	SetExecIndirect(selNode *sqlparser.Exec, indirect astindirect.Indirect)
 }
 
 type standardAnnotatedAst struct {
@@ -45,9 +55,53 @@ type standardAnnotatedAst struct {
 	tableIndirects       map[string]astindirect.Indirect
 	materializedViewRefs map[string]astindirect.Indirect
 	physicalTableRefs    map[string]astindirect.Indirect
+	insertRowsIndirect   map[*sqlparser.Insert]astindirect.Indirect
 	tableSQLDataSources  map[string]sql_datasource.SQLDataSource
 	selectMetadataMap    map[*sqlparser.Select]selectmetadata.SelectMetadata
 	whereParamMaps       map[*sqlparser.Where]parserutil.ParameterMap
+	selectIndirectCache  map[*sqlparser.Select]astindirect.Indirect
+	unionIndirectCache   map[*sqlparser.Union]astindirect.Indirect
+	execIndirectCache    map[*sqlparser.Exec]astindirect.Indirect
+}
+
+func (aa *standardAnnotatedAst) GetExecIndirect(selNode *sqlparser.Exec) (astindirect.Indirect, bool) {
+	rv, ok := aa.execIndirectCache[selNode]
+	return rv, ok
+}
+
+func (aa *standardAnnotatedAst) SetExecIndirect(selNode *sqlparser.Exec, indirect astindirect.Indirect) {
+	aa.execIndirectCache[selNode] = indirect
+}
+
+func (aa *standardAnnotatedAst) GetSelectIndirect(selNode *sqlparser.Select) (astindirect.Indirect, bool) {
+	rv, ok := aa.selectIndirectCache[selNode]
+	return rv, ok
+}
+
+func (aa *standardAnnotatedAst) SetSelectIndirect(selNode *sqlparser.Select, indirect astindirect.Indirect) {
+	aa.selectIndirectCache[selNode] = indirect
+}
+
+func (aa *standardAnnotatedAst) SetInsertRowsIndirect(node *sqlparser.Insert, indirect astindirect.Indirect) {
+	aa.insertRowsIndirect[node] = indirect
+}
+
+func (aa *standardAnnotatedAst) GetInsertRowsIndirect(node *sqlparser.Insert) (astindirect.Indirect, bool) {
+	rv, ok := aa.insertRowsIndirect[node]
+	if ok {
+		return rv, true
+	}
+	switch n := node.Rows.(type) {
+	case *sqlparser.Select:
+		return aa.GetSelectIndirect(n)
+	case *sqlparser.Union:
+		rv, ok = aa.unionIndirectCache[n]
+		return rv, ok
+	case *sqlparser.ParenSelect:
+		return nil, false
+	default:
+		return nil, false
+	}
 }
 
 func (aa *standardAnnotatedAst) SetWhereParamMapsEntry(node *sqlparser.Where, paramMap parserutil.ParameterMap) {
