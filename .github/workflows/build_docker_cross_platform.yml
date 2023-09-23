@@ -1,0 +1,95 @@
+name: Build  And Release Docker Cross Platform
+
+on:
+  push:
+    tags:
+      - build-release-*
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - "examples/**"
+      - "licenses/**"
+
+jobs:
+
+  dockerbuild:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v3
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        cache: pip
+        python-version: '3.11'
+    
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Git Ref Parse
+      id: git_ref_parse
+      run: |
+          {
+            echo "SOURCE_NAME=${GITHUB_REF#refs/*/}"
+            echo "SOURCE_BRANCH=${GITHUB_REF#refs/heads/}"
+            echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}"
+          } >> "${GITHUB_STATE}"
+    
+    - name: Extract Build Info and Persist
+      env:
+        BUILDCOMMITSHA: ${{github.sha}}
+        BUILDBRANCH: ${{github.ref}}
+        BUILDPLATFORM: ${{runner.os}}
+        BUILDPATCHVERSION: ${{github.run_number}}
+      run: |
+        source version.txt
+        BUILDMAJORVERSION=${MajorVersion}
+        BUILDMINORVERSION=${MinorVersion}
+        if [[ ! "$BUILDBRANCH" == "*develop" ]]; then
+          # shellcheck disable=2269
+          BUILDPATCHVERSION="${BUILDPATCHVERSION}"
+        fi
+        BUILDSHORTCOMMITSHA="$(echo "${BUILDCOMMITSHA}" | cut -c 1-7)"
+        BUILDDATE="$(date)"
+        export BUILDDATE
+        echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
+        echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
+        echo "BUILDPATCHVERSION: ${BUILDPATCHVERSION}"
+        echo "BUILDBRANCH: ${BUILDBRANCH}"
+        echo "BUILDCOMMITSHA: ${BUILDCOMMITSHA}"
+        echo "BUILDSHORTCOMMITSHA: ${BUILDSHORTCOMMITSHA}"
+        echo "BUILDDATE: ${BUILDDATE}"
+        echo "BUILDPLATFORM: ${BUILDPLATFORM}"
+
+        {
+          echo "BUILDMAJORVERSION=$BUILDMAJORVERSION"
+          echo "BUILDMINORVERSION=$BUILDMINORVERSION"
+          echo "BUILDPATCHVERSION=$BUILDPATCHVERSION"
+        } >> "${GITHUB_ENV}"
+
+    - name: Login to Docker Hub
+      if: always()
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Push stackql image to Docker Hub
+      if: ${{ success() && github.ref_type == 'tag' && startsWith(github.ref_name, 'build-release') }}
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: linux/arm64
+        build-args: |
+          BUILDMAJORVERSION=${{env.BUILDMAJORVERSION}}
+          BUILDMINORVERSION=${{env.BUILDMINORVERSION}}
+          BUILDPATCHVERSION=${{env.BUILDPATCHVERSION}}
+        push: true
+        target: app
+        tags: stackql/stackql:${{github.sha}},stackql/stackql:latest
