@@ -683,7 +683,7 @@ jobs:
 
   dockerbuild:
     name: Docker Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-m
     steps:
 
     - name: Check out code into the Go module directory
