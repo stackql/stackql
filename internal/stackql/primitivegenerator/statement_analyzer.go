@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/stackql/stackql/internal/stackql/astformat"
+	"github.com/stackql/stackql/internal/stackql/astindirect"
 	"github.com/stackql/stackql/internal/stackql/astvisit"
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/drm"
@@ -626,6 +628,7 @@ func (pb *standardPrimitiveGenerator) AnalyzeNop(
 
 func (pb *standardPrimitiveGenerator) analyzeExec(pbi planbuilderinput.PlanBuilderInput) error {
 	handlerCtx := pbi.GetHandlerCtx()
+	annotatedAST := pbi.GetAnnotatedAST()
 	node, ok := pbi.GetExec()
 	if !ok {
 		return fmt.Errorf("could not cast node of type '%T' to required Exec", pbi.GetStatement())
@@ -649,6 +652,12 @@ func (pb *standardPrimitiveGenerator) analyzeExec(pbi planbuilderinput.PlanBuild
 				nil, nil))
 		return nil
 	}
+	selIndirect, indirectErr := astindirect.NewParserExecIndirect(
+		node, pb.PrimitiveComposer.GetSelectPreparedStatementCtx())
+	if indirectErr != nil {
+		return indirectErr
+	}
+	annotatedAST.SetExecIndirect(node, selIndirect)
 	pb.PrimitiveComposer.SetBuilder(
 		primitivebuilder.NewSingleAcquireAndSelect(
 			pb.PrimitiveComposer.GetGraphHolder(),
@@ -915,9 +924,10 @@ func (pb *standardPrimitiveGenerator) buildRequestContext(
 	return httpArmoury, err
 }
 
-//nolint:gocognit // TODO: review
+//nolint:gocognit,funlen // TODO: review
 func (pb *standardPrimitiveGenerator) AnalyzeInsert(pbi planbuilderinput.PlanBuilderInput) error {
 	handlerCtx := pbi.GetHandlerCtx()
+	annotatedAST := pbi.GetAnnotatedAST()
 	node, ok := pbi.GetInsert()
 	if !ok {
 		return fmt.Errorf("could not cast node of type '%T' to required Insert", pbi.GetStatement())
@@ -930,18 +940,7 @@ func (pb *standardPrimitiveGenerator) AnalyzeInsert(pbi planbuilderinput.PlanBui
 	if err != nil {
 		return err
 	}
-	prov, err := tbl.GetProvider()
-	if err != nil {
-		return err
-	}
-	currentService, err := tbl.GetServiceStr()
-	if err != nil {
-		return err
-	}
-	currentResource, err := tbl.GetResourceStr()
-	if err != nil {
-		return err
-	}
+	pb.PrimitiveComposer.SetTable(node, tbl)
 	insertValOnlyRows, nonValCols, err := parserutil.ExtractInsertValColumnsPlusPlaceHolders(node)
 	if err != nil {
 		return err
@@ -961,6 +960,45 @@ func (pb *standardPrimitiveGenerator) AnalyzeInsert(pbi planbuilderinput.PlanBui
 		default:
 			return fmt.Errorf("insert with rows of type '%T' not currently supported", rowsNode)
 		}
+	} else {
+		selQuery := strings.ReplaceAll(astformat.String(node.Rows, handlerCtx.GetASTFormatter()), "from \"dual\"", "")
+		internallyRoutableVisitor := astvisit.NewInternallyRoutableTypingAstVisitor(
+			selQuery,
+			annotatedAST,
+			handlerCtx,
+			nil,
+			handlerCtx.GetDrmConfig(),
+			handlerCtx.GetNamespaceCollection(),
+		)
+		vizErr := internallyRoutableVisitor.Visit(node)
+		if vizErr != nil {
+			return vizErr
+		}
+		selCtx, selCtxExists := internallyRoutableVisitor.GetSelectContext()
+		if !selCtxExists {
+			return fmt.Errorf("could not find select context for insert values")
+		}
+		selectIndirect, indirectError := astindirect.NewInsertRowsIndirect(node, selCtx)
+		if indirectError != nil {
+			return indirectError
+		}
+		annotatedAST.SetInsertRowsIndirect(node, selectIndirect)
+	}
+	isPhysicalTable := tbl.IsPhysicalTable()
+	if isPhysicalTable {
+		return nil
+	}
+	prov, err := tbl.GetProvider()
+	if err != nil {
+		return err
+	}
+	currentService, err := tbl.GetServiceStr()
+	if err != nil {
+		return err
+	}
+	currentResource, err := tbl.GetResourceStr()
+	if err != nil {
+		return err
 	}
 
 	pb.parseComments(node.Comments)
@@ -983,7 +1021,6 @@ func (pb *standardPrimitiveGenerator) AnalyzeInsert(pbi planbuilderinput.PlanBui
 	if err != nil {
 		return err
 	}
-	pb.PrimitiveComposer.SetTable(node, tbl)
 	return nil
 }
 

@@ -114,6 +114,10 @@
         "create materialized view mv_one as select 1 as one; refresh materialized view mv_one;",
         "create materialized view silly_mv as select * from google.compute.firewalls where project = 'stackql-demo'; refresh materialized view silly_mv; select * from silly_mv;",
         "refresh materialized view stackql_gossip;",
+        "insert into stackql_notes(note, priority) values ('this is a test', 2000); select note from stackql_notes order by priority desc;",
+        "insert into stackql_notes(note, priority) select name from google.compute.firewalls where project = 'stackql-demo'; select * from silly_mv;",
+        "select gossip, 3000 from stackql_gossip;",
+        "create table my_silly_table(id int, name text, magnitude numeric); insert into my_silly_table(id, name, magnitude) values (1, 'one', 1.0); insert into my_silly_table(id, name, magnitude) values (2, 'two', 2.0); insert into my_silly_table(id, name, magnitude) values (3, 'three', 3.0); select name, magnitude from my_silly_table order by magnitude desc;",
       ],
       "default": "show providers;"
     },

@@ -626,11 +626,15 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 			relationalCol, ok := indirect.GetRelationalColumnByIdentifier(col.Name)
 			if !ok {
-				r, ok := indirect.GetColumnByName(col.Name)
-				if !ok {
-					return fmt.Errorf("query rewriting for indirection: cannot find col = '%s'", col.Name)
+				if col.Val != nil {
+					relationalCol = typing.NewRelationalColumn(col.Name, v.getTypeFromParserType(col.Type)).WithDecorated(col.DecoratedColumn)
+				} else {
+					r, ok := indirect.GetColumnByName(col.Name)
+					if !ok {
+						return fmt.Errorf("query rewriting for indirection: cannot find col = '%s'", col.Name)
+					}
+					relationalCol = typing.NewRelationalColumn(col.Name, r.GetType()).WithDecorated(col.DecoratedColumn)
 				}
-				relationalCol = typing.NewRelationalColumn(col.Name, r.GetType()).WithDecorated(col.DecoratedColumn)
 			}
 			v.relationalColumns = append(v.relationalColumns, relationalCol)
 			return nil

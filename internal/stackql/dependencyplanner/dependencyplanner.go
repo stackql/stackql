@@ -8,6 +8,7 @@ import (
 	"github.com/stackql/go-openapistackql/pkg/media"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
+	"github.com/stackql/stackql/internal/stackql/astindirect"
 	"github.com/stackql/stackql/internal/stackql/astvisit"
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/dataflow"
@@ -45,7 +46,7 @@ type standardDependencyPlanner struct {
 	primitiveComposer  primitivecomposer.PrimitiveComposer
 	rewrittenWhere     *sqlparser.Where
 	secondaryTccs      []internaldto.TxnControlCounters
-	sqlStatement       sqlparser.SQLNode
+	sqlStatement       *sqlparser.Select
 	tableSlice         []tableinsertioncontainer.TableInsertionContainer
 	tblz               taxonomy.TblMap
 	discoGenIDs        map[sqlparser.SQLNode]int
@@ -68,7 +69,7 @@ func NewStandardDependencyPlanner(
 	dataflowCollection dataflow.Collection,
 	colRefs parserutil.ColTableMap,
 	rewrittenWhere *sqlparser.Where,
-	sqlStatement sqlparser.SQLNode,
+	sqlStatement *sqlparser.Select,
 	tblz taxonomy.TblMap,
 	primitiveComposer primitivecomposer.PrimitiveComposer,
 	tcc internaldto.TxnControlCounters,
@@ -276,6 +277,11 @@ func (dp *standardDependencyPlanner) Plan() error {
 		nil,
 		streaming.NewNopMapStream(),
 	)
+	selIndirect, indirectErr := astindirect.NewParserSelectIndirect(dp.sqlStatement, selCtx)
+	if indirectErr != nil {
+		return indirectErr
+	}
+	dp.annotatedAST.SetSelectIndirect(dp.sqlStatement, selIndirect)
 	if dp.isElideRead {
 		selBld = primitivebuilder.NewNopBuilder(
 			dp.primitiveComposer.GetGraphHolder(),

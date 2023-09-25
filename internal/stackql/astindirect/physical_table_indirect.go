@@ -1,4 +1,4 @@
-package astindirect //nolint:dupl // TODO: refactor
+package astindirect
 
 import (
 	"fmt"

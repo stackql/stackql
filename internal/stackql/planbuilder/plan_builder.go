@@ -722,9 +722,10 @@ func (pgb *standardPlanGraphBuilder) handleNativeQuery(pbi planbuilderinput.Plan
 	return nil
 }
 
-//nolint:gocognit // acceptable complexity
+//nolint:gocognit,funlen // acceptable complexity
 func (pgb *standardPlanGraphBuilder) handleInsert(pbi planbuilderinput.PlanBuilderInput) error {
 	handlerCtx := pbi.GetHandlerCtx()
+	annotatedAST := pbi.GetAnnotatedAST()
 	node, ok := pbi.GetInsert()
 	if !ok {
 		return fmt.Errorf("could not cast statement of type '%T' to required Insert", pbi.GetStatement())
@@ -767,6 +768,11 @@ func (pgb *standardPlanGraphBuilder) handleInsert(pbi planbuilderinput.PlanBuild
 				if err != nil {
 					return err
 				}
+				selectIndirect, selectIndirectExists := annotatedAST.GetSelectIndirect(rowsNode)
+				if !selectIndirectExists {
+					return fmt.Errorf("could not obtain select statement in insert analysis")
+				}
+				annotatedAST.SetInsertRowsIndirect(node, selectIndirect)
 			default:
 				return fmt.Errorf("insert with rows of type '%T' not currently supported", rowsNode)
 			}
@@ -775,6 +781,7 @@ func (pgb *standardPlanGraphBuilder) handleInsert(pbi planbuilderinput.PlanBuild
 			if err != nil {
 				return err
 			}
+
 			sn := pgb.planGraphHolder.CreatePrimitiveNode(selectPrimitive)
 			selectPrimitiveNode = sn
 		}
@@ -794,6 +801,11 @@ func (pgb *standardPlanGraphBuilder) handleInsert(pbi planbuilderinput.PlanBuild
 		bldrInput.SetCommentDirectives(primitiveGenerator.GetPrimitiveComposer().GetCommentDirectives())
 		bldrInput.SetIsAwait(primitiveGenerator.GetPrimitiveComposer().IsAwait())
 		bldrInput.SetParserNode(node)
+		bldrInput.SetAnnotatedAST(pbi.GetAnnotatedAST())
+		isPhysicalTable := tbl.IsPhysicalTable()
+		if isPhysicalTable {
+			bldrInput.SetIsTargetPhysicalTable(true)
+		}
 		bldr := primitivebuilder.NewInsertOrUpdate(
 			bldrInput,
 		)
@@ -853,6 +865,10 @@ func (pgb *standardPlanGraphBuilder) handleUpdate(pbi planbuilderinput.PlanBuild
 		bldrInput.SetCommentDirectives(primitiveGenerator.GetPrimitiveComposer().GetCommentDirectives())
 		bldrInput.SetIsAwait(primitiveGenerator.GetPrimitiveComposer().IsAwait())
 		bldrInput.SetParserNode(node)
+		isPhysicalTable := tbl.IsPhysicalTable()
+		if isPhysicalTable {
+			bldrInput.SetIsTargetPhysicalTable(true)
+		}
 		bldr := primitivebuilder.NewInsertOrUpdate(
 			bldrInput,
 		)

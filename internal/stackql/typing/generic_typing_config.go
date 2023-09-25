@@ -248,6 +248,7 @@ func (tc *genericTypingConfig) getScannableObjectForNativeResult(colSchema *sql.
 		return new(sql.NullInt64)
 	case "int64", "bigint":
 		return new(sql.NullInt64)
+	//nolint:goconst // let it ride
 	case "numeric", "decimal", "float", "float32", "float64":
 		return new(sql.NullFloat64)
 	case "bool":

@@ -529,7 +529,7 @@ Create Table Scenario Working
     ${inputStr} =    Catenate
     ...    create table phystab_one(t_id int, z text);
     ${outputStr} =    Catenate    SEPARATOR=\n
-    ...    create table is not supported
+    ...    DDL Execution Completed
     Should Stackql Exec Inline Equal Both Streams
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -2029,6 +2029,122 @@ Function Expression And Where Clause Function Expression Predicate Alongside Pro
     ...    ${inputStr}
     ...    ${outputStr}
     ...    stdout=${CURDIR}/tmp/Function-Expression-And-Where-Clause-Function-Expression-Predicate-Alongside-Projection-Returns-Expected-Results.tmp
+
+Insert All Simple Patterns Into Embedded Table Then Projection Returns Expected Results
+    ${inputStr} =    Catenate
+    ...    insert into stackql_notes(note, priority) values ('this is a test', 2000);
+    ...    insert into stackql_notes(note, priority) select gossip, 3000 from stackql_gossip;
+    ...    insert into stackql_notes(note, priority) select name, 1000 as pr from google.compute.firewalls where project = 'testing-project';
+    ...    select note from stackql_notes order by priority desc, note desc;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |--------------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}note${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |--------------------------------|
+    ...    |${SPACE}stackql${SPACE}wants${SPACE}to${SPACE}hear${SPACE}from${SPACE}you${SPACE}|
+    ...    |--------------------------------|
+    ...    |${SPACE}stackql${SPACE}is${SPACE}open${SPACE}to${SPACE}extension${SPACE}${SPACE}${SPACE}|
+    ...    |--------------------------------|
+    ...    |${SPACE}stackql${SPACE}is${SPACE}not${SPACE}opinionated${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |--------------------------------|
+    ...    |${SPACE}this${SPACE}is${SPACE}a${SPACE}test${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |--------------------------------|
+    ...    |${SPACE}v0.5.418${SPACE}introduced${SPACE}table${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |${SPACE}valued${SPACE}functions,${SPACE}for${SPACE}example${SPACE}${SPACE}|
+    ...    |${SPACE}json_each.${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |--------------------------------|
+    ...    |${SPACE}selected-allow-rdesk${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |--------------------------------|
+    ...    |${SPACE}default-allow-ssh${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |--------------------------------|
+    ...    |${SPACE}default-allow-rdp${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |--------------------------------|
+    ...    |${SPACE}default-allow-internal${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |--------------------------------|
+    ...    |${SPACE}default-allow-icmp${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |--------------------------------|
+    ...    |${SPACE}default-allow-https${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |--------------------------------|
+    ...    |${SPACE}default-allow-http${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |--------------------------------|
+    ...    |${SPACE}allow-spark-ui${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |--------------------------------|
+    ...    |${SPACE}stackql${SPACE}supports${SPACE}the${SPACE}postgres${SPACE}${SPACE}|
+    ...    |${SPACE}wire${SPACE}protocol.${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |--------------------------------|
+    Should Stackql Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    stdout=${CURDIR}/tmp/Insert-All-Simple-Patterns-Into-Embedded-Table-Then-Projection-Returns-Expected-Results.tmp
+
+Table Lifecycle Returns Expected Results
+    ${inputStr} =    Catenate
+    ...    create table my_silly_table(id int, name text, magnitude numeric);
+    ...    insert into my_silly_table(id, name, magnitude) values (1, 'one', 1.0); 
+    ...    insert into my_silly_table(id, name, magnitude) values (2, 'two', 2.0); 
+    ...    insert into my_silly_table(id, name, magnitude) values (3, 'three', 3.0); 
+    ...    select name, magnitude from my_silly_table order by magnitude desc;
+    ...    drop table my_silly_table;
+    ...    select name, magnitude from my_silly_table order by magnitude desc;
+    ...    create table my_silly_table(id int, name text, magnitude numeric);
+    ...    insert into my_silly_table(id, name, magnitude) values (11, 'eleven', 11.0); 
+    ...    insert into my_silly_table(id, name, magnitude) values (12, 'twelve', 12.0); 
+    ...    insert into my_silly_table(id, name, magnitude) values (13, 'thirteen', 13.0);
+    ...    select name, magnitude from my_silly_table order by magnitude desc;
+    ...    drop table my_silly_table;
+    ...    select name, magnitude from my_silly_table order by magnitude desc;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-------|-----------|
+    ...    |${SPACE}name${SPACE}${SPACE}|${SPACE}magnitude${SPACE}|
+    ...    |-------|-----------|
+    ...    |${SPACE}three${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}3${SPACE}|
+    ...    |-------|-----------|
+    ...    |${SPACE}two${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}2${SPACE}|
+    ...    |-------|-----------|
+    ...    |${SPACE}one${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|
+    ...    |-------|-----------|
+    ...    |----------|-----------|
+    ...    |${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}|${SPACE}magnitude${SPACE}|
+    ...    |----------|-----------|
+    ...    |${SPACE}thirteen${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}13${SPACE}|
+    ...    |----------|-----------|
+    ...    |${SPACE}twelve${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}12${SPACE}|
+    ...    |----------|-----------|
+    ...    |${SPACE}eleven${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}11${SPACE}|
+    ...    |----------|-----------|
+    ${stdErrStr} =    Catenate    SEPARATOR=\n
+    ...    DDL Execution Completed
+    ...    insert into table completed
+    ...    insert into table completed
+    ...    insert into table completed
+    ...    DDL Execution Completed
+    ...    could not locate table 'my_silly_table'
+    ...    DDL Execution Completed
+    ...    insert into table completed
+    ...    insert into table completed
+    ...    insert into table completed
+    ...    DDL Execution Completed
+    ...    could not locate table 'my_silly_table'
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${stdErrStr}
+    ...    stdout=${CURDIR}/tmp/Table-Lifecycle-Returns-Expected-Results.tmp
+    ...    stderr=${CURDIR}/tmp/Table-Lifecycle-Returns-Expected-Results-stderr.tmp
+
 
 Basic View of Union Returns Results
     Should Stackql Exec Inline Contain

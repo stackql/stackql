@@ -27,6 +27,9 @@ const (
 	CTEType
 	MaterializedViewType
 	PhysicalTableType
+	SelectType
+	ExecType
+	InsertRowsType
 )
 
 func NewViewIndirect(viewDTO internaldto.RelationDTO) (Indirect, error) {
@@ -42,6 +45,33 @@ func NewMaterializedViewIndirect(viewDTO internaldto.RelationDTO, sqlSystem sql_
 		viewDTO:               viewDTO,
 		underlyingSymbolTable: symtab.NewHashMapTreeSymTab(),
 		sqlSystem:             sqlSystem,
+	}
+	return rv, nil
+}
+
+func NewParserSelectIndirect(selectObj *sqlparser.Select, selCtx drm.PreparedStatementCtx) (Indirect, error) {
+	rv := &parserSelectionIndirect{
+		selCtx:                selCtx,
+		selectObj:             selectObj,
+		underlyingSymbolTable: symtab.NewHashMapTreeSymTab(),
+	}
+	return rv, nil
+}
+
+func NewInsertRowsIndirect(insertObj *sqlparser.Insert, selCtx drm.PreparedStatementCtx) (Indirect, error) {
+	rv := &parserSelectionIndirect{
+		selCtx:                selCtx,
+		insertObj:             insertObj,
+		underlyingSymbolTable: symtab.NewHashMapTreeSymTab(),
+	}
+	return rv, nil
+}
+
+func NewParserExecIndirect(execObj *sqlparser.Exec, selCtx drm.PreparedStatementCtx) (Indirect, error) {
+	rv := &parserSelectionIndirect{
+		selCtx:                selCtx,
+		execObj:               execObj,
+		underlyingSymbolTable: symtab.NewHashMapTreeSymTab(),
 	}
 	return rv, nil
 }

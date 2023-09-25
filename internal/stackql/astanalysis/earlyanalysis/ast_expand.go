@@ -850,7 +850,7 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 		// END OPTIMISTIC DOC PERSISTENCE AND VIEW DEFINITION
 		viewDTO, isView := v.sqlSystem.GetViewByName(node.GetRawVal())
 		materializedViewDTO, isMaterializedView := v.sqlSystem.GetMaterializedViewByName(node.GetRawVal())
-		tableDTO, isTable := v.sqlSystem.GetTableByName(node.GetRawVal(), v.tcc)
+		tableDTO, isTable := v.sqlSystem.GetPhysicalTableByName(node.GetRawVal())
 		if isView { //nolint:nestif,gocritic // acceptable
 			indirect, newErr := astindirect.NewViewIndirect(viewDTO)
 			if newErr != nil {
