@@ -505,7 +505,7 @@ func (pgb *standardPlanGraphBuilder) handleDelete(pbi planbuilderinput.PlanBuild
 	if !ok {
 		return fmt.Errorf("could not cast node of type '%T' to required Delete", pbi.GetStatement())
 	}
-	if !handlerCtx.GetRuntimeContext().TestWithoutAPICalls {
+	if !handlerCtx.GetRuntimeContext().TestWithoutAPICalls { //nolint:nestif // tolerable for now
 		primitiveGenerator := pgb.rootPrimitiveGenerator
 		err := primitiveGenerator.AnalyzeStatement(pbi)
 		if err != nil {
@@ -515,14 +515,32 @@ func (pgb *standardPlanGraphBuilder) handleDelete(pbi planbuilderinput.PlanBuild
 		if err != nil {
 			return err
 		}
-		bldr := primitivebuilder.NewDelete(
-			pgb.planGraphHolder,
-			handlerCtx,
-			node,
-			tbl,
-			nil,
-			primitiveGenerator.GetPrimitiveComposer().IsAwait(),
-		)
+		isPhysicalTable := tbl.IsPhysicalTable()
+		var bldr primitivebuilder.Builder
+		if !isPhysicalTable {
+			bldr = primitivebuilder.NewDelete(
+				pgb.planGraphHolder,
+				handlerCtx,
+				node,
+				tbl,
+				nil,
+				primitiveGenerator.GetPrimitiveComposer().IsAwait(),
+			)
+		} else {
+			bi := builder_input.NewBuilderInput(
+				pgb.planGraphHolder,
+				handlerCtx,
+				tbl,
+			)
+			tcc := pbi.GetTxnCtrlCtrs()
+			bldr = primitivebuilder.NewRawNativeExec(
+				pgb.planGraphHolder,
+				handlerCtx,
+				tcc,
+				handlerCtx.GetQuery(),
+				bi,
+			)
+		}
 		err = bldr.Build()
 		if err != nil {
 			return err
@@ -802,6 +820,7 @@ func (pgb *standardPlanGraphBuilder) handleInsert(pbi planbuilderinput.PlanBuild
 		bldrInput.SetIsAwait(primitiveGenerator.GetPrimitiveComposer().IsAwait())
 		bldrInput.SetParserNode(node)
 		bldrInput.SetAnnotatedAST(pbi.GetAnnotatedAST())
+		bldrInput.SetTxnCtrlCtrs(pbi.GetTxnCtrlCtrs())
 		isPhysicalTable := tbl.IsPhysicalTable()
 		if isPhysicalTable {
 			bldrInput.SetIsTargetPhysicalTable(true)
@@ -843,6 +862,7 @@ func (pgb *standardPlanGraphBuilder) handleUpdate(pbi planbuilderinput.PlanBuild
 			// TODO: support dynamic content
 			return fmt.Errorf("update does not currently support dynamic content")
 		}
+		// TODO: elide for physical tables
 		selectPrimitive, err = primitivebuilder.NewUpdateableValsPrimitive(handlerCtx, insertValOnlyRows)
 		if err != nil {
 			return err
@@ -867,6 +887,7 @@ func (pgb *standardPlanGraphBuilder) handleUpdate(pbi planbuilderinput.PlanBuild
 		bldrInput.SetParserNode(node)
 		isPhysicalTable := tbl.IsPhysicalTable()
 		if isPhysicalTable {
+			bldrInput.SetTxnCtrlCtrs(pbi.GetTxnCtrlCtrs())
 			bldrInput.SetIsTargetPhysicalTable(true)
 		}
 		bldr := primitivebuilder.NewInsertOrUpdate(

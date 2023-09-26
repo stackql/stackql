@@ -45,10 +45,29 @@ func (ss *InsertOrUpdate) Build() error {
 	}
 	var genericBldr Builder
 	var genericBldrSetupErr error
+	//nolint:nestif,gocritic // tactical
 	if mutableInput.IsTargetPhysicalTable() {
-		genericBldr, genericBldrSetupErr = newInsertIntoPhysicalTable(
-			mutableInput,
-		)
+		if mutableInput.GetVerb() == "insert" {
+			genericBldr, genericBldrSetupErr = newInsertIntoPhysicalTable(
+				mutableInput,
+			)
+		} else if mutableInput.GetVerb() == "update" {
+			graphHolder, graphHolderExists := mutableInput.GetGraphHolder()
+			handlerCtx, handlerCtxExists := mutableInput.GetHandlerContext()
+			tcc, tccExists := mutableInput.GetTxnCtrlCtrs()
+			if !graphHolderExists || !handlerCtxExists || !tccExists {
+				return fmt.Errorf("mutation executor: cannot accomodate verb '%s'", mutableInput.GetVerb())
+			}
+			genericBldr = NewRawNativeExec(
+				graphHolder,
+				handlerCtx,
+				tcc,
+				handlerCtx.GetQuery(),
+				mutableInput,
+			)
+		} else {
+			return fmt.Errorf("mutation executor: cannot accomodate verb '%s'", mutableInput.GetVerb())
+		}
 	} else {
 		genericBldr, genericBldrSetupErr = newGenericHTTPStreamInput(
 			mutableInput,

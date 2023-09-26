@@ -5,6 +5,7 @@ import (
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 	"github.com/stackql/stackql/internal/stackql/provider"
 	"github.com/stackql/stackql/internal/stackql/streaming"
@@ -49,6 +50,8 @@ type BuilderInput interface {
 	SetHTTPPreparatorStream(prepStream http_preparator_stream.HttpPreparatorStream)
 	IsTargetPhysicalTable() bool
 	SetIsTargetPhysicalTable(isPhysical bool)
+	SetTxnCtrlCtrs(internaldto.TxnControlCounters)
+	GetTxnCtrlCtrs() (internaldto.TxnControlCounters, bool)
 }
 
 type builderInput struct {
@@ -69,6 +72,7 @@ type builderInput struct {
 	prov              provider.IProvider
 	annotatedAst      annotatedast.AnnotatedAst
 	isTargetPhysical  bool
+	txnCtrlCtrs       internaldto.TxnControlCounters
 }
 
 func NewBuilderInput(
@@ -83,6 +87,14 @@ func NewBuilderInput(
 		commentDirectives: sqlparser.CommentDirectives{},
 		inputAlias:        "", // this default is explicit for emphasisis
 	}
+}
+
+func (bi *builderInput) SetTxnCtrlCtrs(tcc internaldto.TxnControlCounters) {
+	bi.txnCtrlCtrs = tcc
+}
+
+func (bi *builderInput) GetTxnCtrlCtrs() (internaldto.TxnControlCounters, bool) {
+	return bi.txnCtrlCtrs, bi.txnCtrlCtrs != nil
 }
 
 func (bi *builderInput) IsTargetPhysicalTable() bool {
@@ -236,5 +248,6 @@ func (bi *builderInput) Clone() BuilderInput {
 		isUndo:            bi.isUndo,
 		isTargetPhysical:  bi.isTargetPhysical,
 		annotatedAst:      bi.annotatedAst,
+		txnCtrlCtrs:       bi.txnCtrlCtrs,
 	}
 }
