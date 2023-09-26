@@ -2145,6 +2145,103 @@ Table Lifecycle Returns Expected Results
     ...    stdout=${CURDIR}/tmp/Table-Lifecycle-Returns-Expected-Results.tmp
     ...    stderr=${CURDIR}/tmp/Table-Lifecycle-Returns-Expected-Results-stderr.tmp
 
+Table Lifecycle Plus Update Returns Expected Results
+    ${inputStr} =    Catenate
+    ...    create table my_silly_table(id int, name text, magnitude numeric);
+    ...    insert into my_silly_table(id, name, magnitude) values (1, 'one', 1.0); 
+    ...    insert into my_silly_table(id, name, magnitude) values (2, 'two', 2.0);
+    ...    select name, magnitude from my_silly_table order by magnitude desc;
+    ...    update my_silly_table set magnitude = 1.5 where id = 1;
+    ...    select name, magnitude from my_silly_table order by magnitude desc;
+    ...    drop table my_silly_table;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |------|-----------|
+    ...    |${SPACE}name${SPACE}|${SPACE}magnitude${SPACE}|
+    ...    |------|-----------|
+    ...    |${SPACE}two${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}2${SPACE}|
+    ...    |------|-----------|
+    ...    |${SPACE}one${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|
+    ...    |------|-----------|
+    ...    |------|-----------|
+    ...    |${SPACE}name${SPACE}|${SPACE}magnitude${SPACE}|
+    ...    |------|-----------|
+    ...    |${SPACE}two${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}2${SPACE}|
+    ...    |------|-----------|
+    ...    |${SPACE}one${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1.5${SPACE}|
+    ...    |------|-----------|
+    ${stdErrStr} =    Catenate    SEPARATOR=\n
+    ...    DDL Execution Completed
+    ...    insert into table completed
+    ...    insert into table completed
+    ...    exec completed
+    ...    DDL Execution Completed
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${stdErrStr}
+    ...    stdout=${CURDIR}/tmp/Table-Lifecycle-Plus-Update-Returns-Expected-Results.tmp
+    ...    stderr=${CURDIR}/tmp/Table-Lifecycle-Plus-Update-Returns-Expected-Results-stderr.tmp
+
+Table Lifecycle Plus Delete Returns Expected Results
+    ${inputStr} =    Catenate
+    ...    create table my_silly_table(id int, name text, magnitude numeric);
+    ...    insert into my_silly_table(id, name, magnitude) values (1, 'one', 1.0); 
+    ...    insert into my_silly_table(id, name, magnitude) values (2, 'two', 2.0);
+    ...    insert into my_silly_table(id, name, magnitude) values (3, 'three', 3.0);
+    ...    select name, magnitude from my_silly_table order by magnitude desc;
+    ...    delete from my_silly_table where id = 3;
+    ...    select name, magnitude from my_silly_table order by magnitude desc;
+    ...    delete from my_silly_table;
+    ...    select name, magnitude from my_silly_table order by magnitude desc;
+    ...    drop table my_silly_table;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-------|-----------|
+    ...    |${SPACE}name${SPACE}${SPACE}|${SPACE}magnitude${SPACE}|
+    ...    |-------|-----------|
+    ...    |${SPACE}three${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}3${SPACE}|
+    ...    |-------|-----------|
+    ...    |${SPACE}two${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}2${SPACE}|
+    ...    |-------|-----------|
+    ...    |${SPACE}one${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|
+    ...    |-------|-----------|
+    ...    |------|-----------|
+    ...    |${SPACE}name${SPACE}|${SPACE}magnitude${SPACE}|
+    ...    |------|-----------|
+    ...    |${SPACE}two${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}2${SPACE}|
+    ...    |------|-----------|
+    ...    |${SPACE}one${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|
+    ...    |------|-----------|
+    ...    |------|-----------|
+    ...    |${SPACE}name${SPACE}|${SPACE}magnitude${SPACE}|
+    ...    |------|-----------|
+    ${stdErrStr} =    Catenate    SEPARATOR=\n
+    ...    DDL Execution Completed
+    ...    insert into table completed
+    ...    insert into table completed
+    ...    insert into table completed
+    ...    exec completed
+    ...    exec completed
+    ...    DDL Execution Completed
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${stdErrStr}
+    ...    stdout=${CURDIR}/tmp/Table-Lifecycle-Plus-Delete-Returns-Expected-Results.tmp
+    ...    stderr=${CURDIR}/tmp/Table-Lifecycle-Plus-Delete-Returns-Expected-Results-stderr.tmp
 
 Basic View of Union Returns Results
     Should Stackql Exec Inline Contain

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/builder_input"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/primitive"
@@ -17,6 +18,7 @@ type RawNativeExec struct {
 	txnCtrlCtr  internaldto.TxnControlCounters
 	root        primitivegraph.PrimitiveNode
 	nativeQuery string
+	bldrInput   builder_input.BuilderInput
 }
 
 func NewRawNativeExec(
@@ -24,12 +26,14 @@ func NewRawNativeExec(
 	handlerCtx handler.HandlerContext,
 	txnCtrlCtr internaldto.TxnControlCounters,
 	nativeQuery string,
+	bldrInput builder_input.BuilderInput,
 ) Builder {
 	return &RawNativeExec{
 		graph:       graph,
 		handlerCtx:  handlerCtx,
 		txnCtrlCtr:  txnCtrlCtr,
 		nativeQuery: nativeQuery,
+		bldrInput:   bldrInput,
 	}
 }
 
@@ -42,6 +46,7 @@ func (ss *RawNativeExec) GetTail() primitivegraph.PrimitiveNode {
 }
 
 func (ss *RawNativeExec) Build() error {
+	dependencyNode, dependencyNodeExists := ss.bldrInput.GetDependencyNode()
 	selectEx := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 		// select phase
 		logging.GetLogger().Infoln(fmt.Sprintf("running native query: '''%s''' ", ss.nativeQuery))
@@ -75,6 +80,9 @@ func (ss *RawNativeExec) Build() error {
 
 	graph := ss.graph
 	selectNode := graph.CreatePrimitiveNode(primitive.NewLocalPrimitive(selectEx))
+	if dependencyNodeExists {
+		graph.NewDependency(dependencyNode, selectNode, 1.0)
+	}
 	ss.root = selectNode
 
 	return nil

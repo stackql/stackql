@@ -14,6 +14,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/builder_input"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/iqlerror"
 	"github.com/stackql/stackql/internal/stackql/iqlutil"
@@ -805,12 +806,19 @@ func (pb *standardPrimitiveGenerator) AnalyzePGInternal(
 			pb.PrimitiveComposer.SetBuilder(bldr)
 			return nil
 		}
+		bldrInput := builder_input.NewBuilderInput(
+			pb.PrimitiveComposer.GetGraphHolder(),
+			handlerCtx,
+			nil,
+		)
 		if backendQueryType == constants.BackendExec {
 			bldr := primitivebuilder.NewRawNativeExec(
 				pb.PrimitiveComposer.GetGraphHolder(),
 				handlerCtx,
 				pbi.GetTxnCtrlCtrs(),
-				pbi.GetRawQuery())
+				pbi.GetRawQuery(),
+				bldrInput,
+			)
 			pb.PrimitiveComposer.SetBuilder(bldr)
 			return nil
 		}
@@ -1038,6 +1046,14 @@ func (pb *standardPrimitiveGenerator) AnalyzeUpdate(pbi planbuilderinput.PlanBui
 	if err != nil {
 		return err
 	}
+
+	pb.PrimitiveComposer.SetTable(node, tbl)
+
+	isPhysicalTable := tbl.IsPhysicalTable()
+	if isPhysicalTable {
+		return nil
+	}
+
 	prov, err := tbl.GetProvider()
 	if err != nil {
 		return err
@@ -1067,7 +1083,6 @@ func (pb *standardPrimitiveGenerator) AnalyzeUpdate(pbi planbuilderinput.PlanBui
 		return err
 	}
 
-	pb.PrimitiveComposer.SetTable(node, tbl)
 	return nil
 }
 
@@ -1093,11 +1108,7 @@ func (pb *standardPrimitiveGenerator) analyzeDelete(
 		return fmt.Errorf("could not cast node of type '%T' to required Delete", pbi.GetStatement())
 	}
 	pb.parseComments(node.Comments)
-	paramMap, ok := pbi.GetAnnotatedAST().GetWhereParamMapsEntry(node.Where)
-	if !ok {
-		return fmt.Errorf("where parameters not found; should be anlaysed a priori")
-	}
-
+	paramMap, paramMapExists := pbi.GetAnnotatedAST().GetWhereParamMapsEntry(node.Where)
 	err := pb.inferHeirarchyAndPersist(handlerCtx, node, paramMap)
 	if err != nil {
 		return err
@@ -1106,6 +1117,15 @@ func (pb *standardPrimitiveGenerator) analyzeDelete(
 	if err != nil {
 		return err
 	}
+
+	if tbl.IsPhysicalTable() {
+		return nil
+	}
+
+	if !paramMapExists {
+		return fmt.Errorf("where parameters not found; should be anlaysed a priori")
+	}
+
 	prov, err := tbl.GetProvider()
 	if err != nil {
 		return err
