@@ -438,11 +438,12 @@ func (dp *standardDependencyPlanner) processAcquire(
 	case media.MediaTypeTextXML, media.MediaTypeXML:
 		tab = tab.RenameColumnsToXml()
 	}
+	// TODO: support defaulting columns to where parameters
 	anTab := util.NewAnnotatedTabulation(
 		tab,
 		annotationCtx.GetHIDs(),
 		inputTableName,
-		annotationCtx.GetTableMeta().GetAlias())
+		annotationCtx.GetTableMeta().GetAlias()).WithParameters(annotationCtx.GetParameters())
 
 	discoGenID, err := docparser.OpenapiStackQLTabulationsPersistor(
 		m,
@@ -547,6 +548,7 @@ func (dp *standardDependencyPlanner) generateSelectDML(
 		nil,
 		dp.handlerCtx.GetNamespaceCollection(),
 		nil,
+		map[string]interface{}{},
 	)
 	return sqlrewrite.GenerateRewrittenSelectDML(rewriteInput)
 }

@@ -89,7 +89,7 @@ func (v *standardInternallyRoutableTypingAstVisitor) getNextAlias() string {
 	return fmt.Sprintf("col_%d", i)
 }
 
-//nolint:dupl,lll // TODO: fix this
+//nolint:lll // TODO: fix this
 func (v *standardInternallyRoutableTypingAstVisitor) getStarColumns(
 	tbl tablemetadata.ExtendedTableMetadata,
 ) ([]typing.RelationalColumn, error) {

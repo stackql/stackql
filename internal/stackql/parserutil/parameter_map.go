@@ -152,11 +152,14 @@ func (pm standardParameterMap) GetStringified() map[string]interface{} {
 func (pm standardParameterMap) GetAbbreviatedStringified() map[string]interface{} {
 	rv := make(map[string]interface{})
 	for k, v := range pm.m {
+		var key string
 		switch kv := k.Value().(type) {
 		case *sqlparser.ColName:
-			rv[kv.Name.GetRawVal()] = v
+			key = kv.Name.GetRawVal()
+			rv[key] = v
 		default:
-			rv[k.GetStringKey()] = v
+			key = k.GetStringKey()
+			rv[key] = v
 		}
 	}
 	return rv

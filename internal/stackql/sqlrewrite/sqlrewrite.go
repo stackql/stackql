@@ -28,6 +28,7 @@ type SQLRewriteInput interface { //nolint:revive //TODO: review
 	GetTableInsertionContainers() []tableinsertioncontainer.TableInsertionContainer
 	WithIndirectContexts(indirectContexts []drm.PreparedStatementCtx) SQLRewriteInput
 	WithPrepStmtOffset(offset int) SQLRewriteInput
+	GetParameters() map[string]interface{}
 }
 
 type StandardSQLRewriteInput struct {
@@ -44,6 +45,7 @@ type StandardSQLRewriteInput struct {
 	indirectContexts         []drm.PreparedStatementCtx
 	prepStmtOffset           int
 	hoistedOnClauseTables    []sqlparser.SQLNode
+	parameters               map[string]interface{}
 }
 
 func NewStandardSQLRewriteInput(
@@ -58,6 +60,7 @@ func NewStandardSQLRewriteInput(
 	tableInsertionContainers []tableinsertioncontainer.TableInsertionContainer,
 	namespaceCollection tablenamespace.Collection,
 	hoistedOnClauseTables []sqlparser.SQLNode,
+	parameters map[string]interface{},
 ) SQLRewriteInput {
 	return &StandardSQLRewriteInput{
 		dc:                       dc,
@@ -71,6 +74,7 @@ func NewStandardSQLRewriteInput(
 		tableInsertionContainers: tableInsertionContainers,
 		namespaceCollection:      namespaceCollection,
 		hoistedOnClauseTables:    hoistedOnClauseTables,
+		parameters:               parameters,
 	}
 }
 
@@ -80,6 +84,10 @@ func (ri *StandardSQLRewriteInput) GetHoistedOnClauseTables() []sqlparser.SQLNod
 
 func (ri *StandardSQLRewriteInput) GetPrepStmtOffset() int {
 	return ri.prepStmtOffset
+}
+
+func (ri *StandardSQLRewriteInput) GetParameters() map[string]interface{} {
+	return ri.parameters
 }
 
 func (ri *StandardSQLRewriteInput) WithPrepStmtOffset(offset int) SQLRewriteInput {
@@ -246,6 +254,7 @@ func GenerateRewrittenSelectDML(input SQLRewriteInput) (drm.PreparedStatementCtx
 		secondaryCtrlCounters,
 		input.GetDRMConfig().GetNamespaceCollection(),
 		dc.GetSQLSystem(),
+		input.GetParameters(),
 	)
 	rv.SetIndirectContexts(input.GetIndirectContexts())
 	return rv, nil

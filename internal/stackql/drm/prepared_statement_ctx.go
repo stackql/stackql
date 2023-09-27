@@ -43,6 +43,7 @@ type standardPreparedStatementCtx struct {
 	namespaceCollection     tablenamespace.Collection
 	sqlSystem               sql_system.SQLSystem
 	indirectContexts        []PreparedStatementCtx
+	parameters              map[string]interface{}
 }
 
 func (ps *standardPreparedStatementCtx) SetIndirectContexts(indirectContexts []PreparedStatementCtx) {
@@ -103,6 +104,7 @@ func NewPreparedStatementCtx(
 	secondaryCtrs []internaldto.TxnControlCounters,
 	namespaceCollection tablenamespace.Collection,
 	sqlSystem sql_system.SQLSystem,
+	parameters map[string]interface{},
 ) PreparedStatementCtx {
 	return &standardPreparedStatementCtx{
 		query:                   query,
@@ -119,6 +121,7 @@ func NewPreparedStatementCtx(
 		selectTxnCtrlCtrs:       secondaryCtrs,
 		namespaceCollection:     namespaceCollection,
 		sqlSystem:               sqlSystem,
+		parameters:              parameters,
 	}
 }
 

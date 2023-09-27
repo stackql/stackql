@@ -12,6 +12,12 @@ var (
 	_ RelationalColumn = &standardRelationalColumn{}
 )
 
+type RelationalColumnByName []RelationalColumn
+
+func (a RelationalColumnByName) Len() int           { return len(a) }
+func (a RelationalColumnByName) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a RelationalColumnByName) Less(i, j int) bool { return a[i].GetName() < a[j].GetName() }
+
 type RelationalColumn interface {
 	CanonicalSelectionString() string
 	DelimitedSelectionString(string) string

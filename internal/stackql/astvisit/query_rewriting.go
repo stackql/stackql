@@ -2,8 +2,10 @@ package astvisit
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 
 	"github.com/stackql/go-openapistackql/openapistackql"
@@ -97,7 +99,7 @@ func NewQueryRewriteAstVisitor(
 
 // TODO: introduce dependency on RDBMS
 func (v *standardQueryRewriteAstVisitor) getTypeFromParserType(t sqlparser.ValType) string {
-	//nolint:exhaustive // acceptable
+	//nolint:exhaustive,goconst // acceptable
 	switch t {
 	case sqlparser.StrVal:
 		return "string"
@@ -121,10 +123,33 @@ func (v *standardQueryRewriteAstVisitor) getNextAlias() string {
 	return fmt.Sprintf("col_%d", i)
 }
 
-//nolint:dupl // TODO: fix this
+func (v *standardQueryRewriteAstVisitor) generateServerVarColumnDescriptor(
+	k string, m openapistackql.OperationStore) openapistackql.ColumnDescriptor {
+	sc := openapi3.NewSchema()
+	sc.Type = "string"
+	schema := openapistackql.NewSchema(
+		sc,
+		m.GetService(),
+		"",
+		"",
+	)
+	colDesc := openapistackql.NewColumnDescriptor(
+		"",
+		k,
+		"",
+		"",
+		nil,
+		schema,
+		nil,
+	)
+	return colDesc
+}
+
+//nolint:gocognit,nestif // acceptable
 func (v *standardQueryRewriteAstVisitor) getStarColumns(
 	tbl tablemetadata.ExtendedTableMetadata,
 ) ([]typing.RelationalColumn, error) {
+	existingColumns := make(map[string]struct{})
 	if indirect, isIndirect := tbl.GetIndirect(); isIndirect {
 		rv := indirect.GetRelationalColumns()
 		if len(rv) > 0 {
@@ -149,6 +174,7 @@ func (v *standardQueryRewriteAstVisitor) getStarColumns(
 	var cols []parserutil.ColumnHandle
 	colNames := itemObjS.GetAllColumns()
 	for _, v := range colNames {
+		existingColumns[v] = struct{}{}
 		cols = append(cols, parserutil.NewUnaliasedColumnHandle(v))
 	}
 	var columnDescriptors []openapistackql.ColumnDescriptor
@@ -166,7 +192,41 @@ func (v *standardQueryRewriteAstVisitor) getStarColumns(
 			),
 		)
 	}
+	m, mErr := tbl.GetMethod()
+	if m != nil && mErr == nil {
+		servers := m.GetServers()
+		if servers != nil && len(*servers) > 0 {
+			for _, srv := range *servers {
+				for k := range srv.Variables {
+					if _, ok := existingColumns[k]; ok {
+						continue
+					}
+					existingColumns[k] = struct{}{}
+					colDesc := v.generateServerVarColumnDescriptor(k, m)
+					columnDescriptors = append(columnDescriptors, colDesc)
+				}
+			}
+		} else {
+			svc := m.GetService()
+			if svc != nil {
+				svcServers := svc.GetServers()
+				if len(svcServers) > 0 {
+					for _, srv := range svcServers {
+						for k := range srv.Variables {
+							if _, ok := existingColumns[k]; ok {
+								continue
+							}
+							existingColumns[k] = struct{}{}
+							colDesc := v.generateServerVarColumnDescriptor(k, m)
+							columnDescriptors = append(columnDescriptors, colDesc)
+						}
+					}
+				}
+			}
+		}
+	}
 	relationalColumns := v.dc.OpenapiColumnsToRelationalColumns(columnDescriptors)
+	sort.Sort(typing.RelationalColumnByName(relationalColumns))
 	return relationalColumns, nil
 }
 
@@ -184,6 +244,7 @@ func (v *standardQueryRewriteAstVisitor) GenerateSelectDML() (drm.PreparedStatem
 		v.tableSlice,
 		v.namespaceCollection,
 		v.hoistedOnClauseTables,
+		make(map[string]interface{}),
 	).WithIndirectContexts(v.indirectContexts).WithPrepStmtOffset(v.prepStmtOffset)
 	return sqlrewrite.GenerateRewrittenSelectDML(rewriteInput)
 }
