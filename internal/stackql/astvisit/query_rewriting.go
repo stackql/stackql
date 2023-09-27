@@ -697,6 +697,10 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 					relationalCol = typing.NewRelationalColumn(col.Name, r.GetType()).WithDecorated(col.DecoratedColumn)
 				}
 			}
+			relationalCol = relationalCol.WithAlias(col.Alias)
+			if col.Qualifier != "" {
+				relationalCol = relationalCol.WithQualifier(col.Qualifier)
+			}
 			v.relationalColumns = append(v.relationalColumns, relationalCol)
 			return nil
 		}

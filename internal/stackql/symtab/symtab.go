@@ -27,6 +27,7 @@ type SymTab interface {
 	GetSymbol(interface{}) (Entry, error)
 	NewLeaf(k interface{}) (SymTab, error)
 	SetSymbol(interface{}, Entry) error
+	Merge(SymTab, string) error
 }
 
 type HashMapTreeSymTab struct {
@@ -34,10 +35,61 @@ type HashMapTreeSymTab struct {
 	leaves map[interface{}]SymTab
 }
 
-func NewHashMapTreeSymTab() *HashMapTreeSymTab {
+func NewHashMapTreeSymTab() SymTab {
 	return &HashMapTreeSymTab{
 		tab:    make(map[interface{}]Entry),
 		leaves: make(map[interface{}]SymTab),
+	}
+}
+
+//nolint:gocognit // acceptable
+func (st *HashMapTreeSymTab) Merge(rhs SymTab, prefix string) error {
+	switch rhs := rhs.(type) {
+	case *HashMapTreeSymTab:
+		for k, v := range rhs.tab {
+			_, ok := st.tab[k]
+			if ok {
+				switch k := k.(type) {
+				case string:
+					kn := k
+					if prefix != "" {
+						kn = fmt.Sprintf("%v.%v", prefix, k)
+					}
+					_, newExists := st.tab[kn]
+					if !newExists {
+						st.tab[kn] = v
+					} else {
+						return fmt.Errorf("symbol %v already present in symtab", k)
+					}
+				default:
+					return fmt.Errorf("symbol %v already present in symtab", k)
+				}
+			}
+			st.tab[k] = v
+		}
+		for k, v := range rhs.leaves {
+			switch k := k.(type) {
+			case int:
+				maxLeaf := 100
+				_, leafKeyExists := st.leaves[k]
+				for i := k; i < maxLeaf && leafKeyExists; i++ {
+					_, leafKeyExists = st.leaves[i]
+				}
+				if leafKeyExists {
+					return fmt.Errorf("leaf symtab %v already present in symtab", k)
+				}
+				st.leaves[k] = v
+			default:
+				_, ok := st.leaves[k]
+				if ok {
+					return fmt.Errorf("leaf symtab %v already present in symtab", k)
+				}
+				st.leaves[k] = v
+			}
+		}
+		return nil
+	default:
+		return fmt.Errorf("cannot merge symtab of type %T", rhs)
 	}
 }
 

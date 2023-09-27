@@ -834,7 +834,10 @@ func (pb *standardPrimitiveGenerator) expandTable(
 	if viewIndirect, isView := tbl.GetIndirect(); isView {
 		viewAST := viewIndirect.GetSelectAST()
 
-		pb.PrimitiveComposer.SetSymTab(viewIndirect.GetUnderlyingSymTab())
+		mergeErr := pb.PrimitiveComposer.MergeSymTab(viewIndirect.GetUnderlyingSymTab(), tbl.GetAlias())
+		if mergeErr != nil {
+			return mergeErr
+		}
 
 		logging.GetLogger().Debugf("viewAST = %v\n", viewAST)
 		return nil
