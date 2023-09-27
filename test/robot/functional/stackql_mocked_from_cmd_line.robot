@@ -1153,6 +1153,52 @@ Recently Active Logic Multi Backend
     ...    ${outputStr}
     ...    stdout=${CURDIR}/tmp/Recently-Active-Logic-Multi-Backend.tmp    
 
+Server Parameter in Projection
+    ${inputStr} =    Catenate
+    ...    select UserName, region from aws.iam.users WHERE region = 'us-east-1' order by UserName desc;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |----------|-----------|
+    ...    |${SPACE}UserName${SPACE}|${SPACE}${SPACE}region${SPACE}${SPACE}${SPACE}|
+    ...    |----------|-----------|
+    ...    |${SPACE}Jackie${SPACE}${SPACE}${SPACE}|${SPACE}us-east-1${SPACE}|
+    ...    |----------|-----------|
+    ...    |${SPACE}Andrew${SPACE}${SPACE}${SPACE}|${SPACE}us-east-1${SPACE}|
+    ...    |----------|-----------|
+    Should Stackql Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    stdout=${CURDIR}/tmp/Server-Parameter-in-Projection.tmp  
+
+Server Parameter in Select Star
+    ${inputStr} =    Catenate
+    ...    select * from aws.ec2.volumes where region = 'ap-southeast-1' order by volumeId asc;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |------------------|---------------|--------------------------|-----------|--------------|------|----------|--------------------|------------|----------------|------|------------|-----------|--------|------------|-----------------------|------------|
+    ...    |${SPACE}AvailabilityZone${SPACE}|${SPACE}attachmentSet${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}createTime${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}encrypted${SPACE}|${SPACE}fastRestored${SPACE}|${SPACE}iops${SPACE}|${SPACE}kmsKeyId${SPACE}|${SPACE}multiAttachEnabled${SPACE}|${SPACE}outpostArn${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}region${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}size${SPACE}|${SPACE}snapshotId${SPACE}|${SPACE}${SPACE}status${SPACE}${SPACE}${SPACE}|${SPACE}tagSet${SPACE}|${SPACE}throughput${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}volumeId${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}volumeType${SPACE}|
+    ...    |------------------|---------------|--------------------------|-----------|--------------|------|----------|--------------------|------------|----------------|------|------------|-----------|--------|------------|-----------------------|------------|
+    ...    |${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}2022-05-02T23:09:30.171Z${SPACE}|${SPACE}false${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}100${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}false${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}ap-southeast-1${SPACE}|${SPACE}${SPACE}${SPACE}10${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}available${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00100000000000000${SPACE}|${SPACE}gp2${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------|---------------|--------------------------|-----------|--------------|------|----------|--------------------|------------|----------------|------|------------|-----------|--------|------------|-----------------------|------------|
+    ...    |${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}2022-05-11T04:45:40.627Z${SPACE}|${SPACE}false${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}100${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}false${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}ap-southeast-1${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}8${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}available${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}vol-00200000000000000${SPACE}|${SPACE}gp2${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------|---------------|--------------------------|-----------|--------------|------|----------|--------------------|------------|----------------|------|------------|-----------|--------|------------|-----------------------|------------|
+    Should Stackql Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    stdout=${CURDIR}/tmp/Server-Parameter-in-Select-Star.tmp  
+
 Left Outer Join Users
     ${sqliteInputStr} =    Catenate
     ...    select 

@@ -546,6 +546,10 @@ func (dc *staticDRMConfig) GenerateInsertDML(
 	if err != nil {
 		return nil, err
 	}
+	transformedParams, paramErr := util.TransformSQLRawParameters(tabAnnotated.GetParameters())
+	if paramErr != nil {
+		return nil, paramErr
+	}
 	return NewPreparedStatementCtx(
 			queryString,
 			"",
@@ -561,6 +565,7 @@ func (dc *staticDRMConfig) GenerateInsertDML(
 			nil,
 			dc.namespaceCollection,
 			dc.sqlSystem,
+			transformedParams,
 		),
 		nil
 }
@@ -644,6 +649,7 @@ func (dc *staticDRMConfig) GenerateSelectDML(
 		nil,
 		dc.namespaceCollection,
 		dc.sqlSystem,
+		tabAnnotated.GetParameters(),
 	), nil
 }
 

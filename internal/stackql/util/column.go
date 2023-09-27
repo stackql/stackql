@@ -1,6 +1,7 @@
 package util
 
 import (
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stackql/go-openapistackql/openapistackql"
 )
 
@@ -20,6 +21,18 @@ func newSimpleColumn(name string, schema openapistackql.Schema) Column {
 		name:   name,
 		schema: schema,
 	}
+}
+
+func newSimpleStringColumn(name string, m openapistackql.OperationStore) Column {
+	sc := openapi3.NewSchema()
+	sc.Type = "string"
+	return newSimpleColumn(name, openapistackql.NewSchema(
+		sc,
+		m.GetService(),
+		"",
+		"",
+	),
+	)
 }
 
 func (sc simpleColumn) GetName() string {
