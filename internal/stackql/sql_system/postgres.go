@@ -1561,7 +1561,11 @@ func (eng *postgresSystem) generateTableDDL(
 	sb.WriteString(fmt.Sprintf(`CREATE TABLE "%s" ( `, relationName))
 	var colzString []string
 	for _, col := range colz {
-		colzString = append(colzString, fmt.Sprintf(`"%s" %s`, col.GetName(), col.GetType()))
+		colType := col.GetType()
+		if colType == "" {
+			colType = "TEXT"
+		}
+		colzString = append(colzString, fmt.Sprintf(`"%s" %s`, col.GetName(), colType))
 	}
 	sb.WriteString(strings.Join(colzString, ", "))
 	sb.WriteString(" ) ")

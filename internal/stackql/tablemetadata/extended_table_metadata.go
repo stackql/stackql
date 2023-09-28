@@ -3,6 +3,7 @@ package tablemetadata
 import (
 	"fmt"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stackql/stackql/internal/stackql/astindirect"
 	"github.com/stackql/stackql/internal/stackql/datasource/sql_datasource"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
@@ -60,6 +61,7 @@ type ExtendedTableMetadata interface {
 	SetIsOnClauseHoistable(bool)
 	IsOnClauseHoistable() bool
 	IsPhysicalTable() bool
+	GetServerVariables() (map[string]*openapi3.ServerVariable, bool)
 }
 
 type standardExtendedTableMetadata struct {
@@ -74,6 +76,34 @@ type standardExtendedTableMetadata struct {
 	indirect            astindirect.Indirect
 	sqlDataSource       sql_datasource.SQLDataSource
 	isOnClauseHoistable bool
+}
+
+func (ex *standardExtendedTableMetadata) GetServerVariables() (map[string]*openapi3.ServerVariable, bool) {
+	m, err := ex.getMethod()
+	if err != nil {
+		return nil, false
+	}
+	rv := make(map[string]*openapi3.ServerVariable)
+	methodServers := m.GetServers()
+	if methodServers == nil || len(*methodServers) == 0 {
+		svc := m.GetService()
+		if svc != nil {
+			svcServers := svc.GetServers()
+			if len(svcServers) > 0 {
+				for k, v := range (svcServers)[0].Variables {
+					rv[k] = v
+				}
+				return rv, true
+			}
+			return nil, false
+		}
+	}
+	for _, s := range *methodServers {
+		for k, v := range s.Variables {
+			rv[k] = v
+		}
+	}
+	return rv, true
 }
 
 func (ex *standardExtendedTableMetadata) IsPhysicalTable() bool {

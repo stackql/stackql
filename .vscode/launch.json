@@ -125,6 +125,8 @@
         "delete from stackql_notes; select note, priority from stackql_notes order by priority desc;",
         "SELECT memoryInfo, hypervisor, autoRecoverySupported, instanceType, SPLIT_PART(processorInfo, '\n', 3) as processorArch, currentGeneration, freeTierEligible, hibernationSupported, SPLIT_PART(vCpuInfo, '\n', 2) as vCPUs, bareMetal, burstablePerformanceSupported, dedicatedHostsSupported,  region FROM aws.ec2.instance_types WHERE region = 'us-east-1';",
         "SELECT * FROM aws.ec2.instance_types WHERE region = 'us-east-1';",
+        "CREATE MATERIALIZED VIEW vw_ec2_instance_types AS SELECT memoryInfo, hypervisor, autoRecoverySupported, instanceType, SPLIT_PART(processorInfo, '\n', 3) as processorArch, currentGeneration, freeTierEligible, hibernationSupported, SPLIT_PART(vCpuInfo, '\n', 2) as vCPUs, bareMetal, burstablePerformanceSupported, dedicatedHostsSupported,  region FROM aws.ec2.instance_types WHERE region = 'us-east-1'; SELECT i.instanceId, i.instanceType, it.vCPUs, it.memoryInfo FROM aws.ec2.instances i INNER JOIN vw_ec2_instance_types it ON i.instanceType = it.instanceType WHERE i.region = 'us-east-1';",
+        "create materialized view vw_aws_usr as select * from aws.iam.users where region = 'us-east-1'; select u1.Arn, u2.UserName, u1.region from aws.iam.users u1 inner join vw_aws_usr u2 on u1.Arn = u2.Arn where u1.region = 'us-east-1';"
       ],
       "default": "show providers;"
     },

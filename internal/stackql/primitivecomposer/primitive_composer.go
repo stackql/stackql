@@ -82,6 +82,7 @@ type PrimitiveComposer interface {
 	SetSelectPreparedStatementCtx(ctx drm.PreparedStatementCtx)
 	SetSymbol(k interface{}, v symtab.Entry) error
 	SetSymTab(symtab.SymTab)
+	MergeSymTab(symtab.SymTab, string) error
 	SetTable(node sqlparser.SQLNode, table tablemetadata.ExtendedTableMetadata)
 	SetTableFilter(tableFilter func(openapistackql.ITable) (openapistackql.ITable, error))
 	SetTxnCtrlCtrs(tc internaldto.TxnControlCounters)
@@ -192,6 +193,10 @@ func (pb *standardPrimitiveComposer) GetAssignedParameters() (internaldto.TableP
 
 func (pb *standardPrimitiveComposer) SetSymTab(symTab symtab.SymTab) {
 	pb.symTab = symTab
+}
+
+func (pb *standardPrimitiveComposer) MergeSymTab(symTab symtab.SymTab, prefix string) error {
+	return pb.symTab.Merge(symTab, prefix)
 }
 
 func (pb *standardPrimitiveComposer) GetNonControlColumns() []typing.ColumnMetadata {

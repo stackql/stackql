@@ -677,6 +677,36 @@ Create Dynamic Materialized View Scenario Working
     ...    stdout=${CURDIR}/tmp/Create-Dynamic-Materialized-Scenario-Working.tmp
     ...    stderr=${CURDIR}/tmp/Create-Dynamic-Materialized-Scenario-Working-stderr.tmp
 
+Create and Interrogate Materialized View With Aliasing and Name Collision
+    ${inputStr} =    Catenate
+    ...    create materialized view vw_aws_usr as select Arn, UserName, UserId, region from aws.iam.users where region = 'us-east-1';
+    ...    select u1.UserName, u2.UserId, u2.Arn, u1.region from aws.iam.users u1 inner join vw_aws_usr u2 on u1.Arn = u2.Arn where u1.region = 'us-east-1' order by u1.UserName desc;
+    ...    drop materialized view vw_aws_usr;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |----------|-----------------------|--------------------------------------------------------------------------------|-----------|
+    ...    |${SPACE}UserName${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}UserId${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}Arn${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}region${SPACE}${SPACE}${SPACE}|
+    ...    |----------|-----------------------|--------------------------------------------------------------------------------|-----------|
+    ...    |${SPACE}Jackie${SPACE}${SPACE}${SPACE}|${SPACE}AIDIODR4TAW7CSEXAMPLE${SPACE}|${SPACE}arn:aws:iam::123456789012:user/division_abc/subdivision_xyz/engineering/Jackie${SPACE}|${SPACE}us-east-1${SPACE}|
+    ...    |----------|-----------------------|--------------------------------------------------------------------------------|-----------|
+    ...    |${SPACE}Andrew${SPACE}${SPACE}${SPACE}|${SPACE}AID2MAB8DPLSRHEXAMPLE${SPACE}|${SPACE}arn:aws:iam::123456789012:user/division_abc/subdivision_xyz/engineering/Andrew${SPACE}|${SPACE}us-east-1${SPACE}|
+    ...    |----------|-----------------------|--------------------------------------------------------------------------------|-----------|
+    ${stdErrStr} =    Catenate    SEPARATOR=\n
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${stdErrStr}
+    ...    stdout=${CURDIR}/tmp/Create-and-Interrogate-Materialized-View-With-Aliasing-and-Name-Collision.tmp
+    ...    stderr=${CURDIR}/tmp/Create-and-Interrogate-Materialized-View-With-Aliasing-and-Name-Collision-stderr.tmp
+
 Create Changing Dynamic Materialized View Scenario Working
     ${inputStr} =    Catenate
     ...    create materialized view silly_changing_mv as select * from google.compute.firewalls where project = 'changing-project';
