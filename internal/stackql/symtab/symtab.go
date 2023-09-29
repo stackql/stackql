@@ -48,24 +48,26 @@ func (st *HashMapTreeSymTab) Merge(rhs SymTab, prefix string) error {
 	case *HashMapTreeSymTab:
 		for k, v := range rhs.tab {
 			_, ok := st.tab[k]
-			if ok {
-				switch k := k.(type) {
-				case string:
-					kn := k
-					if prefix != "" {
-						kn = fmt.Sprintf("%v.%v", prefix, k)
-					}
-					_, newExists := st.tab[kn]
-					if !newExists {
-						st.tab[kn] = v
-					} else {
-						return fmt.Errorf("symbol %v already present in symtab", k)
-					}
-				default:
-					return fmt.Errorf("symbol %v already present in symtab", k)
+			var isUpdated bool = false //nolint:revive,stylecheck // prefer explicits
+			switch k := k.(type) {
+			case string:
+				kn := k
+				if prefix != "" {
+					kn = fmt.Sprintf("%v.%v", prefix, k)
 				}
+				_, newExists := st.tab[kn]
+				if !newExists {
+					isUpdated = true
+					st.tab[kn] = v
+				}
+			default:
 			}
-			st.tab[k] = v
+			if ok && !isUpdated {
+				return fmt.Errorf("symbol %v already present in symtab", k)
+			}
+			if !ok && !isUpdated {
+				st.tab[k] = v
+			}
 		}
 		for k, v := range rhs.leaves {
 			switch k := k.(type) {

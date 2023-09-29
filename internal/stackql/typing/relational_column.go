@@ -24,6 +24,7 @@ type RelationalColumn interface {
 	GetAlias() string
 	GetDecorated() string
 	GetName() string
+	GetIdentifier() string
 	GetOID() (oid.Oid, bool)
 	GetQualifier() string
 	GetType() string
@@ -119,6 +120,16 @@ func (rc *standardRelationalColumn) DelimitedSelectionString(delim string) strin
 }
 
 func (rc *standardRelationalColumn) GetName() string {
+	return rc.colName
+}
+
+func (rc *standardRelationalColumn) GetIdentifier() string {
+	if rc.alias != "" {
+		return rc.alias
+	}
+	if rc.qualifier != "" {
+		return fmt.Sprintf("%s.%s", rc.qualifier, rc.colName)
+	}
 	return rc.colName
 }
 

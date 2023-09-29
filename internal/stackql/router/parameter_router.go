@@ -446,8 +446,16 @@ func (pr *standardParameterRouter) route(
 			if err != nil {
 				return nil, err
 			}
+			err = indirect.Parse()
+			if err != nil {
+				return nil, err
+			}
 		} else if hrView.IsTable() {
 			indirect, err = astindirect.NewPhysicalTableIndirect(hrView, handlerCtx.GetSQLSystem())
+			if err != nil {
+				return nil, err
+			}
+			err = indirect.Parse()
 			if err != nil {
 				return nil, err
 			}
