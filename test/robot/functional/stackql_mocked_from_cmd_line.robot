@@ -680,7 +680,7 @@ Create Dynamic Materialized View Scenario Working
 Create and Interrogate Materialized View With Aliasing and Name Collision
     ${inputStr} =    Catenate
     ...    create materialized view vw_aws_usr as select Arn, UserName, UserId, region from aws.iam.users where region = 'us-east-1';
-    ...    select u1.UserName, u2.UserId, u2.Arn, u1.region from aws.iam.users u1 inner join vw_aws_usr u2 on u1.Arn = u2.Arn where u1.region = 'us-east-1' order by u1.UserName desc;
+    ...    select u1.UserName, u2.UserId, u2.Arn, u1.region from aws.iam.users u1 inner join vw_aws_usr u2 on u1.Arn = u2.Arn where u1.region = 'us-east-1' and u2.region = 'us-east-1' order by u1.UserName desc;
     ...    drop materialized view vw_aws_usr;
     ${outputStr} =    Catenate    SEPARATOR=\n
     ...    |----------|-----------------------|--------------------------------------------------------------------------------|-----------|

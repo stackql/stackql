@@ -87,6 +87,18 @@ func (v *indirectExpandAstVisitor) processMaterializedView(
 	node sqlparser.SQLNode,
 	indirect astindirect.Indirect) error {
 	v.primitiveGenerator.SetContainsUserManagedRelation(true)
+	colz := indirect.GetRelationalColumns()
+	underlyingSymTab := indirect.GetUnderlyingSymTab()
+	for _, col := range colz {
+		colID := col.GetIdentifier()
+		colType := col.GetType()
+		colEntry := symtab.NewSymTabEntry(
+			colType,
+			"",
+			"",
+		)
+		underlyingSymTab.SetSymbol(colID, colEntry) //nolint:errcheck // future proof
+	}
 	v.annotatedAST.SetMaterializedView(node, indirect)
 	return nil
 }

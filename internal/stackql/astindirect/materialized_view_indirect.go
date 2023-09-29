@@ -113,10 +113,23 @@ func (v *materializedView) Parse() error {
 	switch pr := parseResult.(type) {
 	case *sqlparser.DDL:
 		v.selectStmt = pr.SelectStatement
-		return nil
 	default:
 		return fmt.Errorf("materializedView of type '%T' not yet supported", pr)
 	}
+	for _, col := range v.viewDTO.GetColumns() {
+		colID := col.GetIdentifier()
+		colType := col.GetType()
+		colEntry := symtab.NewSymTabEntry(
+			colType,
+			"",
+			"",
+		)
+		err = v.underlyingSymbolTable.SetSymbol(colID, colEntry)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (v *materializedView) GetTranslatedDDL() (string, bool) {

@@ -113,10 +113,23 @@ func (v *physicalTable) Parse() error {
 	switch pr := parseResult.(type) {
 	case *sqlparser.DDL:
 		v.selectStmt = pr.SelectStatement
-		return nil
 	default:
 		return fmt.Errorf("physical table of type '%T' not yet supported", pr)
 	}
+	for _, col := range v.tableDTO.GetColumns() {
+		colID := col.GetIdentifier()
+		colType := col.GetType()
+		colEntry := symtab.NewSymTabEntry(
+			colType,
+			"",
+			"",
+		)
+		err = v.underlyingSymbolTable.SetSymbol(colID, colEntry)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (v *physicalTable) GetTranslatedDDL() (string, bool) {
