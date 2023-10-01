@@ -16,9 +16,15 @@ class PsycoPG2Client(object):
 
 
   def _exec_query(self, query :str) -> typing.List[typing.Dict]:
-    cur = self._connection.cursor(cursor_factory=RealDictCursor)
-    cur.execute(query)
-    return [ dict(b) for b in cur.fetchall() ]
+    with self._connection.cursor(cursor_factory=RealDictCursor) as cur:
+      cur.execute(query)
+      rv = []
+      try:
+        for r in cur:
+          rv.append(dict(r))
+      except Exception as err:
+        pass
+      return rv
 
 
   def _run_queries(self, queries :typing.List[str]) -> typing.List[typing.Dict]:
