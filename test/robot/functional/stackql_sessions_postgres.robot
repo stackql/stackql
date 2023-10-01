@@ -39,3 +39,20 @@ SQLAlchemy Session Postgres Intel Views Exist
     ...    12
     ...    stdout=${CURDIR}/tmp/SQLAlchemy-Session-Postgres-Intel-Views-Exist.tmp
     [Teardown]    NONE
+
+SQLAlchemy Session Materialized View Lifecycle
+    Pass Execution If    "${SQL_BACKEND}" != "postgres_tcp"    This is a postgres only test
+    ${inputStr} =    Catenate
+    ...    [
+    ...    "create materialized view vw_aws_usr as select Arn, UserName, UserId, region from aws.iam.users where region = 'us-east-1';",
+    ...    "select u1.UserName, u2.UserId, u2.Arn, u1.region from aws.iam.users u1 inner join vw_aws_usr u2 on u1.Arn = u2.Arn where u1.region = 'us-east-1' and u2.region = 'us-east-1' order by u1.UserName desc;",
+    ...    "drop materialized view vw_aws_usr;"
+    ...    ]
+    ${inputList} =    Evaluate    ${inputStr}
+    Should SQLALchemy Raw Session Inline Have Length
+    ...    ${POSTGRES_URL_UNENCRYPTED_CONN}
+    ...    ${inputList}
+    ...    2
+    ...    stdout=${CURDIR}/tmp/SQLAlchemy-Session-v2-Materialized-View-Lifecycle.tmp
+    ...    stderr=${CURDIR}/tmp/SQLAlchemy-Session-v2-Materialized-View-Lifecycle-stderr.tmp
+    [Teardown]    NONE

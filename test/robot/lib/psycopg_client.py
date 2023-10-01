@@ -16,17 +16,23 @@ class PsycoPGClient(object):
     )
 
 
-  def _exec_query(self, query :str) -> typing.List[typing.Dict]:  
+  def _exec_query(self, query :str) -> typing.List[typing.Dict]: 
+    rv = [] 
     try:
-      r = self._connection.execute(query)
-      return r.fetchall()
+      with self._connection.execute(query) as r:
+        for row in r:
+          rv.append(row)
+        return rv
     except Exception as err:
       return []
 
-  def _exec_query_strict(self, query :str) -> typing.List[typing.Dict]:  
+  def _exec_query_strict(self, query :str) -> typing.List[typing.Dict]:
+    rv = []
     try:
-      r = self._connection.execute(query)
-      return r.fetchall()
+      with self._connection.execute(query) as r:
+        for row in r:
+          rv.append(row)
+        return rv
     except Exception as err:
       print(err)
       raise err

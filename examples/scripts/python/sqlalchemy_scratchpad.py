@@ -18,7 +18,7 @@ curs.execute("show transaction isolation level")
 # rv = curs.fetchall()
 
 if curs.rowcount > 0:
-    rv = curs.fetchall()
+    rv = curs.fetchall() # throws error on empty result set, so this all relies on rowcount being accurate
     e1 = None
     for entry in rv:
         dir(entry)
