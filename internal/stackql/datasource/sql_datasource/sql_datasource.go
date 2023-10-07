@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/stackql/stackql/internal/stackql/constants"
-	"github.com/stackql/stackql/internal/stackql/datasource/sql_table"
+	"github.com/stackql/stackql/internal/stackql/datasource/sqltable"
 	"github.com/stackql/stackql/internal/stackql/dto"
 )
 
@@ -14,7 +14,7 @@ type SQLDataSource interface {
 	Exec(string, ...interface{}) (sql.Result, error)
 	Query(string, ...interface{}) (*sql.Rows, error)
 	QueryRow(string, ...any) *sql.Row
-	GetTableMetadata(...string) (sql_table.SQLTable, error)
+	GetTableMetadata(...string) (sqltable.SQLTable, error)
 	GetSchemaType() string
 	GetDBName() string
 }
