@@ -1,4 +1,4 @@
-package writer
+package writer //nolint:testpackage // this violates another rule: var-naming: don't use an underscore in package name
 
 import (
 	"io"
