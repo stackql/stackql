@@ -8,7 +8,7 @@ import (
 	_ "github.com/snowflakedb/gosnowflake" //nolint:revive,nolintlint // this is a DB driver pattern
 
 	"github.com/stackql/stackql/internal/stackql/constants"
-	"github.com/stackql/stackql/internal/stackql/datasource/sql_table"
+	"github.com/stackql/stackql/internal/stackql/datasource/sqltable"
 	"github.com/stackql/stackql/internal/stackql/db_util"
 	"github.com/stackql/stackql/internal/stackql/dto"
 )
@@ -67,11 +67,11 @@ func (ds *genericSQLDataSource) Begin() (*sql.Tx, error) {
 	return ds.db.Begin()
 }
 
-func (ds *genericSQLDataSource) GetTableMetadata(args ...string) (sql_table.SQLTable, error) {
+func (ds *genericSQLDataSource) GetTableMetadata(args ...string) (sqltable.SQLTable, error) {
 	return nil, fmt.Errorf("could not obtain sql data source table metadata for args = '%v'", args)
 }
 
-// func (ds *genericSQLDataSource) getPostgresTableMetadata(schemaName, tableName string) (sql_table.SQLTable, error) {
+// func (ds *genericSQLDataSource) getPostgresTableMetadata(schemaName, tableName string) (sqltable.SQLTable, error) {
 // 	queryTemplate := `
 // 	SELECT
 // 		column_name,
