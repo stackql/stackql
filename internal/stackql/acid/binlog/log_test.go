@@ -32,7 +32,11 @@ func TestConcatenate(t *testing.T) {
 
 	humanReadable := entry.GetHumanReadable()
 	if !reflect.DeepEqual(humanReadable, expectedHumanReadable) {
-		t.Fatalf("Human readable representation of combined log is expected to be %+v. Got %+v", expectedHumanReadable, humanReadable)
+		t.Fatalf(
+			"Human readable representation of combined log is expected to be %v. Got %v",
+			expectedHumanReadable,
+			humanReadable,
+		)
 	}
 }
 
@@ -79,6 +83,10 @@ func TestAppend(t *testing.T) {
 		"Undo delete on third_table",
 	}
 	if !reflect.DeepEqual(entry.GetHumanReadable(), expectedHumanReadable) {
-		t.Fatalf("Expected humanReadable field after append operation to be %v, Got %v", expectedHumanReadable, entry.GetHumanReadable())
+		t.Fatalf(
+			"Expected humanReadable field after append operation to be %v, Got %v",
+			expectedHumanReadable,
+			entry.GetHumanReadable(),
+		)
 	}
 }
