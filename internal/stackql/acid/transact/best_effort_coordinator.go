@@ -95,9 +95,7 @@ func (m *basicBestEffortTransactionCoordinator) GetRedoLog() (binlog.LogEntry, b
 	if len(m.redoLogs) == 0 {
 		return nil, false
 	}
-	for _, log := range m.redoLogs {
-		rv = rv.Concatenate(log)
-	}
+	rv.Concatenate(m.redoLogs...)
 	return rv, true
 }
 
@@ -106,9 +104,7 @@ func (m *basicBestEffortTransactionCoordinator) GetUndoLog() (binlog.LogEntry, b
 	if len(m.undoLogs) == 0 {
 		return nil, false
 	}
-	for _, log := range m.undoLogs {
-		rv = rv.Concatenate(log)
-	}
+	rv.Concatenate(m.undoLogs...)
 	return rv, true
 }
 

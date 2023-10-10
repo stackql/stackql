@@ -1,7 +1,5 @@
 package binlog
 
-import "strings"
-
 var (
 	_ LogEntry = &simpleLogEntry{}
 )
@@ -10,7 +8,7 @@ type LogEntry interface {
 	AppendHumanReadable(string)
 	AppendRaw([]byte)
 	Clone() LogEntry
-	Concatenate(LogEntry) LogEntry
+	Concatenate(...LogEntry)
 	GetHumanReadable() []string
 	GetRaw() []byte
 	Size() int
@@ -38,11 +36,22 @@ func newSimpleLogEntry(
 	}
 }
 
-func (l *simpleLogEntry) Concatenate(other LogEntry) LogEntry {
-	return newSimpleLogEntry(
-		append(l.raw, other.GetRaw()...),
-		append(l.humanReadable, other.GetHumanReadable()...),
-	)
+func (l *simpleLogEntry) Concatenate(others ...LogEntry) {
+	rSize, hrSize := len(l.raw), len(l.humanReadable)
+	for _, entry := range others {
+		rSize += entry.Size()
+		hrSize += len(entry.GetHumanReadable())
+	}
+	raw := make([]byte, rSize)
+	humanReadable := make([]string, hrSize)
+	rawN := copy(raw, l.raw)
+	hrN := copy(humanReadable, l.humanReadable)
+	for _, entry := range others {
+		rawN += copy(raw[rawN:], entry.GetRaw())
+		hrN += copy(humanReadable[hrN:], entry.GetHumanReadable())
+	}
+	l.raw = raw
+	l.humanReadable = humanReadable
 }
 
 func (l *simpleLogEntry) Size() int {
@@ -52,10 +61,8 @@ func (l *simpleLogEntry) Size() int {
 func (l *simpleLogEntry) Clone() LogEntry {
 	rawCopy := make([]byte, len(l.raw))
 	copy(rawCopy, l.raw)
-	var humanReadableCopy []string
-	for _, s := range l.humanReadable {
-		humanReadableCopy = append(humanReadableCopy, strings.Clone(s))
-	}
+	humanReadableCopy := make([]string, len(l.humanReadable))
+	copy(humanReadableCopy, l.humanReadable)
 	return NewSimpleLogEntry(rawCopy, humanReadableCopy)
 }
 
