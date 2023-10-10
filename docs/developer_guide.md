@@ -37,6 +37,12 @@ go test -timeout 1200s --tags "json1 sqleanall" ./...
 **Note**: this requires the local build (above) to have been completed successfully, which builds a binary in `./build/`.
 
 ```bash
+robot -d test/robot/functional test/robot/functional
+```
+
+Or better yet, if you have docker desktop and the `postgres` image cited in the docker compose files:
+
+```bash
 robot --variable SHOULD_RUN_DOCKER_EXTERNAL_TESTS:true -d test/robot/functional test/robot/functional
 ```
 
@@ -165,7 +171,10 @@ We use `golangci-lint`.
 
 The linting of go files (and also Actions) for CI is defined in [.github/workflows/lint.yml](/.github/workflows/lint.yml).
 
-To run the linter locally, first ensure you have the same version of `golangci-lint` as the CI and then: `golangci-lint run > log/lint.log 2>&1`.
+To run the linter locally, first ensure you have the same version of `golangci-lint` as the CI and then either:
+
+-  `golangci-lint run` to dump everything to console, or...
+-  `golangci-lint run > log/lint.log 2>&1` to send all output to `log/lint.log` (w.r.t repository root).
 
 ## Cross Compilation locally
 

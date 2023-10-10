@@ -23,6 +23,9 @@
 - [ ] A full round of testing has been completed, and there are no test failures as a result of these changes.
 - [ ] The changes are covered with functional and/or integration robot testing.
 - [ ] The changes work on all supported platforms.
+- [ ] Unit tests pass locally, as per [the developer guide](/docs/developer_guide.md#unit-tests).
+- [ ] Robot tests pass locally, as per [the developer guide](/docs/developer_guide.md#robot-tests).
+- [ ] Linter passes locally, as per [the developer guide](/docs/developer_guide.md#linting).
 
 ### Variations
 
