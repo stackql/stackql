@@ -103,7 +103,7 @@ func (v *standardParserPlaceholderParamAstVisitor) Visit(node sqlparser.SQLNode)
 		return nil
 
 	case *sqlparser.ParenSelect:
-		node.Accept(v)
+		return node.Select.Accept(v)
 
 	case *sqlparser.Auth:
 		return nil

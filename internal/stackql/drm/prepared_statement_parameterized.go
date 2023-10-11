@@ -64,8 +64,8 @@ func NewPreparedStatementParameterized(
 	controlArgsRequired bool,
 ) PreparedStatementParameterized {
 	children := make(map[int]PreparedStatementParameterized)
-	for i, ctx := range ctx.GetIndirectContexts() {
-		children[i] = NewPreparedStatementParameterized(ctx, nil, true)
+	for i, childCtx := range ctx.GetIndirectContexts() {
+		children[i] = NewPreparedStatementParameterized(childCtx, nil, true)
 	}
 	return &standardPreparedStatementParameterized{
 		ctx:                 ctx,
