@@ -28,6 +28,10 @@ env CGO_ENABLED=1 go build \
 
 ### Unit tests
 
+At this time, we are not dogmatic about how to implement unit tests.  Aspirationally, unit tests can be implemented in similar fashion to the none-too opinionated [official testing package documentation](https://pkg.go.dev/testing), and in particular [the overview section](https://pkg.go.dev/testing#pkg-overview).
+
+To run all unit tests:
+
 ```bash
 go test -timeout 1200s --tags "json1 sqleanall" ./...
 ```
