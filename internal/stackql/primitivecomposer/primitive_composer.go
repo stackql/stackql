@@ -455,6 +455,7 @@ func (pb *standardPrimitiveComposer) SetProvider(prov provider.IProvider) {
 	pb.prov = prov
 }
 
+// TODO: fix this demonic nonsense that totally violates `single responsibility principle`
 func (pb *standardPrimitiveComposer) GetBuilder() primitivebuilder.Builder {
 	if pb.children == nil || len(pb.children) == 0 {
 		return pb.builder

@@ -287,6 +287,7 @@ func (pgb *standardPlanGraphBuilder) handleDescribe(pbi planbuilderinput.PlanBui
 	return nil
 }
 
+//nolint:gocognit // acceptable
 func (pgb *standardPlanGraphBuilder) handleDDL(pbi planbuilderinput.PlanBuilderInput) error {
 	handlerCtx := pbi.GetHandlerCtx()
 	node, ok := pbi.GetDDL()
@@ -329,7 +330,30 @@ func (pgb *standardPlanGraphBuilder) handleDDL(pbi planbuilderinput.PlanBuilderI
 				return selErr
 			}
 			var err error
-			_, selectPrimitiveNode, err = pgb.handleSelect(selPbi)
+			switch selStmt := node.SelectStatement.(type) {
+			case *sqlparser.Select:
+				_, selectPrimitiveNode, err = pgb.handleSelect(selPbi)
+			case *sqlparser.ParenSelect:
+				selPbi, selErr = planbuilderinput.NewPlanBuilderInput(
+					pbi.GetAnnotatedAST(),
+					pbi.GetHandlerCtx(),
+					selStmt.Select,
+					pbi.GetTableExprs(),
+					pbi.GetAssignedAliasedColumns(),
+					pbi.GetAliasedTables(),
+					pbi.GetColRefs(),
+					pbi.GetPlaceholderParams(),
+					pbi.GetTxnCtrlCtrs())
+				if selErr != nil {
+					return selErr
+				}
+				_, selectPrimitiveNode, err = pgb.handleSelect(selPbi)
+			case *sqlparser.Union:
+				_, selectPrimitiveNode, err = pgb.handleUnion(selPbi)
+
+			default:
+				return fmt.Errorf("unsupported select statement type '%T'", selStmt)
+			}
 			if err != nil {
 				return err
 			}
@@ -469,6 +493,7 @@ func (pgb *standardPlanGraphBuilder) handleSelect(
 	return rv, rv, nil
 }
 
+//nolint:unparam // acceptable
 func (pgb *standardPlanGraphBuilder) handleUnion(
 	pbi planbuilderinput.PlanBuilderInput) (primitivegraph.PrimitiveNode, primitivegraph.PrimitiveNode, error) {
 	// handlerCtx := pbi.GetHandlerCtx()
