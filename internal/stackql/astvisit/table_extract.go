@@ -97,7 +97,10 @@ func (v *standardParserTableExtractAstVisitor) Visit(node sqlparser.SQLNode) err
 		return nil
 
 	case *sqlparser.ParenSelect:
-		node.Accept(v)
+		err = node.Select.Accept(v)
+		if err != nil {
+			return err
+		}
 
 	case *sqlparser.Auth:
 		return nil

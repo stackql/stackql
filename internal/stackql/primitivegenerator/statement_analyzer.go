@@ -151,7 +151,6 @@ func (pb *standardPrimitiveGenerator) analyzeUnion(
 	var selectStatementContexts []drm.PreparedStatementCtx
 
 	ctx := pChild.GetPrimitiveComposer().GetSelectPreparedStatementCtx()
-	ctx.SetGCCtrlCtrs(counters)
 	selectStatementContexts = append(selectStatementContexts, ctx)
 
 	unionNonControlColumns := pChild.GetPrimitiveComposer().GetSelectPreparedStatementCtx().GetNonControlColumns()
@@ -200,6 +199,10 @@ func (pb *standardPrimitiveGenerator) analyzeUnion(
 	)
 	pb.PrimitiveComposer.SetBuilder(bldr)
 	pb.PrimitiveComposer.SetSelectPreparedStatementCtx(unionSelectCtx)
+	if pb.PrimitiveComposer.IsIndirect() {
+		retrievedBldr := pb.PrimitiveComposer.GetBuilder()
+		pb.SetIndirectCreateTailBuilder(retrievedBldr)
+	}
 
 	return nil
 }
@@ -207,11 +210,13 @@ func (pb *standardPrimitiveGenerator) analyzeUnion(
 func (pb *standardPrimitiveGenerator) AnalyzeSelectStatement(
 	pbi planbuilderinput.PlanBuilderInput) error {
 	node := pbi.GetStatement()
-	switch node.(type) {
+	switch node := node.(type) {
 	case *sqlparser.Select:
 		return pb.analyzeSelect(pbi)
 	case *sqlparser.ParenSelect:
-		return pb.AnalyzeSelectStatement(pbi)
+		clonedPbi := pbi.Clone()
+		clonedPbi.Refocus(node.Select)
+		return pb.AnalyzeSelectStatement(clonedPbi)
 	case *sqlparser.Union:
 		return pb.analyzeUnion(pbi)
 	}

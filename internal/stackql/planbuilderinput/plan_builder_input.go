@@ -15,6 +15,7 @@ import (
 
 type PlanBuilderInput interface {
 	Clone() PlanBuilderInput
+	Refocus(sqlparser.SQLNode) PlanBuilderInput
 	GetAliasedTables() parserutil.TableAliasMap
 	GetAnnotatedAST() annotatedast.AnnotatedAst
 	GetAnnotations() (taxonomy.AnnotationCtxMap, bool)
@@ -152,6 +153,11 @@ func (pbi *StandardPlanBuilderInput) Clone() PlanBuilderInput {
 	clonedPbi.SetReadOnly(pbi.IsReadOnly())
 	clonedPbi.SetCreateMaterializedView(pbi.isCreateMaterializedView)
 	return clonedPbi
+}
+
+func (pbi *StandardPlanBuilderInput) Refocus(stmt sqlparser.SQLNode) PlanBuilderInput {
+	pbi.stmt = stmt
+	return pbi
 }
 
 func (pbi *StandardPlanBuilderInput) SetCreateMaterializedView(isCreateMaterializedView bool) {
