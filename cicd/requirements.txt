@@ -1,5 +1,5 @@
-psycopg2-binary
-psycopg[binary]
+psycopg2-binary==2.9.9
+psycopg[binary]==3.1.14
 PyYaml
 robotframework
 sqlalchemy==1.4.44

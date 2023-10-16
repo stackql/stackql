@@ -4,7 +4,7 @@
 
 ## Mock Server
 
-We are using the java [mockserver](https://www.mock-server.com/) tool.
+We are using the java [mockserver](https://www.mock-server.com/) tool.  As of now, this requires `java 11` and **not** some newer version; otherwise consequences are errors in the `BouncyCastle` TLS library.
 
 Some doco on creating expectations [here](https://www.mock-server.com/mock_server/creating_expectations.html#button_match_request_by_query_parameter_name_regex).
 
