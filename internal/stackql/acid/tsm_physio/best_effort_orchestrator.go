@@ -1,10 +1,11 @@
-package transact
+package tsm_physio //nolint:revive,stylecheck // prefer this nomenclature
 
 import (
 	"fmt"
 	"strings"
 
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
+	"github.com/stackql/stackql/internal/stackql/acid/tsm"
 	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
@@ -22,6 +23,7 @@ var (
 //
 //nolint:unused // TODO: fix this.
 type bestEffortOrchestrator struct {
+	tsm            tsm.TSM
 	txnCoordinator Coordinator
 	undoLogs       []binlog.LogEntry
 	redoLogs       []binlog.LogEntry

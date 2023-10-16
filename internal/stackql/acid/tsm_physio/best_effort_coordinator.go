@@ -1,4 +1,4 @@
-package transact
+package tsm_physio //nolint:revive,stylecheck // prefer this nomenclature
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/acid/acid_dto"
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
+	"github.com/stackql/stackql/internal/stackql/acid/tsm"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
@@ -16,6 +17,7 @@ var (
 )
 
 type basicBestEffortTransactionCoordinator struct {
+	tsm               tsm.TSM
 	handlerCtx        handler.HandlerContext
 	parent            Coordinator
 	statementSequence []Statement
@@ -30,11 +32,13 @@ type basicBestEffortTransactionCoordinator struct {
 }
 
 func newBasicBestEffortTransactionCoordinator(
+	tsmInstance tsm.TSM,
 	handlerCtx handler.HandlerContext,
 	parent Coordinator,
 	maxTxnDepth int,
 ) Coordinator {
 	return &basicBestEffortTransactionCoordinator{
+		tsm:         tsmInstance,
 		handlerCtx:  handlerCtx,
 		parent:      parent,
 		maxTxnDepth: maxTxnDepth,
@@ -171,7 +175,7 @@ func (m *basicBestEffortTransactionCoordinator) Begin() (Coordinator, error) {
 	if m.maxTxnDepth >= 0 && m.Depth() >= m.maxTxnDepth {
 		return nil, fmt.Errorf("cannot begin nested transaction of depth = %d", m.Depth()+1)
 	}
-	return newBasicBestEffortTransactionCoordinator(m.handlerCtx, m, m.maxTxnDepth), nil
+	return newBasicBestEffortTransactionCoordinator(m.tsm, m.handlerCtx, m, m.maxTxnDepth), nil
 }
 
 func (m *basicBestEffortTransactionCoordinator) Commit() acid_dto.CommitCoDomain {

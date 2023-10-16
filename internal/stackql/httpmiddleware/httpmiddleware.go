@@ -9,6 +9,7 @@ import (
 	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/any-sdk/pkg/requesttranslate"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/provider"
 )
 
@@ -70,6 +71,8 @@ func HTTPApiCallFromRequest(
 			handlerCtx.GetOutErrFile().Write([]byte(fmt.Sprintf("http request body = '%s'\n", bodyStr)))
 		}
 	}
+	walObj, _ := handlerCtx.GetTSM()
+	logging.GetLogger().Debugf("Proof of invariant: walObj = %v", walObj)
 	r, err := httpClient.Do(translatedRequest)
 	if handlerCtx.GetRuntimeContext().HTTPLogEnabled { //nolint:nestif // acceptable
 		if r != nil {

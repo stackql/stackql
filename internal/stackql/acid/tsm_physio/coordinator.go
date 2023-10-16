@@ -1,20 +1,21 @@
-package transact
+package tsm_physio //nolint:revive,stylecheck // prefer this nomenclature
 
 import (
 	"github.com/stackql/stackql/internal/stackql/acid/acid_dto"
+	"github.com/stackql/stackql/internal/stackql/acid/tsm"
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/handler"
 )
 
-func NewCoordinator(handlerCtx handler.HandlerContext, maxTxnDepth int) Coordinator {
+func newCoordinator(tsmInstance tsm.TSM, handlerCtx handler.HandlerContext, maxTxnDepth int) Coordinator {
 	rollbackType := handlerCtx.GetRollbackType()
 	switch rollbackType {
 	case constants.NopRollback:
-		return newBasicLazyTransactionCoordinator(nil, maxTxnDepth)
+		return newBasicLazyTransactionCoordinator(tsmInstance, nil, maxTxnDepth)
 	case constants.EagerRollback:
-		return newBasicBestEffortTransactionCoordinator(handlerCtx, nil, maxTxnDepth)
+		return newBasicBestEffortTransactionCoordinator(tsmInstance, handlerCtx, nil, maxTxnDepth)
 	default:
-		return newBasicLazyTransactionCoordinator(nil, maxTxnDepth)
+		return newBasicLazyTransactionCoordinator(tsmInstance, nil, maxTxnDepth)
 	}
 }
 

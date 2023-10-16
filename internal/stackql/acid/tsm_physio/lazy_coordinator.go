@@ -1,4 +1,4 @@
-package transact
+package tsm_physio //nolint:revive,stylecheck // prefer this nomenclature
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/acid/acid_dto"
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
+	"github.com/stackql/stackql/internal/stackql/acid/tsm"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 )
@@ -15,6 +16,7 @@ var (
 )
 
 type basicLazyTransactionCoordinator struct {
+	tsm               tsm.TSM
 	parent            Coordinator
 	statementSequence []Statement
 	undoLogs          []binlog.LogEntry
@@ -24,8 +26,9 @@ type basicLazyTransactionCoordinator struct {
 	isExecuted        bool
 }
 
-func newBasicLazyTransactionCoordinator(parent Coordinator, maxTxnDepth int) Coordinator {
+func newBasicLazyTransactionCoordinator(tsmInstance tsm.TSM, parent Coordinator, maxTxnDepth int) Coordinator {
 	return &basicLazyTransactionCoordinator{
+		tsm:         tsmInstance,
 		parent:      parent,
 		maxTxnDepth: maxTxnDepth,
 	}
@@ -161,7 +164,7 @@ func (m *basicLazyTransactionCoordinator) Begin() (Coordinator, error) {
 	if m.maxTxnDepth >= 0 && m.Depth() >= m.maxTxnDepth {
 		return nil, fmt.Errorf("cannot begin nested transaction of depth = %d", m.Depth()+1)
 	}
-	return newBasicLazyTransactionCoordinator(m, m.maxTxnDepth), nil
+	return newBasicLazyTransactionCoordinator(m.tsm, m, m.maxTxnDepth), nil
 }
 
 func (m *basicLazyTransactionCoordinator) Commit() acid_dto.CommitCoDomain {
