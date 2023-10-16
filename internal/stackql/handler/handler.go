@@ -92,6 +92,7 @@ type standardHandlerContext struct {
 	// must be a pointer dure to clonability
 	authMapMutex        *sync.Mutex
 	sessionCtxMutex     *sync.Mutex
+	providersMapMutex   *sync.Mutex
 	rawQuery            string
 	query               string
 	runtimeContext      dto.RuntimeCtx
@@ -251,6 +252,9 @@ func (hc *standardHandlerContext) GetProvider(providerName string) (provider.IPr
 	if err != nil {
 		return nil, err
 	}
+	// NOTE: this method **must** be the only place the providers map is accessed or mutated
+	hc.providersMapMutex.Lock()
+	defer hc.providersMapMutex.Unlock()
 	prov, ok := hc.providers[providerName]
 	//nolint:nestif // TODO: review
 	if !ok {
@@ -400,6 +404,7 @@ func (hc *standardHandlerContext) Clone() HandlerContext {
 	rv := standardHandlerContext{
 		authMapMutex:        hc.authMapMutex,
 		sessionCtxMutex:     hc.sessionCtxMutex,
+		providersMapMutex:   hc.providersMapMutex,
 		drmConfig:           hc.drmConfig,
 		rawQuery:            hc.rawQuery,
 		runtimeContext:      hc.runtimeContext,
@@ -444,6 +449,7 @@ func GetHandlerCtx(
 	rv := standardHandlerContext{
 		authMapMutex:        &sync.Mutex{},
 		sessionCtxMutex:     &sync.Mutex{},
+		providersMapMutex:   &sync.Mutex{},
 		rawQuery:            cmdString,
 		runtimeContext:      runtimeCtx,
 		providers:           providers,
