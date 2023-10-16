@@ -50,9 +50,9 @@ func TestRenderTemplate(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		actual, err := config.RenderTemplate(c.input)
-		if err != nil {
-			t.Error(err)
+		actual, er := config.RenderTemplate(c.input)
+		if er != nil {
+			t.Error(er)
 			continue
 		}
 		if actual != c.expected {
