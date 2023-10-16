@@ -1,15 +1,17 @@
-package templatenamespace
+package templatenamespace_test
 
 import (
 	"regexp"
 	"testing"
 	"text/template"
+
+	"github.com/stackql/stackql/internal/stackql/templatenamespace"
 )
 
 func TestGetObjectName(t *testing.T) {
 	regex := regexp.MustCompile(`(?P<objectName>\w+)`)
 	templ := template.Must(template.New("test").Parse("{{.objectName}}"))
-	config, err := NewTemplateNamespaceConfigurator(regex, templ)
+	config, err := templatenamespace.NewTemplateNamespaceConfigurator(regex, templ)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -35,7 +37,7 @@ func TestGetObjectName(t *testing.T) {
 func TestRenderTemplate(t *testing.T) {
 	regex := regexp.MustCompile(`(?P<objectName>\w+)`)
 	templete := template.Must(template.New("test").Parse("TestRenderTemplate's {{.objectName}}"))
-	config, err := NewTemplateNamespaceConfigurator(regex, templete)
+	config, err := templatenamespace.NewTemplateNamespaceConfigurator(regex, templete)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -64,7 +66,7 @@ func TestRenderTemplate(t *testing.T) {
 func TestIsAllowed(t *testing.T) {
 	regex := regexp.MustCompile(`(?P<objectName>\w+)`)
 	temp := template.Must(template.New("test").Parse("{{.objectName}}"))
-	conf, e := NewTemplateNamespaceConfigurator(regex, temp)
+	conf, e := templatenamespace.NewTemplateNamespaceConfigurator(regex, temp)
 	if e != nil {
 		t.Fatal(e)
 	}
