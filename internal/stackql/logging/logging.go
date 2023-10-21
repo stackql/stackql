@@ -7,21 +7,21 @@ import (
 )
 
 var (
-	logger *logrus.Logger //nolint:gochecknoglobals // This is convenient as a global variable
+	Logger *logrus.Logger //nolint:gochecknoglobals // This is convenient as a global variable
 )
 
 func SetLogger(logLevelStr string) {
-	logger = logrus.StandardLogger()
+	Logger = logrus.StandardLogger()
 	logLevel, err := logrus.ParseLevel(logLevelStr)
 	if err != nil {
-		logger.Fatal(err)
+		Logger.Fatal(err)
 	}
-	logger.SetLevel(logLevel)
+	Logger.SetLevel(logLevel)
 }
 
 func GetLogger() *logrus.Logger {
-	if logger != nil {
-		return logger
+	if Logger != nil {
+		return Logger
 	}
 	tmpLogger := logrus.New()
 	tmpLogger.SetOutput(io.Discard)
