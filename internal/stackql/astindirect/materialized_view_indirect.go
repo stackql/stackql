@@ -13,7 +13,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/typing"
 )
 
-type materializedView struct {
+type MaterializedView struct {
 	viewDTO               internaldto.RelationDTO
 	selectStmt            sqlparser.SelectStatement
 	paramCollection       internaldto.TableParameterCollection
@@ -21,39 +21,39 @@ type materializedView struct {
 	underlyingSymbolTable symtab.SymTab
 }
 
-func (v *materializedView) GetType() IndirectType {
+func (v *MaterializedView) GetType() IndirectType {
 	return MaterializedViewType
 }
 
-func (v *materializedView) GetAssignedParameters() (internaldto.TableParameterCollection, bool) {
+func (v *MaterializedView) GetAssignedParameters() (internaldto.TableParameterCollection, bool) {
 	return v.paramCollection, v.paramCollection != nil
 }
 
-func (v *materializedView) SetAssignedParameters(paramCollection internaldto.TableParameterCollection) {
+func (v *MaterializedView) SetAssignedParameters(paramCollection internaldto.TableParameterCollection) {
 	v.paramCollection = paramCollection
 }
 
-func (v *materializedView) GetUnderlyingSymTab() symtab.SymTab {
+func (v *MaterializedView) GetUnderlyingSymTab() symtab.SymTab {
 	return v.underlyingSymbolTable
 }
 
-func (v *materializedView) SetUnderlyingSymTab(symbolTable symtab.SymTab) {
+func (v *MaterializedView) SetUnderlyingSymTab(symbolTable symtab.SymTab) {
 	v.underlyingSymbolTable = symbolTable
 }
 
-func (v *materializedView) GetName() string {
+func (v *MaterializedView) GetName() string {
 	return v.viewDTO.GetName()
 }
 
-func (v *materializedView) GetColumns() []typing.ColumnMetadata {
+func (v *MaterializedView) GetColumns() []typing.ColumnMetadata {
 	return nil
 }
 
-func (v *materializedView) GetRelationalColumns() []typing.RelationalColumn {
+func (v *MaterializedView) GetRelationalColumns() []typing.RelationalColumn {
 	return v.viewDTO.GetColumns()
 }
 
-func (v *materializedView) GetRelationalColumnByIdentifier(name string) (typing.RelationalColumn, bool) {
+func (v *MaterializedView) GetRelationalColumnByIdentifier(name string) (typing.RelationalColumn, bool) {
 	for _, col := range v.viewDTO.GetColumns() {
 		if col.GetName() == name {
 			return col, true
@@ -65,31 +65,31 @@ func (v *materializedView) GetRelationalColumnByIdentifier(name string) (typing.
 	return nil, false
 }
 
-func (v *materializedView) GetOptionalParameters() map[string]openapistackql.Addressable {
+func (v *MaterializedView) GetOptionalParameters() map[string]openapistackql.Addressable {
 	return nil
 }
 
-func (v *materializedView) GetRequiredParameters() map[string]openapistackql.Addressable {
+func (v *MaterializedView) GetRequiredParameters() map[string]openapistackql.Addressable {
 	return nil
 }
 
-func (v *materializedView) GetColumnByName(_ string) (typing.ColumnMetadata, bool) {
+func (v *MaterializedView) GetColumnByName(_ string) (typing.ColumnMetadata, bool) {
 	return nil, false
 }
 
-func (v *materializedView) SetSelectContext(_ drm.PreparedStatementCtx) {
+func (v *MaterializedView) SetSelectContext(_ drm.PreparedStatementCtx) {
 	//
 }
 
-func (v *materializedView) GetSelectContext() drm.PreparedStatementCtx {
+func (v *MaterializedView) GetSelectContext() drm.PreparedStatementCtx {
 	return nil
 }
 
-func (v *materializedView) GetTables() sqlparser.TableExprs {
+func (v *MaterializedView) GetTables() sqlparser.TableExprs {
 	return nil
 }
 
-func (v *materializedView) getAST() (sqlparser.Statement, error) {
+func (v *MaterializedView) getAST() (sqlparser.Statement, error) {
 	sqlParser, err := parser.NewParser()
 	if err != nil {
 		return nil, err
@@ -97,15 +97,15 @@ func (v *materializedView) getAST() (sqlparser.Statement, error) {
 	return sqlParser.ParseQuery(v.viewDTO.GetRawQuery())
 }
 
-func (v *materializedView) GetSelectAST() sqlparser.SelectStatement {
+func (v *MaterializedView) GetSelectAST() sqlparser.SelectStatement {
 	return v.selectStmt
 }
 
-func (v *materializedView) GetSelectionCtx() (drm.PreparedStatementCtx, error) {
+func (v *MaterializedView) GetSelectionCtx() (drm.PreparedStatementCtx, error) {
 	return nil, fmt.Errorf("materialized view does not have select context")
 }
 
-func (v *materializedView) Parse() error {
+func (v *MaterializedView) Parse() error {
 	parseResult, err := v.getAST()
 	if err != nil {
 		return err
@@ -114,7 +114,7 @@ func (v *materializedView) Parse() error {
 	case *sqlparser.DDL:
 		v.selectStmt = pr.SelectStatement
 	default:
-		return fmt.Errorf("materializedView of type '%T' not yet supported", pr)
+		return fmt.Errorf("MaterializedView of type '%T' not yet supported", pr)
 	}
 	for _, col := range v.viewDTO.GetColumns() {
 		colID := col.GetIdentifier()
@@ -132,10 +132,10 @@ func (v *materializedView) Parse() error {
 	return nil
 }
 
-func (v *materializedView) GetTranslatedDDL() (string, bool) {
+func (v *MaterializedView) GetTranslatedDDL() (string, bool) {
 	return "", false
 }
 
-func (v *materializedView) GetLoadDML() (string, bool) {
+func (v *MaterializedView) GetLoadDML() (string, bool) {
 	return "", false
 }

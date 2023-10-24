@@ -47,6 +47,7 @@ type AnnotatedAst interface {
 	SetSelectIndirect(selNode *sqlparser.Select, indirect astindirect.Indirect)
 	GetExecIndirect(selNode *sqlparser.Exec) (astindirect.Indirect, bool)
 	SetExecIndirect(selNode *sqlparser.Exec, indirect astindirect.Indirect)
+	GetSubequeryTableCount() int
 }
 
 type standardAnnotatedAst struct {
@@ -67,6 +68,18 @@ type standardAnnotatedAst struct {
 func (aa *standardAnnotatedAst) GetExecIndirect(selNode *sqlparser.Exec) (astindirect.Indirect, bool) {
 	rv, ok := aa.execIndirectCache[selNode]
 	return rv, ok
+}
+
+func (aa *standardAnnotatedAst) GetSubequeryTableCount() int {
+	var rv int
+	for _, indirect := range aa.tableIndirects {
+		switch t := indirect.(type) {
+		case *astindirect.Subquery:
+			rv += t.GetCtrlColumnRepeats()
+		default:
+		}
+	}
+	return rv
 }
 
 func (aa *standardAnnotatedAst) SetExecIndirect(selNode *sqlparser.Exec, indirect astindirect.Indirect) {

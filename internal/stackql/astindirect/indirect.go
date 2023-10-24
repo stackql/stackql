@@ -14,9 +14,9 @@ import (
 )
 
 var (
-	_ Indirect = &view{}
-	_ Indirect = &subquery{}
-	_ Indirect = &materializedView{}
+	_ Indirect = &View{}
+	_ Indirect = &Subquery{}
+	_ Indirect = &MaterializedView{}
 )
 
 type IndirectType int
@@ -33,7 +33,7 @@ const (
 )
 
 func NewViewIndirect(viewDTO internaldto.RelationDTO) (Indirect, error) {
-	rv := &view{
+	rv := &View{
 		viewDTO:               viewDTO,
 		underlyingSymbolTable: symtab.NewHashMapTreeSymTab(),
 	}
@@ -41,7 +41,7 @@ func NewViewIndirect(viewDTO internaldto.RelationDTO) (Indirect, error) {
 }
 
 func NewMaterializedViewIndirect(viewDTO internaldto.RelationDTO, sqlSystem sql_system.SQLSystem) (Indirect, error) {
-	rv := &materializedView{
+	rv := &MaterializedView{
 		viewDTO:               viewDTO,
 		underlyingSymbolTable: symtab.NewHashMapTreeSymTab(),
 		sqlSystem:             sqlSystem,
@@ -89,7 +89,7 @@ func NewSubqueryIndirect(subQueryDTO internaldto.SubqueryDTO) (Indirect, error) 
 	if subQueryDTO == nil {
 		return nil, fmt.Errorf("cannot accomodate nil subquery")
 	}
-	rv := &subquery{
+	rv := &Subquery{
 		subQueryDTO:           subQueryDTO,
 		subQuery:              subQueryDTO.GetSubquery(),
 		selectStmt:            subQueryDTO.GetSubquery().Select,

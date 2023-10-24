@@ -12,7 +12,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/typing"
 )
 
-type view struct {
+type View struct {
 	viewDTO               internaldto.RelationDTO
 	selectStmt            sqlparser.SelectStatement
 	selCtx                drm.PreparedStatementCtx
@@ -20,47 +20,47 @@ type view struct {
 	underlyingSymbolTable symtab.SymTab
 }
 
-func (v *view) GetType() IndirectType {
+func (v *View) GetType() IndirectType {
 	return ViewType
 }
 
-func (v *view) GetRelationalColumns() []typing.RelationalColumn {
+func (v *View) GetRelationalColumns() []typing.RelationalColumn {
 	return nil
 }
 
-func (v *view) GetAssignedParameters() (internaldto.TableParameterCollection, bool) {
+func (v *View) GetAssignedParameters() (internaldto.TableParameterCollection, bool) {
 	return v.paramCollection, v.paramCollection != nil
 }
 
-func (v *view) SetAssignedParameters(paramCollection internaldto.TableParameterCollection) {
+func (v *View) SetAssignedParameters(paramCollection internaldto.TableParameterCollection) {
 	v.paramCollection = paramCollection
 }
 
-func (v *view) GetUnderlyingSymTab() symtab.SymTab {
+func (v *View) GetUnderlyingSymTab() symtab.SymTab {
 	return v.underlyingSymbolTable
 }
 
-func (v *view) SetUnderlyingSymTab(symbolTable symtab.SymTab) {
+func (v *View) SetUnderlyingSymTab(symbolTable symtab.SymTab) {
 	v.underlyingSymbolTable = symbolTable
 }
 
-func (v *view) GetName() string {
+func (v *View) GetName() string {
 	return v.viewDTO.GetName()
 }
 
-func (v *view) GetColumns() []typing.ColumnMetadata {
+func (v *View) GetColumns() []typing.ColumnMetadata {
 	return v.selCtx.GetNonControlColumns()
 }
 
-func (v *view) GetOptionalParameters() map[string]openapistackql.Addressable {
+func (v *View) GetOptionalParameters() map[string]openapistackql.Addressable {
 	return nil
 }
 
-func (v *view) GetRequiredParameters() map[string]openapistackql.Addressable {
+func (v *View) GetRequiredParameters() map[string]openapistackql.Addressable {
 	return nil
 }
 
-func (v *view) GetColumnByName(name string) (typing.ColumnMetadata, bool) {
+func (v *View) GetColumnByName(name string) (typing.ColumnMetadata, bool) {
 	nccs := v.selCtx.GetNonControlColumns()
 	for _, col := range nccs {
 		if col.GetIdentifier() == name {
@@ -70,31 +70,31 @@ func (v *view) GetColumnByName(name string) (typing.ColumnMetadata, bool) {
 	return nil, false
 }
 
-func (v *view) SetSelectContext(selCtx drm.PreparedStatementCtx) {
+func (v *View) SetSelectContext(selCtx drm.PreparedStatementCtx) {
 	v.selCtx = selCtx
 }
 
-func (v *view) GetTranslatedDDL() (string, bool) {
+func (v *View) GetTranslatedDDL() (string, bool) {
 	return "", false
 }
 
-func (v *view) GetLoadDML() (string, bool) {
+func (v *View) GetLoadDML() (string, bool) {
 	return "", false
 }
 
-func (v *view) GetRelationalColumnByIdentifier(_ string) (typing.RelationalColumn, bool) {
+func (v *View) GetRelationalColumnByIdentifier(_ string) (typing.RelationalColumn, bool) {
 	return nil, false
 }
 
-func (v *view) GetSelectContext() drm.PreparedStatementCtx {
+func (v *View) GetSelectContext() drm.PreparedStatementCtx {
 	return v.selCtx
 }
 
-func (v *view) GetTables() sqlparser.TableExprs {
+func (v *View) GetTables() sqlparser.TableExprs {
 	return nil
 }
 
-func (v *view) getAST() (sqlparser.Statement, error) {
+func (v *View) getAST() (sqlparser.Statement, error) {
 	sqlParser, err := parser.NewParser()
 	if err != nil {
 		return nil, err
@@ -102,15 +102,15 @@ func (v *view) getAST() (sqlparser.Statement, error) {
 	return sqlParser.ParseQuery(v.viewDTO.GetRawQuery())
 }
 
-func (v *view) GetSelectAST() sqlparser.SelectStatement {
+func (v *View) GetSelectAST() sqlparser.SelectStatement {
 	return v.selectStmt
 }
 
-func (v *view) GetSelectionCtx() (drm.PreparedStatementCtx, error) {
+func (v *View) GetSelectionCtx() (drm.PreparedStatementCtx, error) {
 	return v.selCtx, nil
 }
 
-func (v *view) Parse() error {
+func (v *View) Parse() error {
 	parseResult, err := v.getAST()
 	if err != nil {
 		return err
@@ -120,6 +120,6 @@ func (v *view) Parse() error {
 		v.selectStmt = pr
 		return nil
 	default:
-		return fmt.Errorf("view of type '%T' not yet supported", pr)
+		return fmt.Errorf("View of type '%T' not yet supported", pr)
 	}
 }

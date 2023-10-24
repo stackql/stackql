@@ -9,7 +9,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/typing"
 )
 
-type subquery struct {
+type Subquery struct {
 	subQueryDTO           internaldto.SubqueryDTO
 	subQuery              *sqlparser.Subquery
 	selectStmt            sqlparser.SelectStatement
@@ -18,51 +18,55 @@ type subquery struct {
 	underlyingSymbolTable symtab.SymTab
 }
 
-func (v *subquery) GetType() IndirectType {
+func (v *Subquery) GetType() IndirectType {
 	return SubqueryType
 }
 
-func (v *subquery) GetAssignedParameters() (internaldto.TableParameterCollection, bool) {
+func (v *Subquery) GetAssignedParameters() (internaldto.TableParameterCollection, bool) {
 	return v.paramCollection, v.paramCollection != nil
 }
 
-func (v *subquery) SetAssignedParameters(paramCollection internaldto.TableParameterCollection) {
+func (v *Subquery) SetAssignedParameters(paramCollection internaldto.TableParameterCollection) {
 	v.paramCollection = paramCollection
 }
 
-func (v *subquery) GetRelationalColumns() []typing.RelationalColumn {
+func (v *Subquery) GetRelationalColumns() []typing.RelationalColumn {
 	return nil
 }
 
-func (v *subquery) GetRelationalColumnByIdentifier(_ string) (typing.RelationalColumn, bool) {
+func (v *Subquery) GetRelationalColumnByIdentifier(_ string) (typing.RelationalColumn, bool) {
 	return nil, false
 }
 
-func (v *subquery) GetUnderlyingSymTab() symtab.SymTab {
+func (v *Subquery) GetUnderlyingSymTab() symtab.SymTab {
 	return v.underlyingSymbolTable
 }
 
-func (v *subquery) SetUnderlyingSymTab(symbolTable symtab.SymTab) {
+func (v *Subquery) SetUnderlyingSymTab(symbolTable symtab.SymTab) {
 	v.underlyingSymbolTable = symbolTable
 }
 
-func (v *subquery) GetName() string {
+func (v *Subquery) GetName() string {
 	return v.subQueryDTO.GetAlias().GetRawVal()
 }
 
-func (v *subquery) GetColumns() []typing.ColumnMetadata {
+func (v *Subquery) GetCtrlColumnRepeats() int {
+	return v.selCtx.GetCtrlColumnRepeats()
+}
+
+func (v *Subquery) GetColumns() []typing.ColumnMetadata {
 	return v.selCtx.GetNonControlColumns()
 }
 
-func (v *subquery) GetOptionalParameters() map[string]openapistackql.Addressable {
+func (v *Subquery) GetOptionalParameters() map[string]openapistackql.Addressable {
 	return nil
 }
 
-func (v *subquery) GetRequiredParameters() map[string]openapistackql.Addressable {
+func (v *Subquery) GetRequiredParameters() map[string]openapistackql.Addressable {
 	return nil
 }
 
-func (v *subquery) GetColumnByName(name string) (typing.ColumnMetadata, bool) {
+func (v *Subquery) GetColumnByName(name string) (typing.ColumnMetadata, bool) {
 	for _, col := range v.selCtx.GetNonControlColumns() {
 		if col.GetIdentifier() == name {
 			return col, true
@@ -71,34 +75,34 @@ func (v *subquery) GetColumnByName(name string) (typing.ColumnMetadata, bool) {
 	return nil, false
 }
 
-func (v *subquery) SetSelectContext(selCtx drm.PreparedStatementCtx) {
+func (v *Subquery) SetSelectContext(selCtx drm.PreparedStatementCtx) {
 	v.selCtx = selCtx
 }
 
-func (v *subquery) GetSelectContext() drm.PreparedStatementCtx {
+func (v *Subquery) GetSelectContext() drm.PreparedStatementCtx {
 	return v.selCtx
 }
 
-func (v *subquery) GetTables() sqlparser.TableExprs {
+func (v *Subquery) GetTables() sqlparser.TableExprs {
 	return nil
 }
 
-func (v *subquery) GetSelectAST() sqlparser.SelectStatement {
+func (v *Subquery) GetSelectAST() sqlparser.SelectStatement {
 	return v.selectStmt
 }
 
-func (v *subquery) GetSelectionCtx() (drm.PreparedStatementCtx, error) {
+func (v *Subquery) GetSelectionCtx() (drm.PreparedStatementCtx, error) {
 	return v.selCtx, nil
 }
 
-func (v *subquery) Parse() error {
+func (v *Subquery) Parse() error {
 	return nil
 }
 
-func (v *subquery) GetTranslatedDDL() (string, bool) {
+func (v *Subquery) GetTranslatedDDL() (string, bool) {
 	return "", false
 }
 
-func (v *subquery) GetLoadDML() (string, bool) {
+func (v *Subquery) GetLoadDML() (string, bool) {
 	return "", false
 }

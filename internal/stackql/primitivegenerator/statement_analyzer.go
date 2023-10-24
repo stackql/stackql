@@ -640,7 +640,10 @@ func (pb *standardPrimitiveGenerator) analyzeExec(pbi planbuilderinput.PlanBuild
 		return fmt.Errorf("could not cast node of type '%T' to required Exec", pbi.GetStatement())
 	}
 	tbl, err := pb.AnalyzeUnaryExec(pbi, handlerCtx, node, nil, nil) //nolint:ineffassign,staticcheck,lll,wastedassign // TODO: handle error
-	insertionContainer, err := tableinsertioncontainer.NewTableInsertionContainer(tbl, handlerCtx.GetSQLEngine())
+	insertionContainer, err := tableinsertioncontainer.NewTableInsertionContainer(
+		tbl,
+		handlerCtx.GetSQLEngine(),
+		handlerCtx.GetTxnCounterMgr())
 	if err != nil {
 		return err
 	}
