@@ -245,7 +245,8 @@ func (v *standardQueryRewriteAstVisitor) GenerateSelectDML() (drm.PreparedStatem
 		v.namespaceCollection,
 		v.hoistedOnClauseTables,
 		make(map[string]interface{}),
-	).WithIndirectContexts(v.indirectContexts).WithPrepStmtOffset(v.prepStmtOffset)
+	).WithIndirectContexts(v.indirectContexts).WithPrepStmtOffset(
+		v.prepStmtOffset + v.annotatedAST.GetSubequeryTableCount())
 	return sqlrewrite.GenerateRewrittenSelectDML(rewriteInput)
 }
 

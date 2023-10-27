@@ -4,6 +4,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
+	"github.com/stackql/stackql/pkg/txncounter"
 )
 
 var (
@@ -51,8 +52,9 @@ func (ic *StandardTableInsertionContainer) IsCountersSet() bool {
 func NewTableInsertionContainer(
 	tm tablemetadata.ExtendedTableMetadata,
 	sqlEngine sqlengine.SQLEngine,
+	txnCtrMgr txncounter.Manager,
 ) (TableInsertionContainer, error) {
-	tcc, err := internaldto.NewTxnControlCounters(nil)
+	tcc, err := internaldto.NewTxnControlCounters(txnCtrMgr)
 	if err != nil {
 		return nil, err
 	}

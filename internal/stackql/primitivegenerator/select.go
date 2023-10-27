@@ -237,7 +237,10 @@ func (pb *standardPrimitiveGenerator) analyzeSelect(pbi planbuilderinput.PlanBui
 			if err != nil {
 				return err
 			}
-			insertionContainer, err := tableinsertioncontainer.NewTableInsertionContainer(tbl, handlerCtx.GetSQLEngine())
+			insertionContainer, err := tableinsertioncontainer.NewTableInsertionContainer(
+				tbl,
+				handlerCtx.GetSQLEngine(),
+				handlerCtx.GetTxnCounterMgr())
 			if err != nil {
 				return err
 			}
