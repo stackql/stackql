@@ -19,7 +19,8 @@ jobs:
         uses: goreleaser/goreleaser-action@v5
         with:
           args: release --snapshot --config .github/workflows/.goreleaser-for-linux.yaml
-  build-linux-binary:
+
+  build-macos-binary:
     runs-on: macos-latest
     steps:
       - name: Checkout
