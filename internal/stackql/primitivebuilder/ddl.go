@@ -70,6 +70,8 @@ func (ddo *ddl) Build() error {
 				selStr := parserutil.RenderDDLSelectStmt(ddo.ddlObject)
 				rawDDL := fmt.Sprintf(`CREATE MATERIALIZED VIEW "%s" AS %s`, tableName, selStr)
 				if ddo.ddlObject.OrReplace {
+					//nolint:errcheck // Drop if exists... not atomic but shall work in most cases.
+					sqlSystem.DropMaterializedView(tableName)
 					rawDDL = fmt.Sprintf(`CREATE OR REPLACE MATERIALIZED VIEW "%s" AS %s`, tableName, selStr)
 				}
 				selCtx := indirect.GetSelectContext()
