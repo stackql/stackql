@@ -1,8 +1,9 @@
 name: build
+
 on:
   push:
     branches:
-      - dev
+      - 'dev'
 
 jobs:
   build-linux-binary:
