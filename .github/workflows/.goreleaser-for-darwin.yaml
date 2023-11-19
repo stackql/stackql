@@ -24,12 +24,6 @@ builds:
       - arm64
     env:
       - CGO_ENABLED=1
-      - >-
-        {{- if eq .Arch "amd64"}}CC=o64-clang{{- end }}
-        {{- if eq .Arch "arm64"}}CC=oa64-clang{{- end }}
-      - >-
-        {{- if eq .Arch "amd64"}}CXX=o64-clang++{{- end }}
-        {{- if eq .Arch "arm64"}}CXX=oa64-clang++{{- end }}
     flags:
       - -trimpath
     ldflags: >-
