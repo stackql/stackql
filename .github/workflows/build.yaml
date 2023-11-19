@@ -17,4 +17,4 @@ jobs:
       - name: Run Goreleaser
         uses: goreleaser/goreleaser-action@v5
         with:
-          args: release --skip-publish --config scripts/.goreleaser-for-linux.yaml
+          args: release --skip-publish --config .github/workflows/.goreleaser-for-linux.yaml
