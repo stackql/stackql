@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - 'dev'
+    tags:
+      - v*
 
 jobs:
   build-linux-binary:
@@ -20,7 +22,11 @@ jobs:
       - name: Run Goreleaser
         uses: goreleaser/goreleaser-action@v5
         with:
+          version: latest
           args: release --clean --config .github/workflows/.goreleaser-for-linux.yaml
+        env:
+          GITHUB_TOKEN: ${{ secrets.FORK_STACKQL_TOKEN }}
+
 
   build-macos-binary:
     runs-on: macos-latest
