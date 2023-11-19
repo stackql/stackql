@@ -14,22 +14,22 @@ before:
     - go mod verify
 
 builds:
-  - id: stackql-linux
+  - id: stackql-darwin
     binary: stackql
     main: ./stackql/
     goos:
-      - linux
+      - darwin
     goarch:
       - amd64
       - arm64
     env:
       - CGO_ENABLED=1
       - >-
-        {{- if eq .Arch "amd64"}}CC=x86_64-linux-gnu-gcc{{- end }}
-        {{- if eq .Arch "arm64"}}CC=aarch64-linux-gnu-gcc{{- end }}
+        {{- if eq .Arch "amd64"}}CC=o64-clang{{- end }}
+        {{- if eq .Arch "arm64"}}CC=oa64-clang{{- end }}
       - >-
-        {{- if eq .Arch "amd64"}}CXX=x86_64-linux-gnu-g++{{- end }}
-        {{- if eq .Arch "arm64"}}CXX=aarch64-linux-gnu-gcc{{- end }}
+        {{- if eq .Arch "amd64"}}CXX=o64-clang++{{- end }}
+        {{- if eq .Arch "arm64"}}CXX=oa64-clang++{{- end }}
     flags:
       - -trimpath
     ldflags: >-
