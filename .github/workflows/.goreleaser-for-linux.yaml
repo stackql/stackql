@@ -16,7 +16,7 @@ before:
 builds:
   - id: stackql-linux
   - binary: stackql
-    main: ../../stackql/main.go
+    main: ./stackql/main.go
     goos:
       - linux
     goarch:
