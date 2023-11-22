@@ -1,883 +1,883 @@
-# name: Build
-
-# on:
-#   push:
-#     branches:
-#       - main
-#       - develop
-#     tags:
-#       - build*
-#     paths-ignore:
-#       - "**/*.md"
-#       - "docs/**"
-#       - "examples/**"
-#       - "licenses/**"
-#   pull_request:
-#     branches:
-#       - main
-#       - develop
-#     paths-ignore:
-#       - "**/*.md"
-#       - "docs/**"
-#       - "examples/**"
-#       - "licenses/**"
-
-# env:
-#   GOTESTCMD: "go test -timeout 1200s --tags \"json1 sqleanall\" -v ./..."
-#   TESTSCRIPT: "test/python/main.py"
-#   GOPRIVATE: github.com/stackql/*
-#   GH_ACCESS_TOKEN: ${{ secrets.ACTIONS_PRIVATE_PACKAGE_SECRET }}
-#   PLANCACHEENABLED: "true"
-
-# jobs:
-
-#   winbuild:
-#     name: Windows Build
-#     runs-on: windows-latest
-#     steps:
-
-#     - name: Get rid of disruptive line endings before checkout
-#       run: |
-#         git config --global core.autocrlf false
-
-#     - name: Check out code into the Go module directory
-#       uses: actions/checkout@v3
-
-#     - name: Set up Go 1.x
-#       uses: actions/setup-go@v3
-#       with:
-#         go-version: ^1.19
-#         check-latest: true
-#         cache: true
-#       id: go
-
-#     - name: Setup Python
-#       uses: actions/setup-python@v4
-#       with:
-#         cache: pip
-#         python-version: '3.11'
-
-#     - name: Cache Chocolatey packages
-#       id: cache-choco
-#       uses: actions/cache@v3
-#       env:
-#         cache-name: cache-choco-packages
-#       with:
-#         path: 'C:\Users\${{ env.username }}\AppData\Local\Temp\chocolatey\'
-#         key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/chocolatey/**/*.zip', '**/chocolatey/**/*.7z') }}
-#         restore-keys: |
-#           ${{ runner.os }}-build-${{ env.cache-name }}-
-
-#     - if: ${{ steps.cache-choco.outputs.cache-hit == 'true' }}
-#       name: List the state of Chocolatey packages
-#       continue-on-error: true
-#       run:  |
-#            dir "C:\Users\${{ env.username }}\AppData\Local\Temp\chocolatey\"
-
-#     - name: Set up mingw
-#       uses: egor-tensin/setup-mingw@v2.2.0
-#       id: gccsetup
-#       timeout-minutes: 20
-#       with:
-#         version: '8.1.0'
-
-#     - name: Choco install postgres
-#       uses: crazy-max/ghaction-chocolatey@v2
-#       timeout-minutes: 20
-#       with:
-#         args: "install --force postgresql13 openssl"
-
-#     - name: Git Ref Parse
-#       id: git_ref_parse
-#       run: |
-#         {
-#           echo "SOURCE_NAME=${GITHUB_REF#refs/*/}"
-#           echo "SOURCE_BRANCH=${GITHUB_REF#refs/heads/}"
-#           echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}"
-#         } >> "${GITHUB_STATE}"
-
-#     - name: Install Python dependencies
-#       run: |
-#         pip3 install -r requirements.txt
-
-
-#     - name: Generate rewritten registry for simulations
-#       run: |
-#         python3 test\python\registry-rewrite.py
-
-#     - name: Get dependencies
-#       run: |
-#         go env -w GOPRIVATE="github.com/stackql/*"
-#         git config --global url."https://$env:GHACCESSTOKEN@github.com/".insteadOf "https://github.com/"
-#         git --no-pager config --list
-#         go get -v -t -d ./...
-#       env:
-#         CGO_ENABLED: 1
-#         GHACCESSTOKEN: ${{env.GH_ACCESS_TOKEN}}
-#         GOPRIVATE: ${{env.GOPRIVATE}}
-
-#     - name: Generate Build Flags and Build
-#       env:
-#         BUILDCOMMITSHA: ${{github.sha}}
-#         BUILDBRANCH: ${{github.ref}}
-#         BUILDPLATFORM: ${{runner.os}}
-#         BUILDPATCHVERSION: ${{github.run_number}}
-#         CGO_ENABLED: 1
-#         GH_ACCESS_TOKEN: ${{env.GH_ACCESS_TOKEN}}
-#         GOPRIVATE: ${{env.GOPRIVATE}}
-#       run: |
-#         git config --global url.https://$env:GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
-#         $Version = convertfrom-stringdata (get-content ./version.txt -raw)
-#         $BuildMajorVersion = $Version.'MajorVersion'
-#         $BuildMinorVersion = $Version.'MinorVersion'
-
-#         $env:BUILDMAJORVERSION = $BuildMajorVersion
-#         $env:BUILDMINORVERSION = $BuildMinorVersion
-
-#         echo "BUILDMAJORVERSION=$env:BUILDMAJORVERSION" >> $GITHUB_ENV
-#         echo "BUILDMINORVERSION=$env:BUILDMINORVERSION" >> $GITHUB_ENV
-#         echo "BUILDPATCHVERSION=$env:BUILDPATCHVERSION" >> $GITHUB_ENV
-
-#         python cicd/python/build.py --verbose --build
-
-#     - name: Test
-#       if: success()
-#       run: python cicd/python/build.py --verbose --test
-
-#     - name: Mock Server Download
-#       run: |
-#         mvn org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy `
-#         '-Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded' `
-#         '-DoutputDirectory=test/downloads'
-
-#     - name: Create certificates for robot tests
-#       run: |
-#         openssl req -x509 -keyout test/server/mtls/credentials/pg_server_key.pem -out test/server/mtls/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
-#         openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
-#         openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365
-
-#     - name: Run robot mocked functional tests
-#       if: success()
-#       env:
-#         PSQL_EXE: C:\Program Files\PostgreSQL\13\bin\psql
-#       run: |
-#         python cicd/python/build.py --robot-test
-
-#     - name: Output from mocked functional tests
-#       if: always()
-#       run: |
-#         cat ./test/robot/functional/output.xml
-
-#     - name: Run robot integration tests
-#       if: env.AZURE_CLIENT_SECRET != '' && startsWith(steps.git_ref_parse.outputs.SOURCE_TAG, 'build-release')
-#       env:
-#         PSQL_EXE: C:\Program Files\PostgreSQL\13\bin\psql
-#         AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-#         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-#         AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
-#         AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-#       run: |
-#         python cicd/python/build.py --robot-test-integration
-
-#     - name: Prepare Test DB
-#       if: success()
-#       run: copy test/db/db.sqlite test/db/tmp/python-tests-tmp-db.sqlite
-
-#     - name: Test Script
-#       if: success()
-#       run: python.exe test/python/main.py
-
-#     - name: Upload Artifact
-#       uses: actions/upload-artifact@v3
-#       if: success()
-#       with:
-#         name: stackql_windows_amd64
-#         path: build/stackql.exe
-
-#   linuxbuild:
-#     name: Linux Build
-#     runs-on: ubuntu-latest
-#     steps:
-
-#     - name: Check out code into the Go module directory
-#       uses: actions/checkout@v3
-
-#     - name: Set up Go 1.x
-#       uses: actions/setup-go@v3
-#       with:
-#         go-version: ^1.19
-#         check-latest: true
-#         cache: true
-#       id: go
-
-#     - name: Setup Python
-#       uses: actions/setup-python@v4
-#       with:
-#         cache: pip
-#         python-version: '3.11'
-
-#     - name: Git Ref Parse
-#       id: git_ref_parse
-#       run: |
-#           {
-#             echo "SOURCE_NAME=${GITHUB_REF#refs/*/}"
-#             echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}"
-#             echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}"
-#           } >> "${GITHUB_STATE}"
-
-#     - name: Set up GCC
-#       uses: egor-tensin/setup-gcc@v1
-#       id: gccsetup
-#       with:
-#         platform: x64
-#         cygwin: 0
-
-#     - name: Install psql
-#       run: |
-#           sudo apt-get update
-#           sudo apt-get install --yes --no-install-recommends postgresql-client
-
-#     - name: Install Python dependencies
-#       run: |
-#         pip3 install -r requirements.txt
-
-#     - name: Generate rewritten registry for simulations
-#       run: |
-#         python3 test/python/registry-rewrite.py
-
-#     - name: Get dependencies
-#       run: |
-#         git config --global "url.https://${GH_ACCESS_TOKEN}@github.com/.insteadOf" https://github.com/
-#         go get -v -t -d ./...
-#       env:
-#         GH_ACCESS_TOKEN: ${{env.GH_ACCESS_TOKEN}}
-#         GOPRIVATE: ${{env.GOPRIVATE}}
-
-#     - name: Generate Build Flags and Build
-#       env:
-#         BUILDCOMMITSHA: ${{github.sha}}
-#         BUILDBRANCH: ${{github.ref}}
-#         BUILDPLATFORM: ${{runner.os}}
-#         BUILDPATCHVERSION: ${{github.run_number}}
-#         CGO_ENABLED: 1
-#         CGO_LDFLAGS: '-static'
-#       run: |
-#         source version.txt
-#         export BUILDMAJORVERSION="$MajorVersion"
-#         export BUILDMINORVERSION="$MinorVersion"
-#         if [[ ! "$BUILDBRANCH" == "*develop" ]]
-#           then
-#           # shellcheck disable=2269
-#           export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
-#         fi
-#         BUILDSHORTCOMMITSHA="$(echo "${BUILDCOMMITSHA}" | cut -c 1-7)"
-#         export BUILDSHORTCOMMITSHA
-#         BUILDDATE="$(date)"
-#         export BUILDDATE
-#         echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
-#         echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
-#         echo "BUILDPATCHVERSION: ${BUILDPATCHVERSION}"
-#         echo "BUILDBRANCH: ${BUILDBRANCH}"
-#         echo "BUILDCOMMITSHA: ${BUILDCOMMITSHA}"
-#         echo "BUILDSHORTCOMMITSHA: ${BUILDSHORTCOMMITSHA}"
-#         echo "BUILDDATE: ${BUILDDATE}"
-#         echo "BUILDPLATFORM: ${BUILDPLATFORM}"
-
-#         {
-#           echo "BUILDMAJORVERSION=${BUILDMAJORVERSION}"
-#           echo "BUILDMINORVERSION=${BUILDMINORVERSION}"
-#           echo "BUILDPATCHVERSION=${BUILDPATCHVERSION}"
-#         } >> "${GITHUB_ENV}"
-#         python cicd/python/build.py --verbose --build
-
-#     - name: Test
-#       if: success()
-#       run: python cicd/python/build.py --verbose --test
-
-#     - name: Mock Server Download
-#       run: |
-#         mvn \
-#         org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy \
-#         -Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded \
-#         -DoutputDirectory=test/downloads
-
-#     - name: Create certificates for robot tests
-#       run: |
-#         openssl req -x509 -keyout test/server/mtls/credentials/pg_server_key.pem -out test/server/mtls/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
-#         openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
-#         openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365
-
-#     - name: Run robot mocked functional tests
-#       if: success()
-#       run: |
-#         python cicd/python/build.py --robot-test  --config='{ "variables": { "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": "true" } }'
-
-#     - name: Output from mocked functional tests
-#       if: always()
-#       run: |
-#         cat ./test/robot/functional/output.xml
-
-#     - name: Run robot mocked functional tests with aggressive concurrency
-#       if: success()
-#       run: |
-#         python cicd/python/build.py --robot-test  --config='{ "variables": { "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": "true", "CONCURRENCY_LIMIT": -1  } }'
-
-#     - name: Output from mocked functional tests with aggressive concurrency
-#       if: always()
-#       run: |
-#         cat ./test/robot/functional/output.xml
-
-#     - name: Run robot integration tests
-#       if: env.AZURE_CLIENT_SECRET != '' && startsWith(steps.git_ref_parse.outputs.SOURCE_TAG, 'build-release')
-#       env:
-#         AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-#         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-#         AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
-#         AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-#       run: |
-#         python cicd/python/build.py --robot-test-integration
-
-#     - name: Prepare Test DB
-#       if: success()
-#       run: cp test/db/db.sqlite test/db/tmp/python-tests-tmp-db.sqlite
-
-#     - name: Test Script
-#       if: success()
-#       run: python3 "${TESTSCRIPT}"
-#       env:
-#         TESTSCRIPT: ${{env.TESTSCRIPT}}
-
-#     - name: Upload Artifact
-#       uses: actions/upload-artifact@v3
-#       if: success()
-#       with:
-#         name: stackql_linux_amd64
-#         path: build/stackql
-
-#   wsltest:
-#     name: WSL Test
-#     runs-on: windows-latest
-#     needs: linuxbuild
-#     steps:
-
-#     - name: Get rid of disruptive line endings before checkout
-#       run: |
-#         git config --global core.autocrlf false
-
-#     - name: Check out code into the Go module directory
-#       uses: actions/checkout@v3
-
-#     - name: Download Artifact
-#       uses: actions/download-artifact@v3
-#       with:
-#         name: stackql_linux_amd64
-#         path: build
-
-#     - name: Setup WSL with dependencies
-#       uses: Vampire/setup-wsl@v1
-#       with:
-#         additional-packages:
-#           maven
-#           openjdk-11-jre
-#           openssl
-#           postgresql
-#           python3
-#           python3-pip
-#         wsl-conf: |
-#           [automount]
-#           options = "metadata"
-
-#     - shell: wsl-bash -u root {0}
-#       name: Stackql permissions
-#       run:  |
-#         chmod a+rwx build/stackql
-#         ls -al build/stackql
-
-#     - shell: wsl-bash -u root {0}
-#       name: Install Python dependencies
-#       run: pip3 install -r requirements.txt
-
-#     - shell: wsl-bash {0}
-#       name: Generate rewritten registry for simulations
-#       run: python3 test/python/registry-rewrite.py
-
-#     - shell: wsl-bash {0}
-#       name: Mock Server Download
-#       run: |
-#           mvn \
-#           org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy \
-#           -Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded \
-#           -DoutputDirectory=test/downloads
-
-#     - shell: wsl-bash {0}
-#       name: Create certificates for robot tests
-#       run: |
-#           openssl req -x509 -keyout test/server/mtls/credentials/pg_server_key.pem -out test/server/mtls/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
-#           openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
-#           openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365
-
-#     - shell: wsl-bash {0}
-#       name: Run robot mocked functional tests
-#       run: |
-#           . version.txt
-#           export BUILDBRANCH="${{github.ref}}"
-#           export BUILDPATCHVERSION="${{github.run_number}}"
-#           export BUILDMAJORVERSION=$MajorVersion
-#           export BUILDMINORVERSION=$MinorVersion
-#           echo "BUILDBRANCH=$BUILDBRANCH"
-#           echo "BUILDMAJORVERSION=$BUILDMAJORVERSION"
-#           echo "BUILDMINORVERSION=$BUILDMINORVERSION"
-#           echo "BUILDPATCHVERSION=$BUILDPATCHVERSION"
-#           if [[ ! "$BUILDBRANCH" == "*develop" ]]
-#             then
-#             export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
-#           fi
-#           python3 cicd/python/build.py --robot-test --config='{ "variables":  { "IS_WSL": true } }'
-
-#     - shell: wsl-bash {0}
-#       name: Output from mocked functional tests
-#       if: always()
-#       run: |
-#           cat ./test/robot/functional/output.xml
-
-#     - shell: wsl-bash {0}
-#       name: Run robot integration tests
-#       # This is a hack because if cannot directly access secrets
-#       if: env.AZURE_CLIENT_SECRET != ''
-#       env:
-#         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-#       run: |
-#           . version.txt
-#           export AZURE_CLIENT_ID='${{ secrets.AZURE_CLIENT_ID }}'
-#           export AZURE_CLIENT_SECRET='${{ secrets.AZURE_CLIENT_SECRET }}'
-#           export AZURE_INTEGRATION_TESTING_SUB_ID='${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}'
-#           export AZURE_TENANT_ID='${{ secrets.AZURE_TENANT_ID }}'
-#           export BUILDBRANCH="${{github.ref}}"
-#           export BUILDPATCHVERSION="${{github.run_number}}"
-#           export BUILDMAJORVERSION=$MajorVersion
-#           export BUILDMINORVERSION=$MinorVersion
-#           echo "BUILDBRANCH=$BUILDBRANCH"
-#           echo "BUILDMAJORVERSION=$BUILDMAJORVERSION"
-#           echo "BUILDMINORVERSION=$BUILDMINORVERSION"
-#           echo "BUILDPATCHVERSION=$BUILDPATCHVERSION"
-#           if [[ ! "$BUILDBRANCH" == "*develop" ]]
-#             then
-#             export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
-#           fi
-#           python3 cicd/python/build.py --robot-test-integration --config='{ "variables":  { "IS_WSL": true } }'
-
-#   macosbuild:
-#     name: MacOS Build
-#     runs-on: macos-11
-#     steps:
-#     - name: Check out code into the Go module directory
-#       uses: actions/checkout@v3
-
-#     - name: Set up Go 1.x
-#       uses: actions/setup-go@v3
-#       with:
-#         go-version: ^1.19
-#         check-latest: true
-#         cache: true
-#       id: go
-
-#     - name: Setup Python
-#       uses: actions/setup-python@v4
-#       with:
-#         cache: pip
-#         python-version: '3.11'
-
-#     - name: Git Ref Parse
-#       id: git_ref_parse
-#       run: |
-#           {
-#             echo "SOURCE_NAME=${GITHUB_REF#refs/*/}"
-#             echo "SOURCE_BRANCH=${GITHUB_REF#refs/heads/}"
-#             echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}"
-#           } >> "${GITHUB_STATE}"
-
-#     - name: Install Python dependencies
-#       run: |
-#         pip3 install -r requirements.txt
-
-#     - name: Generate rewritten registry for simulations
-#       run: |
-#         python3 test/python/registry-rewrite.py
-
-#     - name: Get dependencies
-#       run: |
-#         git config --global "url.https://${GH_ACCESS_TOKEN}@github.com/.insteadOf" https://github.com/
-#         go get -v -t -d ./...
-#       env:
-#         CGO_ENABLED: 1
-#         GH_ACCESS_TOKEN: ${{env.GH_ACCESS_TOKEN}}
-#         GOPRIVATE: ${{env.GOPRIVATE}}
-
-#     - name: Generate Build Flags and Build
-#       env:
-#         BUILDCOMMITSHA: ${{github.sha}}
-#         BUILDBRANCH: ${{github.ref}}
-#         BUILDPLATFORM: ${{runner.os}}
-#         BUILDPATCHVERSION: ${{github.run_number}}
-#         CGO_ENABLED: 1
-#       run: |
-#         source version.txt
-#         export BUILDMAJORVERSION="$MajorVersion"
-#         export BUILDMINORVERSION="$MinorVersion"
-#         if [[ ! "$BUILDBRANCH" == "*develop" ]]
-#           then
-#           # shellcheck disable=2269
-#           export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
-#         fi
-#         BUILDSHORTCOMMITSHA="$(echo "$BUILDCOMMITSHA" | cut -c 1-7)"
-#         export BUILDSHORTCOMMITSHA
-#         BUILDDATE="$(date)"
-#         export BUILDDATE
-#         echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
-#         echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
-#         echo "BUILDPATCHVERSION: ${BUILDPATCHVERSION}"
-#         echo "BUILDBRANCH: ${BUILDBRANCH}"
-#         echo "BUILDCOMMITSHA: ${BUILDCOMMITSHA}"
-#         echo "BUILDSHORTCOMMITSHA: ${BUILDSHORTCOMMITSHA}"
-#         echo "BUILDDATE: ${BUILDDATE}"
-#         echo "BUILDPLATFORM: ${BUILDPLATFORM}"
-
-#         {
-#           echo "BUILDMAJORVERSION=$BUILDMAJORVERSION"
-#           echo "BUILDMINORVERSION=$BUILDMINORVERSION"
-#           echo "BUILDPATCHVERSION=$BUILDPATCHVERSION"
-#         } >> "${GITHUB_ENV}"
-
-#         python cicd/python/build.py --verbose --build
-
-#     - name: Test
-#       if: success()
-#       run: python cicd/python/build.py --verbose --test
-
-#     - name: Mock Server Download
-#       run: |
-#         mvn \
-#         org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy \
-#         -Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded \
-#         -DoutputDirectory=test/downloads
-
-#     - name: Create certificates for robot tests
-#       run: |
-#         openssl req -x509 -keyout test/server/mtls/credentials/pg_server_key.pem -out test/server/mtls/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
-#         openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
-#         openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365
-
-#     - name: Run robot mocked functional tests
-#       if: success()
-#       run: |
-#         python cicd/python/build.py --robot-test
-
-#     - name: Output from mocked functional tests
-#       if: always()
-#       run: |
-#         cat ./test/robot/functional/output.xml
-
-#     - name: Run robot integration tests
-#       if: env.AZURE_CLIENT_SECRET != '' && startsWith(steps.git_ref_parse.outputs.SOURCE_TAG, 'build-release')
-#       env:
-#         AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-#         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-#         AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
-#         AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-#       run: |
-#         python cicd/python/build.py --robot-test-integration
-
-#     - name: Prepare Test DB
-#       if: success()
-#       run: cp test/db/db.sqlite test/db/tmp/python-tests-tmp-db.sqlite
-
-#     - name: Test Script
-#       if: success()
-#       run: python3 "${TESTSCRIPT}"
-#       env:
-#         TESTSCRIPT: ${{env.TESTSCRIPT}}
-
-#     - name: Upload Artifact
-#       uses: actions/upload-artifact@v3
-#       if: success()
-#       with:
-#         name: stackql_darwin_amd64
-#         path: build/stackql
-
-#   macosarmbuild:
-#     name: MacOS ARM Build
-#     runs-on: macos-latest
-#     steps:
-
-#     - name: Check out code into the Go module directory
-#       uses: actions/checkout@v3
-
-#     - name: Setup Python
-#       uses: actions/setup-python@v4
-#       with:
-#         cache: pip
-#         python-version: '3.11'
-
-#     - name: Set up Go 1.x
-#       uses: actions/setup-go@v3
-#       with:
-#         go-version: ^1.19
-#         check-latest: true
-#         cache: true
-#       id: go
-
-#     - name: Get dependencies
-#       run: |
-#         git config --global "url.https://${GH_ACCESS_TOKEN}@github.com/.insteadOf" https://github.com/
-#         go get -v -t -d ./...
-#       env:
-#         CGO_ENABLED: 1
-#         GH_ACCESS_TOKEN: ${{env.GH_ACCESS_TOKEN}}
-#         GOPRIVATE: ${{env.GOPRIVATE}}
-
-#     - name: Generate Build Flags and Build
-#       env:
-#         BUILDCOMMITSHA: ${{github.sha}}
-#         BUILDBRANCH: ${{github.ref}}
-#         BUILDPLATFORM: "darwin_arm64"
-#         BUILDPATCHVERSION: ${{github.run_number}}
-#         CGO_ENABLED: 1
-#       run: |
-#         source version.txt
-#         export BUILDMAJORVERSION="$MajorVersion"
-#         export BUILDMINORVERSION="$MinorVersion"
-#         if [[ ! "$BUILDBRANCH" == "*develop" ]]
-#           then
-#           # shellcheck disable=2269
-#           export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
-#         fi
-#         BUILDSHORTCOMMITSHA="$(echo "$BUILDCOMMITSHA" | cut -c 1-7)"
-#         export BUILDSHORTCOMMITSHA
-#         BUILDDATE="$(date)"
-#         export BUILDDATE
-#         echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
-#         echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
-#         echo "BUILDPATCHVERSION: ${BUILDPATCHVERSION}"
-#         echo "BUILDBRANCH: ${BUILDBRANCH}"
-#         echo "BUILDCOMMITSHA: ${BUILDCOMMITSHA}"
-#         echo "BUILDSHORTCOMMITSHA: ${BUILDSHORTCOMMITSHA}"
-#         echo "BUILDDATE: ${BUILDDATE}"
-#         echo "BUILDPLATFORM: ${BUILDPLATFORM}"
-
-#         {
-#           echo "BUILDMAJORVERSION=$BUILDMAJORVERSION"
-#           echo "BUILDMINORVERSION=$BUILDMINORVERSION"
-#           echo "BUILDPATCHVERSION=$BUILDPATCHVERSION"
-#         } >> "${GITHUB_ENV}"
-
-#         export GOOS="darwin"
-#         export GOARCH="arm64"
-#         python cicd/python/build.py --verbose --build
-
-#     - name: Upload Artifact
-#       uses: actions/upload-artifact@v3
-#       if: success()
-#       with:
-#         name: stackql_darwin_arm64
-#         path: build/stackql
-
-#   dockerbuild:
-#     name: Docker Build
-#     runs-on: ubuntu-latest-m
-#     steps:
-
-#     - name: Check out code into the Go module directory
-#       uses: actions/checkout@v3
-
-#     - name: Set up QEMU
-#       uses: docker/setup-qemu-action@v3
-
-#     - name: Set up Docker Buildx
-#       uses: docker/setup-buildx-action@v3
-
-#     - name: Setup Python
-#       uses: actions/setup-python@v4
-#       with:
-#         cache: pip
-#         python-version: '3.11'
-
-#     - name: Git Ref Parse
-#       id: git_ref_parse
-#       run: |
-#           {
-#             echo "SOURCE_NAME=${GITHUB_REF#refs/*/}"
-#             echo "SOURCE_BRANCH=${GITHUB_REF#refs/heads/}"
-#             echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}"
-#           } >> "${GITHUB_STATE}"
-
-#     - name: Install psql
-#       run: |
-#           sudo apt-get update
-#           sudo apt-get install --yes --no-install-recommends \
-#             postgresql-client \
-#             ca-certificates \
-#             openssl
-
-#     - name: Install Python dependencies
-#       run: |
-#         pip3 install -r requirements.txt
-
-#     - name: Extract Build Info and Persist
-#       env:
-#         BUILDCOMMITSHA: ${{github.sha}}
-#         BUILDBRANCH: ${{github.ref}}
-#         BUILDPLATFORM: ${{runner.os}}
-#         BUILDPATCHVERSION: ${{github.run_number}}
-#       run: |
-#         source version.txt
-#         BUILDMAJORVERSION=${MajorVersion}
-#         BUILDMINORVERSION=${MinorVersion}
-#         if [[ ! "$BUILDBRANCH" == "*develop" ]]; then
-#           # shellcheck disable=2269
-#           BUILDPATCHVERSION="${BUILDPATCHVERSION}"
-#         fi
-#         BUILDSHORTCOMMITSHA="$(echo "${BUILDCOMMITSHA}" | cut -c 1-7)"
-#         BUILDDATE="$(date)"
-#         export BUILDDATE
-#         echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
-#         echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
-#         echo "BUILDPATCHVERSION: ${BUILDPATCHVERSION}"
-#         echo "BUILDBRANCH: ${BUILDBRANCH}"
-#         echo "BUILDCOMMITSHA: ${BUILDCOMMITSHA}"
-#         echo "BUILDSHORTCOMMITSHA: ${BUILDSHORTCOMMITSHA}"
-#         echo "BUILDDATE: ${BUILDDATE}"
-#         echo "BUILDPLATFORM: ${BUILDPLATFORM}"
-
-#         {
-#           echo "BUILDMAJORVERSION=$BUILDMAJORVERSION"
-#           echo "BUILDMINORVERSION=$BUILDMINORVERSION"
-#           echo "BUILDPATCHVERSION=$BUILDPATCHVERSION"
-#         } >> "${GITHUB_ENV}"
-
-#     - name: Generate rewritten registry for simulations
-#       run: |
-#         python3 test/python/registry-rewrite.py --replacement-host=host.docker.internal
-
-#     - name: Pull Docker base images for cache purposes
-#       run: |
-#         docker pull golang:1.18.4-bullseye
-#         docker pull ubuntu:22.04
-
-#     - name: Pull Docker image for cache purposes
-#       run: |
-#         docker pull stackql/stackql:latest || echo 'could not pull image for cache purposes'
-
-#     - name: Create certificates for robot tests
-#       run: |
-#         openssl req -x509 -keyout test/server/mtls/credentials/pg_server_key.pem -out test/server/mtls/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
-#         openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
-#         openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365
-#         openssl req -x509 -keyout vol/srv/credentials/pg_server_key.pem -out  vol/srv/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
-#         openssl req -x509 -keyout vol/srv/credentials/pg_client_key.pem -out  vol/srv/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
-#         openssl req -x509 -keyout vol/srv/credentials/pg_rubbish_key.pem -out vol/srv/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365
-
-#     - name: Build image
-#       run: |
-#         docker compose -f docker-compose-credentials.yml build credentialsgen
-#         docker compose build mockserver
-
-#     - name: Build Stackql image with buildx
-#       uses: docker/build-push-action@v5
-#       with:
-#         context: .
-#         build-args: |
-#           BUILDMAJORVERSION=${{env.BUILDMAJORVERSION}}
-#           BUILDMINORVERSION=${{env.BUILDMINORVERSION}}
-#           BUILDPATCHVERSION=${{env.BUILDPATCHVERSION}}
-#         push: false
-#         target: app
-#         load: true
-#         tags: stackql/stackql:${{github.sha}},stackql/stackql:latest
-
-#     - name: Mock Server Download
-#       run: |
-#         mvn \
-#         org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy \
-#         -Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded \
-#         -DoutputDirectory=test/downloads
-
-#     - name: Debug info
-#       run: |
-#         echo "psql version info: $(psql --version)"
-#         echo ""
-#         echo "docker-compose version info: $(docker-compose -version)"
-#         echo ""
-#         echo "robot version info: $(robot --version)"
-#         echo ""
-#         echo "#### ps -ef output   ####"
-#         echo ""
-#         ps -ef
-#         echo ""
-#         echo "### ###"
-#         echo ""
-#         echo "#### docker version output   ####"
-#         echo ""
-#         docker version
-#         echo ""
-#         echo "### ###"
-#         echo ""
-#         echo "#### lsb_release output   ####"
-#         echo ""
-#         lsb_release || echo "lsb_release not present"
-#         echo ""
-#         echo "### ###"
-#         echo ""
-#         echo "#### env output   ####"
-#         echo ""
-#         env
-#         echo ""
-#         echo "### ###"
-#         echo ""
-
-#     - name: Run robot mocked functional tests
-#       if: success()
-#       timeout-minutes: 20
-#       run: |
-#         python cicd/python/build.py --robot-test --config='{ "variables":  { "EXECUTION_PLATFORM": "docker" } }'
-
-#     - name: Run POSTGRES BACKEND robot mocked functional tests
-#       if: success()
-#       timeout-minutes: 20
-#       run: |
-#         python cicd/python/build.py --robot-test --config='{ "variables":  { "EXECUTION_PLATFORM": "docker", "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": true, "SQL_BACKEND": "postgres_tcp" } }'
-
-#     - name: Output from mocked functional tests
-#       if: always()
-#       run: |
-#         cat ./test/robot/functional/output.xml
-
-#     - name: Run robot integration tests
-#       if: env.AZURE_CLIENT_SECRET != '' && startsWith(steps.git_ref_parse.outputs.SOURCE_TAG, 'build-release')
-#       env:
-#         AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-#         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-#         AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
-#         AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-#       run: |
-#         python cicd/python/build.py --robot-test-integration --config='{ "variables":  { "EXECUTION_PLATFORM": "docker" } }'
-
-#     - name: Login to Docker Hub
-#       if: ${{ ( success() && github.ref_type == 'branch' && github.ref_name == 'main' && github.repository == 'stackql/stackql' && github.event_name == 'push'  ) || ( success() && github.ref_type == 'tag' && startsWith(github.ref_name, 'build-release') ) }}
-#       uses: docker/login-action@v2
-#       with:
-#         username: ${{ secrets.DOCKERHUB_USERNAME }}
-#         password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-#     - name: Push stackql image to Docker Hub
-#       if: ${{ ( success() && github.ref_type == 'branch' && github.ref_name == 'main' && github.repository == 'stackql/stackql' && github.event_name == 'push'  ) || ( success() && github.ref_type == 'tag' && startsWith(github.ref_name, 'build-release') ) }}
-#       uses: docker/build-push-action@v5
-#       with:
-#         context: .
-#         platforms: linux/arm64,linux/amd64
-#         build-args: |
-#           BUILDMAJORVERSION=${{env.BUILDMAJORVERSION}}
-#           BUILDMINORVERSION=${{env.BUILDMINORVERSION}}
-#           BUILDPATCHVERSION=${{env.BUILDPATCHVERSION}}
-#         push: true
-#         target: app
-#         tags: stackql/stackql:${{github.sha}},stackql/stackql:latest
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    tags:
+      - build*
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - "examples/**"
+      - "licenses/**"
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - "examples/**"
+      - "licenses/**"
+
+env:
+  GOTESTCMD: "go test -timeout 1200s --tags \"json1 sqleanall\" -v ./..."
+  TESTSCRIPT: "test/python/main.py"
+  GOPRIVATE: github.com/stackql/*
+  GH_ACCESS_TOKEN: ${{ secrets.ACTIONS_PRIVATE_PACKAGE_SECRET }}
+  PLANCACHEENABLED: "true"
+
+jobs:
+
+  winbuild:
+    name: Windows Build
+    runs-on: windows-latest
+    steps:
+
+    - name: Get rid of disruptive line endings before checkout
+      run: |
+        git config --global core.autocrlf false
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v3
+
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v3
+      with:
+        go-version: ^1.19
+        check-latest: true
+        cache: true
+      id: go
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        cache: pip
+        python-version: '3.11'
+
+    - name: Cache Chocolatey packages
+      id: cache-choco
+      uses: actions/cache@v3
+      env:
+        cache-name: cache-choco-packages
+      with:
+        path: 'C:\Users\${{ env.username }}\AppData\Local\Temp\chocolatey\'
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/chocolatey/**/*.zip', '**/chocolatey/**/*.7z') }}
+        restore-keys: |
+          ${{ runner.os }}-build-${{ env.cache-name }}-
+
+    - if: ${{ steps.cache-choco.outputs.cache-hit == 'true' }}
+      name: List the state of Chocolatey packages
+      continue-on-error: true
+      run:  |
+           dir "C:\Users\${{ env.username }}\AppData\Local\Temp\chocolatey\"
+
+    - name: Set up mingw
+      uses: egor-tensin/setup-mingw@v2.2.0
+      id: gccsetup
+      timeout-minutes: 20
+      with:
+        version: '8.1.0'
+
+    - name: Choco install postgres
+      uses: crazy-max/ghaction-chocolatey@v2
+      timeout-minutes: 20
+      with:
+        args: "install --force postgresql13 openssl"
+
+    - name: Git Ref Parse
+      id: git_ref_parse
+      run: |
+        {
+          echo "SOURCE_NAME=${GITHUB_REF#refs/*/}"
+          echo "SOURCE_BRANCH=${GITHUB_REF#refs/heads/}"
+          echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}"
+        } >> "${GITHUB_STATE}"
+
+    - name: Install Python dependencies
+      run: |
+        pip3 install -r requirements.txt
+
+
+    - name: Generate rewritten registry for simulations
+      run: |
+        python3 test\python\registry-rewrite.py
+
+    - name: Get dependencies
+      run: |
+        go env -w GOPRIVATE="github.com/stackql/*"
+        git config --global url."https://$env:GHACCESSTOKEN@github.com/".insteadOf "https://github.com/"
+        git --no-pager config --list
+        go get -v -t -d ./...
+      env:
+        CGO_ENABLED: 1
+        GHACCESSTOKEN: ${{env.GH_ACCESS_TOKEN}}
+        GOPRIVATE: ${{env.GOPRIVATE}}
+
+    - name: Generate Build Flags and Build
+      env:
+        BUILDCOMMITSHA: ${{github.sha}}
+        BUILDBRANCH: ${{github.ref}}
+        BUILDPLATFORM: ${{runner.os}}
+        BUILDPATCHVERSION: ${{github.run_number}}
+        CGO_ENABLED: 1
+        GH_ACCESS_TOKEN: ${{env.GH_ACCESS_TOKEN}}
+        GOPRIVATE: ${{env.GOPRIVATE}}
+      run: |
+        git config --global url.https://$env:GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
+        $Version = convertfrom-stringdata (get-content ./version.txt -raw)
+        $BuildMajorVersion = $Version.'MajorVersion'
+        $BuildMinorVersion = $Version.'MinorVersion'
+
+        $env:BUILDMAJORVERSION = $BuildMajorVersion
+        $env:BUILDMINORVERSION = $BuildMinorVersion
+
+        echo "BUILDMAJORVERSION=$env:BUILDMAJORVERSION" >> $GITHUB_ENV
+        echo "BUILDMINORVERSION=$env:BUILDMINORVERSION" >> $GITHUB_ENV
+        echo "BUILDPATCHVERSION=$env:BUILDPATCHVERSION" >> $GITHUB_ENV
+
+        python cicd/python/build.py --verbose --build
+
+    - name: Test
+      if: success()
+      run: python cicd/python/build.py --verbose --test
+
+    - name: Mock Server Download
+      run: |
+        mvn org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy `
+        '-Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded' `
+        '-DoutputDirectory=test/downloads'
+
+    - name: Create certificates for robot tests
+      run: |
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_server_key.pem -out test/server/mtls/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365
+
+    - name: Run robot mocked functional tests
+      if: success()
+      env:
+        PSQL_EXE: C:\Program Files\PostgreSQL\13\bin\psql
+      run: |
+        python cicd/python/build.py --robot-test
+
+    - name: Output from mocked functional tests
+      if: always()
+      run: |
+        cat ./test/robot/functional/output.xml
+
+    - name: Run robot integration tests
+      if: env.AZURE_CLIENT_SECRET != '' && startsWith(steps.git_ref_parse.outputs.SOURCE_TAG, 'build-release')
+      env:
+        PSQL_EXE: C:\Program Files\PostgreSQL\13\bin\psql
+        AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
+        AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      run: |
+        python cicd/python/build.py --robot-test-integration
+
+    - name: Prepare Test DB
+      if: success()
+      run: copy test/db/db.sqlite test/db/tmp/python-tests-tmp-db.sqlite
+
+    - name: Test Script
+      if: success()
+      run: python.exe test/python/main.py
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      if: success()
+      with:
+        name: stackql_windows_amd64
+        path: build/stackql.exe
+
+  linuxbuild:
+    name: Linux Build
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v3
+
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v3
+      with:
+        go-version: ^1.19
+        check-latest: true
+        cache: true
+      id: go
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        cache: pip
+        python-version: '3.11'
+
+    - name: Git Ref Parse
+      id: git_ref_parse
+      run: |
+          {
+            echo "SOURCE_NAME=${GITHUB_REF#refs/*/}"
+            echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}"
+            echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}"
+          } >> "${GITHUB_STATE}"
+
+    - name: Set up GCC
+      uses: egor-tensin/setup-gcc@v1
+      id: gccsetup
+      with:
+        platform: x64
+        cygwin: 0
+
+    - name: Install psql
+      run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends postgresql-client
+
+    - name: Install Python dependencies
+      run: |
+        pip3 install -r requirements.txt
+
+    - name: Generate rewritten registry for simulations
+      run: |
+        python3 test/python/registry-rewrite.py
+
+    - name: Get dependencies
+      run: |
+        git config --global "url.https://${GH_ACCESS_TOKEN}@github.com/.insteadOf" https://github.com/
+        go get -v -t -d ./...
+      env:
+        GH_ACCESS_TOKEN: ${{env.GH_ACCESS_TOKEN}}
+        GOPRIVATE: ${{env.GOPRIVATE}}
+
+    - name: Generate Build Flags and Build
+      env:
+        BUILDCOMMITSHA: ${{github.sha}}
+        BUILDBRANCH: ${{github.ref}}
+        BUILDPLATFORM: ${{runner.os}}
+        BUILDPATCHVERSION: ${{github.run_number}}
+        CGO_ENABLED: 1
+        CGO_LDFLAGS: '-static'
+      run: |
+        source version.txt
+        export BUILDMAJORVERSION="$MajorVersion"
+        export BUILDMINORVERSION="$MinorVersion"
+        if [[ ! "$BUILDBRANCH" == "*develop" ]]
+          then
+          # shellcheck disable=2269
+          export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
+        fi
+        BUILDSHORTCOMMITSHA="$(echo "${BUILDCOMMITSHA}" | cut -c 1-7)"
+        export BUILDSHORTCOMMITSHA
+        BUILDDATE="$(date)"
+        export BUILDDATE
+        echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
+        echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
+        echo "BUILDPATCHVERSION: ${BUILDPATCHVERSION}"
+        echo "BUILDBRANCH: ${BUILDBRANCH}"
+        echo "BUILDCOMMITSHA: ${BUILDCOMMITSHA}"
+        echo "BUILDSHORTCOMMITSHA: ${BUILDSHORTCOMMITSHA}"
+        echo "BUILDDATE: ${BUILDDATE}"
+        echo "BUILDPLATFORM: ${BUILDPLATFORM}"
+
+        {
+          echo "BUILDMAJORVERSION=${BUILDMAJORVERSION}"
+          echo "BUILDMINORVERSION=${BUILDMINORVERSION}"
+          echo "BUILDPATCHVERSION=${BUILDPATCHVERSION}"
+        } >> "${GITHUB_ENV}"
+        python cicd/python/build.py --verbose --build
+
+    - name: Test
+      if: success()
+      run: python cicd/python/build.py --verbose --test
+
+    - name: Mock Server Download
+      run: |
+        mvn \
+        org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy \
+        -Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded \
+        -DoutputDirectory=test/downloads
+
+    - name: Create certificates for robot tests
+      run: |
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_server_key.pem -out test/server/mtls/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365
+
+    - name: Run robot mocked functional tests
+      if: success()
+      run: |
+        python cicd/python/build.py --robot-test  --config='{ "variables": { "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": "true" } }'
+
+    - name: Output from mocked functional tests
+      if: always()
+      run: |
+        cat ./test/robot/functional/output.xml
+
+    - name: Run robot mocked functional tests with aggressive concurrency
+      if: success()
+      run: |
+        python cicd/python/build.py --robot-test  --config='{ "variables": { "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": "true", "CONCURRENCY_LIMIT": -1  } }'
+
+    - name: Output from mocked functional tests with aggressive concurrency
+      if: always()
+      run: |
+        cat ./test/robot/functional/output.xml
+
+    - name: Run robot integration tests
+      if: env.AZURE_CLIENT_SECRET != '' && startsWith(steps.git_ref_parse.outputs.SOURCE_TAG, 'build-release')
+      env:
+        AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
+        AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      run: |
+        python cicd/python/build.py --robot-test-integration
+
+    - name: Prepare Test DB
+      if: success()
+      run: cp test/db/db.sqlite test/db/tmp/python-tests-tmp-db.sqlite
+
+    - name: Test Script
+      if: success()
+      run: python3 "${TESTSCRIPT}"
+      env:
+        TESTSCRIPT: ${{env.TESTSCRIPT}}
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      if: success()
+      with:
+        name: stackql_linux_amd64
+        path: build/stackql
+
+  wsltest:
+    name: WSL Test
+    runs-on: windows-latest
+    needs: linuxbuild
+    steps:
+
+    - name: Get rid of disruptive line endings before checkout
+      run: |
+        git config --global core.autocrlf false
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v3
+
+    - name: Download Artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: stackql_linux_amd64
+        path: build
+
+    - name: Setup WSL with dependencies
+      uses: Vampire/setup-wsl@v1
+      with:
+        additional-packages:
+          maven
+          openjdk-11-jre
+          openssl
+          postgresql
+          python3
+          python3-pip
+        wsl-conf: |
+          [automount]
+          options = "metadata"
+
+    - shell: wsl-bash -u root {0}
+      name: Stackql permissions
+      run:  |
+        chmod a+rwx build/stackql
+        ls -al build/stackql
+
+    - shell: wsl-bash -u root {0}
+      name: Install Python dependencies
+      run: pip3 install -r requirements.txt
+
+    - shell: wsl-bash {0}
+      name: Generate rewritten registry for simulations
+      run: python3 test/python/registry-rewrite.py
+
+    - shell: wsl-bash {0}
+      name: Mock Server Download
+      run: |
+          mvn \
+          org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy \
+          -Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded \
+          -DoutputDirectory=test/downloads
+
+    - shell: wsl-bash {0}
+      name: Create certificates for robot tests
+      run: |
+          openssl req -x509 -keyout test/server/mtls/credentials/pg_server_key.pem -out test/server/mtls/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
+          openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
+          openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365
+
+    - shell: wsl-bash {0}
+      name: Run robot mocked functional tests
+      run: |
+          . version.txt
+          export BUILDBRANCH="${{github.ref}}"
+          export BUILDPATCHVERSION="${{github.run_number}}"
+          export BUILDMAJORVERSION=$MajorVersion
+          export BUILDMINORVERSION=$MinorVersion
+          echo "BUILDBRANCH=$BUILDBRANCH"
+          echo "BUILDMAJORVERSION=$BUILDMAJORVERSION"
+          echo "BUILDMINORVERSION=$BUILDMINORVERSION"
+          echo "BUILDPATCHVERSION=$BUILDPATCHVERSION"
+          if [[ ! "$BUILDBRANCH" == "*develop" ]]
+            then
+            export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
+          fi
+          python3 cicd/python/build.py --robot-test --config='{ "variables":  { "IS_WSL": true } }'
+
+    - shell: wsl-bash {0}
+      name: Output from mocked functional tests
+      if: always()
+      run: |
+          cat ./test/robot/functional/output.xml
+
+    - shell: wsl-bash {0}
+      name: Run robot integration tests
+      # This is a hack because if cannot directly access secrets
+      if: env.AZURE_CLIENT_SECRET != ''
+      env:
+        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      run: |
+          . version.txt
+          export AZURE_CLIENT_ID='${{ secrets.AZURE_CLIENT_ID }}'
+          export AZURE_CLIENT_SECRET='${{ secrets.AZURE_CLIENT_SECRET }}'
+          export AZURE_INTEGRATION_TESTING_SUB_ID='${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}'
+          export AZURE_TENANT_ID='${{ secrets.AZURE_TENANT_ID }}'
+          export BUILDBRANCH="${{github.ref}}"
+          export BUILDPATCHVERSION="${{github.run_number}}"
+          export BUILDMAJORVERSION=$MajorVersion
+          export BUILDMINORVERSION=$MinorVersion
+          echo "BUILDBRANCH=$BUILDBRANCH"
+          echo "BUILDMAJORVERSION=$BUILDMAJORVERSION"
+          echo "BUILDMINORVERSION=$BUILDMINORVERSION"
+          echo "BUILDPATCHVERSION=$BUILDPATCHVERSION"
+          if [[ ! "$BUILDBRANCH" == "*develop" ]]
+            then
+            export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
+          fi
+          python3 cicd/python/build.py --robot-test-integration --config='{ "variables":  { "IS_WSL": true } }'
+
+  macosbuild:
+    name: MacOS Build
+    runs-on: macos-11
+    steps:
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v3
+
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v3
+      with:
+        go-version: ^1.19
+        check-latest: true
+        cache: true
+      id: go
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        cache: pip
+        python-version: '3.11'
+
+    - name: Git Ref Parse
+      id: git_ref_parse
+      run: |
+          {
+            echo "SOURCE_NAME=${GITHUB_REF#refs/*/}"
+            echo "SOURCE_BRANCH=${GITHUB_REF#refs/heads/}"
+            echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}"
+          } >> "${GITHUB_STATE}"
+
+    - name: Install Python dependencies
+      run: |
+        pip3 install -r requirements.txt
+
+    - name: Generate rewritten registry for simulations
+      run: |
+        python3 test/python/registry-rewrite.py
+
+    - name: Get dependencies
+      run: |
+        git config --global "url.https://${GH_ACCESS_TOKEN}@github.com/.insteadOf" https://github.com/
+        go get -v -t -d ./...
+      env:
+        CGO_ENABLED: 1
+        GH_ACCESS_TOKEN: ${{env.GH_ACCESS_TOKEN}}
+        GOPRIVATE: ${{env.GOPRIVATE}}
+
+    - name: Generate Build Flags and Build
+      env:
+        BUILDCOMMITSHA: ${{github.sha}}
+        BUILDBRANCH: ${{github.ref}}
+        BUILDPLATFORM: ${{runner.os}}
+        BUILDPATCHVERSION: ${{github.run_number}}
+        CGO_ENABLED: 1
+      run: |
+        source version.txt
+        export BUILDMAJORVERSION="$MajorVersion"
+        export BUILDMINORVERSION="$MinorVersion"
+        if [[ ! "$BUILDBRANCH" == "*develop" ]]
+          then
+          # shellcheck disable=2269
+          export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
+        fi
+        BUILDSHORTCOMMITSHA="$(echo "$BUILDCOMMITSHA" | cut -c 1-7)"
+        export BUILDSHORTCOMMITSHA
+        BUILDDATE="$(date)"
+        export BUILDDATE
+        echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
+        echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
+        echo "BUILDPATCHVERSION: ${BUILDPATCHVERSION}"
+        echo "BUILDBRANCH: ${BUILDBRANCH}"
+        echo "BUILDCOMMITSHA: ${BUILDCOMMITSHA}"
+        echo "BUILDSHORTCOMMITSHA: ${BUILDSHORTCOMMITSHA}"
+        echo "BUILDDATE: ${BUILDDATE}"
+        echo "BUILDPLATFORM: ${BUILDPLATFORM}"
+
+        {
+          echo "BUILDMAJORVERSION=$BUILDMAJORVERSION"
+          echo "BUILDMINORVERSION=$BUILDMINORVERSION"
+          echo "BUILDPATCHVERSION=$BUILDPATCHVERSION"
+        } >> "${GITHUB_ENV}"
+
+        python cicd/python/build.py --verbose --build
+
+    - name: Test
+      if: success()
+      run: python cicd/python/build.py --verbose --test
+
+    - name: Mock Server Download
+      run: |
+        mvn \
+        org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy \
+        -Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded \
+        -DoutputDirectory=test/downloads
+
+    - name: Create certificates for robot tests
+      run: |
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_server_key.pem -out test/server/mtls/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365
+
+    - name: Run robot mocked functional tests
+      if: success()
+      run: |
+        python cicd/python/build.py --robot-test
+
+    - name: Output from mocked functional tests
+      if: always()
+      run: |
+        cat ./test/robot/functional/output.xml
+
+    - name: Run robot integration tests
+      if: env.AZURE_CLIENT_SECRET != '' && startsWith(steps.git_ref_parse.outputs.SOURCE_TAG, 'build-release')
+      env:
+        AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
+        AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      run: |
+        python cicd/python/build.py --robot-test-integration
+
+    - name: Prepare Test DB
+      if: success()
+      run: cp test/db/db.sqlite test/db/tmp/python-tests-tmp-db.sqlite
+
+    - name: Test Script
+      if: success()
+      run: python3 "${TESTSCRIPT}"
+      env:
+        TESTSCRIPT: ${{env.TESTSCRIPT}}
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      if: success()
+      with:
+        name: stackql_darwin_amd64
+        path: build/stackql
+
+  macosarmbuild:
+    name: MacOS ARM Build
+    runs-on: macos-latest
+    steps:
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v3
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        cache: pip
+        python-version: '3.11'
+
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v3
+      with:
+        go-version: ^1.19
+        check-latest: true
+        cache: true
+      id: go
+
+    - name: Get dependencies
+      run: |
+        git config --global "url.https://${GH_ACCESS_TOKEN}@github.com/.insteadOf" https://github.com/
+        go get -v -t -d ./...
+      env:
+        CGO_ENABLED: 1
+        GH_ACCESS_TOKEN: ${{env.GH_ACCESS_TOKEN}}
+        GOPRIVATE: ${{env.GOPRIVATE}}
+
+    - name: Generate Build Flags and Build
+      env:
+        BUILDCOMMITSHA: ${{github.sha}}
+        BUILDBRANCH: ${{github.ref}}
+        BUILDPLATFORM: "darwin_arm64"
+        BUILDPATCHVERSION: ${{github.run_number}}
+        CGO_ENABLED: 1
+      run: |
+        source version.txt
+        export BUILDMAJORVERSION="$MajorVersion"
+        export BUILDMINORVERSION="$MinorVersion"
+        if [[ ! "$BUILDBRANCH" == "*develop" ]]
+          then
+          # shellcheck disable=2269
+          export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
+        fi
+        BUILDSHORTCOMMITSHA="$(echo "$BUILDCOMMITSHA" | cut -c 1-7)"
+        export BUILDSHORTCOMMITSHA
+        BUILDDATE="$(date)"
+        export BUILDDATE
+        echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
+        echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
+        echo "BUILDPATCHVERSION: ${BUILDPATCHVERSION}"
+        echo "BUILDBRANCH: ${BUILDBRANCH}"
+        echo "BUILDCOMMITSHA: ${BUILDCOMMITSHA}"
+        echo "BUILDSHORTCOMMITSHA: ${BUILDSHORTCOMMITSHA}"
+        echo "BUILDDATE: ${BUILDDATE}"
+        echo "BUILDPLATFORM: ${BUILDPLATFORM}"
+
+        {
+          echo "BUILDMAJORVERSION=$BUILDMAJORVERSION"
+          echo "BUILDMINORVERSION=$BUILDMINORVERSION"
+          echo "BUILDPATCHVERSION=$BUILDPATCHVERSION"
+        } >> "${GITHUB_ENV}"
+
+        export GOOS="darwin"
+        export GOARCH="arm64"
+        python cicd/python/build.py --verbose --build
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      if: success()
+      with:
+        name: stackql_darwin_arm64
+        path: build/stackql
+
+  dockerbuild:
+    name: Docker Build
+    runs-on: ubuntu-latest-m
+    steps:
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v3
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        cache: pip
+        python-version: '3.11'
+
+    - name: Git Ref Parse
+      id: git_ref_parse
+      run: |
+          {
+            echo "SOURCE_NAME=${GITHUB_REF#refs/*/}"
+            echo "SOURCE_BRANCH=${GITHUB_REF#refs/heads/}"
+            echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}"
+          } >> "${GITHUB_STATE}"
+
+    - name: Install psql
+      run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends \
+            postgresql-client \
+            ca-certificates \
+            openssl
+
+    - name: Install Python dependencies
+      run: |
+        pip3 install -r requirements.txt
+
+    - name: Extract Build Info and Persist
+      env:
+        BUILDCOMMITSHA: ${{github.sha}}
+        BUILDBRANCH: ${{github.ref}}
+        BUILDPLATFORM: ${{runner.os}}
+        BUILDPATCHVERSION: ${{github.run_number}}
+      run: |
+        source version.txt
+        BUILDMAJORVERSION=${MajorVersion}
+        BUILDMINORVERSION=${MinorVersion}
+        if [[ ! "$BUILDBRANCH" == "*develop" ]]; then
+          # shellcheck disable=2269
+          BUILDPATCHVERSION="${BUILDPATCHVERSION}"
+        fi
+        BUILDSHORTCOMMITSHA="$(echo "${BUILDCOMMITSHA}" | cut -c 1-7)"
+        BUILDDATE="$(date)"
+        export BUILDDATE
+        echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
+        echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
+        echo "BUILDPATCHVERSION: ${BUILDPATCHVERSION}"
+        echo "BUILDBRANCH: ${BUILDBRANCH}"
+        echo "BUILDCOMMITSHA: ${BUILDCOMMITSHA}"
+        echo "BUILDSHORTCOMMITSHA: ${BUILDSHORTCOMMITSHA}"
+        echo "BUILDDATE: ${BUILDDATE}"
+        echo "BUILDPLATFORM: ${BUILDPLATFORM}"
+
+        {
+          echo "BUILDMAJORVERSION=$BUILDMAJORVERSION"
+          echo "BUILDMINORVERSION=$BUILDMINORVERSION"
+          echo "BUILDPATCHVERSION=$BUILDPATCHVERSION"
+        } >> "${GITHUB_ENV}"
+
+    - name: Generate rewritten registry for simulations
+      run: |
+        python3 test/python/registry-rewrite.py --replacement-host=host.docker.internal
+
+    - name: Pull Docker base images for cache purposes
+      run: |
+        docker pull golang:1.18.4-bullseye
+        docker pull ubuntu:22.04
+
+    - name: Pull Docker image for cache purposes
+      run: |
+        docker pull stackql/stackql:latest || echo 'could not pull image for cache purposes'
+
+    - name: Create certificates for robot tests
+      run: |
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_server_key.pem -out test/server/mtls/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout vol/srv/credentials/pg_server_key.pem -out  vol/srv/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout vol/srv/credentials/pg_client_key.pem -out  vol/srv/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout vol/srv/credentials/pg_rubbish_key.pem -out vol/srv/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365
+
+    - name: Build image
+      run: |
+        docker compose -f docker-compose-credentials.yml build credentialsgen
+        docker compose build mockserver
+
+    - name: Build Stackql image with buildx
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        build-args: |
+          BUILDMAJORVERSION=${{env.BUILDMAJORVERSION}}
+          BUILDMINORVERSION=${{env.BUILDMINORVERSION}}
+          BUILDPATCHVERSION=${{env.BUILDPATCHVERSION}}
+        push: false
+        target: app
+        load: true
+        tags: stackql/stackql:${{github.sha}},stackql/stackql:latest
+
+    - name: Mock Server Download
+      run: |
+        mvn \
+        org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy \
+        -Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded \
+        -DoutputDirectory=test/downloads
+
+    - name: Debug info
+      run: |
+        echo "psql version info: $(psql --version)"
+        echo ""
+        echo "docker-compose version info: $(docker-compose -version)"
+        echo ""
+        echo "robot version info: $(robot --version)"
+        echo ""
+        echo "#### ps -ef output   ####"
+        echo ""
+        ps -ef
+        echo ""
+        echo "### ###"
+        echo ""
+        echo "#### docker version output   ####"
+        echo ""
+        docker version
+        echo ""
+        echo "### ###"
+        echo ""
+        echo "#### lsb_release output   ####"
+        echo ""
+        lsb_release || echo "lsb_release not present"
+        echo ""
+        echo "### ###"
+        echo ""
+        echo "#### env output   ####"
+        echo ""
+        env
+        echo ""
+        echo "### ###"
+        echo ""
+
+    - name: Run robot mocked functional tests
+      if: success()
+      timeout-minutes: 20
+      run: |
+        python cicd/python/build.py --robot-test --config='{ "variables":  { "EXECUTION_PLATFORM": "docker" } }'
+
+    - name: Run POSTGRES BACKEND robot mocked functional tests
+      if: success()
+      timeout-minutes: 20
+      run: |
+        python cicd/python/build.py --robot-test --config='{ "variables":  { "EXECUTION_PLATFORM": "docker", "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": true, "SQL_BACKEND": "postgres_tcp" } }'
+
+    - name: Output from mocked functional tests
+      if: always()
+      run: |
+        cat ./test/robot/functional/output.xml
+
+    - name: Run robot integration tests
+      if: env.AZURE_CLIENT_SECRET != '' && startsWith(steps.git_ref_parse.outputs.SOURCE_TAG, 'build-release')
+      env:
+        AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
+        AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      run: |
+        python cicd/python/build.py --robot-test-integration --config='{ "variables":  { "EXECUTION_PLATFORM": "docker" } }'
+
+    - name: Login to Docker Hub
+      if: ${{ ( success() && github.ref_type == 'branch' && github.ref_name == 'main' && github.repository == 'stackql/stackql' && github.event_name == 'push'  ) || ( success() && github.ref_type == 'tag' && startsWith(github.ref_name, 'build-release') ) }}
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Push stackql image to Docker Hub
+      if: ${{ ( success() && github.ref_type == 'branch' && github.ref_name == 'main' && github.repository == 'stackql/stackql' && github.event_name == 'push'  ) || ( success() && github.ref_type == 'tag' && startsWith(github.ref_name, 'build-release') ) }}
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: linux/arm64,linux/amd64
+        build-args: |
+          BUILDMAJORVERSION=${{env.BUILDMAJORVERSION}}
+          BUILDMINORVERSION=${{env.BUILDMINORVERSION}}
+          BUILDPATCHVERSION=${{env.BUILDPATCHVERSION}}
+        push: true
+        target: app
+        tags: stackql/stackql:${{github.sha}},stackql/stackql:latest

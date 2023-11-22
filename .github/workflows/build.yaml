@@ -31,7 +31,7 @@ jobs:
           CGO_LDFLAGS: '-static'
         run: |
           source version.txt
-          export BUILDMAJORVERSION="$MajorVersion"
+          export BUILDMAJORVERSION="0"
           export BUILDMINORVERSION="$MinorVersion"
           if [[ ! "$BUILDBRANCH" == "*dev" ]]
             then

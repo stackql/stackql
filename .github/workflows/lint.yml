@@ -1,27 +1,27 @@
-# name: Lint
+name: Lint
 
-# on:
-#   push:
-#     branches:
-#       - main
-#     tags:
-#       - lint*
-#       - build*
-#   pull_request:
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - lint*
+      - build*
+  pull_request:
 
-# jobs:
-#   lint:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v3
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-#       - name: Check workflow files
-#         uses: docker://rhysd/actionlint:1.6.23
-#         with:
-#           args: -color
+      - name: Check workflow files
+        uses: docker://rhysd/actionlint:1.6.23
+        with:
+          args: -color
 
-#       - name: golangci-lint
-#         uses: golangci/golangci-lint-action@v3
-#         with:
-#           version: 'v1.52.0'
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: 'v1.52.0'
