@@ -430,8 +430,25 @@ func emptyProtectResultSet(
 	return rv
 }
 
-func DescribeRowSort(_ map[string]map[string]interface{}) []string {
-	return describeRowSortArr
+func DescribeRowSort(payload map[string]map[string]interface{}) []string {
+	var rv []string
+	alreadyPresent := make(map[string]struct{})
+	for _, prirityKey := range describeRowSortArr {
+		if _, isPresent := payload[prirityKey]; isPresent {
+			rv = append(rv, prirityKey)
+			alreadyPresent[prirityKey] = struct{}{}
+		}
+	}
+	var unsortedGeneralKeys []string
+	for k := range payload {
+		if _, isPresent := alreadyPresent[k]; !isPresent {
+			unsortedGeneralKeys = append(unsortedGeneralKeys, k)
+			alreadyPresent[k] = struct{}{}
+		}
+	}
+	sort.Strings(unsortedGeneralKeys)
+	rv = append(rv, unsortedGeneralKeys...)
+	return rv
 }
 
 func GetHeaderOnlyResultStream(
