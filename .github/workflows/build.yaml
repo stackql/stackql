@@ -24,6 +24,7 @@ jobs:
         run: sudo apt-get install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
       - name: Run Goreleaser
         uses: goreleaser/goreleaser-action@v5
+        if: success() && startsWith(github.ref, 'refs/tags/')
         with:
           version: latest
           args: release --clean --config .github/goreleaser/.goreleaser-for-linux.yaml
