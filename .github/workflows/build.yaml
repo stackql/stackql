@@ -28,6 +28,7 @@ jobs:
           BUILDBRANCH: ${{github.ref}}
           BUILDPLATFORM: ${{runner.os}}
           BUILDPATCHVERSION: ${{github.run_number}}
+          BUILDPLATFORM: ${{runner.os}}
           CGO_LDFLAGS: '-static'
         run: |
           source version.txt
@@ -38,23 +39,12 @@ jobs:
             # shellcheck disable=2269
             export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
           fi
-          BUILDSHORTCOMMITSHA="$(echo "${BUILDCOMMITSHA}" | cut -c 1-7)"
-          export BUILDSHORTCOMMITSHA
-          BUILDDATE="$(date)"
-          export BUILDDATE
-          echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
-          echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
-          echo "BUILDPATCHVERSION: ${BUILDPATCHVERSION}"
-          echo "BUILDBRANCH: ${BUILDBRANCH}"
-          echo "BUILDCOMMITSHA: ${BUILDCOMMITSHA}"
-          echo "BUILDSHORTCOMMITSHA: ${BUILDSHORTCOMMITSHA}"
-          echo "BUILDDATE: ${BUILDDATE}"
-          echo "BUILDPLATFORM: ${BUILDPLATFORM}"
-          {
-            echo "BUILDMAJORVERSION=${BUILDMAJORVERSION}"
-            echo "BUILDMINORVERSION=${BUILDMINORVERSION}"
-            echo "BUILDPATCHVERSION=${BUILDPATCHVERSION}"
-          } >> "${GITHUB_ENV}"
+          export BUILDCOMMITSHA="${BUILDCOMMITSHA}"
+          export BUILDSHORTCOMMITSHA="$(echo "${BUILDCOMMITSHA}" | cut -c 1-7)"
+          export BUILDDATE="$(date)"
+          export BUILDPLATFORM="${BUILDPLATFORM}"
+          export PLANCACHEENABLED="true"
+
       - name: Run Goreleaser
         uses: goreleaser/goreleaser-action@v5
         with:
