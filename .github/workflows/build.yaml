@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
@@ -36,15 +38,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
           go-version: ^1.19
       - name: Run Goreleaser
         uses: goreleaser/goreleaser-action@v5
-        if: |
-          (github.event_name == 'push' && github.event.ref == 'refs/heads/dev') ||
-          (github.event_name == 'push' && github.event.ref == 'refs/heads/main')
         with:
           version: latest
           args: release --snapshot --clean --config .github/goreleaser/.goreleaser-for-darwin.yaml
@@ -56,6 +57,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
