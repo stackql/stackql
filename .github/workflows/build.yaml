@@ -1,11 +1,11 @@
 name: build
 
-on: push
-  # push:
-  #   branches:
-  #     - 'dev'
-  #   tags:
-  #     - v*
+on:
+  push:
+    branches:
+      - 'dev'
+    tags:
+      - v*
 
 # env:
 #   GITHUB_TOKEN: ${{ secrets.ACTIONS_PRIVATE_PACKAGE_SECRET }}
@@ -55,7 +55,6 @@ jobs:
             echo "BUILDMINORVERSION=${BUILDMINORVERSION}"
             echo "BUILDPATCHVERSION=${BUILDPATCHVERSION}"
           } >> "${GITHUB_ENV}"
-          cat "${GITHUB_ENV}"
       - name: Run Goreleaser
         uses: goreleaser/goreleaser-action@v5
         with:
