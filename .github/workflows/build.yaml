@@ -26,7 +26,6 @@ jobs:
         env:
           BUILDCOMMITSHA: ${{github.sha}}
           BUILDBRANCH: ${{github.ref}}
-          BUILDPLATFORM: ${{runner.os}}
           BUILDPATCHVERSION: ${{github.run_number}}
           BUILDPLATFORM: ${{runner.os}}
           CGO_LDFLAGS: '-static'
