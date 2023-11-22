@@ -23,7 +23,7 @@ builds:
       - arm64
     env:
       - CGO_ENABLED=1
-      - BUILDMINORVERSION={{ .Env.BUILDMINORVERSION }}
+      - BUILDPLATFORM = {{ .Env.BUILDPLATFORM }}
       - >-
         {{- if eq .Arch "amd64"}}CC=x86_64-linux-gnu-gcc{{- end }}
         {{- if eq .Arch "arm64"}}CC=aarch64-linux-gnu-gcc{{- end }}
@@ -34,6 +34,7 @@ builds:
       - -trimpath
     ldflags: >-
       -s -w
+      -X github.com/stackql/stackql/internal/stackql/cmd.BuildPlatform={{ .Env.BUILDPLATFORM }}
       -X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion={{ .Major }}
       -X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion={{ .Env.BUILDMINORVERSION }}}
       -X github.com/stackql/stackql/internal/stackql/cmd.BuildPatchVersion={{ .Env.BUILDPATCHVERSION }}
@@ -41,7 +42,6 @@ builds:
       -X github.com/stackql/stackql/internal/stackql/cmd.BuildShortCommitSHA={{ .Env.BUILDSHORTCOMMITSHA }}
       -X github.com/stackql/stackql/internal/stackql/cmd.BuildDate={{ .Env.BUILDDATE }}
       -X stackql/internal/stackql/planbuilder.PlanCacheEnabled={{ .Env.PLANCACHEENABLED }}
-      -X github.com/stackql/stackql/internal/stackql/cmd.BuildPlatform={{ .Env.BUILDPLATFORM }}
 
 archives:
   - format: tar.gz
