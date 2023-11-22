@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'dev'
+      - 'main'
     tags:
       - v*
 
@@ -24,10 +25,15 @@ jobs:
         run: sudo apt-get install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
       - name: Run Goreleaser
         uses: goreleaser/goreleaser-action@v5
-        # if: success() && startsWith(github.ref, 'refs/tags/')
+        if: |
+          (github.event_name == 'push' && github.event.ref == 'refs/heads/dev') ||
+          (github.event_name == 'push' && github.event.ref == 'refs/heads/main')
         with:
           version: latest
-          args: release --clean --config .github/goreleaser/.goreleaser-for-linux.yaml
+          args: |
+            release --clean
+            {{ if eq(github.event.ref, 'refs/heads/dev') }} --snapshot{{ end }}
+            --config .github/goreleaser/.goreleaser-for-linux.yaml
         env:
           GITHUB_TOKEN: ${{env.GH_ACCESS_TOKEN}}
 
@@ -42,10 +48,15 @@ jobs:
           go-version: ^1.19
       - name: Run Goreleaser
         uses: goreleaser/goreleaser-action@v5
-        # if: success() && startsWith(github.ref, 'refs/tags/')
+        if: |
+          (github.event_name == 'push' && github.event.ref == 'refs/heads/dev') ||
+          (github.event_name == 'push' && github.event.ref == 'refs/heads/main')
         with:
           version: latest
-          args: release --clean --config .github/goreleaser/.goreleaser-for-darwin.yaml
+          args: |
+          release --clean
+          --config .github/goreleaser/.goreleaser-for-darwin.yaml
+          {{ if eq(github.event.ref, 'refs/heads/dev') }} --snapshot{{ end }}
         env:
           GITHUB_TOKEN: ${{env.GH_ACCESS_TOKEN}}
 
