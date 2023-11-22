@@ -54,9 +54,9 @@ jobs:
         with:
           version: latest
           args: |
-          release --clean
-          --config .github/goreleaser/.goreleaser-for-darwin.yaml
-          {{ if eq(github.event.ref, 'refs/heads/dev') }} --snapshot{{ end }}
+            release --clean
+            --config .github/goreleaser/.goreleaser-for-darwin.yaml
+            {{ if eq(github.event.ref, 'refs/heads/dev') }} --snapshot{{ end }}
         env:
           GITHUB_TOKEN: ${{env.GH_ACCESS_TOKEN}}
 
