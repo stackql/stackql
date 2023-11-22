@@ -43,7 +43,6 @@ jobs:
           export BUILDDATE="$(date)"
           export BUILDPLATFORM="${BUILDPLATFORM}"
           export PLANCACHEENABLED="true"
-          printenv
 
       - name: Run Goreleaser
         uses: goreleaser/goreleaser-action@v5
