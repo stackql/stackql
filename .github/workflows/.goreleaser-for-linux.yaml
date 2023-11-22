@@ -6,7 +6,6 @@ release:
     owner: stackql
     name: stackql
 
-# dist: ../../build/dist
 before:
   hooks:
     - go mod tidy
@@ -34,14 +33,14 @@ builds:
       - -trimpath
     ldflags: >-
       -s -w
-      -X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion={{.Major}}
-      -X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion={{.Minor}}}
-      -X github.com/stackql/stackql/internal/stackql/cmd.BuildPatchVersion={{.Patch}}
-      -X github.com/stackql/stackql/internal/stackql/cmd.BuildCommitSHA={{.FullCommit}}
-      -X github.com/stackql/stackql/internal/stackql/cmd.BuildShortCommitSHA={{.ShortCommit}}
-      -X github.com/stackql/stackql/internal/stackql/cmd.BuildDate={{.Date}}
-    # -X stackql/internal/stackql/planbuilder.PlanCacheEnabled={{.Env.PLANCACHEENABLED}}
-    # -X github.com/stackql/stackql/internal/stackql/cmd.BuildPlatform={{.Env.BUILDPLATFORM}}
+      -X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion={{.Env.BUILDMAJORVERSION}}
+      -X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion={{.Env.BUILDMINORVERSION}}}
+      -X github.com/stackql/stackql/internal/stackql/cmd.BuildPatchVersion={{.Env.BUILDPATCHVERSION}}
+      -X github.com/stackql/stackql/internal/stackql/cmd.BuildCommitSHA={{.Env.BUILDCOMMITSHA}}
+      -X github.com/stackql/stackql/internal/stackql/cmd.BuildShortCommitSHA={{.Env.BUILDSHORTCOMMITSHA}}
+      -X github.com/stackql/stackql/internal/stackql/cmd.BuildDate={{.Env.BUILDDATE}}
+      -X stackql/internal/stackql/planbuilder.PlanCacheEnabled={{.Env.PLANCACHEENABLED}}
+      -X github.com/stackql/stackql/internal/stackql/cmd.BuildPlatform={{.Env.BUILDPLATFORM}}
 
 archives:
   - format: tar.gz
@@ -55,3 +54,51 @@ snapshot:
 
 checksum:
   name_template: "stackql_checksums.txt"
+
+nfpms:
+  - id: stackql-nfpms
+    file_name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    homepage: https://stackql.io/
+    maintainer: "StackQL Team <stackql-team@users.noreply.github.com>" # optional
+    description: StackQL core project that enables users to interact with cloud resources using SQL.
+    license: MIT
+    section: golang
+    formats:
+      - deb
+      - rpm
+      - apk
+      - archlinux
+    umask: 0o002
+    overrides:
+      deb:
+        contents:
+          - src: LICENSE
+            dst: /usr/share/doc/stackql/LICENSE
+          - src: README.md
+            dst: /usr/share/doc/stackql/README.md
+        recommends:
+          - golang-go
+      rpm:
+        contents:
+          - src: LICENSE
+            dst: /usr/share/doc/stackql/LICENSE
+            type: license
+          - src: README.md
+            dst: /usr/share/doc/stackql/README.md
+            type: readme
+        recommends:
+          - /usr/bin/go
+      apk:
+        contents:
+          - src: LICENSE
+            dst: /usr/share/doc/stackql/LICENSE
+          - src: README.md
+            dst: /usr/share/doc/stackql/README.md
+      archlinux:
+        contents:
+          - src: LICENSE
+            dst: /usr/share/doc/stackql/LICENSE
+          - src: README.md
+            dst: /usr/share/doc/stackql/README.md
+    rpm:
+      group: Development/Tools

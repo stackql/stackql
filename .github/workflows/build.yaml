@@ -7,6 +7,9 @@ on:
     tags:
       - v*
 
+# env:
+#   GITHUB_TOKEN: ${{ secrets.ACTIONS_PRIVATE_PACKAGE_SECRET }}
+
 jobs:
   build-linux-binary:
     runs-on: ubuntu-latest
@@ -19,14 +22,45 @@ jobs:
           go-version: ^1.19
       - name: Install cross-compiler for linux/arm64
         run: sudo apt-get install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+      - name: Generate Build Flags and Build
+        env:
+          BUILDCOMMITSHA: ${{github.sha}}
+          BUILDBRANCH: ${{github.ref}}
+          BUILDPLATFORM: ${{runner.os}}
+          BUILDPATCHVERSION: ${{github.run_number}}
+          CGO_LDFLAGS: '-static'
+        run: |
+          source version.txt
+          export BUILDMAJORVERSION="$MajorVersion"
+          export BUILDMINORVERSION="$MinorVersion"
+          if [[ ! "$BUILDBRANCH" == "*dev" ]]
+            then
+            # shellcheck disable=2269
+            export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
+          fi
+          BUILDSHORTCOMMITSHA="$(echo "${BUILDCOMMITSHA}" | cut -c 1-7)"
+          export BUILDSHORTCOMMITSHA
+          BUILDDATE="$(date)"
+          export BUILDDATE
+          echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
+          echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
+          echo "BUILDPATCHVERSION: ${BUILDPATCHVERSION}"
+          echo "BUILDBRANCH: ${BUILDBRANCH}"
+          echo "BUILDCOMMITSHA: ${BUILDCOMMITSHA}"
+          echo "BUILDSHORTCOMMITSHA: ${BUILDSHORTCOMMITSHA}"
+          echo "BUILDDATE: ${BUILDDATE}"
+          echo "BUILDPLATFORM: ${BUILDPLATFORM}"
+
+          {
+            echo "BUILDMAJORVERSION=${BUILDMAJORVERSION}"
+            echo "BUILDMINORVERSION=${BUILDMINORVERSION}"
+            echo "BUILDPATCHVERSION=${BUILDPATCHVERSION}"
+          } >> "${GITHUB_ENV}"
       - name: Run Goreleaser
         uses: goreleaser/goreleaser-action@v5
         with:
           version: latest
-          args: release --clean --config .github/workflows/.goreleaser-for-linux.yaml
-        env:
-          GITHUB_TOKEN: ${{ secrets.FORK_STACKQL_TOKEN }}
-
+          args: release --snapshot --clean --config .github/workflows/.goreleaser-for-linux.yaml
 
   build-macos-binary:
     runs-on: macos-latest
@@ -40,7 +74,8 @@ jobs:
       - name: Run Goreleaser
         uses: goreleaser/goreleaser-action@v5
         with:
-          args: release --snapshot --config .github/workflows/.goreleaser-for-darwin.yaml
+          version: latest
+          args: release --snapshot --clean --config .github/workflows/.goreleaser-for-darwin.yaml
 
   build-windows-binary:
     runs-on: windows-latest
@@ -54,4 +89,5 @@ jobs:
       - name: Run Goreleaser
         uses: goreleaser/goreleaser-action@v5
         with:
-          args: release --snapshot --config .github/workflows/.goreleaser-for-windows.yaml
+          version: latest
+          args: release --snapshot --clean --config .github/workflows/.goreleaser-for-windows.yaml

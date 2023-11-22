@@ -6,7 +6,6 @@ release:
     owner: stackql
     name: stackql
 
-# dist: ../../build/dist
 before:
   hooks:
     - go mod tidy
@@ -44,3 +43,10 @@ snapshot:
 
 checksum:
   name_template: "stackql_checksums.txt"
+
+# chocolateys:
+#   -
+#     ids:
+#       - stackql-chocolateys
+#     authors: StackQl
+#     project_url:

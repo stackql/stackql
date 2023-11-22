@@ -6,7 +6,6 @@ release:
     owner: stackql
     name: stackql
 
-# dist: ../../build/dist
 before:
   hooks:
     - go mod tidy
