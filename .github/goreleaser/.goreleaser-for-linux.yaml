@@ -23,7 +23,6 @@ builds:
       - arm64
     env:
       - CGO_ENABLED=1
-      - BUILDPLATFORM = {{ .Env.BUILDPLATFORM }}
       - >-
         {{- if eq .Arch "amd64"}}CC=x86_64-linux-gnu-gcc{{- end }}
         {{- if eq .Arch "arm64"}}CC=aarch64-linux-gnu-gcc{{- end }}
@@ -34,14 +33,14 @@ builds:
       - -trimpath
     ldflags: >-
       -s -w
-      -X github.com/stackql/stackql/internal/stackql/cmd.BuildPlatform={{ .Env.BUILDPLATFORM }}
-      -X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion={{ .Major }}
+      -X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion={{ .Env.BUILDMAJORVERSION }}
       -X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion={{ .Env.BUILDMINORVERSION }}}
       -X github.com/stackql/stackql/internal/stackql/cmd.BuildPatchVersion={{ .Env.BUILDPATCHVERSION }}
       -X github.com/stackql/stackql/internal/stackql/cmd.BuildCommitSHA={{ .Env.BUILDCOMMITSHA }}
       -X github.com/stackql/stackql/internal/stackql/cmd.BuildShortCommitSHA={{ .Env.BUILDSHORTCOMMITSHA }}
       -X github.com/stackql/stackql/internal/stackql/cmd.BuildDate={{ .Env.BUILDDATE }}
       -X stackql/internal/stackql/planbuilder.PlanCacheEnabled={{ .Env.PLANCACHEENABLED }}
+      -X github.com/stackql/stackql/internal/stackql/cmd.BuildPlatform={{ .Env.BUILDPLATFORM }}
 
 archives:
   - format: tar.gz
@@ -69,37 +68,3 @@ nfpms:
       - rpm
       - apk
       - archlinux
-    umask: 0o002
-    overrides:
-      deb:
-        contents:
-          - src: LICENSE
-            dst: /usr/share/doc/stackql/LICENSE
-          - src: README.md
-            dst: /usr/share/doc/stackql/README.md
-        recommends:
-          - golang-go
-      rpm:
-        contents:
-          - src: LICENSE
-            dst: /usr/share/doc/stackql/LICENSE
-            type: license
-          - src: README.md
-            dst: /usr/share/doc/stackql/README.md
-            type: readme
-        recommends:
-          - /usr/bin/go
-      apk:
-        contents:
-          - src: LICENSE
-            dst: /usr/share/doc/stackql/LICENSE
-          - src: README.md
-            dst: /usr/share/doc/stackql/README.md
-      archlinux:
-        contents:
-          - src: LICENSE
-            dst: /usr/share/doc/stackql/LICENSE
-          - src: README.md
-            dst: /usr/share/doc/stackql/README.md
-    rpm:
-      group: Development/Tools

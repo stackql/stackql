@@ -48,7 +48,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v5
         with:
           version: latest
-          args: release --snapshot --clean --config .github/goreleaser/.goreleaser-for-linux.yaml
+          args: BUILDMAJORVERSION=1 release --snapshot --clean --config .github/goreleaser/.goreleaser-for-linux.yaml
 
   build-macos-binary:
     runs-on: macos-latest
