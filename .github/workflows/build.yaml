@@ -50,12 +50,12 @@ jobs:
           echo "BUILDSHORTCOMMITSHA: ${BUILDSHORTCOMMITSHA}"
           echo "BUILDDATE: ${BUILDDATE}"
           echo "BUILDPLATFORM: ${BUILDPLATFORM}"
-
           {
             echo "BUILDMAJORVERSION=${BUILDMAJORVERSION}"
             echo "BUILDMINORVERSION=${BUILDMINORVERSION}"
             echo "BUILDPATCHVERSION=${BUILDPATCHVERSION}"
           } >> "${GITHUB_ENV}"
+          cat "${GITHUB_ENV}"
       - name: Run Goreleaser
         uses: goreleaser/goreleaser-action@v5
         with:
