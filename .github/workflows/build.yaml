@@ -32,7 +32,7 @@ jobs:
         run: |
           source version.txt
           export BUILDMAJORVERSION="0"
-          export BUILDMINORVERSION="$MinorVersion"
+          export BUILDMINORVERSION="5"
           if [[ ! "$BUILDBRANCH" == "*dev" ]]
             then
             # shellcheck disable=2269
