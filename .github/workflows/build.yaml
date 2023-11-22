@@ -7,8 +7,8 @@ on:
     tags:
       - v*
 
-# env:
-#   GITHUB_TOKEN: ${{ secrets.ACTIONS_PRIVATE_PACKAGE_SECRET }}
+env:
+  GH_ACCESS_TOKEN: ${{ secrets.FORK_STACKQL_TOKEN }}
 
 jobs:
   build-linux-binary:
@@ -22,33 +22,13 @@ jobs:
           go-version: ^1.19
       - name: Install cross-compiler for linux/arm64
         run: sudo apt-get install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-      - name: Generate Build Flags and Build
-        env:
-          BUILDCOMMITSHA: ${{github.sha}}
-          BUILDBRANCH: ${{github.ref}}
-          BUILDPATCHVERSION: ${{github.run_number}}
-          BUILDPLATFORM: ${{runner.os}}
-          CGO_LDFLAGS: '-static'
-        run: |
-          source version.txt
-          export BUILDMAJORVERSION="0"
-          export BUILDMINORVERSION="5"
-          if [[ ! "$BUILDBRANCH" == "*dev" ]]
-            then
-            # shellcheck disable=2269
-            export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
-          fi
-          export BUILDCOMMITSHA="${BUILDCOMMITSHA}"
-          export BUILDSHORTCOMMITSHA="$(echo "${BUILDCOMMITSHA}" | cut -c 1-7)"
-          export BUILDDATE="$(date)"
-          export BUILDPLATFORM="${BUILDPLATFORM}"
-          export PLANCACHEENABLED="true"
-
       - name: Run Goreleaser
         uses: goreleaser/goreleaser-action@v5
         with:
           version: latest
-          args: BUILDMAJORVERSION=1 release --snapshot --clean --config .github/goreleaser/.goreleaser-for-linux.yaml
+          args: release --clean --config .github/goreleaser/.goreleaser-for-linux.yaml
+        env:
+          GITHUB_TOKEN: ${{env.GH_ACCESS_TOKEN}}
 
   build-macos-binary:
     runs-on: macos-latest
@@ -63,7 +43,9 @@ jobs:
         uses: goreleaser/goreleaser-action@v5
         with:
           version: latest
-          args: release --snapshot --clean --config .github/goreleaser/.goreleaser-for-darwin.yaml
+          args: release --clean --config .github/goreleaser/.goreleaser-for-darwin.yaml
+        env:
+          GITHUB_TOKEN: ${{env.GH_ACCESS_TOKEN}}
 
   build-windows-binary:
     runs-on: windows-latest
@@ -78,4 +60,6 @@ jobs:
         uses: goreleaser/goreleaser-action@v5
         with:
           version: latest
-          args: release --snapshot --clean --config .github/goreleaser/.goreleaser-for-windows.yaml
+          args: release --clean --config .github/goreleaser/.goreleaser-for-windows.yaml
+        env:
+          GITHUB_TOKEN: ${{env.GH_ACCESS_TOKEN}}
