@@ -33,14 +33,14 @@ builds:
       - -trimpath
     ldflags: >-
       -s -w
-      -X stackql/internal/stackql/planbuilder.PlanCacheEnabled={{ .Env.PLANCACHEENABLED }}
+      -X github.com/stackql/stackql/internal/stackql/cmd.BuildPlatform={{ .Env.BUILDPLATFORM }}
       -X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion={{ .Major }}
       -X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion={{ .Env.BUILDMINORVERSION }}}
       -X github.com/stackql/stackql/internal/stackql/cmd.BuildPatchVersion={{ .Env.BUILDPATCHVERSION }}
       -X github.com/stackql/stackql/internal/stackql/cmd.BuildCommitSHA={{ .Env.BUILDCOMMITSHA }}
       -X github.com/stackql/stackql/internal/stackql/cmd.BuildShortCommitSHA={{ .Env.BUILDSHORTCOMMITSHA }}
       -X github.com/stackql/stackql/internal/stackql/cmd.BuildDate={{ .Env.BUILDDATE }}
-      -X github.com/stackql/stackql/internal/stackql/cmd.BuildPlatform={{ .Env.BUILDPLATFORM }}
+      -X stackql/internal/stackql/planbuilder.PlanCacheEnabled={{ .Env.PLANCACHEENABLED }}
 
 archives:
   - format: tar.gz
