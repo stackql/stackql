@@ -1,11 +1,11 @@
 name: build
 
-on:
-  push:
-    branches:
-      - 'dev'
-    tags:
-      - v*
+on: push
+  # push:
+  #   branches:
+  #     - 'dev'
+  #   tags:
+  #     - v*
 
 # env:
 #   GITHUB_TOKEN: ${{ secrets.ACTIONS_PRIVATE_PACKAGE_SECRET }}
