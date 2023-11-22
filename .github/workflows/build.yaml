@@ -32,7 +32,7 @@ jobs:
           version: latest
           args: |
             release
-            {{ if eq(github.event.ref, 'refs/heads/dev') }} --snapshot{{ end }}
+            {{ if eq(github.event.ref, 'refs/heads/dev') }}--snapshot{{ end }}
             --clean
             --config .github/goreleaser/.goreleaser-for-linux.yaml
         env:
@@ -55,7 +55,7 @@ jobs:
         with:
           version: latest
           args: |
-            release {{ if eq(github.event.ref, 'refs/heads/dev') }} --snapshot{{ end }} --clean --config .github/goreleaser/.goreleaser-for-darwin.yaml
+            release {{ if eq(github.event.ref, 'refs/heads/dev') }}--snapshot{{ end }} --clean --config .github/goreleaser/.goreleaser-for-darwin.yaml
         env:
           GITHUB_TOKEN: ${{env.GH_ACCESS_TOKEN}}
 
@@ -73,6 +73,6 @@ jobs:
         # if: success() && startsWith(github.ref, 'refs/tags/')
         with:
           version: latest
-          args: release {{ if eq(github.event.ref, 'refs/heads/dev') }} --snapshot{{ end }} --clean --config .github/goreleaser/.goreleaser-for-windows.yaml
+          args: release --snapshot --clean --config .github/goreleaser/.goreleaser-for-windows.yaml
         env:
           GITHUB_TOKEN: ${{env.GH_ACCESS_TOKEN}}
