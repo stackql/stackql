@@ -5,8 +5,8 @@ on:
     branches:
       - 'dev'
       - 'main'
-    # tags:
-    #   - v*
+    tags:
+      - 'v*'
 
 env:
   GH_ACCESS_TOKEN: ${{ secrets.FORK_STACKQL_TOKEN }}
