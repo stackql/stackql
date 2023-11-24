@@ -3,7 +3,7 @@ project_name: stackql
 
 # release:
 #   github:
-#     owner: Iqbalabdi
+#     owner: stackql
 #     name: stackql
 
 before:
@@ -68,16 +68,3 @@ nfpms:
       - rpm
       - apk
       - archlinux
-
-dockers:
-- image_templates: ["ghcr.io/stackql/example:{{ .Version }}"]
-  dockerfile: Dockerfile
-  build_flag_templates:
-  - --label=org.opencontainers.image.title={{ .ProjectName }}
-  - --label=org.opencontainers.image.description={{ .ProjectName }}
-  - --label=org.opencontainers.image.url=https://github.com/stackql/example
-  - --label=org.opencontainers.image.source=https://github.com/stackql/example
-  - --label=org.opencontainers.image.version={{ .Version }}
-  - --label=org.opencontainers.image.created={{ .Date }}
-  - --label=org.opencontainers.image.revision={{ .FullCommit }}
-  - --label=org.opencontainers.image.licenses=MIT

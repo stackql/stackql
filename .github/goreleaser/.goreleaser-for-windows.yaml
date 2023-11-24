@@ -3,7 +3,7 @@ project_name: stackql
 
 # release:
 #   github:
-#     owner: Iqbalabdi
+#     owner: stackql
 #     name: stackql
 
 before:
@@ -43,3 +43,12 @@ snapshot:
 
 checksum:
   name_template: "stackql_checksums.txt"
+
+chocolateys:
+  -
+    name: stackql
+    ids:
+      - stackql-chocolatey
+    project_url: https://stackql.io/
+    summary: StackQL core project that enables users to interact with cloud resources using SQL.
+    skip_publish: true

@@ -25,7 +25,7 @@ jobs:
           go-version: ^1.19
       - name: Install cross-compiler for linux/arm64
         run: sudo apt-get install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-      - name: Docker Login
+      - name: Registry Login
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
