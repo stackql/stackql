@@ -54,7 +54,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v5
         with:
           version: latest
-          args: release --snapshot --clean --config .github/goreleaser/.goreleaser-for-darwin.yaml
+          args: release --clean --config .github/goreleaser/.goreleaser-for-darwin.yaml
         env:
           GITHUB_TOKEN: ${{env.GH_ACCESS_TOKEN}}
 
@@ -73,6 +73,6 @@ jobs:
         uses: goreleaser/goreleaser-action@v5
         with:
           version: latest
-          args: release --snapshot --clean --config .github/goreleaser/.goreleaser-for-windows.yaml
+          args: release --clean --config .github/goreleaser/.goreleaser-for-windows.yaml
         env:
           GITHUB_TOKEN: ${{env.GH_ACCESS_TOKEN}}
