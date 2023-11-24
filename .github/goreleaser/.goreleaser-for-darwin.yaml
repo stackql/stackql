@@ -1,10 +1,10 @@
 ---
 project_name: stackql
 
-release:
-  github:
-    owner: Iqbalabdi
-    name: stackql
+# release:
+#   github:
+#     owner: Iqbalabdi
+#     name: stackql
 
 before:
   hooks:
