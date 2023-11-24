@@ -36,6 +36,13 @@ builds:
     # -X stackql/internal/stackql/planbuilder.PlanCacheEnabled={{.Env.PLANCACHEENABLED}}
     # -X github.com/stackql/stackql/internal/stackql/cmd.BuildPlatform={{.Env.BUILDPLATFORM}}
 
+archives:
+  - format: tar.gz
+    name_template: "stackql_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    files:
+      - LICENSE
+      - README.md
+
 
 snapshot:
   name_template: SNAPSHOT-{{ .ShortCommit }}
