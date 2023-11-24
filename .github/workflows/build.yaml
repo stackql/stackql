@@ -25,6 +25,12 @@ jobs:
           go-version: ^1.19
       - name: Install cross-compiler for linux/arm64
         run: sudo apt-get install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+      - name: Docker Login
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ env.GH_ACCESS_TOKEN }}
       - name: Run Goreleaser
         uses: goreleaser/goreleaser-action@v5
         with:
