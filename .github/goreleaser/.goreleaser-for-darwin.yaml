@@ -41,4 +41,4 @@ snapshot:
   name_template: SNAPSHOT-{{ .ShortCommit }}
 
 checksum:
-  name_template: "stackql_checksums.txt"
+  name_template: "stackql_darwin_checksums.txt"

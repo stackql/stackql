@@ -42,13 +42,13 @@ snapshot:
   name_template: SNAPSHOT-{{ .ShortCommit }}
 
 checksum:
-  name_template: "stackql_checksums.txt"
+  name_template: "stackql_windows_checksums.txt"
 
-chocolateys:
-  -
-    name: stackql
-    ids:
-      - stackql-chocolatey
-    project_url: https://stackql.io/
-    summary: StackQL core project that enables users to interact with cloud resources using SQL.
-    skip_publish: true
+# chocolateys:
+#   -
+#     name: stackql
+#     ids:
+#       - stackql-chocolatey
+#     project_url: https://stackql.io/
+#     summary: StackQL core project that enables users to interact with cloud resources using SQL.
+#     skip_publish: true
