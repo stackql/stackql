@@ -934,7 +934,15 @@ func (eng *postgresSystem) composeSelectQuery(
 			)
 			i++
 		}
-		fromString = fmt.Sprintf(fromString, hoistedControlOnComparisons...)
+		// BLOCK protect LHS string formats for indirect replacement
+		remainingStringFormats := strings.Count(fromString, `%s`)
+		diffCount := remainingStringFormats - len(hoistedControlOnComparisons)
+		if diffCount > 0 {
+			fromString = fmt.Sprintf(strings.Replace(fromString, `%s`, `%%s`, diffCount), hoistedControlOnComparisons...)
+		} else {
+			fromString = fmt.Sprintf(fromString, hoistedControlOnComparisons...)
+		}
+		// END BLOCK
 	}
 	for _, alias := range tableAliases {
 		controlWhereComparisons = append(controlWhereComparisons, eng.render(alias, i))

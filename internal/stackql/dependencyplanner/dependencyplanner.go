@@ -341,7 +341,9 @@ func (dp *standardDependencyPlanner) orchestrate(
 ) error {
 	rc, err := tableinsertioncontainer.NewTableInsertionContainer(
 		annotationCtx.GetTableMeta(),
-		dp.handlerCtx.GetSQLEngine())
+		dp.handlerCtx.GetSQLEngine(),
+		dp.handlerCtx.GetTxnCounterMgr(),
+	)
 	if err != nil {
 		return err
 	}
@@ -481,7 +483,9 @@ func (dp *standardDependencyPlanner) getStreamFromEdge(
 		}
 		ann := e.GetSource().GetAnnotation()
 		meta := ann.GetTableMeta()
-		insertContainer, err := tableinsertioncontainer.NewTableInsertionContainer(meta, dp.handlerCtx.GetSQLEngine())
+		insertContainer, err := tableinsertioncontainer.NewTableInsertionContainer(meta,
+			dp.handlerCtx.GetSQLEngine(),
+			dp.handlerCtx.GetTxnCounterMgr())
 		if err != nil {
 			return nil, err
 		}
