@@ -55,7 +55,7 @@ nfpms:
     file_name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
     homepage: https://stackql.io/
     maintainer: "StackQL Team <stackql-team@users.noreply.github.com>" # optional
-    description: StackQL core project that enables users to interact with cloud resources using SQL.
+    description: "Cloud asset management and automation using SQL"
     license: MIT
     section: golang
     formats:
