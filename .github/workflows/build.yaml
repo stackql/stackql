@@ -26,7 +26,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v5
         with:
           version: latest
-          args: release --clean --config .github/goreleaser/.goreleaser-for-linux.yaml
+          args: release --clean --config .github/goreleaser/.goreleaser-for-linux.yaml --verbose
         env:
           GITHUB_TOKEN: ${{env.GH_ACCESS_TOKEN}}
 
