@@ -1,11 +1,6 @@
 ---
 project_name: stackql
 
-# release:
-#   github:
-#     owner: stackql
-#     name: stackql
-
 before:
   hooks:
     - go mod tidy
@@ -33,8 +28,8 @@ builds:
       -X github.com/stackql/stackql/internal/stackql/cmd.BuildCommitSHA={{.FullCommit}}
       -X github.com/stackql/stackql/internal/stackql/cmd.BuildShortCommitSHA={{.ShortCommit}}
       -X github.com/stackql/stackql/internal/stackql/cmd.BuildDate={{.Date}}
-    # -X stackql/internal/stackql/planbuilder.PlanCacheEnabled={{.Env.PLANCACHEENABLED}}
-    # -X github.com/stackql/stackql/internal/stackql/cmd.BuildPlatform={{.Env.BUILDPLATFORM}}
+      -X stackql/internal/stackql/planbuilder.PlanCacheEnabled=true
+      -X github.com/stackql/stackql/internal/stackql/cmd.BuildPlatform={{.Os}}
 
 archives:
   - format: tar.gz

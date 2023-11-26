@@ -2,9 +2,6 @@ name: build
 
 on:
   push:
-    branches:
-      - 'dev'
-      - 'main'
     tags:
       - 'v*'
 
@@ -25,12 +22,6 @@ jobs:
           go-version: ^1.19
       - name: Install cross-compiler for linux/arm64
         run: sudo apt-get install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-      - name: Registry Login
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ env.GH_ACCESS_TOKEN }}
       - name: Run Goreleaser
         uses: goreleaser/goreleaser-action@v5
         with:
@@ -54,7 +45,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v5
         with:
           version: latest
-          args: release --clean --config .github/goreleaser/.goreleaser-for-darwin.yaml
+          args: release --clean --skip=publish --config .github/goreleaser/.goreleaser-for-darwin.yaml
         env:
           GITHUB_TOKEN: ${{env.GH_ACCESS_TOKEN}}
 
