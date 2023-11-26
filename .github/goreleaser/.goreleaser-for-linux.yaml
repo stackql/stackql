@@ -1,0 +1,65 @@
+---
+project_name: stackql
+
+before:
+  hooks:
+    - go mod tidy
+    - go mod download
+    - go mod verify
+
+builds:
+  - id: stackql-linux
+    binary: stackql
+    main: ./stackql/
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - CGO_ENABLED=1
+      - >-
+        {{- if eq .Arch "amd64"}}CC=x86_64-linux-gnu-gcc{{- end }}
+        {{- if eq .Arch "arm64"}}CC=aarch64-linux-gnu-gcc{{- end }}
+      - >-
+        {{- if eq .Arch "amd64"}}CXX=x86_64-linux-gnu-g++{{- end }}
+        {{- if eq .Arch "arm64"}}CXX=aarch64-linux-gnu-gcc{{- end }}
+    flags:
+      - -trimpath
+    ldflags: >-
+      -s -w
+      -X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion={{.Major}}
+      -X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion={{.Minor}}}
+      -X github.com/stackql/stackql/internal/stackql/cmd.BuildPatchVersion={{.Patch}}
+      -X github.com/stackql/stackql/internal/stackql/cmd.BuildCommitSHA={{.FullCommit}}
+      -X github.com/stackql/stackql/internal/stackql/cmd.BuildShortCommitSHA={{.ShortCommit}}
+      -X github.com/stackql/stackql/internal/stackql/cmd.BuildDate={{.Date}}
+      -X stackql/internal/stackql/planbuilder.PlanCacheEnabled=true
+      -X github.com/stackql/stackql/internal/stackql/cmd.BuildPlatform={{.Os}}
+
+archives:
+  - format: tar.gz
+    name_template: "stackql_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    files:
+      - LICENSE
+      - README.md
+
+snapshot:
+  name_template: SNAPSHOT-{{ .ShortCommit }}
+
+checksum:
+  name_template: "stackql_linux_checksums.txt"
+
+nfpms:
+  - id: stackql-nfpms
+    file_name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    homepage: https://stackql.io/
+    maintainer: "StackQL Team <stackql-team@users.noreply.github.com>" # optional
+    description: "Cloud asset management and automation using SQL"
+    license: MIT
+    section: golang
+    formats:
+      - deb
+      - rpm
+      - apk
+      - archlinux
