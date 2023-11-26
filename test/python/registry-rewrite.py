@@ -23,6 +23,7 @@ GITHUB_DEFAULT_PORT = 1093
 AZURE_DEFAULT_PORT = 1095
 SUMOLOGIC_DEFAULT_PORT = 1096
 DIGITALOCEAN_DEFAULT_PORT = 1097
+STACKQL_TEST_DEFAULT_PORT = 1099
 
 
 
@@ -62,6 +63,12 @@ parser.add_argument(
     type=int,
     default=GOOGLEADMIN_DEFAULT_PORT,
     help='port for google mock service'
+)
+parser.add_argument(
+    '--stackqltest-port',
+    type=int,
+    default=STACKQL_TEST_DEFAULT_PORT,
+    help='port for stackql test service'
 )
 parser.add_argument(
     '--okta-port',
@@ -187,6 +194,9 @@ class ProviderCfgMapping:
       },
       "digitalocean": {
         "port": processed_args.digitalocean_port
+      },
+      "stackql_test": {
+        "port": processed_args.stackqltest_port
       },
       "__default__": {
         "port": processed_args.default_port
