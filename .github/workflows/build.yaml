@@ -26,7 +26,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v5
         with:
           version: latest
-          args: release --clean --config .github/goreleaser/.goreleaser-for-linux.yaml
+          args: build --clean --config .github/goreleaser/.goreleaser-for-linux.yaml
         env:
           GITHUB_TOKEN: ${{env.GH_ACCESS_TOKEN}}
 
@@ -45,7 +45,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v5
         with:
           version: latest
-          args: release --clean --skip=publish --config .github/goreleaser/.goreleaser-for-darwin.yaml
+          args: build --clean--config .github/goreleaser/.goreleaser-for-darwin.yaml
         env:
           GITHUB_TOKEN: ${{env.GH_ACCESS_TOKEN}}
 
@@ -64,6 +64,6 @@ jobs:
         uses: goreleaser/goreleaser-action@v5
         with:
           version: latest
-          args: release --clean --config .github/goreleaser/.goreleaser-for-windows.yaml
+          args: build --clean --config .github/goreleaser/.goreleaser-for-windows.yaml
         env:
           GITHUB_TOKEN: ${{env.GH_ACCESS_TOKEN}}
