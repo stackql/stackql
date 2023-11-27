@@ -405,7 +405,8 @@
       "body": {
         "type": "JSON",
         "json": {
-          "TypeName": "AWS::Logs::LogGroup"
+          "TypeName": "AWS::Logs::LogGroup",
+          "DesiredState": "{ \"LogGroupName\": \"LogGroupResourceExampleThird\", \"RetentionInDays\":90}"
         },
         "matchType": "ONLY_MATCHING_FIELDS"
       }
@@ -439,7 +440,8 @@
         "type": "JSON",
         "json": {
           "TypeName": "AWS::Logs::LogGroup",
-          "Identifier": "LogGroupResourceExampleThird" 
+          "Identifier": "LogGroupResourceExampleThird",
+          "PatchDocument": "[{\"op\":\"replace\",\"path\":\"/RetentionInDays\",\"value\":180}]"
         },
         "matchType": "ONLY_MATCHING_FIELDS"
       }
@@ -456,6 +458,40 @@
           "Operation": "UPDATE",
           "OperationStatus": "IN_PROGRESS",
           "RequestToken": "5ae9f962-8720-4a21-992e-1598cf5db273",
+          "TypeName": "AWS::Logs::LogGroup"
+        }
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target": [ "CloudApiService.CreateResource" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "TypeName": "AWS::Logs::LogGroup",
+          "DesiredState": "{\"LogGroupName\": \"LogGroupResourceExample3\",\"RetentionInDays\":90}" 
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "ProgressEvent":{
+          "EventTime": 1.6607142738E9,
+          "Identifier": "LogGroupResourceExample3",
+          "Operation": "CREATE",
+          "OperationStatus": "IN_PROGRESS",
+          "RequestToken": "10000001-0000-0000-0000-000000000001",
           "TypeName": "AWS::Logs::LogGroup"
         }
       }

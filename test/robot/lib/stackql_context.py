@@ -595,7 +595,6 @@ SELECT_AWS_EC2_VPN_GATEWAYS_NULL = "select vpnGatewayId, amazonSideAsn from aws.
 SELECT_AWS_VOLUMES = "select volumeId, encrypted, size from aws.ec2.volumes where region = 'ap-southeast-1' order by volumeId asc;"
 SELECT_AWS_IAM_USERS_ASC = "select UserName, Arn from aws.iam.users WHERE region = 'us-east-1' order by UserName ASC;"
 CREATE_AWS_VOLUME = """insert into aws.ec2.volumes(AvailabilityZone, Size, region, TagSpecification) select 'ap-southeast-1a', JSON(10), 'ap-southeast-1', JSON('[ { "ResourceType": "volume", "Tag": [ { "Key": "stack", "Value": "production" }, { "Key": "name", "Value": "multi-tag-volume" } ] } ]');"""
-CREATE_AWS_CLOUD_CONTROL_LOG_GROUP = """insert into aws.cloud_control.resources(region, data__TypeName, data__DesiredState) select 'ap-southeast-1', 'AWS::Logs::LogGroup', string('{ "LogGroupName": "LogGroupResourceExampleThird", "RetentionInDays":90}');"""
 SELECT_AWS_CLOUD_CONTROL_VPCS_DESC = "select Identifier, Properties from aws.cloud_control.resources where region = 'ap-southeast-1' and data__TypeName = 'AWS::EC2::VPC' order by Identifier desc;"
 SELECT_AWS_CLOUD_CONTROL_BUCKET_PROJECTION = "SELECT JSON_EXTRACT(Properties, '$.Arn') as Arn FROM aws.cloud_control.resources WHERE region = 'ap-southeast-2' and data__TypeName = 'AWS::S3::Bucket' and data__Identifier = 'stackql-trial-bucket-01';"
 SELECT_AWS_CLOUD_CONTROL_BUCKET_VIEW_PROJECTION = "select Arn from aws.pseudo_s3.s3_bucket_listing where data__Identifier = 'stackql-trial-bucket-01' ;"
@@ -604,7 +603,6 @@ SELECT_AWS_CLOUD_CONTROL_BUCKET_PROJECTION_DEFECTIVE = "SELECT JSON_EXTRACT(Arn,
 GET_AWS_CLOUD_CONTROL_VPCS_DESC = "select Identifier, Properties from aws.cloud_control.resources where region = 'ap-southeast-1' and data__TypeName = 'AWS::EC2::VPC' and data__Identifier = 'CloudControlExample';"
 GET_AWS_CLOUD_CONTROL_REQUEST_LOG_GROUP = """select TypeName, OperationStatus, StatusMessage, Identifier, RequestToken from aws.cloud_control.resource_requests where data__RequestToken = 'abc001' and region = 'ap-southeast-1';"""
 SELECT_AWS_CLOUD_CONTROL_OPERATIONS_DESC = "select TypeName, OperationStatus, StatusMessage, Identifier, RequestToken from aws.cloud_control.resource_requests where data__ResourceRequestStatusFilter='{}' and region = 'ap-southeast-1' order by RequestToken desc;"
-UPDATE_AWS_CLOUD_CONTROL_REQUEST_LOG_GROUP = """update aws.cloud_control.resources set data__PatchDocument = string('[{"op":"replace","path":"/RetentionInDays","value":180}]') WHERE region = 'ap-southeast-1' AND data__TypeName = 'AWS::Logs::LogGroup' AND data__Identifier = 'LogGroupResourceExampleThird';"""
 UPDATE_AWS_EC2_VOLUME = "update aws.ec2.volumes set Size = 12 WHERE region = 'ap-southeast-1' AND VolumeId = 'vol-000000000000001';"
 
 UPDATE_GITHUB_ORG = "update github.orgs.orgs set data__description = 'Some silly description.' WHERE  org = 'dummyorg';"
@@ -688,8 +686,6 @@ SELECT_SOME_VIEW_RECREATED_EXPECTED_JSON = get_json_from_local_file(os.path.join
 SELECT_CROSS_CLOUD_DISKS_VIEW_EXPECTED_JSON = get_json_from_local_file(os.path.join('test', 'assets', 'expected', 'views', 'select-cross-cloud-disks.json'))
 
 SELECT_POSTGRES_CATALOG_JOIN = "SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relkind in ('r', 'p');"
-
-DELETE_AWS_CLOUD_CONTROL_LOG_GROUP = "delete from aws.cloud_control.resources where region = 'ap-southeast-1' and data__TypeName = 'AWS::Logs::LogGroup' and data__Identifier = 'LogGroupResourceExampleThird';"
 
 SELECT_AWS_VOLUMES_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'ec2', 'select-volumes-asc.txt'))
 SELECT_AWS_EC2_VPN_GATEWAYS_NULL_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'ec2', 'select-vpn-gateways-empty.txt'))
@@ -872,8 +868,6 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'AWS_CLOUD_CONTROL_BUCKET_VIEW_DETAIL_STAR_EXPECTED':                     SELECT_AWS_CLOUD_CONTROL_BUCKET_VIEW_STAR_EXPECTED,
     'AZURE_VM_SIZES_ENUMERATION':                                             _AZURE_VM_SIZES_ENUMERATION,
     'CREATE_AWS_VOLUME':                                                      CREATE_AWS_VOLUME,
-    'CREATE_AWS_CLOUD_CONTROL_LOG_GROUP':                                     CREATE_AWS_CLOUD_CONTROL_LOG_GROUP,
-    'DELETE_AWS_CLOUD_CONTROL_LOG_GROUP':                                     DELETE_AWS_CLOUD_CONTROL_LOG_GROUP,
     'DESCRIBE_AWS_EC2_INSTANCES':                                             DESCRIBE_AWS_EC2_INSTANCES,
     'DESCRIBE_AWS_EC2_DEFAULT_KMS_KEY_ID':                                    DESCRIBE_AWS_EC2_DEFAULT_KMS_KEY_ID,
     'DESCRIBE_GITHUB_REPOS_PAGES':                                            DESCRIBE_GITHUB_REPOS_PAGES,
@@ -1017,7 +1011,6 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'SHOW_OKTA_APPLICATION_RESOURCES_FILTERED_STR':                           SHOW_OKTA_APPLICATION_RESOURCES_FILTERED_STR,
     'SHOW_OKTA_SERVICES_FILTERED_STR':                                        SHOW_OKTA_SERVICES_FILTERED_STR,
     'SHOW_PROVIDERS_STR':                                                     SHOW_PROVIDERS_STR,
-    'UPDATE_AWS_CLOUD_CONTROL_REQUEST_LOG_GROUP':                             UPDATE_AWS_CLOUD_CONTROL_REQUEST_LOG_GROUP,
     'UPDATE_AWS_EC2_VOLUME':                                                  UPDATE_AWS_EC2_VOLUME,
     'UPDATE_GITHUB_ORG':                                                      UPDATE_GITHUB_ORG,
     'VIEW_SELECT_AWS_CLOUD_CONTROL_BUCKET_DETAIL_EXPECTED':                   VIEW_SELECT_AWS_CLOUD_CONTROL_BUCKET_DETAIL_EXPECTED,

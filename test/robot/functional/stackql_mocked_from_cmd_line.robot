@@ -307,6 +307,15 @@ GitHub Orgs Org Update Simple
     ...    The operation was despatched successfully
 
 AWS Cloud Control Log Group Insert Simple
+    ${inputStr} =    Catenate
+    ...              insert into aws.cloud_control.resources(
+    ...              region, data__TypeName, data__DesiredState
+    ...              ) 
+    ...              select 
+    ...              'ap-southeast-1', 
+    ...              'AWS::Logs::LogGroup', 
+    ...              string('{ "LogGroupName": "LogGroupResourceExampleThird", "RetentionInDays":90}')
+    ...              ;
     Should StackQL Exec Inline Equal Stderr
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -315,10 +324,36 @@ AWS Cloud Control Log Group Insert Simple
     ...    ${REGISTRY_NO_VERIFY_CFG_STR}
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
-    ...    ${CREATE_AWS_CLOUD_CONTROL_LOG_GROUP}
+    ...    ${inputStr}
+    ...    The operation was despatched successfully
+
+AWS Cloud Control Log Group Insert Simple Rely on Annotation
+    ${inputStr} =    Catenate
+    ...              INSERT INTO aws.cloud_control.resources 
+    ...              (data__TypeName, region, data__DesiredState) 
+    ...              SELECT 'AWS::Logs::LogGroup', 
+    ...              'ap-southeast-1', 
+    ...              '{"LogGroupName": "LogGroupResourceExample3","RetentionInDays":90}'
+    ...              ;
+    Should StackQL Exec Inline Equal Stderr
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
     ...    The operation was despatched successfully
 
 AWS Cloud Control Log Group Delete Simple
+    ${inputStr} =    Catenate
+    ...              delete from aws.cloud_control.resources 
+    ...              where 
+    ...              region = 'ap-southeast-1' 
+    ...              and data__TypeName = 'AWS::Logs::LogGroup' 
+    ...              and data__Identifier = 'LogGroupResourceExampleThird'
+    ...              ;
     Should StackQL Exec Inline Equal Stderr
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -327,10 +362,18 @@ AWS Cloud Control Log Group Delete Simple
     ...    ${REGISTRY_NO_VERIFY_CFG_STR}
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
-    ...    ${DELETE_AWS_CLOUD_CONTROL_LOG_GROUP}
+    ...    ${inputStr}
     ...    The operation was despatched successfully
 
 AWS Cloud Control Log Group Update Simple
+    ${inputStr} =    Catenate
+    ...              update aws.cloud_control.resources 
+    ...              set data__PatchDocument = string('[{"op":"replace","path":"/RetentionInDays","value":180}]') 
+    ...              WHERE 
+    ...              region = 'ap-southeast-1' 
+    ...              AND data__TypeName = 'AWS::Logs::LogGroup' 
+    ...              AND data__Identifier = 'LogGroupResourceExampleThird'
+    ...              ;
     Should StackQL Exec Inline Equal Stderr
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -339,7 +382,7 @@ AWS Cloud Control Log Group Update Simple
     ...    ${REGISTRY_NO_VERIFY_CFG_STR}
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
-    ...    ${UPDATE_AWS_CLOUD_CONTROL_REQUEST_LOG_GROUP}
+    ...    ${inputStr}
     ...    The operation was despatched successfully
 
 GitHub Pages Select Top Level Object

@@ -696,6 +696,7 @@ components:
         ClientToken:
           type: string
         DesiredState:
+          x-stackQL-stringOnly: true
           allOf:
           - $ref: '#/components/schemas/Properties'
           - description: <p>Structured data format representing the desired state
