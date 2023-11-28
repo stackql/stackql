@@ -431,10 +431,14 @@ func (pb *standardPrimitiveGenerator) whereComparisonExprCopyAndReWrite(
 			}, colName, nil
 		}
 	}
+	rewrittenOperator := expr.Operator
+	if strings.ToUpper(expr.Operator) == "IN" {
+		rewrittenOperator = "="
+	}
 	return &sqlparser.ComparisonExpr{
 		Left:     &sqlparser.SQLVal{Type: sqlparser.IntVal, Val: []byte("1")},
 		Right:    &sqlparser.SQLVal{Type: sqlparser.IntVal, Val: []byte("1")},
-		Operator: expr.Operator,
+		Operator: rewrittenOperator,
 		Escape:   expr.Escape,
 	}, colName, nil
 }

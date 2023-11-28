@@ -61,6 +61,50 @@
         ]
       }
     }
+  },
+  {
+    "httpRequest": {
+      "method": "GET",
+      "path": "/v1/projects/another-project/aggregated/usableSubnetworks"
+    },
+    "httpResponse": {
+      "body": {
+        "subnetworks": [
+          {
+            "subnetwork": "projects/another-project/regions/australia-southeast1/subnetworks/sn-02",
+            "network": "projects/another-project/global/networks/vpc-01",
+            "ipCidrRange": "10.0.1.0/24"
+          },
+          {
+            "subnetwork": "projects/another-project/regions/australia-southeast1/subnetworks/sn-01",
+            "network": "projects/another-project/global/networks/vpc-01",
+            "ipCidrRange": "10.0.0.0/24"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "GET",
+      "path": "/v1/projects/yet-another-project/aggregated/usableSubnetworks"
+    },
+    "httpResponse": {
+      "body": {
+        "subnetworks": [
+          {
+            "subnetwork": "projects/yet-another-project/regions/australia-southeast1/subnetworks/sn-02",
+            "network": "projects/yet-another-project/global/networks/vpc-01",
+            "ipCidrRange": "10.0.1.0/24"
+          },
+          {
+            "subnetwork": "projects/yet-another-project/regions/australia-southeast1/subnetworks/sn-01",
+            "network": "projects/yet-another-project/global/networks/vpc-01",
+            "ipCidrRange": "10.0.0.0/24"
+          }
+        ]
+      }
+    }
   }, 
   {
     "httpRequest": {

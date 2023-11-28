@@ -53,10 +53,11 @@ type standardDependencyPlanner struct {
 	tccSetAheadOfTime  bool
 
 	//
-	bldr          primitivebuilder.Builder
-	selCtx        drm.PreparedStatementCtx
-	defaultStream streaming.MapStream
-	annMap        taxonomy.AnnotationCtxMap
+	bldr                 primitivebuilder.Builder
+	selCtx               drm.PreparedStatementCtx
+	defaultStream        streaming.MapStream
+	annMap               taxonomy.AnnotationCtxMap
+	equivalencyGroupTCCs map[int64]internaldto.TxnControlCounters
 	//
 	prepStmtOffset int
 	//
@@ -79,19 +80,20 @@ func NewStandardDependencyPlanner(
 		return nil, fmt.Errorf("violation of standardDependencyPlanner invariant: txn counter cannot be nil")
 	}
 	return &standardDependencyPlanner{
-		annotatedAST:       annotatedAST,
-		handlerCtx:         handlerCtx,
-		dataflowCollection: dataflowCollection,
-		colRefs:            colRefs,
-		rewrittenWhere:     rewrittenWhere,
-		sqlStatement:       sqlStatement,
-		tblz:               tblz,
-		primitiveComposer:  primitiveComposer,
-		discoGenIDs:        make(map[sqlparser.SQLNode]int),
-		defaultStream:      streaming.NewStandardMapStream(),
-		annMap:             make(taxonomy.AnnotationCtxMap),
-		tcc:                tcc,
-		tccSetAheadOfTime:  tccSetAheadOfTime,
+		annotatedAST:         annotatedAST,
+		handlerCtx:           handlerCtx,
+		dataflowCollection:   dataflowCollection,
+		colRefs:              colRefs,
+		rewrittenWhere:       rewrittenWhere,
+		sqlStatement:         sqlStatement,
+		tblz:                 tblz,
+		primitiveComposer:    primitiveComposer,
+		discoGenIDs:          make(map[sqlparser.SQLNode]int),
+		defaultStream:        streaming.NewStandardMapStream(),
+		annMap:               make(taxonomy.AnnotationCtxMap),
+		tcc:                  tcc,
+		tccSetAheadOfTime:    tccSetAheadOfTime,
+		equivalencyGroupTCCs: make(map[int64]internaldto.TxnControlCounters),
 	}, nil
 }
 
@@ -148,7 +150,7 @@ func (dp *standardDependencyPlanner) Plan() error {
 				continue
 			}
 			dp.annMap[tableExpr] = annotation
-			insPsc, _, insErr := dp.processOrphan(tableExpr, annotation, dp.defaultStream)
+			insPsc, _, insErr := dp.processOrphan(tableExpr, annotation, dp.defaultStream, unit)
 			if insErr != nil {
 				return insErr
 			}
@@ -189,7 +191,7 @@ func (dp *standardDependencyPlanner) Plan() error {
 					//nolint:nestif // TODO: refactor
 					if e.From().ID() == n.ID() {
 						//
-						insPsc, tcc, insErr := dp.processOrphan(tableExpr, annotation, dp.defaultStream)
+						insPsc, tcc, insErr := dp.processOrphan(tableExpr, annotation, dp.defaultStream, n)
 						if insErr != nil {
 							return insErr
 						}
@@ -207,7 +209,7 @@ func (dp *standardDependencyPlanner) Plan() error {
 						//
 						dp.annMap[toTableExpr] = toAnnotation
 						toAnnotation.SetDynamic()
-						insPsc, _, err = dp.processOrphan(toTableExpr, toAnnotation, stream)
+						insPsc, _, err = dp.processOrphan(toTableExpr, toAnnotation, stream, toNode)
 						if err != nil {
 							return err
 						}
@@ -305,8 +307,9 @@ func (dp *standardDependencyPlanner) processOrphan(
 	sqlNode sqlparser.SQLNode,
 	annotationCtx taxonomy.AnnotationCtx,
 	inStream streaming.MapStream,
+	vertex dataflow.Vertex,
 ) (drm.PreparedStatementCtx, internaldto.TxnControlCounters, error) {
-	anTab, tcc, err := dp.processAcquire(sqlNode, annotationCtx, inStream)
+	anTab, tcc, err := dp.processAcquire(sqlNode, annotationCtx, inStream, vertex)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -399,6 +402,7 @@ func (dp *standardDependencyPlanner) processAcquire(
 	sqlNode sqlparser.SQLNode,
 	annotationCtx taxonomy.AnnotationCtx,
 	stream streaming.MapStream, //nolint:unparam,revive // TODO: remove this
+	vertex dataflow.Vertex,
 ) (util.AnnotatedTabulation, internaldto.TxnControlCounters, error) {
 	inputTableName, err := annotationCtx.GetInputTableName()
 	inputProviderString := annotationCtx.GetHIDs().GetProviderStr()
@@ -465,6 +469,17 @@ func (dp *standardDependencyPlanner) processAcquire(
 		return util.NewAnnotatedTabulation(nil, nil, "", ""), nil, fmt.Errorf("nil counters disallowed in dependency planner")
 	}
 	if !dp.tccSetAheadOfTime {
+		if vertex.GetEquivalencyGroup() > 0 {
+			tcc, ok := dp.equivalencyGroupTCCs[vertex.GetEquivalencyGroup()]
+			if ok {
+				dp.tcc = tcc.Clone()
+			} else {
+				dp.tcc = dp.tcc.CloneAndIncrementInsertID()
+				dp.secondaryTccs = append(dp.secondaryTccs, dp.tcc)
+				dp.equivalencyGroupTCCs[vertex.GetEquivalencyGroup()] = dp.tcc
+			}
+			return anTab, dp.tcc, nil
+		}
 		dp.tcc = dp.tcc.CloneAndIncrementInsertID()
 	}
 	dp.secondaryTccs = append(dp.secondaryTccs, dp.tcc)
