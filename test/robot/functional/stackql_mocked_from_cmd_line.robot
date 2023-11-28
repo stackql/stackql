@@ -2585,6 +2585,105 @@ Select Star of EC2 Instances Returns Expected Result
     ...    vol-1234567890abcdef0
     ...    stdout=${CURDIR}/tmp/Select-Star-of-EC2-Instances-Returns-Expected-Result.tmp
 
+Select With IN Scalars inside WHERE Clause Returns Expected Result
+    ${inputStr} =    Catenate
+    ...              select 
+    ...              instanceId, ipAddress 
+    ...              from aws.ec2.instances 
+    ...              where 
+    ...              region = 'ap-southeast-2'
+    ...              and instanceId not in ('some-silly-id') 
+    ...              and ipAddress in ('54.194.252.215')
+    ...              and region in ('ap-southeast-2')
+    ...              ;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...               |---------------------|----------------|
+    ...               |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}instanceId${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}ipAddress${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...               |---------------------|----------------|
+    ...               |${SPACE}i-1234567890abcdef0${SPACE}|${SPACE}54.194.252.215${SPACE}|
+    ...               |---------------------|----------------|
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}    
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    stdout=${CURDIR}/tmp/Select-With-IN-Scalars-inside-WHERE-Clause-Returns-Expected-Result.tmp
+
+
+Select With Server Parameters inside IN Scalars inside WHERE Clause Returns Expected Result
+    ${inputStr} =    Catenate
+    ...              select 
+    ...              instanceId, 
+    ...              ipAddress 
+    ...              from aws.ec2.instances 
+    ...              where 
+    ...              instanceId not in ('some-silly-id')  
+    ...              and region in ('ap-southeast-2', 'ap-southeast-1')
+    ...              ;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...               |---------------------|----------------|
+    ...               |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}instanceId${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}ipAddress${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...               |---------------------|----------------|
+    ...               |${SPACE}i-1234567890abcdef0${SPACE}|${SPACE}54.194.252.215${SPACE}|
+    ...               |---------------------|----------------|
+    ...               |${SPACE}i-1234567890abcdef0${SPACE}|${SPACE}54.194.252.215${SPACE}|
+    ...               |---------------------|----------------|
+
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}    
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    stdout=${CURDIR}/tmp/Select-With-Server-Parameters-inside-IN-Scalars-inside-WHERE-Clause-Returns-Expected-Result.tmp
+
+Select With Path Parameters inside IN Scalars inside WHERE Clause Returns Expected Result
+    ${inputStr} =     Catenate
+    ...               select 
+    ...               ipCidrRange, 
+    ...               subnetwork 
+    ...               from google.container."projects.aggregated.usableSubnetworks"
+    ...               where 
+    ...               projectsId in ('testing-project', 'another-project', 'yet-another-project') 
+    ...               order by subnetwork desc
+    ...               ;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...               |-------------|-----------------------------------------------------------------------------|
+    ...               |${SPACE}ipCidrRange${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}subnetwork${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...               |-------------|-----------------------------------------------------------------------------|
+    ...               |${SPACE}10.0.1.0/24${SPACE}|${SPACE}projects/yet-another-project/regions/australia-southeast1/subnetworks/sn-02${SPACE}|
+    ...               |-------------|-----------------------------------------------------------------------------|
+    ...               |${SPACE}10.0.0.0/24${SPACE}|${SPACE}projects/yet-another-project/regions/australia-southeast1/subnetworks/sn-01${SPACE}|
+    ...               |-------------|-----------------------------------------------------------------------------|
+    ...               |${SPACE}10.0.1.0/24${SPACE}|${SPACE}projects/testing-project/regions/australia-southeast1/subnetworks/sn-02${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...               |-------------|-----------------------------------------------------------------------------|
+    ...               |${SPACE}10.0.0.0/24${SPACE}|${SPACE}projects/testing-project/regions/australia-southeast1/subnetworks/sn-01${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...               |-------------|-----------------------------------------------------------------------------|
+    ...               |${SPACE}10.0.1.0/24${SPACE}|${SPACE}projects/another-project/regions/australia-southeast1/subnetworks/sn-02${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...               |-------------|-----------------------------------------------------------------------------|
+    ...               |${SPACE}10.0.0.0/24${SPACE}|${SPACE}projects/another-project/regions/australia-southeast1/subnetworks/sn-01${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...               |-------------|-----------------------------------------------------------------------------|
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    stdout=${CURDIR}/tmp/Select-With-Path-Parameters-inside-IN-Scalars-inside-WHERE-Clause-Returns-Expected-Result.tmp
+
 # This also tests passing integers in request body parameters
 Select Projection of CloudWatch Log Events Returns Expected Result
     Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test likely due to case sensitivity and incorrect XML property aliasing

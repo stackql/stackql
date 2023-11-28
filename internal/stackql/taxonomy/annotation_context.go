@@ -23,6 +23,7 @@ type AnnotationCtx interface {
 	GetTableMeta() tablemetadata.ExtendedTableMetadata
 	Prepare(handlerCtx handler.HandlerContext, inStream streaming.MapStream) error
 	SetDynamic()
+	Clone() AnnotationCtx
 }
 
 type standardAnnotationCtx struct {
@@ -45,6 +46,20 @@ func NewStaticStandardAnnotationCtx(
 		hIDs:       hIds,
 		tableMeta:  tableMeta,
 		parameters: parameters,
+	}
+}
+
+func (ac *standardAnnotationCtx) Clone() AnnotationCtx {
+	clonedParams := make(map[string]interface{})
+	for k, v := range ac.parameters {
+		clonedParams[k] = v
+	}
+	return &standardAnnotationCtx{
+		isDynamic:  ac.isDynamic,
+		schema:     ac.schema,
+		hIDs:       ac.hIDs,
+		tableMeta:  ac.tableMeta,
+		parameters: clonedParams,
 	}
 }
 
@@ -117,10 +132,11 @@ func (ac *standardAnnotationCtx) Prepare(
 		)
 		return nil
 	}
+	params := ac.GetParameters()
 	ac.tableMeta.WithGetHTTPArmoury(
 		func() (openapistackql.HTTPArmoury, error) {
 			// need to dynamically generate stream, otherwise repeated calls result in empty body
-			parametersCleaned, cleanErr := util.TransformSQLRawParameters(ac.GetParameters())
+			parametersCleaned, cleanErr := util.TransformSQLRawParameters(params)
 			if cleanErr != nil {
 				return nil, cleanErr
 			}

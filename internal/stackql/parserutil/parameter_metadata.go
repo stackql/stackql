@@ -6,6 +6,11 @@ import (
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
 
+var (
+	_ ParameterMetadata = (*StandardComparisonParameterMetadata)(nil)
+	_ ParameterMetadata = (*PlaceholderParameterMetadata)(nil)
+)
+
 type ParameterMetadata interface {
 	iParameterMetadata()
 	GetParent() *sqlparser.ComparisonExpr

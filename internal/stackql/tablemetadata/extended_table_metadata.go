@@ -62,6 +62,7 @@ type ExtendedTableMetadata interface {
 	IsOnClauseHoistable() bool
 	IsPhysicalTable() bool
 	GetServerVariables() (map[string]*openapi3.ServerVariable, bool)
+	Clone() ExtendedTableMetadata
 }
 
 type standardExtendedTableMetadata struct {
@@ -76,6 +77,22 @@ type standardExtendedTableMetadata struct {
 	indirect            astindirect.Indirect
 	sqlDataSource       sql_datasource.SQLDataSource
 	isOnClauseHoistable bool
+}
+
+func (ex *standardExtendedTableMetadata) Clone() ExtendedTableMetadata {
+	return &standardExtendedTableMetadata{
+		tableFilter:         ex.tableFilter,
+		colsVisited:         ex.colsVisited,
+		heirarchyObjects:    ex.heirarchyObjects,
+		isLocallyExecutable: ex.isLocallyExecutable,
+		getHTTPArmoury:      ex.getHTTPArmoury,
+		selectItemsKey:      ex.selectItemsKey,
+		alias:               ex.alias,
+		inputTableName:      ex.inputTableName,
+		indirect:            ex.indirect,
+		sqlDataSource:       ex.sqlDataSource,
+		isOnClauseHoistable: ex.isOnClauseHoistable,
+	}
 }
 
 func (ex *standardExtendedTableMetadata) GetServerVariables() (map[string]*openapi3.ServerVariable, bool) {

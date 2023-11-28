@@ -7,6 +7,7 @@ import (
 	"github.com/stackql/stackql-parser/go/sqltypes"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 )
 
@@ -728,7 +729,17 @@ func (v *standardParserParamAstVisitor) Visit(node sqlparser.SQLNode) error {
 					node,
 					lt,
 				))
+			case sqlparser.ValTuple:
+				k, err := parserutil.NewUnknownTypeColumnarReference(lt)
+				if err != nil {
+					return err
+				}
+				v.params.Set(k, parserutil.NewComparisonParameterMetadata(
+					node,
+					rt,
+				))
 			default:
+				logging.GetLogger().Debugf("unhandled type: %T", rt)
 			}
 		default:
 			switch rt := node.Right.(type) {

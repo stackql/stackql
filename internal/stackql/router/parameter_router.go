@@ -243,6 +243,36 @@ func (pr *standardParameterRouter) GetOnConditionDataFlows() (dataflow.Collectio
 		}
 	}
 	for k, v := range pr.tableToAnnotationCtx {
+		for k1, param := range v.GetParameters() {
+			switch param := param.(type) { //nolint:gocritic // TODO: review
+			case parserutil.ParameterMetadata:
+				rhs := param.GetVal()
+				switch rhs := rhs.(type) { //nolint:gocritic // TODO: review
+				case sqlparser.ValTuple:
+					for _, valTmp := range rhs {
+						val := valTmp
+						clonedParams := make(map[string]interface{})
+						for k2, v2 := range v.GetParameters() {
+							if k2 != k1 {
+								clonedParams[k1] = v2
+							}
+						}
+
+						clonedParams[k1] = val
+						clonedAnnotationCtx := taxonomy.NewStaticStandardAnnotationCtx(
+							v.GetSchema(),
+							v.GetHIDs(),
+							v.GetTableMeta().Clone(),
+							clonedParams,
+						)
+						sourceVertexIteration := dataflow.NewStandardDataFlowVertex(clonedAnnotationCtx, k, rv.GetNextID())
+						sourceVertexIteration.SetEquivalencyGroup(1)
+						rv.AddVertex(sourceVertexIteration)
+					}
+					return rv, nil
+				}
+			}
+		}
 		rv.AddVertex(dataflow.NewStandardDataFlowVertex(v, k, rv.GetNextID()))
 	}
 	return rv, nil
