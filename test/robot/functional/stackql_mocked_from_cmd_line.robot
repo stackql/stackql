@@ -2684,6 +2684,189 @@ Select With Path Parameters inside IN Scalars inside WHERE Clause Returns Expect
     ...    ${outputStr}
     ...    stdout=${CURDIR}/tmp/Select-With-Path-Parameters-inside-IN-Scalars-inside-WHERE-Clause-Returns-Expected-Result.tmp
 
+Select With Path Parameters inside IN Scalars Mixed With an Equals Parameter all inside WHERE Clause Returns Expected Result
+    ${inputStr} =     Catenate
+    ...    select 
+    ...    id, 
+    ...    name  
+    ...    from google.compute.acceleratorTypes 
+    ...    where 
+    ...    project in ('testing-project', 'another-project') 
+    ...    and zone = 'australia-southeast1-a' 
+    ...    order by id desc
+    ...    ;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-------|---------------------|
+    ...    |${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------|---------------------|
+    ...    |${SPACE}11020${SPACE}|${SPACE}nvidia-tesla-t4-vws${SPACE}|
+    ...    |-------|---------------------|
+    ...    |${SPACE}11019${SPACE}|${SPACE}nvidia-tesla-t4${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------|---------------------|
+    ...    |${SPACE}11012${SPACE}|${SPACE}nvidia-tesla-p4-vws${SPACE}|
+    ...    |-------|---------------------|
+    ...    |${SPACE}11010${SPACE}|${SPACE}nvidia-tesla-p4${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------|---------------------|
+    ...    |${SPACE}10020${SPACE}|${SPACE}nvidia-tesla-t4-vws${SPACE}|
+    ...    |-------|---------------------|
+    ...    |${SPACE}10019${SPACE}|${SPACE}nvidia-tesla-t4${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------|---------------------|
+    ...    |${SPACE}10012${SPACE}|${SPACE}nvidia-tesla-p4-vws${SPACE}|
+    ...    |-------|---------------------|
+    ...    |${SPACE}10010${SPACE}|${SPACE}nvidia-tesla-p4${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------|---------------------|
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    stdout=${CURDIR}/tmp/Select-With-Path-Parameters-inside-IN-Scalars-Mixed-With-an-Equals-Parameter-all-inside-WHERE-Clause-Returns-Expected-Result.tmp
+
+Select Subquery Join With Path Parameters inside IN Scalars inside WHERE Clause Returns Expected Result
+    ${inputStr} =     Catenate
+    ...    select 
+    ...    subnets.subnetwork, 
+    ...    s2.proj 
+    ...    from 
+    ...    ( 
+    ...      select 
+    ...      ipCidrRange, 
+    ...      subnetwork 
+    ...      from google.container."projects.aggregated.usableSubnetworks" 
+    ...      where 
+    ...      projectsId in ('testing-project', 'another-project', 'yet-another-project') 
+    ...      order by subnetwork desc 
+    ...    ) subnets 
+    ...    inner join 
+    ...    (
+    ...      select 
+    ...      ipCidrRange, 
+    ...      subnetwork, 
+    ...      split_part(subnetwork, '/', 2) as proj 
+    ...      from google.container."projects.aggregated.usableSubnetworks" 
+    ...      where projectsId in ('testing-project', 'another-project', 'yet-another-project') 
+    ...      order by subnetwork desc 
+    ...    ) s2 
+    ...    on 
+    ...    subnets.subnetwork = s2.subnetwork 
+    ...    order by subnets.subnetwork desc
+    ...    ;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-----------------------------------------------------------------------------|---------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}subnetwork${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}proj${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------------------------------------------------------------|---------------------|
+    ...    |${SPACE}projects/yet-another-project/regions/australia-southeast1/subnetworks/sn-02${SPACE}|${SPACE}yet-another-project${SPACE}|
+    ...    |-----------------------------------------------------------------------------|---------------------|
+    ...    |${SPACE}projects/yet-another-project/regions/australia-southeast1/subnetworks/sn-01${SPACE}|${SPACE}yet-another-project${SPACE}|
+    ...    |-----------------------------------------------------------------------------|---------------------|
+    ...    |${SPACE}projects/testing-project/regions/australia-southeast1/subnetworks/sn-02${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}testing-project${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------------------------------------------------------------|---------------------|
+    ...    |${SPACE}projects/testing-project/regions/australia-southeast1/subnetworks/sn-01${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}testing-project${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------------------------------------------------------------|---------------------|
+    ...    |${SPACE}projects/another-project/regions/australia-southeast1/subnetworks/sn-02${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}another-project${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------------------------------------------------------------|---------------------|
+    ...    |${SPACE}projects/another-project/regions/australia-southeast1/subnetworks/sn-01${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}another-project${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------------------------------------------------------------|---------------------|
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    stdout=${CURDIR}/tmp/Select-Subquery-Join-With-Path-Parameters-inside-IN-Scalars-inside-WHERE-Clause-Returns-Expected-Result.tmp
+
+Select Subquery Join With Parameters inside IN Scalars Plus More inside WHERE Clause Returns Expected Result
+    ${inputStr} =     Catenate
+    ...    select 
+    ...    subnets.subnetwork, 
+    ...    subnets.proj, 
+    ...    accels.name as accelerator_name 
+    ...    from
+    ...    (
+    ...    select 
+    ...    ipCidrRange, 
+    ...    subnetwork,
+    ...    split_part(subnetwork, '/', 2) as proj
+    ...    from google.container."projects.aggregated.usableSubnetworks"
+    ...    where 
+    ...    projectsId in ('testing-project', 'another-project', 'yet-another-project') 
+    ...    order by subnetwork desc
+    ...    ) as subnets
+    ...    inner join
+    ...    (
+    ...    select 
+    ...    id, 
+    ...    name,
+    ...    split_part(selfLink, '/', 7) as proj,
+    ...    split_part(selfLink, '/', -3) as "zone"
+    ...    from google.compute.acceleratorTypes 
+    ...    where 
+    ...    project in ('testing-project', 'another-project') 
+    ...    and zone = 'australia-southeast1-a' 
+    ...    order by id desc
+    ...    ) as accels
+    ...    on subnets.proj = accels.proj
+    ...    order by 
+    ...    subnets.subnetwork desc,
+    ...    accels.name desc
+    ...    ;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-------------------------------------------------------------------------|-----------------|---------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}subnetwork${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}proj${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}accelerator_name${SPACE}${SPACE}${SPACE}|
+    ...    |-------------------------------------------------------------------------|-----------------|---------------------|
+    ...    |${SPACE}projects/testing-project/regions/australia-southeast1/subnetworks/sn-02${SPACE}|${SPACE}testing-project${SPACE}|${SPACE}nvidia-tesla-t4-vws${SPACE}|
+    ...    |-------------------------------------------------------------------------|-----------------|---------------------|
+    ...    |${SPACE}projects/testing-project/regions/australia-southeast1/subnetworks/sn-02${SPACE}|${SPACE}testing-project${SPACE}|${SPACE}nvidia-tesla-t4${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------------------------------------------------------------------------|-----------------|---------------------|
+    ...    |${SPACE}projects/testing-project/regions/australia-southeast1/subnetworks/sn-02${SPACE}|${SPACE}testing-project${SPACE}|${SPACE}nvidia-tesla-p4-vws${SPACE}|
+    ...    |-------------------------------------------------------------------------|-----------------|---------------------|
+    ...    |${SPACE}projects/testing-project/regions/australia-southeast1/subnetworks/sn-02${SPACE}|${SPACE}testing-project${SPACE}|${SPACE}nvidia-tesla-p4${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------------------------------------------------------------------------|-----------------|---------------------|
+    ...    |${SPACE}projects/testing-project/regions/australia-southeast1/subnetworks/sn-01${SPACE}|${SPACE}testing-project${SPACE}|${SPACE}nvidia-tesla-t4-vws${SPACE}|
+    ...    |-------------------------------------------------------------------------|-----------------|---------------------|
+    ...    |${SPACE}projects/testing-project/regions/australia-southeast1/subnetworks/sn-01${SPACE}|${SPACE}testing-project${SPACE}|${SPACE}nvidia-tesla-t4${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------------------------------------------------------------------------|-----------------|---------------------|
+    ...    |${SPACE}projects/testing-project/regions/australia-southeast1/subnetworks/sn-01${SPACE}|${SPACE}testing-project${SPACE}|${SPACE}nvidia-tesla-p4-vws${SPACE}|
+    ...    |-------------------------------------------------------------------------|-----------------|---------------------|
+    ...    |${SPACE}projects/testing-project/regions/australia-southeast1/subnetworks/sn-01${SPACE}|${SPACE}testing-project${SPACE}|${SPACE}nvidia-tesla-p4${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------------------------------------------------------------------------|-----------------|---------------------|
+    ...    |${SPACE}projects/another-project/regions/australia-southeast1/subnetworks/sn-02${SPACE}|${SPACE}another-project${SPACE}|${SPACE}nvidia-tesla-t4-vws${SPACE}|
+    ...    |-------------------------------------------------------------------------|-----------------|---------------------|
+    ...    |${SPACE}projects/another-project/regions/australia-southeast1/subnetworks/sn-02${SPACE}|${SPACE}another-project${SPACE}|${SPACE}nvidia-tesla-t4${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------------------------------------------------------------------------|-----------------|---------------------|
+    ...    |${SPACE}projects/another-project/regions/australia-southeast1/subnetworks/sn-02${SPACE}|${SPACE}another-project${SPACE}|${SPACE}nvidia-tesla-p4-vws${SPACE}|
+    ...    |-------------------------------------------------------------------------|-----------------|---------------------|
+    ...    |${SPACE}projects/another-project/regions/australia-southeast1/subnetworks/sn-02${SPACE}|${SPACE}another-project${SPACE}|${SPACE}nvidia-tesla-p4${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------------------------------------------------------------------------|-----------------|---------------------|
+    ...    |${SPACE}projects/another-project/regions/australia-southeast1/subnetworks/sn-01${SPACE}|${SPACE}another-project${SPACE}|${SPACE}nvidia-tesla-t4-vws${SPACE}|
+    ...    |-------------------------------------------------------------------------|-----------------|---------------------|
+    ...    |${SPACE}projects/another-project/regions/australia-southeast1/subnetworks/sn-01${SPACE}|${SPACE}another-project${SPACE}|${SPACE}nvidia-tesla-t4${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------------------------------------------------------------------------|-----------------|---------------------|
+    ...    |${SPACE}projects/another-project/regions/australia-southeast1/subnetworks/sn-01${SPACE}|${SPACE}another-project${SPACE}|${SPACE}nvidia-tesla-p4-vws${SPACE}|
+    ...    |-------------------------------------------------------------------------|-----------------|---------------------|
+    ...    |${SPACE}projects/another-project/regions/australia-southeast1/subnetworks/sn-01${SPACE}|${SPACE}another-project${SPACE}|${SPACE}nvidia-tesla-p4${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------------------------------------------------------------------------|-----------------|---------------------|
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    stdout=${CURDIR}/tmp/Select-Subquery-Join-With-Path-Parameters-inside-IN-Scalars-Plus-More-inside-WHERE-Clause-Returns-Expected-Result.tmp
+
 # This also tests passing integers in request body parameters
 Select Projection of CloudWatch Log Events Returns Expected Result
     Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test likely due to case sensitivity and incorrect XML property aliasing

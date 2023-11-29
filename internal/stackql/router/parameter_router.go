@@ -254,7 +254,8 @@ func (pr *standardParameterRouter) GetOnConditionDataFlows() (dataflow.Collectio
 						clonedParams := make(map[string]interface{})
 						for k2, v2 := range v.GetParameters() {
 							if k2 != k1 {
-								clonedParams[k1] = v2
+								val2 := v2
+								clonedParams[k2] = val2
 							}
 						}
 
