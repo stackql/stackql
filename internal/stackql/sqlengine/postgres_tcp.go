@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"regexp"
 	"sync"
 
 	"github.com/stackql/stackql/internal/stackql/db_util"
@@ -18,7 +19,8 @@ import (
 )
 
 var (
-	_ SQLEngine = &postgresTCPEngine{}
+	_             SQLEngine      = &postgresTCPEngine{}
+	prepStmtRegex *regexp.Regexp = regexp.MustCompile(`\$\d+`) //nolint:revive // preferred idiom
 )
 
 type postgresTCPEngine struct {
@@ -271,11 +273,28 @@ func (se postgresTCPEngine) CacheStorePut(key string, val []byte, tablespace str
 	return err
 }
 
+// TODO: fix upstream numbering system and remove this
+func (se postgresTCPEngine) bodgePrepStmt(s string) (string, bool) {
+	matches := prepStmtRegex.FindAllStringIndex(s, -1)
+	if len(matches) == 0 {
+		return s, false
+	}
+	prev := 0
+	rv := ""
+	for i, j := range matches {
+		rv = rv + s[prev:j[0]] + fmt.Sprintf("$%d", i+1)
+		prev = j[1]
+	}
+	rv += s[matches[len(matches)-1][1]:]
+	return rv, len(matches) > 0
+}
+
 func (se postgresTCPEngine) Query(query string, varArgs ...interface{}) (*sql.Rows, error) {
 	return se.query(query, varArgs...)
 }
 
 func (se postgresTCPEngine) query(query string, varArgs ...interface{}) (*sql.Rows, error) {
-	res, err := se.db.Query(query, varArgs...)
+	bodgedQuery, _ := se.bodgePrepStmt(query)
+	res, err := se.db.Query(bodgedQuery, varArgs...)
 	return res, err
 }
