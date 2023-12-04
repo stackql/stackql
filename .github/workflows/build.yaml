@@ -3,7 +3,7 @@ name: build
 on:
   push:
     tags:
-      - 'v*'
+      - 'testing-v*'
 
 env:
   GH_ACCESS_TOKEN: ${{ secrets.ACTIONS_PRIVATE_PACKAGE_SECRET }}
