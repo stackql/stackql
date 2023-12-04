@@ -1,0 +1,46 @@
+---
+project_name: stackql
+
+before:
+  hooks:
+    - go mod tidy
+    - go mod download
+    - go mod verify
+
+builds:
+  - id: stackql-windows
+    binary: stackql
+    main: ./stackql/
+    goos:
+      - windows
+    goarch:
+      - amd64
+    env:
+      - CGO_ENABLED=1
+      - CC=x86_64-w64-mingw32-gcc
+      - CXX=x86_64-w64-mingw32-g++
+    flags:
+      - -trimpath
+    ldflags: >-
+      -s -w
+      -X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion={{.Major}}
+      -X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion={{.Minor}}}
+      -X github.com/stackql/stackql/internal/stackql/cmd.BuildPatchVersion={{.Patch}}
+      -X github.com/stackql/stackql/internal/stackql/cmd.BuildCommitSHA={{.FullCommit}}
+      -X github.com/stackql/stackql/internal/stackql/cmd.BuildShortCommitSHA={{.ShortCommit}}
+      -X github.com/stackql/stackql/internal/stackql/cmd.BuildDate={{.Date}}
+      -X stackql/internal/stackql/planbuilder.PlanCacheEnabled=true
+      -X github.com/stackql/stackql/internal/stackql/cmd.BuildPlatform={{.Os}}
+
+archives:
+  - format: zip
+    name_template: "stackql_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    files:
+      - LICENSE
+      - README.md
+
+snapshot:
+  name_template: SNAPSHOT-{{ .ShortCommit }}
+
+checksum:
+  name_template: "stackql_windows_checksums.txt"
