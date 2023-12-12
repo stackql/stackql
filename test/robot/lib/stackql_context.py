@@ -359,12 +359,12 @@ STACKQL_PG_CLIENT_KEY_PATH_UNIX   :str = get_unix_path(STACKQL_PG_CLIENT_KEY_PAT
 STACKQL_PG_CLIENT_CERT_PATH_UNIX  :str = get_unix_path(STACKQL_PG_CLIENT_CERT_PATH)
 STACKQL_PG_RUBBISH_KEY_PATH  :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "test", "server", "mtls", "credentials", "pg_rubbish_key.pem"))
 STACKQL_PG_RUBBISH_CERT_PATH :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "test", "server", "mtls", "credentials", "pg_rubbish_cert.pem"))
-STACKQL_PG_SERVER_KEY_PATH_DOCKER   :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "vol", "srv", "credentials", "pg_server_key.pem"))
-STACKQL_PG_SERVER_CERT_PATH_DOCKER  :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "vol", "srv", "credentials", "pg_server_cert.pem"))
-STACKQL_PG_CLIENT_KEY_PATH_DOCKER   :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "vol", "srv", "credentials", "pg_client_key.pem"))
-STACKQL_PG_CLIENT_CERT_PATH_DOCKER  :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "vol", "srv", "credentials", "pg_client_cert.pem"))
-STACKQL_PG_RUBBISH_KEY_PATH_DOCKER  :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "vol", "srv", "credentials", "pg_rubbish_key.pem"))
-STACKQL_PG_RUBBISH_CERT_PATH_DOCKER :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "vol", "srv", "credentials", "pg_rubbish_cert.pem"))
+STACKQL_PG_SERVER_KEY_PATH_DOCKER   :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "cicd", "vol", "srv", "credentials", "pg_server_key.pem"))
+STACKQL_PG_SERVER_CERT_PATH_DOCKER  :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "cicd", "vol", "srv", "credentials", "pg_server_cert.pem"))
+STACKQL_PG_CLIENT_KEY_PATH_DOCKER   :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "cicd", "vol", "srv", "credentials", "pg_client_key.pem"))
+STACKQL_PG_CLIENT_CERT_PATH_DOCKER  :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "cicd", "vol", "srv", "credentials", "pg_client_cert.pem"))
+STACKQL_PG_RUBBISH_KEY_PATH_DOCKER  :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "cicd", "vol", "srv", "credentials", "pg_rubbish_key.pem"))
+STACKQL_PG_RUBBISH_CERT_PATH_DOCKER :str = os.path.abspath(os.path.join(REPOSITORY_ROOT, "cicd", "vol", "srv", "credentials", "pg_rubbish_cert.pem"))
 
 def get_sql_dialect_from_sql_backend_str(sql_backend_str :str) -> str:
   if sql_backend_str == 'postgres_tcp':

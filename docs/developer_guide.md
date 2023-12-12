@@ -73,7 +73,7 @@ At this stage, authentication config must be specified for each provider, even f
 
 If you want further auth types or discover bugs, please raise an issue.
 
-Examples are present [here](/examples/examples.md).
+Examples are present [here](/docs/examples/examples.md).
 
 
 ## Server mode
@@ -84,7 +84,7 @@ Examples are present [here](/examples/examples.md).
 - development of `stackql` itself.
 - development of use cases for the product.
 
-The `stackql` server leverages the `postgres` wire protocol and can be used with the `psql` client, including mTLS auth / encryption in transit.  Please see [the relevant examples](/examples/examples.md#running-in-server-mode) for further details.
+The `stackql` server leverages the `postgres` wire protocol and can be used with the `psql` client, including mTLS auth / encryption in transit.  Please see [the relevant examples](/docs/examples/examples.md#running-in-server-mode) for further details.
 
 ## Concurrency considerations
 
@@ -178,7 +178,7 @@ The linting of go files (and also Actions) for CI is defined in [.github/workflo
 To run the linter locally, first ensure you have the same version of `golangci-lint` as the CI and then either:
 
 -  `golangci-lint run` to dump everything to console, or...
--  `golangci-lint run > log/lint.log 2>&1` to send all output to `log/lint.log` (w.r.t repository root).
+-  `golangci-lint run > cicd/log/lint.log 2>&1` to send all output to `cicd/log/lint.log` (w.r.t repository root).
 
 ## Cross Compilation locally
 
@@ -212,14 +212,14 @@ Then, on OSX > 10, you will need to whitelist the executable for execution even 
 
 Then, run test commands, such as:
 ```
-~/Downloads/stackql --credentialsfilepath=$HOME/stackql/stackql-devel/keys/sa-key.json exec "select group_concat(substr(name, 0, 5)) || ' lalala' as cc from google.compute.disks where project = 'lab-kr-network-01' and zone = 'australia-southeast1-b';" -o text
+~/Downloads/stackql --credentialsfilepath=$HOME/stackql/stackql-devel/cicd/keys/sa-key.json exec "select group_concat(substr(name, 0, 5)) || ' lalala' as cc from google.compute.disks where project = 'lab-kr-network-01' and zone = 'australia-southeast1-b';" -o text
 ```
 
 ## Profiling
 
 
 ```
-time ./stackql exec --cpuprofile=./select-disks-improved-05.profile --auth='{ "google": { "credentialsfilepath": "'${HOME}'/stackql/stackql-devel/keys/sa-key.json" }, "okta": { "credentialsfilepath": "'${HOME}'/stackql/stackql-devel/keys/okta-token.txt", "type": "api_key" } } ' "select name from google.compute.disks where project = 'lab-kr-network-01' and zone = 'australia-southeast1-a';"
+time ./stackql exec --cpuprofile=./select-disks-improved-05.profile --auth='{ "google": { "credentialsfilepath": "'${HOME}'/stackql/stackql-devel/cicd/keys/sa-key.json" }, "okta": { "credentialsfilepath": "'${HOME}'/stackql/stackql-devel/cicd/keys/okta-token.txt", "type": "api_key" } } ' "select name from google.compute.disks where project = 'lab-kr-network-01' and zone = 'australia-southeast1-a';"
 ```
 
 

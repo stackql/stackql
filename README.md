@@ -30,8 +30,8 @@
 [contributing]: /CONTRIBUTING.md
 [discussions]: https://github.com/orgs/stackql/discussions
 <!-- repo assets -->
-[darkmodeterm]: /images/stackql-light-term.gif#gh-dark-mode-only
-[lightmodeterm]: /images/stackql-dark-term.gif#gh-light-mode-only
+[darkmodeterm]: /docs/images/stackql-light-term.gif#gh-dark-mode-only
+[lightmodeterm]: /docs/images/stackql-dark-term.gif#gh-light-mode-only
 <!-- misc links -->
 [twitter]: https://twitter.com/stackql
 
@@ -222,7 +222,7 @@ Contributions are welcome and encouraged.  For more information on how to contri
 
 ## License
 
-Distributed under the MIT License. See [`LICENSE`](https://github.com/stackql/stackql/blob/main/LICENSE) for more information.  Licenses for third party software we are using are included in the [/licenses](/licenses) directory.
+Distributed under the MIT License. See [`LICENSE`](https://github.com/stackql/stackql/blob/main/LICENSE) for more information.  Licenses for third party software we are using are included in the [/docs/licenses](/docs/licenses) directory.
 
 ## Contact
 
