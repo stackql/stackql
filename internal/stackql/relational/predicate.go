@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/stackql/go-openapistackql/openapistackql"
-
+	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql-parser/go/sqltypes"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql-parser/go/vt/vtgate/evalengine"
@@ -13,12 +12,12 @@ import (
 
 func AndTableFilters(
 	lhs,
-	rhs func(openapistackql.ITable) (openapistackql.ITable, error),
-) func(openapistackql.ITable) (openapistackql.ITable, error) {
+	rhs func(anysdk.ITable) (anysdk.ITable, error),
+) func(anysdk.ITable) (anysdk.ITable, error) {
 	if lhs == nil {
 		return rhs
 	}
-	return func(t openapistackql.ITable) (openapistackql.ITable, error) {
+	return func(t anysdk.ITable) (anysdk.ITable, error) {
 		lResult, lErr := lhs(t)
 		rResult, rErr := rhs(t)
 		if lErr != nil {
@@ -36,12 +35,12 @@ func AndTableFilters(
 
 func OrTableFilters(
 	lhs,
-	rhs func(openapistackql.ITable) (openapistackql.ITable, error),
-) func(openapistackql.ITable) (openapistackql.ITable, error) {
+	rhs func(anysdk.ITable) (anysdk.ITable, error),
+) func(anysdk.ITable) (anysdk.ITable, error) {
 	if lhs == nil {
 		return rhs
 	}
-	return func(t openapistackql.ITable) (openapistackql.ITable, error) {
+	return func(t anysdk.ITable) (anysdk.ITable, error) {
 		lResult, lErr := lhs(t)
 		rResult, rErr := rhs(t)
 		if lErr != nil {
@@ -62,8 +61,8 @@ func OrTableFilters(
 
 func ConstructTablePredicateFilter(
 	colName string, rhs sqltypes.Value,
-	operatorPredicate func(int) bool) func(openapistackql.ITable) (openapistackql.ITable, error) {
-	return func(row openapistackql.ITable) (openapistackql.ITable, error) {
+	operatorPredicate func(int) bool) func(anysdk.ITable) (anysdk.ITable, error) {
+	return func(row anysdk.ITable) (anysdk.ITable, error) {
 		v, e := row.GetKeyAsSqlVal(colName)
 		if e != nil {
 			return nil, e
@@ -78,8 +77,8 @@ func ConstructTablePredicateFilter(
 
 func ConstructLikePredicateFilter(
 	colName string,
-	rhs *regexp.Regexp, isNegating bool) func(openapistackql.ITable) (openapistackql.ITable, error) {
-	return func(row openapistackql.ITable) (openapistackql.ITable, error) {
+	rhs *regexp.Regexp, isNegating bool) func(anysdk.ITable) (anysdk.ITable, error) {
+	return func(row anysdk.ITable) (anysdk.ITable, error) {
 		v, vErr := row.GetKey(colName)
 		if vErr != nil {
 			return nil, vErr

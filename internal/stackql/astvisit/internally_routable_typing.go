@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 
-	"github.com/stackql/go-openapistackql/openapistackql"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -37,7 +37,7 @@ type standardInternallyRoutableTypingAstVisitor struct {
 	discoGenIDs          map[sqlparser.SQLNode]int
 	annotatedTabulations taxonomy.AnnotatedTabulationMap
 	columnNames          []parserutil.ColumnHandle
-	columnDescriptors    []openapistackql.ColumnDescriptor
+	columnDescriptors    []anysdk.ColumnDescriptor
 	relationalColumns    []typing.RelationalColumn
 	namespaceCollection  tablenamespace.Collection
 	formatter            sqlparser.NodeFormatter
@@ -119,11 +119,11 @@ func (v *standardInternallyRoutableTypingAstVisitor) getStarColumns(
 	for _, v := range colNames {
 		cols = append(cols, parserutil.NewUnaliasedColumnHandle(v))
 	}
-	var columnDescriptors []openapistackql.ColumnDescriptor
+	var columnDescriptors []anysdk.ColumnDescriptor
 	for _, col := range cols {
 		columnDescriptors = append(
 			columnDescriptors,
-			openapistackql.NewColumnDescriptor(
+			anysdk.NewColumnDescriptor(
 				col.Alias,
 				col.Name,
 				col.Qualifier,
@@ -535,7 +535,7 @@ func (v *standardInternallyRoutableTypingAstVisitor) Visit(node sqlparser.SQLNod
 			// 	broadcastType = v.getTypeFromParserType(expr.Type)
 			// default:
 			// }
-			// cd := openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, node, nil, col.Val)
+			// cd := anysdk.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, node, nil, col.Val)
 			// v.columnDescriptors = append(v.columnDescriptors, cd)
 			// relCol := v.dc.OpenapiColumnsToRelationalColumn(cd)
 			rv := typing.NewRelationalColumn(
@@ -609,7 +609,7 @@ func (v *standardInternallyRoutableTypingAstVisitor) Visit(node sqlparser.SQLNod
 		}
 		v.columnNames = append(v.columnNames, col)
 		ss, _ := schema.GetProperty(col.Name)
-		cd := openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, node, ss, col.Val)
+		cd := anysdk.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, node, ss, col.Val)
 		v.columnDescriptors = append(v.columnDescriptors, cd)
 		v.relationalColumns = append(v.relationalColumns, v.dc.OpenapiColumnsToRelationalColumn(cd))
 		if !node.As.IsEmpty() {

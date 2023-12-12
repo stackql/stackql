@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/discovery"
 	"github.com/stackql/stackql/internal/stackql/docparser"
@@ -18,9 +19,7 @@ import (
 
 	"github.com/stackql/stackql/pkg/sqltypeutil"
 
-	"github.com/stackql/go-openapistackql/openapistackql"
-
-	sdk_internal_dto "github.com/stackql/go-openapistackql/pkg/internaldto"
+	sdk_internal_dto "github.com/stackql/any-sdk/pkg/internaldto"
 
 	"net/http"
 	"regexp"
@@ -33,7 +32,7 @@ var (
 )
 
 type GenericProvider struct {
-	provider         openapistackql.Provider
+	provider         anysdk.Provider
 	runtimeCtx       dto.RuntimeCtx
 	currentService   string
 	discoveryAdapter discovery.IDiscoveryAdapter
@@ -60,7 +59,7 @@ func (gp *GenericProvider) GetServiceShard(
 	serviceKey string,
 	resourceKey string,
 	runtimeCtx dto.RuntimeCtx, //nolint:revive // future proofing
-) (openapistackql.Service, error) {
+) (anysdk.Service, error) {
 	return gp.discoveryAdapter.GetServiceShard(gp.provider, serviceKey, resourceKey)
 }
 
@@ -143,7 +142,7 @@ func (gp *GenericProvider) GetMethodForAction(
 	iqlAction string,
 	parameters parserutil.ColumnKeyedDatastore,
 	runtimeCtx dto.RuntimeCtx,
-) (openapistackql.OperationStore, string, error) {
+) (anysdk.OperationStore, string, error) {
 	rsc, err := gp.GetResource(serviceName, resourceName, runtimeCtx)
 	if err != nil {
 		return nil, "", err
@@ -156,7 +155,7 @@ func (gp *GenericProvider) GetFirstMethodForAction(
 	resourceName string,
 	iqlAction string,
 	runtimeCtx dto.RuntimeCtx,
-) (openapistackql.OperationStore, string, error) {
+) (anysdk.OperationStore, string, error) {
 	rsc, err := gp.GetResource(serviceName, resourceName, runtimeCtx)
 	if err != nil {
 		return nil, "", err
@@ -169,8 +168,8 @@ func (gp *GenericProvider) GetFirstMethodForAction(
 }
 
 func (gp *GenericProvider) InferDescribeMethod(
-	rsc openapistackql.Resource,
-) (openapistackql.OperationStore, string, error) {
+	rsc anysdk.Resource,
+) (anysdk.OperationStore, string, error) {
 	if rsc == nil {
 		return nil, "", fmt.Errorf("cannot infer describe method from nil resource")
 	}
@@ -187,7 +186,7 @@ func (gp *GenericProvider) GetObjectSchema(
 	serviceName string,
 	resourceName string,
 	schemaName string,
-) (openapistackql.Schema, error) {
+) (anysdk.Schema, error) {
 	svc, err := gp.GetServiceShard(serviceName, resourceName, gp.runtimeCtx)
 	if err != nil {
 		return nil, err
@@ -195,10 +194,10 @@ func (gp *GenericProvider) GetObjectSchema(
 	return svc.GetSchema(schemaName)
 }
 
-func (gp *GenericProvider) ShowAuth(authCtx *dto.AuthCtx) (*openapistackql.AuthMetadata, error) {
+func (gp *GenericProvider) ShowAuth(authCtx *dto.AuthCtx) (*anysdk.AuthMetadata, error) {
 	var err error
-	var retVal *openapistackql.AuthMetadata
-	var authObj openapistackql.AuthMetadata
+	var retVal *anysdk.AuthMetadata
+	var authObj anysdk.AuthMetadata
 	if authCtx == nil {
 		return nil, errors.New(constants.NotAuthenticatedShowStr) //nolint:stylecheck // happy with message
 	}
@@ -207,7 +206,7 @@ func (gp *GenericProvider) ShowAuth(authCtx *dto.AuthCtx) (*openapistackql.AuthM
 		var sa serviceAccount
 		sa, err = parseServiceAccountFile(authCtx)
 		if err == nil {
-			authObj = openapistackql.AuthMetadata{
+			authObj = anysdk.AuthMetadata{
 				Principal: sa.Email,
 				Type:      strings.ToUpper(dto.AuthServiceAccountStr),
 				Source:    authCtx.GetCredentialsSourceDescriptorString(),
@@ -220,7 +219,7 @@ func (gp *GenericProvider) ShowAuth(authCtx *dto.AuthCtx) (*openapistackql.AuthM
 		if sdkErr == nil {
 			principalStr := string(principal)
 			if principalStr != "" {
-				authObj = openapistackql.AuthMetadata{
+				authObj = anysdk.AuthMetadata{
 					Principal: principalStr,
 					Type:      strings.ToUpper(dto.AuthInteractiveStr),
 					Source:    "OAuth",
@@ -320,9 +319,9 @@ func (gp *GenericProvider) GetLikeableColumns(tableName string) []string {
 
 func (gp *GenericProvider) EnhanceMetadataFilter(
 	metadataType string,
-	metadataFilter func(openapistackql.ITable) (openapistackql.ITable, error),
+	metadataFilter func(anysdk.ITable) (anysdk.ITable, error),
 	colsVisited map[string]bool,
-) (func(openapistackql.ITable) (openapistackql.ITable, error), error) {
+) (func(anysdk.ITable) (anysdk.ITable, error), error) {
 	typeVisited, typeOk := colsVisited["type"]
 	preferredVisited, preferredOk := colsVisited["preferred"]
 	sqlTrue, sqlTrueErr := sqltypeutil.InterfaceToSQLType(true)
@@ -361,8 +360,8 @@ func (gp *GenericProvider) EnhanceMetadataFilter(
 	return metadataFilter, nil
 }
 
-func (gp *GenericProvider) getProviderServices() (map[string]openapistackql.ProviderService, error) {
-	retVal := make(map[string]openapistackql.ProviderService)
+func (gp *GenericProvider) getProviderServices() (map[string]anysdk.ProviderService, error) {
+	retVal := make(map[string]anysdk.ProviderService)
 	disDoc, err := gp.discoveryAdapter.GetServiceHandlesMap(gp.provider)
 	if err != nil {
 		return nil, err
@@ -377,7 +376,7 @@ func (gp *GenericProvider) getProviderServices() (map[string]openapistackql.Prov
 func (gp *GenericProvider) GetProviderServicesRedacted(
 	runtimeCtx dto.RuntimeCtx,
 	extended bool,
-) (map[string]openapistackql.ProviderService, error) {
+) (map[string]anysdk.ProviderService, error) {
 	return gp.getProviderServices()
 }
 
@@ -386,7 +385,7 @@ func (gp *GenericProvider) GetResourcesRedacted(
 	currentService string,
 	runtimeCtx dto.RuntimeCtx,
 	extended bool,
-) (map[string]openapistackql.Resource, error) {
+) (map[string]anysdk.Resource, error) {
 	svcDiscDocMap, err := gp.discoveryAdapter.GetResourcesMap(gp.provider, currentService)
 	return svcDiscDocMap, err
 }
@@ -415,7 +414,7 @@ func (gp *GenericProvider) GetCurrentService() string {
 func (gp *GenericProvider) GetResourcesMap(
 	serviceKey string,
 	runtimeCtx dto.RuntimeCtx,
-) (map[string]openapistackql.Resource, error) {
+) (map[string]anysdk.Resource, error) {
 	return gp.discoveryAdapter.GetResourcesMap(gp.provider, serviceKey)
 }
 
@@ -423,7 +422,7 @@ func (gp *GenericProvider) GetResource(
 	serviceKey string,
 	resourceKey string,
 	runtimeCtx dto.RuntimeCtx,
-) (openapistackql.Resource, error) {
+) (anysdk.Resource, error) {
 	svc, err := gp.GetServiceShard(serviceKey, resourceKey, runtimeCtx)
 	if err != nil {
 		return nil, err
@@ -435,14 +434,14 @@ func (gp *GenericProvider) GetProviderString() string {
 	return gp.provider.GetName()
 }
 
-func (gp *GenericProvider) GetProvider() (openapistackql.Provider, error) {
+func (gp *GenericProvider) GetProvider() (anysdk.Provider, error) {
 	if gp.provider == nil {
 		return nil, fmt.Errorf("nil provider object")
 	}
 	return gp.provider, nil
 }
 
-func (gp *GenericProvider) InferMaxResultsElement(openapistackql.OperationStore) sdk_internal_dto.HTTPElement {
+func (gp *GenericProvider) InferMaxResultsElement(anysdk.OperationStore) sdk_internal_dto.HTTPElement {
 	return sdk_internal_dto.NewHTTPElement(
 		sdk_internal_dto.QueryParam,
 		"maxResults",
@@ -480,7 +479,7 @@ func (gp *GenericProvider) InferNextPageRequestElement(ho internaldto.Heirarchy)
 
 func (gp *GenericProvider) getPaginationRequestTokenSemantic(
 	ho internaldto.Heirarchy,
-) (openapistackql.TokenSemantic, bool) {
+) (anysdk.TokenSemantic, bool) {
 	if ho.GetMethod() == nil {
 		return nil, false
 	}
@@ -489,7 +488,7 @@ func (gp *GenericProvider) getPaginationRequestTokenSemantic(
 
 func (gp *GenericProvider) getPaginationResponseTokenSemantic(
 	ho internaldto.Heirarchy,
-) (openapistackql.TokenSemantic, bool) {
+) (anysdk.TokenSemantic, bool) {
 	if ho.GetMethod() == nil {
 		return nil, false
 	}
@@ -517,7 +516,7 @@ func (gp *GenericProvider) InferNextPageResponseElement(ho internaldto.Heirarchy
 			sdk_internal_dto.Header,
 			"Link",
 		)
-		rv.SetTransformer(openapistackql.DefaultLinkHeaderTransformer)
+		rv.SetTransformer(anysdk.DefaultLinkHeaderTransformer)
 		return rv
 	default:
 		return sdk_internal_dto.NewHTTPElement(

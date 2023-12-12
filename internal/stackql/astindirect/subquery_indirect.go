@@ -1,7 +1,7 @@
 package astindirect
 
 import (
-	"github.com/stackql/go-openapistackql/openapistackql"
+	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
@@ -58,11 +58,11 @@ func (v *Subquery) GetColumns() []typing.ColumnMetadata {
 	return v.selCtx.GetNonControlColumns()
 }
 
-func (v *Subquery) GetOptionalParameters() map[string]openapistackql.Addressable {
+func (v *Subquery) GetOptionalParameters() map[string]anysdk.Addressable {
 	return nil
 }
 
-func (v *Subquery) GetRequiredParameters() map[string]openapistackql.Addressable {
+func (v *Subquery) GetRequiredParameters() map[string]anysdk.Addressable {
 	return nil
 }
 

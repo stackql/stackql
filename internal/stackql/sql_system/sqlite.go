@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/lib/pq/oid"
-	"github.com/stackql/go-openapistackql/openapistackql"
+	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/astfuncrewrite"
 	"github.com/stackql/stackql/internal/stackql/constants"
@@ -199,14 +199,14 @@ func (eng *sqLiteSystem) GCCollectObsoleted(minTransactionID int) error {
 
 func (eng *sqLiteSystem) RegisterExternalTable(
 	connectionName string,
-	tableDetails openapistackql.SQLExternalTable,
+	tableDetails anysdk.SQLExternalTable,
 ) error {
 	return eng.registerExternalTable(connectionName, tableDetails)
 }
 
 func (eng *sqLiteSystem) registerExternalTable(
 	connectionName string,
-	tableDetails openapistackql.SQLExternalTable,
+	tableDetails anysdk.SQLExternalTable,
 ) error {
 	q := `
 	INSERT OR IGNORE INTO "__iql__.external.columns" (

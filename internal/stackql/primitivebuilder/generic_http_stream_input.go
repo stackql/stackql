@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/stackql/go-openapistackql/openapistackql"
-	pkg_response "github.com/stackql/go-openapistackql/pkg/response"
+	"github.com/stackql/any-sdk/anysdk"
+	pkg_response "github.com/stackql/any-sdk/pkg/response"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
 	"github.com/stackql/stackql/internal/stackql/constants"
@@ -91,7 +91,7 @@ func (gh *genericHTTPStreamInput) GetTail() primitivegraph.PrimitiveNode {
 	return gh.root
 }
 
-func (gh *genericHTTPStreamInput) appendReversalData(prep openapistackql.HTTPPreparator) error {
+func (gh *genericHTTPStreamInput) appendReversalData(prep anysdk.HTTPPreparator) error {
 	return gh.reversalStream.Write(prep)
 }
 
@@ -199,7 +199,7 @@ func (gh *genericHTTPStreamInput) Build() error {
 		if mapsErr != nil {
 			return internaldto.NewErroneousExecutorOutput(mapsErr)
 		}
-		httpPreparator := openapistackql.NewHTTPPreparator(
+		httpPreparator := anysdk.NewHTTPPreparator(
 			pr,
 			svc,
 			m,

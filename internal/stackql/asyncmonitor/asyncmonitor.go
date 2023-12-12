@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/stackql/go-openapistackql/openapistackql"
+	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/httpmiddleware"
@@ -27,7 +27,7 @@ var (
 type IAsyncMonitor interface {
 	GetMonitorPrimitive(
 		prov provider.IProvider,
-		op openapistackql.OperationStore,
+		op anysdk.OperationStore,
 		precursor primitive.IPrimitive,
 		initialCtx primitive.IPrimitiveCtx,
 		comments sqlparser.CommentDirectives,
@@ -37,7 +37,7 @@ type IAsyncMonitor interface {
 type AsyncHTTPMonitorPrimitive struct {
 	handlerCtx          handler.HandlerContext
 	prov                provider.IProvider
-	op                  openapistackql.OperationStore
+	op                  anysdk.OperationStore
 	initialCtx          primitive.IPrimitiveCtx
 	precursor           primitive.IPrimitive
 	executor            func(pc primitive.IPrimitiveCtx, initalBody interface{}) internaldto.ExecutorOutput
@@ -123,7 +123,7 @@ func (pr *AsyncHTTPMonitorPrimitive) SetExecutor(_ func(pc primitive.IPrimitiveC
 func NewAsyncMonitor(
 	handlerCtx handler.HandlerContext,
 	prov provider.IProvider,
-	op openapistackql.OperationStore,
+	op anysdk.OperationStore,
 ) (IAsyncMonitor, error) {
 	//nolint:gocritic //TODO: refactor
 	switch prov.GetProviderString() {
@@ -138,7 +138,7 @@ func NewAsyncMonitor(
 func newGoogleAsyncMonitor(
 	handlerCtx handler.HandlerContext,
 	prov provider.IProvider,
-	op openapistackql.OperationStore,
+	op anysdk.OperationStore,
 	version string, //nolint:unparam // TODO: refactor
 ) (IAsyncMonitor, error) {
 	//nolint:gocritic //TODO: refactor
@@ -155,12 +155,12 @@ func newGoogleAsyncMonitor(
 type DefaultGoogleAsyncMonitor struct {
 	handlerCtx handler.HandlerContext
 	prov       provider.IProvider
-	op         openapistackql.OperationStore
+	op         anysdk.OperationStore
 }
 
 func (gm *DefaultGoogleAsyncMonitor) GetMonitorPrimitive(
 	prov provider.IProvider,
-	op openapistackql.OperationStore,
+	op anysdk.OperationStore,
 	precursor primitive.IPrimitive,
 	initialCtx primitive.IPrimitiveCtx,
 	comments sqlparser.CommentDirectives,
@@ -194,7 +194,7 @@ func getOperationDescriptor(body map[string]interface{}) string {
 //nolint:gocognit,funlen // review later
 func (gm *DefaultGoogleAsyncMonitor) getV1Monitor(
 	prov provider.IProvider,
-	op openapistackql.OperationStore,
+	op anysdk.OperationStore,
 	precursor primitive.IPrimitive,
 	initialCtx primitive.IPrimitiveCtx,
 	comments sqlparser.CommentDirectives,

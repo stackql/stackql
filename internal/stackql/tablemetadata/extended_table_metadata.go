@@ -4,12 +4,11 @@ import (
 	"fmt"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql/internal/stackql/astindirect"
 	"github.com/stackql/stackql/internal/stackql/datasource/sql_datasource"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/provider"
-
-	"github.com/stackql/go-openapistackql/openapistackql"
 )
 
 var (
@@ -18,31 +17,31 @@ var (
 
 type ExtendedTableMetadata interface {
 	GetAlias() string
-	GetGraphQL() (openapistackql.GraphQL, bool)
+	GetGraphQL() (anysdk.GraphQL, bool)
 	GetHeirarchyObjects() HeirarchyObjects
-	GetHTTPArmoury() (openapistackql.HTTPArmoury, error)
+	GetHTTPArmoury() (anysdk.HTTPArmoury, error)
 	GetInputTableName() (string, error)
-	GetMethod() (openapistackql.OperationStore, error)
+	GetMethod() (anysdk.OperationStore, error)
 	GetMethodStr() (string, error)
 	GetProvider() (provider.IProvider, error)
 	GetProviderStr() (string, error)
-	GetProviderObject() (openapistackql.Provider, error)
+	GetProviderObject() (anysdk.Provider, error)
 	GetQueryUniqueID() string
-	GetRequestSchema() (openapistackql.Schema, error)
-	GetOptionalParameters() map[string]openapistackql.Addressable
-	GetRequiredParameters() map[string]openapistackql.Addressable
-	GetResource() (openapistackql.Resource, error)
+	GetRequestSchema() (anysdk.Schema, error)
+	GetOptionalParameters() map[string]anysdk.Addressable
+	GetRequiredParameters() map[string]anysdk.Addressable
+	GetResource() (anysdk.Resource, error)
 	GetResourceStr() (string, error)
 	GetResponseSchemaStr() (string, error)
-	GetResponseSchemaAndMediaType() (openapistackql.Schema, string, error)
-	GetSelectableObjectSchema() (openapistackql.Schema, error)
+	GetResponseSchemaAndMediaType() (anysdk.Schema, string, error)
+	GetSelectableObjectSchema() (anysdk.Schema, error)
 	GetSelectItemsKey() string
-	GetSelectSchemaAndObjectPath() (openapistackql.Schema, string, error)
-	GetService() (openapistackql.Service, error)
+	GetSelectSchemaAndObjectPath() (anysdk.Schema, string, error)
+	GetService() (anysdk.Service, error)
 	GetServiceStr() (string, error)
 	GetSQLDataSource() (sql_datasource.SQLDataSource, bool)
 	GetStackQLTableName() (string, error)
-	GetTableFilter() func(openapistackql.ITable) (openapistackql.ITable, error)
+	GetTableFilter() func(anysdk.ITable) (anysdk.ITable, error)
 	GetTableName() (string, error)
 	GetUniqueID() string
 	IsLocallyExecutable() bool
@@ -53,8 +52,8 @@ type ExtendedTableMetadata interface {
 	LookupSelectItemsKey() string
 	SetSelectItemsKey(string)
 	SetSQLDataSource(sql_datasource.SQLDataSource)
-	SetTableFilter(f func(openapistackql.ITable) (openapistackql.ITable, error))
-	WithGetHTTPArmoury(f func() (openapistackql.HTTPArmoury, error)) ExtendedTableMetadata
+	SetTableFilter(f func(anysdk.ITable) (anysdk.ITable, error))
+	WithGetHTTPArmoury(f func() (anysdk.HTTPArmoury, error)) ExtendedTableMetadata
 	WithIndirect(astindirect.Indirect) ExtendedTableMetadata
 	WithResponseSchemaStr(rss string) (ExtendedTableMetadata, error)
 	IsPGInternalObject() bool
@@ -66,11 +65,11 @@ type ExtendedTableMetadata interface {
 }
 
 type standardExtendedTableMetadata struct {
-	tableFilter         func(openapistackql.ITable) (openapistackql.ITable, error)
+	tableFilter         func(anysdk.ITable) (anysdk.ITable, error)
 	colsVisited         map[string]bool
 	heirarchyObjects    HeirarchyObjects
 	isLocallyExecutable bool
-	getHTTPArmoury      func() (openapistackql.HTTPArmoury, error)
+	getHTTPArmoury      func() (anysdk.HTTPArmoury, error)
 	selectItemsKey      string
 	alias               string
 	inputTableName      string
@@ -175,36 +174,36 @@ func (ex *standardExtendedTableMetadata) SetSelectItemsKey(k string) {
 	ex.selectItemsKey = k
 }
 
-func (ex *standardExtendedTableMetadata) SetTableFilter(f func(openapistackql.ITable) (openapistackql.ITable, error)) {
+func (ex *standardExtendedTableMetadata) SetTableFilter(f func(anysdk.ITable) (anysdk.ITable, error)) {
 	ex.tableFilter = f
 }
 
-func (ex *standardExtendedTableMetadata) GetTableFilter() func(openapistackql.ITable) (openapistackql.ITable, error) {
+func (ex *standardExtendedTableMetadata) GetTableFilter() func(anysdk.ITable) (anysdk.ITable, error) {
 	return ex.tableFilter
 }
 
-func (ex *standardExtendedTableMetadata) GetGraphQL() (openapistackql.GraphQL, bool) {
+func (ex *standardExtendedTableMetadata) GetGraphQL() (anysdk.GraphQL, bool) {
 	if ex.heirarchyObjects.GetMethod() != nil && ex.heirarchyObjects.GetMethod().GetGraphQL() != nil {
 		return ex.heirarchyObjects.GetMethod().GetGraphQL(), true
 	}
 	return nil, false
 }
 
-func (ex *standardExtendedTableMetadata) GetRequiredParameters() map[string]openapistackql.Addressable {
+func (ex *standardExtendedTableMetadata) GetRequiredParameters() map[string]anysdk.Addressable {
 	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetMethod() == nil {
 		return nil
 	}
 	return ex.heirarchyObjects.GetMethod().GetRequiredParameters()
 }
 
-func (ex *standardExtendedTableMetadata) GetOptionalParameters() map[string]openapistackql.Addressable {
+func (ex *standardExtendedTableMetadata) GetOptionalParameters() map[string]anysdk.Addressable {
 	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetMethod() == nil {
 		return nil
 	}
 	return ex.heirarchyObjects.GetMethod().GetOptionalParameters()
 }
 
-func (ex *standardExtendedTableMetadata) GetHTTPArmoury() (openapistackql.HTTPArmoury, error) {
+func (ex *standardExtendedTableMetadata) GetHTTPArmoury() (anysdk.HTTPArmoury, error) {
 	if ex.getHTTPArmoury == nil {
 		return nil, fmt.Errorf("nil getHttpAroury() function in ExtendedTableMetadata object")
 	}
@@ -212,7 +211,7 @@ func (ex *standardExtendedTableMetadata) GetHTTPArmoury() (openapistackql.HTTPAr
 }
 
 func (ex *standardExtendedTableMetadata) WithGetHTTPArmoury(
-	f func() (openapistackql.HTTPArmoury, error),
+	f func() (anysdk.HTTPArmoury, error),
 ) ExtendedTableMetadata {
 	ex.getHTTPArmoury = f
 	return ex
@@ -267,50 +266,50 @@ func (ex *standardExtendedTableMetadata) GetProvider() (provider.IProvider, erro
 	return ex.heirarchyObjects.GetProvider(), nil
 }
 
-func (ex *standardExtendedTableMetadata) GetProviderObject() (openapistackql.Provider, error) {
+func (ex *standardExtendedTableMetadata) GetProviderObject() (anysdk.Provider, error) {
 	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetProvider() == nil {
 		return nil, fmt.Errorf("cannot resolve Provider object")
 	}
 	return ex.heirarchyObjects.GetProvider().GetProvider()
 }
 
-func (ex *standardExtendedTableMetadata) GetService() (openapistackql.Service, error) {
+func (ex *standardExtendedTableMetadata) GetService() (anysdk.Service, error) {
 	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetServiceHdl() == nil {
 		return nil, fmt.Errorf("cannot resolve ServiceHandle")
 	}
 	return ex.heirarchyObjects.GetServiceHdl(), nil
 }
 
-func (ex *standardExtendedTableMetadata) GetResource() (openapistackql.Resource, error) {
+func (ex *standardExtendedTableMetadata) GetResource() (anysdk.Resource, error) {
 	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetResource() == nil {
 		return nil, fmt.Errorf("cannot resolve Resource")
 	}
 	return ex.heirarchyObjects.GetResource(), nil
 }
 
-func (ex *standardExtendedTableMetadata) GetMethod() (openapistackql.OperationStore, error) {
+func (ex *standardExtendedTableMetadata) GetMethod() (anysdk.OperationStore, error) {
 	return ex.getMethod()
 }
 
-func (ex *standardExtendedTableMetadata) getMethod() (openapistackql.OperationStore, error) {
+func (ex *standardExtendedTableMetadata) getMethod() (anysdk.OperationStore, error) {
 	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetMethod() == nil {
 		return nil, fmt.Errorf("cannot resolve Method")
 	}
 	return ex.heirarchyObjects.GetMethod(), nil
 }
 
-func (ex *standardExtendedTableMetadata) GetSelectSchemaAndObjectPath() (openapistackql.Schema, string, error) {
+func (ex *standardExtendedTableMetadata) GetSelectSchemaAndObjectPath() (anysdk.Schema, string, error) {
 	return ex.heirarchyObjects.GetSelectSchemaAndObjectPath()
 }
 
-func (ex *standardExtendedTableMetadata) GetResponseSchemaAndMediaType() (openapistackql.Schema, string, error) {
+func (ex *standardExtendedTableMetadata) GetResponseSchemaAndMediaType() (anysdk.Schema, string, error) {
 	if ex.isSimple() {
 		return ex.heirarchyObjects.GetResponseSchemaAndMediaType()
 	}
 	return nil, "", fmt.Errorf("error extracting response schema and media type: views not yet supported")
 }
 
-func (ex *standardExtendedTableMetadata) GetRequestSchema() (openapistackql.Schema, error) {
+func (ex *standardExtendedTableMetadata) GetRequestSchema() (anysdk.Schema, error) {
 	return ex.heirarchyObjects.GetRequestSchema()
 }
 
@@ -375,7 +374,7 @@ func (ex *standardExtendedTableMetadata) GetInputTableName() (string, error) {
 	return ex.inputTableName, nil
 }
 
-func (ex *standardExtendedTableMetadata) GetSelectableObjectSchema() (openapistackql.Schema, error) {
+func (ex *standardExtendedTableMetadata) GetSelectableObjectSchema() (anysdk.Schema, error) {
 	return ex.heirarchyObjects.GetSelectableObjectSchema()
 }
 

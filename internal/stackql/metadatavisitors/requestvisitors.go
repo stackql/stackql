@@ -3,6 +3,7 @@ package metadatavisitors
 import (
 	"fmt"
 
+	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/logging"
 
@@ -10,8 +11,6 @@ import (
 	"strings"
 
 	"github.com/stackql/stackql/pkg/prettyprint"
-
-	"github.com/stackql/go-openapistackql/openapistackql"
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
@@ -24,6 +23,8 @@ const (
 	strType    = "string"
 	objectType = "object"
 	arrayType  = "array"
+	symLHS     = "<< "
+	symRHS     = " >>"
 )
 
 type TemplatedProduct interface {
@@ -127,8 +128,8 @@ func isBodyParam(paramName string) bool {
 //nolint:funlen,gocognit,revive // acceptable
 func ToInsertStatement(
 	columns sqlparser.Columns,
-	m openapistackql.OperationStore,
-	svc openapistackql.Service,
+	m anysdk.OperationStore,
+	svc anysdk.Service,
 	extended bool, prettyPrinter,
 	placeHolderPrettyPrinter *prettyprint.PrettyPrinter,
 	requiredOnly bool,
@@ -144,7 +145,7 @@ func ToInsertStatement(
 		}
 	}
 	if columns != nil {
-		paramsToInclude = make(map[string]openapistackql.Addressable)
+		paramsToInclude = make(map[string]anysdk.Addressable)
 		for _, col := range columns {
 			cName := col.GetRawVal()
 			if !isBodyParam(cName) {
@@ -235,9 +236,9 @@ func ToInsertStatement(
 
 //nolint:gocognit // acceptable
 func (sv *SchemaRequestTemplateVisitor) processSubSchemasMap(
-	sc openapistackql.Schema,
-	method openapistackql.OperationStore,
-	properties map[string]openapistackql.Schema,
+	sc anysdk.Schema,
+	method anysdk.OperationStore,
+	properties map[string]anysdk.Schema,
 ) (map[string]TemplatedProduct, error) {
 	retVal := make(map[string]TemplatedProduct)
 	for k, ss := range properties {
@@ -295,8 +296,8 @@ func (sv *SchemaRequestTemplateVisitor) processSubSchemasMap(
 }
 
 func (sv *SchemaRequestTemplateVisitor) RetrieveTemplate(
-	sc openapistackql.Schema,
-	method openapistackql.OperationStore,
+	sc anysdk.Schema,
+	method anysdk.OperationStore,
 	extended bool, //nolint:revive // TODO: review
 ) (map[string]TemplatedProduct, error) {
 	retVal := make(map[string]TemplatedProduct) //nolint:ineffassign,staticcheck,wastedassign // TODO: review
@@ -315,7 +316,7 @@ func (sv *SchemaRequestTemplateVisitor) RetrieveTemplate(
 		additionalProperties, additionalProprtiesExist := sc.GetAdditionalProperties()
 		if additionalProprtiesExist {
 			additionalProperties.SetKey("k1")
-			retVal, err = sv.processSubSchemasMap(sc, method, map[string]openapistackql.Schema{"k1": additionalProperties})
+			retVal, err = sv.processSubSchemasMap(sc, method, map[string]anysdk.Schema{"k1": additionalProperties})
 		}
 		if len(retVal) == 0 {
 			return nil, nil //nolint:nilnil // TODO: review
@@ -327,8 +328,8 @@ func (sv *SchemaRequestTemplateVisitor) RetrieveTemplate(
 
 //nolint:funlen,gocognit // acceptable
 func (sv *SchemaRequestTemplateVisitor) retrieveTemplateVal(
-	sc openapistackql.Schema,
-	svc openapistackql.Service, //nolint:unparam // TODO: review
+	sc anysdk.Schema,
+	svc anysdk.Service, //nolint:unparam // TODO: review
 	objectKey string,
 	localSchemaVisitedMap map[string]bool,
 ) (interface{}, error) {
@@ -428,8 +429,8 @@ func (sv *SchemaRequestTemplateVisitor) retrieveTemplateVal(
 
 //nolint:funlen,gocognit // acceptable
 func (sv *SchemaRequestTemplateVisitor) retrieveJsonnetPlaceholderVal(
-	sc openapistackql.Schema,
-	svc openapistackql.Service, //nolint:unparam // TODO: review
+	sc anysdk.Schema,
+	svc anysdk.Service, //nolint:unparam // TODO: review
 	objectKey string,
 	localSchemaVisitedMap map[string]bool,
 ) (interface{}, error) {
@@ -464,7 +465,7 @@ func (sv *SchemaRequestTemplateVisitor) retrieveJsonnetPlaceholderVal(
 			}
 			if ss != nil && ((ss.GetType() != arrayType) || !sv.isVisited(ss.GetTitle(), propertyLocalSchemaVisitedMap)) {
 				if propertyLocalSchemaVisitedMap[ss.GetTitle()] {
-					return "<< " + templateValName + " >>", nil
+					return symLHS + templateValName + symRHS, nil
 				}
 				propertyLocalSchemaVisitedMap[ss.GetTitle()] = true
 				sv, svErr := sv.retrieveJsonnetPlaceholderVal(ss, svc, templateValName+"."+k, propertyLocalSchemaVisitedMap)
@@ -519,13 +520,13 @@ func (sv *SchemaRequestTemplateVisitor) retrieveJsonnetPlaceholderVal(
 		}
 		return arr, nil
 	case strType:
-		return "<< " + templateValName + " >>", nil
+		return symLHS + templateValName + symRHS, nil
 	default:
-		return "<< " + templateValName + " >>", nil
+		return symLHS + templateValName + symRHS, nil
 	}
 }
 
-func getAdditionalStuff(ss openapistackql.Schema, templateValName string) string {
+func getAdditionalStuff(ss anysdk.Schema, templateValName string) string {
 	valBase := fmt.Sprintf("{{ %s[0].val }}", templateValName)
 	switch ss.GetType() {
 	case strType:
@@ -537,7 +538,7 @@ func getAdditionalStuff(ss openapistackql.Schema, templateValName string) string
 	}
 }
 
-func getAdditionalStuffPlaceholder(ss openapistackql.Schema, templateValName string) string {
+func getAdditionalStuffPlaceholder(ss anysdk.Schema, templateValName string) string {
 	valBase := fmt.Sprintf("<< %s[0].val >>", templateValName)
 	switch ss.GetType() {
 	case strType:

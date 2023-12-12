@@ -8,8 +8,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/stackql/go-openapistackql/openapistackql"
-	"github.com/stackql/go-openapistackql/pkg/nomenclature"
+	"github.com/stackql/any-sdk/anysdk"
+	"github.com/stackql/any-sdk/pkg/nomenclature"
 	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/bundle"
 	"github.com/stackql/stackql/internal/stackql/constants"
@@ -54,7 +54,7 @@ type HandlerContext interface { //nolint:revive // don't mind stuttering this on
 	GetControlAttributes() sqlcontrol.ControlAttributes
 	GetCurrentProvider() string
 	GetAuthContexts() map[string]*dto.AuthCtx
-	GetRegistry() openapistackql.RegistryAPI
+	GetRegistry() anysdk.RegistryAPI
 	GetErrorPresentation() string
 	GetOutfile() io.Writer
 	GetOutErrFile() io.Writer
@@ -101,7 +101,7 @@ type standardHandlerContext struct {
 	currentProvider     string
 	authContexts        map[string]*dto.AuthCtx
 	sqlDataSources      map[string]sql_datasource.SQLDataSource
-	registry            openapistackql.RegistryAPI
+	registry            anysdk.RegistryAPI
 	errorPresentation   string
 	outfile             io.Writer
 	outErrFile          io.Writer
@@ -162,13 +162,13 @@ func (hc *standardHandlerContext) GetAuthContexts() map[string]*dto.AuthCtx {
 	return hc.authContexts
 }
 
-func (hc *standardHandlerContext) GetRegistry() openapistackql.RegistryAPI { return hc.registry }
-func (hc *standardHandlerContext) GetErrorPresentation() string            { return hc.errorPresentation }
-func (hc *standardHandlerContext) GetOutfile() io.Writer                   { return hc.outfile }
-func (hc *standardHandlerContext) GetOutErrFile() io.Writer                { return hc.outErrFile }
-func (hc *standardHandlerContext) GetLRUCache() *lrucache.LRUCache         { return hc.lRUCache }
-func (hc *standardHandlerContext) GetSQLEngine() sqlengine.SQLEngine       { return hc.sqlEngine }
-func (hc *standardHandlerContext) GetSQLSystem() sql_system.SQLSystem      { return hc.sqlSystem }
+func (hc *standardHandlerContext) GetRegistry() anysdk.RegistryAPI    { return hc.registry }
+func (hc *standardHandlerContext) GetErrorPresentation() string       { return hc.errorPresentation }
+func (hc *standardHandlerContext) GetOutfile() io.Writer              { return hc.outfile }
+func (hc *standardHandlerContext) GetOutErrFile() io.Writer           { return hc.outErrFile }
+func (hc *standardHandlerContext) GetLRUCache() *lrucache.LRUCache    { return hc.lRUCache }
+func (hc *standardHandlerContext) GetSQLEngine() sqlengine.SQLEngine  { return hc.sqlEngine }
+func (hc *standardHandlerContext) GetSQLSystem() sql_system.SQLSystem { return hc.sqlSystem }
 func (hc *standardHandlerContext) GetGarbageCollector() garbagecollector.GarbageCollector {
 	return hc.garbageCollector
 }
@@ -186,7 +186,7 @@ func (hc *standardHandlerContext) GetPGInternalRouter() dbmsinternal.Router {
 	return hc.pgInternalRouter
 }
 
-func getProviderMap(providerName string, providerDesc openapistackql.ProviderDescription) map[string]interface{} {
+func getProviderMap(providerName string, providerDesc anysdk.ProviderDescription) map[string]interface{} {
 	latestVersion, err := providerDesc.GetLatestVersion()
 	if err != nil {
 		//nolint:lll // long message
@@ -201,7 +201,7 @@ func getProviderMap(providerName string, providerDesc openapistackql.ProviderDes
 
 func getProviderMapExtended(
 	providerName string,
-	providerDesc openapistackql.ProviderDescription,
+	providerDesc anysdk.ProviderDescription,
 ) map[string]interface{} {
 	return getProviderMap(providerName, providerDesc)
 }
@@ -379,12 +379,12 @@ func (hc *standardHandlerContext) GetDBMSInternalRouter() dbmsinternal.Router {
 	return hc.pgInternalRouter
 }
 
-func GetRegistry(runtimeCtx dto.RuntimeCtx) (openapistackql.RegistryAPI, error) {
+func GetRegistry(runtimeCtx dto.RuntimeCtx) (anysdk.RegistryAPI, error) {
 	return getRegistry(runtimeCtx)
 }
 
-func getRegistry(runtimeCtx dto.RuntimeCtx) (openapistackql.RegistryAPI, error) {
-	var rc openapistackql.RegistryConfig
+func getRegistry(runtimeCtx dto.RuntimeCtx) (anysdk.RegistryAPI, error) {
+	var rc anysdk.RegistryConfig
 	err := yaml.Unmarshal([]byte(runtimeCtx.RegistryRaw), &rc)
 	if err != nil {
 		return nil, err
@@ -397,7 +397,7 @@ func getRegistry(runtimeCtx dto.RuntimeCtx) (openapistackql.RegistryAPI, error) 
 		}
 	}
 	rt := netutils.GetRoundTripper(runtimeCtx, nil)
-	return openapistackql.NewRegistry(rc, rt)
+	return anysdk.NewRegistry(rc, rt)
 }
 
 func (hc *standardHandlerContext) Clone() HandlerContext {
@@ -482,7 +482,7 @@ func GetHandlerCtx(
 	return &rv, nil
 }
 
-func transformOpenapiStackqlAuthToLocal(authDTO openapistackql.AuthDTO) *dto.AuthCtx {
+func transformOpenapiStackqlAuthToLocal(authDTO anysdk.AuthDTO) *dto.AuthCtx {
 	return &dto.AuthCtx{
 		Scopes:                  authDTO.GetScopes(),
 		Type:                    authDTO.GetType(),

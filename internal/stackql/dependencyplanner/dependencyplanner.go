@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/stackql/go-openapistackql/openapistackql"
-	"github.com/stackql/go-openapistackql/pkg/media"
+	"github.com/stackql/any-sdk/anysdk"
+	"github.com/stackql/any-sdk/pkg/media"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/astindirect"
@@ -314,7 +314,7 @@ func (dp *standardDependencyPlanner) processOrphan(
 		return nil, nil, err
 	}
 	_, isSQLDataSource := annotationCtx.GetTableMeta().GetSQLDataSource()
-	var opStore openapistackql.OperationStore
+	var opStore anysdk.OperationStore
 	if !isSQLDataSource {
 		opStore, err = annotationCtx.GetTableMeta().GetMethod()
 		if err != nil {

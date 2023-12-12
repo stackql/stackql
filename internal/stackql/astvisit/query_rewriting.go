@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 
-	"github.com/stackql/go-openapistackql/openapistackql"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -46,7 +46,7 @@ type standardQueryRewriteAstVisitor struct {
 	secondaryCtrlCounters []internaldto.TxnControlCounters
 	colRefs               parserutil.ColTableMap
 	columnNames           []parserutil.ColumnHandle
-	columnDescriptors     []openapistackql.ColumnDescriptor
+	columnDescriptors     []anysdk.ColumnDescriptor
 	relationalColumns     []typing.RelationalColumn
 	tableSlice            []tableinsertioncontainer.TableInsertionContainer
 	namespaceCollection   tablenamespace.Collection
@@ -124,16 +124,16 @@ func (v *standardQueryRewriteAstVisitor) getNextAlias() string {
 }
 
 func (v *standardQueryRewriteAstVisitor) generateServerVarColumnDescriptor(
-	k string, m openapistackql.OperationStore) openapistackql.ColumnDescriptor {
+	k string, m anysdk.OperationStore) anysdk.ColumnDescriptor {
 	sc := openapi3.NewSchema()
 	sc.Type = "string"
-	schema := openapistackql.NewSchema(
+	schema := anysdk.NewSchema(
 		sc,
 		m.GetService(),
 		"",
 		"",
 	)
-	colDesc := openapistackql.NewColumnDescriptor(
+	colDesc := anysdk.NewColumnDescriptor(
 		"",
 		k,
 		"",
@@ -177,11 +177,11 @@ func (v *standardQueryRewriteAstVisitor) getStarColumns(
 		existingColumns[v] = struct{}{}
 		cols = append(cols, parserutil.NewUnaliasedColumnHandle(v))
 	}
-	var columnDescriptors []openapistackql.ColumnDescriptor
+	var columnDescriptors []anysdk.ColumnDescriptor
 	for _, col := range cols {
 		columnDescriptors = append(
 			columnDescriptors,
-			openapistackql.NewColumnDescriptor(
+			anysdk.NewColumnDescriptor(
 				col.Alias,
 				col.Name,
 				col.Qualifier,
@@ -261,7 +261,7 @@ func (v *standardQueryRewriteAstVisitor) GetTableMap() taxonomy.TblMap {
 	return v.tables
 }
 
-func (v *standardQueryRewriteAstVisitor) GetColumnDescriptors() []openapistackql.ColumnDescriptor {
+func (v *standardQueryRewriteAstVisitor) GetColumnDescriptors() []anysdk.ColumnDescriptor {
 	return v.columnDescriptors
 }
 
@@ -663,7 +663,7 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 				col.Alias = v.getNextAlias()
 			}
 			v.columnNames = append(v.columnNames, col)
-			cd := openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, node, nil, col.Val)
+			cd := anysdk.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, node, nil, col.Val)
 			v.columnDescriptors = append(v.columnDescriptors, cd)
 			v.relationalColumns = append(v.relationalColumns, v.dc.OpenapiColumnsToRelationalColumn(cd))
 			return nil
@@ -736,7 +736,7 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		}
 		v.columnNames = append(v.columnNames, col)
 		ss, _ := schema.GetProperty(col.Name)
-		cd := openapistackql.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, node, ss, col.Val)
+		cd := anysdk.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, node, ss, col.Val)
 		v.columnDescriptors = append(v.columnDescriptors, cd)
 		v.relationalColumns = append(v.relationalColumns, v.dc.OpenapiColumnsToRelationalColumn(cd))
 		if !node.As.IsEmpty() {

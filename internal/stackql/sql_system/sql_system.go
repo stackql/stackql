@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/stackql/go-openapistackql/openapistackql"
+	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/astformat"
 	"github.com/stackql/stackql/internal/stackql/astfuncrewrite"
@@ -108,7 +108,7 @@ type SQLSystem interface {
 		varargs ...any) error
 
 	// External SQL data sources
-	RegisterExternalTable(connectionName string, tableDetails openapistackql.SQLExternalTable) error
+	RegisterExternalTable(connectionName string, tableDetails anysdk.SQLExternalTable) error
 	ObtainRelationalColumnFromExternalSQLtable(
 		hierarchyIDs internaldto.HeirarchyIdentifiers,
 		colName string,

@@ -3,9 +3,8 @@ package primitivebuilder
 import (
 	"fmt"
 
+	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
-
-	"github.com/stackql/go-openapistackql/openapistackql"
 )
 
 type Builder interface {
@@ -26,7 +25,7 @@ func castItemsArray(iArr interface{}) ([]map[string]interface{}, error) {
 			item, ok := iArr[i].(map[string]interface{})
 			if !ok {
 				if iArr[i] != nil {
-					item = map[string]interface{}{openapistackql.AnonymousColumnName: iArr[i]}
+					item = map[string]interface{}{anysdk.AnonymousColumnName: iArr[i]}
 				} else {
 					item = nil
 				}

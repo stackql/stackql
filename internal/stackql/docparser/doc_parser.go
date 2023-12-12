@@ -3,6 +3,7 @@ package docparser
 import (
 	"fmt"
 
+	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
@@ -11,8 +12,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"github.com/stackql/stackql/internal/stackql/typing"
 	"github.com/stackql/stackql/internal/stackql/util"
-
-	"github.com/stackql/go-openapistackql/openapistackql"
 
 	"strings"
 )
@@ -34,7 +33,7 @@ func TranslateServiceKeyIqlToGenericProvider(serviceKey string) string {
 }
 
 func OpenapiStackQLTabulationsPersistor(
-	m openapistackql.OperationStore,
+	m anysdk.OperationStore,
 	tabluationsAnnotated []util.AnnotatedTabulation,
 	dbEngine sqlengine.SQLEngine,
 	prefix string,

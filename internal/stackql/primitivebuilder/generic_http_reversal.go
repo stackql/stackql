@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/stackql/go-openapistackql/openapistackql"
-	pkg_response "github.com/stackql/go-openapistackql/pkg/response"
+	"github.com/stackql/any-sdk/anysdk"
+	pkg_response "github.com/stackql/any-sdk/pkg/response"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
 	"github.com/stackql/stackql/internal/stackql/drm"
@@ -27,7 +27,7 @@ type genericHTTPReversal struct {
 	handlerCtx        handler.HandlerContext
 	drmCfg            drm.Config
 	root              primitivegraph.PrimitiveNode
-	op                openapistackql.OperationStore
+	op                anysdk.OperationStore
 	commentDirectives sqlparser.CommentDirectives
 	isAwait           bool
 	verb              string // may be "insert" or "update"

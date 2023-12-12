@@ -6,12 +6,11 @@ import (
 
 	"encoding/json"
 
+	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/provider"
-
-	"github.com/stackql/go-openapistackql/openapistackql"
 )
 
 type requestBodyParam struct {
@@ -57,13 +56,13 @@ func parseRequestBodyParam(k string, v interface{}) *requestBodyParam {
 	return nil
 }
 
-//nolint:gocognit,revive // not super complex
+//nolint:revive // not super complex
 func SplitHTTPParameters(
 	prov provider.IProvider,
 	sqlParamMap map[int]map[string]interface{},
-	method openapistackql.OperationStore,
-) ([]openapistackql.HttpParameters, error) {
-	var retVal []openapistackql.HttpParameters
+	method anysdk.OperationStore,
+) ([]anysdk.HttpParameters, error) {
+	var retVal []anysdk.HttpParameters
 	var rowKeys []int
 	requestSchema, _ := method.GetRequestBodySchema()
 	responseSchema, _ := method.GetRequestBodySchema()
@@ -73,7 +72,7 @@ func SplitHTTPParameters(
 	sort.Ints(rowKeys)
 	for _, key := range rowKeys {
 		sqlRow := sqlParamMap[key]
-		reqMap := openapistackql.NewHttpParameters(method)
+		reqMap := anysdk.NewHttpParameters(method)
 		for k, v := range sqlRow {
 			if param, ok := method.GetOperationParameter(k); ok {
 				reqMap.StoreParameter(param, v)

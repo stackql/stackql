@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/relationaldto"
@@ -20,8 +21,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"github.com/stackql/stackql/internal/stackql/typing"
 	"github.com/stackql/stackql/internal/stackql/util"
-
-	"github.com/stackql/go-openapistackql/openapistackql"
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
@@ -45,7 +44,7 @@ type Config interface {
 	) (map[string]map[string]interface{}, map[int]map[int]interface{})
 	GetCurrentTable(internaldto.HeirarchyIdentifiers) (internaldto.DBTable, error)
 	GetRelationalType(string) string
-	GenerateDDL(util.AnnotatedTabulation, openapistackql.OperationStore, int, bool) ([]string, error)
+	GenerateDDL(util.AnnotatedTabulation, anysdk.OperationStore, int, bool) ([]string, error)
 	GetControlAttributes() sqlcontrol.ControlAttributes
 	GetGolangValue(string) interface{}
 	GetGolangSlices([]typing.ColumnMetadata) ([]interface{}, []string)
@@ -55,7 +54,7 @@ type Config interface {
 	GetTable(internaldto.HeirarchyIdentifiers, int) (internaldto.DBTable, error)
 	GenerateInsertDML(
 		util.AnnotatedTabulation,
-		openapistackql.OperationStore,
+		anysdk.OperationStore,
 		internaldto.TxnControlCounters,
 	) (PreparedStatementCtx, error)
 	GenerateSelectDML(
@@ -65,8 +64,8 @@ type Config interface {
 		string,
 	) (PreparedStatementCtx, error)
 	ExecuteInsertDML(sqlengine.SQLEngine, PreparedStatementCtx, map[string]interface{}, string) (sql.Result, error)
-	OpenapiColumnsToRelationalColumns(cols []openapistackql.ColumnDescriptor) []typing.RelationalColumn
-	OpenapiColumnsToRelationalColumn(col openapistackql.ColumnDescriptor) typing.RelationalColumn
+	OpenapiColumnsToRelationalColumns(cols []anysdk.ColumnDescriptor) []typing.RelationalColumn
+	OpenapiColumnsToRelationalColumn(col anysdk.ColumnDescriptor) typing.RelationalColumn
 	QueryDML(sqlmachinery.Querier, PreparedStatementParameterized) (*sql.Rows, error)
 	ExecDDL(
 		querier sqlmachinery.ExecQuerier,
@@ -115,7 +114,7 @@ func (dc *staticDRMConfig) GetTable(
 }
 
 func (dc *staticDRMConfig) OpenapiColumnsToRelationalColumns(
-	cols []openapistackql.ColumnDescriptor,
+	cols []anysdk.ColumnDescriptor,
 ) []typing.RelationalColumn {
 	var relationalColumns []typing.RelationalColumn
 	for _, col := range cols {
@@ -155,7 +154,7 @@ func (dc *staticDRMConfig) ToExternalSQLRelationalColumn(
 }
 
 func (dc *staticDRMConfig) OpenapiColumnsToRelationalColumn(
-	col openapistackql.ColumnDescriptor,
+	col anysdk.ColumnDescriptor,
 ) typing.RelationalColumn {
 	var typeStr string
 	schemaExists := false
@@ -431,7 +430,7 @@ func (dc *staticDRMConfig) genRelationalTableFromExternalSQLTable(
 
 func (dc *staticDRMConfig) genRelationalTable(
 	tabAnn util.AnnotatedTabulation,
-	m openapistackql.OperationStore,
+	m anysdk.OperationStore,
 	discoveryGenerationID int,
 ) (relationaldto.RelationalTable, error) {
 	tableName, err := dc.getTableName(tabAnn.GetHeirarchyIdentifiers(), discoveryGenerationID)
@@ -467,7 +466,7 @@ func (dc *staticDRMConfig) genRelationalTable(
 
 func (dc *staticDRMConfig) GenerateDDL(
 	tabAnn util.AnnotatedTabulation,
-	m openapistackql.OperationStore,
+	m anysdk.OperationStore,
 	discoveryGenerationID int,
 	dropTable bool,
 ) ([]string, error) {
@@ -481,7 +480,7 @@ func (dc *staticDRMConfig) GenerateDDL(
 //nolint:gocritic,govet // defer fix
 func (dc *staticDRMConfig) GenerateInsertDML(
 	tabAnnotated util.AnnotatedTabulation,
-	method openapistackql.OperationStore,
+	method anysdk.OperationStore,
 	tcc internaldto.TxnControlCounters,
 ) (PreparedStatementCtx, error) {
 	var columns []typing.ColumnMetadata

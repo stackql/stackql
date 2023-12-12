@@ -3,14 +3,13 @@ package taxonomy
 import (
 	"fmt"
 
+	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql/internal/stackql/astformat"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
-
-	"github.com/stackql/go-openapistackql/openapistackql"
 
 	"strings"
 
@@ -235,7 +234,7 @@ func GetHeirarchyFromStatement(
 		hIds = hIds.WithView(viewDTO) //nolint:staticcheck,wastedassign // TODO: fix this
 		return retVal, nil
 	}
-	var method openapistackql.OperationStore
+	var method anysdk.OperationStore
 	switch node.(type) {
 	case *sqlparser.Exec, *sqlparser.ExecSubquery:
 		method, err = rsc.FindMethod(hIds.GetMethodStr())
@@ -259,7 +258,7 @@ func GetHeirarchyFromStatement(
 		if methodAction == "" {
 			methodAction = "select"
 		}
-		var meth openapistackql.OperationStore
+		var meth anysdk.OperationStore
 		var methStr string
 		if getFirstAvailableMethod {
 			meth, methStr, err = prov.GetFirstMethodForAction( //nolint:staticcheck,ineffassign,wastedassign // TODO: fix this

@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/stackql/go-openapistackql/openapistackql"
+	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -100,22 +100,22 @@ func NewShowInstructionExecutor(
 	tbl tablemetadata.ExtendedTableMetadata,
 	handlerCtx handler.HandlerContext,
 	commentDirectives sqlparser.CommentDirectives,
-	tableFilter func(openapistackql.ITable,
-	) (openapistackql.ITable, error),
+	tableFilter func(anysdk.ITable,
+	) (anysdk.ITable, error),
 ) internaldto.ExecutorOutput {
 	extended := strings.TrimSpace(strings.ToUpper(node.Extended)) == "EXTENDED"
 	nodeTypeUpperCase := strings.ToUpper(node.Type)
 	var keys map[string]map[string]interface{}
 	var columnOrder []string
 	var err error
-	var filter func(interface{}) (openapistackql.ITable, error)
+	var filter func(interface{}) (anysdk.ITable, error)
 	logging.GetLogger().Infoln(fmt.Sprintf("filter type = %T", filter))
 	switch nodeTypeUpperCase {
 	case "AUTH":
 		logging.GetLogger().Infoln(fmt.Sprintf("Show For node.Type = '%s'", node.Type))
 		authCtx, authErr := handlerCtx.GetAuthContext(prov.GetProviderString())
 		if authErr == nil {
-			var authMeta *openapistackql.AuthMetadata
+			var authMeta *anysdk.AuthMetadata
 			authMeta, err = prov.ShowAuth(authCtx)
 			if err == nil {
 				keys = map[string]map[string]interface{}{
@@ -175,7 +175,7 @@ func NewShowInstructionExecutor(
 			},
 		}
 	case "METHODS":
-		var rsc openapistackql.Resource
+		var rsc anysdk.Resource
 		rsc, err = prov.GetResource(
 			node.OnTable.Qualifier.GetRawVal(),
 			node.OnTable.Name.GetRawVal(),
@@ -185,7 +185,7 @@ func NewShowInstructionExecutor(
 				handlerCtx.GetTypingConfig()))
 		}
 		methods := rsc.GetMethodsMatched()
-		var filter func(openapistackql.ITable) (openapistackql.ITable, error)
+		var filter func(anysdk.ITable) (anysdk.ITable, error)
 		if tbl == nil {
 			logging.GetLogger().Infoln(
 				"table and therefore filter not found for AST, shall procede nil filter")
@@ -235,14 +235,14 @@ func NewShowInstructionExecutor(
 				handlerCtx.GetTypingConfig(),
 			)
 		}
-		var resources map[string]openapistackql.Resource
+		var resources map[string]anysdk.Resource
 		resources, err = prov.GetResourcesRedacted(svcName, handlerCtx.GetRuntimeContext(), extended)
 		if err != nil {
 			return prepareErroneousResultSet(keys, columnOrder, err,
 				handlerCtx.GetTypingConfig())
 		}
-		columnOrder = openapistackql.GetResourcesHeader(extended)
-		var filter func(openapistackql.ITable) (openapistackql.ITable, error)
+		columnOrder = anysdk.GetResourcesHeader(extended)
+		var filter func(anysdk.ITable) (anysdk.ITable, error)
 		filter = tableFilter
 		resources, err = filterResources(resources, filter)
 		if err != nil {
@@ -262,14 +262,14 @@ func NewShowInstructionExecutor(
 				prov.GetProviderString(),
 			),
 		)
-		var services map[string]openapistackql.ProviderService
+		var services map[string]anysdk.ProviderService
 		services, err = prov.GetProviderServicesRedacted(handlerCtx.GetRuntimeContext(), extended)
 		if err != nil {
 			return prepareErroneousResultSet(keys, columnOrder, err,
 				handlerCtx.GetTypingConfig(),
 			)
 		}
-		columnOrder = openapistackql.GetServicesHeader(extended)
+		columnOrder = anysdk.GetServicesHeader(extended)
 		services, err = filterServices(services, tableFilter, handlerCtx.GetRuntimeContext().UseNonPreferredAPIs)
 		if err != nil {
 			return prepareErroneousResultSet(keys, columnOrder, err,
@@ -283,16 +283,16 @@ func NewShowInstructionExecutor(
 
 //nolint:errcheck // future proofing
 func filterResources(
-	resources map[string]openapistackql.Resource,
-	tableFilter func(openapistackql.ITable) (openapistackql.ITable, error),
-) (map[string]openapistackql.Resource, error) {
+	resources map[string]anysdk.Resource,
+	tableFilter func(anysdk.ITable) (anysdk.ITable, error),
+) (map[string]anysdk.Resource, error) {
 	var err error
 	if tableFilter != nil {
-		filteredResources := make(map[string]openapistackql.Resource)
+		filteredResources := make(map[string]anysdk.Resource)
 		for k, rsc := range resources {
 			filteredResource, filterErr := tableFilter(rsc)
 			if filterErr == nil && filteredResource != nil {
-				filteredResources[k] = filteredResource.(openapistackql.Resource)
+				filteredResources[k] = filteredResource.(anysdk.Resource)
 			}
 			if filterErr != nil {
 				err = filterErr
@@ -303,7 +303,7 @@ func filterResources(
 	return resources, err
 }
 
-func getProviderServiceMap(item openapistackql.ProviderService, extended bool) map[string]interface{} {
+func getProviderServiceMap(item anysdk.ProviderService, extended bool) map[string]interface{} {
 	retVal := map[string]interface{}{
 		"id":    item.GetID(),
 		"name":  item.GetName(),
@@ -317,7 +317,7 @@ func getProviderServiceMap(item openapistackql.ProviderService, extended bool) m
 }
 
 func convertProviderServicesToMap(
-	services map[string]openapistackql.ProviderService,
+	services map[string]anysdk.ProviderService,
 	extended bool,
 ) map[string]map[string]interface{} {
 	retVal := make(map[string]map[string]interface{})
@@ -328,19 +328,19 @@ func convertProviderServicesToMap(
 }
 
 func filterServices(
-	services map[string]openapistackql.ProviderService,
-	tableFilter func(openapistackql.ITable) (openapistackql.ITable, error),
+	services map[string]anysdk.ProviderService,
+	tableFilter func(anysdk.ITable) (anysdk.ITable, error),
 	useNonPreferredAPIs bool,
-) (map[string]openapistackql.ProviderService, error) {
+) (map[string]anysdk.ProviderService, error) {
 	var err error
 	//nolint:nestif // TODO: refactor
 	if tableFilter != nil {
-		filteredServices := make(map[string]openapistackql.ProviderService)
+		filteredServices := make(map[string]anysdk.ProviderService)
 		for k, svc := range services {
 			if useNonPreferredAPIs || svc.IsPreferred() {
 				filteredService, filterErr := tableFilter(svc)
 				if filterErr == nil && filteredService != nil {
-					filteredServices[k] = (filteredService.(openapistackql.ProviderService))
+					filteredServices[k] = (filteredService.(anysdk.ProviderService))
 				}
 				if filterErr != nil {
 					err = filterErr
@@ -353,12 +353,12 @@ func filterServices(
 }
 
 func filterMethods(
-	methods openapistackql.Methods,
-	tableFilter func(openapistackql.ITable) (openapistackql.ITable, error),
-) (openapistackql.Methods, error) {
+	methods anysdk.Methods,
+	tableFilter func(anysdk.ITable) (anysdk.ITable, error),
+) (anysdk.Methods, error) {
 	var err error
 	if tableFilter != nil {
-		filteredMethods := make(openapistackql.Methods)
+		filteredMethods := make(anysdk.Methods)
 		for k, m := range methods {
 			pm := m
 			filteredMethod, filterErr := tableFilter(&pm)
@@ -403,7 +403,7 @@ func NewDescribeTableInstructionExecutor(
 	if err != nil {
 		return internaldto.NewErroneousExecutorOutput(err)
 	}
-	columnOrder := openapistackql.GetDescribeHeader(extended)
+	columnOrder := anysdk.GetDescribeHeader(extended)
 	descriptionMap := schema.ToDescriptionMap(extended)
 	keys := make(map[string]map[string]interface{})
 	for k, v := range descriptionMap {
@@ -433,7 +433,7 @@ func NewDescribeViewInstructionExecutor(
 	extended bool,
 	full bool,
 ) internaldto.ExecutorOutput {
-	columnOrder := openapistackql.GetDescribeHeader(extended)
+	columnOrder := anysdk.GetDescribeHeader(extended)
 	descriptionMap := columnsToFlatDescriptionMap(nonControlColumns, extended)
 	keys := make(map[string]map[string]interface{})
 	for k, v := range descriptionMap {

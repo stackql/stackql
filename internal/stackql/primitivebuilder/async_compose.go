@@ -1,7 +1,7 @@
 package primitivebuilder
 
 import (
-	"github.com/stackql/go-openapistackql/openapistackql"
+	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/asyncmonitor"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -14,7 +14,7 @@ func composeAsyncMonitor(
 	handlerCtx handler.HandlerContext,
 	precursor primitive.IPrimitive,
 	prov provider.IProvider,
-	method openapistackql.OperationStore,
+	method anysdk.OperationStore,
 	commentDirectives sqlparser.CommentDirectives,
 ) (primitive.IPrimitive, error) {
 	asm, err := asyncmonitor.NewAsyncMonitor(handlerCtx, prov, method)

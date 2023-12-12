@@ -19,7 +19,6 @@ var (
 	}
 )
 
-//nolint:gocognit // tactical
 func PostgresSelectExprsFormatter(buf *sqlparser.TrackedBuffer, node sqlparser.SQLNode) {
 	switch node := node.(type) {
 	case *sqlparser.ColName:

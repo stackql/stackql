@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/stackql/go-openapistackql/pkg/graphql"
+	"github.com/stackql/any-sdk/pkg/graphql"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/httpmiddleware"

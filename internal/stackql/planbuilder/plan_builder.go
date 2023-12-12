@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/stackql/go-openapistackql/openapistackql"
+	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/routeanalysis"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -620,7 +620,7 @@ func (pgb *standardPlanGraphBuilder) handleRegistry(
 						pbi.GetHandlerCtx().GetTypingConfig()))
 			case "list":
 				var colz []string
-				var provz map[string]openapistackql.ProviderDescription
+				var provz map[string]anysdk.ProviderDescription
 				keys := make(map[string]map[string]interface{})
 				if node.ProviderId == "" {
 					provz, err = reg.ListAllAvailableProviders()
