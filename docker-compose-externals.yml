@@ -21,7 +21,7 @@ services:
     image: postgres:14.5-bullseye
     hostname: postgres_stackql
     volumes:
-      - ./vol/postgres/setup:/docker-entrypoint-initdb.d:ro
+      - ./cicd/vol/postgres/setup:/docker-entrypoint-initdb.d:ro
     environment:
       - POSTGRES_PASSWORD=stackql
     ports:

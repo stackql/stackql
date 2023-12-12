@@ -1,0 +1,43 @@
+id: azuread
+name: azuread
+version: v00.00.00000
+providerServices:
+  applications:
+    id: 'applications:v00.00.00000'
+    name: applications
+    preferred: true
+    service:
+      $ref: azuread/v00.00.00000/services/applications.yaml
+    title: OData Service For Namespace Microsoft.Graph - Applications
+    version: v00.00.00000
+    description: Applications
+  groups:
+    id: 'groups:v00.00.00000'
+    name: groups
+    preferred: true
+    service:
+      $ref: azuread/v00.00.00000/services/groups.yaml
+    title: OData Service For Namespace Microsoft.Graph - Groups
+    version: v00.00.00000
+    description: Groups
+  service_principals:
+    id: 'service_principals:v00.00.00000'
+    name: service_principals
+    preferred: true
+    service:
+      $ref: azuread/v00.00.00000/services/service_principals.yaml
+    title: OData Service For Namespace Microsoft.Graph - Service Principals
+    version: v00.00.00000
+    description: ServicePrincipals
+  users:
+    id: 'users:v00.00.00000'
+    name: users
+    preferred: true
+    service:
+      $ref: azuread/v00.00.00000/services/users.yaml
+    title: OData Service For Namespace Microsoft.Graph - Users
+    version: v00.00.00000
+    description: Users
+config:
+  auth:
+    type: azure_default

@@ -10,7 +10,6 @@ on:
     paths-ignore:
       - "**/*.md"
       - "docs/**"
-      - "examples/**"
       - "licenses/**"
   pull_request:
     branches:
@@ -98,7 +97,7 @@ jobs:
 
     - name: Install Python dependencies
       run: |
-        pip3 install -r requirements.txt
+        pip3 install -r cicd/requirements.txt
 
     
     - name: Generate rewritten registry for simulations
@@ -127,7 +126,7 @@ jobs:
         GOPRIVATE: ${{env.GOPRIVATE}}
       run: |
         git config --global url.https://$env:GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
-        $Version = convertfrom-stringdata (get-content ./version.txt -raw)
+        $Version = convertfrom-stringdata (get-content ./cicd/version.txt -raw)
         $BuildMajorVersion = $Version.'MajorVersion'
         $BuildMinorVersion = $Version.'MinorVersion'
 
@@ -239,7 +238,7 @@ jobs:
 
     - name: Install Python dependencies
       run: |
-        pip3 install -r requirements.txt
+        pip3 install -r cicd/requirements.txt
     
     - name: Generate rewritten registry for simulations
       run: |
@@ -262,7 +261,7 @@ jobs:
         CGO_ENABLED: 1
         CGO_LDFLAGS: '-static'
       run: |
-        source version.txt
+        source cicd/version.txt
         export BUILDMAJORVERSION="$MajorVersion"
         export BUILDMINORVERSION="$MinorVersion"
         if [[ ! "$BUILDBRANCH" == "*develop" ]]
@@ -395,7 +394,7 @@ jobs:
 
     - shell: wsl-bash -u root {0}
       name: Install Python dependencies
-      run: pip3 install -r requirements.txt
+      run: pip3 install -r cicd/requirements.txt
     
     - shell: wsl-bash {0}
       name: Generate rewritten registry for simulations
@@ -419,7 +418,7 @@ jobs:
     - shell: wsl-bash {0}
       name: Run robot mocked functional tests
       run: |
-          . version.txt
+          . cicd/version.txt
           export BUILDBRANCH="${{github.ref}}"
           export BUILDPATCHVERSION="${{github.run_number}}"
           export BUILDMAJORVERSION=$MajorVersion
@@ -447,7 +446,7 @@ jobs:
       env:
         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }} 
       run: |
-          . version.txt
+          . cicd/version.txt
           export AZURE_CLIENT_ID='${{ secrets.AZURE_CLIENT_ID }}'
           export AZURE_CLIENT_SECRET='${{ secrets.AZURE_CLIENT_SECRET }}'
           export AZURE_INTEGRATION_TESTING_SUB_ID='${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}'
@@ -498,7 +497,7 @@ jobs:
 
     - name: Install Python dependencies
       run: |
-        pip3 install -r requirements.txt
+        pip3 install -r cicd/requirements.txt
     
     - name: Generate rewritten registry for simulations
       run: |
@@ -521,7 +520,7 @@ jobs:
         BUILDPATCHVERSION: ${{github.run_number}}
         CGO_ENABLED: 1
       run: |
-        source version.txt
+        source cicd/version.txt
         export BUILDMAJORVERSION="$MajorVersion"
         export BUILDMINORVERSION="$MinorVersion"
         if [[ ! "$BUILDBRANCH" == "*develop" ]]
@@ -643,7 +642,7 @@ jobs:
         BUILDPATCHVERSION: ${{github.run_number}}
         CGO_ENABLED: 1
       run: |
-        source version.txt
+        source cicd/version.txt
         export BUILDMAJORVERSION="$MajorVersion"
         export BUILDMINORVERSION="$MinorVersion"
         if [[ ! "$BUILDBRANCH" == "*develop" ]]
@@ -720,7 +719,7 @@ jobs:
 
     - name: Install Python dependencies
       run: |
-        pip3 install -r requirements.txt
+        pip3 install -r cicd/requirements.txt
     
     - name: Extract Build Info and Persist
       env:
@@ -729,7 +728,7 @@ jobs:
         BUILDPLATFORM: ${{runner.os}}
         BUILDPATCHVERSION: ${{github.run_number}}
       run: |
-        source version.txt
+        source cicd/version.txt
         BUILDMAJORVERSION=${MajorVersion}
         BUILDMINORVERSION=${MinorVersion}
         if [[ ! "$BUILDBRANCH" == "*develop" ]]; then
@@ -772,9 +771,9 @@ jobs:
         openssl req -x509 -keyout test/server/mtls/credentials/pg_server_key.pem -out test/server/mtls/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
         openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
         openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365 
-        openssl req -x509 -keyout vol/srv/credentials/pg_server_key.pem -out  vol/srv/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
-        openssl req -x509 -keyout vol/srv/credentials/pg_client_key.pem -out  vol/srv/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
-        openssl req -x509 -keyout vol/srv/credentials/pg_rubbish_key.pem -out vol/srv/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout cicd/vol/srv/credentials/pg_server_key.pem -out  cicd/vol/srv/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout cicd/vol/srv/credentials/pg_client_key.pem -out  cicd/vol/srv/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout cicd/vol/srv/credentials/pg_rubbish_key.pem -out cicd/vol/srv/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365
 
     - name: Build image
       run: |

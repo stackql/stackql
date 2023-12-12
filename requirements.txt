@@ -1,5 +1,0 @@
-psycopg2-binary
-psycopg[binary]
-PyYaml
-robotframework
-sqlalchemy==1.4.44

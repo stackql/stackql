@@ -19,13 +19,13 @@ We include an example integration for a simple Provider, `publicapis`.
 
 This is a yaml or json document which contains Provider metadata and reference(s) to any Service document(s) through which it will expose functionality.
 
-Example as per [examples/registry/src/publicapis/v1/provider.yaml](/examples/registry/src/publicapis/v1/provider.yaml).
+Example as per [docs/examples/registry/src/publicapis/v1/provider.yaml](/docs/examples/registry/src/publicapis/v1/provider.yaml).
 
 ### 2. Create at least one Service definition document.
 
 This is an [openapi document spec](https://swagger.io/specification/) in either yaml or json format, **plus** a legal annotation `components.x-stackQL-resources`, which defines the Resource portion of the `stackql` heirarchy.
 
-Example as per [examples/registry/src/publicapis/v1/services/api-v1.yaml](/examples/registry/src/publicapis/v1/services/api-v1.yaml).
+Example as per [docs/examples/registry/src/publicapis/v1/services/api-v1.yaml](/docs/examples/registry/src/publicapis/v1/services/api-v1.yaml).
 
 
 ### 3. Run `stackql` with config to support local Provider development.
@@ -55,7 +55,7 @@ The assumptions for this walkthrough are:
 Registry access config:
 
 ```bash
-PROVIDER_REGISTRY_ROOT_DIR="$(pwd)/../examples/registry"
+PROVIDER_REGISTRY_ROOT_DIR="$(pwd)/../docs/examples/registry"
 
 REG_STR='{ "url": "file://'${PROVIDER_REGISTRY_ROOT_DIR}'", "localDocRoot": "'${PROVIDER_REGISTRY_ROOT_DIR}'",  "verifyConfig": {"nopVerify": true } }'
 ```
