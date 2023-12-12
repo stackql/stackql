@@ -2,20 +2,20 @@ package util
 
 import (
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/stackql/go-openapistackql/openapistackql"
+	"github.com/stackql/any-sdk/anysdk"
 )
 
 type TableSchemaAnalyzer interface {
 	GetColumns() ([]Column, error)
-	GetColumnDescriptors(AnnotatedTabulation) ([]openapistackql.ColumnDescriptor, error)
+	GetColumnDescriptors(AnnotatedTabulation) ([]anysdk.ColumnDescriptor, error)
 }
 
 type simpleTableSchemaAnalyzer struct {
-	s openapistackql.Schema
-	m openapistackql.OperationStore
+	s anysdk.Schema
+	m anysdk.OperationStore
 }
 
-func NewTableSchemaAnalyzer(s openapistackql.Schema, m openapistackql.OperationStore) TableSchemaAnalyzer {
+func NewTableSchemaAnalyzer(s anysdk.Schema, m anysdk.OperationStore) TableSchemaAnalyzer {
 	return &simpleTableSchemaAnalyzer{
 		s: s,
 		m: m,
@@ -75,16 +75,16 @@ func (ta *simpleTableSchemaAnalyzer) GetColumns() ([]Column, error) {
 }
 
 func (ta *simpleTableSchemaAnalyzer) generateServerVarColumnDescriptor(
-	k string, m openapistackql.OperationStore) openapistackql.ColumnDescriptor {
+	k string, m anysdk.OperationStore) anysdk.ColumnDescriptor {
 	sc := openapi3.NewSchema()
 	sc.Type = "string"
-	schema := openapistackql.NewSchema(
+	schema := anysdk.NewSchema(
 		sc,
 		m.GetService(),
 		"",
 		"",
 	)
-	colDesc := openapistackql.NewColumnDescriptor(
+	colDesc := anysdk.NewColumnDescriptor(
 		"",
 		k,
 		"",
@@ -99,9 +99,9 @@ func (ta *simpleTableSchemaAnalyzer) generateServerVarColumnDescriptor(
 //nolint:gocognit,nestif // tactical
 func (ta *simpleTableSchemaAnalyzer) GetColumnDescriptors(
 	tabAnnotated AnnotatedTabulation,
-) ([]openapistackql.ColumnDescriptor, error) {
+) ([]anysdk.ColumnDescriptor, error) {
 	existingColumns := make(map[string]struct{})
-	var rv []openapistackql.ColumnDescriptor
+	var rv []anysdk.ColumnDescriptor
 	for _, col := range tabAnnotated.GetTabulation().GetColumns() {
 		colName := col.GetName()
 		existingColumns[colName] = struct{}{}
@@ -117,7 +117,7 @@ func (ta *simpleTableSchemaAnalyzer) GetColumnDescriptors(
 		}
 		existingColumns[k] = struct{}{}
 		schema, _ := col.GetSchema()
-		colDesc := openapistackql.NewColumnDescriptor(
+		colDesc := anysdk.NewColumnDescriptor(
 			"",
 			k,
 			"",

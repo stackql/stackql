@@ -3,6 +3,7 @@ package primitivecomposer
 import (
 	"fmt"
 
+	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
@@ -16,8 +17,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 	"github.com/stackql/stackql/internal/stackql/typing"
-
-	"github.com/stackql/go-openapistackql/openapistackql"
 
 	"github.com/stackql/stackql/pkg/txncounter"
 
@@ -53,7 +52,7 @@ type PrimitiveComposer interface {
 	GetSymbol(k interface{}) (symtab.Entry, error)
 	GetSymTab() symtab.SymTab
 	GetTable(node sqlparser.SQLNode) (tablemetadata.ExtendedTableMetadata, error)
-	GetTableFilter() func(openapistackql.ITable) (openapistackql.ITable, error)
+	GetTableFilter() func(anysdk.ITable) (anysdk.ITable, error)
 	GetTables() taxonomy.TblMap
 	GetTxnCounterManager() txncounter.Manager
 	GetTxnCtrlCtrs() internaldto.TxnControlCounters
@@ -84,7 +83,7 @@ type PrimitiveComposer interface {
 	SetSymTab(symtab.SymTab)
 	MergeSymTab(symtab.SymTab, string) error
 	SetTable(node sqlparser.SQLNode, table tablemetadata.ExtendedTableMetadata)
-	SetTableFilter(tableFilter func(openapistackql.ITable) (openapistackql.ITable, error))
+	SetTableFilter(tableFilter func(anysdk.ITable) (anysdk.ITable, error))
 	SetTxnCtrlCtrs(tc internaldto.TxnControlCounters)
 	SetUnionSelectPreparedStatementCtx(ctx drm.PreparedStatementCtx)
 	SetValOnlyCols(m map[int]map[string]interface{})
@@ -113,7 +112,7 @@ type standardPrimitiveComposer struct {
 
 	// needed globally for non-heirarchy queries, such as "SHOW SERVICES FROM google;"
 	prov            provider.IProvider
-	tableFilter     func(openapistackql.ITable) (openapistackql.ITable, error)
+	tableFilter     func(anysdk.ITable) (anysdk.ITable, error)
 	colsVisited     map[string]bool
 	likeAbleColumns []string
 
@@ -253,7 +252,7 @@ func (pb *standardPrimitiveComposer) AssignParameters() (internaldto.TableParame
 		}
 		tbVisited[tb] = struct{}{}
 		tbID := tb.GetUniqueID()
-		var reqParams, tblOptParams map[string]openapistackql.Addressable
+		var reqParams, tblOptParams map[string]anysdk.Addressable
 		if view, isView := tb.GetIndirect(); isView {
 			// TODO: fill this out
 			assignedParams, ok := view.GetAssignedParameters()
@@ -411,12 +410,12 @@ func (pb *standardPrimitiveComposer) SetColVisited(colname string, isVisited boo
 	pb.colsVisited[colname] = isVisited
 }
 
-func (pb *standardPrimitiveComposer) GetTableFilter() func(openapistackql.ITable) (openapistackql.ITable, error) {
+func (pb *standardPrimitiveComposer) GetTableFilter() func(anysdk.ITable) (anysdk.ITable, error) {
 	return pb.tableFilter
 }
 
 func (pb *standardPrimitiveComposer) SetTableFilter(
-	tableFilter func(openapistackql.ITable) (openapistackql.ITable, error)) {
+	tableFilter func(anysdk.ITable) (anysdk.ITable, error)) {
 	pb.tableFilter = tableFilter
 }
 

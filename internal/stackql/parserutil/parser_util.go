@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/stackql/go-openapistackql/openapistackql"
+	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql/internal/stackql/astformat"
 	"github.com/stackql/stackql/internal/stackql/logging"
 
@@ -366,7 +366,7 @@ func ExtractSleepDuration(statement *sqlparser.Sleep) (int, error) {
 	return retVal, fmt.Errorf("sleep definition inadequate")
 }
 
-func CheckColUsagesAgainstTable(colUsages []ColumnUsageMetadata, table openapistackql.OperationStore) error {
+func CheckColUsagesAgainstTable(colUsages []ColumnUsageMetadata, table anysdk.OperationStore) error {
 	for _, colUsage := range colUsages {
 		param, ok := table.GetParameter(colUsage.ColName.Name.GetRawVal())
 		if ok {
@@ -599,12 +599,12 @@ func getDecoratedColRendition(baseDecoratedColumn, alias string) string {
 
 func CheckSQLParserTypeVsServiceColumn(
 	colUsage ColumnUsageMetadata) error {
-	return CheckSQLParserTypeVsColumn(colUsage, openapistackql.ServiceConditionIsValid)
+	return CheckSQLParserTypeVsColumn(colUsage, anysdk.ServiceConditionIsValid)
 }
 
 func CheckSQLParserTypeVsResourceColumn(
 	colUsage ColumnUsageMetadata) error {
-	return CheckSQLParserTypeVsColumn(colUsage, openapistackql.ResourceConditionIsValid)
+	return CheckSQLParserTypeVsColumn(colUsage, anysdk.ResourceConditionIsValid)
 }
 
 //nolint:gomnd // TODO: remove this

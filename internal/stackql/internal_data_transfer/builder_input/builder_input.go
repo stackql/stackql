@@ -1,7 +1,7 @@
 package builder_input //nolint:revive,stylecheck // permissable deviation from norm
 
 import (
-	"github.com/stackql/go-openapistackql/openapistackql"
+	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -28,8 +28,8 @@ type BuilderInput interface {
 	GetParserNode() (sqlparser.SQLNode, bool)
 	GetProvider() (provider.IProvider, bool)
 	SetProvider(provider.IProvider)
-	GetOperationStore() (openapistackql.OperationStore, bool)
-	SetOperationStore(op openapistackql.OperationStore)
+	GetOperationStore() (anysdk.OperationStore, bool)
+	SetOperationStore(op anysdk.OperationStore)
 	IsAwait() bool
 	GetVerb() string
 	GetInputAlias() string
@@ -68,7 +68,7 @@ type builderInput struct {
 	node              sqlparser.SQLNode
 	paramMapStream    streaming.MapStream
 	httpPrepStream    http_preparator_stream.HttpPreparatorStream
-	op                openapistackql.OperationStore
+	op                anysdk.OperationStore
 	prov              provider.IProvider
 	annotatedAst      annotatedast.AnnotatedAst
 	isTargetPhysical  bool
@@ -121,11 +121,11 @@ func (bi *builderInput) SetProvider(prov provider.IProvider) {
 	bi.prov = prov
 }
 
-func (bi *builderInput) GetOperationStore() (openapistackql.OperationStore, bool) {
+func (bi *builderInput) GetOperationStore() (anysdk.OperationStore, bool) {
 	return bi.op, bi.op != nil
 }
 
-func (bi *builderInput) SetOperationStore(op openapistackql.OperationStore) {
+func (bi *builderInput) SetOperationStore(op anysdk.OperationStore) {
 	bi.op = op
 }
 

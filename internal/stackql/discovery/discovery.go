@@ -3,37 +3,37 @@ package discovery
 import (
 	"fmt"
 
+	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql/internal/stackql/docparser"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"gopkg.in/yaml.v2"
 
-	"github.com/stackql/go-openapistackql/openapistackql"
-	"github.com/stackql/go-openapistackql/pkg/nomenclature"
+	"github.com/stackql/any-sdk/pkg/nomenclature"
 )
 
 type IDiscoveryStore interface {
-	ProcessProviderDiscoveryDoc(string, string) (openapistackql.Provider, error)
+	ProcessProviderDiscoveryDoc(string, string) (anysdk.Provider, error)
 	processResourcesDiscoveryDoc(
-		openapistackql.Provider,
-		openapistackql.ProviderService,
-		string) (openapistackql.ResourceRegister, error)
-	PersistServiceShard(openapistackql.Provider, openapistackql.ProviderService, string) (openapistackql.Service, error)
+		anysdk.Provider,
+		anysdk.ProviderService,
+		string) (anysdk.ResourceRegister, error)
+	PersistServiceShard(anysdk.Provider, anysdk.ProviderService, string) (anysdk.Service, error)
 }
 
 type TTLDiscoveryStore struct {
 	sqlSystem  sql_system.SQLSystem
 	runtimeCtx dto.RuntimeCtx
-	registry   openapistackql.RegistryAPI
+	registry   anysdk.RegistryAPI
 }
 
 type IDiscoveryAdapter interface {
-	GetResourcesMap(prov openapistackql.Provider, serviceKey string) (map[string]openapistackql.Resource, error)
-	GetServiceShard(prov openapistackql.Provider, serviceKey, resourceKey string) (openapistackql.Service, error)
-	GetServiceHandlesMap(prov openapistackql.Provider) (map[string]openapistackql.ProviderService, error)
-	GetServiceHandle(prov openapistackql.Provider, serviceKey string) (openapistackql.ProviderService, error)
-	GetProvider(providerKey string) (openapistackql.Provider, error)
-	PersistStaticExternalSQLDataSource(prov openapistackql.Provider) error
+	GetResourcesMap(prov anysdk.Provider, serviceKey string) (map[string]anysdk.Resource, error)
+	GetServiceShard(prov anysdk.Provider, serviceKey, resourceKey string) (anysdk.Service, error)
+	GetServiceHandlesMap(prov anysdk.Provider) (map[string]anysdk.ProviderService, error)
+	GetServiceHandle(prov anysdk.Provider, serviceKey string) (anysdk.ProviderService, error)
+	GetProvider(providerKey string) (anysdk.Provider, error)
+	PersistStaticExternalSQLDataSource(prov anysdk.Provider) error
 	getDicoveryStore() IDiscoveryStore
 }
 
@@ -42,7 +42,7 @@ type BasicDiscoveryAdapter struct {
 	apiDiscoveryDocURL string
 	discoveryStore     IDiscoveryStore
 	runtimeCtx         *dto.RuntimeCtx
-	registry           openapistackql.RegistryAPI
+	registry           anysdk.RegistryAPI
 	sqlSystem          sql_system.SQLSystem
 }
 
@@ -51,7 +51,7 @@ func NewBasicDiscoveryAdapter(
 	apiDiscoveryDocURL string,
 	discoveryStore IDiscoveryStore,
 	runtimeCtx *dto.RuntimeCtx,
-	registry openapistackql.RegistryAPI,
+	registry anysdk.RegistryAPI,
 	sqlSystem sql_system.SQLSystem,
 ) IDiscoveryAdapter {
 	return &BasicDiscoveryAdapter{
@@ -69,28 +69,28 @@ func (adp *BasicDiscoveryAdapter) getDicoveryStore() IDiscoveryStore {
 }
 
 //nolint:revive // future proofing
-func (adp *BasicDiscoveryAdapter) GetProvider(providerKey string) (openapistackql.Provider, error) {
+func (adp *BasicDiscoveryAdapter) GetProvider(providerKey string) (anysdk.Provider, error) {
 	return adp.discoveryStore.ProcessProviderDiscoveryDoc(adp.apiDiscoveryDocURL, adp.alias)
 }
 
 func (adp *BasicDiscoveryAdapter) GetServiceHandlesMap(
-	prov openapistackql.Provider,
-) (map[string]openapistackql.ProviderService, error) {
+	prov anysdk.Provider,
+) (map[string]anysdk.ProviderService, error) {
 	return prov.GetProviderServices(), nil
 }
 
 func (adp *BasicDiscoveryAdapter) GetServiceHandle(
-	prov openapistackql.Provider,
+	prov anysdk.Provider,
 	serviceKey string,
-) (openapistackql.ProviderService, error) {
+) (anysdk.ProviderService, error) {
 	return prov.GetProviderService(serviceKey)
 }
 
 func (adp *BasicDiscoveryAdapter) GetServiceShard(
-	prov openapistackql.Provider,
+	prov anysdk.Provider,
 	serviceKey,
 	resourceKey string,
-) (openapistackql.Service, error) {
+) (anysdk.Service, error) {
 	serviceIDString := docparser.TranslateServiceKeyIqlToGenericProvider(serviceKey)
 	sh, err := adp.GetServiceHandle(prov, serviceIDString)
 	if err != nil {
@@ -119,7 +119,7 @@ func (adp *BasicDiscoveryAdapter) GetServiceShard(
 	return shard, nil
 }
 
-func (adp *BasicDiscoveryAdapter) PersistStaticExternalSQLDataSource(prov openapistackql.Provider) error {
+func (adp *BasicDiscoveryAdapter) PersistStaticExternalSQLDataSource(prov anysdk.Provider) error {
 	stackqlConfig, ok := prov.GetStackQLConfig()
 	if !ok || len(stackqlConfig.GetExternalTables()) < 1 {
 		return fmt.Errorf("no external tables supplied")
@@ -139,9 +139,9 @@ func (adp *BasicDiscoveryAdapter) PersistStaticExternalSQLDataSource(prov openap
 }
 
 func (adp *BasicDiscoveryAdapter) GetResourcesMap(
-	prov openapistackql.Provider,
+	prov anysdk.Provider,
 	serviceKey string,
-) (map[string]openapistackql.Resource, error) {
+) (map[string]anysdk.Resource, error) {
 	component, err := adp.GetServiceHandle(prov, serviceKey)
 	if component == nil || err != nil {
 		return nil, err
@@ -172,7 +172,7 @@ func (adp *BasicDiscoveryAdapter) GetResourcesMap(
 
 func NewTTLDiscoveryStore(
 	sqlSystem sql_system.SQLSystem,
-	registry openapistackql.RegistryAPI,
+	registry anysdk.RegistryAPI,
 	runtimeCtx dto.RuntimeCtx,
 ) IDiscoveryStore {
 	return &TTLDiscoveryStore{
@@ -183,7 +183,7 @@ func NewTTLDiscoveryStore(
 }
 
 //nolint:revive // future proofing
-func (store *TTLDiscoveryStore) ProcessProviderDiscoveryDoc(url string, alias string) (openapistackql.Provider, error) {
+func (store *TTLDiscoveryStore) ProcessProviderDiscoveryDoc(url string, alias string) (anysdk.Provider, error) {
 	switch url {
 	case "https://www.googleapis.com/discovery/v1/apis":
 		ver, err := store.registry.GetLatestAvailableVersion("google")
@@ -207,10 +207,10 @@ func (store *TTLDiscoveryStore) ProcessProviderDiscoveryDoc(url string, alias st
 }
 
 func (store *TTLDiscoveryStore) PersistServiceShard(
-	pr openapistackql.Provider,
-	serviceHandle openapistackql.ProviderService,
+	pr anysdk.Provider,
+	serviceHandle anysdk.ProviderService,
 	resourceKey string,
-) (openapistackql.Service, error) {
+) (anysdk.Service, error) {
 	k := fmt.Sprintf("services.%s.%s", pr.GetName(), serviceHandle.GetName())
 	svc, ok := serviceHandle.PeekServiceFragment(resourceKey)
 	if ok && svc != nil {
@@ -218,7 +218,7 @@ func (store *TTLDiscoveryStore) PersistServiceShard(
 	}
 	b, err := store.sqlSystem.GetSQLEngine().CacheStoreGet(k)
 	if b != nil && err == nil {
-		return openapistackql.LoadServiceDocFromBytes(serviceHandle, b)
+		return anysdk.LoadServiceDocFromBytes(serviceHandle, b)
 	}
 	shard, err := store.registry.GetServiceFragment(serviceHandle, resourceKey)
 	if err != nil {
@@ -228,19 +228,19 @@ func (store *TTLDiscoveryStore) PersistServiceShard(
 	return shard, err
 }
 
-//nolint:gocognit,revive // complexity is fine
+//nolint:revive // complexity is fine
 func (store *TTLDiscoveryStore) processResourcesDiscoveryDoc(
-	prov openapistackql.Provider,
-	serviceHandle openapistackql.ProviderService,
+	prov anysdk.Provider,
+	serviceHandle anysdk.ProviderService,
 	alias string,
-) (openapistackql.ResourceRegister, error) {
+) (anysdk.ResourceRegister, error) {
 	providerKey := prov.GetName()
 	switch providerKey {
 	case "googleapis.com", "google":
 		k := fmt.Sprintf("resources.%s.%s", "google", serviceHandle.GetName())
 		b, err := store.sqlSystem.GetSQLEngine().CacheStoreGet(k)
 		if b != nil && err == nil {
-			return openapistackql.LoadResourcesShallow(serviceHandle, b)
+			return anysdk.LoadResourcesShallow(serviceHandle, b)
 		}
 		rr, err := store.registry.GetResourcesShallowFromProviderService(serviceHandle)
 		if err != nil {
@@ -259,7 +259,7 @@ func (store *TTLDiscoveryStore) processResourcesDiscoveryDoc(
 		k := fmt.Sprintf("%s.%s", providerKey, serviceHandle.GetName())
 		b, err := store.sqlSystem.GetSQLEngine().CacheStoreGet(k)
 		if b != nil && err == nil {
-			return openapistackql.LoadResourcesShallow(serviceHandle, b)
+			return anysdk.LoadResourcesShallow(serviceHandle, b)
 		}
 		rr, err := store.registry.GetResourcesShallowFromProviderService(serviceHandle)
 		if err != nil {

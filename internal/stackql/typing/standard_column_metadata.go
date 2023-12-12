@@ -4,7 +4,7 @@ import (
 	"reflect"
 
 	"github.com/lib/pq/oid"
-	"github.com/stackql/go-openapistackql/openapistackql"
+	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 )
@@ -15,7 +15,7 @@ var (
 
 type standardColumnMetadata struct {
 	coupling ORMCoupling
-	column   openapistackql.ColumnDescriptor
+	column   anysdk.ColumnDescriptor
 }
 
 func (cd *standardColumnMetadata) GetColumnOID() oid.Oid {
@@ -41,11 +41,11 @@ func (cd *standardColumnMetadata) GetType() string {
 	return parserutil.ExtractStringRepresentationOfValueColumn(cd.column.GetVal())
 }
 
-func (cd *standardColumnMetadata) getOidForSchema(colSchema openapistackql.Schema) oid.Oid {
+func (cd *standardColumnMetadata) getOidForSchema(colSchema anysdk.Schema) oid.Oid {
 	return getOidForSchema(colSchema)
 }
 
-func GetOidForSchema(colSchema openapistackql.Schema) oid.Oid {
+func GetOidForSchema(colSchema anysdk.Schema) oid.Oid {
 	return getOidForSchema(colSchema)
 }
 
@@ -74,7 +74,7 @@ func getOidForParserColType(col sqlparser.ColumnType) oid.Oid {
 	}
 }
 
-func getOidForSchema(colSchema openapistackql.Schema) oid.Oid {
+func getOidForSchema(colSchema anysdk.Schema) oid.Oid {
 	if colSchema == nil {
 		return oid.T_text
 	}
@@ -96,7 +96,7 @@ func (cd *standardColumnMetadata) GetRelationalType() string {
 	return cd.coupling.GetRelationalType()
 }
 
-func NewColDescriptor(col openapistackql.ColumnDescriptor, relTypeStr string) ColumnMetadata {
+func NewColDescriptor(col anysdk.ColumnDescriptor, relTypeStr string) ColumnMetadata {
 	return &standardColumnMetadata{
 		coupling: NewORMCoupling(relTypeStr, reflect.String),
 		column:   col,

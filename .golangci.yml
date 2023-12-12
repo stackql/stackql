@@ -307,6 +307,9 @@ issues:
       linters: [ gocritic ]
     - source: "^\\s+if _, ok := err\\.\\([^.]+\\.InternalError\\); ok {"
       linters: [ errorlint ]
+    - path: "internal\\/test\\/.*\\.go"
+      linters:
+        - goconst
     - path: "_test\\.go"
       linters:
         - bodyclose
@@ -315,4 +318,5 @@ issues:
         - goconst
         - gosec
         - noctx
+        - revive
         - wrapcheck

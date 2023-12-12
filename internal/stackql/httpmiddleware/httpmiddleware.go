@@ -6,8 +6,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/stackql/go-openapistackql/openapistackql"
-	"github.com/stackql/go-openapistackql/pkg/requesttranslate"
+	"github.com/stackql/any-sdk/anysdk"
+	"github.com/stackql/any-sdk/pkg/requesttranslate"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/provider"
 )
@@ -32,7 +32,7 @@ func getAuthenticatedClient(handlerCtx handler.HandlerContext, prov provider.IPr
 func HTTPApiCallFromRequest(
 	handlerCtx handler.HandlerContext,
 	prov provider.IProvider,
-	method openapistackql.OperationStore,
+	method anysdk.OperationStore,
 	request *http.Request,
 ) (*http.Response, error) {
 	httpClient, httpClientErr := getAuthenticatedClient(handlerCtx, prov)

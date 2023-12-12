@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/iqlutil"
 	"github.com/stackql/stackql/internal/stackql/logging"
@@ -19,8 +20,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 
 	"github.com/stackql/stackql/pkg/sqltypeutil"
-
-	"github.com/stackql/go-openapistackql/openapistackql"
 
 	"github.com/stackql/stackql-parser/go/sqltypes"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
@@ -172,12 +171,12 @@ func (pb *standardPrimitiveGenerator) AddChildPrimitiveGenerator(
 	return retVal
 }
 
-//nolint:gocognit,unparam,revive // acceptable
+//nolint:unparam,revive // acceptable
 func (pb *standardPrimitiveGenerator) comparisonExprToFilterFunc(
-	table openapistackql.ITable,
+	table anysdk.ITable,
 	parentNode *sqlparser.Show,
 	expr *sqlparser.ComparisonExpr,
-) (func(openapistackql.ITable) (openapistackql.ITable, error), error) {
+) (func(anysdk.ITable) (anysdk.ITable, error), error) {
 	qualifiedName, ok := expr.Left.(*sqlparser.ColName)
 	if !ok {
 		return nil, fmt.Errorf("unexpected: %v", sqlparser.String(expr))
@@ -219,7 +218,7 @@ func (pb *standardPrimitiveGenerator) comparisonExprToFilterFunc(
 	default:
 		return nil, fmt.Errorf("unexpected: %v", sqlparser.String(right))
 	}
-	var retVal func(openapistackql.ITable) (openapistackql.ITable, error)
+	var retVal func(anysdk.ITable) (anysdk.ITable, error)
 	if expr.Operator == sqlparser.LikeStr || expr.Operator == sqlparser.NotLikeStr {
 		likeRegexp, err := regexp.Compile(iqlutil.TranslateLikeToRegexPattern(rhsStr))
 		if err != nil {

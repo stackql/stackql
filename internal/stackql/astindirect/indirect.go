@@ -3,7 +3,7 @@ package astindirect
 import (
 	"fmt"
 
-	"github.com/stackql/go-openapistackql/openapistackql"
+	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/symtab"
@@ -106,8 +106,8 @@ type Indirect interface {
 	GetColumns() []typing.ColumnMetadata
 	GetRelationalColumns() []typing.RelationalColumn
 	GetName() string
-	GetOptionalParameters() map[string]openapistackql.Addressable
-	GetRequiredParameters() map[string]openapistackql.Addressable
+	GetOptionalParameters() map[string]anysdk.Addressable
+	GetRequiredParameters() map[string]anysdk.Addressable
 	GetSelectAST() sqlparser.SelectStatement
 	GetSelectContext() drm.PreparedStatementCtx
 	GetType() IndirectType

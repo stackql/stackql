@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/stackql/go-openapistackql/pkg/httpelement"
-	"github.com/stackql/go-openapistackql/pkg/response"
+	"github.com/stackql/any-sdk/pkg/httpelement"
+	"github.com/stackql/any-sdk/pkg/response"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/httpmiddleware"
@@ -19,7 +19,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/util"
 
-	sdk_internal_dto "github.com/stackql/go-openapistackql/pkg/internaldto"
+	sdk_internal_dto "github.com/stackql/any-sdk/pkg/internaldto"
 )
 
 // SingleSelectAcquire implements the Builder interface

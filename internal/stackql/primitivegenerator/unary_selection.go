@@ -3,6 +3,7 @@ package primitivegenerator
 import (
 	"fmt"
 
+	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql/internal/stackql/astvisit"
 	"github.com/stackql/stackql/internal/stackql/docparser"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -11,8 +12,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/planbuilderinput"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/util"
-
-	"github.com/stackql/go-openapistackql/openapistackql"
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
@@ -23,10 +22,10 @@ func (pb *standardPrimitiveGenerator) assembleUnarySelectionBuilder(
 	node sqlparser.SQLNode,
 	rewrittenWhere *sqlparser.Where,
 	hIds internaldto.HeirarchyIdentifiers,
-	schema openapistackql.Schema,
+	schema anysdk.Schema,
 	tbl tablemetadata.ExtendedTableMetadata,
-	selectTabulation openapistackql.Tabulation,
-	insertTabulation openapistackql.Tabulation,
+	selectTabulation anysdk.Tabulation,
+	insertTabulation anysdk.Tabulation,
 	cols []parserutil.ColumnHandle,
 ) error {
 	inputTableName, err := tbl.GetInputTableName()
@@ -74,7 +73,7 @@ func (pb *standardPrimitiveGenerator) assembleUnarySelectionBuilder(
 			}
 		}
 		selectTabulation.PushBackColumn(
-			openapistackql.NewColumnDescriptor(
+			anysdk.NewColumnDescriptor(
 				col.Alias,
 				col.Name,
 				col.Qualifier,

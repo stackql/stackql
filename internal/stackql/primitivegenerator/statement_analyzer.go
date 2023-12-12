@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql/internal/stackql/astformat"
 	"github.com/stackql/stackql/internal/stackql/astindirect"
 	"github.com/stackql/stackql/internal/stackql/astvisit"
@@ -31,8 +32,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 	"github.com/stackql/stackql/internal/stackql/util"
-
-	"github.com/stackql/go-openapistackql/openapistackql"
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
@@ -262,7 +261,7 @@ func checkResource(
 	prov provider.IProvider,
 	service string,
 	resource string,
-) (openapistackql.Resource, error) {
+) (anysdk.Resource, error) {
 	return prov.GetResource(service, resource, handlerCtx.GetRuntimeContext())
 }
 
@@ -270,7 +269,7 @@ func (pb *standardPrimitiveGenerator) assembleResources(
 	handlerCtx handler.HandlerContext,
 	prov provider.IProvider,
 	service string,
-) (map[string]openapistackql.Resource, error) {
+) (map[string]anysdk.Resource, error) {
 	rm, err := prov.GetResourcesMap(service, handlerCtx.GetRuntimeContext())
 	if err != nil {
 		return nil, err
@@ -278,7 +277,7 @@ func (pb *standardPrimitiveGenerator) assembleResources(
 	return rm, err
 }
 
-func (pb *standardPrimitiveGenerator) analyzeShowFilter(node *sqlparser.Show, table openapistackql.ITable) error {
+func (pb *standardPrimitiveGenerator) analyzeShowFilter(node *sqlparser.Show, table anysdk.ITable) error {
 	showFilter := node.ShowTablesOpt.Filter
 	if showFilter == nil {
 		return nil
@@ -304,10 +303,10 @@ func (pb *standardPrimitiveGenerator) analyzeShowFilter(node *sqlparser.Show, ta
 }
 
 func (pb *standardPrimitiveGenerator) traverseShowFilter(
-	table openapistackql.ITable,
+	table anysdk.ITable,
 	node *sqlparser.Show,
 	filter sqlparser.Expr,
-) (func(openapistackql.ITable) (openapistackql.ITable, error), error) {
+) (func(anysdk.ITable) (anysdk.ITable, error), error) {
 	switch filter := filter.(type) {
 	case *sqlparser.ComparisonExpr:
 		return pb.comparisonExprToFilterFunc(table, node, filter)
@@ -334,9 +333,9 @@ func (pb *standardPrimitiveGenerator) traverseShowFilter(
 		}
 		return relational.OrTableFilters(lhs, rhs), nil
 	case *sqlparser.FuncExpr:
-		return nil, fmt.Errorf("unsupported constraint in openapistackql filter: %v", sqlparser.String(filter))
+		return nil, fmt.Errorf("unsupported constraint in anysdk filter: %v", sqlparser.String(filter))
 	default:
-		return nil, fmt.Errorf("unsupported constraint in openapistackql filter: %v", sqlparser.String(filter))
+		return nil, fmt.Errorf("unsupported constraint in anysdk filter: %v", sqlparser.String(filter))
 	}
 }
 
@@ -374,14 +373,14 @@ func (pb *standardPrimitiveGenerator) traverseWhereFilter(
 		lParams = append(lParams, rParams...)
 		return &sqlparser.OrExpr{Left: lhs, Right: rhs}, lParams, nil
 	case *sqlparser.FuncExpr:
-		return nil, nil, fmt.Errorf("unsupported constraint in openapistackql filter: %v", sqlparser.String(node))
+		return nil, nil, fmt.Errorf("unsupported constraint in anysdk filter: %v", sqlparser.String(node))
 	case *sqlparser.IsExpr:
 		return &sqlparser.IsExpr{
 			Operator: node.Operator,
 			Expr:     node.Expr,
 		}, nil, nil
 	default:
-		return nil, nil, fmt.Errorf("unsupported constraint in openapistackql filter: %v", sqlparser.String(node))
+		return nil, nil, fmt.Errorf("unsupported constraint in anysdk filter: %v", sqlparser.String(node))
 	}
 }
 
@@ -605,7 +604,7 @@ func (pb *standardPrimitiveGenerator) AnalyzeUnaryExec(
 	if err != nil {
 		return nil, err
 	}
-	_, err = pb.buildRequestContext(handlerCtx, node, meta, openapistackql.NewExecContext(execPayload, rsc), nil)
+	_, err = pb.buildRequestContext(handlerCtx, node, meta, anysdk.NewExecContext(execPayload, rsc), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -715,9 +714,9 @@ func (pb *standardPrimitiveGenerator) parseExecPayload(
 //nolint:funlen,unparam,gocognit // TODO: refactor
 func (pb *standardPrimitiveGenerator) analyzeSchemaVsMap(
 	handlerCtx handler.HandlerContext,
-	schema openapistackql.Schema,
+	schema anysdk.Schema,
 	payload map[string]interface{},
-	method openapistackql.OperationStore,
+	method anysdk.OperationStore,
 ) error {
 	requiredElements := make(map[string]bool)
 	schemas, err := schema.GetProperties()
@@ -885,7 +884,7 @@ func (pb *standardPrimitiveGenerator) expandTable(
 		return err
 	}
 	if len(cols) == 0 {
-		cols = openapistackql.Schemas{openapistackql.AnonymousColumnName: responseSchema}
+		cols = anysdk.Schemas{anysdk.AnonymousColumnName: responseSchema}
 	}
 	for colName, colSchema := range cols {
 		if colSchema == nil {
@@ -907,9 +906,9 @@ func (pb *standardPrimitiveGenerator) buildRequestContext(
 	handlerCtx handler.HandlerContext,
 	node sqlparser.SQLNode,
 	meta tablemetadata.ExtendedTableMetadata,
-	execContext openapistackql.ExecContext,
+	execContext anysdk.ExecContext,
 	rowsToInsert map[int]map[int]interface{},
-) (openapistackql.HTTPArmoury, error) {
+) (anysdk.HTTPArmoury, error) {
 	m, err := meta.GetMethod()
 	if err != nil {
 		return nil, err
@@ -930,7 +929,7 @@ func (pb *standardPrimitiveGenerator) buildRequestContext(
 	if paramErr != nil {
 		return nil, paramErr
 	}
-	httpPreparator := openapistackql.NewHTTPPreparator(
+	httpPreparator := anysdk.NewHTTPPreparator(
 		pr,
 		svc,
 		m,
@@ -943,7 +942,7 @@ func (pb *standardPrimitiveGenerator) buildRequestContext(
 	if httpErr != nil {
 		return nil, err
 	}
-	meta.WithGetHTTPArmoury(func() (openapistackql.HTTPArmoury, error) { return httpArmoury, nil })
+	meta.WithGetHTTPArmoury(func() (anysdk.HTTPArmoury, error) { return httpArmoury, nil })
 	return httpArmoury, err
 }
 
@@ -1214,7 +1213,7 @@ func (pb *standardPrimitiveGenerator) analyzeDelete(
 		logging.GetLogger().Infoln(fmt.Sprintf("w = '%s'", w))
 		foundSchemaPrefixed := responseSchema.FindByPath(colPrefix+w, nil)
 		foundSchema := responseSchema.FindByPath(w, nil)
-		foundRequestSchema := requestSchema.FindByPath(strings.TrimPrefix(w, openapistackql.RequestBodyBaseKey), nil)
+		foundRequestSchema := requestSchema.FindByPath(strings.TrimPrefix(w, anysdk.RequestBodyBaseKey), nil)
 		if foundSchemaPrefixed == nil && foundSchema == nil && foundRequestSchema == nil {
 			return fmt.Errorf("DELETE Where element = '%s' is NOT present in data returned from provider", w)
 		}
@@ -1370,7 +1369,7 @@ func (pb *standardPrimitiveGenerator) analyzeShow(
 			return err
 		}
 		if node.ShowTablesOpt != nil {
-			meth := openapistackql.NewEmptyOperationStore()
+			meth := anysdk.NewEmptyOperationStore()
 			err = pb.analyzeShowFilter(node, meth)
 			if err != nil {
 				return err
@@ -1390,12 +1389,12 @@ func (pb *standardPrimitiveGenerator) analyzeShow(
 			return err
 		}
 		for _, col := range colNames {
-			if !openapistackql.ResourceKeyExists(col) {
+			if !anysdk.ResourceKeyExists(col) {
 				return fmt.Errorf("SHOW key = '%s' does NOT exist", col)
 			}
 		}
 		for _, colUsage := range colUsages {
-			if !openapistackql.ResourceKeyExists(colUsage.ColName.Name.GetRawVal()) {
+			if !anysdk.ResourceKeyExists(colUsage.ColName.Name.GetRawVal()) {
 				return fmt.Errorf("SHOW key = '%s' does NOT exist", colUsage.ColName.Name.GetRawVal())
 			}
 			usageErr := parserutil.CheckSQLParserTypeVsResourceColumn(colUsage)
@@ -1404,7 +1403,7 @@ func (pb *standardPrimitiveGenerator) analyzeShow(
 			}
 		}
 		if node.ShowTablesOpt != nil {
-			rsc := openapistackql.NewEmptyResource()
+			rsc := anysdk.NewEmptyResource()
 			err = pb.analyzeShowFilter(node, rsc)
 			if err != nil {
 				return err
@@ -1417,12 +1416,12 @@ func (pb *standardPrimitiveGenerator) analyzeShow(
 		}
 		pb.PrimitiveComposer.SetProvider(prov)
 		for _, col := range colNames {
-			if !openapistackql.ServiceKeyExists(col) {
+			if !anysdk.ServiceKeyExists(col) {
 				return fmt.Errorf("SHOW key = '%s' does NOT exist", col)
 			}
 		}
 		for _, colUsage := range colUsages {
-			if !openapistackql.ServiceKeyExists(colUsage.ColName.Name.GetRawVal()) {
+			if !anysdk.ServiceKeyExists(colUsage.ColName.Name.GetRawVal()) {
 				return fmt.Errorf("SHOW key = '%s' does NOT exist", colUsage.ColName.Name.GetRawVal())
 			}
 			usageErr := parserutil.CheckSQLParserTypeVsServiceColumn(colUsage)
@@ -1431,7 +1430,7 @@ func (pb *standardPrimitiveGenerator) analyzeShow(
 			}
 		}
 		if node.ShowTablesOpt != nil {
-			svc := openapistackql.NewEmptyProviderService()
+			svc := anysdk.NewEmptyProviderService()
 			err = pb.analyzeShowFilter(node, svc)
 			if err != nil {
 				return err

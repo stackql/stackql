@@ -1,7 +1,7 @@
 package util
 
 import (
-	"github.com/stackql/go-openapistackql/openapistackql"
+	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql/internal/stackql/datasource/sql_datasource"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 )
@@ -11,14 +11,14 @@ type AnnotatedTabulation interface {
 	GetHeirarchyIdentifiers() internaldto.HeirarchyIdentifiers
 	GetInputTableName() string
 	GetSQLDataSource() (sql_datasource.SQLDataSource, bool)
-	GetTabulation() openapistackql.Tabulation
+	GetTabulation() anysdk.Tabulation
 	SetSQLDataSource(sql_datasource.SQLDataSource)
 	WithParameters(parameters map[string]interface{}) AnnotatedTabulation
 	GetParameters() map[string]interface{}
 }
 
 type standardAnnotatedTabulation struct {
-	tab            openapistackql.Tabulation
+	tab            anysdk.Tabulation
 	hIds           internaldto.HeirarchyIdentifiers
 	inputTableName string
 	alias          string
@@ -27,7 +27,7 @@ type standardAnnotatedTabulation struct {
 }
 
 func NewAnnotatedTabulation(
-	tab openapistackql.Tabulation,
+	tab anysdk.Tabulation,
 	hIds internaldto.HeirarchyIdentifiers,
 	inputTableName string,
 	alias string,
@@ -53,7 +53,7 @@ func (at *standardAnnotatedTabulation) GetParameters() map[string]interface{} {
 	return at.parameters
 }
 
-func (at *standardAnnotatedTabulation) GetTabulation() openapistackql.Tabulation {
+func (at *standardAnnotatedTabulation) GetTabulation() anysdk.Tabulation {
 	return at.tab
 }
 

@@ -3,6 +3,7 @@ package provider
 import (
 	"net/http"
 
+	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/discovery"
 	"github.com/stackql/stackql/internal/stackql/docparser"
@@ -12,9 +13,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
 
-	"github.com/stackql/go-openapistackql/openapistackql"
-
-	sdk_internal_dto "github.com/stackql/go-openapistackql/pkg/internaldto"
+	sdk_internal_dto "github.com/stackql/any-sdk/pkg/internaldto"
 )
 
 const (
@@ -41,8 +40,8 @@ type IProvider interface {
 
 	EnhanceMetadataFilter(
 		string,
-		func(openapistackql.ITable) (openapistackql.ITable, error),
-		map[string]bool) (func(openapistackql.ITable) (openapistackql.ITable, error), error)
+		func(anysdk.ITable) (anysdk.ITable, error),
+		map[string]bool) (func(anysdk.ITable) (anysdk.ITable, error), error)
 
 	GetCurrentService() string
 
@@ -52,7 +51,7 @@ type IProvider interface {
 		serviceName string,
 		resourceName string,
 		iqlAction string,
-		runtimeCtx dto.RuntimeCtx) (openapistackql.OperationStore, string, error)
+		runtimeCtx dto.RuntimeCtx) (anysdk.OperationStore, string, error)
 
 	GetLikeableColumns(string) []string
 
@@ -61,38 +60,38 @@ type IProvider interface {
 		resourceName string,
 		iqlAction string,
 		parameters parserutil.ColumnKeyedDatastore,
-		runtimeCtx dto.RuntimeCtx) (openapistackql.OperationStore, string, error)
+		runtimeCtx dto.RuntimeCtx) (anysdk.OperationStore, string, error)
 
 	GetMethodSelector() methodselect.IMethodSelector
 
-	GetProvider() (openapistackql.Provider, error)
+	GetProvider() (anysdk.Provider, error)
 
 	GetProviderString() string
 
 	GetProviderServicesRedacted(
 		runtimeCtx dto.RuntimeCtx,
-		extended bool) (map[string]openapistackql.ProviderService, error)
+		extended bool) (map[string]anysdk.ProviderService, error)
 
-	GetResource(serviceKey string, resourceKey string, runtimeCtx dto.RuntimeCtx) (openapistackql.Resource, error)
+	GetResource(serviceKey string, resourceKey string, runtimeCtx dto.RuntimeCtx) (anysdk.Resource, error)
 
 	GetResourcesMap(
 		serviceKey string,
-		runtimeCtx dto.RuntimeCtx) (map[string]openapistackql.Resource, error)
+		runtimeCtx dto.RuntimeCtx) (map[string]anysdk.Resource, error)
 
 	GetResourcesRedacted(
 		currentService string,
 		runtimeCtx dto.RuntimeCtx,
-		extended bool) (map[string]openapistackql.Resource, error)
+		extended bool) (map[string]anysdk.Resource, error)
 
-	GetServiceShard(serviceKey string, resourceKey string, runtimeCtx dto.RuntimeCtx) (openapistackql.Service, error)
+	GetServiceShard(serviceKey string, resourceKey string, runtimeCtx dto.RuntimeCtx) (anysdk.Service, error)
 
-	GetObjectSchema(serviceName string, resourceName string, schemaName string) (openapistackql.Schema, error)
+	GetObjectSchema(serviceName string, resourceName string, schemaName string) (anysdk.Schema, error)
 
 	GetVersion() string
 
-	InferDescribeMethod(openapistackql.Resource) (openapistackql.OperationStore, string, error)
+	InferDescribeMethod(anysdk.Resource) (anysdk.OperationStore, string, error)
 
-	InferMaxResultsElement(openapistackql.OperationStore) sdk_internal_dto.HTTPElement
+	InferMaxResultsElement(anysdk.OperationStore) sdk_internal_dto.HTTPElement
 
 	InferNextPageRequestElement(internaldto.Heirarchy) sdk_internal_dto.HTTPElement
 
@@ -102,14 +101,14 @@ type IProvider interface {
 
 	SetCurrentService(serviceKey string)
 
-	ShowAuth(authCtx *dto.AuthCtx) (*openapistackql.AuthMetadata, error)
+	ShowAuth(authCtx *dto.AuthCtx) (*anysdk.AuthMetadata, error)
 }
 
 func GetProvider(
 	runtimeCtx dto.RuntimeCtx,
 	providerStr,
 	providerVersion string,
-	reg openapistackql.RegistryAPI,
+	reg anysdk.RegistryAPI,
 	sqlSystem sql_system.SQLSystem,
 ) (IProvider, error) {
 	switch providerStr { //nolint:gocritic // TODO: review
@@ -131,7 +130,7 @@ func newGenericProvider(
 	rtCtx dto.RuntimeCtx,
 	providerStr,
 	versionStr string,
-	reg openapistackql.RegistryAPI,
+	reg anysdk.RegistryAPI,
 	sqlSystem sql_system.SQLSystem,
 ) (IProvider, error) {
 	methSel, err := methodselect.NewMethodSelector(providerStr, versionStr)

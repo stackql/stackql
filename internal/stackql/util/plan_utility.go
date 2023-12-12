@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	openapistackql_util "github.com/stackql/go-openapistackql/pkg/util"
+	anysdk_util "github.com/stackql/any-sdk/pkg/util"
 	"github.com/stackql/psql-wire/pkg/sqldata"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
@@ -231,11 +231,11 @@ func arrangeOrderedColumnRow(
 	rowVals := make([]interface{}, colNumber)
 	for j := range columnOrder {
 		v := row[columnOrder[j]]
-		switch u := v.(type) { //nolint:gocritic // shim to excise sqlparser from go-openapistackql
+		switch u := v.(type) { //nolint:gocritic // shim to excise sqlparser from any-sdk
 		case sqlparser.BoolVal:
 			v = bool(u)
 		}
-		rowVals[j] = openapistackql_util.InterfaceToBytes(v, strings.ToLower(columnOrder[j]) == "error")
+		rowVals[j] = anysdk_util.InterfaceToBytes(v, strings.ToLower(columnOrder[j]) == "error")
 	}
 	return rowVals
 }

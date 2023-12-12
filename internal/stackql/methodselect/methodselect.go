@@ -4,17 +4,17 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/stackql/go-openapistackql/openapistackql"
+	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 )
 
 type IMethodSelector interface {
-	GetMethod(resource openapistackql.Resource, methodName string) (openapistackql.OperationStore, error)
+	GetMethod(resource anysdk.Resource, methodName string) (anysdk.OperationStore, error)
 
 	GetMethodForAction(
-		resource openapistackql.Resource,
+		resource anysdk.Resource,
 		iqlAction string,
-		parameters parserutil.ColumnKeyedDatastore) (openapistackql.OperationStore, string, error)
+		parameters parserutil.ColumnKeyedDatastore) (anysdk.OperationStore, string, error)
 }
 
 func NewMethodSelector(provider string, version string) (IMethodSelector, error) {
@@ -35,9 +35,9 @@ type DefaultMethodSelector struct {
 }
 
 func (sel *DefaultMethodSelector) GetMethodForAction(
-	resource openapistackql.Resource,
+	resource anysdk.Resource,
 	iqlAction string,
-	parameters parserutil.ColumnKeyedDatastore) (openapistackql.OperationStore, string, error) {
+	parameters parserutil.ColumnKeyedDatastore) (anysdk.OperationStore, string, error) {
 	var methodName string
 	switch strings.ToLower(iqlAction) {
 	case "select":
@@ -58,12 +58,12 @@ func (sel *DefaultMethodSelector) GetMethodForAction(
 }
 
 func (sel *DefaultMethodSelector) GetMethod(
-	resource openapistackql.Resource, methodName string) (openapistackql.OperationStore, error) {
+	resource anysdk.Resource, methodName string) (anysdk.OperationStore, error) {
 	return sel.getMethodByName(resource, methodName)
 }
 
 func (sel *DefaultMethodSelector) getMethodByName(
-	resource openapistackql.Resource, methodName string) (openapistackql.OperationStore, error) {
+	resource anysdk.Resource, methodName string) (anysdk.OperationStore, error) {
 	m, err := resource.FindMethod(methodName)
 	if err != nil {
 		return nil, fmt.Errorf("no method = '%s' for resource = '%s'", methodName, resource.GetName())
@@ -72,8 +72,8 @@ func (sel *DefaultMethodSelector) getMethodByName(
 }
 
 func (sel *DefaultMethodSelector) getMethodByNameAndParameters(
-	resource openapistackql.Resource, methodName string,
-	parameters parserutil.ColumnKeyedDatastore) (openapistackql.OperationStore, error) {
+	resource anysdk.Resource, methodName string,
+	parameters parserutil.ColumnKeyedDatastore) (anysdk.OperationStore, error) {
 	stringifiedParams := parameters.GetStringified()
 	m, remainingParams, ok := resource.GetFirstMethodMatchFromSQLVerb(methodName, stringifiedParams)
 	if !ok {
