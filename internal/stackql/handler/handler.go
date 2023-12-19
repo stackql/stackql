@@ -10,6 +10,7 @@ import (
 
 	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/any-sdk/pkg/nomenclature"
+	"github.com/stackql/stackql/internal/stackql/acid/tsm"
 	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/bundle"
 	"github.com/stackql/stackql/internal/stackql/constants"
@@ -85,6 +86,9 @@ type HandlerContext interface { //nolint:revive // don't mind stuttering this on
 
 	GetRollbackType() constants.RollbackType
 	UpdateRollbackType(rollbackTypeStr string) error
+
+	GetTSM() (tsm.TSM, bool)
+	SetTSM(tsm.TSM)
 }
 
 type standardHandlerContext struct {
@@ -118,6 +122,15 @@ type standardHandlerContext struct {
 	txnCoordinatorCtx   txn_context.ITransactionCoordinatorContext
 	typCfg              typing.Config
 	sessionContext      dto.SessionContext
+	walInstance         tsm.TSM
+}
+
+func (hc *standardHandlerContext) GetTSM() (tsm.TSM, bool) {
+	return hc.walInstance, hc.walInstance != nil
+}
+
+func (hc *standardHandlerContext) SetTSM(w tsm.TSM) {
+	hc.walInstance = w
 }
 
 func (hc *standardHandlerContext) GetTxnCoordinatorCtx() txn_context.ITransactionCoordinatorContext {

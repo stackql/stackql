@@ -1,9 +1,10 @@
-package transact
+package tsm_physio //nolint:revive,stylecheck // prefer this nomenclature
 
 import (
 	"fmt"
 	"strings"
 
+	"github.com/stackql/stackql/internal/stackql/acid/tsm"
 	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -16,31 +17,43 @@ type Orchestrator interface {
 	) ([]internaldto.ExecutorOutput, bool)
 }
 
-func newTxnOrchestrator(handlerCtx handler.HandlerContext, txnCoordinator Coordinator) (Orchestrator, error) {
+func newTxnOrchestrator(
+	tsmInstance tsm.TSM,
+	handlerCtx handler.HandlerContext,
+	txnCoordinator Coordinator) (Orchestrator, error) {
 	rollbackType := handlerCtx.GetRollbackType()
 	switch rollbackType {
 	case constants.NopRollback:
-		return newStdTxnOrchestrator(handlerCtx, txnCoordinator)
+		return newStdTxnOrchestrator(tsmInstance, handlerCtx, txnCoordinator)
 	case constants.EagerRollback:
-		return newBestEffortTxnOrchestrator(handlerCtx, txnCoordinator)
+		return newBestEffortTxnOrchestrator(tsmInstance, handlerCtx, txnCoordinator)
 	default:
-		return newStdTxnOrchestrator(handlerCtx, txnCoordinator)
+		return newStdTxnOrchestrator(tsmInstance, handlerCtx, txnCoordinator)
 	}
 }
 
-func newStdTxnOrchestrator(_ handler.HandlerContext, txnCoordinator Coordinator) (Orchestrator, error) {
+func newStdTxnOrchestrator(
+	tsmInstance tsm.TSM,
+	_ handler.HandlerContext,
+	txnCoordinator Coordinator) (Orchestrator, error) {
 	return &standardOrchestrator{
+		tsmInstance:    tsmInstance,
 		txnCoordinator: txnCoordinator,
 	}, nil
 }
 
-func newBestEffortTxnOrchestrator(_ handler.HandlerContext, txnCoordinator Coordinator) (Orchestrator, error) {
+func newBestEffortTxnOrchestrator(
+	tsmInstance tsm.TSM,
+	_ handler.HandlerContext,
+	txnCoordinator Coordinator) (Orchestrator, error) {
 	return &bestEffortOrchestrator{
+		tsmInstance:    tsmInstance,
 		txnCoordinator: txnCoordinator,
 	}, nil
 }
 
 type standardOrchestrator struct {
+	tsmInstance    tsm.TSM
 	txnCoordinator Coordinator
 }
 
