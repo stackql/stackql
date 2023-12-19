@@ -155,7 +155,7 @@ func (dp *standardDependencyPlanner) Plan() error {
 				return insErr
 			}
 			stream := streaming.NewNopMapStream()
-			err = dp.orchestrate(annotation, insPsc, dp.defaultStream, stream)
+			err = dp.orchestrate(unit.GetEquivalencyGroup(), annotation, insPsc, dp.defaultStream, stream)
 			if err != nil {
 				return err
 			}
@@ -202,7 +202,7 @@ func (dp *standardDependencyPlanner) Plan() error {
 						if streamErr != nil {
 							return streamErr
 						}
-						err = dp.orchestrate(annotation, insPsc, dp.defaultStream, stream)
+						err = dp.orchestrate(-1, annotation, insPsc, dp.defaultStream, stream)
 						if err != nil {
 							return err
 						}
@@ -213,7 +213,7 @@ func (dp *standardDependencyPlanner) Plan() error {
 						if err != nil {
 							return err
 						}
-						err = dp.orchestrate(toAnnotation, insPsc, stream, streaming.NewNopMapStream())
+						err = dp.orchestrate(-1, toAnnotation, insPsc, stream, streaming.NewNopMapStream())
 						if err != nil {
 							return err
 						}
@@ -337,6 +337,7 @@ func (dp *standardDependencyPlanner) processOrphan(
 }
 
 func (dp *standardDependencyPlanner) orchestrate(
+	equivalencyGroupID int64,
 	annotationCtx taxonomy.AnnotationCtx,
 	insPsc drm.PreparedStatementCtx,
 	inStream streaming.MapStream,
@@ -347,6 +348,16 @@ func (dp *standardDependencyPlanner) orchestrate(
 		dp.handlerCtx.GetSQLEngine(),
 		dp.handlerCtx.GetTxnCounterMgr(),
 	)
+	if equivalencyGroupID > 0 {
+		tcc, ok := dp.equivalencyGroupTCCs[equivalencyGroupID]
+		if ok {
+			tn, _ := rc.GetTableTxnCounters()
+			setErr := rc.SetTableTxnCounters(tn, tcc)
+			if setErr != nil {
+				return setErr
+			}
+		}
+	}
 	if err != nil {
 		return err
 	}

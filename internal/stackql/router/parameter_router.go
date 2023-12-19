@@ -242,7 +242,9 @@ func (pr *standardParameterRouter) GetOnConditionDataFlows() (dataflow.Collectio
 			return nil, err
 		}
 	}
+	var tableEquivalencyID int64
 	for k, v := range pr.tableToAnnotationCtx {
+		tableEquivalencyID++ // start at 1 for > 0 logic
 		for k1, param := range v.GetParameters() {
 			switch param := param.(type) { //nolint:gocritic // TODO: review
 			case parserutil.ParameterMetadata:
@@ -267,7 +269,7 @@ func (pr *standardParameterRouter) GetOnConditionDataFlows() (dataflow.Collectio
 							clonedParams,
 						)
 						sourceVertexIteration := dataflow.NewStandardDataFlowVertex(clonedAnnotationCtx, k, rv.GetNextID())
-						sourceVertexIteration.SetEquivalencyGroup(1)
+						sourceVertexIteration.SetEquivalencyGroup(tableEquivalencyID)
 						rv.AddVertex(sourceVertexIteration)
 					}
 					return rv, nil

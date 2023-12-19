@@ -96,9 +96,6 @@ func (ca *standardPreparedStatementArgs) compose() (childQueryComposition, error
 			return nil, err
 		}
 		childQueryStrings = append(childQueryStrings, childResponse.GetQueryString())
-		if len(ca.GetArgs()) >= k {
-			varArgs = append(varArgs, ca.GetArgs()[j:k]...)
-		}
 		varArgs = append(varArgs, childResponse.GetVarArgs()...)
 		j = k
 	}
