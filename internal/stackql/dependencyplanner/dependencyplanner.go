@@ -249,7 +249,6 @@ func (dp *standardDependencyPlanner) Plan() error {
 	if err != nil {
 		return err
 	}
-	dp.primaryTcc = dp.tcc.Clone()
 	v := astvisit.NewQueryRewriteAstVisitor(
 		dp.annotatedAST,
 		dp.handlerCtx,
