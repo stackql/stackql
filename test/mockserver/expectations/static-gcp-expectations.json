@@ -109,6 +109,17 @@
   {
     "httpRequest": {
       "method": "GET",
+      "path": "/v1/projects/empty-project/aggregated/usableSubnetworks"
+    },
+    "httpResponse": {
+      "body": {
+        "subnetworks": []
+      }
+    }
+  }, 
+  {
+    "httpRequest": {
+      "method": "GET",
       "path": "/projects/testing-project/zones/australia-southeast1-a/acceleratorTypes"
     },
     "httpResponse": {
