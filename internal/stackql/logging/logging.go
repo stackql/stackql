@@ -24,6 +24,7 @@ func GetLogger() *logrus.Logger {
 		return Logger
 	}
 	tmpLogger := logrus.New()
+	tmpLogger.SetLevel(logrus.WarnLevel)
 	tmpLogger.SetOutput(io.Discard)
 	return tmpLogger
 }

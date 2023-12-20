@@ -25,18 +25,19 @@ func TestGetLogger(t *testing.T) {
 	if tmpLogger == nil {
 		t.Error("Expected Logger to be set, but it's nil.")
 	}
-	if tmpLogger.GetLevel() != logrus.InfoLevel {
-		t.Errorf("Expected log level is info, but it's %v.", tmpLogger.GetLevel())
+	if tmpLogger.GetLevel() != logrus.WarnLevel {
+		t.Errorf("Expected log level is warning, but it's %v.", tmpLogger.GetLevel())
 	}
 
 	// Test when Logger is set
-	logging.Logger = logrus.New()
-	logging.Logger.SetLevel(logrus.DebugLevel)
+	inputLogger := logrus.New()
+	inputLogger.SetLevel(logrus.ErrorLevel)
+	logging.Logger = inputLogger
 	tmpLogger = logging.GetLogger()
 	if tmpLogger == nil {
 		t.Error("Expected Logger to be set, but it's nil.")
 	}
-	if tmpLogger.GetLevel() != logrus.DebugLevel {
+	if tmpLogger.GetLevel() != logrus.ErrorLevel {
 		t.Errorf("Expected log level is debug, but it's %v.", tmpLogger.GetLevel())
 	}
 }
