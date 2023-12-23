@@ -292,6 +292,10 @@ jobs:
     - name: Test
       if: success()
       run: python cicd/python/build.py --verbose --test
+    
+    - name: Benchmark
+      if: success()
+      run: go test -run='^$' -bench . -count=3 ./...
 
     - name: Mock Server Download
       run: |

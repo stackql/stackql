@@ -49,6 +49,27 @@ func (pg *standardBasePrimitiveGraph) IsReadOnly() bool {
 	return true
 }
 
+func (pg *standardBasePrimitiveGraph) NewWeightedEdge(
+	from PrimitiveNode, to PrimitiveNode, weight float64) graph.WeightedEdge {
+	return pg.g.NewWeightedEdge(from, to, weight)
+}
+
+func (pg *standardBasePrimitiveGraph) SetWeightedEdge(e graph.WeightedEdge) {
+	pg.g.SetWeightedEdge(e)
+}
+
+func (pg *standardBasePrimitiveGraph) NewNode() graph.Node {
+	return pg.g.NewNode()
+}
+
+func (pg *standardBasePrimitiveGraph) AddNode(n graph.Node) {
+	pg.g.AddNode(n)
+}
+
+func (pg *standardBasePrimitiveGraph) Nodes() graph.Nodes {
+	return pg.g.Nodes()
+}
+
 func (pg *standardBasePrimitiveGraph) SetRedoLog(binlog.LogEntry) {
 }
 
@@ -139,11 +160,25 @@ func (pg *standardBasePrimitiveGraph) Execute(ctx primitive.IPrimitiveCtx) inter
 	//nolint:stylecheck // prefer declarative
 	var output internaldto.ExecutorOutput = internaldto.NewExecutorOutput(
 		nil, nil, nil, nil, fmt.Errorf("empty execution graph"))
+	primitiveNodeCount := 0
 	for _, node := range pg.sorted {
-		outChan := make(chan internaldto.ExecutorOutput, 1)
+		switch node.(type) { //nolint:gocritic // acceptable
+		case PrimitiveNode:
+			primitiveNodeCount++
+		}
+	}
+	outChan := make([]chan internaldto.ExecutorOutput, primitiveNodeCount)
+	for i := 0; i < primitiveNodeCount; i++ {
+		outChan[i] = make(chan internaldto.ExecutorOutput, 1)
+	}
+	outCache := make(map[int]internaldto.ExecutorOutput)
+	var currentNodeIdx int
+	idxMap := make(map[int64]int)
+	for _, node := range pg.sorted {
+		nodeID := node.ID()
 		switch node := node.(type) {
 		case PrimitiveNode:
-			incidentNodes := pg.g.To(node.ID())
+			incidentNodes := pg.g.To(nodeID)
 			for {
 				hasNext := incidentNodes.Next()
 				if !hasNext {
@@ -154,6 +189,21 @@ func (pg *standardBasePrimitiveGraph) Execute(ctx primitive.IPrimitiveCtx) inter
 				case PrimitiveNode:
 					// await completion of the incident node
 					// and replenish the IsDone() channel
+					incidentNodeID := incidentNode.ID()
+					incidentNodeIdx, ok := idxMap[incidentNodeID]
+					if !ok {
+						return internaldto.NewExecutorOutput(
+							nil, nil, nil, nil,
+							fmt.Errorf("unknown incident node index: '%d'", currentNodeIdx))
+					}
+					inputFromDependency, ok := outCache[incidentNodeIdx]
+					if !ok {
+						inputFromDependency = <-outChan[incidentNodeIdx]
+						outCache[incidentNodeIdx] = inputFromDependency
+					}
+					//nolint:errcheck // TODO: consider design options
+					node.GetOperation().IncidentData(
+						incidentNode.ID(), inputFromDependency)
 					incidentNode.SetIsDone(<-incidentNode.IsDone())
 				default:
 					return internaldto.NewExecutorOutput(
@@ -161,27 +211,23 @@ func (pg *standardBasePrimitiveGraph) Execute(ctx primitive.IPrimitiveCtx) inter
 						fmt.Errorf("unknown execution primitive type: '%T'", incidentNode))
 				}
 			}
+			nodeIdx := currentNodeIdx
+			idxMap[nodeID] = nodeIdx
 			pg.errGroup.Go(
 				func() error {
-					output := node.GetOperation().Execute(ctx) //nolint:govet // intentional
-					outChan <- output
-					close(outChan)
-					return output.GetError()
+					funOutput := node.GetOperation().Execute(ctx)
+					thisChan := outChan[nodeIdx]
+					thisChan <- funOutput
+					close(thisChan)
+					// cover off pass through primitive
+					if funOutput == nil {
+						return nil
+					}
+					rv := funOutput.GetError()
+					return rv
 				},
 			)
-			destinationNodes := pg.g.From(node.ID())
-			output = <-outChan
-			for {
-				if !destinationNodes.Next() {
-					break
-				}
-				fromNode := destinationNodes.Node()
-				switch fromNode := fromNode.(type) { //nolint:gocritic // acceptable
-				case PrimitiveNode:
-					op := fromNode.GetOperation()
-					op.IncidentData(node.ID(), output) //nolint:errcheck // TODO: consider design options
-				}
-			}
+			currentNodeIdx++
 			node.SetIsDone(true)
 		default:
 			return internaldto.NewExecutorOutput(nil, nil, nil, nil, fmt.Errorf("unknown execution primitive type: '%T'", node))
@@ -191,6 +237,7 @@ func (pg *standardBasePrimitiveGraph) Execute(ctx primitive.IPrimitiveCtx) inter
 		undoLog, _ := output.GetUndoLog()
 		return internaldto.NewExecutorOutput(nil, nil, nil, nil, err).WithUndoLog(undoLog)
 	}
+	output = <-outChan[primitiveNodeCount-1]
 	return output
 }
 
@@ -228,10 +275,10 @@ func (pg *standardBasePrimitiveGraph) Sort() ([]graph.Node, error) {
 	return topo.Sort(pg.g)
 }
 
-func newBasePrimitiveGraph(concurrencyLimit int) standardBasePrimitiveGraph {
+func newBasePrimitiveGraph(concurrencyLimit int) BasePrimitiveGraph {
 	eg, egCtx := errgroup.WithContext(context.Background())
 	eg.SetLimit(concurrencyLimit)
-	return standardBasePrimitiveGraph{
+	return &standardBasePrimitiveGraph{
 		g:           simple.NewWeightedDirectedGraph(0.0, 0.0),
 		errGroup:    eg,
 		errGroupCtx: egCtx,

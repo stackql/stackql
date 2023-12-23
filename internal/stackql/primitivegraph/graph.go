@@ -24,6 +24,11 @@ type BasePrimitiveGraph interface {
 	Size() int
 	ContainsUserManagedRelation() bool
 	SetContainsUserManagedRelation(containsUserRelation bool)
+	NewWeightedEdge(PrimitiveNode, PrimitiveNode, float64) graph.WeightedEdge
+	SetWeightedEdge(graph.WeightedEdge)
+	NewNode() graph.Node
+	AddNode(graph.Node)
+	Nodes() graph.Nodes
 }
 
 type PrimitiveGraph interface {

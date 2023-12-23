@@ -1,6 +1,6 @@
 module github.com/stackql/stackql
 
-go 1.20
+go 1.21.5
 
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.2.0
@@ -20,7 +20,7 @@ require (
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.1
-	github.com/stackql/any-sdk v0.0.1-alpha01
+	github.com/stackql/any-sdk v0.0.1-alpha02
 	github.com/stackql/go-sqlite3 v0.0.3-stackqlalpha02
 	github.com/stackql/go-suffix-map v0.0.1-alpha01
 	github.com/stackql/psql-wire v0.1.1-alpha04

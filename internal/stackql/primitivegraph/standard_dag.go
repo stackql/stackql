@@ -11,28 +11,28 @@ var (
 )
 
 type standardPrimitiveGraph struct {
-	standardBasePrimitiveGraph
+	BasePrimitiveGraph
 }
 
 func newPrimitiveGraph(concurrencyLimit int) PrimitiveGraph {
 	baseGraph := newBasePrimitiveGraph(concurrencyLimit)
 	return &standardPrimitiveGraph{
-		standardBasePrimitiveGraph: baseGraph,
+		BasePrimitiveGraph: baseGraph,
 	}
 }
 
 func (pg *standardPrimitiveGraph) CreatePrimitiveNode(pr primitive.IPrimitive) PrimitiveNode {
-	nn := pg.g.NewNode()
+	nn := pg.NewNode()
 	node := &standardPrimitiveNode{
 		op:     operation.NewReversibleOperation(pr),
 		id:     nn.ID(),
 		isDone: make(chan bool, 1),
 	}
-	pg.g.AddNode(node)
+	pg.AddNode(node)
 	return node
 }
 
 func (pg *standardPrimitiveGraph) NewDependency(from PrimitiveNode, to PrimitiveNode, weight float64) {
-	e := pg.g.NewWeightedEdge(from, to, weight)
-	pg.g.SetWeightedEdge(e)
+	e := pg.NewWeightedEdge(from, to, weight)
+	pg.SetWeightedEdge(e)
 }

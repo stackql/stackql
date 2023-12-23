@@ -1,4 +1,4 @@
-package primitivebuilder //nolint:dupl // TODO: fix
+package primitivebuilder
 
 import (
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
