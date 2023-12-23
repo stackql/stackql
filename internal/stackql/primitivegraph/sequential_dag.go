@@ -13,7 +13,7 @@ var (
 )
 
 type sequentialPrimitiveGraph struct {
-	standardBasePrimitiveGraph
+	BasePrimitiveGraph
 	mutex sync.Mutex
 	root  PrimitiveNode
 	tail  PrimitiveNode
@@ -22,20 +22,20 @@ type sequentialPrimitiveGraph struct {
 func (pg *sequentialPrimitiveGraph) CreatePrimitiveNode(pr primitive.IPrimitive) PrimitiveNode {
 	pg.mutex.Lock()
 	defer pg.mutex.Unlock()
-	nn := pg.g.NewNode()
+	nn := pg.NewNode()
 	node := &standardPrimitiveNode{
 		op:     operation.NewReversibleOperation(pr),
 		id:     nn.ID(),
 		isDone: make(chan bool, 1),
 	}
 	var isRoot bool
-	if pg.g.Nodes().Len() == 0 {
+	if pg.Nodes().Len() == 0 {
 		pg.root = node
 		isRoot = true
 	}
 	existingTail := pg.tail
 	pg.tail = node
-	pg.g.AddNode(node)
+	pg.AddNode(node)
 	if !isRoot {
 		pg.NewDependency(existingTail, node, 1.0)
 	}
@@ -45,11 +45,11 @@ func (pg *sequentialPrimitiveGraph) CreatePrimitiveNode(pr primitive.IPrimitive)
 func newSequentialPrimitiveGraph(concurrencyLimit int) PrimitiveGraph {
 	baseGraph := newBasePrimitiveGraph(concurrencyLimit)
 	return &sequentialPrimitiveGraph{
-		standardBasePrimitiveGraph: baseGraph,
+		BasePrimitiveGraph: baseGraph,
 	}
 }
 
 func (pg *sequentialPrimitiveGraph) NewDependency(from PrimitiveNode, to PrimitiveNode, weight float64) {
-	e := pg.g.NewWeightedEdge(from, to, weight)
-	pg.g.SetWeightedEdge(e)
+	e := pg.NewWeightedEdge(from, to, weight)
+	pg.SetWeightedEdge(e)
 }

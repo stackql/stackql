@@ -49,6 +49,27 @@ func (pg *standardBasePrimitiveGraph) IsReadOnly() bool {
 	return true
 }
 
+func (pg *standardBasePrimitiveGraph) NewWeightedEdge(
+	from PrimitiveNode, to PrimitiveNode, weight float64) graph.WeightedEdge {
+	return pg.g.NewWeightedEdge(from, to, weight)
+}
+
+func (pg *standardBasePrimitiveGraph) SetWeightedEdge(e graph.WeightedEdge) {
+	pg.g.SetWeightedEdge(e)
+}
+
+func (pg *standardBasePrimitiveGraph) NewNode() graph.Node {
+	return pg.g.NewNode()
+}
+
+func (pg *standardBasePrimitiveGraph) AddNode(n graph.Node) {
+	pg.g.AddNode(n)
+}
+
+func (pg *standardBasePrimitiveGraph) Nodes() graph.Nodes {
+	return pg.g.Nodes()
+}
+
 func (pg *standardBasePrimitiveGraph) SetRedoLog(binlog.LogEntry) {
 }
 
@@ -254,10 +275,10 @@ func (pg *standardBasePrimitiveGraph) Sort() ([]graph.Node, error) {
 	return topo.Sort(pg.g)
 }
 
-func newBasePrimitiveGraph(concurrencyLimit int) standardBasePrimitiveGraph {
+func newBasePrimitiveGraph(concurrencyLimit int) BasePrimitiveGraph {
 	eg, egCtx := errgroup.WithContext(context.Background())
 	eg.SetLimit(concurrencyLimit)
-	return standardBasePrimitiveGraph{
+	return &standardBasePrimitiveGraph{
 		g:           simple.NewWeightedDirectedGraph(0.0, 0.0),
 		errGroup:    eg,
 		errGroupCtx: egCtx,
