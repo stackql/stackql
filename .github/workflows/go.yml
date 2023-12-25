@@ -248,6 +248,7 @@ jobs:
       run: |
         git config --global "url.https://${GH_ACCESS_TOKEN}@github.com/.insteadOf" https://github.com/
         go get -v -t -d ./...
+        go install golang.org/x/perf/cmd/benchstat@latest
       env:
         GH_ACCESS_TOKEN: ${{env.GH_ACCESS_TOKEN}}
         GOPRIVATE: ${{env.GOPRIVATE}}
@@ -295,7 +296,47 @@ jobs:
     
     - name: Benchmark
       if: success()
-      run: go test -run='^$' -bench . -count=3 ./...
+      run: |
+        outFile="cicd/log/current-bench-nocache.txt"
+        baselineRefFile="cicd/ref/bench/baseline-go-bench.log"
+        thresholdRefFile="cicd/ref/bench/max-threshold-go-bench.log"
+        go test -run='^$' -bench . -benchtime=100x -count=6 \
+          --tags "json1 sqleanall" --ldflags "-X stackql/internal/stackql/planbuilder.PlanCacheEnabled=false"  \
+          ./... > ${outFile}
+        if [ "$?" = "0" ]; then
+          echo "Benchmarking run completed successfully"
+        else
+          echo "Benchmarking run failed"
+          exit 1
+        fi
+        cat ${outFile}
+        echo ""
+        echo "##### Raw benchstat on current run #####"
+        echo ""
+        benchstat ${outFile} | tee cicd/log/raw-benchstat.txt
+        echo ""
+        echo "##### Comparing to baseline #####"
+        echo ""
+        benchstat -row .name -table .config -ignore goos,goarch,cpu ${baselineRefFile} ${outFile} | tee cicd/log/comparison-benchstat.txt
+        echo ""
+        echo "##### Comparing to max threshold #####"
+        echo ""
+        benchstat -row .name -table .config -ignore goos,goarch,cpu ${thresholdRefFile} ${outFile} | tee cicd/log/threshold-comparison-benchstat.txt
+        nonNegativeComparisons=$( cat cicd/log/threshold-comparison-benchstat.txt \
+          | sed 's/.*\([+-][0-9][0-9]\.[0-9][0-9]*[%]\).*/\1/' \
+          | grep [+-][0-9][0-9]\.[0-9][0-9]*[%] \
+          | grep -v [-].* \
+        )
+        if [ -z "${nonNegativeComparisons}" ]; then
+          echo "All max threshold comparisons are negative: this is acceptable"
+        else
+          echo "Some max threshold comparisons are positive or zero: this is unacceptable"
+          echo ""
+          echo "##### Non-negative comparisons #####"
+          echo "${nonNegativeComparisons}"
+          echo ""
+          exit 1
+        fi
 
     - name: Mock Server Download
       run: |

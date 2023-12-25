@@ -1,0 +1,34 @@
+goos: linux
+goarch: amd64
+pkg: github.com/stackql/stackql/internal/stackql/driver
+cpu: Intel(R) Xeon(R) Platinum 8272CL CPU @ 2.60GHz
+BenchmarkSelectGoogleComputeInstanceDriver-2                                 	     100	   6400764 ns/op
+BenchmarkSelectGoogleComputeInstanceDriver-2                                 	     100	   6418996 ns/op
+BenchmarkSelectGoogleComputeInstanceDriver-2                                 	     100	   6451862 ns/op
+BenchmarkSelectGoogleComputeInstanceDriver-2                                 	     100	   6598328 ns/op
+BenchmarkSelectGoogleComputeInstanceDriver-2                                 	     100	   7677712 ns/op
+BenchmarkSelectGoogleComputeInstanceDriver-2                                 	     100	   6482811 ns/op
+BenchmarkParallelProjectSelectGoogleComputeInstanceDriver-2                  	     100	   6785489 ns/op
+BenchmarkParallelProjectSelectGoogleComputeInstanceDriver-2                  	     100	   6846661 ns/op
+BenchmarkParallelProjectSelectGoogleComputeInstanceDriver-2                  	     100	   6786778 ns/op
+BenchmarkParallelProjectSelectGoogleComputeInstanceDriver-2                  	     100	   6815967 ns/op
+BenchmarkParallelProjectSelectGoogleComputeInstanceDriver-2                  	     100	   6885115 ns/op
+BenchmarkParallelProjectSelectGoogleComputeInstanceDriver-2                  	     100	   6786656 ns/op
+BenchmarkHighlyParallelProjectSelectGoogleComputeInstanceDriver-2            	     100	  11455720 ns/op
+BenchmarkHighlyParallelProjectSelectGoogleComputeInstanceDriver-2            	     100	  11635215 ns/op
+BenchmarkHighlyParallelProjectSelectGoogleComputeInstanceDriver-2            	     100	  12137071 ns/op
+BenchmarkHighlyParallelProjectSelectGoogleComputeInstanceDriver-2            	     100	  11957348 ns/op
+BenchmarkHighlyParallelProjectSelectGoogleComputeInstanceDriver-2            	     100	  12013644 ns/op
+BenchmarkHighlyParallelProjectSelectGoogleComputeInstanceDriver-2            	     100	  11845601 ns/op
+BenchmarkLoosenedHighlyParallelProjectSelectGoogleComputeInstanceDriver-2    	     100	  10491956 ns/op
+BenchmarkLoosenedHighlyParallelProjectSelectGoogleComputeInstanceDriver-2    	     100	  10402432 ns/op
+BenchmarkLoosenedHighlyParallelProjectSelectGoogleComputeInstanceDriver-2    	     100	  10280864 ns/op
+BenchmarkLoosenedHighlyParallelProjectSelectGoogleComputeInstanceDriver-2    	     100	  10541940 ns/op
+BenchmarkLoosenedHighlyParallelProjectSelectGoogleComputeInstanceDriver-2    	     100	  10451181 ns/op
+BenchmarkLoosenedHighlyParallelProjectSelectGoogleComputeInstanceDriver-2    	     100	  10596109 ns/op
+BenchmarkUnlimitedHighlyParallelProjectSelectGoogleComputeInstanceDriver-2   	     100	  10224503 ns/op
+BenchmarkUnlimitedHighlyParallelProjectSelectGoogleComputeInstanceDriver-2   	     100	  10453230 ns/op
+BenchmarkUnlimitedHighlyParallelProjectSelectGoogleComputeInstanceDriver-2   	     100	  10115479 ns/op
+BenchmarkUnlimitedHighlyParallelProjectSelectGoogleComputeInstanceDriver-2   	     100	  10275647 ns/op
+BenchmarkUnlimitedHighlyParallelProjectSelectGoogleComputeInstanceDriver-2   	     100	  10389938 ns/op
+BenchmarkUnlimitedHighlyParallelProjectSelectGoogleComputeInstanceDriver-2   	     100	  10171688 ns/op
