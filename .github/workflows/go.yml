@@ -331,6 +331,7 @@ jobs:
         echo "##### Comparisons #####"
         echo ""
         echo "${comparisons}"
+        # shellcheck disable=SC2062
         nonNegativeComparisons=$( echo "${comparisons}" \
           | grep -v [-].* \
           || true
