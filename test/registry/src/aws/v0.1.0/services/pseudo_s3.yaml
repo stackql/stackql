@@ -27,41 +27,39 @@ components:
         views:
           'select':
               predicate: sqlDialect == "sqlite3"
-              ddl: '
+              ddl: |
                 SELECT 
-                JSON_EXTRACT(Properties, ''$.Arn'') as Arn,
-                JSON_EXTRACT(Properties, ''$.BucketName'') as BucketName,
-                JSON_EXTRACT(Properties, ''$.DomainName'') as DomainName,
-                JSON_EXTRACT(Properties, ''$.RegionalDomainName'') as RegionalDomainName,
-                JSON_EXTRACT(Properties, ''$.DualStackDomainName'') as DualStackDomainName,
-                JSON_EXTRACT(Properties, ''$.WebsiteURL'') as WebsiteURL,
-                JSON_EXTRACT(Properties, ''$.OwnershipControls.Rules[0].ObjectOwnership'') as ObjectOwnership,
-                IIF(JSON_EXTRACT(Properties, ''$.PublicAccessBlockConfiguration.RestrictPublicBuckets'') = 0, ''false'', ''true'') as RestrictPublicBuckets,
-                IIF(JSON_EXTRACT(Properties, ''$.PublicAccessBlockConfiguration.BlockPublicPolicy'') = 0, ''false'', ''true'') as BlockPublicPolicy,
-                IIF(JSON_EXTRACT(Properties, ''$.PublicAccessBlockConfiguration.BlockPublicAcls'') = 0, ''false'', ''true'') as BlockPublicAcls,
-                IIF(JSON_EXTRACT(Properties, ''$.PublicAccessBlockConfiguration.IgnorePublicAcls'') = 0, ''false'', ''true'') as IgnorePublicAcls,
-                JSON_EXTRACT(Properties, ''$.Tags'') as Tags
-                FROM aws.cloud_control.resources WHERE region = ''ap-southeast-1'' and data__TypeName = ''AWS::S3::Bucket''
+                JSON_EXTRACT(Properties, '$.Arn') as Arn,
+                JSON_EXTRACT(Properties, '$.BucketName') as BucketName,
+                JSON_EXTRACT(Properties, '$.DomainName') as DomainName,
+                JSON_EXTRACT(Properties, '$.RegionalDomainName') as RegionalDomainName,
+                JSON_EXTRACT(Properties, '$.DualStackDomainName') as DualStackDomainName,
+                JSON_EXTRACT(Properties, '$.WebsiteURL') as WebsiteURL,
+                JSON_EXTRACT(Properties, '$.OwnershipControls.Rules[0].ObjectOwnership') as ObjectOwnership,
+                IIF(JSON_EXTRACT(Properties, '$.PublicAccessBlockConfiguration.RestrictPublicBuckets') = 0, 'false', 'true') as RestrictPublicBuckets,
+                IIF(JSON_EXTRACT(Properties, '$.PublicAccessBlockConfiguration.BlockPublicPolicy') = 0, 'false', 'true') as BlockPublicPolicy,
+                IIF(JSON_EXTRACT(Properties, '$.PublicAccessBlockConfiguration.BlockPublicAcls') = 0, 'false', 'true') as BlockPublicAcls,
+                IIF(JSON_EXTRACT(Properties, '$.PublicAccessBlockConfiguration.IgnorePublicAcls') = 0, 'false', 'true') as IgnorePublicAcls,
+                JSON_EXTRACT(Properties, '$.Tags') as Tags
+                FROM aws.cloud_control.resources WHERE region = 'ap-southeast-1' and data__TypeName = 'AWS::S3::Bucket'
                 ;
-                '
               fallback:
                 predicate: sqlDialect == "postgres"
-                ddl: '
+                ddl: |
                   SELECT 
-                  json_extract_path_text(Properties, ''Arn'') as Arn,
-                  json_extract_path_text(Properties, ''BucketName'') as BucketName,
-                  json_extract_path_text(Properties, ''DomainName'') as DomainName,
-                  json_extract_path_text(Properties, ''RegionalDomainName'') as RegionalDomainName,
-                  json_extract_path_text(Properties, ''DualStackDomainName'') as DualStackDomainName,
-                  json_extract_path_text(Properties, ''WebsiteURL'') as WebsiteURL,
-                  json_extract_path_text(Properties, ''OwnershipControls'', ''Rules'', ''0'', ''ObjectOwnership'') as ObjectOwnership,
-                  CASE WHEN json_extract_path_text(Properties, ''PublicAccessBlockConfiguration'', ''RestrictPublicBuckets'') = ''0'' THEN ''false'' ELSE ''true'' END as RestrictPublicBuckets,
-                  CASE WHEN json_extract_path_text(Properties, ''PublicAccessBlockConfiguration'', ''BlockPublicPolicy'') = ''0'' THEN ''false'' ELSE ''true'' END as BlockPublicPolicy,
-                  CASE WHEN json_extract_path_text(Properties, ''PublicAccessBlockConfiguration'', ''BlockPublicAcls'') = ''0'' THEN ''false'' ELSE ''true'' END as BlockPublicAcls,
-                  CASE WHEN json_extract_path_text(Properties, ''PublicAccessBlockConfiguration'', ''IgnorePublicAcls'') = ''0'' THEN ''false'' ELSE ''true'' END as IgnorePublicAcls,
-                  json_extract_path_text(Properties, ''Tags'') as Tags
-                  FROM aws.cloud_control.resources WHERE region = ''ap-southeast-1'' and data__TypeName = ''AWS::S3::Bucket''
+                  json_extract_path_text(Properties, 'Arn') as Arn,
+                  json_extract_path_text(Properties, 'BucketName') as BucketName,
+                  json_extract_path_text(Properties, 'DomainName') as DomainName,
+                  json_extract_path_text(Properties, 'RegionalDomainName') as RegionalDomainName,
+                  json_extract_path_text(Properties, 'DualStackDomainName') as DualStackDomainName,
+                  json_extract_path_text(Properties, 'WebsiteURL') as WebsiteURL,
+                  json_extract_path_text(Properties, 'OwnershipControls', 'Rules', '0', 'ObjectOwnership') as ObjectOwnership,
+                  CASE WHEN json_extract_path_text(Properties, 'PublicAccessBlockConfiguration', 'RestrictPublicBuckets') = '0' THEN 'false' ELSE 'true' END as RestrictPublicBuckets,
+                  CASE WHEN json_extract_path_text(Properties, 'PublicAccessBlockConfiguration', 'BlockPublicPolicy') = '0' THEN 'false' ELSE 'true' END as BlockPublicPolicy,
+                  CASE WHEN json_extract_path_text(Properties, 'PublicAccessBlockConfiguration', 'BlockPublicAcls') = '0' THEN 'false' ELSE 'true' END as BlockPublicAcls,
+                  CASE WHEN json_extract_path_text(Properties, 'PublicAccessBlockConfiguration', 'IgnorePublicAcls') = '0' THEN 'false' ELSE 'true' END as IgnorePublicAcls,
+                  json_extract_path_text(Properties, 'Tags') as Tags
+                  FROM aws.cloud_control.resources WHERE region = 'ap-southeast-1' and data__TypeName = 'AWS::S3::Bucket'
                   ;
-                  '
 security:
   - hmac: []

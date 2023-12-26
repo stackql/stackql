@@ -2,8 +2,8 @@ package driver_test
 
 import (
 	"fmt"
+	"io"
 	"net/url"
-	"os"
 	"testing"
 
 	. "github.com/stackql/stackql/internal/stackql/driver"
@@ -44,12 +44,12 @@ func BenchmarkSelectGoogleComputeInstanceDriver(b *testing.B) {
 		b.Fatalf("Test failed: %v", err)
 	}
 
-	stringQuery := `select name, zone from google.compute.instances where zone = 'australia-southeast1-b' AND /* */ project = 'testing-project';`
+	stringQuery := `select count(1) as inst_count from google.compute.instances where zone = 'australia-southeast1-b' AND /* */ project = 'testing-project';`
 
 	runtimeCtx.LogLevelStr = "fatal"
 	handlerCtx, err := handler.GetHandlerCtx(stringQuery, *runtimeCtx, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-	handlerCtx.SetOutfile(os.Stdout)
-	handlerCtx.SetOutErrFile(os.Stderr)
+	handlerCtx.SetOutfile(io.Discard)
+	handlerCtx.SetOutErrFile(io.Discard)
 
 	dr, _ := NewStackQLDriver(handlerCtx)
 
@@ -98,8 +98,8 @@ func BenchmarkParallelProjectSelectGoogleComputeInstanceDriver(b *testing.B) {
 	stringQuery := `select count(1) as inst_count from google.compute.instances where zone = 'australia-southeast1-b' AND /* */ project in ('testing-project', 'testing-project-two');`
 
 	handlerCtx, err := handler.GetHandlerCtx(stringQuery, *runtimeCtx, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-	handlerCtx.SetOutfile(os.Stdout)
-	handlerCtx.SetOutErrFile(os.Stderr)
+	handlerCtx.SetOutfile(io.Discard)
+	handlerCtx.SetOutErrFile(io.Discard)
 
 	dr, _ := NewStackQLDriver(handlerCtx)
 
@@ -308,8 +308,8 @@ func BenchmarkHighlyParallelProjectSelectGoogleComputeInstanceDriver(b *testing.
 	  ;`
 
 	handlerCtx, err := handler.GetHandlerCtx(stringQuery, *runtimeCtx, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-	handlerCtx.SetOutfile(os.Stdout)
-	handlerCtx.SetOutErrFile(os.Stderr)
+	handlerCtx.SetOutfile(io.Discard)
+	handlerCtx.SetOutErrFile(io.Discard)
 
 	dr, _ := NewStackQLDriver(handlerCtx)
 
@@ -518,8 +518,8 @@ func BenchmarkLoosenedHighlyParallelProjectSelectGoogleComputeInstanceDriver(b *
 	  ;`
 
 	handlerCtx, err := handler.GetHandlerCtx(stringQuery, *runtimeCtx, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-	handlerCtx.SetOutfile(os.Stdout)
-	handlerCtx.SetOutErrFile(os.Stderr)
+	handlerCtx.SetOutfile(io.Discard)
+	handlerCtx.SetOutErrFile(io.Discard)
 
 	dr, _ := NewStackQLDriver(handlerCtx)
 
@@ -728,8 +728,8 @@ func BenchmarkUnlimitedHighlyParallelProjectSelectGoogleComputeInstanceDriver(b 
 	  ;`
 
 	handlerCtx, err := handler.GetHandlerCtx(stringQuery, *runtimeCtx, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-	handlerCtx.SetOutfile(os.Stdout)
-	handlerCtx.SetOutErrFile(os.Stderr)
+	handlerCtx.SetOutfile(io.Discard)
+	handlerCtx.SetOutErrFile(io.Discard)
 
 	dr, _ := NewStackQLDriver(handlerCtx)
 
