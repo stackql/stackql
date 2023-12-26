@@ -333,6 +333,7 @@ jobs:
         echo "${comparisons}"
         nonNegativeComparisons=$( echo "${comparisons}" \
           | grep -v [-].* \
+          || true
         )
         echo "completed comparison logic"
         if [ -z "${nonNegativeComparisons}" ]; then
