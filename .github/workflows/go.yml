@@ -322,6 +322,7 @@ jobs:
         echo "##### Comparing to max threshold #####"
         echo ""
         benchstat -row .name -table .config -ignore goos,goarch,cpu ${thresholdRefFile} ${outFile} | tee cicd/log/threshold-comparison-benchstat.txt
+        # shellcheck disable=SC2002
         nonNegativeComparisons=$( cat cicd/log/threshold-comparison-benchstat.txt \
           | sed 's/.*\([+-][0-9][0-9]\.[0-9][0-9]*[%]\).*/\1/' \
           | grep '[+-][0-9][0-9]\.[0-9][0-9]*[%]' \
