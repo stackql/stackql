@@ -302,14 +302,14 @@ jobs:
         thresholdRefFile="cicd/ref/bench/max-threshold-go-bench.log"
         go test -run='^$' -bench . -benchtime=100x -count=6 \
           --tags "json1 sqleanall" --ldflags "-X stackql/internal/stackql/planbuilder.PlanCacheEnabled=false"  \
-          ./... > ${outFile}
+          ./... | tee ${outFile}
+        # shellcheck disable=SC2181
         if [ "$?" = "0" ]; then
           echo "Benchmarking run completed successfully"
         else
           echo "Benchmarking run failed"
           exit 1
         fi
-        cat ${outFile}
         echo ""
         echo "##### Raw benchstat on current run #####"
         echo ""
@@ -324,8 +324,8 @@ jobs:
         benchstat -row .name -table .config -ignore goos,goarch,cpu ${thresholdRefFile} ${outFile} | tee cicd/log/threshold-comparison-benchstat.txt
         nonNegativeComparisons=$( cat cicd/log/threshold-comparison-benchstat.txt \
           | sed 's/.*\([+-][0-9][0-9]\.[0-9][0-9]*[%]\).*/\1/' \
-          | grep [+-][0-9][0-9]\.[0-9][0-9]*[%] \
-          | grep -v [-].* \
+          | grep '[+-][0-9][0-9]\.[0-9][0-9]*[%]' \
+          | grep -v '[-].*' \
         )
         if [ -z "${nonNegativeComparisons}" ]; then
           echo "All max threshold comparisons are negative: this is acceptable"
