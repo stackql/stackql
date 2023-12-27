@@ -64,6 +64,12 @@ java  -Dfile.encoding=UTF-8 -Dmockserver.initializationJsonPath=${HOME}/stackql/
 java  -Dfile.encoding=UTF-8 -Dmockserver.initializationJsonPath=${HOME}/stackql/stackql-devel/test/mockserver/expectations/static-google-admin-expectations.json -jar ${HOME}/stackql/stackql-devel/test/downloads/mockserver-netty-5.12.0-shaded.jar  -serverPort 1098 -logLevel INFO
 ```
 
+stackql auth testing mocks:
+
+```bash
+java  -Dfile.encoding=UTF-8 -Dmockserver.initializationJsonPath=${HOME}/stackql/stackql-devel/test/mockserver/expectations/static-auth-testing-expectations.json -jar ${HOME}/stackql/stackql-devel/test/downloads/mockserver-netty-5.12.0-shaded.jar  -serverPort 1170 -logLevel INFO
+```
+
 ### Expectations from local file
 
 As per [expectations/static-gcp-expectations.json](/test/server/expectations/static-gcp-expectations.json)

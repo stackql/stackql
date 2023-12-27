@@ -28,12 +28,32 @@ type serviceAccount struct {
 	PrivateKey string `json:"private_key"`
 }
 
+type tokenCfg struct {
+	token           []byte
+	authType        string
+	authValuePrefix string
+	tokenLocation   string
+	key             string
+}
+
+func newTokenConfig(
+	token []byte,
+	authType,
+	authValuePrefix,
+	tokenLocation,
+	key string,
+) *tokenCfg {
+	return &tokenCfg{
+		token:           token,
+		authType:        authType,
+		authValuePrefix: authValuePrefix,
+		tokenLocation:   tokenLocation,
+		key:             key,
+	}
+}
+
 type transport struct {
-	token               []byte
-	authType            string
-	authValuePrefix     string
-	tokenLocation       string
-	key                 string
+	tokenConfigs        []*tokenCfg
 	underlyingTransport http.RoundTripper
 }
 
@@ -41,8 +61,8 @@ func newTransport(
 	token []byte,
 	authType,
 	authValuePrefix,
-	tokenLocation, //nolint:unparam //TODO: review
-	key string, //nolint:unparam //TODO: review
+	tokenLocation,
+	key string,
 	underlyingTransport http.RoundTripper,
 ) (*transport, error) {
 	switch authType {
@@ -66,49 +86,55 @@ func newTransport(
 			return nil, fmt.Errorf("token location not supported: '%s'", tokenLocation)
 		}
 	}
+	tokenConfigObj := newTokenConfig(token, authType, authValuePrefix, tokenLocation, key)
 	return &transport{
-		token:               token,
-		authType:            authType,
-		authValuePrefix:     authValuePrefix,
-		tokenLocation:       tokenLocation,
-		key:                 key,
+		tokenConfigs:        []*tokenCfg{tokenConfigObj},
 		underlyingTransport: underlyingTransport,
 	}, nil
+}
+
+//nolint:unparam // future proofing
+func (t *transport) addTokenCfg(tokenConfig *tokenCfg) error {
+	t.tokenConfigs = append(t.tokenConfigs, tokenConfig)
+	return nil
 }
 
 const (
 	locationHeader string = "header"
 	locationQuery  string = "query"
 	authTypeBasic  string = "BASIC"
+	authTypeCustom string = "custom"
 	authTypeBearer string = "Bearer"
 	authTypeAPIKey string = "api_key"
 )
 
 func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
-	switch t.tokenLocation {
-	case locationHeader:
-		switch t.authType {
-		case authTypeBasic, authTypeBearer, authTypeAPIKey:
-			authValuePrefix := t.authValuePrefix
-			if t.authValuePrefix == "" {
-				authValuePrefix = fmt.Sprintf("%s ", t.authType)
+	for _, tokenConfig := range t.tokenConfigs {
+		switch tokenConfig.tokenLocation {
+		case locationHeader:
+			switch tokenConfig.authType {
+			case authTypeBasic, authTypeBearer, authTypeAPIKey:
+				authValuePrefix := tokenConfig.authValuePrefix
+				if tokenConfig.authValuePrefix == "" {
+					authValuePrefix = fmt.Sprintf("%s ", tokenConfig.authType)
+				}
+				req.Header.Set(
+					"Authorization",
+					fmt.Sprintf("%s%s", authValuePrefix, string(tokenConfig.token)),
+				)
+			default:
+				req.Header.Set(
+					tokenConfig.key,
+					string(tokenConfig.token),
+				)
 			}
-			req.Header.Set(
-				"Authorization",
-				fmt.Sprintf("%s%s", authValuePrefix, string(t.token)),
+		case locationQuery:
+			qv := req.URL.Query()
+			qv.Set(
+				tokenConfig.key, string(tokenConfig.token),
 			)
-		default:
-			req.Header.Set(
-				t.key,
-				string(t.token),
-			)
+			req.URL.RawQuery = qv.Encode()
 		}
-	case locationQuery:
-		qv := req.URL.Query()
-		qv.Set(
-			t.key, string(t.token),
-		)
-		req.URL.RawQuery = qv.Encode()
 	}
 	return t.underlyingTransport.RoundTrip(req)
 }
@@ -214,6 +240,44 @@ func basicAuth(authCtx *dto.AuthCtx, runtimeCtx dto.RuntimeCtx) (*http.Client, e
 	tr, err := newTransport(b, authTypeBasic, authCtx.ValuePrefix, locationHeader, "", httpClient.Transport)
 	if err != nil {
 		return nil, err
+	}
+	httpClient.Transport = tr
+	return httpClient, nil
+}
+
+func customAuth(authCtx *dto.AuthCtx, runtimeCtx dto.RuntimeCtx) (*http.Client, error) {
+	b, err := authCtx.GetCredentialsBytes()
+	if err != nil {
+		return nil, fmt.Errorf("credentials error: %w", err)
+	}
+	activateAuth(authCtx, "", "custom")
+	httpClient := netutils.GetHTTPClient(runtimeCtx, http.DefaultClient)
+	tr, err := newTransport(b, authTypeCustom, authCtx.ValuePrefix, authCtx.Location, authCtx.Name, httpClient.Transport)
+	if err != nil {
+		return nil, err
+	}
+	successor, successorExists := authCtx.GetSuccessor()
+	for {
+		if successorExists {
+			successorCredentialsBytes, sbErr := authCtx.GetCredentialsBytes()
+			if sbErr != nil {
+				return nil, fmt.Errorf("successor credentials error: %w", sbErr)
+			}
+			successorTokenConfig := newTokenConfig(
+				successorCredentialsBytes,
+				authTypeCustom,
+				successor.ValuePrefix,
+				successor.Location,
+				successor.Name,
+			)
+			addTknErr := tr.addTokenCfg(successorTokenConfig)
+			if addTknErr != nil {
+				return nil, addTknErr
+			}
+			successor, successorExists = successor.GetSuccessor()
+		} else {
+			break
+		}
 	}
 	httpClient.Transport = tr
 	return httpClient, nil

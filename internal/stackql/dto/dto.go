@@ -6,6 +6,7 @@ const (
 	AuthAzureDefaultStr             string = "azure_default"
 	AuthBasicStr                    string = "basic"
 	AuthBearerStr                   string = "bearer"
+	AuthCustomStr                   string = "custom"
 	AuthInteractiveStr              string = "interactive"
 	AuthServiceAccountStr           string = "service_account"
 	AuthNullStr                     string = "null_auth"
