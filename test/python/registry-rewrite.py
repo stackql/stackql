@@ -24,6 +24,7 @@ AZURE_DEFAULT_PORT = 1095
 SUMOLOGIC_DEFAULT_PORT = 1096
 DIGITALOCEAN_DEFAULT_PORT = 1097
 STACKQL_TEST_DEFAULT_PORT = 1099
+STACKQL_AUTH_TESTING_DEFAULT_PORT = 1170
 
 
 
@@ -112,6 +113,12 @@ parser.add_argument(
     default=DIGITALOCEAN_DEFAULT_PORT,
     help='port for digitalocean mock service'
 )
+parser.add_argument(
+    '--stackql-auth-testing-port',
+    type=int,
+    default=STACKQL_AUTH_TESTING_DEFAULT_PORT,
+    help='port for stackql auth test mock service'
+)
 
 class ProviderArgs:
 
@@ -197,6 +204,9 @@ class ProviderCfgMapping:
       },
       "stackql_test": {
         "port": processed_args.stackqltest_port
+      },
+      "stackql_auth_testing": {
+        "port": processed_args.stackql_auth_testing_port
       },
       "__default__": {
         "port": processed_args.default_port

@@ -87,6 +87,8 @@ func (gp *GenericProvider) inferAuthType(authCtx dto.AuthCtx, authTypeRequested 
 		return dto.AuthNullStr
 	case dto.AuthAWSSigningv4Str:
 		return dto.AuthAWSSigningv4Str
+	case dto.AuthCustomStr:
+		return dto.AuthCustomStr
 	}
 	if authCtx.KeyFilePath != "" || authCtx.KeyEnvVar != "" {
 		return dto.AuthServiceAccountStr
@@ -110,6 +112,8 @@ func (gp *GenericProvider) Auth(
 		return gp.keyFileAuth(authCtx)
 	case dto.AuthBasicStr:
 		return gp.basicAuth(authCtx)
+	case dto.AuthCustomStr:
+		return gp.customAuth(authCtx)
 	case dto.AuthAzureDefaultStr:
 		return gp.azureDefaultAuth(authCtx)
 	case dto.AuthInteractiveStr:
@@ -285,6 +289,10 @@ func (gp *GenericProvider) awsSigningAuth(authCtx *dto.AuthCtx) (*http.Client, e
 
 func (gp *GenericProvider) basicAuth(authCtx *dto.AuthCtx) (*http.Client, error) {
 	return basicAuth(authCtx, gp.runtimeCtx)
+}
+
+func (gp *GenericProvider) customAuth(authCtx *dto.AuthCtx) (*http.Client, error) {
+	return customAuth(authCtx, gp.runtimeCtx)
 }
 
 func (gp *GenericProvider) azureDefaultAuth(authCtx *dto.AuthCtx) (*http.Client, error) {

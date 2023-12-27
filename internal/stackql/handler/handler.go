@@ -496,7 +496,7 @@ func GetHandlerCtx(
 }
 
 func transformOpenapiStackqlAuthToLocal(authDTO anysdk.AuthDTO) *dto.AuthCtx {
-	return &dto.AuthCtx{
+	rv := &dto.AuthCtx{
 		Scopes:                  authDTO.GetScopes(),
 		Type:                    authDTO.GetType(),
 		ValuePrefix:             authDTO.GetValuePrefix(),
@@ -510,5 +510,20 @@ func transformOpenapiStackqlAuthToLocal(authDTO anysdk.AuthDTO) *dto.AuthCtx {
 		EnvVarUsername:          authDTO.GetEnvVarUsername(),
 		EnvVarPassword:          authDTO.GetEnvVarPassword(),
 		EncodedBasicCredentials: authDTO.GetInlineBasicCredentials(),
+		Location:                authDTO.GetLocation(),
+		Name:                    authDTO.GetName(),
 	}
+	successor, successorExists := authDTO.GetSuccessor()
+	currentParent := rv
+	for {
+		if successorExists {
+			transformedSuccessor := transformOpenapiStackqlAuthToLocal(successor)
+			currentParent.Successor = transformedSuccessor
+			currentParent = transformedSuccessor
+			successor, successorExists = successor.GetSuccessor()
+		} else {
+			break
+		}
+	}
+	return rv
 }

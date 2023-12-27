@@ -27,7 +27,10 @@ type AuthCtx struct {
 	EnvVarUsername          string         `json:"username_var" yaml:"username_var"`
 	EnvVarPassword          string         `json:"password_var" yaml:"password_var"`
 	EncodedBasicCredentials string         `json:"-" yaml:"-"`
+	Successor               *AuthCtx       `json:"successor" yaml:"successor"`
 	Active                  bool           `json:"-" yaml:"-"`
+	Location                string         `json:"location" yaml:"location"`
+	Name                    string         `json:"name" yaml:"name"`
 }
 
 func (ac *AuthCtx) GetSQLCfg() (SQLBackendCfg, bool) {
@@ -60,9 +63,19 @@ func (ac *AuthCtx) Clone() *AuthCtx {
 		EnvVarAPISecretStr:      ac.EnvVarAPISecretStr,
 		EnvVarUsername:          ac.EnvVarUsername,
 		EnvVarPassword:          ac.EnvVarPassword,
+		Successor:               ac.Successor,
 		EncodedBasicCredentials: ac.EncodedBasicCredentials,
+		Location:                ac.Location,
+		Name:                    ac.Name,
 	}
 	return rv
+}
+
+func (ac *AuthCtx) GetSuccessor() (*AuthCtx, bool) {
+	if ac.Successor != nil {
+		return ac.Successor, true
+	}
+	return nil, false
 }
 
 func (ac *AuthCtx) GetInlineBasicCredentials() string {

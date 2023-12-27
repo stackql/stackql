@@ -417,7 +417,9 @@
       "type": "go",
       "env": {
         "DUMMY_DIGITALOCEAN_USERNAME": "myusername",
-        "DUMMY_DIGITALOCEAN_PASSWORD": "mypassword"
+        "DUMMY_DIGITALOCEAN_PASSWORD": "mypassword",
+        "DD_API_KEY": "myusername",
+        "DD_APPLICATION_KEY": "mypassword"
       },
       "request": "launch",
       "mode": "debug",

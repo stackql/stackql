@@ -3114,6 +3114,19 @@ Weird ID WSL bug query
     ...    ${SELECT_SUMOLOGIC_COLLECTORS_IDS_EXPECTED}
     ...    ${CURDIR}/tmp/Weird-ID-WSL-bug-query.tmp
 
+Custom Auth Linear Should Send Appropriate Credentials
+    # This will only succeed if correct headers are sent.
+    Should Horrid Query StackQL Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}    
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select id from stackql_auth_testing.collectors.collectors order by id desc;
+    ...    ${SELECT_SUMOLOGIC_COLLECTORS_IDS_EXPECTED}
+    ...    ${CURDIR}/tmp/Custom-Auth-Linear-Should-Send-Appropriate-Credentials.tmp
 
 HTTP Log enabled regression test
     Should Horrid HTTP Log Enabled Query StackQL Inline Equal

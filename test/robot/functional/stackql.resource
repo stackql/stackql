@@ -40,6 +40,7 @@ Start All Mock Servers
     Start Mock Server    ${JSON_INIT_FILE_PATH_AZURE}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_AZURE}
     Start Mock Server    ${JSON_INIT_FILE_PATH_SUMOLOGIC}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_SUMOLOGIC}
     Start Mock Server    ${JSON_INIT_FILE_PATH_DIGITALOCEAN}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_DIGITALOCEAN}
+    Start Mock Server    ${JSON_INIT_FILE_PATH_STACKQL_AUTH_TESTING}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_STACKQL_AUTH_TESTING}
 
 
 Prepare StackQL Environment
@@ -53,6 +54,8 @@ Prepare StackQL Environment
     Set Environment Variable    DUMMY_DIGITALOCEAN_PASSWORD    ${DUMMY_DIGITALOCEAN_PASSWORD_STR}
     Set Environment Variable    DB_SETUP_SRC    ${DB_SETUP_SRC}
     Set Environment Variable    GOOGLE_APPLICATION_CREDENTIALS    ${GOOGLE_APPLICATION_CREDENTIALS}
+    Set Environment Variable    DD_API_KEY    %{DD_API_KEY=dummy_dd_api_key}
+    Set Environment Variable    DD_APPLICATION_KEY    %{DD_APPLICATION_KEY=dummy_dd_application_key}
     Start All Mock Servers
     Generate Container Credentials for StackQL PG Server mTLS
     Start StackQL PG Server mTLS    ${PG_SRV_PORT_MTLS}    ${PG_SRV_MTLS_CFG_STR}    {}    {}    ${SQL_BACKEND_CFG_STR_CANONICAL}    ${PG_SRV_PORT_DOCKER_MTLS}

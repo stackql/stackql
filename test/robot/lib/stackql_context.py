@@ -488,6 +488,9 @@ MOCKSERVER_PORT_GOOGLE = 1080
 JSON_INIT_FILE_PATH_GOOGLEADMIN = os.path.join(REPOSITORY_ROOT, 'test', 'mockserver', 'expectations', 'static-google-admin-expectations.json')
 MOCKSERVER_PORT_GOOGLEADMIN = 1098
 
+JSON_INIT_FILE_PATH_STACKQL_AUTH_TESTING = os.path.join(REPOSITORY_ROOT, 'test', 'mockserver', 'expectations', 'static-auth-testing-expectations.json')
+MOCKSERVER_PORT_STACKQL_AUTH_TESTING = 1170
+
 JSON_INIT_FILE_PATH_OKTA = os.path.join(REPOSITORY_ROOT, 'test', 'mockserver', 'expectations', 'static-okta-expectations.json')
 MOCKSERVER_PORT_OKTA = 1090
 
@@ -819,6 +822,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'MOCKSERVER_PORT_GITHUB':                         MOCKSERVER_PORT_GITHUB,
     'MOCKSERVER_PORT_GOOGLE':                         MOCKSERVER_PORT_GOOGLE,
     'MOCKSERVER_PORT_GOOGLEADMIN':                    MOCKSERVER_PORT_GOOGLEADMIN,
+    'MOCKSERVER_PORT_STACKQL_AUTH_TESTING':           MOCKSERVER_PORT_STACKQL_AUTH_TESTING,
     'MOCKSERVER_PORT_K8S':                            MOCKSERVER_PORT_K8S,
     'MOCKSERVER_PORT_OKTA':                           MOCKSERVER_PORT_OKTA,
     'MOCKSERVER_PORT_REGISTRY':                       MOCKSERVER_PORT_REGISTRY,
@@ -1028,6 +1032,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     rv['JSON_INIT_FILE_PATH_GITHUB']                    = JSON_INIT_FILE_PATH_GITHUB
     rv['JSON_INIT_FILE_PATH_GOOGLE']                    = JSON_INIT_FILE_PATH_GOOGLE
     rv['JSON_INIT_FILE_PATH_GOOGLEADMIN']               = JSON_INIT_FILE_PATH_GOOGLEADMIN
+    rv['JSON_INIT_FILE_PATH_STACKQL_AUTH_TESTING']      = JSON_INIT_FILE_PATH_STACKQL_AUTH_TESTING
     rv['JSON_INIT_FILE_PATH_K8S']                       = JSON_INIT_FILE_PATH_K8S
     rv['JSON_INIT_FILE_PATH_OKTA']                      = JSON_INIT_FILE_PATH_OKTA
     rv['JSON_INIT_FILE_PATH_REGISTRY']                  = JSON_INIT_FILE_PATH_REGISTRY
@@ -1055,6 +1060,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     rv['JSON_INIT_FILE_PATH_GITHUB']                    = JSON_INIT_FILE_PATH_GITHUB
     rv['JSON_INIT_FILE_PATH_GOOGLE']                    = JSON_INIT_FILE_PATH_GOOGLE
     rv['JSON_INIT_FILE_PATH_GOOGLEADMIN']               = JSON_INIT_FILE_PATH_GOOGLEADMIN
+    rv['JSON_INIT_FILE_PATH_STACKQL_AUTH_TESTING']      = JSON_INIT_FILE_PATH_STACKQL_AUTH_TESTING
     rv['JSON_INIT_FILE_PATH_K8S']                       = JSON_INIT_FILE_PATH_K8S
     rv['JSON_INIT_FILE_PATH_OKTA']                      = JSON_INIT_FILE_PATH_OKTA
     rv['JSON_INIT_FILE_PATH_REGISTRY']                  = JSON_INIT_FILE_PATH_REGISTRY
