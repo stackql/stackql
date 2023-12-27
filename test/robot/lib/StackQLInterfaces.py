@@ -483,7 +483,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
   
 
   @keyword
-  def should_PG_client_inline_equal_bench(self, curdir :str, psql_exe :str, psql_conn_str :str, query :str, expected_output :str, max_mean_time :float = 4.0, max_time :float = 10.0, repeat_count = 10, **cfg):
+  def should_PG_client_inline_equal_bench(self, curdir :str, psql_exe :str, psql_conn_str :str, query :str, expected_output :str, max_mean_time :float = 1.7, max_time :float = 10.0, repeat_count = 10, **cfg):
     times = []
     for i in range(repeat_count):
       start_time = time.time()

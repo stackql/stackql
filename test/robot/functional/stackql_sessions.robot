@@ -267,3 +267,4 @@ High Volume IN Query Is Correct and Performs OK
     ...    ${PSQL_MTLS_CONN_STR}
     ...    ${inputStr}
     ...    ${outputStr}
+    ...    max_mean_time=1.7
