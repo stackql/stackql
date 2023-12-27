@@ -3,6 +3,7 @@
 from asyncio import subprocess
 import json
 import os
+import time
 import typing
 
 from robot.api.deco import keyword, library
@@ -479,6 +480,28 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       query
     )
     return self.should_be_equal(result.stdout, expected_output)
+  
+
+  @keyword
+  def should_PG_client_inline_equal_bench(self, curdir :str, psql_exe :str, psql_conn_str :str, query :str, expected_output :str, max_mean_time :float = 4.0, max_time :float = 10.0, repeat_count = 10, **cfg):
+    times = []
+    for i in range(repeat_count):
+      start_time = time.time()
+      result =    self._run_PG_client_command(
+        curdir,
+        psql_exe,
+        psql_conn_str,
+        query
+      )
+      end_time = time.time()
+      duration = end_time - start_time
+      times.append(duration)
+      self.should_be_equal(result.stdout, expected_output)
+    mean_time = sum(times) / len(times)
+    self.log(f"mean_time = {mean_time}")
+    self.log(f"max_time = {max(times)}")
+    self.should_be_true(mean_time < max_mean_time)
+    return self.should_be_true(all([ t < max_time for t in times ]))
 
 
   @keyword
