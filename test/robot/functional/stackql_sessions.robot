@@ -207,3 +207,64 @@ PG Session Postgres Client V2 Typed Queries
     ...    ${SELECT_AWS_CLOUD_CONTROL_EVENTS_MINIMAL_EXPECTED}
     ...    stdout=${CURDIR}/tmp/PG-Session-Postgres-Client-V2-Typed-Queries.tmp
     [Teardown]    NONE
+
+
+
+High Volume IN Query Is Correct and Performs OK
+    Pass Execution If    "${CONCURRENCY_LIMIT}" == "1"    We only expect performance when concurrency settings are aggressive.
+    ${inputStr} =    Catenate
+    ...              select 
+    ...              instanceId, 
+    ...              ipAddress 
+    ...              from aws.ec2.instances 
+    ...              where 
+    ...              instanceId not in ('some-silly-id')  
+    ...              and region in (
+    ...              'us-east-1',
+    ...              'us-east-2',
+    ...              'us-west-1',
+    ...              'us-west-2',
+    ...              'ap-south-1',
+    ...              'ap-northeast-3',
+    ...              'ap-northeast-2',
+    ...              'ap-southeast-1',
+    ...              'ap-southeast-2',
+    ...              'ap-northeast-1',
+    ...              'ca-central-1',
+    ...              'eu-central-1',
+    ...              'eu-west-1',
+    ...              'eu-west-2',
+    ...              'eu-west-3',
+    ...              'eu-north-1',
+    ...              'sa-east-1'
+    ...              )
+    ...              ;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...               ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}instanceId${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}ipAddress${SPACE}${SPACE}${SPACE}${SPACE}
+    ...               ---------------------+----------------
+    ...               ${SPACE}i-1234567890abcdef0${SPACE}|${SPACE}54.194.252.215
+    ...               ${SPACE}i-1234567890abcdef0${SPACE}|${SPACE}54.194.252.215
+    ...               ${SPACE}i-1234567890abcdef0${SPACE}|${SPACE}54.194.252.215
+    ...               ${SPACE}i-1234567890abcdef0${SPACE}|${SPACE}54.194.252.215
+    ...               ${SPACE}i-1234567890abcdef0${SPACE}|${SPACE}54.194.252.215
+    ...               ${SPACE}i-1234567890abcdef0${SPACE}|${SPACE}54.194.252.215
+    ...               ${SPACE}i-1234567890abcdef0${SPACE}|${SPACE}54.194.252.215
+    ...               ${SPACE}i-1234567890abcdef0${SPACE}|${SPACE}54.194.252.215
+    ...               ${SPACE}i-1234567890abcdef0${SPACE}|${SPACE}54.194.252.215
+    ...               ${SPACE}i-1234567890abcdef0${SPACE}|${SPACE}54.194.252.215
+    ...               ${SPACE}i-1234567890abcdef0${SPACE}|${SPACE}54.194.252.215
+    ...               ${SPACE}i-1234567890abcdef0${SPACE}|${SPACE}54.194.252.215
+    ...               ${SPACE}i-1234567890abcdef0${SPACE}|${SPACE}54.194.252.215
+    ...               ${SPACE}i-1234567890abcdef0${SPACE}|${SPACE}54.194.252.215
+    ...               ${SPACE}i-1234567890abcdef0${SPACE}|${SPACE}54.194.252.215
+    ...               ${SPACE}i-1234567890abcdef0${SPACE}|${SPACE}54.194.252.215
+    ...               ${SPACE}i-1234567890abcdef0${SPACE}|${SPACE}54.194.252.215
+    ...               (17${SPACE}rows)
+    ...               ${EMPTY}
+    Should PG Client Inline Equal Bench
+    ...    ${CURDIR}
+    ...    ${PSQL_EXE}
+    ...    ${PSQL_MTLS_CONN_STR}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    max_mean_time=1.7
