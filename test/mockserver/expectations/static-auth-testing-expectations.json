@@ -4,8 +4,8 @@
       "method": "GET",
       "path": "/v1/collectors",
       "headers": {
-        "DD-API-KEY": ["^.+$" ],
-        "DD-APPLICATION-KEY": ["^.+$" ]
+        "DD-API-KEY": ["^myusername$" ],
+        "DD-APPLICATION-KEY": ["^mypassword$" ]
       }
     },
     "httpResponse": {
