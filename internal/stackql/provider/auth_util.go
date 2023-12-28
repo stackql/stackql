@@ -109,7 +109,8 @@ const (
 )
 
 func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
-	for _, tokenConfig := range t.tokenConfigs {
+	for _, tc := range t.tokenConfigs {
+		tokenConfig := tc
 		switch tokenConfig.tokenLocation {
 		case locationHeader:
 			switch tokenConfig.authType {
@@ -259,7 +260,7 @@ func customAuth(authCtx *dto.AuthCtx, runtimeCtx dto.RuntimeCtx) (*http.Client, 
 	successor, successorExists := authCtx.GetSuccessor()
 	for {
 		if successorExists {
-			successorCredentialsBytes, sbErr := authCtx.GetCredentialsBytes()
+			successorCredentialsBytes, sbErr := successor.GetCredentialsBytes()
 			if sbErr != nil {
 				return nil, fmt.Errorf("successor credentials error: %w", sbErr)
 			}
