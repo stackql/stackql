@@ -22,7 +22,7 @@ type standardDataFlowEdge struct {
 	relations    []Relation
 }
 
-func NewStandardDataFlowEdge(
+func newStandardDataFlowEdge(
 	source Vertex,
 	dest Vertex,
 	comparisonExpr *sqlparser.ComparisonExpr,

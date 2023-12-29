@@ -60,14 +60,6 @@ func (dc *standardDataFlowCollection) GetNextID() int64 {
 	return dc.maxID
 }
 
-func (dc *standardDataFlowCollection) AddOrUpdateEdgeOld(e Edge) error {
-	dc.AddVertex(e.GetSource())
-	dc.AddVertex(e.GetDest())
-	dc.edges = append(dc.edges, e)
-	dc.g.SetWeightedEdge(e)
-	return nil
-}
-
 func (dc *standardDataFlowCollection) AddOrUpdateEdge(
 	source Vertex,
 	dest Vertex,
@@ -79,7 +71,7 @@ func (dc *standardDataFlowCollection) AddOrUpdateEdge(
 	dc.AddVertex(dest)
 	existingEdge := dc.g.WeightedEdge(source.ID(), dest.ID())
 	if existingEdge == nil {
-		edge := NewStandardDataFlowEdge(source, dest, comparisonExpr, sourceExpr, destColumn)
+		edge := newStandardDataFlowEdge(source, dest, comparisonExpr, sourceExpr, destColumn)
 		dc.edges = append(dc.edges, edge)
 		dc.g.SetWeightedEdge(edge)
 		return nil

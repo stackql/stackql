@@ -38,18 +38,14 @@ func (ss *DependencySubDAGBuilder) Build() error {
 	if err != nil {
 		return err
 	}
-	for i, acbBld := range ss.dependencyBuilders {
+	for _, db := range ss.dependencyBuilders {
+		acbBld := db
 		err = acbBld.Build()
 		if err != nil {
 			return err
 		}
 		graph := ss.graph
-		if i > 0 {
-			graph.NewDependency(ss.dependencyBuilders[i-1].GetTail(), acbBld.GetRoot(), 1.0)
-		}
-		if i == len(ss.dependencyBuilders)-1 {
-			graph.NewDependency(acbBld.GetTail(), ss.dependentBuilder.GetRoot(), 1.0)
-		}
+		graph.NewDependency(acbBld.GetTail(), ss.dependentBuilder.GetRoot(), 1.0)
 	}
 	return nil
 }

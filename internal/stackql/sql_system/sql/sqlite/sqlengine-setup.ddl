@@ -95,7 +95,7 @@ INSERT OR IGNORE INTO "__iql__.views" (
 ) 
 VALUES (
   'stackql_repositories',
-  'select id, name, url from github.repos.repos where org = ''stackql'';'
+  'select id, name, url, org from github.repos.repos where org = ''stackql'';'
 )
 ;
 

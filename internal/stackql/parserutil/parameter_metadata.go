@@ -16,28 +16,38 @@ type ParameterMetadata interface {
 	GetParent() *sqlparser.ComparisonExpr
 	GetVal() interface{}
 	GetTable() sqlparser.SQLNode
+	GetOrdinal() int
 	SetTable(sqlparser.SQLNode) error
 }
 
 type StandardComparisonParameterMetadata struct {
-	Parent *sqlparser.ComparisonExpr
-	Val    interface{}
-	table  sqlparser.SQLNode
+	Parent  *sqlparser.ComparisonExpr
+	Val     interface{}
+	table   sqlparser.SQLNode
+	ordinal int
 }
 
 type PlaceholderParameterMetadata struct {
+	ordinal        int
 	placeholderVal struct{}
 }
 
-func NewComparisonParameterMetadata(parent *sqlparser.ComparisonExpr, val interface{}) ParameterMetadata {
+func NewComparisonParameterMetadata(parent *sqlparser.ComparisonExpr, val interface{}, ordinal int) ParameterMetadata {
 	return &StandardComparisonParameterMetadata{
-		Parent: parent,
-		Val:    val,
+		Parent:  parent,
+		Val:     val,
+		ordinal: ordinal,
 	}
 }
 
-func NewPlaceholderParameterMetadata() ParameterMetadata {
-	return PlaceholderParameterMetadata{}
+func NewPlaceholderParameterMetadata(ordinal int) ParameterMetadata {
+	return &PlaceholderParameterMetadata{
+		ordinal: ordinal,
+	}
+}
+
+func (pm *PlaceholderParameterMetadata) GetOrdinal() int {
+	return pm.ordinal
 }
 
 func (pm *StandardComparisonParameterMetadata) iParameterMetadata() {}
@@ -48,6 +58,10 @@ func (pm *StandardComparisonParameterMetadata) GetParent() *sqlparser.Comparison
 
 func (pm *StandardComparisonParameterMetadata) GetVal() interface{} {
 	return pm.Val
+}
+
+func (pm *StandardComparisonParameterMetadata) GetOrdinal() int {
+	return pm.ordinal
 }
 
 func (pm *StandardComparisonParameterMetadata) GetTable() sqlparser.SQLNode {

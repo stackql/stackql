@@ -19,6 +19,7 @@ type TableParameterCoupling interface {
 	getParameterMap() ParameterMap
 	AbbreviateMap() (map[string]interface{}, error)
 	Add(ColumnarReference, ParameterMetadata, ParamSourceType) error
+	DeleteByOrdinal(int) bool
 	Clone() TableParameterCoupling
 	GetOnCoupling() TableParameterCoupling
 	GetNotOnCoupling() TableParameterCoupling
@@ -42,6 +43,16 @@ func NewTableParameterCoupling() TableParameterCoupling {
 func (tpc *standardTableParameterCoupling) AndStringMap(rhs map[string]interface{}) ColumnKeyedDatastore {
 	tpc.paramMap.AndStringMap(rhs)
 	return tpc
+}
+
+func (tpc *standardTableParameterCoupling) DeleteByOrdinal(ord int) bool {
+	var rv bool
+	for k, v := range tpc.paramMap.GetMap() {
+		if v.GetOrdinal() == ord {
+			rv = tpc.paramMap.Delete(k)
+		}
+	}
+	return rv
 }
 
 func (tpc *standardTableParameterCoupling) DeleteStringMap(rhs map[string]interface{}) ColumnKeyedDatastore {
