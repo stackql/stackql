@@ -281,13 +281,16 @@ func (pr *standardParameterRouter) GetOnConditionDataFlows() (dataflow.Collectio
 	return rv, nil
 }
 
+//nolint:gocognit // who cares
 func (pr *standardParameterRouter) getAvailableParameters(
 	tb sqlparser.TableExpr,
 ) parserutil.TableParameterCoupling {
 	rv := parserutil.NewTableParameterCoupling()
+	minKeyMap := make(map[string]int)
 	for k, v := range pr.whereParamMap.GetMap() {
 		key := k.String()
 		tableAlias := k.Alias()
+		ordinal := v.GetOrdinal()
 		foundTable, ok := pr.tablesAliasMap[tableAlias]
 		if ok && foundTable != tb {
 			continue
@@ -299,7 +302,19 @@ func (pr *standardParameterRouter) getAvailableParameters(
 		if ok && ref != tb {
 			continue
 		}
+		existingOrdinal, ordinalOk := minKeyMap[key]
+		if ordinalOk {
+			_, isPlaceholder := v.(*parserutil.PlaceholderParameterMetadata)
+			if isPlaceholder {
+				continue
+			}
+			if existingOrdinal < ordinal {
+				continue
+			}
+			rv.DeleteByOrdinal(existingOrdinal)
+		}
 		rv.Add(k, v, parserutil.WhereParam) //nolint:errcheck // no issue
+		minKeyMap[key] = ordinal
 	}
 	for k, v := range pr.onParamMap.GetMap() {
 		key := k.String()

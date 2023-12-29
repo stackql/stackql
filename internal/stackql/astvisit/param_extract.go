@@ -12,7 +12,8 @@ import (
 )
 
 var (
-	_ ParserParamAstVisitor = &standardParserParamAstVisitor{}
+	_       ParserParamAstVisitor = &standardParserParamAstVisitor{}
+	ordinal int                   //nolint:gochecknoglobals  // TODO: remove this global
 )
 
 type ParserParamAstVisitor interface {
@@ -37,6 +38,11 @@ func NewParamAstVisitor(
 		annotatedAST: annotatedAST,
 		params:       parserutil.NewParameterMap(),
 	}
+}
+
+func (v *standardParserParamAstVisitor) getNextOrdinal() int {
+	ordinal++
+	return ordinal
 }
 
 func (v *standardParserParamAstVisitor) GetParameters() parserutil.ParameterMap {
@@ -711,6 +717,7 @@ func (v *standardParserParamAstVisitor) Visit(node sqlparser.SQLNode) error {
 				v.params.Set(k, parserutil.NewComparisonParameterMetadata(
 					node,
 					rt,
+					v.getNextOrdinal(),
 				))
 			case *sqlparser.ColName:
 				k, err := parserutil.NewUnknownTypeColumnarReference(lt)
@@ -720,6 +727,7 @@ func (v *standardParserParamAstVisitor) Visit(node sqlparser.SQLNode) error {
 				v.params.Set(k, parserutil.NewComparisonParameterMetadata(
 					node,
 					rt,
+					v.getNextOrdinal(),
 				))
 				kr, err := parserutil.NewUnknownTypeColumnarReference(rt)
 				if err != nil {
@@ -728,6 +736,7 @@ func (v *standardParserParamAstVisitor) Visit(node sqlparser.SQLNode) error {
 				v.params.Set(kr, parserutil.NewComparisonParameterMetadata(
 					node,
 					lt,
+					v.getNextOrdinal(),
 				))
 			case sqlparser.ValTuple:
 				k, err := parserutil.NewUnknownTypeColumnarReference(lt)
@@ -737,6 +746,7 @@ func (v *standardParserParamAstVisitor) Visit(node sqlparser.SQLNode) error {
 				v.params.Set(k, parserutil.NewComparisonParameterMetadata(
 					node,
 					rt,
+					v.getNextOrdinal(),
 				))
 			default:
 				logging.GetLogger().Debugf("unhandled type: %T", rt)
@@ -752,6 +762,7 @@ func (v *standardParserParamAstVisitor) Visit(node sqlparser.SQLNode) error {
 				v.params.Set(k, parserutil.NewComparisonParameterMetadata(
 					node,
 					lt,
+					v.getNextOrdinal(),
 				))
 			default:
 			}

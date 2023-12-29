@@ -733,6 +733,7 @@ func (v *standardParserPlaceholderParamAstVisitor) Visit(node sqlparser.SQLNode)
 				v.params.Set(k, parserutil.NewComparisonParameterMetadata(
 					node,
 					rt,
+					0,
 				))
 			default:
 			}
@@ -747,6 +748,7 @@ func (v *standardParserPlaceholderParamAstVisitor) Visit(node sqlparser.SQLNode)
 				v.params.Set(k, parserutil.NewComparisonParameterMetadata(
 					node,
 					lt,
+					0,
 				))
 			default:
 			}
@@ -971,7 +973,7 @@ func (v *standardParserPlaceholderParamAstVisitor) Visit(node sqlparser.SQLNode)
 			if err != nil {
 				return err
 			}
-			v.params.Set(k, parserutil.NewPlaceholderParameterMetadata())
+			v.params.Set(k, parserutil.NewPlaceholderParameterMetadata(0))
 		}
 		buf.AstPrintf(node, "%v = %v", node.Name, node.Expr)
 
@@ -1004,7 +1006,7 @@ func (v *standardParserPlaceholderParamAstVisitor) Visit(node sqlparser.SQLNode)
 		if err != nil {
 			return err
 		}
-		err = v.params.Set(k, parserutil.NewPlaceholderParameterMetadata())
+		err = v.params.Set(k, parserutil.NewPlaceholderParameterMetadata(0))
 		if err != nil {
 			return err
 		}
