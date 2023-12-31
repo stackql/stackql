@@ -19,7 +19,9 @@ type SQLDataSource interface {
 	GetDBName() string
 }
 
-func NewDataSource(authCtx *dto.AuthCtx) (SQLDataSource, error) {
+type genericSQLDataSourceFunc func(*dto.AuthCtx, string, string) (SQLDataSource, error)
+
+func NewDataSource(authCtx *dto.AuthCtx, genericSQL genericSQLDataSourceFunc) (SQLDataSource, error) {
 	if authCtx == nil {
 		return nil, fmt.Errorf("cannot create sql data source from nil auth context")
 	}
@@ -29,7 +31,7 @@ func NewDataSource(authCtx *dto.AuthCtx) (SQLDataSource, error) {
 		constants.AuthTypeDelimiter,
 		"snowflake",
 	) {
-		return newGenericSQLDataSource(authCtx, "snowflake", "snowflake")
+		return genericSQL(authCtx, "snowflake", "snowflake")
 	}
 	if authCtx.Type == fmt.Sprintf(
 		"%s%s%s",
@@ -37,7 +39,7 @@ func NewDataSource(authCtx *dto.AuthCtx) (SQLDataSource, error) {
 		constants.AuthTypeDelimiter,
 		"postgres",
 	) {
-		return newGenericSQLDataSource(authCtx, "pgx", "postgres")
+		return genericSQL(authCtx, "pgx", "postgres")
 	}
 	return nil, fmt.Errorf("sql data source of type '%s' not supported", authCtx.Type)
 }
