@@ -131,7 +131,7 @@ func initSQLDataSources(authContextMap map[string]*dto.AuthCtx) (map[string]sql_
 	for k, ac := range authContextMap {
 		_, isSQLCfg := ac.GetSQLCfg()
 		if isSQLCfg {
-			sqlDataSource, err := sql_datasource.NewDataSource(ac)
+			sqlDataSource, err := sql_datasource.NewDataSource(ac, sql_datasource.NewGenericSQLDataSource)
 			if err != nil {
 				return nil, err
 			}

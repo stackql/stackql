@@ -43,6 +43,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.0.0 // indirect
 	github.com/Azure/azure-storage-blob-go v0.15.0 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v0.7.0 // indirect
+	github.com/DATA-DOG/go-sqlmock v1.5.1 // indirect
 	github.com/Masterminds/semver v1.4.2 // indirect
 	github.com/PaesslerAG/gval v1.0.0 // indirect
 	github.com/PaesslerAG/jsonpath v0.1.1 // indirect
