@@ -534,6 +534,14 @@ CREATE_DISKS_VIEW_PRIMARY_ALIAS = "create view cross_cloud_disks_aliased as sele
 PSQL_MTLS_CONN_STR :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH} sslkey={STACKQL_PG_CLIENT_KEY_PATH} sslrootcert={STACKQL_PG_SERVER_CERT_PATH} dbname=mydatabase"
 PSQL_MTLS_CONN_STR_UNIX :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH_UNIX} sslkey={STACKQL_PG_CLIENT_KEY_PATH_UNIX} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_UNIX} dbname=mydatabase"
 
+PSQL_MTLS_DISABLE_CONN_STR :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=disable sslcert={STACKQL_PG_CLIENT_CERT_PATH} sslkey={STACKQL_PG_CLIENT_KEY_PATH} sslrootcert={STACKQL_PG_SERVER_CERT_PATH} dbname=mydatabase"
+PSQL_MTLS_DISABLE_CONN_STR_UNIX :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=disable sslcert={STACKQL_PG_CLIENT_CERT_PATH_UNIX} sslkey={STACKQL_PG_CLIENT_KEY_PATH_UNIX} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_UNIX} dbname=mydatabase"
+PSQL_MTLS_DISABLE_CONN_STR_DOCKER :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=disable sslcert={STACKQL_PG_CLIENT_CERT_PATH_DOCKER} sslkey={STACKQL_PG_CLIENT_KEY_PATH_DOCKER} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_DOCKER} dbname=mydatabase"
+
+OPENSSL_S_CLIENT_MTLS_CONN_STR :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=disable sslcert={STACKQL_PG_CLIENT_CERT_PATH} sslkey={STACKQL_PG_CLIENT_KEY_PATH} sslrootcert={STACKQL_PG_SERVER_CERT_PATH} dbname=mydatabase"
+OPENSSL_S_CLIENT_MTLS_CONN_STR_UNIX :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=disable sslcert={STACKQL_PG_CLIENT_CERT_PATH_UNIX} sslkey={STACKQL_PG_CLIENT_KEY_PATH_UNIX} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_UNIX} dbname=mydatabase"
+OPENSSL_S_CLIENT_MTLS_CONN_STR_DOCKER :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=disable sslcert={STACKQL_PG_CLIENT_CERT_PATH_DOCKER} sslkey={STACKQL_PG_CLIENT_KEY_PATH_DOCKER} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_DOCKER} dbname=mydatabase"
+
 PSQL_MTLS_CONN_STR_UNIX_WITH_NAMESPACES :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS_WITH_NAMESPACES} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH_UNIX} sslkey={STACKQL_PG_CLIENT_KEY_PATH_UNIX} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_UNIX} dbname=mydatabase"
 PSQL_MTLS_CONN_STR_UNIX_WITH_EAGER_GC :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS_WITH_EAGER_GC} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH_UNIX} sslkey={STACKQL_PG_CLIENT_KEY_PATH_UNIX} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_UNIX} dbname=mydatabase"
 PSQL_MTLS_INVALID_CONN_STR :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=verify-full sslcert={STACKQL_PG_RUBBISH_CERT_PATH} sslkey={STACKQL_PG_RUBBISH_KEY_PATH} sslrootcert={STACKQL_PG_SERVER_CERT_PATH} dbname=mydatabase"
@@ -1039,9 +1047,17 @@ def get_variables(execution_env :str, sql_backend_str :str):
     rv['JSON_INIT_FILE_PATH_SUMOLOGIC']                 = JSON_INIT_FILE_PATH_SUMOLOGIC
     rv['JSONNET_PLUS_ENV_VARS_QUERY_FILE']              = _JSONNET_PLUS_ENV_VARS_QUERY_FILE_DOCKER
     rv['JSONNET_PLUS_ENV_VARS_VAR_FILE']                = _JSONNET_PLUS_ENV_VARS_VAR_FILE_DOCKER
+    rv['PSQL_CLIENT_HOST']                              = PSQL_CLIENT_HOST
+    rv['PG_SRV_PORT_MTLS']                              = PG_SRV_PORT_MTLS
+    rv['STACKQL_PG_CLIENT_CERT_PATH']                   = STACKQL_PG_CLIENT_CERT_PATH_DOCKER
+    rv['STACKQL_PG_CLIENT_KEY_PATH']                    = STACKQL_PG_CLIENT_KEY_PATH_DOCKER
+    rv['STACKQL_PG_SERVER_CERT_PATH']                   = STACKQL_PG_SERVER_CERT_PATH_DOCKER
+    rv['STACKQL_PG_RUBBISH_CERT_PATH']                  = STACKQL_PG_RUBBISH_CERT_PATH_DOCKER
     rv['PG_SRV_MTLS_CFG_STR']                           = PG_SRV_MTLS_CFG_STR
     rv['PSQL_MTLS_CONN_STR']                            = PSQL_MTLS_CONN_STR_DOCKER
+    rv['PSQL_MTLS_DISABLE_CONN_STR']                    = PSQL_MTLS_DISABLE_CONN_STR_DOCKER
     rv['PSQL_MTLS_CONN_STR_UNIX']                       = PSQL_MTLS_CONN_STR_DOCKER
+    rv['PSQL_MTLS_DISABLE_CONN_STR_UNIX']               = PSQL_MTLS_DISABLE_CONN_STR_DOCKER
     rv['PSQL_MTLS_CONN_STR_UNIX_WITH_EAGER_GC']         = PSQL_MTLS_CONN_STR_WITH_EAGER_GC_DOCKER
     rv['PSQL_MTLS_CONN_STR_UNIX_WITH_NAMESPACES']       = PSQL_MTLS_CONN_STR_WITH_NAMESPACES_DOCKER
     rv['PSQL_MTLS_INVALID_CONN_STR']                    = PSQL_MTLS_INVALID_CONN_STR_DOCKER
@@ -1065,9 +1081,17 @@ def get_variables(execution_env :str, sql_backend_str :str):
     rv['JSON_INIT_FILE_PATH_OKTA']                      = JSON_INIT_FILE_PATH_OKTA
     rv['JSON_INIT_FILE_PATH_REGISTRY']                  = JSON_INIT_FILE_PATH_REGISTRY
     rv['JSON_INIT_FILE_PATH_SUMOLOGIC']                 = JSON_INIT_FILE_PATH_SUMOLOGIC
+    rv['PSQL_CLIENT_HOST']                              = PSQL_CLIENT_HOST
+    rv['PG_SRV_PORT_MTLS']                              = PG_SRV_PORT_MTLS
+    rv['STACKQL_PG_CLIENT_CERT_PATH']                   = STACKQL_PG_CLIENT_CERT_PATH
+    rv['STACKQL_PG_CLIENT_KEY_PATH']                    = STACKQL_PG_CLIENT_KEY_PATH
+    rv['STACKQL_PG_SERVER_CERT_PATH']                   = STACKQL_PG_SERVER_CERT_PATH
+    rv['STACKQL_PG_RUBBISH_CERT_PATH']                  = STACKQL_PG_RUBBISH_CERT_PATH
     rv['PG_SRV_MTLS_CFG_STR']                           = PG_SRV_MTLS_CFG_STR
     rv['PSQL_MTLS_CONN_STR']                            = PSQL_MTLS_CONN_STR
+    rv['PSQL_MTLS_DISABLE_CONN_STR']                    = PSQL_MTLS_DISABLE_CONN_STR
     rv['PSQL_MTLS_CONN_STR_UNIX']                       = PSQL_MTLS_CONN_STR_UNIX
+    rv['PSQL_MTLS_DISABLE_CONN_STR_UNIX']               = PSQL_MTLS_DISABLE_CONN_STR_UNIX
     rv['PSQL_MTLS_CONN_STR_UNIX_WITH_EAGER_GC']         = PSQL_MTLS_CONN_STR_UNIX_WITH_EAGER_GC
     rv['PSQL_MTLS_CONN_STR_UNIX_WITH_NAMESPACES']       = PSQL_MTLS_CONN_STR_UNIX_WITH_NAMESPACES
     rv['PSQL_MTLS_INVALID_CONN_STR']                    = PSQL_MTLS_INVALID_CONN_STR

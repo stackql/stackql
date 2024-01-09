@@ -2,6 +2,8 @@
 
 ## mTLS setup for stackql server
 
+We have implemented strict TLS where the server is started in `RequireAndVerifyClientCert` mode, which is the default and (at present) only option where server TLS config is supplied.  Clients attempting to access with `sslmode=disable` will be rejected.  For more detail on client `sslmode` options, please see [the __`libpq`__ doco](https://www.postgresql.org/docs/8.4/libpq-connect.html#LIBPQ-CONNECT-SSLMODE).
+
 ### Prepare tls collateral
 
 ```bash
@@ -12,6 +14,8 @@ openssl req -x509 -keyout ./cicd/vol/srv/credentials/pg_client_key.pem -out ./ci
 
 
 export CLIENT_CERT=$(base64 ./cicd/vol/srv/credentials/pg_client_cert.pem)
+
+echo "$CLIENT_CERT" > ./cicd/vol/srv/credentials/pg_client_cert.pem.base64
 
 ```
 

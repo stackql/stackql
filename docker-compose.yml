@@ -38,7 +38,7 @@ services:
          --pgsrv.port=${PG_SRV_PORT_MTLS:-5476} 
          srv'
     volumes:
-      - ./keys:/opt/stackql/keys:ro
+      - ./cicd/keys:/opt/stackql/keys:ro
       - ./cicd/vol/srv/credentials:/opt/stackql/srv/credentials:ro
       - ./test/assets/credentials/dummy:/opt/stackql/credentials/dummy:ro
       - ./test/assets/input:/opt/stackql/input:ro

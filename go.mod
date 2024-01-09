@@ -5,6 +5,7 @@ go 1.21.5
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.2.0
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.2.0
+	github.com/DATA-DOG/go-sqlmock v1.5.1
 	github.com/aws/aws-sdk-go v1.28.8
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/fatih/color v1.13.0
@@ -23,7 +24,7 @@ require (
 	github.com/stackql/any-sdk v0.0.1-alpha06
 	github.com/stackql/go-sqlite3 v0.0.3-stackqlalpha02
 	github.com/stackql/go-suffix-map v0.0.1-alpha01
-	github.com/stackql/psql-wire v0.1.1-alpha04
+	github.com/stackql/psql-wire v0.1.1-alpha07
 	github.com/stackql/stackql-parser v0.0.13-beta25
 	github.com/stretchr/testify v1.8.4
 	github.com/xo/dburl v0.12.4
@@ -43,7 +44,6 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.0.0 // indirect
 	github.com/Azure/azure-storage-blob-go v0.15.0 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v0.7.0 // indirect
-	github.com/DATA-DOG/go-sqlmock v1.5.1 // indirect
 	github.com/Masterminds/semver v1.4.2 // indirect
 	github.com/PaesslerAG/gval v1.0.0 // indirect
 	github.com/PaesslerAG/jsonpath v0.1.1 // indirect

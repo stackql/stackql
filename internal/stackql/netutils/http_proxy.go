@@ -33,14 +33,14 @@ func getRoundTripper(runtimeCtx dto.RuntimeCtx, existingTransport http.RoundTrip
 		rootCAs, err := getCertPool(runtimeCtx.CABundle)
 		if err == nil {
 			config := &tls.Config{
-				InsecureSkipVerify: runtimeCtx.AllowInsecure, //nolint:gosec // intenttional, if contraindicated
+				InsecureSkipVerify: runtimeCtx.AllowInsecure, //nolint:gosec // intentional, if contraindicated
 				RootCAs:            rootCAs,
 			}
 			tr.TLSClientConfig = config
 		}
 	} else if runtimeCtx.AllowInsecure {
 		config := &tls.Config{
-			InsecureSkipVerify: runtimeCtx.AllowInsecure, //nolint:gosec // intenttional, if contraindicated
+			InsecureSkipVerify: runtimeCtx.AllowInsecure, //nolint:gosec // intentional, if contraindicated
 		}
 		tr.TLSClientConfig = config
 	}

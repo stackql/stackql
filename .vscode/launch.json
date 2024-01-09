@@ -249,6 +249,16 @@
         "{}",
         "{ \"tableRegex\": \"(?i)^(?:public\\\\.)?(?:pg_.*|current_schema|information_schema|stackql_intel)\" }"
       ]
+    },
+    {
+      "type": "pickString",
+      "id": "pgsrvTlsString",
+      "description": "pgsrv.tls config",
+      // you will need to fill in the gaps here
+      "default": "{\"keyFilePath\": \"${workspaceFolder}/test/server/mtls/credentials/pg_server_key.pem\", \"certFilePath\": \"${workspaceFolder}/test/server/mtls/credentials/pg_server_cert.pem\", \"clientCAs\": [\"\"]}" ,
+      "options": [
+        "{\"keyFilePath\": \"${workspaceFolder}/test/server/mtls/credentials/pg_server_key.pem\", \"certFilePath\": \"${workspaceFolder}/test/server/mtls/credentials/pg_server_cert.pem\", \"clientCAs\": [\"\"]}"
+      ]
     }
   ],
   "configurations": [
@@ -262,50 +272,6 @@
       "processId": 16075
     },
     // DEBUG
-    {
-      "name": "analytics select",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--auth=${input:authString}",
-        "--registry=${input:registryString}",
-        "--namespaces=${input:namespaceString}",
-        "--sqlBackend={ \"dbInitFilepath\": \"${workspaceFolder}/test/db/cache_setup.sql\" }" ,
-        "select r.name, col.login, col.type, col.role_name from github.repos.collaborators col inner join github.repos.repos r ON col.repo = r.name where col.owner = 'stackql' and r.org = 'stackql' order by r.name, col.login desc;"
-      ],
-    },
-    {
-      "name": "analytics select NOT primed",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--auth=${input:authString}",
-        "--registry=${input:registryString}",
-        "--namespaces=${input:namespaceString}",
-        "select r.name, col.login, col.type, col.role_name from github.repos.collaborators col inner join github.repos.repos r ON col.repo = r.name where col.owner = 'stackql' and r.org = 'stackql' order by r.name, col.login desc;"
-      ],
-    },
-    {
-      "name": "analytics select NOT primed GRAPHQL",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--auth=${input:authString}",
-        "--registry=${input:registryString}",
-        "--namespaces=${input:namespaceString}",
-        "--tls.allowInsecure=true",
-        "select substr(su.userName, 1, instr(su.userName, '@') - 1), su.externalId, su.id, u.login, u.two_factor_authentication AS is_two_fa_enabled from github.scim.users su inner join github.users.users u ON substr(su.userName, 1, instr(su.userName, '@') - 1) = u.username and substr(su.userName, 1, instr(su.userName, '@') - 1) = u.login where su.org = 'dummyorg' order by su.id asc;"
-      ],
-    }, 
     {
       "name": "AWAIT exec ... ;",
       "type": "go",
@@ -322,71 +288,6 @@
       ],
     },
     {
-      "name": "aws INSERT volume ... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "insert into aws.ec2.volumes(AvailabilityZone, Size, region) select 'ap-southeast-1a', 10, 'ap-southeast-1';"
-      ],
-    },
-    {
-      "name": "aws guff failing",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "--tls.allowInsecure",
-        "select \"Key\", Size, StorageClass from aws.s3.objects where region = 'ap-southeast-1' and bucket = 'stackql-trial-bucket-01' order by \"Key\" ASC;"
-      ],
-    },
-    {
-      "name": "aws select volumes ... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "select * from aws.ec2.volumes where region = 'ap-southeast-1';"
-      ],
-    },
-    {
-      "name": "azure guff",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "--tls.allowInsecure",
-        "SELECT type, resources, zones, extendedLocation FROM azure.compute.virtual_machines WHERE resourceGroupName = 'stackql-ops-cicd-dev-01' AND subscriptionId = '631d1c6d-2a65-43e7-93c2-688bfe4e1468';"
-      ],
-    },
-    {
-      "name": "Boilerplate",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "SELECT t.oid, typarray FROM pg_type t JOIN pg_namespace ns ON typnamespace = ns.oid WHERE typname = 'hstore';"
-      ],
-    },
-    {
       "name": "Boilerplate; pg_catalog",
       "type": "go",
       "request": "launch",
@@ -395,21 +296,6 @@
       "args": [
         "exec",
         "select pg_catalog.version();"
-      ],
-    },
-    {
-      "name": "EXPAND \"select from exec ... ;\" -- prebuilt with cmake",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--auth=${input:authString}",
-        "--cpuprofile=${workspaceFolder}/build/prof1.prof",
-        "select name from (EXEC /*+ SHOWRESULTS */ google.compute.disks.get @disk = 'my-disk-01-indeed',  @project = '${input:gcpProject}', @zone = 'australia-southeast1-a');",
-        "-o",
-        "json"
       ],
     },
     {
@@ -439,250 +325,6 @@
       ],
     },
     {
-      "name": "github guff",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "--tls.allowInsecure",
-        "select r.name, col.login, col.type, col.role_name from github.repos.collaborators col inner join github.repos.repos r ON col.repo = r.name where col.owner = 'stackql' and r.org = 'stackql';"
-      ],
-    },
-    {
-      "name": "github pages",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "--tls.allowInsecure",
-        "--sqlBackend=${input:sqlBackendString}",
-        "select url from github.repos.pages where owner = 'dummyorg' and repo = 'dummyapp.io' ;"
-      ],
-    },
-    {
-      "name": "google case sensitive",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "--tls.allowInsecure",
-        "--sqlBackend=${input:sqlBackendString}",
-        "select ipCidrRange, sum(5) cc  from  google.container.\"projects.aggregated.usableSubnetworks\" where projectsId = 'testing-project' group by ipCidrRange having sum(5) >= 5 order by ipCidrRange desc;"
-      ],
-    },
-    {
-      "name": "google JOIN docker defective",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "--tls.allowInsecure",
-        "--sqlBackend=${input:sqlBackendString}",
-        "select JSON_EXTRACT(saml.samlIdentity, '$.username') as saml_username, om.login as github_login, ou.status as okta_status from github.scim.saml_ids saml INNER JOIN okta.user.users ou ON JSON_EXTRACT(saml.samlIdentity, '$.username') = JSON_EXTRACT(ou.profile, '$.login') INNER JOIN github.orgs.members om ON JSON_EXTRACT(saml.user, '$.login') = om.login where ou.subdomain = 'dummyorg' AND om.org = 'dummyorg' AND saml.org = 'dummyorg' order by om.login desc;"
-      ],
-    },
-    {
-      "name": "google unknown docker defective",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "--tls.allowInsecure",
-        "--sqlBackend=${input:sqlBackendString}",
-        "SELECT etag FROM google.compute.instances_iam_policies WHERE project = 'testing-project' AND zone = 'australia-southeast1-a' AND resource = '000000001';"
-      ],
-    },
-    {
-      "name": "google unknown2 docker defective",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "--tls.allowInsecure",
-        "--sqlBackend=${input:sqlBackendString}",
-        "select   members,  GROUP_CONCAT(role) as roles from   (     exec /*+ SHOWRESULTS */     google.cloudresourcemanager.organizations.getIamPolicy     @organizationsId = '123456789012'   ) GROUP BY members;"
-      ],
-    },
-    {
-      "name": "google WHERE docker defective",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "--tls.allowInsecure",
-        "--sqlBackend=${input:sqlBackendString}",
-        "select  kind, name  from  google.compute.acceleratorTypes where project = 'testing-project' and zone = 'australia-southeast1-a' order by name desc;"
-      ],
-    },
-    {
-      "name": "GRAPHQL select * from github.scim.saml_ids",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "select * from github.scim.saml_ids where org = 'infraql';"
-      ],
-    },
-    {
-      "name": "JOIN exec \"SELECT projects.logs ... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--auth=${input:authString}",
-        "select * from google.logging.\"projects.logs\" WHERE parent = 'projects/${input:gcpProject}';",
-        "-o",
-        "json"
-      ],
-    },
-    {
-      "name": "join ON param",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "--tls.allowInsecure=true",
-        "select u.name, om.login, u.two_factor_authentication AS is_two_fa_enabled from github.orgs.members om inner join github.users.users u on om.login = u.login AND u.username = om.login where om.org = 'dummyorg' order by u.name desc;"
-      ],
-    },
-    {
-      "name": "join ON param problematic",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "--tls.allowInsecure=true",
-        "select r.name, col.login, col.type, col.role_name from github.repos.repos r inner join github.repos.collaborators col ON col.repo = r.name where col.owner = 'stackql' and r.org = 'stackql';"
-      ],
-    },
-    {
-      "name": "join ON param target state",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "--tls.allowInsecure=true",
-        "select substr(su.userName, 1, instr(su.userName, '@') - 1), su.externalId, su.id, u.login, u.two_factor_authentication AS is_two_fa_enabled from github.scim.users su inner join github.users.users u ON substr(su.userName, 1, instr(su.userName, '@') - 1) = u.username  where su.org = 'dummyorg' order by su.id asc;"
-      ],
-    },
-    {
-      "name": "native query",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "--tls.allowInsecure=true",
-        "NATIVEQUERY 'select * from sqlite_master';"
-      ],
-    },
-    {
-      "name": "okta pagination",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "--tls.allowInsecure",
-        "--sqlBackend=${input:sqlBackendString}",
-        "select ou.status, ou.profile from okta.user.users ou where ou.subdomain = 'dummyorg';"
-      ],
-    },
-    {
-      "name": "registry list ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "registry",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "list"
-      ],
-    },
-    {
-      "name": "registry pull github v0.3.0 ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "registry",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "pull",
-        "github",
-        "v0.3.0"
-      ],
-    },
-    {
-      "name": "RUN insert complex iql file... ;\" -- prebuilt with cmake",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--auth=${input:authString}",
-        "-i=${workspaceFolder}/test/assets/input/insert-compute-network.iql",
-        "-o",
-        "table"
-      ],
-    },
-    {
       "name": "run server",
       "type": "go",
       "request": "launch",
@@ -698,6 +340,25 @@
         "--namespaces=${input:namespaceString}",
         "--sqlBackend=${input:sqlBackendString}",
         "--dbInternal=${input:dbInternalString}"
+      ],
+    },
+    {
+      "name": "run mTLS server",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/stackql",
+      "args": [
+        "srv",
+        "--pgsrv.port=5888",
+        "--tls.allowInsecure",
+        "--auth=${input:authString}",
+        "--gc=${input:gcString}",
+        "--registry=${input:registryString}",
+        "--namespaces=${input:namespaceString}",
+        "--sqlBackend=${input:sqlBackendString}",
+        "--dbInternal=${input:dbInternalString}",
+        "--pgsrv.tls=${input:pgsrvTlsString}"
       ],
     },
     {
@@ -728,120 +389,6 @@
         "exec",
         "--auth=${input:authString}",
         "-i=${workspaceFolder}/test/assets/input/show-services-extended-filtered.iql",
-        "-o",
-        "table"
-      ],
-    },
-    {
-      "name": "SELECT bq.datasets ... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "exec",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--auth=${input:authString}",
-        "select * from google.bigquery.datasets where projectId = '${input:gcpProject}';",
-        "-o",
-        "json"
-      ],
-    },
-    {
-      "name": "SELECT container agg ... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--auth=${input:authString}",
-        "select * from google.container.\"projects.aggregated.usableSubnetworks\" where parent = 'projects/kr-lab-network-01'",
-        "-o",
-        "json"
-      ],
-    },
-    {
-      "name": "SELECT google.compute.instances_iam_policies... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--registry=${input:registryString}",
-        "--auth=${input:authString}",
-        "--tls.allowInsecure=true",
-        "SELECT etag FROM google.compute.instances_iam_policies WHERE project = 'testing-project' AND zone = 'australia-southeast1-a' AND resource = '000000001';"
-      ],
-    },
-    {
-      "name": "SHOW INSERT bq.datasets ;\" -- prebuilt with cmake",
-      "type": "go",
-      "request": "launch",
-      "mode": "exec",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--auth=${input:authString}",
-        "SHOW EXTENDED INSERT INTO google.bigquery.datasets;",
-        "-o",
-        "pptext"
-      ],
-    },
-    {
-      "name": "SHOW INSERT...instances( project...) ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--auth=${input:authString}",
-        "show insert into google.compute.instances( project, data__sourceSnapshotId );",
-        "-o",
-        "pptext"
-      ],
-    },
-    {
-      "name": "SHOW INSERT /*+ REQUIRED */... ;",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--auth=${input:authString}",
-        "show insert /*+ REQUIRED */ into google.compute.addresses;",
-        "-o",
-        "pptext"
-      ],
-    },
-    {
-      "name": "SHOW PROVIDERS... ;\" ",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--auth=${input:authString}",
-        "--registry=${input:registryString}",
-        "show providers;",
-        "-o",
-        "json"
-      ],
-    },
-    {
-      "name": "SHOW RESOURCES... ;\"",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/stackql",
-      "args": [
-        "exec",
-        "--auth=${input:authString}",
-        "--registry=${input:registryString}",
-        "show resources from google.container;",
         "-o",
         "table"
       ],
