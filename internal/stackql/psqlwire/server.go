@@ -66,6 +66,7 @@ func MakeWireServer(sbe sqlbackend.SQLBackendFactory, cfg dto.RuntimeCtx) (IWire
 				}
 			}
 			server.ClientCAs = cp
+			// The strongest assertion a server can provide, per https://smallstep.com/hello-mtls/doc/server/go
 			server.ClientAuth = tls.RequireAndVerifyClientCert
 		}
 		if err != nil {

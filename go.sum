@@ -369,6 +369,7 @@ github.com/jstemmer/go-junit-report v0.9.1/go.mod h1:Brl9GWCQeLvo8nXZwPNNblvFj/X
 github.com/jung-kurt/gofpdf v1.0.0/go.mod h1:7Id9E/uU8ce6rXgefFLlgrJj/GYY22cpxn+r32jIOes=
 github.com/jung-kurt/gofpdf v1.0.3-0.20190309125859-24315acbbda5/go.mod h1:7Id9E/uU8ce6rXgefFLlgrJj/GYY22cpxn+r32jIOes=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
+github.com/kisielk/sqlstruct v0.0.0-20201105191214-5f3e10d3ab46/go.mod h1:yyMNCyc/Ib3bDTKd379tNMpB/7/H5TjM2Y9QJ5THLbE=
 github.com/klauspost/compress v1.13.1/go.mod h1:8dP1Hq4DHOhN9w426knH3Rhby4rFm6D8eO+e+Dq5Gzg=
 github.com/klauspost/compress v1.15.11 h1:Lcadnb3RKGin4FYM/orgq0qde+nc15E5Cbqg4B9Sx9c=
 github.com/klauspost/compress v1.15.11/go.mod h1:QPwzmACJjUTFsnSHH934V6woptycfrDDJnH7hvFVbGM=
@@ -479,8 +480,8 @@ github.com/stackql/go-sqlite3 v0.0.3-stackqlalpha02 h1:sDoabC9dSzr0CVrt6tuPwSq12
 github.com/stackql/go-sqlite3 v0.0.3-stackqlalpha02/go.mod h1:JHMGM3Hu7TcW8NBiJMFSBCHaUkhm1VjGZD5/uDaUDf4=
 github.com/stackql/go-suffix-map v0.0.1-alpha01 h1:TDUDS8bySu41Oo9p0eniUeCm43mnRM6zFEd6j6VUaz8=
 github.com/stackql/go-suffix-map v0.0.1-alpha01/go.mod h1:QAi+SKukOyf4dBtWy8UMy+hsXXV+yyEE4vmBkji2V7g=
-github.com/stackql/psql-wire v0.1.1-alpha04 h1:dUrForykNZEvB7u6tIlQ/xGYElRtfMPREA8tVrAOp+k=
-github.com/stackql/psql-wire v0.1.1-alpha04/go.mod h1:a44Wd8kDC3irFLpGutarKDBqhJ/aqXlj1aMzO5bVJYg=
+github.com/stackql/psql-wire v0.1.1-alpha07 h1:LQWVUlx4Bougk6dztDNG5tmXxpIVeeTSsInTj801xCs=
+github.com/stackql/psql-wire v0.1.1-alpha07/go.mod h1:a44Wd8kDC3irFLpGutarKDBqhJ/aqXlj1aMzO5bVJYg=
 github.com/stackql/readline v0.0.2-alpha05 h1:ID4QzGdplFBsrSnTuz8pvKzWw96JbrJg8fsLry2UriU=
 github.com/stackql/readline v0.0.2-alpha05/go.mod h1:OFAYOdXk/X4+5GYiDXFfaGrk+bCN6Qv0SYY5HNzD2E0=
 github.com/stackql/stackql-parser v0.0.13-beta25 h1:rZ8WBSMXJAQ9IFgAZ3GHFVpkw7wITs6qjvM2NeA6vzE=
