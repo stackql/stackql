@@ -300,11 +300,9 @@ Unacceptable Insecure Connection to mTLS Server Returns Error Message
     Should Contain    ${result.stdout}    Verify return code: 18
 
 Acceptable Secure PSQL Connection to mTLS Server With Diagnostic Query Returns Connection Info
-    Pass Execution If    "${IS_WINDOWS}" == "1"    Unknown stream handling issue in powershell and sh hence using bash
     ${input} =     Catenate
-    ...    echo     '\\conninfo'     |
-    ...    ${PSQL_EXE}    -d     "${PSQL_MTLS_CONN_STR_UNIX}"
-    ${shellExe} =    Set Variable If    "${IS_WINDOWS}" == "1"    powershell    bash
+    ...    ${PSQL_EXE}    -d     "${PSQL_MTLS_CONN_STR_UNIX}" -c "\\conninfo"
+    ${shellExe} =    Set Variable If    "${IS_WINDOWS}" == "1"    powershell    sh
     ${result} =    Run Process
     ...    ${shellExe}     \-c    ${input}
     ...    stdout=${CURDIR}/tmp/Acceptable-Secure-PSQL-Connection-to-mTLS-Server-With-Diagnostic-Query-Returns-Connection-Info.tmp
@@ -312,13 +310,11 @@ Acceptable Secure PSQL Connection to mTLS Server With Diagnostic Query Returns C
     Should Contain    ${result.stdout}    SSL connection (protocol: TLSv1.3
 
 Unacceptable Insecure PSQL Connection to mTLS Server Returns Error Message
-    Pass Execution If    "${IS_WINDOWS}" == "1"    Unknown stream handling issue in powershell and sh hence using bash
     ${input} =     Catenate
-    ...    echo     '\\conninfo'     |
-    ...    ${PSQL_EXE}    -d    "${PSQL_MTLS_DISABLE_CONN_STR_UNIX}"
-    ${shellExe} =    Set Variable If    "${IS_WINDOWS}" == "1"    powershell    bash
+    ...    ${PSQL_EXE}    -d    "${PSQL_MTLS_DISABLE_CONN_STR_UNIX}" -c "\\conninfo"
+    ${shellExe} =    Set Variable If    "${IS_WINDOWS}" == "1"    powershell    sh
     ${result} =    Run Process
-    ...    ${shellExe}     \-c    ${input}
+    ...    ${shellExe}     \-c    ${input} 
     ...    stdout=${CURDIR}/tmp/Unacceptable-Insecure-PSQL-Connection-to-mTLS-Server-Returns-Error-Message.tmp
     ...    stderr=${CURDIR}/tmp/Unacceptable-Insecure-PSQL-Connection-to-mTLS-Server-Returns-Error-Message-stderr.tmp
     Should Contain    ${result.stderr}    server closed the connection unexpectedly
