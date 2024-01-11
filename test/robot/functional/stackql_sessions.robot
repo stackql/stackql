@@ -301,7 +301,7 @@ Unacceptable Insecure Connection to mTLS Server Returns Error Message
 
 Acceptable Secure PSQL Connection to mTLS Server With Diagnostic Query Returns Connection Info
     ${input} =     Catenate
-    ...    ${PSQL_EXE}    -d     "${PSQL_MTLS_CONN_STR_UNIX}" -c "\\conninfo"
+    ...    "${PSQL_EXE}"    -d     "${PSQL_MTLS_CONN_STR_UNIX}" -c "\\conninfo"
     ${shellExe} =    Set Variable If    "${IS_WINDOWS}" == "1"    powershell    sh
     ${result} =    Run Process
     ...    ${shellExe}     \-c    ${input}
@@ -311,7 +311,7 @@ Acceptable Secure PSQL Connection to mTLS Server With Diagnostic Query Returns C
 
 Unacceptable Insecure PSQL Connection to mTLS Server Returns Error Message
     ${input} =     Catenate
-    ...    ${PSQL_EXE}    -d    "${PSQL_MTLS_DISABLE_CONN_STR_UNIX}" -c "\\conninfo"
+    ...    "${PSQL_EXE}"    -d    "${PSQL_MTLS_DISABLE_CONN_STR_UNIX}" -c "\\conninfo"
     ${shellExe} =    Set Variable If    "${IS_WINDOWS}" == "1"    powershell    sh
     ${result} =    Run Process
     ...    ${shellExe}     \-c    ${input} 
