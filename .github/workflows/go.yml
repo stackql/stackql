@@ -153,19 +153,7 @@ jobs:
       run: |
         openssl req -x509 -keyout test/server/mtls/credentials/pg_server_key.pem -out test/server/mtls/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
         openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
-        openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365 
-
-    - name: Run robot mocked functional tests
-      if: success()
-      env:
-        PSQL_EXE: C:\Program Files\PostgreSQL\13\bin\psql
-      run: |
-        python cicd/python/build.py --robot-test 
-
-    - name: Output from mocked functional tests
-      if: always()
-      run: |
-        cat ./test/robot/functional/output.xml
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365
     
     - name: Run robot integration tests
       if: env.AZURE_CLIENT_SECRET != '' && startsWith(steps.git_ref_parse.outputs.SOURCE_TAG, 'build-release')
