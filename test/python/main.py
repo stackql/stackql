@@ -33,7 +33,7 @@ DEFAULT_RUN_DIR :str = os.path.abspath(os.path.join(REPOSITORY_ROOT_DIR, 'build'
 DEFAULT_APP_DIR :str = os.path.abspath(os.path.join(TEST_ROOT_DIR, '.stackql'))
 DEFAULT_CONFIG_FILE :str = os.path.abspath(os.path.join(TEST_ROOT_DIR, '.stackqlrc'))
 DEFAULT_DB_FILE :str = os.path.abspath(os.path.join(TEST_ROOT_DIR, 'db/tmp/python-tests-tmp-db.sqlite')).replace(os.sep, '/')
-DEFAULT_REGISTRY_CFG :str = f'{{ "url": "file://{PROVIDER_REGISTRY_ROOT_DIR}", "localDocRoot": "{PROVIDER_REGISTRY_ROOT_DIR}",  "useEmbedded": false }}'
+DEFAULT_REGISTRY_CFG :str = f'{{ "url": "file://{PROVIDER_REGISTRY_ROOT_DIR}", "localDocRoot": "{PROVIDER_REGISTRY_ROOT_DIR}",  "useEmbedded": false, "verifyConfig": {{ "nopVerify": true }} }}'
 DEFAULT_EXECUTABLE :str = 'stackql'
 
 DEFAULT_SQL_BACKEND_CONFIG : str = f'{{ "dsn": "{DEFAULT_DB_FILE}"  }}'

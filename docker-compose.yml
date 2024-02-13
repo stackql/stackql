@@ -25,7 +25,8 @@ services:
            "k8s": { "credentialsenvvar": "K8S_TOKEN", "type": "api_key", "valuePrefix": "Bearer " } 
          }'' 
          --registry=''{
-           "url": "https://cdn.statically.io/gh/stackql/stackql-provider-registry/dev/providers"
+           "url": "https://cdn.statically.io/gh/stackql/stackql-provider-registry/dev/providers",
+           "verifyConfig": { "nopVerify": true }
          }'' 
          --pgsrv.tls=''{ 
            "keyFilePath": "/opt/stackql/srv/credentials/pg_server_key.pem", 

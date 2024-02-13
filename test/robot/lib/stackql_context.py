@@ -42,7 +42,7 @@ class RegistryCfg:
     self,
     local_path :str,
     remote_url :str = '', 
-    nop_verify :bool = False,
+    nop_verify :bool = True,
     src_prefix :str = '',
     is_null_registry :bool = False,
   ) -> None:
@@ -174,11 +174,11 @@ _REGISTRY_SQL_VERB_CONTRIVED_NO_VERIFY_DOCKER = RegistryCfg(
 )
 _REGISTRY_CANONICAL = RegistryCfg(
   get_unix_path(os.path.join('test', 'registry')),
-  nop_verify=False
+  nop_verify=True
 )
 _REGISTRY_DEPRECATED = RegistryCfg(
   get_unix_path(os.path.join('test', 'registry-deprecated')),
-  nop_verify=False
+  nop_verify=True
 )
 _AUTH_CFG={ 
   "google": { 
