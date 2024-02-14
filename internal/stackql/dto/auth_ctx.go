@@ -18,6 +18,7 @@ type AuthCtx struct {
 	KeyFilePath             string         `json:"credentialsfilepath" yaml:"credentialsfilepath"`
 	KeyFilePathEnvVar       string         `json:"credentialsfilepathenvvar" yaml:"credentialsfilepathenvvar"`
 	KeyEnvVar               string         `json:"credentialsenvvar" yaml:"credentialsenvvar"`
+	SessionTokenEnvVar      string         `json:"sessiontokenenvvar" yaml:"sessiontokenenvvar"`
 	APIKeyStr               string         `json:"api_key" yaml:"api_key"`
 	APISecretStr            string         `json:"api_secret" yaml:"api_secret"`
 	Username                string         `json:"username" yaml:"username"`
@@ -54,6 +55,7 @@ func (ac *AuthCtx) Clone() *AuthCtx {
 		KeyFilePath:             ac.KeyFilePath,
 		KeyFilePathEnvVar:       ac.KeyFilePathEnvVar,
 		KeyEnvVar:               ac.KeyEnvVar,
+		SessionTokenEnvVar: 	 ac.SessionTokenEnvVar,
 		Active:                  ac.Active,
 		Username:                ac.Username,
 		Password:                ac.Password,
@@ -126,6 +128,18 @@ func (ac *AuthCtx) GetKeyIDString() (string, error) {
 		return rv, nil
 	}
 	return ac.KeyID, nil
+}
+
+func (ac *AuthCtx) GetSessionTokenString() (string, error) {
+    if ac.SessionTokenEnvVar != "" {
+        token := os.Getenv(ac.SessionTokenEnvVar)
+        if token == "" {
+            // Session token is optional, so an empty token isn't considered an error.
+            return "", nil
+        }
+        return token, nil
+    }
+    return "", nil // No session token environment variable specified.
 }
 
 func (ac *AuthCtx) InferAuthType(authTypeRequested string) string {
