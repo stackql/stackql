@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"time"
+	"os"
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	v4 "github.com/aws/aws-sdk-go/aws/signer/v4"
@@ -30,8 +31,17 @@ func NewAwsSignTransport(
 	id, secret, token string,
 	options ...func(*v4.Signer),
 ) Transport {
-	// creds := credentials.NewStaticCredentials(id, secret, token)
-	creds := credentials.NewEnvCredentials()
+	if token == "" {
+		creds := credentials.NewStaticCredentials(id, secret, token)
+	} else {
+		// AWS_SESSION_TOKEN is populated, assume it's a temporary token and default creds (standard aws env vars) are used
+		defaultAccessKeyId := os.Getenv("AWS_ACCESS_KEY_ID")
+		defaultSecretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
+		if defaultAccessKeyId == "" || defaultSecretAccessKey == "" {
+			return nil, fmt.Errorf("AWS_SESSION_TOKEN is set, AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must also be set")
+		}
+		creds := credentials.NewEnvCredentials()
+	}
 	signer := v4.NewSigner(creds, options...)
 	return &standardAwsSignTransport{
 		underlyingTransport: underlyingTransport,

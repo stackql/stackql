@@ -231,7 +231,7 @@ func awsSigningAuth(authCtx *dto.AuthCtx, runtimeCtx dto.RuntimeCtx) (*http.Clie
     }
 
     // Retrieve the optional session token. Note: No error handling for missing session token.
-    sessionToken, _ := authCtx.GetSessionTokenString()
+    sessionToken, _ := authCtx.GetAwsSessionTokenString()
 
     // Mark the authentication context as active for AWS signing.
     activateAuth(authCtx, "", dto.AuthAWSSigningv4Str)
