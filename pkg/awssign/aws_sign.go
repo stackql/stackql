@@ -30,8 +30,8 @@ func NewAwsSignTransport(
 	id, secret, token string,
 	options ...func(*v4.Signer),
 ) Transport {
-	creds := credentials.NewStaticCredentials(id, secret, token)
-	// creds := credentials.NewEnvCredentials()
+	// creds := credentials.NewStaticCredentials(id, secret, token)
+	creds := credentials.NewEnvCredentials()
 	signer := v4.NewSigner(creds, options...)
 	return &standardAwsSignTransport{
 		underlyingTransport: underlyingTransport,
