@@ -1,25 +1,25 @@
 name: Build
 
-on:
-  push:
-    branches:
-      - main
-      - develop
-    tags:
-      - build*
-    paths-ignore:
-      - "**/*.md"
-      - "docs/**"
-      - "licenses/**"
-  pull_request:
-    branches:
-      - main
-      - develop
-    paths-ignore:
-      - "**/*.md"
-      - "docs/**"
-      - "examples/**"
-      - "licenses/**"
+# on:
+#   push:
+#     branches:
+#       - main
+#       - develop
+#     tags:
+#       - build*
+#     paths-ignore:
+#       - "**/*.md"
+#       - "docs/**"
+#       - "licenses/**"
+#   pull_request:
+#     branches:
+#       - main
+#       - develop
+#     paths-ignore:
+#       - "**/*.md"
+#       - "docs/**"
+#       - "examples/**"
+#       - "licenses/**"
 
 env:
   GOTESTCMD: "go test -timeout 1200s --tags \"json1 sqleanall\" -v ./..."

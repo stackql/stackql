@@ -16,9 +16,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - uses: actions/setup-go@v4
+      - name: Setup Go environment
+        uses: actions/setup-go@v5.0.0
         with:
-          go-version: '1.21.5'
+          go-version: '1.22.0'
           cache: false
 
       - name: Check workflow files
@@ -26,8 +27,9 @@ jobs:
         with:
           args: -color
 
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v4.0.0
         with:
-          version: 'v1.55.2'
-          args: --out-format=text
+          version: 'v1.56.2'
+          args: -v
