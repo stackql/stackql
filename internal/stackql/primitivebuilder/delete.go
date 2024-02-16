@@ -69,7 +69,7 @@ func (ss *Delete) Build() error {
 		return err
 	}
 	tableName, _ := tbl.GetTableName()
-	ex := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+	ex := func(_ primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 		var target map[string]interface{}
 		keys := make(map[string]map[string]interface{})
 		httpArmoury, httpErr := tbl.GetHTTPArmoury()

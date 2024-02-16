@@ -195,7 +195,7 @@ func (pgb *standardPlanGraphBuilder) handleAuth(pbi planbuilderinput.PlanBuilder
 	}
 	pr := primitive.NewMetaDataPrimitive(
 		prov,
-		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+		func(_ primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			authType := strings.ToLower(node.Type)
 			if node.KeyFilePath != "" {
 				authCtx.KeyFilePath = node.KeyFilePath
@@ -232,7 +232,7 @@ func (pgb *standardPlanGraphBuilder) handleAuthRevoke(pbi planbuilderinput.PlanB
 	}
 	pr := primitive.NewMetaDataPrimitive(
 		prov,
-		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+		func(_ primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			return internaldto.NewExecutorOutput(nil, nil, nil, nil, prov.AuthRevoke(authCtx))
 		})
 	pgb.planGraphHolder.CreatePrimitiveNode(pr)
@@ -272,7 +272,7 @@ func (pgb *standardPlanGraphBuilder) handleDescribe(pbi planbuilderinput.PlanBui
 		}
 		pr := primitive.NewMetaDataPrimitive(
 			prov,
-			func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+			func(_ primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 				return primitivebuilder.NewDescribeViewInstructionExecutor(handlerCtx, md, nonControlColummns, extended, full)
 			})
 		pgb.planGraphHolder.CreatePrimitiveNode(pr)
@@ -280,7 +280,7 @@ func (pgb *standardPlanGraphBuilder) handleDescribe(pbi planbuilderinput.PlanBui
 	}
 	pr := primitive.NewMetaDataPrimitive(
 		prov,
-		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+		func(_ primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			return primitivebuilder.NewDescribeTableInstructionExecutor(handlerCtx, md, extended, full)
 		})
 	pgb.planGraphHolder.CreatePrimitiveNode(pr)
@@ -596,7 +596,7 @@ func (pgb *standardPlanGraphBuilder) handleRegistry(
 		return err
 	}
 	pr := primitive.NewLocalPrimitive(
-		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+		func(_ primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			switch at := strings.ToLower(node.ActionType); at {
 			case "pull":
 				providerVersion := node.ProviderVersion
@@ -678,7 +678,7 @@ func (pgb *standardPlanGraphBuilder) handlePurge(pbi planbuilderinput.PlanBuilde
 		return fmt.Errorf("could not cast statement of type '%T' to required Purge", pbi.GetStatement())
 	}
 	pr := primitive.NewLocalPrimitive(
-		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+		func(_ primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			if node.IsGlobal {
 				err := handlerCtx.GetGarbageCollector().Purge()
 				if err != nil {
@@ -1006,7 +1006,7 @@ func (pgb *standardPlanGraphBuilder) handleShow(pbi planbuilderinput.PlanBuilder
 	prov := primitiveGenerator.GetPrimitiveComposer().GetProvider()
 	pr := primitive.NewMetaDataPrimitive(
 		prov,
-		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+		func(_ primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			return primitivebuilder.NewShowInstructionExecutor(
 				node,
 				prov,
@@ -1047,7 +1047,7 @@ func (pgb *standardPlanGraphBuilder) handleUse(pbi planbuilderinput.PlanBuilderI
 	}
 	pr := primitive.NewMetaDataPrimitive(
 		primitiveGenerator.GetPrimitiveComposer().GetProvider(),
-		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+		func(_ primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			handlerCtx.SetCurrentProvider(node.DBName.GetRawVal())
 			return internaldto.NewExecutorOutput(nil, nil, nil, nil, nil)
 		})
@@ -1065,7 +1065,7 @@ func createErroneousPlan(
 		handlerCtx.GetRuntimeContext().ExecutionConcurrencyLimit,
 	)
 	instructions.CreatePrimitiveNode(
-		primitive.NewLocalPrimitive(func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+		primitive.NewLocalPrimitive(func(_ primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			return util.PrepareResultSet(
 				internaldto.PrepareResultSetDTO{
 					OutputBody:  nil,

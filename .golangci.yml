@@ -291,7 +291,6 @@ linters:
     #- structcheck # [deprecated, replaced by unused] finds unused struct fields
     #- varcheck # [deprecated, replaced by unused] finds unused global variables and constants
 
-
 issues:
   # Maximum count of issues with the same text.
   # Set to 0 to disable.
@@ -320,3 +319,25 @@ issues:
         - noctx
         - revive
         - wrapcheck
+    # Exclude var-naming issues about xIDs
+    - linters: [revive]
+      text: "var-naming: .* should be hIDs"
+    - linters: [revive]
+      text: "var-naming: .* should be heirarchyIDs"
+    - linters: [revive]
+      text: "var-naming: .* should be GetHeirarchyIDs"
+    - linters: [rowserrcheck]
+      path: "internal/stackql/sqlstream/sql_map_stream.go"
+      source: "//nolint:rowserrcheck"
+    - linters: [rowserrcheck]
+      path: "internal/stackql/primitivebuilder/graphql_single_select_acquire.go"
+      source: "//nolint:rowserrcheck"
+    - linters: [rowserrcheck]
+      path: "internal/stackql/primitivebuilder/raw_native_select.go"
+      source: "//nolint:rowserrcheck"
+    - linters: [rowserrcheck]
+      path: "internal/stackql/primitivebuilder/single_select_acquire.go"
+      source: "//nolint:rowserrcheck"
+    - linters: [rowserrcheck]
+      path: "internal/stackql/primitivebuilder/sql_data_source_single_select_acquire.go"
+      source: "//nolint:rowserrcheck"

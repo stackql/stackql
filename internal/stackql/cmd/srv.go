@@ -37,7 +37,7 @@ var srvCmd = &cobra.Command{
 	Run a PostgreSQL wire protocol server.
 	Supports client connections from psql and all manner or libs.
   `,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(_ *cobra.Command, _ []string) {
 		inputBundle, err := entryutil.BuildInputBundle(runtimeCtx)
 		iqlerror.PrintErrorAndExitOneIfError(err)
 		handlerCtx, err := entryutil.BuildHandlerContextNoPreProcess(runtimeCtx, queryCache, inputBundle)

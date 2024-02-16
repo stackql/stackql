@@ -34,7 +34,7 @@ func (ddo *refreshMaterializedView) Build() error {
 	if sqlSystem == nil {
 		return fmt.Errorf("cannot proceed DDL execution with nil refreshMaterializedView object")
 	}
-	refreshEx := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+	refreshEx := func(_ primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 		tableName := strings.Trim(astformat.String(parserRefreshObj.ViewName, sqlSystem.GetASTFormatter()), `"`)
 		indirect, indirectExists := ddo.annotatedAst.GetIndirect(ddo.refreshObject)
 		if !indirectExists {

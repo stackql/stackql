@@ -36,10 +36,10 @@ func NewAwsSignTransport(
 	if token == "" {
 		creds = credentials.NewStaticCredentials(id, secret, token)
 	} else {
-		defaultAccessKeyId := os.Getenv("AWS_ACCESS_KEY_ID")
+		defaultAccessKeyID := os.Getenv("AWS_ACCESS_KEY_ID")
 		defaultSecretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
-		if defaultAccessKeyId == "" || defaultSecretAccessKey == "" {
-			return nil, fmt.Errorf("AWS_SESSION_TOKEN is set, but AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must also be set") // Correctly returning two values
+		if defaultAccessKeyID == "" || defaultSecretAccessKey == "" {
+			return nil, fmt.Errorf("AWS_SESSION_TOKEN is set, but AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must also be set")
 		}
 		creds = credentials.NewEnvCredentials()
 	}

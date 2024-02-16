@@ -123,7 +123,7 @@ func (ss *SingleSelectAcquire) Build() error {
 	if err != nil {
 		return err
 	}
-	ex := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+	ex := func(_ primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 		currentTcc := ss.insertPreparedStatementCtx.GetGCCtrlCtrs().Clone()
 		ss.graphHolder.AddTxnControlCounters(currentTcc)
 		mr := prov.InferMaxResultsElement(m)
@@ -173,7 +173,6 @@ func (ss *SingleSelectAcquire) Build() error {
 				//nolint:errcheck // TODO: fix
 				ss.insertionContainer.SetTableTxnCounters(tableName, olderTcc)
 				ss.insertPreparedStatementCtx.SetGCCtrlCtrs(olderTcc)
-				//nolint:rowserrcheck // TODO: fix this
 				r, sqlErr := ss.handlerCtx.GetNamespaceCollection().GetAnalyticsCacheTableNamespaceConfigurator().Read(
 					tableName, reqEncoding,
 					ss.drmCfg.GetControlAttributes().GetControlInsertEncodedIDColumnName(),

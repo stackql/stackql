@@ -225,7 +225,7 @@ func (gh *genericHTTPReversal) Build() error {
 					nil,
 					primitive_context.NewPrimitiveContext(),
 				)
-				err = dependentInsertPrimitive.SetExecutor(func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+				err = dependentInsertPrimitive.SetExecutor(func(_ primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 					return execInstance()
 				})
 				if err != nil {

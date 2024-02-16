@@ -36,7 +36,7 @@ func (ddo *ddl) Build() error {
 	if sqlSystem == nil {
 		return fmt.Errorf("cannot proceed DDL execution with nil ddl object")
 	}
-	unionEx := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+	unionEx := func(_ primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 		actionLowered := strings.ToLower(parserDDLObj.Action)
 		switch actionLowered {
 		case "create":
