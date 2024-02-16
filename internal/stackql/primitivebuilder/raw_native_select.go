@@ -46,7 +46,7 @@ func (ss *RawNativeSelect) Build() error {
 		// select phase
 		logging.GetLogger().Infoln(fmt.Sprintf("running native query: '''%s''' ", ss.nativeQuery))
 
-		//nolint:rowserrcheck // TODO: fix this
+		// TODO: fix this
 		rows, err := ss.handlerCtx.GetSQLEngine().Query(ss.nativeQuery)
 
 		if err != nil {

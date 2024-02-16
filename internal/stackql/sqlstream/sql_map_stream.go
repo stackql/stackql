@@ -39,7 +39,7 @@ func (ss *SimpleSQLMapStream) Write(_ []map[string]interface{}) error {
 func (ss *SimpleSQLMapStream) Read() ([]map[string]interface{}, error) {
 	var rv []map[string]interface{}
 	nonControlColumns := ss.selectCtx.GetNonControlColumns()
-	r, sqlErr := ss.drmCfg.QueryDML( //nolint:rowserrcheck // TODO: fix this
+	r, sqlErr := ss.drmCfg.QueryDML( // TODO: fix this
 		ss.sqlEngine,
 		drm.NewPreparedStatementParameterized(ss.selectCtx, nil, true),
 	)
