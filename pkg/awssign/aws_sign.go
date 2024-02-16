@@ -31,8 +31,10 @@ func NewAwsSignTransport(
 	id, secret, token string,
 	options ...func(*v4.Signer),
 ) Transport {
+	var creds *credentials.Credentials
+
 	if token == "" {
-		creds := credentials.NewStaticCredentials(id, secret, token)
+		creds = credentials.NewStaticCredentials(id, secret, token) // Assign without declaring a new variable
 	} else {
 		// AWS_SESSION_TOKEN is populated, assume it's a temporary token and default creds (standard aws env vars) are used
 		defaultAccessKeyId := os.Getenv("AWS_ACCESS_KEY_ID")
@@ -40,8 +42,9 @@ func NewAwsSignTransport(
 		if defaultAccessKeyId == "" || defaultSecretAccessKey == "" {
 			return nil, fmt.Errorf("AWS_SESSION_TOKEN is set, AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must also be set")
 		}
-		creds := credentials.NewEnvCredentials()
+		creds = credentials.NewEnvCredentials() // Assign without declaring a new variable
 	}
+	
 	signer := v4.NewSigner(creds, options...)
 	return &standardAwsSignTransport{
 		underlyingTransport: underlyingTransport,
