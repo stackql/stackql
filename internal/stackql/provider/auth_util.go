@@ -212,40 +212,43 @@ func apiTokenAuth(authCtx *dto.AuthCtx, runtimeCtx dto.RuntimeCtx, enforceBearer
 }
 
 func awsSigningAuth(authCtx *dto.AuthCtx, runtimeCtx dto.RuntimeCtx) (*http.Client, error) {
-    // Retrieve the AWS access key and secret key.
-    credentialsBytes, err := authCtx.GetCredentialsBytes()
-    if err != nil {
-        return nil, fmt.Errorf("credentials error: %w", err)
-    }
-    keyStr := string(credentialsBytes)
+	// Retrieve the AWS access key and secret key.
+	credentialsBytes, err := authCtx.GetCredentialsBytes()
+	if err != nil {
+		return nil, fmt.Errorf("credentials error: %w", err)
+	}
+	keyStr := string(credentialsBytes)
 
-    // Retrieve the AWS access key ID.
-    keyID, err := authCtx.GetKeyIDString()
-    if err != nil {
-        return nil, err
-    }
+	// Retrieve the AWS access key ID.
+	keyID, err := authCtx.GetKeyIDString()
+	if err != nil {
+		return nil, err
+	}
 
-    // Validate that both keyID and keyStr are not empty.
-    if keyStr == "" || keyID == "" {
-        return nil, fmt.Errorf("cannot compose AWS signing credentials")
-    }
+	// Validate that both keyID and keyStr are not empty.
+	if keyStr == "" || keyID == "" {
+		return nil, fmt.Errorf("cannot compose AWS signing credentials")
+	}
 
-    // Retrieve the optional session token. Note: No error handling for missing session token.
-    sessionToken, _ := authCtx.GetAwsSessionTokenString()
+	// Retrieve the optional session token. Note: No error handling for missing session token.
+	sessionToken, _ := authCtx.GetAwsSessionTokenString()
 
-    // Mark the authentication context as active for AWS signing.
-    activateAuth(authCtx, "", dto.AuthAWSSigningv4Str)
+	// Mark the authentication context as active for AWS signing.
+	activateAuth(authCtx, "", dto.AuthAWSSigningv4Str)
 
-    // Get the HTTP client from the runtime context.
-    httpClient := netutils.GetHTTPClient(runtimeCtx, http.DefaultClient)
+	// Get the HTTP client from the runtime context.
+	httpClient := netutils.GetHTTPClient(runtimeCtx, http.DefaultClient)
 
-    // Initialize the AWS signing transport with credentials and optional session token.
-    tr := awssign.NewAwsSignTransport(httpClient.Transport, keyID, keyStr, sessionToken)
+	// Initialize the AWS signing transport with credentials and optional session token.
+	tr, err := awssign.NewAwsSignTransport(httpClient.Transport, keyID, keyStr, sessionToken)
+	if err != nil {
+		return nil, err
+	}
 
-    // Set the custom AWS signing transport as the client's transport.
-    httpClient.Transport = tr
+	// Set the custom AWS signing transport as the client's transport.
+	httpClient.Transport = tr
 
-    return httpClient, nil
+	return httpClient, nil
 }
 
 func basicAuth(authCtx *dto.AuthCtx, runtimeCtx dto.RuntimeCtx) (*http.Client, error) {
