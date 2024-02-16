@@ -173,8 +173,7 @@ func (ss *SingleSelectAcquire) Build() error {
 				//nolint:errcheck // TODO: fix
 				ss.insertionContainer.SetTableTxnCounters(tableName, olderTcc)
 				ss.insertPreparedStatementCtx.SetGCCtrlCtrs(olderTcc)
-				//nolint:rowserrcheck // TODO: fix this
-				r, sqlErr := ss.handlerCtx.GetNamespaceCollection().GetAnalyticsCacheTableNamespaceConfigurator().Read(
+				r, sqlErr := ss.handlerCtx.GetNamespaceCollection().GetAnalyticsCacheTableNamespaceConfigurator().Read( //nolint:rowserrcheck // TODO: fix this
 					tableName, reqEncoding,
 					ss.drmCfg.GetControlAttributes().GetControlInsertEncodedIDColumnName(),
 					nonControlColumnNames)
