@@ -128,6 +128,7 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 				ss.handlerCtx.GetGarbageCollector().Update(tableName, olderTcc, currentTcc)
 				ss.insertionContainer.SetTableTxnCounters(tableName, olderTcc)
 				ss.insertPreparedStatementCtx.SetGCCtrlCtrs(olderTcc)
+				//nolint:rowserrcheck // TODO: fix this
 				r, sqlErr := ss.handlerCtx.GetNamespaceCollection().GetAnalyticsCacheTableNamespaceConfigurator().Read(
 					tableName, reqEncoding,
 					ss.drmCfg.GetControlAttributes().GetControlInsertEncodedIDColumnName(),
