@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -29,14 +30,25 @@ func NewAwsSignTransport(
 	underlyingTransport http.RoundTripper,
 	id, secret, token string,
 	options ...func(*v4.Signer),
-) Transport {
-	creds := credentials.NewStaticCredentials(id, secret, token)
-	// creds := credentials.NewEnvCredentials()
+) (Transport, error) {
+	var creds *credentials.Credentials
+
+	if token == "" {
+		creds = credentials.NewStaticCredentials(id, secret, token)
+	} else {
+		defaultAccessKeyID := os.Getenv("AWS_ACCESS_KEY_ID")
+		defaultSecretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
+		if defaultAccessKeyID == "" || defaultSecretAccessKey == "" {
+			return nil, fmt.Errorf("AWS_SESSION_TOKEN is set, but AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must also be set")
+		}
+		creds = credentials.NewEnvCredentials()
+	}
+
 	signer := v4.NewSigner(creds, options...)
 	return &standardAwsSignTransport{
 		underlyingTransport: underlyingTransport,
 		signer:              signer,
-	}
+	}, nil
 }
 
 func (t *standardAwsSignTransport) RoundTrip(req *http.Request) (*http.Response, error) {

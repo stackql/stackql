@@ -40,10 +40,10 @@ jobs:
         git config --global core.autocrlf false
 
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4.1.1
 
     - name: Set up Go 1.x
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v5.0.0
       with:
         go-version: ^1.19
         check-latest: true
@@ -51,14 +51,16 @@ jobs:
       id: go
 
     - name: Setup Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5.0.0
+
       with:
         cache: pip
         python-version: '3.11' 
 
     - name: Cache Chocolatey packages
       id: cache-choco
-      uses: actions/cache@v3
+      # uses: actions/cache@v3
+      uses: actions/cache@v4.0.0
       env:
         cache-name: cache-choco-packages
       with:
@@ -81,7 +83,8 @@ jobs:
         version: '8.1.0'
 
     - name: Choco install postgres
-      uses: crazy-max/ghaction-chocolatey@v2
+      # uses: crazy-max/ghaction-chocolatey@v2
+      uses: crazy-max/ghaction-chocolatey@v3.0.0
       timeout-minutes: 20
       with:
         args: "install --force postgresql13 openssl"
@@ -175,7 +178,8 @@ jobs:
       run: python.exe test/python/main.py
 
     - name: Upload Artifact
-      uses: actions/upload-artifact@v3
+      # uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4.3.1
       if: success()
       with:
         name: stackql_windows_amd64
@@ -187,10 +191,10 @@ jobs:
     steps:
 
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4.1.1
 
     - name: Set up Go 1.x
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v5.0.0
       with:
         go-version: ^1.19
         check-latest: true
@@ -198,7 +202,7 @@ jobs:
       id: go
     
     - name: Setup Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5.0.0
       with:
         cache: pip
         python-version: '3.11' 
@@ -390,7 +394,7 @@ jobs:
         TESTSCRIPT: ${{env.TESTSCRIPT}}
 
     - name: Upload Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4.3.1
       if: success()
       with:
         name: stackql_linux_amd64
@@ -407,16 +411,18 @@ jobs:
         git config --global core.autocrlf false
 
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4.1.1
 
     - name: Download Artifact
-      uses: actions/download-artifact@v3
+      # uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4.1.2
       with:
         name: stackql_linux_amd64
         path: build
     
     - name: Setup WSL with dependencies
-      uses: Vampire/setup-wsl@v1
+      # uses: Vampire/setup-wsl@v1
+      uses: Vampire/setup-wsl@v3.0.0
       with:
         additional-packages:
           maven
@@ -513,10 +519,10 @@ jobs:
     runs-on: macos-11
     steps:
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4.1.1
 
     - name: Set up Go 1.x
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v5.0.0
       with:
         go-version: ^1.19
         check-latest: true
@@ -524,7 +530,7 @@ jobs:
       id: go
 
     - name: Setup Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5.0.0
       with:
         cache: pip
         python-version: '3.11' 
@@ -640,7 +646,7 @@ jobs:
         TESTSCRIPT: ${{env.TESTSCRIPT}}
 
     - name: Upload Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4.3.1
       if: success()
       with:
         name: stackql_darwin_amd64
@@ -652,16 +658,16 @@ jobs:
     steps:
 
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4.1.1
 
     - name: Setup Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5.0.0
       with:
         cache: pip
         python-version: '3.11'
 
     - name: Set up Go 1.x
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v5.0.0
       with:
         go-version: ^1.19
         check-latest: true
@@ -717,7 +723,7 @@ jobs:
         python cicd/python/build.py --verbose --build 
 
     - name: Upload Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4.3.1
       if: success()
       with:
         name: stackql_darwin_arm64
@@ -729,7 +735,7 @@ jobs:
     steps:
 
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4.1.1
     
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
@@ -738,7 +744,7 @@ jobs:
       uses: docker/setup-buildx-action@v3
 
     - name: Setup Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5.0.0
       with:
         cache: pip
         python-version: '3.11'
