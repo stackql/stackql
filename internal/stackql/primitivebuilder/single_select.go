@@ -55,7 +55,7 @@ func (ss *SingleSelect) GetTail() primitivegraph.PrimitiveNode {
 }
 
 func (ss *SingleSelect) Build() error {
-	selectEx := func(_ primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+	selectEx := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 		// select phase
 		logging.GetLogger().Infoln(
 			fmt.Sprintf(

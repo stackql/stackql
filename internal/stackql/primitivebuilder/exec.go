@@ -66,7 +66,7 @@ func (ss *Exec) Build() error {
 		return err
 	}
 	var target map[string]interface{}
-	ex := func(_ primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+	ex := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 		var columnOrder []string
 		keys := make(map[string]map[string]interface{})
 		httpArmoury, httpArmouryErr := tbl.GetHTTPArmoury()

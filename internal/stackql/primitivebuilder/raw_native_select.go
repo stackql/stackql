@@ -42,11 +42,11 @@ func (ss *RawNativeSelect) GetTail() primitivegraph.PrimitiveNode {
 }
 
 func (ss *RawNativeSelect) Build() error {
-	selectEx := func(_ primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+	selectEx := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 		// select phase
 		logging.GetLogger().Infoln(fmt.Sprintf("running native query: '''%s''' ", ss.nativeQuery))
 
-		// TODO: fix this
+		//nolint:rowserrcheck // TODO: fix this
 		rows, err := ss.handlerCtx.GetSQLEngine().Query(ss.nativeQuery)
 
 		if err != nil {

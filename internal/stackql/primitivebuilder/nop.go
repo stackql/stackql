@@ -41,7 +41,7 @@ func NewNopBuilder(
 
 func (nb *NopBuilder) Build() error {
 	pr := primitive.NewLocalPrimitive(
-		func(_ primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			return util.PrepareResultSet(
 				internaldto.NewPrepareResultSetPlusRawDTO(
 					nil,

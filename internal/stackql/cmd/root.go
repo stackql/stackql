@@ -75,7 +75,7 @@ Cloud asset management and automation using SQL. For example:
 
 SELECT name, status FROM google.compute.instances
 WHERE project = 'my-project' AND zone = 'us-west1-b';`,
-	Run: func(cmd *cobra.Command, _ []string) {
+	Run: func(cmd *cobra.Command, args []string) {
 		// in the root command is executed with no arguments, print the help message
 		usagemsg := cmd.Long + "\n\n" + cmd.UsageString()
 		fmt.Println(usagemsg) //nolint:forbidigo // legacy

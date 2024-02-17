@@ -34,7 +34,7 @@ func (ddo *insertIntoPhysicalTable) Build() error {
 	if sqlSystem == nil {
 		return fmt.Errorf("cannot proceed DDL execution with nil insertIntoPhysicalTable object")
 	}
-	refreshEx := func(_ primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+	refreshEx := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 		tableName := strings.Trim(astformat.String(parserInsertObj.Table, sqlSystem.GetASTFormatter()), `"`)
 		indirect, indirectExists := ddo.annotatedAst.GetInsertRowsIndirect(ddo.insertObject)
 		if !indirectExists {

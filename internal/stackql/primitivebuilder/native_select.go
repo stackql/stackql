@@ -47,7 +47,7 @@ func (ss *NativeSelect) GetTail() primitivegraph.PrimitiveNode {
 
 //nolint:gocognit // probably a headache no matter which way you slice it
 func (ss *NativeSelect) Build() error {
-	selectEx := func(_ primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+	selectEx := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 		// select phase
 		logging.GetLogger().Infoln(fmt.Sprintf("running empty select with columns: %v", ss.selectQuery))
 

@@ -31,5 +31,4 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v4.0.0
         with:
-          version: 'v1.56.2'
-          args: -v
+          version: 'v1.55.2'
