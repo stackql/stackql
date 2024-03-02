@@ -2238,6 +2238,48 @@ Function Expression And Where Clause Function Expression Predicate Alongside Wil
     ...    default-allow-ssh
     ...    stdout=${CURDIR}/tmp/Function-Expression-And-Where-Clause-Function-Expression-Predicate-Alongside-Wildcard-Returns-Results.tmp
 
+AWS User Policies List Works and Validates Circularity Bugfix
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-----------------|-----------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}member${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}region${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------|-----------|
+    ...    |${SPACE}AllAccessPolicy${SPACE}|${SPACE}us-east-1${SPACE}|
+    ...    |-----------------|-----------|
+    ...    |${SPACE}KeyPolicy${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}us-east-1${SPACE}|
+    ...    |-----------------|-----------|
+    Should Stackql Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select * from aws.iam.user_policies where region \= 'us-east-1' and UserName \= 'joe.blow' order by member asc;
+    ...    ${outputStr}
+    ...    stdout=${CURDIR}/tmp/AWS-User-Policies-List-Works-and-Validates-Circularity-Bugfix.tmp
+
+AWS User Policies List Projection Works and Validates Circularity Bugfix
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-----------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}member${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------|
+    ...    |${SPACE}AllAccessPolicy${SPACE}|
+    ...    |-----------------|
+    ...    |${SPACE}KeyPolicy${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------|
+    Should Stackql Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select member from aws.iam.user_policies where region \= 'us-east-1' and UserName \= 'joe.blow' order by member asc;
+    ...    ${outputStr}
+    ...    stdout=${CURDIR}/tmp/AWS-User-Policies-List-Projection-Works-and-Validates-Circularity-Bugfix.tmp
+
 Function Expression And Where Clause Function Expression Predicate Alongside Projection Returns Expected Results
     ${sqliteInputStr} =    Catenate
     ...    select name, direction, denied, allowed, JSON_EXTRACT(sourceRanges, '$[0]') sr  

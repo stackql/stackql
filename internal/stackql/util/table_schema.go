@@ -1,6 +1,8 @@
 package util
 
 import (
+	"strings"
+
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stackql/any-sdk/anysdk"
 )
@@ -22,10 +24,18 @@ func NewTableSchemaAnalyzer(s anysdk.Schema, m anysdk.OperationStore) TableSchem
 	}
 }
 
+func TrimSelectItemsKey(selectItemsKey string) string {
+	splitSet := strings.Split(selectItemsKey, "/")
+	if len(splitSet) == 0 {
+		return ""
+	}
+	return splitSet[len(splitSet)-1]
+}
+
 //nolint:gocognit,nestif // tactical
 func (ta *simpleTableSchemaAnalyzer) GetColumns() ([]Column, error) {
 	var rv []Column
-	tableColumns := ta.s.Tabulate(false).GetColumns()
+	tableColumns := ta.s.Tabulate(false, "").GetColumns()
 	existingColumns := make(map[string]struct{})
 	for _, col := range tableColumns {
 		existingColumns[col.GetName()] = struct{}{}

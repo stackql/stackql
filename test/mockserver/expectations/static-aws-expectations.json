@@ -1,6 +1,32 @@
 [
   {
     "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*us-east-1.*SignedHeaders=.*host;x-amz-date.*$" ]
+      },
+      "body" : {
+        "type" : "PARAMETERS",
+        "parameters": {
+          "Action": [ "^ListUserPolicies$" ],
+          "Version": [ "^2010\\-05\\-08$" ] 
+        }
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "text/xml" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "type": "BINARY",
+        "base64Bytes": "PExpc3RVc2VyUG9saWNpZXNSZXNwb25zZSB4bWxucz0iaHR0cHM6Ly9pYW0uYW1hem9uYXdzLmNvbS9kb2MvMjAxMC0wNS0wOC8iPgogPExpc3RVc2VyUG9saWNpZXNSZXN1bHQ+CiAgICA8UG9saWN5TmFtZXM+CiAgICAgICA8bWVtYmVyPkFsbEFjY2Vzc1BvbGljeTwvbWVtYmVyPgogICAgICAgPG1lbWJlcj5LZXlQb2xpY3k8L21lbWJlcj4KICAgIDwvUG9saWN5TmFtZXM+CiAgICA8SXNUcnVuY2F0ZWQ+ZmFsc2U8L0lzVHJ1bmNhdGVkPgogPC9MaXN0VXNlclBvbGljaWVzUmVzdWx0PgogPFJlc3BvbnNlTWV0YWRhdGE+CiAgICA8UmVxdWVzdElkPkVYQU1QTEU8L1JlcXVlc3RJZD4KIDwvUmVzcG9uc2VNZXRhZGF0YT4KPC9MaXN0VXNlclBvbGljaWVzUmVzcG9uc2U+"
+      }
+    }
+  },
+  {
+    "httpRequest": {
       "method": "GET",
       "path": "/",
       "headers": {
