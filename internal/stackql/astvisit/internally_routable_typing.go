@@ -16,6 +16,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 	"github.com/stackql/stackql/internal/stackql/typing"
+	"github.com/stackql/stackql/internal/stackql/util"
 )
 
 var (
@@ -115,7 +116,7 @@ func (v *standardInternallyRoutableTypingAstVisitor) getStarColumns(
 		return nil, fmt.Errorf(unsuitableSchemaMsg)
 	}
 	var cols []parserutil.ColumnHandle
-	colNames := itemObjS.GetAllColumns()
+	colNames := itemObjS.GetAllColumns(util.TrimSelectItemsKey(selectItemsKey))
 	for _, v := range colNames {
 		cols = append(cols, parserutil.NewUnaliasedColumnHandle(v))
 	}

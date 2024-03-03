@@ -153,14 +153,14 @@ func (pb *standardPrimitiveGenerator) analyzeUnarySelection(
 			cols = append(cols, parserutil.NewUnaliasedColumnHandle(v.GetName()))
 		}
 	}
-	insertTabulation := itemObjS.Tabulate(false)
+	insertTabulation := itemObjS.Tabulate(false, "")
 
 	hIds := internaldto.NewHeirarchyIdentifiers(provStr, svcStr, itemObjS.GetName(), "")
 	viewDTO, isView := handlerCtx.GetSQLSystem().GetViewByName(hIds.GetTableName())
 	if isView {
 		hIds = hIds.WithView(viewDTO)
 	}
-	selectTabulation := itemObjS.Tabulate(true)
+	selectTabulation := itemObjS.Tabulate(true, "")
 
 	return pb.assembleUnarySelectionBuilder(
 		pbi,

@@ -472,7 +472,12 @@ func (dp *standardDependencyPlanner) processAcquire(
 	if err != nil {
 		return util.NewAnnotatedTabulation(nil, nil, "", ""), nil, err
 	}
-	tab := annotationCtx.GetSchema().Tabulate(false)
+	selectItemsKey := annotationCtx.GetTableMeta().GetSelectItemsKey()
+	var defaultColName string
+	if selectItemsKey != "" {
+		defaultColName = util.TrimSelectItemsKey(selectItemsKey)
+	}
+	tab := annotationCtx.GetSchema().Tabulate(false, defaultColName)
 	_, mediaType, err := m.GetResponseBodySchemaAndMediaType()
 	if err != nil {
 		return util.NewAnnotatedTabulation(nil, nil, "", ""), nil, err
