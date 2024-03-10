@@ -840,7 +840,7 @@ jobs:
         push: false
         target: app
         load: true
-        tags: stackql/stackql:${{github.sha}},stackql/stackql:latest
+        tags: stackql/stackql:${{github.sha}},stackql/stackql:v${{env.BUILDMAJORVERSION}}.${{env.BUILDMINORVERSION}}.${{env.BUILDPATCHVERSION}},stackql/stackql:latest
 
     - name: Mock Server Download
       run: |
@@ -928,5 +928,5 @@ jobs:
           BUILDPATCHVERSION=${{env.BUILDPATCHVERSION}}
         push: true
         target: app
-        tags: stackql/stackql:${{github.sha}},stackql/stackql:latest
+        tags: stackql/stackql:${{github.sha}},stackql/stackql:v${{env.BUILDMAJORVERSION}}.${{env.BUILDMINORVERSION}}.${{env.BUILDPATCHVERSION}},stackql/stackql:latest
 
