@@ -366,6 +366,48 @@
       "path": "/",
       "headers": {
         "Authorization": ["^.*SignedHeaders.*content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target": [ "CloudApiService.GetResource" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "TypeName":"AWS::S3::Bucket",
+          "Identifier": "stackql-testing-bucket-01"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "ResourceDescription": {
+          "Identifier": "stackql-testing-bucket-01",
+          "Properties": {
+            "PublicAccessBlockConfiguration":{"RestrictPublicBuckets":true,"BlockPublicPolicy":true,"BlockPublicAcls":true,"IgnorePublicAcls":true},
+            "BucketName":"stackql-testing-bucket-01",
+            "RegionalDomainName":"stackql-testing-bucket-01.s3.us-west-1.amazonaws.com",
+            "OwnershipControls":{"Rules":[{"ObjectOwnership":"BucketOwnerEnforced"}]},
+            "DomainName":"stackql-testing-bucket-01.s3.amazonaws.com",
+            "BucketEncryption":{"ServerSideEncryptionConfiguration":[{"BucketKeyEnabled":false,"ServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]},
+            "WebsiteURL":"http://stackql-testing-bucket-01.s3-website-us-west-1.amazonaws.com",
+            "DualStackDomainName":"stackql-testing-bucket-01.s3.dualstack.us-west-1.amazonaws.com",
+            "VersioningConfiguration":{"Status":"Enabled"},
+            "Arn":"arn:aws:s3:::stackql-testing-bucket-01"
+          }
+        },
+        "TypeName":"AWS::S3::Bucket"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*SignedHeaders.*content-type;host;x-amz-date;x-amz-target.*$" ],
         "X-Amz-Target": [ "CloudApiService.ListResources" ]
       },
       "body": {
@@ -384,8 +426,8 @@
       "body": {
         "ResourceDescriptions": [
           {
-            "Identifier": "stackql-registry-artifacts",
-            "Properties": "{\"BucketName\":\"stackql-registry-artifacts\"}"
+            "Identifier": "stackql-testing-bucket-01",
+            "Properties": "{\"BucketName\":\"stackql-testing-bucket-01\"}"
           },
           {
             "Identifier": "stackql-trial-bucket-01",
