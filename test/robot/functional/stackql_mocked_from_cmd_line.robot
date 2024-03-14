@@ -3119,6 +3119,25 @@ Filtered Projection Resource Level View of Cloud Control Resource Returns Expect
     ...    ${AWS_CC_VIEW_SELECT_PROJECTION_BUCKET_FILTERED_EXPECTED}
     ...    ${CURDIR}/tmp/Filtered-Projection-Resource-Level-View-of-Cloud-Control-Resource-Returns-Expected-Result.tmp
 
+Filtered Projection Detail Resource Level View of Cloud Control Resource Returns Expected Result
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |--------------------------------------------|----------------------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}domain_name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}arn${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |--------------------------------------------|----------------------------------------|
+    ...    |${SPACE}stackql-testing-bucket-01.s3.amazonaws.com${SPACE}|${SPACE}arn:aws:s3:::stackql-testing-bucket-01${SPACE}|
+    ...    |--------------------------------------------|----------------------------------------|
+    Should Horrid Query StackQL Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}    
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select domain_name, arn from aws.pseudo_s3.s3_bucket_detail where data__Identifier \= 'stackql\-testing\-bucket\-01';
+    ...    ${outputStr}
+    ...    ${CURDIR}/tmp/Filtered-Projection-Detail-Resource-Level-View-of-Cloud-Control-Resource-Returns-Expected-Result.tmp
+
 Filtered Star Resource Level View of Cloud Control Resource Returns Expected Result
     Should Horrid Query StackQL Inline Equal
     ...    ${STACKQL_EXE}
