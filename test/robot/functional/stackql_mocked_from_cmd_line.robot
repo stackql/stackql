@@ -3157,6 +3157,29 @@ Filtered Projection Resource Level View of Cloud Control Resource Returns Expect
     ...    ${AWS_CC_VIEW_SELECT_PROJECTION_BUCKET_FILTERED_EXPECTED}
     ...    ${CURDIR}/tmp/Filtered-Projection-Resource-Level-View-of-Cloud-Control-Resource-Returns-Expected-Result.tmp
 
+Function On Projection Resource Level View of Cloud Control Resource Returns Expected Result
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |---------------------------|---------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}bucket_name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}bucket_rhs_terminal${SPACE}|
+    ...    |---------------------------|---------------------|
+    ...    |${SPACE}stackql-testing-bucket-01${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}01${SPACE}|
+    ...    |---------------------------|---------------------|
+    ...    |${SPACE}stackql-trial-bucket-01${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}01${SPACE}|
+    ...    |---------------------------|---------------------|
+    ...    |${SPACE}stackql-trial-bucket-02${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}02${SPACE}|
+    ...    |---------------------------|---------------------|
+    Should Horrid Query StackQL Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}    
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select BucketName as bucket_name, split_part(BucketName, '-', -1) as bucket_rhs_terminal from aws.pseudo_s3.s3_bucket_listing where region \= 'ap\-southeast\-2' order by BucketName;
+    ...    ${outputStr}
+    ...    ${CURDIR}/tmp/Funtion-On-Projection-Resource-Level-View-of-Cloud-Control-Resource-Returns-Expected-Result.tmp
+
 Filtered Projection Detail Resource Level View of Cloud Control Resource Returns Expected Result
     ${outputStr} =    Catenate    SEPARATOR=\n
     ...    |--------------------------------------------|----------------------------------------|

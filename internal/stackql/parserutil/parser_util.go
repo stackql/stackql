@@ -507,7 +507,8 @@ func inferColNameFromExpr(
 	case *sqlparser.FuncExpr:
 		// As a shortcut, functions are integral types
 		funcNameLowered := expr.Name.Lowered()
-		retVal.Name = astformat.String(expr, formatter)
+		unaliasedRendition := astformat.String(expr, formatter)
+		retVal.Name = unaliasedRendition
 		aggCol, isAggCol := inferAggregatedCol(funcNameLowered)
 		if isAggCol {
 			retVal.IsAggregateExpr = true
@@ -516,7 +517,7 @@ func inferColNameFromExpr(
 		if len(funcNameLowered) >= 4 && funcNameLowered[0:4] == "json" {
 			decoratedColumn := strings.ReplaceAll(retVal.Name, `\"`, `"`)
 			retVal.DecoratedColumn = getDecoratedColRendition(decoratedColumn, alias)
-			return retVal, nil
+			// return retVal, nil
 		}
 		if len(expr.Exprs) == 1 {
 			switch ex := expr.Exprs[0].(type) {
@@ -532,12 +533,15 @@ func inferColNameFromExpr(
 			}
 		} else {
 			var exprsDecorated []string
-			for _, exp := range expr.Exprs {
+			for i, exp := range expr.Exprs {
 				switch ex := exp.(type) {
 				case *sqlparser.AliasedExpr:
 					rv, err := inferColNameFromExpr(ex, formatter)
 					if err != nil {
 						return rv, err
+					}
+					if i == 0 {
+						retVal.Name = rv.Name
 					}
 					exprsDecorated = append(exprsDecorated, rv.DecoratedColumn)
 				}
