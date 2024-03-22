@@ -320,10 +320,16 @@ func (sp *standardInitialPasses) initialPasses(
 		return nil
 	}
 	astToAnalyse := ast
+	// If the select node has already been analysed, no need to repeat.
 	if isCreateMAterializedView {
 		switch node := astToAnalyse.(type) {
 		case *sqlparser.DDL:
-			astToAnalyse = node.SelectStatement
+			// TODO: find a better way and also add support for PG-internal materialized views.
+			logging.GetLogger().Debugf("DDL: %v", node)
+			pbi.SetCreateMaterializedView(true)
+			sp.instructionType = StandardInstruction
+			sp.planBuilderInput = pbi
+			return nil
 		default:
 			return fmt.Errorf("expected DDL statement in analysing 'create materialized view' statement")
 		}
