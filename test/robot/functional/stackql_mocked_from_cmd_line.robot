@@ -750,6 +750,44 @@ Create and Interrogate Materialized View With Aliasing and Name Collision
     ...    stdout=${CURDIR}/tmp/Create-and-Interrogate-Materialized-View-With-Aliasing-and-Name-Collision.tmp
     ...    stderr=${CURDIR}/tmp/Create-and-Interrogate-Materialized-View-With-Aliasing-and-Name-Collision-stderr.tmp
 
+Create and Interrogate Materialized View With Userspace Table Join and Aliasing and Name Collision
+    ${inputStr} =    Catenate
+    ...    create table rhs_table(name text unique, daily_rate numeric);
+    ...    insert into rhs_table values('Jackie', 3200);
+    ...    insert into rhs_table values('Andrew', 1600);
+    ...    create materialized view vw_aws_usr as select Arn, UserName, UserId, region, daily_rate from aws.iam.users inner join rhs_table on UserName = name where region = 'us-east-1';
+    ...    select u1.UserName, u2.UserId, u2.Arn, u1.region, u2.daily_rate from aws.iam.users u1 inner join vw_aws_usr u2 on u1.Arn = u2.Arn where u1.region = 'us-east-1' and u2.region = 'us-east-1' order by u1.UserName desc;
+    ...    drop materialized view vw_aws_usr;
+    ...    drop table rhs_table;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |----------|-----------------------|--------------------------------------------------------------------------------|-----------|------------|
+    ...    |${SPACE}UserName${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}UserId${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}Arn${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}region${SPACE}${SPACE}${SPACE}|${SPACE}daily_rate${SPACE}|
+    ...    |----------|-----------------------|--------------------------------------------------------------------------------|-----------|------------|
+    ...    |${SPACE}Jackie${SPACE}${SPACE}${SPACE}|${SPACE}AIDIODR4TAW7CSEXAMPLE${SPACE}|${SPACE}arn:aws:iam::123456789012:user/division_abc/subdivision_xyz/engineering/Jackie${SPACE}|${SPACE}us-east-1${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}3200${SPACE}|
+    ...    |----------|-----------------------|--------------------------------------------------------------------------------|-----------|------------|
+    ...    |${SPACE}Andrew${SPACE}${SPACE}${SPACE}|${SPACE}AID2MAB8DPLSRHEXAMPLE${SPACE}|${SPACE}arn:aws:iam::123456789012:user/division_abc/subdivision_xyz/engineering/Andrew${SPACE}|${SPACE}us-east-1${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1600${SPACE}|
+    ...    |----------|-----------------------|--------------------------------------------------------------------------------|-----------|------------|
+    ${stdErrStr} =    Catenate    SEPARATOR=\n
+    ...    DDL Execution Completed
+    ...    insert into table completed
+    ...    insert into table completed
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${stdErrStr}
+    ...    stdout=${CURDIR}/tmp/Create-and-Interrogate-Materialized-View-With-Userspace-Table-Join-and-Aliasing-and-Name-Collision.tmp
+    ...    stderr=${CURDIR}/tmp/Create-and-Interrogate-Materialized-View-With-Userspace-Table-Join-and-Aliasing-and-Name-Collision-stderr.tmp
+
 Subquery Left Joined With Aliasing and Name Collision
     ${inputStr} =    Catenate
     ...    select u1.UserName, u.UserId, u.Arn, u1.region from ( select Arn, UserName, UserId from aws.iam.users where region = 'us-east-1' ) u inner join aws.iam.users u1 on u1.Arn = u.Arn where region = 'us-east-1'  order by u1.UserName desc;
