@@ -517,7 +517,9 @@ func inferColNameFromExpr(
 		if len(funcNameLowered) >= 4 && funcNameLowered[0:4] == "json" {
 			decoratedColumn := strings.ReplaceAll(retVal.Name, `\"`, `"`)
 			retVal.DecoratedColumn = getDecoratedColRendition(decoratedColumn, alias)
-			// return retVal, nil
+			if len(funcNameLowered) == 4 { //nolint:gomnd // TODO: remove this
+				return retVal, nil
+			}
 		}
 		if len(expr.Exprs) == 1 {
 			switch ex := expr.Exprs[0].(type) {
