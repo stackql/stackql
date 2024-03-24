@@ -7,6 +7,7 @@ import (
 
 	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql/internal/stackql/astformat"
+	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/logging"
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
@@ -521,7 +522,7 @@ func inferColNameFromExpr(
 				return retVal, nil
 			}
 		}
-		if len(expr.Exprs) == 1 {
+		if len(expr.Exprs) == 1 { //nolint:nestif // TODO: review
 			switch ex := expr.Exprs[0].(type) {
 			case *sqlparser.AliasedExpr:
 				rv, err := inferColNameFromExpr(ex, formatter)
@@ -544,12 +545,17 @@ func inferColNameFromExpr(
 					}
 					if i == 0 {
 						retVal.Name = rv.Name
+						if funcNameLowered == constants.SQLFuncJSONExtractPostgres {
+							rv.DecoratedColumn = fmt.Sprintf(`"%s"%s`, rv.Name, constants.PostgresJSONCastSuffix)
+						}
 					}
 					exprsDecorated = append(exprsDecorated, rv.DecoratedColumn)
 				}
 			}
 			decoratedColumn := fmt.Sprintf("%s(%s)", funcNameLowered, strings.Join(exprsDecorated, ", "))
-			retVal.DecoratedColumn = getDecoratedColRendition(decoratedColumn, alias)
+			if retVal.Name != constants.SQLFuncJSONExtractPostgres {
+				retVal.DecoratedColumn = getDecoratedColRendition(decoratedColumn, alias)
+			}
 			return retVal, nil
 		}
 		switch funcNameLowered {
