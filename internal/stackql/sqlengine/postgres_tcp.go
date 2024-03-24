@@ -294,7 +294,11 @@ func (se postgresTCPEngine) Query(query string, varArgs ...interface{}) (*sql.Ro
 }
 
 func (se postgresTCPEngine) query(query string, varArgs ...interface{}) (*sql.Rows, error) {
-	bodgedQuery, _ := se.bodgePrepStmt(query)
+	bodgedQuery, containsParameters := se.bodgePrepStmt(query)
+	if !containsParameters {
+		res, err := se.db.Query(bodgedQuery, []interface{}{}...)
+		return res, err
+	}
 	res, err := se.db.Query(bodgedQuery, varArgs...)
 	return res, err
 }
