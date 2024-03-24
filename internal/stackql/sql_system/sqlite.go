@@ -1117,8 +1117,10 @@ func (eng *sqLiteSystem) composeSelectQuery(
 	}
 	whereExprsStr := wq.String()
 
-	q.WriteString(fmt.Sprintf(`SELECT %s FROM `, strings.Join(quotedColNames, ", ")))
-	q.WriteString(fromString)
+	q.WriteString(fmt.Sprintf(`SELECT %s `, strings.Join(quotedColNames, ", ")))
+	if fromString != "" {
+		q.WriteString(fmt.Sprintf(`FROM %s `, fromString))
+	}
 	if whereExprsStr != "" {
 		q.WriteString(" WHERE ")
 		q.WriteString(whereExprsStr)

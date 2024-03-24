@@ -3180,6 +3180,27 @@ Function On Projection Resource Level View of Cloud Control Resource Returns Exp
     ...    ${outputStr}
     ...    ${CURDIR}/tmp/Funtion-On-Projection-Resource-Level-View-of-Cloud-Control-Resource-Returns-Expected-Result.tmp
 
+Inline Union Select Returns Expected Result
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |------------------------|----------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}bucket_name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}region${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|----------------|
+    ...    |${SPACE}some-other-placeholder${SPACE}|${SPACE}ap-southeast-2${SPACE}|
+    ...    |------------------------|----------------|
+    ...    |${SPACE}some-placeholder${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}ap-southeast-2${SPACE}|
+    ...    |------------------------|----------------|
+    Should Horrid Query StackQL Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}    
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    SELECT 'some\-placeholder' as bucket_name, 'ap\-southeast\-2' as region UNION SELECT 'some\-other\-placeholder' as bucket_name, 'ap\-southeast\-2' as region;
+    ...    ${outputStr}
+    ...    ${CURDIR}/tmp/Inline-Union-Select-Returns-Expected-Result.tmp
+
 Filtered Projection Detail Resource Level View of Cloud Control Resource Returns Expected Result
     ${outputStr} =    Catenate    SEPARATOR=\n
     ...    |--------------------------------------------|----------------------------------------|
