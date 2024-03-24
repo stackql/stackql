@@ -572,7 +572,7 @@ func (v *standardInternallyRoutableTypingAstVisitor) Visit(node sqlparser.SQLNod
 			if !ok {
 				r, ok := indirect.GetColumnByName(col.Name)
 				if !ok {
-					return fmt.Errorf("query rewriting for indirection: cannot find col = '%s'", col.Name)
+					return fmt.Errorf("internally routable typing: cannot find col = '%s'", col.Name)
 				}
 				relationalCol = typing.NewRelationalColumn(col.Name, r.GetType()).WithDecorated(col.DecoratedColumn)
 			}
