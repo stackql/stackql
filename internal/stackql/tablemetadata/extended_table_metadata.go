@@ -60,6 +60,7 @@ type ExtendedTableMetadata interface {
 	SetIsOnClauseHoistable(bool)
 	IsOnClauseHoistable() bool
 	IsPhysicalTable() bool
+	IsMaterializedView() bool
 	GetServerVariables() (map[string]*openapi3.ServerVariable, bool)
 	Clone() ExtendedTableMetadata
 }
@@ -127,6 +128,13 @@ func (ex *standardExtendedTableMetadata) IsPhysicalTable() bool {
 		return false
 	}
 	return ex.heirarchyObjects.GetHeirarchyIds().IsPhysicalTable()
+}
+
+func (ex *standardExtendedTableMetadata) IsMaterializedView() bool {
+	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetHeirarchyIds() == nil {
+		return false
+	}
+	return ex.heirarchyObjects.GetHeirarchyIds().IsMaterializedView()
 }
 
 func (ex *standardExtendedTableMetadata) SetIsOnClauseHoistable(isOnClauseHoistable bool) {

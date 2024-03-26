@@ -883,6 +883,56 @@ Create Then Replace and Interrogate Materialized View With Union
     ...    stdout=${CURDIR}/tmp/Create-Then-Replace-and-Interrogate-Materialized-View-With-Union.tmp
     ...    stderr=${CURDIR}/tmp/Create-Then-Replace-and-Interrogate-Materialized-View-With-Union-stderr.tmp
 
+Create Then Replace and Interrogate Materialized View With Union of MAterialized Views
+    ${inputStr} =    Catenate
+    ...    create or replace materialized view vw_aws_usr as select Arn, UserName, UserId, region from aws.iam.users where region = 'us-east-1' union all select 'prefixed' || Arn, UserName, 'prefixed' || UserId, region from aws.iam.users where region = 'us-east-1'; 
+    ...    create or replace materialized view vw_aws_usr_two as select Arn, UserName, UserId, region from aws.iam.users where region = 'us-east-1' union all select 'prefixed' || Arn, UserName, 'prefixed' || UserId, region from aws.iam.users where region = 'us-east-1'; 
+    ...    create materialized view composite_mv as select Arn, UserName, UserId, region from vw_aws_usr union all select Arn, UserName, UserId, region from vw_aws_usr_two; 
+    ...    select Arn, UserName, UserId, region from composite_mv order by Arn, region;
+    ...    drop materialized view vw_aws_usr;
+    ...    drop materialized view vw_aws_usr_two;
+    ...    drop materialized view composite_mv;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |----------------------------------------------------------------------------------------|----------|-------------------------------|-----------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}Arn${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}UserName${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}UserId${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}region${SPACE}${SPACE}${SPACE}|
+    ...    |----------------------------------------------------------------------------------------|----------|-------------------------------|-----------|
+    ...    |${SPACE}arn:aws:iam::123456789012:user/division_abc/subdivision_xyz/engineering/Andrew${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Andrew${SPACE}${SPACE}${SPACE}|${SPACE}AID2MAB8DPLSRHEXAMPLE${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}us-east-1${SPACE}|
+    ...    |----------------------------------------------------------------------------------------|----------|-------------------------------|-----------|
+    ...    |${SPACE}arn:aws:iam::123456789012:user/division_abc/subdivision_xyz/engineering/Andrew${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Andrew${SPACE}${SPACE}${SPACE}|${SPACE}AID2MAB8DPLSRHEXAMPLE${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}us-east-1${SPACE}|
+    ...    |----------------------------------------------------------------------------------------|----------|-------------------------------|-----------|
+    ...    |${SPACE}arn:aws:iam::123456789012:user/division_abc/subdivision_xyz/engineering/Jackie${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Jackie${SPACE}${SPACE}${SPACE}|${SPACE}AIDIODR4TAW7CSEXAMPLE${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}us-east-1${SPACE}|
+    ...    |----------------------------------------------------------------------------------------|----------|-------------------------------|-----------|
+    ...    |${SPACE}arn:aws:iam::123456789012:user/division_abc/subdivision_xyz/engineering/Jackie${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Jackie${SPACE}${SPACE}${SPACE}|${SPACE}AIDIODR4TAW7CSEXAMPLE${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}us-east-1${SPACE}|
+    ...    |----------------------------------------------------------------------------------------|----------|-------------------------------|-----------|
+    ...    |${SPACE}prefixedarn:aws:iam::123456789012:user/division_abc/subdivision_xyz/engineering/Andrew${SPACE}|${SPACE}Andrew${SPACE}${SPACE}${SPACE}|${SPACE}prefixedAID2MAB8DPLSRHEXAMPLE${SPACE}|${SPACE}us-east-1${SPACE}|
+    ...    |----------------------------------------------------------------------------------------|----------|-------------------------------|-----------|
+    ...    |${SPACE}prefixedarn:aws:iam::123456789012:user/division_abc/subdivision_xyz/engineering/Andrew${SPACE}|${SPACE}Andrew${SPACE}${SPACE}${SPACE}|${SPACE}prefixedAID2MAB8DPLSRHEXAMPLE${SPACE}|${SPACE}us-east-1${SPACE}|
+    ...    |----------------------------------------------------------------------------------------|----------|-------------------------------|-----------|
+    ...    |${SPACE}prefixedarn:aws:iam::123456789012:user/division_abc/subdivision_xyz/engineering/Jackie${SPACE}|${SPACE}Jackie${SPACE}${SPACE}${SPACE}|${SPACE}prefixedAIDIODR4TAW7CSEXAMPLE${SPACE}|${SPACE}us-east-1${SPACE}|
+    ...    |----------------------------------------------------------------------------------------|----------|-------------------------------|-----------|
+    ...    |${SPACE}prefixedarn:aws:iam::123456789012:user/division_abc/subdivision_xyz/engineering/Jackie${SPACE}|${SPACE}Jackie${SPACE}${SPACE}${SPACE}|${SPACE}prefixedAIDIODR4TAW7CSEXAMPLE${SPACE}|${SPACE}us-east-1${SPACE}|
+    ...    |----------------------------------------------------------------------------------------|----------|-------------------------------|-----------|
+    ${stdErrStr} =    Catenate    SEPARATOR=\n
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${stdErrStr}
+    ...    stdout=${CURDIR}/tmp/Create-Then-Replace-and-Interrogate-Materialized-View-With-Union-of-Materioalized-Views.tmp
+    ...    stderr=${CURDIR}/tmp/Create-Then-Replace-and-Interrogate-Materialized-View-With-Union-of-Materioalized-Views-stderr.tmp
+
 Create and Interrogate Materialized View With Parenthesized Select and Union
     ${inputStr} =    Catenate
     ...    create materialized view vw_aws_usr as (select Arn, UserName, UserId, region from aws.iam.users where region = 'us-east-1' union all select 'prefixed' || Arn, UserName, 'prefixed' || UserId, region from aws.iam.users where region = 'us-east-1');

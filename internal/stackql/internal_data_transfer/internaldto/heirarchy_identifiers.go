@@ -36,19 +36,22 @@ type HeirarchyIdentifiers interface {
 	IsPgInternalObject() bool
 	IsPhysicalTable() bool
 	SetIsPhysicalTable(isPhysical bool)
+	SetIsMaterializedView(isMaterialized bool)
+	IsMaterializedView() bool
 }
 
 type standardHeirarchyIdentifiers struct {
-	providerStr       string
-	serviceStr        string
-	resourceStr       string
-	responseSchemaStr string
-	methodStr         string
-	viewDTO           RelationDTO
-	subqueryDTO       SubqueryDTO
-	viewAST           sqlparser.Statement
-	containsDBMSTable bool
-	isPhysicalTable   bool
+	providerStr        string
+	serviceStr         string
+	resourceStr        string
+	responseSchemaStr  string
+	methodStr          string
+	viewDTO            RelationDTO
+	subqueryDTO        SubqueryDTO
+	viewAST            sqlparser.Statement
+	containsDBMSTable  bool
+	isPhysicalTable    bool
+	isMaterializedView bool
 }
 
 func (hi *standardHeirarchyIdentifiers) IsPhysicalTable() bool {
@@ -57,6 +60,14 @@ func (hi *standardHeirarchyIdentifiers) IsPhysicalTable() bool {
 
 func (hi *standardHeirarchyIdentifiers) SetIsPhysicalTable(isPhysical bool) {
 	hi.isPhysicalTable = isPhysical
+}
+
+func (hi *standardHeirarchyIdentifiers) IsMaterializedView() bool {
+	return hi.isMaterializedView
+}
+
+func (hi *standardHeirarchyIdentifiers) SetIsMaterializedView(isMaterialized bool) {
+	hi.isMaterializedView = isMaterialized
 }
 
 func (hi *standardHeirarchyIdentifiers) IsPgInternalObject() bool {

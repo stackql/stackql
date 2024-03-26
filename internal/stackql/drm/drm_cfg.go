@@ -680,18 +680,22 @@ func (dc *staticDRMConfig) generateControlVarArgs(
 func (dc *staticDRMConfig) generateVarArgs(
 	cp PreparedStatementParameterized,
 	isInsert bool,
+	controlCount int,
 ) (PreparedStatementArgs, error) {
 	retVal := NewPreparedStatementArgs(cp.GetCtx().GetQuery())
 	for i, child := range cp.GetChildren() {
-		chidRv, err := dc.generateVarArgs(child, isInsert)
+		chidRv, err := dc.generateVarArgs(child, isInsert, child.GetCtx().GetCtrlColumnRepeats())
 		if err != nil {
 			return retVal, err
 		}
 		retVal.SetChild(i, chidRv)
 	}
 	varArgs, _ := dc.generateControlVarArgs(cp, isInsert)
+	if controlCount == 0 {
+		varArgs = []interface{}{}
+	}
 	psArgs := cp.GetArgs()
-	if len(psArgs) > 0 {
+	if len(psArgs) > 0 && cp.GetCtx().GetCtrlColumnRepeats() > 0 {
 		for _, col := range cp.GetCtx().GetNonControlColumns() {
 			va, ok := psArgs[col.GetName()]
 			if !ok {
@@ -737,7 +741,10 @@ func (dc *staticDRMConfig) ExecuteInsertDML(
 		ctx,
 		payload,
 		true,
-	).WithRequestEncoding(requestEncoding), true)
+	).WithRequestEncoding(requestEncoding),
+		true,
+		ctx.GetCtrlColumnRepeats(),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -763,7 +770,7 @@ func (dc *staticDRMConfig) prepareCtx(ctxParameterized PreparedStatementParamete
 	if ctxParameterized.GetCtx() == nil {
 		return nil, fmt.Errorf("cannot execute based upon nil PreparedStatementContext")
 	}
-	rootArgs, err := dc.generateVarArgs(ctxParameterized, false)
+	rootArgs, err := dc.generateVarArgs(ctxParameterized, false, ctxParameterized.GetCtx().GetCtrlColumnRepeats())
 	if err != nil {
 		return nil, err
 	}

@@ -247,6 +247,14 @@ func GenerateRewrittenSelectDML(input SQLRewriteInput) (drm.PreparedStatementCtx
 	if err != nil {
 		return nil, err
 	}
+	countedTables := 0
+	for _, tbl := range input.GetTables() {
+		isMaterializedView := tbl.IsMaterializedView()
+		isPhysicalTable := tbl.IsPhysicalTable()
+		if tbl != nil && !isMaterializedView && !isPhysicalTable {
+			countedTables++
+		}
+	}
 	rv := drm.NewPreparedStatementCtx(
 		query,
 		"",
@@ -257,7 +265,7 @@ func GenerateRewrittenSelectDML(input SQLRewriteInput) (drm.PreparedStatementCtx
 		insIDColName,
 		insEncodedColName,
 		columns,
-		len(input.GetTables()),
+		countedTables,
 		txnCtrlCtrs,
 		secondaryCtrlCounters,
 		input.GetDRMConfig().GetNamespaceCollection(),
