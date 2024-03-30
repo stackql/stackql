@@ -967,6 +967,30 @@ Create and Interrogate Materialized View With Parenthesized Select and Union
     ...    stdout=${CURDIR}/tmp/Create-and-Interrogate-Materialized-View-With-Union.tmp
     ...    stderr=${CURDIR}/tmp/Create-and-Interrogate-Materialized-View-With-Union-stderr.tmp
 
+Transparent Defaulted Request Body Returns Expected Result
+    ${inputStr} =    Catenate
+    ...    select ClusterId, VpcId, State from aws.cloudhsm.clusters where region = 'ap-southeast-2';
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-----------------|------------------|---------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}ClusterId${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}VpcId${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}State${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------|------------------|---------------|
+    ...    |${SPACE}cluster-abcdefg${SPACE}|${SPACE}vpc-ZZZZZZZZZZZZ${SPACE}|${SPACE}UNINITIALIZED${SPACE}|
+    ...    |-----------------|------------------|---------------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Transparent-Defaulted-Request-Body-Returns-Expected-Result.tmp
+    ...    stderr=${CURDIR}/tmp/Transparent-Defaulted-Request-Body-Returns-Expected-Result-stderr.tmp
+
+
 Create Changing Dynamic Materialized View Scenario Working
     ${inputStr} =    Catenate
     ...    create materialized view silly_changing_mv as select * from google.compute.firewalls where project = 'changing-project';

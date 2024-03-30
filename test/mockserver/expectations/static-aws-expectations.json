@@ -261,6 +261,54 @@
       "method": "POST",
       "path": "/",
       "headers": {
+        "Authorization": ["^.*SignedHeaders=content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target" : [ "BaldrApiService.DescribeClusters" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+           "Filters": {}
+        },
+        "matchType": "STRICT"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "Clusters": [
+            {
+              "BackupPolicy": "DEFAULT",
+              "BackupRetentionPolicy": {
+                "Type": "DAYS",
+                "Value": "90"
+              },
+              "Certificates": {},
+              "ClusterId": "cluster-abcdefg",
+              "CreateTimestamp": 1711840000.000,
+              "HsmType": "hsm1.medium",
+              "Hsms": [],
+              "Mode": "FIPS",
+              "SecurityGroup": "sg-XXXXXXXXXXX",
+              "State": "UNINITIALIZED",
+              "SubnetMapping": {
+                "ap-southeast-2a": "subnet-XXXXXXXXXX",
+                "ap-southeast-2b": "subnet-YYYYYYYYYY"
+              },
+              "TagList": [],
+              "VpcId": "vpc-ZZZZZZZZZZZZ"
+            }
+        ]
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
         "Authorization": ["^.*SignedHeaders=content-encoding;content-type;host;x-amz-date;x-amz-target.*$" ],
         "X-Amz-Target": [ "Logs_20140328.GetLogEvents" ]
       },

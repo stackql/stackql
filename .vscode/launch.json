@@ -131,6 +131,8 @@
         "create materialized view org_celeb_contributors as select login, contributions FROM github.repos.contributors WHERE owner = 'stackql' AND repo = 'any-sdk' UNION ALL select login, contributions FROM github.repos.contributors WHERE owner = 'stackql' AND repo = 'stackql' UNION ALL select login, contributions FROM github.repos.contributors WHERE owner = 'stackql' AND repo = 'stackql-provider-registry' ;",
         "SELECT f.url, f.login FROM ( SELECT  clone_url as url, SPLIT_PART(clone_url, '/', -2) as login FROM github.repos.forks WHERE owner = 'stackql' AND repo = 'stackql' ) f LEFT OUTER JOIN github.activity.repo_stargazers s ON s.login = f.login WHERE owner = 'stackql' AND repo = 'stackql' ;",
         "select u1.UserName, u.UserId, u.Arn, u1.region from ( select Arn, UserName, UserId from aws.iam.users where region = 'us-east-1' ) u inner join aws.iam.users u1 on u1.Arn = u.Arn where region = 'us-east-1'  order by u1.UserName desc;",
+        "show resources in aws.cloudhsm;",
+        "select * from aws.cloudhsm.clusters where region = 'ap-southeast-2' and data__Filters = '{\"states\": [\"UNINITIALIZED\"]}' ;",
       ],
       "default": "show providers;"
     },
