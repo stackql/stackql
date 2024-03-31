@@ -309,6 +309,69 @@
       "method": "POST",
       "path": "/",
       "headers": {
+        "Authorization": ["^.*SignedHeaders=content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target" : [ "BaldrApiService.DescribeBackups" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+           "Filters": {}
+        },
+        "matchType": "STRICT"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "Backups": [ 
+          { 
+            "BackupId": "bkp-000001",
+            "BackupState": "READY",
+            "ClusterId": "cluster-abcdefg",
+            "CopyTimestamp": 1711841000.000,
+            "CreateTimestamp": 1711840000.000,
+            "DeleteTimestamp": 1711840000.000,
+            "NeverExpires": false,
+            "SourceBackup": "",
+            "SourceCluster": "cluster-abcdefg",
+            "SourceRegion": "ap-southeast-2",
+            "TagList": [ 
+                { 
+                  "Key": "name",
+                  "Value": "backup-01"
+                }
+            ]
+          },
+          { 
+            "BackupId": "bkp-000002",
+            "BackupState": "READY",
+            "ClusterId": "cluster-abcdefg",
+            "CopyTimestamp": 1711841000.000,
+            "CreateTimestamp": 1711840000.000,
+            "DeleteTimestamp": 1711840000.000,
+            "NeverExpires": false,
+            "SourceBackup": "bkp-000001",
+            "SourceCluster": "cluster-abcdefg",
+            "SourceRegion": "ap-southeast-2",
+            "TagList": [ 
+                { 
+                  "Key": "name",
+                  "Value": "backup-02"
+                }
+            ]
+          }
+      ]
+    }
+  }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
         "Authorization": ["^.*SignedHeaders=content-encoding;content-type;host;x-amz-date;x-amz-target.*$" ],
         "X-Amz-Target": [ "Logs_20140328.GetLogEvents" ]
       },
