@@ -11,6 +11,15 @@ providerServices:
       $ref: aws/v0.1.0/services/cloud_control.yaml
     title: Cloud Control API
     version: v0.1.0
+  cloudhsm:
+    description: cloud_hsm
+    id: cloud_hsm:v2.0.0
+    name: cloudhsm
+    preferred: true
+    service:
+      $ref: aws/v0.1.0/services/cloudhsm.yaml
+    title: Cloud HSM API
+    version: v2.0.0
   cloud_watch:
     description: cloud_watch
     id: cloud_watch:v0.1.0
