@@ -990,6 +990,30 @@ Transparent Defaulted Request Body Returns Expected Result
     ...    stdout=${CURDIR}/tmp/Transparent-Defaulted-Request-Body-Returns-Expected-Result.tmp
     ...    stderr=${CURDIR}/tmp/Transparent-Defaulted-Request-Body-Returns-Expected-Result-stderr.tmp
 
+Transparent Placeholder URL and Defaulted Request Body Returns Expected Result
+    ${inputStr} =    Catenate
+    ...    select BackupId, BackupState from aws.cloudhsm.backups where region = 'ap-southeast-2' order by BackupId;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |------------|-------------|
+    ...    |${SPACE}${SPACE}BackupId${SPACE}${SPACE}|${SPACE}BackupState${SPACE}|
+    ...    |------------|-------------|
+    ...    |${SPACE}bkp-000001${SPACE}|${SPACE}READY${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------|-------------|
+    ...    |${SPACE}bkp-000002${SPACE}|${SPACE}READY${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------|-------------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Transparent-Placeholder-URL-and-Defaulted-Request-Body-Returns-Expected-Result.tmp
+    ...    stderr=${CURDIR}/tmp/Transparent-Placeholder-URL-and-Defaulted-Request-Body-Returns-Expected-Result-stderr.tmp
 
 Create Changing Dynamic Materialized View Scenario Working
     ${inputStr} =    Catenate
