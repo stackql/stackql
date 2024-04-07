@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strings"
 	"time"
 
@@ -30,6 +31,7 @@ func newSQLiteSystem(
 	sqlCfg dto.SQLBackendCfg, //nolint:unparam,revive // future proof
 	authCfg map[string]*dto.AuthCtx,
 	typCfg typing.Config,
+	exportNamepsace string,
 ) (SQLSystem, error) {
 	rv := &sqLiteSystem{
 		defaultGolangKind:            reflect.String,
@@ -40,6 +42,7 @@ func newSQLiteSystem(
 		sqlEngine:                    sqlEngine,
 		formatter:                    formatter,
 		authCfg:                      authCfg,
+		exportNamespace:              exportNamepsace,
 	}
 	err := rv.initSQLiteEngine()
 	return rv, err
@@ -54,6 +57,7 @@ type sqLiteSystem struct {
 	defaultRelationalType        string
 	defaultGolangKind            reflect.Kind
 	authCfg                      map[string]*dto.AuthCtx
+	exportNamespace              string
 }
 
 func (eng *sqLiteSystem) initSQLiteEngine() error {
@@ -614,14 +618,15 @@ func (eng *sqLiteSystem) CreateMaterializedView(
 }
 
 //nolint:errcheck,revive,staticcheck // TODO: establish pattern
-func (eng *sqLiteSystem) RefreshMaterializedView(viewName string,
+func (eng *sqLiteSystem) RefreshMaterializedView(naiveViewName string,
 	colz []typing.RelationalColumn,
 	selectQuery string,
 	varargs ...any) error {
+	fullyQualifiedRelationName := eng.getFullyQualifiedRelationName(naiveViewName)
 	//nolint:gosec // no viable alternative
 	deleteQuery := fmt.Sprintf(`
 		DELETE FROM "%s"`,
-		viewName,
+		fullyQualifiedRelationName,
 	)
 	txn, err := eng.sqlEngine.GetTx()
 	if err != nil {
@@ -633,14 +638,14 @@ func (eng *sqLiteSystem) RefreshMaterializedView(viewName string,
 		return err
 	}
 	// TODO: check colz against DTO
-	relationDTO, relationDTOok := eng.getMaterializedViewByName(viewName, txn)
+	relationDTO, relationDTOok := eng.getMaterializedViewByName(naiveViewName, txn)
 	if !relationDTOok {
 		if len(relationDTO.GetColumns()) == 0 {
 		}
 		// no need to rollbak; assumed already done
-		return fmt.Errorf("cannot refresh materialized view = '%s': not found", viewName)
+		return fmt.Errorf("cannot refresh materialized view = '%s': not found", naiveViewName)
 	}
-	insertQuery := eng.generateTableInsertDMLFromViewSelect(viewName, selectQuery, colz)
+	insertQuery := eng.generateTableInsertDMLFromViewSelect(fullyQualifiedRelationName, selectQuery, colz)
 	_, err = txn.Exec(insertQuery, varargs...)
 	if err != nil {
 		txn.Rollback()
@@ -651,7 +656,7 @@ func (eng *sqLiteSystem) RefreshMaterializedView(viewName string,
 }
 
 //nolint:errcheck,revive,staticcheck // TODO: establish pattern
-func (eng *sqLiteSystem) InsertIntoPhysicalTable(tableName string,
+func (eng *sqLiteSystem) InsertIntoPhysicalTable(naiveTableName string,
 	columnsString string,
 	selectQuery string,
 	varargs ...any) error {
@@ -659,16 +664,17 @@ func (eng *sqLiteSystem) InsertIntoPhysicalTable(tableName string,
 	if err != nil {
 		return err
 	}
+	fullyQualifiedRelationName := eng.getFullyQualifiedRelationName(naiveTableName)
 	// TODO: check colz against supplied columns
-	relationDTO, relationDTOok := eng.getTableByName(tableName, txn)
+	relationDTO, relationDTOok := eng.getTableByName(fullyQualifiedRelationName, txn)
 	if !relationDTOok {
 		if len(relationDTO.GetColumns()) == 0 {
 		}
 		// no need to rollbak; assumed already done
-		return fmt.Errorf("cannot refresh materialized view = '%s': not found", tableName)
+		return fmt.Errorf("cannot refresh materialized view = '%s': not found", fullyQualifiedRelationName)
 	}
 	//nolint:gosec // no viable alternative
-	insertQuery := fmt.Sprintf("INSERT INTO \"%s\" %s %s", tableName, columnsString, selectQuery)
+	insertQuery := fmt.Sprintf("INSERT INTO %s %s %s", fullyQualifiedRelationName, columnsString, selectQuery)
 	_, err = txn.Exec(insertQuery, varargs...)
 	if err != nil {
 		txn.Rollback()
@@ -679,7 +685,8 @@ func (eng *sqLiteSystem) InsertIntoPhysicalTable(tableName string,
 }
 
 //nolint:errcheck // TODO: establish pattern
-func (eng *sqLiteSystem) DropMaterializedView(viewName string) error {
+func (eng *sqLiteSystem) DropMaterializedView(naiveViewName string) error {
+	fullyQualifiedRelationName := eng.getFullyQualifiedRelationName(naiveViewName)
 	dropRefQuery := `
 	DELETE FROM "__iql__.materialized_views"
 	WHERE view_name = ?
@@ -693,17 +700,17 @@ func (eng *sqLiteSystem) DropMaterializedView(viewName string) error {
 	`
 	dropTableQuery := fmt.Sprintf(`
 	DROP TABLE IF EXISTS "%s"
-	`, viewName)
+	`, fullyQualifiedRelationName)
 	tx, err := eng.sqlEngine.GetTx()
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(dropRefQuery, viewName)
+	_, err = tx.Exec(dropRefQuery, fullyQualifiedRelationName)
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
-	_, err = tx.Exec(dropColsQuery, viewName)
+	_, err = tx.Exec(dropColsQuery, fullyQualifiedRelationName)
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -728,8 +735,17 @@ func (eng *sqLiteSystem) GetMaterializedViewByName(viewName string) (internaldto
 	return rv, ok
 }
 
+func (eng *sqLiteSystem) IsRelationExported(relationName string) bool {
+	if eng.exportNamespace == "" {
+		return false
+	}
+	matches, _ := regexp.MatchString(fmt.Sprintf(`^%s.*$`, eng.exportNamespace), relationName)
+	return matches
+}
+
 //nolint:errcheck // TODO: establish pattern
-func (eng *sqLiteSystem) getMaterializedViewByName(viewName string, txn *sql.Tx) (internaldto.RelationDTO, bool) {
+func (eng *sqLiteSystem) getMaterializedViewByName(naiveViewName string, txn *sql.Tx) (internaldto.RelationDTO, bool) {
+	fullyQualifiedRelationName := eng.getFullyQualifiedRelationName(naiveViewName)
 	q := `SELECT view_ddl FROM "__iql__.materialized_views" WHERE view_name = ? and deleted_dttm IS NULL`
 	colQuery := `
 	SELECT
@@ -748,7 +764,7 @@ func (eng *sqLiteSystem) getMaterializedViewByName(viewName string, txn *sql.Tx)
 	// if txnErr != nil {
 	// 	return nil, false
 	// }
-	row := txn.QueryRow(q, viewName)
+	row := txn.QueryRow(q, fullyQualifiedRelationName)
 	if row == nil {
 		txn.Rollback()
 		return nil, false
@@ -759,8 +775,8 @@ func (eng *sqLiteSystem) getMaterializedViewByName(viewName string, txn *sql.Tx)
 		txn.Rollback()
 		return nil, false
 	}
-	rv := internaldto.NewMaterializedViewDTO(viewName, viewDDL)
-	rows, err := txn.Query(colQuery, viewName)
+	rv := internaldto.NewMaterializedViewDTO(fullyQualifiedRelationName, viewDDL, eng.exportNamespace)
+	rows, err := txn.Query(colQuery, fullyQualifiedRelationName)
 	if err != nil || rows == nil || rows.Err() != nil {
 		txn.Rollback()
 		return nil, false
@@ -809,9 +825,10 @@ func (eng *sqLiteSystem) GetPhysicalTableByName(
 //
 //nolint:errcheck // TODO: establish pattern
 func (eng *sqLiteSystem) getTableByName(
-	viewName string,
+	naiveTableName string,
 	txn *sql.Tx,
 ) (internaldto.RelationDTO, bool) {
+	fullyQualifiedTableName := eng.getFullyQualifiedRelationName(naiveTableName)
 	q := `SELECT table_ddl FROM "__iql__.tables" WHERE table_name = ? and deleted_dttm IS NULL`
 	colQuery := `
 	SELECT
@@ -826,7 +843,7 @@ func (eng *sqLiteSystem) getTableByName(
 	  table_name = ?
 	ORDER BY ordinal_position ASC
 	`
-	row := txn.QueryRow(q, viewName)
+	row := txn.QueryRow(q, fullyQualifiedTableName)
 	if row == nil {
 		txn.Rollback()
 		return nil, false
@@ -837,8 +854,8 @@ func (eng *sqLiteSystem) getTableByName(
 		txn.Rollback()
 		return nil, false
 	}
-	rv := internaldto.NewPhysicalTableDTO(viewName, viewDDL)
-	rows, err := txn.Query(colQuery, viewName)
+	rv := internaldto.NewPhysicalTableDTO(fullyQualifiedTableName, viewDDL, eng.exportNamespace)
+	rows, err := txn.Query(colQuery, fullyQualifiedTableName)
 	if err != nil || rows == nil || rows.Err() != nil {
 		txn.Rollback()
 		return nil, false
@@ -872,20 +889,21 @@ func (eng *sqLiteSystem) getTableByName(
 }
 
 // TODO: implement temp table drop
-func (eng *sqLiteSystem) DropPhysicalTable(tableName string,
+func (eng *sqLiteSystem) DropPhysicalTable(naiveTableName string,
 	ifExists bool,
 ) error {
+	fullyQualifiedTableName := eng.getFullyQualifiedRelationName(naiveTableName)
 	dropRefQuery := `
 	DELETE FROM "__iql__.tables"
 	WHERE table_name = ?
 	`
 	dropTableQuery := fmt.Sprintf(`
 	DROP TABLE "%s"
-	`, tableName)
+	`, fullyQualifiedTableName)
 	if ifExists {
 		dropTableQuery = fmt.Sprintf(`
 		DROP TABLE IF EXISTS "%s"
-		`, tableName)
+		`, fullyQualifiedTableName)
 	}
 	dropColsQuery := `
 	DELETE
@@ -898,7 +916,7 @@ func (eng *sqLiteSystem) DropPhysicalTable(tableName string,
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(dropRefQuery, tableName)
+	_, err = tx.Exec(dropRefQuery, fullyQualifiedTableName)
 	if err != nil {
 		//nolint:errcheck // TODO: merge variadic error(s) into one
 		tx.Rollback()
@@ -910,7 +928,7 @@ func (eng *sqLiteSystem) DropPhysicalTable(tableName string,
 		tx.Rollback()
 		return err
 	}
-	_, err = tx.Exec(dropColsQuery, tableName)
+	_, err = tx.Exec(dropColsQuery, fullyQualifiedTableName)
 	if err != nil {
 		//nolint:errcheck // TODO: merge variadic error(s) into one
 		tx.Rollback()
@@ -918,6 +936,17 @@ func (eng *sqLiteSystem) DropPhysicalTable(tableName string,
 	}
 	commitErr := tx.Commit()
 	return commitErr
+}
+
+func (eng *sqLiteSystem) GetFullyQualifiedRelationName(tableName string) string {
+	return eng.getFullyQualifiedRelationName(tableName)
+}
+
+func (eng *sqLiteSystem) getFullyQualifiedRelationName(tableName string) string {
+	if eng.exportNamespace == "" {
+		return tableName
+	}
+	return fmt.Sprintf(`"%s.%s"`, eng.exportNamespace, tableName)
 }
 
 // TODO: implement temp table creation
@@ -1434,7 +1463,7 @@ func (eng *sqLiteSystem) generateTableDDL(
 	colz []typing.RelationalColumn,
 ) string {
 	sb := strings.Builder{}
-	sb.WriteString(fmt.Sprintf(`CREATE TABLE "%s" ( `, relationName))
+	sb.WriteString(fmt.Sprintf(`CREATE TABLE %s ( `, relationName))
 	var colzString []string
 	for _, col := range colz {
 		colzString = append(colzString, fmt.Sprintf(`"%s" %s`, col.GetName(), col.GetType()))
@@ -1450,7 +1479,7 @@ func (eng *sqLiteSystem) generateTableInsertDMLFromViewSelect(
 	colz []typing.RelationalColumn,
 ) string {
 	sb := strings.Builder{}
-	sb.WriteString(fmt.Sprintf(`INSERT INTO "%s" ( `, relationName))
+	sb.WriteString(fmt.Sprintf(`INSERT INTO %s ( `, relationName))
 	var colzString []string
 	for _, col := range colz {
 		colzString = append(colzString, fmt.Sprintf(`"%s"`, col.GetName()))

@@ -46,6 +46,7 @@ const (
 	ApplicationFilesRootPathKey     string = "approot"
 	ApplicationFilesRootPathModeKey string = "approotfilemode"
 	PgSrvAddressKey                 string = "pgsrv.address"
+	ExportAliasKey                  string = "export.alias"
 	PgSrvLogLevelKey                string = "pgsrv.loglevel"
 	PgSrvPortKey                    string = "pgsrv.port"
 	PgSrvRawTLSCfgKey               string = "pgsrv.tls"

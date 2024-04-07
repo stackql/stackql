@@ -18,6 +18,7 @@ type RelationDTO interface {
 	GetName() string
 	IsMaterialized() bool
 	IsTable() bool
+	GetNamespace() string
 	GetColumns() []typing.RelationalColumn
 	SetColumns(columns []typing.RelationalColumn)
 }
@@ -34,6 +35,10 @@ func (v *standardViewDTO) GetRawQuery() string {
 
 func (v *standardViewDTO) GetName() string {
 	return v.viewName
+}
+
+func (v *standardViewDTO) GetNamespace() string {
+	return ""
 }
 
 func (v *standardViewDTO) IsMaterialized() bool {

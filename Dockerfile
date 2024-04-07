@@ -68,6 +68,7 @@ RUN apt-get update \
       maven \
       openssl \
       postgresql-client \
+      sqlite3 \
     && pip3 install PyYaml robotframework psycopg2-binary "psycopg[binary]" sqlalchemy \
     && mvn \
         org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy \

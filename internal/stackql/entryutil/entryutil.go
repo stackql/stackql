@@ -67,7 +67,7 @@ func BuildInputBundle(runtimeCtx dto.RuntimeCtx) (bundle.Bundle, error) {
 		namespaces.GetAnalyticsCacheTableNamespaceConfigurator().GetLikeString(),
 		controlAttributes,
 		sqlCfg,
-		ac, typCfg)
+		ac, typCfg, runtimeCtx.ExportAlias)
 	if err != nil {
 		return nil, err
 	}

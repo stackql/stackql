@@ -819,13 +819,17 @@ func isCreatePhysicalTable(ddl *sqlparser.DDL) bool {
 	}
 }
 
-func RenderDDLStmt(ddl *sqlparser.DDL) string {
-	return renderDDLStmt(ddl)
+func RenderDDLTableSpecStmt(ddl *sqlparser.DDL) (string, error) {
+	return renderDDLTableSpecStmt(ddl)
 }
 
-func renderDDLStmt(ddl *sqlparser.DDL) string {
+func renderDDLTableSpecStmt(ddl *sqlparser.DDL) (string, error) {
+	if ddl == nil || ddl.TableSpec == nil {
+		return "", fmt.Errorf("cannot render DDL table spec for ddl = '%v'", ddl)
+	}
 	return strings.ReplaceAll(
-		astformat.String(ddl, astformat.DefaultSelectExprsFormatter), `"`, "")
+			astformat.String(ddl.TableSpec, astformat.DefaultSelectExprsFormatter), `"`, ""),
+		nil
 }
 
 func RenderDDLSelectStmt(ddl *sqlparser.DDL) string {

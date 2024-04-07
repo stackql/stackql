@@ -1,4 +1,4 @@
-//nolint:dupl // TODO: refactor
+//nolint:dupl,nolintlint // TODO: refactor
 package internaldto
 
 import (
@@ -9,16 +9,18 @@ var (
 	_ RelationDTO = &standardMaterializedViewDTO{}
 )
 
-func NewMaterializedViewDTO(viewName, rawViewQuery string) RelationDTO {
+func NewMaterializedViewDTO(viewName, rawViewQuery, namespace string) RelationDTO {
 	return &standardMaterializedViewDTO{
 		viewName:     viewName,
 		rawViewQuery: rawViewQuery,
+		namespace:    namespace,
 	}
 }
 
 type standardMaterializedViewDTO struct {
 	rawViewQuery string
 	viewName     string
+	namespace    string
 	columns      []typing.RelationalColumn
 }
 
@@ -32,6 +34,10 @@ func (v *standardMaterializedViewDTO) GetName() string {
 
 func (v *standardMaterializedViewDTO) IsMaterialized() bool {
 	return true
+}
+
+func (v *standardMaterializedViewDTO) GetNamespace() string {
+	return v.namespace
 }
 
 func (v *standardMaterializedViewDTO) IsTable() bool {

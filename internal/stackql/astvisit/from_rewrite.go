@@ -2,11 +2,13 @@ package astvisit
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/astformat"
 	"github.com/stackql/stackql/internal/stackql/astindirect"
+	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
@@ -670,10 +672,16 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 					v.rewrittenQuery = templateString
 					v.indirectContexts = append(v.indirectContexts, indirect.GetSelectContext())
 				case astindirect.MaterializedViewType, astindirect.PhysicalTableType:
-					refString := fmt.Sprintf(` "%s" `, name)
+					refString := fmt.Sprintf(` %s `, name)
+					isQuoted, _ := regexp.MatchString(`^".*"$`, name)
+					isPostgres := v.sqlSystem.GetName() == constants.SQLDialectPostgres
+					isRelationExported := v.sqlSystem.IsRelationExported(name)
+					if !isQuoted && !(isPostgres && isRelationExported) {
+						refString = fmt.Sprintf(` "%s" `, name)
+					}
 					alias := ""
 					if alias != "" {
-						refString = fmt.Sprintf(` "%s" AS "%s" `, name, alias)
+						refString = fmt.Sprintf(` %s AS "%s" `, refString, alias)
 					}
 					v.rewrittenQuery = refString
 				default:

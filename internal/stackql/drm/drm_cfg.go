@@ -81,8 +81,9 @@ type Config interface {
 		relationName string,
 		ctxParameterized PreparedStatementParameterized,
 	) error
+	// This one the DDL is ahead of time so table name already aware; it is the exception
 	CreatePhysicalTable(
-		relationName string,
+		fullyQualifiedRelationName string,
 		rawDDL string,
 		tableSpec *sqlparser.TableSpec,
 		ifNotExists bool,
@@ -92,6 +93,7 @@ type Config interface {
 		insertColumnsString string,
 		ctxParameterized PreparedStatementParameterized,
 	) error
+	GetFullyQualifiedRelationName(string) string
 }
 
 type staticDRMConfig struct {
@@ -111,6 +113,10 @@ func (dc *staticDRMConfig) GetTable(
 	discoveryID int,
 ) (internaldto.DBTable, error) {
 	return dc.sqlSystem.GetTable(hids, discoveryID)
+}
+
+func (dc *staticDRMConfig) GetFullyQualifiedRelationName(relationName string) string {
+	return dc.sqlSystem.GetFullyQualifiedRelationName(relationName)
 }
 
 func (dc *staticDRMConfig) OpenapiColumnsToRelationalColumns(

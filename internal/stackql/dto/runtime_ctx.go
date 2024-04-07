@@ -37,6 +37,7 @@ type RuntimeCtx struct {
 	PGSrvLogLevel                string
 	PGSrvPort                    int
 	PGSrvRawTLSCfg               string
+	ExportAlias                  string
 	ProviderStr                  string
 	RegistryRaw                  string
 	SessionCtxRaw                string
@@ -158,6 +159,8 @@ func (rc *RuntimeCtx) Set(key string, val string) error {
 		rc.PGSrvAddress = val
 	case PgSrvLogLevelKey:
 		rc.PGSrvLogLevel = val
+	case ExportAliasKey:
+		rc.ExportAlias = val
 	case PgSrvPortKey:
 		retVal = setInt(&rc.PGSrvPort, val)
 	case PgSrvRawTLSCfgKey:

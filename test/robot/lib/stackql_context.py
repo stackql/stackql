@@ -376,12 +376,21 @@ def get_analytics_db_init_path(sql_backend_str :str) -> str:
   return os.path.abspath(os.path.join(REPOSITORY_ROOT, "test", "db", sql_dialect,  "cache_setup.sql"))
 
 
+def get_sqlite_export_db_path(execution_env :str) -> str:
+  if execution_env == 'native':
+    return os.path.abspath(os.path.join(REPOSITORY_ROOT, "test", "db", "tmp",  "export_testing.sqlite"))
+  if execution_env == 'docker':
+    return get_unix_path(os.path.join('/opt', 'stackql', "test", "export_testing.sqlite"))
+
+
 ANALYTICS_DB_INIT_PATH_DOCKER :str = get_unix_path(os.path.join('/opt', 'stackql', "db", "cache_setup.sql"))
 
 def get_analytics_db_init_path_unix(sql_backend_str :str) ->str:
   return get_unix_path(get_analytics_db_init_path(sql_backend_str))
 
 _SQL_BACKEND_POSTGRES_DOCKER_DSN :str = 'postgres://stackql:stackql@postgres_stackql:5432/stackql'
+
+_SQL_BACKEND_POSTGRES_PUBLISHED_DOCKER_DSN :str = 'postgres://stackql:stackql@127.0.0.1:5532/stackql'
 
 
 def get_analytics_sql_backend(execution_env :str, sql_backend_str :str) -> str:
@@ -401,6 +410,25 @@ def get_canonical_sql_backend(execution_env :str, sql_backend_str :str) -> str:
       return f'{{ "dbEngine": "postgres_tcp", "dsn": "{_SQL_BACKEND_POSTGRES_DOCKER_DSN}", "sqlDialect": "postgres", "schemata": {{ "tableSchema": "{_PG_SCHEMA_PHYSICAL_TABLES}", "intelViewSchema": "{_PG_SCHEMA_INTEL}", "opsViewSchema": "stackql_ops" }} }}'.replace(' ', '')
     return '{}'
 
+
+def get_export_sql_backend(execution_env :str, sql_backend_str :str) -> str:
+  sqlite_file_path = get_sqlite_export_db_path(execution_env)
+  if execution_env == 'native':
+    return f'{{ "dsn": "file:{sqlite_file_path}" }} }}'
+  if execution_env == 'docker':
+    if sql_backend_str == 'postgres_tcp':
+      # same as always
+      return f'{{ "dbEngine": "postgres_tcp", "dsn": "{_SQL_BACKEND_POSTGRES_DOCKER_DSN}", "sqlDialect": "postgres", "schemata": {{ "tableSchema": "{_PG_SCHEMA_PHYSICAL_TABLES}", "intelViewSchema": "{_PG_SCHEMA_INTEL}", "opsViewSchema": "stackql_ops" }} }}'.replace(' ', '')
+    return f'{{ "dsn":  "file:{sqlite_file_path}" }}'
+
+def get_export_sql_connection_arg(execution_env :str, sql_backend_str :str) -> str:
+  sqlite_file_path = get_sqlite_export_db_path(execution_env)
+  if execution_env == 'native':
+    return sqlite_file_path
+  if execution_env == 'docker':
+    if sql_backend_str == 'postgres_tcp':
+      return _SQL_BACKEND_POSTGRES_PUBLISHED_DOCKER_DSN
+    return os.path.abspath(os.path.join(REPOSITORY_ROOT, "cicd", "vol", "stackql", "test",  "export_testing.sqlite"))
 
 with open(os.path.join(REPOSITORY_ROOT, 'test', 'server', 'mtls', 'credentials', 'pg_client_cert.pem'), 'rb') as f:
   _CLIENT_CERT_ENCODED :str = base64.b64encode(f.read()).decode('utf-8')
@@ -517,14 +545,17 @@ JSON_INIT_FILE_PATH_REGISTRY = os.path.join(REPOSITORY_ROOT, 'test', 'mockserver
 PG_SRV_PORT_MTLS = 5476
 PG_SRV_PORT_MTLS_WITH_NAMESPACES = 5486
 PG_SRV_PORT_MTLS_WITH_EAGER_GC = 5496
+PG_SRV_PORT_MTLS_EXPORT = 5497
 PG_SRV_PORT_UNENCRYPTED = 5477
 
 PG_SRV_PORT_DOCKER_MTLS = 5576
 PG_SRV_PORT_DOCKER_MTLS_WITH_NAMESPACES = 5586
 PG_SRV_PORT_DOCKER_MTLS_WITH_EAGER_GC = 5596
+PG_SRV_PORT_DOCKER_MTLS_EXPORT = 5597
 PG_SRV_PORT_DOCKER_UNENCRYPTED = 5577
 
 PSQL_EXE :str = os.environ.get('PSQL_EXE', 'psql')
+SQLITE_EXE :str = os.environ.get('SQLITE_EXE', 'sqlite3')
 
 PSQL_CLIENT_HOST :str = "127.0.0.1"
 
@@ -533,6 +564,8 @@ CREATE_DISKS_VIEW_PRIMARY_ALIAS = "create view cross_cloud_disks_aliased as sele
 
 PSQL_MTLS_CONN_STR :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH} sslkey={STACKQL_PG_CLIENT_KEY_PATH} sslrootcert={STACKQL_PG_SERVER_CERT_PATH} dbname=mydatabase"
 PSQL_MTLS_CONN_STR_UNIX :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH_UNIX} sslkey={STACKQL_PG_CLIENT_KEY_PATH_UNIX} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_UNIX} dbname=mydatabase"
+
+PSQL_MTLS_CONN_STR_EXPORT_UNIX :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS_EXPORT} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH_UNIX} sslkey={STACKQL_PG_CLIENT_KEY_PATH_UNIX} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_UNIX} dbname=mydatabase"
 
 PSQL_MTLS_DISABLE_CONN_STR :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=disable sslcert={STACKQL_PG_CLIENT_CERT_PATH} sslkey={STACKQL_PG_CLIENT_KEY_PATH} sslrootcert={STACKQL_PG_SERVER_CERT_PATH} dbname=mydatabase"
 PSQL_MTLS_DISABLE_CONN_STR_UNIX :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=disable sslcert={STACKQL_PG_CLIENT_CERT_PATH_UNIX} sslkey={STACKQL_PG_CLIENT_KEY_PATH_UNIX} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_UNIX} dbname=mydatabase"
@@ -550,6 +583,7 @@ PSQL_UNENCRYPTED_CONN_STR :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_UNE
 POSTGRES_URL_UNENCRYPTED_CONN :str = f"postgresql://myuser:mypass@{PSQL_CLIENT_HOST}:{PG_SRV_PORT_UNENCRYPTED}/mydatabase"
 
 PSQL_MTLS_CONN_STR_DOCKER :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH_DOCKER} sslkey={STACKQL_PG_CLIENT_KEY_PATH_DOCKER} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_DOCKER} dbname=mydatabase"
+PSQL_MTLS_CONN_STR_EXPORT_DOCKER :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS_EXPORT} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH_DOCKER} sslkey={STACKQL_PG_CLIENT_KEY_PATH_DOCKER} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_DOCKER} dbname=mydatabase"
 PSQL_MTLS_CONN_STR_WITH_NAMESPACES_DOCKER :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS_WITH_NAMESPACES} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH_DOCKER} sslkey={STACKQL_PG_CLIENT_KEY_PATH_DOCKER} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_DOCKER} dbname=mydatabase"
 PSQL_MTLS_CONN_STR_WITH_EAGER_GC_DOCKER :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS_WITH_EAGER_GC} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH_DOCKER} sslkey={STACKQL_PG_CLIENT_KEY_PATH_DOCKER} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_DOCKER} dbname=mydatabase"
 PSQL_MTLS_INVALID_CONN_STR_DOCKER :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=verify-full sslcert={STACKQL_PG_RUBBISH_CERT_PATH_DOCKER} sslkey={STACKQL_PG_RUBBISH_KEY_PATH_DOCKER} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_DOCKER} dbname=mydatabase"
@@ -848,10 +882,14 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'PG_SRV_PORT_MTLS':                               PG_SRV_PORT_MTLS,
     'PG_SRV_PORT_MTLS_WITH_EAGER_GC':                 PG_SRV_PORT_MTLS_WITH_EAGER_GC,
     'PG_SRV_PORT_MTLS_WITH_NAMESPACES':               PG_SRV_PORT_MTLS_WITH_NAMESPACES,
+    'PG_SRV_PORT_DOCKER_MTLS_EXPORT':                 PG_SRV_PORT_DOCKER_MTLS_EXPORT,
+    'PG_SRV_PORT_MTLS_EXPORT':                        PG_SRV_PORT_MTLS_EXPORT,
     'PG_SRV_PORT_UNENCRYPTED':                        PG_SRV_PORT_UNENCRYPTED,
     'POSTGRES_URL_UNENCRYPTED_CONN':                  POSTGRES_URL_UNENCRYPTED_CONN,
     'PSQL_CLIENT_HOST':                               PSQL_CLIENT_HOST,
     'PSQL_EXE':                                       PSQL_EXE,
+    'SQLITE_EXE':                                     SQLITE_EXE,
+    'EXPORT_SQLITE_FILE_PATH':                        get_sqlite_export_db_path(execution_env),
     'REGISTRY_ROOT_CANONICAL':                        _REGISTRY_CANONICAL,
     'REGISTRY_ROOT_DEPRECATED':                       _REGISTRY_DEPRECATED,
     'REGISTRY_CANONICAL_CFG_STR':                     _REGISTRY_CANONICAL,
@@ -863,6 +901,8 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'REPOSITORY_ROOT':                                REPOSITORY_ROOT,
     'SQL_BACKEND_CFG_STR_ANALYTICS':                  get_analytics_sql_backend(execution_env, sql_backend_str),
     'SQL_BACKEND_CFG_STR_CANONICAL':                  get_canonical_sql_backend(execution_env, sql_backend_str),
+    'SQL_CLIENT_EXPORT_BACKEND':                      get_export_sql_backend(execution_env, sql_backend_str),
+    'SQL_CLIENT_EXPORT_CONNECTION_ARG':               get_export_sql_connection_arg(execution_env, sql_backend_str),
     'STACKQL_EXE':                                    STACKQL_EXE,
     'SUMOLOGIC_SECRET_STR':                           SUMOLOGIC_SECRET_STR,
     ## queries and expectations
@@ -1049,6 +1089,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     rv['JSONNET_PLUS_ENV_VARS_VAR_FILE']                = _JSONNET_PLUS_ENV_VARS_VAR_FILE_DOCKER
     rv['PSQL_CLIENT_HOST']                              = PSQL_CLIENT_HOST
     rv['PG_SRV_PORT_MTLS']                              = PG_SRV_PORT_MTLS
+    rv['PG_SRV_PORT_MTLS_EXPORT']                       = PG_SRV_PORT_MTLS_EXPORT
     rv['STACKQL_PG_CLIENT_CERT_PATH']                   = STACKQL_PG_CLIENT_CERT_PATH_DOCKER
     rv['STACKQL_PG_CLIENT_KEY_PATH']                    = STACKQL_PG_CLIENT_KEY_PATH_DOCKER
     rv['STACKQL_PG_SERVER_CERT_PATH']                   = STACKQL_PG_SERVER_CERT_PATH_DOCKER
@@ -1057,6 +1098,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     rv['PSQL_MTLS_CONN_STR']                            = PSQL_MTLS_CONN_STR_DOCKER
     rv['PSQL_MTLS_DISABLE_CONN_STR']                    = PSQL_MTLS_DISABLE_CONN_STR_DOCKER
     rv['PSQL_MTLS_CONN_STR_UNIX']                       = PSQL_MTLS_CONN_STR_DOCKER
+    rv['PSQL_MTLS_CONN_STR_EXPORT_UNIX']                = PSQL_MTLS_CONN_STR_EXPORT_DOCKER
     rv['PSQL_MTLS_DISABLE_CONN_STR_UNIX']               = PSQL_MTLS_DISABLE_CONN_STR_DOCKER
     rv['PSQL_MTLS_CONN_STR_UNIX_WITH_EAGER_GC']         = PSQL_MTLS_CONN_STR_WITH_EAGER_GC_DOCKER
     rv['PSQL_MTLS_CONN_STR_UNIX_WITH_NAMESPACES']       = PSQL_MTLS_CONN_STR_WITH_NAMESPACES_DOCKER
@@ -1083,6 +1125,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     rv['JSON_INIT_FILE_PATH_SUMOLOGIC']                 = JSON_INIT_FILE_PATH_SUMOLOGIC
     rv['PSQL_CLIENT_HOST']                              = PSQL_CLIENT_HOST
     rv['PG_SRV_PORT_MTLS']                              = PG_SRV_PORT_MTLS
+    rv['PG_SRV_PORT_MTLS_EXPORT']                       = PG_SRV_PORT_MTLS_EXPORT
     rv['STACKQL_PG_CLIENT_CERT_PATH']                   = STACKQL_PG_CLIENT_CERT_PATH
     rv['STACKQL_PG_CLIENT_KEY_PATH']                    = STACKQL_PG_CLIENT_KEY_PATH
     rv['STACKQL_PG_SERVER_CERT_PATH']                   = STACKQL_PG_SERVER_CERT_PATH
@@ -1091,6 +1134,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     rv['PSQL_MTLS_CONN_STR']                            = PSQL_MTLS_CONN_STR
     rv['PSQL_MTLS_DISABLE_CONN_STR']                    = PSQL_MTLS_DISABLE_CONN_STR
     rv['PSQL_MTLS_CONN_STR_UNIX']                       = PSQL_MTLS_CONN_STR_UNIX
+    rv['PSQL_MTLS_CONN_STR_EXPORT_UNIX']                = PSQL_MTLS_CONN_STR_EXPORT_UNIX
     rv['PSQL_MTLS_DISABLE_CONN_STR_UNIX']               = PSQL_MTLS_DISABLE_CONN_STR_UNIX
     rv['PSQL_MTLS_CONN_STR_UNIX_WITH_EAGER_GC']         = PSQL_MTLS_CONN_STR_UNIX_WITH_EAGER_GC
     rv['PSQL_MTLS_CONN_STR_UNIX_WITH_NAMESPACES']       = PSQL_MTLS_CONN_STR_UNIX_WITH_NAMESPACES
