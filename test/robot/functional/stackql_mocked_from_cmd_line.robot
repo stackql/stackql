@@ -1015,6 +1015,33 @@ Transparent Placeholder URL and Defaulted Request Body Returns Expected Result
     ...    stdout=${CURDIR}/tmp/Transparent-Placeholder-URL-and-Defaulted-Request-Body-Returns-Expected-Result.tmp
     ...    stderr=${CURDIR}/tmp/Transparent-Placeholder-URL-and-Defaulted-Request-Body-Returns-Expected-Result-stderr.tmp
 
+Response Body Printed by Default on Error
+    ${inputStr} =    Catenate
+    ...    select BackupId, BackupState from aws.cloudhsm.backups where region = 'rubbish-region' order by BackupId;
+    ${outputErrStr} =    Catenate    SEPARATOR=\n
+    ...    http${SPACE}error${SPACE}response${SPACE}body:${SPACE}{
+    ...    ${SPACE}${SPACE}"error"${SPACE}:${SPACE}{
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"message"${SPACE}:${SPACE}"What${SPACE}a${SPACE}horrible${SPACE}request${SPACE}body,${SPACE}I${SPACE}hate${SPACE}it!!!",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"customStuff"${SPACE}:${SPACE}{
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"what"${SPACE}:${SPACE}"this${SPACE}is${SPACE}some${SPACE}implementation${SPACE}specific${SPACE}info;${SPACE}might${SPACE}mean${SPACE}something${SPACE}to${SPACE}a${SPACE}developer"
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}}
+    ...    ${SPACE}${SPACE}}
+    ...    }
+    ...    unknown${SPACE}key${SPACE}Backups
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${EMPTY}
+    ...    ${outputErrStr}
+    ...    stdout=${CURDIR}/tmp/Response-Body-Printed-by-Default-on-Error.tmp
+    ...    stderr=${CURDIR}/tmp/Response-Body-Printed-by-Default-on-Error-stderr.tmp
+
 Create Changing Dynamic Materialized View Scenario Working
     ${inputStr} =    Catenate
     ...    create materialized view silly_changing_mv as select * from google.compute.firewalls where project = 'changing-project';
@@ -1376,6 +1403,10 @@ Transaction Abort Attempted Commit Digitalocean Insert Droplet
     ...    '["env:prod", "web"]' ;
     ...    commit;
     ${nativeOutputStr} =    Catenate    SEPARATOR=\n
+    ...    http${SPACE}error${SPACE}response${SPACE}body:${SPACE}{
+    ...    ${SPACE}${SPACE}"id"${SPACE}:${SPACE}"server_error",
+    ...    ${SPACE}${SPACE}"message"${SPACE}:${SPACE}"Unexpected${SPACE}server-side${SPACE}error"
+    ...    }
     ...    OK
     ...    mutating statement queued
     ...    mutating statement queued

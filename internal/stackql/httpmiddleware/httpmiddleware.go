@@ -29,7 +29,24 @@ func getAuthenticatedClient(handlerCtx handler.HandlerContext, prov provider.IPr
 	return httpClient, nil
 }
 
-//nolint:gocognit // acceptable
+//nolint:nestif,gomnd // acceptable for now
+func parseReponseBodyIfErroneous(response *http.Response) (string, error) {
+	if response != nil {
+		if response.StatusCode >= 300 {
+			if response.Body != nil {
+				bodyBytes, bErr := io.ReadAll(response.Body)
+				if bErr != nil {
+					return "", bErr
+				}
+				rv := string(bodyBytes)
+				response.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+				return rv, nil
+			}
+		}
+	}
+	return "", nil
+}
+
 func HTTPApiCallFromRequest(
 	handlerCtx handler.HandlerContext,
 	prov provider.IProvider,
@@ -74,25 +91,16 @@ func HTTPApiCallFromRequest(
 	walObj, _ := handlerCtx.GetTSM()
 	logging.GetLogger().Debugf("Proof of invariant: walObj = %v", walObj)
 	r, err := httpClient.Do(translatedRequest)
-	if handlerCtx.GetRuntimeContext().HTTPLogEnabled { //nolint:nestif // acceptable
-		if r != nil {
-			//nolint:errcheck // output stream
-			handlerCtx.GetOutErrFile().Write([]byte(fmt.Sprintf("http response status: %s\n", r.Status)))
-			if r.StatusCode >= 300 || handlerCtx.GetRuntimeContext().VerboseFlag {
-				if r.Body != nil {
-					bodyBytes, bErr := io.ReadAll(r.Body)
-					if bErr != nil {
-						return nil, bErr
-					}
-					//nolint:errcheck // output stream
-					handlerCtx.GetOutErrFile().Write([]byte(fmt.Sprintf("http error response body: %s\n", string(bodyBytes))))
-					r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-				}
-			}
-		} else {
-			//nolint:errcheck // output stream
-			handlerCtx.GetOutErrFile().Write([]byte("http response came buck null\n"))
-		}
+	responseErrorBodyToPublish, reponseParseErr := parseReponseBodyIfErroneous(r)
+	if reponseParseErr != nil {
+		return nil, reponseParseErr
+	}
+	if responseErrorBodyToPublish != "" {
+		//nolint:errcheck // output stream
+		handlerCtx.GetOutErrFile().Write([]byte(fmt.Sprintf("http error response body: %s\n", responseErrorBodyToPublish)))
+	} else if handlerCtx.GetRuntimeContext().HTTPLogEnabled {
+		//nolint:errcheck // output stream
+		handlerCtx.GetOutErrFile().Write([]byte("http response came buck null\n"))
 	}
 	if err != nil {
 		if handlerCtx.GetRuntimeContext().HTTPLogEnabled {
