@@ -3,6 +3,7 @@
 - All contributions to `stackql`, through any means, are subject to the [license](/LICENSE). 
 - This document itself and the patterns specified herein, are heavily influenced by [redis](https://github.com/redis/redis). We profusely thank the maintainers of same, from which we draw inspiration.
 - For useful information contributors **may** want to consider in developing `stackql`, please see [the developer guide](/docs/developer_guide.md).
+- All contributions to `stackql` and actions related, through any means, are subject to the [CODE OF CONDUCT](/CODE_OF_CONDUCT.md). 
 
 # Contribution flow
 
