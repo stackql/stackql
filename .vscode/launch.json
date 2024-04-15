@@ -254,6 +254,16 @@
     },
     {
       "type": "pickString",
+      "id": "exportAliasString",
+      "description": "export namespace",
+      "default": "{}",
+      "options": [
+        "",
+        "stackql_export"
+      ]
+    },
+    {
+      "type": "pickString",
       "id": "pgsrvTlsString",
       "description": "pgsrv.tls config",
       // you will need to fill in the gaps here
@@ -323,6 +333,7 @@
         "--namespaces=${input:namespaceString}",
         "--dbInternal=${input:dbInternalString}",
         "--execution.concurrency.limit=${input:concurrencyLimit}",
+        "--export.alias=${input:exportAliasString}",
         "${input:queryString}"
       ],
     },

@@ -128,6 +128,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.HTTPProxyPassword, dto.HTTPProxyPasswordKey, "", "http proxy password")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.HTTPProxyUser, dto.HTTPProxyUserKey, "", "http proxy user")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.ProviderStr, dto.ProviderStrKey, "", "stackql provider")
+	rootCmd.PersistentFlags().StringVar(&runtimeCtx.ExportAlias, dto.ExportAliasKey, "", "export alias prefix (namespace or schema)")
 	rootCmd.PersistentFlags().BoolVar(&runtimeCtx.WorkOffline, dto.WorkOfflineKey, false, "Work offline, using cached data")
 	rootCmd.PersistentFlags().BoolVarP(&runtimeCtx.VerboseFlag, dto.VerboseFlagKey, "v", false, "Verbose flag")
 	rootCmd.PersistentFlags().BoolVar(&runtimeCtx.DryRunFlag, dto.DryRunFlagKey, false, "dryrun flag; preprocessor only will run and output returned")

@@ -1,0 +1,81 @@
+version: "3.9"
+   
+services:
+  stackqlsrv:
+    image: stackql/stackql
+    build:
+      context: .
+      cache_from: 
+        - stackql/stackql
+        - stackql/integration
+        - stackql/stackqlsrvcertificates
+      args:
+        - BUILDMAJORVERSION=${BUILDMAJORVERSION:-1}
+        - BUILDMINORVERSION=${BUILDMINORVERSION:-1}
+        - BUILDPATCHVERSION=${BUILDPATCHVERSION:-1}
+    command: 
+      - bash
+      - -c
+      - 'stackql 
+         --auth=''{ 
+           "google": { "credentialsfilepath": "/opt/stackql/credentials/dummy/google/functional-test-dummy-sa-key.json", "type": "service_account" }, 
+           "okta": { "credentialsenvvar": "OKTA_SECRET_KEY", "type": "api_key" }, 
+           "github": { "type": "basic", "credentialsenvvar": "GITHUB_CREDS" }, 
+           "aws": { "type": "aws_signing_v4", "credentialsfilepath": "/opt/stackql/credentials/dummy/aws/functional-test-dummy-aws-key.txt", "keyID": "some-key-not-a-secret" }, 
+           "k8s": { "credentialsenvvar": "K8S_TOKEN", "type": "api_key", "valuePrefix": "Bearer " } 
+         }'' 
+         --registry=''{
+           "url": "https://cdn.statically.io/gh/stackql/stackql-provider-registry/dev/providers",
+           "verifyConfig": { "nopVerify": true }
+         }'' 
+         --pgsrv.tls=''{ 
+           "keyFilePath": "/opt/stackql/srv/credentials/pg_server_key.pem", 
+           "certFilePath": "/opt/stackql/srv/credentials/pg_server_cert.pem", 
+           "clientCAs": [ 
+             "''$$(base64 -w 0 /opt/stackql/srv/credentials/pg_client_cert.pem)''" 
+           ] 
+         }'' 
+         --pgsrv.address=0.0.0.0 
+         --pgsrv.port=${PG_SRV_PORT_MTLS:-5476} 
+         srv'
+    volumes:
+      - ./cicd/keys:/opt/stackql/keys:ro
+      - ./cicd/vol/srv/credentials:/opt/stackql/srv/credentials:ro
+      - ./test/assets/credentials/dummy:/opt/stackql/credentials/dummy:ro
+      - ./test/assets/input:/opt/stackql/input:ro
+      - ${DB_SETUP_SRC:-./test/db/sqlite}:/opt/stackql/db:ro
+      - ${REGISTRY_SRC:-./test/registry-mocked}:/opt/stackql/registry:ro
+      - ./cicd/vol/stackql/config:/opt/stackql/.stackql:rw 
+      - ./cicd/vol/stackql/test:/opt/stackql/test:rw 
+      - ./cicd/vol/logs:/opt/stackql/logs:rw 
+    ports:
+      - "${PG_SRV_PORT_DOCKER_MTLS:-5576}:${PG_SRV_PORT_MTLS:-5476}/tcp"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - OKTA_SECRET_KEY=${OKTA_SECRET_STR:-some-junk}
+      - GITHUB_SECRET_KEY=${GITHUB_SECRET_STR:-some-junk}
+      - K8S_SECRET_KEY=${K8S_SECRET_STR:-some-junk}
+      - AZ_ACCESS_TOKEN=${AZ_ACCESS_TOKEN:-some_junk}
+      - SUMO_CREDS=${SUMO_CREDS:-some_junk}
+      - DIGITALOCEAN_TOKEN=${DIGITALOCEAN_TOKEN:-some_junk}
+      - DUMMY_DIGITALOCEAN_USERNAME=${DUMMY_DIGITALOCEAN_USERNAME:-myusername}
+      - DUMMY_DIGITALOCEAN_PASSWORD=${DUMMY_DIGITALOCEAN_PASSWORD:-mypassword}
+      - DD_API_KEY=${DD_API_KEY:-myusername}
+      - DD_APPLICATION_KEY=${DD_APPLICATION_KEY:-mypassword}
+      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS:-/opt/stackql/credentials/dummy/google/docker-functional-test-dummy-sa-key.json}
+      - BUILDMAJORVERSION=${BUILDMAJORVERSION:-1}
+      - BUILDMINORVERSION=${BUILDMINORVERSION:-1}
+      - BUILDPATCHVERSION=${BUILDPATCHVERSION:-1}
+    depends_on:
+      - postgres_stackql
+  postgres_stackql:
+    image: postgres:14.5-bullseye
+    hostname: postgres_stackql
+    volumes:
+      - ./cicd/vol/postgres/setup:/docker-entrypoint-initdb.d:ro
+      - ./cicd/vol/postgres/persist:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=stackql
+    ports:
+      - "5532:5432/tcp"

@@ -46,6 +46,7 @@ services:
       - ${DB_SETUP_SRC:-./test/db/sqlite}:/opt/stackql/db:ro
       - ${REGISTRY_SRC:-./test/registry-mocked}:/opt/stackql/registry:ro
       - ./cicd/vol/stackql/config:/opt/stackql/.stackql:rw 
+      - ./cicd/vol/stackql/test:/opt/stackql/test:rw 
       - ./cicd/vol/logs:/opt/stackql/logs:rw 
     ports:
       - "${PG_SRV_PORT_DOCKER_MTLS:-5576}:${PG_SRV_PORT_MTLS:-5476}/tcp"

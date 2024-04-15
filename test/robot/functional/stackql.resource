@@ -62,6 +62,7 @@ Prepare StackQL Environment
     Start StackQL PG Server mTLS    ${PG_SRV_PORT_MTLS_WITH_NAMESPACES}    ${PG_SRV_MTLS_CFG_STR}    ${NAMESPACES_TTL_SPECIALCASE_TRANSPARENT}    {}    ${SQL_BACKEND_CFG_STR_CANONICAL}    ${PG_SRV_PORT_DOCKER_MTLS_WITH_NAMESPACES}
     Start StackQL PG Server mTLS    ${PG_SRV_PORT_MTLS_WITH_EAGER_GC}    ${PG_SRV_MTLS_CFG_STR}    {}    ${GC_CFG_EAGER}    ${SQL_BACKEND_CFG_STR_CANONICAL}    ${PG_SRV_PORT_DOCKER_MTLS_WITH_EAGER_GC}
     Start StackQL PG Server unencrypted    ${PG_SRV_PORT_UNENCRYPTED}    {}    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    Start StackQL PG Server mTLS Expose Backing DB    ${PG_SRV_PORT_MTLS_EXPORT}    ${PG_SRV_MTLS_CFG_STR}    {}    {}    ${SQL_BACKEND_CFG_STR_CANONICAL}    ${PG_SRV_PORT_DOCKER_MTLS_EXPORT}
     Start Postgres External Source If Viable
     Sleep    50s
 
@@ -99,6 +100,39 @@ Start StackQL PG Server mTLS
                         ...  bash
                         ...  \-c
                         ...  sleep 2 && stackql srv \-\-execution\.concurrency\.limit\=${CONCURRENCY_LIMIT} \-\-registry\='${REGISTRY_NO_VERIFY_CFG_STR.get_config_str('docker')}' \-\-auth\='${AUTH_CFG_STR}' \-\-namespaces\='${_NAMESPACES_CFG}' \-\-gc\='${_GC_CFG}' \-\-sqlBackend\='${_SQL_BACKEND_CFG}' \-\-dbInternal\='${DB_INTERNAL_CFG_LAX}' \-\-tls\.allowInsecure\=true \-\-pgsrv\.address\='0.0.0.0' \-\-pgsrv\.port\=${_DOCKER_PORT} \-\-pgsrv\.tls\='{\"keyFilePath\": \"/opt/stackql/srv/credentials/pg_server_key.pem\", \"certFilePath\": \"/opt/stackql/srv/credentials/pg_server_cert.pem\", \"clientCAs\": [\"'$(base64 -w 0 /opt/stackql/srv/credentials/pg_client_cert.pem)'\"]}'
+                        ...  stderr=${CURDIR}/tmp/stdout-stackql-srv-mtls-${_SRV_PORT_MTLS}.txt
+                        ...  stdout=${CURDIR}/tmp/stderr-stackql-srv-mtls-${_SRV_PORT_MTLS}.txt
+    END
+    [Return]    ${process}
+
+Start StackQL PG Server mTLS Expose Backing DB
+    [Arguments]    ${_SRV_PORT_MTLS}    ${_MTLS_CFG_STR}    ${_NAMESPACES_CFG}    ${_GC_CFG}    ${_SQL_BACKEND_CFG}    ${_DOCKER_PORT}
+    IF    "${EXECUTION_PLATFORM}" == "native"
+        ${process} =    Start Process    ${STACKQL_EXE}
+                        ...  srv    \-\-registry\=${REGISTRY_NO_VERIFY_CFG_STR.get_config_str('native')}
+                        ...  \-\-auth\=${AUTH_CFG_STR}
+                        ...  \-\-tls\.allowInsecure\=true
+                        ...  \-\-pgsrv\.address\=0.0.0.0 
+                        ...  \-\-pgsrv\.port\=${_SRV_PORT_MTLS} 
+                        ...  \-\-pgsrv\.tls    ${_MTLS_CFG_STR}
+                        ...  \-\-namespaces\=${_NAMESPACES_CFG}
+                        ...  \-\-gc\=${_GC_CFG}
+                        ...  \-\-execution\.concurrency\.limit\=${CONCURRENCY_LIMIT}
+                        ...  \-\-sqlBackend\=${_SQL_BACKEND_CFG}
+                        ...  \-\-dbInternal\=${DB_INTERNAL_CFG_LAX}
+                        ...  \-\-export.alias\=stackql_export
+                        ...  stderr=${CURDIR}/tmp/stdout-stackql-srv-mtls-${_SRV_PORT_MTLS}.txt
+                        ...  stdout=${CURDIR}/tmp/stderr-stackql-srv-mtls-${_SRV_PORT_MTLS}.txt
+    ELSE IF    "${EXECUTION_PLATFORM}" == "docker"
+        ${process} =    Start Process    docker    compose
+                        ...  \-p     stackqlpgsrv\-mtls\-${_DOCKER_PORT}
+                        ...  \-f    ./docker\-compose\-persist\-postgres.yml
+                        ...  run
+                        ...  \-\-rm    \-p${_SRV_PORT_MTLS}:${_DOCKER_PORT}/tcp
+                        ...  stackqlsrv
+                        ...  bash
+                        ...  \-c
+                        ...  sleep 2 && stackql srv \-\-execution\.concurrency\.limit\=${CONCURRENCY_LIMIT} \-\-registry\='${REGISTRY_NO_VERIFY_CFG_STR.get_config_str('docker')}' \-\-auth\='${AUTH_CFG_STR}' \-\-namespaces\='${_NAMESPACES_CFG}' \-\-gc\='${_GC_CFG}' \-\-sqlBackend\='${_SQL_BACKEND_CFG}' \-\-export.alias\='stackql_export' \-\-dbInternal\='${DB_INTERNAL_CFG_LAX}' \-\-tls\.allowInsecure\=true \-\-pgsrv\.address\='0.0.0.0' \-\-pgsrv\.port\=${_DOCKER_PORT} \-\-pgsrv\.tls\='{\"keyFilePath\": \"/opt/stackql/srv/credentials/pg_server_key.pem\", \"certFilePath\": \"/opt/stackql/srv/credentials/pg_server_cert.pem\", \"clientCAs\": [\"'$(base64 -w 0 /opt/stackql/srv/credentials/pg_client_cert.pem)'\"]}'
                         ...  stderr=${CURDIR}/tmp/stdout-stackql-srv-mtls-${_SRV_PORT_MTLS}.txt
                         ...  stdout=${CURDIR}/tmp/stderr-stackql-srv-mtls-${_SRV_PORT_MTLS}.txt
     END

@@ -36,11 +36,13 @@ func (ddo *ddl) Build() error {
 	if sqlSystem == nil {
 		return fmt.Errorf("cannot proceed DDL execution with nil ddl object")
 	}
-	unionEx := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+	ddlEx := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 		actionLowered := strings.ToLower(parserDDLObj.Action)
+		drmCfg := ddo.handlerCtx.GetDrmConfig()
 		switch actionLowered {
 		case "create":
-			tableName := strings.Trim(astformat.String(parserDDLObj.Table, sqlSystem.GetASTFormatter()), `"`)
+			unqualifiedTableName := strings.Trim(astformat.String(parserDDLObj.Table, sqlSystem.GetASTFormatter()), `"`)
+			fullyQualifiedTableName := drmCfg.GetFullyQualifiedRelationName(unqualifiedTableName)
 			isTable := parserutil.IsCreatePhysicalTable(parserDDLObj)
 			isTempTable := parserutil.IsCreateTemporaryPhysicalTable(parserDDLObj)
 			isMaterializedView := parserutil.IsCreateMaterializedView(parserDDLObj)
@@ -49,10 +51,15 @@ func (ddo *ddl) Build() error {
 				if isTempTable {
 					return internaldto.NewErroneousExecutorOutput(fmt.Errorf("create temp table is not supported"))
 				}
-				drmCfg := ddo.handlerCtx.GetDrmConfig()
+				ddlSringTransformed, ddlTransformErr := parserutil.RenderDDLTableSpecStmt(parserDDLObj)
+				if ddlTransformErr != nil {
+					return internaldto.NewErroneousExecutorOutput(ddlTransformErr)
+				}
+				ddlRaw := fmt.Sprintf(`CREATE %s TABLE %s %s`,
+					parserDDLObj.Modifier, fullyQualifiedTableName, ddlSringTransformed)
 				createTableErr := drmCfg.CreatePhysicalTable(
-					tableName,
-					parserutil.RenderDDLStmt(parserDDLObj),
+					fullyQualifiedTableName,
+					ddlRaw,
 					parserDDLObj.TableSpec,
 					parserDDLObj.IfNotExists,
 				)
@@ -65,18 +72,17 @@ func (ddo *ddl) Build() error {
 				if !indirectExists {
 					return internaldto.NewErroneousExecutorOutput(fmt.Errorf("cannot find indirect object for materialized view"))
 				}
-				drmCfg := ddo.handlerCtx.GetDrmConfig()
 
 				selStr := parserutil.RenderDDLSelectStmt(ddo.ddlObject)
-				rawDDL := fmt.Sprintf(`CREATE MATERIALIZED VIEW "%s" AS %s`, tableName, selStr)
+				rawDDL := fmt.Sprintf(`CREATE MATERIALIZED VIEW %s AS %s`, fullyQualifiedTableName, selStr)
 				if ddo.ddlObject.OrReplace {
 					//nolint:errcheck // Drop if exists... not atomic but shall work in most cases.
-					sqlSystem.DropMaterializedView(tableName)
-					rawDDL = fmt.Sprintf(`CREATE OR REPLACE MATERIALIZED VIEW "%s" AS %s`, tableName, selStr)
+					sqlSystem.DropMaterializedView(fullyQualifiedTableName)
+					rawDDL = fmt.Sprintf(`CREATE OR REPLACE MATERIALIZED VIEW "%s" AS %s`, fullyQualifiedTableName, selStr)
 				}
 				selCtx := indirect.GetSelectContext()
 				materializedViewCreateError := drmCfg.CreateMaterializedView(
-					tableName,
+					fullyQualifiedTableName,
 					rawDDL,
 					drm.NewPreparedStatementParameterized(selCtx, nil, true),
 					ddo.ddlObject.OrReplace,
@@ -86,7 +92,7 @@ func (ddo *ddl) Build() error {
 				}
 			} else {
 				relationDDL := parserutil.RenderDDLSelectStmt(parserDDLObj)
-				err := sqlSystem.CreateView(tableName, relationDDL, parserDDLObj.OrReplace)
+				err := sqlSystem.CreateView(unqualifiedTableName, relationDDL, parserDDLObj.OrReplace)
 				if err != nil {
 					return internaldto.NewErroneousExecutorOutput(err)
 				}
@@ -130,7 +136,7 @@ func (ddo *ddl) Build() error {
 		)
 	}
 	graph := ddo.graph
-	ddlGraphNode := graph.CreatePrimitiveNode(primitive.NewLocalPrimitive(unionEx))
+	ddlGraphNode := graph.CreatePrimitiveNode(primitive.NewLocalPrimitive(ddlEx))
 
 	ddo.root = ddlGraphNode
 	ddo.tail = ddlGraphNode

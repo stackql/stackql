@@ -1,4 +1,4 @@
-//nolint:dupl // TODO: refactor
+//nolint:dupl,nolintlint // TODO: refactor
 package internaldto
 
 import (
@@ -9,16 +9,18 @@ var (
 	_ RelationDTO = &standardPhysicalTableDTO{}
 )
 
-func NewPhysicalTableDTO(viewName, rawViewQuery string) RelationDTO {
+func NewPhysicalTableDTO(viewName, rawViewQuery, namespace string) RelationDTO {
 	return &standardPhysicalTableDTO{
 		viewName:     viewName,
 		rawViewQuery: rawViewQuery,
+		namespace:    namespace,
 	}
 }
 
 type standardPhysicalTableDTO struct {
 	rawViewQuery string
 	viewName     string
+	namespace    string
 	columns      []typing.RelationalColumn
 }
 
@@ -28,6 +30,10 @@ func (v *standardPhysicalTableDTO) GetRawQuery() string {
 
 func (v *standardPhysicalTableDTO) GetName() string {
 	return v.viewName
+}
+
+func (v *standardPhysicalTableDTO) GetNamespace() string {
+	return v.namespace
 }
 
 func (v *standardPhysicalTableDTO) IsMaterialized() bool {
