@@ -28,6 +28,7 @@ ARG BUILDSHORTCOMMITSHA="1"
 ARG BUILDDATE="1"
 ARG PLANCACHEENABLED="1"
 ARG BUILDPLATFORM="1"
+ARG RUN_INTEGRATION_TESTS="1"
 
 ENV BUILDMAJORVERSION=${BUILDMAJORVERSION}
 ENV BUILDMINORVERSION=${BUILDMINORVERSION}
@@ -59,6 +60,8 @@ FROM python:3.11-bullseye AS utility
 
 ARG TEST_ROOT_DIR=/opt/test/stackql
 
+ARG RUN_INTEGRATION_TESTS
+
 ENV TEST_ROOT_DIR=${TEST_ROOT_DIR}
 
 RUN apt-get update \
@@ -79,6 +82,8 @@ FROM utility AS certificates
 
 ARG TEST_ROOT_DIR=/opt/test/stackql
 
+ARG RUN_INTEGRATION_TESTS
+
 ENV TEST_ROOT_DIR=${TEST_ROOT_DIR}
 
 RUN mkdir -p ${TEST_ROOT_DIR}
@@ -92,6 +97,8 @@ RUN openssl req -x509 -keyout ${TEST_ROOT_DIR}/test/server/mtls/credentials/pg_s
 FROM python:3.11-bullseye AS registrymock
 
 ARG TEST_ROOT_DIR=/opt/test/stackql
+
+ARG RUN_INTEGRATION_TESTS
 
 ENV TEST_ROOT_DIR=${TEST_ROOT_DIR}
 
@@ -116,6 +123,7 @@ ARG BUILDSHORTCOMMITSHA="1"
 ARG BUILDDATE="1"
 ARG PLANCACHEENABLED="1"
 ARG BUILDPLATFORM="1"
+ARG RUN_INTEGRATION_TESTS
 
 ENV BUILDMAJORVERSION=${BUILDMAJORVERSION}
 ENV BUILDMINORVERSION=${BUILDMINORVERSION}
@@ -132,7 +140,7 @@ COPY --from=registrymock /opt/test/stackql ${TEST_ROOT_DIR}/
 
 COPY --from=builder /work/stackql/build/stackql ${TEST_ROOT_DIR}/build/
 
-RUN  robot ${TEST_ROOT_DIR}/test/robot/functional
+RUN  if [ "${RUN_INTEGRATION_TESTS}" = "1" ]; then robot ${TEST_ROOT_DIR}/test/robot/functional; fi
 
 FROM ubuntu:22.04 AS app
 

@@ -943,6 +943,7 @@ jobs:
           BUILDMAJORVERSION=${{env.BUILDMAJORVERSION}}
           BUILDMINORVERSION=${{env.BUILDMINORVERSION}}
           BUILDPATCHVERSION=${{env.BUILDPATCHVERSION}}
+          RUN_INTEGRATION_TESTS=0
         push: true
         target: app
         tags: stackql/stackql:${{github.sha}},stackql/stackql:v${{env.BUILDMAJORVERSION}}.${{env.BUILDMINORVERSION}}.${{env.BUILDPATCHVERSION}},stackql/stackql:latest
