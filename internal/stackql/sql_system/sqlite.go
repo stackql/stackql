@@ -666,7 +666,7 @@ func (eng *sqLiteSystem) InsertIntoPhysicalTable(naiveTableName string,
 	}
 	fullyQualifiedRelationName := eng.getFullyQualifiedRelationName(naiveTableName)
 	// TODO: check colz against supplied columns
-	relationDTO, relationDTOok := eng.getTableByName(fullyQualifiedRelationName, txn)
+	relationDTO, relationDTOok := eng.getTableByName(naiveTableName, txn)
 	if !relationDTOok {
 		if len(relationDTO.GetColumns()) == 0 {
 		}
@@ -946,7 +946,8 @@ func (eng *sqLiteSystem) getFullyQualifiedRelationName(tableName string) string 
 	if eng.exportNamespace == "" {
 		return tableName
 	}
-	return fmt.Sprintf(`"%s.%s"`, eng.exportNamespace, tableName)
+	strippedTableName := strings.ReplaceAll(tableName, `"`, "")
+	return fmt.Sprintf(`"%s.%s"`, eng.exportNamespace, strippedTableName)
 }
 
 // TODO: implement temp table creation

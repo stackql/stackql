@@ -578,15 +578,19 @@ func (eng *postgresSystem) InsertIntoPhysicalTable(naiveTableName string,
 		return err
 	}
 	// TODO: check colz against supplied columns
-	relationDTO, relationDTOok := eng.getTableByName(fullyQualifiedRelationName, txn)
+	relationDTO, relationDTOok := eng.getTableByName(naiveTableName, txn)
 	if !relationDTOok {
 		if len(relationDTO.GetColumns()) == 0 {
 		}
 		// no need to rollbak; assumed already done
 		return fmt.Errorf("cannot refresh materialized view = '%s': not found", fullyQualifiedRelationName)
 	}
+	// guard against systemic weirdness and trust users not to be weird
+	if naiveTableName == fullyQualifiedRelationName {
+		fullyQualifiedRelationName = fmt.Sprintf(`"%s"`, naiveTableName)
+	}
 	//nolint:gosec // no viable alternative
-	insertQuery := fmt.Sprintf("INSERT INTO \"%s\" %s %s", fullyQualifiedRelationName, columnsString, selectQuery)
+	insertQuery := fmt.Sprintf("INSERT INTO %s %s %s", fullyQualifiedRelationName, columnsString, selectQuery)
 	_, err = txn.Exec(insertQuery, varargs...)
 	if err != nil {
 		txn.Rollback()
