@@ -612,6 +612,7 @@ func (eng *sqLiteSystem) CreateMaterializedView(
 		relationName,
 		colz,
 		rawDDL,
+		replaceAllowed,
 		selectQuery,
 		varargs...,
 	)
@@ -674,7 +675,7 @@ func (eng *sqLiteSystem) InsertIntoPhysicalTable(naiveTableName string,
 		return fmt.Errorf("cannot refresh materialized view = '%s': not found", fullyQualifiedRelationName)
 	}
 	//nolint:gosec // no viable alternative
-	insertQuery := fmt.Sprintf("INSERT INTO %s %s %s", fullyQualifiedRelationName, columnsString, selectQuery)
+	insertQuery := fmt.Sprintf(`INSERT INTO "%s" %s %s`, fullyQualifiedRelationName, columnsString, selectQuery)
 	_, err = txn.Exec(insertQuery, varargs...)
 	if err != nil {
 		txn.Rollback()
@@ -947,7 +948,7 @@ func (eng *sqLiteSystem) getFullyQualifiedRelationName(tableName string) string 
 		return tableName
 	}
 	strippedTableName := strings.ReplaceAll(tableName, `"`, "")
-	return fmt.Sprintf(`"%s.%s"`, eng.exportNamespace, strippedTableName)
+	return fmt.Sprintf(`%s.%s`, eng.exportNamespace, strippedTableName)
 }
 
 // TODO: implement temp table creation
@@ -1464,7 +1465,7 @@ func (eng *sqLiteSystem) generateTableDDL(
 	colz []typing.RelationalColumn,
 ) string {
 	sb := strings.Builder{}
-	sb.WriteString(fmt.Sprintf(`CREATE TABLE %s ( `, relationName))
+	sb.WriteString(fmt.Sprintf(`CREATE TABLE "%s" ( `, relationName))
 	var colzString []string
 	for _, col := range colz {
 		colzString = append(colzString, fmt.Sprintf(`"%s" %s`, col.GetName(), col.GetType()))
@@ -1480,7 +1481,7 @@ func (eng *sqLiteSystem) generateTableInsertDMLFromViewSelect(
 	colz []typing.RelationalColumn,
 ) string {
 	sb := strings.Builder{}
-	sb.WriteString(fmt.Sprintf(`INSERT INTO %s ( `, relationName))
+	sb.WriteString(fmt.Sprintf(`INSERT INTO "%s" ( `, relationName))
 	var colzString []string
 	for _, col := range colz {
 		colzString = append(colzString, fmt.Sprintf(`"%s"`, col.GetName()))
@@ -1491,11 +1492,12 @@ func (eng *sqLiteSystem) generateTableInsertDMLFromViewSelect(
 	return sb.String()
 }
 
-//nolint:errcheck // TODO: establish pattern
+//nolint:errcheck,funlen // TODO: establish pattern
 func (eng *sqLiteSystem) runMaterializedViewCreate(
 	relationName string,
 	colz []typing.RelationalColumn,
 	rawDDL string,
+	replaceAllowed bool,
 	selectQuery string,
 	varargs ...any,
 ) error {
@@ -1522,26 +1524,60 @@ func (eng *sqLiteSystem) runMaterializedViewCreate(
 		?,
 		?
 	  )
-	  ;
 	`
+	if replaceAllowed {
+		columnQuery += `
+		  ON CONFLICT(view_name, column_name)
+		  DO
+		    UPDATE 
+			  SET 
+			    column_type = ?,
+			    ordinal_position = ?,
+			    "oid" = ?,
+			    column_width = ?,
+			    column_precision = ?
+		`
+	}
 	for i, col := range colz {
 		oid, oidExists := col.GetOID()
 		if !oidExists {
 			oid = 25
 		}
-		_, err := txn.Exec(
-			columnQuery,
-			relationName,
-			col.GetName(),
-			col.GetType(),
-			i+1,
-			oid,
-			col.GetWidth(),
-			0, // TODO: implement precision record
-		)
-		if err != nil {
-			txn.Rollback()
-			return err
+		if !replaceAllowed {
+			_, err := txn.Exec(
+				columnQuery,
+				relationName,
+				col.GetName(),
+				col.GetType(),
+				i+1,
+				oid,
+				col.GetWidth(),
+				0, // TODO: implement precision record
+			)
+			if err != nil {
+				txn.Rollback()
+				return err
+			}
+		} else {
+			_, err := txn.Exec(
+				columnQuery,
+				relationName,
+				col.GetName(),
+				col.GetType(),
+				i+1,
+				oid,
+				col.GetWidth(),
+				0, // TODO: implement precision record
+				col.GetType(),
+				i+1,
+				oid,
+				col.GetWidth(),
+				0, // TODO: implement precision record
+			)
+			if err != nil {
+				txn.Rollback()
+				return err
+			}
 		}
 	}
 	tableDDL := eng.generateTableDDL(relationName, colz)
@@ -1583,6 +1619,10 @@ func (eng *sqLiteSystem) runMaterializedViewCreate(
 	}
 	commitErr := txn.Commit()
 	return commitErr
+}
+
+func (eng *sqLiteSystem) DelimitFullyQualifiedRelationName(fqtn string) string {
+	return fmt.Sprintf(`"%s"`, fqtn)
 }
 
 //nolint:errcheck // TODO: establish pattern

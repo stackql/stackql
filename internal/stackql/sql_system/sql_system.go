@@ -118,6 +118,7 @@ type SQLSystem interface {
 	) ([]typing.RelationalColumn, error)
 
 	GetFullyQualifiedRelationName(tableName string) string
+	DelimitFullyQualifiedRelationName(string) string
 	IsRelationExported(relationName string) bool
 }
 

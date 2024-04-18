@@ -517,6 +517,7 @@ func (eng *postgresSystem) CreateMaterializedView(
 		relationName,
 		colz,
 		rawDDL,
+		replaceAllowed,
 		selectQuery,
 		varargs...,
 	)
@@ -613,9 +614,14 @@ func (eng *postgresSystem) DropMaterializedView(naiveViewName string) error {
 	WHERE
 	  view_name = $1
 	`
+	// TODO: clean up this legacy guard
+	delimitedRelationName := fullyQualifiedRelationName
+	if fullyQualifiedRelationName == naiveViewName {
+		delimitedRelationName = fmt.Sprintf(`"%s"`, fullyQualifiedRelationName)
+	}
 	dropTableQuery := fmt.Sprintf(`
-	DROP TABLE IF EXISTS "%s"
-	`, fullyQualifiedRelationName)
+	DROP TABLE IF EXISTS %s
+	`, delimitedRelationName)
 	tx, err := eng.sqlEngine.GetTx()
 	if err != nil {
 		return err
@@ -803,13 +809,18 @@ func (eng *postgresSystem) DropPhysicalTable(naiveTableName string,
 	DELETE FROM "__iql__.tables"
 	WHERE table_name = $1
 	`
+	// TODO: clean up this legacy guard
+	delimitedTableName := fullyQualifiedTableName
+	if fullyQualifiedTableName == naiveTableName {
+		delimitedTableName = fmt.Sprintf(`"%s"`, fullyQualifiedTableName)
+	}
 	dropTableQuery := fmt.Sprintf(`
-	DROP TABLE "%s"
-	`, fullyQualifiedTableName)
+	DROP TABLE %s
+	`, delimitedTableName)
 	if ifExists {
 		dropTableQuery = fmt.Sprintf(`
-		DROP TABLE IF EXISTS "%s"
-		`, fullyQualifiedTableName)
+		DROP TABLE IF EXISTS %s
+		`, delimitedTableName)
 	}
 	dropColsQuery := `
 	DELETE
@@ -861,6 +872,10 @@ func (eng *postgresSystem) CreatePhysicalTable(
 
 func (eng *postgresSystem) GetFullyQualifiedRelationName(tableName string) string {
 	return eng.getFullyQualifiedRelationName(tableName)
+}
+
+func (eng *postgresSystem) DelimitFullyQualifiedRelationName(fqtn string) string {
+	return fqtn
 }
 
 func (eng *postgresSystem) getFullyQualifiedRelationName(tableName string) string {
@@ -1649,11 +1664,12 @@ func (eng *postgresSystem) generateTableInsertDMLFromViewSelect(
 	return sb.String()
 }
 
-//nolint:errcheck // TODO: establish pattern
+//nolint:errcheck,funlen // TODO: establish pattern
 func (eng *postgresSystem) runMaterializedViewCreate(
 	naiveRelationName string,
 	colz []typing.RelationalColumn,
 	rawDDL string,
+	replaceAllowed bool,
 	selectQuery string,
 	varargs ...any,
 ) error {
@@ -1688,8 +1704,20 @@ func (eng *postgresSystem) runMaterializedViewCreate(
 		$6,
 		$7
 	  )
-	  ;
 	`
+	if replaceAllowed {
+		columnQuery += `
+		  ON CONFLICT(view_name, column_name)
+		  DO
+		    UPDATE 
+			  SET 
+			    column_type = $3,
+			    ordinal_position = $4,
+			    "oid" = $5,
+			    column_width = $6,
+			    column_precision = $7
+		`
+	}
 	for i, col := range colz {
 		oid, oidExists := col.GetOID()
 		if !oidExists {

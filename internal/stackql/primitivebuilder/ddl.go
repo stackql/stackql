@@ -56,7 +56,8 @@ func (ddo *ddl) Build() error {
 					return internaldto.NewErroneousExecutorOutput(ddlTransformErr)
 				}
 				ddlRaw := fmt.Sprintf(`CREATE %s TABLE %s %s`,
-					parserDDLObj.Modifier, fullyQualifiedTableName, ddlSringTransformed)
+					parserDDLObj.Modifier,
+					drmCfg.DelimitFullyQualifiedRelationName(fullyQualifiedTableName), ddlSringTransformed)
 				createTableErr := drmCfg.CreatePhysicalTable(
 					fullyQualifiedTableName,
 					ddlRaw,
@@ -74,11 +75,13 @@ func (ddo *ddl) Build() error {
 				}
 
 				selStr := parserutil.RenderDDLSelectStmt(ddo.ddlObject)
-				rawDDL := fmt.Sprintf(`CREATE MATERIALIZED VIEW %s AS %s`, fullyQualifiedTableName, selStr)
+				rawDDL := fmt.Sprintf(`CREATE MATERIALIZED VIEW %s AS %s`,
+					drmCfg.DelimitFullyQualifiedRelationName(fullyQualifiedTableName), selStr)
 				if ddo.ddlObject.OrReplace {
 					//nolint:errcheck // Drop if exists... not atomic but shall work in most cases.
-					sqlSystem.DropMaterializedView(fullyQualifiedTableName)
-					rawDDL = fmt.Sprintf(`CREATE OR REPLACE MATERIALIZED VIEW "%s" AS %s`, fullyQualifiedTableName, selStr)
+					sqlSystem.DropMaterializedView(unqualifiedTableName)
+					rawDDL = fmt.Sprintf(`CREATE OR REPLACE MATERIALIZED VIEW %s AS %s`,
+						drmCfg.DelimitFullyQualifiedRelationName(fullyQualifiedTableName), selStr)
 				}
 				selCtx := indirect.GetSelectContext()
 				materializedViewCreateError := drmCfg.CreateMaterializedView(

@@ -352,7 +352,8 @@
         "--registry=${input:registryString}",
         "--namespaces=${input:namespaceString}",
         "--sqlBackend=${input:sqlBackendString}",
-        "--dbInternal=${input:dbInternalString}"
+        "--dbInternal=${input:dbInternalString}",
+        "--export.alias=${input:exportAliasString}"
       ],
     },
     {
@@ -371,7 +372,8 @@
         "--namespaces=${input:namespaceString}",
         "--sqlBackend=${input:sqlBackendString}",
         "--dbInternal=${input:dbInternalString}",
-        "--pgsrv.tls=${input:pgsrvTlsString}"
+        "--pgsrv.tls=${input:pgsrvTlsString}",
+        "--export.alias=${input:exportAliasString}"
       ],
     },
     {
@@ -389,7 +391,8 @@
         "--registry=${input:registryString}",
         "--namespaces=${input:namespaceString}",
         "--sqlBackend={ \"dbEngine\": \"postgres_tcp\", \"sqlDialect\": \"postgres\", \"dsn\": \"postgres://stackql:stackql@127.0.0.1:7432/stackql\" }",
-        "--dbInternal=${input:dbInternalString}"
+        "--dbInternal=${input:dbInternalString}",
+        "--export.alias=${input:exportAliasString}"
       ],
     },
     {
