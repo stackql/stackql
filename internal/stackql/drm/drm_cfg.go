@@ -94,6 +94,7 @@ type Config interface {
 		ctxParameterized PreparedStatementParameterized,
 	) error
 	GetFullyQualifiedRelationName(string) string
+	DelimitFullyQualifiedRelationName(string) string
 }
 
 type staticDRMConfig struct {
@@ -117,6 +118,10 @@ func (dc *staticDRMConfig) GetTable(
 
 func (dc *staticDRMConfig) GetFullyQualifiedRelationName(relationName string) string {
 	return dc.sqlSystem.GetFullyQualifiedRelationName(relationName)
+}
+
+func (dc *staticDRMConfig) DelimitFullyQualifiedRelationName(fqtn string) string {
+	return dc.sqlSystem.DelimitFullyQualifiedRelationName(fqtn)
 }
 
 func (dc *staticDRMConfig) OpenapiColumnsToRelationalColumns(
