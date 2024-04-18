@@ -227,7 +227,7 @@ Lifecycle Export Materialized View and then Access From RDBMSs
 Lifecycle Export Materialized View and then Access From RDBMSs Over Stackql Postgres Server
     Pass Execution If    "${SQL_BACKEND}" != "postgres_tcp"    TODO: FIX THIS... Engineer a way to do postgres and sqlite export testing in same test case
     ${ddlInputStr} =    Catenate
-    ...    create materialized view nv as select 'junk' as c1, BackupId, BackupState 
+    ...    create or replace materialized view nv as select 'junk' as c1, BackupId, BackupState 
     ...    from aws.cloudhsm.backups where region = 'ap-southeast-2' order by BackupId;
     ${posixInput} =     Catenate
     ...    "${PSQL_EXE}"    -d     "${PSQL_MTLS_CONN_STR_EXPORT_UNIX}"   -c   "${ddlInputStr}"
