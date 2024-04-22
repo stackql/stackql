@@ -365,6 +365,45 @@ AWS Cloud Control Log Group Delete Simple
     ...    ${inputStr}
     ...    The operation was despatched successfully
 
+AWS Transfer Server Delete Simple Exemplifies No Response Body and Non Null Request Body Delete
+    ${inputStr} =    Catenate
+    ...              delete from aws.transfer.servers 
+    ...              where 
+    ...              data__ServerId = 's-0000000001' 
+    ...              and region = 'ap-southeast-2';
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${EMPTY}
+    ...    The operation was despatched successfully
+    ...    stdout=${CURDIR}/tmp/AWS-Transfer-Server-Delete-Simple-Exemplifies-No-Response-Body-and-Non-Null-Request-Body-Delete.tmp
+    ...    stderr=${CURDIR}/tmp/AWS-Transfer-Server-Delete-Simple-Exemplifies-No-Response-Body-and-Non-Null-Request-Body-Delete-stderr.tmp
+
+AWS Transfer Server Insert Simple Exemplifies Empty Request Body Insert
+    ${inputStr} =    Catenate
+    ...              insert into aws.transfer.servers(region)
+    ...              select 'ap-southeast-2';
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${EMPTY}
+    ...    The operation was despatched successfully
+    ...    stdout=${CURDIR}/tmp/AWS-Transfer-Server-Insert-Simple-Exemplifies-Empty-Request-Body-Insert.tmp
+    ...    stderr=${CURDIR}/tmp/AWS-Transfer-Server-Insert-Simple-Exemplifies-Empty-Request-Body-Insert-stderr.tmp
+
+
 AWS Cloud Control Log Group Update Simple
     ${inputStr} =    Catenate
     ...              update aws.cloud_control.resources 

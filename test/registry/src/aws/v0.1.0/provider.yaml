@@ -65,6 +65,15 @@ providerServices:
       $ref: aws/v0.1.0/services/s3.yaml
     title: S3
     version: v0.1.0
+  transfer:
+    description: transfer
+    id: transfer:v0.1.0
+    name: transfer
+    preferred: true
+    service:
+      $ref: aws/v0.1.0/services/transfer.yaml
+    title: Transfer
+    version: v0.1.0
 openapi: 3.0.0
 config:
   auth:

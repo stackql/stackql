@@ -1112,7 +1112,7 @@ func (pb *standardPrimitiveGenerator) inferHeirarchyAndPersist(
 	return err
 }
 
-//nolint:funlen,gocognit // TODO: review
+//nolint:funlen,gocognit,gocyclo,cyclop // TODO: review
 func (pb *standardPrimitiveGenerator) analyzeDelete(
 	pbi planbuilderinput.PlanBuilderInput,
 ) error {
@@ -1207,13 +1207,15 @@ func (pb *standardPrimitiveGenerator) analyzeDelete(
 		if localOk {
 			continue
 		}
-		if responseSchema == nil {
-			return fmt.Errorf("cannot locate parameter '%s'", w)
+		var foundSchemaPrefixed, foundSchema, foundRequestSchema anysdk.Schema
+		if responseSchema != nil {
+			foundSchemaPrefixed = responseSchema.FindByPath(colPrefix+w, nil)
+			foundSchema = responseSchema.FindByPath(w, nil)
 		}
 		logging.GetLogger().Infoln(fmt.Sprintf("w = '%s'", w))
-		foundSchemaPrefixed := responseSchema.FindByPath(colPrefix+w, nil)
-		foundSchema := responseSchema.FindByPath(w, nil)
-		foundRequestSchema := requestSchema.FindByPath(strings.TrimPrefix(w, anysdk.RequestBodyBaseKey), nil)
+		if requestSchema != nil {
+			foundRequestSchema = requestSchema.FindByPath(strings.TrimPrefix(w, anysdk.RequestBodyBaseKey), nil)
+		}
 		if foundSchemaPrefixed == nil && foundSchema == nil && foundRequestSchema == nil {
 			return fmt.Errorf("DELETE Where element = '%s' is NOT present in data returned from provider", w)
 		}

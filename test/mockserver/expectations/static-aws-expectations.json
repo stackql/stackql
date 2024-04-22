@@ -262,6 +262,53 @@
       "path": "/",
       "headers": {
         "Authorization": ["^.*SignedHeaders=content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target" : [ "TransferService.DeleteServer" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+           "ServerId": "s-0000000001"
+        },
+        "matchType": "STRICT"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*SignedHeaders=content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target" : [ "TransferService.CreateServer" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {},
+        "matchType": "STRICT"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "ServerId": "s-0000000001"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*SignedHeaders=content-type;host;x-amz-date;x-amz-target.*$" ],
         "X-Amz-Target" : [ "BaldrApiService.DescribeClusters" ]
       },
       "body": {
