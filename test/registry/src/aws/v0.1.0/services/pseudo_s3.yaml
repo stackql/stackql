@@ -12,7 +12,7 @@ info:
     name: Apache 2.0 License
     url: 'http://www.apache.org/licenses/'
   x-providerName: amazonaws.com
-  x-serviceName: pseudo_s3
+  x-serviceName: cloudcontrolapi
 externalDocs:
   description: Amazon Web Services documentation
   url: 'https://docs.aws.amazon.com/cloudcontrolapi/'
@@ -382,7 +382,7 @@ components:
             default: |
               {
                 "TypeName": "AWS::S3::Bucket",
-                "DesiredState": "{ \"Properties\": { \"BucketName\": \"my-bucket\" } }"
+                "DesiredState": "{ \"BucketName\": \"my-bucket\" }"
               }
           response:
             mediaType: application/json
