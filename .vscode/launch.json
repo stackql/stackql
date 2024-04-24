@@ -133,6 +133,10 @@
         "select u1.UserName, u.UserId, u.Arn, u1.region from ( select Arn, UserName, UserId from aws.iam.users where region = 'us-east-1' ) u inner join aws.iam.users u1 on u1.Arn = u.Arn where region = 'us-east-1'  order by u1.UserName desc;",
         "show resources in aws.cloudhsm;",
         "select * from aws.cloudhsm.clusters where region = 'ap-southeast-2' and data__Filters = '{\"states\": [\"UNINITIALIZED\"]}' ;",
+        "insert into aws.pseudo_s3.s3_bucket_detail( region ) select 'ap-southeast-1' ;",
+        "select gossip from stackql_gossip order by category desc;",
+        "describe github.repos.pages;",
+        "insert into aws.pseudo_s3.s3_bucket_detail( region, data__DesiredState ) select 'ap-southeast-1', string('{ \"Properties\": { \"BucketName\": \"my-bucket\" } }') ;",
       ],
       "default": "show providers;"
     },

@@ -8,7 +8,6 @@ import (
 
 	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
-	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/provider"
 )
@@ -18,8 +17,8 @@ type requestBodyParam struct {
 	Val interface{}
 }
 
-func parseRequestBodyParam(k string, v interface{}) *requestBodyParam {
-	trimmedKey := strings.TrimPrefix(k, constants.RequestBodyBaseKey)
+func parseRequestBodyParam(k string, v interface{}, method anysdk.OperationStore) *requestBodyParam {
+	trimmedKey := method.RenameRequestBodyAttribute(k)
 	var parsedVal interface{}
 	if trimmedKey != k { //nolint:nestif // keep for now
 		switch vt := v.(type) {
@@ -78,7 +77,7 @@ func SplitHTTPParameters(
 				reqMap.StoreParameter(param, v)
 			} else {
 				if requestSchema != nil {
-					rbp := parseRequestBodyParam(k, v)
+					rbp := parseRequestBodyParam(k, v, method)
 					if rbp != nil {
 						reqMap.SetRequestBodyParam(rbp.Key, rbp.Val)
 						continue
