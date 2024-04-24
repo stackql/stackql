@@ -336,7 +336,7 @@ AWS Hybrid Service Cloud Control S3 Bucket Insert Dynamic
     ...              ) 
     ...              select 
     ...              'ap-southeast-1',
-    ...              string('{ "Properties": { "BucketName": "my-bucket" } }')
+    ...              string('{ "BucketName": "my-bucket" }')
     ...              ;
     Should StackQL Exec Inline Equal Both Streams
     ...    ${STACKQL_EXE}
