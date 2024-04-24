@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/stackql/any-sdk/anysdk"
-	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/logging"
 
 	"sort"
@@ -121,8 +120,8 @@ func isColIncludable(key string, columns sqlparser.Columns, colMap map[string]bo
 	return colMap[key]
 }
 
-func isBodyParam(paramName string) bool {
-	return strings.HasPrefix(paramName, constants.RequestBodyBaseKey)
+func isRequestBodyParam(paramName string, m anysdk.OperationStore) bool {
+	return m.IsRequestBodyAttributeRenamed(paramName)
 }
 
 //nolint:funlen,gocognit,revive // acceptable
@@ -139,7 +138,7 @@ func ToInsertStatement(
 	if !extended {
 		paramsToInclude = m.GetRequiredParameters()
 		for k := range paramsToInclude {
-			if strings.HasPrefix(k, constants.RequestBodyKeyPrefix) {
+			if m.IsRequestBodyAttributeRenamed(k) {
 				delete(paramsToInclude, k)
 			}
 		}
@@ -148,7 +147,7 @@ func ToInsertStatement(
 		paramsToInclude = make(map[string]anysdk.Addressable)
 		for _, col := range columns {
 			cName := col.GetRawVal()
-			if !isBodyParam(cName) {
+			if !isRequestBodyParam(cName, m) {
 				p, ok := m.GetParameter(cName)
 				if !ok {
 					return "", fmt.Errorf("cannot generate insert statement: column '%s' not present", cName)
@@ -204,10 +203,10 @@ func ToInsertStatement(
 	if columns != nil {
 		for _, c := range columns {
 			cName := c.GetRawVal()
-			if !isBodyParam(cName) {
+			if !isRequestBodyParam(cName, m) {
 				continue
 			}
-			cNameSuffix := strings.TrimPrefix(cName, constants.RequestBodyBaseKey)
+			cNameSuffix := m.RevertRequestBodyAttributeRename(cName)
 			if v, ok := tVal[cNameSuffix]; ok {
 				columnList = append(columnList, prettyPrinter.RenderColumnName(cName))
 				exprList = append(exprList, v.GetBody())
@@ -220,7 +219,9 @@ func ToInsertStatement(
 		for _, k := range tValKeysSorted {
 			v := tVal[k]
 			if isColIncludable(k, columns, colMap) {
-				columnList = append(columnList, prettyPrinter.RenderColumnName(constants.RequestBodyBaseKey+k))
+				columnList = append(columnList, prettyPrinter.RenderColumnName(
+					m.RenameRequestBodyAttribute(k),
+				))
 				exprList = append(exprList, v.GetBody())
 				jsonnetPlaholderList = append(jsonnetPlaholderList, v.GetPlaceholder())
 			}
@@ -253,13 +254,13 @@ func (sv *SchemaRequestTemplateVisitor) processSubSchemasMap(
 			rv, err := sv.retrieveTemplateVal(
 				ss,
 				method.GetService(),
-				".values."+constants.RequestBodyBaseKey+k,
+				".values."+method.RenameRequestBodyAttribute(k),
 				localSchemaVisitedMap)
 			if err != nil {
 				return nil, err
 			}
 			pl, err := sv.retrieveJsonnetPlaceholderVal(
-				ss, method.GetService(), constants.RequestBodyBaseKey+k,
+				ss, method.GetService(), method.RenameRequestBodyAttribute(k),
 				localSchemaVisitedMap)
 			if err != nil {
 				return nil, err
@@ -282,7 +283,8 @@ func (sv *SchemaRequestTemplateVisitor) processSubSchemasMap(
 				if err != nil {
 					return nil, err
 				}
-				colName := sv.PlaceholderPrettyPrinter.RenderTemplateVarPlaceholderKeyNoDelimit(constants.RequestBodyBaseKey + k)
+				colName := sv.PlaceholderPrettyPrinter.RenderTemplateVarPlaceholderKeyNoDelimit(
+					method.RenameRequestBodyAttribute(k))
 				placeholderBytes = fmt.Sprintf("%s: %s", colName, placeholderBytes)
 			case nil:
 				continue

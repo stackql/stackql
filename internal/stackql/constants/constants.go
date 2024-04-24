@@ -37,9 +37,6 @@ const (
 	SQLFuncGroupConcatPostgres         string = "string_agg"
 	SQLFuncGroupConcatConformed        string = SQLFuncGroupConcatSQLite
 	DefaulHTTPBodyFormat               string = JSONStr
-	RequestBodyKeyPrefix               string = "data"
-	RequestBodyKeyDelimiter            string = "__"
-	RequestBodyBaseKey                 string = RequestBodyKeyPrefix + RequestBodyKeyDelimiter
 	DefaultPrettyPrintBaseIndent       int    = 2
 	DefaultPrettyPrintIndent           int    = 2
 	DefaultQueryCacheSize              int    = 10000

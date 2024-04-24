@@ -137,7 +137,7 @@ func GetTableNameFromStatement(node sqlparser.SQLNode, formatter sqlparser.NodeF
 //   - Supplied parameters that are **not** consumed in Hierarchy inference
 //   - Error if applicable.
 //
-//nolint:funlen,gocognit,gocyclo,cyclop // lots of moving parts
+//nolint:funlen,gocognit,gocyclo,cyclop,goconst // lots of moving parts
 func GetHeirarchyFromStatement(
 	handlerCtx handler.HandlerContext,
 	node sqlparser.SQLNode,
@@ -197,26 +197,32 @@ func GetHeirarchyFromStatement(
 	prov, err := handlerCtx.GetProvider(hIds.GetProviderStr())
 	retVal.SetProvider(prov)
 	viewDTO, isView := retVal.GetView()
+	var meth anysdk.OperationStore
+	var methStr string
+	var methodErr error
+	if methodAction == "" {
+		methodAction = "select"
+	}
 	if isView {
 		logging.GetLogger().Debugf("viewDTO = %v\n", viewDTO)
-		return retVal, nil
+		// return retVal, nil //nolint:nilerr // acceptable
 	}
 	if err != nil {
-		return nil, err
+		return returnViewOnErrorIfPresent(retVal, err, isView)
 	}
 	svcHdl, err := prov.GetServiceShard(hIds.GetServiceStr(), hIds.GetResourceStr(), handlerCtx.GetRuntimeContext())
 	if err != nil {
-		return nil, err
+		return returnViewOnErrorIfPresent(retVal, err, isView)
 	}
 	retVal.SetServiceHdl(svcHdl)
 	rsc, err := prov.GetResource(hIds.GetServiceStr(), hIds.GetResourceStr(), handlerCtx.GetRuntimeContext())
 	if err != nil {
-		return nil, err
+		return returnViewOnErrorIfPresent(retVal, err, isView)
 	}
 	retVal.SetResource(rsc)
 	//nolint:nestif // not overly complex
 	if viewBodyDDL, ok := rsc.GetViewBodyDDLForSQLDialect(
-		handlerCtx.GetSQLSystem().GetName()); ok {
+		handlerCtx.GetSQLSystem().GetName()); ok && methodAction == "select" && !isView {
 		viewName := hIds.GetStackQLTableName()
 		// TODO: mutex required or some other strategy
 		viewDTO, viewExists := handlerCtx.GetSQLSystem().GetViewByName(viewName) //nolint:govet // acceptable shadow
@@ -240,14 +246,18 @@ func GetHeirarchyFromStatement(
 	case *sqlparser.Exec, *sqlparser.ExecSubquery:
 		method, err = rsc.FindMethod(hIds.GetMethodStr())
 		if err != nil {
-			return nil, err
+			return returnViewOnErrorIfPresent(retVal, err, isView)
 		}
 		retVal.SetMethod(method)
 		return retVal, nil
 	}
-	if methodRequired { //nolint:nestif // not overly complex
+	//nolint:nestif,ineffassign // acceptable for now
+	if methodRequired {
 		switch node.(type) { //nolint:gocritic // this is expressive enough
 		case *sqlparser.DescribeTable:
+			if isView {
+				return retVal, nil
+			}
 			m, mStr, mErr := prov.InferDescribeMethod(rsc)
 			if mErr != nil {
 				return nil, mErr
@@ -256,28 +266,24 @@ func GetHeirarchyFromStatement(
 			retVal.SetMethodStr(mStr)
 			return retVal, nil
 		}
-		if methodAction == "" {
-			methodAction = "select"
-		}
-		var meth anysdk.OperationStore
-		var methStr string
 		if getFirstAvailableMethod {
-			meth, methStr, err = prov.GetFirstMethodForAction( //nolint:staticcheck,ineffassign,wastedassign // TODO: fix this
+			meth, methStr, methodErr = prov.GetFirstMethodForAction( //nolint:staticcheck,wastedassign // acceptable
 				retVal.GetHeirarchyIds().GetServiceStr(),
 				retVal.GetHeirarchyIds().GetResourceStr(),
 				methodAction,
 				handlerCtx.GetRuntimeContext())
 		} else {
-			meth, methStr, err = prov.GetMethodForAction(
+			meth, methStr, methodErr = prov.GetMethodForAction(
 				retVal.GetHeirarchyIds().GetServiceStr(),
 				retVal.GetHeirarchyIds().GetResourceStr(),
 				methodAction,
 				parameters,
 				handlerCtx.GetRuntimeContext())
-			if err != nil {
-				return nil, fmt.Errorf(
+			if methodErr != nil {
+				return returnViewOnErrorIfPresent(retVal, fmt.Errorf(
 					"cannot find matching operation, possible causes include missing required parameters or an unsupported method for the resource, to find required parameters for supported methods run SHOW METHODS IN %s: %w", //nolint:lll // long string
-					retVal.GetHeirarchyIds().GetTableName(), err)
+					retVal.GetHeirarchyIds().GetTableName(), methodErr),
+					isView)
 			}
 		}
 		for _, srv := range svcHdl.GetServers() {
@@ -292,4 +298,16 @@ func GetHeirarchyFromStatement(
 		retVal.SetMethod(method)
 	}
 	return retVal, nil
+}
+
+// TODO: remove this rubbish
+func returnViewOnErrorIfPresent(
+	input tablemetadata.HeirarchyObjects, err error, hasView bool) (tablemetadata.HeirarchyObjects, error) {
+	if hasView {
+		return input, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return input, nil
 }

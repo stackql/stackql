@@ -691,6 +691,40 @@
       "path": "/",
       "headers": {
         "Authorization": ["^.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target": [ "CloudApiService.CreateResource" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "TypeName": "AWS::S3::Bucket",
+          "DesiredState": "{ \"Properties\": { \"BucketName\": \"my-bucket\" } }"
+        },
+        "matchType": "STRICT"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "ProgressEvent":{
+          "EventTime": 1.6607142738E9,
+          "Identifier": "my-bucket",
+          "Operation": "CREATE",
+          "OperationStatus": "IN_PROGRESS",
+          "RequestToken": "100000000-1000-1000-1000-1000000000",
+          "TypeName": "AWS::S3::Bucket"
+        }
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$" ],
         "X-Amz-Target": [ "CloudApiService.UpdateResource" ]
       },
       "body": {
