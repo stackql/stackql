@@ -18,9 +18,9 @@ type requestBodyParam struct {
 }
 
 func parseRequestBodyParam(k string, v interface{}, method anysdk.OperationStore) *requestBodyParam {
-	trimmedKey := method.RenameRequestBodyAttribute(k)
+	trimmedKey, trimmedKeyErr := method.RenameRequestBodyAttribute(k)
 	var parsedVal interface{}
-	if trimmedKey != k { //nolint:nestif // keep for now
+	if trimmedKey != k && trimmedKeyErr == nil { //nolint:nestif // keep for now
 		switch vt := v.(type) {
 		case string:
 			var js map[string]interface{}

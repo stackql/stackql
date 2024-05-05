@@ -690,7 +690,7 @@
       "method": "POST",
       "path": "/",
       "headers": {
-        "Authorization": ["^.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$" ],
+        "Authorization": ["^AWS4-HMAC-SHA256 Credential=.*/cloudcontrolapi/aws4_request.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$" ],
         "X-Amz-Target": [ "CloudApiService.CreateResource" ]
       },
       "body": {

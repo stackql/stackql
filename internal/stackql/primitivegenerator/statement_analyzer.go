@@ -1214,8 +1214,11 @@ func (pb *standardPrimitiveGenerator) analyzeDelete(
 		}
 		logging.GetLogger().Infoln(fmt.Sprintf("w = '%s'", w))
 		if requestSchema != nil {
-			foundRequestSchema = requestSchema.FindByPath(
-				method.RevertRequestBodyAttributeRename(w), nil)
+			revertedRequestSchemaProperrtyKey, revertErr := method.RevertRequestBodyAttributeRename(w)
+			if revertErr == nil {
+				foundRequestSchema = requestSchema.FindByPath(
+					revertedRequestSchemaProperrtyKey, nil)
+			}
 		}
 		if foundSchemaPrefixed == nil && foundSchema == nil && foundRequestSchema == nil {
 			return fmt.Errorf("DELETE Where element = '%s' is NOT present in data returned from provider", w)

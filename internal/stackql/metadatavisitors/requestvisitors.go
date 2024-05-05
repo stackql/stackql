@@ -200,13 +200,16 @@ func ToInsertStatement(
 
 	colMap := getColsMap(columns)
 
-	if columns != nil {
+	if columns != nil { //nolint:nestif // acceptable
 		for _, c := range columns {
 			cName := c.GetRawVal()
 			if !isRequestBodyParam(cName, m) {
 				continue
 			}
-			cNameSuffix := m.RevertRequestBodyAttributeRename(cName)
+			cNameSuffix, revertErr := m.RevertRequestBodyAttributeRename(cName)
+			if revertErr != nil {
+				return "", revertErr
+			}
 			if v, ok := tVal[cNameSuffix]; ok {
 				columnList = append(columnList, prettyPrinter.RenderColumnName(cName))
 				exprList = append(exprList, v.GetBody())
@@ -219,8 +222,12 @@ func ToInsertStatement(
 		for _, k := range tValKeysSorted {
 			v := tVal[k]
 			if isColIncludable(k, columns, colMap) {
+				renamedPropertyKey, renamedPropertyErr := m.RenameRequestBodyAttribute(k)
+				if renamedPropertyErr != nil {
+					return "", renamedPropertyErr
+				}
 				columnList = append(columnList, prettyPrinter.RenderColumnName(
-					m.RenameRequestBodyAttribute(k),
+					renamedPropertyKey,
 				))
 				exprList = append(exprList, v.GetBody())
 				jsonnetPlaholderList = append(jsonnetPlaholderList, v.GetPlaceholder())
@@ -251,16 +258,20 @@ func (sv *SchemaRequestTemplateVisitor) processSubSchemasMap(
 				logging.GetLogger().Infoln(fmt.Sprintf("property = '%s' will be skipped", k))
 				continue
 			}
+			renamedPropertyKey, renamedPropertyErr := method.RenameRequestBodyAttribute(k)
+			if renamedPropertyErr != nil {
+				return nil, renamedPropertyErr
+			}
 			rv, err := sv.retrieveTemplateVal(
 				ss,
 				method.GetService(),
-				".values."+method.RenameRequestBodyAttribute(k),
+				fmt.Sprintf(".values.%s", renamedPropertyKey),
 				localSchemaVisitedMap)
 			if err != nil {
 				return nil, err
 			}
 			pl, err := sv.retrieveJsonnetPlaceholderVal(
-				ss, method.GetService(), method.RenameRequestBodyAttribute(k),
+				ss, method.GetService(), renamedPropertyKey,
 				localSchemaVisitedMap)
 			if err != nil {
 				return nil, err
@@ -284,7 +295,8 @@ func (sv *SchemaRequestTemplateVisitor) processSubSchemasMap(
 					return nil, err
 				}
 				colName := sv.PlaceholderPrettyPrinter.RenderTemplateVarPlaceholderKeyNoDelimit(
-					method.RenameRequestBodyAttribute(k))
+					renamedPropertyKey,
+				)
 				placeholderBytes = fmt.Sprintf("%s: %s", colName, placeholderBytes)
 			case nil:
 				continue

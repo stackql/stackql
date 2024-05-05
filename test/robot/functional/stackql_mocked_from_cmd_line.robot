@@ -352,6 +352,30 @@ AWS Hybrid Service Cloud Control S3 Bucket Insert Dynamic
     ...    stdout=${CURDIR}/tmp/AWS-Hybrid-Service-Cloud-Control-S3-Bucket-Insert-Dynamic.tmp
     ...    stderr=${CURDIR}/tmp/AWS-Hybrid-Service-Cloud-Control-S3-Bucket-Insert-Dynamic-stderr.tmp
 
+AWS Hybrid Service Cloud Control S3 Bucket Insert Naive Rename
+    ${inputStr} =    Catenate
+    ...              insert into aws.pseudo_s3.s3_bucket_detail_semantic(
+    ...              region,
+    ...              DesiredState
+    ...              ) 
+    ...              select 
+    ...              'ap-southeast-1',
+    ...              string('{ "BucketName": "my-bucket" }')
+    ...              ;
+    Should StackQL Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${EMPTY}
+    ...    The operation was despatched successfully
+    ...    stdout=${CURDIR}/tmp/AWS-Hybrid-Service-Cloud-Control-S3-Bucket-Insert-Naive-Rename.tmp
+    ...    stderr=${CURDIR}/tmp/AWS-Hybrid-Service-Cloud-Control-S3-Bucket-Insert-Naive-Rename-stderr.tmp
+
 AWS Hybrid Service Cloud Control S3 Bucket Show Methods
     ${inputStr} =    Catenate
     ...              show methods in aws.pseudo_s3.s3_bucket_detail;
