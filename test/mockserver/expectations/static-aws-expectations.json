@@ -697,7 +697,7 @@
         "type": "JSON",
         "json": {
           "TypeName": "AWS::S3::Bucket",
-          "DesiredState": "{ \"BucketName\": \"my-bucket\" }"
+          "DesiredState": "{\"BucketName\":\"my-bucket\"}"
         },
         "matchType": "STRICT"
       }
