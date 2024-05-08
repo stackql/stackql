@@ -400,6 +400,34 @@ AWS Hybrid Service Cloud Control S3 Bucket Insert Naive Transformed
     ...    stdout=${CURDIR}/tmp/AWS-Hybrid-Service-Cloud-Control-S3-Bucket-Insert-Naive-Transformed.tmp
     ...    stderr=${CURDIR}/tmp/AWS-Hybrid-Service-Cloud-Control-S3-Bucket-Insert-Naive-Transformed-stderr.tmp
 
+AWS Hybrid Service Cloud Control S3 Bucket Insert Naive Transformed Extended
+    ${inputStr} =    Catenate
+    ...              insert into aws.pseudo_s3.s3_bucket_detail_transformed(
+    ...              region,
+    ...              BucketName,
+    ...              Tags,
+    ...              ObjectLockEnabled
+    ...              ) 
+    ...              select 
+    ...              'ap-southeast-1',
+    ...              'my-bucket',
+    ...              '[{"Key": "somekey", "Value": "v4" }]',
+    ...              true
+    ...              ;
+    Should StackQL Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${EMPTY}
+    ...    The operation was despatched successfully
+    ...    stdout=${CURDIR}/tmp/AWS-Hybrid-Service-Cloud-Control-S3-Bucket-Insert-Naive-Transformed-Extended.tmp
+    ...    stderr=${CURDIR}/tmp/AWS-Hybrid-Service-Cloud-Control-S3-Bucket-Insert-Naive-Transformed-Extended-stderr.tmp
+
 AWS Hybrid Service Cloud Control S3 Bucket Show Methods
     ${inputStr} =    Catenate
     ...              show methods in aws.pseudo_s3.s3_bucket_detail;
