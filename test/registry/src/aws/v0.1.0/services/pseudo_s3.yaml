@@ -308,6 +308,17 @@ components:
           properties:
             BucketName:
               type: string
+            ObjectLockEnabled: 
+              type: boolean
+            Tags:
+              type: array
+              items:
+                type: object
+                properties:
+                  Key:
+                    type: string
+                  Value:
+                    type: string
         RoleArn:
           type: string
         TypeName:
@@ -680,7 +691,7 @@ components:
             openAPIDocKey: '200'
       sqlVerbs:
         insert:
-          - $ref: '#/components/x-stackQL-resources/s3_bucket_detail_semantic/methods/create_resource'
+          - $ref: '#/components/x-stackQL-resources/s3_bucket_detail_transformed/methods/create_resource'
       config:
         views:
           'select':
