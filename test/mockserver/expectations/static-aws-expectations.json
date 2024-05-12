@@ -309,6 +309,52 @@
       "path": "/",
       "headers": {
         "Authorization": ["^.*SignedHeaders=content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target" : [ "TransferService.CreateServer" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "Domain" : "S3",
+          "EndpointType" : "PUBLIC",
+          "IdentityProviderType" : "SERVICE_MANAGED",
+          "LoggingRole" : "arn:aws:iam::000000001:role/some-domain-role",
+          "Protocols" : [ "SFTP" ],
+          "Tags" : [ {
+            "Key" : "Provisioner",
+            "Value" : "stackql"
+          }, {
+            "Key" : "StackName",
+            "Value" : "my-stack"
+          }, {
+            "Key" : "Environment",
+            "Value" : "uat"
+          }, {
+            "Key" : "RepoName",
+            "Value" : "https://github.com/myorg/mycodebase"
+          }, {
+            "Key" : "aws:transfer:customHostname",
+            "Value" : "sftp-uat.mydomain-subone-subtwo.com"
+          } ]
+        },
+        "matchType": "STRICT"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "ServerId": "s-0000000001"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*SignedHeaders=content-type;host;x-amz-date;x-amz-target.*$" ],
         "X-Amz-Target" : [ "BaldrApiService.DescribeClusters" ]
       },
       "body": {

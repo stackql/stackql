@@ -549,6 +549,41 @@ AWS Transfer Server Insert Simple Exemplifies Empty Request Body Insert
     ...    stderr=${CURDIR}/tmp/AWS-Transfer-Server-Insert-Simple-Exemplifies-Empty-Request-Body-Insert-stderr.tmp
 
 
+AWS Transfer Server Insert Simple Exemplifies Empty Request Body Insert Default Overwrite
+    ${inputStr} =    Catenate
+    ...              insert into aws.transfer.servers
+    ...              (
+    ...              data__Domain, 
+    ...              data__EndpointType, 
+    ...              data__IdentityProviderType, 
+    ...              data__LoggingRole, 
+    ...              data__Protocols, 
+    ...              data__Tags, 
+    ...              region
+    ...              )
+    ...              SELECT
+    ...              'S3',
+    ...              'PUBLIC',
+    ...              'SERVICE_MANAGED',
+    ...              'arn:aws:iam::000000001:role/some-domain-role',
+    ...              '["SFTP"]',
+    ...              '[{"Key":"Provisioner","Value":"stackql"},{"Key":"StackName","Value":"my-stack"},{"Key":"Environment","Value":"uat"},{"Key":"RepoName","Value":"https://github.com/myorg/mycodebase"},{"Key":"aws:transfer:customHostname","Value":"sftp-uat.mydomain-subone-subtwo.com"}]',
+    ...              'ap-southeast-2'
+    ...              ;
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${EMPTY}
+    ...    The operation was despatched successfully
+    ...    stdout=${CURDIR}/tmp/AWS-Transfer-Server-Insert-Simple-Exemplifies-Empty-Request-Body-Insert-Default-Overwrite.tmp
+    ...    stderr=${CURDIR}/tmp/AWS-Transfer-Server-Insert-Simple-Exemplifies-Empty-Request-Body-Insert-Default-Overwrite-stderr.tmp
+
 AWS Cloud Control Log Group Update Simple
     ${inputStr} =    Catenate
     ...              update aws.cloud_control.resources 
