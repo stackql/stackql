@@ -36,6 +36,12 @@ import (
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
 
+//nolint:revive // prefer this way
+var (
+	synonymJSONRegexp *regexp.Regexp = regexp.MustCompile(`^application/[\S]*json[\S]*$`)
+	synonymXMLRegexp  *regexp.Regexp = regexp.MustCompile(`^(?:application|text)/[\S]*xml[\S]*$`)
+)
+
 //nolint:funlen // this is unavoidable
 func (pb *standardPrimitiveGenerator) AnalyzeStatement(
 	pbi planbuilderinput.PlanBuilderInput,
@@ -587,7 +593,7 @@ func (pb *standardPrimitiveGenerator) AnalyzeUnaryExec(
 	}
 	var execPayload internaldto.ExecPayload
 	if node.OptExecPayload != nil {
-		mediaType := "application/json"
+		mediaType := "application/json" //nolint:goconst // acceptable for now
 		if reqExists && req.GetBodyMediaType() != "" {
 			mediaType = req.GetBodyMediaType()
 		}
@@ -681,6 +687,16 @@ func (pb *standardPrimitiveGenerator) analyzeExec(pbi planbuilderinput.PlanBuild
 	return nil
 }
 
+func (pb *standardPrimitiveGenerator) sanitiseMediaType(mediaType string) string {
+	if synonymJSONRegexp.MatchString(mediaType) {
+		return "application/json"
+	}
+	if synonymXMLRegexp.MatchString(mediaType) {
+		return "application/xml"
+	}
+	return mediaType
+}
+
 func (pb *standardPrimitiveGenerator) parseExecPayload(
 	node *sqlparser.ExecVarDef,
 	payloadType string,
@@ -688,6 +704,7 @@ func (pb *standardPrimitiveGenerator) parseExecPayload(
 	var b []byte
 	m := make(map[string][]string)
 	var pm map[string]interface{}
+	payloadType = pb.sanitiseMediaType(payloadType)
 	switch val := node.Val.(type) {
 	case *sqlparser.SQLVal:
 		b = val.Val
