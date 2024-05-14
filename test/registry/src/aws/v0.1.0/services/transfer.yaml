@@ -3844,6 +3844,13 @@ components:
             mediaType: application/x-amz-json-1.1
           response:
             openAPIDocKey: '200'
+        stop_server:
+          operation:
+            $ref: '#/paths/~1?__X-Amz-Target=TransferService.StopServer/post'
+          request:
+            mediaType: application/x-amz-json-1.1
+          response:
+            openAPIDocKey: '200'
       id: aws.transfer.servers
       sqlVerbs:
         delete:
@@ -4909,8 +4916,8 @@ components:
           $ref: '#/components/schemas/ServerId'
     StopServerRequest:
       type: object
-      required:
-        - ServerId
+      # required:
+      #   - ServerId
       title: StopServerRequest
       properties:
         ServerId:

@@ -65,6 +65,7 @@ func (ss *Exec) Build() error {
 	if err != nil {
 		return err
 	}
+	isNullary := m.IsNullary()
 	var target map[string]interface{}
 	ex := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 		var columnOrder []string
@@ -77,6 +78,21 @@ func (ss *Exec) Build() error {
 			response, apiErr := httpmiddleware.HTTPApiCallFromRequest(handlerCtx.Clone(), prov, m, req.GetRequest())
 			if apiErr != nil {
 				return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, nil, nil, nil, apiErr, nil,
+					handlerCtx.GetTypingConfig(),
+				))
+			}
+			if isNullary {
+				//nolint:gomnd // acceptable for now
+				if response.StatusCode <= 300 {
+					continue
+				}
+				return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(
+					nil,
+					nil,
+					nil,
+					nil,
+					fmt.Errorf("HTTP request failed with status code %d", response.StatusCode),
+					nil,
 					handlerCtx.GetTypingConfig(),
 				))
 			}

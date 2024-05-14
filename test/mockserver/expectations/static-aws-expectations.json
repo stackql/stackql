@@ -2,6 +2,29 @@
   {
     "httpRequest": {
       "method": "POST",
+      "path": "/2013-04-01/hostedzone/some-id/rrset/",
+      "headers": {
+        "Authorization": ["^.*us-east-1.*SignedHeaders=.*host.*;x-amz-date.*$" ]
+      },
+      "body" : {
+        "type" : "STRING",
+        "value": "<ChangeResourceRecordSetsRequest><ChangeBatch><Change><Action>CREATE</Action><ResourceRecordSet><Name>my.domain.com</Name><Type>A</Type><TTL>900</TTL><ResourceRecords><ResourceRecord><Value>10.10.10.10</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></ChangeBatch></ChangeResourceRecordSetsRequest>"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "text/xml" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "type": "BINARY",
+        "base64Bytes": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPENoYW5nZVJlc291cmNlUmVjb3JkU2V0c1Jlc3BvbnNlPgogICA8Q2hhbmdlSW5mbz4KICAgICAgPENvbW1lbnQ+c3RyaW5nPC9Db21tZW50PgogICAgICA8SWQ+c3RyaW5nPC9JZD4KICAgICAgPFN0YXR1cz5zdHJpbmc8L1N0YXR1cz4KICAgICAgPFN1Ym1pdHRlZEF0PnRpbWVzdGFtcDwvU3VibWl0dGVkQXQ+CiAgIDwvQ2hhbmdlSW5mbz4KPC9DaGFuZ2VSZXNvdXJjZVJlY29yZFNldHNSZXNwb25zZT4="
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
       "path": "/",
       "headers": {
         "Authorization": ["^.*us-east-1.*SignedHeaders=.*host;x-amz-date.*$" ]
@@ -347,6 +370,22 @@
       "body": {
         "ServerId": "s-0000000001"
       }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*SignedHeaders=content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target" : [ "TransferService.StopServer" ]
+      },
+      "body": {
+        "ServerId": "s-0000000001"
+      }
+    },
+    "httpResponse": {
+      "statusCode": 200
     }
   },
   {

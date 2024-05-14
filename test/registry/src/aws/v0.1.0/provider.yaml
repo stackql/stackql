@@ -56,6 +56,15 @@ providerServices:
       $ref: aws/v0.1.0/services/pseudo_s3.yaml
     title: Pseudo S3 API
     version: v0.1.0
+  route53:
+    description: route53
+    id: route53:v0.1.0
+    name: route53
+    preferred: true
+    service:
+      $ref: aws/v0.1.0/services/route53.yaml
+    title: Route 53 API
+    version: v0.1.0
   s3:
     description: s3
     id: s3:v0.1.0
