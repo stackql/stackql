@@ -1,6 +1,25 @@
 [
   {
     "httpRequest": {
+      "method": "GET",
+      "path": "/2013-04-01/hostedzone/A00000001AAAAAAAAAAAA/rrset",
+      "headers": {
+        "Authorization": ["^.*us-east-1.*SignedHeaders=.*host.*;x-amz-date.*$" ]
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "text/xml" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "type": "BINARY",
+        "base64Bytes": "PD94bWx2ZXJzaW9uPSIxLjAiZW5jb2Rpbmc9IlVURi04Ij8+PExpc3RSZXNvdXJjZVJlY29yZFNldHNSZXNwb25zZT48UmVzb3VyY2VSZWNvcmRTZXRzPjxSZXNvdXJjZVJlY29yZFNldD48TmFtZT5teWFwcGJ1aWxkc2VydmVyLW15ZGl2LW15Y29ycC5jb208L05hbWU+PFJlc291cmNlUmVjb3Jkcz48UmVzb3VyY2VSZWNvcmQ+CjxWYWx1ZT5ucy0wMDAxLmF3c2Rucy0wMS5vcmcubnMtMTExLmF3c2Rucy0xMS5jb20ubnMtMTExMS5hd3NkbnMtMjIuY28udWsubnMtMjIyLmF3c2Rucy0yMi5uZXQuPC9WYWx1ZT4KPC9SZXNvdXJjZVJlY29yZD48L1Jlc291cmNlUmVjb3Jkcz48VFRMPjE4MDA8L1RUTD48VHlwZT5OUzwvVHlwZT48L1Jlc291cmNlUmVjb3JkU2V0PjxSZXNvdXJjZVJlY29yZFNldD48TmFtZT5teWFwcGJ1aWxkc2VydmVyLW15ZGl2LW15Y29ycC5jb208L05hbWU+PFJlc291cmNlUmVjb3Jkcz48UmVzb3VyY2VSZWNvcmQ+CjxWYWx1ZT5ucy0xMTExLmF3c2Rucy0xMS5vcmcuIGF3c2Rucy1ob3N0bWFzdGVyLmFtYXpvbi5jb20uIDExMDAwIDEwMCAxMDAwMDAwIDEwMDAwPC9WYWx1ZT4KPC9SZXNvdXJjZVJlY29yZD48L1Jlc291cmNlUmVjb3Jkcz48VFRMPjkwMDwvVFRMPjxUeXBlPlNPQTwvVHlwZT48L1Jlc291cmNlUmVjb3JkU2V0PjwvUmVzb3VyY2VSZWNvcmRTZXRzPjwvTGlzdFJlc291cmNlUmVjb3JkU2V0c1Jlc3BvbnNlPg=="
+      }
+    }
+  },
+  {
+    "httpRequest": {
       "method": "POST",
       "path": "/2013-04-01/hostedzone/some-id/rrset/",
       "headers": {
