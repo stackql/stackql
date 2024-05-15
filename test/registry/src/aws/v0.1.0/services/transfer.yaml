@@ -3910,7 +3910,7 @@ components:
       id: aws.transfer.users
       sqlVerbs:
         delete:
-          - $ref: '#/components/x-stackQL-resources/users/methods/create_user'
+          - $ref: '#/components/x-stackQL-resources/users/methods/delete_user'
         insert:
           - $ref: '#/components/x-stackQL-resources/users/methods/create_user'
         select:
@@ -4183,7 +4183,7 @@ components:
         ProtocolDetails:
           $ref: '#/components/schemas/ProtocolDetails'
         SecurityPolicyName:
-          ref: '#/components/schemas/SecurityPolicyName'
+          $ref: '#/components/schemas/SecurityPolicyName'
         Tags:
           $ref: '#/components/schemas/Tags'
         WorkflowDetails:

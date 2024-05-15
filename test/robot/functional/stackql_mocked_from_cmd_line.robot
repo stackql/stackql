@@ -530,6 +530,72 @@ AWS Transfer Server Delete Simple Exemplifies No Response Body and Non Null Requ
     ...    stdout=${CURDIR}/tmp/AWS-Transfer-Server-Delete-Simple-Exemplifies-No-Response-Body-and-Non-Null-Request-Body-Delete.tmp
     ...    stderr=${CURDIR}/tmp/AWS-Transfer-Server-Delete-Simple-Exemplifies-No-Response-Body-and-Non-Null-Request-Body-Delete-stderr.tmp
 
+AWS Transfer Users Delete Simple Exemplifies No Response Body and Non Null Request Body Delete
+    ${inputStr} =    Catenate
+    ...              delete from aws.transfer.users 
+    ...              where 
+    ...              data__ServerId = 's-0000000001' 
+    ...              and data__UserName = 'some-jimbo@stackql.io'
+    ...              and region = 'ap-southeast-2';
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${EMPTY}
+    ...    The operation was despatched successfully
+    ...    stdout=${CURDIR}/tmp/AWS-Transfer-User-Delete-Simple-Exemplifies-No-Response-Body-and-Non-Null-Request-Body-Delete.tmp
+    ...    stderr=${CURDIR}/tmp/AWS-Transfer-User-Delete-Simple-Exemplifies-No-Response-Body-and-Non-Null-Request-Body-Delete-stderr.tmp
+
+AWS Transfer Servers Update Simple Exemplifies Non Null Response Body and Non Null Request Body Update
+    ${inputStr} =    Catenate
+    ...              update aws.transfer.servers 
+    ...              set 
+    ...              data__ServerId = 's-0000000001',
+    ...              data__Protocols = '[ "SFTP" ]',
+    ...              region = 'ap-southeast-2'
+    ...              ;
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${EMPTY}
+    ...    The operation was despatched successfully
+    ...    stdout=${CURDIR}/tmp/AWS-Transfer-Servers-Update-Simple-Exemplifies-No-Response-Body-and-Non-Null-Request-Body-Update.tmp
+    ...    stderr=${CURDIR}/tmp/AWS-Transfer-Servers-Update-Simple-Exemplifies-No-Response-Body-and-Non-Null-Request-Body-Update-stderr.tmp
+
+AWS Transfer Users Update Simple Exemplifies Non Null Response Body and Non Null Request Body Update
+    ${inputStr} =    Catenate
+    ...              update aws.transfer.users 
+    ...              set 
+    ...              data__ServerId = 's-0000000001',
+    ...              data__UserName = 'some-jimbo@stackql.io',
+    ...              data__HomeDirectory = '/',
+    ...              region = 'ap-southeast-2'
+    ...              ;
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${EMPTY}
+    ...    The operation was despatched successfully
+    ...    stdout=${CURDIR}/tmp/AWS-Transfer-User-Update-Simple-Exemplifies-No-Response-Body-and-Non-Null-Request-Body-Update.tmp
+    ...    stderr=${CURDIR}/tmp/AWS-Transfer-User-Update-Simple-Exemplifies-No-Response-Body-and-Non-Null-Request-Body-Update-stderr.tmp
+
 AWS Transfer Exec Server Stop Simple Exemplifies No Response Body and Non Null Request Body Exec
     ${inputStr} =    Catenate
     ...              EXEC aws.transfer.servers.stop_server 
@@ -560,7 +626,7 @@ AWS Route53 Create Record Set Simple Exemplifies XML Request Body
     ...    region
     ...    ) 
     ...    select 
-    ...    '<Change><Action>CREATE</Action><ResourceRecordSet><Name>my.domain.com</Name><Type>A</Type><TTL>900</TTL><ResourceRecords><ResourceRecord><Value>10.10.10.10</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change>', 
+    ...    '<Changes><Change><Action>CREATE</Action><ResourceRecordSet><Name>my.domain.com</Name><Type>A</Type><TTL>900</TTL><ResourceRecords><ResourceRecord><Value>10.10.10.10</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes>', 
     ...    'some-id', 
     ...    'us-east-1'
     ...    ;
@@ -577,6 +643,68 @@ AWS Route53 Create Record Set Simple Exemplifies XML Request Body
     ...    The operation was despatched successfully
     ...    stdout=${CURDIR}/tmp/AWS-Route53-Create-Record-Set-Simple-Exemplifies-XML-Request-Body.tmp
     ...    stderr=${CURDIR}/tmp/AWS-Route53-Create-Record-Set-Simple-Exemplifies-XML-Request-Body-stderr.tmp
+
+AWS Route53 Create Record Set CNAME Simple Exemplifies XML Request Body In Real Life
+    ${inputStr} =    Catenate
+    ...    insert into 
+    ...    aws.route53.resource_record_sets
+    ...    (
+    ...    data__ChangeBatch, 
+    ...    Id, 
+    ...    region
+    ...    ) 
+    ...    select 
+    ...    '<Changes><Change><Action>CREATE</Action><ResourceRecordSet><Name>dev-srv.my.domain.com</Name><Type>CNAME</Type><TTL>900</TTL><ResourceRecords><ResourceRecord><Value>s-1000000000000.server-bank.my.domain.com</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes>', 
+    ...    'some-id', 
+    ...    'us-east-1'
+    ...    ;
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${EMPTY}
+    ...    The operation was despatched successfully
+    ...    stdout=${CURDIR}/tmp/AWS-Route53-Create-Record-Set-CNAME-Simple-Exemplifies-XML-Request-Body-In-Real-Life.tmp
+    ...    stderr=${CURDIR}/tmp/AWS-Route53-Create-Record-Set-CNAME-Simple-Exemplifies-XML-Request-Body-In-Real-Life-stderr.tmp
+
+AWS Route53 List Record Sets Simple
+    ${inputStr} =    Catenate
+    ...    select Name, Type, ResourceRecords 
+    ...    from aws.route53.resource_record_sets 
+    ...    where Id = 'A00000001AAAAAAAAAAAA' 
+    ...    and region = 'us-east-1' 
+    ...    order by Name, Type
+    ...    ;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-----------------------------------|------|------------------------------------------------------------------------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}Name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Type${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}ResourceRecords${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------------------|------|------------------------------------------------------------------------------------------|
+    ...    |${SPACE}myappbuildserver-mydiv-mycorp.com${SPACE}|${SPACE}NS${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}ns-0001.awsdns-01.org.ns-111.awsdns-11.com.ns-1111.awsdns-22.co.uk.ns-222.awsdns-22.net.${SPACE}|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------------------|------|------------------------------------------------------------------------------------------|
+    ...    |${SPACE}myappbuildserver-mydiv-mycorp.com${SPACE}|${SPACE}SOA${SPACE}${SPACE}|${SPACE}${SPACE}ns-1111.awsdns-11.org.${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}awsdns-hostmaster.amazon.com.${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}11000${SPACE}100${SPACE}1000000${SPACE}10000${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------------------|------|------------------------------------------------------------------------------------------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/AWS-Route53-List-Record-Set-Simple.tmp
+    ...    stderr=${CURDIR}/tmp/AWS-Route53-List-Record-Set-Simple-stderr.tmp
 
 AWS Transfer Server Insert Simple Exemplifies Empty Request Body Insert
     ${inputStr} =    Catenate

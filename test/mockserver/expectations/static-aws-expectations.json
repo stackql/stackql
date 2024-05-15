@@ -1,6 +1,25 @@
 [
   {
     "httpRequest": {
+      "method": "GET",
+      "path": "/2013-04-01/hostedzone/A00000001AAAAAAAAAAAA/rrset",
+      "headers": {
+        "Authorization": ["^.*us-east-1.*SignedHeaders=.*host.*;x-amz-date.*$" ]
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "text/xml" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "type": "BINARY",
+        "base64Bytes": "PD94bWx2ZXJzaW9uPSIxLjAiZW5jb2Rpbmc9IlVURi04Ij8+PExpc3RSZXNvdXJjZVJlY29yZFNldHNSZXNwb25zZT48UmVzb3VyY2VSZWNvcmRTZXRzPjxSZXNvdXJjZVJlY29yZFNldD48TmFtZT5teWFwcGJ1aWxkc2VydmVyLW15ZGl2LW15Y29ycC5jb208L05hbWU+PFJlc291cmNlUmVjb3Jkcz48UmVzb3VyY2VSZWNvcmQ+CjxWYWx1ZT5ucy0wMDAxLmF3c2Rucy0wMS5vcmcubnMtMTExLmF3c2Rucy0xMS5jb20ubnMtMTExMS5hd3NkbnMtMjIuY28udWsubnMtMjIyLmF3c2Rucy0yMi5uZXQuPC9WYWx1ZT4KPC9SZXNvdXJjZVJlY29yZD48L1Jlc291cmNlUmVjb3Jkcz48VFRMPjE4MDA8L1RUTD48VHlwZT5OUzwvVHlwZT48L1Jlc291cmNlUmVjb3JkU2V0PjxSZXNvdXJjZVJlY29yZFNldD48TmFtZT5teWFwcGJ1aWxkc2VydmVyLW15ZGl2LW15Y29ycC5jb208L05hbWU+PFJlc291cmNlUmVjb3Jkcz48UmVzb3VyY2VSZWNvcmQ+CjxWYWx1ZT5ucy0xMTExLmF3c2Rucy0xMS5vcmcuIGF3c2Rucy1ob3N0bWFzdGVyLmFtYXpvbi5jb20uIDExMDAwIDEwMCAxMDAwMDAwIDEwMDAwPC9WYWx1ZT4KPC9SZXNvdXJjZVJlY29yZD48L1Jlc291cmNlUmVjb3Jkcz48VFRMPjkwMDwvVFRMPjxUeXBlPlNPQTwvVHlwZT48L1Jlc291cmNlUmVjb3JkU2V0PjwvUmVzb3VyY2VSZWNvcmRTZXRzPjwvTGlzdFJlc291cmNlUmVjb3JkU2V0c1Jlc3BvbnNlPg=="
+      }
+    }
+  },
+  {
+    "httpRequest": {
       "method": "POST",
       "path": "/2013-04-01/hostedzone/some-id/rrset/",
       "headers": {
@@ -8,7 +27,30 @@
       },
       "body" : {
         "type" : "STRING",
-        "value": "<ChangeResourceRecordSetsRequest><ChangeBatch><Change><Action>CREATE</Action><ResourceRecordSet><Name>my.domain.com</Name><Type>A</Type><TTL>900</TTL><ResourceRecords><ResourceRecord><Value>10.10.10.10</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></ChangeBatch></ChangeResourceRecordSetsRequest>"
+        "value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2013-04-01/\"><ChangeBatch><Changes><Change><Action>CREATE</Action><ResourceRecordSet><Name>my.domain.com</Name><Type>A</Type><TTL>900</TTL><ResourceRecords><ResourceRecord><Value>10.10.10.10</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "text/xml" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "type": "BINARY",
+        "base64Bytes": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPENoYW5nZVJlc291cmNlUmVjb3JkU2V0c1Jlc3BvbnNlPgogICA8Q2hhbmdlSW5mbz4KICAgICAgPENvbW1lbnQ+c3RyaW5nPC9Db21tZW50PgogICAgICA8SWQ+c3RyaW5nPC9JZD4KICAgICAgPFN0YXR1cz5zdHJpbmc8L1N0YXR1cz4KICAgICAgPFN1Ym1pdHRlZEF0PnRpbWVzdGFtcDwvU3VibWl0dGVkQXQ+CiAgIDwvQ2hhbmdlSW5mbz4KPC9DaGFuZ2VSZXNvdXJjZVJlY29yZFNldHNSZXNwb25zZT4="
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/2013-04-01/hostedzone/some-id/rrset/",
+      "headers": {
+        "Authorization": ["^.*us-east-1.*SignedHeaders=.*host.*;x-amz-date.*$" ]
+      },
+      "body" : {
+        "type" : "STRING",
+        "value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2013-04-01/\"><ChangeBatch><Changes><Change><Action>CREATE</Action><ResourceRecordSet><Name>dev-srv.my.domain.com</Name><Type>CNAME</Type><TTL>900</TTL><ResourceRecords><ResourceRecord><Value>s-1000000000000.server-bank.my.domain.com</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>"
       }
     },
     "httpResponse": {
@@ -300,6 +342,86 @@
         "content-type": [ "application/x-amz-json-1.0" ]
       },
       "statusCode": 200
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*SignedHeaders=content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target" : [ "TransferService.DeleteUser" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+           "ServerId": "s-0000000001",
+           "UserName": "some-jimbo@stackql.io"
+        },
+        "matchType": "STRICT"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*SignedHeaders=content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target" : [ "TransferService.UpdateServer" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+           "ServerId": "s-0000000001",
+           "Protocols": [ "SFTP" ]
+        },
+        "matchType": "STRICT"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "ServerId": "s-0000000001"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*SignedHeaders=content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target" : [ "TransferService.UpdateUser" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+           "ServerId": "s-0000000001",
+           "UserName": "some-jimbo@stackql.io",
+           "HomeDirectory": "/"
+        },
+        "matchType": "STRICT"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "ServerId": "s-0000000001",
+        "UserName": "some-jimbo@stackql.io"
+      }
     }
   },
   {
