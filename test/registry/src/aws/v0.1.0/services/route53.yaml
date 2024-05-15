@@ -4428,6 +4428,7 @@ components:
             $ref: '#/paths/~12013-04-01~1hostedzone~1{Id}~1rrset~1/post'
           request:
             mediaType: text/xml
+            xmlRootAnnotation: 'xmlns="https://route53.amazonaws.com/doc/2013-04-01/"'
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
