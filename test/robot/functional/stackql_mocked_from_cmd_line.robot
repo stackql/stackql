@@ -1410,19 +1410,91 @@ Transparent Placeholder URL and Defaulted Request Body Returns Expected Result
     ...    stdout=${CURDIR}/tmp/Transparent-Placeholder-URL-and-Defaulted-Request-Body-Returns-Expected-Result.tmp
     ...    stderr=${CURDIR}/tmp/Transparent-Placeholder-URL-and-Defaulted-Request-Body-Returns-Expected-Result-stderr.tmp
 
-Response Body Printed by Default on Error
+Debug HTTP Plus Transparent Placeholder URL and Defaulted Request Body Returns Expected Result
     ${inputStr} =    Catenate
-    ...    select BackupId, BackupState from aws.cloudhsm.backups where region = 'rubbish-region' order by BackupId;
-    ${outputErrStr} =    Catenate    SEPARATOR=\n
-    ...    http${SPACE}error${SPACE}response${SPACE}body:${SPACE}{
-    ...    ${SPACE}${SPACE}"error"${SPACE}:${SPACE}{
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"message"${SPACE}:${SPACE}"What${SPACE}a${SPACE}horrible${SPACE}request${SPACE}body,${SPACE}I${SPACE}hate${SPACE}it!!!",
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"customStuff"${SPACE}:${SPACE}{
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"what"${SPACE}:${SPACE}"this${SPACE}is${SPACE}some${SPACE}implementation${SPACE}specific${SPACE}info;${SPACE}might${SPACE}mean${SPACE}something${SPACE}to${SPACE}a${SPACE}developer"
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}}
-    ...    ${SPACE}${SPACE}}
+    ...    select BackupId, BackupState from aws.cloudhsm.backups where region = 'ap-southeast-2' order by BackupId;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |------------|-------------|
+    ...    |${SPACE}${SPACE}BackupId${SPACE}${SPACE}|${SPACE}BackupState${SPACE}|
+    ...    |------------|-------------|
+    ...    |${SPACE}bkp-000001${SPACE}|${SPACE}READY${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------|-------------|
+    ...    |${SPACE}bkp-000002${SPACE}|${SPACE}READY${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------|-------------|
+    ${stderrStr} =    Catenate    SEPARATOR=\n
+    ...    http request url: 'https://localhost:1091/', method: 'POST'
+    ...    http request body = '{"Filters":{}}'
+    ...    http${SPACE}response${SPACE}status${SPACE}code:${SPACE}200,${SPACE}response${SPACE}body:${SPACE}{
+    ...    ${SPACE}${SPACE}"Backups"${SPACE}: [${SPACE}{
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"BackupId"${SPACE}:${SPACE}"bkp-000001",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"BackupState"${SPACE}:${SPACE}"READY",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"ClusterId"${SPACE}:${SPACE}"cluster-abcdefg",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"CopyTimestamp"${SPACE}:${SPACE}1.711841E9,
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"CreateTimestamp"${SPACE}:${SPACE}1.71184E9,
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"DeleteTimestamp"${SPACE}:${SPACE}1.71184E9,
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"NeverExpires"${SPACE}:${SPACE}false,
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"SourceBackup"${SPACE}:${SPACE}"",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"SourceCluster"${SPACE}:${SPACE}"cluster-abcdefg",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"SourceRegion"${SPACE}:${SPACE}"ap-southeast-2",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"TagList"${SPACE}: [${SPACE}{
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"Key"${SPACE}:${SPACE}"name",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"Value"${SPACE}:${SPACE}"backup-01"
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}}${SPACE}]
+    ...    ${SPACE}${SPACE}},${SPACE}{
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"BackupId"${SPACE}:${SPACE}"bkp-000002",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"BackupState"${SPACE}:${SPACE}"READY",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"ClusterId"${SPACE}:${SPACE}"cluster-abcdefg",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"CopyTimestamp"${SPACE}:${SPACE}1.711841E9,
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"CreateTimestamp"${SPACE}:${SPACE}1.71184E9,
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"DeleteTimestamp"${SPACE}:${SPACE}1.71184E9,
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"NeverExpires"${SPACE}:${SPACE}false,
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"SourceBackup"${SPACE}:${SPACE}"bkp-000001",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"SourceCluster"${SPACE}:${SPACE}"cluster-abcdefg",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"SourceRegion"${SPACE}:${SPACE}"ap-southeast-2",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"TagList"${SPACE}: [${SPACE}{
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"Key"${SPACE}:${SPACE}"name",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"Value"${SPACE}:${SPACE}"backup-02"
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}}${SPACE}]
+    ...    ${SPACE}${SPACE}}${SPACE}]
     ...    }
-    ...    unknown${SPACE}key${SPACE}Backups
+    ...    processed${SPACE}http${SPACE}response${SPACE}body${SPACE}object: [
+    ...    ${SPACE}${SPACE}{
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"BackupId":${SPACE}"bkp-000001",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"BackupState":${SPACE}"READY",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"ClusterId":${SPACE}"cluster-abcdefg",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"CopyTimestamp":${SPACE}1711841000,
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"CreateTimestamp":${SPACE}1711840000,
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"DeleteTimestamp":${SPACE}1711840000,
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"NeverExpires":${SPACE}false,
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"SourceBackup":${SPACE}"",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"SourceCluster":${SPACE}"cluster-abcdefg",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"SourceRegion":${SPACE}"ap-southeast-2",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"TagList": [
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}{
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"Key":${SPACE}"name",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"Value":${SPACE}"backup-01"
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}}
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}]
+    ...    ${SPACE}${SPACE}},
+    ...    ${SPACE}${SPACE}{
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"BackupId":${SPACE}"bkp-000002",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"BackupState":${SPACE}"READY",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"ClusterId":${SPACE}"cluster-abcdefg",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"CopyTimestamp":${SPACE}1711841000,
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"CreateTimestamp":${SPACE}1711840000,
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"DeleteTimestamp":${SPACE}1711840000,
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"NeverExpires":${SPACE}false,
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"SourceBackup":${SPACE}"bkp-000001",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"SourceCluster":${SPACE}"cluster-abcdefg",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"SourceRegion":${SPACE}"ap-southeast-2",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"TagList": [
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}{
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"Key":${SPACE}"name",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"Value":${SPACE}"backup-02"
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}}
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}]
+    ...    ${SPACE}${SPACE}}
+    ...    ]
     Should Stackql Exec Inline Equal Both Streams
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -1432,10 +1504,64 @@ Response Body Printed by Default on Error
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${inputStr}
-    ...    ${EMPTY}
+    ...    ${outputStr}
+    ...    ${stderrStr}
+    ...    stdout=${CURDIR}/tmp/Debug-HTTP-Plus-Transparent-Placeholder-URL-and-Defaulted-Request-Body-Returns-Expected-Result.tmp
+    ...    stderr=${CURDIR}/tmp/Debug-HTTP-Plus-Transparent-Placeholder-URL-and-Defaulted-Request-Body-Returns-Expected-Result-stderr.tmp
+    ...    stackql_debug_http=True
+
+Response Body Printed by Default on Error
+    ${inputStr} =    Catenate
+    ...    select BackupId, BackupState from aws.cloudhsm.backups where region = 'rubbish-region' order by BackupId;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |----------|-------------|
+    ...    |${SPACE}BackupId${SPACE}|${SPACE}BackupState${SPACE}|
+    ...    |----------|-------------|
+    ${outputErrStr} =    Catenate    SEPARATOR=\n
+    ...    http${SPACE}response${SPACE}status${SPACE}code:${SPACE}501,${SPACE}response${SPACE}body:${SPACE}{
+    ...    ${SPACE}${SPACE}"error"${SPACE}:${SPACE}{
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"message"${SPACE}:${SPACE}"What${SPACE}a${SPACE}horrible${SPACE}request${SPACE}body,${SPACE}I${SPACE}hate${SPACE}it!!!",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"customStuff"${SPACE}:${SPACE}{
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"what"${SPACE}:${SPACE}"this${SPACE}is${SPACE}some${SPACE}implementation${SPACE}specific${SPACE}info;${SPACE}might${SPACE}mean${SPACE}something${SPACE}to${SPACE}a${SPACE}developer"
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}}
+    ...    ${SPACE}${SPACE}}
+    ...    }
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
     ...    ${outputErrStr}
     ...    stdout=${CURDIR}/tmp/Response-Body-Printed-by-Default-on-Error.tmp
     ...    stderr=${CURDIR}/tmp/Response-Body-Printed-by-Default-on-Error-stderr.tmp
+
+Response Error Printed by Default on 403 Null Body Error
+    ${inputStr} =    Catenate
+    ...    select BackupId, BackupState from aws.cloudhsm.backups where region = 'another-rubbish-region' order by BackupId;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |----------|-------------|
+    ...    |${SPACE}BackupId${SPACE}|${SPACE}BackupState${SPACE}|
+    ...    |----------|-------------|
+    ${outputErrStr} =    Catenate
+    ...    http${SPACE}response${SPACE}status${SPACE}code:${SPACE}403,${SPACE}response${SPACE}body${SPACE}is${SPACE}nil
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${outputErrStr}
+    ...    stdout=${CURDIR}/tmp/Response-Error-Printed-by-Default-on-403-Error.tmp
+    ...    stderr=${CURDIR}/tmp/Response-Error-Printed-by-Default-on-403-Error-stderr.tmp
 
 Create Changing Dynamic Materialized View Scenario Working
     ${inputStr} =    Catenate
@@ -1798,7 +1924,7 @@ Transaction Abort Attempted Commit Digitalocean Insert Droplet
     ...    '["env:prod", "web"]' ;
     ...    commit;
     ${nativeOutputStr} =    Catenate    SEPARATOR=\n
-    ...    http${SPACE}error${SPACE}response${SPACE}body:${SPACE}{
+    ...    http${SPACE}response${SPACE}status${SPACE}code:${SPACE}500,${SPACE}response${SPACE}body:${SPACE}{
     ...    ${SPACE}${SPACE}"id"${SPACE}:${SPACE}"server_error",
     ...    ${SPACE}${SPACE}"message"${SPACE}:${SPACE}"Unexpected${SPACE}server-side${SPACE}error"
     ...    }
@@ -1857,6 +1983,7 @@ Transaction Rollback Failure Eager Idealised Google Admin Directory User
     ...    values ('joeblow@grubit.com');
     ...    rollback;
     ${stderrOutputStr} =    Catenate    SEPARATOR=\n
+    ...    http response status code: 404, response body is nil
     ...    OK
     ...    The operation was despatched successfully
     ...    undo over HTTP error: 404 Not Found

@@ -38,13 +38,35 @@ func parseReponseBodyIfErroneous(response *http.Response) (string, error) {
 				if bErr != nil {
 					return "", bErr
 				}
-				rv := string(bodyBytes)
+				bodyStr := string(bodyBytes)
 				response.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-				return rv, nil
+				if len(bodyStr) > 0 {
+					return fmt.Sprintf("http response status code: %d, response body: %s", response.StatusCode, bodyStr), nil
+				}
 			}
+			return fmt.Sprintf("http response status code: %d, response body is nil", response.StatusCode), nil
 		}
 	}
 	return "", nil
+}
+
+//nolint:nestif // acceptable for now
+func parseReponseBodyIfPresent(response *http.Response) (string, error) {
+	if response != nil {
+		if response.Body != nil {
+			bodyBytes, bErr := io.ReadAll(response.Body)
+			if bErr != nil {
+				return "", bErr
+			}
+			bodyStr := string(bodyBytes)
+			response.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+			if len(bodyStr) > 0 {
+				return fmt.Sprintf("http response status code: %d, response body: %s", response.StatusCode, bodyStr), nil
+			}
+			return fmt.Sprintf("http response status code: %d, response body is nil", response.StatusCode), nil
+		}
+	}
+	return "nil response", nil
 }
 
 func HTTPApiCallFromRequest(
@@ -97,10 +119,11 @@ func HTTPApiCallFromRequest(
 	}
 	if responseErrorBodyToPublish != "" {
 		//nolint:errcheck // output stream
-		handlerCtx.GetOutErrFile().Write([]byte(fmt.Sprintf("http error response body: %s\n", responseErrorBodyToPublish)))
+		handlerCtx.GetOutErrFile().Write([]byte(fmt.Sprintf("%s\n", responseErrorBodyToPublish)))
 	} else if handlerCtx.GetRuntimeContext().HTTPLogEnabled {
+		reponseBodyStr, _ := parseReponseBodyIfPresent(r)
 		//nolint:errcheck // output stream
-		handlerCtx.GetOutErrFile().Write([]byte("http response came buck null\n"))
+		handlerCtx.GetOutErrFile().Write([]byte(fmt.Sprintf("%s\n", reponseBodyStr)))
 	}
 	if err != nil {
 		if handlerCtx.GetRuntimeContext().HTTPLogEnabled {

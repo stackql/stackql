@@ -243,6 +243,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     if cfg.pop('stackql_H', False):
       supplied_args.append('--output=text')
       supplied_args.append('-H')
+    if cfg.pop('stackql_debug_http', False):
+      supplied_args.append("--http.log.enabled=true")
     if cfg.pop('stackql_dryrun', False):
       supplied_args.append('--dryrun')
     query_from_input_file_path = cfg.pop('stackql_i', False)
@@ -336,6 +338,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     if cfg.pop('stackql_H', False):
       supplied_args.append('--output=text')
       supplied_args.append('-H')
+    if cfg.pop('stackql_debug_http', False):
+      supplied_args.append("--http.log.enabled=true")
     registry_cfg_str = registry_cfg.get_config_str('docker')
     if registry_cfg_str != "":
       supplied_args.append(f"--registry='{registry_cfg_str}'")
@@ -418,6 +422,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     if cfg.pop('stackql_H', False):
       supplied_args.append('--output=text')
       supplied_args.append('-H')
+    if cfg.pop('stackql_debug_http', False):
+      supplied_args.append("--http.log.enabled=true")
     if cfg.pop('stackql_dryrun', False):
       supplied_args.append('--dryrun')
     query_from_input_file_path = cfg.pop('stackql_i', False)
@@ -478,6 +484,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     if cfg.pop('stackql_H', False):
       supplied_args.append('--output=text')
       supplied_args.append('-H')
+    if cfg.pop('stackql_debug_http', False):
+      supplied_args.append("--http.log.enabled=true")
     registry_cfg_str = registry_cfg.get_config_str('native')
     if registry_cfg_str != "":
       supplied_args.append(f"--registry={registry_cfg_str}")
