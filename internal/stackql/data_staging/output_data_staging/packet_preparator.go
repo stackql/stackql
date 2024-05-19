@@ -55,5 +55,6 @@ func (st *naivePacketPreparator) PrepareOutputPacket() (dto.OutputPacket, error)
 		rawRows,
 		cNames,
 		colOIDs,
+		nil,
 	), nil
 }

@@ -9,6 +9,7 @@ type OutputPacket interface {
 	GetRawRows() map[int]map[int]interface{}
 	GetColumnNames() []string
 	GetColumnOIDs() []oid.Oid
+	GetMessages() []string
 }
 
 func NewStandardOutputPacket(
@@ -16,12 +17,14 @@ func NewStandardOutputPacket(
 	rawRows map[int]map[int]interface{},
 	columnNames []string,
 	columnOIDs []oid.Oid,
+	messages []string,
 ) OutputPacket {
 	return &standardOutputPacket{
 		rowMaps:     rowMaps,
 		rawRows:     rawRows,
 		columnNames: columnNames,
 		columnOIDs:  columnOIDs,
+		messages:    messages,
 	}
 }
 
@@ -30,10 +33,15 @@ type standardOutputPacket struct {
 	rawRows     map[int]map[int]interface{}
 	columnNames []string
 	columnOIDs  []oid.Oid
+	messages    []string
 }
 
 func (op *standardOutputPacket) GetRows() map[string]map[string]interface{} {
 	return op.rowMaps
+}
+
+func (op *standardOutputPacket) GetMessages() []string {
+	return op.messages
 }
 
 func (op *standardOutputPacket) GetRawRows() map[int]map[int]interface{} {

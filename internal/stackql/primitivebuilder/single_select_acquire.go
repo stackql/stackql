@@ -211,6 +211,9 @@ func (ss *SingleSelectAcquire) Build() error {
 				if !respOk {
 					return internaldto.NewErroneousExecutorOutput(fmt.Errorf("response is not a valid response"))
 				}
+				if res.HasError() {
+					return internaldto.NewNopEmptyExecutorOutput([]string{res.Error()})
+				}
 				ss.handlerCtx.LogHTTPResponseMap(res.GetProcessedBody())
 				logging.GetLogger().Infoln(fmt.Sprintf("target = %v", res))
 				var items interface{}
