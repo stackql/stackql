@@ -219,6 +219,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     rv = [ f"--namespaces='{b[13:]}'" if type(b) == str and b.startswith('--namespaces=') else b for b in list(args) ]
     rv = [ f"--sqlBackend='{b[13:]}'" if type(b) == str and b.startswith('--sqlBackend=') else b for b in list(rv) ]
     rv = [ f"--export.alias='{b[15:]}'" if type(b) == str and b.startswith('--export.alias=') else b for b in list(rv) ]
+    rv = [ f"--http.log.enabled='{b[19:]}'" if type(b) == str and b.startswith('--http.log.enabled=') else b for b in list(rv) ]
     return rv
 
   def _run_stackql_exec_command_docker(
@@ -243,6 +244,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     if cfg.pop('stackql_H', False):
       supplied_args.append('--output=text')
       supplied_args.append('-H')
+    if cfg.pop('stackql_debug_http', False):
+      supplied_args.append("--http.log.enabled=true")
     if cfg.pop('stackql_dryrun', False):
       supplied_args.append('--dryrun')
     query_from_input_file_path = cfg.pop('stackql_i', False)
@@ -336,6 +339,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     if cfg.pop('stackql_H', False):
       supplied_args.append('--output=text')
       supplied_args.append('-H')
+    if cfg.pop('stackql_debug_http', False):
+      supplied_args.append("--http.log.enabled=true")
     registry_cfg_str = registry_cfg.get_config_str('docker')
     if registry_cfg_str != "":
       supplied_args.append(f"--registry='{registry_cfg_str}'")
@@ -418,6 +423,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     if cfg.pop('stackql_H', False):
       supplied_args.append('--output=text')
       supplied_args.append('-H')
+    if cfg.pop('stackql_debug_http', False):
+      supplied_args.append("--http.log.enabled=true")
     if cfg.pop('stackql_dryrun', False):
       supplied_args.append('--dryrun')
     query_from_input_file_path = cfg.pop('stackql_i', False)
@@ -478,6 +485,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     if cfg.pop('stackql_H', False):
       supplied_args.append('--output=text')
       supplied_args.append('-H')
+    if cfg.pop('stackql_debug_http', False):
+      supplied_args.append("--http.log.enabled=true")
     registry_cfg_str = registry_cfg.get_config_str('native')
     if registry_cfg_str != "":
       supplied_args.append(f"--registry={registry_cfg_str}")

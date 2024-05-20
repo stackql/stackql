@@ -586,8 +586,31 @@
             "what": "this is some implementation specific info; might mean something to a developer"
           }
         } 
+      }
     }
-  }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*/another-rubbish-region/.*SignedHeaders=content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target" : [ "BaldrApiService.DescribeBackups" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "Filters": {}
+        },
+        "matchType": "STRICT"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 403
+    }
   },
   {
     "httpRequest": {
