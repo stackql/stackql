@@ -32,7 +32,6 @@ func TrimSelectItemsKey(selectItemsKey string) string {
 	return splitSet[len(splitSet)-1]
 }
 
-//nolint:gocognit,nestif // tactical
 func (ta *simpleTableSchemaAnalyzer) GetColumns() ([]Column, error) {
 	var rv []Column
 	tableColumns := ta.s.Tabulate(false, "").GetColumns()
@@ -53,31 +52,15 @@ func (ta *simpleTableSchemaAnalyzer) GetColumns() ([]Column, error) {
 		existingColumns[col.GetName()] = struct{}{}
 		rv = append(rv, newSimpleColumn(k, schema))
 	}
-	servers := ta.m.GetServers()
-	if servers != nil && len(*servers) > 0 {
-		for _, srv := range *servers {
+	servers, serversDoExist := ta.m.GetServers()
+	if serversDoExist {
+		for _, srv := range servers {
 			for k := range srv.Variables {
 				if _, ok := existingColumns[k]; ok {
 					continue
 				}
 				existingColumns[k] = struct{}{}
 				rv = append(rv, newSimpleStringColumn(k, ta.m))
-			}
-		}
-	} else {
-		svc := ta.m.GetService()
-		if svc != nil {
-			svcServers := svc.GetServers()
-			if len(svcServers) > 0 {
-				for _, srv := range svcServers {
-					for k := range srv.Variables {
-						if _, ok := existingColumns[k]; ok {
-							continue
-						}
-						existingColumns[k] = struct{}{}
-						rv = append(rv, newSimpleStringColumn(k, ta.m))
-					}
-				}
 			}
 		}
 	}
@@ -106,7 +89,6 @@ func (ta *simpleTableSchemaAnalyzer) generateServerVarColumnDescriptor(
 	return colDesc
 }
 
-//nolint:gocognit,nestif // tactical
 func (ta *simpleTableSchemaAnalyzer) GetColumnDescriptors(
 	tabAnnotated AnnotatedTabulation,
 ) ([]anysdk.ColumnDescriptor, error) {
@@ -138,9 +120,9 @@ func (ta *simpleTableSchemaAnalyzer) GetColumnDescriptors(
 		)
 		rv = append(rv, colDesc)
 	}
-	servers := ta.m.GetServers()
-	if servers != nil && len(*servers) > 0 {
-		for _, srv := range *servers {
+	servers, serversDoExist := ta.m.GetServers()
+	if serversDoExist {
+		for _, srv := range servers {
 			for k := range srv.Variables {
 				if _, ok := existingColumns[k]; ok {
 					continue
@@ -148,23 +130,6 @@ func (ta *simpleTableSchemaAnalyzer) GetColumnDescriptors(
 				existingColumns[k] = struct{}{}
 				colDesc := ta.generateServerVarColumnDescriptor(k, ta.m)
 				rv = append(rv, colDesc)
-			}
-		}
-	} else {
-		svc := ta.m.GetService()
-		if svc != nil {
-			svcServers := svc.GetServers()
-			if len(svcServers) > 0 {
-				for _, srv := range svcServers {
-					for k := range srv.Variables {
-						if _, ok := existingColumns[k]; ok {
-							continue
-						}
-						existingColumns[k] = struct{}{}
-						colDesc := ta.generateServerVarColumnDescriptor(k, ta.m)
-						rv = append(rv, colDesc)
-					}
-				}
 			}
 		}
 	}

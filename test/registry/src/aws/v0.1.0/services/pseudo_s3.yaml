@@ -17,6 +17,45 @@ externalDocs:
   description: Amazon Web Services documentation
   url: 'https://docs.aws.amazon.com/cloudcontrolapi/'
 paths:
+  /?__nativeEndpoint=true:
+    get:
+      description: Returns a list of all buckets owned by the authenticated sender
+        of the request. To use this operation, you must have the <code>s3:ListAllMyBuckets</code>
+        permission.
+      servers:
+        - description: The Amazon S3 multi-region endpoint
+          url: https://s3.{region}.amazonaws.com
+          variables:
+            region:
+              default: us-east-2
+              description: The AWS region
+              enum:
+              - us-east-2
+              - us-gov-east-1
+              - ca-central-1
+              - eu-north-1
+              - eu-west-2
+              - eu-west-3
+              - eu-central-1
+              - eu-south-1
+              - af-south-1
+              - ap-northeast-2
+              - ap-northeast-3
+              - ap-southeast-1
+              - ap-southeast-2
+              - ap-east-1
+              - ap-south-1
+              - me-south-1
+      externalDocs:
+        url: http://docs.amazonwebservices.com/AmazonS3/latest/API/RESTServiceGET.html
+      operationId: ListBuckets
+      responses:
+        '200':
+          content:
+            text/xml:
+              schema:
+                $ref: '#/components/schemas/ListBucketsOutput'
+          description: Success
   /?Action=CreateResource&Version=2021-09-30:
     parameters:
     - $ref: '#/components/parameters/X-Amz-Content-Sha256'
@@ -230,6 +269,29 @@ components:
         type: string
       required: false
   schemas:
+    Bucket:
+      description: ' In terms of implementation, a Bucket is a resource. An Amazon
+        S3 bucket name is globally unique, and the namespace is shared by all Amazon
+        Web Services accounts. '
+      properties:
+        CreationDate:
+          allOf:
+          - $ref: '#/components/schemas/CreationDate'
+          - description: Date the bucket was created. This date can change when making
+              changes to your bucket, such as editing its bucket policy.
+        Name:
+          allOf:
+          - $ref: '#/components/schemas/BucketName'
+          - description: The name of the bucket.
+    BucketName:
+      type: string
+    Buckets:
+      items:
+        allOf:
+        - $ref: '#/components/schemas/Bucket'
+        - xml:
+            name: Bucket
+      type: array
     CreateResourceInput:
       properties:
         ClientToken:
@@ -328,6 +390,47 @@ components:
       title: CreateDynamicResourceInput
       type: object
       required: []
+    CreationDate:
+      format: date-time
+      type: string
+    DisplayName:
+      type: string
+    ID:
+      type: string
+    ListBucketsOutput:
+      example:
+        Buckets:
+        - CreationDate: '2012-02-15T21: 03: 02.000Z'
+          Name: examplebucket
+        - CreationDate: '2011-07-24T19: 33: 50.000Z'
+          Name: examplebucket2
+        - CreationDate: '2010-12-17T00: 56: 49.000Z'
+          Name: examplebucket3
+        Owner:
+          DisplayName: own-display-name
+          ID: examplee7a2f25102679df27bb0ae12b3f85be6f290b936c4393484be31
+      properties:
+        Buckets:
+          allOf:
+          - $ref: '#/components/schemas/Buckets'
+          - description: The list of buckets owned by the requester.
+        Owner:
+          allOf:
+          - $ref: '#/components/schemas/Owner'
+          - description: The owner of the buckets listed.
+      type: object
+    Owner:
+      description: Container for the owner's display name and ID.
+      properties:
+        DisplayName:
+          allOf:
+          - $ref: '#/components/schemas/DisplayName'
+          - description: Container for the display name of the owner.
+        ID:
+          allOf:
+          - $ref: '#/components/schemas/ID'
+          - description: Container for the ID of the owner.
+      type: object
     ProgressEvent:
       properties:
         ErrorCode:
@@ -764,6 +867,21 @@ components:
                   AND data__Identifier = '<BucketName>'
                   AND region = 'us-east-1'
                   ;
+    s3_buckets_native:
+      name: s3_buckets_native
+      id: aws.pseudo_s3.s3_buckets_native
+      methods:
+        buckets_list:
+          operation:
+            $ref: '#/paths/~1?__nativeEndpoint=true/get'
+          serviceName: s3
+          response:
+            mediaType: text/xml
+            objectKey: /*/Buckets/Bucket
+            openAPIDocKey: '200'
+      sqlVerbs:
+        select:
+        - $ref: '#/components/x-stackQL-resources/s3_buckets_native/methods/buckets_list'
 
     
 servers:
