@@ -880,17 +880,20 @@ func (pb *standardPrimitiveGenerator) expandTable(
 	if err != nil {
 		return err
 	}
-	for _, sv := range svc.GetServers() {
-		for k := range sv.Variables {
-			colEntry := symtab.NewSymTabEntry(
-				pb.PrimitiveComposer.GetDRMConfig().GetRelationalType("string"),
-				"",
-				"server",
-			)
-			uid := fmt.Sprintf("%s.%s", tbl.GetUniqueID(), k)
-			pb.PrimitiveComposer.SetSymbol(uid, colEntry) //nolint:errcheck // TODO: review
+	availableServers, availableServersDoExist := svc.GetServers()
+	if availableServersDoExist {
+		for _, sv := range availableServers {
+			for k := range sv.Variables {
+				colEntry := symtab.NewSymTabEntry(
+					pb.PrimitiveComposer.GetDRMConfig().GetRelationalType("string"),
+					"",
+					"server",
+				)
+				uid := fmt.Sprintf("%s.%s", tbl.GetUniqueID(), k)
+				pb.PrimitiveComposer.SetSymbol(uid, colEntry) //nolint:errcheck // TODO: review
+			}
+			break //nolint:staticcheck // TODO: review
 		}
-		break //nolint:staticcheck // TODO: review
 	}
 	responseSchema, err := tbl.GetSelectableObjectSchema()
 	if err != nil {
@@ -1192,21 +1195,24 @@ func (pb *standardPrimitiveGenerator) analyzeDelete(
 	if err != nil {
 		logging.GetLogger().Infof("no response schema for delete: %s \n", err.Error())
 	}
-	svc, err := tbl.GetService()
+	_, err = tbl.GetService()
 	if err != nil {
 		return err
 	}
-	for _, sv := range svc.GetServers() {
-		for k := range sv.Variables {
-			colEntry := symtab.NewSymTabEntry(
-				pb.PrimitiveComposer.GetDRMConfig().GetRelationalType("string"),
-				"",
-				"server",
-			)
-			uid := fmt.Sprintf("%s.%s", tbl.GetUniqueID(), k)
-			pb.PrimitiveComposer.SetSymbol(uid, colEntry) //nolint:errcheck // not a concern
+	availableServers, availableServersDoExist := method.GetServers()
+	if availableServersDoExist {
+		for _, sv := range availableServers {
+			for k := range sv.Variables {
+				colEntry := symtab.NewSymTabEntry(
+					pb.PrimitiveComposer.GetDRMConfig().GetRelationalType("string"),
+					"",
+					"server",
+				)
+				uid := fmt.Sprintf("%s.%s", tbl.GetUniqueID(), k)
+				pb.PrimitiveComposer.SetSymbol(uid, colEntry) //nolint:errcheck // not a concern
+			}
+			break //nolint:staticcheck // TODO: review
 		}
-		break //nolint:staticcheck // TODO: review
 	}
 	if responseSchema != nil {
 		_, _, whereErr := pb.analyzeWhere(node.Where, make(map[string]interface{}))

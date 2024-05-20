@@ -146,7 +146,7 @@ func (v *standardQueryRewriteAstVisitor) generateServerVarColumnDescriptor(
 	return colDesc
 }
 
-//nolint:gocognit,nestif // acceptable
+//nolint:gocognit // acceptable
 func (v *standardQueryRewriteAstVisitor) getStarColumns(
 	tbl tablemetadata.ExtendedTableMetadata,
 ) ([]typing.RelationalColumn, error) {
@@ -195,9 +195,9 @@ func (v *standardQueryRewriteAstVisitor) getStarColumns(
 	}
 	m, mErr := tbl.GetMethod()
 	if m != nil && mErr == nil {
-		servers := m.GetServers()
-		if servers != nil && len(*servers) > 0 {
-			for _, srv := range *servers {
+		servers, serversDoExist := m.GetServers()
+		if serversDoExist {
+			for _, srv := range servers {
 				for k := range srv.Variables {
 					if _, ok := existingColumns[k]; ok {
 						continue
@@ -205,23 +205,6 @@ func (v *standardQueryRewriteAstVisitor) getStarColumns(
 					existingColumns[k] = struct{}{}
 					colDesc := v.generateServerVarColumnDescriptor(k, m)
 					columnDescriptors = append(columnDescriptors, colDesc)
-				}
-			}
-		} else {
-			svc := m.GetService()
-			if svc != nil {
-				svcServers := svc.GetServers()
-				if len(svcServers) > 0 {
-					for _, srv := range svcServers {
-						for k := range srv.Variables {
-							if _, ok := existingColumns[k]; ok {
-								continue
-							}
-							existingColumns[k] = struct{}{}
-							colDesc := v.generateServerVarColumnDescriptor(k, m)
-							columnDescriptors = append(columnDescriptors, colDesc)
-						}
-					}
 				}
 			}
 		}

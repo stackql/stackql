@@ -286,9 +286,15 @@ func GetHeirarchyFromStatement(
 					isView)
 			}
 		}
-		for _, srv := range svcHdl.GetServers() {
-			for k := range srv.Variables {
-				logging.GetLogger().Debugf("server parameter = '%s'\n", k)
+		availableServers, availableServersDoExist := svcHdl.GetServers()
+		if meth != nil {
+			availableServers, availableServersDoExist = meth.GetServers()
+		}
+		if availableServersDoExist {
+			for _, srv := range availableServers {
+				for k := range srv.Variables {
+					logging.GetLogger().Debugf("server parameter = '%s'\n", k)
+				}
 			}
 		}
 		method = meth

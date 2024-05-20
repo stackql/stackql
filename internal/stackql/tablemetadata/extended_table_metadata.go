@@ -101,23 +101,12 @@ func (ex *standardExtendedTableMetadata) GetServerVariables() (map[string]*opena
 		return nil, false
 	}
 	rv := make(map[string]*openapi3.ServerVariable)
-	methodServers := m.GetServers()
-	if methodServers == nil || len(*methodServers) == 0 {
-		svc := m.GetService()
-		if svc != nil {
-			svcServers := svc.GetServers()
-			if len(svcServers) > 0 {
-				for k, v := range (svcServers)[0].Variables {
-					rv[k] = v
-				}
-				return rv, true
+	availableServers, availableServersDoExist := m.GetServers()
+	if availableServersDoExist {
+		for _, s := range availableServers {
+			for k, v := range s.Variables {
+				rv[k] = v
 			}
-			return nil, false
-		}
-	}
-	for _, s := range *methodServers {
-		for k, v := range s.Variables {
-			rv[k] = v
 		}
 	}
 	return rv, true

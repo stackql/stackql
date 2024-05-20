@@ -193,6 +193,19 @@ AWS S3 Buckets Select Simple
     ...    ${SELECT_AWS_S3_BUCKETS_EXPECTED}
     ...    ${CURDIR}/tmp/AWS-S3-Buckets-Select-Simple.tmp
 
+AWS S3 Buckets Select Simple Native From Hybrid Service
+    Should Horrid Query StackQL Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select Name, CreationDate from aws.pseudo_s3.s3_buckets_native where region \= 'ap\-southeast\-1' order by Name ASC;
+    ...    ${SELECT_AWS_S3_BUCKETS_EXPECTED}
+    ...    ${CURDIR}/tmp/AWS-S3-Buckets-Select-Simple-Native-From-Hybrid-Service.tmp
+
 AWS S3 Objects Select Simple
     Should Horrid Query StackQL Inline Equal
     ...    ${STACKQL_EXE}

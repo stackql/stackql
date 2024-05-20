@@ -83,13 +83,11 @@ func (sel *DefaultMethodSelector) getMethodByNameAndParameters(
 	//       refactor such that:
 	//         - Server selection and variable assignment is AOT and binding
 	//         - Server selection is passed in to `Paramaterize()`
-	if resource != nil {
-		svc, svcExists := resource.GetService()
-		if svcExists && len(svc.GetServers()) > 0 {
-			for _, srv := range svc.GetServers() {
-				for k := range srv.Variables {
-					delete(remainingParams, k)
-				}
+	availableServers, availableServersDoExist := m.GetServers()
+	if availableServersDoExist {
+		for _, srv := range availableServers {
+			for k := range srv.Variables {
+				delete(remainingParams, k)
 			}
 		}
 	}
