@@ -10,6 +10,8 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/stackql/any-sdk/pkg/nomenclature"
+
+	"github.com/stackql/stackql/pkg/name_mangle"
 )
 
 type IDiscoveryStore interface {
@@ -104,15 +106,19 @@ func (adp *BasicDiscoveryAdapter) GetServiceShard(
 	if err != nil && resourceKey != "" {
 		return nil, err
 	}
-	viewBodyDDL, viewBodyDDLPresent := rsc.GetViewBodyDDLForSQLDialect(adp.sqlSystem.GetName())
-	if viewBodyDDLPresent {
-		viewName := rsc.GetID()
-		_, viewExists := adp.sqlSystem.GetViewByName(viewName)
-		if !viewExists {
-			// TODO: resolve any possible data race
-			err = adp.sqlSystem.CreateView(viewName, viewBodyDDL, true)
-			if err != nil {
-				return nil, err
+	viewNameMangler := name_mangle.NewViewNameMangler()
+	viewCollection, viewCollectionPresent := rsc.GetViewsForSqlDialect(adp.sqlSystem.GetName())
+	if viewCollectionPresent {
+		for i, view := range viewCollection {
+			viewNameNaive := view.GetNameNaive()
+			viewName := viewNameMangler.MangleName(viewNameNaive, i)
+			_, viewExists := adp.sqlSystem.GetViewByName(viewName)
+			if !viewExists {
+				// TODO: resolve any possible data race
+				err = adp.sqlSystem.CreateView(viewName, view.GetDDL(), true, view.GetRequiredParamNames())
+				if err != nil {
+					return nil, err
+				}
 			}
 		}
 	}

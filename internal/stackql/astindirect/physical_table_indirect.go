@@ -21,6 +21,26 @@ type physicalTable struct {
 	underlyingSymbolTable symtab.SymTab
 }
 
+func (v *physicalTable) IsElide() bool {
+	return false
+}
+
+func (v *physicalTable) SetElide(bool) {
+	//
+}
+
+func (v *physicalTable) MatchOnParams(_ map[string]any) (Indirect, bool) {
+	return nil, false
+}
+
+func (v *physicalTable) WithNext(Indirect) Indirect {
+	return v
+}
+
+func (v *physicalTable) Next() (Indirect, bool) {
+	return nil, false
+}
+
 func (v *physicalTable) GetType() IndirectType {
 	return PhysicalTableType
 }

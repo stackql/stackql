@@ -87,6 +87,7 @@ CREATE TABLE IF NOT EXISTS "__iql__.views" (
   ,view_name TEXT NOT NULL UNIQUE
   ,view_ddl TEXT
   ,view_stackql_ddl TEXT
+  ,required_params TEXT NOT NULL DEFAULT ''
   ,created_dttm TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
   ,deleted_dttm TIMESTAMP WITH TIME ZONE DEFAULT null
 )

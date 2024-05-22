@@ -140,6 +140,10 @@
         "insert into aws.pseudo_s3.s3_bucket_detail_transformed( region, BucketName ) select 'ap-southeast-1', 'my-bucket' ;",
         "SHOW METHODS IN aws.pseudo_s3.s3_bucket_detail_transformed",
         "select Identifier, Properties from aws.cloud_control.resources where region = 'ap-southeast-1' and data__TypeName = 'AWS::EC2::VPC' order by Identifier desc;",
+        "select BucketName, DomainName from aws.pseudo_s3.s3_bucket_listing where data__Identifier = 'stackql-trial-bucket-01' and region = 'ap-southeast-2' and BucketName = 'stackql-trial-bucket-01';",
+        "select * from aws.pseudo_s3.s3_bucket_polymorphic;",
+        "show methods in aws.pseudo_s3.s3_bucket_detail;",
+        "select * from aws_cc_bucket_unfiltered where data__Identifier = 'stackql-trial-bucket-01' ;",
       ],
       "default": "show providers;"
     },

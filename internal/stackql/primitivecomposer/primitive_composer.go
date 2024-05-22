@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/stackql/any-sdk/anysdk"
+	"github.com/stackql/stackql/internal/stackql/astindirect"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
@@ -89,6 +90,8 @@ type PrimitiveComposer interface {
 	SetValOnlyCols(m map[int]map[string]interface{})
 	SetWhere(where *sqlparser.Where)
 	ShouldCollectGarbage() bool
+	WithAstIndirect(astIndirect astindirect.Indirect) PrimitiveComposer
+	IsElide() bool
 }
 
 type standardPrimitiveComposer struct {
@@ -154,6 +157,20 @@ type standardPrimitiveComposer struct {
 	isIndirect bool
 
 	containsUserRelation bool
+
+	astIndirect astindirect.Indirect
+}
+
+func (pb *standardPrimitiveComposer) WithAstIndirect(astIndirect astindirect.Indirect) PrimitiveComposer {
+	pb.astIndirect = astIndirect
+	return pb
+}
+
+func (pb *standardPrimitiveComposer) IsElide() bool {
+	if pb.astIndirect == nil {
+		return false
+	}
+	return pb.astIndirect.IsElide()
 }
 
 func (pb *standardPrimitiveComposer) SetContainsUserRelation(containsUserRelation bool) {
@@ -469,7 +486,11 @@ func (pb *standardPrimitiveComposer) GetBuilder() primitivebuilder.Builder {
 		pb.builder, builders, pb.graphHolder, pb.sqlSystem, pb.ShouldCollectGarbage())
 	if len(pb.indirects) > 0 {
 		var indirectBuilders []primitivebuilder.Builder
+		// TODO: elide if not required
 		for _, ind := range pb.indirects {
+			if ind.IsElide() {
+				continue
+			}
 			if bldr := ind.GetBuilder(); bldr != nil {
 				indirectBuilders = append(indirectBuilders, bldr)
 			}

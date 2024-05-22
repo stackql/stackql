@@ -204,14 +204,34 @@ func (aa *standardAnnotatedAst) GetIndirects() map[string]astindirect.Indirect {
 func (aa *standardAnnotatedAst) SetIndirect(node sqlparser.SQLNode, indirect astindirect.Indirect) {
 	switch n := node.(type) {
 	case sqlparser.TableName:
-		aa.tableIndirects[n.GetRawVal()] = indirect
+		lhs, exists := aa.tableIndirects[n.GetRawVal()]
+		if exists {
+			lhs.WithNext(indirect)
+		} else {
+			aa.tableIndirects[n.GetRawVal()] = indirect
+		}
 	case *sqlparser.AliasedTableExpr:
 		// this is for subqueries
-		aa.tableIndirects[n.As.GetRawVal()] = indirect
+		lhs, exists := aa.tableIndirects[n.As.GetRawVal()]
+		if exists {
+			lhs.WithNext(indirect)
+		} else {
+			aa.tableIndirects[n.As.GetRawVal()] = indirect
+		}
 	case *sqlparser.DDL:
-		aa.tableIndirects[n.Table.GetRawVal()] = indirect
+		lhs, exists := aa.tableIndirects[n.Table.GetRawVal()]
+		if exists {
+			lhs.WithNext(indirect)
+		} else {
+			aa.tableIndirects[n.Table.GetRawVal()] = indirect
+		}
 	case *sqlparser.RefreshMaterializedView:
-		aa.tableIndirects[n.ViewName.GetRawVal()] = indirect
+		lhs, exists := aa.tableIndirects[n.ViewName.GetRawVal()]
+		if exists {
+			lhs.WithNext(indirect)
+		} else {
+			aa.tableIndirects[n.ViewName.GetRawVal()] = indirect
+		}
 	default:
 	}
 }

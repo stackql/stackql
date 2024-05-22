@@ -67,9 +67,10 @@ type SQLSystem interface {
 	GetTable(internaldto.HeirarchyIdentifiers, int) (internaldto.DBTable, error)
 
 	// Views
-	CreateView(viewName string, rawDDL string, replaceAllowed bool) error
+	CreateView(viewName string, rawDDL string, replaceAllowed bool, requiredParams []string) error
 	DropView(viewName string) error
 	GetViewByName(viewName string) (internaldto.RelationDTO, bool)
+	GetViewByNameAndParameters(viewName string, params map[string]any) (internaldto.RelationDTO, bool)
 
 	// Materialized Views
 	CreateMaterializedView(

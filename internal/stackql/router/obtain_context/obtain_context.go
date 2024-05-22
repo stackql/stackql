@@ -52,6 +52,7 @@ func ObtainAnnotationCtx(
 	}
 	hIds := internaldto.NewHeirarchyIdentifiers(provStr, svcStr, rscStr, methodStr).WithResponseSchemaStr(name)
 	viewDTO, isView := sqlSystem.GetViewByName(hIds.GetTableName())
+	// TODO: match on params
 	if isView {
 		hIds = hIds.WithView(viewDTO)
 	}

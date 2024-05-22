@@ -358,7 +358,7 @@ func (pr *standardParameterRouter) Route(
 	return pr.route(tb, handlerCtx)
 }
 
-//nolint:funlen,gocognit,govet // inherently complex functionality
+//nolint:funlen,gocognit,govet,gocyclo,cyclop // inherently complex functionality
 func (pr *standardParameterRouter) route(
 	tb sqlparser.TableExpr,
 	handlerCtx handler.HandlerContext,
@@ -486,6 +486,28 @@ func (pr *standardParameterRouter) route(
 		logging.GetLogger().Infof("%v", kv)
 	}
 	indirect, _ := pr.annotatedAST.GetIndirect(tb)
+	currentIndirect := indirect
+	// TODO: elide all non selected indirects
+	var alreadyMatched bool
+	for {
+		if currentIndirect == nil {
+			break
+		}
+		ind, matches := currentIndirect.MatchOnParams(abbreviatedConsumedMap)
+		if matches && !alreadyMatched {
+			indirect = ind
+			alreadyMatched = true
+		} else {
+			// elide this indirect
+			currentIndirect.SetElide(true)
+		}
+		var hasNext bool
+		currentIndirect, hasNext = currentIndirect.Next()
+		if !hasNext {
+			break
+		}
+		logging.GetLogger().Infof("nextIndirect = %v", currentIndirect)
+	}
 	hrView, hrViewPresent := hr.GetHeirarchyIds().GetView()
 	if indirect == nil && hrViewPresent { //nolint:nestif // TODO: review
 		if hrView.IsMaterialized() { //nolint:gocritic // TODO: review
