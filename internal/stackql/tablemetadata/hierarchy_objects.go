@@ -39,6 +39,8 @@ type HeirarchyObjects interface {
 	SetResource(anysdk.Resource)
 	SetServiceHdl(anysdk.Service)
 	IsPGInternalObject() bool
+	SetIndirect(internaldto.RelationDTO)
+	GetIndirect() (internaldto.RelationDTO, bool)
 }
 
 func NewHeirarchyObjects(hIDs internaldto.HeirarchyIdentifiers) HeirarchyObjects {
@@ -53,6 +55,15 @@ type standardHeirarchyObjects struct {
 	heirarchyIds  internaldto.HeirarchyIdentifiers
 	prov          provider.IProvider
 	sqlDataSource sql_datasource.SQLDataSource
+	indirect      internaldto.RelationDTO
+}
+
+func (ho *standardHeirarchyObjects) GetIndirect() (internaldto.RelationDTO, bool) {
+	return ho.indirect, ho.indirect != nil
+}
+
+func (ho *standardHeirarchyObjects) SetIndirect(indirect internaldto.RelationDTO) {
+	ho.indirect = indirect
 }
 
 func (ho *standardHeirarchyObjects) IsPGInternalObject() bool {

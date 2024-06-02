@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/stackql/any-sdk/anysdk"
+	"github.com/stackql/stackql/internal/stackql/astindirect"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/iqlutil"
 	"github.com/stackql/stackql/internal/stackql/logging"
@@ -56,6 +57,7 @@ type PrimitiveGenerator interface {
 	IsShowResults() bool
 	GetIndirectCreateTailBuilder() (primitivebuilder.Builder, bool)
 	SetIndirectCreateTailBuilder(builder primitivebuilder.Builder)
+	WithAstIndirect(astindirect.Indirect) PrimitiveGenerator
 }
 
 type standardPrimitiveGenerator struct {
@@ -84,6 +86,11 @@ func NewRootPrimitiveGenerator(
 			handlerCtx.GetSQLEngine(), handlerCtx.GetSQLSystem(),
 			handlerCtx.GetASTFormatter()),
 	}
+}
+
+func (pb *standardPrimitiveGenerator) WithAstIndirect(astIndirect astindirect.Indirect) PrimitiveGenerator {
+	pb.PrimitiveComposer.WithAstIndirect(astIndirect)
+	return pb
 }
 
 func (pb *standardPrimitiveGenerator) GetIndirectCreateTailBuilder() (primitivebuilder.Builder, bool) {

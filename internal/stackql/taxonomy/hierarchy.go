@@ -10,6 +10,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
+	"github.com/stackql/stackql/pkg/name_mangle"
 
 	"strings"
 
@@ -20,11 +21,15 @@ func GetHeirarchyIDsFromParserNode(
 	handlerCtx handler.HandlerContext,
 	node sqlparser.SQLNode,
 ) (internaldto.HeirarchyIdentifiers, error) {
-	return getHids(handlerCtx, node)
+	return getHids(
+		handlerCtx, node, parserutil.NewParameterMap())
 }
 
 //nolint:funlen,gocognit // lots of moving parts
-func getHids(handlerCtx handler.HandlerContext, node sqlparser.SQLNode) (internaldto.HeirarchyIdentifiers, error) {
+func getHids(
+	handlerCtx handler.HandlerContext,
+	node sqlparser.SQLNode,
+	params parserutil.ColumnKeyedDatastore) (internaldto.HeirarchyIdentifiers, error) {
 	var hIds internaldto.HeirarchyIdentifiers
 	switch n := node.(type) {
 	case *sqlparser.Exec:
@@ -45,9 +50,9 @@ func getHids(handlerCtx handler.HandlerContext, node sqlparser.SQLNode) (interna
 			sq := internaldto.NewSubqueryDTO(n, t)
 			return internaldto.ObtainSubqueryHeirarchyIdentifiers(sq), nil
 		}
-		return getHids(handlerCtx, n.Expr)
+		return getHids(handlerCtx, n.Expr, params)
 	case *sqlparser.DescribeTable:
-		return getHids(handlerCtx, n.Table)
+		return getHids(handlerCtx, n.Table, params)
 	case *sqlparser.Show:
 		switch strings.ToUpper(n.Type) {
 		case "INSERT":
@@ -77,7 +82,8 @@ func getHids(handlerCtx handler.HandlerContext, node sqlparser.SQLNode) (interna
 	default:
 		return nil, fmt.Errorf("cannot resolve taxonomy")
 	}
-	viewDTO, isView := handlerCtx.GetSQLSystem().GetViewByName(hIds.GetTableName())
+	viewDTO, isView := handlerCtx.GetSQLSystem().GetViewByNameAndParameters(
+		hIds.GetTableName(), params.GetStringified())
 	if isView {
 		hIds = hIds.WithView(viewDTO)
 	}
@@ -145,7 +151,10 @@ func GetHeirarchyFromStatement(
 ) (tablemetadata.HeirarchyObjects, error) {
 	var hIds internaldto.HeirarchyIdentifiers
 	getFirstAvailableMethod := false
-	hIds, err := getHids(handlerCtx, node)
+	if parameters == nil {
+		parameters = parserutil.NewParameterMap()
+	}
+	hIds, err := getHids(handlerCtx, node, parameters)
 	if err != nil {
 		return nil, err
 	}
@@ -196,57 +205,65 @@ func GetHeirarchyFromStatement(
 	}
 	prov, err := handlerCtx.GetProvider(hIds.GetProviderStr())
 	retVal.SetProvider(prov)
-	viewDTO, isView := retVal.GetView()
+	viewDTO, viewExists := retVal.GetView()
 	var meth anysdk.OperationStore
 	var methStr string
 	var methodErr error
 	if methodAction == "" {
 		methodAction = "select"
 	}
-	if isView {
+	if viewExists {
+		retVal.SetIndirect(viewDTO)
 		logging.GetLogger().Debugf("viewDTO = %v\n", viewDTO)
 		// return retVal, nil //nolint:nilerr // acceptable
 	}
 	if err != nil {
-		return returnViewOnErrorIfPresent(retVal, err, isView)
+		return returnViewOnErrorIfPresent(retVal, err, viewExists)
 	}
 	svcHdl, err := prov.GetServiceShard(hIds.GetServiceStr(), hIds.GetResourceStr(), handlerCtx.GetRuntimeContext())
 	if err != nil {
-		return returnViewOnErrorIfPresent(retVal, err, isView)
+		return returnViewOnErrorIfPresent(retVal, err, viewExists)
 	}
 	retVal.SetServiceHdl(svcHdl)
 	rsc, err := prov.GetResource(hIds.GetServiceStr(), hIds.GetResourceStr(), handlerCtx.GetRuntimeContext())
 	if err != nil {
-		return returnViewOnErrorIfPresent(retVal, err, isView)
+		return returnViewOnErrorIfPresent(retVal, err, viewExists)
 	}
 	retVal.SetResource(rsc)
+	viewNameMangler := name_mangle.NewViewNameMangler()
 	//nolint:nestif // not overly complex
-	if viewBodyDDL, ok := rsc.GetViewBodyDDLForSQLDialect(
-		handlerCtx.GetSQLSystem().GetName()); ok && methodAction == "select" && !isView {
-		viewName := hIds.GetStackQLTableName()
-		// TODO: mutex required or some other strategy
-		viewDTO, viewExists := handlerCtx.GetSQLSystem().GetViewByName(viewName) //nolint:govet // acceptable shadow
-		if !viewExists {
-			// TODO: resolve any possible data race
-			err = handlerCtx.GetSQLSystem().CreateView(viewName, viewBodyDDL, true)
-			if err != nil {
-				return nil, err
+	if viewCollection, ok := rsc.GetViewsForSqlDialect(
+		handlerCtx.GetSQLSystem().GetName()); ok && methodAction == "select" && !viewExists {
+		for i, view := range viewCollection {
+			viewNameNaive := view.GetNameNaive()
+			viewName := viewNameMangler.MangleName(viewNameNaive, i)
+			// TODO: mutex required or some other strategy
+			viewDTO, viewExists = handlerCtx.GetSQLSystem().GetViewByNameAndParameters(
+				viewName, parameters.GetStringified())
+			if !viewExists {
+				// TODO: resolve any possible data race
+				err = handlerCtx.GetSQLSystem().CreateView(viewName, view.GetDDL(), true, nil)
+				if err != nil {
+					return nil, err
+				}
+				params := parameters.GetStringified()
+				viewDTO, viewExists = handlerCtx.GetSQLSystem().GetViewByNameAndParameters(
+					hIds.GetTableName(), params)
+				if viewExists {
+					retVal.SetIndirect(viewDTO)
+				}
+				return retVal, nil
 			}
-			viewDTO, isView := handlerCtx.GetSQLSystem().GetViewByName(hIds.GetTableName()) //nolint:govet // acceptable shadow
-			if isView {
-				hIds = hIds.WithView(viewDTO) //nolint:staticcheck,wastedassign // TODO: fix this
-			}
-			return retVal, nil
+			retVal.SetIndirect(viewDTO)
+			return retVal, nil //nolint:staticcheck // TODO: fix this
 		}
-		hIds = hIds.WithView(viewDTO) //nolint:staticcheck,wastedassign // TODO: fix this
-		return retVal, nil
 	}
 	var method anysdk.OperationStore
 	switch node.(type) {
 	case *sqlparser.Exec, *sqlparser.ExecSubquery:
 		method, err = rsc.FindMethod(hIds.GetMethodStr())
 		if err != nil {
-			return returnViewOnErrorIfPresent(retVal, err, isView)
+			return returnViewOnErrorIfPresent(retVal, err, viewExists)
 		}
 		retVal.SetMethod(method)
 		return retVal, nil
@@ -255,7 +272,7 @@ func GetHeirarchyFromStatement(
 	if methodRequired {
 		switch node.(type) { //nolint:gocritic // this is expressive enough
 		case *sqlparser.DescribeTable:
-			if isView {
+			if viewExists {
 				return retVal, nil
 			}
 			m, mStr, mErr := prov.InferDescribeMethod(rsc)
@@ -283,7 +300,7 @@ func GetHeirarchyFromStatement(
 				return returnViewOnErrorIfPresent(retVal, fmt.Errorf(
 					"cannot find matching operation, possible causes include missing required parameters or an unsupported method for the resource, to find required parameters for supported methods run SHOW METHODS IN %s: %w", //nolint:lll // long string
 					retVal.GetHeirarchyIds().GetTableName(), methodErr),
-					isView)
+					viewExists)
 			}
 		}
 		availableServers, availableServersDoExist := svcHdl.GetServers()

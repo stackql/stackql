@@ -28,6 +28,23 @@ func (v *standardMaterializedViewDTO) GetRawQuery() string {
 	return v.rawViewQuery
 }
 
+func (v *standardMaterializedViewDTO) Next() (RelationDTO, bool) {
+	return nil, false
+}
+
+func (v *standardMaterializedViewDTO) WithNext(_ RelationDTO) RelationDTO {
+	// v.next = next
+	return v
+}
+
+func (v *standardMaterializedViewDTO) WithRequiredParams(_ map[string]any) RelationDTO {
+	return v
+}
+
+func (v *standardMaterializedViewDTO) MatchOnParams(map[string]any) (RelationDTO, bool) {
+	return v, true
+}
+
 func (v *standardMaterializedViewDTO) GetName() string {
 	return v.viewName
 }

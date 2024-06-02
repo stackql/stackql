@@ -126,7 +126,7 @@ func (v *indirectExpandAstVisitor) processIndirect(node sqlparser.SQLNode, indir
 	indirectPrimitiveGenerator := v.primitiveGenerator.CreateIndirectPrimitiveGenerator(
 		indirect.GetSelectAST(),
 		v.handlerCtx,
-	)
+	).WithAstIndirect(indirect)
 	indirectPrimitiveGenerator.SetIsIndirect(true)
 	err = indirectPrimitiveGenerator.AnalyzeSelectStatement(childAnalyzer.GetPlanBuilderInput())
 	if err != nil {
@@ -864,13 +864,20 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 		materializedViewDTO, isMaterializedView := v.sqlSystem.GetMaterializedViewByName(node.GetRawVal())
 		tableDTO, isTable := v.sqlSystem.GetPhysicalTableByName(node.GetRawVal())
 		if isView { //nolint:nestif,gocritic // acceptable
-			indirect, newErr := astindirect.NewViewIndirect(viewDTO)
-			if newErr != nil {
-				return newErr
-			}
-			err = v.processIndirect(node, indirect)
-			if err != nil {
-				return err
+			hasNext := true //nolint:ineffassign,wastedassign // deferring uplifts on analysers
+			for {
+				indirect, newErr := astindirect.NewViewIndirect(viewDTO)
+				if newErr != nil {
+					return newErr
+				}
+				err = v.processIndirect(node, indirect)
+				if err != nil {
+					return err
+				}
+				viewDTO, hasNext = viewDTO.Next()
+				if !hasNext {
+					break
+				}
 			}
 			return nil
 		} else if isMaterializedView {

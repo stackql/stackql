@@ -18,6 +18,26 @@ type Subquery struct {
 	underlyingSymbolTable symtab.SymTab
 }
 
+func (v *Subquery) IsElide() bool {
+	return false
+}
+
+func (v *Subquery) SetElide(bool) {
+	//
+}
+
+func (v *Subquery) MatchOnParams(_ map[string]any) (Indirect, bool) {
+	return nil, false
+}
+
+func (v *Subquery) WithNext(Indirect) Indirect {
+	return v
+}
+
+func (v *Subquery) Next() (Indirect, bool) {
+	return nil, false
+}
+
 func (v *Subquery) GetType() IndirectType {
 	return SubqueryType
 }

@@ -95,7 +95,7 @@ func (ddo *ddl) Build() error {
 				}
 			} else {
 				relationDDL := parserutil.RenderDDLSelectStmt(parserDDLObj)
-				err := sqlSystem.CreateView(unqualifiedTableName, relationDDL, parserDDLObj.OrReplace)
+				err := sqlSystem.CreateView(unqualifiedTableName, relationDDL, parserDDLObj.OrReplace, nil)
 				if err != nil {
 					return internaldto.NewErroneousExecutorOutput(err)
 				}

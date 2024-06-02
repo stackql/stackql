@@ -18,6 +18,26 @@ type parserSelectionIndirect struct {
 	underlyingSymbolTable symtab.SymTab
 }
 
+func (v *parserSelectionIndirect) IsElide() bool {
+	return false
+}
+
+func (v *parserSelectionIndirect) SetElide(bool) {
+	//
+}
+
+func (v *parserSelectionIndirect) MatchOnParams(_ map[string]any) (Indirect, bool) {
+	return nil, false
+}
+
+func (v *parserSelectionIndirect) WithNext(Indirect) Indirect {
+	return v
+}
+
+func (v *parserSelectionIndirect) Next() (Indirect, bool) {
+	return nil, false
+}
+
 func (v *parserSelectionIndirect) GetType() IndirectType {
 	isExec := v.execObj != nil
 	if isExec {

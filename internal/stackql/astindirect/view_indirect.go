@@ -18,10 +18,36 @@ type View struct {
 	selCtx                drm.PreparedStatementCtx
 	paramCollection       internaldto.TableParameterCollection
 	underlyingSymbolTable symtab.SymTab
+	next                  Indirect
+	isElide               bool
+}
+
+func (v *View) IsElide() bool {
+	return v.isElide
+}
+
+func (v *View) SetElide(isElide bool) {
+	v.isElide = isElide
 }
 
 func (v *View) GetType() IndirectType {
 	return ViewType
+}
+
+func (v *View) MatchOnParams(params map[string]any) (Indirect, bool) {
+	if _, matching := v.viewDTO.MatchOnParams(params); matching {
+		return v, true
+	}
+	return nil, false
+}
+
+func (v *View) WithNext(next Indirect) Indirect {
+	v.next = next
+	return v.next
+}
+
+func (v *View) Next() (Indirect, bool) {
+	return v.next, v.next != nil
 }
 
 func (v *View) GetRelationalColumns() []typing.RelationalColumn {
