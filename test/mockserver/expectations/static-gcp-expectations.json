@@ -5,6 +5,40 @@
         "accept": [ "application/json" ]
       },
       "method": "GET",
+      "path": "/v1/projects/testing-project/locations/australia-southeast1/keyRings"
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "body": {}
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "accept": [ "application/json" ]
+      },
+      "method": "GET",
+      "path": "/v1/projects/testing-project/locations/global/keyRings"
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "body": {
+        "keyRings": [
+          {
+            "name": "projects/testing-project/locations/global/keyRings/testing",
+            "createTime": "2022-02-02T02:02:02.02000000Z"
+          }
+        ],
+        "totalSize": 1
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "accept": [ "application/json" ]
+      },
+      "method": "GET",
       "path": "/projects/testing-project/zones/australia-southeast1-a/instances/000000001/getIamPolicy"
     },
     "httpResponse": {

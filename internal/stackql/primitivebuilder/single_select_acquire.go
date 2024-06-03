@@ -109,7 +109,7 @@ func (ss *SingleSelectAcquire) GetTail() primitivegraph.PrimitiveNode {
 	return ss.root
 }
 
-//nolint:funlen,gocognit,gocyclo,cyclop // TODO: investigate
+//nolint:funlen,gocognit,gocyclo,cyclop,nestif // TODO: investigate
 func (ss *SingleSelectAcquire) Build() error {
 	prov, err := ss.tableMeta.GetProvider()
 	if err != nil {
@@ -205,7 +205,13 @@ func (ss *SingleSelectAcquire) Build() error {
 				}
 				processed, resErr := m.ProcessResponse(response)
 				if resErr != nil {
-					return internaldto.NewErroneousExecutorOutput(resErr)
+					//nolint:errcheck // TODO: fix
+					ss.handlerCtx.GetOutErrFile().Write(
+						[]byte(fmt.Sprintf("error processing response: %s\n", resErr.Error())),
+					)
+					if processed == nil {
+						return internaldto.NewErroneousExecutorOutput(resErr)
+					}
 				}
 				res, respOk := processed.GetResponse()
 				if !respOk {
@@ -225,10 +231,15 @@ func (ss *SingleSelectAcquire) Build() error {
 					if ss.tableMeta.GetSelectItemsKey() != "" && ss.tableMeta.GetSelectItemsKey() != "/*" {
 						items, ok = pl[ss.tableMeta.GetSelectItemsKey()]
 						if !ok {
-							items = []interface{}{
-								pl,
+							if resErr != nil {
+								items = []interface{}{}
+								ok = true
+							} else {
+								items = []interface{}{
+									pl,
+								}
+								ok = true
 							}
-							ok = true
 						}
 					} else {
 						items = []interface{}{

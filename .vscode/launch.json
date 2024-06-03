@@ -144,6 +144,7 @@
         "select * from aws.pseudo_s3.s3_bucket_polymorphic;",
         "show methods in aws.pseudo_s3.s3_bucket_detail;",
         "select * from aws_cc_bucket_unfiltered where data__Identifier = 'stackql-trial-bucket-01' ;",
+        "select * from  google.cloudkms.key_rings where projectsId = 'testing-project' and locationsId = 'australia-southeast1';",
       ],
       "default": "show providers;"
     },
