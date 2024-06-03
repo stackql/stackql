@@ -4111,3 +4111,49 @@ External Postgres Data Source Inner Join Ordered Query
     ...    select rtg.table_catalog, rtg.table_schema, rtg.table_name, rtg.privilege_type, rtg.is_grantable, ar.is_grantable as role_is_grantable from pgi.information_schema.role_table_grants rtg inner join pgi.information_schema.applicable_roles ar on rtg.grantee \= ar.grantee where rtg.table_name \= 'pg_statistic' order by privilege_type desc;
     ...    ${SELECT_EXTERNAL_INFORMATION_SCHEMA_INNER_JOIN_EXPECTED}
     ...    ${CURDIR}/tmp/External-Postgres-Data-Source-Inner-Join-Ordered-Query.tmp
+
+Empty Response 200 Missing Jsonpath Search Key Should Return Empty Table on GCP KMS Key Rings
+    ${inputStr} =    Catenate
+    ...    select * from  google.cloudkms.key_rings where projectsId = 'testing-project' and locationsId = 'australia-southeast1';
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |------------|------|
+    ...    |${SPACE}createTime${SPACE}|${SPACE}name${SPACE}|
+    ...    |------------|------|
+    ${stdErrStr} =    Catenate    SEPARATOR=\n
+    ...    error processing response: unknown key keyRings
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${stdErrStr}
+    ...    stdout=${CURDIR}/tmp/Empty-Response-200-Missing-Jsonpath-Search-Key-Should-Return-Empty-Table-on-GCP-KMS-Key-Rings.tmp
+    ...    stderr=${CURDIR}/tmp/Empty-Response-200-Missing-Jsonpath-Search-Key-Should-Return-Empty-Table-on-GCP-KMS-Key-Rings-stderr.tmp
+
+Normal Response 200 Should Return Populated Table on GCP KMS Key Rings
+    ${inputStr} =    Catenate
+    ...    select * from  google.cloudkms.key_rings where projectsId = 'testing-project' and locationsId = 'global';
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-------------------------------|------------------------------------------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}createTime${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------------------------------|------------------------------------------------------------|
+    ...    |${SPACE}2022-02-02T02:02:02.02000000Z${SPACE}|${SPACE}projects/testing-project/locations/global/keyRings/testing${SPACE}|
+    ...    |-------------------------------|------------------------------------------------------------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Normal-Response-200-Should-Return-Populated-Table-on-GCP-KMS-Key-Rings.tmp
+    ...    stderr=${CURDIR}/tmp/Normal-Response-200-Should-Return-Populated-Table-on-GCP-KMS-Key-Rings-stderr.tmp
