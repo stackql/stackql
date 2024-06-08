@@ -316,7 +316,7 @@ func (pb *standardPrimitiveComposer) AddIndirect(val PrimitiveComposer) {
 }
 
 func (pb *standardPrimitiveComposer) GetIndirectDescribeSelectCtx() (drm.PreparedStatementCtx, bool) {
-	if len(pb.indirects) != 1 || pb.indirects[0] == nil {
+	if len(pb.indirects) < 1 || pb.indirects[0] == nil {
 		return nil, false
 	}
 	rv := pb.indirects[0].GetIndirectSelectPreparedStatementCtx()
