@@ -17,6 +17,25 @@ const (
 	FloatBitSize int = 64
 )
 
+//nolint:gocritic,staticcheck // TODO: clean up this and other tech debt
+func ExtractLHSTable(sqlFunc *sqlparser.FuncExpr) (*sqlparser.ColName, bool) {
+	if sqlFunc == nil {
+		return nil, false
+	}
+	funcNameLowered := strings.ToLower(sqlFunc.Name.GetRawVal())
+	switch funcNameLowered {
+	default:
+		switch ex := sqlFunc.Exprs[0].(type) {
+		case *sqlparser.AliasedExpr:
+			switch ex2 := ex.Expr.(type) {
+			case *sqlparser.ColName:
+				return ex2, true
+			}
+		}
+	}
+	return nil, false
+}
+
 // These null "dual" tables are some vitess artifact.
 func IsNullTable(node sqlparser.TableExpr) bool {
 	return isNullTable(node)

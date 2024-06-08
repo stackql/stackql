@@ -21,6 +21,7 @@ type SQLRewriteInput interface { //nolint:revive //TODO: review
 	GetFromString() string
 	GetIndirectContexts() []drm.PreparedStatementCtx
 	GetPrepStmtOffset() int
+	GetSelectQualifier() string
 	GetSelectSuffix() string
 	GetRewrittenWhere() string
 	GetSecondaryCtrlCounters() []internaldto.TxnControlCounters
@@ -29,12 +30,14 @@ type SQLRewriteInput interface { //nolint:revive //TODO: review
 	WithIndirectContexts(indirectContexts []drm.PreparedStatementCtx) SQLRewriteInput
 	WithPrepStmtOffset(offset int) SQLRewriteInput
 	GetParameters() map[string]interface{}
+	WithSelectQualifier(string) SQLRewriteInput
 }
 
-type StandardSQLRewriteInput struct {
+type standardSQLRewriteInput struct {
 	dc                       drm.Config
 	columnDescriptors        []typing.RelationalColumn
 	baseControlCounters      internaldto.TxnControlCounters
+	selectQualifier          string
 	selectSuffix             string
 	rewrittenWhere           string
 	secondaryCtrlCounters    []internaldto.TxnControlCounters
@@ -62,7 +65,7 @@ func NewStandardSQLRewriteInput(
 	hoistedOnClauseTables []sqlparser.SQLNode,
 	parameters map[string]interface{},
 ) SQLRewriteInput {
-	return &StandardSQLRewriteInput{
+	return &standardSQLRewriteInput{
 		dc:                       dc,
 		columnDescriptors:        columnDescriptors,
 		baseControlCounters:      baseControlCounters,
@@ -78,69 +81,78 @@ func NewStandardSQLRewriteInput(
 	}
 }
 
-func (ri *StandardSQLRewriteInput) GetHoistedOnClauseTables() []sqlparser.SQLNode {
+func (ri *standardSQLRewriteInput) GetHoistedOnClauseTables() []sqlparser.SQLNode {
 	return ri.hoistedOnClauseTables
 }
 
-func (ri *StandardSQLRewriteInput) GetPrepStmtOffset() int {
+func (ri *standardSQLRewriteInput) WithSelectQualifier(selectQualifier string) SQLRewriteInput {
+	ri.selectQualifier = selectQualifier
+	return ri
+}
+
+func (ri *standardSQLRewriteInput) GetSelectQualifier() string {
+	return ri.selectQualifier
+}
+
+func (ri *standardSQLRewriteInput) GetPrepStmtOffset() int {
 	return ri.prepStmtOffset
 }
 
-func (ri *StandardSQLRewriteInput) GetParameters() map[string]interface{} {
+func (ri *standardSQLRewriteInput) GetParameters() map[string]interface{} {
 	return ri.parameters
 }
 
-func (ri *StandardSQLRewriteInput) WithPrepStmtOffset(offset int) SQLRewriteInput {
+func (ri *standardSQLRewriteInput) WithPrepStmtOffset(offset int) SQLRewriteInput {
 	ri.prepStmtOffset = offset
 	return ri
 }
 
-func (ri *StandardSQLRewriteInput) GetDRMConfig() drm.Config {
+func (ri *standardSQLRewriteInput) GetDRMConfig() drm.Config {
 	return ri.dc
 }
 
-func (ri *StandardSQLRewriteInput) WithIndirectContexts(indirectContexts []drm.PreparedStatementCtx) SQLRewriteInput {
+func (ri *standardSQLRewriteInput) WithIndirectContexts(indirectContexts []drm.PreparedStatementCtx) SQLRewriteInput {
 	ri.indirectContexts = indirectContexts
 	return ri
 }
 
-func (ri *StandardSQLRewriteInput) GetIndirectContexts() []drm.PreparedStatementCtx {
+func (ri *standardSQLRewriteInput) GetIndirectContexts() []drm.PreparedStatementCtx {
 	return ri.indirectContexts
 }
 
-func (ri *StandardSQLRewriteInput) GetNamespaceCollection() tablenamespace.Collection {
+func (ri *standardSQLRewriteInput) GetNamespaceCollection() tablenamespace.Collection {
 	return ri.namespaceCollection
 }
 
-func (ri *StandardSQLRewriteInput) GetColumnDescriptors() []typing.RelationalColumn {
+func (ri *standardSQLRewriteInput) GetColumnDescriptors() []typing.RelationalColumn {
 	return ri.columnDescriptors
 }
 
-func (ri *StandardSQLRewriteInput) GetTableInsertionContainers() []tableinsertioncontainer.TableInsertionContainer {
+func (ri *standardSQLRewriteInput) GetTableInsertionContainers() []tableinsertioncontainer.TableInsertionContainer {
 	return ri.tableInsertionContainers
 }
 
-func (ri *StandardSQLRewriteInput) GetBaseControlCounters() internaldto.TxnControlCounters {
+func (ri *standardSQLRewriteInput) GetBaseControlCounters() internaldto.TxnControlCounters {
 	return ri.baseControlCounters
 }
 
-func (ri *StandardSQLRewriteInput) GetSelectSuffix() string {
+func (ri *standardSQLRewriteInput) GetSelectSuffix() string {
 	return ri.selectSuffix
 }
 
-func (ri *StandardSQLRewriteInput) GetFromString() string {
+func (ri *standardSQLRewriteInput) GetFromString() string {
 	return ri.fromString
 }
 
-func (ri *StandardSQLRewriteInput) GetRewrittenWhere() string {
+func (ri *standardSQLRewriteInput) GetRewrittenWhere() string {
 	return ri.rewrittenWhere
 }
 
-func (ri *StandardSQLRewriteInput) GetSecondaryCtrlCounters() []internaldto.TxnControlCounters {
+func (ri *standardSQLRewriteInput) GetSecondaryCtrlCounters() []internaldto.TxnControlCounters {
 	return ri.secondaryCtrlCounters
 }
 
-func (ri *StandardSQLRewriteInput) GetTables() taxonomy.TblMap {
+func (ri *standardSQLRewriteInput) GetTables() taxonomy.TblMap {
 	return ri.tables
 }
 
@@ -150,6 +162,7 @@ func GenerateRewrittenSelectDML(input SQLRewriteInput) (drm.PreparedStatementCtx
 	cols := input.GetColumnDescriptors()
 	var txnCtrlCtrs internaldto.TxnControlCounters
 	var secondaryCtrlCounters []internaldto.TxnControlCounters
+	selectQualifier := input.GetSelectQualifier()
 	selectSuffix := input.GetSelectSuffix()
 	rewrittenWhere := input.GetRewrittenWhere()
 	var columns []typing.ColumnMetadata
@@ -243,7 +256,7 @@ func GenerateRewrittenSelectDML(input SQLRewriteInput) (drm.PreparedStatementCtx
 	// TODO add in some handle for ON clause predicates
 	query, err := dc.GetSQLSystem().ComposeSelectQuery(
 		relationalColumns, tableAliases, hoistedTableAliases, input.GetFromString(),
-		rewrittenWhere, selectSuffix, input.GetPrepStmtOffset())
+		rewrittenWhere, selectQualifier, selectSuffix, input.GetPrepStmtOffset())
 	if err != nil {
 		return nil, err
 	}

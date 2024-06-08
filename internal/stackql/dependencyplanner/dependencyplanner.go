@@ -530,7 +530,7 @@ func (dp *standardDependencyPlanner) processAcquire(
 
 func (dp *standardDependencyPlanner) getStreamFromEdge(
 	e dataflow.Edge,
-	ac taxonomy.AnnotationCtx,
+	toAc taxonomy.AnnotationCtx,
 	tcc internaldto.TxnControlCounters,
 ) (streaming.MapStream, error) {
 	if e.IsSQL() {
@@ -546,11 +546,16 @@ func (dp *standardDependencyPlanner) getStreamFromEdge(
 		if err != nil {
 			return nil, err
 		}
+		transformedStaticParams, paramTRansformErr := util.TransformSQLRawParameters(toAc.GetParameters())
+		if paramTRansformErr != nil {
+			return nil, paramTRansformErr
+		}
 		return sqlstream.NewSimpleSQLMapStream(
 			selectCtx,
 			insertContainer,
 			dp.handlerCtx.GetDrmConfig(),
 			dp.handlerCtx.GetSQLEngine(),
+			transformedStaticParams,
 		), nil
 	}
 	projection, err := e.GetProjection()
@@ -561,7 +566,7 @@ func (dp *standardDependencyPlanner) getStreamFromEdge(
 	for _, v := range projection {
 		incomingCols[v] = struct{}{}
 	}
-	params := ac.GetParameters()
+	params := toAc.GetParameters()
 	staticParams := make(map[string]interface{})
 	for k, v := range params {
 		if _, ok := incomingCols[k]; !ok {
@@ -587,12 +592,21 @@ func (dp *standardDependencyPlanner) generateSelectDML(
 	if err != nil {
 		return nil, err
 	}
+	discoID, discoIDErr := dp.handlerCtx.GetSQLEngine().GetCurrentDiscoveryGenerationID(ann.GetHIDs().GetProviderStr())
+	if discoIDErr != nil {
+		return nil, fmt.Errorf("error generating select dml: %w", discoIDErr)
+	}
 	alias := ann.GetTableMeta().GetAlias()
-	tn, err := dp.handlerCtx.GetDrmConfig().GetTable(ann.GetHIDs(), dp.tcc.GetGenID())
+	tn, err := dp.handlerCtx.GetDrmConfig().GetTable(ann.GetHIDs(), discoID)
 	if err != nil {
 		return nil, err
 	}
 	tableName := fmt.Sprintf(`"%s"`, tn.GetName())
+	// TODO: obtain namespace prefix for postgres
+	tableSchema := tn.GetNameSpace()
+	if tableSchema != "" {
+		tableName = fmt.Sprintf(`"%s"."%s"`, tableSchema, tn.GetName())
+	}
 	if alias != "" {
 		tableName = fmt.Sprintf("%s AS %s", tableName, alias)
 	}
@@ -610,6 +624,6 @@ func (dp *standardDependencyPlanner) generateSelectDML(
 		dp.handlerCtx.GetNamespaceCollection(),
 		nil,
 		map[string]interface{}{},
-	)
+	).WithSelectQualifier("DISTINCT")
 	return sqlrewrite.GenerateRewrittenSelectDML(rewriteInput)
 }

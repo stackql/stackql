@@ -143,7 +143,7 @@ func (dr *basicStackQLDriver) HandleSimpleQuery(ctx context.Context, query strin
 	}
 	r := res[0]
 	if r.GetError() != nil {
-		return nil, r.GetError()
+		return nil, fmt.Errorf("query returns error: %w", r.GetError())
 	}
 	return r.GetSQLResult(), nil
 }

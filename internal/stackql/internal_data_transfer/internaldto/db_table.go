@@ -14,7 +14,9 @@ type DBTable interface {
 	GetHeirarchyIdentifiers() HeirarchyIdentifiers
 	IsAnalytics() bool
 	GetName() string
+	GetNameSpace() string
 	GetNameStump() string
+	WithNameSpace(string) DBTable
 }
 
 type standardDBTable struct {
@@ -50,6 +52,15 @@ func newDBTable(
 		hIDs:        hIDs,
 		namespace:   namespace,
 	}
+}
+
+func (dbt *standardDBTable) WithNameSpace(ns string) DBTable {
+	dbt.namespace = ns
+	return dbt
+}
+
+func (dbt *standardDBTable) GetNameSpace() string {
+	return dbt.namespace
 }
 
 func (dbt *standardDBTable) GetName() string {

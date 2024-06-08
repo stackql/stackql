@@ -2260,6 +2260,98 @@ Left Outer Join Network Infra
     ...    ${outputStr}
     ...    stdout=${CURDIR}/tmp/Left-Outer-Join-Network-Infra.tmp
 
+
+
+Left Outer Join Network Infra Enforce Dependency
+    ${inputStr} =    Catenate
+    ...    select 
+    ...    nw.name as network_name, 
+    ...    sn.name as subnetwork_name, 
+    ...    split_part(sn.network, '/', 10) as sn_fuzz  
+    ...    from 
+    ...    google.compute.networks nw 
+    ...    LEFT OUTER JOIN 
+    ...    google.compute.subnetworks sn  
+    ...    on 
+    ...    lower(nw.name) = lower(split_part(sn.network, '/', 10))   
+    ...    and sn.project = split_part(nw.selfLink, '/', 7) 
+    ...    where nw.project = 'testing-project' and sn.region = 'australia-southeast1'
+    ...    order by 
+    ...    network_name, subnetwork_name
+    ...    ;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |------------------------------|-----------------|---------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}network_name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}subnetwork_name${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}sn_fuzz${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------------|-----------------|---------------|
+    ...    |${SPACE}demo-disk-xx5${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}demo-disk-xx5${SPACE}${SPACE}${SPACE}|${SPACE}demo-disk-xx5${SPACE}|
+    ...    |------------------------------|-----------------|---------------|
+    ...    |${SPACE}k8s-01-vpc${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------------|-----------------|---------------|
+    ...    |${SPACE}kr-vpc-01${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}aus-sn-01${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}kr-vpc-01${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------------|-----------------|---------------|
+    ...    |${SPACE}kr-vpc-01${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}aus-sn-02${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}kr-vpc-01${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------------|-----------------|---------------|
+    ...    |${SPACE}kubernetes-the-hard-way-vpc2${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------------|-----------------|---------------|
+    ...    |${SPACE}testing-network-01${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------------|-----------------|---------------|
+    Should Stackql Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    stdout=${CURDIR}/tmp/Left-Outer-Join-Network-Infra-Enforce-Dependency.tmp
+
+Left Outer Join Network Infra Scalar in ON Condition
+    ${inputStr} =    Catenate
+    ...    select 
+    ...    nw.name as network_name, 
+    ...    sn.name as subnetwork_name, 
+    ...    split_part(sn.network, '/', 10) as sn_fuzz  
+    ...    from 
+    ...    google.compute.networks nw 
+    ...    LEFT OUTER JOIN 
+    ...    google.compute.subnetworks sn  
+    ...    on 
+    ...    lower(nw.name) = lower(split_part(sn.network, '/', 10))   
+    ...    and sn.project = 'testing-project' 
+    ...    where nw.project = 'testing-project' and sn.region = 'australia-southeast1'
+    ...    order by 
+    ...    network_name, subnetwork_name
+    ...    ;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |------------------------------|-----------------|---------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}network_name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}subnetwork_name${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}sn_fuzz${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------------|-----------------|---------------|
+    ...    |${SPACE}demo-disk-xx5${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}demo-disk-xx5${SPACE}${SPACE}${SPACE}|${SPACE}demo-disk-xx5${SPACE}|
+    ...    |------------------------------|-----------------|---------------|
+    ...    |${SPACE}k8s-01-vpc${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------------|-----------------|---------------|
+    ...    |${SPACE}kr-vpc-01${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}aus-sn-01${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}kr-vpc-01${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------------|-----------------|---------------|
+    ...    |${SPACE}kr-vpc-01${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}aus-sn-02${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}kr-vpc-01${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------------|-----------------|---------------|
+    ...    |${SPACE}kubernetes-the-hard-way-vpc2${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------------|-----------------|---------------|
+    ...    |${SPACE}testing-network-01${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------------|-----------------|---------------|
+    Should Stackql Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    stdout=${CURDIR}/tmp/Left-Outer-Join-Network-Infra-Scalar-in-ON-Condition.tmp
+
 Left Inner Join Users
     ${sqliteInputStr} =    Catenate
     ...    select 
@@ -4157,3 +4249,69 @@ Normal Response 200 Should Return Populated Table on GCP KMS Key Rings
     ...    ${EMPTY}
     ...    stdout=${CURDIR}/tmp/Normal-Response-200-Should-Return-Populated-Table-on-GCP-KMS-Key-Rings.tmp
     ...    stderr=${CURDIR}/tmp/Normal-Response-200-Should-Return-Populated-Table-on-GCP-KMS-Key-Rings-stderr.tmp
+
+Verify Data Flow Replication in ON Conditions Is Mitigated Using Example of Networks Subnetworks Join Aggregate
+    ${inputStr} =    Catenate
+    ...    select nw.name as network_name, sn.name as subnetwork_name, count(1) as subnet_count 
+    ...    from google.compute.networks nw LEFT OUTER JOIN google.compute.subnetworks sn 
+    ...    on lower(nw.name) = lower(split_part(sn.network, '/', 10)) and sn.project = split_part(nw.selfLink, '/', 7) 
+    ...    where nw.project = 'testing-project' and sn.region = 'australia-southeast1' 
+    ...    group by network_name, subnetwork_name ;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |------------------------------|-----------------|--------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}network_name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}subnetwork_name${SPACE}|${SPACE}subnet_count${SPACE}|
+    ...    |------------------------------|-----------------|--------------|
+    ...    |${SPACE}demo-disk-xx5${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}demo-disk-xx5${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|
+    ...    |------------------------------|-----------------|--------------|
+    ...    |${SPACE}k8s-01-vpc${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|
+    ...    |------------------------------|-----------------|--------------|
+    ...    |${SPACE}kr-vpc-01${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}aus-sn-01${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|
+    ...    |------------------------------|-----------------|--------------|
+    ...    |${SPACE}kr-vpc-01${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}aus-sn-02${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|
+    ...    |------------------------------|-----------------|--------------|
+    ...    |${SPACE}kubernetes-the-hard-way-vpc2${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|
+    ...    |------------------------------|-----------------|--------------|
+    ...    |${SPACE}testing-network-01${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|
+    ...    |------------------------------|-----------------|--------------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Verify-Data-Flow-Replication-in-ON-Conditions-Is-Mitigated-Using-Example-of-Networks-Subnetworks-Join-Aggregate.tmp
+    ...    stderr=${CURDIR}/tmp/Verify-Data-Flow-Replication-in-ON-Conditions-Is-Mitigated-Using-Example-of-Networks-Subnetworks-Join-Aggregate-stderr.tmp
+
+Verify Data Flow ON Conditions With Functions Do NOT Halt Analysis Using Example of GCP KMS Keyrings to Keys Join
+    ${inputStr} =    Catenate
+    ...    select split_part(rings.name, '/', -1) 
+    ...    from google.cloudkms.key_rings rings inner join google.cloudkms.crypto_keys keys 
+    ...    on keys.keyRingsId = split_part(rings.name, '/', -1) and keys.projectsId = 'testing-project' 
+    ...    where rings.projectsId = 'testing-project' and rings.locationsId = 'global' and keys.locationsId = 'global';
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |---------|
+    ...    |${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}|
+    ...    |---------|
+    ...    |${SPACE}testing${SPACE}|
+    ...    |---------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Verify-Data-Flow-ON-Conditions-With-Functions-Do-NOT-Halt-Analysis-Using-Example-of-GCP-KMS-Keyrings-to-Keys-Join.tmp
+    ...    stderr=${CURDIR}/tmp/Verify-Data-Flow-ON-Conditions-With-Functions-Do-NOT-Halt-Analysis-Using-Example-of-GCP-KMS-Keyrings-to-Keys-Join-stderr.tmp
+
+
+
