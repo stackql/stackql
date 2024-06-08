@@ -293,7 +293,8 @@ func (ss *SingleSelectAcquire) Build() error {
 
 								logging.GetLogger().Infoln(
 									fmt.Sprintf(
-										"running insert with control parameters: %v",
+										"running insert with query = '''%s''', control parameters: %v",
+										ss.insertPreparedStatementCtx.GetQuery(),
 										ss.insertPreparedStatementCtx.GetGCCtrlCtrs(),
 									),
 								)

@@ -1176,10 +1176,12 @@ func (eng *sqLiteSystem) ComposeSelectQuery(
 	hoistedTableAliases []string,
 	fromString string,
 	rewrittenWhere string,
+	selectQualifier string,
 	selectSuffix string,
 	parameterOffset int,
 ) (string, error) {
-	return eng.composeSelectQuery(columns, tableAliases, hoistedTableAliases, fromString, rewrittenWhere, selectSuffix)
+	return eng.composeSelectQuery(
+		columns, tableAliases, hoistedTableAliases, fromString, rewrittenWhere, selectQualifier, selectSuffix)
 }
 
 func (eng *sqLiteSystem) composeSelectQuery(
@@ -1188,6 +1190,7 @@ func (eng *sqLiteSystem) composeSelectQuery(
 	hoistedTableAliases []string,
 	fromString string,
 	rewrittenWhere string,
+	selectQualifier string,
 	selectSuffix string,
 ) (string, error) {
 	var q strings.Builder
@@ -1238,7 +1241,7 @@ func (eng *sqLiteSystem) composeSelectQuery(
 	}
 	whereExprsStr := wq.String()
 
-	q.WriteString(fmt.Sprintf(`SELECT %s `, strings.Join(quotedColNames, ", ")))
+	q.WriteString(fmt.Sprintf(`SELECT %s %s `, selectQualifier, strings.Join(quotedColNames, ", ")))
 	if fromString != "" {
 		q.WriteString(fmt.Sprintf(`FROM %s `, fromString))
 	}

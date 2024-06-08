@@ -3440,8 +3440,8 @@ components:
             openAPIDocKey: '200'
       sqlVerbs:
         select:
-          - $ref: '#/components/x-stackQL-resources/crypto_keys/methods/list'
           - $ref: '#/components/x-stackQL-resources/crypto_keys/methods/get'
+          - $ref: '#/components/x-stackQL-resources/crypto_keys/methods/list'
         insert:
           - $ref: '#/components/x-stackQL-resources/crypto_keys/methods/create'
         update: []

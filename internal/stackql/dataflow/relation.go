@@ -62,7 +62,7 @@ func (dr *standardDataFlowRelation) GetSelectExpr() (sqlparser.SelectExpr, error
 }
 
 func (dr *standardDataFlowRelation) GetColumnDescriptor() (anysdk.ColumnDescriptor, error) {
-	decoratedColumn := fmt.Sprintf(`%s AS %s`, sqlparser.String(dr.sourceExpr), dr.destColumn.Name.GetRawVal())
+	decoratedColumn := fmt.Sprintf(`%s AS %s`, sqlparser.ColDelimitedString(dr.sourceExpr), dr.destColumn.Name.GetRawVal())
 	cd := anysdk.NewColumnDescriptor(dr.destColumn.Name.GetRawVal(), "", "", decoratedColumn, nil, nil, nil)
 	return cd, nil
 }

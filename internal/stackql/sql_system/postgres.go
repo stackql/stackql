@@ -1046,12 +1046,13 @@ func (eng *postgresSystem) ComposeSelectQuery(
 	hoistedTableAliases []string,
 	fromString string,
 	rewrittenWhere string,
+	selectQualifier string,
 	selectSuffix string,
 	parameterOffset int,
 ) (string, error) {
 	return eng.composeSelectQuery(
 		columns, tableAliases,
-		hoistedTableAliases, fromString, rewrittenWhere, selectSuffix, parameterOffset)
+		hoistedTableAliases, fromString, rewrittenWhere, selectQualifier, selectSuffix, parameterOffset)
 }
 
 func (eng *postgresSystem) composeSelectQuery(
@@ -1060,6 +1061,7 @@ func (eng *postgresSystem) composeSelectQuery(
 	hoistedTableAliases []string,
 	fromString string,
 	rewrittenWhere string,
+	selectQualifier string,
 	selectSuffix string,
 	parameterOffset int,
 ) (string, error) {
@@ -1108,7 +1110,7 @@ func (eng *postgresSystem) composeSelectQuery(
 	}
 	whereExprsStr := wq.String()
 
-	q.WriteString(fmt.Sprintf(`SELECT %s `, strings.Join(quotedColNames, ", ")))
+	q.WriteString(fmt.Sprintf(`SELECT %s %s `, selectQualifier, strings.Join(quotedColNames, ", ")))
 	if fromString != "" {
 		q.WriteString(fmt.Sprintf(`FROM %s `, fromString))
 	}
@@ -1619,7 +1621,7 @@ func (eng *postgresSystem) getTable(
 		tableHeirarchyIDs.GetTableName(),
 		discoveryID,
 		tableHeirarchyIDs,
-	), err
+	).WithNameSpace(eng.tableSchema), err
 }
 
 func (eng *postgresSystem) GetCurrentTable(

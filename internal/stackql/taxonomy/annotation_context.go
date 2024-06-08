@@ -104,6 +104,7 @@ func (ac *standardAnnotationCtx) Prepare(
 	if err != nil {
 		return err
 	}
+	params := ac.GetParameters()
 	// LAZY EVAL if dynamic
 	if ac.isDynamic {
 		viewDTO, isView := ac.GetView()
@@ -132,7 +133,7 @@ func (ac *standardAnnotationCtx) Prepare(
 		)
 		return nil
 	}
-	params := ac.GetParameters()
+
 	ac.tableMeta.WithGetHTTPArmoury(
 		func() (anysdk.HTTPArmoury, error) {
 			// need to dynamically generate stream, otherwise repeated calls result in empty body

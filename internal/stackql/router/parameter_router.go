@@ -199,6 +199,9 @@ func (pr *standardParameterRouter) GetOnConditionDataFlows() (dataflow.Collectio
 			dependencyTable = te
 		}
 		switch r := k.Right.(type) {
+		case *sqlparser.SQLVal:
+			// no dataflow dependency, do zero
+			continue
 		case *sqlparser.ColName:
 			rhr, candidateTable, err := pr.extractDataFlowDependency(r)
 			if err != nil {
