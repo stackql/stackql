@@ -326,6 +326,161 @@
       "method": "POST",
       "path": "/",
       "headers": {
+        "Authorization": ["^.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target": [ "CloudApiService.GetResource" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "TypeName":"AWS::EC2::VPC",
+          "Identifier": "vpc-0001"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "ResourceDescription": {
+          "Identifier": "vpc-0001",
+          "Properties": "{\"VpcId\":\"vpc-0001\",\"InstanceTenancy\":\"default\",\"CidrBlockAssociations\":[\"vpc-cidr-assoc-00000001\"],\"CidrBlock\":\"10.0.0.0/16\",\"DefaultNetworkAcl\":\"acl-000000001\",\"EnableDnsSupport\":true,\"Ipv6CidrBlocks\":[],\"DefaultSecurityGroup\":\"sg-00000000001\",\"EnableDnsHostnames\":true,\"Tags\":[{\"Value\":\"vpc1\",\"Key\":\"Name\"}]}"
+        },
+        "TypeName": "AWS::EC2::VPC"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target": [ "CloudApiService.GetResource" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "TypeName":"AWS::EC2::VPC",
+          "Identifier": "vpc-0002"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "ResourceDescription": {
+          "Identifier": "vpc-0002",
+          "Properties": "{\"VpcId\":\"vpc-0002\",\"InstanceTenancy\":\"default\",\"CidrBlockAssociations\":[\"vpc-cidr-assoc-00000001\"],\"CidrBlock\":\"10.1.0.0/16\",\"DefaultNetworkAcl\":\"acl-000000001\",\"EnableDnsSupport\":true,\"Ipv6CidrBlocks\":[],\"DefaultSecurityGroup\":\"sg-00000000001\",\"EnableDnsHostnames\":true,\"Tags\":[{\"Value\":\"vpc2\",\"Key\":\"Name\"}]}"
+        },
+        "TypeName": "AWS::EC2::VPC"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target": [ "CloudApiService.GetResource" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "TypeName":"AWS::EC2::VPC",
+          "Identifier": "vpc-0003"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "ResourceDescription": {
+          "Identifier": "vpc-0003",
+          "Properties": "{\"VpcId\":\"vpc-0003\",\"InstanceTenancy\":\"default\",\"CidrBlockAssociations\":[\"vpc-cidr-assoc-00000001\"],\"CidrBlock\":\"10.2.0.0/16\",\"DefaultNetworkAcl\":\"acl-000000001\",\"EnableDnsSupport\":true,\"Ipv6CidrBlocks\":[],\"DefaultSecurityGroup\":\"sg-00000000001\",\"EnableDnsHostnames\":true,\"Tags\":[{\"Value\":\"vpc3\",\"Key\":\"Name\"}]}"
+        },
+        "TypeName": "AWS::EC2::VPC"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target": [ "CloudApiService.GetResource" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "TypeName":"AWS::EC2::VPC",
+          "Identifier": "vpc-0004"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "ResourceDescription": {
+          "Identifier": "vpc-0004",
+          "Properties": "{\"VpcId\":\"vpc-0004\",\"InstanceTenancy\":\"default\",\"CidrBlockAssociations\":[\"vpc-cidr-assoc-00000001\"],\"CidrBlock\":\"10.3.0.0/16\",\"DefaultNetworkAcl\":\"acl-000000001\",\"EnableDnsSupport\":true,\"Ipv6CidrBlocks\":[],\"DefaultSecurityGroup\":\"sg-00000000001\",\"EnableDnsHostnames\":true,\"Tags\":[{\"Value\":\"vpc4\",\"Key\":\"Name\"}]}"
+        },
+        "TypeName": "AWS::EC2::VPC"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target": [ "CloudApiService.GetResource" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "TypeName":"AWS::EC2::VPC",
+          "Identifier": "vpc-0005"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "ResourceDescription": {
+          "Identifier": "vpc-0005",
+          "Properties": "{\"VpcId\":\"vpc-0005\",\"InstanceTenancy\":\"default\",\"CidrBlockAssociations\":[\"vpc-cidr-assoc-00000001\"],\"CidrBlock\":\"10.4.0.0/16\",\"DefaultNetworkAcl\":\"acl-000000001\",\"EnableDnsSupport\":true,\"Ipv6CidrBlocks\":[],\"DefaultSecurityGroup\":\"sg-00000000001\",\"EnableDnsHostnames\":true,\"Tags\":[{\"Value\":\"vpc5\",\"Key\":\"Name\"}]}"
+        },
+        "TypeName": "AWS::EC2::VPC"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
         "Authorization": ["^.*SignedHeaders=content-type;host;x-amz-date;x-amz-target.*$" ],
         "X-Amz-Target" : [ "TransferService.DeleteServer" ]
       },

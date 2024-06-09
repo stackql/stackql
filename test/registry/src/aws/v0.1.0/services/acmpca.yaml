@@ -1,0 +1,1897 @@
+openapi: 3.0.0
+info:
+  title: acmpca
+  version: 2.0.0
+  x-serviceName: cloudcontrolapi
+servers:
+  - url: https://cloudcontrolapi.{region}.amazonaws.com
+    variables:
+      region:
+        description: The AWS region
+        enum:
+          - us-east-1
+          - us-east-2
+          - us-west-1
+          - us-west-2
+          - us-gov-west-1
+          - us-gov-east-1
+          - ca-central-1
+          - eu-north-1
+          - eu-west-1
+          - eu-west-2
+          - eu-west-3
+          - eu-central-1
+          - eu-south-1
+          - af-south-1
+          - ap-northeast-1
+          - ap-northeast-2
+          - ap-northeast-3
+          - ap-southeast-1
+          - ap-southeast-2
+          - ap-east-1
+          - ap-south-1
+          - sa-east-1
+          - me-south-1
+        default: us-east-1
+    description: The CloudControlApi multi-region endpoint
+  - url: https://cloudcontrolapi.{region}.amazonaws.com.cn
+    variables:
+      region:
+        description: The AWS region
+        enum:
+          - cn-north-1
+          - cn-northwest-1
+        default: cn-north-1
+    description: The CloudControlApi endpoint for China (Beijing) and China (Ningxia)
+components:
+  parameters:
+    X-Amz-Content-Sha256:
+      name: X-Amz-Content-Sha256
+      in: header
+      schema:
+        type: string
+      required: false
+    X-Amz-Date:
+      name: X-Amz-Date
+      in: header
+      schema:
+        type: string
+      required: false
+    X-Amz-Algorithm:
+      name: X-Amz-Algorithm
+      in: header
+      schema:
+        type: string
+      required: false
+    X-Amz-Credential:
+      name: X-Amz-Credential
+      in: header
+      schema:
+        type: string
+      required: false
+    X-Amz-Security-Token:
+      name: X-Amz-Security-Token
+      in: header
+      schema:
+        type: string
+      required: false
+    X-Amz-Signature:
+      name: X-Amz-Signature
+      in: header
+      schema:
+        type: string
+      required: false
+    X-Amz-SignedHeaders:
+      name: X-Amz-SignedHeaders
+      in: header
+      schema:
+        type: string
+      required: false
+  x-cloud-control-schemas:
+    AlreadyExistsException: {}
+    CancelResourceRequestInput:
+      properties:
+        RequestToken:
+          $ref: '#/components/x-cloud-control-schemas/RequestToken'
+      required:
+        - RequestToken
+      title: CancelResourceRequestInput
+      type: object
+    CancelResourceRequestOutput:
+      properties:
+        ProgressEvent:
+          $ref: '#/components/x-cloud-control-schemas/ProgressEvent'
+      type: object
+    ClientToken:
+      maxLength: 128
+      minLength: 1
+      pattern: '[-A-Za-z0-9+/=]+'
+      type: string
+    ClientTokenConflictException: {}
+    ConcurrentModificationException: {}
+    ConcurrentOperationException: {}
+    CreateResourceInput:
+      properties:
+        ClientToken:
+          type: string
+        DesiredState:
+          allOf:
+            - $ref: '#/components/x-cloud-control-schemas/Properties'
+            - description: >-
+                <p>Structured data format representing the desired state of the resource, consisting of that resource's properties and their desired values.</p> <note> <p>Cloud Control API currently supports JSON as a structured data format.</p> </note> <pre><code> &lt;p&gt;Specify the desired state as one of the following:&lt;/p&gt; &lt;ul&gt; &lt;li&gt; &lt;p&gt;A JSON blob&lt;/p&gt; &lt;/li&gt; &lt;li&gt; &lt;p&gt;A local path containing the desired state in JSON data format&lt;/p&gt;
+                &lt;/li&gt; &lt;/ul&gt; &lt;p&gt;For more information, see &lt;a href=&quot;https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/resource-operations-create.html#resource-operations-create-desiredstate&quot;&gt;Composing the desired state of the resource&lt;/a&gt; in the &lt;i&gt;Amazon Web Services Cloud Control API User Guide&lt;/i&gt;.&lt;/p&gt; &lt;p&gt;For more information about the properties of a specific resource, refer to the related topic for the resource in the
+                &lt;a href=&quot;https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html&quot;&gt;Resource and property types reference&lt;/a&gt; in the &lt;i&gt;CloudFormation Users Guide&lt;/i&gt;.&lt;/p&gt; </code></pre>
+        RoleArn:
+          type: string
+        TypeName:
+          type: string
+        TypeVersionId:
+          type: string
+      required:
+        - DesiredState
+      title: CreateResourceInput
+      type: object
+    CreateResourceOutput:
+      properties:
+        ProgressEvent:
+          $ref: '#/components/x-cloud-control-schemas/ProgressEvent'
+      type: object
+    DeleteResourceInput:
+      properties:
+        ClientToken:
+          type: string
+        Identifier:
+          $ref: '#/components/x-cloud-control-schemas/Identifier'
+        RoleArn:
+          type: string
+        TypeName:
+          type: string
+        TypeVersionId:
+          type: string
+      required:
+        - Identifier
+      title: DeleteResourceInput
+      type: object
+    DeleteResourceOutput:
+      properties:
+        ProgressEvent:
+          $ref: '#/components/x-cloud-control-schemas/ProgressEvent'
+      type: object
+    GeneralServiceException: {}
+    GetResourceInput:
+      properties:
+        TypeName:
+          $ref: '#/components/x-cloud-control-schemas/TypeName'
+        Identifier:
+          $ref: '#/components/x-cloud-control-schemas/Identifier'
+        TypeVersionId:
+          $ref: '#/components/x-cloud-control-schemas/TypeVersionId'
+        RoleArn:
+          $ref: '#/components/x-cloud-control-schemas/RoleArn'
+      required:
+        - TypeName
+        - Identifier
+      title: GetResourceInput
+      type: object
+    GetResourceOutput:
+      properties:
+        ResourceDescription:
+          $ref: '#/components/x-cloud-control-schemas/ResourceDescription'
+        TypeName:
+          type: string
+      type: object
+    GetResourceRequestStatusInput:
+      properties:
+        RequestToken:
+          $ref: '#/components/x-cloud-control-schemas/RequestToken'
+      required:
+        - RequestToken
+      title: GetResourceRequestStatusInput
+      type: object
+    GetResourceRequestStatusOutput:
+      properties:
+        ProgressEvent:
+          $ref: '#/components/x-cloud-control-schemas/ProgressEvent'
+      type: object
+    HandlerErrorCode:
+      enum:
+        - NotUpdatable
+        - InvalidRequest
+        - AccessDenied
+        - InvalidCredentials
+        - AlreadyExists
+        - NotFound
+        - ResourceConflict
+        - Throttling
+        - ServiceLimitExceeded
+        - NotStabilized
+        - GeneralServiceException
+        - ServiceInternalError
+        - ServiceTimeout
+        - NetworkFailure
+        - InternalFailure
+      type: string
+    HandlerFailureException: {}
+    HandlerInternalFailureException: {}
+    HandlerNextToken:
+      maxLength: 2048
+      minLength: 1
+      pattern: .+
+      type: string
+    Identifier:
+      maxLength: 1024
+      minLength: 1
+      pattern: .+
+      type: string
+    InvalidCredentialsException: {}
+    InvalidRequestException: {}
+    MaxResults:
+      maximum: 100
+      minimum: 1
+      type: integer
+    NetworkFailureException: {}
+    NextToken:
+      maxLength: 2048
+      minLength: 1
+      pattern: '[-A-Za-z0-9+/=]+'
+      type: string
+    NotStabilizedException: {}
+    NotUpdatableException: {}
+    Operation:
+      enum:
+        - CREATE
+        - DELETE
+        - UPDATE
+      type: string
+    OperationStatus:
+      enum:
+        - PENDING
+        - IN_PROGRESS
+        - SUCCESS
+        - FAILED
+        - CANCEL_IN_PROGRESS
+        - CANCEL_COMPLETE
+      type: string
+    OperationStatuses:
+      items:
+        $ref: '#/components/x-cloud-control-schemas/OperationStatus'
+      type: array
+    Operations:
+      items:
+        $ref: '#/components/x-cloud-control-schemas/Operation'
+      type: array
+    PatchDocument:
+      format: password
+      maxLength: 65536
+      minLength: 1
+      pattern: '[\s\S]*'
+      type: string
+    PrivateTypeException: {}
+    ProgressEvent:
+      example:
+        ErrorCode: string
+        EventTime: number
+        Identifier: string
+        Operation: string
+        OperationStatus: string
+        RequestToken: string
+        ResourceModel: string
+        RetryAfter: number
+        StatusMessage: string
+        TypeName: string
+      properties:
+        ErrorCode:
+          type: string
+        EventTime:
+          type: number
+        Identifier:
+          type: string
+        Operation:
+          type: string
+        OperationStatus:
+          type: string
+        RequestToken:
+          type: string
+        ResourceModel:
+          type: string
+        RetryAfter:
+          type: number
+        StatusMessage:
+          type: string
+        TypeName:
+          type: string
+      type: object
+    Properties:
+      format: password
+      maxLength: 65536
+      minLength: 1
+      pattern: '[\s\S]*'
+      type: string
+    RequestToken:
+      maxLength: 128
+      minLength: 1
+      pattern: '[-A-Za-z0-9+/=]+'
+      type: string
+    RequestTokenNotFoundException: {}
+    ResourceConflictException: {}
+    ResourceDescription:
+      description: Represents information about a provisioned resource.
+      properties:
+        Identifier:
+          type: string
+        Properties:
+          type: string
+      type: object
+    ResourceDescriptions:
+      items:
+        $ref: '#/components/x-cloud-control-schemas/ResourceDescription'
+      type: array
+    ResourceNotFoundException: {}
+    ResourceRequestStatusFilter:
+      description: The filter criteria to use in determining the requests returned.
+      properties:
+        undefined:
+          allOf:
+            - $ref: '#/components/x-cloud-control-schemas/OperationStatuses'
+            - description: >-
+                <p>The operation statuses to include in the filter.</p> <ul> <li> <p> <code>PENDING</code>: The operation has been requested, but not yet initiated.</p> </li> <li> <p> <code>IN_PROGRESS</code>: The operation is in progress.</p> </li> <li> <p> <code>SUCCESS</code>: The operation completed.</p> </li> <li> <p> <code>FAILED</code>: The operation failed.</p> </li> <li> <p> <code>CANCEL_IN_PROGRESS</code>: The operation is in the process of being canceled.</p> </li> <li> <p>
+                <code>CANCEL_COMPLETE</code>: The operation has been canceled.</p> </li> </ul>
+      type: object
+    ResourceRequestStatusSummaries:
+      items:
+        $ref: '#/components/x-cloud-control-schemas/ProgressEvent'
+      type: array
+    RoleArn:
+      maxLength: 2048
+      minLength: 20
+      pattern: arn:.+:iam::[0-9]{12}:role/.+
+      type: string
+    ServiceInternalErrorException: {}
+    ServiceLimitExceededException: {}
+    StatusMessage:
+      maxLength: 1024
+      minLength: 0
+      pattern: '[\s\S]*'
+      type: string
+    ThrottlingException: {}
+    Timestamp:
+      format: date-time
+      type: string
+    TypeName:
+      maxLength: 196
+      minLength: 10
+      pattern: '[A-Za-z0-9]{2,64}::[A-Za-z0-9]{2,64}::[A-Za-z0-9]{2,64}'
+      type: string
+    TypeNotFoundException: {}
+    TypeVersionId:
+      maxLength: 128
+      minLength: 1
+      pattern: '[A-Za-z0-9-]+'
+      type: string
+    UnsupportedActionException: {}
+    UpdateResourceInput:
+      properties:
+        undefined:
+          allOf:
+            - $ref: '#/components/x-cloud-control-schemas/PatchDocument'
+      required:
+        - Identifier
+        - PatchDocument
+      title: UpdateResourceInput
+      type: object
+    UpdateResourceOutput:
+      properties:
+        ProgressEvent:
+          $ref: '#/components/x-cloud-control-schemas/ProgressEvent'
+      type: object
+  schemas:
+    ApiPassthrough:
+      description: |-
+        Contains X.509 certificate information to be placed in an issued certificate. An ``APIPassthrough`` or ``APICSRPassthrough`` template variant must be selected, or else this parameter is ignored. 
+         If conflicting or duplicate certificate information is supplied from other sources, AWS Private CA applies [order of operation rules](https://docs.aws.amazon.com/privateca/latest/userguide/UsingTemplates.html#template-order-of-operations) to determine what information is used.
+      type: object
+      additionalProperties: false
+      properties:
+        Extensions:
+          $ref: '#/components/schemas/Extensions'
+          description: Specifies X.509 extension information for a certificate.
+        Subject:
+          $ref: '#/components/schemas/Subject'
+          description: Contains information about the certificate subject. The Subject field in the certificate identifies the entity that owns or controls the public key in the certificate. The entity can be a user, computer, device, or service. The Subject must contain an X.500 distinguished name (DN). A DN is a sequence of relative distinguished names (RDNs). The RDNs are separated by commas in the certificate.
+    Arn:
+      type: string
+    CertificatePolicyList:
+      type: array
+      items:
+        $ref: '#/components/schemas/PolicyInformation'
+    ExtendedKeyUsage:
+      description: Specifies additional purposes for which the certified public key may be used other than basic purposes indicated in the ``KeyUsage`` extension.
+      type: object
+      additionalProperties: false
+      properties:
+        ExtendedKeyUsageType:
+          type: string
+          description: Specifies a standard ``ExtendedKeyUsage`` as defined as in [RFC 5280](https://docs.aws.amazon.com/https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.12).
+        ExtendedKeyUsageObjectIdentifier:
+          $ref: '#/components/schemas/CustomObjectIdentifier'
+          description: Specifies a custom ``ExtendedKeyUsage`` with an object identifier (OID).
+    ExtendedKeyUsageList:
+      type: array
+      items:
+        $ref: '#/components/schemas/ExtendedKeyUsage'
+    Extensions:
+      description: Contains X.509 extension information for a certificate.
+      type: object
+      additionalProperties: false
+      properties:
+        CertificatePolicies:
+          $ref: '#/components/schemas/CertificatePolicyList'
+          description: |-
+            Contains a sequence of one or more policy information terms, each of which consists of an object identifier (OID) and optional qualifiers. For more information, see NIST's definition of [Object Identifier (OID)](https://docs.aws.amazon.com/https://csrc.nist.gov/glossary/term/Object_Identifier).
+             In an end-entity certificate, these terms indicate the policy under which the certificate was issued and the purposes for which it may be used. In a CA certificate, these terms limit the set of policies for certification paths that include this certificate.
+        ExtendedKeyUsage:
+          $ref: '#/components/schemas/ExtendedKeyUsageList'
+          description: Specifies additional purposes for which the certified public key may be used other than basic purposes indicated in the ``KeyUsage`` extension.
+        KeyUsage:
+          $ref: '#/components/schemas/KeyUsage'
+          description: Defines one or more purposes for which the key contained in the certificate can be used. Default value for each option is false.
+        SubjectAlternativeNames:
+          $ref: '#/components/schemas/GeneralNameList'
+          description: The subject alternative name extension allows identities to be bound to the subject of the certificate. These identities may be included in addition to or in place of the identity in the subject field of the certificate.
+        CustomExtensions:
+          $ref: '#/components/schemas/CustomExtensionList'
+          description: Contains a sequence of one or more X.509 extensions, each of which consists of an object identifier (OID), a base64-encoded value, and the critical flag. For more information, see the [Global OID reference database.](https://docs.aws.amazon.com/https://oidref.com/2.5.29)
+    CustomExtensionList:
+      description: Array of X.509 extensions for a certificate.
+      type: array
+      items:
+        $ref: '#/components/schemas/CustomExtension'
+    CustomExtension:
+      description: |-
+        Specifies the X.509 extension information for a certificate.
+         Extensions present in ``CustomExtensions`` follow the ``ApiPassthrough`` [template rules](https://docs.aws.amazon.com/privateca/latest/userguide/UsingTemplates.html#template-order-of-operations).
+      type: object
+      additionalProperties: false
+      properties:
+        Critical:
+          type: boolean
+          description: Specifies the critical flag of the X.509 extension.
+        ObjectIdentifier:
+          $ref: '#/components/schemas/CustomObjectIdentifier'
+          description: Specifies the object identifier (OID) of the X.509 extension. For more information, see the [Global OID reference database.](https://docs.aws.amazon.com/https://oidref.com/2.5.29)
+        Value:
+          type: string
+          description: Specifies the base64-encoded value of the X.509 extension.
+      required:
+        - ObjectIdentifier
+        - Value
+    GeneralNameList:
+      type: array
+      items:
+        $ref: '#/components/schemas/GeneralName'
+    GeneralName:
+      description: Structure that contains X.509 GeneralName information. Assign one and ONLY one field.
+      type: object
+      additionalProperties: false
+      properties:
+        OtherName:
+          $ref: '#/components/schemas/OtherName'
+        Rfc822Name:
+          $ref: '#/components/schemas/Rfc822Name'
+        DnsName:
+          $ref: '#/components/schemas/DnsName'
+        DirectoryName:
+          $ref: '#/components/schemas/Subject'
+        EdiPartyName:
+          $ref: '#/components/schemas/EdiPartyName'
+        UniformResourceIdentifier:
+          $ref: '#/components/schemas/UniformResourceIdentifier'
+        IpAddress:
+          $ref: '#/components/schemas/IpAddress'
+        RegisteredId:
+          $ref: '#/components/schemas/CustomObjectIdentifier'
+    KeyUsage:
+      description: Structure that contains X.509 KeyUsage information.
+      type: object
+      additionalProperties: false
+      properties:
+        DigitalSignature:
+          type: boolean
+          default: false
+        NonRepudiation:
+          type: boolean
+          default: false
+        KeyEncipherment:
+          type: boolean
+          default: false
+        DataEncipherment:
+          type: boolean
+          default: false
+        KeyAgreement:
+          type: boolean
+          default: false
+        KeyCertSign:
+          type: boolean
+          default: false
+        CRLSign:
+          type: boolean
+          default: false
+        EncipherOnly:
+          type: boolean
+          default: false
+        DecipherOnly:
+          type: boolean
+          default: false
+    PolicyInformation:
+      description: Defines the X.509 ``CertificatePolicies`` extension.
+      type: object
+      additionalProperties: false
+      properties:
+        CertPolicyId:
+          $ref: '#/components/schemas/CustomObjectIdentifier'
+          description: Specifies the object identifier (OID) of the certificate policy under which the certificate was issued. For more information, see NIST's definition of [Object Identifier (OID)](https://docs.aws.amazon.com/https://csrc.nist.gov/glossary/term/Object_Identifier).
+        PolicyQualifiers:
+          $ref: '#/components/schemas/PolicyQualifierInfoList'
+          description: Modifies the given ``CertPolicyId`` with a qualifier. AWS Private CA supports the certification practice statement (CPS) qualifier.
+      required:
+        - CertPolicyId
+    PolicyQualifierInfo:
+      description: Modifies the ``CertPolicyId`` of a ``PolicyInformation`` object with a qualifier. AWS Private CA supports the certification practice statement (CPS) qualifier.
+      type: object
+      additionalProperties: false
+      properties:
+        PolicyQualifierId:
+          type: string
+          description: Identifies the qualifier modifying a ``CertPolicyId``.
+        Qualifier:
+          $ref: '#/components/schemas/Qualifier'
+          description: Defines the qualifier type. AWS Private CA supports the use of a URI for a CPS qualifier in this field.
+      required:
+        - PolicyQualifierId
+        - Qualifier
+    PolicyQualifierInfoList:
+      type: array
+      items:
+        $ref: '#/components/schemas/PolicyQualifierInfo'
+    Qualifier:
+      description: Defines a ``PolicyInformation`` qualifier. AWS Private CA supports the [certification practice statement (CPS) qualifier](https://docs.aws.amazon.com/https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.4) defined in RFC 5280.
+      type: object
+      additionalProperties: false
+      properties:
+        CpsUri:
+          type: string
+          description: Contains a pointer to a certification practice statement (CPS) published by the CA.
+      required:
+        - CpsUri
+    Subject:
+      description: Structure that contains X.500 distinguished name information for your CA.
+      type: object
+      additionalProperties: false
+      properties:
+        Country:
+          type: string
+        Organization:
+          type: string
+        OrganizationalUnit:
+          type: string
+        DistinguishedNameQualifier:
+          type: string
+        State:
+          type: string
+        CommonName:
+          type: string
+        SerialNumber:
+          type: string
+        Locality:
+          type: string
+        Title:
+          type: string
+        Surname:
+          type: string
+        GivenName:
+          type: string
+        Initials:
+          type: string
+        Pseudonym:
+          type: string
+        GenerationQualifier:
+          type: string
+        CustomAttributes:
+          $ref: '#/components/schemas/CustomAttributeList'
+    CustomAttributeList:
+      description: Array of X.500 attribute type and value. CustomAttributes cannot be used along with pre-defined attributes.
+      type: array
+      items:
+        $ref: '#/components/schemas/CustomAttribute'
+    CustomAttribute:
+      description: Structure that contains X.500 attribute type and value.
+      type: object
+      additionalProperties: false
+      properties:
+        ObjectIdentifier:
+          $ref: '#/components/schemas/CustomObjectIdentifier'
+        Value:
+          type: string
+      required:
+        - ObjectIdentifier
+        - Value
+    Validity:
+      description: Length of time for which the certificate issued by your private certificate authority (CA), or by the private CA itself, is valid in days, months, or years. You can issue a certificate by calling the ``IssueCertificate`` operation.
+      type: object
+      additionalProperties: false
+      properties:
+        Value:
+          type: number
+          description: A long integer interpreted according to the value of ``Type``, below.
+        Type:
+          type: string
+          description: Specifies whether the ``Value`` parameter represents days, months, or years.
+      required:
+        - Value
+        - Type
+    CustomObjectIdentifier:
+      description: String that contains X.509 ObjectIdentifier information.
+      type: string
+    OtherName:
+      description: Structure that contains X.509 OtherName information.
+      type: object
+      additionalProperties: false
+      properties:
+        TypeId:
+          $ref: '#/components/schemas/CustomObjectIdentifier'
+        Value:
+          type: string
+      required:
+        - TypeId
+        - Value
+    Rfc822Name:
+      description: String that contains X.509 Rfc822Name information.
+      type: string
+    DnsName:
+      description: String that contains X.509 DnsName information.
+      type: string
+    EdiPartyName:
+      description: Structure that contains X.509 EdiPartyName information.
+      type: object
+      additionalProperties: false
+      properties:
+        PartyName:
+          type: string
+        NameAssigner:
+          type: string
+      required:
+        - PartyName
+    UniformResourceIdentifier:
+      description: String that contains X.509 UniformResourceIdentifier information.
+      type: string
+    IpAddress:
+      description: String that contains X.509 IpAddress information.
+      type: string
+    Certificate:
+      type: object
+      properties:
+        ApiPassthrough:
+          description: Specifies X.509 certificate information to be included in the issued certificate. An ``APIPassthrough`` or ``APICSRPassthrough`` template variant must be selected, or else this parameter is ignored.
+          $ref: '#/components/schemas/ApiPassthrough'
+        CertificateAuthorityArn:
+          description: The Amazon Resource Name (ARN) for the private CA issues the certificate.
+          $ref: '#/components/schemas/Arn'
+        CertificateSigningRequest:
+          description: The certificate signing request (CSR) for the certificate.
+          type: string
+          minLength: 1
+        SigningAlgorithm:
+          description: |-
+            The name of the algorithm that will be used to sign the certificate to be issued. 
+             This parameter should not be confused with the ``SigningAlgorithm`` parameter used to sign a CSR in the ``CreateCertificateAuthority`` action.
+              The specified signing algorithm family (RSA or ECDSA) must match the algorithm family of the CA's secret key.
+          type: string
+        TemplateArn:
+          description: Specifies a custom configuration template to use when issuing a certificate. If this parameter is not provided, PCAshort defaults to the ``EndEntityCertificate/V1`` template. For more information about PCAshort templates, see [Using Templates](https://docs.aws.amazon.com/privateca/latest/userguide/UsingTemplates.html).
+          $ref: '#/components/schemas/Arn'
+        Validity:
+          description: The period of time during which the certificate will be valid.
+          $ref: '#/components/schemas/Validity'
+        ValidityNotBefore:
+          description: |-
+            Information describing the start of the validity period of the certificate. This parameter sets the “Not Before" date for the certificate.
+             By default, when issuing a certificate, PCAshort sets the "Not Before" date to the issuance time minus 60 minutes. This compensates for clock inconsistencies across computer systems. The ``ValidityNotBefore`` parameter can be used to customize the “Not Before” value. 
+             Unlike the ``Validity`` parameter, the ``ValidityNotBefore`` parameter is optional.
+             The ``ValidityNotBefore`` value is expressed as an explicit date and time, using the ``Validity`` type value ``ABSOLUTE``.
+          $ref: '#/components/schemas/Validity'
+        Certificate:
+          description: ''
+          type: string
+        Arn:
+          description: ''
+          $ref: '#/components/schemas/Arn'
+      required:
+        - CertificateAuthorityArn
+        - CertificateSigningRequest
+        - SigningAlgorithm
+        - Validity
+      x-stackql-resource-name: certificate
+      description: The ``AWS::ACMPCA::Certificate`` resource is used to issue a certificate using your private certificate authority. For more information, see the [IssueCertificate](https://docs.aws.amazon.com/privateca/latest/APIReference/API_IssueCertificate.html) action.
+      x-type-name: AWS::ACMPCA::Certificate
+      x-stackql-primary-identifier:
+        - Arn
+        - CertificateAuthorityArn
+      x-create-only-properties:
+        - ApiPassthrough
+        - CertificateAuthorityArn
+        - CertificateSigningRequest
+        - SigningAlgorithm
+        - TemplateArn
+        - Validity
+        - ValidityNotBefore
+      x-write-only-properties:
+        - ApiPassthrough
+        - CertificateSigningRequest
+        - SigningAlgorithm
+        - TemplateArn
+        - Validity
+        - ValidityNotBefore
+      x-read-only-properties:
+        - Arn
+        - Certificate
+      x-required-properties:
+        - CertificateAuthorityArn
+        - CertificateSigningRequest
+        - SigningAlgorithm
+        - Validity
+      x-tagging:
+        taggable: false
+        tagOnCreate: false
+        tagUpdatable: false
+        cloudFormationSystemTags: false
+      x-required-permissions:
+        create:
+          - acm-pca:IssueCertificate
+          - acm-pca:GetCertificate
+        read:
+          - acm-pca:GetCertificate
+        delete:
+          - acm-pca:GetCertificate
+    Tag:
+      type: object
+      additionalProperties: false
+      properties:
+        Key:
+          type: string
+        Value:
+          type: string
+      required:
+        - Key
+    CrlDistributionPointExtensionConfiguration:
+      description: Configures the default behavior of the CRL Distribution Point extension for certificates issued by your certificate authority
+      type: object
+      additionalProperties: false
+      properties:
+        OmitExtension:
+          type: boolean
+      required:
+        - OmitExtension
+    CrlConfiguration:
+      description: Your certificate authority can create and maintain a certificate revocation list (CRL). A CRL contains information about certificates that have been revoked.
+      type: object
+      additionalProperties: false
+      properties:
+        Enabled:
+          type: boolean
+        ExpirationInDays:
+          type: integer
+        CustomCname:
+          type: string
+        S3BucketName:
+          type: string
+        S3ObjectAcl:
+          type: string
+        CrlDistributionPointExtensionConfiguration:
+          $ref: '#/components/schemas/CrlDistributionPointExtensionConfiguration'
+      required:
+        - Enabled
+    OcspConfiguration:
+      description: Helps to configure online certificate status protocol (OCSP) responder for your certificate authority
+      type: object
+      additionalProperties: false
+      properties:
+        Enabled:
+          type: boolean
+        OcspCustomCname:
+          type: string
+      required:
+        - Enabled
+    RevocationConfiguration:
+      description: Certificate Authority revocation information.
+      type: object
+      additionalProperties: false
+      properties:
+        CrlConfiguration:
+          $ref: '#/components/schemas/CrlConfiguration'
+        OcspConfiguration:
+          $ref: '#/components/schemas/OcspConfiguration'
+    AccessMethodType:
+      description: Pre-defined enum string for X.509 AccessMethod ObjectIdentifiers.
+      type: string
+    AccessMethod:
+      description: Structure that contains X.509 AccessMethod information. Assign one and ONLY one field.
+      type: object
+      additionalProperties: false
+      properties:
+        CustomObjectIdentifier:
+          $ref: '#/components/schemas/CustomObjectIdentifier'
+        AccessMethodType:
+          $ref: '#/components/schemas/AccessMethodType'
+    AccessDescription:
+      description: Structure that contains X.509 AccessDescription information.
+      type: object
+      additionalProperties: false
+      properties:
+        AccessMethod:
+          $ref: '#/components/schemas/AccessMethod'
+        AccessLocation:
+          $ref: '#/components/schemas/GeneralName'
+      required:
+        - AccessMethod
+        - AccessLocation
+    SubjectInformationAccess:
+      description: Array of X.509 AccessDescription.
+      type: array
+      items:
+        $ref: '#/components/schemas/AccessDescription'
+    CsrExtensions:
+      description: Structure that contains CSR pass though extensions information.
+      type: object
+      additionalProperties: false
+      properties:
+        KeyUsage:
+          $ref: '#/components/schemas/KeyUsage'
+        SubjectInformationAccess:
+          $ref: '#/components/schemas/SubjectInformationAccess'
+    CertificateAuthority:
+      type: object
+      properties:
+        Arn:
+          description: The Amazon Resource Name (ARN) of the certificate authority.
+          $ref: '#/components/schemas/Arn'
+        Type:
+          description: The type of the certificate authority.
+          type: string
+        KeyAlgorithm:
+          description: Public key algorithm and size, in bits, of the key pair that your CA creates when it issues a certificate.
+          type: string
+        SigningAlgorithm:
+          description: Algorithm your CA uses to sign certificate requests.
+          type: string
+        Subject:
+          description: Structure that contains X.500 distinguished name information for your CA.
+          $ref: '#/components/schemas/Subject'
+        RevocationConfiguration:
+          description: Certificate revocation information used by the CreateCertificateAuthority and UpdateCertificateAuthority actions.
+          $ref: '#/components/schemas/RevocationConfiguration'
+        Tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+        CertificateSigningRequest:
+          description: The base64 PEM-encoded certificate signing request (CSR) for your certificate authority certificate.
+          type: string
+        CsrExtensions:
+          description: Structure that contains CSR pass through extension information used by the CreateCertificateAuthority action.
+          $ref: '#/components/schemas/CsrExtensions'
+        KeyStorageSecurityStandard:
+          description: KeyStorageSecurityStadard defines a cryptographic key management compliance standard used for handling CA keys.
+          type: string
+        UsageMode:
+          description: Usage mode of the ceritificate authority.
+          type: string
+      required:
+        - Type
+        - KeyAlgorithm
+        - SigningAlgorithm
+        - Subject
+      x-stackql-resource-name: certificate_authority
+      description: Private certificate authority.
+      x-type-name: AWS::ACMPCA::CertificateAuthority
+      x-stackql-primary-identifier:
+        - Arn
+      x-create-only-properties:
+        - Type
+        - KeyAlgorithm
+        - SigningAlgorithm
+        - Subject
+        - CsrExtensions
+        - KeyStorageSecurityStandard
+        - UsageMode
+      x-write-only-properties:
+        - Subject
+        - Subject
+        - CsrExtensions
+        - Tags
+        - RevocationConfiguration
+        - KeyStorageSecurityStandard
+      x-read-only-properties:
+        - Arn
+        - CertificateSigningRequest
+      x-required-properties:
+        - Type
+        - KeyAlgorithm
+        - SigningAlgorithm
+        - Subject
+      x-tagging:
+        taggable: true
+        tagOnCreate: true
+        tagUpdatable: true
+        cloudFormationSystemTags: false
+        tagProperty: /properties/Tags
+      x-required-permissions:
+        create:
+          - acm-pca:CreateCertificateAuthority
+          - acm-pca:DescribeCertificateAuthority
+          - acm-pca:GetCertificateAuthorityCsr
+        read:
+          - acm-pca:DescribeCertificateAuthority
+          - acm-pca:GetCertificateAuthorityCsr
+          - acm-pca:ListTags
+        update:
+          - acm-pca:ListTags
+          - acm-pca:TagCertificateAuthority
+          - acm-pca:UntagCertificateAuthority
+          - acm-pca:UpdateCertificateAuthority
+        delete:
+          - acm-pca:DeleteCertificateAuthority
+          - acm-pca:DescribeCertificateAuthority
+        list:
+          - acm-pca:DescribeCertificateAuthority
+          - acm-pca:GetCertificateAuthorityCsr
+          - acm-pca:ListCertificateAuthorities
+          - acm-pca:ListTags
+    CertificateAuthorityActivation:
+      type: object
+      properties:
+        CertificateAuthorityArn:
+          description: Arn of the Certificate Authority.
+          type: string
+        Certificate:
+          description: Certificate Authority certificate that will be installed in the Certificate Authority.
+          type: string
+        CertificateChain:
+          description: Certificate chain for the Certificate Authority certificate.
+          type: string
+        Status:
+          description: The status of the Certificate Authority.
+          type: string
+        CompleteCertificateChain:
+          description: The complete certificate chain, including the Certificate Authority certificate.
+          type: string
+      required:
+        - CertificateAuthorityArn
+        - Certificate
+      x-stackql-resource-name: certificate_authority_activation
+      description: Used to install the certificate authority certificate and update the certificate authority status.
+      x-type-name: AWS::ACMPCA::CertificateAuthorityActivation
+      x-stackql-primary-identifier:
+        - CertificateAuthorityArn
+      x-create-only-properties:
+        - CertificateAuthorityArn
+      x-write-only-properties:
+        - Certificate
+        - CertificateChain
+      x-read-only-properties:
+        - CompleteCertificateChain
+      x-required-properties:
+        - CertificateAuthorityArn
+        - Certificate
+      x-tagging:
+        taggable: false
+        tagOnCreate: false
+        tagUpdatable: false
+        cloudFormationSystemTags: false
+      x-required-permissions:
+        create:
+          - acm-pca:ImportCertificateAuthorityCertificate
+          - acm-pca:UpdateCertificateAuthority
+        read:
+          - acm-pca:GetCertificateAuthorityCertificate
+          - acm-pca:DescribeCertificateAuthority
+        delete:
+          - acm-pca:UpdateCertificateAuthority
+        update:
+          - acm-pca:ImportCertificateAuthorityCertificate
+          - acm-pca:UpdateCertificateAuthority
+    Permission:
+      type: object
+      properties:
+        Actions:
+          description: The actions that the specified AWS service principal can use. Actions IssueCertificate, GetCertificate and ListPermissions must be provided.
+          type: array
+          x-insertionOrder: false
+          items:
+            type: string
+        CertificateAuthorityArn:
+          description: The Amazon Resource Name (ARN) of the Private Certificate Authority that grants the permission.
+          type: string
+        Principal:
+          description: The AWS service or identity that receives the permission. At this time, the only valid principal is acm.amazonaws.com.
+          type: string
+        SourceAccount:
+          description: The ID of the calling account.
+          type: string
+      required:
+        - Actions
+        - CertificateAuthorityArn
+        - Principal
+      x-stackql-resource-name: permission
+      description: Permission set on private certificate authority
+      x-type-name: AWS::ACMPCA::Permission
+      x-stackql-primary-identifier:
+        - CertificateAuthorityArn
+        - Principal
+      x-create-only-properties:
+        - Actions
+        - CertificateAuthorityArn
+        - Principal
+        - SourceAccount
+      x-required-properties:
+        - Actions
+        - CertificateAuthorityArn
+        - Principal
+      x-tagging:
+        taggable: false
+        tagOnCreate: false
+        tagUpdatable: false
+        cloudFormationSystemTags: false
+      x-required-permissions:
+        create:
+          - acm-pca:CreatePermission
+          - acm-pca:ListPermissions
+        read:
+          - acm-pca:ListPermissions
+        delete:
+          - acm-pca:DeletePermission
+    CreateCertificateRequest:
+      properties:
+        ClientToken:
+          type: string
+        RoleArn:
+          type: string
+        TypeName:
+          type: string
+        TypeVersionId:
+          type: string
+        DesiredState:
+          type: object
+          properties:
+            ApiPassthrough:
+              description: Specifies X.509 certificate information to be included in the issued certificate. An ``APIPassthrough`` or ``APICSRPassthrough`` template variant must be selected, or else this parameter is ignored.
+              $ref: '#/components/schemas/ApiPassthrough'
+            CertificateAuthorityArn:
+              description: The Amazon Resource Name (ARN) for the private CA issues the certificate.
+              $ref: '#/components/schemas/Arn'
+            CertificateSigningRequest:
+              description: The certificate signing request (CSR) for the certificate.
+              type: string
+              minLength: 1
+            SigningAlgorithm:
+              description: |-
+                The name of the algorithm that will be used to sign the certificate to be issued. 
+                 This parameter should not be confused with the ``SigningAlgorithm`` parameter used to sign a CSR in the ``CreateCertificateAuthority`` action.
+                  The specified signing algorithm family (RSA or ECDSA) must match the algorithm family of the CA's secret key.
+              type: string
+            TemplateArn:
+              description: Specifies a custom configuration template to use when issuing a certificate. If this parameter is not provided, PCAshort defaults to the ``EndEntityCertificate/V1`` template. For more information about PCAshort templates, see [Using Templates](https://docs.aws.amazon.com/privateca/latest/userguide/UsingTemplates.html).
+              $ref: '#/components/schemas/Arn'
+            Validity:
+              description: The period of time during which the certificate will be valid.
+              $ref: '#/components/schemas/Validity'
+            ValidityNotBefore:
+              description: |-
+                Information describing the start of the validity period of the certificate. This parameter sets the “Not Before" date for the certificate.
+                 By default, when issuing a certificate, PCAshort sets the "Not Before" date to the issuance time minus 60 minutes. This compensates for clock inconsistencies across computer systems. The ``ValidityNotBefore`` parameter can be used to customize the “Not Before” value. 
+                 Unlike the ``Validity`` parameter, the ``ValidityNotBefore`` parameter is optional.
+                 The ``ValidityNotBefore`` value is expressed as an explicit date and time, using the ``Validity`` type value ``ABSOLUTE``.
+              $ref: '#/components/schemas/Validity'
+            Certificate:
+              description: ''
+              type: string
+            Arn:
+              description: ''
+              $ref: '#/components/schemas/Arn'
+          x-stackQL-stringOnly: true
+      x-title: CreateCertificateRequest
+      type: object
+      required: []
+    CreateCertificateAuthorityRequest:
+      properties:
+        ClientToken:
+          type: string
+        RoleArn:
+          type: string
+        TypeName:
+          type: string
+        TypeVersionId:
+          type: string
+        DesiredState:
+          type: object
+          properties:
+            Arn:
+              description: The Amazon Resource Name (ARN) of the certificate authority.
+              $ref: '#/components/schemas/Arn'
+            Type:
+              description: The type of the certificate authority.
+              type: string
+            KeyAlgorithm:
+              description: Public key algorithm and size, in bits, of the key pair that your CA creates when it issues a certificate.
+              type: string
+            SigningAlgorithm:
+              description: Algorithm your CA uses to sign certificate requests.
+              type: string
+            Subject:
+              description: Structure that contains X.500 distinguished name information for your CA.
+              $ref: '#/components/schemas/Subject'
+            RevocationConfiguration:
+              description: Certificate revocation information used by the CreateCertificateAuthority and UpdateCertificateAuthority actions.
+              $ref: '#/components/schemas/RevocationConfiguration'
+            Tags:
+              type: array
+              items:
+                $ref: '#/components/schemas/Tag'
+            CertificateSigningRequest:
+              description: The base64 PEM-encoded certificate signing request (CSR) for your certificate authority certificate.
+              type: string
+            CsrExtensions:
+              description: Structure that contains CSR pass through extension information used by the CreateCertificateAuthority action.
+              $ref: '#/components/schemas/CsrExtensions'
+            KeyStorageSecurityStandard:
+              description: KeyStorageSecurityStadard defines a cryptographic key management compliance standard used for handling CA keys.
+              type: string
+            UsageMode:
+              description: Usage mode of the ceritificate authority.
+              type: string
+          x-stackQL-stringOnly: true
+      x-title: CreateCertificateAuthorityRequest
+      type: object
+      required: []
+    CreateCertificateAuthorityActivationRequest:
+      properties:
+        ClientToken:
+          type: string
+        RoleArn:
+          type: string
+        TypeName:
+          type: string
+        TypeVersionId:
+          type: string
+        DesiredState:
+          type: object
+          properties:
+            CertificateAuthorityArn:
+              description: Arn of the Certificate Authority.
+              type: string
+            Certificate:
+              description: Certificate Authority certificate that will be installed in the Certificate Authority.
+              type: string
+            CertificateChain:
+              description: Certificate chain for the Certificate Authority certificate.
+              type: string
+            Status:
+              description: The status of the Certificate Authority.
+              type: string
+            CompleteCertificateChain:
+              description: The complete certificate chain, including the Certificate Authority certificate.
+              type: string
+          x-stackQL-stringOnly: true
+      x-title: CreateCertificateAuthorityActivationRequest
+      type: object
+      required: []
+    CreatePermissionRequest:
+      properties:
+        ClientToken:
+          type: string
+        RoleArn:
+          type: string
+        TypeName:
+          type: string
+        TypeVersionId:
+          type: string
+        DesiredState:
+          type: object
+          properties:
+            Actions:
+              description: The actions that the specified AWS service principal can use. Actions IssueCertificate, GetCertificate and ListPermissions must be provided.
+              type: array
+              x-insertionOrder: false
+              items:
+                type: string
+            CertificateAuthorityArn:
+              description: The Amazon Resource Name (ARN) of the Private Certificate Authority that grants the permission.
+              type: string
+            Principal:
+              description: The AWS service or identity that receives the permission. At this time, the only valid principal is acm.amazonaws.com.
+              type: string
+            SourceAccount:
+              description: The ID of the calling account.
+              type: string
+          x-stackQL-stringOnly: true
+      x-title: CreatePermissionRequest
+      type: object
+      required: []
+  securitySchemes:
+    hmac:
+      type: apiKey
+      name: Authorization
+      in: header
+      description: Amazon Signature authorization v4
+      x-amazon-apigateway-authtype: awsSigv4
+  x-stackQL-resources:
+    certificates:
+      name: certificates
+      id: aws.acmpca.certificates
+      x-cfn-schema-name: Certificate
+      x-cfn-type-name: AWS::ACMPCA::Certificate
+      x-identifiers:
+        - Arn
+        - CertificateAuthorityArn
+      x-type: cloud_control
+      methods:
+        create_resource:
+          config:
+            requestBodyTranslate:
+              algorithm: naive_DesiredState
+          operation:
+            $ref: '#/paths/~1?Action=CreateResource&Version=2021-09-30&__Certificate&__detailTransformed=true/post'
+          request:
+            mediaType: application/x-amz-json-1.0
+            base: |-
+              {
+                "TypeName": "AWS::ACMPCA::Certificate"
+              }
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete_resource:
+          operation:
+            $ref: '#/paths/~1?Action=DeleteResource&Version=2021-09-30/post'
+          request:
+            mediaType: application/x-amz-json-1.0
+            base: |-
+              {
+                "TypeName": "AWS::ACMPCA::Certificate"
+              }
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      sqlVerbs:
+        insert:
+          - $ref: '#/components/x-stackQL-resources/certificates/methods/create_resource'
+        delete:
+          - $ref: '#/components/x-stackQL-resources/certificates/methods/delete_resource'
+        update: []
+      config:
+        views:
+          select:
+            predicate: sqlDialect == "sqlite3" && requiredParams == [ data__Identifier ]
+            ddl: |-
+              SELECT
+              region,
+              data__Identifier,
+              JSON_EXTRACT(Properties, '$.ApiPassthrough') as api_passthrough,
+              JSON_EXTRACT(Properties, '$.CertificateAuthorityArn') as certificate_authority_arn,
+              JSON_EXTRACT(Properties, '$.CertificateSigningRequest') as certificate_signing_request,
+              JSON_EXTRACT(Properties, '$.SigningAlgorithm') as signing_algorithm,
+              JSON_EXTRACT(Properties, '$.TemplateArn') as template_arn,
+              JSON_EXTRACT(Properties, '$.Validity') as validity,
+              JSON_EXTRACT(Properties, '$.ValidityNotBefore') as validity_not_before,
+              JSON_EXTRACT(Properties, '$.Certificate') as certificate,
+              JSON_EXTRACT(Properties, '$.Arn') as arn
+              FROM aws.cloud_control.resource WHERE data__TypeName = 'AWS::ACMPCA::Certificate'
+              AND data__Identifier = '<Arn>|<CertificateAuthorityArn>'
+              AND region = 'us-east-1'
+            fallback:
+              predicate: sqlDialect == "postgres" && requiredParams == [ data__Identifier ]
+              ddl: |-
+                SELECT
+                region,
+                data__Identifier,
+                json_extract_path_text(Properties, 'ApiPassthrough') as api_passthrough,
+                json_extract_path_text(Properties, 'CertificateAuthorityArn') as certificate_authority_arn,
+                json_extract_path_text(Properties, 'CertificateSigningRequest') as certificate_signing_request,
+                json_extract_path_text(Properties, 'SigningAlgorithm') as signing_algorithm,
+                json_extract_path_text(Properties, 'TemplateArn') as template_arn,
+                json_extract_path_text(Properties, 'Validity') as validity,
+                json_extract_path_text(Properties, 'ValidityNotBefore') as validity_not_before,
+                json_extract_path_text(Properties, 'Certificate') as certificate,
+                json_extract_path_text(Properties, 'Arn') as arn
+                FROM aws.cloud_control.resource WHERE data__TypeName = 'AWS::ACMPCA::Certificate'
+                AND data__Identifier = '<Arn>|<CertificateAuthorityArn>'
+                AND region = 'us-east-1'
+    certificate_authorities:
+      name: certificate_authorities
+      id: aws.acmpca.certificate_authorities
+      x-cfn-schema-name: CertificateAuthority
+      x-cfn-type-name: AWS::ACMPCA::CertificateAuthority
+      x-identifiers:
+        - Arn
+      x-type: cloud_control
+      methods:
+        create_resource:
+          config:
+            requestBodyTranslate:
+              algorithm: naive_DesiredState
+          operation:
+            $ref: '#/paths/~1?Action=CreateResource&Version=2021-09-30&__CertificateAuthority&__detailTransformed=true/post'
+          request:
+            mediaType: application/x-amz-json-1.0
+            base: |-
+              {
+                "TypeName": "AWS::ACMPCA::CertificateAuthority"
+              }
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        update_resource:
+          operation:
+            $ref: '#/paths/~1?Action=UpdateResource&Version=2021-09-30/post'
+          request:
+            mediaType: application/x-amz-json-1.0
+            base: |-
+              {
+                "TypeName": "AWS::ACMPCA::CertificateAuthority"
+              }
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete_resource:
+          operation:
+            $ref: '#/paths/~1?Action=DeleteResource&Version=2021-09-30/post'
+          request:
+            mediaType: application/x-amz-json-1.0
+            base: |-
+              {
+                "TypeName": "AWS::ACMPCA::CertificateAuthority"
+              }
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      sqlVerbs:
+        insert:
+          - $ref: '#/components/x-stackQL-resources/certificate_authorities/methods/create_resource'
+        delete:
+          - $ref: '#/components/x-stackQL-resources/certificate_authorities/methods/delete_resource'
+        update:
+          - $ref: '#/components/x-stackQL-resources/certificate_authorities/methods/update_resource'
+      config:
+        views:
+          select:
+            predicate: sqlDialect == "sqlite3" && requiredParams == [ data__Identifier ]
+            ddl: |-
+              SELECT
+              region,
+              data__Identifier,
+              JSON_EXTRACT(Properties, '$.Arn') as arn,
+              JSON_EXTRACT(Properties, '$.Type') as type,
+              JSON_EXTRACT(Properties, '$.KeyAlgorithm') as key_algorithm,
+              JSON_EXTRACT(Properties, '$.SigningAlgorithm') as signing_algorithm,
+              JSON_EXTRACT(Properties, '$.Subject') as subject,
+              JSON_EXTRACT(Properties, '$.RevocationConfiguration') as revocation_configuration,
+              JSON_EXTRACT(Properties, '$.Tags') as tags,
+              JSON_EXTRACT(Properties, '$.CertificateSigningRequest') as certificate_signing_request,
+              JSON_EXTRACT(Properties, '$.CsrExtensions') as csr_extensions,
+              JSON_EXTRACT(Properties, '$.KeyStorageSecurityStandard') as key_storage_security_standard,
+              JSON_EXTRACT(Properties, '$.UsageMode') as usage_mode
+              FROM aws.cloud_control.resource WHERE data__TypeName = 'AWS::ACMPCA::CertificateAuthority'
+              AND data__Identifier = '<Arn>'
+              AND region = 'us-east-1'
+            fallback:
+              predicate: sqlDialect == "sqlite3"
+              ddl: |-
+                SELECT
+                region,
+                JSON_EXTRACT(Properties, '$.Arn') as arn
+                FROM aws.cloud_control.resources WHERE data__TypeName = 'AWS::ACMPCA::CertificateAuthority'
+                AND region = 'us-east-1'
+              fallback:
+                predicate: sqlDialect == "postgres" && requiredParams == [ data__Identifier ]
+                ddl: |-
+                  SELECT
+                  region,
+                  data__Identifier,
+                  json_extract_path_text(Properties, 'Arn') as arn,
+                  json_extract_path_text(Properties, 'Type') as type,
+                  json_extract_path_text(Properties, 'KeyAlgorithm') as key_algorithm,
+                  json_extract_path_text(Properties, 'SigningAlgorithm') as signing_algorithm,
+                  json_extract_path_text(Properties, 'Subject') as subject,
+                  json_extract_path_text(Properties, 'RevocationConfiguration') as revocation_configuration,
+                  json_extract_path_text(Properties, 'Tags') as tags,
+                  json_extract_path_text(Properties, 'CertificateSigningRequest') as certificate_signing_request,
+                  json_extract_path_text(Properties, 'CsrExtensions') as csr_extensions,
+                  json_extract_path_text(Properties, 'KeyStorageSecurityStandard') as key_storage_security_standard,
+                  json_extract_path_text(Properties, 'UsageMode') as usage_mode
+                  FROM aws.cloud_control.resource WHERE data__TypeName = 'AWS::ACMPCA::CertificateAuthority'
+                  AND data__Identifier = '<Arn>'
+                  AND region = 'us-east-1'
+                fallback:
+                  predicate: sqlDialect == "postgres"
+                  ddl: |-
+                    SELECT
+                    region,
+                    json_extract_path_text(Properties, 'Arn') as arn
+                    FROM aws.cloud_control.resources WHERE data__TypeName = 'AWS::ACMPCA::CertificateAuthority'
+                    AND region = 'us-east-1'
+    certificate_authority_activations:
+      name: certificate_authority_activations
+      id: aws.acmpca.certificate_authority_activations
+      x-cfn-schema-name: CertificateAuthorityActivation
+      x-cfn-type-name: AWS::ACMPCA::CertificateAuthorityActivation
+      x-identifiers:
+        - CertificateAuthorityArn
+      x-type: cloud_control
+      methods:
+        create_resource:
+          config:
+            requestBodyTranslate:
+              algorithm: naive_DesiredState
+          operation:
+            $ref: '#/paths/~1?Action=CreateResource&Version=2021-09-30&__CertificateAuthorityActivation&__detailTransformed=true/post'
+          request:
+            mediaType: application/x-amz-json-1.0
+            base: |-
+              {
+                "TypeName": "AWS::ACMPCA::CertificateAuthorityActivation"
+              }
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        update_resource:
+          operation:
+            $ref: '#/paths/~1?Action=UpdateResource&Version=2021-09-30/post'
+          request:
+            mediaType: application/x-amz-json-1.0
+            base: |-
+              {
+                "TypeName": "AWS::ACMPCA::CertificateAuthorityActivation"
+              }
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete_resource:
+          operation:
+            $ref: '#/paths/~1?Action=DeleteResource&Version=2021-09-30/post'
+          request:
+            mediaType: application/x-amz-json-1.0
+            base: |-
+              {
+                "TypeName": "AWS::ACMPCA::CertificateAuthorityActivation"
+              }
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      sqlVerbs:
+        insert:
+          - $ref: '#/components/x-stackQL-resources/certificate_authority_activations/methods/create_resource'
+        delete:
+          - $ref: '#/components/x-stackQL-resources/certificate_authority_activations/methods/delete_resource'
+        update:
+          - $ref: '#/components/x-stackQL-resources/certificate_authority_activations/methods/update_resource'
+      config:
+        views:
+          select:
+            predicate: sqlDialect == "sqlite3" && requiredParams == [ data__Identifier ]
+            ddl: |-
+              SELECT
+              region,
+              data__Identifier,
+              JSON_EXTRACT(Properties, '$.CertificateAuthorityArn') as certificate_authority_arn,
+              JSON_EXTRACT(Properties, '$.Certificate') as certificate,
+              JSON_EXTRACT(Properties, '$.CertificateChain') as certificate_chain,
+              JSON_EXTRACT(Properties, '$.Status') as status,
+              JSON_EXTRACT(Properties, '$.CompleteCertificateChain') as complete_certificate_chain
+              FROM aws.cloud_control.resources WHERE data__TypeName = 'AWS::ACMPCA::CertificateAuthorityActivation'
+              AND data__Identifier = '<CertificateAuthorityArn>'
+              AND region = 'us-east-1'
+            fallback:
+              predicate: sqlDialect == "postgres" && requiredParams == [ data__Identifier ]
+              ddl: |-
+                SELECT
+                region,
+                data__Identifier,
+                json_extract_path_text(Properties, 'CertificateAuthorityArn') as certificate_authority_arn,
+                json_extract_path_text(Properties, 'Certificate') as certificate,
+                json_extract_path_text(Properties, 'CertificateChain') as certificate_chain,
+                json_extract_path_text(Properties, 'Status') as status,
+                json_extract_path_text(Properties, 'CompleteCertificateChain') as complete_certificate_chain
+                FROM aws.cloud_control.resource WHERE data__TypeName = 'AWS::ACMPCA::CertificateAuthorityActivation'
+                AND data__Identifier = '<CertificateAuthorityArn>'
+                AND region = 'us-east-1'
+    permissions:
+      name: permissions
+      id: aws.acmpca.permissions
+      x-cfn-schema-name: Permission
+      x-cfn-type-name: AWS::ACMPCA::Permission
+      x-identifiers:
+        - CertificateAuthorityArn
+        - Principal
+      x-type: cloud_control
+      methods:
+        create_resource:
+          config:
+            requestBodyTranslate:
+              algorithm: naive_DesiredState
+          operation:
+            $ref: '#/paths/~1?Action=CreateResource&Version=2021-09-30&__Permission&__detailTransformed=true/post'
+          request:
+            mediaType: application/x-amz-json-1.0
+            base: |-
+              {
+                "TypeName": "AWS::ACMPCA::Permission"
+              }
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete_resource:
+          operation:
+            $ref: '#/paths/~1?Action=DeleteResource&Version=2021-09-30/post'
+          request:
+            mediaType: application/x-amz-json-1.0
+            base: |-
+              {
+                "TypeName": "AWS::ACMPCA::Permission"
+              }
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      sqlVerbs:
+        insert:
+          - $ref: '#/components/x-stackQL-resources/permissions/methods/create_resource'
+        delete:
+          - $ref: '#/components/x-stackQL-resources/permissions/methods/delete_resource'
+        update: []
+      config:
+        views:
+          select:
+            predicate: sqlDialect == "sqlite3" && requiredParams == [ data__Identifier ]
+            ddl: |-
+              SELECT
+              region,
+              data__Identifier,
+              JSON_EXTRACT(Properties, '$.Actions') as actions,
+              JSON_EXTRACT(Properties, '$.CertificateAuthorityArn') as certificate_authority_arn,
+              JSON_EXTRACT(Properties, '$.Principal') as principal,
+              JSON_EXTRACT(Properties, '$.SourceAccount') as source_account
+              FROM aws.cloud_control.resource WHERE data__TypeName = 'AWS::ACMPCA::Permission'
+              AND data__Identifier = '<CertificateAuthorityArn>|<Principal>'
+              AND region = 'us-east-1'
+            fallback:
+              predicate: sqlDialect == "postgres" && requiredParams == [ data__Identifier ]
+              ddl: |-
+                SELECT
+                region,
+                data__Identifier,
+                json_extract_path_text(Properties, 'Actions') as actions,
+                json_extract_path_text(Properties, 'CertificateAuthorityArn') as certificate_authority_arn,
+                json_extract_path_text(Properties, 'Principal') as principal,
+                json_extract_path_text(Properties, 'SourceAccount') as source_account
+                FROM aws.cloud_control.resource WHERE data__TypeName = 'AWS::ACMPCA::Permission'
+                AND data__Identifier = '<CertificateAuthorityArn>|<Principal>'
+                AND region = 'us-east-1'
+paths:
+  /?Action=CreateResource&Version=2021-09-30:
+    parameters:
+      - $ref: '#/components/parameters/X-Amz-Content-Sha256'
+      - $ref: '#/components/parameters/X-Amz-Date'
+      - $ref: '#/components/parameters/X-Amz-Algorithm'
+      - $ref: '#/components/parameters/X-Amz-Credential'
+      - $ref: '#/components/parameters/X-Amz-Security-Token'
+      - $ref: '#/components/parameters/X-Amz-Signature'
+      - $ref: '#/components/parameters/X-Amz-SignedHeaders'
+    post:
+      operationId: CreateResource
+      parameters:
+        - description: Action Header
+          in: header
+          name: X-Amz-Target
+          required: false
+          schema:
+            default: CloudApiService.CreateResource
+            enum:
+              - CloudApiService.CreateResource
+            type: string
+        - in: header
+          name: Content-Type
+          required: false
+          schema:
+            default: application/x-amz-json-1.0
+            enum:
+              - application/x-amz-json-1.0
+            type: string
+      requestBody:
+        content:
+          application/x-amz-json-1.0:
+            schema:
+              $ref: '#/components/x-cloud-control-schemas/CreateResourceInput'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/x-cloud-control-schemas/ProgressEvent'
+          description: Success
+  /?Action=DeleteResource&Version=2021-09-30:
+    parameters:
+      - $ref: '#/components/parameters/X-Amz-Content-Sha256'
+      - $ref: '#/components/parameters/X-Amz-Date'
+      - $ref: '#/components/parameters/X-Amz-Algorithm'
+      - $ref: '#/components/parameters/X-Amz-Credential'
+      - $ref: '#/components/parameters/X-Amz-Security-Token'
+      - $ref: '#/components/parameters/X-Amz-Signature'
+      - $ref: '#/components/parameters/X-Amz-SignedHeaders'
+    post:
+      operationId: DeleteResource
+      parameters:
+        - description: Action Header
+          in: header
+          name: X-Amz-Target
+          required: false
+          schema:
+            default: CloudApiService.DeleteResource
+            enum:
+              - CloudApiService.DeleteResource
+            type: string
+        - in: header
+          name: Content-Type
+          required: false
+          schema:
+            default: application/x-amz-json-1.0
+            enum:
+              - application/x-amz-json-1.0
+            type: string
+      requestBody:
+        content:
+          application/x-amz-json-1.0:
+            schema:
+              $ref: '#/components/x-cloud-control-schemas/DeleteResourceInput'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/x-cloud-control-schemas/DeleteResourceOutput'
+          description: Success
+  /?Action=UpdateResource&Version=2021-09-30:
+    parameters:
+      - $ref: '#/components/parameters/X-Amz-Content-Sha256'
+      - $ref: '#/components/parameters/X-Amz-Date'
+      - $ref: '#/components/parameters/X-Amz-Algorithm'
+      - $ref: '#/components/parameters/X-Amz-Credential'
+      - $ref: '#/components/parameters/X-Amz-Security-Token'
+      - $ref: '#/components/parameters/X-Amz-Signature'
+      - $ref: '#/components/parameters/X-Amz-SignedHeaders'
+    post:
+      operationId: UpdateResource
+      parameters:
+        - description: Action Header
+          in: header
+          name: X-Amz-Target
+          required: false
+          schema:
+            default: CloudApiService.UpdateResource
+            enum:
+              - CloudApiService.UpdateResource
+            type: string
+        - in: header
+          name: Content-Type
+          required: false
+          schema:
+            default: application/x-amz-json-1.0
+            enum:
+              - application/x-amz-json-1.0
+            type: string
+      requestBody:
+        content:
+          application/x-amz-json-1.0:
+            schema:
+              properties:
+                ClientName:
+                  type: string
+                Identifier:
+                  $ref: '#/components/x-cloud-control-schemas/Identifier'
+                PatchDocument:
+                  type: string
+                RoleArn:
+                  $ref: '#/components/x-cloud-control-schemas/RoleArn'
+                TypeName:
+                  $ref: '#/components/x-cloud-control-schemas/TypeName'
+                TypeVersionId:
+                  $ref: '#/components/x-cloud-control-schemas/TypeVersionId'
+              required:
+                - Identifier
+                - PatchDocument
+              type: object
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/x-cloud-control-schemas/UpdateResourceOutput'
+          description: Success
+  /?Action=CreateResource&Version=2021-09-30&__Certificate&__detailTransformed=true:
+    parameters:
+      - $ref: '#/components/parameters/X-Amz-Content-Sha256'
+      - $ref: '#/components/parameters/X-Amz-Date'
+      - $ref: '#/components/parameters/X-Amz-Algorithm'
+      - $ref: '#/components/parameters/X-Amz-Credential'
+      - $ref: '#/components/parameters/X-Amz-Security-Token'
+      - $ref: '#/components/parameters/X-Amz-Signature'
+      - $ref: '#/components/parameters/X-Amz-SignedHeaders'
+    post:
+      operationId: CreateCertificate
+      parameters:
+        - description: Action Header
+          in: header
+          name: X-Amz-Target
+          required: false
+          schema:
+            default: CloudApiService.CreateResource
+            enum:
+              - CloudApiService.CreateResource
+            type: string
+        - in: header
+          name: Content-Type
+          required: false
+          schema:
+            default: application/x-amz-json-1.0
+            enum:
+              - application/x-amz-json-1.0
+            type: string
+      requestBody:
+        content:
+          application/x-amz-json-1.0:
+            schema:
+              $ref: '#/components/schemas/CreateCertificateRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/x-cloud-control-schemas/ProgressEvent'
+          description: Success
+  /?Action=CreateResource&Version=2021-09-30&__CertificateAuthority&__detailTransformed=true:
+    parameters:
+      - $ref: '#/components/parameters/X-Amz-Content-Sha256'
+      - $ref: '#/components/parameters/X-Amz-Date'
+      - $ref: '#/components/parameters/X-Amz-Algorithm'
+      - $ref: '#/components/parameters/X-Amz-Credential'
+      - $ref: '#/components/parameters/X-Amz-Security-Token'
+      - $ref: '#/components/parameters/X-Amz-Signature'
+      - $ref: '#/components/parameters/X-Amz-SignedHeaders'
+    post:
+      operationId: CreateCertificateAuthority
+      parameters:
+        - description: Action Header
+          in: header
+          name: X-Amz-Target
+          required: false
+          schema:
+            default: CloudApiService.CreateResource
+            enum:
+              - CloudApiService.CreateResource
+            type: string
+        - in: header
+          name: Content-Type
+          required: false
+          schema:
+            default: application/x-amz-json-1.0
+            enum:
+              - application/x-amz-json-1.0
+            type: string
+      requestBody:
+        content:
+          application/x-amz-json-1.0:
+            schema:
+              $ref: '#/components/schemas/CreateCertificateAuthorityRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/x-cloud-control-schemas/ProgressEvent'
+          description: Success
+  /?Action=CreateResource&Version=2021-09-30&__CertificateAuthorityActivation&__detailTransformed=true:
+    parameters:
+      - $ref: '#/components/parameters/X-Amz-Content-Sha256'
+      - $ref: '#/components/parameters/X-Amz-Date'
+      - $ref: '#/components/parameters/X-Amz-Algorithm'
+      - $ref: '#/components/parameters/X-Amz-Credential'
+      - $ref: '#/components/parameters/X-Amz-Security-Token'
+      - $ref: '#/components/parameters/X-Amz-Signature'
+      - $ref: '#/components/parameters/X-Amz-SignedHeaders'
+    post:
+      operationId: CreateCertificateAuthorityActivation
+      parameters:
+        - description: Action Header
+          in: header
+          name: X-Amz-Target
+          required: false
+          schema:
+            default: CloudApiService.CreateResource
+            enum:
+              - CloudApiService.CreateResource
+            type: string
+        - in: header
+          name: Content-Type
+          required: false
+          schema:
+            default: application/x-amz-json-1.0
+            enum:
+              - application/x-amz-json-1.0
+            type: string
+      requestBody:
+        content:
+          application/x-amz-json-1.0:
+            schema:
+              $ref: '#/components/schemas/CreateCertificateAuthorityActivationRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/x-cloud-control-schemas/ProgressEvent'
+          description: Success
+  /?Action=CreateResource&Version=2021-09-30&__Permission&__detailTransformed=true:
+    parameters:
+      - $ref: '#/components/parameters/X-Amz-Content-Sha256'
+      - $ref: '#/components/parameters/X-Amz-Date'
+      - $ref: '#/components/parameters/X-Amz-Algorithm'
+      - $ref: '#/components/parameters/X-Amz-Credential'
+      - $ref: '#/components/parameters/X-Amz-Security-Token'
+      - $ref: '#/components/parameters/X-Amz-Signature'
+      - $ref: '#/components/parameters/X-Amz-SignedHeaders'
+    post:
+      operationId: CreatePermission
+      parameters:
+        - description: Action Header
+          in: header
+          name: X-Amz-Target
+          required: false
+          schema:
+            default: CloudApiService.CreateResource
+            enum:
+              - CloudApiService.CreateResource
+            type: string
+        - in: header
+          name: Content-Type
+          required: false
+          schema:
+            default: application/x-amz-json-1.0
+            enum:
+              - application/x-amz-json-1.0
+            type: string
+      requestBody:
+        content:
+          application/x-amz-json-1.0:
+            schema:
+              $ref: '#/components/schemas/CreatePermissionRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/x-cloud-control-schemas/ProgressEvent'
+          description: Success
+x-stackQL-config:
+  requestTranslate:
+    algorithm: drop_double_underscore_params
+  pagination:
+    requestToken:
+      key: NextToken
+      location: body
+    responseToken:
+      key: NextToken
+      location: body

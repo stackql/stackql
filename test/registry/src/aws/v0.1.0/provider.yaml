@@ -2,6 +2,15 @@ id: aws
 name: aws
 version: v0.1.0
 providerServices:
+  acmpca:
+    description: acmpca
+    id: acmpca:v0.1.0
+    name: acmpca
+    preferred: true
+    service:
+      $ref: aws/v0.1.0/services/acmpca.yaml
+    title: acmpca API
+    version: v0.1.0
   cloud_control:
     description: cloud_control
     id: cloud_control:v0.1.0

@@ -4463,3 +4463,91 @@ Describe Extended Works For Multi Views Through Naive Approach
     ...    ${EMPTY}
     ...    stdout=${CURDIR}/tmp/Describe-Extended-Works-For-Multi-Views-Through-Naive-Approach.tmp
     ...    stderr=${CURDIR}/tmp/Describe-Extended-Works-For-Multi-Views-Through-Naive-Approach-stderr.tmp
+
+
+Describe Extended Works For Single Exclusive View Through Naive Approach
+    ${inputStr} =    Catenate
+    ...    describe extended aws.acmpca.certificate_authority_activations;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |----------------------------|------|-------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}type${SPACE}|${SPACE}description${SPACE}|
+    ...    |----------------------------|------|-------------|
+    ...    |${SPACE}certificate${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}text${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |----------------------------|------|-------------|
+    ...    |${SPACE}certificate_authority_arn${SPACE}${SPACE}|${SPACE}text${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |----------------------------|------|-------------|
+    ...    |${SPACE}certificate_chain${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}text${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |----------------------------|------|-------------|
+    ...    |${SPACE}complete_certificate_chain${SPACE}|${SPACE}text${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |----------------------------|------|-------------|
+    ...    |${SPACE}data__Identifier${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |----------------------------|------|-------------|
+    ...    |${SPACE}region${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |----------------------------|------|-------------|
+    ...    |${SPACE}status${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}text${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |----------------------------|------|-------------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Describe-Extended-Works-For-Single-Exclusive-View-Through-Naive-Approach.tmp
+    ...    stderr=${CURDIR}/tmp/Describe-Extended-Works-For-Single-Exclusive-View-Through-Naive-Approach-stderr.tmp
+
+
+List And Details Dataflow View Works As Exemplified By AWS EC2 VPC Cloud Control
+    ${sqliteInputStr} =    Catenate
+    ...    select 
+    ...    listing.Identifier as vpc_id, 
+    ...    json_extract(detail.Properties, '$.CidrBlock') as vpc_cidr_block, 
+    ...    json_extract(detail.Properties, '$.Tags') as vpc_tags 
+    ...    from  aws.cloud_control.resources listing 
+    ...    inner join aws.cloud_control.resource detail 
+    ...    on detail.data__Identifier = listing.Identifier 
+    ...    where listing.data__TypeName = 'AWS::EC2::VPC' and listing.region = 'ap-southeast-1' and detail.region = 'ap-southeast-1' and detail.data__TypeName = 'AWS::EC2::VPC' 
+    ...    order by vpc_id desc;
+    ${postgresInputStr} =    Catenate
+    ...    select 
+    ...    listing.Identifier as vpc_id, 
+    ...    json_extract_path_text(detail.Properties, 'CidrBlock') as vpc_cidr_block, 
+    ...    json_extract_path_text(detail.Properties, 'Tags') as vpc_tags 
+    ...    from  aws.cloud_control.resources listing 
+    ...    inner join aws.cloud_control.resource detail 
+    ...    on detail.data__Identifier = listing.Identifier 
+    ...    where listing.data__TypeName = 'AWS::EC2::VPC' and listing.region = 'ap-southeast-1' and detail.region = 'ap-southeast-1' and detail.data__TypeName = 'AWS::EC2::VPC' 
+    ...    order by vpc_id desc;
+    ${inputStr} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"     ${postgresInputStr}    ${sqliteInputStr}
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |----------|----------------|---------------------------------|
+    ...    |${SPACE}${SPACE}vpc_id${SPACE}${SPACE}|${SPACE}vpc_cidr_block${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}vpc_tags${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |----------|----------------|---------------------------------|
+    ...    |${SPACE}vpc-0005${SPACE}|${SPACE}10.4.0.0/16${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}\[{"Value":"vpc5","Key":"Name"}]${SPACE}|
+    ...    |----------|----------------|---------------------------------|
+    ...    |${SPACE}vpc-0004${SPACE}|${SPACE}10.3.0.0/16${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}\[{"Value":"vpc4","Key":"Name"}]${SPACE}|
+    ...    |----------|----------------|---------------------------------|
+    ...    |${SPACE}vpc-0003${SPACE}|${SPACE}10.2.0.0/16${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}\[{"Value":"vpc3","Key":"Name"}]${SPACE}|
+    ...    |----------|----------------|---------------------------------|
+    ...    |${SPACE}vpc-0002${SPACE}|${SPACE}10.1.0.0/16${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}\[{"Value":"vpc2","Key":"Name"}]${SPACE}|
+    ...    |----------|----------------|---------------------------------|
+    ...    |${SPACE}vpc-0001${SPACE}|${SPACE}10.0.0.0/16${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}\[{"Value":"vpc1","Key":"Name"}]${SPACE}|
+    ...    |----------|----------------|---------------------------------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/List-And-Details-Dataflow-View-Works-As-Exemplified-By-AWS-EC2-VPC-Cloud-Control.tmp
+    ...    stderr=${CURDIR}/tmp/List-And-Details-Dataflow-View-Works-As-Exemplified-By-AWS-EC2-VPC-Cloud-Control-stderr.tmp
+
