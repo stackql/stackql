@@ -435,9 +435,9 @@ func (pr *standardParameterRouter) route(
 	priorParameters := runParamters.Clone()
 	// notOnStringParams := notOnParams.GetStringified()
 	// TODO: add parent params into the mix here.
-	hr, err := taxonomy.GetHeirarchyFromStatement(handlerCtx, tb, notOnParams)
+	hr, err := taxonomy.GetHeirarchyFromStatement(handlerCtx, tb, notOnParams, false)
 	if err != nil {
-		hr, err = taxonomy.GetHeirarchyFromStatement(handlerCtx, tb, runParamters)
+		hr, err = taxonomy.GetHeirarchyFromStatement(handlerCtx, tb, runParamters, false)
 	} else {
 		// If the where parameters are sufficient, then need to switch
 		// the Table - Paramater coupling object

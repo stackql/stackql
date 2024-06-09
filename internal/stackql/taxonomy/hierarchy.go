@@ -22,14 +22,15 @@ func GetHeirarchyIDsFromParserNode(
 	node sqlparser.SQLNode,
 ) (internaldto.HeirarchyIdentifiers, error) {
 	return getHids(
-		handlerCtx, node, parserutil.NewParameterMap())
+		handlerCtx, node, parserutil.NewParameterMap(), false)
 }
 
 //nolint:funlen,gocognit // lots of moving parts
 func getHids(
 	handlerCtx handler.HandlerContext,
 	node sqlparser.SQLNode,
-	params parserutil.ColumnKeyedDatastore) (internaldto.HeirarchyIdentifiers, error) {
+	params parserutil.ColumnKeyedDatastore,
+	viewPermissive bool) (internaldto.HeirarchyIdentifiers, error) {
 	var hIds internaldto.HeirarchyIdentifiers
 	switch n := node.(type) {
 	case *sqlparser.Exec:
@@ -50,9 +51,9 @@ func getHids(
 			sq := internaldto.NewSubqueryDTO(n, t)
 			return internaldto.ObtainSubqueryHeirarchyIdentifiers(sq), nil
 		}
-		return getHids(handlerCtx, n.Expr, params)
+		return getHids(handlerCtx, n.Expr, params, viewPermissive)
 	case *sqlparser.DescribeTable:
-		return getHids(handlerCtx, n.Table, params)
+		return getHids(handlerCtx, n.Table, params, viewPermissive)
 	case *sqlparser.Show:
 		switch strings.ToUpper(n.Type) {
 		case "INSERT":
@@ -84,6 +85,9 @@ func getHids(
 	}
 	viewDTO, isView := handlerCtx.GetSQLSystem().GetViewByNameAndParameters(
 		hIds.GetTableName(), params.GetStringified())
+	if viewPermissive && !isView {
+		viewDTO, isView = handlerCtx.GetSQLSystem().GetViewByName(hIds.GetTableName())
+	}
 	if isView {
 		hIds = hIds.WithView(viewDTO)
 	}
@@ -148,13 +152,14 @@ func GetHeirarchyFromStatement(
 	handlerCtx handler.HandlerContext,
 	node sqlparser.SQLNode,
 	parameters parserutil.ColumnKeyedDatastore,
+	viewPermissive bool,
 ) (tablemetadata.HeirarchyObjects, error) {
 	var hIds internaldto.HeirarchyIdentifiers
 	getFirstAvailableMethod := false
 	if parameters == nil {
 		parameters = parserutil.NewParameterMap()
 	}
-	hIds, err := getHids(handlerCtx, node, parameters)
+	hIds, err := getHids(handlerCtx, node, parameters, viewPermissive)
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +177,7 @@ func GetHeirarchyFromStatement(
 			retVal := tablemetadata.NewHeirarchyObjects(hIds)
 			return retVal, nil
 		}
-		return GetHeirarchyFromStatement(handlerCtx, n.Expr, parameters)
+		return GetHeirarchyFromStatement(handlerCtx, n.Expr, parameters, viewPermissive)
 	case *sqlparser.Show:
 		switch strings.ToUpper(n.Type) {
 		case "INSERT":
@@ -249,6 +254,9 @@ func GetHeirarchyFromStatement(
 				params := parameters.GetStringified()
 				viewDTO, viewExists = handlerCtx.GetSQLSystem().GetViewByNameAndParameters(
 					hIds.GetTableName(), params)
+				if viewPermissive {
+					viewDTO, viewExists = handlerCtx.GetSQLSystem().GetViewByName(hIds.GetTableName())
+				}
 				if viewExists {
 					retVal.SetIndirect(viewDTO)
 				}

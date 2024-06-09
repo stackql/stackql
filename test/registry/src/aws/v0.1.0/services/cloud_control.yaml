@@ -579,6 +579,23 @@ components:
         update:
         - $ref: '#/components/x-stackQL-resources/resources/methods/update_resource'
       title: resources
+    resource:
+      name: resource
+      methods:
+        get_resource:
+          operation:
+            $ref: '#/paths/~1?Action=GetResource&Version=2021-09-30/post'
+          request:
+            mediaType: application/x-amz-json-1.0
+          response:
+            mediaType: application/json
+            objectKey: '$.ResourceDescription'
+            openAPIDocKey: '200'
+      id: aws.cloud_control.resource
+      sqlVerbs:
+        select:
+        - $ref: '#/components/x-stackQL-resources/resources/methods/get_resource'
+      title: resource
     resource_requests:
       name: resource_requests
       methods:

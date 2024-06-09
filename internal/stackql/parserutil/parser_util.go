@@ -565,7 +565,7 @@ func inferColNameFromExpr(
 					if i == 0 {
 						retVal.Name = rv.Name
 						if funcNameLowered == constants.SQLFuncJSONExtractPostgres {
-							rv.DecoratedColumn = fmt.Sprintf(`"%s"%s`, rv.Name, constants.PostgresJSONCastSuffix)
+							rv.DecoratedColumn = fmt.Sprintf(`%s%s`, rv.DecoratedColumn, constants.PostgresJSONCastSuffix)
 						}
 					}
 					exprsDecorated = append(exprsDecorated, rv.DecoratedColumn)

@@ -533,7 +533,7 @@ func (pb *standardPrimitiveGenerator) AnalyzeUnaryExec(
 	selectNode *sqlparser.Select,
 	cols []parserutil.ColumnHandle,
 ) (tablemetadata.ExtendedTableMetadata, error) {
-	err := pb.inferHeirarchyAndPersist(handlerCtx, node, nil)
+	err := pb.inferHeirarchyAndPersist(handlerCtx, node, nil, false)
 	if err != nil {
 		return nil, err
 	}
@@ -974,7 +974,7 @@ func (pb *standardPrimitiveGenerator) AnalyzeInsert(pbi planbuilderinput.PlanBui
 	if !ok {
 		return fmt.Errorf("could not cast node of type '%T' to required Insert", pbi.GetStatement())
 	}
-	err := pb.inferHeirarchyAndPersist(handlerCtx, node, pbi.GetPlaceholderParams())
+	err := pb.inferHeirarchyAndPersist(handlerCtx, node, pbi.GetPlaceholderParams(), false)
 	if err != nil {
 		return err
 	}
@@ -1072,7 +1072,7 @@ func (pb *standardPrimitiveGenerator) AnalyzeUpdate(pbi planbuilderinput.PlanBui
 	if !ok {
 		return fmt.Errorf("could not cast node of type '%T' to required Update", pbi.GetStatement())
 	}
-	err := pb.inferHeirarchyAndPersist(handlerCtx, node, pbi.GetPlaceholderParams())
+	err := pb.inferHeirarchyAndPersist(handlerCtx, node, pbi.GetPlaceholderParams(), false)
 	if err != nil {
 		return err
 	}
@@ -1123,8 +1123,9 @@ func (pb *standardPrimitiveGenerator) AnalyzeUpdate(pbi planbuilderinput.PlanBui
 func (pb *standardPrimitiveGenerator) inferHeirarchyAndPersist(
 	handlerCtx handler.HandlerContext,
 	node sqlparser.SQLNode,
-	parameters parserutil.ColumnKeyedDatastore) error {
-	heirarchy, err := taxonomy.GetHeirarchyFromStatement(handlerCtx, node, parameters)
+	parameters parserutil.ColumnKeyedDatastore,
+	viewPermissive bool) error {
+	heirarchy, err := taxonomy.GetHeirarchyFromStatement(handlerCtx, node, parameters, viewPermissive)
 	if err != nil {
 		return err
 	}
@@ -1143,7 +1144,7 @@ func (pb *standardPrimitiveGenerator) analyzeDelete(
 	}
 	pb.parseComments(node.Comments)
 	paramMap, paramMapExists := pbi.GetAnnotatedAST().GetWhereParamMapsEntry(node.Where)
-	err := pb.inferHeirarchyAndPersist(handlerCtx, node, paramMap)
+	err := pb.inferHeirarchyAndPersist(handlerCtx, node, paramMap, false)
 	if err != nil {
 		return err
 	}
@@ -1262,7 +1263,7 @@ func (pb *standardPrimitiveGenerator) analyzeDescribe(pbi planbuilderinput.PlanB
 		return fmt.Errorf("could not cast node of type '%T' to required Describe", pbi.GetStatement())
 	}
 	var err error
-	err = pb.inferHeirarchyAndPersist(handlerCtx, node, nil)
+	err = pb.inferHeirarchyAndPersist(handlerCtx, node, nil, true)
 	if err != nil {
 		return err
 	}
@@ -1372,12 +1373,12 @@ func (pb *standardPrimitiveGenerator) analyzeShow(
 	case "AUTH":
 		// TODO
 	case "INSERT":
-		err = pb.inferHeirarchyAndPersist(handlerCtx, node, nil)
+		err = pb.inferHeirarchyAndPersist(handlerCtx, node, nil, false)
 		if err != nil {
 			return err
 		}
 	case "METHODS":
-		err = pb.inferHeirarchyAndPersist(handlerCtx, node, nil)
+		err = pb.inferHeirarchyAndPersist(handlerCtx, node, nil, false)
 		if err != nil {
 			return err
 		}
