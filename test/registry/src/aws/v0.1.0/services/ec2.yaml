@@ -39560,10 +39560,7 @@ paths:
           schema:
             type: array
             items:
-              allOf:
-                - $ref: '#/components/schemas/InstanceId'
-                - xml:
-                    name: InstanceId
+              $ref: '#/components/schemas/InstanceId'
         - name: AdditionalInfo
           in: query
           required: false
@@ -42475,6 +42472,9 @@ components:
         instances_Start:
           operation:
             $ref: '#/paths/~1?Action=StartInstances&Version=2016-11-15/get'
+          # request:
+          #   mediaType: text/xml
+          #   xmlRootAnnotation: 'xmlns="http://ec2.amazonaws.com/doc/2016-11-15/"'
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
@@ -42502,8 +42502,28 @@ components:
         insert: []
         select:
         - $ref: '#/components/x-stackQL-resources/instances/methods/instances_Describe'
+        update:
+        - $ref: '#/components/x-stackQL-resources/instances/methods/instances_Start'
+    instances_start:
+      name: instances_start
+      methods:
+        instances_Start:
+          operation:
+            $ref: '#/paths/~1?Action=StartInstances&Version=2016-11-15/get'
+          # request:
+          #   mediaType: text/xml
+          #   xmlRootAnnotation: 'xmlns="http://ec2.amazonaws.com/doc/2016-11-15/"'
+          response:
+            mediaType: text/xml
+            openAPIDocKey: '200'
+      id: aws.ec2.instances
+      sqlVerbs:
+        delete: []
+        insert:
+        - $ref: '#/components/x-stackQL-resources/instances/methods/instances_Start'
+        select: []
         update: []
-      title: instances
+      title: instances_Start
     internet_gateways:
       name: internet_gateways
       methods:
@@ -78373,13 +78393,9 @@ components:
       title: StartInstancesRequest
       properties:
         InstanceId:
-          allOf:
-            - $ref: '#/components/schemas/InstanceIdStringList'
-            - description: The IDs of the instances.
+          $ref: '#/components/schemas/InstanceIdStringList'
         additionalInfo:
-          allOf:
-            - $ref: '#/components/schemas/String'
-            - description: Reserved.
+          $ref: '#/components/schemas/String'
         dryRun:
           allOf:
             - $ref: '#/components/schemas/Boolean'
