@@ -707,6 +707,53 @@ AWS Route53 Create Record Set Simple Exemplifies XML Request Body
     ...    stdout=${CURDIR}/tmp/AWS-Route53-Create-Record-Set-Simple-Exemplifies-XML-Request-Body.tmp
     ...    stderr=${CURDIR}/tmp/AWS-Route53-Create-Record-Set-Simple-Exemplifies-XML-Request-Body-stderr.tmp
 
+AWS EC2 Insert Start Instance Exemplifies Lifecycle Insert Verb Form Encoded Request
+    ${inputStr} =    Catenate
+    ...    insert into 
+    ...    aws.ec2.instances_start
+    ...    (InstanceId, region)
+    ...    select 
+    ...    JSON('[ "id-001" ]'), 
+    ...    'ap-southeast-2' 
+    ...    ;
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${EMPTY}
+    ...    The operation was despatched successfully
+    ...    stdout=${CURDIR}/tmp/AWS-EC2-Insert-Start-Instance-Exemplifies-Lifecycle-Insert-Verb-Form-Encoded-Request.tmp
+    ...    stderr=${CURDIR}/tmp/AWS-EC2-Insert-Start-Instance-Exemplifies-Lifecycle-Insert-Verb-Form-Encoded-Request-stderr.tmp
+
+
+AWS EC2 Update Start Instance Exemplifies Lifecycle Update Verb Form Encoded Request
+    ${inputStr} =    Catenate
+    ...    update 
+    ...    aws.ec2.instances
+    ...    set 
+    ...    InstanceId = JSON('[ "id-001" ]'), 
+    ...    region = 'ap-southeast-2' 
+    ...    ;
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${EMPTY}
+    ...    The operation was despatched successfully
+    ...    stdout=${CURDIR}/tmp/AWS-EC2-Update-Start-Instance-Exemplifies-Lifecycle-Update-Verb-Form-Encoded-Request.tmp
+    ...    stderr=${CURDIR}/tmp/AWS-EC2-Update-Start-Instance-Exemplifies-Lifecycle-Update-Verb-Form-Encoded-Request-stderr.tmp
+
+
 AWS Route53 Create Record Set CNAME Simple Exemplifies XML Request Body In Real Life
     ${inputStr} =    Catenate
     ...    insert into 
