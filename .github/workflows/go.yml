@@ -535,7 +535,7 @@ jobs:
 
   macosbuild:
     name: MacOS Build
-    runs-on: macos-11
+    runs-on: macos-12
     steps:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v4.1.1
