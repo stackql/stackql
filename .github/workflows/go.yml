@@ -45,7 +45,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v5.0.0
       with:
-        go-version: ^1.19
+        go-version: ^1.21
         check-latest: true
         cache: true
       id: go
@@ -90,13 +90,18 @@ jobs:
           echo "SOURCE_BRANCH=${GITHUB_REF#refs/heads/}"
           echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}"
         } >> "${GITHUB_STATE}"
+    
+    - name: Choco install openssl
+      uses: crazy-max/ghaction-chocolatey@v3.0.0
+      timeout-minutes: 40
+      with:
+        args: "install --force openssl --version 3.1.1"
 
     - name: Choco install packages
       uses: crazy-max/ghaction-chocolatey@v3.0.0
-      if: startsWith(steps.git_ref_parse.outputs.SOURCE_TAG, 'build-release')
       timeout-minutes: 40
       with:
-        args: "install --force postgresql13 openssl sqlite"
+        args: "install --force postgresql13 sqlite"
 
     - name: Install Python dependencies
       run: |
@@ -147,21 +152,18 @@ jobs:
       run: python cicd/python/build.py --verbose --test
 
     - name: Mock Server Download
-      if: startsWith(steps.git_ref_parse.outputs.SOURCE_TAG, 'build-release')
       run: |
         mvn org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy `
         '-Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded' `
         '-DoutputDirectory=test/downloads'
 
     - name: Create certificates for robot tests
-      if: startsWith(steps.git_ref_parse.outputs.SOURCE_TAG, 'build-release')
       run: |
         openssl req -x509 -keyout test/server/mtls/credentials/pg_server_key.pem -out test/server/mtls/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
         openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
         openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365
     
     - name: Run robot mocked functional tests
-      if: startsWith(steps.git_ref_parse.outputs.SOURCE_TAG, 'build-release')
       env:
         PSQL_EXE: C:\Program Files\PostgreSQL\13\bin\psql
         SQLITE_EXE: C:\ProgramData\chocolatey\lib\SQLite\tools\sqlite3.exe
@@ -169,12 +171,12 @@ jobs:
         python cicd/python/build.py --robot-test
 
     - name: Output from mocked functional tests
-      if: startsWith(steps.git_ref_parse.outputs.SOURCE_TAG, 'build-release')
+      if: always()
       run: |
-        cat ./test/robot/functional/output.xml
+        cat ./test/robot/functional/output.xml || echo "no functional test output present"
     
     - name: Run robot integration tests
-      if: env.AZURE_CLIENT_SECRET != '' && startsWith(steps.git_ref_parse.outputs.SOURCE_TAG, 'build-release')
+      if: env.AZURE_CLIENT_SECRET != '' && startsWith(env.STATE_SOURCE_TAG, 'build-release')
       env:
         PSQL_EXE: C:\Program Files\PostgreSQL\13\bin\psql
         SQLITE_EXE: C:\ProgramData\chocolatey\lib\SQLite\tools\sqlite3.exe
@@ -212,7 +214,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v5.0.0
       with:
-        go-version: ^1.19
+        go-version: ^1.21
         check-latest: true
         cache: true
       id: go
@@ -390,7 +392,7 @@ jobs:
         cat ./test/robot/functional/output.xml
     
     - name: Run robot integration tests
-      if: env.AZURE_CLIENT_SECRET != '' && startsWith(steps.git_ref_parse.outputs.SOURCE_TAG, 'build-release')
+      if: env.AZURE_CLIENT_SECRET != '' && startsWith(env.STATE_SOURCE_TAG, 'build-release')
       env:
         AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
@@ -541,7 +543,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v5.0.0
       with:
-        go-version: ^1.19
+        go-version: ^1.21
         check-latest: true
         cache: true
       id: go
@@ -643,7 +645,7 @@ jobs:
         cat ./test/robot/functional/output.xml
     
     - name: Run robot integration tests
-      if: env.AZURE_CLIENT_SECRET != '' && startsWith(steps.git_ref_parse.outputs.SOURCE_TAG, 'build-release')
+      if: env.AZURE_CLIENT_SECRET != '' && startsWith(env.STATE_SOURCE_TAG, 'build-release')
       env:
         AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
@@ -686,7 +688,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v5.0.0
       with:
-        go-version: ^1.19
+        go-version: ^1.21
         check-latest: true
         cache: true
       id: go
@@ -928,7 +930,7 @@ jobs:
         cat ./test/robot/functional/output.xml
 
     - name: Run robot integration tests
-      if: env.AZURE_CLIENT_SECRET != '' && startsWith(steps.git_ref_parse.outputs.SOURCE_TAG, 'build-release')
+      if: env.AZURE_CLIENT_SECRET != '' && startsWith(env.STATE_SOURCE_TAG, 'build-release')
       env:
         AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
