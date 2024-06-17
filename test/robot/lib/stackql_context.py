@@ -378,7 +378,7 @@ def get_analytics_db_init_path(sql_backend_str :str) -> str:
 
 def get_sqlite_export_db_path(execution_env :str) -> str:
   if execution_env == 'native':
-    return os.path.abspath(os.path.join(REPOSITORY_ROOT, "test", "db", "tmp",  "export_testing.sqlite"))
+    return get_unix_path(os.path.abspath(os.path.join(REPOSITORY_ROOT, "test", "db", "tmp",  "export_testing.sqlite")))
   if execution_env == 'docker':
     return get_unix_path(os.path.join('/opt', 'stackql', "test", "export_testing.sqlite"))
 
@@ -565,7 +565,7 @@ CREATE_DISKS_VIEW_PRIMARY_ALIAS = "create view cross_cloud_disks_aliased as sele
 PSQL_MTLS_CONN_STR :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH} sslkey={STACKQL_PG_CLIENT_KEY_PATH} sslrootcert={STACKQL_PG_SERVER_CERT_PATH} dbname=mydatabase"
 PSQL_MTLS_CONN_STR_UNIX :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH_UNIX} sslkey={STACKQL_PG_CLIENT_KEY_PATH_UNIX} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_UNIX} dbname=mydatabase"
 
-PSQL_MTLS_CONN_STR_EXPORT_UNIX :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS_EXPORT} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH_UNIX} sslkey={STACKQL_PG_CLIENT_KEY_PATH_UNIX} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_UNIX} dbname=mydatabase"
+PSQL_MTLS_CONN_STR_EXPORT_UNIX :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS_EXPORT} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH_UNIX} sslkey={STACKQL_PG_CLIENT_KEY_PATH_UNIX} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_UNIX} dbname=mydatabase".replace('\\', '/')
 
 PSQL_MTLS_DISABLE_CONN_STR :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=disable sslcert={STACKQL_PG_CLIENT_CERT_PATH} sslkey={STACKQL_PG_CLIENT_KEY_PATH} sslrootcert={STACKQL_PG_SERVER_CERT_PATH} dbname=mydatabase"
 PSQL_MTLS_DISABLE_CONN_STR_UNIX :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=disable sslcert={STACKQL_PG_CLIENT_CERT_PATH_UNIX} sslkey={STACKQL_PG_CLIENT_KEY_PATH_UNIX} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_UNIX} dbname=mydatabase"
