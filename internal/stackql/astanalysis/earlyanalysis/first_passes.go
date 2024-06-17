@@ -46,6 +46,56 @@ type InitialPassesScreener interface {
 	IsReadOnly() bool
 }
 
+type threeToFivePassAggregate interface {
+	GetAliasMap() parserutil.TableAliasMap
+	GetTables() sqlparser.TableExprs
+	GetColRefs() parserutil.ColTableMap
+	GetAliasedColumns() parserutil.TableExprMap
+	GetParameters() parserutil.ParameterMap
+}
+
+var (
+	_ threeToFivePassAggregate = &threeToFivePassAggregateImpl{}
+)
+
+func newThreeToFivePassAggregate(
+	firstPassVisitor astvisit.ParserTableExtractAstVisitor,
+	secondPassVisitor astvisit.ParserTableAliasPairingAstVisitor,
+	thirdPassVisitor astvisit.ParserPlaceholderParamAstVisitor,
+) threeToFivePassAggregate {
+	return &threeToFivePassAggregateImpl{
+		firstPassVisitor:  firstPassVisitor,
+		secondPassVisitor: secondPassVisitor,
+		thirdPassVisitor:  thirdPassVisitor,
+	}
+}
+
+type threeToFivePassAggregateImpl struct {
+	firstPassVisitor  astvisit.ParserTableExtractAstVisitor
+	secondPassVisitor astvisit.ParserTableAliasPairingAstVisitor
+	thirdPassVisitor  astvisit.ParserPlaceholderParamAstVisitor
+}
+
+func (tfa *threeToFivePassAggregateImpl) GetAliasMap() parserutil.TableAliasMap {
+	return tfa.firstPassVisitor.GetAliasMap()
+}
+
+func (tfa *threeToFivePassAggregateImpl) GetTables() sqlparser.TableExprs {
+	return tfa.firstPassVisitor.GetTables()
+}
+
+func (tfa *threeToFivePassAggregateImpl) GetColRefs() parserutil.ColTableMap {
+	return tfa.secondPassVisitor.GetColRefs()
+}
+
+func (tfa *threeToFivePassAggregateImpl) GetAliasedColumns() parserutil.TableExprMap {
+	return tfa.secondPassVisitor.GetAliasedColumns()
+}
+
+func (tfa *threeToFivePassAggregateImpl) GetParameters() parserutil.ParameterMap {
+	return tfa.thirdPassVisitor.GetParameters()
+}
+
 type InitialPassesScreenerAnalyzer interface {
 	Analyzer
 	InitialPassesScreener
@@ -126,6 +176,36 @@ func (sp *standardInitialPasses) Analyze(
 	tcc internaldto.TxnControlCounters,
 ) error {
 	return sp.initialPasses(statement, handlerCtx, tcc)
+}
+
+//nolint:unparam // future proofing
+func thirdToFifthPasses(
+	ast sqlparser.SQLNode, annotatedAST annotatedast.AnnotatedAst) (threeToFivePassAggregate, error) {
+	// Third pass AST analysis; extract parser table objects.
+	// Extracts:
+	//   - parser objects representing tables.
+	//   - mapping of string aliases to tables.
+	tVis := astvisit.NewTableExtractAstVisitor(annotatedAST)
+	tVis.Visit(ast) //nolint:errcheck // TODO: fix this
+
+	// Fourth pass AST analysis.
+	// Accepts slice of parser table objects
+	// extracted from previous analysis.
+	// Extracts:
+	//   - Col Refs; mapping columnar objects to tables.
+	//   - Alias Map; mapping the "TableName" objects
+	//     defining aliases to table objects.
+	aVis := astvisit.NewTableAliasAstVisitor(annotatedAST, tVis.GetTables())
+	aVis.Visit(ast) //nolint:errcheck // TODO: fix this
+
+	// Fifth pass AST analysis.
+	// Extracts:
+	//   - Columnar parameters with null values.
+	//     Useful for method matching.
+	//     Especially for "Insert" queries.
+	tpv := astvisit.NewPlaceholderParamAstVisitor(annotatedAST, "", false)
+	tpv.Visit(ast) //nolint:errcheck // TODO: fix this
+	return newThreeToFivePassAggregate(tVis, aVis, tpv), nil
 }
 
 //nolint:funlen,gocognit,gocyclo,cyclop // this is a large function abstracting plenty
@@ -236,40 +316,21 @@ func (sp *standardInitialPasses) initialPasses(
 		}
 	}
 
-	// Third pass AST analysis; extract parser table objects.
-	// Extracts:
-	//   - parser objects representing tables.
-	//   - mapping of string aliases to tables.
-	tVis := astvisit.NewTableExtractAstVisitor(annotatedAST)
-	tVis.Visit(ast) //nolint:errcheck // TODO: fix this
-
-	// Fourth pass AST analysis.
-	// Accepts slice of parser table objects
-	// extracted from previous analysis.
-	// Extracts:
-	//   - Col Refs; mapping columnar objects to tables.
-	//   - Alias Map; mapping the "TableName" objects
-	//     defining aliases to table objects.
-	aVis := astvisit.NewTableAliasAstVisitor(annotatedAST, tVis.GetTables())
-	aVis.Visit(ast) //nolint:errcheck // TODO: fix this
-
-	// Fifth pass AST analysis.
-	// Extracts:
-	//   - Columnar parameters with null values.
-	//     Useful for method matching.
-	//     Especially for "Insert" queries.
-	tpv := astvisit.NewPlaceholderParamAstVisitor(annotatedAST, "", false)
-	tpv.Visit(ast) //nolint:errcheck // TODO: fix this
+	// Third to fifth pass AST analysis; extract parser table objects, col refs, and parameters.
+	threeToFiveAgg, err := thirdToFifthPasses(ast, annotatedAST)
+	if err != nil {
+		return err
+	}
 
 	pbi, err := planbuilderinput.NewPlanBuilderInput(
 		annotatedAST,
 		handlerCtx,
 		ast,
-		tVis.GetTables(),
-		aVis.GetAliasedColumns(),
-		tVis.GetAliasMap(),
-		aVis.GetColRefs(),
-		tpv.GetParameters(),
+		threeToFiveAgg.GetTables(),
+		threeToFiveAgg.GetAliasedColumns(),
+		threeToFiveAgg.GetAliasMap(),
+		threeToFiveAgg.GetColRefs(),
+		threeToFiveAgg.GetParameters(),
 		tcc.Clone(),
 	)
 	if err != nil {
@@ -362,7 +423,49 @@ func (sp *standardInitialPasses) initialPasses(
 		}
 		pbi = routeAnalyzer.GetPlanBuilderInput()
 	case *sqlparser.Union:
-		routeAnalyzer := routeanalysis.NewSelectRoutePass(node, pbi, whereParams)
+		lhsThreeToFiveAgg, passErr := thirdToFifthPasses(node.FirstStatement, annotatedAST)
+		if passErr != nil {
+			return passErr
+		}
+		lhsPbi, pbiErr := planbuilderinput.NewPlanBuilderInput(
+			annotatedAST,
+			handlerCtx,
+			node,
+			lhsThreeToFiveAgg.GetTables(),
+			lhsThreeToFiveAgg.GetAliasedColumns(),
+			lhsThreeToFiveAgg.GetAliasMap(),
+			lhsThreeToFiveAgg.GetColRefs(),
+			lhsThreeToFiveAgg.GetParameters(),
+			tcc.Clone(),
+		)
+		if pbiErr != nil {
+			return pbiErr
+		}
+		rhsPbi := lhsPbi
+		for _, stmt := range node.UnionSelects {
+			var nextPbi planbuilderinput.PlanBuilderInput
+			rhsThreeToFiveAgg, nextPassErr := thirdToFifthPasses(stmt, annotatedAST)
+			if nextPassErr != nil {
+				return nextPassErr
+			}
+			nextPbi, pbiErr = planbuilderinput.NewPlanBuilderInput(
+				annotatedAST,
+				handlerCtx,
+				stmt.Statement,
+				rhsThreeToFiveAgg.GetTables(),
+				rhsThreeToFiveAgg.GetAliasedColumns(),
+				rhsThreeToFiveAgg.GetAliasMap(),
+				rhsThreeToFiveAgg.GetColRefs(),
+				rhsThreeToFiveAgg.GetParameters(),
+				tcc.CloneAndIncrementInsertID(),
+			)
+			if pbiErr != nil {
+				return pbiErr
+			}
+			rhsPbi.WithNext(nextPbi)
+			rhsPbi = nextPbi
+		}
+		routeAnalyzer := routeanalysis.NewSelectRoutePass(node, lhsPbi, whereParams)
 		err = routeAnalyzer.RoutePass()
 		if err != nil {
 			return err
