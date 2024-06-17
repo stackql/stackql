@@ -58,6 +58,9 @@ type PlanBuilderInput interface {
 	WithTableRouteVisitor(tableRouteVisitor router.TableRouteAstVisitor) PlanBuilderInput
 	SetReadOnly(bool)
 	IsReadOnly() bool
+	Next() (PlanBuilderInput, bool)
+	WithNext(PlanBuilderInput)
+	SetTxnCtrlCtrs(tcc internaldto.TxnControlCounters)
 }
 
 type StandardPlanBuilderInput struct {
@@ -80,6 +83,7 @@ type StandardPlanBuilderInput struct {
 	prepStmtOffset           int
 	isCreateMaterializedView bool
 	rawQuery                 string
+	next                     PlanBuilderInput
 }
 
 func NewPlanBuilderInput(
@@ -137,6 +141,14 @@ func newPlanBuilderInput(
 	return rv
 }
 
+func (pbi *StandardPlanBuilderInput) Next() (PlanBuilderInput, bool) {
+	return pbi.next, pbi.next != nil
+}
+
+func (pbi *StandardPlanBuilderInput) WithNext(next PlanBuilderInput) {
+	pbi.next = next
+}
+
 func (pbi *StandardPlanBuilderInput) Clone() PlanBuilderInput {
 	clonedPbi := newPlanBuilderInput(
 		pbi.annotatedAST,
@@ -152,6 +164,7 @@ func (pbi *StandardPlanBuilderInput) Clone() PlanBuilderInput {
 	clonedPbi.SetPrepStmtOffset(pbi.prepStmtOffset)
 	clonedPbi.SetReadOnly(pbi.IsReadOnly())
 	clonedPbi.SetCreateMaterializedView(pbi.isCreateMaterializedView)
+	clonedPbi.WithNext(pbi.next)
 	return clonedPbi
 }
 
@@ -265,6 +278,10 @@ func (pbi *StandardPlanBuilderInput) GetStatement() sqlparser.SQLNode {
 
 func (pbi *StandardPlanBuilderInput) GetTxnCtrlCtrs() internaldto.TxnControlCounters {
 	return pbi.tcc
+}
+
+func (pbi *StandardPlanBuilderInput) SetTxnCtrlCtrs(tcc internaldto.TxnControlCounters) {
+	pbi.tcc = tcc
 }
 
 func (pbi *StandardPlanBuilderInput) GetPlaceholderParams() parserutil.ParameterMap {

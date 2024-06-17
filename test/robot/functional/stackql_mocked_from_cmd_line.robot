@@ -4598,3 +4598,110 @@ List And Details Dataflow View Works As Exemplified By AWS EC2 VPC Cloud Control
     ...    stdout=${CURDIR}/tmp/List-And-Details-Dataflow-View-Works-As-Exemplified-By-AWS-EC2-VPC-Cloud-Control.tmp
     ...    stderr=${CURDIR}/tmp/List-And-Details-Dataflow-View-Works-As-Exemplified-By-AWS-EC2-VPC-Cloud-Control-stderr.tmp
 
+
+Union of List And Details Dataflow View Works As Exemplified By AWS KMS Key Cloud Control
+    ${sqliteInputStr} =    Catenate
+    ...    select 
+    ...    json_extract(detail.Properties, '$.KeyPolicy.Id') as key_policy_id, 
+    ...    json_extract(detail.Properties, '$.Tags') as key_tags, 
+    ...    json_extract(detail.Properties, '$.KeyUsage') as key_usage, 
+    ...    json_extract(detail.Properties, '$.Origin') as key_origin, 
+    ...    json_extract(detail.Properties, '$.MultiRegion') as key_is_multi_region, 
+    ...    detail.region 
+    ...    from aws.cloud_control.resources listing 
+    ...    inner join 
+    ...    aws.cloud_control.resource detail 
+    ...    on 
+    ...    detail.data__Identifier = listing.Identifier 
+    ...    where 
+    ...    listing.data__TypeName = 'AWS::KMS::Key' 
+    ...    and listing.region = 'us-east-1' 
+    ...    and detail.region = 'us-east-1' 
+    ...    and detail.data__TypeName = 'AWS::KMS::Key' 
+    ...    union all 
+    ...    select 
+    ...    json_extract(detail.Properties, '$.KeyPolicy.Id') as key_policy_id, 
+    ...    json_extract(detail.Properties, '$.Tags') as key_tags, 
+    ...    json_extract(detail.Properties, '$.KeyUsage') as key_usage, 
+    ...    json_extract(detail.Properties, '$.Origin') as key_origin, 
+    ...    json_extract(detail.Properties, '$.MultiRegion') as key_is_multi_region, 
+    ...    detail.region 
+    ...    from 
+    ...    aws.cloud_control.resources listing 
+    ...    inner join 
+    ...    aws.cloud_control.resource detail 
+    ...    on 
+    ...    detail.data__Identifier = listing.Identifier 
+    ...    where 
+    ...    listing.data__TypeName = 'AWS::KMS::Key' 
+    ...    and listing.region = 'ap-southeast-1' 
+    ...    and detail.region = 'ap-southeast-1' 
+    ...    and detail.data__TypeName = 'AWS::KMS::Key'
+    ...    order by key_policy_id ASC
+    ...    ;
+    ${postgresInputStr} =    Catenate
+    ...    select 
+    ...    json_extract_path_text(detail.Properties, 'KeyPolicy', 'Id') as key_policy_id, 
+    ...    json_extract_path_text(detail.Properties, 'Tags') as key_tags, 
+    ...    json_extract_path_text(detail.Properties, 'KeyUsage') as key_usage, 
+    ...    json_extract_path_text(detail.Properties, 'Origin') as key_origin, 
+    ...    case when json_extract_path_text(detail.Properties, 'MultiRegion') = 'true' then 1 else 0 end as key_is_multi_region, 
+    ...    detail.region 
+    ...    from aws.cloud_control.resources listing 
+    ...    inner join 
+    ...    aws.cloud_control.resource detail 
+    ...    on 
+    ...    detail.data__Identifier = listing.Identifier 
+    ...    where 
+    ...    listing.data__TypeName = 'AWS::KMS::Key' 
+    ...    and listing.region = 'us-east-1' 
+    ...    and detail.region = 'us-east-1' 
+    ...    and detail.data__TypeName = 'AWS::KMS::Key'
+    ...    union all 
+    ...    select 
+    ...    json_extract_path_text(detail.Properties, 'KeyPolicy', 'Id') as key_policy_id, 
+    ...    json_extract_path_text(detail.Properties, 'Tags') as key_tags, 
+    ...    json_extract_path_text(detail.Properties, 'KeyUsage') as key_usage, 
+    ...    json_extract_path_text(detail.Properties, 'Origin') as key_origin, 
+    ...    case when json_extract_path_text(detail.Properties, 'MultiRegion') = 'true' then 1 else 0 end as key_is_multi_region, 
+    ...    detail.region 
+    ...    from 
+    ...    aws.cloud_control.resources listing 
+    ...    inner join 
+    ...    aws.cloud_control.resource detail 
+    ...    on 
+    ...    detail.data__Identifier = listing.Identifier 
+    ...    where 
+    ...    listing.data__TypeName = 'AWS::KMS::Key' 
+    ...    and listing.region = 'ap-southeast-1' 
+    ...    and detail.region = 'ap-southeast-1' 
+    ...    and detail.data__TypeName = 'AWS::KMS::Key'
+    ...    order by key_policy_id ASC
+    ...    ;
+    ${inputStr} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"     ${postgresInputStr}    ${sqliteInputStr}
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |------------------|----------|-----------------|------------|---------------------|----------------|
+    ...    |${SPACE}${SPACE}key_policy_id${SPACE}${SPACE}${SPACE}|${SPACE}key_tags${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}key_usage${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}key_origin${SPACE}|${SPACE}key_is_multi_region${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}region${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------|----------|-----------------|------------|---------------------|----------------|
+    ...    |${SPACE}auto-lightsail-1${SPACE}|${SPACE}\[]${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}ENCRYPT_DECRYPT${SPACE}|${SPACE}AWS_KMS${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}0${SPACE}|${SPACE}ap-southeast-1${SPACE}|
+    ...    |------------------|----------|-----------------|------------|---------------------|----------------|
+    ...    |${SPACE}auto-lightsail-2${SPACE}|${SPACE}\[]${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}ENCRYPT_DECRYPT${SPACE}|${SPACE}AWS_KMS${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}0${SPACE}|${SPACE}ap-southeast-1${SPACE}|
+    ...    |------------------|----------|-----------------|------------|---------------------|----------------|
+    ...    |${SPACE}auto-lightsail-3${SPACE}|${SPACE}\[]${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}ENCRYPT_DECRYPT${SPACE}|${SPACE}AWS_KMS${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}0${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------|----------|-----------------|------------|---------------------|----------------|
+    ...    |${SPACE}auto-lightsail-4${SPACE}|${SPACE}\[]${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}ENCRYPT_DECRYPT${SPACE}|${SPACE}AWS_KMS${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}0${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------|----------|-----------------|------------|---------------------|----------------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Union-of-List-And-Details-Dataflow-View-Works-As-Exemplified-By-AWS-KMS-Key-Cloud-Control.tmp
+    ...    stderr=${CURDIR}/tmp/Union-of-List-And-Details-Dataflow-View-Works-As-Exemplified-By-AWS-KMS-Key-Cloud-Control-stderr.tmp
+

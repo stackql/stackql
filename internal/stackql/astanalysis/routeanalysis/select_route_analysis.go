@@ -1,6 +1,8 @@
 package routeanalysis
 
 import (
+	"fmt"
+
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/selectmetadata"
 	"github.com/stackql/stackql/internal/stackql/astvisit"
@@ -57,7 +59,7 @@ func (sp *standardSelectRoutePass) RoutePass() error {
 
 	pbi := sp.inputPbi.Clone()
 
-	counters := pbi.GetTxnCtrlCtrs()
+	// counters := pbi.GetTxnCtrlCtrs()
 
 	switch n := sp.node.(type) {
 	case *sqlparser.Select:
@@ -69,16 +71,8 @@ func (sp *standardSelectRoutePass) RoutePass() error {
 		sp.outputPbi = pbi
 		return err
 	case *sqlparser.Union:
-		lhsPbi, err := planbuilderinput.NewPlanBuilderInput(
-			pbi.GetAnnotatedAST(),
-			sp.handlerCtx,
-			n.FirstStatement,
-			nil, nil, nil, nil, nil, counters)
-		if err != nil {
-			return err
-		}
-		routePass := NewSelectRoutePass(n.FirstStatement, lhsPbi, sp.parentWhereParams)
-		err = routePass.RoutePass()
+		routePass := NewSelectRoutePass(n.FirstStatement, pbi, sp.parentWhereParams)
+		err := routePass.RoutePass()
 		if err != nil {
 			return err
 		}
@@ -86,17 +80,16 @@ func (sp *standardSelectRoutePass) RoutePass() error {
 		// TODO: eventualy accomodate sharing pg native stuff to
 		//       mix and match with stackql stuff.
 		var rhsNonPGInternalDetected bool
+		rhsPbi := pbi
+		var hasPbi bool
 		for _, s := range n.UnionSelects {
-			ctrClone := counters.CloneAndIncrementInsertID()
-			sPbi, err := planbuilderinput.NewPlanBuilderInput( //nolint:govet // defer cosmetics
-				sp.inputPbi.GetAnnotatedAST(),
-				sp.handlerCtx,
-				s.Statement,
-				nil, nil, nil, nil, nil, ctrClone)
-			if err != nil {
-				return err
+			rhsPbi, hasPbi = rhsPbi.Next()
+			if !hasPbi {
+				return fmt.Errorf("no more PBIs for union selects")
 			}
-			routePass := NewSelectRoutePass(s.Statement, sPbi, sp.parentWhereParams) //nolint:govet // intentional shadow
+			// ctrClone := counters.CloneAndIncrementInsertID()
+			// rhsPbi.SetTxnCtrlCtrs(ctrClone)
+			routePass := NewSelectRoutePass(s.Statement, rhsPbi, sp.parentWhereParams) //nolint:govet // intentional shadow
 			err = routePass.RoutePass()
 			if err != nil {
 				return err

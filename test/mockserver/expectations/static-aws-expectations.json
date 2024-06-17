@@ -278,6 +278,202 @@
       "method": "POST",
       "path": "/",
       "headers": {
+        "Authorization": ["^.*ap-southeast-1.*SignedHeaders=accept;content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target": [ "CloudApiService.ListResources" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "TypeName":"AWS::KMS::Key"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "ResourceDescriptions":[
+          {
+            "Identifier":"00001-0001-0001-0001-00000000000001",
+            "Properties":"{\"KeyId\":\"00001-0001-0001-0001-00000000000001\"}"
+          },
+          {
+            "Identifier":"00001-0001-0001-0001-00000000000002",
+            "Properties":"{\"KeyId\":\"00001-0001-0001-0001-00000000000002\"}"
+          }
+        ],
+        "TypeName":"AWS::KMS::Key"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*us-east-1.*SignedHeaders=accept;content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target": [ "CloudApiService.ListResources" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "TypeName":"AWS::KMS::Key"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "ResourceDescriptions":[
+          {
+            "Identifier":"00001-0001-0001-0001-00000000000003",
+            "Properties":"{\"KeyId\":\"00001-0001-0001-0001-00000000000003\"}"
+          },
+          {
+            "Identifier":"00001-0001-0001-0001-00000000000004",
+            "Properties":"{\"KeyId\":\"00001-0001-0001-0001-00000000000004\"}"
+          }
+        ],
+        "TypeName":"AWS::KMS::Key"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*ap-southeast-1.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target": [ "CloudApiService.GetResource" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "TypeName":"AWS::KMS::Key",
+          "Identifier": "00001-0001-0001-0001-00000000000001"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "ResourceDescription": {
+          "Identifier":"00001-0001-0001-0001-00000000000001",
+          "Properties":"{\"Origin\":\"AWS_KMS\",\"MultiRegion\":false,\"Description\":\"Default key that protects my Lightsail signing keys when no other key is defined\",\"KeyPolicy\":{\"Version\":\"2012-10-17\",\"Statement\":[{\"Condition\":{\"StringEquals\":{\"kms:CallerAccount\":\"0000000001\",\"kms:ViaService\":\"lightsail.us-east-1.amazonaws.com\"}},\"Action\":[\"kms:Encrypt\",\"kms:Decrypt\",\"kms:ReEncrypt*\",\"kms:GenerateDataKey*\",\"kms:DescribeKey\"],\"Resource\":\"*\",\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"*\"},\"Sid\":\"Allow access through Lightsail for all principals in the account that are authorized to use Lightsail\"},{\"Action\":[\"kms:Describe*\",\"kms:Get*\",\"kms:List*\"],\"Resource\":\"*\",\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::0000000001:root\"},\"Sid\":\"Allow direct access to key metadata to the account\"},{\"Action\":[\"kms:Describe*\",\"kms:Get*\",\"kms:List*\"],\"Resource\":\"*\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"lightsail.amazonaws.com\"},\"Sid\":\"Allow Lightsail with service principal name lightsail.amazonaws.com to describe the key directly\"}],\"Id\":\"auto-lightsail-1\"},\"KeySpec\":\"SYMMETRIC_DEFAULT\",\"Enabled\":true,\"EnableKeyRotation\":true,\"KeyUsage\":\"ENCRYPT_DECRYPT\",\"KeyId\":\"00001-0001-0001-0001-00000000000001\",\"Arn\":\"arn:aws:kms:us-east-1:000000001:key/00001-0001-0001-0001-00000000000001\",\"Tags\":[]}"
+        },
+        "TypeName":"AWS::KMS::Key"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*ap-southeast-1.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target": [ "CloudApiService.GetResource" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "TypeName":"AWS::KMS::Key",
+          "Identifier": "00001-0001-0001-0001-00000000000002"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "ResourceDescription": {
+          "Identifier":"00001-0001-0001-0001-00000000000002",
+          "Properties":"{\"Origin\":\"AWS_KMS\",\"MultiRegion\":false,\"Description\":\"Default key that protects my Lightsail signing keys when no other key is defined\",\"KeyPolicy\":{\"Version\":\"2012-10-17\",\"Statement\":[{\"Condition\":{\"StringEquals\":{\"kms:CallerAccount\":\"0000000001\",\"kms:ViaService\":\"lightsail.us-east-1.amazonaws.com\"}},\"Action\":[\"kms:Encrypt\",\"kms:Decrypt\",\"kms:ReEncrypt*\",\"kms:GenerateDataKey*\",\"kms:DescribeKey\"],\"Resource\":\"*\",\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"*\"},\"Sid\":\"Allow access through Lightsail for all principals in the account that are authorized to use Lightsail\"},{\"Action\":[\"kms:Describe*\",\"kms:Get*\",\"kms:List*\"],\"Resource\":\"*\",\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::0000000001:root\"},\"Sid\":\"Allow direct access to key metadata to the account\"},{\"Action\":[\"kms:Describe*\",\"kms:Get*\",\"kms:List*\"],\"Resource\":\"*\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"lightsail.amazonaws.com\"},\"Sid\":\"Allow Lightsail with service principal name lightsail.amazonaws.com to describe the key directly\"}],\"Id\":\"auto-lightsail-2\"},\"KeySpec\":\"SYMMETRIC_DEFAULT\",\"Enabled\":true,\"EnableKeyRotation\":true,\"KeyUsage\":\"ENCRYPT_DECRYPT\",\"KeyId\":\"00001-0001-0001-0001-00000000000002\",\"Arn\":\"arn:aws:kms:us-east-1:000000001:key/00001-0001-0001-0001-00000000000002\",\"Tags\":[]}"
+        },
+        "TypeName":"AWS::KMS::Key"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*us-east-1.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target": [ "CloudApiService.GetResource" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "TypeName":"AWS::KMS::Key",
+          "Identifier": "00001-0001-0001-0001-00000000000003"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "ResourceDescription": {
+          "Identifier":"00001-0001-0001-0001-00000000000003",
+          "Properties":"{\"Origin\":\"AWS_KMS\",\"MultiRegion\":false,\"Description\":\"Default key that protects my Lightsail signing keys when no other key is defined\",\"KeyPolicy\":{\"Version\":\"2012-10-17\",\"Statement\":[{\"Condition\":{\"StringEquals\":{\"kms:CallerAccount\":\"0000000001\",\"kms:ViaService\":\"lightsail.us-east-1.amazonaws.com\"}},\"Action\":[\"kms:Encrypt\",\"kms:Decrypt\",\"kms:ReEncrypt*\",\"kms:GenerateDataKey*\",\"kms:DescribeKey\"],\"Resource\":\"*\",\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"*\"},\"Sid\":\"Allow access through Lightsail for all principals in the account that are authorized to use Lightsail\"},{\"Action\":[\"kms:Describe*\",\"kms:Get*\",\"kms:List*\"],\"Resource\":\"*\",\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::0000000001:root\"},\"Sid\":\"Allow direct access to key metadata to the account\"},{\"Action\":[\"kms:Describe*\",\"kms:Get*\",\"kms:List*\"],\"Resource\":\"*\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"lightsail.amazonaws.com\"},\"Sid\":\"Allow Lightsail with service principal name lightsail.amazonaws.com to describe the key directly\"}],\"Id\":\"auto-lightsail-3\"},\"KeySpec\":\"SYMMETRIC_DEFAULT\",\"Enabled\":true,\"EnableKeyRotation\":true,\"KeyUsage\":\"ENCRYPT_DECRYPT\",\"KeyId\":\"00001-0001-0001-0001-00000000000003\",\"Arn\":\"arn:aws:kms:us-east-1:000000001:key/00001-0001-0001-0001-00000000000003\",\"Tags\":[]}"
+        },
+        "TypeName":"AWS::KMS::Key"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*us-east-1.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target": [ "CloudApiService.GetResource" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "TypeName":"AWS::KMS::Key",
+          "Identifier": "00001-0001-0001-0001-00000000000004"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "ResourceDescription": {
+          "Identifier":"00001-0001-0001-0001-00000000000004",
+          "Properties":"{\"Origin\":\"AWS_KMS\",\"MultiRegion\":false,\"Description\":\"Default key that protects my Lightsail signing keys when no other key is defined\",\"KeyPolicy\":{\"Version\":\"2012-10-17\",\"Statement\":[{\"Condition\":{\"StringEquals\":{\"kms:CallerAccount\":\"0000000001\",\"kms:ViaService\":\"lightsail.us-east-1.amazonaws.com\"}},\"Action\":[\"kms:Encrypt\",\"kms:Decrypt\",\"kms:ReEncrypt*\",\"kms:GenerateDataKey*\",\"kms:DescribeKey\"],\"Resource\":\"*\",\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"*\"},\"Sid\":\"Allow access through Lightsail for all principals in the account that are authorized to use Lightsail\"},{\"Action\":[\"kms:Describe*\",\"kms:Get*\",\"kms:List*\"],\"Resource\":\"*\",\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::0000000001:root\"},\"Sid\":\"Allow direct access to key metadata to the account\"},{\"Action\":[\"kms:Describe*\",\"kms:Get*\",\"kms:List*\"],\"Resource\":\"*\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"lightsail.amazonaws.com\"},\"Sid\":\"Allow Lightsail with service principal name lightsail.amazonaws.com to describe the key directly\"}],\"Id\":\"auto-lightsail-4\"},\"KeySpec\":\"SYMMETRIC_DEFAULT\",\"Enabled\":true,\"EnableKeyRotation\":true,\"KeyUsage\":\"ENCRYPT_DECRYPT\",\"KeyId\":\"00001-0001-0001-0001-00000000000004\",\"Arn\":\"arn:aws:kms:us-east-1:000000001:key/00001-0001-0001-0001-00000000000004\",\"Tags\":[]}"
+        },
+        "TypeName":"AWS::KMS::Key"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
         "Authorization": ["^.*SignedHeaders=accept;content-type;host;x-amz-date;x-amz-target.*$" ],
         "X-Amz-Target": [ "CloudApiService.ListResources" ]
       },

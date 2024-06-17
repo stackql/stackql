@@ -909,6 +909,17 @@ jobs:
       if: success()
       timeout-minutes: 20
       run: |
+        echo "## Stray docker containers before postgres robot tests ##"
+        docker container ls --format "table {{.ID}}\t{{.Names}}\t{{.Ports}}" -a
+        echo "## End ##"
+        docker compose down
+        # shellcheck disable=SC2046
+        docker stop $(docker ps -a -q)
+        # shellcheck disable=SC2046
+        docker rm $(docker ps -a -q)
+        echo "## Stray docker containers after clean up commands ##"
+        docker container ls --format "table {{.ID}}\t{{.Names}}\t{{.Ports}}" -a
+        echo "## End ##"
         python cicd/python/build.py --robot-test --config='{ "variables":  { "EXECUTION_PLATFORM": "docker", "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": true, "SQL_BACKEND": "postgres_tcp" } }'
 
     - name: Output from mocked functional tests
