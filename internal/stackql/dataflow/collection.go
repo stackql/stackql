@@ -6,6 +6,7 @@ import (
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/logging"
+	"github.com/stackql/stackql/internal/stackql/taxonomy"
 	"gonum.org/v1/gonum/graph"
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
@@ -30,6 +31,8 @@ type Collection interface {
 	OutDegree(v Vertex) int
 	Sort() error
 	Vertices() []Vertex
+	UpsertStandardDataFlowVertex(taxonomy.AnnotationCtx, sqlparser.TableExpr) Vertex
+	getVertex(annotation taxonomy.AnnotationCtx, tableExpr sqlparser.TableExpr) (Vertex, bool)
 }
 
 func NewStandardDataFlowCollection() Collection {
@@ -39,6 +42,36 @@ func NewStandardDataFlowCollection() Collection {
 		vertices:              make(map[Vertex]struct{}),
 		verticesForTableExprs: make(map[sqlparser.TableExpr]struct{}),
 	}
+}
+
+// Upsert a vertex into the collection.
+// If the vertex already exists, it is returned.
+// Otherwise, a new vertex is created and returned.
+// This makes subsequent handling of degenerate edges easier.
+func (dc *standardDataFlowCollection) UpsertStandardDataFlowVertex(
+	annotation taxonomy.AnnotationCtx,
+	tableExpr sqlparser.TableExpr,
+) Vertex {
+	if v, ok := dc.getVertex(annotation, tableExpr); ok {
+		return v
+	}
+	return &standardDataFlowVertex{
+		annotation: annotation,
+		tableExpr:  tableExpr,
+		id:         dc.GetNextID(),
+	}
+}
+
+func (dc *standardDataFlowCollection) getVertex(
+	annotation taxonomy.AnnotationCtx,
+	tableExpr sqlparser.TableExpr,
+) (Vertex, bool) {
+	for v := range dc.vertices {
+		if v.GetAnnotation() == annotation && v.GetTableExpr() == tableExpr {
+			return v, true
+		}
+	}
+	return nil, false
 }
 
 type standardDataFlowCollection struct {
@@ -69,7 +102,9 @@ func (dc *standardDataFlowCollection) AddOrUpdateEdge(
 ) error {
 	dc.AddVertex(source)
 	dc.AddVertex(dest)
-	existingEdge := dc.g.WeightedEdge(source.ID(), dest.ID())
+	sourceID := source.ID()
+	destID := dest.ID()
+	existingEdge := dc.g.WeightedEdge(sourceID, destID)
 	if existingEdge == nil {
 		edge := newStandardDataFlowEdge(source, dest, comparisonExpr, sourceExpr, destColumn)
 		dc.edges = append(dc.edges, edge)
@@ -98,6 +133,9 @@ func (dc *standardDataFlowCollection) AddVertex(v Vertex) {
 	dc.g.AddNode(v)
 }
 
+// Sort sorts the underlying graph.
+// Cyclic dependencies return an error.
+// This is where the DAG invariant is enforced.
 func (dc *standardDataFlowCollection) Sort() error {
 	var err error
 	dc.sorted, err = topo.Sort(dc.g)
