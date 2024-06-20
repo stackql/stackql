@@ -22,17 +22,6 @@ type standardDataFlowVertex struct {
 	tableExpr          sqlparser.TableExpr
 }
 
-func NewStandardDataFlowVertex(
-	annotation taxonomy.AnnotationCtx,
-	tableExpr sqlparser.TableExpr,
-	id int64) Vertex {
-	return &standardDataFlowVertex{
-		annotation: annotation,
-		tableExpr:  tableExpr,
-		id:         id,
-	}
-}
-
 func (dv *standardDataFlowVertex) iDataFlowUnit() {}
 
 func (dv *standardDataFlowVertex) ID() int64 {

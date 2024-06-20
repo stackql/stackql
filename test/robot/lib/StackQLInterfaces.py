@@ -244,6 +244,9 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     if cfg.pop('stackql_H', False):
       supplied_args.append('--output=text')
       supplied_args.append('-H')
+    if cfg.pop('stackql_dataflow_permissive', False):
+      supplied_args.append('--dataflow.dependency.max=5')
+      supplied_args.append('--dataflow.components.max=5')
     if cfg.pop('stackql_debug_http', False):
       supplied_args.append("--http.log.enabled=true")
     if cfg.pop('stackql_dryrun', False):
@@ -339,6 +342,9 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     if cfg.pop('stackql_H', False):
       supplied_args.append('--output=text')
       supplied_args.append('-H')
+    if cfg.pop('stackql_dataflow_permissive', False):
+      supplied_args.append('--dataflow.dependency.max=5')
+      supplied_args.append('--dataflow.components.max=5')
     if cfg.pop('stackql_debug_http', False):
       supplied_args.append("--http.log.enabled=true")
     registry_cfg_str = registry_cfg.get_config_str('docker')
@@ -423,6 +429,9 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     if cfg.pop('stackql_H', False):
       supplied_args.append('--output=text')
       supplied_args.append('-H')
+    if cfg.pop('stackql_dataflow_permissive', False):
+      supplied_args.append('--dataflow.dependency.max=5')
+      supplied_args.append('--dataflow.components.max=5')
     if cfg.pop('stackql_debug_http', False):
       supplied_args.append("--http.log.enabled=true")
     if cfg.pop('stackql_dryrun', False):
@@ -485,6 +494,9 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     if cfg.pop('stackql_H', False):
       supplied_args.append('--output=text')
       supplied_args.append('-H')
+    if cfg.pop('stackql_dataflow_permissive', False):
+      supplied_args.append('--dataflow.dependency.max=5')
+      supplied_args.append('--dataflow.components.max=5')
     if cfg.pop('stackql_debug_http', False):
       supplied_args.append("--http.log.enabled=true")
     registry_cfg_str = registry_cfg.get_config_str('native')

@@ -232,7 +232,12 @@ func (dp *standardDependencyPlanner) Plan() error {
 						dp.dataflowToEdges[toIdx] = append(dp.dataflowToEdges[toIdx], fromIdx)
 					}
 				}
+			}
+			for _, n := range orderedNodes {
 				// another pass for AOT dataflows; to wit, on clauses
+				if _, ok := idsVisited[n.ID()]; ok {
+					continue
+				}
 				for _, e := range edges {
 					toIdx, toFound := dp.nodeIDIdxMap[e.To().ID()]
 					if !toFound {
@@ -249,7 +254,8 @@ func (dp *standardDependencyPlanner) Plan() error {
 			return fmt.Errorf("cannot support dependency unit of type = '%T'", unit)
 		}
 	}
-	if weaklyConnectedComponentCount > 1 {
+	maxWeaklyConnectedComponents := dp.handlerCtx.GetRuntimeContext().DataflowComponentsMax
+	if weaklyConnectedComponentCount > maxWeaklyConnectedComponents {
 		return fmt.Errorf(
 			"data flow: there are too many weakly connected components; found = %d, max = 1",
 			weaklyConnectedComponentCount)

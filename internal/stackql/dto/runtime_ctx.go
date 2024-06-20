@@ -26,6 +26,7 @@ type RuntimeCtx struct {
 	HTTPProxyScheme              string
 	HTTPProxyUser                string
 	IndirectDepthMax             int
+	DataflowComponentsMax        int
 	DataflowDependencyMax        int
 	InfilePath                   string
 	LogLevelStr                  string
@@ -129,6 +130,8 @@ func (rc *RuntimeCtx) Set(key string, val string) error {
 		retVal = setInt(&rc.HTTPProxyPort, val)
 	case IndirectDepthMaxKey:
 		retVal = setInt(&rc.IndirectDepthMax, val)
+	case DataflowComponentsMaxKey:
+		retVal = setInt(&rc.DataflowComponentsMax, val)
 	case DataflowDependencyMaxKey:
 		retVal = setInt(&rc.DataflowDependencyMax, val)
 	case HTTPProxySchemeKey:

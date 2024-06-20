@@ -231,8 +231,8 @@ func (pr *standardParameterRouter) GetOnConditionDataFlows() (dataflow.Collectio
 		}
 		// rv[dependency] = destHierarchy
 
-		srcVertex := dataflow.NewStandardDataFlowVertex(dependency, dependencyTable, rv.GetNextID())
-		destVertex := dataflow.NewStandardDataFlowVertex(destHierarchy, destinationTable, rv.GetNextID())
+		srcVertex := rv.UpsertStandardDataFlowVertex(dependency, dependencyTable)
+		destVertex := rv.UpsertStandardDataFlowVertex(destHierarchy, destinationTable)
 
 		err := rv.AddOrUpdateEdge(
 			srcVertex,
@@ -271,7 +271,7 @@ func (pr *standardParameterRouter) GetOnConditionDataFlows() (dataflow.Collectio
 							v.GetTableMeta().Clone(),
 							clonedParams,
 						)
-						sourceVertexIteration := dataflow.NewStandardDataFlowVertex(clonedAnnotationCtx, k, rv.GetNextID())
+						sourceVertexIteration := rv.UpsertStandardDataFlowVertex(clonedAnnotationCtx, k)
 						sourceVertexIteration.SetEquivalencyGroup(tableEquivalencyID)
 						rv.AddVertex(sourceVertexIteration)
 					}
@@ -279,7 +279,7 @@ func (pr *standardParameterRouter) GetOnConditionDataFlows() (dataflow.Collectio
 				}
 			}
 		}
-		rv.AddVertex(dataflow.NewStandardDataFlowVertex(v, k, rv.GetNextID()))
+		rv.AddVertex(rv.UpsertStandardDataFlowVertex(v, k))
 	}
 	return rv, nil
 }
