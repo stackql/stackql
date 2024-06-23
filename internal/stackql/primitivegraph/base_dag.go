@@ -179,8 +179,8 @@ func (pg *standardBasePrimitiveGraph) Execute(ctx primitive.IPrimitiveCtx) inter
 		switch node := node.(type) {
 		case PrimitiveNode:
 			incidentNodes := pg.g.To(nodeID)
+			hasNext := incidentNodes.Next()
 			for {
-				hasNext := incidentNodes.Next()
 				if !hasNext {
 					break
 				}
@@ -210,6 +210,7 @@ func (pg *standardBasePrimitiveGraph) Execute(ctx primitive.IPrimitiveCtx) inter
 						nil, nil, nil, nil,
 						fmt.Errorf("unknown execution primitive type: '%T'", incidentNode))
 				}
+				hasNext = incidentNodes.Next()
 			}
 			nodeIdx := currentNodeIdx
 			idxMap[nodeID] = nodeIdx
@@ -273,6 +274,10 @@ func (pg *standardBasePrimitiveGraph) SetInputAlias(alias string, id int64) erro
 
 func (pg *standardBasePrimitiveGraph) Sort() ([]graph.Node, error) {
 	return topo.Sort(pg.g)
+}
+
+func (pg *standardBasePrimitiveGraph) WithDebugName(_ string) primitive.IPrimitive {
+	return pg
 }
 
 func newBasePrimitiveGraph(concurrencyLimit int) BasePrimitiveGraph {

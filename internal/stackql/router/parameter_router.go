@@ -164,96 +164,21 @@ func (pr *standardParameterRouter) extractFromFunctionExpr(
 //nolint:funlen,gocognit // inherently complex functionality
 func (pr *standardParameterRouter) GetOnConditionDataFlows() (dataflow.Collection, error) {
 	rv := dataflow.NewStandardDataFlowCollection()
-	for k, destinationTable := range pr.comparisonToTableDependencies {
-		selfTableCited := false
-		destHierarchy, ok := pr.tableToAnnotationCtx[destinationTable]
-		if !ok {
-			return nil, fmt.Errorf(
-				"table expression '%s' has not been assigned to hierarchy", sqlparser.String(destinationTable))
-		}
-		var dependencyTable sqlparser.TableExpr
-		var dependency taxonomy.AnnotationCtx
-		var destColumn *sqlparser.ColName
-		var srcExpr sqlparser.Expr
-		switch l := k.Left.(type) {
-		case *sqlparser.ColName:
-			lhr, candidateTable, err := pr.extractDataFlowDependency(l)
-			if err != nil {
-				return nil, err
-			}
-			if destHierarchy == lhr {
-				selfTableCited = true
-				destColumn = l
-				srcExpr = k.Right
-			} else {
-				dependency = lhr
-				dependencyTable = candidateTable
-				srcExpr = k.Left
-			}
-		case *sqlparser.FuncExpr:
-			annCtx, te, err := pr.extractFromFunctionExpr(l)
-			if err != nil {
-				return nil, err
-			}
-			dependency = annCtx
-			dependencyTable = te
-		}
-		switch r := k.Right.(type) {
-		case *sqlparser.SQLVal:
-			// no dataflow dependency, do zero
-			continue
-		case *sqlparser.ColName:
-			rhr, candidateTable, err := pr.extractDataFlowDependency(r)
-			if err != nil {
-				return nil, err
-			}
-			if destHierarchy == rhr {
-				if selfTableCited {
-					return nil, fmt.Errorf("table join ON comparison '%s' is self referencing", sqlparser.String(k))
-				}
-				selfTableCited = true
-				destColumn = r
-				srcExpr = k.Left
-			} else {
-				dependency = rhr
-				dependencyTable = candidateTable
-			}
-		case *sqlparser.FuncExpr:
-			annCtx, te, err := pr.extractFromFunctionExpr(r)
-			if err != nil {
-				return nil, err
-			}
-			dependency = annCtx
-			dependencyTable = te
-		}
-		if !selfTableCited {
-			return nil, fmt.Errorf("table join ON comparison '%s' referencing incomplete", sqlparser.String(k))
-		}
-		// rv[dependency] = destHierarchy
 
-		srcVertex := rv.UpsertStandardDataFlowVertex(dependency, dependencyTable)
-		destVertex := rv.UpsertStandardDataFlowVertex(destHierarchy, destinationTable)
+	splitAnnotationContextMap := taxonomy.NewAnnotationCtxSplitMap()
 
-		err := rv.AddOrUpdateEdge(
-			srcVertex,
-			destVertex,
-			k,
-			srcExpr,
-			destColumn,
-		)
-		if err != nil {
-			return nil, err
-		}
-	}
 	var tableEquivalencyID int64
+	// Rist, see if any dependencies need splitting
 	for k, v := range pr.tableToAnnotationCtx {
 		tableEquivalencyID++ // start at 1 for > 0 logic
+		var skipBaseAdd bool
 		for k1, param := range v.GetParameters() {
 			switch param := param.(type) { //nolint:gocritic // TODO: review
 			case parserutil.ParameterMetadata:
 				rhs := param.GetVal()
 				switch rhs := rhs.(type) { //nolint:gocritic // TODO: review
 				case sqlparser.ValTuple:
+					// TODO: fix update anomale for dataflow graph!!!
 					for _, valTmp := range rhs {
 						val := valTmp
 						clonedParams := make(map[string]interface{})
@@ -271,17 +196,125 @@ func (pr *standardParameterRouter) GetOnConditionDataFlows() (dataflow.Collectio
 							v.GetTableMeta().Clone(),
 							clonedParams,
 						)
+						splitAnnotationContextMap.Put(v, clonedAnnotationCtx)
+						// TODO: this has gotta replace the original and also be duplicated
 						sourceVertexIteration := rv.UpsertStandardDataFlowVertex(clonedAnnotationCtx, k)
 						sourceVertexIteration.SetEquivalencyGroup(tableEquivalencyID)
 						rv.AddVertex(sourceVertexIteration)
 					}
-					return rv, nil
+					// return rv, nil
+					skipBaseAdd = true
 				}
 			}
 		}
-		rv.AddVertex(rv.UpsertStandardDataFlowVertex(v, k))
+		if !skipBaseAdd {
+			rv.AddVertex(rv.UpsertStandardDataFlowVertex(v, k))
+		}
 	}
-	return rv, nil
+	for k, destinationTable := range pr.comparisonToTableDependencies {
+		selfTableCited := false
+		destHierarchy, ok := pr.tableToAnnotationCtx[destinationTable]
+		if !ok {
+			return nil, fmt.Errorf(
+				"table expression '%s' has not been assigned to hierarchy", sqlparser.String(destinationTable))
+		}
+		var dependencyTable sqlparser.TableExpr
+		var dependencies []taxonomy.AnnotationCtx
+		var destColumn *sqlparser.ColName
+		var srcExpr sqlparser.Expr
+		switch l := k.Left.(type) {
+		case *sqlparser.ColName:
+			lhr, candidateTable, err := pr.extractDataFlowDependency(l)
+			if err != nil {
+				return nil, err
+			}
+			if destHierarchy == lhr {
+				selfTableCited = true
+				destColumn = l
+				srcExpr = k.Right
+			} else {
+				splitDependencies, isSplit := splitAnnotationContextMap.Get(lhr)
+				if isSplit {
+					dependencies = append(dependencies, splitDependencies...)
+				} else {
+					dependencies = append(dependencies, lhr)
+				}
+				dependencyTable = candidateTable
+				srcExpr = k.Left
+			}
+		case *sqlparser.FuncExpr:
+			annCtx, te, err := pr.extractFromFunctionExpr(l)
+			if err != nil {
+				return nil, err
+			}
+			splitDependencies, isSplit := splitAnnotationContextMap.Get(annCtx)
+			if isSplit {
+				dependencies = append(dependencies, splitDependencies...)
+			} else {
+				dependencies = append(dependencies, annCtx)
+			}
+			dependencyTable = te
+		}
+		switch r := k.Right.(type) {
+		case *sqlparser.SQLVal:
+			// no dataflow dependencies, do zero
+			continue
+		case *sqlparser.ColName:
+			rhr, candidateTable, err := pr.extractDataFlowDependency(r)
+			if err != nil {
+				return nil, err
+			}
+			if destHierarchy == rhr {
+				if selfTableCited {
+					return nil, fmt.Errorf("table join ON comparison '%s' is self referencing", sqlparser.String(k))
+				}
+				selfTableCited = true
+				destColumn = r
+				srcExpr = k.Left
+			} else {
+				splitDependencies, isSplit := splitAnnotationContextMap.Get(rhr)
+				if isSplit {
+					dependencies = append(dependencies, splitDependencies...)
+				} else {
+					dependencies = append(dependencies, rhr)
+				}
+				dependencyTable = candidateTable
+			}
+		case *sqlparser.FuncExpr:
+			annCtx, te, err := pr.extractFromFunctionExpr(r)
+			if err != nil {
+				return nil, err
+			}
+			splitDependencies, isSplit := splitAnnotationContextMap.Get(annCtx)
+			if isSplit {
+				dependencies = append(dependencies, splitDependencies...)
+			} else {
+				dependencies = append(dependencies, annCtx)
+			}
+			dependencyTable = te
+		}
+		if !selfTableCited {
+			return nil, fmt.Errorf("table join ON comparison '%s' referencing incomplete", sqlparser.String(k))
+		}
+		// rv[dependencies] = destHierarchy
+
+		for _, dependency := range dependencies {
+			srcVertex := rv.UpsertStandardDataFlowVertex(dependency, dependencyTable)
+			destVertex := rv.UpsertStandardDataFlowVertex(destHierarchy, destinationTable)
+
+			err := rv.AddOrUpdateEdge(
+				srcVertex,
+				destVertex,
+				k,
+				srcExpr,
+				destColumn,
+			)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	return rv.WithSplitAnnotationContextMap(splitAnnotationContextMap), nil
 }
 
 //nolint:gocognit // who cares
@@ -410,7 +443,7 @@ func (pr *standardParameterRouter) route(
 	//   - Any remaining param is not required.
 	//   - Any "on" param that was consumed:
 	//      - Can / must be from removed join conditions in a rewrite. [Requires Join in router for later rewrite].
-	//      - Defines a sequencing and data flow dependency unless RHS is a literal. [Create new object to represent].
+	//      - Defines a sequencing and data flow dependencies unless RHS is a literal. [Create new object to represent].
 	// TODO: In order to do this, we can, for each table:
 	//   1. [*] Subtract the remaining parameters returned by GetHeirarchyFromStatement()
 	//      from the available parameters.  Will need reversible string to object translation.
@@ -482,7 +515,7 @@ func (pr *standardParameterRouter) route(
 		existingTable, ok := pr.comparisonToTableDependencies[p]
 		if ok {
 			return nil, fmt.Errorf(
-				"data flow violation detected: ON comparison expression '%s' is a  dependency for tables '%s' and '%s'",
+				"data flow violation detected: ON comparison expression '%s' is a  dependencies for tables '%s' and '%s'",
 				sqlparser.String(p), sqlparser.String(existingTable), sqlparser.String(tb))
 		}
 		pr.comparisonToTableDependencies[p] = tb

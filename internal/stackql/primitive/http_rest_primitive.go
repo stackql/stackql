@@ -5,6 +5,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/primitive_context"
+	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/provider"
 )
 
@@ -19,6 +20,7 @@ type HTTPRestPrimitive struct {
 	isReadOnly    bool
 	undoLog       binlog.LogEntry
 	redoLog       binlog.LogEntry
+	debugName     string
 }
 
 func NewHTTPRestPrimitive(
@@ -37,6 +39,11 @@ func NewHTTPRestPrimitive(
 		InputAliases:  make(map[string]int64),
 		isReadOnly:    primitiveCtx.IsReadOnly(),
 	}
+}
+
+func (pr *HTTPRestPrimitive) WithDebugName(name string) IPrimitive {
+	pr.debugName = name
+	return pr
 }
 
 func (pr *HTTPRestPrimitive) SetUndoLog(log binlog.LogEntry) {
@@ -94,6 +101,7 @@ func (pr *HTTPRestPrimitive) GetInputFromAlias(alias string) (internaldto.Execut
 
 func (pr *HTTPRestPrimitive) Execute(pc IPrimitiveCtx) internaldto.ExecutorOutput {
 	if pr.Executor != nil {
+		logging.GetLogger().Debugf("running HTTP rest primitive %s", pr.debugName)
 		op := pr.Executor(pc)
 		return op
 	}

@@ -42,7 +42,7 @@ func (ic *StandardTableInsertionContainer) SetTableTxnCounters(
 }
 
 func (ic *StandardTableInsertionContainer) GetTableTxnCounters() (string, internaldto.TxnControlCounters) {
-	return ic.tableName, ic.tcc
+	return ic.tm.GetAlias(), ic.tcc
 }
 
 func (ic *StandardTableInsertionContainer) IsCountersSet() bool {

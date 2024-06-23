@@ -39,6 +39,6 @@ func (ss *SimpleProjectionMapStream) Read() ([]map[string]interface{}, error) {
 		}
 		rv = append(rv, rowTransformed)
 	}
-	ss.dynamicStore = nil
+	ss.dynamicStore = []map[string]interface{}{}
 	return rv, io.EOF
 }

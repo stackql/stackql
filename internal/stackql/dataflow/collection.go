@@ -33,14 +33,17 @@ type Collection interface {
 	Vertices() []Vertex
 	UpsertStandardDataFlowVertex(taxonomy.AnnotationCtx, sqlparser.TableExpr) Vertex
 	getVertex(annotation taxonomy.AnnotationCtx, tableExpr sqlparser.TableExpr) (Vertex, bool)
+	GetSplitAnnotationContextMap() taxonomy.AnnotationCtxSplitMap
+	WithSplitAnnotationContextMap(taxonomy.AnnotationCtxSplitMap) Collection
 }
 
 func NewStandardDataFlowCollection() Collection {
 	return &standardDataFlowCollection{
-		idMutex:               &sync.Mutex{},
-		g:                     simple.NewWeightedDirectedGraph(0.0, 0.0),
-		vertices:              make(map[Vertex]struct{}),
-		verticesForTableExprs: make(map[sqlparser.TableExpr]struct{}),
+		idMutex:                   &sync.Mutex{},
+		g:                         simple.NewWeightedDirectedGraph(0.0, 0.0),
+		vertices:                  make(map[Vertex]struct{}),
+		verticesForTableExprs:     make(map[sqlparser.TableExpr]struct{}),
+		splitAnnotationContextMap: taxonomy.NewAnnotationCtxSplitMap(),
 	}
 }
 
@@ -75,15 +78,16 @@ func (dc *standardDataFlowCollection) getVertex(
 }
 
 type standardDataFlowCollection struct {
-	idMutex                *sync.Mutex
-	maxID                  int64
-	g                      *simple.WeightedDirectedGraph
-	sorted                 []graph.Node
-	orphans                []Vertex
-	weaklyConnnectedGraphs []WeaklyConnectedComponent
-	vertices               map[Vertex]struct{}
-	verticesForTableExprs  map[sqlparser.TableExpr]struct{}
-	edges                  []Edge
+	idMutex                   *sync.Mutex
+	maxID                     int64
+	g                         *simple.WeightedDirectedGraph
+	sorted                    []graph.Node
+	orphans                   []Vertex
+	weaklyConnnectedGraphs    []WeaklyConnectedComponent
+	vertices                  map[Vertex]struct{}
+	verticesForTableExprs     map[sqlparser.TableExpr]struct{}
+	edges                     []Edge
+	splitAnnotationContextMap taxonomy.AnnotationCtxSplitMap
 }
 
 func (dc *standardDataFlowCollection) GetNextID() int64 {
@@ -91,6 +95,15 @@ func (dc *standardDataFlowCollection) GetNextID() int64 {
 	dc.idMutex.Lock()
 	dc.maxID++
 	return dc.maxID
+}
+
+func (dc *standardDataFlowCollection) GetSplitAnnotationContextMap() taxonomy.AnnotationCtxSplitMap {
+	return dc.splitAnnotationContextMap
+}
+
+func (dc *standardDataFlowCollection) WithSplitAnnotationContextMap(m taxonomy.AnnotationCtxSplitMap) Collection {
+	dc.splitAnnotationContextMap = m
+	return dc
 }
 
 func (dc *standardDataFlowCollection) AddOrUpdateEdge(
@@ -123,10 +136,13 @@ func (dc *standardDataFlowCollection) AddOrUpdateEdge(
 func (dc *standardDataFlowCollection) AddVertex(v Vertex) {
 	_, ok := dc.verticesForTableExprs[v.GetTableExpr()]
 	if ok {
+		var isNew bool
 		if v.GetEquivalencyGroup() > 0 {
-			dc.g.AddNode(v) // TODO: change to acceptable idion
+			_, isNew = dc.g.NodeWithID(v.ID()) // TODO: change to acceptable idion
 		}
-		return
+		if !isNew {
+			return
+		}
 	}
 	dc.vertices[v] = struct{}{}
 	dc.verticesForTableExprs[v.GetTableExpr()] = struct{}{}

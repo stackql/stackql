@@ -170,7 +170,7 @@ func ExtractSQLNodeParams(
 	return map[int]map[string]interface{}{0: paramMap}, err
 }
 
-func TransformSQLRawParameters(input map[string]interface{}) (map[string]interface{}, error) {
+func TransformSQLRawParameters(input map[string]interface{}, ignoreTuples bool) (map[string]interface{}, error) {
 	rv := make(map[string]interface{})
 	for k, v := range input {
 		switch v := v.(type) {
@@ -184,16 +184,19 @@ func TransformSQLRawParameters(input map[string]interface{}) (map[string]interfa
 				continue
 			}
 		}
-		r, err := extractRaw(v)
+		r, err := extractRaw(v, ignoreTuples)
 		if err != nil {
 			return nil, err
+		}
+		if r == nil {
+			continue
 		}
 		rv[k] = r
 	}
 	return rv, nil
 }
 
-func extractRaw(raw interface{}) (interface{}, error) {
+func extractRaw(raw interface{}, ignoreTuples bool) (interface{}, error) {
 	switch r := raw.(type) {
 	case *sqlparser.SQLVal:
 		switch r.Type { //nolint:exhaustive // TODO: review
@@ -215,8 +218,12 @@ func extractRaw(raw interface{}) (interface{}, error) {
 		kr := r.Name.GetRawVal()
 		return kr, nil
 	case parserutil.ParameterMetadata:
-		return extractRaw(r.GetVal())
+		return extractRaw(r.GetVal(), ignoreTuples)
 	default:
+		if ignoreTuples {
+			//nolint:nilnil // TODO: fix
+			return nil, nil
+		}
 		err := fmt.Errorf("unsupported type on RHS of comparison '%T'", r)
 		return "", err
 	}

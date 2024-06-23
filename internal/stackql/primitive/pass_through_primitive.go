@@ -15,6 +15,7 @@ type PassThroughPrimitive struct {
 	txnControlCounterSlice []internaldto.TxnControlCounters
 	undoLog                binlog.LogEntry
 	redoLog                binlog.LogEntry
+	debugName              string
 }
 
 func NewPassThroughPrimitive(
@@ -72,6 +73,11 @@ func (pr *PassThroughPrimitive) SetExecutor(func(pc IPrimitiveCtx) internaldto.E
 func (pr *PassThroughPrimitive) IncidentData(fromID int64, input internaldto.ExecutorOutput) error {
 	pr.Inputs[fromID] = input
 	return nil
+}
+
+func (pr *PassThroughPrimitive) WithDebugName(name string) IPrimitive {
+	pr.debugName = name
+	return pr
 }
 
 func (pr *PassThroughPrimitive) collectGarbage() {

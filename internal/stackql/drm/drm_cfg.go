@@ -556,7 +556,9 @@ func (dc *staticDRMConfig) GenerateInsertDML(
 	if err != nil {
 		return nil, err
 	}
-	transformedParams, paramErr := util.TransformSQLRawParameters(tabAnnotated.GetParameters())
+	priorParameters := tabAnnotated.GetParameters()
+	// TODO: fix this for dependent table where dependency has `IN` clause!!!
+	transformedParams, paramErr := util.TransformSQLRawParameters(priorParameters, false)
 	if paramErr != nil {
 		return nil, paramErr
 	}
@@ -670,7 +672,11 @@ func (dc *staticDRMConfig) generateControlVarArgs(
 ) ([]interface{}, error) {
 	var varArgs []interface{}
 	if cp.IsControlArgsRequired() {
-		ctrSlice := cp.GetCtx().GetAllCtrlCtrs()
+		ctrSlice := cp.GetCtx().GetOrderedTccs()
+		legacyCtrSlice := cp.GetCtx().GetAllCtrlCtrs()
+		if len(ctrSlice) < len(legacyCtrSlice) {
+			ctrSlice = legacyCtrSlice
+		}
 		for _, ctrs := range ctrSlice {
 			if ctrs == nil {
 				continue
