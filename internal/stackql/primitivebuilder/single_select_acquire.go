@@ -124,10 +124,11 @@ func (ss *SingleSelectAcquire) Build() error {
 		return err
 	}
 	ex := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+		logging.GetLogger().Infof("SingleSelectAcquire.Execute() beginning execution for table %s", tableName)
 		currentTcc := ss.insertPreparedStatementCtx.GetGCCtrlCtrs().Clone()
 		ss.graphHolder.AddTxnControlCounters(currentTcc)
 		mr := prov.InferMaxResultsElement(m)
-		// TODO: instrument for view
+		// TODO: instrument for split source vertices !!!important!!!
 		httpArmoury, armouryErr := ss.tableMeta.GetHTTPArmoury()
 		if armouryErr != nil {
 			return internaldto.NewErroneousExecutorOutput(armouryErr)
@@ -149,6 +150,7 @@ func (ss *SingleSelectAcquire) Build() error {
 			}
 		}
 		reqParams := httpArmoury.GetRequestParams()
+		logging.GetLogger().Infof("SingleSelectAcquire.Execute() req param count = %d", len(reqParams))
 		for _, rc := range reqParams {
 			reqCtx := rc
 			paramsUsed, paramErr := reqCtx.ToFlatMap()
@@ -221,10 +223,11 @@ func (ss *SingleSelectAcquire) Build() error {
 					return internaldto.NewNopEmptyExecutorOutput([]string{res.Error()})
 				}
 				ss.handlerCtx.LogHTTPResponseMap(res.GetProcessedBody())
-				logging.GetLogger().Infoln(fmt.Sprintf("target = %v", res))
+				logging.GetLogger().Infoln(fmt.Sprintf("SingleSelectAcquire.Execute() response = %v", res))
 				var items interface{}
 				var ok bool
 				target := res.GetProcessedBody()
+				logging.GetLogger().Infoln(fmt.Sprintf("SingleSelectAcquire.Execute() target = %v", target))
 				switch pl := target.(type) {
 				// add case for xml object,
 				case map[string]interface{}:
@@ -346,6 +349,7 @@ func (ss *SingleSelectAcquire) Build() error {
 				reqCtx.SetRawQuery(q.Encode())
 			}
 		}
+		logging.GetLogger().Infof("SingleSelectAcquire.Execute() returning empty for table %s", tableName)
 		return internaldto.NewEmptyExecutorOutput()
 	}
 
@@ -360,7 +364,7 @@ func (ss *SingleSelectAcquire) Build() error {
 		prep,
 		ss.txnCtrlCtr,
 		primitiveCtx,
-	)
+	).WithDebugName(fmt.Sprintf("insert_%s_%s", tableName, ss.tableMeta.GetAlias()))
 	graphHolder := ss.graphHolder
 	insertNode := graphHolder.CreatePrimitiveNode(insertPrim)
 	ss.root = insertNode

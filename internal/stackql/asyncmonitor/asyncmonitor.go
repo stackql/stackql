@@ -63,6 +63,10 @@ func (pr *AsyncHTTPMonitorPrimitive) GetUndoLog() (binlog.LogEntry, bool) {
 	return nil, false
 }
 
+func (pr *AsyncHTTPMonitorPrimitive) WithDebugName(_ string) primitive.IPrimitive {
+	return pr
+}
+
 func (pr *AsyncHTTPMonitorPrimitive) SetUndoLog(_ binlog.LogEntry) {
 }
 

@@ -31,6 +31,7 @@ type SQLRewriteInput interface { //nolint:revive //TODO: review
 	WithPrepStmtOffset(offset int) SQLRewriteInput
 	GetParameters() map[string]interface{}
 	WithSelectQualifier(string) SQLRewriteInput
+	GetAliasToControlCounterMap() map[string][]internaldto.TxnControlCounters
 }
 
 type standardSQLRewriteInput struct {
@@ -156,6 +157,20 @@ func (ri *standardSQLRewriteInput) GetTables() taxonomy.TblMap {
 	return ri.tables
 }
 
+func (ri *standardSQLRewriteInput) GetAliasToControlCounterMap() map[string][]internaldto.TxnControlCounters {
+	aliasToControlCounterMap := make(map[string][]internaldto.TxnControlCounters)
+	for _, tbl := range ri.tableInsertionContainers {
+		tableName, controlCounter := tbl.GetTableTxnCounters()
+		_, ok := aliasToControlCounterMap[tableName]
+		if ok {
+			aliasToControlCounterMap[tableName] = append(aliasToControlCounterMap[tableName], controlCounter)
+			continue
+		}
+		aliasToControlCounterMap[tableName] = []internaldto.TxnControlCounters{controlCounter}
+	}
+	return aliasToControlCounterMap
+}
+
 //nolint:funlen,gocognit //TODO: review
 func GenerateRewrittenSelectDML(input SQLRewriteInput) (drm.PreparedStatementCtx, error) {
 	dc := input.GetDRMConfig()
@@ -234,6 +249,7 @@ func GenerateRewrittenSelectDML(input SQLRewriteInput) (drm.PreparedStatementCtx
 			continue
 		}
 		// This is required because of TOPO SORT
+		// TODO: support in clause dataflow stuff
 		if txnCtrlCtrs == nil {
 			_, txnCtrlCtrs = tb.GetTableTxnCounters()
 		}
@@ -241,7 +257,7 @@ func GenerateRewrittenSelectDML(input SQLRewriteInput) (drm.PreparedStatementCtx
 		//       Alias is a marker for "inside insertion group"
 		alias := v.GetAlias()
 		_, aliasPresent := aliasCache[alias]
-		if i > 0 && !aliasPresent {
+		if i > 0 {
 			_, secondaryCtr := tb.GetTableTxnCounters()
 			secondaryCtrlCounters = append(secondaryCtrlCounters, secondaryCtr)
 		}
@@ -256,7 +272,9 @@ func GenerateRewrittenSelectDML(input SQLRewriteInput) (drm.PreparedStatementCtx
 	// TODO add in some handle for ON clause predicates
 	query, err := dc.GetSQLSystem().ComposeSelectQuery(
 		relationalColumns, tableAliases, hoistedTableAliases, input.GetFromString(),
-		rewrittenWhere, selectQualifier, selectSuffix, input.GetPrepStmtOffset())
+		rewrittenWhere, selectQualifier, selectSuffix, input.GetPrepStmtOffset(),
+		input.GetAliasToControlCounterMap(),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -268,6 +286,7 @@ func GenerateRewrittenSelectDML(input SQLRewriteInput) (drm.PreparedStatementCtx
 			countedTables++
 		}
 	}
+	// reorderedSecondaryCtrlCounters := reorderSliceAsRing(secondaryCtrlCounters, countedTables)
 	rv := drm.NewPreparedStatementCtx(
 		query,
 		"",
@@ -284,7 +303,7 @@ func GenerateRewrittenSelectDML(input SQLRewriteInput) (drm.PreparedStatementCtx
 		input.GetDRMConfig().GetNamespaceCollection(),
 		dc.GetSQLSystem(),
 		input.GetParameters(),
-	)
+	).WithAliasToTccMap(input.GetAliasToControlCounterMap()).WithAliasOrdering(tableAliases)
 	rv.SetIndirectContexts(input.GetIndirectContexts())
 	return rv, nil
 }

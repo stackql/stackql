@@ -16,6 +16,7 @@ type MetaDataPrimitive struct {
 	id         int64
 	undoLog    binlog.LogEntry
 	redoLog    binlog.LogEntry
+	debugName  string
 }
 
 func (pr *MetaDataPrimitive) SetTxnID(_ int) {
@@ -72,6 +73,11 @@ func (pr *MetaDataPrimitive) Execute(pc IPrimitiveCtx) internaldto.ExecutorOutpu
 		return pr.Executor(pc)
 	}
 	return internaldto.NewExecutorOutput(nil, nil, nil, nil, nil)
+}
+
+func (pr *MetaDataPrimitive) WithDebugName(name string) IPrimitive {
+	pr.debugName = name
+	return pr
 }
 
 func NewMetaDataPrimitive(

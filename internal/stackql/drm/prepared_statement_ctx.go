@@ -25,6 +25,9 @@ type PreparedStatementCtx interface {
 	SetIndirectContexts(indirectContexts []PreparedStatementCtx)
 	SetKind(kind string)
 	UpdateQuery(q string)
+	WithAliasToTccMap(map[string][]internaldto.TxnControlCounters) PreparedStatementCtx
+	WithAliasOrdering([]string) PreparedStatementCtx
+	GetOrderedTccs() []internaldto.TxnControlCounters
 }
 
 type standardPreparedStatementCtx struct {
@@ -44,6 +47,27 @@ type standardPreparedStatementCtx struct {
 	sqlSystem               sql_system.SQLSystem
 	indirectContexts        []PreparedStatementCtx
 	parameters              map[string]interface{}
+	aliasToTccMap           map[string][]internaldto.TxnControlCounters
+	aliasOrdering           []string
+}
+
+func (ps *standardPreparedStatementCtx) GetOrderedTccs() []internaldto.TxnControlCounters {
+	var rv []internaldto.TxnControlCounters
+	for _, alias := range ps.aliasOrdering {
+		rv = append(rv, ps.aliasToTccMap[alias]...)
+	}
+	return rv
+}
+
+func (ps *standardPreparedStatementCtx) WithAliasToTccMap(
+	aliasToTccMap map[string][]internaldto.TxnControlCounters) PreparedStatementCtx {
+	ps.aliasToTccMap = aliasToTccMap
+	return ps
+}
+
+func (ps *standardPreparedStatementCtx) WithAliasOrdering(aliasOrdering []string) PreparedStatementCtx {
+	ps.aliasOrdering = aliasOrdering
+	return ps
 }
 
 func (ps *standardPreparedStatementCtx) SetIndirectContexts(indirectContexts []PreparedStatementCtx) {

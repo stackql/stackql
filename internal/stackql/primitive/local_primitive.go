@@ -4,6 +4,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
+	"github.com/stackql/stackql/internal/stackql/logging"
 )
 
 type LocalPrimitive struct {
@@ -13,6 +14,7 @@ type LocalPrimitive struct {
 	id         int64
 	undoLog    binlog.LogEntry
 	redoLog    binlog.LogEntry
+	debugName  string
 }
 
 func NewLocalPrimitive(executor func(pc IPrimitiveCtx) internaldto.ExecutorOutput) IPrimitive {
@@ -72,8 +74,14 @@ func (pr *LocalPrimitive) ID() int64 {
 	return pr.id
 }
 
+func (pr *LocalPrimitive) WithDebugName(name string) IPrimitive {
+	pr.debugName = name
+	return pr
+}
+
 func (pr *LocalPrimitive) Execute(pc IPrimitiveCtx) internaldto.ExecutorOutput {
 	if pr.Executor != nil {
+		logging.GetLogger().Infof("running local primitive")
 		return pr.Executor(pc)
 	}
 	return internaldto.NewExecutorOutput(nil, nil, nil, nil, nil)

@@ -58,7 +58,7 @@ func (ac *standardAnnotationCtx) Clone() AnnotationCtx {
 		isDynamic:  ac.isDynamic,
 		schema:     ac.schema,
 		hIDs:       ac.hIDs,
-		tableMeta:  ac.tableMeta,
+		tableMeta:  ac.tableMeta.Clone(),
 		parameters: clonedParams,
 	}
 }
@@ -137,7 +137,7 @@ func (ac *standardAnnotationCtx) Prepare(
 	ac.tableMeta.WithGetHTTPArmoury(
 		func() (anysdk.HTTPArmoury, error) {
 			// need to dynamically generate stream, otherwise repeated calls result in empty body
-			parametersCleaned, cleanErr := util.TransformSQLRawParameters(params)
+			parametersCleaned, cleanErr := util.TransformSQLRawParameters(params, true)
 			if cleanErr != nil {
 				return nil, cleanErr
 			}

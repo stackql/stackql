@@ -40,4 +40,6 @@ type IPrimitive interface {
 	SetInputAlias(string, int64) error
 
 	GetInputFromAlias(string) (internaldto.ExecutorOutput, bool)
+
+	WithDebugName(string) IPrimitive
 }

@@ -1018,26 +1018,36 @@ func (eng *postgresSystem) quoteWrapTerm(term string) string {
 	return fmt.Sprintf(`"%s"`, term)
 }
 
-func (eng *postgresSystem) render(alias string, controlIterationCount int) string {
+func (eng *postgresSystem) render(alias string,
+	controlIterationCount int, aliasToCountersMap map[string][]internaldto.TxnControlCounters) string {
 	j := controlIterationCount * constants.ControlColumnCount
 	genIDColName := eng.controlAttributes.GetControlGenIDColumnName()
 	sessionIDColName := eng.controlAttributes.GetControlSsnIDColumnName()
 	txnIDColName := eng.controlAttributes.GetControlTxnIDColumnName()
 	insIDColName := eng.controlAttributes.GetControlInsIDColumnName()
+	var controls []string
 	if alias != "" {
-		gIDcn := fmt.Sprintf(`"%s"."%s"`, alias, genIDColName)
-		sIDcn := fmt.Sprintf(`"%s"."%s"`, alias, sessionIDColName)
-		tIDcn := fmt.Sprintf(`"%s"."%s"`, alias, txnIDColName)
-		iIDcn := fmt.Sprintf(`"%s"."%s"`, alias, insIDColName)
-		//nolint:lll // better expressed compactly
-		return fmt.Sprintf(`%s = $%d AND %s = $%d AND %s = $%d AND %s = $%d`, gIDcn, j+1, sIDcn, j+2, tIDcn, j+3, iIDcn, j+4) //nolint:gomnd // the magic numbers are offsets
+		for range aliasToCountersMap[alias] {
+			gIDcn := fmt.Sprintf(`"%s"."%s"`, alias, genIDColName)
+			sIDcn := fmt.Sprintf(`"%s"."%s"`, alias, sessionIDColName)
+			tIDcn := fmt.Sprintf(`"%s"."%s"`, alias, txnIDColName)
+			iIDcn := fmt.Sprintf(`"%s"."%s"`, alias, insIDColName)
+			//nolint:lll // better expressed compactly
+			controls = append(controls, fmt.Sprintf(`%s = $%d AND %s = $%d AND %s = $%d AND %s = $%d`, gIDcn, j+1, sIDcn, j+2, tIDcn, j+3, iIDcn, j+4)) //nolint:gomnd // the magic numbers are offsets
+			j += constants.ControlColumnCount
+		}
+		return fmt.Sprintf(`( %s )`, strings.Join(controls, " OR "))
 	}
-	gIDcn := fmt.Sprintf(`"%s"`, genIDColName)
-	sIDcn := fmt.Sprintf(`"%s"`, sessionIDColName)
-	tIDcn := fmt.Sprintf(`"%s"`, txnIDColName)
-	iIDcn := fmt.Sprintf(`"%s"`, insIDColName)
-	//nolint:lll // better expressed compactly
-	return fmt.Sprintf(`%s = $%d AND %s = $%d AND %s = $%d AND %s = $%d`, gIDcn, j+1, sIDcn, j+2, tIDcn, j+3, iIDcn, j+4) //nolint:gomnd // the magic numbers are offsets
+	for range aliasToCountersMap[alias] {
+		gIDcn := fmt.Sprintf(`"%s"`, genIDColName)
+		sIDcn := fmt.Sprintf(`"%s"`, sessionIDColName)
+		tIDcn := fmt.Sprintf(`"%s"`, txnIDColName)
+		iIDcn := fmt.Sprintf(`"%s"`, insIDColName)
+		//nolint:lll // better expressed compactly
+		controls = append(controls, fmt.Sprintf(`%s = $%d AND %s = $%d AND %s = $%d AND %s = $%d`, gIDcn, j+1, sIDcn, j+2, tIDcn, j+3, iIDcn, j+4)) //nolint:gomnd // the magic numbers are offsets
+		j += constants.ControlColumnCount
+	}
+	return fmt.Sprintf(`( %s )`, strings.Join(controls, " OR "))
 }
 
 func (eng *postgresSystem) ComposeSelectQuery(
@@ -1049,10 +1059,11 @@ func (eng *postgresSystem) ComposeSelectQuery(
 	selectQualifier string,
 	selectSuffix string,
 	parameterOffset int,
+	aliasToCountersMap map[string][]internaldto.TxnControlCounters,
 ) (string, error) {
 	return eng.composeSelectQuery(
 		columns, tableAliases,
-		hoistedTableAliases, fromString, rewrittenWhere, selectQualifier, selectSuffix, parameterOffset)
+		hoistedTableAliases, fromString, rewrittenWhere, selectQualifier, selectSuffix, parameterOffset, aliasToCountersMap)
 }
 
 func (eng *postgresSystem) composeSelectQuery(
@@ -1064,6 +1075,7 @@ func (eng *postgresSystem) composeSelectQuery(
 	selectQualifier string,
 	selectSuffix string,
 	parameterOffset int,
+	aliasToCountersMap map[string][]internaldto.TxnControlCounters,
 ) (string, error) {
 	var q strings.Builder
 	var quotedColNames []string
@@ -1078,9 +1090,9 @@ func (eng *postgresSystem) composeSelectQuery(
 		for _, alias := range hoistedTableAliases {
 			hoistedControlOnComparisons = append(
 				hoistedControlOnComparisons,
-				eng.render(alias, i),
+				eng.render(alias, i, aliasToCountersMap),
 			)
-			i++
+			i += len(aliasToCountersMap[alias])
 		}
 		// BLOCK protect LHS string formats for indirect replacement
 		remainingStringFormats := strings.Count(fromString, `%s`)
@@ -1093,8 +1105,8 @@ func (eng *postgresSystem) composeSelectQuery(
 		// END BLOCK
 	}
 	for _, alias := range tableAliases {
-		controlWhereComparisons = append(controlWhereComparisons, eng.render(alias, i))
-		i++
+		controlWhereComparisons = append(controlWhereComparisons, eng.render(alias, i, aliasToCountersMap))
+		i += len(aliasToCountersMap[alias])
 	}
 	if len(controlWhereComparisons) > 0 {
 		controlWhereSubClause := fmt.Sprintf("( %s )", strings.Join(controlWhereComparisons, " AND "))

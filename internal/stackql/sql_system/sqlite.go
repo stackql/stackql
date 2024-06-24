@@ -1150,23 +1150,30 @@ func (eng *sqLiteSystem) getGCHousekeepingQuery(tableName string, tcc internaldt
 	return fmt.Sprintf(templateQuery, tcc.GetGenID(), tcc.GetSessionID(), tcc.GetTxnID(), tableName)
 }
 
-func (eng *sqLiteSystem) render(alias string) string {
+func (eng *sqLiteSystem) render(alias string, aliasToCountersMap map[string][]internaldto.TxnControlCounters) string {
 	genIDColName := eng.controlAttributes.GetControlGenIDColumnName()
 	sessionIDColName := eng.controlAttributes.GetControlSsnIDColumnName()
 	txnIDColName := eng.controlAttributes.GetControlTxnIDColumnName()
 	insIDColName := eng.controlAttributes.GetControlInsIDColumnName()
+	var controls []string
 	if alias != "" {
-		gIDcn := fmt.Sprintf(`"%s"."%s"`, alias, genIDColName)
-		sIDcn := fmt.Sprintf(`"%s"."%s"`, alias, sessionIDColName)
-		tIDcn := fmt.Sprintf(`"%s"."%s"`, alias, txnIDColName)
-		iIDcn := fmt.Sprintf(`"%s"."%s"`, alias, insIDColName)
-		return fmt.Sprintf(`%s = ? AND %s = ? AND %s = ? AND %s = ?`, gIDcn, sIDcn, tIDcn, iIDcn)
+		for range aliasToCountersMap[alias] {
+			gIDcn := fmt.Sprintf(`"%s"."%s"`, alias, genIDColName)
+			sIDcn := fmt.Sprintf(`"%s"."%s"`, alias, sessionIDColName)
+			tIDcn := fmt.Sprintf(`"%s"."%s"`, alias, txnIDColName)
+			iIDcn := fmt.Sprintf(`"%s"."%s"`, alias, insIDColName)
+			controls = append(controls, fmt.Sprintf(`( %s = ? AND %s = ? AND %s = ? AND %s = ? )`, gIDcn, sIDcn, tIDcn, iIDcn))
+		}
+		return fmt.Sprintf(`( %s )`, strings.Join(controls, " OR "))
 	}
-	gIDcn := fmt.Sprintf(`"%s"`, genIDColName)
-	sIDcn := fmt.Sprintf(`"%s"`, sessionIDColName)
-	tIDcn := fmt.Sprintf(`"%s"`, txnIDColName)
-	iIDcn := fmt.Sprintf(`"%s"`, insIDColName)
-	return fmt.Sprintf(`%s = ? AND %s = ? AND %s = ? AND %s = ?`, gIDcn, sIDcn, tIDcn, iIDcn)
+	for range aliasToCountersMap[alias] {
+		gIDcn := fmt.Sprintf(`"%s"`, genIDColName)
+		sIDcn := fmt.Sprintf(`"%s"`, sessionIDColName)
+		tIDcn := fmt.Sprintf(`"%s"`, txnIDColName)
+		iIDcn := fmt.Sprintf(`"%s"`, insIDColName)
+		controls = append(controls, fmt.Sprintf(`( %s = ? AND %s = ? AND %s = ? AND %s = ? )`, gIDcn, sIDcn, tIDcn, iIDcn))
+	}
+	return fmt.Sprintf(`( %s )`, strings.Join(controls, " OR "))
 }
 
 //nolint:revive // Liskov substitution principle
@@ -1179,9 +1186,11 @@ func (eng *sqLiteSystem) ComposeSelectQuery(
 	selectQualifier string,
 	selectSuffix string,
 	parameterOffset int,
+	aliasToCountersMap map[string][]internaldto.TxnControlCounters,
 ) (string, error) {
 	return eng.composeSelectQuery(
-		columns, tableAliases, hoistedTableAliases, fromString, rewrittenWhere, selectQualifier, selectSuffix)
+		columns, tableAliases, hoistedTableAliases,
+		fromString, rewrittenWhere, selectQualifier, selectSuffix, aliasToCountersMap)
 }
 
 func (eng *sqLiteSystem) composeSelectQuery(
@@ -1192,6 +1201,7 @@ func (eng *sqLiteSystem) composeSelectQuery(
 	rewrittenWhere string,
 	selectQualifier string,
 	selectSuffix string,
+	aliasToCountersMap map[string][]internaldto.TxnControlCounters,
 ) (string, error) {
 	var q strings.Builder
 	var quotedColNames []string
@@ -1205,7 +1215,7 @@ func (eng *sqLiteSystem) composeSelectQuery(
 		for _, alias := range hoistedTableAliases {
 			hoistedControlOnComparisons = append(
 				hoistedControlOnComparisons,
-				eng.render(alias),
+				eng.render(alias, aliasToCountersMap),
 			)
 			i++
 		}
@@ -1223,7 +1233,7 @@ func (eng *sqLiteSystem) composeSelectQuery(
 	for _, alias := range tableAliases {
 		controlWhereComparisons = append(
 			controlWhereComparisons,
-			eng.render(alias),
+			eng.render(alias, aliasToCountersMap),
 		)
 		i++
 	}
