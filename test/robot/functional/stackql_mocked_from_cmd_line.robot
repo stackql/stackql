@@ -5130,3 +5130,114 @@ Materialized View of In Clause Split of List And Details Dataflow View Works As 
     ...    stderr=${CURDIR}/tmp/Materialized-View-of-In-Clause-Split-of-List-And-Details-Dataflow-View-Works-As-Exemplified-By-AWS-KMS-Key-Cloud-Control-stderr.tmp
     ...    stackql_dataflow_permissive=True
 
+
+Materialized View of High Dependency In Clause Split of List And Details Dataflow View Works As Exemplified By AWS KMS Key Cloud Control
+    ${sqliteInputStr} =    Catenate
+    ...    create or replace materialized view de_gen_02
+    ...    as 
+    ...    select 
+    ...    json_extract(detail.Properties, '$.KeyPolicy.Id') as key_policy_id, 
+    ...    json_extract(detail.Properties, '$.Tags') as key_tags, 
+    ...    json_extract(detail.Properties, '$.KeyUsage') as key_usage, 
+    ...    json_extract(detail.Properties, '$.Origin') as key_origin, 
+    ...    json_extract(detail.Properties, '$.MultiRegion') as key_is_multi_region, 
+    ...    detail.region from aws.cloud_control.resources listing 
+    ...    inner join aws.cloud_control.resource detail 
+    ...    on detail.data__Identifier = listing.Identifier 
+    ...    and detail.region = listing.region 
+    ...    where listing.data__TypeName = 'AWS::KMS::Key' 
+    ...    and listing.region IN ('ap-southeast-1', 'us-east-1', 'us-west-1', 'ca-central-1', 'eu-west-1', 'us-west-2') 
+    ...    and detail.data__TypeName = 'AWS::KMS::Key'
+    ...    order by key_policy_id ASC
+    ...    ;
+    ...    select 
+    ...    key_policy_id, 
+    ...    key_tags, 
+    ...    key_usage, 
+    ...    key_origin, 
+    ...    key_is_multi_region,
+    ...    region
+    ...    from
+    ...    de_gen_02
+    ...    order by key_policy_id ASC, region ASC
+    ...    ;
+    ...    drop materialized view if exists de_gen_02
+    ...    ;
+    ${postgresInputStr} =    Catenate
+    ...    create or replace materialized view de_gen_02
+    ...    as 
+    ...    select 
+    ...    json_extract_path_text(detail.Properties, 'KeyPolicy', 'Id') as key_policy_id, 
+    ...    json_extract_path_text(detail.Properties, 'Tags') as key_tags, 
+    ...    json_extract_path_text(detail.Properties, 'KeyUsage') as key_usage, 
+    ...    json_extract_path_text(detail.Properties, 'Origin') as key_origin, 
+    ...    case when json_extract_path_text(detail.Properties, 'MultiRegion') = 'true' then 1 else 0 end as key_is_multi_region, 
+    ...    detail.region from aws.cloud_control.resources listing 
+    ...    inner join aws.cloud_control.resource detail 
+    ...    on detail.data__Identifier = listing.Identifier 
+    ...    and detail.region = listing.region 
+    ...    where listing.data__TypeName = 'AWS::KMS::Key' 
+    ...    and listing.region IN ('ap-southeast-1', 'us-east-1', 'us-west-1', 'ca-central-1', 'eu-west-1', 'us-west-2')
+    ...    and detail.data__TypeName = 'AWS::KMS::Key'
+    ...    order by key_policy_id ASC
+    ...    ;
+    ...    select 
+    ...    key_policy_id, 
+    ...    key_tags, 
+    ...    key_usage, 
+    ...    key_origin, 
+    ...    key_is_multi_region,
+    ...    region
+    ...    from
+    ...    de_gen_02
+    ...    order by key_policy_id ASC, region ASC
+    ...    ;
+    ...    drop materialized view if exists de_gen_02
+    ...    ;
+    ${inputStr} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"     ${postgresInputStr}    ${sqliteInputStr}
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-------------------|----------|-----------------|------------|---------------------|----------------|
+    ...    |${SPACE}${SPACE}${SPACE}key_policy_id${SPACE}${SPACE}${SPACE}|${SPACE}key_tags${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}key_usage${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}key_origin${SPACE}|${SPACE}key_is_multi_region${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}region${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------------------|----------|-----------------|------------|---------------------|----------------|
+    ...    |${SPACE}auto-lightsail-1${SPACE}${SPACE}|${SPACE}\[]${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}ENCRYPT_DECRYPT${SPACE}|${SPACE}AWS_KMS${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}0${SPACE}|${SPACE}ap-southeast-1${SPACE}|
+    ...    |-------------------|----------|-----------------|------------|---------------------|----------------|
+    ...    |${SPACE}auto-lightsail-11${SPACE}|${SPACE}\[]${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}ENCRYPT_DECRYPT${SPACE}|${SPACE}AWS_KMS${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}0${SPACE}|${SPACE}ca-central-1${SPACE}${SPACE}${SPACE}|
+    ...    |-------------------|----------|-----------------|------------|---------------------|----------------|
+    ...    |${SPACE}auto-lightsail-12${SPACE}|${SPACE}\[]${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}ENCRYPT_DECRYPT${SPACE}|${SPACE}AWS_KMS${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}0${SPACE}|${SPACE}ca-central-1${SPACE}${SPACE}${SPACE}|
+    ...    |-------------------|----------|-----------------|------------|---------------------|----------------|
+    ...    |${SPACE}auto-lightsail-2${SPACE}${SPACE}|${SPACE}\[]${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}ENCRYPT_DECRYPT${SPACE}|${SPACE}AWS_KMS${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}0${SPACE}|${SPACE}ap-southeast-1${SPACE}|
+    ...    |-------------------|----------|-----------------|------------|---------------------|----------------|
+    ...    |${SPACE}auto-lightsail-3${SPACE}${SPACE}|${SPACE}\[]${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}ENCRYPT_DECRYPT${SPACE}|${SPACE}AWS_KMS${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}0${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------------------|----------|-----------------|------------|---------------------|----------------|
+    ...    |${SPACE}auto-lightsail-4${SPACE}${SPACE}|${SPACE}\[]${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}ENCRYPT_DECRYPT${SPACE}|${SPACE}AWS_KMS${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}0${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------------------|----------|-----------------|------------|---------------------|----------------|
+    ...    |${SPACE}auto-lightsail-4${SPACE}${SPACE}|${SPACE}\[]${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}ENCRYPT_DECRYPT${SPACE}|${SPACE}AWS_KMS${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}0${SPACE}|${SPACE}us-west-2${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------------------|----------|-----------------|------------|---------------------|----------------|
+    ...    |${SPACE}auto-lightsail-5${SPACE}${SPACE}|${SPACE}\[]${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}ENCRYPT_DECRYPT${SPACE}|${SPACE}AWS_KMS${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}0${SPACE}|${SPACE}us-west-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------------------|----------|-----------------|------------|---------------------|----------------|
+    ...    |${SPACE}auto-lightsail-6${SPACE}${SPACE}|${SPACE}\[]${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}ENCRYPT_DECRYPT${SPACE}|${SPACE}AWS_KMS${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}0${SPACE}|${SPACE}us-west-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------------------|----------|-----------------|------------|---------------------|----------------|
+    ...    |${SPACE}auto-lightsail-7${SPACE}${SPACE}|${SPACE}\[]${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}ENCRYPT_DECRYPT${SPACE}|${SPACE}AWS_KMS${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}0${SPACE}|${SPACE}eu-west-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------------------|----------|-----------------|------------|---------------------|----------------|
+    ...    |${SPACE}auto-lightsail-8${SPACE}${SPACE}|${SPACE}\[]${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}ENCRYPT_DECRYPT${SPACE}|${SPACE}AWS_KMS${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}0${SPACE}|${SPACE}eu-west-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------------------|----------|-----------------|------------|---------------------|----------------|
+    ...    |${SPACE}auto-lightsail-9${SPACE}${SPACE}|${SPACE}\[]${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}ENCRYPT_DECRYPT${SPACE}|${SPACE}AWS_KMS${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}0${SPACE}|${SPACE}us-west-2${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------------------|----------|-----------------|------------|---------------------|----------------|
+    ${stdErrStr} =    Catenate    SEPARATOR=\n
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${stdErrStr}
+    ...    stdout=${CURDIR}/tmp/Materialized-View-of-High-Dependency-In-Clause-Split-of-List-And-Details-Dataflow-View-Works-As-Exemplified-By-AWS-KMS-Key-Cloud-Control.tmp
+    ...    stderr=${CURDIR}/tmp/Materialized-View-of-High-Dependency-In-Clause-Split-of-List-And-Details-Dataflow-View-Works-As-Exemplified-By-AWS-KMS-Key-Cloud-Control-stderr.tmp
+    ...    stackql_dataflow_permissive=True
+

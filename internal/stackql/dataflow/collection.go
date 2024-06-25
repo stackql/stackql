@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
+	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 	"gonum.org/v1/gonum/graph"
@@ -37,13 +38,14 @@ type Collection interface {
 	WithSplitAnnotationContextMap(taxonomy.AnnotationCtxSplitMap) Collection
 }
 
-func NewStandardDataFlowCollection() Collection {
+func NewStandardDataFlowCollection(cfg dto.DataFlowCfg) Collection {
 	return &standardDataFlowCollection{
 		idMutex:                   &sync.Mutex{},
 		g:                         simple.NewWeightedDirectedGraph(0.0, 0.0),
 		vertices:                  make(map[Vertex]struct{}),
 		verticesForTableExprs:     make(map[sqlparser.TableExpr]struct{}),
 		splitAnnotationContextMap: taxonomy.NewAnnotationCtxSplitMap(),
+		cfg:                       cfg,
 	}
 }
 
@@ -88,6 +90,7 @@ type standardDataFlowCollection struct {
 	verticesForTableExprs     map[sqlparser.TableExpr]struct{}
 	edges                     []Edge
 	splitAnnotationContextMap taxonomy.AnnotationCtxSplitMap
+	cfg                       dto.DataFlowCfg
 }
 
 func (dc *standardDataFlowCollection) GetNextID() int64 {

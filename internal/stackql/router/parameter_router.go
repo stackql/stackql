@@ -8,6 +8,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/astindirect"
 	"github.com/stackql/stackql/internal/stackql/astvisit"
 	"github.com/stackql/stackql/internal/stackql/dataflow"
+	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
@@ -72,6 +73,7 @@ type standardParameterRouter struct {
 	invalidatedParams             map[string]interface{}
 	namespaceCollection           tablenamespace.Collection
 	astFormatter                  sqlparser.NodeFormatter
+	dataFlowCfg                   dto.DataFlowCfg
 }
 
 func NewParameterRouter(
@@ -83,6 +85,7 @@ func NewParameterRouter(
 	colRefs parserutil.ColTableMap,
 	namespaceCollection tablenamespace.Collection,
 	astFormatter sqlparser.NodeFormatter,
+	dataflowCfg dto.DataFlowCfg,
 ) ParameterRouter {
 	return &standardParameterRouter{
 		tablesAliasMap:                tablesAliasMap,
@@ -97,6 +100,7 @@ func NewParameterRouter(
 		namespaceCollection:           namespaceCollection,
 		astFormatter:                  astFormatter,
 		annotatedAST:                  annotatedAST,
+		dataFlowCfg:                   dataflowCfg,
 	}
 }
 
@@ -163,7 +167,7 @@ func (pr *standardParameterRouter) extractFromFunctionExpr(
 
 //nolint:funlen,gocognit // inherently complex functionality
 func (pr *standardParameterRouter) GetOnConditionDataFlows() (dataflow.Collection, error) {
-	rv := dataflow.NewStandardDataFlowCollection()
+	rv := dataflow.NewStandardDataFlowCollection(pr.dataFlowCfg)
 
 	splitAnnotationContextMap := taxonomy.NewAnnotationCtxSplitMap()
 

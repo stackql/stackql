@@ -148,6 +148,7 @@ func (sp *standardSelectRoutePass) RoutePass() error {
 		pbi.GetColRefs(),
 		handlerCtx.GetNamespaceCollection(),
 		handlerCtx.GetASTFormatter(),
+		handlerCtx.GetDataFlowCfg(),
 	)
 
 	// TODO: Do the proper SOLID treatment on router, etc.

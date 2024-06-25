@@ -73,11 +73,12 @@ func (wc *standardDataFlowWeaklyConnectedComponent) Analyze() error {
 	for _, node := range wc.collection.sorted {
 		incidentNodes := wc.collection.g.To(node.ID())
 		wc.idsVisited[node.ID()] = struct{}{}
-		//nolint:gomnd // TODO: pass through configurable limit
-		if incidentNodes.Len() > 5 {
+		if incidentNodes.Len() > wc.collection.cfg.GetMaxDependencies() {
 			return fmt.Errorf(
-				"data flow: too complex for now; %d dependencies detected when max allowed = 1",
-				incidentNodes.Len())
+				"data flow: too complex for now; %d dependencies detected when max allowed = %d",
+				incidentNodes.Len(),
+				wc.collection.cfg.GetMaxDependencies(),
+			)
 		}
 		for {
 			itemPresent := incidentNodes.Next()
