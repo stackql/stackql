@@ -92,6 +92,8 @@ type HandlerContext interface { //nolint:revive // don't mind stuttering this on
 
 	SetExportNamespace(string)
 	GetExportNamespace() string
+
+	GetDataFlowCfg() dto.DataFlowCfg
 }
 
 type standardHandlerContext struct {
@@ -127,6 +129,13 @@ type standardHandlerContext struct {
 	sessionContext      dto.SessionContext
 	walInstance         tsm.TSM
 	exportNamespace     string
+}
+
+func (hc *standardHandlerContext) GetDataFlowCfg() dto.DataFlowCfg {
+	return dto.NewDataFlowCfg(
+		hc.runtimeContext.DataflowDependencyMax,
+		hc.runtimeContext.DataflowComponentsMax,
+	)
 }
 
 func (hc *standardHandlerContext) SetExportNamespace(exportNamespace string) {
