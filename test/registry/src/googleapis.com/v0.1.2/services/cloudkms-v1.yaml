@@ -3344,8 +3344,8 @@ components:
             openAPIDocKey: '200'
       sqlVerbs:
         select:
-          - $ref: '#/components/x-stackQL-resources/key_rings/methods/list'
           - $ref: '#/components/x-stackQL-resources/key_rings/methods/get'
+          - $ref: '#/components/x-stackQL-resources/key_rings/methods/list'
         insert:
           - $ref: '#/components/x-stackQL-resources/key_rings/methods/create'
         update: []

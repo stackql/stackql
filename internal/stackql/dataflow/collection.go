@@ -72,8 +72,19 @@ func (dc *standardDataFlowCollection) getVertex(
 	tableExpr sqlparser.TableExpr,
 ) (Vertex, bool) {
 	for v := range dc.vertices {
-		if v.GetAnnotation() == annotation && v.GetTableExpr() == tableExpr {
+		rhsAnnotation := v.GetAnnotation()
+		rhsTableExpr := v.GetTableExpr()
+		annotationMatch := rhsAnnotation.Equals(annotation)
+		tableExprMatch := rhsTableExpr == tableExpr
+		if annotationMatch && tableExprMatch {
 			return v, true
+		}
+		if annotationMatch || tableExprMatch {
+			logging.GetLogger().Infof(
+				"data flow error: vertex with annotation '%v' and tableExpr '%v' has **almost** been found",
+				rhsAnnotation,
+				rhsTableExpr,
+			)
 		}
 	}
 	return nil, false

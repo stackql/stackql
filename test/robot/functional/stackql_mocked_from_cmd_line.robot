@@ -5241,3 +5241,207 @@ Materialized View of High Dependency In Clause Split of List And Details Dataflo
     ...    stderr=${CURDIR}/tmp/Materialized-View-of-High-Dependency-In-Clause-Split-of-List-And-Details-Dataflow-View-Works-As-Exemplified-By-AWS-KMS-Key-Cloud-Control-stderr.tmp
     ...    stackql_dataflow_permissive=True
 
+
+Poly Dependency In Clause Split of List And Sublist Dimensions Dataflow View Works As Exemplified By AWS KMS Key Cloud Control
+    ${sqliteInputStr} =    Catenate
+    ...    select 
+    ...    rings.projectsId as project, 
+    ...    rings.locationsId as locale, 
+    ...    split_part(rings.name, '/', -1) as key_ring_name, 
+    ...    split_part(keys.name, '/', -1) as key_name, 
+    ...    json_extract(keys."versionTemplate", '$.algorithm') as key_algorithm, 
+    ...    json_extract(keys."versionTemplate", '$.protectionLevel') as key_protection_level 
+    ...    from 
+    ...    google.cloudkms.key_rings rings 
+    ...    inner join google.cloudkms.crypto_keys keys 
+    ...    on 
+    ...    keys.keyRingsId = split_part(rings.name, '/', -1) 
+    ...    and keys.projectsId = rings.projectsId 
+    ...    and keys.locationsId = rings.locationsId 
+    ...    where 
+    ...    rings.projectsId in ('testing-project', 'testing-project-two', 'testing-project-three') 
+    ...    and rings.locationsId in ('global', 'australia-southeast1', 'australia-southeast2') 
+    ...    order by project, locale, key_name
+    ...    ;
+    ${postgresInputStr} =    Catenate
+    ...    select 
+    ...    rings.projectsId as project, 
+    ...    rings.locationsId as locale, 
+    ...    split_part(rings.name, '/', -1) as key_ring_name, 
+    ...    split_part(keys.name, '/', -1) as key_name, 
+    ...    json_extract_path_text(keys."versionTemplate", 'algorithm') as key_algorithm, 
+    ...    json_extract_path_text(keys."versionTemplate", 'protectionLevel') as key_protection_level 
+    ...    from 
+    ...    google.cloudkms.key_rings rings 
+    ...    inner join google.cloudkms.crypto_keys keys 
+    ...    on 
+    ...    keys.keyRingsId = split_part(rings.name, '/', -1) 
+    ...    and keys.projectsId = rings.projectsId 
+    ...    and keys.locationsId = rings.locationsId 
+    ...    where 
+    ...    rings.projectsId in ('testing-project', 'testing-project-two', 'testing-project-three') 
+    ...    and rings.locationsId in ('global', 'australia-southeast1', 'australia-southeast2') 
+    ...    order by project, locale, key_name
+    ...    ;
+    ${inputStr} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"     ${postgresInputStr}    ${sqliteInputStr}
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-----------------------|----------------------|---------------------|------------------------------------|-----------------------------|----------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}project${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}locale${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}key_ring_name${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}key_name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}key_algorithm${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}key_protection_level${SPACE}|
+    ...    |-----------------------|----------------------|---------------------|------------------------------------|-----------------------------|----------------------|
+    ...    |${SPACE}testing-project${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}testing${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}testing-demo-key${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}GOOGLE_SYMMETRIC_ENCRYPTION${SPACE}|${SPACE}SOFTWARE${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------|----------------------|---------------------|------------------------------------|-----------------------------|----------------------|
+    ...    |${SPACE}testing-project-three${SPACE}|${SPACE}australia-southeast2${SPACE}|${SPACE}big-m-testing-three${SPACE}|${SPACE}big-m-testing-three-demo-key${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}GOOGLE_SYMMETRIC_ENCRYPTION${SPACE}|${SPACE}SOFTWARE${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------|----------------------|---------------------|------------------------------------|-----------------------------|----------------------|
+    ...    |${SPACE}testing-project-three${SPACE}|${SPACE}australia-southeast2${SPACE}|${SPACE}big-m-testing-three${SPACE}|${SPACE}big-m-testing-three-demo-key-three${SPACE}|${SPACE}GOOGLE_SYMMETRIC_ENCRYPTION${SPACE}|${SPACE}SOFTWARE${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------|----------------------|---------------------|------------------------------------|-----------------------------|----------------------|
+    ...    |${SPACE}testing-project-three${SPACE}|${SPACE}australia-southeast2${SPACE}|${SPACE}big-m-testing-three${SPACE}|${SPACE}big-m-testing-three-demo-key-three${SPACE}|${SPACE}GOOGLE_SYMMETRIC_ENCRYPTION${SPACE}|${SPACE}SOFTWARE${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------|----------------------|---------------------|------------------------------------|-----------------------------|----------------------|
+    ...    |${SPACE}testing-project-three${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}testing-three${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}testing-three-demo-key${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}GOOGLE_SYMMETRIC_ENCRYPTION${SPACE}|${SPACE}SOFTWARE${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------|----------------------|---------------------|------------------------------------|-----------------------------|----------------------|
+    ...    |${SPACE}testing-project-three${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}testing-three${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}testing-three-demo-key-three${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}GOOGLE_SYMMETRIC_ENCRYPTION${SPACE}|${SPACE}SOFTWARE${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------|----------------------|---------------------|------------------------------------|-----------------------------|----------------------|
+    ...    |${SPACE}testing-project-three${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}testing-three${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}testing-three-demo-key-three${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}GOOGLE_SYMMETRIC_ENCRYPTION${SPACE}|${SPACE}SOFTWARE${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------|----------------------|---------------------|------------------------------------|-----------------------------|----------------------|
+    ...    |${SPACE}testing-project-two${SPACE}${SPACE}${SPACE}|${SPACE}australia-southeast2${SPACE}|${SPACE}big-m-testing-two${SPACE}${SPACE}${SPACE}|${SPACE}big-m-testing-two-demo-key${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}GOOGLE_SYMMETRIC_ENCRYPTION${SPACE}|${SPACE}SOFTWARE${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------|----------------------|---------------------|------------------------------------|-----------------------------|----------------------|
+    ...    |${SPACE}testing-project-two${SPACE}${SPACE}${SPACE}|${SPACE}australia-southeast2${SPACE}|${SPACE}big-m-testing-two${SPACE}${SPACE}${SPACE}|${SPACE}big-m-testing-two-demo-key-three${SPACE}${SPACE}${SPACE}|${SPACE}GOOGLE_SYMMETRIC_ENCRYPTION${SPACE}|${SPACE}SOFTWARE${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------|----------------------|---------------------|------------------------------------|-----------------------------|----------------------|
+    ...    |${SPACE}testing-project-two${SPACE}${SPACE}${SPACE}|${SPACE}australia-southeast2${SPACE}|${SPACE}big-m-testing-two${SPACE}${SPACE}${SPACE}|${SPACE}big-m-testing-two-demo-key-two${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}GOOGLE_SYMMETRIC_ENCRYPTION${SPACE}|${SPACE}SOFTWARE${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------|----------------------|---------------------|------------------------------------|-----------------------------|----------------------|
+    ...    |${SPACE}testing-project-two${SPACE}${SPACE}${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}testing-two${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}testing-two-demo-key${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}GOOGLE_SYMMETRIC_ENCRYPTION${SPACE}|${SPACE}SOFTWARE${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------|----------------------|---------------------|------------------------------------|-----------------------------|----------------------|
+    ...    |${SPACE}testing-project-two${SPACE}${SPACE}${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}testing-two${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}testing-two-demo-key-three${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}GOOGLE_SYMMETRIC_ENCRYPTION${SPACE}|${SPACE}SOFTWARE${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------|----------------------|---------------------|------------------------------------|-----------------------------|----------------------|
+    ...    |${SPACE}testing-project-two${SPACE}${SPACE}${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}testing-two${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}testing-two-demo-key-two${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}GOOGLE_SYMMETRIC_ENCRYPTION${SPACE}|${SPACE}SOFTWARE${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------|----------------------|---------------------|------------------------------------|-----------------------------|----------------------|
+    Should Stackql Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    stdout=${CURDIR}/tmp/Poly-Dependency-In-Clause-Split-of-List-And-Sublist-Dimensions-Dataflow-View-Works-As-Exemplified-By-AWS-KMS-Key-Cloud-Control.tmp
+    ...    stderr=${CURDIR}/tmp/Poly-Dependency-In-Clause-Split-of-List-And-Sublist-Dimensions-Dataflow-View-Works-As-Exemplified-By-AWS-KMS-Key-Cloud-Control-stderr.tmp
+    ...    stackql_dataflow_permissive=True
+
+
+Materialized View Beware Keywords of Poly Dependency In Clause Split of List And Sublist Dimensions Dataflow View Works As Exemplified By AWS KMS Key Cloud Control
+    ${sqliteInputStr} =    Catenate
+    ...    create or replace materialized view de_gen_03
+    ...    as 
+    ...    select 
+    ...    rings.projectsId as project, 
+    ...    rings.locationsId as locale, 
+    ...    split_part(rings.name, '/', -1) as key_ring_name, 
+    ...    split_part(keyz.name, '/', -1) as key_name, 
+    ...    json_extract(keyz."versionTemplate", '$.algorithm') as key_algorithm, 
+    ...    json_extract(keyz."versionTemplate", '$.protectionLevel') as key_protection_level 
+    ...    from 
+    ...    google.cloudkms.key_rings rings 
+    ...    inner join google.cloudkms.crypto_keys keyz 
+    ...    on 
+    ...    keyz.keyRingsId = split_part(rings.name, '/', -1) 
+    ...    and keyz.projectsId = rings.projectsId 
+    ...    and keyz.locationsId = rings.locationsId 
+    ...    where 
+    ...    rings.projectsId in ('testing-project', 'testing-project-two', 'testing-project-three') 
+    ...    and rings.locationsId in ('global', 'australia-southeast1', 'australia-southeast2') 
+    ...    order by project, locale, key_name
+    ...    ;
+    ...    select 
+    ...    project, 
+    ...    locale, 
+    ...    key_ring_name, 
+    ...    key_name, 
+    ...    key_algorithm,
+    ...    key_protection_level
+    ...    from
+    ...    de_gen_03
+    ...    order by project, locale, key_name ASC
+    ...    ;
+    ...    drop materialized view if exists de_gen_03
+    ...    ;
+    ${postgresInputStr} =    Catenate
+    ...    create or replace materialized view de_gen_03
+    ...    as 
+    ...    select 
+    ...    rings.projectsId as project, 
+    ...    rings.locationsId as locale, 
+    ...    split_part(rings.name, '/', -1) as key_ring_name, 
+    ...    split_part(keyz.name, '/', -1) as key_name, 
+    ...    json_extract_path_text(keyz."versionTemplate", 'algorithm') as key_algorithm, 
+    ...    json_extract_path_text(keyz."versionTemplate", 'protectionLevel') as key_protection_level 
+    ...    from 
+    ...    google.cloudkms.key_rings rings 
+    ...    inner join google.cloudkms.crypto_keys keyz 
+    ...    on 
+    ...    keyz.keyRingsId = split_part(rings.name, '/', -1) 
+    ...    and keyz.projectsId = rings.projectsId 
+    ...    and keyz.locationsId = rings.locationsId 
+    ...    where 
+    ...    rings.projectsId in ('testing-project', 'testing-project-two', 'testing-project-three') 
+    ...    and rings.locationsId in ('global', 'australia-southeast1', 'australia-southeast2') 
+    ...    order by project, locale, key_name
+    ...    ;
+    ...    select 
+    ...    project, 
+    ...    locale, 
+    ...    key_ring_name, 
+    ...    key_name, 
+    ...    key_algorithm,
+    ...    key_protection_level
+    ...    from
+    ...    de_gen_03
+    ...    order by project, locale, key_name ASC
+    ...    ;
+    ...    drop materialized view if exists de_gen_03
+    ...    ;
+    ${inputStr} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"     ${postgresInputStr}    ${sqliteInputStr}
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-----------------------|----------------------|---------------------|------------------------------------|-----------------------------|----------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}project${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}locale${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}key_ring_name${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}key_name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}key_algorithm${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}key_protection_level${SPACE}|
+    ...    |-----------------------|----------------------|---------------------|------------------------------------|-----------------------------|----------------------|
+    ...    |${SPACE}testing-project${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}testing${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}testing-demo-key${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}GOOGLE_SYMMETRIC_ENCRYPTION${SPACE}|${SPACE}SOFTWARE${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------|----------------------|---------------------|------------------------------------|-----------------------------|----------------------|
+    ...    |${SPACE}testing-project-three${SPACE}|${SPACE}australia-southeast2${SPACE}|${SPACE}big-m-testing-three${SPACE}|${SPACE}big-m-testing-three-demo-key${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}GOOGLE_SYMMETRIC_ENCRYPTION${SPACE}|${SPACE}SOFTWARE${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------|----------------------|---------------------|------------------------------------|-----------------------------|----------------------|
+    ...    |${SPACE}testing-project-three${SPACE}|${SPACE}australia-southeast2${SPACE}|${SPACE}big-m-testing-three${SPACE}|${SPACE}big-m-testing-three-demo-key-three${SPACE}|${SPACE}GOOGLE_SYMMETRIC_ENCRYPTION${SPACE}|${SPACE}SOFTWARE${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------|----------------------|---------------------|------------------------------------|-----------------------------|----------------------|
+    ...    |${SPACE}testing-project-three${SPACE}|${SPACE}australia-southeast2${SPACE}|${SPACE}big-m-testing-three${SPACE}|${SPACE}big-m-testing-three-demo-key-three${SPACE}|${SPACE}GOOGLE_SYMMETRIC_ENCRYPTION${SPACE}|${SPACE}SOFTWARE${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------|----------------------|---------------------|------------------------------------|-----------------------------|----------------------|
+    ...    |${SPACE}testing-project-three${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}testing-three${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}testing-three-demo-key${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}GOOGLE_SYMMETRIC_ENCRYPTION${SPACE}|${SPACE}SOFTWARE${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------|----------------------|---------------------|------------------------------------|-----------------------------|----------------------|
+    ...    |${SPACE}testing-project-three${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}testing-three${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}testing-three-demo-key-three${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}GOOGLE_SYMMETRIC_ENCRYPTION${SPACE}|${SPACE}SOFTWARE${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------|----------------------|---------------------|------------------------------------|-----------------------------|----------------------|
+    ...    |${SPACE}testing-project-three${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}testing-three${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}testing-three-demo-key-three${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}GOOGLE_SYMMETRIC_ENCRYPTION${SPACE}|${SPACE}SOFTWARE${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------|----------------------|---------------------|------------------------------------|-----------------------------|----------------------|
+    ...    |${SPACE}testing-project-two${SPACE}${SPACE}${SPACE}|${SPACE}australia-southeast2${SPACE}|${SPACE}big-m-testing-two${SPACE}${SPACE}${SPACE}|${SPACE}big-m-testing-two-demo-key${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}GOOGLE_SYMMETRIC_ENCRYPTION${SPACE}|${SPACE}SOFTWARE${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------|----------------------|---------------------|------------------------------------|-----------------------------|----------------------|
+    ...    |${SPACE}testing-project-two${SPACE}${SPACE}${SPACE}|${SPACE}australia-southeast2${SPACE}|${SPACE}big-m-testing-two${SPACE}${SPACE}${SPACE}|${SPACE}big-m-testing-two-demo-key-three${SPACE}${SPACE}${SPACE}|${SPACE}GOOGLE_SYMMETRIC_ENCRYPTION${SPACE}|${SPACE}SOFTWARE${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------|----------------------|---------------------|------------------------------------|-----------------------------|----------------------|
+    ...    |${SPACE}testing-project-two${SPACE}${SPACE}${SPACE}|${SPACE}australia-southeast2${SPACE}|${SPACE}big-m-testing-two${SPACE}${SPACE}${SPACE}|${SPACE}big-m-testing-two-demo-key-two${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}GOOGLE_SYMMETRIC_ENCRYPTION${SPACE}|${SPACE}SOFTWARE${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------|----------------------|---------------------|------------------------------------|-----------------------------|----------------------|
+    ...    |${SPACE}testing-project-two${SPACE}${SPACE}${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}testing-two${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}testing-two-demo-key${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}GOOGLE_SYMMETRIC_ENCRYPTION${SPACE}|${SPACE}SOFTWARE${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------|----------------------|---------------------|------------------------------------|-----------------------------|----------------------|
+    ...    |${SPACE}testing-project-two${SPACE}${SPACE}${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}testing-two${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}testing-two-demo-key-three${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}GOOGLE_SYMMETRIC_ENCRYPTION${SPACE}|${SPACE}SOFTWARE${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------|----------------------|---------------------|------------------------------------|-----------------------------|----------------------|
+    ...    |${SPACE}testing-project-two${SPACE}${SPACE}${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}testing-two${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}testing-two-demo-key-two${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}GOOGLE_SYMMETRIC_ENCRYPTION${SPACE}|${SPACE}SOFTWARE${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------|----------------------|---------------------|------------------------------------|-----------------------------|----------------------|
+    Should Stackql Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    stdout=${CURDIR}/tmp/Materialized-View-Beware-Keywords-of-Poly-Dependency-In-Clause-Split-of-List-And-Sublist-Dimensions-Dataflow-View-Works-As-Exemplified-By-AWS-KMS-Key-Cloud-Control.tmp
+    ...    stderr=${CURDIR}/tmp/Materialized-View-Beware-Keywords-of-Poly-Dependency-In-Clause-Split-of-List-And-Sublist-Dimensions-Dataflow-View-Works-As-Exemplified-By-AWS-KMS-Key-Cloud-Control-stderr.tmp
+    ...    stackql_dataflow_permissive=True
+

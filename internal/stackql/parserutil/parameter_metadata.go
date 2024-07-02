@@ -18,6 +18,7 @@ type ParameterMetadata interface {
 	GetTable() sqlparser.SQLNode
 	GetOrdinal() int
 	SetTable(sqlparser.SQLNode) error
+	Equals(ParameterMetadata) bool
 }
 
 type StandardComparisonParameterMetadata struct {
@@ -44,6 +45,29 @@ func NewPlaceholderParameterMetadata(ordinal int) ParameterMetadata {
 	return &PlaceholderParameterMetadata{
 		ordinal: ordinal,
 	}
+}
+
+func (pm *StandardComparisonParameterMetadata) Equals(rhs ParameterMetadata) bool {
+	if rhs == nil {
+		return false
+	}
+	if _, ok := rhs.(*StandardComparisonParameterMetadata); !ok {
+		return false
+	}
+	ordinalComparison := pm.GetOrdinal() == rhs.GetOrdinal()
+	parentComparison := pm.GetParent() == rhs.GetParent()
+	valComparison := pm.GetVal() == rhs.GetVal()
+	return ordinalComparison && parentComparison && valComparison
+}
+
+func (pm *PlaceholderParameterMetadata) Equals(rhs ParameterMetadata) bool {
+	if rhs == nil {
+		return false
+	}
+	if _, ok := rhs.(*PlaceholderParameterMetadata); !ok {
+		return false
+	}
+	return pm.GetOrdinal() == rhs.GetOrdinal()
 }
 
 func (pm *PlaceholderParameterMetadata) GetOrdinal() int {

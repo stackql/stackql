@@ -63,6 +63,7 @@ type ExtendedTableMetadata interface {
 	IsMaterializedView() bool
 	GetServerVariables() (map[string]*openapi3.ServerVariable, bool)
 	Clone() ExtendedTableMetadata
+	Equals(ExtendedTableMetadata) bool
 }
 
 type standardExtendedTableMetadata struct {
@@ -93,6 +94,38 @@ func (ex *standardExtendedTableMetadata) Clone() ExtendedTableMetadata {
 		sqlDataSource:       ex.sqlDataSource,
 		isOnClauseHoistable: ex.isOnClauseHoistable,
 	}
+}
+
+func (ex *standardExtendedTableMetadata) Equals(other ExtendedTableMetadata) bool {
+	otherStandard, isStandard := other.(*standardExtendedTableMetadata)
+	if !isStandard {
+		return false
+	}
+	if ex.heirarchyObjects != otherStandard.heirarchyObjects {
+		return false
+	}
+	if ex.isLocallyExecutable != otherStandard.isLocallyExecutable {
+		return false
+	}
+	if ex.selectItemsKey != otherStandard.selectItemsKey {
+		return false
+	}
+	if ex.alias != otherStandard.alias {
+		return false
+	}
+	if ex.inputTableName != otherStandard.inputTableName {
+		return false
+	}
+	if ex.indirect != otherStandard.indirect {
+		return false
+	}
+	if ex.sqlDataSource != otherStandard.sqlDataSource {
+		return false
+	}
+	if ex.isOnClauseHoistable != otherStandard.isOnClauseHoistable {
+		return false
+	}
+	return true
 }
 
 func (ex *standardExtendedTableMetadata) GetServerVariables() (map[string]*openapi3.ServerVariable, bool) {

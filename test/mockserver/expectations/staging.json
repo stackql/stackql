@@ -1,100 +1,210 @@
-[
-
+[  
   {
     "httpRequest": {
-      "method": "POST",
-      "path": "/",
       "headers": {
-        "Authorization": ["^.*us-west-2.*SignedHeaders=accept;content-type;host;x-amz-date;x-amz-target.*$" ],
-        "X-Amz-Target": [ "CloudApiService.ListResources" ]
+        "accept": [ "application/json" ]
       },
-      "body": {
-        "type": "JSON",
-        "json": {
-          "TypeName":"AWS::KMS::Key"
-        },
-        "matchType": "ONLY_MATCHING_FIELDS"
-      }
+      "method": "GET",
+      "path": "/v1/projects/testing-project-three/locations/global/keyRings/testing-three/cryptoKeys"
     },
     "httpResponse": {
-      "headers": {
-        "content-type": [ "application/x-amz-json-1.0" ]
-      },
       "statusCode": 200,
       "body": {
-        "ResourceDescriptions":[
+        "cryptoKeys": [
           {
-            "Identifier":"00001-0001-0001-0001-00000000000009",
-            "Properties":"{\"KeyId\":\"00001-0001-0001-0001-00000000000009\"}"
+            "name": "projects/testing-project-three/locations/global/keyRings/testing/cryptoKeys/testing-three-demo-key",
+            "primary": {
+              "name": "projects/testing-project-three/locations/global/keyRings/testing/cryptoKeys/testing-three-demo-key/cryptoKeyVersions/6",
+              "state": "ENABLED",
+              "createTime": "2024-05-22T14:00:00.000000000Z",
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION",
+              "generateTime": "2024-05-22T14:00:00.000000000Z"
+            },
+            "purpose": "ENCRYPT_DECRYPT",
+            "createTime": "2023-02-04T03:03:03.000000000Z",
+            "nextRotationTime": "2025-03-03T14:00:00.000000000Z",
+            "rotationPeriod": "7776000s",
+            "versionTemplate": {
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION"
+            },
+            "destroyScheduledDuration": "86400s"
           },
           {
-            "Identifier":"00001-0001-0001-0001-00000000000010",
-            "Properties":"{\"KeyId\":\"00001-0001-0001-0001-00000000000010\"}"
+            "name": "projects/testing-project-three/locations/global/keyRings/testing/cryptoKeys/testing-three-demo-key-three",
+            "primary": {
+              "name": "projects/testing-project-three/locations/global/keyRings/testing/cryptoKeys/testing-three-demo-key-three/cryptoKeyVersions/6",
+              "state": "ENABLED",
+              "createTime": "2024-05-22T14:00:00.000000000Z",
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION",
+              "generateTime": "2024-05-22T14:00:00.000000000Z"
+            },
+            "purpose": "ENCRYPT_DECRYPT",
+            "createTime": "2023-02-04T03:03:03.000000000Z",
+            "nextRotationTime": "2025-03-03T14:00:00.000000000Z",
+            "rotationPeriod": "7776000s",
+            "versionTemplate": {
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION"
+            },
+            "destroyScheduledDuration": "86400s"
+          },
+          {
+            "name": "projects/testing-project-three/locations/global/keyRings/testing/cryptoKeys/testing-three-demo-key-three",
+            "primary": {
+              "name": "projects/testing-project-three/locations/global/keyRings/testing/cryptoKeys/testing-three-demo-key-three/cryptoKeyVersions/6",
+              "state": "ENABLED",
+              "createTime": "2024-05-22T14:00:00.000000000Z",
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION",
+              "generateTime": "2024-05-22T14:00:00.000000000Z"
+            },
+            "purpose": "ENCRYPT_DECRYPT",
+            "createTime": "2023-02-04T03:03:03.000000000Z",
+            "nextRotationTime": "2025-03-03T14:00:00.000000000Z",
+            "rotationPeriod": "7776000s",
+            "versionTemplate": {
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION"
+            },
+            "destroyScheduledDuration": "86400s"
           }
         ],
-        "TypeName":"AWS::KMS::Key"
+        "totalSize": 3
       }
     }
   },
   {
     "httpRequest": {
-      "method": "POST",
-      "path": "/",
       "headers": {
-        "Authorization": ["^.*us-west-2.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$" ],
-        "X-Amz-Target": [ "CloudApiService.GetResource" ]
+        "accept": [ "application/json" ]
       },
-      "body": {
-        "type": "JSON",
-        "json": {
-          "TypeName":"AWS::KMS::Key",
-          "Identifier": "00001-0001-0001-0001-00000000000009"
-        },
-        "matchType": "ONLY_MATCHING_FIELDS"
-      }
+      "method": "GET",
+      "path": "/v1/projects/testing-project-three/locations/australia-southeast2/keyRings/big-m-testing-three/cryptoKeys"
     },
     "httpResponse": {
-      "headers": {
-        "content-type": [ "application/x-amz-json-1.0" ]
-      },
       "statusCode": 200,
       "body": {
-        "ResourceDescription": {
-          "Identifier":"00001-0001-0001-0001-00000000000009",
-          "Properties":"{\"Origin\":\"AWS_KMS\",\"MultiRegion\":false,\"Description\":\"Default key that protects my Lightsail signing keys when no other key is defined\",\"KeyPolicy\":{\"Version\":\"2012-10-17\",\"Statement\":[{\"Condition\":{\"StringEquals\":{\"kms:CallerAccount\":\"0000000001\",\"kms:ViaService\":\"lightsail.us-west-2.amazonaws.com\"}},\"Action\":[\"kms:Encrypt\",\"kms:Decrypt\",\"kms:ReEncrypt*\",\"kms:GenerateDataKey*\",\"kms:DescribeKey\"],\"Resource\":\"*\",\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"*\"},\"Sid\":\"Allow access through Lightsail for all principals in the account that are authorized to use Lightsail\"},{\"Action\":[\"kms:Describe*\",\"kms:Get*\",\"kms:List*\"],\"Resource\":\"*\",\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::0000000001:root\"},\"Sid\":\"Allow direct access to key metadata to the account\"},{\"Action\":[\"kms:Describe*\",\"kms:Get*\",\"kms:List*\"],\"Resource\":\"*\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"lightsail.amazonaws.com\"},\"Sid\":\"Allow Lightsail with service principal name lightsail.amazonaws.com to describe the key directly\"}],\"Id\":\"auto-lightsail-3\"},\"KeySpec\":\"SYMMETRIC_DEFAULT\",\"Enabled\":true,\"EnableKeyRotation\":true,\"KeyUsage\":\"ENCRYPT_DECRYPT\",\"KeyId\":\"00001-0001-0001-0001-00000000000009\",\"Arn\":\"arn:aws:kms:us-west-2:000000001:key/00001-0001-0001-0001-00000000000009\",\"Tags\":[]}"
-        },
-        "TypeName":"AWS::KMS::Key"
+        "cryptoKeys": [
+          {
+            "name": "projects/testing-project-three/locations/australia-southeast2/keyRings/testing/cryptoKeys/big-m-testing-three-demo-key",
+            "primary": {
+              "name": "projects/testing-project-three/locations/australia-southeast2/keyRings/testing/cryptoKeys/big-m-testing-three-demo-key/cryptoKeyVersions/6",
+              "state": "ENABLED",
+              "createTime": "2024-05-22T14:00:00.000000000Z",
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION",
+              "generateTime": "2024-05-22T14:00:00.000000000Z"
+            },
+            "purpose": "ENCRYPT_DECRYPT",
+            "createTime": "2023-02-04T03:03:03.000000000Z",
+            "nextRotationTime": "2025-03-03T14:00:00.000000000Z",
+            "rotationPeriod": "7776000s",
+            "versionTemplate": {
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION"
+            },
+            "destroyScheduledDuration": "86400s"
+          },
+          {
+            "name": "projects/testing-project-three/locations/australia-southeast2/keyRings/testing/cryptoKeys/big-m-testing-three-demo-key-three",
+            "primary": {
+              "name": "projects/testing-project-three/locations/australia-southeast2/keyRings/testing/cryptoKeys/big-m-testing-three-demo-key-three/cryptoKeyVersions/6",
+              "state": "ENABLED",
+              "createTime": "2024-05-22T14:00:00.000000000Z",
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION",
+              "generateTime": "2024-05-22T14:00:00.000000000Z"
+            },
+            "purpose": "ENCRYPT_DECRYPT",
+            "createTime": "2023-02-04T03:03:03.000000000Z",
+            "nextRotationTime": "2025-03-03T14:00:00.000000000Z",
+            "rotationPeriod": "7776000s",
+            "versionTemplate": {
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION"
+            },
+            "destroyScheduledDuration": "86400s"
+          },
+          {
+            "name": "projects/testing-project-three/locations/australia-southeast2/keyRings/testing/cryptoKeys/big-m-testing-three-demo-key-three",
+            "primary": {
+              "name": "projects/testing-project-three/locations/australia-southeast2/keyRings/testing/cryptoKeys/big-m-testing-three-demo-key-three/cryptoKeyVersions/6",
+              "state": "ENABLED",
+              "createTime": "2024-05-22T14:00:00.000000000Z",
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION",
+              "generateTime": "2024-05-22T14:00:00.000000000Z"
+            },
+            "purpose": "ENCRYPT_DECRYPT",
+            "createTime": "2023-02-04T03:03:03.000000000Z",
+            "nextRotationTime": "2025-03-03T14:00:00.000000000Z",
+            "rotationPeriod": "7776000s",
+            "versionTemplate": {
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION"
+            },
+            "destroyScheduledDuration": "86400s"
+          }
+        ],
+        "totalSize": 3
       }
     }
   },
   {
     "httpRequest": {
-      "method": "POST",
-      "path": "/",
       "headers": {
-        "Authorization": ["^.*us-west-2.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$" ],
-        "X-Amz-Target": [ "CloudApiService.GetResource" ]
+        "accept": [ "application/json" ]
       },
-      "body": {
-        "type": "JSON",
-        "json": {
-          "TypeName":"AWS::KMS::Key",
-          "Identifier": "00001-0001-0001-0001-00000000000010"
-        },
-        "matchType": "ONLY_MATCHING_FIELDS"
-      }
+      "method": "GET",
+      "path": "/v1/projects/testing-project-three/locations/australia-southeast1/keyRings"
     },
     "httpResponse": {
+      "statusCode": 200,
+      "body": {}
+    }
+  },
+  {
+    "httpRequest": {
       "headers": {
-        "content-type": [ "application/x-amz-json-1.0" ]
+        "accept": [ "application/json" ]
       },
+      "method": "GET",
+      "path": "/v1/projects/testing-project-three/locations/global/keyRings"
+    },
+    "httpResponse": {
       "statusCode": 200,
       "body": {
-        "ResourceDescription": {
-          "Identifier":"00001-0001-0001-0001-00000000000010",
-          "Properties":"{\"Origin\":\"AWS_KMS\",\"MultiRegion\":false,\"Description\":\"Default key that protects my Lightsail signing keys when no other key is defined\",\"KeyPolicy\":{\"Version\":\"2012-10-17\",\"Statement\":[{\"Condition\":{\"StringEquals\":{\"kms:CallerAccount\":\"0000000001\",\"kms:ViaService\":\"lightsail.us-west-2.amazonaws.com\"}},\"Action\":[\"kms:Encrypt\",\"kms:Decrypt\",\"kms:ReEncrypt*\",\"kms:GenerateDataKey*\",\"kms:DescribeKey\"],\"Resource\":\"*\",\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"*\"},\"Sid\":\"Allow access through Lightsail for all principals in the account that are authorized to use Lightsail\"},{\"Action\":[\"kms:Describe*\",\"kms:Get*\",\"kms:List*\"],\"Resource\":\"*\",\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::0000000001:root\"},\"Sid\":\"Allow direct access to key metadata to the account\"},{\"Action\":[\"kms:Describe*\",\"kms:Get*\",\"kms:List*\"],\"Resource\":\"*\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"lightsail.amazonaws.com\"},\"Sid\":\"Allow Lightsail with service principal name lightsail.amazonaws.com to describe the key directly\"}],\"Id\":\"auto-lightsail-4\"},\"KeySpec\":\"SYMMETRIC_DEFAULT\",\"Enabled\":true,\"EnableKeyRotation\":true,\"KeyUsage\":\"ENCRYPT_DECRYPT\",\"KeyId\":\"00001-0001-0001-0001-00000000000010\",\"Arn\":\"arn:aws:kms:us-west-2:000000001:key/00001-0001-0001-0001-00000000000010\",\"Tags\":[]}"
-        },
-        "TypeName":"AWS::KMS::Key"
+        "keyRings": [
+          {
+            "name": "projects/testing-project-three/locations/global/keyRings/testing-three",
+            "createTime": "2022-02-02T02:02:02.02000000Z"
+          }
+        ],
+        "totalSize": 1
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "accept": [ "application/json" ]
+      },
+      "method": "GET",
+      "path": "/v1/projects/testing-project-three/locations/australia-southeast2/keyRings"
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "body": {
+        "keyRings": [
+          {
+            "name": "projects/testing-project-three/locations/australia-southeast2/keyRings/big-m-testing-three",
+            "createTime": "2022-02-02T02:02:02.02000000Z"
+          }
+        ],
+        "totalSize": 1
       }
     }
   }

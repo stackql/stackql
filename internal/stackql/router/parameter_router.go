@@ -37,7 +37,7 @@ type ParameterRouter interface {
 
 	// Records the fact that parameters have been assigned to a table and
 	// cannot be used elsewhere.
-	// invalidateParams(params map[string]interface{}) error
+	// splitParams(params map[string]interface{}) error
 
 	// First pass assignment of columnar objects
 	// to tables, only for HTTP method parameters.  All data accrual is done herein:
@@ -165,56 +165,142 @@ func (pr *standardParameterRouter) extractFromFunctionExpr(
 	return nil, nil, fmt.Errorf("cannot accomodate this")
 }
 
-//nolint:funlen,gocognit // inherently complex functionality
-func (pr *standardParameterRouter) GetOnConditionDataFlows() (dataflow.Collection, error) {
-	rv := dataflow.NewStandardDataFlowCollection(pr.dataFlowCfg)
+type paramSplitter interface {
+	split() (bool, error)
+	getSplitDataFlowCollection() dataflow.Collection
+	getSplitAnnotationContextMap() taxonomy.AnnotationCtxSplitMap
+}
 
-	splitAnnotationContextMap := taxonomy.NewAnnotationCtxSplitMap()
+type standardParamSplitter struct {
+	alreadySplit              map[string]struct{}
+	splitParamMap             map[sqlparser.TableExpr]map[string][]any
+	paramToTableExprMap       map[string]sqlparser.TableExpr
+	splitAnnotationContextMap taxonomy.AnnotationCtxSplitMap
+	tableToAnnotationCtx      map[sqlparser.TableExpr]taxonomy.AnnotationCtx
+	dataflowCollection        dataflow.Collection
+}
 
+func newParamSplitter(
+	tableToAnnotationCtx map[sqlparser.TableExpr]taxonomy.AnnotationCtx,
+	dataFlowCfg dto.DataFlowCfg,
+) paramSplitter {
+	splitParamMap := make(map[sqlparser.TableExpr]map[string][]any)
+	for k := range tableToAnnotationCtx {
+		splitParamMap[k] = make(map[string][]any)
+	}
+	return &standardParamSplitter{
+		alreadySplit:              make(map[string]struct{}),
+		splitParamMap:             splitParamMap,
+		paramToTableExprMap:       make(map[string]sqlparser.TableExpr),
+		splitAnnotationContextMap: taxonomy.NewAnnotationCtxSplitMap(),
+		tableToAnnotationCtx:      tableToAnnotationCtx,
+		dataflowCollection:        dataflow.NewStandardDataFlowCollection(dataFlowCfg),
+	}
+}
+
+func (sp *standardParamSplitter) getSplitAnnotationContextMap() taxonomy.AnnotationCtxSplitMap {
+	return sp.splitAnnotationContextMap
+}
+
+func (sp *standardParamSplitter) split() (bool, error) {
 	var tableEquivalencyID int64
 	// Rist, see if any dependencies need splitting
-	for k, v := range pr.tableToAnnotationCtx {
+	var isAnythingSplit bool
+	for k, v := range sp.tableToAnnotationCtx {
 		tableEquivalencyID++ // start at 1 for > 0 logic
 		var skipBaseAdd bool
 		for k1, param := range v.GetParameters() {
-			switch param := param.(type) { //nolint:gocritic // TODO: review
-			case parserutil.ParameterMetadata:
-				rhs := param.GetVal()
-				switch rhs := rhs.(type) { //nolint:gocritic // TODO: review
-				case sqlparser.ValTuple:
-					// TODO: fix update anomale for dataflow graph!!!
-					for _, valTmp := range rhs {
-						val := valTmp
-						clonedParams := make(map[string]interface{})
-						for k2, v2 := range v.GetParameters() {
-							if k2 != k1 {
-								val2 := v2
-								clonedParams[k2] = val2
-							}
-						}
-
-						clonedParams[k1] = val
-						clonedAnnotationCtx := taxonomy.NewStaticStandardAnnotationCtx(
-							v.GetSchema(),
-							v.GetHIDs(),
-							v.GetTableMeta().Clone(),
-							clonedParams,
-						)
-						splitAnnotationContextMap.Put(v, clonedAnnotationCtx)
-						// TODO: this has gotta replace the original and also be duplicated
-						sourceVertexIteration := rv.UpsertStandardDataFlowVertex(clonedAnnotationCtx, k)
-						sourceVertexIteration.SetEquivalencyGroup(tableEquivalencyID)
-						rv.AddVertex(sourceVertexIteration)
-					}
-					// return rv, nil
-					skipBaseAdd = true
-				}
+			sp.paramToTableExprMap[k1] = k
+			paramSlice, isSplit := sp.splitSingleParam(param)
+			sp.splitParamMap[k][k1] = paramSlice
+			if isSplit {
+				skipBaseAdd = true
+				isAnythingSplit = true
 			}
 		}
+		_, assembleErr := sp.assembleSplitParams(k, tableEquivalencyID)
+		if assembleErr != nil {
+			return false, assembleErr
+		}
 		if !skipBaseAdd {
-			rv.AddVertex(rv.UpsertStandardDataFlowVertex(v, k))
+			sp.dataflowCollection.AddVertex(sp.dataflowCollection.UpsertStandardDataFlowVertex(v, k))
 		}
 	}
+	return isAnythingSplit, nil
+}
+
+func (sp *standardParamSplitter) getSplitDataFlowCollection() dataflow.Collection {
+	return sp.dataflowCollection
+}
+
+func (sp *standardParamSplitter) assembleSplitParams(
+	tableExpr sqlparser.TableExpr,
+	tableEquivalencyID int64,
+) (bool, error) {
+	rawAnnotationCtx, ok := sp.tableToAnnotationCtx[tableExpr]
+	if !ok {
+		return false, fmt.Errorf("table expression '%s' has not been assigned to hierarchy", sqlparser.String(tableExpr))
+	}
+	combinationComposerObj := newCombinationComposer()
+	splitParams := sp.splitParamMap[tableExpr]
+	analysisErr := combinationComposerObj.analyse(splitParams)
+	if analysisErr != nil {
+		return false, analysisErr
+	}
+	combinations := combinationComposerObj.getCombinations()
+	_, isAnythingSplit := len(combinations), combinationComposerObj.getIsAnythingSplit()
+	for _, paramCombination := range combinations {
+		splitAnnotationCtx := taxonomy.NewStaticStandardAnnotationCtx(
+			rawAnnotationCtx.GetSchema(),
+			rawAnnotationCtx.GetHIDs(),
+			rawAnnotationCtx.GetTableMeta().Clone(),
+			paramCombination,
+		)
+		sp.splitAnnotationContextMap.Put(rawAnnotationCtx, splitAnnotationCtx)
+		// TODO: this has gotta replace the original and also be duplicated
+		sourceVertexIteration := sp.dataflowCollection.UpsertStandardDataFlowVertex(splitAnnotationCtx, tableExpr)
+		sourceVertexIteration.SetEquivalencyGroup(tableEquivalencyID)
+		sp.dataflowCollection.AddVertex(sourceVertexIteration)
+	}
+	return isAnythingSplit, nil
+}
+
+func (sp *standardParamSplitter) splitSingleParam(
+	param any,
+) ([]any, bool) {
+	var isSplit bool
+	var rv []any
+	switch param := param.(type) { //nolint:gocritic // TODO: review
+	case parserutil.ParameterMetadata:
+		rhs := param.GetVal()
+		switch rhs := rhs.(type) {
+		case sqlparser.ValTuple:
+			// TODO: fix update anomale for dataflow graph!!!
+			for _, valTmp := range rhs {
+				val := valTmp
+				rv = append(rv, val)
+				isSplit = true
+			}
+		default:
+			rv = append(rv, param)
+		}
+	}
+	return rv, isSplit
+}
+
+//nolint:funlen,gocognit // inherently complex functionality
+func (pr *standardParameterRouter) GetOnConditionDataFlows() (dataflow.Collection, error) {
+	paramSplitterObj := newParamSplitter(pr.tableToAnnotationCtx, pr.dataFlowCfg)
+	isInitiallySplit, splitErr := paramSplitterObj.split()
+	if isInitiallySplit {
+		logging.GetLogger().Debugf("dataflow required initial splitting")
+	}
+	if splitErr != nil {
+		return nil, splitErr
+	}
+	rv := paramSplitterObj.getSplitDataFlowCollection()
+	splitAnnotationContextMap := paramSplitterObj.getSplitAnnotationContextMap()
+
 	for k, destinationTable := range pr.comparisonToTableDependencies {
 		selfTableCited := false
 		destHierarchy, ok := pr.tableToAnnotationCtx[destinationTable]
@@ -504,7 +590,7 @@ func (pr *standardParameterRouter) route(
 	// }
 	// TODO: fix this mess and make it global
 	//       so that ancestor params can be correctly consumed!!!
-	// err = pr.invalidateParams(abbreviatedConsumedMap)
+	// err = pr.splitParams(abbreviatedConsumedMap)
 	// if err != nil {
 	// 	return nil, err
 	// }
