@@ -181,10 +181,11 @@ func (dp *standardDependencyPlanner) Plan() error {
 			logging.GetLogger().Infof("%v\n", edges)
 			edgeCount := len(edges)
 			// TODO: test this
-			if edgeCount > dp.handlerCtx.GetRuntimeContext().DataflowDependencyMax {
+			dependencyMax := dp.handlerCtx.GetRuntimeContext().DataflowDependencyMax
+			if edgeCount > dependencyMax {
 				return fmt.Errorf(
-					"data flow: cannot accomodate table dependencies of this complexity: supplied = %d, max = 1",
-					edgeCount)
+					"data flow: cannot accomodate table dependencies of this complexity: supplied = %d, max = %d",
+					edgeCount, dependencyMax)
 			}
 			idsVisited := make(map[int64]struct{})
 			for _, n := range orderedNodes {
@@ -590,11 +591,31 @@ func (dp *standardDependencyPlanner) getStreamFromEdge(
 	return streaming.NewSimpleProjectionMapStream(projection, staticParams), nil
 }
 
+// This is very naive but safe because there is only ever one source table.
+func (dp *standardDependencyPlanner) harvestFilter(sourceAnnotation taxonomy.AnnotationCtx) (string, bool) {
+	var valz []string
+	for k, p := range sourceAnnotation.GetParameters() {
+		//nolint:gocritic // fine with this
+		switch pt := p.(type) {
+		case *sqlparser.SQLVal:
+			val := string(pt.Val)
+			s := fmt.Sprintf(`"%s" = '%s' `, k, val)
+			valz = append(valz, s)
+		}
+	}
+	if len(valz) == 0 {
+		return "", false
+	}
+	rv := strings.Join(valz, " AND ")
+	return rv, true
+}
+
 func (dp *standardDependencyPlanner) generateSelectDML(
 	e dataflow.Edge,
 	tcc internaldto.TxnControlCounters,
 ) (drm.PreparedStatementCtx, error) {
 	ann := e.GetSource().GetAnnotation()
+	whereStr, _ := dp.harvestFilter(ann)
 	columnDescriptors, err := e.GetColumnDescriptors()
 	if err != nil {
 		return nil, err
@@ -623,10 +644,10 @@ func (dp *standardDependencyPlanner) generateSelectDML(
 		relationalColumns,
 		tcc,
 		"",
-		"",
+		whereStr,
 		dp.secondaryTccs,
 		dp.tblz,
-		tableName,
+		tableName, // this is the sole from string
 		nil,
 		dp.handlerCtx.GetNamespaceCollection(),
 		nil,

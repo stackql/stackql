@@ -5,6 +5,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/logging"
+	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/streaming"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/util"
@@ -23,6 +24,7 @@ type AnnotationCtx interface {
 	GetTableMeta() tablemetadata.ExtendedTableMetadata
 	Prepare(handlerCtx handler.HandlerContext, inStream streaming.MapStream) error
 	SetDynamic()
+	Equals(AnnotationCtx) bool
 	Clone() AnnotationCtx
 }
 
@@ -47,6 +49,45 @@ func NewStaticStandardAnnotationCtx(
 		tableMeta:  tableMeta,
 		parameters: parameters,
 	}
+}
+
+func (ac *standardAnnotationCtx) Equals(other AnnotationCtx) bool {
+	otherStandard, isStandard := other.(*standardAnnotationCtx)
+	if !isStandard {
+		return false
+	}
+	if ac.isDynamic != otherStandard.isDynamic {
+		return false
+	}
+	if ac.schema != otherStandard.schema {
+		return false
+	}
+	if ac.hIDs != otherStandard.hIDs {
+		return false
+	}
+	if !ac.tableMeta.Equals(otherStandard.tableMeta) {
+		return false
+	}
+	if len(ac.parameters) != len(otherStandard.parameters) {
+		return false
+	}
+	for k, v := range ac.parameters {
+		rhs, paramExists := otherStandard.parameters[k]
+		if rhs != v {
+			if paramExists {
+				logging.GetLogger().Debugf("param %s not equal: %v != %v\n", k, v, rhs)
+			}
+			lhsStdParam, lhsOk := v.(parserutil.ParameterMetadata)
+			rhsStdParam, rhsOk := rhs.(parserutil.ParameterMetadata)
+			if lhsOk && rhsOk {
+				if !lhsStdParam.Equals(rhsStdParam) {
+					return true
+				}
+			}
+			return false
+		}
+	}
+	return true
 }
 
 func (ac *standardAnnotationCtx) Clone() AnnotationCtx {

@@ -5,6 +5,424 @@
         "accept": [ "application/json" ]
       },
       "method": "GET",
+      "path": "/v1/projects/testing-project-three/locations/global/keyRings/testing-three/cryptoKeys"
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "body": {
+        "cryptoKeys": [
+          {
+            "name": "projects/testing-project-three/locations/global/keyRings/testing/cryptoKeys/testing-three-demo-key",
+            "primary": {
+              "name": "projects/testing-project-three/locations/global/keyRings/testing/cryptoKeys/testing-three-demo-key/cryptoKeyVersions/6",
+              "state": "ENABLED",
+              "createTime": "2024-05-22T14:00:00.000000000Z",
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION",
+              "generateTime": "2024-05-22T14:00:00.000000000Z"
+            },
+            "purpose": "ENCRYPT_DECRYPT",
+            "createTime": "2023-02-04T03:03:03.000000000Z",
+            "nextRotationTime": "2025-03-03T14:00:00.000000000Z",
+            "rotationPeriod": "7776000s",
+            "versionTemplate": {
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION"
+            },
+            "destroyScheduledDuration": "86400s"
+          },
+          {
+            "name": "projects/testing-project-three/locations/global/keyRings/testing/cryptoKeys/testing-three-demo-key-three",
+            "primary": {
+              "name": "projects/testing-project-three/locations/global/keyRings/testing/cryptoKeys/testing-three-demo-key-three/cryptoKeyVersions/6",
+              "state": "ENABLED",
+              "createTime": "2024-05-22T14:00:00.000000000Z",
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION",
+              "generateTime": "2024-05-22T14:00:00.000000000Z"
+            },
+            "purpose": "ENCRYPT_DECRYPT",
+            "createTime": "2023-02-04T03:03:03.000000000Z",
+            "nextRotationTime": "2025-03-03T14:00:00.000000000Z",
+            "rotationPeriod": "7776000s",
+            "versionTemplate": {
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION"
+            },
+            "destroyScheduledDuration": "86400s"
+          },
+          {
+            "name": "projects/testing-project-three/locations/global/keyRings/testing/cryptoKeys/testing-three-demo-key-three",
+            "primary": {
+              "name": "projects/testing-project-three/locations/global/keyRings/testing/cryptoKeys/testing-three-demo-key-three/cryptoKeyVersions/6",
+              "state": "ENABLED",
+              "createTime": "2024-05-22T14:00:00.000000000Z",
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION",
+              "generateTime": "2024-05-22T14:00:00.000000000Z"
+            },
+            "purpose": "ENCRYPT_DECRYPT",
+            "createTime": "2023-02-04T03:03:03.000000000Z",
+            "nextRotationTime": "2025-03-03T14:00:00.000000000Z",
+            "rotationPeriod": "7776000s",
+            "versionTemplate": {
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION"
+            },
+            "destroyScheduledDuration": "86400s"
+          }
+        ],
+        "totalSize": 3
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "accept": [ "application/json" ]
+      },
+      "method": "GET",
+      "path": "/v1/projects/testing-project-three/locations/australia-southeast2/keyRings/big-m-testing-three/cryptoKeys"
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "body": {
+        "cryptoKeys": [
+          {
+            "name": "projects/testing-project-three/locations/australia-southeast2/keyRings/testing/cryptoKeys/big-m-testing-three-demo-key",
+            "primary": {
+              "name": "projects/testing-project-three/locations/australia-southeast2/keyRings/testing/cryptoKeys/big-m-testing-three-demo-key/cryptoKeyVersions/6",
+              "state": "ENABLED",
+              "createTime": "2024-05-22T14:00:00.000000000Z",
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION",
+              "generateTime": "2024-05-22T14:00:00.000000000Z"
+            },
+            "purpose": "ENCRYPT_DECRYPT",
+            "createTime": "2023-02-04T03:03:03.000000000Z",
+            "nextRotationTime": "2025-03-03T14:00:00.000000000Z",
+            "rotationPeriod": "7776000s",
+            "versionTemplate": {
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION"
+            },
+            "destroyScheduledDuration": "86400s"
+          },
+          {
+            "name": "projects/testing-project-three/locations/australia-southeast2/keyRings/testing/cryptoKeys/big-m-testing-three-demo-key-three",
+            "primary": {
+              "name": "projects/testing-project-three/locations/australia-southeast2/keyRings/testing/cryptoKeys/big-m-testing-three-demo-key-three/cryptoKeyVersions/6",
+              "state": "ENABLED",
+              "createTime": "2024-05-22T14:00:00.000000000Z",
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION",
+              "generateTime": "2024-05-22T14:00:00.000000000Z"
+            },
+            "purpose": "ENCRYPT_DECRYPT",
+            "createTime": "2023-02-04T03:03:03.000000000Z",
+            "nextRotationTime": "2025-03-03T14:00:00.000000000Z",
+            "rotationPeriod": "7776000s",
+            "versionTemplate": {
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION"
+            },
+            "destroyScheduledDuration": "86400s"
+          },
+          {
+            "name": "projects/testing-project-three/locations/australia-southeast2/keyRings/testing/cryptoKeys/big-m-testing-three-demo-key-three",
+            "primary": {
+              "name": "projects/testing-project-three/locations/australia-southeast2/keyRings/testing/cryptoKeys/big-m-testing-three-demo-key-three/cryptoKeyVersions/6",
+              "state": "ENABLED",
+              "createTime": "2024-05-22T14:00:00.000000000Z",
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION",
+              "generateTime": "2024-05-22T14:00:00.000000000Z"
+            },
+            "purpose": "ENCRYPT_DECRYPT",
+            "createTime": "2023-02-04T03:03:03.000000000Z",
+            "nextRotationTime": "2025-03-03T14:00:00.000000000Z",
+            "rotationPeriod": "7776000s",
+            "versionTemplate": {
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION"
+            },
+            "destroyScheduledDuration": "86400s"
+          }
+        ],
+        "totalSize": 3
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "accept": [ "application/json" ]
+      },
+      "method": "GET",
+      "path": "/v1/projects/testing-project-three/locations/australia-southeast1/keyRings"
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "body": {}
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "accept": [ "application/json" ]
+      },
+      "method": "GET",
+      "path": "/v1/projects/testing-project-three/locations/global/keyRings"
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "body": {
+        "keyRings": [
+          {
+            "name": "projects/testing-project-three/locations/global/keyRings/testing-three",
+            "createTime": "2022-02-02T02:02:02.02000000Z"
+          }
+        ],
+        "totalSize": 1
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "accept": [ "application/json" ]
+      },
+      "method": "GET",
+      "path": "/v1/projects/testing-project-three/locations/australia-southeast2/keyRings"
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "body": {
+        "keyRings": [
+          {
+            "name": "projects/testing-project-three/locations/australia-southeast2/keyRings/big-m-testing-three",
+            "createTime": "2022-02-02T02:02:02.02000000Z"
+          }
+        ],
+        "totalSize": 1
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "accept": [ "application/json" ]
+      },
+      "method": "GET",
+      "path": "/v1/projects/testing-project-two/locations/global/keyRings/testing-two/cryptoKeys"
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "body": {
+        "cryptoKeys": [
+          {
+            "name": "projects/testing-project-two/locations/global/keyRings/testing/cryptoKeys/testing-two-demo-key",
+            "primary": {
+              "name": "projects/testing-project-two/locations/global/keyRings/testing/cryptoKeys/testing-two-demo-key/cryptoKeyVersions/6",
+              "state": "ENABLED",
+              "createTime": "2024-05-22T14:00:00.000000000Z",
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION",
+              "generateTime": "2024-05-22T14:00:00.000000000Z"
+            },
+            "purpose": "ENCRYPT_DECRYPT",
+            "createTime": "2023-02-04T03:03:03.000000000Z",
+            "nextRotationTime": "2025-03-03T14:00:00.000000000Z",
+            "rotationPeriod": "7776000s",
+            "versionTemplate": {
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION"
+            },
+            "destroyScheduledDuration": "86400s"
+          },
+          {
+            "name": "projects/testing-project-two/locations/global/keyRings/testing/cryptoKeys/testing-two-demo-key-two",
+            "primary": {
+              "name": "projects/testing-project-two/locations/global/keyRings/testing/cryptoKeys/testing-two-demo-key-two/cryptoKeyVersions/6",
+              "state": "ENABLED",
+              "createTime": "2024-05-22T14:00:00.000000000Z",
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION",
+              "generateTime": "2024-05-22T14:00:00.000000000Z"
+            },
+            "purpose": "ENCRYPT_DECRYPT",
+            "createTime": "2023-02-04T03:03:03.000000000Z",
+            "nextRotationTime": "2025-03-03T14:00:00.000000000Z",
+            "rotationPeriod": "7776000s",
+            "versionTemplate": {
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION"
+            },
+            "destroyScheduledDuration": "86400s"
+          },
+          {
+            "name": "projects/testing-project-two/locations/global/keyRings/testing/cryptoKeys/testing-two-demo-key-three",
+            "primary": {
+              "name": "projects/testing-project-two/locations/global/keyRings/testing/cryptoKeys/testing-two-demo-key-three/cryptoKeyVersions/6",
+              "state": "ENABLED",
+              "createTime": "2024-05-22T14:00:00.000000000Z",
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION",
+              "generateTime": "2024-05-22T14:00:00.000000000Z"
+            },
+            "purpose": "ENCRYPT_DECRYPT",
+            "createTime": "2023-02-04T03:03:03.000000000Z",
+            "nextRotationTime": "2025-03-03T14:00:00.000000000Z",
+            "rotationPeriod": "7776000s",
+            "versionTemplate": {
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION"
+            },
+            "destroyScheduledDuration": "86400s"
+          }
+        ],
+        "totalSize": 3
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "accept": [ "application/json" ]
+      },
+      "method": "GET",
+      "path": "/v1/projects/testing-project-two/locations/australia-southeast2/keyRings/big-m-testing-two/cryptoKeys"
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "body": {
+        "cryptoKeys": [
+          {
+            "name": "projects/testing-project-two/locations/australia-southeast2/keyRings/testing/cryptoKeys/big-m-testing-two-demo-key",
+            "primary": {
+              "name": "projects/testing-project-two/locations/australia-southeast2/keyRings/testing/cryptoKeys/big-m-testing-two-demo-key/cryptoKeyVersions/6",
+              "state": "ENABLED",
+              "createTime": "2024-05-22T14:00:00.000000000Z",
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION",
+              "generateTime": "2024-05-22T14:00:00.000000000Z"
+            },
+            "purpose": "ENCRYPT_DECRYPT",
+            "createTime": "2023-02-04T03:03:03.000000000Z",
+            "nextRotationTime": "2025-03-03T14:00:00.000000000Z",
+            "rotationPeriod": "7776000s",
+            "versionTemplate": {
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION"
+            },
+            "destroyScheduledDuration": "86400s"
+          },
+          {
+            "name": "projects/testing-project-two/locations/australia-southeast2/keyRings/testing/cryptoKeys/big-m-testing-two-demo-key-two",
+            "primary": {
+              "name": "projects/testing-project-two/locations/australia-southeast2/keyRings/testing/cryptoKeys/big-m-testing-two-demo-key-two/cryptoKeyVersions/6",
+              "state": "ENABLED",
+              "createTime": "2024-05-22T14:00:00.000000000Z",
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION",
+              "generateTime": "2024-05-22T14:00:00.000000000Z"
+            },
+            "purpose": "ENCRYPT_DECRYPT",
+            "createTime": "2023-02-04T03:03:03.000000000Z",
+            "nextRotationTime": "2025-03-03T14:00:00.000000000Z",
+            "rotationPeriod": "7776000s",
+            "versionTemplate": {
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION"
+            },
+            "destroyScheduledDuration": "86400s"
+          },
+          {
+            "name": "projects/testing-project-two/locations/australia-southeast2/keyRings/testing/cryptoKeys/big-m-testing-two-demo-key-three",
+            "primary": {
+              "name": "projects/testing-project-two/locations/australia-southeast2/keyRings/testing/cryptoKeys/big-m-testing-two-demo-key-three/cryptoKeyVersions/6",
+              "state": "ENABLED",
+              "createTime": "2024-05-22T14:00:00.000000000Z",
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION",
+              "generateTime": "2024-05-22T14:00:00.000000000Z"
+            },
+            "purpose": "ENCRYPT_DECRYPT",
+            "createTime": "2023-02-04T03:03:03.000000000Z",
+            "nextRotationTime": "2025-03-03T14:00:00.000000000Z",
+            "rotationPeriod": "7776000s",
+            "versionTemplate": {
+              "protectionLevel": "SOFTWARE",
+              "algorithm": "GOOGLE_SYMMETRIC_ENCRYPTION"
+            },
+            "destroyScheduledDuration": "86400s"
+          }
+        ],
+        "totalSize": 3
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "accept": [ "application/json" ]
+      },
+      "method": "GET",
+      "path": "/v1/projects/testing-project-two/locations/australia-southeast1/keyRings"
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "body": {}
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "accept": [ "application/json" ]
+      },
+      "method": "GET",
+      "path": "/v1/projects/testing-project-two/locations/global/keyRings"
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "body": {
+        "keyRings": [
+          {
+            "name": "projects/testing-project-two/locations/global/keyRings/testing-two",
+            "createTime": "2022-02-02T02:02:02.02000000Z"
+          }
+        ],
+        "totalSize": 1
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "accept": [ "application/json" ]
+      },
+      "method": "GET",
+      "path": "/v1/projects/testing-project-two/locations/australia-southeast2/keyRings"
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "body": {
+        "keyRings": [
+          {
+            "name": "projects/testing-project-two/locations/australia-southeast2/keyRings/big-m-testing-two",
+            "createTime": "2022-02-02T02:02:02.02000000Z"
+          }
+        ],
+        "totalSize": 1
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "accept": [ "application/json" ]
+      },
+      "method": "GET",
       "path": "/v1/projects/testing-project/locations/global/keyRings/testing/cryptoKeys"
     },
     "httpResponse": {
