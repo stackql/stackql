@@ -1012,6 +1012,91 @@ components:
                       json_extract_path_text(Properties, 'Tags') as Tags
                       FROM aws.cloud_control.resources WHERE region = 'ap-southeast-1' and data__TypeName = 'AWS::S3::Bucket'
                       ;
+    s3_bucket_list_and_detail:
+      name: s3_bucket_list_and_detail
+      id: aws.pseudo_s3.s3_bucket_list_and_detail
+      methods: {}
+      sqlVerbs: {}
+      config:
+        views:
+          'select':
+              predicate: sqlDialect == "sqlite3"
+              ddl: |
+                SELECT
+                detail.region,
+                detail.data__Identifier,
+                JSON_EXTRACT(detail.Properties, '$.AccelerateConfiguration') as accelerate_configuration,
+                JSON_EXTRACT(detail.Properties, '$.AccessControl') as access_control,
+                JSON_EXTRACT(detail.Properties, '$.AnalyticsConfigurations') as analytics_configurations,
+                JSON_EXTRACT(detail.Properties, '$.BucketEncryption') as bucket_encryption,
+                JSON_EXTRACT(detail.Properties, '$.BucketName') as bucket_name,
+                JSON_EXTRACT(detail.Properties, '$.CorsConfiguration') as cors_configuration,
+                JSON_EXTRACT(detail.Properties, '$.IntelligentTieringConfigurations') as intelligent_tiering_configurations,
+                JSON_EXTRACT(detail.Properties, '$.InventoryConfigurations') as inventory_configurations,
+                JSON_EXTRACT(detail.Properties, '$.LifecycleConfiguration') as lifecycle_configuration,
+                JSON_EXTRACT(detail.Properties, '$.LoggingConfiguration') as logging_configuration,
+                JSON_EXTRACT(detail.Properties, '$.MetricsConfigurations') as metrics_configurations,
+                JSON_EXTRACT(detail.Properties, '$.NotificationConfiguration') as notification_configuration,
+                JSON_EXTRACT(detail.Properties, '$.ObjectLockConfiguration') as object_lock_configuration,
+                JSON_EXTRACT(detail.Properties, '$.ObjectLockEnabled') as object_lock_enabled,
+                JSON_EXTRACT(detail.Properties, '$.OwnershipControls') as ownership_controls,
+                JSON_EXTRACT(detail.Properties, '$.PublicAccessBlockConfiguration') as public_access_block_configuration,
+                JSON_EXTRACT(detail.Properties, '$.ReplicationConfiguration') as replication_configuration,
+                JSON_EXTRACT(detail.Properties, '$.Tags') as tags,
+                JSON_EXTRACT(detail.Properties, '$.VersioningConfiguration') as versioning_configuration,
+                JSON_EXTRACT(detail.Properties, '$.WebsiteConfiguration') as website_configuration,
+                JSON_EXTRACT(detail.Properties, '$.Arn') as arn,
+                JSON_EXTRACT(detail.Properties, '$.DomainName') as domain_name,
+                JSON_EXTRACT(detail.Properties, '$.DualStackDomainName') as dual_stack_domain_name,
+                JSON_EXTRACT(detail.Properties, '$.RegionalDomainName') as regional_domain_name,
+                JSON_EXTRACT(detail.Properties, '$.WebsiteURL') as website_url
+                FROM  aws.cloud_control.resources listing 
+                INNER JOIN aws.cloud_control.resource detail 
+                on detail.data__Identifier = listing.Identifier
+                and detail.region = listing.region
+                WHERE listing.data__TypeName = 'AWS::S3::Bucket'
+                AND detail.data__TypeName = 'AWS::S3::Bucket'
+                AND listing.region = 'us-east-1'
+                ;
+              fallback:
+                predicate: sqlDialect == "postgres"
+                ddl: |
+                  SELECT
+                  detail.region,
+                  detail.data__Identifier,
+                  json_extract_path_text(detail.Properties, 'AccelerateConfiguration') as accelerate_configuration,
+                  json_extract_path_text(detail.Properties, 'AccessControl') as access_control,
+                  json_extract_path_text(detail.Properties, 'AnalyticsConfigurations') as analytics_configurations,
+                  json_extract_path_text(detail.Properties, 'BucketEncryption') as bucket_encryption,
+                  json_extract_path_text(detail.Properties, 'BucketName') as bucket_name,
+                  json_extract_path_text(detail.Properties, 'CorsConfiguration') as cors_configuration,
+                  json_extract_path_text(detail.Properties, 'IntelligentTieringConfigurations') as intelligent_tiering_configurations,
+                  json_extract_path_text(detail.Properties, 'InventoryConfigurations') as inventory_configurations,
+                  json_extract_path_text(detail.Properties, 'LifecycleConfiguration') as lifecycle_configuration,
+                  json_extract_path_text(detail.Properties, 'LoggingConfiguration') as logging_configuration,
+                  json_extract_path_text(detail.Properties, 'MetricsConfigurations') as metrics_configurations,
+                  json_extract_path_text(detail.Properties, 'NotificationConfiguration') as notification_configuration,
+                  json_extract_path_text(detail.Properties, 'ObjectLockConfiguration') as object_lock_configuration,
+                  json_extract_path_text(detail.Properties, 'ObjectLockEnabled') as object_lock_enabled,
+                  json_extract_path_text(detail.Properties, 'OwnershipControls') as ownership_controls,
+                  json_extract_path_text(detail.Properties, 'PublicAccessBlockConfiguration') as public_access_block_configuration,
+                  json_extract_path_text(detail.Properties, 'ReplicationConfiguration') as replication_configuration,
+                  json_extract_path_text(detail.Properties, 'Tags') as tags,
+                  json_extract_path_text(detail.Properties, 'VersioningConfiguration') as versioning_configuration,
+                  json_extract_path_text(detail.Properties, 'WebsiteConfiguration') as website_configuration,
+                  json_extract_path_text(detail.Properties, 'Arn') as arn,
+                  json_extract_path_text(detail.Properties, 'DomainName') as domain_name,
+                  json_extract_path_text(detail.Properties, 'DualStackDomainName') as dual_stack_domain_name,
+                  json_extract_path_text(detail.Properties, 'RegionalDomainName') as regional_domain_name,
+                  json_extract_path_text(detail.Properties, 'WebsiteURL') as website_url
+                  FROM  aws.cloud_control.resources listing 
+                  INNER JOIN aws.cloud_control.resource detail 
+                  on detail.data__Identifier = listing.Identifier
+                  and detail.region = listing.region
+                  WHERE listing.data__TypeName = 'AWS::S3::Bucket'
+                  AND detail.data__TypeName = 'AWS::S3::Bucket'
+                  AND listing.region = 'us-east-1'
+                  ;
 
     
 servers:

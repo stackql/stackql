@@ -258,6 +258,7 @@ func (pb *standardPrimitiveComposer) GetChildren() []PrimitiveComposer {
 	return pb.children
 }
 
+//nolint:gocognit // acceptable for now
 func (pb *standardPrimitiveComposer) AssignParameters() (internaldto.TableParameterCollection, error) {
 	requiredParameters := suffix.NewParameterSuffixMap()
 	remainingRequiredParameters := suffix.NewParameterSuffixMap()
@@ -269,7 +270,7 @@ func (pb *standardPrimitiveComposer) AssignParameters() (internaldto.TableParame
 		}
 		tbVisited[tb] = struct{}{}
 		tbID := tb.GetUniqueID()
-		var reqParams, tblOptParams map[string]anysdk.Addressable
+		var reqParams, tblOptParams, remainingReqParams map[string]anysdk.Addressable
 		if view, isView := tb.GetIndirect(); isView {
 			// TODO: fill this out
 			assignedParams, ok := view.GetAssignedParameters()
@@ -278,6 +279,7 @@ func (pb *standardPrimitiveComposer) AssignParameters() (internaldto.TableParame
 			}
 			reqParams = assignedParams.GetRequiredParams().GetAll()
 			tblOptParams = assignedParams.GetOptionalParams().GetAll()
+			remainingReqParams = assignedParams.GetRemainingRequiredParams().GetAll()
 		} else {
 			// These methods need to incorporate request body parameters
 			reqParams = tb.GetRequiredParameters()
@@ -300,6 +302,17 @@ func (pb *standardPrimitiveComposer) AssignParameters() (internaldto.TableParame
 				return nil, fmt.Errorf("key already is optional: %s", k)
 			}
 			optionalParameters.Put(key, vOpt)
+		}
+		for k, vRem := range remainingReqParams {
+			key := fmt.Sprintf("%s.%s", tbID, k)
+			if vRem == nil {
+				return nil, fmt.Errorf("remaining required parameter is nil: %s", k)
+			}
+			_, keyExists := remainingRequiredParameters.Get(key)
+			if !keyExists {
+				return nil, fmt.Errorf("key already is optional: %s", k)
+			}
+			remainingRequiredParameters.Delete(key)
 		}
 	}
 	rv := internaldto.NewTableParameterCollection(requiredParameters, optionalParameters, remainingRequiredParameters)
