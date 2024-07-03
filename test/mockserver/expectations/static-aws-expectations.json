@@ -1595,7 +1595,37 @@
       "method": "POST",
       "path": "/",
       "headers": {
-        "Authorization": ["^.*SignedHeaders.*content-type;host;x-amz-date;x-amz-target.*$" ],
+        "Authorization": ["^.*ap-southeast-1.*SignedHeaders.*content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target": [ "CloudApiService.GetResource" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "TypeName":"AWS::S3::Bucket",
+          "Identifier": "stackql-trial-bucket-01"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "ResourceDescription": {
+          "Identifier": "stackql-trial-bucket-01",
+          "Properties": "{\"PublicAccessBlockConfiguration\":{\"RestrictPublicBuckets\":true,\"BlockPublicPolicy\":true,\"BlockPublicAcls\":true,\"IgnorePublicAcls\":true},\"BucketName\":\"stackql-trial-bucket-01\",\"RegionalDomainName\":\"stackql-trial-bucket-01.s3.ap-southeast-1.amazonaws.com\",\"OwnershipControls\":{\"Rules\":[{\"ObjectOwnership\":\"BucketOwnerEnforced\"}]},\"DomainName\":\"stackql-trial-bucket-01.s3.amazonaws.com\",\"WebsiteURL\":\"http://stackql-trial-bucket-01.s3-website-ap-southeast-1.amazonaws.com\",\"DualStackDomainName\":\"stackql-trial-bucket-01.s3.dualstack.ap-southeast-1.amazonaws.com\",\"Arn\":\"arn:aws:s3:::stackql-trial-bucket-01\",\"Tags\":[{\"Value\":\"first-ever-bucket\",\"Key\":\"sundry\"}]}"
+        }
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*ap-southeast-2.*SignedHeaders.*content-type;host;x-amz-date;x-amz-target.*$" ],
         "X-Amz-Target": [ "CloudApiService.GetResource" ]
       },
       "body": {
@@ -1667,7 +1697,7 @@
       "method": "POST",
       "path": "/",
       "headers": {
-        "Authorization": ["^.*SignedHeaders.*content-type;host;x-amz-date;x-amz-target.*$" ],
+        "Authorization": ["^.*ap-southeast-1.*SignedHeaders.*content-type;host;x-amz-date;x-amz-target.*$" ],
         "X-Amz-Target": [ "CloudApiService.ListResources" ]
       },
       "body": {
@@ -1698,6 +1728,174 @@
             "Properties": "{\"BucketName\":\"stackql-trial-bucket-02\"}"
           }
         ]
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*ap-southeast-2.*SignedHeaders.*content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target": [ "CloudApiService.ListResources" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "TypeName":"AWS::S3::Bucket"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "ResourceDescriptions": [
+          {
+            "Identifier": "stackql-testing-bucket-01",
+            "Properties": "{\"BucketName\":\"stackql-testing-bucket-01\"}"
+          },
+          {
+            "Identifier": "stackql-trial-bucket-01",
+            "Properties": "{\"BucketName\":\"stackql-trial-bucket-01\"}"
+          },
+          {
+            "Identifier": "stackql-trial-bucket-02",
+            "Properties": "{\"BucketName\":\"stackql-trial-bucket-02\"}"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*us-east-1.*SignedHeaders.*content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target": [ "CloudApiService.ListResources" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "TypeName":"AWS::S3::Bucket"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "ResourceDescriptions": [
+          {
+            "Identifier": "stackql-contrived-bucket-01",
+            "Properties": "{\"BucketName\":\"stackql-contrived-bucket-01\"}"
+          },
+          {
+            "Identifier": "stackql-contrived-bucket-02",
+            "Properties": "{\"BucketName\":\"stackql-contrived-bucket-02\"}"
+          },
+          {
+            "Identifier": "stackql-contrived-bucket-03",
+            "Properties": "{\"BucketName\":\"stackql-contrived-bucket-03\"}"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*us-east-1.*SignedHeaders.*content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target": [ "CloudApiService.GetResource" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "TypeName":"AWS::S3::Bucket",
+          "Identifier": "stackql-contrived-bucket-01"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "ResourceDescription": {
+          "Identifier": "stackql-contrived-bucket-01",
+          "Properties": "{\"PublicAccessBlockConfiguration\":{\"RestrictPublicBuckets\":true,\"BlockPublicPolicy\":true,\"BlockPublicAcls\":true,\"IgnorePublicAcls\":true},\"BucketName\":\"stackql-contrived-bucket-01\",\"RegionalDomainName\":\"stackql-contrived-bucket-01.s3.us-east-1.amazonaws.com\",\"OwnershipControls\":{\"Rules\":[{\"ObjectOwnership\":\"BucketOwnerEnforced\"}]},\"DomainName\":\"stackql-contrived-bucket-01.s3.amazonaws.com\",\"WebsiteURL\":\"http://stackql-contrived-bucket-01.s3-website-us-east-1.amazonaws.com\",\"DualStackDomainName\":\"stackql-contrived-bucket-01.s3.dualstack.us-east-1.amazonaws.com\",\"Arn\":\"arn:aws:s3:::stackql-contrived-bucket-01\",\"Tags\":[{\"Value\":\"first-ever-bucket\",\"Key\":\"sundry\"}, {\"Key\":\"provisioner\",\"Value\":\"stackql\"}, {\"Key\":\"domain\",\"Value\":\"payroll\"}, {\"Key\":\"stackid\",\"Value\":\"payruns\"}, {\"Key\":\"env\",\"Value\":\"dev\"}]}"
+        }
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*us-east-1.*SignedHeaders.*content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target": [ "CloudApiService.GetResource" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "TypeName":"AWS::S3::Bucket",
+          "Identifier": "stackql-contrived-bucket-02"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "ResourceDescription": {
+          "Identifier": "stackql-contrived-bucket-02",
+          "Properties": "{\"PublicAccessBlockConfiguration\":{\"RestrictPublicBuckets\":true,\"BlockPublicPolicy\":true,\"BlockPublicAcls\":true,\"IgnorePublicAcls\":true},\"BucketName\":\"stackql-contrived-bucket-02\",\"RegionalDomainName\":\"stackql-contrived-bucket-02.s3.us-east-1.amazonaws.com\",\"OwnershipControls\":{\"Rules\":[{\"ObjectOwnership\":\"BucketOwnerEnforced\"}]},\"DomainName\":\"stackql-contrived-bucket-02.s3.amazonaws.com\",\"WebsiteURL\":\"http://stackql-contrived-bucket-02.s3-website-us-east-1.amazonaws.com\",\"DualStackDomainName\":\"stackql-contrived-bucket-02.s3.dualstack.us-east-1.amazonaws.com\",\"Arn\":\"arn:aws:s3:::stackql-contrived-bucket-02\",\"Tags\":[{\"Value\":\"first-ever-bucket\",\"Key\":\"sundry\"}, {\"Key\":\"provisioner\",\"Value\":\"stackql\"}, {\"Key\":\"domain\",\"Value\":\"payroll\"}, {\"Key\":\"stackid\",\"Value\":\"payruns\"}, {\"Key\":\"env\",\"Value\":\"dev\"}]}"
+        }
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "Authorization": ["^.*us-east-1.*SignedHeaders.*content-type;host;x-amz-date;x-amz-target.*$" ],
+        "X-Amz-Target": [ "CloudApiService.GetResource" ]
+      },
+      "body": {
+        "type": "JSON",
+        "json": {
+          "TypeName":"AWS::S3::Bucket",
+          "Identifier": "stackql-contrived-bucket-03"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "headers": {
+        "content-type": [ "application/x-amz-json-1.0" ]
+      },
+      "statusCode": 200,
+      "body": {
+        "ResourceDescription": {
+          "Identifier": "stackql-contrived-bucket-03",
+          "Properties": "{\"PublicAccessBlockConfiguration\":{\"RestrictPublicBuckets\":true,\"BlockPublicPolicy\":true,\"BlockPublicAcls\":true,\"IgnorePublicAcls\":true},\"BucketName\":\"stackql-contrived-bucket-03\",\"RegionalDomainName\":\"stackql-contrived-bucket-03.s3.us-east-1.amazonaws.com\",\"OwnershipControls\":{\"Rules\":[{\"ObjectOwnership\":\"BucketOwnerEnforced\"}]},\"DomainName\":\"stackql-contrived-bucket-03.s3.amazonaws.com\",\"WebsiteURL\":\"http://stackql-contrived-bucket-03.s3-website-us-east-1.amazonaws.com\",\"DualStackDomainName\":\"stackql-contrived-bucket-03.s3.dualstack.us-east-1.amazonaws.com\",\"Arn\":\"arn:aws:s3:::stackql-contrived-bucket-03\",\"Tags\":[{\"Value\":\"first-ever-bucket\",\"Key\":\"sundry\"}, {\"Key\":\"provisioner\",\"Value\":\"stackql\"}, {\"Key\":\"domain\",\"Value\":\"payroll\"}, {\"Key\":\"stackid\",\"Value\":\"payruns\"}, {\"Key\":\"env\",\"Value\":\"dev\"}]}"
+        }
       }
     }
   },
