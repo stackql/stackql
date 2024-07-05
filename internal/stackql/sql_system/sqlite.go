@@ -533,6 +533,9 @@ func (eng *sqLiteSystem) generateDDL(relationalTable relationaldto.RelationalTab
 
 func (eng *sqLiteSystem) GetViewByName(viewName string) (internaldto.RelationDTO, bool) {
 	rv, ok := eng.getViewByName(viewName)
+	if !ok {
+		return nil, false
+	}
 	candidates, err := eng.getAwareViewsByName(viewName)
 	currentNode := rv
 	if err == nil {
