@@ -110,9 +110,10 @@ func (ss *sqlDataSourceSingleSelectAcquire) Build() error {
 	}
 	// targetTableName := annotationCtx.GetHIDs().GetStackQLTableName()
 	// inputQuery := fmt.Sprintf(`INSERT INTO %s ( %s ) VALUES ( ?,  )`, targetTableName, projectionStr, tableName)
+	//nolint:revive // no big deal
 	ex := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 		// ss.tableMeta.GetP
-		rows, rowsErr := sqlDB.Query(ss.query, ss.queryArgs...) //nolint:rowserrcheck // TODO: fix this
+		rows, rowsErr := sqlDB.Query(ss.query, ss.queryArgs...)
 		if rowsErr != nil {
 			return internaldto.NewErroneousExecutorOutput(rowsErr)
 		}

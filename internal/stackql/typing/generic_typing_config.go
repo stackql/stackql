@@ -143,7 +143,7 @@ func (tc *genericTypingConfig) getPlaceholderColumn(
 		colName,
 		0,
 		uint32(colOID),
-		1024, //nolint:gomnd // TODO: refactor
+		1024, //nolint:mnd // TODO: refactor
 		0,
 		"TextFormat",
 	)
@@ -171,7 +171,7 @@ func (tc *genericTypingConfig) getPlaceholderColumnForNativeResult(
 		colName,
 		0,
 		uint32(tc.GetOidForSQLType(colSchema)),
-		1024, //nolint:gomnd // TODO: refactor
+		1024, //nolint:mnd // TODO: refactor
 		0,
 		"TextFormat",
 	)

@@ -191,7 +191,7 @@ func ToInsertStatement(
 			"\n)\n" + "SELECT\n" + strings.Join(exprList, ",\n") + "\n;\n", err
 	}
 
-	//nolint:gomnd // acceptable
+	//nolint:mnd // acceptable
 	schemaVisitor := NewSchemaRequestTemplateVisitor(2, "", prettyPrinter, placeHolderPrettyPrinter, requiredOnly)
 
 	tVal, _ := schemaVisitor.RetrieveTemplate(sch, m, extended)

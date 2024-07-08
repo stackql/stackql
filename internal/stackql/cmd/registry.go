@@ -55,7 +55,7 @@ var registryCmd = &cobra.Command{
 		subCommand := strings.ToLower(args[0])
 		switch subCommand {
 		case "pull":
-			if len(args) != 3 { //nolint:gomnd // TODO: investigate
+			if len(args) != 3 { //nolint:mnd // TODO: investigate
 				iqlerror.PrintErrorAndExitOneWithMessage(usagemsg)
 			}
 			providerName := args[1]
@@ -74,7 +74,7 @@ var registryCmd = &cobra.Command{
 			switch len(args) {
 			case 1:
 				rdr = bytes.NewReader([]byte("registry list;"))
-			case 2: //nolint:gomnd // TODO: investigate
+			case 2: //nolint:mnd // TODO: investigate
 				rdr = bytes.NewReader([]byte(fmt.Sprintf("registry list %s;", args[1])))
 			default:
 				iqlerror.PrintErrorAndExitOneWithMessage(

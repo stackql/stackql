@@ -19,7 +19,7 @@ type AnnotatedTabulation interface {
 
 type standardAnnotatedTabulation struct {
 	tab            anysdk.Tabulation
-	hIds           internaldto.HeirarchyIdentifiers
+	hIDs           internaldto.HeirarchyIdentifiers
 	inputTableName string
 	alias          string
 	sqlDataSource  sql_datasource.SQLDataSource
@@ -28,13 +28,13 @@ type standardAnnotatedTabulation struct {
 
 func NewAnnotatedTabulation(
 	tab anysdk.Tabulation,
-	hIds internaldto.HeirarchyIdentifiers,
+	hIDs internaldto.HeirarchyIdentifiers,
 	inputTableName string,
 	alias string,
 ) AnnotatedTabulation {
 	return &standardAnnotatedTabulation{
 		tab:            tab,
-		hIds:           hIds,
+		hIDs:           hIDs,
 		inputTableName: inputTableName,
 		alias:          alias,
 		parameters:     make(map[string]interface{}),
@@ -66,7 +66,7 @@ func (at *standardAnnotatedTabulation) GetInputTableName() string {
 }
 
 func (at *standardAnnotatedTabulation) GetHeirarchyIdentifiers() internaldto.HeirarchyIdentifiers {
-	return at.hIds
+	return at.hIDs
 }
 
 func (at *standardAnnotatedTabulation) SetSQLDataSource(sqlDataSource sql_datasource.SQLDataSource) {

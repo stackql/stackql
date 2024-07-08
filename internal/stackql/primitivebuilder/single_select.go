@@ -55,6 +55,7 @@ func (ss *SingleSelect) GetTail() primitivegraph.PrimitiveNode {
 }
 
 func (ss *SingleSelect) Build() error {
+	//nolint:revive // acceptable for now
 	selectEx := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 		// select phase
 		logging.GetLogger().Infoln(

@@ -634,7 +634,7 @@ func (pr *standardParameterRouter) route(
 		}
 		logging.GetLogger().Infof("nextIndirect = %v", currentIndirect)
 	}
-	hrView, hrViewPresent := hr.GetHeirarchyIds().GetView()
+	hrView, hrViewPresent := hr.GetHeirarchyIDs().GetView()
 	if indirect == nil && hrViewPresent { //nolint:nestif // TODO: review
 		if hrView.IsMaterialized() { //nolint:gocritic // TODO: review
 			indirect, err = astindirect.NewMaterializedViewIndirect(hrView, handlerCtx.GetSQLSystem())

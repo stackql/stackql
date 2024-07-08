@@ -19,6 +19,7 @@ type Union struct {
 }
 
 func (un *Union) Build() error {
+	//nolint:revive // acceptable for now
 	unionEx := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 		us := drm.NewPreparedStatementParameterized(un.unionCtx, nil, false)
 		outputter := output_data_staging.NewNaiveOutputter(

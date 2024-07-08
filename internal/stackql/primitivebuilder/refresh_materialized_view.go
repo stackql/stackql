@@ -25,6 +25,7 @@ type refreshMaterializedView struct {
 	bldrInput     builder_input.BuilderInput
 }
 
+//nolint:revive // no big deal
 func (ddo *refreshMaterializedView) Build() error {
 	sqlSystem := ddo.handlerCtx.GetSQLSystem()
 	if sqlSystem == nil {

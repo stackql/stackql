@@ -359,17 +359,17 @@ func (dc *staticDRMConfig) GetCurrentTable(
 }
 
 func (dc *staticDRMConfig) GetTableName(
-	hIds internaldto.HeirarchyIdentifiers,
+	hIDs internaldto.HeirarchyIdentifiers,
 	discoveryGenerationID int,
 ) (string, error) {
-	return dc.getTableName(hIds, discoveryGenerationID)
+	return dc.getTableName(hIDs, discoveryGenerationID)
 }
 
 func (dc *staticDRMConfig) getTableName(
-	hIds internaldto.HeirarchyIdentifiers,
+	hIDs internaldto.HeirarchyIdentifiers,
 	discoveryGenerationID int,
 ) (string, error) {
-	tbl, err := dc.sqlSystem.GetTable(hIds, discoveryGenerationID)
+	tbl, err := dc.sqlSystem.GetTable(hIDs, discoveryGenerationID)
 	if err != nil {
 		return "", err
 	}
@@ -381,28 +381,28 @@ func (dc *staticDRMConfig) getTableName(
 }
 
 func (dc *staticDRMConfig) GetParserTableName(
-	hIds internaldto.HeirarchyIdentifiers,
+	hIDs internaldto.HeirarchyIdentifiers,
 	discoveryGenerationID int,
 ) sqlparser.TableName {
-	return dc.getParserTableName(hIds, discoveryGenerationID)
+	return dc.getParserTableName(hIDs, discoveryGenerationID)
 }
 
 func (dc *staticDRMConfig) getParserTableName(
-	hIds internaldto.HeirarchyIdentifiers,
+	hIDs internaldto.HeirarchyIdentifiers,
 	discoveryGenerationID int,
 ) sqlparser.TableName {
-	if dc.namespaceCollection.GetAnalyticsCacheTableNamespaceConfigurator().IsAllowed(hIds.GetTableName()) {
+	if dc.namespaceCollection.GetAnalyticsCacheTableNamespaceConfigurator().IsAllowed(hIDs.GetTableName()) {
 		return sqlparser.TableName{
-			Name:            sqlparser.NewTableIdent(hIds.GetResourceStr()),
-			Qualifier:       sqlparser.NewTableIdent(hIds.GetServiceStr()),
-			QualifierSecond: sqlparser.NewTableIdent(hIds.GetProviderStr()),
+			Name:            sqlparser.NewTableIdent(hIDs.GetResourceStr()),
+			Qualifier:       sqlparser.NewTableIdent(hIDs.GetServiceStr()),
+			QualifierSecond: sqlparser.NewTableIdent(hIDs.GetProviderStr()),
 		}
 	}
 	return sqlparser.TableName{
 		Name:            sqlparser.NewTableIdent(fmt.Sprintf("generation_%d", discoveryGenerationID)),
-		Qualifier:       sqlparser.NewTableIdent(hIds.GetResourceStr()),
-		QualifierSecond: sqlparser.NewTableIdent(hIds.GetServiceStr()),
-		QualifierThird:  sqlparser.NewTableIdent(hIds.GetProviderStr()),
+		Qualifier:       sqlparser.NewTableIdent(hIDs.GetResourceStr()),
+		QualifierSecond: sqlparser.NewTableIdent(hIDs.GetServiceStr()),
+		QualifierThird:  sqlparser.NewTableIdent(hIDs.GetProviderStr()),
 	}
 }
 

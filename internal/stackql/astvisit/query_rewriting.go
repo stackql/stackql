@@ -414,7 +414,7 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		if ct.EnumValues != nil {
 		}
 
-		opts := make([]string, 0, 16)
+		opts := make([]string, 0, 16) //nolint:mnd // TODO: tech debt sweep mnd hacks
 		if ct.Unsigned {
 			opts = append(opts, sqlparser.KeywordStrings[sqlparser.UNSIGNED])
 		}
@@ -698,7 +698,7 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 				return err
 			}
 			relationalColumn, err := v.dc.GetSQLSystem().ObtainRelationalColumnFromExternalSQLtable(
-				tbl.GetHeirarchyObjects().GetHeirarchyIds(),
+				tbl.GetHeirarchyObjects().GetHeirarchyIDs(),
 				col.Name,
 			)
 			if err != nil {

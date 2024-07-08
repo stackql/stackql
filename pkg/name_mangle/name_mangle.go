@@ -58,7 +58,7 @@ func (v *standardNameMutator) UnmangleName(base string) (string, error) {
 	if len(matches) == 0 {
 		return base, nil
 	}
-	if len(matches) != 3 { //nolint:gomnd // 3 is the expected length
+	if len(matches) != 3 { //nolint:mnd // 3 is the expected length
 		return "", fmt.Errorf("could not unmangle %s", base)
 	}
 	return matches[1], nil
@@ -69,7 +69,7 @@ func (v *standardNameMutator) UnmangleName(base string) (string, error) {
 // 	if len(matches) == 0 {
 // 		return base, nil
 // 	}
-// 	if len(matches) != 3 { //nolint:gomnd // 3 is the expected length
+// 	if len(matches) != 3 { //nolint:mnd // 3 is the expected length
 // 		return "", fmt.Errorf("could not unmangle %s", base)
 // 	}
 // 	return matches[1], nil

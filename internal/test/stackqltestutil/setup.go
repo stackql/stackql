@@ -171,7 +171,7 @@ func SetupSimpleSelectGoogleComputeDisksPaginated(t *testing.T) {
 	ex2 := testhttpapi.NewHTTPRequestExpectations(nil, nil, "GET", url2, testobjects.GoogleComputeHost, string(responseBytes2), nil)
 	ex3 := testhttpapi.NewHTTPRequestExpectations(nil, nil, "GET", url3, testobjects.GoogleComputeHost, string(responseBytes3), nil)
 
-	expectations := testhttpapi.NewExpectationStore(3)
+	expectations := testhttpapi.NewExpectationStore(3) //nolint:mnd // TODO: tech debt sweep mnd hacks
 	expectations.Put(testobjects.GoogleComputeHost+path+"?"+rawQuery1, ex1)
 	expectations.Put(testobjects.GoogleComputeHost+path+"?"+rawQuery2, ex2)
 	expectations.Put(testobjects.GoogleComputeHost+path+"?"+rawQuery3, ex3)
@@ -477,7 +477,7 @@ func getNetworkDeleteSuccessExpectations() map[string]testhttpapi.HTTPRequestExp
 }
 
 func SetupSimpleInsertGoogleComputeNetworks(t *testing.T) {
-	expectations := testhttpapi.NewExpectationStore(3)
+	expectations := testhttpapi.NewExpectationStore(3) //nolint:mnd // TODO: tech debt sweep mnd hacks
 	for k, v := range getNetworkInsertSuccessExpectations() {
 		expectations.Put(k, v)
 	}
@@ -487,7 +487,7 @@ func SetupSimpleInsertGoogleComputeNetworks(t *testing.T) {
 }
 
 func SetupDependentInsertGoogleComputeDisks(t *testing.T) {
-	expectations := testhttpapi.NewExpectationStore(5)
+	expectations := testhttpapi.NewExpectationStore(5) //nolint:mnd // TODO: tech debt sweep mnd hacks
 	for k, v := range getDisksSelectExpectations(t) {
 		expectations.Put(k, v)
 	}
@@ -512,7 +512,7 @@ func SetupExecGoogleOrganizationsGetIamPolicy(t *testing.T) {
 }
 
 func SetupDependentInsertGoogleComputeDisksReversed(t *testing.T) {
-	expectations := testhttpapi.NewExpectationStore(5)
+	expectations := testhttpapi.NewExpectationStore(5) //nolint:mnd // TODO: tech debt sweep mnd hacks
 	for k, v := range getCloudResourceManagerProjectSelectExpectations(t) {
 		expectations.Put(k, v)
 	}
@@ -528,7 +528,7 @@ func SetupDependentInsertGoogleComputeDisksReversed(t *testing.T) {
 }
 
 func SetupDependentInsertGoogleBQDatasets(t *testing.T) {
-	expectations := testhttpapi.NewExpectationStore(3)
+	expectations := testhttpapi.NewExpectationStore(3) //nolint:mnd // TODO: tech debt sweep mnd hacks
 	for k, v := range getCloudResourceManagerProjectSelectExpectations(t) {
 		expectations.Put(k, v)
 	}
@@ -560,7 +560,7 @@ func SetupDependentInsertGoogleBQDatasets(t *testing.T) {
 }
 
 func SetupSimpleDeleteGoogleComputeNetworks(t *testing.T) {
-	expectations := testhttpapi.NewExpectationStore(3)
+	expectations := testhttpapi.NewExpectationStore(3) //nolint:mnd // TODO: tech debt sweep mnd hacks
 	for k, v := range getNetworkDeleteSuccessExpectations() {
 		expectations.Put(k, v)
 	}
@@ -573,7 +573,7 @@ func SetupK8sTheHardWayE2eSuccess(t *testing.T) {
 	computeControllerInstanceCount := 3
 	computeWorkerInstanceCount := 3
 
-	expectations := testhttpapi.NewExpectationStore(30)
+	expectations := testhttpapi.NewExpectationStore(30) //nolint:mnd // TODO: tech debt sweep mnd hacks
 	for k, v := range getNetworkInsertSuccessExpectations() {
 		expectations.Put(k, v)
 	}
@@ -590,11 +590,13 @@ func SetupK8sTheHardWayE2eSuccess(t *testing.T) {
 		expectations.Put(k, v)
 	}
 	for i := 0; i < computeControllerInstanceCount; i++ {
+		//nolint:mnd // TODO: tech debt sweep mnd hacks
 		for k, v := range getComputeInstanceInsertSuccessExpectations(fmt.Sprintf("controller-%d", i), "controller", fmt.Sprintf("10.240.0.%d", 10+i)) {
 			expectations.Put(k, v)
 		}
 	}
 	for i := 0; i < computeWorkerInstanceCount; i++ {
+		//nolint:mnd // TODO: tech debt sweep mnd hacks
 		for k, v := range getComputeInstanceInsertSuccessExpectations(fmt.Sprintf("worker-%d", i), "worker", fmt.Sprintf("10.240.0.%d", 20+i)) {
 			expectations.Put(k, v)
 		}
@@ -604,6 +606,7 @@ func SetupK8sTheHardWayE2eSuccess(t *testing.T) {
 	asyncmonitor.MonitorPollIntervalSeconds = 2
 }
 
+//nolint:mnd // TODO: tech debt sweep mnd hacks
 func SetupInsertDependentComputeDiskSuccess(t *testing.T) {
 	computeControllerInstanceCount := 3
 	computeWorkerInstanceCount := 3

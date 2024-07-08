@@ -146,17 +146,17 @@ func (ex *standardExtendedTableMetadata) GetServerVariables() (map[string]*opena
 }
 
 func (ex *standardExtendedTableMetadata) IsPhysicalTable() bool {
-	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetHeirarchyIds() == nil {
+	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetHeirarchyIDs() == nil {
 		return false
 	}
-	return ex.heirarchyObjects.GetHeirarchyIds().IsPhysicalTable()
+	return ex.heirarchyObjects.GetHeirarchyIDs().IsPhysicalTable()
 }
 
 func (ex *standardExtendedTableMetadata) IsMaterializedView() bool {
-	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetHeirarchyIds() == nil {
+	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetHeirarchyIDs() == nil {
 		return false
 	}
-	return ex.heirarchyObjects.GetHeirarchyIds().IsMaterializedView()
+	return ex.heirarchyObjects.GetHeirarchyIDs().IsMaterializedView()
 }
 
 func (ex *standardExtendedTableMetadata) SetIsOnClauseHoistable(isOnClauseHoistable bool) {
@@ -344,60 +344,60 @@ func (ex *standardExtendedTableMetadata) GetRequestSchema() (anysdk.Schema, erro
 }
 
 func (ex *standardExtendedTableMetadata) GetServiceStr() (string, error) {
-	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetHeirarchyIds().GetServiceStr() == "" {
+	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetHeirarchyIDs().GetServiceStr() == "" {
 		return "", fmt.Errorf("cannot resolve ServiceStr")
 	}
-	return ex.heirarchyObjects.GetHeirarchyIds().GetServiceStr(), nil
+	return ex.heirarchyObjects.GetHeirarchyIDs().GetServiceStr(), nil
 }
 
 func (ex *standardExtendedTableMetadata) GetResourceStr() (string, error) {
-	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetHeirarchyIds().GetResourceStr() == "" {
+	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetHeirarchyIDs().GetResourceStr() == "" {
 		return "", fmt.Errorf("cannot resolve ResourceStr")
 	}
-	return ex.heirarchyObjects.GetHeirarchyIds().GetResourceStr(), nil
+	return ex.heirarchyObjects.GetHeirarchyIDs().GetResourceStr(), nil
 }
 
 func (ex *standardExtendedTableMetadata) GetProviderStr() (string, error) {
-	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetHeirarchyIds().GetProviderStr() == "" {
+	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetHeirarchyIDs().GetProviderStr() == "" {
 		return "", fmt.Errorf("cannot resolve ProviderStr")
 	}
-	return ex.heirarchyObjects.GetHeirarchyIds().GetProviderStr(), nil
+	return ex.heirarchyObjects.GetHeirarchyIDs().GetProviderStr(), nil
 }
 
 func (ex *standardExtendedTableMetadata) GetMethodStr() (string, error) {
-	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetHeirarchyIds().GetMethodStr() == "" {
+	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetHeirarchyIDs().GetMethodStr() == "" {
 		return "", fmt.Errorf("cannot resolve MethodStr")
 	}
-	return ex.heirarchyObjects.GetHeirarchyIds().GetMethodStr(), nil
+	return ex.heirarchyObjects.GetHeirarchyIDs().GetMethodStr(), nil
 }
 
 func (ex *standardExtendedTableMetadata) GetResponseSchemaStr() (string, error) {
-	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetHeirarchyIds().GetResponseSchemaStr() == "" {
+	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetHeirarchyIDs().GetResponseSchemaStr() == "" {
 		return "", fmt.Errorf("cannot resolve ResponseSchemaStr")
 	}
-	return ex.heirarchyObjects.GetHeirarchyIds().GetResponseSchemaStr(), nil
+	return ex.heirarchyObjects.GetHeirarchyIDs().GetResponseSchemaStr(), nil
 }
 
 func (ex *standardExtendedTableMetadata) WithResponseSchemaStr(rss string) (ExtendedTableMetadata, error) {
 	if ex.heirarchyObjects == nil {
 		return ex, fmt.Errorf("standardExtendedTableMetadata.WithResponseSchemaStr(): cannot resolve HeirarchyObjects")
 	}
-	ex.heirarchyObjects.GetHeirarchyIds().WithResponseSchemaStr(rss)
+	ex.heirarchyObjects.GetHeirarchyIDs().WithResponseSchemaStr(rss)
 	return ex, nil
 }
 
 func (ex *standardExtendedTableMetadata) GetTableName() (string, error) {
-	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetHeirarchyIds().GetTableName() == "" {
+	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetHeirarchyIDs().GetTableName() == "" {
 		return "", fmt.Errorf("cannot resolve TableName")
 	}
-	return ex.heirarchyObjects.GetHeirarchyIds().GetTableName(), nil
+	return ex.heirarchyObjects.GetHeirarchyIDs().GetTableName(), nil
 }
 
 func (ex *standardExtendedTableMetadata) GetStackQLTableName() (string, error) {
-	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetHeirarchyIds().GetTableName() == "" {
+	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetHeirarchyIDs().GetTableName() == "" {
 		return "", fmt.Errorf("cannot resolve TableName")
 	}
-	return ex.heirarchyObjects.GetHeirarchyIds().GetStackQLTableName(), nil
+	return ex.heirarchyObjects.GetHeirarchyIDs().GetStackQLTableName(), nil
 }
 
 func (ex *standardExtendedTableMetadata) GetInputTableName() (string, error) {

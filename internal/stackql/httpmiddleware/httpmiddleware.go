@@ -29,7 +29,7 @@ func getAuthenticatedClient(handlerCtx handler.HandlerContext, prov provider.IPr
 	return httpClient, nil
 }
 
-//nolint:nestif,gomnd // acceptable for now
+//nolint:nestif,mnd // acceptable for now
 func parseReponseBodyIfErroneous(response *http.Response) (string, error) {
 	if response != nil {
 		if response.StatusCode >= 300 {
