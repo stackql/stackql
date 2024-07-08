@@ -195,6 +195,7 @@ func (pgb *standardPlanGraphBuilder) handleAuth(pbi planbuilderinput.PlanBuilder
 	}
 	pr := primitive.NewMetaDataPrimitive(
 		prov,
+		//nolint:revive // acceptable for now
 		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			authType := strings.ToLower(node.Type)
 			if node.KeyFilePath != "" {
@@ -232,6 +233,7 @@ func (pgb *standardPlanGraphBuilder) handleAuthRevoke(pbi planbuilderinput.PlanB
 	}
 	pr := primitive.NewMetaDataPrimitive(
 		prov,
+		//nolint:revive // acceptable for now
 		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			return internaldto.NewExecutorOutput(nil, nil, nil, nil, prov.AuthRevoke(authCtx))
 		})
@@ -260,7 +262,7 @@ func (pgb *standardPlanGraphBuilder) handleDescribe(pbi planbuilderinput.PlanBui
 	}
 	var extended bool = strings.TrimSpace(strings.ToUpper(node.Extended)) == "EXTENDED" //nolint:revive // acceptable
 	var full bool = strings.TrimSpace(strings.ToUpper(node.Full)) == "FULL"             //nolint:revive // acceptable
-	_, isView := md.GetHeirarchyObjects().GetHeirarchyIds().GetView()
+	_, isView := md.GetHeirarchyObjects().GetHeirarchyIDs().GetView()
 	if isView {
 		stmtCtx, sOk := primitiveGenerator.GetPrimitiveComposer().GetIndirectDescribeSelectCtx()
 		if !sOk || stmtCtx == nil {
@@ -272,6 +274,7 @@ func (pgb *standardPlanGraphBuilder) handleDescribe(pbi planbuilderinput.PlanBui
 		}
 		pr := primitive.NewMetaDataPrimitive(
 			prov,
+			//nolint:revive // acceptable for now
 			func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 				return primitivebuilder.NewDescribeViewInstructionExecutor(handlerCtx, md, nonControlColummns, extended, full)
 			})
@@ -280,6 +283,7 @@ func (pgb *standardPlanGraphBuilder) handleDescribe(pbi planbuilderinput.PlanBui
 	}
 	pr := primitive.NewMetaDataPrimitive(
 		prov,
+		//nolint:revive // acceptable for now
 		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			return primitivebuilder.NewDescribeTableInstructionExecutor(handlerCtx, md, extended, full)
 		})
@@ -596,6 +600,7 @@ func (pgb *standardPlanGraphBuilder) handleRegistry(
 		return err
 	}
 	pr := primitive.NewLocalPrimitive(
+		//nolint:revive // acceptable for now
 		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			switch at := strings.ToLower(node.ActionType); at {
 			case "pull":
@@ -678,6 +683,7 @@ func (pgb *standardPlanGraphBuilder) handlePurge(pbi planbuilderinput.PlanBuilde
 		return fmt.Errorf("could not cast statement of type '%T' to required Purge", pbi.GetStatement())
 	}
 	pr := primitive.NewLocalPrimitive(
+		//nolint:revive // acceptable for now
 		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			if node.IsGlobal {
 				err := handlerCtx.GetGarbageCollector().Purge()
@@ -1006,6 +1012,7 @@ func (pgb *standardPlanGraphBuilder) handleShow(pbi planbuilderinput.PlanBuilder
 	prov := primitiveGenerator.GetPrimitiveComposer().GetProvider()
 	pr := primitive.NewMetaDataPrimitive(
 		prov,
+		//nolint:revive // acceptable for now
 		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			return primitivebuilder.NewShowInstructionExecutor(
 				node,
@@ -1047,6 +1054,7 @@ func (pgb *standardPlanGraphBuilder) handleUse(pbi planbuilderinput.PlanBuilderI
 	}
 	pr := primitive.NewMetaDataPrimitive(
 		primitiveGenerator.GetPrimitiveComposer().GetProvider(),
+		//nolint:revive // acceptable for now
 		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			handlerCtx.SetCurrentProvider(node.DBName.GetRawVal())
 			return internaldto.NewExecutorOutput(nil, nil, nil, nil, nil)
@@ -1065,6 +1073,7 @@ func createErroneousPlan(
 		handlerCtx.GetRuntimeContext().ExecutionConcurrencyLimit,
 	)
 	instructions.CreatePrimitiveNode(
+		//nolint:revive // acceptable for now
 		primitive.NewLocalPrimitive(func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			return util.PrepareResultSet(
 				internaldto.PrepareResultSetDTO{

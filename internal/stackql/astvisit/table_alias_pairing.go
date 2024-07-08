@@ -230,7 +230,7 @@ func (v *standardParserTableAliasPairingAstVisitor) Visit(node sqlparser.SQLNode
 		if ct.EnumValues != nil {
 		}
 
-		opts := make([]string, 0, 16)
+		opts := make([]string, 0, 16) //nolint:mnd // TODO: tech debt sweep mnd hacks
 		if ct.Unsigned {
 			opts = append(opts, sqlparser.KeywordStrings[sqlparser.UNSIGNED])
 		}

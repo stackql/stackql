@@ -21,7 +21,7 @@ func (pb *standardPrimitiveGenerator) assembleUnarySelectionBuilder(
 	handlerCtx handler.HandlerContext,
 	node sqlparser.SQLNode,
 	rewrittenWhere *sqlparser.Where,
-	hIds internaldto.HeirarchyIdentifiers,
+	hIDs internaldto.HeirarchyIdentifiers,
 	schema anysdk.Schema,
 	tbl tablemetadata.ExtendedTableMetadata,
 	selectTabulation anysdk.Tabulation,
@@ -32,7 +32,7 @@ func (pb *standardPrimitiveGenerator) assembleUnarySelectionBuilder(
 	if err != nil {
 		return err
 	}
-	annotatedInsertTabulation := util.NewAnnotatedTabulation(insertTabulation, hIds, inputTableName, "")
+	annotatedInsertTabulation := util.NewAnnotatedTabulation(insertTabulation, hIDs, inputTableName, "")
 
 	prov, err := tbl.GetProviderObject()
 	if err != nil {
@@ -92,7 +92,7 @@ func (pb *standardPrimitiveGenerator) assembleUnarySelectionBuilder(
 		handlerCtx.GetNamespaceCollection(),
 	)
 	selPsc, err := pb.PrimitiveComposer.GetDRMConfig().GenerateSelectDML(
-		util.NewAnnotatedTabulation(selectTabulation, hIds, inputTableName, tbl.GetAlias()),
+		util.NewAnnotatedTabulation(selectTabulation, hIDs, inputTableName, tbl.GetAlias()),
 		insPsc.GetGCCtrlCtrs(),
 		selectSuffix,
 		astvisit.GenerateModifiedWhereClause(
@@ -155,10 +155,10 @@ func (pb *standardPrimitiveGenerator) analyzeUnarySelection(
 	}
 	insertTabulation := itemObjS.Tabulate(false, "")
 
-	hIds := internaldto.NewHeirarchyIdentifiers(provStr, svcStr, itemObjS.GetName(), "")
-	viewDTO, isView := handlerCtx.GetSQLSystem().GetViewByName(hIds.GetTableName())
+	hIDs := internaldto.NewHeirarchyIdentifiers(provStr, svcStr, itemObjS.GetName(), "")
+	viewDTO, isView := handlerCtx.GetSQLSystem().GetViewByName(hIDs.GetTableName())
 	if isView {
-		hIds = hIds.WithView(viewDTO)
+		hIDs = hIDs.WithView(viewDTO)
 	}
 	selectTabulation := itemObjS.Tabulate(true, "")
 
@@ -167,7 +167,7 @@ func (pb *standardPrimitiveGenerator) analyzeUnarySelection(
 		handlerCtx,
 		node,
 		rewrittenWhere,
-		hIds,
+		hIDs,
 		schema,
 		tbl,
 		selectTabulation,

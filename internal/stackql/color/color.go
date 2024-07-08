@@ -50,7 +50,7 @@ func (cd *Driver) setupDarkColorScheme() {
 }
 
 func (cd *Driver) setupLightColorScheme() {
-	cd.New(Attribute(fc.FgBlack), 48, 5, 231) //nolint:gomnd // color functionality is mothballed
+	cd.New(Attribute(fc.FgBlack), 48, 5, 231) //nolint:mnd // color functionality is mothballed
 }
 
 func (cd *Driver) setupDarkPromptColorScheme() {

@@ -33,6 +33,7 @@ type standardPlanBuilder struct {
 	transactionContext txn_context.ITransactionContext
 }
 
+//nolint:nilnil // TODO: sweep through tech debt
 func (pb *standardPlanBuilder) BuildUndoPlanFromContext(_ handler.HandlerContext) (plan.Plan, error) {
 	return nil, nil
 }

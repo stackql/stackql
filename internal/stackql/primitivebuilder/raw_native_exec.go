@@ -45,6 +45,7 @@ func (ss *RawNativeExec) GetTail() primitivegraph.PrimitiveNode {
 	return ss.root
 }
 
+//nolint:revive // no big deal
 func (ss *RawNativeExec) Build() error {
 	dependencyNode, dependencyNodeExists := ss.bldrInput.GetDependencyNode()
 	selectEx := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {

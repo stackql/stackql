@@ -112,6 +112,7 @@ var shellCmd = &cobra.Command{
 	Use:   "shell",
 	Short: "Interactive shell for running stackql commands",
 	Long:  getShellIntroLong(),
+	//nolint:revive // acceptable for now
 	Run: func(command *cobra.Command, args []string) {
 
 		cd := color.NewColorDriver(runtimeCtx)

@@ -38,14 +38,14 @@ type standardAnnotationCtx struct {
 
 func NewStaticStandardAnnotationCtx(
 	schema anysdk.Schema,
-	hIds internaldto.HeirarchyIdentifiers,
+	hIDs internaldto.HeirarchyIdentifiers,
 	tableMeta tablemetadata.ExtendedTableMetadata,
 	parameters map[string]interface{},
 ) AnnotationCtx {
 	return &standardAnnotationCtx{
 		isDynamic:  false,
 		schema:     schema,
-		hIDs:       hIds,
+		hIDs:       hIDs,
 		tableMeta:  tableMeta,
 		parameters: parameters,
 	}

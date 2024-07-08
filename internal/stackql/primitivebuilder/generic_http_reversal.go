@@ -169,7 +169,7 @@ func (gh *genericHTTPReversal) Build() error {
 						}
 					}
 					if err == nil {
-						if response.StatusCode < 300 { //nolint:gomnd // TODO: fix this
+						if response.StatusCode < 300 { //nolint:mnd // TODO: fix this
 							msgs := internaldto.NewBackendMessages(
 								[]string{"undo over HTTP successful"},
 							)
@@ -225,6 +225,7 @@ func (gh *genericHTTPReversal) Build() error {
 					nil,
 					primitive_context.NewPrimitiveContext(),
 				)
+				//nolint:revive // no big deal
 				err = dependentInsertPrimitive.SetExecutor(func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 					return execInstance()
 				})

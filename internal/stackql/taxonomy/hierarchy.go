@@ -21,99 +21,99 @@ func GetHeirarchyIDsFromParserNode(
 	handlerCtx handler.HandlerContext,
 	node sqlparser.SQLNode,
 ) (internaldto.HeirarchyIdentifiers, error) {
-	return getHids(
+	return GetHIDs(
 		handlerCtx, node, parserutil.NewParameterMap(), false)
 }
 
 //nolint:funlen,gocognit // lots of moving parts
-func getHids(
+func GetHIDs(
 	handlerCtx handler.HandlerContext,
 	node sqlparser.SQLNode,
 	params parserutil.ColumnKeyedDatastore,
 	viewPermissive bool) (internaldto.HeirarchyIdentifiers, error) {
-	var hIds internaldto.HeirarchyIdentifiers
+	var hIDs internaldto.HeirarchyIdentifiers
 	switch n := node.(type) {
 	case *sqlparser.Exec:
-		hIds = internaldto.ResolveMethodTerminalHeirarchyIdentifiers(n.MethodName)
+		hIDs = internaldto.ResolveMethodTerminalHeirarchyIdentifiers(n.MethodName)
 	case *sqlparser.ExecSubquery:
-		hIds = internaldto.ResolveMethodTerminalHeirarchyIdentifiers(n.Exec.MethodName)
+		hIDs = internaldto.ResolveMethodTerminalHeirarchyIdentifiers(n.Exec.MethodName)
 	case *sqlparser.Select:
 		currentSvcRsc, err := parserutil.TableFromSelectNode(n)
 		if err != nil {
 			return nil, err
 		}
-		hIds = internaldto.ResolveResourceTerminalHeirarchyIdentifiers(currentSvcRsc)
+		hIDs = internaldto.ResolveResourceTerminalHeirarchyIdentifiers(currentSvcRsc)
 	case sqlparser.TableName:
-		hIds = internaldto.ResolveResourceTerminalHeirarchyIdentifiers(n)
+		hIDs = internaldto.ResolveResourceTerminalHeirarchyIdentifiers(n)
 	case *sqlparser.AliasedTableExpr:
 		switch t := n.Expr.(type) { //nolint:gocritic // this is expressive enough
 		case *sqlparser.Subquery:
 			sq := internaldto.NewSubqueryDTO(n, t)
 			return internaldto.ObtainSubqueryHeirarchyIdentifiers(sq), nil
 		}
-		return getHids(handlerCtx, n.Expr, params, viewPermissive)
+		return GetHIDs(handlerCtx, n.Expr, params, viewPermissive)
 	case *sqlparser.DescribeTable:
-		return getHids(handlerCtx, n.Table, params, viewPermissive)
+		return GetHIDs(handlerCtx, n.Table, params, viewPermissive)
 	case *sqlparser.Show:
 		switch strings.ToUpper(n.Type) {
 		case "INSERT":
-			hIds = internaldto.ResolveResourceTerminalHeirarchyIdentifiers(n.OnTable)
+			hIDs = internaldto.ResolveResourceTerminalHeirarchyIdentifiers(n.OnTable)
 		case "METHODS":
-			hIds = internaldto.ResolveResourceTerminalHeirarchyIdentifiers(n.OnTable)
+			hIDs = internaldto.ResolveResourceTerminalHeirarchyIdentifiers(n.OnTable)
 		default:
 			return nil, fmt.Errorf("cannot resolve taxonomy for SHOW statement of type = '%s'", strings.ToUpper(n.Type))
 		}
 	case *sqlparser.Insert:
-		hIds = internaldto.ResolveResourceTerminalHeirarchyIdentifiers(n.Table)
+		hIDs = internaldto.ResolveResourceTerminalHeirarchyIdentifiers(n.Table)
 	case *sqlparser.Update:
 		currentSvcRsc, err := parserutil.ExtractSingleTableFromTableExprs(n.TableExprs)
 		if err != nil {
 			return nil, err
 		}
-		hIds = internaldto.ResolveResourceTerminalHeirarchyIdentifiers(*currentSvcRsc)
+		hIDs = internaldto.ResolveResourceTerminalHeirarchyIdentifiers(*currentSvcRsc)
 	case *sqlparser.Delete:
 		currentSvcRsc, err := parserutil.ExtractSingleTableFromTableExprs(n.TableExprs)
 		if err != nil {
 			return nil, err
 		}
-		hIds = internaldto.ResolveResourceTerminalHeirarchyIdentifiers(*currentSvcRsc)
+		hIDs = internaldto.ResolveResourceTerminalHeirarchyIdentifiers(*currentSvcRsc)
 	// case *sqlparser.Subquery:
 	// suq := internaldto
-	// hIds = internaldto.ObtainSubqueryHeirarchyIdentifiers()
+	// hIDs = internaldto.ObtainSubqueryHeirarchyIdentifiers()
 	default:
 		return nil, fmt.Errorf("cannot resolve taxonomy")
 	}
 	viewDTO, isView := handlerCtx.GetSQLSystem().GetViewByNameAndParameters(
-		hIds.GetTableName(), params.GetStringified())
+		hIDs.GetTableName(), params.GetStringified())
 	if viewPermissive && !isView {
-		viewDTO, isView = handlerCtx.GetSQLSystem().GetViewByName(hIds.GetTableName())
+		viewDTO, isView = handlerCtx.GetSQLSystem().GetViewByName(hIDs.GetTableName())
 	}
 	if isView {
-		hIds = hIds.WithView(viewDTO)
+		hIDs = hIDs.WithView(viewDTO)
 	}
-	materializedViewDTO, isMaterializedView := handlerCtx.GetSQLSystem().GetMaterializedViewByName(hIds.GetTableName())
+	materializedViewDTO, isMaterializedView := handlerCtx.GetSQLSystem().GetMaterializedViewByName(hIDs.GetTableName())
 	if isMaterializedView {
-		hIds = hIds.WithView(materializedViewDTO)
-		hIds.SetIsMaterializedView(true)
+		hIDs = hIDs.WithView(materializedViewDTO)
+		hIDs.SetIsMaterializedView(true)
 	}
 	// TODO: pass in current counters
-	physicalTableDTO, isPhysicalTable := handlerCtx.GetSQLSystem().GetPhysicalTableByName(hIds.GetTableName())
+	physicalTableDTO, isPhysicalTable := handlerCtx.GetSQLSystem().GetPhysicalTableByName(hIDs.GetTableName())
 	if isPhysicalTable {
-		hIds.SetIsPhysicalTable(true)
-		hIds = hIds.WithView(physicalTableDTO)
+		hIDs.SetIsPhysicalTable(true)
+		hIDs = hIDs.WithView(physicalTableDTO)
 	}
 	isInternallyRoutable := handlerCtx.GetPGInternalRouter().ExprIsRoutable(node)
 	if isInternallyRoutable {
-		hIds.SetContainsNativeDBMSTable(true)
-		return hIds, nil
+		hIDs.SetContainsNativeDBMSTable(true)
+		return hIDs, nil
 	}
-	if !(isView || isMaterializedView || isPhysicalTable) && hIds.GetProviderStr() == "" {
+	if !(isView || isMaterializedView || isPhysicalTable) && hIDs.GetProviderStr() == "" {
 		if handlerCtx.GetCurrentProvider() == "" {
-			return nil, fmt.Errorf("could not locate table '%s'", hIds.GetTableName())
+			return nil, fmt.Errorf("could not locate table '%s'", hIDs.GetTableName())
 		}
-		hIds.WithProviderStr(handlerCtx.GetCurrentProvider())
+		hIDs.WithProviderStr(handlerCtx.GetCurrentProvider())
 	}
-	return hIds, nil
+	return hIDs, nil
 }
 
 func GetAliasFromStatement(node sqlparser.SQLNode) string {
@@ -154,12 +154,12 @@ func GetHeirarchyFromStatement(
 	parameters parserutil.ColumnKeyedDatastore,
 	viewPermissive bool,
 ) (tablemetadata.HeirarchyObjects, error) {
-	var hIds internaldto.HeirarchyIdentifiers
+	var hIDs internaldto.HeirarchyIdentifiers
 	getFirstAvailableMethod := false
 	if parameters == nil {
 		parameters = parserutil.NewParameterMap()
 	}
-	hIds, err := getHids(handlerCtx, node, parameters, viewPermissive)
+	hIDs, err := GetHIDs(handlerCtx, node, parameters, viewPermissive)
 	if err != nil {
 		return nil, err
 	}
@@ -174,7 +174,7 @@ func GetHeirarchyFromStatement(
 	case *sqlparser.AliasedTableExpr:
 		switch n.Expr.(type) { //nolint:gocritic // this is expressive enough
 		case *sqlparser.Subquery:
-			retVal := tablemetadata.NewHeirarchyObjects(hIds)
+			retVal := tablemetadata.NewHeirarchyObjects(hIDs)
 			return retVal, nil
 		}
 		return GetHeirarchyFromStatement(handlerCtx, n.Expr, parameters, viewPermissive)
@@ -197,18 +197,18 @@ func GetHeirarchyFromStatement(
 	default:
 		return nil, fmt.Errorf("cannot resolve taxonomy")
 	}
-	retVal := tablemetadata.NewHeirarchyObjects(hIds)
-	sqlDataSource, isSQLDataSource := handlerCtx.GetSQLDataSource(hIds.GetProviderStr())
+	retVal := tablemetadata.NewHeirarchyObjects(hIDs)
+	sqlDataSource, isSQLDataSource := handlerCtx.GetSQLDataSource(hIDs.GetProviderStr())
 	if isSQLDataSource {
 		retVal.SetSQLDataSource(sqlDataSource)
 		return retVal, nil
 	}
 	// TODO: accomodate complex PG internal queries
-	isPgInternal := hIds.IsPgInternalObject()
+	isPgInternal := hIDs.IsPgInternalObject()
 	if isPgInternal {
 		return retVal, nil
 	}
-	prov, err := handlerCtx.GetProvider(hIds.GetProviderStr())
+	prov, err := handlerCtx.GetProvider(hIDs.GetProviderStr())
 	retVal.SetProvider(prov)
 	viewDTO, viewExists := retVal.GetView()
 	var meth anysdk.OperationStore
@@ -225,12 +225,12 @@ func GetHeirarchyFromStatement(
 	if err != nil {
 		return returnViewOnErrorIfPresent(retVal, err, viewExists)
 	}
-	svcHdl, err := prov.GetServiceShard(hIds.GetServiceStr(), hIds.GetResourceStr(), handlerCtx.GetRuntimeContext())
+	svcHdl, err := prov.GetServiceShard(hIDs.GetServiceStr(), hIDs.GetResourceStr(), handlerCtx.GetRuntimeContext())
 	if err != nil {
 		return returnViewOnErrorIfPresent(retVal, err, viewExists)
 	}
 	retVal.SetServiceHdl(svcHdl)
-	rsc, err := prov.GetResource(hIds.GetServiceStr(), hIds.GetResourceStr(), handlerCtx.GetRuntimeContext())
+	rsc, err := prov.GetResource(hIDs.GetServiceStr(), hIDs.GetResourceStr(), handlerCtx.GetRuntimeContext())
 	if err != nil {
 		return returnViewOnErrorIfPresent(retVal, err, viewExists)
 	}
@@ -253,9 +253,9 @@ func GetHeirarchyFromStatement(
 				}
 				params := parameters.GetStringified()
 				viewDTO, viewExists = handlerCtx.GetSQLSystem().GetViewByNameAndParameters(
-					hIds.GetTableName(), params)
+					hIDs.GetTableName(), params)
 				if viewPermissive {
-					viewDTO, viewExists = handlerCtx.GetSQLSystem().GetViewByName(hIds.GetTableName())
+					viewDTO, viewExists = handlerCtx.GetSQLSystem().GetViewByName(hIDs.GetTableName())
 				}
 				if viewExists {
 					retVal.SetIndirect(viewDTO)
@@ -269,7 +269,7 @@ func GetHeirarchyFromStatement(
 	var method anysdk.OperationStore
 	switch node.(type) {
 	case *sqlparser.Exec, *sqlparser.ExecSubquery:
-		method, err = rsc.FindMethod(hIds.GetMethodStr())
+		method, err = rsc.FindMethod(hIDs.GetMethodStr())
 		if err != nil {
 			return returnViewOnErrorIfPresent(retVal, err, viewExists)
 		}
@@ -293,21 +293,21 @@ func GetHeirarchyFromStatement(
 		}
 		if getFirstAvailableMethod {
 			meth, methStr, methodErr = prov.GetFirstMethodForAction( //nolint:staticcheck,wastedassign // acceptable
-				retVal.GetHeirarchyIds().GetServiceStr(),
-				retVal.GetHeirarchyIds().GetResourceStr(),
+				retVal.GetHeirarchyIDs().GetServiceStr(),
+				retVal.GetHeirarchyIDs().GetResourceStr(),
 				methodAction,
 				handlerCtx.GetRuntimeContext())
 		} else {
 			meth, methStr, methodErr = prov.GetMethodForAction(
-				retVal.GetHeirarchyIds().GetServiceStr(),
-				retVal.GetHeirarchyIds().GetResourceStr(),
+				retVal.GetHeirarchyIDs().GetServiceStr(),
+				retVal.GetHeirarchyIDs().GetResourceStr(),
 				methodAction,
 				parameters,
 				handlerCtx.GetRuntimeContext())
 			if methodErr != nil {
 				return returnViewOnErrorIfPresent(retVal, fmt.Errorf(
 					"cannot find matching operation, possible causes include missing required parameters or an unsupported method for the resource, to find required parameters for supported methods run SHOW METHODS IN %s: %w", //nolint:lll // long string
-					retVal.GetHeirarchyIds().GetTableName(), methodErr),
+					retVal.GetHeirarchyIDs().GetTableName(), methodErr),
 					viewExists)
 			}
 		}

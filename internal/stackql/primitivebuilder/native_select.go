@@ -45,7 +45,7 @@ func (ss *NativeSelect) GetTail() primitivegraph.PrimitiveNode {
 	return ss.root
 }
 
-//nolint:gocognit // probably a headache no matter which way you slice it
+//nolint:gocognit,revive // probably a headache no matter which way you slice it
 func (ss *NativeSelect) Build() error {
 	selectEx := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 		// select phase

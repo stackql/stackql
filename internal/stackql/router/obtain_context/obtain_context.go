@@ -22,7 +22,7 @@ func ObtainAnnotationCtx(
 	isPGInternalObject := tbl.GetHeirarchyObjects().IsPGInternalObject()
 	if isView || isSQLDataSource || isSubquery || isPGInternalObject {
 		// TODO: upgrade this flow; nil == YUCK!!!
-		return taxonomy.NewStaticStandardAnnotationCtx(nil, tbl.GetHeirarchyObjects().GetHeirarchyIds(), tbl, parameters), nil
+		return taxonomy.NewStaticStandardAnnotationCtx(nil, tbl.GetHeirarchyObjects().GetHeirarchyIDs(), tbl, parameters), nil
 	}
 	schema, mediaType, err := tbl.GetResponseSchemaAndMediaType()
 	if err != nil {
@@ -50,11 +50,11 @@ func ObtainAnnotationCtx(
 	if err == nil && namespaceCollection.GetAnalyticsCacheTableNamespaceConfigurator().IsAllowed(tn) {
 		name, _ = tbl.GetResponseSchemaStr()
 	}
-	hIds := internaldto.NewHeirarchyIdentifiers(provStr, svcStr, rscStr, methodStr).WithResponseSchemaStr(name)
-	viewDTO, isView := sqlSystem.GetViewByName(hIds.GetTableName())
+	hIDs := internaldto.NewHeirarchyIdentifiers(provStr, svcStr, rscStr, methodStr).WithResponseSchemaStr(name)
+	viewDTO, isView := sqlSystem.GetViewByName(hIDs.GetTableName())
 	// TODO: match on params
 	if isView {
-		hIds = hIds.WithView(viewDTO)
+		hIDs = hIDs.WithView(viewDTO)
 	}
-	return taxonomy.NewStaticStandardAnnotationCtx(itemObjS, hIds, tbl, parameters), nil
+	return taxonomy.NewStaticStandardAnnotationCtx(itemObjS, hIDs, tbl, parameters), nil
 }

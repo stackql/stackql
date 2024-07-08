@@ -76,7 +76,7 @@ type DeclarationBlock struct {
 	Contents map[string]interface{}
 }
 
-//nolint:gomnd //these invariants are ad-hoc
+//nolint:mnd //these invariants are ad-hoc
 func parseVarList(varList []string) (map[string]string, error) {
 	vars := make(map[string]string)
 	for _, v := range varList {

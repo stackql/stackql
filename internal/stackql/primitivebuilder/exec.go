@@ -53,7 +53,7 @@ func (ss *Exec) GetTail() primitivegraph.PrimitiveNode {
 	return ss.root
 }
 
-//nolint:gocognit // probably a headache no matter which way you slice it
+//nolint:gocognit,funlen // probably a headache no matter which way you slice it
 func (ss *Exec) Build() error {
 	handlerCtx := ss.handlerCtx
 	tbl := ss.tbl
@@ -67,6 +67,7 @@ func (ss *Exec) Build() error {
 	}
 	isNullary := m.IsNullary()
 	var target map[string]interface{}
+	//nolint:revive // no big deal
 	ex := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 		var columnOrder []string
 		keys := make(map[string]map[string]interface{})
@@ -82,7 +83,7 @@ func (ss *Exec) Build() error {
 				))
 			}
 			if isNullary {
-				//nolint:gomnd // acceptable for now
+				//nolint:mnd // acceptable for now
 				if response.StatusCode <= 300 {
 					continue
 				}

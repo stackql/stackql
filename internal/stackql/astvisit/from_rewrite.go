@@ -316,7 +316,7 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			buf.AstPrintf(ct, "(%s)", strings.Join(ct.EnumValues, ", "))
 		}
 
-		opts := make([]string, 0, 16)
+		opts := make([]string, 0, 16) //nolint:mnd // TODO: tech debt sweep mnd hacks
 		if ct.Unsigned {
 			opts = append(opts, sqlparser.KeywordStrings[sqlparser.UNSIGNED])
 		}

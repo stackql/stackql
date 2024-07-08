@@ -465,7 +465,7 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 			buf.AstPrintf(ct, "(%s)", strings.Join(ct.EnumValues, ", "))
 		}
 
-		opts := make([]string, 0, 16) //nolint:gomnd // deferring uplifts on analysers
+		opts := make([]string, 0, 16) //nolint:mnd // deferring uplifts on analysers
 		if ct.Unsigned {
 			opts = append(opts, sqlparser.KeywordStrings[sqlparser.UNSIGNED])
 		}

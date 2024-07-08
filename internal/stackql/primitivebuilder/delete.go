@@ -56,7 +56,7 @@ func (ss *Delete) GetTail() primitivegraph.PrimitiveNode {
 	return ss.root
 }
 
-//nolint:gocognit,funlen // probably a headache no matter which way you slice it
+//nolint:gocognit,funlen,revive // probably a headache no matter which way you slice it
 func (ss *Delete) Build() error {
 	tbl := ss.tbl
 	handlerCtx := ss.handlerCtx

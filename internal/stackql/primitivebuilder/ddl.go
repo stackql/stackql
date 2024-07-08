@@ -26,7 +26,7 @@ type ddl struct {
 	bldrInput    builder_input.BuilderInput
 }
 
-//nolint:gocognit,nestif,funlen // acceptable
+//nolint:gocognit,nestif,funlen,revive // acceptable
 func (ddo *ddl) Build() error {
 	sqlSystem := ddo.handlerCtx.GetSQLSystem()
 	if sqlSystem == nil {

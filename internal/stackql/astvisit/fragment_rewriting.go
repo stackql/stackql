@@ -71,6 +71,7 @@ func (v *standardFragmentRewriteAstVisitor) generateQIDComparison(ta sqlparser.T
 	}
 }
 
+//nolint:nilnil // bodge ok for now
 func (v *standardFragmentRewriteAstVisitor) ComputeQIDWhereSubTree() (sqlparser.Expr, error) {
 	tblCount := len(v.tablesCited)
 	if tblCount == 0 {
@@ -334,7 +335,7 @@ func (v *standardFragmentRewriteAstVisitor) Visit(node sqlparser.SQLNode) error 
 			buf.AstPrintf(ct, "(%s)", strings.Join(ct.EnumValues, ", "))
 		}
 
-		opts := make([]string, 0, 16)
+		opts := make([]string, 0, 16) //nolint:mnd // TODO: tech debt sweep mnd hacks
 		if ct.Unsigned {
 			opts = append(opts, sqlparser.KeywordStrings[sqlparser.UNSIGNED])
 		}

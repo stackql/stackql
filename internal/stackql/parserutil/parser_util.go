@@ -537,7 +537,7 @@ func inferColNameFromExpr(
 		if len(funcNameLowered) >= 4 && funcNameLowered[0:4] == "json" {
 			decoratedColumn := strings.ReplaceAll(retVal.Name, `\"`, `"`)
 			retVal.DecoratedColumn = getDecoratedColRendition(decoratedColumn, alias)
-			if len(funcNameLowered) == 4 { //nolint:gomnd // TODO: remove this
+			if len(funcNameLowered) == 4 { //nolint:mnd // TODO: remove this
 				return retVal, nil
 			}
 		}
@@ -638,7 +638,7 @@ func CheckSQLParserTypeVsResourceColumn(
 	return CheckSQLParserTypeVsColumn(colUsage, anysdk.ResourceConditionIsValid)
 }
 
-//nolint:gomnd // TODO: remove this
+//nolint:mnd // TODO: remove this
 func CheckSQLParserTypeVsColumn(colUsage ColumnUsageMetadata, verifyCallback func(string, interface{}) bool) error {
 	switch colUsage.ColVal.Type {
 	case sqlparser.StrVal:

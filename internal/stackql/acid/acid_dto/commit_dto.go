@@ -69,7 +69,7 @@ func (c *standardCommitCoDomain) GetUndoLog() (binlog.LogEntry, bool) {
 	}
 	initialUndoLog := undoLogs[len(undoLogs)-1]
 	rv := initialUndoLog.Clone()
-	for i := len(undoLogs) - 2; i >= 0; i-- { //nolint:gomnd // magic number second from last
+	for i := len(undoLogs) - 2; i >= 0; i-- { //nolint:mnd // magic number second from last
 		currentLog := undoLogs[i]
 		if currentLog != nil {
 			for _, s := range currentLog.GetHumanReadable() {

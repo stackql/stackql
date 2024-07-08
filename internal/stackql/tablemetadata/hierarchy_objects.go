@@ -14,7 +14,7 @@ var (
 )
 
 type HeirarchyObjects interface {
-	GetHeirarchyIds() internaldto.HeirarchyIdentifiers
+	GetHeirarchyIDs() internaldto.HeirarchyIdentifiers
 	GetObjectSchema() (anysdk.Schema, error)
 	GetProvider() provider.IProvider
 	GetRequestSchema() (anysdk.Schema, error)
@@ -45,14 +45,14 @@ type HeirarchyObjects interface {
 
 func NewHeirarchyObjects(hIDs internaldto.HeirarchyIdentifiers) HeirarchyObjects {
 	return &standardHeirarchyObjects{
-		heirarchyIds: hIDs,
+		heirarchyIDs: hIDs,
 		hr:           internaldto.NewHeirarchy(hIDs),
 	}
 }
 
 type standardHeirarchyObjects struct {
 	hr            internaldto.Heirarchy
-	heirarchyIds  internaldto.HeirarchyIdentifiers
+	heirarchyIDs  internaldto.HeirarchyIdentifiers
 	prov          provider.IProvider
 	sqlDataSource sql_datasource.SQLDataSource
 	indirect      internaldto.RelationDTO
@@ -67,7 +67,7 @@ func (ho *standardHeirarchyObjects) SetIndirect(indirect internaldto.RelationDTO
 }
 
 func (ho *standardHeirarchyObjects) IsPGInternalObject() bool {
-	return ho.heirarchyIds.IsPgInternalObject()
+	return ho.heirarchyIDs.IsPgInternalObject()
 }
 
 func (ho *standardHeirarchyObjects) GetServiceHdl() anysdk.Service {
@@ -83,11 +83,11 @@ func (ho *standardHeirarchyObjects) SetSQLDataSource(sqlDataSource sql_datasourc
 }
 
 func (ho *standardHeirarchyObjects) GetView() (internaldto.RelationDTO, bool) {
-	return ho.heirarchyIds.GetView()
+	return ho.heirarchyIDs.GetView()
 }
 
 func (ho *standardHeirarchyObjects) GetSubquery() (internaldto.SubqueryDTO, bool) {
-	return ho.heirarchyIds.GetSubquery()
+	return ho.heirarchyIDs.GetSubquery()
 }
 
 func (ho *standardHeirarchyObjects) GetResource() anysdk.Resource {
@@ -126,8 +126,8 @@ func (ho *standardHeirarchyObjects) GetProvider() provider.IProvider {
 	return ho.prov
 }
 
-func (ho *standardHeirarchyObjects) GetHeirarchyIds() internaldto.HeirarchyIdentifiers {
-	return ho.heirarchyIds
+func (ho *standardHeirarchyObjects) GetHeirarchyIDs() internaldto.HeirarchyIdentifiers {
+	return ho.heirarchyIDs
 }
 
 func (ho *standardHeirarchyObjects) SetMethodStr(mStr string) {
@@ -186,7 +186,7 @@ func (ho *standardHeirarchyObjects) GetRequestSchema() (anysdk.Schema, error) {
 }
 
 func (ho *standardHeirarchyObjects) GetTableName() string {
-	return ho.heirarchyIds.GetTableName()
+	return ho.heirarchyIDs.GetTableName()
 }
 
 func (ho *standardHeirarchyObjects) GetObjectSchema() (anysdk.Schema, error) {

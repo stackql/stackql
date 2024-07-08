@@ -26,6 +26,7 @@ func NewUpdateableValsPrimitive(
 	vals map[*sqlparser.ColName]interface{},
 ) (primitive.IPrimitive, error) {
 	return primitive.NewLocalPrimitive(
+		//nolint:revive // no big deal
 		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			keys := make(map[string]map[string]interface{})
 			row := make(map[string]interface{})
@@ -62,6 +63,7 @@ func NewInsertableValsPrimitive(
 	vals map[int]map[int]interface{},
 ) (primitive.IPrimitive, error) {
 	return primitive.NewLocalPrimitive(
+		//nolint:revive // acceptable for now
 		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			keys := make(map[string]map[string]interface{})
 			row := make(map[string]interface{})

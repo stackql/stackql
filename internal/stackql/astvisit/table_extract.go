@@ -193,7 +193,7 @@ func (v *standardParserTableExtractAstVisitor) Visit(node sqlparser.SQLNode) err
 		if ct.EnumValues != nil {
 		}
 
-		opts := make([]string, 0, 16)
+		opts := make([]string, 0, 16) //nolint:mnd // TODO: tech debt sweep mnd hacks
 		if ct.Unsigned {
 			opts = append(opts, sqlparser.KeywordStrings[sqlparser.UNSIGNED])
 		}

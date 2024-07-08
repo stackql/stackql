@@ -1310,6 +1310,7 @@ func (pb *standardPrimitiveGenerator) analyzeSleep(pbi planbuilderinput.PlanBuil
 	pb.PrimitiveComposer.SetRoot(
 		graph.CreatePrimitiveNode(
 			primitive.NewLocalPrimitive(
+				//nolint:revive // acceptable for now
 				func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 					time.Sleep(time.Duration(sleepDuration) * time.Millisecond)
 					return internaldto.NewExecutorOutput(

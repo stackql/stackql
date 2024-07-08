@@ -245,7 +245,7 @@ func (v *standardTableRouteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		if ct.EnumValues != nil {
 		}
 
-		opts := make([]string, 0, 16) //nolint:gomnd // TODO: review
+		opts := make([]string, 0, 16) //nolint:mnd // TODO: review
 		if ct.Unsigned {
 			opts = append(opts, sqlparser.KeywordStrings[sqlparser.UNSIGNED])
 		}
