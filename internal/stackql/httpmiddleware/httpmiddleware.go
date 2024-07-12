@@ -112,6 +112,8 @@ func HTTPApiCallFromRequest(
 	}
 	walObj, _ := handlerCtx.GetTSM()
 	logging.GetLogger().Debugf("Proof of invariant: walObj = %v", walObj)
+	urlString := translatedRequest.URL.String()
+	logging.GetLogger().Debugf("HTTP request: URL = '''%s'''", urlString)
 	r, err := httpClient.Do(translatedRequest)
 	responseErrorBodyToPublish, reponseParseErr := parseReponseBodyIfErroneous(r)
 	if reponseParseErr != nil {

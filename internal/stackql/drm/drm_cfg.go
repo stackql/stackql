@@ -779,7 +779,7 @@ func (dc *staticDRMConfig) QueryDML(
 	}
 	query := prepStmt.GetRawQuery()
 	varArgs := prepStmt.GetArgs()
-	logging.GetLogger().Infoln(fmt.Sprintf("query = %s", query))
+	logging.GetLogger().Infoln(fmt.Sprintf("query = %s, varArgs = %v", query, varArgs))
 	return querier.Query(query, varArgs...)
 }
 

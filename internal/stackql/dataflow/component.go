@@ -65,6 +65,15 @@ func (wc *standardDataFlowWeaklyConnectedComponent) GetEdges() ([]Edge, error) {
 	return rv, nil
 }
 
+func (wc *standardDataFlowWeaklyConnectedComponent) isAlreadyInOrderedNodes(rhs graph.Node) bool {
+	for _, n := range wc.orderedNodes {
+		if n.ID() == rhs.ID() {
+			return true
+		}
+	}
+	return false
+}
+
 func (wc *standardDataFlowWeaklyConnectedComponent) Analyze() error {
 	// This algorithm underlying this analyisis
 	// is defective; or would be were it not halted early.
@@ -83,12 +92,17 @@ func (wc *standardDataFlowWeaklyConnectedComponent) Analyze() error {
 		for {
 			itemPresent := incidentNodes.Next()
 			if !itemPresent {
+				// wc.orderedNodes = append(wc.orderedNodes, node)
+				// wc.idsVisited[node.ID()] = struct{}{}
 				break
 			}
 			fromNode := incidentNodes.Node()
 			_, ok := wc.idsVisited[fromNode.ID()]
 			if ok {
-				wc.orderedNodes = append(wc.orderedNodes, node)
+				isAlreadyInOrderedNodes := wc.isAlreadyInOrderedNodes(node)
+				if !isAlreadyInOrderedNodes {
+					wc.orderedNodes = append(wc.orderedNodes, node)
+				}
 				wc.idsVisited[node.ID()] = struct{}{}
 				incidentEdge := wc.collection.g.WeightedEdge(fromNode.ID(), node.ID())
 				if incidentEdge == nil {
@@ -111,6 +125,10 @@ func (wc *standardDataFlowWeaklyConnectedComponent) AddEdge(e Edge) {
 }
 
 func (wc *standardDataFlowWeaklyConnectedComponent) PushBack(v Vertex) {
+	isAlreadyInOrderedNodes := wc.isAlreadyInOrderedNodes(v)
+	if isAlreadyInOrderedNodes {
+		return
+	}
 	wc.orderedNodes = append(wc.orderedNodes, v)
 }
 

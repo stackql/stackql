@@ -102,6 +102,19 @@ func NewStandardDependencyPlanner(
 	}, nil
 }
 
+func (dp *standardDependencyPlanner) dataflowEdgeExists(from, to int) bool {
+	edges, ok := dp.dataflowToEdges[to]
+	if !ok {
+		return false
+	}
+	for _, e := range edges {
+		if e == from {
+			return true
+		}
+	}
+	return false
+}
+
 func (dp *standardDependencyPlanner) WithPrepStmtOffset(offset int) DependencyPlanner {
 	dp.prepStmtOffset = offset
 	return dp
@@ -157,7 +170,7 @@ func (dp *standardDependencyPlanner) Plan() error {
 			}
 			dp.annMap[tableExpr] = annotation
 			connectorStream := streaming.NewStandardMapStream()
-			insPsc, _, insErr := dp.processOrphan(tableExpr, annotation, connectorStream, unit)
+			insPsc, _, insErr := dp.processOrphan(tableExpr, annotation, unit)
 			if insErr != nil {
 				return insErr
 			}
@@ -173,6 +186,7 @@ func (dp *standardDependencyPlanner) Plan() error {
 			if oErr != nil {
 				return oErr
 			}
+			dp.nodeIDIdxMap = make(map[int64]int)
 			logging.GetLogger().Infof("%v\n", orderedNodes)
 			edges, eErr := unit.GetEdges()
 			if eErr != nil {
@@ -188,6 +202,12 @@ func (dp *standardDependencyPlanner) Plan() error {
 					edgeCount, dependencyMax)
 			}
 			idsVisited := make(map[int64]struct{})
+			// first pass: set up AOT stuff
+			//    - stream per edge.
+			edgeStreams := make(map[dataflow.Edge]streaming.MapStream)
+			nodeStreamCollections := NewStreamDependecyCollection()
+			insertPrepearedStatements := make(map[int64]drm.PreparedStatementCtx)
+			var orderedEdges []dataflow.Edge
 			for _, n := range orderedNodes {
 				if _, ok := idsVisited[n.ID()]; ok {
 					continue
@@ -197,41 +217,73 @@ func (dp *standardDependencyPlanner) Plan() error {
 				annotation := n.GetAnnotation()
 				dp.annMap[tableExpr] = annotation
 				for _, e := range edges {
-					//nolint:nestif // TODO: refactor
 					if e.From().ID() == n.ID() {
-						//
-						connectorStream := streaming.NewStandardMapStream()
-						insPsc, tcc, insErr := dp.processOrphan(tableExpr, annotation, connectorStream, n)
+						insPsc, tcc, insErr := dp.processOrphan(tableExpr, annotation, n)
 						if insErr != nil {
 							return insErr
 						}
+						insertPrepearedStatements[n.ID()] = insPsc
 						toNode := e.GetDest()
-						toTableExpr := toNode.GetTableExpr()
 						toAnnotation := toNode.GetAnnotation().Clone() // this bodge protects split source vertices
+						toTableExpr := toNode.GetTableExpr()
 						stream, streamErr := dp.getStreamFromEdge(e, toAnnotation, tcc)
 						if streamErr != nil {
 							return streamErr
 						}
-						fromIdx, fromErr := dp.orchestrate(-1, annotation, insPsc, connectorStream, stream)
-						if fromErr != nil {
-							return fromErr
-						}
-						dp.nodeIDIdxMap[e.From().ID()] = fromIdx
-						//
-						dp.annMap[toTableExpr] = toAnnotation
-						toAnnotation.SetDynamic()
-						insPsc, _, err = dp.processOrphan(toTableExpr, toAnnotation, stream, toNode)
-						if err != nil {
-							return err
-						}
-						toIdx, toErr := dp.orchestrate(-1, toAnnotation, insPsc, stream, streaming.NewNopMapStream())
+						edgeStreams[e] = stream
+						nodeStreamCollections.Add(n.ID(), toNode.ID(), stream)
+						toInsPsc, _, toErr := dp.processOrphan(toTableExpr, toAnnotation, toNode)
 						if toErr != nil {
 							return toErr
 						}
-						dp.nodeIDIdxMap[e.To().ID()] = toIdx
-						idsVisited[toNode.ID()] = struct{}{}
-						dp.dataflowToEdges[toIdx] = append(dp.dataflowToEdges[toIdx], fromIdx)
+						insertPrepearedStatements[toNode.ID()] = toInsPsc
+						orderedEdges = append(orderedEdges, e)
 					}
+				}
+			}
+			// second pass: connect streams
+			//     - edge collection per node
+			for _, e := range orderedEdges {
+				fromNode := e.GetSource()
+				toNode := e.GetDest()
+				fromAnnotation := fromNode.GetAnnotation()
+				toAnnotation := toNode.GetAnnotation().Clone() // this bodge protects split source vertices
+				toTableExpr := toNode.GetTableExpr()
+				departingSourceNodeStream := nodeStreamCollections.GetDeparting(fromNode.ID())
+				arrivingDestinationNodeStream := nodeStreamCollections.GetArriving(toNode.ID())
+				arrivingSourceNodeStream := nodeStreamCollections.GetArriving(fromNode.ID())
+				departingDestinationNodeStream := nodeStreamCollections.GetDeparting(toNode.ID())
+				insPsc, pscExists := insertPrepearedStatements[fromNode.ID()]
+				if !pscExists {
+					return fmt.Errorf("unknown insert prepared statement")
+				}
+				toInsPsc, pscExists := insertPrepearedStatements[toNode.ID()]
+				if !pscExists {
+					return fmt.Errorf("unknown insert prepared statement")
+				}
+				fromIdx, fromBuilderExists := dp.nodeIDIdxMap[fromNode.ID()]
+				if !fromBuilderExists {
+					var fromErr error
+					fromIdx, fromErr = dp.orchestrate(-1, fromAnnotation, insPsc, arrivingSourceNodeStream, departingSourceNodeStream)
+					if fromErr != nil {
+						return fromErr
+					}
+					dp.nodeIDIdxMap[fromNode.ID()] = fromIdx
+				}
+				toIdx, toBuilderExists := dp.nodeIDIdxMap[e.To().ID()]
+				if !toBuilderExists {
+					dp.annMap[toTableExpr] = toAnnotation
+					toAnnotation.SetDynamic()
+					var toErr error
+					toIdx, toErr = dp.orchestrate(
+						-1, toAnnotation, toInsPsc, arrivingDestinationNodeStream, departingDestinationNodeStream)
+					if toErr != nil {
+						return toErr
+					}
+					dp.nodeIDIdxMap[e.To().ID()] = toIdx
+				}
+				if !dp.dataflowEdgeExists(fromIdx, toIdx) {
+					dp.dataflowToEdges[toIdx] = append(dp.dataflowToEdges[toIdx], fromIdx)
 				}
 			}
 			for _, n := range orderedNodes {
@@ -339,10 +391,9 @@ func (dp *standardDependencyPlanner) Plan() error {
 func (dp *standardDependencyPlanner) processOrphan(
 	sqlNode sqlparser.SQLNode,
 	annotationCtx taxonomy.AnnotationCtx,
-	inStream streaming.MapStream,
 	vertex dataflow.Vertex,
 ) (drm.PreparedStatementCtx, internaldto.TxnControlCounters, error) {
-	anTab, tcc, err := dp.processAcquire(sqlNode, annotationCtx, inStream, vertex)
+	anTab, tcc, err := dp.processAcquire(sqlNode, annotationCtx, vertex)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -446,7 +497,6 @@ func (dp *standardDependencyPlanner) orchestrate(
 func (dp *standardDependencyPlanner) processAcquire(
 	sqlNode sqlparser.SQLNode,
 	annotationCtx taxonomy.AnnotationCtx,
-	stream streaming.MapStream, //nolint:unparam,revive // TODO: remove this
 	vertex dataflow.Vertex,
 ) (util.AnnotatedTabulation, internaldto.TxnControlCounters, error) {
 	inputTableName, err := annotationCtx.GetInputTableName()

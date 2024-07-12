@@ -64,8 +64,8 @@ func (ss *SimpleSQLMapStream) Read() ([]map[string]interface{}, error) {
 		keyArr = append(keyArr, x.GetIdentifier())
 		i++
 	}
+	i = 0
 	if r != nil {
-		i := 0 //nolint:govet // ok with this
 		for r.Next() {
 			errScan := r.Scan(ifArr...)
 			if errScan != nil {
@@ -81,8 +81,13 @@ func (ss *SimpleSQLMapStream) Read() ([]map[string]interface{}, error) {
 				im[key] = ev
 			}
 			rv = append(rv, im)
+			logging.GetLogger().Infof(
+				"sql map stream query returning row '''%v''' for query: '''%s'''", im, ss.selectCtx.GetQuery())
 			i++
 		}
+	}
+	if i == 0 {
+		logging.GetLogger().Infof("sql map stream query returned no rows for query: '''%s'''", ss.selectCtx.GetQuery())
 	}
 	return rv, io.EOF
 }
