@@ -5,6 +5,982 @@
         "accept": [ "application/json" ]
       },
       "method": "GET",
+      "path": "/subscriptions/{subscriptionId}/providers/Microsoft.KeyVault/vaults/",
+      "pathParameters": {
+        "subscriptionId": ["000000-0000-0000-0000-000000000022"] 
+      },
+      "queryStringParameters" : {
+        "api-version" : [ "2023-07-01" ]
+      }
+    },
+    "httpResponse": {
+      "body": {
+        "value": [
+          {
+            "id": "/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/go-on-azure/providers/Microsoft.KeyVault/vaults/stackql-testing-keyvault",
+            "name": "stackql-testing-keyvault",
+            "type": "Microsoft.KeyVault/vaults",
+            "location": "eastus",
+            "tags": {},
+            "systemData": {
+              "createdBy": "joe.blow@stackql.com",
+              "createdByType": "User",
+              "createdAt": "2022-12-31T05:14:56.289Z",
+              "lastModifiedBy": "joe.blow@stackql.com",
+              "lastModifiedByType": "User",
+              "lastModifiedAt": "2023-05-11T12:06:31.662Z"
+            },
+            "properties": {
+              "sku": {
+                "family": "A",
+                "name": "standard"
+              },
+              "tenantId": "000000-0000-0000-0000-000000000001",
+              "accessPolicies": [
+                {
+                  "tenantId": "000000-0000-0000-0000-000000000001",
+                  "objectId": "000000-0000-0000-0000-000000000002",
+                  "permissions": {
+                    "keys": [
+                      "Get",
+                      "List",
+                      "Update",
+                      "Create",
+                      "Import",
+                      "Delete",
+                      "Recover",
+                      "Backup",
+                      "Restore",
+                      "Decrypt",
+                      "Encrypt",
+                      "UnwrapKey",
+                      "WrapKey",
+                      "Verify",
+                      "Sign",
+                      "Release",
+                      "Rotate",
+                      "GetRotationPolicy",
+                      "SetRotationPolicy"
+                    ],
+                    "secrets": [
+                      "Get",
+                      "List",
+                      "Set",
+                      "Delete",
+                      "Recover",
+                      "Backup",
+                      "Restore"
+                    ],
+                    "certificates": [
+                      "Get",
+                      "List",
+                      "Update",
+                      "Create",
+                      "Import",
+                      "Delete",
+                      "Recover",
+                      "Backup",
+                      "Restore",
+                      "ManageContacts",
+                      "ManageIssuers",
+                      "GetIssuers",
+                      "ListIssuers",
+                      "SetIssuers",
+                      "DeleteIssuers"
+                    ],
+                    "storage": [
+                      "all"
+                    ]
+                  }
+                },
+                {
+                  "tenantId": "000000-0000-0000-0000-000000000001",
+                  "objectId": "000000-0000-0000-0000-000000000003",
+                  "permissions": {
+                    "certificates": [
+                      "Get",
+                      "List",
+                      "Update",
+                      "Create",
+                      "Import",
+                      "Delete",
+                      "Recover",
+                      "Backup",
+                      "Restore",
+                      "ManageContacts",
+                      "ManageIssuers",
+                      "GetIssuers",
+                      "ListIssuers",
+                      "SetIssuers",
+                      "DeleteIssuers",
+                      "Purge"
+                    ],
+                    "keys": [
+                      "Get",
+                      "List",
+                      "Update",
+                      "Create",
+                      "Import",
+                      "Delete",
+                      "Recover",
+                      "Backup",
+                      "Restore",
+                      "GetRotationPolicy",
+                      "SetRotationPolicy",
+                      "Rotate",
+                      "Encrypt",
+                      "Decrypt",
+                      "UnwrapKey",
+                      "WrapKey",
+                      "Verify",
+                      "Sign",
+                      "Purge",
+                      "Release"
+                    ],
+                    "secrets": [
+                      "Get",
+                      "List",
+                      "Set",
+                      "Delete",
+                      "Recover",
+                      "Backup",
+                      "Restore",
+                      "Purge"
+                    ]
+                  }
+                }
+              ],
+              "enabledForDeployment": false,
+              "enabledForDiskEncryption": false,
+              "enabledForTemplateDeployment": false,
+              "enableSoftDelete": true,
+              "softDeleteRetentionInDays": 90,
+              "vaultUri": "https://stackql-testing-keyvault.vault.azure.net/",
+              "provisioningState": "Succeeded",
+              "publicNetworkAccess": "Enabled"
+            }
+          },
+          {
+            "id": "/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/go-on-azure/providers/Microsoft.KeyVault/vaults/stackql-alt-keyvault",
+            "name": "stackql-alt-keyvault",
+            "type": "Microsoft.KeyVault/vaults",
+            "location": "eastus",
+            "tags": {},
+            "systemData": {
+              "createdBy": "joe.blow@stackql.com",
+              "createdByType": "User",
+              "createdAt": "2022-12-31T05:14:56.289Z",
+              "lastModifiedBy": "joe.blow@stackql.com",
+              "lastModifiedByType": "User",
+              "lastModifiedAt": "2023-05-11T12:06:31.662Z"
+            },
+            "properties": {
+              "sku": {
+                "family": "A",
+                "name": "standard"
+              },
+              "tenantId": "000000-0000-0000-0000-000000000001",
+              "accessPolicies": [
+                {
+                  "tenantId": "000000-0000-0000-0000-000000000001",
+                  "objectId": "000000-0000-0000-0000-000000000002",
+                  "permissions": {
+                    "keys": [
+                      "Get",
+                      "List",
+                      "Update",
+                      "Create",
+                      "Import",
+                      "Delete",
+                      "Recover",
+                      "Backup",
+                      "Restore",
+                      "Decrypt",
+                      "Encrypt",
+                      "UnwrapKey",
+                      "WrapKey",
+                      "Verify",
+                      "Sign",
+                      "Release",
+                      "Rotate",
+                      "GetRotationPolicy",
+                      "SetRotationPolicy"
+                    ],
+                    "secrets": [
+                      "Get",
+                      "List",
+                      "Set",
+                      "Delete",
+                      "Recover",
+                      "Backup",
+                      "Restore"
+                    ],
+                    "certificates": [
+                      "Get",
+                      "List",
+                      "Update",
+                      "Create",
+                      "Import",
+                      "Delete",
+                      "Recover",
+                      "Backup",
+                      "Restore",
+                      "ManageContacts",
+                      "ManageIssuers",
+                      "GetIssuers",
+                      "ListIssuers",
+                      "SetIssuers",
+                      "DeleteIssuers"
+                    ],
+                    "storage": [
+                      "all"
+                    ]
+                  }
+                },
+                {
+                  "tenantId": "000000-0000-0000-0000-000000000001",
+                  "objectId": "000000-0000-0000-0000-000000000003",
+                  "permissions": {
+                    "certificates": [
+                      "Get",
+                      "List",
+                      "Update",
+                      "Create",
+                      "Import",
+                      "Delete",
+                      "Recover",
+                      "Backup",
+                      "Restore",
+                      "ManageContacts",
+                      "ManageIssuers",
+                      "GetIssuers",
+                      "ListIssuers",
+                      "SetIssuers",
+                      "DeleteIssuers",
+                      "Purge"
+                    ],
+                    "keys": [
+                      "Get",
+                      "List",
+                      "Update",
+                      "Create",
+                      "Import",
+                      "Delete",
+                      "Recover",
+                      "Backup",
+                      "Restore",
+                      "GetRotationPolicy",
+                      "SetRotationPolicy",
+                      "Rotate",
+                      "Encrypt",
+                      "Decrypt",
+                      "UnwrapKey",
+                      "WrapKey",
+                      "Verify",
+                      "Sign",
+                      "Purge",
+                      "Release"
+                    ],
+                    "secrets": [
+                      "Get",
+                      "List",
+                      "Set",
+                      "Delete",
+                      "Recover",
+                      "Backup",
+                      "Restore",
+                      "Purge"
+                    ]
+                  }
+                }
+              ],
+              "enabledForDeployment": false,
+              "enabledForDiskEncryption": false,
+              "enabledForTemplateDeployment": false,
+              "enableSoftDelete": true,
+              "softDeleteRetentionInDays": 90,
+              "vaultUri": "https://stackql-testing-keyvault.vault.azure.net/",
+              "provisioningState": "Succeeded",
+              "publicNetworkAccess": "Enabled"
+            }
+          }
+        ],
+        "nextLink": "https://management.azure.com/subscriptions/000000-0000-0000-0000-000000000022/providers/Microsoft.KeyVault/vaults/?api-version=2023-07-01&$skiptoken=0011"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "accept": [ "application/json" ]
+      },
+      "method": "GET",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/stackql-testing-keyvault/keys/",
+      "pathParameters": {
+        "subscriptionId": ["000000-0000-0000-0000-000000000022"],
+        "resourceGroupName": ["[A-Za-z0-9-]+"]  
+      },
+      "queryStringParameters" : {
+        "api-version" : [ "2023-07-01" ]
+      }
+    },
+    "httpResponse": {
+      "body": {
+        "value": [
+          {
+            "id": "/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/go-on-azure/providers/Microsoft.KeyVault/vaults/stackql-testing-keyvault/keys/dummy-key-01",
+            "name": "dummy-key-01",
+            "type": "Microsoft.KeyVault/vaults/keys",
+            "location": "eastus",
+            "tags": {},
+            "properties": {
+              "attributes": {
+                "enabled": true,
+                "created": 1720150115,
+                "updated": 1720150115,
+                "recoveryLevel": "Recoverable+Purgeable",
+                "exportable": false
+              },
+              "keyUri": "https://stackql-testing-keyvault.vault.azure.net/keys/dummy-key-01"
+            }
+          },
+
+          {
+            "id": "/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/go-on-azure/providers/Microsoft.KeyVault/vaults/stackql-testing-keyvault/keys/dummy-key-02",
+            "name": "dummy-key-02",
+            "type": "Microsoft.KeyVault/vaults/keys",
+            "location": "eastus",
+            "tags": {},
+            "properties": {
+              "attributes": {
+                "enabled": true,
+                "created": 1720150115,
+                "updated": 1720150115,
+                "recoveryLevel": "Recoverable+Purgeable",
+                "exportable": false
+              },
+              "keyUri": "https://stackql-testing-keyvault.vault.azure.net/keys/dummy-key-01"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "accept": [ "application/json" ]
+      },
+      "method": "GET",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/stackql-alt-keyvault/keys/",
+      "pathParameters": {
+        "subscriptionId": ["000000-0000-0000-0000-000000000022"],
+        "resourceGroupName": ["[A-Za-z0-9-]+"]  
+      },
+      "queryStringParameters" : {
+        "api-version" : [ "2023-07-01" ]
+      }
+    },
+    "httpResponse": {
+      "body": {
+        "value": [
+          {
+            "id": "/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/go-on-azure/providers/Microsoft.KeyVault/vaults/stackql-alt-keyvault/keys/alt-dummy-key-01",
+            "name": "alt-dummy-key-01",
+            "type": "Microsoft.KeyVault/vaults/keys",
+            "location": "eastus",
+            "tags": {},
+            "properties": {
+              "attributes": {
+                "enabled": true,
+                "created": 1720150115,
+                "updated": 1720150115,
+                "recoveryLevel": "Recoverable+Purgeable",
+                "exportable": false
+              },
+              "keyUri": "https://stackql-testing-keyvault.vault.azure.net/keys/dummy-key-01"
+            }
+          },
+          {
+            "id": "/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/go-on-azure/providers/Microsoft.KeyVault/vaults/stackql-alt-keyvault/keys/alt-dummy-key-02",
+            "name": "alt-dummy-key-02",
+            "type": "Microsoft.KeyVault/vaults/keys",
+            "location": "eastus",
+            "tags": {},
+            "properties": {
+              "attributes": {
+                "enabled": true,
+                "created": 1720150115,
+                "updated": 1720150115,
+                "recoveryLevel": "Recoverable+Purgeable",
+                "exportable": false
+              },
+              "keyUri": "https://stackql-testing-keyvault.vault.azure.net/keys/dummy-key-01"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "accept": [ "application/json" ]
+      },
+      "method": "GET",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/stackql-testing-keyvault/keys/dummy-key-01/",
+      "pathParameters": {
+        "subscriptionId": ["000000-0000-0000-0000-000000000022"],
+        "resourceGroupName": ["[A-Za-z0-9-]+"]  
+      },
+      "queryStringParameters" : {
+        "api-version" : [ "2023-07-01" ]
+      }
+    },
+    "httpResponse": {
+      "body": {
+        "id": "/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/go-on-azure/providers/Microsoft.KeyVault/vaults/stackql-testing-keyvault/keys/dummy-key-01",
+        "name": "dummy-key-01",
+        "type": "Microsoft.KeyVault/vaults/keys",
+        "location": "eastus",
+        "tags": {},
+        "properties": {
+          "attributes": {
+            "enabled": true,
+            "created": 1720150115,
+            "updated": 1720150115,
+            "recoveryLevel": "Recoverable+Purgeable",
+            "exportable": false
+          },
+          "rotationPolicy": {
+            "lifetimeActions": [
+              {
+                "trigger": {
+                  "timeBeforeExpiry": "P30D"
+                },
+                "action": {
+                  "type": "Notify"
+                }
+              }
+            ]
+          },
+          "kty": "RSA",
+          "keyOps": [
+            "sign",
+            "verify",
+            "wrapKey",
+            "unwrapKey",
+            "encrypt",
+            "decrypt"
+          ],
+          "keySize": 2048,
+          "keyUri": "https://stackql-testing-keyvault.vault.azure.net/keys/dummy-key-01",
+          "keyUriWithVersion": "https://stackql-testing-keyvault.vault.azure.net/keys/dummy-key-01/aaaaaaaaa00000001"
+        }
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "accept": [ "application/json" ]
+      },
+      "method": "GET",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/stackql-testing-keyvault/keys/dummy-key-02/",
+      "pathParameters": {
+        "subscriptionId": ["000000-0000-0000-0000-000000000022"],
+        "resourceGroupName": ["[A-Za-z0-9-]+"]  
+      },
+      "queryStringParameters" : {
+        "api-version" : [ "2023-07-01" ]
+      }
+    },
+    "httpResponse": {
+      "body": {
+        "id": "/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/go-on-azure/providers/Microsoft.KeyVault/vaults/stackql-testing-keyvault/keys/dummy-key-02",
+        "name": "dummy-key-02",
+        "type": "Microsoft.KeyVault/vaults/keys",
+        "location": "eastus",
+        "tags": {},
+        "properties": {
+          "attributes": {
+            "enabled": true,
+            "created": 1720150115,
+            "updated": 1720150115,
+            "recoveryLevel": "Recoverable+Purgeable",
+            "exportable": false
+          },
+          "rotationPolicy": {
+            "lifetimeActions": [
+              {
+                "trigger": {
+                  "timeBeforeExpiry": "P30D"
+                },
+                "action": {
+                  "type": "Notify"
+                }
+              }
+            ]
+          },
+          "kty": "RSA",
+          "keyOps": [
+            "sign",
+            "verify",
+            "wrapKey",
+            "unwrapKey",
+            "encrypt",
+            "decrypt"
+          ],
+          "keySize": 2048,
+          "keyUri": "https://stackql-testing-keyvault.vault.azure.net/keys/dummy-key-02",
+          "keyUriWithVersion": "https://stackql-testing-keyvault.vault.azure.net/keys/dummy-key-02/aaaaaaaaa00000001"
+        }
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "accept": [ "application/json" ]
+      },
+      "method": "GET",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/stackql-testing-keyvault/keys/alt-dummy-key-02/",
+      "pathParameters": {
+        "subscriptionId": ["000000-0000-0000-0000-000000000022"],
+        "resourceGroupName": ["[A-Za-z0-9-]+"]  
+      },
+      "queryStringParameters" : {
+        "api-version" : [ "2023-07-01" ]
+      }
+    },
+    "httpResponse": {
+      "body": {
+        "id": "/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/go-on-azure/providers/Microsoft.KeyVault/vaults/stackql-testing-keyvault/keys/dummy-key-02",
+        "name": "dummy-key-02",
+        "type": "Microsoft.KeyVault/vaults/keys",
+        "location": "eastus",
+        "tags": {},
+        "properties": {
+          "attributes": {
+            "enabled": true,
+            "created": 1720150115,
+            "updated": 1720150115,
+            "recoveryLevel": "Recoverable+Purgeable",
+            "exportable": false
+          },
+          "rotationPolicy": {
+            "lifetimeActions": [
+              {
+                "trigger": {
+                  "timeBeforeExpiry": "P30D"
+                },
+                "action": {
+                  "type": "Notify"
+                }
+              }
+            ]
+          },
+          "kty": "RSA",
+          "keyOps": [
+            "sign",
+            "verify",
+            "wrapKey",
+            "unwrapKey",
+            "encrypt",
+            "decrypt"
+          ],
+          "keySize": 2048,
+          "keyUri": "https://stackql-testing-keyvault.vault.azure.net/keys/dummy-key-02",
+          "keyUriWithVersion": "https://stackql-testing-keyvault.vault.azure.net/keys/dummy-key-02/aaaaaaaaa00000001"
+        }
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "accept": [ "application/json" ]
+      },
+      "method": "GET",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/stackql-alt-keyvault/keys/alt-dummy-key-01/",
+      "pathParameters": {
+        "subscriptionId": ["000000-0000-0000-0000-000000000022"],
+        "resourceGroupName": ["[A-Za-z0-9-]+"]  
+      },
+      "queryStringParameters" : {
+        "api-version" : [ "2023-07-01" ]
+      }
+    },
+    "httpResponse": {
+      "body": {
+        "id": "/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/go-on-azure/providers/Microsoft.KeyVault/vaults/stackql-alt-keyvault/keys/alt-dummy-key-01",
+        "name": "dummy-key-01",
+        "type": "Microsoft.KeyVault/vaults/keys",
+        "location": "eastus",
+        "tags": {},
+        "properties": {
+          "attributes": {
+            "enabled": true,
+            "created": 1720150115,
+            "updated": 1720150115,
+            "recoveryLevel": "Recoverable+Purgeable",
+            "exportable": false
+          },
+          "rotationPolicy": {
+            "lifetimeActions": [
+              {
+                "trigger": {
+                  "timeBeforeExpiry": "P30D"
+                },
+                "action": {
+                  "type": "Notify"
+                }
+              }
+            ]
+          },
+          "kty": "RSA",
+          "keyOps": [
+            "sign",
+            "verify",
+            "wrapKey",
+            "unwrapKey",
+            "encrypt",
+            "decrypt"
+          ],
+          "keySize": 2048,
+          "keyUri": "https://stackql-alt-keyvault.vault.azure.net/keys/alt-dummy-key-01",
+          "keyUriWithVersion": "https://stackql-alt-keyvault.vault.azure.net/keys/alt-dummy-key-01/aaaaaaaaa00000001"
+        }
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "accept": [ "application/json" ]
+      },
+      "method": "GET",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/stackql-alt-keyvault/keys/alt-dummy-key-02/",
+      "pathParameters": {
+        "subscriptionId": ["000000-0000-0000-0000-000000000022"],
+        "resourceGroupName": ["[A-Za-z0-9-]+"]  
+      },
+      "queryStringParameters" : {
+        "api-version" : [ "2023-07-01" ]
+      }
+    },
+    "httpResponse": {
+      "body": {
+        "id": "/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/go-on-azure/providers/Microsoft.KeyVault/vaults/stackql-alt-keyvault/keys/alt-dummy-key-02",
+        "name": "dummy-key-02",
+        "type": "Microsoft.KeyVault/vaults/keys",
+        "location": "eastus",
+        "tags": {},
+        "properties": {
+          "attributes": {
+            "enabled": true,
+            "created": 1720150115,
+            "updated": 1720150115,
+            "recoveryLevel": "Recoverable+Purgeable",
+            "exportable": false
+          },
+          "rotationPolicy": {
+            "lifetimeActions": [
+              {
+                "trigger": {
+                  "timeBeforeExpiry": "P30D"
+                },
+                "action": {
+                  "type": "Notify"
+                }
+              }
+            ]
+          },
+          "kty": "RSA",
+          "keyOps": [
+            "sign",
+            "verify",
+            "wrapKey",
+            "unwrapKey",
+            "encrypt",
+            "decrypt"
+          ],
+          "keySize": 2048,
+          "keyUri": "https://stackql-alt-keyvault.vault.azure.net/keys/dummy-key-02",
+          "keyUriWithVersion": "https://stackql-alt-keyvault.vault.azure.net/keys/dummy-key-02/aaaaaaaaa00000001"
+        }
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "accept": [ "application/json" ]
+      },
+      "method": "GET",
+      "path": "/subscriptions/{subscriptionId}/providers/Microsoft.KeyVault/vaults/",
+      "pathParameters": {
+        "subscriptionId": ["000000-0000-0000-0000-000000000011"] 
+      },
+      "queryStringParameters" : {
+        "api-version" : [ "2023-07-01" ]
+      }
+    },
+    "httpResponse": {
+      "body": {
+        "value": [
+          {
+            "id": "/subscriptions/000000-0000-0000-0000-000000000011/resourceGroups/go-on-azure/providers/Microsoft.KeyVault/vaults/stackql-testing-keyvault",
+            "name": "stackql-testing-keyvault",
+            "type": "Microsoft.KeyVault/vaults",
+            "location": "eastus",
+            "tags": {},
+            "systemData": {
+              "createdBy": "joe.blow@stackql.com",
+              "createdByType": "User",
+              "createdAt": "2022-12-31T05:14:56.289Z",
+              "lastModifiedBy": "joe.blow@stackql.com",
+              "lastModifiedByType": "User",
+              "lastModifiedAt": "2023-05-11T12:06:31.662Z"
+            },
+            "properties": {
+              "sku": {
+                "family": "A",
+                "name": "standard"
+              },
+              "tenantId": "000000-0000-0000-0000-000000000001",
+              "accessPolicies": [
+                {
+                  "tenantId": "000000-0000-0000-0000-000000000001",
+                  "objectId": "000000-0000-0000-0000-000000000002",
+                  "permissions": {
+                    "keys": [
+                      "Get",
+                      "List",
+                      "Update",
+                      "Create",
+                      "Import",
+                      "Delete",
+                      "Recover",
+                      "Backup",
+                      "Restore",
+                      "Decrypt",
+                      "Encrypt",
+                      "UnwrapKey",
+                      "WrapKey",
+                      "Verify",
+                      "Sign",
+                      "Release",
+                      "Rotate",
+                      "GetRotationPolicy",
+                      "SetRotationPolicy"
+                    ],
+                    "secrets": [
+                      "Get",
+                      "List",
+                      "Set",
+                      "Delete",
+                      "Recover",
+                      "Backup",
+                      "Restore"
+                    ],
+                    "certificates": [
+                      "Get",
+                      "List",
+                      "Update",
+                      "Create",
+                      "Import",
+                      "Delete",
+                      "Recover",
+                      "Backup",
+                      "Restore",
+                      "ManageContacts",
+                      "ManageIssuers",
+                      "GetIssuers",
+                      "ListIssuers",
+                      "SetIssuers",
+                      "DeleteIssuers"
+                    ],
+                    "storage": [
+                      "all"
+                    ]
+                  }
+                },
+                {
+                  "tenantId": "000000-0000-0000-0000-000000000001",
+                  "objectId": "000000-0000-0000-0000-000000000003",
+                  "permissions": {
+                    "certificates": [
+                      "Get",
+                      "List",
+                      "Update",
+                      "Create",
+                      "Import",
+                      "Delete",
+                      "Recover",
+                      "Backup",
+                      "Restore",
+                      "ManageContacts",
+                      "ManageIssuers",
+                      "GetIssuers",
+                      "ListIssuers",
+                      "SetIssuers",
+                      "DeleteIssuers",
+                      "Purge"
+                    ],
+                    "keys": [
+                      "Get",
+                      "List",
+                      "Update",
+                      "Create",
+                      "Import",
+                      "Delete",
+                      "Recover",
+                      "Backup",
+                      "Restore",
+                      "GetRotationPolicy",
+                      "SetRotationPolicy",
+                      "Rotate",
+                      "Encrypt",
+                      "Decrypt",
+                      "UnwrapKey",
+                      "WrapKey",
+                      "Verify",
+                      "Sign",
+                      "Purge",
+                      "Release"
+                    ],
+                    "secrets": [
+                      "Get",
+                      "List",
+                      "Set",
+                      "Delete",
+                      "Recover",
+                      "Backup",
+                      "Restore",
+                      "Purge"
+                    ]
+                  }
+                }
+              ],
+              "enabledForDeployment": false,
+              "enabledForDiskEncryption": false,
+              "enabledForTemplateDeployment": false,
+              "enableSoftDelete": true,
+              "softDeleteRetentionInDays": 90,
+              "vaultUri": "https://stackql-testing-keyvault.vault.azure.net/",
+              "provisioningState": "Succeeded",
+              "publicNetworkAccess": "Enabled"
+            }
+          }
+        ],
+        "nextLink": "https://management.azure.com/subscriptions/000000-0000-0000-0000-000000000011/providers/Microsoft.KeyVault/vaults/?api-version=2023-07-01&$skiptoken=0011"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "accept": [ "application/json" ]
+      },
+      "method": "GET",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/stackql-testing-keyvault/keys/",
+      "pathParameters": {
+        "subscriptionId": ["000000-0000-0000-0000-000000000011"],
+        "resourceGroupName": ["[A-Za-z0-9-]+"]  
+      },
+      "queryStringParameters" : {
+        "api-version" : [ "2023-07-01" ]
+      }
+    },
+    "httpResponse": {
+      "body": {
+        "value": [
+          {
+            "id": "/subscriptions/000000-0000-0000-0000-000000000011/resourceGroups/go-on-azure/providers/Microsoft.KeyVault/vaults/stackql-testing-keyvault/keys/dummy-key-01",
+            "name": "dummy-key-01",
+            "type": "Microsoft.KeyVault/vaults/keys",
+            "location": "eastus",
+            "tags": {},
+            "properties": {
+              "attributes": {
+                "enabled": true,
+                "created": 1720150115,
+                "updated": 1720150115,
+                "recoveryLevel": "Recoverable+Purgeable",
+                "exportable": false
+              },
+              "keyUri": "https://stackql-testing-keyvault.vault.azure.net/keys/dummy-key-01"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "accept": [ "application/json" ]
+      },
+      "method": "GET",
+      "path": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/stackql-testing-keyvault/keys/dummy-key-01/",
+      "pathParameters": {
+        "subscriptionId": ["000000-0000-0000-0000-000000000011"],
+        "resourceGroupName": ["[A-Za-z0-9-]+"]  
+      },
+      "queryStringParameters" : {
+        "api-version" : [ "2023-07-01" ]
+      }
+    },
+    "httpResponse": {
+      "body": {
+        "id": "/subscriptions/000000-0000-0000-0000-000000000011/resourceGroups/go-on-azure/providers/Microsoft.KeyVault/vaults/stackql-testing-keyvault/keys/dummy-key-01",
+        "name": "dummy-key-01",
+        "type": "Microsoft.KeyVault/vaults/keys",
+        "location": "eastus",
+        "tags": {},
+        "properties": {
+          "attributes": {
+            "enabled": true,
+            "created": 1720150115,
+            "updated": 1720150115,
+            "recoveryLevel": "Recoverable+Purgeable",
+            "exportable": false
+          },
+          "rotationPolicy": {
+            "lifetimeActions": [
+              {
+                "trigger": {
+                  "timeBeforeExpiry": "P30D"
+                },
+                "action": {
+                  "type": "Notify"
+                }
+              }
+            ]
+          },
+          "kty": "RSA",
+          "keyOps": [
+            "sign",
+            "verify",
+            "wrapKey",
+            "unwrapKey",
+            "encrypt",
+            "decrypt"
+          ],
+          "keySize": 2048,
+          "keyUri": "https://stackql-testing-keyvault.vault.azure.net/keys/dummy-key-01",
+          "keyUriWithVersion": "https://stackql-testing-keyvault.vault.azure.net/keys/dummy-key-01/aaaaaaaaa00000001"
+        }
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "accept": [ "application/json" ]
+      },
+      "method": "GET",
       "path": "/subscriptions/{subscriptionId}/providers/Microsoft.Compute/sshPublicKeys/",
       "pathParameters": {
         "subscriptionId": ["[A-Za-z0-9-]+"] 

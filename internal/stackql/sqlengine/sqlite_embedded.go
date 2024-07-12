@@ -276,7 +276,7 @@ func (se sqLiteEmbeddedEngine) Query(query string, varArgs ...interface{}) (*sql
 }
 
 func (se sqLiteEmbeddedEngine) query(query string, varArgs ...interface{}) (*sql.Rows, error) {
-	// logging.GetLogger().Infoln(fmt.Sprintf("query = %s", query))
+	logging.GetLogger().Debugln(fmt.Sprintf("sqlite embedded raw query = %s, varArgs = %v", query, varArgs))
 	res, err := se.db.Query(query, varArgs...)
 	// logging.GetLogger().Infoln(fmt.Sprintf("res= %v, err = %v", res, err))
 	return res, err
