@@ -513,6 +513,9 @@ func (eng *postgresSystem) createView(
 
 func (eng *postgresSystem) GetViewByName(viewName string) (internaldto.RelationDTO, bool) {
 	rv, ok := eng.getViewByName(viewName)
+	if !ok {
+		return nil, false
+	}
 	candidates, err := eng.getAwareViewsByName(fmt.Sprintf("%s%%", viewName))
 	currentNode := rv
 	if err == nil {

@@ -47,6 +47,15 @@ providerServices:
       $ref: aws/v0.1.0/services/ec2.yaml
     title: EC2
     version: v0.1.0
+  ec2_nextgen:
+    description: ec2_nextgen
+    id: ec2_nextgen:v0.1.0
+    name: ec2_nextgen
+    preferred: true
+    service:
+      $ref: aws/v0.1.0/services/ec2_nextgen.yaml
+    title: EC2 NextGen
+    version: v0.1.0
   iam:
     description: iam
     id: iam:v0.1.0

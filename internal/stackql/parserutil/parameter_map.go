@@ -15,6 +15,7 @@ type ParameterMap interface {
 	Clone() ParameterMap
 	Merge(ParameterMap) ParameterMap
 	Set(ColumnarReference, ParameterMetadata) error
+	SetIntolerant(ColumnarReference, ParameterMetadata) error
 	Get(ColumnarReference) (ParameterMetadata, bool)
 	GetAll() []ParameterMapKeyVal
 	GetByString(string) ([]ParameterMapKeyVal, bool)
@@ -46,6 +47,8 @@ func (pm standardParameterMap) Merge(rhs ParameterMap) ParameterMap {
 	if rhs != nil {
 		allEntries := rhs.GetAll()
 		for _, kv := range allEntries {
+			stringToDelete := kv.K.GetStringKey()
+			pm.deleteByAbbreviatedString(stringToDelete)
 			pm.m[kv.K] = kv.V
 		}
 	}
@@ -66,7 +69,8 @@ func (pm standardParameterMap) GetByString(s string) ([]ParameterMapKeyVal, bool
 
 func (pm standardParameterMap) DeleteByString(s string) bool {
 	for k := range pm.m {
-		if k.GetStringKey() == s {
+		lhs := k.GetStringKey()
+		if lhs == s {
 			delete(pm.m, k)
 		}
 	}
@@ -174,6 +178,16 @@ func (pm standardParameterMap) Set(k ColumnarReference, v ParameterMetadata) err
 	default:
 		return fmt.Errorf("parameter map cannot support key type = '%T'", t)
 	}
+	return nil
+}
+
+func (pm standardParameterMap) SetIntolerant(k ColumnarReference, v ParameterMetadata) error {
+	rhs := NewParameterMap()
+	rv := rhs.Set(k, v)
+	if rv != nil {
+		return rv
+	}
+	pm.Merge(rhs)
 	return nil
 }
 
