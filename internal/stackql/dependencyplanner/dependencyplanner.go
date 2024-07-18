@@ -586,6 +586,7 @@ func (dp *standardDependencyPlanner) processAcquire(
 	return anTab, dp.tcc, nil
 }
 
+//nolint:gocognit,nestif // live with it
 func (dp *standardDependencyPlanner) getStreamFromEdge(
 	e dataflow.Edge,
 	toAc taxonomy.AnnotationCtx,
@@ -604,16 +605,27 @@ func (dp *standardDependencyPlanner) getStreamFromEdge(
 		if err != nil {
 			return nil, err
 		}
-		transformedStaticParams, paramTRansformErr := util.TransformSQLRawParameters(toAc.GetParameters(), false)
-		if paramTRansformErr != nil {
-			return nil, paramTRansformErr
+		toParams := toAc.GetParameters()
+
+		transformedToStaticParams, paramTransformErr := util.TransformSQLRawParameters(toParams, false)
+		if paramTransformErr != nil {
+			return nil, paramTransformErr
+		}
+		for k, v := range transformedToStaticParams {
+			hasSourceAttr := e.HasSourceAttribute(k)
+			if !hasSourceAttr {
+				vIsUnpopulated := k == v
+				if vIsUnpopulated {
+					delete(transformedToStaticParams, k)
+				}
+			}
 		}
 		return sqlstream.NewSimpleSQLMapStream(
 			selectCtx,
 			insertContainer,
 			dp.handlerCtx.GetDrmConfig(),
 			dp.handlerCtx.GetSQLEngine(),
-			transformedStaticParams,
+			transformedToStaticParams,
 		), nil
 	}
 	projection, err := e.GetProjection()

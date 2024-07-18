@@ -6388,3 +6388,78 @@ Repeated View Invocation to Guard Prior View Param Indeterminate Scenario
     ...    stackql_dataflow_permissive=True
     ...    repeat_count=30
 
+
+Static Input Read Many Multi Dependency Multi Dependent Multiple List And Detail Dataflow Works As Exemplified By Azure Vault and Keys and Key Details
+    ${sqliteInputStr} =    Catenate
+    ...    select
+    ...    keyz.name as key_name, 
+    ...    keyz.tags as key_tags, 
+    ...    json_extract(detail.properties, '$.kty') as key_class, 
+    ...    json_extract(detail.properties, '$.keySize') as key_size, 
+    ...    json_extract(detail.properties, '$.keyOps') as key_ops, 
+    ...    keyz.type as key_type 
+    ...    from azure.key_vault.vaults vaultz 
+    ...    inner join azure.key_vault.keys keyz 
+    ...    on keyz.vaultName = split_part(vaultz.id, '/', -1) 
+    ...    and keyz.subscriptionId = vaultz.subscriptionId 
+    ...    and keyz.resourceGroupName = split_part(vaultz.id, '/', 5) 
+    ...    inner join azure.key_vault.keys detail 
+    ...    on detail.vaultName = split_part(vaultz.id, '/', -1) 
+    ...    and detail.subscriptionId = vaultz.subscriptionId 
+    ...    and detail.resourceGroupName = split_part(vaultz.id, '/', 5) 
+    ...    and detail.keyName = split_part(keyz.id, '/', -1) 
+    ...    where vaultz.subscriptionId = '000000-0000-0000-0000-000000000022' 
+    ...    order by key_name
+    ...    ;
+    ${postgresInputStr} =    Catenate
+    ...    select
+    ...    keyz.name as key_name, 
+    ...    keyz.tags as key_tags, 
+    ...    json_extract_path_text(detail.properties, 'kty') as key_class, 
+    ...    json_extract_path_text(detail.properties, 'keySize') as key_size, 
+    ...    json_extract_path_text(detail.properties, 'keyOps') as key_ops, 
+    ...    keyz.type as key_type 
+    ...    from azure.key_vault.vaults vaultz 
+    ...    inner join azure.key_vault.keys keyz 
+    ...    on keyz.vaultName = split_part(vaultz.id, '/', -1) 
+    ...    and keyz.subscriptionId = vaultz.subscriptionId 
+    ...    and keyz.resourceGroupName = split_part(vaultz.id, '/', 5) 
+    ...    inner join azure.key_vault.keys detail 
+    ...    on detail.vaultName = split_part(vaultz.id, '/', -1)  
+    ...    and detail.subscriptionId = vaultz.subscriptionId  
+    ...    and detail.resourceGroupName = split_part(vaultz.id, '/', 5) 
+    ...    and detail.keyName = split_part(keyz.id, '/', -1) 
+    ...    where vaultz.subscriptionId = '000000-0000-0000-0000-000000000022' 
+    ...    order by key_name
+    ...    ;
+    ${inputStr} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"     ${postgresInputStr}    ${sqliteInputStr}
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |------------------|----------|-----------|----------|-------------------------------------------------------------|--------------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}key_name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}key_tags${SPACE}|${SPACE}key_class${SPACE}|${SPACE}key_size${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}key_ops${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}key_type${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------|----------|-----------|----------|-------------------------------------------------------------|--------------------------------|
+    ...    |${SPACE}alt-dummy-key-01${SPACE}|${SPACE}{}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}RSA${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}2048${SPACE}|${SPACE}\["sign","verify","wrapKey","unwrapKey","encrypt","decrypt"]${SPACE}|${SPACE}Microsoft.KeyVault/vaults/keys${SPACE}|
+    ...    |------------------|----------|-----------|----------|-------------------------------------------------------------|--------------------------------|
+    ...    |${SPACE}alt-dummy-key-02${SPACE}|${SPACE}{}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}RSA${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}2048${SPACE}|${SPACE}\["sign","verify","wrapKey","unwrapKey","encrypt","decrypt"]${SPACE}|${SPACE}Microsoft.KeyVault/vaults/keys${SPACE}|
+    ...    |------------------|----------|-----------|----------|-------------------------------------------------------------|--------------------------------|
+    ...    |${SPACE}dummy-key-01${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}{}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}RSA${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}2048${SPACE}|${SPACE}\["sign","verify","wrapKey","unwrapKey","encrypt","decrypt"]${SPACE}|${SPACE}Microsoft.KeyVault/vaults/keys${SPACE}|
+    ...    |------------------|----------|-----------|----------|-------------------------------------------------------------|--------------------------------|
+    ...    |${SPACE}dummy-key-02${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}{}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}RSA${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}2048${SPACE}|${SPACE}\["sign","verify","wrapKey","unwrapKey","encrypt","decrypt"]${SPACE}|${SPACE}Microsoft.KeyVault/vaults/keys${SPACE}|
+    ...    |------------------|----------|-----------|----------|-------------------------------------------------------------|--------------------------------|
+    ${outputErrStr} =    Catenate    SEPARATOR=\n
+    ...    http response status code: 404, response body is nil
+    ...    http response status code: 404, response body is nil
+    ...    http response status code: 404, response body is nil
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${outputErrStr}
+    ...    stdout=${CURDIR}/tmp/Static-Input-Read-Many-Multi-Dependency-Multi-Dependent-Multiple-List-And-Detail-Dataflow-Works-As-Exemplified-By-Azure-Vault-and-Keys-and-Key-Details.tmp
+    ...    stderr=${CURDIR}/tmp/Static-Input-Read-Many-Multi-Dependency-Multi-Dependent-Multiple-List-And-Detail-Dataflow-Works-As-Exemplified-By-Azure-Vault-and-Keys-and-Key-Details-stderr.tmp
+

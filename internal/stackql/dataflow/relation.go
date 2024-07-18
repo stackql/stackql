@@ -13,6 +13,7 @@ type Relation interface {
 	GetProjection() (string, string, error)
 	GetSelectExpr() (sqlparser.SelectExpr, error)
 	GetColumnDescriptor() (anysdk.ColumnDescriptor, error)
+	GetDestColumnName() string
 	IsSQL() bool
 }
 
@@ -32,6 +33,10 @@ func NewStandardDataFlowRelation(
 		destColumn:     destColumn,
 		sourceExpr:     sourceExpr,
 	}
+}
+
+func (dr *standardDataFlowRelation) GetDestColumnName() string {
+	return dr.destColumn.Name.GetRawVal()
 }
 
 func (dr *standardDataFlowRelation) GetProjection() (string, string, error) {
