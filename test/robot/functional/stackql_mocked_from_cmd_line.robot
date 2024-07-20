@@ -6463,3 +6463,54 @@ Static Input Read Many Multi Dependency Multi Dependent Multiple List And Detail
     ...    stdout=${CURDIR}/tmp/Static-Input-Read-Many-Multi-Dependency-Multi-Dependent-Multiple-List-And-Detail-Dataflow-Works-As-Exemplified-By-Azure-Vault-and-Keys-and-Key-Details.tmp
     ...    stderr=${CURDIR}/tmp/Static-Input-Read-Many-Multi-Dependency-Multi-Dependent-Multiple-List-And-Detail-Dataflow-Works-As-Exemplified-By-Azure-Vault-and-Keys-and-Key-Details-stderr.tmp
 
+
+Self Join Polymorphic Works As Exemplified By Azure VPN List and Details
+    ${sqliteInputStr} =    Catenate
+    ...    select 
+    ...    split_part(lz.id, '/', -1) as gateway_short_name, 
+    ...    json_extract(detail.properties, '$.bgpSettings.bgpPeeringAddress') as bgp_peering_address, 
+    ...    lz."type" 
+    ...    from azure.network.vpn_gateways lz 
+    ...    inner join azure.network.vpn_gateways detail 
+    ...    on detail.gatewayName = split_part(lz.name, '/', -1) 
+    ...    and detail.resourceGroupName = split_part(lz.id, '/', 5) 
+    ...    and detail.subscriptionId = lz.subscriptionId 
+    ...    where lz.subscriptionId = '000000-0000-0000-0000-000000000022' 
+    ...    order by gateway_short_name asc
+    ...    ;
+    ${postgresInputStr} =    Catenate
+    ...    select 
+    ...    split_part(lz.id, '/', -1) as gateway_short_name, 
+    ...    json_extract_path_text(detail.properties, 'bgpSettings', 'bgpPeeringAddress') as bgp_peering_address, 
+    ...    lz."type" 
+    ...    from azure.network.vpn_gateways lz 
+    ...    inner join azure.network.vpn_gateways detail 
+    ...    on detail.gatewayName = split_part(lz.name, '/', -1) 
+    ...    and detail.resourceGroupName = split_part(lz.id, '/', 5) 
+    ...    and detail.subscriptionId = lz.subscriptionId 
+    ...    where lz.subscriptionId = '000000-0000-0000-0000-000000000022' 
+    ...    order by gateway_short_name asc
+    ...    ;
+    ${inputStr} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"     ${postgresInputStr}    ${sqliteInputStr}
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |--------------------|---------------------|-------------------------------|
+    ...    |${SPACE}gateway_short_name${SPACE}|${SPACE}bgp_peering_address${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}type${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |--------------------|---------------------|-------------------------------|
+    ...    |${SPACE}gateway1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}10.0.1.30${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Microsoft.Network/vpnGateways${SPACE}|
+    ...    |--------------------|---------------------|-------------------------------|
+    ...    |${SPACE}gateway2${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}10.0.1.60${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Microsoft.Network/vpnGateways${SPACE}|
+    ...    |--------------------|---------------------|-------------------------------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Self-Join-Polymorphic-Works-As-Exemplified-By-Azure-VPN-List-and-Details.tmp
+    ...    stderr=${CURDIR}/tmp/Self-Join-Polymorphic-Works-As-Exemplified-By-Azure-VPN-List-and-Details-stderr.tmp
+
