@@ -26360,7 +26360,6 @@ components:
           response:
             mediaType: application/json
             openAPIDocKey: '200'
-            objectKey: $.value
         VpnGateways_CreateOrUpdate:
           operation:
             $ref: '#/paths/~1subscriptions~1{subscriptionId}~1resourceGroups~1{resourceGroupName}~1providers~1Microsoft.Network~1vpnGateways~1{gatewayName}~1?api-version=2022-01-01/put'
@@ -26413,6 +26412,7 @@ components:
             objectKey: $.value
       sqlVerbs:
         select:
+          - $ref: '#/components/x-stackQL-resources/vpn_gateways/methods/VpnGateways_Get'
           - $ref: '#/components/x-stackQL-resources/vpn_gateways/methods/VpnGateways_ListByResourceGroup'
           - $ref: '#/components/x-stackQL-resources/vpn_gateways/methods/VpnGateways_List'
         insert:
@@ -40804,11 +40804,15 @@ paths:
             type: string
       responses:
         '200':
-          description: Request successful. Returns the details of the virtual wan vpn gateway retrieved.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/VpnGateway'
+                type: object
+                properties:
+                  name:
+                    type: string
+                  properties:
+                    $ref: '#/components/schemas/VpnGateway'
         default:
           description: Error response describing why the operation failed.
           content:
