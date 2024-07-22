@@ -6514,3 +6514,54 @@ Self Join Polymorphic Works As Exemplified By Azure VPN List and Details
     ...    stdout=${CURDIR}/tmp/Self-Join-Polymorphic-Works-As-Exemplified-By-Azure-VPN-List-and-Details.tmp
     ...    stderr=${CURDIR}/tmp/Self-Join-Polymorphic-Works-As-Exemplified-By-Azure-VPN-List-and-Details-stderr.tmp
 
+
+Self Join Polymorphic Works As Exemplified In Real World By Azure Virtual Network Gateways List and Details
+    ${sqliteInputStr} =    Catenate
+    ...    select 
+    ...    split_part(lz.id, '/', -1) as short_name, 
+    ...    json_extract(detail.properties, '$.bgpSettings.bgpPeeringAddress') as bgp_peering_address, 
+    ...    lz."type" 
+    ...    from azure.network.virtual_network_gateways lz 
+    ...    inner join azure.network.virtual_network_gateways detail 
+    ...    on detail.virtualNetworkGatewayName = split_part(lz.name, '/', -1) 
+    ...    and detail.resourceGroupName = split_part(lz.id, '/', 5) 
+    ...    and detail.subscriptionId = lz.subscriptionId 
+    ...    where lz.subscriptionId = '000000-0000-0000-0000-000000000022' 
+    ...    and lz.resourceGroupName = 'rg2' 
+    ...    order by short_name asc
+    ...    ;
+    ${postgresInputStr} =    Catenate
+    ...    select 
+    ...    split_part(lz.id, '/', -1) as short_name, 
+    ...    json_extract_path_text(detail.properties, 'bgpSettings', 'bgpPeeringAddress') as bgp_peering_address, 
+    ...    lz."type" 
+    ...    from azure.network.virtual_network_gateways lz 
+    ...    inner join azure.network.virtual_network_gateways detail 
+    ...    on detail.virtualNetworkGatewayName = split_part(lz.name, '/', -1) 
+    ...    and detail.resourceGroupName = split_part(lz.id, '/', 5) 
+    ...    and detail.subscriptionId = lz.subscriptionId 
+    ...    where lz.subscriptionId = '000000-0000-0000-0000-000000000022' 
+    ...    and lz.resourceGroupName = 'rg2' 
+    ...    order by short_name asc
+    ...    ;
+    ${inputStr} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"     ${postgresInputStr}    ${sqliteInputStr}
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |----------------|---------------------|------------------------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}short_name${SPACE}${SPACE}${SPACE}|${SPACE}bgp_peering_address${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}type${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |----------------|---------------------|------------------------------------------|
+    ...    |${SPACE}my-vpn-gateway${SPACE}|${SPACE}10.0.1.5,10.0.1.4${SPACE}${SPACE}${SPACE}|${SPACE}Microsoft.Network/virtualNetworkGateways${SPACE}|
+    ...    |----------------|---------------------|------------------------------------------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Self-Join-Polymorphic-Works-As-Exemplified-In-Real-World-By-Azure-Virtual-Network-Gateways-List-and-Details.tmp
+    ...    stderr=${CURDIR}/tmp/Self-Join-Polymorphic-Works-As-Exemplified-In-Real-World-By-Azure-Virtual-Network-Gateways-List-and-Details-stderr.tmp
+
