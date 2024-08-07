@@ -13,7 +13,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
 	"github.com/stackql/stackql/internal/stackql/util"
 
-	_ "github.com/stackql/go-sqlite3" //nolint:revive,nolintlint // anonymous import is a pattern for SQL drivers
+	_ "github.com/mattn/go-sqlite3" //nolint:revive,nolintlint // anonymous import is a pattern for SQL drivers
 )
 
 var (

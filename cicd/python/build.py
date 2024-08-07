@@ -13,7 +13,7 @@ def build_stackql(verbose :bool) -> int:
     os.environ['BUILDPATCHVERSION'] = os.environ.get('BUILDPATCHVERSION', '1')
     os.environ['CGO_ENABLED'] = os.environ.get('CGO_ENABLED', '1')
     return subprocess.call(
-        f'go build {"-x -v" if verbose else ""} --tags "json1 sqleanall" -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion={os.environ.get("BUILDMAJORVERSION")} '
+        f'go build {"-x -v" if verbose else ""} --tags "sqlite_stackql" -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion={os.environ.get("BUILDMAJORVERSION")} '
         f'-X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion={os.environ.get("BUILDMINORVERSION")} '
         f'-X github.com/stackql/stackql/internal/stackql/cmd.BuildPatchVersion={os.environ.get("BUILDPATCHVERSION")} '
         f'-X github.com/stackql/stackql/internal/stackql/cmd.BuildCommitSHA={os.environ.get("BUILDCOMMITSHA", "")} '
@@ -28,7 +28,7 @@ def build_stackql(verbose :bool) -> int:
 
 def unit_test_stackql(verbose :bool) -> int:
     return subprocess.call(
-        f'go test -timeout 1200s {"-v" if verbose else ""} --tags "json1 sqleanall"  ./...',
+        f'go test -timeout 1200s {"-v" if verbose else ""} --tags "sqlite_stackql"  ./...',
         shell=True
     )
 

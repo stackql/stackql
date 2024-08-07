@@ -15,6 +15,7 @@ require (
 	github.com/jackc/pgx/v5 v5.0.4
 	github.com/lib/pq v1.10.4
 	github.com/magiconair/properties v1.8.6
+	github.com/mattn/go-sqlite3 v1.0.2-stackql
 	github.com/olekukonko/tablewriter v0.0.0-20180130162743-b8a9be070da4
 	github.com/sirupsen/logrus v1.9.0
 	github.com/snowflakedb/gosnowflake v1.6.16
@@ -22,7 +23,6 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.1
 	github.com/stackql/any-sdk v0.0.3-beta01
-	github.com/stackql/go-sqlite3 v0.0.3-stackqlalpha02
 	github.com/stackql/go-suffix-map v0.0.1-alpha01
 	github.com/stackql/psql-wire v0.1.1-alpha07
 	github.com/stackql/stackql-parser v0.0.13-beta30
@@ -133,3 +133,5 @@ require (
 replace github.com/chzyer/readline => github.com/stackql/readline v0.0.2-alpha05
 
 replace github.com/fatih/color => github.com/stackql/color v0.0.1-rc01
+
+replace github.com/mattn/go-sqlite3 => github.com/stackql/stackql-go-sqlite3 v1.0.2-stackql
