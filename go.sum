@@ -476,14 +476,14 @@ github.com/stackql/any-sdk v0.0.3-beta01 h1:in9hYBhuUIIhhOpDpW28PdJQXgRr3JRdgLnW
 github.com/stackql/any-sdk v0.0.3-beta01/go.mod h1:CIMFo3fC2ScpqzkzeCkzUQQuzYA1VuqpG0p1EZXN+wY=
 github.com/stackql/color v0.0.1-rc01 h1:fq3Gj6gwskaZnQrDXfFYnDP6JyayGHy6Dp7I5P/V2u0=
 github.com/stackql/color v0.0.1-rc01/go.mod h1:ELkj/draVOlAH/xkhN6mQ50Qd0MPOk5AAr3maGEBuJM=
-github.com/stackql/go-sqlite3 v0.0.3-stackqlalpha02 h1:sDoabC9dSzr0CVrt6tuPwSq12ARoDXseJv7b6OwWacc=
-github.com/stackql/go-sqlite3 v0.0.3-stackqlalpha02/go.mod h1:JHMGM3Hu7TcW8NBiJMFSBCHaUkhm1VjGZD5/uDaUDf4=
 github.com/stackql/go-suffix-map v0.0.1-alpha01 h1:TDUDS8bySu41Oo9p0eniUeCm43mnRM6zFEd6j6VUaz8=
 github.com/stackql/go-suffix-map v0.0.1-alpha01/go.mod h1:QAi+SKukOyf4dBtWy8UMy+hsXXV+yyEE4vmBkji2V7g=
 github.com/stackql/psql-wire v0.1.1-alpha07 h1:LQWVUlx4Bougk6dztDNG5tmXxpIVeeTSsInTj801xCs=
 github.com/stackql/psql-wire v0.1.1-alpha07/go.mod h1:a44Wd8kDC3irFLpGutarKDBqhJ/aqXlj1aMzO5bVJYg=
 github.com/stackql/readline v0.0.2-alpha05 h1:ID4QzGdplFBsrSnTuz8pvKzWw96JbrJg8fsLry2UriU=
 github.com/stackql/readline v0.0.2-alpha05/go.mod h1:OFAYOdXk/X4+5GYiDXFfaGrk+bCN6Qv0SYY5HNzD2E0=
+github.com/stackql/stackql-go-sqlite3 v1.0.2-stackql h1:HyctYfBzMth/fIs2Y+9c/SICsCvR/DEnzcI7VZgwGZo=
+github.com/stackql/stackql-go-sqlite3 v1.0.2-stackql/go.mod h1:Uh1q+B4BYcTPb+yiD3kU8Ct7aC0hY9fxUwlHK0RXw+Y=
 github.com/stackql/stackql-parser v0.0.13-beta30 h1:+M5PJxC2lCO9pR8gxxQfWcpq2geAQN3R3l3K0ypWcYI=
 github.com/stackql/stackql-parser v0.0.13-beta30/go.mod h1:iyB47SvRS+Fvpn7joF7mHAkeiWSq83TbUhglRmLzPLQ=
 github.com/stackql/stackql-provider-registry v0.0.1-rc06 h1:MgroWOr0bSqjSTDGnXB0UoZGFXpW3SRtN0EFkzB8Rpo=

@@ -21,7 +21,7 @@ As of now, `stackql` handles `xml` SERDE through the core, and does not route th
 
 ```bash
 env CGO_ENABLED=1 go build \
-  --tags "json1 sqleanall" \
+  --tags "sqlite_stackql" \
   -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion=${BUILDMAJORVERSION:-1} \
   -X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion=${BUILDMINORVERSION:-1} \
   -X github.com/stackql/stackql/internal/stackql/cmd.BuildPatchVersion=${BUILDPATCHVERSION:-1} \
@@ -41,7 +41,7 @@ At this time, we are not dogmatic about how to implement unit tests.  Aspiration
 To run all unit tests:
 
 ```bash
-go test -timeout 1200s --tags "json1 sqleanall" ./...
+go test -timeout 1200s --tags "sqlite_stackql" ./...
 ```
 
 ### Robot tests
@@ -150,7 +150,7 @@ Requirements are [detailed in the root README](/README.md#system-requirements).
 
 Local testing of the application:
 
-1. Run `go test --tags "json1 sqleanall" ./...` tests.
+1. Run `go test --tags "sqlite_stackql" ./...` tests.
 2. Build the executable [as per the root README](/README.md#build)
 3. Perform registry rewrites as needed for mocking `python3 test/python/registry-rewrite.py`.
 3. Run robot tests:
@@ -169,7 +169,7 @@ Test coverage is sparse.  Regressions are mitigated by `go test` integration tes
 #### Point in time gotest coverage
 
 If not already done, then install 'cover' with `go get golang.org/x/tools/cmd/cover`.  
-Then: `go test --tags "json1 sqleanall" -cover ../...`.
+Then: `go test --tags "sqlite_stackql" -cover ../...`.
 
 ### Functional and Integration testing
 

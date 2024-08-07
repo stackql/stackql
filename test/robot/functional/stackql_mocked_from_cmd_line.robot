@@ -6565,3 +6565,38 @@ Self Join Polymorphic Works As Exemplified In Real World By Azure Virtual Networ
     ...    stdout=${CURDIR}/tmp/Self-Join-Polymorphic-Works-As-Exemplified-In-Real-World-By-Azure-Virtual-Network-Gateways-List-and-Details.tmp
     ...    stderr=${CURDIR}/tmp/Self-Join-Polymorphic-Works-As-Exemplified-In-Real-World-By-Azure-Virtual-Network-Gateways-List-and-Details-stderr.tmp
 
+Run JSON_EQUAL Tests
+    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test due to unsupported function json_extract
+    ${inputStr} =    Catenate
+    ...    SELECT
+    ...    json_equal(json_extract(properties, '$.attributes'), '{"created":1720150115,"enabled":true,"exportable":false,"recoveryLevel":"Recoverable+Purgeable","updated":1720150115}') AS obj_match_ex_one,
+    ...    json_equal(json_extract(properties, '$.attributes'), '{"name":"Fred"}') AS obj_mismatch_ex_zero,
+    ...    json_equal(json_extract(properties, '$.attributes'), '{"created":1720150115, "enabled": true, "exportable": false, "recoveryLevel":"Recoverable+Purgeable", "updated":1720150115}') AS obj_fmt_ex_one,
+    ...    json_equal(json_extract(properties, '$.attributes'), '{"enabled":true,"updated":1720150115,"created":1720150115,"exportable":false,"recoveryLevel":"Recoverable+Purgeable"}') AS obj_ordering_ex_one,
+    ...    json_equal(json_extract(properties, '$.keyOps'), '["sign","verify","wrapKey","unwrapKey","encrypt","decrypt"]') AS array_match_ex_one,
+    ...    json_equal(json_extract(properties, '$.keyOps'), '["decrypt","sign","verify","wrapKey","unwrapKey","encrypt"]') AS array_inc_order_ex_zero,
+    ...    json_equal(json_extract(properties, '$.keyOps'), '["sign", "verify", "wrapKey", "unwrapKey","encrypt","decrypt"]') AS array_fmt_ex_one
+    ...    FROM azure.key_vault.keys
+    ...    WHERE keyName = 'dummy-key-01'
+    ...    AND resourceGroupName = 'go-on-azure'
+    ...    AND subscriptionId = '000000-0000-0000-0000-000000000011'
+    ...    AND vaultName = 'stackql-testing-keyvault';
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |------------------|----------------------|----------------|---------------------|--------------------|-------------------------|------------------|
+    ...    |${SPACE}obj_match_ex_one${SPACE}|${SPACE}obj_mismatch_ex_zero${SPACE}|${SPACE}obj_fmt_ex_one${SPACE}|${SPACE}obj_ordering_ex_one${SPACE}|${SPACE}array_match_ex_one${SPACE}|${SPACE}array_inc_order_ex_zero${SPACE}|${SPACE}array_fmt_ex_one${SPACE}|
+    ...    |------------------|----------------------|----------------|---------------------|--------------------|-------------------------|------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}0${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}0${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|
+    ...    |------------------|----------------------|----------------|---------------------|--------------------|-------------------------|------------------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/JSON_EQUAL_test_output.tmp
+    ...    stderr=${CURDIR}/tmp/JSON_EQUAL_test_stderr.tmp
