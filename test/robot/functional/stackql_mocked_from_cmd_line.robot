@@ -6675,7 +6675,8 @@ Sum and String Aggregation on Materialized View as Exemplified By Okta Apps
     ...    name, 
     ...    split_part(name, '_', 1) stub, 
     ...    status, 
-    ...    case when status = 'ACTIVE' then 1 else 0 end as is_active_flag 
+    ...    case when status = 'ACTIVE' then 1 else 0 end as is_active_flag,
+    ...    "signOnMode" as sign_on_mode 
     ...    from okta.application.apps 
     ...    where subdomain = 'example-subdomain'
     ...    ;
@@ -6694,7 +6695,8 @@ Sum and String Aggregation on Materialized View as Exemplified By Okta Apps
     ...    name, 
     ...    split_part(name, '_', 1) stub, 
     ...    status, 
-    ...    case when status = 'ACTIVE' then 1 else 0 end as is_active_flag 
+    ...    case when status = 'ACTIVE' then 1 else 0 end as is_active_flag,
+    ...    signOnMode as sign_on_mode 
     ...    from okta.application.apps 
     ...    where subdomain = 'example-subdomain'
     ...    ;
