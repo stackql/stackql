@@ -6602,7 +6602,7 @@ Run JSON_EQUAL Tests
     ...    stderr=${CURDIR}/tmp/JSON_EQUAL_test_stderr.tmp
 
 Sum on Materialized View as Exemplified By Okta Apps
-    ${inputStr} =    Catenate
+    ${sqliteInputStr} =    Catenate
     ...    create or replace materialized view okta_apps as 
     ...    select 
     ...    name, 
@@ -6620,6 +6620,25 @@ Sum on Materialized View as Exemplified By Okta Apps
     ...    order by stub asc
     ...    ;
     ...    drop materialized view okta_apps;
+    ${postgresInputStr} =    Catenate
+    ...    create or replace materialized view okta_apps as 
+    ...    select 
+    ...    name, 
+    ...    split_part(name, '_', 1) stub, 
+    ...    status, 
+    ...    case when status = 'ACTIVE' then 1 else 0 end as is_active_flag 
+    ...    from okta.application.apps 
+    ...    where subdomain = 'example-subdomain'
+    ...    ;
+    ...    select 
+    ...    stub, 
+    ...    sum(cast(is_active_flag as decimal)) as active_count 
+    ...    from okta_apps 
+    ...    group by stub 
+    ...    order by stub asc
+    ...    ;
+    ...    drop materialized view okta_apps;
+    ${inputStr} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"     ${postgresInputStr}    ${sqliteInputStr}
     ${outputStr} =    Catenate    SEPARATOR=\n
     ...    |----------|--------------|
     ...    |${SPACE}${SPACE}${SPACE}stub${SPACE}${SPACE}${SPACE}|${SPACE}active_count${SPACE}|
