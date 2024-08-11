@@ -6566,7 +6566,7 @@ Self Join Polymorphic Works As Exemplified In Real World By Azure Virtual Networ
     ...    stderr=${CURDIR}/tmp/Self-Join-Polymorphic-Works-As-Exemplified-In-Real-World-By-Azure-Virtual-Network-Gateways-List-and-Details-stderr.tmp
 
 Run JSON_EQUAL Tests
-    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test due to unsupported function json_extract
+    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test due to unsupported function json_equal
     ${inputStr} =    Catenate
     ...    SELECT
     ...    json_equal(json_extract(properties, '$.attributes'), '{"created":1720150115,"enabled":true,"exportable":false,"recoveryLevel":"Recoverable+Purgeable","updated":1720150115}') AS obj_match_ex_one,
@@ -6600,3 +6600,70 @@ Run JSON_EQUAL Tests
     ...    ${EMPTY}
     ...    stdout=${CURDIR}/tmp/JSON_EQUAL_test_output.tmp
     ...    stderr=${CURDIR}/tmp/JSON_EQUAL_test_stderr.tmp
+
+Sum on Materialized View as Exemplified By Okta Apps
+    ${sqliteInputStr} =    Catenate
+    ...    create or replace materialized view okta_apps as 
+    ...    select 
+    ...    name, 
+    ...    split_part(name, '_', 1) stub, 
+    ...    status, 
+    ...    case when status = 'ACTIVE' then 1 else 0 end as is_active_flag 
+    ...    from okta.application.apps 
+    ...    where subdomain = 'example-subdomain'
+    ...    ;
+    ...    select 
+    ...    stub, 
+    ...    sum(is_active_flag) as active_count 
+    ...    from okta_apps 
+    ...    group by stub 
+    ...    order by stub asc
+    ...    ;
+    ...    drop materialized view okta_apps;
+    ${postgresInputStr} =    Catenate
+    ...    create or replace materialized view okta_apps as 
+    ...    select 
+    ...    name, 
+    ...    split_part(name, '_', 1) stub, 
+    ...    status, 
+    ...    case when status = 'ACTIVE' then 1 else 0 end as is_active_flag 
+    ...    from okta.application.apps 
+    ...    where subdomain = 'example-subdomain'
+    ...    ;
+    ...    select 
+    ...    stub, 
+    ...    sum(cast(is_active_flag as decimal)) as active_count 
+    ...    from okta_apps 
+    ...    group by stub 
+    ...    order by stub asc
+    ...    ;
+    ...    drop materialized view okta_apps;
+    ${inputStr} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"     ${postgresInputStr}    ${sqliteInputStr}
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |----------|--------------|
+    ...    |${SPACE}${SPACE}${SPACE}stub${SPACE}${SPACE}${SPACE}|${SPACE}active_count${SPACE}|
+    ...    |----------|--------------|
+    ...    |${SPACE}oidc${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|
+    ...    |----------|--------------|
+    ...    |${SPACE}okta${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}2${SPACE}|
+    ...    |----------|--------------|
+    ...    |${SPACE}saasure${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|
+    ...    |----------|--------------|
+    ...    |${SPACE}template${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}0${SPACE}|
+    ...    |----------|--------------|
+    ${outputErrStr} =    Catenate    SEPARATOR=\n
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${outputErrStr}
+    ...    stdout=${CURDIR}/tmp/Sum-on-Materialized-View-as-Exemplified-By-Okta-Apps.tmp
+    ...    stderr=${CURDIR}/tmp/Sum-on-Materialized-View-as-Exemplified-By-Okta-Apps-stderr.tmp

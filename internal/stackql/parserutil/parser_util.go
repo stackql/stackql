@@ -484,6 +484,11 @@ func inferAggregatedCol(funcNameLowered string) (aggregatedCol, bool) {
 			name:       funcNameLowered,
 			returnType: sqlparser.IntVal,
 		}, true
+	case "sum":
+		return simpleAggSQLCol{
+			name:       funcNameLowered,
+			returnType: sqlparser.IntVal,
+		}, true
 	default:
 		return nil, false
 	}
@@ -551,6 +556,7 @@ func inferColNameFromExpr(
 				decoratedColumn := astformat.String(expr, formatter)
 				rv.DecoratedColumn = getDecoratedColRendition(decoratedColumn, alias)
 				rv.Alias = alias
+				rv.IsAggregateExpr = retVal.IsAggregateExpr
 				return rv, nil
 			}
 		} else {
