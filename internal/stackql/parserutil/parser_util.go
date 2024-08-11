@@ -489,6 +489,16 @@ func inferAggregatedCol(funcNameLowered string) (aggregatedCol, bool) {
 			name:       funcNameLowered,
 			returnType: sqlparser.IntVal,
 		}, true
+	case "group_concat":
+		return simpleAggSQLCol{
+			name:       funcNameLowered,
+			returnType: sqlparser.StrVal,
+		}, true
+	case "string_agg":
+		return simpleAggSQLCol{
+			name:       funcNameLowered,
+			returnType: sqlparser.StrVal,
+		}, true
 	default:
 		return nil, false
 	}
@@ -515,8 +525,9 @@ func inferColNameFromExpr(
 		//}
 		retVal.IsColumn = true
 	case *sqlparser.GroupConcatExpr:
-		if len(expr.Exprs) != 1 {
-			return retVal, fmt.Errorf("group_concat() arg count = %d is NOT permissable", len(expr.Exprs))
+		argCount := len(expr.Exprs)
+		if argCount < 1 || argCount > 2 {
+			return retVal, fmt.Errorf("group_concat() arg count = %d is NOT permissable", argCount)
 		}
 		switch ex := expr.Exprs[0].(type) {
 		case *sqlparser.AliasedExpr:
@@ -526,6 +537,7 @@ func inferColNameFromExpr(
 			}
 			rv.DecoratedColumn = astformat.String(expr, formatter)
 			rv.Alias = alias
+			rv.IsAggregateExpr = true
 			return rv, nil
 		}
 
