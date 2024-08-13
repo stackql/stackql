@@ -6738,3 +6738,81 @@ Sum and String Aggregation on Materialized View as Exemplified By Okta Apps
     ...    ${outputErrStr}
     ...    stdout=${CURDIR}/tmp/Sum-and-String-Aggregation-on-Materialized-View-as-Exemplified-By-Okta-Apps.tmp
     ...    stderr=${CURDIR}/tmp/Sum-and-String-Aggregation-on-Materialized-View-as-Exemplified-By-Okta-Apps-stderr.tmp
+
+Conditional Column on Table Valued Function in Materialized View Returns Expected Results as Exemplified by Google Firewalls
+    ${sqliteInputStr} =    Catenate
+    ...    create or replace materialized view google_firewalls as 
+    ...    select 
+    ...    id, 
+    ...    name, 
+    ...    sourceRanges as source_ranges 
+    ...    from google.compute.firewalls 
+    ...    where project = 'testing-project'; 
+    ...    select 
+    ...    fw.id, 
+    ...    fw.name, 
+    ...    json_each.value as source_range,
+    ...    json_each.value = '0.0.0.0/0' as is_entire_network 
+    ...    from google_firewalls fw, 
+    ...    json_each(source_ranges)
+    ...    order by fw.id, fw.name, source_range
+    ...    ;
+    ...    drop materialized view google_firewalls;
+    ${postgresInputStr} =    Catenate
+    ...    create or replace materialized view google_firewalls as 
+    ...    select 
+    ...    id, 
+    ...    name, 
+    ...    sourceRanges as source_ranges 
+    ...    from google.compute.firewalls 
+    ...    where project = 'testing-project'; 
+    ...    select 
+    ...    fw.id, 
+    ...    fw.name, 
+    ...    rd.value as source_range, 
+    ...    case when rd.value = '0.0.0.0/0' then 1 else 0 end as is_entire_network
+    ...    from google_firewalls fw, 
+    ...    json_each(source_ranges)
+    ...    json_array_elements_text(source_ranges) as rd
+    ...    order by fw.id, fw.name, source_range
+    ...    ;
+    ...    drop materialized view google_firewalls;
+    ${inputStr} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"     ${postgresInputStr}    ${sqliteInputStr}
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |---------------|------------------------|--------------|-------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}source_range${SPACE}|${SPACE}is_entire_network${SPACE}|
+    ...    |---------------|------------------------|--------------|-------------------|
+    ...    |${SPACE}${SPACE}111111111111${SPACE}|${SPACE}allow-spark-ui${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}0.0.0.0/0${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|
+    ...    |---------------|------------------------|--------------|-------------------|
+    ...    |${SPACE}${SPACE}${SPACE}22222222222${SPACE}|${SPACE}default-allow-http${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}0.0.0.0/0${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|
+    ...    |---------------|------------------------|--------------|-------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}33333333${SPACE}|${SPACE}default-allow-https${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}0.0.0.0/0${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|
+    ...    |---------------|------------------------|--------------|-------------------|
+    ...    |${SPACE}4444444444444${SPACE}|${SPACE}default-allow-icmp${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}0.0.0.0/0${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|
+    ...    |---------------|------------------------|--------------|-------------------|
+    ...    |${SPACE}5555555555555${SPACE}|${SPACE}default-allow-internal${SPACE}|${SPACE}10.128.0.0/9${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}0${SPACE}|
+    ...    |---------------|------------------------|--------------|-------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}6666666666${SPACE}|${SPACE}default-allow-rdp${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}0.0.0.0/0${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|
+    ...    |---------------|------------------------|--------------|-------------------|
+    ...    |${SPACE}${SPACE}777777777777${SPACE}|${SPACE}default-allow-ssh${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}0.0.0.0/0${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|
+    ...    |---------------|------------------------|--------------|-------------------|
+    ...    |${SPACE}8888888888888${SPACE}|${SPACE}selected-allow-rdesk${SPACE}${SPACE}${SPACE}|${SPACE}10.0.0.0/16${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}0${SPACE}|
+    ...    |---------------|------------------------|--------------|-------------------|
+    ...    |${SPACE}8888888888888${SPACE}|${SPACE}selected-allow-rdesk${SPACE}${SPACE}${SPACE}|${SPACE}10.128.0.0/9${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}0${SPACE}|
+    ...    |---------------|------------------------|--------------|-------------------|
+    ${outputErrStr} =    Catenate    SEPARATOR=\n
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${outputErrStr}
+    ...    stdout=${CURDIR}/tmp/Conditional-Column-on-Table-Valued-Function-in-Materialized-View-Returns-Expected-Results-as-Exemplified-by-Google-Firewalls.tmp
+    ...    stderr=${CURDIR}/tmp/Conditional-Column-on-Table-Valued-Function-in-Materialized-View-Returns-Expected-Results-as-Exemplified-by-Google-Firewalls-stderr.tmp
