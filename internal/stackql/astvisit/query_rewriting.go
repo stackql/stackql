@@ -2,6 +2,7 @@ package astvisit
 
 import (
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -25,7 +26,8 @@ import (
 )
 
 var (
-	_ QueryRewriteAstVisitor = &standardQueryRewriteAstVisitor{}
+	_                          QueryRewriteAstVisitor = &standardQueryRewriteAstVisitor{}
+	isJSONEachCompatibleRegexp *regexp.Regexp         = regexp.MustCompile(`^.*\.value$`) //nolint:revive // acceptable
 )
 
 type QueryRewriteAstVisitor interface {
@@ -96,6 +98,15 @@ func NewQueryRewriteAstVisitor(
 		namespaceCollection:   namespaceCollection,
 	}
 	return rv
+}
+
+func (v *standardQueryRewriteAstVisitor) isJSONEachCompatible(col parserutil.ColumnHandle) bool {
+	s := col.Name
+	qualifier := col.Qualifier
+	if qualifier != "" {
+		s = fmt.Sprintf("%s.%s", qualifier, s)
+	}
+	return isJSONEachCompatibleRegexp.MatchString(s)
 }
 
 // TODO: introduce dependency on RDBMS
@@ -677,9 +688,13 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 				} else {
 					r, ok := indirect.GetColumnByName(col.Name)
 					if !ok {
-						return fmt.Errorf("query rewriting for indirection: cannot find col = '%s'", col.Name)
+						if !v.isJSONEachCompatible(col) {
+							return fmt.Errorf("query rewriting for indirection: cannot find col = '%s'", col.Name)
+						}
+						relationalCol = typing.NewRelationalColumn(col.Name, "").WithDecorated(col.DecoratedColumn) // TOOO: clean this up
+					} else {
+						relationalCol = typing.NewRelationalColumn(col.Name, r.GetType()).WithDecorated(col.DecoratedColumn)
 					}
-					relationalCol = typing.NewRelationalColumn(col.Name, r.GetType()).WithDecorated(col.DecoratedColumn)
 				}
 			}
 			relationalCol = relationalCol.WithAlias(col.Alias)

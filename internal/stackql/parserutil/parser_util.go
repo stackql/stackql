@@ -77,7 +77,7 @@ func ExtractSelectColumnNames(selStmt *sqlparser.Select, formatter sqlparser.Nod
 	for _, node := range selStmt.SelectExprs {
 		switch node := node.(type) {
 		case *sqlparser.AliasedExpr:
-			cn, cErr := inferColNameFromExpr(node, formatter)
+			cn, cErr := inferColNameFromExpr(node.Expr, formatter, node.As.GetRawVal())
 			if cErr != nil {
 				return nil, cErr
 			}
@@ -442,7 +442,7 @@ func GetColumnUsageTypesForExec(exec *sqlparser.Exec) ([]ColumnUsageMetadata, er
 }
 
 func InferColNameFromExpr(node *sqlparser.AliasedExpr, formatter sqlparser.NodeFormatter) (ColumnHandle, error) {
-	return inferColNameFromExpr(node, formatter)
+	return inferColNameFromExpr(node.Expr, formatter, node.As.GetRawVal())
 }
 
 func GetStringFromStringFunc(fe *sqlparser.FuncExpr) (string, error) {
@@ -504,17 +504,17 @@ func inferAggregatedCol(funcNameLowered string) (aggregatedCol, bool) {
 	}
 }
 
-//nolint:funlen,gocognit,gocritic // not overly complex
+//nolint:funlen,gocognit,gocritic,gocyclo,cyclop // not overly complex
 func inferColNameFromExpr(
-	node *sqlparser.AliasedExpr,
+	node sqlparser.Expr,
 	formatter sqlparser.NodeFormatter,
+	alias string,
 ) (ColumnHandle, error) {
-	alias := node.As.GetRawVal()
 	retVal := ColumnHandle{
 		Alias: alias,
-		Expr:  node.Expr,
+		Expr:  node,
 	}
-	switch expr := node.Expr.(type) {
+	switch expr := node.(type) {
 	case *sqlparser.ColName:
 		retVal.Name = expr.Name.String()
 		retVal.Qualifier = expr.Qualifier.GetRawVal()
@@ -531,7 +531,7 @@ func inferColNameFromExpr(
 		}
 		switch ex := expr.Exprs[0].(type) {
 		case *sqlparser.AliasedExpr:
-			rv, err := inferColNameFromExpr(ex, formatter)
+			rv, err := inferColNameFromExpr(ex.Expr, formatter, ex.As.GetRawVal())
 			if err != nil {
 				return rv, err
 			}
@@ -561,7 +561,7 @@ func inferColNameFromExpr(
 		if len(expr.Exprs) == 1 { //nolint:nestif // TODO: review
 			switch ex := expr.Exprs[0].(type) {
 			case *sqlparser.AliasedExpr:
-				rv, err := inferColNameFromExpr(ex, formatter)
+				rv, err := inferColNameFromExpr(ex.Expr, formatter, ex.As.GetRawVal())
 				if err != nil {
 					return rv, err
 				}
@@ -576,7 +576,7 @@ func inferColNameFromExpr(
 			for i, exp := range expr.Exprs {
 				switch ex := exp.(type) {
 				case *sqlparser.AliasedExpr:
-					rv, err := inferColNameFromExpr(ex, formatter)
+					rv, err := inferColNameFromExpr(ex.Expr, formatter, ex.As.GetRawVal())
 					if err != nil {
 						return rv, err
 					}
@@ -599,7 +599,7 @@ func inferColNameFromExpr(
 		case "substr":
 			switch ex := expr.Exprs[0].(type) {
 			case *sqlparser.AliasedExpr:
-				rv, err := inferColNameFromExpr(ex, formatter)
+				rv, err := inferColNameFromExpr(ex.Expr, formatter, ex.As.GetRawVal())
 				if err != nil {
 					return rv, err
 				}
@@ -630,7 +630,67 @@ func inferColNameFromExpr(
 		retVal.Val = expr
 		decoratedColumn := ExtractStringRepresentationOfValueColumn(expr)
 		retVal.DecoratedColumn = getDecoratedColRendition(decoratedColumn, alias)
-
+	case *sqlparser.ComparisonExpr:
+		// TODO: add provision for comparison stuff
+		decoratedColumn := astformat.String(expr, formatter)
+		retVal.DecoratedColumn = getDecoratedColRendition(decoratedColumn, alias)
+		lhsRetval, lhsErr := inferColNameFromExpr(expr.Left, formatter, alias)
+		if lhsRetval.Name != "" {
+			retVal.Name = lhsRetval.Name
+			retVal.Qualifier = lhsRetval.Qualifier
+			break
+		}
+		if lhsErr != nil {
+			return retVal, lhsErr
+		}
+		rhsRetval, rhsErr := inferColNameFromExpr(expr.Right, formatter, alias)
+		if rhsRetval.Name != "" {
+			retVal.Name = rhsRetval.Name
+			retVal.Qualifier = rhsRetval.Qualifier
+			break
+		}
+		if rhsErr != nil {
+			return retVal, rhsErr
+		}
+	case *sqlparser.CaseExpr:
+		decoratedColumn := astformat.String(expr, formatter)
+		retVal.DecoratedColumn = getDecoratedColRendition(decoratedColumn, alias)
+		if expr.Expr != nil {
+			lhsRetval, lhsErr := inferColNameFromExpr(expr.Expr, formatter, alias)
+			if lhsErr != nil {
+				return retVal, lhsErr
+			}
+			if lhsRetval.Name != "" {
+				retVal.Name = lhsRetval.Name
+				retVal.Qualifier = lhsRetval.Qualifier
+				retVal.DecoratedColumn = strings.ReplaceAll(retVal.DecoratedColumn, `\"`, `"`)
+				return retVal, nil
+			}
+		}
+		for _, when := range expr.Whens {
+			whenRetval, whenErr := inferColNameFromExpr(when.Cond, formatter, alias)
+			if whenErr != nil {
+				return retVal, whenErr
+			}
+			if whenRetval.Name != "" {
+				retVal.Name = whenRetval.Name
+				retVal.Qualifier = whenRetval.Qualifier
+				retVal.DecoratedColumn = strings.ReplaceAll(retVal.DecoratedColumn, `\"`, `"`)
+				return retVal, nil
+			}
+		}
+		if expr.Else != nil {
+			rhsRetval, rhsErr := inferColNameFromExpr(expr.Else, formatter, alias)
+			if rhsErr != nil {
+				return retVal, rhsErr
+			}
+			if rhsRetval.Name != "" {
+				retVal.Name = rhsRetval.Name
+				retVal.Qualifier = rhsRetval.Qualifier
+				retVal.DecoratedColumn = strings.ReplaceAll(retVal.DecoratedColumn, `\"`, `"`)
+				return retVal, nil
+			}
+		}
 	default:
 		decoratedColumn := astformat.String(expr, formatter)
 		retVal.DecoratedColumn = getDecoratedColRendition(decoratedColumn, alias)
