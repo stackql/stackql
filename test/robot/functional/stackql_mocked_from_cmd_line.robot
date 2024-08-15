@@ -6771,8 +6771,7 @@ Conditional Column on Table Valued Function in Materialized View Returns Expecte
     ...    fw.name, 
     ...    rd.value as source_range, 
     ...    case when rd.value = '0.0.0.0/0' then 1 else 0 end as is_entire_network
-    ...    from google_firewalls fw, 
-    ...    json_each(source_ranges)
+    ...    from google_firewalls fw,
     ...    json_array_elements_text(source_ranges) as rd
     ...    order by fw.id, fw.name, source_range
     ...    ;

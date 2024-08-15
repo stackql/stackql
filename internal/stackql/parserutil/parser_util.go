@@ -652,6 +652,45 @@ func inferColNameFromExpr(
 		if rhsErr != nil {
 			return retVal, rhsErr
 		}
+	case *sqlparser.CaseExpr:
+		decoratedColumn := astformat.String(expr, formatter)
+		retVal.DecoratedColumn = getDecoratedColRendition(decoratedColumn, alias)
+		if expr.Expr != nil {
+			lhsRetval, lhsErr := inferColNameFromExpr(expr.Expr, formatter, alias)
+			if lhsErr != nil {
+				return retVal, lhsErr
+			}
+			if lhsRetval.Name != "" {
+				retVal.Name = lhsRetval.Name
+				retVal.Qualifier = lhsRetval.Qualifier
+				retVal.DecoratedColumn = strings.ReplaceAll(retVal.DecoratedColumn, `\"`, `"`)
+				return retVal, nil
+			}
+		}
+		for _, when := range expr.Whens {
+			whenRetval, whenErr := inferColNameFromExpr(when.Cond, formatter, alias)
+			if whenErr != nil {
+				return retVal, whenErr
+			}
+			if whenRetval.Name != "" {
+				retVal.Name = whenRetval.Name
+				retVal.Qualifier = whenRetval.Qualifier
+				retVal.DecoratedColumn = strings.ReplaceAll(retVal.DecoratedColumn, `\"`, `"`)
+				return retVal, nil
+			}
+		}
+		if expr.Else != nil {
+			rhsRetval, rhsErr := inferColNameFromExpr(expr.Else, formatter, alias)
+			if rhsErr != nil {
+				return retVal, rhsErr
+			}
+			if rhsRetval.Name != "" {
+				retVal.Name = rhsRetval.Name
+				retVal.Qualifier = rhsRetval.Qualifier
+				retVal.DecoratedColumn = strings.ReplaceAll(retVal.DecoratedColumn, `\"`, `"`)
+				return retVal, nil
+			}
+		}
 	default:
 		decoratedColumn := astformat.String(expr, formatter)
 		retVal.DecoratedColumn = getDecoratedColRendition(decoratedColumn, alias)
