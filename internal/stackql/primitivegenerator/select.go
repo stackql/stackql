@@ -160,7 +160,8 @@ func (pb *standardPrimitiveGenerator) analyzeSelect(pbi planbuilderinput.PlanBui
 
 		for _, tbl := range tblz {
 			err := pb.expandTable(tbl)
-			if err != nil {
+			_, isIndirect := tbl.GetIndirect()
+			if err != nil && !isIndirect {
 				return err
 			}
 		}

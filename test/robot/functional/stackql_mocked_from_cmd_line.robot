@@ -6815,3 +6815,161 @@ Conditional Column on Table Valued Function in Materialized View Returns Expecte
     ...    ${outputErrStr}
     ...    stdout=${CURDIR}/tmp/Conditional-Column-on-Table-Valued-Function-in-Materialized-View-Returns-Expected-Results-as-Exemplified-by-Google-Firewalls.tmp
     ...    stderr=${CURDIR}/tmp/Conditional-Column-on-Table-Valued-Function-in-Materialized-View-Returns-Expected-Results-as-Exemplified-by-Google-Firewalls-stderr.tmp
+
+Unaliased Projection on Materialized View as Exemplified by Google Firewalls
+    ${inputStr} =    Catenate
+    ...    create or replace materialized view google_firewalls as 
+    ...    select 
+    ...    id, 
+    ...    name, 
+    ...    sourceRanges as source_ranges 
+    ...    from google.compute.firewalls 
+    ...    where project = 'testing-project'; 
+    ...    select 
+    ...    id,
+    ...    name 
+    ...    from 
+    ...    google_firewalls
+    ...    order by id asc, name asc
+    ...    ;
+    ...    drop materialized view google_firewalls;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |---------------|------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------|------------------------|
+    ...    |${SPACE}${SPACE}111111111111${SPACE}|${SPACE}allow-spark-ui${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------|------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}22222222222${SPACE}|${SPACE}default-allow-http${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------|------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}33333333${SPACE}|${SPACE}default-allow-https${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------|------------------------|
+    ...    |${SPACE}4444444444444${SPACE}|${SPACE}default-allow-icmp${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------|------------------------|
+    ...    |${SPACE}5555555555555${SPACE}|${SPACE}default-allow-internal${SPACE}|
+    ...    |---------------|------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}6666666666${SPACE}|${SPACE}default-allow-rdp${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------|------------------------|
+    ...    |${SPACE}${SPACE}777777777777${SPACE}|${SPACE}default-allow-ssh${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------|------------------------|
+    ...    |${SPACE}8888888888888${SPACE}|${SPACE}selected-allow-rdesk${SPACE}${SPACE}${SPACE}|
+    ...    |---------------|------------------------|
+    ${outputErrStr} =    Catenate    SEPARATOR=\n
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${outputErrStr}
+    ...    stdout=${CURDIR}/tmp/Unaliased-Projection-on-Materialized-View-as-Exemplified-by-Google-Firewalls.tmp
+    ...    stderr=${CURDIR}/tmp/Unaliased-Projection-on-Materialized-View-as-Exemplified-by-Google-Firewalls-stderr.tmp
+
+Unaliased Projection on View as Exemplified by Google Firewalls
+    ${inputStr} =    Catenate
+    ...    create or replace view google_firewalls_v as 
+    ...    select 
+    ...    id, 
+    ...    name, 
+    ...    sourceRanges as source_ranges 
+    ...    from google.compute.firewalls 
+    ...    where project = 'testing-project'; 
+    ...    select 
+    ...    id,
+    ...    name 
+    ...    from 
+    ...    google_firewalls_v
+    ...    order by id asc, name asc
+    ...    ;
+    ...    drop materialized view google_firewalls_v;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |---------------|------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------|------------------------|
+    ...    |${SPACE}${SPACE}111111111111${SPACE}|${SPACE}allow-spark-ui${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------|------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}22222222222${SPACE}|${SPACE}default-allow-http${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------|------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}33333333${SPACE}|${SPACE}default-allow-https${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------|------------------------|
+    ...    |${SPACE}4444444444444${SPACE}|${SPACE}default-allow-icmp${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------|------------------------|
+    ...    |${SPACE}5555555555555${SPACE}|${SPACE}default-allow-internal${SPACE}|
+    ...    |---------------|------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}6666666666${SPACE}|${SPACE}default-allow-rdp${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------|------------------------|
+    ...    |${SPACE}${SPACE}777777777777${SPACE}|${SPACE}default-allow-ssh${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------|------------------------|
+    ...    |${SPACE}8888888888888${SPACE}|${SPACE}selected-allow-rdesk${SPACE}${SPACE}${SPACE}|
+    ...    |---------------|------------------------|
+    ${outputErrStr} =    Catenate    SEPARATOR=\n
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${outputErrStr}
+    ...    stdout=${CURDIR}/tmp/Unaliased-Projection-on-View-as-Exemplified-by-Google-Firewalls.tmp
+    ...    stderr=${CURDIR}/tmp/Unaliased-Projection-on-View-as-Exemplified-by-Google-Firewalls-stderr.tmp
+
+Unaliased Projection on Subquery as Exemplified by Google Firewalls
+    ${inputStr} =    Catenate
+    ...    select 
+    ...    id, 
+    ...    name
+    ...    from
+    ...    (
+    ...    select 
+    ...    id, 
+    ...    name, 
+    ...    sourceRanges as source_ranges 
+    ...    from google.compute.firewalls 
+    ...    where project = 'testing-project'
+    ...    ) google_firewalls
+    ...    order by id asc, name asc
+    ...    ;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |---------------|------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------|------------------------|
+    ...    |${SPACE}${SPACE}111111111111${SPACE}|${SPACE}allow-spark-ui${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------|------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}22222222222${SPACE}|${SPACE}default-allow-http${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------|------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}33333333${SPACE}|${SPACE}default-allow-https${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------|------------------------|
+    ...    |${SPACE}4444444444444${SPACE}|${SPACE}default-allow-icmp${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------|------------------------|
+    ...    |${SPACE}5555555555555${SPACE}|${SPACE}default-allow-internal${SPACE}|
+    ...    |---------------|------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}6666666666${SPACE}|${SPACE}default-allow-rdp${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------|------------------------|
+    ...    |${SPACE}${SPACE}777777777777${SPACE}|${SPACE}default-allow-ssh${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------|------------------------|
+    ...    |${SPACE}8888888888888${SPACE}|${SPACE}selected-allow-rdesk${SPACE}${SPACE}${SPACE}|
+    ...    |---------------|------------------------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Unaliased-Projection-on-Subquery-as-Exemplified-by-Google-Firewalls.tmp
+    ...    stderr=${CURDIR}/tmp/Unaliased-Projection-on-Subquery-as-Exemplified-by-Google-Firewalls-stderr.tmp
