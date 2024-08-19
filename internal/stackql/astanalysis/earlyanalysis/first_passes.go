@@ -99,8 +99,8 @@ func (tfa *threeToFivePassAggregateImpl) GetParameters() parserutil.ParameterMap
 type InitialPassesScreenerAnalyzer interface {
 	Analyzer
 	InitialPassesScreener
-	GetIndirectCreateTail() (primitivebuilder.Builder, bool)
-	SetIndirectCreateTail(indirectCreateTail primitivebuilder.Builder)
+	GetIndirectCreateTail() ([]primitivebuilder.Builder, bool)
+	SetIndirectCreateTail(preBuiltIndirectCollection []primitivebuilder.Builder)
 }
 
 var (
@@ -131,19 +131,19 @@ type standardInitialPasses struct {
 	parentWhereParams             parserutil.ParameterMap
 	indirectionDepth              int
 	isReadOnly                    bool
-	indirectCreateTail            primitivebuilder.Builder
+	preBuiltIndirectCollection    []primitivebuilder.Builder
 }
 
 func (sp *standardInitialPasses) GetIndirectionDepth() int {
 	return sp.indirectionDepth
 }
 
-func (sp *standardInitialPasses) GetIndirectCreateTail() (primitivebuilder.Builder, bool) {
-	return sp.indirectCreateTail, sp.indirectCreateTail != nil
+func (sp *standardInitialPasses) GetIndirectCreateTail() ([]primitivebuilder.Builder, bool) {
+	return sp.preBuiltIndirectCollection, sp.preBuiltIndirectCollection != nil
 }
 
-func (sp *standardInitialPasses) SetIndirectCreateTail(indirectCreateTail primitivebuilder.Builder) {
-	sp.indirectCreateTail = indirectCreateTail
+func (sp *standardInitialPasses) SetIndirectCreateTail(preBuiltIndirectCollection []primitivebuilder.Builder) {
+	sp.preBuiltIndirectCollection = preBuiltIndirectCollection
 }
 
 func (sp *standardInitialPasses) GetInstructionType() InstructionType {
@@ -289,6 +289,7 @@ func (sp *standardInitialPasses) initialPasses(
 	if err != nil {
 		return err
 	}
+	// TODO: make this iterative
 	bldr, createBldrExists := astExpandVisitor.GetCreateBuilder()
 	if createBldrExists {
 		sp.SetIndirectCreateTail(bldr)

@@ -65,7 +65,7 @@ func (pb *standardPrimitiveGenerator) analyzeSelect(pbi planbuilderinput.PlanBui
 			return fmt.Errorf("nil pg internal builder")
 		}
 		if pb.PrimitiveComposer.IsIndirect() {
-			pb.SetIndirectCreateTailBuilder(builder)
+			pb.SetIndirectCreateTailBuilder([]primitivebuilder.Builder{builder})
 		}
 		return nil
 	}
@@ -218,7 +218,7 @@ func (pb *standardPrimitiveGenerator) analyzeSelect(pbi planbuilderinput.PlanBui
 			}
 			bld := dp.GetBldr()
 			if pb.PrimitiveComposer.IsIndirect() {
-				pb.SetIndirectCreateTailBuilder(bld)
+				pb.SetIndirectCreateTailBuilder([]primitivebuilder.Builder{bld})
 			}
 			selCtx := dp.GetSelectCtx()
 			pChild.GetPrimitiveComposer().SetBuilder(bld)

@@ -6973,3 +6973,87 @@ Unaliased Projection on Subquery as Exemplified by Google Firewalls
     ...    ${EMPTY}
     ...    stdout=${CURDIR}/tmp/Unaliased-Projection-on-Subquery-as-Exemplified-by-Google-Firewalls.tmp
     ...    stderr=${CURDIR}/tmp/Unaliased-Projection-on-Subquery-as-Exemplified-by-Google-Firewalls-stderr.tmp
+
+Materialized View from Projection on View as Exemplified by AWS S3 List and Detail
+    ${inputStr} =    Catenate
+    ...    create or replace materialized view mv_from_v as 
+    ...    select 
+    ...    region, 
+    ...    data__Identifier 
+    ...    from aws.pseudo_s3.s3_bucket_list_and_detail
+    ...    ;
+    ...    select 
+    ...    * 
+    ...    from mv_from_v 
+    ...    order by data__Identifier asc
+    ...    ;
+    ...    drop materialized view mv_from_v
+    ...    ;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-----------|-----------------------------|
+    ...    |${SPACE}${SPACE}region${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}data__Identifier${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------|-----------------------------|
+    ...    |${SPACE}us-east-1${SPACE}|${SPACE}stackql-contrived-bucket-01${SPACE}|
+    ...    |-----------|-----------------------------|
+    ...    |${SPACE}us-east-1${SPACE}|${SPACE}stackql-contrived-bucket-02${SPACE}|
+    ...    |-----------|-----------------------------|
+    ...    |${SPACE}us-east-1${SPACE}|${SPACE}stackql-contrived-bucket-03${SPACE}|
+    ...    |-----------|-----------------------------|
+    ${outputErrStr} =    Catenate    SEPARATOR=\n
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${outputErrStr}
+    ...    stdout=${CURDIR}/tmp/Materialized-View-from-Projection-on-View-as-Exemplified-by-AWS-S3-List-and-Detail.tmp
+    ...    stderr=${CURDIR}/tmp/Materialized-View-from-Projection-on-View-as-Exemplified-by-AWS-S3-List-and-Detail-stderr.tmp
+
+Materialized View from Star on View as Exemplified by AWS S3 List and Detail
+    ${inputStr} =    Catenate
+    ...    create or replace materialized view mv_from_v_star as 
+    ...    select 
+    ...    *
+    ...    from aws.pseudo_s3.s3_bucket_list_and_detail
+    ...    ;
+    ...    select 
+    ...    region, 
+    ...    data__Identifier 
+    ...    from mv_from_v_star 
+    ...    order by data__Identifier asc
+    ...    ;
+    ...    drop materialized view mv_from_v_star
+    ...    ;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-----------|-----------------------------|
+    ...    |${SPACE}${SPACE}region${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}data__Identifier${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------|-----------------------------|
+    ...    |${SPACE}us-east-1${SPACE}|${SPACE}stackql-contrived-bucket-01${SPACE}|
+    ...    |-----------|-----------------------------|
+    ...    |${SPACE}us-east-1${SPACE}|${SPACE}stackql-contrived-bucket-02${SPACE}|
+    ...    |-----------|-----------------------------|
+    ...    |${SPACE}us-east-1${SPACE}|${SPACE}stackql-contrived-bucket-03${SPACE}|
+    ...    |-----------|-----------------------------|
+    ${outputErrStr} =    Catenate    SEPARATOR=\n
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${outputErrStr}
+    ...    stdout=${CURDIR}/tmp/Materialized-View-from-Star-on-View-as-Exemplified-by-AWS-S3-List-and-Detail.tmp
+    ...    stderr=${CURDIR}/tmp/Materialized-View-from-Star-on-View-as-Exemplified-by-AWS-S3-List-and-Detail-stderr.tmp

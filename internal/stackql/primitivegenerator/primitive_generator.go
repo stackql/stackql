@@ -55,8 +55,8 @@ type PrimitiveGenerator interface {
 	SetElideRead(bool)
 	IsElideRead() bool
 	IsShowResults() bool
-	GetIndirectCreateTailBuilder() (primitivebuilder.Builder, bool)
-	SetIndirectCreateTailBuilder(builder primitivebuilder.Builder)
+	GetIndirectCreateTailBuilder() ([]primitivebuilder.Builder, bool)
+	SetIndirectCreateTailBuilder(builder []primitivebuilder.Builder)
 	WithAstIndirect(astindirect.Indirect) PrimitiveGenerator
 }
 
@@ -68,7 +68,7 @@ type standardPrimitiveGenerator struct {
 	prepStmtOffset            int
 	PrimitiveComposer         primitivecomposer.PrimitiveComposer
 	isElideRead               bool
-	indirectCreateTailBuilder primitivebuilder.Builder
+	indirectCreateTailBuilder []primitivebuilder.Builder
 }
 
 func NewRootPrimitiveGenerator(
@@ -93,11 +93,11 @@ func (pb *standardPrimitiveGenerator) WithAstIndirect(astIndirect astindirect.In
 	return pb
 }
 
-func (pb *standardPrimitiveGenerator) GetIndirectCreateTailBuilder() (primitivebuilder.Builder, bool) {
+func (pb *standardPrimitiveGenerator) GetIndirectCreateTailBuilder() ([]primitivebuilder.Builder, bool) {
 	return pb.indirectCreateTailBuilder, pb.indirectCreateTailBuilder != nil
 }
 
-func (pb *standardPrimitiveGenerator) SetIndirectCreateTailBuilder(builder primitivebuilder.Builder) {
+func (pb *standardPrimitiveGenerator) SetIndirectCreateTailBuilder(builder []primitivebuilder.Builder) {
 	pb.indirectCreateTailBuilder = builder
 }
 
