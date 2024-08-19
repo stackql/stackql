@@ -209,7 +209,7 @@ func (pb *standardPrimitiveGenerator) analyzeUnion(
 	pb.PrimitiveComposer.SetSelectPreparedStatementCtx(unionSelectCtx)
 	if pb.PrimitiveComposer.IsIndirect() {
 		retrievedBldr := pb.PrimitiveComposer.GetBuilder()
-		pb.SetIndirectCreateTailBuilder(retrievedBldr)
+		pb.SetIndirectCreateTailBuilder([]primitivebuilder.Builder{retrievedBldr})
 	}
 
 	return nil

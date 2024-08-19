@@ -44,23 +44,23 @@ type planGraphBuilder interface {
 	createInstructionFor(planbuilderinput.PlanBuilderInput) error
 	nop(planbuilderinput.PlanBuilderInput) error
 	getPlanGraphHolder() primitivegraph.PrimitiveGraphHolder
-	setPrebuiltIndirect(primitivebuilder.Builder)
-	getPrebuiltIndirect() (primitivebuilder.Builder, bool)
+	setPrebuiltIndirect([]primitivebuilder.Builder)
+	getPrebuiltIndirect() ([]primitivebuilder.Builder, bool)
 }
 
 type standardPlanGraphBuilder struct {
-	planGraphHolder        primitivegraph.PrimitiveGraphHolder
-	rootPrimitiveGenerator primitivegenerator.PrimitiveGenerator
-	transactionContext     txn_context.ITransactionContext
-	preBuiltIndirect       primitivebuilder.Builder
+	planGraphHolder            primitivegraph.PrimitiveGraphHolder
+	rootPrimitiveGenerator     primitivegenerator.PrimitiveGenerator
+	transactionContext         txn_context.ITransactionContext
+	preBuiltIndirectCollection []primitivebuilder.Builder
 }
 
-func (pgb *standardPlanGraphBuilder) getPrebuiltIndirect() (primitivebuilder.Builder, bool) {
-	return pgb.preBuiltIndirect, pgb.preBuiltIndirect != nil
+func (pgb *standardPlanGraphBuilder) getPrebuiltIndirect() ([]primitivebuilder.Builder, bool) {
+	return pgb.preBuiltIndirectCollection, pgb.preBuiltIndirectCollection != nil
 }
 
-func (pgb *standardPlanGraphBuilder) setPrebuiltIndirect(builder primitivebuilder.Builder) {
-	pgb.preBuiltIndirect = builder
+func (pgb *standardPlanGraphBuilder) setPrebuiltIndirect(builderz []primitivebuilder.Builder) {
+	pgb.preBuiltIndirectCollection = builderz
 }
 
 func (pgb *standardPlanGraphBuilder) setRootPrimitiveGenerator(
@@ -291,7 +291,31 @@ func (pgb *standardPlanGraphBuilder) handleDescribe(pbi planbuilderinput.PlanBui
 	return nil
 }
 
-//nolint:gocognit // acceptable
+func (pgb *standardPlanGraphBuilder) arrangePrebuildIndirects(
+	preBuiltIndirectCollection []primitivebuilder.Builder) (primitivegraph.PrimitiveNode, error) {
+	var selectPrimitiveNode primitivegraph.PrimitiveNode
+	for i, prebuiltIndirect := range preBuiltIndirectCollection {
+		buildErr := prebuiltIndirect.Build()
+		if buildErr != nil {
+			return nil, buildErr
+		}
+		tailNode := prebuiltIndirect.GetTail()
+		localRootNode := prebuiltIndirect.GetRoot()
+		if tailNode != nil {
+			if i > 0 {
+				// TODO: create graph edge from previous tail to current head
+				pgb.planGraphHolder.GetPrimitiveGraph().NewDependency(
+					selectPrimitiveNode, localRootNode, 1.0,
+				)
+			}
+			selectPrimitiveNode = tailNode
+		} else {
+			return nil, fmt.Errorf("could not obtain tail node from prebuilt indirect")
+		}
+	}
+	return selectPrimitiveNode, nil
+}
+
 func (pgb *standardPlanGraphBuilder) handleDDL(pbi planbuilderinput.PlanBuilderInput) error {
 	handlerCtx := pbi.GetHandlerCtx()
 	node, ok := pbi.GetDDL()
@@ -306,18 +330,13 @@ func (pgb *standardPlanGraphBuilder) handleDDL(pbi planbuilderinput.PlanBuilderI
 	bldrInput.SetParserNode(node)
 	//nolint:nestif // TODO: refactor
 	if node.SelectStatement != nil && parserutil.IsCreateMaterializedView(node) {
-		prebuiltIndirect, prebuildIndirectExists := pgb.getPrebuiltIndirect()
+		preBuiltIndirectCollection, prebuildIndirectExists := pgb.getPrebuiltIndirect()
 		var selectPrimitiveNode primitivegraph.PrimitiveNode
 		if prebuildIndirectExists {
-			buildErr := prebuiltIndirect.Build()
-			if buildErr != nil {
-				return buildErr
-			}
-			tailNode := prebuiltIndirect.GetTail()
-			if tailNode != nil {
-				selectPrimitiveNode = tailNode
-			} else {
-				return fmt.Errorf("could not obtain tail node from prebuilt indirect")
+			var arrangeErr error
+			selectPrimitiveNode, arrangeErr = pgb.arrangePrebuildIndirects(preBuiltIndirectCollection)
+			if arrangeErr != nil {
+				return arrangeErr
 			}
 		} else {
 			selPbi, selErr := planbuilderinput.NewPlanBuilderInput(
@@ -392,18 +411,13 @@ func (pgb *standardPlanGraphBuilder) handleRefreshMaterializedView(pbi planbuild
 	bldrInput.SetParserNode(node)
 	//nolint:nestif // acceptable
 	if node.ImplicitSelect != nil {
-		prebuiltIndirect, prebuildIndirectExists := pgb.getPrebuiltIndirect()
+		preBuiltIndirectCollection, prebuildIndirectExists := pgb.getPrebuiltIndirect()
 		var selectPrimitiveNode primitivegraph.PrimitiveNode
 		if prebuildIndirectExists {
-			buildErr := prebuiltIndirect.Build()
-			if buildErr != nil {
-				return buildErr
-			}
-			tailNode := prebuiltIndirect.GetTail()
-			if tailNode != nil {
-				selectPrimitiveNode = tailNode
-			} else {
-				return fmt.Errorf("could not obtain tail node from prebuilt indirect")
+			var arrangeErr error
+			selectPrimitiveNode, arrangeErr = pgb.arrangePrebuildIndirects(preBuiltIndirectCollection)
+			if arrangeErr != nil {
+				return arrangeErr
 			}
 		} else {
 			selPbi, selErr := planbuilderinput.NewPlanBuilderInput(

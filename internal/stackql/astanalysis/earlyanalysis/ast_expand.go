@@ -31,7 +31,7 @@ type AstExpandVisitor interface {
 	Analyze() error
 	ContainsAnalyticsCacheMaterial() bool
 	IsReadOnly() bool
-	GetCreateBuilder() (primitivebuilder.Builder, bool)
+	GetCreateBuilder() ([]primitivebuilder.Builder, bool)
 }
 
 type indirectExpandAstVisitor struct {
@@ -48,7 +48,7 @@ type indirectExpandAstVisitor struct {
 	indirectionDepth               int
 	selectCount                    int
 	mutateCount                    int
-	createBuilder                  primitivebuilder.Builder
+	createBuilder                  []primitivebuilder.Builder
 }
 
 func newIndirectExpandAstVisitor(
@@ -79,7 +79,7 @@ func newIndirectExpandAstVisitor(
 	return rv, nil
 }
 
-func (v *indirectExpandAstVisitor) GetCreateBuilder() (primitivebuilder.Builder, bool) {
+func (v *indirectExpandAstVisitor) GetCreateBuilder() ([]primitivebuilder.Builder, bool) {
 	return v.createBuilder, v.createBuilder != nil
 }
 
@@ -121,6 +121,10 @@ func (v *indirectExpandAstVisitor) processIndirect(node sqlparser.SQLNode, indir
 	if err != nil {
 		return err
 	}
+	childIndirectCreateBuilders, childCreateBuilderExists := childAnalyzer.GetIndirectCreateTail()
+	if childCreateBuilderExists {
+		v.createBuilder = append(v.createBuilder, childIndirectCreateBuilders...)
+	}
 	// Persist indirect for later retrieval
 	v.annotatedAST.SetIndirect(node, indirect)
 	indirectPrimitiveGenerator := v.primitiveGenerator.CreateIndirectPrimitiveGenerator(
@@ -161,7 +165,7 @@ func (v *indirectExpandAstVisitor) processIndirect(node sqlparser.SQLNode, indir
 	}
 	createBuilder, createBuilderExists := indirectPrimitiveGenerator.GetIndirectCreateTailBuilder()
 	if createBuilderExists {
-		v.createBuilder = createBuilder
+		v.createBuilder = append(v.createBuilder, createBuilder...)
 	}
 	// createBuilder, createBuilderExists := childAnalyzer.GetIndirectCreateTail()
 	// if createBuilderExists {
