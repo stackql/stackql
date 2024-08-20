@@ -5,11 +5,12 @@ ${SQL_BACKEND}                         sqlite_embedded   # to be overridden from
 ${IS_WSL}                              false   # to be overridden from command line, with string "true"
 ${SHOULD_RUN_DOCKER_EXTERNAL_TESTS}    false   # to be overridden from command line, with string "true"
 ${CONCURRENCY_LIMIT}                   1       # to be overridden from command line, with integer value, -1 for no limit
+${USE_STACKQL_PREINSTALLED}            false   # to be overridden from command line, with string "true"
 
 *** Settings ***
 Library           Process
 Library           OperatingSystem 
-Variables         ${LOCAL_LIB_HOME}/stackql_context.py    ${EXECUTION_PLATFORM}    ${SQL_BACKEND}
+Variables         ${LOCAL_LIB_HOME}/stackql_context.py    ${EXECUTION_PLATFORM}    ${SQL_BACKEND}    ${USE_STACKQL_PREINSTALLED}
 Library           Process
 Library           OperatingSystem
 Library           String

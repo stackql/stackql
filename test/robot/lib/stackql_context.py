@@ -134,7 +134,12 @@ _PROD_REGISTRY_URL :str = "https://cdn.statically.io/gh/stackql/stackql-provider
 _DEV_REGISTRY_URL :str = "https://cdn.statically.io/gh/stackql/stackql-provider-registry/dev/providers"
 
 REPOSITORY_ROOT_UNIX = get_unix_path(REPOSITORY_ROOT)
-STACKQL_EXE     = ' '.join(get_unix_path(os.path.join(REPOSITORY_ROOT, 'build', _exe_name)).splitlines())
+
+def get_stackql_exe(execution_env :str, is_preinstalled :bool):
+  _default_stackqk_exe = ' '.join(get_unix_path(os.path.join(REPOSITORY_ROOT, 'build', _exe_name)).splitlines())
+  if is_preinstalled:
+    return 'stackql'
+  return _default_stackqk_exe
 
 def get_registry_mocked(execution_env :str) -> RegistryCfg:
   return RegistryCfg(
@@ -836,7 +841,8 @@ def get_db_setup_src(sql_backend_str :str) -> str:
 
 
 
-def get_variables(execution_env :str, sql_backend_str :str):
+def get_variables(execution_env :str, sql_backend_str :str, use_stackql_preinstalled :str) -> dict:
+  must_use_stackql_preinstalled :bool = use_stackql_preinstalled.lower() == 'true'
   NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_ONE = get_native_query_row_count_from_table('okta.application.apps.Application.generation_1', sql_backend_str)
   NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_THREE = get_native_query_row_count_from_table('okta.application.apps.Application.generation_3', sql_backend_str)
   rv = {
@@ -903,7 +909,7 @@ def get_variables(execution_env :str, sql_backend_str :str):
     'SQL_BACKEND_CFG_STR_CANONICAL':                  get_canonical_sql_backend(execution_env, sql_backend_str),
     'SQL_CLIENT_EXPORT_BACKEND':                      get_export_sql_backend(execution_env, sql_backend_str),
     'SQL_CLIENT_EXPORT_CONNECTION_ARG':               get_export_sql_connection_arg(execution_env, sql_backend_str),
-    'STACKQL_EXE':                                    STACKQL_EXE,
+    'STACKQL_EXE':                                    get_stackql_exe(execution_env, must_use_stackql_preinstalled),
     'SUMOLOGIC_SECRET_STR':                           SUMOLOGIC_SECRET_STR,
     ## queries and expectations
     'AWS_CC_VIEW_SELECT_PROJECTION_BUCKET_COMPLEX_EXPECTED':                  AWS_CC_VIEW_SELECT_PROJECTION_BUCKET_COMPLEX_EXPECTED,

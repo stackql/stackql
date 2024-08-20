@@ -417,6 +417,48 @@ jobs:
       with:
         name: stackql_linux_amd64
         path: build/stackql
+    
+    - name: prepare deb boilerplate
+      run: |
+        mkdir -p .debpkg/usr/bin
+        cp -p build/stackql .debpkg/usr/bin/
+    
+    - uses: jiro4989/build-deb-action@v3
+      name: build deb package
+      with:
+        package: stackql
+        package_root: .debpkg
+        maintainer: stackql
+        version: ${{env.BUILDMAJORVERSION}}.${{env.BUILDMINORVERSION}}.${{env.BUILDPATCHVERSION}}
+        arch: 'amd64'
+        # depends: 'libc6 (>= 2.2.1), git'
+        desc: 'stackql treats the internet as a relational database'
+        homepage: 'https://stackql.io'
+    
+    - name: install and test deb package
+      run: |
+        mkdir -p deb_test
+        cp stackql_${{env.BUILDMAJORVERSION}}.${{env.BUILDMINORVERSION}}.${{env.BUILDPATCHVERSION}}_amd64.deb deb_test/
+        sudo dpkg -i ./deb_test/stackql_${{env.BUILDMAJORVERSION}}.${{env.BUILDMINORVERSION}}.${{env.BUILDPATCHVERSION}}_amd64.deb
+        sudo apt-get install -f
+        python cicd/python/build.py --robot-test  --config='{ "variables": { "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": "true", "CONCURRENCY_LIMIT": -1, "USE_STACKQL_PREINSTALLED": "true"  } }'
+        stackqlLocation="$(which stackql 2>&1 | head -n 1)"
+        stackqlVersion="$(stackql --version 2>&1 | head -n 1)"
+        echo "stackql location: ${stackqlLocation}"
+        echo "stackql version: ${stackqlVersion}"
+    
+    - name: Output from mocked deb package functional tests
+      if: always()
+      run: |
+        cat ./test/robot/functional/output.xml
+
+    - name: Upload deb Artifact
+      uses: actions/upload-artifact@v4.3.1
+      if: success()
+      with:
+        name: amd64-artifact-deb
+        path: |
+          ./*.deb
 
   linuxarmbuild:
     name: Linux arm64 Build
@@ -630,7 +672,6 @@ jobs:
       with:
         name: stackql_linux_arm64
         path: build/stackql
-
 
   wsltest:
     name: WSL Test
