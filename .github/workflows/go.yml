@@ -673,6 +673,75 @@ jobs:
         name: stackql_linux_arm64
         path: build/stackql
 
+    - name: prepare deb boilerplate
+      env:
+        pkgCompressType: 'gzip'
+        pkgRoot: '.debpkg'
+        pkgName: 'stackql'
+        pkgVersion: ${{env.BUILDMAJORVERSION}}.${{env.BUILDMINORVERSION}}.${{env.BUILDPATCHVERSION}}
+        pkgArchitecture: 'arm64'
+        pkgMaintainer: 'stackql'
+        pkgDepends: ''
+        pkgHomepage: 'https://stackql.io'
+        pkgDescription: 'stackql treats the internet as a relational database'
+        pkgInstalledSize: ''
+        pkgOwner: '--root-owner-group'
+      run: |
+        mkdir -p "${pkgRoot}/usr/bin"
+        mkdir -p "${pkgRoot}/DEBIAN"
+        cp -p build/stackql "${pkgRoot}/usr/bin/"
+        if [ -z "$pkgInstalledSize" ]; then
+          pkgRootSizeBytes="$(du --bytes --summarize --exclude=DEBIAN "$pkgRoot"/ | awk '{print $1}')"
+          pkgInstalledSize="$(( (pkgRootSizeBytes + 1024 - 1) / 1024 ))"
+        fi
+        cat >"${pkgRoot}/DEBIAN/control" <<EOL
+        Package: ${pkgName}
+        Version: ${pkgVersion}
+        Installed-Size: ${pkgInstalledSize}
+        Architecture: ${pkgArchitecture}
+        Maintainer: ${pkgMaintainer}
+        ${pkgDepends}${pkgHomepage}${pkgDescription}
+        EOL
+        sudo apt-get update -yqq && \
+        sudo apt-get install -y \
+            devscripts \
+            build-essential \
+            cdbs
+        DEB_FILE="${pkgName}_${pkgVersion}_${pkgArchitecture}.deb"
+        dpkg-deb -Z"${pkgCompressType}" ${pkgOwner:+"$pkgOwner"} --build "$pkgRoot" "$DEB_FILE"     
+        ls ./*.deb
+        echo "file_name=$DEB_FILE"
+    
+    - name: install and test deb package
+      env:
+        pkgName: 'stackql'
+        pkgVersion: ${{env.BUILDMAJORVERSION}}.${{env.BUILDMINORVERSION}}.${{env.BUILDPATCHVERSION}}
+        pkgArchitecture: 'arm64'
+      run: |
+        mkdir -p deb_test
+        DEB_FILE="${pkgName}_${pkgVersion}_${pkgArchitecture}.deb"
+        cp "${DEB_FILE}" deb_test/
+        sudo dpkg -i "./deb_test/${DEB_FILE}"
+        sudo apt-get install -f
+        python cicd/python/build.py --robot-test  --config='{ "variables": { "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": "true", "CONCURRENCY_LIMIT": -1, "USE_STACKQL_PREINSTALLED": "true"  } }'
+        stackqlLocation="$(which stackql 2>&1 | head -n 1)"
+        stackqlVersion="$(stackql --version 2>&1 | head -n 1)"
+        echo "stackql location: ${stackqlLocation}"
+        echo "stackql version: ${stackqlVersion}"
+      
+    - name: Output from mocked deb package functional tests
+      if: always()
+      run: |
+        cat ./test/robot/functional/output.xml
+
+    - name: Upload deb Artifact
+      uses: actions/upload-artifact@v4.3.1
+      if: success()
+      with:
+        name: arm64-artifact-deb
+        path: |
+          ./*.deb
+
   wsltest:
     name: WSL Test
     runs-on: windows-latest
