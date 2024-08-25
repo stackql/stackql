@@ -615,51 +615,58 @@ resources:
     title: firewallPolicies
   firewalls:
     id: google.compute.firewalls
+    name: firewalls
+    title: Firewalls
     methods:
-      delete:
+      list:
         operation:
-          $ref: 'googleapis.com/v0.1.2/services-split/compute/compute-v1.yaml#/paths/~1projects~1{project}~1global~1firewalls~1{firewall}/delete'
-        response:
-          mediaType: application/json
-          openAPIDocKey: '200'
-      get:
-        operation:
-          $ref: 'googleapis.com/v0.1.2/services-split/compute/compute-v1.yaml#/paths/~1projects~1{project}~1global~1firewalls~1{firewall}/get'
+          $ref: 'googleapis.com/v2.0.1/services-split/compute/compute-v1.yaml#/paths/~1projects~1{project}~1global~1firewalls/get'
         response:
           mediaType: application/json
           openAPIDocKey: '200'
       insert:
         operation:
-          $ref: 'googleapis.com/v0.1.2/services-split/compute/compute-v1.yaml#/paths/~1projects~1{project}~1global~1firewalls/post'
-        request:
-          mediaType: application/json
+          $ref: 'googleapis.com/v2.0.1/services-split/compute/compute-v1.yaml#/paths/~1projects~1{project}~1global~1firewalls/post'
         response:
           mediaType: application/json
           openAPIDocKey: '200'
-      list:
+      get:
         operation:
-          $ref: 'googleapis.com/v0.1.2/services-split/compute/compute-v1.yaml#/paths/~1projects~1{project}~1global~1firewalls/get'
+          $ref: 'googleapis.com/v2.0.1/services-split/compute/compute-v1.yaml#/paths/~1projects~1{project}~1global~1firewalls~1{firewall}/get'
+        response:
+          mediaType: application/json
+          openAPIDocKey: '200'
+      delete:
+        operation:
+          $ref: >-
+            googleapis.com/v2.0.1/services-split/compute/compute-v1.yaml#/paths/~1projects~1{project}~1global~1firewalls~1{firewall}/delete
+        response:
+          mediaType: application/json
+          openAPIDocKey: '200'
+      put:
+        operation:
+          $ref: 'googleapis.com/v2.0.1/services-split/compute/compute-v1.yaml#/paths/~1projects~1{project}~1global~1firewalls~1{firewall}/put'
         response:
           mediaType: application/json
           openAPIDocKey: '200'
       patch:
         operation:
-          $ref: 'googleapis.com/v0.1.2/services-split/compute/compute-v1.yaml#/paths/~1projects~1{project}~1global~1firewalls~1{firewall}/patch'
-        request:
-          mediaType: application/json
+          $ref: 'googleapis.com/v2.0.1/services-split/compute/compute-v1.yaml#/paths/~1projects~1{project}~1global~1firewalls~1{firewall}/patch'
         response:
           mediaType: application/json
           openAPIDocKey: '200'
+    sqlVerbs:
+      select:
+        - $ref: '#/components/x-stackQL-resources/firewalls/methods/get'
+        - $ref: '#/components/x-stackQL-resources/firewalls/methods/list'
+      insert:
+        - $ref: '#/components/x-stackQL-resources/firewalls/methods/insert'
+      replace:
+        - $ref: '#/resources/firewalls/methods/put'
       update:
-        operation:
-          $ref: 'googleapis.com/v0.1.2/services-split/compute/compute-v1.yaml#/paths/~1projects~1{project}~1global~1firewalls~1{firewall}/put'
-        request:
-          mediaType: application/json
-        response:
-          mediaType: application/json
-          openAPIDocKey: '200'
-    name: firewalls
-    title: firewalls
+        - $ref: '#/resources/firewalls/methods/patch'
+      delete:
+        - $ref: '#/components/x-stackQL-resources/firewalls/methods/delete'
   forwardingRules:
     id: google.compute.forwardingRules
     methods:

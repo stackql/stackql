@@ -7057,3 +7057,75 @@ Materialized View from Star on View as Exemplified by AWS S3 List and Detail
     ...    ${outputErrStr}
     ...    stdout=${CURDIR}/tmp/Materialized-View-from-Star-on-View-as-Exemplified-by-AWS-S3-List-and-Detail.tmp
     ...    stderr=${CURDIR}/tmp/Materialized-View-from-Star-on-View-as-Exemplified-by-AWS-S3-List-and-Detail-stderr.tmp
+
+Show Methods Supports Replace as Exemplified by Google Firewalls
+    ${inputStr} =    Catenate
+    ...    show methods in
+    ...    google.compute.firewalls
+    ...    ;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |------------|-------------------|---------|
+    ...    |${SPACE}MethodName${SPACE}|${SPACE}${SPACE}RequiredParams${SPACE}${SPACE}${SPACE}|${SPACE}SQLVerb${SPACE}|
+    ...    |------------|-------------------|---------|
+    ...    |${SPACE}get${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}firewall,${SPACE}project${SPACE}|${SPACE}SELECT${SPACE}${SPACE}|
+    ...    |------------|-------------------|---------|
+    ...    |${SPACE}list${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}project${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}SELECT${SPACE}${SPACE}|
+    ...    |------------|-------------------|---------|
+    ...    |${SPACE}insert${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}project${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}INSERT${SPACE}${SPACE}|
+    ...    |------------|-------------------|---------|
+    ...    |${SPACE}delete${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}firewall,${SPACE}project${SPACE}|${SPACE}DELETE${SPACE}${SPACE}|
+    ...    |------------|-------------------|---------|
+    ...    |${SPACE}patch${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}firewall,${SPACE}project${SPACE}|${SPACE}UPDATE${SPACE}${SPACE}|
+    ...    |------------|-------------------|---------|
+    ...    |${SPACE}put${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}firewall,${SPACE}project${SPACE}|${SPACE}REPLACE${SPACE}|
+    ...    |------------|-------------------|---------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Show-Methods-Supports-Replace-as-Exemplified-by-Google-Firewalls.tmp
+    ...    stderr=${CURDIR}/tmp/Show-Methods-Supports-Replace-as-Exemplified-by-Google-Firewalls-stderr.tmp
+
+Update Replace Duality as Exemplified by Google Firewalls
+    ${inputStr} =    Catenate
+    ...    update
+    ...    google.compute.firewalls 
+    ...    set 
+    ...    data__name = 'some-other-firewall',
+    ...    data__description = 'Self-explanatory'
+    ...    where 
+    ...    project = 'testing-project'
+    ...    and firewall = 'some-other-firewall'
+    ...    ;
+    ...    replace
+    ...    google.compute.firewalls 
+    ...    set 
+    ...    data__name = 'allow-spark-ui',
+    ...    data__description = 'Self-explanatory'
+    ...    where 
+    ...    project = 'testing-project'
+    ...    and firewall = 'allow-spark-ui'
+    ...    ;
+    ${outputErrStr} =    Catenate    SEPARATOR=\n
+    ...    The operation was despatched successfully
+    ...    The operation was despatched successfully
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${EMPTY}
+    ...    ${outputErrStr}
+    ...    stdout=${CURDIR}/tmp/Update-Replace-Duality-as-Exemplified-by-Google-Firewalls.tmp
+    ...    stderr=${CURDIR}/tmp/Update-Replace-Duality-as-Exemplified-by-Google-Firewalls-stderr.tmp

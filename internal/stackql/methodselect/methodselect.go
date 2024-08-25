@@ -48,6 +48,8 @@ func (sel *DefaultMethodSelector) GetMethodForAction(
 		methodName = "insert"
 	case "update":
 		methodName = "update"
+	case "replace":
+		methodName = "replace"
 	default:
 		return nil, "", fmt.Errorf(
 			"iql action = '%s' curently not supported, there is no method mapping possible for any resource",
