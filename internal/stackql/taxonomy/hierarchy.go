@@ -193,7 +193,7 @@ func GetHeirarchyFromStatement(
 	case *sqlparser.Delete:
 		methodAction = "delete"
 	case *sqlparser.Update:
-		methodAction = "update"
+		methodAction = strings.ToLower(n.Action)
 	default:
 		return nil, fmt.Errorf("cannot resolve taxonomy")
 	}

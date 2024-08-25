@@ -5901,6 +5901,40 @@
   },
   {
     "httpRequest": {
+      "method": "PUT",
+      "path": "/projects/testing-project/global/firewalls/allow-spark-ui",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "description" : "Self-explanatory",
+          "name" : "allow-spark-ui"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "body":{}      
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "PATCH",
+      "path": "/projects/testing-project/global/firewalls/some-other-firewall",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "description" : "Self-explanatory",
+          "name" : "some-other-firewall"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "body":{}      
+    }
+  },
+  {
+    "httpRequest": {
       "method": "GET",
       "path": "/projects/testing-project/global/firewalls"
     },
