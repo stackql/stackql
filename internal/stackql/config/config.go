@@ -49,13 +49,6 @@ func GetDefaultConfigFilePath() string {
 	return path.Join(GetWorkingDir(), defaultConfigFileName)
 }
 
-func GetDefaultColorScheme() string {
-	if runtime.GOOS == "windows" {
-		return dto.DefaultWindowsColorScheme
-	}
-	return dto.DefaultColorScheme
-}
-
 func GetReadlineDirPath(runtimeCtx dto.RuntimeCtx) string {
 	return path.Join(runtimeCtx.ApplicationFilesRootPath, readlineDir)
 }

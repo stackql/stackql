@@ -23,7 +23,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/stackql/stackql/internal/stackql/color"
 	"github.com/stackql/stackql/internal/stackql/config"
 	"github.com/stackql/stackql/internal/stackql/driver"
 	"github.com/stackql/stackql/internal/stackql/dto"
@@ -31,6 +30,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/iqlerror"
 	"github.com/stackql/stackql/internal/stackql/logging"
+	"github.com/stackql/stackql/internal/stackql/presentation"
 	"github.com/stackql/stackql/internal/stackql/provider"
 	"github.com/stackql/stackql/internal/stackql/writer"
 
@@ -64,19 +64,19 @@ func usage(w io.Writer) {
 	io.WriteString(w, getShellIntroLong()+"\r\n") //nolint:errcheck // TODO: investigate
 }
 
-func getShellPRompt(authCtx *dto.AuthCtx, cd *color.Driver) string {
+func getShellPRompt(authCtx *dto.AuthCtx, cd presentation.Driver) string {
 	if runtime.GOOS == "windows" {
 		return "stackql  >>"
 	}
 	if authCtx != nil && authCtx.Active {
 		switch authCtx.Type {
 		case dto.AuthInteractiveStr:
-			return cd.ShellColorPrint("stackql* >>")
+			return cd.Sprintf("stackql* >>")
 		case dto.AuthServiceAccountStr:
-			return cd.ShellColorPrint("stackql**>>")
+			return cd.Sprintf("stackql**>>")
 		}
 	}
-	return cd.ShellColorPrint("stackql  >>")
+	return cd.Sprintf("stackql  >>")
 }
 
 func getIntroAuthMsg(authCtx *dto.AuthCtx, prov provider.IProvider) string {
@@ -101,10 +101,6 @@ func getIntroAuthMsg(authCtx *dto.AuthCtx, prov provider.IProvider) string {
 	return "" // notAuthenticatedMsg
 }
 
-func colorIsNull(runtimeCtx dto.RuntimeCtx) bool {
-	return runtimeCtx.ColorScheme == dto.NullColorScheme || runtime.GOOS == "windows"
-}
-
 // shellCmd represents the shell command.
 //
 //nolint:gochecknoglobals // cobra command
@@ -115,14 +111,14 @@ var shellCmd = &cobra.Command{
 	//nolint:revive // acceptable for now
 	Run: func(command *cobra.Command, args []string) {
 
-		cd := color.NewColorDriver(runtimeCtx)
+		cd := presentation.NewPresentationDriver(runtimeCtx)
 
 		outfile, _ := writer.GetDecoratedOutputWriter(runtimeCtx.OutfilePath, cd)
 
-		outErrFile, _ := writer.GetDecoratedOutputWriter(writer.StdErrStr, cd, cd.GetErrorColorAttributes(runtimeCtx)...)
+		outErrFile, _ := writer.GetDecoratedOutputWriter(writer.StdErrStr, cd)
 
 		var sb strings.Builder
-		fmt.Fprintln(outfile, "") // necesary hack to get 'square' coloring
+		fmt.Fprintln(outfile, "") // necesary hack to get 'square' presentation
 		fmt.Fprintln(outfile, getShellIntroLong())
 
 		inputBundle, err := entryutil.BuildInputBundle(runtimeCtx)
@@ -162,28 +158,15 @@ var shellCmd = &cobra.Command{
 			}
 		}
 
-		var readlineCfg *readline.Config
-
-		if colorIsNull(handlerCtx.GetRuntimeContext()) {
-			readlineCfg = &readline.Config{
-				Prompt:               getShellPRompt(authCtx, cd),
-				InterruptPrompt:      "^C",
-				EOFPrompt:            "exit",
-				HistoryFile:          config.GetReadlineFilePath(handlerCtx.GetRuntimeContext()),
-				HistorySearchFold:    true,
-				HistoryExternalWrite: true,
-			}
-		} else {
-			readlineCfg = &readline.Config{
-				Stderr:               outErrFile,
-				Stdout:               outfile,
-				Prompt:               getShellPRompt(authCtx, cd),
-				InterruptPrompt:      "^C",
-				EOFPrompt:            "exit",
-				HistoryFile:          config.GetReadlineFilePath(handlerCtx.GetRuntimeContext()),
-				HistorySearchFold:    true,
-				HistoryExternalWrite: true,
-			}
+		readlineCfg := &readline.Config{
+			Stderr:               outErrFile,
+			Stdout:               outfile,
+			Prompt:               getShellPRompt(authCtx, cd),
+			InterruptPrompt:      "^C",
+			EOFPrompt:            "exit",
+			HistoryFile:          config.GetReadlineFilePath(handlerCtx.GetRuntimeContext()),
+			HistorySearchFold:    true,
+			HistoryExternalWrite: true,
 		}
 
 		sessionRunnerInstance, sessionErr := newSessionRunner(
@@ -257,9 +240,6 @@ var shellCmd = &cobra.Command{
 			outErrFile,
 			"goodbye",
 		)
-		if !colorIsNull(runtimeCtx) {
-			cd.ResetColorScheme()
-		}
 		fmt.Fprintf(outfile, "")
 		fmt.Fprintf(outErrFile, "")
 		outfile, _ = writer.GetOutputWriter(writer.StdOutStr)

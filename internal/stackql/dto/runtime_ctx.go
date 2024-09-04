@@ -9,7 +9,6 @@ type RuntimeCtx struct {
 	AllowInsecure                bool
 	CacheKeyCount                int
 	CacheTTL                     int
-	ColorScheme                  string
 	ConfigFilePath               string
 	CPUProfile                   string
 	CSVHeadersDisable            bool
@@ -96,8 +95,7 @@ func (rc *RuntimeCtx) Set(key string, val string) error {
 		retVal = setInt(&rc.CacheKeyCount, val)
 	case CacheTTLKey:
 		retVal = setInt(&rc.CacheTTL, val)
-	case ColorSchemeKey:
-		rc.ColorScheme = val
+	case ColorSchemeKey: // deprecated
 	case ConfigFilePathKey:
 		rc.ConfigFilePath = val
 	case CPUProfileKey:

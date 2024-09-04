@@ -8,7 +8,6 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.1
 	github.com/aws/aws-sdk-go v1.28.8
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
-	github.com/fatih/color v1.13.0
 	github.com/getkin/kin-openapi v0.88.0
 	github.com/google/go-jsonnet v0.17.0
 	github.com/jackc/pgtype v1.10.0
@@ -92,9 +91,7 @@ require (
 	github.com/klauspost/compress v1.15.11 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
-	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-ieproxy v0.0.1 // indirect
-	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/mtibben/percent v0.2.1 // indirect
@@ -131,7 +128,5 @@ require (
 )
 
 replace github.com/chzyer/readline => github.com/stackql/readline v0.0.2-alpha05
-
-replace github.com/fatih/color => github.com/stackql/color v0.0.1-rc01
 
 replace github.com/mattn/go-sqlite3 => github.com/stackql/stackql-go-sqlite3 v1.0.2-stackql
