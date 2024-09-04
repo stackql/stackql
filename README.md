@@ -45,6 +45,20 @@
 ![badge4]
 
 </div>
+
+<div align="center">
+
+![homebrew downloads](https://img.shields.io/homebrew/installs/dy/stackql?label=homebrew%20downloads)
+![homebrew version](https://img.shields.io/homebrew/v/stackql?label=homebrew%20version)
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/stackql/stackql/total?label=github%20release%20downloads)
+![GitHub Release](https://img.shields.io/github/v/release/stackql/stackql?label=github%20release)
+![Docker Pulls](https://img.shields.io/docker/pulls/stackql/stackql)
+![Docker Image Version](https://img.shields.io/docker/v/stackql/stackql?label=docker%20version)
+![Chocolatey Downloads](https://img.shields.io/chocolatey/dt/stackql?label=chocolatey%20downloads)
+![Chocolatey Version](https://img.shields.io/chocolatey/v/stackql)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/stackql-deploy?label=pypi%20downloads)
+
+</div>
 <div align="center">
 
 ### Deploy, manage and query cloud resources and interact with APIs using SQL
