@@ -100,6 +100,8 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
+	var dummyString string
+
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.DBInternalCfgRaw, dto.DBInternalCfgRawKey, "{}", "JSON / YAML string to configure DBMS housekeeping query handling")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.SQLBackendCfgRaw, dto.SQLBackendCfgRawKey, "{}", "JSON / YAML string representing SQL Backend System Config")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.NamespaceCfgRaw, dto.NamespaceCfgRawKey, "{}", "JSON / YAML string representing namespaces for cacheing, views etc")
@@ -108,7 +110,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.ACIDCfgRaw, dto.ACIDCfgRawKey, "{}", "JSON / YAML string representing ACID config")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.SessionCtxRaw, dto.SessionCtxKey, "{}", "JSON / YAML string representing session config")
 	rootCmd.PersistentFlags().IntVar(&runtimeCtx.APIRequestTimeout, dto.APIRequestTimeoutKey, 45, "API request timeout in seconds, 0 for no timeout.") //nolint:mnd // TODO: investigate
-	rootCmd.PersistentFlags().StringVar(&runtimeCtx.ColorScheme, dto.ColorSchemeKey, config.GetDefaultColorScheme(), fmt.Sprintf("Color scheme, must be one of {'%s', '%s', '%s'}", dto.DarkColorScheme, dto.LightColorScheme, dto.NullColorScheme))
+	rootCmd.PersistentFlags().StringVar(&dummyString, dto.ColorSchemeKey, "", "DEPRECATED: color schems no longer active")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.CABundle, dto.CABundleKey, "", "Path to CA bundle, if not specified then system defaults used.")
 	rootCmd.PersistentFlags().BoolVar(&runtimeCtx.AllowInsecure, dto.AllowInsecureKey, false, "Allow trust of insecure certificates (not recommended)")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.ConfigFilePath, dto.ConfigFilePathKey, config.GetDefaultConfigFilePath(), "Config file full path; defaults to current dir")

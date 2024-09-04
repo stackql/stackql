@@ -3,11 +3,10 @@ package writer //nolint:testpackage // this violates another rule: var-naming: d
 import (
 	"io"
 	"os"
-	"runtime"
 	"testing"
 
-	"github.com/stackql/stackql/internal/stackql/color"
 	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/stackql/internal/stackql/presentation"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -59,9 +58,8 @@ func TestGetOutputWriter(t *testing.T) {
 
 func TestGetDecoratedOutputWriter(t *testing.T) {
 	type args struct {
-		filename      string
-		cd            *color.Driver
-		overrideColor []color.Attribute
+		filename string
+		cd       presentation.Driver
 	}
 	tests := []struct {
 		name string
@@ -70,36 +68,18 @@ func TestGetDecoratedOutputWriter(t *testing.T) {
 	}{
 		{
 			"stdout",
-			args{"stdout", color.NewColorDriver(dto.RuntimeCtx{}), nil},
-			&StdStreamWriter{os.Stdout, color.NewColorDriver(dto.RuntimeCtx{}), nil},
+			args{"stdout", presentation.NewPresentationDriver(dto.RuntimeCtx{})},
+			&StdStreamWriter{os.Stdout, presentation.NewPresentationDriver(dto.RuntimeCtx{})},
 		},
 		{
 			"stderr",
-			args{"stderr", color.NewColorDriver(dto.RuntimeCtx{}), nil},
-			&StdStreamWriter{os.Stderr, color.NewColorDriver(dto.RuntimeCtx{}), nil},
+			args{"stderr", presentation.NewPresentationDriver(dto.RuntimeCtx{})},
+			&StdStreamWriter{os.Stderr, presentation.NewPresentationDriver(dto.RuntimeCtx{})},
 		},
-	}
-	if runtime.GOOS == "windows" {
-		tests = []struct {
-			name string
-			args args
-			want io.Writer
-		}{
-			{
-				"stdout",
-				args{"stdout", color.NewColorDriver(dto.RuntimeCtx{}), nil},
-				os.Stdout,
-			},
-			{
-				"stderr",
-				args{"stderr", color.NewColorDriver(dto.RuntimeCtx{}), nil},
-				os.Stderr,
-			},
-		}
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, _ := GetDecoratedOutputWriter(tt.args.filename, tt.args.cd, tt.args.overrideColor...)
+			got, _ := GetDecoratedOutputWriter(tt.args.filename, tt.args.cd)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -107,9 +87,8 @@ func TestGetDecoratedOutputWriter(t *testing.T) {
 
 func TestStdStreamWriter_Write(t *testing.T) {
 	type fields struct {
-		writer        io.Writer
-		colorDriver   *color.Driver
-		overrideColor []color.Attribute
+		writer       io.Writer
+		prezzoDriver presentation.Driver
 	}
 	type args struct {
 		p []byte
@@ -122,7 +101,7 @@ func TestStdStreamWriter_Write(t *testing.T) {
 	}{
 		{
 			"stdout",
-			fields{os.Stdout, color.NewColorDriver(dto.RuntimeCtx{}), nil},
+			fields{os.Stdout, presentation.NewPresentationDriver(dto.RuntimeCtx{})},
 			args{[]byte("test")},
 			4,
 		},
@@ -130,9 +109,8 @@ func TestStdStreamWriter_Write(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ssw := &StdStreamWriter{
-				writer:        tt.fields.writer,
-				colorDriver:   tt.fields.colorDriver,
-				overrideColor: tt.fields.overrideColor,
+				writer:       tt.fields.writer,
+				prezzoDriver: tt.fields.prezzoDriver,
 			}
 			got, _ := ssw.Write(tt.args.p)
 			assert.Equal(t, got, tt.want)
