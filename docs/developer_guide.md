@@ -9,6 +9,36 @@ Please see [the contributing document](/CONTRIBUTING.md).
 
 See [the CICD documentation](/docs/CICD.md).
 
+## Developer quickstart
+
+The short of things is that for basic build and unit testing, these are needed:
+
+- Install `golang` on your system **if you do not already have version >= 1.21**, per [the `golang` doco](https://go.dev/doc/install).
+- Install `python` on your system **if you do not already have version >= 3.11**, available from [the `python` website](https://www.python.org/downloads/) and numerous package managers.
+
+Then, each of these should be run from the repository root:
+
+    - Get required `go` libs: `go get ./...`.
+    - Run unit tests: `python cicd/python/build.py --test`.
+    - Build the application: `python cicd/python/build.py --build` (this will generate an executable at `./build/stackql`).
+
+
+For serious development, simulated integration tests are essential.  So, there are more dependencies:
+
+- Install the python dependencies (including `robot` framework).  Simplest way, system permitting, is `pip install -r cicd/requirements.txt`.
+- Install `psql`.  On some systems, this can be done as client only asnd/or with various package managers; fallback is to just [install postgres manually](https://www.postgresql.org/download/).
+- Install `java`.  Version `11` is what is currently used in CI but this ought not to be mandatory.
+- Install `mock-server`, either using a package manager (eg `maven`), or from source per [the mockserver docs](https://www.mock-server.com/mock_server/running_mock_server.html#build-and-run-from-source).
+
+Having installed all dependencies, the `robot` tests should be run from the repository root directory (this relies upon the executable in `./build/stackql`, built above):
+    - Run mocked functional tests: `python cicd/python/build.py --robot-test`.  This will subject the executable to the automated testing regimen.
+
+Running linting locally is also a nice-to-have, and can be done:
+
+- Install `golangci-lint` `v1.59.1` (the current version used in CI) per [the `golangci-lint` doco](https://golangci-lint.run/welcome/install/).
+- From the root directory of the repository: `golangci-lint run`.
+
+
 ## xml
 
 The inherent difficulty in generically serialising `xml` is nicely expressed by the golang dev community in [the `encoding/xml` documentation](https://pkg.go.dev/encoding/xml#pkg-note-BUG):
