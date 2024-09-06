@@ -570,6 +570,9 @@ CREATE_DISKS_VIEW_PRIMARY_ALIAS = "create view cross_cloud_disks_aliased as sele
 PSQL_MTLS_CONN_STR :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH} sslkey={STACKQL_PG_CLIENT_KEY_PATH} sslrootcert={STACKQL_PG_SERVER_CERT_PATH} dbname=mydatabase"
 PSQL_MTLS_CONN_STR_UNIX :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH_UNIX} sslkey={STACKQL_PG_CLIENT_KEY_PATH_UNIX} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_UNIX} dbname=mydatabase"
 
+def generate_password() -> str:
+  return os.urandom(16).hex()
+
 PSQL_MTLS_CONN_STR_EXPORT_UNIX :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS_EXPORT} user=myuser sslmode=verify-full sslcert={STACKQL_PG_CLIENT_CERT_PATH_UNIX} sslkey={STACKQL_PG_CLIENT_KEY_PATH_UNIX} sslrootcert={STACKQL_PG_SERVER_CERT_PATH_UNIX} dbname=mydatabase".replace('\\', '/')
 
 PSQL_MTLS_DISABLE_CONN_STR :str = f"host={PSQL_CLIENT_HOST} port={PG_SRV_PORT_MTLS} user=myuser sslmode=disable sslcert={STACKQL_PG_CLIENT_CERT_PATH} sslkey={STACKQL_PG_CLIENT_KEY_PATH} sslrootcert={STACKQL_PG_SERVER_CERT_PATH} dbname=mydatabase"
@@ -937,6 +940,7 @@ def get_variables(execution_env :str, sql_backend_str :str, use_stackql_preinsta
     'PG_CLIENT_SETUP_QUERIES':                                                [ SHOW_TRANSACTION_ISOLATION_LEVEL, SELECT_HSTORE_DETAILS ],
     'PG_CLIENT_SETUP_QUERIES_JSON_EXPECTED':                                  SHOW_TRANSACTION_ISOLATION_LEVEL_JSON_EXPECTED + SELECT_HSTORE_DETAILS_JSON_EXPECTED,
     'PG_CLIENT_SETUP_QUERIES_TUPLES_EXPECTED':                                SHOW_TRANSACTION_ISOLATION_LEVEL_TUPLES_EXPECTED + SELECT_HSTORE_DETAILS_TUPLES_EXPECTED,
+    'PSQL_PASSWORD':                                                          generate_password(),
     'QUERY_PARSER_TEST_KEYWORD_QUOTING':                                      _QUERY_PARSER_TEST_KEYWORD_QUOTING,
     'QUERY_PARSER_TEST_POSTGRES_CASTING':                                     _QUERY_PARSER_TEST_POSTGRES_CASTING,
     'REGISTRY_GOOGLE_PROVIDER_LIST':                                          REGISTRY_GOOGLE_PROVIDER_LIST,

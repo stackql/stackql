@@ -26,7 +26,7 @@ Then, each of these should be run from the repository root:
 For serious development, simulated integration tests are essential.  So, there are more dependencies:
 
 - Install the python dependencies (including `robot` framework).  Simplest way, system permitting, is `pip install -r cicd/requirements.txt`.
-- Install `psql`.  On some systems, this can be done as client only asnd/or with various package managers; fallback is to just [install postgres manually](https://www.postgresql.org/download/).
+- Install `psql`.  On some systems, this can be done as client only and/or with various package managers; fallback is to just [install postgres manually](https://www.postgresql.org/download/).
 - Install `java`.  Version `11` is what is currently used in CI but this ought not to be mandatory.
 - Install `mock-server`, either using a package manager (eg `maven`), or from source per [the mockserver docs](https://www.mock-server.com/mock_server/running_mock_server.html#build-and-run-from-source).
 

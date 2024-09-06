@@ -312,6 +312,52 @@ Acceptable Secure PSQL Connection to mTLS Server With Diagnostic Query Returns C
     ...    stderr=${CURDIR}/tmp/Acceptable-Secure-PSQL-Connection-to-mTLS-Server-With-Diagnostic-Query-Returns-Connection-Info-stderr.tmp
     Should Contain    ${result.stdout}    SSL connection (protocol: TLSv1.3
 
+Acceptable Password Only PSQL Connection Defined by Env Vars to Server With Diagnostic Query Returns Connection Info
+    Set Environment Variable    PGHOST           ${PSQL_CLIENT_HOST}
+    Set Environment Variable    PGPORT           ${PG_SRV_PORT_UNENCRYPTED}
+    Set Environment Variable    PGUSER           stackql
+    Set Environment Variable    PGPASSWORD       ${PSQL_PASSWORD} 
+    ${posixInput} =     Catenate
+    ...    "${PSQL_EXE}" -c "\\conninfo"
+    ${windowsInput} =     Catenate
+    ...    &    ${posixInput}
+    ${input} =    Set Variable If    "${IS_WINDOWS}" == "1"    ${windowsInput}    ${posixInput}
+    ${shellExe} =    Set Variable If    "${IS_WINDOWS}" == "1"    powershell    sh
+    ${result} =    Run Process
+    ...    ${shellExe}     \-c    ${input}
+    ...    stdout=${CURDIR}/tmp/Acceptable-Password-Only-PSQL-Connection-Defined-by-Env-Vars-to-Server-With-Diagnostic-Query-Returns-Connection-Info.tmp
+    ...    stderr=${CURDIR}/tmp/Acceptable-Password-Only-PSQL-Connection-Defined-by-Env-Vars-to-Server-With-Diagnostic-Query-Returns-Connection-Info-stderr.tmp
+    Should Contain    ${result.stdout}    You are connected to database
+    [Teardown]  Run Keywords    Remove Environment Variable     PGHOST
+    ...         AND             Remove Environment Variable     PGPORT
+    ...         AND             Remove Environment Variable     PGUSER 
+    ...         AND             Remove Environment Variable     PGPASSWORD
+
+Acceptable Secure PSQL Connection Defined by Env Vars to mTLS Server With Diagnostic Query Returns Connection Info
+    Set Environment Variable    PGHOST           ${PSQL_CLIENT_HOST}
+    Set Environment Variable    PGPORT           ${PG_SRV_PORT_MTLS}
+    Set Environment Variable    PGSSLMODE        verify\-full 
+    Set Environment Variable    PGSSLCERT        ${STACKQL_PG_CLIENT_CERT_PATH} 
+    Set Environment Variable    PGSSLKEY         ${STACKQL_PG_CLIENT_KEY_PATH} 
+    Set Environment Variable    PGSSLROOTCERT    ${STACKQL_PG_SERVER_CERT_PATH} 
+    ${posixInput} =     Catenate
+    ...    "${PSQL_EXE}" -c "\\conninfo"
+    ${windowsInput} =     Catenate
+    ...    &    ${posixInput}
+    ${input} =    Set Variable If    "${IS_WINDOWS}" == "1"    ${windowsInput}    ${posixInput}
+    ${shellExe} =    Set Variable If    "${IS_WINDOWS}" == "1"    powershell    sh
+    ${result} =    Run Process
+    ...    ${shellExe}     \-c    ${input}
+    ...    stdout=${CURDIR}/tmp/Acceptable-Secure-PSQL-Connection-Defined-by-Env-Vars-to-mTLS-Server-With-Diagnostic-Query-Returns-Connection-Info.tmp
+    ...    stderr=${CURDIR}/tmp/Acceptable-Secure-PSQL-Connection-Defined-by-Env-Vars-to-mTLS-Server-With-Diagnostic-Query-Returns-Connection-Info-stderr.tmp
+    Should Contain    ${result.stdout}    SSL connection (protocol: TLSv1.3
+    [Teardown]  Run Keywords    Remove Environment Variable     PGHOST
+    ...         AND             Remove Environment Variable     PGPORT
+    ...         AND             Remove Environment Variable     PGSSLMODE 
+    ...         AND             Remove Environment Variable     PGSSLCERT 
+    ...         AND             Remove Environment Variable     PGSSLKEY
+    ...         AND             Remove Environment Variable     PGSSLROOTCERT
+
 Unacceptable Insecure PSQL Connection to mTLS Server Returns Error Message
     ${posixInput} =     Catenate
     ...    "${PSQL_EXE}"    -d    "${PSQL_MTLS_DISABLE_CONN_STR_UNIX}" -c "\\conninfo"
