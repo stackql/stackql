@@ -8,6 +8,7 @@ import (
 
 type Driver interface {
 	Sprintf(format string, args ...interface{}) string
+	Print(s string) string
 }
 
 type prezzoDriver struct {
@@ -23,4 +24,8 @@ func NewPresentationDriver(runtimeCtx dto.RuntimeCtx) Driver {
 
 func (prezzoDriver *prezzoDriver) Sprintf(format string, args ...interface{}) string {
 	return fmt.Sprintf(format, args...)
+}
+
+func (prezzoDriver *prezzoDriver) Print(s string) string {
+	return fmt.Sprint(s)
 }

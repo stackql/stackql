@@ -41,7 +41,7 @@ type StdStreamWriter struct {
 }
 
 func (ssw *StdStreamWriter) render(p []byte) []byte {
-	return []byte(ssw.prezzoDriver.Sprintf(string(p)))
+	return []byte(ssw.prezzoDriver.Print(string(p)))
 }
 
 func (ssw *StdStreamWriter) enclose(p []byte) []byte {
