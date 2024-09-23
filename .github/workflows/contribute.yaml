@@ -1,0 +1,41 @@
+name: Check if PR author has starred the repository
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  check-starred:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4.1.7
+
+    - name: Pull github provider
+      uses: stackql/stackql-exec@v2.2.1
+      with:
+        is_command: 'true'
+        query: "REGISTRY PULL github;"
+
+    - name: Run stackql query
+      id: check-star
+      uses: stackql/stackql-assert@v2.2.1
+      with:
+        test_query: |
+          SELECT repo, count(*) as has_starred
+          FROM github.activity.repo_stargazers
+          WHERE owner = 'stackql' and repo in ('stackql') and login = '${{ github.event.pull_request.user.login }}'
+          GROUP BY repo;
+        expected_results_str: '[{"has_starred":"1","repo":"stackql"}]'
+      continue-on-error: true
+
+    - name: Check if starred
+      run: |
+        if [ "${{ steps.check-star.outcome }}" = "success" ]; then
+         echo "Thanks for your support by starring both StackQL repositories!"
+        else
+         echo "It seems you haven't starred the StackQL repositories. Please star the following repos before proceeding:"
+         echo "https://github.com/stackql/stackql (our core repo)"
+         exit 1
+        fi
+      if: always()

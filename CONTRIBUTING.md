@@ -11,6 +11,8 @@ Before beginning implementation work, please raise an issue and receive a consen
 
 Please raise pull requests (PRs) from a fork of this repository, using the provided PR template.  The richer the detail / evidence supplied, the easier the review process.  A usefully named feature branch for the PR source is appreciated.
 
+Finally, in respect of all your efforts; we thank you and ask that you please give us a star while you are at it.
+
 Many Thanks,
 
 The StackQL team.
