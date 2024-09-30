@@ -149,6 +149,7 @@
         "select json_extract(detail.Properties, '$.KeyPolicy.Id') as key_policy_id, json_extract(detail.Properties, '$.Tags') as key_tags, json_extract(detail.Properties, '$.KeyUsage') as key_usage, json_extract(detail.Properties, '$.Origin') as key_origin, json_extract(detail.Properties, '$.MultiRegion') as key_is_multi_region, detail.region from aws.cloud_control.resources listing inner join aws.cloud_control.resource detail on detail.data__Identifier = listing.Identifier and detail.region = listing.region where listing.data__TypeName = 'AWS::KMS::Key' and listing.region in ('us-east-1', 'ap-southeast-1') and detail.data__TypeName = 'AWS::KMS::Key' order by key_policy_id;",
         "select listing.Identifier as key_policy_id, listing.region from aws.cloud_control.resources listing where listing.data__TypeName = 'AWS::KMS::Key' and listing.region in ('us-east-1', 'ap-southeast-1') order by key_policy_id;",
         "create or replace materialized view de_gen_01 as select json_extract_path_text(detail.Properties, 'KeyPolicy', 'Id') as key_policy_id, json_extract_path_text(detail.Properties, 'Tags') as key_tags, json_extract_path_text(detail.Properties, 'KeyUsage') as key_usage, json_extract_path_text(detail.Properties, 'Origin') as key_origin, case when json_extract_path_text(detail.Properties, 'MultiRegion') = 'true' then 1 else 0 end as key_is_multi_region, detail.region from aws.cloud_control.resources listing inner join aws.cloud_control.resource detail on detail.data__Identifier = listing.Identifier and detail.region = listing.region where listing.data__TypeName = 'AWS::KMS::Key' and listing.region IN ('us-east-1', 'ap-southeast-1') and detail.data__TypeName = 'AWS::KMS::Key' order by key_policy_id ASC ; select key_policy_id, key_tags, key_usage, key_origin, key_is_multi_region, region from de_gen_01 order by key_policy_id ASC ; drop materialized view if exists de_gen_01 ;",
+        "show methods in azure.dev_center.customization_tasks;",
       ],
       "default": "show providers;"
     },
@@ -162,7 +163,7 @@
         "{ \"url\": \"file://${workspaceFolder}/test/registry-mocked\", \"localDocRoot\": \"${workspaceFolder}/test/registry-mocked\", \"verifyConfig\": { \"nopVerify\": true } }",
         "{ \"url\": \"file://${workspaceFolder}/test/registry-mocked-native\", \"localDocRoot\": \"${workspaceFolder}/test/registry-mocked-native\", \"verifyConfig\": { \"nopVerify\": true } }",
         "{ \"url\": \"file://${workspaceFolder}/test/registry-advanced\", \"localDocRoot\": \"${workspaceFolder}/test/registry-advanced\", \"verifyConfig\": { \"nopVerify\": true } }",
-        "{ \"url\": \"file://${workspaceFolder}/build/.stackql\", \"localDocRoot\": \"${workspaceFolder}/build/.stackql\" }",
+        "{ \"url\": \"file://${workspaceFolder}/build/.stackql\", \"localDocRoot\": \"${workspaceFolder}/build/.stackql\", \"verifyConfig\": { \"nopVerify\": true } }",
         "{ \"url\": \"file://${workspaceFolder}/docs/examples/empty-registry\", \"localDocRoot\": \"${workspaceFolder}/docs/examples/empty-registry\" }",
         "{ \"url\": \"https://cdn.statically.io/gh/stackql/stackql-provider-registry/main/providers\", \"localDocRoot\": \"${workspaceFolder}/test/registry\" }",
         "{ \"url\": \"https://cdn.statically.io/gh/stackql/stackql-provider-registry/dev/providers\" }",

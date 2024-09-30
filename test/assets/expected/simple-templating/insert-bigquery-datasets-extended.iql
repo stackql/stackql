@@ -1,0 +1,79 @@
+<<<jsonnet
+{
+   alt: << alt >>,
+   fields: << fields >>,
+   key: << key >>,
+   oauth_token: << oauth_token >>,
+   prettyPrint: << prettyPrint >>,
+   projectId: << projectId >>,
+   quotaUser: << quotaUser >>,
+   userIp: << userIp >>,
+   data__access:    [ {
+     dataset: << dataset >>,
+     domain: << domain >>,
+     groupByEmail: << groupByEmail >>,
+     iamMember: << iamMember >>,
+     role: << role >>,
+     routine: << routine >>,
+     specialGroup: << specialGroup >>,
+     userByEmail: << userByEmail >>,
+     view: << view >>
+     } ],
+   data__datasetReference:    {
+   datasetId: << datasetId >>,
+   projectId: << projectId >>
+   },
+   data__defaultEncryptionConfiguration:    {
+   kmsKeyName: << kmsKeyName >>
+   },
+   data__defaultPartitionExpirationMs:    << data__defaultPartitionExpirationMs >>,
+   data__defaultTableExpirationMs:    << data__defaultTableExpirationMs >>,
+   data__description:    << data__description >>,
+   data__friendlyName:    << data__friendlyName >>,
+   data__isCaseInsensitive:    << data__isCaseInsensitive >>,
+   data__labels:    {
+   << data__labels[0].key >>: << data__labels[0].val >>
+   },
+   data__location:    << data__location >>
+}
+>>>
+INSERT INTO google.bigquery.datasets(
+  alt,
+  fields,
+  key,
+  oauth_token,
+  prettyPrint,
+  projectId,
+  quotaUser,
+  userIp,
+  data__access,
+  data__datasetReference,
+  data__defaultEncryptionConfiguration,
+  data__defaultPartitionExpirationMs,
+  data__defaultTableExpirationMs,
+  data__description,
+  data__friendlyName,
+  data__isCaseInsensitive,
+  data__labels,
+  data__location
+)
+SELECT
+  '{{ .values.alt }}',
+  '{{ .values.fields }}',
+  '{{ .values.key }}',
+  '{{ .values.oauth_token }}',
+   {{ .values.prettyPrint }},
+  '{{ .values.projectId }}',
+  '{{ .values.quotaUser }}',
+  '{{ .values.userIp }}',
+  '[ { "dataset": "{{ .values.data__access[0].dataset }}", "domain": "{{ .values.data__access[0].domain }}", "groupByEmail": "{{ .values.data__access[0].groupByEmail }}", "iamMember": "{{ .values.data__access[0].iamMember }}", "role": "{{ .values.data__access[0].role }}", "routine": "{{ .values.data__access[0].routine }}", "specialGroup": "{{ .values.data__access[0].specialGroup }}", "userByEmail": "{{ .values.data__access[0].userByEmail }}", "view": "{{ .values.data__access[0].view }}" } ]',
+  '{ "datasetId": "{{ .values.data__datasetReference.datasetId }}", "projectId": "{{ .values.data__datasetReference.projectId }}" }',
+  '{ "kmsKeyName": "{{ .values.data__defaultEncryptionConfiguration.kmsKeyName }}" }',
+  '{{ .values.data__defaultPartitionExpirationMs }}',
+  '{{ .values.data__defaultTableExpirationMs }}',
+  '{{ .values.data__description }}',
+  '{{ .values.data__friendlyName }}',
+   {{ .values.data__isCaseInsensitive }},
+  '{ "{{ .values.data__labels[0].key }}": "{{ .values.data__labels[0].val }}" }',
+  '{{ .values.data__location }}'
+;
