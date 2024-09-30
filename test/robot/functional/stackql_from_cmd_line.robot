@@ -677,7 +677,7 @@ JSONNET Plus Env Vars
 Show Extended Insert Google BQ Datasets
     Should StackQL Exec Contain    
     ...    SHOW EXTENDED INSERT INTO google.bigquery.datasets;
-    ...    ${SHOW_INSERT_GOOGLE_BIGQUERY_DATASET} 
+    ...    ${SHOW_INSERT_EXTENDED_GOOGLE_BIGQUERY_DATASET} 
     ...    stackql_H=True
     ...    stdout=${CURDIR}/tmp/Show-Extended-Insert-Google-BQ-Datasets.tmp   
 

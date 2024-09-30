@@ -353,6 +353,20 @@ providerServices:
       $ref: azure/v0.1.0/services/deployment_manager.yaml
     title: AzureDeploymentManager (Microsoft.DeploymentManager)
     version: v0.1.0
+  dev_center:
+    id: dev_center:v0.1.0
+    name: dev_center
+    preferred: true
+    service:
+      $ref: azure/v0.1.0/services/dev_center.yaml
+    title: Dev Center
+    version: v0.1.0
+    description: >-
+      Microsoft Dev Box is a service that enables you to provide preconfigured
+      cloud-based workstations to your users through dev centers. Developers,
+      testers, QA professionals, and others who need to get productive quickly
+      on new projects can self-serve multiple dev boxes customized for their
+      workloads.
   devops:
     description: Azure DevOps Resource Provider
     id: devops:v0.1.0

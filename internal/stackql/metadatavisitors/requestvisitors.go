@@ -134,6 +134,9 @@ func ToInsertStatement(
 	requiredOnly bool,
 ) (string, error) {
 	paramsToInclude := m.GetNonBodyParameters()
+	if requiredOnly {
+		paramsToInclude = m.GetRequiredNonBodyParameters()
+	}
 	successfullyIncludedCols := make(map[string]bool)
 	if !extended {
 		paramsToInclude = m.GetRequiredParameters()
