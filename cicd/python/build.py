@@ -43,7 +43,7 @@ def run_robot_mocked_functional_tests_stackql(*args, **kwargs) -> int:
     return subprocess.call(
         'robot '
         f'{variables} ' 
-        '-d test/robot/functional '
+        '-d test/robot/reports '
         'test/robot/functional',
         shell=True
     )

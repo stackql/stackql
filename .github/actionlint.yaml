@@ -3,3 +3,5 @@ self-hosted-runner:
   labels:
     - ubuntu-latest-m
     - arm-ubuntu-22-04-runner-one
+    - macos-13 # should not be necessary
+    - macos-14 # should not be necessary

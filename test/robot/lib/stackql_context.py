@@ -857,7 +857,7 @@ def get_select_k8s_nodes_asc(execution_env :str) -> str:
   k8s_host = '127.0.0.1'
   if execution_env == 'docker':
     k8s_host = 'host.docker.internal'
-  return f"select name, uid, creationTimestamp from k8s.core_v1.node where cluster_addr = '{k8s_host}:{MOCKSERVER_PORT_K8S}' order by name asc;"
+  return f"select json_extract(metadata, '$.name') as name, json_extract(metadata, '$.uid') as uid, json_extract(metadata, '$.creationTimestamp') as creationTimestamp from k8s.core_v1.nodes where cluster_addr = '{k8s_host}:{MOCKSERVER_PORT_K8S}' order by name asc;"
 
 def get_registry_mock_url(execution_env :str) -> str:
   host = 'localhost'

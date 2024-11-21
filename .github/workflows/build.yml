@@ -174,7 +174,7 @@ jobs:
     - name: Output from mocked functional tests
       if: always()
       run: |
-        cat ./test/robot/functional/output.xml || echo "no functional test output present"
+        cat ./test/robot/reports/output.xml || echo "no functional test output present"
     
     - name: Run robot integration tests
       if: env.AZURE_CLIENT_SECRET != '' && startsWith(env.STATE_SOURCE_TAG, 'build-release')
@@ -381,7 +381,7 @@ jobs:
     - name: Output from mocked functional tests
       if: always()
       run: |
-        cat ./test/robot/functional/output.xml
+        cat ./test/robot/reports/output.xml
 
     - name: Run robot mocked functional tests with aggressive concurrency
       if: success()
@@ -391,7 +391,7 @@ jobs:
     - name: Output from mocked functional tests with aggressive concurrency
       if: always()
       run: |
-        cat ./test/robot/functional/output.xml
+        cat ./test/robot/reports/output.xml
     
     - name: Run robot integration tests
       if: env.AZURE_CLIENT_SECRET != '' && startsWith(env.STATE_SOURCE_TAG, 'build-release')
@@ -452,7 +452,7 @@ jobs:
     - name: Output from mocked deb package functional tests
       if: always()
       run: |
-        cat ./test/robot/functional/output.xml
+        cat ./test/robot/reports/output.xml
 
     - name: Upload deb Artifact
       uses: actions/upload-artifact@v4.3.1
@@ -637,7 +637,7 @@ jobs:
     - name: Output from mocked functional tests
       if: always()
       run: |
-        cat ./test/robot/functional/output.xml
+        cat ./test/robot/reports/output.xml
 
     - name: Run robot mocked functional tests with aggressive concurrency
       if: success()
@@ -647,7 +647,7 @@ jobs:
     - name: Output from mocked functional tests with aggressive concurrency
       if: always()
       run: |
-        cat ./test/robot/functional/output.xml
+        cat ./test/robot/reports/output.xml
     
     - name: Run robot integration tests
       if: env.AZURE_CLIENT_SECRET != '' && startsWith(env.STATE_SOURCE_TAG, 'build-release')
@@ -735,7 +735,7 @@ jobs:
     - name: Output from mocked deb package functional tests
       if: always()
       run: |
-        cat ./test/robot/functional/output.xml
+        cat ./test/robot/reports/output.xml
 
     - name: Upload deb Artifact
       uses: actions/upload-artifact@v4.3.1
@@ -833,7 +833,7 @@ jobs:
       name: Output from mocked functional tests
       if: always()
       run: |
-          cat ./test/robot/functional/output.xml
+          cat ./test/robot/reports/output.xml
     
     - shell: wsl-bash {0}
       name: Run robot integration tests
@@ -863,11 +863,14 @@ jobs:
 
   macosbuild:
     name: MacOS Build
-    runs-on: macos-12
+    runs-on: macos-13
     timeout-minutes: ${{ vars.DEFAULT_JOB_TIMEOUT_MIN == '' && 120 || vars.DEFAULT_JOB_TIMEOUT_MIN }}
     steps:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v4.1.1
+
+    - name: Set env # awful hack to get java 8 and support the abomnible mock server template grammar
+      run: echo "JAVA_HOME=${JAVA_HOME_8_X64}" >> "$GITHUB_ENV"
 
     - name: Set up Go 1.x
       uses: actions/setup-go@v5.0.0
@@ -892,8 +895,9 @@ jobs:
             echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}"
           } >> "${GITHUB_STATE}"
 
-    - name: Install Python dependencies
+    - name: Install Various dependencies
       run: |
+        brew install postgresql
         pip3 install -r cicd/requirements.txt
     
     - name: Generate rewritten registry for simulations
@@ -971,7 +975,7 @@ jobs:
     - name: Output from mocked functional tests
       if: always()
       run: |
-        cat ./test/robot/functional/output.xml
+        cat ./test/robot/reports/output.xml
     
     - name: Run robot integration tests
       if: env.AZURE_CLIENT_SECRET != '' && startsWith(env.STATE_SOURCE_TAG, 'build-release')
@@ -1002,7 +1006,7 @@ jobs:
 
   macosarmbuild:
     name: MacOS ARM Build
-    runs-on: macos-latest
+    runs-on: macos-13
     timeout-minutes: ${{ vars.DEFAULT_JOB_TIMEOUT_MIN == '' && 120 || vars.DEFAULT_JOB_TIMEOUT_MIN }}
     steps:
 
@@ -1258,7 +1262,7 @@ jobs:
     - name: Output from mocked functional tests
       if: always()
       run: |
-        cat ./test/robot/functional/output.xml
+        cat ./test/robot/reports/output.xml
 
     - name: Run robot integration tests
       if: env.AZURE_CLIENT_SECRET != '' && startsWith(env.STATE_SOURCE_TAG, 'build-release')
