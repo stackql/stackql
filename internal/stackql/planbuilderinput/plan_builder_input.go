@@ -45,6 +45,7 @@ type PlanBuilderInput interface {
 	GetUnion() (*sqlparser.Union, bool)
 	GetUpdate() (*sqlparser.Update, bool)
 	GetUse() (*sqlparser.Use, bool)
+	GetSet() (*sqlparser.Set, bool)
 	IsTccSetAheadOfTime() bool
 	SetIsTccSetAheadOfTime(bool)
 	SetPrepStmtOffset(int)
@@ -381,6 +382,11 @@ func (pbi *StandardPlanBuilderInput) GetUnion() (*sqlparser.Union, bool) {
 
 func (pbi *StandardPlanBuilderInput) GetUse() (*sqlparser.Use, bool) {
 	rv, ok := pbi.stmt.(*sqlparser.Use)
+	return rv, ok
+}
+
+func (pbi *StandardPlanBuilderInput) GetSet() (*sqlparser.Set, bool) {
+	rv, ok := pbi.stmt.(*sqlparser.Set)
 	return rv, ok
 }
 

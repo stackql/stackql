@@ -1,12 +1,14 @@
 package planbuilder
 
 import (
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/stackql/any-sdk/anysdk"
+
 	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/routeanalysis"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -123,7 +125,7 @@ func (pgb *standardPlanGraphBuilder) createInstructionFor(pbi planbuilderinput.P
 		_, _, err := pgb.handleSelect(pbi)
 		return err
 	case *sqlparser.Set:
-		return pgb.nop(pbi)
+		return pgb.handleSet(pbi)
 	case *sqlparser.SetTransaction:
 		return pgb.nop(pbi)
 	case *sqlparser.Show:
@@ -157,6 +159,46 @@ func (pgb *standardPlanGraphBuilder) nop(pbi planbuilderinput.PlanBuilderInput) 
 	}
 	err = builder.Build()
 	return err
+}
+
+func setLogic(pbi planbuilderinput.PlanBuilderInput, setExpr *sqlparser.SetExpr) error {
+	lhsRaw := setExpr.Name.GetRawVal()
+	lhsTrimmed := strings.TrimPrefix(lhsRaw, "$.")
+	if lhsTrimmed == lhsRaw {
+		return nil
+	}
+	exprStr := strings.Trim(sqlparser.String(setExpr.Expr), "'")
+	exprObj := map[string]interface{}{}
+	deserErr := json.Unmarshal([]byte(exprStr), &exprObj)
+	if deserErr != nil {
+		rawRv := pbi.GetHandlerCtx().SetConfigAtPath(lhsTrimmed, exprStr, setExpr.Scope)
+		return rawRv
+	}
+	rv := pbi.GetHandlerCtx().SetConfigAtPath(lhsTrimmed, exprObj, setExpr.Scope)
+	return rv
+}
+
+func (pgb *standardPlanGraphBuilder) handleSet(pbi planbuilderinput.PlanBuilderInput) error {
+	primitiveGenerator := pgb.rootPrimitiveGenerator
+	err := primitiveGenerator.AnalyzeStatement(pbi)
+	if err != nil {
+		return err
+	}
+	setStmt, ok := pbi.GetSet()
+	if !ok {
+		return fmt.Errorf("could not cast node of type '%T' to required Set", pbi.GetStatement())
+	}
+	if len(setStmt.Exprs) < 1 {
+		return fmt.Errorf("no set expressions found")
+	}
+	pr := primitive.NewLocalPrimitive(
+		//nolint:revive // acceptable for now
+		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+			err = setLogic(pbi, setStmt.Exprs[0])
+			return internaldto.NewExecutorOutput(nil, nil, nil, nil, err)
+		})
+	pgb.planGraphHolder.GetPrimitiveGraph().CreatePrimitiveNode(pr)
+	return nil
 }
 
 func (pgb *standardPlanGraphBuilder) pgInternal(pbi planbuilderinput.PlanBuilderInput) error {

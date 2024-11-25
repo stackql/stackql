@@ -7158,3 +7158,85 @@ Show Methods Path Level Parameters Considered as Exemplified by Azure Dev Center
     ...    ${EMPTY}
     ...    stdout=${CURDIR}/tmp/Show-Methods-Path-Level-Parameters-Considered-as-Exemplified-by-Azure-Dev-Center-Customization-Tasks-Methods.tmp
     ...    stderr=${CURDIR}/tmp/Show-Methods-Path-Level-Parameters-Considered-as-Exemplified-by-Azure-Dev-Center-Customization-Tasks-Methods-stderr.tmp
+
+Set Statement Update Auth Scenario Working
+    ${inputStr} =    Catenate
+    ...    set session "$.auth.google.credentialsfilepath"='${AUTH_GOOGLE_SA_KEY_PATH}';
+    ...    select name, id, network, split_part(network, '/', 8) as network_region from google.compute.firewalls where project \= 'testing-project' order by id desc;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}network${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}network_region${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}selected-allow-rdesk${SPACE}${SPACE}${SPACE}|${SPACE}8888888888888${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}default-allow-ssh${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}777777777777${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}default-allow-rdp${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}6666666666${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}default-allow-internal${SPACE}|${SPACE}5555555555555${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}default-allow-icmp${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}4444444444444${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}default-allow-https${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}33333333${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}default-allow-http${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}22222222222${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}allow-spark-ui${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}111111111111${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_DEFECTIVE_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Set-Statement-Update-Auth-Scenario-Working-Working.tmp
+    ...    stderr=${CURDIR}/tmp/Set-Statement-Update-Auth-Scenario-Working-Working-stderr.tmp
+
+Busted Auth Throws Error Then Set Statement Update Auth Scenario Working
+    ${inputStr} =    Catenate
+    ...    select name, id, network, split_part(network, '/', 8) as network_region from google.compute.firewalls where project \= 'testing-project' order by id desc;
+    ...    set session "$.auth.google.credentialsfilepath"='${AUTH_GOOGLE_SA_KEY_PATH}';
+    ...    select name, id, network, split_part(network, '/', 8) as network_region from google.compute.firewalls where project \= 'testing-project' order by id desc;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}network${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}network_region${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}selected-allow-rdesk${SPACE}${SPACE}${SPACE}|${SPACE}8888888888888${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}default-allow-ssh${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}777777777777${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}default-allow-rdp${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}6666666666${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}default-allow-internal${SPACE}|${SPACE}5555555555555${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}default-allow-icmp${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}4444444444444${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}default-allow-https${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}33333333${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}default-allow-http${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}22222222222${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ...    |${SPACE}allow-spark-ui${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}111111111111${SPACE}|${SPACE}https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/default${SPACE}|${SPACE}global${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------------------------|---------------|----------------------------------------------------------------------------------------|----------------|
+    ${outputErrStrNix} =    Catenate    SEPARATOR=\n
+    ...    service account credentials error: open ${NON_EXISTENT_AUTH_GOOGLE_SA_KEY_PATH}: no such file or directory
+    ${outputErrStrWin} =    Catenate    SEPARATOR=\n
+    ...    service account credentials error: open ${NON_EXISTENT_AUTH_GOOGLE_SA_KEY_PATH}: The system cannot find the file specified.
+    ${outputErrStr} =    Set Variable If    "${IS_WINDOWS}" == "1"    ${outputErrStrWin}    ${outputErrStrNix}
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_DEFECTIVE_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${outputErrStr}
+    ...    stdout=${CURDIR}/tmp/Busted-Auth-Throws-Error-Then-Set-Statement-Update-Auth-Scenario-Working-Working.tmp
+    ...    stderr=${CURDIR}/tmp/Busted-Auth-Throws-Error-Then-Set-Statement-Update-Auth-Scenario-Working-Working-stderr.tmp
