@@ -16,6 +16,7 @@ Library           OperatingSystem
 Library           String
 Library           ${LOCAL_LIB_HOME}/StackQLInterfaces.py    ${EXECUTION_PLATFORM}    ${SQL_BACKEND}    ${CONCURRENCY_LIMIT}
 Library           ${LOCAL_LIB_HOME}/CloudIntegration.py
+Library           ${LOCAL_LIB_HOME}/web_service_keywords.py
 
 *** Keywords ***
 Start Mock Server
@@ -42,6 +43,7 @@ Start All Mock Servers
     Start Mock Server    ${JSON_INIT_FILE_PATH_SUMOLOGIC}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_SUMOLOGIC}
     Start Mock Server    ${JSON_INIT_FILE_PATH_DIGITALOCEAN}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_DIGITALOCEAN}
     Start Mock Server    ${JSON_INIT_FILE_PATH_STACKQL_AUTH_TESTING}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_STACKQL_AUTH_TESTING}
+    Create OAuth2 Client Credentials Web Service    ${MOCKSERVER_PORT_OAUTH_CLIENT_CREDENTIALS_TOKEN}
 
 
 Prepare StackQL Environment

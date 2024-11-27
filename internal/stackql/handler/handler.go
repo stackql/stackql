@@ -575,6 +575,14 @@ func transformOpenapiStackqlAuthToLocal(authDTO anysdk.AuthDTO) *dto.AuthCtx {
 		EncodedBasicCredentials: authDTO.GetInlineBasicCredentials(),
 		Location:                authDTO.GetLocation(),
 		Name:                    authDTO.GetName(),
+		TokenURL:                authDTO.GetTokenURL(),
+		GrantType:               authDTO.GetGrantType(),
+		ClientID:                authDTO.GetClientID(),
+		ClientSecret:            authDTO.GetClientSecret(),
+		ClientIDEnvVar:          authDTO.GetClientIDEnvVar(),
+		ClientSecretEnvVar:      authDTO.GetClientSecretEnvVar(),
+		Values:                  authDTO.GetValues(),
+		AuthStyle:               authDTO.GetAuthStyle(),
 	}
 	successor, successorExists := authDTO.GetSuccessor()
 	currentParent := rv

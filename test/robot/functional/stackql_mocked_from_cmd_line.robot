@@ -4182,6 +4182,49 @@ Custom Auth Linear Should Send Appropriate Credentials
     ...    ${SELECT_SUMOLOGIC_COLLECTORS_IDS_EXPECTED}
     ...    ${CURDIR}/tmp/Custom-Auth-Linear-Should-Send-Appropriate-Credentials.tmp
 
+Oauth2 CLient Credentials Auth Should Succeed with Valid Config
+    Set Environment Variable    YOUR_OAUTH2_CLIENT_ID_ENV_VAR    dummy-client-id
+    Set Environment Variable    YOUR_OAUTH2_CLIENT_SECRET_ENV_VAR    dummy-client-secret
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-----------|---------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}|
+    ...    |-----------|---------|
+    ...    |${SPACE}100000001${SPACE}|${SPACE}Netlify${SPACE}|
+    ...    |-----------|---------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}    
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select id, name from stackql_oauth2_testing.collectors.collectors where id \= '100000001';
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Oauth2-CLient-Credentials-Auth-Should-Succeed-with-Valid-Config.tmp
+    ...    stderr=${CURDIR}/tmp/Oauth2-CLient-Credentials-Auth-Should-Succeed-with-Valid-Config-stderr.tmp
+
+Oauth2 CLient Credentials Auth Should Fail with Invalid Config
+    Set Environment Variable    YOUR_OAUTH2_CLIENT_ID_ENV_VAR    dummy-client-id
+    Set Environment Variable    YOUR_OAUTH2_CLIENT_SECRET_ENV_VAR    dummy-client-secret
+    ${outputErrStr} =    Catenate    SEPARATOR=\n
+    ...    Get "https://${LOCAL_HOST_ALIAS}:1170/v1/collectors/100000001?": oauth2: cannot fetch token: 401 UNAUTHORIZED
+    ...    Response: {"msg": "auth failed"}
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}    
+    ...    ${AUTH_CFG_DEFECTIVE_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select id, name from stackql_oauth2_testing.collectors.collectors where id \= '100000001';
+    ...    ${EMPTY}
+    ...    ${outputErrStr}
+    ...    stdout=${CURDIR}/tmp/Oauth2-CLient-Credentials-Auth-Should-Fail-with-Invalid-Config.tmp
+    ...    stderr=${CURDIR}/tmp/Oauth2-CLient-Credentials-Auth-Should-Fail-with-Invalid-Config-stderr.tmp
+
 HTTP Log enabled regression test
     Should Horrid HTTP Log Enabled Query StackQL Inline Equal
     ...    ${STACKQL_EXE}

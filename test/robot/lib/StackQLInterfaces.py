@@ -320,6 +320,10 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     rv["DIGITALOCEAN_TOKEN"] = os.environ.get('DIGITALOCEAN_TOKEN', "digitaloceandummysecret")
     rv["DUMMY_DIGITALOCEAN_USERNAME"] = os.environ.get('DUMMY_DIGITALOCEAN_USERNAME', "myusername")
     rv["DUMMY_DIGITALOCEAN_PASSWORD"] = os.environ.get('DUMMY_DIGITALOCEAN_PASSWORD', "mypassword")
+    if os.environ.get('YOUR_OAUTH2_CLIENT_ID_ENV_VAR') is not None:
+      rv["YOUR_OAUTH2_CLIENT_ID_ENV_VAR"] = os.environ.get('YOUR_OAUTH2_CLIENT_ID_ENV_VAR')
+    if os.environ.get('YOUR_OAUTH2_CLIENT_SECRET_ENV_VAR') is not None:
+      rv["YOUR_OAUTH2_CLIENT_SECRET_ENV_VAR"] = os.environ.get('YOUR_OAUTH2_CLIENT_SECRET_ENV_VAR')
     return rv
 
 

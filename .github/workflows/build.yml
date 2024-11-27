@@ -33,6 +33,7 @@ jobs:
   winbuild:
     name: Windows Build
     runs-on: windows-latest
+    timeout-minutes: ${{ vars.DEFAULT_JOB_TIMEOUT_MIN == '' && 120 || vars.DEFAULT_JOB_TIMEOUT_MIN }}
     steps:
 
     - name: Get rid of disruptive line endings before checkout
@@ -78,7 +79,7 @@ jobs:
     - name: Set up mingw
       uses: egor-tensin/setup-mingw@v2.2.0
       id: gccsetup
-      timeout-minutes: 20
+      timeout-minutes: ${{ vars.DEFAULT_STEP_TIMEOUT_MIN == '' && 20 || vars.DEFAULT_STEP_TIMEOUT_MIN }}
       with:
         version: '8.1.0'
     
@@ -93,13 +94,13 @@ jobs:
     
     - name: Choco install openssl
       uses: crazy-max/ghaction-chocolatey@v3.0.0
-      timeout-minutes: 40
+      timeout-minutes: ${{ vars.DEFAULT_LONG_STEP_TIMEOUT_MIN == '' && 40 || vars.DEFAULT_LONG_STEP_TIMEOUT_MIN }}
       with:
         args: "install --force openssl --version 3.1.1"
 
     - name: Choco install packages
       uses: crazy-max/ghaction-chocolatey@v3.0.0
-      timeout-minutes: 40
+      timeout-minutes: ${{ vars.DEFAULT_LONG_STEP_TIMEOUT_MIN == '' && 40 || vars.DEFAULT_LONG_STEP_TIMEOUT_MIN }}
       with:
         args: "install --force postgresql13 sqlite"
 
@@ -206,6 +207,7 @@ jobs:
   linuxbuild:
     name: Linux Build
     runs-on: ubuntu-latest
+    timeout-minutes: ${{ vars.DEFAULT_JOB_TIMEOUT_MIN == '' && 120 || vars.DEFAULT_JOB_TIMEOUT_MIN }}
     steps:
 
     - name: Check out code into the Go module directory
@@ -463,6 +465,7 @@ jobs:
   linuxarmbuild:
     name: Linux arm64 Build
     runs-on: arm-ubuntu-22-04-runner-one
+    timeout-minutes: ${{ vars.DEFAULT_JOB_TIMEOUT_MIN == '' && 120 || vars.DEFAULT_JOB_TIMEOUT_MIN }}
     steps:
 
     - name: Check out code into the Go module directory
@@ -746,6 +749,7 @@ jobs:
     name: WSL Test
     runs-on: windows-latest
     needs: linuxbuild
+    timeout-minutes: ${{ vars.DEFAULT_JOB_TIMEOUT_MIN == '' && 120 || vars.DEFAULT_JOB_TIMEOUT_MIN }}
     steps:
 
     - name: Get rid of disruptive line endings before checkout
@@ -860,6 +864,7 @@ jobs:
   macosbuild:
     name: MacOS Build
     runs-on: macos-12
+    timeout-minutes: ${{ vars.DEFAULT_JOB_TIMEOUT_MIN == '' && 120 || vars.DEFAULT_JOB_TIMEOUT_MIN }}
     steps:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v4.1.1
@@ -998,6 +1003,7 @@ jobs:
   macosarmbuild:
     name: MacOS ARM Build
     runs-on: macos-latest
+    timeout-minutes: ${{ vars.DEFAULT_JOB_TIMEOUT_MIN == '' && 120 || vars.DEFAULT_JOB_TIMEOUT_MIN }}
     steps:
 
     - name: Check out code into the Go module directory
@@ -1075,6 +1081,7 @@ jobs:
   dockerbuild:
     name: Docker Build
     runs-on: ubuntu-latest-m
+    timeout-minutes: ${{ vars.DEFAULT_JOB_TIMEOUT_MIN == '' && 120 || vars.DEFAULT_JOB_TIMEOUT_MIN }}
     steps:
 
     - name: Check out code into the Go module directory
@@ -1227,13 +1234,13 @@ jobs:
 
     - name: Run robot mocked functional tests
       if: success()
-      timeout-minutes: 20
+      timeout-minutes: ${{ vars.DEFAULT_STEP_TIMEOUT_MIN == '' && 20 || vars.DEFAULT_STEP_TIMEOUT_MIN }}
       run: |
         python cicd/python/build.py --robot-test --config='{ "variables":  { "EXECUTION_PLATFORM": "docker" } }'
 
     - name: Run POSTGRES BACKEND robot mocked functional tests
       if: success()
-      timeout-minutes: 20
+      timeout-minutes: ${{ vars.DEFAULT_STEP_TIMEOUT_MIN == '' && 20 || vars.DEFAULT_STEP_TIMEOUT_MIN }}
       run: |
         echo "## Stray docker containers before postgres robot tests ##"
         docker container ls --format "table {{.ID}}\t{{.Names}}\t{{.Ports}}" -a
