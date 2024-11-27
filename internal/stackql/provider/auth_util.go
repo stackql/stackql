@@ -161,12 +161,19 @@ func parseServiceAccountFile(ac *dto.AuthCtx) (serviceAccount, error) {
 	return c, json.Unmarshal(b, &c)
 }
 
-func getJWTConfig(provider string, credentialsBytes []byte, scopes []string) (*jwt.Config, error) {
+func getJWTConfig(provider string, credentialsBytes []byte, scopes []string, subject string) (*jwt.Config, error) {
 	switch provider {
 	case "google", "googleads", "googleanalytics",
 		"googledevelopers", "googlemybusiness", "googleworkspace",
 		"youtube", "googleadmin":
-		return google.JWTConfigFromJSON(credentialsBytes, scopes...)
+		rv, err := google.JWTConfigFromJSON(credentialsBytes, scopes...)
+		if err != nil {
+			return nil, err
+		}
+		if subject != "" {
+			rv.Subject = subject
+		}
+		return rv, nil
 	default:
 		return nil, fmt.Errorf("service account auth for provider = '%s' currently not supported", provider)
 	}
@@ -182,7 +189,7 @@ func oauthServiceAccount(
 	if err != nil {
 		return nil, fmt.Errorf("service account credentials error: %w", err)
 	}
-	config, errToken := getJWTConfig(provider, b, scopes)
+	config, errToken := getJWTConfig(provider, b, scopes, authCtx.Subject)
 	if errToken != nil {
 		return nil, errToken
 	}

@@ -82,7 +82,7 @@ func (pb *standardPrimitiveGenerator) AnalyzeStatement(
 	case *sqlparser.Select:
 		return pb.analyzeSelect(pbi)
 	case *sqlparser.Set:
-		return iqlerror.GetStatementNotSupportedError("SET")
+		return pb.analyzeSet(pbi)
 	case *sqlparser.SetTransaction:
 		return iqlerror.GetStatementNotSupportedError("SET TRANSACTION")
 	case *sqlparser.Show:
@@ -115,6 +115,15 @@ func (pb *standardPrimitiveGenerator) analyzeUse(
 		return pErr
 	}
 	pb.PrimitiveComposer.SetProvider(prov)
+	return nil
+}
+
+func (pb *standardPrimitiveGenerator) analyzeSet(
+	pbi planbuilderinput.PlanBuilderInput) error {
+	_, ok := pbi.GetSet()
+	if !ok {
+		return fmt.Errorf("could not cast node of type '%T' to required Set", pbi.GetStatement())
+	}
 	return nil
 }
 

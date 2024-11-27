@@ -2,6 +2,7 @@ package dbmsinternal
 
 import (
 	"regexp"
+	"strings"
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/constants"
@@ -94,7 +95,7 @@ func (pgr *standardDBMSInternalRouter) CanRoute(node sqlparser.SQLNode) (constan
 		}
 		return pgr.analyzeSelect(node)
 	case *sqlparser.Set:
-		return pgr.affirmativeExec()
+		return pgr.analyzeSet(node)
 	case *sqlparser.Show:
 		return pgr.analyzeShow(node)
 	case *sqlparser.Begin, *sqlparser.Commit, *sqlparser.Rollback:
@@ -155,6 +156,15 @@ func (pgr *standardDBMSInternalRouter) analyzeShow(node *sqlparser.Show) (consta
 		}
 	}
 	return pgr.negative()
+}
+
+func (pgr *standardDBMSInternalRouter) analyzeSet(node *sqlparser.Set) (constants.BackendQueryType, bool) {
+	for _, n := range node.Exprs {
+		if strings.HasPrefix(n.Name.GetRawVal(), "$") {
+			return pgr.negative()
+		}
+	}
+	return pgr.affirmativeExec()
 }
 
 func (pgr *standardDBMSInternalRouter) ExprIsRoutable(node sqlparser.SQLNode) bool {

@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/stackql/any-sdk/anysdk"
+	"github.com/stackql/any-sdk/pkg/jsonpath"
 	"github.com/stackql/any-sdk/pkg/nomenclature"
 	"github.com/stackql/stackql/internal/stackql/acid/tsm"
 	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
@@ -54,7 +55,7 @@ type HandlerContext interface { //nolint:revive // don't mind stuttering this on
 	GetProviders() map[string]provider.IProvider
 	GetControlAttributes() sqlcontrol.ControlAttributes
 	GetCurrentProvider() string
-	GetAuthContexts() map[string]*dto.AuthCtx
+	GetAuthContexts() dto.AuthContexts
 	GetRegistry() anysdk.RegistryAPI
 	GetErrorPresentation() string
 	GetOutfile() io.Writer
@@ -94,6 +95,9 @@ type HandlerContext interface { //nolint:revive // don't mind stuttering this on
 	GetExportNamespace() string
 
 	GetDataFlowCfg() dto.DataFlowCfg
+
+	//
+	SetConfigAtPath(path string, rhs interface{}, scope string) error
 }
 
 type standardHandlerContext struct {
@@ -108,7 +112,7 @@ type standardHandlerContext struct {
 	providers           map[string]provider.IProvider
 	controlAttributes   sqlcontrol.ControlAttributes
 	currentProvider     string
-	authContexts        map[string]*dto.AuthCtx
+	authContexts        dto.AuthContexts
 	sqlDataSources      map[string]sql_datasource.SQLDataSource
 	registry            anysdk.RegistryAPI
 	errorPresentation   string
@@ -190,7 +194,7 @@ func (hc *standardHandlerContext) GetControlAttributes() sqlcontrol.ControlAttri
 }
 func (hc *standardHandlerContext) GetCurrentProvider() string { return hc.currentProvider }
 
-func (hc *standardHandlerContext) GetAuthContexts() map[string]*dto.AuthCtx {
+func (hc *standardHandlerContext) GetAuthContexts() dto.AuthContexts {
 	hc.authMapMutex.Lock()
 	defer hc.authMapMutex.Unlock()
 	return hc.authContexts
@@ -405,6 +409,41 @@ func (hc *standardHandlerContext) updateAuthContextIfNotExists(providerName stri
 	hc.authContexts[providerName] = authCtx
 }
 
+func (hc *standardHandlerContext) SetConfigAtPath(path string, rhs interface{}, scope string) error {
+	return hc.setConfigAtPath(path, rhs, scope)
+}
+
+func (hc *standardHandlerContext) setConfigAtPath(path string, rhs interface{}, scope string) error {
+	searchPath, searchPathErr := composeSystemSearchPath(path)
+	if searchPathErr != nil {
+		return searchPathErr
+	}
+	system := searchPath.GetSystem()
+	remainder := searchPath.GetRemainder()
+	switch system {
+	case dto.AuthCtxKey:
+		return hc.setAuthContextAtPath(remainder, rhs, scope)
+	default:
+		return fmt.Errorf("system '%s' not supported", system)
+	}
+}
+
+func (hc *standardHandlerContext) setAuthContextAtPath(path string, rhs interface{}, scope string) error {
+	hc.authMapMutex.Lock()
+	defer hc.authMapMutex.Unlock()
+	// TODO: review
+	if scope == "local" {
+		hc.authContexts = hc.authContexts.Clone()
+	}
+	searchPath, searchPathErr := composeSystemSearchPath(path)
+	if searchPathErr != nil {
+		return searchPathErr
+	}
+	authCtx := hc.authContexts[searchPath.GetSystem()]
+	rv := jsonpath.Set(authCtx, searchPath.GetRemainder(), rhs)
+	return rv
+}
+
 func (hc *standardHandlerContext) GetNamespaceCollection() tablenamespace.Collection {
 	return hc.namespaceCollection
 }
@@ -521,6 +560,7 @@ func GetHandlerCtx(
 func transformOpenapiStackqlAuthToLocal(authDTO anysdk.AuthDTO) *dto.AuthCtx {
 	rv := &dto.AuthCtx{
 		Scopes:                  authDTO.GetScopes(),
+		Subject:                 authDTO.GetSubject(),
 		Type:                    authDTO.GetType(),
 		ValuePrefix:             authDTO.GetValuePrefix(),
 		KeyID:                   authDTO.GetKeyID(),
