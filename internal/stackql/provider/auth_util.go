@@ -15,6 +15,7 @@ import (
 	"regexp"
 
 	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/clientcredentials"
 	"golang.org/x/oauth2/google"
 	"golang.org/x/oauth2/jwt"
 )
@@ -161,11 +162,21 @@ func parseServiceAccountFile(ac *dto.AuthCtx) (serviceAccount, error) {
 	return c, json.Unmarshal(b, &c)
 }
 
-func getJWTConfig(provider string, credentialsBytes []byte, scopes []string, subject string) (*jwt.Config, error) {
+func getGoogleJWTConfig(
+	provider string,
+	credentialsBytes []byte,
+	scopes []string,
+	subject string,
+) (*jwt.Config, error) {
 	switch provider {
 	case "google", "googleads", "googleanalytics",
 		"googledevelopers", "googlemybusiness", "googleworkspace",
 		"youtube", "googleadmin":
+		if scopes == nil {
+			scopes = []string{
+				"https://www.googleapis.com/auth/cloud-platform",
+			}
+		}
 		rv, err := google.JWTConfigFromJSON(credentialsBytes, scopes...)
 		if err != nil {
 			return nil, err
@@ -179,7 +190,31 @@ func getJWTConfig(provider string, credentialsBytes []byte, scopes []string, sub
 	}
 }
 
-func oauthServiceAccount(
+func getGenericClientCredentialsConfig(authCtx *dto.AuthCtx, scopes []string) (*clientcredentials.Config, error) {
+	clientID, clientIDErr := authCtx.GetClientID()
+	if clientIDErr != nil {
+		return nil, clientIDErr
+	}
+	clientSecret, secretErr := authCtx.GetClientSecret()
+	if secretErr != nil {
+		return nil, secretErr
+	}
+	rv := &clientcredentials.Config{
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		Scopes:       scopes,
+		TokenURL:     authCtx.GetTokenURL(),
+	}
+	if len(authCtx.GetValues()) > 0 {
+		rv.EndpointParams = authCtx.GetValues()
+	}
+	if authCtx.GetAuthStyle() > 0 {
+		rv.AuthStyle = oauth2.AuthStyle(authCtx.GetAuthStyle())
+	}
+	return rv, nil
+}
+
+func googleOauthServiceAccount(
 	provider string,
 	authCtx *dto.AuthCtx,
 	scopes []string,
@@ -189,14 +224,27 @@ func oauthServiceAccount(
 	if err != nil {
 		return nil, fmt.Errorf("service account credentials error: %w", err)
 	}
-	config, errToken := getJWTConfig(provider, b, scopes, authCtx.Subject)
+	config, errToken := getGoogleJWTConfig(provider, b, scopes, authCtx.Subject)
 	if errToken != nil {
 		return nil, errToken
 	}
 	activateAuth(authCtx, "", dto.AuthServiceAccountStr)
 	httpClient := netutils.GetHTTPClient(runtimeCtx, http.DefaultClient)
-	//nolint:staticcheck // TODO: fix this
-	return config.Client(context.WithValue(oauth2.NoContext, oauth2.HTTPClient, httpClient)), nil
+	return config.Client(context.WithValue(context.Background(), oauth2.HTTPClient, httpClient)), nil
+}
+
+func genericOauthClientCredentials(
+	authCtx *dto.AuthCtx,
+	scopes []string,
+	runtimeCtx dto.RuntimeCtx,
+) (*http.Client, error) {
+	config, errToken := getGenericClientCredentialsConfig(authCtx, scopes)
+	if errToken != nil {
+		return nil, errToken
+	}
+	activateAuth(authCtx, "", dto.ClientCredentialsStr)
+	httpClient := netutils.GetHTTPClient(runtimeCtx, http.DefaultClient)
+	return config.Client(context.WithValue(context.Background(), oauth2.HTTPClient, httpClient)), nil
 }
 
 func apiTokenAuth(authCtx *dto.AuthCtx, runtimeCtx dto.RuntimeCtx, enforceBearer bool) (*http.Client, error) {

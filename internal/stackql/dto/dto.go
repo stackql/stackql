@@ -16,6 +16,7 @@ const (
 	APIRequestTimeoutKey            string = "apirequesttimeout"
 	CacheKeyCountKey                string = "cachekeycount"
 	CacheTTLKey                     string = "metadatattl"
+	ClientCredentialsStr            string = "client_credentials"
 	ColorSchemeKey                  string = "colorscheme" // deprecated
 	ConfigFilePathKey               string = "configfile"
 	CPUProfileKey                   string = "cpuprofile"
@@ -37,6 +38,7 @@ const (
 	AllowInsecureKey                string = "tls.allowInsecure"
 	InfilePathKey                   string = "infile"
 	LogLevelStrKey                  string = "loglevel"
+	OAuth2Str                       string = "oauth2"
 	OutfilePathKey                  string = "outfile"
 	OutputFormatKey                 string = "output"
 	ApplicationFilesRootPathKey     string = "approot"

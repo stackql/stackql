@@ -4,6 +4,8 @@ import os
 
 from pathlib import Path
 
+import urllib.parse
+
 import shutil
 import yaml
 
@@ -131,6 +133,11 @@ class ProviderArgs:
 
   def isServerRewriteRequired(self) -> bool:
     return self.name != 'k8s' 
+  
+def _replace_token_url(url :str, replacement_host :str) -> str:
+  parsed = urllib.parse.urlparse(url)
+  replaced = parsed._replace(netloc="{}:{}".format(replacement_host, parsed.port))
+  return urllib.parse.urlunparse(replaced)
 
 def rewrite_provider(args :ProviderArgs):
     os.chdir(args.srcdir)
@@ -146,6 +153,9 @@ def rewrite_provider(args :ProviderArgs):
             for srv in servs:
               srv['url'] = f'https://{args.replacement_host}:{args.port}/'
           d['servers'] = servs
+          token_url = d.get('config', {}).get('auth', {}).get('token_url')
+          if args.isServerRewriteRequired() and token_url:
+            d['config']['auth']['token_url'] = _replace_token_url(token_url, args.replacement_host)
           for path, path_item in d.get('paths', {}).items():
             path_item_servers = path_item.get('servers', [])
             if args.isServerRewriteRequired():
@@ -207,6 +217,9 @@ class ProviderCfgMapping:
       },
       "stackql_auth_testing": {
         "port": processed_args.stackql_auth_testing_port
+      },
+      "stackql_oauth2_testing": {
+        "port": processed_args.stackql_auth_testing_port # shared port acceptable coz auth server decooupled for outh2
       },
       "__default__": {
         "port": processed_args.default_port

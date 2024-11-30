@@ -89,6 +89,8 @@ func (gp *GenericProvider) inferAuthType(authCtx dto.AuthCtx, authTypeRequested 
 		return dto.AuthAWSSigningv4Str
 	case dto.AuthCustomStr:
 		return dto.AuthCustomStr
+	case dto.OAuth2Str:
+		return dto.OAuth2Str
 	}
 	if authCtx.KeyFilePath != "" || authCtx.KeyEnvVar != "" {
 		return dto.AuthServiceAccountStr
@@ -109,7 +111,11 @@ func (gp *GenericProvider) Auth(
 	case dto.AuthBearerStr:
 		return gp.apiTokenFileAuth(authCtx, true)
 	case dto.AuthServiceAccountStr:
-		return gp.keyFileAuth(authCtx)
+		return gp.googleKeyFileAuth(authCtx)
+	case dto.OAuth2Str:
+		if authCtx.GrantType == dto.ClientCredentialsStr {
+			return gp.clientCredentialsAuth(authCtx)
+		}
 	case dto.AuthBasicStr:
 		return gp.basicAuth(authCtx)
 	case dto.AuthCustomStr:
@@ -269,14 +275,14 @@ func (gp *GenericProvider) oAuth(authCtx *dto.AuthCtx, enforceRevokeFirst bool) 
 	return client, nil
 }
 
-func (gp *GenericProvider) keyFileAuth(authCtx *dto.AuthCtx) (*http.Client, error) {
+func (gp *GenericProvider) googleKeyFileAuth(authCtx *dto.AuthCtx) (*http.Client, error) {
 	scopes := authCtx.Scopes
-	if scopes == nil {
-		scopes = []string{
-			"https://www.googleapis.com/auth/cloud-platform",
-		}
-	}
-	return oauthServiceAccount(gp.GetProviderString(), authCtx, scopes, gp.runtimeCtx)
+	return googleOauthServiceAccount(gp.GetProviderString(), authCtx, scopes, gp.runtimeCtx)
+}
+
+func (gp *GenericProvider) clientCredentialsAuth(authCtx *dto.AuthCtx) (*http.Client, error) {
+	scopes := authCtx.Scopes
+	return genericOauthClientCredentials(authCtx, scopes, gp.runtimeCtx)
 }
 
 func (gp *GenericProvider) apiTokenFileAuth(authCtx *dto.AuthCtx, enforceBearer bool) (*http.Client, error) {

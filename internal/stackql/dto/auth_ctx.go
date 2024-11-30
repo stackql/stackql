@@ -3,6 +3,7 @@ package dto
 import (
 	"encoding/base64"
 	"fmt"
+	"net/url"
 	"os"
 	"strings"
 )
@@ -42,6 +43,14 @@ type AuthCtx struct {
 	Active                  bool           `json:"-" yaml:"-"`
 	Location                string         `json:"location" yaml:"location"`
 	Name                    string         `json:"name" yaml:"name"`
+	TokenURL                string         `json:"token_url" yaml:"token_url"`
+	GrantType               string         `json:"grant_type" yaml:"grant_type"`
+	ClientID                string         `json:"client_id" yaml:"client_id"`
+	ClientSecret            string         `json:"client_secret" yaml:"client_secret"`
+	ClientIDEnvVar          string         `json:"client_id_env_var" yaml:"client_id_env_var"`
+	ClientSecretEnvVar      string         `json:"client_secret_env_var" yaml:"client_secret_env_var"`
+	Values                  url.Values     `json:"values" yaml:"values"`
+	AuthStyle               int            `json:"auth_style" yaml:"auth_style"`
 }
 
 func (ac *AuthCtx) GetSQLCfg() (SQLBackendCfg, bool) {
@@ -78,8 +87,24 @@ func (ac *AuthCtx) Clone() *AuthCtx {
 		EncodedBasicCredentials: ac.EncodedBasicCredentials,
 		Location:                ac.Location,
 		Name:                    ac.Name,
+		Subject:                 ac.Subject,
+		TokenURL:                ac.TokenURL,
+		GrantType:               ac.GrantType,
+		ClientID:                ac.ClientID,
+		ClientSecret:            ac.ClientSecret,
+		ClientIDEnvVar:          ac.ClientIDEnvVar,
+		ClientSecretEnvVar:      ac.ClientSecretEnvVar,
+		Values:                  ac.Values,
+		AuthStyle:               ac.AuthStyle,
 	}
 	return rv
+}
+
+func (ac *AuthCtx) GetValues() url.Values {
+	if ac.Values == nil {
+		return url.Values{}
+	}
+	return ac.Values
 }
 
 func (ac *AuthCtx) GetSuccessor() (*AuthCtx, bool) {
@@ -186,6 +211,46 @@ func (ac *AuthCtx) GetCredentialsBytes() ([]byte, error) {
 		return []byte(ac.EncodedBasicCredentials), nil
 	}
 	return nil, fmt.Errorf("no credentials found")
+}
+
+func (ac *AuthCtx) GetClientID() (string, error) {
+	if ac.ClientIDEnvVar != "" {
+		rv := os.Getenv(ac.ClientIDEnvVar)
+		if rv == "" {
+			return "", fmt.Errorf("client_id_env_var references empty string")
+		}
+		return rv, nil
+	}
+	if ac.ClientID == "" {
+		return "", fmt.Errorf("client_id is empty")
+	}
+	return ac.ClientID, nil
+}
+
+func (ac *AuthCtx) GetClientSecret() (string, error) {
+	if ac.ClientSecretEnvVar != "" {
+		rv := os.Getenv(ac.ClientSecretEnvVar)
+		if rv == "" {
+			return "", fmt.Errorf("client_secret_env_var references empty string")
+		}
+		return rv, nil
+	}
+	if ac.ClientSecret == "" {
+		return "", fmt.Errorf("client_secret is empty")
+	}
+	return ac.ClientSecret, nil
+}
+
+func (ac *AuthCtx) GetGrantType() string {
+	return ac.GrantType
+}
+
+func (ac *AuthCtx) GetTokenURL() string {
+	return ac.TokenURL
+}
+
+func (ac *AuthCtx) GetAuthStyle() int {
+	return ac.AuthStyle
 }
 
 func (ac *AuthCtx) GetCredentialsSourceDescriptorString() string {

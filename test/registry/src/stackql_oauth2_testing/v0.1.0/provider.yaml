@@ -1,0 +1,33 @@
+id: stackql_oauth2_testing
+name: stackql_oauth2_testing
+version: v0.1.0
+providerServices:
+  collectors:
+    description: Interact with and view information about collectors.
+    id: collectors:v0.1.0
+    name: collectors
+    preferred: true
+    service:
+      $ref: stackql_oauth2_testing/v0.1.0/services/collectors.yaml
+    title: Sumo Logic v1 REST API - users
+    version: v0.1.0
+  users:
+    description: Interact with and view information about users.
+    id: users:v0.1.0
+    name: users
+    preferred: true
+    service:
+      $ref: stackql_oauth2_testing/v0.1.0/services/users.yaml
+    title: Sumo Logic v1 REST API - users
+    version: v0.1.0
+openapi: 3.0.3
+config:
+  auth:
+    client_id_env_var: 'YOUR_OAUTH2_CLIENT_ID_ENV_VAR'
+    client_secret_env_var: 'YOUR_OAUTH2_CLIENT_SECRET_ENV_VAR'
+    type: "oauth2"
+    grant_type: "client_credentials"
+    token_url: 'http://localhost:2091/contrived/simple/token'
+    scopes:
+      - 'scope-01'
+      - 'scope-02'
