@@ -1,0 +1,40 @@
+[
+    {
+        "login": "joeblow",
+        "id": 90000004,
+        "node_id": "node_id_primary_01",
+        "avatar_url": "https://avatars.githubusercontent.com/u/90000004?v=4",
+        "url": "https://api.github.com/users/joeblow",
+        "html_url": "https://github.com/joeblow",
+        "followers_url": "https://api.github.com/users/joeblow/followers",
+        "following_url": "https://api.github.com/users/joeblow/following{/other_user}",
+        "gists_url": "https://api.github.com/users/joeblow/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/joeblow/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/joeblow/subscriptions",
+        "organizations_url": "https://api.github.com/users/joeblow/orgs",
+        "repos_url": "https://api.github.com/users/joeblow/repos",
+        "events_url": "https://api.github.com/users/joeblow/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/joeblow/received_events",
+        "type": "User",
+        "site_admin": false
+    },
+    {
+        "login": "marcusaurelius",
+        "id": 90000003,
+        "node_id": "node_id_primary_02",
+        "avatar_url": "https://avatars.githubusercontent.com/u/90000003?v=4",
+        "url": "https://api.github.com/users/marcusaurelius",
+        "html_url": "https://github.com/marcusaurelius",
+        "followers_url": "https://api.github.com/users/marcusaurelius/followers",
+        "following_url": "https://api.github.com/users/marcusaurelius/following{/other_user}",
+        "gists_url": "https://api.github.com/users/marcusaurelius/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/marcusaurelius/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/marcusaurelius/subscriptions",
+        "organizations_url": "https://api.github.com/users/marcusaurelius/orgs",
+        "repos_url": "https://api.github.com/users/marcusaurelius/repos",
+        "events_url": "https://api.github.com/users/marcusaurelius/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/marcusaurelius/received_events",
+        "type": "User",
+        "site_admin": false
+    }
+]

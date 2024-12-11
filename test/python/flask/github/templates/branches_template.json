@@ -1,0 +1,13 @@
+[
+        {% for branch in branches %}
+        {
+            "name": "{{ branch.name }}",
+            "commit": {
+                "sha": "{{ branch.commit.sha }}",
+                "url": "{{ branch.commit.url }}"
+            },
+            "protected": {{ branch.protected | tojson }}
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ]
+

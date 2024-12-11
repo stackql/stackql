@@ -326,7 +326,7 @@ func (hc *standardHandlerContext) LogHTTPResponseMap(target interface{}) {
 	//nolint:nestif // ignore nested if
 	if hc.runtimeContext.HTTPLogEnabled {
 		switch target := target.(type) {
-		case map[string]interface{}, []interface{}:
+		case []map[string]interface{}, map[string]interface{}, []interface{}:
 			b, err := json.MarshalIndent(target, "", "  ")
 			if err != nil {
 				//nolint:errcheck // ignore error on output stream
@@ -525,7 +525,7 @@ func GetHandlerCtx(
 		sessionCtxMutex:     &sync.Mutex{},
 		providersMapMutex:   &sync.Mutex{},
 		rawQuery:            cmdString,
-		runtimeContext:      runtimeCtx,
+		runtimeContext:      runtimeCtx.Copy(),
 		providers:           providers,
 		authContexts:        inputBundle.GetAuthContexts(),
 		registry:            reg,

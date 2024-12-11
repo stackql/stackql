@@ -1,0 +1,26 @@
+{
+      "url": "https://api.github.com/repos/dummyorg/dummyapp.io/pages",
+      "status": "built",
+      "cname": "dummyapp.io",
+      "custom_404": true,
+      "html_url": "https://dummyapp.io/",
+      "build_type": "legacy",
+      "source": {
+        "branch": "gh-pages",
+        "path": "/"
+      },
+      "public": true,
+      "protected_domain_state": "verified",
+      "pending_domain_unverified_at": null,
+      "https_certificate": {
+        "state": "approved",
+        "description": "The certificate has been approved.",
+        "domains": [
+          "dummyapp.io",
+          "www.dummyapp.io"
+        ],
+        "expires_at": "2022-07-17"
+      },
+      "https_enforced": true
+
+  }
