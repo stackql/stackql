@@ -1,0 +1,62 @@
+{
+    "version": 1,
+    "etag": "BwXdCzeFew0=",
+    "bindings": [
+        {
+            "role": "roles/appengine.serviceAgent",
+            "members": [
+                "serviceAccount:service-1231231231230@gcp-gae-service.iam.gserviceaccount.com"
+            ]
+        },
+        {
+            "role": "roles/cloudbuild.builds.builder",
+            "members": [
+                "serviceAccount:1231231231230@cloudbuild.gserviceaccount.com"
+            ]
+        },
+        {
+            "role": "roles/cloudbuild.serviceAgent",
+            "members": [
+                "serviceAccount:service-1231231231230@gcp-sa-cloudbuild.iam.gserviceaccount.com"
+            ]
+        },
+        {
+            "role": "roles/containerregistry.ServiceAgent",
+            "members": [
+                "serviceAccount:service-1231231231230@containerregistry.iam.gserviceaccount.com"
+            ]
+        },
+        {
+            "role": "roles/editor",
+            "members": [
+                "serviceAccount:testproject@appspot.gserviceaccount.com"
+            ]
+        },
+        {
+            "role": "roles/firebaserules.system",
+            "members": [
+                "serviceAccount:service-1231231231230@firebase-rules.iam.gserviceaccount.com"
+            ]
+        },
+        {
+            "role": "roles/firestore.serviceAgent",
+            "members": [
+                "serviceAccount:service-1231231231230@gcp-sa-firestore.iam.gserviceaccount.com"
+            ]
+        },
+        {
+            "role": "roles/owner",
+            "members": [
+                "serviceAccount:testproject-provisioner@testproject.iam.gserviceaccount.com",
+                "user:joeblow@testorg.io",
+                "user:johnsmith@testorg.io"
+            ]
+        },
+        {
+            "role": "roles/pubsub.serviceAgent",
+            "members": [
+                "serviceAccount:service-1231231231230@gcp-sa-pubsub.iam.gserviceaccount.com"
+            ]
+        }
+    ]
+}

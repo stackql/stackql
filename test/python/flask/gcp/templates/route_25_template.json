@@ -1,0 +1,134 @@
+{
+    "kind": "compute#diskList",
+    "id": "projects/testing-project/zones/australia-southeast1-a/disks",
+    "items": [
+        {
+            "kind": "compute#disk",
+            "id": "1277395518335084741",
+            "creationTimestamp": "2022-06-11T01:45:30.778-07:00",
+            "name": "instance-1",
+            "sizeGb": "10",
+            "zone": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a",
+            "status": "READY",
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a/disks/instance-1",
+            "sourceImage": "https://www.googleapis.com/compute/v1/projects/debian-cloud/global/images/debian-11-bullseye-v20220519",
+            "sourceImageId": "4801817364715522935",
+            "type": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a/diskTypes/pd-balanced",
+            "licenses": [
+                "https://www.googleapis.com/compute/v1/projects/debian-cloud/global/licenses/debian-11-bullseye"
+            ],
+            "guestOsFeatures": [
+                {
+                    "type": "UEFI_COMPATIBLE"
+                },
+                {
+                    "type": "VIRTIO_SCSI_MULTIQUEUE"
+                },
+                {
+                    "type": "GVNIC"
+                }
+            ],
+            "lastAttachTimestamp": "2022-06-11T01:45:30.779-07:00",
+            "users": [
+                "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a/instances/instance-1"
+            ],
+            "labelFingerprint": "42WmSpB8rSM=",
+            "licenseCodes": [
+                "3853522013536123851"
+            ],
+            "physicalBlockSizeBytes": "4096"
+        },
+        {
+            "kind": "compute#disk",
+            "id": "3935171575166829779",
+            "creationTimestamp": "2022-06-11T17:58:37.035-07:00",
+            "name": "instance-1-b",
+            "sizeGb": "10",
+            "zone": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a",
+            "status": "READY",
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a/disks/instance-1-b",
+            "sourceImage": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20220610",
+            "sourceImageId": "7038015254429599799",
+            "type": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a/diskTypes/pd-standard",
+            "licenses": [
+                "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/licenses/ubuntu-2004-lts"
+            ],
+            "guestOsFeatures": [
+                {
+                    "type": "VIRTIO_SCSI_MULTIQUEUE"
+                },
+                {
+                    "type": "SEV_CAPABLE"
+                },
+                {
+                    "type": "UEFI_COMPATIBLE"
+                },
+                {
+                    "type": "GVNIC"
+                }
+            ],
+            "lastAttachTimestamp": "2022-06-11T17:58:37.036-07:00",
+            "users": [
+                "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a/instances/instance-1-b"
+            ],
+            "labelFingerprint": "42WmSpB8rSM=",
+            "licenseCodes": [
+                "2211838267635035815"
+            ],
+            "physicalBlockSizeBytes": "4096"
+        },
+        {
+            "kind": "compute#disk",
+            "id": "8621760977127900205",
+            "creationTimestamp": "2022-06-11T18:00:51.210-07:00",
+            "name": "instance-1-c",
+            "sizeGb": "10",
+            "zone": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a",
+            "status": "READY",
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a/disks/instance-1-c",
+            "sourceImage": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20220610",
+            "sourceImageId": "7038015254429599799",
+            "type": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a/diskTypes/pd-standard",
+            "licenses": [
+                "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/licenses/ubuntu-2004-lts"
+            ],
+            "guestOsFeatures": [
+                {
+                    "type": "VIRTIO_SCSI_MULTIQUEUE"
+                },
+                {
+                    "type": "SEV_CAPABLE"
+                },
+                {
+                    "type": "UEFI_COMPATIBLE"
+                },
+                {
+                    "type": "GVNIC"
+                }
+            ],
+            "lastAttachTimestamp": "2022-06-11T18:00:51.211-07:00",
+            "users": [
+                "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a/instances/instance-1-c"
+            ],
+            "labelFingerprint": "42WmSpB8rSM=",
+            "licenseCodes": [
+                "2211838267635035815"
+            ],
+            "physicalBlockSizeBytes": "4096"
+        },
+        {
+            "kind": "compute#disk",
+            "id": "1089670722739086122",
+            "creationTimestamp": "2021-12-04T18:02:46.207-08:00",
+            "name": "my-disk-01-indeed",
+            "sizeGb": "10",
+            "zone": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a",
+            "status": "READY",
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a/disks/my-disk-01-indeed",
+            "type": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a/diskTypes/pd-standard",
+            "labelFingerprint": "42WmSpB8rSM=",
+            "physicalBlockSizeBytes": "4096"
+        }
+    ],
+    "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a/disks"
+}

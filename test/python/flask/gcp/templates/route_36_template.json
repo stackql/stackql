@@ -1,0 +1,234 @@
+{
+    "kind": "compute#firewallList",
+    "id": "projects/changing-project/global/firewalls",
+    "items": [
+        {
+            "kind": "compute#firewall",
+            "id": "111111111111",
+            "creationTimestamp": "2022-02-26T00:05:59.737-08:00",
+            "name": "allow-spark-ui",
+            "description": "",
+            "network": "https://www.googleapis.com/compute/v1/projects/changing-project/global/networks/default",
+            "priority": 1000,
+            "sourceRanges": [
+                "0.0.0.0/0"
+            ],
+            "allowed": [
+                {
+                    "IPProtocol": "tcp",
+                    "ports": [
+                        "4040"
+                    ]
+                }
+            ],
+            "direction": "INGRESS",
+            "logConfig": {
+                "enable": false
+            },
+            "disabled": false,
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/changing-project/global/firewalls/allow-spark-ui"
+        },
+        {
+            "kind": "compute#firewall",
+            "id": "22222222222",
+            "creationTimestamp": "2022-02-26T00:08:48.378-08:00",
+            "name": "default-allow-http",
+            "description": "",
+            "network": "https://www.googleapis.com/compute/v1/projects/changing-project/global/networks/default",
+            "priority": 1000,
+            "sourceRanges": [
+                "0.0.0.0/0"
+            ],
+            "targetTags": [
+                "http-server"
+            ],
+            "allowed": [
+                {
+                    "IPProtocol": "tcp",
+                    "ports": [
+                        "80"
+                    ]
+                }
+            ],
+            "direction": "INGRESS",
+            "logConfig": {
+                "enable": false
+            },
+            "disabled": false,
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/changing-project/global/firewalls/default-allow-http"
+        },
+        {
+            "kind": "compute#firewall",
+            "id": "33333333",
+            "creationTimestamp": "2022-02-25T23:41:59.999-08:00",
+            "name": "default-allow-https",
+            "description": "",
+            "network": "https://www.googleapis.com/compute/v1/projects/changing-project/global/networks/default",
+            "priority": 1000,
+            "sourceRanges": [
+                "0.0.0.0/0"
+            ],
+            "targetTags": [
+                "https-server"
+            ],
+            "allowed": [
+                {
+                    "IPProtocol": "tcp",
+                    "ports": [
+                        "443"
+                    ]
+                }
+            ],
+            "direction": "INGRESS",
+            "logConfig": {
+                "enable": false
+            },
+            "disabled": false,
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/changing-project/global/firewalls/default-allow-https"
+        },
+        {
+            "kind": "compute#firewall",
+            "id": "4444444444444",
+            "creationTimestamp": "2022-02-08T15:05:18.484-08:00",
+            "name": "default-allow-icmp",
+            "description": "Allow ICMP from anywhere",
+            "network": "https://www.googleapis.com/compute/v1/projects/changing-project/global/networks/default",
+            "priority": 65534,
+            "sourceRanges": [
+                "0.0.0.0/0"
+            ],
+            "allowed": [
+                {
+                    "IPProtocol": "icmp"
+                }
+            ],
+            "direction": "INGRESS",
+            "logConfig": {
+                "enable": false
+            },
+            "disabled": false,
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/changing-project/global/firewalls/default-allow-icmp"
+        },
+        {
+            "kind": "compute#firewall",
+            "id": "5555555555555",
+            "creationTimestamp": "2022-02-08T15:05:18.471-08:00",
+            "name": "default-allow-internal",
+            "description": "Allow internal traffic on the default network",
+            "network": "https://www.googleapis.com/compute/v1/projects/changing-project/global/networks/default",
+            "priority": 65534,
+            "sourceRanges": [
+                "10.128.0.0/9"
+            ],
+            "allowed": [
+                {
+                    "IPProtocol": "tcp",
+                    "ports": [
+                        "0-65535"
+                    ]
+                },
+                {
+                    "IPProtocol": "udp",
+                    "ports": [
+                        "0-65535"
+                    ]
+                },
+                {
+                    "IPProtocol": "icmp"
+                }
+            ],
+            "direction": "INGRESS",
+            "logConfig": {
+                "enable": false
+            },
+            "disabled": false,
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/changing-project/global/firewalls/default-allow-internal"
+        },
+        {
+            "kind": "compute#firewall",
+            "id": "6666666666",
+            "creationTimestamp": "2022-02-08T15:05:18.480-08:00",
+            "name": "default-allow-rdp",
+            "description": "Allow RDP from anywhere",
+            "network": "https://www.googleapis.com/compute/v1/projects/changing-project/global/networks/default",
+            "priority": 65534,
+            "sourceRanges": [
+                "0.0.0.0/0"
+            ],
+            "allowed": [
+                {
+                    "IPProtocol": "tcp",
+                    "ports": [
+                        "3389"
+                    ]
+                }
+            ],
+            "direction": "INGRESS",
+            "logConfig": {
+                "enable": false
+            },
+            "disabled": false,
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/changing-project/global/firewalls/default-allow-rdp"
+        },
+        {
+            "kind": "compute#firewall",
+            "id": "777777777777",
+            "creationTimestamp": "2022-02-08T15:05:18.476-08:00",
+            "name": "default-allow-ssh",
+            "description": "Allow SSH from anywhere",
+            "network": "https://www.googleapis.com/compute/v1/projects/changing-project/global/networks/default",
+            "priority": 65534,
+            "sourceRanges": [
+                "0.0.0.0/0"
+            ],
+            "allowed": [
+                {
+                    "IPProtocol": "tcp",
+                    "ports": [
+                        "22"
+                    ]
+                }
+            ],
+            "direction": "INGRESS",
+            "logConfig": {
+                "enable": false
+            },
+            "disabled": false,
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/changing-project/global/firewalls/default-allow-ssh"
+        },
+        {
+            "kind": "compute#firewall",
+            "id": "8888888888888",
+            "creationTimestamp": "2022-02-08T15:05:18.476-08:00",
+            "name": "selected-allow-rdesk",
+            "description": "Allow RDESK from selected address spaces",
+            "network": "https://www.googleapis.com/compute/v1/projects/changing-project/global/networks/default",
+            "priority": 65534,
+            "sourceRanges": [
+                "10.128.0.0/9",
+                "10.0.0.0/16"
+            ],
+            "allowed": [
+                {
+                    "IPProtocol": "tcp",
+                    "ports": [
+                        "3389"
+                    ]
+                },
+                {
+                    "IPProtocol": "udp",
+                    "ports": [
+                        "3389"
+                    ]
+                }
+            ],
+            "direction": "INGRESS",
+            "logConfig": {
+                "enable": false
+            },
+            "disabled": false,
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/changing-project/global/firewalls/selected-allow-rdesk"
+        }
+    ],
+    "selfLink": "https://www.googleapis.com/compute/v1/projects/changing-project/global/firewalls"
+}

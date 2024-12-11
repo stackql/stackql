@@ -1,0 +1,88 @@
+{
+    "kind": "compute#networkList",
+    "id": "projects/testing-project/global/networks",
+    "items": [
+        {
+            "kind": "compute#network",
+            "id": "8588306527720695833",
+            "creationTimestamp": "2021-03-22T01:36:06.563-07:00",
+            "name": "k8s-01-vpc",
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/k8s-01-vpc",
+            "selfLinkWithId": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/8588306527720695833",
+            "autoCreateSubnetworks": false,
+            "routingConfig": {
+                "routingMode": "REGIONAL"
+            },
+            "mtu": 1460,
+            "networkFirewallPolicyEnforcementOrder": "AFTER_CLASSIC_FIREWALL"
+        },
+        {
+            "kind": "compute#network",
+            "id": "7485409936384317385",
+            "creationTimestamp": "2020-06-22T01:17:42.886-07:00",
+            "name": "kr-vpc-01",
+            "description": "",
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/kr-vpc-01",
+            "selfLinkWithId": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/7485409936384317385",
+            "autoCreateSubnetworks": false,
+            "subnetworks": [
+                "https://www.googleapis.com/compute/v1/projects/testing-project/regions/australia-southeast1/subnetworks/aus-sn-02",
+                "https://www.googleapis.com/compute/v1/projects/testing-project/regions/australia-southeast1/subnetworks/aus-sn-01"
+            ],
+            "routingConfig": {
+                "routingMode": "REGIONAL"
+            },
+            "networkFirewallPolicyEnforcementOrder": "AFTER_CLASSIC_FIREWALL"
+        },
+        {
+            "kind": "compute#network",
+            "id": "6038828054077414542",
+            "creationTimestamp": "2021-03-27T05:17:37.377-07:00",
+            "name": "kubernetes-the-hard-way-vpc2",
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/kubernetes-the-hard-way-vpc2",
+            "selfLinkWithId": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/6038828054077414542",
+            "autoCreateSubnetworks": false,
+            "routingConfig": {
+                "routingMode": "REGIONAL"
+            },
+            "networkFirewallPolicyEnforcementOrder": "AFTER_CLASSIC_FIREWALL"
+        },
+        {
+            "kind": "compute#network",
+            "id": "3809679799090968205",
+            "creationTimestamp": "2022-04-21T14:10:58.899-07:00",
+            "name": "demo-disk-xx5",
+            "description": "matchable network",
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/demo-disk-xx5",
+            "selfLinkWithId": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/3809679799090968205",
+            "autoCreateSubnetworks": false,
+            "subnetworks": [
+                "https://www.googleapis.com/compute/v1/projects/testing-project/regions/australia-southeast1/subnetworks/demo-disk-xx5"
+            ],
+            "routingConfig": {
+                "routingMode": "REGIONAL"
+            },
+            "mtu": 1460,
+            "networkFirewallPolicyEnforcementOrder": "AFTER_CLASSIC_FIREWALL"
+        },
+        {
+            "kind": "compute#network",
+            "id": "8912734694931449472",
+            "creationTimestamp": "2022-03-01T02:41:51.571-08:00",
+            "name": "testing-network-01",
+            "description": "some-description",
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/testing-network-01",
+            "selfLinkWithId": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/8912734694931449472",
+            "autoCreateSubnetworks": false,
+            "subnetworks": [
+                "https://www.googleapis.com/compute/v1/projects/testing-project/regions/australia-southeast2/subnetworks/ts-01"
+            ],
+            "routingConfig": {
+                "routingMode": "REGIONAL"
+            },
+            "mtu": 1460,
+            "networkFirewallPolicyEnforcementOrder": "AFTER_CLASSIC_FIREWALL"
+        }
+    ],
+    "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks"
+}

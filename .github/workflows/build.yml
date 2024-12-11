@@ -185,7 +185,7 @@ jobs:
         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
         AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
         AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      run: |
+      run: | #Ideally there wiuld be forced kill of flaks here but dont know how to do that in windows
         python cicd/python/build.py --robot-test-integration
     
     - name: Prepare Test DB
@@ -386,6 +386,9 @@ jobs:
     - name: Run robot mocked functional tests with aggressive concurrency
       if: success()
       run: |
+        echo "## Stray flask apps to be killed before robot tests ##"
+        pgrep -f flask | xargs kill -9
+        echo "## End ##"
         python cicd/python/build.py --robot-test  --config='{ "variables": { "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": "true", "CONCURRENCY_LIMIT": -1  } }'
 
     - name: Output from mocked functional tests with aggressive concurrency
@@ -401,6 +404,9 @@ jobs:
         AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
         AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       run: |
+        echo "## Stray flask apps to be killed before robot tests ##"
+        pgrep -f flask | xargs kill -9
+        echo "## End ##"
         python cicd/python/build.py --robot-test-integration
     
     - name: Prepare Test DB
@@ -443,6 +449,9 @@ jobs:
         cp stackql_${{env.BUILDMAJORVERSION}}.${{env.BUILDMINORVERSION}}.${{env.BUILDPATCHVERSION}}_amd64.deb deb_test/
         sudo dpkg -i ./deb_test/stackql_${{env.BUILDMAJORVERSION}}.${{env.BUILDMINORVERSION}}.${{env.BUILDPATCHVERSION}}_amd64.deb
         sudo apt-get install -f
+        echo "## Stray flask apps to be killed before robot tests ##"
+        pgrep -f flask | xargs kill -9
+        echo "## End ##"
         python cicd/python/build.py --robot-test  --config='{ "variables": { "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": "true", "CONCURRENCY_LIMIT": -1, "USE_STACKQL_PREINSTALLED": "true"  } }'
         stackqlLocation="$(which stackql 2>&1 | head -n 1)"
         stackqlVersion="$(stackql --version 2>&1 | head -n 1)"
@@ -642,6 +651,9 @@ jobs:
     - name: Run robot mocked functional tests with aggressive concurrency
       if: success()
       run: |
+        echo "## Stray flask apps to be killed before robot tests ##"
+        pgrep -f flask | xargs kill -9
+        echo "## End ##"
         python cicd/python/build.py --robot-test  --config='{ "variables": { "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": "true", "CONCURRENCY_LIMIT": -1  } }'
 
     - name: Output from mocked functional tests with aggressive concurrency
@@ -657,6 +669,9 @@ jobs:
         AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
         AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       run: |
+        echo "## Stray flask apps to be killed before robot tests ##"
+        pgrep -f flask | xargs kill -9
+        echo "## End ##"
         python cicd/python/build.py --robot-test-integration
     
     - name: Prepare Test DB
@@ -726,6 +741,9 @@ jobs:
         cp "${DEB_FILE}" deb_test/
         sudo dpkg -i "./deb_test/${DEB_FILE}"
         sudo apt-get install -f
+        echo "## Stray flask apps to be killed before robot tests ##"
+        pgrep -f flask | xargs kill -9
+        echo "## End ##"
         python cicd/python/build.py --robot-test  --config='{ "variables": { "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": "true", "CONCURRENCY_LIMIT": -1, "USE_STACKQL_PREINSTALLED": "true"  } }'
         stackqlLocation="$(which stackql 2>&1 | head -n 1)"
         stackqlVersion="$(stackql --version 2>&1 | head -n 1)"
@@ -859,6 +877,9 @@ jobs:
             then
             export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
           fi
+          echo "## Stray flask apps to be killed before robot tests ##"
+          pgrep -f flask | xargs kill -9
+          echo "## End ##"
           python3 cicd/python/build.py --robot-test-integration --config='{ "variables":  { "IS_WSL": true } }'
 
   macosbuild:
@@ -985,6 +1006,9 @@ jobs:
         AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
         AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       run: |
+        echo "## Stray flask apps to be killed before robot tests ##"
+        pgrep -f flask | xargs kill -9
+        echo "## End ##"
         python cicd/python/build.py --robot-test-integration
     
     - name: Prepare Test DB
@@ -1246,6 +1270,9 @@ jobs:
       if: success()
       timeout-minutes: ${{ vars.DEFAULT_STEP_TIMEOUT_MIN == '' && 20 || vars.DEFAULT_STEP_TIMEOUT_MIN }}
       run: |
+        echo "## Stray flask apps to be killed before robot tests ##"
+        pgrep -f flask | xargs kill -9
+        echo "## End ##"
         echo "## Stray docker containers before postgres robot tests ##"
         docker container ls --format "table {{.ID}}\t{{.Names}}\t{{.Ports}}" -a
         echo "## End ##"
@@ -1272,6 +1299,9 @@ jobs:
         AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
         AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       run: |
+        echo "## Stray flask apps to be killed before robot tests ##"
+        pgrep -f flask | xargs kill -9
+        echo "## End ##"
         python cicd/python/build.py --robot-test-integration --config='{ "variables":  { "EXECUTION_PLATFORM": "docker" } }'
 
     - name: Login to Docker Hub

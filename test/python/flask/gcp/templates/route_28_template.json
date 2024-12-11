@@ -1,0 +1,79 @@
+{
+    "kind": "compute#subnetworkList",
+    "id": "projects/testing-project/regions/australia-southeast1/subnetworks",
+    "items": [
+        {
+            "kind": "compute#subnetwork",
+            "id": "1291870789777086425",
+            "creationTimestamp": "2020-06-22T01:17:58.324-07:00",
+            "name": "aus-sn-01",
+            "description": "",
+            "network": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/kr-vpc-01",
+            "ipCidrRange": "10.0.0.0/24",
+            "gatewayAddress": "10.0.0.1",
+            "region": "https://www.googleapis.com/compute/v1/projects/testing-project/regions/australia-southeast1",
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/regions/australia-southeast1/subnetworks/aus-sn-01",
+            "privateIpGoogleAccess": true,
+            "fingerprint": "4bvbccOE26o=",
+            "enableFlowLogs": false,
+            "privateIpv6GoogleAccess": "DISABLE_GOOGLE_ACCESS",
+            "purpose": "PRIVATE",
+            "logConfig": {
+                "enable": false,
+                "aggregationInterval": "INTERVAL_5_SEC",
+                "flowSampling": 0.5,
+                "metadata": "INCLUDE_ALL_METADATA"
+            },
+            "stackType": "IPV4_ONLY"
+        },
+        {
+            "kind": "compute#subnetwork",
+            "id": "4010558545247197144",
+            "creationTimestamp": "2020-06-22T01:17:59.303-07:00",
+            "name": "aus-sn-02",
+            "description": "",
+            "network": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/kr-vpc-01",
+            "ipCidrRange": "10.0.1.0/24",
+            "gatewayAddress": "10.0.1.1",
+            "region": "https://www.googleapis.com/compute/v1/projects/testing-project/regions/australia-southeast1",
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/regions/australia-southeast1/subnetworks/aus-sn-02",
+            "privateIpGoogleAccess": true,
+            "fingerprint": "gVVUMelTKSY=",
+            "enableFlowLogs": true,
+            "privateIpv6GoogleAccess": "DISABLE_GOOGLE_ACCESS",
+            "purpose": "PRIVATE",
+            "logConfig": {
+                "enable": true,
+                "aggregationInterval": "INTERVAL_5_SEC",
+                "flowSampling": 0.5,
+                "metadata": "INCLUDE_ALL_METADATA"
+            },
+            "stackType": "IPV4_ONLY"
+        },
+        {
+            "kind": "compute#subnetwork",
+            "id": "6595214855052752540",
+            "creationTimestamp": "2022-04-21T14:11:15.882-07:00",
+            "name": "demo-disk-xx5",
+            "description": "matchable subnet",
+            "network": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/demo-disk-xx5",
+            "ipCidrRange": "10.0.0.0/24",
+            "gatewayAddress": "10.0.0.1",
+            "region": "https://www.googleapis.com/compute/v1/projects/testing-project/regions/australia-southeast1",
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/regions/australia-southeast1/subnetworks/demo-disk-xx5",
+            "privateIpGoogleAccess": false,
+            "fingerprint": "4EGffKc5JN0=",
+            "enableFlowLogs": false,
+            "privateIpv6GoogleAccess": "DISABLE_GOOGLE_ACCESS",
+            "purpose": "PRIVATE",
+            "logConfig": {
+                "enable": false,
+                "aggregationInterval": "INTERVAL_5_SEC",
+                "flowSampling": 0.5,
+                "metadata": "INCLUDE_ALL_METADATA"
+            },
+            "stackType": "IPV4_ONLY"
+        }
+    ],
+    "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/regions/australia-southeast1/subnetworks"
+}
