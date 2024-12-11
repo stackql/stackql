@@ -152,6 +152,7 @@
         "show methods in azure.dev_center.customization_tasks;",
         "set global \"a.b\"=1;",
         "set global \"$.auth.google.sub\"='krimmer@stackql.io';",
+        "select JSON_EXTRACT(saml.samlIdentity, '$.username') as saml_username from github.scim.saml_ids saml where saml.org = 'dummyorg';"
       ],
       "default": "show providers;"
     },
@@ -315,6 +316,16 @@
       "options": [
         "{\"keyFilePath\": \"${workspaceFolder}/test/server/mtls/credentials/pg_server_key.pem\", \"certFilePath\": \"${workspaceFolder}/test/server/mtls/credentials/pg_server_cert.pem\", \"clientCAs\": [\"\"]}"
       ]
+    },
+    {
+      "type": "pickString",
+      "id": "httpLogEnabled",
+      "description": "http log enabled",
+      "default": "false",
+      "options": [
+        "true",
+        "false"
+      ]
     }
   ],
   "configurations": [
@@ -380,6 +391,7 @@
         "--export.alias=${input:exportAliasString}",
         "--dataflow.dependency.max=${input:dataflowDependencyMax}",
         "--dataflow.components.max=${input:dataflowComponentsMax}",
+        "--http.log.enabled=${input:httpLogEnabled}",
         "${input:queryString}"
       ],
     },

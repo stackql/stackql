@@ -153,6 +153,7 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 			}
 			for {
 				response, err := graphQLReader.Read()
+				ss.handlerCtx.LogHTTPResponseMap(response)
 				if len(response) > 0 {
 					if !housekeepingDone && ss.insertPreparedStatementCtx != nil {
 						_, err = ss.handlerCtx.GetSQLEngine().Exec(ss.insertPreparedStatementCtx.GetGCHousekeepingQueries())

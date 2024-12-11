@@ -1,0 +1,25 @@
+
+[
+            {% for member in members %}
+            {
+                "login": "{{ member.login }}",
+                "id": {{ member.id }},
+                "node_id": "{{ member.node_id }}",
+                "avatar_url": "{{ member.avatar_url }}",
+                "gravatar_id": "{{ member.gravatar_id }}",
+                "url": "{{ member.url }}",
+                "html_url": "{{ member.html_url }}",
+                "followers_url": "{{ member.followers_url }}",
+                "following_url": "{{ member.following_url }}",
+                "gists_url": "{{ member.gists_url }}",
+                "starred_url": "{{ member.starred_url }}",
+                "subscriptions_url": "{{ member.subscriptions_url }}",
+                "organizations_url": "{{ member.organizations_url }}",
+                "repos_url": "{{ member.repos_url }}",
+                "events_url": "{{ member.events_url }}",
+                "received_events_url": "{{ member.received_events_url }}",
+                "type": "{{ member.type }}",
+                "site_admin": {{ member.site_admin | tojson }}
+            }{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ]

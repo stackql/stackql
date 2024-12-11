@@ -1,0 +1,14 @@
+[
+        {% for tag in tags %}
+        {
+            "name": "{{ tag.name }}",
+            "zipball_url": "{{ tag.zipball_url }}",
+            "tarball_url": "{{ tag.tarball_url }}",
+            "commit": {
+                "sha": "{{ tag.commit.sha }}",
+                "url": "{{ tag.commit.url }}"
+            },
+            "node_id": "{{ tag.node_id }}"
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ]
