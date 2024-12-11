@@ -1,0 +1,9 @@
+{
+    "keyRings": [
+        {
+            "name": "projects/testing-project-two/locations/global/keyRings/testing-two",
+            "createTime": "2022-02-02T02:02:02.02000000Z"
+        }
+    ],
+    "totalSize": 1
+}

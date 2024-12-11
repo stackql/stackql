@@ -32,7 +32,6 @@ Start Mock Server
     RETURN    ${process}
 
 Start All Mock Servers
-    Start Mock Server    ${JSON_INIT_FILE_PATH_GOOGLE}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_GOOGLE}
     Start Mock Server    ${JSON_INIT_FILE_PATH_GOOGLEADMIN}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_GOOGLEADMIN}
     Start Mock Server    ${JSON_INIT_FILE_PATH_OKTA}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_OKTA}
     Start Mock Server    ${JSON_INIT_FILE_PATH_AWS}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_AWS}
@@ -44,6 +43,7 @@ Start All Mock Servers
     Start Mock Server    ${JSON_INIT_FILE_PATH_STACKQL_AUTH_TESTING}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_STACKQL_AUTH_TESTING}
     Create OAuth2 Client Credentials Web Service    ${MOCKSERVER_PORT_OAUTH_CLIENT_CREDENTIALS_TOKEN}
     Create Github Web Service    ${MOCKSERVER_PORT_GITHUB}
+    Create GCP Web Service    ${MOCKSERVER_PORT_GOOGLE}
 
 
 Prepare StackQL Environment

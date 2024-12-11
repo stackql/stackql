@@ -1,0 +1,851 @@
+{
+    "readTime": "2023-08-21T10:05:28.701683596Z",
+    "assets": [
+      {
+        "name": "//compute.googleapis.com/projects/stackql-demo/regions/europe-west4/subnetworks/default",
+        "assetType": "compute.googleapis.com/Subnetwork",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2022-10-22T01:00:00Z"
+      },
+      {
+        "name": "//compute.googleapis.com/projects/stackql-demo/regions/europe-west6/subnetworks/default",
+        "assetType": "compute.googleapis.com/Subnetwork",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2022-10-22T01:00:00Z"
+      },
+      {
+        "name": "//compute.googleapis.com/projects/stackql-demo/regions/europe-west8/subnetworks/default",
+        "assetType": "compute.googleapis.com/Subnetwork",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2022-10-21T07:00:00Z"
+      },
+      {
+        "name": "//compute.googleapis.com/projects/stackql-demo/regions/europe-west9/subnetworks/default",
+        "assetType": "compute.googleapis.com/Subnetwork",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2022-10-21T07:00:00Z"
+      },
+      {
+        "name": "//compute.googleapis.com/projects/stackql-demo/regions/me-central1/subnetworks/default",
+        "assetType": "compute.googleapis.com/Subnetwork",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-04-07T13:00:00Z"
+      },
+      {
+        "name": "//compute.googleapis.com/projects/stackql-demo/regions/me-west1/subnetworks/default",
+        "assetType": "compute.googleapis.com/Subnetwork",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2022-10-21T07:00:00Z"
+      },
+      {
+        "name": "//compute.googleapis.com/projects/stackql-demo/regions/northamerica-northeast1/subnetworks/default",
+        "assetType": "compute.googleapis.com/Subnetwork",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2022-10-21T13:00:00Z"
+      },
+      {
+        "name": "//compute.googleapis.com/projects/stackql-demo/regions/northamerica-northeast2/subnetworks/default",
+        "assetType": "compute.googleapis.com/Subnetwork",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2022-10-21T19:00:00Z"
+      },
+      {
+        "name": "//compute.googleapis.com/projects/stackql-demo/regions/southamerica-east1/subnetworks/default",
+        "assetType": "compute.googleapis.com/Subnetwork",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2022-10-21T13:00:00Z"
+      },
+      {
+        "name": "//compute.googleapis.com/projects/stackql-demo/regions/southamerica-west1/subnetworks/default",
+        "assetType": "compute.googleapis.com/Subnetwork",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2022-10-21T07:00:00Z"
+      },
+      {
+        "name": "//compute.googleapis.com/projects/stackql-demo/regions/us-central1/subnetworks/default",
+        "assetType": "compute.googleapis.com/Subnetwork",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2022-10-21T07:00:00Z"
+      },
+      {
+        "name": "//compute.googleapis.com/projects/stackql-demo/regions/us-east1/subnetworks/default",
+        "assetType": "compute.googleapis.com/Subnetwork",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2022-10-21T19:00:00Z"
+      },
+      {
+        "name": "//compute.googleapis.com/projects/stackql-demo/regions/us-east4/subnetworks/default",
+        "assetType": "compute.googleapis.com/Subnetwork",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2022-10-21T19:00:00Z"
+      },
+      {
+        "name": "//compute.googleapis.com/projects/stackql-demo/regions/us-east5/subnetworks/default",
+        "assetType": "compute.googleapis.com/Subnetwork",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2022-10-21T07:00:00Z"
+      },
+      {
+        "name": "//compute.googleapis.com/projects/stackql-demo/regions/us-east7/subnetworks/default",
+        "assetType": "compute.googleapis.com/Subnetwork",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-02-14T14:00:00Z"
+      },
+      {
+        "name": "//compute.googleapis.com/projects/stackql-demo/regions/us-south1/subnetworks/default",
+        "assetType": "compute.googleapis.com/Subnetwork",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2022-10-21T19:00:00Z"
+      },
+      {
+        "name": "//compute.googleapis.com/projects/stackql-demo/regions/us-west1/subnetworks/default",
+        "assetType": "compute.googleapis.com/Subnetwork",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2022-10-22T01:00:00Z"
+      },
+      {
+        "name": "//compute.googleapis.com/projects/stackql-demo/regions/us-west2/subnetworks/default",
+        "assetType": "compute.googleapis.com/Subnetwork",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2022-10-22T01:00:00Z"
+      },
+      {
+        "name": "//compute.googleapis.com/projects/stackql-demo/regions/us-west3/subnetworks/default",
+        "assetType": "compute.googleapis.com/Subnetwork",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2022-10-21T07:00:00Z"
+      },
+      {
+        "name": "//compute.googleapis.com/projects/stackql-demo/regions/us-west4/subnetworks/default",
+        "assetType": "compute.googleapis.com/Subnetwork",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2022-10-21T13:00:00Z"
+      },
+      {
+        "name": "//firestore.googleapis.com/projects/11111111111111/databases/(default)",
+        "assetType": "firestore.googleapis.com/Database",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-02-26T10:14:46Z"
+      },
+      {
+        "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/102430966964460311783/keys/17710a6b5a39d8d4beb1eb21f66c48b833e5c7a9",
+        "assetType": "iam.googleapis.com/ServiceAccountKey",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-04-26T14:02:54Z"
+      },
+      {
+        "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/102430966964460311783/keys/4572c8edea32b6a1f114a33808e197e809e9a4d8",
+        "assetType": "iam.googleapis.com/ServiceAccountKey",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-02-27T05:50:00Z"
+      },
+      {
+        "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/102430966964460311783/keys/a8400e589f8eef038b5f0d00b2a14f32754983ab",
+        "assetType": "iam.googleapis.com/ServiceAccountKey",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-03-07T05:36:13Z"
+      },
+      {
+        "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/102430966964460311783/keys/e6b29865d0bc8c625c6f1d548a96a30749e0c0ec",
+        "assetType": "iam.googleapis.com/ServiceAccountKey",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-07-19T23:19:43Z"
+      },
+      {
+        "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/105027669845114844382/keys/a6aed87bc30d998a861e1ae55ef2e84760c370df",
+        "assetType": "iam.googleapis.com/ServiceAccountKey",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-07-19T23:19:43Z"
+      },
+      {
+        "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/110323505484004687375/keys/9af5de16cabc8f2e64b8f6bde702a6f3494184b8",
+        "assetType": "iam.googleapis.com/ServiceAccountKey",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-07-19T23:19:43Z"
+      },
+      {
+        "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/113605357442065327031/keys/3779b2392caf70e02df2f1d7089d775220f367d3",
+        "assetType": "iam.googleapis.com/ServiceAccountKey",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-07-19T23:19:43Z"
+      },
+      {
+        "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/113605357442065327031/keys/7023824dc9945260f219dae0a814331430167370",
+        "assetType": "iam.googleapis.com/ServiceAccountKey",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-03-18T08:00:04Z"
+      },
+      {
+        "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/114858367317979947628/keys/0a074d723b6017bd7202c51e78fce4a6c8b4dad4",
+        "assetType": "iam.googleapis.com/ServiceAccountKey",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-07-19T23:19:43Z"
+      },
+      {
+        "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/114858367317979947628/keys/103061c5847504116ace18c3d2b79d4d356a760b",
+        "assetType": "iam.googleapis.com/ServiceAccountKey",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-02-01T05:43:49Z"
+      },
+      {
+        "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/116118831870983692040/keys/667a8c1ac6d6f7291d6aa0b7b9d8683cde809a21",
+        "assetType": "iam.googleapis.com/ServiceAccountKey",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-07-19T23:19:43Z"
+      },
+      {
+        "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/116118831870983692040/keys/a590baf7721014d819ea3f39ddfe9f5b6acd3c59",
+        "assetType": "iam.googleapis.com/ServiceAccountKey",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2022-10-21T08:42:01Z"
+      },
+      {
+        "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/102430966964460311783",
+        "assetType": "iam.googleapis.com/ServiceAccount",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2022-10-21T14:48:59Z"
+      },
+      {
+        "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/105027669845114844382",
+        "assetType": "iam.googleapis.com/ServiceAccount",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-02-26T08:35:30Z"
+      },
+      {
+        "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/110323505484004687375",
+        "assetType": "iam.googleapis.com/ServiceAccount",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2022-10-21T20:57:14Z"
+      },
+      {
+        "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/113605357442065327031",
+        "assetType": "iam.googleapis.com/ServiceAccount",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-03-17T21:19:57Z"
+      },
+      {
+        "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/114858367317979947628",
+        "assetType": "iam.googleapis.com/ServiceAccount",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-01-31T01:23:09Z"
+      },
+      {
+        "name": "//iam.googleapis.com/projects/stackql-demo/serviceAccounts/116118831870983692040",
+        "assetType": "iam.googleapis.com/ServiceAccount",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2022-10-21T20:57:14Z"
+      },
+      {
+        "name": "//logging.googleapis.com/projects/11111111111111/locations/global/buckets/_Default",
+        "assetType": "logging.googleapis.com/LogBucket",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2022-10-23T06:56:19Z"
+      },
+      {
+        "name": "//logging.googleapis.com/projects/11111111111111/locations/global/buckets/_Required",
+        "assetType": "logging.googleapis.com/LogBucket",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2022-10-23T06:56:19Z"
+      },
+      {
+        "name": "//logging.googleapis.com/projects/11111111111111/sinks/_Default",
+        "assetType": "logging.googleapis.com/LogSink",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2022-10-24T06:56:10Z"
+      },
+      {
+        "name": "//logging.googleapis.com/projects/11111111111111/sinks/_Required",
+        "assetType": "logging.googleapis.com/LogSink",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2022-10-24T06:56:10Z"
+      },
+      {
+        "name": "//pubsub.googleapis.com/projects/stackql-demo/topics/container-analysis-notes-v1",
+        "assetType": "pubsub.googleapis.com/Topic",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-04-20T03:27:08.929763Z"
+      },
+      {
+        "name": "//pubsub.googleapis.com/projects/stackql-demo/topics/container-analysis-notes-v1beta1",
+        "assetType": "pubsub.googleapis.com/Topic",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-04-20T23:21:36.640368Z"
+      },
+      {
+        "name": "//pubsub.googleapis.com/projects/stackql-demo/topics/container-analysis-occurrences-v1",
+        "assetType": "pubsub.googleapis.com/Topic",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-04-25T10:03:33.329070Z"
+      },
+      {
+        "name": "//pubsub.googleapis.com/projects/stackql-demo/topics/container-analysis-occurrences-v1beta1",
+        "assetType": "pubsub.googleapis.com/Topic",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-04-24T15:09:10.573597Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/appenginereporting.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/autoscaling.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/bigquery.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/bigqueryconnection.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/bigquerymigration.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/bigquerystorage.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/cloudapis.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/clouddebugger.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/cloudidentity.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/cloudkms.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/cloudresourcemanager.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/cloudtrace.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/compute.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/container.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/containeranalysis.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/containerfilesystem.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/containerregistry.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/datafusion.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/dataproc-control.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/dataproc.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/datastore.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/deploymentmanager.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/dns.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/firebaserules.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/firestore.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/iam.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/iamcredentials.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/logging.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/monitoring.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/networkconnectivity.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-08-03T18:05:33.294163Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/osconfig.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/oslogin.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/pubsub.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/runtimeconfig.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/servicemanagement.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/serviceusage.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/sql-component.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/storage-api.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/storage-component.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//serviceusage.googleapis.com/projects/11111111111111/services/storage.googleapis.com",
+        "assetType": "serviceusage.googleapis.com/Service",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-05-31T02:40:41.277389Z"
+      },
+      {
+        "name": "//storage.googleapis.com/demo-app-bucket1",
+        "assetType": "storage.googleapis.com/Bucket",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-04-25T20:36:50.827Z"
+      },
+      {
+        "name": "//storage.googleapis.com/demo-app-bucket2",
+        "assetType": "storage.googleapis.com/Bucket",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-04-25T20:36:50.827Z"
+      },
+      {
+        "name": "//storage.googleapis.com/stackql-demo-bucket",
+        "assetType": "storage.googleapis.com/Bucket",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-04-25T12:37:01.143Z"
+      },
+      {
+        "name": "//storage.googleapis.com/stackql-demo-src-bucket",
+        "assetType": "storage.googleapis.com/Bucket",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-04-24T12:36:09.746Z"
+      },
+      {
+        "name": "//storage.googleapis.com/stackql-demo.appspot.com",
+        "assetType": "storage.googleapis.com/Bucket",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-04-24T12:36:09.746Z"
+      },
+      {
+        "name": "//storage.googleapis.com/stackql-encrypted-bucket-1",
+        "assetType": "storage.googleapis.com/Bucket",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-04-24T12:36:09.746Z"
+      },
+      {
+        "name": "//storage.googleapis.com/staging.stackql-demo.appspot.com",
+        "assetType": "storage.googleapis.com/Bucket",
+        "ancestors": [
+          "projects/11111111111111",
+          "organizations/11111111111111"
+        ],
+        "updateTime": "2023-04-25T12:37:01.143Z"
+      }
+    ]
+  }

@@ -1,0 +1,296 @@
+{
+    "kind": "compute#instanceList",
+    "id": "projects/testing-project/zones/australia-southeast1-a/instances",
+    "items": [
+        {
+            "kind": "compute#instance",
+            "id": "111111111111",
+            "creationTimestamp": "2022-06-11T01:45:30.771-07:00",
+            "name": "instance-1",
+            "description": "",
+            "tags": {
+                "fingerprint": "42WmSpB8rSM="
+            },
+            "labels": {
+                "sha": "8d5dc38ef71f6249f7090947bb444ace3d5682c3"
+            },
+            "machineType": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a/machineTypes/e2-medium",
+            "status": "RUNNING",
+            "zone": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a",
+            "canIpForward": false,
+            "networkInterfaces": [
+                {
+                    "kind": "compute#networkInterface",
+                    "network": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/my-disk-01-indeed",
+                    "subnetwork": "https://www.googleapis.com/compute/v1/projects/testing-project/regions/australia-southeast1/subnetworks/my-disk-01-indeed",
+                    "networkIP": "10.0.0.3",
+                    "name": "nic0",
+                    "accessConfigs": [
+                        {
+                            "kind": "compute#accessConfig",
+                            "type": "ONE_TO_ONE_NAT",
+                            "name": "External NAT",
+                            "natIP": "35.244.116.177",
+                            "networkTier": "PREMIUM"
+                        }
+                    ],
+                    "fingerprint": "yqI9Osh-1Hw=",
+                    "stackType": "IPV4_ONLY"
+                }
+            ],
+            "disks": [
+                {
+                    "kind": "compute#attachedDisk",
+                    "type": "PERSISTENT",
+                    "mode": "READ_WRITE",
+                    "source": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a/disks/instance-1",
+                    "deviceName": "instance-1",
+                    "index": 0,
+                    "boot": true,
+                    "autoDelete": true,
+                    "licenses": [
+                        "https://www.googleapis.com/compute/v1/projects/debian-cloud/global/licenses/debian-11-bullseye"
+                    ],
+                    "interface": "SCSI",
+                    "guestOsFeatures": [
+                        {
+                            "type": "UEFI_COMPATIBLE"
+                        },
+                        {
+                            "type": "VIRTIO_SCSI_MULTIQUEUE"
+                        },
+                        {
+                            "type": "GVNIC"
+                        }
+                    ],
+                    "diskSizeGb": "10"
+                }
+            ],
+            "metadata": {
+                "kind": "compute#metadata",
+                "fingerprint": "ygG8rS1Z5tQ="
+            },
+            "serviceAccounts": [
+                {
+                    "email": "111111111111-compute@developer.gserviceaccount.com",
+                    "scopes": [
+                        "https://www.googleapis.com/auth/devstorage.read_only",
+                        "https://www.googleapis.com/auth/logging.write",
+                        "https://www.googleapis.com/auth/monitoring.write",
+                        "https://www.googleapis.com/auth/servicecontrol",
+                        "https://www.googleapis.com/auth/service.management.readonly",
+                        "https://www.googleapis.com/auth/trace.append"
+                    ]
+                }
+            ],
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a/instances/instance-1",
+            "scheduling": {
+                "onHostMaintenance": "MIGRATE",
+                "automaticRestart": true,
+                "preemptible": false,
+                "provisioningModel": "STANDARD"
+            },
+            "cpuPlatform": "Intel Broadwell",
+            "labelFingerprint": "42WmSpB8rSM=",
+            "startRestricted": false,
+            "deletionProtection": false,
+            "reservationAffinity": {
+                "consumeReservationType": "ANY_RESERVATION"
+            },
+            "displayDevice": {
+                "enableDisplay": false
+            },
+            "shieldedInstanceConfig": {
+                "enableSecureBoot": false,
+                "enableVtpm": true,
+                "enableIntegrityMonitoring": true
+            },
+            "shieldedInstanceIntegrityPolicy": {
+                "updateAutoLearnPolicy": true
+            },
+            "confidentialInstanceConfig": {
+                "enableConfidentialCompute": false
+            },
+            "fingerprint": "E35OZj9fe7E=",
+            "lastStartTimestamp": "2022-06-11T01:45:38.493-07:00"
+        },
+        {
+            "kind": "compute#instance",
+            "id": "8021927678519575763",
+            "creationTimestamp": "2022-06-11T17:58:37.018-07:00",
+            "name": "instance-1-b",
+            "tags": {
+                "fingerprint": "42WmSpB8rSM="
+            },
+            "machineType": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a/machineTypes/e2-medium",
+            "status": "RUNNING",
+            "labels": {
+                "sha": "219001a1ecac6c17e8e3a45f7c9182341e4cf71b"
+            },
+            "zone": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a",
+            "networkInterfaces": [
+                {
+                    "kind": "compute#networkInterface",
+                    "network": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/my-disk-01-indeed",
+                    "subnetwork": "https://www.googleapis.com/compute/v1/projects/testing-project/regions/australia-southeast1/subnetworks/my-disk-01-indeed",
+                    "networkIP": "10.0.0.10",
+                    "name": "nic0",
+                    "fingerprint": "WKFxxUeXwoM=",
+                    "stackType": "IPV4_ONLY"
+                }
+            ],
+            "disks": [
+                {
+                    "kind": "compute#attachedDisk",
+                    "type": "PERSISTENT",
+                    "mode": "READ_WRITE",
+                    "source": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a/disks/instance-1-b",
+                    "deviceName": "persistent-disk-0",
+                    "index": 0,
+                    "boot": true,
+                    "autoDelete": true,
+                    "licenses": [
+                        "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/licenses/ubuntu-2004-lts"
+                    ],
+                    "interface": "SCSI",
+                    "guestOsFeatures": [
+                        {
+                            "type": "VIRTIO_SCSI_MULTIQUEUE"
+                        },
+                        {
+                            "type": "SEV_CAPABLE"
+                        },
+                        {
+                            "type": "UEFI_COMPATIBLE"
+                        },
+                        {
+                            "type": "GVNIC"
+                        }
+                    ],
+                    "diskSizeGb": "10",
+                    "shieldedInstanceInitialState": {
+                        "dbxs": [
+                            {
+                                "content": "",
+                                "fileType": "BIN"
+                            }
+                        ]
+                    }
+                }
+            ],
+            "metadata": {
+                "kind": "compute#metadata",
+                "fingerprint": "ygG8rS1Z5tQ="
+            },
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a/instances/instance-1-b",
+            "scheduling": {
+                "onHostMaintenance": "MIGRATE",
+                "automaticRestart": true,
+                "preemptible": false,
+                "provisioningModel": "STANDARD"
+            },
+            "cpuPlatform": "Intel Broadwell",
+            "labelFingerprint": "42WmSpB8rSM=",
+            "startRestricted": false,
+            "deletionProtection": false,
+            "shieldedInstanceConfig": {
+                "enableSecureBoot": false,
+                "enableVtpm": true,
+                "enableIntegrityMonitoring": true
+            },
+            "shieldedInstanceIntegrityPolicy": {
+                "updateAutoLearnPolicy": true
+            },
+            "fingerprint": "fpvvj6SdmkQ=",
+            "lastStartTimestamp": "2022-06-11T17:58:44.841-07:00"
+        },
+        {
+            "kind": "compute#instance",
+            "id": "7240987059421742125",
+            "creationTimestamp": "2022-06-11T18:00:51.160-07:00",
+            "name": "instance-1-c",
+            "tags": {
+                "fingerprint": "42WmSpB8rSM="
+            },
+            "machineType": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a/machineTypes/e2-medium",
+            "status": "RUNNING",
+            "zone": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a",
+            "networkInterfaces": [
+                {
+                    "kind": "compute#networkInterface",
+                    "network": "https://www.googleapis.com/compute/v1/projects/testing-project/global/networks/my-disk-01-indeed",
+                    "subnetwork": "https://www.googleapis.com/compute/v1/projects/testing-project/regions/australia-southeast1/subnetworks/my-disk-01-indeed",
+                    "networkIP": "10.0.0.11",
+                    "name": "nic0",
+                    "fingerprint": "K-wsN1P92Tk=",
+                    "stackType": "IPV4_ONLY"
+                }
+            ],
+            "disks": [
+                {
+                    "kind": "compute#attachedDisk",
+                    "type": "PERSISTENT",
+                    "mode": "READ_WRITE",
+                    "source": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a/disks/instance-1-c",
+                    "deviceName": "persistent-disk-0",
+                    "index": 0,
+                    "boot": true,
+                    "autoDelete": true,
+                    "licenses": [
+                        "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/licenses/ubuntu-2004-lts"
+                    ],
+                    "interface": "SCSI",
+                    "guestOsFeatures": [
+                        {
+                            "type": "VIRTIO_SCSI_MULTIQUEUE"
+                        },
+                        {
+                            "type": "SEV_CAPABLE"
+                        },
+                        {
+                            "type": "UEFI_COMPATIBLE"
+                        },
+                        {
+                            "type": "GVNIC"
+                        }
+                    ],
+                    "diskSizeGb": "10",
+                    "shieldedInstanceInitialState": {
+                        "dbxs": [
+                            {
+                                "content": "",
+                                "fileType": "BIN"
+                            }
+                        ]
+                    }
+                }
+            ],
+            "metadata": {
+                "kind": "compute#metadata",
+                "fingerprint": "ygG8rS1Z5tQ="
+            },
+            "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a/instances/instance-1-c",
+            "scheduling": {
+                "onHostMaintenance": "MIGRATE",
+                "automaticRestart": true,
+                "preemptible": false,
+                "provisioningModel": "STANDARD"
+            },
+            "cpuPlatform": "Intel Broadwell",
+            "labelFingerprint": "42WmSpB8rSM=",
+            "startRestricted": false,
+            "deletionProtection": false,
+            "shieldedInstanceConfig": {
+                "enableSecureBoot": false,
+                "enableVtpm": true,
+                "enableIntegrityMonitoring": true
+            },
+            "shieldedInstanceIntegrityPolicy": {
+                "updateAutoLearnPolicy": true
+            },
+            "fingerprint": "vKT10O6mmKo=",
+            "lastStartTimestamp": "2022-06-11T18:01:00.331-07:00"
+        }
+    ],
+    "selfLink": "https://www.googleapis.com/compute/v1/projects/testing-project/zones/australia-southeast1-a/instances"
+}
