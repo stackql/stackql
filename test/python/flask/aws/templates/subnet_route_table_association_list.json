@@ -1,0 +1,25 @@
+{
+  "ResourceDescriptions":[
+    {
+      "Identifier": "rtbassoc-001",
+      "Properties": "{\"Id\":\"rtbassoc-001\"}"
+    },
+    {
+      "Identifier": "rtbassoc-002",
+      "Properties": "{\"Id\":\"rtbassoc-002\"}"
+    },
+    {
+      "Identifier": "rtbassoc-003",
+      "Properties": "{\"Id\":\"rtbassoc-003\"}"
+    },
+    {
+      "Identifier": "ltbassoc-001",
+      "Properties": "{\"Id\":\"ltbassoc-001\"}"
+    },
+    {
+      "Identifier": "ltbassoc-002",
+      "Properties": "{\"Id\":\"ltbassoc-002\"}"
+    }
+  ],
+  "TypeName":"AWS::EC2::SubnetRouteTableAssociation"
+}

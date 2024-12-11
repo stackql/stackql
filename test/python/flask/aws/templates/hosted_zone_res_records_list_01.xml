@@ -1,0 +1,5 @@
+<?xmlversion="1.0"encoding="UTF-8"?><ListResourceRecordSetsResponse><ResourceRecordSets><ResourceRecordSet><Name>myappbuildserver-mydiv-mycorp.com</Name><ResourceRecords><ResourceRecord>
+<Value>ns-0001.awsdns-01.org.ns-111.awsdns-11.com.ns-1111.awsdns-22.co.uk.ns-222.awsdns-22.net.</Value>
+</ResourceRecord></ResourceRecords><TTL>1800</TTL><Type>NS</Type></ResourceRecordSet><ResourceRecordSet><Name>myappbuildserver-mydiv-mycorp.com</Name><ResourceRecords><ResourceRecord>
+<Value>ns-1111.awsdns-11.org. awsdns-hostmaster.amazon.com. 11000 100 1000000 10000</Value>
+</ResourceRecord></ResourceRecords><TTL>900</TTL><Type>SOA</Type></ResourceRecordSet></ResourceRecordSets></ListResourceRecordSetsResponse>

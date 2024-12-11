@@ -1,0 +1,10 @@
+{
+    "ProgressEvent": {
+        "EventTime": 1660714273.8,
+        "Identifier": "LogGroupResourceExampleThird",
+        "Operation": "DELETE",
+        "OperationStatus": "IN_PROGRESS",
+        "RequestToken": "100000000-1000-1000-1000-1000000001",
+        "TypeName": "AWS::Logs::LogGroup"
+    }
+}

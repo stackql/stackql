@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Name>stackql-trial-bucket-01</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><IsTruncated>false</IsTruncated><Contents><Key>dummy.txt</Key><LastModified>2022-08-31T12:46:54.000Z</LastModified><ETag>&quot;100000000000000000000000000000&quot;</ETag><Size>13</Size><Owner><ID>100000000000000000000000000000000000000000000000000000000000</ID><DisplayName>joeblow</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents></ListBucketResult>

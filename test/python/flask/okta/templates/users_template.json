@@ -1,0 +1,6 @@
+[
+  {% for user in users %}
+  {{ user|tojson }}{% if not loop.last %},{% endif %}
+  {% endfor %}
+]
+  

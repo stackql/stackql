@@ -1,0 +1,6 @@
+{
+    "ResourceDescription": {
+        "Identifier": "stackql-trial-bucket-01",
+        "Properties": "{\"PublicAccessBlockConfiguration\":{\"RestrictPublicBuckets\":true,\"BlockPublicPolicy\":true,\"BlockPublicAcls\":true,\"IgnorePublicAcls\":true},\"BucketName\":\"stackql-trial-bucket-01\",\"RegionalDomainName\":\"stackql-trial-bucket-01.s3.ap-southeast-1.amazonaws.com\",\"OwnershipControls\":{\"Rules\":[{\"ObjectOwnership\":\"BucketOwnerEnforced\"}]},\"DomainName\":\"stackql-trial-bucket-01.s3.amazonaws.com\",\"WebsiteURL\":\"http://stackql-trial-bucket-01.s3-website-ap-southeast-1.amazonaws.com\",\"DualStackDomainName\":\"stackql-trial-bucket-01.s3.dualstack.ap-southeast-1.amazonaws.com\",\"Arn\":\"arn:aws:s3:::stackql-trial-bucket-01\",\"Tags\":[{\"Value\":\"first-ever-bucket\",\"Key\":\"sundry\"}]}"
+    }
+}

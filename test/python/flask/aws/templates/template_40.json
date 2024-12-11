@@ -1,0 +1,9 @@
+{
+    "ResourceDescriptions": [
+        {
+            "Identifier": "vpc-2-0001",
+            "Properties": "{\"VpcId\":\"vpc-2-0001\"}"
+        }
+    ],
+    "TypeName": "AWS::EC2::VPC"
+}

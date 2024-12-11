@@ -1,0 +1,64 @@
+{% set end = 2 %}
+{% set rb = request.get_json() if request.get_json() else {} %}
+{% set currentCursor = rb.get('NextToken', 0) | int %}
+{% set maxItems = 8 %}
+{% set nextCursor = currentCursor + 1 %}
+{% set cFinal = currentCursor + end %}
+
+{
+    {% if currentCursor < maxItems %}
+    "NextToken": {{ nextCursor }},
+    {% endif %}
+    "ResourceRequestStatusSummaries": [
+        {% set includeFinal = currentCursor + 1 >= maxItems / end %}
+        {% for i in range(1, end + 1) %}
+        {% set ci = currentCursor + i %}
+        {% if ci <= maxItems or (includeFinal and i == end) %}
+        {
+            "EventTime": 1660714274.285,
+            "Identifier": "LogGroupResourceExampleThird{{ ci - 1 }}",
+            "Operation": "CREATE",
+            "OperationStatus": "SUCCESS",
+            "RequestToken": "5ae5ae5a-0001-0001-001a-{{ ci - 1 }}",
+            "TypeName": "AWS::Logs::LogGroup"
+        },
+        {
+            "EventTime": 1660709766.092,
+            "Identifier": "LogGroupResourceExampleSecond{{ ci - 1 }}",
+            "Operation": "CREATE",
+            "OperationStatus": "SUCCESS",
+            "RequestToken": "5ae5ae5a-0002-0001-001a-{{ ci - 1 }}",
+            "TypeName": "AWS::Logs::LogGroup"
+        },
+        {
+            "EventTime": 1660266055.925,
+            "Identifier": "CloudControlExample{{ ci - 1 }}",
+            "Operation": "CREATE",
+            "OperationStatus": "SUCCESS",
+            "RequestToken": "5ae5ae5a-0003-0001-001a-{{ ci - 1 }}",
+            "TypeName": "AWS::Logs::LogGroup"
+        },
+        {
+            "ErrorCode": "InvalidRequest",
+            "EventTime": 1660709730.739,
+            "OperationStatus": "FAILED",
+            "RequestToken": "5ae5ae5a-0004-0001-001a-{{ ci - 1 }}",
+            "StatusMessage": "Model validation failed (#/RetentionInDays: #: only 1 subschema matches out of 2\n#/RetentionInDays: failed validation constraint for keyword [enum])",
+            "TypeName": "AWS::Logs::LogGroup"
+        }
+        {% if not loop.last or (includeFinal and i == end) %},{% endif %}
+        {% endif %}
+        {% endfor %}
+        {% if includeFinal %}
+        {
+            "EventTime": 1660709644.835,
+            "Identifier": "LogGroupResourceExample{{ cFinal - 1 }}",
+            "Operation": "CREATE",
+            "OperationStatus": "SUCCESS",
+            "RequestToken": "5ae5ae5a-0005-0001-001a-{{ cFinal - 1 }}",
+            "TypeName": "AWS::Logs::LogGroup"
+        }
+        {% endif %}
+    ],
+    "rb": {{ rb | tojson }}
+}

@@ -1,0 +1,16 @@
+{
+    "ResourceDescriptions": [
+        {
+            "Identifier": "stackql-testing-bucket-01",
+            "Properties": "{\"BucketName\":\"stackql-testing-bucket-01\"}"
+        },
+        {
+            "Identifier": "stackql-trial-bucket-01",
+            "Properties": "{\"BucketName\":\"stackql-trial-bucket-01\"}"
+        },
+        {
+            "Identifier": "stackql-trial-bucket-02",
+            "Properties": "{\"BucketName\":\"stackql-trial-bucket-02\"}"
+        }
+    ]
+}

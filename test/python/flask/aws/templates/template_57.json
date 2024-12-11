@@ -1,0 +1,40 @@
+{
+  "Backups": [
+    {
+      "BackupId": "bkp-000001",
+      "BackupState": "READY",
+      "ClusterId": "cluster-abcdefg",
+      "CopyTimestamp": 1711841000.0,
+      "CreateTimestamp": 1711840000.0,
+      "DeleteTimestamp": 1711840000.0,
+      "NeverExpires": false,
+      "SourceBackup": "",
+      "SourceCluster": "cluster-abcdefg",
+      "SourceRegion": "ap-southeast-2",
+      "TagList": [
+        {
+          "Key": "name",
+          "Value": "backup-01"
+        }
+      ]
+    },
+    {
+      "BackupId": "bkp-000002",
+      "BackupState": "READY",
+      "ClusterId": "cluster-abcdefg",
+      "CopyTimestamp": 1711841000.0,
+      "CreateTimestamp": 1711840000.0,
+      "DeleteTimestamp": 1711840000.0,
+      "NeverExpires": false,
+      "SourceBackup": "bkp-000001",
+      "SourceCluster": "cluster-abcdefg",
+      "SourceRegion": "ap-southeast-2",
+      "TagList": [
+        {
+          "Key": "name",
+          "Value": "backup-02"
+        }
+      ]
+    }
+  ]
+}

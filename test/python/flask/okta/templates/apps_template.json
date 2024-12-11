@@ -1,0 +1,421 @@
+[
+  {
+    "id": "0oa3cy8k41YM15j4H5d7",
+    "name": "saasure",
+    "label": "Okta Admin Console",
+    "status": "ACTIVE",
+    "lastUpdated": "2021-12-17T15:22:44.000Z",
+    "created": "2021-12-17T15:22:41.000Z",
+    "accessibility": {
+      "selfService": false,
+      "errorRedirectUrl": null,
+      "loginRedirectUrl": null
+    },
+    "visibility": {
+      "autoSubmitToolbar": false,
+      "hide": {
+        "iOS": false,
+        "web": false
+      },
+      "appLinks": {
+        "admin": true
+      }
+    },
+    "features": [],
+    "signOnMode": "OPENID_CONNECT",
+    "credentials": {
+      "userNameTemplate": {
+        "template": "${source.login}",
+        "type": "BUILT_IN"
+      },
+      "signing": {
+        "kid": "KhaJdbiunRXnaR0G5Gu9moTMm4_q6AJjHvTfgtg4ywE"
+      }
+    },
+    "settings": {
+      "app": {},
+      "notifications": {
+        "vpn": {
+          "network": {
+            "connection": "DISABLED"
+          },
+          "message": null,
+          "helpUrl": null
+        }
+      }
+    },
+    "_links": {
+      "uploadLogo": {
+        "href": "https://dev-79923018.okta.com/api/v1/apps/0oa3cy8k41YM15j4H5d7/logo",
+        "hints": {
+          "allow": [
+            "POST"
+          ]
+        }
+      },
+      "appLinks": [
+        {
+          "name": "admin",
+          "href": "https://dev-79923018.okta.com/home/saasure/0oa3cy8k41YM15j4H5d7/2",
+          "type": "text/html"
+        }
+      ],
+      "groups": {
+        "href": "https://dev-79923018.okta.com/api/v1/apps/0oa3cy8k41YM15j4H5d7/groups"
+      },
+      "logo": [
+        {
+          "name": "medium",
+          "href": "https://ok12static.oktacdn.com/assets/img/logos/okta_admin_app.da3325676d57eaf566cb786dd0c7a819.png",
+          "type": "image/png"
+        }
+      ],
+      "users": {
+        "href": "https://dev-79923018.okta.com/api/v1/apps/0oa3cy8k41YM15j4H5d7/users"
+      },
+      "deactivate": {
+        "href": "https://dev-79923018.okta.com/api/v1/apps/0oa3cy8k41YM15j4H5d7/lifecycle/deactivate"
+      }
+    }
+  },
+  {
+    "id": "0oa3cy8k83is5uMwh5d7",
+    "name": "okta_browser_plugin",
+    "label": "Okta Browser Plugin",
+    "status": "ACTIVE",
+    "lastUpdated": "2021-12-17T15:22:45.000Z",
+    "created": "2021-12-17T15:22:45.000Z",
+    "accessibility": {
+      "selfService": false,
+      "errorRedirectUrl": null,
+      "loginRedirectUrl": null
+    },
+    "visibility": {
+      "autoSubmitToolbar": false,
+      "hide": {
+        "iOS": false,
+        "web": false
+      },
+      "appLinks": {}
+    },
+    "features": [],
+    "signOnMode": "OPENID_CONNECT",
+    "credentials": {
+      "userNameTemplate": {
+        "template": "${source.login}",
+        "type": "BUILT_IN"
+      },
+      "signing": {
+        "kid": "KhaJdbiunRXnaR0G5Gu9moTMm4_q6AJjHvTfgtg4ywE"
+      }
+    },
+    "settings": {
+      "app": {},
+      "notifications": {
+        "vpn": {
+          "network": {
+            "connection": "DISABLED"
+          },
+          "message": null,
+          "helpUrl": null
+        }
+      }
+    },
+    "_links": {
+      "uploadLogo": {
+        "href": "https://dev-79923018.okta.com/api/v1/apps/0oa3cy8k83is5uMwh5d7/logo",
+        "hints": {
+          "allow": [
+            "POST"
+          ]
+        }
+      },
+      "appLinks": [],
+      "groups": {
+        "href": "https://dev-79923018.okta.com/api/v1/apps/0oa3cy8k83is5uMwh5d7/groups"
+      },
+      "logo": [
+        {
+          "name": "medium",
+          "href": "https://ok12static.oktacdn.com/assets/img/logos/okta-logo-browser-plugin.1db9f55776407dfc548a5d6985ff280a.svg",
+          "type": "image/png"
+        }
+      ],
+      "users": {
+        "href": "https://dev-79923018.okta.com/api/v1/apps/0oa3cy8k83is5uMwh5d7/users"
+      },
+      "deactivate": {
+        "href": "https://dev-79923018.okta.com/api/v1/apps/0oa3cy8k83is5uMwh5d7/lifecycle/deactivate"
+      }
+    }
+  },
+  {
+    "id": "0oa3cy8k8zaX4fKl15d7",
+    "name": "okta_enduser",
+    "label": "Okta Dashboard",
+    "status": "ACTIVE",
+    "lastUpdated": "2021-12-17T15:22:46.000Z",
+    "created": "2021-12-17T15:22:46.000Z",
+    "accessibility": {
+      "selfService": false,
+      "errorRedirectUrl": null,
+      "loginRedirectUrl": null
+    },
+    "visibility": {
+      "autoSubmitToolbar": false,
+      "hide": {
+        "iOS": false,
+        "web": false
+      },
+      "appLinks": {}
+    },
+    "features": [],
+    "signOnMode": "OPENID_CONNECT",
+    "credentials": {
+      "userNameTemplate": {
+        "template": "${source.login}",
+        "type": "BUILT_IN"
+      },
+      "signing": {
+        "kid": "KhaJdbiunRXnaR0G5Gu9moTMm4_q6AJjHvTfgtg4ywE"
+      }
+    },
+    "settings": {
+      "app": {},
+      "notifications": {
+        "vpn": {
+          "network": {
+            "connection": "DISABLED"
+          },
+          "message": null,
+          "helpUrl": null
+        }
+      }
+    },
+    "_links": {
+      "uploadLogo": {
+        "href": "https://dev-79923018.okta.com/api/v1/apps/0oa3cy8k8zaX4fKl15d7/logo",
+        "hints": {
+          "allow": [
+            "POST"
+          ]
+        }
+      },
+      "appLinks": [],
+      "groups": {
+        "href": "https://dev-79923018.okta.com/api/v1/apps/0oa3cy8k8zaX4fKl15d7/groups"
+      },
+      "logo": [
+        {
+          "name": "medium",
+          "href": "https://ok12static.oktacdn.com/assets/img/logos/okta-logo-end-user-dashboard.fc6d8fdbcb8cb4c933d009e71456cec6.svg",
+          "type": "image/png"
+        }
+      ],
+      "users": {
+        "href": "https://dev-79923018.okta.com/api/v1/apps/0oa3cy8k8zaX4fKl15d7/users"
+      },
+      "deactivate": {
+        "href": "https://dev-79923018.okta.com/api/v1/apps/0oa3cy8k8zaX4fKl15d7/lifecycle/deactivate"
+      }
+    }
+  },
+  {
+    "id": "0oa3fwm4zsW5jR5V55d7",
+    "name": "oidc_client",
+    "label": "demo-disk-xx4",
+    "status": "ACTIVE",
+    "lastUpdated": "2022-04-21T14:56:21.000Z",
+    "created": "2021-12-28T13:52:45.000Z",
+    "accessibility": {
+      "selfService": false,
+      "errorRedirectUrl": null,
+      "loginRedirectUrl": null
+    },
+    "visibility": {
+      "autoLaunch": false,
+      "autoSubmitToolbar": false,
+      "hide": {
+        "iOS": true,
+        "web": true
+      },
+      "appLinks": {
+        "oidc_client_link": true
+      }
+    },
+    "features": [],
+    "signOnMode": "OPENID_CONNECT",
+    "credentials": {
+      "userNameTemplate": {
+        "template": "${source.login}",
+        "type": "BUILT_IN"
+      },
+      "signing": {
+        "kid": "KhaJdbiunRXnaR0G5Gu9moTMm4_q6AJjHvTfgtg4ywE"
+      },
+      "oauthClient": {
+        "autoKeyRotation": true,
+        "client_id": "0oa3fwm4zsW5jR5V55d7",
+        "token_endpoint_auth_method": "none"
+      }
+    },
+    "settings": {
+      "app": {},
+      "notifications": {
+        "vpn": {
+          "network": {
+            "connection": "DISABLED"
+          },
+          "message": null,
+          "helpUrl": null
+        }
+      },
+      "notes": {
+        "admin": null,
+        "enduser": null
+      },
+      "oauthClient": {
+        "client_uri": null,
+        "logo_uri": null,
+        "redirect_uris": [
+          "https://example.com/oauth2/callback"
+        ],
+        "response_types": [
+          "code"
+        ],
+        "grant_types": [
+          "authorization_code"
+        ],
+        "application_type": "native",
+        "consent_method": "REQUIRED",
+        "issuer_mode": "ORG_URL",
+        "idp_initiated_login": {
+          "mode": "DISABLED",
+          "default_scope": []
+        },
+        "wildcard_redirect": "DISABLED"
+      }
+    },
+    "_links": {
+      "uploadLogo": {
+        "href": "https://dev-79923018.okta.com/api/v1/apps/0oa3fwm4zsW5jR5V55d7/logo",
+        "hints": {
+          "allow": [
+            "POST"
+          ]
+        }
+      },
+      "appLinks": [
+        {
+          "name": "oidc_client_link",
+          "href": "https://dev-79923018.okta.com/home/oidc_client/0oa3fwm4zsW5jR5V55d7/aln177a159h7Zf52X0g8",
+          "type": "text/html"
+        }
+      ],
+      "groups": {
+        "href": "https://dev-79923018.okta.com/api/v1/apps/0oa3fwm4zsW5jR5V55d7/groups"
+      },
+      "logo": [
+        {
+          "name": "medium",
+          "href": "https://ok12static.oktacdn.com/assets/img/logos/default.6770228fb0dab49a1695ef440a5279bb.png",
+          "type": "image/png"
+        }
+      ],
+      "users": {
+        "href": "https://dev-79923018.okta.com/api/v1/apps/0oa3fwm4zsW5jR5V55d7/users"
+      },
+      "deactivate": {
+        "href": "https://dev-79923018.okta.com/api/v1/apps/0oa3fwm4zsW5jR5V55d7/lifecycle/deactivate"
+      }
+    }
+  },
+  {
+    "id": "0oa3pssr5jYavmnNF5d7",
+    "name": "template_basic_auth",
+    "label": "demo-disk-xx5",
+    "status": "INACTIVE",
+    "lastUpdated": "2022-03-07T08:35:46.000Z",
+    "created": "2022-01-26T07:25:44.000Z",
+    "accessibility": {
+      "selfService": false,
+      "errorRedirectUrl": null,
+      "loginRedirectUrl": null
+    },
+    "visibility": {
+      "autoLaunch": false,
+      "autoSubmitToolbar": false,
+      "hide": {
+        "iOS": false,
+        "web": false
+      },
+      "appLinks": {
+        "login": true
+      }
+    },
+    "features": [],
+    "signOnMode": "BASIC_AUTH",
+    "credentials": {
+      "scheme": "EDIT_USERNAME_AND_PASSWORD",
+      "userNameTemplate": {
+        "template": "${source.login}",
+        "type": "BUILT_IN"
+      },
+      "revealPassword": false,
+      "signing": {}
+    },
+    "settings": {
+      "app": {
+        "loginUrlRegex": null,
+        "authURL": "https://example.com/auth.html",
+        "url": "https://example.com/bookmark.html"
+      },
+      "notifications": {
+        "vpn": {
+          "network": {
+            "connection": "DISABLED"
+          },
+          "message": null,
+          "helpUrl": null
+        }
+      },
+      "notes": {
+        "admin": null,
+        "enduser": null
+      }
+    },
+    "_links": {
+      "uploadLogo": {
+        "href": "https://dev-79923018.okta.com/api/v1/apps/0oa3pssr5jYavmnNF5d7/logo",
+        "hints": {
+          "allow": [
+            "POST"
+          ]
+        }
+      },
+      "appLinks": [
+        {
+          "name": "login",
+          "href": "https://dev-79923018.okta.com/home/template_basic_auth/0oa3pssr5jYavmnNF5d7/2873",
+          "type": "text/html"
+        }
+      ],
+      "activate": {
+        "href": "https://dev-79923018.okta.com/api/v1/apps/0oa3pssr5jYavmnNF5d7/lifecycle/activate"
+      },
+      "groups": {
+        "href": "https://dev-79923018.okta.com/api/v1/apps/0oa3pssr5jYavmnNF5d7/groups"
+      },
+      "logo": [
+        {
+          "name": "medium",
+          "href": "https://ok12static.oktacdn.com/assets/img/logos/default.6770228fb0dab49a1695ef440a5279bb.png",
+          "type": "image/png"
+        }
+      ],
+      "users": {
+        "href": "https://dev-79923018.okta.com/api/v1/apps/0oa3pssr5jYavmnNF5d7/users"
+      }
+    }
+  }
+]

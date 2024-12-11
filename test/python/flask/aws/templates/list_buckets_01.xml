@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListAllMyBucketsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Owner><ID>100000000000000000000000000000000000000000000000000000000000</ID><DisplayName>joeblow</DisplayName></Owner><Buckets>
+  <Bucket><Name>stackql-trial-bucket-01</Name><CreationDate>2022-08-29T12:10:06.000Z</CreationDate></Bucket>
+  <Bucket><Name>stackql-trial-bucket-02</Name><CreationDate>2022-08-29T12:11:06.000Z</CreationDate></Bucket>
+  <Bucket><Name>stackql-trial-bucket-03</Name><CreationDate>2022-08-29T12:12:06.000Z</CreationDate></Bucket>
+</Buckets></ListAllMyBucketsResult>
