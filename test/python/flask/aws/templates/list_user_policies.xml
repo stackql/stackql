@@ -1,0 +1,12 @@
+<ListUserPoliciesResponse xmlns="https://iam.amazonaws.com/doc/2010-05-08/">
+ <ListUserPoliciesResult>
+    <PolicyNames>
+       <member>AllAccessPolicy</member>
+       <member>KeyPolicy</member>
+    </PolicyNames>
+    <IsTruncated>false</IsTruncated>
+ </ListUserPoliciesResult>
+ <ResponseMetadata>
+    <RequestId>EXAMPLE</RequestId>
+ </ResponseMetadata>
+</ListUserPoliciesResponse>

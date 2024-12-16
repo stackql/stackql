@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CreateVolumeResponse xmlns="http://ec2.amazonaws.com/doc/2016-11-15/">
+  <requestId>1a0fd852-e01b-4f96-8cf6-4ae4aeed37b1</requestId>
+  <volumeId>vol-0326895bed0f38ea8</volumeId>
+  <size>10</size>
+  <snapshotId></snapshotId>
+  <availabilityZone>ap-southeast-1a</availabilityZone>
+  <status>creating</status>
+  <createTime>2022-06-20T13:11:23.000Z</createTime>
+  <volumeType>gp2</volumeType>
+  <iops>100</iops>
+  <encrypted>false</encrypted>
+  <tagSet/>
+  <multiAttachEnabled>false</multiAttachEnabled>
+</CreateVolumeResponse>

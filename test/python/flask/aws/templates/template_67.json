@@ -1,0 +1,6 @@
+{
+    "ResourceDescription": {
+        "Identifier": "stackql-contrived-bucket-02",
+        "Properties": "{\"PublicAccessBlockConfiguration\":{\"RestrictPublicBuckets\":true,\"BlockPublicPolicy\":true,\"BlockPublicAcls\":true,\"IgnorePublicAcls\":true},\"BucketName\":\"stackql-contrived-bucket-02\",\"RegionalDomainName\":\"stackql-contrived-bucket-02.s3.us-east-1.amazonaws.com\",\"OwnershipControls\":{\"Rules\":[{\"ObjectOwnership\":\"BucketOwnerEnforced\"}]},\"DomainName\":\"stackql-contrived-bucket-02.s3.amazonaws.com\",\"WebsiteURL\":\"http://stackql-contrived-bucket-02.s3-website-us-east-1.amazonaws.com\",\"DualStackDomainName\":\"stackql-contrived-bucket-02.s3.dualstack.us-east-1.amazonaws.com\",\"Arn\":\"arn:aws:s3:::stackql-contrived-bucket-02\",\"Tags\":[{\"Value\":\"first-ever-bucket\",\"Key\":\"sundry\"}, {\"Key\":\"provisioner\",\"Value\":\"stackql\"}, {\"Key\":\"domain\",\"Value\":\"payroll\"}, {\"Key\":\"stackid\",\"Value\":\"payruns\"}, {\"Key\":\"env\",\"Value\":\"dev\"}]}"
+    }
+}

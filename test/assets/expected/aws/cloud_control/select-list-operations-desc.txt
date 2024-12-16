@@ -1,227 +1,236 @@
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-|      TypeName       | OperationStatus |         StatusMessage          |           Identifier           |        RequestToken        |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExample9       | 5ae5ae5a-0005-0001-001a-9  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExample8       | 5ae5ae5a-0005-0001-001a-8  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExample7       | 5ae5ae5a-0005-0001-001a-7  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExample6       | 5ae5ae5a-0005-0001-001a-6  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExample5       | 5ae5ae5a-0005-0001-001a-5  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExample4       | 5ae5ae5a-0005-0001-001a-4  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExample3       | 5ae5ae5a-0005-0001-001a-3  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExample10      | 5ae5ae5a-0005-0001-001a-10 |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-9  |
-|                     |                 | (#/RetentionInDays: #: only    |                                |                            |
-|                     |                 | 1 subschema matches out of     |                                |                            |
-|                     |                 | 2 #/RetentionInDays: failed    |                                |                            |
-|                     |                 | validation constraint for      |                                |                            |
-|                     |                 | keyword [enum])                |                                |                            |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-8  |
-|                     |                 | (#/RetentionInDays: #: only    |                                |                            |
-|                     |                 | 1 subschema matches out of     |                                |                            |
-|                     |                 | 2 #/RetentionInDays: failed    |                                |                            |
-|                     |                 | validation constraint for      |                                |                            |
-|                     |                 | keyword [enum])                |                                |                            |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-8  |
-|                     |                 | (#/RetentionInDays: #: only    |                                |                            |
-|                     |                 | 1 subschema matches out of     |                                |                            |
-|                     |                 | 2 #/RetentionInDays: failed    |                                |                            |
-|                     |                 | validation constraint for      |                                |                            |
-|                     |                 | keyword [enum])                |                                |                            |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-7  |
-|                     |                 | (#/RetentionInDays: #: only    |                                |                            |
-|                     |                 | 1 subschema matches out of     |                                |                            |
-|                     |                 | 2 #/RetentionInDays: failed    |                                |                            |
-|                     |                 | validation constraint for      |                                |                            |
-|                     |                 | keyword [enum])                |                                |                            |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-7  |
-|                     |                 | (#/RetentionInDays: #: only    |                                |                            |
-|                     |                 | 1 subschema matches out of     |                                |                            |
-|                     |                 | 2 #/RetentionInDays: failed    |                                |                            |
-|                     |                 | validation constraint for      |                                |                            |
-|                     |                 | keyword [enum])                |                                |                            |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-6  |
-|                     |                 | (#/RetentionInDays: #: only    |                                |                            |
-|                     |                 | 1 subschema matches out of     |                                |                            |
-|                     |                 | 2 #/RetentionInDays: failed    |                                |                            |
-|                     |                 | validation constraint for      |                                |                            |
-|                     |                 | keyword [enum])                |                                |                            |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-6  |
-|                     |                 | (#/RetentionInDays: #: only    |                                |                            |
-|                     |                 | 1 subschema matches out of     |                                |                            |
-|                     |                 | 2 #/RetentionInDays: failed    |                                |                            |
-|                     |                 | validation constraint for      |                                |                            |
-|                     |                 | keyword [enum])                |                                |                            |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-5  |
-|                     |                 | (#/RetentionInDays: #: only    |                                |                            |
-|                     |                 | 1 subschema matches out of     |                                |                            |
-|                     |                 | 2 #/RetentionInDays: failed    |                                |                            |
-|                     |                 | validation constraint for      |                                |                            |
-|                     |                 | keyword [enum])                |                                |                            |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-5  |
-|                     |                 | (#/RetentionInDays: #: only    |                                |                            |
-|                     |                 | 1 subschema matches out of     |                                |                            |
-|                     |                 | 2 #/RetentionInDays: failed    |                                |                            |
-|                     |                 | validation constraint for      |                                |                            |
-|                     |                 | keyword [enum])                |                                |                            |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-4  |
-|                     |                 | (#/RetentionInDays: #: only    |                                |                            |
-|                     |                 | 1 subschema matches out of     |                                |                            |
-|                     |                 | 2 #/RetentionInDays: failed    |                                |                            |
-|                     |                 | validation constraint for      |                                |                            |
-|                     |                 | keyword [enum])                |                                |                            |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-4  |
-|                     |                 | (#/RetentionInDays: #: only    |                                |                            |
-|                     |                 | 1 subschema matches out of     |                                |                            |
-|                     |                 | 2 #/RetentionInDays: failed    |                                |                            |
-|                     |                 | validation constraint for      |                                |                            |
-|                     |                 | keyword [enum])                |                                |                            |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-3  |
-|                     |                 | (#/RetentionInDays: #: only    |                                |                            |
-|                     |                 | 1 subschema matches out of     |                                |                            |
-|                     |                 | 2 #/RetentionInDays: failed    |                                |                            |
-|                     |                 | validation constraint for      |                                |                            |
-|                     |                 | keyword [enum])                |                                |                            |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-3  |
-|                     |                 | (#/RetentionInDays: #: only    |                                |                            |
-|                     |                 | 1 subschema matches out of     |                                |                            |
-|                     |                 | 2 #/RetentionInDays: failed    |                                |                            |
-|                     |                 | validation constraint for      |                                |                            |
-|                     |                 | keyword [enum])                |                                |                            |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-2  |
-|                     |                 | (#/RetentionInDays: #: only    |                                |                            |
-|                     |                 | 1 subschema matches out of     |                                |                            |
-|                     |                 | 2 #/RetentionInDays: failed    |                                |                            |
-|                     |                 | validation constraint for      |                                |                            |
-|                     |                 | keyword [enum])                |                                |                            |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-2  |
-|                     |                 | (#/RetentionInDays: #: only    |                                |                            |
-|                     |                 | 1 subschema matches out of     |                                |                            |
-|                     |                 | 2 #/RetentionInDays: failed    |                                |                            |
-|                     |                 | validation constraint for      |                                |                            |
-|                     |                 | keyword [enum])                |                                |                            |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-1  |
-|                     |                 | (#/RetentionInDays: #: only    |                                |                            |
-|                     |                 | 1 subschema matches out of     |                                |                            |
-|                     |                 | 2 #/RetentionInDays: failed    |                                |                            |
-|                     |                 | validation constraint for      |                                |                            |
-|                     |                 | keyword [enum])                |                                |                            |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample9           | 5ae5ae5a-0003-0001-001a-9  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample8           | 5ae5ae5a-0003-0001-001a-8  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample8           | 5ae5ae5a-0003-0001-001a-8  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample7           | 5ae5ae5a-0003-0001-001a-7  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample7           | 5ae5ae5a-0003-0001-001a-7  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample6           | 5ae5ae5a-0003-0001-001a-6  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample6           | 5ae5ae5a-0003-0001-001a-6  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample5           | 5ae5ae5a-0003-0001-001a-5  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample5           | 5ae5ae5a-0003-0001-001a-5  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample4           | 5ae5ae5a-0003-0001-001a-4  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample4           | 5ae5ae5a-0003-0001-001a-4  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample3           | 5ae5ae5a-0003-0001-001a-3  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample3           | 5ae5ae5a-0003-0001-001a-3  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample2           | 5ae5ae5a-0003-0001-001a-2  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample2           | 5ae5ae5a-0003-0001-001a-2  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample1           | 5ae5ae5a-0003-0001-001a-1  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond9 | 5ae5ae5a-0002-0001-001a-9  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond8 | 5ae5ae5a-0002-0001-001a-8  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond8 | 5ae5ae5a-0002-0001-001a-8  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond7 | 5ae5ae5a-0002-0001-001a-7  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond7 | 5ae5ae5a-0002-0001-001a-7  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond6 | 5ae5ae5a-0002-0001-001a-6  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond6 | 5ae5ae5a-0002-0001-001a-6  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond5 | 5ae5ae5a-0002-0001-001a-5  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond5 | 5ae5ae5a-0002-0001-001a-5  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond4 | 5ae5ae5a-0002-0001-001a-4  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond4 | 5ae5ae5a-0002-0001-001a-4  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond3 | 5ae5ae5a-0002-0001-001a-3  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond3 | 5ae5ae5a-0002-0001-001a-3  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond2 | 5ae5ae5a-0002-0001-001a-2  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond2 | 5ae5ae5a-0002-0001-001a-2  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond1 | 5ae5ae5a-0002-0001-001a-1  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird9  | 5ae5ae5a-0001-0001-001a-9  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird8  | 5ae5ae5a-0001-0001-001a-8  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird8  | 5ae5ae5a-0001-0001-001a-8  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird7  | 5ae5ae5a-0001-0001-001a-7  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird7  | 5ae5ae5a-0001-0001-001a-7  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird6  | 5ae5ae5a-0001-0001-001a-6  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird6  | 5ae5ae5a-0001-0001-001a-6  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird5  | 5ae5ae5a-0001-0001-001a-5  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird5  | 5ae5ae5a-0001-0001-001a-5  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird4  | 5ae5ae5a-0001-0001-001a-4  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird4  | 5ae5ae5a-0001-0001-001a-4  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird3  | 5ae5ae5a-0001-0001-001a-3  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird3  | 5ae5ae5a-0001-0001-001a-3  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird2  | 5ae5ae5a-0001-0001-001a-2  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird2  | 5ae5ae5a-0001-0001-001a-2  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
-| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird1  | 5ae5ae5a-0001-0001-001a-1  |
-|---------------------|-----------------|--------------------------------|--------------------------------|----------------------------|
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+|      TypeName       | OperationStatus |         StatusMessage          |           Identifier           |       RequestToken        |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExample9       | 5ae5ae5a-0005-0001-001a-9 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExample8       | 5ae5ae5a-0005-0001-001a-8 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExample7       | 5ae5ae5a-0005-0001-001a-7 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExample6       | 5ae5ae5a-0005-0001-001a-6 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExample5       | 5ae5ae5a-0005-0001-001a-5 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExample4       | 5ae5ae5a-0005-0001-001a-4 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-9 |
+|                     |                 | (#/RetentionInDays: #: only    |                                |                           |
+|                     |                 | 1 subschema matches out of     |                                |                           |
+|                     |                 | 2 #/RetentionInDays: failed    |                                |                           |
+|                     |                 | validation constraint for      |                                |                           |
+|                     |                 | keyword [enum])                |                                |                           |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-8 |
+|                     |                 | (#/RetentionInDays: #: only    |                                |                           |
+|                     |                 | 1 subschema matches out of     |                                |                           |
+|                     |                 | 2 #/RetentionInDays: failed    |                                |                           |
+|                     |                 | validation constraint for      |                                |                           |
+|                     |                 | keyword [enum])                |                                |                           |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-7 |
+|                     |                 | (#/RetentionInDays: #: only    |                                |                           |
+|                     |                 | 1 subschema matches out of     |                                |                           |
+|                     |                 | 2 #/RetentionInDays: failed    |                                |                           |
+|                     |                 | validation constraint for      |                                |                           |
+|                     |                 | keyword [enum])                |                                |                           |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-7 |
+|                     |                 | (#/RetentionInDays: #: only    |                                |                           |
+|                     |                 | 1 subschema matches out of     |                                |                           |
+|                     |                 | 2 #/RetentionInDays: failed    |                                |                           |
+|                     |                 | validation constraint for      |                                |                           |
+|                     |                 | keyword [enum])                |                                |                           |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-6 |
+|                     |                 | (#/RetentionInDays: #: only    |                                |                           |
+|                     |                 | 1 subschema matches out of     |                                |                           |
+|                     |                 | 2 #/RetentionInDays: failed    |                                |                           |
+|                     |                 | validation constraint for      |                                |                           |
+|                     |                 | keyword [enum])                |                                |                           |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-6 |
+|                     |                 | (#/RetentionInDays: #: only    |                                |                           |
+|                     |                 | 1 subschema matches out of     |                                |                           |
+|                     |                 | 2 #/RetentionInDays: failed    |                                |                           |
+|                     |                 | validation constraint for      |                                |                           |
+|                     |                 | keyword [enum])                |                                |                           |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-5 |
+|                     |                 | (#/RetentionInDays: #: only    |                                |                           |
+|                     |                 | 1 subschema matches out of     |                                |                           |
+|                     |                 | 2 #/RetentionInDays: failed    |                                |                           |
+|                     |                 | validation constraint for      |                                |                           |
+|                     |                 | keyword [enum])                |                                |                           |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-5 |
+|                     |                 | (#/RetentionInDays: #: only    |                                |                           |
+|                     |                 | 1 subschema matches out of     |                                |                           |
+|                     |                 | 2 #/RetentionInDays: failed    |                                |                           |
+|                     |                 | validation constraint for      |                                |                           |
+|                     |                 | keyword [enum])                |                                |                           |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-4 |
+|                     |                 | (#/RetentionInDays: #: only    |                                |                           |
+|                     |                 | 1 subschema matches out of     |                                |                           |
+|                     |                 | 2 #/RetentionInDays: failed    |                                |                           |
+|                     |                 | validation constraint for      |                                |                           |
+|                     |                 | keyword [enum])                |                                |                           |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-4 |
+|                     |                 | (#/RetentionInDays: #: only    |                                |                           |
+|                     |                 | 1 subschema matches out of     |                                |                           |
+|                     |                 | 2 #/RetentionInDays: failed    |                                |                           |
+|                     |                 | validation constraint for      |                                |                           |
+|                     |                 | keyword [enum])                |                                |                           |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-3 |
+|                     |                 | (#/RetentionInDays: #: only    |                                |                           |
+|                     |                 | 1 subschema matches out of     |                                |                           |
+|                     |                 | 2 #/RetentionInDays: failed    |                                |                           |
+|                     |                 | validation constraint for      |                                |                           |
+|                     |                 | keyword [enum])                |                                |                           |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-3 |
+|                     |                 | (#/RetentionInDays: #: only    |                                |                           |
+|                     |                 | 1 subschema matches out of     |                                |                           |
+|                     |                 | 2 #/RetentionInDays: failed    |                                |                           |
+|                     |                 | validation constraint for      |                                |                           |
+|                     |                 | keyword [enum])                |                                |                           |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-2 |
+|                     |                 | (#/RetentionInDays: #: only    |                                |                           |
+|                     |                 | 1 subschema matches out of     |                                |                           |
+|                     |                 | 2 #/RetentionInDays: failed    |                                |                           |
+|                     |                 | validation constraint for      |                                |                           |
+|                     |                 | keyword [enum])                |                                |                           |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-2 |
+|                     |                 | (#/RetentionInDays: #: only    |                                |                           |
+|                     |                 | 1 subschema matches out of     |                                |                           |
+|                     |                 | 2 #/RetentionInDays: failed    |                                |                           |
+|                     |                 | validation constraint for      |                                |                           |
+|                     |                 | keyword [enum])                |                                |                           |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-1 |
+|                     |                 | (#/RetentionInDays: #: only    |                                |                           |
+|                     |                 | 1 subschema matches out of     |                                |                           |
+|                     |                 | 2 #/RetentionInDays: failed    |                                |                           |
+|                     |                 | validation constraint for      |                                |                           |
+|                     |                 | keyword [enum])                |                                |                           |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-1 |
+|                     |                 | (#/RetentionInDays: #: only    |                                |                           |
+|                     |                 | 1 subschema matches out of     |                                |                           |
+|                     |                 | 2 #/RetentionInDays: failed    |                                |                           |
+|                     |                 | validation constraint for      |                                |                           |
+|                     |                 | keyword [enum])                |                                |                           |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | FAILED          | Model validation failed        | null                           | 5ae5ae5a-0004-0001-001a-0 |
+|                     |                 | (#/RetentionInDays: #: only    |                                |                           |
+|                     |                 | 1 subschema matches out of     |                                |                           |
+|                     |                 | 2 #/RetentionInDays: failed    |                                |                           |
+|                     |                 | validation constraint for      |                                |                           |
+|                     |                 | keyword [enum])                |                                |                           |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample9           | 5ae5ae5a-0003-0001-001a-9 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample8           | 5ae5ae5a-0003-0001-001a-8 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample7           | 5ae5ae5a-0003-0001-001a-7 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample7           | 5ae5ae5a-0003-0001-001a-7 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample6           | 5ae5ae5a-0003-0001-001a-6 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample6           | 5ae5ae5a-0003-0001-001a-6 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample5           | 5ae5ae5a-0003-0001-001a-5 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample5           | 5ae5ae5a-0003-0001-001a-5 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample4           | 5ae5ae5a-0003-0001-001a-4 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample4           | 5ae5ae5a-0003-0001-001a-4 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample3           | 5ae5ae5a-0003-0001-001a-3 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample3           | 5ae5ae5a-0003-0001-001a-3 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample2           | 5ae5ae5a-0003-0001-001a-2 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample2           | 5ae5ae5a-0003-0001-001a-2 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample1           | 5ae5ae5a-0003-0001-001a-1 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample1           | 5ae5ae5a-0003-0001-001a-1 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | CloudControlExample0           | 5ae5ae5a-0003-0001-001a-0 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond9 | 5ae5ae5a-0002-0001-001a-9 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond8 | 5ae5ae5a-0002-0001-001a-8 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond7 | 5ae5ae5a-0002-0001-001a-7 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond7 | 5ae5ae5a-0002-0001-001a-7 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond6 | 5ae5ae5a-0002-0001-001a-6 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond6 | 5ae5ae5a-0002-0001-001a-6 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond5 | 5ae5ae5a-0002-0001-001a-5 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond5 | 5ae5ae5a-0002-0001-001a-5 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond4 | 5ae5ae5a-0002-0001-001a-4 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond4 | 5ae5ae5a-0002-0001-001a-4 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond3 | 5ae5ae5a-0002-0001-001a-3 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond3 | 5ae5ae5a-0002-0001-001a-3 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond2 | 5ae5ae5a-0002-0001-001a-2 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond2 | 5ae5ae5a-0002-0001-001a-2 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond1 | 5ae5ae5a-0002-0001-001a-1 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond1 | 5ae5ae5a-0002-0001-001a-1 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleSecond0 | 5ae5ae5a-0002-0001-001a-0 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird9  | 5ae5ae5a-0001-0001-001a-9 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird8  | 5ae5ae5a-0001-0001-001a-8 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird7  | 5ae5ae5a-0001-0001-001a-7 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird7  | 5ae5ae5a-0001-0001-001a-7 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird6  | 5ae5ae5a-0001-0001-001a-6 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird6  | 5ae5ae5a-0001-0001-001a-6 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird5  | 5ae5ae5a-0001-0001-001a-5 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird5  | 5ae5ae5a-0001-0001-001a-5 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird4  | 5ae5ae5a-0001-0001-001a-4 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird4  | 5ae5ae5a-0001-0001-001a-4 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird3  | 5ae5ae5a-0001-0001-001a-3 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird3  | 5ae5ae5a-0001-0001-001a-3 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird2  | 5ae5ae5a-0001-0001-001a-2 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird2  | 5ae5ae5a-0001-0001-001a-2 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird1  | 5ae5ae5a-0001-0001-001a-1 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird1  | 5ae5ae5a-0001-0001-001a-1 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|
+| AWS::Logs::LogGroup | SUCCESS         | null                           | LogGroupResourceExampleThird0  | 5ae5ae5a-0001-0001-001a-0 |
+|---------------------|-----------------|--------------------------------|--------------------------------|---------------------------|

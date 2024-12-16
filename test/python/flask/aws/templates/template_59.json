@@ -1,0 +1,6 @@
+{
+    "ResourceDescription": {
+        "Identifier": "CloudControlExample",
+        "Properties": "{\"RetentionInDays\":90,\"LogGroupName\":\"CloudControlExample\",\"Arn\":\"arn:aws:logs:ap-southeast-1:0000000001:log-group:CloudControlExample:*\"}"
+    }
+}

@@ -1,0 +1,4 @@
+{
+  "__type": "com.amazon.cloudapiservice#InvalidRequestException",
+  "Message": "AWS::EC2::SubnetRouteTableAssociation Handler returned status FAILED: The RouteTableAssociation does not belong to a subnet (HandlerErrorCode: InvalidRequest, RequestToken: 00000000-0000-0000-0000-00000001)"
+}

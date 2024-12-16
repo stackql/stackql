@@ -1,0 +1,7 @@
+{
+    "ResourceDescription": {
+        "Identifier": "rtbassoc-003",
+        "Properties": "{\"RouteTableId\":\"rtb-001a\",\"Id\":\"rtbassoc-003\",\"SubnetId\":\"subnet-0003b\"}"
+    },
+    "TypeName": "AWS::EC2::SubnetRouteTableAssociation"
+}

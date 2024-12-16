@@ -1,0 +1,10 @@
+{
+    "ProgressEvent": {
+        "EventTime": 1660714273.8,
+        "Identifier": "LogGroupResourceExample3",
+        "Operation": "CREATE",
+        "OperationStatus": "IN_PROGRESS",
+        "RequestToken": "10000001-0000-0000-0000-000000000001",
+        "TypeName": "AWS::Logs::LogGroup"
+    }
+}

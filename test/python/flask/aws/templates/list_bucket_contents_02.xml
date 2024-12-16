@@ -1,0 +1,1 @@
+<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Name>stackql-trial-bucket-02</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><IsTruncated>false</IsTruncated></ListBucketResult>

@@ -1,0 +1,25 @@
+{
+    "ResourceDescriptions": [
+        {
+            "Identifier": "vpc-0001",
+            "Properties": "{\"VpcId\":\"vpc-0001\"}"
+        },
+        {
+            "Identifier": "vpc-0002",
+            "Properties": "{\"VpcId\":\"vpc-0002\"}"
+        },
+        {
+            "Identifier": "vpc-0003",
+            "Properties": "{\"VpcId\":\"vpc-0003\"}"
+        },
+        {
+            "Identifier": "vpc-0004",
+            "Properties": "{\"VpcId\":\"vpc-0004\"}"
+        },
+        {
+            "Identifier": "vpc-0005",
+            "Properties": "{\"VpcId\":\"vpc-0005\"}"
+        }
+    ],
+    "TypeName": "AWS::EC2::VPC"
+}

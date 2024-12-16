@@ -1,0 +1,7 @@
+{
+    "ResourceDescription": {
+        "Identifier": "vpc-0004",
+        "Properties": "{\"VpcId\":\"vpc-0004\",\"InstanceTenancy\":\"default\",\"CidrBlockAssociations\":[\"vpc-cidr-assoc-00000001\"],\"CidrBlock\":\"10.3.0.0/16\",\"DefaultNetworkAcl\":\"acl-000000001\",\"EnableDnsSupport\":true,\"Ipv6CidrBlocks\":[],\"DefaultSecurityGroup\":\"sg-00000000001\",\"EnableDnsHostnames\":true,\"Tags\":[{\"Value\":\"vpc4\",\"Key\":\"Name\"}]}"
+    },
+    "TypeName": "AWS::EC2::VPC"
+}

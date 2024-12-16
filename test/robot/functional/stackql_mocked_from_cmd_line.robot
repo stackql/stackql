@@ -818,8 +818,8 @@ AWS Route53 List Record Sets Simple
 
 AWS Transfer Server Insert Simple Exemplifies Empty Request Body Insert
     ${inputStr} =    Catenate
-    ...              insert into aws.transfer.servers(region)
-    ...              select 'ap-southeast-2';
+    ...              insert into aws.transfer.servers(region, data__Domain)
+    ...              select 'ap-southeast-2', 'AWS';
     Should Stackql Exec Inline Equal Both Streams
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -1536,37 +1536,44 @@ Debug HTTP Plus Transparent Placeholder URL and Defaulted Request Body Returns E
     ...    http request url: 'https://${hostName}:1091/', method: 'POST'
     ...    http request body = '{"Filters":{}}'
     ...    http${SPACE}response${SPACE}status${SPACE}code:${SPACE}200,${SPACE}response${SPACE}body:${SPACE}{
-    ...    ${SPACE}${SPACE}"Backups"${SPACE}: [${SPACE}{
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"BackupId"${SPACE}:${SPACE}"bkp-000001",
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"BackupState"${SPACE}:${SPACE}"READY",
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"ClusterId"${SPACE}:${SPACE}"cluster-abcdefg",
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"CopyTimestamp"${SPACE}:${SPACE}1.711841E9,
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"CreateTimestamp"${SPACE}:${SPACE}1.71184E9,
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"DeleteTimestamp"${SPACE}:${SPACE}1.71184E9,
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"NeverExpires"${SPACE}:${SPACE}false,
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"SourceBackup"${SPACE}:${SPACE}"",
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"SourceCluster"${SPACE}:${SPACE}"cluster-abcdefg",
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"SourceRegion"${SPACE}:${SPACE}"ap-southeast-2",
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"TagList"${SPACE}: [${SPACE}{
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"Key"${SPACE}:${SPACE}"name",
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"Value"${SPACE}:${SPACE}"backup-01"
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}}${SPACE}]
-    ...    ${SPACE}${SPACE}},${SPACE}{
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"BackupId"${SPACE}:${SPACE}"bkp-000002",
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"BackupState"${SPACE}:${SPACE}"READY",
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"ClusterId"${SPACE}:${SPACE}"cluster-abcdefg",
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"CopyTimestamp"${SPACE}:${SPACE}1.711841E9,
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"CreateTimestamp"${SPACE}:${SPACE}1.71184E9,
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"DeleteTimestamp"${SPACE}:${SPACE}1.71184E9,
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"NeverExpires"${SPACE}:${SPACE}false,
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"SourceBackup"${SPACE}:${SPACE}"bkp-000001",
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"SourceCluster"${SPACE}:${SPACE}"cluster-abcdefg",
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"SourceRegion"${SPACE}:${SPACE}"ap-southeast-2",
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"TagList"${SPACE}: [${SPACE}{
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"Key"${SPACE}:${SPACE}"name",
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"Value"${SPACE}:${SPACE}"backup-02"
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}}${SPACE}]
-    ...    ${SPACE}${SPACE}}${SPACE}]
+    ...    ${SPACE}${SPACE}"Backups": [
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}{
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"BackupId":${SPACE}"bkp-000001",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"BackupState":${SPACE}"READY",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"ClusterId":${SPACE}"cluster-abcdefg",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"CopyTimestamp":${SPACE}1711841000.0,
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"CreateTimestamp":${SPACE}1711840000.0,
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"DeleteTimestamp":${SPACE}1711840000.0,
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"NeverExpires":${SPACE}false,
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"SourceBackup":${SPACE}"",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"SourceCluster":${SPACE}"cluster-abcdefg",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"SourceRegion":${SPACE}"ap-southeast-2",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"TagList": [
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}{
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"Key":${SPACE}"name",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"Value":${SPACE}"backup-01"
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}}
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}]
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}},
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}{
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"BackupId":${SPACE}"bkp-000002",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"BackupState":${SPACE}"READY",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"ClusterId":${SPACE}"cluster-abcdefg",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"CopyTimestamp":${SPACE}1711841000.0,
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"CreateTimestamp":${SPACE}1711840000.0,
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"DeleteTimestamp":${SPACE}1711840000.0,
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"NeverExpires":${SPACE}false,
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"SourceBackup":${SPACE}"bkp-000001",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"SourceCluster":${SPACE}"cluster-abcdefg",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"SourceRegion":${SPACE}"ap-southeast-2",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"TagList": [
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}{
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"Key":${SPACE}"name",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"Value":${SPACE}"backup-02"
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}}
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}]
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}}
+    ...    ${SPACE}${SPACE}]
     ...    }
     ...    processed${SPACE}http${SPACE}response${SPACE}body${SPACE}object: [
     ...    ${SPACE}${SPACE}{
@@ -1630,12 +1637,12 @@ Response Body Printed by Default on Error
     ...    |----------|-------------|
     ${outputErrStr} =    Catenate    SEPARATOR=\n
     ...    http${SPACE}response${SPACE}status${SPACE}code:${SPACE}501,${SPACE}response${SPACE}body:${SPACE}{
-    ...    ${SPACE}${SPACE}"error"${SPACE}:${SPACE}{
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"message"${SPACE}:${SPACE}"What${SPACE}a${SPACE}horrible${SPACE}request${SPACE}body,${SPACE}I${SPACE}hate${SPACE}it!!!",
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"customStuff"${SPACE}:${SPACE}{
-    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"what"${SPACE}:${SPACE}"this${SPACE}is${SPACE}some${SPACE}implementation${SPACE}specific${SPACE}info;${SPACE}might${SPACE}mean${SPACE}something${SPACE}to${SPACE}a${SPACE}developer"
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"error":${SPACE}{
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"message":${SPACE}"What${SPACE}a${SPACE}horrible${SPACE}request${SPACE}body,${SPACE}I${SPACE}hate${SPACE}it!!!",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"customStuff":${SPACE}{
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}"what":${SPACE}"this${SPACE}is${SPACE}some${SPACE}implementation${SPACE}specific${SPACE}info;${SPACE}might${SPACE}mean${SPACE}something${SPACE}to${SPACE}a${SPACE}developer"
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}}
     ...    ${SPACE}${SPACE}${SPACE}${SPACE}}
-    ...    ${SPACE}${SPACE}}
     ...    }
     Should Stackql Exec Inline Equal Both Streams
     ...    ${STACKQL_EXE}
@@ -6299,12 +6306,12 @@ Error GTE 400 Response Code Does Not Stop The World As Exemplified By AWS Subnet
     ...    |----------------|--------------|--------------|----------------|--------------|
     ${outputErrStr} =    Catenate    SEPARATOR=\n
     ...    http${SPACE}response${SPACE}status${SPACE}code:${SPACE}400,${SPACE}response${SPACE}body:${SPACE}{
-    ...    ${SPACE}${SPACE}"__type"${SPACE}:${SPACE}"com.amazon.cloudapiservice#InvalidRequestException",
-    ...    ${SPACE}${SPACE}"Message"${SPACE}:${SPACE}"AWS::EC2::SubnetRouteTableAssociation${SPACE}Handler${SPACE}returned${SPACE}status${SPACE}FAILED:${SPACE}The${SPACE}RouteTableAssociation${SPACE}does${SPACE}not${SPACE}belong${SPACE}to${SPACE}a${SPACE}subnet${SPACE}(HandlerErrorCode:${SPACE}InvalidRequest,${SPACE}RequestToken:${SPACE}00000000-0000-0000-0000-00000001)"
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"__type":${SPACE}"com.amazon.cloudapiservice#InvalidRequestException",
+    ...    ${SPACE}${SPACE}${SPACE}${SPACE}"Message":${SPACE}"AWS::EC2::SubnetRouteTableAssociation${SPACE}Handler${SPACE}returned${SPACE}status${SPACE}FAILED:${SPACE}The${SPACE}RouteTableAssociation${SPACE}does${SPACE}not${SPACE}belong${SPACE}to${SPACE}a${SPACE}subnet${SPACE}(HandlerErrorCode:${SPACE}InvalidRequest,${SPACE}RequestToken:${SPACE}00000000-0000-0000-0000-00000001)"
     ...    }
     ...    http${SPACE}response${SPACE}status${SPACE}code:${SPACE}400,${SPACE}response${SPACE}body:${SPACE}{
-    ...    ${SPACE}${SPACE}"__type"${SPACE}:${SPACE}"com.amazon.cloudapiservice#InvalidRequestException",
-    ...    ${SPACE}${SPACE}"Message"${SPACE}:${SPACE}"AWS::EC2::SubnetRouteTableAssociation${SPACE}Handler${SPACE}returned${SPACE}status${SPACE}FAILED:${SPACE}The${SPACE}RouteTableAssociation${SPACE}does${SPACE}not${SPACE}belong${SPACE}to${SPACE}a${SPACE}subnet${SPACE}(HandlerErrorCode:${SPACE}InvalidRequest,${SPACE}RequestToken:${SPACE}00000000-0000-0000-0000-00000001)"
+    ...    ${SPACE}${SPACE}"__type":${SPACE}"com.amazon.cloudapiservice#InvalidRequestException",
+    ...    ${SPACE}${SPACE}"Message":${SPACE}"AWS::EC2::SubnetRouteTableAssociation${SPACE}Handler${SPACE}returned${SPACE}status${SPACE}FAILED:${SPACE}The${SPACE}RouteTableAssociation${SPACE}does${SPACE}not${SPACE}belong${SPACE}to${SPACE}a${SPACE}subnet${SPACE}(HandlerErrorCode:${SPACE}InvalidRequest,${SPACE}RequestToken:${SPACE}00000000-0000-0000-0000-00000001)"
     ...    }
     Should Stackql Exec Inline Equal Both Streams
     ...    ${STACKQL_EXE}

@@ -1,0 +1,25 @@
+{
+    "Clusters": [
+        {
+            "BackupPolicy": "DEFAULT",
+            "BackupRetentionPolicy": {
+                "Type": "DAYS",
+                "Value": "90"
+            },
+            "Certificates": {},
+            "ClusterId": "cluster-abcdefg",
+            "CreateTimestamp": 1711840000.0,
+            "HsmType": "hsm1.medium",
+            "Hsms": [],
+            "Mode": "FIPS",
+            "SecurityGroup": "sg-XXXXXXXXXXX",
+            "State": "UNINITIALIZED",
+            "SubnetMapping": {
+                "ap-southeast-2a": "subnet-XXXXXXXXXX",
+                "ap-southeast-2b": "subnet-YYYYYYYYYY"
+            },
+            "TagList": [],
+            "VpcId": "vpc-ZZZZZZZZZZZZ"
+        }
+    ]
+}

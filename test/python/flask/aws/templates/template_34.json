@@ -1,0 +1,7 @@
+{
+    "ResourceDescription": {
+        "Identifier": "00001-0001-0001-0001-00000000000009",
+        "Properties": "{\"Origin\":\"AWS_KMS\",\"MultiRegion\":false,\"Description\":\"Default key that protects my Lightsail signing keys when no other key is defined\",\"KeyPolicy\":{\"Version\":\"2012-10-17\",\"Statement\":[{\"Condition\":{\"StringEquals\":{\"kms:CallerAccount\":\"0000000001\",\"kms:ViaService\":\"lightsail.eu-west-2.amazonaws.com\"}},\"Action\":[\"kms:Encrypt\",\"kms:Decrypt\",\"kms:ReEncrypt*\",\"kms:GenerateDataKey*\",\"kms:DescribeKey\"],\"Resource\":\"*\",\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"*\"},\"Sid\":\"Allow access through Lightsail for all principals in the account that are authorized to use Lightsail\"},{\"Action\":[\"kms:Describe*\",\"kms:Get*\",\"kms:List*\"],\"Resource\":\"*\",\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::0000000001:root\"},\"Sid\":\"Allow direct access to key metadata to the account\"},{\"Action\":[\"kms:Describe*\",\"kms:Get*\",\"kms:List*\"],\"Resource\":\"*\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"lightsail.amazonaws.com\"},\"Sid\":\"Allow Lightsail with service principal name lightsail.amazonaws.com to describe the key directly\"}],\"Id\":\"auto-lightsail-9\"},\"KeySpec\":\"SYMMETRIC_DEFAULT\",\"Enabled\":true,\"EnableKeyRotation\":true,\"KeyUsage\":\"ENCRYPT_DECRYPT\",\"KeyId\":\"00001-0001-0001-0001-00000000000009\",\"Arn\":\"arn:aws:kms:eu-west-2:000000001:key/00001-0001-0001-0001-00000000000009\",\"Tags\":[]}"
+    },
+    "TypeName": "AWS::KMS::Key"
+}
