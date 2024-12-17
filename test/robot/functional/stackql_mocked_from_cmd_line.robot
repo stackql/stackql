@@ -129,6 +129,18 @@ Google AcceleratorTypes SQL verb post changeover
     ...    ${SELECT_ACCELERATOR_TYPES_DESC}
     ...    ${SELECT_ACCELERATOR_TYPES_DESC_EXPECTED}
 
+Google AcceleratorTypes Demonstrating Response Content Type Override
+    Should StackQL Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select kind, name, maximumCardsPerInstance from google.compute.acceleratorTypes where project \= 'defective\-response\-content\-project' and zone \= 'australia\-southeast1\-a' order by name desc;
+    ...    ${SELECT_ACCELERATOR_TYPES_DESC_EXPECTED}
+
 Okta Apps Select Simple
     Should StackQL Exec Inline Equal
     ...    ${STACKQL_EXE}
