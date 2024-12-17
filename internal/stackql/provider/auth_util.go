@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/stackql/any-sdk/pkg/litetemplate"
 	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/netutils"
@@ -199,11 +200,15 @@ func getGenericClientCredentialsConfig(authCtx *dto.AuthCtx, scopes []string) (*
 	if secretErr != nil {
 		return nil, secretErr
 	}
+	templatedTokenURL, templateErr := litetemplate.RenderTemplateFromSerializable(authCtx.GetTokenURL(), authCtx)
+	if templateErr != nil {
+		return nil, fmt.Errorf("incorrect token url templating %w", templateErr)
+	}
 	rv := &clientcredentials.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
 		Scopes:       scopes,
-		TokenURL:     authCtx.GetTokenURL(),
+		TokenURL:     templatedTokenURL,
 	}
 	if len(authCtx.GetValues()) > 0 {
 		rv.EndpointParams = authCtx.GetValues()
