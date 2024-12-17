@@ -38,12 +38,12 @@ Start All Mock Servers
     Start Mock Server    ${JSON_INIT_FILE_PATH_AZURE}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_AZURE}
     Start Mock Server    ${JSON_INIT_FILE_PATH_SUMOLOGIC}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_SUMOLOGIC}
     Start Mock Server    ${JSON_INIT_FILE_PATH_DIGITALOCEAN}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_DIGITALOCEAN}
-    Start Mock Server    ${JSON_INIT_FILE_PATH_STACKQL_AUTH_TESTING}    ${MOCKSERVER_JAR}    ${MOCKSERVER_PORT_STACKQL_AUTH_TESTING}
     Create OAuth2 Client Credentials Web Service    ${MOCKSERVER_PORT_OAUTH_CLIENT_CREDENTIALS_TOKEN}
     Create Github Web Service    ${MOCKSERVER_PORT_GITHUB}
     Create GCP Web Service    ${MOCKSERVER_PORT_GOOGLE}
     Create Okta Web Service    ${MOCKSERVER_PORT_OKTA}
     Create AWS Web Service    ${MOCKSERVER_PORT_AWS}
+    Create Static Auth Web Service    ${MOCKSERVER_PORT_STACKQL_AUTH_TESTING}
 
 
 Prepare StackQL Environment

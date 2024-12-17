@@ -1,0 +1,34 @@
+[
+  {
+    "httpRequest": {
+      "method": "GET",
+      "path": "/v1/collectors",
+      "headers": {
+        "DD-API-KEY": ["^myusername$" ],
+        "DD-APPLICATION-KEY": ["^mypassword$" ]
+      }
+    },
+    "httpResponse": {
+      "template": "collectors-list.json",
+      "headers":{
+        "Content-Type": "application/json"
+      },
+      "status": 200
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "GET",
+      "path": "/v1/collectors/100000001",
+      "headers": {
+        "Authorization": ["^Bearer\\ some-dummy-token$" ]
+      }
+    },
+    "httpResponse": {
+      "template": "collectors-detail-get.json",
+      "headers":{
+        "Content-Type": "application/json"
+      }
+    }
+  }
+]

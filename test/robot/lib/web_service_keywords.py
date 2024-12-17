@@ -25,6 +25,7 @@ class web_service_keywords(Process):
         self._gcp_app: str = 'test/python/flask/gcp/app'
         self._okta_app: str = 'test/python/flask/okta/app'
         self._auth_testing_app: str = 'test/python/flask/auth_testing/app'
+        self._static_auth_testing_app: str = 'test/python/flask/static_auth/app'
         self._aws_app: str = 'test/python/flask/aws/app'
         self._azure_app: str = 'test/python/flask/azure/app'
         self._digitalocean_app: str = 'test/python/flask/digitalocean/app'
@@ -137,6 +138,27 @@ class web_service_keywords(Process):
             f'--key={self._tls_key_path}',
             stdout=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'aws-server-{port}-stdout.txt')),
             stderr=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'aws-server-{port}-stderr.txt'))
+        )
+    
+    @keyword
+    def create_static_auth_web_service(
+        self,
+        port: int,
+        host: str = '0.0.0.0'
+    ) -> None:
+        """
+        Sign the input.
+        """
+        return self.start_process(
+            'flask',
+            f'--app={self._static_auth_testing_app}',
+            'run',
+            f'--host={host}', # generally, `0.0.0.0`; otherwise, invisible on `docker.host.internal` etc
+            f'--port={port}',
+            f'--cert={self._tls_cert_path}',
+            f'--key={self._tls_key_path}',
+            stdout=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'static-auth-server-{port}-stdout.txt')),
+            stderr=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'static-auth-server-{port}-stderr.txt'))
         )
 
     @keyword

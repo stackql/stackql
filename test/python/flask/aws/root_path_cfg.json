@@ -20,7 +20,7 @@
         "template": "subnet_route_table_association_list.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:1": {
@@ -45,7 +45,7 @@
         "template": "subnet_route_table_association_get_01.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:2": {
@@ -70,7 +70,7 @@
         "template": "subnet_route_table_assocoation_error_01.json",
         "status": 400,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:3": {
@@ -95,7 +95,7 @@
         "template": "subnet_route_table_association_get_02.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:4": {
@@ -120,7 +120,7 @@
         "template": "subnet_route_table_association_error_02.json",
         "status": 400,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:5": {
@@ -145,7 +145,7 @@
         "template": "subnet_route_table_association_get_03.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "GET:/2013-04-01/hostedzone/A00000001AAAAAAAAAAAA/rrset:6": {
@@ -414,7 +414,7 @@
         "template": "kms_keys_list_01.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:19": {
@@ -439,7 +439,7 @@
         "template": "kms_keys_get_01.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:20": {
@@ -464,7 +464,7 @@
         "template": "kms_keys_get_02.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:21": {
@@ -488,7 +488,7 @@
         "template": "kms_keys_list_02.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:22": {
@@ -513,7 +513,7 @@
         "template": "kms_keys_get_03.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:23": {
@@ -538,7 +538,7 @@
         "template": "kms_keys_get_04.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:24": {
@@ -562,7 +562,7 @@
         "template": "keys_list_03.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:25": {
@@ -587,7 +587,7 @@
         "template": "kms_keys_get_05.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:26": {
@@ -612,7 +612,7 @@
         "template": "kms_keys_get_06.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:27": {
@@ -636,7 +636,7 @@
         "template": "template_27.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:28": {
@@ -661,7 +661,7 @@
         "template": "kms_keys_get_07.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:29": {
@@ -686,7 +686,7 @@
         "template": "template_29.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:30": {
@@ -710,7 +710,7 @@
         "template": "template_30.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:31": {
@@ -735,7 +735,7 @@
         "template": "template_31.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:32": {
@@ -760,7 +760,7 @@
         "template": "template_32.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:33": {
@@ -784,7 +784,7 @@
         "template": "template_33.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:34": {
@@ -809,7 +809,7 @@
         "template": "template_34.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:35": {
@@ -834,7 +834,7 @@
         "template": "template_35.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:36": {
@@ -858,7 +858,7 @@
         "template": "template_36.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:37": {
@@ -883,7 +883,7 @@
         "template": "template_37.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:38": {
@@ -908,7 +908,7 @@
         "template": "template_38.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:39": {
@@ -932,7 +932,7 @@
         "template": "template_39.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:40": {
@@ -956,7 +956,7 @@
         "template": "template_40.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:41": {
@@ -981,7 +981,7 @@
         "template": "template_41.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:42": {
@@ -1006,7 +1006,7 @@
         "template": "template_42.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:43": {
@@ -1031,7 +1031,7 @@
         "template": "template_43.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:44": {
@@ -1056,7 +1056,7 @@
         "template": "template_44.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:45": {
@@ -1081,7 +1081,7 @@
         "template": "template_45.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:46": {
@@ -1106,7 +1106,7 @@
         "template": "template_46.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:47": {
@@ -1130,7 +1130,7 @@
         "template": "empty-response.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:48": {
@@ -1155,7 +1155,7 @@
         "template": "empty-response.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:49": {
@@ -1182,7 +1182,7 @@
         "template": "template_49.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:50": {
@@ -1208,7 +1208,7 @@
         "template": "template_50.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:51": {
@@ -1232,7 +1232,7 @@
         "template": "empty-response.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:52": {
@@ -1284,7 +1284,7 @@
         "template": "template_52.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:53": {
@@ -1329,7 +1329,7 @@
         "template": "template_54.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:55": {
@@ -1353,7 +1353,7 @@
         "template": "template_55.json",
         "status": 501,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:56": {
@@ -1377,7 +1377,7 @@
         "template": "empty-response.json",
         "status": 403,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:57": {
@@ -1396,7 +1396,7 @@
         },
         "template": "template_57.json",
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         },
         "status": 200
     },
@@ -1449,7 +1449,7 @@
         "template": "template_59.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:60": {
@@ -1474,7 +1474,7 @@
         "template": "template_60.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:61": {
@@ -1499,7 +1499,7 @@
         "template": "template_61.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:62": {
@@ -1524,7 +1524,7 @@
         "template": "template_62.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:63": {
@@ -1548,7 +1548,7 @@
         "template": "template_63.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:64": {
@@ -1572,7 +1572,7 @@
         "template": "template_64.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:65": {
@@ -1596,7 +1596,7 @@
         "template": "template_65.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:66": {
@@ -1621,7 +1621,7 @@
         "template": "template_66.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:67": {
@@ -1646,7 +1646,7 @@
         "template": "template_67.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:68": {
@@ -1671,7 +1671,7 @@
         "template": "template_68.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:69": {
@@ -1695,7 +1695,7 @@
         "template": "template_69.jinja.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:70": {
@@ -1720,7 +1720,7 @@
         "template": "template_70.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:71": {
@@ -1745,7 +1745,7 @@
         "template": "template_71.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:72": {
@@ -1778,7 +1778,7 @@
         "template": "template_72.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:73": {
@@ -1804,7 +1804,7 @@
         "template": "template_73.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:74": {
@@ -1829,7 +1829,7 @@
         "template": "template_74.json",
         "status": 200 ,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:75": {
@@ -1854,7 +1854,7 @@
         "template": "template_75.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:76": {
@@ -1878,7 +1878,7 @@
         "template": "template_76.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:77": {
@@ -1902,7 +1902,7 @@
         "template": "template_77.json",
         "status": 200,
         "response_headers": {
-            "Content-Type": ["application/json"]
+            "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
     "POST:/:78": {

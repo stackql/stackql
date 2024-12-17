@@ -4,6 +4,7 @@ import logging
 import re
 import json
 import base64
+from typing import List
 
 app = Flask(__name__)
 app.template_folder = os.path.join(os.path.dirname(__file__), "templates")
@@ -18,32 +19,18 @@ def log_request_info():
 
 class GetMatcherConfig:
 
-    _ROOT_PATH_CFG: dict = {}
+    _ROOT_PATH_CFG: List[dict] = {}
 
     @staticmethod
     def load_config_from_file(file_path):
         try:
             with open(file_path, 'r') as f:
                 GetMatcherConfig._ROOT_PATH_CFG = json.load(f)
-
-                # Decode base64 responses in templates
-                for route_name, cfg in GetMatcherConfig._ROOT_PATH_CFG.items():
-                    if "base64_template" in cfg:
-                        try:
-                            decoded_content = base64.b64decode(cfg["base64_template"]).decode("utf-8")
-                            template_path = os.path.join(app.template_folder, cfg["template"]) 
-                            with open(template_path, "w") as tpl_file:
-                                tpl_file.write(decoded_content)
-                            logger.info(f"Decoded base64 template for route: {route_name}")
-                        except Exception as e:
-                            logger.error(f"Failed to decode base64 template for route: {route_name}: {e}")
-
-                logger.info("Configuration loaded and templates processed successfully.")
         except Exception as e:
             logger.error(f"Failed to load configuration: {e}")
 
     def __init__(self):
-        config_path = os.path.join(os.path.dirname(__file__), "root_path_cfg.json")
+        config_path = os.path.join(os.path.dirname(__file__), "expectations.json")
         self.load_config_from_file(config_path)
 
     @staticmethod
@@ -83,7 +70,7 @@ class GetMatcherConfig:
         return False
     
     def _match_request_body(self, req: Request, entry: dict) -> bool:
-        body_conditions = entry.get('body_conditions', {})
+        body_conditions = entry.get('httpRequest', {}).get('body', {})
         
         if not body_conditions:
             return True
@@ -115,7 +102,7 @@ class GetMatcherConfig:
         return False
 
     def _match_request_headers(self, req: Request, entry: dict) -> bool:
-        for k, v in entry.get('headers', {}).items():
+        for k, v in entry.get('httpRequest', {}).get('headers', {}).items():
             if type(v) == str:
                 if not self._match_string(req.headers.get(k), v):
                     return False
@@ -131,13 +118,13 @@ class GetMatcherConfig:
         return True
     
     def _is_method_match(self, req: Request, cfg: dict) -> bool:
-        method = cfg.get("method", '')
+        method = cfg.get('httpRequest', {}).get( "method", '')
         if not method:
             return True
         return req.method.lower() == method.lower()
     
     def _is_path_match(self, req: Request, cfg: dict) -> bool:
-        path = cfg.get("path", '')
+        path = cfg.get('httpRequest', {}).get("path", '')
         if not path:
             return True
         return req.path == path
@@ -146,7 +133,9 @@ class GetMatcherConfig:
     def match_route(self, req: Request) -> dict:
         matching_routes = []
 
-        for route_name, cfg in self._ROOT_PATH_CFG.items():
+        for i in range(len(self._ROOT_PATH_CFG)):
+            route_name: str = f"route_{i}"
+            cfg: dict = self._ROOT_PATH_CFG[i]
             logger.debug(f"Evaluating route: {route_name}")
 
             is_method_match: bool = self._is_method_match(req, cfg)
@@ -154,7 +143,7 @@ class GetMatcherConfig:
                 logger.debug(f"Method mismatch for route {route_name}")
                 continue
 
-            is_query_match: bool = self._match_json_by_key(req.args, cfg.get("queryStringParameters", {}))
+            is_query_match: bool = self._match_json_by_key(req.args, cfg.get('httpRequest', {}).get("queryStringParameters", {}))
             if not is_query_match:
                 logger.debug(f"Query mismatch for route {route_name}")
                 continue
@@ -187,7 +176,7 @@ class GetMatcherConfig:
                     "template": "template_71.json",
                     "status": 200,
                     "response_headers": {
-                        "Content-Type": ["application/x-amz-json-1.0"]
+                        "Content-Type": ["application/json"]
                     }
                 }
             else:
@@ -203,32 +192,25 @@ class GetMatcherConfig:
 
 
 # Load the configuration at startup
-config_path = os.path.join(os.path.dirname(__file__), "root_path_cfg.json")
+config_path = os.path.join(os.path.dirname(__file__), "expectations.json")
 cfg_obj: GetMatcherConfig = GetMatcherConfig()
 
-# Routes generated from mockserver configuration
-@app.route('/', methods=['POST', "GET"])
-def handle_root_requests():
-    return generic_handler(request)
-
-@app.route('/2013-04-01/hostedzone/<rrset_id>/rrset/', methods=['POST', 'GET'])
-def handle_rrset_requests(rrset_id: str):
-    return generic_handler(request)
-
-@app.route('/2013-04-01/hostedzone/<rrset_id>/rrset', methods=['GET'])
-def handle_rrset_requests_unterminated(rrset_id: str):
+# A catch-all route that accepts any path
+@app.route('/<path:any_path>', methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH'])
+def catch_all(any_path):
     return generic_handler(request)
 
 def generic_handler(request: Request):
     """Route POST requests to the correct template based on mockserver rules."""
     route_cfg: dict = cfg_obj.match_route(request)
-    if "template" not in route_cfg:
+    template_name = route_cfg.get("httpResponse", {}).get("template", "")
+    if not template_name:
         logger.error(f"Missing template for route: {request}")
         return jsonify({'error': f'Missing template for route: {request}'}), 500
-    logger.info(f"routing to template: {route_cfg['template']}")
-    response = make_response(render_template(route_cfg["template"], request=request))
-    response.headers.update(route_cfg.get("response_headers", {}))
-    response.status_code = route_cfg.get("status", 200)
+    logger.info(f"routing to template: {template_name}")
+    response = make_response(render_template(template_name, request=request))
+    response.headers.update(route_cfg.get("httpResponse", {}).get("headers", {}))
+    response.status_code = route_cfg.get("httpResponse", {}).get("status", 200)
     return response
 
 if __name__ == "__main__":
