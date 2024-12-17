@@ -152,7 +152,8 @@
         "show methods in azure.dev_center.customization_tasks;",
         "set global \"a.b\"=1;",
         "set global \"$.auth.google.sub\"='krimmer@stackql.io';",
-        "select JSON_EXTRACT(saml.samlIdentity, '$.username') as saml_username from github.scim.saml_ids saml where saml.org = 'dummyorg';"
+        "select JSON_EXTRACT(saml.samlIdentity, '$.username') as saml_username from github.scim.saml_ids saml where saml.org = 'dummyorg';",
+        "select kind, name, maximumCardsPerInstance from google.compute.acceleratorTypes where project = 'defective-response-content-project' and zone = 'australia-southeast1-a' order by name desc;"
       ],
       "default": "show providers;"
     },

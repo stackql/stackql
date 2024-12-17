@@ -1,0 +1,47 @@
+{
+    "kind": "compute#acceleratorTypeList",
+    "id": "projects/testing-project/zones/australia-southeast1-a/acceleratorTypes",
+    "items": [
+        {
+            "kind": "compute#acceleratorType",
+            "id": "10010",
+            "creationTimestamp": "1969-12-31T16:00:00.000-08:00",
+            "name": "nvidia-tesla-p4",
+            "description": "NVIDIA Tesla P4",
+            "zone": "https://www.googleapis.com/compute/beta/projects/testing-project/zones/australia-southeast1-a",
+            "selfLink": "https://www.googleapis.com/compute/beta/projects/testing-project/zones/australia-southeast1-a/acceleratorTypes/nvidia-tesla-p4",
+            "maximumCardsPerInstance": 4
+        },
+        {
+            "kind": "compute#acceleratorType",
+            "id": "10012",
+            "creationTimestamp": "1969-12-31T16:00:00.000-08:00",
+            "name": "nvidia-tesla-p4-vws",
+            "description": "NVIDIA Tesla P4 Virtual Workstation",
+            "zone": "https://www.googleapis.com/compute/beta/projects/testing-project/zones/australia-southeast1-a",
+            "selfLink": "https://www.googleapis.com/compute/beta/projects/testing-project/zones/australia-southeast1-a/acceleratorTypes/nvidia-tesla-p4-vws",
+            "maximumCardsPerInstance": 4
+        },
+        {
+            "kind": "compute#acceleratorType",
+            "id": "10019",
+            "creationTimestamp": "1969-12-31T16:00:00.000-08:00",
+            "name": "nvidia-tesla-t4",
+            "description": "NVIDIA Tesla T4",
+            "zone": "https://www.googleapis.com/compute/beta/projects/testing-project/zones/australia-southeast1-a",
+            "selfLink": "https://www.googleapis.com/compute/beta/projects/testing-project/zones/australia-southeast1-a/acceleratorTypes/nvidia-tesla-t4",
+            "maximumCardsPerInstance": 4
+        },
+        {
+            "kind": "compute#acceleratorType",
+            "id": "10020",
+            "creationTimestamp": "1969-12-31T16:00:00.000-08:00",
+            "name": "nvidia-tesla-t4-vws",
+            "description": "NVIDIA Tesla T4 Virtual Workstation",
+            "zone": "https://www.googleapis.com/compute/beta/projects/testing-project/zones/australia-southeast1-a",
+            "selfLink": "https://www.googleapis.com/compute/beta/projects/testing-project/zones/australia-southeast1-a/acceleratorTypes/nvidia-tesla-t4-vws",
+            "maximumCardsPerInstance": 4
+        }
+    ],
+    "selfLink": "https://www.googleapis.com/compute/beta/projects/testing-project/zones/australia-southeast1-a/acceleratorTypes"
+}

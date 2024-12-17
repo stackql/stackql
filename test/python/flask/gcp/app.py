@@ -146,6 +146,10 @@ def v1_projects_empty_project_aggregated_usableSubnetworks():
 def projects_testing_project_zones_australia_southeast1_a_acceleratorTypes():
     return render_template('route_21_template.json'), 200, {'Content-Type': 'application/json'}
 
+@app.route('/projects/defective-response-content-project/zones/australia-southeast1-a/acceleratorTypes', methods=['GET'])
+def projects_testing_project_zones_australia_southeast1_a_acceleratorTypes_defective_response_type():
+    return render_template('defective-content-type-accelerator-type-list.json'), 200, {'Content-Type': 'text/plain'}
+
 @app.route('/projects/another-project/zones/australia-southeast1-a/acceleratorTypes', methods=['GET'])
 def projects_another_project_zones_australia_southeast1_a_acceleratorTypes():
     return render_template('route_22_template.json'), 200, {'Content-Type': 'application/json'}
