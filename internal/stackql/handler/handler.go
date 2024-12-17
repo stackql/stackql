@@ -583,6 +583,8 @@ func transformOpenapiStackqlAuthToLocal(authDTO anysdk.AuthDTO) *dto.AuthCtx {
 		ClientSecretEnvVar:      authDTO.GetClientSecretEnvVar(),
 		Values:                  authDTO.GetValues(),
 		AuthStyle:               authDTO.GetAuthStyle(),
+		AccountID:               authDTO.GetAccountID(),
+		AccoountIDEnvVar:        authDTO.GetAccountIDEnvVar(),
 	}
 	successor, successorExists := authDTO.GetSuccessor()
 	currentParent := rv

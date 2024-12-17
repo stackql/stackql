@@ -4192,6 +4192,7 @@ Custom Auth Linear Should Send Appropriate Credentials
 Oauth2 CLient Credentials Auth Should Succeed with Valid Config
     Set Environment Variable    YOUR_OAUTH2_CLIENT_ID_ENV_VAR    dummy-client-id
     Set Environment Variable    YOUR_OAUTH2_CLIENT_SECRET_ENV_VAR    dummy-client-secret
+    Set Environment Variable    YOUR_OAUTH2_SOME_SYSTEM_ACCOUNT_ID    contrived
     ${outputStr} =    Catenate    SEPARATOR=\n
     ...    |-----------|---------|
     ...    |${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}|

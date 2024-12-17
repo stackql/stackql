@@ -51,6 +51,8 @@ type AuthCtx struct {
 	ClientSecretEnvVar      string         `json:"client_secret_env_var" yaml:"client_secret_env_var"`
 	Values                  url.Values     `json:"values" yaml:"values"`
 	AuthStyle               int            `json:"auth_style" yaml:"auth_style"`
+	AccountID               string         `json:"account_id" yaml:"account_id"`
+	AccoountIDEnvVar        string         `json:"account_id_env_var" yaml:"account_id_var"`
 }
 
 func (ac *AuthCtx) GetSQLCfg() (SQLBackendCfg, bool) {
@@ -96,6 +98,8 @@ func (ac *AuthCtx) Clone() *AuthCtx {
 		ClientSecretEnvVar:      ac.ClientSecretEnvVar,
 		Values:                  ac.Values,
 		AuthStyle:               ac.AuthStyle,
+		AccountID:               ac.AccountID,
+		AccoountIDEnvVar:        ac.AccoountIDEnvVar,
 	}
 	return rv
 }
