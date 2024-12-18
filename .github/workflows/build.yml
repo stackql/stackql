@@ -1175,6 +1175,7 @@ jobs:
           BUILDPATCHVERSION=${{env.BUILDPATCHVERSION}}
         push: false
         target: app
+        no-cache: true
         load: true
         tags: stackql/stackql:${{github.sha}},stackql/stackql:v${{env.BUILDMAJORVERSION}}.${{env.BUILDMINORVERSION}}.${{env.BUILDPATCHVERSION}},stackql/stackql:latest
 
