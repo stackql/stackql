@@ -1,0 +1,14 @@
+[
+  {
+    "httpRequest": {
+      "method": "GET",
+      "path": "/v1/collectors"
+    },
+    "httpResponse": {
+      "template": "collectors-list-01.json",
+      "headers": {
+        "Content-Type": "application/json"
+      }
+    }
+  }
+]

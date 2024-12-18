@@ -1,0 +1,110 @@
+[
+  {
+    "httpRequest": {
+      "headers": {
+        "Accept": [ "application/json" ],
+        "Authorization" : [ 
+          ".+" 
+        ]
+      },
+      "method": "GET",
+      "path": "/admin/directory/v1/users",
+      "queryStringParameters": {
+        "domain": ["[A-Za-z0-9-.]+"] 
+      }
+    },
+    "httpResponse": {
+      "template": "users-list-01.json",
+      "headers": {
+        "Content-Type": "application/json"
+      } 
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "Accept": [ "application/json" ],
+        "Authorization" : [ 
+          ".+" 
+        ]
+      },
+      "method": "POST",
+      "path": "/admin/directory/v1/users",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "primaryEmail": "somejimbo@grubit.com"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "template": "users-create-01.json",
+      "headers": {
+        "Content-Type": "application/json"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "Accept": [ "application/json" ],
+        "Authorization" : [ 
+          ".+" 
+        ]
+      },
+      "method": "POST",
+      "path": "/admin/directory/v1/users",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "primaryEmail": "joeblow@grubit.com"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "template": "users-create-02.json",
+      "headers": {
+        "Content-Type": "application/json"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "Accept": [ "application/json" ],
+        "Authorization" : [ 
+          ".+" 
+        ]
+      },
+      "method": "DELETE",
+      "path": "/admin/directory/v1/users/10000000000000000009"
+    },
+    "httpResponse": {
+      "template": "users-delete-01.json",
+      "headers": {
+        "Content-Type": "application/json"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "Accept": [ "application/json" ],
+        "Authorization" : [ 
+          ".+" 
+        ]
+      },
+      "method": "DELETE",
+      "path": "/admin/directory/v1/users/10000000000000000008"
+    },
+    "httpResponse": {
+      "status": 404,
+      "template": "nil-response.json",
+      "headers": {
+        "Content-Type": "application/json"
+      }
+    }
+  }
+]

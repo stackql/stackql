@@ -1,0 +1,19 @@
+providers:
+  github:
+    versions:
+    - v0.1.0
+    - v0.1.1
+    - v0.2.0
+    - v0.3.0
+  google:
+    versions:
+    - v0.1.0
+    - v0.1.1-alpha01
+    - v0.1.2
+  netlify:
+    versions:
+    - v0.1.0
+    - v0.2.0
+  okta:
+    versions:
+    - v0.1.0

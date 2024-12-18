@@ -1,0 +1,11 @@
+{
+    "value": [
+      {
+        "name": "some_jimbo",
+        "id": "/providers/Microsoft.Billing/billingAccounts/",
+        "type": "Microsoft.Billing/billingAccounts",
+        "location": "australiaeast",
+        "properties": {}
+      }
+    ]
+  }

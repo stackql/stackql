@@ -1,0 +1,14 @@
+[
+  {
+    "httpRequest": {
+      "method": "GET",
+      "path": "/api/v1/nodes"
+    },
+    "httpResponse": {
+      "template": "nodes-list-01.json",
+      "headers": {
+        "Content-Type": "application/json"
+      }
+    }
+  }
+]

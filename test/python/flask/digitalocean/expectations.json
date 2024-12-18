@@ -1,0 +1,66 @@
+[
+  {
+    "httpRequest": {
+      "method": "GET",
+      "path": "/v2/sizes",
+      "headers": {
+        "Authorization": ["^(Bearer|BASIC|CUSTOM|TOTALLY_CONTRIVED)\\ bXl1c2VybmFtZTpteXBhc3N3b3Jk$" ]
+      }
+    },
+    "httpResponse": {
+      "template": "sizes-list-01.json",
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/json"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "POST",
+      "path": "/v2/droplets",
+      "headers": {
+        "Authorization": ["^(Bearer|BASIC|CUSTOM|TOTALLY_CONTRIVED)\\ bXl1c2VybmFtZTpteXBhc3N3b3Jk$" ]
+      },
+      "body" : {
+        "type" : "JSON",
+        "json": {
+          "name": "some.example.com",
+          "region": "nyc3" 
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "template": "droplets-create-01.json",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "status": 202
+    }
+    },
+    {
+      "httpRequest": {
+        "method": "POST",
+        "path": "/v2/droplets",
+        "headers": {
+          "Authorization": ["^(Bearer|BASIC|CUSTOM|TOTALLY_CONTRIVED)\\ bXl1c2VybmFtZTpteXBhc3N3b3Jk$" ]
+        },
+        "body" : {
+          "type" : "JSON",
+          "json": {
+            "name": "error.example.com",
+            "region": "nyc3" 
+          },
+          "matchType": "ONLY_MATCHING_FIELDS"
+        }
+      },
+      "httpResponse": {
+        "status": 500,
+        "template": "server-error-01.json",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      }
+    }
+]

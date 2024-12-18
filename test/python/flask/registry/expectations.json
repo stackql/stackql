@@ -1,0 +1,41 @@
+[
+  {
+    "httpRequest": {
+      "method": "GET",
+      "path": "/gh/stackql/stackql-provider-registry/main/providers/dist/providers.yaml"
+    },
+    "httpResponse": {
+      "headers": {
+        "Content-Type": "text/yaml; charset=utf-8"
+      },
+      "status": 200,
+      "file": "providers.yaml"
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "GET",
+      "path": "/gh/stackql/stackql-provider-registry/main/providers/dist/googleapis.com/v0.1.2.tgz"
+    },
+    "httpResponse": {
+      "headers": {
+        "Content-Type": "application/gzip"
+      },
+      "status": 200,
+      "file": "google-v0.1.2.tgz" 
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "GET",
+      "path": "/gh/stackql/stackql-provider-registry/main/providers/dist/googleapis.com/v0.1.1-alpha01.tgz"
+    },
+    "httpResponse": {
+      "headers": {
+        "Content-Type": "application/gzip"
+      },
+      "status": 200,
+      "file": "google-v0.1.1-alpha01.tgz"
+    }
+  }
+]

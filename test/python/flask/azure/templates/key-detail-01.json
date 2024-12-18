@@ -1,0 +1,40 @@
+{
+    "id": "/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/go-on-azure/providers/Microsoft.KeyVault/vaults/stackql-testing-keyvault/keys/dummy-key-01",
+    "name": "dummy-key-01",
+    "type": "Microsoft.KeyVault/vaults/keys",
+    "location": "eastus",
+    "tags": {},
+    "properties": {
+      "attributes": {
+        "enabled": true,
+        "created": 1720150115,
+        "updated": 1720150115,
+        "recoveryLevel": "Recoverable+Purgeable",
+        "exportable": false
+      },
+      "rotationPolicy": {
+        "lifetimeActions": [
+          {
+            "trigger": {
+              "timeBeforeExpiry": "P30D"
+            },
+            "action": {
+              "type": "Notify"
+            }
+          }
+        ]
+      },
+      "kty": "RSA",
+      "keyOps": [
+        "sign",
+        "verify",
+        "wrapKey",
+        "unwrapKey",
+        "encrypt",
+        "decrypt"
+      ],
+      "keySize": 2048,
+      "keyUri": "https://stackql-testing-keyvault.vault.azure.net/keys/dummy-key-01",
+      "keyUriWithVersion": "https://stackql-testing-keyvault.vault.azure.net/keys/dummy-key-01/aaaaaaaaa00000001"
+    }
+  }

@@ -1,0 +1,92 @@
+{
+  "name": "my-vpn-gateway",
+  "id": "/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworkGateways/my-vpn-gateway",
+  "etag": "W/\"000000-0000-0000-0000-000000000044\"",
+  "type": "Microsoft.Network/virtualNetworkGateways",
+  "location": "australiaeast",
+  "tags": {},
+  "properties": {
+    "provisioningState": "Succeeded",
+    "resourceGuid": "000000-0000-0000-0000-0000000000",
+    "packetCaptureDiagnosticState": "None",
+    "enablePrivateIpAddress": false,
+    "isMigrateToCSES": false,
+    "ipConfigurations": [
+      {
+        "name": "default",
+        "id": "/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworkGateways/my-vpn-gateway/ipConfigurations/default",
+        "etag": "W/\"000000-0000-0000-0000-000000000044\"",
+        "type": "Microsoft.Network/virtualNetworkGateways/ipConfigurations",
+        "properties": {
+          "provisioningState": "Succeeded",
+          "privateIPAllocationMethod": "Dynamic",
+          "publicIPAddress": {
+            "id": "/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/rg2/providers/Microsoft.Network/publicIPAddresses/test-public-ip"
+          },
+          "subnet": {
+            "id": "/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworks/rg2-vnet/subnets/GatewaySubnet"
+          }
+        }
+      },
+      {
+        "name": "activeActive",
+        "id": "/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworkGateways/my-vpn-gateway/ipConfigurations/activeActive",
+        "etag": "W/\"000000-0000-0000-0000-000000000044\"",
+        "type": "Microsoft.Network/virtualNetworkGateways/ipConfigurations",
+        "properties": {
+          "provisioningState": "Succeeded",
+          "privateIPAllocationMethod": "Dynamic",
+          "publicIPAddress": {
+            "id": "/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/rg2/providers/Microsoft.Network/publicIPAddresses/test-public-ip2"
+          },
+          "subnet": {
+            "id": "/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworks/rg2-vnet/subnets/GatewaySubnet"
+          }
+        }
+      }
+    ],
+    "natRules": [],
+    "virtualNetworkGatewayPolicyGroups": [],
+    "enableBgpRouteTranslationForNat": false,
+    "disableIPSecReplayProtection": false,
+    "sku": {
+      "name": "VpnGw2AZ",
+      "tier": "VpnGw2AZ",
+      "capacity": 2
+    },
+    "gatewayType": "Vpn",
+    "vpnType": "RouteBased",
+    "enableBgp": false,
+    "activeActive": true,
+    "bgpSettings": {
+      "asn": 65515,
+      "bgpPeeringAddress": "10.0.1.5,10.0.1.4",
+      "peerWeight": 0,
+      "bgpPeeringAddresses": [
+        {
+          "ipconfigurationId": "/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworkGateways/my-vpn-gateway/ipConfigurations/default",
+          "defaultBgpIpAddresses": [
+            "10.0.1.5"
+          ],
+          "customBgpIpAddresses": [],
+          "tunnelIpAddresses": [
+            "20.11.71.213"
+          ]
+        },
+        {
+          "ipconfigurationId": "/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworkGateways/my-vpn-gateway/ipConfigurations/activeActive",
+          "defaultBgpIpAddresses": [
+            "10.0.1.4"
+          ],
+          "customBgpIpAddresses": [],
+          "tunnelIpAddresses": [
+            "20.11.71.243"
+          ]
+        }
+      ]
+    },
+    "vpnGatewayGeneration": "Generation2",
+    "allowRemoteVnetTraffic": false,
+    "allowVirtualWanTraffic": false
+  }
+}

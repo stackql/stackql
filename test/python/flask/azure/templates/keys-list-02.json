@@ -1,0 +1,38 @@
+{
+    "value": [
+      {
+        "id": "/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/go-on-azure/providers/Microsoft.KeyVault/vaults/stackql-alt-keyvault/keys/alt-dummy-key-01",
+        "name": "alt-dummy-key-01",
+        "type": "Microsoft.KeyVault/vaults/keys",
+        "location": "eastus",
+        "tags": {},
+        "properties": {
+          "attributes": {
+            "enabled": true,
+            "created": 1720150115,
+            "updated": 1720150115,
+            "recoveryLevel": "Recoverable+Purgeable",
+            "exportable": false
+          },
+          "keyUri": "https://stackql-testing-keyvault.vault.azure.net/keys/dummy-key-01"
+        }
+      },
+      {
+        "id": "/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/go-on-azure/providers/Microsoft.KeyVault/vaults/stackql-alt-keyvault/keys/alt-dummy-key-02",
+        "name": "alt-dummy-key-02",
+        "type": "Microsoft.KeyVault/vaults/keys",
+        "location": "eastus",
+        "tags": {},
+        "properties": {
+          "attributes": {
+            "enabled": true,
+            "created": 1720150115,
+            "updated": 1720150115,
+            "recoveryLevel": "Recoverable+Purgeable",
+            "exportable": false
+          },
+          "keyUri": "https://stackql-testing-keyvault.vault.azure.net/keys/dummy-key-01"
+        }
+      }
+    ]
+  }
