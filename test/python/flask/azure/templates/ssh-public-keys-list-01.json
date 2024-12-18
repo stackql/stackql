@@ -1,0 +1,13 @@
+{
+    "value": [
+      {
+        "name": "test_key",
+        "id": "/subscriptions/10001000-1000-1000-1000-100010001000/resourceGroups/STACKQL-TESTING-01/providers/Microsoft.Compute/sshPublicKeys/test_key",
+        "location": "australiaeast",
+        "tags": {},
+        "properties": {
+          "publicKey": "ssh-rsa SOME_PUBLIC_KEY_BODY= generated-by-azure"
+        }
+      }
+    ]
+  }

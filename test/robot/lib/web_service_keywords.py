@@ -24,7 +24,6 @@ class web_service_keywords(Process):
         self._github_app: str = 'test/python/flask/github/app'
         self._gcp_app: str = 'test/python/flask/gcp/app'
         self._okta_app: str = 'test/python/flask/okta/app'
-        self._auth_testing_app: str = 'test/python/flask/auth_testing/app'
         self._static_auth_testing_app: str = 'test/python/flask/static_auth/app'
         self._aws_app: str = 'test/python/flask/aws/app'
         self._azure_app: str = 'test/python/flask/azure/app'
@@ -159,6 +158,132 @@ class web_service_keywords(Process):
             f'--key={self._tls_key_path}',
             stdout=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'static-auth-server-{port}-stdout.txt')),
             stderr=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'static-auth-server-{port}-stderr.txt'))
+        )
+    
+    @keyword
+    def create_google_admin_web_service(
+        self,
+        port: int,
+        host: str = '0.0.0.0'
+    ) -> None:
+        """
+        Sign the input.
+        """
+        return self.start_process(
+            'flask',
+            f'--app={self._googleadmin_app}',
+            'run',
+            f'--host={host}', # generally, `0.0.0.0`; otherwise, invisible on `docker.host.internal` etc
+            f'--port={port}',
+            f'--cert={self._tls_cert_path}',
+            f'--key={self._tls_key_path}',
+            stdout=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'google-admin-server-{port}-stdout.txt')),
+            stderr=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'google-admin-server-{port}-stderr.txt'))
+        )
+    
+    @keyword
+    def create_k8s_web_service(
+        self,
+        port: int,
+        host: str = '0.0.0.0'
+    ) -> None:
+        """
+        Sign the input.
+        """
+        return self.start_process(
+            'flask',
+            f'--app={self._k8s_app}',
+            'run',
+            f'--host={host}', # generally, `0.0.0.0`; otherwise, invisible on `docker.host.internal` etc
+            f'--port={port}',
+            f'--cert={self._tls_cert_path}',
+            f'--key={self._tls_key_path}',
+            stdout=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'k8s-server-{port}-stdout.txt')),
+            stderr=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'k8s-server-{port}-stderr.txt'))
+        )
+    
+    @keyword
+    def create_registry_web_service(
+        self,
+        port: int,
+        host: str = '0.0.0.0'
+    ) -> None:
+        """
+        Sign the input.
+        """
+        return self.start_process(
+            'flask',
+            f'--app={self._registry_app}',
+            'run',
+            f'--host={host}', # generally, `0.0.0.0`; otherwise, invisible on `docker.host.internal` etc
+            f'--port={port}',
+            # f'--cert={self._tls_cert_path}',
+            # f'--key={self._tls_key_path}',
+            stdout=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'registry-server-{port}-stdout.txt')),
+            stderr=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'registry-server-{port}-stderr.txt'))
+        )
+    
+    @keyword
+    def create_azure_web_service(
+        self,
+        port: int,
+        host: str = '0.0.0.0'
+    ) -> None:
+        """
+        Sign the input.
+        """
+        return self.start_process(
+            'flask',
+            f'--app={self._azure_app}',
+            'run',
+            f'--host={host}', # generally, `0.0.0.0`; otherwise, invisible on `docker.host.internal` etc
+            f'--port={port}',
+            f'--cert={self._tls_cert_path}',
+            f'--key={self._tls_key_path}',
+            stdout=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'azure-server-{port}-stdout.txt')),
+            stderr=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'azure-server-{port}-stderr.txt'))
+        )
+    
+    @keyword
+    def create_sumologic_web_service(
+        self,
+        port: int,
+        host: str = '0.0.0.0'
+    ) -> None:
+        """
+        Sign the input.
+        """
+        return self.start_process(
+            'flask',
+            f'--app={self._sumologic_app}',
+            'run',
+            f'--host={host}', # generally, `0.0.0.0`; otherwise, invisible on `docker.host.internal` etc
+            f'--port={port}',
+            f'--cert={self._tls_cert_path}',
+            f'--key={self._tls_key_path}',
+            stdout=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'sumologic-server-{port}-stdout.txt')),
+            stderr=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'sumologic-server-{port}-stderr.txt'))
+        )
+    
+    @keyword
+    def create_digitalocean_web_service(
+        self,
+        port: int,
+        host: str = '0.0.0.0'
+    ) -> None:
+        """
+        Sign the input.
+        """
+        return self.start_process(
+            'flask',
+            f'--app={self._digitalocean_app}',
+            'run',
+            f'--host={host}', # generally, `0.0.0.0`; otherwise, invisible on `docker.host.internal` etc
+            f'--port={port}',
+            f'--cert={self._tls_cert_path}',
+            f'--key={self._tls_key_path}',
+            stdout=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'digitalocean-server-{port}-stdout.txt')),
+            stderr=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'digitalocean-server-{port}-stderr.txt'))
         )
 
     @keyword

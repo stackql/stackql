@@ -152,12 +152,6 @@ jobs:
       if: success()
       run: python cicd/python/build.py --verbose --test
 
-    - name: Mock Server Download
-      run: |
-        mvn org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy `
-        '-Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded' `
-        '-DoutputDirectory=test/downloads'
-
     - name: Create certificates for robot tests
       run: |
         openssl req -x509 -keyout test/server/mtls/credentials/pg_server_key.pem -out test/server/mtls/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
@@ -360,13 +354,6 @@ jobs:
           exit 1
         fi
 
-    - name: Mock Server Download
-      run: |
-        mvn \
-        org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy \
-        -Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded \
-        -DoutputDirectory=test/downloads
-
     - name: Create certificates for robot tests
       run: |
         openssl req -x509 -keyout test/server/mtls/credentials/pg_server_key.pem -out test/server/mtls/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
@@ -509,9 +496,7 @@ jobs:
           sudo apt-get install --yes build-essential
           sudo apt-get install --yes --no-install-recommends postgresql-client
           gccVersion="$(gcc --version 2>&1 | head -n 1)"
-          javaVersion="$(java -version 2>&1 | head -n 1)"
           echo "gcc version: ${gccVersion}"
-          echo "java version: ${javaVersion}"
 
     - name: Install Python dependencies
       run: |
@@ -624,13 +609,6 @@ jobs:
           echo ""
           exit 1
         fi
-
-    - name: Mock Server Download
-      run: |
-        mvn \
-        org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy \
-        -Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded \
-        -DoutputDirectory=test/downloads
 
     - name: Create certificates for robot tests
       run: |
@@ -789,8 +767,6 @@ jobs:
       uses: Vampire/setup-wsl@v3.0.0
       with:
         additional-packages:
-          maven
-          openjdk-11-jre
           openssl
           postgresql
           python3
@@ -813,14 +789,6 @@ jobs:
     - shell: wsl-bash {0}
       name: Generate rewritten registry for simulations
       run: python3 test/python/registry-rewrite.py
-
-    - shell: wsl-bash {0}
-      name: Mock Server Download
-      run: |
-          mvn \
-          org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy \
-          -Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded \
-          -DoutputDirectory=test/downloads
 
     - shell: wsl-bash {0}
       name: Create certificates for robot tests
@@ -889,9 +857,6 @@ jobs:
     steps:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v4.1.1
-
-    - name: Set env # awful hack to get java 8 and support the abomnible mock server template grammar
-      run: echo "JAVA_HOME=${JAVA_HOME_8_X64}" >> "$GITHUB_ENV"
 
     - name: Set up Go 1.x
       uses: actions/setup-go@v5.0.0
@@ -974,13 +939,6 @@ jobs:
     - name: Test
       if: success()
       run: python cicd/python/build.py --verbose --test
-
-    - name: Mock Server Download
-      run: |
-        mvn \
-        org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy \
-        -Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded \
-        -DoutputDirectory=test/downloads
 
     - name: Create certificates for robot tests
       run: |
@@ -1219,13 +1177,6 @@ jobs:
         target: app
         load: true
         tags: stackql/stackql:${{github.sha}},stackql/stackql:v${{env.BUILDMAJORVERSION}}.${{env.BUILDMINORVERSION}}.${{env.BUILDPATCHVERSION}},stackql/stackql:latest
-
-    - name: Mock Server Download
-      run: |
-        mvn \
-        org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy \
-        -Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded \
-        -DoutputDirectory=test/downloads
 
     - name: Debug info
       run: |

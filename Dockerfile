@@ -66,17 +66,9 @@ ENV TEST_ROOT_DIR=${TEST_ROOT_DIR}
 
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends \
-      default-jdk \
-      default-jre \
-      maven \
       openssl \
       postgresql-client \
-      sqlite3 \
-    && pip3 install PyYaml robotframework psycopg2-binary "psycopg[binary]" sqlalchemy \
-    && mvn \
-        org.apache.maven.plugins:maven-dependency-plugin:3.0.2:copy \
-        -Dartifact=org.mock-server:mockserver-netty:5.12.0:jar:shaded \
-        -DoutputDirectory=${TEST_ROOT_DIR}/test/downloads
+      sqlite3
 
 FROM utility AS certificates
 
@@ -104,9 +96,11 @@ ENV TEST_ROOT_DIR=${TEST_ROOT_DIR}
 
 RUN mkdir -p ${TEST_ROOT_DIR}
 
+ADD cicd ${TEST_ROOT_DIR}/cicd
+
 COPY --from=certificates /opt/test/stackql ${TEST_ROOT_DIR}/
 
-RUN pip3 install PyYaml \
+RUN pip3 install -r ${TEST_ROOT_DIR}/cicd/requirements.txt \
     && python3 ${TEST_ROOT_DIR}/test/python/registry-rewrite.py
 
 FROM utility AS integration

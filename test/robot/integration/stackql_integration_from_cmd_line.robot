@@ -37,14 +37,6 @@ Faulty Auth Azure Authenticated VM Sizes
     ...    stderr=${CURDIR}/tmp/Faulty-Azure-Authenticated-VM-Sizes-stderr.tmp
 
 *** Keywords ***
-Start Mock Server
-    [Arguments]    ${_JSON_INIT_FILE_PATH}    ${_MOCKSERVER_JAR}    ${_MOCKSERVER_PORT}
-    ${process} =    Start Process    java    \-Dfile.encoding\=UTF-8
-    ...  \-Dmockserver.initializationJsonPath\=${_JSON_INIT_FILE_PATH}
-    ...  \-jar    ${_MOCKSERVER_JAR}
-    ...  \-serverPort    ${_MOCKSERVER_PORT}    \-logLevel    INFO
-    Sleep    5s
-    [Return]    ${process}
 
 Run StackQL Exec Command
     [Arguments]    ${_REGISTRY_CFG_STR}    ${_EXEC_CMD_STR}    @{varargs}

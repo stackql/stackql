@@ -2055,14 +2055,14 @@ Transaction Abort Attempted Commit Digitalocean Insert Droplet
     ...    commit;
     ${nativeOutputStr} =    Catenate    SEPARATOR=\n
     ...    http${SPACE}response${SPACE}status${SPACE}code:${SPACE}500,${SPACE}response${SPACE}body:${SPACE}{
-    ...    ${SPACE}${SPACE}"id"${SPACE}:${SPACE}"server_error",
-    ...    ${SPACE}${SPACE}"message"${SPACE}:${SPACE}"Unexpected${SPACE}server-side${SPACE}error"
+    ...    ${SPACE}${SPACE}"id":${SPACE}"server_error",
+    ...    ${SPACE}${SPACE}"message":${SPACE}"Unexpected${SPACE}server-side${SPACE}error"
     ...    }
     ...    OK
     ...    mutating statement queued
     ...    mutating statement queued
     ...    mutating statement queued
-    ...    insert over HTTP error: 500 Internal Server Error
+    ...    insert over HTTP error: 500 INTERNAL SERVER ERROR
     ...    UNDO required: Undo the insert on digitalocean.droplets.droplets
     ...    UNDO required: Undo the insert on digitalocean.droplets.droplets
     ${dockerOutputStr} =    Catenate    SEPARATOR=\n
@@ -2116,7 +2116,7 @@ Transaction Rollback Failure Eager Idealised Google Admin Directory User
     ...    http response status code: 404, response body is nil
     ...    OK
     ...    The operation was despatched successfully
-    ...    undo over HTTP error: 404 Not Found
+    ...    undo over HTTP error: 404 NOT FOUND
     ...    Rollback failed
     Should Stackql Exec Inline Equal Both Streams
     ...    ${STACKQL_EXE}

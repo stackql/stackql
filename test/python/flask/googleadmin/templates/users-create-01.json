@@ -1,0 +1,45 @@
+{
+    "kind": "admin#directory#user",
+    "id": "10000000000000000009",
+    "etag": "\"yet-another-sj-etag-prefix/yet-another-sj-etag-suffix\"",
+    "primaryEmail": "somejimbo@grubit.com",
+    "name": {
+      "givenName": "Some",
+      "familyName": "Jimbo",
+      "fullName": "Some Jimbo"
+    },
+    "isAdmin": true,
+    "isDelegatedAdmin": false,
+    "lastLoginTime": "2022-06-07T07:52:37.000Z",
+    "creationTime": "2022-02-04T02:04:41.000Z",
+    "agreedToTerms": true,
+    "suspended": false,
+    "archived": false,
+    "changePasswordAtNextLogin": false,
+    "ipWhitelisted": false,
+    "emails": [
+      {
+        "address": "somejimbo@grubit.com",
+        "primary": true
+      },
+      {
+        "address": "somejimbo@grubit.com.test-google-a.com"
+      }
+    ],
+    "languages": [
+      {
+        "languageCode": "en",
+        "preference": "preferred"
+      }
+    ],
+    "nonEditableAliases": [
+      "somejimbo@grubit.com.test-google-a.com"
+    ],
+    "customerId": "C11s1s111",
+    "orgUnitPath": "/",
+    "isMailboxSetup": true,
+    "isEnrolledIn2Sv": false,
+    "isEnforcedIn2Sv": false,
+    "includeInGlobalAddressList": true,
+    "recoveryEmail": "somejimbo@grubit.com"
+  }

@@ -1,0 +1,293 @@
+{
+    "value": [
+      {
+        "id": "/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/go-on-azure/providers/Microsoft.KeyVault/vaults/stackql-testing-keyvault",
+        "name": "stackql-testing-keyvault",
+        "type": "Microsoft.KeyVault/vaults",
+        "location": "eastus",
+        "tags": {},
+        "systemData": {
+          "createdBy": "joe.blow@stackql.com",
+          "createdByType": "User",
+          "createdAt": "2022-12-31T05:14:56.289Z",
+          "lastModifiedBy": "joe.blow@stackql.com",
+          "lastModifiedByType": "User",
+          "lastModifiedAt": "2023-05-11T12:06:31.662Z"
+        },
+        "properties": {
+          "sku": {
+            "family": "A",
+            "name": "standard"
+          },
+          "tenantId": "000000-0000-0000-0000-000000000001",
+          "accessPolicies": [
+            {
+              "tenantId": "000000-0000-0000-0000-000000000001",
+              "objectId": "000000-0000-0000-0000-000000000002",
+              "permissions": {
+                "keys": [
+                  "Get",
+                  "List",
+                  "Update",
+                  "Create",
+                  "Import",
+                  "Delete",
+                  "Recover",
+                  "Backup",
+                  "Restore",
+                  "Decrypt",
+                  "Encrypt",
+                  "UnwrapKey",
+                  "WrapKey",
+                  "Verify",
+                  "Sign",
+                  "Release",
+                  "Rotate",
+                  "GetRotationPolicy",
+                  "SetRotationPolicy"
+                ],
+                "secrets": [
+                  "Get",
+                  "List",
+                  "Set",
+                  "Delete",
+                  "Recover",
+                  "Backup",
+                  "Restore"
+                ],
+                "certificates": [
+                  "Get",
+                  "List",
+                  "Update",
+                  "Create",
+                  "Import",
+                  "Delete",
+                  "Recover",
+                  "Backup",
+                  "Restore",
+                  "ManageContacts",
+                  "ManageIssuers",
+                  "GetIssuers",
+                  "ListIssuers",
+                  "SetIssuers",
+                  "DeleteIssuers"
+                ],
+                "storage": [
+                  "all"
+                ]
+              }
+            },
+            {
+              "tenantId": "000000-0000-0000-0000-000000000001",
+              "objectId": "000000-0000-0000-0000-000000000003",
+              "permissions": {
+                "certificates": [
+                  "Get",
+                  "List",
+                  "Update",
+                  "Create",
+                  "Import",
+                  "Delete",
+                  "Recover",
+                  "Backup",
+                  "Restore",
+                  "ManageContacts",
+                  "ManageIssuers",
+                  "GetIssuers",
+                  "ListIssuers",
+                  "SetIssuers",
+                  "DeleteIssuers",
+                  "Purge"
+                ],
+                "keys": [
+                  "Get",
+                  "List",
+                  "Update",
+                  "Create",
+                  "Import",
+                  "Delete",
+                  "Recover",
+                  "Backup",
+                  "Restore",
+                  "GetRotationPolicy",
+                  "SetRotationPolicy",
+                  "Rotate",
+                  "Encrypt",
+                  "Decrypt",
+                  "UnwrapKey",
+                  "WrapKey",
+                  "Verify",
+                  "Sign",
+                  "Purge",
+                  "Release"
+                ],
+                "secrets": [
+                  "Get",
+                  "List",
+                  "Set",
+                  "Delete",
+                  "Recover",
+                  "Backup",
+                  "Restore",
+                  "Purge"
+                ]
+              }
+            }
+          ],
+          "enabledForDeployment": false,
+          "enabledForDiskEncryption": false,
+          "enabledForTemplateDeployment": false,
+          "enableSoftDelete": true,
+          "softDeleteRetentionInDays": 90,
+          "vaultUri": "https://stackql-testing-keyvault.vault.azure.net/",
+          "provisioningState": "Succeeded",
+          "publicNetworkAccess": "Enabled"
+        }
+      },
+      {
+        "id": "/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/go-on-azure/providers/Microsoft.KeyVault/vaults/stackql-alt-keyvault",
+        "name": "stackql-alt-keyvault",
+        "type": "Microsoft.KeyVault/vaults",
+        "location": "eastus",
+        "tags": {},
+        "systemData": {
+          "createdBy": "joe.blow@stackql.com",
+          "createdByType": "User",
+          "createdAt": "2022-12-31T05:14:56.289Z",
+          "lastModifiedBy": "joe.blow@stackql.com",
+          "lastModifiedByType": "User",
+          "lastModifiedAt": "2023-05-11T12:06:31.662Z"
+        },
+        "properties": {
+          "sku": {
+            "family": "A",
+            "name": "standard"
+          },
+          "tenantId": "000000-0000-0000-0000-000000000001",
+          "accessPolicies": [
+            {
+              "tenantId": "000000-0000-0000-0000-000000000001",
+              "objectId": "000000-0000-0000-0000-000000000002",
+              "permissions": {
+                "keys": [
+                  "Get",
+                  "List",
+                  "Update",
+                  "Create",
+                  "Import",
+                  "Delete",
+                  "Recover",
+                  "Backup",
+                  "Restore",
+                  "Decrypt",
+                  "Encrypt",
+                  "UnwrapKey",
+                  "WrapKey",
+                  "Verify",
+                  "Sign",
+                  "Release",
+                  "Rotate",
+                  "GetRotationPolicy",
+                  "SetRotationPolicy"
+                ],
+                "secrets": [
+                  "Get",
+                  "List",
+                  "Set",
+                  "Delete",
+                  "Recover",
+                  "Backup",
+                  "Restore"
+                ],
+                "certificates": [
+                  "Get",
+                  "List",
+                  "Update",
+                  "Create",
+                  "Import",
+                  "Delete",
+                  "Recover",
+                  "Backup",
+                  "Restore",
+                  "ManageContacts",
+                  "ManageIssuers",
+                  "GetIssuers",
+                  "ListIssuers",
+                  "SetIssuers",
+                  "DeleteIssuers"
+                ],
+                "storage": [
+                  "all"
+                ]
+              }
+            },
+            {
+              "tenantId": "000000-0000-0000-0000-000000000001",
+              "objectId": "000000-0000-0000-0000-000000000003",
+              "permissions": {
+                "certificates": [
+                  "Get",
+                  "List",
+                  "Update",
+                  "Create",
+                  "Import",
+                  "Delete",
+                  "Recover",
+                  "Backup",
+                  "Restore",
+                  "ManageContacts",
+                  "ManageIssuers",
+                  "GetIssuers",
+                  "ListIssuers",
+                  "SetIssuers",
+                  "DeleteIssuers",
+                  "Purge"
+                ],
+                "keys": [
+                  "Get",
+                  "List",
+                  "Update",
+                  "Create",
+                  "Import",
+                  "Delete",
+                  "Recover",
+                  "Backup",
+                  "Restore",
+                  "GetRotationPolicy",
+                  "SetRotationPolicy",
+                  "Rotate",
+                  "Encrypt",
+                  "Decrypt",
+                  "UnwrapKey",
+                  "WrapKey",
+                  "Verify",
+                  "Sign",
+                  "Purge",
+                  "Release"
+                ],
+                "secrets": [
+                  "Get",
+                  "List",
+                  "Set",
+                  "Delete",
+                  "Recover",
+                  "Backup",
+                  "Restore",
+                  "Purge"
+                ]
+              }
+            }
+          ],
+          "enabledForDeployment": false,
+          "enabledForDiskEncryption": false,
+          "enabledForTemplateDeployment": false,
+          "enableSoftDelete": true,
+          "softDeleteRetentionInDays": 90,
+          "vaultUri": "https://stackql-testing-keyvault.vault.azure.net/",
+          "provisioningState": "Succeeded",
+          "publicNetworkAccess": "Enabled"
+        }
+      }
+    ],
+    "nextLink": "https://management.azure.com/subscriptions/000000-0000-0000-0000-000000000022/providers/Microsoft.KeyVault/vaults/?api-version=2023-07-01&$skiptoken=0011"
+  }

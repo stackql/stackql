@@ -27,8 +27,6 @@ For serious development, simulated integration tests are essential.  So, there a
 
 - Install the python dependencies (including `robot` framework).  Simplest way, system permitting, is `pip install -r cicd/requirements.txt`.
 - Install `psql`.  On some systems, this can be done as client only and/or with various package managers; fallback is to just [install postgres manually](https://www.postgresql.org/download/).
-- Install `java`.  Version `11` is what is currently used in CI but this ought not to be mandatory.
-- Install `mock-server`, either using a package manager (eg `maven`), or from source per [the mockserver docs](https://www.mock-server.com/mock_server/running_mock_server.html#build-and-run-from-source).
 
 Having installed all dependencies, the `robot` tests should be run from the repository root directory (this relies upon the executable in `./build/stackql`, built above):
     - Run mocked functional tests: `python cicd/python/build.py --robot-test`.  This will subject the executable to the automated testing regimen.
