@@ -4188,7 +4188,7 @@ Weird ID WSL bug query
     ...    ${CURDIR}/tmp/Weird-ID-WSL-bug-query.tmp
 
 Custom Auth Linear Should Send Appropriate Credentials
-    # This will only succeed if correct headers are sent.
+    [Documentation]    This test is to ensure that the custom auth mechanism is working as expected.
     Should Horrid Query StackQL Inline Equal
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -4200,6 +4200,26 @@ Custom Auth Linear Should Send Appropriate Credentials
     ...    select id from stackql_auth_testing.collectors.collectors order by id desc;
     ...    ${SELECT_SUMOLOGIC_COLLECTORS_IDS_EXPECTED}
     ...    ${CURDIR}/tmp/Custom-Auth-Linear-Should-Send-Appropriate-Credentials.tmp
+
+Default Pagination Behaviour Should Work Correctly Against Straight Array Responses
+    [Documentation]    This test is to ensure that the jsonpath.Get() defect guard is working.
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-------------|------------|---------------|------------------------|-------------|----------------------|------------------------------------------|------------|--------------|----------------------------|----------------------------------|---------------------------------|--------------|----------------|------------------|--------------------------|
+    ...    |${SPACE}account_id${SPACE}${SPACE}|${SPACE}aws_region${SPACE}|${SPACE}creation_time${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}credentials_id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}custom_tags${SPACE}|${SPACE}${SPACE}${SPACE}deployment_name${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}managed_services_customer_managed_key_id${SPACE}|${SPACE}network_id${SPACE}|${SPACE}pricing_tier${SPACE}|${SPACE}private_access_settings_id${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}storage_configuration_id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}storage_customer_managed_key_id${SPACE}|${SPACE}workspace_id${SPACE}|${SPACE}workspace_name${SPACE}|${SPACE}workspace_status${SPACE}|${SPACE}workspace_status_message${SPACE}|
+    ...    |-------------|------------|---------------|------------------------|-------------|----------------------|------------------------------------------|------------|--------------|----------------------------|----------------------------------|---------------------------------|--------------|----------------|------------------|--------------------------|
+    ...    |${SPACE}contrivedID${SPACE}|${SPACE}us-west-2${SPACE}${SPACE}|${SPACE}1734406430000${SPACE}|${SPACE}rubbish-credentials-id${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}some-deployment-name${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}PREMIUM${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}rubbish-storage-configuration-id${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}10000001${SPACE}|${SPACE}stackql-test${SPACE}${SPACE}${SPACE}|${SPACE}RUNNING${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}Workspace${SPACE}is${SPACE}running.${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------------|------------|---------------|------------------------|-------------|----------------------|------------------------------------------|------------|--------------|----------------------------|----------------------------------|---------------------------------|--------------|----------------|------------------|--------------------------|
+    Should Horrid Query StackQL Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}    
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select * from stackql_auth_testing.provisioning.workspaces where account_id \= 'contrivedID';
+    ...    ${outputStr}
+    ...    ${CURDIR}/tmp/Default-Pagination-Behaviour-Should-Work-Correctly-Against-Straight-Array-Responses.tmp
 
 Oauth2 CLient Credentials Auth Should Succeed with Valid Config
     Set Environment Variable    YOUR_OAUTH2_CLIENT_ID_ENV_VAR    dummy-client-id
