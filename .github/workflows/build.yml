@@ -1263,6 +1263,10 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+    - name: Hack to avoid docker buildx failures
+      run: |
+        sudo rm -rf cicd/vol/postgres/persist
+
     - name: Push stackql image to Docker Hub
       if: ${{ ( success() && github.ref_type == 'branch' && github.ref_name == 'main' && github.repository == 'stackql/stackql' && github.event_name == 'push'  ) || ( success() && github.ref_type == 'tag' && startsWith(github.ref_name, 'build-release') ) }}
       uses: docker/build-push-action@v5
