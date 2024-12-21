@@ -11,6 +11,15 @@ providerServices:
       $ref: stackql_auth_testing/v0.1.0/services/collectors.yaml
     title: Sumo Logic v1 REST API - users
     version: v0.1.0
+  provisioning:
+    id: 'provisioning:v0.1.0'
+    name: provisioning
+    preferred: true
+    service:
+      $ref: stackql_auth_testing/v0.1.0/services/provisioning.yaml
+    title: Provisioning  - Contrived Testing Meterial
+    version: v0.1.0
+    description: Provisioning - Totally Contrived Testing Meterial
   users:
     description: Interact with and view information about users.
     id: users:v0.1.0

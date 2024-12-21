@@ -1,0 +1,27 @@
+[
+    {
+      "workspace_id": 10000001,
+      "workspace_name": "stackql-test",
+      "aws_region": "us-west-2",
+      "creation_time": 1734406430000,
+      "deployment_name": "some-deployment-name",
+      "workspace_status": "RUNNING",
+      "account_id": "contrivedID",
+      "credentials_id": "rubbish-credentials-id",
+      "storage_configuration_id": "rubbish-storage-configuration-id",
+      "workspace_status_message": "Workspace is running.",
+      "is_no_public_ip_enabled": true,
+      "pricing_tier": "PREMIUM",
+      "identity_federation_info": {
+        "enable_identity_federation": true
+      },
+      "workspace_info": {
+        "compliance_security_profile": {
+          "is_enabled": false
+        },
+        "enhanced_security_monitoring": {
+          "is_enabled": false
+        }
+      }
+    }
+  ]

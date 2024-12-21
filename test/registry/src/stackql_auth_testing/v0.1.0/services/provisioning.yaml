@@ -1,0 +1,2223 @@
+openapi: 3.0.0
+info:
+  version: 2024-12-16-stackql-generated
+  contact:
+    name: StackQL Studios
+    url: https://stackql.io/
+    email: info@stackql.io
+  title: Databricks Provisioning API
+  description: Account Provisioning
+servers:
+- url: https://accounts.cloud.databricks.com
+paths:
+  /api/2.0/accounts/{account_id}/credentials:
+    post:
+      operationId: credentials-create
+      externalDocs:
+        url: https://docs.databricks.com/api/account/credentials/create
+      x-stackQL-resource: credentials
+      x-stackQL-method: create
+      x-stackQL-verb: insert
+      x-numReqParams: 1
+      parameters:
+      - name: account_id
+        required: true
+        description: '(uuid) Databricks account ID of any type. For non-E2 account
+          types, get your account ID from the '
+        in: path
+      responses:
+        '201':
+          description: The credential configuration creation request succeeded.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  credentials_id:
+                    type: string
+                  credentials_name:
+                    type: string
+                  aws_credentials:
+                    type: object
+                    properties:
+                      sts_role:
+                        type: object
+                        properties:
+                          role_arn:
+                            type: string
+                          external_id:
+                            type: string
+                  account_id:
+                    type: string
+                  creation_time:
+                    type: integer
+        '400':
+          description: Request is invalid or malformed.
+        '401':
+          description: The request does not have valid authentication credentials
+            for the operation.
+        '404':
+          description: Operation was performed on a resource that does not exist.
+        '500':
+          description: Internal error.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                credentials_name:
+                  type: required
+                  description: ' '
+                aws_credentials:
+                  type: required
+              example:
+                credentials_name: credential_1
+                aws_credentials:
+                  sts_role:
+                    role_arn: arn-aws-iam::111110000000:role/test_role
+        description: Properties of the new credential configuration.
+      description: Creates a Databricks credential configuration that represents cloud
+        cross-account credentials for a specified account. Databricks uses this to
+        set up network infrastructure properly to host Databricks clusters. For your
+        AWS IAM role, you need to trust the External ID (the Databricks Account API
+        account ID)  in the returned credential object, and configure the required
+        access policy.
+    get:
+      operationId: credentials-list
+      externalDocs:
+        url: https://docs.databricks.com/api/account/credentials/list
+      x-stackQL-resource: credentials
+      x-stackQL-method: list
+      x-stackQL-verb: select
+      x-numReqParams: 1
+      parameters:
+      - name: account_id
+        required: true
+        description: '(uuid) Databricks account ID of any type. For non-E2 account
+          types, get your account ID from the '
+        in: path
+      responses:
+        '200':
+          description: Credential configurations were returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    credentials_id:
+                      type: string
+                    credentials_name:
+                      type: string
+                    aws_credentials:
+                      type: object
+                      properties:
+                        sts_role:
+                          type: object
+                          properties:
+                            role_arn:
+                              type: string
+                            external_id:
+                              type: string
+                    account_id:
+                      type: string
+                    creation_time:
+                      type: integer
+        '401':
+          description: The request does not have valid authentication credentials
+            for the operation.
+        '404':
+          description: Operation was performed on a resource that does not exist.
+        '500':
+          description: Internal error.
+      description: Gets all Databricks credential configurations associated with an
+        account specified by ID.
+  /api/2.0/accounts/{account_id}/credentials/{credentials_id}:
+    delete:
+      operationId: credentials-delete
+      externalDocs:
+        url: https://docs.databricks.com/api/account/credentials/delete
+      x-stackQL-resource: credentials
+      x-stackQL-method: delete
+      x-stackQL-verb: delete
+      x-numReqParams: 2
+      parameters:
+      - name: account_id
+        required: true
+        description: '(uuid) Databricks account ID of any type. For non-E2 account
+          types, get your account ID from the '
+        in: path
+      - name: credentials_id
+        required: true
+        description: (uuid) Databricks Account API credential configuration ID
+        in: path
+      responses:
+        '200':
+          description: The credential configuration was successfully deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+        '401':
+          description: The request does not have valid authentication credentials
+            for the operation.
+        '404':
+          description: Operation was performed on a resource that does not exist.
+        '409':
+          description: Request was rejected due a conflict with an existing resource.
+        '500':
+          description: Internal error.
+      description: Deletes a Databricks credential configuration object for an account,
+        both specified by ID. You cannot delete a credential that is associated with
+        any workspace.
+    get:
+      operationId: credentials-get
+      externalDocs:
+        url: https://docs.databricks.com/api/account/credentials/get
+      x-stackQL-resource: credentials
+      x-stackQL-method: get
+      x-stackQL-verb: select
+      x-numReqParams: 2
+      parameters:
+      - name: account_id
+        required: true
+        description: '(uuid) Databricks account ID of any type. For non-E2 account
+          types, get your account ID from the '
+        in: path
+      - name: credentials_id
+        required: true
+        description: (uuid) Databricks Account API credential configuration ID
+        in: path
+      responses:
+        '200':
+          description: The credential configuration was successfully returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  credentials_id:
+                    type: string
+                  credentials_name:
+                    type: string
+                  aws_credentials:
+                    type: object
+                    properties:
+                      sts_role:
+                        type: object
+                        properties:
+                          role_arn:
+                            type: string
+                          external_id:
+                            type: string
+                  account_id:
+                    type: string
+                  creation_time:
+                    type: integer
+        '401':
+          description: The request does not have valid authentication credentials
+            for the operation.
+        '404':
+          description: Operation was performed on a resource that does not exist.
+        '500':
+          description: Internal error.
+      description: Gets a Databricks credential configuration object for an account,
+        both specified by ID.
+  /api/2.0/accounts/{account_id}/customer-managed-keys:
+    post:
+      operationId: encryption-keys-create
+      externalDocs:
+        url: https://docs.databricks.com/api/account/encryptionkeys/create
+      x-stackQL-resource: encryption_keys
+      x-stackQL-method: create
+      x-stackQL-verb: insert
+      x-numReqParams: 1
+      parameters:
+      - name: account_id
+        required: true
+        description: '(uuid) Databricks account ID of any type. For non-E2 account
+          types, get your account ID from the '
+        in: path
+      responses:
+        '201':
+          description: The encryption key configuration was successfully created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customer_managed_key_id:
+                    type: string
+                  account_id:
+                    type: string
+                  aws_key_info:
+                    type: object
+                    properties:
+                      key_arn:
+                        type: string
+                      key_alias:
+                        type: string
+                      key_region:
+                        type: string
+                      reuse_key_for_cluster_volumes:
+                        type: boolean
+                  creation_time:
+                    type: integer
+                  use_cases:
+                    type: array
+                    items:
+                      type: string
+        '400':
+          description: Request is invalid or malformed.
+        '401':
+          description: The request does not have valid authentication credentials
+            for the operation.
+        '403':
+          description: Caller does not have permission to execute the specified operation.
+        '404':
+          description: Operation was performed on a resource that does not exist.
+        '500':
+          description: Internal error.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                use_cases:
+                  type: required
+                  description: The cases that the key can be used for.
+                aws_key_info:
+                  type: object
+              example:
+                aws_key_info:
+                  key_arn: arn:aws:kms:us-west-2:111122223333:key/0987dcba-09fe-87dc-65ba-ab0987654321
+                  key_alias: alias/projectKey
+                  reuse_key_for_cluster_volumes: true
+                use_cases:
+                - MANAGED_SERVICES
+                - STORAGE
+        description: Properties of the encryption key configuration.
+      description: Creates a customer-managed key configuration object for an account,
+        specified by ID. This operation uploads a reference to a customer-managed
+        key to Databricks. If the key is assigned as a workspace's customer-managed
+        key for managed services, Databricks uses the key to encrypt the workspaces
+        notebooks and secrets in the control plane, in addition to Databricks SQL
+        queries and query history. If it is specified as a workspace's customer-managed
+        key for workspace storage, the key encrypts the workspace's root S3 bucket
+        (which contains the workspace's root DBFS and system data) and, optionally,
+        cluster EBS volume data.
+    get:
+      operationId: encryption-keys-list
+      externalDocs:
+        url: https://docs.databricks.com/api/account/encryptionkeys/list
+      x-stackQL-resource: encryption_keys
+      x-stackQL-method: list
+      x-stackQL-verb: select
+      x-numReqParams: 1
+      parameters:
+      - name: account_id
+        required: true
+        description: '(uuid) Databricks account ID of any type. For non-E2 account
+          types, get your account ID from the '
+        in: path
+      responses:
+        '200':
+          description: The encryption key configurations were successfully returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    customer_managed_key_id:
+                      type: string
+                    account_id:
+                      type: string
+                    aws_key_info:
+                      type: object
+                      properties:
+                        key_arn:
+                          type: string
+                        key_alias:
+                          type: string
+                        key_region:
+                          type: string
+                        reuse_key_for_cluster_volumes:
+                          type: boolean
+                    creation_time:
+                      type: integer
+                    use_cases:
+                      type: array
+                      items:
+                        type: string
+        '401':
+          description: The request does not have valid authentication credentials
+            for the operation.
+        '404':
+          description: Operation was performed on a resource that does not exist.
+        '500':
+          description: Internal error.
+      description: Gets all customer-managed key configuration objects for an account.
+        If the key is specified as a workspace's managed services customer-managed
+        key, Databricks uses the key to encrypt the workspace's notebooks and secrets
+        in the control plane, in addition to Databricks SQL queries and query history.
+        If the key is specified as a workspace's storage customer-managed key, the
+        key is used to encrypt the workspace's root S3 bucket and optionally can encrypt
+        cluster EBS volumes data in the data plane.
+  /api/2.0/accounts/{account_id}/customer-managed-keys/{customer_managed_key_id}:
+    delete:
+      operationId: encryption-keys-delete
+      externalDocs:
+        url: https://docs.databricks.com/api/account/encryptionkeys/delete
+      x-stackQL-resource: encryption_keys
+      x-stackQL-method: delete
+      x-stackQL-verb: delete
+      x-numReqParams: 2
+      parameters:
+      - name: account_id
+        required: true
+        description: '(uuid) Databricks account ID of any type. For non-E2 account
+          types, get your account ID from the '
+        in: path
+      - name: customer_managed_key_id
+        required: true
+        description: (uuid) Databricks encryption key configuration ID.
+        in: path
+      responses:
+        '200':
+          description: The encryption key configuration was successfully deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+        '401':
+          description: The request does not have valid authentication credentials
+            for the operation.
+        '404':
+          description: Operation was performed on a resource that does not exist.
+        '409':
+          description: Request was rejected due a conflict with an existing resource.
+        '500':
+          description: Internal error.
+      description: Deletes a customer-managed key configuration object for an account.
+        You cannot delete a configuration that is associated with a running workspace.
+    get:
+      operationId: encryption-keys-get
+      externalDocs:
+        url: https://docs.databricks.com/api/account/encryptionkeys/get
+      x-stackQL-resource: encryption_keys
+      x-stackQL-method: get
+      x-stackQL-verb: select
+      x-numReqParams: 2
+      parameters:
+      - name: account_id
+        required: true
+        description: '(uuid) Databricks account ID of any type. For non-E2 account
+          types, get your account ID from the '
+        in: path
+      - name: customer_managed_key_id
+        required: true
+        description: (uuid) Databricks encryption key configuration ID.
+        in: path
+      responses:
+        '200':
+          description: The encryption key configuration was successfully returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customer_managed_key_id:
+                    type: string
+                  account_id:
+                    type: string
+                  aws_key_info:
+                    type: object
+                    properties:
+                      key_arn:
+                        type: string
+                      key_alias:
+                        type: string
+                      key_region:
+                        type: string
+                      reuse_key_for_cluster_volumes:
+                        type: boolean
+                  creation_time:
+                    type: integer
+                  use_cases:
+                    type: array
+                    items:
+                      type: string
+        '401':
+          description: The request does not have valid authentication credentials
+            for the operation.
+        '404':
+          description: Operation was performed on a resource that does not exist.
+        '500':
+          description: Internal error.
+      description: Gets a customer-managed key configuration object for an account,
+        specified by ID. This operation uploads a reference to a customer-managed
+        key to Databricks. If assigned as a workspace's customer-managed key for managed
+        services, Databricks uses the key to encrypt the workspaces notebooks and
+        secrets in the control plane, in addition to Databricks SQL queries and query
+        history. If it is specified as a workspace's customer-managed key for storage,
+        the key encrypts the workspace's root S3 bucket (which contains the workspace's
+        root DBFS and system data) and, optionally, cluster EBS volume data.
+  /api/2.0/accounts/{account_id}/networks:
+    post:
+      operationId: networks-create
+      externalDocs:
+        url: https://docs.databricks.com/api/account/networks/create
+      x-stackQL-resource: networks
+      x-stackQL-method: create
+      x-stackQL-verb: insert
+      x-numReqParams: 1
+      parameters:
+      - name: account_id
+        required: true
+        description: '(uuid) Databricks account ID of any type. For non-E2 account
+          types, get your account ID from the '
+        in: path
+      responses:
+        '201':
+          description: The network configuration was successfully created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  network_id:
+                    type: string
+                  network_name:
+                    type: string
+                  vpc_id:
+                    type: string
+                  subnet_ids:
+                    type: array
+                    items:
+                      type: string
+                  security_group_ids:
+                    type: array
+                    items:
+                      type: string
+                  vpc_status:
+                    type: string
+                  warning_messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        warning_type:
+                          type: string
+                        warning_message:
+                          type: string
+                  error_messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        error_type:
+                          type: string
+                        error_message:
+                          type: string
+                  workspace_id:
+                    type: integer
+                  account_id:
+                    type: string
+                  creation_time:
+                    type: integer
+                  vpc_endpoints:
+                    type: object
+                    properties:
+                      rest_api:
+                        type: array
+                        items:
+                          type: string
+                      dataplane_relay:
+                        type: array
+                        items:
+                          type: string
+        '400':
+          description: Request is invalid or malformed.
+        '401':
+          description: The request does not have valid authentication credentials
+            for the operation.
+        '404':
+          description: Operation was performed on a resource that does not exist.
+        '500':
+          description: Internal error.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                network_name:
+                  type: required
+                  description: The human-readable name of the network configuration.
+                vpc_id:
+                  type: string
+                  description: The ID of the VPC associated with this network. VPC
+                    IDs can be used in multiple network configurations.
+                subnet_ids:
+                  type: string
+                  description: 'IDs of at least two subnets associated with this network.
+                    Subnet IDs '
+                security_group_ids:
+                  type: Array of string
+                  description: ' be used in multiple network configurations.'
+                vpc_endpoints:
+                  type: object
+              example:
+                network_name: string
+                vpc_id: string
+                subnet_ids:
+                - string
+                security_group_ids:
+                - string
+                vpc_endpoints:
+                  rest_api:
+                  - 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                  dataplane_relay:
+                  - 497f6eca-6276-4993-bfeb-53cbbbba6f08
+        description: Properties of the new network configuration.
+      description: Creates a Databricks network configuration that represents an AWS
+        VPC and its resources. The VPC will be used for new Databricks clusters. This
+        requires a pre-existing VPC and subnets. For VPC requirements, see
+    get:
+      operationId: networks-list
+      externalDocs:
+        url: https://docs.databricks.com/api/account/networks/list
+      x-stackQL-resource: networks
+      x-stackQL-method: list
+      x-stackQL-verb: select
+      x-numReqParams: 1
+      parameters:
+      - name: account_id
+        required: true
+        description: '(uuid) Databricks account ID of any type. For non-E2 account
+          types, get your account ID from the '
+        in: path
+      responses:
+        '200':
+          description: The network configurations were successfully returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    network_id:
+                      type: string
+                    network_name:
+                      type: string
+                    vpc_id:
+                      type: string
+                    subnet_ids:
+                      type: array
+                      items:
+                        type: string
+                    security_group_ids:
+                      type: array
+                      items:
+                        type: string
+                    vpc_status:
+                      type: string
+                    warning_messages:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          warning_type:
+                            type: string
+                          warning_message:
+                            type: string
+                    error_messages:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          error_type:
+                            type: string
+                          error_message:
+                            type: string
+                    workspace_id:
+                      type: integer
+                    account_id:
+                      type: string
+                    creation_time:
+                      type: integer
+                    vpc_endpoints:
+                      type: object
+                      properties:
+                        rest_api:
+                          type: array
+                          items:
+                            type: string
+                        dataplane_relay:
+                          type: array
+                          items:
+                            type: string
+        '401':
+          description: The request does not have valid authentication credentials
+            for the operation.
+        '404':
+          description: Operation was performed on a resource that does not exist.
+        '500':
+          description: Internal error.
+      description: Gets a list of all Databricks network configurations for an account,
+        specified by ID.
+  /api/2.0/accounts/{account_id}/networks/{network_id}:
+    delete:
+      operationId: networks-delete
+      externalDocs:
+        url: https://docs.databricks.com/api/account/networks/delete
+      x-stackQL-resource: networks
+      x-stackQL-method: delete
+      x-stackQL-verb: delete
+      x-numReqParams: 2
+      parameters:
+      - name: account_id
+        required: true
+        description: '(uuid) Databricks account ID of any type. For non-E2 account
+          types, get your account ID from the '
+        in: path
+      - name: network_id
+        required: true
+        description: (uuid) Databricks Account API network configuration ID.
+        in: path
+      responses:
+        '200':
+          description: The network configuration was successfully deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+        '401':
+          description: The request does not have valid authentication credentials
+            for the operation.
+        '404':
+          description: Operation was performed on a resource that does not exist.
+        '409':
+          description: Request was rejected due a conflict with an existing resource.
+        '500':
+          description: Internal error.
+      description: Deletes a Databricks network configuration, which represents a
+        cloud VPC and its resources. You cannot delete a network that is associated
+        with a workspace.
+    get:
+      operationId: networks-get
+      externalDocs:
+        url: https://docs.databricks.com/api/account/networks/get
+      x-stackQL-resource: networks
+      x-stackQL-method: get
+      x-stackQL-verb: select
+      x-numReqParams: 2
+      parameters:
+      - name: account_id
+        required: true
+        description: '(uuid) Databricks account ID of any type. For non-E2 account
+          types, get your account ID from the '
+        in: path
+      - name: network_id
+        required: true
+        description: (uuid) Databricks Account API network configuration ID.
+        in: path
+      responses:
+        '200':
+          description: The network configuration was successfully returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  network_id:
+                    type: string
+                  network_name:
+                    type: string
+                  vpc_id:
+                    type: string
+                  subnet_ids:
+                    type: array
+                    items:
+                      type: string
+                  security_group_ids:
+                    type: array
+                    items:
+                      type: string
+                  vpc_status:
+                    type: string
+                  warning_messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        warning_type:
+                          type: string
+                        warning_message:
+                          type: string
+                  error_messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        error_type:
+                          type: string
+                        error_message:
+                          type: string
+                  workspace_id:
+                    type: integer
+                  account_id:
+                    type: string
+                  creation_time:
+                    type: integer
+                  vpc_endpoints:
+                    type: object
+                    properties:
+                      rest_api:
+                        type: array
+                        items:
+                          type: string
+                      dataplane_relay:
+                        type: array
+                        items:
+                          type: string
+        '401':
+          description: The request does not have valid authentication credentials
+            for the operation.
+        '404':
+          description: Operation was performed on a resource that does not exist.
+        '500':
+          description: Internal error.
+      description: Gets a Databricks network configuration, which represents an AWS
+        VPC and its resources.  This requires a pre-existing VPC and subnets.
+  /api/2.0/accounts/{account_id}/private-access-settings:
+    post:
+      operationId: private-access-create
+      externalDocs:
+        url: https://docs.databricks.com/api/account/privateaccess/create
+      x-stackQL-resource: private_access
+      x-stackQL-method: create
+      x-stackQL-verb: insert
+      x-numReqParams: 1
+      parameters:
+      - name: account_id
+        required: true
+        description: '(uuid) Databricks account ID of any type. For non-E2 account
+          types, get your account ID from the '
+        in: path
+      responses:
+        '200':
+          description: The private access settings object was successfully created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  private_access_settings_id:
+                    type: string
+                  private_access_settings_name:
+                    type: string
+                  public_access_enabled:
+                    type: boolean
+                  region:
+                    type: string
+                  account_id:
+                    type: string
+                  private_access_level:
+                    type: string
+                  allowed_vpc_endpoint_ids:
+                    type: array
+                    items:
+                      type: string
+        '400':
+          description: Request is invalid or malformed.
+        '401':
+          description: The request does not have valid authentication credentials
+            for the operation.
+        '404':
+          description: Operation was performed on a resource that does not exist.
+        '500':
+          description: Internal error.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                private_access_settings_name:
+                  type: required
+                  description: The human-readable name of the private access settings
+                    object.
+                region:
+                  type: string
+                  description: 'The AWS region for workspaces attached to this private
+                    access settings object. This must be a '
+                public_access_enabled:
+                  type: required
+                  description: .
+                private_access_level:
+                  type: string
+                  description: ' '
+                allowed_vpc_endpoint_ids:
+                  type: boolean
+                  description: 'Determines if the workspace can be accessed over public
+                    internet. For fully private workspaces, you can optionally specify '
+              example:
+                private_access_settings_name: string
+                region: string
+                public_access_enabled: false
+                private_access_level: ENDPOINT
+                allowed_vpc_endpoint_ids:
+                - 497f6eca-6276-4993-bfeb-53cbbbba6f08
+        description: Properties of the new private access settings object.
+      description: Creates a private access settings object, which specifies how your
+        workspace is accessed over
+    get:
+      operationId: private-access-list
+      externalDocs:
+        url: https://docs.databricks.com/api/account/privateaccess/list
+      x-stackQL-resource: private_access
+      x-stackQL-method: list
+      x-stackQL-verb: select
+      x-numReqParams: 1
+      parameters:
+      - name: account_id
+        required: true
+        description: '(uuid) Databricks account ID of any type. For non-E2 account
+          types, get your account ID from the '
+        in: path
+      responses:
+        '200':
+          description: The private access settings object was successfully returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    private_access_settings_id:
+                      type: string
+                    private_access_settings_name:
+                      type: string
+                    public_access_enabled:
+                      type: boolean
+                    region:
+                      type: string
+                    account_id:
+                      type: string
+                    private_access_level:
+                      type: string
+                    allowed_vpc_endpoint_ids:
+                      type: array
+                      items:
+                        type: string
+        '401':
+          description: The request does not have valid authentication credentials
+            for the operation.
+        '404':
+          description: Operation was performed on a resource that does not exist.
+        '500':
+          description: Internal error.
+      description: Gets a list of all private access settings objects for an account,
+        specified by ID.
+  /api/2.0/accounts/{account_id}/private-access-settings/{private_access_settings_id}:
+    delete:
+      operationId: private-access-delete
+      externalDocs:
+        url: https://docs.databricks.com/api/account/privateaccess/delete
+      x-stackQL-resource: private_access
+      x-stackQL-method: delete
+      x-stackQL-verb: delete
+      x-numReqParams: 2
+      parameters:
+      - name: account_id
+        required: true
+        description: '(uuid) Databricks account ID of any type. For non-E2 account
+          types, get your account ID from the '
+        in: path
+      - name: private_access_settings_id
+        required: true
+        description: (uuid) Databricks Account API private access settings ID.
+        in: path
+      responses:
+        '200':
+          description: The private access settings was successfully deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+        '401':
+          description: The request does not have valid authentication credentials
+            for the operation.
+        '404':
+          description: Operation was performed on a resource that does not exist.
+        '409':
+          description: Request was rejected due a conflict with an existing resource.
+        '500':
+          description: Internal error.
+      description: Deletes a private access settings object, which determines how
+        your workspace is accessed over
+    get:
+      operationId: private-access-get
+      externalDocs:
+        url: https://docs.databricks.com/api/account/privateaccess/get
+      x-stackQL-resource: private_access
+      x-stackQL-method: get
+      x-stackQL-verb: select
+      x-numReqParams: 2
+      parameters:
+      - name: account_id
+        required: true
+        description: '(uuid) Databricks account ID of any type. For non-E2 account
+          types, get your account ID from the '
+        in: path
+      - name: private_access_settings_id
+        required: true
+        description: (uuid) Databricks Account API private access settings ID.
+        in: path
+      responses:
+        '200':
+          description: The private access settings object was successfully returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  private_access_settings_id:
+                    type: string
+                  private_access_settings_name:
+                    type: string
+                  public_access_enabled:
+                    type: boolean
+                  region:
+                    type: string
+                  account_id:
+                    type: string
+                  private_access_level:
+                    type: string
+                  allowed_vpc_endpoint_ids:
+                    type: array
+                    items:
+                      type: string
+        '401':
+          description: The request does not have valid authentication credentials
+            for the operation.
+        '404':
+          description: Operation was performed on a resource that does not exist.
+        '500':
+          description: Internal error.
+      description: Gets a private access settings object, which specifies how your
+        workspace is accessed over
+    put:
+      operationId: private-access-replace
+      externalDocs:
+        url: https://docs.databricks.com/api/account/privateaccess/replace
+      x-stackQL-resource: private_access
+      x-stackQL-method: replace
+      x-stackQL-verb: replace
+      x-numReqParams: 2
+      parameters:
+      - name: account_id
+        required: true
+        description: '(uuid) Databricks account ID of any type. For non-E2 account
+          types, get your account ID from the '
+        in: path
+      - name: private_access_settings_id
+        required: true
+        description: (uuid) Databricks Account API private access settings ID.
+        in: path
+      responses:
+        '200':
+          description: The private access settings object was successfully updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+        '400':
+          description: Request is invalid or malformed.
+        '401':
+          description: The request does not have valid authentication credentials
+            for the operation.
+        '404':
+          description: Operation was performed on a resource that does not exist.
+        '500':
+          description: Internal error.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                private_access_settings_name:
+                  type: required
+                  description: The human-readable name of the private access settings
+                    object.
+                region:
+                  type: string
+                  description: 'The AWS region for workspaces attached to this private
+                    access settings object. This must be a '
+                public_access_enabled:
+                  type: required
+                  description: .
+                private_access_level:
+                  type: string
+                  description: ' '
+                allowed_vpc_endpoint_ids:
+                  type: boolean
+                  description: 'Determines if the workspace can be accessed over public
+                    internet. For fully private workspaces, you can optionally specify '
+              example:
+                private_access_settings_name: string
+                region: string
+                public_access_enabled: false
+                private_access_level: ENDPOINT
+                allowed_vpc_endpoint_ids:
+                - 497f6eca-6276-4993-bfeb-53cbbbba6f08
+        description: Properties of the new private access settings object.
+      description: Updates an existing private access settings object, which specifies
+        how your workspace is accessed over
+  /api/2.0/accounts/{account_id}/storage-configurations:
+    post:
+      operationId: storage-create
+      externalDocs:
+        url: https://docs.databricks.com/api/account/storage/create
+      x-stackQL-resource: storage
+      x-stackQL-method: create
+      x-stackQL-verb: insert
+      x-numReqParams: 1
+      parameters:
+      - name: account_id
+        required: true
+        description: '(uuid) Databricks account ID of any type. For non-E2 account
+          types, get your account ID from the '
+        in: path
+      responses:
+        '201':
+          description: The storage configuration was successfully created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  storage_configuration_id:
+                    type: string
+                  storage_configuration_name:
+                    type: string
+                  root_bucket_info:
+                    type: object
+                    properties:
+                      bucket_name:
+                        type: string
+                  account_id:
+                    type: string
+                  creation_time:
+                    type: integer
+        '400':
+          description: Request is invalid or malformed.
+        '401':
+          description: The request does not have valid authentication credentials
+            for the operation.
+        '404':
+          description: Operation was performed on a resource that does not exist.
+        '500':
+          description: Internal error.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                storage_configuration_name:
+                  type: required
+                  description: ' '
+                root_bucket_info:
+                  type: required
+              example:
+                storage_configuration_name: storage_conf_1
+                root_bucket_info:
+                  bucket_name: string
+        description: Properties of the new storage configuration.
+      description: Creates new storage configuration for an account, specified by
+        ID. Uploads a storage configuration object that represents the root AWS S3
+        bucket in your account. Databricks stores related workspace assets including
+        DBFS, cluster logs, and job results. For the AWS S3 bucket, you need to configure
+        the required bucket policy.
+    get:
+      operationId: storage-list
+      externalDocs:
+        url: https://docs.databricks.com/api/account/storage/list
+      x-stackQL-resource: storage
+      x-stackQL-method: list
+      x-stackQL-verb: select
+      x-numReqParams: 1
+      parameters:
+      - name: account_id
+        required: true
+        description: '(uuid) Databricks account ID of any type. For non-E2 account
+          types, get your account ID from the '
+        in: path
+      responses:
+        '200':
+          description: The storage configurations were successfully returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    storage_configuration_id:
+                      type: string
+                    storage_configuration_name:
+                      type: string
+                    root_bucket_info:
+                      type: object
+                      properties:
+                        bucket_name:
+                          type: string
+                    account_id:
+                      type: string
+                    creation_time:
+                      type: integer
+        '401':
+          description: The request does not have valid authentication credentials
+            for the operation.
+        '404':
+          description: Operation was performed on a resource that does not exist.
+        '500':
+          description: Internal error.
+      description: Gets a list of all Databricks storage configurations for your account,
+        specified by ID.
+  /api/2.0/accounts/{account_id}/storage-configurations/{storage_configuration_id}:
+    delete:
+      operationId: storage-delete
+      externalDocs:
+        url: https://docs.databricks.com/api/account/storage/delete
+      x-stackQL-resource: storage
+      x-stackQL-method: delete
+      x-stackQL-verb: delete
+      x-numReqParams: 2
+      parameters:
+      - name: account_id
+        required: true
+        description: '(uuid) Databricks account ID of any type. For non-E2 account
+          types, get your account ID from the '
+        in: path
+      - name: storage_configuration_id
+        required: true
+        description: (uuid) Databricks Account API storage configuration ID.
+        in: path
+      responses:
+        '200':
+          description: The storage configuration was successfully deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+        '401':
+          description: The request does not have valid authentication credentials
+            for the operation.
+        '404':
+          description: Operation was performed on a resource that does not exist.
+        '409':
+          description: Request was rejected due a conflict with an existing resource.
+        '500':
+          description: Internal error.
+      description: Deletes a Databricks storage configuration. You cannot delete a
+        storage configuration that is associated with any workspace.
+    get:
+      operationId: storage-get
+      externalDocs:
+        url: https://docs.databricks.com/api/account/storage/get
+      x-stackQL-resource: storage
+      x-stackQL-method: get
+      x-stackQL-verb: select
+      x-numReqParams: 2
+      parameters:
+      - name: account_id
+        required: true
+        description: '(uuid) Databricks account ID of any type. For non-E2 account
+          types, get your account ID from the '
+        in: path
+      - name: storage_configuration_id
+        required: true
+        description: (uuid) Databricks Account API storage configuration ID.
+        in: path
+      responses:
+        '200':
+          description: The storage configuration was successfully returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  storage_configuration_id:
+                    type: string
+                  storage_configuration_name:
+                    type: string
+                  root_bucket_info:
+                    type: object
+                    properties:
+                      bucket_name:
+                        type: string
+                  account_id:
+                    type: string
+                  creation_time:
+                    type: integer
+        '401':
+          description: The request does not have valid authentication credentials
+            for the operation.
+        '404':
+          description: Operation was performed on a resource that does not exist.
+        '500':
+          description: Internal error.
+      description: Gets a Databricks storage configuration for an account, both specified
+        by ID.
+  /api/2.0/accounts/{account_id}/vpc-endpoints:
+    post:
+      operationId: vpc-endpoints-create
+      externalDocs:
+        url: https://docs.databricks.com/api/account/vpcendpoints/create
+      x-stackQL-resource: vpc_endpoints
+      x-stackQL-method: create
+      x-stackQL-verb: insert
+      x-numReqParams: 1
+      parameters:
+      - name: account_id
+        required: true
+        description: '(uuid) Databricks account ID of any type. For non-E2 account
+          types, get your account ID from the '
+        in: path
+      responses:
+        '200':
+          description: The VPC endpoint configuration was successfully created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  vpc_endpoint_id:
+                    type: string
+                  vpc_endpoint_name:
+                    type: string
+                  aws_vpc_endpoint_id:
+                    type: string
+                  aws_endpoint_service_id:
+                    type: string
+                  use_case:
+                    type: string
+                  region:
+                    type: string
+                  account_id:
+                    type: string
+                  aws_account_id:
+                    type: string
+                  state:
+                    type: string
+        '400':
+          description: Request is invalid or malformed.
+        '401':
+          description: The request does not have valid authentication credentials
+            for the operation.
+        '404':
+          description: Operation was performed on a resource that does not exist.
+        '500':
+          description: Internal error.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                vpc_endpoint_name:
+                  type: required
+                  description: The human-readable name of the storage configuration.
+                aws_vpc_endpoint_id:
+                  type: string
+                  description: The ID of the VPC endpoint object in AWS.
+                region:
+                  type: string
+                  description: The AWS region in which this VPC endpoint object exists.
+              example:
+                vpc_endpoint_name: string
+                aws_vpc_endpoint_id: string
+                region: string
+        description: Properties of the new VPC endpoint configuration.
+      description: Creates a VPC endpoint configuration, which represents a
+    get:
+      operationId: vpc-endpoints-list
+      externalDocs:
+        url: https://docs.databricks.com/api/account/vpcendpoints/list
+      x-stackQL-resource: vpc_endpoints
+      x-stackQL-method: list
+      x-stackQL-verb: select
+      x-numReqParams: 1
+      parameters:
+      - name: account_id
+        required: true
+        description: '(uuid) Databricks account ID of any type. For non-E2 account
+          types, get your account ID from the '
+        in: path
+      responses:
+        '200':
+          description: The VPC endpoints were successfully returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    vpc_endpoint_id:
+                      type: string
+                    vpc_endpoint_name:
+                      type: string
+                    aws_vpc_endpoint_id:
+                      type: string
+                    aws_endpoint_service_id:
+                      type: string
+                    use_case:
+                      type: string
+                    region:
+                      type: string
+                    account_id:
+                      type: string
+                    aws_account_id:
+                      type: string
+                    state:
+                      type: string
+        '401':
+          description: The request does not have valid authentication credentials
+            for the operation.
+        '404':
+          description: Operation was performed on a resource that does not exist.
+        '500':
+          description: Internal error.
+      description: Gets a list of all VPC endpoints for an account, specified by ID.
+  /api/2.0/accounts/{account_id}/vpc-endpoints/{vpc_endpoint_id}:
+    delete:
+      operationId: vpc-endpoints-delete
+      externalDocs:
+        url: https://docs.databricks.com/api/account/vpcendpoints/delete
+      x-stackQL-resource: vpc_endpoints
+      x-stackQL-method: delete
+      x-stackQL-verb: delete
+      x-numReqParams: 2
+      parameters:
+      - name: account_id
+        required: true
+        description: '(uuid) Databricks account ID of any type. For non-E2 account
+          types, get your account ID from the '
+        in: path
+      - name: vpc_endpoint_id
+        required: true
+        description: (uuid) Databricks VPC endpoint ID.
+        in: path
+      responses:
+        '200':
+          description: The VPC endpoint configuration was successfully deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+        '401':
+          description: The request does not have valid authentication credentials
+            for the operation.
+        '404':
+          description: Operation was performed on a resource that does not exist.
+        '409':
+          description: Request was rejected due a conflict with an existing resource.
+        '500':
+          description: Internal error.
+      description: Deletes a VPC endpoint configuration, which represents an
+    get:
+      operationId: vpc-endpoints-get
+      externalDocs:
+        url: https://docs.databricks.com/api/account/vpcendpoints/get
+      x-stackQL-resource: vpc_endpoints
+      x-stackQL-method: get
+      x-stackQL-verb: select
+      x-numReqParams: 2
+      parameters:
+      - name: account_id
+        required: true
+        description: '(uuid) Databricks account ID of any type. For non-E2 account
+          types, get your account ID from the '
+        in: path
+      - name: vpc_endpoint_id
+        required: true
+        description: (uuid) Databricks VPC endpoint ID.
+        in: path
+      responses:
+        '200':
+          description: The VPC endpoint was successfully returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  vpc_endpoint_id:
+                    type: string
+                  vpc_endpoint_name:
+                    type: string
+                  aws_vpc_endpoint_id:
+                    type: string
+                  aws_endpoint_service_id:
+                    type: string
+                  use_case:
+                    type: string
+                  region:
+                    type: string
+                  account_id:
+                    type: string
+                  aws_account_id:
+                    type: string
+                  state:
+                    type: string
+        '401':
+          description: The request does not have valid authentication credentials
+            for the operation.
+        '404':
+          description: Operation was performed on a resource that does not exist.
+        '500':
+          description: Internal error.
+      description: Gets a VPC endpoint configuration, which represents a
+  /api/2.0/accounts/{account_id}/workspaces:
+    post:
+      operationId: workspaces-create
+      externalDocs:
+        url: https://docs.databricks.com/api/account/workspaces/create
+      x-stackQL-resource: workspaces
+      x-stackQL-method: create
+      x-stackQL-verb: insert
+      x-numReqParams: 1
+      parameters:
+      - name: account_id
+        required: true
+        description: '(uuid) Databricks account ID of any type. For non-E2 account
+          types, get your account ID from the '
+        in: path
+      responses:
+        '201':
+          description: Workspace creation request was received. Check workspace status.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  workspace_id:
+                    type: integer
+                  workspace_name:
+                    type: string
+                  deployment_name:
+                    type: string
+                  network_id:
+                    type: string
+                  aws_region:
+                    type: string
+                  credentials_id:
+                    type: string
+                  storage_configuration_id:
+                    type: string
+                  account_id:
+                    type: string
+                  workspace_status:
+                    type: string
+                  workspace_status_message:
+                    type: string
+                  managed_services_customer_managed_key_id:
+                    type: string
+                  private_access_settings_id:
+                    type: string
+                  creation_time:
+                    type: integer
+                  pricing_tier:
+                    type: string
+                  storage_customer_managed_key_id:
+                    type: string
+                  custom_tags:
+                    type: object
+                    properties:
+                      property1:
+                        type: string
+                      property2:
+                        type: string
+        '400':
+          description: Request is invalid or malformed.
+        '401':
+          description: The request does not have valid authentication credentials
+            for the operation.
+        '403':
+          description: Caller does not have permission to execute the specified operation.
+        '404':
+          description: Operation was performed on a resource that does not exist.
+        '500':
+          description: Internal error.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                workspace_name:
+                  type: required
+                  description: The workspace's human-readable name.
+                network_id:
+                  type: string
+                  description: ' '
+                deployment_name:
+                  type: uuid
+                  description: 'The ID of the workspace''s network configuration object.
+                    To use '
+                aws_region:
+                  type: string
+                  description: ', this field is required.'
+                credentials_id:
+                  type: string
+                  description: ' '
+                storage_configuration_id:
+                  type: uuid
+                  description: 'The deployment name defines part of the subdomain
+                    for the workspace. The workspace URL for the web application and
+                    REST APIs is '
+                managed_services_customer_managed_key_id:
+                  type: uuid
+                  description: '. For example, if the deployment name is '
+                private_access_settings_id:
+                  type: uuid
+                  description: ', your workspace URL will be '
+                pricing_tier:
+                  type: uuid
+                  description: . Hyphens are allowed. This property supports only
+                    the set of characters that are allowed in a subdomain.
+                storage_customer_managed_key_id:
+                  type: string
+                  description: To set this value, you must have a deployment name
+                    prefix. Contact your Databricks account team to add an account
+                    deployment name prefix to your account.
+                custom_tags:
+                  type: object
+              example:
+                workspace_name: string
+                network_id: fd0cc5bc-683c-47e9-b15e-144d7744a496
+                deployment_name: workspace_1
+                aws_region: us-west-2
+                credentials_id: ccc64f28-ebdc-4c89-add9-5dcb6d7727d8
+                storage_configuration_id: b43a6064-04c1-4e1c-88b6-d91e5b136b13
+                managed_services_customer_managed_key_id: 849b3d6b-e68e-468d-b3e5-deb08b03c56d
+                private_access_settings_id: 3b3bbcb5-46bd-4b03-944e-97eb44ed7991
+                pricing_tier: PREMIUM
+                storage_customer_managed_key_id: 14138d0f-a575-4ae2-be71-ddfd0b602286
+                custom_tags:
+                  property1: string
+                  property2: string
+        description: Properties of the new workspace.
+      description: Creates a new workspace using a credential configuration and a
+        storage configuration, an optional network configuration (if using a customer-managed
+        VPC), an optional managed services key configuration (if using customer-managed
+        keys for managed services), and an optional storage key configuration (if
+        using customer-managed keys for storage). The key configurations used for
+        managed services and storage encryption can be the same or different.
+    get:
+      operationId: workspaces-list
+      externalDocs:
+        url: https://docs.databricks.com/api/account/workspaces/list
+      x-stackQL-resource: workspaces
+      x-stackQL-method: list
+      x-stackQL-verb: select
+      x-numReqParams: 1
+      parameters:
+      - name: account_id
+        required: true
+        description: '(uuid) Databricks account ID of any type. For non-E2 account
+          types, get your account ID from the '
+        in: path
+      responses:
+        '200':
+          description: The workspaces were returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    workspace_id:
+                      type: integer
+                    workspace_name:
+                      type: string
+                    deployment_name:
+                      type: string
+                    network_id:
+                      type: string
+                    aws_region:
+                      type: string
+                    credentials_id:
+                      type: string
+                    storage_configuration_id:
+                      type: string
+                    account_id:
+                      type: string
+                    workspace_status:
+                      type: string
+                    workspace_status_message:
+                      type: string
+                    managed_services_customer_managed_key_id:
+                      type: string
+                    private_access_settings_id:
+                      type: string
+                    creation_time:
+                      type: integer
+                    pricing_tier:
+                      type: string
+                    storage_customer_managed_key_id:
+                      type: string
+                    custom_tags:
+                      type: object
+                      properties:
+                        property1:
+                          type: string
+                        property2:
+                          type: string
+        '401':
+          description: The request does not have valid authentication credentials
+            for the operation.
+        '404':
+          description: Operation was performed on a resource that does not exist.
+        '500':
+          description: Internal error.
+      description: Gets a list of all workspaces associated with an account, specified
+        by ID.
+  /api/2.0/accounts/{account_id}/workspaces/{workspace_id}:
+    delete:
+      operationId: workspaces-delete
+      externalDocs:
+        url: https://docs.databricks.com/api/account/workspaces/delete
+      x-stackQL-resource: workspaces
+      x-stackQL-method: delete
+      x-stackQL-verb: delete
+      x-numReqParams: 2
+      parameters:
+      - name: account_id
+        required: true
+        description: '(uuid) Databricks account ID of any type. For non-E2 account
+          types, get your account ID from the '
+        in: path
+      - name: workspace_id
+        required: true
+        description: (int64) Workspace ID.
+        in: path
+      responses:
+        '200':
+          description: The workspace was successfully deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+        '401':
+          description: The request does not have valid authentication credentials
+            for the operation.
+        '404':
+          description: Operation was performed on a resource that does not exist.
+        '409':
+          description: Request was rejected due a conflict with an existing resource.
+        '500':
+          description: Internal error.
+      description: Terminates and deletes a Databricks workspace. From an API perspective,
+        deletion is immediate. However, it might take a few minutes for all workspaces
+        resources to be deleted, depending on the size and number of workspace resources.
+    get:
+      operationId: workspaces-get
+      externalDocs:
+        url: https://docs.databricks.com/api/account/workspaces/get
+      x-stackQL-resource: workspaces
+      x-stackQL-method: get
+      x-stackQL-verb: select
+      x-numReqParams: 2
+      parameters:
+      - name: account_id
+        required: true
+        description: '(uuid) Databricks account ID of any type. For non-E2 account
+          types, get your account ID from the '
+        in: path
+      - name: workspace_id
+        required: true
+        description: (int64) Workspace ID.
+        in: path
+      responses:
+        '200':
+          description: The workspace configuration was successfully returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  workspace_id:
+                    type: integer
+                  workspace_name:
+                    type: string
+                  deployment_name:
+                    type: string
+                  network_id:
+                    type: string
+                  aws_region:
+                    type: string
+                  credentials_id:
+                    type: string
+                  storage_configuration_id:
+                    type: string
+                  account_id:
+                    type: string
+                  workspace_status:
+                    type: string
+                  workspace_status_message:
+                    type: string
+                  managed_services_customer_managed_key_id:
+                    type: string
+                  private_access_settings_id:
+                    type: string
+                  creation_time:
+                    type: integer
+                  pricing_tier:
+                    type: string
+                  storage_customer_managed_key_id:
+                    type: string
+                  custom_tags:
+                    type: object
+                    properties:
+                      property1:
+                        type: string
+                      property2:
+                        type: string
+        '401':
+          description: The request does not have valid authentication credentials
+            for the operation.
+        '404':
+          description: Operation was performed on a resource that does not exist.
+        '500':
+          description: Internal error.
+      description: Gets information including status for a Databricks workspace, specified
+        by ID. In the response, the
+    patch:
+      operationId: workspaces-update
+      externalDocs:
+        url: https://docs.databricks.com/api/account/workspaces/update
+      x-stackQL-resource: workspaces
+      x-stackQL-method: update
+      x-stackQL-verb: update
+      x-numReqParams: 2
+      parameters:
+      - name: account_id
+        required: true
+        description: '(uuid) Databricks account ID of any type. For non-E2 account
+          types, get your account ID from the '
+        in: path
+      - name: workspace_id
+        required: true
+        description: (int64) Workspace ID.
+        in: path
+      responses:
+        '200':
+          description: The workspace update request is accepted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+        '400':
+          description: Request is invalid or malformed.
+        '401':
+          description: The request does not have valid authentication credentials
+            for the operation.
+        '403':
+          description: Caller does not have permission to execute the specified operation.
+        '404':
+          description: Operation was performed on a resource that does not exist.
+        '409':
+          description: Request was rejected due a conflict with an existing resource.
+        '500':
+          description: Internal error.
+        '509':
+          description: An external service is unavailable temporarily as it is being
+            updated.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                aws_region:
+                  type: string
+                  description: ' '
+                credentials_id:
+                  type: uuid
+                  description: 'The AWS region of the workspace''s data plane (for
+                    example, '
+                storage_configuration_id:
+                  type: uuid
+                  description: ). This parameter is available only for updating failed
+                    workspaces.
+                network_id:
+                  type: uuid
+                  description: ID of the workspace's credential configuration object.
+                    This parameter is available for updating both failed and running
+                    workspaces.
+                managed_services_customer_managed_key_id:
+                  type: uuid
+                  description: The ID of the workspace's storage configuration object.
+                    This parameter is available only for updating failed workspaces.
+                private_access_settings_id:
+                  type: uuid
+                  description: The ID of the workspace's network configuration object.
+                    Used only if you already use a customer-managed VPC. For failed
+                    workspaces only, you can switch from a Databricks-managed VPC
+                    to a customer-managed VPC by updating the workspace to add a network
+                    configuration ID.
+                storage_customer_managed_key_id:
+                  type: uuid
+                  description: The ID of the workspace's managed services encryption
+                    key configuration object. This parameter is available only for
+                    updating failed workspaces.
+                network_connectivity_config_id:
+                  type: uuid
+                  description: The ID of the workspace's private access settings configuration
+                    object. This parameter is available only for updating failed workspaces.
+                custom_tags:
+                  type: object
+              example:
+                aws_region: us-west-2
+                credentials_id: c7814269-df58-4ca3-85e9-f6672ef43d77
+                storage_configuration_id: 04aae505-1b1e-4cb9-997d-e1c49282675d
+                network_id: d6797cf4-42b9-4cad-8591-9dd91c3f0fc3
+                managed_services_customer_managed_key_id: faacdc79-6530-4583-a154-5d427a663e53
+                private_access_settings_id: 3b3bbcb5-46bd-4b03-944e-97eb44ed7991
+                storage_customer_managed_key_id: 14138d0f-a575-4ae2-be71-ddfd0b602286
+                custom_tags:
+                  property1: string
+                  property2: string
+                network_connectivity_config_id: 390afeb4-1111-2222-af33-ca3965c04068
+        description: Changes of the workspace properties.
+      description: Updates a workspace configuration for either a running workspace
+        or a failed workspace. The elements that can be updated varies between these
+        two use cases.
+components:
+  x-stackQL-resources:
+    credentials:
+      id: databricks_account.provisioning.credentials
+      name: credentials
+      title: Credentials
+      methods:
+        create:
+          operation:
+            $ref: '#/paths/~1api~12.0~1accounts~1{account_id}~1credentials/post'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: '#/paths/~1api~12.0~1accounts~1{account_id}~1credentials/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: '#/paths/~1api~12.0~1accounts~1{account_id}~1credentials~1{credentials_id}/delete'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: '#/paths/~1api~12.0~1accounts~1{account_id}~1credentials~1{credentials_id}/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      sqlVerbs:
+        select:
+        - $ref: '#/components/x-stackQL-resources/credentials/methods/get'
+        - $ref: '#/components/x-stackQL-resources/credentials/methods/list'
+        insert:
+        - $ref: '#/components/x-stackQL-resources/credentials/methods/create'
+        update: []
+        replace: []
+        delete:
+        - $ref: '#/components/x-stackQL-resources/credentials/methods/delete'
+        exec: []
+    encryption_keys:
+      id: databricks_account.provisioning.encryption_keys
+      name: encryption_keys
+      title: Encryption_keys
+      methods:
+        create:
+          operation:
+            $ref: '#/paths/~1api~12.0~1accounts~1{account_id}~1customer-managed-keys/post'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: '#/paths/~1api~12.0~1accounts~1{account_id}~1customer-managed-keys/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: '#/paths/~1api~12.0~1accounts~1{account_id}~1customer-managed-keys~1{customer_managed_key_id}/delete'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: '#/paths/~1api~12.0~1accounts~1{account_id}~1customer-managed-keys~1{customer_managed_key_id}/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      sqlVerbs:
+        select:
+        - $ref: '#/components/x-stackQL-resources/encryption_keys/methods/get'
+        - $ref: '#/components/x-stackQL-resources/encryption_keys/methods/list'
+        insert:
+        - $ref: '#/components/x-stackQL-resources/encryption_keys/methods/create'
+        update: []
+        replace: []
+        delete:
+        - $ref: '#/components/x-stackQL-resources/encryption_keys/methods/delete'
+        exec: []
+    networks:
+      id: databricks_account.provisioning.networks
+      name: networks
+      title: Networks
+      methods:
+        create:
+          operation:
+            $ref: '#/paths/~1api~12.0~1accounts~1{account_id}~1networks/post'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: '#/paths/~1api~12.0~1accounts~1{account_id}~1networks/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: '#/paths/~1api~12.0~1accounts~1{account_id}~1networks~1{network_id}/delete'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: '#/paths/~1api~12.0~1accounts~1{account_id}~1networks~1{network_id}/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      sqlVerbs:
+        select:
+        - $ref: '#/components/x-stackQL-resources/networks/methods/get'
+        - $ref: '#/components/x-stackQL-resources/networks/methods/list'
+        insert:
+        - $ref: '#/components/x-stackQL-resources/networks/methods/create'
+        update: []
+        replace: []
+        delete:
+        - $ref: '#/components/x-stackQL-resources/networks/methods/delete'
+        exec: []
+    private_access:
+      id: databricks_account.provisioning.private_access
+      name: private_access
+      title: Private_access
+      methods:
+        create:
+          operation:
+            $ref: '#/paths/~1api~12.0~1accounts~1{account_id}~1private-access-settings/post'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: '#/paths/~1api~12.0~1accounts~1{account_id}~1private-access-settings/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: '#/paths/~1api~12.0~1accounts~1{account_id}~1private-access-settings~1{private_access_settings_id}/delete'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: '#/paths/~1api~12.0~1accounts~1{account_id}~1private-access-settings~1{private_access_settings_id}/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        replace:
+          operation:
+            $ref: '#/paths/~1api~12.0~1accounts~1{account_id}~1private-access-settings~1{private_access_settings_id}/put'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      sqlVerbs:
+        select:
+        - $ref: '#/components/x-stackQL-resources/private_access/methods/get'
+        - $ref: '#/components/x-stackQL-resources/private_access/methods/list'
+        insert:
+        - $ref: '#/components/x-stackQL-resources/private_access/methods/create'
+        update: []
+        replace:
+        - $ref: '#/components/x-stackQL-resources/private_access/methods/replace'
+        delete:
+        - $ref: '#/components/x-stackQL-resources/private_access/methods/delete'
+        exec: []
+    storage:
+      id: databricks_account.provisioning.storage
+      name: storage
+      title: Storage
+      methods:
+        create:
+          operation:
+            $ref: '#/paths/~1api~12.0~1accounts~1{account_id}~1storage-configurations/post'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: '#/paths/~1api~12.0~1accounts~1{account_id}~1storage-configurations/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: '#/paths/~1api~12.0~1accounts~1{account_id}~1storage-configurations~1{storage_configuration_id}/delete'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: '#/paths/~1api~12.0~1accounts~1{account_id}~1storage-configurations~1{storage_configuration_id}/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      sqlVerbs:
+        select:
+        - $ref: '#/components/x-stackQL-resources/storage/methods/get'
+        - $ref: '#/components/x-stackQL-resources/storage/methods/list'
+        insert:
+        - $ref: '#/components/x-stackQL-resources/storage/methods/create'
+        update: []
+        replace: []
+        delete:
+        - $ref: '#/components/x-stackQL-resources/storage/methods/delete'
+        exec: []
+    vpc_endpoints:
+      id: databricks_account.provisioning.vpc_endpoints
+      name: vpc_endpoints
+      title: Vpc_endpoints
+      methods:
+        create:
+          operation:
+            $ref: '#/paths/~1api~12.0~1accounts~1{account_id}~1vpc-endpoints/post'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: '#/paths/~1api~12.0~1accounts~1{account_id}~1vpc-endpoints/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: '#/paths/~1api~12.0~1accounts~1{account_id}~1vpc-endpoints~1{vpc_endpoint_id}/delete'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: '#/paths/~1api~12.0~1accounts~1{account_id}~1vpc-endpoints~1{vpc_endpoint_id}/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      sqlVerbs:
+        select:
+        - $ref: '#/components/x-stackQL-resources/vpc_endpoints/methods/get'
+        - $ref: '#/components/x-stackQL-resources/vpc_endpoints/methods/list'
+        insert:
+        - $ref: '#/components/x-stackQL-resources/vpc_endpoints/methods/create'
+        update: []
+        replace: []
+        delete:
+        - $ref: '#/components/x-stackQL-resources/vpc_endpoints/methods/delete'
+        exec: []
+    workspaces:
+      id: databricks_account.provisioning.workspaces
+      name: workspaces
+      title: Workspaces
+      methods:
+        create:
+          operation:
+            $ref: '#/paths/~1api~12.0~1accounts~1{account_id}~1workspaces/post'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        list:
+          operation:
+            $ref: '#/paths/~1api~12.0~1accounts~1{account_id}~1workspaces/get'
+          response:
+            overrideMediaType: application/json
+            mediaType: application/json
+            openAPIDocKey: '200'
+        delete:
+          operation:
+            $ref: '#/paths/~1api~12.0~1accounts~1{account_id}~1workspaces~1{workspace_id}/delete'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        get:
+          operation:
+            $ref: '#/paths/~1api~12.0~1accounts~1{account_id}~1workspaces~1{workspace_id}/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+        update:
+          operation:
+            $ref: '#/paths/~1api~12.0~1accounts~1{account_id}~1workspaces~1{workspace_id}/patch'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      sqlVerbs:
+        select:
+        - $ref: '#/components/x-stackQL-resources/workspaces/methods/get'
+        - $ref: '#/components/x-stackQL-resources/workspaces/methods/list'
+        insert:
+        - $ref: '#/components/x-stackQL-resources/workspaces/methods/create'
+        update:
+        - $ref: '#/components/x-stackQL-resources/workspaces/methods/update'
+        replace: []
+        delete:
+        - $ref: '#/components/x-stackQL-resources/workspaces/methods/delete'
+        exec: []

@@ -195,6 +195,19 @@ class GetMatcherConfig:
 config_path = os.path.join(os.path.dirname(__file__), "expectations.json")
 cfg_obj: GetMatcherConfig = GetMatcherConfig()
 
+@app.route('/api/2.0/accounts/<my_account_id>/workspaces', methods=['GET'])
+def workspace_list_eccentric(my_account_id: str):
+    if my_account_id != "contrivedID":
+        return jsonify({'error': f'Invalid account: {my_account_id}'}), 404
+    next_page_token = request.args.get('nextPageToken')
+    if next_page_token:
+        ## is the guard working?
+        return jsonify({'message': f'disallowed nextPageToken = {next_page_token}'}), 404 
+    rv = make_response(render_template('workspaces-list-01.json', request=request))
+    rv.headers['Content-Type'] = 'text/plain' # This is key to appropriate testing
+    rv.status_code = 200
+    return rv
+
 # A catch-all route that accepts any path
 @app.route('/<path:any_path>', methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH'])
 def catch_all(any_path):
