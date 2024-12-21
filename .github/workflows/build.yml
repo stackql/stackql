@@ -27,6 +27,7 @@ env:
   GOPRIVATE: github.com/stackql/*
   GH_ACCESS_TOKEN: ${{ secrets.ACTIONS_PRIVATE_PACKAGE_SECRET }}
   PLANCACHEENABLED: "true"
+  CI_IS_EXPRESS: ${{ github.ref_type == 'tag' && contains(github.ref_name, 'express') && 'true' || 'false' }}
 
 jobs:
 
@@ -1167,6 +1168,7 @@ jobs:
     
     - name: Build Stackql image with buildx
       uses: docker/build-push-action@v5
+      if: ${{ (github.repository == 'stackql/stackql' ||  github.repository == 'stackql/stackql-devel') }}
       with:
         context: .
         build-args: |
@@ -1175,9 +1177,9 @@ jobs:
           BUILDPATCHVERSION=${{env.BUILDPATCHVERSION}}
         push: false
         target: app
-        no-cache: true
+        no-cache: ${{ vars.CI_DOCKER_BUILD_NO_CACHE == 'true' && true || false }}
         load: true
-        tags: stackql/stackql:${{github.sha}},stackql/stackql:v${{env.BUILDMAJORVERSION}}.${{env.BUILDMINORVERSION}}.${{env.BUILDPATCHVERSION}},stackql/stackql:latest
+        tags: ${{ github.repository }}:${{github.sha}},${{ github.repository }}:v${{env.BUILDMAJORVERSION}}.${{env.BUILDMINORVERSION}}.${{env.BUILDPATCHVERSION}},${{ github.repository }}:latest
 
     - name: Debug info
       run: |
@@ -1213,13 +1215,13 @@ jobs:
         echo ""
 
     - name: Run robot mocked functional tests
-      if: success()
+      if: success() && env.CI_IS_EXPRESS != 'true'
       timeout-minutes: ${{ vars.DEFAULT_STEP_TIMEOUT_MIN == '' && 20 || vars.DEFAULT_STEP_TIMEOUT_MIN }}
       run: |
         python cicd/python/build.py --robot-test --config='{ "variables":  { "EXECUTION_PLATFORM": "docker" } }'
 
     - name: Run POSTGRES BACKEND robot mocked functional tests
-      if: success()
+      if: success() && env.CI_IS_EXPRESS != 'true'
       timeout-minutes: ${{ vars.DEFAULT_STEP_TIMEOUT_MIN == '' && 20 || vars.DEFAULT_STEP_TIMEOUT_MIN }}
       run: |
         echo "## Stray flask apps to be killed before robot tests ##"
@@ -1239,7 +1241,7 @@ jobs:
         python cicd/python/build.py --robot-test --config='{ "variables":  { "EXECUTION_PLATFORM": "docker", "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": true, "SQL_BACKEND": "postgres_tcp" } }'
 
     - name: Output from mocked functional tests
-      if: always()
+      if: always() && env.CI_IS_EXPRESS != 'true'
       run: |
         cat ./test/robot/reports/output.xml
 
@@ -1268,10 +1270,11 @@ jobs:
         sudo rm -rf cicd/vol/postgres/persist
 
     - name: Push stackql image to Docker Hub
-      if: ${{ ( success() && github.ref_type == 'branch' && github.ref_name == 'main' && github.repository == 'stackql/stackql' && github.event_name == 'push'  ) || ( success() && github.ref_type == 'tag' && startsWith(github.ref_name, 'build-release') ) }}
+      if: ${{ (github.repository == 'stackql/stackql' ||  github.repository == 'stackql/stackql-devel') &&  vars.CI_SKIP_DOCKER_PUSH != 'true' && ( success() && github.ref_type == 'branch' && github.ref_name == 'main' && github.event_name == 'push'  ) || ( success() && github.ref_type == 'tag' && startsWith(github.ref_name, 'build-release') ) }}
       uses: docker/build-push-action@v5
       with:
         context: .
+        no-cache: ${{ vars.CI_DOCKER_BUILD_NO_CACHE == 'true' && true || false }}
         platforms: linux/arm64,linux/amd64
         build-args: |
           BUILDMAJORVERSION=${{env.BUILDMAJORVERSION}}
@@ -1280,5 +1283,5 @@ jobs:
           RUN_INTEGRATION_TESTS=0
         push: true
         target: app
-        tags: stackql/stackql:${{github.sha}},stackql/stackql:v${{env.BUILDMAJORVERSION}}.${{env.BUILDMINORVERSION}}.${{env.BUILDPATCHVERSION}},stackql/stackql:latest
+        tags: ${{ github.repository }}:${{github.sha}},${{ github.repository }}:v${{env.BUILDMAJORVERSION}}.${{env.BUILDMINORVERSION}}.${{env.BUILDPATCHVERSION}},${{ github.repository }}:latest
 
