@@ -45,6 +45,9 @@ var registryCmd = &cobra.Command{
 
 		var rdr io.Reader
 
+		flagErr := dependentFlagHandler(&runtimeCtx)
+		iqlerror.PrintErrorAndExitOneIfError(flagErr)
+
 		usagemsg := cmd.Long + "\n\n" + cmd.UsageString()
 		if len(args) < 1 {
 			iqlerror.PrintErrorAndExitOneWithMessage(usagemsg)

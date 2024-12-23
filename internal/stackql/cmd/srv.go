@@ -39,6 +39,8 @@ var srvCmd = &cobra.Command{
   `,
 	//nolint:revive // acceptable for now
 	Run: func(cmd *cobra.Command, args []string) {
+		flagErr := dependentFlagHandler(&runtimeCtx)
+		iqlerror.PrintErrorAndExitOneIfError(flagErr)
 		inputBundle, err := entryutil.BuildInputBundle(runtimeCtx)
 		iqlerror.PrintErrorAndExitOneIfError(err)
 		handlerCtx, err := entryutil.BuildHandlerContextNoPreProcess(runtimeCtx, queryCache, inputBundle)

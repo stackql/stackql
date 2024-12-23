@@ -28,6 +28,7 @@ env:
   GH_ACCESS_TOKEN: ${{ secrets.ACTIONS_PRIVATE_PACKAGE_SECRET }}
   PLANCACHEENABLED: "true"
   CI_IS_EXPRESS: ${{ github.ref_type == 'tag' && contains(github.ref_name, 'express') && 'true' || 'false' }}
+  STACKQL_IMAGE_NAME: ${{ vars.STACKQL_IMAGE_NAME != '' && vars.STACKQL_IMAGE_NAME || (github.repository == 'stackql/stackql' ||  github.repository == 'stackql/stackql-devel') && github.repository || 'stackql/stackql' }}
 
 jobs:
 
@@ -1137,6 +1138,8 @@ jobs:
           echo "BUILDMAJORVERSION=$BUILDMAJORVERSION"
           echo "BUILDMINORVERSION=$BUILDMINORVERSION"
           echo "BUILDPATCHVERSION=$BUILDPATCHVERSION"
+          echo "UID=${UID}"
+          echo "GID=${GID}"
         } >> "${GITHUB_ENV}"
     
     - name: Generate rewritten registry for simulations
@@ -1168,7 +1171,6 @@ jobs:
     
     - name: Build Stackql image with buildx
       uses: docker/build-push-action@v5
-      if: ${{ (github.repository == 'stackql/stackql' ||  github.repository == 'stackql/stackql-devel') }}
       with:
         context: .
         build-args: |
@@ -1179,13 +1181,15 @@ jobs:
         target: app
         no-cache: ${{ vars.CI_DOCKER_BUILD_NO_CACHE == 'true' && true || false }}
         load: true
-        tags: ${{ github.repository }}:${{github.sha}},${{ github.repository }}:v${{env.BUILDMAJORVERSION}}.${{env.BUILDMINORVERSION}}.${{env.BUILDPATCHVERSION}},${{ github.repository }}:latest
+        tags: ${{ env.STACKQL_IMAGE_NAME }}:${{github.sha}},${{ env.STACKQL_IMAGE_NAME }}:v${{env.BUILDMAJORVERSION}}.${{env.BUILDMINORVERSION}}.${{env.BUILDPATCHVERSION}},${{ env.STACKQL_IMAGE_NAME }}:latest
 
     - name: Debug info
       run: |
         echo "psql version info: $(psql --version)"
         echo ""
-        echo "docker-compose version info: $(docker-compose -version)"
+        echo "docker-compose version info: $(docker compose -version)"
+        echo ""
+        echo "docker images: $(docker images)"
         echo ""
         echo "robot version info: $(robot --version)"
         echo ""
@@ -1283,5 +1287,5 @@ jobs:
           RUN_INTEGRATION_TESTS=0
         push: true
         target: app
-        tags: ${{ github.repository }}:${{github.sha}},${{ github.repository }}:v${{env.BUILDMAJORVERSION}}.${{env.BUILDMINORVERSION}}.${{env.BUILDPATCHVERSION}},${{ github.repository }}:latest
+        tags: ${{ env.STACKQL_IMAGE_NAME }}:${{github.sha}},${{ env.STACKQL_IMAGE_NAME }}:v${{env.BUILDMAJORVERSION}}.${{env.BUILDMINORVERSION}}.${{env.BUILDPATCHVERSION}},${{ env.STACKQL_IMAGE_NAME }}:latest
 
