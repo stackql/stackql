@@ -3,6 +3,7 @@ version: "3.9"
 services:
   stackqlsrv:
     image: "${STACKQL_IMAGE_NAME:-stackql/stackql}"
+    user: "${UID}:${GID}"
     build:
       context: .
       cache_from: 
