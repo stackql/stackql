@@ -52,6 +52,9 @@ stackql exec -i iqlscripts/create-disk.iql --credentialsfilepath /mnt/c/tmp/stac
 		var err error
 		var rdr io.Reader
 
+		flagErr := dependentFlagHandler(&runtimeCtx)
+		iqlerror.PrintErrorAndExitOneIfError(flagErr)
+
 		if runtimeCtx.CPUProfile != "" {
 			var f *os.File
 			f, err = os.Create(runtimeCtx.CPUProfile)

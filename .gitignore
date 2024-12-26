@@ -30,3 +30,5 @@ y.output
 *.pyc
 
 .stackql/
+
+.venv/

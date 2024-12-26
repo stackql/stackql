@@ -30,6 +30,9 @@ Welcome to the interactive shell for running stackql commands.
 ---
 """
 
+def get_shell_welcome_stdout(env: str) -> str:
+  return ''
+
 _AZURE_INTEGRATION_TESTING_SUB_ID :str = os.environ.get('AZURE_INTEGRATION_TESTING_SUB_ID', '10001000-1000-1000-1000-100010001000')
 
 _AZURE_VM_SIZES_ENUMERATION :str = f"SELECT * FROM azure.compute.virtual_machine_sizes WHERE location = 'Australia East' AND subscriptionId = '{_AZURE_INTEGRATION_TESTING_SUB_ID}';"
@@ -185,6 +188,11 @@ _REGISTRY_DEPRECATED = RegistryCfg(
   get_unix_path(os.path.join('test', 'registry-deprecated')),
   nop_verify=True
 )
+
+def get_local_temp_path(inode_name: str, execution_env: str) -> str:
+  if execution_env == 'docker':
+    return os.path.join('/opt', 'test', 'tmp', inode_name)
+  return os.path.join(REPOSITORY_ROOT, 'test', 'tmp', inode_name)
 
 _AUTH_GOOGLE_SA_KEY_PATH = get_unix_path(os.path.join(REPOSITORY_ROOT, 'test', 'assets', 'credentials', 'dummy', 'google', 'functional-test-dummy-sa-key.json'))
 
@@ -1075,7 +1083,7 @@ def get_variables(execution_env :str, sql_backend_str :str, use_stackql_preinsta
     'SELECT_SUMOLOGIC_COLLECTORS_IDS':                                        SELECT_SUMOLOGIC_COLLECTORS_IDS,
     'SELECT_SUMOLOGIC_COLLECTORS_IDS_EXPECTED':                               SELECT_SUMOLOGIC_COLLECTORS_IDS_EXPECTED,
     'SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD':                            [ SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES, SELECT_AZURE_COMPUTE_PUBLIC_KEYS ],
-    'SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD_EXPECTED':                   _SHELL_WELCOME_MSG + SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_EXPECTED + '\n' + SELECT_AZURE_COMPUTE_PUBLIC_KEYS_EXPECTED,
+    'SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD_EXPECTED':                   get_shell_welcome_stdout(execution_env) + SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_EXPECTED + '\n' + SELECT_AZURE_COMPUTE_PUBLIC_KEYS_EXPECTED,
     'SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD_JSON_EXPECTED':              SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_JSON_EXPECTED + SELECT_AZURE_COMPUTE_PUBLIC_KEYS_JSON_EXPECTED,
     'SHELL_COMMANDS_AZURE_BILLING_PATH_SPLIT_GUARD':                          [ "select name from azure.billing.accounts order by name desc;" ],
     'SHELL_COMMANDS_AZURE_BILLING_PATH_SPLIT_GUARD_JSON_EXPECTED':            SELECT_AZURE_COMPUTE_BILLING_ACCOUNTS_JSON_EXPECTED,
@@ -1096,7 +1104,7 @@ def get_variables(execution_env :str, sql_backend_str :str, use_stackql_preinsta
     'SHELL_SESSION_SIMPLE_COMMANDS':                                          [ SELECT_GITHUB_BRANCHES_NAMES_DESC ],
     'SHELL_SESSION_SIMPLE_COMMANDS_AFTER_ERROR':                              [ SELECT_GITHUB_BRANCHES_NAMES_DESC_WRONG_COLUMN, SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES ],
     'SHELL_SESSION_SIMPLE_COMMANDS_AFTER_ERROR_EXPECTED':                     SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_JSON_EXPECTED,
-    'SHELL_SESSION_SIMPLE_EXPECTED':                                          _SHELL_WELCOME_MSG + SELECT_GITHUB_BRANCHES_NAMES_DESC_EXPECTED,
+    'SHELL_SESSION_SIMPLE_EXPECTED':                                          get_shell_welcome_stdout(execution_env) + SELECT_GITHUB_BRANCHES_NAMES_DESC_EXPECTED,
     'SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR':                   SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR,
     'SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR':                   SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR,
     'SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR_EXPECTED':          SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR_EXPECTED,
@@ -1115,6 +1123,8 @@ def get_variables(execution_env :str, sql_backend_str :str, use_stackql_preinsta
     'UPDATE_GITHUB_ORG':                                                      UPDATE_GITHUB_ORG,
     'VIEW_SELECT_AWS_CLOUD_CONTROL_BUCKET_DETAIL_EXPECTED':                   VIEW_SELECT_AWS_CLOUD_CONTROL_BUCKET_DETAIL_EXPECTED,
     'VIEW_SELECT_STAR_AWS_CLOUD_CONTROL_BUCKET_DETAIL_EXPECTED':              VIEW_SELECT_STAR_AWS_CLOUD_CONTROL_BUCKET_DETAIL_EXPECTED,
+    'TEST_TMP_EXEC_APP_ROOT':                                                 get_local_temp_path('.exec_app_root.stackql', execution_env),
+    'TEST_TMP_EXEC_APP_ROOT_NATIVE':                                          get_local_temp_path('.exec_app_root.stackql', 'native'),
   }
   if execution_env == 'docker':
     rv['AUTH_CFG_STR']                                  = AUTH_CFG_STR_DOCKER

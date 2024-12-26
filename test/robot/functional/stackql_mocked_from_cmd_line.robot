@@ -2148,7 +2148,7 @@ Recently Active Logic Multi Backend
     ...    UserName,
     ...    CASE WHEN ( 
     ...      TO_TIMESTAMP(PasswordLastUsed, 'YYYY-MM-DDTHH:MI:SSZ') 
-    ...      > (now() - interval '7 days' ) )
+    ...      > (now() - interval '20 days' ) )
     ...     then 'true' else 'false' end as active 
     ...    from aws.iam.users 
     ...    WHERE region = 'us-east-1' and PasswordLastUsed is not null
@@ -7323,3 +7323,33 @@ Busted Auth Throws Error Then Set Statement Update Auth Scenario Working
     ...    ${outputErrStr}
     ...    stdout=${CURDIR}/tmp/Busted-Auth-Throws-Error-Then-Set-Statement-Update-Auth-Scenario-Working-Working.tmp
     ...    stderr=${CURDIR}/tmp/Busted-Auth-Throws-Error-Then-Set-Statement-Update-Auth-Scenario-Working-Working-stderr.tmp
+
+Alternate App Root Persists All Temp Materials in Alotted Directory
+    # [Teardown]    Remove Directory    ${TEST_TMP_EXEC_APP_ROOT_NATIVE}    recursive=True
+    ${inputStr} =    Catenate
+    ...    registry pull google v0.1.2;
+    ...    show providers;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |--------|---------|
+    ...    |${SPACE}${SPACE}name${SPACE}${SPACE}|${SPACE}version${SPACE}|
+    ...    |--------|---------|
+    ...    |${SPACE}google${SPACE}|${SPACE}v0.1.2${SPACE}${SPACE}|
+    ...    |--------|---------|
+    ${outputErrStr} =    Catenate    SEPARATOR=\n
+    ...    google provider, version 'v0.1.2' successfully installed
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_MOCKED_CFG_STR}
+    ...    ${AUTH_CFG_DEFECTIVE_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${outputErrStr}
+    ...    stackql_approot=${TEST_TMP_EXEC_APP_ROOT}
+    ...    stdout=${CURDIR}/tmp/Alternate-App-Root-Persists-All-Temp-Materials-in-Alotted-Directory.tmp
+    ...    stderr=${CURDIR}/tmp/Alternate-App-Root-Persists-All-Temp-Materials-in-Alotted-Directory-stderr.tmp
+    Directory Should Exist    ${TEST_TMP_EXEC_APP_ROOT_NATIVE}${/}readline
+    Directory Should Exist    ${TEST_TMP_EXEC_APP_ROOT_NATIVE}${/}src

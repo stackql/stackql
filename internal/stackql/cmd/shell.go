@@ -111,6 +111,9 @@ var shellCmd = &cobra.Command{
 	//nolint:revive // acceptable for now
 	Run: func(command *cobra.Command, args []string) {
 
+		flagErr := dependentFlagHandler(&runtimeCtx)
+		iqlerror.PrintErrorAndExitOneIfError(flagErr)
+
 		cd := presentation.NewPresentationDriver(runtimeCtx)
 
 		outfile, _ := writer.GetDecoratedOutputWriter(runtimeCtx.OutfilePath, cd)
@@ -118,8 +121,7 @@ var shellCmd = &cobra.Command{
 		outErrFile, _ := writer.GetDecoratedOutputWriter(writer.StdErrStr, cd)
 
 		var sb strings.Builder
-		fmt.Fprintln(outfile, "") // necesary hack to get 'square' presentation
-		fmt.Fprintln(outfile, getShellIntroLong())
+		fmt.Fprintln(outErrFile, getShellIntroLong())
 
 		inputBundle, err := entryutil.BuildInputBundle(runtimeCtx)
 		iqlerror.PrintErrorAndExitOneIfError(err)

@@ -2,17 +2,19 @@ version: "3.9"
    
 services:
   stackqlsrv:
-    image: stackql/stackql
+    image: "${STACKQL_IMAGE_NAME:-stackql/stackql}"
     build:
       context: .
       cache_from: 
-        - stackql/stackql
+        - "${STACKQL_IMAGE_NAME:-stackql/stackql}"
         - stackql/integration
         - stackql/stackqlsrvcertificates
       args:
         - BUILDMAJORVERSION=${BUILDMAJORVERSION:-1}
         - BUILDMINORVERSION=${BUILDMINORVERSION:-1}
         - BUILDPATCHVERSION=${BUILDPATCHVERSION:-1}
+        - UID=${UID}
+        - GID=${GID}
     command: 
       - bash
       - -c
@@ -43,6 +45,7 @@ services:
       - ./cicd/vol/srv/credentials:/opt/stackql/srv/credentials:ro
       - ./test/assets/credentials/dummy:/opt/stackql/credentials/dummy:ro
       - ./test/assets/input:/opt/stackql/input:ro
+      - ./test/tmp:/opt/test/tmp:rw
       - ${DB_SETUP_SRC:-./test/db/sqlite}:/opt/stackql/db:ro
       - ${REGISTRY_SRC:-./test/registry-mocked}:/opt/stackql/registry:ro
       - ./cicd/vol/stackql/config:/opt/stackql/.stackql:rw 

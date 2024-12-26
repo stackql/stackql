@@ -4,6 +4,7 @@ import logging
 import re
 import json
 import base64
+import datetime
 
 app = Flask(__name__)
 app.template_folder = os.path.join(os.path.dirname(__file__), "templates")
@@ -226,7 +227,8 @@ def generic_handler(request: Request):
         logger.error(f"Missing template for route: {request}")
         return jsonify({'error': f'Missing template for route: {request}'}), 500
     logger.info(f"routing to template: {route_cfg['template']}")
-    response = make_response(render_template(route_cfg["template"], request=request))
+    twelve_days_ago = (datetime.datetime.now() - datetime.timedelta(days=12)).strftime("%Y-%m-%d")
+    response = make_response(render_template(route_cfg["template"], request=request, twelve_days_ago=twelve_days_ago))
     response.headers.update(route_cfg.get("response_headers", {}))
     response.status_code = route_cfg.get("status", 200)
     return response

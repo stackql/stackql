@@ -220,6 +220,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     rv = [ f"--sqlBackend='{b[13:]}'" if type(b) == str and b.startswith('--sqlBackend=') else b for b in list(rv) ]
     rv = [ f"--export.alias='{b[15:]}'" if type(b) == str and b.startswith('--export.alias=') else b for b in list(rv) ]
     rv = [ f"--http.log.enabled='{b[19:]}'" if type(b) == str and b.startswith('--http.log.enabled=') else b for b in list(rv) ]
+    rv = [ f"--approot='{b[10:]}'" if type(b) == str and b.startswith('--approot=') else b for b in list(rv) ]
     return rv
 
   def _run_stackql_exec_command_docker(
@@ -254,6 +255,9 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     query_from_input_file_path = cfg.pop('stackql_i', False)
     if query_from_input_file_path:
       supplied_args.append(f'--infile={query_from_input_file_path}')
+    approot = cfg.pop('stackql_approot', False)
+    if approot:
+      supplied_args.append(f'--approot={approot}')
     query_from_input_file_data_path = cfg.pop('stackql_iqldata', False)
     if query_from_input_file_data_path:
       supplied_args.append(f'--iqldata={query_from_input_file_data_path}')
@@ -358,6 +362,9 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       supplied_args.append(f"--registry='{registry_cfg_str}'")
     if auth_cfg_str != "":
       supplied_args.append(f"--auth='{auth_cfg_str}'")
+    approot = cfg.pop('stackql_approot', False)
+    if approot:
+      supplied_args.append(f'--approot={approot}')
     if sql_backend_cfg_str != "":
       supplied_args.append(f"--sqlBackend='{sql_backend_cfg_str}'")
     supplied_args.append("--tls.allowInsecure=true")
@@ -445,6 +452,9 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     query_from_input_file_path = cfg.pop('stackql_i', False)
     if query_from_input_file_path:
       supplied_args.append(f'--infile={query_from_input_file_path}')
+    approot = cfg.pop('stackql_approot', False)
+    if approot:
+      supplied_args.append(f'--approot={approot}')
     query_from_input_file_data_path = cfg.pop('stackql_iqldata', False)
     if query_from_input_file_data_path:
       supplied_args.append(f'--iqldata={query_from_input_file_data_path}')
@@ -513,7 +523,11 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     if sql_backend_cfg_str != "":
       supplied_args.append(f"--sqlBackend={sql_backend_cfg_str}")
     supplied_args.append("--tls.allowInsecure=true")
-    supplied_args.append(f'--approot="{_TEST_APP_CACHE_ROOT}"')
+    approot = cfg.pop('stackql_approot', False)
+    if approot:
+      supplied_args.append(f'--approot={approot}')
+    else:
+      supplied_args.append(f'--approot="{_TEST_APP_CACHE_ROOT}"')
     supplied_args.append(f"--execution.concurrency.limit={self._concurrency_limit}")
     supplied_args = supplied_args + list(args)
     stdout = cfg.get('stdout', subprocess.PIPE)
