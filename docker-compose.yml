@@ -2,6 +2,7 @@ version: "3.9"
    
 services:
   stackqlsrv:
+    user: "${UID}:${GID}"
     image: "${STACKQL_IMAGE_NAME:-stackql/stackql}"
     build:
       context: .

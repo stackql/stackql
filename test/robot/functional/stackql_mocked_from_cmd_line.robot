@@ -7325,7 +7325,7 @@ Busted Auth Throws Error Then Set Statement Update Auth Scenario Working
     ...    stderr=${CURDIR}/tmp/Busted-Auth-Throws-Error-Then-Set-Statement-Update-Auth-Scenario-Working-Working-stderr.tmp
 
 Alternate App Root Persists All Temp Materials in Alotted Directory
-    # [Teardown]    Remove Directory    ${TEST_TMP_EXEC_APP_ROOT_NATIVE}    recursive=True
+    [Teardown]    Remove Directory    ${TEST_TMP_EXEC_APP_ROOT_NATIVE}    recursive=True
     ${inputStr} =    Catenate
     ...    registry pull google v0.1.2;
     ...    show providers;
