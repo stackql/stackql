@@ -1,0 +1,71 @@
+name: scenario
+
+on:
+  push:
+    tags:
+      - 'scenario*'
+
+env:
+  TAG_NAME: ${{ github.ref_name }}
+
+jobs:
+  scenario-testing:
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ vars.DEFAULT_JOB_TIMEOUT_MIN == '' && 120 || vars.DEFAULT_JOB_TIMEOUT_MIN }}
+    steps:
+      - name: Ref Parse
+        run: |
+          {
+            echo "runID=$(echo -n '${{ github.ref_name }}' | cut -d '-' -f 2)"
+          } >> "${GITHUB_ENV}"
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v4.1.1
+
+      - name: Download Artifact
+        uses: actions/download-artifact@v4.1.2
+        with:
+          name: stackql_linux_amd64
+          path: build
+          github-token: ${{ secrets.CI_STACKQL_PACKAGE_DOWNLOAD_TOKEN }}
+          repository: stackql/stackql
+          run-id: ${{ env.runID }}
+
+      - name: Stackql permissions
+        run:  |
+          sudo chmod a+rwx build/stackql
+          ls -al build/stackql
+          {
+            echo "$(pwd)/build"
+          } >> "${GITHUB_PATH}"
+
+      - name: Check Stackql Version
+        run: |
+          stackql --version
+      
+      - name: Persist secrets
+        run: |
+          echo "$GCP_RO_SECRET" >> cicd/keys/testing/google-ro-credentials.json
+        shell: bash
+        env:
+          GCP_RO_SECRET: ${{ secrets.CI_SCENARIO_GCP_RO_SECRET }}
+      
+      - name: Install Python dependencies
+        run: |
+          pip3 install -r cicd/requirements.txt
+      
+      - name: Run Walkthrough Scenarios
+        run: |
+          python3 test/python/markdown_testing/markdown_testing.py 2>&1 | tee cicd/log/markdown-testing-results.log 
+      
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: scenario_test_results
+          path: cicd/log/markdown-testing-results.log
+      
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -rf cicd/keys/testing
+
