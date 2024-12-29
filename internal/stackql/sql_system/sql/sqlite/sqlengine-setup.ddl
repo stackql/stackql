@@ -267,7 +267,7 @@ VALUES (
   IIF(JSON_EXTRACT(Properties, ''$.PublicAccessBlockConfiguration.BlockPublicAcls'') = 0, ''false'', ''true'') as BlockPublicAcls,
   IIF(JSON_EXTRACT(Properties, ''$.PublicAccessBlockConfiguration.IgnorePublicAcls'') = 0, ''false'', ''true'') as IgnorePublicAcls,
   JSON_EXTRACT(Properties, ''$.Tags'') as Tags
-  FROM aws.cloud_control.resources WHERE region = ''ap-southeast-2'' and data__TypeName = ''AWS::S3::Bucket'' and data__Identifier = ''stackql-trial-bucket-01''
+  FROM aws.cloud_control.resource WHERE region = ''ap-southeast-2'' and data__TypeName = ''AWS::S3::Bucket'' and data__Identifier = ''stackql-trial-bucket-01''
   ;'
 );
 
@@ -291,7 +291,7 @@ VALUES (
   IIF(JSON_EXTRACT(Properties, ''$.PublicAccessBlockConfiguration.BlockPublicAcls'') = 0, ''false'', ''true'') as BlockPublicAcls,
   IIF(JSON_EXTRACT(Properties, ''$.PublicAccessBlockConfiguration.IgnorePublicAcls'') = 0, ''false'', ''true'') as IgnorePublicAcls,
   JSON_EXTRACT(Properties, ''$.Tags'') as Tags
-  FROM aws.cloud_control.resources WHERE region = ''ap-southeast-2'' and data__TypeName = ''AWS::S3::Bucket''
+  FROM aws.cloud_control_legacy.resources WHERE region = ''ap-southeast-2'' and data__TypeName = ''AWS::S3::Bucket''
   ;'
 );
 

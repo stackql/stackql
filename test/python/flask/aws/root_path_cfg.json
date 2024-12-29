@@ -442,6 +442,54 @@
             "Content-Type": ["application/x-amz-json-1.0"]
         }
     },
+    "POST:/:newkey": {
+        "method": "POST",
+        "path": "/",
+        "headers": {
+            "Authorization": [
+                "^.*SignedHeaders=accept;content-type;host;x-amz-date;x-amz-target.*$"
+            ],
+            "X-Amz-Target": [
+                "CloudApiService.ListResources"
+            ]
+        },
+        "body_conditions": {
+            "type": "JSON",
+            "json": {
+                "TypeName": "AWS::EC2::Instance"
+            },
+            "matchType": "ONLY_MATCHING_FIELDS"
+        },
+        "template": "cloud_control_ec2_instances_list.jinja.json",
+        "status": 200,
+        "response_headers": {
+            "Content-Type": ["application/x-amz-json-1.0"]
+        }
+    },
+    "POST:/:newkey2": {
+        "method": "POST",
+        "path": "/",
+        "headers": {
+            "Authorization": [
+                "^.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$"
+            ],
+            "X-Amz-Target": [
+                "CloudApiService.GetResource"
+            ]
+        },
+        "body_conditions": {
+            "type": "JSON",
+            "json": {
+                "TypeName": "AWS::EC2::Instance"
+            },
+            "matchType": "ONLY_MATCHING_FIELDS"
+        },
+        "template": "cloud_control_ec2_instance_detail.jinja.json",
+        "status": 200,
+        "response_headers": {
+            "Content-Type": ["application/x-amz-json-1.0"]
+        }
+    },
     "POST:/:20": {
         "method": "POST",
         "path": "/",

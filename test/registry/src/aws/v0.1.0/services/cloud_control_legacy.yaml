@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   version: '2021-09-30'
   x-release: v4
-  title: AWS Cloud Control api
+  title: AWS Cloud Control API
   description: 'For more information about Amazon Web Services Cloud Control API, see the <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/what-is-cloudcontrolapi.html">Amazon Web Services Cloud Control API User Guide</a>.'
   x-logo:
     url: 'https://twitter.com/awscloud/profile_image?size=original'
@@ -430,10 +430,9 @@ paths:
             schema:
               properties:
                 MaxResults: 
-                  # $ref: '#/components/schemas/MaxResults'
                   type: integer
                   maximum: 100
-                  minimum: 1                  
+                  minimum: 1
                 NextToken:
                   $ref: '#/components/schemas/NextToken'
                 ResourceModel:
@@ -523,57 +522,8 @@ paths:
           description: Success
 components:
   x-stackQL-resources:
-    resource_raw:
-      name: resource
-      x-cfn-schema-name: ResourceDescription
-      x-example-where-clause: WHERE region = 'us-east-1' AND data__TypeName = '<TypeName>' AND data__Identifier = '<Identifier>'
-      x-type: native      
-      methods:
-        get_resource_raw:
-          operation:
-            $ref: '#/paths/~1?Action=GetResource&Version=2021-09-30/post'
-          request:
-            mediaType: application/x-amz-json-1.0
-          response:
-            mediaType: application/json
-            openAPIDocKey: '200'
-      id: aws.cloud_control.resource_raw
-      sqlVerbs:
-        delete: []
-        insert: []
-        select:
-        - $ref: '#/components/x-stackQL-resources/resource_raw/methods/get_resource_raw'
-        update: []
-      title: resource_raw
-    resource:
-      name: resource
-      x-cfn-schema-name: ResourceDescription
-      x-example-where-clause: WHERE region = 'us-east-1' AND data__TypeName = '<TypeName>' AND data__Identifier = '<Identifier>'
-      x-type: native      
-      methods:
-        get_resource:
-          operation:
-            $ref: '#/paths/~1?Action=GetResource&Version=2021-09-30/post'
-          request:
-            mediaType: application/x-amz-json-1.0
-          response:
-            mediaType: application/json
-            objectKey: '$.ResourceDescription'
-            openAPIDocKey: '200'
-      id: aws.cloud_control.resources
-      sqlVerbs:
-        delete: []
-        insert: []
-        select:
-        - $ref: '#/components/x-stackQL-resources/resource/methods/get_resource'
-        update: []
-      title: resource
     resources:
       name: resources
-      x-cfn-schema-name: ResourceDescriptions
-      x-example-where-clause: WHERE region = 'us-east-1' AND data__TypeName = '<TypeName>'
-      x-description: 'For more information about Amazon Web Services Cloud Control API, see the <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/what-is-cloudcontrolapi.html">Amazon Web Services Cloud Control API User Guide</a>.'
-      x-type: native      
       methods:
         list_resources:
           operation:
@@ -600,6 +550,15 @@ components:
           response:
             mediaType: application/json
             openAPIDocKey: '200'
+        get_resource:
+          operation:
+            $ref: '#/paths/~1?Action=GetResource&Version=2021-09-30/post'
+          request:
+            mediaType: application/x-amz-json-1.0
+          response:
+            mediaType: application/json
+            objectKey: '$.ResourceDescription'
+            openAPIDocKey: '200'
         update_resource:
           operation:
             $ref: '#/paths/~1?Action=UpdateResource&Version=2021-09-30/post'
@@ -615,40 +574,30 @@ components:
         insert:
         - $ref: '#/components/x-stackQL-resources/resources/methods/create_resource'
         select:
+        - $ref: '#/components/x-stackQL-resources/resources/methods/get_resource'
         - $ref: '#/components/x-stackQL-resources/resources/methods/list_resources'
         update:
         - $ref: '#/components/x-stackQL-resources/resources/methods/update_resource'
       title: resources
-    resource_request:
-      name: resource_request
-      x-cfn-schema-name: ProgressEvent
-      x-example-where-clause: WHERE region = 'us-east-1' AND data__RequestToken = '<RequestToken>'
-      x-description: 'For more information about Amazon Web Services Cloud Control API, see the <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/what-is-cloudcontrolapi.html">Amazon Web Services Cloud Control API User Guide</a>.'      
-      x-type: native      
+    resource:
+      name: resource
       methods:
-        get_resource_request:
+        get_resource:
           operation:
-            $ref: '#/paths/~1?Action=GetResourceRequestStatus&Version=2021-09-30/post'
+            $ref: '#/paths/~1?Action=GetResource&Version=2021-09-30/post'
           request:
             mediaType: application/x-amz-json-1.0
           response:
-            mediaType: application/x-amz-json-1.0
-            objectKey: '$.ProgressEvent'
+            mediaType: application/json
+            objectKey: '$.ResourceDescription'
             openAPIDocKey: '200'
-      id: aws.cloud_control.resource_request
+      id: aws.cloud_control.resource
       sqlVerbs:
-        delete: []
-        insert: []
         select:
-        - $ref: '#/components/x-stackQL-resources/resource_request/methods/get_resource_request'
-        update: []
-      title: resource_request
+        - $ref: '#/components/x-stackQL-resources/resources/methods/get_resource'
+      title: resource
     resource_requests:
       name: resource_requests
-      x-cfn-schema-name: ResourceRequestStatusSummaries
-      x-example-where-clause: WHERE region = 'us-east-1' AND data__ResourceRequestStatusFilter = '<ResourceRequestStatusFilter>'
-      x-description: 'For more information about Amazon Web Services Cloud Control API, see the <a href="https://docs.aws.amazon.com/cloudcontrolapi/latest/userguide/what-is-cloudcontrolapi.html">Amazon Web Services Cloud Control API User Guide</a>.'      
-      x-type: native      
       methods:
         list_resource_requests:
           operation:
@@ -658,6 +607,15 @@ components:
           response:
             mediaType: application/x-amz-json-1.0
             objectKey: '$.ResourceRequestStatusSummaries'
+            openAPIDocKey: '200'
+        get_resource_request:
+          operation:
+            $ref: '#/paths/~1?Action=GetResourceRequestStatus&Version=2021-09-30/post'
+          request:
+            mediaType: application/x-amz-json-1.0
+          response:
+            mediaType: application/x-amz-json-1.0
+            objectKey: '$.ProgressEvent'
             openAPIDocKey: '200'
         cancel_resource_request:
           operation:
@@ -673,6 +631,7 @@ components:
         - $ref: '#/components/x-stackQL-resources/resource_requests/methods/cancel_resource_request'
         insert: []
         select:
+        - $ref: '#/components/x-stackQL-resources/resource_requests/methods/get_resource_request'
         - $ref: '#/components/x-stackQL-resources/resource_requests/methods/list_resource_requests'
         update: []
       title: resource_requests

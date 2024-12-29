@@ -207,6 +207,10 @@ class GetMatcherConfig:
 config_path = os.path.join(os.path.dirname(__file__), "root_path_cfg.json")
 cfg_obj: GetMatcherConfig = GetMatcherConfig()
 
+def _extract_request_region(request: Request) -> str:
+    auth_header = request.headers.get("Authorization", "")
+    return '' if len(auth_header.split('/')) < 3 else  auth_header.split('/')[2]
+
 # Routes generated from mockserver configuration
 @app.route('/', methods=['POST', "GET"])
 def handle_root_requests():
@@ -228,7 +232,8 @@ def generic_handler(request: Request):
         return jsonify({'error': f'Missing template for route: {request}'}), 500
     logger.info(f"routing to template: {route_cfg['template']}")
     twelve_days_ago = (datetime.datetime.now() - datetime.timedelta(days=12)).strftime("%Y-%m-%d")
-    response = make_response(render_template(route_cfg["template"], request=request, twelve_days_ago=twelve_days_ago))
+    region = _extract_request_region(request)
+    response = make_response(render_template(route_cfg["template"], request=request, region=region, twelve_days_ago=twelve_days_ago))
     response.headers.update(route_cfg.get("response_headers", {}))
     response.status_code = route_cfg.get("status", 200)
     return response

@@ -16757,12 +16757,12 @@ components:
                 JSON_EXTRACT(detail.Properties, '$.Affinity') as affinity,
                 JSON_EXTRACT(detail.Properties, '$.CreditSpecification') as credit_specification
                 FROM aws.cloud_control.resources listing
-                LEFT OUTER JOIN aws.cloud_control.resource detail
+                INNER JOIN aws.cloud_control.resource detail
                 ON detail.data__Identifier = listing.Identifier
                 AND detail.region = listing.region
                 WHERE listing.data__TypeName = 'AWS::EC2::Instance'
                 AND detail.data__TypeName = 'AWS::EC2::Instance'
-                AND listing.region = 'us-east-1'
+                AND listing.region IN ('us-west-1', 'ap-southeast-1')
               fallback:
                 predicate: sqlDialect == "postgres" && requiredParams == [ data__Identifier ]
                 ddl: |-
@@ -16872,12 +16872,12 @@ components:
                     json_extract_path_text(detail.Properties, 'Affinity') as affinity,
                     json_extract_path_text(detail.Properties, 'CreditSpecification') as credit_specification
                     FROM aws.cloud_control.resources listing
-                    LEFT OUTER JOIN aws.cloud_control.resource detail
+                    INNER JOIN aws.cloud_control.resource detail
                     ON detail.data__Identifier = listing.Identifier
                     AND detail.region = listing.region
                     WHERE listing.data__TypeName = 'AWS::EC2::Instance'
                     AND detail.data__TypeName = 'AWS::EC2::Instance'
-                    AND listing.region = 'us-east-1'
+                    AND listing.region IN ('us-west-1', 'ap-southeast-1')
     instances_list_only:
       name: instances_list_only
       id: aws.ec2_nextgen.instances_list_only

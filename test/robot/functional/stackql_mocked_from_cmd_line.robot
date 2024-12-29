@@ -7353,3 +7353,35 @@ Alternate App Root Persists All Temp Materials in Alotted Directory
     ...    stderr=${CURDIR}/tmp/Alternate-App-Root-Persists-All-Temp-Materials-in-Alotted-Directory-stderr.tmp
     Directory Should Exist    ${TEST_TMP_EXEC_APP_ROOT_NATIVE}${/}readline
     Directory Should Exist    ${TEST_TMP_EXEC_APP_ROOT_NATIVE}${/}src
+
+View Tuple Replacement Working As Exemplified by AWS EC2 Instances List and Detail
+    ${inputStr} =    Catenate
+    ...    SELECT region, instance_id, tenancy, security_groups 
+    ...    FROM aws.ec2_nextgen.instances 
+    ...    WHERE region IN ('us-east-1', 'ap-southeast-2', 'ap-southeast-1') order by region, instance_id;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |----------------|---------------------|---------|--------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}region${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}instance_id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}tenancy${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}security_groups${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |----------------|---------------------|---------|--------------------------|
+    ...    |${SPACE}ap-southeast-2${SPACE}|${SPACE}i-00000000000000003${SPACE}|${SPACE}default${SPACE}|${SPACE}\["aws-stack-dev-web-sg"]${SPACE}|
+    ...    |----------------|---------------------|---------|--------------------------|
+    ...    |${SPACE}ap-southeast-2${SPACE}|${SPACE}i-00000000000000003${SPACE}|${SPACE}default${SPACE}|${SPACE}\["aws-stack-dev-web-sg"]${SPACE}|
+    ...    |----------------|---------------------|---------|--------------------------|
+    ...    |${SPACE}ap-southeast-2${SPACE}|${SPACE}i-00000000000000003${SPACE}|${SPACE}default${SPACE}|${SPACE}\["aws-stack-dev-web-sg"]${SPACE}|
+    ...    |----------------|---------------------|---------|--------------------------|
+    ...    |${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}i-00000000000000003${SPACE}|${SPACE}default${SPACE}|${SPACE}\["aws-stack-dev-web-sg"]${SPACE}|
+    ...    |----------------|---------------------|---------|--------------------------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_DEFECTIVE_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/View-Tuple-Replacement-Working-As-Exemplified-by-AWS-EC2-Instances-List-and-Detail.tmp
+    ...    stderr=${CURDIR}/tmp/View-Tuple-Replacement-Working-As-Exemplified-by-AWS-EC2-Instances-List-and-Detail-stderr.tmp
+    ...    repeat_count=20
