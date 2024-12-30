@@ -250,11 +250,12 @@ func (sp *standardParamSplitter) assembleSplitParams(
 	combinations := combinationComposerObj.getCombinations()
 	_, isAnythingSplit := len(combinations), combinationComposerObj.getIsAnythingSplit()
 	for _, paramCombination := range combinations {
+		com := paramCombination
 		splitAnnotationCtx := taxonomy.NewStaticStandardAnnotationCtx(
 			rawAnnotationCtx.GetSchema(),
 			rawAnnotationCtx.GetHIDs(),
 			rawAnnotationCtx.GetTableMeta().Clone(),
-			paramCombination,
+			com,
 		)
 		sp.splitAnnotationContextMap.Put(rawAnnotationCtx, splitAnnotationCtx)
 		// TODO: this has gotta replace the original and also be duplicated
@@ -288,7 +289,7 @@ func (sp *standardParamSplitter) splitSingleParam(
 	return rv, isSplit
 }
 
-//nolint:funlen,gocognit // inherently complex functionality
+//nolint:funlen,gocognit,nestif // inherently complex functionality
 func (pr *standardParameterRouter) GetOnConditionDataFlows() (dataflow.Collection, error) {
 	paramSplitterObj := newParamSplitter(pr.tableToAnnotationCtx, pr.dataFlowCfg)
 	isInitiallySplit, splitErr := paramSplitterObj.split()
@@ -310,6 +311,8 @@ func (pr *standardParameterRouter) GetOnConditionDataFlows() (dataflow.Collectio
 		}
 		var dependencyTable sqlparser.TableExpr
 		var dependencies []taxonomy.AnnotationCtx
+		var destinations []taxonomy.AnnotationCtx
+
 		var destColumn *sqlparser.ColName
 		var srcExpr sqlparser.Expr
 		switch l := k.Left.(type) {
@@ -329,6 +332,12 @@ func (pr *standardParameterRouter) GetOnConditionDataFlows() (dataflow.Collectio
 				} else {
 					dependencies = append(dependencies, lhr)
 				}
+				splitDestinations, isDestinationSplit := splitAnnotationContextMap.Get(destHierarchy)
+				if isDestinationSplit {
+					destinations = append(destinations, splitDestinations...)
+				} else {
+					destinations = append(destinations, destHierarchy)
+				}
 				dependencyTable = candidateTable
 				srcExpr = k.Left
 			}
@@ -342,6 +351,12 @@ func (pr *standardParameterRouter) GetOnConditionDataFlows() (dataflow.Collectio
 				dependencies = append(dependencies, splitDependencies...)
 			} else {
 				dependencies = append(dependencies, annCtx)
+			}
+			splitDestinations, isDestinationSplit := splitAnnotationContextMap.Get(destHierarchy)
+			if isDestinationSplit {
+				destinations = append(destinations, splitDestinations...)
+			} else {
+				destinations = append(destinations, destHierarchy)
 			}
 			dependencyTable = te
 		}
@@ -368,6 +383,12 @@ func (pr *standardParameterRouter) GetOnConditionDataFlows() (dataflow.Collectio
 				} else {
 					dependencies = append(dependencies, rhr)
 				}
+				splitDestinations, isDestinationSplit := splitAnnotationContextMap.Get(destHierarchy)
+				if isDestinationSplit {
+					destinations = append(destinations, splitDestinations...)
+				} else {
+					destinations = append(destinations, destHierarchy)
+				}
 				dependencyTable = candidateTable
 			}
 		case *sqlparser.FuncExpr:
@@ -381,16 +402,25 @@ func (pr *standardParameterRouter) GetOnConditionDataFlows() (dataflow.Collectio
 			} else {
 				dependencies = append(dependencies, annCtx)
 			}
+			splitDestinations, isDestinationSplit := splitAnnotationContextMap.Get(destHierarchy)
+			if isDestinationSplit {
+				destinations = append(destinations, splitDestinations...)
+			} else {
+				destinations = append(destinations, destHierarchy)
+			}
 			dependencyTable = te
 		}
 		if !selfTableCited {
 			return nil, fmt.Errorf("table join ON comparison '%s' referencing incomplete", sqlparser.String(k))
 		}
-		// rv[dependencies] = destHierarchy
 
-		for _, dependency := range dependencies {
+		for i, dependency := range dependencies {
 			srcVertex := rv.UpsertStandardDataFlowVertex(dependency, dependencyTable)
-			destVertex := rv.UpsertStandardDataFlowVertex(destHierarchy, destinationTable)
+			destination := destHierarchy
+			if i < len(destinations) {
+				destination = destinations[i]
+			}
+			destVertex := rv.UpsertStandardDataFlowVertex(destination, destinationTable)
 
 			err := rv.AddOrUpdateEdge(
 				srcVertex,

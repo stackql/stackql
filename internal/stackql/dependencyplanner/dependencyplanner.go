@@ -586,6 +586,18 @@ func (dp *standardDependencyPlanner) processAcquire(
 	return anTab, dp.tcc, nil
 }
 
+func (dp *standardDependencyPlanner) isVectorParam(param interface{}) bool {
+	paramMeta, isParamMeta := param.(parserutil.ParameterMetadata)
+	if isParamMeta {
+		val := paramMeta.GetVal()
+		_, valIsSQLVal := val.(sqlparser.ValTuple)
+		if valIsSQLVal {
+			return true
+		}
+	}
+	return false
+}
+
 //nolint:gocognit,nestif // live with it
 func (dp *standardDependencyPlanner) getStreamFromEdge(
 	e dataflow.Edge,
@@ -639,7 +651,8 @@ func (dp *standardDependencyPlanner) getStreamFromEdge(
 	params := toAc.GetParameters()
 	staticParams := make(map[string]interface{})
 	for k, v := range params {
-		if _, ok := incomingCols[k]; !ok {
+		isVector := dp.isVectorParam(v)
+		if _, ok := incomingCols[k]; !ok && !isVector {
 			staticParams[k] = v
 			incomingCols[k] = struct{}{}
 		}

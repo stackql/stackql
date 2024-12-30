@@ -1486,7 +1486,7 @@ components:
               JSON_EXTRACT(Properties, '$.CertificateChain') as certificate_chain,
               JSON_EXTRACT(Properties, '$.Status') as status,
               JSON_EXTRACT(Properties, '$.CompleteCertificateChain') as complete_certificate_chain
-              FROM aws.cloud_control.resources WHERE data__TypeName = 'AWS::ACMPCA::CertificateAuthorityActivation'
+              FROM aws.cloud_control.resource WHERE data__TypeName = 'AWS::ACMPCA::CertificateAuthorityActivation'
               AND data__Identifier = '<CertificateAuthorityArn>'
               AND region = 'us-east-1'
             fallback:
