@@ -55,6 +55,9 @@ jobs:
           pip3 install -r cicd/requirements.txt
       
       - name: Run Walkthrough Scenarios
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.CI_SCENARIO_RO_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.CI_SCENARIO_RO_AWS_SECRET_ACCESS_KEY }}
         run: |
           python3 test/python/markdown_testing/markdown_testing.py 2>&1 | tee cicd/log/markdown-testing-results.log 
       

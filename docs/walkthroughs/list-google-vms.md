@@ -1,20 +1,20 @@
 
 ## Setup
 
-First, create a google service account key using the GCP Console, per [the GCP documentation](https://cloud.google.com/iam/docs/keys-create-delete).  Grant the service account at least `Viewer` role equivalent privileges, per [the GCP dumentation](https://cloud.google.com/iam/docs/create-service-agents#grant-roles).
+First, create a google service account key using the GCP Console, per [the GCP documentation](https://cloud.google.com/iam/docs/keys-create-delete).  Grant the service account at least `Viewer` role equivalent privileges, per [the GCP documentation](https://cloud.google.com/iam/docs/create-service-agents#grant-roles).
 
 Then, do this in bash:
 
-```bash setup stackql-shell credentials-path=cicd/keys/testing/google-ro-credentials.json app-root-path=./test/tmp/.get-google-vms.stackql
+```bash setup stackql-shell credentials_path=cicd/keys/testing/google-ro-credentials.json app_root_path=./test/tmp/.get-google-vms.stackql
 
-export GOOGLE_CREDENTIALS="$(cat <credentials-path>)";
+export GOOGLE_CREDENTIALS="$(cat <<credentials_path>>)";
 
-stackql shell --approot=<app-root-path>
+stackql shell --approot=<<app_root_path>>
 ```
 
 ## Method
 
-Do this in the `stackql` shell, replacing `<project>` with your GCP project name, and `<zone>` as desired, eg: `australia-southeast1-a`:
+Do this in the `stackql` shell, replacing `<<project>>` with your GCP project name, and `<<zone>>` as desired, eg: `australia-southeast1-a`:
 
 ```sql stackql-shell input required project=stackql-demo zone=australia-southeast1-a
 
@@ -25,8 +25,8 @@ select
   id 
 FROM google.compute.instances 
 WHERE 
-  project = '<project>' 
-  AND zone = '<zone>'
+  project = '<<project>>' 
+  AND zone = '<<zone>>'
 ;
 
 ```
@@ -55,8 +55,8 @@ goodbye
 
 ## Cleanup
 
-```bash teardown best-effort app-root-path=./test/tmp/.get-google-vms.stackql
+```bash teardown best-effort app_root_path=./test/tmp/.get-google-vms.stackql
 
-rm -rf <app-root-path>
+rm -rf <<app_root_path>>
 
 ```
