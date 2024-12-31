@@ -10,7 +10,8 @@ import jinja2
 
 from tabulate import tabulate
 
-_REPOSITORY_ROOT_PATH = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..'))
+import argparse
+
 
 """
 Intentions:
@@ -18,6 +19,19 @@ Intentions:
   - Support markdown parsing.
   - Support sequential markdown code block execution, leveraging [info strings](https://spec.commonmark.org/0.30/#info-string).
 """
+
+
+def parse_args() -> argparse.Namespace:
+    """
+    Parse the arguments.
+    """
+    parser = argparse.ArgumentParser(description='Create a token.')
+    parser.add_argument('--test-root', type=str, help='The test root.', default=os.path.join(_REPOSITORY_ROOT_PATH, 'docs', 'walkthroughs'))
+    return parser.parse_args()
+
+
+_REPOSITORY_ROOT_PATH = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..'))
+
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
@@ -363,10 +377,6 @@ class AllWalkthroughsRunner(object):
                         e2e: SimpleRunner = SimpleRunner(workload)
                         result = e2e.run()
                         results.append(result)
-                    if recursive:
-                        for dir in dirs:
-                            dir_path = os.path.join(root, dir)
-                            results += self.run_all([dir_path], recursive)
                 continue
             is_file = os.path.isfile(inode_path)
             if is_file:
@@ -382,7 +392,7 @@ class AllWalkthroughsRunner(object):
             raise FileNotFoundError(f'Path not tractable: {inode_path}')
         return results
 
-def collate_results(results: List[WalkthroughResult]) -> bool:
+def _collate_results(results: List[WalkthroughResult]) -> bool:
     failed: int = 0
     for result in results:
         if result.rc != 0 or not result.passes_stdout_check or not result.passes_stderr_check:
@@ -391,14 +401,32 @@ def collate_results(results: List[WalkthroughResult]) -> bool:
     print(tabulate([[result.name, result.rc, result.passes_stdout_check, result.passes_stderr_check] for result in results], headers=['Test Name', 'Return Code', 'Passes Stdout Checks', 'Passes Stderr Checks']))
     return failed == 0
 
-def main():
+def run_tests(root_dir: str) -> List[WalkthroughResult]:
+    """
+    Run all tests.
+    A decent entry point for a test harness.
+
+    :param root_dir: The root directory.
+
+    :return: The results.
+    """
     runner: AllWalkthroughsRunner = AllWalkthroughsRunner()
-    results: List[WalkthroughResult] = runner.run_all([os.path.join(_REPOSITORY_ROOT_PATH, 'docs', 'walkthroughs')])
-    if collate_results(results):
+    results: List[WalkthroughResult] = runner.run_all([root_dir])
+    return results
+
+
+def _process_tests(root_dir: str) -> List[WalkthroughResult]:
+    results: List[WalkthroughResult] = run_tests(root_dir)
+    if _collate_results(results):
         print('All tests passed.')
         sys.exit(0)
     print('Some tests failed.')
     sys.exit(1)
 
+def _main() -> None:
+    args :argparse.Namespace = parse_args()
+    _process_tests(args.test_root)
+
+
 if __name__ == '__main__':
-    main()
+    _main()

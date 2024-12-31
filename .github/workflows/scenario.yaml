@@ -7,6 +7,10 @@ on:
 
 env:
   TAG_NAME: ${{ github.ref_name }}
+  RUNTYPE_READ_ONLY: readonly
+  RUNTYPE_READ_WRITE: readwrite
+  RUNTYPE_DEPLOY: deploy
+  RUNTYPE_ALL: all
 
 jobs:
   scenario-testing:
@@ -15,8 +19,28 @@ jobs:
     steps:
       - name: Ref Parse
         run: |
+          _defaultRunType="${{ env.RUNTYPE_READ_ONLY }}"
+          runID=$(echo -n '${{ github.ref_name }}' | cut -d '-' -f 2)"
+          runType=$(echo -n '${{ github.ref_name }}' | cut -d '-' -f 3)"
+          repositoryShorthand=$(echo -n '${{ github.ref_name }}' | rev | cut -d '-' -f 1 | rev)
+          artifactRepositoryFullName='stackql/stackql'
+          if [ "$repositoryShorthand" = "devel" ]; then
+            artifactRepositoryFullName='stackql/stackql-devel'
+          fi
+          if [ "$runType" = "" ]; then
+            runType="$_defaultRunType"
+          elif [ "$runType" != "${{ env.RUNTYPE_READ_ONLY }}" ] \
+                 && [ "$runType" != "${{ env.RUNTYPE_READ_WRITE }}" ] \
+                 && [ "$runType" != "${{ env.RUNTYPE_DEPLOY }}" ] \
+                 && [ "$runType" != "${{ env.RUNTYPE_ALL }}" ]
+          then
+            echo "Invalid run type: $runType"
+            exit 1
+          fi
           {
-            echo "runID=$(echo -n '${{ github.ref_name }}' | cut -d '-' -f 2)"
+            echo "runID=$runID"
+            echo "artifactRepositoryFullName=$artifactRepositoryFullName"
+            echo "runType=$runType"
           } >> "${GITHUB_ENV}"
 
       - name: Check out code into the Go module directory
@@ -28,7 +52,7 @@ jobs:
           name: stackql_linux_amd64
           path: build
           github-token: ${{ secrets.CI_STACKQL_PACKAGE_DOWNLOAD_TOKEN }}
-          repository: stackql/stackql
+          repository: ${{ env.artifactRepositoryFullName }}
           run-id: ${{ env.runID }}
 
       - name: Stackql permissions
@@ -46,26 +70,45 @@ jobs:
       - name: Persist secrets
         run: |
           echo "$GCP_RO_SECRET" >> cicd/keys/testing/google-ro-credentials.json
+          echo "$GCP_RW_SECRET" >> cicd/keys/testing/google-rw-credentials.json
         shell: bash
         env:
           GCP_RO_SECRET: ${{ secrets.CI_SCENARIO_GCP_RO_SECRET }}
+          GCP_RW_SECRET: ${{ secrets.CI_SCENARIO_GCP_RW_SECRET }}
       
       - name: Install Python dependencies
         run: |
           pip3 install -r cicd/requirements.txt
       
-      - name: Run Walkthrough Scenarios
+      - name: Run Read Only Walkthrough Scenarios
+        if: ${{ env.runType == env.RUNTYPE_READ_ONLY || env.runType == env.RUNTYPE_ALL }}
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.CI_SCENARIO_RO_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.CI_SCENARIO_RO_AWS_SECRET_ACCESS_KEY }}
         run: |
-          python3 test/python/markdown_testing/markdown_testing.py 2>&1 | tee cicd/log/markdown-testing-results.log 
+          python3 test/python/markdown_testing/markdown_testing.py --test-root=docs/walkthroughs/readonly 2>&1 | tee cicd/log/markdown-readonly-testing-results.log
       
+      - name: Run Read Write Walkthrough Scenarios
+        if: ${{ env.runType == env.RUNTYPE_READ_WRITE || env.runType == env.RUNTYPE_ALL }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.CI_SCENARIO_RW_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.CI_SCENARIO_RW_AWS_SECRET_ACCESS_KEY }}
+        run: |
+          python3 test/python/markdown_testing/markdown_testing.py --test-root=docs/walkthroughs/readwrite 2>&1 | tee cicd/log/markdown-readwrite-testing-results.log
+      
+      - name: Run Deploy Walkthrough Scenarios
+        if: ${{ env.runType == env.RUNTYPE_DEPLOY || env.runType == env.RUNTYPE_ALL }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.CI_SCENARIO_RW_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.CI_SCENARIO_RW_AWS_SECRET_ACCESS_KEY }}
+        run: |
+          python3 test/python/markdown_testing/markdown_testing.py --test-root=docs/walkthroughs/deploy 2>&1 | tee cicd/log/markdown-deploy-testing-results.log
+
       - name: Upload Test Results
         uses: actions/upload-artifact@v4.3.1
         with:
           name: scenario_test_results
-          path: cicd/log/markdown-testing-results.log
+          path: cicd/log/markdown-*.log
       
       - name: Cleanup
         if: always()
