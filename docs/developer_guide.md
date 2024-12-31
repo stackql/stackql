@@ -15,6 +15,7 @@ The short of things is that for basic build and unit testing, these are needed:
 
 - Install `golang` on your system **if you do not already have version >= 1.21**, per [the `golang` doco](https://go.dev/doc/install).
 - Install `python` on your system **if you do not already have version >= 3.11**, available from [the `python` website](https://www.python.org/downloads/) and numerous package managers.
+- Using a `venv` or otherwise, install the requisite python packages, eg: (system permitting) from the repository root: `pip install -r cicd/requirements.txt`.
 
 Then, each of these should be run from the repository root:
 
@@ -25,7 +26,6 @@ Then, each of these should be run from the repository root:
 
 For serious development, simulated integration tests are essential.  So, there are more dependencies:
 
-- Install the python dependencies (including `robot` framework).  Simplest way, system permitting, is `pip install -r cicd/requirements.txt`.
 - Install `psql`.  On some systems, this can be done as client only and/or with various package managers; fallback is to just [install postgres manually](https://www.postgresql.org/download/).
 
 Having installed all dependencies, the `robot` tests should be run from the repository root directory (this relies upon the executable in `./build/stackql`, built above):
@@ -88,8 +88,14 @@ robot --variable SHOULD_RUN_DOCKER_EXTERNAL_TESTS:true -d test/robot/functional 
 
 ### Manually Testing
 
-Please see [the mock testing doco](/test/mockserver/README.md#manually-testing-mocks).
+Please see [the mock testing doco](/test/python/flask/README.md).
 
+
+## Debuggers
+
+The `vscode` tooling configuration is mostly ready to use, as seen in the `.vscode` directory.  You will need to create a file at the `.gitignore`d location `.vscode/.env`.  Simplest thing just copy the example to get going: `cp .vscode/example.env .vscode/.env`.
+
+The debugger config is pretty messy, and probably with time we will slim it down.  That said, it is far from useless as an example.
 
 ## Provider development
 

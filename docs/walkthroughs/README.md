@@ -16,7 +16,13 @@ in order to setup, run, verify and tear down testing scenarios.  The tests *can*
 
 ## Running from CI
 
-The canonical, **ruleset-protected** tag form is `scenario-<run_number>-<anything>`.  At this stage, `run_number` must refer to a `stackql` run for which a `linux` `amd64` stackql binary archive is present at the time the tag is run.  
+The canonical, **ruleset-protected** tag form is `scenario-<<run_number>>-<<anything>>`.  At this stage, `run_number` must refer to a `stackql` run for which a `linux` `amd64` stackql binary archive is present at the time the tag is run.  
 
+
+## Plumbing
+
+These walkthroughs are runnable using CI.  This is built upon:
+
+- `jinja2` templates, with `<<` and `>>` as delimiters.
 
 

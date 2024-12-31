@@ -6,6 +6,10 @@ import subprocess, os, sys, shutil, io
 
 import json
 
+import jinja2
+
+from tabulate import tabulate
+
 _REPOSITORY_ROOT_PATH = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..'))
 
 """
@@ -17,6 +21,15 @@ Intentions:
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
+
+
+_TEMPLATE_ENV = jinja2.Environment(
+    trim_blocks=True,
+    block_start_string='<%',
+    block_end_string='%>',
+    variable_start_string='<<',
+    variable_end_string='>>'
+)
 
 class ASTNode(object):
 
@@ -83,7 +96,9 @@ class ASTNode(object):
         return self.node.get('lang', '')
     
     def expand(self) -> str:
-        return self.get_text().replace("<", "{").replace(">", "}").format(**self._local_vars)
+        tpl = _TEMPLATE_ENV.from_string(self.get_text())
+        rv = tpl.render(**self._local_vars)
+        return rv
 
     def __str__(self):
         return json.dumps(self.node, indent=2)
@@ -94,8 +109,12 @@ class ASTNode(object):
 
 class MdAST(object):
 
-    def __init__(self, ast: List[ASTNode]):
+    def __init__(self, ast: List[ASTNode], path: str):
         self._ast: List[ASTNode] = ast
+        self._path: str = path
+
+    def get_name(self) -> str:
+        return os.path.basename(self._path)
 
     def get_ordered(self) -> List[ASTNode]:
         return self._ast
@@ -118,7 +137,7 @@ class MdParser(object):
         with open(file_path, 'r') as f:
             txt = f.read()
         raw_list: List[dict] = markdown(txt)
-        return MdAST([ASTNode(node) for node in raw_list])
+        return MdAST([ASTNode(node) for node in raw_list], file_path)
     
 class Expectation(object):
 
@@ -166,15 +185,20 @@ class WorkloadDTO(object):
 
     def __init__(
         self,
+        name: str,
         setup: str,
         in_session: List[str],
         teardown: str,
         expectations: List[Expectation]
     ):
+        self._name = name
         self._setup = setup
         self._in_session = in_session
         self._teardown = teardown
         self._expectations = expectations
+
+    def get_name(self) -> str:
+        return self._name
 
     def get_setup(self) -> List[str]:
         return self._setup
@@ -244,14 +268,25 @@ class MdOrchestrator(object):
                         invocation_count += 1
                     else:
                         raise KeyError(f'Maximum invocation blocks exceeded: {self._max_invocations_blocks}')
-        return WorkloadDTO(setup_str, in_session_commands, teardown_str, expectations)
+        return WorkloadDTO(ast.get_name(), setup_str, in_session_commands, teardown_str, expectations)
 
 class WalkthroughResult:
 
-  def __init__(self, stdout_str :str, stderr_str :str, rc :int) -> None:
+  def __init__(
+    self,
+    name: str,
+    stdout_str :str,
+    stderr_str :str, 
+    rc :int,
+    passes_stdout: bool,
+    passes_stderr: bool
+  ) -> None:
+    self.name: str = name 
     self.stdout :str = stdout_str
     self.stderr :str = stderr_str
     self.rc = rc
+    self.passes_stdout_check = passes_stdout
+    self.passes_stderr_check = passes_stderr
 
 class SimpleRunner(object):
 
@@ -276,12 +311,28 @@ class SimpleRunner(object):
         stdout_str: str = stdout_bytes.decode(sys.getdefaultencoding())
         stderr_str: str = stderr_bytes.decode(sys.getdefaultencoding())
 
+        fails_stdout: bool = False
+        fails_stderr: bool = False
+
         for expectation in self._workload.get_expectations():
+            passes_stdout: bool = expectation.passes_stdout(stdout_str)
+            passes_stderr: bool = expectation.passes_stderr(stderr_str)
+            if not passes_stdout:
+                fails_stdout = True
+            if not passes_stderr:
+                fails_stderr = True
             print(f'Expectation: {expectation}')
-            print(f'Passes stdout: {expectation.passes_stdout(stdout_str)}')
-            print(f'Passes stderr: {expectation.passes_stderr(stderr_str)}')
+            print(f'Passes stdout: {passes_stdout}')
+            print(f'Passes stderr: {passes_stderr}')
             print('---')
-        return WalkthroughResult(stdout_str, stderr_str, pr.returncode)
+        return WalkthroughResult(
+            self._workload.get_name(),
+            stdout_str,
+            stderr_str,
+            pr.returncode,
+            not fails_stdout,
+            not fails_stderr
+        )
 
 class AllWalkthroughsRunner(object):
     
@@ -324,13 +375,23 @@ class AllWalkthroughsRunner(object):
             raise FileNotFoundError(f'Path not tractable: {inode_path}')
         return results
 
+def collate_results(results: List[WalkthroughResult]) -> bool:
+    failed: int = 0
+    for result in results:
+        if result.rc != 0 or not result.passes_stdout_check or not result.passes_stderr_check:
+            failed += 1
+    print(f'Failed test count: {failed}')
+    print(tabulate([[result.name, result.rc, result.passes_stdout_check, result.passes_stderr_check] for result in results], headers=['Test Name', 'Return Code', 'Passes Stdout Checks', 'Passes Stderr Checks']))
+    return failed == 0
+
 def main():
     runner: AllWalkthroughsRunner = AllWalkthroughsRunner()
     results: List[WalkthroughResult] = runner.run_all([os.path.join(_REPOSITORY_ROOT_PATH, 'docs', 'walkthroughs')])
-    for result in results:
-        print(f'RC: {result.rc}')
-        print(f'STDOUT: {result.stdout}')
-        print(f'STDERR: {result.stderr}')
+    if collate_results(results):
+        print('All tests passed.')
+        sys.exit(0)
+    print('Some tests failed.')
+    sys.exit(1)
 
 if __name__ == '__main__':
     main()
