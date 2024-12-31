@@ -321,7 +321,14 @@ class SimpleRunner(object):
                 fails_stdout = True
             if not passes_stderr:
                 fails_stderr = True
+            print('---')
             print(f'Expectation: {expectation}')
+            print('stdout:')
+            print(stdout_str)
+            print('')
+            print('stderr:')
+            print(stderr_str)
+            print('')
             print(f'Passes stdout: {passes_stdout}')
             print(f'Passes stderr: {passes_stderr}')
             print('---')
