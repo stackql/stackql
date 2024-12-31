@@ -11,6 +11,8 @@ on:
       - "**/*.md"
       - "docs/**"
       - "licenses/**"
+      - "test/python/markdown_testing/**"
+      - ".github/workflows/scenario.yaml"
   pull_request:
     branches:
       - main
@@ -20,6 +22,8 @@ on:
       - "docs/**"
       - "examples/**"
       - "licenses/**"
+      - "test/python/markdown_testing/**"
+      - ".github/workflows/scenario.yaml"
 
 env:
   GOTESTCMD: "go test -timeout 1200s --tags \"sqlite_stackql\" -v ./..."
