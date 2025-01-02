@@ -1,4 +1,4 @@
 
-## Lifecycle managment with `stackql`
+## Lifecycle management with `stackql`
 
 
