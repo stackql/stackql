@@ -20,7 +20,7 @@ First, create a google service account key using the GCP Console, per [the GCP d
 
 Then, do this in bash:
 
-```bash setup stackql-shell credentials_path=cicd/keys/testing/google-rw-credentials.json app_root_path=./test/tmp/.create-google-vm-webserver-qs.stackql
+```bash setup stackql-shell credentials_path=cicd/keys/testing/google-rw-credentials.json app_root_path=./test/tmp/.create-google-vm-webserver.stackql
 
 export GOOGLE_CREDENTIALS="$(cat <<credentials_path>>)";
 
@@ -31,7 +31,7 @@ stackql shell --approot=<<app_root_path>>
 
 Do this in the `stackql` shell, replacing `<<project>>` with your GCP project name, '<<region>>', and `<<zone>>` as desired, eg: `australia-southeast1-a`:
 
-```sql stackql-shell input required project=stackql-demo zone=australia-southeast1-a final-capture=public_ipv4_address
+```sql stackql-shell input required my_ephemeral_network_name=my-ephemeral-network-01 my_vm_name=my-ephemeral-vm-01 project=stackql-demo region=australia-southeast2 zone=australia-southeast2-a 
 
 registry pull google;
 
@@ -83,23 +83,36 @@ select
     ]'
 ;
 
-select    json_extract(networkInterfaces, '$.[0].accessConfigs.natIp') as public_ipv4_address from   google.comput.instances where   project = '<<project>>'   and zone = '<<zone>>'   and instance = '<<my_vm_name>>' ;
-
 ```
 
-```bash expect-stdoout-contains=auto-provisioned
+```bash expect-stdoout-contains=auto-provisioned app_root_path=./test/tmp/.create-google-vm-webserver.stackql my_vm_name=my-ephemeral-vm-01 project=stackql-demo zone=australia-southeast2 zone=australia-southeast2-a
 
 export GOOGLE_CREDENTIALS="$(cat <<credentials_path>>)";
 
-getAddressQuery="select json_extract(networkInterfaces, '$.[0].accessConfigs.natIp') as public_ipv4_address from   google.comput.instances where project = '<<project>>' and zone = '<<zone>>' and instance = '<<my_vm_name>>';"
+publicIpAddress=$(stackql --approot=<<app_root_path>> exec "select json_extract(\"networkInterfaces\", '\$[0].accessConfigs[0].natIP') as public_ipv4_address from   google.compute.instances where project = '<<project>>' and zone = '<<zone>>' and instance = '<<my_vm_name>>';" -o json | jq -r '.[0].public_ipv4_address')
 
-publicIpAddress=$(./stackql exec "select json_extract(\"networkInterfaces\", '\$[0].accessConfigs[0].natIP') as public_ipv4_address from   google.compute.instances where project = '<<project>>' and zone = '<<zone>>' and instance = '<<my_vm_name>>';" -o json | jq -r '.[0].public_ipv4_address')
+curl http://${publicIpAddress} | grep 'auto-provisioned'
+```
 
-curlOutput=$(curl http://${publicIpAddress}| grep 'auto-provisioned')
+## Result
 
-if [ "${curlOutput}" = "" ]; then
-  exit 1
-fi
+
+You will see exactly this in the output:
+
+```html expectation stdout-contains-all
+<!doctype html><html><body><h1>Hello from stackql auto-provisioned.</h1></body></html>
+```
+
+## Cleanup
+
+```bash teardown best-effort app_root_path=./test/tmp/.create-google-vm-webserver.stackql my_ephemeral_network_name=my-ephemeral-network-01 my_vm_name=my-ephemeral-vm-01 project=stackql-demo region=australia-southeast2 zone=australia-southeast2-a 
+
+stackql --approot=<<app_root_path>> exec "delete from google.compute.instances where project = '<<project>>' and zone = '<<zone>>' and instance = '<<my_vm_name>>';"
+
+stackql --approot=<<app_root_path>> exec "delete from google.compute.networks where project = '<<project>>' and zone = '<<zone>>' and network = '<<my_ephemeral_network_name>>';"
+
+rm -rf <<app_root_path>>
+
 ```
 
 
