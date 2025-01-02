@@ -42,6 +42,8 @@ Assuming you have chosen regions wisely, you will see something like this includ
 
 ```bash teardown best-effort app_root_path=./test/tmp/.list-aws-instances.stackql
 
-rm -rf <<app_root_path>>
+rm -rf <<app_root_path>>;
+
+echo "teardown complete";
 
 ```

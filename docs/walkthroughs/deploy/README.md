@@ -1,3 +1,3 @@
 
-## Lifecycle managment with `stackql-deploy`
+## Lifecycle management with `stackql-deploy`
 

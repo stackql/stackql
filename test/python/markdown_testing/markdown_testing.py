@@ -248,41 +248,57 @@ class MdOrchestrator(object):
         self._max_teardown_blocks = max_teardown_blocks
         self._setup_contains_shell_invocation = setup_contains_shell_invocation
 
-    def orchestrate(self, file_path: str) -> WorkloadDTO:
+    def _get_teardown_base(self) -> str:
+        return f'set -e;\ncd {_REPOSITORY_ROOT_PATH};\n'
+
+    def _get_setup_base(self) -> str:
+        return f'cd {_REPOSITORY_ROOT_PATH};\n'
+
+    def orchestrate(self, file_path: str) -> List[WorkloadDTO]:
+        return self._orchestrate_block(file_path, 0, self._parser.parse_markdown_file(file_path).get_ordered())
+    
+    def _get_block_name(self, file_name: str, block_count: int) -> str:
+        return f'{os.path.basename(file_name)}_{block_count}'
+    
+    def _orchestrate_block(self, file_name: str, block_count: int, ordered_ast: List[ASTNode]) -> List[WorkloadDTO]:
         setup_count: int = 0
         teardown_count: int = 0
         invocation_count: int = 0
-        ast = self._parser.parse_markdown_file(file_path)
+        block_name: str = self._get_block_name(file_name, block_count)
         # print(f'AST: {ast}')
-        setup_str: str = f'cd {_REPOSITORY_ROOT_PATH};\n'
+        setup_str: str = self._get_setup_base()
         in_session_commands: List[str] = []
-        teardown_str: str = f'cd {_REPOSITORY_ROOT_PATH};\n'
+        teardown_str: str = self._get_teardown_base()
         expectations: List[Expectation] = []
-        for node in ast.get_ordered():
+        for node_idx in range(len(ordered_ast)):
+            node = ordered_ast[node_idx]
             if node.is_expectation():
                 expectations.append(Expectation(node))
                 continue
             elif node.is_executable():
                 if node.is_setup():
                     if setup_count < self._max_setup_blocks:
-                        setup_str += ast.expand(node)
+                        setup_str += node.expand()
                         setup_count += 1
                     else:
-                        raise KeyError(f'Maximum setup blocks exceeded: {self._max_setup_blocks}')
+                        this_dto: WorkloadDTO = WorkloadDTO(block_name, setup_str, in_session_commands, teardown_str, expectations)
+                        trailing_nodes = ordered_ast[node_idx:]
+                        trailing_dtos = self._orchestrate_block(file_name, block_count + 1, trailing_nodes)
+                        return [this_dto] + trailing_dtos
                 elif node.is_teardown():
                     if teardown_count < self._max_teardown_blocks:
-                        teardown_str += ast.expand(node)
+                        teardown_str += node.expand()
                         teardown_count += 1
                     else:
                         raise KeyError(f'Maximum teardown blocks exceeded: {self._max_teardown_blocks}')
                 elif node.is_stackql_shell_invocation():
                     if invocation_count < self._max_invocations_blocks:
-                        all_commands: str = ast.expand(node).split('\n\n')
+                        all_commands: str = node.expand().split('\n\n')
                         in_session_commands += all_commands
                         invocation_count += 1
                     else:
                         raise KeyError(f'Maximum invocation blocks exceeded: {self._max_invocations_blocks}')
-        return WorkloadDTO(ast.get_name(), setup_str, in_session_commands, teardown_str, expectations)
+        return [WorkloadDTO(block_name, setup_str, in_session_commands, teardown_str, expectations)]
 
 class WalkthroughResult:
 
@@ -293,7 +309,8 @@ class WalkthroughResult:
     stderr_str :str, 
     rc :int,
     passes_stdout: bool,
-    passes_stderr: bool
+    passes_stderr: bool,
+    teardown_rc: int
   ) -> None:
     self.name: str = name 
     self.stdout :str = stdout_str
@@ -301,6 +318,7 @@ class WalkthroughResult:
     self.rc = rc
     self.passes_stdout_check = passes_stdout
     self.passes_stderr_check = passes_stderr
+    self.teardown_rc = teardown_rc
 
 class SimpleRunner(object):
 
@@ -318,6 +336,13 @@ class SimpleRunner(object):
             executable=bash_path
         )
         for cmd in self._workload.get_in_session():
+            print('')
+            print('@@@')
+            print('Running command:')
+            print(f'{cmd}')
+            print('')
+            print('@@@')
+            print('')
             pr.stdin.write(f"{cmd}\n".encode(sys.getdefaultencoding()))
             pr.stdin.flush()
         stdout_bytes, stderr_bytes = pr.communicate()
@@ -328,6 +353,18 @@ class SimpleRunner(object):
         fails_stdout: bool = False
         fails_stderr: bool = False
 
+        print('---')
+        print('')
+        print(f'Running test: {self._workload.get_name()}')
+        print('')
+        print(f'Process return code: {pr.returncode}')
+        print('process stdout:')
+        print(stdout_str)
+        print('')
+        print('process stderr:')
+        print(stderr_str)
+        print('')
+
         for expectation in self._workload.get_expectations():
             passes_stdout: bool = expectation.passes_stdout(stdout_str)
             passes_stderr: bool = expectation.passes_stderr(stderr_str)
@@ -335,24 +372,55 @@ class SimpleRunner(object):
                 fails_stdout = True
             if not passes_stderr:
                 fails_stderr = True
-            print('---')
+            print('###')
             print(f'Expectation: {expectation}')
-            print('stdout:')
+            print('attempted matching stdout:')
             print(stdout_str)
             print('')
-            print('stderr:')
+            print('attempted matching stderr:')
             print(stderr_str)
             print('')
             print(f'Passes stdout: {passes_stdout}')
             print(f'Passes stderr: {passes_stderr}')
-            print('---')
+            print('###')
+
+
+        teardown_str: str = self._workload.get_teardown()
+        
+        teardown_process: subprocess.CompletedProcess = subprocess.run(
+            teardown_str,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=True,
+            executable=bash_path
+        )
+        teardown_stdout_bytes, teardown_stderr_bytes = teardown_process.stdout, teardown_process.stderr
+        teardown_stdout_str: str = teardown_stdout_bytes.decode(sys.getdefaultencoding())
+        teardown_stderr_str: str = teardown_stderr_bytes.decode(sys.getdefaultencoding())
+
+        print('')
+        print('Teardown code:')
+        print(f'{teardown_str}')
+        print('')
+        print(f'Teardown process return code: {teardown_process.returncode}')
+        print('teardown process stdout:')
+        print(teardown_stdout_str)
+        print('')
+        print('teardown process stderr:')
+        print(teardown_stderr_str)
+
+        print('')
+        print('---')
+
         return WalkthroughResult(
             self._workload.get_name(),
             stdout_str,
             stderr_str,
             pr.returncode,
             not fails_stdout,
-            not fails_stderr
+            not fails_stderr,
+            teardown_process.returncode
         )
 
 class AllWalkthroughsRunner(object):
@@ -373,10 +441,11 @@ class AllWalkthroughsRunner(object):
                             continue
                         file_path = os.path.join(root, file)
                         print(f'File path: {file_path}')
-                        workload: WorkloadDTO = self._orchestrator.orchestrate(file_path)
-                        e2e: SimpleRunner = SimpleRunner(workload)
-                        result = e2e.run()
-                        results.append(result)
+                        workloads: List[WorkloadDTO] = self._orchestrator.orchestrate(file_path)
+                        for workload in workloads:
+                            e2e: SimpleRunner = SimpleRunner(workload)
+                            result = e2e.run()
+                            results.append(result)
                 continue
             is_file = os.path.isfile(inode_path)
             if is_file:
@@ -384,10 +453,11 @@ class AllWalkthroughsRunner(object):
                     eprint(f'Skipping README.md')
                     continue
                 file_path = inode_path
-                workload: WorkloadDTO = self._orchestrator.orchestrate(file_path)
-                e2e: SimpleRunner = SimpleRunner(workload)
-                result = e2e.run()
-                results.append(result)
+                workloads: List[WorkloadDTO] = self._orchestrator.orchestrate(file_path)
+                for workload in workloads:
+                        e2e: SimpleRunner = SimpleRunner(workload)
+                        result = e2e.run()
+                        results.append(result)
                 continue
             raise FileNotFoundError(f'Path not tractable: {inode_path}')
         return results
