@@ -17,12 +17,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: ${{ vars.DEFAULT_JOB_TIMEOUT_MIN == '' && 120 || vars.DEFAULT_JOB_TIMEOUT_MIN }}
     steps:
+      - name: Install Package dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+
       - name: Ref Parse
         run: |
           _defaultRunType="${{ env.RUNTYPE_READ_ONLY }}"
-          runID=$(echo -n '${{ github.ref_name }}' | cut -d '-' -f 2)"
-          runType=$(echo -n '${{ github.ref_name }}' | cut -d '-' -f 3)"
-          repositoryShorthand=$(echo -n '${{ github.ref_name }}' | rev | cut -d '-' -f 1 | rev)
+          runID="$(echo -n '${{ github.ref_name }}' | cut -d '-' -f 2)"
+          runType="$(echo -n '${{ github.ref_name }}' | cut -d '-' -f 3)"
+          repositoryShorthand="$(echo -n '${{ github.ref_name }}' | rev | cut -d '-' -f 1 | rev)"
           artifactRepositoryFullName='stackql/stackql'
           if [ "$repositoryShorthand" = "devel" ]; then
             artifactRepositoryFullName='stackql/stackql-devel'
@@ -69,8 +74,8 @@ jobs:
       
       - name: Persist secrets
         run: |
-          echo "$GCP_RO_SECRET" >> cicd/keys/testing/google-ro-credentials.json
-          echo "$GCP_RW_SECRET" >> cicd/keys/testing/google-rw-credentials.json
+          echo "$GCP_RO_SECRET" > cicd/keys/testing/google-ro-credentials.json
+          echo "$GCP_RW_SECRET" > cicd/keys/testing/google-rw-credentials.json
         shell: bash
         env:
           GCP_RO_SECRET: ${{ secrets.CI_SCENARIO_GCP_RO_SECRET }}
