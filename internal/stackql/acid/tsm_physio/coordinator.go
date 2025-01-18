@@ -1,9 +1,9 @@
 package tsm_physio //nolint:revive,stylecheck // prefer this nomenclature
 
 import (
+	"github.com/stackql/any-sdk/pkg/constants"
 	"github.com/stackql/stackql/internal/stackql/acid/acid_dto"
 	"github.com/stackql/stackql/internal/stackql/acid/tsm"
-	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/handler"
 )
 

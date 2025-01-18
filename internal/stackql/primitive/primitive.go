@@ -3,8 +3,8 @@ package primitive
 import (
 	"io"
 
+	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
-	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 )
 

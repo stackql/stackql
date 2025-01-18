@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/stackql/any-sdk/anysdk"
+	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/stackql/internal/stackql/docparser"
-	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"gopkg.in/yaml.v2"
 

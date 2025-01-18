@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/stackql/any-sdk/anysdk"
-	"github.com/stackql/stackql/internal/stackql/logging"
+	"github.com/stackql/any-sdk/pkg/logging"
 
 	"sort"
 	"strings"

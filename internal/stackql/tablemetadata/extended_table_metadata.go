@@ -3,7 +3,6 @@ package tablemetadata
 import (
 	"fmt"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql/internal/stackql/astindirect"
 	"github.com/stackql/stackql/internal/stackql/datasource/sql_datasource"
@@ -61,7 +60,6 @@ type ExtendedTableMetadata interface {
 	IsOnClauseHoistable() bool
 	IsPhysicalTable() bool
 	IsMaterializedView() bool
-	GetServerVariables() (map[string]*openapi3.ServerVariable, bool)
 	Clone() ExtendedTableMetadata
 	Equals(ExtendedTableMetadata) bool
 }
@@ -126,23 +124,6 @@ func (ex *standardExtendedTableMetadata) Equals(other ExtendedTableMetadata) boo
 		return false
 	}
 	return true
-}
-
-func (ex *standardExtendedTableMetadata) GetServerVariables() (map[string]*openapi3.ServerVariable, bool) {
-	m, err := ex.getMethod()
-	if err != nil {
-		return nil, false
-	}
-	rv := make(map[string]*openapi3.ServerVariable)
-	availableServers, availableServersDoExist := m.GetServers()
-	if availableServersDoExist {
-		for _, s := range availableServers {
-			for k, v := range s.Variables {
-				rv[k] = v
-			}
-		}
-	}
-	return rv, true
 }
 
 func (ex *standardExtendedTableMetadata) IsPhysicalTable() bool {

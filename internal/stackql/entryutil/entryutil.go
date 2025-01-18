@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/bundle"
 	"github.com/stackql/stackql/internal/stackql/datasource/sql_datasource"
 	"github.com/stackql/stackql/internal/stackql/dbmsinternal"
-	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/garbagecollector"
 	"github.com/stackql/stackql/internal/stackql/gcexec"
 	"github.com/stackql/stackql/internal/stackql/handler"

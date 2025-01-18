@@ -7,10 +7,10 @@ import (
 	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 
+	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/handler"
-	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"

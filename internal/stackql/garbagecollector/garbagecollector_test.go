@@ -3,7 +3,7 @@ package garbagecollector //nolint:testpackage // to test unexported methods
 import (
 	"testing"
 
-	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

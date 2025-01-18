@@ -4,7 +4,7 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/any-sdk/pkg/dto"
 )
 
 var (

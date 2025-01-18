@@ -4,10 +4,11 @@ import (
 	"net/http"
 
 	"github.com/stackql/any-sdk/anysdk"
-	"github.com/stackql/stackql/internal/stackql/constants"
+	"github.com/stackql/any-sdk/pkg/auth_util"
+	"github.com/stackql/any-sdk/pkg/constants"
+	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/stackql/internal/stackql/discovery"
 	"github.com/stackql/stackql/internal/stackql/docparser"
-	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/methodselect"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
@@ -168,6 +169,7 @@ func newGenericProvider(
 		discoveryAdapter: da,
 		apiVersion:       versionStr,
 		methodSelector:   methSel,
+		authUtil:         auth_util.NewAuthUtility(),
 	}
 	return gp, err
 }

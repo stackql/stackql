@@ -319,3 +319,6 @@ issues:
         - noctx
         - revive
         - wrapcheck
+output:
+  formats:
+    - format: colored-line-number

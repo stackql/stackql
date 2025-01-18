@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/stackql/stackql/internal/stackql/dto"
-	"github.com/stackql/stackql/internal/stackql/logging"
+	"github.com/stackql/any-sdk/pkg/dto"
+	"github.com/stackql/any-sdk/pkg/logging"
 )
 
 func GetDB(driverName string, dbName string, cfg dto.SQLBackendCfg) (*sql.DB, error) {

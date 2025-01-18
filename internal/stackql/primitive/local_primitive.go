@@ -1,10 +1,10 @@
 package primitive
 
 import (
+	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
-	"github.com/stackql/stackql/internal/stackql/logging"
 )
 
 type LocalPrimitive struct {

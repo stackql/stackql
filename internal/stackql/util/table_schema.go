@@ -3,7 +3,6 @@ package util
 import (
 	"strings"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stackql/any-sdk/anysdk"
 )
 
@@ -69,10 +68,7 @@ func (ta *simpleTableSchemaAnalyzer) GetColumns() ([]Column, error) {
 
 func (ta *simpleTableSchemaAnalyzer) generateServerVarColumnDescriptor(
 	k string, m anysdk.OperationStore) anysdk.ColumnDescriptor {
-	sc := openapi3.NewSchema()
-	sc.Type = "string"
-	schema := anysdk.NewSchema(
-		sc,
+	schema := anysdk.NewStringSchema(
 		m.GetService(),
 		"",
 		"",

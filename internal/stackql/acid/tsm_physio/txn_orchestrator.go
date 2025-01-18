@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/stackql/any-sdk/pkg/constants"
 	"github.com/stackql/stackql/internal/stackql/acid/tsm"
 	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
-	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 )

@@ -3,10 +3,10 @@ package primitivebuilder
 import (
 	"fmt"
 
+	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/stackql/internal/stackql/data_staging/input_data_staging"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
-	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 )

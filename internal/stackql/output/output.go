@@ -10,10 +10,10 @@ import (
 	"strings"
 
 	"github.com/jackc/pgtype"
-	"github.com/stackql/stackql/internal/stackql/constants"
+	"github.com/stackql/any-sdk/pkg/constants"
+	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/iqlutil"
-	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/psqlwire"
 
 	"github.com/olekukonko/tablewriter"

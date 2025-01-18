@@ -8,10 +8,10 @@ import (
 	"regexp"
 	"sync"
 
+	"github.com/stackql/any-sdk/pkg/dto"
+	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/stackql/internal/stackql/db_util"
-	"github.com/stackql/stackql/internal/stackql/dto"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
-	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
 	"github.com/stackql/stackql/internal/stackql/util"
 

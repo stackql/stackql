@@ -1,8 +1,8 @@
 package internaldto
 
 import (
+	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/psql-wire/pkg/sqldata"
-	"github.com/stackql/stackql/internal/stackql/dto"
 )
 
 type OutputContext struct {

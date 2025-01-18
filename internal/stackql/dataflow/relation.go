@@ -6,7 +6,7 @@ import (
 	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 
-	"github.com/stackql/stackql/internal/stackql/logging"
+	"github.com/stackql/any-sdk/pkg/logging"
 )
 
 type Relation interface {

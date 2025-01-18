@@ -8,8 +8,8 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
-	"github.com/stackql/stackql/internal/stackql/dto"
-	"github.com/stackql/stackql/internal/stackql/logging"
+	"github.com/stackql/any-sdk/pkg/dto"
+	"github.com/stackql/any-sdk/pkg/logging"
 
 	"github.com/stackql/psql-wire/pkg/sqlbackend"
 

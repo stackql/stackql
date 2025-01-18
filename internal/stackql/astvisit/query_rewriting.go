@@ -6,15 +6,14 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 
+	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
-	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/sqlrewrite"
 	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
@@ -111,7 +110,7 @@ func (v *standardQueryRewriteAstVisitor) isJSONEachCompatible(col parserutil.Col
 
 // TODO: introduce dependency on RDBMS
 func (v *standardQueryRewriteAstVisitor) getTypeFromParserType(t sqlparser.ValType) string {
-	//nolint:exhaustive,goconst // acceptable
+	//nolint:exhaustive // acceptable
 	switch t {
 	case sqlparser.StrVal:
 		return "string"
@@ -137,10 +136,7 @@ func (v *standardQueryRewriteAstVisitor) getNextAlias() string {
 
 func (v *standardQueryRewriteAstVisitor) generateServerVarColumnDescriptor(
 	k string, m anysdk.OperationStore) anysdk.ColumnDescriptor {
-	sc := openapi3.NewSchema()
-	sc.Type = "string"
-	schema := anysdk.NewSchema(
-		sc,
+	schema := anysdk.NewStringSchema(
 		m.GetService(),
 		"",
 		"",

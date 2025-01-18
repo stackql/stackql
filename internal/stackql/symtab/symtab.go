@@ -5,8 +5,8 @@ import (
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 
+	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/go-suffix-map/pkg/suffixmap"
-	"github.com/stackql/stackql/internal/stackql/logging"
 )
 
 type Entry struct {
