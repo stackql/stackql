@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/any-sdk/pkg/dto"
 )
 
 func GetRoundTripper(runtimeCtx dto.RuntimeCtx, existingTransport http.RoundTripper) http.RoundTripper {

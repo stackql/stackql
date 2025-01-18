@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/stackql/any-sdk/pkg/constants"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
-	"github.com/stackql/stackql/internal/stackql/constants"
 )
 
 //nolint:revive // Explicit type declaration removes any ambiguity

@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/stackql/stackql/internal/stackql/logging"
+	"github.com/stackql/any-sdk/pkg/logging"
 )
 
 func TestMain(m *testing.M) {

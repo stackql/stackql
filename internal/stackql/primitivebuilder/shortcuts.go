@@ -7,11 +7,11 @@ import (
 	"strings"
 
 	"github.com/stackql/any-sdk/anysdk"
+	"github.com/stackql/any-sdk/pkg/constants"
+	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
-	"github.com/stackql/stackql/internal/stackql/constants"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
-	"github.com/stackql/stackql/internal/stackql/logging"
 	"github.com/stackql/stackql/internal/stackql/metadatavisitors"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/provider"

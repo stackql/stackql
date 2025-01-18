@@ -7,10 +7,10 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"     //nolint:revive,nolintlint // this is a DB driver pattern
 	_ "github.com/snowflakedb/gosnowflake" //nolint:revive,nolintlint // this is a DB driver pattern
 
-	"github.com/stackql/stackql/internal/stackql/constants"
+	"github.com/stackql/any-sdk/pkg/constants"
+	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/stackql/internal/stackql/datasource/sqltable"
 	"github.com/stackql/stackql/internal/stackql/db_util"
-	"github.com/stackql/stackql/internal/stackql/dto"
 )
 
 var (

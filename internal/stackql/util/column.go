@@ -1,7 +1,6 @@
 package util
 
 import (
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stackql/any-sdk/anysdk"
 )
 
@@ -24,10 +23,7 @@ func newSimpleColumn(name string, schema anysdk.Schema) Column {
 }
 
 func newSimpleStringColumn(name string, m anysdk.OperationStore) Column {
-	sc := openapi3.NewSchema()
-	sc.Type = "string"
-	return newSimpleColumn(name, anysdk.NewSchema(
-		sc,
+	return newSimpleColumn(name, anysdk.NewStringSchema(
 		m.GetService(),
 		"",
 		"",

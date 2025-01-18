@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/stackql/stackql/internal/stackql/constants"
+	"github.com/stackql/any-sdk/pkg/constants"
+	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/stackql/internal/stackql/datasource/sqltable"
-	"github.com/stackql/stackql/internal/stackql/dto"
 )
 
 type SQLDataSource interface {

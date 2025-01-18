@@ -3,7 +3,7 @@ package planbuilderinput
 import (
 	"regexp"
 
-	"github.com/stackql/stackql/internal/stackql/logging"
+	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/stackql/internal/stackql/nativedb"
 	"github.com/stackql/stackql/internal/stackql/sqlstream"
 )

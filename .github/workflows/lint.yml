@@ -9,6 +9,11 @@ on:
       - build*
   pull_request:
 
+
+env:
+  GOLANGCI_LINT_VERSION: ${{ vars.GOLANGCI_LINT_VERSION == '' && 'v1.59.1' || vars.GOLANGCI_LINT_VERSION }}
+  DEFAULT_STEP_TIMEOUT: ${{ vars.DEFAULT_STEP_TIMEOUT_MIN == '' && '20' || vars.DEFAULT_STEP_TIMEOUT_MIN }}
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -31,4 +36,5 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v4.0.0
         with:
-          version: 'v1.59.1'
+          version: ${{ env.GOLANGCI_LINT_VERSION }}
+          args: --timeout ${{ env.DEFAULT_STEP_TIMEOUT }}m

@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/lib/pq/oid"
+	"github.com/stackql/any-sdk/pkg/constants"
 	"github.com/stackql/psql-wire/pkg/sqldata"
-	"github.com/stackql/stackql/internal/stackql/constants"
 )
 
 var (

@@ -15,7 +15,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/stackql/stackql/internal/stackql/logging"
+	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/stackql/internal/test/testobjects"
 	"github.com/stackql/stackql/internal/test/testutil"
 )

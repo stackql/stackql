@@ -1,7 +1,7 @@
 package tablenamespace
 
 import (
-	"github.com/stackql/stackql/internal/stackql/dto"
+	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 )
