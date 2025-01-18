@@ -4,10 +4,15 @@
 
 Summary:
 
-- At present, PR checks, build and test are all performed through [.github/workflows/go.yml](/.github/workflows/go.yml).
+- At present, PR checks, build and test are all performed through [.github/workflows/build.yml](/.github/workflows/build.yml).
 - Releasing over various channels (website, homebrew, chocolatey...) is performed manually.
-- The strategic state is to split the functions: PR checks, build and test; into separate files, and migrate to use [goreleaser](https://goreleaser.com/).
-- Should take the hint from docker to [speed up multi-platform builds using multiple runners](https://docs.docker.com/build/ci/github-actions/multi-platform/#distribute-build-across-multiple-runners).
+- ~~The strategic state is to split the functions: PR checks, build and test; into separate files, and migrate to use [goreleaser](https://goreleaser.com/).~~
+- Docker Build and Push Jobs have scope for improvement. 
+    - These are currently based loosely on patterns described in:
+        - https://docs.docker.com/build/ci/github-actions/multi-platform/#distribute-build-across-multiple-runners
+        - https://docs.docker.com/build/ci/github-actions/share-image-jobs/ 
+    - **NOTE**: The QEMU build for linux/arm64 is **very slow**.  On the order of 30 minutes.  This is currently unavoidable.
+    - **TODO**: Migrate linux/arm64 docker build to native once GHA supports this platform as a first class citizen.
 
 
 ## Secrets
