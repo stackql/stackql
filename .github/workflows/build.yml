@@ -1069,12 +1069,39 @@ jobs:
       with:
         name: stackql_darwin_arm64
         path: build/stackql
-
+  
+  ## Docker Build and Push Jobs
+  ## based loosely on patterns described in:
+  ##    - https://docs.docker.com/build/ci/github-actions/multi-platform/#distribute-build-across-multiple-runners
+  ##    - https://docs.docker.com/build/ci/github-actions/share-image-jobs/
+  ##
+  ## NOTE: The QEMU build for linux/arm64 is very slow.  On the order of 30 minutes.  This is currently unavoidable.
+  ##
+  ## TODO: Migrate linux/arm64 docker build to native once GHA supports this platform as a first class citizen.
+  ##
   dockerbuild:
     name: Docker Build
     runs-on: ubuntu-latest-m
     timeout-minutes: ${{ vars.DEFAULT_JOB_TIMEOUT_MIN == '' && 120 || vars.DEFAULT_JOB_TIMEOUT_MIN }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
+
     steps:
+    - name: Prepare
+      run: |
+        platform=${{ matrix.platform }}
+        echo "PLATFORM_PAIR=${platform//\//-}" >> "${GITHUB_ENV}"          
+
+    - name: Docker meta
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: |
+          ${{ env.STACKQL_IMAGE_NAME }}
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v4.1.1
@@ -1100,17 +1127,40 @@ jobs:
             echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}"
           } >> "${GITHUB_STATE}"
     
-    - name: Install psql
+    - name: Image  env sanitize
       run: |
-          sudo apt-get update
-          sudo apt-get install --yes --no-install-recommends \
-            postgresql-client \
-            ca-certificates \
-            openssl
-
-    - name: Install Python dependencies
-      run: |
-        pip3 install -r cicd/requirements.txt
+        BUILD_IMAGE_REQUIRED="true"
+        PUSH_IMAGE_REQUIRED="false"
+        if [ "$( grep '^build-elide.*' <<< '${{ github.ref_name }}' )" !=  "" ]; then
+          BUILD_IMAGE_REQUIRED="false"
+        fi
+        # shellcheck disable=SC2235
+        if  ( \
+                [ "${{ github.repository }}" = "stackql/stackql" ] \
+                || [ "${{ github.repository }}" != "stackql/stackql-devel" ] \
+            ) \
+            && [ "${{ vars.CI_SKIP_DOCKER_PUSH }}" != "true" ] \
+            && [ "$( grep '^build-elide.*' <<< '${{ github.ref_name }}' )" =  "" ] \
+            && ( \
+                [ "${{ github.ref_type }}" = "branch" ] \
+                && [ "${{ github.ref_name }}" = "main" ] \
+                && [ "${{ github.event_name }}" = "push" ] \
+            ) \
+            || ( \
+                [ "${{ github.ref_type }}" = "tag" ] \
+                && [ "$( grep '^build-release.*' <<< '${{ github.ref_name }}' )" !=  "" ] \
+            ); \
+        then
+          PUSH_IMAGE_REQUIRED="true"
+        fi
+        if [ "${{ matrix.platform }}" == "linux/arm64" ] && [ "${PUSH_IMAGE_REQUIRED}" = "false" ]; then
+          BUILD_IMAGE_REQUIRED="false"
+        fi
+        {
+          echo "IMAGE_PLATFORM_SAN=$( sed 's/\//_/g' <<< '${{ matrix.platform }}' )";
+          echo "PUSH_IMAGE_REQUIRED=${PUSH_IMAGE_REQUIRED}";
+          echo "BUILD_IMAGE_REQUIRED=${BUILD_IMAGE_REQUIRED}";
+        } | tee -a "${GITHUB_ENV}"
     
     - name: Extract Build Info and Persist
       env:
@@ -1146,20 +1196,38 @@ jobs:
           echo "GID=${GID}"
         } >> "${GITHUB_ENV}"
     
+    - name: Install psql
+      if: env.BUILD_IMAGE_REQUIRED == 'true'
+      run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends \
+            postgresql-client \
+            ca-certificates \
+            openssl
+
+    # for some reason skipping this with env.BUILD_IMAGE_REQUIRED == 'true' breaks python cleanup where it can't find pip cache
+    - name: Install Python dependencies
+      run: |
+        pip3 install -r cicd/requirements.txt
+    
     - name: Generate rewritten registry for simulations
+      if: env.BUILD_IMAGE_REQUIRED == 'true'
       run: |
         python3 test/python/registry-rewrite.py --replacement-host=host.docker.internal
 
     - name: Pull Docker base images for cache purposes
+      if: env.BUILD_IMAGE_REQUIRED == 'true'
       run: |
-        docker pull golang:1.18.4-bullseye
-        docker pull ubuntu:22.04
+        docker pull --platform ${{ matrix.platform }} golang:1.18.4-bullseye || echo 'could not pull image for cache purposes'
+        docker pull --platform ${{ matrix.platform }} ubuntu:22.04 || echo 'could not pull image for cache purposes'
 
     - name: Pull Docker image for cache purposes
+      if: env.BUILD_IMAGE_REQUIRED == 'true'
       run: |
-        docker pull stackql/stackql:latest || echo 'could not pull image for cache purposes'
+        docker pull --platform ${{ matrix.platform }} stackql/stackql:latest || echo 'could not pull image for cache purposes'
 
     - name: Create certificates for robot tests
+      if: env.BUILD_IMAGE_REQUIRED == 'true'
       run: |
         openssl req -x509 -keyout test/server/mtls/credentials/pg_server_key.pem -out test/server/mtls/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
         openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
@@ -1168,26 +1236,56 @@ jobs:
         openssl req -x509 -keyout cicd/vol/srv/credentials/pg_client_key.pem -out  cicd/vol/srv/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
         openssl req -x509 -keyout cicd/vol/srv/credentials/pg_rubbish_key.pem -out cicd/vol/srv/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365
 
-    - name: Build image
+    - name: Build image precursors
+      if: env.BUILD_IMAGE_REQUIRED == 'true'
       run: |
         docker compose -f docker-compose-credentials.yml build credentialsgen
         docker compose build mockserver
+      
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      if: env.BUILD_IMAGE_REQUIRED == 'true'
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
     
     - name: Build Stackql image with buildx
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v6
+      id: img_build
+      if: env.BUILD_IMAGE_REQUIRED == 'true'
       with:
         context: .
         build-args: |
           BUILDMAJORVERSION=${{env.BUILDMAJORVERSION}}
           BUILDMINORVERSION=${{env.BUILDMINORVERSION}}
           BUILDPATCHVERSION=${{env.BUILDPATCHVERSION}}
-        push: false
+        platforms: ${{ matrix.platform }}
         target: app
-        no-cache: ${{ vars.CI_DOCKER_BUILD_NO_CACHE == 'true' && true || false }}
-        load: true
-        tags: ${{ env.STACKQL_IMAGE_NAME }}:${{github.sha}},${{ env.STACKQL_IMAGE_NAME }}:v${{env.BUILDMAJORVERSION}}.${{env.BUILDMINORVERSION}}.${{env.BUILDPATCHVERSION}},${{ env.STACKQL_IMAGE_NAME }}:latest
+        labels: ${{ steps.meta.outputs.labels }}
+        outputs: type=image,"name=${{ env.STACKQL_IMAGE_NAME }}",push-by-digest=true,name-canonical=true,push=true
+
+    - name: Export digest
+      if: env.BUILD_IMAGE_REQUIRED == 'true'
+      run: |
+        mkdir -p ${{ runner.temp }}/digests
+        digest="${{ steps.img_build.outputs.digest }}"
+        touch "${{ runner.temp }}/digests/${digest#sha256:}"          
+
+    - name: Upload digest
+      if: env.BUILD_IMAGE_REQUIRED == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: digests-${{ env.PLATFORM_PAIR }}
+        path: ${{ runner.temp }}/digests/*
+        if-no-files-found: error
+
+    - name: Pull by digest
+      if: env.BUILD_IMAGE_REQUIRED == 'true'
+      run: |
+        docker pull --platform ${{ matrix.platform }} ${{ env.STACKQL_IMAGE_NAME }}@${{ steps.img_build.outputs.digest }}
 
     - name: Debug info
+      if: env.BUILD_IMAGE_REQUIRED == 'true'
       run: |
         echo "psql version info: $(psql --version)"
         echo ""
@@ -1223,14 +1321,14 @@ jobs:
         echo ""
 
     - name: Run robot mocked functional tests
-      if: success() && env.CI_IS_EXPRESS != 'true'
+      if: success() && env.CI_IS_EXPRESS != 'true' && matrix.platform == 'linux/amd64' && env.BUILD_IMAGE_REQUIRED == 'true'
       timeout-minutes: ${{ vars.DEFAULT_STEP_TIMEOUT_MIN == '' && 20 || vars.DEFAULT_STEP_TIMEOUT_MIN }}
       run: |
         python cicd/python/build.py --robot-test --config='{ "variables":  { "EXECUTION_PLATFORM": "docker" } }'
 
     - name: Run POSTGRES BACKEND robot mocked functional tests
-      if: success() && env.CI_IS_EXPRESS != 'true'
-      timeout-minutes: ${{ vars.DEFAULT_STEP_TIMEOUT_MIN == '' && 20 || vars.DEFAULT_STEP_TIMEOUT_MIN }}
+      if: success() && env.CI_IS_EXPRESS != 'true' && matrix.platform == 'linux/amd64' && env.BUILD_IMAGE_REQUIRED == 'true'
+      timeout-minutes: ${{ vars.DEFAULT_LONG_STEP_TIMEOUT_MIN == '' && 40 || vars.DEFAULT_LONG_STEP_TIMEOUT_MIN }}
       run: |
         echo "## Stray flask apps to be killed before robot tests ##"
         pgrep -f flask | xargs kill -9
@@ -1249,12 +1347,12 @@ jobs:
         python cicd/python/build.py --robot-test --config='{ "variables":  { "EXECUTION_PLATFORM": "docker", "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": true, "SQL_BACKEND": "postgres_tcp" } }'
 
     - name: Output from mocked functional tests
-      if: always() && env.CI_IS_EXPRESS != 'true'
+      if: always() && env.CI_IS_EXPRESS != 'true' && matrix.platform == 'linux/amd64' && env.BUILD_IMAGE_REQUIRED == 'true'
       run: |
         cat ./test/robot/reports/output.xml
 
     - name: Run robot integration tests
-      if: env.AZURE_CLIENT_SECRET != '' && startsWith(env.STATE_SOURCE_TAG, 'build-release')
+      if: env.AZURE_CLIENT_SECRET != '' && startsWith(env.STATE_SOURCE_TAG, 'build-release') && matrix.platform == 'linux/amd64' && env.BUILD_IMAGE_REQUIRED == 'true'
       env:
         AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
@@ -1266,30 +1364,118 @@ jobs:
         echo "## End ##"
         python cicd/python/build.py --robot-test-integration --config='{ "variables":  { "EXECUTION_PLATFORM": "docker" } }'
 
-    - name: Login to Docker Hub
-      if: ${{ ( success() && github.ref_type == 'branch' && github.ref_name == 'main' && github.repository == 'stackql/stackql' && github.event_name == 'push'  ) || ( success() && github.ref_type == 'tag' && startsWith(github.ref_name, 'build-release') ) }}
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
+  dockermerge:
+    runs-on: ubuntu-latest
+    needs:
+      - dockerbuild
+    steps:
 
-    - name: Hack to avoid docker buildx failures
-      run: |
-        sudo rm -rf cicd/vol/postgres/persist
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v4.1.1
+    
+      - name: Image  env sanitize
+        run: |
+          PUSH_IMAGE_REQUIRED="false"
+          # shellcheck disable=SC2235
+          if  ( \
+                  [ "${{ github.repository }}" = "stackql/stackql" ] \
+                  || [ "${{ github.repository }}" != "stackql/stackql-devel" ] \
+              ) \
+              && [ "${{ vars.CI_SKIP_DOCKER_PUSH }}" != "true" ] \
+              && [ "$( grep '^build-elide.*' <<< '${{ github.ref_name }}' )" =  "" ] \
+              && ( \
+                  [ "${{ github.ref_type }}" = "branch" ] \
+                  && [ "${{ github.ref_name }}" = "main" ] \
+                  && [ "${{ github.event_name }}" = "push" ] \
+              ) \
+              || ( \
+                  [ "${{ github.ref_type }}" = "tag" ] \
+                  && [ "$( grep '^build-release.*' <<< '${{ github.ref_name }}' )" !=  "" ] \
+              ); \
+          then
+            PUSH_IMAGE_REQUIRED="true"
+          fi
+          {
+            echo "PUSH_IMAGE_REQUIRED=${PUSH_IMAGE_REQUIRED}";
+          } | tee -a "${GITHUB_ENV}"
+    
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        if: env.PUSH_IMAGE_REQUIRED == 'true'
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-*
+          merge-multiple: true
+      
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        if: env.PUSH_IMAGE_REQUIRED == 'true'
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    - name: Push stackql image to Docker Hub
-      if: ${{ (github.repository == 'stackql/stackql' ||  github.repository == 'stackql/stackql-devel') &&  vars.CI_SKIP_DOCKER_PUSH != 'true' && ( success() && github.ref_type == 'branch' && github.ref_name == 'main' && github.event_name == 'push'  ) || ( success() && github.ref_type == 'tag' && startsWith(github.ref_name, 'build-release') ) }}
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        no-cache: ${{ vars.CI_DOCKER_BUILD_NO_CACHE == 'true' && true || false }}
-        platforms: linux/arm64,linux/amd64
-        build-args: |
-          BUILDMAJORVERSION=${{env.BUILDMAJORVERSION}}
-          BUILDMINORVERSION=${{env.BUILDMINORVERSION}}
-          BUILDPATCHVERSION=${{env.BUILDPATCHVERSION}}
-          RUN_INTEGRATION_TESTS=0
-        push: true
-        target: app
-        tags: ${{ env.STACKQL_IMAGE_NAME }}:${{github.sha}},${{ env.STACKQL_IMAGE_NAME }}:v${{env.BUILDMAJORVERSION}}.${{env.BUILDMINORVERSION}}.${{env.BUILDPATCHVERSION}},${{ env.STACKQL_IMAGE_NAME }}:latest
+      - name: Set up Docker Buildx
+        if: env.PUSH_IMAGE_REQUIRED == 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract Build Info and Persist
+        if: env.PUSH_IMAGE_REQUIRED == 'true'
+        env:
+          BUILDCOMMITSHA: ${{github.sha}}
+          BUILDBRANCH: ${{github.ref}}
+          BUILDPLATFORM: ${{runner.os}}
+          BUILDPATCHVERSION: ${{github.run_number}}
+        run: |
+          source cicd/version.txt
+          BUILDMAJORVERSION=${MajorVersion}
+          BUILDMINORVERSION=${MinorVersion}
+          if [[ ! "$BUILDBRANCH" == "*develop" ]]; then
+            # shellcheck disable=2269
+            BUILDPATCHVERSION="${BUILDPATCHVERSION}"
+          fi
+          BUILDSHORTCOMMITSHA="$(echo "${BUILDCOMMITSHA}" | cut -c 1-7)"
+          BUILDDATE="$(date)"
+          export BUILDDATE
+          echo "BUILDMAJORVERSION: ${BUILDMAJORVERSION}"
+          echo "BUILDMINORVERSION: ${BUILDMINORVERSION}"
+          echo "BUILDPATCHVERSION: ${BUILDPATCHVERSION}"
+          echo "BUILDBRANCH: ${BUILDBRANCH}"
+          echo "BUILDCOMMITSHA: ${BUILDCOMMITSHA}"
+          echo "BUILDSHORTCOMMITSHA: ${BUILDSHORTCOMMITSHA}"
+          echo "BUILDDATE: ${BUILDDATE}"
+          echo "BUILDPLATFORM: ${BUILDPLATFORM}"
+          {
+            echo "BUILDMAJORVERSION=$BUILDMAJORVERSION"
+            echo "BUILDMINORVERSION=$BUILDMINORVERSION"
+            echo "BUILDPATCHVERSION=$BUILDPATCHVERSION"
+            echo "UID=${UID}"
+            echo "GID=${GID}"
+          } >> "${GITHUB_ENV}"
+
+      - name: Docker meta
+        if: env.PUSH_IMAGE_REQUIRED == 'true'
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ env.STACKQL_IMAGE_NAME }}   
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=raw,value=latest
+            type=raw,value=v${{env.BUILDMAJORVERSION}}.${{env.BUILDMINORVERSION}}.${{env.BUILDPATCHVERSION}}
+            type=raw,value=${{ github.sha }}           
+
+      - name: Create manifest list and push
+        if: env.PUSH_IMAGE_REQUIRED == 'true'
+        working-directory: ${{ runner.temp }}/digests
+        run: |
+          # shellcheck disable=SC2046
+          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf '${{ env.STACKQL_IMAGE_NAME }}@sha256:%s ' *)
+
+      - name: Inspect image
+        if: env.PUSH_IMAGE_REQUIRED == 'true'
+        run: |
+          docker buildx imagetools inspect ${{ env.STACKQL_IMAGE_NAME }}:${{ steps.meta.outputs.version }}
 
