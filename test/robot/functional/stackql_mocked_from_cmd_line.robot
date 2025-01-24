@@ -691,6 +691,46 @@ AWS Transfer Exec Server Stop Simple Exemplifies No Response Body and Non Null R
     ...    stdout=${CURDIR}/tmp/AWS-Transfer-Exec-Server-Stop-Simple-Exemplifies-No-Response-Body-and-Non-Null-Request-Body-Exec.tmp
     ...    stderr=${CURDIR}/tmp/AWS-Transfer-Exec-Server-Stop-Simple-Exemplifies-No-Response-Body-and-Non-Null-Request-Body-Exec-stderr.tmp
 
+AWS EC2 Exec Instance Start Simple Exemplifies Legacy Form Encoded Request Body Exec
+    ${inputStr} =    Catenate
+    ...              exec aws.ec2.instances.instances_Start
+    ...              @region = 'ap-southeast-2', 
+    ...              @InstanceId = 'id-001'
+    ...              ;
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${EMPTY}
+    ...    The operation was despatched successfully
+    ...    stdout=${CURDIR}/tmp/AWS-EC2-Exec-Instance-Start-Simple-Exemplifies-Legacy-Form-Encoded-Request-Body-Exec.tmp
+    ...    stderr=${CURDIR}/tmp/AWS-EC2-Exec-Instance-Start-Simple-Exemplifies-Legacy-Form-Encoded-Request-Body-Exec-stderr.tmp
+
+AWS EC2 Exec Instance Stop Simple Exemplifies Legacy Form Encoded Request Body Exec
+    ${inputStr} =    Catenate
+    ...              exec aws.ec2.instances.instances_Stop 
+    ...              @region = 'ap-southeast-2', 
+    ...              @InstanceId = 'id-001'
+    ...              ;
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${EMPTY}
+    ...    The operation was despatched successfully
+    ...    stdout=${CURDIR}/tmp/AWS-EC2-Exec-Instance-Stop-Simple-Exemplifies-Legacy-Form-Encoded-Request-Body-Exec.tmp
+    ...    stderr=${CURDIR}/tmp/AWS-EC2-Exec-Instance-Stop-Simple-Exemplifies-Legacy-Form-Encoded-Request-Body-Exec-stderr.tmp
+
 AWS Route53 Create Record Set Simple Exemplifies XML Request Body
     ${inputStr} =    Catenate
     ...    insert into 

@@ -2018,7 +2018,63 @@
                 ]
             }
         },
-        "template": "empty-response.json",
+        "template": "start_instances.xml",
+        "status": 200,
+        "response_headers": {
+            "Content-Type": ["text/xml"]
+        }
+    },
+    "POST:/:STARTSINGLEINSTANCE": {
+        "method": "POST",
+        "path": "/",
+        "headers": {
+            "Authorization": [
+                "^.*SignedHeaders=.*content-type;host;x-amz-date.*$"
+            ]
+        },
+        "body_conditions": {
+            "type": "PARAMETERS",
+            "parameters": {
+                "Action": [
+                    "^StartInstances$"
+                ],
+                "Version": [
+                    "^2016\\-11\\-15$"
+                ],
+                "InstanceId": [
+                    "id-001"
+                ]
+            }
+        },
+        "template": "start_instances.xml",
+        "status": 200,
+        "response_headers": {
+            "Content-Type": ["text/xml"]
+        }
+    },
+    "POST:/:STOPSINGLEINSTANCE": {
+        "method": "POST",
+        "path": "/",
+        "headers": {
+            "Authorization": [
+                "^.*SignedHeaders=.*content-type;host;x-amz-date.*$"
+            ]
+        },
+        "body_conditions": {
+            "type": "PARAMETERS",
+            "parameters": {
+                "Action": [
+                    "^StopInstances$"
+                ],
+                "Version": [
+                    "^2016\\-11\\-15$"
+                ],
+                "InstanceId": [
+                    "id-001"
+                ]
+            }
+        },
+        "template": "stop_instances.xml",
         "status": 200,
         "response_headers": {
             "Content-Type": ["text/xml"]

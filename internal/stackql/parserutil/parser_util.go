@@ -720,7 +720,8 @@ func CheckSQLParserTypeVsResourceColumn(
 func CheckSQLParserTypeVsColumn(colUsage ColumnUsageMetadata, verifyCallback func(string, interface{}) bool) error {
 	switch colUsage.ColVal.Type {
 	case sqlparser.StrVal:
-		if !verifyCallback(colUsage.ColName.Name.String(), "") {
+		cn := colUsage.ColName.Name.String()
+		if !verifyCallback(cn, "") {
 			return fmt.Errorf("SHOW key = '%s' does NOT match SQL type '%s'", colUsage.ColName.Name.String(), "StrVal")
 		}
 	case sqlparser.IntVal:
