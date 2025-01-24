@@ -42516,7 +42516,7 @@ components:
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
-      id: aws.ec2.instances
+      id: aws.ec2.instances_start
       sqlVerbs:
         delete: []
         insert:
