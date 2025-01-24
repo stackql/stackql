@@ -206,7 +206,7 @@ jobs:
 
   linuxbuild:
     name: Linux Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: ${{ vars.DEFAULT_JOB_TIMEOUT_MIN == '' && 120 || vars.DEFAULT_JOB_TIMEOUT_MIN }}
     steps:
 
@@ -1081,7 +1081,7 @@ jobs:
   ##
   dockerbuild:
     name: Docker Build
-    runs-on: ubuntu-latest-m
+    runs-on: ubuntu-22-04-m
     timeout-minutes: ${{ vars.DEFAULT_JOB_TIMEOUT_MIN == '' && 120 || vars.DEFAULT_JOB_TIMEOUT_MIN }}
     strategy:
       fail-fast: false
@@ -1366,7 +1366,7 @@ jobs:
         python cicd/python/build.py --robot-test-integration --config='{ "variables":  { "EXECUTION_PLATFORM": "docker" } }'
 
   dockermerge:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs:
       - dockerbuild
     steps:

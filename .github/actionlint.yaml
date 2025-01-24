@@ -2,6 +2,7 @@ self-hosted-runner:
   # Labels of self-hosted runner in array of string
   labels:
     - ubuntu-latest-m
+    - ubuntu-22-04-m
     - arm-ubuntu-22-04-runner-one
     - macos-13 # should not be necessary
     - macos-14 # should not be necessary
