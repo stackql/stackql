@@ -1283,6 +1283,7 @@ jobs:
       if: env.BUILD_IMAGE_REQUIRED == 'true'
       run: |
         docker pull --platform ${{ matrix.platform }} ${{ env.STACKQL_IMAGE_NAME }}@${{ steps.img_build.outputs.digest }}
+        docker tag ${{ env.STACKQL_IMAGE_NAME }}@${{ steps.img_build.outputs.digest }} ${{ env.STACKQL_IMAGE_NAME }}:latest
 
     - name: Debug info
       if: env.BUILD_IMAGE_REQUIRED == 'true'
