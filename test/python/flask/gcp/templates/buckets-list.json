@@ -1,0 +1,235 @@
+{
+  "kind": "storage#buckets",
+  "items": [
+    {
+      "kind": "storage#bucket",
+      "selfLink": "https://www.googleapis.com/storage/v1/b/demo-app-bucket1",
+      "id": "demo-app-bucket1",
+      "name": "demo-app-bucket1",
+      "projectNumber": "0000000003",
+      "generation": "0000000000001",
+      "metageneration": "1",
+      "location": "US",
+      "storageClass": "STANDARD",
+      "etag": "CAE=",
+      "timeCreated": "2023-02-17T05:33:56.248Z",
+      "updated": "2023-02-17T05:33:56.248Z",
+      "labels": {
+        "app": "stackql-demo-okta-app"
+      },
+      "softDeletePolicy": {
+        "retentionDurationSeconds": "604800",
+        "effectiveTime": "2024-03-01T08:00:00.000Z"
+      },
+      "iamConfiguration": {
+        "bucketPolicyOnly": {
+          "enabled": true,
+          "lockedTime": "2023-05-18T05:33:56.248Z"
+        },
+        "uniformBucketLevelAccess": {
+          "enabled": true,
+          "lockedTime": "2023-05-18T05:33:56.248Z"
+        },
+        "publicAccessPrevention": "enforced"
+      },
+      "locationType": "multi-region",
+      "rpo": "DEFAULT"
+    },
+    {
+      "kind": "storage#bucket",
+      "selfLink": "https://www.googleapis.com/storage/v1/b/demo-app-bucket2",
+      "id": "demo-app-bucket2",
+      "name": "demo-app-bucket2",
+      "projectNumber": "0000000003",
+      "generation": "0000000000001",
+      "metageneration": "1",
+      "location": "US",
+      "storageClass": "STANDARD",
+      "etag": "CAE=",
+      "timeCreated": "2023-02-17T05:34:26.958Z",
+      "updated": "2023-02-17T05:34:26.958Z",
+      "labels": {
+        "app": "stackql-demo-okta-app"
+      },
+      "softDeletePolicy": {
+        "retentionDurationSeconds": "604800",
+        "effectiveTime": "2024-03-01T08:00:00.000Z"
+      },
+      "iamConfiguration": {
+        "bucketPolicyOnly": {
+          "enabled": true,
+          "lockedTime": "2023-05-18T05:34:26.958Z"
+        },
+        "uniformBucketLevelAccess": {
+          "enabled": true,
+          "lockedTime": "2023-05-18T05:34:26.958Z"
+        },
+        "publicAccessPrevention": "enforced"
+      },
+      "locationType": "multi-region",
+      "rpo": "DEFAULT"
+    },
+    {
+      "kind": "storage#bucket",
+      "selfLink": "https://www.googleapis.com/storage/v1/b/stackql-demo-bucket",
+      "id": "stackql-demo-bucket",
+      "name": "stackql-demo-bucket",
+      "projectNumber": "0000000003",
+      "generation": "0000000000001",
+      "metageneration": "1",
+      "location": "US",
+      "storageClass": "STANDARD",
+      "etag": "CAE=",
+      "timeCreated": "2022-02-09T04:39:09.058Z",
+      "updated": "2022-02-09T04:39:09.058Z",
+      "softDeletePolicy": {
+        "retentionDurationSeconds": "604800",
+        "effectiveTime": "2024-03-01T08:00:00.000Z"
+      },
+      "iamConfiguration": {
+        "bucketPolicyOnly": {
+          "enabled": false
+        },
+        "uniformBucketLevelAccess": {
+          "enabled": false
+        },
+        "publicAccessPrevention": "inherited"
+      },
+      "locationType": "multi-region",
+      "rpo": "DEFAULT"
+    },
+    {
+      "kind": "storage#bucket",
+      "selfLink": "https://www.googleapis.com/storage/v1/b/stackql-demo-src-bucket",
+      "id": "stackql-demo-src-bucket",
+      "name": "stackql-demo-src-bucket",
+      "projectNumber": "0000000003",
+      "generation": "0000000000001",
+      "metageneration": "3",
+      "location": "US",
+      "storageClass": "STANDARD",
+      "etag": "CAM=",
+      "timeCreated": "2022-02-08T23:23:47.208Z",
+      "updated": "2023-03-27T03:06:27.204Z",
+      "softDeletePolicy": {
+        "retentionDurationSeconds": "604800",
+        "effectiveTime": "2024-03-01T08:00:00.000Z"
+      },
+      "iamConfiguration": {
+        "bucketPolicyOnly": {
+          "enabled": false
+        },
+        "uniformBucketLevelAccess": {
+          "enabled": false
+        },
+        "publicAccessPrevention": "inherited"
+      },
+      "locationType": "multi-region",
+      "rpo": "DEFAULT"
+    },
+    {
+      "kind": "storage#bucket",
+      "selfLink": "https://www.googleapis.com/storage/v1/b/stackql-demo.appspot.com",
+      "id": "stackql-demo.appspot.com",
+      "name": "stackql-demo.appspot.com",
+      "projectNumber": "0000000003",
+      "generation": "0000000000001",
+      "metageneration": "1",
+      "location": "US",
+      "storageClass": "STANDARD",
+      "etag": "CAE=",
+      "timeCreated": "2023-02-26T08:35:40.061Z",
+      "updated": "2023-02-26T08:35:40.061Z",
+      "softDeletePolicy": {
+        "retentionDurationSeconds": "604800",
+        "effectiveTime": "2024-03-01T08:00:00.000Z"
+      },
+      "iamConfiguration": {
+        "bucketPolicyOnly": {
+          "enabled": false
+        },
+        "uniformBucketLevelAccess": {
+          "enabled": false
+        },
+        "publicAccessPrevention": "inherited"
+      },
+      "locationType": "multi-region",
+      "rpo": "DEFAULT"
+    },
+    {
+      "kind": "storage#bucket",
+      "selfLink": "https://www.googleapis.com/storage/v1/b/stackql-encrypted-bucket-1",
+      "id": "stackql-encrypted-bucket-1",
+      "name": "stackql-encrypted-bucket-1",
+      "projectNumber": "0000000003",
+      "generation": "0000000000001",
+      "metageneration": "1",
+      "location": "US",
+      "storageClass": "STANDARD",
+      "etag": "CAE=",
+      "timeCreated": "2023-02-28T03:18:33.043Z",
+      "updated": "2023-02-28T03:18:33.043Z",
+      "encryption": {
+        "defaultKmsKeyName": "projects/stackql-demo/locations/us/keyRings/stackql-us/cryptoKeys/stackql-us-demo-key"
+      },
+      "softDeletePolicy": {
+        "retentionDurationSeconds": "604800",
+        "effectiveTime": "2024-03-01T08:00:00.000Z"
+      },
+      "iamConfiguration": {
+        "bucketPolicyOnly": {
+          "enabled": true,
+          "lockedTime": "2023-05-29T03:18:33.043Z"
+        },
+        "uniformBucketLevelAccess": {
+          "enabled": true,
+          "lockedTime": "2023-05-29T03:18:33.043Z"
+        },
+        "publicAccessPrevention": "enforced"
+      },
+      "locationType": "multi-region",
+      "rpo": "DEFAULT"
+    },
+    {
+      "kind": "storage#bucket",
+      "selfLink": "https://www.googleapis.com/storage/v1/b/staging.stackql-demo.appspot.com",
+      "id": "staging.stackql-demo.appspot.com",
+      "name": "staging.stackql-demo.appspot.com",
+      "projectNumber": "0000000003",
+      "generation": "0000000000001",
+      "metageneration": "1",
+      "location": "US",
+      "storageClass": "STANDARD",
+      "etag": "CAE=",
+      "timeCreated": "2023-02-26T08:35:40.223Z",
+      "updated": "2023-02-26T08:35:40.223Z",
+      "lifecycle": {
+        "rule": [
+          {
+            "action": {
+              "type": "Delete"
+            },
+            "condition": {
+              "age": 15
+            }
+          }
+        ]
+      },
+      "softDeletePolicy": {
+        "retentionDurationSeconds": "604800",
+        "effectiveTime": "2024-03-01T08:00:00.000Z"
+      },
+      "iamConfiguration": {
+        "bucketPolicyOnly": {
+          "enabled": false
+        },
+        "uniformBucketLevelAccess": {
+          "enabled": false
+        },
+        "publicAccessPrevention": "inherited"
+      },
+      "locationType": "multi-region",
+      "rpo": "DEFAULT"
+    }
+  ]
+}

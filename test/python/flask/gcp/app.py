@@ -12,7 +12,11 @@ logger = logging.getLogger(__name__)
 def log_request_info():
     logger.info(f"Request: {request.method} {request.path} - Query: {request.args}")
 
-
+@app.route('/b', methods=['GET'])
+def v1_storage_buckets_list():
+    if request.args.get('project') == 'stackql-demo':
+        return render_template('buckets-list.json'), 200, {'Content-Type': 'application/json'}
+    return '{"msg": "Project Not Found"}', 404, {'Content-Type': 'application/json'}
 
 @app.route('/v1/projects/testing-project-three/locations/global/keyRings/testing-three/cryptoKeys', methods=['GET'])
 def v1_projects_testing_project_three_locations_global_keyRings_testing_three_cryptoKeys():

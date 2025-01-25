@@ -10,6 +10,7 @@ import (
 	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/any-sdk/pkg/constants"
 	"github.com/stackql/any-sdk/pkg/dto"
+	anysdk_internaldto "github.com/stackql/any-sdk/pkg/internaldto"
 	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/stackql/internal/stackql/astformat"
 	"github.com/stackql/stackql/internal/stackql/astindirect"
@@ -599,7 +600,7 @@ func (pb *standardPrimitiveGenerator) AnalyzeUnaryExec(
 	if err != nil && reqExists {
 		return nil, err
 	}
-	var execPayload internaldto.ExecPayload
+	var execPayload anysdk_internaldto.ExecPayload
 	if node.OptExecPayload != nil {
 		mediaType := "application/json" //nolint:goconst // acceptable for now
 		if reqExists && req.GetBodyMediaType() != "" {
@@ -711,7 +712,7 @@ func (pb *standardPrimitiveGenerator) sanitiseMediaType(mediaType string) string
 func (pb *standardPrimitiveGenerator) parseExecPayload(
 	node *sqlparser.ExecVarDef,
 	payloadType string,
-) (internaldto.ExecPayload, error) {
+) (anysdk_internaldto.ExecPayload, error) {
 	var b []byte
 	m := make(map[string][]string)
 	var pm map[string]interface{}
@@ -732,7 +733,7 @@ func (pb *standardPrimitiveGenerator) parseExecPayload(
 	default:
 		return nil, fmt.Errorf("payload map of declared type = '%T' not allowed", payloadType)
 	}
-	return internaldto.NewExecPayload(
+	return anysdk_internaldto.NewExecPayload(
 		b,
 		m,
 		pm,
