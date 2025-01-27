@@ -7425,3 +7425,43 @@ View Tuple Replacement Working As Exemplified by AWS EC2 Instances List and Deta
     ...    stdout=${CURDIR}/tmp/View-Tuple-Replacement-Working-As-Exemplified-by-AWS-EC2-Instances-List-and-Detail.tmp
     ...    stderr=${CURDIR}/tmp/View-Tuple-Replacement-Working-As-Exemplified-by-AWS-EC2-Instances-List-and-Detail-stderr.tmp
     ...    repeat_count=20
+
+Google Buckets List With Date Logic Exemplifies Use of SQLite Math Functions
+    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    This is a valid case where the test is targetted at SQLite only
+    ${inputStr} =    Catenate
+    ...    SELECT name, timeCreated, floor(julianday('2025-01-27')-julianday(timeCreated)) as days_since_ceiling 
+    ...    FROM google.storage.buckets 
+    ...    WHERE project = 'stackql-demo' 
+    ...    order by name desc
+    ...    ;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |----------------------------------|--------------------------|--------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}timeCreated${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}days_since_ceiling${SPACE}|
+    ...    |----------------------------------|--------------------------|--------------------|
+    ...    |${SPACE}staging.stackql-demo.appspot.com${SPACE}|${SPACE}2023-02-26T08:35:40.223Z${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}700${SPACE}|
+    ...    |----------------------------------|--------------------------|--------------------|
+    ...    |${SPACE}stackql-encrypted-bucket-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}2023-02-28T03:18:33.043Z${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}698${SPACE}|
+    ...    |----------------------------------|--------------------------|--------------------|
+    ...    |${SPACE}stackql-demo.appspot.com${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}2023-02-26T08:35:40.061Z${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}700${SPACE}|
+    ...    |----------------------------------|--------------------------|--------------------|
+    ...    |${SPACE}stackql-demo-src-bucket${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}2022-02-08T23:23:47.208Z${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1083${SPACE}|
+    ...    |----------------------------------|--------------------------|--------------------|
+    ...    |${SPACE}stackql-demo-bucket${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}2022-02-09T04:39:09.058Z${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1082${SPACE}|
+    ...    |----------------------------------|--------------------------|--------------------|
+    ...    |${SPACE}demo-app-bucket2${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}2023-02-17T05:34:26.958Z${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}709${SPACE}|
+    ...    |----------------------------------|--------------------------|--------------------|
+    ...    |${SPACE}demo-app-bucket1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}2023-02-17T05:33:56.248Z${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}709${SPACE}|
+    ...    |----------------------------------|--------------------------|--------------------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Google-Buckets-List-With-Date-Logic-Exemplifies-Use-of-SQLite-Math-Functions.tmp
+    ...    stderr=${CURDIR}/tmp/Google-Buckets-List-With-Date-Logic-Exemplifies-Use-of-SQLite-Math-Functions-stderr.tmp
