@@ -5,6 +5,8 @@ import os
 import typing
 import copy
 
+from typing import Optional
+
 from typed_python_responses import SELECT_AWS_CLOUD_CONTROL_EVENTS_MINIMAL_EXPECTED
 
 _exe_name = 'stackql'
@@ -154,14 +156,21 @@ _REGISTRY_NULL = RegistryCfg(
   '',
   is_null_registry=True
 )
-_REGISTRY_CANONICAL_NO_VERIFY = RegistryCfg(
-  get_unix_path(os.path.join('test', 'registry')),
-  nop_verify=True
-)
-_REGISTRY_NO_VERIFY = RegistryCfg(
-  get_unix_path(os.path.join('test', 'registry-mocked')),
-  nop_verify=True
-)
+
+def _get_registry_canonical_no_verify(registry_path: Optional[str] = None) -> RegistryCfg:
+  _registry_path = registry_path if registry_path else os.path.join('test', 'registry')
+  return RegistryCfg(
+    get_unix_path(_registry_path),
+    nop_verify=True
+  )
+
+def _get_registry_no_verify(registry_path: Optional[str] = None) -> RegistryCfg:
+  _registry_path = registry_path if registry_path else os.path.join('test', 'registry-mocked')
+  return RegistryCfg(
+    get_unix_path(_registry_path),
+    nop_verify=True
+  )
+
 _REGISTRY_EXPERIMENTAL_NO_VERIFY = RegistryCfg(
   get_unix_path(os.path.join('test', 'registry-advanced')),
   nop_verify=True
@@ -178,10 +187,6 @@ _REGISTRY_SQL_VERB_CONTRIVED_NO_VERIFY = RegistryCfg(
 _REGISTRY_SQL_VERB_CONTRIVED_NO_VERIFY_DOCKER = RegistryCfg(
   get_unix_path(os.path.join('test', 'registry')),
   src_prefix="registry-verb-matching-src-docker",
-  nop_verify=True
-)
-_REGISTRY_CANONICAL = RegistryCfg(
-  get_unix_path(os.path.join('test', 'registry')),
   nop_verify=True
 )
 _REGISTRY_DEPRECATED = RegistryCfg(
@@ -244,7 +249,7 @@ _AUTH_CFG_DEFECTIVE["stackql_oauth2_testing"] = {
   "grant_type": "client_credentials",
   "client_id": "dummy_client_id",
   "client_secret": "dummy_client_secret",
-  "token_url": "http://localhost:2091/contrived/simple/error/token",
+  "token_url": "https://localhost:2091/contrived/simple/error/token",
   "scopes": ["scope1", "scope2"]
 }
 
@@ -307,7 +312,7 @@ _AUTH_CFG_DEFECTIVE_DOCKER["stackql_oauth2_testing"] = {
   "grant_type": "client_credentials",
   "client_id": "dummy_client_id",
   "client_secret": "dummy_client_secret",
-  "token_url": "http://host.docker.internal:2091/contrived/simple/error/token",
+  "token_url": "https://host.docker.internal:2091/contrived/simple/error/token",
   "scopes": ["scope1", "scope2"]
 }
 
@@ -888,7 +893,14 @@ def get_db_setup_src(sql_backend_str :str) -> str:
 
 
 
-def get_variables(execution_env :str, sql_backend_str :str, use_stackql_preinstalled :str) -> dict:
+def get_variables(
+  execution_env :str,
+  sql_backend_str :str,
+  use_stackql_preinstalled :str,
+  sundry_config: str # a json string with arbitrary config 
+) -> dict:
+  print(f'sundry_config: "{sundry_config}"')
+  _sundry_config = json.loads(sundry_config) if sundry_config else {}
   must_use_stackql_preinstalled :bool = use_stackql_preinstalled.lower() == 'true'
   NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_ONE = get_native_query_row_count_from_table('okta.application.apps.Application.generation_1', sql_backend_str)
   NATIVEQUERY_OKTA_APPS_ROW_COUNT_DISCO_ID_THREE = get_native_query_row_count_from_table('okta.application.apps.Application.generation_3', sql_backend_str)
@@ -944,13 +956,13 @@ def get_variables(execution_env :str, sql_backend_str :str, use_stackql_preinsta
     'PSQL_EXE':                                       PSQL_EXE,
     'SQLITE_EXE':                                     SQLITE_EXE,
     'EXPORT_SQLITE_FILE_PATH':                        get_sqlite_export_db_path(execution_env),
-    'REGISTRY_ROOT_CANONICAL':                        _REGISTRY_CANONICAL,
+    'REGISTRY_ROOT_CANONICAL':                        _get_registry_canonical_no_verify(_sundry_config.get('registry_path_canonical')),
     'REGISTRY_ROOT_DEPRECATED':                       _REGISTRY_DEPRECATED,
-    'REGISTRY_CANONICAL_CFG_STR':                     _REGISTRY_CANONICAL,
-    'REGISTRY_CANONICAL_NO_VERIFY_CFG_STR':           _REGISTRY_CANONICAL_NO_VERIFY,
+    'REGISTRY_CANONICAL_CFG_STR':                     _get_registry_canonical_no_verify(_sundry_config.get('registry_path_canonical')),
+    'REGISTRY_CANONICAL_NO_VERIFY_CFG_STR':           _get_registry_canonical_no_verify(_sundry_config.get('registry_path_canonical')),
     'REGISTRY_DEPRECATED_CFG_STR':                    _REGISTRY_DEPRECATED,
     'REGISTRY_MOCKED_CFG_STR':                        get_registry_mocked(execution_env),
-    'REGISTRY_NO_VERIFY_CFG_STR':                     _REGISTRY_NO_VERIFY,
+    'REGISTRY_NO_VERIFY_CFG_STR':                     _get_registry_no_verify(_sundry_config.get('registry_path')),
     'REGISTRY_NULL':                                  _REGISTRY_NULL,
     'REPOSITORY_ROOT':                                REPOSITORY_ROOT,
     'SQL_BACKEND_CFG_STR_ANALYTICS':                  get_analytics_sql_backend(execution_env, sql_backend_str),

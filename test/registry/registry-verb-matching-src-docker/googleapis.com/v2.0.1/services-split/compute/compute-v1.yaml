@@ -68593,7 +68593,7 @@ paths:
     - $ref: '#/components/parameters/uploadType'
     - $ref: '#/components/parameters/userIp'
 servers:
-- url: https://host.docker.internal:1080/
+- url: https://host.docker.internal:1080/compute/v1
 tags:
 - name: acceleratorTypes
 - name: addresses

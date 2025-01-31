@@ -2,7 +2,7 @@
   {
     "httpRequest": {
       "method": "GET",
-      "path": "/v1/collectors"
+      "path": "/api/v1/collectors"
     },
     "httpResponse": {
       "template": "collectors-list-01.json",

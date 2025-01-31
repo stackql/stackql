@@ -6,11 +6,13 @@ ${IS_WSL}                              false   # to be overridden from command l
 ${SHOULD_RUN_DOCKER_EXTERNAL_TESTS}    false   # to be overridden from command line, with string "true"
 ${CONCURRENCY_LIMIT}                   1       # to be overridden from command line, with integer value, -1 for no limit
 ${USE_STACKQL_PREINSTALLED}            false   # to be overridden from command line, with string "true"
+${SUNDRY_CONFIG}                       {}  # to be overridden from command line, with string value
 
 *** Settings ***
 Library           Process
 Library           OperatingSystem 
 Variables         ${LOCAL_LIB_HOME}/stackql_context.py    ${EXECUTION_PLATFORM}    ${SQL_BACKEND}    ${USE_STACKQL_PREINSTALLED}
+...               ${SUNDRY_CONFIG}
 Library           Process
 Library           OperatingSystem
 Library           String
@@ -21,18 +23,20 @@ Library           ${LOCAL_LIB_HOME}/web_service_keywords.py
 *** Keywords ***
 
 Start All Mock Servers
-    Create OAuth2 Client Credentials Web Service    ${MOCKSERVER_PORT_OAUTH_CLIENT_CREDENTIALS_TOKEN}
-    Create Github Web Service    ${MOCKSERVER_PORT_GITHUB}
-    Create GCP Web Service    ${MOCKSERVER_PORT_GOOGLE}
-    Create Okta Web Service    ${MOCKSERVER_PORT_OKTA}
-    Create AWS Web Service    ${MOCKSERVER_PORT_AWS}
-    Create Static Auth Web Service    ${MOCKSERVER_PORT_STACKQL_AUTH_TESTING}
-    Create Google Admin Web Service    ${MOCKSERVER_PORT_GOOGLEADMIN}
-    Create K8S Web Service    ${MOCKSERVER_PORT_K8S}
-    Create Registry Web Service    ${MOCKSERVER_PORT_REGISTRY}
-    Create Azure Web Service    ${MOCKSERVER_PORT_AZURE}
-    Create Sumologic Web Service    ${MOCKSERVER_PORT_SUMOLOGIC}
-    Create Digitalocean Web Service    ${MOCKSERVER_PORT_DIGITALOCEAN}
+    ${port_dict} =    Create Dictionary    
+    ...    oauth_client_credentials_token=${MOCKSERVER_PORT_OAUTH_CLIENT_CREDENTIALS_TOKEN}
+    ...    github=${MOCKSERVER_PORT_GITHUB}
+    ...    google=${MOCKSERVER_PORT_GOOGLE}
+    ...    okta=${MOCKSERVER_PORT_OKTA}
+    ...    aws=${MOCKSERVER_PORT_AWS}
+    ...    stackql_auth_testing=${MOCKSERVER_PORT_STACKQL_AUTH_TESTING}
+    ...    googleadmin=${MOCKSERVER_PORT_GOOGLEADMIN}
+    ...    k8s=${MOCKSERVER_PORT_K8S}
+    ...    registry=${MOCKSERVER_PORT_REGISTRY}
+    ...    azure=${MOCKSERVER_PORT_AZURE}
+    ...    sumologic=${MOCKSERVER_PORT_SUMOLOGIC}
+    ...    digitalocean=${MOCKSERVER_PORT_DIGITALOCEAN}
+    Start All Webservers    port_dict=${port_dict}
 
 
 Prepare StackQL Environment

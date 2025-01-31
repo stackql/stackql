@@ -8,32 +8,65 @@ from requests import get, post, Response
 
 import os
 
-from typing import Union, Tuple, List
+from typing import Union, Tuple, List, Optional
 
 @library
 class web_service_keywords(Process):
 
     _DEFAULT_SQLITE_DB_PATH: str = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "tmp", "robot_cli_affirmation_store.db"))
 
+    _DEFAULT_APP_ROOT: str = 'test/python/flask'
+
+    _DEFAULT_LOG_ROOT: str = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log'))
+
+    _DEFAULT_TLS_KEY_PATH: str = 'test/server/mtls/credentials/pg_server_key.pem'
+
+    _DEFAULT_TLS_CERT_PATH: str = 'test/server/mtls/credentials/pg_server_cert.pem'
+
+    _DEFAULT_MOCKSERVER_PORT_GOOGLE                         = 1080
+    _DEFAULT_MOCKSERVER_PORT_GOOGLEADMIN                    = 1098
+    _DEFAULT_MOCKSERVER_PORT_STACKQL_AUTH_TESTING           = 1170
+    _DEFAULT_MOCKSERVER_PORT_OKTA                           = 1090
+    _DEFAULT_MOCKSERVER_PORT_AWS                            = 1091
+    _DEFAULT_MOCKSERVER_PORT_K8S                            = 1092
+    _DEFAULT_MOCKSERVER_PORT_GITHUB                         = 1093
+    _DEFAULT_MOCKSERVER_PORT_AZURE                          = 1095
+    _DEFAULT_MOCKSERVER_PORT_SUMOLOGIC                      = 1096
+    _DEFAULT_MOCKSERVER_PORT_DIGITALOCEAN                   = 1097
+    _DEFAULT_MOCKSERVER_PORT_OAUTH_CLIENT_CREDENTIALS_TOKEN = 2091
+    _DEFAULT_MOCKSERVER_PORT_REGISTRY                       = 1094
+
     def _get_dsn(self) -> str:
         return self._DEFAULT_SQLITE_DB_PATH
 
-    def __init__(self):
+    def __init__(
+        self,
+        log_root: Optional[str] = None,
+        app_root: Optional[str] = None,
+        tls_key_path: Optional[str] = None,
+        tls_cert_path: Optional[str] = None
+    ):
+        _app_root: str = app_root if app_root else self._DEFAULT_APP_ROOT
+
+        self._log_root: str = log_root if log_root else self._DEFAULT_LOG_ROOT
+
         self._affirmation_store_web_service = None
-        self._web_server_app: str = 'test/python/flask/oauth2/token_srv'
-        self._github_app: str = 'test/python/flask/github/app'
-        self._gcp_app: str = 'test/python/flask/gcp/app'
-        self._okta_app: str = 'test/python/flask/okta/app'
-        self._static_auth_testing_app: str = 'test/python/flask/static_auth/app'
-        self._aws_app: str = 'test/python/flask/aws/app'
-        self._azure_app: str = 'test/python/flask/azure/app'
-        self._digitalocean_app: str = 'test/python/flask/digitalocean/app'
-        self._googleadmin_app: str = 'test/python/flask/googleadmin/app'
-        self._k8s_app: str = 'test/python/flask/k8s/app'
-        self._registry_app: str = 'test/python/flask/registry/app'
-        self._sumologic_app: str = 'test/python/flask/sumologic/app'
-        self._tls_key_path: str = 'test/server/mtls/credentials/pg_server_key.pem'
-        self._tls_cert_path: str = 'test/server/mtls/credentials/pg_server_cert.pem'
+
+        self._web_server_app: str = f'{_app_root}/oauth2/token_srv'
+        self._github_app: str = f'{_app_root}/github/app'
+        self._gcp_app: str = f'{_app_root}/gcp/app'
+        self._okta_app: str = f'{_app_root}/okta/app'
+        self._static_auth_testing_app: str = f'{_app_root}/static_auth/app'
+        self._aws_app: str = f'{_app_root}/aws/app'
+        self._azure_app: str = f'{_app_root}/azure/app'
+        self._digitalocean_app: str = f'{_app_root}/digitalocean/app'
+        self._googleadmin_app: str = f'{_app_root}/googleadmin/app'
+        self._k8s_app: str = f'{_app_root}/k8s/app'
+        self._registry_app: str = f'{_app_root}/registry/app'
+        self._sumologic_app: str = f'{_app_root}/sumologic/app'
+
+        self._tls_key_path: str = tls_key_path if tls_key_path else self._DEFAULT_TLS_KEY_PATH
+        self._tls_cert_path: str = tls_cert_path if tls_cert_path else self._DEFAULT_TLS_CERT_PATH
         super().__init__()
 
     @keyword
@@ -51,8 +84,10 @@ class web_service_keywords(Process):
             'run',
             f'--host={host}', # generally, `0.0.0.0`; otherwise, invisible on `docker.host.internal` etc
             f'--port={port}',
-            stdout=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'token-client-credentials-{port}-stdout.txt')),
-            stderr=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'token-client-credentials-{port}-stderr.txt'))
+            f'--cert={self._tls_cert_path}',
+            f'--key={self._tls_key_path}',
+            stdout=os.path.abspath(os.path.join(self._log_root, f'token-client-credentials-{port}-stdout.txt')),
+            stderr=os.path.abspath(os.path.join(self._log_root, f'token-client-credentials-{port}-stderr.txt'))
         )
     
     @keyword
@@ -72,8 +107,8 @@ class web_service_keywords(Process):
             f'--port={port}',
             f'--cert={self._tls_cert_path}',
             f'--key={self._tls_key_path}',
-            stdout=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'github-server-{port}-stdout.txt')),
-            stderr=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'github-server-{port}-stderr.txt'))
+            stdout=os.path.abspath(os.path.join(self._log_root, f'github-server-{port}-stdout.txt')),
+            stderr=os.path.abspath(os.path.join(self._log_root, f'github-server-{port}-stderr.txt'))
         )
     
     @keyword
@@ -93,8 +128,8 @@ class web_service_keywords(Process):
             f'--port={port}',
             f'--cert={self._tls_cert_path}',
             f'--key={self._tls_key_path}',
-            stdout=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'gcp-server-{port}-stdout.txt')),
-            stderr=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'gcp-server-{port}-stderr.txt'))
+            stdout=os.path.abspath(os.path.join(self._log_root, f'gcp-server-{port}-stdout.txt')),
+            stderr=os.path.abspath(os.path.join(self._log_root, f'gcp-server-{port}-stderr.txt'))
         )
     
     @keyword
@@ -114,8 +149,8 @@ class web_service_keywords(Process):
             f'--port={port}',
             f'--cert={self._tls_cert_path}',
             f'--key={self._tls_key_path}',
-            stdout=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'okta-server-{port}-stdout.txt')),
-            stderr=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'okta-server-{port}-stderr.txt'))
+            stdout=os.path.abspath(os.path.join(self._log_root, f'okta-server-{port}-stdout.txt')),
+            stderr=os.path.abspath(os.path.join(self._log_root, f'okta-server-{port}-stderr.txt'))
         )
     
     @keyword
@@ -135,8 +170,8 @@ class web_service_keywords(Process):
             f'--port={port}',
             f'--cert={self._tls_cert_path}',
             f'--key={self._tls_key_path}',
-            stdout=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'aws-server-{port}-stdout.txt')),
-            stderr=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'aws-server-{port}-stderr.txt'))
+            stdout=os.path.abspath(os.path.join(self._log_root, f'aws-server-{port}-stdout.txt')),
+            stderr=os.path.abspath(os.path.join(self._log_root, f'aws-server-{port}-stderr.txt'))
         )
     
     @keyword
@@ -156,8 +191,8 @@ class web_service_keywords(Process):
             f'--port={port}',
             f'--cert={self._tls_cert_path}',
             f'--key={self._tls_key_path}',
-            stdout=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'static-auth-server-{port}-stdout.txt')),
-            stderr=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'static-auth-server-{port}-stderr.txt'))
+            stdout=os.path.abspath(os.path.join(self._log_root, f'static-auth-server-{port}-stdout.txt')),
+            stderr=os.path.abspath(os.path.join(self._log_root, f'static-auth-server-{port}-stderr.txt'))
         )
     
     @keyword
@@ -177,8 +212,8 @@ class web_service_keywords(Process):
             f'--port={port}',
             f'--cert={self._tls_cert_path}',
             f'--key={self._tls_key_path}',
-            stdout=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'google-admin-server-{port}-stdout.txt')),
-            stderr=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'google-admin-server-{port}-stderr.txt'))
+            stdout=os.path.abspath(os.path.join(self._log_root, f'google-admin-server-{port}-stdout.txt')),
+            stderr=os.path.abspath(os.path.join(self._log_root, f'google-admin-server-{port}-stderr.txt'))
         )
     
     @keyword
@@ -198,8 +233,8 @@ class web_service_keywords(Process):
             f'--port={port}',
             f'--cert={self._tls_cert_path}',
             f'--key={self._tls_key_path}',
-            stdout=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'k8s-server-{port}-stdout.txt')),
-            stderr=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'k8s-server-{port}-stderr.txt'))
+            stdout=os.path.abspath(os.path.join(self._log_root, f'k8s-server-{port}-stdout.txt')),
+            stderr=os.path.abspath(os.path.join(self._log_root, f'k8s-server-{port}-stderr.txt'))
         )
     
     @keyword
@@ -219,8 +254,8 @@ class web_service_keywords(Process):
             f'--port={port}',
             # f'--cert={self._tls_cert_path}',
             # f'--key={self._tls_key_path}',
-            stdout=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'registry-server-{port}-stdout.txt')),
-            stderr=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'registry-server-{port}-stderr.txt'))
+            stdout=os.path.abspath(os.path.join(self._log_root, f'registry-server-{port}-stdout.txt')),
+            stderr=os.path.abspath(os.path.join(self._log_root, f'registry-server-{port}-stderr.txt'))
         )
     
     @keyword
@@ -240,8 +275,8 @@ class web_service_keywords(Process):
             f'--port={port}',
             f'--cert={self._tls_cert_path}',
             f'--key={self._tls_key_path}',
-            stdout=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'azure-server-{port}-stdout.txt')),
-            stderr=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'azure-server-{port}-stderr.txt'))
+            stdout=os.path.abspath(os.path.join(self._log_root, f'azure-server-{port}-stdout.txt')),
+            stderr=os.path.abspath(os.path.join(self._log_root, f'azure-server-{port}-stderr.txt'))
         )
     
     @keyword
@@ -261,8 +296,8 @@ class web_service_keywords(Process):
             f'--port={port}',
             f'--cert={self._tls_cert_path}',
             f'--key={self._tls_key_path}',
-            stdout=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'sumologic-server-{port}-stdout.txt')),
-            stderr=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'sumologic-server-{port}-stderr.txt'))
+            stdout=os.path.abspath(os.path.join(self._log_root, f'sumologic-server-{port}-stdout.txt')),
+            stderr=os.path.abspath(os.path.join(self._log_root, f'sumologic-server-{port}-stderr.txt'))
         )
     
     @keyword
@@ -282,9 +317,26 @@ class web_service_keywords(Process):
             f'--port={port}',
             f'--cert={self._tls_cert_path}',
             f'--key={self._tls_key_path}',
-            stdout=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'digitalocean-server-{port}-stdout.txt')),
-            stderr=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log', f'digitalocean-server-{port}-stderr.txt'))
+            stdout=os.path.abspath(os.path.join(self._log_root, f'digitalocean-server-{port}-stdout.txt')),
+            stderr=os.path.abspath(os.path.join(self._log_root, f'digitalocean-server-{port}-stderr.txt'))
         )
+    
+    @keyword
+    def start_all_webservers(self, port_dict: Optional[dict] = None) -> None:
+        _port_dict: dict = port_dict if port_dict else {}
+
+        self.create_digitalocean_web_service(_port_dict.get('digitalocean', self._DEFAULT_MOCKSERVER_PORT_DIGITALOCEAN))
+        self.create_sumologic_web_service(_port_dict.get('sumologic', self._DEFAULT_MOCKSERVER_PORT_SUMOLOGIC))
+        self.create_registry_web_service(_port_dict.get('registry', self._DEFAULT_MOCKSERVER_PORT_REGISTRY))
+        self.create_k8s_web_service(_port_dict.get('k8s', self._DEFAULT_MOCKSERVER_PORT_K8S))
+        self.create_google_admin_web_service(_port_dict.get('googleadmin', self._DEFAULT_MOCKSERVER_PORT_GOOGLEADMIN))
+        self.create_azure_web_service(_port_dict.get('azure', self._DEFAULT_MOCKSERVER_PORT_AZURE))
+        self.create_aws_web_service(_port_dict.get('aws', self._DEFAULT_MOCKSERVER_PORT_AWS))
+        self.create_static_auth_web_service(_port_dict.get('static_auth_testing', self._DEFAULT_MOCKSERVER_PORT_STACKQL_AUTH_TESTING))
+        self.create_okta_web_service(_port_dict.get('okta', self._DEFAULT_MOCKSERVER_PORT_OKTA))
+        self.create_gcp_web_service(_port_dict.get('gcp', self._DEFAULT_MOCKSERVER_PORT_GOOGLE))
+        self.create_github_web_service(_port_dict.get('github', self._DEFAULT_MOCKSERVER_PORT_GITHUB))
+        self.create_oauth2_client_credentials_web_service(_port_dict.get('oauth_client_credentials_token', self._DEFAULT_MOCKSERVER_PORT_OAUTH_CLIENT_CREDENTIALS_TOKEN))
 
     @keyword
     def send_get_request(

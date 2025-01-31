@@ -4289,7 +4289,7 @@ Oauth2 CLient Credentials Auth Should Fail with Invalid Config
     Set Environment Variable    YOUR_OAUTH2_CLIENT_ID_ENV_VAR    dummy-client-id
     Set Environment Variable    YOUR_OAUTH2_CLIENT_SECRET_ENV_VAR    dummy-client-secret
     ${outputErrStr} =    Catenate    SEPARATOR=\n
-    ...    Get "https://${LOCAL_HOST_ALIAS}:1170/v1/collectors/100000001?": oauth2: cannot fetch token: 401 UNAUTHORIZED
+    ...    Get "https://${LOCAL_HOST_ALIAS}:1170/api/v1/collectors/100000001?": oauth2: cannot fetch token: 401 UNAUTHORIZED
     ...    Response: {"msg": "auth failed"}
     Should Stackql Exec Inline Equal Both Streams
     ...    ${STACKQL_EXE}
@@ -7365,7 +7365,7 @@ Busted Auth Throws Error Then Set Statement Update Auth Scenario Working
     ...    stderr=${CURDIR}/tmp/Busted-Auth-Throws-Error-Then-Set-Statement-Update-Auth-Scenario-Working-Working-stderr.tmp
 
 Alternate App Root Persists All Temp Materials in Alotted Directory
-    [Teardown]    Remove Directory    ${TEST_TMP_EXEC_APP_ROOT_NATIVE}    recursive=True
+    # [Teardown]    Remove Directory    ${TEST_TMP_EXEC_APP_ROOT_NATIVE}    recursive=True # does not work for docker
     ${inputStr} =    Catenate
     ...    registry pull google v0.1.2;
     ...    show providers;
@@ -7427,6 +7427,7 @@ View Tuple Replacement Working As Exemplified by AWS EC2 Instances List and Deta
     ...    repeat_count=20
 
 Google Buckets List With Date Logic Exemplifies Use of SQLite Math Functions
+    [Tags]   registry    tls_proxied
     Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    This is a valid case where the test is targetted at SQLite only
     ${inputStr} =    Catenate
     ...    SELECT name, timeCreated, floor(julianday('2025-01-27')-julianday(timeCreated)) as days_since_ceiling 
