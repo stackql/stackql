@@ -68593,7 +68593,7 @@ paths:
     - $ref: '#/components/parameters/uploadType'
     - $ref: '#/components/parameters/userIp'
 servers:
-- url: https://localhost:1080/
+- url: https://localhost:1080/compute/v1
 tags:
 - name: acceleratorTypes
 - name: addresses

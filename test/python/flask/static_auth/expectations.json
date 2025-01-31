@@ -2,7 +2,7 @@
   {
     "httpRequest": {
       "method": "GET",
-      "path": "/v1/collectors",
+      "path": "/api/v1/collectors",
       "headers": {
         "DD-API-KEY": ["^myusername$" ],
         "DD-APPLICATION-KEY": ["^mypassword$" ]
@@ -19,7 +19,7 @@
   {
     "httpRequest": {
       "method": "GET",
-      "path": "/v1/collectors/100000001",
+      "path": "/api/v1/collectors/100000001",
       "headers": {
         "Authorization": ["^Bearer\\ some-dummy-token$" ]
       }

@@ -27,7 +27,7 @@ config:
     client_secret_env_var: 'YOUR_OAUTH2_CLIENT_SECRET_ENV_VAR'
     type: "oauth2"
     grant_type: "client_credentials"
-    token_url: 'http://localhost:2091/{{ .__env__YOUR_OAUTH2_SOME_SYSTEM_ACCOUNT_ID }}/simple/token'
+    token_url: 'https://localhost:2091/{{ .__env__YOUR_OAUTH2_SOME_SYSTEM_ACCOUNT_ID }}/simple/token'
     scopes:
       - 'scope-01'
       - 'scope-02'

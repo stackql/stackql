@@ -139,6 +139,11 @@ def _replace_token_url(url :str, replacement_host :str) -> str:
   replaced = parsed._replace(netloc="{}:{}".format(replacement_host, parsed.port))
   return urllib.parse.urlunparse(replaced)
 
+def _replace_server_url(url :str, replacement_host :str, replacement_port: int) -> str:
+  parsed = urllib.parse.urlparse(url)
+  replaced = parsed._replace(netloc="{}:{}".format(replacement_host, replacement_port))
+  return urllib.parse.urlunparse(replaced)
+
 def rewrite_provider(args :ProviderArgs):
     os.chdir(args.srcdir)
     for r, dz, fz in os.walk('.'):
@@ -151,7 +156,7 @@ def rewrite_provider(args :ProviderArgs):
           servs = d.get('servers', [])
           if args.isServerRewriteRequired():
             for srv in servs:
-              srv['url'] = f'https://{args.replacement_host}:{args.port}/'
+              srv['url'] = _replace_server_url(srv['url'], args.replacement_host, args.port) 
           d['servers'] = servs
           token_url = d.get('config', {}).get('auth', {}).get('token_url')
           if args.isServerRewriteRequired() and token_url:
@@ -160,7 +165,7 @@ def rewrite_provider(args :ProviderArgs):
             path_item_servers = path_item.get('servers', [])
             if args.isServerRewriteRequired():
               for srv in path_item_servers:
-                srv['url'] = f'https://{args.replacement_host}:{args.port}/' 
+                srv['url'] = _replace_server_url(srv['url'], args.replacement_host, args.port) 
                 path_item_servers
             for k in ('get', 'put', 'post', 'delete', 'head'):
               operation = path_item.get(k)
@@ -168,10 +173,10 @@ def rewrite_provider(args :ProviderArgs):
                 operation_servers = operation.get('servers', [])
                 if args.isServerRewriteRequired():
                   for srv in operation_servers:
-                    srv['url'] = f'https://{args.replacement_host}:{args.port}/' 
+                    srv['url'] = _replace_server_url(srv['url'], args.replacement_host, args.port) 
           graphql_url = d.get('paths', {}).get('/graphql', {}).get('post', {}).get('x-stackQL-graphQL', {}).get('url')
           if graphql_url:
-            d['paths']['/graphql']['post']['x-stackQL-graphQL']['url'] = f'https://{args.replacement_host}:{args.port}/graphql'
+            d['paths']['/graphql']['post']['x-stackQL-graphQL']['url'] = f'{_replace_server_url(graphql_url, args.replacement_host, args.port)}/graphql'
           with open(os.path.join(os.path.abspath(args.destdir), r, f), 'w') as fw:
             yaml.dump(d, fw)
         else:

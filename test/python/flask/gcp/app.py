@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 def log_request_info():
     logger.info(f"Request: {request.method} {request.path} - Query: {request.args}")
 
-@app.route('/b', methods=['GET'])
+@app.route('/storage/v1/b', methods=['GET'])
 def v1_storage_buckets_list():
     if request.args.get('project') == 'stackql-demo':
         return render_template('buckets-list.json'), 200, {'Content-Type': 'application/json'}
@@ -70,11 +70,11 @@ def v1_projects_testing_project_locations_australia_southeast1_keyRings():
 def v1_projects_testing_project_locations_global_keyRings():
     return render_template('route_13_template.json'), 200, {'Content-Type': 'application/json'}
 
-@app.route('/projects/testing-project/zones/australia-southeast1-a/instances/000000001/getIamPolicy', methods=['GET'])
+@app.route('/compute/v1/projects/testing-project/zones/australia-southeast1-a/instances/000000001/getIamPolicy', methods=['GET'])
 def projects_testing_project_zones_australia_southeast1_a_instances_000000001_getIamPolicy():
     return render_template('route_14_template.json'), 200, {'Content-Type': 'application/json'}
 
-@app.route('/projects/testing-project/zones/australia-southeast1-a/machineTypes', methods=['GET'])
+@app.route('/compute/v1/projects/testing-project/zones/australia-southeast1-a/machineTypes', methods=['GET'])
 def machine_types():
     import math
 
@@ -146,15 +146,15 @@ def v1_projects_yet_another_project_aggregated_usableSubnetworks():
 def v1_projects_empty_project_aggregated_usableSubnetworks():
     return render_template('route_20_template.json'), 200, {'Content-Type': 'application/json'}
 
-@app.route('/projects/testing-project/zones/australia-southeast1-a/acceleratorTypes', methods=['GET'])
+@app.route('/compute/v1/projects/testing-project/zones/australia-southeast1-a/acceleratorTypes', methods=['GET'])
 def projects_testing_project_zones_australia_southeast1_a_acceleratorTypes():
     return render_template('route_21_template.json'), 200, {'Content-Type': 'application/json'}
 
-@app.route('/projects/defective-response-content-project/zones/australia-southeast1-a/acceleratorTypes', methods=['GET'])
+@app.route('/compute/v1/projects/defective-response-content-project/zones/australia-southeast1-a/acceleratorTypes', methods=['GET'])
 def projects_testing_project_zones_australia_southeast1_a_acceleratorTypes_defective_response_type():
     return render_template('defective-content-type-accelerator-type-list.json'), 200, {'Content-Type': 'text/plain'}
 
-@app.route('/projects/another-project/zones/australia-southeast1-a/acceleratorTypes', methods=['GET'])
+@app.route('/compute/v1/projects/another-project/zones/australia-southeast1-a/acceleratorTypes', methods=['GET'])
 def projects_another_project_zones_australia_southeast1_a_acceleratorTypes():
     return render_template('route_22_template.json'), 200, {'Content-Type': 'application/json'}
 
@@ -166,27 +166,27 @@ def v3_projects_testproject_getIamPolicy():
 def v3_organizations_123456789012_getIamPolicy():
     return render_template('route_24_template.json'), 200, {'Content-Type': 'application/json'}
 
-@app.route('/projects/testing-project/zones/australia-southeast1-a/disks', methods=['GET'])
+@app.route('/compute/v1/projects/testing-project/zones/australia-southeast1-a/disks', methods=['GET'])
 def projects_testing_project_zones_australia_southeast1_a_disks():
     return render_template('route_25_template.json'), 200, {'Content-Type': 'application/json'}
 
-@app.route('/projects/testing-project/zones/australia-southeast1-b/disks', methods=['GET'])
+@app.route('/compute/v1/projects/testing-project/zones/australia-southeast1-b/disks', methods=['GET'])
 def projects_testing_project_zones_australia_southeast1_b_disks():
     return render_template('route_26_template.json'), 200, {'Content-Type': 'application/json'}
 
-@app.route('/projects/testing-project/global/networks', methods=['GET'])
+@app.route('/compute/v1/projects/testing-project/global/networks', methods=['GET'])
 def projects_testing_project_global_networks():
     return render_template('route_27_template.json'), 200, {'Content-Type': 'application/json'}
 
-@app.route('/projects/testing-project/regions/australia-southeast1/subnetworks', methods=['GET'])
+@app.route('/compute/v1/projects/testing-project/regions/australia-southeast1/subnetworks', methods=['GET'])
 def projects_testing_project_regions_australia_southeast1_subnetworks():
     return render_template('route_28_template.json'), 200, {'Content-Type': 'application/json'}
 
-@app.route('/projects/testing-project/zones/australia-southeast1-a/instances', methods=['GET'])
+@app.route('/compute/v1/projects/testing-project/zones/australia-southeast1-a/instances', methods=['GET'])
 def projects_testing_project_zones_australia_southeast1_a_instances():
     return render_template('route_29_template.json'), 200, {'Content-Type': 'application/json'}
 
-@app.route('/projects/testing-project/aggregated/instances', methods=['GET'])
+@app.route('/compute/v1/projects/testing-project/aggregated/instances', methods=['GET'])
 def projects_testing_project_aggregated_instances():
     return render_template('route_30_template.json'), 200, {'Content-Type': 'application/json'}
 
@@ -199,15 +199,15 @@ def v1_projects_testing_project_assets():
     # Increment the call counter
     return render_template('route_32_template.json'), 200, {'Content-Type': 'application/json'}
 
-@app.route('/projects/testing-project/global/firewalls/allow-spark-ui', methods=['PUT'])
+@app.route('/compute/v1/projects/testing-project/global/firewalls/allow-spark-ui', methods=['PUT'])
 def projects_testing_project_global_firewalls_allow_spark_ui():
     return render_template('route_33_template.json'), 200, {'Content-Type': 'application/json'}
 
-@app.route('/projects/testing-project/global/firewalls/some-other-firewall', methods=['PATCH'])
+@app.route('/compute/v1/projects/testing-project/global/firewalls/some-other-firewall', methods=['PATCH'])
 def projects_testing_project_global_firewalls_some_other_firewall():
     return render_template('route_34_template.json'), 200, {'Content-Type': 'application/json'}
 
-@app.route('/projects/testing-project/global/firewalls', methods=['GET'])
+@app.route('/compute/v1/projects/testing-project/global/firewalls', methods=['GET'])
 def projects_testing_project_global_firewalls():
     return render_template('route_35_template.json'), 200, {'Content-Type': 'application/json'}
 
@@ -215,7 +215,7 @@ def projects_testing_project_global_firewalls():
 # Initialize a counter to track the number of calls
 call_counter = {"firewalls": 0}
 
-@app.route('/projects/changing-project/global/firewalls', methods=['GET'])
+@app.route('/compute/v1/projects/changing-project/global/firewalls', methods=['GET'])
 def firewalls():
     # Increment the call counter
     call_counter["firewalls"] += 1
