@@ -13,9 +13,7 @@ Summary:
     - This pattern does the below:
         - (a) Build and push by digest.
         - (b) Leverage [`docker buildx imagetools`](https://docs.docker.com/reference/cli/docker/buildx/imagetools/) to write desired tags.
-    - This pattern is only required because if tag pushes are done concurrently, then identical multi-architecture tags are clobbered in a reverse race condition. 
-    - **NOTE**: The QEMU build for linux/arm64 is **very slow**.  On the order of 30 minutes.  This is currently unavoidable.
-    - **TODO**: Migrate linux/arm64 docker build to native once GHA supports this platform as a first class citizen.
+    - This pattern is only required because if tag pushes are done concurrently, then identical multi-architecture tags are clobbered in a reverse race condition.
     - **NOTE**.  Be careful selecting from [the available github actions runners](https://github.com/actions/runner-images).  Some runnner instances may be incompatible with assumed toolchain.
 - Docker images:
     - [production image at `stackql/stackql`](https://hub.docker.com/r/stackql/stackql/tags).

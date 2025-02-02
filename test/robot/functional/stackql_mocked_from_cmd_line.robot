@@ -7321,6 +7321,7 @@ Set Statement Update Auth Scenario Working
     ...    stderr=${CURDIR}/tmp/Set-Statement-Update-Auth-Scenario-Working-Working-stderr.tmp
 
 Busted Auth Throws Error Then Set Statement Update Auth Scenario Working
+    [Tags]    registry    tls_proxied
     ${inputStr} =    Catenate
     ...    select name, id, network, split_part(network, '/', 8) as network_region from google.compute.firewalls where project \= 'testing-project' order by id desc;
     ...    set session "$.auth.google.credentialsfilepath"='${AUTH_GOOGLE_SA_KEY_PATH}';
@@ -7395,6 +7396,7 @@ Alternate App Root Persists All Temp Materials in Alotted Directory
     Directory Should Exist    ${TEST_TMP_EXEC_APP_ROOT_NATIVE}${/}src
 
 View Tuple Replacement Working As Exemplified by AWS EC2 Instances List and Detail
+    [Tags]    registry    tls_proxied
     ${inputStr} =    Catenate
     ...    SELECT region, instance_id, tenancy, security_groups 
     ...    FROM aws.ec2_nextgen.instances 
@@ -7427,7 +7429,7 @@ View Tuple Replacement Working As Exemplified by AWS EC2 Instances List and Deta
     ...    repeat_count=20
 
 Google Buckets List With Date Logic Exemplifies Use of SQLite Math Functions
-    [Tags]   registry    tls_proxied
+    [Tags]    registry    tls_proxied
     Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    This is a valid case where the test is targetted at SQLite only
     ${inputStr} =    Catenate
     ...    SELECT name, timeCreated, floor(julianday('2025-01-27')-julianday(timeCreated)) as days_since_ceiling 
