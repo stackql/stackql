@@ -23,7 +23,7 @@ Azure Authenticated VM Sizes
     ...    stdout=${CURDIR}/tmp/Azure-Authenticated-VM-Sizes.tmp
 
 Faulty Auth Azure Authenticated VM Sizes
-    Should Stackql Exec Inline Contain stderr
+    Should Stackql Exec Inline Contain Both Streams
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
     ...    ${GITHUB_SECRET_STR}
@@ -32,6 +32,7 @@ Faulty Auth Azure Authenticated VM Sizes
     ...    ${AUTH_AZURE_FAULTY}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${AZURE_VM_SIZES_ENUMERATION}
+    ...    ${EMPTY}
     ...    credentials error
     ...    stdout=${CURDIR}/tmp/Faulty-Azure-Authenticated-VM-Sizes.tmp
     ...    stderr=${CURDIR}/tmp/Faulty-Azure-Authenticated-VM-Sizes-stderr.tmp
