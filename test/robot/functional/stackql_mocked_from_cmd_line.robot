@@ -2688,7 +2688,7 @@ Registry Pull Google Provider Specific Version Prerelease
     ...    successfully installed
 
 Registry Pull Google Provider Implicit Latest Version
-    Should Stackql Exec Inline Contain Stderr
+    Should Stackql Exec Inline Contain Both Streams
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
     ...    ${GITHUB_SECRET_STR}
@@ -2697,6 +2697,7 @@ Registry Pull Google Provider Implicit Latest Version
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    registry pull google ;
+    ...    ${EMPTY}
     ...    successfully installed
 
 
@@ -3566,7 +3567,7 @@ Basic View Select Star of Cloud Control Resource Returns Expected Result
     ...    ${CURDIR}/tmp/Basic-View-Select-Star-of-Cloud-Control-Resource-Returns-Expected-Result.tmp
 
 Select Star of EC2 Instances Returns Expected Result
-    Should StackQL Exec Inline Contain
+    Should StackQL Exec Inline Contain Both Streams
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
     ...    ${GITHUB_SECRET_STR}
@@ -3576,6 +3577,7 @@ Select Star of EC2 Instances Returns Expected Result
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select * from aws.ec2.instances where region \= 'us-east-1' ;
     ...    vol-1234567890abcdef0
+    ...    ${EMPTY}
     ...    stdout=${CURDIR}/tmp/Select-Star-of-EC2-Instances-Returns-Expected-Result.tmp
 
 Select With IN Scalars inside WHERE Clause Returns Expected Result
