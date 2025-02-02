@@ -7283,6 +7283,7 @@ Show Methods Path Level Parameters Considered as Exemplified by Azure Dev Center
     ...    stderr=${CURDIR}/tmp/Show-Methods-Path-Level-Parameters-Considered-as-Exemplified-by-Azure-Dev-Center-Customization-Tasks-Methods-stderr.tmp
 
 Set Statement Update Auth Scenario Working
+    [Tags]    registry    tls_proxied
     ${inputStr} =    Catenate
     ...    set session "$.auth.google.credentialsfilepath"='${AUTH_GOOGLE_SA_KEY_PATH}';
     ...    select name, id, network, split_part(network, '/', 8) as network_region from google.compute.firewalls where project \= 'testing-project' order by id desc;
@@ -7396,7 +7397,7 @@ Alternate App Root Persists All Temp Materials in Alotted Directory
     Directory Should Exist    ${TEST_TMP_EXEC_APP_ROOT_NATIVE}${/}src
 
 View Tuple Replacement Working As Exemplified by AWS EC2 Instances List and Detail
-    [Tags]    registry    tls_proxied
+    [Tags]    registry_extension    tls_proxied
     ${inputStr} =    Catenate
     ...    SELECT region, instance_id, tenancy, security_groups 
     ...    FROM aws.ec2_nextgen.instances 
