@@ -21,6 +21,7 @@ _DEFAULT_AWS_GLOBAL_SERVICES: Tuple[str] = (
 )
 
 _DEFAULT_AWS_REGIONAL_SERVICES: Tuple[str] = (
+    "ce", # costexplorer
     "cloudcontrolapi", # cloudcontrol
     'cloudhsmv2', # cloudhsm
     "ec2",

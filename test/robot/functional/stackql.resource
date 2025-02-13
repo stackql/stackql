@@ -1,5 +1,6 @@
 *** Variables ***
 ${LOCAL_LIB_HOME}                      ${CURDIR}/../lib
+${REPOSITORY_ROOT}                     ${CURDIR}${/}..${/}..${/}..
 ${EXECUTION_PLATFORM}                  native   # to be overridden from command line, eg "docker"
 ${SQL_BACKEND}                         sqlite_embedded   # to be overridden from command line, eg "postgres_tcp"
 ${IS_WSL}                              false   # to be overridden from command line, with string "true"

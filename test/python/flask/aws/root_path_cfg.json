@@ -1,4 +1,28 @@
 {
+    "POST:/:ce_01": {
+        "method": "POST",
+        "path": "/",
+        "headers": {
+            "Authorization": [
+                "^.*SignedHeaders=.*x-amz-target.*$"
+            ],
+            "X-Amz-Target": [
+                "AWSInsightsIndexService.GetCostAndUsage"
+            ]
+        },
+        "body_conditions": {
+            "type": "JSON",
+            "json": {
+                "Granularity": "MONTHLY"
+            },
+            "matchType": "ONLY_MATCHING_FIELDS"
+        },
+        "template": "cost_explorer_services_01.json",
+        "status": 200,
+        "response_headers": {
+            "Content-Type": ["application/x-amz-json-1.0"]
+        }
+    },
     "POST:/:0": {
         "method": "POST",
         "path": "/",
