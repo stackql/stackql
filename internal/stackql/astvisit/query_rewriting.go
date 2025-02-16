@@ -25,8 +25,10 @@ import (
 )
 
 var (
-	_                          QueryRewriteAstVisitor = &standardQueryRewriteAstVisitor{}
-	isJSONEachCompatibleRegexp *regexp.Regexp         = regexp.MustCompile(`^.*\.value$`) //nolint:revive // acceptable
+	_ QueryRewriteAstVisitor = &standardQueryRewriteAstVisitor{}
+	//nolint:revive // acceptable
+	isJSONEachCompatibleRegexp *regexp.Regexp = regexp.MustCompile(
+		`^(.*\.value|value)$`)
 )
 
 type QueryRewriteAstVisitor interface {
