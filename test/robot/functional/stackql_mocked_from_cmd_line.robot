@@ -7496,3 +7496,27 @@ AWS Materialized View And Query on Resource Costs Exemplifies Functions On Mater
     ...    DDL Execution Completed
     ...    stdout=${CURDIR}/tmp/AWS-Materialized-View-And-Query-on-Resource-Costs-Exemplifies-Functions-On-Materialized-Views.tmp
     ...    stderr=${CURDIR}/tmp/AWS-Materialized-View-And-Query-on-Resource-Costs-Exemplifies-Functions-On-Materialized-Views-stderr.tmp
+
+AWS Materialized View And Multiple Function Query on Resource Costs Exemplifies Multiple Functions on Materialized Views
+    [Tags]    registry    tls_proxied
+    ${sqliteInputStr} =    Catenate
+    ...    create or replace materialized view e1 as select json_extract(json_each.value, '$.TimePeriod.Start') as beginning, json_extract(json_each.value, '$.TimePeriod.End') as ending, json_extract(json_each.value, '$.Groups') as rez from aws.ce_native.cost_and_usage, json_each(ResultsByTime) where data__Granularity = 'MONTHLY' and data__Metrics = '["UnblendedCost"]' and data__TimePeriod = '{"Start": "2024-08-01", "End": "2024-11-30"}' and data__GroupBy = '[{"Type":"DIMENSION","Key":"SERVICE"}]' and region = 'us-east-1';
+    ...    select beginning, ending, json_extract(json_each.value, '$.Keys') as keyz, json_extract(json_each.value, '$.Metrics.UnblendedCost.Amount') as amount, json_extract(json_each.value, '$.Metrics.UnblendedCost.Unit') as unit from e1, json_each(e1.rez) order by amount, keyz, ending;
+    ${postgresInputStr} =    Catenate
+    ...    create or replace materialized view e1 as select json_extract_path_text(rd.value, 'TimePeriod', 'Start') as beginning, json_extract_path_text(rd.value, 'TimePeriod', 'End') as ending, json_extract_path_text(rd.value, 'Groups') as rez from aws.ce_native.cost_and_usage, json_array_elements_text(ResultsByTime) as rd where data__Granularity = 'MONTHLY' and data__Metrics = '["UnblendedCost"]' and data__TimePeriod = '{"Start": "2024-08-01", "End": "2024-11-30"}' and data__GroupBy = '[{"Type":"DIMENSION","Key":"SERVICE"}]' and region = 'us-east-1';
+    ...    select beginning, ending, json_extract_path_text(rd.value, 'Keys') as keyz, json_extract_path_text(rd.value, 'Metrics', 'UnblendedCost', 'Amount') as amount, json_extract_path_text(rd.value, 'Metrics', 'UnblendedCost', 'Unit') as unit from e1, json_array_elements_text(e1.rez) as rd order by amount, keyz, ending;
+    ${inputStr} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"     ${postgresInputStr}    ${sqliteInputStr}
+    ${outputStr} =    Get File     ${REPOSITORY_ROOT}${/}test${/}assets${/}expected${/}aws${/}ce${/}ce-nested-function-materialized-view.txt
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    DDL Execution Completed
+    ...    stdout=${CURDIR}/tmp/AWS-Materialized-View-And-Multiple-Function-Query-on-Resource-Costs-Exemplifies-Multiple-Functions-on-Materialized-Views.tmp
+    ...    stderr=${CURDIR}/tmp/AWS-Materialized-View-And-Multiple-Function-Query-on-Resource-Costs-Exemplifies-Multiple-Functions-on-Materialized-Views-stderr.tmp
