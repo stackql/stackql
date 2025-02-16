@@ -935,8 +935,8 @@ func RenderDDLSelectStmt(ddl *sqlparser.DDL) string {
 }
 
 func renderDDLSelectStmt(ddl *sqlparser.DDL) string {
-	return strings.ReplaceAll(
-		astformat.String(ddl.SelectStatement, astformat.DefaultSelectExprsFormatter), `"`, "")
+	intermediateStr := astformat.String(ddl.SelectStatement, astformat.DefaultSelectExprsFormatter)
+	return intermediateStr
 }
 
 func RenderRefreshMaterializedViewSelectStmt(ref *sqlparser.RefreshMaterializedView) string {

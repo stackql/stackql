@@ -20,6 +20,15 @@ providerServices:
       $ref: aws/v0.1.0/services/cloud_control.yaml
     title: Cloud Control API
     version: v0.1.0
+  ce_native:
+    description: ce_native
+    id: ce_native:v0.1.0
+    name: ce_native
+    preferred: true
+    service:
+      $ref: aws/v0.1.0/services/ce_native.yaml
+    title: ce_native API
+    version: v0.1.0
   cloud_control_legacy:
     description: cloud_control_legacy
     id: cloud_control_legacy:v0.1.0
