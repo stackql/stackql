@@ -684,14 +684,23 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 				if col.Val != nil {
 					relationalCol = typing.NewRelationalColumn(col.Name, v.getTypeFromParserType(col.Type)).WithDecorated(col.DecoratedColumn)
 				} else {
-					r, ok := indirect.GetColumnByName(col.Name)
-					if !ok {
-						if !v.isJSONEachCompatible(col) {
-							return fmt.Errorf("query rewriting for indirection: cannot find col = '%s'", col.Name)
+					_, isConvert := col.Expr.(*sqlparser.ConvertExpr)
+					if isConvert {
+						convertCol, convertColErr := parserutil.InferColNameFromExpr(node, v.formatter)
+						if convertColErr != nil {
+							return convertColErr
 						}
-						relationalCol = typing.NewRelationalColumn(col.Name, "").WithDecorated(col.DecoratedColumn) // TOOO: clean this up
+						relationalCol = typing.NewRelationalColumn(convertCol.Name, v.getTypeFromParserType(col.Type)).WithDecorated(convertCol.DecoratedColumn)
 					} else {
-						relationalCol = typing.NewRelationalColumn(col.Name, r.GetType()).WithDecorated(col.DecoratedColumn)
+						r, ok := indirect.GetColumnByName(col.Name)
+						if !ok {
+							if !v.isJSONEachCompatible(col) {
+								return fmt.Errorf("query rewriting for indirection: cannot find col = '%s'", col.Name)
+							}
+							relationalCol = typing.NewRelationalColumn(col.Name, "").WithDecorated(col.DecoratedColumn) // TOOO: clean this up
+						} else {
+							relationalCol = typing.NewRelationalColumn(col.Name, r.GetType()).WithDecorated(col.DecoratedColumn)
+						}
 					}
 				}
 			}

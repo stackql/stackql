@@ -622,6 +622,15 @@ func inferColNameFromExpr(
 			rv.DecoratedColumn = getDecoratedColRendition(decoratedColumn, alias)
 			rv.Alias = alias
 			return rv, nil
+		default:
+			decortedCol := astformat.String(node, formatter)
+			rv := ColumnHandle{
+				Alias: "",
+				Expr:  node,
+			}
+			rv.DecoratedColumn = getDecoratedColRendition(decortedCol, alias)
+			rv.Alias = alias
+			return rv, nil
 		}
 	case *sqlparser.SQLVal:
 		// As a shortcut, functions are integral types
