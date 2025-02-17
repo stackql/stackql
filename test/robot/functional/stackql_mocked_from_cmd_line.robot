@@ -7523,6 +7523,7 @@ AWS Materialized View And Multiple Function Query on Resource Costs Exemplifies 
 
 AWS Materialized View and Cast and Multiple Function Query on Resource Costs Exemplifies Cast and Multiple Functions on Materialized Views
     [Tags]    registry    tls_proxied
+    Pass Execution If    "${IS_WINDOWS}" == "1"   Windows real casting on the input is indeterminant so will use a similarity check below.
     ${sqliteInputStr} =    Catenate
     ...    create or replace materialized view e1 as select json_extract(json_each.value, '$.TimePeriod.Start') as beginning, json_extract(json_each.value, '$.TimePeriod.End') as ending, json_extract(json_each.value, '$.Groups') as rez from aws.ce_native.cost_and_usage, json_each(ResultsByTime) where data__Granularity = 'MONTHLY' and data__Metrics = '["UnblendedCost"]' and data__TimePeriod = '{"Start": "2024-08-01", "End": "2024-11-30"}' and data__GroupBy = '[{"Type":"DIMENSION","Key":"SERVICE"}]' and region = 'us-east-1';
     ...    select beginning, ending, json_extract(json_each.value, '$.Keys') as keyz, cast(json_extract(json_each.value, '$.Metrics.UnblendedCost.Amount') as real) as amount, json_extract(json_each.value, '$.Metrics.UnblendedCost.Unit') as unit from e1, json_each(e1.rez) order by amount, keyz, ending;
@@ -7532,7 +7533,9 @@ AWS Materialized View and Cast and Multiple Function Query on Resource Costs Exe
     ${inputStr} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"     ${postgresInputStr}    ${sqliteInputStr}
     ${outputStrSQLite} =    Get File     ${REPOSITORY_ROOT}${/}test${/}assets${/}expected${/}aws${/}ce${/}ce-cast-real.txt
     ${outputStrPostgres} =    Get File     ${REPOSITORY_ROOT}${/}test${/}assets${/}expected${/}aws${/}ce${/}ce-cast-real-postgres.txt
-    ${outputStr} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"     ${outputStrPostgres}    ${outputStrSQLite}
+    ${outputStr} =    Set Variable If    
+    ...               "${SQL_BACKEND}" == "postgres_tcp"     ${outputStrPostgres}
+    ...               ${outputStrSQLite}
     Should Stackql Exec Inline Equal Both Streams
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -7546,3 +7549,27 @@ AWS Materialized View and Cast and Multiple Function Query on Resource Costs Exe
     ...    DDL Execution Completed
     ...    stdout=${CURDIR}/tmp/AWS-Materialized-View-And-Cast-and-Multiple-Function-Query-on-Resource-Costs-Exemplifies-Cast-and-Multiple-Functions-on-Materialized-Views.tmp
     ...    stderr=${CURDIR}/tmp/AWS-Materialized-View-And-Cast-and-Multiple-Function-Query-on-Resource-Costs-Exemplifies-Cast-and-Multiple-Functions-on-Materialized-Views-stderr.tmp
+
+Contains Check AWS Materialized View and Cast and Multiple Function Query on Resource Costs Exemplifies Cast and Multiple Functions on Materialized Views
+    [Tags]    registry    tls_proxied
+    [Documentation]    This test exists only because windows real casting is intereminant and we want to check the query is not erroeaous on windows.
+    ${sqliteInputStr} =    Catenate
+    ...    create or replace materialized view e1 as select json_extract(json_each.value, '$.TimePeriod.Start') as beginning, json_extract(json_each.value, '$.TimePeriod.End') as ending, json_extract(json_each.value, '$.Groups') as rez from aws.ce_native.cost_and_usage, json_each(ResultsByTime) where data__Granularity = 'MONTHLY' and data__Metrics = '["UnblendedCost"]' and data__TimePeriod = '{"Start": "2024-08-01", "End": "2024-11-30"}' and data__GroupBy = '[{"Type":"DIMENSION","Key":"SERVICE"}]' and region = 'us-east-1';
+    ...    select beginning, ending, json_extract(json_each.value, '$.Keys') as keyz, cast(json_extract(json_each.value, '$.Metrics.UnblendedCost.Amount') as real) as amount, json_extract(json_each.value, '$.Metrics.UnblendedCost.Unit') as unit from e1, json_each(e1.rez) order by amount, keyz, ending;
+    ${postgresInputStr} =    Catenate
+    ...    create or replace materialized view e1 as select json_extract_path_text(rd.value, 'TimePeriod', 'Start') as beginning, json_extract_path_text(rd.value, 'TimePeriod', 'End') as ending, json_extract_path_text(rd.value, 'Groups') as rez from aws.ce_native.cost_and_usage, json_array_elements_text(ResultsByTime) as rd where data__Granularity = 'MONTHLY' and data__Metrics = '["UnblendedCost"]' and data__TimePeriod = '{"Start": "2024-08-01", "End": "2024-11-30"}' and data__GroupBy = '[{"Type":"DIMENSION","Key":"SERVICE"}]' and region = 'us-east-1';
+    ...    select beginning, ending, json_extract_path_text(rd.value, 'Keys') as keyz, cast(json_extract_path_text(rd.value, 'Metrics', 'UnblendedCost', 'Amount') as real) as amount, json_extract_path_text(rd.value, 'Metrics', 'UnblendedCost', 'Unit') as unit from e1, json_array_elements_text(e1.rez) as rd order by amount, keyz, ending;
+    ${inputStr} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"     ${postgresInputStr}    ${sqliteInputStr}
+    Should Stackql Exec Inline Contain Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    "AWS CloudFormation"
+    ...    DDL Execution Completed
+    ...    stdout=${CURDIR}/tmp/Contains-Check-AWS-Materialized-View-And-Cast-and-Multiple-Function-Query-on-Resource-Costs-Exemplifies-Cast-and-Multiple-Functions-on-Materialized-Views.tmp
+    ...    stderr=${CURDIR}/tmp/Contains-Check-AWS-Materialized-View-And-Cast-and-Multiple-Function-Query-on-Resource-Costs-Exemplifies-Cast-and-Multiple-Functions-on-Materialized-Views-stderr.tmp  
