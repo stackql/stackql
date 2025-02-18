@@ -28,7 +28,7 @@ builds:
       -X github.com/stackql/stackql/internal/stackql/cmd.BuildCommitSHA={{.FullCommit}}
       -X github.com/stackql/stackql/internal/stackql/cmd.BuildShortCommitSHA={{.ShortCommit}}
       -X github.com/stackql/stackql/internal/stackql/cmd.BuildDate={{.Date}}
-      -X stackql/internal/stackql/planbuilder.PlanCacheEnabled=true
+      -X stackql/internal/stackql/planbuilder.PlanCacheEnabled=false
       -X github.com/stackql/stackql/internal/stackql/cmd.BuildPlatform={{.Os}}
 
 archives:
