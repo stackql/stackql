@@ -30,7 +30,7 @@ env:
   TESTSCRIPT: "test/python/main.py"
   GOPRIVATE: github.com/stackql/*
   GH_ACCESS_TOKEN: ${{ secrets.ACTIONS_PRIVATE_PACKAGE_SECRET }}
-  PLANCACHEENABLED: "true"
+  PLANCACHEENABLED: "false"
   CI_IS_EXPRESS: ${{ github.ref_type == 'tag' && contains(github.ref_name, 'express') && 'true' || 'false' }}
   STACKQL_IMAGE_NAME: ${{ vars.STACKQL_IMAGE_NAME != '' && vars.STACKQL_IMAGE_NAME || (github.repository == 'stackql/stackql' ||  github.repository == 'stackql/stackql-devel') && github.repository || 'stackql/stackql' }}
 

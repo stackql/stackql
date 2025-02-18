@@ -30,14 +30,19 @@ import (
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
 
+const (
+	negativePlanCacheEnabled = "false"
+	defaultPlanCacheEnabled  = negativePlanCacheEnabled
+)
+
 var (
 	// only string "false" will disable.
-	PlanCacheEnabled string           = "true" //nolint:revive,gochecknoglobals // acceptable
+	PlanCacheEnabled string           = defaultPlanCacheEnabled //nolint:revive,gochecknoglobals // acceptable
 	_                planGraphBuilder = &standardPlanGraphBuilder{}
 )
 
 func isPlanCacheEnabled() bool {
-	return strings.ToLower(PlanCacheEnabled) != "false"
+	return strings.ToLower(PlanCacheEnabled) != negativePlanCacheEnabled
 }
 
 type planGraphBuilder interface {

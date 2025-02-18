@@ -6,6 +6,8 @@ import json
 import os
 import subprocess
 
+_DEFAULT_PLANCACHEENABLED = 'false'
+
 
 def build_stackql(verbose :bool) -> int:
     os.environ['BUILDMAJORVERSION'] = os.environ.get('BUILDMAJORVERSION', '1')
@@ -19,7 +21,7 @@ def build_stackql(verbose :bool) -> int:
         f'-X github.com/stackql/stackql/internal/stackql/cmd.BuildCommitSHA={os.environ.get("BUILDCOMMITSHA", "")} '
         f'-X github.com/stackql/stackql/internal/stackql/cmd.BuildShortCommitSHA={os.environ.get("BUILDCOMMITSHA", "")[0:7 or None]} '
         f"-X 'github.com/stackql/stackql/internal/stackql/cmd.BuildDate={os.environ.get('BUILDDATE', '')}' "
-        f"-X 'stackql/internal/stackql/planbuilder.PlanCacheEnabled={os.environ.get('PLANCACHEENABLED', '')}' "
+        f"-X 'stackql/internal/stackql/planbuilder.PlanCacheEnabled={os.environ.get('PLANCACHEENABLED', _DEFAULT_PLANCACHEENABLED)}' "
         f'-X github.com/stackql/stackql/internal/stackql/cmd.BuildPlatform={os.environ.get("BUILDPLATFORM", "")}" '
         '-o build/ ./stackql',
         shell=True

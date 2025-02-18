@@ -48,7 +48,7 @@ As of now, `stackql` handles `xml` SERDE through the core, and does not route th
 ## Building locally
 
 ```bash
-env CGO_ENABLED=1 go build \
+env CGO_ENABLED=1 PLANCACHEENABLED=false go build \
   --tags "sqlite_stackql" \
   -ldflags "-X github.com/stackql/stackql/internal/stackql/cmd.BuildMajorVersion=${BUILDMAJORVERSION:-1} \
   -X github.com/stackql/stackql/internal/stackql/cmd.BuildMinorVersion=${BUILDMINORVERSION:-1} \
