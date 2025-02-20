@@ -2,24 +2,19 @@ package primitivebuilder
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/stackql/any-sdk/anysdk"
-	"github.com/stackql/any-sdk/pkg/logging"
-	pkg_response "github.com/stackql/any-sdk/pkg/response"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
 	"github.com/stackql/stackql/internal/stackql/drm"
+	"github.com/stackql/stackql/internal/stackql/execution"
 	"github.com/stackql/stackql/internal/stackql/handler"
-	"github.com/stackql/stackql/internal/stackql/httpmiddleware"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/builder_input"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/primitive_context"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 	"github.com/stackql/stackql/internal/stackql/provider"
-	"github.com/stackql/stackql/internal/stackql/streaming/http_preparator_stream.go"
-	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 )
 
 type genericHTTPReversal struct {
@@ -33,7 +28,7 @@ type genericHTTPReversal struct {
 	verb              string // may be "insert" or "update"
 	inputAlias        string
 	isUndo            bool
-	reversalStream    http_preparator_stream.HttpPreparatorStream
+	reversalStream    anysdk.HttpPreparatorStream
 	prov              provider.IProvider
 }
 
@@ -100,19 +95,28 @@ func (gh *genericHTTPReversal) decorateOutput(
 func (gh *genericHTTPReversal) Build() error {
 	m := gh.op
 	prov := gh.prov
+	provider, providerErr := prov.GetProvider()
+	if providerErr != nil {
+		return providerErr
+	}
 	handlerCtx := gh.handlerCtx
+	rtCtx := handlerCtx.GetRuntimeContext()
+	authCtx, authCtxErr := handlerCtx.GetAuthContext(provider.GetName())
+	if authCtxErr != nil {
+		return authCtxErr
+	}
+	outErrFile := handlerCtx.GetOutErrFile()
 	commentDirectives := gh.commentDirectives
 	isAwait := gh.isAwait
 	_, _, responseAnalysisErr := m.GetResponseBodySchemaAndMediaType()
-	actionPrimitive := primitive.NewHTTPRestPrimitive(
-		prov,
+	actionPrimitive := primitive.NewGenericPrimitive(
 		nil,
 		nil,
 		nil,
 		primitive_context.NewPrimitiveContext(),
 	)
 	tableName := m.GetName()
-	target := make(map[string]interface{})
+	// target := make(map[string]interface{})
 	ex := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 		httpPreparator, httpPreparatorExists := gh.reversalStream.Next()
 		resultSet := internaldto.NewErroneousExecutorOutput(fmt.Errorf("no executions detected"))
@@ -129,76 +133,47 @@ func (gh *genericHTTPReversal) Build() error {
 			var nullaryExecutors []func() internaldto.ExecutorOutput
 			for _, r := range httpArmoury.GetRequestParams() {
 				req := r
+				isSkipResponse := responseAnalysisErr != nil
+				polyHandler := execution.NewStandardPolyHandler(
+					handlerCtx,
+				)
 				nullaryEx := func() internaldto.ExecutorOutput {
-					response, apiErr := httpmiddleware.HTTPApiCallFromRequest(handlerCtx.Clone(), prov, m, req.GetRequest())
-					if apiErr != nil {
-						return internaldto.NewErroneousExecutorOutput(apiErr)
-					}
-
-					if responseAnalysisErr == nil {
-						var resp pkg_response.Response
-						processed, processErr := m.ProcessResponse(response)
-						if processErr != nil {
-							return internaldto.NewErroneousExecutorOutput(processErr)
-						}
-						resp, respOk := processed.GetResponse()
-						if !respOk {
-							return internaldto.NewErroneousExecutorOutput(fmt.Errorf("response is not a valid response"))
-						}
-						processedBody := resp.GetProcessedBody()
-						switch processedBody := processedBody.(type) { //nolint:gocritic // TODO: fix this
-						case map[string]interface{}:
-							target = processedBody
-						}
-					}
-					if err != nil {
-						return internaldto.NewErroneousExecutorOutput(err)
-					}
-					logging.GetLogger().Infoln(fmt.Sprintf("target = %v", target))
-					items, ok := target[tablemetadata.LookupSelectItemsKey(m)]
-					keys := make(map[string]map[string]interface{})
-					if ok {
-						iArr, iOk := items.([]interface{})
-						if iOk && len(iArr) > 0 {
-							for i := range iArr {
-								item, itemOk := iArr[i].(map[string]interface{})
-								if itemOk {
-									keys[strconv.Itoa(i)] = item
-								}
-							}
-						}
-					}
-					if err == nil {
-						if response.StatusCode < 300 { //nolint:mnd // TODO: fix this
-							msgs := internaldto.NewBackendMessages(
-								[]string{"undo over HTTP successful"},
-							)
-							return gh.decorateOutput(
-								internaldto.NewExecutorOutput(
-									nil,
-									target,
-									nil,
-									msgs,
-									nil,
-								),
-								tableName,
-							)
-						}
-						generatedErr := fmt.Errorf("undo over HTTP error: %s", response.Status)
-						return internaldto.NewExecutorOutput(
-							nil,
-							target,
-							nil,
-							nil,
-							generatedErr,
-						)
-					}
-					return internaldto.NewExecutorOutput(
+					pp := execution.NewProcessorPayload(
+						req,
+						execution.NewNilMethodElider(),
+						provider,
+						m,
+						tableName,
+						rtCtx,
+						authCtx,
+						outErrFile,
+						polyHandler,
+						"",
 						nil,
-						target,
-						nil,
-						nil,
-						err,
+						isSkipResponse,
+						true,
+						isAwait,
+						gh.isUndo,
+						true,
+						"undo",
+					)
+					processor := execution.NewProcessor(pp)
+					processorResponse := processor.Process()
+					processorErr := processorResponse.GetError()
+					singletonBody := processorResponse.GetSingletonBody()
+					// if processorResponse.IsFailed() && !gh.isAwait {
+					// 	processorErr = fmt.Errorf(processorResponse.GetFailedMessage())
+					// }
+					msgs := internaldto.NewBackendMessages(processorResponse.GetSuccessMessages())
+					return gh.decorateOutput(
+						internaldto.NewExecutorOutput(
+							nil,
+							singletonBody,
+							nil,
+							msgs,
+							processorErr,
+						),
+						tableName,
 					)
 				}
 
@@ -218,8 +193,7 @@ func (gh *genericHTTPReversal) Build() error {
 			}
 			for _, eI := range nullaryExecutors {
 				execInstance := eI
-				dependentInsertPrimitive := primitive.NewHTTPRestPrimitive(
-					prov,
+				dependentInsertPrimitive := primitive.NewGenericPrimitive(
 					nil,
 					nil,
 					nil,

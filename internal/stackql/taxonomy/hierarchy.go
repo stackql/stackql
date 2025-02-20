@@ -136,6 +136,11 @@ func GetTableNameFromStatement(node sqlparser.SQLNode, formatter sqlparser.NodeF
 		}
 	case *sqlparser.Exec:
 		return n.MethodName.GetRawVal()
+	case *sqlparser.Delete:
+		if len(n.TableExprs) != 1 {
+			return astformat.String(n, formatter)
+		}
+		return GetTableNameFromStatement(n.TableExprs[0], formatter)
 	default:
 		return astformat.String(n, formatter)
 	}

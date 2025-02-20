@@ -3,7 +3,6 @@ package primitivebuilder
 import (
 	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
-	"github.com/stackql/stackql/internal/stackql/asyncmonitor"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/primitive"
@@ -17,7 +16,7 @@ func composeAsyncMonitor(
 	method anysdk.OperationStore,
 	commentDirectives sqlparser.CommentDirectives,
 ) (primitive.IPrimitive, error) {
-	asm, err := asyncmonitor.NewAsyncMonitor(handlerCtx, prov, method)
+	asm, err := NewAsyncMonitor(handlerCtx, prov, method)
 	if err != nil {
 		return nil, err
 	}

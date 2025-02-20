@@ -2,14 +2,13 @@ package builder_input //nolint:revive,stylecheck // permissable deviation from n
 
 import (
 	"github.com/stackql/any-sdk/anysdk"
+	"github.com/stackql/any-sdk/pkg/streaming"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 	"github.com/stackql/stackql/internal/stackql/provider"
-	"github.com/stackql/stackql/internal/stackql/streaming"
-	"github.com/stackql/stackql/internal/stackql/streaming/http_preparator_stream.go"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 )
 
@@ -46,8 +45,8 @@ type BuilderInput interface {
 	SetParamMapStream(streaming.MapStream)
 	SetVerb(verb string)
 	Clone() BuilderInput
-	GetHTTPPreparatorStream() (http_preparator_stream.HttpPreparatorStream, bool)
-	SetHTTPPreparatorStream(prepStream http_preparator_stream.HttpPreparatorStream)
+	GetHTTPPreparatorStream() (anysdk.HttpPreparatorStream, bool)
+	SetHTTPPreparatorStream(prepStream anysdk.HttpPreparatorStream)
 	IsTargetPhysicalTable() bool
 	SetIsTargetPhysicalTable(isPhysical bool)
 	SetTxnCtrlCtrs(internaldto.TxnControlCounters)
@@ -67,7 +66,7 @@ type builderInput struct {
 	isUndo            bool
 	node              sqlparser.SQLNode
 	paramMapStream    streaming.MapStream
-	httpPrepStream    http_preparator_stream.HttpPreparatorStream
+	httpPrepStream    anysdk.HttpPreparatorStream
 	op                anysdk.OperationStore
 	prov              provider.IProvider
 	annotatedAst      annotatedast.AnnotatedAst
@@ -133,11 +132,11 @@ func (bi *builderInput) GetParamMapStream() (streaming.MapStream, bool) {
 	return bi.paramMapStream, bi.paramMapStream != nil
 }
 
-func (bi *builderInput) GetHTTPPreparatorStream() (http_preparator_stream.HttpPreparatorStream, bool) {
+func (bi *builderInput) GetHTTPPreparatorStream() (anysdk.HttpPreparatorStream, bool) {
 	return bi.httpPrepStream, bi.httpPrepStream != nil
 }
 
-func (bi *builderInput) SetHTTPPreparatorStream(prepStream http_preparator_stream.HttpPreparatorStream) {
+func (bi *builderInput) SetHTTPPreparatorStream(prepStream anysdk.HttpPreparatorStream) {
 	bi.httpPrepStream = prepStream
 }
 

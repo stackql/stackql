@@ -3,6 +3,7 @@ package primitivebuilder
 import (
 	"fmt"
 
+	"github.com/stackql/any-sdk/pkg/streaming"
 	"github.com/stackql/stackql/internal/stackql/data_staging/input_data_staging"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -10,7 +11,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/primitive_context"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
-	"github.com/stackql/stackql/internal/stackql/streaming"
 	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 )
@@ -136,8 +136,7 @@ func (ss *sqlDataSourceSingleSelectAcquire) Build() error {
 	}
 	primitiveCtx := primitive_context.NewPrimitiveContext()
 	primitiveCtx.SetIsReadOnly(true)
-	insertPrim := primitive.NewHTTPRestPrimitive(
-		nil,
+	insertPrim := primitive.NewGenericPrimitive(
 		ex,
 		prep,
 		ss.txnCtrlCtr,

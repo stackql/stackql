@@ -1,27 +1,18 @@
-package asyncmonitor
+package primitivebuilder
 
 import (
-	"context"
 	"fmt"
-	"net/http"
 	"strings"
-	"time"
 
 	"github.com/stackql/any-sdk/anysdk"
-	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
+	"github.com/stackql/stackql/internal/stackql/execution"
 	"github.com/stackql/stackql/internal/stackql/handler"
-	"github.com/stackql/stackql/internal/stackql/httpmiddleware"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/provider"
-	"github.com/stackql/stackql/internal/stackql/util"
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
-)
-
-var (
-	MonitorPollIntervalSeconds int = 10 //nolint:revive,gochecknoglobals // TODO: global vars refactor
 )
 
 type IAsyncMonitor interface {
@@ -34,6 +25,7 @@ type IAsyncMonitor interface {
 	) (primitive.IPrimitive, error)
 }
 
+//nolint:unused // TODO: refactor
 type AsyncHTTPMonitorPrimitive struct {
 	handlerCtx          handler.HandlerContext
 	prov                provider.IProvider
@@ -176,26 +168,6 @@ func (gm *DefaultGoogleAsyncMonitor) GetMonitorPrimitive(
 	}
 }
 
-func getOperationDescriptor(body map[string]interface{}) string {
-	operationDescriptor := "operation"
-	if body == nil {
-		return operationDescriptor
-	}
-	//nolint:nestif,govet // TODO: refactor
-	if descriptor, ok := body["kind"]; ok {
-		if descriptorStr, ok := descriptor.(string); ok {
-			operationDescriptor = descriptorStr
-			if typeElem, ok := body["operationType"]; ok {
-				if typeStr, ok := typeElem.(string); ok {
-					operationDescriptor = fmt.Sprintf("%s: %s", descriptorStr, typeStr)
-				}
-			}
-		}
-	}
-	return operationDescriptor
-}
-
-//nolint:gocognit,funlen // review later
 func (gm *DefaultGoogleAsyncMonitor) getV1Monitor(
 	prov provider.IProvider,
 	op anysdk.OperationStore,
@@ -203,138 +175,20 @@ func (gm *DefaultGoogleAsyncMonitor) getV1Monitor(
 	initialCtx primitive.IPrimitiveCtx,
 	comments sqlparser.CommentDirectives,
 ) (primitive.IPrimitive, error) {
-	asyncPrim := AsyncHTTPMonitorPrimitive{
-		handlerCtx:          gm.handlerCtx,
-		prov:                prov,
-		op:                  op,
-		initialCtx:          initialCtx,
-		precursor:           precursor,
-		elapsedSeconds:      0,
-		pollIntervalSeconds: MonitorPollIntervalSeconds,
-		comments:            comments,
+	provider, providerErr := prov.GetProvider()
+	if providerErr != nil {
+		return nil, providerErr
 	}
-	if comments != nil {
-		asyncPrim.noStatus = comments.IsSet("NOSTATUS")
-	}
-	m := gm.op
-	if m.IsAwaitable() { //nolint:nestif // encapulation probably sufficient
-		asyncPrim.executor = func(pc primitive.IPrimitiveCtx, bd interface{}) internaldto.ExecutorOutput {
-			body, ok := bd.(map[string]interface{})
-			if !ok {
-				return internaldto.NewExecutorOutput(
-					nil,
-					nil,
-					nil,
-					nil,
-					fmt.Errorf("cannot execute monitor: response body of type '%T' unreadable", bd),
-				)
-			}
-			if pc == nil {
-				return internaldto.NewExecutorOutput(nil, nil, nil, nil, fmt.Errorf("cannot execute monitor: nil plan primitive"))
-			}
-			if body == nil {
-				return internaldto.NewExecutorOutput(nil, nil, nil, nil, fmt.Errorf("cannot execute monitor: no body present"))
-			}
-			logging.GetLogger().Infoln(fmt.Sprintf("body = %v", body))
-
-			operationDescriptor := getOperationDescriptor(body)
-			endTime, endTimeOk := body["endTime"]
-			if endTimeOk && endTime != "" {
-				return prepareReultSet(&asyncPrim, pc, body, operationDescriptor)
-			}
-			url, ok := body["selfLink"]
-			if !ok {
-				return internaldto.NewExecutorOutput(
-					nil,
-					nil,
-					nil,
-					nil,
-					fmt.Errorf("cannot execute monitor: no 'selfLink' property present"),
-				)
-			}
-			prStr := gm.prov.GetProviderString()
-			authCtx, err := pc.GetAuthContext(prStr)
-			if err != nil {
-				return internaldto.NewExecutorOutput(nil, nil, nil, nil, err)
-			}
-			if authCtx == nil {
-				return internaldto.NewExecutorOutput(nil, nil, nil, nil, fmt.Errorf("cannot execute monitor: no auth context"))
-			}
-			time.Sleep(time.Duration(asyncPrim.pollIntervalSeconds) * time.Second)
-			asyncPrim.elapsedSeconds += asyncPrim.pollIntervalSeconds
-			if !asyncPrim.noStatus {
-				//nolint:errcheck //TODO: handle error
-				pc.GetWriter().Write(
-					[]byte(
-						fmt.Sprintf(
-							"%s in progress, %d seconds elapsed",
-							operationDescriptor,
-							asyncPrim.elapsedSeconds,
-						) + fmt.Sprintln(""),
-					),
-				)
-			}
-			req, err := getMonitorRequest(url.(string))
-			if req != nil && req.Body != nil {
-				defer req.Body.Close()
-			}
-			if err != nil {
-				return internaldto.NewExecutorOutput(nil, nil, nil, nil, err)
-			}
-			response, apiErr := httpmiddleware.HTTPApiCallFromRequest(gm.handlerCtx.Clone(), gm.prov, m, req)
-			if response != nil && response.Body != nil {
-				defer response.Body.Close()
-			}
-			if apiErr != nil {
-				return internaldto.NewExecutorOutput(nil, nil, nil, nil, apiErr)
-			}
-			target, err := m.DeprecatedProcessResponse(response)
-			gm.handlerCtx.LogHTTPResponseMap(target)
-			if err != nil {
-				return internaldto.NewExecutorOutput(nil, nil, nil, nil, err)
-			}
-			return asyncPrim.executor(internaldto.NewBasicPrimitiveContext(
-				pc.GetAuthContext,
-				pc.GetWriter(),
-				pc.GetErrWriter(),
-			),
-				target)
-		}
-		return &asyncPrim, nil
-	}
-	return nil, fmt.Errorf("method %s is not awaitable", m.GetName())
-}
-
-func prepareReultSet(
-	prim *AsyncHTTPMonitorPrimitive,
-	pc primitive.IPrimitiveCtx,
-	target map[string]interface{},
-	operationDescriptor string,
-) internaldto.ExecutorOutput {
-	payload := internaldto.PrepareResultSetDTO{
-		OutputBody:  target,
-		Msg:         nil,
-		RowMap:      nil,
-		ColumnOrder: nil,
-		RowSort:     nil,
-		Err:         nil,
-	}
-	if !prim.noStatus {
-		//nolint:errcheck //TODO: handle error
-		pc.GetWriter().Write([]byte(fmt.Sprintf("%s complete", operationDescriptor) + fmt.Sprintln("")))
-	}
-	return util.PrepareResultSet(payload)
-}
-
-func getMonitorRequest(urlStr string) (*http.Request, error) {
-	req, err := http.NewRequest(
-		http.MethodGet,
-		urlStr,
-		nil,
+	ex, exPrepErr := execution.GetMonitorExecutor(
+		gm.handlerCtx,
+		provider,
+		op,
+		precursor,
+		initialCtx,
+		comments,
 	)
-	if err != nil {
-		return nil, err
+	if exPrepErr != nil {
+		return nil, exPrepErr
 	}
-	req = req.WithContext(context.Background())
-	return req, nil
+	return ex, nil
 }

@@ -318,6 +318,7 @@ issues:
         - gosec
         - noctx
         - revive
+        - typecheck
         - wrapcheck
 output:
   formats:

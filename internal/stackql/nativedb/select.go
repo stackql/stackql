@@ -1,6 +1,6 @@
 package nativedb
 
-import "github.com/stackql/stackql/internal/stackql/streaming"
+import "github.com/stackql/any-sdk/pkg/streaming"
 
 type Select interface {
 	GetColumns() []Column
