@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - develop
+      - version*
     tags:
       - build*
     paths-ignore:
@@ -17,6 +18,7 @@ on:
     branches:
       - main
       - develop
+      - version*
     paths-ignore:
       - "**/*.md"
       - "docs/**"
@@ -1272,13 +1274,16 @@ jobs:
         # shellcheck disable=SC2235
         if  ( \
                 [ "${{ github.repository }}" = "stackql/stackql" ] \
-                || [ "${{ github.repository }}" != "stackql/stackql-devel" ] \
+                || [ "${{ github.repository }}" = "stackql/stackql-devel" ] \
             ) \
             && [ "${{ vars.CI_SKIP_DOCKER_PUSH }}" != "true" ] \
             && [ "$( grep '^build-elide.*' <<< '${{ github.ref_name }}' )" =  "" ] \
             && ( \
                 [ "${{ github.ref_type }}" = "branch" ] \
-                && [ "${{ github.ref_name }}" = "main" ] \
+                && ( \
+                  [ "${{ github.ref_name }}" = "main" ] \
+                  || [[ "${{ github.ref_name }}" =~ ^version.* ]] \
+                ) \
                 && [ "${{ github.event_name }}" = "push" ] \
             ) \
             || ( \
@@ -1292,7 +1297,9 @@ jobs:
           echo "IMAGE_PLATFORM_SAN=$( sed 's/\//_/g' <<< '${{ matrix.platform }}' )";
           echo "PUSH_IMAGE_REQUIRED=${PUSH_IMAGE_REQUIRED}";
           echo "BUILD_IMAGE_REQUIRED=${BUILD_IMAGE_REQUIRED}";
+          echo "SHORTHAND_DOCKER_TAG=${SHORTHAND_DOCKER_TAG}";
         } | tee -a "${GITHUB_ENV}"
+        
     
     - name: Extract Build Info and Persist
       env:
@@ -1418,13 +1425,16 @@ jobs:
         # shellcheck disable=SC2235
         if  ( \
                 [ "${{ github.repository }}" = "stackql/stackql" ] \
-                || [ "${{ github.repository }}" != "stackql/stackql-devel" ] \
+                || [ "${{ github.repository }}" = "stackql/stackql-devel" ] \
             ) \
             && [ "${{ vars.CI_SKIP_DOCKER_PUSH }}" != "true" ] \
             && [ "$( grep '^build-elide.*' <<< '${{ github.ref_name }}' )" =  "" ] \
             && ( \
                 [ "${{ github.ref_type }}" = "branch" ] \
-                && [ "${{ github.ref_name }}" = "main" ] \
+                &&  ( \
+                  [ "${{ github.ref_name }}" = "main" ] \
+                  || [[ "${{ github.ref_name }}" =~ ^version.* ]] \
+                ) \
                 && [ "${{ github.event_name }}" = "push" ] \
             ) \
             || ( \
@@ -1624,13 +1634,16 @@ jobs:
           # shellcheck disable=SC2235
           if  ( \
                   [ "${{ github.repository }}" = "stackql/stackql" ] \
-                  || [ "${{ github.repository }}" != "stackql/stackql-devel" ] \
+                  || [ "${{ github.repository }}" = "stackql/stackql-devel" ] \
               ) \
               && [ "${{ vars.CI_SKIP_DOCKER_PUSH }}" != "true" ] \
               && [ "$( grep '^build-elide.*' <<< '${{ github.ref_name }}' )" =  "" ] \
               && ( \
                   [ "${{ github.ref_type }}" = "branch" ] \
-                  && [ "${{ github.ref_name }}" = "main" ] \
+                  &&  ( \
+                    [ "${{ github.ref_name }}" = "main" ] \
+                    || [[ "${{ github.ref_name }}" =~ ^version.* ]] \
+                  ) \
                   && [ "${{ github.event_name }}" = "push" ] \
               ) \
               || ( \
@@ -1678,6 +1691,14 @@ jobs:
             # shellcheck disable=2269
             BUILDPATCHVERSION="${BUILDPATCHVERSION}"
           fi
+          if \
+            [ "${{ github.ref_type }}" = "branch" ] \
+            && [ "${{ github.ref_name }}" = "main" ] \
+          ; then
+            SHORTHAND_DOCKER_TAG="latest"
+          else
+            SHORTHAND_DOCKER_TAG="${{ github.ref_name }}"
+          fi
           BUILDSHORTCOMMITSHA="$(echo "${BUILDCOMMITSHA}" | cut -c 1-7)"
           BUILDDATE="$(date)"
           export BUILDDATE
@@ -1695,6 +1716,7 @@ jobs:
             echo "BUILDPATCHVERSION=$BUILDPATCHVERSION"
             echo "UID=${UID}"
             echo "GID=${GID}"
+            echo "SHORTHAND_DOCKER_TAG=${SHORTHAND_DOCKER_TAG}"
           } >> "${GITHUB_ENV}"
 
       - name: Docker meta
@@ -1707,8 +1729,9 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=raw,value=latest
+            type=raw,value=${{env.SHORTHAND_DOCKER_TAG}}
             type=raw,value=v${{env.BUILDMAJORVERSION}}.${{env.BUILDMINORVERSION}}.${{env.BUILDPATCHVERSION}}
+            type=raw,value=v${{env.BUILDMAJORVERSION}}.${{env.BUILDMINORVERSION}}
             type=raw,value=${{ github.sha }}           
 
       - name: Create manifest list and push
