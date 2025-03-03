@@ -537,7 +537,7 @@ func (pgb *standardPlanGraphBuilder) handleSelect(
 			}
 			pr, prErr := primitivebuilder.NewLocalSelectExecutor(handlerCtx, node, util.DefaultRowSort, colz)
 			if prErr != nil {
-				return nil, nil, err
+				return nil, nil, prErr
 			}
 			rv := pgb.planGraphHolder.CreatePrimitiveNode(pr)
 			return rv, rv, nil
