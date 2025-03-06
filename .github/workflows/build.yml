@@ -35,6 +35,7 @@ env:
   PLANCACHEENABLED: "false"
   CI_IS_EXPRESS: ${{ github.ref_type == 'tag' && contains(github.ref_name, 'express') && 'true' || 'false' }}
   STACKQL_IMAGE_NAME: ${{ vars.STACKQL_IMAGE_NAME != '' && vars.STACKQL_IMAGE_NAME || (github.repository == 'stackql/stackql' ||  github.repository == 'stackql/stackql-devel') && github.repository || 'stackql/stackql' }}
+  IS_FORK_PR: ${{ github.event.pull_request.head.repo.full_name == github.repository && 'false' || 'true' }}
 
 jobs:
 
@@ -68,8 +69,7 @@ jobs:
 
     - name: Cache Chocolatey packages
       id: cache-choco
-      # uses: actions/cache@v3
-      uses: actions/cache@v4.0.0
+      uses: actions/cache@v4
       env:
         cache-name: cache-choco-packages
       with:
@@ -1268,7 +1268,7 @@ jobs:
       run: |
         BUILD_IMAGE_REQUIRED="true"
         PUSH_IMAGE_REQUIRED="false"
-        if [ "$( grep '^build-elide.*' <<< '${{ github.ref_name }}' )" !=  "" ]; then
+        if [ "$( grep '^build-elide.*' <<< '${{ github.ref_name }}' )" !=  "" ] || [ "${{ env.IS_FORK_PR }}" = "true" ]; then
           BUILD_IMAGE_REQUIRED="false"
         fi
         # shellcheck disable=SC2235
@@ -1419,7 +1419,7 @@ jobs:
       run: |
         BUILD_IMAGE_REQUIRED="true"
         PUSH_IMAGE_REQUIRED="false"
-        if [ "$( grep '^build-elide.*' <<< '${{ github.ref_name }}' )" !=  "" ]; then
+        if [ "$( grep '^build-elide.*' <<< '${{ github.ref_name }}' )" !=  "" ] || [ "${{ env.IS_FORK_PR }}" = "true" ]; then
           BUILD_IMAGE_REQUIRED="false"
         fi
         # shellcheck disable=SC2235
