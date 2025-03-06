@@ -35,7 +35,7 @@ env:
   PLANCACHEENABLED: "false"
   CI_IS_EXPRESS: ${{ github.ref_type == 'tag' && contains(github.ref_name, 'express') && 'true' || 'false' }}
   STACKQL_IMAGE_NAME: ${{ vars.STACKQL_IMAGE_NAME != '' && vars.STACKQL_IMAGE_NAME || (github.repository == 'stackql/stackql' ||  github.repository == 'stackql/stackql-devel') && github.repository || 'stackql/stackql' }}
-  IS_FORK_PR: ${{ github.event.pull_request.head.repo.full_name == github.repository && 'false' || 'true' }}
+  IS_FORK_PR: ${{ ((github.event_name == 'pull_request') && (github.event.pull_request.head.repo.full_name != github.repository)) && 'true' || 'false' }}
 
 jobs:
 
