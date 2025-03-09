@@ -972,7 +972,7 @@ func (pb *standardPrimitiveGenerator) buildRequestContext(
 	)
 	httpArmoury, httpErr := httpPreparator.BuildHTTPRequestCtx()
 	if httpErr != nil {
-		return nil, err
+		return nil, httpErr
 	}
 	meta.WithGetHTTPArmoury(func() (anysdk.HTTPArmoury, error) { return httpArmoury, nil })
 	return httpArmoury, err
