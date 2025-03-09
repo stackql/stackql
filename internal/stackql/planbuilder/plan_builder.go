@@ -605,12 +605,14 @@ func (pgb *standardPlanGraphBuilder) handleDelete(pbi planbuilderinput.PlanBuild
 		if err != nil {
 			return err
 		}
+		insertCtx := primitiveGenerator.GetPrimitiveComposer().GetInsertPreparedStatementCtx()
 		isPhysicalTable := tbl.IsPhysicalTable()
 		var bldr primitivebuilder.Builder
 		if !isPhysicalTable {
 			bldr = primitivebuilder.NewDelete(
 				pgb.planGraphHolder,
 				handlerCtx,
+				insertCtx,
 				node,
 				tbl,
 				nil,
@@ -637,7 +639,7 @@ func (pgb *standardPlanGraphBuilder) handleDelete(pbi planbuilderinput.PlanBuild
 		}
 		return nil
 	}
-	pr := primitive.NewHTTPRestPrimitive(nil, nil, nil, nil, primitive_context.NewPrimitiveContext())
+	pr := primitive.NewGenericPrimitive(nil, nil, nil, primitive_context.NewPrimitiveContext())
 	pgb.planGraphHolder.CreatePrimitiveNode(pr)
 	return nil
 }
@@ -926,7 +928,7 @@ func (pgb *standardPlanGraphBuilder) handleInsert(pbi planbuilderinput.PlanBuild
 		}
 		return nil
 	}
-	pr := primitive.NewHTTPRestPrimitive(nil, nil, nil, nil, primitive_context.NewPrimitiveContext())
+	pr := primitive.NewGenericPrimitive(nil, nil, nil, primitive_context.NewPrimitiveContext())
 	pgb.planGraphHolder.CreatePrimitiveNode(pr)
 	return nil
 }
@@ -991,7 +993,7 @@ func (pgb *standardPlanGraphBuilder) handleUpdate(pbi planbuilderinput.PlanBuild
 		}
 		return nil
 	}
-	pr := primitive.NewHTTPRestPrimitive(nil, nil, nil, nil, primitive_context.NewPrimitiveContext())
+	pr := primitive.NewGenericPrimitive(nil, nil, nil, primitive_context.NewPrimitiveContext())
 	pgb.planGraphHolder.CreatePrimitiveNode(pr)
 	return nil
 }
@@ -1020,6 +1022,7 @@ func (pgb *standardPlanGraphBuilder) handleExec(pbi planbuilderinput.PlanBuilder
 		if err != nil {
 			return err
 		}
+		tcc := pbi.GetTxnCtrlCtrs()
 		bldr := primitivebuilder.NewExec(
 			primitiveGenerator.GetPrimitiveComposer().GetGraphHolder(),
 			handlerCtx,
@@ -1027,6 +1030,7 @@ func (pgb *standardPlanGraphBuilder) handleExec(pbi planbuilderinput.PlanBuilder
 			tbl,
 			primitiveGenerator.GetPrimitiveComposer().IsAwait(),
 			primitiveGenerator.IsShowResults(),
+			tcc,
 		)
 		err = bldr.Build()
 		if err != nil {
@@ -1034,7 +1038,7 @@ func (pgb *standardPlanGraphBuilder) handleExec(pbi planbuilderinput.PlanBuilder
 		}
 		return nil
 	}
-	pr := primitive.NewHTTPRestPrimitive(nil, nil, nil, nil, primitive_context.NewPrimitiveContext())
+	pr := primitive.NewGenericPrimitive(nil, nil, nil, primitive_context.NewPrimitiveContext())
 	pgb.planGraphHolder.CreatePrimitiveNode(pr)
 	return nil
 }

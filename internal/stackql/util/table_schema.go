@@ -12,14 +12,20 @@ type TableSchemaAnalyzer interface {
 }
 
 type simpleTableSchemaAnalyzer struct {
-	s anysdk.Schema
-	m anysdk.OperationStore
+	s                   anysdk.Schema
+	m                   anysdk.OperationStore
+	isNilResponseAlloed bool
 }
 
-func NewTableSchemaAnalyzer(s anysdk.Schema, m anysdk.OperationStore) TableSchemaAnalyzer {
+func NewTableSchemaAnalyzer(
+	s anysdk.Schema,
+	m anysdk.OperationStore,
+	isNilResponseAlloed bool,
+) TableSchemaAnalyzer {
 	return &simpleTableSchemaAnalyzer{
-		s: s,
-		m: m,
+		s:                   s,
+		m:                   m,
+		isNilResponseAlloed: isNilResponseAlloed,
 	}
 }
 
@@ -40,7 +46,7 @@ func (ta *simpleTableSchemaAnalyzer) GetColumns() ([]Column, error) {
 		rv = append(rv, newSimpleColumn(col.GetName(), col.GetSchema()))
 	}
 	unionedRequiredParams, err := ta.m.GetUnionRequiredParameters()
-	if err != nil {
+	if err != nil && !ta.isNilResponseAlloed {
 		return nil, err
 	}
 	for k, col := range unionedRequiredParams {

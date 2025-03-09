@@ -8,6 +8,7 @@ import (
 	"github.com/stackql/any-sdk/pkg/constants"
 	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/any-sdk/pkg/media"
+	"github.com/stackql/any-sdk/pkg/streaming"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/astindirect"
@@ -22,7 +23,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/primitivecomposer"
 	"github.com/stackql/stackql/internal/stackql/sqlrewrite"
 	"github.com/stackql/stackql/internal/stackql/sqlstream"
-	"github.com/stackql/stackql/internal/stackql/streaming"
 	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 	"github.com/stackql/stackql/internal/stackql/util"
@@ -407,7 +407,7 @@ func (dp *standardDependencyPlanner) processOrphan(
 	} else {
 		// Persist SQL mirror table here prior to generating insert DML
 		drmCfg := dp.handlerCtx.GetDrmConfig()
-		ddl, ddlErr := drmCfg.GenerateDDL(anTab, opStore, 0, false)
+		ddl, ddlErr := drmCfg.GenerateDDL(anTab, opStore, 0, false, false)
 		if ddlErr != nil {
 			return nil, nil, ddlErr
 		}
@@ -416,7 +416,7 @@ func (dp *standardDependencyPlanner) processOrphan(
 			return nil, nil, err
 		}
 	}
-	insPsc, err := dp.primitiveComposer.GetDRMConfig().GenerateInsertDML(anTab, opStore, tcc)
+	insPsc, err := dp.primitiveComposer.GetDRMConfig().GenerateInsertDML(anTab, opStore, tcc, false)
 	return insPsc, tcc, err
 }
 

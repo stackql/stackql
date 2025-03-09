@@ -3,7 +3,7 @@ package sqlstream
 import (
 	"io"
 
-	"github.com/stackql/stackql/internal/stackql/streaming"
+	"github.com/stackql/any-sdk/pkg/streaming"
 )
 
 type StaticMapStream struct {

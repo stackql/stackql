@@ -5,16 +5,16 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/any-sdk/pkg/graphql"
 	"github.com/stackql/any-sdk/pkg/logging"
+	"github.com/stackql/any-sdk/pkg/streaming"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/handler"
-	"github.com/stackql/stackql/internal/stackql/httpmiddleware"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/primitive_context"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
-	"github.com/stackql/stackql/internal/stackql/streaming"
 	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 )
@@ -79,6 +79,14 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 	if err != nil {
 		return err
 	}
+	provider, err := prov.GetProvider()
+	if err != nil {
+		return err
+	}
+	authCtx, err := ss.handlerCtx.GetAuthContext(provider.GetName())
+	if err != nil {
+		return err
+	}
 	httpArmoury, err := ss.tableMeta.GetHTTPArmoury()
 	if err != nil {
 		return err
@@ -94,7 +102,8 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 		for _, reqCtx := range httpArmoury.GetRequestParams() {
 			req := reqCtx.GetRequest()
 			housekeepingDone := false
-			client, err := httpmiddleware.GetAuthenticatedClient(ss.handlerCtx.Clone(), prov)
+			cc := anysdk.NewAnySdkClientConfigurator(ss.handlerCtx.GetRuntimeContext(), prov.GetProviderString())
+			client, err := cc.Auth(authCtx, authCtx.Type, false)
 			if err != nil {
 				return internaldto.NewErroneousExecutorOutput(err)
 			}
@@ -190,8 +199,7 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 	prep := func() drm.PreparedStatementCtx {
 		return ss.insertPreparedStatementCtx
 	}
-	insertPrim := primitive.NewHTTPRestPrimitive(
-		prov,
+	insertPrim := primitive.NewGenericPrimitive(
 		ex,
 		prep,
 		ss.txnCtrlCtr,

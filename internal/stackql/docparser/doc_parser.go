@@ -62,7 +62,7 @@ func OpenapiStackQLTabulationsPersistor(
 		return discoveryGenerationID, err
 	}
 	for _, tblt := range tabluationsAnnotated {
-		ddl, ddlErr := drmCfg.GenerateDDL(tblt, m, discoveryGenerationID, false)
+		ddl, ddlErr := drmCfg.GenerateDDL(tblt, m, discoveryGenerationID, false, true)
 		if ddlErr != nil {
 			displayErr := fmt.Errorf("error generating DDL: %w", err)
 			logging.GetLogger().Infoln(displayErr.Error())

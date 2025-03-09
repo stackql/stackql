@@ -9,11 +9,11 @@ import (
 	"github.com/stackql/any-sdk/pkg/constants"
 	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/any-sdk/pkg/logging"
+	"github.com/stackql/any-sdk/pkg/netutils"
 	"github.com/stackql/stackql/internal/stackql/discovery"
 	"github.com/stackql/stackql/internal/stackql/docparser"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/methodselect"
-	"github.com/stackql/stackql/internal/stackql/netutils"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/relational"
 
@@ -108,25 +108,27 @@ func (gp *GenericProvider) Auth(
 	at := gp.inferAuthType(*authCtx, authTypeRequested)
 	switch at {
 	case dto.AuthAPIKeyStr:
-		return gp.apiTokenFileAuth(authCtx, false)
+		return gp.authUtil.ApiTokenAuth(authCtx, gp.runtimeCtx, false)
 	case dto.AuthBearerStr:
-		return gp.apiTokenFileAuth(authCtx, true)
+		return gp.authUtil.ApiTokenAuth(authCtx, gp.runtimeCtx, true)
 	case dto.AuthServiceAccountStr:
-		return gp.googleKeyFileAuth(authCtx)
+		scopes := authCtx.Scopes
+		return gp.authUtil.GoogleOauthServiceAccount(gp.GetProviderString(), authCtx, scopes, gp.runtimeCtx)
 	case dto.OAuth2Str:
 		if authCtx.GrantType == dto.ClientCredentialsStr {
-			return gp.clientCredentialsAuth(authCtx)
+			scopes := authCtx.Scopes
+			return gp.authUtil.GenericOauthClientCredentials(authCtx, scopes, gp.runtimeCtx)
 		}
 	case dto.AuthBasicStr:
-		return gp.basicAuth(authCtx)
+		return gp.authUtil.BasicAuth(authCtx, gp.runtimeCtx)
 	case dto.AuthCustomStr:
-		return gp.customAuth(authCtx)
+		return gp.authUtil.CustomAuth(authCtx, gp.runtimeCtx)
 	case dto.AuthAzureDefaultStr:
-		return gp.azureDefaultAuth(authCtx)
+		return gp.authUtil.AzureDefaultAuth(authCtx, gp.runtimeCtx)
 	case dto.AuthInteractiveStr:
-		return gp.oAuth(authCtx, enforceRevokeFirst)
+		return gp.authUtil.GCloudOAuth(gp.runtimeCtx, authCtx, enforceRevokeFirst)
 	case dto.AuthAWSSigningv4Str:
-		return gp.awsSigningAuth(authCtx)
+		return gp.authUtil.AwsSigningAuth(authCtx, gp.runtimeCtx)
 	case dto.AuthNullStr:
 		return netutils.GetHTTPClient(gp.runtimeCtx, http.DefaultClient), nil
 	}
@@ -237,40 +239,6 @@ func (gp *GenericProvider) ShowAuth(authCtx *dto.AuthCtx) (*anysdk.AuthMetadata,
 		err = errors.New(constants.NotAuthenticatedShowStr) //nolint:stylecheck // happy with message
 	}
 	return retVal, err
-}
-
-func (gp *GenericProvider) oAuth(authCtx *dto.AuthCtx, enforceRevokeFirst bool) (*http.Client, error) {
-	return gp.authUtil.GCloudOAuth(gp.runtimeCtx, authCtx, enforceRevokeFirst)
-}
-
-func (gp *GenericProvider) googleKeyFileAuth(authCtx *dto.AuthCtx) (*http.Client, error) {
-	scopes := authCtx.Scopes
-	return gp.authUtil.GoogleOauthServiceAccount(gp.GetProviderString(), authCtx, scopes, gp.runtimeCtx)
-}
-
-func (gp *GenericProvider) clientCredentialsAuth(authCtx *dto.AuthCtx) (*http.Client, error) {
-	scopes := authCtx.Scopes
-	return gp.authUtil.GenericOauthClientCredentials(authCtx, scopes, gp.runtimeCtx)
-}
-
-func (gp *GenericProvider) apiTokenFileAuth(authCtx *dto.AuthCtx, enforceBearer bool) (*http.Client, error) {
-	return gp.authUtil.ApiTokenAuth(authCtx, gp.runtimeCtx, enforceBearer)
-}
-
-func (gp *GenericProvider) awsSigningAuth(authCtx *dto.AuthCtx) (*http.Client, error) {
-	return gp.authUtil.AwsSigningAuth(authCtx, gp.runtimeCtx)
-}
-
-func (gp *GenericProvider) basicAuth(authCtx *dto.AuthCtx) (*http.Client, error) {
-	return gp.authUtil.BasicAuth(authCtx, gp.runtimeCtx)
-}
-
-func (gp *GenericProvider) customAuth(authCtx *dto.AuthCtx) (*http.Client, error) {
-	return gp.authUtil.CustomAuth(authCtx, gp.runtimeCtx)
-}
-
-func (gp *GenericProvider) azureDefaultAuth(authCtx *dto.AuthCtx) (*http.Client, error) {
-	return gp.authUtil.AzureDefaultAuth(authCtx, gp.runtimeCtx)
 }
 
 func (gp *GenericProvider) GetLikeableColumns(tableName string) []string {
