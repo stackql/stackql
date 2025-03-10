@@ -7573,3 +7573,104 @@ Contains Check AWS Materialized View and Cast and Multiple Function Query on Res
     ...    DDL Execution Completed
     ...    stdout=${CURDIR}/tmp/Contains-Check-AWS-Materialized-View-And-Cast-and-Multiple-Function-Query-on-Resource-Costs-Exemplifies-Cast-and-Multiple-Functions-on-Materialized-Views.tmp
     ...    stderr=${CURDIR}/tmp/Contains-Check-AWS-Materialized-View-And-Cast-and-Multiple-Function-Query-on-Resource-Costs-Exemplifies-Cast-and-Multiple-Functions-on-Materialized-Views-stderr.tmp  
+
+
+Local Execution Openssl RSA Show Methods
+    ${inputStr} =    Catenate
+    ...    show methods in local_openssl.keys.rsa;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-----------------|--------------------------------|---------|
+    ...    |${SPACE}${SPACE}${SPACE}MethodName${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}RequiredParams${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}SQLVerb${SPACE}|
+    ...    |-----------------|--------------------------------|---------|
+    ...    |${SPACE}create_key_pair${SPACE}|${SPACE}cert_out_file,${SPACE}config_file,${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}INSERT${SPACE}${SPACE}|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}key_out_file${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------|--------------------------------|---------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Local-Execution-Openssl-RSA-Show-Methods.tmp
+    ...    stderr=${CURDIR}/tmp/Local-Execution-Openssl-RSA-Show-Methods-stderr.tmp  
+
+Local Execution Openssl Create RSA Key Pair
+    ${inputStrNative} =    Catenate
+    ...    insert into local_openssl.keys.rsa(config_file, key_out_file, cert_out_file, days) select 'test/server/mtls/openssl.cnf', 'test/tmp/manual_key.pem', 'test/tmp/manual_cert.pem', 90;
+    ${inputStrDocker} =    Catenate
+    ...    insert into local_openssl.keys.rsa(config_file, key_out_file, cert_out_file, days) select '/opt/test/server/mtls/openssl.cnf', '/opt/test/tmp/manual_key.pem', '/opt/test/tmp/manual_cert.pem', 90;
+    ${inputStr} =    Set Variable If    "${EXECUTION_PLATFORM}" == "docker"      ${inputStrDocker}    ${inputStrNative}
+    Should Stackql Exec Inline Contain Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${EMPTY}
+    ...    OK
+    ...    stdout=${CURDIR}/tmp/Local-Execution-Openssl-Create-RSA-Key-Pair.tmp
+    ...    stderr=${CURDIR}/tmp/Local-Execution-Openssl-Create-RSA-Key-Pair-stderr.tmp  
+
+Local Execution Openssl x509 Describe
+    ${inputStr} =    Catenate
+    ...    describe local_openssl.keys.x509;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |----------------------|--------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}type${SPACE}${SPACE}|
+    ...    |----------------------|--------|
+    ...    |${SPACE}not_after${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}string${SPACE}|
+    ...    |----------------------|--------|
+    ...    |${SPACE}not_before${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}string${SPACE}|
+    ...    |----------------------|--------|
+    ...    |${SPACE}public_key_algorithm${SPACE}|${SPACE}string${SPACE}|
+    ...    |----------------------|--------|
+    ...    |${SPACE}type${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}string${SPACE}|
+    ...    |----------------------|--------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Local-Execution-Openssl-x509-Describe.tmp
+    ...    stderr=${CURDIR}/tmp/Local-Execution-Openssl-x509-Describe-stderr.tmp  
+
+Local Execution Openssl x509 Select
+    Pass Execution If    "${IS_WINDOWS}" == "1"   Need to look into this.
+    ${inputStrNative} =    Catenate
+    ...    select * from local_openssl.keys.x509 where cert_file = 'test/assets/input/manual_cert.pem';
+    ${inputStrDocker} =    Catenate
+    ...    select * from local_openssl.keys.x509 where cert_file = '/opt/stackql/input/manual_cert.pem';
+    ${inputStr} =    Set Variable If    "${EXECUTION_PLATFORM}" == "docker"      ${inputStrDocker}    ${inputStrNative}
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |--------------------------|--------------------------|----------------------|------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}not_after${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}not_before${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}public_key_algorithm${SPACE}|${SPACE}type${SPACE}|
+    ...    |--------------------------|--------------------------|----------------------|------|
+    ...    |${SPACE}Jun${SPACE}21${SPACE}09:12:17${SPACE}2025${SPACE}GMT${SPACE}|${SPACE}Mar${SPACE}23${SPACE}09:12:17${SPACE}2025${SPACE}GMT${SPACE}|${SPACE}rsaEncryption${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}x509${SPACE}|
+    ...    |--------------------------|--------------------------|----------------------|------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Local-Execution-Openssl-x509-Select.tmp
+    ...    stderr=${CURDIR}/tmp/Local-Execution-Openssl-x509-Select-stderr.tmp  

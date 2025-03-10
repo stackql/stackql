@@ -1,0 +1,287 @@
+info:
+  version: 0.1.0
+  title: Contrived Service for a Contrived Provider
+  contact:
+    name: Support
+    url: https://support.contrivedservice.contrivedprovider.com/contact
+paths: {}
+components:
+  schemas:
+    basic-error:
+      title: Basic Error
+      description: Basic Error
+      type: object
+      properties:
+        message:
+          type: string
+        documentation_url:
+          type: string
+        url:
+          type: string
+        status:
+          type: string
+    cert_display:
+      title: Key Display
+      type: object
+      properties:
+        type:
+          type: string
+          description: The key type
+          example: x509
+        not_before:
+          type: string
+          description: Textual date representation of the key's not before date.
+          example: Mar 22 02:50:46 2025 GMT
+        not_after:
+          type: string
+          description: Textual date representation of the key's not after date.
+          example: Mar 22 02:50:46 2025 GMT
+        public_key_algorithm:
+          type: string
+          description: The public key algorithm used by the key.
+          example: rsaEncryption
+    page:
+      type: object
+      properties:
+        url:
+          type: string
+          description: The API address for accessing this Page resource.
+          format: uri
+          example: https://api.github.com/repos/github/hello-world/pages
+        status:
+          type: string
+          enum:
+            - built
+            - building
+            - errored
+          nullable: true
+        cname:
+          description: The Pages site's custom domain
+          example: example.com
+          type: string
+          nullable: true
+        protected_domain_state:
+          type: string
+          description: The state if the domain is verified
+          example: pending
+          nullable: true
+          enum:
+            - pending
+            - verified
+            - unverified
+        pending_domain_unverified_at:
+          type: string
+          description: The timestamp when a pending domain becomes unverified.
+          nullable: true
+          format: date-time
+        custom_404:
+          type: boolean
+          description: Whether the Page has a custom 404 page.
+          example: false
+          default: false
+        html_url:
+          type: string
+          description: The web address the Page can be accessed from.
+          format: uri
+          example: https://example.com
+        source:
+          $ref: '#/components/schemas/pages-source-hash'
+        public:
+          type: boolean
+          description: Whether the GitHub Pages site is publicly visible. If set to `true`, the site is accessible to anyone on the internet. If set to `false`, the site will only be accessible to users who have at least `read` access to the repository that published the site.
+          example: true
+        https_certificate:
+          $ref: '#/components/schemas/pages-https-certificate'
+        https_enforced:
+          type: boolean
+          description: Whether https is enabled on the domain
+          example: true
+      required:
+        - url
+        - status
+        - cname
+        - custom_404
+        - public
+    pages-source-hash:
+      title: Pages Source Hash
+      type: object
+      properties:
+        branch:
+          type: string
+        path:
+          type: string
+      required:
+        - branch
+        - path
+    pages-https-certificate:
+      title: Pages Https Certificate
+      type: object
+      properties:
+        state:
+          type: string
+          enum:
+            - new
+            - authorization_created
+            - authorization_pending
+            - authorized
+            - authorization_revoked
+            - issued
+            - uploaded
+            - approved
+            - errored
+            - bad_authz
+            - destroy_pending
+            - dns_changed
+          example: approved
+        description:
+          type: string
+          example: Certificate is approved
+        domains:
+          type: array
+          items:
+            type: string
+          description: Array of the domain set and its alternate name (if it is configured)
+          example:
+            - example.com
+            - www.example.com
+        expires_at:
+          type: string
+          format: date
+      required:
+        - state
+        - description
+        - domains
+  parameters:
+    owner:
+      name: owner
+      in: path
+      required: true
+      schema:
+        type: string
+    repo:
+      name: repo
+      in: path
+      required: true
+      schema:
+        type: string
+  responses:
+    not_found:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/basic-error'
+  securitySchemes: {}
+  callbacks: {}
+  requestBodies: {}
+resources:
+    x509:
+      id: openssl_local.keys.x509
+      name: x509
+      title: x509
+      methods:
+        describe_certificate:
+          summary: Describe an x509 certificate.
+          description: | 
+            Describe an x509 certificate. 
+            Classical usage:
+            openssl x509 -in test/tmp/cert.pem -noout -text
+          inline:
+            - '{{ or .parameters.executable "openssl" }}'
+            - x509
+            - -in
+            - '{{ .parameters.cert_file }}'
+            - -noout
+            - -text
+          parameters:
+            cert_file:
+              in: inline
+              required: true
+          response:
+            schema_override:
+              title: Key Display
+              type: object
+              properties:
+                type:
+                    type: string
+                    description: The key type
+                    example: x509
+                not_before:
+                    type: string
+                    description: Textual date representation of the key's not before date.
+                    example: Mar 22 02:50:46 2025 GMT
+                not_after:
+                    type: string
+                    description: Textual date representation of the key's not after date.
+                    example: Mar 22 02:50:46 2025 GMT
+                public_key_algorithm:
+                    type: string
+                    description: The public key algorithm used by the key.
+                    example: rsaEncryption
+            transform:
+              body: >
+                {{- $s := separator ", " -}}
+                {{- $root := . -}}
+                {{- $pubKeyAlgo := getRegexpFirstMatch $root "Public Key Algorithm: (?<anything>.*)" -}}
+                {{- $notBefore := getRegexpFirstMatch $root "Not Before: (.*)" -}}
+                {{- $notAfter := getRegexpFirstMatch $root "Not After(?:[ ]*): (.*)" -}}
+                [{ "type": "x509", "public_key_algorithm": "{{ $pubKeyAlgo }}", "not_before": "{{ $notBefore }}", "not_after": "{{ $notAfter }}"}]
+              type: 'golang_template_v0.1.0'
+      sqlVerbs:
+        insert: []
+        select:
+          - $ref: '#/components/x-stackQL-resources/x509/methods/describe_certificate'
+        update: []
+        delete: []
+
+    rsa:
+      id: openssl_local.keys.rsa
+      name: rsa
+      title: rsa
+      methods:
+        create_key_pair:
+          summary: Create a new RSA key pair.
+          description: | 
+            Create a new RSA key pair. 
+            Classical usage:
+            openssl req -x509 -keyout test/server/mtls/credentials/pg_server_key.pem -out test/server/mtls/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
+          inline:
+            - '{{ or .parameters.executable "openssl" }}'
+            - req 
+            - -x509
+            - -keyout 
+            - '{{ .parameters.key_out_file }}' 
+            - -out 
+            - '{{ .parameters.cert_out_file }}'
+            - -config 
+            - '{{ .parameters.config_file }}'
+            - -days 
+            - '{{ or .parameters.days 365 }}'
+          parameters:
+            key_out_file:
+              in: inline
+              required: true
+            cert_out_file:
+              in: inline
+              required: true
+            config_file:
+              in: inline
+              required: true
+            days:
+              in: inline
+              required: false
+            executable:
+              in: inline
+              required: false
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+      sqlVerbs:
+        select: []
+        insert:
+          - $ref: '#/components/x-stackQL-resources/rsa/methods/create_key_pair'
+        update: []
+        delete: []
+openapi: 3.0.3
+servers:
+  - url: https://contrivedservice.contrivedprovider.com
