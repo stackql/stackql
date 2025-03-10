@@ -988,7 +988,7 @@ func (pb *standardPrimitiveGenerator) buildRequestContext(
 			)
 			httpArmoury, httpErr := httpPreparator.BuildHTTPRequestCtx()
 			if httpErr != nil {
-				return nil, err
+				return nil, httpErr
 			}
 			return httpArmoury, nil
 		},
