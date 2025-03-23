@@ -1,6 +1,8 @@
 package execution
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,8 +13,10 @@ import (
 	"github.com/stackql/any-sdk/pkg/client"
 	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/any-sdk/pkg/httpelement"
+	"github.com/stackql/any-sdk/pkg/local_template_executor"
 	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/any-sdk/pkg/response"
+	"github.com/stackql/any-sdk/pkg/stream_transform"
 	"github.com/stackql/any-sdk/pkg/streaming"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
@@ -1232,7 +1236,7 @@ func (sp *standardProcessor) Process() ProcessorResponse {
 	return newHTTPProcessorResponse(nil, reversalStream, false, nil)
 }
 
-//nolint:revive // TODO: investigate
+//nolint:revive,nestif,funlen,gocognit // TODO: investigate
 func (mv *monoValentExecution) GetExecutor() (func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput, error) {
 	prov, err := mv.tableMeta.GetProvider()
 	if err != nil {
@@ -1261,47 +1265,150 @@ func (mv *monoValentExecution) GetExecutor() (func(pc primitive.IPrimitiveCtx) i
 		polyHandler := NewStandardPolyHandler(
 			mv.handlerCtx,
 		)
-		agnosticatePayload := newHTTPAgnosticatePayload(
-			mv.tableMeta,
-			provider,
-			m,
-			tableName,
-			authCtx,
-			mv.handlerCtx.GetRuntimeContext(),
-			mv.handlerCtx.GetOutErrFile(),
-			mr,
-			mv.elideActionIfPossible(
-				currentTcc,
-				tableName,
-				"", // late binding, should remove AOT reference
-			),
-			true,
-			polyHandler,
-			mv.tableMeta.GetSelectItemsKey(),
-			mv,
-			mv.isSkipResponse,
-			mv.isMutation,
-		)
-		processorResponse, agnosticErr := agnosticate(agnosticatePayload)
-		if agnosticErr != nil {
-			return internaldto.NewErroneousExecutorOutput(agnosticErr)
+		protocolType, protocolTypeErr := provider.GetProtocolType()
+		if protocolTypeErr != nil {
+			return internaldto.NewErroneousExecutorOutput(protocolTypeErr)
 		}
-		messages := polyHandler.GetMessages()
-		var castMessages internaldto.BackendMessages
-		if len(messages) > 0 {
-			castMessages = internaldto.NewBackendMessages(messages)
-		}
-		if processorResponse != nil && len(processorResponse.GetSuccessMessages()) > 0 {
-			if len(messages) == 0 {
-				castMessages = internaldto.NewBackendMessages(processorResponse.GetSuccessMessages())
-			} else {
-				castMessages.AppendMessages(processorResponse.GetSuccessMessages())
+		//nolint:exhaustive // acceptable for now
+		switch protocolType {
+		case client.LocalTemplated:
+			inlines := m.GetInline()
+			if len(inlines) == 0 {
+				return internaldto.NewErroneousExecutorOutput(fmt.Errorf("no inlines found"))
 			}
+			executor := local_template_executor.NewLocalTemplateExecutor(
+				inlines[0],
+				inlines[1:],
+				nil,
+			)
+			armoury, armouryErr := mv.tableMeta.GetHTTPArmoury()
+			if armouryErr != nil {
+				return internaldto.NewErroneousExecutorOutput(armouryErr)
+			}
+			requestParams := armoury.GetRequestParams()
+			logging.GetLogger().Infoln(fmt.Sprintf("requestParams = %v", requestParams))
+			flatInlineParams := make(map[string]interface{})
+			for _, p := range requestParams {
+				foundInlineParams, loopErr := p.GetParameters().GetInlineParameterFlatMap()
+				if loopErr == nil {
+					flatInlineParams = foundInlineParams
+				}
+				break //nolint:staticcheck // acceptable for now
+			}
+			// if mapsErr != nil {
+			// 	return internaldto.NewErroneousExecutorOutput(mapsErr)
+			// }
+			// paramMap := interestingMaps.getParameterMap()
+			// params := paramMap[0]
+			resp, exErr := executor.Execute(
+				map[string]any{"parameters": flatInlineParams},
+			)
+			if exErr != nil {
+				return internaldto.NewErroneousExecutorOutput(exErr)
+			}
+			var backendMessages []string
+			stdOut, stdOutExists := resp.GetStdOut()
+			var stdoutStr string
+			if stdOutExists {
+				stdoutStr = stdOut.String()
+				expectedResponse, isExpectedResponse := m.GetResponse()
+				if isExpectedResponse {
+					responseTransform, responseTransformExists := expectedResponse.GetTransform()
+					if responseTransformExists && responseTransform.GetType() == "golang_template_v0.1.0" {
+						input := stdoutStr
+						tmpl := responseTransform.GetBody()
+						inStream := stream_transform.NewTextReader(bytes.NewBufferString(input))
+						outStream := bytes.NewBuffer(nil)
+						tfm, setupErr := stream_transform.NewTemplateStreamTransformer(tmpl, inStream, outStream)
+						if setupErr != nil {
+							return internaldto.NewErroneousExecutorOutput(fmt.Errorf("template stream transform error: %w", setupErr))
+						}
+						if tfErr := tfm.Transform(); tfErr != nil {
+							return internaldto.NewErroneousExecutorOutput(fmt.Errorf("failed to transform: %w", tfErr))
+						}
+						outputStr := outStream.String()
+						stdoutStr = outputStr
+					}
+				}
+				var res []map[string]interface{}
+				resErr := json.Unmarshal([]byte(stdoutStr), &res)
+				itemisationResult := itemise(res, resErr, "")
+				insertPrepResult := mv.ActionInsertPreparation(
+					newHTTPActionInsertPayload(
+						itemisationResult,
+						false,
+						tableName,
+						flatInlineParams,
+						"",
+					),
+				)
+				insertErr, hasErr := insertPrepResult.GetError()
+				if hasErr {
+					return internaldto.NewErroneousExecutorOutput(insertErr)
+				}
+				// fmt.Fprintf(os.Stdout, "%s", stdoutStr)
+			}
+			// if stdOutExists {
+			// 	backendMessages = append(backendMessages, stdOut.String())
+			// }
+			stdErr, stdErrExists := resp.GetStdErr()
+			if stdErrExists {
+				backendMessages = append(backendMessages, stdErr.String())
+			}
+			backendMessages = append(backendMessages, "OK")
+			return internaldto.NewExecutorOutput(
+				nil,
+				nil,
+				nil,
+				internaldto.NewBackendMessages(backendMessages),
+				nil,
+			)
+		case client.HTTP:
+			agnosticatePayload := newHTTPAgnosticatePayload(
+				mv.tableMeta,
+				provider,
+				m,
+				tableName,
+				authCtx,
+				mv.handlerCtx.GetRuntimeContext(),
+				mv.handlerCtx.GetOutErrFile(),
+				mr,
+				mv.elideActionIfPossible(
+					currentTcc,
+					tableName,
+					"", // late binding, should remove AOT reference
+				),
+				true,
+				polyHandler,
+				mv.tableMeta.GetSelectItemsKey(),
+				mv,
+				mv.isSkipResponse,
+				mv.isMutation,
+			)
+			processorResponse, agnosticErr := agnosticate(agnosticatePayload)
+			if agnosticErr != nil {
+				return internaldto.NewErroneousExecutorOutput(agnosticErr)
+			}
+			messages := polyHandler.GetMessages()
+			var castMessages internaldto.BackendMessages
+			if len(messages) > 0 {
+				castMessages = internaldto.NewBackendMessages(messages)
+			}
+			if processorResponse != nil && len(processorResponse.GetSuccessMessages()) > 0 {
+				if len(messages) == 0 {
+					castMessages = internaldto.NewBackendMessages(processorResponse.GetSuccessMessages())
+				} else {
+					castMessages.AppendMessages(processorResponse.GetSuccessMessages())
+				}
+			}
+			if processorResponse == nil {
+				return internaldto.NewExecutorOutput(nil, nil, nil, castMessages, nil)
+			}
+			return internaldto.NewExecutorOutput(nil, processorResponse.GetSingletonBody(), nil, castMessages, err)
+		default:
+			return internaldto.NewErroneousExecutorOutput(
+				fmt.Errorf("unsupported protocol type '%v'", protocolType))
 		}
-		if processorResponse == nil {
-			return internaldto.NewExecutorOutput(nil, nil, nil, castMessages, nil)
-		}
-		return internaldto.NewExecutorOutput(nil, processorResponse.GetSingletonBody(), nil, castMessages, err)
 	}
 	return ex, nil
 }
