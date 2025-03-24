@@ -6,11 +6,9 @@ import (
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/primitive_context"
-	"github.com/stackql/stackql/internal/stackql/provider"
 )
 
-type HTTPRestPrimitive struct {
-	Provider      provider.IProvider
+type GenericPrimitive struct {
 	Executor      func(pc IPrimitiveCtx) internaldto.ExecutorOutput
 	Preparator    func() drm.PreparedStatementCtx
 	TxnControlCtr internaldto.TxnControlCounters
@@ -23,15 +21,13 @@ type HTTPRestPrimitive struct {
 	debugName     string
 }
 
-func NewHTTPRestPrimitive(
-	provider provider.IProvider,
+func NewGenericPrimitive(
 	executor func(pc IPrimitiveCtx) internaldto.ExecutorOutput,
 	preparator func() drm.PreparedStatementCtx,
 	txnCtrlCtr internaldto.TxnControlCounters,
 	primitiveCtx primitive_context.IPrimitiveCtx,
 ) IPrimitive {
-	return &HTTPRestPrimitive{
-		Provider:      provider,
+	return &GenericPrimitive{
 		Executor:      executor,
 		Preparator:    preparator,
 		TxnControlCtr: txnCtrlCtr,
@@ -41,52 +37,52 @@ func NewHTTPRestPrimitive(
 	}
 }
 
-func (pr *HTTPRestPrimitive) WithDebugName(name string) IPrimitive {
+func (pr *GenericPrimitive) WithDebugName(name string) IPrimitive {
 	pr.debugName = name
 	return pr
 }
 
-func (pr *HTTPRestPrimitive) SetUndoLog(log binlog.LogEntry) {
+func (pr *GenericPrimitive) SetUndoLog(log binlog.LogEntry) {
 	pr.undoLog = log
 }
 
-func (pr *HTTPRestPrimitive) SetRedoLog(log binlog.LogEntry) {
+func (pr *GenericPrimitive) SetRedoLog(log binlog.LogEntry) {
 	pr.redoLog = log
 }
 
-func (pr *HTTPRestPrimitive) GetRedoLog() (binlog.LogEntry, bool) {
+func (pr *GenericPrimitive) GetRedoLog() (binlog.LogEntry, bool) {
 	return pr.redoLog, pr.redoLog != nil
 }
 
-func (pr *HTTPRestPrimitive) GetUndoLog() (binlog.LogEntry, bool) {
+func (pr *GenericPrimitive) GetUndoLog() (binlog.LogEntry, bool) {
 	return pr.undoLog, pr.undoLog != nil
 }
 
-func (pr *HTTPRestPrimitive) SetTxnID(id int) {
+func (pr *GenericPrimitive) SetTxnID(id int) {
 	if pr.TxnControlCtr != nil {
 		pr.TxnControlCtr.SetTxnID(id)
 	}
 }
 
-func (pr *HTTPRestPrimitive) IsReadOnly() bool {
+func (pr *GenericPrimitive) IsReadOnly() bool {
 	return pr.isReadOnly
 }
 
-func (pr *HTTPRestPrimitive) IncidentData(fromID int64, input internaldto.ExecutorOutput) error {
+func (pr *GenericPrimitive) IncidentData(fromID int64, input internaldto.ExecutorOutput) error {
 	pr.Inputs[fromID] = input
 	return nil
 }
 
-func (pr *HTTPRestPrimitive) SetInputAlias(alias string, id int64) error {
+func (pr *GenericPrimitive) SetInputAlias(alias string, id int64) error {
 	pr.InputAliases[alias] = id
 	return nil
 }
 
-func (pr *HTTPRestPrimitive) Optimise() error {
+func (pr *GenericPrimitive) Optimise() error {
 	return nil
 }
 
-func (pr *HTTPRestPrimitive) GetInputFromAlias(alias string) (internaldto.ExecutorOutput, bool) {
+func (pr *GenericPrimitive) GetInputFromAlias(alias string) (internaldto.ExecutorOutput, bool) {
 	var rv internaldto.ExecutorOutput
 	key, keyExists := pr.InputAliases[alias]
 	if !keyExists {
@@ -99,7 +95,7 @@ func (pr *HTTPRestPrimitive) GetInputFromAlias(alias string) (internaldto.Execut
 	return input, true
 }
 
-func (pr *HTTPRestPrimitive) Execute(pc IPrimitiveCtx) internaldto.ExecutorOutput {
+func (pr *GenericPrimitive) Execute(pc IPrimitiveCtx) internaldto.ExecutorOutput {
 	if pr.Executor != nil {
 		logging.GetLogger().Debugf("running HTTP rest primitive %s", pr.debugName)
 		op := pr.Executor(pc)
@@ -108,11 +104,11 @@ func (pr *HTTPRestPrimitive) Execute(pc IPrimitiveCtx) internaldto.ExecutorOutpu
 	return internaldto.NewExecutorOutput(nil, nil, nil, nil, nil)
 }
 
-func (pr *HTTPRestPrimitive) ID() int64 {
+func (pr *GenericPrimitive) ID() int64 {
 	return pr.id
 }
 
-func (pr *HTTPRestPrimitive) SetExecutor(ex func(pc IPrimitiveCtx) internaldto.ExecutorOutput) error {
+func (pr *GenericPrimitive) SetExecutor(ex func(pc IPrimitiveCtx) internaldto.ExecutorOutput) error {
 	pr.Executor = ex
 	return nil
 }

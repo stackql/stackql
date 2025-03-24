@@ -47,6 +47,7 @@ services:
       - ./test/assets/credentials/dummy:/opt/stackql/credentials/dummy:ro
       - ./test/assets/input:/opt/stackql/input:ro
       - ./test/tmp:/opt/test/tmp:rw
+      - ./test/server:/opt/test/server:ro
       - ${DB_SETUP_SRC:-./test/db/sqlite}:/opt/stackql/db:ro
       - ${REGISTRY_SRC:-./test/registry-mocked}:/opt/stackql/registry:ro
       - ./cicd/vol/stackql/config:/opt/stackql/.stackql:rw 

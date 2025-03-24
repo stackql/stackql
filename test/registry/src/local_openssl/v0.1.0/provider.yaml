@@ -1,0 +1,18 @@
+id: local_openssl
+name: local_openssl
+version: v0.1.0
+protocolType: local_templated
+providerServices:
+  keys:
+    description: Key management through openssl.
+    id: keys:v0.1.0
+    name: keys
+    preferred: true
+    service:
+      $ref: local_openssl/v0.1.0/services/keys.yaml
+    title: openssl Key Management
+    version: v0.1.0
+openapi: 3.0.3
+config:
+  auth:
+    type: "null_auth"

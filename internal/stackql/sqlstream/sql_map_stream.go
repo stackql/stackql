@@ -5,9 +5,9 @@ import (
 	"io"
 
 	"github.com/stackql/any-sdk/pkg/logging"
+	"github.com/stackql/any-sdk/pkg/streaming"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
-	"github.com/stackql/stackql/internal/stackql/streaming"
 	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
 )
 

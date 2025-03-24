@@ -2,23 +2,22 @@ package primitivebuilder
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/stackql/any-sdk/anysdk"
+	"github.com/stackql/any-sdk/pkg/client"
 	"github.com/stackql/any-sdk/pkg/constants"
+	"github.com/stackql/any-sdk/pkg/local_template_executor"
 	"github.com/stackql/any-sdk/pkg/logging"
-	pkg_response "github.com/stackql/any-sdk/pkg/response"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
 	"github.com/stackql/stackql/internal/stackql/drm"
+	"github.com/stackql/stackql/internal/stackql/execution"
 	"github.com/stackql/stackql/internal/stackql/handler"
-	"github.com/stackql/stackql/internal/stackql/httpmiddleware"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/builder_input"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/primitive_context"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
-	"github.com/stackql/stackql/internal/stackql/streaming/http_preparator_stream.go"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/util"
 )
@@ -36,7 +35,8 @@ type genericHTTPStreamInput struct {
 	verb              string // may be "insert" or "update"
 	inputAlias        string
 	isUndo            bool
-	reversalStream    http_preparator_stream.HttpPreparatorStream
+	isMutation        bool
+	reversalStream    anysdk.HttpPreparatorStream
 	reversalBuilder   Builder
 	rollbackType      constants.RollbackType
 }
@@ -74,7 +74,7 @@ func newGenericHTTPStreamInput(
 		inputAlias:        builderInput.GetInputAlias(),
 		isUndo:            builderInput.IsUndo(),
 		parserNode:        parserNode,
-		reversalStream:    http_preparator_stream.NewHttpPreparatorStream(),
+		reversalStream:    anysdk.NewHttpPreparatorStream(),
 		rollbackType:      handlerCtx.GetRollbackType(),
 	}, nil
 }
@@ -132,7 +132,7 @@ func (gh *genericHTTPStreamInput) getInterestingMaps(actionPrimitive primitive.I
 	return newMapsAggregatorDTO(paramMap, inputMap), nil
 }
 
-//nolint:funlen,gocognit,gocyclo,cyclop,nestif // TODO: fix this
+//nolint:funlen,gocognit,gocyclo,cyclop // TODO: fix this
 func (gh *genericHTTPStreamInput) Build() error {
 	tbl := gh.tbl
 	handlerCtx := gh.handlerCtx
@@ -142,6 +142,16 @@ func (gh *genericHTTPStreamInput) Build() error {
 	if err != nil {
 		return err
 	}
+	provider, providerErr := prov.GetProvider()
+	if providerErr != nil {
+		return providerErr
+	}
+	rtCtx := handlerCtx.GetRuntimeContext()
+	authCtx, authCtxErr := handlerCtx.GetAuthContext(provider.GetName())
+	if authCtxErr != nil {
+		return authCtxErr
+	}
+	outErrFile := handlerCtx.GetOutErrFile()
 	svc, err := tbl.GetService()
 	if err != nil {
 		return err
@@ -181,175 +191,188 @@ func (gh *genericHTTPStreamInput) Build() error {
 		// inverseBuilder :=
 	}
 	_, _, responseAnalysisErr := tbl.GetResponseSchemaAndMediaType()
-	actionPrimitive := primitive.NewHTTPRestPrimitive(
-		prov,
+	actionPrimitive := primitive.NewGenericPrimitive(
 		nil,
 		nil,
 		nil,
 		primitive_context.NewPrimitiveContext(),
 	)
 	// reversalStream := streaming.NewStandardMapStream()
-	target := make(map[string]interface{})
 	ex := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 		pr, prErr := prov.GetProvider()
 		if prErr != nil {
 			return internaldto.NewErroneousExecutorOutput(prErr)
 		}
+		protocolType, protocolTypeErr := pr.GetProtocolType()
+		if protocolTypeErr != nil {
+			return internaldto.NewErroneousExecutorOutput(protocolTypeErr)
+		}
 		interestingMaps, mapsErr := gh.getInterestingMaps(actionPrimitive)
 		if mapsErr != nil {
 			return internaldto.NewErroneousExecutorOutput(mapsErr)
 		}
-		httpPreparator := anysdk.NewHTTPPreparator(
-			pr,
-			svc,
-			m,
-			interestingMaps.getParameterMap(),
-			nil,
-			nil,
-			logging.GetLogger(),
-		)
-		httpArmoury, httpErr := httpPreparator.BuildHTTPRequestCtx()
-		if httpErr != nil {
-			return internaldto.NewErroneousExecutorOutput(httpErr)
-		}
+		paramMap := interestingMaps.getParameterMap()
+		params := paramMap[0]
+		//nolint:exhaustive // no big deal
+		switch protocolType {
+		case client.LocalTemplated:
+			inlines := m.GetInline()
+			if len(inlines) == 0 {
+				return internaldto.NewErroneousExecutorOutput(fmt.Errorf("no inlines found"))
+			}
+			executor := local_template_executor.NewLocalTemplateExecutor(
+				inlines[0],
+				inlines[1:],
+				nil,
+			)
+			resp, exErr := executor.Execute(
+				map[string]any{"parameters": params},
+			)
+			if exErr != nil {
+				return internaldto.NewErroneousExecutorOutput(exErr)
+			}
+			var backendMessages []string
+			stdOut, stdOutExists := resp.GetStdOut()
+			if stdOutExists {
+				backendMessages = append(backendMessages, stdOut.String())
+			}
+			stdErr, stdErrExists := resp.GetStdErr()
+			if stdErrExists {
+				backendMessages = append(backendMessages, stdErr.String())
+			}
+			backendMessages = append(backendMessages, "OK")
+			return internaldto.NewExecutorOutput(
+				nil,
+				nil,
+				nil,
+				internaldto.NewBackendMessages(backendMessages),
+				nil,
+			)
+		case client.HTTP:
+			httpPreparator := anysdk.NewHTTPPreparator(
+				pr,
+				svc,
+				m,
+				paramMap,
+				nil,
+				nil,
+				logging.GetLogger(),
+			)
+			httpArmoury, httpErr := httpPreparator.BuildHTTPRequestCtx()
+			if httpErr != nil {
+				return internaldto.NewErroneousExecutorOutput(httpErr)
+			}
 
-		tableName, _ := tbl.GetTableName()
+			tableName, _ := tbl.GetTableName()
 
-		// var reversalParameters []map[string]interface{}
-		// TODO: Implement reversal operations:
-		//           - depending upon reversal operation, collect sequence of HTTP operations.
-		//           - for each HTTP operation, collect context and store in *some object*
-		//                then attach to reversal graph for later retrieval and execution
-		var nullaryExecutors []func() internaldto.ExecutorOutput
-		for _, r := range httpArmoury.GetRequestParams() {
-			req := r
-			nullaryEx := func() internaldto.ExecutorOutput {
-				response, apiErr := httpmiddleware.HTTPApiCallFromRequest(handlerCtx.Clone(), prov, m, req.GetRequest())
-				if apiErr != nil {
-					return internaldto.NewErroneousExecutorOutput(apiErr)
-				}
-
-				if responseAnalysisErr == nil {
-					var resp pkg_response.Response
-					processed, procErr := m.ProcessResponse(response)
-					if err != nil {
-						return internaldto.NewErroneousExecutorOutput(procErr)
-					}
-					reversal, reversalExists := processed.GetReversal()
-					if reversalExists {
-						reversalAppendErr := gh.appendReversalData(reversal)
-						if reversalAppendErr != nil {
-							return internaldto.NewErroneousExecutorOutput(reversalAppendErr)
+			// var reversalParameters []map[string]interface{}
+			// TODO: Implement reversal operations:
+			//           - depending upon reversal operation, collect sequence of HTTP operations.
+			//           - for each HTTP operation, collect context and store in *some object*
+			//                then attach to reversal graph for later retrieval and execution
+			var nullaryExecutors []func() internaldto.ExecutorOutput
+			for _, r := range httpArmoury.GetRequestParams() {
+				req := r
+				isSkipResponse := responseAnalysisErr != nil
+				polyHandler := execution.NewStandardPolyHandler(
+					handlerCtx,
+				)
+				nullaryEx := func() internaldto.ExecutorOutput {
+					pp := execution.NewProcessorPayload(
+						req,
+						execution.NewNilMethodElider(),
+						provider,
+						m,
+						tableName,
+						rtCtx,
+						authCtx,
+						outErrFile,
+						polyHandler,
+						"",
+						nil,
+						isSkipResponse,
+						true,
+						isAwait,
+						gh.isUndo,
+						gh.isMutation,
+						"",
+					)
+					processor := execution.NewProcessor(pp)
+					processorResponse := processor.Process()
+					processorErr := processorResponse.GetError()
+					singletonBody := processorResponse.GetSingletonBody()
+					reversalStrem := processorResponse.GetReversalStream()
+					for {
+						rev, isRevExistent := reversalStrem.Next()
+						if !isRevExistent {
+							break
+						}
+						revErr := gh.appendReversalData(rev)
+						if revErr != nil {
+							return internaldto.NewErroneousExecutorOutput(revErr)
 						}
 					}
-					if !reversalExists && gh.isReverseRequired() {
-						return internaldto.NewErroneousExecutorOutput(fmt.Errorf("reversal is required but not provided"))
-					}
-					resp, respOk := processed.GetResponse()
-					if !respOk {
-						return internaldto.NewErroneousExecutorOutput(fmt.Errorf("response is not a valid response"))
-					}
-					processedBody := resp.GetProcessedBody()
-					switch processedBody := processedBody.(type) { //nolint:gocritic // TODO: fix this
-					case map[string]interface{}:
-						target = processedBody
+					// if processorResponse.IsFailed() && !gh.isAwait {
+					// 	processorErr = fmt.Errorf(processorResponse.GetFailedMessage())
+					// }
+					return gh.decorateOutput(
+						internaldto.NewExecutorOutput(
+							nil,
+							singletonBody,
+							nil,
+							internaldto.NewBackendMessages(processorResponse.GetSuccessMessages()),
+							processorErr,
+						),
+						tableName,
+					)
+				}
+
+				nullaryExecutors = append(nullaryExecutors, nullaryEx)
+			}
+			resultSet := internaldto.NewErroneousExecutorOutput(fmt.Errorf("no executions detected"))
+			if !isAwait {
+				for _, ei := range nullaryExecutors {
+					execInstance := ei
+					aPrioriMessages := resultSet.GetMessages()
+					resultSet = execInstance()
+					resultSet.AppendMessages(aPrioriMessages)
+					if resultSet.GetError() != nil {
+						return resultSet
 					}
 				}
+				return resultSet
+			}
+			for _, eI := range nullaryExecutors {
+				execInstance := eI
+				dependentInsertPrimitive := primitive.NewGenericPrimitive(
+					nil,
+					nil,
+					nil,
+					primitive_context.NewPrimitiveContext(),
+				)
+				//nolint:revive // no big deal
+				err = dependentInsertPrimitive.SetExecutor(func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+					return execInstance()
+				})
 				if err != nil {
 					return internaldto.NewErroneousExecutorOutput(err)
 				}
-				logging.GetLogger().Infoln(fmt.Sprintf("target = %v", target))
-				items, ok := target[tbl.LookupSelectItemsKey()]
-				keys := make(map[string]map[string]interface{})
-				if ok {
-					iArr, iOk := items.([]interface{})
-					if iOk && len(iArr) > 0 {
-						for i := range iArr {
-							item, itemOk := iArr[i].(map[string]interface{})
-							if itemOk {
-								keys[strconv.Itoa(i)] = item
-							}
-						}
-					}
+				execPrim, execErr := composeAsyncMonitor(handlerCtx, dependentInsertPrimitive, prov, m, commentDirectives)
+				if execErr != nil {
+					return internaldto.NewErroneousExecutorOutput(execErr)
 				}
-				if err == nil {
-					if response.StatusCode < 300 { //nolint:mnd // TODO: fix this
-						msgs := internaldto.NewBackendMessages(
-							generateSuccessMessagesFromHeirarchy(tbl, isAwait),
-						)
-						return gh.decorateOutput(
-							internaldto.NewExecutorOutput(
-								nil,
-								target,
-								nil,
-								msgs,
-								nil,
-							),
-							tableName,
-						)
-					}
-					generatedErr := fmt.Errorf("insert over HTTP error: %s", response.Status)
-					return internaldto.NewExecutorOutput(
-						nil,
-						target,
-						nil,
-						nil,
-						generatedErr,
-					)
-				}
-				return internaldto.NewExecutorOutput(
-					nil,
-					target,
-					nil,
-					nil,
-					err,
-				)
-			}
-
-			nullaryExecutors = append(nullaryExecutors, nullaryEx)
-		}
-		resultSet := internaldto.NewErroneousExecutorOutput(fmt.Errorf("no executions detected"))
-		if !isAwait {
-			for _, ei := range nullaryExecutors {
-				execInstance := ei
-				aPrioriMessages := resultSet.GetMessages()
-				resultSet = execInstance()
-				resultSet.AppendMessages(aPrioriMessages)
+				resultSet = execPrim.Execute(pc)
 				if resultSet.GetError() != nil {
 					return resultSet
 				}
 			}
-			return resultSet
-		}
-		for _, eI := range nullaryExecutors {
-			execInstance := eI
-			dependentInsertPrimitive := primitive.NewHTTPRestPrimitive(
-				prov,
-				nil,
-				nil,
-				nil,
-				primitive_context.NewPrimitiveContext(),
+			return gh.decorateOutput(
+				resultSet,
+				tableName,
 			)
-			//nolint:revive // no big deal
-			err = dependentInsertPrimitive.SetExecutor(func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
-				return execInstance()
-			})
-			if err != nil {
-				return internaldto.NewErroneousExecutorOutput(err)
-			}
-			execPrim, execErr := composeAsyncMonitor(handlerCtx, dependentInsertPrimitive, prov, m, commentDirectives)
-			if execErr != nil {
-				return internaldto.NewErroneousExecutorOutput(execErr)
-			}
-			resultSet = execPrim.Execute(pc)
-			if resultSet.GetError() != nil {
-				return resultSet
-			}
+		default:
+			return internaldto.NewErroneousExecutorOutput(fmt.Errorf("unsupported protocol type: %v", protocolType))
 		}
-		return gh.decorateOutput(
-			resultSet,
-			tableName,
-		)
 	}
 	err = actionPrimitive.SetExecutor(ex)
 	if err != nil {

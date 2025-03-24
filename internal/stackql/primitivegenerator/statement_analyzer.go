@@ -587,6 +587,10 @@ func (pb *standardPrimitiveGenerator) AnalyzeUnaryExec(
 	if err != nil {
 		return nil, err
 	}
+	svc, err := meta.GetService()
+	if err != nil {
+		return nil, err
+	}
 	rStr, err := meta.GetResourceStr()
 	if err != nil {
 		return nil, err
@@ -619,7 +623,7 @@ func (pb *standardPrimitiveGenerator) AnalyzeUnaryExec(
 	if err != nil {
 		return nil, err
 	}
-	_, err = pb.buildRequestContext(handlerCtx, node, meta, anysdk.NewExecContext(execPayload, rsc), nil)
+	err = pb.buildRequestContext(node, meta, anysdk.NewExecContext(execPayload, rsc), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -629,10 +633,22 @@ func (pb *standardPrimitiveGenerator) AnalyzeUnaryExec(
 	if method.IsNullary() && !pb.PrimitiveComposer.IsAwait() {
 		return meta, nil
 	}
-	if selectNode != nil {
-		return meta, pb.analyzeUnarySelection(pbi, handlerCtx, selectNode, selectNode.Where, meta, cols)
+	// TODO: columns in and replace hadnrolled analysis
+	analysisInput := anysdk.NewMethodAnalysisInput(
+		method,
+		svc,
+		true,
+		[]anysdk.ColumnDescriptor{},
+	)
+	analyser := anysdk.NewMethodAnalyzer()
+	methodAnalysisOutput, analysisErr := analyser.AnalyzeUnaryAction(analysisInput)
+	if analysisErr != nil {
+		return meta, analysisErr
 	}
-	return meta, pb.analyzeUnarySelection(pbi, handlerCtx, node, nil, meta, cols)
+	if selectNode != nil {
+		return meta, pb.analyzeUnarySelection(pbi, handlerCtx, selectNode, selectNode.Where, meta, cols, methodAnalysisOutput)
+	}
+	return meta, pb.analyzeUnarySelection(pbi, handlerCtx, node, nil, meta, cols, methodAnalysisOutput)
 }
 
 func (pb *standardPrimitiveGenerator) AnalyzeNop(
@@ -933,49 +949,51 @@ func (pb *standardPrimitiveGenerator) expandTable(
 	return nil
 }
 
-//nolint:unparam,revive // TODO: review
 func (pb *standardPrimitiveGenerator) buildRequestContext(
-	handlerCtx handler.HandlerContext,
 	node sqlparser.SQLNode,
 	meta tablemetadata.ExtendedTableMetadata,
 	execContext anysdk.ExecContext,
 	rowsToInsert map[int]map[int]interface{},
-) (anysdk.HTTPArmoury, error) {
+) error {
 	m, err := meta.GetMethod()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	prov, err := meta.GetProvider()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	svc, err := meta.GetService()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	pr, prErr := prov.GetProvider()
 	if prErr != nil {
-		return nil, prErr
+		return prErr
 	}
 	paramMap, paramErr := util.ExtractSQLNodeParams(node, rowsToInsert)
 	if paramErr != nil {
-		return nil, paramErr
+		return paramErr
 	}
-	httpPreparator := anysdk.NewHTTPPreparator(
-		pr,
-		svc,
-		m,
-		paramMap,
-		nil,
-		execContext,
-		logging.GetLogger(),
+	meta.WithGetHTTPArmoury(
+		func() (anysdk.HTTPArmoury, error) {
+			httpPreparator := anysdk.NewHTTPPreparator(
+				pr,
+				svc,
+				m,
+				paramMap,
+				nil,
+				execContext,
+				logging.GetLogger(),
+			)
+			httpArmoury, httpErr := httpPreparator.BuildHTTPRequestCtx()
+			if httpErr != nil {
+				return nil, httpErr
+			}
+			return httpArmoury, nil
+		},
 	)
-	httpArmoury, httpErr := httpPreparator.BuildHTTPRequestCtx()
-	if httpErr != nil {
-		return nil, httpErr
-	}
-	meta.WithGetHTTPArmoury(func() (anysdk.HTTPArmoury, error) { return httpArmoury, nil })
-	return httpArmoury, err
+	return err
 }
 
 //nolint:gocognit,funlen // TODO: review
@@ -1071,7 +1089,7 @@ func (pb *standardPrimitiveGenerator) AnalyzeInsert(pbi planbuilderinput.PlanBui
 		return err
 	}
 
-	_, err = pb.buildRequestContext(handlerCtx, node, tbl, nil, insertValOnlyRows)
+	err = pb.buildRequestContext(node, tbl, nil, insertValOnlyRows)
 	if err != nil {
 		return err
 	}
@@ -1145,7 +1163,6 @@ func (pb *standardPrimitiveGenerator) inferHeirarchyAndPersist(
 	return err
 }
 
-//nolint:funlen,gocognit,gocyclo,cyclop // TODO: review
 func (pb *standardPrimitiveGenerator) analyzeDelete(
 	pbi planbuilderinput.PlanBuilderInput,
 ) error {
@@ -1172,15 +1189,14 @@ func (pb *standardPrimitiveGenerator) analyzeDelete(
 	if !paramMapExists {
 		return fmt.Errorf("where parameters not found; should be anlaysed a priori")
 	}
-
-	prov, err := tbl.GetProvider()
-	if err != nil {
-		return err
-	}
 	method, err := tbl.GetMethod()
 	if err != nil {
 		return err
 	}
+	svc, err := tbl.GetService()
+	if err != nil {
+		return err
+	}
 
 	if pb.PrimitiveComposer.IsAwait() && !method.IsAwaitable() {
 		return fmt.Errorf("method %s is not awaitable", method.GetName())
@@ -1188,79 +1204,30 @@ func (pb *standardPrimitiveGenerator) analyzeDelete(
 	if pb.PrimitiveComposer.IsAwait() && !method.IsAwaitable() {
 		return fmt.Errorf("method %s is not awaitable", method.GetName())
 	}
-	currentService, err := tbl.GetServiceStr()
+	analysisInput := anysdk.NewMethodAnalysisInput(
+		method,
+		svc,
+		true,
+		[]anysdk.ColumnDescriptor{},
+	)
+	analyser := anysdk.NewMethodAnalyzer()
+	methodAnalysisOutput, analysisErr := analyser.AnalyzeUnaryAction(analysisInput)
+	if analysisErr != nil {
+		return analysisErr
+	}
+	err = pb.buildRequestContext(node, tbl, nil, nil)
 	if err != nil {
 		return err
 	}
-	currentResource, err := tbl.GetResourceStr()
-	if err != nil {
-		return err
-	}
-	_, err = checkResource(handlerCtx, prov, currentService, currentResource)
-	if err != nil {
-		return err
-	}
-	requestSchema, err := method.GetRequestBodySchema()
-	if err != nil {
-		logging.GetLogger().Infof("no request schema for delete: %s \n", err.Error())
-	}
-	responseSchema, _, err := method.GetResponseBodySchemaAndMediaType()
-	if err != nil {
-		logging.GetLogger().Infof("no response schema for delete: %s \n", err.Error())
-	}
-	_, err = tbl.GetService()
-	if err != nil {
-		return err
-	}
-	availableServers, availableServersDoExist := method.GetServers()
-	if availableServersDoExist {
-		for _, sv := range availableServers {
-			for k := range sv.Variables {
-				colEntry := symtab.NewSymTabEntry(
-					pb.PrimitiveComposer.GetDRMConfig().GetRelationalType("string"),
-					"",
-					"server",
-				)
-				uid := fmt.Sprintf("%s.%s", tbl.GetUniqueID(), k)
-				pb.PrimitiveComposer.SetSymbol(uid, colEntry) //nolint:errcheck // not a concern
-			}
-			break //nolint:staticcheck // TODO: review
-		}
-	}
-	if responseSchema != nil {
-		_, _, whereErr := pb.analyzeWhere(node.Where, make(map[string]interface{}))
-		if whereErr != nil {
-			return whereErr
-		}
-	}
-	colPrefix := prov.GetDefaultKeyForDeleteItems() + "[]."
-	whereNames, err := parserutil.ExtractWhereColNames(node.Where)
-	if err != nil {
-		return err
-	}
-	for _, w := range whereNames {
-		localOk := method.KeyExists(w)
-		if localOk {
-			continue
-		}
-		var foundSchemaPrefixed, foundSchema, foundRequestSchema anysdk.Schema
-		if responseSchema != nil {
-			foundSchemaPrefixed = responseSchema.FindByPath(colPrefix+w, nil)
-			foundSchema = responseSchema.FindByPath(w, nil)
-		}
-		logging.GetLogger().Infoln(fmt.Sprintf("w = '%s'", w))
-		if requestSchema != nil {
-			revertedRequestSchemaProperrtyKey, revertErr := method.RevertRequestBodyAttributeRename(w)
-			if revertErr == nil {
-				foundRequestSchema = requestSchema.FindByPath(
-					revertedRequestSchemaProperrtyKey, nil)
-			}
-		}
-		if foundSchemaPrefixed == nil && foundSchema == nil && foundRequestSchema == nil {
-			return fmt.Errorf("DELETE Where element = '%s' is NOT present in data returned from provider", w)
-		}
-	}
-	_, err = pb.buildRequestContext(handlerCtx, node, tbl, nil, nil)
+	err = pb.analyzeUnaryAction(
+		pbi,
+		handlerCtx,
+		node,
+		node.Where,
+		tbl,
+		[]parserutil.ColumnHandle{},
+		methodAnalysisOutput,
+	)
 	if err != nil {
 		return err
 	}

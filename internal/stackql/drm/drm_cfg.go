@@ -11,13 +11,13 @@ import (
 	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/any-sdk/pkg/constants"
 	"github.com/stackql/any-sdk/pkg/logging"
+	"github.com/stackql/any-sdk/pkg/streaming"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/relationaldto"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/sqlcontrol"
 	"github.com/stackql/stackql/internal/stackql/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/sqlmachinery"
-	"github.com/stackql/stackql/internal/stackql/streaming"
 	"github.com/stackql/stackql/internal/stackql/tablenamespace"
 	"github.com/stackql/stackql/internal/stackql/typing"
 	"github.com/stackql/stackql/internal/stackql/util"
@@ -44,7 +44,7 @@ type Config interface {
 	) (map[string]map[string]interface{}, map[int]map[int]interface{})
 	GetCurrentTable(internaldto.HeirarchyIdentifiers) (internaldto.DBTable, error)
 	GetRelationalType(string) string
-	GenerateDDL(util.AnnotatedTabulation, anysdk.OperationStore, int, bool) ([]string, error)
+	GenerateDDL(util.AnnotatedTabulation, anysdk.OperationStore, int, bool, bool) ([]string, error)
 	GetControlAttributes() sqlcontrol.ControlAttributes
 	GetGolangValue(string) interface{}
 	GetGolangSlices([]typing.ColumnMetadata) ([]interface{}, []string)
@@ -56,6 +56,7 @@ type Config interface {
 		util.AnnotatedTabulation,
 		anysdk.OperationStore,
 		internaldto.TxnControlCounters,
+		bool,
 	) (PreparedStatementCtx, error)
 	GenerateSelectDML(
 		util.AnnotatedTabulation,
@@ -443,6 +444,7 @@ func (dc *staticDRMConfig) genRelationalTable(
 	tabAnn util.AnnotatedTabulation,
 	m anysdk.OperationStore,
 	discoveryGenerationID int,
+	isNilResponseAlloed bool,
 ) (relationaldto.RelationalTable, error) {
 	tableName, err := dc.getTableName(tabAnn.GetHeirarchyIdentifiers(), discoveryGenerationID)
 	if err != nil {
@@ -458,7 +460,7 @@ func (dc *staticDRMConfig) genRelationalTable(
 		tableName,
 		tabAnn.GetInputTableName(),
 	)
-	schemaAnalyzer := util.NewTableSchemaAnalyzer(tabAnn.GetTabulation().GetSchema(), m)
+	schemaAnalyzer := util.NewTableSchemaAnalyzer(tabAnn.GetTabulation().GetSchema(), m, isNilResponseAlloed)
 	tableColumns, err := schemaAnalyzer.GetColumns()
 	if err != nil {
 		return nil, err
@@ -480,8 +482,9 @@ func (dc *staticDRMConfig) GenerateDDL(
 	m anysdk.OperationStore,
 	discoveryGenerationID int,
 	dropTable bool,
+	isNilResponseAlloed bool,
 ) ([]string, error) {
-	relationalTable, err := dc.genRelationalTable(tabAnn, m, discoveryGenerationID)
+	relationalTable, err := dc.genRelationalTable(tabAnn, m, discoveryGenerationID, isNilResponseAlloed)
 	if err != nil {
 		return nil, err
 	}
@@ -493,6 +496,7 @@ func (dc *staticDRMConfig) GenerateInsertDML(
 	tabAnnotated util.AnnotatedTabulation,
 	method anysdk.OperationStore,
 	tcc internaldto.TxnControlCounters,
+	isNilResponseAlloed bool,
 ) (PreparedStatementCtx, error) {
 	var columns []typing.ColumnMetadata
 	_, isSQLDataSource := tabAnnotated.GetSQLDataSource()
@@ -536,9 +540,9 @@ func (dc *staticDRMConfig) GenerateInsertDML(
 			relationalTable.PushBackColumn(col)
 		}
 	} else {
-		schemaAnalyzer := util.NewTableSchemaAnalyzer(tabAnnotated.GetTabulation().GetSchema(), method)
+		schemaAnalyzer := util.NewTableSchemaAnalyzer(tabAnnotated.GetTabulation().GetSchema(), method, isNilResponseAlloed)
 		tableColumns, err := schemaAnalyzer.GetColumnDescriptors(tabAnnotated)
-		if err != nil {
+		if err != nil && !isNilResponseAlloed {
 			return nil, err
 		}
 		for _, col := range tableColumns {
