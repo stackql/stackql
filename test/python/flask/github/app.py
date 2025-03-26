@@ -123,6 +123,12 @@ def update_org():
     return jsonify({"error": "Invalid request"}), 400
 
 
+@app.route('/repos/sillyorg/<string:repositoryId>/stargazers', methods=['GET'])
+def get_stargazers_defective(repositoryId: str):
+    logger.warning("Invalid GET request for stargazers")
+    error_msg = """{"message":"API rate limit exceeded for 111.1111.111.11. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.) If you reach out to GitHub Support for help, please include the request ID AAAA:AAAA:BBBBBB:BBBBBB:BBBBBBBB and timestamp 2025-01-01 01:00:00 UTC.","documentation_url":"https://docs.github.com/rest/overview/rate-limits-for-the-rest-api","status":"403"}"""
+    return jsonify(error_msg), 403
+
 @app.route('/users/<string:userId>', methods=['GET'])
 def get_user(userId):
     """Retrieve user details dynamically from template."""

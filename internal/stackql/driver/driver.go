@@ -1,6 +1,7 @@
 package driver
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 
@@ -28,7 +29,8 @@ type StackQLDriverFactory interface {
 }
 
 type basicStackQLDriverFactory struct {
-	handlerCtx handler.HandlerContext
+	isCaptureDebug bool
+	handlerCtx     handler.HandlerContext
 }
 
 func (sdf *basicStackQLDriverFactory) NewSQLBackend() (sqlbackend.ISQLBackend, error) {
@@ -59,16 +61,23 @@ func (sdf *basicStackQLDriverFactory) newSQLDriver() (StackQLDriver, error) {
 	sdf.handlerCtx.SetTSM(tsmInstance)
 	clonedCtx := sdf.handlerCtx.Clone()
 	clonedCtx.SetTxnCounterMgr(txCtr)
+	buf := bytes.NewBuffer([]byte{})
+	if sdf.isCaptureDebug {
+		logging.GetLogger().Debugln("debug mode enabled")
+		clonedCtx.SetOutErrFile(buf)
+	}
 	rv := &basicStackQLDriver{
+		debugBuf:        buf,
 		handlerCtx:      clonedCtx,
 		txnOrchestrator: txnOrchestrator,
 	}
 	return rv, nil
 }
 
-func NewStackQLDriverFactory(handlerCtx handler.HandlerContext) sqlbackend.SQLBackendFactory {
+func NewStackQLDriverFactory(handlerCtx handler.HandlerContext, isCaptureDebug bool) sqlbackend.SQLBackendFactory {
 	return &basicStackQLDriverFactory{
-		handlerCtx: handlerCtx,
+		isCaptureDebug: isCaptureDebug,
+		handlerCtx:     handlerCtx,
 	}
 }
 
@@ -121,8 +130,16 @@ func (dr *basicStackQLDriver) ProcessQuery(query string) {
 }
 
 type basicStackQLDriver struct {
+	debugBuf        *bytes.Buffer
 	handlerCtx      handler.HandlerContext
 	txnOrchestrator tsm_physio.Orchestrator
+}
+
+func (dr *basicStackQLDriver) GetDebugStr() string {
+	if dr.debugBuf != nil {
+		return dr.debugBuf.String()
+	}
+	return ""
 }
 
 func (dr *basicStackQLDriver) CloneSQLBackend() sqlbackend.ISQLBackend {

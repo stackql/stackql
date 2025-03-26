@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/any-sdk/pkg/logging"
+	"gopkg.in/yaml.v2"
 
 	"github.com/stackql/psql-wire/pkg/sqlbackend"
 
@@ -35,6 +36,13 @@ func MakeWireServer(sbe sqlbackend.SQLBackendFactory, cfg dto.RuntimeCtx) (IWire
 	var server *wire.Server
 
 	var err error
+	pgSrvMiscConfig := make(map[string]interface{})
+	if cfg.PGSrvRawSrvCfg != "" {
+		err = yaml.Unmarshal([]byte(cfg.PGSrvRawSrvCfg), &pgSrvMiscConfig)
+		if err != nil {
+			return nil, err
+		}
+	}
 	if cfg.PGSrvRawTLSCfg != "" {
 		err = json.Unmarshal([]byte(cfg.PGSrvRawTLSCfg), &tlsCfg)
 		if err != nil {
@@ -73,7 +81,11 @@ func MakeWireServer(sbe sqlbackend.SQLBackendFactory, cfg dto.RuntimeCtx) (IWire
 			return nil, err
 		}
 	} else {
-		server, err = wire.NewServer(wire.SQLBackendFactory(sbe))
+		server, err = wire.NewServer(
+			wire.SQLBackendFactory(sbe),
+			wire.SundryConfig(pgSrvMiscConfig),
+			wire.IsCaptureDebug(cfg.PGSrvIsDebugNoticesEnabled),
+		)
 		if err != nil {
 			return nil, err
 		}

@@ -1,7 +1,6 @@
 package driver_test
 
 import (
-	"os"
 	"strings"
 	"testing"
 
@@ -31,9 +30,7 @@ func TestUnionAllSelectComputeDisksOrderByCrtTmstpAscPlusCoalesceJsonExtract(t *
 	}
 
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
-		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.SetOutfile(os.Stdout)
-		handlerCtx.SetOutErrFile(os.Stderr)
+		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle.WithStdOut(outFile), true)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -50,7 +47,6 @@ func TestUnionAllSelectComputeDisksOrderByCrtTmstpAscPlusCoalesceJsonExtract(t *
 			t.Fatalf("Test failed: %v", prepareErr)
 		}
 		response := querySubmitter.SubmitQuery()
-		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 
 		dr.ProcessQuery(handlerCtx.GetRawQuery())

@@ -50,9 +50,7 @@ func TestSimpleSelectGoogleComputeInstanceDriver(t *testing.T) {
 		t.Fatalf("Test failed: %v", err)
 	}
 
-	handlerCtx, err := handler.GetHandlerCtx(testobjects.SimpleSelectGoogleComputeInstance, *runtimeCtx, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-	handlerCtx.SetOutfile(os.Stdout)
-	handlerCtx.SetOutErrFile(os.Stderr)
+	handlerCtx, err := handler.NewHandlerCtx(testobjects.SimpleSelectGoogleComputeInstance, *runtimeCtx, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
 
 	dr, _ := NewStackQLDriver(handlerCtx)
 
@@ -77,15 +75,10 @@ func TestSimpleSelectGoogleComputeInstanceDriverOutput(t *testing.T) {
 	}
 
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
-		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.SetOutfile(os.Stdout)
-		handlerCtx.SetOutErrFile(os.Stderr)
+		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle.WithStdOut(outFile), true)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
-
-		handlerCtx.SetOutfile(outFile)
-		handlerCtx.SetOutErrFile(os.Stderr)
 
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
@@ -98,7 +91,6 @@ func TestSimpleSelectGoogleComputeInstanceDriverOutput(t *testing.T) {
 			t.Fatalf("Test failed: %v", prepareErr)
 		}
 		response := querySubmitter.SubmitQuery()
-		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 	}
 
@@ -118,15 +110,10 @@ func TestSimpleSelectGoogleComputeInstanceDriverOutputRepeated(t *testing.T) {
 	}
 
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
-		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.SetOutfile(os.Stdout)
-		handlerCtx.SetOutErrFile(os.Stderr)
+		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle.WithStdOut(outFile), true)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
-
-		handlerCtx.SetOutfile(outFile)
-		handlerCtx.SetOutErrFile(os.Stderr)
 
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
@@ -139,7 +126,6 @@ func TestSimpleSelectGoogleComputeInstanceDriverOutputRepeated(t *testing.T) {
 			t.Fatalf("Test failed: %v", prepareErr)
 		}
 		response := querySubmitter.SubmitQuery()
-		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 	}
 
@@ -159,15 +145,10 @@ func TestSimpleSelectGoogleContainerSubnetworksAllowedDriverOutput(t *testing.T)
 	}
 
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
-		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.SetOutfile(os.Stdout)
-		handlerCtx.SetOutErrFile(os.Stderr)
+		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle.WithStdOut(outFile), true)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
-
-		handlerCtx.SetOutfile(outFile)
-		handlerCtx.SetOutErrFile(os.Stderr)
 
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
@@ -180,7 +161,6 @@ func TestSimpleSelectGoogleContainerSubnetworksAllowedDriverOutput(t *testing.T)
 			t.Fatalf("Test failed: %v", prepareErr)
 		}
 		response := querySubmitter.SubmitQuery()
-		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 	}
 
@@ -200,15 +180,10 @@ func TestSimpleInsertGoogleComputeNetworkAsync(t *testing.T) {
 	}
 
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
-		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.SetOutfile(os.Stdout)
-		handlerCtx.SetOutErrFile(os.Stderr)
+		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle.WithStdOut(outFile), true)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
-
-		handlerCtx.SetOutfile(outFile)
-		handlerCtx.SetOutErrFile(os.Stderr)
 
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
@@ -221,7 +196,6 @@ func TestSimpleInsertGoogleComputeNetworkAsync(t *testing.T) {
 			t.Fatalf("Test failed: %v", prepareErr)
 		}
 		response := querySubmitter.SubmitQuery()
-		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 	}
 
@@ -252,15 +226,11 @@ func TestK8sTheHardWayAsync(t *testing.T) {
 		runtimeCtx.InfilePath = k8sthwRenderedFile
 		runtimeCtx.CSVHeadersDisable = true
 
-		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.SetOutfile(os.Stdout)
-		handlerCtx.SetOutErrFile(os.Stderr)
+		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle.WithStdOut(outFile), true)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		handlerCtx.SetOutfile(outFile)
-		handlerCtx.SetOutErrFile(os.Stderr)
 		handlerCtx.SetCurrentProvider("google")
 
 		if err != nil {
@@ -288,6 +258,7 @@ func TestSimpleDryRunK8sTheHardWayDriver(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
+		inputBundle.WithStdOut(outFile)
 		templateFile, err := util.GetFilePathFromRepositoryRoot(testobjects.K8STheHardWayTemplateFile)
 		if err != nil {
 			t.Fatalf("TestSimpleDryRunDriver failed: %v", err)
@@ -306,15 +277,10 @@ func TestSimpleDryRunK8sTheHardWayDriver(t *testing.T) {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, rdr, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.SetOutfile(os.Stdout)
-		handlerCtx.SetOutErrFile(os.Stderr)
+		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, rdr, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle, true)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
-
-		handlerCtx.SetOutfile(outFile)
-		handlerCtx.SetOutErrFile(os.Stderr)
 
 		dr, _ := NewStackQLDriver(handlerCtx)
 		dr.ProcessDryRun(handlerCtx.GetRawQuery())

@@ -19,9 +19,9 @@ require (
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.1
-	github.com/stackql/any-sdk v0.1.2-alpha37
+	github.com/stackql/any-sdk v0.1.2-beta01
 	github.com/stackql/go-suffix-map v0.0.1-alpha01
-	github.com/stackql/psql-wire v0.1.1-alpha07
+	github.com/stackql/psql-wire v0.1.1-beta23
 	github.com/stackql/stackql-parser v0.0.14-alpha05
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/sync v0.10.0

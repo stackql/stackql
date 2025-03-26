@@ -60,9 +60,7 @@ func TestSelectOktaApplicationAppsDriver(t *testing.T) {
 		t.Fatalf("Test failed: %v", err)
 	}
 
-	handlerCtx, err := handler.GetHandlerCtx(testobjects.SimpleSelectOktaApplicationApps, *runtimeCtx, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-	handlerCtx.SetOutfile(os.Stdout)
-	handlerCtx.SetOutErrFile(os.Stderr)
+	handlerCtx, err := handler.NewHandlerCtx(testobjects.SimpleSelectOktaApplicationApps, *runtimeCtx, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
 
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)
@@ -86,15 +84,10 @@ func TestSimpleSelectOktaApplicationAppsDriverOutput(t *testing.T) {
 	}
 
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
-		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.SetOutfile(os.Stdout)
-		handlerCtx.SetOutErrFile(os.Stderr)
+		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle.WithStdOut(outFile), true)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
-
-		handlerCtx.SetOutfile(outFile)
-		handlerCtx.SetOutErrFile(os.Stderr)
 
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
@@ -107,7 +100,6 @@ func TestSimpleSelectOktaApplicationAppsDriverOutput(t *testing.T) {
 			t.Fatalf("Test failed: %v", prepareErr)
 		}
 		response := querySubmitter.SubmitQuery()
-		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 	}
 

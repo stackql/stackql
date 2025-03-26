@@ -28,6 +28,7 @@ func TestSimpleShowInsertComputeAddressesRequired(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
+		inputBundle.WithStdOut(outFile)
 		showInsertFile, err := util.GetFilePathFromRepositoryRoot(testobjects.ShowInsertAddressesRequiredInputFile)
 		if err != nil {
 			t.Fatalf("TestSimpleTemplateComputeAddressesRequired failed: %v", err)
@@ -40,15 +41,10 @@ func TestSimpleShowInsertComputeAddressesRequired(t *testing.T) {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, rdr, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.SetOutfile(os.Stdout)
-		handlerCtx.SetOutErrFile(os.Stderr)
+		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, rdr, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle, true)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
-
-		handlerCtx.SetOutfile(outFile)
-		handlerCtx.SetOutErrFile(os.Stderr)
 
 		dr, _ := NewStackQLDriver(handlerCtx)
 		dr.ProcessQuery(handlerCtx.GetRawQuery())
@@ -68,6 +64,7 @@ func TestSimpleShowInsertBiqueryDatasetsRequired(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
+		inputBundle.WithStdOut(outFile)
 		showInsertFile, err := util.GetFilePathFromRepositoryRoot(testobjects.ShowInsertBQDatasetsRequiredFile)
 		if err != nil {
 			t.Fatalf("TestSimpleShowInsertBiqueryDatasetsRequired failed: %v", err)
@@ -80,15 +77,10 @@ func TestSimpleShowInsertBiqueryDatasetsRequired(t *testing.T) {
 			t.Fatalf("Test failed: %v", err)
 		}
 
-		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, rdr, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.SetOutfile(os.Stdout)
-		handlerCtx.SetOutErrFile(os.Stderr)
+		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, rdr, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle, true)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
-
-		handlerCtx.SetOutfile(outFile)
-		handlerCtx.SetOutErrFile(os.Stderr)
 
 		dr, _ := NewStackQLDriver(handlerCtx)
 		dr.ProcessQuery(handlerCtx.GetRawQuery())

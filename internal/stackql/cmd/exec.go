@@ -27,7 +27,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/entryutil"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/iqlerror"
-	"github.com/stackql/stackql/internal/stackql/writer"
 )
 
 // execCmd represents the exec command.
@@ -78,27 +77,16 @@ stackql exec -i iqlscripts/create-disk.iql --credentialsfilepath /mnt/c/tmp/stac
 		}
 		inputBundle, err := entryutil.BuildInputBundle(runtimeCtx)
 		iqlerror.PrintErrorAndExitOneIfError(err)
-		handlerCtx, err := entryutil.BuildHandlerContext(runtimeCtx, rdr, queryCache, inputBundle)
+		handlerCtx, err := entryutil.BuildHandlerContext(runtimeCtx, rdr, queryCache, inputBundle, true)
 		iqlerror.PrintErrorAndExitOneIfError(err)
 		iqlerror.PrintErrorAndExitOneIfNil(handlerCtx, "Handler context error")
 		cr := newCommandRunner()
-		cr.RunCommand(handlerCtx, nil, nil)
+		cr.RunCommand(handlerCtx)
 	},
 }
 
-func getOutputFile(filename string) (*os.File, error) {
-	switch filename {
-	case "stdout":
-		return os.Stdout, nil
-	case "stderr":
-		return os.Stderr, nil
-	default:
-		return os.Create(filename)
-	}
-}
-
 type commandRunner interface {
-	RunCommand(handlerCtx handler.HandlerContext, outfile io.Writer, outErrFile io.Writer)
+	RunCommand(handlerCtx handler.HandlerContext)
 }
 
 func newCommandRunner() commandRunner {
@@ -108,16 +96,7 @@ func newCommandRunner() commandRunner {
 type commandRunnerImpl struct {
 }
 
-func (cr *commandRunnerImpl) RunCommand(handlerCtx handler.HandlerContext, outfile io.Writer, outErrFile io.Writer) {
-	defer iqlerror.HandlePanic(outErrFile)
-	if outfile == nil {
-		outfile, _ = getOutputFile(handlerCtx.GetRuntimeContext().OutfilePath)
-	}
-	if outErrFile == nil {
-		outErrFile, _ = getOutputFile(writer.StdErrStr)
-	}
-	handlerCtx.SetOutfile(outfile)
-	handlerCtx.SetOutErrFile(outErrFile)
+func (cr *commandRunnerImpl) RunCommand(handlerCtx handler.HandlerContext) {
 	stackqlDriver, err := driver.NewStackQLDriver(handlerCtx)
 	iqlerror.PrintErrorAndExitOneIfError(err)
 	if handlerCtx.GetRuntimeContext().DryRunFlag {

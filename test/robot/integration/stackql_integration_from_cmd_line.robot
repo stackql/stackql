@@ -68,6 +68,7 @@ Start StackQL PG Server mTLS
                     ...  \-\-tls\.allowInsecure\=true
                     ...  \-\-pgsrv\.address\=0.0.0.0 
                     ...  \-\-pgsrv\.port\=${_SRV_PORT_MTLS} 
+                    ...  \-\-pgsrv\.debug\.enable\=true
                     ...  \-\-pgsrv\.tls    ${_MTLS_CFG_STR}
     Sleep    15s
     [Return]    ${process}

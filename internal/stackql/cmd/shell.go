@@ -125,8 +125,9 @@ var shellCmd = &cobra.Command{
 
 		inputBundle, err := entryutil.BuildInputBundle(runtimeCtx)
 		iqlerror.PrintErrorAndExitOneIfError(err)
+		inputBundle.WithStdOut(outfile).WithStdErr(outErrFile)
 
-		handlerCtx, handlerrErr := handler.GetHandlerCtx("", runtimeCtx, queryCache, inputBundle)
+		handlerCtx, handlerrErr := handler.NewHandlerCtx("", runtimeCtx, queryCache, inputBundle)
 		if handlerrErr != nil {
 			fmt.Fprintln( //nolint:gosimple // legacy
 				outErrFile,
@@ -260,21 +261,6 @@ func newSessionRunner(
 	outfile io.Writer,
 	outErrFile io.Writer,
 ) (sessionRunner, error) {
-	var err error
-	if outfile == nil {
-		outfile, err = getOutputFile(handlerCtx.GetRuntimeContext().OutfilePath)
-		if err != nil {
-			return nil, err
-		}
-	}
-	if outErrFile == nil {
-		outErrFile, err = getOutputFile(writer.StdErrStr)
-		if err != nil {
-			return nil, err
-		}
-	}
-	handlerCtx.SetOutfile(outfile)
-	handlerCtx.SetOutErrFile(outErrFile)
 	stackqlDriver, driverErr := driver.NewStackQLDriver(handlerCtx)
 	if driverErr != nil {
 		return nil, driverErr

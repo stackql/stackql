@@ -2,7 +2,6 @@ package driver_test
 
 import (
 	"bufio"
-	"os"
 	"strings"
 	"testing"
 
@@ -29,9 +28,7 @@ func TestSelectComputeDisksOrderByCrtTmstpAscPaginated(t *testing.T) {
 	}
 
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
-		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.SetOutfile(os.Stdout)
-		handlerCtx.SetOutErrFile(os.Stderr)
+		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle.WithStdOut(outFile), true)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -48,7 +45,6 @@ func TestSelectComputeDisksOrderByCrtTmstpAscPaginated(t *testing.T) {
 			t.Fatalf("Test failed: %v", prepareErr)
 		}
 		response := querySubmitter.SubmitQuery()
-		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 
 		dr.ProcessQuery(handlerCtx.GetRawQuery())
@@ -71,9 +67,7 @@ func TestSelectComputeDisksAggOrderBySizeAscPaginated(t *testing.T) {
 	}
 
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
-		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.SetOutfile(os.Stdout)
-		handlerCtx.SetOutErrFile(os.Stderr)
+		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle.WithStdOut(outFile), true)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -90,7 +84,6 @@ func TestSelectComputeDisksAggOrderBySizeAscPaginated(t *testing.T) {
 			t.Fatalf("Test failed: %v", prepareErr)
 		}
 		response := querySubmitter.SubmitQuery()
-		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 
 		dr.ProcessQuery(handlerCtx.GetRawQuery())
@@ -113,9 +106,7 @@ func TestSelectComputeDisksAggOrderBySizeDescPaginated(t *testing.T) {
 	}
 
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
-		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.SetOutfile(os.Stdout)
-		handlerCtx.SetOutErrFile(os.Stderr)
+		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle.WithStdOut(outFile), true)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -132,7 +123,6 @@ func TestSelectComputeDisksAggOrderBySizeDescPaginated(t *testing.T) {
 			t.Fatalf("Test failed: %v", prepareErr)
 		}
 		response := querySubmitter.SubmitQuery()
-		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 
 		dr.ProcessQuery(handlerCtx.GetRawQuery())
@@ -155,9 +145,7 @@ func TestSelectComputeDisksAggTotalSizePaginated(t *testing.T) {
 	}
 
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
-		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.SetOutfile(os.Stdout)
-		handlerCtx.SetOutErrFile(os.Stderr)
+		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle.WithStdOut(outFile), true)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -174,7 +162,6 @@ func TestSelectComputeDisksAggTotalSizePaginated(t *testing.T) {
 			t.Fatalf("Test failed: %v", prepareErr)
 		}
 		response := querySubmitter.SubmitQuery()
-		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 
 		dr.ProcessQuery(handlerCtx.GetRawQuery())
@@ -197,9 +184,7 @@ func TestSelectComputeDisksAggTotalStringPaginated(t *testing.T) {
 	}
 
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
-		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.SetOutfile(os.Stdout)
-		handlerCtx.SetOutErrFile(os.Stderr)
+		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle.WithStdOut(outFile), true)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -216,7 +201,6 @@ func TestSelectComputeDisksAggTotalStringPaginated(t *testing.T) {
 			t.Fatalf("Test failed: %v", prepareErr)
 		}
 		response := querySubmitter.SubmitQuery()
-		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 
 		dr.ProcessQuery(handlerCtx.GetRawQuery())

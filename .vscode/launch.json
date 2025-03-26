@@ -355,6 +355,16 @@
         "true",
         "false"
       ]
+    },
+    {
+      "type": "pickString",
+      "id": "serverDebugPublish",
+      "description": "postgres server publish debug messages",
+      "default": "true",
+      "options": [
+        "true",
+        "false"
+      ]
     }
   ],
   "configurations": [
@@ -436,7 +446,8 @@
         "--namespaces=${input:namespaceString}",
         "--sqlBackend=${input:sqlBackendString}",
         "--dbInternal=${input:dbInternalString}",
-        "--export.alias=${input:exportAliasString}"
+        "--export.alias=${input:exportAliasString}",
+        "--pgsrv.debug.enable=${input:serverDebugPublish}",
       ],
     },
     {
@@ -456,7 +467,8 @@
         "--sqlBackend=${input:sqlBackendString}",
         "--dbInternal=${input:dbInternalString}",
         "--pgsrv.tls=${input:pgsrvTlsString}",
-        "--export.alias=${input:exportAliasString}"
+        "--export.alias=${input:exportAliasString}",
+        "--pgsrv.debug.enable=${input:serverDebugPublish}",
       ],
     },
     {

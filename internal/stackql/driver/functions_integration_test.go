@@ -1,7 +1,6 @@
 package driver_test
 
 import (
-	"os"
 	"strings"
 	"testing"
 
@@ -31,9 +30,7 @@ func TestSelectComputeDisksOrderByCrtTmstpAscPlusJsonExtract(t *testing.T) {
 	}
 
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
-		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.SetOutfile(os.Stdout)
-		handlerCtx.SetOutErrFile(os.Stderr)
+		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle.WithStdOut(outFile), true)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -50,7 +47,6 @@ func TestSelectComputeDisksOrderByCrtTmstpAscPlusJsonExtract(t *testing.T) {
 			t.Fatalf("Test failed: %v", prepareErr)
 		}
 		response := querySubmitter.SubmitQuery()
-		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 
 		dr.ProcessQuery(handlerCtx.GetRawQuery())
@@ -72,9 +68,7 @@ func TestSelectComputeDisksOrderByCrtTmstpAscPlusCoalesceJsonExtract(t *testing.
 	}
 
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
-		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.SetOutfile(os.Stdout)
-		handlerCtx.SetOutErrFile(os.Stderr)
+		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle.WithStdOut(outFile), true)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -91,7 +85,6 @@ func TestSelectComputeDisksOrderByCrtTmstpAscPlusCoalesceJsonExtract(t *testing.
 			t.Fatalf("Test failed: %v", prepareErr)
 		}
 		response := querySubmitter.SubmitQuery()
-		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 
 		dr.ProcessQuery(handlerCtx.GetRawQuery())
@@ -113,9 +106,7 @@ func TestSelectComputeDisksOrderByCrtTmstpAscPlusCoalesceJsonInstr(t *testing.T)
 	}
 
 	testSubject := func(t *testing.T, outFile *bufio.Writer) {
-		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-		handlerCtx.SetOutfile(os.Stdout)
-		handlerCtx.SetOutErrFile(os.Stderr)
+		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle.WithStdOut(outFile), true)
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
 		}
@@ -132,7 +123,6 @@ func TestSelectComputeDisksOrderByCrtTmstpAscPlusCoalesceJsonInstr(t *testing.T)
 			t.Fatalf("Test failed: %v", prepareErr)
 		}
 		response := querySubmitter.SubmitQuery()
-		handlerCtx.SetOutfile(outFile)
 		responsehandler.HandleResponse(handlerCtx, response)
 
 		dr.ProcessQuery(handlerCtx.GetRawQuery())

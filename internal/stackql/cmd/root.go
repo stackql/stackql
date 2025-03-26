@@ -156,6 +156,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.HTTPProxyUser, dto.HTTPProxyUserKey, "", "http proxy user")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.ProviderStr, dto.ProviderStrKey, "", "stackql provider")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.ExportAlias, dto.ExportAliasKey, "", "export alias prefix (namespace or schema)")
+	rootCmd.PersistentFlags().BoolVar(&runtimeCtx.PGSrvIsDebugNoticesEnabled, dto.PgSrvIsDebugNoticesEnabledKey, false, "Publish debug notices to clients, for server mode only")
 	rootCmd.PersistentFlags().BoolVar(&runtimeCtx.WorkOffline, dto.WorkOfflineKey, false, "Work offline, using cached data")
 	rootCmd.PersistentFlags().BoolVarP(&runtimeCtx.VerboseFlag, dto.VerboseFlagKey, "v", false, "Verbose flag")
 	rootCmd.PersistentFlags().BoolVar(&runtimeCtx.DryRunFlag, dto.DryRunFlagKey, false, "dryrun flag; preprocessor only will run and output returned")
@@ -176,6 +177,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.PGSrvAddress, dto.PgSrvAddressKey, "0.0.0.0", "server address, for server mode only")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.PGSrvLogLevel, dto.PgSrvLogLevelKey, "WARN", "Log level, for server mode only")
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.PGSrvRawTLSCfg, dto.PgSrvRawTLSCfgKey, "", "tls config for server, for server mode only")
+	rootCmd.PersistentFlags().StringVar(&runtimeCtx.PGSrvRawSrvCfg, dto.PgSrvRawSrvCfgKey, "{}", "miscellaneous config for server, for server mode only")
 	rootCmd.PersistentFlags().IntVar(&runtimeCtx.PGSrvPort, dto.PgSrvPortKey, 5466, "TCP server port, for server mode only") //nolint:mnd // TODO: investigate
 
 	rootCmd.PersistentFlags().StringSliceVar(&runtimeCtx.VarList, dto.VarListKey, []string{}, "list of variables to be used in queries")
