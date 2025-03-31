@@ -4,7 +4,6 @@ import (
 	"errors"
 	"io"
 	"net/url"
-	"os"
 	"testing"
 
 	. "github.com/stackql/stackql/internal/stackql/querysubmit"
@@ -44,12 +43,10 @@ func TestSimpleSelectGoogleComputeInstanceQuerySubmit(t *testing.T) {
 		t.Fatalf("Test failed: %v", err)
 	}
 
-	handlerCtx, err := handler.GetHandlerCtx(
+	handlerCtx, err := handler.NewHandlerCtx(
 		testobjects.SimpleSelectGoogleComputeInstance,
 		*runtimeCtx,
 		lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
-	handlerCtx.SetOutfile(os.Stdout)
-	handlerCtx.SetOutErrFile(os.Stderr)
 
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)

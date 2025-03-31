@@ -243,16 +243,12 @@ func BuildHandlerContext(
 	rdr io.Reader,
 	lruCache *lrucache.LRUCache,
 	inputBundle bundle.Bundle,
+	isPreprocess bool,
 ) (handler.HandlerContext, error) {
+	if !isPreprocess {
+		return handler.NewHandlerCtx("", runtimeCtx, lruCache, inputBundle)
+	}
 	bb, err := assemblePreprocessor(runtimeCtx, rdr)
 	iqlerror.PrintErrorAndExitOneIfError(err)
-	return handler.GetHandlerCtx(strings.TrimSpace(string(bb)), runtimeCtx, lruCache, inputBundle)
-}
-
-func BuildHandlerContextNoPreProcess(
-	runtimeCtx dto.RuntimeCtx,
-	lruCache *lrucache.LRUCache,
-	inputBundle bundle.Bundle,
-) (handler.HandlerContext, error) {
-	return handler.GetHandlerCtx("", runtimeCtx, lruCache, inputBundle)
+	return handler.NewHandlerCtx(strings.TrimSpace(string(bb)), runtimeCtx, lruCache, inputBundle)
 }

@@ -1,6 +1,8 @@
 package bundle
 
 import (
+	"io"
+
 	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
@@ -30,6 +32,10 @@ type Bundle interface {
 	GetTxnCoordinatorContext() txn_context.ITransactionCoordinatorContext
 	GetTypingConfig() typing.Config
 	GetSessionContext() dto.SessionContext
+	GetStdOut() (io.Writer, bool)
+	GetStdErr() (io.Writer, bool)
+	WithStdOut(io.Writer) Bundle
+	WithStdErr(io.Writer) Bundle
 }
 
 func NewBundle(
@@ -80,6 +86,26 @@ type simpleBundle struct {
 	authContexts           map[string]*dto.AuthCtx
 	txnCoordintatorContext txn_context.ITransactionCoordinatorContext
 	sessionCtx             dto.SessionContext
+	stdOut                 io.Writer
+	stdErr                 io.Writer
+}
+
+func (sb *simpleBundle) WithStdOut(w io.Writer) Bundle {
+	sb.stdOut = w
+	return sb
+}
+
+func (sb *simpleBundle) WithStdErr(w io.Writer) Bundle {
+	sb.stdErr = w
+	return sb
+}
+
+func (sb *simpleBundle) GetStdOut() (io.Writer, bool) {
+	return sb.stdOut, sb.stdOut != nil
+}
+
+func (sb *simpleBundle) GetStdErr() (io.Writer, bool) {
+	return sb.stdErr, sb.stdErr != nil
 }
 
 func (sb *simpleBundle) GetSessionContext() dto.SessionContext {

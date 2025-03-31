@@ -3,6 +3,7 @@ package stackqltestutil
 
 import (
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/stackql/any-sdk/pkg/dto"
@@ -100,5 +101,55 @@ func BuildInputBundle(runtimeCtx dto.RuntimeCtx) (bundle.Bundle, error) {
 	if err != nil {
 		return nil, err
 	}
+	return inputBundle, nil
+}
+
+func BuildBenchInputBundle(runtimeCtx dto.RuntimeCtx) (bundle.Bundle, error) {
+	inputBundle, err := entryutil.BuildInputBundle(runtimeCtx)
+	if err != nil {
+		return nil, err
+	}
+	googleRootDiscoveryBytes, err := getBytesFromLocalPath("test/db/google._root_.json")
+	if err != nil {
+		return nil, err
+	}
+	googleComputeDiscoveryBytes, err := getBytesFromLocalPath("test/db/google.compute.json")
+	if err != nil {
+		return nil, err
+	}
+	googleContainerDiscoveryBytes, err := getBytesFromLocalPath("test/db/google.container.json")
+	if err != nil {
+		return nil, err
+	}
+	googleCloudResourceManagerDiscoveryBytes, err := getBytesFromLocalPath("test/db/google.cloudresourcemanager.json")
+	if err != nil {
+		return nil, err
+	}
+	googleBQDiscoveryBytes, err := getBytesFromLocalPath("test/db/google.bigquery.json")
+	if err != nil {
+		return nil, err
+	}
+	sqlEng := inputBundle.GetSQLEngine()
+	sqlEng.Exec(`INSERT INTO "__iql__.cache.key_val"(k, v) VALUES(?, ?)`, "https://www.googleapis.com/discovery/v1/apis", googleRootDiscoveryBytes)
+	if err != nil {
+		return nil, err
+	}
+	sqlEng.Exec(`INSERT INTO "__iql__.cache.key_val"(k, v) VALUES(?, ?)`, "https://www.googleapis.com/discovery/v1/apis/compute/v1/rest", googleComputeDiscoveryBytes)
+	if err != nil {
+		return nil, err
+	}
+	sqlEng.Exec(`INSERT INTO "__iql__.cache.key_val"(k, v) VALUES(?, ?)`, "https://container.googleapis.com/$discovery/rest?version=v1", googleContainerDiscoveryBytes)
+	if err != nil {
+		return nil, err
+	}
+	sqlEng.Exec(`INSERT INTO "__iql__.cache.key_val"(k, v) VALUES(?, ?)`, "https://cloudresourcemanager.googleapis.com/$discovery/rest?version=v3", googleCloudResourceManagerDiscoveryBytes)
+	if err != nil {
+		return nil, err
+	}
+	sqlEng.Exec(`INSERT INTO "__iql__.cache.key_val"(k, v) VALUES(?, ?)`, "https://bigquery.googleapis.com/$discovery/rest?version=v2", googleBQDiscoveryBytes)
+	if err != nil {
+		return nil, err
+	}
+	inputBundle = inputBundle.WithStdErr(io.Discard).WithStdOut(io.Discard)
 	return inputBundle, nil
 }
