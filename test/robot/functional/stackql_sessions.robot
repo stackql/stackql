@@ -447,3 +447,46 @@ PG Session Debug Off Behaviour Canonical
     ...         AND             Remove Environment Variable     PGPORT
     ...         AND             Remove Environment Variable     PGUSER 
     ...         AND             Remove Environment Variable     PGPASSWORD
+
+Server Stability PG Session Repeat AWS EC2 Select
+    [Documentation]   Repeat the same query over psql many times as a marker of server stability
+    Set Environment Variable    PGHOST           ${PSQL_CLIENT_HOST}
+    Set Environment Variable    PGPORT           ${PG_SRV_PORT_UNENCRYPTED}
+    Set Environment Variable    PGUSER           stackql
+    Set Environment Variable    PGPASSWORD       ${PSQL_PASSWORD} 
+    ${inputStr} =    Catenate
+    ...              select 
+    ...              instanceId, ipAddress 
+    ...              from aws.ec2.instances 
+    ...              where 
+    ...              region = 'ap-southeast-2'
+    ...              and instanceId not in ('some-silly-id') 
+    ...              and ipAddress in ('54.194.252.215')
+    ...              and region in ('ap-southeast-2')
+    ...              ;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...         instanceId      |   ipAddress    
+    ...    ---------------------+----------------
+    ...     i-1234567890abcdef0 | 54.194.252.215
+    ...    (1 row)
+    FOR    ${index}    IN RANGE    100
+        LOG    runnning index = ${index}
+        ${posixInput} =     Catenate
+        ...    "${PSQL_EXE}" -c "${inputStr}"
+        ${windowsInput} =     Catenate
+        ...    &    ${posixInput}
+        ${input} =    Set Variable If    "${IS_WINDOWS}" == "1"    ${windowsInput}    ${posixInput}
+        ${shellExe} =    Set Variable If    "${IS_WINDOWS}" == "1"    powershell    sh
+        ${result} =    Run Process
+        ...    ${shellExe}     \-c    ${input}
+        ...    stdout=${CURDIR}/tmp/Server-Stability-PG-Session-Repeat-AWS-EC2-Select-${index}.tmp
+        ...    stderr=${CURDIR}/tmp/Server-Stability-PG-Session-Repeat-AWS-EC2-Select-${index}-stderr.tmp
+        Log    STDOUT = "${result.stdout}"
+        Log    STDERR = "${result.stderr}"
+        Should Contain     ${result.stdout}    ${outputStr}   collapse_spaces=True
+        Should Be Empty    ${result.stderr}
+    END
+    [Teardown]  Run Keywords    Remove Environment Variable     PGHOST
+    ...         AND             Remove Environment Variable     PGPORT
+    ...         AND             Remove Environment Variable     PGUSER 
+    ...         AND             Remove Environment Variable     PGPASSWORD
