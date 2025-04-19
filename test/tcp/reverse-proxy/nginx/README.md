@@ -50,9 +50,9 @@ Please run all commands from the root of the repository:
 
 ```bash
 
-python test/python/tcp_lb.py --generate-hosts-entries | sudo tee -a /etc/hosts
+python test/python/stackql_test_tooling/tcp_lb.py --generate-hosts-entries | sudo tee -a /etc/hosts
 
-python test/python/tcp_lb.py --generate-nginx-lb > test/tcp/reverse-proxy/nginx/dynamic-sni-proxy.conf
+python test/python/stackql_test_tooling/tcp_lb.py --generate-nginx-lb > test/tcp/reverse-proxy/nginx/dynamic-sni-proxy.conf
 
 sudo nginx -c $(pwd)/test/tcp/reverse-proxy/nginx/tls-pass-through.conf
 

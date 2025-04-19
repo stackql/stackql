@@ -12,15 +12,20 @@ from robot.libraries.Collections import Collections
 from robot.libraries.Process import Process
 from robot.libraries.OperatingSystem import OperatingSystem 
 
-from stackql_context import RegistryCfg, _TEST_APP_CACHE_ROOT, PSQL_EXE, SQLITE_EXE
-from ShellSession import ShellSession
-from psycopg_client import PsycoPGClient
-from psycopg2_client import PsycoPG2Client
-from sqlalchemy_client import SQLAlchemyClient
+from .registry_cfg import RegistryCfg
+from .ShellSession import ShellSession
+from .psycopg_client import PsycoPGClient
+from .psycopg2_client import PsycoPG2Client
+from .sqlalchemy_client import SQLAlchemyClient
 
 SQL_BACKEND_CANONICAL_SQLITE_EMBEDDED :str = 'sqlite_embedded'
 SQL_BACKEND_POSTGRES_TCP :str = 'postgres_tcp'
 SQL_CONCURRENCT_LIMIT_DEFAULT :int = 1
+
+_TEST_APP_CACHE_ROOT = os.path.join("test", ".stackql")
+
+PSQL_EXE :str = os.environ.get('PSQL_EXE', 'psql')
+SQLITE_EXE :str = os.environ.get('SQLITE_EXE', 'sqlite3')
 
 
 @library(scope='SUITE', version='0.1.0', doc_format='reST')

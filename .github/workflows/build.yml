@@ -29,7 +29,7 @@ on:
 
 env:
   GOTESTCMD: "go test -timeout 1200s --tags \"sqlite_stackql\" -v ./..."
-  TESTSCRIPT: "test/python/main.py"
+  TESTSCRIPT: "test/deprecated/python/main.py"
   GOPRIVATE: github.com/stackql/*
   GH_ACCESS_TOKEN: ${{ secrets.ACTIONS_PRIVATE_PACKAGE_SECRET }}
   PLANCACHEENABLED: "false"
@@ -38,6 +38,42 @@ env:
   IS_FORK_PR: ${{ ((github.event_name == 'pull_request') && (github.event.pull_request.head.repo.full_name != github.repository)) && 'true' || 'false' }}
 
 jobs:
+
+  test_python_package_build:
+    # id: test_python_package_build
+    name: Test Python Package Build
+    runs-on: ubuntu-22.04
+    timeout-minutes: ${{ vars.DEFAULT_JOB_TIMEOUT_MIN == '' && 120 || vars.DEFAULT_JOB_TIMEOUT_MIN }}
+    steps:
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v4.1.1
+
+    - name: Setup Python
+      uses: actions/setup-python@v5.0.0
+      with:
+        cache: pip
+        python-version: '3.12' 
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: 1.8.3
+        virtualenvs-create: true
+        virtualenvs-in-project: false
+        virtualenvs-path: ~/my-custom-path
+        installer-parallel: true
+    
+    - name: Build package
+      run: |
+        cicd/util/01-build-robot-lib.sh
+    
+    - name: Upload python package artifact
+      uses: actions/upload-artifact@v4.3.1
+      with:
+        name: python-package-dist-folder
+        path: test/dist
+
 
   winbuild:
     name: Windows Build
@@ -65,7 +101,7 @@ jobs:
 
       with:
         cache: pip
-        python-version: '3.11' 
+        python-version: '3.12' 
 
     - name: Cache Chocolatey packages
       id: cache-choco
@@ -119,7 +155,7 @@ jobs:
     
     - name: Generate rewritten registry for simulations
       run: |
-        python3 test\python\registry-rewrite.py
+        python3 test\python\stackql_test_tooling\registry_rewrite.py --srcdir "$pwd\test\registry\src" --destdir "$pwd\test\registry-mocked\src"
 
     - name: Get dependencies
       run: |
@@ -170,6 +206,7 @@ jobs:
       env:
         PSQL_EXE: C:\Program Files\PostgreSQL\13\bin\psql
         SQLITE_EXE: C:\ProgramData\chocolatey\lib\SQLite\tools\sqlite3.exe
+        PYTHONPATH: '${{ env.PYTHONPATH }};${{ github.workspace }}\test\python'
       run: |
         python cicd/python/build.py --robot-test
 
@@ -187,6 +224,7 @@ jobs:
         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
         AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
         AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        PYTHONPATH: '${{ env.PYTHONPATH }};${{ github.workspace }}\test\python'
       run: | #Ideally there wiuld be forced kill of flaks here but dont know how to do that in windows
         python cicd/python/build.py --robot-test-integration
     
@@ -196,7 +234,7 @@ jobs:
 
     - name: Test Script
       if: success()
-      run: python.exe test/python/main.py
+      run: python.exe test/deprecated/python/main.py
 
     - name: Upload Artifact
       # uses: actions/upload-artifact@v3
@@ -227,7 +265,7 @@ jobs:
       uses: actions/setup-python@v5.0.0
       with:
         cache: pip
-        python-version: '3.11' 
+        python-version: '3.12' 
     
     - name: Git Ref Parse
       id: git_ref_parse
@@ -256,7 +294,7 @@ jobs:
     
     - name: Generate rewritten registry for simulations
       run: |
-        python3 test/python/registry-rewrite.py
+        python3 test/python/stackql_test_tooling/registry_rewrite.py --srcdir "$(pwd)/test/registry/src" --destdir "$(pwd)/test/registry-mocked/src"
       
     - name: Get dependencies
       run: |
@@ -398,6 +436,7 @@ jobs:
     name: Linux Test
     needs:
       - linuxbuild
+      - test_python_package_build
     runs-on: ubuntu-22.04
     strategy:
       matrix:
@@ -446,7 +485,21 @@ jobs:
       uses: actions/setup-python@v5.0.0
       with:
         cache: pip
-        python-version: '3.11' 
+        python-version: '3.12' 
+    
+    - name: Download python package dist folder
+      uses: actions/download-artifact@v4.1.2
+      with:
+        name: python-package-dist-folder
+        path: test/dist
+
+    - name: Install python testing package
+      run: |
+        echo "Inspecting python package"
+        for file in test/dist/*.whl; do
+          pip3 install "$file" --force-reinstall
+        done
+
     
     - name: Git Ref Parse
       id: git_ref_parse
@@ -494,8 +547,8 @@ jobs:
         } >> "${GITHUB_ENV}"
         
         if [ "${{ matrix.registry }}" = "test/registry" ]; then
-          python3 test/python/tcp_lb.py --generate-hosts-entries | sudo tee -a /etc/hosts
-          python3 test/python/tcp_lb.py --generate-nginx-lb > test/tcp/reverse-proxy/nginx/dynamic-sni-proxy.conf
+          python3 test/python/stackql_test_tooling/tcp_lb.py --generate-hosts-entries | sudo tee -a /etc/hosts
+          python3 test/python/stackql_test_tooling/tcp_lb.py --generate-nginx-lb > test/tcp/reverse-proxy/nginx/dynamic-sni-proxy.conf
         fi
 
 
@@ -523,7 +576,7 @@ jobs:
     - name: Generate rewritten registry for simulations
       if: ${{ matrix.registry  != 'test/registry' }}
       run: |
-        python3 test/python/registry-rewrite.py
+        python3 test/python/stackql_test_tooling/registry_rewrite.py --srcdir "$(pwd)/test/registry/src" --destdir "$(pwd)/test/registry-mocked/src"
 
     - name: Create certificates for robot tests
       run: |
@@ -532,6 +585,8 @@ jobs:
         openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365 
 
     - name: Run robot mocked functional tests
+      env:
+        PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
       if: success()
       run: |
         if [ "${{ matrix.registry }}" = "test/registry" ]; then
@@ -588,6 +643,8 @@ jobs:
     
     - name: install and test deb package
       if: matrix.registry != 'test/registry'
+      env:
+        PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
       run: |
         mkdir -p deb_test
         cp stackql_${{env.BUILDMAJORVERSION}}.${{env.BUILDMINORVERSION}}.${{env.BUILDPATCHVERSION}}_amd64.deb deb_test/
@@ -604,6 +661,8 @@ jobs:
     
     - name: Output from mocked deb package functional tests
       if: always() && matrix.registry != 'test/registry'
+      env:
+        PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
       run: |
         cat ./test/robot/reports/output.xml
 
@@ -628,7 +687,7 @@ jobs:
       uses: actions/setup-python@v5.0.0
       with:
         cache: pip
-        python-version: '3.11' 
+        python-version: '3.12' 
     
     - name: Git Ref Parse
       id: git_ref_parse
@@ -653,7 +712,7 @@ jobs:
     
     - name: Generate rewritten registry for simulations
       run: |
-        python3 test/python/registry-rewrite.py
+        python3 test/python/stackql_test_tooling/registry_rewrite.py --srcdir "$(pwd)/test/registry/src" --destdir "$(pwd)/test/registry-mocked/src"
       
     - name: Get dependencies
       run: |
@@ -766,6 +825,8 @@ jobs:
         openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365 
 
     - name: Run robot mocked functional tests
+      env:
+        PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
       if: success()
       run: |
         python cicd/python/build.py --robot-test  --config='{ "variables": { "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": "true" } }'
@@ -776,6 +837,8 @@ jobs:
         cat ./test/robot/reports/output.xml
 
     - name: Run robot mocked functional tests with aggressive concurrency
+      env:
+        PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
       if: success()
       run: |
         echo "## Stray flask apps to be killed before robot tests ##"
@@ -795,6 +858,7 @@ jobs:
         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
         AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
         AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
       run: |
         echo "## Stray flask apps to be killed before robot tests ##"
         pgrep -f flask | xargs kill -9 || true
@@ -862,6 +926,7 @@ jobs:
         pkgName: 'stackql'
         pkgVersion: ${{env.BUILDMAJORVERSION}}.${{env.BUILDMINORVERSION}}.${{env.BUILDPATCHVERSION}}
         pkgArchitecture: 'arm64'
+        PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
       run: |
         mkdir -p deb_test
         DEB_FILE="${pkgName}_${pkgVersion}_${pkgArchitecture}.deb"
@@ -937,7 +1002,7 @@ jobs:
     
     - shell: wsl-bash {0}
       name: Generate rewritten registry for simulations
-      run: python3 test/python/registry-rewrite.py
+      run: python3 test/python/stackql_test_tooling/registry_rewrite.py --srcdir "$(pwd)/test/registry/src" --destdir "$(pwd)/test/registry-mocked/src"
 
     - shell: wsl-bash {0}
       name: Create certificates for robot tests
@@ -962,6 +1027,7 @@ jobs:
             then
             export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
           fi
+          export PYTHONPATH="$(pwd)/test/python"
           python3 cicd/python/build.py --robot-test --config='{ "variables":  { "IS_WSL": true } }'
 
     - shell: wsl-bash {0}
@@ -975,7 +1041,7 @@ jobs:
       # This is a hack because if cannot directly access secrets
       if: env.AZURE_CLIENT_SECRET != ''
       env:
-        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }} 
+        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
       run: |
           . cicd/version.txt
           export AZURE_CLIENT_ID='${{ secrets.AZURE_CLIENT_ID }}'
@@ -997,6 +1063,7 @@ jobs:
           echo "## Stray flask apps to be killed before robot tests ##"
           pgrep -f flask | xargs kill -9 || true
           echo "## End ##"
+          export PYTHONPATH="$(pwd)/test/python"
           python3 cicd/python/build.py --robot-test-integration --config='{ "variables":  { "IS_WSL": true } }'
 
   macosbuild:
@@ -1019,7 +1086,7 @@ jobs:
       uses: actions/setup-python@v5.0.0
       with:
         cache: pip
-        python-version: '3.11' 
+        python-version: '3.12' 
     
     - name: Git Ref Parse
       id: git_ref_parse
@@ -1037,7 +1104,7 @@ jobs:
     
     - name: Generate rewritten registry for simulations
       run: |
-        python3 test/python/registry-rewrite.py
+        python3 test/python/stackql_test_tooling/registry_rewrite.py --srcdir "$(pwd)/test/registry/src" --destdir "$(pwd)/test/registry-mocked/src"
 
     - name: Get dependencies
       run: |
@@ -1096,6 +1163,8 @@ jobs:
         openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365 
 
     - name: Run robot mocked functional tests
+      env:
+        PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
       if: success()
       run: |
         python cicd/python/build.py --robot-test
@@ -1112,6 +1181,7 @@ jobs:
         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
         AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
         AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
       run: |
         echo "## Stray flask apps to be killed before robot tests ##"
         pgrep -f flask | xargs kill -9 || true
@@ -1148,7 +1218,7 @@ jobs:
       uses: actions/setup-python@v5.0.0
       with:
         cache: pip
-        python-version: '3.11'
+        python-version: '3.12'
 
     - name: Set up Go 1.x
       uses: actions/setup-go@v5.0.0
@@ -1547,7 +1617,7 @@ jobs:
       uses: actions/setup-python@v5.0.0
       with:
         cache: pip
-        python-version: '3.11'
+        python-version: '3.12'
 
     # for some reason skipping this with env.BUILD_IMAGE_REQUIRED == 'true' breaks python cleanup where it can't find pip cache
     - name: Install Python dependencies
@@ -1557,7 +1627,7 @@ jobs:
     - name: Generate rewritten registry for simulations
       if: env.BUILD_IMAGE_REQUIRED == 'true'
       run: |
-        python3 test/python/registry-rewrite.py --replacement-host=host.docker.internal
+        python3 test/python/stackql_test_tooling/registry_rewrite.py --srcdir "$(pwd)/test/registry/src" --destdir "$(pwd)/test/registry-mocked/src" --replacement-host=host.docker.internal
 
     
     - name: Create certificates for robot tests
@@ -1571,6 +1641,8 @@ jobs:
         openssl req -x509 -keyout cicd/vol/srv/credentials/pg_rubbish_key.pem -out cicd/vol/srv/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365
 
     - name: Run robot mocked functional tests
+      env:
+        PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
       if: success() && env.CI_IS_EXPRESS != 'true' && matrix.platform == 'linux/amd64' && env.BUILD_IMAGE_REQUIRED == 'true' && matrix.db_backend == 'sqlite'
       timeout-minutes: ${{ vars.DEFAULT_STEP_TIMEOUT_MIN == '' && 20 || vars.DEFAULT_STEP_TIMEOUT_MIN }}
       run: |
@@ -1579,6 +1651,8 @@ jobs:
         python cicd/python/build.py --robot-test --config='{ "variables":  { "EXECUTION_PLATFORM": "docker" } }'
 
     - name: Run POSTGRES BACKEND robot mocked functional tests
+      env:
+        PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
       if: success() && env.CI_IS_EXPRESS != 'true' && matrix.platform == 'linux/amd64' && env.BUILD_IMAGE_REQUIRED == 'true' && matrix.db_backend == 'postgres_tcp'
       timeout-minutes: ${{ vars.DEFAULT_LONG_STEP_TIMEOUT_MIN == '' && 40 || vars.DEFAULT_LONG_STEP_TIMEOUT_MIN }}
       run: |
@@ -1610,6 +1684,7 @@ jobs:
         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
         AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
         AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
       run: |
         sudo rm -rf test/tmp || true
         mkdir -p test/tmp

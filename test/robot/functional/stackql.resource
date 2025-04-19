@@ -1,5 +1,5 @@
 *** Variables ***
-${LOCAL_LIB_HOME}                      ${CURDIR}/../lib
+${LOCAL_LIB_HOME}                      ${CURDIR}${/}..${/}..${/}python
 ${REPOSITORY_ROOT}                     ${CURDIR}${/}..${/}..${/}..
 ${EXECUTION_PLATFORM}                  native   # to be overridden from command line, eg "docker"
 ${SQL_BACKEND}                         sqlite_embedded   # to be overridden from command line, eg "postgres_tcp"
@@ -8,18 +8,22 @@ ${SHOULD_RUN_DOCKER_EXTERNAL_TESTS}    false   # to be overridden from command l
 ${CONCURRENCY_LIMIT}                   1       # to be overridden from command line, with integer value, -1 for no limit
 ${USE_STACKQL_PREINSTALLED}            false   # to be overridden from command line, with string "true"
 ${SUNDRY_CONFIG}                       {}  # to be overridden from command line, with string value
+${CWD_FOR_EXEC}                        ${REPOSITORY_ROOT}  # works for self repository, can be overwritten when shared
+${WEB_SERVICE_LIBRARY}                 stackql_test_tooling.web_service_keywords
+${STACKQL_INTERFACE_LIBRARY}           stackql_test_tooling.StackQLInterfaces
+${CLOUD_INTEGRATION_LIBRARY}           stackql_test_tooling.CloudIntegration
 
 *** Settings ***
 Library           Process
 Library           OperatingSystem 
-Variables         ${LOCAL_LIB_HOME}/stackql_context.py    ${EXECUTION_PLATFORM}    ${SQL_BACKEND}    ${USE_STACKQL_PREINSTALLED}
+Variables         ${LOCAL_LIB_HOME}/stackql_test_tooling/stackql_context.py    ${REPOSITORY_ROOT}    ${EXECUTION_PLATFORM}    ${SQL_BACKEND}    ${USE_STACKQL_PREINSTALLED}
 ...               ${SUNDRY_CONFIG}
 Library           Process
 Library           OperatingSystem
 Library           String
-Library           ${LOCAL_LIB_HOME}/StackQLInterfaces.py    ${EXECUTION_PLATFORM}    ${SQL_BACKEND}    ${CONCURRENCY_LIMIT}
-Library           ${LOCAL_LIB_HOME}/CloudIntegration.py
-Library           ${LOCAL_LIB_HOME}/web_service_keywords.py
+Library           ${STACKQL_INTERFACE_LIBRARY}    ${EXECUTION_PLATFORM}    ${SQL_BACKEND}    ${CONCURRENCY_LIMIT}
+Library           ${CLOUD_INTEGRATION_LIBRARY}
+Library           ${WEB_SERVICE_LIBRARY}          ${CWD_FOR_EXEC}
 
 *** Keywords ***
 

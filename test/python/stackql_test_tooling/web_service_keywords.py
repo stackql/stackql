@@ -2,22 +2,18 @@ from robot.api.deco import library, keyword
 
 from robot.libraries.Process import Process
 
-import json
-
 from requests import get, post, Response
 
 import os
 
-from typing import Union, Tuple, List, Optional
+from typing import Optional
 
 @library
 class web_service_keywords(Process):
 
-    _DEFAULT_SQLITE_DB_PATH: str = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "tmp", "robot_cli_affirmation_store.db"))
+    
 
-    _DEFAULT_APP_ROOT: str = 'test/python/flask'
-
-    _DEFAULT_LOG_ROOT: str = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'log'))
+    _DEFAULT_APP_ROOT: str = 'test/python/stackql_test_tooling/flask'
 
     _DEFAULT_TLS_KEY_PATH: str = 'test/server/mtls/credentials/pg_server_key.pem'
 
@@ -37,18 +33,30 @@ class web_service_keywords(Process):
     _DEFAULT_MOCKSERVER_PORT_REGISTRY                       = 1094
 
     def _get_dsn(self) -> str:
-        return self._DEFAULT_SQLITE_DB_PATH
+        return self._sqlite_db_path
 
     def __init__(
         self,
+        cwd: str,
         log_root: Optional[str] = None,
         app_root: Optional[str] = None,
         tls_key_path: Optional[str] = None,
-        tls_cert_path: Optional[str] = None
+        tls_cert_path: Optional[str] = None,
     ):
         _app_root: str = app_root if app_root else self._DEFAULT_APP_ROOT
 
-        self._log_root: str = log_root if log_root else self._DEFAULT_LOG_ROOT
+        if not cwd:
+            raise ValueError('cwd must be set')
+        if not os.path.exists(cwd):
+            raise ValueError(f'cwd does not exist: {cwd}')
+
+        self._cwd = os.path.abspath(cwd)
+
+        self._sqlite_db_path: str = os.path.abspath(os.path.join(self._cwd, "test", "tmp", "robot_cli_affirmation_store.db"))
+
+        self._log_root: str = os.path.abspath(os.path.join(self._cwd, 'test', 'robot', 'log'))
+
+        self._log_root: str = log_root if log_root else self._log_root
 
         self._affirmation_store_web_service = None
 
@@ -87,7 +95,8 @@ class web_service_keywords(Process):
             f'--cert={self._tls_cert_path}',
             f'--key={self._tls_key_path}',
             stdout=os.path.abspath(os.path.join(self._log_root, f'token-client-credentials-{port}-stdout.txt')),
-            stderr=os.path.abspath(os.path.join(self._log_root, f'token-client-credentials-{port}-stderr.txt'))
+            stderr=os.path.abspath(os.path.join(self._log_root, f'token-client-credentials-{port}-stderr.txt')),
+            cwd=self._cwd,
         )
     
     @keyword
@@ -108,7 +117,8 @@ class web_service_keywords(Process):
             f'--cert={self._tls_cert_path}',
             f'--key={self._tls_key_path}',
             stdout=os.path.abspath(os.path.join(self._log_root, f'github-server-{port}-stdout.txt')),
-            stderr=os.path.abspath(os.path.join(self._log_root, f'github-server-{port}-stderr.txt'))
+            stderr=os.path.abspath(os.path.join(self._log_root, f'github-server-{port}-stderr.txt')),
+            cwd=self._cwd,
         )
     
     @keyword
@@ -129,7 +139,8 @@ class web_service_keywords(Process):
             f'--cert={self._tls_cert_path}',
             f'--key={self._tls_key_path}',
             stdout=os.path.abspath(os.path.join(self._log_root, f'gcp-server-{port}-stdout.txt')),
-            stderr=os.path.abspath(os.path.join(self._log_root, f'gcp-server-{port}-stderr.txt'))
+            stderr=os.path.abspath(os.path.join(self._log_root, f'gcp-server-{port}-stderr.txt')),
+            cwd=self._cwd,
         )
     
     @keyword
@@ -150,7 +161,8 @@ class web_service_keywords(Process):
             f'--cert={self._tls_cert_path}',
             f'--key={self._tls_key_path}',
             stdout=os.path.abspath(os.path.join(self._log_root, f'okta-server-{port}-stdout.txt')),
-            stderr=os.path.abspath(os.path.join(self._log_root, f'okta-server-{port}-stderr.txt'))
+            stderr=os.path.abspath(os.path.join(self._log_root, f'okta-server-{port}-stderr.txt')),
+            cwd=self._cwd,
         )
     
     @keyword
@@ -171,7 +183,8 @@ class web_service_keywords(Process):
             f'--cert={self._tls_cert_path}',
             f'--key={self._tls_key_path}',
             stdout=os.path.abspath(os.path.join(self._log_root, f'aws-server-{port}-stdout.txt')),
-            stderr=os.path.abspath(os.path.join(self._log_root, f'aws-server-{port}-stderr.txt'))
+            stderr=os.path.abspath(os.path.join(self._log_root, f'aws-server-{port}-stderr.txt')),
+            cwd=self._cwd,
         )
     
     @keyword
@@ -192,7 +205,8 @@ class web_service_keywords(Process):
             f'--cert={self._tls_cert_path}',
             f'--key={self._tls_key_path}',
             stdout=os.path.abspath(os.path.join(self._log_root, f'static-auth-server-{port}-stdout.txt')),
-            stderr=os.path.abspath(os.path.join(self._log_root, f'static-auth-server-{port}-stderr.txt'))
+            stderr=os.path.abspath(os.path.join(self._log_root, f'static-auth-server-{port}-stderr.txt')),
+            cwd=self._cwd,
         )
     
     @keyword
@@ -213,7 +227,8 @@ class web_service_keywords(Process):
             f'--cert={self._tls_cert_path}',
             f'--key={self._tls_key_path}',
             stdout=os.path.abspath(os.path.join(self._log_root, f'google-admin-server-{port}-stdout.txt')),
-            stderr=os.path.abspath(os.path.join(self._log_root, f'google-admin-server-{port}-stderr.txt'))
+            stderr=os.path.abspath(os.path.join(self._log_root, f'google-admin-server-{port}-stderr.txt')),
+            cwd=self._cwd,
         )
     
     @keyword
@@ -234,7 +249,8 @@ class web_service_keywords(Process):
             f'--cert={self._tls_cert_path}',
             f'--key={self._tls_key_path}',
             stdout=os.path.abspath(os.path.join(self._log_root, f'k8s-server-{port}-stdout.txt')),
-            stderr=os.path.abspath(os.path.join(self._log_root, f'k8s-server-{port}-stderr.txt'))
+            stderr=os.path.abspath(os.path.join(self._log_root, f'k8s-server-{port}-stderr.txt')),
+            cwd=self._cwd,
         )
     
     @keyword
@@ -255,7 +271,8 @@ class web_service_keywords(Process):
             # f'--cert={self._tls_cert_path}',
             # f'--key={self._tls_key_path}',
             stdout=os.path.abspath(os.path.join(self._log_root, f'registry-server-{port}-stdout.txt')),
-            stderr=os.path.abspath(os.path.join(self._log_root, f'registry-server-{port}-stderr.txt'))
+            stderr=os.path.abspath(os.path.join(self._log_root, f'registry-server-{port}-stderr.txt')),
+            cwd=self._cwd,
         )
     
     @keyword
@@ -276,7 +293,8 @@ class web_service_keywords(Process):
             f'--cert={self._tls_cert_path}',
             f'--key={self._tls_key_path}',
             stdout=os.path.abspath(os.path.join(self._log_root, f'azure-server-{port}-stdout.txt')),
-            stderr=os.path.abspath(os.path.join(self._log_root, f'azure-server-{port}-stderr.txt'))
+            stderr=os.path.abspath(os.path.join(self._log_root, f'azure-server-{port}-stderr.txt')),
+            cwd=self._cwd,
         )
     
     @keyword
@@ -297,7 +315,8 @@ class web_service_keywords(Process):
             f'--cert={self._tls_cert_path}',
             f'--key={self._tls_key_path}',
             stdout=os.path.abspath(os.path.join(self._log_root, f'sumologic-server-{port}-stdout.txt')),
-            stderr=os.path.abspath(os.path.join(self._log_root, f'sumologic-server-{port}-stderr.txt'))
+            stderr=os.path.abspath(os.path.join(self._log_root, f'sumologic-server-{port}-stderr.txt')),
+            cwd=self._cwd,
         )
     
     @keyword
@@ -318,7 +337,8 @@ class web_service_keywords(Process):
             f'--cert={self._tls_cert_path}',
             f'--key={self._tls_key_path}',
             stdout=os.path.abspath(os.path.join(self._log_root, f'digitalocean-server-{port}-stdout.txt')),
-            stderr=os.path.abspath(os.path.join(self._log_root, f'digitalocean-server-{port}-stderr.txt'))
+            stderr=os.path.abspath(os.path.join(self._log_root, f'digitalocean-server-{port}-stderr.txt')),
+            cwd=self._cwd,
         )
     
     @keyword

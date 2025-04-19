@@ -99,7 +99,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.CI_SCENARIO_RO_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.CI_SCENARIO_RO_AWS_SECRET_ACCESS_KEY }}
         run: |
-          python3 test/python/markdown_testing/markdown_testing.py --test-root=docs/walkthroughs/readonly 2>&1 | tee cicd/log/markdown-readonly-testing-results.log
+          python3 test/python/markdown_testing/markdown_testing.py "$(pwd)" --test-root=docs/walkthroughs/readonly 2>&1 | tee cicd/log/markdown-readonly-testing-results.log
       
       - name: Run Read Write Walkthrough Scenarios
         if: ${{ env.runType == env.RUNTYPE_READ_WRITE || env.runType == env.RUNTYPE_ALL }}
@@ -107,7 +107,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.CI_SCENARIO_RW_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.CI_SCENARIO_RW_AWS_SECRET_ACCESS_KEY }}
         run: |
-          python3 test/python/markdown_testing/markdown_testing.py --test-root=docs/walkthroughs/readwrite 2>&1 | tee cicd/log/markdown-readwrite-testing-results.log
+          python3 test/python/markdown_testing/markdown_testing.py "$(pwd)" --test-root=docs/walkthroughs/readwrite 2>&1 | tee cicd/log/markdown-readwrite-testing-results.log
       
       - name: Run Deploy Walkthrough Scenarios
         if: ${{ env.runType == env.RUNTYPE_DEPLOY || env.runType == env.RUNTYPE_ALL }}
@@ -115,7 +115,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.CI_SCENARIO_RW_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.CI_SCENARIO_RW_AWS_SECRET_ACCESS_KEY }}
         run: |
-          python3 test/python/markdown_testing/markdown_testing.py --test-root=docs/walkthroughs/deploy 2>&1 | tee cicd/log/markdown-deploy-testing-results.log
+          python3 test/python/markdown_testing/markdown_testing.py "$(pwd)" --test-root=docs/walkthroughs/deploy 2>&1 | tee cicd/log/markdown-deploy-testing-results.log
 
       - name: Upload Test Results
         uses: actions/upload-artifact@v4.3.1

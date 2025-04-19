@@ -23,8 +23,8 @@ class TestStatus(Enum):
 
 
 CURDIR :str = os.path.dirname(os.path.realpath(__file__))
-TEST_ROOT_DIR :str = os.path.abspath(os.path.join(CURDIR, '..'))
-REPOSITORY_ROOT_DIR :str = os.path.abspath(os.path.join(CURDIR, '../..'))
+TEST_ROOT_DIR :str = os.path.abspath(os.path.join(CURDIR, '..', '..'))
+REPOSITORY_ROOT_DIR :str = os.path.abspath(os.path.join(CURDIR, '..', '..', '..'))
 PROVIDER_REGISTRY_ROOT_DIR :str = os.path.abspath(os.path.join(TEST_ROOT_DIR, 'registry')).replace(os.sep, '/')
 TEST_GENERATOR_DEFINITIONS_ROOT :str = os.path.join(TEST_ROOT_DIR, 'test-generators')
 TEST_GENERATOR_ALWAYS_ROOT :str = os.path.join(TEST_GENERATOR_DEFINITIONS_ROOT, 'always')
