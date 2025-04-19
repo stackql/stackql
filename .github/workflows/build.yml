@@ -493,12 +493,11 @@ jobs:
         name: python-package-dist-folder
         path: test/dist
 
-    - name: Dummy Install python testing package
+    - name: Install python testing package
       run: |
         echo "Inspecting python package"
         for file in test/dist/*.whl; do
-          # pip3 install "$file"
-          ls -al "$file"
+          pip3 install "$file" --force-reinstall
         done
 
     
@@ -607,8 +606,6 @@ jobs:
         cat ./test/robot/reports/output.xml
 
     - name: Run robot mocked functional tests with aggressive concurrency
-      env:
-        PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
       if: success() && matrix.registry != 'test/registry'
       run: |
         echo "## Stray flask apps to be killed before robot tests ##"
@@ -628,7 +625,6 @@ jobs:
         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
         AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
         AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-        PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
       run: |
         echo "## Stray flask apps to be killed before robot tests ##"
         pgrep -f flask | xargs kill -9 || true
@@ -1015,16 +1011,8 @@ jobs:
           openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
           openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365 
 
-    # - shell: powershell {0}
-    #   name: Git Ref Parse
-    #   id: git_ref_parse
-    #   run: |
-    #       PYTHONPATH="$Env:PYTHONPATH:$(pwd)/test/python"
-
     - shell: wsl-bash {0}
       name: Run robot mocked functional tests
-      # env:
-      #   PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}\test\python'
       run: |
           . cicd/version.txt
           export BUILDBRANCH="${{github.ref}}"
@@ -1053,8 +1041,7 @@ jobs:
       # This is a hack because if cannot directly access secrets
       if: env.AZURE_CLIENT_SECRET != ''
       env:
-        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }} 
-        # PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}\test\python'
+        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
       run: |
           . cicd/version.txt
           export AZURE_CLIENT_ID='${{ secrets.AZURE_CLIENT_ID }}'
