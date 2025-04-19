@@ -101,7 +101,8 @@ ADD cicd ${TEST_ROOT_DIR}/cicd
 COPY --from=certificates /opt/test/stackql ${TEST_ROOT_DIR}/
 
 RUN pip3 install PyYaml \
-    && python3 ${TEST_ROOT_DIR}/test/python/registry-rewrite.py
+    && python3 ${TEST_ROOT_DIR}/test/python/stackql_test_tooling/registry_rewrite.py \
+      --srcdir ${TEST_ROOT_DIR}/test/registry/src --destdir ${TEST_ROOT_DIR}/test/registry-mocked/src
 
 FROM utility AS integration
 
@@ -134,7 +135,7 @@ COPY --from=registrymock /opt/test/stackql ${TEST_ROOT_DIR}/
 
 COPY --from=builder /work/stackql/build/stackql ${TEST_ROOT_DIR}/build/
 
-RUN  if [ "${RUN_INTEGRATION_TESTS}" = "1" ]; then robot ${TEST_ROOT_DIR}/test/robot/functional; fi
+RUN  if [ "${RUN_INTEGRATION_TESTS}" = "1" ]; then env PYTHONPATH="$PYTHONPATH:${TEST_ROOT_DIR}/test/python" robot ${TEST_ROOT_DIR}/test/robot/functional; fi
 
 FROM ubuntu:22.04 AS app
 

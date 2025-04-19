@@ -17,7 +17,7 @@ from typing import List
 Example invocation:
 
 ```bash
-flask --app=test/python/flask/oaut/token_srv run --port=8070
+flask --app=test/python/stackql_test_tooling/flask/oauth/token_srv run --port=8070
 ```
 
 

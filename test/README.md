@@ -5,7 +5,7 @@
 
 Offline invocations of `stackql` are assessed against expected responses, through:
 
-1. the functionality of [/test/python/main.py](/test/python/main.py).
+1. the functionality of [/test/deprecated/python/main.py](/test/deprecated/python/main.py).
 2. [robot tests in /test/functional](/test/functional)  
 
 (1) is deprecated and will be entirely migrated to (2).

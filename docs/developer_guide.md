@@ -88,7 +88,7 @@ robot --variable SHOULD_RUN_DOCKER_EXTERNAL_TESTS:true -d test/robot/functional 
 
 ### Manually Testing
 
-Please see [the mock testing doco](/test/python/flask/README.md).
+Please see [the mock testing doco](/test/python/stackql_test_tooling/flask/README.md).
 
 
 ## Debuggers
@@ -186,13 +186,13 @@ Local testing of the application:
 
 1. Run `go test --tags "sqlite_stackql" ./...` tests.
 2. Build the executable [as per the root README](/README.md#build)
-3. Perform registry rewrites as needed for mocking `python3 test/python/registry-rewrite.py`.
+3. Perform registry rewrites as needed for mocking `python3 test/python/stackql_test_tooling/registry_rewrite.py --srcdir "$(pwd)/test/registry/src" --destdir "$(pwd)/test/registry-mocked/src"`.
 3. Run robot tests:
     - Functional tests, mocked as needed `robot -d test/robot/functional test/robot/functional`.
     - Integration tests `robot -d test/robot/integration test/robot/integration`.  For these, you will need to set various envirnonment variables as per the github actions.
 4. Run the deprecated manual python tests:
     - Prepare with `cp test/db/db.sqlite test/db/tmp/python-tests-tmp-db.sqlite`.
-    - Run with `python3 test/python/main.py`.
+    - Run with `python3 test/deprecated/python/main.py`.
 
 [This article](https://medium.com/cbi-engineering/mocking-techniques-for-go-805c10f1676b) gives a nice overview of mocking in golang.
 
@@ -209,7 +209,7 @@ Then: `go test --tags "sqlite_stackql" -cover ../...`.
 
 Automated functional and integration testing are done largely through robot framework.  Please see [the robot test readme](/test/robot/README.md).
 
-There is some legacy, deprecated [manual python testing](/test/python/main.py) which will be migrated to robot and decommissioned.
+There is some legacy, deprecated [manual python testing](/test/deprecated/python/main.py) which will be migrated to robot and decommissioned.
 
 ### Linting
 

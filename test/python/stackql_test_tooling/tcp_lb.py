@@ -2,18 +2,8 @@ import argparse
 
 from typing import List, Tuple, Iterable, Optional
 
-_DEFAULT_PORT = 1070
 _GOOGLE_DEFAULT_PORT = 1080
-_GOOGLEADMIN_DEFAULT_PORT = 1098
-_OKTA_DEFAULT_PORT = 1090
 _AWS_DEFAULT_PORT = 1091
-_K8S_DEFAULT_PORT = 1092
-_GITHUB_DEFAULT_PORT = 1093
-_AZURE_DEFAULT_PORT = 1095
-_SUMOLOGIC_DEFAULT_PORT = 1096
-_DIGITALOCEAN_DEFAULT_PORT = 1097
-_STACKQL_TEST_DEFAULT_PORT = 1099
-_STACKQL_AUTH_TESTING_DEFAULT_PORT = 1170
 
 _DEFAULT_AWS_GLOBAL_SERVICES: Tuple[str] = (
     'iam',
@@ -192,7 +182,7 @@ def _parse_args() -> argparse.Namespace:
     # parser.add_argument('--header', type=str, help='The header.')
     return parser.parse_args()
 
-def main():
+def generate_lb_config():
     args = _parse_args()
     host_gen = _HostsGenerator()
     all_hosts = [lb for lb in host_gen.generate_all_load_balancers()]
@@ -208,4 +198,4 @@ def main():
         return
 
 if __name__ == '__main__':
-    main()
+    generate_lb_config()

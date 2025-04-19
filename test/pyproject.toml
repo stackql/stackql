@@ -1,0 +1,41 @@
+[tool.poetry]
+name = "stackql-test-tooling"
+version = "0.1.0"
+description = "Some testing tooling for stackql"
+authors = ["General Kroll <generalkroll0@gmail.com>"]
+readme = "python/stackql_test_tooling/README.md"
+packages = [
+    {include = "*.py", from = "python/stackql_test_tooling", to = "stackql_test_tooling"},
+    {include = "flask", from = "python/stackql_test_tooling", to = "stackql_test_tooling"}
+]
+
+[tool.poetry.dependencies]
+Flask = "3.0.3"
+Jinja2 = "3.1.4"
+jsonpath-ng = "1.7.0"
+mistune = "3.0.2"
+pyopenssl = "24.2.1"
+python = "^3.12"
+psycopg = {version = "3.2.5", extras = ["binary", "pool"]}
+psycopg2-binary = "2.9.10"
+PyYaml = {version = ">=6.0.1" }
+requests = "2.32.3"
+robotframework = "7.0.1"
+sqlalchemy = "1.4.44"
+tabulate = "0.9.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+coverage = "^7.6.0"
+pytest = "^8.2.2"
+requests = "2.32.3"
+robotframework = "7.0.1"
+
+[tool.pytest.ini_options]
+pythonpath = ["./lib"]
+
+[tool.robot]
+pythonpath = ["./lib"]

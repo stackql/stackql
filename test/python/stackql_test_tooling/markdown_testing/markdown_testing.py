@@ -21,16 +21,15 @@ Intentions:
 """
 
 
-def parse_args() -> argparse.Namespace:
+def _parse_args() -> argparse.Namespace:
     """
     Parse the arguments.
     """
     parser = argparse.ArgumentParser(description='Create a token.')
-    parser.add_argument('--test-root', type=str, help='The test root.', default=os.path.join(_REPOSITORY_ROOT_PATH, 'docs', 'walkthroughs'))
+    parser.add_argument('cwd', type=str, help='The working dir to stasrt and finish in.')
+    parser.add_argument('--test-root', type=str, help='The test root.', required=True)
     return parser.parse_args()
 
-
-_REPOSITORY_ROOT_PATH = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..'))
 
 
 def eprint(*args, **kwargs):
@@ -236,12 +235,14 @@ class MdOrchestrator(object):
 
     def __init__(
         self,
+        cwd: str,
         parser: MdParser, 
         max_setup_blocks: int = 1,
         max_invocations_blocks: int = 1,
         max_teardown_blocks: int = 1,
         setup_contains_shell_invocation: bool = True
     ):
+        self._cwd = cwd
         self._parser = parser
         self._max_setup_blocks = max_setup_blocks
         self._max_invocations_blocks = max_invocations_blocks
@@ -249,10 +250,10 @@ class MdOrchestrator(object):
         self._setup_contains_shell_invocation = setup_contains_shell_invocation
 
     def _get_teardown_base(self) -> str:
-        return f'set -e;\ncd {_REPOSITORY_ROOT_PATH};\n'
+        return f'set -e;\ncd {self._cwd};\n'
 
     def _get_setup_base(self) -> str:
-        return f'cd {_REPOSITORY_ROOT_PATH};\n'
+        return f'cd {self._cwd};\n'
 
     def orchestrate(self, file_path: str) -> List[WorkloadDTO]:
         return self._orchestrate_block(file_path, 0, self._parser.parse_markdown_file(file_path).get_ordered())
@@ -425,9 +426,9 @@ class SimpleRunner(object):
 
 class AllWalkthroughsRunner(object):
     
-    def __init__(self):
+    def __init__(self, cwd: str):
         md_parser = MdParser()
-        self._orchestrator: MdOrchestrator = MdOrchestrator(md_parser)
+        self._orchestrator: MdOrchestrator = MdOrchestrator(cwd, md_parser)
 
     def run_all(self, walkthrough_inodes: List[str], recursive=True, skip_readme=True) -> List[WalkthroughResult]:
         results: List[WalkthroughResult] = []
@@ -471,7 +472,7 @@ def _collate_results(results: List[WalkthroughResult]) -> bool:
     print(tabulate([[result.name, result.rc, result.passes_stdout_check, result.passes_stderr_check] for result in results], headers=['Test Name', 'Return Code', 'Passes Stdout Checks', 'Passes Stderr Checks']))
     return failed == 0
 
-def run_tests(root_dir: str) -> List[WalkthroughResult]:
+def _run_tests(root_dir: str) -> List[WalkthroughResult]:
     """
     Run all tests.
     A decent entry point for a test harness.
@@ -480,23 +481,23 @@ def run_tests(root_dir: str) -> List[WalkthroughResult]:
 
     :return: The results.
     """
-    runner: AllWalkthroughsRunner = AllWalkthroughsRunner()
+    runner: AllWalkthroughsRunner = AllWalkthroughsRunner(root_dir)
     results: List[WalkthroughResult] = runner.run_all([root_dir])
     return results
 
 
 def _process_tests(root_dir: str) -> List[WalkthroughResult]:
-    results: List[WalkthroughResult] = run_tests(root_dir)
+    results: List[WalkthroughResult] = _run_tests(root_dir)
     if _collate_results(results):
         print('All tests passed.')
         sys.exit(0)
     print('Some tests failed.')
     sys.exit(1)
 
-def _main() -> None:
-    args :argparse.Namespace = parse_args()
+def md_testing() -> None:
+    args :argparse.Namespace = _parse_args()
     _process_tests(args.test_root)
 
 
 if __name__ == '__main__':
-    _main()
+    md_testing()
