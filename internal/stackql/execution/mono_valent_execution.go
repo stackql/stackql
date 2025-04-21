@@ -78,6 +78,7 @@ type monoValentExecution struct {
 	isReadOnly                 bool //nolint:unused // TODO: build out
 	isSkipResponse             bool
 	isMutation                 bool
+	isAwait                    bool
 }
 
 func NewMonoValentExecutorFactory(
@@ -90,6 +91,7 @@ func NewMonoValentExecutorFactory(
 	stream streaming.MapStream,
 	isSkipResponse bool,
 	isMutation bool,
+	isAwait bool,
 ) MonoValentExecutorFactory {
 	var tcc internaldto.TxnControlCounters
 	if insertCtx != nil {
@@ -110,6 +112,7 @@ func NewMonoValentExecutorFactory(
 		stream:                     stream,
 		isSkipResponse:             isSkipResponse,
 		isMutation:                 isMutation,
+		isAwait:                    isAwait,
 	}
 }
 
@@ -586,6 +589,7 @@ type AgnosticatePayload interface {
 	GetInsertPreparator() InsertPreparator
 	IsSkipResponse() bool
 	IsMutation() bool
+	IsAwait() bool
 }
 
 type httpAgnosticatePayload struct {
@@ -604,6 +608,7 @@ type httpAgnosticatePayload struct {
 	insertPreparator        InsertPreparator
 	isSkipResponse          bool
 	isMutation              bool
+	isAwait                 bool
 }
 
 func newHTTPAgnosticatePayload(
@@ -622,6 +627,7 @@ func newHTTPAgnosticatePayload(
 	insertPreparator InsertPreparator,
 	isSkipResponse bool,
 	isMutation bool,
+	isAwait bool,
 ) AgnosticatePayload {
 	return &httpAgnosticatePayload{
 		tableMeta:               tableMeta,
@@ -639,11 +645,16 @@ func newHTTPAgnosticatePayload(
 		insertPreparator:        insertPreparator,
 		isSkipResponse:          isSkipResponse,
 		isMutation:              isMutation,
+		isAwait:                 isAwait,
 	}
 }
 
 func (ap *httpAgnosticatePayload) GetPolyHandler() PolyHandler {
 	return ap.polyHandler
+}
+
+func (ap *httpAgnosticatePayload) IsAwait() bool {
+	return ap.isAwait
 }
 
 func (ap *httpAgnosticatePayload) GetInsertPreparator() InsertPreparator {
@@ -748,6 +759,7 @@ func agnosticate(
 	insertPreparator := agPayload.GetInsertPreparator()
 	isSkipResponse := agPayload.IsNilResponseAcceptable()
 	isMutation := agPayload.IsMutation()
+	isAwait := agPayload.IsAwait()
 	// TODO: TCC setup
 	armoury, armouryErr := agPayload.GetArmoury()
 	if armouryErr != nil {
@@ -797,7 +809,7 @@ func agnosticate(
 				insertPreparator,
 				isSkipResponse,
 				false,
-				false,
+				isAwait,
 				false,
 				isMutation,
 				"",
@@ -1155,6 +1167,10 @@ func (sp *standardProcessor) Process() ProcessorResponse {
 		polyHandler.LogHTTPResponseMap(res.GetProcessedBody())
 		logging.GetLogger().Infoln(fmt.Sprintf("monoValentExecution.Execute() response = %v", res))
 
+		if selectItemsKey == "" {
+			selectItemsKey = method.GetSelectItemsKey()
+		}
+
 		itemisationResult := itemise(res.GetProcessedBody(), resErr, selectItemsKey)
 
 		if itemisationResult.IsNilPayload() {
@@ -1189,12 +1205,12 @@ func (sp *standardProcessor) Process() ProcessorResponse {
 		)
 		housekeepingDone = insertPrepResult.IsHousekeepingDone()
 		insertPrepErr, hasInsertPrepErr := insertPrepResult.GetError()
+		if !isAwait && isSkipResponse && isMutation && httpResponse.StatusCode < 300 {
+			return newHTTPProcessorResponse(
+				nil, reversalStream, false, nil,
+			).WithSuccessMessages([]string{"The operation was despatched successfully"})
+		}
 		if hasInsertPrepErr {
-			if isSkipResponse && isMutation && httpResponse.StatusCode < 300 {
-				return newHTTPProcessorResponse(
-					nil, reversalStream, false, nil,
-				).WithSuccessMessages([]string{"The operation was despatched successfully"})
-			}
 			return newHTTPProcessorResponse(nil, reversalStream, false, insertPrepErr)
 		}
 
@@ -1384,6 +1400,7 @@ func (mv *monoValentExecution) GetExecutor() (func(pc primitive.IPrimitiveCtx) i
 				mv,
 				mv.isSkipResponse,
 				mv.isMutation,
+				mv.isAwait,
 			)
 			processorResponse, agnosticErr := agnosticate(agnosticatePayload)
 			if agnosticErr != nil {

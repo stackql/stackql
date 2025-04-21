@@ -45729,6 +45729,62 @@ components:
         update:
         - $ref: '#/components/x-stackQL-resources/volumes/methods/volume_Modify'
       title: volumes
+    volumes_presented:
+      id: aws.ec2.volumes_presented
+      name: volumes_presented
+      title: volumes_presented
+      methods:
+        describeVolumes:
+          config:
+            queryParamTranspose:
+              algorithm: AWSCanonical
+            requestTranslate:
+              algorithm: get_query_to_post_form_utf_8
+          operation:
+            $ref: '#/paths/~1?Action=DescribeVolumes&Version=2016-11-15/get'
+          response:
+            mediaType: application/xml
+            overrideMediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: '$.line_items'
+            schema_override:
+              $ref: '#/components/schemas/DisplayVolumesSchema'
+            transform:
+              body: >
+                {
+                  "next_page_token": {{with index . "DescribeVolumesResponse" "nextToken"}}{{printf "%q" .}}{{else}}null{{end}},
+                  "line_items": [
+                    {{- $items := index . "DescribeVolumesResponse" "volumeSet" "item" -}}
+                    {{- if eq (printf "%T" $items) "map[string]interface {}" }}
+                      {{template "volume" $items}}
+                    {{- else }}
+                      {{- range $i, $v := $items }}
+                        {{- if $i}},{{end}}
+                        {{template "volume" $v}}
+                      {{- end }}
+                    {{- end }}
+                  ]
+                }
+                {{define "volume"}}
+                {
+                  "volume_id": {{printf "%q" (index . "volumeId")}},
+                  "size": {{toInt (index . "size")}},
+                  "snapshot_id": {{with index . "snapshotId"}}{{printf "%q" .}}{{else}}null{{end}},
+                  "availability_zone": {{printf "%q" (index . "availabilityZone")}},
+                  "status": {{printf "%q" (index . "status")}},
+                  "create_time": {{printf "%q" (index . "createTime")}},
+                  "volume_type": {{printf "%q" (index . "volumeType")}},
+                  "encrypted": {{toBool (index . "encrypted")}},
+                  "multi_attach_enabled": {{toBool (index . "multiAttachEnabled")}}
+                }
+                {{end}}
+              type: 'golang_template_mxj_v0.1.0'
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/volumes/methods/describeVolumes'
+        insert: []
+        update: []
+        delete: []
     volumes_modifications:
       name: volumes_modifications
       methods:
@@ -46413,6 +46469,42 @@ components:
       description: Amazon Signature authorization v4
       x-amazon-apigateway-authtype: awsSigv4
   schemas:
+    DisplayVolumesSchema:
+      title: Key Display
+      type: object
+      properties:
+        next_page_token:
+          type: string
+          description: The <code>NextToken</code> value to include in a future <code>DescribeVolumes</code> request. When the results of a <code>DescribeVolumes</code> request exceed <code>MaxResults</code>, this value can be used to retrieve the next page of results. This value is <code>null</code> when there are no more results to return.
+        line_items:
+          type: array
+          items:
+            type: object
+            properties:
+              volume_type:
+                type: string
+                description: The volume type
+                example: gp3
+              volume_id:
+                type: string
+                example: vol-00aaaccc111000000
+              snapshot_id:
+                type: string
+              status:
+                type: string
+              availability_zone:
+                type: string
+              create_time:
+                type: string
+                description: Textual datetime representation of the volume's creation time.
+                example: '2024-08-20T05:47:06.409Z'
+              size:
+                type: integer
+                example: 8
+              encrypted:
+                type: bool
+              multi_attach_enabled:
+                type: bool
     AcceptReservedInstancesExchangeQuoteResult:
       type: object
       properties:

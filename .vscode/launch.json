@@ -171,6 +171,10 @@
         "insert into  local_openssl.keys.rsa(config_file, key_out_file, cert_out_file, days) select '${workspaceFolder}/test/server/mtls/openssl.cnf', '${workspaceFolder}/test/tmp/manual_key.pem', '${workspaceFolder}/test/tmp/manuial_cert.pem', 90;",
         "describe local_openssl.keys.x509;",
         "select * from local_openssl.keys.x509 where cert_file = '/Users/admin/stackql/stackql-devel/test/tmp/manual_cert.pem';",
+        "select * from aws.ec2.volumes_presented where region = 'ap-southeast-2';",
+        "select BackupId, BackupState from aws.cloudhsm.backups where region = 'rubbish-region' order by BackupId;",
+        "select  rings.projectsId as project,  rings.locationsId as locale,  split_part(rings.name, '/', -1) as key_ring_name,  split_part(keys.name, '/', -1) as key_name,  json_extract(keys.\"versionTemplate\", '$.algorithm') as key_algorithm,  json_extract(keys.\"versionTemplate\", '$.protectionLevel') as key_protection_level  from  google.cloudkms.key_rings rings  inner join google.cloudkms.crypto_keys keys  on  keys.keyRingsId = split_part(rings.name, '/', -1)  and keys.projectsId = rings.projectsId  and keys.locationsId = rings.locationsId  where  rings.projectsId in ('testing-project', 'testing-project-two', 'testing-project-three')  and rings.locationsId in ('global', 'australia-southeast1', 'australia-southeast2')  order by project, locale, key_name ;",
+        "delete from aws.cloud_control.resources  where  region = 'ap-southeast-1'  and data__TypeName = 'AWS::Logs::LogGroup'  and data__Identifier = 'LogGroupResourceExampleThird' ;",
       ],
       "default": "show providers;"
     },

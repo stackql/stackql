@@ -199,25 +199,7 @@ resources:
               required: true
           response:
             schema_override:
-              title: Key Display
-              type: object
-              properties:
-                type:
-                    type: string
-                    description: The key type
-                    example: x509
-                not_before:
-                    type: string
-                    description: Textual date representation of the key's not before date.
-                    example: Mar 22 02:50:46 2025 GMT
-                not_after:
-                    type: string
-                    description: Textual date representation of the key's not after date.
-                    example: Mar 22 02:50:46 2025 GMT
-                public_key_algorithm:
-                    type: string
-                    description: The public key algorithm used by the key.
-                    example: rsaEncryption
+              $ref: '#/components/schemas/cert_display'
             transform:
               body: >
                 {{- $s := separator ", " -}}

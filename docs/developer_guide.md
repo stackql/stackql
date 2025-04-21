@@ -77,7 +77,7 @@ go test -timeout 1200s --tags "sqlite_stackql" ./...
 **Note**: this requires the local build (above) to have been completed successfully, which builds a binary in `./build/`.
 
 ```bash
-robot -d test/robot/functional test/robot/functional
+env PYTHONPATH="$PYTHONPATH:$(pwd)/test/python" robot -d test/robot/functional test/robot/functional
 ```
 
 Or better yet, if you have docker desktop and the `postgres` image cited in the docker compose files:

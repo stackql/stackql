@@ -494,6 +494,7 @@ func (dp *standardDependencyPlanner) orchestrate(
 	return idx, err
 }
 
+//nolint:gocognit // live with it
 func (dp *standardDependencyPlanner) processAcquire(
 	sqlNode sqlparser.SQLNode,
 	annotationCtx taxonomy.AnnotationCtx,
@@ -531,6 +532,9 @@ func (dp *standardDependencyPlanner) processAcquire(
 		return util.NewAnnotatedTabulation(nil, nil, "", ""), nil, err
 	}
 	selectItemsKey := annotationCtx.GetTableMeta().GetSelectItemsKey()
+	if selectItemsKey == "" {
+		selectItemsKey = m.GetSelectItemsKey()
+	}
 	var defaultColName string
 	if selectItemsKey != "" {
 		defaultColName = util.TrimSelectItemsKey(selectItemsKey)

@@ -27,7 +27,7 @@ These may consume entire testing modules, or more nuanced [tag-based](https://ro
 From the repository root:
 
 ```sh
-robot -d test/robot/functional test/robot/functional
+env PYTHONPATH="$PYTHONPATH:$(pwd)/test/python" robot -d test/robot/functional test/robot/functional
 ```
 
 ### Running actual integration tests
@@ -35,7 +35,7 @@ robot -d test/robot/functional test/robot/functional
 From the repository root:
 
 ```sh
-robot -d test/robot/integration \ 
+env PYTHONPATH="$PYTHONPATH:$(pwd)/test/python"  robot -d test/robot/integration \ 
   -v OKTA_CREDENTIALS:"$(cat /path/to/okta/credentials)" \
   -v GCP_CREDENTIALS:"$(cat /path/to/gcp/credentials)" \
   -v AWS_CREDENTIALS:"$(cat /path/to/aws/credentials)" \
@@ -46,7 +46,7 @@ robot -d test/robot/integration \
 For example:
 
 ```sh
-robot -d test/robot/integration \ 
+env PYTHONPATH="$PYTHONPATH:$(pwd)/test/python" robot -d test/robot/integration \ 
   -v OKTA_CREDENTIALS:"$(cat /path/to/okta/credentials)" \
   -v GCP_CREDENTIALS:"$(cat ${HOME}/stack/stackql-devel/cicd/keys/integration/stackql-dev-01-07d91f4abacf.json)" \
   -v AWS_CREDENTIALS:"$(cat ${HOME}/stack/stackql-devel/cicd/keys/integration/aws-auth-val.txt)" \
