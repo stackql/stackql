@@ -7674,3 +7674,93 @@ Local Execution Openssl x509 Select
     ...    ${EMPTY}
     ...    stdout=${CURDIR}/tmp/Local-Execution-Openssl-x509-Select.tmp
     ...    stderr=${CURDIR}/tmp/Local-Execution-Openssl-x509-Select-stderr.tmp  
+
+Select Star From Transformed XML Response Body
+    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres for speed, simple enough to support bool there.
+    ${inputStr} =    Catenate
+    ...    select * from aws.ec2.volumes_presented where region = 'ap-southeast-2' order by volume_id;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-------------------|--------------------------|-----------|----------------------|----------------|------|-------------|-----------|-----------------------|-------------|
+    ...    |${SPACE}availability_zone${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}create_time${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}encrypted${SPACE}|${SPACE}multi_attach_enabled${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}region${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}size${SPACE}|${SPACE}snapshot_id${SPACE}|${SPACE}${SPACE}status${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}volume_id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}volume_type${SPACE}|
+    ...    |-------------------|--------------------------|-----------|----------------------|----------------|------|-------------|-----------|-----------------------|-------------|
+    ...    |${SPACE}ap-southeast-1a${SPACE}${SPACE}${SPACE}|${SPACE}2022-05-02T23:09:30.171Z${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}0${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}0${SPACE}|${SPACE}ap-southeast-2${SPACE}|${SPACE}${SPACE}${SPACE}10${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}available${SPACE}|${SPACE}vol-00100000000000000${SPACE}|${SPACE}gp2${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------------------|--------------------------|-----------|----------------------|----------------|------|-------------|-----------|-----------------------|-------------|
+    ...    |${SPACE}ap-southeast-1a${SPACE}${SPACE}${SPACE}|${SPACE}2022-05-11T04:45:40.627Z${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}0${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}0${SPACE}|${SPACE}ap-southeast-2${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}8${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}available${SPACE}|${SPACE}vol-00200000000000000${SPACE}|${SPACE}gp2${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------------------|--------------------------|-----------|----------------------|----------------|------|-------------|-----------|-----------------------|-------------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Select-Star-From-Transformed-XML-Response-Body.tmp
+    ...    stderr=${CURDIR}/tmp/Select-Star-From-Transformed-XML-Response-Body-stderr.tmp
+
+Select Projection From Transformed XML Response Body
+    ${inputStr} =    Catenate
+    ...    select volume_id, create_time, region, size from aws.ec2.volumes_presented where region = 'ap-southeast-2'  order by volume_id;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-----------------------|--------------------------|----------------|------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}volume_id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}create_time${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}region${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}size${SPACE}|
+    ...    |-----------------------|--------------------------|----------------|------|
+    ...    |${SPACE}vol-00100000000000000${SPACE}|${SPACE}2022-05-02T23:09:30.171Z${SPACE}|${SPACE}ap-southeast-2${SPACE}|${SPACE}${SPACE}${SPACE}10${SPACE}|
+    ...    |-----------------------|--------------------------|----------------|------|
+    ...    |${SPACE}vol-00200000000000000${SPACE}|${SPACE}2022-05-11T04:45:40.627Z${SPACE}|${SPACE}ap-southeast-2${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}8${SPACE}|
+    ...    |-----------------------|--------------------------|----------------|------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Select-Projection-From-Transformed-XML-Response-Body.tmp
+    ...    stderr=${CURDIR}/tmp/Select-Projection-From-Transformed-XML-Response-Body-stderr.tmp  
+
+Describe Transformed XML Response Body
+    ${inputStr} =    Catenate
+    ...    describe aws.ec2.volumes_presented;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |----------------------|---------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}type${SPACE}${SPACE}${SPACE}|
+    ...    |----------------------|---------|
+    ...    |${SPACE}availability_zone${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}string${SPACE}${SPACE}|
+    ...    |----------------------|---------|
+    ...    |${SPACE}create_time${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}string${SPACE}${SPACE}|
+    ...    |----------------------|---------|
+    ...    |${SPACE}encrypted${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}bool${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |----------------------|---------|
+    ...    |${SPACE}multi_attach_enabled${SPACE}|${SPACE}bool${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |----------------------|---------|
+    ...    |${SPACE}size${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}integer${SPACE}|
+    ...    |----------------------|---------|
+    ...    |${SPACE}snapshot_id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}string${SPACE}${SPACE}|
+    ...    |----------------------|---------|
+    ...    |${SPACE}status${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}string${SPACE}${SPACE}|
+    ...    |----------------------|---------|
+    ...    |${SPACE}volume_id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}string${SPACE}${SPACE}|
+    ...    |----------------------|---------|
+    ...    |${SPACE}volume_type${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}string${SPACE}${SPACE}|
+    ...    |----------------------|---------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Describe-Transformed-XML-Response-Body.tmp
+    ...    stderr=${CURDIR}/tmp/Describe-Transformed-XML-Response-Body-stderr.tmp  

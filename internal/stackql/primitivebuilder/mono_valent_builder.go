@@ -72,6 +72,7 @@ func newMonoValentBuilder(
 			stream,
 			isSkipResponse,
 			isMutation,
+			false,
 		),
 	}
 }
