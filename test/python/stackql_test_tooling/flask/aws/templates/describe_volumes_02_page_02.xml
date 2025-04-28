@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DescribeVolumesResponse xmlns="http://ec2.amazonaws.com/doc/2016-11-15/">
+    <requestId>00000000-0000-0000-aaaa-000000000002</requestId>
+    <nextToken>token02</nextToken>
+    <volumeSet>
+        <item>
+            <volumeId>vol-20300000000000000</volumeId>
+            <size>10</size>
+            <snapshotId/>
+            <availabilityZone>us-east-1a</availabilityZone>
+            <status>available</status>
+            <createTime>2022-05-02T23:09:30.171Z</createTime>
+            <attachmentSet/>
+            <volumeType>gp2</volumeType>
+            <iops>100</iops>
+            <encrypted>false</encrypted>
+            <multiAttachEnabled>false</multiAttachEnabled>
+        </item>
+        <item>
+            <volumeId>vol-20400000000000000</volumeId>
+            <size>8</size>
+            <snapshotId/>
+            <availabilityZone>us-east-1a</availabilityZone>
+            <status>available</status>
+            <createTime>2022-05-11T04:45:40.627Z</createTime>
+            <attachmentSet/>
+            <volumeType>gp2</volumeType>
+            <iops>100</iops>
+            <encrypted>false</encrypted>
+            <multiAttachEnabled>false</multiAttachEnabled>
+        </item>
+    </volumeSet>
+</DescribeVolumesResponse>

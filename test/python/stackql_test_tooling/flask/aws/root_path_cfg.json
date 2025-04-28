@@ -317,6 +317,87 @@
             "Content-Type": ["text/xml"]
         }
     },
+    "POST:/:14alt3": {
+        "method": "POST",
+        "path": "/",
+        "headers": {
+            "Authorization": [
+                "^.*eu-south-*.*SignedHeaders=.*content-type;host;x-amz-date.*$"
+            ]
+        },
+        "body_conditions": {
+            "type": "PARAMETERS",
+            "parameters": {
+                "Action": [
+                    "^DescribeVolumes$"
+                ],
+                "Version": [
+                    "^2016\\-11\\-15$"
+                ],
+                "NextToken": [
+                    "^token02$"
+                ]
+            }
+        },
+        "template": "describe_volumes_02_page_03.xml",
+        "status": 200,
+        "response_headers": {
+            "Content-Type": ["text/xml"]
+        }
+    },
+    "POST:/:14alt2": {
+        "method": "POST",
+        "path": "/",
+        "headers": {
+            "Authorization": [
+                "^.*eu-south-*.*SignedHeaders=.*content-type;host;x-amz-date.*$"
+            ]
+        },
+        "body_conditions": {
+            "type": "PARAMETERS",
+            "parameters": {
+                "Action": [
+                    "^DescribeVolumes$"
+                ],
+                "Version": [
+                    "^2016\\-11\\-15$"
+                ],
+                "NextToken": [
+                    "^token01$"
+                ]
+            }
+        },
+        "template": "describe_volumes_02_page_02.xml",
+        "status": 200,
+        "response_headers": {
+            "Content-Type": ["text/xml"]
+        }
+    },
+    "POST:/:14alt": {
+        "method": "POST",
+        "path": "/",
+        "headers": {
+            "Authorization": [
+                "^.*eu-south-*.*SignedHeaders=.*content-type;host;x-amz-date.*$"
+            ]
+        },
+        "body_conditions": {
+            "type": "PARAMETERS",
+            "parameters": {
+                "Action": [
+                    "^DescribeVolumes$"
+                ],
+                "Version": [
+                    "^2016\\-11\\-15$"
+                ]
+            }
+        },
+        "template": "describe_volumes_02_page_01.xml",
+        "status": 200,
+        "response_headers": {
+            "Content-Type": ["text/xml"]
+        }
+    },
     "POST:/:14": {
         "method": "POST",
         "path": "/",
