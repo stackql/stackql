@@ -7805,3 +7805,144 @@ Select Paginated Projection From Transformed XML Response Body
     ...    ${EMPTY}
     ...    stdout=${CURDIR}/tmp/Select-Paginated-Projection-From-Transformed-XML-Response-Body.tmp
     ...    stderr=${CURDIR}/tmp/Select-Paginated-Projection-From-Transformed-XML-Response-Body-stderr.tmp 
+
+Select Join Paginated Projection From Transformed XML Response Body
+    ${inputStr} =    Catenate
+    ...    select lhs.volume_id, lhs.create_time, lhs.region, rhs.region as rhs_region, lhs.size from aws.ec2.volumes_presented lhs inner join aws.ec2.volumes_presented rhs on lhs.size = rhs.size  where lhs.region = 'eu-south-2' and rhs.region in ('ap-southeast-1', 'us-east-1') order by lhs.volume_id, rhs.region asc;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}volume_id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}create_time${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}region${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}rhs_region${SPACE}${SPACE}${SPACE}|${SPACE}size${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20100000000000000${SPACE}|${SPACE}2022-05-02T23:09:30.171Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}ap-southeast-1${SPACE}|${SPACE}${SPACE}${SPACE}10${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20100000000000000${SPACE}|${SPACE}2022-05-02T23:09:30.171Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}10${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20200000000000000${SPACE}|${SPACE}2022-05-11T04:45:40.627Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}ap-southeast-1${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}8${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20200000000000000${SPACE}|${SPACE}2022-05-11T04:45:40.627Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}8${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20300000000000000${SPACE}|${SPACE}2022-05-02T23:09:30.171Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}ap-southeast-1${SPACE}|${SPACE}${SPACE}${SPACE}10${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20300000000000000${SPACE}|${SPACE}2022-05-02T23:09:30.171Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}10${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20400000000000000${SPACE}|${SPACE}2022-05-11T04:45:40.627Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}ap-southeast-1${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}8${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20400000000000000${SPACE}|${SPACE}2022-05-11T04:45:40.627Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}8${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20500000000000000${SPACE}|${SPACE}2022-05-02T23:09:30.171Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}ap-southeast-1${SPACE}|${SPACE}${SPACE}${SPACE}10${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20500000000000000${SPACE}|${SPACE}2022-05-02T23:09:30.171Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}10${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20600000000000000${SPACE}|${SPACE}2022-05-11T04:45:40.627Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}ap-southeast-1${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}8${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20600000000000000${SPACE}|${SPACE}2022-05-11T04:45:40.627Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}8${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Select-Join-Paginated-Projection-From-Transformed-XML-Response-Body.tmp
+    ...    stderr=${CURDIR}/tmp/Select-Join-Paginated-Projection-From-Transformed-XML-Response-Body-stderr.tmp 
+
+Select View of Join Paginated Projection From Transformed XML Response Body
+    ${inputStr} =    Catenate
+    ...    create or replace view xml_v_01 as  select lhs.volume_id, lhs.create_time, lhs.region, rhs.region as rhs_region, lhs.size from aws.ec2.volumes_presented lhs inner join aws.ec2.volumes_presented rhs on lhs.size = rhs.size  where lhs.region = 'eu-south-2' and rhs.region in ('ap-southeast-1', 'us-east-1') order by lhs.volume_id, rhs.region asc;
+    ...    select volume_id, create_time, region, rhs_region, size from xml_v_01 order by volume_id, rhs_region asc;
+    ${stdErrStr} =    Catenate    SEPARATOR=\n
+    ...    DDL Execution Completed
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}volume_id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}create_time${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}region${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}rhs_region${SPACE}${SPACE}${SPACE}|${SPACE}size${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20100000000000000${SPACE}|${SPACE}2022-05-02T23:09:30.171Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}ap-southeast-1${SPACE}|${SPACE}${SPACE}${SPACE}10${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20100000000000000${SPACE}|${SPACE}2022-05-02T23:09:30.171Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}10${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20200000000000000${SPACE}|${SPACE}2022-05-11T04:45:40.627Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}ap-southeast-1${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}8${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20200000000000000${SPACE}|${SPACE}2022-05-11T04:45:40.627Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}8${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20300000000000000${SPACE}|${SPACE}2022-05-02T23:09:30.171Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}ap-southeast-1${SPACE}|${SPACE}${SPACE}${SPACE}10${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20300000000000000${SPACE}|${SPACE}2022-05-02T23:09:30.171Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}10${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20400000000000000${SPACE}|${SPACE}2022-05-11T04:45:40.627Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}ap-southeast-1${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}8${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20400000000000000${SPACE}|${SPACE}2022-05-11T04:45:40.627Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}8${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20500000000000000${SPACE}|${SPACE}2022-05-02T23:09:30.171Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}ap-southeast-1${SPACE}|${SPACE}${SPACE}${SPACE}10${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20500000000000000${SPACE}|${SPACE}2022-05-02T23:09:30.171Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}10${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20600000000000000${SPACE}|${SPACE}2022-05-11T04:45:40.627Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}ap-southeast-1${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}8${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20600000000000000${SPACE}|${SPACE}2022-05-11T04:45:40.627Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}8${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${stdErrStr}
+    ...    stdout=${CURDIR}/tmp/Select-View-of-Join-Paginated-Projection-From-Transformed-XML-Response-Body.tmp
+    ...    stderr=${CURDIR}/tmp/Select-View-of-Join-Paginated-Projection-From-Transformed-XML-Response-Body-stderr.tmp 
+
+Select Materialized View of Join Paginated Projection From Transformed XML Response Body
+    ${inputStr} =    Catenate
+    ...    create or replace materialized view xml_mv_01 as  select lhs.volume_id, lhs.create_time, lhs.region, rhs.region as rhs_region, lhs.size from aws.ec2.volumes_presented lhs inner join aws.ec2.volumes_presented rhs on lhs.size = rhs.size  where lhs.region = 'eu-south-2' and rhs.region in ('ap-southeast-1', 'us-east-1') order by lhs.volume_id, rhs.region asc;
+    ...    select volume_id, create_time, region, rhs_region, size from xml_mv_01 order by volume_id, rhs_region asc;
+    ${stdErrStr} =    Catenate    SEPARATOR=\n
+    ...    DDL Execution Completed
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}volume_id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}create_time${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}region${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}rhs_region${SPACE}${SPACE}${SPACE}|${SPACE}size${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20100000000000000${SPACE}|${SPACE}2022-05-02T23:09:30.171Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}ap-southeast-1${SPACE}|${SPACE}${SPACE}${SPACE}10${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20100000000000000${SPACE}|${SPACE}2022-05-02T23:09:30.171Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}10${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20200000000000000${SPACE}|${SPACE}2022-05-11T04:45:40.627Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}ap-southeast-1${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}8${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20200000000000000${SPACE}|${SPACE}2022-05-11T04:45:40.627Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}8${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20300000000000000${SPACE}|${SPACE}2022-05-02T23:09:30.171Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}ap-southeast-1${SPACE}|${SPACE}${SPACE}${SPACE}10${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20300000000000000${SPACE}|${SPACE}2022-05-02T23:09:30.171Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}10${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20400000000000000${SPACE}|${SPACE}2022-05-11T04:45:40.627Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}ap-southeast-1${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}8${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20400000000000000${SPACE}|${SPACE}2022-05-11T04:45:40.627Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}8${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20500000000000000${SPACE}|${SPACE}2022-05-02T23:09:30.171Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}ap-southeast-1${SPACE}|${SPACE}${SPACE}${SPACE}10${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20500000000000000${SPACE}|${SPACE}2022-05-02T23:09:30.171Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}10${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20600000000000000${SPACE}|${SPACE}2022-05-11T04:45:40.627Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}ap-southeast-1${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}8${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    ...    |${SPACE}vol-20600000000000000${SPACE}|${SPACE}2022-05-11T04:45:40.627Z${SPACE}|${SPACE}eu-south-2${SPACE}|${SPACE}us-east-1${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}8${SPACE}|
+    ...    |-----------------------|--------------------------|------------|----------------|------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${stdErrStr}
+    ...    stdout=${CURDIR}/tmp/Select-Materialized-View-of-Join-Paginated-Projection-From-Transformed-XML-Response-Body.tmp
+    ...    stderr=${CURDIR}/tmp/Select-Materialized-View-of-Join-Paginated-Projection-From-Transformed-XML-Response-Body-stderr.tmp 
