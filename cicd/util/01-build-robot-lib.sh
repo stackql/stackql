@@ -1,15 +1,12 @@
 #! /usr/bin/env bash
 
-poetryExe="$(which poetry)"
-rv="$?"
-if [ $rv -ne 0 ]; then
-    >&2 echo "Poetry is not installed. Please install it first." 
-    exit 1
-fi
-if [ "$poetryExe" = "" ]; then
-    >&2 echo "No poetry executable found in PATH. Please install it first."
-    exit 1
-fi
+checkPoetry () {
+    if ! command -v poetry &> /dev/null
+    then
+        >&2 echo "Poetry is not installed. Please install it first." 
+        exit 1
+    fi
+}
 
 CURDIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
@@ -17,12 +14,26 @@ REPOSITORY_ROOT="$(realpath ${CURDIR}/../..)"
 
 PACKAGE_ROOT="${REPOSITORY_ROOT}/test"
 
-venv_path="${REPOSITORY_ROOT}/.venv"
-
-
 rm -f ${PACKAGE_ROOT}/dist/*.whl || true
 
+if [ ! -d "${PACKAGE_ROOT}/.venv" ]; then
+  >&2 echo "No existing virtual environment, creating one..."
+  >&2 echo "Creating virtual environment in ${PACKAGE_ROOT}/.venv"
+  python -m venv "${PACKAGE_ROOT}/.venv"
+  >&2 echo "Virtual environment created."
+  >&2 echo "Installing poetry into virtual environment."
+  ${PACKAGE_ROOT}/.venv/bin/pip install -U pip setuptools
+  ${PACKAGE_ROOT}/.venv/bin/pip install poetry
+  >&2 echo "Poetry installed into virtual environment."
+else
+  >&2 echo "Using existing virtual environment in ${PACKAGE_ROOT}/.venv"
+fi
+
 cd "${PACKAGE_ROOT}"
+
+source ${PACKAGE_ROOT}/.venv/bin/activate
+
+checkPoetry
 
 poetry install
 
@@ -38,7 +49,6 @@ else
 fi
 
 
-# >&2 echo "Artifact built successfully: ${expectedRobotLibArtifact}"
 
 
 
