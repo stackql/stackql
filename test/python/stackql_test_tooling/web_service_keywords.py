@@ -6,14 +6,16 @@ from requests import get, post, Response
 
 import os
 
+from pathlib import Path, PurePosixPath
+
 from typing import Optional
 
 @library
 class web_service_keywords(Process):
 
+    _THIS_DIR: str = PurePosixPath(Path(os.path.dirname(os.path.abspath(__file__)))).as_posix()
     
-
-    _DEFAULT_APP_ROOT: str = 'test/python/stackql_test_tooling/flask'
+    _DEFAULT_APP_ROOT: str = os.path.join(_THIS_DIR, 'flask')
 
     _DEFAULT_TLS_KEY_PATH: str = 'test/server/mtls/credentials/pg_server_key.pem'
 
