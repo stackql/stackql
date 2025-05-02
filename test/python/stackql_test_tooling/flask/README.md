@@ -81,9 +81,9 @@ flask --app=${HOME}/stackql/stackql-devel/test/python/stackql_test_tooling/flask
 With embedded `sqlite` (default), from the root of this repository:
 
 ```bash
-export workspaceFolder="$(pwd)"
+source cicd/scripts/testing-env.sh
 
-stackql --registry="{ \"url\": \"file://${workspaceFolder}/test/registry-mocked\", \"localDocRoot\": \"${workspaceFolder}/test/registry-mocked\", \"verifyConfig\": { \"nopVerify\": true } }" --tls.allowInsecure shell
+stackql --registry="${stackqlMockedRegistryStr}" --auth="${stackqlAuthStr}" --tls.allowInsecure shell
 ```
 
 With `postgres`, from the root of this repository:
@@ -91,7 +91,15 @@ With `postgres`, from the root of this repository:
 ```bash
 docker compose -f docker-compose-externals.yml up postgres_stackql -d
 
-export workspaceFolder="$(pwd)"
+source cicd/scripts/testing-env.sh
 
-stackql --registry="{ \"url\": \"file://${workspaceFolder}/test/registry-mocked\", \"localDocRoot\": \"${workspaceFolder}/test/registry-mocked\", \"verifyConfig\": { \"nopVerify\": true } }" --tls.allowInsecure --sqlBackend="{ \"dbEngine\": \"postgres_tcp\", \"sqlDialect\": \"postgres\", \"dsn\": \"postgres://stackql:stackql@127.0.0.1:7432/stackql\" }" shell
+stackql --registry="${stackqlMockedRegistryStr}" --tls.allowInsecure --sqlBackend="{ \"dbEngine\": \"postgres_tcp\", \"sqlDialect\": \"postgres\", \"dsn\": \"postgres://stackql:stackql@127.0.0.1:7432/stackql\" }" shell
 ```
+
+## Sources of Mock Data
+
+There are some decent examples in vendor documentation, eg:
+
+- [Azure vendor documenation](https://learn.microsoft.com/en-us/rest/api/azure/).
+
+

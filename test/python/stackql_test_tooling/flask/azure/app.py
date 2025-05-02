@@ -10,13 +10,44 @@ app = Flask(__name__)
 app.template_folder = os.path.join(os.path.dirname(__file__), "templates")
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 @app.before_request
 def log_request_info():
     logger.info(f"Request: {request.method} {request.path}\n  - Query: {request.args}\n  - Headers: {request.headers}\n  - Body: {request.get_data()}")
 
+
+def _extract_req_adornments(req: Request) -> dict:
+    """
+    Extracts the request adornments from the request object.
+    """
+    req_adornments = {}
+    if req.headers.get('Authorization'):
+        auth_header = req.headers.get('Authorization')
+        if auth_header.startswith('Basic '):
+            auth_value = auth_header.split(' ')[1]
+            decoded_value = base64.b64decode(auth_value).decode('utf-8')
+            username, password = decoded_value.split(':', 1)
+            req_adornments['username'] = username
+            req_adornments['password'] = password
+        elif auth_header.startswith('Bearer '):
+            token = auth_header.split(' ')[1]
+            req_adornments['token'] = token
+    logger.debug(f"Host url: {request.host_url}")
+    host_components = request.host_url.split(':')
+    logger.debug(f"Host components: {host_components}")
+    if len(host_components) == 3:
+        req_adornments['scheme'] = host_components[0]
+        req_adornments['host_name'] = host_components[1].lstrip('/')
+        req_adornments['port'] = int(host_components[2].strip('/'))
+    elif len(host_components) == 2:
+        req_adornments['scheme'] = host_components[0]
+        req_adornments['host_name'] = host_components[1].lstrip('/')
+
+    logger.debug(f"Request adornments:\n {json.dumps(req_adornments, indent=2)}\n\n")
+
+    return req_adornments
 class GetMatcherConfig:
 
     _ROOT_PATH_CFG: List[dict] = {}
@@ -45,6 +76,7 @@ class GetMatcherConfig:
     
     def _match_json_by_key(self, lhs: dict, rhs: dict) -> bool:
         for key, value in rhs.items():
+            logger.debug(f"Matching key: {key} from {json.dumps(lhs)} with value: {value}")
             if key not in lhs:
                 return False
             if isinstance(value, dict):
@@ -53,6 +85,7 @@ class GetMatcherConfig:
             elif isinstance(value, list):
                 for item in value:
                     if not self._match_string(lhs[key], item):
+                        logger.debug(f"Matching item {item} in list {lhs[key]} failed")
                         return False
             elif isinstance(value, str):
                 if not self._match_string(lhs[key], value):
@@ -138,7 +171,7 @@ class GetMatcherConfig:
         for i in range(len(self._ROOT_PATH_CFG)):
             route_name: str = f"route_{i}"
             cfg: dict = self._ROOT_PATH_CFG[i]
-            logger.debug(f"Evaluating route: {route_name}")
+            logger.debug(f"Evaluating route: {route_name} with config: \n{json.dumps(cfg, indent=2, sort_keys=True)}\n\n")
 
             is_method_match: bool = self._is_method_match(req, cfg)
             if not is_method_match:
@@ -200,7 +233,7 @@ cfg_obj: GetMatcherConfig = GetMatcherConfig()
 @app.route('/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/<resourceGroupName>/providers/Microsoft.KeyVault/vaults/stackql-testing-keyvault/keys/', methods=['GET'])
 def keys_list_01(resourceGroupName):
     template_name = "keys-list-01.json"
-    response = make_response(render_template(template_name, request=request))
+    response = make_response(render_template(template_name, request=request, **_extract_req_adornments(request)))
     response.headers.update({"Content-Type": "application/json"})
     response.status_code = 200
     return response
@@ -208,7 +241,7 @@ def keys_list_01(resourceGroupName):
 @app.route('/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/<resourceGroupName>/providers/Microsoft.KeyVault/vaults/stackql-alt-keyvault/keys/', methods=['GET'])
 def keys_list_02(resourceGroupName):
     template_name = "keys-list-02.json"
-    response = make_response(render_template(template_name, request=request))
+    response = make_response(render_template(template_name, request=request, **_extract_req_adornments(request)))
     response.headers.update({"Content-Type": "application/json"})
     response.status_code = 200
     return response
@@ -216,7 +249,7 @@ def keys_list_02(resourceGroupName):
 @app.route('/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/<resourceGroupName>/providers/Microsoft.KeyVault/vaults/stackql-testing-keyvault/keys/dummy-key-01/', methods=['GET'])
 def key_detail_01(resourceGroupName):
     template_name = "key-detail-01.json"
-    response = make_response(render_template(template_name, request=request))
+    response = make_response(render_template(template_name, request=request, **_extract_req_adornments(request)))
     response.headers.update({"Content-Type": "application/json"})
     response.status_code = 200
     return response
@@ -224,7 +257,7 @@ def key_detail_01(resourceGroupName):
 @app.route('/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/<resourceGroupName>/providers/Microsoft.KeyVault/vaults/stackql-testing-keyvault/keys/dummy-key-02/', methods=['GET'])
 def key_detail_02(resourceGroupName):
     template_name = "key-detail-02.json"
-    response = make_response(render_template(template_name, request=request))
+    response = make_response(render_template(template_name, request=request, **_extract_req_adornments(request)))
     response.headers.update({"Content-Type": "application/json"})
     response.status_code = 200
     return response
@@ -232,7 +265,7 @@ def key_detail_02(resourceGroupName):
 @app.route('/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/<resourceGroupName>/providers/Microsoft.KeyVault/vaults/stackql-testing-keyvault/keys/alt-dummy-key-02/', methods=['GET'])
 def key_detail_03(resourceGroupName):
     template_name = "key-detail-03.json"
-    response = make_response(render_template(template_name, request=request))
+    response = make_response(render_template(template_name, request=request, **_extract_req_adornments(request)))
     response.headers.update({"Content-Type": "application/json"})
     response.status_code = 200
     return response
@@ -240,7 +273,7 @@ def key_detail_03(resourceGroupName):
 @app.route('/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/<resourceGroupName>/providers/Microsoft.KeyVault/vaults/stackql-alt-keyvault/keys/alt-dummy-key-01/', methods=['GET'])
 def key_detail_04(resourceGroupName):
     template_name = "key-detail-04.json"
-    response = make_response(render_template(template_name, request=request))
+    response = make_response(render_template(template_name, request=request, **_extract_req_adornments(request)))
     response.headers.update({"Content-Type": "application/json"})
     response.status_code = 200
     return response
@@ -248,7 +281,7 @@ def key_detail_04(resourceGroupName):
 @app.route('/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/<resourceGroupName>/providers/Microsoft.KeyVault/vaults/stackql-alt-keyvault/keys/alt-dummy-key-02/', methods=['GET'])
 def key_detail_05(resourceGroupName):
     template_name = "key-detail-05.json"
-    response = make_response(render_template(template_name, request=request))
+    response = make_response(render_template(template_name, request=request, **_extract_req_adornments(request)))
     response.headers.update({"Content-Type": "application/json"})
     response.status_code = 200
     return response
@@ -256,7 +289,7 @@ def key_detail_05(resourceGroupName):
 @app.route('/subscriptions/000000-0000-0000-0000-000000000011/resourceGroups/<resourceGroupName>/providers/Microsoft.KeyVault/vaults/stackql-testing-keyvault/keys/dummy-key-01/', methods=['GET'])
 def key_detail_06(resourceGroupName):
     template_name = "key-detail-06.json"
-    response = make_response(render_template(template_name, request=request))
+    response = make_response(render_template(template_name, request=request, **_extract_req_adornments(request)))
     response.headers.update({"Content-Type": "application/json"})
     response.status_code = 200
     return response
@@ -264,7 +297,7 @@ def key_detail_06(resourceGroupName):
 @app.route('/subscriptions/000000-0000-0000-0000-000000000011/resourceGroups/<resourceGroupName>/providers/Microsoft.KeyVault/vaults/stackql-testing-keyvault/keys/', methods=['GET'])
 def keys_list_03(resourceGroupName):
     template_name = "keys-list-03.json"
-    response = make_response(render_template(template_name, request=request))
+    response = make_response(render_template(template_name, request=request, **_extract_req_adornments(request)))
     response.headers.update({"Content-Type": "application/json"})
     response.status_code = 200
     return response
@@ -272,7 +305,7 @@ def keys_list_03(resourceGroupName):
 @app.route('/subscriptions/<subscriptionId>/providers/Microsoft.Compute/sshPublicKeys/', methods=['GET'])
 def ssh_public_keys_list(subscriptionId):
     template_name = "ssh-public-keys-list-01.json"
-    response = make_response(render_template(template_name, request=request))
+    response = make_response(render_template(template_name, request=request, **_extract_req_adornments(request)))
     response.headers.update({"Content-Type": "application/json"})
     response.status_code = 200
     return response
@@ -280,7 +313,7 @@ def ssh_public_keys_list(subscriptionId):
 @app.route('/subscriptions/<subscriptionId>/resourceGroups/<resourceGroupId>/providers/Microsoft.Compute/virtualMachines/', methods=['GET'])
 def virtual_machines_list(subscriptionId, resourceGroupId):
     template_name = "virtual-machines-list-01.json"
-    response = make_response(render_template(template_name, request=request))
+    response = make_response(render_template(template_name, request=request, **_extract_req_adornments(request)))
     response.headers.update({"Content-Type": "application/json"})
     response.status_code = 200
     return response
@@ -295,11 +328,11 @@ def generic_handler(request: Request):
     route_cfg: dict = cfg_obj.match_route(request)
     template_name = route_cfg.get("httpResponse", {}).get("template", "")
     if not template_name:
-        rv = make_response(render_template('nil-response.json', request=request))
+        rv = make_response(render_template('nil-response.json', request=request, **_extract_req_adornments(request)))
         rv.status_code = 404
         return rv
     logger.info(f"routing to template: {template_name}")
-    response = make_response(render_template(template_name, request=request))
+    response = make_response(render_template(template_name, request=request, **_extract_req_adornments(request)))
     response.headers.update(route_cfg.get("httpResponse", {}).get("headers", {}))
     response.status_code = route_cfg.get("httpResponse", {}).get("status", 200)
     return response
