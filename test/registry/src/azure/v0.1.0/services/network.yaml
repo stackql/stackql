@@ -197,6 +197,31 @@ components:
       schema:
         type: string
   schemas:
+    VNetListingFlattened:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Resource ID.
+        name:
+          type: string
+          description: Resource name.
+        type:
+          type: string
+          description: Resource type.
+        location:
+          type: string
+          description: Resource location.
+        provisioning_state:
+          type: string
+        subnet_id:
+          type: string
+        subnet_name:
+          type: string
+        subnet_address_prefix:
+          type: string
+        subnet_provisioning_state:
+          type: string
     VNetListingTransformed:
       type: object
       properties:
@@ -240,6 +265,18 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/VNetListingTransformed'
+          description: List of virtual networks.
+        next_link:
+          type: string
+          description: The URL to get the next set of results.
+      description: Response for ListVNet API service call.
+    VNetListingsFlattened:
+      type: object
+      properties:
+        line_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/VNetListingFlattened'
           description: List of virtual networks.
         next_link:
           type: string
@@ -25339,6 +25376,99 @@ components:
             openAPIDocKey: '200'
       sqlVerbs:
         select: []
+        insert: []
+        update: []
+        delete: []
+    virtual_networks_flattened:
+      id: azure.network.virtual_networks
+      name: virtual_networks
+      title: virtual_networks
+      methods:
+        list_all_flattened:
+          config:
+            pagination:
+              requestToken:
+                key: ''
+                location: request
+              responseToken:
+                key: $.next_link
+                location: body
+          operation:
+            $ref: '#/paths/~1subscriptions~1{subscriptionId}~1providers~1Microsoft.Network~1virtualNetworks~1?api-version=2023-11-01/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            overrideMediaType: application/json
+            objectKey: $.line_items
+            schema_override:
+              $ref: '#/components/schemas/VNetListingsFlattened'
+            transform:
+              body: >
+                {
+                  {{- with index . "nextLink" }}
+                  "next_link": {{printf "%q" .}},
+                  {{- end }}
+                  "line_items": [
+                    {{- $items := index . "value" -}}
+                    {{- $first := true -}}
+                    {{- if eq (printf "%T" $items) "map[string]interface {}" }}
+                      {{template "rows" $items}}
+                    {{- else }}
+                      {{- range $vnet := $items }}
+                        {{- if not $first}},{{end}}
+                        {{template "rows" $vnet}}
+                        {{- $first = false }}
+                      {{- end }}
+                    {{- end }}
+                  ]
+                }
+                {{define "rows"}}
+                  {{- $vnet := . }}
+                  {{- $subnets := index $vnet "properties" "subnets" }}
+                  {{- if eq (printf "%T" $subnets) "map[string]interface {}" }}
+                    {{template "row" $vnet}}
+                  {{- else if eq (printf "%T" $subnets) "[]interface {}" }}
+                    {{- if eq (len $subnets) 0 }}
+                      {{template "row" $vnet}}
+                    {{- else }}
+                      {{- range $i, $s := $subnets }}
+                        {{- if $i}},{{end}}
+                {
+                  "id": {{printf "%q" (index $vnet "id")}},
+                  "name": {{printf "%q" (index $vnet "name")}},
+                  "type": {{with index $vnet "type"}}{{printf "%q" .}}{{else}}null{{end}},
+                  "location": {{printf "%q" (index $vnet "location")}},
+                  "address_prefixes": {{with index $vnet "properties" "addressSpace" "addressPrefixes"}}{{printf "%q" .}}{{else}}[]{{end}},
+                  "provisioning_state": {{with index $vnet "properties" "provisioningState"}}{{printf "%q" .}}{{else}}null{{end}},
+                  "subnet_id": {{with $s}}{{printf "%q" (index . "id")}}{{else}}null{{end}},
+                  "subnet_name": {{with $s}}{{printf "%q" (index . "name")}}{{else}}null{{end}},
+                  "subnet_address_prefix": {{with $s}}{{with index . "properties" "addressPrefix"}}{{printf "%q" .}}{{else}}null{{end}}{{else}}null{{end}},
+                  "subnet_provisioning_state": {{with $s}}{{with index . "properties" "provisioningState"}}{{printf "%q" .}}{{else}}null{{end}}{{else}}null{{end}}
+                }
+                      {{- end }}
+                  {{- end }}
+                  {{- else }}
+                    {{template "row" $vnet}}
+                  {{- end }}
+                {{end}}
+                {{define "row"}}
+                {
+                  "id": {{printf "%q" (index . "id")}},
+                  "name": {{printf "%q" (index . "name")}},
+                  "type": {{with index . "type"}}{{printf "%q" .}}{{else}}null{{end}},
+                  "location": {{printf "%q" (index . "location")}},
+                  "address_prefixes": {{with index . "properties" "addressSpace" "addressPrefixes"}}{{printf "%q" .}}{{else}}[]{{end}},
+                  "provisioning_state": {{with index . "properties" "provisioningState"}}{{printf "%q" .}}{{else}}null{{end}},
+                  "subnet_id": null,
+                  "subnet_name": null,
+                  "subnet_address_prefix": null,
+                  "subnet_provisioning_state": null
+                }
+                {{end}}
+              type: 'golang_template_json_v0.1.0'
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/virtual_networks_flattened/methods/list_all_flattened'
         insert: []
         update: []
         delete: []
