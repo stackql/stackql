@@ -5,6 +5,43 @@
         "Accept": [ "application/json" ]
       },
       "method": "GET",
+      "path": "/subscriptions/subid/providers/Microsoft.Network/virtualNetworks/",
+      "queryStringParameters" : {
+        "api-version" : [ "2023-11-01" ],
+        "$skiptoken": [ "0011" ]
+      }
+    },
+    "httpResponse": {
+      "template": "virtual-networks-list-all-paginated-02.json",
+      "headers": {
+        "Content-Type": "application/json; charset=utf-8"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "Accept": [ "application/json" ]
+      },
+      "method": "GET",
+      "path": "/subscriptions/subid/providers/Microsoft.Network/virtualNetworks/",
+      "queryStringParameters" : {
+        "api-version" : [ "2023-11-01" ]
+      }
+    },
+    "httpResponse": {
+      "template": "virtual-networks-list-all-paginated-01.json",
+      "headers": {
+        "Content-Type": "application/json; charset=utf-8"
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "headers": {
+        "Accept": [ "application/json" ]
+      },
+      "method": "GET",
       "path": "/subscriptions/000000-0000-0000-0000-000000000022/resourceGroups/rg2/providers/Microsoft.Network/virtualNetworkGateways/",
       "queryStringParameters" : {
         "api-version" : [ "2023-11-01" ]

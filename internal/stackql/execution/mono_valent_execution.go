@@ -1,7 +1,6 @@
 package execution
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -1330,19 +1329,34 @@ func (mv *monoValentExecution) GetExecutor() (func(pc primitive.IPrimitiveCtx) i
 				expectedResponse, isExpectedResponse := m.GetResponse()
 				if isExpectedResponse {
 					responseTransform, responseTransformExists := expectedResponse.GetTransform()
-					if responseTransformExists && responseTransform.GetType() == "golang_template_v0.1.0" {
+					if responseTransformExists {
 						input := stdoutStr
-						tmpl := responseTransform.GetBody()
-						inStream := stream_transform.NewTextReader(bytes.NewBufferString(input))
-						outStream := bytes.NewBuffer(nil)
-						tfm, setupErr := stream_transform.NewTemplateStreamTransformer(tmpl, inStream, outStream)
-						if setupErr != nil {
-							return internaldto.NewErroneousExecutorOutput(fmt.Errorf("template stream transform error: %w", setupErr))
+						streamTransformerFactory := stream_transform.NewStreamTransformerFactory(
+							responseTransform.GetType(),
+							responseTransform.GetBody(),
+						)
+						if !streamTransformerFactory.IsTransformable() {
+							return internaldto.NewErroneousExecutorOutput(
+								fmt.Errorf("unsupported template type: %s", responseTransform.GetType()),
+							)
 						}
-						if tfErr := tfm.Transform(); tfErr != nil {
-							return internaldto.NewErroneousExecutorOutput(fmt.Errorf("failed to transform: %w", tfErr))
+						tfm, getTfmErr := streamTransformerFactory.GetTransformer(input)
+						if getTfmErr != nil {
+							return internaldto.NewErroneousExecutorOutput(
+								fmt.Errorf("failed to transform: %w", getTfmErr))
 						}
-						outputStr := outStream.String()
+						transformError := tfm.Transform()
+						if transformError != nil {
+							return internaldto.NewErroneousExecutorOutput(
+								fmt.Errorf("failed to transform: %w", transformError))
+						}
+						outStream := tfm.GetOutStream()
+						outputBytes, readErr := io.ReadAll(outStream)
+						if readErr != nil {
+							return internaldto.NewErroneousExecutorOutput(
+								fmt.Errorf("failed to read transformed stream: %w", readErr))
+						}
+						outputStr := string(outputBytes)
 						stdoutStr = outputStr
 					}
 				}

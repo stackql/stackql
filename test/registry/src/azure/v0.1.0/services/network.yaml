@@ -197,6 +197,54 @@ components:
       schema:
         type: string
   schemas:
+    VNetListingTransformed:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Resource ID.
+        name:
+          type: string
+          description: Resource name.
+        type:
+          type: string
+          description: Resource type.
+        location:
+          type: string
+          description: Resource location.
+        provisioning_state:
+          type: string
+        subnets:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                description: Resource ID.
+              name:
+                type: string
+                description: Resource name.
+              address_prefixes:
+                type: array
+                items:
+                  type: string
+                  description: Address prefixes.
+                description: Resource type.
+              provisioning_state:
+                type: string
+    VNetListingsTransformed:
+      type: object
+      properties:
+        line_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/VNetListingTransformed'
+          description: List of virtual networks.
+        next_link:
+          type: string
+          description: The URL to get the next set of results.
+      description: Response for ListVNet API service call.
     NetworkManagerConnection:
       description: The Network Manager Connection resource
       properties:
@@ -25324,6 +25372,80 @@ components:
             mediaType: application/json
             openAPIDocKey: '200'
             objectKey: $.value
+        # list_all:
+        #   operation:
+        #     $ref: '#/paths/~1subscriptions~1{subscriptionId}~1providers~1Microsoft.Network~1virtualNetworks~1?api-version=2023-11-01/get'
+        #   response:
+        #     mediaType: application/json
+        #     openAPIDocKey: '200'
+        #     objectKey: $.value
+        list_all_presented:
+          config:
+            pagination:
+              requestToken:
+                key: ''
+                location: request
+              responseToken:
+                key: $.next_link
+                location: body
+          operation:
+            $ref: '#/paths/~1subscriptions~1{subscriptionId}~1providers~1Microsoft.Network~1virtualNetworks~1?api-version=2023-11-01/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            overrideMediaType: application/json
+            objectKey: $.line_items
+            schema_override:
+              $ref: '#/components/schemas/VNetListingsTransformed'
+            transform:
+              body: >
+                {
+                  {{- with index . "nextLink" }}
+                  "next_link": {{printf "%q" .}},
+                  {{- end }}
+                  "line_items": [
+                    {{- $items := index . "value" -}}
+                    {{- if eq (printf "%T" $items) "map[string]interface {}" }}
+                      {{template "vnet" $items}}
+                    {{- else }}
+                      {{- range $i, $v := $items }}
+                        {{- if $i}},{{end}}
+                        {{template "vnet" $v}}
+                      {{- end }}
+                    {{- end }}
+                  ]
+                }
+                {{define "subnet"}}
+                {
+                  "id": {{printf "%q" (index . "id")}},
+                  "name": {{printf "%q" (index . "name")}},
+                  "address_prefixes": {{with index . "properties" "addressPrefixes"}}{{printf "%q" .}}{{else}}null{{end}},
+                  "provisioning_state": {{with index . "properties" "provisioningState"}}{{printf "%q" .}}{{else}}null{{end}}
+                }
+                {{end}}
+                {{define "vnet"}}
+                {
+                  "id": {{printf "%q" (index . "id")}},
+                  "name": {{printf "%q" (index . "name")}},
+                  "type": {{with index . "type"}}{{printf "%q" .}}{{else}}null{{end}},
+                  "location": {{printf "%q" (index . "location")}},
+                  "address_prefixes": {{with index . "properties" "addressSpace" "addressPrefixes"}}{{printf "%q" .}}{{else}}[]{{end}},
+                  "subnets": [
+                    {{- with index . "properties" "subnets" }}
+                      {{- if eq (printf "%T" .) "map[string]interface {}" }}
+                        {{template "subnet" .}}
+                      {{- else if eq (printf "%T" .) "[]interface {}" }}
+                        {{- range $i, $v := . }}
+                          {{- if $i}},{{end}}
+                          {{template "subnet" $v}}
+                        {{- end }}
+                      {{- end }}
+                    {{- end }}
+                  ],
+                  "provisioning_state": {{with index . "properties" "provisioningState"}}{{printf "%q" .}}{{else}}null{{end}}
+                }
+                {{end}}
+              type: 'golang_template_json_v0.1.0'
         check_ip_address_availability:
           operation:
             $ref: '#/paths/~1subscriptions~1{subscriptionId}~1resourceGroups~1{resourceGroupName}~1providers~1Microsoft.Network~1virtualNetworks~1{virtualNetworkName}~1CheckIPAddressAvailability~1?api-version=2023-11-01/get'
@@ -25334,6 +25456,7 @@ components:
         select:
           - $ref: '#/components/x-stackQL-resources/virtual_networks/methods/get'
           - $ref: '#/components/x-stackQL-resources/virtual_networks/methods/list'
+          - $ref: '#/components/x-stackQL-resources/virtual_networks/methods/list_all_presented'
         insert:
           - $ref: '#/components/x-stackQL-resources/virtual_networks/methods/create_or_update'
         update: []
