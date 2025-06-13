@@ -645,9 +645,7 @@ func (pgb *standardPlanGraphBuilder) handleDelete(pbi planbuilderinput.PlanBuild
 }
 
 //nolint:gocognit // acceptable
-func (pgb *standardPlanGraphBuilder) handleRegistry(
-	pbi planbuilderinput.PlanBuilderInput,
-) error {
+func (pgb *standardPlanGraphBuilder) handleRegistry(pbi planbuilderinput.PlanBuilderInput) error {
 	handlerCtx := pbi.GetHandlerCtx()
 	node, ok := pbi.GetRegistry()
 	if !ok {
@@ -670,14 +668,32 @@ func (pgb *standardPlanGraphBuilder) handleRegistry(
 				providerVersion := node.ProviderVersion
 				if providerVersion == "" {
 					providerVersion, err = reg.GetLatestPublishedVersion(node.ProviderId)
+					if err != nil {
+						return internaldto.NewErroneousExecutorOutput(err)
+					}
 				}
-				if err != nil {
+
+				// Get all existing versions from local filesystem
+				localProviders := reg.ListLocallyAvailableProviders()
+				if providerDesc, exists := localProviders[node.ProviderId]; exists {
+					// Remove all existing versions
+					for _, version := range providerDesc.Versions {
+						if err := reg.RemoveProviderVersion(node.ProviderId, version); err != nil {
+							return internaldto.NewErroneousExecutorOutput(err)
+						}
+					}
+				}
+
+				// Clear provider cache before pulling new version
+				if err := reg.ClearProviderCache(node.ProviderId); err != nil {
 					return internaldto.NewErroneousExecutorOutput(err)
 				}
-				err = reg.PullAndPersistProviderArchive(node.ProviderId, providerVersion)
-				if err != nil {
+
+				// Pull and persist the requested version
+				if err := reg.PullAndPersistProviderArchive(node.ProviderId, providerVersion); err != nil {
 					return internaldto.NewErroneousExecutorOutput(err)
 				}
+
 				return util.PrepareResultSet(
 					internaldto.NewPrepareResultSetPlusRawDTO(
 						nil, nil, nil, nil, nil,
