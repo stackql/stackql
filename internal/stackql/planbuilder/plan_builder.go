@@ -24,6 +24,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/primitivebuilder"
 	"github.com/stackql/stackql/internal/stackql/primitivegenerator"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
+	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/util"
 
@@ -919,9 +920,36 @@ func (pgb *standardPlanGraphBuilder) handleInsert(pbi planbuilderinput.PlanBuild
 		if isPhysicalTable {
 			bldrInput.SetIsTargetPhysicalTable(true)
 		}
-		bldr := primitivebuilder.NewInsertOrUpdate(
-			bldrInput,
-		)
+		var bldr primitivebuilder.Builder
+		if len(node.SelectExprs) > 0 {
+			// Two cases:
+			//   1. Synchronous.  Equivalent to select.
+			//   2. Asynchronous.  Whole other story.
+			//   Synchronous only for now...
+			tableMeta, tableMetaExists := bldrInput.GetTableMetadata()
+			if !tableMetaExists {
+				return fmt.Errorf("could not obtain table metadata for node '%s'", node.Action)
+			}
+			rc, rcErr := tableinsertioncontainer.NewTableInsertionContainer(
+				tableMeta,
+				handlerCtx.GetSQLEngine(),
+				handlerCtx.GetTxnCounterMgr(),
+			)
+			if rcErr != nil {
+				return rcErr
+			}
+			bldrInput.SetTableInsertionContainer(rc)
+			bldr = primitivebuilder.NewSingleAcquireAndSelect(
+				bldrInput,
+				primitiveGenerator.GetPrimitiveComposer().GetInsertPreparedStatementCtx(),
+				primitiveGenerator.GetPrimitiveComposer().GetSelectPreparedStatementCtx(),
+				nil,
+			)
+		} else {
+			bldr = primitivebuilder.NewInsertOrUpdate(
+				bldrInput,
+			)
+		}
 		err = bldr.Build()
 		if err != nil {
 			return err

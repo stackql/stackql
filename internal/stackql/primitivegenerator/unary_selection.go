@@ -2,6 +2,7 @@ package primitivegenerator
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql/internal/stackql/astvisit"
@@ -206,7 +207,18 @@ func (pb *standardPrimitiveGenerator) analyzeUnaryAction(
 	if itemObjS != nil {
 		itemSchemaName = itemObjS.GetName()
 	}
-	hIDs := internaldto.NewHeirarchyIdentifiers(rawhIDs.GetProviderStr(), rawhIDs.GetServiceStr(), itemSchemaName, "")
+	publishedMethodKey := ""
+	switch node := node.(type) {
+	case *sqlparser.Insert:
+		publishedMethodKey = node.Action
+	case *sqlparser.Update:
+		publishedMethodKey = node.Action
+	case *sqlparser.Delete:
+		publishedMethodKey = "delete"
+	default:
+	}
+	hIDs := internaldto.NewHeirarchyIdentifiers(
+		rawhIDs.GetProviderStr(), rawhIDs.GetServiceStr(), itemSchemaName, strings.ToLower(publishedMethodKey))
 
 	// annotatedInsertTabulation := util.NewAnnotatedTabulation(insertTabulation, hIDs, inputTableName, "")
 
