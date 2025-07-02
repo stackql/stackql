@@ -1535,6 +1535,7 @@ jobs:
         name: digests-${{ env.PLATFORM_PAIR }}
 
     - name: Prepare digest information
+      if: env.BUILD_IMAGE_REQUIRED == 'true'
       working-directory: ${{ runner.temp }}/digests
       run: |
         platform=${{ matrix.platform }}
