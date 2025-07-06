@@ -108,8 +108,6 @@ func (ss *sqlDataSourceSingleSelectAcquire) Build() error {
 	if err != nil {
 		return err
 	}
-	// targetTableName := annotationCtx.GetHIDs().GetStackQLTableName()
-	// inputQuery := fmt.Sprintf(`INSERT INTO %s ( %s ) VALUES ( ?,  )`, targetTableName, projectionStr, tableName)
 	//nolint:revive // no big deal
 	ex := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 		// ss.tableMeta.GetP

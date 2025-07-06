@@ -1327,6 +1327,17 @@ components:
             openAPIDocKey: '200'
       name: buckets
       title: buckets
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/buckets/methods/get'
+          - $ref: '#/components/x-stackQL-resources/buckets/methods/list'
+        insert:
+          - $ref: '#/components/x-stackQL-resources/buckets/methods/insert'
+        update:
+          - $ref: '#/components/x-stackQL-resources/buckets/methods/patch'
+          - $ref: '#/components/x-stackQL-resources/buckets/methods/update'
+        delete:
+          - $ref: '#/components/x-stackQL-resources/buckets/methods/delete'
     channels:
       id: google.storage.channels
       methods:
