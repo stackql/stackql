@@ -8,7 +8,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 )
 
-type InsertOrUpdate struct {
+type insertOrUpdate struct {
 	bldrInput builder_input.BuilderInput
 	root      primitivegraph.PrimitiveNode
 }
@@ -16,20 +16,20 @@ type InsertOrUpdate struct {
 func NewInsertOrUpdate(
 	bldrInput builder_input.BuilderInput,
 ) Builder {
-	return &InsertOrUpdate{
+	return &insertOrUpdate{
 		bldrInput: bldrInput,
 	}
 }
 
-func (ss *InsertOrUpdate) GetRoot() primitivegraph.PrimitiveNode {
+func (ss *insertOrUpdate) GetRoot() primitivegraph.PrimitiveNode {
 	return ss.root
 }
 
-func (ss *InsertOrUpdate) GetTail() primitivegraph.PrimitiveNode {
+func (ss *insertOrUpdate) GetTail() primitivegraph.PrimitiveNode {
 	return ss.root
 }
 
-func (ss *InsertOrUpdate) Build() error {
+func (ss *insertOrUpdate) Build() error {
 	node, nodeExists := ss.bldrInput.GetParserNode()
 	if !nodeExists {
 		return fmt.Errorf("mutation executor: node does not exist")

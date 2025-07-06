@@ -10,6 +10,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/astindirect"
 	"github.com/stackql/stackql/internal/stackql/astvisit"
 	"github.com/stackql/stackql/internal/stackql/dependencyplanner"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/builder_input"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/planbuilderinput"
 	"github.com/stackql/stackql/internal/stackql/primitivebuilder"
@@ -251,12 +252,16 @@ func (pb *standardPrimitiveGenerator) analyzeSelect(pbi planbuilderinput.PlanBui
 				return indirectErr
 			}
 			annotatedAST.SetSelectIndirect(node, selIndirect)
+			bldrInput := builder_input.NewBuilderInput(
+				pChild.GetPrimitiveComposer().GetGraphHolder(),
+				handlerCtx,
+				tbl,
+			)
+			bldrInput.SetTxnCtrlCtrs(pChild.GetPrimitiveComposer().GetTxnCtrlCtrs())
+			bldrInput.SetTableInsertionContainer(insertionContainer)
 			pChild.GetPrimitiveComposer().SetBuilder(
 				primitivebuilder.NewSingleAcquireAndSelect(
-					pChild.GetPrimitiveComposer().GetGraphHolder(),
-					pChild.GetPrimitiveComposer().GetTxnCtrlCtrs(),
-					handlerCtx,
-					insertionContainer,
+					bldrInput,
 					pChild.GetPrimitiveComposer().GetInsertPreparedStatementCtx(),
 					pChild.GetPrimitiveComposer().GetSelectPreparedStatementCtx(),
 					nil))

@@ -18,6 +18,20 @@ def v1_storage_buckets_list():
         return render_template('buckets-list.json'), 200, {'Content-Type': 'application/json'}
     return '{"msg": "Project Not Found"}', 404, {'Content-Type': 'application/json'}
 
+@app.route('/storage/v1/b', methods=['POST'])
+def v1_storage_buckets_insert():
+    # Validate the incoming query
+    body = request.get_json()
+    if not body or 'name' not in body:
+        return '{"msg": "Invalid request body"}', 400, {'Content-Type': 'application/json'}
+    bucket_name = body['name']
+    project_name = request.args.get('project')
+    if not project_name:
+        return '{"msg": "Invalid request: project not supplied"}', 400, {'Content-Type': 'application/json'}
+    if project_name == 'testing-project':
+        return render_template('buckets-insert-generic.jinja.json', bucket_name=bucket_name), 200, {'Content-Type': 'application/json'}
+    return '{"msg": "Disallowed"}', 401, {'Content-Type': 'application/json'}
+
 @app.route('/v1/projects/testing-project-three/locations/global/keyRings/testing-three/cryptoKeys', methods=['GET'])
 def v1_projects_testing_project_three_locations_global_keyRings_testing_three_cryptoKeys():
     return render_template('route_1_template.json'), 200, {'Content-Type': 'application/json'}
