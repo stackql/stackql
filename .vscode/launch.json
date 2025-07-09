@@ -177,6 +177,7 @@
         "delete from aws.cloud_control.resources  where  region = 'ap-southeast-1'  and data__TypeName = 'AWS::Logs::LogGroup'  and data__Identifier = 'LogGroupResourceExampleThird' ;",
         "insert into google.storage.buckets( project, data__name) select  'testing-project', 'silly-bucket' returning projectNumber;",
         "insert /*+ AWAIT */ into google.compute.networks(project, data__name, data__autoCreateSubnetworks) select 'mutable-project', 'auto-test-01', false returning creationTimestamp, name;",
+        "registry pull google 'v0.1.2'; show resources in google.storage; registry pull google 'v0.1.1-alpha01'; show resources in google.storage; registry pull google 'v0.1.0'; show resources in google.storage;",
       ],
       "default": "show providers;"
     },
@@ -195,7 +196,8 @@
         "{ \"url\": \"https://cdn.statically.io/gh/stackql/stackql-provider-registry/main/providers\", \"localDocRoot\": \"${workspaceFolder}/test/registry\" }",
         "{ \"url\": \"https://cdn.statically.io/gh/stackql/stackql-provider-registry/dev/providers\" }",
         "{ \"url\": \"https://registry-dev.stackql.app/providers\" }",
-        "{ \"url\": \"https://registry.stackql.app/providers\" }"
+        "{ \"url\": \"https://registry.stackql.app/providers\" }",
+        "{\"url\": \"http://localhost:1094/gh/stackql/stackql-provider-registry/main/providers\", \"verifyConfig\": {\"nopVerify\": true}}",
       ],
       "default": "{ \"url\": \"file://${workspaceFolder}/test/registry\", \"localDocRoot\": \"${workspaceFolder}/test/registry\", \"verifyConfig\": { \"nopVerify\": true } }"
     },

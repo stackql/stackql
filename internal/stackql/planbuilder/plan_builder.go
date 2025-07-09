@@ -647,9 +647,7 @@ func (pgb *standardPlanGraphBuilder) handleDelete(pbi planbuilderinput.PlanBuild
 }
 
 //nolint:gocognit // acceptable
-func (pgb *standardPlanGraphBuilder) handleRegistry(
-	pbi planbuilderinput.PlanBuilderInput,
-) error {
+func (pgb *standardPlanGraphBuilder) handleRegistry(pbi planbuilderinput.PlanBuilderInput) error {
 	handlerCtx := pbi.GetHandlerCtx()
 	node, ok := pbi.GetRegistry()
 	if !ok {
@@ -665,29 +663,10 @@ func (pgb *standardPlanGraphBuilder) handleRegistry(
 		return err
 	}
 	pr := primitive.NewLocalPrimitive(
-		//nolint:revive // acceptable for now
-		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+		func(_ primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			switch at := strings.ToLower(node.ActionType); at {
 			case "pull":
-				providerVersion := node.ProviderVersion
-				if providerVersion == "" {
-					providerVersion, err = reg.GetLatestPublishedVersion(node.ProviderId)
-				}
-				if err != nil {
-					return internaldto.NewErroneousExecutorOutput(err)
-				}
-				err = reg.PullAndPersistProviderArchive(node.ProviderId, providerVersion)
-				if err != nil {
-					return internaldto.NewErroneousExecutorOutput(err)
-				}
-				return util.PrepareResultSet(
-					internaldto.NewPrepareResultSetPlusRawDTO(
-						nil, nil, nil, nil, nil,
-						internaldto.NewBackendMessages([]string{fmt.Sprintf(
-							"%s provider, version '%s' successfully installed",
-							node.ProviderId, providerVersion)}),
-						nil,
-						pbi.GetHandlerCtx().GetTypingConfig()))
+				return pgb.handleRegistryPull(reg, node, pbi)
 			case "list":
 				var colz []string
 				var provz map[string]anysdk.ProviderDescription
@@ -737,8 +716,56 @@ func (pgb *standardPlanGraphBuilder) handleRegistry(
 		},
 	)
 	pgb.planGraphHolder.CreatePrimitiveNode(pr)
-
 	return nil
+}
+
+// handleRegistryPull is a helper function that pulls a provider version from the registry and persists it locally.
+func (pgb *standardPlanGraphBuilder) handleRegistryPull(
+	reg anysdk.RegistryAPI,
+	node *sqlparser.Registry,
+	pbi planbuilderinput.PlanBuilderInput,
+) internaldto.ExecutorOutput {
+	providerVersion := node.ProviderVersion
+	var err error
+	if providerVersion == "" {
+		providerVersion, err = reg.GetLatestPublishedVersion(node.ProviderId)
+		if err != nil {
+			return internaldto.NewErroneousExecutorOutput(err)
+		}
+	}
+	// Get all existing versions from local filesystem
+	localProviders := reg.ListLocallyAvailableProviders()
+	// Handle special case for google provider
+	providerID := node.ProviderId
+	if providerID == "google" {
+		providerID = "googleapis.com"
+	}
+	if providerDesc, exists := localProviders[providerID]; exists {
+		// Remove all existing versions
+		for _, version := range providerDesc.Versions {
+			if err = reg.RemoveProviderVersion(providerID, version); err != nil {
+				return internaldto.NewErroneousExecutorOutput(err)
+			}
+		}
+	}
+	// Clear provider cache before pulling new version
+	if err = reg.ClearProviderCache(providerID); err != nil {
+		return internaldto.NewErroneousExecutorOutput(err)
+	}
+	handlerCtx := pbi.GetHandlerCtx()
+	_ = handlerCtx.DeleteProvider(providerID)
+	// Pull and persist the requested version
+	if err = reg.PullAndPersistProviderArchive(node.ProviderId, providerVersion); err != nil {
+		return internaldto.NewErroneousExecutorOutput(err)
+	}
+	return util.PrepareResultSet(
+		internaldto.NewPrepareResultSetPlusRawDTO(
+			nil, nil, nil, nil, nil,
+			internaldto.NewBackendMessages([]string{fmt.Sprintf(
+				"%s provider, version '%s' successfully installed",
+				node.ProviderId, providerVersion)}),
+			nil,
+			pbi.GetHandlerCtx().GetTypingConfig()))
 }
 
 func (pgb *standardPlanGraphBuilder) handlePurge(pbi planbuilderinput.PlanBuilderInput) error {
