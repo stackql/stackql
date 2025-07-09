@@ -8550,3 +8550,30 @@ Insert Returning Simple Projection
     ...    ${EMPTY}
     ...    stdout=${CURDIR}/tmp/Insert-Returning-Simple-Projection.tmp
     ...    stderr=${CURDIR}/tmp/Insert-Returning-Simple-Projection-stderr.tmp
+
+Insert Async Returning Simple Projection
+    [Documentation]    Insert a row into a table and return projected new object values. For **asynchronously** created objects.
+    ${inputStr} =    Catenate
+    ...    insert /*+ AWAIT */ into google.compute.networks(project, data__name, data__autoCreateSubnetworks) select 'mutable-project', 'auto-test-01', false returning creationTimestamp, name;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-------------------------------|--------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}creationTimestamp${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------------------------------|--------------|
+    ...    |${SPACE}2025-07-05T19:42:34.483-07:00${SPACE}|${SPACE}auto-test-01${SPACE}|
+    ...    |-------------------------------|--------------|
+    ${stdErrStr} =    Catenate    SEPARATOR=\n
+    ...    compute#operation: insert in progress, 10 seconds elapsed
+    ...    compute#operation: insert complete
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${stdErrStr}
+    ...    stdout=${CURDIR}/tmp/Insert-Async-Returning-Simple-Projection.tmp
+    ...    stderr=${CURDIR}/tmp/Insert-Async-Returning-Simple-Projection-stderr.tmp

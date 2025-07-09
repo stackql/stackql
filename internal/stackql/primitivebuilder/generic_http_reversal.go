@@ -6,6 +6,7 @@ import (
 	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
+	"github.com/stackql/stackql/internal/stackql/asynccompose"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/execution"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -21,10 +22,12 @@ type genericHTTPReversal struct {
 	graphHolder       primitivegraph.PrimitiveGraphHolder
 	handlerCtx        handler.HandlerContext
 	drmCfg            drm.Config
+	insertCtx         drm.PreparedStatementCtx
 	root              primitivegraph.PrimitiveNode
 	op                anysdk.OperationStore
 	commentDirectives sqlparser.CommentDirectives
 	isAwait           bool
+	isReturning       bool
 	verb              string // may be "insert" or "update"
 	inputAlias        string
 	isUndo            bool
@@ -56,7 +59,7 @@ func newGenericHTTPReversal(
 		return nil, fmt.Errorf("provider is required")
 	}
 
-	return &genericHTTPReversal{
+	rv := &genericHTTPReversal{
 		prov:           prov,
 		graphHolder:    graphHolder,
 		handlerCtx:     handlerCtx,
@@ -67,7 +70,12 @@ func newGenericHTTPReversal(
 		verb:           builderInput.GetVerb(),
 		inputAlias:     builderInput.GetInputAlias(),
 		isUndo:         builderInput.IsUndo(),
-	}, nil
+	}
+	insertCtx, insertCtxExists := builderInput.GetInsertCtx()
+	if insertCtxExists {
+		rv.insertCtx = insertCtx
+	}
+	return rv, nil
 }
 
 func (gh *genericHTTPReversal) GetRoot() primitivegraph.PrimitiveNode {
@@ -206,7 +214,8 @@ func (gh *genericHTTPReversal) Build() error {
 				if err != nil {
 					return internaldto.NewErroneousExecutorOutput(err)
 				}
-				execPrim, execErr := composeAsyncMonitor(handlerCtx, dependentInsertPrimitive, prov, m, commentDirectives)
+				execPrim, execErr := asynccompose.ComposeAsyncMonitor(
+					handlerCtx, dependentInsertPrimitive, prov, m, commentDirectives, gh.isReturning, gh.insertCtx, gh.drmCfg)
 				if execErr != nil {
 					return internaldto.NewErroneousExecutorOutput(execErr)
 				}

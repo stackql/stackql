@@ -1,0 +1,14 @@
+{
+  "kind": "compute#network",
+  "id": "{{ network_id if network_id else '1000000000000001' }}",
+  "creationTimestamp": "2025-07-05T19:42:34.483-07:00",
+  "name": "{{ network_name }}",
+  "selfLink": "https://www.googleapis.com/compute/v1/projects/{{ project_name }}/global/networks/{{ network_name }}",
+  "selfLinkWithId": "https://www.googleapis.com/compute/v1/projects/{{ project_name }}/global/networks/{{ network_id if network_id else '1000000000000001' }}",
+  "autoCreateSubnetworks": false,
+  "routingConfig": {
+    "routingMode": "REGIONAL",
+    "bgpBestPathSelectionMode": "LEGACY"
+  },
+  "networkFirewallPolicyEnforcementOrder": "AFTER_CLASSIC_FIREWALL"
+}

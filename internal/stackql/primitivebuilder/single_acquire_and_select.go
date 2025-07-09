@@ -38,7 +38,9 @@ func NewSingleAcquireAndSelect(
 			insertContainer,
 			insertCtx,
 			rowSort,
-			nil),
+			nil,
+			bldrInput.IsAwait(),
+		),
 		selectBuilder: NewSingleSelect(
 			graph, handlerCtx, selectCtx,
 			[]tableinsertioncontainer.TableInsertionContainer{insertContainer},

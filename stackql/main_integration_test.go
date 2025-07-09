@@ -79,7 +79,7 @@ func TestK8STemplatedE2eSuccess(t *testing.T) {
 
 	os.Args = args
 
-	stackqltestutil.RunStdOutTestAgainstFiles(t, execStuff, []string{testobjects.ExpectedK8STheHardWayAsyncFile})
+	stackqltestutil.RunStdErrTestAgainstFiles(t, execStuff, []string{testobjects.ExpectedK8STheHardWayAsyncFile})
 }
 
 func TestInsertAwaitExecSuccess(t *testing.T) {
@@ -105,7 +105,7 @@ func TestInsertAwaitExecSuccess(t *testing.T) {
 
 	os.Args = args
 
-	stackqltestutil.RunStdOutTestAgainstFiles(t, execStuff, []string{testobjects.ExpectedComputeNetworkInsertAsyncFile})
+	stackqltestutil.RunStdErrTestAgainstFiles(t, execStuff, []string{testobjects.ExpectedComputeNetworkInsertAsyncFile})
 }
 
 func TestDeleteAwaitSuccess(t *testing.T) {
@@ -130,7 +130,7 @@ func TestDeleteAwaitSuccess(t *testing.T) {
 
 	os.Args = args
 
-	stackqltestutil.RunStdOutTestAgainstFiles(t, execStuff, []string{testobjects.ExpectedComputeNetworkDeleteAsyncFile})
+	stackqltestutil.RunStdErrTestAgainstFiles(t, execStuff, []string{testobjects.ExpectedComputeNetworkDeleteAsyncFile})
 }
 
 func TestDeleteAwaitExecSuccess(t *testing.T) {
@@ -156,7 +156,7 @@ func TestDeleteAwaitExecSuccess(t *testing.T) {
 
 	os.Args = args
 
-	stackqltestutil.RunStdOutTestAgainstFiles(t, execStuff, []string{testobjects.ExpectedComputeNetworkDeleteAsyncFile})
+	stackqltestutil.RunStdErrTestAgainstFiles(t, execStuff, []string{testobjects.ExpectedComputeNetworkDeleteAsyncFile})
 }
 
 func execStuff(t *testing.T) {
