@@ -6726,6 +6726,50 @@ Run JSON_EQUAL Tests
     ...    stdout=${CURDIR}/tmp/JSON_EQUAL_test_output.tmp
     ...    stderr=${CURDIR}/tmp/JSON_EQUAL_test_stderr.tmp
 
+Run AWS_POLICY_EQUAL Tests
+    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test due to unsupported function aws_policy_equal
+    ${inputStr} =    Catenate
+    ...    SELECT
+    ...    aws_policy_equal(
+    ...      '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:*","Resource":"*"}]}',
+    ...      '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:*","Resource":"*"}]}'
+    ...    ) AS identical_policy_match,
+    ...    aws_policy_equal(
+    ...      '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:GetObject","s3:PutObject"],"Resource":"*"}]}',
+    ...      '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:PutObject","s3:GetObject"],"Resource":"*"}]}'
+    ...    ) AS unordered_action_match,
+    ...    aws_policy_equal(
+    ...      '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:GetObject"],"Resource":"*"}]}',
+    ...      '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}'
+    ...    ) AS array_string_match,
+    ...    aws_policy_equal(
+    ...      '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":"arn:aws:iam::123456789012:role/role1"},"Action":"s3:*","Resource":"*"}]}',
+    ...      '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":"arn:aws:iam::123456789012:role/role1"},"Action":"s3:*","Resource":"*"}]}'
+    ...    ) AS principal_match,
+    ...    aws_policy_equal(
+    ...      '{"Version":"2012-10-17","Statement":[{"Condition":{"StringEquals":{"sts:ExternalId":"0000"}},"Action":"sts:AssumeRole","Effect":"Allow","Principal":{"AWS":"arn:aws:iam::414351767826:role/role-name"}}]}',
+    ...      '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":"arn:aws:iam::414351767826:role/role-name"},"Action":"sts:AssumeRole","Condition":{"StringEquals":{"sts:ExternalId":"0000"}}}]}'
+    ...    ) AS condition_reordering_match;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |------------------------|------------------------|--------------------|-----------------|----------------------------|
+    ...    |${SPACE}identical_policy_match${SPACE}|${SPACE}unordered_action_match${SPACE}|${SPACE}array_string_match${SPACE}|${SPACE}principal_match${SPACE}|${SPACE}condition_reordering_match${SPACE}|
+    ...    |------------------------|------------------------|--------------------|-----------------|----------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|
+    ...    |------------------------|------------------------|--------------------|-----------------|----------------------------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/AWS_POLICY_EQUAL_test_output.tmp
+    ...    stderr=${CURDIR}/tmp/AWS_POLICY_EQUAL_test_stderr.tmp
+
 Sum on Materialized View as Exemplified By Okta Apps
     ${sqliteInputStr} =    Catenate
     ...    create or replace materialized view okta_apps as 
