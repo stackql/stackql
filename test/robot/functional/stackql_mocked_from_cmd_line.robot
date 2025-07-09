@@ -2687,6 +2687,64 @@ Registry Pull Google Provider Specific Version Prerelease
     ...    registry pull google 'v0.1.1\-alpha01' ; 
     ...    successfully installed
 
+Registry Pull Overwrite Works in Both Directions
+    ${inputStr} =    Catenate
+    ...    registry pull google 'v0.1.2';
+    ...    show resources in google.storage;
+    ...    registry pull google 'v0.1.1-alpha01';
+    ...    show resources in google.storage;
+    ...    registry pull google 'v0.1.0';
+    ...    show resources in google.storage;
+    ...    registry pull google 'v0.1.1-alpha01';
+    ...    show resources in google.storage;
+    ...    registry pull google 'v0.1.2';
+    ...    show resources in google.storage;
+    ${stdOutStr} =    Catenate    SEPARATOR=\n
+    ...    |------|------------------------|
+    ...    |${SPACE}name${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------|------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}google.storage.buckets${SPACE}|
+    ...    |------|------------------------|
+    ...    |------|-------------------------------|
+    ...    |${SPACE}name${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------|-------------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}google.storage.bucket_objects${SPACE}|
+    ...    |------|-------------------------------|
+    ...    |------|--------------------------------|
+    ...    |${SPACE}name${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------|--------------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}google.storage.storage_buckets${SPACE}|
+    ...    |------|--------------------------------|
+    ...    |------|-------------------------------|
+    ...    |${SPACE}name${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------|-------------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}google.storage.bucket_objects${SPACE}|
+    ...    |------|-------------------------------|
+    ...    |------|------------------------|
+    ...    |${SPACE}name${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |------|------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}google.storage.buckets${SPACE}|
+    ...    |------|------------------------|
+    ${stdErrStr} =    Catenate    SEPARATOR=\n
+    ...    google provider, version 'v0.1.2' successfully installed
+    ...    google provider, version 'v0.1.1-alpha01' successfully installed
+    ...    google provider, version 'v0.1.0' successfully installed
+    ...    google provider, version 'v0.1.1-alpha01' successfully installed
+    ...    google provider, version 'v0.1.2' successfully installed
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_MOCKED_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr} 
+    ...    ${stdOutStr}
+    ...    ${stdErrStr}
+    ...    stdout=${CURDIR}/tmp/Registry-Pull-Override-Works-in-Both-Directions.tmp
+    ...    stderr=${CURDIR}/tmp/Registry-Pull-Override-Works-in-Both-Directions-stderr.tmp    
+
 Registry Pull Google Provider Implicit Latest Version
     Should Stackql Exec Inline Contain Both Streams
     ...    ${STACKQL_EXE}

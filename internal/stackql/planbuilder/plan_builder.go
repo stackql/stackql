@@ -750,6 +750,8 @@ func (pgb *standardPlanGraphBuilder) handleRegistryPull(
 	if err = reg.ClearProviderCache(providerID); err != nil {
 		return internaldto.NewErroneousExecutorOutput(err)
 	}
+	handlerCtx := pbi.GetHandlerCtx()
+	_ = handlerCtx.DeleteProvider(providerID)
 	// Pull and persist the requested version
 	if err = reg.PullAndPersistProviderArchive(node.ProviderId, providerVersion); err != nil {
 		return internaldto.NewErroneousExecutorOutput(err)

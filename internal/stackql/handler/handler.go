@@ -48,6 +48,7 @@ type HandlerContext interface { //nolint:revive // don't mind stuttering this on
 	GetAuthContext(providerName string) (*dto.AuthCtx, error)
 	GetDBMSInternalRouter() dbmsinternal.Router
 	GetProvider(providerName string) (provider.IProvider, error)
+	DeleteProvider(providerName string) error
 	GetSupportedProviders(extended bool) (map[string]map[string]interface{}, error)
 	LogHTTPResponseMap(target interface{})
 	//
@@ -284,6 +285,23 @@ func (hc *standardHandlerContext) GetSupportedProviders(extended bool) (map[stri
 
 func (hc *standardHandlerContext) GetASTFormatter() sqlparser.NodeFormatter {
 	return hc.formatter
+}
+
+func (hc *standardHandlerContext) DeleteProvider(providerName string) error {
+	hc.providersMapMutex.Lock()
+	defer hc.providersMapMutex.Unlock()
+	if providerName == "googleapis.com" {
+		providerName = "google"
+	}
+	if providerName == "" {
+		return fmt.Errorf("provider name cannot be empty")
+	}
+	_, ok := hc.providers[providerName]
+	if len(hc.providers) == 0 || !ok {
+		return fmt.Errorf("provider '%s' not found", providerName)
+	}
+	delete(hc.providers, providerName)
+	return nil
 }
 
 func (hc *standardHandlerContext) GetProvider(providerName string) (provider.IProvider, error) {
