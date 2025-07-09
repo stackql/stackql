@@ -12,7 +12,7 @@ require (
 	github.com/jackc/pgx/v5 v5.0.4
 	github.com/lib/pq v1.10.4
 	github.com/magiconair/properties v1.8.6
-	github.com/mattn/go-sqlite3 v1.0.3-stackql
+	github.com/mattn/go-sqlite3 v1.0.4-stackql
 	github.com/olekukonko/tablewriter v0.0.0-20180130162743-b8a9be070da4
 	github.com/sirupsen/logrus v1.9.0
 	github.com/snowflakedb/gosnowflake v1.6.16
@@ -131,4 +131,4 @@ require (
 
 replace github.com/chzyer/readline => github.com/stackql/readline v0.0.2-alpha05
 
-replace github.com/mattn/go-sqlite3 => github.com/stackql/stackql-go-sqlite3 v1.0.3-stackql
+replace github.com/mattn/go-sqlite3 => github.com/stackql/stackql-go-sqlite3 v1.0.4-stackql
