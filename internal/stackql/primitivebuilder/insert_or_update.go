@@ -8,28 +8,29 @@ import (
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 )
 
-type InsertOrUpdate struct {
+type insertOrUpdate struct {
 	bldrInput builder_input.BuilderInput
 	root      primitivegraph.PrimitiveNode
+	tail      primitivegraph.PrimitiveNode
 }
 
 func NewInsertOrUpdate(
 	bldrInput builder_input.BuilderInput,
 ) Builder {
-	return &InsertOrUpdate{
+	return &insertOrUpdate{
 		bldrInput: bldrInput,
 	}
 }
 
-func (ss *InsertOrUpdate) GetRoot() primitivegraph.PrimitiveNode {
+func (ss *insertOrUpdate) GetRoot() primitivegraph.PrimitiveNode {
 	return ss.root
 }
 
-func (ss *InsertOrUpdate) GetTail() primitivegraph.PrimitiveNode {
-	return ss.root
+func (ss *insertOrUpdate) GetTail() primitivegraph.PrimitiveNode {
+	return ss.tail
 }
 
-func (ss *InsertOrUpdate) Build() error {
+func (ss *insertOrUpdate) Build() error {
 	node, nodeExists := ss.bldrInput.GetParserNode()
 	if !nodeExists {
 		return fmt.Errorf("mutation executor: node does not exist")
@@ -38,6 +39,9 @@ func (ss *InsertOrUpdate) Build() error {
 	switch node := node.(type) {
 	case *sqlparser.Insert:
 		mutableInput.SetVerb("insert")
+		if len(node.SelectExprs) > 0 {
+			mutableInput.SetIsReturning(true)
+		}
 	case *sqlparser.Update:
 		mutableInput.SetVerb("update")
 	default:
@@ -82,6 +86,7 @@ func (ss *InsertOrUpdate) Build() error {
 		return genericBldrErr
 	}
 	ss.root = genericBldr.GetRoot()
+	ss.tail = genericBldr.GetTail()
 
 	return nil
 }

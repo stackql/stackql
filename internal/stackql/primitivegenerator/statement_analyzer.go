@@ -695,7 +695,7 @@ func (pb *standardPrimitiveGenerator) analyzeExec(pbi planbuilderinput.PlanBuild
 				handlerCtx,
 				insertionContainer,
 				pb.PrimitiveComposer.GetInsertPreparedStatementCtx(),
-				nil, nil))
+				nil, nil, false)) // returning hardcoded to false for now
 		return nil
 	}
 	selIndirect, indirectErr := astindirect.NewParserExecIndirect(
@@ -704,14 +704,20 @@ func (pb *standardPrimitiveGenerator) analyzeExec(pbi planbuilderinput.PlanBuild
 		return indirectErr
 	}
 	annotatedAST.SetExecIndirect(node, selIndirect)
+	bldrInput := builder_input.NewBuilderInput(
+		pb.PrimitiveComposer.GetGraphHolder(),
+		handlerCtx,
+		tbl,
+	)
+	bldrInput.SetTxnCtrlCtrs(pb.PrimitiveComposer.GetTxnCtrlCtrs())
+	bldrInput.SetTableInsertionContainer(insertionContainer)
 	pb.PrimitiveComposer.SetBuilder(
 		primitivebuilder.NewSingleAcquireAndSelect(
-			pb.PrimitiveComposer.GetGraphHolder(),
-			pb.PrimitiveComposer.GetTxnCtrlCtrs(),
-			handlerCtx,
-			insertionContainer,
+			bldrInput,
 			pb.PrimitiveComposer.GetInsertPreparedStatementCtx(),
-			pb.PrimitiveComposer.GetSelectPreparedStatementCtx(), nil))
+			pb.PrimitiveComposer.GetSelectPreparedStatementCtx(),
+			nil,
+		))
 	return nil
 }
 
@@ -996,7 +1002,7 @@ func (pb *standardPrimitiveGenerator) buildRequestContext(
 	return err
 }
 
-//nolint:gocognit,funlen // TODO: review
+//nolint:gocognit,funlen,gocyclo,cyclop // TODO: review
 func (pb *standardPrimitiveGenerator) AnalyzeInsert(pbi planbuilderinput.PlanBuilderInput) error {
 	handlerCtx := pbi.GetHandlerCtx()
 	annotatedAST := pbi.GetAnnotatedAST()
@@ -1088,11 +1094,66 @@ func (pb *standardPrimitiveGenerator) AnalyzeInsert(pbi planbuilderinput.PlanBui
 	if err != nil {
 		return err
 	}
+	pb.parseComments(node.Comments)
 
+	if tbl.IsPhysicalTable() {
+		return nil
+	}
+	svc, err := tbl.GetService()
+	if err != nil {
+		return err
+	}
+	_, isOpenapi := svc.(anysdk.OpenAPIService)
+	if !isOpenapi {
+		err = pb.buildRequestContext(node, tbl, nil, insertValOnlyRows)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	if pb.PrimitiveComposer.IsAwait() && !method.IsAwaitable() {
+		return fmt.Errorf("method %s is not awaitable", method.GetName())
+	}
+	if pb.PrimitiveComposer.IsAwait() && !method.IsAwaitable() {
+		return fmt.Errorf("method %s is not awaitable", method.GetName())
+	}
+	analysisInput := anysdk.NewMethodAnalysisInput(
+		method,
+		svc,
+		true,
+		[]anysdk.ColumnDescriptor{},
+	)
+	analyser := anysdk.NewMethodAnalyzer()
+	// TODO: this ought to cater for async
+	methodAnalysisOutput, analysisErr := analyser.AnalyzeUnaryAction(analysisInput)
+	if analysisErr != nil {
+		return analysisErr
+	}
 	err = pb.buildRequestContext(node, tbl, nil, insertValOnlyRows)
 	if err != nil {
 		return err
 	}
+	columnHandles := []parserutil.ColumnHandle{}
+	if len(node.SelectExprs) > 0 {
+		columnHandles, err = parserutil.ExtractInsertReturningColumnNames(node, handlerCtx.GetASTFormatter())
+		if err != nil {
+			return err
+		}
+	}
+	err = pb.analyzeUnaryAction(
+		pbi,
+		handlerCtx,
+		node,
+		nil,
+		tbl,
+		columnHandles,
+		methodAnalysisOutput,
+	)
+	if err != nil {
+		return err
+	}
+	pb.PrimitiveComposer.SetTable(node, tbl)
 	return nil
 }
 

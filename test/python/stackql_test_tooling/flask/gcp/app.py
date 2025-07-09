@@ -2,7 +2,11 @@
 import logging
 from flask import Flask, render_template, request, jsonify
 
+import os
+
 app = Flask(__name__)
+
+_IS_DOCKER = True if os.getenv('IS_DOCKER', 'false').lower() == 'true' else False
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -17,6 +21,80 @@ def v1_storage_buckets_list():
     if request.args.get('project') == 'stackql-demo':
         return render_template('buckets-list.json'), 200, {'Content-Type': 'application/json'}
     return '{"msg": "Project Not Found"}', 404, {'Content-Type': 'application/json'}
+
+@app.route('/storage/v1/b', methods=['POST'])
+def v1_storage_buckets_insert():
+    # Validate the incoming query
+    body = request.get_json()
+    if not body or 'name' not in body:
+        return '{"msg": "Invalid request body"}', 400, {'Content-Type': 'application/json'}
+    bucket_name = body['name']
+    project_name = request.args.get('project')
+    if not project_name:
+        return '{"msg": "Invalid request: project not supplied"}', 400, {'Content-Type': 'application/json'}
+    if project_name == 'testing-project':
+        return render_template('buckets-insert-generic.jinja.json', bucket_name=bucket_name), 200, {'Content-Type': 'application/json'}
+    return '{"msg": "Disallowed"}', 401, {'Content-Type': 'application/json'}
+
+@app.route('/compute/v1/projects/testing-project/global/networks', methods=['GET'])
+def projects_testing_project_global_networks():
+    return render_template('route_27_template.json'), 200, {'Content-Type': 'application/json'}
+
+@app.route('/compute/v1/projects/<project_name>/global/networks', methods=['POST'])
+def compute_networks_insert(project_name: str):
+    # Validate the incoming query
+    body = request.get_json()
+    operation_id = '1000000000001'
+    operation_name = 'operation-100000000001-10000000001-10000001-10000001'
+    network_name = body['name']
+    host_name = 'host.docker.internal' if _IS_DOCKER else 'localhost'
+    target_link = f'https://{host_name}:1080/compute/v1/projects/{ project_name }/global/networks/{ network_name }'
+    if not body or 'name' not in body:
+        return '{"msg": "Invalid request body"}', 400, {'Content-Type': 'application/json'}
+    if not project_name:
+        return '{"msg": "Invalid request: project not supplied"}', 400, {'Content-Type': 'application/json'}
+    if project_name == 'mutable-project' and network_name == 'auto-test-01':
+        return render_template(
+            'global-operation.jinja.json', 
+            target_link=target_link, 
+            operation_id=operation_id,
+            operation_name=operation_name,
+            project_name=project_name,
+            host_name=host_name,
+            kind='compute#operation',
+            operation_type='insert',
+            progress=0,
+        ), 200, {'Content-Type': 'application/json'}
+    return '{"msg": "Disallowed"}', 401, {'Content-Type': 'application/json'}
+
+@app.route('/compute/v1/projects/<project_name>/global/operations/<operation_name>', methods=['GET'])
+def projects_testing_project_global_operation_detail(project_name: str, operation_name: str):
+    if project_name == 'mutable-project' and 'operation-100000000001-10000000001-10000001-10000001':
+        operation_id = '1000000000001'
+        network_name = 'auto-test-01'
+        host_name = 'host.docker.internal' if _IS_DOCKER else 'localhost'
+        target_link = f'https://{host_name}:1080/compute/v1/projects/{ project_name }/global/networks/{ network_name }'
+        return render_template(
+            'global-operation.jinja.json',
+            target_link=target_link, 
+            operation_id=operation_id,
+            operation_name=operation_name,
+            project_name=project_name,
+            host_name=host_name,
+            kind='compute#operation',
+            operation_type='insert',
+            progress=100,
+            end_time='2025-07-05T19:43:34.491-07:00',
+        ), 200, {'Content-Type': 'application/json'}
+    return '{"msg": "Disallowed"}', 401, {'Content-Type': 'application/json'}
+
+@app.route('/compute/v1/projects/<project_name>/global/networks/<network_name>', methods=['GET'])
+def projects_testing_project_global_network_detail(project_name: str, network_name: str):
+    return render_template(
+        'networks-insert-generic-mature.jinja.json', 
+        project_name=project_name, 
+        network_name=network_name
+    ), 200, {'Content-Type': 'application/json'}
 
 @app.route('/v1/projects/testing-project-three/locations/global/keyRings/testing-three/cryptoKeys', methods=['GET'])
 def v1_projects_testing_project_three_locations_global_keyRings_testing_three_cryptoKeys():
@@ -174,9 +252,6 @@ def projects_testing_project_zones_australia_southeast1_a_disks():
 def projects_testing_project_zones_australia_southeast1_b_disks():
     return render_template('route_26_template.json'), 200, {'Content-Type': 'application/json'}
 
-@app.route('/compute/v1/projects/testing-project/global/networks', methods=['GET'])
-def projects_testing_project_global_networks():
-    return render_template('route_27_template.json'), 200, {'Content-Type': 'application/json'}
 
 @app.route('/compute/v1/projects/testing-project/regions/australia-southeast1/subnetworks', methods=['GET'])
 def projects_testing_project_regions_australia_southeast1_subnetworks():

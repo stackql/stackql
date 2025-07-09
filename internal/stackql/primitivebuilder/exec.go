@@ -3,9 +3,11 @@ package primitivebuilder
 import (
 	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
+	"github.com/stackql/stackql/internal/stackql/asynccompose"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/execution"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/builder_input"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/primitive_context"
 	"github.com/stackql/stackql/internal/stackql/primitive"
@@ -92,11 +94,14 @@ func (ss *Exec) Build() error {
 			return analysisErr
 		}
 		methodAnalysisOutput.GetInsertTabulation()
-		deFactoSelectBuilder := NewSingleAcquireAndSelect(
+		bldrInput := builder_input.NewBuilderInput(
 			ss.graph,
-			ss.tcc,
-			ss.handlerCtx.Clone(),
-			nil,
+			handlerCtx.Clone(),
+			tbl,
+		)
+		bldrInput.SetTxnCtrlCtrs(ss.tcc)
+		deFactoSelectBuilder := NewSingleAcquireAndSelect(
+			bldrInput,
 			nil,
 			nil,
 			nil,
@@ -170,7 +175,9 @@ func (ss *Exec) Build() error {
 		ss.graph.CreatePrimitiveNode(execPrimitive)
 		return nil
 	}
-	pr, err := composeAsyncMonitor(handlerCtx, execPrimitive, prov, m, nil)
+	pr, err := asynccompose.ComposeAsyncMonitor(
+		handlerCtx, execPrimitive, prov, m,
+		nil, false, nil, nil) // returning hardcoded to false for now
 	if err != nil {
 		return err
 	}

@@ -12,17 +12,17 @@ require (
 	github.com/jackc/pgx/v5 v5.0.4
 	github.com/lib/pq v1.10.4
 	github.com/magiconair/properties v1.8.6
-	github.com/mattn/go-sqlite3 v1.0.3-stackql
+	github.com/mattn/go-sqlite3 v1.0.4-stackql
 	github.com/olekukonko/tablewriter v0.0.0-20180130162743-b8a9be070da4
 	github.com/sirupsen/logrus v1.9.0
 	github.com/snowflakedb/gosnowflake v1.6.16
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.1
-	github.com/stackql/any-sdk v0.1.4-alpha01
+	github.com/stackql/any-sdk v0.1.4-alpha06
 	github.com/stackql/go-suffix-map v0.0.1-alpha01
 	github.com/stackql/psql-wire v0.1.1-beta23
-	github.com/stackql/stackql-parser v0.0.14-alpha05
+	github.com/stackql/stackql-parser v0.0.15-alpha06
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/sync v0.10.0
 	gonum.org/v1/gonum v0.11.0
@@ -131,4 +131,4 @@ require (
 
 replace github.com/chzyer/readline => github.com/stackql/readline v0.0.2-alpha05
 
-replace github.com/mattn/go-sqlite3 => github.com/stackql/stackql-go-sqlite3 v1.0.3-stackql
+replace github.com/mattn/go-sqlite3 => github.com/stackql/stackql-go-sqlite3 v1.0.4-stackql

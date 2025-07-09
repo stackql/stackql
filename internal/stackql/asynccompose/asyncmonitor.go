@@ -1,4 +1,4 @@
-package primitivebuilder
+package asynccompose
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
+	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/execution"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
@@ -22,6 +23,9 @@ type IAsyncMonitor interface {
 		precursor primitive.IPrimitive,
 		initialCtx primitive.IPrimitiveCtx,
 		comments sqlparser.CommentDirectives,
+		isReturning bool,
+		insertCtx drm.PreparedStatementCtx,
+		drmCfg drm.Config,
 	) (primitive.IPrimitive, error)
 }
 
@@ -120,11 +124,12 @@ func NewAsyncMonitor(
 	handlerCtx handler.HandlerContext,
 	prov provider.IProvider,
 	op anysdk.OperationStore,
+	isReturning bool,
 ) (IAsyncMonitor, error) {
 	//nolint:gocritic //TODO: refactor
 	switch prov.GetProviderString() {
 	case "google":
-		return newGoogleAsyncMonitor(handlerCtx, prov, op, prov.GetVersion())
+		return newGoogleAsyncMonitor(handlerCtx, prov, op, prov.GetVersion(), isReturning)
 	}
 	return nil, fmt.Errorf(
 		"async operation monitor for provider = '%s', api version = '%s' currently not supported",
@@ -136,6 +141,7 @@ func newGoogleAsyncMonitor(
 	prov provider.IProvider,
 	op anysdk.OperationStore,
 	version string, //nolint:unparam // TODO: refactor
+	isReturning bool, //nolint:unparam,revive // TODO: refactor
 ) (IAsyncMonitor, error) {
 	//nolint:gocritic //TODO: refactor
 	switch version {
@@ -160,11 +166,14 @@ func (gm *DefaultGoogleAsyncMonitor) GetMonitorPrimitive(
 	precursor primitive.IPrimitive,
 	initialCtx primitive.IPrimitiveCtx,
 	comments sqlparser.CommentDirectives,
+	isReturning bool,
+	insertCtx drm.PreparedStatementCtx,
+	drmCfg drm.Config,
 ) (primitive.IPrimitive, error) {
 	//nolint:gocritic,staticcheck //TODO: refactor
 	switch strings.ToLower(prov.GetVersion()) {
 	default:
-		return gm.getV1Monitor(prov, op, precursor, initialCtx, comments)
+		return gm.getV1Monitor(prov, op, precursor, initialCtx, comments, isReturning, insertCtx, drmCfg)
 	}
 }
 
@@ -174,6 +183,9 @@ func (gm *DefaultGoogleAsyncMonitor) getV1Monitor(
 	precursor primitive.IPrimitive,
 	initialCtx primitive.IPrimitiveCtx,
 	comments sqlparser.CommentDirectives,
+	isReturning bool,
+	insertCtx drm.PreparedStatementCtx,
+	drmCfg drm.Config,
 ) (primitive.IPrimitive, error) {
 	provider, providerErr := prov.GetProvider()
 	if providerErr != nil {
@@ -186,6 +198,9 @@ func (gm *DefaultGoogleAsyncMonitor) getV1Monitor(
 		precursor,
 		initialCtx,
 		comments,
+		isReturning,
+		insertCtx,
+		drmCfg,
 	)
 	if exPrepErr != nil {
 		return nil, exPrepErr

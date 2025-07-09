@@ -5,10 +5,12 @@ import (
 	"github.com/stackql/any-sdk/pkg/streaming"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
+	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 	"github.com/stackql/stackql/internal/stackql/provider"
+	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 )
 
@@ -30,6 +32,8 @@ type BuilderInput interface {
 	GetOperationStore() (anysdk.OperationStore, bool)
 	SetOperationStore(op anysdk.OperationStore)
 	IsAwait() bool
+	IsReturning() bool
+	SetIsReturning(bool)
 	GetVerb() string
 	GetInputAlias() string
 	IsUndo() bool
@@ -51,27 +55,34 @@ type BuilderInput interface {
 	SetIsTargetPhysicalTable(isPhysical bool)
 	SetTxnCtrlCtrs(internaldto.TxnControlCounters)
 	GetTxnCtrlCtrs() (internaldto.TxnControlCounters, bool)
+	GetTableInsertionContainer() (tableinsertioncontainer.TableInsertionContainer, bool)
+	SetTableInsertionContainer(tableinsertioncontainer.TableInsertionContainer)
+	SetInsertCtx(insertCtx drm.PreparedStatementCtx)
+	GetInsertCtx() (drm.PreparedStatementCtx, bool)
 }
 
 type builderInput struct {
-	graphHolder       primitivegraph.PrimitiveGraphHolder
-	handlerCtx        handler.HandlerContext
-	paramMap          map[int]map[string]interface{}
-	tbl               tablemetadata.ExtendedTableMetadata
-	dependencyNode    primitivegraph.PrimitiveNode
-	commentDirectives sqlparser.CommentDirectives
-	isAwait           bool
-	verb              string
-	inputAlias        string
-	isUndo            bool
-	node              sqlparser.SQLNode
-	paramMapStream    streaming.MapStream
-	httpPrepStream    anysdk.HttpPreparatorStream
-	op                anysdk.OperationStore
-	prov              provider.IProvider
-	annotatedAst      annotatedast.AnnotatedAst
-	isTargetPhysical  bool
-	txnCtrlCtrs       internaldto.TxnControlCounters
+	graphHolder             primitivegraph.PrimitiveGraphHolder
+	handlerCtx              handler.HandlerContext
+	paramMap                map[int]map[string]interface{}
+	tbl                     tablemetadata.ExtendedTableMetadata
+	dependencyNode          primitivegraph.PrimitiveNode
+	commentDirectives       sqlparser.CommentDirectives
+	isAwait                 bool
+	isReturning             bool
+	verb                    string
+	inputAlias              string
+	isUndo                  bool
+	node                    sqlparser.SQLNode
+	paramMapStream          streaming.MapStream
+	httpPrepStream          anysdk.HttpPreparatorStream
+	op                      anysdk.OperationStore
+	prov                    provider.IProvider
+	annotatedAst            annotatedast.AnnotatedAst
+	isTargetPhysical        bool
+	txnCtrlCtrs             internaldto.TxnControlCounters
+	tableInsertionContainer tableinsertioncontainer.TableInsertionContainer
+	insertCtx               drm.PreparedStatementCtx
 }
 
 func NewBuilderInput(
@@ -86,6 +97,33 @@ func NewBuilderInput(
 		commentDirectives: sqlparser.CommentDirectives{},
 		inputAlias:        "", // this default is explicit for emphasisis
 	}
+}
+
+func (bi *builderInput) SetInsertCtx(insertCtx drm.PreparedStatementCtx) {
+	bi.insertCtx = insertCtx
+}
+
+func (bi *builderInput) GetInsertCtx() (drm.PreparedStatementCtx, bool) {
+	if bi.insertCtx == nil {
+		return nil, false
+	}
+	return bi.insertCtx, true
+}
+
+func (bi *builderInput) IsReturning() bool {
+	return bi.isReturning
+}
+
+func (bi *builderInput) SetIsReturning(isReturning bool) {
+	bi.isReturning = isReturning
+}
+
+func (bi *builderInput) GetTableInsertionContainer() (tableinsertioncontainer.TableInsertionContainer, bool) {
+	return bi.tableInsertionContainer, bi.tableInsertionContainer != nil
+}
+
+func (bi *builderInput) SetTableInsertionContainer(ti tableinsertioncontainer.TableInsertionContainer) {
+	bi.tableInsertionContainer = ti
 }
 
 func (bi *builderInput) SetTxnCtrlCtrs(tcc internaldto.TxnControlCounters) {
@@ -248,5 +286,7 @@ func (bi *builderInput) Clone() BuilderInput {
 		isTargetPhysical:  bi.isTargetPhysical,
 		annotatedAst:      bi.annotatedAst,
 		txnCtrlCtrs:       bi.txnCtrlCtrs,
+		isReturning:       bi.isReturning,
+		insertCtx:         bi.insertCtx,
 	}
 }

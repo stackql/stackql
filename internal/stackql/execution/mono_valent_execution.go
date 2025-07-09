@@ -1130,6 +1130,7 @@ func (sp *standardProcessor) Process() ProcessorResponse {
 		if httpResponseErr != nil {
 			return newHTTPProcessorResponse(nil, reversalStream, false, httpResponseErr)
 		}
+		// TODO: add async monitor here
 		processed, resErr := method.ProcessResponse(httpResponse)
 		if resErr != nil {
 			if isSkipResponse && isMutation && httpResponse.StatusCode < 300 {
@@ -1444,6 +1445,32 @@ func (mv *monoValentExecution) GetExecutor() (func(pc primitive.IPrimitiveCtx) i
 	return ex, nil
 }
 
+func shimProcessHTTP(
+	url string,
+	rtCtx dto.RuntimeCtx,
+	authCtx *dto.AuthCtx,
+	provider anysdk.Provider,
+	m anysdk.OperationStore,
+	outErrFile io.Writer,
+) (*http.Response, error) {
+	req, monitorReqErr := anysdk.GetMonitorRequest(url)
+	if monitorReqErr != nil {
+		return nil, monitorReqErr
+	}
+	cc := anysdk.NewAnySdkClientConfigurator(rtCtx, provider.GetName())
+	anySdkResponse, apiErr := anysdk.CallFromSignature(
+		cc, rtCtx, authCtx, authCtx.Type, false, outErrFile, provider, anysdk.NewAnySdkOpStoreDesignation(m), req)
+
+	if apiErr != nil {
+		return nil, apiErr
+	}
+	httpResponse, httpResponseErr := anySdkResponse.GetHttpResponse()
+	if httpResponseErr != nil {
+		return nil, httpResponseErr
+	}
+	return httpResponse, nil
+}
+
 //nolint:funlen,gocognit // acceptable for now
 func GetMonitorExecutor(
 	handlerCtx handler.HandlerContext,
@@ -1452,6 +1479,9 @@ func GetMonitorExecutor(
 	precursor primitive.IPrimitive,
 	initialCtx primitive.IPrimitiveCtx,
 	comments sqlparser.CommentDirectives,
+	isReturning bool,
+	insertCtx drm.PreparedStatementCtx,
+	drmCfg drm.Config,
 ) (primitive.IPrimitive, error) {
 	m := op
 	// tableName, err := mv.tableMeta.GetTableName()
@@ -1471,6 +1501,8 @@ func GetMonitorExecutor(
 		elapsedSeconds:      0,
 		pollIntervalSeconds: MonitorPollIntervalSeconds,
 		comments:            comments,
+		insertCtx:           insertCtx,
+		drmCfg:              drmCfg,
 	}
 	if comments != nil {
 		asyncPrim.noStatus = comments.IsSet("NOSTATUS")
@@ -1498,7 +1530,64 @@ func GetMonitorExecutor(
 
 		operationDescriptor := getOpDescriptor(body)
 		endTime, endTimeOk := body["endTime"]
+		prStr := provider.GetName()
+		//nolint:nestif // acceptable for now
 		if endTimeOk && endTime != "" {
+			targetLink, targetLinkOK := body["targetLink"]
+			if targetLinkOK && isReturning {
+				authCtx, authErr := pc.GetAuthContext(prStr)
+				if authErr != nil {
+					return internaldto.NewExecutorOutput(nil, nil, nil, nil, authErr)
+				}
+				if authCtx == nil {
+					return internaldto.NewExecutorOutput(nil, nil, nil, nil, fmt.Errorf("cannot execute monitor: no auth context"))
+				}
+				targetLinkStr, targetLinkStrOk := targetLink.(string)
+				if !targetLinkStrOk {
+					return internaldto.NewExecutorOutput(
+						nil,
+						nil,
+						nil,
+						nil,
+						fmt.Errorf("cannot execute monitor: 'targetLink' is not a string"),
+					)
+				}
+				httpResponse, httpResponseErr := shimProcessHTTP(
+					targetLinkStr,
+					rtCtx,
+					authCtx,
+					provider,
+					m,
+					outErrFile,
+				)
+				if httpResponseErr != nil {
+					return internaldto.NewExecutorOutput(nil, nil, nil, nil, httpResponseErr)
+				}
+
+				if httpResponse != nil && httpResponse.Body != nil {
+					defer httpResponse.Body.Close()
+				}
+				target, targetErr := m.DeprecatedProcessResponse(httpResponse)
+				handlerCtx.LogHTTPResponseMap(target)
+				if targetErr != nil {
+					return internaldto.NewExecutorOutput(nil, nil, nil, nil, targetErr)
+				}
+				// TODO: insert into table here
+				if isReturning {
+					if asyncPrim.insertCtx != nil {
+						_, rErr := asyncPrim.drmCfg.ExecuteInsertDML(
+							handlerCtx.GetSQLEngine(),
+							asyncPrim.insertCtx,
+							target,
+							"", // TODO: figure out how on earth to compute this encoding
+						)
+						if rErr != nil {
+							return internaldto.NewExecutorOutput(nil, nil, nil, nil, rErr)
+						}
+					}
+				}
+				return prepareResultSet(&asyncPrim, pc, target, operationDescriptor)
+			}
 			return prepareResultSet(&asyncPrim, pc, body, operationDescriptor)
 		}
 		url, ok := body["selfLink"]
@@ -1511,7 +1600,6 @@ func GetMonitorExecutor(
 				fmt.Errorf("cannot execute monitor: no 'selfLink' property present"),
 			)
 		}
-		prStr := provider.GetName()
 		authCtx, authErr := pc.GetAuthContext(prStr)
 		if authErr != nil {
 			return internaldto.NewExecutorOutput(nil, nil, nil, nil, authErr)
@@ -1523,7 +1611,7 @@ func GetMonitorExecutor(
 		asyncPrim.elapsedSeconds += asyncPrim.pollIntervalSeconds
 		if !asyncPrim.noStatus {
 			//nolint:errcheck //TODO: handle error
-			pc.GetWriter().Write(
+			pc.GetErrWriter().Write(
 				[]byte(
 					fmt.Sprintf(
 						"%s in progress, %d seconds elapsed",
@@ -1649,6 +1737,8 @@ type asyncHTTPMonitorPrimitive struct {
 	noStatus            bool
 	id                  int64
 	comments            sqlparser.CommentDirectives
+	insertCtx           drm.PreparedStatementCtx
+	drmCfg              drm.Config
 }
 
 func (pr *asyncHTTPMonitorPrimitive) SetTxnID(_ int) {
@@ -1762,7 +1852,7 @@ func prepareResultSet(
 	}
 	if !prim.noStatus {
 		//nolint:errcheck //TODO: handle error
-		pc.GetWriter().Write([]byte(fmt.Sprintf("%s complete", operationDescriptor) + fmt.Sprintln("")))
+		pc.GetErrWriter().Write([]byte(fmt.Sprintf("%s complete", operationDescriptor) + fmt.Sprintln("")))
 	}
 	return util.PrepareResultSet(payload)
 }

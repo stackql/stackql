@@ -10,6 +10,7 @@ import (
 	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
+	"github.com/stackql/stackql/internal/stackql/asynccompose"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/execution"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -27,11 +28,13 @@ type genericHTTPStreamInput struct {
 	handlerCtx        handler.HandlerContext
 	drmCfg            drm.Config
 	root              primitivegraph.PrimitiveNode
+	tail              primitivegraph.PrimitiveNode
 	tbl               tablemetadata.ExtendedTableMetadata
 	commentDirectives sqlparser.CommentDirectives
 	dependencyNode    primitivegraph.PrimitiveNode
 	parserNode        sqlparser.SQLNode
 	isAwait           bool
+	isReturning       bool
 	verb              string // may be "insert" or "update"
 	inputAlias        string
 	isUndo            bool
@@ -39,6 +42,7 @@ type genericHTTPStreamInput struct {
 	reversalStream    anysdk.HttpPreparatorStream
 	reversalBuilder   Builder
 	rollbackType      constants.RollbackType
+	insertCtx         drm.PreparedStatementCtx
 }
 
 func newGenericHTTPStreamInput(
@@ -62,6 +66,7 @@ func newGenericHTTPStreamInput(
 		return nil, fmt.Errorf("dependency node is required")
 	}
 	parserNode, _ := builderInput.GetParserNode()
+	insertCtx, _ := builderInput.GetInsertCtx()
 	return &genericHTTPStreamInput{
 		graphHolder:       graphHolder,
 		handlerCtx:        handlerCtx,
@@ -70,12 +75,14 @@ func newGenericHTTPStreamInput(
 		commentDirectives: commentDirectives,
 		dependencyNode:    dependencyNode,
 		isAwait:           builderInput.IsAwait(),
+		isReturning:       builderInput.IsReturning(),
 		verb:              builderInput.GetVerb(),
 		inputAlias:        builderInput.GetInputAlias(),
 		isUndo:            builderInput.IsUndo(),
 		parserNode:        parserNode,
 		reversalStream:    anysdk.NewHttpPreparatorStream(),
 		rollbackType:      handlerCtx.GetRollbackType(),
+		insertCtx:         insertCtx,
 	}, nil
 }
 
@@ -88,6 +95,9 @@ func (gh *genericHTTPStreamInput) GetRoot() primitivegraph.PrimitiveNode {
 }
 
 func (gh *genericHTTPStreamInput) GetTail() primitivegraph.PrimitiveNode {
+	if gh.tail != nil {
+		return gh.tail
+	}
 	return gh.root
 }
 
@@ -179,6 +189,7 @@ func (gh *genericHTTPStreamInput) Build() error {
 		reverseInput.SetHTTPPreparatorStream(gh.reversalStream)
 		reverseInput.SetOperationStore(inverseOpStore)
 		reverseInput.SetProvider(prov)
+		reverseInput.SetInsertCtx(gh.insertCtx)
 		gh.reversalBuilder, reversalBuildInitErr = newGenericHTTPReversal(reverseInput)
 		if reversalBuildInitErr != nil {
 			return reversalBuildInitErr
@@ -357,7 +368,8 @@ func (gh *genericHTTPStreamInput) Build() error {
 				if err != nil {
 					return internaldto.NewErroneousExecutorOutput(err)
 				}
-				execPrim, execErr := composeAsyncMonitor(handlerCtx, dependentInsertPrimitive, prov, m, commentDirectives)
+				execPrim, execErr := asynccompose.ComposeAsyncMonitor(
+					handlerCtx, dependentInsertPrimitive, prov, m, commentDirectives, gh.isReturning, gh.insertCtx, gh.drmCfg)
 				if execErr != nil {
 					return internaldto.NewErroneousExecutorOutput(execErr)
 				}
@@ -386,6 +398,7 @@ func (gh *genericHTTPStreamInput) Build() error {
 	actionNode := graphHolder.CreatePrimitiveNode(actionPrimitive)
 	graphHolder.NewDependency(gh.dependencyNode, actionNode, 1.0)
 	gh.root = gh.dependencyNode
+	gh.tail = actionNode
 
 	return nil
 }

@@ -1237,7 +1237,7 @@ func (eng *postgresSystem) generateSelectDML(
 				quotedColNames,
 				", ",
 			),
-			eng.tableCatalog,
+			eng.tableSchema,
 			tableName,
 			aliasStr,
 		),

@@ -33,6 +33,28 @@ func RunStdOutTestAgainstFiles(t *testing.T, testSubject func(*testing.T), possi
 	checkPossibleMatchFiles(t, out, possibleExpectedOutputFiles)
 }
 
+func RunStdErrTestAgainstFiles(t *testing.T, testSubject func(*testing.T), possibleExpectedOutputFiles []string) {
+	old := os.Stderr // keep backup of the real stderr
+	r, w, _ := os.Pipe()
+	os.Stderr = w
+	outC := make(chan string)
+
+	testSubject(t)
+
+	// copy the output in a separate goroutine so printing can't block indefinitely
+	go func() {
+		var buf bytes.Buffer
+		io.Copy(&buf, r) //nolint:errcheck // ok for testing
+		outC <- buf.String()
+	}()
+	w.Close()
+	os.Stderr = old // restoring the real stderr
+	out := <-outC
+	t.Logf("outC = %s", out)
+
+	checkPossibleMatchFiles(t, out, possibleExpectedOutputFiles)
+}
+
 func checkPossibleMatchFiles(t *testing.T, subject string, possibleExpectedOutputFiles []string) {
 	hasMatchedExpected := false
 	for _, expectedOpFile := range possibleExpectedOutputFiles {

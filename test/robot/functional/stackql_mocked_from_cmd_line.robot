@@ -6784,6 +6784,50 @@ Run JSON_EQUAL Tests
     ...    stdout=${CURDIR}/tmp/JSON_EQUAL_test_output.tmp
     ...    stderr=${CURDIR}/tmp/JSON_EQUAL_test_stderr.tmp
 
+Run AWS_POLICY_EQUAL Tests
+    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Skipping postgres backend test due to unsupported function aws_policy_equal
+    ${inputStr} =    Catenate
+    ...    SELECT
+    ...    aws_policy_equal(
+    ...      '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:*","Resource":"*"}]}',
+    ...      '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:*","Resource":"*"}]}'
+    ...    ) AS identical_policy_match,
+    ...    aws_policy_equal(
+    ...      '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:GetObject","s3:PutObject"],"Resource":"*"}]}',
+    ...      '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:PutObject","s3:GetObject"],"Resource":"*"}]}'
+    ...    ) AS unordered_action_match,
+    ...    aws_policy_equal(
+    ...      '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:GetObject"],"Resource":"*"}]}',
+    ...      '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}'
+    ...    ) AS array_string_match,
+    ...    aws_policy_equal(
+    ...      '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":"arn:aws:iam::123456789012:role/role1"},"Action":"s3:*","Resource":"*"}]}',
+    ...      '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":"arn:aws:iam::123456789012:role/role1"},"Action":"s3:*","Resource":"*"}]}'
+    ...    ) AS principal_match,
+    ...    aws_policy_equal(
+    ...      '{"Version":"2012-10-17","Statement":[{"Condition":{"StringEquals":{"sts:ExternalId":"0000"}},"Action":"sts:AssumeRole","Effect":"Allow","Principal":{"AWS":"arn:aws:iam::414351767826:role/role-name"}}]}',
+    ...      '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":"arn:aws:iam::414351767826:role/role-name"},"Action":"sts:AssumeRole","Condition":{"StringEquals":{"sts:ExternalId":"0000"}}}]}'
+    ...    ) AS condition_reordering_match;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |------------------------|------------------------|--------------------|-----------------|----------------------------|
+    ...    |${SPACE}identical_policy_match${SPACE}|${SPACE}unordered_action_match${SPACE}|${SPACE}array_string_match${SPACE}|${SPACE}principal_match${SPACE}|${SPACE}condition_reordering_match${SPACE}|
+    ...    |------------------------|------------------------|--------------------|-----------------|----------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|
+    ...    |------------------------|------------------------|--------------------|-----------------|----------------------------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/AWS_POLICY_EQUAL_test_output.tmp
+    ...    stderr=${CURDIR}/tmp/AWS_POLICY_EQUAL_test_stderr.tmp
+
 Sum on Materialized View as Exemplified By Okta Apps
     ${sqliteInputStr} =    Catenate
     ...    create or replace materialized view okta_apps as 
@@ -8537,3 +8581,57 @@ Select Materialized View of Join of Flattened Paginated Projection From Transfor
     ...    ${stdErrStr}
     ...    stdout=${CURDIR}/tmp/Select-Materialized-View-of-Join-of-Flattened-Paginated-Projection-From-Transformed-JSON-and-XML-Response-Bodies.tmp
     ...    stderr=${CURDIR}/tmp/Select-Materialized-View-of-Join-of-Flattened-Paginated-Projection-From-Transformed-JSON-and-XML-Response-Bodies-stderr.tmp
+
+Insert Returning Simple Projection
+    [Documentation]    Insert a row into a table and return projected new object values. For synchronously created objects.
+    ${inputStrSQLite} =    Catenate
+    ...    insert into google.storage.buckets( project, data__name) select  'testing-project', 'silly-bucket' returning projectNumber, name, location, json_extract(iamConfiguration, '$.publicAccessPrevention') ic;
+    ${inputStrPostgres} =    Catenate
+    ...    insert into google.storage.buckets( project, data__name) select  'testing-project', 'silly-bucket' returning projectNumber, name, location, json_extract_path_text(iamConfiguration, 'publicAccessPrevention') ic;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |---------------|--------------|----------|-----------|
+    ...    |${SPACE}projectNumber${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}location${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}ic${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------|--------------|----------|-----------|
+    ...    |${SPACE}${SPACE}100000000001${SPACE}|${SPACE}silly-bucket${SPACE}|${SPACE}US${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}inherited${SPACE}|
+    ...    |---------------|--------------|----------|-----------|
+    ${inputStr} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"     ${inputStrPostgres}    ${inputStrSQLite}
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Insert-Returning-Simple-Projection.tmp
+    ...    stderr=${CURDIR}/tmp/Insert-Returning-Simple-Projection-stderr.tmp
+
+Insert Async Returning Simple Projection
+    [Documentation]    Insert a row into a table and return projected new object values. For **asynchronously** created objects.
+    ${inputStr} =    Catenate
+    ...    insert /*+ AWAIT */ into google.compute.networks(project, data__name, data__autoCreateSubnetworks) select 'mutable-project', 'auto-test-01', false returning creationTimestamp, name;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-------------------------------|--------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}creationTimestamp${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------------------------------|--------------|
+    ...    |${SPACE}2025-07-05T19:42:34.483-07:00${SPACE}|${SPACE}auto-test-01${SPACE}|
+    ...    |-------------------------------|--------------|
+    ${stdErrStr} =    Catenate    SEPARATOR=\n
+    ...    compute#operation: insert in progress, 10 seconds elapsed
+    ...    compute#operation: insert complete
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${stdErrStr}
+    ...    stdout=${CURDIR}/tmp/Insert-Async-Returning-Simple-Projection.tmp
+    ...    stderr=${CURDIR}/tmp/Insert-Async-Returning-Simple-Projection-stderr.tmp

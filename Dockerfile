@@ -162,7 +162,7 @@ ENV PATH="${APP_DIR}:${PATH}"
 COPY --from=integration ${TEST_ROOT_DIR}/build/stackql ${APP_DIR}/
 
 RUN apt-get update \
-    && apt-get install -y ca-certificates openssl \
+    && apt-get install -y ca-certificates openssl netcat-traditional \
     && update-ca-certificates
 
 EXPOSE ${STACKQL_PG_PORT}/tcp

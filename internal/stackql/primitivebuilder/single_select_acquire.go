@@ -15,6 +15,7 @@ func NewSingleSelectAcquire(
 	insertCtx drm.PreparedStatementCtx,
 	rowSort func(map[string]map[string]interface{}) []string,
 	stream streaming.MapStream,
+	isAwait bool,
 ) Builder {
 	tableMeta := insertionContainer.GetTableMetadata()
 	_, isGraphQL := tableMeta.GetGraphQL()
@@ -39,5 +40,6 @@ func NewSingleSelectAcquire(
 		stream,
 		false,
 		false,
+		isAwait,
 	)
 }

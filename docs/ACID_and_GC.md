@@ -111,3 +111,11 @@ Please **watch this space** on all items which are **TBD**-inclusive.
   - List active Txns.
   - Halt / Allow new Txns.
   - Cancel Txns (filtered / unfiltered).
+
+## ACID
+
+
+### When RDBMS ACID fails
+
+Despite all efforts to enforce ACID, there are times when it can fail and require admin intervention, even for local disk backed RDBMs, [per `postgres` corruption documentation](https://wiki.postgresql.org/wiki/Corruption).
+
