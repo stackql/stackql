@@ -31,6 +31,7 @@ type monoValentBuilder struct {
 	root                       primitivegraph.PrimitiveNode
 	stream                     streaming.MapStream
 	isReadOnly                 bool //nolint:unused // TODO: build out
+	isAwait                    bool //nolint:unused // TODO: build out
 	monoValentExecutorFactory  execution.MonoValentExecutorFactory
 }
 
@@ -44,6 +45,7 @@ func newMonoValentBuilder(
 	stream streaming.MapStream,
 	isSkipResponse bool,
 	isMutation bool,
+	isAwait bool,
 ) Builder {
 	var tcc internaldto.TxnControlCounters
 	if insertCtx != nil {
@@ -72,7 +74,7 @@ func newMonoValentBuilder(
 			stream,
 			isSkipResponse,
 			isMutation,
-			false,
+			isAwait,
 		),
 	}
 }

@@ -3,6 +3,7 @@ package primitivebuilder
 import (
 	"github.com/stackql/any-sdk/pkg/streaming"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
+	"github.com/stackql/stackql/internal/stackql/asynccompose"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/execution"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -93,7 +94,8 @@ func (ss *Delete) Build() error {
 		primitive_context.NewPrimitiveContext(),
 	)
 	if ss.isAwait {
-		deletePrimitive, err = composeAsyncMonitor(handlerCtx, deletePrimitive, prov, method, nil)
+		deletePrimitive, err = asynccompose.ComposeAsyncMonitor(
+			handlerCtx, deletePrimitive, prov, method, nil, false, nil, nil) // isReturning hardcoded to false for now
 	}
 	if err != nil {
 		return err

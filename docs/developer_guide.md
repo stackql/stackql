@@ -274,7 +274,7 @@ https://docs.aws.amazon.com/sdk-for-go/api/aws/signer/v4/
 `INSERT RETURNING` can function in two mechanisms:
 
 - Synchronous responses, such as [`google.storage.buckets`](https://cloud.google.com/storage/docs/json_api/v1/buckets/insert).  The returning clause is a projection on the immediately available reponse body.
-- Asynchronous responses, such as [`google.compute.instances`](https://cloud.google.com/compute/docs/reference/rest/v1/instances/insert).  The returning clause is a projection on the reponse body **after** the await flow has concluded.
+- Asynchronous responses, such as [`google.compute.instances`](https://cloud.google.com/compute/docs/reference/rest/v1/instances/insert) and [`google.compute.networks`](https://cloud.google.com/compute/docs/reference/rest/v1/networks/insert).  The returning clause is a projection on the reponse body **after** the await flow has concluded.
 
 Future use cases for `UPDATE RETURNING`, `REPLACE RETURNING` and `DELETE RETURNING` will function the same observable fashion.
 

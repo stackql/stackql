@@ -3,6 +3,7 @@ package primitivebuilder
 import (
 	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
+	"github.com/stackql/stackql/internal/stackql/asynccompose"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/execution"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -174,7 +175,9 @@ func (ss *Exec) Build() error {
 		ss.graph.CreatePrimitiveNode(execPrimitive)
 		return nil
 	}
-	pr, err := composeAsyncMonitor(handlerCtx, execPrimitive, prov, m, nil)
+	pr, err := asynccompose.ComposeAsyncMonitor(
+		handlerCtx, execPrimitive, prov, m,
+		nil, false, nil, nil) // returning hardcoded to false for now
 	if err != nil {
 		return err
 	}

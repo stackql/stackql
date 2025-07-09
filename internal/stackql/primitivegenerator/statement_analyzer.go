@@ -695,7 +695,7 @@ func (pb *standardPrimitiveGenerator) analyzeExec(pbi planbuilderinput.PlanBuild
 				handlerCtx,
 				insertionContainer,
 				pb.PrimitiveComposer.GetInsertPreparedStatementCtx(),
-				nil, nil))
+				nil, nil, false)) // returning hardcoded to false for now
 		return nil
 	}
 	selIndirect, indirectErr := astindirect.NewParserExecIndirect(
@@ -1125,6 +1125,7 @@ func (pb *standardPrimitiveGenerator) AnalyzeInsert(pbi planbuilderinput.PlanBui
 		[]anysdk.ColumnDescriptor{},
 	)
 	analyser := anysdk.NewMethodAnalyzer()
+	// TODO: this ought to cater for async
 	methodAnalysisOutput, analysisErr := analyser.AnalyzeUnaryAction(analysisInput)
 	if analysisErr != nil {
 		return analysisErr

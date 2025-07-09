@@ -2130,6 +2130,9 @@ resources:
         response:
           mediaType: application/json
           openAPIDocKey: '200'
+          asyncOverrideMediaType: application/json
+          async_schema_override:
+            $ref: '#/components/schemas/Network'
       list:
         operation:
           $ref: 'googleapis.com/v0.1.2/services-split/compute/compute-v1.yaml#/paths/~1projects~1{project}~1global~1networks/get'
