@@ -90,11 +90,24 @@ func ExtractSelectColumnNames(selStmt *sqlparser.Select, formatter sqlparser.Nod
 
 func ExtractInsertReturningColumnNames(
 	insertStmt *sqlparser.Insert,
+	starColumns []string,
+	formatter sqlparser.NodeFormatter,
+) ([]ColumnHandle, error) {
+	return extractInsertReturningColumnNames(
+		insertStmt.SelectExprs,
+		starColumns,
+		formatter,
+	)
+}
+
+func extractInsertReturningColumnNames(
+	returningExprs sqlparser.SelectExprs,
+	starColumns []string,
 	formatter sqlparser.NodeFormatter,
 ) ([]ColumnHandle, error) {
 	var colNames []ColumnHandle
 	var err error
-	for _, node := range insertStmt.SelectExprs {
+	for _, node := range returningExprs {
 		switch node := node.(type) {
 		case *sqlparser.AliasedExpr:
 			cn, cErr := inferColNameFromExpr(node.Expr, formatter, node.As.GetRawVal())
@@ -103,6 +116,22 @@ func ExtractInsertReturningColumnNames(
 			}
 			colNames = append(colNames, cn)
 		case *sqlparser.StarExpr:
+			if len(starColumns) == 0 {
+				return nil, fmt.Errorf("no star columns provided for insert returning of star")
+			}
+			prefix := node.TableName.GetRawVal()
+			for _, colName := range starColumns {
+				if prefix != "" {
+					colName = prefix + "." + colName
+				}
+				colNames = append(colNames, ColumnHandle{
+					Name:  colName,
+					Alias: colName,
+				})
+			}
+		default:
+			err = fmt.Errorf("cannot use SelectExpr of type '%T' as a raw value", node)
+			return nil, err
 		}
 	}
 	return colNames, err
@@ -110,22 +139,14 @@ func ExtractInsertReturningColumnNames(
 
 func ExtractUpdateReturningColumnNames(
 	updateStmt *sqlparser.Update,
+	starColumns []string,
 	formatter sqlparser.NodeFormatter,
 ) ([]ColumnHandle, error) {
-	var colNames []ColumnHandle
-	var err error
-	for _, node := range updateStmt.SelectExprs {
-		switch node := node.(type) {
-		case *sqlparser.AliasedExpr:
-			cn, cErr := inferColNameFromExpr(node.Expr, formatter, node.As.GetRawVal())
-			if cErr != nil {
-				return nil, cErr
-			}
-			colNames = append(colNames, cn)
-		case *sqlparser.StarExpr:
-		}
-	}
-	return colNames, err
+	return extractInsertReturningColumnNames(
+		updateStmt.SelectExprs,
+		starColumns,
+		formatter,
+	)
 }
 
 func ExtractInsertColumnNames(insertStmt *sqlparser.Insert) ([]string, error) {

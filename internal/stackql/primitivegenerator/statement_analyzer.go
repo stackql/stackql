@@ -1152,7 +1152,8 @@ func (pb *standardPrimitiveGenerator) AnalyzeInsert(pbi planbuilderinput.PlanBui
 	}
 	columnHandles := []parserutil.ColumnHandle{}
 	if len(node.SelectExprs) > 0 {
-		columnHandles, err = parserutil.ExtractInsertReturningColumnNames(node, handlerCtx.GetASTFormatter())
+		starColumns, _ := methodAnalysisOutput.GetOrderedStarColumnsNames()
+		columnHandles, err = parserutil.ExtractInsertReturningColumnNames(node, starColumns, handlerCtx.GetASTFormatter())
 		if err != nil {
 			return err
 		}
@@ -1261,7 +1262,12 @@ func (pb *standardPrimitiveGenerator) AnalyzeUpdate(pbi planbuilderinput.PlanBui
 	}
 	columnHandles := []parserutil.ColumnHandle{}
 	if len(node.SelectExprs) > 0 {
-		columnHandles, err = parserutil.ExtractUpdateReturningColumnNames(node, handlerCtx.GetASTFormatter())
+		starColumns, _ := methodAnalysisOutput.GetOrderedStarColumnsNames()
+		columnHandles, err = parserutil.ExtractUpdateReturningColumnNames(
+			node,
+			starColumns,
+			handlerCtx.GetASTFormatter(),
+		)
 		if err != nil {
 			return err
 		}
