@@ -1,0 +1,30 @@
+{
+  "kind": "storage#bucket",
+  "selfLink": "https://www.googleapis.com/storage/v1/b/{{ bucket_name }}",
+  "id": "{{ bucket_name }}",
+  "name": "{{ bucket_name }}",
+  "projectNumber": "100000000001",
+  "generation": "1000000000000000001",
+  "metageneration": "1",
+  "location": "US",
+  "storageClass": "STANDARD",
+  "etag": "CAE=",
+  "timeCreated": "2025-07-03T00:03:44.250Z",
+  "updated": "2025-07-03T00:03:44.250Z",
+  "labels": {{ labels }},
+  "softDeletePolicy": {
+    "retentionDurationSeconds": "604800",
+    "effectiveTime": "2025-07-03T00:03:44.250Z"
+  },
+  "iamConfiguration": {
+    "bucketPolicyOnly": {
+      "enabled": false
+    },
+    "uniformBucketLevelAccess": {
+      "enabled": false
+    },
+    "publicAccessPrevention": "inherited"
+  },
+  "locationType": "multi-region",
+  "rpo": "DEFAULT"
+}

@@ -87,6 +87,7 @@ func (ss *Exec) Build() error {
 			svc,
 			true,
 			[]anysdk.ColumnDescriptor{},
+			false,
 		)
 		analyser := anysdk.NewMethodAnalyzer()
 		methodAnalysisOutput, analysisErr := analyser.AnalyzeUnaryAction(analysisInput)

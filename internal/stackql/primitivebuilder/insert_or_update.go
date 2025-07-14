@@ -44,6 +44,9 @@ func (ss *insertOrUpdate) Build() error {
 		}
 	case *sqlparser.Update:
 		mutableInput.SetVerb("update")
+		if len(node.SelectExprs) > 0 {
+			mutableInput.SetIsReturning(true)
+		}
 	default:
 		return fmt.Errorf("mutation executor: cannnot accomodate node of type '%T'", node)
 	}

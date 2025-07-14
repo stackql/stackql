@@ -1,0 +1,23 @@
+{
+  "kind": "compute#firewall",
+  "id": "100000000001",
+  "creationTimestamp": "2025-07-13T22:08:28.822-07:00",
+  "name": "{{ firewall_name }}",
+  "description": "My test fw rule",
+  "network": "https://www.googleapis.com/compute/v1/projects/{{ project_name }}/global/networks/nw-test-02",
+  "priority": 1000,
+  "sourceRanges": [
+    "0.0.0.0/0"
+  ],
+  "allowed": [
+    {
+      "IPProtocol": "all"
+    }
+  ],
+  "direction": "INGRESS",
+  "logConfig": {
+    "enable": false
+  },
+  "disabled": false,
+  "selfLink": "https://www.googleapis.com/compute/v1/projects/{{ project_name }}/global/firewalls/{{ firewall_name }}"
+}

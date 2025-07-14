@@ -650,12 +650,18 @@ resources:
         response:
           mediaType: application/json
           openAPIDocKey: '200'
+          asyncOverrideMediaType: application/json
+          async_schema_override:
+            $ref: '#/components/schemas/Firewall'
       patch:
         operation:
           $ref: 'googleapis.com/v2.0.1/services-split/compute/compute-v1.yaml#/paths/~1projects~1{project}~1global~1firewalls~1{firewall}/patch'
         response:
           mediaType: application/json
           openAPIDocKey: '200'
+          asyncOverrideMediaType: application/json
+          async_schema_override:
+            $ref: '#/components/schemas/Firewall'
     sqlVerbs:
       select:
         - $ref: '#/components/x-stackQL-resources/firewalls/methods/get'
