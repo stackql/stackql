@@ -108,6 +108,26 @@ func ExtractInsertReturningColumnNames(
 	return colNames, err
 }
 
+func ExtractUpdateReturningColumnNames(
+	updateStmt *sqlparser.Update,
+	formatter sqlparser.NodeFormatter,
+) ([]ColumnHandle, error) {
+	var colNames []ColumnHandle
+	var err error
+	for _, node := range updateStmt.SelectExprs {
+		switch node := node.(type) {
+		case *sqlparser.AliasedExpr:
+			cn, cErr := inferColNameFromExpr(node.Expr, formatter, node.As.GetRawVal())
+			if cErr != nil {
+				return nil, cErr
+			}
+			colNames = append(colNames, cn)
+		case *sqlparser.StarExpr:
+		}
+	}
+	return colNames, err
+}
+
 func ExtractInsertColumnNames(insertStmt *sqlparser.Insert) ([]string, error) {
 	var colNames []string
 	var err error

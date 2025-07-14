@@ -6,7 +6,7 @@
   "targetLink": "{{ target_link }}",
   "targetId": "{{ target_id if target_id else '2000000000002' }}",
   "status": "{{ 'DONE' if progress and progress > 99 else 'RUNNING' }}",
-  "user": "krimmer@ryukit.com",
+  "user": "somejimbo@stackql.io",
   "progress": {{ progress }},
   "insertTime": "2025-07-05T19:42:34.488-07:00",
   "startTime": "2025-07-05T19:42:34.491-07:00",

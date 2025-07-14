@@ -125,6 +125,27 @@ func GetAliasFromStatement(node sqlparser.SQLNode) string {
 	}
 }
 
+func GetUpdateTargetTableName(node *sqlparser.Update) (string, error) {
+	return getUpdateTargetTableName(node)
+}
+
+func getUpdateTargetTableName(node *sqlparser.Update) (string, error) {
+	if len(node.TableExprs) != 1 {
+		return "", fmt.Errorf("update statement must have exactly one table expression, not %d", len(node.TableExprs))
+	}
+	switch t := node.TableExprs[0].(type) {
+	case *sqlparser.AliasedTableExpr:
+		switch et := t.Expr.(type) {
+		case sqlparser.TableName:
+			return et.GetRawVal(), nil
+		default:
+			return "", fmt.Errorf("update statement must have exactly one table expression, not %T", et)
+		}
+	default:
+		return "", fmt.Errorf("update statement must have exactly one table expression, not %T", t)
+	}
+}
+
 func GetTableNameFromStatement(node sqlparser.SQLNode, formatter sqlparser.NodeFormatter) string {
 	switch n := node.(type) {
 	case *sqlparser.AliasedTableExpr:
@@ -138,6 +159,9 @@ func GetTableNameFromStatement(node sqlparser.SQLNode, formatter sqlparser.NodeF
 		return n.MethodName.GetRawVal()
 	case *sqlparser.Insert:
 		return n.Table.GetRawVal()
+	case *sqlparser.Update:
+		tableName, _ := getUpdateTargetTableName(n)
+		return tableName
 	case *sqlparser.Delete:
 		if len(n.TableExprs) != 1 {
 			return astformat.String(n, formatter)

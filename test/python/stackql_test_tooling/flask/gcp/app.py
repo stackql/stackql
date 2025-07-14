@@ -1,6 +1,7 @@
 
 import logging
 from flask import Flask, render_template, request, jsonify
+import json
 
 import os
 
@@ -14,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 @app.before_request
 def log_request_info():
-    logger.info(f"Request: {request.method} {request.path} - Query: {request.args}")
+    logger.info(f"Request: {request.method} {request.path} - Query: {request.args} -- Body: {request.get_data(as_text=True)}")
 
 @app.route('/storage/v1/b', methods=['GET'])
 def v1_storage_buckets_list():
@@ -35,6 +36,12 @@ def v1_storage_buckets_insert():
     if project_name == 'testing-project':
         return render_template('buckets-insert-generic.jinja.json', bucket_name=bucket_name), 200, {'Content-Type': 'application/json'}
     return '{"msg": "Disallowed"}', 401, {'Content-Type': 'application/json'}
+
+@app.route('/storage/v1/b/<bucket_name>', methods=['PATCH'])
+def v1_storage_buckets_update(bucket_name: str):
+    body = request.get_json()
+    labels = json.dumps(body.get('labels', {}))
+    return render_template('buckets-update-generic.jinja.json', bucket_name=bucket_name, labels=labels), 200, {'Content-Type': 'application/json'}
 
 @app.route('/compute/v1/projects/testing-project/global/networks', methods=['GET'])
 def projects_testing_project_global_networks():
@@ -67,13 +74,27 @@ def compute_networks_insert(project_name: str):
         ), 200, {'Content-Type': 'application/json'}
     return '{"msg": "Disallowed"}', 401, {'Content-Type': 'application/json'}
 
+def _extrapolate_target_from_operation(operation_name: str, project_name: str, host_name: str) -> str:
+    """
+    Extrapolates the target link from the operation name and project name.
+    """
+    if project_name == 'mutable-project' and operation_name == 'operation-100000000001-10000000001-10000001-10000001':
+        network_name = 'auto-test-01'
+        return f'https://{host_name}:1080/compute/v1/projects/{ project_name }/global/networks/{ network_name }'
+    if project_name == 'mutable-project' and operation_name == 'operation-100000000002-10000000002-10000002-10000002':
+        firewall_name = 'replacable-firewall'
+        return f'https://{host_name}:1080/compute/v1/projects/{ project_name }/global/firewalls/{ firewall_name }'
+    if project_name == 'mutable-project' and operation_name == 'operation-100000000003-10000000003-10000003-10000003':
+        firewall_name = 'updatable-firewall'
+        return f'https://{host_name}:1080/compute/v1/projects/{ project_name }/global/firewalls/{ firewall_name }'
+    raise ValueError(f"Unsupported operation name: {operation_name} for project: {project_name}")
+
 @app.route('/compute/v1/projects/<project_name>/global/operations/<operation_name>', methods=['GET'])
 def projects_testing_project_global_operation_detail(project_name: str, operation_name: str):
-    if project_name == 'mutable-project' and 'operation-100000000001-10000000001-10000001-10000001':
+    try:
         operation_id = '1000000000001'
-        network_name = 'auto-test-01'
         host_name = 'host.docker.internal' if _IS_DOCKER else 'localhost'
-        target_link = f'https://{host_name}:1080/compute/v1/projects/{ project_name }/global/networks/{ network_name }'
+        target_link = _extrapolate_target_from_operation(operation_name, project_name, host_name)
         return render_template(
             'global-operation.jinja.json',
             target_link=target_link, 
@@ -86,7 +107,8 @@ def projects_testing_project_global_operation_detail(project_name: str, operatio
             progress=100,
             end_time='2025-07-05T19:43:34.491-07:00',
         ), 200, {'Content-Type': 'application/json'}
-    return '{"msg": "Disallowed"}', 401, {'Content-Type': 'application/json'}
+    except:
+        return '{"msg": "Disallowed"}', 401, {'Content-Type': 'application/json'}
 
 @app.route('/compute/v1/projects/<project_name>/global/networks/<network_name>', methods=['GET'])
 def projects_testing_project_global_network_detail(project_name: str, network_name: str):
@@ -274,13 +296,69 @@ def v1_projects_testing_project_assets():
     # Increment the call counter
     return render_template('route_32_template.json'), 200, {'Content-Type': 'application/json'}
 
-@app.route('/compute/v1/projects/testing-project/global/firewalls/allow-spark-ui', methods=['PUT'])
-def projects_testing_project_global_firewalls_allow_spark_ui():
-    return render_template('route_33_template.json'), 200, {'Content-Type': 'application/json'}
+@app.route('/compute/v1/projects/<project_name>/global/firewalls/<firewall_name>', methods=['PUT'])
+def projects_testing_project_global_firewalls_replace(project_name: str, firewall_name: str):
+    _permitted_combinations = (('testing-project', 'allow-spark-ui'), ('mutable-project', 'replacable-firewall'))
+    if (project_name, firewall_name) not in _permitted_combinations:
+        return '{"msg": "Disallowed"}', 500, {'Content-Type': 'application/json'}
+    body = request.get_json()
+    operation_id = '1000000000002'
+    operation_name = 'operation-100000000002-10000000002-10000002-10000002'
+    host_name = 'host.docker.internal' if _IS_DOCKER else 'localhost'
+    target_link = f'https://{host_name}:1080/compute/v1/projects/{ project_name }/global/firewalls/{ firewall_name }'
+    if not body:
+        return '{"msg": "Invalid request body"}', 400, {'Content-Type': 'application/json'}
+    if not project_name:
+        return '{"msg": "Invalid request: project not supplied"}', 400, {'Content-Type': 'application/json'}
+    return render_template(
+        'global-operation.jinja.json', 
+        target_link=target_link, 
+        operation_id=operation_id,
+        operation_name=operation_name,
+        project_name=project_name,
+        host_name=host_name,
+        kind='compute#operation',
+        operation_type='put',
+        progress=0,
+    ), 200, {'Content-Type': 'application/json'}
 
-@app.route('/compute/v1/projects/testing-project/global/firewalls/some-other-firewall', methods=['PATCH'])
-def projects_testing_project_global_firewalls_some_other_firewall():
-    return render_template('route_34_template.json'), 200, {'Content-Type': 'application/json'}
+@app.route('/compute/v1/projects/<project_name>/global/firewalls/<firewall_name>', methods=['PATCH'])
+def projects_testing_project_global_firewalls_update(project_name: str, firewall_name: str):
+    _permitted_combinations = (('testing-project', 'some-other-firewall'), ('mutable-project', 'updatable-firewall'))
+    if (project_name, firewall_name) not in _permitted_combinations:
+        return '{"msg": "Disallowed"}', 500, {'Content-Type': 'application/json'}
+    body = request.get_json()
+    operation_id = '1000000000003'
+    operation_name = 'operation-100000000003-10000000003-10000003-10000003'
+    host_name = 'host.docker.internal' if _IS_DOCKER else 'localhost'
+    target_link = f'https://{host_name}:1080/compute/v1/projects/{ project_name }/global/firewalls/{ firewall_name }'
+    if not body:
+        return '{"msg": "Invalid request body"}', 400, {'Content-Type': 'application/json'}
+    if not project_name:
+        return '{"msg": "Invalid request: project not supplied"}', 400, {'Content-Type': 'application/json'}
+    return render_template(
+        'global-operation.jinja.json', 
+        target_link=target_link, 
+        operation_id=operation_id,
+        operation_name=operation_name,
+        project_name=project_name,
+        host_name=host_name,
+        kind='compute#operation',
+        operation_type='patch',
+        progress=0,
+    ), 200, {'Content-Type': 'application/json'}
+
+@app.route('/compute/v1/projects/<project_name>/global/firewalls/<firewall_name>', methods=['GET'])
+def projects_testing_project_global_firewalls_some_other_firewall(project_name: str, firewall_name: str):
+    _permitted_combinations = (('testing-project', 'some-other-firewall'), ('mutable-project', 'updatable-firewall'), ('mutable-project', 'replacable-firewall'))
+    if (project_name, firewall_name) not in _permitted_combinations:
+        return '{"msg": "Disallowed"}', 500, {'Content-Type': 'application/json'}
+    jinja_context = {
+        'project_name': project_name,
+        'firewall_name': firewall_name,
+        'host_name': 'host.docker.internal' if _IS_DOCKER else 'localhost',
+    }
+    return render_template('firewall-detail.jinja.json', **jinja_context), 200, {'Content-Type': 'application/json'}
 
 @app.route('/compute/v1/projects/testing-project/global/firewalls', methods=['GET'])
 def projects_testing_project_global_firewalls():
