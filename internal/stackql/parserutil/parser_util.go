@@ -137,6 +137,18 @@ func extractInsertReturningColumnNames(
 	return colNames, err
 }
 
+func ExtractDeleteReturningColumnNames(
+	deleteStmt *sqlparser.Delete,
+	starColumns []string,
+	formatter sqlparser.NodeFormatter,
+) ([]ColumnHandle, error) {
+	return extractInsertReturningColumnNames(
+		deleteStmt.SelectExprs,
+		starColumns,
+		formatter,
+	)
+}
+
 func ExtractUpdateReturningColumnNames(
 	updateStmt *sqlparser.Update,
 	starColumns []string,

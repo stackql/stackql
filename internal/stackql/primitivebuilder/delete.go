@@ -19,17 +19,20 @@ type Delete struct {
 	handlerCtx        handler.HandlerContext
 	drmCfg            drm.Config
 	root              primitivegraph.PrimitiveNode
+	tail              primitivegraph.PrimitiveNode
 	tbl               tablemetadata.ExtendedTableMetadata
 	node              sqlparser.SQLNode
 	commentDirectives sqlparser.CommentDirectives
 	isAwait           bool
 	insertCtx         drm.PreparedStatementCtx
+	selectCtx         drm.PreparedStatementCtx
 }
 
 func NewDelete(
 	graph primitivegraph.PrimitiveGraphHolder,
 	handlerCtx handler.HandlerContext,
 	insertCtx drm.PreparedStatementCtx,
+	selectCtx drm.PreparedStatementCtx,
 	node sqlparser.SQLNode,
 	tbl tablemetadata.ExtendedTableMetadata,
 	commentDirectives sqlparser.CommentDirectives,
@@ -44,6 +47,7 @@ func NewDelete(
 		commentDirectives: commentDirectives,
 		isAwait:           isAwait,
 		insertCtx:         insertCtx,
+		selectCtx:         selectCtx,
 	}
 }
 
@@ -52,7 +56,7 @@ func (ss *Delete) GetRoot() primitivegraph.PrimitiveNode {
 }
 
 func (ss *Delete) GetTail() primitivegraph.PrimitiveNode {
-	return ss.root
+	return ss.tail
 }
 
 func (ss *Delete) Build() error {
@@ -104,6 +108,22 @@ func (ss *Delete) Build() error {
 	graph := ss.graph
 	insertNode := graph.CreatePrimitiveNode(deletePrimitive)
 	ss.root = insertNode
-
+	ss.tail = insertNode
+	if ss.selectCtx != nil {
+		selectionBldr := NewSingleSelect(
+			ss.graph,
+			handlerCtx,
+			ss.selectCtx,
+			[]tableinsertioncontainer.TableInsertionContainer{insertContainer},
+			nil,
+			streaming.NewNopMapStream(),
+		)
+		err = selectionBldr.Build()
+		if err != nil {
+			return err
+		}
+		ss.graph.NewDependency(ss.tail, selectionBldr.GetRoot(), 1.0)
+		ss.tail = selectionBldr.GetTail()
+	}
 	return nil
 }
