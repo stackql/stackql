@@ -2,7 +2,7 @@
   "kind": "{{ kind if kind else 'compute#operation' }}",
   "id": "{{ operation_id if operation_id else '1000000000001' }}",
   "name": "{{ operation_name }}",
-  "operationType": "insert",
+  "operationType": "{{ operation_type }}",
   "targetLink": "{{ target_link }}",
   "targetId": "{{ target_id if target_id else '2000000000002' }}",
   "status": "{{ 'DONE' if progress and progress > 99 else 'RUNNING' }}",

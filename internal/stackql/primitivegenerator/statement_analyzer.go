@@ -1301,6 +1301,7 @@ func (pb *standardPrimitiveGenerator) inferHeirarchyAndPersist(
 	return err
 }
 
+//nolint:funlen,gocognit // acceptable for now
 func (pb *standardPrimitiveGenerator) analyzeDelete(
 	pbi planbuilderinput.PlanBuilderInput,
 ) error {
@@ -1331,6 +1332,13 @@ func (pb *standardPrimitiveGenerator) analyzeDelete(
 	if err != nil {
 		return err
 	}
+
+	if pb.PrimitiveComposer.IsAwait() && !method.IsAwaitable() {
+		return fmt.Errorf("method %s is not awaitable", method.GetName())
+	}
+	if pb.PrimitiveComposer.IsAwait() && len(node.SelectExprs) > 0 {
+		return fmt.Errorf("returning from asynchronous delete is disallowed")
+	}
 	svc, err := tbl.GetService()
 	if err != nil {
 		return err
@@ -1358,20 +1366,35 @@ func (pb *standardPrimitiveGenerator) analyzeDelete(
 	if err != nil {
 		return err
 	}
+	columnHandles := []parserutil.ColumnHandle{}
+	if len(node.SelectExprs) > 0 {
+		if pb.PrimitiveComposer.IsAwait() {
+			return fmt.Errorf("delete with returning not allowed in await mode")
+		}
+		starColumns, _ := methodAnalysisOutput.GetOrderedStarColumnsNames()
+		columnHandles, err = parserutil.ExtractDeleteReturningColumnNames(
+			node,
+			starColumns,
+			handlerCtx.GetASTFormatter(),
+		)
+		if err != nil {
+			return err
+		}
+	}
 	err = pb.analyzeUnaryAction(
 		pbi,
 		handlerCtx,
 		node,
 		node.Where,
 		tbl,
-		[]parserutil.ColumnHandle{},
+		columnHandles,
 		methodAnalysisOutput,
 	)
 	if err != nil {
 		return err
 	}
 	pb.PrimitiveComposer.SetTable(node, tbl)
-	return err
+	return nil
 }
 
 func (pb *standardPrimitiveGenerator) analyzeDescribe(pbi planbuilderinput.PlanBuilderInput) error {

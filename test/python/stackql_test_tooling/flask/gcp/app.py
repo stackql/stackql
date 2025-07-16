@@ -87,6 +87,9 @@ def _extrapolate_target_from_operation(operation_name: str, project_name: str, h
     if project_name == 'mutable-project' and operation_name == 'operation-100000000003-10000000003-10000003-10000003':
         firewall_name = 'updatable-firewall'
         return f'https://{host_name}:1080/compute/v1/projects/{ project_name }/global/firewalls/{ firewall_name }'
+    if project_name == 'mutable-project' and operation_name == 'operation-100000000004-10000000004-10000004-10000004':
+        firewall_name = 'deletable-firewall'
+        return f'https://{host_name}:1080/compute/v1/projects/{ project_name }/global/firewalls/{ firewall_name }'
     raise ValueError(f"Unsupported operation name: {operation_name} for project: {project_name}")
 
 @app.route('/compute/v1/projects/<project_name>/global/operations/<operation_name>', methods=['GET'])
@@ -103,7 +106,7 @@ def projects_testing_project_global_operation_detail(project_name: str, operatio
             project_name=project_name,
             host_name=host_name,
             kind='compute#operation',
-            operation_type='insert',
+            operation_type='insert' if operation_name == 'operation-100000000001-10000000001-10000001-10000001' else 'update' if operation_name == 'operation-100000000002-10000000002-10000002-10000002' else 'delete' if operation_name == 'operation-100000000004-10000000004-10000004-10000004' else 'patch',
             progress=100,
             end_time='2025-07-05T19:43:34.491-07:00',
         ), 200, {'Content-Type': 'application/json'}
@@ -318,7 +321,7 @@ def projects_testing_project_global_firewalls_replace(project_name: str, firewal
         project_name=project_name,
         host_name=host_name,
         kind='compute#operation',
-        operation_type='put',
+        operation_type='update',
         progress=0,
     ), 200, {'Content-Type': 'application/json'}
 
@@ -345,6 +348,29 @@ def projects_testing_project_global_firewalls_update(project_name: str, firewall
         host_name=host_name,
         kind='compute#operation',
         operation_type='patch',
+        progress=0,
+    ), 200, {'Content-Type': 'application/json'}
+
+@app.route('/compute/v1/projects/<project_name>/global/firewalls/<firewall_name>', methods=['DELETE'])
+def projects_testing_project_global_firewalls_delete(project_name: str, firewall_name: str):
+    _permitted_combinations = (('mutable-project', 'deletable-firewall'),)
+    if (project_name, firewall_name) not in _permitted_combinations:
+        return '{"msg": "Disallowed"}', 500, {'Content-Type': 'application/json'}
+    operation_id = '1000000000004'
+    operation_name = 'operation-100000000004-10000000004-10000004-10000004'
+    host_name = 'host.docker.internal' if _IS_DOCKER else 'localhost'
+    target_link = f'https://{host_name}:1080/compute/v1/projects/{ project_name }/global/firewalls/{ firewall_name }'
+    if not project_name:
+        return '{"msg": "Invalid request: project not supplied"}', 400, {'Content-Type': 'application/json'}
+    return render_template(
+        'global-operation.jinja.json', 
+        target_link=target_link, 
+        operation_id=operation_id,
+        operation_name=operation_name,
+        project_name=project_name,
+        host_name=host_name,
+        kind='compute#operation',
+        operation_type='delete',
         progress=0,
     ), 200, {'Content-Type': 'application/json'}
 

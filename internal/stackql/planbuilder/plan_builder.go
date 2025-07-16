@@ -13,6 +13,7 @@ import (
 	"github.com/stackql/any-sdk/pkg/streaming"
 	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/routeanalysis"
+	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/builder_input"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
@@ -608,6 +609,10 @@ func (pgb *standardPlanGraphBuilder) handleDelete(pbi planbuilderinput.PlanBuild
 			return err
 		}
 		insertCtx := primitiveGenerator.GetPrimitiveComposer().GetInsertPreparedStatementCtx()
+		var selectCtx drm.PreparedStatementCtx
+		if len(node.SelectExprs) > 0 {
+			selectCtx = primitiveGenerator.GetPrimitiveComposer().GetSelectPreparedStatementCtx()
+		}
 		isPhysicalTable := tbl.IsPhysicalTable()
 		var bldr primitivebuilder.Builder
 		if !isPhysicalTable {
@@ -615,6 +620,7 @@ func (pgb *standardPlanGraphBuilder) handleDelete(pbi planbuilderinput.PlanBuild
 				pgb.planGraphHolder,
 				handlerCtx,
 				insertCtx,
+				selectCtx,
 				node,
 				tbl,
 				nil,
