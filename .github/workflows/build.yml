@@ -978,13 +978,15 @@ jobs:
     
     - name: Setup WSL with dependencies
       # uses: Vampire/setup-wsl@v1
-      uses: Vampire/setup-wsl@v3.0.0
+      uses: Vampire/setup-wsl@v6.0.0
       with:
+        distribution: Ubuntu-24.04
         additional-packages:
           openssl
           postgresql
           python3
           python3-pip
+          python3-venv
           sqlite3
         wsl-conf: |
           [automount]
@@ -998,11 +1000,16 @@ jobs:
 
     - shell: wsl-bash -u root {0}
       name: Install Python dependencies
-      run: pip3 install -r cicd/requirements.txt
+      run: |
+        python3 -m venv .venv;
+        source .venv/bin/activate; 
+        pip3 install -r cicd/requirements.txt;
     
     - shell: wsl-bash {0}
       name: Generate rewritten registry for simulations
-      run: python3 test/python/stackql_test_tooling/registry_rewrite.py --srcdir "$(pwd)/test/registry/src" --destdir "$(pwd)/test/registry-mocked/src"
+      run: |
+        source .venv/bin/activate;
+        python3 test/python/stackql_test_tooling/registry_rewrite.py --srcdir "$(pwd)/test/registry/src" --destdir "$(pwd)/test/registry-mocked/src"
 
     - shell: wsl-bash {0}
       name: Create certificates for robot tests
@@ -1028,6 +1035,7 @@ jobs:
             export BUILDPATCHVERSION="${BUILDPATCHVERSION}"
           fi
           export PYTHONPATH="$(pwd)/test/python"
+          source .venv/bin/activate;
           python3 cicd/python/build.py --robot-test --config='{ "variables":  { "IS_WSL": true } }'
 
     - shell: wsl-bash {0}
@@ -1064,6 +1072,7 @@ jobs:
           pgrep -f flask | xargs kill -9 || true
           echo "## End ##"
           export PYTHONPATH="$(pwd)/test/python"
+          source .venv/bin/activate;
           python3 cicd/python/build.py --robot-test-integration --config='{ "variables":  { "IS_WSL": true } }'
 
   macosbuild:
