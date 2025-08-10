@@ -91,7 +91,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v5.0.0
       with:
-        go-version: ^1.21
+        go-version: '~1.22'
         check-latest: true
         cache: true
       id: go
@@ -177,6 +177,8 @@ jobs:
         CGO_ENABLED: 1
         GH_ACCESS_TOKEN: ${{env.GH_ACCESS_TOKEN}}
         GOPRIVATE: ${{env.GOPRIVATE}}
+        GOOS: windows
+        GOARCH: amd64
       run: |
         git config --global url.https://$env:GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
         $Version = convertfrom-stringdata (get-content ./cicd/version.txt -raw)
@@ -190,7 +192,9 @@ jobs:
         echo "BUILDMINORVERSION=$env:BUILDMINORVERSION" >> $GITHUB_ENV
         echo "BUILDPATCHVERSION=$env:BUILDPATCHVERSION" >> $GITHUB_ENV
 
-        python cicd/python/build.py --verbose --build 
+        python cicd/python/build.py --verbose --build
+
+        build\stackql.exe --help
 
     - name: Test
       if: success()
@@ -256,7 +260,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v5.0.0
       with:
-        go-version: ^1.21
+        go-version: '~1.22'
         check-latest: true
         cache: true
       id: go
@@ -476,7 +480,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v5.0.0
       with:
-        go-version: ^1.21
+        go-version: '~1.22'
         check-latest: true
         cache: true
       id: go
@@ -678,7 +682,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v5.0.0
       with:
-        go-version: ^1.21
+        go-version: '~1.22'
         check-latest: true
         cache: true
       id: go
@@ -1086,7 +1090,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v5.0.0
       with:
-        go-version: ^1.21
+        go-version: '~1.22'
         check-latest: true
         cache: true
       id: go
@@ -1232,7 +1236,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v5.0.0
       with:
-        go-version: ^1.21
+        go-version: '~1.22'
         check-latest: true
         cache: true
       id: go
