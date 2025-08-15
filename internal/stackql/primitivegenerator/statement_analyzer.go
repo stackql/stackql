@@ -12,7 +12,6 @@ import (
 	"github.com/stackql/any-sdk/pkg/dto"
 	anysdk_internaldto "github.com/stackql/any-sdk/pkg/internaldto"
 	"github.com/stackql/any-sdk/pkg/logging"
-	"github.com/stackql/stackql/internal/stackql/astformat"
 	"github.com/stackql/stackql/internal/stackql/astindirect"
 	"github.com/stackql/stackql/internal/stackql/astvisit"
 	"github.com/stackql/stackql/internal/stackql/drm"
@@ -33,6 +32,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/taxonomy"
 	"github.com/stackql/stackql/internal/stackql/util"
+	"github.com/stackql/stackql/pkg/astformat"
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )

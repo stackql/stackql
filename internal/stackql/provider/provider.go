@@ -7,11 +7,12 @@ import (
 	"github.com/stackql/any-sdk/pkg/auth_util"
 	"github.com/stackql/any-sdk/pkg/constants"
 	"github.com/stackql/any-sdk/pkg/dto"
-	"github.com/stackql/stackql/internal/stackql/discovery"
+	"github.com/stackql/any-sdk/public/discovery"
 	"github.com/stackql/stackql/internal/stackql/docparser"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/methodselect"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
+	"github.com/stackql/stackql/internal/stackql/persistence"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
 
 	sdk_internal_dto "github.com/stackql/any-sdk/pkg/internaldto"
@@ -144,17 +145,19 @@ func newGenericProvider(
 		return nil, err
 	}
 
+	persistor := persistence.NewSQLPersistenceSystem(sqlSystem)
+
 	da := discovery.NewBasicDiscoveryAdapter(
 		providerStr,
 		rootURL,
 		discovery.NewTTLDiscoveryStore(
-			sqlSystem,
+			persistor,
 			reg,
 			rtCtx,
 		),
 		&rtCtx,
 		reg,
-		sqlSystem,
+		persistor,
 	)
 
 	p, err := da.GetProvider(rtCtx.ProviderStr)

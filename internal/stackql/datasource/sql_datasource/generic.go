@@ -8,9 +8,9 @@ import (
 	_ "github.com/snowflakedb/gosnowflake" //nolint:revive,nolintlint // this is a DB driver pattern
 
 	"github.com/stackql/any-sdk/pkg/constants"
+	"github.com/stackql/any-sdk/pkg/db/db_util"
 	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/stackql/internal/stackql/datasource/sqltable"
-	"github.com/stackql/stackql/internal/stackql/db_util"
 )
 
 var (

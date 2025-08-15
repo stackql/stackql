@@ -6,7 +6,7 @@ import (
 
 	"github.com/stackql/any-sdk/pkg/constants"
 	"github.com/stackql/any-sdk/pkg/dto"
-	"github.com/stackql/stackql/internal/stackql/sqlengine"
+	"github.com/stackql/any-sdk/public/sqlengine"
 	"github.com/stackql/stackql/pkg/textutil"
 )
 

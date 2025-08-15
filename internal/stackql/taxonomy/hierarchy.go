@@ -5,12 +5,12 @@ import (
 
 	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/any-sdk/pkg/logging"
-	"github.com/stackql/stackql/internal/stackql/astformat"
+	"github.com/stackql/any-sdk/pkg/name_mangle"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
-	"github.com/stackql/stackql/pkg/name_mangle"
+	"github.com/stackql/stackql/pkg/astformat"
 
 	"strings"
 

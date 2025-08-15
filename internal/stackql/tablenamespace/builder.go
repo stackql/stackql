@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"text/template"
 
-	"github.com/stackql/stackql/internal/stackql/sqlengine"
+	"github.com/stackql/any-sdk/public/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/templatenamespace"
 )
 
