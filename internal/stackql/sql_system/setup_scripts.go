@@ -4,7 +4,7 @@ import (
 	"github.com/stackql/any-sdk/public/sqlengine"
 )
 
-//nolint:checknoglobals,gochecknoglobals // fine with this
+//nolint:gochecknoglobals // fine with this
 var (
 	sqLiteEngineSetupDDL, _   = sqlengine.GetSQLEngineSetupDDL("sqlite")
 	postgresEngineSetupDDL, _ = sqlengine.GetSQLEngineSetupDDL("postgres")

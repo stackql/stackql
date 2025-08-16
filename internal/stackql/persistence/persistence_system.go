@@ -3,12 +3,12 @@ package persistence
 import (
 	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/any-sdk/pkg/name_mangle"
-	"github.com/stackql/any-sdk/public/discovery"
+	"github.com/stackql/any-sdk/public/persistence"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
 )
 
 var (
-	_ discovery.PersistenceSystem = &SQLPersistenceSystem{}
+	_ persistence.PersistenceSystem = &SQLPersistenceSystem{}
 )
 
 type SQLPersistenceSystem struct {
@@ -16,7 +16,7 @@ type SQLPersistenceSystem struct {
 	viewNameMangler name_mangle.NameMangler
 }
 
-func NewSQLPersistenceSystem(sqlSystem sql_system.SQLSystem) *SQLPersistenceSystem {
+func NewSQLPersistenceSystem(sqlSystem sql_system.SQLSystem) persistence.PersistenceSystem {
 	return &SQLPersistenceSystem{
 		sqlSystem:       sqlSystem,
 		viewNameMangler: name_mangle.NewViewNameMangler(),
