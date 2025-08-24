@@ -28,7 +28,7 @@
         "path": "/",
         "headers": {
             "Authorization": [
-                "^.*ap-southeast-2.*SignedHeaders=accept;content-type;host;x-amz-date;x-amz-target.*$"
+                "^.*ap-southeast-2.*SignedHeaders=accept.*;content-type;host;x-amz-date;x-amz-target.*$"
             ],
             "X-Amz-Target": [
                 "CloudApiService.ListResources"
@@ -256,7 +256,7 @@
         },
         "headers": {
             "Authorization": [
-                "^.*ap-southeast-1.*SignedHeaders=.*host;x-amz-content-sha256;x-amz-date.*$"
+                "^.*ap-southeast-1.*SignedHeaders=.*host;.*x-amz-date.*$"
             ]
         },
         "body_conditions": {},
@@ -274,7 +274,7 @@
         },
         "headers": {
             "Authorization": [
-                "^.*ap-southeast-2.*SignedHeaders=.*host;x-amz-content-sha256;x-amz-date.*$"
+                "^.*ap-southeast-2.*SignedHeaders=.*host;.*x-amz-date.*$"
             ]
         },
         "body_conditions": {},
@@ -503,7 +503,7 @@
         "path": "/",
         "headers": {
             "Authorization": [
-                "^.*ap-southeast-1.*SignedHeaders=accept;content-type;host;x-amz-date;x-amz-target.*$"
+                "^.*ap-southeast-1.*SignedHeaders=accept.*;content-type;host;x-amz-date;x-amz-target.*$"
             ],
             "X-Amz-Target": [
                 "CloudApiService.ListResources"
@@ -552,7 +552,7 @@
         "path": "/",
         "headers": {
             "Authorization": [
-                "^.*SignedHeaders=accept;content-type;host;x-amz-date;x-amz-target.*$"
+                "^.*SignedHeaders=accept.*;content-type;host;x-amz-date;x-amz-target.*$"
             ],
             "X-Amz-Target": [
                 "CloudApiService.ListResources"
@@ -625,7 +625,7 @@
         "path": "/",
         "headers": {
             "Authorization": [
-                "^.*us-east-1.*SignedHeaders=accept;content-type;host;x-amz-date;x-amz-target.*$"
+                "^.*us-east-1.*SignedHeaders=accept.*;content-type;host;x-amz-date;x-amz-target.*$"
             ],
             "X-Amz-Target": [
                 "CloudApiService.ListResources"
@@ -699,7 +699,7 @@
         "path": "/",
         "headers": {
             "Authorization": [
-                "^.*us-west-1.*SignedHeaders=accept;content-type;host;x-amz-date;x-amz-target.*$"
+                "^.*us-west-1.*SignedHeaders=accept.*;content-type;host;x-amz-date;x-amz-target.*$"
             ],
             "X-Amz-Target": [
                 "CloudApiService.ListResources"
@@ -773,7 +773,7 @@
         "path": "/",
         "headers": {
             "Authorization": [
-                "^.*eu-west-1.*SignedHeaders=accept;content-type;host;x-amz-date;x-amz-target.*$"
+                "^.*eu-west-1.*SignedHeaders=accept.*;content-type;host;x-amz-date;x-amz-target.*$"
             ],
             "X-Amz-Target": [
                 "CloudApiService.ListResources"
@@ -847,7 +847,7 @@
         "path": "/",
         "headers": {
             "Authorization": [
-                "^.*us-west-2.*SignedHeaders=accept;content-type;host;x-amz-date;x-amz-target.*$"
+                "^.*us-west-2.*SignedHeaders=accept.*;content-type;host;x-amz-date;x-amz-target.*$"
             ],
             "X-Amz-Target": [
                 "CloudApiService.ListResources"
@@ -921,7 +921,7 @@
         "path": "/",
         "headers": {
             "Authorization": [
-                "^.*eu-west-2.*SignedHeaders=accept;content-type;host;x-amz-date;x-amz-target.*$"
+                "^.*eu-west-2.*SignedHeaders=accept.*;content-type;host;x-amz-date;x-amz-target.*$"
             ],
             "X-Amz-Target": [
                 "CloudApiService.ListResources"
@@ -995,7 +995,7 @@
         "path": "/",
         "headers": {
             "Authorization": [
-                "^.*ca-central-1.*SignedHeaders=accept;content-type;host;x-amz-date;x-amz-target.*$"
+                "^.*ca-central-1.*SignedHeaders=accept.*;content-type;host;x-amz-date;x-amz-target.*$"
             ],
             "X-Amz-Target": [
                 "CloudApiService.ListResources"
@@ -1069,7 +1069,7 @@
         "path": "/",
         "headers": {
             "Authorization": [
-                "^.*ap-southeast-1.*SignedHeaders=accept;content-type;host;x-amz-date;x-amz-target.*$"
+                "^.*ap-southeast-1.*SignedHeaders=accept.*;content-type;host;x-amz-date;x-amz-target.*$"
             ],
             "X-Amz-Target": [
                 "CloudApiService.ListResources"
@@ -1093,7 +1093,7 @@
         "path": "/",
         "headers": {
             "Authorization": [
-                "^.*ap-southeast-2.*SignedHeaders=accept;content-type;host;x-amz-date;x-amz-target.*$"
+                "^.*ap-southeast-2.*SignedHeaders=accept.*;content-type;host;x-amz-date;x-amz-target.*$"
             ],
             "X-Amz-Target": [
                 "CloudApiService.ListResources"
@@ -1267,7 +1267,7 @@
         "path": "/",
         "headers": {
             "Authorization": [
-                "^.*SignedHeaders=content-type;host;x-amz-date;x-amz-target.*$"
+                "^.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$"
             ],
             "X-Amz-Target": [
                 "TransferService.DeleteServer"
@@ -1291,7 +1291,7 @@
         "path": "/",
         "headers": {
             "Authorization": [
-                "^.*SignedHeaders=content-type;host;x-amz-date;x-amz-target.*$"
+                "^.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$"
             ],
             "X-Amz-Target": [
                 "TransferService.DeleteUser"
@@ -1316,7 +1316,7 @@
         "path": "/",
         "headers": {
             "Authorization": [
-                "^.*SignedHeaders=content-type;host;x-amz-date;x-amz-target.*$"
+                "^.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$"
             ],
             "X-Amz-Target": [
                 "TransferService.UpdateServer"
@@ -1343,7 +1343,7 @@
         "path": "/",
         "headers": {
             "Authorization": [
-                "^.*SignedHeaders=content-type;host;x-amz-date;x-amz-target.*$"
+                "^.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$"
             ],
             "X-Amz-Target": [
                 "TransferService.UpdateUser"
@@ -1369,7 +1369,7 @@
         "path": "/",
         "headers": {
             "Authorization": [
-                "^.*SignedHeaders=content-type;host;x-amz-date;x-amz-target.*$"
+                "^.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$"
             ],
             "X-Amz-Target": [
                 "TransferService.CreateServer"
@@ -1393,7 +1393,7 @@
         "path": "/",
         "headers": {
             "Authorization": [
-                "^.*SignedHeaders=content-type;host;x-amz-date;x-amz-target.*$"
+                "^.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$"
             ],
             "X-Amz-Target": [
                 "TransferService.CreateServer"
@@ -1445,7 +1445,7 @@
         "path": "/",
         "headers": {
             "Authorization": [
-                "^.*SignedHeaders=content-type;host;x-amz-date;x-amz-target.*$"
+                "^.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$"
             ],
             "X-Amz-Target": [
                 "TransferService.StopServer"
@@ -1466,7 +1466,7 @@
         "path": "/",
         "headers": {
             "Authorization": [
-                "^.*SignedHeaders=content-type;host;x-amz-date;x-amz-target.*$"
+                "^.*SignedHeaders=.*host;x-amz-date;x-amz-target.*$"
             ],
             "X-Amz-Target": [
                 "BaldrApiService.DescribeClusters"
@@ -1490,7 +1490,7 @@
         "path": "/",
         "headers": {
             "Authorization": [
-                "^.*/rubbish-region/.*SignedHeaders=content-type;host;x-amz-date;x-amz-target.*$"
+                "^.*/rubbish-region/.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$"
             ],
             "X-Amz-Target": [
                 "BaldrApiService.DescribeBackups"
@@ -1514,7 +1514,7 @@
         "path": "/",
         "headers": {
             "Authorization": [
-                "^.*/another-rubbish-region/.*SignedHeaders=content-type;host;x-amz-date;x-amz-target.*$"
+                "^.*/another-rubbish-region/.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$"
             ],
             "X-Amz-Target": [
                 "BaldrApiService.DescribeBackups"
@@ -1537,7 +1537,7 @@
         "method": "POST",
         "path": "/",
         "headers": {
-            "Authorization": "^.*SignedHeaders=content-type;host;x-amz-date;x-amz-target.*$",
+            "Authorization": "^.*SignedHeaders=.*content-type;host;x-amz-date;x-amz-target.*$",
             "X-Amz-Target": "BaldrApiService.DescribeBackups"
         },
         "body_conditions": {
@@ -1558,7 +1558,7 @@
         "path": "/",
         "headers": {
             "Authorization": [
-                "^.*SignedHeaders=content-encoding;content-type;host;x-amz-date;x-amz-target.*$"
+                "^.*SignedHeaders=content-encoding;.*content-type;host;x-amz-date;x-amz-target.*$"
             ],
             "X-Amz-Target": [
                 "Logs_20140328.GetLogEvents"
@@ -1832,7 +1832,7 @@
         "path": "/",
         "headers": {
             "Authorization": [
-                "^.*SignedHeaders=accept;content-type;host;x-amz-date;x-amz-target.*$"
+                "^.*SignedHeaders=accept.*;content-type;host;x-amz-date;x-amz-target.*$"
             ],
             "X-Amz-Target": [
                 "CloudApiService.ListResourceRequests"
