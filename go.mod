@@ -16,7 +16,7 @@ require (
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.1
-	github.com/stackql/any-sdk v0.1.5-beta06
+	github.com/stackql/any-sdk v0.2.1-alpha01
 	github.com/stackql/go-suffix-map v0.0.1-alpha01
 	github.com/stackql/psql-wire v0.1.1-beta23
 	github.com/stackql/stackql-parser v0.0.15-alpha06
@@ -44,7 +44,6 @@ require (
 	github.com/antchfx/xmlquery v1.3.10 // indirect
 	github.com/antchfx/xpath v1.2.0 // indirect
 	github.com/apache/arrow-go/v18 v18.0.0 // indirect
-	github.com/aws/aws-sdk-go v1.55.6 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.26.1 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.2 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.27.11 // indirect
