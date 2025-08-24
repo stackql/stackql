@@ -27,7 +27,7 @@ These may consume entire testing modules, or more nuanced [tag-based](https://ro
 From the repository root:
 
 ```sh
-env PYTHONPATH="$PYTHONPATH:$(pwd)/test/python" robot -d test/robot/functional test/robot/functional
+env PYTHONPATH="$PYTHONPATH:$(pwd)/test/python" robot -d test/robot/reports test/robot/functional
 ```
 
 ### Running actual integration tests
