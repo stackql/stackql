@@ -16,7 +16,7 @@ require (
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.1
-	github.com/stackql/any-sdk v0.2.1-alpha05
+	github.com/stackql/any-sdk v0.2.2-alpha01
 	github.com/stackql/go-suffix-map v0.0.1-alpha01
 	github.com/stackql/psql-wire v0.1.1-beta23
 	github.com/stackql/stackql-parser v0.0.15-alpha06
@@ -108,7 +108,7 @@ require (
 	github.com/spf13/afero v1.6.0 // indirect
 	github.com/spf13/cast v1.4.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
-	github.com/stackql/stackql-provider-registry v0.0.1-rc06 // indirect
+	github.com/stackql/stackql-provider-registry v0.0.2-alpha01 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
 	github.com/xo/dburl v0.23.2 // indirect
