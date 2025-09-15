@@ -153,7 +153,7 @@ func (sp *standardSelectRoutePass) RoutePass() error {
 
 	// TODO: Do the proper SOLID treatment on router, etc.
 	// Might need to split into multiple passes.
-	v := router.NewTableRouteAstVisitor(pbi.GetHandlerCtx(), paramRouter)
+	v := router.NewTableRouteAstVisitor(pbi.GetHandlerCtx(), paramRouter, false)
 
 	err := v.Visit(node)
 

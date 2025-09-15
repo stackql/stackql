@@ -145,7 +145,7 @@ func (gp *GenericProvider) GetMethodForAction(
 	iqlAction string,
 	parameters parserutil.ColumnKeyedDatastore,
 	runtimeCtx dto.RuntimeCtx,
-) (anysdk.OperationStore, string, error) {
+) (anysdk.StandardOperationStore, string, error) {
 	rsc, err := gp.GetResource(serviceName, resourceName, runtimeCtx)
 	if err != nil {
 		return nil, "", err
@@ -158,7 +158,7 @@ func (gp *GenericProvider) GetFirstMethodForAction(
 	resourceName string,
 	iqlAction string,
 	runtimeCtx dto.RuntimeCtx,
-) (anysdk.OperationStore, string, error) {
+) (anysdk.StandardOperationStore, string, error) {
 	rsc, err := gp.GetResource(serviceName, resourceName, runtimeCtx)
 	if err != nil {
 		return nil, "", err
@@ -172,7 +172,7 @@ func (gp *GenericProvider) GetFirstMethodForAction(
 
 func (gp *GenericProvider) InferDescribeMethod(
 	rsc anysdk.Resource,
-) (anysdk.OperationStore, string, error) {
+) (anysdk.StandardOperationStore, string, error) {
 	if rsc == nil {
 		return nil, "", fmt.Errorf("cannot infer describe method from nil resource")
 	}

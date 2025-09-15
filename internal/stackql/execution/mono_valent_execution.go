@@ -67,6 +67,7 @@ type monoValentExecution struct {
 	graphHolder                primitivegraph.PrimitiveGraphHolder
 	handlerCtx                 handler.HandlerContext
 	tableMeta                  tablemetadata.ExtendedTableMetadata
+	addressSpace               anysdk.AddressSpace
 	drmCfg                     drm.Config
 	insertPreparedStatementCtx drm.PreparedStatementCtx
 	insertionContainer         tableinsertioncontainer.TableInsertionContainer

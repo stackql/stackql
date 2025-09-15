@@ -49,7 +49,7 @@ type ParameterRouter interface {
 	//   - Hierarchy.
 	//   - Columnar objects definitely assigned as HTTP method parameters.
 	//   - Error if applicable.
-	Route(tb sqlparser.TableExpr, handler handler.HandlerContext) (taxonomy.AnnotationCtx, error)
+	Route(tb sqlparser.TableExpr, handler handler.HandlerContext, isAwait bool) (taxonomy.AnnotationCtx, error)
 
 	// Detects:
 	//   - Dependency cycle.
@@ -256,6 +256,7 @@ func (sp *standardParamSplitter) assembleSplitParams(
 			rawAnnotationCtx.GetHIDs(),
 			rawAnnotationCtx.GetTableMeta().Clone(),
 			com,
+			rawAnnotationCtx.IsAwait(),
 		)
 		sp.splitAnnotationContextMap.Put(rawAnnotationCtx, splitAnnotationCtx)
 		// TODO: this has gotta replace the original and also be duplicated
@@ -510,14 +511,16 @@ func (pr *standardParameterRouter) isInvalidated(key string) bool {
 func (pr *standardParameterRouter) Route(
 	tb sqlparser.TableExpr,
 	handlerCtx handler.HandlerContext,
+	isAwait bool,
 ) (taxonomy.AnnotationCtx, error) {
-	return pr.route(tb, handlerCtx)
+	return pr.route(tb, handlerCtx, isAwait)
 }
 
 //nolint:funlen,gocognit,govet,gocyclo,cyclop // inherently complex functionality
 func (pr *standardParameterRouter) route(
 	tb sqlparser.TableExpr,
 	handlerCtx handler.HandlerContext,
+	isAwait bool,
 ) (taxonomy.AnnotationCtx, error) {
 	// TODO: Get rid of the dead set mess that is where paramters in preference.
 	for k, v := range pr.whereParamMap.GetMap() {
@@ -588,9 +591,9 @@ func (pr *standardParameterRouter) route(
 	priorParameters := runParamters.Clone()
 	// notOnStringParams := notOnParams.GetStringified()
 	// TODO: add parent params into the mix here.
-	hr, err := taxonomy.GetHeirarchyFromStatement(handlerCtx, tb, notOnParams, false)
+	hr, err := taxonomy.GetHeirarchyFromStatement(handlerCtx, tb, notOnParams, false, isAwait)
 	if err != nil {
-		hr, err = taxonomy.GetHeirarchyFromStatement(handlerCtx, tb, runParamters, false)
+		hr, err = taxonomy.GetHeirarchyFromStatement(handlerCtx, tb, runParamters, false, isAwait)
 	} else {
 		// If the where parameters are sufficient, then need to switch
 		// the Table - Paramater coupling object

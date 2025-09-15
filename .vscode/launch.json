@@ -178,7 +178,14 @@
         "insert into google.storage.buckets( project, data__name) select  'testing-project', 'silly-bucket' returning projectNumber;",
         "insert /*+ AWAIT */ into google.compute.networks(project, data__name, data__autoCreateSubnetworks) select 'mutable-project', 'auto-test-01', false returning creationTimestamp, name;",
         "registry pull google 'v0.1.2'; show resources in google.storage; registry pull google 'v0.1.1-alpha01'; show resources in google.storage; registry pull google 'v0.1.0'; show resources in google.storage;",
-      ],
+        "select * from aws.iam.user_policies where region = 'us-east-1' and UserName = 'joe.blow' order by member asc;",
+        "replace /*+ AWAIT */ google.compute.firewalls set data__disabled = 'true'  where project = 'mutable-project'  and firewall = 'replacable-firewall'  returning *;",
+        "delete from aws.transfer.servers  where  data__ServerId = 's-0000000001'  and region = 'ap-southeast-2';",
+        "replace google.compute.firewalls set data__disabled = 'true'  where project = 'mutable-project'  and firewall = 'replacable-firewall'  returning *;",
+        "replace /*+ AWAIT */ google.compute.firewalls set data__disabled = 'true'  where project = 'mutable-project'  and firewall = 'replacable-firewall'  returning *;",
+        "select role_name from pgi.information_schema.applicable_roles order by role_name desc;",
+        "SELECT * FROM datadog.organization.users;",
+      ], 
       "default": "show providers;"
     },
     {

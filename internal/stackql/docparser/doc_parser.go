@@ -6,6 +6,7 @@ import (
 	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/any-sdk/pkg/db/sqlcontrol"
 	"github.com/stackql/any-sdk/pkg/logging"
+	sdk_persistence "github.com/stackql/any-sdk/public/persistence"
 	"github.com/stackql/any-sdk/public/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
@@ -33,16 +34,22 @@ func TranslateServiceKeyIqlToGenericProvider(serviceKey string) string {
 }
 
 func OpenapiStackQLTabulationsPersistor(
-	m anysdk.OperationStore,
+	prov anysdk.Provider,
+	svc anysdk.Service,
+	resource anysdk.Resource,
+	m anysdk.StandardOperationStore,
+	isAwait bool,
 	tabluationsAnnotated []util.AnnotatedTabulation,
 	dbEngine sqlengine.SQLEngine,
 	prefix string,
 	namespaceCollection tablenamespace.Collection,
 	controlAttributes sqlcontrol.ControlAttributes,
 	sqlSystem sql_system.SQLSystem,
+	persistenceSystem sdk_persistence.PersistenceSystem,
 	typCfg typing.Config,
 ) (int, error) {
-	drmCfg, err := drm.GetDRMConfig(sqlSystem, typCfg, namespaceCollection, controlAttributes)
+	drmCfg, err := drm.GenerateDRMConfig(sqlSystem, persistenceSystem,
+		typCfg, namespaceCollection, controlAttributes)
 	if err != nil {
 		return 0, err
 	}
@@ -62,7 +69,7 @@ func OpenapiStackQLTabulationsPersistor(
 		return discoveryGenerationID, err
 	}
 	for _, tblt := range tabluationsAnnotated {
-		ddl, ddlErr := drmCfg.GenerateDDL(tblt, m, discoveryGenerationID, false, true)
+		ddl, ddlErr := drmCfg.GenerateDDL(tblt, prov, svc, resource, m, isAwait, discoveryGenerationID, false, true)
 		if ddlErr != nil {
 			displayErr := fmt.Errorf("error generating DDL: %w", err)
 			logging.GetLogger().Infoln(displayErr.Error())

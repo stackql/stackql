@@ -184,6 +184,7 @@ func GetHeirarchyFromStatement(
 	node sqlparser.SQLNode,
 	parameters parserutil.ColumnKeyedDatastore,
 	viewPermissive bool,
+	isAwait bool,
 ) (tablemetadata.HeirarchyObjects, error) {
 	var hIDs internaldto.HeirarchyIdentifiers
 	getFirstAvailableMethod := false
@@ -205,10 +206,10 @@ func GetHeirarchyFromStatement(
 	case *sqlparser.AliasedTableExpr:
 		switch n.Expr.(type) { //nolint:gocritic // this is expressive enough
 		case *sqlparser.Subquery:
-			retVal := tablemetadata.NewHeirarchyObjects(hIDs)
+			retVal := tablemetadata.NewHeirarchyObjects(hIDs, isAwait)
 			return retVal, nil
 		}
-		return GetHeirarchyFromStatement(handlerCtx, n.Expr, parameters, viewPermissive)
+		return GetHeirarchyFromStatement(handlerCtx, n.Expr, parameters, viewPermissive, isAwait)
 	case *sqlparser.Show:
 		switch strings.ToUpper(n.Type) {
 		case "INSERT":
@@ -228,7 +229,7 @@ func GetHeirarchyFromStatement(
 	default:
 		return nil, fmt.Errorf("cannot resolve taxonomy")
 	}
-	retVal := tablemetadata.NewHeirarchyObjects(hIDs)
+	retVal := tablemetadata.NewHeirarchyObjects(hIDs, isAwait)
 	sqlDataSource, isSQLDataSource := handlerCtx.GetSQLDataSource(hIDs.GetProviderStr())
 	if isSQLDataSource {
 		retVal.SetSQLDataSource(sqlDataSource)
@@ -242,7 +243,7 @@ func GetHeirarchyFromStatement(
 	prov, err := handlerCtx.GetProvider(hIDs.GetProviderStr())
 	retVal.SetProvider(prov)
 	viewDTO, viewExists := retVal.GetView()
-	var meth anysdk.OperationStore
+	var meth anysdk.StandardOperationStore
 	var methStr string
 	var methodErr error
 	if methodAction == "" {
@@ -297,7 +298,7 @@ func GetHeirarchyFromStatement(
 			return retVal, nil //nolint:staticcheck // TODO: fix this
 		}
 	}
-	var method anysdk.OperationStore
+	var method anysdk.StandardOperationStore
 	switch node.(type) {
 	case *sqlparser.Exec, *sqlparser.ExecSubquery:
 		method, err = rsc.FindMethod(hIDs.GetMethodStr())

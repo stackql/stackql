@@ -16,6 +16,7 @@ import (
 	"github.com/stackql/any-sdk/pkg/jsonpath"
 	"github.com/stackql/any-sdk/pkg/netutils"
 	"github.com/stackql/any-sdk/pkg/nomenclature"
+	sdk_persistence "github.com/stackql/any-sdk/public/persistence"
 	"github.com/stackql/any-sdk/public/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/acid/tsm"
 	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
@@ -67,6 +68,7 @@ type HandlerContext interface { //nolint:revive // don't mind stuttering this on
 	GetSQLDataSource(name string) (sql_datasource.SQLDataSource, bool)
 	GetSQLEngine() sqlengine.SQLEngine
 	GetSQLSystem() sql_system.SQLSystem
+	GetPersistenceSystem() sdk_persistence.PersistenceSystem
 	GetGarbageCollector() garbagecollector.GarbageCollector
 	GetDrmConfig() drm.Config
 	SetTxnCounterMgr(txncounter.Manager)
@@ -124,6 +126,7 @@ type standardHandlerContext struct {
 	lRUCache            *lrucache.LRUCache
 	sqlEngine           sqlengine.SQLEngine
 	sqlSystem           sql_system.SQLSystem
+	persistenceSystem   sdk_persistence.PersistenceSystem
 	garbageCollector    garbagecollector.GarbageCollector
 	drmConfig           drm.Config
 	txnCounterMgr       txncounter.Manager
@@ -216,6 +219,9 @@ func (hc *standardHandlerContext) SetOutErrFile(w io.Writer) {
 func (hc *standardHandlerContext) GetLRUCache() *lrucache.LRUCache    { return hc.lRUCache }
 func (hc *standardHandlerContext) GetSQLEngine() sqlengine.SQLEngine  { return hc.sqlEngine }
 func (hc *standardHandlerContext) GetSQLSystem() sql_system.SQLSystem { return hc.sqlSystem }
+func (hc *standardHandlerContext) GetPersistenceSystem() sdk_persistence.PersistenceSystem {
+	return hc.persistenceSystem
+}
 func (hc *standardHandlerContext) GetGarbageCollector() garbagecollector.GarbageCollector {
 	return hc.garbageCollector
 }
@@ -322,7 +328,9 @@ func (hc *standardHandlerContext) GetProvider(providerName string) (provider.IPr
 	prov, ok := hc.providers[providerName]
 	//nolint:nestif // TODO: review
 	if !ok {
-		prov, err = provider.GetProvider(hc.runtimeContext, ds.Name, ds.Tag, hc.registry, hc.sqlSystem)
+		prov, err = provider.GenerateProvider(
+			hc.runtimeContext, ds.Name, ds.Tag,
+			hc.registry, hc.sqlSystem, hc.persistenceSystem)
 		if err == nil {
 			hc.providers[providerName] = prov
 			// update auth info with provider default if auth not already present
@@ -519,6 +527,7 @@ func (hc *standardHandlerContext) Clone() HandlerContext {
 		sqlEngine:           hc.sqlEngine,
 		sqlDataSources:      hc.sqlDataSources,
 		sqlSystem:           hc.sqlSystem,
+		persistenceSystem:   hc.persistenceSystem,
 		garbageCollector:    hc.garbageCollector,
 		outErrFile:          hc.outErrFile,
 		outfile:             hc.outfile,
@@ -594,6 +603,7 @@ func NewHandlerCtx(
 		sqlEngine:           sqlEngine,
 		sqlDataSources:      inputBundle.GetSQLDataSources(),
 		sqlSystem:           inputBundle.GetSQLSystem(),
+		persistenceSystem:   inputBundle.GetPersistenceSystem(),
 		garbageCollector:    inputBundle.GetGC(),
 		txnCounterMgr:       inputBundle.GetTxnCounterManager(),
 		txnStore:            inputBundle.GetTxnStore(),
@@ -608,9 +618,13 @@ func NewHandlerCtx(
 		outfile:             outWriter,
 		outErrFile:          outErrWriter,
 	}
-	drmCfg, err := drm.GetDRMConfig(inputBundle.GetSQLSystem(),
+	drmCfg, err := drm.GenerateDRMConfig(
+		inputBundle.GetSQLSystem(),
+		inputBundle.GetPersistenceSystem(),
 		inputBundle.GetTypingConfig(),
-		rv.namespaceCollection, controlAttributes)
+		rv.namespaceCollection,
+		controlAttributes,
+	)
 	if err != nil {
 		return nil, err
 	}

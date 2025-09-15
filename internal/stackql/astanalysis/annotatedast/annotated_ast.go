@@ -27,6 +27,7 @@ func NewAnnotatedAst(parent AnnotatedAst, ast sqlparser.Statement) (AnnotatedAst
 
 type AnnotatedAst interface {
 	GetAST() sqlparser.Statement
+	IsAwait(sqlparser.SQLNode) bool
 	GetIndirect(sqlparser.SQLNode) (astindirect.Indirect, bool)
 	GetIndirects() map[string]astindirect.Indirect
 	GetMaterializedView(sqlparser.SQLNode) (astindirect.Indirect, bool)
@@ -63,6 +64,31 @@ type standardAnnotatedAst struct {
 	selectIndirectCache  map[*sqlparser.Select]astindirect.Indirect
 	unionIndirectCache   map[*sqlparser.Union]astindirect.Indirect
 	execIndirectCache    map[*sqlparser.Exec]astindirect.Indirect
+}
+
+func hasAwaitComment(comments sqlparser.Comments) bool {
+	if comments != nil {
+		commentDirectives := sqlparser.ExtractCommentDirectives(comments)
+		if commentDirectives.IsSet("AWAIT") {
+			return true
+		}
+	}
+	return false
+}
+
+func (aa *standardAnnotatedAst) IsAwait(node sqlparser.SQLNode) bool {
+	switch n := node.(type) {
+	case *sqlparser.Exec:
+		return hasAwaitComment(n.Comments)
+	case *sqlparser.Insert:
+		return hasAwaitComment(n.Comments)
+	case *sqlparser.Update:
+		return hasAwaitComment(n.Comments)
+	case *sqlparser.Delete:
+		return hasAwaitComment(n.Comments)
+	default:
+		return false
+	}
 }
 
 func (aa *standardAnnotatedAst) GetExecIndirect(selNode *sqlparser.Exec) (astindirect.Indirect, bool) {

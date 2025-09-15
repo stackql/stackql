@@ -9,12 +9,12 @@ import (
 )
 
 type IMethodSelector interface {
-	GetMethod(resource anysdk.Resource, methodName string) (anysdk.OperationStore, error)
+	GetMethod(resource anysdk.Resource, methodName string) (anysdk.StandardOperationStore, error)
 
 	GetMethodForAction(
 		resource anysdk.Resource,
 		iqlAction string,
-		parameters parserutil.ColumnKeyedDatastore) (anysdk.OperationStore, string, error)
+		parameters parserutil.ColumnKeyedDatastore) (anysdk.StandardOperationStore, string, error)
 }
 
 func NewMethodSelector(provider string, version string) (IMethodSelector, error) {
@@ -37,7 +37,7 @@ type DefaultMethodSelector struct {
 func (sel *DefaultMethodSelector) GetMethodForAction(
 	resource anysdk.Resource,
 	iqlAction string,
-	parameters parserutil.ColumnKeyedDatastore) (anysdk.OperationStore, string, error) {
+	parameters parserutil.ColumnKeyedDatastore) (anysdk.StandardOperationStore, string, error) {
 	var methodName string
 	switch strings.ToLower(iqlAction) {
 	case "select":
@@ -60,12 +60,12 @@ func (sel *DefaultMethodSelector) GetMethodForAction(
 }
 
 func (sel *DefaultMethodSelector) GetMethod(
-	resource anysdk.Resource, methodName string) (anysdk.OperationStore, error) {
+	resource anysdk.Resource, methodName string) (anysdk.StandardOperationStore, error) {
 	return sel.getMethodByName(resource, methodName)
 }
 
 func (sel *DefaultMethodSelector) getMethodByName(
-	resource anysdk.Resource, methodName string) (anysdk.OperationStore, error) {
+	resource anysdk.Resource, methodName string) (anysdk.StandardOperationStore, error) {
 	m, err := resource.FindMethod(methodName)
 	if err != nil {
 		return nil, fmt.Errorf("no method = '%s' for resource = '%s'", methodName, resource.GetName())
@@ -75,9 +75,9 @@ func (sel *DefaultMethodSelector) getMethodByName(
 
 func (sel *DefaultMethodSelector) getMethodByNameAndParameters(
 	resource anysdk.Resource, methodName string,
-	parameters parserutil.ColumnKeyedDatastore) (anysdk.OperationStore, error) {
+	parameters parserutil.ColumnKeyedDatastore) (anysdk.StandardOperationStore, error) {
 	stringifiedParams := parameters.GetStringified()
-	m, remainingParams, ok := resource.GetFirstMethodMatchFromSQLVerb(methodName, stringifiedParams)
+	m, remainingParams, ok := resource.GetFirstNamespaceMethodMatchFromSQLVerb(methodName, stringifiedParams)
 	if !ok {
 		return nil, fmt.Errorf("no appropriate method = '%s' for resource = '%s'", methodName, resource.GetName())
 	}

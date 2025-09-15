@@ -324,8 +324,9 @@ func (dp *standardDependencyPlanner) Plan() error {
 		return err
 	}
 	logging.GetLogger().Debugf("rewrittenWhereStr = '%s'", rewrittenWhereStr)
-	drmCfg, err := drm.GetDRMConfig(
+	drmCfg, err := drm.GenerateDRMConfig(
 		dp.handlerCtx.GetSQLSystem(),
+		dp.handlerCtx.GetPersistenceSystem(),
 		dp.handlerCtx.GetTypingConfig(),
 		dp.handlerCtx.GetNamespaceCollection(),
 		dp.handlerCtx.GetControlAttributes())
@@ -397,8 +398,11 @@ func (dp *standardDependencyPlanner) processOrphan(
 	if err != nil {
 		return nil, nil, err
 	}
+
+	tableMetadata := annotationCtx.GetTableMeta()
+
 	_, isSQLDataSource := annotationCtx.GetTableMeta().GetSQLDataSource()
-	var opStore anysdk.OperationStore
+	var opStore anysdk.StandardOperationStore
 	if !isSQLDataSource {
 		opStore, err = annotationCtx.GetTableMeta().GetMethod()
 		if err != nil {
@@ -407,7 +411,7 @@ func (dp *standardDependencyPlanner) processOrphan(
 	} else {
 		// Persist SQL mirror table here prior to generating insert DML
 		drmCfg := dp.handlerCtx.GetDrmConfig()
-		ddl, ddlErr := drmCfg.GenerateDDL(anTab, opStore, 0, false, false)
+		ddl, ddlErr := drmCfg.GenerateDDL(anTab, nil, nil, nil, opStore, annotationCtx.IsAwait(), 0, false, false)
 		if ddlErr != nil {
 			return nil, nil, ddlErr
 		}
@@ -415,8 +419,42 @@ func (dp *standardDependencyPlanner) processOrphan(
 		if err != nil {
 			return nil, nil, err
 		}
+
+		insPsc, insPscErr := dp.primitiveComposer.GetDRMConfig().GenerateInsertDML(
+			anTab,
+			nil,
+			nil,
+			nil,
+			opStore,
+			tcc,
+			false,
+			annotationCtx.IsAwait(),
+		)
+		return insPsc, tcc, insPscErr
 	}
-	insPsc, err := dp.primitiveComposer.GetDRMConfig().GenerateInsertDML(anTab, opStore, tcc, false)
+
+	anySdkProv, anySdkPrvErr := tableMetadata.GetProviderObject()
+	if anySdkPrvErr != nil {
+		return nil, nil, anySdkPrvErr
+	}
+	svc, svcErr := tableMetadata.GetService()
+	if svcErr != nil {
+		return nil, nil, svcErr
+	}
+	resource, resourceErr := tableMetadata.GetResource()
+	if resourceErr != nil {
+		return nil, nil, resourceErr
+	}
+	insPsc, err := dp.primitiveComposer.GetDRMConfig().GenerateInsertDML(
+		anTab,
+		anySdkProv,
+		svc,
+		resource,
+		opStore,
+		tcc,
+		false,
+		annotationCtx.IsAwait(),
+	)
 	return insPsc, tcc, err
 }
 
@@ -495,7 +533,7 @@ func (dp *standardDependencyPlanner) orchestrate(
 	return idx, err
 }
 
-//nolint:gocognit // live with it
+//nolint:gocognit,funlen // live with it
 func (dp *standardDependencyPlanner) processAcquire(
 	sqlNode sqlparser.SQLNode,
 	annotationCtx taxonomy.AnnotationCtx,
@@ -528,6 +566,14 @@ func (dp *standardDependencyPlanner) processAcquire(
 	if err != nil {
 		return util.NewAnnotatedTabulation(nil, nil, "", ""), nil, err
 	}
+	svc, err := annotationCtx.GetTableMeta().GetService()
+	if err != nil {
+		return util.NewAnnotatedTabulation(nil, nil, "", ""), nil, err
+	}
+	resource, rscErr := annotationCtx.GetTableMeta().GetResource()
+	if rscErr != nil {
+		return util.NewAnnotatedTabulation(nil, nil, "", ""), nil, rscErr
+	}
 	m, err := annotationCtx.GetTableMeta().GetMethod()
 	if err != nil {
 		return util.NewAnnotatedTabulation(nil, nil, "", ""), nil, err
@@ -557,13 +603,18 @@ func (dp *standardDependencyPlanner) processAcquire(
 		annotationCtx.GetTableMeta().GetAlias()).WithParameters(annotationCtx.GetParameters())
 
 	discoGenID, err := docparser.OpenapiStackQLTabulationsPersistor(
+		prov,
+		svc,
+		resource,
 		m,
+		annotationCtx.IsAwait(),
 		[]util.AnnotatedTabulation{anTab},
 		dp.primitiveComposer.GetSQLEngine(),
 		prov.GetName(),
 		dp.handlerCtx.GetNamespaceCollection(),
 		dp.handlerCtx.GetControlAttributes(),
 		dp.handlerCtx.GetSQLSystem(),
+		dp.handlerCtx.GetPersistenceSystem(),
 		dp.handlerCtx.GetTypingConfig(),
 	)
 	if err != nil {
