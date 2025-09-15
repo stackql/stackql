@@ -17,6 +17,20 @@ const (
 	FloatBitSize int = 64
 )
 
+func hasAwaitComment(comments sqlparser.Comments) bool {
+	if comments != nil {
+		commentDirectives := sqlparser.ExtractCommentDirectives(comments)
+		if commentDirectives.IsSet("AWAIT") {
+			return true
+		}
+	}
+	return false
+}
+
+func IsAwait(comments sqlparser.Comments) bool {
+	return hasAwaitComment(comments)
+}
+
 //nolint:gocritic,staticcheck // TODO: clean up this and other tech debt
 func ExtractLHSTable(sqlFunc *sqlparser.FuncExpr) (*sqlparser.ColName, bool) {
 	if sqlFunc == nil {

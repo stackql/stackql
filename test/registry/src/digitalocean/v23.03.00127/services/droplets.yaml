@@ -7722,8 +7722,8 @@ components:
             openAPIDocKey: '200'
       sqlVerbs:
         select:
-          - $ref: '#/components/x-stackQL-resources/droplets/methods/list'
           - $ref: '#/components/x-stackQL-resources/droplets/methods/get'
+          - $ref: '#/components/x-stackQL-resources/droplets/methods/list'
         insert:
           - $ref: '#/components/x-stackQL-resources/droplets/methods/create'
         update: []

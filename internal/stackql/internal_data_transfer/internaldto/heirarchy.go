@@ -15,11 +15,11 @@ type Heirarchy interface {
 	GetServiceHdl() anysdk.Service
 	GetResource() anysdk.Resource
 	GetMethodSet() anysdk.MethodSet
-	GetMethod() anysdk.OperationStore
+	GetMethod() anysdk.StandardOperationStore
 	SetServiceHdl(anysdk.Service)
 	SetResource(anysdk.Resource)
 	SetMethodSet(anysdk.MethodSet)
-	SetMethod(anysdk.OperationStore)
+	SetMethod(anysdk.StandardOperationStore)
 	SetMethodStr(string)
 }
 
@@ -34,7 +34,7 @@ type standardHeirarchy struct {
 	serviceHdl anysdk.Service
 	resource   anysdk.Resource
 	methodSet  anysdk.MethodSet
-	method     anysdk.OperationStore
+	method     anysdk.StandardOperationStore
 }
 
 func (hr *standardHeirarchy) SetServiceHdl(sh anysdk.Service) {
@@ -53,7 +53,7 @@ func (hr *standardHeirarchy) SetMethodStr(mStr string) {
 	hr.hIDs.SetMethodStr(mStr)
 }
 
-func (hr *standardHeirarchy) SetMethod(ost anysdk.OperationStore) {
+func (hr *standardHeirarchy) SetMethod(ost anysdk.StandardOperationStore) {
 	hr.method = ost
 }
 
@@ -69,7 +69,7 @@ func (hr *standardHeirarchy) GetMethodSet() anysdk.MethodSet {
 	return hr.methodSet
 }
 
-func (hr *standardHeirarchy) GetMethod() anysdk.OperationStore {
+func (hr *standardHeirarchy) GetMethod() anysdk.StandardOperationStore {
 	return hr.method
 }
 

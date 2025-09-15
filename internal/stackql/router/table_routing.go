@@ -30,14 +30,20 @@ type standardTableRouteAstVisitor struct {
 	router      ParameterRouter
 	tables      taxonomy.TblMap
 	annotations taxonomy.AnnotationCtxMap
+	isAwait     bool
 }
 
-func NewTableRouteAstVisitor(handlerCtx handler.HandlerContext, router ParameterRouter) TableRouteAstVisitor {
+func NewTableRouteAstVisitor(
+	handlerCtx handler.HandlerContext,
+	router ParameterRouter,
+	isAwait bool,
+) TableRouteAstVisitor {
 	return &standardTableRouteAstVisitor{
 		handlerCtx:  handlerCtx,
 		router:      router,
 		tables:      make(taxonomy.TblMap),
 		annotations: make(taxonomy.AnnotationCtxMap),
+		isAwait:     isAwait,
 	}
 }
 
@@ -55,13 +61,13 @@ func (v *standardTableRouteAstVisitor) analyzeAliasedTable(
 ) (taxonomy.AnnotationCtx, error) {
 	switch ex := tb.Expr.(type) {
 	case *sqlparser.Subquery:
-		return v.router.Route(tb, v.handlerCtx)
+		return v.router.Route(tb, v.handlerCtx, v.isAwait)
 	case sqlparser.TableName:
 		_, err := taxonomy.GetHeirarchyIDsFromParserNode(v.handlerCtx, ex)
 		if err != nil {
 			return nil, err
 		}
-		return v.router.Route(tb, v.handlerCtx)
+		return v.router.Route(tb, v.handlerCtx, v.isAwait)
 	default:
 		return nil, fmt.Errorf("table of type '%T' not currently supported", ex)
 	}
@@ -75,7 +81,7 @@ func (v *standardTableRouteAstVisitor) analyzeExecTableName(
 	tb *sqlparser.ExecSubquery,
 ) (taxonomy.AnnotationCtx, error) {
 	// cannot be recursive
-	return v.router.Route(tb, v.handlerCtx)
+	return v.router.Route(tb, v.handlerCtx, v.isAwait)
 }
 
 func (v *standardTableRouteAstVisitor) GetTableMap() taxonomy.TblMap {

@@ -24,6 +24,7 @@ type AnnotationCtx interface {
 	GetTableMeta() tablemetadata.ExtendedTableMetadata
 	Prepare(handlerCtx handler.HandlerContext, inStream streaming.MapStream) error
 	SetDynamic()
+	IsAwait() bool
 	Equals(AnnotationCtx) bool
 	Clone() AnnotationCtx
 }
@@ -34,6 +35,7 @@ type standardAnnotationCtx struct {
 	hIDs       internaldto.HeirarchyIdentifiers
 	tableMeta  tablemetadata.ExtendedTableMetadata
 	parameters map[string]interface{}
+	isAwait    bool
 }
 
 func NewStaticStandardAnnotationCtx(
@@ -41,6 +43,7 @@ func NewStaticStandardAnnotationCtx(
 	hIDs internaldto.HeirarchyIdentifiers,
 	tableMeta tablemetadata.ExtendedTableMetadata,
 	parameters map[string]interface{},
+	isAwait bool,
 ) AnnotationCtx {
 	return &standardAnnotationCtx{
 		isDynamic:  false,
@@ -48,15 +51,24 @@ func NewStaticStandardAnnotationCtx(
 		hIDs:       hIDs,
 		tableMeta:  tableMeta,
 		parameters: parameters,
+		isAwait:    isAwait,
 	}
 }
 
+func (ac *standardAnnotationCtx) IsAwait() bool {
+	return ac.isAwait
+}
+
+//nolint:gocognit // acceptable
 func (ac *standardAnnotationCtx) Equals(other AnnotationCtx) bool {
 	otherStandard, isStandard := other.(*standardAnnotationCtx)
 	if !isStandard {
 		return false
 	}
 	if ac.isDynamic != otherStandard.isDynamic {
+		return false
+	}
+	if ac.isAwait != otherStandard.isAwait {
 		return false
 	}
 	if ac.schema != otherStandard.schema {
@@ -101,6 +113,7 @@ func (ac *standardAnnotationCtx) Clone() AnnotationCtx {
 		hIDs:       ac.hIDs,
 		tableMeta:  ac.tableMeta.Clone(),
 		parameters: clonedParams,
+		isAwait:    ac.isAwait,
 	}
 }
 
@@ -129,8 +142,6 @@ func (ac *standardAnnotationCtx) Prepare(
 	if isSQLDataSource {
 		ac.tableMeta.SetSQLDataSource(sqlDataSource)
 		// TODO: persist mirror table here a la GenerateInsertDML()
-		// anTab := util.NewAnnotatedTabulation(tab, ac.GetHIDs(), inputTableName, annotationCtx.GetTableMeta().GetAlias())
-		// ddl, err := handlerCtx.GetDrmConfig().GenerateDDL(ac.tableMeta, nil, 0, false)
 		return nil
 	}
 	pr, err := ac.GetTableMeta().GetProvider()

@@ -20,7 +20,7 @@ type ExtendedTableMetadata interface {
 	GetHeirarchyObjects() HeirarchyObjects
 	GetHTTPArmoury() (anysdk.HTTPArmoury, error)
 	GetInputTableName() (string, error)
-	GetMethod() (anysdk.OperationStore, error)
+	GetMethod() (anysdk.StandardOperationStore, error)
 	GetMethodStr() (string, error)
 	GetProvider() (provider.IProvider, error)
 	GetProviderStr() (string, error)
@@ -298,11 +298,11 @@ func (ex *standardExtendedTableMetadata) GetResource() (anysdk.Resource, error) 
 	return ex.heirarchyObjects.GetResource(), nil
 }
 
-func (ex *standardExtendedTableMetadata) GetMethod() (anysdk.OperationStore, error) {
+func (ex *standardExtendedTableMetadata) GetMethod() (anysdk.StandardOperationStore, error) {
 	return ex.getMethod()
 }
 
-func (ex *standardExtendedTableMetadata) getMethod() (anysdk.OperationStore, error) {
+func (ex *standardExtendedTableMetadata) getMethod() (anysdk.StandardOperationStore, error) {
 	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetMethod() == nil {
 		return nil, fmt.Errorf("cannot resolve Method")
 	}

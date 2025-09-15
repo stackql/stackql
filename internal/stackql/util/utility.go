@@ -33,3 +33,11 @@ func MaxMapKey(numbers map[int]interface{}) int {
 	}
 	return maxNumber
 }
+
+func TrimSelectItemsKey(selectItemsKey string) string {
+	splitSet := strings.Split(selectItemsKey, "/")
+	if len(splitSet) == 0 {
+		return ""
+	}
+	return splitSet[len(splitSet)-1]
+}

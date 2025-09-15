@@ -74,6 +74,15 @@ providerServices:
       $ref: digitalocean/v23.03.00127/services/container_registry.yaml
     title: DigitalOcean API - Container Registry
     version: v23.03.00127
+  compute:
+    description: Compute
+    id: 'compute:v23.03.00127'
+    name: compute
+    preferred: true
+    service:
+      $ref: digitalocean/v23.03.00127/services/compute.yaml
+    title: DigitalOcean API - Compute
+    version: v23.03.00127
   databases:
     description: Databases
     id: 'databases:v23.03.00127'

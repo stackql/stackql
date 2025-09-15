@@ -13,6 +13,9 @@ import (
 	"github.com/stackql/any-sdk/pkg/db/sqlcontrol"
 	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/any-sdk/pkg/streaming"
+	"github.com/stackql/any-sdk/public/discovery"
+	sdk_persistence "github.com/stackql/any-sdk/public/persistence"
+	"github.com/stackql/any-sdk/public/radix_tree_address_space"
 	"github.com/stackql/any-sdk/public/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/relationaldto"
@@ -44,7 +47,17 @@ type Config interface {
 	) (map[string]map[string]interface{}, map[int]map[int]interface{})
 	GetCurrentTable(internaldto.HeirarchyIdentifiers) (internaldto.DBTable, error)
 	GetRelationalType(string) string
-	GenerateDDL(util.AnnotatedTabulation, anysdk.OperationStore, int, bool, bool) ([]string, error)
+	GenerateDDL(
+		util.AnnotatedTabulation,
+		anysdk.Provider,
+		anysdk.Service,
+		anysdk.Resource,
+		anysdk.StandardOperationStore,
+		bool,
+		int,
+		bool,
+		bool,
+	) ([]string, error)
 	GetControlAttributes() sqlcontrol.ControlAttributes
 	GetGolangValue(string) interface{}
 	GetGolangSlices([]typing.ColumnMetadata) ([]interface{}, []string)
@@ -54,15 +67,24 @@ type Config interface {
 	GetTable(internaldto.HeirarchyIdentifiers, int) (internaldto.DBTable, error)
 	GenerateInsertDML(
 		util.AnnotatedTabulation,
-		anysdk.OperationStore,
+		anysdk.Provider,
+		anysdk.Service,
+		anysdk.Resource,
+		anysdk.StandardOperationStore,
 		internaldto.TxnControlCounters,
+		bool,
 		bool,
 	) (PreparedStatementCtx, error)
 	GenerateSelectDML(
 		util.AnnotatedTabulation,
+		anysdk.Provider,
+		anysdk.Service,
+		anysdk.Resource,
+		anysdk.StandardOperationStore,
 		internaldto.TxnControlCounters,
 		string,
 		string,
+		bool,
 	) (PreparedStatementCtx, error)
 	ExecuteInsertDML(sqlengine.SQLEngine, PreparedStatementCtx, map[string]interface{}, string) (sql.Result, error)
 	OpenapiColumnsToRelationalColumns(cols []anysdk.ColumnDescriptor) []typing.RelationalColumn
@@ -99,11 +121,13 @@ type Config interface {
 }
 
 type staticDRMConfig struct {
-	namespaceCollection tablenamespace.Collection
-	controlAttributes   sqlcontrol.ControlAttributes
-	sqlEngine           sqlengine.SQLEngine
-	sqlSystem           sql_system.SQLSystem
-	typCfg              typing.Config
+	namespaceCollection    tablenamespace.Collection
+	controlAttributes      sqlcontrol.ControlAttributes
+	sqlEngine              sqlengine.SQLEngine
+	sqlSystem              sql_system.SQLSystem
+	typCfg                 typing.Config
+	analyzerFactoryFactory discovery.StaticAnalyzerFactoryFactory
+	persistenceSystem      sdk_persistence.PersistenceSystem
 }
 
 func (dc *staticDRMConfig) GetSQLSystem() sql_system.SQLSystem {
@@ -407,9 +431,13 @@ func (dc *staticDRMConfig) getParserTableName(
 	}
 }
 
-func (dc *staticDRMConfig) inferColType(col util.Column) string {
-	relationalType := textStr
+func (dc *staticDRMConfig) inferColType(col anysdk.Column) string {
 	schema := col.GetSchema()
+	return dc.inferColTypeFromSchema(schema)
+}
+
+func (dc *staticDRMConfig) inferColTypeFromSchema(schema anysdk.Schema) string {
+	relationalType := textStr
 	if schema != nil && schema.GetType() != "" {
 		relationalType = dc.GetRelationalType(schema.GetType())
 	}
@@ -440,11 +468,57 @@ func (dc *staticDRMConfig) genRelationalTableFromExternalSQLTable(
 	return relationalTable, nil
 }
 
+func (dc *staticDRMConfig) obtainAddressSpace(
+	prov anysdk.Provider,
+	svc anysdk.Service,
+	resource anysdk.Resource,
+	m anysdk.StandardOperationStore,
+	isAwait bool,
+) (anysdk.AddressSpace, error) {
+	addressSpaceFormulator := radix_tree_address_space.NewAddressSpaceFormulator(
+		radix_tree_address_space.NewAddressSpaceGrammar(),
+		prov,
+		svc,
+		resource,
+		m,
+		m.GetProjections(),
+		isAwait,
+	)
+	addressSpaceErr := addressSpaceFormulator.Formulate()
+	if addressSpaceErr != nil {
+		return nil, addressSpaceErr
+	}
+	addressSpace := addressSpaceFormulator.GetAddressSpace()
+	if addressSpace == nil {
+		return nil, fmt.Errorf("failed to obtain address space")
+	}
+	return addressSpace, nil
+}
+
+func (dc *staticDRMConfig) obtainRelationFromAddressSpace(
+	addressSpace anysdk.AddressSpace,
+	isNilResponseAllowed bool,
+) (anysdk.Relation, error) {
+	inferredRelation, inferredRelationErr := addressSpace.ToRelation(
+		radix_tree_address_space.NewStandardAddressSpaceExpansionConfig(
+			true, // TODO: switch this off at the appropriate time
+			isNilResponseAllowed,
+		))
+	if inferredRelationErr != nil {
+		return nil, inferredRelationErr
+	}
+	return inferredRelation, nil
+}
+
 func (dc *staticDRMConfig) genRelationalTable(
 	tabAnn util.AnnotatedTabulation,
-	m anysdk.OperationStore,
+	prov anysdk.Provider,
+	svc anysdk.Service,
+	resource anysdk.Resource,
+	m anysdk.StandardOperationStore,
+	isAwait bool,
 	discoveryGenerationID int,
-	isNilResponseAlloed bool,
+	isNilResponseAllowed bool,
 ) (relationaldto.RelationalTable, error) {
 	tableName, err := dc.getTableName(tabAnn.GetHeirarchyIdentifiers(), discoveryGenerationID)
 	if err != nil {
@@ -460,11 +534,18 @@ func (dc *staticDRMConfig) genRelationalTable(
 		tableName,
 		tabAnn.GetInputTableName(),
 	)
-	schemaAnalyzer := util.NewTableSchemaAnalyzer(tabAnn.GetTabulation().GetSchema(), m, isNilResponseAlloed)
-	tableColumns, err := schemaAnalyzer.GetColumns()
-	if err != nil {
-		return nil, err
+	addressSpace, hasAddressSpace := m.GetAddressSpace()
+	if !hasAddressSpace {
+		addressSpace, err = dc.obtainAddressSpace(prov, svc, resource, m, isAwait)
+		if err != nil {
+			return nil, err
+		}
 	}
+	inferredRelation, inferredRelationErr := dc.obtainRelationFromAddressSpace(addressSpace, isNilResponseAllowed)
+	if inferredRelationErr != nil {
+		return nil, inferredRelationErr
+	}
+	tableColumns := inferredRelation.GetColumns()
 	for _, col := range tableColumns {
 		colName := col.GetName()
 		colType := dc.inferColType(col)
@@ -479,24 +560,33 @@ func (dc *staticDRMConfig) genRelationalTable(
 
 func (dc *staticDRMConfig) GenerateDDL(
 	tabAnn util.AnnotatedTabulation,
-	m anysdk.OperationStore,
+	prov anysdk.Provider,
+	svc anysdk.Service,
+	resource anysdk.Resource,
+	m anysdk.StandardOperationStore,
+	isAwait bool,
 	discoveryGenerationID int,
 	dropTable bool,
-	isNilResponseAlloed bool,
+	isNilResponseAllowed bool,
 ) ([]string, error) {
-	relationalTable, err := dc.genRelationalTable(tabAnn, m, discoveryGenerationID, isNilResponseAlloed)
+	relationalTable, err := dc.genRelationalTable(
+		tabAnn, prov, svc, resource, m, isAwait, discoveryGenerationID, isNilResponseAllowed)
 	if err != nil {
 		return nil, err
 	}
 	return dc.sqlSystem.GenerateDDL(relationalTable, dropTable)
 }
 
-//nolint:gocritic,govet // defer fix
+//nolint:gocritic,govet,funlen,nestif // defer fix
 func (dc *staticDRMConfig) GenerateInsertDML(
 	tabAnnotated util.AnnotatedTabulation,
-	method anysdk.OperationStore,
+	prov anysdk.Provider,
+	svc anysdk.Service,
+	resource anysdk.Resource,
+	method anysdk.StandardOperationStore,
 	tcc internaldto.TxnControlCounters,
-	isNilResponseAlloed bool,
+	isNilResponseAllowed bool,
+	isAsync bool,
 ) (PreparedStatementCtx, error) {
 	var columns []typing.ColumnMetadata
 	_, isSQLDataSource := tabAnnotated.GetSQLDataSource()
@@ -540,11 +630,18 @@ func (dc *staticDRMConfig) GenerateInsertDML(
 			relationalTable.PushBackColumn(col)
 		}
 	} else {
-		schemaAnalyzer := util.NewTableSchemaAnalyzer(tabAnnotated.GetTabulation().GetSchema(), method, isNilResponseAlloed)
-		tableColumns, err := schemaAnalyzer.GetColumnDescriptors(tabAnnotated)
-		if err != nil && !isNilResponseAlloed {
-			return nil, err
+		addressSpace, addressSpaceErr := dc.obtainAddressSpace(prov, svc, resource, method, isAsync)
+		if addressSpaceErr != nil {
+			return nil, addressSpaceErr
 		}
+		inferredRelation, relationErr := dc.obtainRelationFromAddressSpace(
+			addressSpace,
+			isNilResponseAllowed,
+		)
+		if relationErr != nil {
+			return nil, relationErr
+		}
+		tableColumns := inferredRelation.GetColumnDescriptors()
 		for _, col := range tableColumns {
 			relationalType := textStr
 			schema := col.GetSchema()
@@ -586,11 +683,17 @@ func (dc *staticDRMConfig) GenerateInsertDML(
 		nil
 }
 
+//nolint:revive // future proofing
 func (dc *staticDRMConfig) GenerateSelectDML(
 	tabAnnotated util.AnnotatedTabulation,
+	prov anysdk.Provider,
+	svc anysdk.Service,
+	resource anysdk.Resource,
+	method anysdk.StandardOperationStore,
 	txnCtrlCtrs internaldto.TxnControlCounters,
 	selectSuffix,
 	rewrittenWhere string,
+	isAwait bool,
 ) (PreparedStatementCtx, error) {
 	var quotedColNames []string
 	var columns []typing.ColumnMetadata
@@ -897,18 +1000,21 @@ func (dc *staticDRMConfig) InsertIntoPhysicalTable(
 	)
 }
 
-func GetDRMConfig(
+func GenerateDRMConfig(
 	sqlSystem sql_system.SQLSystem,
+	persistenceSystem sdk_persistence.PersistenceSystem,
 	typCfg typing.Config,
 	namespaceCollection tablenamespace.Collection,
 	controlAttributes sqlcontrol.ControlAttributes,
 ) (Config, error) {
 	rv := &staticDRMConfig{
-		namespaceCollection: namespaceCollection,
-		controlAttributes:   controlAttributes,
-		sqlEngine:           sqlSystem.GetSQLEngine(),
-		sqlSystem:           sqlSystem,
-		typCfg:              typCfg,
+		namespaceCollection:    namespaceCollection,
+		controlAttributes:      controlAttributes,
+		sqlEngine:              sqlSystem.GetSQLEngine(),
+		sqlSystem:              sqlSystem,
+		typCfg:                 typCfg,
+		analyzerFactoryFactory: discovery.NewStandardStaticAnalyzerFactoryFactory(),
+		persistenceSystem:      persistenceSystem,
 	}
 	return rv, nil
 }

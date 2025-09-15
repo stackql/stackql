@@ -518,12 +518,22 @@ func extractVarDefFromExec(node *sqlparser.Exec, argName string) (*sqlparser.Exe
 
 func (pb *standardPrimitiveGenerator) parseComments(comments sqlparser.Comments) {
 	if comments != nil {
-		pb.PrimitiveComposer.SetCommentDirectives(sqlparser.ExtractCommentDirectives(comments))
-		// This pattern supports preset.
-		if pb.PrimitiveComposer.GetCommentDirectives().IsSet("AWAIT") {
-			pb.PrimitiveComposer.SetAwait(true)
+		commentDirectives := sqlparser.ExtractCommentDirectives(comments)
+		pb.PrimitiveComposer.SetCommentDirectives(commentDirectives)
+	}
+	if pb.hasAwaitComment(comments) {
+		pb.PrimitiveComposer.SetAwait(true)
+	}
+}
+
+func (pb *standardPrimitiveGenerator) hasAwaitComment(comments sqlparser.Comments) bool {
+	if comments != nil {
+		commentDirectives := sqlparser.ExtractCommentDirectives(comments)
+		if commentDirectives.IsSet("AWAIT") {
+			return true
 		}
 	}
+	return false
 }
 
 func (pb *standardPrimitiveGenerator) persistHerarchyToBuilder(
@@ -542,7 +552,8 @@ func (pb *standardPrimitiveGenerator) AnalyzeUnaryExec(
 	selectNode *sqlparser.Select,
 	cols []parserutil.ColumnHandle,
 ) (tablemetadata.ExtendedTableMetadata, error) {
-	err := pb.inferHeirarchyAndPersist(handlerCtx, node, nil, false)
+	isAwait := pb.hasAwaitComment(node.Comments)
+	err := pb.inferHeirarchyAndPersist(handlerCtx, node, nil, false, isAwait)
 	if err != nil {
 		return nil, err
 	}
@@ -1025,7 +1036,8 @@ func (pb *standardPrimitiveGenerator) AnalyzeInsert(pbi planbuilderinput.PlanBui
 	if !ok {
 		return fmt.Errorf("could not cast node of type '%T' to required Insert", pbi.GetStatement())
 	}
-	err := pb.inferHeirarchyAndPersist(handlerCtx, node, pbi.GetPlaceholderParams(), false)
+	isAwait := pb.hasAwaitComment(node.Comments)
+	err := pb.inferHeirarchyAndPersist(handlerCtx, node, pbi.GetPlaceholderParams(), false, isAwait)
 	if err != nil {
 		return err
 	}
@@ -1181,7 +1193,8 @@ func (pb *standardPrimitiveGenerator) AnalyzeUpdate(pbi planbuilderinput.PlanBui
 	if !ok {
 		return fmt.Errorf("could not cast node of type '%T' to required Update", pbi.GetStatement())
 	}
-	err := pb.inferHeirarchyAndPersist(handlerCtx, node, pbi.GetPlaceholderParams(), false)
+	isAwait := pb.hasAwaitComment(node.Comments)
+	err := pb.inferHeirarchyAndPersist(handlerCtx, node, pbi.GetPlaceholderParams(), false, isAwait)
 	if err != nil {
 		return err
 	}
@@ -1292,8 +1305,10 @@ func (pb *standardPrimitiveGenerator) inferHeirarchyAndPersist(
 	handlerCtx handler.HandlerContext,
 	node sqlparser.SQLNode,
 	parameters parserutil.ColumnKeyedDatastore,
-	viewPermissive bool) error {
-	heirarchy, err := taxonomy.GetHeirarchyFromStatement(handlerCtx, node, parameters, viewPermissive)
+	viewPermissive bool,
+	isAwait bool,
+) error {
+	heirarchy, err := taxonomy.GetHeirarchyFromStatement(handlerCtx, node, parameters, viewPermissive, isAwait)
 	if err != nil {
 		return err
 	}
@@ -1312,7 +1327,8 @@ func (pb *standardPrimitiveGenerator) analyzeDelete(
 	}
 	pb.parseComments(node.Comments)
 	paramMap, paramMapExists := pbi.GetAnnotatedAST().GetWhereParamMapsEntry(node.Where)
-	err := pb.inferHeirarchyAndPersist(handlerCtx, node, paramMap, false)
+	isAwait := pb.hasAwaitComment(node.Comments)
+	err := pb.inferHeirarchyAndPersist(handlerCtx, node, paramMap, false, isAwait)
 	if err != nil {
 		return err
 	}
@@ -1404,7 +1420,8 @@ func (pb *standardPrimitiveGenerator) analyzeDescribe(pbi planbuilderinput.PlanB
 		return fmt.Errorf("could not cast node of type '%T' to required Describe", pbi.GetStatement())
 	}
 	var err error
-	err = pb.inferHeirarchyAndPersist(handlerCtx, node, nil, true)
+	// DESCRIBE has no await or comments at this time
+	err = pb.inferHeirarchyAndPersist(handlerCtx, node, nil, true, false)
 	if err != nil {
 		return err
 	}
@@ -1515,12 +1532,14 @@ func (pb *standardPrimitiveGenerator) analyzeShow(
 	case "AUTH":
 		// TODO
 	case "INSERT":
-		err = pb.inferHeirarchyAndPersist(handlerCtx, node, nil, false)
+		// SHOW has no comments or concept of await
+		err = pb.inferHeirarchyAndPersist(handlerCtx, node, nil, false, false)
 		if err != nil {
 			return err
 		}
 	case "METHODS":
-		err = pb.inferHeirarchyAndPersist(handlerCtx, node, nil, false)
+		// SHOW has no comments or concept of await
+		err = pb.inferHeirarchyAndPersist(handlerCtx, node, nil, false, false)
 		if err != nil {
 			return err
 		}

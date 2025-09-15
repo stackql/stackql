@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/stackql/any-sdk/anysdk"
+	"github.com/stackql/any-sdk/public/radix_tree_address_space"
 	"github.com/stackql/stackql/internal/stackql/astvisit"
 	"github.com/stackql/stackql/internal/stackql/docparser"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -17,6 +18,7 @@ import (
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
 
+//nolint:funlen // apathy
 func (pb *standardPrimitiveGenerator) assembleUnarySelectionBuilder(
 	pbi planbuilderinput.PlanBuilderInput,
 	handlerCtx handler.HandlerContext,
@@ -40,19 +42,31 @@ func (pb *standardPrimitiveGenerator) assembleUnarySelectionBuilder(
 	if err != nil {
 		return err
 	}
-
+	svc, err := tbl.GetService()
+	if err != nil {
+		return err
+	}
+	resource, err := tbl.GetResource()
+	if err != nil {
+		return err
+	}
 	method, err := tbl.GetMethod()
 	if err != nil {
 		return err
 	}
-
 	_, err = docparser.OpenapiStackQLTabulationsPersistor(
-		method, []util.AnnotatedTabulation{annotatedInsertTabulation},
+		prov,
+		svc,
+		resource,
+		method,
+		methodAnalysisOutput.IsAwait(),
+		[]util.AnnotatedTabulation{annotatedInsertTabulation},
 		pb.PrimitiveComposer.GetSQLEngine(),
 		prov.GetName(),
 		handlerCtx.GetNamespaceCollection(),
 		handlerCtx.GetControlAttributes(),
 		handlerCtx.GetSQLSystem(),
+		handlerCtx.GetPersistenceSystem(),
 		handlerCtx.GetTypingConfig(),
 	)
 	if err != nil && !methodAnalysisOutput.IsNilResponseAllowed() {
@@ -60,7 +74,15 @@ func (pb *standardPrimitiveGenerator) assembleUnarySelectionBuilder(
 	}
 	ctrs := pbi.GetTxnCtrlCtrs()
 	insPsc, err := pb.PrimitiveComposer.GetDRMConfig().GenerateInsertDML(
-		annotatedInsertTabulation, method, ctrs, methodAnalysisOutput.IsNilResponseAllowed())
+		annotatedInsertTabulation,
+		prov,
+		svc,
+		resource,
+		method,
+		ctrs,
+		methodAnalysisOutput.IsNilResponseAllowed(),
+		methodAnalysisOutput.IsAwait(),
+	)
 	if err != nil {
 		return err
 	}
@@ -96,6 +118,10 @@ func (pb *standardPrimitiveGenerator) assembleUnarySelectionBuilder(
 	)
 	selPsc, err := pb.PrimitiveComposer.GetDRMConfig().GenerateSelectDML(
 		util.NewAnnotatedTabulation(selectTabulation, hIDs, inputTableName, tbl.GetAlias()),
+		prov,
+		svc,
+		resource,
+		method,
 		insPsc.GetGCCtrlCtrs(),
 		selectSuffix,
 		astvisit.GenerateModifiedWhereClause(
@@ -103,7 +129,9 @@ func (pb *standardPrimitiveGenerator) assembleUnarySelectionBuilder(
 			rewrittenWhere,
 			handlerCtx.GetSQLSystem(),
 			handlerCtx.GetASTFormatter(),
-			handlerCtx.GetNamespaceCollection()),
+			handlerCtx.GetNamespaceCollection(),
+		),
+		methodAnalysisOutput.IsAwait(),
 	)
 	if err != nil {
 		return err
@@ -148,12 +176,45 @@ func (pb *standardPrimitiveGenerator) analyzeUnarySelection(
 	if itemObjS == nil {
 		return fmt.Errorf(unsuitableSchemaMsg)
 	}
+	resource, err := tbl.GetResource()
+	if err != nil {
+		return err
+	}
+	prov, err := tbl.GetProviderObject()
+	if err != nil {
+		return err
+	}
+	svc, err := tbl.GetService()
+	if err != nil {
+		return err
+	}
 	if len(cols) == 0 {
-		tsa := util.NewTableSchemaAnalyzer(schema, method, methodAnalysisOutput.IsNilResponseAllowed())
-		colz, localErr := tsa.GetColumns()
-		if localErr != nil {
-			return localErr
+		addressSpaceFormulator := radix_tree_address_space.NewAddressSpaceFormulator(
+			radix_tree_address_space.NewAddressSpaceGrammar(),
+			prov,
+			svc,
+			resource,
+			method,
+			method.GetProjections(),
+			methodAnalysisOutput.IsAwait(),
+		)
+		addressSpaceErr := addressSpaceFormulator.Formulate()
+		if addressSpaceErr != nil {
+			return addressSpaceErr
 		}
+		addressSpace := addressSpaceFormulator.GetAddressSpace()
+		if addressSpace == nil {
+			return fmt.Errorf("failed to obtain address space")
+		}
+		inferredRelation, inferredRelationErr := addressSpace.ToRelation(
+			radix_tree_address_space.NewStandardAddressSpaceExpansionConfig(
+				true, // TODO: switch this off at the appropriate time
+				false,
+			))
+		if inferredRelationErr != nil {
+			return inferredRelationErr
+		}
+		colz := inferredRelation.GetColumns()
 		for _, v := range colz {
 			cols = append(cols, parserutil.NewUnaliasedColumnHandle(v.GetName()))
 		}
@@ -220,13 +281,6 @@ func (pb *standardPrimitiveGenerator) analyzeUnaryAction(
 	hIDs := internaldto.NewHeirarchyIdentifiers(
 		rawhIDs.GetProviderStr(), rawhIDs.GetServiceStr(), itemSchemaName, strings.ToLower(publishedMethodKey))
 
-	// annotatedInsertTabulation := util.NewAnnotatedTabulation(insertTabulation, hIDs, inputTableName, "")
-
-	// ctrs := pbi.GetTxnCtrlCtrs()
-	// insPsc, err := pb.PrimitiveComposer.GetDRMConfig().GenerateInsertDML(annotatedInsertTabulation, method, ctrs)
-	// if err != nil {
-	// 	return err
-	// }
 	schema, _, err := tbl.GetResponseSchemaAndMediaType()
 	if err != nil && !methodAnalysisOutput.IsNilResponseAllowed() {
 		return err
