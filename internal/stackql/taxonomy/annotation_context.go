@@ -179,7 +179,9 @@ func (ac *standardAnnotationCtx) Prepare(
 					nil,
 					logging.GetLogger(),
 				)
-				httpArmoury, armouryErr := httpPreparator.BuildHTTPRequestCtxFromAnnotation()
+				httpArmoury, armouryErr := httpPreparator.BuildHTTPRequestCtx(
+					anysdk.NewHTTPPreparatorConfig(true),
+				)
 				return httpArmoury, armouryErr
 			},
 		)
@@ -211,7 +213,9 @@ func (ac *standardAnnotationCtx) Prepare(
 				nil,
 				logging.GetLogger(),
 			)
-			httpArmoury, armouryErr := httpPreparator.BuildHTTPRequestCtxFromAnnotation()
+			httpArmoury, armouryErr := httpPreparator.BuildHTTPRequestCtx(
+				anysdk.NewHTTPPreparatorConfig(true),
+			)
 			if armouryErr != nil {
 				return nil, armouryErr
 			}

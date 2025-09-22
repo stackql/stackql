@@ -1018,7 +1018,9 @@ func (pb *standardPrimitiveGenerator) buildRequestContextFromMapArray(
 				execContext,
 				logging.GetLogger(),
 			)
-			httpArmoury, httpErr := httpPreparator.BuildHTTPRequestCtx()
+			httpArmoury, httpErr := httpPreparator.BuildHTTPRequestCtx(
+				anysdk.NewHTTPPreparatorConfig(false),
+			)
 			if httpErr != nil {
 				return nil, httpErr
 			}

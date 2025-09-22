@@ -208,6 +208,7 @@ func (pb *standardPrimitiveGenerator) analyzeUnarySelection(
 		}
 		inferredRelation, inferredRelationErr := addressSpace.ToRelation(
 			radix_tree_address_space.NewStandardAddressSpaceExpansionConfig(
+				methodAnalysisOutput.IsAwait(),
 				true, // TODO: switch this off at the appropriate time
 				false,
 			))
