@@ -64,9 +64,9 @@ func MakeWireServer(sbe sqlbackend.SQLBackendFactory, cfg dto.RuntimeCtx) (IWire
 			cp = x509.NewCertPool()
 			for _, pemStr := range tlsCfg.ClientCAs {
 				var b []byte
-				b, err = base64.RawStdEncoding.DecodeString(pemStr)
+				b, err = base64.StdEncoding.DecodeString(pemStr)
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("failed to decode Client CA PEM: %w, with string '%s'", err, pemStr)
 				}
 				ok := cp.AppendCertsFromPEM(b)
 				if !ok {

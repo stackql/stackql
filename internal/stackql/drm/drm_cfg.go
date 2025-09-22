@@ -496,11 +496,13 @@ func (dc *staticDRMConfig) obtainAddressSpace(
 }
 
 func (dc *staticDRMConfig) obtainRelationFromAddressSpace(
+	isAwait bool,
 	addressSpace anysdk.AddressSpace,
 	isNilResponseAllowed bool,
 ) (anysdk.Relation, error) {
 	inferredRelation, inferredRelationErr := addressSpace.ToRelation(
 		radix_tree_address_space.NewStandardAddressSpaceExpansionConfig(
+			isAwait,
 			true, // TODO: switch this off at the appropriate time
 			isNilResponseAllowed,
 		))
@@ -541,7 +543,7 @@ func (dc *staticDRMConfig) genRelationalTable(
 			return nil, err
 		}
 	}
-	inferredRelation, inferredRelationErr := dc.obtainRelationFromAddressSpace(addressSpace, isNilResponseAllowed)
+	inferredRelation, inferredRelationErr := dc.obtainRelationFromAddressSpace(isAwait, addressSpace, isNilResponseAllowed)
 	if inferredRelationErr != nil {
 		return nil, inferredRelationErr
 	}
@@ -635,6 +637,7 @@ func (dc *staticDRMConfig) GenerateInsertDML(
 			return nil, addressSpaceErr
 		}
 		inferredRelation, relationErr := dc.obtainRelationFromAddressSpace(
+			isAsync,
 			addressSpace,
 			isNilResponseAllowed,
 		)

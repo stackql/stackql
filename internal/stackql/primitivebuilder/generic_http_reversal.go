@@ -133,7 +133,9 @@ func (gh *genericHTTPReversal) Build() error {
 			if !httpPreparatorExists {
 				break
 			}
-			httpArmoury, httpErr := httpPreparator.BuildHTTPRequestCtx()
+			httpArmoury, httpErr := httpPreparator.BuildHTTPRequestCtx(
+				anysdk.NewHTTPPreparatorConfig(false),
+			)
 			if httpErr != nil {
 				return internaldto.NewErroneousExecutorOutput(httpErr)
 			}

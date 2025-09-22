@@ -269,7 +269,9 @@ func (gh *genericHTTPStreamInput) Build() error {
 				nil,
 				logging.GetLogger(),
 			)
-			httpArmoury, httpErr := httpPreparator.BuildHTTPRequestCtx()
+			httpArmoury, httpErr := httpPreparator.BuildHTTPRequestCtx(
+				anysdk.NewHTTPPreparatorConfig(false),
+			)
 			if httpErr != nil {
 				return internaldto.NewErroneousExecutorOutput(httpErr)
 			}
