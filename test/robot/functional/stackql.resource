@@ -58,7 +58,6 @@ Prepare StackQL Environment
     Set Environment Variable    DD_API_KEY    %{DD_API_KEY=myusername}
     Set Environment Variable    DD_APPLICATION_KEY    %{DD_APPLICATION_KEY=mypassword}
     Start All Mock Servers
-    Generate Container Credentials for StackQL PG Server mTLS
     Start StackQL PG Server mTLS    ${PG_SRV_PORT_MTLS}    ${PG_SRV_MTLS_CFG_STR}    {}    {}    ${SQL_BACKEND_CFG_STR_CANONICAL}    ${PG_SRV_PORT_DOCKER_MTLS}
     Start StackQL PG Server mTLS    ${PG_SRV_PORT_MTLS_WITH_NAMESPACES}    ${PG_SRV_MTLS_CFG_STR}    ${NAMESPACES_TTL_SPECIALCASE_TRANSPARENT}    {}    ${SQL_BACKEND_CFG_STR_CANONICAL}    ${PG_SRV_PORT_DOCKER_MTLS_WITH_NAMESPACES}
     Start StackQL PG Server mTLS    ${PG_SRV_PORT_MTLS_WITH_EAGER_GC}    ${PG_SRV_MTLS_CFG_STR}    {}    ${GC_CFG_EAGER}    ${SQL_BACKEND_CFG_STR_CANONICAL}    ${PG_SRV_PORT_DOCKER_MTLS_WITH_EAGER_GC}
@@ -66,14 +65,6 @@ Prepare StackQL Environment
     Start StackQL PG Server mTLS Expose Backing DB    ${PG_SRV_PORT_MTLS_EXPORT}    ${PG_SRV_MTLS_CFG_STR}    {}    {}    ${SQL_BACKEND_CFG_STR_CANONICAL}    ${PG_SRV_PORT_DOCKER_MTLS_EXPORT}
     Start Postgres External Source If Viable
     Sleep    50s
-
-Generate Container Credentials for StackQL PG Server mTLS
-    IF    "${EXECUTION_PLATFORM}" == "docker"
-        ${res} =         Run Process    docker    compose    \-f    docker\-compose\-credentials.yml
-                        ...  run    \-\-rm    credentialsgen
-        Log     Credentials gen completed
-        Should Be Equal As Integers    ${res.rc}    0
-    END
 
 Start StackQL PG Server mTLS
     [Arguments]    ${_SRV_PORT_MTLS}    ${_MTLS_CFG_STR}    ${_NAMESPACES_CFG}    ${_GC_CFG}    ${_SQL_BACKEND_CFG}    ${_DOCKER_PORT}

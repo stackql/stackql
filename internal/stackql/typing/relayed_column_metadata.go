@@ -47,6 +47,7 @@ func (cd *relayedColumnMetadata) GetRelationalType() string {
 	return cd.coupling.GetRelationalType()
 }
 
+//nolint:goconst // ok
 func (cd *relayedColumnMetadata) getOidForRelationalType(relType string) oid.Oid {
 	relType = strings.ToLower(relType)
 	switch relType {

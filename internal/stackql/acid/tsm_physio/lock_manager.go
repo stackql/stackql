@@ -1,4 +1,4 @@
-package tsm_physio //nolint:revive,stylecheck // prefer this nomenclature
+package tsm_physio //nolint:stylecheck,revive // prefer this nomenclature
 
 var (
 	_ LockManager = (*lockManager)(nil)

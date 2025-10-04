@@ -38,7 +38,7 @@ func (pb *standardPlanBuilder) BuildUndoPlanFromContext(_ handler.HandlerContext
 	return nil, nil
 }
 
-//nolint:funlen,gocognit // no big deal
+//nolint:funlen,gocognit,errcheck // no big deal
 func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerContext) (plan.Plan, error) {
 	defer handlerCtx.GetGarbageCollector().Close()
 	tcc, err := internaldto.NewTxnControlCounters(handlerCtx.GetTxnCounterMgr())

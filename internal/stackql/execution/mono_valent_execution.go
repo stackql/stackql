@@ -1472,7 +1472,7 @@ func shimProcessHTTP(
 	return httpResponse, nil
 }
 
-//nolint:funlen,gocognit // acceptable for now
+//nolint:funlen,gocognit,errcheck // acceptable for now
 func GetMonitorExecutor(
 	handlerCtx handler.HandlerContext,
 	provider anysdk.Provider,

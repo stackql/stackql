@@ -91,7 +91,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v5.0.0
       with:
-        go-version: '~1.22'
+        go-version: '~1.23'
         check-latest: true
         cache: true
       id: go
@@ -193,6 +193,7 @@ jobs:
         echo "BUILDPATCHVERSION=$env:BUILDPATCHVERSION" >> $GITHUB_ENV
 
         python cicd/python/build.py --verbose --build
+        python cicd/python/build.py --verbose --build-mcp-client
 
         build\stackql.exe --help
 
@@ -260,7 +261,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v5.0.0
       with:
-        go-version: '~1.22'
+        go-version: '~1.24'
         check-latest: true
         cache: true
       id: go
@@ -345,6 +346,16 @@ jobs:
           echo "BUILDPATCHVERSION=${BUILDPATCHVERSION}"
         } >> "${GITHUB_ENV}"
         python cicd/python/build.py --verbose --build
+    
+    - name: Build MCP client
+      env:
+        BUILDCOMMITSHA: ${{github.sha}}
+        BUILDBRANCH: ${{github.ref}}
+        BUILDPLATFORM: ${{runner.os}}
+        BUILDPATCHVERSION: ${{github.run_number}}
+        CGO_ENABLED: 1
+      run: |
+        python cicd/python/build.py --verbose --build-mcp-client
       
     - name: Test
       if: success()
@@ -410,6 +421,13 @@ jobs:
       with:
         name: stackql_linux_amd64
         path: build/stackql
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4.3.1
+      if: success()
+      with:
+        name: stackql_mcp_client_linux_amd64
+        path: build/stackql_mcp_client
     
     - name: prepare deb boilerplate
       run: |
@@ -459,6 +477,11 @@ jobs:
         name: stackql_linux_amd64
         path: build
 
+    - name: Download Artifact
+      uses: actions/download-artifact@v4.1.2
+      with:
+        name: stackql_mcp_client_linux_amd64
+        path: build
     
     - name: Download deb Artifact
       uses: actions/download-artifact@v4.1.2
@@ -474,13 +497,15 @@ jobs:
     - name: Stackql permissions
       run:  |
         sudo chmod a+rwx build/stackql
+        sudo chmod a+rwx build/stackql_mcp_client
         ls -al build/stackql
+        ls -al build/stackql_mcp_client
         ls -al .
 
     - name: Set up Go 1.x
       uses: actions/setup-go@v5.0.0
       with:
-        go-version: '~1.22'
+        go-version: '~1.24'
         check-latest: true
         cache: true
       id: go
@@ -649,6 +674,7 @@ jobs:
       if: matrix.registry != 'test/registry'
       env:
         PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
+        IS_SKIP_MCP_TEST: 'true'
       run: |
         mkdir -p deb_test
         cp stackql_${{env.BUILDMAJORVERSION}}.${{env.BUILDMINORVERSION}}.${{env.BUILDPATCHVERSION}}_amd64.deb deb_test/
@@ -682,7 +708,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v5.0.0
       with:
-        go-version: '~1.22'
+        go-version: '~1.23'
         check-latest: true
         cache: true
       id: go
@@ -693,7 +719,7 @@ jobs:
         cache: pip
         python-version: '3.12' 
     
-    - name: Git Ref Parse
+    - name: Git Ref Parse 
       id: git_ref_parse
       run: |
           {
@@ -763,6 +789,16 @@ jobs:
           echo "BUILDPATCHVERSION=${BUILDPATCHVERSION}"
         } >> "${GITHUB_ENV}"
         python cicd/python/build.py --verbose --build
+    
+    - name: Build MCP client
+      env:
+        BUILDCOMMITSHA: ${{github.sha}}
+        BUILDBRANCH: ${{github.ref}}
+        BUILDPLATFORM: ${{runner.os}}
+        BUILDPATCHVERSION: ${{github.run_number}}
+        CGO_ENABLED: 1
+      run: |
+        python cicd/python/build.py --verbose --build-mcp-client
       
     - name: Test
       if: success()
@@ -931,6 +967,7 @@ jobs:
         pkgVersion: ${{env.BUILDMAJORVERSION}}.${{env.BUILDMINORVERSION}}.${{env.BUILDPATCHVERSION}}
         pkgArchitecture: 'arm64'
         PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
+        IS_SKIP_MCP_TEST: 'true'
       run: |
         mkdir -p deb_test
         DEB_FILE="${pkgName}_${pkgVersion}_${pkgArchitecture}.deb"
@@ -978,6 +1015,13 @@ jobs:
       uses: actions/download-artifact@v4.1.2
       with:
         name: stackql_linux_amd64
+        path: build
+
+    - name: Download MCP Client Artifact
+      # uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4.1.2
+      with:
+        name: stackql_mcp_client_linux_amd64
         path: build
     
     - name: Setup WSL with dependencies
@@ -1090,7 +1134,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v5.0.0
       with:
-        go-version: '~1.22'
+        go-version: '~1.23'
         check-latest: true
         cache: true
       id: go
@@ -1164,6 +1208,7 @@ jobs:
         } >> "${GITHUB_ENV}"
 
         python cicd/python/build.py --verbose --build 
+        python cicd/python/build.py --verbose --build-mcp-client
 
     - name: Test
       if: success()
@@ -1236,7 +1281,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v5.0.0
       with:
-        go-version: '~1.22'
+        go-version: '~1.23'
         check-latest: true
         cache: true
       id: go
@@ -1288,6 +1333,7 @@ jobs:
         export GOOS="darwin"
         export GOARCH="arm64"
         python cicd/python/build.py --verbose --build 
+        python cicd/python/build.py --verbose --build-mcp-client
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4.3.1
@@ -1421,7 +1467,7 @@ jobs:
     - name: Pull Docker base images for cache purposes
       if: env.BUILD_IMAGE_REQUIRED == 'true'
       run: |
-        docker pull --platform ${{ matrix.platform }} golang:1.18.4-bullseye || echo 'could not pull image for cache purposes'
+        docker pull --platform ${{ matrix.platform }} golang:1.23-bullseye || echo 'could not pull image for cache purposes'
         docker pull --platform ${{ matrix.platform }} ubuntu:22.04 || echo 'could not pull image for cache purposes'
 
     - name: Pull Docker image for cache purposes
@@ -1659,6 +1705,7 @@ jobs:
     - name: Run robot mocked functional tests
       env:
         PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
+        IS_SKIP_MCP_TEST: 'true'
       if: success() && env.CI_IS_EXPRESS != 'true' && matrix.platform == 'linux/amd64' && env.BUILD_IMAGE_REQUIRED == 'true' && matrix.db_backend == 'sqlite'
       timeout-minutes: ${{ vars.DEFAULT_STEP_TIMEOUT_MIN == '' && 20 || vars.DEFAULT_STEP_TIMEOUT_MIN }}
       run: |
@@ -1669,6 +1716,7 @@ jobs:
     - name: Run POSTGRES BACKEND robot mocked functional tests
       env:
         PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
+        IS_SKIP_MCP_TEST: 'true'
       if: success() && env.CI_IS_EXPRESS != 'true' && matrix.platform == 'linux/amd64' && env.BUILD_IMAGE_REQUIRED == 'true' && matrix.db_backend == 'postgres_tcp'
       timeout-minutes: ${{ vars.DEFAULT_LONG_STEP_TIMEOUT_MIN == '' && 40 || vars.DEFAULT_LONG_STEP_TIMEOUT_MIN }}
       run: |

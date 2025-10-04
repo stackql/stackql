@@ -46,11 +46,7 @@ func (sdf *basicStackQLDriverFactory) newSQLDriver() (StackQLDriver, error) {
 	if err != nil {
 		return nil, err
 	}
-	txnProvider, txnProviderErr := tsm_physio.GetProviderInstance(sdf.handlerCtx.GetTxnCoordinatorCtx())
-	if txnProviderErr != nil {
-		return nil, txnProviderErr
-	}
-	txnOrchestrator, orcErr := txnProvider.GetOrchestrator(sdf.handlerCtx)
+	txnOrchestrator, orcErr := tsm_physio.NewOrchestrator(sdf.handlerCtx)
 	if orcErr != nil {
 		return nil, orcErr
 	}
@@ -186,12 +182,7 @@ func (dr *basicStackQLDriver) SplitCompoundQuery(s string) ([]string, error) {
 }
 
 func NewStackQLDriver(handlerCtx handler.HandlerContext) (StackQLDriver, error) {
-	txnProvider, txnProviderErr := tsm_physio.GetProviderInstance(
-		handlerCtx.GetTxnCoordinatorCtx())
-	if txnProviderErr != nil {
-		return nil, txnProviderErr
-	}
-	txnOrchestrator, orcErr := txnProvider.GetOrchestrator(handlerCtx)
+	txnOrchestrator, orcErr := tsm_physio.NewOrchestrator(handlerCtx)
 	if orcErr != nil {
 		return nil, orcErr
 	}

@@ -1,4 +1,4 @@
-package util
+package util //nolint:revive // fine for now
 
 import (
 	"path"

@@ -8,7 +8,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/sqlstream"
 )
 
-//nolint:revive // prefer declarative
 var (
 	multipleWhitespaceRegexp     *regexp.Regexp = regexp.MustCompile(`\s+`)
 	getOidsRegexp                *regexp.Regexp = regexp.MustCompile(`(?i)select\s+t\.oid,\s+(?:NULL|typarray)\s+from.*pg_type`) //nolint:lll // long string

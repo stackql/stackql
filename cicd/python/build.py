@@ -27,6 +27,18 @@ def build_stackql(verbose :bool) -> int:
         shell=True
     )
 
+def build_stackql_mcp_client(verbose :bool) -> int:
+    os.environ['BUILDMAJORVERSION'] = os.environ.get('BUILDMAJORVERSION', '1')
+    os.environ['BUILDMINORVERSION'] = os.environ.get('BUILDMINORVERSION', '1')
+    os.environ['BUILDPATCHVERSION'] = os.environ.get('BUILDPATCHVERSION', '1')
+    os.environ['CGO_ENABLED'] = os.environ.get('CGO_ENABLED', '1')
+    return subprocess.call(
+        'go build '
+        f'{"-x -v" if verbose else ""} '
+        '-o build/stackql_mcp_client ./mcp_client/cmd',
+        shell=True
+    )
+
 
 def unit_test_stackql(verbose :bool) -> int:
     return subprocess.call(
@@ -34,7 +46,7 @@ def unit_test_stackql(verbose :bool) -> int:
         shell=True
     )
 
-def sanitise_val(val :any) -> str:
+def sanitise_val(val) -> str:
     if isinstance(val, bool):
         return str(val).lower()
     return str(val)
@@ -65,6 +77,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--verbose', action='store_true')
     parser.add_argument('--build', action='store_true')
+    parser.add_argument('--build-mcp-client', action='store_true')
     parser.add_argument('--test', action='store_true')
     parser.add_argument('--robot-test', action='store_true')
     parser.add_argument('--robot-test-integration', action='store_true')
@@ -73,6 +86,10 @@ def main():
     ret_code = 0
     if args.build:
         ret_code = build_stackql(args.verbose)
+        if ret_code != 0:
+            exit(ret_code)
+    if args.build_mcp_client:
+        ret_code = build_stackql_mcp_client(args.verbose)
         if ret_code != 0:
             exit(ret_code)
     if args.test:

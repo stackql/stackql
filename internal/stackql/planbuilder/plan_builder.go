@@ -310,8 +310,8 @@ func (pgb *standardPlanGraphBuilder) handleDescribe(pbi planbuilderinput.PlanBui
 	if err != nil {
 		return err
 	}
-	var extended bool = strings.TrimSpace(strings.ToUpper(node.Extended)) == "EXTENDED" //nolint:revive // acceptable
-	var full bool = strings.TrimSpace(strings.ToUpper(node.Full)) == "FULL"             //nolint:revive // acceptable
+	var extended bool = strings.TrimSpace(strings.ToUpper(node.Extended)) == "EXTENDED"
+	var full bool = strings.TrimSpace(strings.ToUpper(node.Full)) == "FULL"
 	_, isView := md.GetHeirarchyObjects().GetHeirarchyIDs().GetView()
 	if isView {
 		stmtCtx, sOk := primitiveGenerator.GetPrimitiveComposer().GetIndirectDescribeSelectCtx()

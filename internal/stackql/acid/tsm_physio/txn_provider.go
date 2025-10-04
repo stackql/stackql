@@ -24,7 +24,7 @@ const (
 // that orchestrates transaction managers.
 type Provider interface {
 	// Create a new transaction manager.
-	GetOrchestrator(handler.HandlerContext) (Orchestrator, error)
+	getOrchestrator(handler.HandlerContext) (Orchestrator, error)
 	GetTSM(handlerCtx handler.HandlerContext) (tsm.TSM, error)
 }
 
@@ -32,7 +32,7 @@ type standardProvider struct {
 	ctx txn_context.ITransactionCoordinatorContext
 }
 
-func (sp *standardProvider) GetOrchestrator(handlerCtx handler.HandlerContext) (Orchestrator, error) {
+func (sp *standardProvider) getOrchestrator(handlerCtx handler.HandlerContext) (Orchestrator, error) {
 	tsmInstance, walError := GetTSM(handlerCtx)
 	if walError != nil {
 		return nil, walError
@@ -66,4 +66,13 @@ func GetProviderInstance(ctx txn_context.ITransactionCoordinatorContext) (Provid
 		}
 	})
 	return providerSingleton, err
+}
+
+func NewOrchestrator(handlerCtx handler.HandlerContext) (Orchestrator, error) {
+	txnProvider, txnProviderErr := GetProviderInstance(
+		handlerCtx.GetTxnCoordinatorCtx())
+	if txnProviderErr != nil {
+		return nil, txnProviderErr
+	}
+	return txnProvider.getOrchestrator(handlerCtx)
 }

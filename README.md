@@ -250,6 +250,9 @@ Forks of the following support our work:
 * [gorilla/mux](https://github.com/gorilla/mux)
 * [readline](https://github.com/chzyer/readline)
 * [psql-wire](https://github.com/jeroenrinzema/psql-wire)
+* [mcp-postgres](https://github.com/gldc/mcp-postgres)
+* [the `golang` MCP SDK](https://github.com/modelcontextprotocol/go-sdk)
+* ...and more.  Please excuse us for any omissions.
 
 We gratefully acknowledge these pieces of work.
 

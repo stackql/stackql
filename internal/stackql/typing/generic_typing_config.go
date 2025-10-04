@@ -50,7 +50,7 @@ func getTypeMappings(sqlDialect string) (map[string]ORMCoupling, error) {
 	}
 }
 
-//nolint:goconst,unparam // let it ride
+//nolint:unparam // let it ride
 func getDefaultRelationalType(sqlDialect string) string {
 	switch sqlDialect {
 	case constants.SQLDialectPostgres:
@@ -191,7 +191,6 @@ func newTypingConfig(sqlDialect string) (Config, error) {
 	}, nil
 }
 
-//nolint:goconst // defer cleanup
 func getOidForSQLDatabaseTypeName(typeName string) oid.Oid {
 	typeNameLowered := strings.ToLower(typeName)
 	switch strings.ToLower(typeNameLowered) {
@@ -248,7 +247,6 @@ func (tc *genericTypingConfig) getScannableObjectForNativeResult(colSchema *sql.
 		return new(sql.NullInt64)
 	case "int64", "bigint":
 		return new(sql.NullInt64)
-	//nolint:goconst // let it ride
 	case "numeric", "decimal", "float", "float32", "float64":
 		return new(sql.NullFloat64)
 	case "bool":

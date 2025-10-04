@@ -15,7 +15,7 @@ import (
 	lrucache "github.com/stackql/stackql-parser/go/cache"
 )
 
-//nolint:govet,lll,errcheck // legacy test
+//nolint:govet,lll // legacy test
 func TestSelectComputeDisksOrderByCrtTmstpAscPaginated(t *testing.T) {
 	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSelectComputeDisksOrderByCrtTmstpAscPaginated")
 	if err != nil {
@@ -93,7 +93,7 @@ func TestSelectComputeDisksAggOrderBySizeAscPaginated(t *testing.T) {
 	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedSelectComputeDisksAggPaginatedSizeOrderSizeAsc})
 }
 
-//nolint:govet,lll,errcheck // legacy test
+//nolint:govet,lll // legacy test
 func TestSelectComputeDisksAggOrderBySizeDescPaginated(t *testing.T) {
 	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSelectComputeDisksAggOrderBySizeDescPaginated")
 	if err != nil {
@@ -132,7 +132,7 @@ func TestSelectComputeDisksAggOrderBySizeDescPaginated(t *testing.T) {
 	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedSelectComputeDisksAggPaginatedSizeOrderSizeDesc})
 }
 
-//nolint:govet,lll,errcheck // legacy test
+//nolint:govet,lll // legacy test
 func TestSelectComputeDisksAggTotalSizePaginated(t *testing.T) {
 	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSelectComputeDisksAggTotalSizePaginated")
 	if err != nil {
@@ -171,7 +171,7 @@ func TestSelectComputeDisksAggTotalSizePaginated(t *testing.T) {
 	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedSelectComputeDisksAggPaginatedSizeTotal})
 }
 
-//nolint:govet,lll,errcheck // legacy test
+//nolint:govet,lll // legacy test
 func TestSelectComputeDisksAggTotalStringPaginated(t *testing.T) {
 	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSelectComputeDisksAggTotalStringPaginated")
 	if err != nil {

@@ -81,7 +81,7 @@ func (v *standardLeftoverReferencesAstVisitor) findTableLeftover(
 	return nil, fmt.Errorf("could not locate table corresponding to expression '%s'", colName.GetRawVal())
 }
 
-//nolint:dupl,funlen,gocognit,gocyclo,cyclop,errcheck,staticcheck,goconst,gocritic,lll,nestif,govet,gomnd,exhaustive,revive // defer uplifts on analysers
+//nolint:dupl,funlen,gocognit,gocyclo,cyclop,errcheck,staticcheck,gocritic,lll,nestif,govet,gomnd,exhaustive,revive // defer uplifts on analysers
 func (v *standardLeftoverReferencesAstVisitor) Visit(node sqlparser.SQLNode) error {
 	var err error
 

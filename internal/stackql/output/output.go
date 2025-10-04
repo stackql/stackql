@@ -58,13 +58,8 @@ func GetOutputWriter(
 	ci := pgtype.NewConnInfo()
 	switch outputCtx.RuntimeContext.OutputFormat {
 	case constants.JSONStr:
-		jsonWriter := JSONWriter{
-			ci:        ci,
-			writer:    writer,
-			errWriter: errWriter,
-			outputCtx: outputCtx,
-		}
-		return &jsonWriter, nil
+		jsonWriter := NewJSONWriter(writer, errWriter)
+		return jsonWriter, nil
 	case constants.TableStr:
 		tablewriter := TableWriter{
 			AbstractTabularWriter{
@@ -112,10 +107,15 @@ func GetOutputWriter(
 }
 
 type JSONWriter struct {
-	ci        *pgtype.ConnInfo
 	writer    io.Writer
 	errWriter io.Writer
-	outputCtx internaldto.OutputContext
+}
+
+func NewJSONWriter(writer io.Writer, errWriter io.Writer) IOutputWriter {
+	return &JSONWriter{
+		writer:    writer,
+		errWriter: errWriter,
+	}
 }
 
 type AbstractTabularWriter struct {
@@ -147,44 +147,19 @@ type PrettyWriter struct {
 	errWriter io.Writer
 }
 
-func resToArr(res sqldata.ISQLResult) []map[string]interface{} {
-	var keys []string
-	for _, col := range res.GetColumns() {
-		keys = append(keys, col.GetName())
-	}
-	var retVal []map[string]interface{}
-	for _, r := range res.GetRows() {
-		rowArr := r.GetRowDataNaive()
-		if len(rowArr) == 0 {
-			continue
-		}
-		rm := make(map[string]interface{})
-		for i, c := range keys {
-			switch tp := rowArr[i].(type) {
-			case []byte:
-				rm[c] = string(tp)
-			default:
-				rm[c] = tp
-			}
-		}
-		retVal = append(retVal, rm)
-	}
-	return retVal
-}
-
 func (jw *JSONWriter) writeRowsFromResult(res sqldata.ISQLResultStream) error {
 	for {
 		r, err := res.Read()
 		logging.GetLogger().Debugln(fmt.Sprintf("result from stream: %v", r))
 		if err != nil {
 			if errors.Is(err, io.EOF) {
-				rowsArr := resToArr(r)
+				rowsArr := r.ToArr()
 				jw.writeRows(rowsArr) //nolint:errcheck // output stream is not critical
 				return nil
 			}
 			return err
 		}
-		rowsArr := resToArr(r)
+		rowsArr := r.ToArr()
 		jw.writeRows(rowsArr) //nolint:errcheck // output stream is not critical
 	}
 }

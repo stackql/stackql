@@ -219,6 +219,7 @@ func (eng *postgresSystem) ObtainRelationalColumnFromExternalSQLtable(
 	return eng.obtainRelationalColumnFromExternalSQLtable(hierarchyIDs, colName)
 }
 
+//nolint:gosec // who cares
 func (eng *postgresSystem) obtainRelationalColumnsFromExternalSQLtable(
 	hierarchyIDs internaldto.HeirarchyIdentifiers,
 ) ([]typing.RelationalColumn, error) {
@@ -300,6 +301,7 @@ func (eng *postgresSystem) getSQLExternalSchema(providerName string) string {
 	return rv
 }
 
+//nolint:gosec // who cares
 func (eng *postgresSystem) obtainRelationalColumnFromExternalSQLtable(
 	hierarchyIDs internaldto.HeirarchyIdentifiers,
 	colName string,
@@ -766,7 +768,7 @@ func (eng *postgresSystem) GetMaterializedViewByName(viewName string) (internald
 	return rv, ok
 }
 
-//nolint:errcheck // TODO: establish pattern
+//nolint:errcheck,gosec // TODO: establish pattern
 func (eng *postgresSystem) getMaterializedViewByName(
 	naiveViewName string, txn *sql.Tx) (internaldto.RelationDTO, bool) {
 	fullyQualifiedRelationName := eng.getFullyQualifiedRelationName(naiveViewName)
@@ -843,7 +845,7 @@ func (eng *postgresSystem) GetPhysicalTableByName(
 
 // TODO: implement temp tables
 //
-//nolint:errcheck // TODO: establish pattern
+//nolint:errcheck,gosec // TODO: establish pattern
 func (eng *postgresSystem) getTableByName(
 	naiveTableName string,
 	txn *sql.Tx) (internaldto.RelationDTO, bool) {

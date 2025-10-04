@@ -63,7 +63,7 @@ func TestSimpleSelectGoogleComputeInstanceDriver(t *testing.T) {
 	t.Logf("simple select driver integration test passed")
 }
 
-//nolint:lll,errcheck,govet // legacy test
+//nolint:lll,govet // legacy test
 func TestSimpleSelectGoogleComputeInstanceDriverOutput(t *testing.T) {
 	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSimpleSelectGoogleComputeInstanceDriverOutput")
 	if err != nil {
@@ -98,7 +98,7 @@ func TestSimpleSelectGoogleComputeInstanceDriverOutput(t *testing.T) {
 	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedSimpleSelectGoogleComputeInstanceTextFile01, testobjects.ExpectedSimpleSelectGoogleComputeInstanceTextFile02})
 }
 
-//nolint:lll,errcheck,govet // legacy test
+//nolint:lll,govet // legacy test
 func TestSimpleSelectGoogleComputeInstanceDriverOutputRepeated(t *testing.T) {
 	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSimpleSelectGoogleComputeInstanceDriverOutputRepeated")
 	if err != nil {
@@ -133,7 +133,7 @@ func TestSimpleSelectGoogleComputeInstanceDriverOutputRepeated(t *testing.T) {
 	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedSimpleSelectGoogleComputeInstanceTextFile01, testobjects.ExpectedSimpleSelectGoogleComputeInstanceTextFile02})
 }
 
-//nolint:govet,lll,errcheck // legacy test
+//nolint:govet,lll // legacy test
 func TestSimpleSelectGoogleContainerSubnetworksAllowedDriverOutput(t *testing.T) {
 	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSimpleSelectGoogleContainerSubnetworksAllowedDriverOutput")
 	if err != nil {
@@ -168,7 +168,7 @@ func TestSimpleSelectGoogleContainerSubnetworksAllowedDriverOutput(t *testing.T)
 	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedSimpleSelectGoogleCotainerSubnetworkTextFile01, testobjects.ExpectedSimpleSelectGoogleCotainerSubnetworkTextFile02})
 }
 
-//nolint:govet,lll,errcheck // legacy test
+//nolint:govet,lll // legacy test
 func TestSimpleInsertGoogleComputeNetworkAsync(t *testing.T) {
 	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSimpleInsertGoogleComputeNetworkAsync")
 	if err != nil {

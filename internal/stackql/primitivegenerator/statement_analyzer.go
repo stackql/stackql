@@ -37,7 +37,6 @@ import (
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
 
-//nolint:revive // prefer this way
 var (
 	synonymJSONRegexp *regexp.Regexp = regexp.MustCompile(`^application/[\S]*json[\S]*$`)
 	synonymXMLRegexp  *regexp.Regexp = regexp.MustCompile(`^(?:application|text)/[\S]*xml[\S]*$`)

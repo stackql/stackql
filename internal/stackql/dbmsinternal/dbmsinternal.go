@@ -11,7 +11,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/sql_system"
 )
 
-//nolint:lll,revive // complex regex
+//nolint:lll // complex regex
 var (
 	_                      Router         = &standardDBMSInternalRouter{}
 	internalTableRegexp    *regexp.Regexp = regexp.MustCompile(`(?i)^(?:public\.)?(?:pg_type|pg_namespace|pg_catalog.*|current_schema|pg_.*|information_schema.*)`)

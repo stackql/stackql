@@ -297,6 +297,7 @@ func (eng *sqLiteSystem) getSQLExternalSchema(providerName string) string {
 	return rv
 }
 
+//nolint:gosec // who cares
 func (eng *sqLiteSystem) obtainRelationalColumnsFromExternalSQLtable(
 	hierarchyIDs internaldto.HeirarchyIdentifiers,
 ) ([]typing.RelationalColumn, error) {
@@ -362,6 +363,7 @@ func (eng *sqLiteSystem) obtainRelationalColumnsFromExternalSQLtable(
 	return rv, nil
 }
 
+//nolint:gosec // TODO: establish pattern
 func (eng *sqLiteSystem) obtainRelationalColumnFromExternalSQLtable(
 	hierarchyIDs internaldto.HeirarchyIdentifiers,
 	colName string,
@@ -837,7 +839,7 @@ func (eng *sqLiteSystem) IsRelationExported(relationName string) bool {
 	return matches
 }
 
-//nolint:errcheck // TODO: establish pattern
+//nolint:errcheck,gosec // TODO: establish pattern
 func (eng *sqLiteSystem) getMaterializedViewByName(naiveViewName string, txn *sql.Tx) (internaldto.RelationDTO, bool) {
 	fullyQualifiedRelationName := eng.getFullyQualifiedRelationName(naiveViewName)
 	q := `SELECT view_ddl FROM "__iql__.materialized_views" WHERE view_name = ? and deleted_dttm IS NULL`
@@ -917,7 +919,7 @@ func (eng *sqLiteSystem) GetPhysicalTableByName(
 
 // TODO: implement temp tables
 //
-//nolint:errcheck // TODO: establish pattern
+//nolint:errcheck,gosec // TODO: establish pattern
 func (eng *sqLiteSystem) getTableByName(
 	naiveTableName string,
 	txn *sql.Tx,

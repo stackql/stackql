@@ -27,7 +27,7 @@ import (
 )
 
 var (
-	//nolint:revive,unused // prefer declarative
+	//nolint:unused // prefer declarative
 	gitHubLinksNextRegex *regexp.Regexp = regexp.MustCompile(`.*<(?P<nextURL>[^>]*)>;\ rel="next".*`)
 )
 

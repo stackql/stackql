@@ -1,4 +1,4 @@
-package tsm_physio //nolint:revive,stylecheck // prefer this nomenclature
+package tsm_physio //nolint:stylecheck // prefer this nomenclature
 
 import (
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"

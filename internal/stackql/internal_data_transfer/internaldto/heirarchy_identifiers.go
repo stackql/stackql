@@ -10,7 +10,7 @@ import (
 
 var (
 	_                     HeirarchyIdentifiers = &standardHeirarchyIdentifiers{}
-	pgInternalObjectRegex *regexp.Regexp       = regexp.MustCompile(`^pg_.*`) //nolint:revive // prefer declarative
+	pgInternalObjectRegex *regexp.Regexp       = regexp.MustCompile(`^pg_.*`)
 )
 
 type HeirarchyIdentifiers interface {

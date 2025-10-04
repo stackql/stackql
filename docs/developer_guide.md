@@ -77,7 +77,7 @@ go test -timeout 1200s --tags "sqlite_stackql" ./...
 **Note**: this requires the local build (above) to have been completed successfully, which builds a binary in `./build/`.
 
 ```bash
-env PYTHONPATH="$PYTHONPATH:$(pwd)/test/python" robot -d test/robot/functional test/robot/functional
+env PYTHONPATH="$PYTHONPATH:$(pwd)/test/python" robot -d test/robot/reports test/robot/functional
 ```
 
 Or better yet, if you have docker desktop and the `postgres` image cited in the docker compose files:
@@ -188,8 +188,8 @@ Local testing of the application:
 2. Build the executable [as per the root README](/README.md#build)
 3. Perform registry rewrites as needed for mocking `python3 test/python/stackql_test_tooling/registry_rewrite.py --srcdir "$(pwd)/test/registry/src" --destdir "$(pwd)/test/registry-mocked/src"`.
 3. Run robot tests:
-    - Functional tests, mocked as needed `robot -d test/robot/functional test/robot/functional`.
-    - Integration tests `robot -d test/robot/integration test/robot/integration`.  For these, you will need to set various envirnonment variables as per the github actions.
+    - Functional tests, mocked as needed `robot -d test/robot/reports test/robot/functional`.
+    - Integration tests `robot -d test/robot/reports test/robot/integration`.  For these, you will need to set various envirnonment variables as per the github actions.
 4. Run the deprecated manual python tests:
     - Prepare with `cp test/db/db.sqlite test/db/tmp/python-tests-tmp-db.sqlite`.
     - Run with `python3 test/deprecated/python/main.py`.
