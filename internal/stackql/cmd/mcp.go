@@ -24,6 +24,7 @@ import (
 	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/stackql/internal/stackql/acid/tsm_physio"
 	"github.com/stackql/stackql/internal/stackql/entryutil"
+	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/iqlerror"
 	"github.com/stackql/stackql/internal/stackql/mcpbackend"
 	"github.com/stackql/stackql/pkg/mcp_server"
@@ -52,35 +53,42 @@ var mcpSrvCmd = &cobra.Command{
 		handlerCtx, err := entryutil.BuildHandlerContext(runtimeCtx, nil, queryCache, inputBundle, false)
 		iqlerror.PrintErrorAndExitOneIfError(err)
 		iqlerror.PrintErrorAndExitOneIfNil(handlerCtx, "handler context is unexpectedly nil")
-		var config mcp_server.Config
-		json.Unmarshal([]byte(mcpConfig), &config) //nolint:errcheck // TODO: investigate
-		config.Server.Transport = mcpServerType
-		var isReadOnly bool
-		if config.Server.IsReadOnly != nil {
-			isReadOnly = *config.Server.IsReadOnly
+		if mcpServerType == "" {
+			mcpServerType = "http"
 		}
-		orchestrator, orchestratorErr := tsm_physio.NewOrchestrator(handlerCtx)
-		iqlerror.PrintErrorAndExitOneIfError(orchestratorErr)
-		iqlerror.PrintErrorAndExitOneIfNil(orchestrator, "orchestrator is unexpectedly nil")
-		// handlerCtx.SetTSMOrchestrator(orchestrator)
-		backend, backendErr := mcpbackend.NewStackqlMCPBackendService(
-			isReadOnly,
-			orchestrator,
-			handlerCtx,
-			logging.GetLogger(),
-		)
-		iqlerror.PrintErrorAndExitOneIfError(backendErr)
-		iqlerror.PrintErrorAndExitOneIfNil(backend, "mcp backend is unexpectedly nil")
-
-		server, serverErr := mcp_server.NewAgnosticBackendServer(
-			backend,
-			&config,
-			logging.GetLogger(),
-		)
-		// server, serverErr := mcp_server.NewExampleHTTPBackendServer(
-		// 	logging.GetLogger(),
-		// )
-		iqlerror.PrintErrorAndExitOneIfError(serverErr)
-		server.Start(context.Background()) //nolint:errcheck // TODO: investigate
+		runMCPServer(handlerCtx)
 	},
+}
+
+func runMCPServer(handlerCtx handler.HandlerContext) {
+	var config mcp_server.Config
+	json.Unmarshal([]byte(mcpConfig), &config) //nolint:errcheck // TODO: investigate
+	config.Server.Transport = mcpServerType
+	var isReadOnly bool
+	if config.Server.IsReadOnly != nil {
+		isReadOnly = *config.Server.IsReadOnly
+	}
+	orchestrator, orchestratorErr := tsm_physio.NewOrchestrator(handlerCtx)
+	iqlerror.PrintErrorAndExitOneIfError(orchestratorErr)
+	iqlerror.PrintErrorAndExitOneIfNil(orchestrator, "orchestrator is unexpectedly nil")
+	// handlerCtx.SetTSMOrchestrator(orchestrator)
+	backend, backendErr := mcpbackend.NewStackqlMCPBackendService(
+		isReadOnly,
+		orchestrator,
+		handlerCtx,
+		logging.GetLogger(),
+	)
+	iqlerror.PrintErrorAndExitOneIfError(backendErr)
+	iqlerror.PrintErrorAndExitOneIfNil(backend, "mcp backend is unexpectedly nil")
+
+	server, serverErr := mcp_server.NewAgnosticBackendServer(
+		backend,
+		&config,
+		logging.GetLogger(),
+	)
+	// server, serverErr := mcp_server.NewExampleHTTPBackendServer(
+	// 	logging.GetLogger(),
+	// )
+	iqlerror.PrintErrorAndExitOneIfError(serverErr)
+	server.Start(context.Background()) //nolint:errcheck // TODO: investigate
 }

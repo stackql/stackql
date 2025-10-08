@@ -199,8 +199,8 @@ func init() {
 	rootCmd.AddCommand(srvCmd)
 	rootCmd.AddCommand(mcpSrvCmd)
 
-	mcpSrvCmd.PersistentFlags().StringVar(&mcpConfig, "mcp.config", "{}", "MCP server config file path (YAML or JSON)")
-	mcpSrvCmd.PersistentFlags().StringVar(&mcpServerType, "mcp.server.type", "http", "MCP server type (http or stdio for now)")
+	rootCmd.PersistentFlags().StringVar(&mcpConfig, "mcp.config", "{}", "MCP server config file path (YAML or JSON)")
+	rootCmd.PersistentFlags().StringVar(&mcpServerType, "mcp.server.type", "", "MCP server type (http or stdio for now)")
 }
 
 func mergeConfigFromFile(runtimeCtx *dto.RuntimeCtx, flagSet pflag.FlagSet) {

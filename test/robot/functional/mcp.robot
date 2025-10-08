@@ -3,7 +3,7 @@ Resource          ${CURDIR}${/}stackql.resource
 
 
 *** Keywords ***
-Start MCP HTTP Server
+Start MCP Servers
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
     Start Process                         ${STACKQL_EXE}
     ...                                   mcp
@@ -15,10 +15,22 @@ Start MCP HTTP Server
     ...                                   \-\-auth
     ...                                   ${AUTH_CFG_STR}
     ...                                   \-\-tls.allowInsecure
+    Start Process                         ${STACKQL_EXE}
+    ...                                   srv
+    ...                                   \-\-mcp.server.type\=http
+    ...                                   \-\-mcp.config
+    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9913"} }
+    ...                                   \-\-registry
+    ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
+    ...                                   \-\-auth
+    ...                                   ${AUTH_CFG_STR}
+    ...                                   \-\-tls.allowInsecure
+    ...                                   \-\-pgsrv.port
+    ...                                   5665
     Sleep         5s
 
 *** Settings ***
-Suite Setup     Start MCP HTTP Server
+Suite Setup     Start MCP Servers
 
 
 *** Test Cases *** 
@@ -120,3 +132,30 @@ MCP HTTP Server Query Tool
     Should Contain       ${result.stdout}       cloudkms.googleapis.com
     Should Be Equal As Integers    ${result.rc}    0
 
+
+Concurrent psql and MCP HTTP Server Query Tool
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${mcp_client_result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http 
+    ...                  \-\-url\=http://127.0.0.1:9913
+    ...                  \-\-exec.action      query_v2
+    ...                  \-\-exec.args        {"sql": "SELECT assetType, count(*) as asset_count FROM google.cloudasset.assets WHERE parentType \= 'projects' and parent \= 'testing-project' GROUP BY assetType order by count(*) desc, assetType desc;"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Query-Tool.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Query-Tool-stderr.txt
+    Should Contain       ${mcp_client_result.stdout}       cloudkms.googleapis.com
+    Should Be Equal As Integers    ${mcp_client_result.rc}    0
+    ${posixInput} =     Catenate
+    ...    "${PSQL_EXE}"    -d     postgres://stackql:stackql@127.0.0.1:5665   -c
+    ...    "SELECT assetType, count(*) as asset_count FROM google.cloudasset.assets WHERE parentType = 'projects' and parent = 'testing-project' GROUP BY assetType order by count(*) desc, assetType desc;"
+    ${windowsInput} =     Catenate
+    ...    &    ${posixInput}
+    ${input} =    Set Variable If    "${IS_WINDOWS}" == "1"    ${windowsInput}    ${posixInput}
+    ${shellExe} =    Set Variable If    "${IS_WINDOWS}" == "1"    powershell    sh
+    ${psql_client_result}=    Run Process
+    ...                  ${shellExe}     \-c    ${input}
+    ...                  stdout=${CURDIR}${/}tmp${/}Concurrent-psql-and-MCP-HTTP-Server-Query-Tool.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}Concurrent-psql-and-MCP-HTTP-Server-Query-Tool-stderr.txt
+    Should Contain       ${psql_client_result.stdout}       cloudkms.googleapis.com
+    Should Be Equal As Integers    ${psql_client_result.rc}    0

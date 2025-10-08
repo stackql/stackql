@@ -48,6 +48,9 @@ var srvCmd = &cobra.Command{
 		sbe := driver.NewStackQLDriverFactory(handlerCtx, runtimeCtx.PGSrvIsDebugNoticesEnabled)
 		server, err := psqlwire.MakeWireServer(sbe, runtimeCtx)
 		iqlerror.PrintErrorAndExitOneIfError(err)
+		if mcpServerType != "" {
+			go runMCPServer(handlerCtx.Clone()) //nolint:errcheck // TODO: investigate
+		}
 		server.Serve() //nolint:errcheck // TODO: investigate
 	},
 }
