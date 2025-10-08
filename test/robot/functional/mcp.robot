@@ -146,10 +146,15 @@ Concurrent psql and MCP HTTP Server Query Tool
     ...                  stderr=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Query-Tool-stderr.txt
     Should Contain       ${mcp_client_result.stdout}       cloudkms.googleapis.com
     Should Be Equal As Integers    ${mcp_client_result.rc}    0
-    ${psql_client_result}=    Run Process          ${PSQL_EXE}
-    ...                  postgres:\/\/stackql:stackql@127.0.0.1:5665
-    ...                  \-c
-    ...                  SELECT assetType, count(*) as asset_count FROM google.cloudasset.assets WHERE parentType \= 'projects' and parent \= 'testing-project' GROUP BY assetType order by count(*) desc, assetType desc;
+    ${posixInput} =     Catenate
+    ...    "${PSQL_EXE}"    -d     postgres://stackql:stackql@127.0.0.1:5665   -c
+    ...    "SELECT assetType, count(*) as asset_count FROM google.cloudasset.assets WHERE parentType = 'projects' and parent = 'testing-project' GROUP BY assetType order by count(*) desc, assetType desc;"
+    ${windowsInput} =     Catenate
+    ...    &    ${posixInput}
+    ${input} =    Set Variable If    "${IS_WINDOWS}" == "1"    ${windowsInput}    ${posixInput}
+    ${shellExe} =    Set Variable If    "${IS_WINDOWS}" == "1"    powershell    sh
+    ${psql_client_result}=    Run Process
+    ...                  ${shellExe}     \-c    ${input}
     ...                  stdout=${CURDIR}${/}tmp${/}Concurrent-psql-and-MCP-HTTP-Server-Query-Tool.txt
     ...                  stderr=${CURDIR}${/}tmp${/}Concurrent-psql-and-MCP-HTTP-Server-Query-Tool-stderr.txt
     Should Contain       ${psql_client_result.stdout}       cloudkms.googleapis.com
