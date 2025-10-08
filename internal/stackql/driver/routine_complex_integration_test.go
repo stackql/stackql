@@ -18,7 +18,7 @@ import (
 	lrucache "github.com/stackql/stackql-parser/go/cache"
 )
 
-//nolint:govet,lll,errcheck // legacy test
+//nolint:govet,lll // legacy test
 func TestUnionAllSelectComputeDisksOrderByCrtTmstpAscPlusCoalesceJsonExtract(t *testing.T) {
 	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "csv", "TestUnionAllSelectComputeDisksOrderByCrtTmstpAscPlusCoalesceJsonExtract")
 	if err != nil {

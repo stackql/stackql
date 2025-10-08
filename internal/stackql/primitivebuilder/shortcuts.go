@@ -329,6 +329,7 @@ func convertProviderServicesToMap(
 	return retVal
 }
 
+//nolint:errcheck // future proofing
 func filterServices(
 	services map[string]anysdk.ProviderService,
 	tableFilter func(anysdk.ITable) (anysdk.ITable, error),

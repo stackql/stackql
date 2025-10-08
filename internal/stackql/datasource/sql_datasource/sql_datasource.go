@@ -1,4 +1,4 @@
-package sql_datasource //nolint:revive,stylecheck // package name is helpful
+package sql_datasource //nolint:stylecheck,revive // package name is helpful
 
 import (
 	"database/sql"

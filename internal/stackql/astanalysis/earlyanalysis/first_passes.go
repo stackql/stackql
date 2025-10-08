@@ -28,7 +28,6 @@ const (
 )
 
 var (
-	//nolint:revive // prefer declarative
 	errPgOnly error = fmt.Errorf("cannot accomodate PG-only statement when backend is not matched to PG")
 )
 

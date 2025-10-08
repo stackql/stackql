@@ -1,0 +1,69 @@
+{
+  "inputs": [
+    {
+      "type": "pickString",
+      "id": "pg_url",
+      "description": "PostgreSQL URL (e.g. postgresql://user:pass@host.docker.internal:5432/mydb)",
+      "options": [
+        "postgresql://stackql:stackql@host.docker.internal:7432/stackql"
+      ],
+      "default": "postgresql://stackql:stackql@host.docker.internal:7432/stackql"
+    },
+    {
+      "type": "pickString",
+      "id": "registryString",
+      "description": "Registry Configuration",
+      "options": [
+        "{ \"url\": \"file://${workspaceFolder}/test/registry-sandbox\", \"localDocRoot\": \"${workspaceFolder}/test/registry-sandbox\", \"verifyConfig\": { \"nopVerify\": true } }",
+        "{ \"url\": \"file://${workspaceFolder}/test/registry\", \"localDocRoot\": \"${workspaceFolder}/test/registry\", \"verifyConfig\": { \"nopVerify\": true } }",
+        "{ \"url\": \"file://${workspaceFolder}/test/registry-mocked\", \"localDocRoot\": \"${workspaceFolder}/test/registry-mocked\", \"verifyConfig\": { \"nopVerify\": true } }",
+        "{ \"url\": \"file://${workspaceFolder}/test/registry-mocked-native\", \"localDocRoot\": \"${workspaceFolder}/test/registry-mocked-native\", \"verifyConfig\": { \"nopVerify\": true } }",
+        "{ \"url\": \"file://${workspaceFolder}/test/registry-advanced\", \"localDocRoot\": \"${workspaceFolder}/test/registry-advanced\", \"verifyConfig\": { \"nopVerify\": true } }",
+        "{ \"url\": \"file://${workspaceFolder}/build/.stackql\", \"localDocRoot\": \"${workspaceFolder}/build/.stackql\", \"verifyConfig\": { \"nopVerify\": true } }",
+        "{ \"url\": \"file://${workspaceFolder}/docs/examples/empty-registry\", \"localDocRoot\": \"${workspaceFolder}/docs/examples/empty-registry\" }",
+        "{ \"url\": \"https://cdn.statically.io/gh/stackql/stackql-provider-registry/main/providers\", \"localDocRoot\": \"${workspaceFolder}/test/registry\" }",
+        "{ \"url\": \"https://cdn.statically.io/gh/stackql/stackql-provider-registry/dev/providers\" }",
+        "{ \"url\": \"https://registry-dev.stackql.app/providers\" }",
+        "{ \"url\": \"https://registry.stackql.app/providers\" }",
+        "{\"url\": \"http://localhost:1094/gh/stackql/stackql-provider-registry/main/providers\", \"verifyConfig\": {\"nopVerify\": true}}",
+      ],
+      "default": "{ \"url\": \"file://${workspaceFolder}/test/registry\", \"localDocRoot\": \"${workspaceFolder}/test/registry\", \"verifyConfig\": { \"nopVerify\": true } }"
+    },
+    {
+      "type": "pickString",
+      "id": "authString",
+      "description": "Auth Input arg String",
+      "default": "{}",
+      "options": [
+        "{ \"local_openssl\": { \"type\": \"null_auth\"}, \"azure\": { \"type\": \"azure_default\" }, \"digitalocean\": { \"type\": \"bearer\", \"credentialsfilepath\": \"${workspaceFolder}/cicd/keys/integration/digitalocean-key.txt\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/cicd/keys/integration/stackql-security-reviewer.json\" },  \"googleadmin\": { \"credentialsfilepath\": \"${workspaceFolder}/cicd/keys/integration/ryuk-it-query.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/cicd/keys/okta-token.txt\", \"type\": \"api_key\", \"valuePrefix\": \"SSWS \" }, \"github\": { \"credentialsenvvar\": \"STACKQL_GITHUB_TOKEN\", \"type\": \"api_key\", \"valuePrefix\": \"Bearer \" }, \"aws\": { \"type\": \"aws_signing_v4\", \"credentialsfilepath\": \"${workspaceFolder}/cicd/keys/integration/aws-secret-key.txt\", \"keyID\": \"AKIA376P4FQSS2ONB2NS\" }, \"netlify\": { \"type\": \"api_key\", \"valuePrefix\": \"Bearer \", \"credentialsfilepath\": \"${workspaceFolder}/cicd/keys/netlify-token.txt\"  }, \"k8s\": { \"credentialsfilepath\": \"${workspaceFolder}/cicd/keys/integration/k8s-token.txt\", \"type\": \"api_key\", \"valuePrefix\": \"Bearer \" }, \"sumologic\": { \"credentialsfilepath\": \"${workspaceFolder}/cicd/keys/integration/sumologic-token.txt\", \"type\": \"basic\" } }",
+        "{ \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/test/assets/credentials/dummy/google/functional-test-dummy-sa-key.json\" }, \"googleadmin\": { \"credentialsfilepath\": \"${workspaceFolder}/test/assets/credentials/dummy/google/functional-test-dummy-sa-key.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/test/assets/credentials/dummy/okta/api-key.txt\", \"type\": \"api_key\", \"valuePrefix\": \"SSWS \" }, \"github\": { \"credentialsenvvar\": \"STACKQL_GITHUB_TOKEN\", \"type\": \"api_key\", \"valuePrefix\": \"Bearer \" }, \"aws\": { \"type\": \"aws_signing_v4\", \"credentialsfilepath\": \"${workspaceFolder}/test/assets/credentials/dummy/aws/functional-test-dummy-aws-key.txt\", \"keyID\": \"AKIA376P4FQSS2ONB2NS\" }, \"netlify\": { \"type\": \"api_key\", \"valuePrefix\": \"Bearer \", \"credentialsfilepath\": \"${workspaceFolder}/test/assets/credentials/dummy/netlify/netlify-token.txt\"  }, \"k8s\": { \"credentialsfilepath\": \"${workspaceFolder}/test/assets/credentials/dummy/k8s/k8s-token.txt\", \"type\": \"api_key\", \"valuePrefix\": \"Bearer \" }, \"sumologic\": { \"credentialsfilepath\": \"${workspaceFolder}/test/assets/credentials/dummy/sumologic/sumologic-token.txt\", \"type\": \"basic\" } }",
+        "{ \"pgi\": { \"type\": \"sql_data_source::postgres\", \"sqlDataSource\": { \"dsn\": \"postgres://stackql:stackql@127.0.0.1:8432\" } }, \"azure\": { \"type\": \"azure_default\" }, \"google\": { \"credentialsfilepath\": \"${workspaceFolder}/cicd/keys/integration/stackql-security-reviewer.json\" }, \"okta\": { \"credentialsfilepath\": \"${workspaceFolder}/cicd/keys/okta-token.txt\", \"type\": \"api_key\", \"valuePrefix\": \"SSWS \" }, \"github\": { \"credentialsenvvar\": \"STACKQL_GITHUB_TOKEN\", \"type\": \"api_key\", \"valuePrefix\": \"Bearer \" }, \"aws\": { \"type\": \"aws_signing_v4\", \"credentialsfilepath\": \"${workspaceFolder}/cicd/keys/integration/aws-secret-key.txt\", \"keyID\": \"AKIA376P4FQSS2ONB2NS\" }, \"netlify\": { \"type\": \"api_key\", \"valuePrefix\": \"Bearer \", \"credentialsfilepath\": \"${workspaceFolder}/cicd/keys/netlify-token.txt\"  }, \"k8s\": { \"credentialsfilepath\": \"${workspaceFolder}/cicd/keys/integration/k8s-token.txt\", \"type\": \"api_key\", \"valuePrefix\": \"Bearer \" }, \"sumologic\": { \"credentialsfilepath\": \"${workspaceFolder}/cicd/keys/integration/sumologic-token.txt\", \"type\": \"basic\" } }",
+        "{ \"digitalocean\": { \"username_var\": \"DUMMY_DIGITALOCEAN_USERNAME\", \"password_var\": \"DUMMY_DIGITALOCEAN_PASSWORD\", \"type\": \"bearer\" }, \"azure\": {\"type\": \"api_key\", \"valuePrefix\": \"Bearer \", \"credentialsenvvar\": \"AZ_ACCESS_TOKEN\"} }",
+        "{}"
+      ]
+    },
+  ],
+  "servers": {
+    "postgres": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "mcp/postgres",
+        "postgresql://stackql:stackql@host.docker.internal:8432/stackql"
+      ]
+    },
+    "stackqlLocal": {
+      "type": "stdio",
+      "command": "${workspaceFolder}/build/stackql",
+      "args": [
+        "mcp",
+        "--tls.allowInsecure",
+        "--mcp.server.type=stdio",
+        "--auth=${input:authString}",
+        "--registry=${input:registryString}"
+      ]
+    }
+  }
+}

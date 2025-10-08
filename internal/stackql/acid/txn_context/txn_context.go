@@ -1,4 +1,4 @@
-package txn_context //nolint:revive,stylecheck // meaning of package name is clear
+package txn_context //nolint:stylecheck,revive // meaning of package name is clear
 
 var (
 	_ ITransactionContext = &transactionContext{}

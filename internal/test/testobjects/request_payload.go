@@ -64,7 +64,7 @@ const (
 	`
 )
 
-//nolint:revive,gochecknoglobals // This is a test file
+//nolint:gochecknoglobals // This is a test file
 var (
 	CreateGoogleBQDatasetRequestPayload01 string = fmt.Sprintf(`
 	{

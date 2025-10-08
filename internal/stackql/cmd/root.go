@@ -1,5 +1,5 @@
 /*
-Copyright © 2019 stackql info@stackql.io
+Copyright © 2025 stackql info@stackql.io
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -197,6 +197,10 @@ func init() {
 	rootCmd.AddCommand(shellCmd)
 	rootCmd.AddCommand(registryCmd)
 	rootCmd.AddCommand(srvCmd)
+	rootCmd.AddCommand(mcpSrvCmd)
+
+	mcpSrvCmd.PersistentFlags().StringVar(&mcpConfig, "mcp.config", "{}", "MCP server config file path (YAML or JSON)")
+	mcpSrvCmd.PersistentFlags().StringVar(&mcpServerType, "mcp.server.type", "http", "MCP server type (http or stdio for now)")
 }
 
 func mergeConfigFromFile(runtimeCtx *dto.RuntimeCtx, flagSet pflag.FlagSet) {

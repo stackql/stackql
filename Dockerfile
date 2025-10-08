@@ -1,4 +1,4 @@
-FROM golang:1.22-bullseye AS sourceprep
+FROM golang:1.23-bullseye AS sourceprep
 
 ENV SRC_DIR=/work/stackql/src
 
@@ -11,6 +11,8 @@ ADD internal  ${SRC_DIR}/internal
 ADD pkg ${SRC_DIR}/pkg
 
 ADD stackql ${SRC_DIR}/stackql
+
+ADD mcp_client ${SRC_DIR}/mcp_client
 
 ADD test ${SRC_DIR}/test
 
@@ -55,6 +57,10 @@ RUN   cd ${SRC_DIR} \
           -X github.com/stackql/stackql/internal/stackql/cmd.BuildPlatform=$BUILDPLATFORM" \
         --tags "sqlite_stackql" \
         -o ${BUILD_DIR}/stackql ./stackql
+
+RUN   cd ${SRC_DIR} \
+      && go build \
+        -o ${BUILD_DIR}/stackql_mcp_client ./mcp_client/cmd
 
 FROM python:3.11-bullseye AS utility
 
@@ -135,6 +141,8 @@ COPY --from=registrymock /opt/test/stackql ${TEST_ROOT_DIR}/
 
 COPY --from=builder /work/stackql/build/stackql ${TEST_ROOT_DIR}/build/
 
+COPY --from=builder /work/stackql/build/stackql_mcp_client ${TEST_ROOT_DIR}/build/
+
 RUN  if [ "${RUN_INTEGRATION_TESTS}" = "1" ]; then env PYTHONPATH="$PYTHONPATH:${TEST_ROOT_DIR}/test/python" robot ${TEST_ROOT_DIR}/test/robot/functional; fi
 
 FROM ubuntu:22.04 AS app
@@ -160,6 +168,8 @@ RUN mkdir -p ${APP_DIR} ${STACKQL_CFG_ROOT}/keys ${STACKQL_CFG_ROOT}/srv/credent
 ENV PATH="${APP_DIR}:${PATH}"
 
 COPY --from=integration ${TEST_ROOT_DIR}/build/stackql ${APP_DIR}/
+
+COPY --from=integration ${TEST_ROOT_DIR}/build/stackql_mcp_client ${APP_DIR}/
 
 RUN apt-get update \
     && apt-get install -y ca-certificates openssl netcat-traditional jq dnsutils \

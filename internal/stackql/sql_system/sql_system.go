@@ -1,4 +1,4 @@
-package sql_system //nolint:revive,stylecheck // package name is meaningful and readable
+package sql_system //nolint:stylecheck,revive // package name is meaningful and readable
 
 import (
 	"database/sql"

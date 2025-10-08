@@ -1,4 +1,4 @@
-package output_data_staging //nolint:revive,stylecheck // package name is helpful
+package output_data_staging //nolint:stylecheck,revive // package name is helpful
 
 import (
 	"fmt"
