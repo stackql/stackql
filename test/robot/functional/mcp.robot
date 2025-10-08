@@ -139,7 +139,7 @@ Concurrent psql and MCP HTTP Server Query Tool
     ${mcp_client_result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
     ...                  exec
     ...                  \-\-client\-type\=http 
-    ...                  \-\-url\=http://127.0.0.1:9912
+    ...                  \-\-url\=http://127.0.0.1:9913
     ...                  \-\-exec.action      query_v2
     ...                  \-\-exec.args        {"sql": "SELECT assetType, count(*) as asset_count FROM google.cloudasset.assets WHERE parentType \= 'projects' and parent \= 'testing-project' GROUP BY assetType order by count(*) desc, assetType desc;"}
     ...                  stdout=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Query-Tool.txt
