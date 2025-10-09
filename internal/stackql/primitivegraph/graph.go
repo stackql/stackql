@@ -37,7 +37,3 @@ type PrimitiveGraph interface {
 	CreatePrimitiveNode(pr primitive.IPrimitive) PrimitiveNode
 	NewDependency(from PrimitiveNode, to PrimitiveNode, weight float64)
 }
-
-func SortPlan(pg PrimitiveGraph) ([]graph.Node, error) {
-	return pg.Sort()
-}

@@ -21,6 +21,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/stackql/any-sdk/pkg/db/db_util"
+	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/stackql/internal/stackql/acid/tsm_physio"
 	"github.com/stackql/stackql/internal/stackql/entryutil"
@@ -28,6 +30,8 @@ import (
 	"github.com/stackql/stackql/internal/stackql/iqlerror"
 	"github.com/stackql/stackql/internal/stackql/mcpbackend"
 	"github.com/stackql/stackql/pkg/mcp_server"
+
+	_ "github.com/jackc/pgx/v5" //nolint:revive // canonical driver pattern
 )
 
 //nolint:gochecknoglobals // cobra pattern
@@ -68,27 +72,45 @@ func runMCPServer(handlerCtx handler.HandlerContext) {
 	if config.Server.IsReadOnly != nil {
 		isReadOnly = *config.Server.IsReadOnly
 	}
-	orchestrator, orchestratorErr := tsm_physio.NewOrchestrator(handlerCtx)
-	iqlerror.PrintErrorAndExitOneIfError(orchestratorErr)
-	iqlerror.PrintErrorAndExitOneIfNil(orchestrator, "orchestrator is unexpectedly nil")
-	// handlerCtx.SetTSMOrchestrator(orchestrator)
-	backend, backendErr := mcpbackend.NewStackqlMCPBackendService(
-		isReadOnly,
-		orchestrator,
-		handlerCtx,
-		logging.GetLogger(),
-	)
-	iqlerror.PrintErrorAndExitOneIfError(backendErr)
-	iqlerror.PrintErrorAndExitOneIfNil(backend, "mcp backend is unexpectedly nil")
-
+	var backend mcp_server.Backend
+	var backendErr error
+	if mcpServerType == "reverse_proxy" {
+		config.Server.Transport = "http"
+		dsn := config.GetBackendConnectionString()
+		// conn
+		var cfg dto.SQLBackendCfg
+		cfg.DSN = dsn
+		cfg.InitMaxRetries = 5
+		cfg.InitRetryInitialDelay = 2
+		db, err := db_util.GetDB("pgx", "postgres", cfg)
+		iqlerror.PrintErrorAndExitOneIfError(err)
+		backend, backendErr = mcpbackend.NewStackqlMCPReverseProxyService(
+			isReadOnly,
+			dsn,
+			db,
+			handlerCtx,
+			logging.GetLogger(),
+		)
+		iqlerror.PrintErrorAndExitOneIfError(backendErr)
+	} else {
+		orchestrator, orchestratorErr := tsm_physio.NewOrchestrator(handlerCtx)
+		iqlerror.PrintErrorAndExitOneIfError(orchestratorErr)
+		iqlerror.PrintErrorAndExitOneIfNil(orchestrator, "orchestrator is unexpectedly nil")
+		// handlerCtx.SetTSMOrchestrator(orchestrator)
+		backend, backendErr = mcpbackend.NewStackqlMCPBackendService(
+			isReadOnly,
+			orchestrator,
+			handlerCtx,
+			logging.GetLogger(),
+		)
+		iqlerror.PrintErrorAndExitOneIfError(backendErr)
+		iqlerror.PrintErrorAndExitOneIfNil(backend, "mcp backend is unexpectedly nil")
+	}
 	server, serverErr := mcp_server.NewAgnosticBackendServer(
 		backend,
 		&config,
 		logging.GetLogger(),
 	)
-	// server, serverErr := mcp_server.NewExampleHTTPBackendServer(
-	// 	logging.GetLogger(),
-	// )
 	iqlerror.PrintErrorAndExitOneIfError(serverErr)
 	server.Start(context.Background()) //nolint:errcheck // TODO: investigate
 }

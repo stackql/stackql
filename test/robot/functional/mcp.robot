@@ -27,6 +27,18 @@ Start MCP Servers
     ...                                   \-\-tls.allowInsecure
     ...                                   \-\-pgsrv.port
     ...                                   5665
+    Start Process                         ${STACKQL_EXE}
+    ...                                   srv
+    ...                                   \-\-mcp.server.type\=reverse_proxy
+    ...                                   \-\-mcp.config
+    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9914"}, "backend": {"dsn": "postgres:\/\/stackql:stackql@127.0.0.1:5445?default_query_exec_mode\=simple_protocol"} }
+    ...                                   \-\-registry
+    ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
+    ...                                   \-\-auth
+    ...                                   ${AUTH_CFG_STR}
+    ...                                   \-\-tls.allowInsecure
+    ...                                   \-\-pgsrv.port
+    ...                                   5445
     Sleep         5s
 
 *** Settings ***
@@ -142,8 +154,8 @@ Concurrent psql and MCP HTTP Server Query Tool
     ...                  \-\-url\=http://127.0.0.1:9913
     ...                  \-\-exec.action      query_v2
     ...                  \-\-exec.args        {"sql": "SELECT assetType, count(*) as asset_count FROM google.cloudasset.assets WHERE parentType \= 'projects' and parent \= 'testing-project' GROUP BY assetType order by count(*) desc, assetType desc;"}
-    ...                  stdout=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Query-Tool.txt
-    ...                  stderr=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Query-Tool-stderr.txt
+    ...                  stdout=${CURDIR}${/}tmp${/}Concurrent-psql-and-MCP-HTTP-Server-Query-Tool.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}Concurrent-psql-and-MCP-HTTP-Server-Query-Tool-stderr.txt
     Should Contain       ${mcp_client_result.stdout}       cloudkms.googleapis.com
     Should Be Equal As Integers    ${mcp_client_result.rc}    0
     ${posixInput} =     Catenate
@@ -155,7 +167,34 @@ Concurrent psql and MCP HTTP Server Query Tool
     ${shellExe} =    Set Variable If    "${IS_WINDOWS}" == "1"    powershell    sh
     ${psql_client_result}=    Run Process
     ...                  ${shellExe}     \-c    ${input}
-    ...                  stdout=${CURDIR}${/}tmp${/}Concurrent-psql-and-MCP-HTTP-Server-Query-Tool.txt
-    ...                  stderr=${CURDIR}${/}tmp${/}Concurrent-psql-and-MCP-HTTP-Server-Query-Tool-stderr.txt
+    ...                  stdout=${CURDIR}${/}tmp${/}Concurrent-psql-and-MCP-HTTP-Server-Query-Tool-psql.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}Concurrent-psql-and-MCP-HTTP-Server-Query-Tool-psql-stderr.txt
+    Should Contain       ${psql_client_result.stdout}       cloudkms.googleapis.com
+    Should Be Equal As Integers    ${psql_client_result.rc}    0
+
+Concurrent psql and Reverse Proxy MCP HTTP Server Query Tool
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${mcp_client_result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http 
+    ...                  \-\-url\=http://127.0.0.1:9914
+    ...                  \-\-exec.action      query_v2
+    ...                  \-\-exec.args        {"sql": "SELECT assetType, count(*) as asset_count FROM google.cloudasset.assets WHERE parentType \= 'projects' and parent \= 'testing-project' GROUP BY assetType order by count(*) desc, assetType desc;"}
+    ...                  stdout=${CURDIR}${/}tmp${/}Concurrent-psql-and-Reverse-Proxy-MCP-HTTP-Server-Query-Tool.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}Concurrent-psql-and-Reverse-Proxy-MCP-HTTP-Server-Query-Tool-stderr.txt
+    Should Contain       ${mcp_client_result.stdout}       cloudkms.googleapis.com
+    Should Be Equal As Integers    ${mcp_client_result.rc}    0
+    ${posixInput} =     Catenate
+    ...    "${PSQL_EXE}"    -d     postgres://stackql:stackql@127.0.0.1:5445   -c
+    ...    "SELECT assetType, count(*) as asset_count FROM google.cloudasset.assets WHERE parentType = 'projects' and parent = 'testing-project' GROUP BY assetType order by count(*) desc, assetType desc;"
+    ${windowsInput} =     Catenate
+    ...    &    ${posixInput}
+    ${input} =    Set Variable If    "${IS_WINDOWS}" == "1"    ${windowsInput}    ${posixInput}
+    ${shellExe} =    Set Variable If    "${IS_WINDOWS}" == "1"    powershell    sh
+    ${psql_client_result}=    Run Process
+    ...                  ${shellExe}     \-c    ${input}
+    ...                  stdout=${CURDIR}${/}tmp${/}Concurrent-psql-and-Reverse-Proxy-MCP-HTTP-Server-Query-Tool-psql.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}Concurrent-psql-and-Reverse-Proxy-MCP-HTTP-Server-Query-Tool-psql-stderr.txt
     Should Contain       ${psql_client_result.stdout}       cloudkms.googleapis.com
     Should Be Equal As Integers    ${psql_client_result.rc}    0

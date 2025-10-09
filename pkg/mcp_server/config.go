@@ -31,6 +31,17 @@ func (c *Config) GetServerAddress() string {
 	return c.Server.Address
 }
 
+func (c *Config) IsTcpBackend() bool {
+	return c.Backend.Type == "tcp"
+}
+
+func (c *Config) GetBackendConnectionString() string {
+	if c.Backend.ConnectionString == "" {
+		return DefaultConfig().Backend.ConnectionString
+	}
+	return c.Backend.ConnectionString
+}
+
 // ServerConfig contains configuration for the MCP server itself.
 type ServerConfig struct {
 	// Name is the server name advertised to clients.
@@ -48,6 +59,8 @@ type ServerConfig struct {
 	// Version is the server version advertised to clients.
 	Version string `json:"version" yaml:"version"`
 
+	ConnectionCfg map[string]any `json:"connection_cfg,omitempty" yaml:"connection_cfg,omitempty"`
+
 	// Description is a human-readable description of the server.
 	Description string `json:"description" yaml:"description"`
 
@@ -62,12 +75,17 @@ type ServerConfig struct {
 
 // BackendConfig contains configuration for the backend connection.
 type BackendConfig struct {
-	// Type specifies the backend type ("stackql", "tcp", "memory").
+	// Type specifies the backend type ("tcp", "memory").
 	Type string `json:"type" yaml:"type"`
+
+	// AppName is an optional application name describing the backend.
+	// In the first instance, this is stackql.
+	// **Possible** future use case for the backing db (e.g., "postgres", "mysql", etc).
+	AppName string `json:"app_name" yaml:"app_name"`
 
 	// ConnectionString contains the connection details for the backend.
 	// Format depends on the backend type.
-	ConnectionString string `json:"connection_string" yaml:"connection_string"`
+	ConnectionString string `json:"dsn" yaml:"dsn"`
 
 	// MaxConnections limits the number of backend connections.
 	MaxConnections int `json:"max_connections" yaml:"max_connections"`
