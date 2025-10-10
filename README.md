@@ -91,7 +91,7 @@
 
 ## About The Project
 
-[__StackQL__][homepage] is an open-source project built with Golang that allows you to create, modify and query the state of services and resources across different cloud and SaaS providers (Google, AWS, Azure, Okta, GitHub, etc.) using SQL semantics
+[__StackQL__][homepage] is an open-source project built with Golang that allows you to create, modify and query the state of services and resources across different local and remote interfaces, using SQL semantics.  Such interfaces canonically include, but are not limited to, cloud and SaaS providers (Google, AWS, Azure, Okta, GitHub, etc.).
 <br />
 <br />
 
@@ -102,9 +102,9 @@
 
 StackQL is a standalone application that can be used in client mode (via __`exec`__ or __`shell`__) or accessed via a Postgres wire protocol client (`psycopg2`, etc.) using server mode (__`srv`__).  
 
-StackQL parses SQL statements and transpiles them into API requests to the cloud provider.  The API calls are then executed and the results are returned to the user.  
+StackQL parses SQL statements and transpiles them into API requests to the (cloud) resource provider.  The API calls are then executed and the results are returned to the user.  
 
-StackQL provider definitions are defined in OpenAPI extensions to the providers specification.  These definitions are then used to generate the SQL schema and the API client.  The source for the provider definitions are stored in the [__StackQL Registry__][registry].  
+StackQL provider interfaces are canonically defined in OpenAPI extensions to the providers' specification.  These definitions are then used to generate the SQL schema and the API client.  The source for the provider definitions are stored in the [__StackQL Registry__][registry].  The semantics of provider interactions are defined in [our `any-sdk` library](https://github.com/stackql/any-sdk).  For more detail on nuts and bolts, please see [the local `AGENTS.md` file](/AGENTS.md) and [that of `any-sdk`](https://github.com/stackql/any-sdk/blob/main/AGENTS.md).
 
 <details>
 <summary><b>StackQL Context Diagram</b></summary>

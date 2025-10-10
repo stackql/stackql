@@ -1,8 +1,8 @@
 # Repository Guidelines
 
-These guidelines help contributors work effectively on this repository.  We gratefully acknowledge [mcp-postgres](https://github.com/gldc/mcp-postgres) as the chief inspiration for the MCP server function and this document.
+These guidelines help contributors, human and otherwise, understand and work effectively on this repository.
 
-We also encourage reading [`docs/developer_guide.md`](/docs/developer_guide.md) for further useful information.
+We also encourage reading [`docs/developer_guide.md`](/docs/developer_guide.md) for further useful information.  For deeper understanding of the "brains" of `stackql`, it is worthwhile to consult [the `AGENTS.md` file of `any-sdk`](https://github.com/stackql/any-sdk/blob/main/AGENTS.md) and linked documents from there.
 
 
 ## Project Structure & Module Organization
@@ -18,11 +18,7 @@ We also encourage reading [`docs/developer_guide.md`](/docs/developer_guide.md) 
 
 ## Build, Test, and Development Commands
 
-- Create env: `python -m venv .venv && source .venv/bin/activate`
-- Install deps: `pip install -r requirements.txt`
-- Run server (no DB): `python postgres_server.py`
-- Run with DB: `POSTGRES_CONNECTION_STRING="postgresql://user:pass@host:5432/db" python postgres_server.py`
-- Docker build/run: `docker build -t mcp-postgres .` then `docker run -e POSTGRES_CONNECTION_STRING=... -p 8000:8000 mcp-postgres`
+Please refer to [the developer guide](/docs/developer_guide.md), [the testing summary document](/test/README.md), [the robot testing document](/test/robot/README.md), and possibly most useful of all, [the doco explaining testing with mocks](/test/python/stackql_test_tooling/flask/README.md).  For CI in the wild, please see [`.github/workflows/build.yml`](/.github/workflows/build.yml).
 
 ## Coding Style & Naming Conventions
 
@@ -30,7 +26,7 @@ We also encourage reading [`docs/developer_guide.md`](/docs/developer_guide.md) 
 
 ## Testing Guidelines
 
-- Black box regression tests are effectively mandatory.  The canaonical ones reside in [`test/robot/functional`](/test/robot/functional).
+- Black box regression tests are effectively mandatory.  The canaonical ones reside in [`test/robot`](/test/robot/README.md).
 
 ## Tools & Resources
 
