@@ -25,6 +25,31 @@ const (
 	unlimitedRowLimit     int = -1
 )
 
+type resultsRenderer interface {
+	RenderAsMarkdown(results []map[string]interface{}) string
+}
+
+func NewResultsRenderer() resultsRenderer {
+	return &simpleRenderer{}
+}
+
+type simpleRenderer struct{}
+
+func (r *simpleRenderer) RenderAsMarkdown(results []map[string]interface{}) string {
+	if len(results) == 0 {
+		return "**no results**"
+	}
+	var sb strings.Builder
+	headerRow := presentation.NewMarkdownRowFromMap(results[0])
+	sb.WriteString(headerRow.HeaderString() + "\n")
+	sb.WriteString(headerRow.SeparatorString() + "\n")
+	for _, row := range results[1:] {
+		markdownRow := presentation.NewMarkdownRowFromMap(row)
+		sb.WriteString(markdownRow.RowString() + "\n")
+	}
+	return sb.String()
+}
+
 type StackqlInterrogator interface {
 	// This struct is responsible for interrogating the StackQL engine.
 	// Each method provides the requisite query string.
@@ -207,6 +232,7 @@ type stackqlMCPService struct {
 	interrogator    StackqlInterrogator
 	handlerCtx      handler.HandlerContext
 	logger          *logrus.Logger
+	renderer        resultsRenderer
 }
 
 func NewStackqlMCPBackendService(
@@ -231,6 +257,7 @@ func NewStackqlMCPBackendService(
 		interrogator:    NewSimpleStackqlInterrogator(),
 		logger:          logger,
 		handlerCtx:      handlerCtx,
+		renderer:        NewResultsRenderer(),
 	}, nil
 }
 
@@ -388,18 +415,7 @@ func (b *stackqlMCPService) extractQueryResults(query string, rowLimit int) ([]m
 }
 
 func (b *stackqlMCPService) renderQueryResultsAsMarkdown(results []map[string]interface{}) string {
-	if len(results) == 0 {
-		return "**no results**"
-	}
-	var sb strings.Builder
-	headerRow := presentation.NewMarkdownRowFromMap(results[0])
-	sb.WriteString(headerRow.HeaderString() + "\n")
-	sb.WriteString(headerRow.SeparatorString() + "\n")
-	for _, row := range results[1:] {
-		markdownRow := presentation.NewMarkdownRowFromMap(row)
-		sb.WriteString(markdownRow.RowString() + "\n")
-	}
-	return sb.String()
+	return b.renderer.RenderAsMarkdown(results)
 }
 
 func (b *stackqlMCPService) renderQueryResultsAsJSON(results []map[string]interface{}) string {
