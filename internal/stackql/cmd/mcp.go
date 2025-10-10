@@ -67,7 +67,9 @@ var mcpSrvCmd = &cobra.Command{
 func runMCPServer(handlerCtx handler.HandlerContext) {
 	var config mcp_server.Config
 	json.Unmarshal([]byte(mcpConfig), &config) //nolint:errcheck // TODO: investigate
-	config.Server.Transport = mcpServerType
+	if config.Server.Transport == "" {
+		config.Server.Transport = mcpServerType
+	}
 	var isReadOnly bool
 	if config.Server.IsReadOnly != nil {
 		isReadOnly = *config.Server.IsReadOnly
@@ -75,7 +77,6 @@ func runMCPServer(handlerCtx handler.HandlerContext) {
 	var backend mcp_server.Backend
 	var backendErr error
 	if mcpServerType == "reverse_proxy" {
-		config.Server.Transport = "http"
 		dsn := config.GetBackendConnectionString()
 		// conn
 		var cfg dto.SQLBackendCfg
