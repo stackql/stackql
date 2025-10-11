@@ -1,14 +1,4 @@
 
-
-## TODO
-
-- [ ] Source registry files from other repository, where possible.
-- [x] "reuired" string.
-- [x] clean up this readme.
-- [x] integration tests for different registry configurations.
-- [x] fix library lifetimes issue; as per https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#creating-test-library-class-or-module.
-
-
 ## Distributed testing
 
 It is convenient for development- and release-critical robot tests to reside in this repository, because it accelerates the 
@@ -106,6 +96,8 @@ $v1="SELECT i.zone, i.name, i.machineType, i.deletionProtection, '[{""""""subnet
 ```
 
 ## Session testing for Server and Shell
+
+**NOTE**: This is deprecated; robot is the way formward.  Do **not** add new tests with this pattern.
 
 Basic idea is have python start a session, run commands with result verification and then terminate.  Probably custom library(ies).
 

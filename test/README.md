@@ -6,13 +6,13 @@
 Offline invocations of `stackql` are assessed against expected responses, through:
 
 1. the functionality of [/test/deprecated/python/main.py](/test/deprecated/python/main.py).
-2. [robot tests in /test/functional](/test/functional)  
+2. robot tests, [per this document](/test/robot/README.md).  
 
 (1) is deprecated and will be entirely migrated to (2).
 
 These tests are run during the build process:
   - locally as per [/README.md#build](/README.md#build)
-  - in github actions based CICD as per [/.github/workflows/go.yml](/.github/workflows/go.yml).
+  - in github actions based CICD as per [/.github/workflows/go.yml](/.github/workflows/build.yml).
 
 ## Unit tests using standard golang approaches
 
