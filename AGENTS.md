@@ -39,7 +39,7 @@ Please refer to [the developer guide](/docs/developer_guide.md), [the testing su
 
 ## Security & Configuration Tips
 
-- WIP.
+StackQL supports flexible configuration management, including authentication secrets and connection parameters, through environment variables and command-line arguments. This design enables seamless integration with standard deployment mechanisms such as container orchestration platforms, CI/CD pipelines, and configuration management tools, allowing sensitive credentials to be managed securely through established DevOps practices rather than hard-coded in scripts or configuration files.
 
 ---
 
