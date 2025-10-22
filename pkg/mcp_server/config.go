@@ -59,7 +59,10 @@ type ServerConfig struct {
 	// Version is the server version advertised to clients.
 	Version string `json:"version" yaml:"version"`
 
-	ConnectionCfg map[string]any `json:"connection_cfg,omitempty" yaml:"connection_cfg,omitempty"`
+	TLSCertFile string `json:"tls_cert_file,omitempty" yaml:"tls_cert_file,omitempty"`
+	TLSKeyFile  string `json:"tls_key_file,omitempty" yaml:"tls_key_file,omitempty"`
+
+	TransportCfg map[string]any `json:"transport_cfg,omitempty" yaml:"transport_cfg,omitempty"`
 
 	// Description is a human-readable description of the server.
 	Description string `json:"description" yaml:"description"`

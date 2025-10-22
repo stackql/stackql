@@ -43,8 +43,9 @@ type simpleMCPServer struct {
 	servers []io.Closer // Track all running servers for cleanup
 }
 
-func (s *simpleMCPServer) runHTTPServer(server *mcp.Server, address string) error {
+func (s *simpleMCPServer) runHTTPServer(server *mcp.Server, config *Config) error {
 	// Create the streamable HTTP handler.
+	address := config.GetServerAddress()
 	handler := mcp.NewStreamableHTTPHandler(func(req *http.Request) *mcp.Server {
 		return server
 	}, nil)
@@ -55,6 +56,15 @@ func (s *simpleMCPServer) runHTTPServer(server *mcp.Server, address string) erro
 	s.logger.Debugf("Available tool: cityTime (cities: nyc, sf, boston)")
 
 	// Start the HTTP server with logging handler.
+	//nolint:gosec // TODO: find viable alternative to http.ListenAndServe
+	if config.Server.TLSCertFile != "" && config.Server.TLSKeyFile != "" {
+		s.logger.Infof("Starting HTTPS server on %s", address)
+		if err := http.ListenAndServeTLS(address, config.Server.TLSCertFile, config.Server.TLSKeyFile, handlerWithLogging); err != nil {
+			s.logger.Errorf("HTTPS Server failed: %v", err)
+			return err
+		}
+		return nil
+	}
 	//nolint:gosec // TODO: find viable alternative to http.ListenAndServe
 	if err := http.ListenAndServe(address, handlerWithLogging); err != nil {
 		s.logger.Errorf("Server failed: %v", err)
@@ -478,9 +488,9 @@ func (s *simpleMCPServer) Start(ctx context.Context) error {
 func (s *simpleMCPServer) run(ctx context.Context) error {
 	switch s.config.GetServerTransport() {
 	case serverTransportHTTP:
-		return s.runHTTPServer(s.server, s.config.GetServerAddress())
+		return s.runHTTPServer(s.server, s.config)
 	case serverTransportSSE:
-		return fmt.Errorf("SSE transport not yet implemented")
+		return fmt.Errorf("SSE transport obsoleted; use streamable HTTP transport instead")
 	case serverTransportStdIO:
 		// Default to stdio transport
 		return s.server.Run(ctx, &mcp.StdioTransport{})

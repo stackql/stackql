@@ -42,9 +42,15 @@ var execCmd = &cobra.Command{
 	Long: `simple mcp client example
 `,
 	Run: func(cmd *cobra.Command, args []string) {
+		clientCfgMap := make(map[string]any)
+		jsonErr := json.Unmarshal([]byte(clientCfgJSON), &clientCfgMap)
+		if jsonErr != nil {
+			panic(fmt.Sprintf("error unmarshaling client cfg json: %v", jsonErr))
+		}
 		client, setupErr := mcp_server.NewMCPClient(
 			clientType,
 			url,
+			clientCfgMap,
 			nil,
 		)
 		if setupErr != nil {
@@ -64,9 +70,9 @@ var execCmd = &cobra.Command{
 			outputString = string(output)
 		default:
 			var args map[string]any
-			jsonErr := json.Unmarshal([]byte(actionArgs), &args)
-			if jsonErr != nil {
-				panic(fmt.Sprintf("error unmarshaling action args: %v", jsonErr))
+			jsonCfgErr := json.Unmarshal([]byte(actionArgs), &args)
+			if jsonCfgErr != nil {
+				panic(fmt.Sprintf("error unmarshaling action args: %v", jsonCfgErr))
 			}
 			rv, rvErr := client.CallToolText(actionName, args)
 			if rvErr != nil {

@@ -24,8 +24,9 @@ import (
 )
 
 var (
-	clientType = "http"
-	url        = "127.0.0.1:9191"
+	clientType    = "http"
+	url           = "127.0.0.1:9191"
+	clientCfgJSON = "{}"
 )
 
 //nolint:revive,gochecknoglobals // explicit preferred
@@ -68,6 +69,7 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVar(&clientType, "client-type", mcp_server.MCPClientTypeSTDIO, "MCP client type (http or stdio for now)")
 	rootCmd.PersistentFlags().StringVar(&url, "url", "http://127.0.0.1:9876", "MCP server URL.  Relevant for http and sse client types.")
+	rootCmd.PersistentFlags().StringVar(&clientCfgJSON, "client-cfg", "{}", "MCP client configuration as JSON string")
 
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
