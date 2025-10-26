@@ -175,16 +175,19 @@ jobs:
         BUILDPLATFORM: ${{runner.os}}
         BUILDPATCHVERSION: ${{github.run_number}}
         CGO_ENABLED: '1'
-        # Use the path to the correct gcc from the setup-mingw action
-        CC: ${{ steps.gccsetup.outputs.mingw_path }}\bin\x86_64-w64-mingw32-gcc
-        CXX: ${{ steps.gccsetup.outputs.mingw_path }}\bin\x86_64-w64-mingw32-g++
         GH_ACCESS_TOKEN: ${{env.GH_ACCESS_TOKEN}}
         GOPRIVATE: ${{env.GOPRIVATE}}
         GOOS: windows
         GOARCH: amd64
         GOMINGWID: 'x86_64-w64-mingw32'
       run: |
-        $env:Path = "${{ steps.gccsetup.outputs.mingw_path }}\bin;" + $env:Path
+        # Explicitly prioritize the correct MinGW in the PATH
+        $mingwPath = Resolve-Path "${{ steps.gccsetup.outputs.mingw_path }}"
+        $env:Path = "$mingwPath\bin;" + $env:Path
+
+        # Set CC and CXX with the fully resolved absolute path
+        $env:CC = "$mingwPath\bin\x86_64-w64-mingw32-gcc"
+        $env:CXX = "$mingwPath\bin\x86_64-w64-mingw32-g++"
         echo "Current PATH:"
         echo $env:PATH
 
