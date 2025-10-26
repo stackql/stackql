@@ -125,7 +125,7 @@ jobs:
       id: gccsetup
       timeout-minutes: ${{ vars.DEFAULT_STEP_TIMEOUT_MIN == '' && 20 || vars.DEFAULT_STEP_TIMEOUT_MIN }}
       with:
-        version: '8.1.0'
+        version: '15.2.0'
     
     - name: Git Ref Parse
       id: git_ref_parse
