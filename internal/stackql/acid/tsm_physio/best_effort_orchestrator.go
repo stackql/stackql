@@ -121,7 +121,7 @@ func (orc *bestEffortOrchestrator) processQuery(
 			retVal = append(retVal, internaldto.NewNopEmptyExecutorOutput([]string{"OK"}))
 			return retVal, true
 		}
-		noParentErr := fmt.Errorf(noParentMessage)
+		noParentErr := fmt.Errorf("%s", noParentMessage)
 		retVal = append(retVal, internaldto.NewErroneousExecutorOutput(noParentErr))
 		return retVal, true
 	} else if transactStatement.IsRollback() {
@@ -152,7 +152,7 @@ func (orc *bestEffortOrchestrator) processQuery(
 		retVal = append(
 			retVal,
 			internaldto.NewErroneousExecutorOutput(
-				fmt.Errorf(noParentMessage)),
+				fmt.Errorf("%s", noParentMessage)),
 		)
 		return retVal, true
 	}

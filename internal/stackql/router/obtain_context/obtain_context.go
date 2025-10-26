@@ -35,7 +35,7 @@ func ObtainAnnotationCtx(
 	itemObjS, selectItemsKey, err := schema.GetSelectSchema(tbl.LookupSelectItemsKey(), mediaType)
 	unsuitableSchemaMsg := "schema unsuitable for select query"
 	if err != nil {
-		return nil, fmt.Errorf(unsuitableSchemaMsg)
+		return nil, fmt.Errorf("%s", unsuitableSchemaMsg)
 	}
 	tbl.SetSelectItemsKey(selectItemsKey)
 	provStr, _ := tbl.GetProviderStr()
@@ -43,7 +43,7 @@ func ObtainAnnotationCtx(
 	rscStr, _ := tbl.GetResourceStr()
 	methodStr, _ := tbl.GetMethodStr()
 	if itemObjS == nil {
-		return nil, fmt.Errorf(unsuitableSchemaMsg)
+		return nil, fmt.Errorf("%s", unsuitableSchemaMsg)
 	}
 	name := itemObjS.GetSelectionName()
 	tbl, err = tbl.WithResponseSchemaStr(name)

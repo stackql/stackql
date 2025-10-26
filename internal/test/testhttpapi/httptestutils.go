@@ -336,7 +336,7 @@ func GetRequestTestHandler(t testing.TB, expectationStore ExpectationStore, hand
 					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}
-				fmt.Fprintf(w, expectations.ResponseExpectations.Body)
+				fmt.Fprintf(w, "%s", expectations.ResponseExpectations.Body)
 				return
 			}
 			if handler == nil {

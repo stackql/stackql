@@ -91,7 +91,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v5.0.0
       with:
-        go-version: '~1.23'
+        go-version: '1.25.3'
         check-latest: true
         cache: true
       id: go
@@ -174,12 +174,32 @@ jobs:
         BUILDBRANCH: ${{github.ref}}
         BUILDPLATFORM: ${{runner.os}}
         BUILDPATCHVERSION: ${{github.run_number}}
-        CGO_ENABLED: 1
+        CGO_ENABLED: '1'
         GH_ACCESS_TOKEN: ${{env.GH_ACCESS_TOKEN}}
         GOPRIVATE: ${{env.GOPRIVATE}}
         GOOS: windows
         GOARCH: amd64
+        GOMINGWID: 'x86_64-w64-mingw32'
       run: |
+        # Explicitly prioritize the correct MinGW in the PATH
+        $mingwPath = "C:\mingw64"
+        if (-not (Test-Path -Path $mingwPath)) {
+            # Fallback to the chocolatey path, which we know exists
+            $mingwPath = "C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64"
+        }
+
+        # Use Resolve-Path to get the guaranteed absolute path
+        # Now that we've ensured $mingwPath isn't empty, Resolve-Path will succeed.
+        $mingwPath = Resolve-Path $mingwPath
+        $env:Path = "$mingwPath\bin;" + $env:Path
+
+        # Set CC and CXX with the fully resolved absolute path
+        $env:CC = "$mingwPath\bin\x86_64-w64-mingw32-gcc"
+        $env:CXX = "$mingwPath\bin\x86_64-w64-mingw32-g++"
+        echo "Current PATH:"
+        echo $env:PATH
+
+
         git config --global url.https://$env:GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
         $Version = convertfrom-stringdata (get-content ./cicd/version.txt -raw)
         $BuildMajorVersion = $Version.'MajorVersion'
@@ -192,8 +212,58 @@ jobs:
         echo "BUILDMINORVERSION=$env:BUILDMINORVERSION" >> $GITHUB_ENV
         echo "BUILDPATCHVERSION=$env:BUILDPATCHVERSION" >> $GITHUB_ENV
 
+        # This creates a PowerShell function to intercept the 'go build' command
+        # and inject the static linker flags.
+        # The function calls the actual go.exe with the added arguments.
+        $originalGoPath = (Get-Command go.exe).Path
+        function go {
+            & $originalGoPath @args -ldflags "-linkmode external -extldflags '-static -s -w'"
+        }
+
         python cicd/python/build.py --verbose --build
         python cicd/python/build.py --verbose --build-mcp-client
+
+        ls ".\build"
+
+        function Copy-FileIfExists {
+          [CmdletBinding()]
+          param (
+              [Parameter(Mandatory = $true, HelpMessage = "The relative or absolute path of the file to be copied.")]
+              [string]$SourcePath,
+
+              [Parameter(Mandatory = $true, HelpMessage = "The relative or absolute path of the destination directory or file.")]
+              [string]$Destination
+          )
+
+          if (Test-Path -Path $SourcePath -PathType Leaf) {
+              # Check if the destination directory exists and create it if not
+              $destinationDir = Split-Path -Path $Destination -Parent
+              if (-not (Test-Path -Path $destinationDir)) {
+                  Write-Verbose "Creating destination directory: $destinationDir"
+                  New-Item -ItemType Directory -Path $destinationDir | Out-Null
+              }
+
+              # Copy the file
+              Write-Host "Copying '$SourcePath' to '$Destination'..."
+              Copy-Item -Path $SourcePath -Destination $Destination -Force -Verbose
+              Write-Host "Copy complete."
+          }
+          else {
+              Write-Warning "Source file not found: $SourcePath"
+          }
+        }
+
+        $sourcePath = ".\build\stackql"
+        $destinationPath = ".\build\stackql.exe"
+
+        Copy-FileIfExists -SourcePath $sourcePath -Destination $destinationPath
+
+        $mcpSourcePath = ".\build\stackql_mcp_client"
+        $mcpDestinationPath = ".\build\stackql_mcp_client.exe"
+
+        Copy-FileIfExists -SourcePath $mcpSourcePath -Destination $mcpDestinationPath
+
+        ls ".\build"
 
         build\stackql.exe --help
 
@@ -261,7 +331,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v5.0.0
       with:
-        go-version: '~1.24'
+        go-version: '1.25.3'
         check-latest: true
         cache: true
       id: go
@@ -505,7 +575,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v5.0.0
       with:
-        go-version: '~1.24'
+        go-version: '1.25.3'
         check-latest: true
         cache: true
       id: go
@@ -708,7 +778,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v5.0.0
       with:
-        go-version: '~1.23'
+        go-version: '1.25.3'
         check-latest: true
         cache: true
       id: go
@@ -1134,7 +1204,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v5.0.0
       with:
-        go-version: '~1.23'
+        go-version: '1.25.3'
         check-latest: true
         cache: true
       id: go
@@ -1281,7 +1351,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v5.0.0
       with:
-        go-version: '~1.23'
+        go-version: '1.25.3'
         check-latest: true
         cache: true
       id: go

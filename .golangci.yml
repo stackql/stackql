@@ -196,6 +196,9 @@ linters:
           - lll
           - revive
         path: mcp_client\/cmd\/.*\.go
+      - linters:
+          - revive
+        path: internal\/stackql\/acid\/tsm_physio\/.*\.go
       - linters: 
           - staticcheck
         path: ast_format_postgres\.go
