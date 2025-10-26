@@ -125,7 +125,7 @@ jobs:
       id: gccsetup
       timeout-minutes: ${{ vars.DEFAULT_STEP_TIMEOUT_MIN == '' && 20 || vars.DEFAULT_STEP_TIMEOUT_MIN }}
       with:
-        version: '15.2.0'
+        version: '8.1.0'
     
     - name: Git Ref Parse
       id: git_ref_parse
@@ -194,6 +194,48 @@ jobs:
 
         python cicd/python/build.py --verbose --build
         python cicd/python/build.py --verbose --build-mcp-client
+
+        ls ".\build"
+
+        function Copy-FileIfExists {
+          [CmdletBinding()]
+          param (
+              [Parameter(Mandatory = $true, HelpMessage = "The relative or absolute path of the file to be copied.")]
+              [string]$SourcePath,
+
+              [Parameter(Mandatory = $true, HelpMessage = "The relative or absolute path of the destination directory or file.")]
+              [string]$Destination
+          )
+
+          if (Test-Path -Path $SourcePath -PathType Leaf) {
+              # Check if the destination directory exists and create it if not
+              $destinationDir = Split-Path -Path $Destination -Parent
+              if (-not (Test-Path -Path $destinationDir)) {
+                  Write-Verbose "Creating destination directory: $destinationDir"
+                  New-Item -ItemType Directory -Path $destinationDir | Out-Null
+              }
+
+              # Copy the file
+              Write-Host "Copying '$SourcePath' to '$Destination'..."
+              Copy-Item -Path $SourcePath -Destination $Destination -Force -Verbose
+              Write-Host "Copy complete."
+          }
+          else {
+              Write-Warning "Source file not found: $SourcePath"
+          }
+        }
+
+        $sourcePath = ".\build\stackql"
+        $destinationPath = ".\build\stackql.exe"
+
+        Copy-FileIfExists -SourcePath $sourcePath -Destination $destinationPath
+
+        $mcpSourcePath = ".\build\stackql_mcp_client"
+        $mcpDestinationPath = ".\build\stackql_mcp_client.exe"
+
+        Copy-FileIfExists -SourcePath $mcpSourcePath -Destination $mcpDestinationPath
+
+        ls ".\build"
 
         build\stackql.exe --help
 
