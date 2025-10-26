@@ -183,7 +183,6 @@ jobs:
         GOOS: windows
         GOARCH: amd64
         GOMINGWID: 'x86_64-w64-mingw32'
-        GOFLAGS: -ldflags="-linkmode=external -extldflags=-static"
       run: |
         $env:Path = "${{ steps.gccsetup.outputs.mingw_path }}\bin;" + $env:Path
         echo "Current PATH:"
