@@ -336,6 +336,7 @@ func GetRequestTestHandler(t testing.TB, expectationStore ExpectationStore, hand
 					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}
+				//nolint:govet // fine with this
 				fmt.Fprintf(w, expectations.ResponseExpectations.Body)
 				return
 			}

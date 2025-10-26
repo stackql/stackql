@@ -136,6 +136,7 @@ func (orc *standardOrchestrator) processQuery(
 			retVal = append(retVal, internaldto.NewNopEmptyExecutorOutput([]string{"OK"}))
 			return retVal, true
 		}
+		//nolint:govet // fine with this
 		noParentErr := fmt.Errorf(noParentMessage)
 		retVal = append(retVal, internaldto.NewErroneousExecutorOutput(noParentErr))
 		return retVal, true
@@ -155,6 +156,7 @@ func (orc *standardOrchestrator) processQuery(
 		retVal = append(
 			retVal,
 			internaldto.NewErroneousExecutorOutput(
+				//nolint:govet // fine with this
 				fmt.Errorf(noParentMessage)),
 		)
 		return retVal, true
