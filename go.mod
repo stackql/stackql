@@ -1,6 +1,6 @@
 module github.com/stackql/stackql
 
-go 1.23.0
+go 1.25.3
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.1
