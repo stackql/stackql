@@ -66,6 +66,8 @@ env CGO_ENABLED=1 PLANCACHEENABLED=false go build \
 
 At this time, we are not dogmatic about how to implement unit tests.  Aspirationally, unit tests can be implemented in similar fashion to the none-too opinionated [official testing package documentation](https://pkg.go.dev/testing), and in particular [the overview section](https://pkg.go.dev/testing#pkg-overview).
 
+We have upgraded to golang `>= 1.25.3` in order to take advantage of [time simultion and other capabilites in `testing/synctest`](https://go.dev/blog/testing-time).
+
 To run all unit tests:
 
 ```bash
