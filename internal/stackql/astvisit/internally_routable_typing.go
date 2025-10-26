@@ -110,12 +110,10 @@ func (v *standardInternallyRoutableTypingAstVisitor) getStarColumns(
 	tbl.SetSelectItemsKey(selectItemsKey)
 	unsuitableSchemaMsg := "standardInternallyRoutableTypingAstVisitor.getStarColumns(): schema unsuitable for select query"
 	if err != nil {
-		//nolint:govet // fine with this
-		return nil, fmt.Errorf(unsuitableSchemaMsg)
+		return nil, fmt.Errorf("%s", unsuitableSchemaMsg)
 	}
 	if itemObjS == nil {
-		//nolint:govet // fine with this
-		return nil, fmt.Errorf(unsuitableSchemaMsg)
+		return nil, fmt.Errorf("%s", unsuitableSchemaMsg)
 	}
 	var cols []parserutil.ColumnHandle
 	colNames := itemObjS.GetAllColumns(util.TrimSelectItemsKey(selectItemsKey))

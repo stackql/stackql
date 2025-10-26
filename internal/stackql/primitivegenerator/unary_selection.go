@@ -167,16 +167,14 @@ func (pb *standardPrimitiveGenerator) analyzeUnarySelection(
 	// rscStr, _ := tbl.GetResourceStr()
 	unsuitableSchemaMsg := "analyzeUnarySelection(): schema unsuitable for select query"
 	if err != nil {
-		//nolint:govet // fine with this
-		return fmt.Errorf(unsuitableSchemaMsg)
+		return fmt.Errorf("%s", unsuitableSchemaMsg)
 	}
 	tbl.SetSelectItemsKey(selectItemsKey)
 	provStr, _ := tbl.GetProviderStr()
 	svcStr, _ := tbl.GetServiceStr()
 	// rscStr, _ := tbl.GetResourceStr()
 	if itemObjS == nil {
-		//nolint:govet // fine with this
-		return fmt.Errorf(unsuitableSchemaMsg)
+		return fmt.Errorf("%s", unsuitableSchemaMsg)
 	}
 	resource, err := tbl.GetResource()
 	if err != nil {
