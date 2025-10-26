@@ -182,7 +182,15 @@ jobs:
         GOMINGWID: 'x86_64-w64-mingw32'
       run: |
         # Explicitly prioritize the correct MinGW in the PATH
-        $mingwPath = Resolve-Path "${{ steps.gccsetup.outputs.mingw_path }}"
+        $mingwPath = "C:\mingw64"
+        if (-not (Test-Path -Path $mingwPath)) {
+            # Fallback to the chocolatey path, which we know exists
+            $mingwPath = "C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64"
+        }
+
+        # Use Resolve-Path to get the guaranteed absolute path
+        # Now that we've ensured $mingwPath isn't empty, Resolve-Path will succeed.
+        $mingwPath = Resolve-Path $mingwPath
         $env:Path = "$mingwPath\bin;" + $env:Path
 
         # Set CC and CXX with the fully resolved absolute path
