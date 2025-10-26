@@ -174,12 +174,16 @@ jobs:
         BUILDBRANCH: ${{github.ref}}
         BUILDPLATFORM: ${{runner.os}}
         BUILDPATCHVERSION: ${{github.run_number}}
-        CGO_ENABLED: 1
+        CGO_ENABLED: '1'
+        CC: 'x86_64-w64-mingw32-gcc'
+        CXX: 'x86_64-w64-mingw32-g++'
         GH_ACCESS_TOKEN: ${{env.GH_ACCESS_TOKEN}}
         GOPRIVATE: ${{env.GOPRIVATE}}
         GOOS: windows
         GOARCH: amd64
       run: |
+        echo "Current PATH:"
+        echo $env:PATH
         git config --global url.https://$env:GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
         $Version = convertfrom-stringdata (get-content ./cicd/version.txt -raw)
         $BuildMajorVersion = $Version.'MajorVersion'
