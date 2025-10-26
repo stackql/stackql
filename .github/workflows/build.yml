@@ -202,6 +202,14 @@ jobs:
         echo "BUILDMINORVERSION=$env:BUILDMINORVERSION" >> $GITHUB_ENV
         echo "BUILDPATCHVERSION=$env:BUILDPATCHVERSION" >> $GITHUB_ENV
 
+        # This creates a PowerShell function to intercept the 'go build' command
+        # and inject the static linker flags.
+        # The function calls the actual go.exe with the added arguments.
+        $originalGoPath = (Get-Command go.exe).Path
+        function go {
+            & $originalGoPath @args -ldflags "-linkmode external -extldflags '-static -s -w'"
+        }
+
         python cicd/python/build.py --verbose --build
         python cicd/python/build.py --verbose --build-mcp-client
 
