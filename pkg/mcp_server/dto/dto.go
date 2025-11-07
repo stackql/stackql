@@ -1,4 +1,4 @@
-package mcp_server //nolint:revive,stylecheck // fine for now
+package dto
 
 type GreetingInput struct {
 	Name string `json:"name" jsonschema:"the name of the person to greet"`
@@ -93,7 +93,7 @@ type HierarchyInput struct {
 type ServerInfoOutput struct {
 	Name       string `json:"name" jsonschema:"server name"`
 	Info       string `json:"info" jsonschema:"server info"`
-	IsReadOnly bool   `json:"read_only" jsonschema:"is the database read-only"`
+	IsReadOnly bool   `json:"is_read_only" jsonschema:"is the database read-only"`
 }
 
 type QueryInput struct {
@@ -147,4 +147,41 @@ type ListTablesPageInput struct {
 	PageSize      int             `json:"page_size,omitempty" yaml:"page_size,omitempty"`
 	Cursor        *string         `json:"cursor,omitempty" yaml:"cursor,omitempty"`
 	Format        string          `json:"format,omitempty" yaml:"format,omitempty"`
+}
+
+// SimpleRowsDTO wraps a plain rows array.
+type SimpleRowsDTO struct {
+	Rows []map[string]any `json:"rows"`
+}
+
+// SimpleTextDTO wraps a single text payload.
+type SimpleTextDTO struct {
+	Text string `json:"text"`
+}
+
+type ServerInfoDTO struct {
+	Name       string `json:"name"`
+	Info       string `json:"info"`
+	IsReadOnly bool   `json:"is_read_only"`
+}
+
+// DBIdentityDTO represents the current database identity.
+type DBIdentityDTO struct {
+	Identity string `json:"identity"`
+}
+
+// QueryResultDTO represents a query response; Rows only populated for JSON format.
+// Raw contains original textual result when not parsed; Warnings may include advisory messages
+// (e.g. URL encode slashes in hierarchical resource keys).
+type QueryResultDTO struct {
+	Rows     []map[string]any `json:"rows,omitempty"`
+	RowCount int              `json:"row_count"`
+	Format   string           `json:"format"`
+	Raw      string           `json:"raw,omitempty"`
+	Warnings []string         `json:"warnings,omitempty"`
+}
+
+// GreetDTO carries a simple greeting payload.
+type GreetDTO struct {
+	Greeting string `json:"greeting"`
 }

@@ -3,6 +3,8 @@ package mcp_server //nolint:revive // fine for now
 import (
 	"context"
 	"time"
+
+	"github.com/stackql/stackql/pkg/mcp_server/dto"
 )
 
 const (
@@ -22,12 +24,12 @@ type ExampleBackend struct {
 
 // Stub all Backend interface methods below
 
-func (b *ExampleBackend) Greet(ctx context.Context, args GreetInput) (string, error) {
+func (b *ExampleBackend) Greet(ctx context.Context, args dto.GreetInput) (string, error) {
 	return "Hi " + args.Name, nil
 }
 
-func (b *ExampleBackend) ServerInfo(ctx context.Context, _ any) (ServerInfoOutput, error) {
-	return ServerInfoOutput{
+func (b *ExampleBackend) ServerInfo(ctx context.Context, _ any) (dto.ServerInfoOutput, error) {
+	return dto.ServerInfoOutput{
 		Name:       "Stackql explorer",
 		Info:       "This is an example server.",
 		IsReadOnly: false,
@@ -42,23 +44,23 @@ func (b *ExampleBackend) DBIdentity(ctx context.Context, _ any) (map[string]any,
 	}, nil
 }
 
-func (b *ExampleBackend) RunQuery(ctx context.Context, args QueryInput) (string, error) {
+func (b *ExampleBackend) RunQuery(ctx context.Context, args dto.QueryInput) (string, error) {
 	return "stub", nil
 }
 
-func (b *ExampleBackend) RunQueryJSON(ctx context.Context, input QueryJSONInput) ([]map[string]interface{}, error) {
+func (b *ExampleBackend) RunQueryJSON(ctx context.Context, input dto.QueryJSONInput) ([]map[string]interface{}, error) {
 	return []map[string]interface{}{}, nil
 }
 
-// func (b *ExampleBackend) ListTableResources(ctx context.Context, hI HierarchyInput) ([]string, error) {
+// func (b *ExampleBackend) ListTableResources(ctx context.Context, hI dto.HierarchyInput) ([]string, error) {
 // 	return []string{}, nil
 // }
 
-func (b *ExampleBackend) ReadTableResource(ctx context.Context, hI HierarchyInput) ([]map[string]interface{}, error) {
+func (b *ExampleBackend) ReadTableResource(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
 	return []map[string]interface{}{}, nil
 }
 
-func (b *ExampleBackend) PromptWriteSafeSelectTool(ctx context.Context, args HierarchyInput) (string, error) {
+func (b *ExampleBackend) PromptWriteSafeSelectTool(ctx context.Context, args dto.HierarchyInput) (string, error) {
 	return ExplainerPromptWriteSafeSelectTool, nil
 }
 
@@ -66,31 +68,31 @@ func (b *ExampleBackend) PromptWriteSafeSelectTool(ctx context.Context, args Hie
 // 	return "stub", nil
 // }
 
-func (b *ExampleBackend) ListTablesJSON(ctx context.Context, input ListTablesInput) ([]map[string]interface{}, error) {
+func (b *ExampleBackend) ListTablesJSON(ctx context.Context, input dto.ListTablesInput) ([]map[string]interface{}, error) {
 	return []map[string]interface{}{}, nil
 }
 
-func (b *ExampleBackend) ListTablesJSONPage(ctx context.Context, input ListTablesPageInput) (map[string]interface{}, error) {
+func (b *ExampleBackend) ListTablesJSONPage(ctx context.Context, input dto.ListTablesPageInput) (map[string]interface{}, error) {
 	return map[string]interface{}{}, nil
 }
 
-func (b *ExampleBackend) ListTables(ctx context.Context, hI HierarchyInput) (string, error) {
+func (b *ExampleBackend) ListTables(ctx context.Context, hI dto.HierarchyInput) (string, error) {
 	return "stub", nil
 }
 
-func (b *ExampleBackend) ListMethods(ctx context.Context, hI HierarchyInput) (string, error) {
+func (b *ExampleBackend) ListMethods(ctx context.Context, hI dto.HierarchyInput) (string, error) {
 	return "stub", nil
 }
 
-func (b *ExampleBackend) DescribeTable(ctx context.Context, hI HierarchyInput) (string, error) {
+func (b *ExampleBackend) DescribeTable(ctx context.Context, hI dto.HierarchyInput) (string, error) {
 	return "stub", nil
 }
 
-func (b *ExampleBackend) GetForeignKeys(ctx context.Context, hI HierarchyInput) (string, error) {
+func (b *ExampleBackend) GetForeignKeys(ctx context.Context, hI dto.HierarchyInput) (string, error) {
 	return ExplainerForeignKeyStackql, nil
 }
 
-func (b *ExampleBackend) FindRelationships(ctx context.Context, hI HierarchyInput) (string, error) {
+func (b *ExampleBackend) FindRelationships(ctx context.Context, hI dto.HierarchyInput) (string, error) {
 	return ExplainerFindRelationships, nil
 }
 
@@ -98,11 +100,11 @@ func (b *ExampleBackend) ListProviders(ctx context.Context) (string, error) {
 	return "stub", nil
 }
 
-func (b *ExampleBackend) ListServices(ctx context.Context, hI HierarchyInput) (string, error) {
+func (b *ExampleBackend) ListServices(ctx context.Context, hI dto.HierarchyInput) (string, error) {
 	return "stub", nil
 }
 
-func (b *ExampleBackend) ListResources(ctx context.Context, hI HierarchyInput) (string, error) {
+func (b *ExampleBackend) ListResources(ctx context.Context, hI dto.HierarchyInput) (string, error) {
 	return "stub", nil
 }
 

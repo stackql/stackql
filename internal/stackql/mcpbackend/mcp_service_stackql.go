@@ -12,6 +12,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/pkg/mcp_server"
+	"github.com/stackql/stackql/pkg/mcp_server/dto"
 	"github.com/stackql/stackql/pkg/presentation"
 )
 
@@ -54,17 +55,17 @@ type StackqlInterrogator interface {
 	// This struct is responsible for interrogating the StackQL engine.
 	// Each method provides the requisite query string.
 
-	GetShowProviders(mcp_server.HierarchyInput, string) (string, error)
-	GetShowServices(mcp_server.HierarchyInput, string) (string, error)
-	GetShowResources(mcp_server.HierarchyInput, string) (string, error)
-	GetShowMethods(mcp_server.HierarchyInput) (string, error)
-	// GetShowTables(mcp_server.HierarchyInput) (string, error)
-	GetDescribeTable(mcp_server.HierarchyInput) (string, error)
-	GetForeignKeys(mcp_server.HierarchyInput) (string, error)
-	FindRelationships(mcp_server.HierarchyInput) (string, error)
-	GetQuery(mcp_server.QueryInput) (string, error)
-	GetQueryJSON(mcp_server.QueryJSONInput) (string, error)
-	// GetListTableResources(mcp_server.HierarchyInput) (string, error)
+	GetShowProviders(dto.HierarchyInput, string) (string, error)
+	GetShowServices(dto.HierarchyInput, string) (string, error)
+	GetShowResources(dto.HierarchyInput, string) (string, error)
+	GetShowMethods(dto.HierarchyInput) (string, error)
+	// GetShowTables(dto.HierarchyInput) (string, error)
+	GetDescribeTable(dto.HierarchyInput) (string, error)
+	GetForeignKeys(dto.HierarchyInput) (string, error)
+	FindRelationships(dto.HierarchyInput) (string, error)
+	GetQuery(dto.QueryInput) (string, error)
+	GetQueryJSON(dto.QueryJSONInput) (string, error)
+	// GetListTableResources(dto.HierarchyInput) (string, error)
 	// GetReadTableResource(mcp_server.HierarchyInput) (string, error)
 	GetPromptWriteSafeSelectTool() (string, error)
 	// GetPromptExplainPlanTipsTool() (string, error)
@@ -78,7 +79,7 @@ func NewSimpleStackqlInterrogator() StackqlInterrogator {
 	return &simpleStackqlInterrogator{}
 }
 
-func (s *simpleStackqlInterrogator) GetShowProviders(_ mcp_server.HierarchyInput, likeStr string) (string, error) {
+func (s *simpleStackqlInterrogator) GetShowProviders(_ dto.HierarchyInput, likeStr string) (string, error) {
 	sb := strings.Builder{}
 	sb.WriteString("SHOW PROVIDERS")
 	if likeStr != "" {
@@ -89,7 +90,7 @@ func (s *simpleStackqlInterrogator) GetShowProviders(_ mcp_server.HierarchyInput
 	return sb.String(), nil
 }
 
-func (s *simpleStackqlInterrogator) GetShowServices(hI mcp_server.HierarchyInput, likeStr string) (string, error) {
+func (s *simpleStackqlInterrogator) GetShowServices(hI dto.HierarchyInput, likeStr string) (string, error) {
 	sb := strings.Builder{}
 	sb.WriteString("SHOW SERVICES")
 	if hI.Provider == "" {
@@ -105,7 +106,7 @@ func (s *simpleStackqlInterrogator) GetShowServices(hI mcp_server.HierarchyInput
 	return sb.String(), nil
 }
 
-func (s *simpleStackqlInterrogator) GetShowResources(hI mcp_server.HierarchyInput, likeString string) (string, error) {
+func (s *simpleStackqlInterrogator) GetShowResources(hI dto.HierarchyInput, likeString string) (string, error) {
 	sb := strings.Builder{}
 	sb.WriteString("SHOW RESOURCES")
 	if hI.Provider == "" || hI.Service == "" {
@@ -125,7 +126,7 @@ func (s *simpleStackqlInterrogator) GetShowResources(hI mcp_server.HierarchyInpu
 	return sb.String(), nil
 }
 
-func (s *simpleStackqlInterrogator) GetShowMethods(hI mcp_server.HierarchyInput) (string, error) {
+func (s *simpleStackqlInterrogator) GetShowMethods(hI dto.HierarchyInput) (string, error) {
 	sb := strings.Builder{}
 	sb.WriteString("SHOW METHODS")
 	if hI.Provider == "" || hI.Service == "" || hI.Resource == "" {
@@ -144,7 +145,7 @@ func (s *simpleStackqlInterrogator) GetShowMethods(hI mcp_server.HierarchyInput)
 	return sb.String(), nil
 }
 
-func (s *simpleStackqlInterrogator) GetDescribeTable(hI mcp_server.HierarchyInput) (string, error) {
+func (s *simpleStackqlInterrogator) GetDescribeTable(hI dto.HierarchyInput) (string, error) {
 	sb := strings.Builder{}
 	sb.WriteString("DESCRIBE TABLE")
 	if hI.Provider == "" || hI.Service == "" || hI.Resource == "" {
@@ -163,22 +164,22 @@ func (s *simpleStackqlInterrogator) GetDescribeTable(hI mcp_server.HierarchyInpu
 	return sb.String(), nil
 }
 
-func (s *simpleStackqlInterrogator) GetForeignKeys(hI mcp_server.HierarchyInput) (string, error) {
+func (s *simpleStackqlInterrogator) GetForeignKeys(hI dto.HierarchyInput) (string, error) {
 	return mcp_server.ExplainerForeignKeyStackql, nil
 }
 
-func (s *simpleStackqlInterrogator) FindRelationships(hI mcp_server.HierarchyInput) (string, error) {
+func (s *simpleStackqlInterrogator) FindRelationships(hI dto.HierarchyInput) (string, error) {
 	return mcp_server.ExplainerFindRelationships, nil
 }
 
-func (s *simpleStackqlInterrogator) GetQuery(qI mcp_server.QueryInput) (string, error) {
+func (s *simpleStackqlInterrogator) GetQuery(qI dto.QueryInput) (string, error) {
 	if qI.SQL == "" {
 		return "", fmt.Errorf("no SQL provided")
 	}
 	return qI.SQL, nil
 }
 
-func (s *simpleStackqlInterrogator) GetQueryJSON(qI mcp_server.QueryJSONInput) (string, error) {
+func (s *simpleStackqlInterrogator) GetQueryJSON(qI dto.QueryJSONInput) (string, error) {
 	if qI.SQL == "" {
 		return "", fmt.Errorf("no SQL provided")
 	}
@@ -274,8 +275,8 @@ func (b *stackqlMCPService) Close() error {
 }
 
 // Server and environment info
-func (b *stackqlMCPService) ServerInfo(ctx context.Context, args any) (mcp_server.ServerInfoOutput, error) {
-	return mcp_server.ServerInfoOutput{
+func (b *stackqlMCPService) ServerInfo(ctx context.Context, args any) (dto.ServerInfoOutput, error) {
+	return dto.ServerInfoOutput{
 		Name:       "Stackql MCP Service",
 		Info:       "This is the Stackql MCP Service.",
 		IsReadOnly: b.isReadOnly,
@@ -289,11 +290,11 @@ func (b *stackqlMCPService) DBIdentity(ctx context.Context, args any) (map[strin
 	}, nil
 }
 
-func (b *stackqlMCPService) Greet(ctx context.Context, args mcp_server.GreetInput) (string, error) {
+func (b *stackqlMCPService) Greet(ctx context.Context, args dto.GreetInput) (string, error) {
 	return "Hi " + args.Name, nil
 }
 
-func (b *stackqlMCPService) RunQuery(ctx context.Context, args mcp_server.QueryInput) (string, error) {
+func (b *stackqlMCPService) RunQuery(ctx context.Context, args dto.QueryInput) (string, error) {
 	q, qErr := b.interrogator.GetQuery(args)
 	if qErr != nil {
 		return "", qErr
@@ -302,7 +303,7 @@ func (b *stackqlMCPService) RunQuery(ctx context.Context, args mcp_server.QueryI
 	return rv, nil
 }
 
-func (b *stackqlMCPService) RunQueryJSON(ctx context.Context, input mcp_server.QueryJSONInput) ([]map[string]interface{}, error) {
+func (b *stackqlMCPService) RunQueryJSON(ctx context.Context, input dto.QueryJSONInput) ([]map[string]interface{}, error) {
 	q := input.SQL
 	if q == "" {
 		return nil, fmt.Errorf("no SQL provided")
@@ -322,7 +323,7 @@ func (b *stackqlMCPService) RunQueryJSON(ctx context.Context, input mcp_server.Q
 // 	return []map[string]interface{}{}, nil
 // }
 
-func (b *stackqlMCPService) PromptWriteSafeSelectTool(ctx context.Context, args mcp_server.HierarchyInput) (string, error) {
+func (b *stackqlMCPService) PromptWriteSafeSelectTool(ctx context.Context, args dto.HierarchyInput) (string, error) {
 	return b.interrogator.GetPromptWriteSafeSelectTool()
 }
 
@@ -330,8 +331,8 @@ func (b *stackqlMCPService) PromptWriteSafeSelectTool(ctx context.Context, args 
 // 	return "stub", nil
 // }
 
-func (b *stackqlMCPService) ListTablesJSON(ctx context.Context, input mcp_server.ListTablesInput) ([]map[string]interface{}, error) {
-	hI := mcp_server.HierarchyInput{}
+func (b *stackqlMCPService) ListTablesJSON(ctx context.Context, input dto.ListTablesInput) ([]map[string]interface{}, error) {
+	hI := dto.HierarchyInput{}
 	likeStr := ""
 	if input.Hierarchy != nil {
 		hI = *input.Hierarchy
@@ -350,15 +351,15 @@ func (b *stackqlMCPService) ListTablesJSON(ctx context.Context, input mcp_server
 	return results, nil
 }
 
-func (b *stackqlMCPService) ListTablesJSONPage(ctx context.Context, input mcp_server.ListTablesPageInput) (map[string]interface{}, error) {
+func (b *stackqlMCPService) ListTablesJSONPage(ctx context.Context, input dto.ListTablesPageInput) (map[string]interface{}, error) {
 	return map[string]interface{}{}, nil
 }
 
-func (b *stackqlMCPService) ListTables(ctx context.Context, hI mcp_server.HierarchyInput) (string, error) {
+func (b *stackqlMCPService) ListTables(ctx context.Context, hI dto.HierarchyInput) (string, error) {
 	return b.ListResources(ctx, hI)
 }
 
-func (b *stackqlMCPService) ListMethods(ctx context.Context, hI mcp_server.HierarchyInput) (string, error) {
+func (b *stackqlMCPService) ListMethods(ctx context.Context, hI dto.HierarchyInput) (string, error) {
 	q, qErr := b.interrogator.GetShowMethods(hI)
 	if qErr != nil {
 		return "", qErr
@@ -450,7 +451,7 @@ func (b *stackqlMCPService) renderQueryResults(query string, format string, rowL
 	}
 }
 
-func (b *stackqlMCPService) DescribeTable(ctx context.Context, hI mcp_server.HierarchyInput) (string, error) {
+func (b *stackqlMCPService) DescribeTable(ctx context.Context, hI dto.HierarchyInput) (string, error) {
 	q, qErr := b.interrogator.GetDescribeTable(hI)
 	if qErr != nil {
 		return "", qErr
@@ -459,16 +460,16 @@ func (b *stackqlMCPService) DescribeTable(ctx context.Context, hI mcp_server.Hie
 	return rv, nil
 }
 
-func (b *stackqlMCPService) GetForeignKeys(ctx context.Context, hI mcp_server.HierarchyInput) (string, error) {
+func (b *stackqlMCPService) GetForeignKeys(ctx context.Context, hI dto.HierarchyInput) (string, error) {
 	return b.interrogator.GetForeignKeys(hI)
 }
 
-func (b *stackqlMCPService) FindRelationships(ctx context.Context, hI mcp_server.HierarchyInput) (string, error) {
+func (b *stackqlMCPService) FindRelationships(ctx context.Context, hI dto.HierarchyInput) (string, error) {
 	return b.interrogator.FindRelationships(hI)
 }
 
 func (b *stackqlMCPService) ListProviders(ctx context.Context) (string, error) {
-	q, qErr := b.interrogator.GetShowProviders(mcp_server.HierarchyInput{}, "")
+	q, qErr := b.interrogator.GetShowProviders(dto.HierarchyInput{}, "")
 	if qErr != nil {
 		return "", qErr
 	}
@@ -476,7 +477,7 @@ func (b *stackqlMCPService) ListProviders(ctx context.Context) (string, error) {
 	return rv, nil
 }
 
-func (b *stackqlMCPService) ListServices(ctx context.Context, hI mcp_server.HierarchyInput) (string, error) {
+func (b *stackqlMCPService) ListServices(ctx context.Context, hI dto.HierarchyInput) (string, error) {
 	q, qErr := b.interrogator.GetShowServices(hI, "")
 	if qErr != nil {
 		return "", qErr
@@ -485,7 +486,7 @@ func (b *stackqlMCPService) ListServices(ctx context.Context, hI mcp_server.Hier
 	return rv, nil
 }
 
-func (b *stackqlMCPService) ListResources(ctx context.Context, hI mcp_server.HierarchyInput) (string, error) {
+func (b *stackqlMCPService) ListResources(ctx context.Context, hI dto.HierarchyInput) (string, error) {
 	q, qErr := b.interrogator.GetShowResources(hI, "")
 	if qErr != nil {
 		return "", qErr
