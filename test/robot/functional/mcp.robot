@@ -1,5 +1,6 @@
 *** Settings ***
 Resource          ${CURDIR}${/}stackql.resource
+Library           Collections
 
 
 *** Keywords ***
@@ -54,6 +55,12 @@ Start MCP Servers
     ...                                   stdout=${CURDIR}${/}tmp${/}Stackql-MCP-Server-HTTPS.txt
     ...                                   stderr=${CURDIR}${/}tmp${/}Stackql-MCP-Server-HTTPS-stderr.txt
     Sleep         5s
+
+Parse MCP JSON Output
+    [Arguments]    ${input}
+    ${parsed}=    Evaluate
+    ...    json.loads('''${input}''')    json
+    RETURN    ${parsed}
 
 *** Settings ***
 Suite Setup     Start MCP Servers
@@ -240,3 +247,159 @@ Concurrent psql and Reverse Proxy MCP HTTPS Server Query Tool
     ...                  stderr=${CURDIR}${/}tmp${/}Concurrent-psql-and-Reverse-Proxy-MCP-HTTPS-Server-Query-Tool-psql-stderr.txt
     Should Contain       ${psql_client_result.stdout}       cloudkms.googleapis.com
     Should Be Equal As Integers    ${psql_client_result.rc}    0
+
+MCP HTTPS Server JSON DTO Greet
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${greet}=    Run Process
+    ...    ${STACKQL_MCP_CLIENT_EXE}
+    ...    exec
+    ...    \-\-client\-type\=http
+    ...    \-\-url\=https://127.0.0.1:9004
+    ...    \-\-client\-cfg
+    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
+    ...    \-\-exec.action
+    ...    greet
+    ...    \-\-exec.args
+    ...    {"name":"JSON TEST"}
+    ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-greet.txt
+    ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-greet-stderr.txt
+    Should Be Equal As Integers    ${greet.rc}    0
+    Should Contain    ${greet.stdout}    Hi JSON TEST
+
+MCP HTTPS Server JSON DTO Server Info
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${srvinfo}=    Run Process
+    ...    ${STACKQL_MCP_CLIENT_EXE}
+    ...    exec
+    ...    \-\-client\-type\=http
+    ...    \-\-url\=https://127.0.0.1:9004
+    ...    \-\-client\-cfg
+    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
+    ...    \-\-exec.action
+    ...    server_info
+    ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-server-info.txt
+    ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-server-info-stderr.txt
+    Should Be Equal As Integers    ${srvinfo.rc}    0
+    ${srvinfo_obj}=    Parse MCP JSON Output    ${srvinfo.stdout}
+    Dictionary Should Contain Key    ${srvinfo_obj}    name
+    Dictionary Should Contain Key    ${srvinfo_obj}    info
+    Dictionary Should Contain Key    ${srvinfo_obj}    is_read_only
+
+MCP HTTPS Server JSON DTO DB Identity
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${dbident}=    Run Process
+    ...    ${STACKQL_MCP_CLIENT_EXE}
+    ...    exec
+    ...    \-\-client\-type\=http
+    ...    \-\-url\=https://127.0.0.1:9004
+    ...    \-\-client\-cfg
+    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
+    ...    \-\-exec.action
+    ...    db_identity
+    ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-db-identity.txt
+    ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-db-identity-stderr.txt
+    Should Be Equal As Integers    ${dbident.rc}    0
+    ${dbident_obj}=    Parse MCP JSON Output    ${dbident.stdout}
+    Dictionary Should Contain Key    ${dbident_obj}    identity
+
+MCP HTTPS Server JSON DTO Query V3 JSON
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${query_json}=    Run Process
+    ...    ${STACKQL_MCP_CLIENT_EXE}
+    ...    exec
+    ...    \-\-client\-type\=http
+    ...    \-\-url\=https://127.0.0.1:9004
+    ...    \-\-client\-cfg
+    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
+    ...    \-\-exec.action
+    ...    query_v3
+    ...    \-\-exec.args
+    ...    {"sql":"show providers;","format":"json"}
+    ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-query-v2-json.txt
+    ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-query-v2-json-stderr.txt
+    Should Be Equal As Integers    ${query_json.rc}    0
+    ${query_obj}=    Parse MCP JSON Output    ${query_json.stdout}
+    Should Be Equal    ${query_obj["format"]}    json
+    Dictionary Should Contain Key    ${query_obj}    rows
+    ${row_count}=    Get From Dictionary    ${query_obj}    row_count
+    Should Be True    ${row_count} > 0
+
+MCP HTTPS Server Query Exec Text
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    # Future proofing: raw text format reserved; may gain structured hints later.
+    ${ns_query_text}=    Run Process
+    ...    ${STACKQL_MCP_CLIENT_EXE}
+    ...    exec
+    ...    \-\-client\-type\=http
+    ...    \-\-url\=https://127.0.0.1:9004
+    ...    \-\-client\-cfg
+    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
+    ...    \-\-exec.action
+    ...    query.exec_text
+    ...    \-\-exec.args
+    ...    {"sql":"SELECT 1 as foo"}
+    ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-query-exec-text.txt
+    ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-query-exec-text-stderr.txt
+    Should Be Equal As Integers    ${ns_query_text.rc}    0
+    Should Contain     ${ns_query_text.stdout}   foo
+
+MCP HTTPS Server JSON DTO Query Exec JSON
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${ns_query_json}=    Run Process
+    ...    ${STACKQL_MCP_CLIENT_EXE}
+    ...    exec
+    ...    \-\-client\-type\=http
+    ...    \-\-url\=https://127.0.0.1:9004
+    ...    \-\-client\-cfg
+    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
+    ...    \-\-exec.action
+    ...    query.exec_json
+    ...    \-\-exec.args
+    ...    {"sql":"SELECT 1 as foo","row_limit":5}
+    ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-query-exec-json.txt
+    ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-query-exec-json-stderr.txt
+    Should Be Equal As Integers    ${ns_query_json.rc}    0
+    ${ns_query_json_obj}=    Parse MCP JSON Output    ${ns_query_json.stdout}
+    Should Be Equal    ${ns_query_json_obj["format"]}    json
+    ${ns_row_count}=    Get From Dictionary    ${ns_query_json_obj}    row_count
+    Should Be True    ${ns_row_count} >= 0
+
+MCP HTTPS Server JSON DTO Meta Get Foreign Keys
+    [Documentation]     Future proofing: foreign key discovery not yet implemented; placeholder.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${meta_fk}=    Run Process
+    ...    ${STACKQL_MCP_CLIENT_EXE}
+    ...    exec
+    ...    \-\-client\-type\=http
+    ...    \-\-url\=https://127.0.0.1:9004
+    ...    \-\-client\-cfg
+    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
+    ...    \-\-exec.action
+    ...    meta.get_foreign_keys
+    ...    \-\-exec.args
+    ...    {"provider":"google","service":"cloudresourcemanager","resource":"projects"}
+    ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-meta-get-foreign-keys.txt
+    ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-meta-get-foreign-keys-stderr.txt
+    Should Be Equal As Integers    ${meta_fk.rc}    0
+    ${meta_fk_obj}=    Parse MCP JSON Output    ${meta_fk.stdout}
+    Dictionary Should Contain Key    ${meta_fk_obj}    text
+
+MCP HTTPS Server JSON DTO Meta Find Relationships
+    [Documentation]     Future proofing: relationship graph inference pending; placeholder output.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${meta_rels}=    Run Process
+    ...    ${STACKQL_MCP_CLIENT_EXE}
+    ...    exec
+    ...    \-\-client\-type\=http
+    ...    \-\-url\=https://127.0.0.1:9004
+    ...    \-\-client\-cfg
+    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
+    ...    \-\-exec.action
+    ...    meta.find_relationships
+    ...    \-\-exec.args
+    ...    {"provider":"google","service":"cloudresourcemanager","resource":"projects"}
+    ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-meta-find-relationships.txt
+    ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-meta-find-relationships-stderr.txt
+    Should Be Equal As Integers    ${meta_rels.rc}    0
+    ${meta_rels_obj}=    Parse MCP JSON Output    ${meta_rels.stdout}
+    Dictionary Should Contain Key    ${meta_rels_obj}    text

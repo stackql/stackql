@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/pkg/mcp_server"
+	"github.com/stackql/stackql/pkg/mcp_server/dto"
 )
 
 type stackqlMCPReverseProxyService struct {
@@ -59,8 +60,8 @@ func (b *stackqlMCPReverseProxyService) Close() error {
 }
 
 // Server and environment info
-func (b *stackqlMCPReverseProxyService) ServerInfo(ctx context.Context, args any) (mcp_server.ServerInfoOutput, error) {
-	return mcp_server.ServerInfoOutput{
+func (b *stackqlMCPReverseProxyService) ServerInfo(ctx context.Context, args any) (dto.ServerInfoOutput, error) {
+	return dto.ServerInfoOutput{
 		Name:       "Stackql MCP Reverse Proxy Service",
 		Info:       "This is the Stackql MCP Reverse Proxy Service.",
 		IsReadOnly: b.isReadOnly,
@@ -74,7 +75,7 @@ func (b *stackqlMCPReverseProxyService) DBIdentity(ctx context.Context, args any
 	}, nil
 }
 
-func (b *stackqlMCPReverseProxyService) Greet(ctx context.Context, args mcp_server.GreetInput) (string, error) {
+func (b *stackqlMCPReverseProxyService) Greet(ctx context.Context, args dto.GreetInput) (string, error) {
 	return "Hi " + args.Name, nil
 }
 
@@ -180,7 +181,7 @@ func (b *stackqlMCPReverseProxyService) renderQueryResults(query string, format 
 	}
 }
 
-func (b *stackqlMCPReverseProxyService) RunQuery(ctx context.Context, args mcp_server.QueryInput) (string, error) {
+func (b *stackqlMCPReverseProxyService) RunQuery(ctx context.Context, args dto.QueryInput) (string, error) {
 	if args.Format == "" {
 		args.Format = b.getDefaultFormat()
 	}
@@ -202,18 +203,18 @@ func (b *stackqlMCPReverseProxyService) RunQuery(ctx context.Context, args mcp_s
 	}
 }
 
-func (b *stackqlMCPReverseProxyService) RunQueryJSON(ctx context.Context, input mcp_server.QueryJSONInput) ([]map[string]interface{}, error) {
+func (b *stackqlMCPReverseProxyService) RunQueryJSON(ctx context.Context, input dto.QueryJSONInput) ([]map[string]interface{}, error) {
 	return b.query(ctx, input.SQL, input.RowLimit)
 }
 
-// func (b *stackqlMCPReverseProxyService) ListTableResources(ctx context.Context, hI mcp_server.HierarchyInput) ([]string, error) {
+// func (b *stackqlMCPReverseProxyService) ListTableResources(ctx context.Context, hI dto.HierarchyInput) ([]string, error) {
 
 // TODO: implement the remaining methods, using the db connection as sole sql data source
 
 // 	return []string{}, nil
 // }
 
-func (b *stackqlMCPReverseProxyService) ReadTableResource(ctx context.Context, hI mcp_server.HierarchyInput) ([]map[string]interface{}, error) {
+func (b *stackqlMCPReverseProxyService) ReadTableResource(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
 	if hI.Provider == "" || hI.Service == "" || hI.Resource == "" {
 		return nil, fmt.Errorf("provider, service, and resource must be specified")
 	}
@@ -221,7 +222,7 @@ func (b *stackqlMCPReverseProxyService) ReadTableResource(ctx context.Context, h
 	return b.query(ctx, query, hI.RowLimit)
 }
 
-func (b *stackqlMCPReverseProxyService) PromptWriteSafeSelectTool(ctx context.Context, args mcp_server.HierarchyInput) (string, error) {
+func (b *stackqlMCPReverseProxyService) PromptWriteSafeSelectTool(ctx context.Context, args dto.HierarchyInput) (string, error) {
 	return mcp_server.ExplainerPromptWriteSafeSelectTool, nil
 }
 
@@ -229,7 +230,7 @@ func (b *stackqlMCPReverseProxyService) PromptWriteSafeSelectTool(ctx context.Co
 // 	return "stub", nil
 // }
 
-func (b *stackqlMCPReverseProxyService) DescribeTable(ctx context.Context, hI mcp_server.HierarchyInput) (string, error) {
+func (b *stackqlMCPReverseProxyService) DescribeTable(ctx context.Context, hI dto.HierarchyInput) (string, error) {
 	q, qErr := b.interrogator.GetDescribeTable(hI)
 	if qErr != nil {
 		return "", qErr
@@ -237,23 +238,23 @@ func (b *stackqlMCPReverseProxyService) DescribeTable(ctx context.Context, hI mc
 	return b.renderQueryResults(q, hI.Format, hI.RowLimit)
 }
 
-func (b *stackqlMCPReverseProxyService) GetForeignKeys(ctx context.Context, hI mcp_server.HierarchyInput) (string, error) {
+func (b *stackqlMCPReverseProxyService) GetForeignKeys(ctx context.Context, hI dto.HierarchyInput) (string, error) {
 	return b.interrogator.GetForeignKeys(hI)
 }
 
-func (b *stackqlMCPReverseProxyService) FindRelationships(ctx context.Context, hI mcp_server.HierarchyInput) (string, error) {
+func (b *stackqlMCPReverseProxyService) FindRelationships(ctx context.Context, hI dto.HierarchyInput) (string, error) {
 	return b.interrogator.FindRelationships(hI)
 }
 
 func (b *stackqlMCPReverseProxyService) ListProviders(ctx context.Context) (string, error) {
-	q, qErr := b.interrogator.GetShowProviders(mcp_server.HierarchyInput{}, "")
+	q, qErr := b.interrogator.GetShowProviders(dto.HierarchyInput{}, "")
 	if qErr != nil {
 		return "", qErr
 	}
 	return b.renderQueryResults(q, "", unlimitedRowLimit)
 }
 
-func (b *stackqlMCPReverseProxyService) ListServices(ctx context.Context, hI mcp_server.HierarchyInput) (string, error) {
+func (b *stackqlMCPReverseProxyService) ListServices(ctx context.Context, hI dto.HierarchyInput) (string, error) {
 	q, qErr := b.interrogator.GetShowServices(hI, "")
 	if qErr != nil {
 		return "", qErr
@@ -261,7 +262,7 @@ func (b *stackqlMCPReverseProxyService) ListServices(ctx context.Context, hI mcp
 	return b.renderQueryResults(q, hI.Format, hI.RowLimit)
 }
 
-func (b *stackqlMCPReverseProxyService) ListResources(ctx context.Context, hI mcp_server.HierarchyInput) (string, error) {
+func (b *stackqlMCPReverseProxyService) ListResources(ctx context.Context, hI dto.HierarchyInput) (string, error) {
 	q, qErr := b.interrogator.GetShowResources(hI, "")
 	if qErr != nil {
 		return "", qErr
@@ -269,8 +270,8 @@ func (b *stackqlMCPReverseProxyService) ListResources(ctx context.Context, hI mc
 	return b.renderQueryResults(q, hI.Format, hI.RowLimit)
 }
 
-func (b *stackqlMCPReverseProxyService) ListTablesJSON(ctx context.Context, input mcp_server.ListTablesInput) ([]map[string]interface{}, error) {
-	hI := mcp_server.HierarchyInput{}
+func (b *stackqlMCPReverseProxyService) ListTablesJSON(ctx context.Context, input dto.ListTablesInput) ([]map[string]interface{}, error) {
+	hI := dto.HierarchyInput{}
 	likeStr := ""
 	if input.Hierarchy != nil {
 		hI = *input.Hierarchy
@@ -285,15 +286,15 @@ func (b *stackqlMCPReverseProxyService) ListTablesJSON(ctx context.Context, inpu
 	return b.query(ctx, q, input.RowLimit)
 }
 
-func (b *stackqlMCPReverseProxyService) ListTablesJSONPage(ctx context.Context, input mcp_server.ListTablesPageInput) (map[string]interface{}, error) {
+func (b *stackqlMCPReverseProxyService) ListTablesJSONPage(ctx context.Context, input dto.ListTablesPageInput) (map[string]interface{}, error) {
 	return map[string]interface{}{}, nil
 }
 
-func (b *stackqlMCPReverseProxyService) ListTables(ctx context.Context, hI mcp_server.HierarchyInput) (string, error) {
+func (b *stackqlMCPReverseProxyService) ListTables(ctx context.Context, hI dto.HierarchyInput) (string, error) {
 	return b.ListResources(ctx, hI)
 }
 
-func (b *stackqlMCPReverseProxyService) ListMethods(ctx context.Context, hI mcp_server.HierarchyInput) (string, error) {
+func (b *stackqlMCPReverseProxyService) ListMethods(ctx context.Context, hI dto.HierarchyInput) (string, error) {
 	q, qErr := b.interrogator.GetShowMethods(hI)
 	if qErr != nil {
 		return "", qErr

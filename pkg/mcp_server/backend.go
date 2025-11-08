@@ -3,6 +3,8 @@ package mcp_server //nolint:revive // fine for now
 import (
 	"context"
 	"database/sql/driver"
+
+	"github.com/stackql/stackql/pkg/mcp_server/dto"
 )
 
 type Backend interface {
@@ -13,18 +15,18 @@ type Backend interface {
 	// Close gracefully shuts down the backend connection.
 	Close() error
 	// Server and environment info
-	ServerInfo(ctx context.Context, args any) (ServerInfoOutput, error)
+	ServerInfo(ctx context.Context, args any) (dto.ServerInfoOutput, error)
 
 	// Current DB identity details
 	DBIdentity(ctx context.Context, args any) (map[string]any, error)
 
-	Greet(ctx context.Context, args GreetInput) (string, error)
+	Greet(ctx context.Context, args dto.GreetInput) (string, error)
 
 	// Execute a SQL query with typed input (preferred)
-	RunQuery(ctx context.Context, args QueryInput) (string, error)
+	RunQuery(ctx context.Context, args dto.QueryInput) (string, error)
 
 	// Execute a SQL query and return JSON rows with typed input (preferred)
-	RunQueryJSON(ctx context.Context, input QueryJSONInput) ([]map[string]interface{}, error)
+	RunQueryJSON(ctx context.Context, input dto.QueryJSONInput) ([]map[string]interface{}, error)
 
 	// List resource URIs for tables in a schema
 	// ListTableResources(ctx context.Context, hI HierarchyInput) ([]string, error)
@@ -33,37 +35,37 @@ type Backend interface {
 	// ReadTableResource(ctx context.Context, hI HierarchyInput) ([]map[string]interface{}, error)
 
 	// Prompt: guidelines for writing safe SELECT queries
-	PromptWriteSafeSelectTool(ctx context.Context, args HierarchyInput) (string, error)
+	PromptWriteSafeSelectTool(ctx context.Context, args dto.HierarchyInput) (string, error)
 
 	// Prompt: tips for reading EXPLAIN ANALYZE output
 	// PromptExplainPlanTipsTool(ctx context.Context) (string, error)
 
 	// List tables in a schema with optional filters and return JSON rows
-	ListTablesJSON(ctx context.Context, input ListTablesInput) ([]map[string]interface{}, error)
+	ListTablesJSON(ctx context.Context, input dto.ListTablesInput) ([]map[string]interface{}, error)
 
 	// List tables with pagination and filters
-	ListTablesJSONPage(ctx context.Context, input ListTablesPageInput) (map[string]interface{}, error)
+	ListTablesJSONPage(ctx context.Context, input dto.ListTablesPageInput) (map[string]interface{}, error)
 
 	// List all schemas in the database
 	ListProviders(ctx context.Context) (string, error)
 
-	ListServices(ctx context.Context, hI HierarchyInput) (string, error)
+	ListServices(ctx context.Context, hI dto.HierarchyInput) (string, error)
 
-	ListResources(ctx context.Context, hI HierarchyInput) (string, error)
+	ListResources(ctx context.Context, hI dto.HierarchyInput) (string, error)
 
-	ListMethods(ctx context.Context, hI HierarchyInput) (string, error)
+	ListMethods(ctx context.Context, hI dto.HierarchyInput) (string, error)
 
 	// List all tables in a specific schema
 	// ListTables(ctx context.Context, hI HierarchyInput) (string, error)
 
 	// Get detailed information about a table
-	DescribeTable(ctx context.Context, hI HierarchyInput) (string, error)
+	DescribeTable(ctx context.Context, hI dto.HierarchyInput) (string, error)
 
 	// Get foreign key information for a table
-	GetForeignKeys(ctx context.Context, hI HierarchyInput) (string, error)
+	GetForeignKeys(ctx context.Context, hI dto.HierarchyInput) (string, error)
 
 	// Find both explicit and implied relationships for a table
-	FindRelationships(ctx context.Context, hI HierarchyInput) (string, error)
+	FindRelationships(ctx context.Context, hI dto.HierarchyInput) (string, error)
 }
 
 // QueryResult represents the result of a query execution.
