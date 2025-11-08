@@ -302,7 +302,7 @@ MCP HTTPS Server JSON DTO DB Identity
     ${dbident_obj}=    Parse MCP JSON Output    ${dbident.stdout}
     Dictionary Should Contain Key    ${dbident_obj}    identity
 
-MCP HTTPS Server JSON DTO Query V2 JSON
+MCP HTTPS Server JSON DTO Query V3 JSON
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
     ${query_json}=    Run Process
     ...    ${STACKQL_MCP_CLIENT_EXE}
@@ -312,7 +312,7 @@ MCP HTTPS Server JSON DTO Query V2 JSON
     ...    \-\-client\-cfg
     ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
     ...    \-\-exec.action
-    ...    query_v2
+    ...    query_v3
     ...    \-\-exec.args
     ...    {"sql":"show providers;","format":"json"}
     ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-query-v2-json.txt
