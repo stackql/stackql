@@ -44,7 +44,7 @@ func (r *simpleRenderer) RenderAsMarkdown(results []map[string]interface{}) stri
 	headerRow := presentation.NewMarkdownRowFromMap(results[0])
 	sb.WriteString(headerRow.HeaderString() + "\n")
 	sb.WriteString(headerRow.SeparatorString() + "\n")
-	for _, row := range results[1:] {
+	for _, row := range results {
 		markdownRow := presentation.NewMarkdownRowFromMap(row)
 		sb.WriteString(markdownRow.RowString() + "\n")
 	}
