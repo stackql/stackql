@@ -112,7 +112,7 @@ func (pgb *standardPlanGraphBuilder) createInstructionFor(pbi planbuilderinput.P
 	case *sqlparser.Exec:
 		return pgb.handleExec(pbi)
 	case *sqlparser.Explain:
-		return iqlerror.GetStatementNotSupportedError("EXPLAIN")
+		return pgb.handleExplain(pbi)
 	case *sqlparser.Insert:
 		return pgb.handleInsert(pbi)
 	case *sqlparser.NativeQuery:
@@ -167,6 +167,44 @@ func (pgb *standardPlanGraphBuilder) nop(pbi planbuilderinput.PlanBuilderInput) 
 	}
 	err = builder.Build()
 	return err
+}
+
+func (pgb *standardPlanGraphBuilder) handleExplain(pbi planbuilderinput.PlanBuilderInput) error {
+	primitiveGenerator := pgb.rootPrimitiveGenerator
+	explain, _ok := pbi.GetExplain()
+	if !_ok {
+		return fmt.Errorf("could not retrieve explain AST node for statement of type '%T'", pbi.GetStatement())
+	}
+	childPbi, err := planbuilderinput.NewPlanBuilderInput(
+		pbi.GetAnnotatedAST(),
+		pbi.GetHandlerCtx(),
+		explain.Statement,
+		pbi.GetTableExprs(),
+		pbi.GetAssignedAliasedColumns(),
+		pbi.GetAliasedTables(),
+		pbi.GetColRefs(),
+		pbi.GetPlaceholderParams(),
+		pbi.GetTxnCtrlCtrs(),
+	)
+	childPbi.SetReadOnly(true)
+	if err != nil {
+		return err
+	}
+	instructionErr := pgb.createInstructionFor(childPbi)
+	explainMessages := []string{}
+	if instructionErr == nil {
+		explainMessages = append(explainMessages, "Execution plan generated successfully")
+	}
+	genErr := primitiveGenerator.AnalyzeExplain(pbi, explainMessages, instructionErr)
+	if genErr != nil {
+		return genErr
+	}
+	builder := primitiveGenerator.GetPrimitiveComposer().GetBuilder()
+	if builder == nil {
+		return fmt.Errorf("nil explain builder")
+	}
+	buildErr := builder.Build()
+	return buildErr
 }
 
 func setLogic(pbi planbuilderinput.PlanBuilderInput, setExpr *sqlparser.SetExpr) error {

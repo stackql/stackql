@@ -11,6 +11,7 @@ var (
 
 //nolint:revive // acceptable nomenclature
 type PrimitiveGraphHolder interface {
+	Blank() error
 	AddInverseTxnControlCounters(t internaldto.TxnControlCounters)
 	AddTxnControlCounters(t internaldto.TxnControlCounters)
 	ContainsIndirect() bool
@@ -34,8 +35,9 @@ type PrimitiveGraphHolder interface {
 }
 
 type standardPrimitiveGraphHolder struct {
-	pg  PrimitiveGraph
-	ipg PrimitiveGraph
+	concurrencyLimit int
+	pg               PrimitiveGraph
+	ipg              PrimitiveGraph
 }
 
 func (pgh *standardPrimitiveGraphHolder) GetPrimitiveGraph() PrimitiveGraph {
@@ -122,7 +124,14 @@ func NewPrimitiveGraphHolder(concurrencyLimit int) PrimitiveGraphHolder {
 	pg := newPrimitiveGraph(concurrencyLimit)
 	ipg := newSequentialPrimitiveGraph(concurrencyLimit)
 	return &standardPrimitiveGraphHolder{
-		pg:  pg,
-		ipg: ipg,
+		concurrencyLimit: concurrencyLimit,
+		pg:               pg,
+		ipg:              ipg,
 	}
+}
+
+func (pgh *standardPrimitiveGraphHolder) Blank() error {
+	pgh.pg = newPrimitiveGraph(pgh.concurrencyLimit)
+	pgh.ipg = newSequentialPrimitiveGraph(pgh.concurrencyLimit)
+	return nil
 }

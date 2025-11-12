@@ -34,6 +34,7 @@ type PrimitiveGenerator interface {
 	AddChildPrimitiveGenerator(ast sqlparser.SQLNode, leaf symtab.SymTab) PrimitiveGenerator
 	AnalyzeInsert(pbi planbuilderinput.PlanBuilderInput) error
 	AnalyzeNop(pbi planbuilderinput.PlanBuilderInput) error
+	AnalyzeExplain(pbi planbuilderinput.PlanBuilderInput, messages []string, instructionErr error) error
 	AnalyzeUpdate(pbi planbuilderinput.PlanBuilderInput) error
 	AnalyzePGInternal(pbi planbuilderinput.PlanBuilderInput) error
 	AnalyzeRegistry(pbi planbuilderinput.PlanBuilderInput) error

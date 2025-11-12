@@ -38,7 +38,7 @@ func (pb *standardPlanBuilder) BuildUndoPlanFromContext(_ handler.HandlerContext
 	return nil, nil
 }
 
-//nolint:funlen,gocognit,errcheck // no big deal
+//nolint:funlen,gocognit,errcheck,gocyclo,cyclop // no big deal
 func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerContext) (plan.Plan, error) {
 	defer handlerCtx.GetGarbageCollector().Close()
 	tcc, err := internaldto.NewTxnControlCounters(handlerCtx.GetTxnCounterMgr())
@@ -161,6 +161,14 @@ func (pb *standardPlanBuilder) BuildPlanFromContext(handlerCtx handler.HandlerCo
 		if createInstructionError != nil {
 			return nil, createInstructionError
 		}
+	}
+
+	//nolint:gocritic // prefer switch
+	switch statement.(type) {
+	case *sqlparser.Explain:
+		// explain plans are never cacheable and always readonly
+		qPlan.SetCacheable(false)
+		qPlan.SetReadOnly(true)
 	}
 
 	if pGBuilder.getPlanGraphHolder().ContainsIndirect() {

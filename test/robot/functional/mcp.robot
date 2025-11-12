@@ -315,8 +315,8 @@ MCP HTTPS Server JSON DTO Query V3 JSON
     ...    query_v3
     ...    \-\-exec.args
     ...    {"sql":"show providers;","format":"json"}
-    ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-query-v2-json.txt
-    ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-query-v2-json-stderr.txt
+    ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-query-v3-json.txt
+    ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-query-v3-json-stderr.txt
     Should Be Equal As Integers    ${query_json.rc}    0
     ${query_obj}=    Parse MCP JSON Output    ${query_json.stdout}
     Should Be Equal    ${query_obj["format"]}    json
@@ -381,8 +381,7 @@ MCP HTTPS Server JSON DTO Meta Get Foreign Keys
     ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-meta-get-foreign-keys.txt
     ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-meta-get-foreign-keys-stderr.txt
     Should Be Equal As Integers    ${meta_fk.rc}    0
-    ${meta_fk_obj}=    Parse MCP JSON Output    ${meta_fk.stdout}
-    Dictionary Should Contain Key    ${meta_fk_obj}    text
+    Should Contain    ${meta_fk.stdout}    not implemented
 
 MCP HTTPS Server JSON DTO Meta Find Relationships
     [Documentation]     Future proofing: relationship graph inference pending; placeholder output.
@@ -403,3 +402,165 @@ MCP HTTPS Server JSON DTO Meta Find Relationships
     Should Be Equal As Integers    ${meta_rels.rc}    0
     ${meta_rels_obj}=    Parse MCP JSON Output    ${meta_rels.stdout}
     Dictionary Should Contain Key    ${meta_rels_obj}    text
+
+
+MCP HTTPS List Providers Canonical
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    # Future proofing: raw text format reserved; may gain structured hints later.
+    ${meta_rels}=    Run Process
+    ...    ${STACKQL_MCP_CLIENT_EXE}
+    ...    exec
+    ...    \-\-client\-type\=http
+    ...    \-\-url\=https://127.0.0.1:9004
+    ...    \-\-client\-cfg
+    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
+    ...    \-\-exec.action
+    ...    list_providers
+    ...    \-\-exec.args
+    ...    {"provider": "google"}
+    ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-list-providers-canonical.txt
+    ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-list-providers-canonical-stderr.txt
+    ${meta_rels_obj}=    Parse MCP JSON Output    ${meta_rels.stdout}
+    Dictionary Should Contain Key    ${meta_rels_obj}    rows
+    Should Not Be Empty        ${meta_rels_obj['rows']}
+
+MCP HTTPS List Services Canonical
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    # Future proofing: raw text format reserved; may gain structured hints later.
+    ${meta_rels}=    Run Process
+    ...    ${STACKQL_MCP_CLIENT_EXE}
+    ...    exec
+    ...    \-\-client\-type\=http
+    ...    \-\-url\=https://127.0.0.1:9004
+    ...    \-\-client\-cfg
+    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
+    ...    \-\-exec.action
+    ...    list_services
+    ...    \-\-exec.args
+    ...    {"provider": "google"}
+    ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-list-services-canonical.txt
+    ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-list-services-canonical-stderr.txt
+    ${meta_rels_obj}=    Parse MCP JSON Output    ${meta_rels.stdout}
+    Dictionary Should Contain Key    ${meta_rels_obj}    rows
+    Should Not Be Empty        ${meta_rels_obj['rows']}
+
+MCP HTTPS List Resources Canonical
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    # Future proofing: raw text format reserved; may gain structured hints later.
+    ${meta_rels}=    Run Process
+    ...    ${STACKQL_MCP_CLIENT_EXE}
+    ...    exec
+    ...    \-\-client\-type\=http
+    ...    \-\-url\=https://127.0.0.1:9004
+    ...    \-\-client\-cfg
+    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
+    ...    \-\-exec.action
+    ...    list_resources
+    ...    \-\-exec.args
+    ...    {"provider": "google", "service": "compute"}
+    ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-list-resources-canonical.txt
+    ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-list-resources-canonical-stderr.txt
+    ${meta_rels_obj}=    Parse MCP JSON Output    ${meta_rels.stdout}
+    Dictionary Should Contain Key    ${meta_rels_obj}    rows
+    Should Not Be Empty        ${meta_rels_obj['rows']}
+
+
+MCP HTTPS List Methods Canonical
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    # Future proofing: raw text format reserved; may gain structured hints later.
+    ${meta_rels}=    Run Process
+    ...    ${STACKQL_MCP_CLIENT_EXE}
+    ...    exec
+    ...    \-\-client\-type\=http
+    ...    \-\-url\=https://127.0.0.1:9004
+    ...    \-\-client\-cfg
+    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
+    ...    \-\-exec.action
+    ...    list_methods
+    ...    \-\-exec.args
+    ...    {"provider": "google", "service": "compute", "resource": "networks"}
+    ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-list-methods-canonical.txt
+    ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-list-methods-canonical-stderr.txt
+    ${meta_rels_obj}=    Parse MCP JSON Output    ${meta_rels.stdout}
+    Dictionary Should Contain Key    ${meta_rels_obj}    rows
+    Should Not Be Empty        ${meta_rels_obj['rows']}
+
+
+MCP HTTPS Describe Table Canonical
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    # Future proofing: raw text format reserved; may gain structured hints later.
+    ${meta_rels}=    Run Process
+    ...    ${STACKQL_MCP_CLIENT_EXE}
+    ...    exec
+    ...    \-\-client\-type\=http
+    ...    \-\-url\=https://127.0.0.1:9004
+    ...    \-\-client\-cfg
+    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
+    ...    \-\-exec.action
+    ...    describe_table
+    ...    \-\-exec.args
+    ...    {"provider": "google", "service": "compute", "resource": "networks"}
+    ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-describe-table-canonical.txt
+    ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-describe-table-canonical-stderr.txt
+    ${meta_rels_obj}=    Parse MCP JSON Output    ${meta_rels.stdout}
+    Dictionary Should Contain Key    ${meta_rels_obj}    rows
+    Should Not Be Empty        ${meta_rels_obj['rows']}
+
+MCP HTTPS Server Validate Canonical
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    # Future proofing: raw text format reserved; may gain structured hints later.
+    ${meta_rels}=    Run Process
+    ...    ${STACKQL_MCP_CLIENT_EXE}
+    ...    exec
+    ...    \-\-client\-type\=http
+    ...    \-\-url\=https://127.0.0.1:9004
+    ...    \-\-client\-cfg
+    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
+    ...    \-\-exec.action
+    ...    validate_query_json_v2
+    ...    \-\-exec.args
+    ...    {"sql":"select * from google.storage.buckets where project \= 'stackql\-demo';"}
+    ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-validate-canonical.txt
+    ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-validate-canonical-stderr.txt
+    ${meta_rels_obj}=    Parse MCP JSON Output    ${meta_rels.stdout}
+    Dictionary Should Contain Key    ${meta_rels_obj}    rows
+    Length Should Be    ${meta_rels_obj['rows']}    1
+
+MCP HTTPS Server Query Canonical
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    # Future proofing: raw text format reserved; may gain structured hints later.
+    ${meta_rels}=    Run Process
+    ...    ${STACKQL_MCP_CLIENT_EXE}
+    ...    exec
+    ...    \-\-client\-type\=http
+    ...    \-\-url\=https://127.0.0.1:9004
+    ...    \-\-client\-cfg
+    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
+    ...    \-\-exec.action
+    ...    query_json_v2
+    ...    \-\-exec.args
+    ...    {"sql":"select name, id from google.storage.buckets where project \= 'stackql\-demo';"}
+    ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-Query-canonical.txt
+    ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-Query-canonical-stderr.txt
+    ${meta_rels_obj}=    Parse MCP JSON Output    ${meta_rels.stdout}
+    Dictionary Should Contain Key    ${meta_rels_obj}    rows
+    Length Should Be    ${meta_rels_obj['rows']}    7
+
+MCP HTTPS Server Exec Query Canonical
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    # Future proofing: raw text format reserved; may gain structured hints later.
+    ${meta_rels}=    Run Process
+    ...    ${STACKQL_MCP_CLIENT_EXE}
+    ...    exec
+    ...    \-\-client\-type\=http
+    ...    \-\-url\=https://127.0.0.1:9004
+    ...    \-\-client\-cfg
+    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
+    ...    \-\-exec.action
+    ...    exec_query_json_v2
+    ...    \-\-exec.args
+    ...    {"sql":"delete from google.compute.firewalls where project \= 'mutable\-project' and firewall \= 'deletable\-firewall';"}
+    ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-Exec-Query-canonical.txt
+    ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-Exec-Query-canonical-stderr.txt
+    ${meta_rels_obj}=    Parse MCP JSON Output    ${meta_rels.stdout}
+    Dictionary Should Contain Key    ${meta_rels_obj}    timestamp

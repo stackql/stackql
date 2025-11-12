@@ -68,7 +68,7 @@ func (pb *standardPrimitiveGenerator) AnalyzeStatement(
 	case *sqlparser.Exec:
 		return pb.analyzeExec(pbi)
 	case *sqlparser.Explain:
-		return iqlerror.GetStatementNotSupportedError("EXPLAIN")
+		return fmt.Errorf("direct access to %s analysis not supported", "EXPLAIN")
 	case *sqlparser.Insert:
 		return pb.AnalyzeInsert(pbi)
 	case *sqlparser.OtherRead, *sqlparser.OtherAdmin:
@@ -677,6 +677,26 @@ func (pb *standardPrimitiveGenerator) AnalyzeNop(
 	return nil
 }
 
+func (pb *standardPrimitiveGenerator) AnalyzeExplain(
+	pbi planbuilderinput.PlanBuilderInput,
+	messages []string, // future proofing free form messages
+	instructionErr error,
+) error {
+	handlerCtx := pbi.GetHandlerCtx()
+	_ = pb.PrimitiveComposer.GetGraphHolder().Blank()
+	pb.PrimitiveComposer.SetBuilder(
+		primitivebuilder.NewExplainBuilder(
+			pb.PrimitiveComposer.GetGraphHolder(),
+			pb.PrimitiveComposer.GetTxnCtrlCtrs(),
+			handlerCtx,
+			handlerCtx.GetSQLEngine(),
+			messages,
+			instructionErr,
+		),
+	)
+	return nil
+}
+
 func (pb *standardPrimitiveGenerator) analyzeExec(pbi planbuilderinput.PlanBuilderInput) error {
 	handlerCtx := pbi.GetHandlerCtx()
 	annotatedAST := pbi.GetAnnotatedAST()
@@ -871,6 +891,12 @@ func (pb *standardPrimitiveGenerator) analyzeSchemaVsMap(
 func (pb *standardPrimitiveGenerator) AnalyzePGInternal(
 	pbi planbuilderinput.PlanBuilderInput) error {
 	handlerCtx := pbi.GetHandlerCtx()
+	//nolint:gocritic // prefer switch for now
+	switch pbi.GetStatement().(type) {
+	case *sqlparser.Explain:
+		return pb.AnalyzeExplain(pbi, pbi.GetMessages(), nil)
+	}
+	// pass through
 	if backendQueryType, ok := handlerCtx.GetDBMSInternalRouter().CanRoute(pbi.GetStatement()); ok {
 		if backendQueryType == constants.BackendQuery {
 			bldr := primitivebuilder.NewRawNativeSelect(
