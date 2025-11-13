@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -77,6 +78,38 @@ func (b *stackqlMCPReverseProxyService) DBIdentity(ctx context.Context, args any
 
 func (b *stackqlMCPReverseProxyService) Greet(ctx context.Context, args dto.GreetInput) (string, error) {
 	return "Hi " + args.Name, nil
+}
+
+func (b *stackqlMCPReverseProxyService) ExecQuery(ctx context.Context, query string) (map[string]any, error) {
+	return b.execQuery(ctx, query)
+}
+
+func (b *stackqlMCPReverseProxyService) ValidateQuery(ctx context.Context, query string) ([]map[string]any, error) {
+	explainQuery := fmt.Sprintf("EXPLAIN %s", query)
+	rows, err := b.query(ctx, explainQuery, unlimitedRowLimit)
+	if err != nil {
+		return nil, err
+	}
+	return rows, nil
+}
+
+func (b *stackqlMCPReverseProxyService) execQuery(ctx context.Context, query string) (map[string]any, error) {
+	r, sqlErr := b.db.Exec(query)
+	if sqlErr != nil {
+		return nil, sqlErr
+	}
+	rowsAffected, rowsAffectedErr := r.RowsAffected()
+	lastInsertId, lastInsertIdErr := r.LastInsertId()
+	rv := map[string]any{}
+	if rowsAffectedErr == nil {
+		rv["rows_affected"] = rowsAffected
+	}
+	if lastInsertIdErr == nil {
+		rv["last_insert_id"] = lastInsertId
+	}
+	oneLinerOutput := time.Now().Format("2006-01-02T15:04:05-07:00 MST")
+	rv["timestamp"] = oneLinerOutput
+	return rv, nil
 }
 
 //nolint:gocognit,funlen // acceptable
@@ -230,44 +263,44 @@ func (b *stackqlMCPReverseProxyService) PromptWriteSafeSelectTool(ctx context.Co
 // 	return "stub", nil
 // }
 
-func (b *stackqlMCPReverseProxyService) DescribeTable(ctx context.Context, hI dto.HierarchyInput) (string, error) {
+func (b *stackqlMCPReverseProxyService) DescribeTable(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
 	q, qErr := b.interrogator.GetDescribeTable(hI)
 	if qErr != nil {
-		return "", qErr
+		return nil, qErr
 	}
-	return b.renderQueryResults(q, hI.Format, hI.RowLimit)
+	return b.query(ctx, q, hI.RowLimit)
 }
 
-func (b *stackqlMCPReverseProxyService) GetForeignKeys(ctx context.Context, hI dto.HierarchyInput) (string, error) {
-	return b.interrogator.GetForeignKeys(hI)
+func (b *stackqlMCPReverseProxyService) GetForeignKeys(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
+	return nil, fmt.Errorf("GetForeignKeys not implemented")
 }
 
 func (b *stackqlMCPReverseProxyService) FindRelationships(ctx context.Context, hI dto.HierarchyInput) (string, error) {
 	return b.interrogator.FindRelationships(hI)
 }
 
-func (b *stackqlMCPReverseProxyService) ListProviders(ctx context.Context) (string, error) {
+func (b *stackqlMCPReverseProxyService) ListProviders(ctx context.Context) ([]map[string]interface{}, error) {
 	q, qErr := b.interrogator.GetShowProviders(dto.HierarchyInput{}, "")
 	if qErr != nil {
-		return "", qErr
+		return nil, qErr
 	}
-	return b.renderQueryResults(q, "", unlimitedRowLimit)
+	return b.query(ctx, q, unlimitedRowLimit)
 }
 
-func (b *stackqlMCPReverseProxyService) ListServices(ctx context.Context, hI dto.HierarchyInput) (string, error) {
+func (b *stackqlMCPReverseProxyService) ListServices(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
 	q, qErr := b.interrogator.GetShowServices(hI, "")
 	if qErr != nil {
-		return "", qErr
+		return nil, qErr
 	}
-	return b.renderQueryResults(q, hI.Format, hI.RowLimit)
+	return b.query(ctx, q, hI.RowLimit)
 }
 
-func (b *stackqlMCPReverseProxyService) ListResources(ctx context.Context, hI dto.HierarchyInput) (string, error) {
+func (b *stackqlMCPReverseProxyService) ListResources(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
 	q, qErr := b.interrogator.GetShowResources(hI, "")
 	if qErr != nil {
-		return "", qErr
+		return nil, qErr
 	}
-	return b.renderQueryResults(q, hI.Format, hI.RowLimit)
+	return b.query(ctx, q, hI.RowLimit)
 }
 
 func (b *stackqlMCPReverseProxyService) ListTablesJSON(ctx context.Context, input dto.ListTablesInput) ([]map[string]interface{}, error) {
@@ -290,14 +323,14 @@ func (b *stackqlMCPReverseProxyService) ListTablesJSONPage(ctx context.Context, 
 	return map[string]interface{}{}, nil
 }
 
-func (b *stackqlMCPReverseProxyService) ListTables(ctx context.Context, hI dto.HierarchyInput) (string, error) {
+func (b *stackqlMCPReverseProxyService) ListTables(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
 	return b.ListResources(ctx, hI)
 }
 
-func (b *stackqlMCPReverseProxyService) ListMethods(ctx context.Context, hI dto.HierarchyInput) (string, error) {
+func (b *stackqlMCPReverseProxyService) ListMethods(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
 	q, qErr := b.interrogator.GetShowMethods(hI)
 	if qErr != nil {
-		return "", qErr
+		return nil, qErr
 	}
-	return b.renderQueryResults(q, hI.Format, hI.RowLimit)
+	return b.query(ctx, q, hI.RowLimit)
 }

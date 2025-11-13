@@ -52,6 +52,10 @@ func (b *ExampleBackend) RunQueryJSON(ctx context.Context, input dto.QueryJSONIn
 	return []map[string]interface{}{}, nil
 }
 
+func (b *ExampleBackend) ValidateQuery(ctx context.Context, query string) ([]map[string]any, error) {
+	return []map[string]any{}, nil
+}
+
 // func (b *ExampleBackend) ListTableResources(ctx context.Context, hI dto.HierarchyInput) ([]string, error) {
 // 	return []string{}, nil
 // }
@@ -76,36 +80,40 @@ func (b *ExampleBackend) ListTablesJSONPage(ctx context.Context, input dto.ListT
 	return map[string]interface{}{}, nil
 }
 
-func (b *ExampleBackend) ListTables(ctx context.Context, hI dto.HierarchyInput) (string, error) {
-	return "stub", nil
+func (b *ExampleBackend) ListTables(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
+	return []map[string]interface{}{}, nil
 }
 
-func (b *ExampleBackend) ListMethods(ctx context.Context, hI dto.HierarchyInput) (string, error) {
-	return "stub", nil
+func (b *ExampleBackend) ListMethods(ctx context.Context, hI dto.HierarchyInput) ([]map[string]any, error) {
+	return []map[string]any{}, nil
 }
 
-func (b *ExampleBackend) DescribeTable(ctx context.Context, hI dto.HierarchyInput) (string, error) {
-	return "stub", nil
+func (b *ExampleBackend) DescribeTable(ctx context.Context, hI dto.HierarchyInput) ([]map[string]any, error) {
+	return []map[string]any{}, nil
 }
 
-func (b *ExampleBackend) GetForeignKeys(ctx context.Context, hI dto.HierarchyInput) (string, error) {
-	return ExplainerForeignKeyStackql, nil
+func (b *ExampleBackend) GetForeignKeys(ctx context.Context, hI dto.HierarchyInput) ([]map[string]any, error) {
+	return []map[string]any{}, nil
 }
 
 func (b *ExampleBackend) FindRelationships(ctx context.Context, hI dto.HierarchyInput) (string, error) {
 	return ExplainerFindRelationships, nil
 }
 
-func (b *ExampleBackend) ListProviders(ctx context.Context) (string, error) {
-	return "stub", nil
+func (b *ExampleBackend) ExecQuery(ctx context.Context, query string) (map[string]any, error) {
+	return map[string]any{}, nil
 }
 
-func (b *ExampleBackend) ListServices(ctx context.Context, hI dto.HierarchyInput) (string, error) {
-	return "stub", nil
+func (b *ExampleBackend) ListProviders(ctx context.Context) ([]map[string]any, error) {
+	return []map[string]any{}, nil
 }
 
-func (b *ExampleBackend) ListResources(ctx context.Context, hI dto.HierarchyInput) (string, error) {
-	return "stub", nil
+func (b *ExampleBackend) ListServices(ctx context.Context, hI dto.HierarchyInput) ([]map[string]any, error) {
+	return []map[string]any{}, nil
+}
+
+func (b *ExampleBackend) ListResources(ctx context.Context, hI dto.HierarchyInput) ([]map[string]any, error) {
+	return []map[string]any{}, nil
 }
 
 // NewExampleBackend creates a new example backend instance.

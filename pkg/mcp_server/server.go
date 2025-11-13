@@ -111,7 +111,7 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 	}
 
 	server := mcp.NewServer(
-		&mcp.Implementation{Name: "stackql", Version: "v0.1.0"},
+		&mcp.Implementation{Name: "stackql", Version: "v0.1.1"},
 		nil,
 	)
 	mcp.AddTool(
@@ -223,6 +223,52 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
 		},
 	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:        "validate_query_json_v2",
+			Description: "Validate a SQL SELECT query ahead of time and return a JSON object expressing success, or else an error.  Supply the query exactly as you would execute it, no qualifying keywords.  Only works for SELECT at this time.",
+		},
+		func(ctx context.Context, req *mcp.CallToolRequest, args dto.QueryJSONInput) (*mcp.CallToolResult, any, error) {
+			arr, err := backend.ValidateQuery(ctx, args.SQL)
+			if err != nil {
+				return nil, nil, err
+			}
+			out := dto.QueryResultDTO{Rows: arr, RowCount: len(arr), Format: "json"}
+			bytesOut, _ := json.Marshal(out)
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
+		},
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:        "exec_query_json_v2",
+			Description: "Exec query pattern; for non-read operations. Tread carefully!!! These are almost always mutations!  Execute a SQL query and return an optional JSON object, describing the effect(s).",
+		},
+		func(ctx context.Context, req *mcp.CallToolRequest, args dto.QueryJSONInput) (*mcp.CallToolResult, any, error) {
+			res, err := backend.ExecQuery(ctx, args.SQL)
+			if err != nil {
+				return nil, nil, err
+			}
+			bytesOut, _ := json.Marshal(res)
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, res, nil
+		},
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:        "query_validate_json_v2",
+			Description: "Run an ahead of time (AOT) check for query tractability.",
+		},
+		func(ctx context.Context, req *mcp.CallToolRequest, args dto.QueryJSONInput) (*mcp.CallToolResult, any, error) {
+			res, err := backend.ExecQuery(ctx, args.SQL)
+			if err != nil {
+				return nil, nil, err
+			}
+			bytesOut, _ := json.Marshal(res)
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, res, nil
+		},
+	)
 
 	mcp.AddTool(
 		server,
@@ -310,14 +356,14 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		server,
 		&mcp.Tool{
 			Name:        "list_providers",
-			Description: "List all schemas/providers in the database.",
+			Description: "List available providers.  This is the top level of the stackql hierarchy.",
 		},
 		func(ctx context.Context, req *mcp.CallToolRequest, _ any) (*mcp.CallToolResult, any, error) {
 			result, err := backend.ListProviders(ctx)
 			if err != nil {
 				return nil, nil, err
 			}
-			out := dto.SimpleTextDTO{Text: result}
+			out := dto.QueryResultDTO{Rows: result, RowCount: len(result), Format: "json"}
 			bytesOut, _ := json.Marshal(out)
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
 		},
@@ -327,14 +373,14 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		server,
 		&mcp.Tool{
 			Name:        "list_services",
-			Description: "List services for a provider.",
+			Description: "List services. **must** supply <provider>.",
 		},
 		func(ctx context.Context, req *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, any, error) {
 			result, err := backend.ListServices(ctx, args)
 			if err != nil {
 				return nil, nil, err
 			}
-			out := dto.SimpleTextDTO{Text: result}
+			out := dto.QueryResultDTO{Rows: result, RowCount: len(result), Format: "json"}
 			bytesOut, _ := json.Marshal(out)
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
 		},
@@ -344,14 +390,14 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		server,
 		&mcp.Tool{
 			Name:        "list_resources",
-			Description: "List resources for a service.",
+			Description: "List available resources. **must** supply <provider>, <service>.",
 		},
 		func(ctx context.Context, req *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, any, error) {
 			result, err := backend.ListResources(ctx, args)
 			if err != nil {
 				return nil, nil, err
 			}
-			out := dto.SimpleTextDTO{Text: result}
+			out := dto.QueryResultDTO{Rows: result, RowCount: len(result), Format: "json"}
 			bytesOut, _ := json.Marshal(out)
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
 		},
@@ -361,14 +407,14 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		server,
 		&mcp.Tool{
 			Name:        "list_methods",
-			Description: "List methods for a resource.",
+			Description: "List access methods for a resource.  Interrogating this is almost compulsory before executing a CRUD query; you will need to infer requireed WHERE parameters. **must** supply <provider>, <service>, <resource>.",
 		},
 		func(ctx context.Context, req *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, any, error) {
 			result, err := backend.ListMethods(ctx, args)
 			if err != nil {
 				return nil, nil, err
 			}
-			out := dto.SimpleTextDTO{Text: result}
+			out := dto.QueryResultDTO{Rows: result, RowCount: len(result), Format: "json"}
 			bytesOut, _ := json.Marshal(out)
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
 		},
@@ -385,7 +431,7 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 			if err != nil {
 				return nil, nil, err
 			}
-			out := dto.SimpleTextDTO{Text: result}
+			out := dto.QueryResultDTO{Rows: result, RowCount: len(result), Format: "json"}
 			bytesOut, _ := json.Marshal(out)
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
 		},
@@ -402,7 +448,7 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 			if err != nil {
 				return nil, nil, err
 			}
-			out := dto.SimpleTextDTO{Text: result}
+			out := dto.QueryResultDTO{Rows: result, RowCount: len(result), Format: "json"}
 			bytesOut, _ := json.Marshal(out)
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
 		},
@@ -543,78 +589,6 @@ func registerNamespacedTools(server *mcp.Server, backend Backend, logger *logrus
 		},
 	)
 
-	// meta.list_providers
-	mcp.AddTool(
-		server,
-		&mcp.Tool{
-			Name:        "meta.list_providers",
-			Description: "Namespaced: List all providers (schemas).",
-		},
-		func(ctx context.Context, req *mcp.CallToolRequest, _ any) (*mcp.CallToolResult, any, error) {
-			result, err := backend.ListProviders(ctx)
-			if err != nil {
-				return nil, nil, err
-			}
-			out := dto.SimpleTextDTO{Text: result}
-			bytesOut, _ := json.Marshal(out)
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
-		},
-	)
-
-	// meta.list_services
-	mcp.AddTool(
-		server,
-		&mcp.Tool{
-			Name:        "meta.list_services",
-			Description: "Namespaced: List services for a provider.",
-		},
-		func(ctx context.Context, req *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, any, error) {
-			result, err := backend.ListServices(ctx, args)
-			if err != nil {
-				return nil, nil, err
-			}
-			out := dto.SimpleTextDTO{Text: result}
-			bytesOut, _ := json.Marshal(out)
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
-		},
-	)
-
-	// meta.list_resources
-	mcp.AddTool(
-		server,
-		&mcp.Tool{
-			Name:        "meta.list_resources",
-			Description: "Namespaced: List resources for a service.",
-		},
-		func(ctx context.Context, req *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, any, error) {
-			result, err := backend.ListResources(ctx, args)
-			if err != nil {
-				return nil, nil, err
-			}
-			out := dto.SimpleTextDTO{Text: result}
-			bytesOut, _ := json.Marshal(out)
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
-		},
-	)
-
-	// meta.list_methods
-	mcp.AddTool(
-		server,
-		&mcp.Tool{
-			Name:        "meta.list_methods",
-			Description: "Namespaced: List methods for a resource.",
-		},
-		func(ctx context.Context, req *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, any, error) {
-			result, err := backend.ListMethods(ctx, args)
-			if err != nil {
-				return nil, nil, err
-			}
-			out := dto.SimpleTextDTO{Text: result}
-			bytesOut, _ := json.Marshal(out)
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
-		},
-	)
-
 	mcp.AddTool(
 		server,
 		&mcp.Tool{
@@ -654,19 +628,19 @@ func registerNamespacedTools(server *mcp.Server, backend Backend, logger *logrus
 		},
 	)
 
-	// meta.describe_table
+	// meta_describe_table
 	mcp.AddTool(
 		server,
 		&mcp.Tool{
-			Name:        "meta.describe_table",
-			Description: "Namespaced: Describe a table.",
+			Name:        "meta_describe_table",
+			Description: "Describe a stackql relation.  This publishes the bullk of the columns returned from a SELECT.",
 		},
 		func(ctx context.Context, req *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, any, error) {
 			result, err := backend.DescribeTable(ctx, args)
 			if err != nil {
 				return nil, nil, err
 			}
-			out := dto.SimpleTextDTO{Text: result}
+			out := dto.QueryResultDTO{Rows: result, RowCount: len(result), Format: "json"}
 			bytesOut, _ := json.Marshal(out)
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
 		},
@@ -684,7 +658,7 @@ func registerNamespacedTools(server *mcp.Server, backend Backend, logger *logrus
 			if err != nil {
 				return nil, nil, err
 			}
-			out := dto.SimpleTextDTO{Text: result}
+			out := dto.QueryResultDTO{Rows: result, RowCount: len(result), Format: "json"}
 			bytesOut, _ := json.Marshal(out)
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
 		},

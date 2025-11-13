@@ -25,6 +25,12 @@ type Backend interface {
 	// Execute a SQL query with typed input (preferred)
 	RunQuery(ctx context.Context, args dto.QueryInput) (string, error)
 
+	// Execute a SQL query that does not return rows
+	ExecQuery(ctx context.Context, query string) (map[string]any, error)
+
+	// Execute a SQL query that does not return rows
+	ValidateQuery(ctx context.Context, query string) ([]map[string]any, error)
+
 	// Execute a SQL query and return JSON rows with typed input (preferred)
 	RunQueryJSON(ctx context.Context, input dto.QueryJSONInput) ([]map[string]interface{}, error)
 
@@ -47,22 +53,20 @@ type Backend interface {
 	ListTablesJSONPage(ctx context.Context, input dto.ListTablesPageInput) (map[string]interface{}, error)
 
 	// List all schemas in the database
-	ListProviders(ctx context.Context) (string, error)
+	ListProviders(ctx context.Context) ([]map[string]any, error)
 
-	ListServices(ctx context.Context, hI dto.HierarchyInput) (string, error)
+	ListServices(ctx context.Context, hI dto.HierarchyInput) ([]map[string]any, error)
 
-	ListResources(ctx context.Context, hI dto.HierarchyInput) (string, error)
-
-	ListMethods(ctx context.Context, hI dto.HierarchyInput) (string, error)
-
+	ListResources(ctx context.Context, hI dto.HierarchyInput) ([]map[string]any, error)
+	ListMethods(ctx context.Context, hI dto.HierarchyInput) ([]map[string]any, error)
 	// List all tables in a specific schema
 	// ListTables(ctx context.Context, hI HierarchyInput) (string, error)
 
 	// Get detailed information about a table
-	DescribeTable(ctx context.Context, hI dto.HierarchyInput) (string, error)
+	DescribeTable(ctx context.Context, hI dto.HierarchyInput) ([]map[string]any, error)
 
 	// Get foreign key information for a table
-	GetForeignKeys(ctx context.Context, hI dto.HierarchyInput) (string, error)
+	GetForeignKeys(ctx context.Context, hI dto.HierarchyInput) ([]map[string]any, error)
 
 	// Find both explicit and implied relationships for a table
 	FindRelationships(ctx context.Context, hI dto.HierarchyInput) (string, error)

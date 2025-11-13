@@ -219,6 +219,12 @@ func (sp *standardInitialPasses) initialPasses(
 		return err
 	}
 	ast := result.AST
+	//nolint:gocritic // prefer switch
+	switch node := ast.(type) {
+	case *sqlparser.Explain:
+		ast = node.Statement
+	}
+
 	annotatedAST, err := annotatedast.NewAnnotatedAst(sp.parentAnnotatedAST, ast)
 	if err != nil {
 		return err
@@ -235,6 +241,8 @@ func (sp *standardInitialPasses) initialPasses(
 		switch node := subjectAST.(type) {
 		case *sqlparser.DDL:
 			subjectAST = node.SelectStatement
+			// case *sqlparser.Explain:
+			// 	subjectAST = node.Statement
 		}
 		pbi, pbiErr := planbuilderinput.NewPlanBuilderInput(
 			annotatedAST,
@@ -326,7 +334,7 @@ func (sp *standardInitialPasses) initialPasses(
 	pbi, err := planbuilderinput.NewPlanBuilderInput(
 		annotatedAST,
 		handlerCtx,
-		ast,
+		result.AST,
 		threeToFiveAgg.GetTables(),
 		threeToFiveAgg.GetAliasedColumns(),
 		threeToFiveAgg.GetAliasMap(),

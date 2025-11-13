@@ -9013,4 +9013,48 @@ Delete Await Returning Generates Error
     ...    ${EMPTY}
     ...    ${outputErrStr}
     ...    stdout=${CURDIR}/tmp/Delete-Await-Returning-Generates-Error.tmp
-    ...    stderr=${CURDIR}/tmp/Delete-Await-Returning-Generates-Error-stderr.tmp
+    ...    stderr=${CURDIR}/tmp/Delete-Await-Returning-Generates-Error-stderr.tmp 
+
+Explain Select Repeatably Generates Messagez
+    [Documentation]    This is fairly crude but useful in particular for MCP functions.
+    ${inputStr} =    Catenate
+    ...    explain select * from google.storage.buckets where project = 'stackql-demo';
+    ...    explain select * from google.storage.buckets where project = 'stackql-demo';
+    ...    explain select * from aws.ec2.instances where region = 'ap-southeast-2';
+    ...    explain select * from aws.ec2.instances where region = 'ap-southeast-2';
+    ...    explain select 1 as foo;
+    ...    explain select 1 as foo;
+    ...    explain select * from google.storage.buckets;
+    ...    explain select * from google.storage.buckets;
+    ...    explain select * from google.storage.buckets where project = 'stackql-demo';
+    ...    explain select * from google.storage.buckets where project = 'stackql-demo';
+    ${outputErrStrNative} =    Catenate    SEPARATOR=\n
+    ...    Execution plan generated successfully
+    ...    OK
+    ...    Execution plan generated successfully
+    ...    OK
+    ...    Execution plan generated successfully
+    ...    OK
+    ...    Execution plan generated successfully
+    ...    OK
+    ...    OK
+    ...    OK
+    ...    cannot find matching operation, possible causes include missing required parameters or an unsupported method for the resource, to find required parameters for supported methods run SHOW METHODS IN google.storage.buckets: no appropriate method = 'select' for resource = 'buckets'
+    ...    cannot find matching operation, possible causes include missing required parameters or an unsupported method for the resource, to find required parameters for supported methods run SHOW METHODS IN google.storage.buckets: no appropriate method = 'select' for resource = 'buckets'
+    ...    Execution plan generated successfully
+    ...    OK
+    ...    Execution plan generated successfully
+    ...    OK
+    ${outputErrStr} =    Set Variable If    "${EXECUTION_PLATFORM}" == "docker"    OK   ${outputErrStrNative}
+    Should Stackql Exec Inline Equal Stderr
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputErrStr}
+    ...    stdout=${CURDIR}/tmp/Explain-Select-Repeatably-Generates-Messages.tmp
+    ...    stderr=${CURDIR}/tmp/Explain-Select-Repeatably-Generates-Messages-stderr.tmp
