@@ -30,7 +30,7 @@ Build:
 python cicd/python/build.py --build-mcp-client
 ```
 
-Then, assuming you have a `stackql` MCP server serving streamable HTTP on port `9992`, you ca access any edpoint.  The below examples are somewhat illustrative of a canonical agent pattern for agent behaviour.
+Then, assuming you have a `stackql` MCP server serving streamable HTTP on port `9992`, you can access any edpoint.  The below examples are somewhat illustrative of a canonical agent pattern for agent behaviour.
 
 
 ```bash
