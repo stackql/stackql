@@ -545,7 +545,7 @@ MCP HTTPS Server Validate Canonical Negative
     ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-validate-canonical-negative-stderr.txt
     ${meta_rels_obj}=    Parse MCP JSON Output    ${meta_rels.stdout}
     Dictionary Should Contain Key    ${meta_rels_obj}    valid
-    Should Be False                   ${meta_rels_obj}[valid]
+    Should Be True                   ${meta_rels_obj}[valid] == False
 
 MCP HTTPS Server Query Canonical
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
