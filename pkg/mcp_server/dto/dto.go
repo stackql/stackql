@@ -181,6 +181,12 @@ type QueryResultDTO struct {
 	Warnings []string         `json:"warnings,omitempty"`
 }
 
+type ValidationResultDTO struct {
+	IsValid bool     `json:"valid"`
+	Message string   `json:"message,omitempty"`
+	Errors  []string `json:"errors,omitempty"`
+}
+
 // GreetDTO carries a simple greeting payload.
 type GreetDTO struct {
 	Greeting string `json:"greeting"`
