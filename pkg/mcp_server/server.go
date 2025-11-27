@@ -231,10 +231,15 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		},
 		func(ctx context.Context, req *mcp.CallToolRequest, args dto.QueryJSONInput) (*mcp.CallToolResult, any, error) {
 			arr, err := backend.ValidateQuery(ctx, args.SQL)
+			isValid := err == nil
+			message := "Query validation succeeded."
+			var errorsToPublish []string
 			if err != nil {
-				return nil, nil, err
+				errorsToPublish = append(errorsToPublish, err.Error())
+				arrBytes, _ := json.Marshal(arr)
+				message = fmt.Sprintf("Query validation failed, returned data: %s", string(arrBytes))
 			}
-			out := dto.QueryResultDTO{Rows: arr, RowCount: len(arr), Format: "json"}
+			out := dto.ValidationResultDTO{IsValid: isValid, Errors: errorsToPublish, Message: message}
 			bytesOut, _ := json.Marshal(out)
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
 		},

@@ -1,6 +1,7 @@
 *** Settings ***
 Resource          ${CURDIR}${/}stackql.resource
 Library           Collections
+Library           Builtin
 
 
 *** Keywords ***
@@ -523,8 +524,28 @@ MCP HTTPS Server Validate Canonical
     ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-validate-canonical.txt
     ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-validate-canonical-stderr.txt
     ${meta_rels_obj}=    Parse MCP JSON Output    ${meta_rels.stdout}
-    Dictionary Should Contain Key    ${meta_rels_obj}    rows
-    Length Should Be    ${meta_rels_obj['rows']}    1
+    Dictionary Should Contain Key    ${meta_rels_obj}    valid
+    Should Be True                   ${meta_rels_obj}[valid]
+
+MCP HTTPS Server Validate Canonical Negative
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    # Future proofing: raw text format reserved; may gain structured hints later.
+    ${meta_rels}=    Run Process
+    ...    ${STACKQL_MCP_CLIENT_EXE}
+    ...    exec
+    ...    \-\-client\-type\=http
+    ...    \-\-url\=https://127.0.0.1:9004
+    ...    \-\-client\-cfg
+    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
+    ...    \-\-exec.action
+    ...    validate_query_json_v2
+    ...    \-\-exec.args
+    ...    {"sql":"select * from google.storage.buckets2 where project \= 'stackql\-demo';"}
+    ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-validate-canonical-negative.txt
+    ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-validate-canonical-negative-stderr.txt
+    ${meta_rels_obj}=    Parse MCP JSON Output    ${meta_rels.stdout}
+    Dictionary Should Contain Key    ${meta_rels_obj}    valid
+    Should Be True                   ${meta_rels_obj}[valid] == False
 
 MCP HTTPS Server Query Canonical
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
