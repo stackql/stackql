@@ -1,0 +1,98 @@
+openapi: 3.0.1
+servers:
+  - url: 'https://services.odata.org/TripPinRESTierService/(S(readwrite))'
+info:
+  version: v1.0
+  title: TripPin People OData Service
+  description: Microsoft TripPin reference OData service for People entities
+paths:
+  /People:
+    get:
+      description: Get people
+      parameters:
+        - name: '$filter'
+          in: query
+          description: Filter the results
+          schema:
+            type: string
+        - name: '$select'
+          in: query
+          description: Select specific fields
+          schema:
+            type: string
+        - name: '$expand'
+          in: query
+          description: Expand related entities
+          schema:
+            type: string
+        - name: '$orderby'
+          in: query
+          description: Order the results
+          schema:
+            type: string
+        - name: '$top'
+          in: query
+          description: Limit number of results
+          schema:
+            type: integer
+        - name: '$skip'
+          in: query
+          description: Skip number of results
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  value:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Person'
+components:
+  schemas:
+    Person:
+      type: object
+      properties:
+        UserName:
+          type: string
+          description: User name
+        FirstName:
+          type: string
+          description: First name
+        LastName:
+          type: string
+          description: Last name
+        Age:
+          type: integer
+          description: Age
+        FavoriteFeature:
+          type: string
+          description: Favorite feature
+        Features:
+          type: array
+          items:
+            type: string
+          description: Features list
+  x-stackQL-resources:
+    people:
+      id: trippin.people.people
+      name: people
+      title: People
+      methods:
+        list_people:
+          operation:
+            $ref: '#/paths/~1People/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: $.value[*]
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/people/methods/list_people'
+        insert: []
+        update: []
+        delete: []

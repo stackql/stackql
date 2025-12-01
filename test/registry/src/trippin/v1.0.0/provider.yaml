@@ -1,0 +1,16 @@
+id: trippin
+name: trippin
+version: v1.0.0
+providerServices:
+  people:
+    id: 'people:v1.0.0'
+    name: people
+    preferred: true
+    service:
+      $ref: trippin/v1.0.0/services/people.yaml
+    title: TripPin People Service
+    version: v1.0.0
+    description: People entities in the TripPin OData reference service
+config:
+  auth:
+    type: null_auth

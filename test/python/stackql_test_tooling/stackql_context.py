@@ -802,6 +802,10 @@ def get_variables(
   AWS_CC_VIEW_SELECT_PROJECTION_BUCKET_COMPLEX_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-projection-bucket-view-parameter-pushed-and-response-filtered.txt'))
   AWS_CC_VIEW_SELECT_STAR_BUCKET_COMPLEX_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-star-bucket-view-parameter-pushed-and-response-filtered.txt'))
 
+  # TripPin OData predicate pushdown tests
+  TRIPPIN_PEOPLE_SELECT_PROJECTION_PARAMETER_PUSHED_AND_RESPONSE_FILTERED_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'trippin', 'people', 'select-projection-people-parameter-pushed-and-response-filtered.txt'))
+  TRIPPIN_PEOPLE_SELECT_STAR_PARAMETER_PUSHED_AND_RESPONSE_FILTERED_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'trippin', 'people', 'select-star-people-parameter-pushed-and-response-filtered.txt'))
+
   SELECT_GITHUB_REPOS_PAGES_SINGLE_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-repos-pages.txt'))
   SELECT_GITHUB_REPOS_IDS_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-repos-ids-asc.txt'))
   SELECT_GITHUB_REPOS_WITH_USEFUL_FUNCTIONS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-repos-functions.txt'))

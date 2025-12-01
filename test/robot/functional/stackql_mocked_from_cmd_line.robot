@@ -4232,6 +4232,32 @@ Filtered and Parameterised Star Resource Level View of Cloud Control Resource Re
     ...    ${AWS_CC_VIEW_SELECT_STAR_BUCKET_COMPLEX_EXPECTED}
     ...    ${CURDIR}/tmp/Filtered-and-Parameterised-Star-Resource-Level-View-of-Cloud-Control-Resource-Returns-Expected-Result.tmp
 
+TripPin OData Filtered and Parameterised Projection People Resource Returns Expected Result
+    Should Horrid Query StackQL Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}    
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select UserName, FirstName from trippin.people.people where Age > 25 and FirstName like 'R%' or FirstName = 'Scott';
+    ...    ${TRIPPIN_PEOPLE_SELECT_PROJECTION_PARAMETER_PUSHED_AND_RESPONSE_FILTERED_EXPECTED}
+    ...    ${CURDIR}/tmp/TripPin-OData-Filtered-and-Parameterised-Projection-People-Resource-Returns-Expected-Result.tmp
+
+TripPin OData Filtered and Parameterised Star People Resource Returns Expected Result
+    Should Horrid Query StackQL Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}    
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select * from trippin.people.people where Age > 25 and FirstName like 'R%' or FirstName = 'Scott';
+    ...    ${TRIPPIN_PEOPLE_SELECT_STAR_PARAMETER_PUSHED_AND_RESPONSE_FILTERED_EXPECTED}
+    ...    ${CURDIR}/tmp/TripPin-OData-Filtered-and-Parameterised-Star-People-Resource-Returns-Expected-Result.tmp
+
 Describe View of Cloud Control Resource Returns Expected Result
     Should StackQL Exec Inline Contain
     ...    ${STACKQL_EXE}

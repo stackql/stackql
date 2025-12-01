@@ -1,0 +1,37 @@
+{
+  "@odata.context": "https://services.odata.org/TripPinRESTierService/(S(readwrite))/$metadata#People",
+  "value": [
+    {
+      "UserName": "russellwhyte",
+      "FirstName": "Russell",
+      "LastName": "Whyte",
+      "Age": 30,
+      "FavoriteFeature": "Feature1",
+      "Features": ["Feature1", "Feature2"]
+    },
+    {
+      "UserName": "scottketchum",
+      "FirstName": "Scott",
+      "LastName": "Ketchum", 
+      "Age": 32,
+      "FavoriteFeature": "Feature2",
+      "Features": ["Feature2", "Feature3"]
+    },
+    {
+      "UserName": "ronaldmundy",
+      "FirstName": "Ronald",
+      "LastName": "Mundy",
+      "Age": 35,
+      "FavoriteFeature": "Feature3",
+      "Features": ["Feature1", "Feature3"]
+    },
+    {
+      "UserName": "javieralfred",
+      "FirstName": "Javier",
+      "LastName": "Alfred",
+      "Age": 28,
+      "FavoriteFeature": "Feature1",
+      "Features": ["Feature1", "Feature4"]
+    }
+  ]
+}
