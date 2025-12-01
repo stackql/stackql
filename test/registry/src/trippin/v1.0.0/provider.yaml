@@ -1,0 +1,8 @@
+name: trippin
+version: v1.0.0
+description: TripPin Sample OData Service for testing predicate pushdown
+config:
+  auth:
+    type: null
+services:
+  - people

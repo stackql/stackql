@@ -1,0 +1,109 @@
+openapi: 3.0.0
+info:
+  version: '1.0.0'
+  title: TripPin Sample OData Service
+  description: TripPin OData Reference Service for testing predicate pushdown
+servers:
+  - url: 'https://services.odata.org/TripPinRESTierService/(S(test))'
+    description: TripPin OData Service
+paths:
+  '/People':
+    get:
+      operationId: ListPeople
+      parameters:
+        - name: '$filter'
+          in: query
+          required: false
+          schema:
+            type: string
+          description: OData filter expression
+        - name: '$select'
+          in: query
+          required: false
+          schema:
+            type: string
+          description: OData select expression
+        - name: '$expand'
+          in: query
+          required: false
+          schema:
+            type: string
+          description: OData expand expression
+        - name: '$orderby'
+          in: query
+          required: false
+          schema:
+            type: string
+          description: OData orderby expression
+        - name: '$top'
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: OData top expression
+        - name: '$skip'
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: OData skip expression
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PeopleCollection'
+components:
+  schemas:
+    Person:
+      type: object
+      properties:
+        UserName:
+          type: string
+        FirstName:
+          type: string
+        LastName:
+          type: string
+        Age:
+          type: integer
+        FavoriteFeature:
+          type: string
+        Features:
+          type: array
+          items:
+            type: string
+        AddressInfo:
+          type: array
+          items:
+            type: object
+        HomeAddress:
+          type: object
+        Gender:
+          type: string
+        Concurrency:
+          type: integer
+    PeopleCollection:
+      type: object
+      properties:
+        '@odata.context':
+          type: string
+        value:
+          type: array
+          items:
+            $ref: '#/components/schemas/Person'
+  x-stackQL-resources:
+    people:
+      name: people
+      id: trippin.people.people
+      methods:
+        list_people:
+          operation:
+            $ref: '#/paths/~1People/get'
+          response:
+            mediaType: application/json
+            objectKey: '$.value'
+            openAPIDocKey: '200'
+      sqlVerbs:
+        select:
+        - $ref: '#/components/x-stackQL-resources/people/methods/list_people'
