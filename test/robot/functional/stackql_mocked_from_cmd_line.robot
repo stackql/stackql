@@ -4245,6 +4245,84 @@ Describe View of Cloud Control Resource Returns Expected Result
     ...    RestrictPublicBuckets
     ...    stdout=${CURDIR}/tmp/Describe-View-of-Cloud-Control-Resource-Returns-Expected-Result.tmp
 
+Google Cloud Compute Instances Projection with Predicate Pushdown and Response Filtering
+    Should Horrid Query StackQL Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}    
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select name, zone, machineType from google.compute.instances where project = 'testing-project' and zone = 'zone1' and name = 'test-vm-001';
+    ...    ${GOOGLE_COMPUTE_VIEW_SELECT_PROJECTION_INSTANCES_COMPLEX_EXPECTED}
+    ...    ${CURDIR}/tmp/Google-Cloud-Compute-Instances-Projection-Predicate-Pushdown.tmp
+
+Google Cloud Compute Instances Star with Predicate Pushdown and Response Filtering
+    Should Horrid Query StackQL Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}    
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select * from google.compute.instances where project = 'testing-project' and zone = 'zone1' and name = 'test-vm-001';
+    ...    ${GOOGLE_COMPUTE_VIEW_SELECT_STAR_INSTANCES_COMPLEX_EXPECTED}
+    ...    ${CURDIR}/tmp/Google-Cloud-Compute-Instances-Star-Predicate-Pushdown.tmp
+
+GitHub Repos Projection with Predicate Pushdown and Response Filtering
+    Should Horrid Query StackQL Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}    
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select id, name from github.repos.repos where org = 'testorg' and repo = 'test-repo' and name = 'test-repo';
+    ...    ${GITHUB_REPOS_VIEW_SELECT_PROJECTION_REPOS_COMPLEX_EXPECTED}
+    ...    ${CURDIR}/tmp/GitHub-Repos-Projection-Predicate-Pushdown.tmp
+
+GitHub Repos Star with Predicate Pushdown and Response Filtering
+    Should Horrid Query StackQL Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}    
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select * from github.repos.repos where org = 'testorg' and repo = 'test-repo' and name = 'test-repo';
+    ...    ${GITHUB_REPOS_VIEW_SELECT_STAR_REPOS_COMPLEX_EXPECTED}
+    ...    ${CURDIR}/tmp/GitHub-Repos-Star-Predicate-Pushdown.tmp
+
+Azure Compute VMs Projection with Predicate Pushdown and Response Filtering
+    Should Horrid Query StackQL Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}    
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select name, location from azure.compute.virtual_machines where subscriptionId = 'test-subscription-id' and resourceGroupName = 'test-rg' and name = 'test-vm-01';
+    ...    ${AZURE_COMPUTE_VIEW_SELECT_PROJECTION_VMS_COMPLEX_EXPECTED}
+    ...    ${CURDIR}/tmp/Azure-Compute-VMs-Projection-Predicate-Pushdown.tmp
+
+Okta Apps Projection with Predicate Pushdown and Response Filtering
+    Should Horrid Query StackQL Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}    
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select id, name from okta.application.apps where id = '12345abcd' and name = 'TestApp';
+    ...    ${OKTA_APPS_VIEW_SELECT_PROJECTION_APPS_COMPLEX_EXPECTED}
+    ...    ${CURDIR}/tmp/Okta-Apps-Projection-Predicate-Pushdown.tmp
+
 View Depth Expanded Limitation Respected
     Should Stackql Exec Inline Contain
     ...    ${STACKQL_EXE}

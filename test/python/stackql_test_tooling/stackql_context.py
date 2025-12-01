@@ -802,6 +802,22 @@ def get_variables(
   AWS_CC_VIEW_SELECT_PROJECTION_BUCKET_COMPLEX_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-projection-bucket-view-parameter-pushed-and-response-filtered.txt'))
   AWS_CC_VIEW_SELECT_STAR_BUCKET_COMPLEX_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-star-bucket-view-parameter-pushed-and-response-filtered.txt'))
 
+  # Google Cloud predicate pushdown expected results
+  GOOGLE_COMPUTE_VIEW_SELECT_PROJECTION_INSTANCES_FILTERED_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'google', 'compute', 'select-instances-projection-response-filtered-only.txt'))
+  GOOGLE_COMPUTE_VIEW_SELECT_STAR_INSTANCES_FILTERED_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'google', 'compute', 'select-instances-star-response-filtered-only.txt'))
+  GOOGLE_COMPUTE_VIEW_SELECT_PROJECTION_INSTANCES_COMPLEX_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'google', 'compute', 'select-instances-projection-parameter-pushed-and-response-filtered.txt'))
+  GOOGLE_COMPUTE_VIEW_SELECT_STAR_INSTANCES_COMPLEX_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'google', 'compute', 'select-instances-star-parameter-pushed-and-response-filtered.txt'))
+
+  # GitHub predicate pushdown expected results
+  GITHUB_REPOS_VIEW_SELECT_PROJECTION_REPOS_COMPLEX_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-repos-projection-parameter-pushed-and-response-filtered.txt'))
+  GITHUB_REPOS_VIEW_SELECT_STAR_REPOS_COMPLEX_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-repos-star-parameter-pushed-and-response-filtered.txt'))
+
+  # Azure predicate pushdown expected results
+  AZURE_COMPUTE_VIEW_SELECT_PROJECTION_VMS_COMPLEX_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'azure', 'compute', 'select-vms-projection-parameter-pushed-and-response-filtered.txt'))
+  
+  # Okta predicate pushdown expected results
+  OKTA_APPS_VIEW_SELECT_PROJECTION_APPS_COMPLEX_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'okta', 'apps', 'select-apps-projection-parameter-pushed-and-response-filtered.txt'))
+
   SELECT_GITHUB_REPOS_PAGES_SINGLE_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-repos-pages.txt'))
   SELECT_GITHUB_REPOS_IDS_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-repos-ids-asc.txt'))
   SELECT_GITHUB_REPOS_WITH_USEFUL_FUNCTIONS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-repos-functions.txt'))
@@ -956,6 +972,18 @@ def get_variables(
     'AWS_CC_VIEW_SELECT_PROJECTION_BUCKET_FILTERED_EXPECTED':                 AWS_CC_VIEW_SELECT_PROJECTION_BUCKET_FILTERED_EXPECTED,
     'AWS_CC_VIEW_SELECT_STAR_BUCKET_COMPLEX_EXPECTED':                        AWS_CC_VIEW_SELECT_STAR_BUCKET_COMPLEX_EXPECTED,
     'AWS_CC_VIEW_SELECT_STAR_BUCKET_FILTERED_EXPECTED':                       AWS_CC_VIEW_SELECT_STAR_BUCKET_FILTERED_EXPECTED,
+    # Google Cloud predicate pushdown test expectations
+    'GOOGLE_COMPUTE_VIEW_SELECT_PROJECTION_INSTANCES_FILTERED_EXPECTED':      GOOGLE_COMPUTE_VIEW_SELECT_PROJECTION_INSTANCES_FILTERED_EXPECTED,
+    'GOOGLE_COMPUTE_VIEW_SELECT_STAR_INSTANCES_FILTERED_EXPECTED':            GOOGLE_COMPUTE_VIEW_SELECT_STAR_INSTANCES_FILTERED_EXPECTED,
+    'GOOGLE_COMPUTE_VIEW_SELECT_PROJECTION_INSTANCES_COMPLEX_EXPECTED':       GOOGLE_COMPUTE_VIEW_SELECT_PROJECTION_INSTANCES_COMPLEX_EXPECTED,
+    'GOOGLE_COMPUTE_VIEW_SELECT_STAR_INSTANCES_COMPLEX_EXPECTED':             GOOGLE_COMPUTE_VIEW_SELECT_STAR_INSTANCES_COMPLEX_EXPECTED,
+    # GitHub predicate pushdown test expectations
+    'GITHUB_REPOS_VIEW_SELECT_PROJECTION_REPOS_COMPLEX_EXPECTED':             GITHUB_REPOS_VIEW_SELECT_PROJECTION_REPOS_COMPLEX_EXPECTED,
+    'GITHUB_REPOS_VIEW_SELECT_STAR_REPOS_COMPLEX_EXPECTED':                   GITHUB_REPOS_VIEW_SELECT_STAR_REPOS_COMPLEX_EXPECTED,
+    # Azure predicate pushdown test expectations
+    'AZURE_COMPUTE_VIEW_SELECT_PROJECTION_VMS_COMPLEX_EXPECTED':              AZURE_COMPUTE_VIEW_SELECT_PROJECTION_VMS_COMPLEX_EXPECTED,
+    # Okta predicate pushdown test expectations
+    'OKTA_APPS_VIEW_SELECT_PROJECTION_APPS_COMPLEX_EXPECTED':                 OKTA_APPS_VIEW_SELECT_PROJECTION_APPS_COMPLEX_EXPECTED,
     'AWS_CLOUD_CONTROL_METHOD_SIGNATURE_CMD_ARR':                             [ SELECT_AWS_CLOUD_CONTROL_VPCS_DESC, GET_AWS_CLOUD_CONTROL_VPCS_DESC ],
     'AWS_CLOUD_CONTROL_METHOD_SIGNATURE_CMD_ARR_EXPECTED':                    SELECT_AWS_CLOUD_CONTROL_VPCS_DESC_JSON_EXPECTED + GET_AWS_CLOUD_CONTROL_VPCS_DESC_JSON_EXPECTED,
     'AWS_CLOUD_CONTROL_BUCKET_DETAIL_PROJECTION_DEFECTIVE_CMD_ARR':           [ SELECT_AWS_CLOUD_CONTROL_BUCKET_PROJECTION_DEFECTIVE, SELECT_AWS_CLOUD_CONTROL_BUCKET_PROJECTION ],
