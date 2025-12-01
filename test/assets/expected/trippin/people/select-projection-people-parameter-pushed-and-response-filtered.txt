@@ -1,6 +1,4 @@
 |------------|-----------|
-|  UserName  | FirstName |
-|------------|-----------|
 | russellwhyte | Russell   |
 | scottketchum | Scott     |
 |------------|-----------|

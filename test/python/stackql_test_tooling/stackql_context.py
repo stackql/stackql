@@ -516,7 +516,7 @@ def get_variables(
     "keyFilePath": "/opt/stackql/srv/credentials/pg_server_key.pem",
     "certFilePath": "/opt/stackql/srv/credentials/pg_server_cert.pem",
     "clientCAs": [ 
-      "'\$(base64 -w 0 /opt/stackql/srv/credentials/pg_client_cert.pem)'"
+      "'\\$(base64 -w 0 /opt/stackql/srv/credentials/pg_client_cert.pem)'"
     ] 
   }
 
@@ -530,7 +530,7 @@ def get_variables(
 
   PG_SRV_MTLS_CFG_STR :str = json.dumps(_mTLS_CFG)
 
-  PG_SRV_MTLS_DOCKER_CFG_STR :str = json.dumps(_mTLS_CFG_DOCKER).replace('\\$', '\$')
+  PG_SRV_MTLS_DOCKER_CFG_STR :str = json.dumps(_mTLS_CFG_DOCKER).replace('\\\\$', '\\$')
 
 
 
