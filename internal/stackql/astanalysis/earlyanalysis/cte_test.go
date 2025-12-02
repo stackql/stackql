@@ -1,4 +1,4 @@
-package earlyanalysis
+package earlyanalysis_test
 
 import (
 	"testing"
