@@ -11,6 +11,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/astvisit"
 	"github.com/stackql/stackql/internal/stackql/dataflow"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/router/obtain_context"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
@@ -591,18 +592,30 @@ func (pr *standardParameterRouter) route(
 	priorParameters := runParamters.Clone()
 	// notOnStringParams := notOnParams.GetStringified()
 	// TODO: add parent params into the mix here.
-	hr, err := taxonomy.GetHeirarchyFromStatement(handlerCtx, tb, notOnParams, false, isAwait)
-	if err != nil {
-		hr, err = taxonomy.GetHeirarchyFromStatement(handlerCtx, tb, runParamters, false, isAwait)
+	// Check for CTE indirect before attempting hierarchy resolution.
+	// CTEs don't need provider/service/resource resolution.
+	cteIndirect, isCTE := pr.annotatedAST.GetIndirect(tb)
+	var hr tablemetadata.HeirarchyObjects
+	var err error
+	if isCTE && cteIndirect != nil && cteIndirect.GetType() == astindirect.CTEType {
+		// CTE reference - create empty hierarchy identifiers.
+		tableName := taxonomy.GetTableNameFromStatement(tb, pr.astFormatter)
+		hIDs := internaldto.NewHeirarchyIdentifiers("", "", tableName, "")
+		hr = tablemetadata.NewHeirarchyObjects(hIDs, isAwait)
 	} else {
-		// If the where parameters are sufficient, then need to switch
-		// the Table - Paramater coupling object
-		runParamters = notOnParams
-		priorParameters = priorNotOnParameters
-	}
-	// logging.GetLogger().Infof("hr = '%+v', remainingParams = '%+v', err = '%+v'", hr, remainingParams, err)
-	if err != nil {
-		return nil, err
+		hr, err = taxonomy.GetHeirarchyFromStatement(handlerCtx, tb, notOnParams, false, isAwait)
+		if err != nil {
+			hr, err = taxonomy.GetHeirarchyFromStatement(handlerCtx, tb, runParamters, false, isAwait)
+		} else {
+			// If the where parameters are sufficient, then need to switch
+			// the Table - Paramater coupling object
+			runParamters = notOnParams
+			priorParameters = priorNotOnParameters
+		}
+		// logging.GetLogger().Infof("hr = '%+v', remainingParams = '%+v', err = '%+v'", hr, remainingParams, err)
+		if err != nil {
+			return nil, err
+		}
 	}
 	// reconstitutedConsumedParams, err := tpc.ReconstituteConsumedParams(remainingParams)
 	// if err != nil {
