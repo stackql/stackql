@@ -43,12 +43,12 @@ const (
 	ExpectedSelectComputeDisksAggPaginatedStringTotal                         string = "test/assets/expected/aggregated-select/google/disks-paginated/text/disks-total-string-agg.csv"
 	ExpectedSelectExecOrgGetIamPolicyAgg                                      string = "test/assets/expected/aggregated-select/google/cloudresourcemanager/select-exec-getiampolicy-agg.csv"
 
-	// Window function expected outputs
+	// Window function expected outputs.
 	ExpectedSelectComputeDisksWindowRowNumber string = "test/assets/expected/window-select/google/disks/text/disks-window-row-number.csv"
 	ExpectedSelectComputeDisksWindowRank      string = "test/assets/expected/window-select/google/disks/text/disks-window-rank.csv"
 	ExpectedSelectComputeDisksWindowSum       string = "test/assets/expected/window-select/google/disks/text/disks-window-sum.csv"
 
-	// CTE expected outputs
+	// CTE expected outputs.
 	ExpectedSelectComputeDisksCTESimple   string = "test/assets/expected/cte-select/google/disks/text/disks-cte-simple.csv"
 	ExpectedSelectComputeDisksCTEWithAgg  string = "test/assets/expected/cte-select/google/disks/text/disks-cte-with-agg.csv"
 	ExpectedSelectComputeDisksCTEMultiple string = "test/assets/expected/cte-select/google/disks/text/disks-cte-multiple.csv"
