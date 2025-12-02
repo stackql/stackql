@@ -282,7 +282,7 @@ jobs:
         PSQL_EXE: C:\Program Files\PostgreSQL\13\bin\psql
         SQLITE_EXE: C:\ProgramData\chocolatey\lib\SQLite\tools\sqlite3.exe
         PYTHONPATH: '${{ env.PYTHONPATH }};${{ github.workspace }}\test\python'
-        STACKQL_TEST_VERBOSE_DEBUG: 'true'  # Set to 'true' to enable detailed test output
+        STACKQL_TEST_VERBOSE_DEBUG: 'false'  # Set to 'true' to enable detailed test output
       run: |
         python cicd/python/build.py --robot-test
 
@@ -290,6 +290,19 @@ jobs:
       if: always()
       run: |
         cat ./test/robot/reports/output.xml || echo "no functional test output present"
+
+    # temp dump of trippin tmp files
+    - name: Dump TripPin tmp files
+      if: always()
+      shell: cmd
+      run: |
+        set "TMP_DIR=test/robot/functional/tmp"
+        if exist "%TMP_DIR%" (
+          type "%TMP_DIR%\TripPin-OData-Filtered-and-Parameterised-Projection-People-Resource-Returns-Expected-Result.tmp"
+          type "%TMP_DIR%\TripPin-OData-Filtered-and-Parameterised-Star-People-Resource-Returns-Expected-Result.tmp"
+        ) else (
+          echo "TripPin tmp files not present"
+        )
     
     - name: Run robot integration tests
       if: env.AZURE_CLIENT_SECRET != '' && startsWith(env.STATE_SOURCE_TAG, 'build-release')
@@ -1151,7 +1164,7 @@ jobs:
     - shell: wsl-bash {0}
       name: Run robot mocked functional tests
       env:
-        STACKQL_TEST_VERBOSE_DEBUG: 'true'  # Set to 'true' to enable detailed test output
+        STACKQL_TEST_VERBOSE_DEBUG: 'false'  # Set to 'true' to enable detailed test output
       run: |
           . cicd/version.txt
           export BUILDBRANCH="${{github.ref}}"
