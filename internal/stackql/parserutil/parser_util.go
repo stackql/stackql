@@ -663,6 +663,12 @@ func inferColNameFromExpr(
 				return rv, nil
 			}
 		} else {
+			// For window functions with OVER clause, use proper formatting to preserve it.
+			if expr.Over != nil {
+				decoratedColumn := astformat.String(expr, formatter)
+				retVal.DecoratedColumn = getDecoratedColRendition(decoratedColumn, alias)
+				return retVal, nil
+			}
 			var exprsDecorated []string
 			for i, exp := range expr.Exprs {
 				switch ex := exp.(type) {
