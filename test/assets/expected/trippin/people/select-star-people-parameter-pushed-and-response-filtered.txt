@@ -1,5 +1,5 @@
-|  UserName   | FirstName | LastName | Age | FavoriteFeature |           Features           |
-|-------------|-----------|----------|-----|----------------|------------------------------|
-| russellwhyte | Russell   | Whyte    | 30  | Feature1       | ["Feature1","Feature2"]      |
-| scottketchum | Scott     | Ketchum  | 32  | Feature2       | ["Feature2","Feature3"]      |
-|-------------|-----------|----------|-----|----------------|------------------------------|
+|------|-----------------|----------|-----------|----------|--------------|
+| Age  | FavoriteFeature | Features | FirstName | LastName |   UserName   |
+|------|-----------------|----------|-----------|----------|--------------|
+| null | Feature1        | []       | Scott     | Ketchum  | scottketchum |
+|------|-----------------|----------|-----------|----------|--------------|
