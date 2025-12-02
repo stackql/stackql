@@ -1096,3 +1096,38 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     )
     return self.should_be_equal(result.stdout, expected_output)
 
+  @keyword
+  def should_horrid_query_stackql_inline_equal_with_debug(
+    self, 
+    stackql_exe :str, 
+    okta_secret_str :str,
+    github_secret_str :str,
+    k8s_secret_str :str,
+    registry_cfg :RegistryCfg, 
+    auth_cfg_str :str,
+    sql_backend_cfg_str :str,
+    query,
+    expected_output :str,
+    stdout_tmp_file :str,
+  ):
+    result = self._run_stackql_exec_command(
+      stackql_exe, 
+      okta_secret_str,
+      github_secret_str,
+      k8s_secret_str,
+      registry_cfg, 
+      auth_cfg_str, 
+      sql_backend_cfg_str,
+      query,
+      **{"stdout": stdout_tmp_file }
+    )
+    # Debug output: print both received and expected
+    print(f"=== DEBUG OUTPUT FOR TEST ===")
+    print(f"QUERY: {query}")
+    print(f"RECEIVED:")
+    print(repr(result.stdout))
+    print(f"EXPECTED:")  
+    print(repr(expected_output))
+    print(f"=== END DEBUG OUTPUT ===")
+    return self.should_be_equal(result.stdout, expected_output)
+

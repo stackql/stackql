@@ -4233,7 +4233,7 @@ Filtered and Parameterised Star Resource Level View of Cloud Control Resource Re
     ...    ${CURDIR}/tmp/Filtered-and-Parameterised-Star-Resource-Level-View-of-Cloud-Control-Resource-Returns-Expected-Result.tmp
 
 TripPin OData Filtered and Parameterised Projection People Resource Returns Expected Result
-    Should Horrid Query StackQL Inline Equal
+    Should Horrid Query StackQL Inline Equal With Debug
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
     ...    ${GITHUB_SECRET_STR}
@@ -4246,7 +4246,7 @@ TripPin OData Filtered and Parameterised Projection People Resource Returns Expe
     ...    ${CURDIR}/tmp/TripPin-OData-Filtered-and-Parameterised-Projection-People-Resource-Returns-Expected-Result.tmp
 
 TripPin OData Filtered and Parameterised Star People Resource Returns Expected Result
-    Should Horrid Query StackQL Inline Equal
+    Should Horrid Query StackQL Inline Equal With Debug
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
     ...    ${GITHUB_SECRET_STR}
