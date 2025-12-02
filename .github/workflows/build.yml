@@ -1151,8 +1151,7 @@ jobs:
     - shell: wsl-bash {0}
       name: Run robot mocked functional tests
       env:
-        # Set to 'true' to enable detailed test output showing actual vs expected results
-        STACKQL_TEST_VERBOSE_DEBUG: 'false'
+        STACKQL_TEST_VERBOSE_DEBUG: 'true'  # Set to 'true' to enable detailed test output
       run: |
           . cicd/version.txt
           export BUILDBRANCH="${{github.ref}}"
