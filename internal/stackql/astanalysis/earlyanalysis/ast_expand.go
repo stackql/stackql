@@ -839,11 +839,15 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 		if node.IsEmpty() {
 			return nil
 		}
-		// Check if this is a CTE reference
+		// Check if this is a CTE reference.
 		cteName := node.Name.GetRawVal()
-		if _, isCTE := v.cteRegistry[cteName]; isCTE {
-			// This is a CTE reference - no further processing needed
-			// The CTE's select statement has already been processed
+		if cte, isCTE := v.cteRegistry[cteName]; isCTE {
+			// This is a CTE reference - create and register an indirect.
+			indirect, err := astindirect.NewCTEIndirect(cte)
+			if err != nil {
+				return err
+			}
+			v.annotatedAST.SetIndirect(node, indirect)
 			return nil
 		}
 		containsBackendMaterial := v.handlerCtx.GetDBMSInternalRouter().ExprIsRoutable(node)
