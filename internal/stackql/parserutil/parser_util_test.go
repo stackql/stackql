@@ -27,6 +27,8 @@ func TestInferColNameFromExpr_WindowFunctions(t *testing.T) {
 
 		assert.True(t, colHandle.IsAggregateExpr, "ROW_NUMBER() with OVER should be marked as aggregate expression")
 		assert.Equal(t, "row_num", colHandle.Alias)
+		// Verify DecoratedColumn includes OVER clause.
+		assert.Contains(t, colHandle.DecoratedColumn, "over", "DecoratedColumn should contain OVER clause")
 	})
 
 	t.Run("SUM with OVER PARTITION BY is marked as aggregate", func(t *testing.T) {
