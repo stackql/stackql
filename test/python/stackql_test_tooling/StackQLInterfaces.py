@@ -37,6 +37,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     self._execution_platform=execution_platform
     self._sql_backend=sql_backend
     self._concurrency_limit=concurrency_limit
+    # Read from environment variable for CI/CD integration
+    self._verbose_debug = os.environ.get('STACKQL_TEST_VERBOSE_DEBUG', 'false').lower() == 'true'
     self.ROBOT_LIBRARY_LISTENER = self
     Process.__init__(self)
 
@@ -1121,13 +1123,25 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       query,
       **{"stdout": stdout_tmp_file }
     )
-    # Debug output: print both received and expected
-    print(f"=== DEBUG OUTPUT FOR TEST ===")
-    print(f"QUERY: {query}")
-    print(f"RECEIVED:")
-    print(repr(result.stdout))
-    print(f"EXPECTED:")  
-    print(repr(expected_output))
-    print(f"=== END DEBUG OUTPUT ===")
+    # Debug output: print both received and expected (only if verbose debug is enabled)
+    if self._verbose_debug:
+      print(f"\n{'='*80}")
+      print(f"DEBUG OUTPUT FOR TEST")
+      print(f"{'='*80}")
+      print(f"QUERY:\n{query}\n")
+      print(f"{'-'*80}")
+      print(f"ACTUAL OUTPUT:")
+      print(f"{'-'*80}")
+      print(result.stdout)
+      print(f"\n{'-'*80}")
+      print(f"EXPECTED OUTPUT:")
+      print(f"{'-'*80}")
+      print(expected_output)
+      print(f"\n{'-'*80}")
+      print(f"COMPARISON (repr):")
+      print(f"{'-'*80}")
+      print(f"ACTUAL:   {repr(result.stdout)}")
+      print(f"EXPECTED: {repr(expected_output)}")
+      print(f"{'='*80}\n")
     return self.should_be_equal(result.stdout, expected_output)
 

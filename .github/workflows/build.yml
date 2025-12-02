@@ -282,6 +282,7 @@ jobs:
         PSQL_EXE: C:\Program Files\PostgreSQL\13\bin\psql
         SQLITE_EXE: C:\ProgramData\chocolatey\lib\SQLite\tools\sqlite3.exe
         PYTHONPATH: '${{ env.PYTHONPATH }};${{ github.workspace }}\test\python'
+        STACKQL_TEST_VERBOSE_DEBUG: 'true'  # Set to 'true' to enable detailed test output
       run: |
         python cicd/python/build.py --robot-test
 
@@ -300,6 +301,7 @@ jobs:
         AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
         AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         PYTHONPATH: '${{ env.PYTHONPATH }};${{ github.workspace }}\test\python'
+        STACKQL_TEST_VERBOSE_DEBUG: 'false'  # Set to 'true' to enable detailed test output
       run: | #Ideally there wiuld be forced kill of flaks here but dont know how to do that in windows
         python cicd/python/build.py --robot-test-integration
     
@@ -686,6 +688,7 @@ jobs:
     - name: Run robot mocked functional tests
       env:
         PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
+        STACKQL_TEST_VERBOSE_DEBUG: 'false'  # Set to 'true' to enable detailed test output
       if: success()
       run: |
         if [ "${{ matrix.registry }}" = "test/registry" ]; then
@@ -706,6 +709,8 @@ jobs:
 
     - name: Run robot mocked functional tests with aggressive concurrency
       if: success() && matrix.registry != 'test/registry'
+      env:
+        STACKQL_TEST_VERBOSE_DEBUG: 'false'  # Set to 'true' to enable detailed test output
       run: |
         echo "## Stray flask apps to be killed before robot tests ##"
         pgrep -f flask | xargs kill -9 || true
@@ -724,6 +729,7 @@ jobs:
         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
         AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
         AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        STACKQL_TEST_VERBOSE_DEBUG: 'false'  # Set to 'true' to enable detailed test output
       run: |
         echo "## Stray flask apps to be killed before robot tests ##"
         pgrep -f flask | xargs kill -9 || true
@@ -936,6 +942,8 @@ jobs:
 
     - name: Run robot mocked functional tests
       env:
+        # Set to 'true' to enable detailed test output showing actual vs expected results
+        STACKQL_TEST_VERBOSE_DEBUG: 'false'
         PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
       if: success()
       run: |
@@ -948,6 +956,8 @@ jobs:
 
     - name: Run robot mocked functional tests with aggressive concurrency
       env:
+        # Set to 'true' to enable detailed test output showing actual vs expected results
+        STACKQL_TEST_VERBOSE_DEBUG: 'false'
         PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
       if: success()
       run: |
@@ -964,6 +974,8 @@ jobs:
     - name: Run robot integration tests
       if: env.AZURE_CLIENT_SECRET != '' && startsWith(env.STATE_SOURCE_TAG, 'build-release')
       env:
+        # Set to 'true' to enable detailed test output showing actual vs expected results
+        STACKQL_TEST_VERBOSE_DEBUG: 'false'
         AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
         AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
@@ -1138,6 +1150,9 @@ jobs:
 
     - shell: wsl-bash {0}
       name: Run robot mocked functional tests
+      env:
+        # Set to 'true' to enable detailed test output showing actual vs expected results
+        STACKQL_TEST_VERBOSE_DEBUG: 'false'
       run: |
           . cicd/version.txt
           export BUILDBRANCH="${{github.ref}}"
@@ -1167,6 +1182,8 @@ jobs:
       # This is a hack because if cannot directly access secrets
       if: env.AZURE_CLIENT_SECRET != ''
       env:
+        # Set to 'true' to enable detailed test output showing actual vs expected results
+        STACKQL_TEST_VERBOSE_DEBUG: 'false'
         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
       run: |
           . cicd/version.txt
@@ -1292,6 +1309,8 @@ jobs:
 
     - name: Run robot mocked functional tests
       env:
+        # Set to 'true' to enable detailed test output showing actual vs expected results
+        STACKQL_TEST_VERBOSE_DEBUG: 'false'
         PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
       if: success()
       run: |
@@ -1305,6 +1324,8 @@ jobs:
     - name: Run robot integration tests
       if: env.AZURE_CLIENT_SECRET != '' && startsWith(env.STATE_SOURCE_TAG, 'build-release')
       env:
+        # Set to 'true' to enable detailed test output showing actual vs expected results
+        STACKQL_TEST_VERBOSE_DEBUG: 'false'
         AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
         AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
@@ -1774,6 +1795,8 @@ jobs:
 
     - name: Run robot mocked functional tests
       env:
+        # Set to 'true' to enable detailed test output showing actual vs expected results
+        STACKQL_TEST_VERBOSE_DEBUG: 'false'
         PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
         IS_SKIP_MCP_TEST: 'true'
       if: success() && env.CI_IS_EXPRESS != 'true' && matrix.platform == 'linux/amd64' && env.BUILD_IMAGE_REQUIRED == 'true' && matrix.db_backend == 'sqlite'
@@ -1785,6 +1808,8 @@ jobs:
 
     - name: Run POSTGRES BACKEND robot mocked functional tests
       env:
+        # Set to 'true' to enable detailed test output showing actual vs expected results
+        STACKQL_TEST_VERBOSE_DEBUG: 'false'
         PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
         IS_SKIP_MCP_TEST: 'true'
       if: success() && env.CI_IS_EXPRESS != 'true' && matrix.platform == 'linux/amd64' && env.BUILD_IMAGE_REQUIRED == 'true' && matrix.db_backend == 'postgres_tcp'
@@ -1814,6 +1839,8 @@ jobs:
     - name: Run robot integration tests
       if: env.AZURE_CLIENT_SECRET != '' && startsWith(env.STATE_SOURCE_TAG, 'build-release') && matrix.platform == 'linux/amd64' && env.BUILD_IMAGE_REQUIRED == 'true'
       env:
+        # Set to 'true' to enable detailed test output showing actual vs expected results
+        STACKQL_TEST_VERBOSE_DEBUG: 'false'
         AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
         AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
