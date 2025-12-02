@@ -49,6 +49,7 @@ type indirectExpandAstVisitor struct {
 	selectCount                    int
 	mutateCount                    int
 	createBuilder                  []primitivebuilder.Builder
+	cteRegistry                    map[string]*sqlparser.CommonTableExpr
 }
 
 func newIndirectExpandAstVisitor(
@@ -75,6 +76,7 @@ func newIndirectExpandAstVisitor(
 		tcc:                 tcc,
 		whereParams:         whereParams,
 		indirectionDepth:    indirectionDepth,
+		cteRegistry:         make(map[string]*sqlparser.CommonTableExpr),
 	}
 	return rv, nil
 }
@@ -213,6 +215,21 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 		}
 		addIf(node.StraightJoinHint, sqlparser.StraightJoinHint)
 		addIf(node.SQLCalcFoundRows, sqlparser.SQLCalcFoundRowsStr)
+
+		// Process CTEs (Common Table Expressions) if present
+		if node.With != nil {
+			for _, cte := range node.With.CTEs {
+				cteName := cte.Name.GetRawVal()
+				v.cteRegistry[cteName] = cte
+				// Process the CTE's select statement
+				if cte.Select != nil {
+					err := cte.Select.Accept(v)
+					if err != nil {
+						return err
+					}
+				}
+			}
+		}
 
 		if node.Comments != nil {
 			node.Comments.Accept(v) //nolint:errcheck // future proof
@@ -820,6 +837,13 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 	case sqlparser.TableName:
 		if node.IsEmpty() {
+			return nil
+		}
+		// Check if this is a CTE reference
+		cteName := node.Name.GetRawVal()
+		if _, isCTE := v.cteRegistry[cteName]; isCTE {
+			// This is a CTE reference - no further processing needed
+			// The CTE's select statement has already been processed
 			return nil
 		}
 		containsBackendMaterial := v.handlerCtx.GetDBMSInternalRouter().ExprIsRoutable(node)
