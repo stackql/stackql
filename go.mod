@@ -143,4 +143,4 @@ replace github.com/chzyer/readline => github.com/stackql/readline v0.0.2-alpha05
 
 replace github.com/mattn/go-sqlite3 => github.com/stackql/stackql-go-sqlite3 v1.0.4-stackql
 
-replace github.com/stackql/stackql-parser => github.com/stackql/stackql-parser v0.0.0-20251202000000-1595204710ca
+replace github.com/stackql/stackql-parser => github.com/stackql/stackql-parser v0.0.0-20251202115006-1595204710ca
