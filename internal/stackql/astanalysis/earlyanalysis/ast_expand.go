@@ -49,7 +49,7 @@ type indirectExpandAstVisitor struct {
 	selectCount                    int
 	mutateCount                    int
 	createBuilder                  []primitivebuilder.Builder
-	cteRegistry                    map[string]*sqlparser.CommonTableExpr
+	cteRegistry                    map[string]*sqlparser.Subquery // CTE name -> subquery definition
 }
 
 func newIndirectExpandAstVisitor(
@@ -76,7 +76,7 @@ func newIndirectExpandAstVisitor(
 		tcc:                 tcc,
 		whereParams:         whereParams,
 		indirectionDepth:    indirectionDepth,
-		cteRegistry:         make(map[string]*sqlparser.CommonTableExpr),
+		cteRegistry:         make(map[string]*sqlparser.Subquery),
 	}
 	return rv, nil
 }
@@ -103,6 +103,41 @@ func (v *indirectExpandAstVisitor) processMaterializedView(
 	}
 	v.annotatedAST.SetMaterializedView(node, indirect)
 	return nil
+}
+
+// processCTEReference handles CTE references by converting them to subquery indirects.
+// Returns true if the table name was a CTE reference and was processed, false otherwise.
+func (v *indirectExpandAstVisitor) processCTEReference(
+	node *sqlparser.AliasedTableExpr,
+	tableName string,
+) bool {
+	cteSubquery, isCTE := v.cteRegistry[tableName]
+	if !isCTE {
+		return false
+	}
+	logging.GetLogger().Infof("processCTEReference: Converting CTE '%s' to subquery", tableName)
+	logging.GetLogger().Debugf("processCTEReference: CTE subquery = %s", sqlparser.String(cteSubquery))
+	// Modify the original node to replace the TableName with the CTE subquery
+	// This is critical: downstream code (GetHIDs) checks node.Expr type to identify subqueries
+	node.Expr = cteSubquery
+	// Set the alias to the CTE name if no explicit alias was provided
+	if node.As.IsEmpty() {
+		node.As = sqlparser.NewTableIdent(tableName)
+	}
+	logging.GetLogger().Debugf("processCTEReference: Node alias set to '%s'", node.As.GetRawVal())
+	sq := internaldto.NewSubqueryDTO(node, cteSubquery)
+	indirect, err := astindirect.NewSubqueryIndirect(sq)
+	if err != nil {
+		logging.GetLogger().Errorf("processCTEReference: Failed to create subquery indirect: %v", err)
+		return true //nolint:nilerr //TODO: investigate
+	}
+	err = v.processIndirect(node, indirect)
+	if err != nil {
+		logging.GetLogger().Errorf("processCTEReference: processIndirect failed: %v", err)
+	} else {
+		logging.GetLogger().Infof("processCTEReference: Successfully processed CTE '%s' as subquery", tableName)
+	}
+	return true
 }
 
 func (v *indirectExpandAstVisitor) processIndirect(node sqlparser.SQLNode, indirect astindirect.Indirect) error {
@@ -216,14 +251,14 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 		addIf(node.StraightJoinHint, sqlparser.StraightJoinHint)
 		addIf(node.SQLCalcFoundRows, sqlparser.SQLCalcFoundRowsStr)
 
-		// Register CTEs (Common Table Expressions) if present.
-		// We only register CTE names here - the actual SELECT processing
-		// happens in processIndirect when the CTE is referenced.
-		// This mirrors how subqueries work (processed once in processIndirect).
+		// Extract CTEs from WITH clause and store in registry as Subqueries.
+		// CTEs are converted to subqueries at the AST level for uniform handling.
 		if node.With != nil {
+			logging.GetLogger().Infof("Registering %d CTEs from WITH clause", len(node.With.CTEs))
 			for _, cte := range node.With.CTEs {
 				cteName := cte.Name.GetRawVal()
-				v.cteRegistry[cteName] = cte
+				v.cteRegistry[cteName] = cte.Subquery
+				logging.GetLogger().Debugf("Registered CTE '%s' with subquery: %s", cteName, sqlparser.String(cte.Subquery))
 			}
 		}
 
@@ -798,6 +833,11 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 					return nil //nolint:nilerr //TODO: investigate
 				}
 				return nil
+			case sqlparser.TableName:
+				// Check if this is a CTE reference - convert to subquery
+				if v.processCTEReference(node, n.GetRawVal()) {
+					return nil
+				}
 			}
 			err := node.Expr.Accept(v)
 			if err != nil {
@@ -835,22 +875,9 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 		if node.IsEmpty() {
 			return nil
 		}
-		// Check if this is a CTE reference.
-		cteName := node.Name.GetRawVal()
-		if cte, isCTE := v.cteRegistry[cteName]; isCTE {
-			// This is a CTE reference - create and process an indirect.
-			// We need to call processIndirect to get the proper column context
-			// from the CTE's SELECT statement.
-			indirect, err := astindirect.NewCTEIndirect(cte)
-			if err != nil {
-				return err
-			}
-			err = v.processIndirect(node, indirect)
-			if err != nil {
-				return err
-			}
-			return nil
-		}
+		// Note: CTE references are handled in AliasedTableExpr case above,
+		// where they are converted to subqueries. This case only handles
+		// regular table names (provider.service.resource).
 		containsBackendMaterial := v.handlerCtx.GetDBMSInternalRouter().ExprIsRoutable(node)
 		if containsBackendMaterial {
 			v.containsNativeBackendMaterial = true
