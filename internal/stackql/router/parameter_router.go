@@ -602,6 +602,9 @@ func (pr *standardParameterRouter) route(
 		tableName := taxonomy.GetTableNameFromStatement(tb, pr.astFormatter)
 		hIDs := internaldto.NewHeirarchyIdentifiers("", "", tableName, "")
 		hr = tablemetadata.NewHeirarchyObjects(hIDs, isAwait)
+		// Set the CTE indirect on the hierarchy objects so it can be accessed
+		// during query rewriting and execution.
+		hr.SetIndirect(cteIndirect)
 	} else {
 		hr, err = taxonomy.GetHeirarchyFromStatement(handlerCtx, tb, notOnParams, false, isAwait)
 		if err != nil {
