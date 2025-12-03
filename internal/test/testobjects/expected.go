@@ -44,9 +44,13 @@ const (
 	ExpectedSelectExecOrgGetIamPolicyAgg                                      string = "test/assets/expected/aggregated-select/google/cloudresourcemanager/select-exec-getiampolicy-agg.csv"
 
 	// Window function expected outputs.
-	ExpectedSelectComputeDisksWindowRowNumber string = "test/assets/expected/window-select/google/disks/text/disks-window-row-number.csv"
-	ExpectedSelectComputeDisksWindowRank      string = "test/assets/expected/window-select/google/disks/text/disks-window-rank.csv"
-	ExpectedSelectComputeDisksWindowSum       string = "test/assets/expected/window-select/google/disks/text/disks-window-sum.csv"
+	ExpectedSelectComputeDisksWindowRowNumber  string = "test/assets/expected/window-select/google/disks/text/disks-window-row-number.csv"
+	ExpectedSelectComputeDisksWindowRank       string = "test/assets/expected/window-select/google/disks/text/disks-window-rank.csv"
+	ExpectedSelectComputeDisksWindowSum        string = "test/assets/expected/window-select/google/disks/text/disks-window-sum.csv"
+	ExpectedSelectComputeDisksWindowDenseRank  string = "test/assets/expected/window-select/google/disks/text/disks-window-dense-rank.csv"
+	ExpectedSelectComputeDisksWindowMultiple   string = "test/assets/expected/window-select/google/disks/text/disks-window-multiple.csv"
+	ExpectedSelectComputeDisksWindowCount      string = "test/assets/expected/window-select/google/disks/text/disks-window-count.csv"
+	ExpectedSelectComputeDisksCTEWithWindow    string = "test/assets/expected/window-select/google/disks/text/disks-cte-with-window.csv"
 
 	// CTE expected outputs.
 	ExpectedSelectComputeDisksCTESimple   string = "test/assets/expected/cte-select/google/disks/text/disks-cte-simple.csv"

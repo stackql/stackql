@@ -219,3 +219,139 @@ func TestSelectComputeDisksCTEMultiple(t *testing.T) {
 	stackqltestutil.SetupSimpleSelectGoogleComputeDisks(t, 2)
 	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedSelectComputeDisksCTEMultiple})
 }
+
+//nolint:govet,lll // test file
+func TestSelectComputeDisksWindowDenseRank(t *testing.T) {
+	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSelectComputeDisksWindowDenseRank")
+	if err != nil {
+		t.Fatalf("Test failed: %v", err)
+	}
+	inputBundle, err := stackqltestutil.BuildInputBundle(*runtimeCtx)
+	if err != nil {
+		t.Fatalf("Test failed: %v", err)
+	}
+
+	testSubject := func(t *testing.T, outFile *bufio.Writer) {
+		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle.WithStdOut(outFile), true)
+		if err != nil {
+			t.Fatalf("Test failed: %v", err)
+		}
+
+		handlerCtx.SetQuery(testobjects.SelectGoogleComputeDisksWindowDenseRank)
+		dr, _ := NewStackQLDriver(handlerCtx)
+		querySubmitter := querysubmit.NewQuerySubmitter()
+		prepareErr := querySubmitter.PrepareQuery(handlerCtx)
+		if prepareErr != nil {
+			t.Fatalf("Test failed: %v", prepareErr)
+		}
+		response := querySubmitter.SubmitQuery()
+		responsehandler.HandleResponse(handlerCtx, response)
+
+		dr.ProcessQuery(handlerCtx.GetRawQuery())
+	}
+
+	stackqltestutil.SetupSimpleSelectGoogleComputeDisks(t, 1)
+	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedSelectComputeDisksWindowDenseRank})
+}
+
+//nolint:govet,lll // test file
+func TestSelectComputeDisksWindowMultiple(t *testing.T) {
+	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSelectComputeDisksWindowMultiple")
+	if err != nil {
+		t.Fatalf("Test failed: %v", err)
+	}
+	inputBundle, err := stackqltestutil.BuildInputBundle(*runtimeCtx)
+	if err != nil {
+		t.Fatalf("Test failed: %v", err)
+	}
+
+	testSubject := func(t *testing.T, outFile *bufio.Writer) {
+		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle.WithStdOut(outFile), true)
+		if err != nil {
+			t.Fatalf("Test failed: %v", err)
+		}
+
+		handlerCtx.SetQuery(testobjects.SelectGoogleComputeDisksWindowMultiple)
+		dr, _ := NewStackQLDriver(handlerCtx)
+		querySubmitter := querysubmit.NewQuerySubmitter()
+		prepareErr := querySubmitter.PrepareQuery(handlerCtx)
+		if prepareErr != nil {
+			t.Fatalf("Test failed: %v", prepareErr)
+		}
+		response := querySubmitter.SubmitQuery()
+		responsehandler.HandleResponse(handlerCtx, response)
+
+		dr.ProcessQuery(handlerCtx.GetRawQuery())
+	}
+
+	stackqltestutil.SetupSimpleSelectGoogleComputeDisks(t, 1)
+	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedSelectComputeDisksWindowMultiple})
+}
+
+//nolint:govet,lll // test file
+func TestSelectComputeDisksWindowCount(t *testing.T) {
+	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSelectComputeDisksWindowCount")
+	if err != nil {
+		t.Fatalf("Test failed: %v", err)
+	}
+	inputBundle, err := stackqltestutil.BuildInputBundle(*runtimeCtx)
+	if err != nil {
+		t.Fatalf("Test failed: %v", err)
+	}
+
+	testSubject := func(t *testing.T, outFile *bufio.Writer) {
+		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle.WithStdOut(outFile), true)
+		if err != nil {
+			t.Fatalf("Test failed: %v", err)
+		}
+
+		handlerCtx.SetQuery(testobjects.SelectGoogleComputeDisksWindowCount)
+		dr, _ := NewStackQLDriver(handlerCtx)
+		querySubmitter := querysubmit.NewQuerySubmitter()
+		prepareErr := querySubmitter.PrepareQuery(handlerCtx)
+		if prepareErr != nil {
+			t.Fatalf("Test failed: %v", prepareErr)
+		}
+		response := querySubmitter.SubmitQuery()
+		responsehandler.HandleResponse(handlerCtx, response)
+
+		dr.ProcessQuery(handlerCtx.GetRawQuery())
+	}
+
+	stackqltestutil.SetupSimpleSelectGoogleComputeDisks(t, 1)
+	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedSelectComputeDisksWindowCount})
+}
+
+//nolint:govet,lll // test file
+func TestSelectComputeDisksCTEWithWindow(t *testing.T) {
+	runtimeCtx, err := stackqltestutil.GetRuntimeCtx(testobjects.GetGoogleProviderString(), "text", "TestSelectComputeDisksCTEWithWindow")
+	if err != nil {
+		t.Fatalf("Test failed: %v", err)
+	}
+	inputBundle, err := stackqltestutil.BuildInputBundle(*runtimeCtx)
+	if err != nil {
+		t.Fatalf("Test failed: %v", err)
+	}
+
+	testSubject := func(t *testing.T, outFile *bufio.Writer) {
+		handlerCtx, err := entryutil.BuildHandlerContext(*runtimeCtx, strings.NewReader(""), lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle.WithStdOut(outFile), true)
+		if err != nil {
+			t.Fatalf("Test failed: %v", err)
+		}
+
+		handlerCtx.SetQuery(testobjects.SelectGoogleComputeDisksCTEWithWindow)
+		dr, _ := NewStackQLDriver(handlerCtx)
+		querySubmitter := querysubmit.NewQuerySubmitter()
+		prepareErr := querySubmitter.PrepareQuery(handlerCtx)
+		if prepareErr != nil {
+			t.Fatalf("Test failed: %v", prepareErr)
+		}
+		response := querySubmitter.SubmitQuery()
+		responsehandler.HandleResponse(handlerCtx, response)
+
+		dr.ProcessQuery(handlerCtx.GetRawQuery())
+	}
+
+	stackqltestutil.SetupSimpleSelectGoogleComputeDisks(t, 1)
+	stackqltestutil.RunCaptureTestAgainstFiles(t, testSubject, []string{testobjects.ExpectedSelectComputeDisksCTEWithWindow})
+}

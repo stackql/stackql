@@ -61,6 +61,14 @@ const (
 	SelectGoogleComputeDisksWindowRank      string = `select name, sizeGb, RANK() OVER (ORDER BY sizeGb) as size_rank from google.compute.disks where zone = 'australia-southeast1-b' AND project = 'testing-project' ORDER BY name;`
 	SelectGoogleComputeDisksWindowSum       string = `select name, sizeGb, SUM(cast(sizeGb as unsigned)) OVER (ORDER BY name) as running_total from google.compute.disks where zone = 'australia-southeast1-b' AND project = 'testing-project' ORDER BY name;`
 
+	// Additional window function test queries.
+	SelectGoogleComputeDisksWindowDenseRank string = `select name, sizeGb, DENSE_RANK() OVER (ORDER BY sizeGb) as dense_rank from google.compute.disks where zone = 'australia-southeast1-b' AND project = 'testing-project' ORDER BY name;`
+	SelectGoogleComputeDisksWindowMultiple  string = `select name, sizeGb, ROW_NUMBER() OVER (ORDER BY name) as row_num, RANK() OVER (ORDER BY sizeGb DESC) as size_rank, COUNT(*) OVER () as total_count from google.compute.disks where zone = 'australia-southeast1-b' AND project = 'testing-project' ORDER BY name;`
+	SelectGoogleComputeDisksWindowCount     string = `select name, sizeGb, COUNT(*) OVER () as total, AVG(cast(sizeGb as unsigned)) OVER () as avg_size from google.compute.disks where zone = 'australia-southeast1-b' AND project = 'testing-project' ORDER BY name;`
+
+	// CTE with window function test query.
+	SelectGoogleComputeDisksCTEWithWindow string = `WITH disk_cte AS (SELECT name, sizeGb FROM google.compute.disks WHERE zone = 'australia-southeast1-b' AND project = 'testing-project') SELECT name, sizeGb, ROW_NUMBER() OVER (ORDER BY name) as row_num FROM disk_cte ORDER BY name;`
+
 	// CTE test queries.
 	SelectGoogleComputeDisksCTESimple   string = `WITH disk_cte AS (SELECT name, sizeGb FROM google.compute.disks WHERE zone = 'australia-southeast1-b' AND project = 'testing-project') SELECT name, sizeGb FROM disk_cte ORDER BY name;`
 	SelectGoogleComputeDisksCTEWithAgg  string = `WITH disk_cte AS (SELECT name, sizeGb FROM google.compute.disks WHERE zone = 'australia-southeast1-b' AND project = 'testing-project') SELECT COUNT(*) as disk_count FROM disk_cte;`
