@@ -17,6 +17,7 @@ var (
 	_ Indirect = &View{}
 	_ Indirect = &Subquery{}
 	_ Indirect = &MaterializedView{}
+	_ Indirect = &CTE{}
 )
 
 type IndirectType int

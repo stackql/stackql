@@ -20,7 +20,7 @@ require (
 	github.com/stackql/any-sdk v0.3.1-beta01
 	github.com/stackql/go-suffix-map v0.0.1-alpha01
 	github.com/stackql/psql-wire v0.1.2-alpha01
-	github.com/stackql/stackql-parser v0.0.15-alpha06
+	github.com/stackql/stackql-parser v0.0.16-alpha01
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/sync v0.15.0
 	gonum.org/v1/gonum v0.15.1

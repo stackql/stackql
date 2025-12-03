@@ -164,6 +164,7 @@ func (dp *standardDependencyPlanner) Plan() error {
 			annotation := unit.GetAnnotation()
 			_, isView := annotation.GetView()
 			_, isSubquery := annotation.GetSubquery()
+			// Note: CTEs are converted to subqueries at AST level, so isSubquery handles them.
 			if isView || isSubquery {
 				dp.annMap[tableExpr] = annotation
 				continue

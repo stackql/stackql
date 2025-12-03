@@ -591,7 +591,11 @@ func (pr *standardParameterRouter) route(
 	priorParameters := runParamters.Clone()
 	// notOnStringParams := notOnParams.GetStringified()
 	// TODO: add parent params into the mix here.
-	hr, err := taxonomy.GetHeirarchyFromStatement(handlerCtx, tb, notOnParams, false, isAwait)
+	// Note: CTEs are converted to subqueries at AST level, so they follow
+	// the normal subquery path (handled via GetSubquery() in ObtainAnnotationCtx).
+	var hr tablemetadata.HeirarchyObjects
+	var err error
+	hr, err = taxonomy.GetHeirarchyFromStatement(handlerCtx, tb, notOnParams, false, isAwait)
 	if err != nil {
 		hr, err = taxonomy.GetHeirarchyFromStatement(handlerCtx, tb, runParamters, false, isAwait)
 	} else {

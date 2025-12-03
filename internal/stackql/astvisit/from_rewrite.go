@@ -668,6 +668,8 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 					v.rewrittenQuery = templateString
 					v.indirectContexts = append(v.indirectContexts, indirect.GetSelectContext())
 				case astindirect.SubqueryType:
+					// Note: CTEs are converted to SubqueryType at AST level,
+					// so this path handles both regular subqueries and CTEs.
 					templateString := ` ( %s ) `
 					v.rewrittenQuery = templateString
 					v.indirectContexts = append(v.indirectContexts, indirect.GetSelectContext())

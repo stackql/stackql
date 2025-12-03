@@ -20,6 +20,7 @@ func ObtainAnnotationCtx(
 	_, isSQLDataSource := tbl.GetSQLDataSource()
 	_, isSubquery := tbl.GetSubquery()
 	isPGInternalObject := tbl.GetHeirarchyObjects().IsPGInternalObject()
+	// Note: CTEs are converted to subqueries at AST level, so isSubquery handles them.
 	if isView || isSQLDataSource || isSubquery || isPGInternalObject {
 		// TODO: upgrade this flow; nil == YUCK!!!
 		return taxonomy.NewStaticStandardAnnotationCtx(

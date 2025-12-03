@@ -638,6 +638,10 @@ func inferColNameFromExpr(
 			retVal.IsAggregateExpr = true
 			retVal.Type = aggCol.getReturnType()
 		}
+		// Window functions (with OVER clause) are also treated as aggregate expressions
+		if expr.Over != nil {
+			retVal.IsAggregateExpr = true
+		}
 		if len(funcNameLowered) >= 4 && funcNameLowered[0:4] == "json" {
 			decoratedColumn := strings.ReplaceAll(retVal.Name, `\"`, `"`)
 			retVal.DecoratedColumn = getDecoratedColRendition(decoratedColumn, alias)
@@ -659,6 +663,12 @@ func inferColNameFromExpr(
 				return rv, nil
 			}
 		} else {
+			// For window functions with OVER clause, use proper formatting to preserve it.
+			if expr.Over != nil {
+				decoratedColumn := astformat.String(expr, formatter)
+				retVal.DecoratedColumn = getDecoratedColRendition(decoratedColumn, alias)
+				return retVal, nil
+			}
 			var exprsDecorated []string
 			for i, exp := range expr.Exprs {
 				switch ex := exp.(type) {
