@@ -19,6 +19,7 @@ type CTE struct {
 	underlyingSymbolTable symtab.SymTab
 	next                  Indirect
 	isElide               bool
+	columns               []string // Column names extracted from SELECT
 }
 
 // NewCTEIndirect creates a new CTE indirect from a CommonTableExpr.
@@ -29,7 +30,30 @@ func NewCTEIndirect(cte *sqlparser.CommonTableExpr) (Indirect, error) {
 		selectStmt:            cte.Select,
 		underlyingSymbolTable: symtab.NewHashMapTreeSymTab(),
 	}
+	// Extract column names from the SELECT statement.
+	rv.columns = rv.extractColumnsFromSelect()
 	return rv, nil
+}
+
+// extractColumnsFromSelect extracts column names from the CTE's SELECT statement.
+func (c *CTE) extractColumnsFromSelect() []string {
+	var columns []string
+	sel, ok := c.selectStmt.(*sqlparser.Select)
+	if !ok {
+		return columns
+	}
+	for _, expr := range sel.SelectExprs {
+		switch e := expr.(type) {
+		case *sqlparser.AliasedExpr:
+			// Use alias if present, otherwise try to get column name
+			if e.As.GetRawVal() != "" {
+				columns = append(columns, e.As.GetRawVal())
+			} else if col, ok := e.Expr.(*sqlparser.ColName); ok {
+				columns = append(columns, col.Name.GetRawVal())
+			}
+		}
+	}
+	return columns
 }
 
 func (c *CTE) IsElide() bool {
@@ -82,10 +106,16 @@ func (c *CTE) GetName() string {
 }
 
 func (c *CTE) GetColumns() []typing.ColumnMetadata {
-	if c.selCtx == nil {
-		return nil
+	if c.selCtx != nil {
+		return c.selCtx.GetNonControlColumns()
 	}
-	return c.selCtx.GetNonControlColumns()
+	// If no selCtx, create simple column metadata from extracted column names.
+	var cols []typing.ColumnMetadata
+	for _, name := range c.columns {
+		relCol := typing.NewRelationalColumn(name, "")
+		cols = append(cols, typing.NewRelayedColDescriptor(relCol, ""))
+	}
+	return cols
 }
 
 func (c *CTE) GetOptionalParameters() map[string]anysdk.Addressable {
@@ -97,12 +127,19 @@ func (c *CTE) GetRequiredParameters() map[string]anysdk.Addressable {
 }
 
 func (c *CTE) GetColumnByName(name string) (typing.ColumnMetadata, bool) {
-	if c.selCtx == nil {
+	if c.selCtx != nil {
+		for _, col := range c.selCtx.GetNonControlColumns() {
+			if col.GetIdentifier() == name {
+				return col, true
+			}
+		}
 		return nil, false
 	}
-	for _, col := range c.selCtx.GetNonControlColumns() {
-		if col.GetIdentifier() == name {
-			return col, true
+	// If no selCtx, check extracted column names.
+	for _, colName := range c.columns {
+		if colName == name {
+			relCol := typing.NewRelationalColumn(name, "")
+			return typing.NewRelayedColDescriptor(relCol, ""), true
 		}
 	}
 	return nil, false
