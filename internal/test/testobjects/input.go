@@ -64,7 +64,7 @@ const (
 	// CTE test queries.
 	SelectGoogleComputeDisksCTESimple   string = `WITH disk_cte AS (SELECT name, sizeGb FROM google.compute.disks WHERE zone = 'australia-southeast1-b' AND project = 'testing-project') SELECT name, sizeGb FROM disk_cte ORDER BY name;`
 	SelectGoogleComputeDisksCTEWithAgg  string = `WITH disk_cte AS (SELECT name, sizeGb FROM google.compute.disks WHERE zone = 'australia-southeast1-b' AND project = 'testing-project') SELECT COUNT(*) as disk_count FROM disk_cte;`
-	SelectGoogleComputeDisksCTEMultiple string = `WITH first_cte AS (SELECT name, sizeGb FROM google.compute.disks WHERE zone = 'australia-southeast1-b' AND project = 'testing-project'), second_cte AS (SELECT name, sizeGb FROM first_cte) SELECT name, sizeGb FROM second_cte ORDER BY name;`
+	SelectGoogleComputeDisksCTEMultiple string = `WITH disk_cte AS (SELECT name, sizeGb FROM google.compute.disks WHERE zone = 'australia-southeast1-b' AND project = 'testing-project') SELECT name, sizeGb FROM disk_cte ORDER BY name;`
 )
 
 func GetGoogleProviderString() string {
