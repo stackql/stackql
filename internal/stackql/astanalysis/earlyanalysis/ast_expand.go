@@ -216,18 +216,14 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 		addIf(node.StraightJoinHint, sqlparser.StraightJoinHint)
 		addIf(node.SQLCalcFoundRows, sqlparser.SQLCalcFoundRowsStr)
 
-		// Process CTEs (Common Table Expressions) if present
+		// Register CTEs (Common Table Expressions) if present.
+		// We only register CTE names here - the actual SELECT processing
+		// happens in processIndirect when the CTE is referenced.
+		// This mirrors how subqueries work (processed once in processIndirect).
 		if node.With != nil {
 			for _, cte := range node.With.CTEs {
 				cteName := cte.Name.GetRawVal()
 				v.cteRegistry[cteName] = cte
-				// Process the CTE's select statement
-				if cte.Select != nil {
-					err := cte.Select.Accept(v)
-					if err != nil {
-						return err
-					}
-				}
 			}
 		}
 
