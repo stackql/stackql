@@ -842,14 +842,17 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 		// Check if this is a CTE reference.
 		cteName := node.Name.GetRawVal()
 		if cte, isCTE := v.cteRegistry[cteName]; isCTE {
-			// This is a CTE reference - create and register an indirect.
-			// The CTE's inner SELECT has already been visited when processing
-			// the WITH clause, so the API tables within it will be processed.
+			// This is a CTE reference - create and process an indirect.
+			// We need to call processIndirect to get the proper column context
+			// from the CTE's SELECT statement.
 			indirect, err := astindirect.NewCTEIndirect(cte)
 			if err != nil {
 				return err
 			}
-			v.annotatedAST.SetIndirect(node, indirect)
+			err = v.processIndirect(node, indirect)
+			if err != nil {
+				return err
+			}
 			return nil
 		}
 		containsBackendMaterial := v.handlerCtx.GetDBMSInternalRouter().ExprIsRoutable(node)
