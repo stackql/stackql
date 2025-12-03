@@ -43,12 +43,11 @@ func (c *CTE) extractColumnsFromSelect() []string {
 		return columns
 	}
 	for _, expr := range sel.SelectExprs {
-		switch e := expr.(type) {
-		case *sqlparser.AliasedExpr:
+		if e, isAliased := expr.(*sqlparser.AliasedExpr); isAliased {
 			// Use alias if present, otherwise try to get column name
 			if e.As.GetRawVal() != "" {
 				columns = append(columns, e.As.GetRawVal())
-			} else if col, ok := e.Expr.(*sqlparser.ColName); ok {
+			} else if col, isCol := e.Expr.(*sqlparser.ColName); isCol {
 				columns = append(columns, col.Name.GetRawVal())
 			}
 		}
