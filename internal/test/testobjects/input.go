@@ -59,12 +59,12 @@ const (
 	// Window function test queries.
 	SelectGoogleComputeDisksWindowRowNumber string = `select name, sizeGb, ROW_NUMBER() OVER (ORDER BY name) as row_num from google.compute.disks where zone = 'australia-southeast1-b' AND project = 'testing-project' ORDER BY name;`
 	SelectGoogleComputeDisksWindowRank      string = `select name, sizeGb, RANK() OVER (ORDER BY sizeGb) as size_rank from google.compute.disks where zone = 'australia-southeast1-b' AND project = 'testing-project' ORDER BY name;`
-	SelectGoogleComputeDisksWindowSum       string = `select name, sizeGb, SUM(cast(sizeGb as int)) OVER (ORDER BY name) as running_total from google.compute.disks where zone = 'australia-southeast1-b' AND project = 'testing-project' ORDER BY name;`
+	SelectGoogleComputeDisksWindowSum       string = `select name, sizeGb, SUM(cast(sizeGb as INTEGER)) OVER (ORDER BY name) as running_total from google.compute.disks where zone = 'australia-southeast1-b' AND project = 'testing-project' ORDER BY name;`
 
 	// CTE test queries.
 	SelectGoogleComputeDisksCTESimple   string = `WITH disk_cte AS (SELECT name, sizeGb FROM google.compute.disks WHERE zone = 'australia-southeast1-b' AND project = 'testing-project') SELECT name, sizeGb FROM disk_cte ORDER BY name;`
 	SelectGoogleComputeDisksCTEWithAgg  string = `WITH disk_cte AS (SELECT name, sizeGb FROM google.compute.disks WHERE zone = 'australia-southeast1-b' AND project = 'testing-project') SELECT COUNT(*) as disk_count FROM disk_cte;`
-	SelectGoogleComputeDisksCTEMultiple string = `WITH small_disks AS (SELECT name, sizeGb FROM google.compute.disks WHERE zone = 'australia-southeast1-b' AND project = 'testing-project' AND cast(sizeGb as int) <= 10), large_disks AS (SELECT name, sizeGb FROM google.compute.disks WHERE zone = 'australia-southeast1-b' AND project = 'testing-project' AND cast(sizeGb as int) > 10) SELECT 'small' as category, COUNT(*) as cnt FROM small_disks UNION ALL SELECT 'large' as category, COUNT(*) as cnt FROM large_disks;`
+	SelectGoogleComputeDisksCTEMultiple string = `WITH small_disks AS (SELECT name, sizeGb FROM google.compute.disks WHERE zone = 'australia-southeast1-b' AND project = 'testing-project' AND cast(sizeGb as INTEGER) <= 10), large_disks AS (SELECT name, sizeGb FROM google.compute.disks WHERE zone = 'australia-southeast1-b' AND project = 'testing-project' AND cast(sizeGb as INTEGER) > 10) SELECT 'small' as category, COUNT(*) as cnt FROM small_disks UNION ALL SELECT 'large' as category, COUNT(*) as cnt FROM large_disks;`
 )
 
 func GetGoogleProviderString() string {

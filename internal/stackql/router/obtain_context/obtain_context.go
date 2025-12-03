@@ -3,6 +3,7 @@ package obtain_context //nolint:revive,cyclop,stylecheck // TODO: allow
 import (
 	"fmt"
 
+	"github.com/stackql/stackql/internal/stackql/astindirect"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
@@ -20,7 +21,10 @@ func ObtainAnnotationCtx(
 	_, isSQLDataSource := tbl.GetSQLDataSource()
 	_, isSubquery := tbl.GetSubquery()
 	isPGInternalObject := tbl.GetHeirarchyObjects().IsPGInternalObject()
-	if isView || isSQLDataSource || isSubquery || isPGInternalObject {
+	// Check if this is a CTE reference.
+	indirect, hasIndirect := tbl.GetIndirect()
+	isCTE := hasIndirect && indirect != nil && indirect.GetType() == astindirect.CTEType
+	if isView || isSQLDataSource || isSubquery || isPGInternalObject || isCTE {
 		// TODO: upgrade this flow; nil == YUCK!!!
 		return taxonomy.NewStaticStandardAnnotationCtx(
 			nil, tbl.GetHeirarchyObjects().GetHeirarchyIDs(),
