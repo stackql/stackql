@@ -1,3 +1,7 @@
-category,cnt
-small,3
-large,3
+name,sizeGb
+demo-disk-qq1,10
+demo-disk-qq2,10
+demo-disk-xx2,10
+demo-disk-xx3,20
+demo-disk-xx4,30
+demo-disk-xx5,40
