@@ -224,6 +224,11 @@ func (pb *standardPrimitiveGenerator) analyzeSelect(pbi planbuilderinput.PlanBui
 			selCtx := dp.GetSelectCtx()
 			pChild.GetPrimitiveComposer().SetBuilder(bld)
 			pb.PrimitiveComposer.SetSelectPreparedStatementCtx(selCtx)
+			// For indirects (like CTEs), also set the builder on the indirect's primitive
+			// composer so it can be found when parent's GetBuilder() iterates over indirects.
+			if pb.PrimitiveComposer.IsIndirect() {
+				pb.PrimitiveComposer.SetBuilder(bld)
+			}
 			return nil
 		}
 	}
