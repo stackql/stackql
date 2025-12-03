@@ -164,7 +164,10 @@ func (dp *standardDependencyPlanner) Plan() error {
 			annotation := unit.GetAnnotation()
 			_, isView := annotation.GetView()
 			_, isSubquery := annotation.GetSubquery()
-			if isView || isSubquery {
+			// Check if this is a CTE reference.
+			indirect, hasIndirect := annotation.GetTableMeta().GetIndirect()
+			isCTE := hasIndirect && indirect != nil && indirect.GetType() == astindirect.CTEType
+			if isView || isSubquery || isCTE {
 				dp.annMap[tableExpr] = annotation
 				continue
 			}
