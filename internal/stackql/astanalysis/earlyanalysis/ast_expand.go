@@ -847,7 +847,11 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 			if err != nil {
 				return err
 			}
-			v.annotatedAST.SetIndirect(node, indirect)
+			// Process the indirect to populate select context with columns.
+			err = v.processIndirect(node, indirect)
+			if err != nil {
+				return err
+			}
 			return nil
 		}
 		containsBackendMaterial := v.handlerCtx.GetDBMSInternalRouter().ExprIsRoutable(node)
