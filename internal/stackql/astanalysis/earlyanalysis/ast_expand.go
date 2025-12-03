@@ -257,8 +257,10 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 			logging.GetLogger().Infof("Registering %d CTEs from WITH clause", len(node.With.CTEs))
 			for _, cte := range node.With.CTEs {
 				cteName := cte.Name.GetRawVal()
-				v.cteRegistry[cteName] = cte.Subquery
-				logging.GetLogger().Debugf("Registered CTE '%s' with subquery: %s", cteName, sqlparser.String(cte.Subquery))
+				// Wrap the CTE's SELECT statement in a Subquery struct
+				cteSubquery := &sqlparser.Subquery{Select: cte.Select}
+				v.cteRegistry[cteName] = cteSubquery
+				logging.GetLogger().Debugf("Registered CTE '%s' with subquery: %s", cteName, sqlparser.String(cteSubquery))
 			}
 		}
 
