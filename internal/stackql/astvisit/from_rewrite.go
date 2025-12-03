@@ -671,6 +671,12 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 					templateString := ` ( %s ) `
 					v.rewrittenQuery = templateString
 					v.indirectContexts = append(v.indirectContexts, indirect.GetSelectContext())
+				case astindirect.CTEType:
+					// CTEs are handled like views - the inner SELECT is executed
+					// and results are wrapped with the CTE name as alias.
+					templateString := fmt.Sprintf(` ( %%s ) AS "%s" `, name)
+					v.rewrittenQuery = templateString
+					v.indirectContexts = append(v.indirectContexts, indirect.GetSelectContext())
 				case astindirect.MaterializedViewType, astindirect.PhysicalTableType:
 					refString := fmt.Sprintf(` %s `, name)
 					isQuoted, _ := regexp.MatchString(`^".*"$`, name)
