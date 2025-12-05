@@ -335,6 +335,18 @@ jobs:
         check-latest: true
         cache: true
       id: go
+
+    - name: Check go sum coherence
+      run: |
+        cp go.sum go.sum.bkp
+        sumDiff="$(diff go.sum go.sum.bkp)" || true;
+        if [ "$sumDiff" = "" ]; then 
+          echo "go.sum check passed"
+        else 
+          echo "go.sum is inconsistent, might be time to run 'go mod tidy' and commit";
+          exit 1;
+        fi
+
     
     - name: Setup Python
       uses: actions/setup-python@v5.0.0

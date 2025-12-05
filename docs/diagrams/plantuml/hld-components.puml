@@ -1,20 +1,29 @@
 @startuml
 
-node "Openapi-StackQL" as OpenapiStackQL
-node "StackQL Parser" as StackQLParser
+node "any-sdk" as AnySdk
+node "stackql-parser" as StackQLParser
 node "psql-wire" as PsqlWire
+node "stackql-provider-registry" as ProviderRegistry
+node "stackql-go-sqlite3" as StackqlSqlite
+node "postgres" as Postgres
+node "postgres clients\neg: libpq" as PostgresClient
+node "AI agents\neg: Claude Code" as AIAgent
 
 [Shell] ..> [Command Runner]
 [Exec] ..> [Command Runner]
 [Command Runner] ..> [Driver]
+PostgresClient ->  [Server]
 [Server] ..> [Driver]
 [Server] ..> [Wire Server]
 [Wire Server] ..> PsqlWire
+[MCP Server] ..> [Driver]
+AIAgent -> [MCP Server]
 [Driver] ..> [Query Submitter]
 [Query Submitter] ..> [Plan Builder]
 [Plan Builder] ..> [Initial Passes Screener Analyzer] : Mature the AST
 [Initial Passes Screener Analyzer] ..> [Initial Passes Screener Analyzer] : Nested Indirection
 [Initial Passes Screener Analyzer] ..> [Indirect] : Indirect Expansion
+[Initial Passes Screener Analyzer] ..> ProviderRegistry
 [Plan Builder] ..> [Parser]
 [Indirect] ..> [Parser]
 [Parser] ..> StackQLParser
@@ -22,9 +31,14 @@ node "psql-wire" as PsqlWire
 [Plan Builder] ..> [Primitive Builder]
 [Primitive Builder] ..> [Primitive Graph]
 [Plan Builder] ..> [Primitive Graph]
-[Primitive Builder] ..> OpenapiStackQL
+[Primitive Graph] ..> [Executor]
+[Executor] ..> [Relational Algebra]
+[Executor] ..> ProviderRegistry
+[Relational Algebra] ..> StackqlSqlite
+[Relational Algebra] -> Postgres
+[Primitive Builder] ..> AnySdk
 [Route Pass] ..> [Parameter Router]
-[Parameter Router] ..> OpenapiStackQL
+[Parameter Router] ..> AnySdk
 [Route Pass] ..> [Route Pass] : Nesting / Composition
 
 
