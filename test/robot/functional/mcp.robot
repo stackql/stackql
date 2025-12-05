@@ -325,46 +325,6 @@ MCP HTTPS Server JSON DTO Query V3 JSON
     ${row_count}=    Get From Dictionary    ${query_obj}    row_count
     Should Be True    ${row_count} > 0
 
-MCP HTTPS Server Query Exec Text
-    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
-    # Future proofing: raw text format reserved; may gain structured hints later.
-    ${ns_query_text}=    Run Process
-    ...    ${STACKQL_MCP_CLIENT_EXE}
-    ...    exec
-    ...    \-\-client\-type\=http
-    ...    \-\-url\=https://127.0.0.1:9004
-    ...    \-\-client\-cfg
-    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
-    ...    \-\-exec.action
-    ...    query.exec_text
-    ...    \-\-exec.args
-    ...    {"sql":"SELECT 1 as foo"}
-    ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-query-exec-text.txt
-    ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-query-exec-text-stderr.txt
-    Should Be Equal As Integers    ${ns_query_text.rc}    0
-    Should Contain     ${ns_query_text.stdout}   foo
-
-MCP HTTPS Server JSON DTO Query Exec JSON
-    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
-    ${ns_query_json}=    Run Process
-    ...    ${STACKQL_MCP_CLIENT_EXE}
-    ...    exec
-    ...    \-\-client\-type\=http
-    ...    \-\-url\=https://127.0.0.1:9004
-    ...    \-\-client\-cfg
-    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
-    ...    \-\-exec.action
-    ...    query.exec_json
-    ...    \-\-exec.args
-    ...    {"sql":"SELECT 1 as foo","row_limit":5}
-    ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-query-exec-json.txt
-    ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-query-exec-json-stderr.txt
-    Should Be Equal As Integers    ${ns_query_json.rc}    0
-    ${ns_query_json_obj}=    Parse MCP JSON Output    ${ns_query_json.stdout}
-    Should Be Equal    ${ns_query_json_obj["format"]}    json
-    ${ns_row_count}=    Get From Dictionary    ${ns_query_json_obj}    row_count
-    Should Be True    ${ns_row_count} >= 0
-
 MCP HTTPS Server JSON DTO Meta Get Foreign Keys
     [Documentation]     Future proofing: foreign key discovery not yet implemented; placeholder.
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
@@ -376,7 +336,7 @@ MCP HTTPS Server JSON DTO Meta Get Foreign Keys
     ...    \-\-client\-cfg
     ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
     ...    \-\-exec.action
-    ...    meta.get_foreign_keys
+    ...    get_foreign_keys
     ...    \-\-exec.args
     ...    {"provider":"google","service":"cloudresourcemanager","resource":"projects"}
     ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-meta-get-foreign-keys.txt
@@ -395,7 +355,7 @@ MCP HTTPS Server JSON DTO Meta Find Relationships
     ...    \-\-client\-cfg
     ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
     ...    \-\-exec.action
-    ...    meta.find_relationships
+    ...    find_relationships
     ...    \-\-exec.args
     ...    {"provider":"google","service":"cloudresourcemanager","resource":"projects"}
     ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-meta-find-relationships.txt

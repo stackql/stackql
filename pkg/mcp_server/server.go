@@ -166,7 +166,7 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		server,
 		&mcp.Tool{
 			Name:        "query_v2",
-			Description: "Execute a SQL query.  Please adhere to the expected parameters.  Returns a textual response",
+			Description: "Deprecated: Please switch to query_v3. Execute a SQL query.  Please adhere to the expected parameters.  Returns a textual response",
 			// Input and output schemas can be defined here if needed.
 		},
 		func(ctx context.Context, req *mcp.CallToolRequest, arg dto.QueryInput) (*mcp.CallToolResult, any, error) {
@@ -279,7 +279,7 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		server,
 		&mcp.Tool{
 			Name:        "prompt_write_safe_select_tool",
-			Description: "Prompt: guidelines for writing safe SELECT queries.",
+			Description: "PLACEHOLDER Future proofing: prompt guidelines for writing safe SELECT queries.",
 		},
 		func(ctx context.Context, req *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, any, error) {
 			result, err := backend.PromptWriteSafeSelectTool(ctx, args)
@@ -291,25 +291,6 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
 		},
 	)
-
-	// mcp.AddTool(
-	// 	server,
-	// 	&mcp.Tool{
-	// 		Name:        "prompt_explain_plan_tips_tool",
-	// 		Description: "Prompt: tips for reading EXPLAIN ANALYZE output.",
-	// 	},
-	// 	func(ctx context.Context, req *mcp.CallToolRequest, _ any) (*mcp.CallToolResult, any, error) {
-	// 		result, err := backend.PromptExplainPlanTipsTool(ctx)
-	// 		if err != nil {
-	// 			return nil, nil, err
-	// 		}
-	// 		return &mcp.CallToolResult{
-	// 			Content: []mcp.Content{
-	// 				&mcp.TextContent{Text: result},
-	// 			},
-	// 		}, result, nil
-	// 	},
-	// )
 
 	mcp.AddTool(
 		server,
@@ -338,7 +319,7 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		server,
 		&mcp.Tool{
 			Name:        "list_tables_json_page",
-			Description: "List tables with pagination and filters, returns JSON.",
+			Description: "Future proofing: List tables with pagination and filters, returns JSON.",
 		},
 		func(ctx context.Context, req *mcp.CallToolRequest, args dto.ListTablesPageInput) (*mcp.CallToolResult, any, error) {
 			result, err := backend.ListTablesJSONPage(ctx, args)
@@ -429,7 +410,7 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		server,
 		&mcp.Tool{
 			Name:        "describe_table",
-			Description: "Get detailed information about a table.",
+			Description: "PLACEHOLDER Future proofing: Get detailed information about a table.",
 		},
 		func(ctx context.Context, req *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, any, error) {
 			result, err := backend.DescribeTable(ctx, args)
@@ -446,7 +427,7 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		server,
 		&mcp.Tool{
 			Name:        "get_foreign_keys",
-			Description: "Get foreign key information for a table.",
+			Description: "PLACEHOLDER Future proofing: Get foreign key information for a table.",
 		},
 		func(ctx context.Context, req *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, any, error) {
 			result, err := backend.GetForeignKeys(ctx, args)
@@ -463,7 +444,7 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		server,
 		&mcp.Tool{
 			Name:        "find_relationships",
-			Description: "Find explicit and implied relationships for a table.",
+			Description: "PLACEHOLDER Future proofing: Find explicit and implied relationships for a table.",
 		},
 		func(ctx context.Context, req *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, any, error) {
 			result, err := backend.FindRelationships(ctx, args)
@@ -475,10 +456,6 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
 		},
 	)
-
-	// --- new: register namespaced meta.* and query.* tools ---
-	registerNamespacedTools(server, backend, logger)
-	// ---------------------------------------------------------
 
 	return &simpleMCPServer{
 		config:           config,
@@ -552,138 +529,4 @@ func (s *simpleMCPServer) Stop() error {
 
 	s.logger.Printf("MCP server stopped")
 	return nil
-}
-
-// registerNamespacedTools adds meta.* and query.* tools (namespaced variants).
-//
-//nolint:gocognit,funlen // ok for now
-func registerNamespacedTools(server *mcp.Server, backend Backend, logger *logrus.Logger) {
-	// meta.server_info
-	mcp.AddTool(
-		server,
-		&mcp.Tool{
-			Name:        "meta.server_info",
-			Description: "Namespaced: Get server information.",
-		},
-		func(ctx context.Context, req *mcp.CallToolRequest, _ any) (*mcp.CallToolResult, dto.ServerInfoDTO, error) {
-			info, err := backend.ServerInfo(ctx, nil)
-			if err != nil {
-				return nil, dto.ServerInfoDTO{}, err
-			}
-			out := dto.ServerInfoDTO{Name: info.Name, Info: info.Info, IsReadOnly: info.IsReadOnly}
-			bytesOut, _ := json.Marshal(out)
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
-		},
-	)
-
-	// meta.db_identity
-	mcp.AddTool(
-		server,
-		&mcp.Tool{
-			Name:        "meta.db_identity",
-			Description: "Namespaced: Get current database identity.",
-		},
-		func(ctx context.Context, req *mcp.CallToolRequest, _ any) (*mcp.CallToolResult, dto.DBIdentityDTO, error) {
-			id, err := backend.DBIdentity(ctx, nil)
-			if err != nil {
-				return nil, dto.DBIdentityDTO{}, err
-			}
-			out := dto.DBIdentityDTO{Identity: fmt.Sprintf("%v", id["identity"])}
-			bytesOut, _ := json.Marshal(out)
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
-		},
-	)
-
-	mcp.AddTool(
-		server,
-		&mcp.Tool{
-			Name:        "query.exec_text",
-			Description: "Namespaced: Execute SQL returning textual result.",
-		},
-		func(ctx context.Context, req *mcp.CallToolRequest, arg dto.QueryInput) (*mcp.CallToolResult, any, error) {
-			logger.Infof("query.exec_text SQL: %s", arg.SQL)
-			rawText, err := backend.RunQuery(ctx, arg)
-			if err != nil {
-				return nil, nil, err
-			}
-			out := dto.QueryResultDTO{Raw: rawText, Format: "text"}
-			bytesOut, _ := json.Marshal(out)
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
-		},
-	)
-
-	mcp.AddTool(
-		server,
-		&mcp.Tool{
-			Name:        "query.exec_json",
-			Description: "Namespaced: Execute SQL returning JSON array as text.",
-		},
-		func(ctx context.Context, req *mcp.CallToolRequest, arg dto.QueryJSONInput) (*mcp.CallToolResult, any, error) {
-			rows, err := backend.RunQueryJSON(ctx, arg)
-			if err != nil {
-				return nil, nil, err
-			}
-			dtObj := dto.QueryResultDTO{
-				Rows:     rows,
-				RowCount: len(rows),
-				Format:   "json",
-			}
-			bytesOut, _ := json.Marshal(dtObj)
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, dtObj, nil
-		},
-	)
-
-	// meta_describe_table
-	mcp.AddTool(
-		server,
-		&mcp.Tool{
-			Name:        "meta_describe_table",
-			Description: "Describe a stackql relation.  This publishes the bullk of the columns returned from a SELECT.",
-		},
-		func(ctx context.Context, req *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, any, error) {
-			result, err := backend.DescribeTable(ctx, args)
-			if err != nil {
-				return nil, nil, err
-			}
-			out := dto.QueryResultDTO{Rows: result, RowCount: len(result), Format: "json"}
-			bytesOut, _ := json.Marshal(out)
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
-		},
-	)
-
-	// meta.get_foreign_keys
-	mcp.AddTool(
-		server,
-		&mcp.Tool{
-			Name:        "meta.get_foreign_keys",
-			Description: "Namespaced: Get foreign keys for a table.",
-		},
-		func(ctx context.Context, req *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, any, error) {
-			result, err := backend.GetForeignKeys(ctx, args)
-			if err != nil {
-				return nil, nil, err
-			}
-			out := dto.QueryResultDTO{Rows: result, RowCount: len(result), Format: "json"}
-			bytesOut, _ := json.Marshal(out)
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
-		},
-	)
-
-	// meta.find_relationships
-	mcp.AddTool(
-		server,
-		&mcp.Tool{
-			Name:        "meta.find_relationships",
-			Description: "Namespaced: Find relationships for a table.",
-		},
-		func(ctx context.Context, req *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, any, error) {
-			result, err := backend.FindRelationships(ctx, args)
-			if err != nil {
-				return nil, nil, err
-			}
-			out := dto.SimpleTextDTO{Text: result}
-			bytesOut, _ := json.Marshal(out)
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
-		},
-	)
 }

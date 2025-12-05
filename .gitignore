@@ -1,4 +1,7 @@
 
+# CI staging
+go.sum.bkp
+
 # Windows
 *.exe
 
