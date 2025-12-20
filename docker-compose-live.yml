@@ -1,0 +1,35 @@
+version: "3.9"
+   
+services:
+  postgres_stackql:
+    image: postgres:14.5-bullseye
+    hostname: postgres_stackql
+    volumes:
+      - ./cicd/vol/postgres/setup:/docker-entrypoint-initdb.d:ro
+    environment:
+      - POSTGRES_PASSWORD=stackql
+    ports:
+      - "7632:5432/tcp"
+  stackql:
+    # Update image tag as needed
+    image: stackql/stackql:latest
+    hostname: stackql
+    restart: no
+    volumes:
+      - ./cicd/vol/vendor-secrets:/opt/stackql/vendor-secrets:ro
+      - ./cicd/vol/stackql-data:/opt/stackql/.stackql:rw
+    ports:
+      - "8632:8432/tcp"
+    command: 
+      - bash
+      - -c
+      - |
+        while ! nc -z postgres_stackql 5432; do sleep 1; done;
+        source /opt/stackql/vendor-secrets/secrets.sh
+        stackql srv \
+          --http.log.enabled=true \
+          --pgsrv.port=8432 \
+          --pgsrv.address=0.0.0.0 \
+          --export.alias=stackql_export \
+          --auth='{ "github": { "credentialsenvvar": "STACKQL_GITHUB_TOKEN", "type": "api_key", "valuePrefix": "Bearer " }, "googleadmin": { "type": "service_account", "credentialsenvvar": "GOOGLEADMIN_CREDENTIALS" } }' \
+          --sqlBackend='{ "dbEngine": "postgres_tcp", "sqlDialect": "postgres", "dsn": "postgres://stackql:stackql@postgres_stackql:5432" }'

@@ -1207,7 +1207,7 @@ jobs:
 
   macosbuild:
     name: MacOS Build
-    runs-on: macos-13
+    runs-on: macos-15
     timeout-minutes: ${{ vars.DEFAULT_JOB_TIMEOUT_MIN == '' && 120 || vars.DEFAULT_JOB_TIMEOUT_MIN }}
     steps:
     - name: Check out code into the Go module directory
@@ -1347,7 +1347,7 @@ jobs:
 
   macosarmbuild:
     name: MacOS ARM Build
-    runs-on: macos-13
+    runs-on: macos-15
     timeout-minutes: ${{ vars.DEFAULT_JOB_TIMEOUT_MIN == '' && 120 || vars.DEFAULT_JOB_TIMEOUT_MIN }}
     steps:
 

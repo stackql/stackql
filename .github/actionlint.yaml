@@ -5,5 +5,5 @@ self-hosted-runner:
     - ubuntu-22-04-m
     - ubuntu-22-04-arm64-m
     - arm-ubuntu-22-04-runner-one
-    - macos-13 # should not be necessary
     - macos-14 # should not be necessary
+    - macos-15 # should not be necessary

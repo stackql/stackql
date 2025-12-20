@@ -8,7 +8,7 @@ checkPoetry () {
     fi
 }
 
-CURDIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+CURDIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]:-${(%):-%x}}" )" &> /dev/null && pwd )"
 
 REPOSITORY_ROOT="$(realpath ${CURDIR}/../..)"
 
