@@ -879,7 +879,14 @@ paths:
                 $ref: '#/components/schemas/ObjectNotInActiveTierError'
           description: |-
             The source object of the COPY action is not in the active tier and is only stored in Amazon S3 Glacier.
-  /{Bucket}?max-keys=1000:
+  /?max-keys=1000:
+    servers:
+    - url: 'https://{Bucket}.s3-{region}.amazonaws.com'
+      variables:
+        Bucket:
+          default: stackql-trial-bucket-02
+        region:
+          default: us-east-1
     get:
       description: "This operation is not supported for directory buckets.\n\nReturns\
         \ some or all (up to 1,000) of the objects in a bucket. You can use the request\
@@ -900,11 +907,6 @@ paths:
         \ you must URL encode this value to `my%20%20file.txt`."
       operationId: ListObjects
       parameters:
-      - in: path
-        name: Bucket
-        required: true
-        schema:
-          $ref: '#/components/schemas/BucketName'
       - in: header
         name: x-amz-content-sha256
         required: false
@@ -4890,7 +4892,14 @@ paths:
             text/xml:
               schema:
                 $ref: '#/components/schemas/GetBucketInventoryConfigurationOutput'
-  /{Bucket}?location:
+  /?location:
+    servers:
+    - url: https://{Bucket}.s3.{region}.amazonaws.com
+      variables:
+        region:
+          default: us-east-1
+        Bucket:
+          default: example-bucket
     get:
       operationId: GetBucketLocation
       description: |-
@@ -4914,11 +4923,6 @@ paths:
 
         You must URL encode any signed header values that contain spaces. For example, if your header value is `my file.txt`, containing two spaces after `my`, you must URL encode this value to `my%20%20file.txt`.
       parameters:
-      - name: Bucket
-        in: path
-        required: true
-        schema:
-          $ref: '#/components/schemas/BucketName'
       - name: x-amz-content-sha256
         in: header
         required: false
@@ -22400,7 +22404,7 @@ components:
       methods:
         get_bucket_location:
           operation:
-            $ref: '#/paths/~1{Bucket}?location/get'
+            $ref: '#/paths/~1?location/get'
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
@@ -23206,7 +23210,7 @@ components:
             openAPIDocKey: '200'
         list_objects:
           operation:
-            $ref: '#/paths/~1{Bucket}?max-keys=1000/get'
+            $ref: '#/paths/~1?max-keys=1000/get'
           response:
             mediaType: text/xml
             openAPIDocKey: '200'

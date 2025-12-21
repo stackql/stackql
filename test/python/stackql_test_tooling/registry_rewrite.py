@@ -134,6 +134,9 @@ def _replace_token_url(url :str, replacement_host :str) -> str:
   return urllib.parse.urlunparse(replaced)
 
 def _replace_server_url(url :str, replacement_host :str, replacement_port: int) -> str:
+  ## handle special case where {scheme}://{host} is used
+  if url.startswith('{protocol}://{origin:^(?:[^\:/]+(?:\:[0-9]+)?|[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(?:\:[0-9]+)?)$}/'): 
+    return f'http://{replacement_host}:{replacement_port}/'
   parsed = urllib.parse.urlparse(url)
   replaced = parsed._replace(netloc="{}:{}".format(replacement_host, replacement_port))
   return urllib.parse.urlunparse(replaced)

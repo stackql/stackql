@@ -683,6 +683,62 @@ jobs:
     - name: Install Python dependencies
       run: |
         pip3 install -r cicd/requirements.txt
+
+    - id: install-aws-cli
+      uses: unfor19/install-aws-cli-action@v1
+      with:
+        version: 2                         # default
+        verbose: false                     # default
+        arch: amd64                        # allowed values: amd64, x86, x64, arm, arm64
+
+    - name: Create certificates for robot tests
+      run: |
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_server_key.pem -out test/server/mtls/credentials/pg_server_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_client_key.pem -out test/server/mtls/credentials/pg_client_cert.pem -config test/server/mtls/openssl.cnf -days 365
+        openssl req -x509 -keyout test/server/mtls/credentials/pg_rubbish_key.pem -out test/server/mtls/credentials/pg_rubbish_cert.pem -config test/server/mtls/openssl.cnf -days 365 
+        
+    - name: Run traffic light robot integration tests
+      if: ((startsWith(github.ref_name, 'build-traffic-lights') && github.ref_type == 'tag') || (github.repository == 'stackql/stackql' && github.event_name == 'push' && github.ref == 'refs/heads/main')) && matrix.registry == 'test/registry'
+      env:
+        PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
+        AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
+        AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        GODEBUG: netdns=go
+      run: |
+        ## positive control with aws cli
+        foundAwsBucketCiontents="$(aws s3 ls s3://stackql-trial-bucket-02 --region ap-southeast-2)"
+        echo "Found aws s3 bucket contents: $foundAwsBucketCiontents"
+        if [ "$foundAwsBucketCiontents" == "" ]; then
+          echo "ℹ️ AWS CLI access to S3 bucket failed"
+        else
+          echo "ℹ️ AWS CLI access to S3 bucket succeeded"
+        fi
+        echo "## Stray flask apps to be killed before robot tests ##"
+        pgrep -f flask | xargs kill -9 || true
+        echo "## End ##"
+        if python cicd/python/build.py --robot-test-traffic-lights-integration; then
+          echo "✅ Traffic light robot integration tests **all** passed"
+        else
+          rv="$?"
+          echo "🟡 **some** traffic light robot integration tests failed code = $rv"
+        fi
+        {
+          echo "TRAFFIC_LIGHTS_COMPLETED=true"
+        } >> "$GITHUB_ENV"
+
+    - name: Output from traffic lights integration tests
+      if: env.TRAFFIC_LIGHTS_COMPLETED == 'true'
+      run: |
+        cat ./test/robot/reports-integration-traffic-lights/output.xml || true
+
+    - name: Output from traffic lights tmp dir
+      if: env.TRAFFIC_LIGHTS_COMPLETED == 'true'
+      run: |
+        cat ./test/robot/integration-traffic-lights/tmp/* || true
     
     - name: Generate rewritten registry for simulations
       if: ${{ matrix.registry  != 'test/registry' }}
@@ -741,26 +797,6 @@ jobs:
         pgrep -f flask | xargs kill -9 || true
         echo "## End ##"
         python cicd/python/build.py --robot-test-integration
-    
-    - name: Run traffic light robot integration tests
-      if: (startsWith(env.STATE_SOURCE_TAG, 'build-traffic-lights') || (github.repository == 'stackql/stackql' && github.event_name == 'push' && github.ref == 'refs/heads/main')) && matrix.registry == 'test/registry'
-      env:
-        AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-        AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
-        AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      run: |
-        echo "## Stray flask apps to be killed before robot tests ##"
-        pgrep -f flask | xargs kill -9 || true
-        echo "## End ##"
-        if "$(python cicd/python/build.py --robot-test-traffic-lights-integration)"; then
-          echo "Traffic light robot integration tests **all** passed"
-        else
-          rv="$?"
-          echo "**some** traffic light robot integration tests failed code = $rv"
-        fi
     
     - name: Prepare Test DB
       if: success() && matrix.registry != 'test/registry'

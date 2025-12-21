@@ -250,7 +250,7 @@
     },
     "GET:/:10": {
         "method": "GET",
-        "path": "/stackql-trial-bucket-01",
+        "path": "/",
         "queryStringParameters": { 
           "max-keys": [ "1000" ]
         },
@@ -286,7 +286,7 @@
     },
     "GET:/:12": {
         "method": "GET",
-        "path": "/stackql-trial-bucket-01",
+        "path": "/",
         "queryStringParameters": { 
           "location": [ "" ]
         },
