@@ -742,6 +742,26 @@ jobs:
         echo "## End ##"
         python cicd/python/build.py --robot-test-integration
     
+    - name: Run traffic light robot integration tests
+      if: (startsWith(env.STATE_SOURCE_TAG, 'build-traffic-lights') || (github.repository == 'stackql/stackql' && github.event_name == 'push' && github.ref == 'refs/heads/main')) && matrix.registry == 'test/registry'
+      env:
+        AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
+        AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      run: |
+        echo "## Stray flask apps to be killed before robot tests ##"
+        pgrep -f flask | xargs kill -9 || true
+        echo "## End ##"
+        if "$(python cicd/python/build.py --robot-test-traffic-lights-integration)"; then
+          echo "Traffic light robot integration tests **all** passed"
+        else
+          rv="$?"
+          echo "**some** traffic light robot integration tests failed code = $rv"
+        fi
+    
     - name: Prepare Test DB
       if: success() && matrix.registry != 'test/registry'
       run: cp test/db/db.sqlite test/db/tmp/python-tests-tmp-db.sqlite

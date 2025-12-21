@@ -216,6 +216,14 @@ def _extract_request_region(request: Request) -> str:
 def handle_root_requests():
     return generic_handler(request)
 
+@app.route('/stackql-trial-bucket-01', methods=["GET"])
+def handle_object_list_requests():
+    return generic_handler(request)
+
+@app.route('/stackql-trial-bucket-02', methods=["GET"])
+def handle_object_list2_requests():
+    return generic_handler(request)
+
 @app.route('/2013-04-01/hostedzone/<rrset_id>/rrset/', methods=['POST', 'GET'])
 def handle_rrset_requests(rrset_id: str):
     return generic_handler(request)
