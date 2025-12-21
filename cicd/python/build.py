@@ -67,11 +67,20 @@ def run_robot_integration_tests_stackql(*args, **kwargs) -> int:
     return subprocess.call(
         'robot '
         f'{variables} ' 
-        '-d test/robot/integration '
+        '-d test/robot/reports-integration '
         'test/robot/integration',
         shell=True
     )
 
+def run_robot_integration_traffic_lights_tests_stackql(*args, **kwargs) -> int:
+    variables = ' '.join([f'--variable {key}:{sanitise_val(value)} ' for key, value in kwargs.get("variables", {}).items()])
+    return subprocess.call(
+        'robot '
+        f'{variables} ' 
+        '-d test/robot/reports-integration-traffic-lights '
+        'test/robot/integration-traffic-lights',
+        shell=True
+    )
 
 def main():
     parser = argparse.ArgumentParser()
@@ -81,6 +90,7 @@ def main():
     parser.add_argument('--test', action='store_true')
     parser.add_argument('--robot-test', action='store_true')
     parser.add_argument('--robot-test-integration', action='store_true')
+    parser.add_argument('--robot-test-traffic-lights-integration', action='store_true')
     parser.add_argument('--config', type=json.loads, default={})
     args = parser.parse_args()
     ret_code = 0
@@ -102,6 +112,10 @@ def main():
             exit(ret_code)
     if args.robot_test_integration:
         ret_code = run_robot_integration_tests_stackql(**args.config)
+        if ret_code != 0:
+            exit(ret_code)
+    if args.robot_test_traffic_lights_integration:
+        ret_code = run_robot_integration_traffic_lights_tests_stackql(**args.config)
         if ret_code != 0:
             exit(ret_code)
     exit(ret_code)

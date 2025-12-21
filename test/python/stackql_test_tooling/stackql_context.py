@@ -678,10 +678,10 @@ def get_variables(
   SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_JSON_EXPECTED = get_json_from_local_file(os.path.join('test', 'assets', 'expected', 'azure', 'compute', 'vm-list.json'))
   SELECT_AZURE_COMPUTE_BILLING_ACCOUNTS_JSON_EXPECTED = get_json_from_local_file(os.path.join('test', 'assets', 'expected', 'azure', 'billing', 'billing-account-list.json'))
 
-  SELECT_AWS_S3_BUCKET_LOCATIONS = "select LocationConstraint from aws.s3.bucket_locations where region = 'ap-southeast-1' and bucket = 'stackql-trial-bucket-01';"
+  SELECT_AWS_S3_BUCKET_LOCATIONS = "select LocationConstraint from aws.s3.bucket_locations where region = 'ap-southeast-1' and Bucket = 'stackql-trial-bucket-01';"
   SELECT_AWS_S3_BUCKETS = "select Name, CreationDate from  aws.s3.buckets where region = 'ap-southeast-1' order by Name ASC;"
-  SELECT_AWS_S3_OBJECTS = "select \"Key\", Size, StorageClass from  aws.s3.objects where region = 'ap-southeast-1' and bucket = 'stackql-trial-bucket-01' order by \"Key\" ASC;"
-  SELECT_AWS_S3_OBJECTS_NULL = "select \"Key\", Size, StorageClass from  aws.s3.objects where region = 'ap-southeast-2' and bucket = 'stackql-trial-bucket-02' order by \"Key\" ASC;"
+  SELECT_AWS_S3_OBJECTS = "select \"Key\", Size, StorageClass from  aws.s3.objects where region = 'ap-southeast-1' and Bucket = 'stackql-trial-bucket-01' order by \"Key\" ASC;"
+  SELECT_AWS_S3_OBJECTS_NULL = "select \"Key\", Size, StorageClass from  aws.s3.objects where region = 'ap-southeast-2' and Bucket = 'stackql-trial-bucket-02' order by \"Key\" ASC;"
   SELECT_AWS_EC2_VPN_GATEWAYS_NULL = "select vpnGatewayId, amazonSideAsn from aws.ec2.vpn_gateways where region = 'ap-southeast-1' order by vpnGatewayId ASC;"
   SELECT_AWS_VOLUMES = "select volumeId, encrypted, size from aws.ec2.volumes where region = 'ap-southeast-1' order by volumeId asc;"
   SELECT_AWS_IAM_USERS_ASC = "select UserName, Arn from aws.iam.users WHERE region = 'us-east-1' order by UserName ASC;"
