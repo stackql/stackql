@@ -9058,3 +9058,109 @@ Explain Select Repeatably Generates Messagez
     ...    ${outputErrStr}
     ...    stdout=${CURDIR}/tmp/Explain-Select-Repeatably-Generates-Messages.tmp
     ...    stderr=${CURDIR}/tmp/Explain-Select-Repeatably-Generates-Messages-stderr.tmp
+
+Materialized View of Filtered Multi Level Table Valued Function In Subquery Returns Expected Results
+    ${sqliteInputStr} =    Catenate
+    ...    CREATE OR REPLACE MATERIALIZED VIEW gcp_compute_public_ip_exposure AS
+    ...    select resource_type, resource_id, resource_name, cloud, region, protocol, from_port, to_port, cidr, direction, public_access_type, public_principal, access_mechanism 
+    ...    from ( 
+    ...        SELECT 'compute' AS resource_type, vms.id AS resource_id, vms.name AS resource_name, 'google' AS cloud, split_part(vms.zone, '/', -1) AS region, NULL AS protocol, NULL AS from_port, NULL AS to_port, NULL AS cidr, NULL AS direction, NULL AS public_access_type, NULL AS public_principal, NULL AS access_mechanism, json_extract(ac.value, '$.natIP') as external_ip FROM google.compute.instances vms, json_each(vms.networkInterfaces) AS ni, json_each(json_extract(ni.value, '$.accessConfigs')) AS ac WHERE vms.project in ( 'stackql-interesting' ) 
+    ...    ) foo 
+    ...    where external_ip != '' 
+    ...    ;
+    ...    select
+    ...      resource_type,
+    ...      resource_id,
+    ...      resource_name,
+    ...      cloud,
+    ...      region,
+    ...      protocol,
+    ...      from_port,
+    ...      to_port,
+    ...      cidr,
+    ...      direction,
+    ...      public_access_type,
+    ...      public_principal,
+    ...      access_mechanism
+    ...    from 
+    ...    gcp_compute_public_ip_exposure
+    ...    ;
+    ${postgresInputStr} =    Catenate
+    ...    CREATE OR REPLACE MATERIALIZED VIEW gcp_compute_public_ip_exposure AS
+    ...    select
+    ...      resource_type,
+    ...      resource_id,
+    ...      resource_name,
+    ...      cloud,
+    ...      region,
+    ...      protocol,
+    ...      from_port,
+    ...      to_port,
+    ...      cidr,
+    ...      direction,
+    ...      public_access_type,
+    ...      public_principal,
+    ...      access_mechanism
+    ...    from 
+    ...    (
+    ...    SELECT
+    ...      'compute'                          AS resource_type,
+    ...      vms.id                                 AS resource_id,
+    ...      vms.name                               AS resource_name,
+    ...      'google'                              AS cloud,
+    ...      split_part(vms.zone, '/', -1)      AS region,
+    ...      NULL                               AS protocol,
+    ...      NULL                               AS from_port,
+    ...      NULL                               AS to_port,
+    ...      NULL                               AS cidr,
+    ...      NULL                               AS direction,
+    ...      NULL                               AS public_access_type,
+    ...      NULL                               AS public_principal,
+    ...      NULL                               AS access_mechanism,
+    ...      json_extract_path_text(ac.value, 'natIP') as external_ip
+    ...    FROM google.compute.instances vms,
+    ...      json_array_elements_text(vms.networkInterfaces) AS ni,
+    ...      json_array_elements_text(json_extract_path_text(ni.value, 'accessConfigs')) AS ac
+    ...    WHERE 
+    ...      vms.project in (
+    ...        'stackql-interesting'
+    ...      )
+    ...      ) foo
+    ...      where external_ip != ''
+    ...    ;
+    ...    select
+    ...      resource_type,
+    ...      resource_id,
+    ...      resource_name,
+    ...      cloud,
+    ...      region,
+    ...      protocol,
+    ...      from_port,
+    ...      to_port,
+    ...      cidr,
+    ...      direction,
+    ...      public_access_type,
+    ...      public_principal,
+    ...      access_mechanism
+    ...    from 
+    ...    gcp_compute_public_ip_exposure
+    ...    ;
+    ${inputStr} =    Set Variable If    "${SQL_BACKEND}" == "postgres_tcp"     ${postgresInputStr}    ${sqliteInputStr}
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |---------------|--------------|---------------|--------|------------------------|----------|-----------|---------|------|-----------|--------------------|------------------|------------------|
+    ...    |${SPACE}resource_type${SPACE}|${SPACE}resource_id${SPACE}${SPACE}|${SPACE}resource_name${SPACE}|${SPACE}cloud${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}region${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}protocol${SPACE}|${SPACE}from_port${SPACE}|${SPACE}to_port${SPACE}|${SPACE}cidr${SPACE}|${SPACE}direction${SPACE}|${SPACE}public_access_type${SPACE}|${SPACE}public_principal${SPACE}|${SPACE}access_mechanism${SPACE}|
+    ...    |---------------|--------------|---------------|--------|------------------------|----------|-----------|---------|------|-----------|--------------------|------------------|------------------|
+    ...    |${SPACE}compute${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}100000000001${SPACE}|${SPACE}instance-001${SPACE}${SPACE}|${SPACE}google${SPACE}|${SPACE}australia-southeast1-a${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------|--------------|---------------|--------|------------------------|----------|-----------|---------|------|-----------|--------------------|------------------|------------------|
+    Should Stackql Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    stdout=${CURDIR}/tmp/Materialized-View-of-Filtered-Multi-Level-Table-Valued-Function-In-Subquery-Returns-Expected-Results.tmp
+    ...    stderr=${CURDIR}/tmp/Materialized-View-of-Filtered-Multi-Level-Table-Valued-Function-In-Subquery-Returns-Expected-Results-stderr.tmp

@@ -290,6 +290,10 @@ def projects_testing_project_zones_australia_southeast1_a_instances():
 def projects_testing_project_aggregated_instances():
     return render_template('route_30_template.json'), 200, {'Content-Type': 'application/json'}
 
+@app.route('/compute/v1/projects/stackql-interesting/aggregated/instances', methods=['GET'])
+def projects_stackql_interesting_aggregated_instances():
+    return render_template('instances-agg-list-interesting.jinja.json'), 200, {'Content-Type': 'application/json'}
+
 assets_counter = {'count': 0}
 @app.route('/v1/projects/testing-project/assets', methods=['GET'])
 def v1_projects_testing_project_assets():

@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 
-CURDIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+CURDIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]:-${(%):-%x}}" )" &> /dev/null && pwd )"
 
 REPOSITORY_ROOT="$(realpath ${CURDIR}/../..)"
 
@@ -8,7 +8,7 @@ PACKAGE_ROOT="${REPOSITORY_ROOT}/test"
 
 venv_path="${REPOSITORY_ROOT}/.venv"
 
-CURDIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+CURDIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]:-${(%):-%x}}" )" &> /dev/null && pwd )"
 
 REPOSITORY_ROOT="$(realpath ${CURDIR}/../..)"
 

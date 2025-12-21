@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-CUR_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CUR_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-${(%):-%x}}")" && pwd)"
 
 source "${CUR_DIR}/context.sh"
 
