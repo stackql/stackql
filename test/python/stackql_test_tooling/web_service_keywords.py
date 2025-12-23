@@ -345,6 +345,15 @@ class web_service_keywords(Process):
     
     @keyword
     def start_all_webservers(self, port_dict: Optional[dict] = None) -> None:
+        # if system has docker installed, use that to run mock servers
+        if os.system('which docker >/dev/null 2>&1') == 0:
+            ## inherits env vars from parent process so IS_DOCKER env var is passed along
+            rv = os.system('docker compose -f docker-compose-testing.yml up -d --build --force-recreate')
+            if rv != 0:
+                raise RuntimeError('failed to start mock servers via docker compose')
+            return
+
+
         _port_dict: dict = port_dict if port_dict else {}
 
         self.create_digitalocean_web_service(_port_dict.get('digitalocean', self._DEFAULT_MOCKSERVER_PORT_DIGITALOCEAN))
