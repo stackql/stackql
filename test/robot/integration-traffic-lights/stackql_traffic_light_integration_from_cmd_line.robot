@@ -11,6 +11,7 @@ Nop From Lib
 
 
 AWS S3 Buckets Location Constraint
+    Sleep    2s
     ${locactionConstraintQuery} =    Catenate
     ...    select LocationConstraint from aws.s3.bucket_locations where region = 'ap-southeast-1' and Bucket = 'stackql-trial-bucket-01';
     ${result} =    Run Process
@@ -26,6 +27,7 @@ AWS S3 Buckets Location Constraint
     Should Contain                 ${result.stdout}       ap\-southeast\-1
 
 AWS S3 Buckets List
+    Sleep    2s
     ${bucketsListQuery} =    Catenate
     ...    select * from aws.s3.buckets where region = 'us-east-1' order by BucketArn desc;
    ${result} =    Run Process
@@ -41,6 +43,7 @@ AWS S3 Buckets List
     Should Contain                 ${result.stdout}       stackql\-trial\-bucket\-02
 
 AWS S3 Bucket Objects List
+    Sleep    2s
     ${bucketObjectsListQuery} =    Catenate
     ...    select * from aws.s3.objects where Bucket = 'stackql-trial-bucket-02' and region = 'ap-southeast-2';
     ${result} =    Run Process

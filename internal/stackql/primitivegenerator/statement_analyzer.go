@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/any-sdk/pkg/constants"
 	"github.com/stackql/any-sdk/pkg/dto"
@@ -928,6 +929,7 @@ func (pb *standardPrimitiveGenerator) AnalyzePGInternal(
 	return fmt.Errorf("cannot execute PG internal")
 }
 
+//nolint:funlen,gocognit // TODO: refactor
 func (pb *standardPrimitiveGenerator) expandTable(
 	tbl tablemetadata.ExtendedTableMetadata) error {
 	if viewIndirect, isView := tbl.GetIndirect(); isView {
@@ -951,7 +953,19 @@ func (pb *standardPrimitiveGenerator) expandTable(
 	if err != nil {
 		return err
 	}
-	availableServers, availableServersDoExist := svc.GetServers()
+	var availableServers openapi3.Servers
+	var availableServersDoExist bool
+	method, _ := tbl.GetMethod()
+	if method != nil {
+		srvs, ok := method.GetServers()
+		if ok && len(srvs) > 0 {
+			availableServers = srvs
+			availableServersDoExist = true
+		}
+	}
+	if len(availableServers) == 0 {
+		availableServers, availableServersDoExist = svc.GetServers()
+	}
 	if availableServersDoExist {
 		for _, sv := range availableServers {
 			for k := range sv.Variables {
