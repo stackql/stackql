@@ -12,10 +12,27 @@ One pertinent fact in life with `flask` is that processes die hard; so it genera
 pgrep -f flask | xargs kill -9
 ```
 
+### Running in docker
 
-### To Run
+This is far and away the easiest option, given you have docker on your system.  You must let the sequence run before starting any `stackql` client, or the TLS credentials will be overwritten.  Then:
 
-In order to get the environmental variables required, you can go to the repository root ans then `source cicd/scripts/context.sh`, or set manually; hopefully self-explanatory.
+```bash
+
+docker compose -f docker-compose-testing.yml up -d --build --force-recreate
+
+```
+
+To kill all:
+
+```bash
+
+docker compose -f docker-compose-testing.yml down --volumes
+
+```
+
+### To Run Natively
+
+In order to get the environmental variables required, you can go to the repository root and then `source cicd/scripts/context.sh`, or set manually; hopefully self-explanatory.
 
 GCP mocks:
 
@@ -50,7 +67,7 @@ flask --app=${REPOSITORY_ROOT}/test/python/stackql_test_tooling/flask/github/app
 Sumologic mocks:
 
 ```bash
-flask --app=${REPOSITORY_ROOT}/test/python/stackql_test_tooling/flask/okta/app run --cert=${REPOSITORY_ROOT}/test/server/mtls/credentials/pg_server_cert.pem --key=${REPOSITORY_ROOT}/test/server/mtls/credentials/pg_server_key.pem --host 0.0.0.0 --port 1096
+flask --app=${REPOSITORY_ROOT}/test/python/stackql_test_tooling/flask/sumologic/app run --cert=${REPOSITORY_ROOT}/test/server/mtls/credentials/pg_server_cert.pem --key=${REPOSITORY_ROOT}/test/server/mtls/credentials/pg_server_key.pem --host 0.0.0.0 --port 1096
 ```
 
 Digitalocean mocks:
@@ -63,6 +80,12 @@ flask --app=${REPOSITORY_ROOT}/test/python/stackql_test_tooling/flask/digitaloce
 
 ```bash
 flask --app=${REPOSITORY_ROOT}/test/python/stackql_test_tooling/flask/googleadmin/app run --cert=${REPOSITORY_ROOT}/test/server/mtls/credentials/pg_server_cert.pem --key=${REPOSITORY_ROOT}/test/server/mtls/credentials/pg_server_key.pem --host 0.0.0.0 --port 1098
+```
+
+`k8s` mocks:
+
+```bash
+flask --app=${REPOSITORY_ROOT}/test/python/stackql_test_tooling/flask/k8s/app run --cert=${REPOSITORY_ROOT}/test/server/mtls/credentials/pg_server_cert.pem --key=${REPOSITORY_ROOT}/test/server/mtls/credentials/pg_server_key.pem --host 0.0.0.0 --port 1092
 ```
 
 stackql auth testing mocks:

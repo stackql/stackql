@@ -1,0 +1,393 @@
+
+   
+services:
+  credentialsgen:
+    restart: "no"
+    image: stackql/testlib
+    build:
+      context: .
+      dockerfile: testLib.Dockerfile
+      # cache_from: 
+      #   - stackql/testlib
+    volumes:
+      - ./test/server/mtls/credentials:/opt/stackql/srv/credentials:rw
+    command: 
+      - bash
+      - -c
+      - |
+        openssl req -x509 -keyout /opt/stackql/srv/credentials/pg_server_key.pem -out /opt/stackql/srv/credentials/pg_server_cert.pem  -config /opt/test/stackql/test/server/mtls/openssl.cnf -days 365 \
+        && openssl req -x509 -keyout /opt/stackql/srv/credentials/pg_client_key.pem -out  /opt/stackql/srv/credentials/pg_client_cert.pem  -config /opt/test/stackql/test/server/mtls/openssl.cnf -days 365 \
+        && openssl req -x509 -keyout /opt/stackql/srv/credentials/pg_rubbish_key.pem -out /opt/stackql/srv/credentials/pg_rubbish_cert.pem -config /opt/test/stackql/test/server/mtls/openssl.cnf -days 365
+  github_mockserver:
+    networks:
+      testing-network:
+        aliases:
+          - github.com
+    image: stackql/testlib
+    build:
+      context: .
+      dockerfile: testLib.Dockerfile
+      # cache_from: 
+      #   - stackql/testlib
+    volumes:
+      - ./test/server/mtls/credentials:/opt/testlib/test/server/mtls/credentials:ro
+    ports:
+      - "1093:1093/tcp"
+    depends_on:
+      - credentialsgen
+    environment:
+      IS_DOCKER: "${IS_DOCKER:-false}"
+    command: 
+      - bash
+      - -c
+      - |
+        flask \
+        --app=/opt/testlib/test/python/stackql_test_tooling/flask/github/app \
+        run \
+        --cert=/opt/testlib/test/server/mtls/credentials/pg_server_cert.pem \
+        --key=/opt/testlib/test/server/mtls/credentials/pg_server_key.pem \
+        --host 0.0.0.0 \
+        --port  \
+        1093
+  google_mockserver:
+    networks:
+      testing-network:
+        aliases:
+          - googleapis.com
+    image: stackql/testlib
+    build:
+      context: .
+      dockerfile: testLib.Dockerfile
+      # cache_from: 
+      #   - stackql/testlib
+    volumes:
+      - ./test/server/mtls/credentials:/opt/testlib/test/server/mtls/credentials:ro
+    ports:
+      - "1080:1080/tcp"
+    depends_on:
+      - credentialsgen
+    environment:
+      IS_DOCKER: "${IS_DOCKER:-false}"
+    command: 
+      - bash
+      - -c
+      - |
+        flask \
+        --app=/opt/testlib/test/python/stackql_test_tooling/flask/gcp/app \
+        run \
+        --cert=/opt/testlib/test/server/mtls/credentials/pg_server_cert.pem \
+        --key=/opt/testlib/test/server/mtls/credentials/pg_server_key.pem \
+        --host 0.0.0.0 \
+        --port  \
+        1080
+  azure_mockserver:
+    networks:
+      testing-network:
+        aliases:
+          - azure.com
+    image: stackql/testlib
+    build:
+      context: .
+      dockerfile: testLib.Dockerfile
+      # cache_from: 
+      #   - stackql/testlib
+    volumes:
+      - ./test/server/mtls/credentials:/opt/testlib/test/server/mtls/credentials:ro
+    ports:
+      - "1095:1095/tcp"
+    depends_on:
+      - credentialsgen
+    environment:
+      IS_DOCKER: "${IS_DOCKER:-false}"
+    command: 
+      - bash
+      - -c
+      - |
+        flask \
+        --app=/opt/testlib/test/python/stackql_test_tooling/flask/azure/app \
+        run \
+        --cert=/opt/testlib/test/server/mtls/credentials/pg_server_cert.pem \
+        --key=/opt/testlib/test/server/mtls/credentials/pg_server_key.pem \
+        --host 0.0.0.0 \
+        --port  \
+        1095
+  okta_mockserver:
+    networks:
+      testing-network:
+        aliases:
+          - okta.com
+    image: stackql/testlib
+    build:
+      context: .
+      dockerfile: testLib.Dockerfile
+      # cache_from: 
+      #   - stackql/testlib
+    volumes:
+      - ./test/server/mtls/credentials:/opt/testlib/test/server/mtls/credentials:ro
+    ports:
+      - "1090:1090/tcp"
+    depends_on:
+      - credentialsgen
+    environment:
+      IS_DOCKER: "${IS_DOCKER:-false}"
+    command: 
+      - bash
+      - -c
+      - |
+        flask \
+        --app=/opt/testlib/test/python/stackql_test_tooling/flask/okta/app \
+        run \
+        --cert=/opt/testlib/test/server/mtls/credentials/pg_server_cert.pem \
+        --key=/opt/testlib/test/server/mtls/credentials/pg_server_key.pem \
+        --host 0.0.0.0 \
+        --port  \
+        1090
+  aws_mockserver:
+    networks:
+      testing-network:
+        aliases:
+          - aws.com
+    image: stackql/testlib
+    build:
+      context: .
+      dockerfile: testLib.Dockerfile
+      # cache_from: 
+      #   - stackql/testlib
+    volumes:
+      - ./test/server/mtls/credentials:/opt/testlib/test/server/mtls/credentials:ro
+    ports:
+      - "1091:1091/tcp"
+    depends_on:
+      - credentialsgen
+    environment:
+      IS_DOCKER: "${IS_DOCKER:-false}"
+    command: 
+      - bash
+      - -c
+      - |
+        flask \
+        --app=/opt/testlib/test/python/stackql_test_tooling/flask/aws/app \
+        run \
+        --cert=/opt/testlib/test/server/mtls/credentials/pg_server_cert.pem \
+        --key=/opt/testlib/test/server/mtls/credentials/pg_server_key.pem \
+        --host 0.0.0.0 \
+        --port  \
+        1091
+  sumologic_mockserver:
+    networks:
+      testing-network:
+        aliases:
+          - sumologic.com
+    image: stackql/testlib
+    build:
+      context: .
+      dockerfile: testLib.Dockerfile
+      # cache_from: 
+      #   - stackql/testlib
+    volumes:
+      - ./test/server/mtls/credentials:/opt/testlib/test/server/mtls/credentials:ro
+    ports:
+      - "1096:1096/tcp"
+    depends_on:
+      - credentialsgen
+    environment:
+      IS_DOCKER: "${IS_DOCKER:-false}"
+    command: 
+      - bash
+      - -c
+      - |
+        flask \
+        --app=/opt/testlib/test/python/stackql_test_tooling/flask/sumologic/app \
+        run \
+        --cert=/opt/testlib/test/server/mtls/credentials/pg_server_cert.pem \
+        --key=/opt/testlib/test/server/mtls/credentials/pg_server_key.pem \
+        --host 0.0.0.0 \
+        --port  \
+        1096
+  digitalocean_mockserver:
+    networks:
+      testing-network:
+        aliases:
+          - digitalocean.com
+    image: stackql/testlib
+    build:
+      context: .
+      dockerfile: testLib.Dockerfile
+      # cache_from: 
+      #   - stackql/testlib
+    volumes:
+      - ./test/server/mtls/credentials:/opt/testlib/test/server/mtls/credentials:ro
+    ports:
+      - "1097:1097/tcp"
+    depends_on:
+      - credentialsgen
+    environment:
+      IS_DOCKER: "${IS_DOCKER:-false}"
+    command: 
+      - bash
+      - -c
+      - |
+        flask \
+        --app=/opt/testlib/test/python/stackql_test_tooling/flask/digitalocean/app \
+        run \
+        --cert=/opt/testlib/test/server/mtls/credentials/pg_server_cert.pem \
+        --key=/opt/testlib/test/server/mtls/credentials/pg_server_key.pem \
+        --host 0.0.0.0 \
+        --port  \
+        1097
+  googleadmin_mockserver:
+    networks:
+      testing-network:
+        aliases:
+          - googleadmin.com
+    image: stackql/testlib
+    build:
+      context: .
+      dockerfile: testLib.Dockerfile
+      # cache_from: 
+      #   - stackql/testlib
+    volumes:
+      - ./test/server/mtls/credentials:/opt/testlib/test/server/mtls/credentials:ro
+    ports:
+      - "1098:1098/tcp"
+    depends_on:
+      - credentialsgen
+    environment:
+      IS_DOCKER: "${IS_DOCKER:-false}"
+    command: 
+      - bash
+      - -c
+      - |
+        flask \
+        --app=/opt/testlib/test/python/stackql_test_tooling/flask/googleadmin/app \
+        run \
+        --cert=/opt/testlib/test/server/mtls/credentials/pg_server_cert.pem \
+        --key=/opt/testlib/test/server/mtls/credentials/pg_server_key.pem \
+        --host 0.0.0.0 \
+        --port  \
+        1098
+  static_auth_mockserver:
+    networks:
+      testing-network:
+        aliases:
+          - staticauth.com
+    image: stackql/testlib
+    build:
+      context: .
+      dockerfile: testLib.Dockerfile
+      # cache_from: 
+      #   - stackql/testlib
+    volumes:
+      - ./test/server/mtls/credentials:/opt/testlib/test/server/mtls/credentials:ro
+    ports:
+      - "1170:1170/tcp"
+    depends_on:
+      - credentialsgen
+    environment:
+      IS_DOCKER: "${IS_DOCKER:-false}"
+    command: 
+      - bash
+      - -c
+      - |
+        flask \
+        --app=/opt/testlib/test/python/stackql_test_tooling/flask/static_auth/app \
+        run \
+        --cert=/opt/testlib/test/server/mtls/credentials/pg_server_cert.pem \
+        --key=/opt/testlib/test/server/mtls/credentials/pg_server_key.pem \
+        --host 0.0.0.0 \
+        --port  \
+        1170
+  token_srv_mockserver:
+    networks:
+      testing-network:
+        aliases:
+          - staticauth.com
+    image: stackql/testlib
+    build:
+      context: .
+      dockerfile: testLib.Dockerfile
+      # cache_from: 
+      #   - stackql/testlib
+    volumes:
+      - ./test/server/mtls/credentials:/opt/testlib/test/server/mtls/credentials:ro
+    ports:
+      - "2091:2091/tcp"
+    depends_on:
+      - credentialsgen
+    environment:
+      IS_DOCKER: "${IS_DOCKER:-false}"
+    command: 
+      - bash
+      - -c
+      - |
+        flask \
+        --app=/opt/testlib/test/python/stackql_test_tooling/flask/oauth2/token_srv \
+        run \
+        --cert=/opt/testlib/test/server/mtls/credentials/pg_server_cert.pem \
+        --key=/opt/testlib/test/server/mtls/credentials/pg_server_key.pem \
+        --host 0.0.0.0 \
+        --port  \
+        2091
+  k8s_mockserver:
+    networks:
+      testing-network:
+        aliases:
+          - k8s.com
+    image: stackql/testlib
+    build:
+      context: .
+      dockerfile: testLib.Dockerfile
+      # cache_from: 
+      #   - stackql/testlib
+    volumes:
+      - ./test/server/mtls/credentials:/opt/testlib/test/server/mtls/credentials:ro
+    ports:
+      - "1092:1092/tcp"
+    depends_on:
+      - credentialsgen
+    environment:
+      IS_DOCKER: "${IS_DOCKER:-false}"
+    command: 
+      - bash
+      - -c
+      - |
+        flask \
+        --app=/opt/testlib/test/python/stackql_test_tooling/flask/k8s/app \
+        run \
+        --cert=/opt/testlib/test/server/mtls/credentials/pg_server_cert.pem \
+        --key=/opt/testlib/test/server/mtls/credentials/pg_server_key.pem \
+        --host 0.0.0.0 \
+        --port  \
+        1092
+  registry_mockserver:
+    networks:
+      testing-network:
+        aliases:
+          - registry.com
+    image: stackql/testlib
+    build:
+      context: .
+      dockerfile: testLib.Dockerfile
+      # cache_from: 
+      #   - stackql/testlib
+    volumes:
+      - ./test/server/mtls/credentials:/opt/testlib/test/server/mtls/credentials:ro
+    ports:
+      - "1094:1094/tcp"
+    environment:
+      IS_DOCKER: "${IS_DOCKER:-false}"
+    command: 
+      - bash
+      - -c
+      - |
+        flask \
+        --app=/opt/testlib/test/python/stackql_test_tooling/flask/registry/app \
+        run \
+        --host 0.0.0.0 \
+        --port  \
+        1094
+
+networks:
+  testing-network:
+    driver: bridge
+
