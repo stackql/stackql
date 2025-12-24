@@ -57,3 +57,19 @@ AWS S3 Bucket Objects List
     ...    stderr=${CURDIR}/tmp/AWS-S3-Bucket-Objects-List-stderr.tmp
     Should Be Equal As Integers    ${result.rc}           0
     Should Contain                 ${result.stdout}       docs/advanced
+
+AWS S3 Bucket ABAC Works
+    Sleep    2s
+    ${bucketObjectsListQuery} =    Catenate
+    ...    select * from aws.s3.bucket_abac where Bucket = 'stackql-trial-bucket-02' and region = 'ap-southeast-2';
+    ${result} =    Run Process
+    ...    ${STACKQL_EXE}
+    ...    \-\-registry
+    ...    { "url": "file://${REPOSITORY_ROOT}/test/registry", "localDocRoot": "${REPOSITORY_ROOT}/test/registry", "verifyConfig": { "nopVerify": true } }
+    ...    exec
+    ...    ${bucketObjectsListQuery}
+    ...    cwd=${REPOSITORY_ROOT}
+    ...    stdout=${CURDIR}/tmp/AWS-S3-Bucket-Objects-List.tmp
+    ...    stderr=${CURDIR}/tmp/AWS-S3-Bucket-Objects-List-stderr.tmp
+    Should Be Equal As Integers    ${result.rc}           0
+    Should Contain                 ${result.stdout}       stackql\-trial\-bucket\-02

@@ -345,8 +345,8 @@ class web_service_keywords(Process):
     
     @keyword
     def start_all_webservers(self, port_dict: Optional[dict] = None) -> None:
-        # if system has docker installed, use that to run mock servers
-        if os.system('which docker >/dev/null 2>&1') == 0:
+        # if system has docker installed and also has docker compose file, use that to run mock servers
+        if os.system('which docker >/dev/null 2>&1') == 0 and os.path.exists('docker-compose-testing.yml'):
             ## inherits env vars from parent process so IS_DOCKER env var is passed along
             rv = os.system('docker compose -f docker-compose-testing.yml up -d --build --force-recreate')
             if rv != 0:

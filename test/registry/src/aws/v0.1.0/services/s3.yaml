@@ -4423,17 +4423,25 @@ paths:
       responses:
         '200':
           description: Success
-  /{Bucket}?abac:
+  /?abac:
+    servers:
+    - url: 'https://{Bucket}.s3-{region}.amazonaws.com'
+      variables:
+        Bucket:
+          default: stackql-trial-bucket-02
+        region:
+          default: us-east-1
     get:
       operationId: GetBucketAbac
       description: |-
         Returns the attribute-based access control (ABAC) property of the general purpose bucket. If ABAC is enabled on your bucket, you can use tags on the bucket for access control. For more information, see [Enabling ABAC in general purpose buckets](https://docs.aws.amazon.com/AmazonS3/latest/userguide/buckets-tagging-enable-abac.html).
       parameters:
-      - name: Bucket
-        in: path
-        required: true
+      - name: x-amz-content-sha256
+        in: header
+        required: false
         schema:
-          $ref: '#/components/schemas/BucketName'
+          type: string
+          default: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
       - name: x-amz-expected-bucket-owner
         in: header
         required: false
@@ -4451,11 +4459,6 @@ paths:
       description: |-
         Sets the attribute-based access control (ABAC) property of the general purpose bucket. You must have `s3:PutBucketABAC` permission to perform this action. When you enable ABAC, you can use tags for access control on your buckets. Additionally, when ABAC is enabled, you must use the [TagResource](https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_TagResource.html) and [UntagResource](https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_UntagResource.html) actions to manage tags on your buckets. You can nolonger use the [PutBucketTagging](https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketTagging.html) and [DeleteBucketTagging](https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteBucketTagging.html) actions to tag your bucket. For more information, see [Enabling ABAC in general purpose buckets](https://docs.aws.amazon.com/AmazonS3/latest/userguide/buckets-tagging-enable-abac.html).
       parameters:
-      - name: Bucket
-        in: path
-        required: true
-        schema:
-          $ref: '#/components/schemas/BucketName'
       - name: Content-MD5
         in: header
         required: false
@@ -22116,13 +22119,13 @@ components:
       methods:
         get_bucket_abac:
           operation:
-            $ref: '#/paths/~1{Bucket}?abac/get'
+            $ref: '#/paths/~1?abac/get'
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
         put_bucket_abac:
           operation:
-            $ref: '#/paths/~1{Bucket}?abac/put'
+            $ref: '#/paths/~1?abac/put'
           response:
             mediaType: application/json
             openAPIDocKey: '200'
