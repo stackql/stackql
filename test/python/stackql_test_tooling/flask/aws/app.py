@@ -211,6 +211,21 @@ def _extract_request_region(request: Request) -> str:
     auth_header = request.headers.get("Authorization", "")
     return '' if len(auth_header.split('/')) < 3 else  auth_header.split('/')[2]
 
+@app.route('/', methods=['PUT'])
+def handle_bucket_abac_put_enabled_request():
+    # 1. Verify the 'abac' query parameter is present (e.g., /?abac)
+    if 'abac' not in request.args:
+        return generic_handler(request)
+
+    target_xml = b'<AbacStatus xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Status>Enabled</Status></AbacStatus>'
+    
+    raw_body = request.get_data()
+
+    if raw_body == target_xml:
+        return make_response("", 200)
+    else:
+        return make_response("Body did not match target XML exactly", 501)
+
 # Routes generated from mockserver configuration
 @app.route('/', methods=['POST', "GET"])
 def handle_root_requests():

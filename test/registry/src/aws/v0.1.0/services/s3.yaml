@@ -8603,8 +8603,29 @@ paths:
           description: Success
 components:
   schemas:
+    AbacInputOverride:
+      type: object
+      description: A convenience for presentation
+      properties:
+        line_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AbacInputOverrideJunk'
+        status:
+          type: string
+    AbacInputOverrideJunk:
+      type: object
+      properties:
+        comment:
+          type: string
+        source:
+          type: string
+        id:
+          type: number
     AbacStatus:
       type: object
+      xml:
+        name: AbacStatus
       properties:
         Status:
           $ref: '#/components/schemas/BucketAbacStatus'
@@ -22124,18 +22145,45 @@ components:
             mediaType: text/xml
             openAPIDocKey: '200'
         put_bucket_abac:
+          config:
+            requestBodyTranslate:
+              algorithm: naive
           operation:
             $ref: '#/paths/~1?abac/put'
           response:
-            mediaType: application/json
             openAPIDocKey: '200'
           request:
             mediaType: application/xml
+            schema_override:
+              $ref: '#/components/schemas/AbacInputOverride'
+            transform:
+              type: golang_template_text_v0.1.0
+              body: |-
+                {{- $s := separator ", " -}}
+                {{- $body := jsonMapFromString . -}}
+                {{- $status := index $body "Status" -}}
+                {{- $nestedField := index $body "NestedField" -}}
+                {{- $renderedNestedFields := "" -}}
+                {{- range $k, $v := $nestedField -}}
+                    {{- if eq (printf "%T" $v) "[]interface {}" -}}
+                        {{- $renderedListItems := "" -}}
+                        {{- range $i, $item := $v -}}
+                            {{- /* Fix: Use '=' and 'print' instead of '+=' */ -}}
+                            {{- $renderedListItems = print $renderedListItems (printf "<%s>%v</%s>" $k $item $k) -}}
+                        {{- end -}}
+                        {{- $renderedNestedFields = print $renderedNestedFields (printf "<%sList>%s</%sList>" $k $renderedListItems $k) -}}
+                        {{- continue -}}
+                    {{- end -}}
+                    {{- /* Fix: Removed redundant variable reference in printf and changed += to = print */ -}}
+                    {{- $renderedNestedFields = print $renderedNestedFields (printf "<%s>%v</%s>" $k $v $k) -}}
+                {{- end -}}
+                <AbacStatus xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Status>{{ $status }}</Status></AbacStatus>
       sqlVerbs:
         select:
         - $ref: '#/components/x-stackQL-resources/bucket_abac/methods/get_bucket_abac'
         insert: []
-        update: []
+        update:
+        - $ref: '#/components/x-stackQL-resources/bucket_abac/methods/put_bucket_abac'
         delete: []
     bucket_accelerate_configurations:
       id: aws.s3.bucket_accelerate_configurations

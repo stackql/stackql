@@ -626,6 +626,26 @@ AWS Transfer Users Delete Simple Exemplifies No Response Body and Non Null Reque
     ...    stdout=${CURDIR}/tmp/AWS-Transfer-User-Delete-Simple-Exemplifies-No-Response-Body-and-Non-Null-Request-Body-Delete.tmp
     ...    stderr=${CURDIR}/tmp/AWS-Transfer-User-Delete-Simple-Exemplifies-No-Response-Body-and-Non-Null-Request-Body-Delete-stderr.tmp
 
+AWS S3 Bucket ABAC Update Exemplifies Transformed Request Body and nil Response Body
+    ${inputStr} =    Catenate
+    ...              update aws.s3.bucket_abac 
+    ...              set "Status" = 'Enabled' 
+    ...              where "Bucket" = 'my-bucket' 
+    ...              and region = 'ap-southeast-1';
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${EMPTY}
+    ...    The operation was despatched successfully
+    ...    stdout=${CURDIR}/tmp/AWS-S3-Bucket-ABAC-Update-Exemplifies-Transformed-Request-Body-and-nil-Response-Body.tmp
+    ...    stderr=${CURDIR}/tmp/AWS-S3-Bucket-ABAC-Update-Exemplifies-Transformed-Request-Body-and-nil-Response-Body-stderr.tmp
+
 AWS Transfer Servers Update Simple Exemplifies Non Null Response Body and Non Null Request Body Update
     ${inputStr} =    Catenate
     ...              update aws.transfer.servers 
