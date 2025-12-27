@@ -67,6 +67,11 @@ func newGenericHTTPStreamInput(
 	}
 	parserNode, _ := builderInput.GetParserNode()
 	insertCtx, _ := builderInput.GetInsertCtx()
+	var isMutation bool
+	switch parserNode.(type) {
+	case *sqlparser.Insert, *sqlparser.Update, *sqlparser.Delete:
+		isMutation = true
+	}
 	return &genericHTTPStreamInput{
 		graphHolder:       graphHolder,
 		handlerCtx:        handlerCtx,
@@ -83,6 +88,7 @@ func newGenericHTTPStreamInput(
 		reversalStream:    anysdk.NewHttpPreparatorStream(),
 		rollbackType:      handlerCtx.GetRollbackType(),
 		insertCtx:         insertCtx,
+		isMutation:        isMutation,
 	}, nil
 }
 
@@ -201,7 +207,7 @@ func (gh *genericHTTPStreamInput) Build() error {
 		// inverseInput :=
 		// inverseBuilder :=
 	}
-	_, _, responseAnalysisErr := tbl.GetResponseSchemaAndMediaType()
+	responseSchema, _, responseAnalysisErr := tbl.GetResponseSchemaAndMediaType()
 	actionPrimitive := primitive.NewGenericPrimitive(
 		nil,
 		nil,
@@ -286,7 +292,7 @@ func (gh *genericHTTPStreamInput) Build() error {
 			var nullaryExecutors []func() internaldto.ExecutorOutput
 			for _, r := range httpArmoury.GetRequestParams() {
 				req := r
-				isSkipResponse := responseAnalysisErr != nil
+				isSkipResponse := responseAnalysisErr != nil || responseSchema == nil
 				polyHandler := execution.NewStandardPolyHandler(
 					handlerCtx,
 				)

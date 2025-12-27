@@ -4429,6 +4429,7 @@ components:
           request:
             mediaType: text/xml
             xmlRootAnnotation: 'xmlns="https://route53.amazonaws.com/doc/2013-04-01/"'
+            xmlDeclaration: '<?xml version="1.0" encoding="UTF-8"?>'
           response:
             mediaType: text/xml
             openAPIDocKey: '200'
