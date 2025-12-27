@@ -50,7 +50,9 @@ func TestSimpleSelectGoogleComputeInstanceDriver(t *testing.T) {
 		t.Fatalf("Test failed: %v", err)
 	}
 
-	handlerCtx, err := handler.NewHandlerCtx(testobjects.SimpleSelectGoogleComputeInstance, *runtimeCtx, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
+	handlerCtx, err := handler.NewHandlerCtx(
+		testobjects.SimpleSelectGoogleComputeInstance, *runtimeCtx, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)),
+		inputBundle, "v0.1.1")
 
 	dr, _ := NewStackQLDriver(handlerCtx)
 

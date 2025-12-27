@@ -50,5 +50,18 @@
       "status": 200,
       "file": "google-v0.1.0.tgz" 
     }
+  },
+  {
+    "httpRequest": {
+      "method": "GET",
+      "path": "/gh/stackql/stackql-provider-registry/main/providers/dist/googleapis.com/v0.2.1.tgz"
+    },
+    "httpResponse": {
+      "headers": {
+        "Content-Type": "application/gzip"
+      },
+      "status": 200,
+      "file": "google-v0.2.1.tgz" 
+    }
   }
 ]

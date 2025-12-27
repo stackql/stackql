@@ -60,7 +60,9 @@ func TestSelectOktaApplicationAppsDriver(t *testing.T) {
 		t.Fatalf("Test failed: %v", err)
 	}
 
-	handlerCtx, err := handler.NewHandlerCtx(testobjects.SimpleSelectOktaApplicationApps, *runtimeCtx, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)), inputBundle)
+	handlerCtx, err := handler.NewHandlerCtx(
+		testobjects.SimpleSelectOktaApplicationApps, *runtimeCtx, lrucache.NewLRUCache(int64(runtimeCtx.QueryCacheSize)),
+		inputBundle, "v0.1.1")
 
 	if err != nil {
 		t.Fatalf("Test failed: %v", err)

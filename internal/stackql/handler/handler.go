@@ -45,6 +45,7 @@ var (
 type HandlerContext interface { //nolint:revive // don't mind stuttering this one
 	Clone() HandlerContext
 	//
+	GetStacqklSemver() string
 	GetASTFormatter() sqlparser.NodeFormatter
 	GetAuthContext(providerName string) (*dto.AuthCtx, error)
 	GetDBMSInternalRouter() dbmsinternal.Router
@@ -139,6 +140,7 @@ type standardHandlerContext struct {
 	sessionContext      dto.SessionContext
 	walInstance         tsm.TSM
 	exportNamespace     string
+	stackqlSemver       string
 }
 
 func (hc *standardHandlerContext) GetDataFlowCfg() dto.DataFlowCfg {
@@ -146,6 +148,10 @@ func (hc *standardHandlerContext) GetDataFlowCfg() dto.DataFlowCfg {
 		hc.runtimeContext.DataflowDependencyMax,
 		hc.runtimeContext.DataflowComponentsMax,
 	)
+}
+
+func (hc *standardHandlerContext) GetStacqklSemver() string {
+	return hc.stackqlSemver
 }
 
 func (hc *standardHandlerContext) SetExportNamespace(exportNamespace string) {
@@ -540,6 +546,7 @@ func (hc *standardHandlerContext) Clone() HandlerContext {
 		typCfg:              hc.typCfg,
 		sessionContext:      hc.sessionContext,
 		exportNamespace:     hc.exportNamespace,
+		stackqlSemver:       hc.stackqlSemver,
 	}
 	return &rv
 }
@@ -560,6 +567,7 @@ func NewHandlerCtx(
 	runtimeCtx dto.RuntimeCtx,
 	lruCache *lrucache.LRUCache,
 	inputBundle bundle.Bundle,
+	stackqlSemver string,
 ) (HandlerContext, error) {
 	reg, err := getRegistry(runtimeCtx)
 	if err != nil {
@@ -617,6 +625,7 @@ func NewHandlerCtx(
 		exportNamespace:     runtimeCtx.ExportAlias,
 		outfile:             outWriter,
 		outErrFile:          outErrWriter,
+		stackqlSemver:       stackqlSemver,
 	}
 	drmCfg, err := drm.GenerateDRMConfig(
 		inputBundle.GetSQLSystem(),

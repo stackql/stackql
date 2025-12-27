@@ -646,6 +646,26 @@ AWS S3 Bucket ABAC Update Exemplifies Transformed Request Body and nil Response 
     ...    stdout=${CURDIR}/tmp/AWS-S3-Bucket-ABAC-Update-Exemplifies-Transformed-Request-Body-and-nil-Response-Body.tmp
     ...    stderr=${CURDIR}/tmp/AWS-S3-Bucket-ABAC-Update-Exemplifies-Transformed-Request-Body-and-nil-Response-Body-stderr.tmp
 
+Obsolete AWS S3 Bucket ABAC Update Exemplifies Disallowed Transformed Request Body and nil Response Body
+    ${inputStr} =    Catenate
+    ...              update aws.s3.bucket_abac_rubbish 
+    ...              set "Status" = 'Enabled' 
+    ...              where "Bucket" = 'my-bucket' 
+    ...              and region = 'ap-southeast-1';
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${EMPTY}
+    ...    unsupported template type: golang_template_text_v0.1.999
+    ...    stdout=${CURDIR}/tmp/Obsolete-AWS-S3-Bucket-ABAC-Update-Exemplifies-Disallowed-Transformed-Request-Body-and-nil-Response-Body.tmp
+    ...    stderr=${CURDIR}/tmp/Obsolete-AWS-S3-Bucket-ABAC-Update-Exemplifies-Disallowed-Transformed-Request-Body-and-nil-Response-Body-stderr.tmp
+
 AWS Transfer Servers Update Simple Exemplifies Non Null Response Body and Non Null Request Body Update
     ${inputStr} =    Catenate
     ...              update aws.transfer.servers 
@@ -1989,7 +2009,7 @@ Registry List Google Provider
     ...    ${REGISTRY_GOOGLE_PROVIDER_LIST_EXPECTED}
 
 Registry Pull Google Provider Specific Version
-    Should Stackql Exec Inline Contain Stderr
+    Should Stackql Exec Inline Equal Stderr
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
     ...    ${GITHUB_SECRET_STR}
@@ -1998,7 +2018,19 @@ Registry Pull Google Provider Specific Version
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    registry pull google v0.1.2 ; 
-    ...    successfully installed
+    ...    google provider, version 'v0.1.2' successfully installed
+
+Registry Pull Google Provider Advanced Version
+    Should Stackql Exec Inline Contain Stderr
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_MOCKED_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    registry pull google v0.2.1 ; 
+    ...    requires minimum stackql version
 
 Basic Floating Point Projection Display Plus Bearer And User Password Auth Encoding
     Should Stackql Exec Inline Contain
@@ -7828,6 +7860,22 @@ Select Star From Transformed XML Response Body
     ...    ${inputStr}
     ...    ${outputStr}
     ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Select-Star-From-Transformed-XML-Response-Body.tmp
+    ...    stderr=${CURDIR}/tmp/Select-Star-From-Transformed-XML-Response-Body-stderr.tmp
+
+Select Leveraging Unsupported Transform Does Not Cause a Crash
+    ${inputStr} =    Catenate
+    ...    select * from aws.ec2.volumes_poorly_presented where region = 'ap-southeast-2' order by volume_id;
+    Should Stackql Exec Inline Equal Stderr
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    error processing response: invalid character '<' looking for beginning of value
     ...    stdout=${CURDIR}/tmp/Select-Star-From-Transformed-XML-Response-Body.tmp
     ...    stderr=${CURDIR}/tmp/Select-Star-From-Transformed-XML-Response-Body-stderr.tmp
 
