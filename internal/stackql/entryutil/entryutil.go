@@ -246,9 +246,13 @@ func BuildHandlerContext(
 	isPreprocess bool,
 ) (handler.HandlerContext, error) {
 	if !isPreprocess {
-		return handler.NewHandlerCtx("", runtimeCtx, lruCache, inputBundle)
+		return handler.NewHandlerCtx(
+			"", runtimeCtx, lruCache,
+			inputBundle, "v0.1.1")
 	}
 	bb, err := assemblePreprocessor(runtimeCtx, rdr)
 	iqlerror.PrintErrorAndExitOneIfError(err)
-	return handler.NewHandlerCtx(strings.TrimSpace(string(bb)), runtimeCtx, lruCache, inputBundle)
+	return handler.NewHandlerCtx(
+		strings.TrimSpace(string(bb)), runtimeCtx, lruCache,
+		inputBundle, "v0.1.1")
 }

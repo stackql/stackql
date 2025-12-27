@@ -29,6 +29,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
 	"github.com/stackql/stackql/internal/stackql/tablemetadata"
 	"github.com/stackql/stackql/internal/stackql/util"
+	"golang.org/x/mod/semver"
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
@@ -802,12 +803,30 @@ func (pgb *standardPlanGraphBuilder) handleRegistryPull(
 	if err = reg.PullAndPersistProviderArchive(node.ProviderId, providerVersion); err != nil {
 		return internaldto.NewErroneousExecutorOutput(err)
 	}
+	newProvider, newProviderErr := reg.LoadProviderByName(node.ProviderId, providerVersion)
+	if newProviderErr != nil {
+		return internaldto.NewErroneousExecutorOutput(fmt.Errorf("Error parsing new provider: %w", newProviderErr))
+	}
+	minSupprotedStackqlVersion := newProvider.GetMinStackQLVersion()
+	currentStackqlVersion := handlerCtx.GetStacqklSemver()
+	messages := []string{
+		fmt.Sprintf(
+			"%s provider, version '%s' successfully installed",
+			node.ProviderId, providerVersion),
+	}
+	if minSupprotedStackqlVersion != "" {
+		isUpToDate := semver.Compare(currentStackqlVersion, minSupprotedStackqlVersion) >= 0
+		if !isUpToDate {
+			messages = append(messages, fmt.Sprintf(
+				//nolint:lll // acceptable
+				"warning: installed %s provider version '%s' requires minimum stackql version '%s', current stackql version is '%s'",
+				node.ProviderId, providerVersion, minSupprotedStackqlVersion, currentStackqlVersion))
+		}
+	}
 	return util.PrepareResultSet(
 		internaldto.NewPrepareResultSetPlusRawDTO(
 			nil, nil, nil, nil, nil,
-			internaldto.NewBackendMessages([]string{fmt.Sprintf(
-				"%s provider, version '%s' successfully installed",
-				node.ProviderId, providerVersion)}),
+			internaldto.NewBackendMessages(messages),
 			nil,
 			pbi.GetHandlerCtx().GetTypingConfig()))
 }

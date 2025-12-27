@@ -133,4 +133,14 @@ There are some decent examples in vendor documentation, eg:
 
 - [Azure vendor documenation](https://learn.microsoft.com/en-us/rest/api/azure/).
 
+## Preparing mock registry entries
 
+From within the dir where your file lives:
+
+```bash
+
+COPYFILE_DISABLE=1 tar -czvf <name>.tgz <source dir>
+
+# eg: COPYFILE_DISABLE=1 tar -cvzf google-v0.2.1.tgz v0.2.1
+
+```

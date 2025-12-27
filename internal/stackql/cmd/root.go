@@ -45,6 +45,10 @@ var (
 	BuildPlatform       string = ""
 )
 
+func getSemver() string {
+	return fmt.Sprintf("v%s.%s.%s", BuildMajorVersion, BuildMinorVersion, BuildPatchVersion)
+}
+
 const (
 	defaultRegistryURLString string = "https://registry.stackql.app/providers"
 )

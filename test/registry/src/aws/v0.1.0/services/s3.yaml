@@ -22185,6 +22185,58 @@ components:
         update:
         - $ref: '#/components/x-stackQL-resources/bucket_abac/methods/put_bucket_abac'
         delete: []
+    bucket_abac_rubbish:
+      id: aws.s3.bucket_abac
+      name: bucket_abac
+      title: Bucket Abac
+      methods:
+        get_bucket_abac:
+          operation:
+            $ref: '#/paths/~1?abac/get'
+          response:
+            mediaType: text/xml
+            openAPIDocKey: '200'
+        put_bucket_abac:
+          config:
+            requestBodyTranslate:
+              algorithm: naive
+          operation:
+            $ref: '#/paths/~1?abac/put'
+          response:
+            openAPIDocKey: '200'
+          request:
+            mediaType: application/xml
+            schema_override:
+              $ref: '#/components/schemas/AbacInputOverride'
+            transform:
+              type: golang_template_text_v0.1.999
+              body: |-
+                {{- $s := separator ", " -}}
+                {{- $body := jsonMapFromString . -}}
+                {{- $status := index $body "Status" -}}
+                {{- $nestedField := index $body "NestedField" -}}
+                {{- $renderedNestedFields := "" -}}
+                {{- range $k, $v := $nestedField -}}
+                    {{- if eq (printf "%T" $v) "[]interface {}" -}}
+                        {{- $renderedListItems := "" -}}
+                        {{- range $i, $item := $v -}}
+                            {{- /* Fix: Use '=' and 'print' instead of '+=' */ -}}
+                            {{- $renderedListItems = print $renderedListItems (printf "<%s>%v</%s>" $k $item $k) -}}
+                        {{- end -}}
+                        {{- $renderedNestedFields = print $renderedNestedFields (printf "<%sList>%s</%sList>" $k $renderedListItems $k) -}}
+                        {{- continue -}}
+                    {{- end -}}
+                    {{- /* Fix: Removed redundant variable reference in printf and changed += to = print */ -}}
+                    {{- $renderedNestedFields = print $renderedNestedFields (printf "<%s>%v</%s>" $k $v $k) -}}
+                {{- end -}}
+                <AbacStatus xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Status>{{ $status }}</Status></AbacStatus>
+      sqlVerbs:
+        select:
+        - $ref: '#/components/x-stackQL-resources/bucket_abac_rubbish/methods/get_bucket_abac'
+        insert: []
+        update:
+        - $ref: '#/components/x-stackQL-resources/bucket_abac_rubbish/methods/put_bucket_abac'
+        delete: []
     bucket_accelerate_configurations:
       id: aws.s3.bucket_accelerate_configurations
       name: bucket_accelerate_configurations

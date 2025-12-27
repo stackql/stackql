@@ -45788,7 +45788,70 @@ components:
               type: 'golang_template_mxj_v0.1.0'
       sqlVerbs:
         select:
-          - $ref: '#/components/x-stackQL-resources/volumes/methods/describeVolumes'
+          - $ref: '#/components/x-stackQL-resources/volumes_presented/methods/describeVolumes'
+        insert: []
+        update: []
+        delete: []
+    volumes_poorly_presented:
+      id: aws.ec2.volumes_poorly_presented
+      name: volumes_poorly_presented
+      title: volumes_poorly_presented
+      methods:
+        describeVolumes:
+          config:
+            queryParamTranspose:
+              algorithm: AWSCanonical
+            requestTranslate:
+              algorithm: get_query_to_post_form_utf_8
+            pagination:
+              requestToken:
+                key: NextToken
+                location: query
+              responseToken:
+                key: $.next_page_token
+                location: body
+          operation:
+            $ref: '#/paths/~1?Action=DescribeVolumes&Version=2016-11-15/get'
+          response:
+            mediaType: application/xml
+            overrideMediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: '$.line_items'
+            schema_override:
+              $ref: '#/components/schemas/DisplayVolumesSchema'
+            transform:
+              body: >
+                {
+                  "next_page_token": {{with index . "DescribeVolumesResponse" "nextToken"}}{{printf "%q" .}}{{else}}null{{end}},
+                  "line_items": [
+                    {{- $items := index . "DescribeVolumesResponse" "volumeSet" "item" -}}
+                    {{- if eq (printf "%T" $items) "map[string]interface {}" }}
+                      {{template "volume" $items}}
+                    {{- else }}
+                      {{- range $i, $v := $items }}
+                        {{- if $i}},{{end}}
+                        {{template "volume" $v}}
+                      {{- end }}
+                    {{- end }}
+                  ]
+                }
+                {{define "volume"}}
+                {
+                  "volume_id": {{printf "%q" (index . "volumeId")}},
+                  "size": {{toInt (index . "size")}},
+                  "snapshot_id": {{with index . "snapshotId"}}{{printf "%q" .}}{{else}}null{{end}},
+                  "availability_zone": {{printf "%q" (index . "availabilityZone")}},
+                  "status": {{printf "%q" (index . "status")}},
+                  "create_time": {{printf "%q" (index . "createTime")}},
+                  "volume_type": {{printf "%q" (index . "volumeType")}},
+                  "encrypted": {{toBool (index . "encrypted")}},
+                  "multi_attach_enabled": {{toBool (index . "multiAttachEnabled")}}
+                }
+                {{end}}
+              type: 'golang_template_mxj_v0.1.999'
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/volumes_poorly_presented/methods/describeVolumes'
         insert: []
         update: []
         delete: []
