@@ -45792,6 +45792,42 @@ components:
         insert: []
         update: []
         delete: []
+    volumes_naively_presented:
+      id: aws.ec2.volumes_naively_presented
+      name: volumes_naively_presented
+      title: volumes_naively_presented
+      methods:
+        describeVolumes:
+          config:
+            queryParamTranspose:
+              algorithm: AWSCanonical
+            requestTranslate:
+              algorithm: get_query_to_post_form_utf_8
+            pagination:
+              requestToken:
+                key: NextToken
+                location: query
+              responseToken:
+                key: $.next_page_token
+                location: body
+          operation:
+            $ref: '#/paths/~1?Action=DescribeVolumes&Version=2016-11-15/get'
+          response:
+            mediaType: application/xml
+            overrideMediaType: application/json
+            openAPIDocKey: '200'
+            schema_override:
+              $ref: '#/components/schemas/DescribeVolumesOutput'
+            transform:
+              body: >-
+                {{ toJson . }}
+              type: 'golang_template_mxj_v0.2.0'
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/volumes_naively_presented/methods/describeVolumes'
+        insert: []
+        update: []
+        delete: []
     volumes_poorly_presented:
       id: aws.ec2.volumes_poorly_presented
       name: volumes_poorly_presented
@@ -51281,6 +51317,14 @@ components:
             - description: Information about the status of the volumes.
     VolumeId:
       type: string
+    DescribeVolumesOutput:
+      type: object
+      properties:
+        DescribeVolumesResponse:
+          xml: 
+            name: DescribeVolumesResult
+          $ref: '#/components/schemas/DescribeVolumesResult'
+        
     DescribeVolumesResult:
       type: object
       example:
