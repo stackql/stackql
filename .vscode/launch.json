@@ -9,6 +9,7 @@
       "id": "queryString",
       "description": "SQL Query string",
       "options": [
+        "select * from aws.ec2_native.vpcs where region = 'ap-southeast-2';",
         "select \"Key\", Size, StorageClass from  aws.s3.objects where region = 'ap-southeast-1' and bucket = 'stackql-trial-bucket-01' order by \"Key\" ASC;",
         "SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relkind in ('r', 'p')",
         "select  kind, name  from  google.compute.acceleratorTypes where project = 'testing-project' and zone = 'australia-southeast1-a' order by name desc;",
@@ -217,6 +218,7 @@
         "{ \"url\": \"https://registry-dev.stackql.app/providers\" }",
         "{ \"url\": \"https://registry.stackql.app/providers\" }",
         "{\"url\": \"http://localhost:1094/gh/stackql/stackql-provider-registry/main/providers\", \"verifyConfig\": {\"nopVerify\": true}}",
+        "{ \"url\": \"file://${workspaceFolder}/../stackql-provider-registry/providers\", \"localDocRoot\": \"${workspaceFolder}/../stackql-provider-registry/providers\", \"verifyConfig\": { \"nopVerify\": true } }",
       ],
       "default": "{ \"url\": \"file://${workspaceFolder}/test/registry\", \"localDocRoot\": \"${workspaceFolder}/test/registry\", \"verifyConfig\": { \"nopVerify\": true } }"
     },
