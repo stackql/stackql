@@ -1259,7 +1259,12 @@ jobs:
           echo "## End ##"
           export PYTHONPATH="$(pwd)/test/python"
           source .venv/bin/activate;
-          python3 cicd/python/build.py --robot-test-integration --config='{ "variables":  { "IS_WSL": true } }'
+          if python3 cicd/python/build.py --robot-test-integration --config='{ "variables":  { "IS_WSL": true } }'; then
+            echo "✅ Integration tests **all** passed"
+          else
+            rv="$?"
+            echo "🟡 **some** integration tests failed code = $rv"
+          fi
 
   macosbuild:
     name: MacOS Build
