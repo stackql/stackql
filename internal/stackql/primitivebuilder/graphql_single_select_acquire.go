@@ -102,7 +102,9 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 		for _, reqCtx := range httpArmoury.GetRequestParams() {
 			req := reqCtx.GetRequest()
 			housekeepingDone := false
-			cc := anysdk.NewAnySdkClientConfigurator(ss.handlerCtx.GetRuntimeContext(), prov.GetProviderString())
+			cc := anysdk.NewAnySdkClientConfigurator(
+				ss.handlerCtx.GetRuntimeContext(), prov.GetProviderString(),
+				prov.GetDefaultHTTPClient())
 			client, err := cc.Auth(authCtx, authCtx.Type, false)
 			if err != nil {
 				return internaldto.NewErroneousExecutorOutput(err)

@@ -149,6 +149,7 @@ func (ss *Exec) Build() error {
 				false,
 				!ss.isShowResults,
 				"",
+				prov.GetDefaultHTTPClient(), // for testing purposes only
 			)
 			processor := execution.NewProcessor(pp)
 			processorResponse := processor.Process()
