@@ -39,6 +39,7 @@ type GenericProvider struct {
 	apiVersion       string
 	methodSelector   methodselect.IMethodSelector
 	authUtil         auth_util.AuthUtility
+	defaultClient    *http.Client // for testing purposes only, defaulted downstream
 }
 
 func (gp *GenericProvider) GetDefaultKeyForDeleteItems() string {
@@ -151,6 +152,10 @@ func (gp *GenericProvider) GetMethodForAction(
 		return nil, "", err
 	}
 	return gp.methodSelector.GetMethodForAction(rsc, iqlAction, parameters)
+}
+
+func (gp *GenericProvider) GetDefaultHTTPClient() *http.Client {
+	return gp.defaultClient
 }
 
 func (gp *GenericProvider) GetFirstMethodForAction(

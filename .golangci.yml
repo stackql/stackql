@@ -206,6 +206,7 @@ linters:
           - bodyclose
           - dupl
           - errcheck
+          - errorlint
           - funlen
           - goconst
           - gosec
@@ -213,6 +214,9 @@ linters:
           - revive
           - wrapcheck
           - govet
+          - lll
+          - whitespace
+          - cyclop
         path: _test\.go
     paths:
       - third_party$

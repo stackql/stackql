@@ -79,6 +79,7 @@ type monoValentExecution struct {
 	isSkipResponse             bool
 	isMutation                 bool
 	isAwait                    bool
+	defaultHTTPClient          *http.Client // for testing purposes only
 }
 
 func NewMonoValentExecutorFactory(
@@ -100,6 +101,13 @@ func NewMonoValentExecutorFactory(
 	if stream == nil {
 		stream = streaming.NewNopMapStream()
 	}
+	var defaultHTTPClient *http.Client
+	if tableMeta != nil {
+		prov, provErr := tableMeta.GetProvider()
+		if provErr == nil && prov != nil {
+			defaultHTTPClient = prov.GetDefaultHTTPClient()
+		}
+	}
 	return &monoValentExecution{
 		graphHolder:                graphHolder,
 		handlerCtx:                 handlerCtx,
@@ -113,6 +121,7 @@ func NewMonoValentExecutorFactory(
 		isSkipResponse:             isSkipResponse,
 		isMutation:                 isMutation,
 		isAwait:                    isAwait,
+		defaultHTTPClient:          defaultHTTPClient,
 	}
 }
 
@@ -414,6 +423,7 @@ func page(
 	rtCtx dto.RuntimeCtx,
 	authCtx *dto.AuthCtx,
 	outErrFile io.Writer,
+	defaultHTTPClient *http.Client,
 ) PagingState {
 	npt := inferNextPageResponseElement(provider, method)
 	nptRequest := inferNextPageRequestElement(provider, method)
@@ -429,7 +439,7 @@ func page(
 	if reqErr != nil {
 		return newPagingState(pageCount, true, nil, reqErr)
 	}
-	cc := anysdk.NewAnySdkClientConfigurator(rtCtx, provider.GetName())
+	cc := anysdk.NewAnySdkClientConfigurator(rtCtx, provider.GetName(), defaultHTTPClient)
 	response, apiErr := anysdk.CallFromSignature(
 		cc, rtCtx, authCtx, authCtx.Type, false, outErrFile, provider,
 		anysdk.NewAnySdkOpStoreDesignation(method),
@@ -590,6 +600,7 @@ type AgnosticatePayload interface {
 	IsSkipResponse() bool
 	IsMutation() bool
 	IsAwait() bool
+	GetDefaultHTTPClient() *http.Client // testing purposes only
 }
 
 type httpAgnosticatePayload struct {
@@ -609,6 +620,7 @@ type httpAgnosticatePayload struct {
 	isSkipResponse          bool
 	isMutation              bool
 	isAwait                 bool
+	defaultHTTPClient       *http.Client // testing purposes only
 }
 
 func newHTTPAgnosticatePayload(
@@ -628,6 +640,7 @@ func newHTTPAgnosticatePayload(
 	isSkipResponse bool,
 	isMutation bool,
 	isAwait bool,
+	defaultHTTPClient *http.Client,
 ) AgnosticatePayload {
 	return &httpAgnosticatePayload{
 		tableMeta:               tableMeta,
@@ -646,11 +659,16 @@ func newHTTPAgnosticatePayload(
 		isSkipResponse:          isSkipResponse,
 		isMutation:              isMutation,
 		isAwait:                 isAwait,
+		defaultHTTPClient:       defaultHTTPClient,
 	}
 }
 
 func (ap *httpAgnosticatePayload) GetPolyHandler() PolyHandler {
 	return ap.polyHandler
+}
+
+func (ap *httpAgnosticatePayload) GetDefaultHTTPClient() *http.Client {
+	return ap.defaultHTTPClient
 }
 
 func (ap *httpAgnosticatePayload) IsAwait() bool {
@@ -760,6 +778,7 @@ func agnosticate(
 	isSkipResponse := agPayload.IsNilResponseAcceptable()
 	isMutation := agPayload.IsMutation()
 	isAwait := agPayload.IsAwait()
+	defaultHTTPClient := agPayload.GetDefaultHTTPClient()
 	// TODO: TCC setup
 	armoury, armouryErr := agPayload.GetArmoury()
 	if armouryErr != nil {
@@ -813,6 +832,7 @@ func agnosticate(
 				false,
 				isMutation,
 				"",
+				defaultHTTPClient,
 			),
 		)
 		processorResponse = processor.Process()
@@ -841,6 +861,7 @@ type ProcessorPayload interface {
 	IsAwait() bool
 	IsReverseRequired() bool
 	GetVerb() string
+	GetDefaultHTTPClient() *http.Client // testing purposes only
 }
 
 func NewProcessorPayload(
@@ -861,6 +882,7 @@ func NewProcessorPayload(
 	isReverseRequired bool,
 	isMutation bool,
 	verb string,
+	defaultHTTPClient *http.Client,
 ) ProcessorPayload {
 	return &standardProcessorPayload{
 		armouryParams:         armouryParams,
@@ -880,6 +902,7 @@ func NewProcessorPayload(
 		isReverseRequired:     isReverseRequired,
 		isMutation:            isMutation,
 		verb:                  verb,
+		defaultHTTPClient:     defaultHTTPClient,
 	}
 }
 
@@ -901,6 +924,7 @@ type standardProcessorPayload struct {
 	isReverseRequired     bool
 	isMutation            bool
 	verb                  string
+	defaultHTTPClient     *http.Client // testing purposes only
 }
 
 func (pp *standardProcessorPayload) GetArmouryParams() anysdk.HTTPArmouryParameters {
@@ -909,6 +933,10 @@ func (pp *standardProcessorPayload) GetArmouryParams() anysdk.HTTPArmouryParamet
 
 func (pp *standardProcessorPayload) IsSkipResponse() bool {
 	return pp.isSkipResponse
+}
+
+func (pp *standardProcessorPayload) GetDefaultHTTPClient() *http.Client {
+	return pp.defaultHTTPClient
 }
 
 func (pp *standardProcessorPayload) IsAwait() bool {
@@ -1047,12 +1075,14 @@ type Processor interface {
 }
 
 type standardProcessor struct {
-	payload ProcessorPayload
+	payload           ProcessorPayload
+	defaultHTTPClient *http.Client
 }
 
 func NewProcessor(payload ProcessorPayload) Processor {
 	return &standardProcessor{
-		payload: payload,
+		payload:           payload,
+		defaultHTTPClient: payload.GetDefaultHTTPClient(),
 	}
 }
 
@@ -1090,7 +1120,7 @@ func (sp *standardProcessor) Process() ProcessorResponse {
 		return newHTTPProcessorResponse(nil, reversalStream, false, nil)
 	}
 	// TODO: fix cloning ops
-	cc := anysdk.NewAnySdkClientConfigurator(runtimeCtx, provider.GetName())
+	cc := anysdk.NewAnySdkClientConfigurator(runtimeCtx, provider.GetName(), sp.defaultHTTPClient)
 	response, apiErr := anysdk.CallFromSignature(
 		cc,
 		runtimeCtx,
@@ -1224,6 +1254,7 @@ func (sp *standardProcessor) Process() ProcessorResponse {
 			runtimeCtx,
 			authCtx,
 			outErrFile,
+			sp.defaultHTTPClient,
 		)
 		httpResponse, httpResponseErr = pageResult.GetHTTPResponse()
 		// if httpResponse != nil && httpResponse.Body != nil {
@@ -1417,6 +1448,7 @@ func (mv *monoValentExecution) GetExecutor() (func(pc primitive.IPrimitiveCtx) i
 				mv.isSkipResponse,
 				mv.isMutation,
 				mv.isAwait,
+				mv.defaultHTTPClient,
 			)
 			processorResponse, agnosticErr := agnosticate(agnosticatePayload)
 			if agnosticErr != nil {
@@ -1458,7 +1490,7 @@ func shimProcessHTTP(
 	if monitorReqErr != nil {
 		return nil, monitorReqErr
 	}
-	cc := anysdk.NewAnySdkClientConfigurator(rtCtx, provider.GetName())
+	cc := anysdk.NewAnySdkClientConfigurator(rtCtx, provider.GetName(), nil)
 	anySdkResponse, apiErr := anysdk.CallFromSignature(
 		cc, rtCtx, authCtx, authCtx.Type, false, outErrFile, provider, anysdk.NewAnySdkOpStoreDesignation(m), req)
 
@@ -1626,7 +1658,7 @@ func GetMonitorExecutor(
 		if monitorReqErr != nil {
 			return internaldto.NewExecutorOutput(nil, nil, nil, nil, monitorReqErr)
 		}
-		cc := anysdk.NewAnySdkClientConfigurator(rtCtx, provider.GetName())
+		cc := anysdk.NewAnySdkClientConfigurator(rtCtx, provider.GetName(), nil)
 		anySdkResponse, apiErr := anysdk.CallFromSignature(
 			cc, rtCtx, authCtx, authCtx.Type, false, outErrFile, provider, anysdk.NewAnySdkOpStoreDesignation(m), req)
 

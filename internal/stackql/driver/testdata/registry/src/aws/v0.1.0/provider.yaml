@@ -1,0 +1,126 @@
+id: aws
+name: aws
+version: v0.1.0
+providerServices:
+  acmpca:
+    description: acmpca
+    id: acmpca:v0.1.0
+    name: acmpca
+    preferred: true
+    service:
+      $ref: aws/v0.1.0/services/acmpca.yaml
+    title: acmpca API
+    version: v0.1.0
+  cloud_control:
+    description: cloud_control
+    id: cloud_control:v0.1.0
+    name: cloud_control
+    preferred: true
+    service:
+      $ref: aws/v0.1.0/services/cloud_control.yaml
+    title: Cloud Control API
+    version: v0.1.0
+  ce_native:
+    description: ce_native
+    id: ce_native:v0.1.0
+    name: ce_native
+    preferred: true
+    service:
+      $ref: aws/v0.1.0/services/ce_native.yaml
+    title: ce_native API
+    version: v0.1.0
+  cloud_control_legacy:
+    description: cloud_control_legacy
+    id: cloud_control_legacy:v0.1.0
+    name: cloud_control_legacy
+    preferred: true
+    service:
+      $ref: aws/v0.1.0/services/cloud_control_legacy.yaml
+    title: Cloud Control Legacy API
+    version: v0.1.0
+  cloudhsm:
+    description: cloud_hsm
+    id: cloud_hsm:v2.0.0
+    name: cloudhsm
+    preferred: true
+    service:
+      $ref: aws/v0.1.0/services/cloudhsm.yaml
+    title: Cloud HSM API
+    version: v2.0.0
+  cloud_watch:
+    description: cloud_watch
+    id: cloud_watch:v0.1.0
+    name: cloud_watch
+    preferred: true
+    service:
+      $ref: aws/v0.1.0/services/cloudwatch.yaml
+    title: Cloud Control API
+    version: v0.1.0
+  ec2:
+    description: ec2
+    id: ec2:v0.1.0
+    name: ec2
+    preferred: true
+    service:
+      $ref: aws/v0.1.0/services/ec2.yaml
+    title: EC2
+    version: v0.1.0
+  ec2_nextgen:
+    description: ec2_nextgen
+    id: ec2_nextgen:v0.1.0
+    name: ec2_nextgen
+    preferred: true
+    service:
+      $ref: aws/v0.1.0/services/ec2_nextgen.yaml
+    title: EC2 NextGen
+  iam:
+    description: iam
+    id: iam:v0.1.0
+    name: ec2
+    preferred: true
+    service:
+      $ref: aws/v0.1.0/services/iam.yaml
+    title: IAM
+    version: v0.1.0
+  pseudo_s3:
+    description: pseudo_s3
+    id: pseudo_s3:v0.1.0
+    name: pseudo_s3
+    preferred: true
+    service:
+      $ref: aws/v0.1.0/services/pseudo_s3.yaml
+    title: Pseudo S3 API
+    version: v0.1.0
+  route53:
+    description: route53
+    id: route53:v0.1.0
+    name: route53
+    preferred: true
+    service:
+      $ref: aws/v0.1.0/services/route53.yaml
+    title: Route 53 API
+    version: v0.1.0
+  s3:
+    description: s3
+    id: s3:v0.1.0
+    name: s3
+    preferred: true
+    service:
+      $ref: aws/v0.1.0/services/s3.yaml
+    title: S3
+    version: v0.1.0
+  transfer:
+    description: transfer
+    id: transfer:v0.1.0
+    name: transfer
+    preferred: true
+    service:
+      $ref: aws/v0.1.0/services/transfer.yaml
+    title: Transfer
+    version: v0.1.0
+openapi: 3.0.0
+config:
+  auth:
+    type: "aws_signing_v4"
+    credentialsenvvar: "AWS_SECRET_ACCESS_KEY"
+    keyIDenvvar: "AWS_ACCESS_KEY_ID"
