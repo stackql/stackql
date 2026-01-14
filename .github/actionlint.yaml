@@ -7,3 +7,4 @@ self-hosted-runner:
     - arm-ubuntu-22-04-runner-one
     - macos-14 # should not be necessary
     - macos-15 # should not be necessary
+    - macos-15-intel # should not be necessary
