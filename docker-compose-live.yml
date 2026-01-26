@@ -1,9 +1,8 @@
-version: "3.9"
+
    
 services:
   postgres_stackql:
     image: postgres:14.5-bullseye
-    hostname: postgres_stackql
     volumes:
       - ./cicd/vol/postgres/setup:/docker-entrypoint-initdb.d:ro
     environment:
@@ -13,7 +12,6 @@ services:
   stackql:
     # Update image tag as needed
     image: stackql/stackql:latest
-    hostname: stackql
     restart: no
     volumes:
       - ./cicd/vol/vendor-secrets:/opt/stackql/vendor-secrets:ro
