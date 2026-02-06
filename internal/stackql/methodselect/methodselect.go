@@ -55,7 +55,7 @@ func (sel *DefaultMethodSelector) GetMethodForAction(
 			"iql action = '%s' curently not supported, there is no method mapping possible for any resource",
 			iqlAction)
 	}
-	m, err := sel.getMethodByNameAndParameters(resource, methodName, parameters)
+	m, err := sel.GetMethodByNameAndParameters(resource, methodName, parameters)
 	return m, methodName, err
 }
 
@@ -73,7 +73,7 @@ func (sel *DefaultMethodSelector) getMethodByName(
 	return m, nil
 }
 
-func (sel *DefaultMethodSelector) getMethodByNameAndParameters(
+func (sel *DefaultMethodSelector) GetMethodByNameAndParameters(
 	resource anysdk.Resource, methodName string,
 	parameters parserutil.ColumnKeyedDatastore) (anysdk.StandardOperationStore, error) {
 	stringifiedParams := parameters.GetStringified()
