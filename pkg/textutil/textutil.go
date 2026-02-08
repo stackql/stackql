@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	namespaceLikeStringRegex *regexp.Regexp = regexp.MustCompile(`{{.*}}`)
+	namespaceLikeStringRegex *regexp.Regexp = regexp.MustCompile(`{{.*?}}`)
 )
 
 func GetTemplateLikeString(templateString string) string {
