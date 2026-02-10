@@ -1,6 +1,10 @@
-package textutil
+package textutil_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stackql/stackql/pkg/textutil"
+)
 
 func TestGetTemplateLikeString(t *testing.T) {
 	cases := []struct {
@@ -27,7 +31,7 @@ func TestGetTemplateLikeString(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			got := GetTemplateLikeString(tc.input)
+			got := textutil.GetTemplateLikeString(tc.input)
 			if got != tc.want {
 				t.Errorf("GetTemplateLikeString(%q) = %q, want %q", tc.input, got, tc.want)
 			}
