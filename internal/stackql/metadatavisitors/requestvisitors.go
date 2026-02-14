@@ -5,6 +5,7 @@ import (
 
 	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/any-sdk/pkg/logging"
+	"github.com/stackql/any-sdk/public/formulation"
 
 	"sort"
 	"strings"
@@ -133,13 +134,25 @@ func ToInsertStatement(
 	placeHolderPrettyPrinter *prettyprint.PrettyPrinter,
 	requiredOnly bool,
 ) (string, error) {
-	paramsToInclude := m.GetNonBodyParameters()
+	rawParamsToInclude := m.GetNonBodyParameters()
+	paramsToInclude := make(map[string]formulation.Addressable)
+	for k, v := range rawParamsToInclude {
+		paramsToInclude[k] = v
+	}
 	if requiredOnly {
-		paramsToInclude = m.GetRequiredNonBodyParameters()
+		rawParamsToInclude = m.GetRequiredNonBodyParameters()
+		paramsToInclude = make(map[string]formulation.Addressable)
+		for k, v := range rawParamsToInclude {
+			paramsToInclude[k] = v
+		}
 	}
 	successfullyIncludedCols := make(map[string]bool)
 	if !extended {
-		paramsToInclude = m.GetRequiredParameters()
+		rawParamsToInclude = m.GetRequiredParameters()
+		paramsToInclude = make(map[string]formulation.Addressable)
+		for k, v := range rawParamsToInclude {
+			paramsToInclude[k] = v
+		}
 		for k := range paramsToInclude {
 			if m.IsRequestBodyAttributeRenamed(k) {
 				delete(paramsToInclude, k)
@@ -147,7 +160,7 @@ func ToInsertStatement(
 		}
 	}
 	if columns != nil {
-		paramsToInclude = make(map[string]anysdk.Addressable)
+		paramsToInclude = make(map[string]formulation.Addressable)
 		for _, col := range columns {
 			cName := col.GetRawVal()
 			if !isRequestBodyParam(cName, m) {

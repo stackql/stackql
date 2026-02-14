@@ -3,7 +3,7 @@ package astindirect
 import (
 	"fmt"
 
-	"github.com/stackql/any-sdk/anysdk"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
@@ -78,11 +78,11 @@ func (v *View) GetColumns() []typing.ColumnMetadata {
 	return v.selCtx.GetNonControlColumns()
 }
 
-func (v *View) GetOptionalParameters() map[string]anysdk.Addressable {
+func (v *View) GetOptionalParameters() map[string]formulation.Addressable {
 	return nil
 }
 
-func (v *View) GetRequiredParameters() map[string]anysdk.Addressable {
+func (v *View) GetRequiredParameters() map[string]formulation.Addressable {
 	return nil
 }
 

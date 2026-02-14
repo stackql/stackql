@@ -3,7 +3,7 @@ package dataflow
 import (
 	"fmt"
 
-	"github.com/stackql/any-sdk/anysdk"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 
 	"github.com/stackql/any-sdk/pkg/logging"
@@ -12,7 +12,7 @@ import (
 type Relation interface {
 	GetProjection() (string, string, error)
 	GetSelectExpr() (sqlparser.SelectExpr, error)
-	GetColumnDescriptor() (anysdk.ColumnDescriptor, error)
+	GetColumnDescriptor() (formulation.ColumnDescriptor, error)
 	GetDestColumnName() string
 	IsSQL() bool
 }
@@ -66,8 +66,8 @@ func (dr *standardDataFlowRelation) GetSelectExpr() (sqlparser.SelectExpr, error
 	return rv, nil
 }
 
-func (dr *standardDataFlowRelation) GetColumnDescriptor() (anysdk.ColumnDescriptor, error) {
+func (dr *standardDataFlowRelation) GetColumnDescriptor() (formulation.ColumnDescriptor, error) {
 	decoratedColumn := fmt.Sprintf(`%s AS %s`, sqlparser.ColDelimitedString(dr.sourceExpr), dr.destColumn.Name.GetRawVal())
-	cd := anysdk.NewColumnDescriptor(dr.destColumn.Name.GetRawVal(), "", "", decoratedColumn, nil, nil, nil)
+	cd := formulation.NewColumnDescriptor(dr.destColumn.Name.GetRawVal(), "", "", decoratedColumn, nil, nil, nil)
 	return cd, nil
 }

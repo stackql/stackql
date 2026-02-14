@@ -3,7 +3,7 @@ package astindirect
 import (
 	"fmt"
 
-	"github.com/stackql/any-sdk/anysdk"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
 	"github.com/stackql/stackql/internal/stackql/symtab"
@@ -107,8 +107,8 @@ type Indirect interface {
 	GetColumns() []typing.ColumnMetadata
 	GetRelationalColumns() []typing.RelationalColumn
 	GetName() string
-	GetOptionalParameters() map[string]anysdk.Addressable
-	GetRequiredParameters() map[string]anysdk.Addressable
+	GetOptionalParameters() map[string]formulation.Addressable
+	GetRequiredParameters() map[string]formulation.Addressable
 	GetSelectAST() sqlparser.SelectStatement
 	GetSelectContext() drm.PreparedStatementCtx
 	GetType() IndirectType

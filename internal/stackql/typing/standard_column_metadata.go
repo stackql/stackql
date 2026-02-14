@@ -5,6 +5,7 @@ import (
 
 	"github.com/lib/pq/oid"
 	"github.com/stackql/any-sdk/anysdk"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 )
@@ -15,7 +16,7 @@ var (
 
 type standardColumnMetadata struct {
 	coupling ORMCoupling
-	column   anysdk.ColumnDescriptor
+	column   formulation.ColumnDescriptor
 }
 
 func (cd *standardColumnMetadata) GetColumnOID() oid.Oid {
@@ -96,7 +97,7 @@ func (cd *standardColumnMetadata) GetRelationalType() string {
 	return cd.coupling.GetRelationalType()
 }
 
-func NewColDescriptor(col anysdk.ColumnDescriptor, relTypeStr string) ColumnMetadata {
+func NewColDescriptor(col formulation.ColumnDescriptor, relTypeStr string) ColumnMetadata {
 	return &standardColumnMetadata{
 		coupling: NewORMCoupling(relTypeStr, reflect.String),
 		column:   col,

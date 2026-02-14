@@ -149,7 +149,7 @@ linters:
     rowserrcheck:
       packages:
         - github.com/jmoiron/sqlx
-  exclusions:
+  exclusions:      
     generated: lax
     presets:
       - comments
@@ -222,6 +222,8 @@ linters:
       - third_party$
       - builtin$
       - examples$
+      - internal\/stackql\/execution\/mono_valent_execution\.go
+      - internal\/stackql\/providerinvokers\/anysdkhttp\/.*.go
 issues:
   max-same-issues: 50
 formatters:

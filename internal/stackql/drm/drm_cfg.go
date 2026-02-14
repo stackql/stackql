@@ -14,6 +14,7 @@ import (
 	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/any-sdk/pkg/streaming"
 	"github.com/stackql/any-sdk/public/discovery"
+	"github.com/stackql/any-sdk/public/formulation"
 	sdk_persistence "github.com/stackql/any-sdk/public/persistence"
 	"github.com/stackql/any-sdk/public/radix_tree_address_space"
 	"github.com/stackql/any-sdk/public/sqlengine"
@@ -87,8 +88,8 @@ type Config interface {
 		bool,
 	) (PreparedStatementCtx, error)
 	ExecuteInsertDML(sqlengine.SQLEngine, PreparedStatementCtx, map[string]interface{}, string) (sql.Result, error)
-	OpenapiColumnsToRelationalColumns(cols []anysdk.ColumnDescriptor) []typing.RelationalColumn
-	OpenapiColumnsToRelationalColumn(col anysdk.ColumnDescriptor) typing.RelationalColumn
+	OpenapiColumnsToRelationalColumns(cols []formulation.ColumnDescriptor) []typing.RelationalColumn
+	OpenapiColumnsToRelationalColumn(col formulation.ColumnDescriptor) typing.RelationalColumn
 	QueryDML(sqlmachinery.Querier, PreparedStatementParameterized) (*sql.Rows, error)
 	ExecDDL(
 		querier sqlmachinery.ExecQuerier,
@@ -150,7 +151,7 @@ func (dc *staticDRMConfig) DelimitFullyQualifiedRelationName(fqtn string) string
 }
 
 func (dc *staticDRMConfig) OpenapiColumnsToRelationalColumns(
-	cols []anysdk.ColumnDescriptor,
+	cols []formulation.ColumnDescriptor,
 ) []typing.RelationalColumn {
 	var relationalColumns []typing.RelationalColumn
 	for _, col := range cols {
@@ -190,7 +191,7 @@ func (dc *staticDRMConfig) ToExternalSQLRelationalColumn(
 }
 
 func (dc *staticDRMConfig) OpenapiColumnsToRelationalColumn(
-	col anysdk.ColumnDescriptor,
+	col formulation.ColumnDescriptor,
 ) typing.RelationalColumn {
 	var typeStr string
 	schemaExists := false
@@ -646,6 +647,10 @@ func (dc *staticDRMConfig) GenerateInsertDML(
 		}
 		tableColumns := inferredRelation.GetColumnDescriptors()
 		for _, col := range tableColumns {
+			col, colOk := col.(formulation.ColumnDescriptor)
+			if !colOk {
+				return nil, fmt.Errorf("expected column descriptor to be of type formulation.ColumnDescriptor but got %T", col)
+			}
 			relationalType := textStr
 			schema := col.GetSchema()
 			if schema != nil && schema.GetType() != "" {
@@ -716,6 +721,10 @@ func (dc *staticDRMConfig) GenerateSelectDML(
 		tabAnnotated.GetInputTableName(),
 	).WithAlias(aliasStr)
 	for _, col := range tabAnnotated.GetTabulation().GetColumns() {
+		col, colOk := col.(formulation.ColumnDescriptor)
+		if !colOk {
+			return nil, fmt.Errorf("expected column descriptor to be of type formulation.ColumnDescriptor but got %T", col)
+		}
 		var typeStr string
 		//nolint:gocritic,exhaustive // TODO: fix
 		if col.GetSchema() != nil {

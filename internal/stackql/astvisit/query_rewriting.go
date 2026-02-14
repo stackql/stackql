@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/stackql/any-sdk/anysdk"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 
 	"github.com/stackql/any-sdk/pkg/logging"
@@ -49,7 +50,7 @@ type standardQueryRewriteAstVisitor struct {
 	secondaryCtrlCounters []internaldto.TxnControlCounters
 	colRefs               parserutil.ColTableMap
 	columnNames           []parserutil.ColumnHandle
-	columnDescriptors     []anysdk.ColumnDescriptor
+	columnDescriptors     []formulation.ColumnDescriptor
 	relationalColumns     []typing.RelationalColumn
 	tableSlice            []tableinsertioncontainer.TableInsertionContainer
 	namespaceCollection   tablenamespace.Collection
@@ -136,13 +137,13 @@ func (v *standardQueryRewriteAstVisitor) getNextAlias() string {
 }
 
 func (v *standardQueryRewriteAstVisitor) generateServerVarColumnDescriptor(
-	k string, m anysdk.OperationStore) anysdk.ColumnDescriptor {
+	k string, m anysdk.OperationStore) formulation.ColumnDescriptor {
 	schema := anysdk.NewStringSchema(
 		m.GetService(),
 		"",
 		"",
 	)
-	colDesc := anysdk.NewColumnDescriptor(
+	colDesc := formulation.NewColumnDescriptor(
 		"",
 		k,
 		"",
@@ -186,11 +187,11 @@ func (v *standardQueryRewriteAstVisitor) getStarColumns(
 		existingColumns[v] = struct{}{}
 		cols = append(cols, parserutil.NewUnaliasedColumnHandle(v))
 	}
-	var columnDescriptors []anysdk.ColumnDescriptor
+	var columnDescriptors []formulation.ColumnDescriptor
 	for _, col := range cols {
 		columnDescriptors = append(
 			columnDescriptors,
-			anysdk.NewColumnDescriptor(
+			formulation.NewColumnDescriptor(
 				col.Alias,
 				col.Name,
 				col.Qualifier,
@@ -253,7 +254,7 @@ func (v *standardQueryRewriteAstVisitor) GetTableMap() taxonomy.TblMap {
 	return v.tables
 }
 
-func (v *standardQueryRewriteAstVisitor) GetColumnDescriptors() []anysdk.ColumnDescriptor {
+func (v *standardQueryRewriteAstVisitor) GetColumnDescriptors() []formulation.ColumnDescriptor {
 	return v.columnDescriptors
 }
 
@@ -655,7 +656,7 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 				col.Alias = v.getNextAlias()
 			}
 			v.columnNames = append(v.columnNames, col)
-			cd := anysdk.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, node, nil, col.Val)
+			cd := formulation.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, node, nil, col.Val)
 			v.columnDescriptors = append(v.columnDescriptors, cd)
 			v.relationalColumns = append(v.relationalColumns, v.dc.OpenapiColumnsToRelationalColumn(cd))
 			return nil
@@ -741,7 +742,7 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		}
 		v.columnNames = append(v.columnNames, col)
 		ss, _ := schema.GetProperty(col.Name)
-		cd := anysdk.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, node, ss, col.Val)
+		cd := formulation.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, node, ss, col.Val)
 		v.columnDescriptors = append(v.columnDescriptors, cd)
 		v.relationalColumns = append(v.relationalColumns, v.dc.OpenapiColumnsToRelationalColumn(cd))
 		if !node.As.IsEmpty() {

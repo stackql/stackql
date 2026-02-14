@@ -1,3 +1,4 @@
+import cmd
 from robot.api.deco import library, keyword
 
 from robot.libraries.Process import Process
@@ -348,8 +349,11 @@ class web_service_keywords(Process):
         # if system has docker installed and also has docker compose file, use that to run mock servers
         if os.system('which docker >/dev/null 2>&1') == 0 and os.path.exists('docker-compose-testing.yml'):
             ## inherits env vars from parent process so IS_DOCKER env var is passed along
-            rv = os.system('docker compose -f docker-compose-testing.yml up -d --build --force-recreate')
-            if rv != 0:
+            cmd = 'docker compose -f docker-compose-testing.yml up -d --build --force-recreate'
+            rv = os.system(cmd)
+            if rv != 0: # debug failures
+                os.system('docker compose -f docker-compose-testing.yml ps || true')
+                os.system('docker compose -f docker-compose-testing.yml logs --no-color --tail=200 || true')
                 raise RuntimeError('failed to start mock servers via docker compose')
             return
 

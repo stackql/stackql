@@ -1,7 +1,7 @@
 package astindirect
 
 import (
-	"github.com/stackql/any-sdk/anysdk"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
@@ -117,11 +117,11 @@ func (c *CTE) GetColumns() []typing.ColumnMetadata {
 	return cols
 }
 
-func (c *CTE) GetOptionalParameters() map[string]anysdk.Addressable {
+func (c *CTE) GetOptionalParameters() map[string]formulation.Addressable {
 	return nil
 }
 
-func (c *CTE) GetRequiredParameters() map[string]anysdk.Addressable {
+func (c *CTE) GetRequiredParameters() map[string]formulation.Addressable {
 	return nil
 }
 

@@ -537,11 +537,16 @@ jobs:
           ./*.deb
 
   linuxtest:
+    # env:
+    #   COMPOSE_BAKE: '0'
+    #   DOCKER_BUILDKIT: '0'
+    #   COMPOSE_DOCKER_CLI_BUILD: '0'
+
     name: Linux Test
     needs:
       - linuxbuild
       - test_python_package_build
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-22-04-m
     strategy:
       matrix:
         registry:
