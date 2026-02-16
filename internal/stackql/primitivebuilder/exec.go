@@ -2,6 +2,7 @@ package primitivebuilder
 
 import (
 	"github.com/stackql/any-sdk/anysdk"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/asynccompose"
 	"github.com/stackql/stackql/internal/stackql/drm"
@@ -82,11 +83,11 @@ func (ss *Exec) Build() error {
 		return err
 	}
 	if ss.isShowResults {
-		analysisInput := anysdk.NewMethodAnalysisInput(
+		analysisInput := formulation.NewMethodAnalysisInput(
 			m,
 			svc,
 			true,
-			[]anysdk.ColumnDescriptor{},
+			[]formulation.ColumnDescriptor{}, // TODO: get rid of internal refs
 			false,
 		)
 		analyser := anysdk.NewMethodAnalyzer()

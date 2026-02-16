@@ -1,6 +1,7 @@
 package execution
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -17,6 +18,9 @@ import (
 	"github.com/stackql/any-sdk/pkg/response"
 	"github.com/stackql/any-sdk/pkg/stream_transform"
 	"github.com/stackql/any-sdk/pkg/streaming"
+
+	"github.com/stackql/any-sdk/pkg/providerinvoker"
+	"github.com/stackql/any-sdk/public/providerinvokers/anysdkhttp"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
 	"github.com/stackql/stackql/internal/stackql/drm"
@@ -64,6 +68,7 @@ type MonitorMonoValentExecutorFactory interface {
 
 //nolint:unused // TODO: refactor
 type monoValentExecution struct {
+	invoker                    providerinvoker.Invoker
 	graphHolder                primitivegraph.PrimitiveGraphHolder
 	handlerCtx                 handler.HandlerContext
 	tableMeta                  tablemetadata.ExtendedTableMetadata
@@ -122,6 +127,7 @@ func NewMonoValentExecutorFactory(
 		isMutation:                 isMutation,
 		isAwait:                    isAwait,
 		defaultHTTPClient:          defaultHTTPClient,
+		invoker:                    anysdkhttp.New(),
 	}
 }
 
@@ -449,7 +455,7 @@ func page(
 }
 
 type ActionInsertPayload interface {
-	GetItemisationResult() ItemisationResult
+	GetItemisationResult() providerinvoker.ItemisationResult
 	IsHousekeepingDone() bool
 	GetTableName() string
 	GetParamsUsed() map[string]interface{}
@@ -457,14 +463,14 @@ type ActionInsertPayload interface {
 }
 
 type httpActionInsertPayload struct {
-	itemisationResult ItemisationResult
+	itemisationResult providerinvoker.ItemisationResult
 	housekeepingDone  bool
 	tableName         string
 	paramsUsed        map[string]interface{}
 	reqEncoding       string
 }
 
-func (ap *httpActionInsertPayload) GetItemisationResult() ItemisationResult {
+func (ap *httpActionInsertPayload) GetItemisationResult() providerinvoker.ItemisationResult {
 	return ap.itemisationResult
 }
 
@@ -485,12 +491,12 @@ func (ap *httpActionInsertPayload) GetReqEncoding() string {
 }
 
 func newHTTPActionInsertPayload(
-	itemisationResult ItemisationResult,
+	itemisationResult providerinvoker.ItemisationResult,
 	housekeepingDone bool,
 	tableName string,
 	paramsUsed map[string]interface{},
 	reqEncoding string,
-) ActionInsertPayload {
+) providerinvoker.ActionInsertPayload {
 	return &httpActionInsertPayload{
 		itemisationResult: itemisationResult,
 		housekeepingDone:  housekeepingDone,
@@ -500,14 +506,10 @@ func newHTTPActionInsertPayload(
 	}
 }
 
-type InsertPreparator interface {
-	ActionInsertPreparation(payload ActionInsertPayload) ActionInsertResult
-}
-
 //nolint:nestif,gocognit // acceptable for now
 func (mv *monoValentExecution) ActionInsertPreparation(
-	payload ActionInsertPayload,
-) ActionInsertResult {
+	payload providerinvoker.ActionInsertPayload,
+) providerinvoker.ActionInsertResult {
 	itemisationResult := payload.GetItemisationResult()
 	housekeepingDone := payload.IsHousekeepingDone()
 	tableName := payload.GetTableName()
@@ -596,7 +598,7 @@ type AgnosticatePayload interface {
 	IsNilResponseAcceptable() bool
 	GetPolyHandler() PolyHandler
 	GetSelectItemsKey() string
-	GetInsertPreparator() InsertPreparator
+	GetInsertPreparator() providerinvoker.InsertPreparator
 	IsSkipResponse() bool
 	IsMutation() bool
 	IsAwait() bool
@@ -616,7 +618,7 @@ type httpAgnosticatePayload struct {
 	isNilResponseAcceptable bool
 	polyHandler             PolyHandler
 	selectItemsKey          string
-	insertPreparator        InsertPreparator
+	insertPreparator        providerinvoker.InsertPreparator
 	isSkipResponse          bool
 	isMutation              bool
 	isAwait                 bool
@@ -636,7 +638,7 @@ func newHTTPAgnosticatePayload(
 	isNilResponseAcceptable bool,
 	polyHandler PolyHandler,
 	selectItemsKey string,
-	insertPreparator InsertPreparator,
+	insertPreparator providerinvoker.InsertPreparator,
 	isSkipResponse bool,
 	isMutation bool,
 	isAwait bool,
@@ -675,7 +677,7 @@ func (ap *httpAgnosticatePayload) IsAwait() bool {
 	return ap.isAwait
 }
 
-func (ap *httpAgnosticatePayload) GetInsertPreparator() InsertPreparator {
+func (ap *httpAgnosticatePayload) GetInsertPreparator() providerinvoker.InsertPreparator {
 	return ap.insertPreparator
 }
 
@@ -763,7 +765,7 @@ func NewStandardPolyHandler(handlerCtx handler.HandlerContext) PolyHandler {
 
 func agnosticate(
 	agPayload AgnosticatePayload,
-) (ProcessorResponse, error) {
+) (processorResponse, error) {
 	outErrFile := agPayload.GetOutErrFile()
 	runtimeCtx := agPayload.GetRuntimeCtx()
 	provider := agPayload.GetProvider()
@@ -810,7 +812,7 @@ func agnosticate(
 	}
 	reqParams := armoury.GetRequestParams()
 	logging.GetLogger().Infof("monoValentExecution.Execute() req param count = %d", len(reqParams))
-	var processorResponse ProcessorResponse
+	var processorResponse processorResponse
 	for _, rc := range reqParams {
 		rq := rc
 		processor := NewProcessor(
@@ -854,7 +856,7 @@ type ProcessorPayload interface {
 	GetOutErrFile() io.Writer
 	GetPolyHandler() PolyHandler
 	GetSelectItemsKey() string
-	GetInsertPreparator() InsertPreparator
+	GetInsertPreparator() providerinvoker.InsertPreparator
 	IsSkipResponse() bool
 	IsMutation() bool
 	IsMaterialiseResponse() bool
@@ -875,7 +877,7 @@ func NewProcessorPayload(
 	outErrFile io.Writer,
 	polyHandler PolyHandler,
 	selectItemsKey string,
-	insertPreparator InsertPreparator,
+	insertPreparator providerinvoker.InsertPreparator,
 	isSkipResponse bool,
 	isMaterialiseResponse bool,
 	isAwait bool,
@@ -917,7 +919,7 @@ type standardProcessorPayload struct {
 	outErrFile            io.Writer
 	polyHandler           PolyHandler
 	selectItemsKey        string
-	insertPreparator      InsertPreparator
+	insertPreparator      providerinvoker.InsertPreparator
 	isSkipResponse        bool
 	isMaterialiseResponse bool
 	isAwait               bool
@@ -998,14 +1000,14 @@ func (pp *standardProcessorPayload) GetSelectItemsKey() string {
 	return pp.selectItemsKey
 }
 
-func (pp *standardProcessorPayload) GetInsertPreparator() InsertPreparator {
+func (pp *standardProcessorPayload) GetInsertPreparator() providerinvoker.InsertPreparator {
 	return pp.insertPreparator
 }
 
-type ProcessorResponse interface {
+type processorResponse interface {
 	GetError() error
 	GetSingletonBody() map[string]interface{}
-	WithSuccessMessages([]string) ProcessorResponse
+	WithSuccessMessages([]string) processorResponse
 	GetSuccessMessages() []string
 	AppendReversal(rev anysdk.HTTPPreparator)
 	GetReversalStream() anysdk.HttpPreparatorStream
@@ -1030,7 +1032,7 @@ func (hpr *httpProcessorResponse) GetFailedMessage() string {
 	return hpr.failedMessage
 }
 
-func (hpr *httpProcessorResponse) WithSuccessMessages(messages []string) ProcessorResponse {
+func (hpr *httpProcessorResponse) WithSuccessMessages(messages []string) processorResponse {
 	hpr.successMessages = messages
 	return hpr
 }
@@ -1061,7 +1063,7 @@ func newHTTPProcessorResponse(
 	reversalStream anysdk.HttpPreparatorStream,
 	isFailed bool,
 	err error,
-) ProcessorResponse {
+) processorResponse {
 	return &httpProcessorResponse{
 		body:           body,
 		err:            err,
@@ -1071,7 +1073,7 @@ func newHTTPProcessorResponse(
 }
 
 type Processor interface {
-	Process() ProcessorResponse
+	Process() processorResponse
 }
 
 type standardProcessor struct {
@@ -1087,7 +1089,7 @@ func NewProcessor(payload ProcessorPayload) Processor {
 }
 
 //nolint:funlen,bodyclose,gocognit,gocyclo,cyclop // acceptable for now
-func (sp *standardProcessor) Process() ProcessorResponse {
+func (sp *standardProcessor) Process() processorResponse {
 	processorPayload := sp.payload
 	armouryParams := processorPayload.GetArmouryParams()
 	elider := processorPayload.GetElider()
@@ -1427,49 +1429,47 @@ func (mv *monoValentExecution) GetExecutor() (func(pc primitive.IPrimitiveCtx) i
 				nil,
 			)
 		case client.HTTP:
-			agnosticatePayload := newHTTPAgnosticatePayload(
-				mv.tableMeta,
-				provider,
-				m,
-				tableName,
-				authCtx,
-				mv.handlerCtx.GetRuntimeContext(),
-				mv.handlerCtx.GetOutErrFile(),
-				mr,
-				mv.elideActionIfPossible(
-					currentTcc,
+			invRes, invErr := mv.invoker.Invoke(context.Background(), providerinvoker.Request{
+				Payload: anysdkhttp.NewPayload(
+					mv.tableMeta,
+					provider,
+					m,
 					tableName,
-					"", // late binding, should remove AOT reference
+					authCtx,
+					mv.handlerCtx.GetRuntimeContext(),
+					mv.handlerCtx.GetOutErrFile(),
+					mr,
+					mv.elideActionIfPossible(
+						currentTcc,
+						tableName,
+						"", // late binding, should remove AOT reference
+					),
+					true,
+					polyHandler,
+					mv.tableMeta.GetSelectItemsKey(),
+					mv,
+					mv.isSkipResponse,
+					mv.isMutation,
+					mv.isAwait,
+					mv.defaultHTTPClient,
+					mv.handlerCtx,
 				),
-				true,
-				polyHandler,
-				mv.tableMeta.GetSelectItemsKey(),
-				mv,
-				mv.isSkipResponse,
-				mv.isMutation,
-				mv.isAwait,
-				mv.defaultHTTPClient,
-			)
-			processorResponse, agnosticErr := agnosticate(agnosticatePayload)
-			if agnosticErr != nil {
-				return internaldto.NewErroneousExecutorOutput(agnosticErr)
+			})
+			if invErr != nil {
+				return internaldto.NewErroneousExecutorOutput(invErr)
 			}
-			messages := polyHandler.GetMessages()
 			var castMessages internaldto.BackendMessages
-			if len(messages) > 0 {
-				castMessages = internaldto.NewBackendMessages(messages)
+			if len(invRes.Messages) > 0 {
+				castMessages = internaldto.NewBackendMessages(invRes.Messages)
 			}
-			if processorResponse != nil && len(processorResponse.GetSuccessMessages()) > 0 {
-				if len(messages) == 0 {
-					castMessages = internaldto.NewBackendMessages(processorResponse.GetSuccessMessages())
-				} else {
-					castMessages.AppendMessages(processorResponse.GetSuccessMessages())
-				}
-			}
-			if processorResponse == nil {
+			if invRes.Body == nil {
 				return internaldto.NewExecutorOutput(nil, nil, nil, castMessages, nil)
 			}
-			return internaldto.NewExecutorOutput(nil, processorResponse.GetSingletonBody(), nil, castMessages, err)
+			bdyMap, bodyMapOk := invRes.Body.(map[string]interface{})
+			if !bodyMapOk {
+				return internaldto.NewErroneousExecutorOutput(fmt.Errorf("unexpected body type '%T'", invRes.Body))
+			}
+			return internaldto.NewExecutorOutput(nil, bdyMap, nil, castMessages, err)
 		default:
 			return internaldto.NewErroneousExecutorOutput(
 				fmt.Errorf("unsupported protocol type '%v'", protocolType))

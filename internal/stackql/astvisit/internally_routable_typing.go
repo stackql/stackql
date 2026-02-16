@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/stackql/any-sdk/anysdk"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 
 	"github.com/stackql/any-sdk/pkg/logging"
@@ -38,7 +38,7 @@ type standardInternallyRoutableTypingAstVisitor struct {
 	discoGenIDs          map[sqlparser.SQLNode]int
 	annotatedTabulations taxonomy.AnnotatedTabulationMap
 	columnNames          []parserutil.ColumnHandle
-	columnDescriptors    []anysdk.ColumnDescriptor
+	columnDescriptors    []formulation.ColumnDescriptor
 	relationalColumns    []typing.RelationalColumn
 	namespaceCollection  tablenamespace.Collection
 	formatter            sqlparser.NodeFormatter
@@ -120,11 +120,11 @@ func (v *standardInternallyRoutableTypingAstVisitor) getStarColumns(
 	for _, v := range colNames {
 		cols = append(cols, parserutil.NewUnaliasedColumnHandle(v))
 	}
-	var columnDescriptors []anysdk.ColumnDescriptor
+	var columnDescriptors []formulation.ColumnDescriptor
 	for _, col := range cols {
 		columnDescriptors = append(
 			columnDescriptors,
-			anysdk.NewColumnDescriptor(
+			formulation.NewColumnDescriptor(
 				col.Alias,
 				col.Name,
 				col.Qualifier,
@@ -536,7 +536,7 @@ func (v *standardInternallyRoutableTypingAstVisitor) Visit(node sqlparser.SQLNod
 			// 	broadcastType = v.getTypeFromParserType(expr.Type)
 			// default:
 			// }
-			// cd := anysdk.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, node, nil, col.Val)
+			// cd := formulation.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, node, nil, col.Val)
 			// v.columnDescriptors = append(v.columnDescriptors, cd)
 			// relCol := v.dc.OpenapiColumnsToRelationalColumn(cd)
 			rv := typing.NewRelationalColumn(
@@ -610,7 +610,7 @@ func (v *standardInternallyRoutableTypingAstVisitor) Visit(node sqlparser.SQLNod
 		}
 		v.columnNames = append(v.columnNames, col)
 		ss, _ := schema.GetProperty(col.Name)
-		cd := anysdk.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, node, ss, col.Val)
+		cd := formulation.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, node, ss, col.Val)
 		v.columnDescriptors = append(v.columnDescriptors, cd)
 		v.relationalColumns = append(v.relationalColumns, v.dc.OpenapiColumnsToRelationalColumn(cd))
 		if !node.As.IsEmpty() {

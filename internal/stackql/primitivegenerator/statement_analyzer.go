@@ -13,6 +13,7 @@ import (
 	"github.com/stackql/any-sdk/pkg/dto"
 	anysdk_internaldto "github.com/stackql/any-sdk/pkg/internaldto"
 	"github.com/stackql/any-sdk/pkg/logging"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql/internal/stackql/astindirect"
 	"github.com/stackql/stackql/internal/stackql/astvisit"
 	"github.com/stackql/stackql/internal/stackql/drm"
@@ -645,11 +646,11 @@ func (pb *standardPrimitiveGenerator) AnalyzeUnaryExec(
 		return meta, nil
 	}
 	// TODO: columns in and replace hadnrolled analysis
-	analysisInput := anysdk.NewMethodAnalysisInput(
+	analysisInput := formulation.NewMethodAnalysisInput(
 		method,
 		svc,
 		true,
-		[]anysdk.ColumnDescriptor{},
+		[]formulation.ColumnDescriptor{},
 		false,
 	)
 	analyser := anysdk.NewMethodAnalyzer()
@@ -1186,11 +1187,11 @@ func (pb *standardPrimitiveGenerator) AnalyzeInsert(pbi planbuilderinput.PlanBui
 	if pb.PrimitiveComposer.IsAwait() && !method.IsAwaitable() {
 		return fmt.Errorf("method %s is not awaitable", method.GetName())
 	}
-	analysisInput := anysdk.NewMethodAnalysisInput(
+	analysisInput := formulation.NewMethodAnalysisInput(
 		method,
 		svc,
 		true,
-		[]anysdk.ColumnDescriptor{},
+		[]formulation.ColumnDescriptor{},
 		pb.PrimitiveComposer.IsAwait(),
 	)
 	analyser := anysdk.NewMethodAnalyzer()
@@ -1298,11 +1299,11 @@ func (pb *standardPrimitiveGenerator) AnalyzeUpdate(pbi planbuilderinput.PlanBui
 	if pb.PrimitiveComposer.IsAwait() && !method.IsAwaitable() {
 		return fmt.Errorf("method %s is not awaitable", method.GetName())
 	}
-	analysisInput := anysdk.NewMethodAnalysisInput(
+	analysisInput := formulation.NewMethodAnalysisInput(
 		method,
 		svc,
 		true,
-		[]anysdk.ColumnDescriptor{},
+		[]formulation.ColumnDescriptor{},
 		pb.PrimitiveComposer.IsAwait(),
 	)
 	analyser := anysdk.NewMethodAnalyzer()
@@ -1407,11 +1408,11 @@ func (pb *standardPrimitiveGenerator) analyzeDelete(
 	if pb.PrimitiveComposer.IsAwait() && !method.IsAwaitable() {
 		return fmt.Errorf("method %s is not awaitable", method.GetName())
 	}
-	analysisInput := anysdk.NewMethodAnalysisInput(
+	analysisInput := formulation.NewMethodAnalysisInput(
 		method,
 		svc,
 		true,
-		[]anysdk.ColumnDescriptor{},
+		[]formulation.ColumnDescriptor{},
 		pb.PrimitiveComposer.IsAwait(),
 	)
 	analyser := anysdk.NewMethodAnalyzer()

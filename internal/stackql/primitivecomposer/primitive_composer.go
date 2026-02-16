@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/stackql/any-sdk/anysdk"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/any-sdk/public/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/astindirect"
 	"github.com/stackql/stackql/internal/stackql/drm"
@@ -270,7 +271,7 @@ func (pb *standardPrimitiveComposer) AssignParameters() (internaldto.TableParame
 		}
 		tbVisited[tb] = struct{}{}
 		tbID := tb.GetUniqueID()
-		var reqParams, tblOptParams, remainingReqParams map[string]anysdk.Addressable
+		var reqParams, tblOptParams, remainingReqParams map[string]formulation.Addressable
 		if view, isView := tb.GetIndirect(); isView {
 			// TODO: fill this out
 			assignedParams, ok := view.GetAssignedParameters()

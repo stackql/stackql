@@ -1,7 +1,7 @@
 package suffix
 
 import (
-	"github.com/stackql/any-sdk/anysdk"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/go-suffix-map/pkg/suffixmap"
 )
 
@@ -11,9 +11,9 @@ var (
 
 type ParameterSuffixMap interface {
 	Delete(k string) bool
-	Get(k string) (anysdk.Addressable, bool)
-	GetAll() map[string]anysdk.Addressable
-	Put(k string, v anysdk.Addressable)
+	Get(k string) (formulation.Addressable, bool)
+	GetAll() map[string]formulation.Addressable
+	Put(k string, v formulation.Addressable)
 	Size() int
 }
 
@@ -27,20 +27,20 @@ func NewParameterSuffixMap() ParameterSuffixMap {
 	}
 }
 
-func (psm *standardParameterSuffixMap) Get(k string) (anysdk.Addressable, bool) {
+func (psm *standardParameterSuffixMap) Get(k string) (formulation.Addressable, bool) {
 	rv, ok := psm.sm.Get(k)
 	if !ok {
 		return nil, false
 	}
-	crv, ok := rv.(anysdk.Addressable)
+	crv, ok := rv.(formulation.Addressable)
 	return crv, ok
 }
 
-func (psm *standardParameterSuffixMap) GetAll() map[string]anysdk.Addressable {
+func (psm *standardParameterSuffixMap) GetAll() map[string]formulation.Addressable {
 	m := psm.sm.GetAll()
-	rv := make(map[string]anysdk.Addressable)
+	rv := make(map[string]formulation.Addressable)
 	for k, v := range m {
-		p, ok := v.(anysdk.Addressable)
+		p, ok := v.(formulation.Addressable)
 		if ok {
 			rv[k] = p
 		}
@@ -48,7 +48,7 @@ func (psm *standardParameterSuffixMap) GetAll() map[string]anysdk.Addressable {
 	return rv
 }
 
-func (psm *standardParameterSuffixMap) Put(k string, v anysdk.Addressable) {
+func (psm *standardParameterSuffixMap) Put(k string, v formulation.Addressable) {
 	psm.sm.Put(k, v)
 }
 

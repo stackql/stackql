@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/stackql/any-sdk/anysdk"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql/internal/stackql/astindirect"
 	"github.com/stackql/stackql/internal/stackql/datasource/sql_datasource"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
@@ -27,8 +28,8 @@ type ExtendedTableMetadata interface {
 	GetProviderObject() (anysdk.Provider, error)
 	GetQueryUniqueID() string
 	GetRequestSchema() (anysdk.Schema, error)
-	GetOptionalParameters() map[string]anysdk.Addressable
-	GetRequiredParameters() map[string]anysdk.Addressable
+	GetOptionalParameters() map[string]formulation.Addressable
+	GetRequiredParameters() map[string]formulation.Addressable
 	GetResource() (anysdk.Resource, error)
 	GetResourceStr() (string, error)
 	GetResponseSchemaStr() (string, error)
@@ -200,18 +201,26 @@ func (ex *standardExtendedTableMetadata) GetGraphQL() (anysdk.GraphQL, bool) {
 	return nil, false
 }
 
-func (ex *standardExtendedTableMetadata) GetRequiredParameters() map[string]anysdk.Addressable {
+func (ex *standardExtendedTableMetadata) GetRequiredParameters() map[string]formulation.Addressable {
 	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetMethod() == nil {
 		return nil
 	}
-	return ex.heirarchyObjects.GetMethod().GetRequiredParameters()
+	rv := map[string]formulation.Addressable{}
+	for k, v := range ex.heirarchyObjects.GetMethod().GetRequiredParameters() {
+		rv[k] = v
+	}
+	return rv
 }
 
-func (ex *standardExtendedTableMetadata) GetOptionalParameters() map[string]anysdk.Addressable {
+func (ex *standardExtendedTableMetadata) GetOptionalParameters() map[string]formulation.Addressable {
 	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetMethod() == nil {
 		return nil
 	}
-	return ex.heirarchyObjects.GetMethod().GetOptionalParameters()
+	rv := map[string]formulation.Addressable{}
+	for k, v := range ex.heirarchyObjects.GetMethod().GetOptionalParameters() {
+		rv[k] = v
+	}
+	return rv
 }
 
 func (ex *standardExtendedTableMetadata) GetHTTPArmoury() (anysdk.HTTPArmoury, error) {

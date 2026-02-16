@@ -1,7 +1,7 @@
 package dataflow
 
 import (
-	"github.com/stackql/any-sdk/anysdk"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"gonum.org/v1/gonum/graph"
 )
@@ -9,7 +9,7 @@ import (
 type Edge interface {
 	graph.WeightedEdge
 	AddRelation(Relation)
-	GetColumnDescriptors() ([]anysdk.ColumnDescriptor, error)
+	GetColumnDescriptors() ([]formulation.ColumnDescriptor, error)
 	GetDest() Vertex
 	GetProjection() (map[string]string, error)
 	GetSelectExprs() (sqlparser.SelectExprs, error)
@@ -117,8 +117,8 @@ func (de *standardDataFlowEdge) HasSourceAttribute(attr string) bool {
 	return false
 }
 
-func (de *standardDataFlowEdge) GetColumnDescriptors() ([]anysdk.ColumnDescriptor, error) {
-	var rv []anysdk.ColumnDescriptor
+func (de *standardDataFlowEdge) GetColumnDescriptors() ([]formulation.ColumnDescriptor, error) {
+	var rv []formulation.ColumnDescriptor
 	for _, rel := range de.relations {
 		d, err := rel.GetColumnDescriptor()
 		if err != nil {
