@@ -718,10 +718,7 @@ func (dc *staticDRMConfig) GenerateSelectDML(
 		tabAnnotated.GetInputTableName(),
 	).WithAlias(aliasStr)
 	for _, col := range tabAnnotated.GetTabulation().GetColumns() {
-		col, colOk := col.(formulation.ColumnDescriptor)
-		if !colOk {
-			return nil, fmt.Errorf("expected column descriptor to be of type formulation.ColumnDescriptor but got %T", col)
-		}
+		col := formulation.ColumnDescriptor(col)
 		var typeStr string
 		//nolint:gocritic,exhaustive // TODO: fix
 		if col.GetSchema() != nil {
