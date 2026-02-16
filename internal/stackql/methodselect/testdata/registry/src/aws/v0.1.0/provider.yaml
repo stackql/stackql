@@ -1,0 +1,19 @@
+id: aws
+name: aws
+version: v0.1.0
+providerServices:
+  s3:
+    description: s3
+    id: s3:v0.1.0
+    name: s3
+    preferred: true
+    service:
+      $ref: aws/v0.1.0/services/s3.yaml
+    title: S3
+    version: v0.1.0
+openapi: 3.0.0
+config:
+  auth:
+    type: "aws_signing_v4"
+    credentialsenvvar: "AWS_SECRET_ACCESS_KEY"
+    keyIDenvvar: "AWS_ACCESS_KEY_ID"
