@@ -647,10 +647,7 @@ func (dc *staticDRMConfig) GenerateInsertDML(
 		}
 		tableColumns := inferredRelation.GetColumnDescriptors()
 		for _, col := range tableColumns {
-			col, colOk := col.(formulation.ColumnDescriptor)
-			if !colOk {
-				return nil, fmt.Errorf("expected column descriptor to be of type formulation.ColumnDescriptor but got %T", col)
-			}
+			col := formulation.ColumnDescriptor(col)
 			relationalType := textStr
 			schema := col.GetSchema()
 			if schema != nil && schema.GetType() != "" {
