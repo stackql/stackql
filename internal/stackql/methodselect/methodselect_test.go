@@ -3,7 +3,7 @@ package methodselect_test
 import (
 	"testing"
 
-	"github.com/stackql/any-sdk/anysdk"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql/internal/stackql/methodselect"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stretchr/testify/assert"
@@ -12,7 +12,7 @@ import (
 func TestGetMethodForAction(t *testing.T) {
 	sel := &methodselect.DefaultMethodSelector{}
 	vr := "v0.1.0"
-	svc, err := anysdk.LoadProviderAndServiceFromPaths(
+	svc, err := formulation.LoadProviderAndServiceFromPaths(
 		"./testdata/registry/src/aws/"+vr+"/provider.yaml",
 		"./testdata/registry/src/aws/"+vr+"/services/s3.yaml",
 	)
@@ -51,7 +51,7 @@ func TestGetMethodForAction(t *testing.T) {
 func TestGetMethod(t *testing.T) {
 	sel := &methodselect.DefaultMethodSelector{}
 	vr := "v0.1.0"
-	svc, err := anysdk.LoadProviderAndServiceFromPaths(
+	svc, err := formulation.LoadProviderAndServiceFromPaths(
 		"./testdata/registry/src/aws/"+vr+"/provider.yaml",
 		"./testdata/registry/src/aws/"+vr+"/services/s3.yaml",
 	)
@@ -87,7 +87,7 @@ func TestGetMethod(t *testing.T) {
 func TestGetMethodByNameAndParameters(t *testing.T) {
 	sel := &methodselect.DefaultMethodSelector{}
 	vr := "v0.1.0"
-	svc, err := anysdk.LoadProviderAndServiceFromPaths(
+	svc, err := formulation.LoadProviderAndServiceFromPaths(
 		"./testdata/registry/src/aws/"+vr+"/provider.yaml",
 		"./testdata/registry/src/aws/"+vr+"/services/s3.yaml",
 	)

@@ -1,7 +1,6 @@
 package primitivebuilder
 
 import (
-	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/asynccompose"
@@ -90,7 +89,7 @@ func (ss *Exec) Build() error {
 			[]formulation.ColumnDescriptor{}, // TODO: get rid of internal refs
 			false,
 		)
-		analyser := anysdk.NewMethodAnalyzer()
+		analyser := formulation.NewMethodAnalyzer()
 		methodAnalysisOutput, analysisErr := analyser.AnalyzeUnaryAction(analysisInput)
 		if analysisErr != nil {
 			return analysisErr

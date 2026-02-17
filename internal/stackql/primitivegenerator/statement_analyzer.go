@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/any-sdk/pkg/constants"
 	"github.com/stackql/any-sdk/pkg/dto"
 	anysdk_internaldto "github.com/stackql/any-sdk/pkg/internaldto"
@@ -281,7 +280,7 @@ func checkResource(
 	prov provider.IProvider,
 	service string,
 	resource string,
-) (anysdk.Resource, error) {
+) (formulation.Resource, error) {
 	return prov.GetResource(service, resource, handlerCtx.GetRuntimeContext())
 }
 
@@ -289,7 +288,7 @@ func (pb *standardPrimitiveGenerator) assembleResources(
 	handlerCtx handler.HandlerContext,
 	prov provider.IProvider,
 	service string,
-) (map[string]anysdk.Resource, error) {
+) (map[string]formulation.Resource, error) {
 	rm, err := prov.GetResourcesMap(service, handlerCtx.GetRuntimeContext())
 	if err != nil {
 		return nil, err
@@ -297,7 +296,7 @@ func (pb *standardPrimitiveGenerator) assembleResources(
 	return rm, err
 }
 
-func (pb *standardPrimitiveGenerator) analyzeShowFilter(node *sqlparser.Show, table anysdk.ITable) error {
+func (pb *standardPrimitiveGenerator) analyzeShowFilter(node *sqlparser.Show, table formulation.ITable) error {
 	showFilter := node.ShowTablesOpt.Filter
 	if showFilter == nil {
 		return nil
@@ -323,10 +322,10 @@ func (pb *standardPrimitiveGenerator) analyzeShowFilter(node *sqlparser.Show, ta
 }
 
 func (pb *standardPrimitiveGenerator) traverseShowFilter(
-	table anysdk.ITable,
+	table formulation.ITable,
 	node *sqlparser.Show,
 	filter sqlparser.Expr,
-) (func(anysdk.ITable) (anysdk.ITable, error), error) {
+) (func(formulation.ITable) (formulation.ITable, error), error) {
 	switch filter := filter.(type) {
 	case *sqlparser.ComparisonExpr:
 		return pb.comparisonExprToFilterFunc(table, node, filter)
@@ -635,7 +634,7 @@ func (pb *standardPrimitiveGenerator) AnalyzeUnaryExec(
 	if err != nil {
 		return nil, err
 	}
-	err = pb.buildRequestContext(node, meta, anysdk.NewExecContext(execPayload, rsc), nil)
+	err = pb.buildRequestContext(node, meta, formulation.NewExecContext(execPayload, rsc), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -653,7 +652,7 @@ func (pb *standardPrimitiveGenerator) AnalyzeUnaryExec(
 		[]formulation.ColumnDescriptor{},
 		false,
 	)
-	analyser := anysdk.NewMethodAnalyzer()
+	analyser := formulation.NewMethodAnalyzer()
 	methodAnalysisOutput, analysisErr := analyser.AnalyzeUnaryAction(analysisInput)
 	if analysisErr != nil {
 		return meta, analysisErr
@@ -798,9 +797,9 @@ func (pb *standardPrimitiveGenerator) parseExecPayload(
 //nolint:funlen,unparam,gocognit // TODO: refactor
 func (pb *standardPrimitiveGenerator) analyzeSchemaVsMap(
 	handlerCtx handler.HandlerContext,
-	schema anysdk.Schema,
+	schema formulation.Schema,
 	payload map[string]interface{},
-	method anysdk.OperationStore,
+	method formulation.OperationStore,
 ) error {
 	requiredElements := make(map[string]bool)
 	schemas, err := schema.GetProperties()
@@ -990,7 +989,7 @@ func (pb *standardPrimitiveGenerator) expandTable(
 		return err
 	}
 	if len(cols) == 0 {
-		cols = anysdk.Schemas{anysdk.AnonymousColumnName: responseSchema}
+		cols = formulation.Schemas{formulation.AnonymousColumnName: responseSchema}
 	}
 	for colName, colSchema := range cols {
 		if colSchema == nil {
@@ -1010,7 +1009,7 @@ func (pb *standardPrimitiveGenerator) expandTable(
 func (pb *standardPrimitiveGenerator) buildRequestContext(
 	node sqlparser.SQLNode,
 	meta tablemetadata.ExtendedTableMetadata,
-	execContext anysdk.ExecContext,
+	execContext formulation.ExecContext,
 	rowsToInsert map[int]map[int]interface{},
 ) error {
 	paramMapArray, paramErr := util.ExtractSQLNodeParams(node, rowsToInsert)
@@ -1028,7 +1027,7 @@ func (pb *standardPrimitiveGenerator) buildRequestContext(
 func (pb *standardPrimitiveGenerator) buildRequestContextFromMapArray(
 	node sqlparser.SQLNode, //nolint:revive,unparam // TODO: review
 	meta tablemetadata.ExtendedTableMetadata,
-	execContext anysdk.ExecContext,
+	execContext formulation.ExecContext,
 	paramMapArray map[int]map[string]interface{},
 ) error {
 	m, err := meta.GetMethod()
@@ -1048,8 +1047,8 @@ func (pb *standardPrimitiveGenerator) buildRequestContextFromMapArray(
 		return prErr
 	}
 	meta.WithGetHTTPArmoury(
-		func() (anysdk.HTTPArmoury, error) {
-			httpPreparator := anysdk.NewHTTPPreparator(
+		func() (formulation.HTTPArmoury, error) {
+			httpPreparator := formulation.NewHTTPPreparator(
 				pr,
 				svc,
 				m,
@@ -1059,7 +1058,7 @@ func (pb *standardPrimitiveGenerator) buildRequestContextFromMapArray(
 				logging.GetLogger(),
 			)
 			httpArmoury, httpErr := httpPreparator.BuildHTTPRequestCtx(
-				anysdk.NewHTTPPreparatorConfig(false),
+				formulation.NewHTTPPreparatorConfig(false),
 			)
 			if httpErr != nil {
 				return nil, httpErr
@@ -1172,7 +1171,7 @@ func (pb *standardPrimitiveGenerator) AnalyzeInsert(pbi planbuilderinput.PlanBui
 	if err != nil {
 		return err
 	}
-	_, isOpenapi := svc.(anysdk.OpenAPIService)
+	isOpenapi := svc.IsOpenapi()
 	if !isOpenapi {
 		err = pb.buildRequestContext(node, tbl, nil, insertValOnlyRows)
 		if err != nil {
@@ -1194,7 +1193,7 @@ func (pb *standardPrimitiveGenerator) AnalyzeInsert(pbi planbuilderinput.PlanBui
 		[]formulation.ColumnDescriptor{},
 		pb.PrimitiveComposer.IsAwait(),
 	)
-	analyser := anysdk.NewMethodAnalyzer()
+	analyser := formulation.NewMethodAnalyzer()
 	// TODO: this ought to cater for async
 	methodAnalysisOutput, analysisErr := analyser.AnalyzeUnaryAction(analysisInput)
 	if analysisErr != nil {
@@ -1279,7 +1278,7 @@ func (pb *standardPrimitiveGenerator) AnalyzeUpdate(pbi planbuilderinput.PlanBui
 		firstRow[k.GetRawVal()] = v
 	}
 	updateValOnlyRowsMap := map[int]map[string]interface{}{0: firstRow}
-	_, isOpenapi := svc.(anysdk.OpenAPIService)
+	isOpenapi := svc.IsOpenapi()
 	if !isOpenapi {
 		err = pb.buildRequestContextFromMapArray(
 			node,
@@ -1306,7 +1305,7 @@ func (pb *standardPrimitiveGenerator) AnalyzeUpdate(pbi planbuilderinput.PlanBui
 		[]formulation.ColumnDescriptor{},
 		pb.PrimitiveComposer.IsAwait(),
 	)
-	analyser := anysdk.NewMethodAnalyzer()
+	analyser := formulation.NewMethodAnalyzer()
 	methodAnalysisOutput, analysisErr := analyser.AnalyzeUnaryAction(analysisInput)
 	if analysisErr != nil {
 		return analysisErr
@@ -1415,7 +1414,7 @@ func (pb *standardPrimitiveGenerator) analyzeDelete(
 		[]formulation.ColumnDescriptor{},
 		pb.PrimitiveComposer.IsAwait(),
 	)
-	analyser := anysdk.NewMethodAnalyzer()
+	analyser := formulation.NewMethodAnalyzer()
 	methodAnalysisOutput, analysisErr := analyser.AnalyzeUnaryAction(analysisInput)
 	if analysisErr != nil {
 		return analysisErr
@@ -1602,7 +1601,7 @@ func (pb *standardPrimitiveGenerator) analyzeShow(
 			return err
 		}
 		if node.ShowTablesOpt != nil {
-			meth := anysdk.NewEmptyOperationStore()
+			meth := formulation.NewEmptyOperationStore()
 			err = pb.analyzeShowFilter(node, meth)
 			if err != nil {
 				return err
@@ -1622,12 +1621,12 @@ func (pb *standardPrimitiveGenerator) analyzeShow(
 			return err
 		}
 		for _, col := range colNames {
-			if !anysdk.ResourceKeyExists(col) {
+			if !formulation.ResourceKeyExists(col) {
 				return fmt.Errorf("SHOW key = '%s' does NOT exist", col)
 			}
 		}
 		for _, colUsage := range colUsages {
-			if !anysdk.ResourceKeyExists(colUsage.ColName.Name.GetRawVal()) {
+			if !formulation.ResourceKeyExists(colUsage.ColName.Name.GetRawVal()) {
 				return fmt.Errorf("SHOW key = '%s' does NOT exist", colUsage.ColName.Name.GetRawVal())
 			}
 			usageErr := parserutil.CheckSQLParserTypeVsResourceColumn(colUsage)
@@ -1636,7 +1635,7 @@ func (pb *standardPrimitiveGenerator) analyzeShow(
 			}
 		}
 		if node.ShowTablesOpt != nil {
-			rsc := anysdk.NewEmptyResource()
+			rsc := formulation.NewEmptyResource()
 			err = pb.analyzeShowFilter(node, rsc)
 			if err != nil {
 				return err
@@ -1649,12 +1648,12 @@ func (pb *standardPrimitiveGenerator) analyzeShow(
 		}
 		pb.PrimitiveComposer.SetProvider(prov)
 		for _, col := range colNames {
-			if !anysdk.ServiceKeyExists(col) {
+			if !formulation.ServiceKeyExists(col) {
 				return fmt.Errorf("SHOW key = '%s' does NOT exist", col)
 			}
 		}
 		for _, colUsage := range colUsages {
-			if !anysdk.ServiceKeyExists(colUsage.ColName.Name.GetRawVal()) {
+			if !formulation.ServiceKeyExists(colUsage.ColName.Name.GetRawVal()) {
 				return fmt.Errorf("SHOW key = '%s' does NOT exist", colUsage.ColName.Name.GetRawVal())
 			}
 			usageErr := parserutil.CheckSQLParserTypeVsServiceColumn(colUsage)
@@ -1663,7 +1662,7 @@ func (pb *standardPrimitiveGenerator) analyzeShow(
 			}
 		}
 		if node.ShowTablesOpt != nil {
-			svc := anysdk.NewEmptyProviderService()
+			svc := formulation.NewEmptyProviderService()
 			err = pb.analyzeShowFilter(node, svc)
 			if err != nil {
 				return err

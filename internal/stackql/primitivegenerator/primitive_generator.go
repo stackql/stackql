@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/any-sdk/pkg/logging"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql/internal/stackql/astindirect"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/iqlutil"
@@ -181,10 +181,10 @@ func (pb *standardPrimitiveGenerator) AddChildPrimitiveGenerator(
 
 //nolint:unparam,revive // acceptable
 func (pb *standardPrimitiveGenerator) comparisonExprToFilterFunc(
-	table anysdk.ITable,
+	table formulation.ITable,
 	parentNode *sqlparser.Show,
 	expr *sqlparser.ComparisonExpr,
-) (func(anysdk.ITable) (anysdk.ITable, error), error) {
+) (func(formulation.ITable) (formulation.ITable, error), error) {
 	qualifiedName, ok := expr.Left.(*sqlparser.ColName)
 	if !ok {
 		return nil, fmt.Errorf("unexpected: %v", sqlparser.String(expr))
@@ -226,7 +226,7 @@ func (pb *standardPrimitiveGenerator) comparisonExprToFilterFunc(
 	default:
 		return nil, fmt.Errorf("unexpected: %v", sqlparser.String(right))
 	}
-	var retVal func(anysdk.ITable) (anysdk.ITable, error)
+	var retVal func(formulation.ITable) (formulation.ITable, error)
 	if expr.Operator == sqlparser.LikeStr || expr.Operator == sqlparser.NotLikeStr {
 		likeRegexp, err := regexp.Compile(iqlutil.TranslateLikeToRegexPattern(rhsStr))
 		if err != nil {

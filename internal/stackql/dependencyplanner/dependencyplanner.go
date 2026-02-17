@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/any-sdk/pkg/constants"
 	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/any-sdk/pkg/media"
 	"github.com/stackql/any-sdk/pkg/streaming"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/astindirect"
@@ -403,7 +403,7 @@ func (dp *standardDependencyPlanner) processOrphan(
 	tableMetadata := annotationCtx.GetTableMeta()
 
 	_, isSQLDataSource := annotationCtx.GetTableMeta().GetSQLDataSource()
-	var opStore anysdk.StandardOperationStore
+	var opStore formulation.StandardOperationStore
 	if !isSQLDataSource {
 		opStore, err = annotationCtx.GetTableMeta().GetMethod()
 		if err != nil {

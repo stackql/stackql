@@ -6,7 +6,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 
@@ -137,8 +136,8 @@ func (v *standardQueryRewriteAstVisitor) getNextAlias() string {
 }
 
 func (v *standardQueryRewriteAstVisitor) generateServerVarColumnDescriptor(
-	k string, m anysdk.OperationStore) formulation.ColumnDescriptor {
-	schema := anysdk.NewStringSchema(
+	k string, m formulation.OperationStore) formulation.ColumnDescriptor {
+	schema := formulation.NewStringSchema(
 		m.GetService(),
 		"",
 		"",

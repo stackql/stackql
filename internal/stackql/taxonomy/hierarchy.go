@@ -3,9 +3,9 @@ package taxonomy
 import (
 	"fmt"
 
-	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/any-sdk/pkg/name_mangle"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
@@ -243,7 +243,7 @@ func GetHeirarchyFromStatement(
 	prov, err := handlerCtx.GetProvider(hIDs.GetProviderStr())
 	retVal.SetProvider(prov)
 	viewDTO, viewExists := retVal.GetView()
-	var meth anysdk.StandardOperationStore
+	var meth formulation.StandardOperationStore
 	var methStr string
 	var methodErr error
 	if methodAction == "" {
@@ -298,7 +298,7 @@ func GetHeirarchyFromStatement(
 			return retVal, nil //nolint:staticcheck // TODO: fix this
 		}
 	}
-	var method anysdk.StandardOperationStore
+	var method formulation.StandardOperationStore
 	switch node.(type) {
 	case *sqlparser.Exec, *sqlparser.ExecSubquery:
 		method, err = rsc.FindMethod(hIDs.GetMethodStr())

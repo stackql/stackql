@@ -8,14 +8,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/any-sdk/pkg/constants"
 	"github.com/stackql/any-sdk/pkg/db/sqlcontrol"
 	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/any-sdk/pkg/streaming"
 	"github.com/stackql/any-sdk/public/discovery"
 	"github.com/stackql/any-sdk/public/formulation"
-	sdk_persistence "github.com/stackql/any-sdk/public/persistence"
 	"github.com/stackql/any-sdk/public/radix_tree_address_space"
 	"github.com/stackql/any-sdk/public/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
@@ -50,10 +48,10 @@ type Config interface {
 	GetRelationalType(string) string
 	GenerateDDL(
 		util.AnnotatedTabulation,
-		anysdk.Provider,
-		anysdk.Service,
-		anysdk.Resource,
-		anysdk.StandardOperationStore,
+		formulation.Provider,
+		formulation.Service,
+		formulation.Resource,
+		formulation.StandardOperationStore,
 		bool,
 		int,
 		bool,
@@ -68,20 +66,20 @@ type Config interface {
 	GetTable(internaldto.HeirarchyIdentifiers, int) (internaldto.DBTable, error)
 	GenerateInsertDML(
 		util.AnnotatedTabulation,
-		anysdk.Provider,
-		anysdk.Service,
-		anysdk.Resource,
-		anysdk.StandardOperationStore,
+		formulation.Provider,
+		formulation.Service,
+		formulation.Resource,
+		formulation.StandardOperationStore,
 		internaldto.TxnControlCounters,
 		bool,
 		bool,
 	) (PreparedStatementCtx, error)
 	GenerateSelectDML(
 		util.AnnotatedTabulation,
-		anysdk.Provider,
-		anysdk.Service,
-		anysdk.Resource,
-		anysdk.StandardOperationStore,
+		formulation.Provider,
+		formulation.Service,
+		formulation.Resource,
+		formulation.StandardOperationStore,
 		internaldto.TxnControlCounters,
 		string,
 		string,
@@ -128,7 +126,7 @@ type staticDRMConfig struct {
 	sqlSystem              sql_system.SQLSystem
 	typCfg                 typing.Config
 	analyzerFactoryFactory discovery.StaticAnalyzerFactoryFactory
-	persistenceSystem      sdk_persistence.PersistenceSystem
+	persistenceSystem      formulation.PersistenceSystem
 }
 
 func (dc *staticDRMConfig) GetSQLSystem() sql_system.SQLSystem {
@@ -157,7 +155,7 @@ func (dc *staticDRMConfig) OpenapiColumnsToRelationalColumns(
 	for _, col := range cols {
 		var typeStr string
 		schemaExists := false
-		if col.GetSchema() != nil {
+		if col.GetSchema() != nil && !col.GetSchema().IsEmpty() {
 			typeStr = dc.GetRelationalType(col.GetSchema().GetType())
 			schemaExists = true
 		} else { //nolint:gocritic // defer fix
@@ -196,7 +194,7 @@ func (dc *staticDRMConfig) OpenapiColumnsToRelationalColumn(
 	var typeStr string
 	schemaExists := false
 	//nolint:gocritic,exhaustive // defer fix
-	if col.GetSchema() != nil {
+	if col.GetSchema() != nil && !col.GetSchema().IsEmpty() {
 		typeStr = dc.GetRelationalType(col.GetSchema().GetType())
 		schemaExists = true
 	} else {
@@ -432,14 +430,14 @@ func (dc *staticDRMConfig) getParserTableName(
 	}
 }
 
-func (dc *staticDRMConfig) inferColType(col anysdk.Column) string {
+func (dc *staticDRMConfig) inferColType(col formulation.Column) string {
 	schema := col.GetSchema()
 	return dc.inferColTypeFromSchema(schema)
 }
 
-func (dc *staticDRMConfig) inferColTypeFromSchema(schema anysdk.Schema) string {
+func (dc *staticDRMConfig) inferColTypeFromSchema(schema formulation.Schema) string {
 	relationalType := textStr
-	if schema != nil && schema.GetType() != "" {
+	if schema != nil && !schema.IsEmpty() && schema.GetType() != "" {
 		relationalType = dc.GetRelationalType(schema.GetType())
 	}
 	return relationalType
@@ -470,13 +468,13 @@ func (dc *staticDRMConfig) genRelationalTableFromExternalSQLTable(
 }
 
 func (dc *staticDRMConfig) obtainAddressSpace(
-	prov anysdk.Provider,
-	svc anysdk.Service,
-	resource anysdk.Resource,
-	m anysdk.StandardOperationStore,
+	prov formulation.Provider,
+	svc formulation.Service,
+	resource formulation.Resource,
+	m formulation.StandardOperationStore,
 	isAwait bool,
-) (anysdk.AddressSpace, error) {
-	addressSpaceFormulator := radix_tree_address_space.NewAddressSpaceFormulator(
+) (formulation.AddressSpace, error) {
+	addressSpaceFormulator := formulation.NewAddressSpaceFormulator(
 		radix_tree_address_space.NewAddressSpaceGrammar(),
 		prov,
 		svc,
@@ -498,11 +496,11 @@ func (dc *staticDRMConfig) obtainAddressSpace(
 
 func (dc *staticDRMConfig) obtainRelationFromAddressSpace(
 	isAwait bool,
-	addressSpace anysdk.AddressSpace,
+	addressSpace formulation.AddressSpace,
 	isNilResponseAllowed bool,
-) (anysdk.Relation, error) {
+) (formulation.Relation, error) {
 	inferredRelation, inferredRelationErr := addressSpace.ToRelation(
-		radix_tree_address_space.NewStandardAddressSpaceExpansionConfig(
+		formulation.NewStandardAddressSpaceExpansionConfig(
 			isAwait,
 			true, // TODO: switch this off at the appropriate time
 			isNilResponseAllowed,
@@ -515,10 +513,10 @@ func (dc *staticDRMConfig) obtainRelationFromAddressSpace(
 
 func (dc *staticDRMConfig) genRelationalTable(
 	tabAnn util.AnnotatedTabulation,
-	prov anysdk.Provider,
-	svc anysdk.Service,
-	resource anysdk.Resource,
-	m anysdk.StandardOperationStore,
+	prov formulation.Provider,
+	svc formulation.Service,
+	resource formulation.Resource,
+	m formulation.StandardOperationStore,
 	isAwait bool,
 	discoveryGenerationID int,
 	isNilResponseAllowed bool,
@@ -563,10 +561,10 @@ func (dc *staticDRMConfig) genRelationalTable(
 
 func (dc *staticDRMConfig) GenerateDDL(
 	tabAnn util.AnnotatedTabulation,
-	prov anysdk.Provider,
-	svc anysdk.Service,
-	resource anysdk.Resource,
-	m anysdk.StandardOperationStore,
+	prov formulation.Provider,
+	svc formulation.Service,
+	resource formulation.Resource,
+	m formulation.StandardOperationStore,
 	isAwait bool,
 	discoveryGenerationID int,
 	dropTable bool,
@@ -583,10 +581,10 @@ func (dc *staticDRMConfig) GenerateDDL(
 //nolint:gocritic,govet,funlen,nestif // defer fix
 func (dc *staticDRMConfig) GenerateInsertDML(
 	tabAnnotated util.AnnotatedTabulation,
-	prov anysdk.Provider,
-	svc anysdk.Service,
-	resource anysdk.Resource,
-	method anysdk.StandardOperationStore,
+	prov formulation.Provider,
+	svc formulation.Service,
+	resource formulation.Resource,
+	method formulation.StandardOperationStore,
 	tcc internaldto.TxnControlCounters,
 	isNilResponseAllowed bool,
 	isAsync bool,
@@ -650,7 +648,7 @@ func (dc *staticDRMConfig) GenerateInsertDML(
 			col := formulation.ColumnDescriptor(col)
 			relationalType := textStr
 			schema := col.GetSchema()
-			if schema != nil && schema.GetType() != "" {
+			if schema != nil && !schema.IsEmpty() && schema.GetType() != "" {
 				relationalType = dc.GetRelationalType(schema.GetType())
 			}
 			columns = append(columns, typing.NewColDescriptor(col, relationalType))
@@ -691,10 +689,10 @@ func (dc *staticDRMConfig) GenerateInsertDML(
 //nolint:revive // future proofing
 func (dc *staticDRMConfig) GenerateSelectDML(
 	tabAnnotated util.AnnotatedTabulation,
-	prov anysdk.Provider,
-	svc anysdk.Service,
-	resource anysdk.Resource,
-	method anysdk.StandardOperationStore,
+	prov formulation.Provider,
+	svc formulation.Service,
+	resource formulation.Resource,
+	method formulation.StandardOperationStore,
 	txnCtrlCtrs internaldto.TxnControlCounters,
 	selectSuffix,
 	rewrittenWhere string,
@@ -1008,7 +1006,7 @@ func (dc *staticDRMConfig) InsertIntoPhysicalTable(
 
 func GenerateDRMConfig(
 	sqlSystem sql_system.SQLSystem,
-	persistenceSystem sdk_persistence.PersistenceSystem,
+	persistenceSystem formulation.PersistenceSystem,
 	typCfg typing.Config,
 	namespaceCollection tablenamespace.Collection,
 	controlAttributes sqlcontrol.ControlAttributes,

@@ -1,7 +1,6 @@
 *** Settings ***
 Resource          ${CURDIR}${/}stackql.resource
 Library           Collections
-Library           Builtin
 
 
 *** Keywords ***

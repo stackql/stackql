@@ -1,8 +1,8 @@
 package builder_input //nolint:revive,stylecheck // permissable deviation from norm
 
 import (
-	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/any-sdk/pkg/streaming"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/drm"
@@ -29,8 +29,8 @@ type BuilderInput interface {
 	GetParserNode() (sqlparser.SQLNode, bool)
 	GetProvider() (provider.IProvider, bool)
 	SetProvider(provider.IProvider)
-	GetOperationStore() (anysdk.OperationStore, bool)
-	SetOperationStore(op anysdk.OperationStore)
+	GetOperationStore() (formulation.OperationStore, bool)
+	SetOperationStore(op formulation.OperationStore)
 	IsAwait() bool
 	IsReturning() bool
 	SetIsReturning(bool)
@@ -49,8 +49,8 @@ type BuilderInput interface {
 	SetParamMapStream(streaming.MapStream)
 	SetVerb(verb string)
 	Clone() BuilderInput
-	GetHTTPPreparatorStream() (anysdk.HttpPreparatorStream, bool)
-	SetHTTPPreparatorStream(prepStream anysdk.HttpPreparatorStream)
+	GetHTTPPreparatorStream() (formulation.HttpPreparatorStream, bool)
+	SetHTTPPreparatorStream(prepStream formulation.HttpPreparatorStream)
 	IsTargetPhysicalTable() bool
 	SetIsTargetPhysicalTable(isPhysical bool)
 	SetTxnCtrlCtrs(internaldto.TxnControlCounters)
@@ -75,8 +75,8 @@ type builderInput struct {
 	isUndo                  bool
 	node                    sqlparser.SQLNode
 	paramMapStream          streaming.MapStream
-	httpPrepStream          anysdk.HttpPreparatorStream
-	op                      anysdk.OperationStore
+	httpPrepStream          formulation.HttpPreparatorStream
+	op                      formulation.OperationStore
 	prov                    provider.IProvider
 	annotatedAst            annotatedast.AnnotatedAst
 	isTargetPhysical        bool
@@ -158,11 +158,11 @@ func (bi *builderInput) SetProvider(prov provider.IProvider) {
 	bi.prov = prov
 }
 
-func (bi *builderInput) GetOperationStore() (anysdk.OperationStore, bool) {
+func (bi *builderInput) GetOperationStore() (formulation.OperationStore, bool) {
 	return bi.op, bi.op != nil
 }
 
-func (bi *builderInput) SetOperationStore(op anysdk.OperationStore) {
+func (bi *builderInput) SetOperationStore(op formulation.OperationStore) {
 	bi.op = op
 }
 
@@ -170,11 +170,11 @@ func (bi *builderInput) GetParamMapStream() (streaming.MapStream, bool) {
 	return bi.paramMapStream, bi.paramMapStream != nil
 }
 
-func (bi *builderInput) GetHTTPPreparatorStream() (anysdk.HttpPreparatorStream, bool) {
+func (bi *builderInput) GetHTTPPreparatorStream() (formulation.HttpPreparatorStream, bool) {
 	return bi.httpPrepStream, bi.httpPrepStream != nil
 }
 
-func (bi *builderInput) SetHTTPPreparatorStream(prepStream anysdk.HttpPreparatorStream) {
+func (bi *builderInput) SetHTTPPreparatorStream(prepStream formulation.HttpPreparatorStream) {
 	bi.httpPrepStream = prepStream
 }
 

@@ -10,8 +10,8 @@ import (
 	"testing"
 
 	"github.com/sirupsen/logrus"
-	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/any-sdk/pkg/dto"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,11 +22,11 @@ func TestAwsS3BucketAclsGet(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Test failed: could not read provider doc, error: %v", err)
 	}
-	prov, provErr := anysdk.LoadProviderDocFromBytes(pb)
+	prov, provErr := formulation.LoadProviderDocFromBytes(pb)
 	if provErr != nil {
 		t.Fatalf("Test failed: could not load provider doc, error: %v", provErr)
 	}
-	svc, err := anysdk.LoadProviderAndServiceFromPaths(
+	svc, err := formulation.LoadProviderAndServiceFromPaths(
 		"./testdata/registry/src/aws/"+vr+"/provider.yaml",
 		"./testdata/registry/src/aws/"+vr+"/services/s3.yaml",
 	)
@@ -67,14 +67,14 @@ func TestAwsS3BucketAclsGet(t *testing.T) {
 
 	authCtx := dto.GetAuthCtx([]string{}, "./testdata/dummy_credentials/dummy-sa-key.json", "null_auth")
 
-	configurator := anysdk.NewAnySdkClientConfigurator(
+	configurator := formulation.NewAnySdkClientConfigurator(
 		dto.RuntimeCtx{
 			AllowInsecure: true,
 		},
 		"aws",
 		dummyClient,
 	)
-	httpPreparator := anysdk.NewHTTPPreparator(
+	httpPreparator := formulation.NewHTTPPreparator(
 		prov,
 		svc,
 		method,
@@ -89,7 +89,7 @@ func TestAwsS3BucketAclsGet(t *testing.T) {
 		nil,
 		logrus.StandardLogger(),
 	)
-	armoury, armouryErr := httpPreparator.BuildHTTPRequestCtx(anysdk.NewHTTPPreparatorConfig(false))
+	armoury, armouryErr := httpPreparator.BuildHTTPRequestCtx(formulation.NewHTTPPreparatorConfig(false))
 	if armouryErr != nil {
 		t.Fatalf("Test failed: could not build HTTP preparator armoury, error: %v", armouryErr)
 	}
@@ -102,7 +102,7 @@ func TestAwsS3BucketAclsGet(t *testing.T) {
 
 		argList := v.GetArgList()
 
-		response, apiErr := anysdk.CallFromSignature(
+		response, apiErr := formulation.CallFromSignature(
 			configurator,
 			dto.RuntimeCtx{
 				AllowInsecure: true,
@@ -112,7 +112,7 @@ func TestAwsS3BucketAclsGet(t *testing.T) {
 			false,
 			nil,
 			prov,
-			anysdk.NewAnySdkOpStoreDesignation(method),
+			formulation.NewAnySdkOpStoreDesignation(method),
 			argList, // TODO: abstract
 		)
 		if apiErr != nil {

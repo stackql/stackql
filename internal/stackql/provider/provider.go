@@ -3,12 +3,10 @@ package provider
 import (
 	"net/http"
 
-	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/any-sdk/pkg/auth_util"
 	"github.com/stackql/any-sdk/pkg/constants"
 	"github.com/stackql/any-sdk/pkg/dto"
-	"github.com/stackql/any-sdk/public/discovery"
-	sdk_persistence "github.com/stackql/any-sdk/public/persistence"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql/internal/stackql/docparser"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/methodselect"
@@ -44,8 +42,8 @@ type IProvider interface {
 
 	EnhanceMetadataFilter(
 		string,
-		func(anysdk.ITable) (anysdk.ITable, error),
-		map[string]bool) (func(anysdk.ITable) (anysdk.ITable, error), error)
+		func(formulation.ITable) (formulation.ITable, error),
+		map[string]bool) (func(formulation.ITable) (formulation.ITable, error), error)
 
 	GetCurrentService() string
 
@@ -55,7 +53,7 @@ type IProvider interface {
 		serviceName string,
 		resourceName string,
 		iqlAction string,
-		runtimeCtx dto.RuntimeCtx) (anysdk.StandardOperationStore, string, error)
+		runtimeCtx dto.RuntimeCtx) (formulation.StandardOperationStore, string, error)
 
 	GetLikeableColumns(string) []string
 
@@ -64,38 +62,38 @@ type IProvider interface {
 		resourceName string,
 		iqlAction string,
 		parameters parserutil.ColumnKeyedDatastore,
-		runtimeCtx dto.RuntimeCtx) (anysdk.StandardOperationStore, string, error)
+		runtimeCtx dto.RuntimeCtx) (formulation.StandardOperationStore, string, error)
 
 	GetMethodSelector() methodselect.IMethodSelector
 
-	GetProvider() (anysdk.Provider, error)
+	GetProvider() (formulation.Provider, error)
 
 	GetProviderString() string
 
 	GetProviderServicesRedacted(
 		runtimeCtx dto.RuntimeCtx,
-		extended bool) (map[string]anysdk.ProviderService, error)
+		extended bool) (map[string]formulation.ProviderService, error)
 
-	GetResource(serviceKey string, resourceKey string, runtimeCtx dto.RuntimeCtx) (anysdk.Resource, error)
+	GetResource(serviceKey string, resourceKey string, runtimeCtx dto.RuntimeCtx) (formulation.Resource, error)
 
 	GetResourcesMap(
 		serviceKey string,
-		runtimeCtx dto.RuntimeCtx) (map[string]anysdk.Resource, error)
+		runtimeCtx dto.RuntimeCtx) (map[string]formulation.Resource, error)
 
 	GetResourcesRedacted(
 		currentService string,
 		runtimeCtx dto.RuntimeCtx,
-		extended bool) (map[string]anysdk.Resource, error)
+		extended bool) (map[string]formulation.Resource, error)
 
-	GetServiceShard(serviceKey string, resourceKey string, runtimeCtx dto.RuntimeCtx) (anysdk.Service, error)
+	GetServiceShard(serviceKey string, resourceKey string, runtimeCtx dto.RuntimeCtx) (formulation.Service, error)
 
-	GetObjectSchema(serviceName string, resourceName string, schemaName string) (anysdk.Schema, error)
+	GetObjectSchema(serviceName string, resourceName string, schemaName string) (formulation.Schema, error)
 
 	GetVersion() string
 
-	InferDescribeMethod(anysdk.Resource) (anysdk.StandardOperationStore, string, error)
+	InferDescribeMethod(formulation.Resource) (formulation.StandardOperationStore, string, error)
 
-	InferMaxResultsElement(anysdk.OperationStore) sdk_internal_dto.HTTPElement
+	InferMaxResultsElement(formulation.OperationStore) sdk_internal_dto.HTTPElement
 
 	InferNextPageRequestElement(internaldto.Heirarchy) sdk_internal_dto.HTTPElement
 
@@ -105,7 +103,7 @@ type IProvider interface {
 
 	SetCurrentService(serviceKey string)
 
-	ShowAuth(authCtx *dto.AuthCtx) (*anysdk.AuthMetadata, error)
+	ShowAuth(authCtx *dto.AuthCtx) (*formulation.AuthMetadata, error)
 }
 
 //nolint:revive // TODO: review
@@ -113,9 +111,9 @@ func GenerateProvider(
 	runtimeCtx dto.RuntimeCtx,
 	providerStr,
 	providerVersion string,
-	reg anysdk.RegistryAPI,
+	reg formulation.RegistryAPI,
 	sqlSystem sql_system.SQLSystem,
-	persistenceSystem sdk_persistence.PersistenceSystem,
+	persistenceSystem formulation.PersistenceSystem,
 	defaultHTTPClient *http.Client,
 ) (IProvider, error) {
 	switch providerStr { //nolint:gocritic // TODO: review
@@ -139,9 +137,9 @@ func newGenericProvider(
 	rtCtx dto.RuntimeCtx,
 	providerStr,
 	versionStr string,
-	reg anysdk.RegistryAPI,
+	reg formulation.RegistryAPI,
 	_ sql_system.SQLSystem,
-	persistenceSystem sdk_persistence.PersistenceSystem,
+	persistenceSystem formulation.PersistenceSystem,
 	defaultHTTPClient *http.Client,
 ) (IProvider, error) {
 	methSel, err := methodselect.NewMethodSelector(providerStr, versionStr)
@@ -154,10 +152,10 @@ func newGenericProvider(
 		return nil, err
 	}
 
-	da := discovery.NewBasicDiscoveryAdapter(
+	da := formulation.NewBasicDiscoveryAdapter(
 		providerStr,
 		rootURL,
-		discovery.NewTTLDiscoveryStore(
+		formulation.NewTTLDiscoveryStore(
 			persistenceSystem,
 			reg,
 			rtCtx,

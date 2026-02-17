@@ -1,9 +1,9 @@
 package taxonomy
 
 import (
-	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/any-sdk/pkg/streaming"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
@@ -20,7 +20,7 @@ type AnnotationCtx interface {
 	GetSubquery() (internaldto.SubqueryDTO, bool)
 	GetInputTableName() (string, error)
 	GetParameters() map[string]interface{}
-	GetSchema() anysdk.Schema
+	GetSchema() formulation.Schema
 	GetTableMeta() tablemetadata.ExtendedTableMetadata
 	Prepare(handlerCtx handler.HandlerContext, inStream streaming.MapStream) error
 	SetDynamic()
@@ -31,7 +31,7 @@ type AnnotationCtx interface {
 
 type standardAnnotationCtx struct {
 	isDynamic  bool
-	schema     anysdk.Schema
+	schema     formulation.Schema
 	hIDs       internaldto.HeirarchyIdentifiers
 	tableMeta  tablemetadata.ExtendedTableMetadata
 	parameters map[string]interface{}
@@ -39,7 +39,7 @@ type standardAnnotationCtx struct {
 }
 
 func NewStaticStandardAnnotationCtx(
-	schema anysdk.Schema,
+	schema formulation.Schema,
 	hIDs internaldto.HeirarchyIdentifiers,
 	tableMeta tablemetadata.ExtendedTableMetadata,
 	parameters map[string]interface{},
@@ -169,8 +169,8 @@ func (ac *standardAnnotationCtx) Prepare(
 			return provErr
 		}
 		ac.tableMeta.WithGetHTTPArmoury(
-			func() (anysdk.HTTPArmoury, error) {
-				httpPreparator := anysdk.NewHTTPPreparator(
+			func() (formulation.HTTPArmoury, error) {
+				httpPreparator := formulation.NewHTTPPreparator(
 					prov,
 					svc,
 					opStore,
@@ -180,7 +180,7 @@ func (ac *standardAnnotationCtx) Prepare(
 					logging.GetLogger(),
 				)
 				httpArmoury, armouryErr := httpPreparator.BuildHTTPRequestCtx(
-					anysdk.NewHTTPPreparatorConfig(true),
+					formulation.NewHTTPPreparatorConfig(true),
 				)
 				return httpArmoury, armouryErr
 			},
@@ -189,7 +189,7 @@ func (ac *standardAnnotationCtx) Prepare(
 	}
 
 	ac.tableMeta.WithGetHTTPArmoury(
-		func() (anysdk.HTTPArmoury, error) {
+		func() (formulation.HTTPArmoury, error) {
 			// need to dynamically generate stream, otherwise repeated calls result in empty body
 			parametersCleaned, cleanErr := util.TransformSQLRawParameters(params, true)
 			if cleanErr != nil {
@@ -204,7 +204,7 @@ func (ac *standardAnnotationCtx) Prepare(
 			if provErr != nil {
 				return nil, provErr
 			}
-			httpPreparator := anysdk.NewHTTPPreparator(
+			httpPreparator := formulation.NewHTTPPreparator(
 				prov,
 				svc,
 				opStore,
@@ -214,7 +214,7 @@ func (ac *standardAnnotationCtx) Prepare(
 				logging.GetLogger(),
 			)
 			httpArmoury, armouryErr := httpPreparator.BuildHTTPRequestCtx(
-				anysdk.NewHTTPPreparatorConfig(true),
+				formulation.NewHTTPPreparatorConfig(true),
 			)
 			if armouryErr != nil {
 				return nil, armouryErr
@@ -233,7 +233,7 @@ func (ac *standardAnnotationCtx) GetParameters() map[string]interface{} {
 	return ac.parameters
 }
 
-func (ac *standardAnnotationCtx) GetSchema() anysdk.Schema {
+func (ac *standardAnnotationCtx) GetSchema() formulation.Schema {
 	return ac.schema
 }
 

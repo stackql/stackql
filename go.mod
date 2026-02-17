@@ -18,13 +18,14 @@ require (
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.1
-	github.com/stackql/any-sdk v0.4.3-beta08
+	github.com/stackql/any-sdk v0.5.1-alpha01
 	github.com/stackql/go-suffix-map v0.0.1-alpha01
 	github.com/stackql/psql-wire v0.1.2-alpha01
 	github.com/stackql/stackql-parser v0.0.16-alpha01
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/mod v0.25.0
 	golang.org/x/sync v0.15.0
+	golang.org/x/tools v0.34.0
 	gonum.org/v1/gonum v0.15.1
 	gopkg.in/yaml.v2 v2.4.0
 	gotest.tools v2.2.0+incompatible
@@ -130,7 +131,6 @@ require (
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/term v0.32.0 // indirect
 	golang.org/x/text v0.26.0 // indirect
-	golang.org/x/tools v0.34.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	google.golang.org/genproto v0.0.0-20211208223120-3a66f561d7aa // indirect
 	google.golang.org/grpc v1.67.1 // indirect

@@ -4,17 +4,17 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/stackql/any-sdk/anysdk"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 )
 
 type IMethodSelector interface {
-	GetMethod(resource anysdk.Resource, methodName string) (anysdk.StandardOperationStore, error)
+	GetMethod(resource formulation.Resource, methodName string) (formulation.StandardOperationStore, error)
 
 	GetMethodForAction(
-		resource anysdk.Resource,
+		resource formulation.Resource,
 		iqlAction string,
-		parameters parserutil.ColumnKeyedDatastore) (anysdk.StandardOperationStore, string, error)
+		parameters parserutil.ColumnKeyedDatastore) (formulation.StandardOperationStore, string, error)
 }
 
 func NewMethodSelector(provider string, version string) (IMethodSelector, error) {
@@ -35,9 +35,9 @@ type DefaultMethodSelector struct {
 }
 
 func (sel *DefaultMethodSelector) GetMethodForAction(
-	resource anysdk.Resource,
+	resource formulation.Resource,
 	iqlAction string,
-	parameters parserutil.ColumnKeyedDatastore) (anysdk.StandardOperationStore, string, error) {
+	parameters parserutil.ColumnKeyedDatastore) (formulation.StandardOperationStore, string, error) {
 	var methodName string
 	switch strings.ToLower(iqlAction) {
 	case "select":
@@ -60,12 +60,12 @@ func (sel *DefaultMethodSelector) GetMethodForAction(
 }
 
 func (sel *DefaultMethodSelector) GetMethod(
-	resource anysdk.Resource, methodName string) (anysdk.StandardOperationStore, error) {
+	resource formulation.Resource, methodName string) (formulation.StandardOperationStore, error) {
 	return sel.getMethodByName(resource, methodName)
 }
 
 func (sel *DefaultMethodSelector) getMethodByName(
-	resource anysdk.Resource, methodName string) (anysdk.StandardOperationStore, error) {
+	resource formulation.Resource, methodName string) (formulation.StandardOperationStore, error) {
 	m, err := resource.FindMethod(methodName)
 	if err != nil {
 		return nil, fmt.Errorf("no method = '%s' for resource = '%s'", methodName, resource.GetName())
@@ -74,8 +74,8 @@ func (sel *DefaultMethodSelector) getMethodByName(
 }
 
 func (sel *DefaultMethodSelector) GetMethodByNameAndParameters(
-	resource anysdk.Resource, methodName string,
-	parameters parserutil.ColumnKeyedDatastore) (anysdk.StandardOperationStore, error) {
+	resource formulation.Resource, methodName string,
+	parameters parserutil.ColumnKeyedDatastore) (formulation.StandardOperationStore, error) {
 	stringifiedParams := parameters.GetStringified()
 	m, remainingParams, ok := resource.GetFirstNamespaceMethodMatchFromSQLVerb(methodName, stringifiedParams)
 	if !ok {

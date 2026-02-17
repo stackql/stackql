@@ -3,10 +3,9 @@ package docparser
 import (
 	"fmt"
 
-	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/any-sdk/pkg/db/sqlcontrol"
 	"github.com/stackql/any-sdk/pkg/logging"
-	sdk_persistence "github.com/stackql/any-sdk/public/persistence"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/any-sdk/public/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
@@ -34,10 +33,10 @@ func TranslateServiceKeyIqlToGenericProvider(serviceKey string) string {
 }
 
 func OpenapiStackQLTabulationsPersistor(
-	prov anysdk.Provider,
-	svc anysdk.Service,
-	resource anysdk.Resource,
-	m anysdk.StandardOperationStore,
+	prov formulation.Provider,
+	svc formulation.Service,
+	resource formulation.Resource,
+	m formulation.StandardOperationStore,
 	isAwait bool,
 	tabluationsAnnotated []util.AnnotatedTabulation,
 	dbEngine sqlengine.SQLEngine,
@@ -45,7 +44,7 @@ func OpenapiStackQLTabulationsPersistor(
 	namespaceCollection tablenamespace.Collection,
 	controlAttributes sqlcontrol.ControlAttributes,
 	sqlSystem sql_system.SQLSystem,
-	persistenceSystem sdk_persistence.PersistenceSystem,
+	persistenceSystem formulation.PersistenceSystem,
 	typCfg typing.Config,
 ) (int, error) {
 	drmCfg, err := drm.GenerateDRMConfig(sqlSystem, persistenceSystem,

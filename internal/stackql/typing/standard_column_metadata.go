@@ -4,7 +4,6 @@ import (
 	"reflect"
 
 	"github.com/lib/pq/oid"
-	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
@@ -42,11 +41,11 @@ func (cd *standardColumnMetadata) GetType() string {
 	return parserutil.ExtractStringRepresentationOfValueColumn(cd.column.GetVal())
 }
 
-func (cd *standardColumnMetadata) getOidForSchema(colSchema anysdk.Schema) oid.Oid {
+func (cd *standardColumnMetadata) getOidForSchema(colSchema formulation.Schema) oid.Oid {
 	return getOidForSchema(colSchema)
 }
 
-func GetOidForSchema(colSchema anysdk.Schema) oid.Oid {
+func GetOidForSchema(colSchema formulation.Schema) oid.Oid {
 	return getOidForSchema(colSchema)
 }
 
@@ -75,7 +74,7 @@ func getOidForParserColType(col sqlparser.ColumnType) oid.Oid {
 	}
 }
 
-func getOidForSchema(colSchema anysdk.Schema) oid.Oid {
+func getOidForSchema(colSchema formulation.Schema) oid.Oid {
 	if colSchema == nil {
 		return oid.T_text
 	}

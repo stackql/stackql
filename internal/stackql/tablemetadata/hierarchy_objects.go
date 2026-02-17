@@ -3,7 +3,7 @@ package tablemetadata
 import (
 	"fmt"
 
-	"github.com/stackql/any-sdk/anysdk"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql/internal/stackql/datasource/sql_datasource"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/provider"
@@ -15,12 +15,12 @@ var (
 
 type HeirarchyObjects interface {
 	GetHeirarchyIDs() internaldto.HeirarchyIdentifiers
-	GetObjectSchema() (anysdk.Schema, error)
+	GetObjectSchema() (formulation.Schema, error)
 	GetProvider() provider.IProvider
-	GetRequestSchema() (anysdk.Schema, error)
-	GetResponseSchemaAndMediaType() (anysdk.Schema, string, error)
-	GetSelectableObjectSchema() (anysdk.Schema, error)
-	GetSelectSchemaAndObjectPath() (anysdk.Schema, string, error)
+	GetRequestSchema() (formulation.Schema, error)
+	GetResponseSchemaAndMediaType() (formulation.Schema, string, error)
+	GetSelectableObjectSchema() (formulation.Schema, error)
+	GetSelectSchemaAndObjectPath() (formulation.Schema, string, error)
 	GetSQLDataSource() (sql_datasource.SQLDataSource, bool)
 	GetTableName() string
 	GetSubquery() (internaldto.SubqueryDTO, bool)
@@ -29,15 +29,15 @@ type HeirarchyObjects interface {
 	SetProvider(provider.IProvider)
 	SetSQLDataSource(sql_datasource.SQLDataSource)
 	// De facto inheritance
-	GetServiceHdl() anysdk.Service
-	GetResource() anysdk.Resource
-	GetMethodSet() anysdk.MethodSet
-	GetMethod() anysdk.StandardOperationStore
-	SetMethod(anysdk.StandardOperationStore)
-	SetMethodSet(anysdk.MethodSet)
+	GetServiceHdl() formulation.Service
+	GetResource() formulation.Resource
+	GetMethodSet() formulation.MethodSet
+	GetMethod() formulation.StandardOperationStore
+	SetMethod(formulation.StandardOperationStore)
+	SetMethodSet(formulation.MethodSet)
 	SetMethodStr(string)
-	SetResource(anysdk.Resource)
-	SetServiceHdl(anysdk.Service)
+	SetResource(formulation.Resource)
+	SetServiceHdl(formulation.Service)
 	IsPGInternalObject() bool
 	SetIndirect(internaldto.RelationDTO)
 	GetIndirect() (internaldto.RelationDTO, bool)
@@ -77,7 +77,7 @@ func (ho *standardHeirarchyObjects) IsPGInternalObject() bool {
 	return ho.heirarchyIDs.IsPgInternalObject()
 }
 
-func (ho *standardHeirarchyObjects) GetServiceHdl() anysdk.Service {
+func (ho *standardHeirarchyObjects) GetServiceHdl() formulation.Service {
 	return ho.hr.GetServiceHdl()
 }
 
@@ -97,31 +97,31 @@ func (ho *standardHeirarchyObjects) GetSubquery() (internaldto.SubqueryDTO, bool
 	return ho.heirarchyIDs.GetSubquery()
 }
 
-func (ho *standardHeirarchyObjects) GetResource() anysdk.Resource {
+func (ho *standardHeirarchyObjects) GetResource() formulation.Resource {
 	return ho.hr.GetResource()
 }
 
-func (ho *standardHeirarchyObjects) GetMethodSet() anysdk.MethodSet {
+func (ho *standardHeirarchyObjects) GetMethodSet() formulation.MethodSet {
 	return ho.hr.GetMethodSet()
 }
 
-func (ho *standardHeirarchyObjects) GetMethod() anysdk.StandardOperationStore {
+func (ho *standardHeirarchyObjects) GetMethod() formulation.StandardOperationStore {
 	return ho.hr.GetMethod()
 }
 
-func (ho *standardHeirarchyObjects) SetServiceHdl(sh anysdk.Service) {
+func (ho *standardHeirarchyObjects) SetServiceHdl(sh formulation.Service) {
 	ho.hr.SetServiceHdl(sh)
 }
 
-func (ho *standardHeirarchyObjects) SetResource(r anysdk.Resource) {
+func (ho *standardHeirarchyObjects) SetResource(r formulation.Resource) {
 	ho.hr.SetResource(r)
 }
 
-func (ho *standardHeirarchyObjects) SetMethodSet(mSet anysdk.MethodSet) {
+func (ho *standardHeirarchyObjects) SetMethodSet(mSet formulation.MethodSet) {
 	ho.hr.SetMethodSet(mSet)
 }
 
-func (ho *standardHeirarchyObjects) SetMethod(m anysdk.StandardOperationStore) {
+func (ho *standardHeirarchyObjects) SetMethod(m formulation.StandardOperationStore) {
 	ho.hr.SetMethod(m)
 }
 
@@ -146,11 +146,11 @@ func (ho *standardHeirarchyObjects) LookupSelectItemsKey() string {
 	return lookupSelectItemsKey(method)
 }
 
-func LookupSelectItemsKey(method anysdk.OperationStore) string {
+func LookupSelectItemsKey(method formulation.OperationStore) string {
 	return lookupSelectItemsKey(method)
 }
 
-func lookupSelectItemsKey(method anysdk.OperationStore) string {
+func lookupSelectItemsKey(method formulation.OperationStore) string {
 	if method == nil {
 		return defaultSelectItemsKey
 	}
@@ -163,12 +163,12 @@ func lookupSelectItemsKey(method anysdk.OperationStore) string {
 	}
 	switch responseSchema.GetType() {
 	case "string", "integer":
-		return anysdk.AnonymousColumnName
+		return formulation.AnonymousColumnName
 	}
 	return defaultSelectItemsKey
 }
 
-func (ho *standardHeirarchyObjects) GetResponseSchemaAndMediaType() (anysdk.Schema, string, error) {
+func (ho *standardHeirarchyObjects) GetResponseSchemaAndMediaType() (formulation.Schema, string, error) {
 	m := ho.GetMethod()
 	if m == nil {
 		return nil, "", fmt.Errorf("method is nil")
@@ -176,7 +176,7 @@ func (ho *standardHeirarchyObjects) GetResponseSchemaAndMediaType() (anysdk.Sche
 	return m.GetResponseBodySchemaAndMediaType()
 }
 
-func (ho *standardHeirarchyObjects) GetSelectSchemaAndObjectPath() (anysdk.Schema, string, error) {
+func (ho *standardHeirarchyObjects) GetSelectSchemaAndObjectPath() (formulation.Schema, string, error) {
 	m := ho.GetMethod()
 	if m == nil {
 		return nil, "", fmt.Errorf("method is nil")
@@ -184,7 +184,7 @@ func (ho *standardHeirarchyObjects) GetSelectSchemaAndObjectPath() (anysdk.Schem
 	return m.GetSelectSchemaAndObjectPath()
 }
 
-func (ho *standardHeirarchyObjects) GetRequestSchema() (anysdk.Schema, error) {
+func (ho *standardHeirarchyObjects) GetRequestSchema() (formulation.Schema, error) {
 	m := ho.GetMethod()
 	if m == nil {
 		return nil, fmt.Errorf("method is nil")
@@ -196,16 +196,16 @@ func (ho *standardHeirarchyObjects) GetTableName() string {
 	return ho.heirarchyIDs.GetTableName()
 }
 
-func (ho *standardHeirarchyObjects) GetObjectSchema() (anysdk.Schema, error) {
+func (ho *standardHeirarchyObjects) GetObjectSchema() (formulation.Schema, error) {
 	return ho.getObjectSchema()
 }
 
-func (ho *standardHeirarchyObjects) getObjectSchema() (anysdk.Schema, error) {
+func (ho *standardHeirarchyObjects) getObjectSchema() (formulation.Schema, error) {
 	rv, _, err := ho.GetMethod().GetResponseBodySchemaAndMediaType()
 	return rv, err
 }
 
-func (ho *standardHeirarchyObjects) GetSelectableObjectSchema() (anysdk.Schema, error) {
+func (ho *standardHeirarchyObjects) GetSelectableObjectSchema() (formulation.Schema, error) {
 	unsuitableSchemaMsg := "GetSelectableObjectSchema(): schema unsuitable for select query"
 	itemObjS, _, err := ho.GetMethod().GetSelectSchemaAndObjectPath()
 	if err != nil {
