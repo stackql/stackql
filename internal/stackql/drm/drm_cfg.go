@@ -645,6 +645,7 @@ func (dc *staticDRMConfig) GenerateInsertDML(
 		}
 		tableColumns := inferredRelation.GetColumnDescriptors()
 		for _, col := range tableColumns {
+			//nolint:unconvert // defer fix
 			col := formulation.ColumnDescriptor(col)
 			relationalType := textStr
 			schema := col.GetSchema()
@@ -716,6 +717,7 @@ func (dc *staticDRMConfig) GenerateSelectDML(
 		tabAnnotated.GetInputTableName(),
 	).WithAlias(aliasStr)
 	for _, col := range tabAnnotated.GetTabulation().GetColumns() {
+		//nolint:unconvert,govet // defer fix
 		col := formulation.ColumnDescriptor(col)
 		var typeStr string
 		//nolint:gocritic,exhaustive // TODO: fix

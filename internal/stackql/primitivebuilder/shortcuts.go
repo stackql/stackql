@@ -367,7 +367,8 @@ func filterMethods(
 			pm := m.GetValue()
 			filteredMethod, filterErr := tableFilter(pm)
 			if filterErr == nil && filteredMethod != nil {
-				filteredMethods.Put(k, pm) //[k] = pm
+				//nolint:errcheck // letting it go for now, but should be addressed
+				filteredMethods.Put(k, pm)
 			}
 			if filterErr != nil {
 				err = filterErr

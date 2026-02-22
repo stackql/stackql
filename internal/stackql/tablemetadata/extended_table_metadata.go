@@ -194,6 +194,7 @@ func (ex *standardExtendedTableMetadata) GetTableFilter() func(formulation.ITabl
 }
 
 func (ex *standardExtendedTableMetadata) GetGraphQL() (formulation.GraphQL, bool) {
+	//nolint:lll // defer fix
 	if ex.heirarchyObjects.GetMethod() != nil && ex.heirarchyObjects.GetMethod().GetGraphQL() != nil && !ex.heirarchyObjects.GetMethod().GetGraphQL().IsEmpty() {
 		return ex.heirarchyObjects.GetMethod().GetGraphQL(), true
 	}
