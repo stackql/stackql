@@ -3,11 +3,11 @@ package primitivebuilder
 import (
 	"fmt"
 
-	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/any-sdk/pkg/client"
 	"github.com/stackql/any-sdk/pkg/constants"
 	"github.com/stackql/any-sdk/pkg/local_template_executor"
 	"github.com/stackql/any-sdk/pkg/logging"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
 	"github.com/stackql/stackql/internal/stackql/asynccompose"
@@ -39,7 +39,7 @@ type genericHTTPStreamInput struct {
 	inputAlias        string
 	isUndo            bool
 	isMutation        bool
-	reversalStream    anysdk.HttpPreparatorStream
+	reversalStream    formulation.HttpPreparatorStream
 	reversalBuilder   Builder
 	rollbackType      constants.RollbackType
 	insertCtx         drm.PreparedStatementCtx
@@ -85,7 +85,7 @@ func newGenericHTTPStreamInput(
 		inputAlias:        builderInput.GetInputAlias(),
 		isUndo:            builderInput.IsUndo(),
 		parserNode:        parserNode,
-		reversalStream:    anysdk.NewHttpPreparatorStream(),
+		reversalStream:    formulation.NewHttpPreparatorStream(),
 		rollbackType:      handlerCtx.GetRollbackType(),
 		insertCtx:         insertCtx,
 		isMutation:        isMutation,
@@ -107,7 +107,7 @@ func (gh *genericHTTPStreamInput) GetTail() primitivegraph.PrimitiveNode {
 	return gh.root
 }
 
-func (gh *genericHTTPStreamInput) appendReversalData(prep anysdk.HTTPPreparator) error {
+func (gh *genericHTTPStreamInput) appendReversalData(prep formulation.HTTPPreparator) error {
 	return gh.reversalStream.Write(prep)
 }
 
@@ -266,7 +266,7 @@ func (gh *genericHTTPStreamInput) Build() error {
 				nil,
 			)
 		case client.HTTP:
-			httpPreparator := anysdk.NewHTTPPreparator(
+			httpPreparator := formulation.NewHTTPPreparator(
 				pr,
 				svc,
 				m,
@@ -276,7 +276,7 @@ func (gh *genericHTTPStreamInput) Build() error {
 				logging.GetLogger(),
 			)
 			httpArmoury, httpErr := httpPreparator.BuildHTTPRequestCtx(
-				anysdk.NewHTTPPreparatorConfig(false),
+				formulation.NewHTTPPreparatorConfig(false),
 			)
 			if httpErr != nil {
 				return internaldto.NewErroneousExecutorOutput(httpErr)

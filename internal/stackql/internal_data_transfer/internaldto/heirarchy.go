@@ -3,8 +3,9 @@ package internaldto
 import (
 	"fmt"
 
-	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
+
+	"github.com/stackql/any-sdk/public/formulation"
 )
 
 var (
@@ -12,14 +13,14 @@ var (
 )
 
 type Heirarchy interface {
-	GetServiceHdl() anysdk.Service
-	GetResource() anysdk.Resource
-	GetMethodSet() anysdk.MethodSet
-	GetMethod() anysdk.StandardOperationStore
-	SetServiceHdl(anysdk.Service)
-	SetResource(anysdk.Resource)
-	SetMethodSet(anysdk.MethodSet)
-	SetMethod(anysdk.StandardOperationStore)
+	GetServiceHdl() formulation.Service
+	GetResource() formulation.Resource
+	GetMethodSet() formulation.MethodSet
+	GetMethod() formulation.StandardOperationStore
+	SetServiceHdl(formulation.Service)
+	SetResource(formulation.Resource)
+	SetMethodSet(formulation.MethodSet)
+	SetMethod(formulation.StandardOperationStore)
 	SetMethodStr(string)
 }
 
@@ -31,21 +32,21 @@ func NewHeirarchy(hIDs HeirarchyIdentifiers) Heirarchy {
 
 type standardHeirarchy struct {
 	hIDs       HeirarchyIdentifiers
-	serviceHdl anysdk.Service
-	resource   anysdk.Resource
-	methodSet  anysdk.MethodSet
-	method     anysdk.StandardOperationStore
+	serviceHdl formulation.Service
+	resource   formulation.Resource
+	methodSet  formulation.MethodSet
+	method     formulation.StandardOperationStore
 }
 
-func (hr *standardHeirarchy) SetServiceHdl(sh anysdk.Service) {
+func (hr *standardHeirarchy) SetServiceHdl(sh formulation.Service) {
 	hr.serviceHdl = sh
 }
 
-func (hr *standardHeirarchy) SetResource(r anysdk.Resource) {
+func (hr *standardHeirarchy) SetResource(r formulation.Resource) {
 	hr.resource = r
 }
 
-func (hr *standardHeirarchy) SetMethodSet(mSet anysdk.MethodSet) {
+func (hr *standardHeirarchy) SetMethodSet(mSet formulation.MethodSet) {
 	hr.methodSet = mSet
 }
 
@@ -53,23 +54,23 @@ func (hr *standardHeirarchy) SetMethodStr(mStr string) {
 	hr.hIDs.SetMethodStr(mStr)
 }
 
-func (hr *standardHeirarchy) SetMethod(ost anysdk.StandardOperationStore) {
+func (hr *standardHeirarchy) SetMethod(ost formulation.StandardOperationStore) {
 	hr.method = ost
 }
 
-func (hr *standardHeirarchy) GetServiceHdl() anysdk.Service {
+func (hr *standardHeirarchy) GetServiceHdl() formulation.Service {
 	return hr.serviceHdl
 }
 
-func (hr *standardHeirarchy) GetResource() anysdk.Resource {
+func (hr *standardHeirarchy) GetResource() formulation.Resource {
 	return hr.resource
 }
 
-func (hr *standardHeirarchy) GetMethodSet() anysdk.MethodSet {
+func (hr *standardHeirarchy) GetMethodSet() formulation.MethodSet {
 	return hr.methodSet
 }
 
-func (hr *standardHeirarchy) GetMethod() anysdk.StandardOperationStore {
+func (hr *standardHeirarchy) GetMethod() formulation.StandardOperationStore {
 	return hr.method
 }
 

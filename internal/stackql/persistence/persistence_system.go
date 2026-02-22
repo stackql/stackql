@@ -1,14 +1,13 @@
 package persistence
 
 import (
-	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/any-sdk/pkg/name_mangle"
-	"github.com/stackql/any-sdk/public/persistence"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql/internal/stackql/sql_system"
 )
 
 var (
-	_ persistence.PersistenceSystem = &SQLPersistenceSystem{}
+	_ formulation.PersistenceSystem = &SQLPersistenceSystem{}
 )
 
 type SQLPersistenceSystem struct {
@@ -16,7 +15,7 @@ type SQLPersistenceSystem struct {
 	viewNameMangler name_mangle.NameMangler
 }
 
-func NewSQLPersistenceSystem(sqlSystem sql_system.SQLSystem) persistence.PersistenceSystem {
+func NewSQLPersistenceSystem(sqlSystem sql_system.SQLSystem) formulation.PersistenceSystem {
 	return &SQLPersistenceSystem{
 		sqlSystem:       sqlSystem,
 		viewNameMangler: name_mangle.NewViewNameMangler(),
@@ -28,7 +27,7 @@ func (s *SQLPersistenceSystem) GetSystemName() string {
 }
 
 func (s *SQLPersistenceSystem) HandleExternalTables(
-	providerName string, externalTables map[string]anysdk.SQLExternalTable) error {
+	providerName string, externalTables map[string]formulation.SQLExternalTable) error {
 	for _, tbl := range externalTables {
 		err := s.sqlSystem.RegisterExternalTable(
 			providerName,
@@ -41,7 +40,7 @@ func (s *SQLPersistenceSystem) HandleExternalTables(
 	return nil
 }
 
-func (s *SQLPersistenceSystem) HandleViewCollection(viewCollection []anysdk.View) error {
+func (s *SQLPersistenceSystem) HandleViewCollection(viewCollection []formulation.View) error {
 	for i, view := range viewCollection {
 		viewNameNaive := view.GetNameNaive()
 		viewName := s.viewNameMangler.MangleName(viewNameNaive, i)

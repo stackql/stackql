@@ -189,6 +189,9 @@
         "explain select 1 as foo;",
         "explain select name from google.compute.networks where project = 'stackql-demo';",
         "explain select * from aws.ec2.instances where region = 'ap-southeast-2';",
+        "replace /*+ AWAIT */ google.compute.firewalls set data__disabled = 'true' where project = 'mutable-project' and firewall = 'replacable-firewall' returning *;",
+        "select split_part(rings.name, '/', -1) from google.cloudkms.key_rings rings inner join google.cloudkms.crypto_keys keys on keys.keyRingsId = split_part(rings.name, '/', -1) and keys.projectsId = 'testing-project' where rings.projectsId = 'testing-project' and rings.locationsId = 'global' and keys.locationsId = 'global';",
+        "select * from local_openssl.keys.x509 where cert_file = '${workspaceFolder}/test/assets/input/manual_cert.pem';",
       ], 
       "default": "show providers;"
     },

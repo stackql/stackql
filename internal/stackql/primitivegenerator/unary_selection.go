@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/stackql/any-sdk/anysdk"
-	"github.com/stackql/any-sdk/public/radix_tree_address_space"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql/internal/stackql/astvisit"
 	"github.com/stackql/stackql/internal/stackql/docparser"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -25,12 +24,12 @@ func (pb *standardPrimitiveGenerator) assembleUnarySelectionBuilder(
 	node sqlparser.SQLNode,
 	rewrittenWhere *sqlparser.Where,
 	hIDs internaldto.HeirarchyIdentifiers,
-	schema anysdk.Schema,
+	schema formulation.Schema,
 	tbl tablemetadata.ExtendedTableMetadata,
-	selectTabulation anysdk.Tabulation,
-	insertTabulation anysdk.Tabulation,
+	selectTabulation formulation.Tabulation,
+	insertTabulation formulation.Tabulation,
 	cols []parserutil.ColumnHandle,
-	methodAnalysisOutput anysdk.MethodAnalysisOutput,
+	methodAnalysisOutput formulation.MethodAnalysisOutput,
 ) error {
 	inputTableName, err := tbl.GetInputTableName()
 	if err != nil {
@@ -98,7 +97,7 @@ func (pb *standardPrimitiveGenerator) assembleUnarySelectionBuilder(
 			}
 		}
 		selectTabulation.PushBackColumn(
-			anysdk.NewColumnDescriptor(
+			formulation.NewColumnDescriptor(
 				col.Alias,
 				col.Name,
 				col.Qualifier,
@@ -149,7 +148,7 @@ func (pb *standardPrimitiveGenerator) analyzeUnarySelection(
 	rewrittenWhere *sqlparser.Where,
 	tbl tablemetadata.ExtendedTableMetadata,
 	cols []parserutil.ColumnHandle,
-	methodAnalysisOutput anysdk.MethodAnalysisOutput,
+	methodAnalysisOutput formulation.MethodAnalysisOutput,
 ) error {
 	_, err := tbl.GetProvider()
 	if err != nil {
@@ -189,8 +188,8 @@ func (pb *standardPrimitiveGenerator) analyzeUnarySelection(
 		return err
 	}
 	if len(cols) == 0 {
-		addressSpaceFormulator := radix_tree_address_space.NewAddressSpaceFormulator(
-			radix_tree_address_space.NewAddressSpaceGrammar(),
+		addressSpaceFormulator := formulation.NewAddressSpaceFormulator(
+			formulation.NewAddressSpaceGrammar(),
 			prov,
 			svc,
 			resource,
@@ -207,7 +206,7 @@ func (pb *standardPrimitiveGenerator) analyzeUnarySelection(
 			return fmt.Errorf("failed to obtain address space")
 		}
 		inferredRelation, inferredRelationErr := addressSpace.ToRelation(
-			radix_tree_address_space.NewStandardAddressSpaceExpansionConfig(
+			formulation.NewStandardAddressSpaceExpansionConfig(
 				methodAnalysisOutput.IsAwait(),
 				true, // TODO: switch this off at the appropriate time
 				false,
@@ -251,7 +250,7 @@ func (pb *standardPrimitiveGenerator) analyzeUnaryAction(
 	rewrittenWhere *sqlparser.Where,
 	tbl tablemetadata.ExtendedTableMetadata,
 	cols []parserutil.ColumnHandle,
-	methodAnalysisOutput anysdk.MethodAnalysisOutput,
+	methodAnalysisOutput formulation.MethodAnalysisOutput,
 ) error {
 	insertTabulation := methodAnalysisOutput.GetInsertTabulation()
 	selectTabulation := methodAnalysisOutput.GetSelectTabulation()

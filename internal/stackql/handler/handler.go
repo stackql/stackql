@@ -10,14 +10,13 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/any-sdk/pkg/constants"
 	"github.com/stackql/any-sdk/pkg/db/sqlcontrol"
 	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/any-sdk/pkg/jsonpath"
 	"github.com/stackql/any-sdk/pkg/netutils"
 	"github.com/stackql/any-sdk/pkg/nomenclature"
-	sdk_persistence "github.com/stackql/any-sdk/public/persistence"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/any-sdk/public/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/acid/tsm"
 	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
@@ -62,7 +61,7 @@ type HandlerContext interface { //nolint:revive // don't mind stuttering this on
 	GetControlAttributes() sqlcontrol.ControlAttributes
 	GetCurrentProvider() string
 	GetAuthContexts() dto.AuthContexts
-	GetRegistry() anysdk.RegistryAPI
+	GetRegistry() formulation.RegistryAPI
 	GetErrorPresentation() string
 	GetOutfile() io.Writer
 	GetOutErrFile() io.Writer
@@ -70,7 +69,7 @@ type HandlerContext interface { //nolint:revive // don't mind stuttering this on
 	GetSQLDataSource(name string) (sql_datasource.SQLDataSource, bool)
 	GetSQLEngine() sqlengine.SQLEngine
 	GetSQLSystem() sql_system.SQLSystem
-	GetPersistenceSystem() sdk_persistence.PersistenceSystem
+	GetPersistenceSystem() formulation.PersistenceSystem
 	GetGarbageCollector() garbagecollector.GarbageCollector
 	GetDrmConfig() drm.Config
 	SetTxnCounterMgr(txncounter.Manager)
@@ -124,14 +123,14 @@ type standardHandlerContext struct {
 	currentProvider     string
 	authContexts        dto.AuthContexts
 	sqlDataSources      map[string]sql_datasource.SQLDataSource
-	registry            anysdk.RegistryAPI
+	registry            formulation.RegistryAPI
 	errorPresentation   string
 	outfile             io.Writer
 	outErrFile          io.Writer
 	lRUCache            *lrucache.LRUCache
 	sqlEngine           sqlengine.SQLEngine
 	sqlSystem           sql_system.SQLSystem
-	persistenceSystem   sdk_persistence.PersistenceSystem
+	persistenceSystem   formulation.PersistenceSystem
 	garbageCollector    garbagecollector.GarbageCollector
 	drmConfig           drm.Config
 	txnCounterMgr       txncounter.Manager
@@ -219,9 +218,9 @@ func (hc *standardHandlerContext) GetAuthContexts() dto.AuthContexts {
 	return hc.authContexts
 }
 
-func (hc *standardHandlerContext) GetRegistry() anysdk.RegistryAPI { return hc.registry }
-func (hc *standardHandlerContext) GetErrorPresentation() string    { return hc.errorPresentation }
-func (hc *standardHandlerContext) GetOutfile() io.Writer           { return hc.outfile }
+func (hc *standardHandlerContext) GetRegistry() formulation.RegistryAPI { return hc.registry }
+func (hc *standardHandlerContext) GetErrorPresentation() string         { return hc.errorPresentation }
+func (hc *standardHandlerContext) GetOutfile() io.Writer                { return hc.outfile }
 func (hc *standardHandlerContext) GetOutErrFile() io.Writer {
 	defer hc.sessionCtxMutex.Unlock()
 	hc.sessionCtxMutex.Lock()
@@ -235,7 +234,7 @@ func (hc *standardHandlerContext) SetOutErrFile(w io.Writer) {
 func (hc *standardHandlerContext) GetLRUCache() *lrucache.LRUCache    { return hc.lRUCache }
 func (hc *standardHandlerContext) GetSQLEngine() sqlengine.SQLEngine  { return hc.sqlEngine }
 func (hc *standardHandlerContext) GetSQLSystem() sql_system.SQLSystem { return hc.sqlSystem }
-func (hc *standardHandlerContext) GetPersistenceSystem() sdk_persistence.PersistenceSystem {
+func (hc *standardHandlerContext) GetPersistenceSystem() formulation.PersistenceSystem {
 	return hc.persistenceSystem
 }
 func (hc *standardHandlerContext) GetGarbageCollector() garbagecollector.GarbageCollector {
@@ -255,7 +254,7 @@ func (hc *standardHandlerContext) GetPGInternalRouter() dbmsinternal.Router {
 	return hc.pgInternalRouter
 }
 
-func getProviderMap(providerName string, providerDesc anysdk.ProviderDescription) map[string]interface{} {
+func getProviderMap(providerName string, providerDesc formulation.ProviderDescription) map[string]interface{} {
 	latestVersion, err := providerDesc.GetLatestVersion()
 	if err != nil {
 		//nolint:lll // long message
@@ -270,7 +269,7 @@ func getProviderMap(providerName string, providerDesc anysdk.ProviderDescription
 
 func getProviderMapExtended(
 	providerName string,
-	providerDesc anysdk.ProviderDescription,
+	providerDesc formulation.ProviderDescription,
 ) map[string]interface{} {
 	return getProviderMap(providerName, providerDesc)
 }
@@ -504,12 +503,12 @@ func (hc *standardHandlerContext) GetDBMSInternalRouter() dbmsinternal.Router {
 	return hc.pgInternalRouter
 }
 
-func GetRegistry(runtimeCtx dto.RuntimeCtx) (anysdk.RegistryAPI, error) {
+func GetRegistry(runtimeCtx dto.RuntimeCtx) (formulation.RegistryAPI, error) {
 	return getRegistry(runtimeCtx)
 }
 
-func getRegistry(runtimeCtx dto.RuntimeCtx) (anysdk.RegistryAPI, error) {
-	var rc anysdk.RegistryConfig
+func getRegistry(runtimeCtx dto.RuntimeCtx) (formulation.RegistryAPI, error) {
+	var rc formulation.RegistryConfig
 	err := yaml.Unmarshal([]byte(runtimeCtx.RegistryRaw), &rc)
 	if err != nil {
 		return nil, err
@@ -522,7 +521,7 @@ func getRegistry(runtimeCtx dto.RuntimeCtx) (anysdk.RegistryAPI, error) {
 		}
 	}
 	rt := netutils.GetRoundTripper(runtimeCtx, nil)
-	return anysdk.NewRegistry(rc, rt)
+	return formulation.NewRegistry(rc, rt)
 }
 
 func (hc *standardHandlerContext) Clone() HandlerContext {
@@ -654,7 +653,7 @@ func NewHandlerCtx(
 	return &rv, nil
 }
 
-func transformOpenapiStackqlAuthToLocal(authDTO anysdk.AuthDTO) *dto.AuthCtx {
+func transformOpenapiStackqlAuthToLocal(authDTO formulation.AuthDTO) *dto.AuthCtx {
 	rv := &dto.AuthCtx{
 		Scopes:                  authDTO.GetScopes(),
 		Subject:                 authDTO.GetSubject(),

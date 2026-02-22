@@ -3,7 +3,6 @@ package primitivecomposer
 import (
 	"fmt"
 
-	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/any-sdk/public/sqlengine"
 	"github.com/stackql/stackql/internal/stackql/astindirect"
@@ -54,7 +53,7 @@ type PrimitiveComposer interface {
 	GetSymbol(k interface{}) (symtab.Entry, error)
 	GetSymTab() symtab.SymTab
 	GetTable(node sqlparser.SQLNode) (tablemetadata.ExtendedTableMetadata, error)
-	GetTableFilter() func(anysdk.ITable) (anysdk.ITable, error)
+	GetTableFilter() func(formulation.ITable) (formulation.ITable, error)
 	GetTables() taxonomy.TblMap
 	GetTxnCounterManager() txncounter.Manager
 	GetTxnCtrlCtrs() internaldto.TxnControlCounters
@@ -85,7 +84,7 @@ type PrimitiveComposer interface {
 	SetSymTab(symtab.SymTab)
 	MergeSymTab(symtab.SymTab, string) error
 	SetTable(node sqlparser.SQLNode, table tablemetadata.ExtendedTableMetadata)
-	SetTableFilter(tableFilter func(anysdk.ITable) (anysdk.ITable, error))
+	SetTableFilter(tableFilter func(formulation.ITable) (formulation.ITable, error))
 	SetTxnCtrlCtrs(tc internaldto.TxnControlCounters)
 	SetUnionSelectPreparedStatementCtx(ctx drm.PreparedStatementCtx)
 	SetValOnlyCols(m map[int]map[string]interface{})
@@ -116,7 +115,7 @@ type standardPrimitiveComposer struct {
 
 	// needed globally for non-heirarchy queries, such as "SHOW SERVICES FROM google;"
 	prov            provider.IProvider
-	tableFilter     func(anysdk.ITable) (anysdk.ITable, error)
+	tableFilter     func(formulation.ITable) (formulation.ITable, error)
 	colsVisited     map[string]bool
 	likeAbleColumns []string
 
@@ -441,12 +440,12 @@ func (pb *standardPrimitiveComposer) SetColVisited(colname string, isVisited boo
 	pb.colsVisited[colname] = isVisited
 }
 
-func (pb *standardPrimitiveComposer) GetTableFilter() func(anysdk.ITable) (anysdk.ITable, error) {
+func (pb *standardPrimitiveComposer) GetTableFilter() func(formulation.ITable) (formulation.ITable, error) {
 	return pb.tableFilter
 }
 
 func (pb *standardPrimitiveComposer) SetTableFilter(
-	tableFilter func(anysdk.ITable) (anysdk.ITable, error)) {
+	tableFilter func(formulation.ITable) (formulation.ITable, error)) {
 	pb.tableFilter = tableFilter
 }
 

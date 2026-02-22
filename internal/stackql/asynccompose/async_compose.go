@@ -1,7 +1,7 @@
 package asynccompose
 
 import (
-	"github.com/stackql/any-sdk/anysdk"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -14,7 +14,7 @@ func ComposeAsyncMonitor(
 	handlerCtx handler.HandlerContext,
 	precursor primitive.IPrimitive,
 	prov provider.IProvider,
-	method anysdk.OperationStore,
+	method formulation.OperationStore,
 	commentDirectives sqlparser.CommentDirectives,
 	isReturning bool,
 	insertCtx drm.PreparedStatementCtx,

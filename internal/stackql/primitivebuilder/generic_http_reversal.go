@@ -3,7 +3,7 @@ package primitivebuilder
 import (
 	"fmt"
 
-	"github.com/stackql/any-sdk/anysdk"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
 	"github.com/stackql/stackql/internal/stackql/asynccompose"
@@ -24,14 +24,14 @@ type genericHTTPReversal struct {
 	drmCfg            drm.Config
 	insertCtx         drm.PreparedStatementCtx
 	root              primitivegraph.PrimitiveNode
-	op                anysdk.OperationStore
+	op                formulation.OperationStore
 	commentDirectives sqlparser.CommentDirectives
 	isAwait           bool
 	isReturning       bool
 	verb              string // may be "insert" or "update"
 	inputAlias        string
 	isUndo            bool
-	reversalStream    anysdk.HttpPreparatorStream
+	reversalStream    formulation.HttpPreparatorStream
 	prov              provider.IProvider
 }
 
@@ -134,7 +134,7 @@ func (gh *genericHTTPReversal) Build() error {
 				break
 			}
 			httpArmoury, httpErr := httpPreparator.BuildHTTPRequestCtx(
-				anysdk.NewHTTPPreparatorConfig(false),
+				formulation.NewHTTPPreparatorConfig(false),
 			)
 			if httpErr != nil {
 				return internaldto.NewErroneousExecutorOutput(httpErr)

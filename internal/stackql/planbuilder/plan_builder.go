@@ -7,10 +7,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/stackql/any-sdk/anysdk"
-
 	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/any-sdk/pkg/streaming"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/routeanalysis"
 	"github.com/stackql/stackql/internal/stackql/drm"
@@ -714,7 +713,7 @@ func (pgb *standardPlanGraphBuilder) handleRegistry(pbi planbuilderinput.PlanBui
 				return pgb.handleRegistryPull(reg, node, pbi)
 			case "list":
 				var colz []string
-				var provz map[string]anysdk.ProviderDescription
+				var provz map[string]formulation.ProviderDescription
 				keys := make(map[string]map[string]interface{})
 				if node.ProviderId == "" {
 					provz, err = reg.ListAllAvailableProviders()
@@ -729,7 +728,7 @@ func (pgb *standardPlanGraphBuilder) handleRegistry(pbi planbuilderinput.PlanBui
 					sort.Strings(dks)
 					for i, k := range dks {
 						v := provz[k]
-						for _, ver := range v.Versions {
+						for _, ver := range v.Versions() {
 							keys[strconv.Itoa(i)] = map[string]interface{}{
 								"provider": k,
 								"version":  ver,
@@ -746,7 +745,7 @@ func (pgb *standardPlanGraphBuilder) handleRegistry(pbi planbuilderinput.PlanBui
 					for k, v := range provz {
 						keys[strconv.Itoa(i)] = map[string]interface{}{
 							"provider": k,
-							"versions": strings.Join(v.Versions, ", "),
+							"versions": strings.Join(v.Versions(), ", "),
 						}
 						i++
 					}
@@ -766,7 +765,7 @@ func (pgb *standardPlanGraphBuilder) handleRegistry(pbi planbuilderinput.PlanBui
 
 // handleRegistryPull is a helper function that pulls a provider version from the registry and persists it locally.
 func (pgb *standardPlanGraphBuilder) handleRegistryPull(
-	reg anysdk.RegistryAPI,
+	reg formulation.RegistryAPI,
 	node *sqlparser.Registry,
 	pbi planbuilderinput.PlanBuilderInput,
 ) internaldto.ExecutorOutput {
@@ -787,7 +786,7 @@ func (pgb *standardPlanGraphBuilder) handleRegistryPull(
 	}
 	if providerDesc, exists := localProviders[providerID]; exists {
 		// Remove all existing versions
-		for _, version := range providerDesc.Versions {
+		for _, version := range providerDesc.Versions() {
 			if err = reg.RemoveProviderVersion(providerID, version); err != nil {
 				return internaldto.NewErroneousExecutorOutput(err)
 			}
@@ -1096,7 +1095,9 @@ func (pgb *standardPlanGraphBuilder) handleMutationOperation(
 			newBldrInput.SetDependencyNode(selectPrimitiveNode)
 			newBldrInput.SetIsAwait(isAwait)
 			rhsBldr := primitivebuilder.NewSingleSelect(
-				pgb.planGraphHolder, handlerCtx, primitiveGenerator.GetPrimitiveComposer().GetSelectPreparedStatementCtx(),
+				pgb.planGraphHolder,
+				handlerCtx,
+				primitiveGenerator.GetPrimitiveComposer().GetSelectPreparedStatementCtx(),
 				[]tableinsertioncontainer.TableInsertionContainer{rc},
 				nil,
 				streaming.NewNopMapStream(),

@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/stackql/any-sdk/anysdk"
+	"github.com/stackql/any-sdk/public/formulation"
+
 	"github.com/stackql/any-sdk/pkg/graphql"
 	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/any-sdk/pkg/streaming"
@@ -102,7 +103,7 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 		for _, reqCtx := range httpArmoury.GetRequestParams() {
 			req := reqCtx.GetRequest()
 			housekeepingDone := false
-			cc := anysdk.NewAnySdkClientConfigurator(
+			cc := formulation.NewAnySdkClientConfigurator(
 				ss.handlerCtx.GetRuntimeContext(), prov.GetProviderString(),
 				prov.GetDefaultHTTPClient())
 			client, err := cc.Auth(authCtx, authCtx.Type, false)

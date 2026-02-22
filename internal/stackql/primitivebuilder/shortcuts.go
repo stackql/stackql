@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/stackql/any-sdk/anysdk"
 	"github.com/stackql/any-sdk/pkg/constants"
 	"github.com/stackql/any-sdk/pkg/logging"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
@@ -102,22 +102,22 @@ func NewShowInstructionExecutor(
 	tbl tablemetadata.ExtendedTableMetadata,
 	handlerCtx handler.HandlerContext,
 	commentDirectives sqlparser.CommentDirectives,
-	tableFilter func(anysdk.ITable,
-	) (anysdk.ITable, error),
+	tableFilter func(formulation.ITable,
+	) (formulation.ITable, error),
 ) internaldto.ExecutorOutput {
 	extended := strings.TrimSpace(strings.ToUpper(node.Extended)) == "EXTENDED"
 	nodeTypeUpperCase := strings.ToUpper(node.Type)
 	var keys map[string]map[string]interface{}
 	var columnOrder []string
 	var err error
-	var filter func(interface{}) (anysdk.ITable, error)
+	var filter func(interface{}) (formulation.ITable, error)
 	logging.GetLogger().Infoln(fmt.Sprintf("filter type = %T", filter))
 	switch nodeTypeUpperCase {
 	case "AUTH":
 		logging.GetLogger().Infoln(fmt.Sprintf("Show For node.Type = '%s'", node.Type))
 		authCtx, authErr := handlerCtx.GetAuthContext(prov.GetProviderString())
 		if authErr == nil {
-			var authMeta *anysdk.AuthMetadata
+			var authMeta *formulation.AuthMetadata
 			authMeta, err = prov.ShowAuth(authCtx)
 			if err == nil {
 				keys = map[string]map[string]interface{}{
@@ -177,7 +177,7 @@ func NewShowInstructionExecutor(
 			},
 		}
 	case "METHODS":
-		var rsc anysdk.Resource
+		var rsc formulation.Resource
 		rsc, err = prov.GetResource(
 			node.OnTable.Qualifier.GetRawVal(),
 			node.OnTable.Name.GetRawVal(),
@@ -187,7 +187,7 @@ func NewShowInstructionExecutor(
 				handlerCtx.GetTypingConfig()))
 		}
 		methods := rsc.GetMethodsMatched()
-		var filter func(anysdk.ITable) (anysdk.ITable, error)
+		var filter func(formulation.ITable) (formulation.ITable, error)
 		if tbl == nil {
 			logging.GetLogger().Infoln(
 				"table and therefore filter not found for AST, shall procede nil filter")
@@ -237,14 +237,14 @@ func NewShowInstructionExecutor(
 				handlerCtx.GetTypingConfig(),
 			)
 		}
-		var resources map[string]anysdk.Resource
+		var resources map[string]formulation.Resource
 		resources, err = prov.GetResourcesRedacted(svcName, handlerCtx.GetRuntimeContext(), extended)
 		if err != nil {
 			return prepareErroneousResultSet(keys, columnOrder, err,
 				handlerCtx.GetTypingConfig())
 		}
-		columnOrder = anysdk.GetResourcesHeader(extended)
-		var filter func(anysdk.ITable) (anysdk.ITable, error)
+		columnOrder = formulation.GetResourcesHeader(extended)
+		var filter func(formulation.ITable) (formulation.ITable, error)
 		filter = tableFilter
 		resources, err = filterResources(resources, filter)
 		if err != nil {
@@ -264,14 +264,14 @@ func NewShowInstructionExecutor(
 				prov.GetProviderString(),
 			),
 		)
-		var services map[string]anysdk.ProviderService
+		var services map[string]formulation.ProviderService
 		services, err = prov.GetProviderServicesRedacted(handlerCtx.GetRuntimeContext(), extended)
 		if err != nil {
 			return prepareErroneousResultSet(keys, columnOrder, err,
 				handlerCtx.GetTypingConfig(),
 			)
 		}
-		columnOrder = anysdk.GetServicesHeader(extended)
+		columnOrder = formulation.GetServicesHeader(extended)
 		services, err = filterServices(services, tableFilter, handlerCtx.GetRuntimeContext().UseNonPreferredAPIs)
 		if err != nil {
 			return prepareErroneousResultSet(keys, columnOrder, err,
@@ -285,16 +285,16 @@ func NewShowInstructionExecutor(
 
 //nolint:errcheck // future proofing
 func filterResources(
-	resources map[string]anysdk.Resource,
-	tableFilter func(anysdk.ITable) (anysdk.ITable, error),
-) (map[string]anysdk.Resource, error) {
+	resources map[string]formulation.Resource,
+	tableFilter func(formulation.ITable) (formulation.ITable, error),
+) (map[string]formulation.Resource, error) {
 	var err error
 	if tableFilter != nil {
-		filteredResources := make(map[string]anysdk.Resource)
+		filteredResources := make(map[string]formulation.Resource)
 		for k, rsc := range resources {
 			filteredResource, filterErr := tableFilter(rsc)
 			if filterErr == nil && filteredResource != nil {
-				filteredResources[k] = filteredResource.(anysdk.Resource)
+				filteredResources[k] = filteredResource.(formulation.Resource)
 			}
 			if filterErr != nil {
 				err = filterErr
@@ -305,7 +305,7 @@ func filterResources(
 	return resources, err
 }
 
-func getProviderServiceMap(item anysdk.ProviderService, extended bool) map[string]interface{} {
+func getProviderServiceMap(item formulation.ProviderService, extended bool) map[string]interface{} {
 	retVal := map[string]interface{}{
 		"id":    item.GetID(),
 		"name":  item.GetName(),
@@ -319,7 +319,7 @@ func getProviderServiceMap(item anysdk.ProviderService, extended bool) map[strin
 }
 
 func convertProviderServicesToMap(
-	services map[string]anysdk.ProviderService,
+	services map[string]formulation.ProviderService,
 	extended bool,
 ) map[string]map[string]interface{} {
 	retVal := make(map[string]map[string]interface{})
@@ -331,19 +331,19 @@ func convertProviderServicesToMap(
 
 //nolint:errcheck // future proofing
 func filterServices(
-	services map[string]anysdk.ProviderService,
-	tableFilter func(anysdk.ITable) (anysdk.ITable, error),
+	services map[string]formulation.ProviderService,
+	tableFilter func(formulation.ITable) (formulation.ITable, error),
 	useNonPreferredAPIs bool,
-) (map[string]anysdk.ProviderService, error) {
+) (map[string]formulation.ProviderService, error) {
 	var err error
 	//nolint:nestif // TODO: refactor
 	if tableFilter != nil {
-		filteredServices := make(map[string]anysdk.ProviderService)
+		filteredServices := make(map[string]formulation.ProviderService)
 		for k, svc := range services {
 			if useNonPreferredAPIs || svc.IsPreferred() {
 				filteredService, filterErr := tableFilter(svc)
 				if filterErr == nil && filteredService != nil {
-					filteredServices[k] = (filteredService.(anysdk.ProviderService))
+					filteredServices[k] = (filteredService.(formulation.ProviderService))
 				}
 				if filterErr != nil {
 					err = filterErr
@@ -356,17 +356,19 @@ func filterServices(
 }
 
 func filterMethods(
-	methods anysdk.Methods,
-	tableFilter func(anysdk.ITable) (anysdk.ITable, error),
-) (anysdk.Methods, error) {
+	methods formulation.Methods,
+	tableFilter func(formulation.ITable) (formulation.ITable, error),
+) (formulation.Methods, error) {
 	var err error
 	if tableFilter != nil {
-		filteredMethods := make(anysdk.Methods)
-		for k, m := range methods {
-			pm := m
-			filteredMethod, filterErr := tableFilter(&pm)
+		filteredMethods := formulation.EmptyMethods()
+		for _, m := range methods.List() {
+			k := m.GetKey()
+			pm := m.GetValue()
+			filteredMethod, filterErr := tableFilter(pm)
 			if filterErr == nil && filteredMethod != nil {
-				filteredMethods[k] = pm
+				//nolint:errcheck // letting it go for now, but should be addressed
+				filteredMethods.Put(k, pm)
 			}
 			if filterErr != nil {
 				err = filterErr
@@ -406,7 +408,7 @@ func NewDescribeTableInstructionExecutor(
 	if err != nil {
 		return internaldto.NewErroneousExecutorOutput(err)
 	}
-	columnOrder := anysdk.GetDescribeHeader(extended)
+	columnOrder := formulation.GetDescribeHeader(extended)
 	descriptionMap := schema.ToDescriptionMap(extended)
 	keys := make(map[string]map[string]interface{})
 	for k, v := range descriptionMap {
@@ -436,7 +438,7 @@ func NewDescribeViewInstructionExecutor(
 	extended bool,
 	full bool,
 ) internaldto.ExecutorOutput {
-	columnOrder := anysdk.GetDescribeHeader(extended)
+	columnOrder := formulation.GetDescribeHeader(extended)
 	descriptionMap := columnsToFlatDescriptionMap(nonControlColumns, extended)
 	keys := make(map[string]map[string]interface{})
 	for k, v := range descriptionMap {

@@ -5,7 +5,7 @@ import (
 
 	"github.com/stackql/any-sdk/pkg/db/sqlcontrol"
 	"github.com/stackql/any-sdk/pkg/dto"
-	sdk_persistence "github.com/stackql/any-sdk/public/persistence"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/any-sdk/public/sqlengine"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
@@ -28,7 +28,7 @@ type Bundle interface {
 	GetDBMSInternalRouter() dbmsinternal.Router
 	GetSQLDataSources() map[string]sql_datasource.SQLDataSource
 	GetSQLSystem() sql_system.SQLSystem
-	GetPersistenceSystem() sdk_persistence.PersistenceSystem
+	GetPersistenceSystem() formulation.PersistenceSystem
 	GetSQLEngine() sqlengine.SQLEngine
 	GetTxnCounterManager() txncounter.Manager
 	GetTxnStore() kstore.KStore
@@ -81,7 +81,7 @@ type simpleBundle struct {
 	namespaces             tablenamespace.Collection
 	sqlEngine              sqlengine.SQLEngine
 	sqlSystem              sql_system.SQLSystem
-	persistenceSystem      sdk_persistence.PersistenceSystem
+	persistenceSystem      formulation.PersistenceSystem
 	txnStore               kstore.KStore
 	txnCtrMgr              txncounter.Manager
 	typCfg                 typing.Config
@@ -125,7 +125,7 @@ func (sb *simpleBundle) GetSQLDataSources() map[string]sql_datasource.SQLDataSou
 	return sb.sqlDataSources
 }
 
-func (sb *simpleBundle) GetPersistenceSystem() sdk_persistence.PersistenceSystem {
+func (sb *simpleBundle) GetPersistenceSystem() formulation.PersistenceSystem {
 	return sb.persistenceSystem
 }
 
