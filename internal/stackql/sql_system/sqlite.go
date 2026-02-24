@@ -1178,6 +1178,9 @@ func (eng *sqLiteSystem) render(alias string, aliasToCountersMap map[string][]in
 		iIDcn := fmt.Sprintf(`"%s"`, insIDColName)
 		controls = append(controls, fmt.Sprintf(`( %s = ? AND %s = ? AND %s = ? AND %s = ? )`, gIDcn, sIDcn, tIDcn, iIDcn))
 	}
+	if len(controls) == 0 {
+		return "1 = 1"
+	}
 	return fmt.Sprintf(`( %s )`, strings.Join(controls, " OR "))
 }
 

@@ -9278,3 +9278,61 @@ Materialized View of Filtered Multi Level Table Valued Function In Subquery Retu
     ...    ${outputStr}
     ...    stdout=${CURDIR}/tmp/Materialized-View-of-Filtered-Multi-Level-Table-Valued-Function-In-Subquery-Returns-Expected-Results.tmp
     ...    stderr=${CURDIR}/tmp/Materialized-View-of-Filtered-Multi-Level-Table-Valued-Function-In-Subquery-Returns-Expected-Results-stderr.tmp
+
+Left Outer Join Negative LHS Inline
+    ${inputStr} =    Catenate
+    ...    select lhs.id, lhs.secondary_field, rhs.volume_id 
+    ...    from 
+    ...    (select 'my-id' as id, 'some other field' as secondary_field) lhs 
+    ...    left outer join 
+    ...    (select volume_id from aws.ec2.volumes_presented where region = 'ap-southeast-2') rhs 
+    ...    on lhs.id = rhs.volume_id 
+    ...    where volume_id is null
+    ...    ;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-------|------------------|-----------|
+    ...    |${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}|${SPACE}secondary_field${SPACE}${SPACE}|${SPACE}volume_id${SPACE}|
+    ...    |-------|------------------|-----------|
+    ...    |${SPACE}my-id${SPACE}|${SPACE}some${SPACE}other${SPACE}field${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------|------------------|-----------|
+    Should Stackql Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    stdout=${CURDIR}/tmp/Left-Outer-Join-Negative-LHS-Inline.tmp
+    ...    stderr=${CURDIR}/tmp/Left-Outer-Join-Negative-LHS-Inline-stderr.tmp
+
+Left Outer Join Positive LHS Inline
+    ${inputStr} =    Catenate
+    ...    select lhs.id, lhs.secondary_field, rhs.volume_id 
+    ...    from 
+    ...    (select 'vol-00200000000000000' as id, 'some other field' as secondary_field) lhs 
+    ...    left outer join 
+    ...    (select volume_id from aws.ec2.volumes_presented where region = 'ap-southeast-2') rhs 
+    ...    on lhs.id = rhs.volume_id 
+    ...    where volume_id is not null
+    ...    ;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-----------------------|------------------|-----------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}secondary_field${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}volume_id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------|------------------|-----------------------|
+    ...    |${SPACE}vol-00200000000000000${SPACE}|${SPACE}some${SPACE}other${SPACE}field${SPACE}|${SPACE}vol-00200000000000000${SPACE}|
+    ...    |-----------------------|------------------|-----------------------|
+    Should Stackql Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    stdout=${CURDIR}/tmp/Left-Outer-Join-Positive-LHS-Inline.tmp
+    ...    stderr=${CURDIR}/tmp/Left-Outer-Join-Positive-LHS-Inline-stderr.tmp

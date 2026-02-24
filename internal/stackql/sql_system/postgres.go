@@ -1052,6 +1052,9 @@ func (eng *postgresSystem) render(alias string,
 		controls = append(controls, fmt.Sprintf(`%s = $%d AND %s = $%d AND %s = $%d AND %s = $%d`, gIDcn, j+1, sIDcn, j+2, tIDcn, j+3, iIDcn, j+4)) //nolint:mnd // the magic numbers are offsets
 		j += constants.ControlColumnCount
 	}
+	if len(controls) == 0 {
+		return "1 = 1"
+	}
 	return fmt.Sprintf(`( %s )`, strings.Join(controls, " OR "))
 }
 
