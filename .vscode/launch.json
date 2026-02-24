@@ -192,6 +192,7 @@
         "replace /*+ AWAIT */ google.compute.firewalls set data__disabled = 'true' where project = 'mutable-project' and firewall = 'replacable-firewall' returning *;",
         "select split_part(rings.name, '/', -1) from google.cloudkms.key_rings rings inner join google.cloudkms.crypto_keys keys on keys.keyRingsId = split_part(rings.name, '/', -1) and keys.projectsId = 'testing-project' where rings.projectsId = 'testing-project' and rings.locationsId = 'global' and keys.locationsId = 'global';",
         "select * from local_openssl.keys.x509 where cert_file = '${workspaceFolder}/test/assets/input/manual_cert.pem';",
+        "select t1.id as t1_id, t2.id as t2_id from (select 'my-id' as id) t1 left outer join (select a.vpcId id from aws.ec2_native.vpcs a where region = 'ap-southeast-2') t2 on t1.id = t2.id;",
       ], 
       "default": "show providers;"
     },
@@ -214,7 +215,7 @@
         "{ \"url\": \"file://${workspaceFolder}/test/registry-mocked\", \"localDocRoot\": \"${workspaceFolder}/test/registry-mocked\", \"verifyConfig\": { \"nopVerify\": true } }",
         "{ \"url\": \"file://${workspaceFolder}/test/registry-mocked-native\", \"localDocRoot\": \"${workspaceFolder}/test/registry-mocked-native\", \"verifyConfig\": { \"nopVerify\": true } }",
         "{ \"url\": \"file://${workspaceFolder}/test/registry-advanced\", \"localDocRoot\": \"${workspaceFolder}/test/registry-advanced\", \"verifyConfig\": { \"nopVerify\": true } }",
-        "{ \"url\": \"file://${workspaceFolder}/build/.stackql\", \"localDocRoot\": \"${workspaceFolder}/build/.stackql\", \"verifyConfig\": { \"nopVerify\": true } }",
+        "{ \"url\": \"file://${workspaceFolder}/.stackql\", \"localDocRoot\": \"${workspaceFolder}/.stackql\", \"verifyConfig\": { \"nopVerify\": true } }",
         "{ \"url\": \"file://${workspaceFolder}/docs/examples/empty-registry\", \"localDocRoot\": \"${workspaceFolder}/docs/examples/empty-registry\" }",
         "{ \"url\": \"https://cdn.statically.io/gh/stackql/stackql-provider-registry/main/providers\", \"localDocRoot\": \"${workspaceFolder}/test/registry\" }",
         "{ \"url\": \"https://cdn.statically.io/gh/stackql/stackql-provider-registry/dev/providers\" }",

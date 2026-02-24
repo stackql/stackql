@@ -204,10 +204,6 @@ func (v *indirectExpandAstVisitor) processIndirect(node sqlparser.SQLNode, indir
 	if createBuilderExists {
 		v.createBuilder = append(v.createBuilder, createBuilder...)
 	}
-	// createBuilder, createBuilderExists := childAnalyzer.GetIndirectCreateTail()
-	// if createBuilderExists {
-	// 	v.createBuilder = createBuilder
-	// }
 	return nil
 }
 
