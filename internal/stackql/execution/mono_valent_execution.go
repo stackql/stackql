@@ -23,6 +23,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/builder_input"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
@@ -84,6 +85,7 @@ type monoValentExecution struct {
 	isMutation                 bool
 	isAwait                    bool
 	defaultHTTPClient          *http.Client // for testing purposes only
+	bldrInput                  builder_input.BuilderInput
 }
 
 func NewMonoValentExecutorFactory(
@@ -97,6 +99,7 @@ func NewMonoValentExecutorFactory(
 	isSkipResponse bool,
 	isMutation bool,
 	isAwait bool,
+	bldrInput builder_input.BuilderInput,
 ) MonoValentExecutorFactory {
 	var tcc internaldto.TxnControlCounters
 	if insertCtx != nil {
@@ -127,6 +130,7 @@ func NewMonoValentExecutorFactory(
 		isAwait:                    isAwait,
 		defaultHTTPClient:          defaultHTTPClient,
 		invoker:                    anysdkhttp.New(),
+		bldrInput:                  bldrInput,
 	}
 }
 
@@ -1257,6 +1261,59 @@ func (sp *standardProcessor) Process() processorResponse {
 	return newHTTPProcessorResponse(nil, reversalStream, false, nil)
 }
 
+var (
+	_ formulation.BaseArmouryGenerator = (*reconsititutedarmouryGenerator)(nil)
+)
+
+type rawTransformer struct {
+	node              sqlparser.SQLNode
+	insertValOnlyRows map[int]map[int]interface{}
+}
+
+func (rt *rawTransformer) Transform() (map[int]map[string]interface{}, error) {
+	return util.ExtractSQLNodeParams(rt.node, rt.insertValOnlyRows)
+}
+
+func newRawTransformer(
+	node sqlparser.SQLNode,
+	insertValOnlyRows map[int]map[int]interface{},
+) *rawTransformer {
+	return &rawTransformer{
+		node:              node,
+		insertValOnlyRows: insertValOnlyRows,
+	}
+}
+
+type reconsititutedarmouryGenerator struct {
+	prior         formulation.BaseArmouryGenerator
+	updatedParams map[int]map[string]any
+}
+
+func newUpdatedArmouryGenerator(
+	prior formulation.BaseArmouryGenerator,
+	updatedParams map[int]map[string]any,
+) formulation.BaseArmouryGenerator {
+	return &reconsititutedarmouryGenerator{
+		prior:         prior,
+		updatedParams: updatedParams,
+	}
+}
+
+func (r *reconsititutedarmouryGenerator) GetHTTPArmoury() (formulation.HTTPArmoury, error) {
+	if len(r.updatedParams) == 0 {
+		return r.prior.GetHTTPArmoury()
+	}
+	armoury, err := r.prior.GetHTTPArmoury()
+	if err != nil {
+		return nil, err
+	}
+	updatedArmoury, err := armoury.MergeLateBindingMaps(r.updatedParams)
+	if err != nil {
+		return nil, err
+	}
+	return updatedArmoury, nil
+}
+
 //nolint:revive,nestif,funlen,gocognit // TODO: investigate
 func (mv *monoValentExecution) GetExecutor() (func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput, error) {
 	prov, err := mv.tableMeta.GetProvider()
@@ -1280,6 +1337,62 @@ func (mv *monoValentExecution) GetExecutor() (func(pc primitive.IPrimitiveCtx) i
 		return nil, authCtxErr
 	}
 	ex := func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+		requiredDepedencyKey, requiredKeyExists := mv.bldrInput.GetRequiredDataRequestKey()
+		// lateBindingData := map[int]map[string]any{}
+
+		rawData := map[int]map[int]any{}
+		if requiredKeyExists {
+			dataRequest, isRequestExist := mv.graphHolder.GetExecutorOutput(requiredDepedencyKey)
+			if !isRequestExist {
+				return internaldto.NewErroneousExecutorOutput(fmt.Errorf("required data request not found"))
+			}
+			requiredData := dataRequest.GetRawResult()
+			if requiredData == nil {
+				return internaldto.NewErroneousExecutorOutput(fmt.Errorf("nil required data"))
+			}
+			rowCount := 0
+			for res, err := requiredData.Read(); res != nil; {
+				rows, rowErr := res.GetMap()
+				if rowErr != nil {
+					return internaldto.NewErroneousExecutorOutput(fmt.Errorf("error reading required data: %w", rowErr))
+				}
+				for k, r := range rows {
+					rawData[k] = r
+					rowCount++
+				}
+				logging.GetLogger().Infoln(fmt.Sprintf("read %d rows for required data with key '%s'", len(rows), requiredDepedencyKey))
+				if err != nil {
+					if err == io.EOF {
+						break
+					}
+					return internaldto.NewErroneousExecutorOutput(fmt.Errorf("error reading required data: %w", err))
+				}
+				break // yes weird, the api should change
+			}
+			if rowCount == 0 {
+				return internaldto.NewNopEmptyExecutorOutput([]string{"operation skipped due to nil data"})
+			}
+			logging.GetLogger().Infoln(fmt.Sprintf("required data for key '%s' = %v", requiredDepedencyKey, rawData))
+		}
+
+		lateBindingData := map[int]map[string]any{}
+		var lateBindingErr error
+		if len(rawData) > 0 {
+			parserNode, _ := mv.bldrInput.GetParserNode()
+			transformer := newRawTransformer(
+				parserNode,
+				rawData,
+			)
+			lateBindingData, lateBindingErr = transformer.Transform()
+			if lateBindingErr != nil {
+				return internaldto.NewErroneousExecutorOutput(fmt.Errorf("error transforming required data: %w", lateBindingErr))
+			}
+			logging.GetLogger().Infoln(fmt.Sprintf("late binding data = %v", lateBindingData))
+		}
+		armouryGenerator := newUpdatedArmouryGenerator(
+			mv.tableMeta,
+			lateBindingData,
+		)
 		currentTcc := mv.insertPreparedStatementCtx.GetGCCtrlCtrs().Clone()
 		mv.graphHolder.AddTxnControlCounters(currentTcc)
 		mr := prov.InferMaxResultsElement(m)
@@ -1302,7 +1415,7 @@ func (mv *monoValentExecution) GetExecutor() (func(pc primitive.IPrimitiveCtx) i
 				inlines[1:],
 				nil,
 			)
-			armoury, armouryErr := mv.tableMeta.GetHTTPArmoury()
+			armoury, armouryErr := armouryGenerator.GetHTTPArmoury()
 			if armouryErr != nil {
 				return internaldto.NewErroneousExecutorOutput(armouryErr)
 			}
@@ -1402,7 +1515,7 @@ func (mv *monoValentExecution) GetExecutor() (func(pc primitive.IPrimitiveCtx) i
 		case client.HTTP:
 			invRes, invErr := mv.invoker.Invoke(context.Background(), providerinvoker.Request{
 				Payload: formulation.NewPayload(
-					mv.tableMeta,
+					armouryGenerator,
 					provider,
 					m,
 					tableName,

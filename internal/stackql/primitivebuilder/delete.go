@@ -7,6 +7,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/execution"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/builder_input"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/primitive_context"
 	"github.com/stackql/stackql/internal/stackql/primitive"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
@@ -26,6 +27,7 @@ type Delete struct {
 	isAwait           bool
 	insertCtx         drm.PreparedStatementCtx
 	selectCtx         drm.PreparedStatementCtx
+	bldrInput         builder_input.BuilderInput
 }
 
 func NewDelete(
@@ -37,11 +39,13 @@ func NewDelete(
 	tbl tablemetadata.ExtendedTableMetadata,
 	commentDirectives sqlparser.CommentDirectives,
 	isAwait bool,
+	bldrInput builder_input.BuilderInput,
 ) Builder {
 	return &Delete{
 		graph:             graph,
 		handlerCtx:        handlerCtx,
 		drmCfg:            handlerCtx.GetDrmConfig(),
+		bldrInput:         bldrInput,
 		tbl:               tbl,
 		node:              node,
 		commentDirectives: commentDirectives,
@@ -86,6 +90,7 @@ func (ss *Delete) Build() error {
 		!ss.isAwait,
 		true,
 		ss.isAwait,
+		ss.bldrInput,
 	)
 	ex, exErr := mvb.GetExecutor()
 	if exErr != nil {

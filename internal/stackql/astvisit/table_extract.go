@@ -138,6 +138,7 @@ func (v *standardParserTableExtractAstVisitor) Visit(node sqlparser.SQLNode) err
 		return node.Table.Accept(v)
 
 	case *sqlparser.Insert:
+		return v.Visit(node.Rows)
 
 	case *sqlparser.Update:
 

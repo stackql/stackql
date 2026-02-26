@@ -267,6 +267,9 @@ func ExtractSelectValColumns(selStmt *sqlparser.Select) (map[int]map[string]inte
 	cols := make(map[int]map[string]interface{})
 	var nonValCount int
 	fromIsNull := isNullFromClause(selStmt.From)
+	if selStmt.Where != nil {
+		return cols, len(selStmt.SelectExprs)
+	}
 	for idx, node := range selStmt.SelectExprs {
 		switch node := node.(type) {
 		case *sqlparser.AliasedExpr:

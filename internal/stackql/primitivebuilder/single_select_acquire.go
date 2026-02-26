@@ -4,6 +4,7 @@ import (
 	"github.com/stackql/any-sdk/pkg/streaming"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/builder_input"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
 	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
 )
@@ -15,8 +16,9 @@ func NewSingleSelectAcquire(
 	insertCtx drm.PreparedStatementCtx,
 	rowSort func(map[string]map[string]interface{}) []string,
 	stream streaming.MapStream,
-	isAwait bool,
+	bldrInput builder_input.BuilderInput,
 ) Builder {
+	isAwait := bldrInput.IsAwait()
 	tableMeta := insertionContainer.GetTableMetadata()
 	_, isGraphQL := tableMeta.GetGraphQL()
 	if isGraphQL {
@@ -28,6 +30,7 @@ func NewSingleSelectAcquire(
 			insertionContainer,
 			rowSort,
 			stream,
+			bldrInput,
 		)
 	}
 	return newMonoValentBuilder(
@@ -41,5 +44,6 @@ func NewSingleSelectAcquire(
 		false,
 		false,
 		isAwait,
+		bldrInput,
 	)
 }

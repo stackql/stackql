@@ -175,6 +175,7 @@ func (v *standardParserTableAliasPairingAstVisitor) Visit(node sqlparser.SQLNode
 		return node.Table.Accept(v)
 
 	case *sqlparser.Insert:
+		return v.Visit(node.Rows)
 
 	case *sqlparser.Update:
 
