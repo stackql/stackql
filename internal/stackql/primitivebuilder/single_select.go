@@ -79,7 +79,10 @@ func (ss *SingleSelect) Build() error {
 			ss.selectPreparedStatementCtx.GetNonControlColumns(),
 			ss.handlerCtx.GetTypingConfig(),
 		)
-		return outputter.OutputExecutorResult()
+		// TODO: consider deep copy for output and hnadle errors
+		rv := outputter.OutputExecutorResult()
+		_ = ss.graph.SetExecutorOutput("select", rv)
+		return rv
 	}
 	graph := ss.graph
 	selectNode := graph.CreatePrimitiveNode(primitive.NewLocalPrimitive(selectEx))

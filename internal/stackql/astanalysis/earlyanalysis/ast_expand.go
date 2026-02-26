@@ -334,6 +334,10 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 		if err != nil {
 			return err
 		}
+		err = node.Rows.Accept(v)
+		if err != nil {
+			return err
+		}
 
 	case *sqlparser.Update:
 		v.mutateCount++

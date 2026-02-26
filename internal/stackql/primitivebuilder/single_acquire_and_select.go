@@ -39,7 +39,7 @@ func NewSingleAcquireAndSelect(
 			insertCtx,
 			rowSort,
 			nil,
-			bldrInput.IsAwait(),
+			bldrInput,
 		),
 		selectBuilder: NewSingleSelect(
 			graph, handlerCtx, selectCtx,

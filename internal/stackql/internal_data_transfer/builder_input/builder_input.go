@@ -41,6 +41,8 @@ type BuilderInput interface {
 	SetIsAwait(isAwait bool)
 	SetCommentDirectives(commentDirectives sqlparser.CommentDirectives)
 	SetIsUndo(isUndo bool)
+	SetRequiredDataRequestKey(key string)
+	GetRequiredDataRequestKey() (string, bool)
 	SetDependencyNode(dependencyNode primitivegraph.PrimitiveNode)
 	SetParserNode(node sqlparser.SQLNode)
 	SetParamMap(paramMap map[int]map[string]interface{})
@@ -83,6 +85,7 @@ type builderInput struct {
 	txnCtrlCtrs             internaldto.TxnControlCounters
 	tableInsertionContainer tableinsertioncontainer.TableInsertionContainer
 	insertCtx               drm.PreparedStatementCtx
+	requiredDataRequestKey  string
 }
 
 func NewBuilderInput(
@@ -97,6 +100,14 @@ func NewBuilderInput(
 		commentDirectives: sqlparser.CommentDirectives{},
 		inputAlias:        "", // this default is explicit for emphasisis
 	}
+}
+
+func (bi *builderInput) GetRequiredDataRequestKey() (string, bool) {
+	return bi.requiredDataRequestKey, bi.requiredDataRequestKey != ""
+}
+
+func (bi *builderInput) SetRequiredDataRequestKey(key string) {
+	bi.requiredDataRequestKey = key
 }
 
 func (bi *builderInput) SetInsertCtx(insertCtx drm.PreparedStatementCtx) {
@@ -272,21 +283,22 @@ func (bi *builderInput) SetIsUndo(isUndo bool) {
 
 func (bi *builderInput) Clone() BuilderInput {
 	return &builderInput{
-		graphHolder:       bi.graphHolder,
-		handlerCtx:        bi.handlerCtx,
-		paramMap:          bi.paramMap,
-		tbl:               bi.tbl,
-		node:              bi.node,
-		dependencyNode:    bi.dependencyNode,
-		commentDirectives: bi.commentDirectives,
-		isAwait:           bi.isAwait,
-		verb:              bi.verb,
-		inputAlias:        bi.inputAlias,
-		isUndo:            bi.isUndo,
-		isTargetPhysical:  bi.isTargetPhysical,
-		annotatedAst:      bi.annotatedAst,
-		txnCtrlCtrs:       bi.txnCtrlCtrs,
-		isReturning:       bi.isReturning,
-		insertCtx:         bi.insertCtx,
+		graphHolder:            bi.graphHolder,
+		handlerCtx:             bi.handlerCtx,
+		paramMap:               bi.paramMap,
+		tbl:                    bi.tbl,
+		node:                   bi.node,
+		dependencyNode:         bi.dependencyNode,
+		commentDirectives:      bi.commentDirectives,
+		isAwait:                bi.isAwait,
+		verb:                   bi.verb,
+		inputAlias:             bi.inputAlias,
+		isUndo:                 bi.isUndo,
+		isTargetPhysical:       bi.isTargetPhysical,
+		annotatedAst:           bi.annotatedAst,
+		txnCtrlCtrs:            bi.txnCtrlCtrs,
+		isReturning:            bi.isReturning,
+		insertCtx:              bi.insertCtx,
+		requiredDataRequestKey: bi.requiredDataRequestKey,
 	}
 }

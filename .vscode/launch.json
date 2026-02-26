@@ -193,6 +193,10 @@
         "select split_part(rings.name, '/', -1) from google.cloudkms.key_rings rings inner join google.cloudkms.crypto_keys keys on keys.keyRingsId = split_part(rings.name, '/', -1) and keys.projectsId = 'testing-project' where rings.projectsId = 'testing-project' and rings.locationsId = 'global' and keys.locationsId = 'global';",
         "select * from local_openssl.keys.x509 where cert_file = '${workspaceFolder}/test/assets/input/manual_cert.pem';",
         "select t1.id as t1_id, t2.id as t2_id from (select 'my-id' as id) t1 left outer join (select a.vpcId id from aws.ec2_native.vpcs a where region = 'ap-southeast-2') t2 on t1.id = t2.id;",
+        "insert into aws.ec2.vpcs(CidrBlock, region) select '10.0.0.0/16', 'ap-southeast-2' where 0 = 1 returning *;",
+        "insert into aws.ec2.vpcs(CidrBlock, region) select '10.0.0.0/16', 'ap-southeast-2' where 1 = 1 returning *;",
+        "select lhs.proj, lhs.bucket from (select 'testing-project' as proj, 'silly-bucket' as bucket) lhs LEFT OUTER join (select name from google.storage.buckets where project = 'testing-project') rhs on lhs.bucket = rhs.name where rhs.name;",
+        "insert into google.storage.buckets( project, data__name) select lhs.proj, lhs.bucket from (select 'testing-project' as proj, 'silly-bucket' as bucket) lhs LEFT OUTER join (select name from google.storage.buckets where project = 'testing-project') rhs on lhs.bucket = rhs.name where rhs.name is null returning *;",
       ], 
       "default": "show providers;"
     },

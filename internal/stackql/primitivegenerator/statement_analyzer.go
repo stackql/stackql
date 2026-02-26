@@ -408,6 +408,9 @@ func (pb *standardPrimitiveGenerator) whereComparisonExprCopyAndReWrite(
 	requiredParameters,
 	optionalParameters suffix.ParameterSuffixMap,
 ) (sqlparser.Expr, string, error) {
+	if parserutil.IsScalarComparison(expr) {
+		return expr, "", nil
+	}
 	qualifiedName, ok := expr.Left.(*sqlparser.ColName)
 	if !ok {
 		if qualifiedLHSName, lhsOk := expr.Left.(*sqlparser.FuncExpr); lhsOk {
@@ -721,13 +724,23 @@ func (pb *standardPrimitiveGenerator) analyzeExec(pbi planbuilderinput.PlanBuild
 		return err
 	}
 	if m.IsNullary() && !pb.PrimitiveComposer.IsAwait() {
+		bldrInput := builder_input.NewBuilderInput(
+			pb.PrimitiveComposer.GetGraphHolder(),
+			handlerCtx,
+			tbl,
+		)
+		bldrInput.SetIsAwait(false) // returning hardcoded to false for now
 		pb.PrimitiveComposer.SetBuilder(
 			primitivebuilder.NewSingleSelectAcquire(
 				pb.PrimitiveComposer.GetGraphHolder(),
 				handlerCtx,
 				insertionContainer,
 				pb.PrimitiveComposer.GetInsertPreparedStatementCtx(),
-				nil, nil, false)) // returning hardcoded to false for now
+				nil,
+				nil,
+				bldrInput,
+			),
+		)
 		return nil
 	}
 	selIndirect, indirectErr := astindirect.NewParserExecIndirect(

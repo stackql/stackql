@@ -17,6 +17,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/docparser"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/builder_input"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/primitivebuilder"
@@ -514,17 +515,25 @@ func (dp *standardDependencyPlanner) orchestrate(
 			nil,
 			insPsc,
 			nil,
+			// this is the connector
 			outStream,
 		)
 	} else {
+		bldrInput := builder_input.NewBuilderInput(
+			dp.primitiveComposer.GetGraphHolder(),
+			dp.handlerCtx,
+			annotationCtx.GetTableMeta(),
+		)
+		bldrInput.SetIsAwait(false) // returning hardcoded to false for now
 		builder = primitivebuilder.NewSingleSelectAcquire(
 			dp.primitiveComposer.GetGraphHolder(),
 			dp.handlerCtx,
 			rc,
 			insPsc,
 			nil,
+			// this is the connector
 			outStream,
-			false, // returning hardcoded to false for now
+			bldrInput,
 		)
 	}
 	dp.execSlice = append(dp.execSlice, builder)
@@ -557,6 +566,7 @@ func (dp *standardDependencyPlanner) processAcquire(
 			nil, annotationCtx.GetHIDs(),
 			inputTableName,
 			annotationCtx.GetTableMeta().GetAlias())
+		// TODO: repeat this for mutations
 		anTab.SetSQLDataSource(sqlDataSource)
 		return anTab, dp.tcc, nil
 	}

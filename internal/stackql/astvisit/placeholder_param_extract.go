@@ -141,6 +141,10 @@ func (v *standardParserPlaceholderParamAstVisitor) Visit(node sqlparser.SQLNode)
 		return node.Table.Accept(v)
 
 	case *sqlparser.Insert:
+		err := v.Visit(node.Rows)
+		if err != nil {
+			return err
+		}
 		if len(node.Columns) > 0 {
 			err := node.Columns.Accept(v)
 			if err != nil {

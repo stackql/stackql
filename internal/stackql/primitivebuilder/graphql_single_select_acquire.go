@@ -12,6 +12,7 @@ import (
 	"github.com/stackql/any-sdk/pkg/streaming"
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/builder_input"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/primitive_context"
 	"github.com/stackql/stackql/internal/stackql/primitive"
@@ -35,6 +36,7 @@ type GraphQLSingleSelectAcquire struct {
 	rowSort                    func(map[string]map[string]interface{}) []string
 	root                       primitivegraph.PrimitiveNode
 	stream                     streaming.MapStream
+	bldrInput                  builder_input.BuilderInput
 }
 
 func newGraphQLSingleSelectAcquire(
@@ -45,6 +47,7 @@ func newGraphQLSingleSelectAcquire(
 	insertionContainer tableinsertioncontainer.TableInsertionContainer,
 	rowSort func(map[string]map[string]interface{}) []string,
 	stream streaming.MapStream,
+	bldrInput builder_input.BuilderInput,
 ) Builder {
 	var tcc internaldto.TxnControlCounters
 	if insertCtx != nil {
@@ -63,6 +66,7 @@ func newGraphQLSingleSelectAcquire(
 		insertionContainer:         insertionContainer,
 		txnCtrlCtr:                 tcc,
 		stream:                     stream,
+		bldrInput:                  bldrInput,
 	}
 }
 

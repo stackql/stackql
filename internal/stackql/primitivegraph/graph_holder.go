@@ -32,12 +32,16 @@ type PrimitiveGraphHolder interface {
 	SetContainsUserManagedRelation(containsUserRelation bool)
 	InverseContainsUserManagedRelation() bool
 	ContainsUserManagedRelation() bool
+	SetExecutorOutput(id string, output internaldto.ExecutorOutput) error
+	GetExecutorOutput(id string) (internaldto.ExecutorOutput, bool)
+	GetRequest(requestType string) (internaldto.ExecutorOutputRequest, error)
 }
 
 type standardPrimitiveGraphHolder struct {
 	concurrencyLimit int
 	pg               PrimitiveGraph
 	ipg              PrimitiveGraph
+	outputRegister   internaldto.ExecutorOutputRegister
 }
 
 func (pgh *standardPrimitiveGraphHolder) GetPrimitiveGraph() PrimitiveGraph {
@@ -120,6 +124,18 @@ func (pgh *standardPrimitiveGraphHolder) SetInverseContainsIndirect(containsView
 	pgh.pg.SetContainsIndirect(containsView)
 }
 
+func (pgh *standardPrimitiveGraphHolder) SetExecutorOutput(id string, output internaldto.ExecutorOutput) error {
+	return pgh.outputRegister.SetExecutorOutput(id, output)
+}
+
+func (pgh *standardPrimitiveGraphHolder) GetExecutorOutput(id string) (internaldto.ExecutorOutput, bool) {
+	return pgh.outputRegister.GetExecutorOutput(id)
+}
+
+func (pgh *standardPrimitiveGraphHolder) GetRequest(requestType string) (internaldto.ExecutorOutputRequest, error) {
+	return pgh.outputRegister.GetRequest(requestType)
+}
+
 func NewPrimitiveGraphHolder(concurrencyLimit int) PrimitiveGraphHolder {
 	pg := newPrimitiveGraph(concurrencyLimit)
 	ipg := newSequentialPrimitiveGraph(concurrencyLimit)
@@ -127,6 +143,7 @@ func NewPrimitiveGraphHolder(concurrencyLimit int) PrimitiveGraphHolder {
 		concurrencyLimit: concurrencyLimit,
 		pg:               pg,
 		ipg:              ipg,
+		outputRegister:   internaldto.NewExecutorOutputRegister(),
 	}
 }
 

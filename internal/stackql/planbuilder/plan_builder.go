@@ -563,7 +563,7 @@ func (pgb *standardPlanGraphBuilder) handleSelect(
 		_, isNativeSelect := builder.(*primitivebuilder.NativeSelect)
 		_, isRawNativeSelect := builder.(*primitivebuilder.RawNativeSelect)
 		_, isRawNativeExec := builder.(*primitivebuilder.RawNativeExec)
-		isLocallyExecutable := !isNativeSelect && !isRawNativeSelect && !isRawNativeExec
+		isLocallyExecutable := !isNativeSelect && !isRawNativeSelect && !isRawNativeExec && !parserutil.IsSelectDynamic(node)
 		// check tables only if not native
 		if isLocallyExecutable {
 			for _, val := range primitiveGenerator.GetPrimitiveComposer().GetTables() {
@@ -652,6 +652,11 @@ func (pgb *standardPlanGraphBuilder) handleDelete(pbi planbuilderinput.PlanBuild
 			selectCtx = primitiveGenerator.GetPrimitiveComposer().GetSelectPreparedStatementCtx()
 		}
 		isPhysicalTable := tbl.IsPhysicalTable()
+		bldrInput := builder_input.NewBuilderInput(
+			pgb.planGraphHolder,
+			handlerCtx,
+			tbl,
+		)
 		var bldr primitivebuilder.Builder
 		if !isPhysicalTable {
 			bldr = primitivebuilder.NewDelete(
@@ -663,20 +668,16 @@ func (pgb *standardPlanGraphBuilder) handleDelete(pbi planbuilderinput.PlanBuild
 				tbl,
 				nil,
 				primitiveGenerator.GetPrimitiveComposer().IsAwait(),
+				bldrInput,
 			)
 		} else {
-			bi := builder_input.NewBuilderInput(
-				pgb.planGraphHolder,
-				handlerCtx,
-				tbl,
-			)
 			tcc := pbi.GetTxnCtrlCtrs()
 			bldr = primitivebuilder.NewRawNativeExec(
 				pgb.planGraphHolder,
 				handlerCtx,
 				tcc,
 				handlerCtx.GetQuery(),
-				bi,
+				bldrInput,
 			)
 		}
 		err = bldr.Build()
@@ -946,7 +947,17 @@ func (pgb *standardPlanGraphBuilder) handleInsert(pbi planbuilderinput.PlanBuild
 		// selectPrimitive here forms the insert data
 		var selectPrimitive primitive.IPrimitive
 		var selectPrimitiveNode primitivegraph.PrimitiveNode
-		if nonValCols > 0 {
+		var dataRequest internaldto.ExecutorOutputRequest
+		if nonValCols > 0 || parserutil.IsInsertRowsDynamic(node) {
+			// In such cases, select data is required for desired intent to be fulfilled.
+			var dataRequestErr error
+			dataRequest, dataRequestErr = pgb.planGraphHolder.GetRequest("select")
+			if dataRequestErr != nil {
+				return dataRequestErr
+			}
+			if dataRequest == nil {
+				return fmt.Errorf("could not obtain data request for insert statement")
+			}
 			switch rowsNode := node.Rows.(type) {
 			case *sqlparser.Select:
 				selPbi, selErr := planbuilderinput.NewPlanBuilderInput(
@@ -1007,6 +1018,9 @@ func (pgb *standardPlanGraphBuilder) handleInsert(pbi planbuilderinput.PlanBuild
 		bldrInput.SetParserNode(node)
 		bldrInput.SetAnnotatedAST(pbi.GetAnnotatedAST())
 		bldrInput.SetTxnCtrlCtrs(pbi.GetTxnCtrlCtrs())
+		if dataRequest != nil {
+			bldrInput.SetRequiredDataRequestKey("select")
+		}
 		isPhysicalTable := tbl.IsPhysicalTable()
 		if isPhysicalTable {
 			bldrInput.SetIsTargetPhysicalTable(true)

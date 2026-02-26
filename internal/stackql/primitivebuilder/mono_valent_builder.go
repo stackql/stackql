@@ -7,6 +7,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/drm"
 	"github.com/stackql/stackql/internal/stackql/execution"
 	"github.com/stackql/stackql/internal/stackql/handler"
+	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/builder_input"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/primitive_context"
 	"github.com/stackql/stackql/internal/stackql/primitive"
@@ -33,6 +34,7 @@ type monoValentBuilder struct {
 	isReadOnly                 bool //nolint:unused // TODO: build out
 	isAwait                    bool //nolint:unused // TODO: build out
 	monoValentExecutorFactory  execution.MonoValentExecutorFactory
+	bldrInput                  builder_input.BuilderInput
 }
 
 func newMonoValentBuilder(
@@ -46,6 +48,7 @@ func newMonoValentBuilder(
 	isSkipResponse bool,
 	isMutation bool,
 	isAwait bool,
+	bldrInput builder_input.BuilderInput,
 ) Builder {
 	var tcc internaldto.TxnControlCounters
 	if insertCtx != nil {
@@ -64,6 +67,7 @@ func newMonoValentBuilder(
 		insertionContainer:         insertionContainer,
 		txnCtrlCtr:                 tcc,
 		stream:                     stream,
+		bldrInput:                  bldrInput,
 		monoValentExecutorFactory: execution.NewMonoValentExecutorFactory(
 			graphHolder,
 			handlerCtx,
@@ -75,6 +79,7 @@ func newMonoValentBuilder(
 			isSkipResponse,
 			isMutation,
 			isAwait,
+			bldrInput,
 		),
 	}
 }

@@ -1,6 +1,9 @@
 package internaldto
 
 import (
+	"fmt"
+	"sync"
+
 	"github.com/stackql/any-sdk/pkg/streaming"
 	"github.com/stackql/psql-wire/pkg/sqldata"
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
@@ -57,6 +60,95 @@ type ExecutorOutput interface {
 	SetRedoLog(binlog.LogEntry)
 	WithUndoLog(binlog.LogEntry) ExecutorOutput
 	WithRedoLog(binlog.LogEntry) ExecutorOutput
+}
+
+type ExecutorOutputRegister interface {
+	SetExecutorOutput(string, ExecutorOutput) error
+	GetExecutorOutput(string) (ExecutorOutput, bool)
+	GetRequest(string) (ExecutorOutputRequest, error)
+}
+
+type ExecutorOutputRequest interface {
+	GetID() int64
+	GetExecutorOutput() (ExecutorOutput, bool)
+	setExecutorOutput(ExecutorOutput)
+}
+
+type executorOutRegisterImpl struct {
+	mu             sync.RWMutex
+	nextID         int64
+	requests       map[int64]ExecutorOutputRequest
+	requestMapping map[string]int64
+}
+
+type executorOutRequestImpl struct {
+	id     int64
+	output ExecutorOutput
+}
+
+func (r *executorOutRegisterImpl) SetExecutorOutput(id string, output ExecutorOutput) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	reqID, exists := r.requestMapping[id]
+	if !exists {
+		return fmt.Errorf("executor output request with id %s does not exist", id)
+	}
+	req, exists := r.requests[reqID]
+	if !exists {
+		return fmt.Errorf("executor output request with id %s does not exist", id)
+	}
+	req.setExecutorOutput(output)
+	return nil
+}
+
+func (r *executorOutRegisterImpl) GetExecutorOutput(id string) (ExecutorOutput, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	reqID, exists := r.requestMapping[id]
+	if !exists {
+		return nil, false
+	}
+	req, exists := r.requests[reqID]
+	if !exists {
+		return nil, false
+	}
+	return req.GetExecutorOutput()
+}
+
+func (r *executorOutRegisterImpl) GetRequest(requestType string) (ExecutorOutputRequest, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	id := r.nextID
+	r.nextID++
+	req := &executorOutRequestImpl{
+		id: id,
+	}
+	r.requests[id] = req
+	r.requestMapping[requestType] = id
+	return req, nil
+}
+
+func (req *executorOutRequestImpl) GetID() int64 {
+	return req.id
+}
+
+func (req *executorOutRequestImpl) GetExecutorOutput() (ExecutorOutput, bool) {
+	if req.output == nil {
+		return nil, false
+	}
+	return req.output, true
+}
+
+func (req *executorOutRequestImpl) setExecutorOutput(output ExecutorOutput) {
+	req.output = output
+}
+
+func NewExecutorOutputRegister() ExecutorOutputRegister {
+	return &executorOutRegisterImpl{
+		nextID:         0,
+		requests:       make(map[int64]ExecutorOutputRequest),
+		requestMapping: make(map[string]int64),
+	}
 }
 
 type standardExecutorOutput struct {
