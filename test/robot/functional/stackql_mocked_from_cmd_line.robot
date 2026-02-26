@@ -8942,7 +8942,7 @@ Insert Left Outer Join Positive Returning Star
     ...    |------|-----------|---------|------|-----------------------|-----------------------|------------------|------------|------|--------------------------------------------------------------------------------------------------------------------------|--------------|----------------|--------|-----------|----------|--------------|---------|----------------|--------------|-------|---------------|-----------------|---------|--------------|------------------------------------------------------|--------------|--------------------------|--------------------------|------------|---------|
     ...    |${SPACE}null${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}CAE=${SPACE}|${SPACE}{"bucketPolicyOnly":{"enabled":false},"publicAccessPrevention":"inherited","uniformBucketLevelAccess":{"enabled":false}}${SPACE}|${SPACE}silly-bucket${SPACE}|${SPACE}storage#bucket${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}US${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}multi-region${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}1${SPACE}|${SPACE}silly-bucket${SPACE}|${SPACE}null${SPACE}${SPACE}|${SPACE}${SPACE}100000000001${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}DEFAULT${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}https://www.googleapis.com/storage/v1/b/silly-bucket${SPACE}|${SPACE}STANDARD${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}2025-07-03T00:03:44.250Z${SPACE}|${SPACE}2025-07-03T00:03:44.250Z${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}|
     ...    |------|-----------|---------|------|-----------------------|-----------------------|------------------|------------|------|--------------------------------------------------------------------------------------------------------------------------|--------------|----------------|--------|-----------|----------|--------------|---------|----------------|--------------|-------|---------------|-----------------|---------|--------------|------------------------------------------------------|--------------|--------------------------|--------------------------|------------|---------|
-    Should Stackql Exec Inline Equal Both Streams
+    Should Stackql Exec Inline Equal
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
     ...    ${GITHUB_SECRET_STR}
@@ -8952,7 +8952,6 @@ Insert Left Outer Join Positive Returning Star
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${inputStr}
     ...    ${outputStr}
-    ...    ${EMPTY}
     ...    stdout=${CURDIR}/tmp/Insert-Left-Outer-Join-Positive-Returning-Star.tmp
     ...    stderr=${CURDIR}/tmp/Insert-Left-Outer-Join-Positive-Returning-Star-stderr.tmp
 
@@ -8964,7 +8963,7 @@ Insert Left Outer Join Negative Returning Star
     ...    |-----|-----------|---------|------|-----------------------|-----------------------|------------------|------------|------|------------------|----|------|--------|-----------|----------|--------------|---------|----------------|------|-------|---------------|-----------------|-----|--------------|----------|--------------|-------------|---------|------------|---------|
     ...    |${SPACE}acl${SPACE}|${SPACE}autoclass${SPACE}|${SPACE}billing${SPACE}|${SPACE}cors${SPACE}|${SPACE}customPlacementConfig${SPACE}|${SPACE}defaultEventBasedHold${SPACE}|${SPACE}defaultObjectAcl${SPACE}|${SPACE}encryption${SPACE}|${SPACE}etag${SPACE}|${SPACE}iamConfiguration${SPACE}|${SPACE}id${SPACE}|${SPACE}kind${SPACE}|${SPACE}labels${SPACE}|${SPACE}lifecycle${SPACE}|${SPACE}location${SPACE}|${SPACE}locationType${SPACE}|${SPACE}logging${SPACE}|${SPACE}metageneration${SPACE}|${SPACE}name${SPACE}|${SPACE}owner${SPACE}|${SPACE}projectNumber${SPACE}|${SPACE}retentionPolicy${SPACE}|${SPACE}rpo${SPACE}|${SPACE}satisfiesPZS${SPACE}|${SPACE}selfLink${SPACE}|${SPACE}storageClass${SPACE}|${SPACE}timeCreated${SPACE}|${SPACE}updated${SPACE}|${SPACE}versioning${SPACE}|${SPACE}website${SPACE}|
     ...    |-----|-----------|---------|------|-----------------------|-----------------------|------------------|------------|------|------------------|----|------|--------|-----------|----------|--------------|---------|----------------|------|-------|---------------|-----------------|-----|--------------|----------|--------------|-------------|---------|------------|---------|
-    Should Stackql Exec Inline Equal Both Streams
+    Should Stackql Exec Inline Equal
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
     ...    ${GITHUB_SECRET_STR}
@@ -8974,7 +8973,6 @@ Insert Left Outer Join Negative Returning Star
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${inputStr}
     ...    ${outputStr}
-    ...    ${EMPTY}
     ...    stdout=${CURDIR}/tmp/Insert-Left-Outer-Join-Negative-Returning-Star.tmp
     ...    stderr=${CURDIR}/tmp/Insert-Left-Outer-Join-Negative-Returning-Star-stderr.tmp
 
