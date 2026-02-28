@@ -1,0 +1,408 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>annotatedast: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast/annotated_ast.go (2.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package annotatedast
+
+import (
+        "github.com/stackql/stackql-parser/go/vt/sqlparser"
+        "github.com/stackql/stackql/internal/stackql/astanalysis/selectmetadata"
+        "github.com/stackql/stackql/internal/stackql/astindirect"
+        "github.com/stackql/stackql/internal/stackql/datasource/sql_datasource"
+        "github.com/stackql/stackql/internal/stackql/parserutil"
+)
+
+func NewAnnotatedAst(parent AnnotatedAst, ast sqlparser.Statement) (AnnotatedAst, error) <span class="cov8" title="1">{
+        rv := &amp;standardAnnotatedAst{
+                parent:               parent,
+                ast:                  ast,
+                tableIndirects:       make(map[string]astindirect.Indirect),
+                materializedViewRefs: make(map[string]astindirect.Indirect),
+                tableSQLDataSources:  make(map[string]sql_datasource.SQLDataSource),
+                selectMetadataMap:    make(map[*sqlparser.Select]selectmetadata.SelectMetadata),
+                whereParamMaps:       make(map[*sqlparser.Where]parserutil.ParameterMap),
+                insertRowsIndirect:   make(map[*sqlparser.Insert]astindirect.Indirect),
+                selectIndirectCache:  make(map[*sqlparser.Select]astindirect.Indirect),
+                execIndirectCache:    make(map[*sqlparser.Exec]astindirect.Indirect),
+                unionIndirectCache:   make(map[*sqlparser.Union]astindirect.Indirect),
+        }
+        return rv, nil
+}</span>
+
+type AnnotatedAst interface {
+        GetAST() sqlparser.Statement
+        IsAwait(sqlparser.SQLNode) bool
+        GetIndirect(sqlparser.SQLNode) (astindirect.Indirect, bool)
+        GetIndirects() map[string]astindirect.Indirect
+        GetMaterializedView(sqlparser.SQLNode) (astindirect.Indirect, bool)
+        GetPhysicalTable(sqlparser.SQLNode) (astindirect.Indirect, bool)
+        GetSelectMetadata(*sqlparser.Select) (selectmetadata.SelectMetadata, bool)
+        GetSQLDataSource(node sqlparser.SQLNode) (sql_datasource.SQLDataSource, bool)
+        SetIndirect(node sqlparser.SQLNode, indirect astindirect.Indirect)
+        SetMaterializedView(node sqlparser.SQLNode, indirect astindirect.Indirect)
+        SetPhysicalTable(node sqlparser.SQLNode, indirect astindirect.Indirect)
+        SetSelectMetadata(*sqlparser.Select, selectmetadata.SelectMetadata)
+        SetSQLDataSource(node sqlparser.SQLNode, sqlDataSource sql_datasource.SQLDataSource)
+        SetWhereParamMapsEntry(*sqlparser.Where, parserutil.ParameterMap)
+        GetWhereParamMapsEntry(*sqlparser.Where) (parserutil.ParameterMap, bool)
+        IsReadOnly() bool
+        SetInsertRowsIndirect(node *sqlparser.Insert, indirect astindirect.Indirect)
+        GetInsertRowsIndirect(*sqlparser.Insert) (astindirect.Indirect, bool)
+        GetSelectIndirect(selNode *sqlparser.Select) (astindirect.Indirect, bool)
+        SetSelectIndirect(selNode *sqlparser.Select, indirect astindirect.Indirect)
+        GetExecIndirect(selNode *sqlparser.Exec) (astindirect.Indirect, bool)
+        SetExecIndirect(selNode *sqlparser.Exec, indirect astindirect.Indirect)
+        GetSubequeryTableCount() int
+}
+
+type standardAnnotatedAst struct {
+        parent               AnnotatedAst
+        ast                  sqlparser.Statement
+        tableIndirects       map[string]astindirect.Indirect
+        materializedViewRefs map[string]astindirect.Indirect
+        physicalTableRefs    map[string]astindirect.Indirect
+        insertRowsIndirect   map[*sqlparser.Insert]astindirect.Indirect
+        tableSQLDataSources  map[string]sql_datasource.SQLDataSource
+        selectMetadataMap    map[*sqlparser.Select]selectmetadata.SelectMetadata
+        whereParamMaps       map[*sqlparser.Where]parserutil.ParameterMap
+        selectIndirectCache  map[*sqlparser.Select]astindirect.Indirect
+        unionIndirectCache   map[*sqlparser.Union]astindirect.Indirect
+        execIndirectCache    map[*sqlparser.Exec]astindirect.Indirect
+}
+
+func hasAwaitComment(comments sqlparser.Comments) bool <span class="cov0" title="0">{
+        if comments != nil </span><span class="cov0" title="0">{
+                commentDirectives := sqlparser.ExtractCommentDirectives(comments)
+                if commentDirectives.IsSet("AWAIT") </span><span class="cov0" title="0">{
+                        return true
+                }</span>
+        }
+        <span class="cov0" title="0">return false</span>
+}
+
+func (aa *standardAnnotatedAst) IsAwait(node sqlparser.SQLNode) bool <span class="cov0" title="0">{
+        switch n := node.(type) </span>{
+        case *sqlparser.Exec:<span class="cov0" title="0">
+                return hasAwaitComment(n.Comments)</span>
+        case *sqlparser.Insert:<span class="cov0" title="0">
+                return hasAwaitComment(n.Comments)</span>
+        case *sqlparser.Update:<span class="cov0" title="0">
+                return hasAwaitComment(n.Comments)</span>
+        case *sqlparser.Delete:<span class="cov0" title="0">
+                return hasAwaitComment(n.Comments)</span>
+        default:<span class="cov0" title="0">
+                return false</span>
+        }
+}
+
+func (aa *standardAnnotatedAst) GetExecIndirect(selNode *sqlparser.Exec) (astindirect.Indirect, bool) <span class="cov0" title="0">{
+        rv, ok := aa.execIndirectCache[selNode]
+        return rv, ok
+}</span>
+
+func (aa *standardAnnotatedAst) GetSubequeryTableCount() int <span class="cov0" title="0">{
+        var rv int
+        for _, indirect := range aa.tableIndirects </span><span class="cov0" title="0">{
+                switch t := indirect.(type) </span>{
+                case *astindirect.Subquery:<span class="cov0" title="0">
+                        rv += t.GetCtrlColumnRepeats()</span>
+                default:<span class="cov0" title="0"></span>
+                }
+        }
+        <span class="cov0" title="0">return rv</span>
+}
+
+func (aa *standardAnnotatedAst) SetExecIndirect(selNode *sqlparser.Exec, indirect astindirect.Indirect) <span class="cov0" title="0">{
+        aa.execIndirectCache[selNode] = indirect
+}</span>
+
+func (aa *standardAnnotatedAst) GetSelectIndirect(selNode *sqlparser.Select) (astindirect.Indirect, bool) <span class="cov0" title="0">{
+        rv, ok := aa.selectIndirectCache[selNode]
+        return rv, ok
+}</span>
+
+func (aa *standardAnnotatedAst) SetSelectIndirect(selNode *sqlparser.Select, indirect astindirect.Indirect) <span class="cov0" title="0">{
+        aa.selectIndirectCache[selNode] = indirect
+}</span>
+
+func (aa *standardAnnotatedAst) SetInsertRowsIndirect(node *sqlparser.Insert, indirect astindirect.Indirect) <span class="cov0" title="0">{
+        aa.insertRowsIndirect[node] = indirect
+}</span>
+
+func (aa *standardAnnotatedAst) GetInsertRowsIndirect(node *sqlparser.Insert) (astindirect.Indirect, bool) <span class="cov0" title="0">{
+        rv, ok := aa.insertRowsIndirect[node]
+        if ok </span><span class="cov0" title="0">{
+                return rv, true
+        }</span>
+        <span class="cov0" title="0">switch n := node.Rows.(type) </span>{
+        case *sqlparser.Select:<span class="cov0" title="0">
+                return aa.GetSelectIndirect(n)</span>
+        case *sqlparser.Union:<span class="cov0" title="0">
+                rv, ok = aa.unionIndirectCache[n]
+                return rv, ok</span>
+        case *sqlparser.ParenSelect:<span class="cov0" title="0">
+                return nil, false</span>
+        default:<span class="cov0" title="0">
+                return nil, false</span>
+        }
+}
+
+func (aa *standardAnnotatedAst) SetWhereParamMapsEntry(node *sqlparser.Where, paramMap parserutil.ParameterMap) <span class="cov0" title="0">{
+        aa.whereParamMaps[node] = paramMap
+}</span>
+
+func (aa *standardAnnotatedAst) GetWhereParamMapsEntry(node *sqlparser.Where) (parserutil.ParameterMap, bool) <span class="cov0" title="0">{
+        rv, ok := aa.whereParamMaps[node]
+        return rv, ok
+}</span>
+
+func (aa *standardAnnotatedAst) GetAST() sqlparser.Statement <span class="cov0" title="0">{
+        return aa.ast
+}</span>
+
+func (aa *standardAnnotatedAst) IsReadOnly() bool <span class="cov0" title="0">{
+        return false
+}</span>
+
+func (aa *standardAnnotatedAst) GetSelectMetadata(selNode *sqlparser.Select) (selectmetadata.SelectMetadata, bool) <span class="cov0" title="0">{
+        sm, ok := aa.selectMetadataMap[selNode]
+        return sm, ok
+}</span>
+
+func (aa *standardAnnotatedAst) SetSelectMetadata(selNode *sqlparser.Select, meta selectmetadata.SelectMetadata) <span class="cov0" title="0">{
+        aa.selectMetadataMap[selNode] = meta
+}</span>
+
+func (aa *standardAnnotatedAst) GetIndirect(node sqlparser.SQLNode) (astindirect.Indirect, bool) <span class="cov0" title="0">{
+        switch n := node.(type) </span>{
+        case *sqlparser.AliasedTableExpr:<span class="cov0" title="0">
+                rv, ok := aa.tableIndirects[n.As.GetRawVal()]
+                if ok </span><span class="cov0" title="0">{
+                        return rv, true
+                }</span>
+                <span class="cov0" title="0">return aa.GetIndirect(n.Expr)</span>
+        case sqlparser.TableName:<span class="cov0" title="0">
+                rv, ok := aa.tableIndirects[n.GetRawVal()]
+                return rv, ok</span>
+        case *sqlparser.DDL:<span class="cov0" title="0">
+                rv, ok := aa.tableIndirects[n.Table.GetRawVal()]
+                return rv, ok</span>
+        case *sqlparser.RefreshMaterializedView:<span class="cov0" title="0">
+                rv, ok := aa.tableIndirects[n.ViewName.GetRawVal()]
+                return rv, ok</span>
+        default:<span class="cov0" title="0">
+                return nil, false</span>
+        }
+}
+
+func (aa *standardAnnotatedAst) GetMaterializedView(node sqlparser.SQLNode) (astindirect.Indirect, bool) <span class="cov0" title="0">{
+        switch n := node.(type) </span>{
+        case *sqlparser.AliasedTableExpr:<span class="cov0" title="0">
+                rv, ok := aa.materializedViewRefs[n.As.GetRawVal()]
+                if ok </span><span class="cov0" title="0">{
+                        return rv, true
+                }</span>
+                <span class="cov0" title="0">return aa.GetIndirect(n.Expr)</span>
+        case sqlparser.TableName:<span class="cov0" title="0">
+                rv, ok := aa.materializedViewRefs[n.GetRawVal()]
+                return rv, ok</span>
+        default:<span class="cov0" title="0">
+                return nil, false</span>
+        }
+}
+
+func (aa *standardAnnotatedAst) GetPhysicalTable(node sqlparser.SQLNode) (astindirect.Indirect, bool) <span class="cov0" title="0">{
+        switch n := node.(type) </span>{
+        case *sqlparser.AliasedTableExpr:<span class="cov0" title="0">
+                rv, ok := aa.physicalTableRefs[n.As.GetRawVal()]
+                if ok </span><span class="cov0" title="0">{
+                        return rv, true
+                }</span>
+                <span class="cov0" title="0">return aa.GetIndirect(n.Expr)</span>
+        case sqlparser.TableName:<span class="cov0" title="0">
+                rv, ok := aa.physicalTableRefs[n.GetRawVal()]
+                return rv, ok</span>
+        default:<span class="cov0" title="0">
+                return nil, false</span>
+        }
+}
+
+func (aa *standardAnnotatedAst) GetIndirects() map[string]astindirect.Indirect <span class="cov0" title="0">{
+        return aa.tableIndirects
+}</span>
+
+func (aa *standardAnnotatedAst) SetIndirect(node sqlparser.SQLNode, indirect astindirect.Indirect) <span class="cov0" title="0">{
+        switch n := node.(type) </span>{
+        case sqlparser.TableName:<span class="cov0" title="0">
+                lhs, exists := aa.tableIndirects[n.GetRawVal()]
+                if exists </span><span class="cov0" title="0">{
+                        lhs.WithNext(indirect)
+                }</span> else<span class="cov0" title="0"> {
+                        aa.tableIndirects[n.GetRawVal()] = indirect
+                }</span>
+        case *sqlparser.AliasedTableExpr:<span class="cov0" title="0">
+                // this is for subqueries
+                lhs, exists := aa.tableIndirects[n.As.GetRawVal()]
+                if exists </span><span class="cov0" title="0">{
+                        lhs.WithNext(indirect)
+                }</span> else<span class="cov0" title="0"> {
+                        aa.tableIndirects[n.As.GetRawVal()] = indirect
+                }</span>
+        case *sqlparser.DDL:<span class="cov0" title="0">
+                lhs, exists := aa.tableIndirects[n.Table.GetRawVal()]
+                if exists </span><span class="cov0" title="0">{
+                        lhs.WithNext(indirect)
+                }</span> else<span class="cov0" title="0"> {
+                        aa.tableIndirects[n.Table.GetRawVal()] = indirect
+                }</span>
+        case *sqlparser.RefreshMaterializedView:<span class="cov0" title="0">
+                lhs, exists := aa.tableIndirects[n.ViewName.GetRawVal()]
+                if exists </span><span class="cov0" title="0">{
+                        lhs.WithNext(indirect)
+                }</span> else<span class="cov0" title="0"> {
+                        aa.tableIndirects[n.ViewName.GetRawVal()] = indirect
+                }</span>
+        default:<span class="cov0" title="0"></span>
+        }
+}
+
+func (aa *standardAnnotatedAst) SetMaterializedView(node sqlparser.SQLNode, indirect astindirect.Indirect) <span class="cov0" title="0">{
+        switch n := node.(type) </span>{
+        case sqlparser.TableName:<span class="cov0" title="0">
+                aa.materializedViewRefs[n.GetRawVal()] = indirect</span>
+        case *sqlparser.AliasedTableExpr:<span class="cov0" title="0">
+                // this is for subqueries
+                aa.materializedViewRefs[n.As.GetRawVal()] = indirect</span>
+        default:<span class="cov0" title="0"></span>
+        }
+}
+
+func (aa *standardAnnotatedAst) SetPhysicalTable(node sqlparser.SQLNode, indirect astindirect.Indirect) <span class="cov0" title="0">{
+        switch n := node.(type) </span>{
+        case sqlparser.TableName:<span class="cov0" title="0">
+                aa.physicalTableRefs[n.GetRawVal()] = indirect</span>
+        case *sqlparser.AliasedTableExpr:<span class="cov0" title="0">
+                // this is for subqueries
+                aa.physicalTableRefs[n.As.GetRawVal()] = indirect</span>
+        default:<span class="cov0" title="0"></span>
+        }
+}
+
+func (aa *standardAnnotatedAst) SetSQLDataSource(node sqlparser.SQLNode, sqlDataSource sql_datasource.SQLDataSource) <span class="cov0" title="0">{
+        switch n := node.(type) </span>{
+        case sqlparser.TableName:<span class="cov0" title="0">
+                aa.tableSQLDataSources[n.GetRawVal()] = sqlDataSource</span>
+        default:<span class="cov0" title="0"></span>
+        }
+}
+
+func (aa *standardAnnotatedAst) GetSQLDataSource(node sqlparser.SQLNode) (sql_datasource.SQLDataSource, bool) <span class="cov0" title="0">{
+        switch n := node.(type) </span>{
+        case *sqlparser.AliasedTableExpr:<span class="cov0" title="0">
+                return aa.GetSQLDataSource(n.Expr)</span>
+        case sqlparser.TableName:<span class="cov0" title="0">
+                rv, ok := aa.tableSQLDataSources[n.GetRawVal()]
+                return rv, ok</span>
+        default:<span class="cov0" title="0">
+                return nil, false</span>
+        }
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>
