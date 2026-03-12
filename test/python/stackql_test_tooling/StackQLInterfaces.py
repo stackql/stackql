@@ -649,7 +649,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       queries
     )
     self.log(result)
-    return self.lists_should_be_equal(result, expected_output, collapse_spaces=kwargs.pop('collapse_spaces', False))
+    return self.lists_should_be_equal(result, expected_output)
   
 
   @keyword
@@ -659,7 +659,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       queries
     )
     self.log(result)
-    return self.lists_should_be_equal(result, expected_output, collapse_spaces=kwargs.pop('collapse_spaces', False))
+    return self.lists_should_be_equal(result, expected_output)
 
   
   @keyword
@@ -679,7 +679,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       queries
     )
     self.log(result)
-    return self.lists_should_be_equal(result, expected_output, collapse_spaces=kwargs.pop('collapse_spaces', False))
+    return self.lists_should_be_equal(result, expected_output)
 
 
   @keyword
@@ -719,7 +719,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       queries
     )
     self.log(result)
-    return self.lists_should_be_equal(result, expected_output, collapse_spaces=kwargs.pop('collapse_spaces', False))
+    return self.lists_should_be_equal(result, expected_output)
 
 
   @keyword
