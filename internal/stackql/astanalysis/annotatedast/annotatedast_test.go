@@ -1,4 +1,4 @@
-package annotatedast
+package annotatedast //nolint:testpackage // acceptable
 
 import (
 	"testing"
