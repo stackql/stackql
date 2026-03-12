@@ -78,6 +78,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     *args,
     **kwargs):
     collapse_spaces = kwargs.pop('collapse_spaces', False)
+    strip_spaces = kwargs.pop('strip_sspaces', False)
     result = None
     if db_name == "sqlite":
       result = self._run_sqlite_command(
@@ -96,16 +97,23 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
         *("--csv",),
         **kwargs,
       )
-    return self._verify_both_streams(result, expected_output, expected_stderr_output, collapse_spaces=collapse_spaces, **kwargs)
+    return self._verify_both_streams(
+      result, 
+      expected_output, 
+      expected_stderr_output, 
+      collapse_spaces=collapse_spaces,
+      strip_spaces=strip_spaces, 
+      **kwargs,
+    )
   
 
   def _verify_both_streams(self, result, expected_output, expected_stderr_output, **cfg):
-    stdout_ok = self.should_be_equal(result.stdout, expected_output, collapse_spaces=cfg.pop('collapse_spaces', False))
+    stdout_ok = self.should_be_equal(result.stdout, expected_output, **cfg)
     if self._execution_platform == "docker":
       # cannot silence stupid compose status logs
-      stderr_ok = self.should_contain(result.stderr, expected_stderr_output, collapse_spaces=cfg.pop('collapse_spaces', False))
+      stderr_ok = self.should_contain(result.stderr, expected_stderr_output, **cfg)
       return stdout_ok and stderr_ok
-    stderr_ok = self.should_be_equal(result.stderr, expected_stderr_output, collapse_spaces=cfg.pop('collapse_spaces', False))
+    stderr_ok = self.should_be_equal(result.stderr, expected_stderr_output, **cfg)
     return stdout_ok and stderr_ok
   
   def _contain_both_streams(self, result, expected_output, expected_stderr_output):
@@ -1096,5 +1104,10 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       *args,
       **{"stdout": stdout_tmp_file }
     )
-    return self.should_be_equal(result.stdout, expected_output, collapse_spaces=cfg.pop('collapse_spaces', False))
+    return self.should_be_equal(
+      result.stdout, 
+      expected_output, 
+      collapse_spaces=cfg.pop('collapse_spaces', False),
+      strip_spaces=cfg.pop('strip_spaces', False),
+    )
 
