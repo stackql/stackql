@@ -77,6 +77,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     expected_stderr_output :str,
     *args,
     **kwargs):
+    collapse_spaces = kwargs.pop('collapse_spaces', False)
     result = None
     if db_name == "sqlite":
       result = self._run_sqlite_command(
@@ -95,7 +96,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
         *("--csv",),
         **kwargs,
       )
-    return self._verify_both_streams(result, expected_output, expected_stderr_output, **kwargs)
+    return self._verify_both_streams(result, expected_output, expected_stderr_output, collapse_spaces=collapse_spaces, **kwargs)
   
 
   def _verify_both_streams(self, result, expected_output, expected_stderr_output, **cfg):
@@ -1052,7 +1053,6 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     query,
     expected_output :str,
     stdout_tmp_file :str,
-    **cfg,
   ):
     result = self._run_stackql_exec_command(
       stackql_exe, 
@@ -1065,7 +1065,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       query,
       **{"stdout": stdout_tmp_file }
     )
-    return self.should_be_equal(result.stdout, expected_output, collapse_spaces=cfg.pop('collapse_spaces', False))
+    return self.should_be_equal(result.stdout, expected_output)
 
 
   @keyword
