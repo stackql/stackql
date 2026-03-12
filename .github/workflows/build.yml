@@ -1306,7 +1306,7 @@ jobs:
       run: |
         brew install postgresql
         pip3 install -r cicd/requirements.txt
-        brew install libpq
+        brew install libpq@16
         brew link --force libpq
         psql --version
     

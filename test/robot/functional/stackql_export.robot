@@ -42,6 +42,7 @@ Export Materialized View and then Access From RDBMSs
     ...    ${EMPTY}
     ...    stdout=${CURDIR}/tmp/Export-Materialized-View-and-then-Access-From-RDBMSs-stage-2.tmp
     ...    stderr=${CURDIR}/tmp/Export-Materialized-View-and-then-Access-From-RDBMSs-stage-2-stderr.tmp
+    ...    collapse_spaces=${True}
 
 Export Materialized View and then Access From RDBMSs Over Stackql Postgres Server
     Pass Execution If    "${SQL_BACKEND}" != "postgres_tcp"    TODO: FIX THIS... Engineer a way to do postgres and sqlite export testing in same test case
@@ -76,7 +77,7 @@ Export Materialized View and then Access From RDBMSs Over Stackql Postgres Serve
     ...    ${queryOutputStr}
     ...    ${EMPTY}
     ...    stdout=${CURDIR}/tmp/Export-Materialized-View-and-then-Access-From-RDBMSs-Over-Stackql-Postgres-Server-stage-2.tmp
-    ...    stderr=${CURDIR}/tmp/Export-Materialized-View-and-then-Access-From-RDBMSs-Over-Stackql-Postgres-Server-stage-2-stderr.tmp 
+    ...    stderr=${CURDIR}/tmp/Export-Materialized-View-and-then-Access-From-RDBMSs-Over-Stackql-Postgres-Server-stage-2-stderr.tmp
 
 Export User Space Table and then Access From RDBMSs
     Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Engineer a way to do postgres and sqlite export testing in same test case
@@ -119,6 +120,7 @@ Export User Space Table and then Access From RDBMSs
     ...    ${EMPTY}
     ...    stdout=${CURDIR}/tmp/Export-User-Space-Table-and-then-Access-From-RDBMSs-stage-2.tmp
     ...    stderr=${CURDIR}/tmp/Export-User-Space-Table-and-then-Access-From-RDBMSs-stage-2-stderr.tmp
+    ...    collapse_spaces=${True}
 
 Export User Space Table and then Access From RDBMSs Over Stackql Postgres Server
     Pass Execution If    "${SQL_BACKEND}" != "postgres_tcp"    TODO: FIX THIS... Engineer a way to do postgres and sqlite export testing in same test case
@@ -180,7 +182,7 @@ Export User Space Table and then Access From RDBMSs Over Stackql Postgres Server
     ...    ${queryOutputStr}
     ...    ${EMPTY}
     ...    stdout=${CURDIR}/tmp/Export-User-Space-Table-and-then-Access-From-RDBMSs-Over-Stackql-Postgres-Server-stage-2.tmp
-    ...    stderr=${CURDIR}/tmp/Export-User-Space-Table-and-then-Access-From-RDBMSs-Over-Stackql-Postgres-Server-stage-2-stderr.tmp 
+    ...    stderr=${CURDIR}/tmp/Export-User-Space-Table-and-then-Access-From-RDBMSs-Over-Stackql-Postgres-Server-stage-2-stderr.tmp
 
 Lifecycle Export Materialized View and then Access From RDBMSs
     Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Engineer a way to do postgres and sqlite export testing in same test case
@@ -223,6 +225,7 @@ Lifecycle Export Materialized View and then Access From RDBMSs
     ...    ${EMPTY}
     ...    stdout=${CURDIR}/tmp/Lifecycle-Export-Materialized-View-and-then-Access-From-RDBMSs-stage-2.tmp
     ...    stderr=${CURDIR}/tmp/Lifecycle-Export-Materialized-View-and-then-Access-From-RDBMSs-stage-2-stderr.tmp
+    ...    collapse_spaces=${True}
 
 Lifecycle Export Materialized View and then Access From RDBMSs Over Stackql Postgres Server
     Pass Execution If    "${SQL_BACKEND}" != "postgres_tcp"    TODO: FIX THIS... Engineer a way to do postgres and sqlite export testing in same test case
@@ -271,7 +274,7 @@ Lifecycle Export Materialized View and then Access From RDBMSs Over Stackql Post
     ...    ${queryOutputStr}
     ...    ${EMPTY}
     ...    stdout=${CURDIR}/tmp/Lifecycle-Export-Materialized-View-and-then-Access-From-RDBMSs-Over-Stackql-Postgres-Server-stage-2.tmp
-    ...    stderr=${CURDIR}/tmp/Lifecycle-Export-Materialized-View-and-then-Access-From-RDBMSs-Over-Stackql-Postgres-Server-stage-2-stderr.tmp 
+    ...    stderr=${CURDIR}/tmp/Lifecycle-Export-Materialized-View-and-then-Access-From-RDBMSs-Over-Stackql-Postgres-Server-stage-2-stderr.tmp
 
 Lifecycle Export User Space Table and then Access From RDBMSs
     Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    TODO: FIX THIS... Engineer a way to do postgres and sqlite export testing in same test case
@@ -318,6 +321,7 @@ Lifecycle Export User Space Table and then Access From RDBMSs
     ...    ${EMPTY}
     ...    stdout=${CURDIR}/tmp/Lifecycle-Export-User-Space-Table-and-then-Access-From-RDBMSs-stage-2.tmp
     ...    stderr=${CURDIR}/tmp/Lifecycle-Export-User-Space-Table-and-then-Access-From-RDBMSs-stage-2-stderr.tmp
+    ...    collapse_spaces=${True}
 
 Lifecycle Export User Space Table and then Access From RDBMSs Over Stackql Postgres Server
     Pass Execution If    "${SQL_BACKEND}" != "postgres_tcp"    TODO: FIX THIS... Engineer a way to do postgres and sqlite export testing in same test case
