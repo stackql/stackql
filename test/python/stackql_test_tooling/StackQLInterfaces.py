@@ -108,12 +108,16 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
   
 
   def _verify_both_streams(self, result, expected_output, expected_stderr_output, **cfg):
-    stdout_ok = self.should_be_equal(result.stdout, expected_output, **cfg)
+    pass_through = {
+      'strip_spaces': cfg.pop('strip_spaces', False),
+      'collapse_spaces': cfg.pop('collapse_spaces', False)
+    }
+    stdout_ok = self.should_be_equal(result.stdout, expected_output, **pass_through)
     if self._execution_platform == "docker":
       # cannot silence stupid compose status logs
-      stderr_ok = self.should_contain(result.stderr, expected_stderr_output, **cfg)
+      stderr_ok = self.should_contain(result.stderr, expected_stderr_output, **pass_through)
       return stdout_ok and stderr_ok
-    stderr_ok = self.should_be_equal(result.stderr, expected_stderr_output, **cfg)
+    stderr_ok = self.should_be_equal(result.stderr, expected_stderr_output, **pass_through)
     return stdout_ok and stderr_ok
   
   def _contain_both_streams(self, result, expected_output, expected_stderr_output):
