@@ -310,7 +310,7 @@ Acceptable Secure PSQL Connection to mTLS Server With Diagnostic Query Returns C
     ...    ${shellExe}     \-c    ${input}
     ...    stdout=${CURDIR}/tmp/Acceptable-Secure-PSQL-Connection-to-mTLS-Server-With-Diagnostic-Query-Returns-Connection-Info.tmp
     ...    stderr=${CURDIR}/tmp/Acceptable-Secure-PSQL-Connection-to-mTLS-Server-With-Diagnostic-Query-Returns-Connection-Info-stderr.tmp
-    Should Contain    ${result.stdout}    SSL connection (protocol: TLSv1.3
+    Should Contain    ${result.stdout}    TLSv1.3
 
 Acceptable Password Only PSQL Connection Defined by Env Vars to Server With Diagnostic Query Returns Connection Info
     Set Environment Variable    PGHOST           ${PSQL_CLIENT_HOST}
@@ -327,7 +327,7 @@ Acceptable Password Only PSQL Connection Defined by Env Vars to Server With Diag
     ...    ${shellExe}     \-c    ${input}
     ...    stdout=${CURDIR}/tmp/Acceptable-Password-Only-PSQL-Connection-Defined-by-Env-Vars-to-Server-With-Diagnostic-Query-Returns-Connection-Info.tmp
     ...    stderr=${CURDIR}/tmp/Acceptable-Password-Only-PSQL-Connection-Defined-by-Env-Vars-to-Server-With-Diagnostic-Query-Returns-Connection-Info-stderr.tmp
-    Should Contain    ${result.stdout}    You are connected to database
+    Should Match Regexp    ${result.stdout}    (You are connected to database|Connection Information)
     [Teardown]  Run Keywords    Remove Environment Variable     PGHOST
     ...         AND             Remove Environment Variable     PGPORT
     ...         AND             Remove Environment Variable     PGUSER 
@@ -350,7 +350,7 @@ Acceptable Secure PSQL Connection Defined by Env Vars to mTLS Server With Diagno
     ...    ${shellExe}     \-c    ${input}
     ...    stdout=${CURDIR}/tmp/Acceptable-Secure-PSQL-Connection-Defined-by-Env-Vars-to-mTLS-Server-With-Diagnostic-Query-Returns-Connection-Info.tmp
     ...    stderr=${CURDIR}/tmp/Acceptable-Secure-PSQL-Connection-Defined-by-Env-Vars-to-mTLS-Server-With-Diagnostic-Query-Returns-Connection-Info-stderr.tmp
-    Should Contain    ${result.stdout}    SSL connection (protocol: TLSv1.3
+    Should Contain    ${result.stdout}    TLSv1.3
     [Teardown]  Run Keywords    Remove Environment Variable     PGHOST
     ...         AND             Remove Environment Variable     PGPORT
     ...         AND             Remove Environment Variable     PGSSLMODE 

@@ -77,6 +77,8 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     expected_stderr_output :str,
     *args,
     **kwargs):
+    collapse_spaces = kwargs.pop('collapse_spaces', False)
+    strip_spaces = kwargs.pop('strip_spaces', False)
     result = None
     if db_name == "sqlite":
       result = self._run_sqlite_command(
@@ -95,16 +97,27 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
         *("--csv",),
         **kwargs,
       )
-    return self._verify_both_streams(result, expected_output, expected_stderr_output)
+    return self._verify_both_streams(
+      result, 
+      expected_output, 
+      expected_stderr_output, 
+      collapse_spaces=collapse_spaces,
+      strip_spaces=strip_spaces, 
+      **kwargs,
+    )
   
 
-  def _verify_both_streams(self, result, expected_output, expected_stderr_output):
-    stdout_ok = self.should_be_equal(result.stdout, expected_output)
+  def _verify_both_streams(self, result, expected_output, expected_stderr_output, **cfg):
+    pass_through = {
+      'strip_spaces': cfg.pop('strip_spaces', False),
+      'collapse_spaces': cfg.pop('collapse_spaces', False)
+    }
+    stdout_ok = self.should_be_equal(result.stdout, expected_output, **pass_through)
     if self._execution_platform == "docker":
       # cannot silence stupid compose status logs
-      stderr_ok = self.should_contain(result.stderr, expected_stderr_output)
+      stderr_ok = self.should_contain(result.stderr, expected_stderr_output, **pass_through)
       return stdout_ok and stderr_ok
-    stderr_ok = self.should_be_equal(result.stderr, expected_stderr_output)
+    stderr_ok = self.should_be_equal(result.stderr, expected_stderr_output, **pass_through)
     return stdout_ok and stderr_ok
   
   def _contain_both_streams(self, result, expected_output, expected_stderr_output):
@@ -589,14 +602,14 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
 
 
   @keyword
-  def should_PG_client_inline_equal(self, curdir :str, psql_exe :str, psql_conn_str :str, query :str, expected_output :str):
+  def should_PG_client_inline_equal(self, curdir :str, psql_exe :str, psql_conn_str :str, query :str, expected_output :str, **cfg):
     result =    self._run_PG_client_command(
       curdir,
       psql_exe,
       psql_conn_str,
       query
     )
-    return self.should_be_equal(result.stdout, expected_output)
+    return self.should_be_equal(result.stdout, expected_output, collapse_spaces=cfg.pop('collapse_spaces', False))
   
 
   @keyword
@@ -617,7 +630,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
         sqlite_db_file,
         query
       ) 
-    return self.should_be_equal(result.stdout, expected_output)
+    return self.should_be_equal(result.stdout, expected_output, collapse_spaces=kwargs.pop('collapse_spaces', False))
   
 
   @keyword
@@ -634,7 +647,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       end_time = time.time()
       duration = end_time - start_time
       times.append(duration)
-      self.should_be_equal(result.stdout, expected_output)
+      self.should_be_equal(result.stdout, expected_output, collapse_spaces=cfg.pop('collapse_spaces', False))
     mean_time = sum(times) / len(times)
     self.log(f"mean_time = {mean_time}")
     self.log(f"max_time = {max(times)}")
@@ -699,7 +712,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       queries
     )
     self.log(result)
-    return self.should_be_equal(len(result), expected_length)
+    return self.should_be_equal(len(result), expected_length, collapse_spaces=kwargs.pop('collapse_spaces', False))
   
 
   @keyword
@@ -751,7 +764,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       *args,
       **cfg
     )
-    return self.should_be_equal(result.stdout, expected_output)
+    return self.should_be_equal(result.stdout, expected_output, collapse_spaces=cfg.pop('collapse_spaces', False))
 
 
   @keyword
@@ -813,7 +826,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
         *args,
         **cfg
       )
-      self.should_be_equal(result.stdout, expected_output)
+      self.should_be_equal(result.stdout, expected_output, collapse_spaces=cfg.pop('collapse_spaces', False))
   
 
   @keyword
@@ -846,7 +859,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
         *args,
         **cfg
       )
-      return self._verify_both_streams(result, expected_output, expected_stderr_output)
+      return self._verify_both_streams(result, expected_output, expected_stderr_output, **cfg)
 
 
   @keyword
@@ -876,7 +889,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       *args,
       **cfg
     )
-    return self.should_be_equal(result.stdout, expected_output)
+    return self.should_be_equal(result.stdout, expected_output, collapse_spaces=cfg.pop('collapse_spaces', False))
 
   
   @keyword
@@ -1080,6 +1093,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     query,
     expected_output :str,
     stdout_tmp_file :str,
+    **cfg,
   ):
     args = ("--http.log.enabled",)
     result = self._run_stackql_exec_command(
@@ -1094,5 +1108,10 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
       *args,
       **{"stdout": stdout_tmp_file }
     )
-    return self.should_be_equal(result.stdout, expected_output)
+    return self.should_be_equal(
+      result.stdout, 
+      expected_output, 
+      collapse_spaces=cfg.pop('collapse_spaces', False),
+      strip_spaces=cfg.pop('strip_spaces', False),
+    )
 
