@@ -6863,11 +6863,11 @@ Run AWS_POLICY_EQUAL Tests
     ...    aws_policy_equal(
     ...      '[{"Key":"stackql:stack-name","Value":"stackql-serverless"},{"Key":"stackql:stack-env","Value":"dev"},{"Key":"stackql:resource-name","Value":"aws_s3_workspace_bucket"}]',
     ...      '[{"Value":"dev","Key":"stackql:stack-env"},{"Value":"stackql-serverless","Key":"stackql:stack-name"},{"Value":"aws_s3_workspace_bucket","Key":"stackql:resource-name"}]'
-    ...    ) AS toplevel_tags_unordered_match,
+    ...    ) AS toplevel_tags_equal,
     ...    aws_policy_equal(
     ...      '{"BucketName":"my-bucket","Tags":[{"Key":"env","Value":"prod"},{"Key":"team","Value":"platform"}]}',
     ...      '{"BucketName":"my-bucket","Tags":[{"Key":"team","Value":"platform"},{"Key":"env","Value":"prod"}]}'
-    ...    ) AS nested_tags_unordered_match;
+    ...    ) AS nested_tags_equal;
     ${outputStr} =    Catenate    SEPARATOR=\n
     ...    |------------------------|------------------------|--------------------|-----------------|----------------------------|-----------------------------|---------------------------|
     ...    |${SPACE}identical_policy_match${SPACE}|${SPACE}unordered_action_match${SPACE}|${SPACE}array_string_match${SPACE}|${SPACE}principal_match${SPACE}|${SPACE}condition_reordering_match${SPACE}|${SPACE}toplevel_tags_unordered_match${SPACE}|${SPACE}nested_tags_unordered_match${SPACE}|
