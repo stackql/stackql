@@ -78,7 +78,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     *args,
     **kwargs):
     collapse_spaces = kwargs.pop('collapse_spaces', False)
-    strip_spaces = kwargs.pop('strip_sspaces', False)
+    strip_spaces = kwargs.pop('strip_spaces', False)
     result = None
     if db_name == "sqlite":
       result = self._run_sqlite_command(
