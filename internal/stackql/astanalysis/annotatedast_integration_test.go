@@ -1,4 +1,4 @@
-package astanalysis
+package astanalysis //nolint:testpackage // acceptable
 
 import (
 	"testing"
