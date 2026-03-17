@@ -109,6 +109,15 @@ func (v *standardQueryRewriteAstVisitor) isJSONEachCompatible(col parserutil.Col
 	return isJSONEachCompatibleRegexp.MatchString(s)
 }
 
+func (v *standardQueryRewriteAstVisitor) isAnonymous(col parserutil.ColumnHandle) bool {
+	switch col.Expr.(type) {
+	case *sqlparser.OrExpr:
+		return true
+	default:
+		return false
+	}
+}
+
 // TODO: introduce dependency on RDBMS
 func (v *standardQueryRewriteAstVisitor) getTypeFromParserType(t sqlparser.ValType) string {
 	//nolint:exhaustive // acceptable
@@ -693,7 +702,7 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 					} else {
 						r, ok := indirect.GetColumnByName(col.Name)
 						if !ok {
-							if !v.isJSONEachCompatible(col) {
+							if !v.isJSONEachCompatible(col) && !v.isAnonymous(col) {
 								return fmt.Errorf("query rewriting for indirection: cannot find col = '%s'", col.Name)
 							}
 							relationalCol = typing.NewRelationalColumn(col.Name, "").WithDecorated(col.DecoratedColumn) // TOOO: clean this up

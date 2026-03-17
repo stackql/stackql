@@ -4268,6 +4268,27 @@ Filtered Projection Detail Resource Level View of Cloud Control Resource Returns
     ...    ${outputStr}
     ...    ${CURDIR}/tmp/Filtered-Projection-Detail-Resource-Level-View-of-Cloud-Control-Resource-Returns-Expected-Result.tmp
 
+View String Concatenation Filtered Projection Detail Resource Level View of Cloud Control Resource Returns Expected Result
+    ${inputStr} =    Catenate
+    ...    select domain_name, 'Descriptor:' || arn as descriptor from aws.pseudo_s3.s3_bucket_detail where data__Identifier = 'stackql-testing-bucket-01';
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |--------------------------------------------|---------------------------------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}domain_name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}descriptor${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |--------------------------------------------|---------------------------------------------------|
+    ...    |${SPACE}stackql-testing-bucket-01.s3.amazonaws.com${SPACE}|${SPACE}Descriptor:arn:aws:s3:::stackql-testing-bucket-01${SPACE}|
+    ...    |--------------------------------------------|---------------------------------------------------|
+    Should Horrid Query StackQL Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}    
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${CURDIR}/tmp/View-String-Concatenation-Filtered-Projection-Detail-Resource-Level-View-of-Cloud-Control-Resource-Returns-Expected-Result.tmp
+
 Filtered Star Resource Level View of Cloud Control Resource Returns Expected Result
     Should Horrid Query StackQL Inline Equal
     ...    ${STACKQL_EXE}
