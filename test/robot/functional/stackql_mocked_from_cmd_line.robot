@@ -2044,7 +2044,30 @@ Basic Floating Point Projection Display Plus Bearer And User Password Auth Encod
     ...    select price_monthly, price_hourly from digitalocean.sizes.sizes where price_monthly \= 48.0 ;
     ...    0.07143
     ...    stdout=${CURDIR}/tmp/Basic-Floating-Point-Projection-Display-Plus-Bearer-And-User-Password-Auth-Encoding.tmp
-   
+
+Basic Null Floating Point Projection Display Plus Bearer And User Password Auth Encoding Also Tests Null Numeric
+    ${expectedStr} =    Catenate    SEPARATOR=\n
+    ...    |-------------|---------------|--------------|
+    ...    |${SPACE}description${SPACE}|${SPACE}price_monthly${SPACE}|${SPACE}price_hourly${SPACE}|
+    ...    |-------------|---------------|--------------|
+    ...    |${SPACE}Basic${SPACE}AMD${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}7${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------------|---------------|--------------|
+    ...    |${SPACE}Basic${SPACE}Intel${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}7${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}0.01042${SPACE}|
+    ...    |-------------|---------------|--------------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select description, price_monthly, price_hourly from digitalocean.sizes.sizes where price_monthly \= 7.0 order by description asc;
+    ...    ${expectedStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Basic-Null-Floating-Point-Projection-Display-Plus-Bearer-And-User-Password-Auth-Encoding.tmp
+    ...    stderr=${CURDIR}/tmp/Basic-Null-Floating-Point-Projection-Display-Plus-Bearer-And-User-Password-Auth-Encoding-stderr.tmp
+
 Basic Floating Point Projection Display Plus Basic Auth Encoding
     Should Stackql Exec Inline Contain
     ...    ${STACKQL_EXE}
