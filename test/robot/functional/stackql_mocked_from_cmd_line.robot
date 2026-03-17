@@ -4205,6 +4205,19 @@ Filtered Projection Resource Level View of Cloud Control Resource Returns Expect
     ...    ${AWS_CC_VIEW_SELECT_PROJECTION_BUCKET_FILTERED_EXPECTED}
     ...    ${CURDIR}/tmp/Filtered-Projection-Resource-Level-View-of-Cloud-Control-Resource-Returns-Expected-Result.tmp
 
+String Concatenation View of Cloud Control Resource Returns Expected Result
+    Should Horrid Query StackQL Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}    
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select BucketName || '-confidential' as concatenated_name, DomainName from aws.pseudo_s3.s3_bucket_listing where region \= 'ap\-southeast\-2' and BucketName \= 'stackql\-trial\-bucket\-01';
+    ...    ${AWS_CC_VIEW_SELECT_BUCKET_CONCATENATION_FILTERED_EXPECTED}
+    ...    ${CURDIR}/tmp/String-Concatenation-View-of-Cloud-Control-Resource-Returns-Expected-Result.tmp
+
 Function On Projection Resource Level View of Cloud Control Resource Returns Expected Result
     ${outputStr} =    Catenate    SEPARATOR=\n
     ...    |---------------------------|---------------------|

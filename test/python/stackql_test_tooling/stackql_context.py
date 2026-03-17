@@ -801,6 +801,7 @@ def get_variables(
   AWS_CC_VIEW_SELECT_STAR_BUCKET_FILTERED_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-star-bucket-view-response-filtered-only.txt'))
   AWS_CC_VIEW_SELECT_PROJECTION_BUCKET_COMPLEX_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-projection-bucket-view-parameter-pushed-and-response-filtered.txt'))
   AWS_CC_VIEW_SELECT_STAR_BUCKET_COMPLEX_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-star-bucket-view-parameter-pushed-and-response-filtered.txt'))
+  AWS_CC_VIEW_SELECT_BUCKET_CONCATENATION_FILTERED_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'aws', 'cloud_control', 'select-bucket-concatenation-view-response-filtered.txt'))
 
   SELECT_GITHUB_REPOS_PAGES_SINGLE_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-repos-pages.txt'))
   SELECT_GITHUB_REPOS_IDS_ASC_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'github', 'repos', 'select-github-repos-ids-asc.txt'))
@@ -956,6 +957,7 @@ def get_variables(
     'AWS_CC_VIEW_SELECT_PROJECTION_BUCKET_FILTERED_EXPECTED':                 AWS_CC_VIEW_SELECT_PROJECTION_BUCKET_FILTERED_EXPECTED,
     'AWS_CC_VIEW_SELECT_STAR_BUCKET_COMPLEX_EXPECTED':                        AWS_CC_VIEW_SELECT_STAR_BUCKET_COMPLEX_EXPECTED,
     'AWS_CC_VIEW_SELECT_STAR_BUCKET_FILTERED_EXPECTED':                       AWS_CC_VIEW_SELECT_STAR_BUCKET_FILTERED_EXPECTED,
+    'AWS_CC_VIEW_SELECT_BUCKET_CONCATENATION_FILTERED_EXPECTED':              AWS_CC_VIEW_SELECT_BUCKET_CONCATENATION_FILTERED_EXPECTED,
     'AWS_CLOUD_CONTROL_METHOD_SIGNATURE_CMD_ARR':                             [ SELECT_AWS_CLOUD_CONTROL_VPCS_DESC, GET_AWS_CLOUD_CONTROL_VPCS_DESC ],
     'AWS_CLOUD_CONTROL_METHOD_SIGNATURE_CMD_ARR_EXPECTED':                    SELECT_AWS_CLOUD_CONTROL_VPCS_DESC_JSON_EXPECTED + GET_AWS_CLOUD_CONTROL_VPCS_DESC_JSON_EXPECTED,
     'AWS_CLOUD_CONTROL_BUCKET_DETAIL_PROJECTION_DEFECTIVE_CMD_ARR':           [ SELECT_AWS_CLOUD_CONTROL_BUCKET_PROJECTION_DEFECTIVE, SELECT_AWS_CLOUD_CONTROL_BUCKET_PROJECTION ],
