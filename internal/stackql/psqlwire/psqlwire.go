@@ -30,6 +30,9 @@ func shimNumericElement(rowElement interface{}) interface{} {
 		if err == nil {
 			return f
 		}
+		if string(re) == "null" {
+			return nil
+		}
 	}
 	return rowElement
 }
@@ -42,6 +45,10 @@ func shimNumericElement(rowElement interface{}) interface{} {
 //nolint:gocritic // this is a hack
 func shimNumericTextBytes(n *pgtype.Numeric) []byte {
 	intStr := n.Int.String()
+
+	if intStr == "<nil>" {
+		return []byte("null")
+	}
 
 	buf := &bytes.Buffer{}
 

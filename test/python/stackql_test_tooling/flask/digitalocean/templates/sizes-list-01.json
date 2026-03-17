@@ -47,7 +47,6 @@
         "description": "Basic AMD",
         "disk": 25,
         "memory": 1024,
-        "price_hourly": 0.01042,
         "price_monthly": 7,
         "regions": [
           "ams3",
