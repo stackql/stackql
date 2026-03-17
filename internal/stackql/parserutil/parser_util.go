@@ -762,6 +762,27 @@ func inferColNameFromExpr(
 		if rhsErr != nil {
 			return retVal, rhsErr
 		}
+	case *sqlparser.BinaryExpr:
+		decoratedColumn := astformat.String(expr, formatter)
+		retVal.DecoratedColumn = getDecoratedColRendition(decoratedColumn, alias)
+		lhsRetval, lhsErr := inferColNameFromExpr(expr.Left, formatter, alias)
+		if lhsErr == nil && lhsRetval.Name != "" {
+			retVal.Name = lhsRetval.Name
+			retVal.Qualifier = lhsRetval.Qualifier
+			return retVal, nil
+		}
+		rhsRetval, rhsErr := inferColNameFromExpr(expr.Right, formatter, alias)
+		if rhsErr == nil && rhsRetval.Name != "" {
+			retVal.Name = rhsRetval.Name
+			retVal.Qualifier = rhsRetval.Qualifier
+			return retVal, nil
+		}
+		if lhsErr != nil {
+			return retVal, lhsErr
+		}
+		if rhsErr != nil {
+			return retVal, rhsErr
+		}
 	case *sqlparser.CaseExpr:
 		decoratedColumn := astformat.String(expr, formatter)
 		retVal.DecoratedColumn = getDecoratedColRendition(decoratedColumn, alias)

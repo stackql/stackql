@@ -184,3 +184,58 @@ func TestInferColNameFromExpr_WindowFunctions(t *testing.T) {
 		assert.False(t, colHandle.IsAggregateExpr, "UPPER() should not be marked as aggregate expression")
 	})
 }
+
+func TestInferColNameFromExpr_BinaryExpressions(t *testing.T) {
+	formatter := astformat.DefaultSelectExprsFormatter
+
+	t.Run("String concatenation with || operator", func(t *testing.T) {
+		query := "SELECT 'homebrew://' || formula_name as formula_uri FROM t"
+		stmt, err := sqlparser.Parse(query)
+		require.NoError(t, err)
+
+		sel := stmt.(*sqlparser.Select)
+		require.Len(t, sel.SelectExprs, 1)
+
+		aliasedExpr := sel.SelectExprs[0].(*sqlparser.AliasedExpr)
+		colHandle, err := parserutil.InferColNameFromExpr(aliasedExpr, formatter)
+		require.NoError(t, err)
+
+		assert.Equal(t, "formula_name", colHandle.Name, "Should extract column name from right operand")
+		assert.Equal(t, "formula_uri", colHandle.Alias)
+		assert.Contains(t, colHandle.DecoratedColumn, "||", "DecoratedColumn should contain concatenation operator")
+		assert.False(t, colHandle.IsAggregateExpr, "Concatenation should not be marked as aggregate")
+	})
+
+	t.Run("String concatenation with literal on right side", func(t *testing.T) {
+		query := "SELECT col_name || '_suffix' as modified_col FROM t"
+		stmt, err := sqlparser.Parse(query)
+		require.NoError(t, err)
+
+		sel := stmt.(*sqlparser.Select)
+		require.Len(t, sel.SelectExprs, 1)
+
+		aliasedExpr := sel.SelectExprs[0].(*sqlparser.AliasedExpr)
+		colHandle, err := parserutil.InferColNameFromExpr(aliasedExpr, formatter)
+		require.NoError(t, err)
+
+		assert.Equal(t, "col_name", colHandle.Name, "Should extract column name from left operand")
+		assert.Equal(t, "modified_col", colHandle.Alias)
+	})
+
+	t.Run("Arithmetic expression with columns", func(t *testing.T) {
+		query := "SELECT col_a + col_b as sum_cols FROM t"
+		stmt, err := sqlparser.Parse(query)
+		require.NoError(t, err)
+
+		sel := stmt.(*sqlparser.Select)
+		require.Len(t, sel.SelectExprs, 1)
+
+		aliasedExpr := sel.SelectExprs[0].(*sqlparser.AliasedExpr)
+		colHandle, err := parserutil.InferColNameFromExpr(aliasedExpr, formatter)
+		require.NoError(t, err)
+
+		// Should extract first available column name
+		assert.Equal(t, "col_a", colHandle.Name, "Should extract column name from left operand")
+		assert.Equal(t, "sum_cols", colHandle.Alias)
+	})
+}
