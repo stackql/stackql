@@ -1,5 +1,5 @@
 |-------------------------------------|------------|
 |           concatenated_name         | DomainName |
 |-------------------------------------|------------|
-| stackql-trial-bucket-01-confidential|    null    |
+| stackql-trial-bucket-01-confidential | null       |
 |-------------------------------------|------------|
