@@ -1385,6 +1385,66 @@ Create and Interrogate Materialized View With Userspace Table Join and Aliasing 
     ...    stdout=${CURDIR}/tmp/Create-and-Interrogate-Materialized-View-With-Userspace-Table-Join-and-Aliasing-and-Name-Collision.tmp
     ...    stderr=${CURDIR}/tmp/Create-and-Interrogate-Materialized-View-With-Userspace-Table-Join-and-Aliasing-and-Name-Collision-stderr.tmp
 
+Resource Inner Joined With View
+    ${inputStr} =    Catenate
+    ...    create view vw_iam as select UserName, Arn from aws.iam.users where region = 'us-east-1';
+    ...    select u.UserName, v.Arn from aws.iam.users u inner join vw_iam v on u.UserName = v.UserName where u.region = 'us-east-1' order by u.UserName desc;
+    ...    drop view vw_iam;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |----------|--------------------------------------------------------------------------------|
+    ...    |${SPACE}UserName${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}Arn${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |----------|--------------------------------------------------------------------------------|
+    ...    |${SPACE}Jackie${SPACE}${SPACE}${SPACE}|${SPACE}arn:aws:iam::123456789012:user/division_abc/subdivision_xyz/engineering/Jackie${SPACE}|
+    ...    |----------|--------------------------------------------------------------------------------|
+    ...    |${SPACE}Andrew${SPACE}${SPACE}${SPACE}|${SPACE}arn:aws:iam::123456789012:user/division_abc/subdivision_xyz/engineering/Andrew${SPACE}|
+    ...    |----------|--------------------------------------------------------------------------------|
+    ${stdErrStr} =    Catenate    SEPARATOR=\n
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${stdErrStr}
+    ...    stdout=${CURDIR}/tmp/Resource-Inner-Joined-With-View.tmp
+    ...    stderr=${CURDIR}/tmp/Resource-Inner-Joined-With-View-stderr.tmp
+
+Resource Left Joined With View
+    ${inputStr} =    Catenate
+    ...    create view vw_iam as select UserName, Arn from aws.iam.users where region = 'us-east-1';
+    ...    select u.UserName, v.Arn from aws.iam.users u left join vw_iam v on u.UserName = v.UserName where u.region = 'us-east-1' order by u.UserName desc;
+    ...    drop view vw_iam;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |----------|--------------------------------------------------------------------------------|
+    ...    |${SPACE}UserName${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}Arn${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |----------|--------------------------------------------------------------------------------|
+    ...    |${SPACE}Jackie${SPACE}${SPACE}${SPACE}|${SPACE}arn:aws:iam::123456789012:user/division_abc/subdivision_xyz/engineering/Jackie${SPACE}|
+    ...    |----------|--------------------------------------------------------------------------------|
+    ...    |${SPACE}Andrew${SPACE}${SPACE}${SPACE}|${SPACE}arn:aws:iam::123456789012:user/division_abc/subdivision_xyz/engineering/Andrew${SPACE}|
+    ...    |----------|--------------------------------------------------------------------------------|
+    ${stdErrStr} =    Catenate    SEPARATOR=\n
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${stdErrStr}
+    ...    stdout=${CURDIR}/tmp/Resource-Left-Joined-With-View.tmp
+    ...    stderr=${CURDIR}/tmp/Resource-Left-Joined-With-View-stderr.tmp
+
 Subquery Left Joined With Aliasing and Name Collision
     ${inputStr} =    Catenate
     ...    select u1.UserName, u.UserId, u.Arn, u1.region from ( select Arn, UserName, UserId from aws.iam.users where region = 'us-east-1' ) u inner join aws.iam.users u1 on u1.Arn = u.Arn where region = 'us-east-1'  order by u1.UserName desc;
