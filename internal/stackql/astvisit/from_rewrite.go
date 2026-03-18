@@ -664,8 +664,11 @@ func (v *standardFromRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 				indirectType := indirect.GetType()
 				switch indirectType {
 				case astindirect.ViewType:
-					templateString := fmt.Sprintf(` ( %%s ) AS "%s" `, name)
-					v.rewrittenQuery = templateString
+					if node.As.IsEmpty() {
+						v.rewrittenQuery = fmt.Sprintf(` ( %%s ) AS "%s" `, name)
+					} else {
+						v.rewrittenQuery = ` ( %s ) `
+					}
 					v.indirectContexts = append(v.indirectContexts, indirect.GetSelectContext())
 				case astindirect.SubqueryType:
 					// Note: CTEs are converted to SubqueryType at AST level,
