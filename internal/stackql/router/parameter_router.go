@@ -531,7 +531,9 @@ func (pr *standardParameterRouter) route(
 		}
 		t, ok := pr.tablesAliasMap[alias]
 		if !ok {
-			return nil, fmt.Errorf("alias '%s' does not map to any table expression", alias)
+			// Alias may come from an outer query scope (e.g. parentWhereParams propagated
+			// into a view's inner routing context). Skip rather than error.
+			continue
 		}
 		if t == tb {
 			ref, ok := pr.colRefs[k]
@@ -549,7 +551,8 @@ func (pr *standardParameterRouter) route(
 		}
 		t, ok := pr.tablesAliasMap[alias]
 		if !ok {
-			return nil, fmt.Errorf("alias '%s' does not map to any table expression", alias)
+			// Alias may come from an outer query scope; skip rather than error.
+			continue
 		}
 		if t == tb {
 			ref, ok := pr.colRefs[k]
