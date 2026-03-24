@@ -655,6 +655,43 @@ Show Methods including server params AWS
     ...    show methods in aws.ec2.vpcs;
     ...    ${outputStr}
 
+Show Methods including view 
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |------------|----------------|---------|
+    ...    |${SPACE}MethodName${SPACE}|${SPACE}RequiredParams${SPACE}|${SPACE}SQLVerb${SPACE}|
+    ...    |------------|----------------|---------|
+    ...    |${SPACE}__view__${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}SELECT${SPACE}${SPACE}|
+    ...    |------------|----------------|---------|
+    Should StackQL Current Exec Equal    
+    ...    show methods in aws.pseudo_s3.s3_bucket_listing;
+    ...    ${outputStr}
+
+Show Methods including view and others 
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-----------------|----------------|---------|
+    ...    |${SPACE}${SPACE}${SPACE}MethodName${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}RequiredParams${SPACE}|${SPACE}SQLVerb${SPACE}|
+    ...    |-----------------|----------------|---------|
+    ...    |${SPACE}__view__${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}SELECT${SPACE}${SPACE}|
+    ...    |-----------------|----------------|---------|
+    ...    |${SPACE}create_resource${SPACE}|${SPACE}region${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}INSERT${SPACE}${SPACE}|
+    ...    |-----------------|----------------|---------|
+    Should StackQL Current Exec Equal    
+    ...    show methods in aws.pseudo_s3.s3_bucket_detail_defaulted;
+    ...    ${outputStr}
+
+Show Methods including required params view and others 
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-----------------|--------------------------|---------|
+    ...    |${SPACE}${SPACE}${SPACE}MethodName${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}RequiredParams${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}SQLVerb${SPACE}|
+    ...    |-----------------|--------------------------|---------|
+    ...    |${SPACE}__view__${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}data__Identifier,${SPACE}region${SPACE}|${SPACE}SELECT${SPACE}${SPACE}|
+    ...    |-----------------|--------------------------|---------|
+    ...    |${SPACE}create_resource${SPACE}|${SPACE}region${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}INSERT${SPACE}${SPACE}|
+    ...    |-----------------|--------------------------|---------|
+    Should StackQL Current Exec Equal    
+    ...    show methods in aws.pseudo_s3.s3_bucket_polymorphic;
+    ...    ${outputStr}
+
 Show Insert Google Container Clusters
     Should StackQL Exec Contain    
     ...    SHOW INSERT INTO google.container."projects.zones.clusters";

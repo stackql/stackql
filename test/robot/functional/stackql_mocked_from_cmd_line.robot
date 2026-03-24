@@ -460,6 +460,8 @@ AWS Hybrid Service Cloud Control S3 Bucket Show Methods
     ...    |-----------------|----------------------------|---------|
     ...    |${SPACE}${SPACE}${SPACE}MethodName${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}RequiredParams${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}SQLVerb${SPACE}|
     ...    |-----------------|----------------------------|---------|
+    ...    |${SPACE}__view__${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}SELECT${SPACE}${SPACE}|
+    ...    |-----------------|----------------------------|---------|
     ...    |${SPACE}create_resource${SPACE}|${SPACE}data__DesiredState,${SPACE}region${SPACE}|${SPACE}INSERT${SPACE}${SPACE}|
     ...    |-----------------|----------------------------|---------|
     Should StackQL Exec Inline Equal Both Streams

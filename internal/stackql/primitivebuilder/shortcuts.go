@@ -204,11 +204,25 @@ func NewShowInstructionExecutor(
 			return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, mErr, nil,
 				handlerCtx.GetTypingConfig()))
 		}
+		views, hasViews := rsc.GetViewsForSqlDialect(
+			handlerCtx.GetSQLSystem().GetName(),
+		)
 		methodKeys := make(map[string]map[string]interface{})
+		j := 0
+		if hasViews {
+			for i, v := range views {
+				vMap := v.ToPresentationMap(extended)
+				if i == 0 {
+					methodKeys[fmt.Sprintf("%06d", i)] = vMap
+					j++
+					columnOrder = v.GetColumnOrder(extended)
+				}
+			}
+		}
 		for i, k := range mOrd {
 			method := k
 			methMap := method.ToPresentationMap(extended)
-			methodKeys[fmt.Sprintf("%06d", i)] = methMap
+			methodKeys[fmt.Sprintf("%06d", j+i)] = methMap
 			columnOrder = method.GetColumnOrder(extended)
 		}
 		keys = methodKeys
