@@ -1304,10 +1304,16 @@ jobs:
 
     - name: Install Various dependencies
       run: |
-        brew install postgresql
-        pip3 install -r cicd/requirements.txt
         brew install libpq@16
-        brew link --force libpq
+        
+        # Use overwrite to force the links for version 16
+        brew link --force --overwrite libpq@16
+        
+        # Update PATH so the CI finds the brew version of psql
+        echo "/usr/local/opt/libpq@16/bin" >> $GITHUB_PATH
+        
+        pip3 install -r cicd/requirements.txt
+        
         psql --version
     
     - name: Generate rewritten registry for simulations
