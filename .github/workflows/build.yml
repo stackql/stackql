@@ -1310,7 +1310,7 @@ jobs:
         brew link --force --overwrite libpq@16
         
         # Update PATH so the CI finds the brew version of psql
-        echo "/usr/local/opt/libpq@16/bin" >> $GITHUB_PATH
+        echo "/usr/local/opt/libpq@16/bin" >> "$GITHUB_PATH"
         
         pip3 install -r cicd/requirements.txt
         
