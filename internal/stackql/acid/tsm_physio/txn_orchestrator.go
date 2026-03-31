@@ -2,9 +2,9 @@ package tsm_physio //nolint:stylecheck,revive // prefer this nomenclature
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/stackql/any-sdk/pkg/constants"
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/acid/tsm"
 	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -68,7 +68,8 @@ func (orc *standardOrchestrator) processQueryOrQueries(
 ) ([]internaldto.ExecutorOutput, bool) {
 	var retVal []internaldto.ExecutorOutput
 	cmdString := handlerCtx.GetRawQuery()
-	for _, s := range strings.Split(cmdString, ";") {
+	splitQueries, _ := sqlparser.SplitStatementToPieces(cmdString)
+	for _, s := range splitQueries {
 		response, hasResponse := orc.processQuery(handlerCtx, s)
 		if hasResponse {
 			retVal = append(retVal, response...)

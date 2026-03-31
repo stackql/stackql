@@ -25,6 +25,7 @@ import (
 
 	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/any-sdk/pkg/logging"
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/config"
 	"github.com/stackql/stackql/internal/stackql/driver"
 	"github.com/stackql/stackql/internal/stackql/entryutil"
@@ -225,20 +226,27 @@ var shellCmd = &cobra.Command{
 				if inlineCommentIdx > -1 {
 					line = line[:inlineCommentIdx]
 				}
-				semiColonIdx := strings.Index(line, ";")
-				if semiColonIdx > -1 {
-					line = strings.TrimSpace(line[:semiColonIdx+1])
-					subSemiColonIdx := strings.Index(line, ";")
-					sb.WriteString(" " + line[:subSemiColonIdx+1])
-					rawQuery := sb.String()
-					queryToExecute, qErr := entryutil.PreprocessInline(runtimeCtx, rawQuery)
-					if qErr != nil {
-						io.WriteString(outErrFile, "\r\n"+qErr.Error()+"\r\n") //nolint:errcheck // TODO: investigate
+				hasRHSSemiColon := strings.HasSuffix(strings.TrimSpace(line), ";")
+				splitQueries, _ := sqlparser.SplitStatementToPieces(line)
+				if len(splitQueries) > 0 {
+					for i, s := range splitQueries {
+						if i == len(splitQueries)-1 && !hasRHSSemiColon {
+							// Last piece has no trailing semicolon;
+							// accumulate for multi-line continuation.
+							sb.Reset()
+							sb.WriteString(s)
+							continue
+						}
+						sb.WriteString(" " + s)
+						rawQuery := sb.String()
+						queryToExecute, qErr := entryutil.PreprocessInline(runtimeCtx, rawQuery)
+						if qErr != nil {
+							io.WriteString(outErrFile, "\r\n"+qErr.Error()+"\r\n") //nolint:errcheck // TODO: investigate
+						}
+						l.WriteToHistory(rawQuery) //nolint:errcheck // TODO: investigate
+						sessionRunnerInstance.RunCommand(queryToExecute)
+						sb.Reset()
 					}
-					l.WriteToHistory(rawQuery) //nolint:errcheck // TODO: investigate
-					sessionRunnerInstance.RunCommand(queryToExecute)
-					sb.Reset()
-					sb.WriteString(line[subSemiColonIdx+1:])
 				} else {
 					sb.WriteString(" " + line)
 				}

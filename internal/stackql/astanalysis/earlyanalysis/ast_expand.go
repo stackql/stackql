@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/stackql/any-sdk/pkg/constants"
 	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/astindirect"
@@ -141,14 +140,31 @@ func (v *indirectExpandAstVisitor) processCTEReference(
 }
 
 func (v *indirectExpandAstVisitor) processIndirect(node sqlparser.SQLNode, indirect astindirect.Indirect) error {
+	// Eager depth check: fail before recursively analyzing an indirection that would exceed the limit.
+	if v.indirectionDepth+1 > v.handlerCtx.GetRuntimeContext().IndirectDepthMax {
+		return fmt.Errorf(
+			"query error: indirection chain length %d > %d and is therefore disallowed; please do not cite views at too deep a level", //nolint:lll
+			v.indirectionDepth+1,
+			v.handlerCtx.GetRuntimeContext().IndirectDepthMax,
+		)
+	}
 	err := indirect.Parse()
 	if err != nil {
 		return nil //nolint:nilerr //TODO: investigate
 	}
+	// Filter parent WHERE params to only pass down unqualified (alias-free) entries.
+	// Aliased params like "r.org" reference specific outer tables and must not
+	// leak into child indirection analysis, where the alias would be unresolvable.
+	filteredWhereParams := parserutil.NewParameterMap()
+	for k, val := range v.whereParams.GetMap() {
+		if k.Alias() == "" {
+			filteredWhereParams.Set(k, val) //nolint:errcheck // best effort
+		}
+	}
 	childAnalyzer, err := NewEarlyScreenerAnalyzer(
 		v.primitiveGenerator,
 		v.annotatedAST,
-		v.whereParams.Clone(),
+		filteredWhereParams,
 		v.indirectionDepth+1,
 	)
 	if err != nil {
@@ -178,7 +194,7 @@ func (v *indirectExpandAstVisitor) processIndirect(node sqlparser.SQLNode, indir
 		return fmt.Errorf(
 			"query error: indirection chain length %d > %d and is therefore disallowed; please do not cite views at too deep a level", //nolint:lll
 			maxIndirectCount,
-			constants.LimitsIndirectMaxChainLength,
+			v.handlerCtx.GetRuntimeContext().IndirectDepthMax,
 		)
 	}
 	indirectPrimitiveGenerator.GetPrimitiveComposer().GetAst()

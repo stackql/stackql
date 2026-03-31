@@ -1388,6 +1388,21 @@ jobs:
       if: always()
       run: |
         cat ./test/robot/reports/output.xml
+
+    - name: Upload Robot Reports Artifact
+      uses: actions/upload-artifact@v4.3.1
+      if: always() && github.repository == 'stackql/stackql-devel'
+      with:
+        name: stackql_darwin_amd64_robot_reports
+        path: test/robot/reports
+
+
+    - name: Upload Robot Tmp Artifact
+      uses: actions/upload-artifact@v4.3.1
+      if: always() && github.repository == 'stackql/stackql-devel'
+      with:
+        name: stackql_darwin_amd64_robot_tmp
+        path: test/robot/functional/tmp
     
     - name: Run robot integration tests
       if: env.AZURE_CLIENT_SECRET != '' && startsWith(env.STATE_SOURCE_TAG, 'build-release')

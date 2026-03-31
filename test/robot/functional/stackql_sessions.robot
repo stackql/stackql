@@ -32,6 +32,36 @@ Shell Session Azure Compute Table Nomenclature Mutation Guard
     ...    stdout=${CURDIR}/tmp/Shell-Session-Azure-Compute-Table-Nomenclature-Mutation-Guard.tmp
     [Teardown]    Stackql Per Test Teardown
 
+Shell Session Multiple Statements Inline
+    Pass Execution If    "${IS_WINDOWS}" == "1"    Skipping session test in windows
+    Should StackQL Shell Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${SHELL_SESSION_MULTI_STMT_INLINE_COMMANDS}
+    ...    dummyapp.io
+    ...    stdout=${CURDIR}/tmp/Shell-Session-Multiple-Statements-Inline.tmp
+    [Teardown]    Stackql Per Test Teardown
+
+Shell Session Multi Line Then Multi Statement
+    Pass Execution If    "${IS_WINDOWS}" == "1"    Skipping session test in windows
+    Should StackQL Shell Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${SHELL_SESSION_MULTI_LINE_THEN_MULTI_STMT_COMMANDS}
+    ...    dummyapp.io
+    ...    stdout=${CURDIR}/tmp/Shell-Session-Multi-Line-Then-Multi-Statement.tmp
+    [Teardown]    Stackql Per Test Teardown
+
 PG Session GC Manual Behaviour Canonical
     Should PG Client Session Inline Equal Strict
     ...    ${PSQL_MTLS_CONN_STR_UNIX}

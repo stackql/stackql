@@ -2,8 +2,8 @@ package tsm_physio //nolint:revive,stylecheck // prefer this nomenclature
 
 import (
 	"fmt"
-	"strings"
 
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
 	"github.com/stackql/stackql/internal/stackql/acid/tsm"
 	"github.com/stackql/stackql/internal/stackql/acid/txn_context"
@@ -42,7 +42,8 @@ func (orc *bestEffortOrchestrator) processQueryOrQueries(
 ) ([]internaldto.ExecutorOutput, bool) {
 	var retVal []internaldto.ExecutorOutput
 	cmdString := handlerCtx.GetRawQuery()
-	for _, s := range strings.Split(cmdString, ";") {
+	splitQueries, _ := sqlparser.SplitStatementToPieces(cmdString)
+	for _, s := range splitQueries {
 		response, hasResponse := orc.processQuery(handlerCtx, s)
 		if hasResponse {
 			retVal = append(retVal, response...)
