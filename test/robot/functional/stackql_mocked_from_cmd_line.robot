@@ -9478,3 +9478,121 @@ Left Outer Join Positive LHS Inline
     ...    ${outputStr}
     ...    stdout=${CURDIR}/tmp/Left-Outer-Join-Positive-LHS-Inline.tmp
     ...    stderr=${CURDIR}/tmp/Left-Outer-Join-Positive-LHS-Inline-stderr.tmp
+
+View JOIN View Returns Results
+    ${inputStr} =    Catenate
+    ...    create or replace view vw_repos_name as select name from stackql_repositories;
+    ...    create or replace view vw_repos_url as select name, url from stackql_repositories;
+    ...    select v1.name from vw_repos_name v1 inner join vw_repos_url v2 on v1.name = v2.name;
+    Should Stackql Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    dummyapp.io
+    ...    stdout=${CURDIR}/tmp/View-JOIN-View-Returns-Results-stdout.tmp
+    ...    stderr=${CURDIR}/tmp/View-JOIN-View-Returns-Results-stderr.tmp
+
+View JOIN Provider Table Returns Results
+    ${inputStr} =    Catenate
+    ...    create or replace view vw_repos as select name, url from stackql_repositories;
+    ...    select v1.name from vw_repos v1 inner join github.repos.repos r on v1.name = r.name where r.org = 'stackql';
+    Should Stackql Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    dummyapp.io
+    ...    stdout=${CURDIR}/tmp/View-JOIN-Provider-Table-Returns-Results-stdout.tmp
+    ...    stderr=${CURDIR}/tmp/View-JOIN-Provider-Table-Returns-Results-stderr.tmp
+
+View Depth Limitation Error Message Shows Correct Max
+    Should Stackql Exec Inline Contain Stderr
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    create view zz1 as select name from stackql_repositories; create view zz2 as select name from zz1; create view zz3 as select name from zz2; create view zz4 as select name from zz3; create view zz5 as select name from zz4; select * from zz5;
+    ...    indirection chain length 6 > 5
+    ...    stdout=${CURDIR}/tmp/View-Depth-Limitation-Error-Message-Shows-Correct-Max-stdout.tmp
+    ...    stderr=${CURDIR}/tmp/View-Depth-Limitation-Error-Message-Shows-Correct-Max-stderr.tmp
+
+
+Subquery JOIN Subquery Returns Results
+    ${inputStr} =    Catenate
+    ...    select a.name from (select name from stackql_repositories) a inner join (select name, url from stackql_repositories) b on a.name = b.name;
+    Should Stackql Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    dummyapp.io
+    ...    stdout=${CURDIR}/tmp/Subquery-JOIN-Subquery-Returns-Results-stdout.tmp
+    ...    stderr=${CURDIR}/tmp/Subquery-JOIN-Subquery-Returns-Results-stderr.tmp
+
+View JOIN Subquery Returns Results
+    ${inputStr} =    Catenate
+    ...    create or replace view vw_repos as select name, url from stackql_repositories;
+    ...    select v1.name from vw_repos v1 inner join (select name from stackql_repositories) sq on v1.name = sq.name;
+    Should Stackql Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    dummyapp.io
+    ...    stdout=${CURDIR}/tmp/View-JOIN-Subquery-Returns-Results-stdout.tmp
+    ...    stderr=${CURDIR}/tmp/View-JOIN-Subquery-Returns-Results-stderr.tmp
+
+View JOIN Materialized View Returns Results
+    ${inputStr} =    Catenate
+    ...    create or replace view vw_repos as select name, url from stackql_repositories;
+    ...    create or replace materialized view mv_repos as select name from stackql_repositories;
+    ...    select v1.name from vw_repos v1 inner join mv_repos mv on v1.name = mv.name;
+    Should Stackql Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    dummyapp.io
+    ...    stdout=${CURDIR}/tmp/View-JOIN-Materialized-View-Returns-Results-stdout.tmp
+    ...    stderr=${CURDIR}/tmp/View-JOIN-Materialized-View-Returns-Results-stderr.tmp
+
+CTE Within View Returns Results
+    ${inputStr} =    Catenate
+    ...    create or replace view vw_cte as with sub as (select name from stackql_repositories) select name from sub;
+    ...    select name from vw_cte;
+    Should Stackql Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    dummyapp.io
+    ...    stdout=${CURDIR}/tmp/CTE-Within-View-Returns-Results-stdout.tmp
+    ...    stderr=${CURDIR}/tmp/CTE-Within-View-Returns-Results-stderr.tmp

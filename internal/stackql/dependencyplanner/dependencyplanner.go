@@ -103,6 +103,35 @@ func NewStandardDependencyPlanner(
 	}, nil
 }
 
+func isAnnotationIndirection(annotationCtx taxonomy.AnnotationCtx) bool {
+	_, isView := annotationCtx.GetView()
+	_, isSubquery := annotationCtx.GetSubquery()
+	return isView || isSubquery
+}
+
+// orchestrateIndirection handles indirection vertices (views, subqueries, CTEs) in the dependency planner.
+// Unlike regular tables that need HTTP acquisition, indirections are already materialized by the
+// "create tail" builder and appear in the FROM clause as inline subqueries.
+// This method creates a NopBuilder as a placeholder in the execution DAG.
+// Indirections are NOT added to dp.tableSlice because they appear as inline subqueries
+// with their own internal control columns; adding them would generate incorrect outer WHERE clauses.
+//
+//nolint:unparam,revive // acceptable
+func (dp *standardDependencyPlanner) orchestrateIndirection(
+	annotationCtx taxonomy.AnnotationCtx,
+) (int, error) {
+	builder := primitivebuilder.NewNopBuilder(
+		dp.primitiveComposer.GetGraphHolder(),
+		dp.primitiveComposer.GetTxnCtrlCtrs(),
+		dp.handlerCtx,
+		dp.handlerCtx.GetSQLEngine(),
+		[]string{},
+	)
+	dp.execSlice = append(dp.execSlice, builder)
+	idx := len(dp.execSlice) - 1
+	return idx, nil
+}
+
 func (dp *standardDependencyPlanner) dataflowEdgeExists(from, to int) bool {
 	edges, ok := dp.dataflowToEdges[to]
 	if !ok {
@@ -204,6 +233,7 @@ func (dp *standardDependencyPlanner) Plan() error {
 					edgeCount, dependencyMax)
 			}
 			idsVisited := make(map[int64]struct{})
+			indirectionNodeIDs := make(map[int64]struct{})
 			// first pass: set up AOT stuff
 			//    - stream per edge.
 			edgeStreams := make(map[dataflow.Edge]streaming.MapStream)
@@ -218,7 +248,19 @@ func (dp *standardDependencyPlanner) Plan() error {
 				tableExpr := n.GetTableExpr()
 				annotation := n.GetAnnotation()
 				dp.annMap[tableExpr] = annotation
+				// Indirection nodes (views, subqueries, CTEs) are already materialized
+				// by the create tail builder; register them and skip acquisition.
+				if isAnnotationIndirection(annotation) {
+					indirectionNodeIDs[n.ID()] = struct{}{}
+					idx, indErr := dp.orchestrateIndirection(annotation)
+					if indErr != nil {
+						return indErr
+					}
+					dp.nodeIDIdxMap[n.ID()] = idx
+					continue
+				}
 				for _, e := range edges {
+					//nolint:nestif // necessary to handle indirection cases cleanly
 					if e.From().ID() == n.ID() {
 						insPsc, tcc, insErr := dp.processOrphan(tableExpr, annotation, n)
 						if insErr != nil {
@@ -228,6 +270,20 @@ func (dp *standardDependencyPlanner) Plan() error {
 						toNode := e.GetDest()
 						toAnnotation := toNode.GetAnnotation().Clone() // this bodge protects split source vertices
 						toTableExpr := toNode.GetTableExpr()
+						// Handle indirection destination nodes.
+						if isAnnotationIndirection(toAnnotation) {
+							if _, alreadyHandled := indirectionNodeIDs[toNode.ID()]; !alreadyHandled {
+								indirectionNodeIDs[toNode.ID()] = struct{}{}
+								dp.annMap[toTableExpr] = toAnnotation
+								toIdx, toIndErr := dp.orchestrateIndirection(toAnnotation)
+								if toIndErr != nil {
+									return toIndErr
+								}
+								dp.nodeIDIdxMap[toNode.ID()] = toIdx
+							}
+							orderedEdges = append(orderedEdges, e)
+							continue
+						}
 						stream, streamErr := dp.getStreamFromEdge(e, toAnnotation, tcc)
 						if streamErr != nil {
 							return streamErr
@@ -251,6 +307,71 @@ func (dp *standardDependencyPlanner) Plan() error {
 				fromAnnotation := fromNode.GetAnnotation()
 				toAnnotation := toNode.GetAnnotation().Clone() // this bodge protects split source vertices
 				toTableExpr := toNode.GetTableExpr()
+				// For indirection nodes, builders are already created; just wire up edge dependencies.
+				_, fromIsIndirection := indirectionNodeIDs[fromNode.ID()]
+				_, toIsIndirection := indirectionNodeIDs[toNode.ID()]
+				if fromIsIndirection && toIsIndirection {
+					// Both sides are indirections; no acquisition or streaming needed.
+					// Just ensure edge dependencies are registered.
+					fromIdx := dp.nodeIDIdxMap[fromNode.ID()]
+					toIdx := dp.nodeIDIdxMap[toNode.ID()]
+					if !dp.dataflowEdgeExists(fromIdx, toIdx) {
+						dp.dataflowToEdges[toIdx] = append(dp.dataflowToEdges[toIdx], fromIdx)
+					}
+					continue
+				}
+				//nolint:nestif // necessary to handle indirection cases cleanly
+				if fromIsIndirection {
+					// Source is indirection, destination is a regular table.
+					fromIdx := dp.nodeIDIdxMap[fromNode.ID()]
+					toIdx, toBuilderExists := dp.nodeIDIdxMap[toNode.ID()]
+					if !toBuilderExists {
+						toInsPsc, pscExists := insertPrepearedStatements[toNode.ID()]
+						if !pscExists {
+							return fmt.Errorf("unknown insert prepared statement")
+						}
+						dp.annMap[toTableExpr] = toAnnotation
+						toAnnotation.SetDynamic()
+						arrivingDestinationNodeStream := nodeStreamCollections.GetArriving(toNode.ID())
+						departingDestinationNodeStream := nodeStreamCollections.GetDeparting(toNode.ID())
+						var toErr error
+						toIdx, toErr = dp.orchestrate(
+							-1, toAnnotation, toInsPsc, arrivingDestinationNodeStream, departingDestinationNodeStream)
+						if toErr != nil {
+							return toErr
+						}
+						dp.nodeIDIdxMap[toNode.ID()] = toIdx
+					}
+					if !dp.dataflowEdgeExists(fromIdx, toIdx) {
+						dp.dataflowToEdges[toIdx] = append(dp.dataflowToEdges[toIdx], fromIdx)
+					}
+					continue
+				}
+				//nolint:nestif // necessary to handle indirection cases cleanly
+				if toIsIndirection {
+					// Destination is indirection, source is a regular table.
+					toIdx := dp.nodeIDIdxMap[toNode.ID()]
+					fromIdx, fromBuilderExists := dp.nodeIDIdxMap[fromNode.ID()]
+					if !fromBuilderExists {
+						insPsc, pscExists := insertPrepearedStatements[fromNode.ID()]
+						if !pscExists {
+							return fmt.Errorf("unknown insert prepared statement")
+						}
+						arrivingSourceNodeStream := nodeStreamCollections.GetArriving(fromNode.ID())
+						departingSourceNodeStream := nodeStreamCollections.GetDeparting(fromNode.ID())
+						var fromErr error
+						fromIdx, fromErr = dp.orchestrate(-1, fromAnnotation, insPsc, arrivingSourceNodeStream, departingSourceNodeStream)
+						if fromErr != nil {
+							return fromErr
+						}
+						dp.nodeIDIdxMap[fromNode.ID()] = fromIdx
+					}
+					if !dp.dataflowEdgeExists(fromIdx, toIdx) {
+						dp.dataflowToEdges[toIdx] = append(dp.dataflowToEdges[toIdx], fromIdx)
+					}
+					continue
+				}
+				// Neither side is an indirection; original logic.
 				departingSourceNodeStream := nodeStreamCollections.GetDeparting(fromNode.ID())
 				arrivingDestinationNodeStream := nodeStreamCollections.GetArriving(toNode.ID())
 				arrivingSourceNodeStream := nodeStreamCollections.GetArriving(fromNode.ID())

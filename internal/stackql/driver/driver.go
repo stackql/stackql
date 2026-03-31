@@ -147,9 +147,6 @@ func (dr *basicStackQLDriver) CloneSQLBackend() sqlbackend.ISQLBackend {
 //nolint:revive // TODO: review
 func (dr *basicStackQLDriver) HandleSimpleQuery(ctx context.Context, query string) (sqldata.ISQLResultStream, error) {
 	dr.handlerCtx.SetRawQuery(query)
-	// if strings.Count(query, ";") > 1 {
-	// 	return nil, fmt.Errorf("only support single queries in server mode at this time")
-	// }
 	res, ok := dr.processQueryOrQueries(dr.handlerCtx)
 	if !ok {
 		return nil, fmt.Errorf("no SQLresults available")

@@ -198,6 +198,7 @@
         "select lhs.proj, lhs.bucket from (select 'testing-project' as proj, 'silly-bucket' as bucket) lhs LEFT OUTER join (select name from google.storage.buckets where project = 'testing-project') rhs on lhs.bucket = rhs.name where rhs.name;",
         "insert into google.storage.buckets( project, data__name) select lhs.proj, lhs.bucket from (select 'testing-project' as proj, 'silly-bucket' as bucket) lhs LEFT OUTER join (select name from google.storage.buckets where project = 'testing-project') rhs on lhs.bucket = rhs.name where rhs.name is null returning *;",
         "select description, price_monthly, price_hourly from digitalocean.sizes.sizes where price_monthly = 7.0 order by description desc;",
+        "create or replace view vw_repos_name as select name from stackql_repositories; create or replace view vw_repos_url as select name, url from stackql_repositories; select v1.name from vw_repos_name v1 inner join vw_repos_url v2 on v1.name = v2.name;",
       ], 
       "default": "show providers;"
     },
