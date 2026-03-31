@@ -68,7 +68,6 @@ Views are rendered as inline subqueries `( SELECT ... ) AS "alias"` in the final
 
 **Not supported:**
 - Table-qualified parameter clobbering into views (e.g. `WHERE v1.region = 'us-east-1'` will not override the view's internal `region` parameter).
-- Joins of three or more heterogeneous indirections (e.g. `view JOIN subquery JOIN provider_table`).  Binary joins work; three-way and beyond fail with parameter count mismatches in the SQL composition layer.
 
 ### Materialized views (eager evaluated)
 

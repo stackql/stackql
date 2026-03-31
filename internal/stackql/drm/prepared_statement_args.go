@@ -81,9 +81,8 @@ func (ca *standardPreparedStatementArgs) Analyze() error {
 
 func (ca *standardPreparedStatementArgs) compose() (childQueryComposition, error) {
 	var varArgs []interface{}
-	j := 0
 	query := ca.GetQuery()
-	var childQueryStrings []interface{} // dunno why
+	var childQueryStrings []interface{}
 	var keys []int
 	for i := range ca.GetChildren() {
 		keys = append(keys, i)
@@ -97,14 +96,11 @@ func (ca *standardPreparedStatementArgs) compose() (childQueryComposition, error
 		}
 		childQueryStrings = append(childQueryStrings, childResponse.GetQueryString())
 		varArgs = append(varArgs, childResponse.GetVarArgs()...)
-		j = k
 	}
 	if len(childQueryStrings) > 0 {
 		query = fmt.Sprintf(ca.GetQuery(), childQueryStrings...)
 	}
-	if len(ca.GetArgs()) >= j {
-		varArgs = append(varArgs, ca.GetArgs()[j:]...)
-	}
+	varArgs = append(varArgs, ca.GetArgs()...)
 	return newChildQueryComposition(query, varArgs), nil
 }
 
