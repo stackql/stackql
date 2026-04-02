@@ -9597,6 +9597,278 @@ Three Way View Subquery Provider Table Join Returns Results
     ...    stdout=${CURDIR}/tmp/Three-Way-View-Subquery-Provider-Table-Join-Returns-Results-stdout.tmp
     ...    stderr=${CURDIR}/tmp/Three-Way-View-Subquery-Provider-Table-Join-Returns-Results-stderr.tmp
 
+Three Way View Provider Table Materialized View Join Returns Results
+    ${inputStr} =    Catenate
+    ...    create or replace view vw_repos as select name, url from stackql_repositories;
+    ...    create or replace materialized view mv_repos as select name from stackql_repositories;
+    ...    select v1.name, v1.url, mv.name as mv_name from vw_repos v1 inner join github.repos.repos r on v1.name = r.name inner join mv_repos mv on v1.name = mv.name where r.org = 'stackql' order by v1.name desc;
+    ...    drop materialized view mv_repos;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |---------------------------|-----------------------------------------------------------------------|---------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}url${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}mv_name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|---------------------------|
+    ...    |${SPACE}gatsby-plugin-smartlook${SPACE}${SPACE}${SPACE}|${SPACE}https://api.github.com/repos/specialcaseorg/gatsby-plugin-smartlook${SPACE}${SPACE}${SPACE}|${SPACE}gatsby-plugin-smartlook${SPACE}${SPACE}${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|---------------------------|
+    ...    |${SPACE}dummyapp.io${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}https://api.github.com/repos/specialcaseorg/dummyapp.io${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}dummyapp.io${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|---------------------------|
+    ...    |${SPACE}docusaurus-plugin-hubspot${SPACE}|${SPACE}https://api.github.com/repos/specialcaseorg/docusaurus-plugin-hubspot${SPACE}|${SPACE}docusaurus-plugin-hubspot${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|---------------------------|
+    ${stdErrStr} =    Catenate    SEPARATOR=\n
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${stdErrStr}
+    ...    stdout=${CURDIR}/tmp/Three-Way-View-Provider-Table-Materialized-View-Join-Returns-Results-stdout.tmp
+    ...    stderr=${CURDIR}/tmp/Three-Way-View-Provider-Table-Materialized-View-Join-Returns-Results-stderr.tmp
+
+Three Way Materialized View Subquery Provider Table Join Returns Results
+    ${inputStr} =    Catenate
+    ...    create or replace materialized view mv_repos as select name from stackql_repositories;
+    ...    select mv.name, sq.url from mv_repos mv inner join (select name, url from stackql_repositories) sq on mv.name = sq.name inner join github.repos.repos r on mv.name = r.name where r.org = 'stackql' order by mv.name desc;
+    ...    drop materialized view mv_repos;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |---------------------------|-----------------------------------------------------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}url${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|
+    ...    |${SPACE}gatsby-plugin-smartlook${SPACE}${SPACE}${SPACE}|${SPACE}https://api.github.com/repos/specialcaseorg/gatsby-plugin-smartlook${SPACE}${SPACE}${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|
+    ...    |${SPACE}dummyapp.io${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}https://api.github.com/repos/specialcaseorg/dummyapp.io${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|
+    ...    |${SPACE}docusaurus-plugin-hubspot${SPACE}|${SPACE}https://api.github.com/repos/specialcaseorg/docusaurus-plugin-hubspot${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|
+    ${stdErrStr} =    Catenate    SEPARATOR=\n
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${stdErrStr}
+    ...    stdout=${CURDIR}/tmp/Three-Way-Materialized-View-Subquery-Provider-Table-Join-Returns-Results-stdout.tmp
+    ...    stderr=${CURDIR}/tmp/Three-Way-Materialized-View-Subquery-Provider-Table-Join-Returns-Results-stderr.tmp
+
+Three Way View View Subquery Join Returns Results
+    ${inputStr} =    Catenate
+    ...    create or replace view vw_repos_name as select name from stackql_repositories;
+    ...    create or replace view vw_repos_url as select name, url from stackql_repositories;
+    ...    select v1.name, v2.url, sq.name as sq_name from vw_repos_name v1 inner join vw_repos_url v2 on v1.name = v2.name inner join (select name from stackql_repositories) sq on v1.name = sq.name order by v1.name desc;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |---------------------------|-----------------------------------------------------------------------|---------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}url${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}sq_name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|---------------------------|
+    ...    |${SPACE}gatsby-plugin-smartlook${SPACE}${SPACE}${SPACE}|${SPACE}https://api.github.com/repos/specialcaseorg/gatsby-plugin-smartlook${SPACE}${SPACE}${SPACE}|${SPACE}gatsby-plugin-smartlook${SPACE}${SPACE}${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|---------------------------|
+    ...    |${SPACE}dummyapp.io${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}https://api.github.com/repos/specialcaseorg/dummyapp.io${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}dummyapp.io${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|---------------------------|
+    ...    |${SPACE}docusaurus-plugin-hubspot${SPACE}|${SPACE}https://api.github.com/repos/specialcaseorg/docusaurus-plugin-hubspot${SPACE}|${SPACE}docusaurus-plugin-hubspot${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|---------------------------|
+    ${stdErrStr} =    Catenate    SEPARATOR=\n
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${stdErrStr}
+    ...    stdout=${CURDIR}/tmp/Three-Way-View-View-Subquery-Join-Returns-Results-stdout.tmp
+    ...    stderr=${CURDIR}/tmp/Three-Way-View-View-Subquery-Join-Returns-Results-stderr.tmp
+
+Four Way View Subquery Materialized View Provider Table Join Returns Results
+    ${inputStr} =    Catenate
+    ...    create or replace view vw_repos as select name, url from stackql_repositories;
+    ...    create or replace materialized view mv_repos as select name from stackql_repositories;
+    ...    select v1.name, v1.url, sq.name as sq_name, mv.name as mv_name from vw_repos v1 inner join (select name from stackql_repositories) sq on v1.name = sq.name inner join mv_repos mv on v1.name = mv.name inner join github.repos.repos r on v1.name = r.name where r.org = 'stackql' order by v1.name desc;
+    ...    drop materialized view mv_repos;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |---------------------------|-----------------------------------------------------------------------|---------------------------|---------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}url${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}sq_name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}mv_name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|---------------------------|---------------------------|
+    ...    |${SPACE}gatsby-plugin-smartlook${SPACE}${SPACE}${SPACE}|${SPACE}https://api.github.com/repos/specialcaseorg/gatsby-plugin-smartlook${SPACE}${SPACE}${SPACE}|${SPACE}gatsby-plugin-smartlook${SPACE}${SPACE}${SPACE}|${SPACE}gatsby-plugin-smartlook${SPACE}${SPACE}${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|---------------------------|---------------------------|
+    ...    |${SPACE}dummyapp.io${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}https://api.github.com/repos/specialcaseorg/dummyapp.io${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}dummyapp.io${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}dummyapp.io${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|---------------------------|---------------------------|
+    ...    |${SPACE}docusaurus-plugin-hubspot${SPACE}|${SPACE}https://api.github.com/repos/specialcaseorg/docusaurus-plugin-hubspot${SPACE}|${SPACE}docusaurus-plugin-hubspot${SPACE}|${SPACE}docusaurus-plugin-hubspot${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|---------------------------|---------------------------|
+    ${stdErrStr} =    Catenate    SEPARATOR=\n
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${stdErrStr}
+    ...    stdout=${CURDIR}/tmp/Four-Way-View-Subquery-Materialized-View-Provider-Table-Join-Returns-Results-stdout.tmp
+    ...    stderr=${CURDIR}/tmp/Four-Way-View-Subquery-Materialized-View-Provider-Table-Join-Returns-Results-stderr.tmp
+
+View Left Outer Join View Returns Results
+    ${inputStr} =    Catenate
+    ...    create table partial_repos(name text unique);
+    ...    insert into partial_repos values('dummyapp.io');
+    ...    create or replace view vw_repos as select name, url from stackql_repositories;
+    ...    create or replace view vw_partial as select name from partial_repos;
+    ...    select v1.name, v1.url, v2.name as v2_name from vw_repos v1 left outer join vw_partial v2 on v1.name = v2.name order by v1.name desc;
+    ...    drop view vw_partial;
+    ...    drop table partial_repos;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |---------------------------|-----------------------------------------------------------------------|-------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}url${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}v2_name${SPACE}${SPACE}${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|-------------|
+    ...    |${SPACE}gatsby-plugin-smartlook${SPACE}${SPACE}${SPACE}|${SPACE}https://api.github.com/repos/specialcaseorg/gatsby-plugin-smartlook${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|-------------|
+    ...    |${SPACE}dummyapp.io${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}https://api.github.com/repos/specialcaseorg/dummyapp.io${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}dummyapp.io${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|-------------|
+    ...    |${SPACE}docusaurus-plugin-hubspot${SPACE}|${SPACE}https://api.github.com/repos/specialcaseorg/docusaurus-plugin-hubspot${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|-------------|
+    ${stdErrStr} =    Catenate    SEPARATOR=\n
+    ...    DDL Execution Completed
+    ...    insert into table completed
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${stdErrStr}
+    ...    stdout=${CURDIR}/tmp/View-Left-Outer-Join-View-Returns-Results-stdout.tmp
+    ...    stderr=${CURDIR}/tmp/View-Left-Outer-Join-View-Returns-Results-stderr.tmp
+
+View Left Outer Join Subquery Returns Results
+    ${inputStr} =    Catenate
+    ...    create or replace view vw_repos as select name, url from stackql_repositories;
+    ...    select v1.name, v1.url, sq.name as sq_name from vw_repos v1 left outer join (select 'dummyapp.io' as name) sq on v1.name = sq.name order by v1.name desc;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |---------------------------|-----------------------------------------------------------------------|-------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}url${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}sq_name${SPACE}${SPACE}${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|-------------|
+    ...    |${SPACE}gatsby-plugin-smartlook${SPACE}${SPACE}${SPACE}|${SPACE}https://api.github.com/repos/specialcaseorg/gatsby-plugin-smartlook${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|-------------|
+    ...    |${SPACE}dummyapp.io${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}https://api.github.com/repos/specialcaseorg/dummyapp.io${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}dummyapp.io${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|-------------|
+    ...    |${SPACE}docusaurus-plugin-hubspot${SPACE}|${SPACE}https://api.github.com/repos/specialcaseorg/docusaurus-plugin-hubspot${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|-------------|
+    ${stdErrStr} =    Catenate    SEPARATOR=\n
+    ...    DDL Execution Completed
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${stdErrStr}
+    ...    stdout=${CURDIR}/tmp/View-Left-Outer-Join-Subquery-Returns-Results-stdout.tmp
+    ...    stderr=${CURDIR}/tmp/View-Left-Outer-Join-Subquery-Returns-Results-stderr.tmp
+
+View Left Outer Join Materialized View Returns Results
+    ${inputStr} =    Catenate
+    ...    create table partial_repos(name text unique);
+    ...    insert into partial_repos values('dummyapp.io');
+    ...    create or replace view vw_repos as select name, url from stackql_repositories;
+    ...    create or replace materialized view mv_partial as select name from partial_repos;
+    ...    select v1.name, v1.url, mv.name as mv_name from vw_repos v1 left outer join mv_partial mv on v1.name = mv.name order by v1.name desc;
+    ...    drop materialized view mv_partial;
+    ...    drop table partial_repos;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |---------------------------|-----------------------------------------------------------------------|-------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}url${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}mv_name${SPACE}${SPACE}${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|-------------|
+    ...    |${SPACE}gatsby-plugin-smartlook${SPACE}${SPACE}${SPACE}|${SPACE}https://api.github.com/repos/specialcaseorg/gatsby-plugin-smartlook${SPACE}${SPACE}${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|-------------|
+    ...    |${SPACE}dummyapp.io${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}https://api.github.com/repos/specialcaseorg/dummyapp.io${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}dummyapp.io${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|-------------|
+    ...    |${SPACE}docusaurus-plugin-hubspot${SPACE}|${SPACE}https://api.github.com/repos/specialcaseorg/docusaurus-plugin-hubspot${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|-------------|
+    ${stdErrStr} =    Catenate    SEPARATOR=\n
+    ...    DDL Execution Completed
+    ...    insert into table completed
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
+    ...    DDL Execution Completed
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${stdErrStr}
+    ...    stdout=${CURDIR}/tmp/View-Left-Outer-Join-Materialized-View-Returns-Results-stdout.tmp
+    ...    stderr=${CURDIR}/tmp/View-Left-Outer-Join-Materialized-View-Returns-Results-stderr.tmp
+
+Three Way View Inner Join Subquery Left Outer Join Provider Table Returns Results
+    ${inputStr} =    Catenate
+    ...    create or replace view vw_repos as select name, url from stackql_repositories;
+    ...    select v1.name, v1.url, sq.name as sq_name from vw_repos v1 inner join (select name from stackql_repositories) sq on v1.name = sq.name left outer join github.repos.repos r on v1.name = r.name where r.org = 'stackql' order by v1.name desc;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |---------------------------|-----------------------------------------------------------------------|---------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}url${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}sq_name${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|---------------------------|
+    ...    |${SPACE}gatsby-plugin-smartlook${SPACE}${SPACE}${SPACE}|${SPACE}https://api.github.com/repos/specialcaseorg/gatsby-plugin-smartlook${SPACE}${SPACE}${SPACE}|${SPACE}gatsby-plugin-smartlook${SPACE}${SPACE}${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|---------------------------|
+    ...    |${SPACE}dummyapp.io${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}https://api.github.com/repos/specialcaseorg/dummyapp.io${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}dummyapp.io${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|---------------------------|
+    ...    |${SPACE}docusaurus-plugin-hubspot${SPACE}|${SPACE}https://api.github.com/repos/specialcaseorg/docusaurus-plugin-hubspot${SPACE}|${SPACE}docusaurus-plugin-hubspot${SPACE}|
+    ...    |---------------------------|-----------------------------------------------------------------------|---------------------------|
+    ${stdErrStr} =    Catenate    SEPARATOR=\n
+    ...    DDL Execution Completed
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${stdErrStr}
+    ...    stdout=${CURDIR}/tmp/Three-Way-View-Inner-Join-Subquery-Left-Outer-Join-Provider-Table-Returns-Results-stdout.tmp
+    ...    stderr=${CURDIR}/tmp/Three-Way-View-Inner-Join-Subquery-Left-Outer-Join-Provider-Table-Returns-Results-stderr.tmp
+
 CTE Within View Returns Results
     ${inputStr} =    Catenate
     ...    create or replace view vw_cte as with sub as (select name from stackql_repositories) select name from sub;

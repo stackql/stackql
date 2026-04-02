@@ -63,6 +63,11 @@ Views are rendered as inline subqueries `( SELECT ... ) AS "alias"` in the final
 - View JOIN provider table: `SELECT ... FROM my_view v1 INNER JOIN provider.svc.resource r ON ...`.
 - View JOIN subquery: `SELECT ... FROM my_view v1 INNER JOIN (SELECT ...) sq ON ...`.
 - View JOIN materialized view: `SELECT ... FROM my_view v1 INNER JOIN mv ON ...`.
+- View LEFT OUTER JOIN view: `SELECT ... FROM v1 LEFT OUTER JOIN v2 ON ...`.
+- View LEFT OUTER JOIN subquery: `SELECT ... FROM my_view v1 LEFT OUTER JOIN (SELECT ...) sq ON ...`.
+- View LEFT OUTER JOIN materialized view: `SELECT ... FROM my_view v1 LEFT OUTER JOIN mv ON ...`.
+- N-way heterogeneous joins (INNER and LEFT OUTER) across views, subqueries, materialized views and provider tables, up to the configured dataflow dependency limit.  
+    - **NOTE**: Joins of up to 4 members are tested and proven for views, materialized views, subqueries and provider tables; higher counts are not recommended.
 - Nested views (view wrapping a view): supported up to configurable depth (`--indirect-depth-max`, default 5).
 - WHERE clause parameter clobbering from outside the view, using **unqualified** parameters (e.g. `WHERE region = 'us-east-1'`).
 
