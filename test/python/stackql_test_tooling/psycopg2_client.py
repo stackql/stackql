@@ -37,3 +37,32 @@ class PsycoPG2Client(object):
   def run_queries(self, queries :typing.List[str]) -> typing.List[typing.Dict]:
     return self._run_queries(queries)
 
+
+  def get_column_descriptions(self, query :str) -> typing.List[typing.Dict]:
+    """Execute a query and return column metadata from cursor.description.
+
+    Each entry is a dict with keys: name, type_code.
+    type_code is the PostgreSQL OID for the column type.
+    """
+    with self._connection.cursor() as cur:
+      cur.execute(query)
+      if cur.description is None:
+        return []
+      return [
+        {'name': col.name, 'type_code': col.type_code}
+        for col in cur.description
+      ]
+
+
+  def exec_prepared_query(self, query :str, params :tuple) -> typing.List[typing.Dict]:
+    """Execute a parameterised query (extended query protocol) and return rows as dicts."""
+    with self._connection.cursor(cursor_factory=RealDictCursor) as cur:
+      cur.execute(query, params)
+      rv = []
+      try:
+        for r in cur:
+          rv.append(dict(r))
+      except Exception:
+        pass
+      return rv
+

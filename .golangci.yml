@@ -198,6 +198,13 @@ linters:
         path: mcp_client\/cmd\/.*\.go
       - linters:
           - revive
+          - unparam
+        path: internal\/stackql\/driver\/.*\.go
+      - linters:
+          - stylecheck
+        path: internal\/stackql\/queryshape\/.*\.go
+      - linters:
+          - revive
         path: internal\/stackql\/acid\/tsm_physio\/.*\.go
       - linters: 
           - staticcheck

@@ -1,0 +1,68 @@
+[
+  {
+    "description": "no params returns query unchanged",
+    "query": "SELECT name FROM my_table",
+    "paramValues": [],
+    "expected": "SELECT name FROM my_table"
+  },
+  {
+    "description": "single text param",
+    "query": "SELECT * FROM t WHERE name = $1",
+    "paramValues": ["hello"],
+    "expected": "SELECT * FROM t WHERE name = 'hello'"
+  },
+  {
+    "description": "multiple params",
+    "query": "SELECT * FROM t WHERE name = $1 AND region = $2",
+    "paramValues": ["hello", "us-east-1"],
+    "expected": "SELECT * FROM t WHERE name = 'hello' AND region = 'us-east-1'"
+  },
+  {
+    "description": "NULL param",
+    "query": "SELECT * FROM t WHERE name = $1",
+    "paramValues": [null],
+    "expected": "SELECT * FROM t WHERE name = NULL"
+  },
+  {
+    "description": "mixed NULL and text",
+    "query": "SELECT * FROM t WHERE a = $1 AND b = $2",
+    "paramValues": ["val", null],
+    "expected": "SELECT * FROM t WHERE a = 'val' AND b = NULL"
+  },
+  {
+    "description": "numeric param as text",
+    "query": "SELECT * FROM t WHERE id = $1",
+    "paramValues": ["42"],
+    "expected": "SELECT * FROM t WHERE id = '42'"
+  },
+  {
+    "description": "param with embedded single quote",
+    "query": "SELECT * FROM t WHERE name = $1",
+    "paramValues": ["O'Brien"],
+    "expected": "SELECT * FROM t WHERE name = 'O''Brien'"
+  },
+  {
+    "description": "param index out of range left as-is",
+    "query": "SELECT * FROM t WHERE a = $1 AND b = $3",
+    "paramValues": ["val"],
+    "expected": "SELECT * FROM t WHERE a = 'val' AND b = $3"
+  },
+  {
+    "description": "SELECT literal expression with params",
+    "query": "SELECT $1::text, $2::int",
+    "paramValues": ["hello", "42"],
+    "expected": "SELECT 'hello'::text, '42'::int"
+  },
+  {
+    "description": "no placeholders returns query unchanged even with params",
+    "query": "SELECT 1",
+    "paramValues": ["unused"],
+    "expected": "SELECT 1"
+  },
+  {
+    "description": "empty string param",
+    "query": "SELECT * FROM t WHERE name = $1",
+    "paramValues": [""],
+    "expected": "SELECT * FROM t WHERE name = ''"
+  }
+]

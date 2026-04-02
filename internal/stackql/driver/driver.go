@@ -11,6 +11,8 @@ import (
 	"github.com/stackql/stackql/internal/stackql/acid/tsm_physio"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
+	"github.com/stackql/stackql/internal/stackql/paramdecoder"
+	"github.com/stackql/stackql/internal/stackql/queryshape"
 	"github.com/stackql/stackql/internal/stackql/responsehandler"
 	"github.com/stackql/stackql/internal/stackql/util"
 	"github.com/stackql/stackql/pkg/txncounter"
@@ -19,9 +21,10 @@ import (
 )
 
 var (
-	_ StackQLDriver                = &basicStackQLDriver{}
-	_ sqlbackend.SQLBackendFactory = &basicStackQLDriverFactory{}
-	_ StackQLDriverFactory         = &basicStackQLDriverFactory{}
+	_ StackQLDriver                    = &basicStackQLDriver{}
+	_ sqlbackend.IExtendedQueryBackend = &basicStackQLDriver{}
+	_ sqlbackend.SQLBackendFactory     = &basicStackQLDriverFactory{}
+	_ StackQLDriverFactory             = &basicStackQLDriverFactory{}
 )
 
 type StackQLDriverFactory interface {
@@ -66,6 +69,10 @@ func (sdf *basicStackQLDriverFactory) newSQLDriver() (StackQLDriver, error) {
 		debugBuf:        buf,
 		handlerCtx:      clonedCtx,
 		txnOrchestrator: txnOrchestrator,
+		shapeInferrer:   queryshape.NewInferrer(clonedCtx),
+		paramDecoder:    paramdecoder.NewDecoder(),
+		stmtCache:       make(map[string]*stmtMeta),
+		portalCache:     make(map[string]*portalMeta),
 	}
 	return rv, nil
 }
@@ -125,10 +132,24 @@ func (dr *basicStackQLDriver) ProcessQuery(query string) {
 	}
 }
 
+type stmtMeta struct {
+	query     string
+	paramOIDs []uint32
+	columns   []sqldata.ISQLColumn
+}
+
+type portalMeta struct {
+	stmtName string
+}
+
 type basicStackQLDriver struct {
 	debugBuf        *bytes.Buffer
 	handlerCtx      handler.HandlerContext
 	txnOrchestrator tsm_physio.Orchestrator
+	shapeInferrer   queryshape.Inferrer
+	paramDecoder    paramdecoder.Decoder
+	stmtCache       map[string]*stmtMeta
+	portalCache     map[string]*portalMeta
 }
 
 func (dr *basicStackQLDriver) GetDebugStr() string {
@@ -191,7 +212,86 @@ func NewStackQLDriver(handlerCtx handler.HandlerContext) (StackQLDriver, error) 
 	return &basicStackQLDriver{
 		handlerCtx:      handlerCtx,
 		txnOrchestrator: txnOrchestrator,
+		shapeInferrer:   queryshape.NewInferrer(handlerCtx),
+		paramDecoder:    paramdecoder.NewDecoder(),
+		stmtCache:       make(map[string]*stmtMeta),
+		portalCache:     make(map[string]*portalMeta),
 	}, nil
+}
+
+func (dr *basicStackQLDriver) HandleParse(
+	ctx context.Context, stmtName string, query string, paramOIDs []uint32,
+) ([]uint32, error) {
+	// Infer result columns at parse time and cache for Describe/Execute.
+	columns := dr.shapeInferrer.InferResultColumns(query)
+	dr.stmtCache[stmtName] = &stmtMeta{
+		query:     query,
+		paramOIDs: paramOIDs,
+		columns:   columns,
+	}
+	return paramOIDs, nil
+}
+
+func (dr *basicStackQLDriver) HandleBind(
+	ctx context.Context, portalName string, stmtName string,
+	paramFormats []int16, paramValues [][]byte, resultFormats []int16,
+) error {
+	dr.portalCache[portalName] = &portalMeta{
+		stmtName: stmtName,
+	}
+	return nil
+}
+
+func (dr *basicStackQLDriver) HandleDescribeStatement(
+	ctx context.Context, stmtName string, query string, paramOIDs []uint32,
+) ([]uint32, []sqldata.ISQLColumn, error) {
+	if cached, ok := dr.stmtCache[stmtName]; ok {
+		return cached.paramOIDs, cached.columns, nil
+	}
+	// Fallback: infer on the fly (shouldn't happen if Parse was called first).
+	columns := dr.shapeInferrer.InferResultColumns(query)
+	return paramOIDs, columns, nil
+}
+
+func (dr *basicStackQLDriver) HandleDescribePortal(
+	ctx context.Context, portalName string, stmtName string, query string, paramOIDs []uint32,
+) ([]sqldata.ISQLColumn, error) {
+	if portal, portalFound := dr.portalCache[portalName]; portalFound {
+		if cached, stmtFound := dr.stmtCache[portal.stmtName]; stmtFound {
+			return cached.columns, nil
+		}
+	}
+	return dr.shapeInferrer.InferResultColumns(query), nil
+}
+
+func (dr *basicStackQLDriver) HandleExecute(
+	ctx context.Context, portalName string, stmtName string, query string,
+	paramFormats []int16, paramValues [][]byte, resultFormats []int16, maxRows int32,
+) (sqldata.ISQLResultStream, error) {
+	// Look up cached param OIDs for format-aware decoding.
+	var paramOIDs []uint32
+	if portal, portalFound := dr.portalCache[portalName]; portalFound {
+		if cached, stmtFound := dr.stmtCache[portal.stmtName]; stmtFound {
+			paramOIDs = cached.paramOIDs
+		}
+	}
+	// Decode params (handles both text and binary formats).
+	decodedStrings, err := dr.paramDecoder.DecodeParams(paramOIDs, paramFormats, paramValues)
+	if err != nil {
+		return nil, fmt.Errorf("parameter decoding error: %w", err)
+	}
+	resolved := queryshape.SubstituteDecodedParams(query, decodedStrings)
+	return dr.HandleSimpleQuery(ctx, resolved)
+}
+
+func (dr *basicStackQLDriver) HandleCloseStatement(ctx context.Context, stmtName string) error {
+	delete(dr.stmtCache, stmtName)
+	return nil
+}
+
+func (dr *basicStackQLDriver) HandleClosePortal(ctx context.Context, portalName string) error {
+	delete(dr.portalCache, portalName)
+	return nil
 }
 
 func (dr *basicStackQLDriver) processQueryOrQueries(

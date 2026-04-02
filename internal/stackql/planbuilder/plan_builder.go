@@ -50,6 +50,7 @@ func isPlanCacheEnabled() bool {
 
 type planGraphBuilder interface {
 	setRootPrimitiveGenerator(primitivegenerator.PrimitiveGenerator)
+	getRootPrimitiveGenerator() primitivegenerator.PrimitiveGenerator
 	pgInternal(planbuilderinput.PlanBuilderInput) error
 	createInstructionFor(planbuilderinput.PlanBuilderInput) error
 	nop(planbuilderinput.PlanBuilderInput) error
@@ -76,6 +77,10 @@ func (pgb *standardPlanGraphBuilder) setPrebuiltIndirect(builderz []primitivebui
 func (pgb *standardPlanGraphBuilder) setRootPrimitiveGenerator(
 	primitiveGenerator primitivegenerator.PrimitiveGenerator) {
 	pgb.rootPrimitiveGenerator = primitiveGenerator
+}
+
+func (pgb *standardPlanGraphBuilder) getRootPrimitiveGenerator() primitivegenerator.PrimitiveGenerator {
+	return pgb.rootPrimitiveGenerator
 }
 
 func (pgb *standardPlanGraphBuilder) getPlanGraphHolder() primitivegraph.PrimitiveGraphHolder {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/stackql/stackql/internal/stackql/acid/binlog"
 	"github.com/stackql/stackql/internal/stackql/primitivegraph"
+	"github.com/stackql/stackql/internal/stackql/typing"
 
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
@@ -29,6 +30,10 @@ type Plan interface {
 	GetRedoLog() (binlog.LogEntry, bool)
 	// Get the undo log entry.
 	GetUndoLog() (binlog.LogEntry, bool)
+
+	// Column metadata from query planning (available after plan build, before execution).
+	GetColumnMetadata() []typing.ColumnMetadata
+	SetColumnMetadata(columns []typing.ColumnMetadata)
 
 	// Setters
 	SetType(t sqlparser.StatementType)
@@ -59,13 +64,14 @@ type standardPlan struct {
 	// Stores BindVars needed to be provided as part of expression rewriting
 	sqlparser.BindVarNeeds
 
-	ExecCount    uint64        // Count of times this plan was executed
-	ExecTime     time.Duration // Total execution time
-	ShardQueries uint64        // Total number of shard queries
-	Rows         uint64        // Total number of rows
-	Errors       uint64        // Total number of errors
-	isCacheable  bool
-	isReadOnly   bool
+	ExecCount      uint64        // Count of times this plan was executed
+	ExecTime       time.Duration // Total execution time
+	ShardQueries   uint64        // Total number of shard queries
+	Rows           uint64        // Total number of rows
+	Errors         uint64        // Total number of errors
+	isCacheable    bool
+	isReadOnly     bool
+	columnMetadata []typing.ColumnMetadata
 }
 
 func NewPlan(
@@ -169,4 +175,12 @@ func (p *standardPlan) IsCacheable() bool {
 
 func (p *standardPlan) SetCacheable(isCacheable bool) {
 	p.isCacheable = isCacheable
+}
+
+func (p *standardPlan) GetColumnMetadata() []typing.ColumnMetadata {
+	return p.columnMetadata
+}
+
+func (p *standardPlan) SetColumnMetadata(columns []typing.ColumnMetadata) {
+	p.columnMetadata = columns
 }

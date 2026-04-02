@@ -726,6 +726,35 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
 
 
   @keyword
+  def should_PG_client_column_descriptions_equal(self, conn_str :str, query :str, expected_descriptions :typing.List[typing.Dict], **kwargs):
+    """Execute a query via psycopg2 and verify column descriptions (name + type_code OID)."""
+    client = PsycoPG2Client(conn_str)
+    result = client.get_column_descriptions(query)
+    self.log(f"Column descriptions: {result}")
+    return self.lists_should_be_equal(result, expected_descriptions)
+
+
+  @keyword
+  def should_PG_client_prepared_query_results_contain(self, conn_str :str, query :str, params :typing.Tuple, expected_value :str, **kwargs):
+    """Execute a parameterised query via psycopg2 (extended query protocol) and verify results contain a value."""
+    client = PsycoPG2Client(conn_str)
+    result = client.exec_prepared_query(query, params)
+    self.log(f"Prepared query results: {result}")
+    result_str = str(result)
+    if expected_value not in result_str:
+      raise AssertionError(f"Expected '{expected_value}' in results but got: {result_str}")
+
+
+  @keyword
+  def should_PG_client_prepared_query_results_have_length(self, conn_str :str, query :str, params :typing.Tuple, expected_length :int, **kwargs):
+    """Execute a parameterised query via psycopg2 (extended query protocol) and verify result count."""
+    client = PsycoPG2Client(conn_str)
+    result = client.exec_prepared_query(query, params)
+    self.log(f"Prepared query results ({len(result)} rows): {result}")
+    return self.should_be_equal(len(result), expected_length)
+
+
+  @keyword
   def should_PG_client_V2_session_inline_equal(self, conn_str :str, queries :typing.List[str], expected_output :typing.List[typing.Dict], **kwargs):
     client = PsycoPG2Client(conn_str)
     result =  client.run_queries(
