@@ -20,7 +20,7 @@ require (
 	github.com/spf13/viper v1.10.1
 	github.com/stackql/any-sdk v0.5.2-alpha02
 	github.com/stackql/go-suffix-map v0.0.1-alpha01
-	github.com/stackql/psql-wire v0.1.2-alpha05
+	github.com/stackql/psql-wire v0.1.2-beta01
 	github.com/stackql/stackql-parser v0.0.16-alpha01
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/mod v0.25.0
