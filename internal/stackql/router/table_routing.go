@@ -537,11 +537,11 @@ func (v *standardTableRouteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		//       and also so that
 		//       these are omitted from the WHERE clause.
 		switch node.Join {
-		case sqlparser.LeftJoinStr:
 		case sqlparser.RightJoinStr:
 		case sqlparser.StraightJoinStr:
 		case sqlparser.JoinStr:
-		case sqlparser.LeftOuterJoinStr:
+		case sqlparser.LeftJoinStr, sqlparser.LeftOuterJoinStr:
+			// LEFT JOIN and LEFT OUTER JOIN are semantically identical in SQL.
 			rhs := v.tables[node.RightExpr]
 			if rhs == nil {
 				return fmt.Errorf("table routing: nil RHS table in left outer join")

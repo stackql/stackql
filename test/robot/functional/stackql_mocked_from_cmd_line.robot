@@ -1389,7 +1389,7 @@ Create and Interrogate Materialized View With Userspace Table Join and Aliasing 
 
 Subquery Left Joined With Aliasing and Name Collision
     ${inputStr} =    Catenate
-    ...    select u1.UserName, u.UserId, u.Arn, u1.region from ( select Arn, UserName, UserId from aws.iam.users where region = 'us-east-1' ) u inner join aws.iam.users u1 on u1.Arn = u.Arn where region = 'us-east-1'  order by u1.UserName desc;
+    ...    select u1.UserName, u.UserId, u.Arn, u1.region from ( select Arn, UserName, UserId from aws.iam.users where region = 'us-east-1' ) u left join aws.iam.users u1 on u1.Arn = u.Arn where region = 'us-east-1'  order by u1.UserName desc;
     ${outputStr} =    Catenate    SEPARATOR=\n
     ...    |----------|-----------------------|--------------------------------------------------------------------------------|-----------|
     ...    |${SPACE}UserName${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}UserId${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}Arn${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}region${SPACE}${SPACE}${SPACE}|
@@ -2535,7 +2535,7 @@ Left Outer Join Network Infra Scalar in ON Condition
     ...    ${outputStr}
     ...    stdout=${CURDIR}/tmp/Left-Outer-Join-Network-Infra-Scalar-in-ON-Condition.tmp
 
-Left Inner Join Users
+Inner Join Users Cross Cloud Fuzzy Match
     ${sqliteInputStr} =    Catenate
     ...    select 
     ...    aid.UserName as aws_user_name
@@ -2591,7 +2591,7 @@ Left Inner Join Users
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    ${inputStr}
     ...    ${outputStr}
-    ...    stdout=${CURDIR}/tmp/Left-Inner-Join-Users.tmp
+    ...    stdout=${CURDIR}/tmp/Inner-Join-Users-Cross-Cloud-Fuzzy-Match.tmp
 
 Google Admin Directory Small Response Also De Facto Credentials Path Env Var
     Set Environment Variable    GOOGLE_APPLICATION_CREDENTIALS    ${GOOGLE_APPLICATION_CREDENTIALS}
@@ -9479,6 +9479,122 @@ Left Outer Join Positive LHS Inline
     ...    stdout=${CURDIR}/tmp/Left-Outer-Join-Positive-LHS-Inline.tmp
     ...    stderr=${CURDIR}/tmp/Left-Outer-Join-Positive-LHS-Inline-stderr.tmp
 
+Inner Join Negative LHS Inline
+    ${inputStr} =    Catenate
+    ...    select lhs.id, lhs.secondary_field, rhs.volume_id
+    ...    from
+    ...    (select 'my-id' as id, 'some other field' as secondary_field) lhs
+    ...    join
+    ...    (select volume_id from aws.ec2.volumes_presented where region \= 'ap-southeast-2') rhs
+    ...    on lhs.id \= rhs.volume_id
+    ...    ;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |----|-----------------|-----------|
+    ...    |${SPACE}id${SPACE}|${SPACE}secondary_field${SPACE}|${SPACE}volume_id${SPACE}|
+    ...    |----|-----------------|-----------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Inner-Join-Negative-LHS-Inline.tmp
+    ...    stderr=${CURDIR}/tmp/Inner-Join-Negative-LHS-Inline-stderr.tmp
+
+Inner Join Positive LHS Inline
+    ${inputStr} =    Catenate
+    ...    select lhs.id, lhs.secondary_field, rhs.volume_id
+    ...    from
+    ...    (select 'vol-00200000000000000' as id, 'some other field' as secondary_field) lhs
+    ...    join
+    ...    (select volume_id from aws.ec2.volumes_presented where region \= 'ap-southeast-2') rhs
+    ...    on lhs.id \= rhs.volume_id
+    ...    ;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-----------------------|------------------|-----------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}secondary_field${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}volume_id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------|------------------|-----------------------|
+    ...    |${SPACE}vol-00200000000000000${SPACE}|${SPACE}some${SPACE}other${SPACE}field${SPACE}|${SPACE}vol-00200000000000000${SPACE}|
+    ...    |-----------------------|------------------|-----------------------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Inner-Join-Positive-LHS-Inline.tmp
+    ...    stderr=${CURDIR}/tmp/Inner-Join-Positive-LHS-Inline-stderr.tmp
+
+Left Join Negative LHS Inline
+    ${inputStr} =    Catenate
+    ...    select lhs.id, lhs.secondary_field, rhs.volume_id
+    ...    from
+    ...    (select 'my-id' as id, 'some other field' as secondary_field) lhs
+    ...    left join
+    ...    (select volume_id from aws.ec2.volumes_presented where region \= 'ap-southeast-2') rhs
+    ...    on lhs.id \= rhs.volume_id
+    ...    where volume_id is null
+    ...    ;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-------|------------------|-----------|
+    ...    |${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}|${SPACE}secondary_field${SPACE}${SPACE}|${SPACE}volume_id${SPACE}|
+    ...    |-------|------------------|-----------|
+    ...    |${SPACE}my-id${SPACE}|${SPACE}some${SPACE}other${SPACE}field${SPACE}|${SPACE}null${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------|------------------|-----------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Left-Join-Negative-LHS-Inline.tmp
+    ...    stderr=${CURDIR}/tmp/Left-Join-Negative-LHS-Inline-stderr.tmp
+
+Left Join Positive LHS Inline
+    ${inputStr} =    Catenate
+    ...    select lhs.id, lhs.secondary_field, rhs.volume_id
+    ...    from
+    ...    (select 'vol-00200000000000000' as id, 'some other field' as secondary_field) lhs
+    ...    left join
+    ...    (select volume_id from aws.ec2.volumes_presented where region \= 'ap-southeast-2') rhs
+    ...    on lhs.id \= rhs.volume_id
+    ...    where volume_id is not null
+    ...    ;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-----------------------|------------------|-----------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}secondary_field${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}volume_id${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-----------------------|------------------|-----------------------|
+    ...    |${SPACE}vol-00200000000000000${SPACE}|${SPACE}some${SPACE}other${SPACE}field${SPACE}|${SPACE}vol-00200000000000000${SPACE}|
+    ...    |-----------------------|------------------|-----------------------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Left-Join-Positive-LHS-Inline.tmp
+    ...    stderr=${CURDIR}/tmp/Left-Join-Positive-LHS-Inline-stderr.tmp
+
 View JOIN View Returns Results
     ${inputStr} =    Catenate
     ...    create or replace view vw_repos_name as select name from stackql_repositories;
@@ -9838,6 +9954,67 @@ View Left Outer Join Materialized View Returns Results
     ...    ${stdErrStr}
     ...    stdout=${CURDIR}/tmp/View-Left-Outer-Join-Materialized-View-Returns-Results-stdout.tmp
     ...    stderr=${CURDIR}/tmp/View-Left-Outer-Join-Materialized-View-Returns-Results-stderr.tmp
+
+View Left Join View Returns Results
+    ${inputStr} =    Catenate
+    ...    create table partial_repos(name text unique);
+    ...    insert into partial_repos values('dummyapp.io');
+    ...    create or replace view vw_repos as select name, url from stackql_repositories;
+    ...    create or replace view vw_partial as select name from partial_repos;
+    ...    select v1.name, v1.url, v2.name as v2_name from vw_repos v1 left join vw_partial v2 on v1.name \= v2.name order by v1.name desc;
+    ...    drop view vw_partial;
+    ...    drop table partial_repos;
+    Should Stackql Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    null
+    ...    stdout=${CURDIR}/tmp/View-Left-Join-View-Returns-Results-stdout.tmp
+    ...    stderr=${CURDIR}/tmp/View-Left-Join-View-Returns-Results-stderr.tmp
+
+View Left Join Subquery Returns Results
+    ${inputStr} =    Catenate
+    ...    create or replace view vw_repos as select name, url from stackql_repositories;
+    ...    select v1.name, v1.url, sq.name as sq_name from vw_repos v1 left join (select 'dummyapp.io' as name) sq on v1.name \= sq.name order by v1.name desc;
+    Should Stackql Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    null
+    ...    stdout=${CURDIR}/tmp/View-Left-Join-Subquery-Returns-Results-stdout.tmp
+    ...    stderr=${CURDIR}/tmp/View-Left-Join-Subquery-Returns-Results-stderr.tmp
+
+View Left Join Materialized View Returns Results
+    ${inputStr} =    Catenate
+    ...    create table partial_repos(name text unique);
+    ...    insert into partial_repos values('dummyapp.io');
+    ...    create or replace view vw_repos as select name, url from stackql_repositories;
+    ...    create or replace materialized view mv_partial as select name from partial_repos;
+    ...    select v1.name, v1.url, mv.name as mv_name from vw_repos v1 left join mv_partial mv on v1.name \= mv.name order by v1.name desc;
+    ...    drop materialized view mv_partial;
+    ...    drop table partial_repos;
+    Should Stackql Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    null
+    ...    stdout=${CURDIR}/tmp/View-Left-Join-Materialized-View-Returns-Results-stdout.tmp
+    ...    stderr=${CURDIR}/tmp/View-Left-Join-Materialized-View-Returns-Results-stderr.tmp
 
 Three Way View Inner Join Subquery Left Outer Join Provider Table Returns Results
     ${inputStr} =    Catenate
