@@ -56,7 +56,7 @@ PG Extended Query Prepared Statement Returns Rows
     ${params} =    Evaluate    ('dummyapp.io',)
     Should PG Client Prepared Query Results Contain
     ...    ${POSTGRES_URL_UNENCRYPTED_CONN}
-    ...    SELECT name, url FROM stackql_repositories WHERE name = %s
+    ...    SELECT name, url FROM stackql_repositories WHERE name \= %s
     ...    ${params}
     ...    dummyapp.io
     ...    stdout=${CURDIR}/tmp/PG-Extended-Query-Prepared-Statement-Returns-Rows.tmp
@@ -67,7 +67,7 @@ PG Extended Query Prepared Statement NULL Param Returns Zero Rows
     ${params} =    Evaluate    (None,)
     Should PG Client Prepared Query Results Have Length
     ...    ${POSTGRES_URL_UNENCRYPTED_CONN}
-    ...    SELECT name FROM stackql_repositories WHERE name = %s
+    ...    SELECT name FROM stackql_repositories WHERE name \= %s
     ...    ${params}
     ...    ${0}
     ...    stdout=${CURDIR}/tmp/PG-Extended-Query-Prepared-Statement-NULL-Param.tmp
