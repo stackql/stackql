@@ -98,6 +98,12 @@ func ExtractRowElement(column sqldata.ISQLColumn, src interface{}, ci *pgtype.Co
 		processedElement = shimNumericElement(src)
 	}
 	// end hack
+	// NOTE: coerceForOID is available for binary format encoding (Phase 4).
+	// For text format (current default), string values pass through to
+	// pgtype's text encoder which handles all types correctly.
+	// Coercing to native Go types here would change the text encoding
+	// format (e.g. bool: "t"→"true", int: quoted→unquoted).
+
 	err := typed.Value.Set(processedElement)
 	if err != nil {
 		return nil, err

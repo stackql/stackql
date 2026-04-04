@@ -53,8 +53,6 @@ func (cd *relayedColumnMetadata) getOidForRelationalType(relType string) oid.Oid
 	switch relType {
 	case "object", "array", "text":
 		return oid.T_text
-	// case "integer":
-	// 	return oid.T_numeric
 	case "boolean", "bool":
 		return oid.T_text
 	case "number", "decimal", "numeric", "real":

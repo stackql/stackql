@@ -81,8 +81,6 @@ func getOidForSchema(colSchema formulation.Schema) oid.Oid {
 	switch colSchema.GetType() {
 	case "object", "array":
 		return oid.T_text
-	// case "integer":
-	// 	return oid.T_numeric
 	case "boolean", "bool":
 		return oid.T_text
 	case "number":

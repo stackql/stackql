@@ -1,0 +1,82 @@
+[
+  {
+    "description": "simple unqualified SELECT",
+    "query": "SELECT * FROM my_table",
+    "expected": "my_table"
+  },
+  {
+    "description": "SELECT with WHERE clause",
+    "query": "SELECT name FROM my_view WHERE x = 1",
+    "expected": "my_view"
+  },
+  {
+    "description": "SELECT with alias",
+    "query": "SELECT t.name FROM my_table t WHERE t.id = 5",
+    "expected": "my_table"
+  },
+  {
+    "description": "JOIN returns empty (multi-table)",
+    "query": "SELECT * FROM a JOIN b ON a.id = b.id",
+    "expected": ""
+  },
+  {
+    "description": "subquery returns empty",
+    "query": "SELECT * FROM (SELECT 1) sq",
+    "expected": ""
+  },
+  {
+    "description": "INSERT returns empty",
+    "query": "INSERT INTO foo VALUES (1)",
+    "expected": ""
+  },
+  {
+    "description": "CREATE VIEW returns empty",
+    "query": "CREATE VIEW v AS SELECT 1",
+    "expected": ""
+  },
+  {
+    "description": "qualified provider.service.resource returns empty",
+    "query": "SELECT * FROM google.compute.instances WHERE project = 'x'",
+    "expected": ""
+  },
+  {
+    "description": "qualified local_templated provider returns empty",
+    "query": "SELECT * FROM local_openssl.keys.x509 WHERE cert_file = 'foo.pem'",
+    "expected": ""
+  },
+  {
+    "description": "SELECT with ORDER BY",
+    "query": "SELECT name, url FROM mv_repos ORDER BY name DESC",
+    "expected": "mv_repos"
+  },
+  {
+    "description": "SELECT with dollar param in WHERE",
+    "query": "SELECT name FROM my_table WHERE id = $1",
+    "expected": "my_table"
+  },
+  {
+    "description": "SELECT with multiple dollar params",
+    "query": "SELECT name FROM my_table WHERE id = $1 AND region = $2",
+    "expected": "my_table"
+  },
+  {
+    "description": "LEFT OUTER JOIN returns empty",
+    "query": "SELECT v1.name FROM vw_repos v1 LEFT OUTER JOIN mv_repos mv ON v1.name = mv.name",
+    "expected": ""
+  },
+  {
+    "description": "CTE extracts inner table name (harmless; won't match stored relations)",
+    "query": "WITH cte AS (SELECT 1) SELECT * FROM cte",
+    "expected": "cte"
+  },
+  {
+    "description": "empty string returns empty",
+    "query": "",
+    "expected": ""
+  },
+  {
+    "description": "garbage returns empty",
+    "query": "NOT VALID SQL AT ALL",
+    "expected": ""
+  }
+]
