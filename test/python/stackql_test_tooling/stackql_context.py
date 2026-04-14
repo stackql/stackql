@@ -1099,6 +1099,8 @@ def get_variables(
     'SHELL_SESSION_SIMPLE_EXPECTED':                                          get_shell_welcome_stdout(execution_env) + SELECT_GITHUB_BRANCHES_NAMES_DESC_EXPECTED,
     'SHELL_SESSION_MULTI_STMT_INLINE_COMMANDS':                               [ "SELECT * FROM stackql_repositories; " + SELECT_GITHUB_BRANCHES_NAMES_DESC ],
     'SHELL_SESSION_MULTI_LINE_THEN_MULTI_STMT_COMMANDS':                      [ "select name", "from github.repos.branches where owner = 'dummyorg' and repo = 'dummyapp.io' order by name desc;", "SELECT * FROM stackql_repositories; " + SELECT_GITHUB_BRANCHES_NAMES_DESC ],
+    'SHELL_SESSION_MULTI_LINE_SEMICOLON_TERMINATED_COMMANDS':                 [ "select name", "from github.repos.branches", "where owner = 'dummyorg' and repo = 'dummyapp.io'", "order by name desc", ";" ],
+    'SHELL_SESSION_MULTI_LINE_SEMICOLON_TERMINATED_EXPECTED':                 get_shell_welcome_stdout(execution_env) + SELECT_GITHUB_BRANCHES_NAMES_DESC_EXPECTED,
     'SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR':                   SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR,
     'SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR':                   SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR,
     'SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR_EXPECTED':          SHOW_INSERT_GOOGLE_COMPUTE_INSTANCE_IAM_POLICY_ERROR_EXPECTED,

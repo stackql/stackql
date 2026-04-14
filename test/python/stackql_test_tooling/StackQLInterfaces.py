@@ -550,7 +550,7 @@ class StackQLInterfaces(OperatingSystem, Process, BuiltIn, Collections):
     if approot:
       supplied_args.append(f'--approot={approot}')
     else:
-      supplied_args.append(f'--approot="{_TEST_APP_CACHE_ROOT}"')
+      supplied_args.append(f'--approot={_TEST_APP_CACHE_ROOT}')
     supplied_args.append(f"--execution.concurrency.limit={self._concurrency_limit}")
     supplied_args = supplied_args + list(args)
     stdout = cfg.get('stdout', subprocess.PIPE)
