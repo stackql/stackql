@@ -233,11 +233,10 @@ var shellCmd = &cobra.Command{
 						if i == len(splitQueries)-1 && !hasRHSSemiColon {
 							// Last piece has no trailing semicolon;
 							// accumulate for multi-line continuation.
-							sb.Reset()
-							sb.WriteString(s)
+							sb.WriteString(" " + s)
 							continue
 						}
-						sb.WriteString(" " + s)
+						sb.WriteString(" " + s + ";")
 						rawQuery := sb.String()
 						queryToExecute, qErr := entryutil.PreprocessInline(runtimeCtx, rawQuery)
 						if qErr != nil {

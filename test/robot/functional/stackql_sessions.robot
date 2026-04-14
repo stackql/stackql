@@ -45,6 +45,11 @@ Shell Session Multiple Statements Inline
     ...    ${SHELL_SESSION_MULTI_STMT_INLINE_COMMANDS}
     ...    dummyapp.io
     ...    stdout=${CURDIR}/tmp/Shell-Session-Multiple-Statements-Inline.tmp
+    # Verify readline history preserves trailing semicolons
+    Pass Execution If    "${EXECUTION_PLATFORM}" == "docker"    Skipping readline verification in docker
+    ${readline_content} =    Get File    ${REPOSITORY_ROOT}${/}test${/}.stackql${/}readline${/}readline.tmp
+    Should Contain    ${readline_content}    stackql_repositories;
+    Should Contain    ${readline_content}    order by name desc;
     [Teardown]    Stackql Per Test Teardown
 
 Shell Session Multi Line Then Multi Statement
@@ -60,6 +65,21 @@ Shell Session Multi Line Then Multi Statement
     ...    ${SHELL_SESSION_MULTI_LINE_THEN_MULTI_STMT_COMMANDS}
     ...    dummyapp.io
     ...    stdout=${CURDIR}/tmp/Shell-Session-Multi-Line-Then-Multi-Statement.tmp
+    [Teardown]    Stackql Per Test Teardown
+
+Shell Session Multi Line Semicolon Terminated
+    Pass Execution If    "${IS_WINDOWS}" == "1"    Skipping session test in windows
+    Should StackQL Shell Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${SHELL_SESSION_MULTI_LINE_SEMICOLON_TERMINATED_COMMANDS}
+    ...    ${SHELL_SESSION_MULTI_LINE_SEMICOLON_TERMINATED_EXPECTED}
+    ...    stdout=${CURDIR}/tmp/Shell-Session-Multi-Line-Semicolon-Terminated.tmp
     [Teardown]    Stackql Per Test Teardown
 
 PG Session GC Manual Behaviour Canonical
