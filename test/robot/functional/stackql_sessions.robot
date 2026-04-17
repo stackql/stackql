@@ -84,6 +84,7 @@ Shell Session Multi Line Semicolon Terminated
 
 Shell Session Invalid Registry Config Exits Cleanly
     Pass Execution If    "${IS_WINDOWS}" == "1"    Skipping session test in windows
+    Pass Execution If    "${EXECUTION_PLATFORM}" == "docker"    Skipping readline verification in docker
     ${input} =    Catenate
     ...    "${STACKQL_EXE}" shell "--registry=/not/valid/yaml/registry/config" "--tls.allowInsecure=true" "--approot=test/.stackql" "--execution.concurrency.limit=${CONCURRENCY_LIMIT}"
     ${result} =    Run Process
