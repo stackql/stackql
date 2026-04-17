@@ -141,6 +141,7 @@ var shellCmd = &cobra.Command{
 				fmt.Sprintf(
 					"Error setting up handler context for provider '%s': \"%s\"",
 					runtimeCtx.ProviderStr, handlerrErr))
+			iqlerror.PrintErrorAndExitOneIfError(handlerrErr)
 		}
 		var authCtx *dto.AuthCtx
 		var prov provider.IProvider

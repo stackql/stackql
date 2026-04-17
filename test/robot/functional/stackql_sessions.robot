@@ -82,6 +82,19 @@ Shell Session Multi Line Semicolon Terminated
     ...    stdout=${CURDIR}/tmp/Shell-Session-Multi-Line-Semicolon-Terminated.tmp
     [Teardown]    Stackql Per Test Teardown
 
+Shell Session Invalid Registry Config Exits Cleanly
+    Pass Execution If    "${IS_WINDOWS}" == "1"    Skipping session test in windows
+    ${input} =    Catenate
+    ...    "${STACKQL_EXE}" shell "--registry=/not/valid/yaml/registry/config" "--tls.allowInsecure=true" "--approot=test/.stackql" "--execution.concurrency.limit=${CONCURRENCY_LIMIT}"
+    ${result} =    Run Process
+    ...    sh     \-c    ${input}
+    ...    stdout=${CURDIR}/tmp/Shell-Session-Invalid-Registry-Config-Exits-Cleanly.tmp
+    ...    stderr=${CURDIR}/tmp/Shell-Session-Invalid-Registry-Config-Exits-Cleanly-stderr.tmp
+    Should Be Equal As Integers    ${result.rc}        1
+    Should Contain                 ${result.stderr}    cannot unmarshal
+    Should Not Contain             ${result.stderr}    panic
+    [Teardown]    NONE
+
 PG Session GC Manual Behaviour Canonical
     Should PG Client Session Inline Equal Strict
     ...    ${PSQL_MTLS_CONN_STR_UNIX}
