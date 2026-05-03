@@ -583,6 +583,9 @@ def get_variables(
 
   MOCKSERVER_PORT_OAUTH_CLIENT_CREDENTIALS_TOKEN = 2091
 
+  MOCKSERVER_PORT_RETRY = 1199
+  RETRY_MOCK_BASE_URL = f"http://127.0.0.1:{MOCKSERVER_PORT_RETRY}"
+
   JSON_INIT_FILE_PATH_REGISTRY = os.path.join(repository_root, 'test', 'mockserver', 'expectations', 'static-registry-expectations.json')
 
   PG_SRV_PORT_MTLS = 5476
@@ -825,6 +828,16 @@ def get_variables(
   SELECT_SUMOLOGIC_COLLECTORS_IDS = 'select id from sumologic.collectors.collectors order by id desc;'
   SELECT_SUMOLOGIC_COLLECTORS_IDS_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'sumologic', 'select-collectors-desc.txt'))
 
+  SELECT_RETRY_DEFAULT_RECOVER = "select attempt, ok from retrytestprovider.flaky.recoverable_default where fail_until = 2;"
+  SELECT_RETRY_CONFIGURED_RECOVER = "select attempt, ok from retrytestprovider.flaky.recoverable_configured where fail_until = 4;"
+  SELECT_RETRY_NO_RETRY = "select attempt, ok from retrytestprovider.flaky.no_retry;"
+  SELECT_RETRY_TIGHT_BUDGET = "select attempt, ok from retrytestprovider.flaky.tight_budget where fail_until = 4;"
+
+  SELECT_RETRY_DEFAULT_RECOVER_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'retry', 'default-recover.txt'))
+  SELECT_RETRY_CONFIGURED_RECOVER_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'retry', 'configured-recover.txt'))
+  SELECT_RETRY_NO_RETRY_STDERR_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'retry', 'no-retry-stderr.txt'))
+  SELECT_RETRY_TIGHT_BUDGET_STDERR_EXPECTED = get_output_from_local_file(os.path.join('test', 'assets', 'expected', 'retry', 'tight-budget-stderr.txt'))
+
   GET_IAM_POLICY_AGG_ASC_INPUT_FILE = os.path.join(repository_root, 'test', 'assets', 'input', 'select-exec-dependent-org-iam-policy.iql')
   GET_IAM_POLICY_AGG_ASC_INPUT_FILE_DOCKER = os.path.join('/opt', 'stackql', 'input', 'select-exec-dependent-org-iam-policy.iql')
 
@@ -909,6 +922,8 @@ def get_variables(
     'MOCKSERVER_PORT_GOOGLEADMIN':                    MOCKSERVER_PORT_GOOGLEADMIN,
     'MOCKSERVER_PORT_STACKQL_AUTH_TESTING':           MOCKSERVER_PORT_STACKQL_AUTH_TESTING,
     'MOCKSERVER_PORT_OAUTH_CLIENT_CREDENTIALS_TOKEN': MOCKSERVER_PORT_OAUTH_CLIENT_CREDENTIALS_TOKEN,
+    'MOCKSERVER_PORT_RETRY':                          MOCKSERVER_PORT_RETRY,
+    'RETRY_MOCK_BASE_URL':                            RETRY_MOCK_BASE_URL,
     'MOCKSERVER_PORT_K8S':                            MOCKSERVER_PORT_K8S,
     'MOCKSERVER_PORT_OKTA':                           MOCKSERVER_PORT_OKTA,
     'MOCKSERVER_PORT_REGISTRY':                       MOCKSERVER_PORT_REGISTRY,
@@ -1074,6 +1089,14 @@ def get_variables(
     'SELECT_POSTGRES_CATALOG_JOIN_TUPLE_EXPECTED':                            SELECT_POSTGRES_CATALOG_JOIN_TUPLE_EXPECTED,
     'SELECT_SUMOLOGIC_COLLECTORS_IDS':                                        SELECT_SUMOLOGIC_COLLECTORS_IDS,
     'SELECT_SUMOLOGIC_COLLECTORS_IDS_EXPECTED':                               SELECT_SUMOLOGIC_COLLECTORS_IDS_EXPECTED,
+    'SELECT_RETRY_DEFAULT_RECOVER':                                           SELECT_RETRY_DEFAULT_RECOVER,
+    'SELECT_RETRY_DEFAULT_RECOVER_EXPECTED':                                  SELECT_RETRY_DEFAULT_RECOVER_EXPECTED,
+    'SELECT_RETRY_CONFIGURED_RECOVER':                                        SELECT_RETRY_CONFIGURED_RECOVER,
+    'SELECT_RETRY_CONFIGURED_RECOVER_EXPECTED':                               SELECT_RETRY_CONFIGURED_RECOVER_EXPECTED,
+    'SELECT_RETRY_NO_RETRY':                                                  SELECT_RETRY_NO_RETRY,
+    'SELECT_RETRY_NO_RETRY_STDERR_EXPECTED':                                  SELECT_RETRY_NO_RETRY_STDERR_EXPECTED,
+    'SELECT_RETRY_TIGHT_BUDGET':                                              SELECT_RETRY_TIGHT_BUDGET,
+    'SELECT_RETRY_TIGHT_BUDGET_STDERR_EXPECTED':                              SELECT_RETRY_TIGHT_BUDGET_STDERR_EXPECTED,
     'SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD':                            [ SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES, SELECT_AZURE_COMPUTE_PUBLIC_KEYS ],
     'SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD_EXPECTED':                   get_shell_welcome_stdout(execution_env) + SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_EXPECTED + '\n' + SELECT_AZURE_COMPUTE_PUBLIC_KEYS_EXPECTED,
     'SHELL_COMMANDS_AZURE_COMPUTE_MUTATION_GUARD_JSON_EXPECTED':              SELECT_AZURE_COMPUTE_VIRTUAL_MACHINES_JSON_EXPECTED + SELECT_AZURE_COMPUTE_PUBLIC_KEYS_JSON_EXPECTED,

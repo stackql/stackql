@@ -1,0 +1,208 @@
+components:
+  parameters:
+    fail_until:
+      in: query
+      name: fail_until
+      required: true
+      schema:
+        type: integer
+  schemas:
+    flaky_response:
+      properties:
+        key:
+          type: string
+        attempt:
+          type: integer
+        fail_until:
+          type: integer
+        ok:
+          type: boolean
+      type: object
+  x-stackQL-resources:
+    recoverable_default:
+      id: retrytestprovider.flaky.recoverable_default
+      name: recoverable_default
+      title: Recoverable using default retry policy (3 attempts)
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1flaky~1default-recover/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: $
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/recoverable_default/methods/select'
+        delete: []
+        insert: []
+        update: []
+    recoverable_configured:
+      id: retrytestprovider.flaky.recoverable_configured
+      name: recoverable_configured
+      title: Recoverable using configured 5-attempt policy
+      config:
+        retry:
+          algorithm: exponential
+          max_attempts: 5
+          initial_delay_ms: 5
+          max_delay_ms: 25
+          multiplier: 2
+          retryable_methods:
+            - GET
+          retryable_conditions:
+            status_codes:
+              - 503
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1flaky~1configured-recover/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: $
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/recoverable_configured/methods/select'
+        delete: []
+        insert: []
+        update: []
+    no_retry:
+      id: retrytestprovider.flaky.no_retry
+      name: no_retry
+      title: Single attempt only - retry disabled
+      config:
+        retry:
+          max_attempts: 1
+          initial_delay_ms: 1
+          max_delay_ms: 1
+          retryable_methods:
+            - GET
+          retryable_conditions:
+            status_codes:
+              - 503
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1always_503/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '503'
+            objectKey: $
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/no_retry/methods/select'
+        delete: []
+        insert: []
+        update: []
+    tight_budget:
+      id: retrytestprovider.flaky.tight_budget
+      name: tight_budget
+      title: Retry budget intentionally smaller than required failures
+      config:
+        retry:
+          max_attempts: 2
+          initial_delay_ms: 5
+          max_delay_ms: 10
+          retryable_methods:
+            - GET
+          retryable_conditions:
+            status_codes:
+              - 503
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1flaky~1tight-budget/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '503'
+            objectKey: $
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/tight_budget/methods/select'
+        delete: []
+        insert: []
+        update: []
+info:
+  title: Flaky service for retry policy testing
+  version: 0.1.0
+openapi: 3.0.3
+paths:
+  /flaky/default-recover:
+    get:
+      operationId: flaky/default-recover
+      parameters:
+        - $ref: '#/components/parameters/fail_until'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/flaky_response'
+          description: OK
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/flaky_response'
+          description: Transient failure
+      servers:
+        - url: http://localhost:1199
+      summary: Recover via default retry policy
+  /flaky/configured-recover:
+    get:
+      operationId: flaky/configured-recover
+      parameters:
+        - $ref: '#/components/parameters/fail_until'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/flaky_response'
+          description: OK
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/flaky_response'
+          description: Transient failure
+      servers:
+        - url: http://localhost:1199
+      summary: Recover via configured 5-attempt retry policy
+  /flaky/tight-budget:
+    get:
+      operationId: flaky/tight-budget
+      parameters:
+        - $ref: '#/components/parameters/fail_until'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/flaky_response'
+          description: OK
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/flaky_response'
+          description: Transient failure
+      summary: Tight retry budget that should exhaust
+      servers:
+        - url: http://localhost:1199
+  /always_503:
+    get:
+      operationId: always_503
+      responses:
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/flaky_response'
+          description: Always 503
+      summary: Always returns 503
+      servers:
+        - url: http://localhost:1199
+servers:
+  - url: http://localhost:1199

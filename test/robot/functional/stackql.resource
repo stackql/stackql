@@ -28,7 +28,7 @@ Library           ${WEB_SERVICE_LIBRARY}          ${CWD_FOR_EXEC}
 *** Keywords ***
 
 Start All Mock Servers
-    ${port_dict} =    Create Dictionary    
+    ${port_dict} =    Create Dictionary
     ...    oauth_client_credentials_token=${MOCKSERVER_PORT_OAUTH_CLIENT_CREDENTIALS_TOKEN}
     ...    github=${MOCKSERVER_PORT_GITHUB}
     ...    google=${MOCKSERVER_PORT_GOOGLE}
@@ -41,7 +41,19 @@ Start All Mock Servers
     ...    azure=${MOCKSERVER_PORT_AZURE}
     ...    sumologic=${MOCKSERVER_PORT_SUMOLOGIC}
     ...    digitalocean=${MOCKSERVER_PORT_DIGITALOCEAN}
+    ...    retry=${MOCKSERVER_PORT_RETRY}
     Start All Webservers    port_dict=${port_dict}
+
+Reset Retry Mock Counters
+    ${reset} =    Run Process    curl    -sf    -X    POST    ${RETRY_MOCK_BASE_URL}/reset
+    Should Be Equal As Strings    ${reset.rc}    0
+    ...    Reset call to ${RETRY_MOCK_BASE_URL}/reset returned rc=${reset.rc} stdout='${reset.stdout}' stderr='${reset.stderr}'
+
+Assert Retry Mock Attempts
+    [Arguments]    ${key}    ${expected}
+    ${count} =    Run Process    curl    -sf    ${RETRY_MOCK_BASE_URL}/count/${key}
+    Should Be Equal As Strings    ${count.rc}    0
+    Should Contain    ${count.stdout}    "attempts":${expected}
 
 
 Prepare StackQL Environment
