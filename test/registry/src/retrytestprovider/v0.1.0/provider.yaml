@@ -1,0 +1,18 @@
+id: retrytestprovider
+name: retrytestprovider
+openapi: 3.0.3
+config:
+  auth:
+    type: null_auth
+providerServices:
+  flaky:
+    description: Service backed by the local flask retry mock.
+    id: flaky:v0.1.0
+    name: flaky
+    preferred: true
+    service:
+      $ref: retrytestprovider/v0.1.0/services/flaky.yaml
+    title: Flaky service for retry policy testing
+    version: v0.1.0
+servers: []
+version: v0.1.0

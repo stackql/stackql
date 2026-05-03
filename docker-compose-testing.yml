@@ -368,7 +368,7 @@ services:
     build:
       context: .
       dockerfile: testLib.Dockerfile
-      # cache_from: 
+      # cache_from:
       #   - stackql/testlib
     volumes:
       - ./test/server/mtls/credentials:/opt/testlib/test/server/mtls/credentials:ro
@@ -376,7 +376,7 @@ services:
       - "1094:1094/tcp"
     environment:
       IS_DOCKER: "${IS_DOCKER:-false}"
-    command: 
+    command:
       - bash
       - -c
       - |
@@ -386,6 +386,29 @@ services:
         --host 0.0.0.0 \
         --port  \
         1094
+  retry_mockserver:
+    networks:
+      testing-network:
+        aliases:
+          - retry.test
+    image: stackql/testlib
+    build:
+      context: .
+      dockerfile: testLib.Dockerfile
+    ports:
+      - "1199:1199/tcp"
+    environment:
+      IS_DOCKER: "${IS_DOCKER:-false}"
+    command:
+      - bash
+      - -c
+      - |
+        flask \
+        --app=/opt/testlib/test/python/stackql_test_tooling/flask/retry/app \
+        run \
+        --host 0.0.0.0 \
+        --port  \
+        1199
 
 networks:
   testing-network:

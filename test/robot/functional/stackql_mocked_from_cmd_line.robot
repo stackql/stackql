@@ -10062,3 +10062,79 @@ CTE Within View Returns Results
     ...    dummyapp.io
     ...    stdout=${CURDIR}/tmp/CTE-Within-View-Returns-Results-stdout.tmp
     ...    stderr=${CURDIR}/tmp/CTE-Within-View-Returns-Results-stderr.tmp
+
+Default Retry Policy Recovers After Transient 503s
+    [Documentation]    Default retry policy (3 attempts). Mock fails twice with 503 then succeeds.
+    [Tags]    retry
+    Reset Retry Mock Counters
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${SELECT_RETRY_DEFAULT_RECOVER}
+    ...    ${SELECT_RETRY_DEFAULT_RECOVER_EXPECTED}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Default-Retry-Policy-Recovers-After-Transient-503s-stdout.tmp
+    ...    stderr=${CURDIR}/tmp/Default-Retry-Policy-Recovers-After-Transient-503s-stderr.tmp
+    Assert Retry Mock Attempts    default-recover    3
+
+Configured Retry Policy Recovers On Fifth Attempt
+    [Documentation]    Resource-level config max_attempts=5. Mock fails four times then succeeds.
+    [Tags]    retry
+    Reset Retry Mock Counters
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${SELECT_RETRY_CONFIGURED_RECOVER}
+    ...    ${SELECT_RETRY_CONFIGURED_RECOVER_EXPECTED}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Configured-Retry-Policy-Recovers-On-Fifth-Attempt-stdout.tmp
+    ...    stderr=${CURDIR}/tmp/Configured-Retry-Policy-Recovers-On-Fifth-Attempt-stderr.tmp
+    Assert Retry Mock Attempts    configured-recover    5
+
+Zero Retry Policy Issues Exactly One Attempt
+    [Documentation]    Resource-level config max_attempts=1 disables retry; the always_503 endpoint surfaces immediately.
+    [Tags]    retry
+    Reset Retry Mock Counters
+    Should Stackql Exec Inline Contain Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${SELECT_RETRY_NO_RETRY}
+    ...    ${EMPTY}
+    ...    ${SELECT_RETRY_NO_RETRY_STDERR_EXPECTED}
+    ...    stdout=${CURDIR}/tmp/Zero-Retry-Policy-Issues-Exactly-One-Attempt-stdout.tmp
+    ...    stderr=${CURDIR}/tmp/Zero-Retry-Policy-Issues-Exactly-One-Attempt-stderr.tmp
+    Assert Retry Mock Attempts    always_503    1
+
+Tight Retry Budget Surfaces Final 503
+    [Documentation]    Resource-level config max_attempts=2 with four required failures - retry budget exhausts.
+    [Tags]    retry
+    Reset Retry Mock Counters
+    Should Stackql Exec Inline Contain Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${SELECT_RETRY_TIGHT_BUDGET}
+    ...    ${EMPTY}
+    ...    ${SELECT_RETRY_TIGHT_BUDGET_STDERR_EXPECTED}
+    ...    stdout=${CURDIR}/tmp/Tight-Retry-Budget-Surfaces-Final-503-stdout.tmp
+    ...    stderr=${CURDIR}/tmp/Tight-Retry-Budget-Surfaces-Final-503-stderr.tmp
+    Assert Retry Mock Attempts    tight-budget    2
