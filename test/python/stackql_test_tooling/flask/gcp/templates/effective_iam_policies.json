@@ -1,0 +1,50 @@
+{
+  "policyResults": [
+    {
+      "fullResourceName": "//cloudresourcemanager.googleapis.com/projects/demo-project",
+      "policies": [
+        {
+          "attachedResource": "//cloudresourcemanager.googleapis.com/projects/demo-project",
+          "policy": {
+            "bindings": [
+              { "role": "roles/aiplatform.serviceAgent", "members": ["serviceAccount:service-ANONYMIZED@gcp-sa-aiplatform.iam.gserviceaccount.com"] },
+              { "role": "roles/bigquery.admin", "members": ["user:demo-user@example.com"] },
+              { "role": "roles/bigquery.user", "members": ["serviceAccount:demo-fivetran@demo-project.iam.gserviceaccount.com"] },
+              { "role": "roles/bigquerydatatransfer.serviceAgent", "members": ["serviceAccount:service-ANONYMIZED@gcp-sa-bigquerydatatransfer.iam.gserviceaccount.com"] },
+              { "role": "roles/cloudkms.serviceAgent", "members": ["serviceAccount:service-ANONYMIZED@gcp-sa-cloudkms.iam.gserviceaccount.com"] },
+              { "role": "roles/compute.admin", "members": ["serviceAccount:demo-security-reviewer@demo.iam.gserviceaccount.com"] },
+              { "role": "roles/compute.serviceAgent", "members": ["serviceAccount:service-ANONYMIZED@compute-system.iam.gserviceaccount.com"] },
+              { "role": "roles/compute.storageAdmin", "members": ["serviceAccount:demo-minimal@demo-project.iam.gserviceaccount.com"] },
+              { "role": "roles/container.defaultNodeServiceAgent", "members": ["serviceAccount:service-ANONYMIZED@gcp-sa-gkenode.iam.gserviceaccount.com"] },
+              { "role": "roles/container.serviceAgent", "members": ["serviceAccount:service-ANONYMIZED@container-engine-robot.iam.gserviceaccount.com"] },
+              { "role": "roles/containeranalysis.ServiceAgent", "members": ["serviceAccount:service-ANONYMIZED@container-analysis.iam.gserviceaccount.com"] },
+              { "role": "roles/containerregistry.ServiceAgent", "members": ["serviceAccount:service-ANONYMIZED@containerregistry.iam.gserviceaccount.com"] },
+              { "role": "roles/datafusion.serviceAgent", "members": ["serviceAccount:service-ANONYMIZED@gcp-sa-datafusion.iam.gserviceaccount.com"] },
+              { "role": "roles/dataproc.serviceAgent", "members": ["serviceAccount:service-ANONYMIZED@dataproc-accounts.iam.gserviceaccount.com"] },
+              { "role": "roles/editor", "members": [
+                "serviceAccount:ANONYMIZED-compute@developer.gserviceaccount.com",
+                "serviceAccount:ANONYMIZED@cloudservices.gserviceaccount.com",
+                "serviceAccount:demo-project@appspot.gserviceaccount.com"
+              ] },
+              { "role": "roles/firebaserules.system", "members": ["serviceAccount:service-ANONYMIZED@firebase-rules.iam.gserviceaccount.com"] },
+              { "role": "roles/firestore.serviceAgent", "members": ["serviceAccount:service-ANONYMIZED@gcp-sa-firestore.iam.gserviceaccount.com"] },
+              { "role": "roles/networkconnectivity.serviceAgent", "members": ["serviceAccount:service-ANONYMIZED@gcp-sa-networkconnectivity.iam.gserviceaccount.com"] },
+              { "role": "roles/osconfig.serviceAgent", "members": ["serviceAccount:service-ANONYMIZED@gcp-sa-osconfig.iam.gserviceaccount.com"] },
+              { "role": "roles/owner", "members": [
+                "serviceAccount:ci-testing-rw-principal@demo-project.iam.gserviceaccount.com",
+                "serviceAccount:demo-worker@demo-project.iam.gserviceaccount.com",
+                "serviceAccount:demo-project@demo-project.iam.gserviceaccount.com",
+                "serviceAccount:demo-project@demo.iam.gserviceaccount.com",
+                "user:demo-user@example.com",
+                "user:another-user@example.com"
+              ] },
+              { "role": "roles/pubsub.serviceAgent", "members": ["serviceAccount:service-ANONYMIZED@gcp-sa-pubsub.iam.gserviceaccount.com"] },
+              { "role": "roles/resourcemanager.organizationAdmin", "members": ["serviceAccount:demo-project@demo-project.iam.gserviceaccount.com"] },
+              { "role": "roles/viewer", "members": ["serviceAccount:ci-testing-viewer-principal@demo-project.iam.gserviceaccount.com"] }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

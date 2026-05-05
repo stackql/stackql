@@ -409,5 +409,13 @@ def firewalls():
     else:
         return render_template('route_37_template.json'), 200, {'Content-Type': 'application/json'}
 
+
+
+# Mock for: GET /v1/projects/<project_id>/effectiveIamPolicies
+@app.route('/v1/projects/<project_id>/effectiveIamPolicies', methods=['GET'])
+def v1_projects_effective_iam_policies(project_id: str):
+    # Return a realistic mock response for effectiveIamPolicies
+    return render_template('effective_iam_policies.json'), 200, {'Content-Type': 'application/json'}
+
 if __name__ == '__main__':
     app.run(debug=True)

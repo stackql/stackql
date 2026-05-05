@@ -231,6 +231,30 @@ AWS S3 Objects Select Simple
     ...    ${SELECT_AWS_S3_OBJECTS_EXPECTED}
     ...    ${CURDIR}/tmp/AWS-S3-Objects-Select-Simple.tmp
 
+
+Google Cloud Asset IAM Policies Select With Slash In Path Param
+    ${inputStr} =    Catenate
+    ...              select fullResourceName from google.cloudasset.effective_iam_policies where scope = 'projects/mine';
+    ${expectedStr} =    Catenate    SEPARATOR=\n
+    ...    |-------------------------------------------------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}fullResourceName${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------------------------------------------------------------|
+    ...    |${SPACE}//cloudresourcemanager.googleapis.com/projects/demo-project${SPACE}|
+    ...    |-------------------------------------------------------------|
+    Should StackQL Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${expectedStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Google-Cloud-Asset-IAM-Policies-Select-With-Slash-In-Path-Param-stdout.tmp
+    ...    stderr=${CURDIR}/tmp/Google-Cloud-Asset-IAM-Policies-Select-With-Slash-In-Path-Param-stderr.tmp
+
 AWS S3 Objects Null Select Simple
     Should Horrid Query StackQL Inline Equal
     ...    ${STACKQL_EXE}
