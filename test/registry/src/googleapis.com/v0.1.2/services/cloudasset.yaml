@@ -2674,8 +2674,10 @@ components:
           response:
             mediaType: application/json
             openAPIDocKey: '200'
+            objectKey: $.policyResults
       sqlVerbs:
-        select: []
+        select:
+          - $ref: '#/components/x-stackQL-resources/effective_iam_policies/methods/batch_get'
         insert: []
         update: []
         delete: []
