@@ -54,6 +54,18 @@ Start MCP Servers
     ...                                   5446
     ...                                   stdout=${CURDIR}${/}tmp${/}Stackql-MCP-Server-HTTPS.txt
     ...                                   stderr=${CURDIR}${/}tmp${/}Stackql-MCP-Server-HTTPS-stderr.txt
+    Start Process                         ${STACKQL_EXE}
+    ...                                   mcp
+    ...                                   \-\-mcp.server.type\=http
+    ...                                   \-\-mcp.config
+    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9915"}, "enabled_tools": ["greet"] }
+    ...                                   \-\-registry
+    ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
+    ...                                   \-\-auth
+    ...                                   ${AUTH_CFG_STR}
+    ...                                   \-\-tls.allowInsecure
+    ...                                   stdout=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Restricted.txt
+    ...                                   stderr=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Restricted-stderr.txt
     Sleep         5s
 
 Parse MCP JSON Output
@@ -544,3 +556,49 @@ MCP HTTPS Server Exec Query Canonical
     ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-Exec-Query-canonical-stderr.txt
     ${meta_rels_obj}=    Parse MCP JSON Output    ${meta_rels.stdout}
     Dictionary Should Contain Key    ${meta_rels_obj}    timestamp
+
+MCP HTTP Server Restricted Tools Allowlist
+    [Documentation]    Verify enabled_tools in mcp.config restricts which tools are published.
+    ...                Server at 9915 is started with enabled_tools=["greet"]; only greet should be callable.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${list_result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9915
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Restricted-list-tools.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Restricted-list-tools-stderr.txt
+    Should Be Equal As Integers    ${list_result.rc}    0
+    Should Contain        ${list_result.stdout}    greet
+    Should Not Contain    ${list_result.stdout}    server_info
+    Should Not Contain    ${list_result.stdout}    list_providers
+    Should Not Contain    ${list_result.stdout}    query_v2
+    ${greet_result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9915
+    ...                  \-\-exec.action      greet
+    ...                  \-\-exec.args        {"name": "RESTRICTED USER"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Restricted-greet.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Restricted-greet-stderr.txt
+    Should Be Equal As Integers    ${greet_result.rc}    0
+    Should Contain    ${greet_result.stdout}    RESTRICTED USER
+    ${denied_result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9915
+    ...                  \-\-exec.action      list_providers
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Restricted-list-providers.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Restricted-list-providers-stderr.txt
+    Should Not Be Equal As Integers    ${denied_result.rc}    0
+    Should Contain    ${denied_result.stderr}    unknown tool
+    ${denied_query}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9915
+    ...                  \-\-exec.action      query_v2
+    ...                  \-\-exec.args        {"sql": "select 1;"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Restricted-query.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Restricted-query-stderr.txt
+    Should Not Be Equal As Integers    ${denied_query.rc}    0
+    Should Contain    ${denied_query.stderr}    unknown tool
