@@ -74,6 +74,17 @@ func (s *simpleMCPServer) runHTTPServer(server *mcp.Server, config *Config) erro
 	return nil
 }
 
+// addToolIfEnabled registers a tool only when cfg.IsToolEnabled allows it.
+// This is the single chokepoint by which the EnabledTools allowlist is enforced.
+func addToolIfEnabled[In, Out any](
+	s *mcp.Server, cfg *Config, t *mcp.Tool, h mcp.ToolHandlerFor[In, Out],
+) {
+	if !cfg.IsToolEnabled(t.Name) {
+		return
+	}
+	mcp.AddTool(s, t, h)
+}
+
 func NewExampleBackendServer(config *Config, logger *logrus.Logger) (MCPServer, error) {
 	backend := NewExampleBackend("example-connection-string")
 	return newMCPServer(config, backend, logger)
@@ -114,8 +125,9 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		&mcp.Implementation{Name: "stackql", Version: "v0.1.1"},
 		nil,
 	)
-	mcp.AddTool(
+	addToolIfEnabled(
 		server,
+		config,
 		&mcp.Tool{
 			Name:        "greet",
 			Description: "Say hi.  A simple liveness check.",
@@ -130,8 +142,9 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
 		},
 	)
-	mcp.AddTool(
+	addToolIfEnabled(
 		server,
+		config,
 		&mcp.Tool{
 			Name:        "server_info",
 			Description: "Get server information",
@@ -146,8 +159,9 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
 		},
 	)
-	mcp.AddTool(
+	addToolIfEnabled(
 		server,
+		config,
 		&mcp.Tool{
 			Name:        "db_identity",
 			Description: "get current database identity",
@@ -162,8 +176,9 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
 		},
 	)
-	mcp.AddTool(
+	addToolIfEnabled(
 		server,
+		config,
 		&mcp.Tool{
 			Name:        "query_v2",
 			Description: "Deprecated: Please switch to query_v3. Execute a SQL query.  Please adhere to the expected parameters.  Returns a textual response",
@@ -182,8 +197,9 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 			}, nil, nil
 		},
 	)
-	mcp.AddTool(
+	addToolIfEnabled(
 		server,
+		config,
 		&mcp.Tool{
 			Name:        "query_v3",
 			Description: "Execute a SQL query.  Returns a DTO with rows or raw text.",
@@ -207,8 +223,9 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
 		},
 	)
-	mcp.AddTool(
+	addToolIfEnabled(
 		server,
+		config,
 		&mcp.Tool{
 			Name:        "query_json_v2",
 			Description: "Execute a SQL query and return a JSON array of rows, as text plus DTO.",
@@ -223,8 +240,9 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
 		},
 	)
-	mcp.AddTool(
+	addToolIfEnabled(
 		server,
+		config,
 		&mcp.Tool{
 			Name:        "validate_query_json_v2",
 			Description: "Validate a SQL SELECT query ahead of time and return a JSON object expressing success, or else an error.  Supply the query exactly as you would execute it, no qualifying keywords.  Only works for SELECT at this time.",
@@ -244,8 +262,9 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
 		},
 	)
-	mcp.AddTool(
+	addToolIfEnabled(
 		server,
+		config,
 		&mcp.Tool{
 			Name:        "exec_query_json_v2",
 			Description: "Exec query pattern; for non-read operations. Tread carefully!!! These are almost always mutations!  Execute a SQL query and return an optional JSON object, describing the effect(s).",
@@ -259,8 +278,9 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, res, nil
 		},
 	)
-	mcp.AddTool(
+	addToolIfEnabled(
 		server,
+		config,
 		&mcp.Tool{
 			Name:        "query_validate_json_v2",
 			Description: "Run an ahead of time (AOT) check for query tractability.",
@@ -275,8 +295,9 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		},
 	)
 
-	mcp.AddTool(
+	addToolIfEnabled(
 		server,
+		config,
 		&mcp.Tool{
 			Name:        "prompt_write_safe_select_tool",
 			Description: "PLACEHOLDER Future proofing: prompt guidelines for writing safe SELECT queries.",
@@ -292,8 +313,9 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		},
 	)
 
-	mcp.AddTool(
+	addToolIfEnabled(
 		server,
+		config,
 		&mcp.Tool{
 			Name:        "list_tables_json",
 			Description: "List tables in a schema and return JSON rows.",
@@ -315,8 +337,9 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		},
 	)
 
-	mcp.AddTool(
+	addToolIfEnabled(
 		server,
+		config,
 		&mcp.Tool{
 			Name:        "list_tables_json_page",
 			Description: "Future proofing: List tables with pagination and filters, returns JSON.",
@@ -338,8 +361,9 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		},
 	)
 
-	mcp.AddTool(
+	addToolIfEnabled(
 		server,
+		config,
 		&mcp.Tool{
 			Name:        "list_providers",
 			Description: "List available providers.  This is the top level of the stackql hierarchy.",
@@ -355,8 +379,9 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		},
 	)
 
-	mcp.AddTool(
+	addToolIfEnabled(
 		server,
+		config,
 		&mcp.Tool{
 			Name:        "list_services",
 			Description: "List services. **must** supply <provider>.",
@@ -372,8 +397,9 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		},
 	)
 
-	mcp.AddTool(
+	addToolIfEnabled(
 		server,
+		config,
 		&mcp.Tool{
 			Name:        "list_resources",
 			Description: "List available resources. **must** supply <provider>, <service>.",
@@ -389,8 +415,9 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		},
 	)
 
-	mcp.AddTool(
+	addToolIfEnabled(
 		server,
+		config,
 		&mcp.Tool{
 			Name:        "list_methods",
 			Description: "List access methods for a resource.  Interrogating this is almost compulsory before executing a CRUD query; you will need to infer requireed WHERE parameters. **must** supply <provider>, <service>, <resource>.",
@@ -406,8 +433,9 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		},
 	)
 
-	mcp.AddTool(
+	addToolIfEnabled(
 		server,
+		config,
 		&mcp.Tool{
 			Name:        "describe_table",
 			Description: "PLACEHOLDER Future proofing: Get detailed information about a table.",
@@ -423,8 +451,9 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		},
 	)
 
-	mcp.AddTool(
+	addToolIfEnabled(
 		server,
+		config,
 		&mcp.Tool{
 			Name:        "get_foreign_keys",
 			Description: "PLACEHOLDER Future proofing: Get foreign key information for a table.",
@@ -440,8 +469,9 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		},
 	)
 
-	mcp.AddTool(
+	addToolIfEnabled(
 		server,
+		config,
 		&mcp.Tool{
 			Name:        "find_relationships",
 			Description: "PLACEHOLDER Future proofing: Find explicit and implied relationships for a table.",

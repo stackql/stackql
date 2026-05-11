@@ -199,6 +199,29 @@ logging:
   enable_request_logging: false
 ```
 
+### Restricting Published Tools
+
+The top-level `enabled_tools` field on `Config` controls which MCP tools the server publishes. It is an allowlist of tool names.
+
+- **Omitted, `null`, or empty list** — every built-in tool is registered. This is the default and matches the historical behaviour.
+- **Populated list** — only the named tools are registered. Any other tool is absent from `tools/list` and `tools/call` returns an `unknown tool` error.
+
+This is enforced at registration time in `pkg/mcp_server/server.go` via the `addToolIfEnabled` helper, which consults `Config.IsToolEnabled(name)` before delegating to `mcp.AddTool`. There is no runtime cost for tools that are not enabled — they are never bound to the server.
+
+JSON example — a single-purpose server that exposes only the liveness check:
+
+```json
+{
+  "server": {
+    "transport": "http",
+    "address": "127.0.0.1:9915"
+  },
+  "enabled_tools": ["greet"]
+}
+```
+
+When the server is launched via the `stackql mcp` (or `stackql srv --mcp.server.type=...`) command, this field is parsed from the same `--mcp.config` JSON blob as the rest of the configuration — no additional flag is required.  For example, `stackql mcp --mcp.config='{"server": { "transport": "http",    "address": "127.0.0.1:9915"}, "enabled_tools": ["greet"]}'`.
+
 ## MCP Protocol Support
 
 The server implements the Model Context Protocol specification and supports:

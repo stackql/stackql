@@ -15,6 +15,25 @@ type Config struct {
 
 	// Backend contains backend-specific configuration.
 	Backend BackendConfig `json:"backend" yaml:"backend"`
+
+	// EnabledTools restricts which MCP tools the server publishes.
+	// When nil or empty, every built-in tool is published (default behavior).
+	// When populated, only the named tools are registered.
+	EnabledTools []string `json:"enabled_tools,omitempty" yaml:"enabled_tools,omitempty"`
+}
+
+// IsToolEnabled reports whether the named tool should be published.
+// Empty/nil EnabledTools means all tools are enabled.
+func (c *Config) IsToolEnabled(name string) bool {
+	if len(c.EnabledTools) == 0 {
+		return true
+	}
+	for _, n := range c.EnabledTools {
+		if n == name {
+			return true
+		}
+	}
+	return false
 }
 
 func (c *Config) GetServerTransport() string {
