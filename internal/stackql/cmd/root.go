@@ -55,6 +55,19 @@ var (
 
 //nolint:gochecknoinits // mirrors -ldflags-populated vars into the leaf buildinfo package
 func init() {
+	// Create new BuildInfo instance and set as default
+	info := buildinfo.NewBuildInfo(
+		BuildMajorVersion,
+		BuildMinorVersion,
+		BuildPatchVersion,
+		BuildCommitSHA,
+		BuildShortCommitSHA,
+		BuildDate,
+		BuildPlatform,
+	)
+	buildinfo.SetDefault(info)
+	
+	// Maintain legacy global variables for backward compatibility
 	buildinfo.BuildMajorVersion = BuildMajorVersion
 	buildinfo.BuildMinorVersion = BuildMinorVersion
 	buildinfo.BuildPatchVersion = BuildPatchVersion
