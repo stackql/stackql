@@ -294,9 +294,18 @@ func NewShowInstructionExecutor(
 		}
 		keys = convertProviderServicesToMap(services, extended)
 	case "VERSION":
-		if extended {
-			columnOrder = []string{"version", "commit", "build_date", "platform"}
-			keys = map[string]map[string]interface{}{
+		columnOrder, keys = buildVersionShowOutput(extended)
+	}
+	return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, err, nil,
+		handlerCtx.GetTypingConfig()))
+}
+
+// buildVersionShowOutput renders the SHOW VERSION result. Extracted so that
+// NewShowInstructionExecutor stays under the gocyclo threshold.
+func buildVersionShowOutput(extended bool) ([]string, map[string]map[string]interface{}) {
+	if extended {
+		return []string{"version", "commit", "build_date", "platform"},
+			map[string]map[string]interface{}{
 				"1": {
 					"version":    buildinfo.SemVersion,
 					"commit":     buildinfo.BuildShortCommitSHA,
@@ -304,15 +313,11 @@ func NewShowInstructionExecutor(
 					"platform":   buildinfo.BuildPlatform,
 				},
 			}
-		} else {
-			columnOrder = []string{"version"}
-			keys = map[string]map[string]interface{}{
-				"1": {"version": buildinfo.SemVersion},
-			}
-		}
 	}
-	return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, err, nil,
-		handlerCtx.GetTypingConfig()))
+	return []string{"version"},
+		map[string]map[string]interface{}{
+			"1": {"version": buildinfo.SemVersion},
+		}
 }
 
 //nolint:errcheck // future proofing

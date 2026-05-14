@@ -780,23 +780,23 @@ Show Version
 
 Show Version Extended
     Should StackQL Exec Contain
-    ...    SHOW VERSION EXTENDED;
+    ...    SHOW EXTENDED VERSION;
     ...    version
     ...    stdout=${CURDIR}/tmp/Show-Version-Extended.tmp
     Should StackQL Exec Contain
-    ...    SHOW VERSION EXTENDED;
+    ...    SHOW EXTENDED VERSION;
     ...    commit
     ...    stdout=${CURDIR}/tmp/Show-Version-Extended-Commit.tmp
     Should StackQL Exec Contain
-    ...    SHOW VERSION EXTENDED;
+    ...    SHOW EXTENDED VERSION;
     ...    build_date
     ...    stdout=${CURDIR}/tmp/Show-Version-Extended-BuildDate.tmp
     Should StackQL Exec Contain
-    ...    SHOW VERSION EXTENDED;
+    ...    SHOW EXTENDED VERSION;
     ...    platform
     ...    stdout=${CURDIR}/tmp/Show-Version-Extended-Platform.tmp
     Should StackQL Exec Contain
-    ...    SHOW VERSION EXTENDED;
+    ...    SHOW EXTENDED VERSION;
     ...    ${EXPECTED_SEMVER}
     ...    stdout=${CURDIR}/tmp/Show-Version-Extended-Semver.tmp
 
