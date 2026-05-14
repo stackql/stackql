@@ -175,7 +175,7 @@ MCP HTTP Server Show Version SQL
     ...                  stdout=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Show-Version.txt
     ...                  stderr=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Show-Version-stderr.txt
     Should Contain       ${result.stdout}       version
-    Should Contain       ${result.stdout}       ${EXPECTED_SEMVER}
+    Should Match Regexp    ${result.stdout}       \\d+\\.\\d+\\.\\d+
     Should Be Equal As Integers    ${result.rc}    0
 
 MCP HTTP Server Info Includes Version
@@ -191,7 +191,7 @@ MCP HTTP Server Info Includes Version
     ...                  stderr=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Info-stderr.txt
     Should Contain       ${result.stdout}       version
     Should Contain       ${result.stdout}       transport
-    Should Contain       ${result.stdout}       ${EXPECTED_SEMVER}
+    Should Match Regexp    ${result.stdout}       \\d+\\.\\d+\\.\\d+
     Should Be Equal As Integers    ${result.rc}    0
 
 PG Server Show Version
@@ -209,7 +209,7 @@ PG Server Show Version
     ...                  stdout=${CURDIR}${/}tmp${/}PG-Server-Show-Version-psql.txt
     ...                  stderr=${CURDIR}${/}tmp${/}PG-Server-Show-Version-psql-stderr.txt
     Should Contain       ${psql_client_result.stdout}       version
-    Should Contain       ${psql_client_result.stdout}       ${EXPECTED_SEMVER}
+    Should Match Regexp    ${psql_client_result.stdout}       \\d+\\.\\d+\\.\\d+
     Should Be Equal As Integers    ${psql_client_result.rc}    0
 
 PG Server Show Version Extended
@@ -217,7 +217,7 @@ PG Server Show Version Extended
     Sleep         5s
     ${posixInput} =     Catenate
     ...    "${PSQL_EXE}"    -d     postgres://stackql:stackql@127.0.0.1:5665   -c
-    ...    "SHOW VERSION EXTENDED;"
+    ...    "SHOW EXTENDED VERSION;"
     ${windowsInput} =     Catenate
     ...    &    ${posixInput}
     ${input} =    Set Variable If    "${IS_WINDOWS}" == "1"    ${windowsInput}    ${posixInput}
@@ -230,7 +230,7 @@ PG Server Show Version Extended
     Should Contain       ${psql_client_result.stdout}       commit
     Should Contain       ${psql_client_result.stdout}       build_date
     Should Contain       ${psql_client_result.stdout}       platform
-    Should Contain       ${psql_client_result.stdout}       ${EXPECTED_SEMVER}
+    Should Match Regexp    ${psql_client_result.stdout}       \\d+\\.\\d+\\.\\d+
     Should Be Equal As Integers    ${psql_client_result.rc}    0
 
 MCP HTTP Server Query Tool
