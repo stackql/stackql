@@ -583,6 +583,10 @@ func (v *standardFragmentRewriteAstVisitor) Visit(node sqlparser.SQLNode) error 
 		buf.WriteString("describetable")
 		v.rewrittenQuery = buf.String()
 
+	case *sqlparser.DescribeMethod:
+		buf.WriteString("describemethod")
+		v.rewrittenQuery = buf.String()
+
 	case *sqlparser.OtherAdmin:
 		buf.WriteString("otheradmin")
 		v.rewrittenQuery = buf.String()

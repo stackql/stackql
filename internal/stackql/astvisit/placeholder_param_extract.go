@@ -558,6 +558,9 @@ func (v *standardParserPlaceholderParamAstVisitor) Visit(node sqlparser.SQLNode)
 	case *sqlparser.DescribeTable:
 		buf.WriteString("describetable")
 
+	case *sqlparser.DescribeMethod:
+		buf.WriteString("describemethod")
+
 	case *sqlparser.OtherAdmin:
 		buf.WriteString("otheradmin")
 

@@ -24,6 +24,7 @@ import (
 	"github.com/stackql/any-sdk/pkg/constants"
 	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/any-sdk/pkg/logging"
+	"github.com/stackql/stackql/internal/stackql/buildinfo"
 	"github.com/stackql/stackql/internal/stackql/config"
 
 	"github.com/magiconair/properties"
@@ -34,7 +35,14 @@ import (
 	lrucache "github.com/stackql/stackql-parser/go/cache"
 )
 
-//nolint:revive,gochecknoglobals // explicit preferred
+// Build-time identifiers. These remain exported from this package so that
+// existing -ldflags `-X github.com/stackql/stackql/internal/stackql/cmd.<var>`
+// invocations in CI/CD continue to populate them. They are mirrored into
+// internal/stackql/buildinfo at init() time so that runtime packages can
+// read them without importing this command-layer package (which would
+// produce an import cycle).
+//
+//nolint:revive,gochecknoglobals // populated by -ldflags at build time
 var (
 	BuildMajorVersion   string = ""
 	BuildMinorVersion   string = ""
@@ -44,6 +52,18 @@ var (
 	BuildDate           string = ""
 	BuildPlatform       string = ""
 )
+
+//nolint:gochecknoinits // mirrors -ldflags-populated vars into the leaf buildinfo package
+func init() {
+	buildinfo.BuildMajorVersion = BuildMajorVersion
+	buildinfo.BuildMinorVersion = BuildMinorVersion
+	buildinfo.BuildPatchVersion = BuildPatchVersion
+	buildinfo.BuildCommitSHA = BuildCommitSHA
+	buildinfo.BuildShortCommitSHA = BuildShortCommitSHA
+	buildinfo.BuildDate = BuildDate
+	buildinfo.BuildPlatform = BuildPlatform
+	buildinfo.SemVersion = fmt.Sprintf("%s.%s.%s", BuildMajorVersion, BuildMinorVersion, BuildPatchVersion)
+}
 
 func getSemver() string {
 	return fmt.Sprintf("v%s.%s.%s", BuildMajorVersion, BuildMinorVersion, BuildPatchVersion)

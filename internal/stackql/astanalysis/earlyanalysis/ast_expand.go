@@ -776,6 +776,10 @@ func (v *indirectExpandAstVisitor) Visit(node sqlparser.SQLNode) error {
 			return err
 		}
 
+	case *sqlparser.DescribeMethod:
+		// DescribeMethod is resolved directly by the plan builder and does not
+		// participate in the table-metadata hierarchy expansion.
+
 	case *sqlparser.OtherAdmin:
 		buf.WriteString("otheradmin")
 

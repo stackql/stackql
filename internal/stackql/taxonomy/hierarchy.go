@@ -54,6 +54,10 @@ func GetHIDs(
 		return GetHIDs(handlerCtx, n.Expr, params, viewPermissive)
 	case *sqlparser.DescribeTable:
 		return GetHIDs(handlerCtx, n.Table, params, viewPermissive)
+	case *sqlparser.DescribeMethod:
+		// DescribeMethod is dispatched directly by the plan builder and does not
+		// participate in hierarchy resolution.
+		return nil, fmt.Errorf("DESCRIBE METHOD is dispatched outside of hierarchy resolution")
 	case *sqlparser.Show:
 		switch strings.ToUpper(n.Type) {
 		case "INSERT":
@@ -202,6 +206,8 @@ func GetHeirarchyFromStatement(
 	case *sqlparser.Select:
 		methodAction = "select"
 	case *sqlparser.DescribeTable:
+	case *sqlparser.DescribeMethod:
+		return nil, fmt.Errorf("DESCRIBE METHOD is dispatched outside of hierarchy resolution")
 	case sqlparser.TableName:
 	case *sqlparser.AliasedTableExpr:
 		switch n.Expr.(type) { //nolint:gocritic // this is expressive enough
@@ -322,6 +328,8 @@ func GetHeirarchyFromStatement(
 			retVal.SetMethod(m)
 			retVal.SetMethodStr(mStr)
 			return retVal, nil
+		case *sqlparser.DescribeMethod:
+			return nil, fmt.Errorf("DESCRIBE METHOD is dispatched outside of hierarchy resolution")
 		}
 		if getFirstAvailableMethod {
 			meth, methStr, methodErr = prov.GetFirstMethodForAction( //nolint:staticcheck,wastedassign // acceptable

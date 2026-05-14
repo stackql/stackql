@@ -32,6 +32,49 @@ Describe AWS EC2 Default KMS Key ID Exemplifies Top Level XPath for schema
                                                  ...  kmsKeyId
                                                  ...  stdout=${CURDIR}/tmp/describe-aws-ec2-default-kms-key-id.tmp
 
+Describe Method Returns Input And Output Rows
+    [Documentation]    DESCRIBE METHOD google.storage.buckets.get returns rows
+    ...                tagged input_required, input_optional, and output.
+    Should StackQL NoVerify Only Exec Contain    ${DESCRIBE_METHOD_GOOGLE_STORAGE_BUCKETS_GET}
+                                                 ...  bucket    input_required    output
+                                                 ...  stdout=${CURDIR}/tmp/describe-method-google-storage-buckets-get.tmp
+
+Describe Method Extended Includes Description
+    [Documentation]    EXTENDED variant includes a description column populated
+    ...                from the source schema.
+    Should StackQL NoVerify Only Exec Contain    ${DESCRIBE_METHOD_EXTENDED_GOOGLE_STORAGE_BUCKETS_GET}
+                                                 ...  description
+                                                 ...  stdout=${CURDIR}/tmp/describe-method-extended-google-storage-buckets-get.tmp
+
+Describe Method Renders Shape For Nested Object
+    [Documentation]    Object fields carry a JSON Schema subset in the shape column;
+    ...                deep nesting (iamConfiguration.bucketPolicyOnly.enabled) is
+    ...                preserved in one query.
+    Should StackQL NoVerify Only Exec Contain    ${DESCRIBE_METHOD_GOOGLE_STORAGE_BUCKETS_GET}
+                                                 ...  iamConfiguration    bucketPolicyOnly
+                                                 ...  stdout=${CURDIR}/tmp/describe-method-shape-nested.tmp
+
+Describe Method Insert Has Required Body Field
+    [Documentation]    The buckets.insert method has a method-level
+    ...                request.required: [name] annotation; name must surface
+    ...                as input_required regardless of body-translation algorithm.
+    Should StackQL NoVerify Only Exec Contain    ${DESCRIBE_METHOD_GOOGLE_STORAGE_BUCKETS_INSERT}
+                                                 ...  name    input_required
+                                                 ...  stdout=${CURDIR}/tmp/describe-method-google-storage-buckets-insert.tmp
+
+Describe Method Delete Has No Output Rows
+    [Documentation]    Methods that return 204 No Content emit zero output rows.
+    Should StackQL NoVerify Only Exec Contain    ${DESCRIBE_METHOD_GOOGLE_STORAGE_BUCKETS_DELETE}
+                                                 ...  input_required
+                                                 ...  stdout=${CURDIR}/tmp/describe-method-google-storage-buckets-delete.tmp
+
+Describe Table Still Works Unchanged
+    [Documentation]    Regression guard: existing DESCRIBE behaviour is byte-identical -
+    ...                no param_type column appears for the DESCRIBE TABLE form.
+    Should StackQL NoVerify Only Exec Contain    ${DESCRIBE_GOOGLE_STORAGE_BUCKETS}
+                                                 ...  name    type
+                                                 ...  stdout=${CURDIR}/tmp/describe-google-storage-buckets.tmp
+
 Describe allOf Object Returns Expected Result
     ${outputStr} =    Catenate    SEPARATOR=\n
     ...    |---------------------------------------|---------|
@@ -719,11 +762,43 @@ Show Extended Insert Google BQ Datasets
     ...    stdout=${CURDIR}/tmp/Show-Extended-Insert-Google-BQ-Datasets.tmp   
 
 Show Insert Google BQ Datasets
-    Should StackQL Exec Contain    
+    Should StackQL Exec Contain
     ...    SHOW INSERT INTO google.bigquery.datasets;
-    ...    ${SHOW_INSERT_GOOGLE_BIGQUERY_DATASET} 
+    ...    ${SHOW_INSERT_GOOGLE_BIGQUERY_DATASET}
     ...    stackql_H=True
     ...    stdout=${CURDIR}/tmp/Show-Insert-Google-BQ-Datasets.tmp
+
+Show Version
+    Should StackQL Exec Contain
+    ...    SHOW VERSION;
+    ...    version
+    ...    stdout=${CURDIR}/tmp/Show-Version.tmp
+    Should StackQL Exec Contain
+    ...    SHOW VERSION;
+    ...    ${EXPECTED_SEMVER}
+    ...    stdout=${CURDIR}/tmp/Show-Version-Semver.tmp
+
+Show Version Extended
+    Should StackQL Exec Contain
+    ...    SHOW VERSION EXTENDED;
+    ...    version
+    ...    stdout=${CURDIR}/tmp/Show-Version-Extended.tmp
+    Should StackQL Exec Contain
+    ...    SHOW VERSION EXTENDED;
+    ...    commit
+    ...    stdout=${CURDIR}/tmp/Show-Version-Extended-Commit.tmp
+    Should StackQL Exec Contain
+    ...    SHOW VERSION EXTENDED;
+    ...    build_date
+    ...    stdout=${CURDIR}/tmp/Show-Version-Extended-BuildDate.tmp
+    Should StackQL Exec Contain
+    ...    SHOW VERSION EXTENDED;
+    ...    platform
+    ...    stdout=${CURDIR}/tmp/Show-Version-Extended-Platform.tmp
+    Should StackQL Exec Contain
+    ...    SHOW VERSION EXTENDED;
+    ...    ${EXPECTED_SEMVER}
+    ...    stdout=${CURDIR}/tmp/Show-Version-Extended-Semver.tmp
 
 *** Keywords ***
 Should StackQL Exec Equal

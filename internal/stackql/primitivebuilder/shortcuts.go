@@ -10,6 +10,7 @@ import (
 	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
+	"github.com/stackql/stackql/internal/stackql/buildinfo"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/metadatavisitors"
@@ -292,6 +293,23 @@ func NewShowInstructionExecutor(
 				handlerCtx.GetTypingConfig())
 		}
 		keys = convertProviderServicesToMap(services, extended)
+	case "VERSION":
+		if extended {
+			columnOrder = []string{"version", "commit", "build_date", "platform"}
+			keys = map[string]map[string]interface{}{
+				"1": {
+					"version":    buildinfo.SemVersion,
+					"commit":     buildinfo.BuildShortCommitSHA,
+					"build_date": buildinfo.BuildDate,
+					"platform":   buildinfo.BuildPlatform,
+				},
+			}
+		} else {
+			columnOrder = []string{"version"}
+			keys = map[string]map[string]interface{}{
+				"1": {"version": buildinfo.SemVersion},
+			}
+		}
 	}
 	return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, err, nil,
 		handlerCtx.GetTypingConfig()))
@@ -439,6 +457,41 @@ func NewDescribeTableInstructionExecutor(
 			util.DescribeRowSort,
 			err,
 			nil,
+			handlerCtx.GetTypingConfig(),
+		),
+	)
+}
+
+func NewDescribeMethodInstructionExecutor(
+	handlerCtx handler.HandlerContext,
+	rsc formulation.Resource,
+	methodName string,
+	extended bool,
+) internaldto.ExecutorOutput {
+	mi, err := formulation.IntrospectMethod(rsc, methodName, extended)
+	if err != nil {
+		return internaldto.NewErroneousExecutorOutput(err)
+	}
+	columnOrder := []string{"name", "type", "param_type", "shape"}
+	if extended {
+		columnOrder = append(columnOrder, "description")
+	}
+	rows := make(map[string]map[string]interface{})
+	for i, f := range mi.GetFields() {
+		row := map[string]interface{}{
+			"name":       f.GetName(),
+			"type":       f.GetType(),
+			"param_type": string(f.GetParamType()),
+			"shape":      f.GetShape(),
+		}
+		if extended {
+			row["description"] = f.GetDescription()
+		}
+		rows[fmt.Sprintf("%06d", i)] = row
+	}
+	return util.PrepareResultSet(
+		internaldto.NewPrepareResultSetDTO(
+			nil, rows, columnOrder, nil, nil, nil,
 			handlerCtx.GetTypingConfig(),
 		),
 	)

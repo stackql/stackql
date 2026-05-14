@@ -541,6 +541,9 @@ func (v *standardParserParamAstVisitor) Visit(node sqlparser.SQLNode) error {
 	case *sqlparser.DescribeTable:
 		buf.WriteString("describetable")
 
+	case *sqlparser.DescribeMethod:
+		buf.WriteString("describemethod")
+
 	case *sqlparser.OtherAdmin:
 		buf.WriteString("otheradmin")
 

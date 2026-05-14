@@ -21,6 +21,7 @@ type stackqlMCPReverseProxyService struct {
 	db           *sql.DB
 	interrogator StackqlInterrogator
 	renderer     resultsRenderer
+	serverInfo   ServerBuildInfo
 }
 
 func NewStackqlMCPReverseProxyService(
@@ -29,6 +30,7 @@ func NewStackqlMCPReverseProxyService(
 	db *sql.DB,
 	handlerCtx handler.HandlerContext,
 	logger *logrus.Logger,
+	serverInfo ServerBuildInfo,
 ) (mcp_server.Backend, error) {
 	if logger == nil {
 		logger = logrus.New()
@@ -45,6 +47,7 @@ func NewStackqlMCPReverseProxyService(
 		handlerCtx:   handlerCtx,
 		db:           db,
 		renderer:     NewResultsRenderer(),
+		serverInfo:   serverInfo,
 	}, nil
 }
 
@@ -66,6 +69,11 @@ func (b *stackqlMCPReverseProxyService) ServerInfo(ctx context.Context, args any
 		Name:       "Stackql MCP Reverse Proxy Service",
 		Info:       "This is the Stackql MCP Reverse Proxy Service.",
 		IsReadOnly: b.isReadOnly,
+		Version:    b.serverInfo.Version,
+		Commit:     b.serverInfo.Commit,
+		BuildDate:  b.serverInfo.BuildDate,
+		Platform:   b.serverInfo.Platform,
+		Transport:  b.serverInfo.Transport,
 	}, nil
 }
 
@@ -269,6 +277,18 @@ func (b *stackqlMCPReverseProxyService) DescribeTable(ctx context.Context, hI dt
 		return nil, qErr
 	}
 	return b.query(ctx, q, hI.RowLimit)
+}
+
+func (b *stackqlMCPReverseProxyService) DescribeMethod(
+	ctx context.Context,
+	methodPath string,
+	extended bool,
+) ([]map[string]interface{}, error) {
+	q, qErr := b.interrogator.GetDescribeMethod(methodPath, extended)
+	if qErr != nil {
+		return nil, qErr
+	}
+	return b.query(ctx, q, unlimitedRowLimit)
 }
 
 func (b *stackqlMCPReverseProxyService) GetForeignKeys(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {

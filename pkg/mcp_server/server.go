@@ -154,7 +154,16 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 			if rvErr != nil {
 				return nil, dto.ServerInfoDTO{}, rvErr
 			}
-			out := dto.ServerInfoDTO{Name: rv.Name, Info: rv.Info, IsReadOnly: rv.IsReadOnly}
+			out := dto.ServerInfoDTO{
+				Name:       rv.Name,
+				Info:       rv.Info,
+				IsReadOnly: rv.IsReadOnly,
+				Version:    rv.Version,
+				Commit:     rv.Commit,
+				BuildDate:  rv.BuildDate,
+				Platform:   rv.Platform,
+				Transport:  rv.Transport,
+			}
 			bytesOut, _ := json.Marshal(out)
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
 		},
@@ -442,6 +451,24 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		},
 		func(ctx context.Context, req *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, any, error) {
 			result, err := backend.DescribeTable(ctx, args)
+			if err != nil {
+				return nil, nil, err
+			}
+			out := dto.QueryResultDTO{Rows: result, RowCount: len(result), Format: "json"}
+			bytesOut, _ := json.Marshal(out)
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
+		},
+	)
+
+	addToolIfEnabled(
+		server,
+		config,
+		&mcp.Tool{
+			Name:        "describe_method",
+			Description: "Describe the input/output fields for a specific method on a resource. method_path must be of form '<provider>.<service>.<resource>.<method>'. Set extended=true to include the description column.",
+		},
+		func(ctx context.Context, req *mcp.CallToolRequest, args dto.DescribeMethodInput) (*mcp.CallToolResult, any, error) {
+			result, err := backend.DescribeMethod(ctx, args.MethodPath, args.Extended)
 			if err != nil {
 				return nil, nil, err
 			}
