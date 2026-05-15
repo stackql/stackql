@@ -25,6 +25,7 @@ import (
 	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/stackql/internal/stackql/acid/tsm_physio"
+	"github.com/stackql/stackql/internal/stackql/buildinfo"
 	"github.com/stackql/stackql/internal/stackql/entryutil"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/iqlerror"
@@ -74,13 +75,8 @@ func runMCPServer(handlerCtx handler.HandlerContext) {
 	if config.Server.IsReadOnly != nil {
 		isReadOnly = *config.Server.IsReadOnly
 	}
-	serverInfo := mcpbackend.ServerBuildInfo{
-		Version:   SemVersion,
-		Commit:    BuildShortCommitSHA,
-		BuildDate: BuildDate,
-		Platform:  BuildPlatform,
-		Transport: config.Server.Transport,
-	}
+	bi := buildinfo.Get()
+	transport := config.Server.Transport
 	var backend mcp_server.Backend
 	var backendErr error
 	if mcpServerType == "reverse_proxy" {
@@ -98,7 +94,8 @@ func runMCPServer(handlerCtx handler.HandlerContext) {
 			db,
 			handlerCtx,
 			logging.GetLogger(),
-			serverInfo,
+			bi,
+			transport,
 		)
 		iqlerror.PrintErrorAndExitOneIfError(backendErr)
 	} else {
@@ -111,7 +108,8 @@ func runMCPServer(handlerCtx handler.HandlerContext) {
 			orchestrator,
 			handlerCtx,
 			logging.GetLogger(),
-			serverInfo,
+			bi,
+			transport,
 		)
 		iqlerror.PrintErrorAndExitOneIfError(backendErr)
 		iqlerror.PrintErrorAndExitOneIfNil(backend, "mcp backend is unexpectedly nil")

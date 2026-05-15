@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/stackql/stackql/internal/stackql/buildinfo"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/pkg/mcp_server"
 	"github.com/stackql/stackql/pkg/mcp_server/dto"
@@ -21,7 +22,7 @@ type stackqlMCPReverseProxyService struct {
 	db           *sql.DB
 	interrogator StackqlInterrogator
 	renderer     resultsRenderer
-	serverInfo   ServerBuildInfo
+	serverInfo   serverBuildInfo
 }
 
 func NewStackqlMCPReverseProxyService(
@@ -30,7 +31,8 @@ func NewStackqlMCPReverseProxyService(
 	db *sql.DB,
 	handlerCtx handler.HandlerContext,
 	logger *logrus.Logger,
-	serverInfo ServerBuildInfo,
+	bi buildinfo.BuildInfo,
+	transport string,
 ) (mcp_server.Backend, error) {
 	if logger == nil {
 		logger = logrus.New()
@@ -47,7 +49,7 @@ func NewStackqlMCPReverseProxyService(
 		handlerCtx:   handlerCtx,
 		db:           db,
 		renderer:     NewResultsRenderer(),
-		serverInfo:   serverInfo,
+		serverInfo:   newServerBuildInfo(bi, transport),
 	}, nil
 }
 
@@ -69,11 +71,11 @@ func (b *stackqlMCPReverseProxyService) ServerInfo(ctx context.Context, args any
 		Name:       "Stackql MCP Reverse Proxy Service",
 		Info:       "This is the Stackql MCP Reverse Proxy Service.",
 		IsReadOnly: b.isReadOnly,
-		Version:    b.serverInfo.Version,
-		Commit:     b.serverInfo.Commit,
-		BuildDate:  b.serverInfo.BuildDate,
-		Platform:   b.serverInfo.Platform,
-		Transport:  b.serverInfo.Transport,
+		Version:    b.serverInfo.version(),
+		Commit:     b.serverInfo.commit(),
+		BuildDate:  b.serverInfo.buildDate(),
+		Platform:   b.serverInfo.platform(),
+		Transport:  b.serverInfo.transport(),
 	}, nil
 }
 

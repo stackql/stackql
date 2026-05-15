@@ -549,10 +549,6 @@ def get_variables(
   DESCRIBE_GITHUB_REPOS_PAGES = "describe github.repos.pages;"
   DESCRIBE_AWS_EC2_INSTANCES = "describe aws.ec2.instances;"
   DESCRIBE_AWS_EC2_DEFAULT_KMS_KEY_ID = "describe aws.ec2.ebs_default_kms_key_id;"
-  DESCRIBE_METHOD_GOOGLE_STORAGE_BUCKETS_GET = "describe method google.storage.buckets.get;"
-  DESCRIBE_METHOD_EXTENDED_GOOGLE_STORAGE_BUCKETS_GET = "describe method extended google.storage.buckets.get;"
-  DESCRIBE_METHOD_GOOGLE_STORAGE_BUCKETS_INSERT = "describe method google.storage.buckets.insert;"
-  DESCRIBE_METHOD_GOOGLE_STORAGE_BUCKETS_DELETE = "describe method google.storage.buckets.delete;"
   DESCRIBE_GOOGLE_STORAGE_BUCKETS = "describe google.storage.buckets;"
   MOCKSERVER_JAR = os.path.join(repository_root, 'test', 'downloads', 'mockserver-netty-5.12.0-shaded.jar')
 
@@ -989,10 +985,6 @@ def get_variables(
     'CREATE_AWS_VOLUME':                                                      CREATE_AWS_VOLUME,
     'DESCRIBE_AWS_EC2_INSTANCES':                                             DESCRIBE_AWS_EC2_INSTANCES,
     'DESCRIBE_AWS_EC2_DEFAULT_KMS_KEY_ID':                                    DESCRIBE_AWS_EC2_DEFAULT_KMS_KEY_ID,
-    'DESCRIBE_METHOD_GOOGLE_STORAGE_BUCKETS_GET':                             DESCRIBE_METHOD_GOOGLE_STORAGE_BUCKETS_GET,
-    'DESCRIBE_METHOD_EXTENDED_GOOGLE_STORAGE_BUCKETS_GET':                    DESCRIBE_METHOD_EXTENDED_GOOGLE_STORAGE_BUCKETS_GET,
-    'DESCRIBE_METHOD_GOOGLE_STORAGE_BUCKETS_INSERT':                          DESCRIBE_METHOD_GOOGLE_STORAGE_BUCKETS_INSERT,
-    'DESCRIBE_METHOD_GOOGLE_STORAGE_BUCKETS_DELETE':                          DESCRIBE_METHOD_GOOGLE_STORAGE_BUCKETS_DELETE,
     'DESCRIBE_GOOGLE_STORAGE_BUCKETS':                                        DESCRIBE_GOOGLE_STORAGE_BUCKETS,
     'DESCRIBE_GITHUB_REPOS_PAGES':                                            DESCRIBE_GITHUB_REPOS_PAGES,
     'GET_AWS_CLOUD_CONTROL_REQUEST_LOG_GROUP':                                GET_AWS_CLOUD_CONTROL_REQUEST_LOG_GROUP,

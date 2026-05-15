@@ -1,11 +1,18 @@
-// Package buildinfo holds build-time identifiers that are populated at link
-// time. Keeping these in a leaf package lets both the CLI command layer and
+// Package buildinfo holds build-time identifiers populated at link time.
+// Keeping these in a leaf package lets both the CLI command layer and the
 // runtime primitives reference them without creating an import cycle.
+//
+// The public surface is intentionally minimal: a BuildInfo interface, a
+// constructor, and a process-wide accessor. The implementation is a private
+// struct that is constructed exactly once, at program start, from cmd/root.go.
 package buildinfo
 
-import "fmt"
+import (
+	"fmt"
+	"sync"
+)
 
-// BuildInfo provides access to build-time information.
+// BuildInfo provides read-only access to build-time identifiers.
 type BuildInfo interface {
 	GetMajorVersion() string
 	GetMinorVersion() string
@@ -17,7 +24,6 @@ type BuildInfo interface {
 	GetSemVersion() string
 }
 
-// buildInfo is a private struct that implements BuildInfo.
 type buildInfo struct {
 	majorVersion   string
 	minorVersion   string
@@ -29,9 +35,9 @@ type buildInfo struct {
 	semVersion     string
 }
 
-// NewBuildInfo creates a new BuildInfo with the provided values.
+// NewBuildInfo constructs an immutable BuildInfo from the given identifiers.
+// SemVersion is derived from the major/minor/patch trio.
 func NewBuildInfo(major, minor, patch, commitSHA, shortCommitSHA, date, platform string) BuildInfo {
-	semVer := fmt.Sprintf("%s.%s.%s", major, minor, patch)
 	return &buildInfo{
 		majorVersion:   major,
 		minorVersion:   minor,
@@ -40,11 +46,10 @@ func NewBuildInfo(major, minor, patch, commitSHA, shortCommitSHA, date, platform
 		shortCommitSHA: shortCommitSHA,
 		date:           date,
 		platform:       platform,
-		semVersion:     semVer,
+		semVersion:     fmt.Sprintf("%s.%s.%s", major, minor, patch),
 	}
 }
 
-// Implement BuildInfo interface.
 func (b *buildInfo) GetMajorVersion() string   { return b.majorVersion }
 func (b *buildInfo) GetMinorVersion() string   { return b.minorVersion }
 func (b *buildInfo) GetPatchVersion() string   { return b.patchVersion }
@@ -54,32 +59,23 @@ func (b *buildInfo) GetDate() string           { return b.date }
 func (b *buildInfo) GetPlatform() string       { return b.platform }
 func (b *buildInfo) GetSemVersion() string     { return b.semVersion }
 
-// NewBuildInfoFromLegacy creates a BuildInfo instance from legacy global variables.
-func NewBuildInfoFromLegacy() BuildInfo {
-	return NewBuildInfo(
-		BuildMajorVersion,
-		BuildMinorVersion,
-		BuildPatchVersion,
-		BuildCommitSHA,
-		BuildShortCommitSHA,
-		BuildDate,
-		BuildPlatform,
-	)
-}
-
-// Legacy global variables for backward compatibility.
-// These will be populated by the init() function in cmd/root.go.
-//
-//nolint:revive,gochecknoglobals // populated by -ldflags at build time
+//nolint:gochecknoglobals // process-wide singleton; written exactly once via Init.
 var (
-	BuildMajorVersion   string = ""
-	BuildMinorVersion   string = ""
-	BuildPatchVersion   string = ""
-	BuildCommitSHA      string = ""
-	BuildShortCommitSHA string = ""
-	BuildDate           string = ""
-	BuildPlatform       string = ""
+	singleton = NewBuildInfo("", "", "", "", "", "", "")
+	once      sync.Once
 )
 
-//nolint:gochecknoglobals // derived from the build-time vars above
-var SemVersion = fmt.Sprintf("%s.%s.%s", BuildMajorVersion, BuildMinorVersion, BuildPatchVersion)
+// Init publishes the process-wide BuildInfo. It is intended to be called once
+// from cmd/root.go's init(), after the -ldflags-populated string variables in
+// the cmd package have been observed. Subsequent calls are no-ops.
+func Init(major, minor, patch, commitSHA, shortCommitSHA, date, platform string) {
+	once.Do(func() {
+		singleton = NewBuildInfo(major, minor, patch, commitSHA, shortCommitSHA, date, platform)
+	})
+}
+
+// Get returns the process-wide BuildInfo. Before Init is called it returns an
+// instance with empty strings.
+func Get() BuildInfo {
+	return singleton
+}

@@ -322,20 +322,21 @@ func buildInsertShowOutput(
 // buildVersionShowOutput renders the SHOW VERSION result. Extracted so that
 // NewShowInstructionExecutor stays under the gocyclo threshold.
 func buildVersionShowOutput(extended bool) ([]string, map[string]map[string]interface{}) {
+	bi := buildinfo.Get()
 	if extended {
 		return []string{"version", "commit", "build_date", "platform"},
 			map[string]map[string]interface{}{
 				"1": {
-					"version":    buildinfo.SemVersion,
-					"commit":     buildinfo.BuildShortCommitSHA,
-					"build_date": buildinfo.BuildDate,
-					"platform":   buildinfo.BuildPlatform,
+					"version":    bi.GetSemVersion(),
+					"commit":     bi.GetShortCommitSHA(),
+					"build_date": bi.GetDate(),
+					"platform":   bi.GetPlatform(),
 				},
 			}
 	}
 	return []string{"version"},
 		map[string]map[string]interface{}{
-			"1": {"version": buildinfo.SemVersion},
+			"1": {"version": bi.GetSemVersion()},
 		}
 }
 

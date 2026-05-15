@@ -37,10 +37,10 @@ import (
 
 // Build-time identifiers. These remain exported from this package so that
 // existing -ldflags `-X github.com/stackql/stackql/internal/stackql/cmd.<var>`
-// invocations in CI/CD continue to populate them. They are mirrored into
-// internal/stackql/buildinfo at init() time so that runtime packages can
-// read them without importing this command-layer package (which would
-// produce an import cycle).
+// invocations in CI/CD continue to populate them. They are published into
+// internal/stackql/buildinfo from this package's init() so that runtime
+// packages can read them without importing this command-layer package (which
+// would produce an import cycle).
 //
 //nolint:revive,gochecknoglobals // populated by -ldflags at build time
 var (
@@ -53,21 +53,8 @@ var (
 	BuildPlatform       string = ""
 )
 
-//nolint:gochecknoinits // mirrors -ldflags-populated vars into the leaf buildinfo package
-func init() {
-	// Update legacy global variables for backward compatibility
-	buildinfo.BuildMajorVersion = BuildMajorVersion
-	buildinfo.BuildMinorVersion = BuildMinorVersion
-	buildinfo.BuildPatchVersion = BuildPatchVersion
-	buildinfo.BuildCommitSHA = BuildCommitSHA
-	buildinfo.BuildShortCommitSHA = BuildShortCommitSHA
-	buildinfo.BuildDate = BuildDate
-	buildinfo.BuildPlatform = BuildPlatform
-	buildinfo.SemVersion = fmt.Sprintf("%s.%s.%s", BuildMajorVersion, BuildMinorVersion, BuildPatchVersion)
-}
-
 func getSemver() string {
-	return fmt.Sprintf("v%s.%s.%s", BuildMajorVersion, BuildMinorVersion, BuildPatchVersion)
+	return "v" + buildinfo.Get().GetSemVersion()
 }
 
 const (
@@ -78,17 +65,15 @@ const (
 var (
 	runtimeCtx      dto.RuntimeCtx
 	queryCache      *lrucache.LRUCache
-	SemVersion      string = fmt.Sprintf("%s.%s.%s", BuildMajorVersion, BuildMinorVersion, BuildPatchVersion)
-	replicateCtrMgr bool   = false //nolint:unused // TODO: investigate and test then remove if possible
+	replicateCtrMgr bool = false //nolint:unused // TODO: investigate and test then remove if possible
 )
 
 // rootCmd represents the base command when called without any subcommands.
 //
 //nolint:gochecknoglobals // global vars are a pattern for this lib
 var rootCmd = &cobra.Command{
-	Use:     "stackql",
-	Version: SemVersion,
-	Short:   "Cloud asset management and automation using SQL",
+	Use:   "stackql",
+	Short: "Cloud asset management and automation using SQL",
 	Long: `
          __             __         __
    _____/ /_____ ______/ /______ _/ /
@@ -134,8 +119,19 @@ func Execute() error {
 
 //nolint:lll,funlen,gochecknoinits,mnd // init is a pattern for this lib
 func init() {
+	buildinfo.Init(
+		BuildMajorVersion,
+		BuildMinorVersion,
+		BuildPatchVersion,
+		BuildCommitSHA,
+		BuildShortCommitSHA,
+		BuildDate,
+		BuildPlatform,
+	)
+	bi := buildinfo.Get()
+	rootCmd.Version = bi.GetSemVersion()
 	cobra.OnInitialize(initConfig)
-	rootCmd.SetVersionTemplate("stackql v{{.Version}} " + BuildPlatform + " (" + BuildShortCommitSHA + ")\nBuildDate: " + BuildDate + "\nhttps://stackql.io\n")
+	rootCmd.SetVersionTemplate("stackql v{{.Version}} " + bi.GetPlatform() + " (" + bi.GetShortCommitSHA() + ")\nBuildDate: " + bi.GetDate() + "\nhttps://stackql.io\n")
 
 	rootCmd.PersistentFlags().StringVar(&runtimeCtx.CPUProfile, dto.CPUProfileKey, "", "cpuprofile file, none if empty")
 

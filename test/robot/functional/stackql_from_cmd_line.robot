@@ -35,14 +35,14 @@ Describe AWS EC2 Default KMS Key ID Exemplifies Top Level XPath for schema
 Describe Method Returns Input And Output Rows
     [Documentation]    DESCRIBE METHOD google.storage.buckets.get returns rows
     ...                tagged input_required, input_optional, and output.
-    Should StackQL NoVerify Only Exec Contain    ${DESCRIBE_METHOD_GOOGLE_STORAGE_BUCKETS_GET}
+    Should StackQL NoVerify Only Exec Contain    describe method google.storage.buckets.get;
                                                  ...  bucket    input_required    output
                                                  ...  stdout=${CURDIR}/tmp/describe-method-google-storage-buckets-get.tmp
 
 Describe Method Extended Includes Description
     [Documentation]    EXTENDED variant includes a description column populated
     ...                from the source schema.
-    Should StackQL NoVerify Only Exec Contain    ${DESCRIBE_METHOD_EXTENDED_GOOGLE_STORAGE_BUCKETS_GET}
+    Should StackQL NoVerify Only Exec Contain    describe method extended google.storage.buckets.get;
                                                  ...  description
                                                  ...  stdout=${CURDIR}/tmp/describe-method-extended-google-storage-buckets-get.tmp
 
@@ -50,7 +50,7 @@ Describe Method Renders Shape For Nested Object
     [Documentation]    Object fields carry a JSON Schema subset in the shape column;
     ...                deep nesting (iamConfiguration.bucketPolicyOnly.enabled) is
     ...                preserved in one query.
-    Should StackQL NoVerify Only Exec Contain    ${DESCRIBE_METHOD_GOOGLE_STORAGE_BUCKETS_GET}
+    Should StackQL NoVerify Only Exec Contain    describe method google.storage.buckets.get;
                                                  ...  iamConfiguration    bucketPolicyOnly
                                                  ...  stdout=${CURDIR}/tmp/describe-method-shape-nested.tmp
 
@@ -58,13 +58,13 @@ Describe Method Insert Has Required Body Field
     [Documentation]    The buckets.insert method has a method-level
     ...                request.required: [name] annotation; name must surface
     ...                as input_required regardless of body-translation algorithm.
-    Should StackQL NoVerify Only Exec Contain    ${DESCRIBE_METHOD_GOOGLE_STORAGE_BUCKETS_INSERT}
+    Should StackQL NoVerify Only Exec Contain    describe method google.storage.buckets.insert;
                                                  ...  name    input_required
                                                  ...  stdout=${CURDIR}/tmp/describe-method-google-storage-buckets-insert.tmp
 
 Describe Method Delete Has No Output Rows
     [Documentation]    Methods that return 204 No Content emit zero output rows.
-    Should StackQL NoVerify Only Exec Contain    ${DESCRIBE_METHOD_GOOGLE_STORAGE_BUCKETS_DELETE}
+    Should StackQL NoVerify Only Exec Contain    describe method google.storage.buckets.delete;
                                                  ...  input_required
                                                  ...  stdout=${CURDIR}/tmp/describe-method-google-storage-buckets-delete.tmp
 

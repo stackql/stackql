@@ -10,6 +10,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/stackql/stackql/internal/stackql/acid/tsm_physio"
+	"github.com/stackql/stackql/internal/stackql/buildinfo"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/pkg/mcp_server"
@@ -27,14 +28,38 @@ const (
 	unlimitedRowLimit     int = -1
 )
 
-// ServerBuildInfo carries build-time and runtime metadata reported via the
-// MCP server_info tool.
-type ServerBuildInfo struct {
-	Version   string
-	Commit    string
-	BuildDate string
-	Platform  string
-	Transport string
+// serverBuildInfo carries build-time and runtime metadata reported via the
+// MCP server_info tool. Constructed once per backend, read by ServerInfo.
+type serverBuildInfo interface {
+	version() string
+	commit() string
+	buildDate() string
+	platform() string
+	transport() string
+}
+
+type immutableServerBuildInfo struct {
+	versionStr   string
+	commitStr    string
+	buildDateStr string
+	platformStr  string
+	transportStr string
+}
+
+func (s *immutableServerBuildInfo) version() string   { return s.versionStr }
+func (s *immutableServerBuildInfo) commit() string    { return s.commitStr }
+func (s *immutableServerBuildInfo) buildDate() string { return s.buildDateStr }
+func (s *immutableServerBuildInfo) platform() string  { return s.platformStr }
+func (s *immutableServerBuildInfo) transport() string { return s.transportStr }
+
+func newServerBuildInfo(bi buildinfo.BuildInfo, transport string) serverBuildInfo {
+	return &immutableServerBuildInfo{
+		versionStr:   bi.GetSemVersion(),
+		commitStr:    bi.GetShortCommitSHA(),
+		buildDateStr: bi.GetDate(),
+		platformStr:  bi.GetPlatform(),
+		transportStr: transport,
+	}
 }
 
 type resultsRenderer interface {
@@ -269,7 +294,7 @@ type stackqlMCPService struct {
 	handlerCtx      handler.HandlerContext
 	logger          *logrus.Logger
 	renderer        resultsRenderer
-	serverInfo      ServerBuildInfo
+	serverInfo      serverBuildInfo
 }
 
 func NewStackqlMCPBackendService(
@@ -277,7 +302,8 @@ func NewStackqlMCPBackendService(
 	txnOrchestrator tsm_physio.Orchestrator,
 	handlerCtx handler.HandlerContext,
 	logger *logrus.Logger,
-	serverInfo ServerBuildInfo,
+	bi buildinfo.BuildInfo,
+	transport string,
 ) (mcp_server.Backend, error) {
 	if logger == nil {
 		logger = logrus.New()
@@ -296,7 +322,7 @@ func NewStackqlMCPBackendService(
 		logger:          logger,
 		handlerCtx:      handlerCtx,
 		renderer:        NewResultsRenderer(),
-		serverInfo:      serverInfo,
+		serverInfo:      newServerBuildInfo(bi, transport),
 	}, nil
 }
 
@@ -318,11 +344,11 @@ func (b *stackqlMCPService) ServerInfo(ctx context.Context, args any) (dto.Serve
 		Name:       "Stackql MCP Service",
 		Info:       "This is the Stackql MCP Service.",
 		IsReadOnly: b.isReadOnly,
-		Version:    b.serverInfo.Version,
-		Commit:     b.serverInfo.Commit,
-		BuildDate:  b.serverInfo.BuildDate,
-		Platform:   b.serverInfo.Platform,
-		Transport:  b.serverInfo.Transport,
+		Version:    b.serverInfo.version(),
+		Commit:     b.serverInfo.commit(),
+		BuildDate:  b.serverInfo.buildDate(),
+		Platform:   b.serverInfo.platform(),
+		Transport:  b.serverInfo.transport(),
 	}, nil
 }
 
