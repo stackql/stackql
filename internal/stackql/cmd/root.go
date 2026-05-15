@@ -66,7 +66,6 @@ func init() {
 		BuildPlatform,
 	)
 	buildinfo.SetDefault(info)
-	
 	// Maintain legacy global variables for backward compatibility
 	buildinfo.BuildMajorVersion = BuildMajorVersion
 	buildinfo.BuildMinorVersion = BuildMinorVersion

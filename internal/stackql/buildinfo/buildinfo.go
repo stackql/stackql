@@ -3,9 +3,12 @@
 // runtime primitives reference them without creating an import cycle.
 package buildinfo
 
-import "fmt"
+import (
+	"fmt"
+	"sync"
+)
 
-// BuildInfo provides access to build-time information
+// BuildInfo provides access to build-time information.
 type BuildInfo interface {
 	GetMajorVersion() string
 	GetMinorVersion() string
@@ -17,7 +20,7 @@ type BuildInfo interface {
 	GetSemVersion() string
 }
 
-// buildInfo is a private struct that implements BuildInfo
+// buildInfo is a private struct that implements BuildInfo.
 type buildInfo struct {
 	majorVersion   string
 	minorVersion   string
@@ -29,7 +32,7 @@ type buildInfo struct {
 	semVersion     string
 }
 
-// NewBuildInfo creates a new BuildInfo with the provided values
+// NewBuildInfo creates a new BuildInfo with the provided values.
 func NewBuildInfo(major, minor, patch, commitSHA, shortCommitSHA, date, platform string) BuildInfo {
 	semVer := fmt.Sprintf("%s.%s.%s", major, minor, patch)
 	return &buildInfo{
@@ -44,7 +47,7 @@ func NewBuildInfo(major, minor, patch, commitSHA, shortCommitSHA, date, platform
 	}
 }
 
-// Implement BuildInfo interface
+// Implement BuildInfo interface.
 func (b *buildInfo) GetMajorVersion() string   { return b.majorVersion }
 func (b *buildInfo) GetMinorVersion() string   { return b.minorVersion }
 func (b *buildInfo) GetPatchVersion() string   { return b.patchVersion }
@@ -54,21 +57,41 @@ func (b *buildInfo) GetDate() string           { return b.date }
 func (b *buildInfo) GetPlatform() string       { return b.platform }
 func (b *buildInfo) GetSemVersion() string     { return b.semVersion }
 
-// Global instance for backward compatibility during transition
-var defaultBuildInfo BuildInfo
+// Thread-safe singleton pattern for backward compatibility during transition.
+var (
+	defaultInstance BuildInfo
+	defaultOnce     sync.Once
+	setOnce         sync.Once
+)
 
-// SetDefault sets the default build info instance
+// SetDefault sets the default build info instance.
 func SetDefault(info BuildInfo) {
-	defaultBuildInfo = info
+	setOnce.Do(func() {
+		defaultInstance = info
+	})
 }
 
-// GetDefault returns the default build info instance
+// GetDefault returns the default build info instance.
 func GetDefault() BuildInfo {
-	return defaultBuildInfo
+	defaultOnce.Do(func() {
+		if defaultInstance == nil {
+			// Fallback to legacy globals if SetDefault wasn't called
+			defaultInstance = NewBuildInfo(
+				BuildMajorVersion,
+				BuildMinorVersion,
+				BuildPatchVersion,
+				BuildCommitSHA,
+				BuildShortCommitSHA,
+				BuildDate,
+				BuildPlatform,
+			)
+		}
+	})
+	return defaultInstance
 }
 
-// Legacy global variables for backward compatibility
-// These will be populated by the init() function in cmd/root.go
+// Legacy global variables for backward compatibility.
+// These will be populated by the init() function in cmd/root.go.
 //nolint:revive,gochecknoglobals // populated by -ldflags at build time
 var (
 	BuildMajorVersion   string = ""
