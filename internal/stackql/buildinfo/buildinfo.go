@@ -69,6 +69,7 @@ func NewBuildInfoFromLegacy() BuildInfo {
 
 // Legacy global variables for backward compatibility.
 // These will be populated by the init() function in cmd/root.go.
+//
 //nolint:revive,gochecknoglobals // populated by -ldflags at build time
 var (
 	BuildMajorVersion   string = ""
