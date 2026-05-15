@@ -3,10 +3,7 @@
 // runtime primitives reference them without creating an import cycle.
 package buildinfo
 
-import (
-	"fmt"
-	"sync"
-)
+import "fmt"
 
 // BuildInfo provides access to build-time information.
 type BuildInfo interface {
@@ -57,37 +54,17 @@ func (b *buildInfo) GetDate() string           { return b.date }
 func (b *buildInfo) GetPlatform() string       { return b.platform }
 func (b *buildInfo) GetSemVersion() string     { return b.semVersion }
 
-// Thread-safe singleton pattern for backward compatibility during transition.
-var (
-	defaultInstance BuildInfo
-	defaultOnce     sync.Once
-	setOnce         sync.Once
-)
-
-// SetDefault sets the default build info instance.
-func SetDefault(info BuildInfo) {
-	setOnce.Do(func() {
-		defaultInstance = info
-	})
-}
-
-// GetDefault returns the default build info instance.
-func GetDefault() BuildInfo {
-	defaultOnce.Do(func() {
-		if defaultInstance == nil {
-			// Fallback to legacy globals if SetDefault wasn't called
-			defaultInstance = NewBuildInfo(
-				BuildMajorVersion,
-				BuildMinorVersion,
-				BuildPatchVersion,
-				BuildCommitSHA,
-				BuildShortCommitSHA,
-				BuildDate,
-				BuildPlatform,
-			)
-		}
-	})
-	return defaultInstance
+// NewBuildInfoFromLegacy creates a BuildInfo instance from legacy global variables.
+func NewBuildInfoFromLegacy() BuildInfo {
+	return NewBuildInfo(
+		BuildMajorVersion,
+		BuildMinorVersion,
+		BuildPatchVersion,
+		BuildCommitSHA,
+		BuildShortCommitSHA,
+		BuildDate,
+		BuildPlatform,
+	)
 }
 
 // Legacy global variables for backward compatibility.
