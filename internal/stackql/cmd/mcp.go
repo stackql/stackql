@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 
 	"github.com/stackql/any-sdk/pkg/db/db_util"
 	"github.com/stackql/any-sdk/pkg/dto"
@@ -34,6 +35,44 @@ import (
 
 	_ "github.com/jackc/pgx/v5" //nolint:revive // canonical driver pattern
 )
+
+// sqlBackendIdentifier derives a stable identifier for the backing SQL engine
+// from the runtime context's SQLBackendCfgRaw blob. Falls back to the empty
+// string when nothing usable is configured.
+func sqlBackendIdentifier(runtimeCtx dto.RuntimeCtx) string {
+	raw := runtimeCtx.SQLBackendCfgRaw
+	if raw == "" {
+		return ""
+	}
+	cfg, err := dto.GetSQLBackendCfg(raw)
+	if err != nil {
+		return ""
+	}
+	if d := cfg.GetSQLDialect(); d != "" {
+		return d
+	}
+	return cfg.DBEngine
+}
+
+// providerRegistryIdentifier extracts the registry URL/path from the runtime
+// context's RegistryRaw YAML/JSON blob.
+func providerRegistryIdentifier(runtimeCtx dto.RuntimeCtx) string {
+	raw := runtimeCtx.RegistryRaw
+	if raw == "" {
+		return ""
+	}
+	var probe struct {
+		URL          string `json:"url" yaml:"url"`
+		LocalDocRoot string `json:"localDocRoot" yaml:"localDocRoot"`
+	}
+	if err := yaml.Unmarshal([]byte(raw), &probe); err != nil {
+		return ""
+	}
+	if probe.URL != "" {
+		return probe.URL
+	}
+	return probe.LocalDocRoot
+}
 
 //nolint:gochecknoglobals // cobra pattern
 var (
@@ -77,6 +116,13 @@ func runMCPServer(handlerCtx handler.HandlerContext) {
 	}
 	bi := buildinfo.Get()
 	transport := config.Server.Transport
+	runtimeContext := handlerCtx.GetRuntimeContext()
+	serverInfo := mcpbackend.NewServerBuildInfo(
+		bi,
+		transport,
+		sqlBackendIdentifier(runtimeContext),
+		providerRegistryIdentifier(runtimeContext),
+	)
 	var backend mcp_server.Backend
 	var backendErr error
 	if mcpServerType == "reverse_proxy" {
@@ -94,22 +140,19 @@ func runMCPServer(handlerCtx handler.HandlerContext) {
 			db,
 			handlerCtx,
 			logging.GetLogger(),
-			bi,
-			transport,
+			serverInfo,
 		)
 		iqlerror.PrintErrorAndExitOneIfError(backendErr)
 	} else {
 		orchestrator, orchestratorErr := tsm_physio.NewOrchestrator(handlerCtx)
 		iqlerror.PrintErrorAndExitOneIfError(orchestratorErr)
 		iqlerror.PrintErrorAndExitOneIfNil(orchestrator, "orchestrator is unexpectedly nil")
-		// handlerCtx.SetTSMOrchestrator(orchestrator)
 		backend, backendErr = mcpbackend.NewStackqlMCPBackendService(
 			isReadOnly,
 			orchestrator,
 			handlerCtx,
 			logging.GetLogger(),
-			bi,
-			transport,
+			serverInfo,
 		)
 		iqlerror.PrintErrorAndExitOneIfError(backendErr)
 		iqlerror.PrintErrorAndExitOneIfNil(backend, "mcp backend is unexpectedly nil")

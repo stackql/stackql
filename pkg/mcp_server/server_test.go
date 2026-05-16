@@ -27,58 +27,6 @@ func TestDefaultConfig(t *testing.T) {
 	}
 }
 
-// func TestConfigValidation(t *testing.T) {
-// 	tests := []struct {
-// 		name      string
-// 		config    *Config
-// 		wantError bool
-// 	}{
-// 		{
-// 			name:      "valid default config",
-// 			config:    DefaultConfig(),
-// 			wantError: false,
-// 		},
-// 		{
-// 			name: "empty server name",
-// 			config: &Config{
-// 				Server: ServerConfig{
-// 					Name:                  "",
-// 					Version:               "1.0.0",
-// 					MaxConcurrentRequests: 100,
-// 				},
-// 				Backend: BackendConfig{
-// 					Type:           "stackql",
-// 					MaxConnections: 10,
-// 				},
-// 			},
-// 			wantError: true,
-// 		},
-// 		{
-// 			name: "invalid transport",
-// 			config: &Config{
-// 				Server: ServerConfig{
-// 					Name:                  "Test Server",
-// 					Version:               "1.0.0",
-// 					MaxConcurrentRequests: 100,
-// 				},
-// 				Backend: BackendConfig{
-// 					Type:           "stackql",
-// 					MaxConnections: 10,
-// 				},
-// 			},
-// 			wantError: true,
-// 		},
-// 	}
-//  for _, tt := range tests {
-//  	t.Run(tt.name, func(t *testing.T) {
-//  		err := tt.config.Validate()
-//  		if (err != nil) != tt.wantError {
-//  			t.Errorf("Config.Validate() error = %v, wantError %v", err, tt.wantError)
-//  		}
-//  	})
-//  }
-// }
-
 func TestExampleBackend(t *testing.T) {
 	backend := NewExampleBackend("test://localhost")
 	ctx := context.Background()
@@ -149,6 +97,34 @@ func TestBackendError(t *testing.T) {
 
 	if val != "Test error message" {
 		t.Errorf("Expected value 'Test error message', got '%v'", val)
+	}
+}
+
+func TestIsToolEnabled(t *testing.T) {
+	cfg := &Config{}
+	if !cfg.IsToolEnabled("anything") {
+		t.Errorf("empty EnabledTools should allow all tools")
+	}
+	cfg.EnabledTools = []string{"foo"}
+	if !cfg.IsToolEnabled("foo") {
+		t.Errorf("foo should be enabled")
+	}
+	if cfg.IsToolEnabled("bar") {
+		t.Errorf("bar should be denied")
+	}
+}
+
+func TestIsPromptEnabled(t *testing.T) {
+	cfg := &Config{}
+	if !cfg.IsPromptEnabled("anything") {
+		t.Errorf("empty EnabledPrompts should allow all prompts")
+	}
+	cfg.EnabledPrompts = []string{"write_safe_select"}
+	if !cfg.IsPromptEnabled("write_safe_select") {
+		t.Errorf("write_safe_select should be enabled")
+	}
+	if cfg.IsPromptEnabled("other") {
+		t.Errorf("other should be denied")
 	}
 }
 

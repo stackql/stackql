@@ -20,6 +20,10 @@ type Config struct {
 	// When nil or empty, every built-in tool is published (default behavior).
 	// When populated, only the named tools are registered.
 	EnabledTools []string `json:"enabled_tools,omitempty" yaml:"enabled_tools,omitempty"`
+
+	// EnabledPrompts restricts which MCP prompts the server publishes.
+	// Same semantics as EnabledTools: nil or empty means all registered prompts are published.
+	EnabledPrompts []string `json:"enabled_prompts,omitempty" yaml:"enabled_prompts,omitempty"`
 }
 
 // IsToolEnabled reports whether the named tool should be published.
@@ -29,6 +33,20 @@ func (c *Config) IsToolEnabled(name string) bool {
 		return true
 	}
 	for _, n := range c.EnabledTools {
+		if n == name {
+			return true
+		}
+	}
+	return false
+}
+
+// IsPromptEnabled reports whether the named prompt should be published.
+// Empty/nil EnabledPrompts means all prompts are enabled.
+func (c *Config) IsPromptEnabled(name string) bool {
+	if len(c.EnabledPrompts) == 0 {
+		return true
+	}
+	for _, n := range c.EnabledPrompts {
 		if n == name {
 			return true
 		}
@@ -201,25 +219,7 @@ func DefaultSSEConfig() *Config {
 }
 
 // Validate validates the configuration and returns an error if invalid.
-//
-//nolint:gocognit // simple validation logic
 func (c *Config) Validate() error {
-	// if c.Server.Name == "" {
-	// 	return fmt.Errorf("server.name is required")
-	// }
-	// if c.Server.Version == "" {
-	// 	return fmt.Errorf("server.version is required")
-	// }
-	// if c.Server.MaxConcurrentRequests <= 0 {
-	// 	return fmt.Errorf("server.max_concurrent_requests must be greater than 0")
-	// }
-	// if c.Backend.Type == "" {
-	// 	return fmt.Errorf("backend.type is required")
-	// }
-	// if c.Backend.MaxConnections <= 0 {
-	// 	return fmt.Errorf("backend.max_connections must be greater than 0")
-	// }
-
 	return nil
 }
 

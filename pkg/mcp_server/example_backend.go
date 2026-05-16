@@ -8,8 +8,7 @@ import (
 )
 
 const (
-	ExplainerForeignKeyStackql         = "At present, foreign keys are not meaningfully supported in stackql."
-	ExplainerFindRelationships         = "At present, relationship finding is not meaningfully supported in stackql."
+	// ExplainerPromptWriteSafeSelectTool is the static body of the write_safe_select prompt.
 	ExplainerPromptWriteSafeSelectTool = `In order to ascertain the best safe select query, the correct query form is:
 	>   SHOW methods IN <provider>.<service>.<resource>;
 	From the output, one can infer the best access method for the SQL "select" verb and the **required** WHERE clause attributes.`
@@ -22,30 +21,8 @@ type ExampleBackend struct {
 	connected        bool
 }
 
-// Stub all Backend interface methods below
-
-func (b *ExampleBackend) Greet(ctx context.Context, args dto.GreetInput) (string, error) {
-	return "Hi " + args.Name, nil
-}
-
 func (b *ExampleBackend) ServerInfo(ctx context.Context, _ any) (dto.ServerInfoOutput, error) {
-	return dto.ServerInfoOutput{
-		Name:       "Stackql explorer",
-		Info:       "This is an example server.",
-		IsReadOnly: false,
-	}, nil
-}
-
-// Please adjust all below to sensible signatures in keeping with what is above.
-// Do it now!
-func (b *ExampleBackend) DBIdentity(ctx context.Context, _ any) (map[string]any, error) {
-	return map[string]any{
-		"identity": "stub",
-	}, nil
-}
-
-func (b *ExampleBackend) RunQuery(ctx context.Context, args dto.QueryInput) (string, error) {
-	return "stub", nil
+	return dto.ServerInfoOutput{}, nil
 }
 
 func (b *ExampleBackend) RunQueryJSON(ctx context.Context, input dto.QueryJSONInput) ([]map[string]interface{}, error) {
@@ -56,52 +33,16 @@ func (b *ExampleBackend) ValidateQuery(ctx context.Context, query string) ([]map
 	return []map[string]any{}, nil
 }
 
-// func (b *ExampleBackend) ListTableResources(ctx context.Context, hI dto.HierarchyInput) ([]string, error) {
-// 	return []string{}, nil
-// }
-
-func (b *ExampleBackend) ReadTableResource(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
-	return []map[string]interface{}{}, nil
-}
-
-func (b *ExampleBackend) PromptWriteSafeSelectTool(ctx context.Context, args dto.HierarchyInput) (string, error) {
-	return ExplainerPromptWriteSafeSelectTool, nil
-}
-
-// func (b *ExampleBackend) PromptExplainPlanTipsTool(ctx context.Context) (string, error) {
-// 	return "stub", nil
-// }
-
-func (b *ExampleBackend) ListTablesJSON(ctx context.Context, input dto.ListTablesInput) ([]map[string]interface{}, error) {
-	return []map[string]interface{}{}, nil
-}
-
-func (b *ExampleBackend) ListTablesJSONPage(ctx context.Context, input dto.ListTablesPageInput) (map[string]interface{}, error) {
-	return map[string]interface{}{}, nil
-}
-
-func (b *ExampleBackend) ListTables(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
-	return []map[string]interface{}{}, nil
-}
-
 func (b *ExampleBackend) ListMethods(ctx context.Context, hI dto.HierarchyInput) ([]map[string]any, error) {
 	return []map[string]any{}, nil
 }
 
-func (b *ExampleBackend) DescribeTable(ctx context.Context, hI dto.HierarchyInput) ([]map[string]any, error) {
+func (b *ExampleBackend) DescribeResource(ctx context.Context, hI dto.HierarchyInput) ([]map[string]any, error) {
 	return []map[string]any{}, nil
 }
 
-func (b *ExampleBackend) DescribeMethod(ctx context.Context, methodPath string, extended bool) ([]map[string]any, error) {
+func (b *ExampleBackend) DescribeMethod(ctx context.Context, hI dto.HierarchyInput) ([]map[string]any, error) {
 	return []map[string]any{}, nil
-}
-
-func (b *ExampleBackend) GetForeignKeys(ctx context.Context, hI dto.HierarchyInput) ([]map[string]any, error) {
-	return []map[string]any{}, nil
-}
-
-func (b *ExampleBackend) FindRelationships(ctx context.Context, hI dto.HierarchyInput) (string, error) {
-	return ExplainerFindRelationships, nil
 }
 
 func (b *ExampleBackend) ExecQuery(ctx context.Context, query string) (map[string]any, error) {
@@ -131,11 +72,8 @@ func NewExampleBackend(connectionString string) Backend {
 // Ping implements the Backend interface.
 func (b *ExampleBackend) Ping(ctx context.Context) error {
 	if !b.connected {
-		// Simulate connection establishment
 		b.connected = true
 	}
-
-	// Simulate a ping operation
 	select {
 	case <-ctx.Done():
 		return ctx.Err()

@@ -14,66 +14,36 @@ type Backend interface {
 
 	// Close gracefully shuts down the backend connection.
 	Close() error
-	// Server and environment info
+
+	// ServerInfo returns server identity and runtime metadata.
 	ServerInfo(ctx context.Context, args any) (dto.ServerInfoOutput, error)
 
-	// Current DB identity details
-	DBIdentity(ctx context.Context, args any) (map[string]any, error)
-
-	Greet(ctx context.Context, args dto.GreetInput) (string, error)
-
-	// Execute a SQL query with typed input (preferred)
-	RunQuery(ctx context.Context, args dto.QueryInput) (string, error)
-
-	// Execute a SQL query that does not return rows
+	// ExecQuery executes a non-row-returning SQL statement (mutations, EXEC).
 	ExecQuery(ctx context.Context, query string) (map[string]any, error)
 
-	// Execute a SQL query that does not return rows
+	// ValidateQuery parses and plans a SELECT without executing it.
 	ValidateQuery(ctx context.Context, query string) ([]map[string]any, error)
 
-	// Execute a SQL query and return JSON rows with typed input (preferred)
+	// RunQueryJSON executes a SELECT and returns the rows.
 	RunQueryJSON(ctx context.Context, input dto.QueryJSONInput) ([]map[string]interface{}, error)
 
-	// List resource URIs for tables in a schema
-	// ListTableResources(ctx context.Context, hI HierarchyInput) ([]string, error)
-
-	// Read rows from a table resource
-	// ReadTableResource(ctx context.Context, hI HierarchyInput) ([]map[string]interface{}, error)
-
-	// Prompt: guidelines for writing safe SELECT queries
-	PromptWriteSafeSelectTool(ctx context.Context, args dto.HierarchyInput) (string, error)
-
-	// Prompt: tips for reading EXPLAIN ANALYZE output
-	// PromptExplainPlanTipsTool(ctx context.Context) (string, error)
-
-	// List tables in a schema with optional filters and return JSON rows
-	ListTablesJSON(ctx context.Context, input dto.ListTablesInput) ([]map[string]interface{}, error)
-
-	// List tables with pagination and filters
-	ListTablesJSONPage(ctx context.Context, input dto.ListTablesPageInput) (map[string]interface{}, error)
-
-	// List all schemas in the database
+	// ListProviders lists available providers.
 	ListProviders(ctx context.Context) ([]map[string]any, error)
 
+	// ListServices lists services under a provider.
 	ListServices(ctx context.Context, hI dto.HierarchyInput) ([]map[string]any, error)
 
+	// ListResources lists resources under a provider/service.
 	ListResources(ctx context.Context, hI dto.HierarchyInput) ([]map[string]any, error)
+
+	// ListMethods lists access methods for a resource.
 	ListMethods(ctx context.Context, hI dto.HierarchyInput) ([]map[string]any, error)
-	// List all tables in a specific schema
-	// ListTables(ctx context.Context, hI HierarchyInput) (string, error)
 
-	// Get detailed information about a table
-	DescribeTable(ctx context.Context, hI dto.HierarchyInput) ([]map[string]any, error)
+	// DescribeResource returns the output fields for a resource's primary read method.
+	DescribeResource(ctx context.Context, hI dto.HierarchyInput) ([]map[string]any, error)
 
-	// Describe an individual method on a resource (input/output field metadata).
-	// methodPath is "<provider>.<service>.<resource>.<method>".
-	DescribeMethod(ctx context.Context, methodPath string, extended bool) ([]map[string]any, error)
-
-	// Get foreign key information for a table
-	GetForeignKeys(ctx context.Context, hI dto.HierarchyInput) ([]map[string]any, error)
-
-	// Find both explicit and implied relationships for a table
-	FindRelationships(ctx context.Context, hI dto.HierarchyInput) (string, error)
+	// DescribeMethod returns the full I/O contract for one method.
+	DescribeMethod(ctx context.Context, hI dto.HierarchyInput) ([]map[string]any, error)
 }
 
 // QueryResult represents the result of a query execution.

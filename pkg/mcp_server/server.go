@@ -13,6 +13,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/stackql/stackql/pkg/mcp_server/dto"
+	"github.com/stackql/stackql/pkg/mcp_server/render"
 )
 
 const (
@@ -45,7 +46,6 @@ type simpleMCPServer struct {
 }
 
 func (s *simpleMCPServer) runHTTPServer(server *mcp.Server, config *Config) error {
-	// Create the streamable HTTP handler.
 	address := config.GetServerAddress()
 	handler := mcp.NewStreamableHTTPHandler(func(req *http.Request) *mcp.Server {
 		return server
@@ -54,9 +54,7 @@ func (s *simpleMCPServer) runHTTPServer(server *mcp.Server, config *Config) erro
 	handlerWithLogging := loggingHandler(handler, s.logger)
 
 	s.logger.Debugf("MCP server listening on %s", address)
-	// s.logger.Debugf("Available tool: cityTime (cities: nyc, sf, boston)")
 
-	// Start the HTTP server with logging handler.
 	//nolint:gosec // TODO: find viable alternative to http.ListenAndServe
 	if config.Server.TLSCertFile != "" && config.Server.TLSKeyFile != "" {
 		s.logger.Infof("Starting HTTPS server on %s", address)
@@ -85,6 +83,14 @@ func addToolIfEnabled[In, Out any](
 	mcp.AddTool(s, t, h)
 }
 
+// addPromptIfEnabled registers a prompt only when cfg.IsPromptEnabled allows it.
+func addPromptIfEnabled(s *mcp.Server, cfg *Config, p *mcp.Prompt, h mcp.PromptHandler) {
+	if !cfg.IsPromptEnabled(p.Name) {
+		return
+	}
+	s.AddPrompt(p, h)
+}
+
 func NewExampleBackendServer(config *Config, logger *logrus.Logger) (MCPServer, error) {
 	backend := NewExampleBackend("example-connection-string")
 	return newMCPServer(config, backend, logger)
@@ -94,13 +100,20 @@ func NewAgnosticBackendServer(backend Backend, config *Config, logger *logrus.Lo
 	return newMCPServer(config, backend, logger)
 }
 
-// func NewExampleHTTPBackendServer(config *Config, logger *logrus.Logger) (MCPServer, error) {
-// 	backend := NewExampleBackend("example-connection-string")
-// 	if config == nil {
-// 		config = DefaultHTTPConfig()
-// 	}
-// 	return NewMCPServer(config, backend, logger)
-// }
+func isReadOnlyConfig(cfg *Config) bool {
+	if cfg == nil || cfg.Server.IsReadOnly == nil {
+		return false
+	}
+	return *cfg.Server.IsReadOnly
+}
+
+func mustMarshal(v any) string {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return fmt.Sprintf(`{"error":"failed to marshal: %v"}`, err)
+	}
+	return string(b)
+}
 
 // NewMCPServer creates a new MCP server with the provided configuration and backend.
 //
@@ -118,401 +131,15 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 	if logger == nil {
 		logger = logrus.New()
 		logger.SetLevel(logrus.InfoLevel)
-		// logger.SetOutput(io.Discard)
 	}
 
 	server := mcp.NewServer(
 		&mcp.Implementation{Name: "stackql", Version: "v0.1.1"},
 		nil,
 	)
-	addToolIfEnabled(
-		server,
-		config,
-		&mcp.Tool{
-			Name:        "greet",
-			Description: "Say hi.  A simple liveness check.",
-		},
-		func(ctx context.Context, req *mcp.CallToolRequest, args dto.GreetInput) (*mcp.CallToolResult, any, error) {
-			greeting, greetingErr := backend.Greet(ctx, args)
-			if greetingErr != nil {
-				return nil, nil, greetingErr
-			}
-			out := dto.GreetDTO{Greeting: greeting}
-			bytesOut, _ := json.Marshal(out)
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
-		},
-	)
-	addToolIfEnabled(
-		server,
-		config,
-		&mcp.Tool{
-			Name:        "server_info",
-			Description: "Get server information",
-		},
-		func(ctx context.Context, req *mcp.CallToolRequest, args any) (*mcp.CallToolResult, dto.ServerInfoDTO, error) {
-			rv, rvErr := backend.ServerInfo(ctx, args)
-			if rvErr != nil {
-				return nil, dto.ServerInfoDTO{}, rvErr
-			}
-			out := dto.ServerInfoDTO{
-				Name:       rv.Name,
-				Info:       rv.Info,
-				IsReadOnly: rv.IsReadOnly,
-				Version:    rv.Version,
-				Commit:     rv.Commit,
-				BuildDate:  rv.BuildDate,
-				Platform:   rv.Platform,
-				Transport:  rv.Transport,
-			}
-			bytesOut, _ := json.Marshal(out)
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
-		},
-	)
-	addToolIfEnabled(
-		server,
-		config,
-		&mcp.Tool{
-			Name:        "db_identity",
-			Description: "get current database identity",
-		},
-		func(ctx context.Context, req *mcp.CallToolRequest, args any) (*mcp.CallToolResult, dto.DBIdentityDTO, error) {
-			rv, rvErr := backend.DBIdentity(ctx, args)
-			if rvErr != nil {
-				return nil, dto.DBIdentityDTO{}, rvErr
-			}
-			out := dto.DBIdentityDTO{Identity: fmt.Sprintf("%v", rv["identity"])}
-			bytesOut, _ := json.Marshal(out)
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
-		},
-	)
-	addToolIfEnabled(
-		server,
-		config,
-		&mcp.Tool{
-			Name:        "query_v2",
-			Description: "Deprecated: Please switch to query_v3. Execute a SQL query.  Please adhere to the expected parameters.  Returns a textual response",
-			// Input and output schemas can be defined here if needed.
-		},
-		func(ctx context.Context, req *mcp.CallToolRequest, arg dto.QueryInput) (*mcp.CallToolResult, any, error) {
-			logger.Warnf("Received query: %s", arg.SQL)
-			rv, rvErr := backend.RunQuery(ctx, arg)
-			if rvErr != nil {
-				return nil, nil, rvErr
-			}
-			return &mcp.CallToolResult{
-				Content: []mcp.Content{
-					&mcp.TextContent{Text: rv},
-				},
-			}, nil, nil
-		},
-	)
-	addToolIfEnabled(
-		server,
-		config,
-		&mcp.Tool{
-			Name:        "query_v3",
-			Description: "Execute a SQL query.  Returns a DTO with rows or raw text.",
-		},
-		func(ctx context.Context, req *mcp.CallToolRequest, arg dto.QueryInput) (*mcp.CallToolResult, any, error) {
-			logger.Warnf("Received query: %s", arg.SQL)
-			raw, rvErr := backend.RunQuery(ctx, arg)
-			if rvErr != nil {
-				return nil, nil, rvErr
-			}
-			out := dto.QueryResultDTO{Format: arg.Format, Raw: raw}
-			if arg.Format == "json" {
-				var rows []map[string]any
-				if json.Unmarshal([]byte(raw), &rows) == nil {
-					out.Rows = rows
-					out.RowCount = len(rows)
-					out.Raw = ""
-				}
-			}
-			bytesOut, _ := json.Marshal(out)
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
-		},
-	)
-	addToolIfEnabled(
-		server,
-		config,
-		&mcp.Tool{
-			Name:        "query_json_v2",
-			Description: "Execute a SQL query and return a JSON array of rows, as text plus DTO.",
-		},
-		func(ctx context.Context, req *mcp.CallToolRequest, args dto.QueryJSONInput) (*mcp.CallToolResult, any, error) {
-			arr, err := backend.RunQueryJSON(ctx, args)
-			if err != nil {
-				return nil, nil, err
-			}
-			out := dto.QueryResultDTO{Rows: arr, RowCount: len(arr), Format: "json"}
-			bytesOut, _ := json.Marshal(out)
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
-		},
-	)
-	addToolIfEnabled(
-		server,
-		config,
-		&mcp.Tool{
-			Name:        "validate_query_json_v2",
-			Description: "Validate a SQL SELECT query ahead of time and return a JSON object expressing success, or else an error.  Supply the query exactly as you would execute it, no qualifying keywords.  Only works for SELECT at this time.",
-		},
-		func(ctx context.Context, req *mcp.CallToolRequest, args dto.QueryJSONInput) (*mcp.CallToolResult, any, error) {
-			arr, err := backend.ValidateQuery(ctx, args.SQL)
-			isValid := err == nil
-			message := "Query validation succeeded."
-			var errorsToPublish []string
-			if err != nil {
-				errorsToPublish = append(errorsToPublish, err.Error())
-				arrBytes, _ := json.Marshal(arr)
-				message = fmt.Sprintf("Query validation failed, returned data: %s", string(arrBytes))
-			}
-			out := dto.ValidationResultDTO{IsValid: isValid, Errors: errorsToPublish, Message: message}
-			bytesOut, _ := json.Marshal(out)
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
-		},
-	)
-	addToolIfEnabled(
-		server,
-		config,
-		&mcp.Tool{
-			Name:        "exec_query_json_v2",
-			Description: "Exec query pattern; for non-read operations. Tread carefully!!! These are almost always mutations!  Execute a SQL query and return an optional JSON object, describing the effect(s).",
-		},
-		func(ctx context.Context, req *mcp.CallToolRequest, args dto.QueryJSONInput) (*mcp.CallToolResult, any, error) {
-			res, err := backend.ExecQuery(ctx, args.SQL)
-			if err != nil {
-				return nil, nil, err
-			}
-			bytesOut, _ := json.Marshal(res)
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, res, nil
-		},
-	)
-	addToolIfEnabled(
-		server,
-		config,
-		&mcp.Tool{
-			Name:        "query_validate_json_v2",
-			Description: "Run an ahead of time (AOT) check for query tractability.",
-		},
-		func(ctx context.Context, req *mcp.CallToolRequest, args dto.QueryJSONInput) (*mcp.CallToolResult, any, error) {
-			res, err := backend.ExecQuery(ctx, args.SQL)
-			if err != nil {
-				return nil, nil, err
-			}
-			bytesOut, _ := json.Marshal(res)
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, res, nil
-		},
-	)
 
-	addToolIfEnabled(
-		server,
-		config,
-		&mcp.Tool{
-			Name:        "prompt_write_safe_select_tool",
-			Description: "PLACEHOLDER Future proofing: prompt guidelines for writing safe SELECT queries.",
-		},
-		func(ctx context.Context, req *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, any, error) {
-			result, err := backend.PromptWriteSafeSelectTool(ctx, args)
-			if err != nil {
-				return nil, nil, err
-			}
-			out := dto.SimpleTextDTO{Text: result}
-			bytesOut, _ := json.Marshal(out)
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
-		},
-	)
-
-	addToolIfEnabled(
-		server,
-		config,
-		&mcp.Tool{
-			Name:        "list_tables_json",
-			Description: "List tables in a schema and return JSON rows.",
-		},
-		func(ctx context.Context, req *mcp.CallToolRequest, args dto.ListTablesInput) (*mcp.CallToolResult, any, error) {
-			result, err := backend.ListTablesJSON(ctx, args)
-			if err != nil {
-				return nil, nil, err
-			}
-			bytesArr, marshalErr := json.Marshal(result)
-			if marshalErr != nil {
-				return nil, nil, fmt.Errorf("failed to marshal result to JSON: %w", marshalErr)
-			}
-			return &mcp.CallToolResult{
-				Content: []mcp.Content{
-					&mcp.TextContent{Text: string(bytesArr)},
-				},
-			}, result, nil
-		},
-	)
-
-	addToolIfEnabled(
-		server,
-		config,
-		&mcp.Tool{
-			Name:        "list_tables_json_page",
-			Description: "Future proofing: List tables with pagination and filters, returns JSON.",
-		},
-		func(ctx context.Context, req *mcp.CallToolRequest, args dto.ListTablesPageInput) (*mcp.CallToolResult, any, error) {
-			result, err := backend.ListTablesJSONPage(ctx, args)
-			if err != nil {
-				return nil, nil, err
-			}
-			bytesArr, marshalErr := json.Marshal(result)
-			if marshalErr != nil {
-				return nil, nil, fmt.Errorf("failed to marshal result to JSON: %w", marshalErr)
-			}
-			return &mcp.CallToolResult{
-				Content: []mcp.Content{
-					&mcp.TextContent{Text: string(bytesArr)},
-				},
-			}, result, nil
-		},
-	)
-
-	addToolIfEnabled(
-		server,
-		config,
-		&mcp.Tool{
-			Name:        "list_providers",
-			Description: "List available providers.  This is the top level of the stackql hierarchy.",
-		},
-		func(ctx context.Context, req *mcp.CallToolRequest, _ any) (*mcp.CallToolResult, any, error) {
-			result, err := backend.ListProviders(ctx)
-			if err != nil {
-				return nil, nil, err
-			}
-			out := dto.QueryResultDTO{Rows: result, RowCount: len(result), Format: "json"}
-			bytesOut, _ := json.Marshal(out)
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
-		},
-	)
-
-	addToolIfEnabled(
-		server,
-		config,
-		&mcp.Tool{
-			Name:        "list_services",
-			Description: "List services. **must** supply <provider>.",
-		},
-		func(ctx context.Context, req *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, any, error) {
-			result, err := backend.ListServices(ctx, args)
-			if err != nil {
-				return nil, nil, err
-			}
-			out := dto.QueryResultDTO{Rows: result, RowCount: len(result), Format: "json"}
-			bytesOut, _ := json.Marshal(out)
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
-		},
-	)
-
-	addToolIfEnabled(
-		server,
-		config,
-		&mcp.Tool{
-			Name:        "list_resources",
-			Description: "List available resources. **must** supply <provider>, <service>.",
-		},
-		func(ctx context.Context, req *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, any, error) {
-			result, err := backend.ListResources(ctx, args)
-			if err != nil {
-				return nil, nil, err
-			}
-			out := dto.QueryResultDTO{Rows: result, RowCount: len(result), Format: "json"}
-			bytesOut, _ := json.Marshal(out)
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
-		},
-	)
-
-	addToolIfEnabled(
-		server,
-		config,
-		&mcp.Tool{
-			Name:        "list_methods",
-			Description: "List access methods for a resource.  Interrogating this is almost compulsory before executing a CRUD query; you will need to infer requireed WHERE parameters. **must** supply <provider>, <service>, <resource>.",
-		},
-		func(ctx context.Context, req *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, any, error) {
-			result, err := backend.ListMethods(ctx, args)
-			if err != nil {
-				return nil, nil, err
-			}
-			out := dto.QueryResultDTO{Rows: result, RowCount: len(result), Format: "json"}
-			bytesOut, _ := json.Marshal(out)
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
-		},
-	)
-
-	addToolIfEnabled(
-		server,
-		config,
-		&mcp.Tool{
-			Name:        "describe_table",
-			Description: "PLACEHOLDER Future proofing: Get detailed information about a table.",
-		},
-		func(ctx context.Context, req *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, any, error) {
-			result, err := backend.DescribeTable(ctx, args)
-			if err != nil {
-				return nil, nil, err
-			}
-			out := dto.QueryResultDTO{Rows: result, RowCount: len(result), Format: "json"}
-			bytesOut, _ := json.Marshal(out)
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
-		},
-	)
-
-	addToolIfEnabled(
-		server,
-		config,
-		&mcp.Tool{
-			Name:        "describe_method",
-			Description: "Describe the input/output fields for a specific method on a resource. method_path must be of form '<provider>.<service>.<resource>.<method>'. Set extended=true to include the description column.",
-		},
-		func(ctx context.Context, req *mcp.CallToolRequest, args dto.DescribeMethodInput) (*mcp.CallToolResult, any, error) {
-			result, err := backend.DescribeMethod(ctx, args.MethodPath, args.Extended)
-			if err != nil {
-				return nil, nil, err
-			}
-			out := dto.QueryResultDTO{Rows: result, RowCount: len(result), Format: "json"}
-			bytesOut, _ := json.Marshal(out)
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
-		},
-	)
-
-	addToolIfEnabled(
-		server,
-		config,
-		&mcp.Tool{
-			Name:        "get_foreign_keys",
-			Description: "PLACEHOLDER Future proofing: Get foreign key information for a table.",
-		},
-		func(ctx context.Context, req *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, any, error) {
-			result, err := backend.GetForeignKeys(ctx, args)
-			if err != nil {
-				return nil, nil, err
-			}
-			out := dto.QueryResultDTO{Rows: result, RowCount: len(result), Format: "json"}
-			bytesOut, _ := json.Marshal(out)
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
-		},
-	)
-
-	addToolIfEnabled(
-		server,
-		config,
-		&mcp.Tool{
-			Name:        "find_relationships",
-			Description: "PLACEHOLDER Future proofing: Find explicit and implied relationships for a table.",
-		},
-		func(ctx context.Context, req *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, any, error) {
-			result, err := backend.FindRelationships(ctx, args)
-			if err != nil {
-				return nil, nil, err
-			}
-			out := dto.SimpleTextDTO{Text: result}
-			bytesOut, _ := json.Marshal(out)
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(bytesOut)}}}, out, nil
-		},
-	)
+	registerTools(server, config, backend, logger)
+	registerPrompts(server, config)
 
 	return &simpleMCPServer{
 		config:           config,
@@ -522,6 +149,252 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		requestSemaphore: semaphore.NewWeighted(int64(config.Server.MaxConcurrentRequests)),
 		servers:          make([]io.Closer, 0),
 	}, nil
+}
+
+//nolint:funlen,gocognit // tool registrations are inherently long and branchy
+func registerTools(server *mcp.Server, config *Config, backend Backend, logger *logrus.Logger) {
+	addToolIfEnabled(
+		server,
+		config,
+		&mcp.Tool{
+			Name:        "server_info",
+			Description: "Get server identity and runtime: stackql version, backing SQL engine, provider registry location, read-only flag. Call once at session start.",
+		},
+		func(ctx context.Context, _ *mcp.CallToolRequest, args any) (*mcp.CallToolResult, dto.ServerInfoDTO, error) {
+			rv, err := backend.ServerInfo(ctx, args)
+			if err != nil {
+				return nil, dto.ServerInfoDTO{}, err
+			}
+			out := dto.ServerInfoDTO{
+				Version:          rv.Version,
+				Commit:           rv.Commit,
+				BuildDate:        rv.BuildDate,
+				Platform:         rv.Platform,
+				Transport:        rv.Transport,
+				SQLBackend:       rv.SQLBackend,
+				ProviderRegistry: rv.ProviderRegistry,
+				ReadOnly:         rv.ReadOnly,
+			}
+			rec := []map[string]any{{
+				"version":           out.Version,
+				"commit":            out.Commit,
+				"build_date":        out.BuildDate,
+				"platform":          out.Platform,
+				"transport":         out.Transport,
+				"sql_backend":       out.SQLBackend,
+				"provider_registry": out.ProviderRegistry,
+				"is_read_only":      out.ReadOnly,
+			}}
+			text := render.RenderKV("Server Info", rec)
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, out, nil
+		},
+	)
+
+	addToolIfEnabled(
+		server,
+		config,
+		&mcp.Tool{
+			Name:        "list_providers",
+			Description: "Available cloud/SaaS providers (top of the hierarchy). No inputs.",
+		},
+		func(ctx context.Context, _ *mcp.CallToolRequest, _ any) (*mcp.CallToolResult, dto.QueryResultDTO, error) {
+			rows, err := backend.ListProviders(ctx)
+			if err != nil {
+				return nil, dto.QueryResultDTO{}, err
+			}
+			out := dto.QueryResultDTO{Rows: rows}
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: render.RenderTable(rows)}}}, out, nil
+		},
+	)
+
+	addToolIfEnabled(
+		server,
+		config,
+		&mcp.Tool{
+			Name:        "list_services",
+			Description: "Services under a provider. Requires provider.",
+		},
+		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, dto.QueryResultDTO, error) {
+			rows, err := backend.ListServices(ctx, args)
+			if err != nil {
+				return nil, dto.QueryResultDTO{}, err
+			}
+			out := dto.QueryResultDTO{Rows: rows}
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: render.RenderTable(rows)}}}, out, nil
+		},
+	)
+
+	addToolIfEnabled(
+		server,
+		config,
+		&mcp.Tool{
+			Name:        "list_resources",
+			Description: "Resources under a provider.service. Requires provider and service.",
+		},
+		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, dto.QueryResultDTO, error) {
+			rows, err := backend.ListResources(ctx, args)
+			if err != nil {
+				return nil, dto.QueryResultDTO{}, err
+			}
+			out := dto.QueryResultDTO{Rows: rows}
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: render.RenderTable(rows)}}}, out, nil
+		},
+	)
+
+	addToolIfEnabled(
+		server,
+		config,
+		&mcp.Tool{
+			Name:        "list_methods",
+			Description: "Access methods (HTTP operations) for a resource. Call before writing any query. Requires provider, service, resource.",
+		},
+		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, dto.QueryResultDTO, error) {
+			rows, err := backend.ListMethods(ctx, args)
+			if err != nil {
+				return nil, dto.QueryResultDTO{}, err
+			}
+			out := dto.QueryResultDTO{Rows: rows}
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: render.RenderTable(rows)}}}, out, nil
+		},
+	)
+
+	addToolIfEnabled(
+		server,
+		config,
+		&mcp.Tool{
+			Name:        "describe_resource",
+			Description: "Output fields for a resource's primary read method. Requires provider, service, resource.",
+		},
+		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, dto.QueryResultDTO, error) {
+			rows, err := backend.DescribeResource(ctx, args)
+			if err != nil {
+				return nil, dto.QueryResultDTO{}, err
+			}
+			out := dto.QueryResultDTO{Rows: rows}
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: render.RenderKV("Resource", rows)}}}, out, nil
+		},
+	)
+
+	addToolIfEnabled(
+		server,
+		config,
+		&mcp.Tool{
+			Name:        "describe_method",
+			Description: "Full I/O contract for one method. Requires provider, service, resource, method.",
+		},
+		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, dto.QueryResultDTO, error) {
+			rows, err := backend.DescribeMethod(ctx, args)
+			if err != nil {
+				return nil, dto.QueryResultDTO{}, err
+			}
+			out := dto.QueryResultDTO{Rows: rows}
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: render.RenderKV("Method", rows)}}}, out, nil
+		},
+	)
+
+	addToolIfEnabled(
+		server,
+		config,
+		&mcp.Tool{
+			Name:        "validate_select_query",
+			Description: "Parse and plan a SELECT without executing. Returns {valid, errors}. SELECT only.",
+		},
+		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.QueryJSONInput) (*mcp.CallToolResult, dto.ValidationResultDTO, error) {
+			rowsBack, err := backend.ValidateQuery(ctx, args.SQL)
+			isValid := err == nil
+			var errs []string
+			if err != nil {
+				errs = append(errs, err.Error())
+			}
+			out := dto.ValidationResultDTO{Valid: isValid, Errors: errs}
+			rec := []map[string]any{{
+				"valid":  out.Valid,
+				"errors": mustMarshal(out.Errors),
+			}}
+			if !isValid {
+				rec[0]["explain_output"] = mustMarshal(rowsBack)
+			}
+			text := render.RenderKV("Validation Result", rec)
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, out, nil
+		},
+	)
+
+	addToolIfEnabled(
+		server,
+		config,
+		&mcp.Tool{
+			Name:        "run_select_query",
+			Description: "Execute a SELECT. Returns {rows}. Reads only.",
+		},
+		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.QueryJSONInput) (*mcp.CallToolResult, dto.QueryResultDTO, error) {
+			logger.Debugf("run_select_query: %s", args.SQL)
+			rows, err := backend.RunQueryJSON(ctx, args)
+			if err != nil {
+				return nil, dto.QueryResultDTO{}, err
+			}
+			out := dto.QueryResultDTO{Rows: rows}
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: render.RenderTable(rows)}}}, out, nil
+		},
+	)
+
+	addToolIfEnabled(
+		server,
+		config,
+		&mcp.Tool{
+			Name:        "run_mutation_query",
+			Description: "Execute INSERT/UPDATE/REPLACE/DELETE against the provider. Real side effects. Returns {messages, timestamp}. Refused in read-only mode.",
+		},
+		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.QueryJSONInput) (*mcp.CallToolResult, map[string]any, error) {
+			if isReadOnlyConfig(config) {
+				return nil, nil, fmt.Errorf("tool 'run_mutation_query' refused: server is read-only")
+			}
+			res, err := backend.ExecQuery(ctx, args.SQL)
+			if err != nil {
+				return nil, nil, err
+			}
+			text := render.RenderKV("Mutation Result", []map[string]any{res})
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, res, nil
+		},
+	)
+
+	addToolIfEnabled(
+		server,
+		config,
+		&mcp.Tool{
+			Name:        "run_lifecycle_operation",
+			Description: "Execute a stackql EXEC lifecycle operation. Returns {messages, timestamp}. Refused in read-only mode.",
+		},
+		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.QueryJSONInput) (*mcp.CallToolResult, map[string]any, error) {
+			if isReadOnlyConfig(config) {
+				return nil, nil, fmt.Errorf("tool 'run_lifecycle_operation' refused: server is read-only")
+			}
+			res, err := backend.ExecQuery(ctx, args.SQL)
+			if err != nil {
+				return nil, nil, err
+			}
+			text := render.RenderKV("Lifecycle Result", []map[string]any{res})
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, res, nil
+		},
+	)
+}
+
+func registerPrompts(server *mcp.Server, config *Config) {
+	addPromptIfEnabled(
+		server,
+		config,
+		&mcp.Prompt{
+			Name:        "write_safe_select",
+			Description: "Guidance for writing safe SELECT queries against stackql resources.",
+		},
+		func(_ context.Context, _ *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
+			return &mcp.GetPromptResult{
+				Messages: []*mcp.PromptMessage{{
+					Role:    "user",
+					Content: &mcp.TextContent{Text: ExplainerPromptWriteSafeSelectTool},
+				}},
+			}, nil
+		},
+	)
 }
 
 // Start starts the MCP server with all configured transports.
@@ -548,7 +421,6 @@ func (s *simpleMCPServer) run(ctx context.Context) error {
 	case serverTransportSSE:
 		return fmt.Errorf("SSE transport obsoleted; use streamable HTTP transport instead")
 	case serverTransportStdIO:
-		// Default to stdio transport
 		return s.server.Run(ctx, &mcp.StdioTransport{})
 	default:
 		return fmt.Errorf("unsupported transport: %s", s.config.Server.Transport)
@@ -564,7 +436,6 @@ func (s *simpleMCPServer) Stop() error {
 		return nil
 	}
 
-	// Close all servers
 	var errs []error
 	for _, server := range s.servers {
 		if err := server.Close(); err != nil {
@@ -572,7 +443,6 @@ func (s *simpleMCPServer) Stop() error {
 		}
 	}
 
-	// Close backend
 	if err := s.backend.Close(); err != nil {
 		errs = append(errs, err)
 	}
