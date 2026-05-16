@@ -219,25 +219,7 @@ func DefaultSSEConfig() *Config {
 }
 
 // Validate validates the configuration and returns an error if invalid.
-//
-//nolint:gocognit // simple validation logic
 func (c *Config) Validate() error {
-	// if c.Server.Name == "" {
-	// 	return fmt.Errorf("server.name is required")
-	// }
-	// if c.Server.Version == "" {
-	// 	return fmt.Errorf("server.version is required")
-	// }
-	// if c.Server.MaxConcurrentRequests <= 0 {
-	// 	return fmt.Errorf("server.max_concurrent_requests must be greater than 0")
-	// }
-	// if c.Backend.Type == "" {
-	// 	return fmt.Errorf("backend.type is required")
-	// }
-	// if c.Backend.MaxConnections <= 0 {
-	// 	return fmt.Errorf("backend.max_connections must be greater than 0")
-	// }
-
 	return nil
 }
 

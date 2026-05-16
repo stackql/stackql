@@ -27,58 +27,6 @@ func TestDefaultConfig(t *testing.T) {
 	}
 }
 
-// func TestConfigValidation(t *testing.T) {
-// 	tests := []struct {
-// 		name      string
-// 		config    *Config
-// 		wantError bool
-// 	}{
-// 		{
-// 			name:      "valid default config",
-// 			config:    DefaultConfig(),
-// 			wantError: false,
-// 		},
-// 		{
-// 			name: "empty server name",
-// 			config: &Config{
-// 				Server: ServerConfig{
-// 					Name:                  "",
-// 					Version:               "1.0.0",
-// 					MaxConcurrentRequests: 100,
-// 				},
-// 				Backend: BackendConfig{
-// 					Type:           "stackql",
-// 					MaxConnections: 10,
-// 				},
-// 			},
-// 			wantError: true,
-// 		},
-// 		{
-// 			name: "invalid transport",
-// 			config: &Config{
-// 				Server: ServerConfig{
-// 					Name:                  "Test Server",
-// 					Version:               "1.0.0",
-// 					MaxConcurrentRequests: 100,
-// 				},
-// 				Backend: BackendConfig{
-// 					Type:           "stackql",
-// 					MaxConnections: 10,
-// 				},
-// 			},
-// 			wantError: true,
-// 		},
-// 	}
-//  for _, tt := range tests {
-//  	t.Run(tt.name, func(t *testing.T) {
-//  		err := tt.config.Validate()
-//  		if (err != nil) != tt.wantError {
-//  			t.Errorf("Config.Validate() error = %v, wantError %v", err, tt.wantError)
-//  		}
-//  	})
-//  }
-// }
-
 func TestExampleBackend(t *testing.T) {
 	backend := NewExampleBackend("test://localhost")
 	ctx := context.Background()
