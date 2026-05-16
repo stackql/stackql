@@ -257,6 +257,12 @@ func (b *stackqlMCPService) runPreprocessedQueryJSON(_ context.Context, query st
 	return results, nil
 }
 
+// ExecQuery returns {messages, timestamp}: messages is the orchestrator's
+// per-statement message list (eg "The operation was despatched successfully"),
+// timestamp is the wall-clock dispatch time.  The reverse-proxy backend
+// returns a different shape ({timestamp, rows_affected?, last_insert_id?})
+// because it goes through database/sql Exec instead of the orchestrator.
+// Robot assertions that target both backends must rely only on `timestamp`.
 func (b *stackqlMCPService) ExecQuery(_ context.Context, query string) (map[string]any, error) {
 	return b.execQuery(query)
 }

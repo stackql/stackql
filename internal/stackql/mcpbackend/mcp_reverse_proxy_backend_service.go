@@ -68,6 +68,11 @@ func (b *stackqlMCPReverseProxyService) ServerInfo(_ context.Context, _ any) (dt
 	}, nil
 }
 
+// ExecQuery returns {timestamp, rows_affected?, last_insert_id?} -- the keys
+// the standard database/sql Exec result exposes.  The primary
+// orchestrator-backed backend returns {messages, timestamp} instead.  Robot
+// assertions that target both backends must rely only on `timestamp`, which
+// both shapes carry.
 func (b *stackqlMCPReverseProxyService) ExecQuery(_ context.Context, query string) (map[string]any, error) {
 	r, sqlErr := b.db.Exec(query)
 	if sqlErr != nil {

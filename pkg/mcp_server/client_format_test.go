@@ -1,6 +1,7 @@
 package mcp_server //nolint:testpackage,revive // exercise unexported formatter
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -58,6 +59,45 @@ func TestFormatToolResult_NilResult(t *testing.T) {
 	_, err := formatToolResult("anything", nil)
 	if err == nil {
 		t.Fatal("expected error for nil result")
+	}
+}
+
+func TestFormatToolResult_EmbeddedJSONStringInValueRoundtripsCleanly(t *testing.T) {
+	// describe_method returns rows whose `shape` field is itself a JSON-encoded
+	// string.  Robot scenarios feed our stdout to json.loads, so anything that
+	// gets the escaping wrong (eg interpolating into a single-quoted Python
+	// source literal) will explode.  Verify formatToolResult's output is
+	// itself round-trippable through Go's json.Unmarshal -- the strict-mode
+	// equivalent of what Robot does in its Parse MCP JSON Output helper.
+	res := &mcp.CallToolResult{
+		Content: []mcp.Content{&mcp.TextContent{Text: "ignored markdown"}},
+		StructuredContent: map[string]any{
+			"rows": []any{
+				map[string]any{
+					"name":  "routingConfig",
+					"shape": `{"description":"A routing config.","type":"object"}`,
+				},
+			},
+		},
+	}
+	out, err := formatToolResult("describe_method", res)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	var decoded map[string]any
+	if err := json.Unmarshal([]byte(out), &decoded); err != nil {
+		t.Fatalf("client output is not valid JSON: %v\noutput: %s", err, out)
+	}
+	rows, ok := decoded["rows"].([]any)
+	if !ok || len(rows) != 1 {
+		t.Fatalf("expected one row, got %#v", decoded["rows"])
+	}
+	first, ok := rows[0].(map[string]any)
+	if !ok {
+		t.Fatalf("row is not a map: %#v", rows[0])
+	}
+	if first["shape"] != `{"description":"A routing config.","type":"object"}` {
+		t.Errorf("shape did not survive round-trip: %#v", first["shape"])
 	}
 }
 
