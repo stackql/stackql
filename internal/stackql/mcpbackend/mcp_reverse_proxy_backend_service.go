@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/stackql/stackql/internal/stackql/buildinfo"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/pkg/mcp_server"
 	"github.com/stackql/stackql/pkg/mcp_server/dto"
@@ -21,6 +22,7 @@ type stackqlMCPReverseProxyService struct {
 	db           *sql.DB
 	interrogator StackqlInterrogator
 	renderer     resultsRenderer
+	serverInfo   serverBuildInfo
 }
 
 func NewStackqlMCPReverseProxyService(
@@ -29,6 +31,8 @@ func NewStackqlMCPReverseProxyService(
 	db *sql.DB,
 	handlerCtx handler.HandlerContext,
 	logger *logrus.Logger,
+	bi buildinfo.BuildInfo,
+	transport string,
 ) (mcp_server.Backend, error) {
 	if logger == nil {
 		logger = logrus.New()
@@ -45,6 +49,7 @@ func NewStackqlMCPReverseProxyService(
 		handlerCtx:   handlerCtx,
 		db:           db,
 		renderer:     NewResultsRenderer(),
+		serverInfo:   newServerBuildInfo(bi, transport),
 	}, nil
 }
 
@@ -66,6 +71,11 @@ func (b *stackqlMCPReverseProxyService) ServerInfo(ctx context.Context, args any
 		Name:       "Stackql MCP Reverse Proxy Service",
 		Info:       "This is the Stackql MCP Reverse Proxy Service.",
 		IsReadOnly: b.isReadOnly,
+		Version:    b.serverInfo.version(),
+		Commit:     b.serverInfo.commit(),
+		BuildDate:  b.serverInfo.buildDate(),
+		Platform:   b.serverInfo.platform(),
+		Transport:  b.serverInfo.transport(),
 	}, nil
 }
 
@@ -269,6 +279,18 @@ func (b *stackqlMCPReverseProxyService) DescribeTable(ctx context.Context, hI dt
 		return nil, qErr
 	}
 	return b.query(ctx, q, hI.RowLimit)
+}
+
+func (b *stackqlMCPReverseProxyService) DescribeMethod(
+	ctx context.Context,
+	methodPath string,
+	extended bool,
+) ([]map[string]interface{}, error) {
+	q, qErr := b.interrogator.GetDescribeMethod(methodPath, extended)
+	if qErr != nil {
+		return nil, qErr
+	}
+	return b.query(ctx, q, unlimitedRowLimit)
 }
 
 func (b *stackqlMCPReverseProxyService) GetForeignKeys(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {

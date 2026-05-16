@@ -549,6 +549,7 @@ def get_variables(
   DESCRIBE_GITHUB_REPOS_PAGES = "describe github.repos.pages;"
   DESCRIBE_AWS_EC2_INSTANCES = "describe aws.ec2.instances;"
   DESCRIBE_AWS_EC2_DEFAULT_KMS_KEY_ID = "describe aws.ec2.ebs_default_kms_key_id;"
+  DESCRIBE_GOOGLE_STORAGE_BUCKETS = "describe google.storage.buckets;"
   MOCKSERVER_JAR = os.path.join(repository_root, 'test', 'downloads', 'mockserver-netty-5.12.0-shaded.jar')
 
   JSON_INIT_FILE_PATH_GOOGLE = os.path.join(repository_root, 'test', 'mockserver', 'expectations', 'static-gcp-expectations.json')
@@ -902,6 +903,7 @@ def get_variables(
     'BUILDMAJORVERSION':                              _BUILD_MAJOR_VERSION,
     'BUILDMINORVERSION':                              _BUILD_MINOR_VERSION,
     'BUILDPATCHVERSION':                              _BUILD_PATCH_VERSION,
+    'EXPECTED_SEMVER':                                f"{_BUILD_MAJOR_VERSION}.{_BUILD_MINOR_VERSION}.{_BUILD_PATCH_VERSION}",
     'DB_INTERNAL_CFG_LAX':                            DB_INTERNAL_CFG_LAX,
     'DB_SETUP_SRC':                                   get_db_setup_src(sql_backend_str),
     'DIGITALOCEAN_SECRET_STR':                        DIGITALOCEAN_SECRET_STR,
@@ -983,6 +985,7 @@ def get_variables(
     'CREATE_AWS_VOLUME':                                                      CREATE_AWS_VOLUME,
     'DESCRIBE_AWS_EC2_INSTANCES':                                             DESCRIBE_AWS_EC2_INSTANCES,
     'DESCRIBE_AWS_EC2_DEFAULT_KMS_KEY_ID':                                    DESCRIBE_AWS_EC2_DEFAULT_KMS_KEY_ID,
+    'DESCRIBE_GOOGLE_STORAGE_BUCKETS':                                        DESCRIBE_GOOGLE_STORAGE_BUCKETS,
     'DESCRIBE_GITHUB_REPOS_PAGES':                                            DESCRIBE_GITHUB_REPOS_PAGES,
     'GET_AWS_CLOUD_CONTROL_REQUEST_LOG_GROUP':                                GET_AWS_CLOUD_CONTROL_REQUEST_LOG_GROUP,
     'GET_AWS_CLOUD_CONTROL_REQUEST_LOG_GROUP_EXPECTED':                       GET_AWS_CLOUD_CONTROL_REQUEST_LOG_GROUP_EXPECTED,

@@ -431,6 +431,8 @@ func (v *standardTableRouteAstVisitor) Visit(node sqlparser.SQLNode) error {
 
 	case *sqlparser.DescribeTable:
 
+	case *sqlparser.DescribeMethod:
+
 	case *sqlparser.OtherAdmin:
 
 	case sqlparser.Comments:

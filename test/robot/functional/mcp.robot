@@ -163,6 +163,76 @@ MCP HTTP Server List Methods Tool
     Should Contain       ${result.stdout}       getScreenshot
     Should Be Equal As Integers    ${result.rc}    0
 
+MCP HTTP Server Show Version SQL
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9912
+    ...                  \-\-exec.action      query_v2
+    ...                  \-\-exec.args        {"sql": "SHOW VERSION;"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Show-Version.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Show-Version-stderr.txt
+    Should Contain       ${result.stdout}       version
+    Should Match Regexp    ${result.stdout}       \\d+\\.\\d+\\.\\d+
+    Should Be Equal As Integers    ${result.rc}    0
+
+MCP HTTP Server Info Includes Version
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9912
+    ...                  \-\-exec.action      server_info
+    ...                  \-\-exec.args        {}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Info.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Info-stderr.txt
+    Should Contain       ${result.stdout}       version
+    Should Contain       ${result.stdout}       transport
+    Should Match Regexp    ${result.stdout}       \\d+\\.\\d+\\.\\d+
+    Should Be Equal As Integers    ${result.rc}    0
+
+PG Server Show Version
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${posixInput} =     Catenate
+    ...    "${PSQL_EXE}"    -d     postgres://stackql:stackql@127.0.0.1:5665   -c
+    ...    "SHOW VERSION;"
+    ${windowsInput} =     Catenate
+    ...    &    ${posixInput}
+    ${input} =    Set Variable If    "${IS_WINDOWS}" == "1"    ${windowsInput}    ${posixInput}
+    ${shellExe} =    Set Variable If    "${IS_WINDOWS}" == "1"    powershell    sh
+    ${psql_client_result}=    Run Process
+    ...                  ${shellExe}     \-c    ${input}
+    ...                  stdout=${CURDIR}${/}tmp${/}PG-Server-Show-Version-psql.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}PG-Server-Show-Version-psql-stderr.txt
+    Should Contain       ${psql_client_result.stdout}       version
+    Should Match Regexp    ${psql_client_result.stdout}       \\d+\\.\\d+\\.\\d+
+    Should Be Equal As Integers    ${psql_client_result.rc}    0
+
+PG Server Show Version Extended
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${posixInput} =     Catenate
+    ...    "${PSQL_EXE}"    -d     postgres://stackql:stackql@127.0.0.1:5665   -c
+    ...    "SHOW EXTENDED VERSION;"
+    ${windowsInput} =     Catenate
+    ...    &    ${posixInput}
+    ${input} =    Set Variable If    "${IS_WINDOWS}" == "1"    ${windowsInput}    ${posixInput}
+    ${shellExe} =    Set Variable If    "${IS_WINDOWS}" == "1"    powershell    sh
+    ${psql_client_result}=    Run Process
+    ...                  ${shellExe}     \-c    ${input}
+    ...                  stdout=${CURDIR}${/}tmp${/}PG-Server-Show-Version-Extended-psql.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}PG-Server-Show-Version-Extended-psql-stderr.txt
+    Should Contain       ${psql_client_result.stdout}       version
+    Should Contain       ${psql_client_result.stdout}       commit
+    Should Contain       ${psql_client_result.stdout}       build_date
+    Should Contain       ${psql_client_result.stdout}       platform
+    Should Match Regexp    ${psql_client_result.stdout}       \\d+\\.\\d+\\.\\d+
+    Should Be Equal As Integers    ${psql_client_result.rc}    0
+
 MCP HTTP Server Query Tool
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
     Sleep         5s

@@ -402,6 +402,8 @@ func (v *standardParserTableAliasPairingAstVisitor) Visit(node sqlparser.SQLNode
 
 	case *sqlparser.DescribeTable:
 
+	case *sqlparser.DescribeMethod:
+
 	case *sqlparser.OtherAdmin:
 
 	case sqlparser.Comments:

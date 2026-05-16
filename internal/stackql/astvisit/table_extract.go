@@ -365,6 +365,8 @@ func (v *standardParserTableExtractAstVisitor) Visit(node sqlparser.SQLNode) err
 
 	case *sqlparser.DescribeTable:
 
+	case *sqlparser.DescribeMethod:
+
 	case *sqlparser.OtherAdmin:
 
 	case sqlparser.Comments:

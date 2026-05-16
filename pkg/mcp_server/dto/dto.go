@@ -90,10 +90,21 @@ type HierarchyInput struct {
 	// Parameters map[string]any `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 }
 
+// DescribeMethodInput identifies a method to describe via DESCRIBE METHOD.
+type DescribeMethodInput struct {
+	MethodPath string `json:"method_path" yaml:"method_path" jsonschema:"<provider>.<service>.<resource>.<method>"`
+	Extended   bool   `json:"extended,omitempty" yaml:"extended,omitempty" jsonschema:"include description column"`
+}
+
 type ServerInfoOutput struct {
 	Name       string `json:"name" jsonschema:"server name"`
 	Info       string `json:"info" jsonschema:"server info"`
 	IsReadOnly bool   `json:"is_read_only" jsonschema:"is the database read-only"`
+	Version    string `json:"version,omitempty" jsonschema:"stackql semver"`
+	Commit     string `json:"commit,omitempty" jsonschema:"git short commit SHA"`
+	BuildDate  string `json:"build_date,omitempty" jsonschema:"build timestamp"`
+	Platform   string `json:"platform,omitempty" jsonschema:"build platform"`
+	Transport  string `json:"transport,omitempty" jsonschema:"MCP transport (http, stdio, reverse_proxy)"`
 }
 
 type QueryInput struct {
@@ -163,6 +174,11 @@ type ServerInfoDTO struct {
 	Name       string `json:"name"`
 	Info       string `json:"info"`
 	IsReadOnly bool   `json:"is_read_only"`
+	Version    string `json:"version,omitempty"`
+	Commit     string `json:"commit,omitempty"`
+	BuildDate  string `json:"build_date,omitempty"`
+	Platform   string `json:"platform,omitempty"`
+	Transport  string `json:"transport,omitempty"`
 }
 
 // DBIdentityDTO represents the current database identity.

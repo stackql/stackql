@@ -10,6 +10,7 @@ import (
 	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
+	"github.com/stackql/stackql/internal/stackql/buildinfo"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/internal/stackql/metadatavisitors"
@@ -127,55 +128,11 @@ func NewShowInstructionExecutor(
 			}
 		}
 	case "INSERT":
-		ppCtx := prettyprint.NewPrettyPrintContext(
-			handlerCtx.GetRuntimeContext().OutputFormat == constants.PrettyTextStr,
-			constants.DefaultPrettyPrintIndent,
-			constants.DefaultPrettyPrintBaseIndent,
-			"'",
-			logging.GetLogger(),
-		)
-		meth, methErr := tbl.GetMethod()
-		if methErr != nil {
-			tblName, tblErr := tbl.GetStackQLTableName()
-			if tblErr != nil {
-				return util.GenerateSimpleErroneousOutput(
-					fmt.Errorf(
-						"cannot find matching operation, possible causes include missing required parameters or an unsupported method for the resource, to find required parameters for supported methods run SHOW METHODS: %w", //nolint:lll // prescribed message
-						methErr),
-					handlerCtx.GetTypingConfig(),
-				)
-			}
-			return util.GenerateSimpleErroneousOutput(
-				fmt.Errorf(
-					"cannot find matching operation, possible causes include missing required parameters or an unsupported method for the resource, to find required parameters for supported methods run SHOW METHODS IN %s: %w", //nolint:lll // prescribed message
-					tblName, methErr),
-				handlerCtx.GetTypingConfig(),
-			)
+		stmtKeys, errOut, ok := buildInsertShowOutput(node, tbl, handlerCtx, commentDirectives, extended)
+		if !ok {
+			return errOut
 		}
-		svc, svcErr := tbl.GetService()
-		if svcErr != nil {
-			return util.GenerateSimpleErroneousOutput(svcErr,
-				handlerCtx.GetTypingConfig(),
-			)
-		}
-		pp := prettyprint.NewPrettyPrinter(ppCtx)
-		ppPlaceholder := prettyprint.NewPrettyPrinter(ppCtx)
-		requiredOnly := commentDirectives != nil && commentDirectives.IsSet("REQUIRED")
-		insertStmt, insertErr := metadatavisitors.ToInsertStatement(
-			node.Columns, meth, svc, extended, pp, ppPlaceholder, requiredOnly)
-		tableName, _ := tbl.GetTableName()
-		if insertErr != nil {
-			return util.GenerateSimpleErroneousOutput(
-				fmt.Errorf("error creating insert statement for %s: %w", tableName, insertErr),
-				handlerCtx.GetTypingConfig(),
-			)
-		}
-		stmtStr := fmt.Sprintf(insertStmt, tableName)
-		keys = map[string]map[string]interface{}{
-			"1": {
-				"insert_statement": stmtStr,
-			},
-		}
+		keys = stmtKeys
 	case "METHODS":
 		var rsc formulation.Resource
 		rsc, err = prov.GetResource(
@@ -292,9 +249,95 @@ func NewShowInstructionExecutor(
 				handlerCtx.GetTypingConfig())
 		}
 		keys = convertProviderServicesToMap(services, extended)
+	case "VERSION":
+		columnOrder, keys = buildVersionShowOutput(extended)
 	}
 	return util.PrepareResultSet(internaldto.NewPrepareResultSetDTO(nil, keys, columnOrder, nil, err, nil,
 		handlerCtx.GetTypingConfig()))
+}
+
+// buildInsertShowOutput renders the SHOW INSERT result for a resource method.
+// On success it returns the rows map, a zero-value ExecutorOutput, and true.
+// On any resolver / formatter failure it returns nil, an erroneous output,
+// and false; callers should propagate that output to the caller directly.
+// Extracted from NewShowInstructionExecutor to keep gocyclo under threshold.
+func buildInsertShowOutput(
+	node *sqlparser.Show,
+	tbl tablemetadata.ExtendedTableMetadata,
+	handlerCtx handler.HandlerContext,
+	commentDirectives sqlparser.CommentDirectives,
+	extended bool,
+) (map[string]map[string]interface{}, internaldto.ExecutorOutput, bool) {
+	ppCtx := prettyprint.NewPrettyPrintContext(
+		handlerCtx.GetRuntimeContext().OutputFormat == constants.PrettyTextStr,
+		constants.DefaultPrettyPrintIndent,
+		constants.DefaultPrettyPrintBaseIndent,
+		"'",
+		logging.GetLogger(),
+	)
+	meth, methErr := tbl.GetMethod()
+	if methErr != nil {
+		tblName, tblErr := tbl.GetStackQLTableName()
+		if tblErr != nil {
+			return nil, util.GenerateSimpleErroneousOutput(
+				fmt.Errorf(
+					"cannot find matching operation, possible causes include missing required parameters or an unsupported method for the resource, to find required parameters for supported methods run SHOW METHODS: %w", //nolint:lll // prescribed message
+					methErr),
+				handlerCtx.GetTypingConfig(),
+			), false
+		}
+		return nil, util.GenerateSimpleErroneousOutput(
+			fmt.Errorf(
+				"cannot find matching operation, possible causes include missing required parameters or an unsupported method for the resource, to find required parameters for supported methods run SHOW METHODS IN %s: %w", //nolint:lll // prescribed message
+				tblName, methErr),
+			handlerCtx.GetTypingConfig(),
+		), false
+	}
+	svc, svcErr := tbl.GetService()
+	if svcErr != nil {
+		return nil, util.GenerateSimpleErroneousOutput(svcErr,
+			handlerCtx.GetTypingConfig(),
+		), false
+	}
+	pp := prettyprint.NewPrettyPrinter(ppCtx)
+	ppPlaceholder := prettyprint.NewPrettyPrinter(ppCtx)
+	requiredOnly := commentDirectives != nil && commentDirectives.IsSet("REQUIRED")
+	insertStmt, insertErr := metadatavisitors.ToInsertStatement(
+		node.Columns, meth, svc, extended, pp, ppPlaceholder, requiredOnly)
+	tableName, _ := tbl.GetTableName()
+	if insertErr != nil {
+		return nil, util.GenerateSimpleErroneousOutput(
+			fmt.Errorf("error creating insert statement for %s: %w", tableName, insertErr),
+			handlerCtx.GetTypingConfig(),
+		), false
+	}
+	stmtStr := fmt.Sprintf(insertStmt, tableName)
+	return map[string]map[string]interface{}{
+		"1": {
+			"insert_statement": stmtStr,
+		},
+	}, nil, true
+}
+
+// buildVersionShowOutput renders the SHOW VERSION result. Extracted so that
+// NewShowInstructionExecutor stays under the gocyclo threshold.
+func buildVersionShowOutput(extended bool) ([]string, map[string]map[string]interface{}) {
+	bi := buildinfo.Get()
+	if extended {
+		return []string{"version", "commit", "build_date", "platform"},
+			map[string]map[string]interface{}{
+				"1": {
+					"version":    bi.GetSemVersion(),
+					"commit":     bi.GetShortCommitSHA(),
+					"build_date": bi.GetDate(),
+					"platform":   bi.GetPlatform(),
+				},
+			}
+	}
+	return []string{"version"},
+		map[string]map[string]interface{}{
+			"1": {"version": bi.GetSemVersion()},
+		}
 }
 
 //nolint:errcheck // future proofing
@@ -439,6 +482,41 @@ func NewDescribeTableInstructionExecutor(
 			util.DescribeRowSort,
 			err,
 			nil,
+			handlerCtx.GetTypingConfig(),
+		),
+	)
+}
+
+func NewDescribeMethodInstructionExecutor(
+	handlerCtx handler.HandlerContext,
+	rsc formulation.Resource,
+	methodName string,
+	extended bool,
+) internaldto.ExecutorOutput {
+	mi, err := formulation.IntrospectMethod(rsc, methodName, extended)
+	if err != nil {
+		return internaldto.NewErroneousExecutorOutput(err)
+	}
+	columnOrder := []string{"name", "type", "param_type", "shape"}
+	if extended {
+		columnOrder = append(columnOrder, "description")
+	}
+	rows := make(map[string]map[string]interface{})
+	for i, f := range mi.GetFields() {
+		row := map[string]interface{}{
+			"name":       f.GetName(),
+			"type":       f.GetType(),
+			"param_type": string(f.GetParamType()),
+			"shape":      f.GetShape(),
+		}
+		if extended {
+			row["description"] = f.GetDescription()
+		}
+		rows[fmt.Sprintf("%06d", i)] = row
+	}
+	return util.PrepareResultSet(
+		internaldto.NewPrepareResultSetDTO(
+			nil, rows, columnOrder, nil, nil, nil,
 			handlerCtx.GetTypingConfig(),
 		),
 	)

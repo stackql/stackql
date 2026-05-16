@@ -26,6 +26,7 @@ import (
 	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
+	"github.com/stackql/stackql/internal/stackql/buildinfo"
 	"github.com/stackql/stackql/internal/stackql/config"
 	"github.com/stackql/stackql/internal/stackql/driver"
 	"github.com/stackql/stackql/internal/stackql/entryutil"
@@ -58,7 +59,7 @@ Welcome to the interactive shell for running stackql commands.
 )
 
 func getShellIntroLong() string {
-	return fmt.Sprintf(shellLongStr, SemVersion)
+	return fmt.Sprintf(shellLongStr, buildinfo.Get().GetSemVersion())
 }
 
 func usage(w io.Writer) {

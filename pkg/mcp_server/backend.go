@@ -65,6 +65,10 @@ type Backend interface {
 	// Get detailed information about a table
 	DescribeTable(ctx context.Context, hI dto.HierarchyInput) ([]map[string]any, error)
 
+	// Describe an individual method on a resource (input/output field metadata).
+	// methodPath is "<provider>.<service>.<resource>.<method>".
+	DescribeMethod(ctx context.Context, methodPath string, extended bool) ([]map[string]any, error)
+
 	// Get foreign key information for a table
 	GetForeignKeys(ctx context.Context, hI dto.HierarchyInput) ([]map[string]any, error)
 

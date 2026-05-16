@@ -480,6 +480,8 @@ func (v *standardInternallyRoutableTypingAstVisitor) Visit(node sqlparser.SQLNod
 
 	case *sqlparser.DescribeTable:
 
+	case *sqlparser.DescribeMethod:
+
 	case *sqlparser.OtherAdmin:
 
 	case sqlparser.Comments:

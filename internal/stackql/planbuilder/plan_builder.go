@@ -114,6 +114,8 @@ func (pgb *standardPlanGraphBuilder) createInstructionFor(pbi planbuilderinput.P
 		return pgb.handleDelete(pbi)
 	case *sqlparser.DescribeTable:
 		return pgb.handleDescribe(pbi)
+	case *sqlparser.DescribeMethod:
+		return pgb.handleDescribeMethod(pbi)
 	case *sqlparser.Exec:
 		return pgb.handleExec(pbi)
 	case *sqlparser.Explain:
@@ -379,6 +381,39 @@ func (pgb *standardPlanGraphBuilder) handleDescribe(pbi planbuilderinput.PlanBui
 		//nolint:revive // acceptable for now
 		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
 			return primitivebuilder.NewDescribeTableInstructionExecutor(handlerCtx, md, extended, full)
+		})
+	pgb.planGraphHolder.CreatePrimitiveNode(pr)
+	return nil
+}
+
+func (pgb *standardPlanGraphBuilder) handleDescribeMethod(pbi planbuilderinput.PlanBuilderInput) error {
+	handlerCtx := pbi.GetHandlerCtx()
+	node, ok := pbi.GetDescribeMethod()
+	if !ok {
+		return fmt.Errorf("could not cast node of type '%T' to required DescribeMethod", pbi.GetStatement())
+	}
+	providerName := node.Provider.GetRawVal()
+	serviceName := node.Service.GetRawVal()
+	resourceName := node.Resource.GetRawVal()
+	methodName := node.Method.GetRawVal()
+	if providerName == "" || serviceName == "" || resourceName == "" || methodName == "" {
+		return fmt.Errorf("DESCRIBE METHOD requires <provider>.<service>.<resource>.<method>")
+	}
+	prov, err := handlerCtx.GetProvider(providerName)
+	if err != nil {
+		return err
+	}
+	runtimeCtx := handlerCtx.GetRuntimeContext()
+	rsc, err := prov.GetResource(serviceName, resourceName, runtimeCtx)
+	if err != nil {
+		return err
+	}
+	extended := strings.TrimSpace(strings.ToLower(node.Extended)) == "extended"
+	pr := primitive.NewMetaDataPrimitive(
+		prov,
+		//nolint:revive // acceptable for now
+		func(pc primitive.IPrimitiveCtx) internaldto.ExecutorOutput {
+			return primitivebuilder.NewDescribeMethodInstructionExecutor(handlerCtx, rsc, methodName, extended)
 		})
 	pgb.planGraphHolder.CreatePrimitiveNode(pr)
 	return nil

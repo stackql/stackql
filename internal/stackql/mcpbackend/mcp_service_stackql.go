@@ -10,6 +10,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/stackql/stackql/internal/stackql/acid/tsm_physio"
+	"github.com/stackql/stackql/internal/stackql/buildinfo"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/pkg/mcp_server"
@@ -26,6 +27,40 @@ const (
 	resultsFormatJSON         = "json"
 	unlimitedRowLimit     int = -1
 )
+
+// serverBuildInfo carries build-time and runtime metadata reported via the
+// MCP server_info tool. Constructed once per backend, read by ServerInfo.
+type serverBuildInfo interface {
+	version() string
+	commit() string
+	buildDate() string
+	platform() string
+	transport() string
+}
+
+type immutableServerBuildInfo struct {
+	versionStr   string
+	commitStr    string
+	buildDateStr string
+	platformStr  string
+	transportStr string
+}
+
+func (s *immutableServerBuildInfo) version() string   { return s.versionStr }
+func (s *immutableServerBuildInfo) commit() string    { return s.commitStr }
+func (s *immutableServerBuildInfo) buildDate() string { return s.buildDateStr }
+func (s *immutableServerBuildInfo) platform() string  { return s.platformStr }
+func (s *immutableServerBuildInfo) transport() string { return s.transportStr }
+
+func newServerBuildInfo(bi buildinfo.BuildInfo, transport string) serverBuildInfo {
+	return &immutableServerBuildInfo{
+		versionStr:   bi.GetSemVersion(),
+		commitStr:    bi.GetShortCommitSHA(),
+		buildDateStr: bi.GetDate(),
+		platformStr:  bi.GetPlatform(),
+		transportStr: transport,
+	}
+}
 
 type resultsRenderer interface {
 	RenderAsMarkdown(results []map[string]interface{}) string
@@ -62,6 +97,7 @@ type StackqlInterrogator interface {
 	GetShowMethods(dto.HierarchyInput) (string, error)
 	// GetShowTables(dto.HierarchyInput) (string, error)
 	GetDescribeTable(dto.HierarchyInput) (string, error)
+	GetDescribeMethod(methodPath string, extended bool) (string, error)
 	GetForeignKeys(dto.HierarchyInput) (string, error)
 	FindRelationships(dto.HierarchyInput) (string, error)
 	GetQuery(dto.QueryInput) (string, error)
@@ -165,6 +201,29 @@ func (s *simpleStackqlInterrogator) GetDescribeTable(hI dto.HierarchyInput) (str
 	return sb.String(), nil
 }
 
+func (s *simpleStackqlInterrogator) GetDescribeMethod(methodPath string, extended bool) (string, error) {
+	trimmed := strings.TrimSpace(methodPath)
+	if trimmed == "" {
+		return "", fmt.Errorf("method path not specified")
+	}
+	parts := strings.Split(trimmed, ".")
+	if len(parts) != 4 {
+		return "", fmt.Errorf("method path %q must be of form <provider>.<service>.<resource>.<method>", methodPath)
+	}
+	for i, p := range parts {
+		if strings.TrimSpace(p) == "" {
+			return "", fmt.Errorf("method path %q has empty segment at position %d", methodPath, i)
+		}
+	}
+	sb := strings.Builder{}
+	sb.WriteString("DESCRIBE METHOD ")
+	if extended {
+		sb.WriteString("EXTENDED ")
+	}
+	sb.WriteString(trimmed)
+	return sb.String(), nil
+}
+
 func (s *simpleStackqlInterrogator) GetForeignKeys(hI dto.HierarchyInput) (string, error) {
 	return mcp_server.ExplainerForeignKeyStackql, nil
 }
@@ -235,6 +294,7 @@ type stackqlMCPService struct {
 	handlerCtx      handler.HandlerContext
 	logger          *logrus.Logger
 	renderer        resultsRenderer
+	serverInfo      serverBuildInfo
 }
 
 func NewStackqlMCPBackendService(
@@ -242,6 +302,8 @@ func NewStackqlMCPBackendService(
 	txnOrchestrator tsm_physio.Orchestrator,
 	handlerCtx handler.HandlerContext,
 	logger *logrus.Logger,
+	bi buildinfo.BuildInfo,
+	transport string,
 ) (mcp_server.Backend, error) {
 	if logger == nil {
 		logger = logrus.New()
@@ -260,6 +322,7 @@ func NewStackqlMCPBackendService(
 		logger:          logger,
 		handlerCtx:      handlerCtx,
 		renderer:        NewResultsRenderer(),
+		serverInfo:      newServerBuildInfo(bi, transport),
 	}, nil
 }
 
@@ -281,6 +344,11 @@ func (b *stackqlMCPService) ServerInfo(ctx context.Context, args any) (dto.Serve
 		Name:       "Stackql MCP Service",
 		Info:       "This is the Stackql MCP Service.",
 		IsReadOnly: b.isReadOnly,
+		Version:    b.serverInfo.version(),
+		Commit:     b.serverInfo.commit(),
+		BuildDate:  b.serverInfo.buildDate(),
+		Platform:   b.serverInfo.platform(),
+		Transport:  b.serverInfo.transport(),
 	}, nil
 }
 
@@ -486,6 +554,18 @@ func (b *stackqlMCPService) renderQueryResults(query string, format string, rowL
 
 func (b *stackqlMCPService) DescribeTable(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
 	q, qErr := b.interrogator.GetDescribeTable(hI)
+	if qErr != nil {
+		return nil, qErr
+	}
+	return b.runPreprocessedQueryJSON(ctx, q, unlimitedRowLimit)
+}
+
+func (b *stackqlMCPService) DescribeMethod(
+	ctx context.Context,
+	methodPath string,
+	extended bool,
+) ([]map[string]interface{}, error) {
+	q, qErr := b.interrogator.GetDescribeMethod(methodPath, extended)
 	if qErr != nil {
 		return nil, qErr
 	}

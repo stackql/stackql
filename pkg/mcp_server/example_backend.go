@@ -92,6 +92,10 @@ func (b *ExampleBackend) DescribeTable(ctx context.Context, hI dto.HierarchyInpu
 	return []map[string]any{}, nil
 }
 
+func (b *ExampleBackend) DescribeMethod(ctx context.Context, methodPath string, extended bool) ([]map[string]any, error) {
+	return []map[string]any{}, nil
+}
+
 func (b *ExampleBackend) GetForeignKeys(ctx context.Context, hI dto.HierarchyInput) ([]map[string]any, error) {
 	return []map[string]any{}, nil
 }

@@ -25,63 +25,93 @@ func GetHeirarchyIDsFromParserNode(
 		handlerCtx, node, parserutil.NewParameterMap(), false)
 }
 
+// resolveInitialHIDs dispatches on the supplied AST node to derive
+// hierarchy identifiers, returning either:
+//   - (hIDs, nil, nil) when further view/materialized-view/physical-table
+//     resolution is still required;
+//   - (nil, terminal, nil) when the node has produced a final result that
+//     GetHIDs should return directly (eg subqueries, DescribeTable);
+//   - (nil, nil, err) on any failure.
+//
+//nolint:funlen,gocognit,cyclop // node-shape dispatch is necessarily wide
+func resolveInitialHIDs(
+	handlerCtx handler.HandlerContext,
+	node sqlparser.SQLNode,
+	params parserutil.ColumnKeyedDatastore,
+	viewPermissive bool,
+) (internaldto.HeirarchyIdentifiers, internaldto.HeirarchyIdentifiers, error) {
+	switch n := node.(type) {
+	case *sqlparser.Exec:
+		return internaldto.ResolveMethodTerminalHeirarchyIdentifiers(n.MethodName), nil, nil
+	case *sqlparser.ExecSubquery:
+		return internaldto.ResolveMethodTerminalHeirarchyIdentifiers(n.Exec.MethodName), nil, nil
+	case *sqlparser.Select:
+		currentSvcRsc, err := parserutil.TableFromSelectNode(n)
+		if err != nil {
+			return nil, nil, err
+		}
+		return internaldto.ResolveResourceTerminalHeirarchyIdentifiers(currentSvcRsc), nil, nil
+	case sqlparser.TableName:
+		return internaldto.ResolveResourceTerminalHeirarchyIdentifiers(n), nil, nil
+	case *sqlparser.AliasedTableExpr:
+		switch t := n.Expr.(type) { //nolint:gocritic // this is expressive enough
+		case *sqlparser.Subquery:
+			sq := internaldto.NewSubqueryDTO(n, t)
+			return nil, internaldto.ObtainSubqueryHeirarchyIdentifiers(sq), nil
+		}
+		inner, recErr := GetHIDs(handlerCtx, n.Expr, params, viewPermissive)
+		if recErr != nil {
+			return nil, nil, recErr
+		}
+		return nil, inner, nil
+	case *sqlparser.DescribeTable:
+		inner, recErr := GetHIDs(handlerCtx, n.Table, params, viewPermissive)
+		if recErr != nil {
+			return nil, nil, recErr
+		}
+		return nil, inner, nil
+	case *sqlparser.DescribeMethod:
+		// DescribeMethod is dispatched directly by the plan builder and does not
+		// participate in hierarchy resolution.
+		return nil, nil, fmt.Errorf("DESCRIBE METHOD is dispatched outside of hierarchy resolution")
+	case *sqlparser.Show:
+		switch strings.ToUpper(n.Type) {
+		case "INSERT", "METHODS":
+			return internaldto.ResolveResourceTerminalHeirarchyIdentifiers(n.OnTable), nil, nil
+		default:
+			return nil, nil, fmt.Errorf("cannot resolve taxonomy for SHOW statement of type = '%s'", strings.ToUpper(n.Type))
+		}
+	case *sqlparser.Insert:
+		return internaldto.ResolveResourceTerminalHeirarchyIdentifiers(n.Table), nil, nil
+	case *sqlparser.Update:
+		currentSvcRsc, err := parserutil.ExtractSingleTableFromTableExprs(n.TableExprs)
+		if err != nil {
+			return nil, nil, err
+		}
+		return internaldto.ResolveResourceTerminalHeirarchyIdentifiers(*currentSvcRsc), nil, nil
+	case *sqlparser.Delete:
+		currentSvcRsc, err := parserutil.ExtractSingleTableFromTableExprs(n.TableExprs)
+		if err != nil {
+			return nil, nil, err
+		}
+		return internaldto.ResolveResourceTerminalHeirarchyIdentifiers(*currentSvcRsc), nil, nil
+	default:
+		return nil, nil, fmt.Errorf("cannot resolve taxonomy")
+	}
+}
+
 //nolint:funlen,gocognit // lots of moving parts
 func GetHIDs(
 	handlerCtx handler.HandlerContext,
 	node sqlparser.SQLNode,
 	params parserutil.ColumnKeyedDatastore,
 	viewPermissive bool) (internaldto.HeirarchyIdentifiers, error) {
-	var hIDs internaldto.HeirarchyIdentifiers
-	switch n := node.(type) {
-	case *sqlparser.Exec:
-		hIDs = internaldto.ResolveMethodTerminalHeirarchyIdentifiers(n.MethodName)
-	case *sqlparser.ExecSubquery:
-		hIDs = internaldto.ResolveMethodTerminalHeirarchyIdentifiers(n.Exec.MethodName)
-	case *sqlparser.Select:
-		currentSvcRsc, err := parserutil.TableFromSelectNode(n)
-		if err != nil {
-			return nil, err
-		}
-		hIDs = internaldto.ResolveResourceTerminalHeirarchyIdentifiers(currentSvcRsc)
-	case sqlparser.TableName:
-		hIDs = internaldto.ResolveResourceTerminalHeirarchyIdentifiers(n)
-	case *sqlparser.AliasedTableExpr:
-		switch t := n.Expr.(type) { //nolint:gocritic // this is expressive enough
-		case *sqlparser.Subquery:
-			sq := internaldto.NewSubqueryDTO(n, t)
-			return internaldto.ObtainSubqueryHeirarchyIdentifiers(sq), nil
-		}
-		return GetHIDs(handlerCtx, n.Expr, params, viewPermissive)
-	case *sqlparser.DescribeTable:
-		return GetHIDs(handlerCtx, n.Table, params, viewPermissive)
-	case *sqlparser.Show:
-		switch strings.ToUpper(n.Type) {
-		case "INSERT":
-			hIDs = internaldto.ResolveResourceTerminalHeirarchyIdentifiers(n.OnTable)
-		case "METHODS":
-			hIDs = internaldto.ResolveResourceTerminalHeirarchyIdentifiers(n.OnTable)
-		default:
-			return nil, fmt.Errorf("cannot resolve taxonomy for SHOW statement of type = '%s'", strings.ToUpper(n.Type))
-		}
-	case *sqlparser.Insert:
-		hIDs = internaldto.ResolveResourceTerminalHeirarchyIdentifiers(n.Table)
-	case *sqlparser.Update:
-		currentSvcRsc, err := parserutil.ExtractSingleTableFromTableExprs(n.TableExprs)
-		if err != nil {
-			return nil, err
-		}
-		hIDs = internaldto.ResolveResourceTerminalHeirarchyIdentifiers(*currentSvcRsc)
-	case *sqlparser.Delete:
-		currentSvcRsc, err := parserutil.ExtractSingleTableFromTableExprs(n.TableExprs)
-		if err != nil {
-			return nil, err
-		}
-		hIDs = internaldto.ResolveResourceTerminalHeirarchyIdentifiers(*currentSvcRsc)
-	// case *sqlparser.Subquery:
-	// suq := internaldto
-	// hIDs = internaldto.ObtainSubqueryHeirarchyIdentifiers()
-	default:
-		return nil, fmt.Errorf("cannot resolve taxonomy")
+	hIDs, terminal, err := resolveInitialHIDs(handlerCtx, node, params, viewPermissive)
+	if err != nil {
+		return nil, err
+	}
+	if terminal != nil {
+		return terminal, nil
 	}
 	viewDTO, isView := handlerCtx.GetSQLSystem().GetViewByNameAndParameters(
 		hIDs.GetTableName(), params.GetStringified())
@@ -202,6 +232,8 @@ func GetHeirarchyFromStatement(
 	case *sqlparser.Select:
 		methodAction = "select"
 	case *sqlparser.DescribeTable:
+	case *sqlparser.DescribeMethod:
+		return nil, fmt.Errorf("DESCRIBE METHOD is dispatched outside of hierarchy resolution")
 	case sqlparser.TableName:
 	case *sqlparser.AliasedTableExpr:
 		switch n.Expr.(type) { //nolint:gocritic // this is expressive enough
@@ -322,6 +354,8 @@ func GetHeirarchyFromStatement(
 			retVal.SetMethod(m)
 			retVal.SetMethodStr(mStr)
 			return retVal, nil
+		case *sqlparser.DescribeMethod:
+			return nil, fmt.Errorf("DESCRIBE METHOD is dispatched outside of hierarchy resolution")
 		}
 		if getFirstAvailableMethod {
 			meth, methStr, methodErr = prov.GetFirstMethodForAction( //nolint:staticcheck,wastedassign // acceptable
