@@ -58,7 +58,7 @@ Start MCP Servers
     ...                                   mcp
     ...                                   \-\-mcp.server.type\=http
     ...                                   \-\-mcp.config
-    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9915"}, "enabled_tools": ["greet"] }
+    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9915"}, "enabled_tools": ["server_info"] }
     ...                                   \-\-registry
     ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
     ...                                   \-\-auth
@@ -66,6 +66,18 @@ Start MCP Servers
     ...                                   \-\-tls.allowInsecure
     ...                                   stdout=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Restricted.txt
     ...                                   stderr=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Restricted-stderr.txt
+    Start Process                         ${STACKQL_EXE}
+    ...                                   mcp
+    ...                                   \-\-mcp.server.type\=http
+    ...                                   \-\-mcp.config
+    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9916", "read_only": true} }
+    ...                                   \-\-registry
+    ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
+    ...                                   \-\-auth
+    ...                                   ${AUTH_CFG_STR}
+    ...                                   \-\-tls.allowInsecure
+    ...                                   stdout=${CURDIR}${/}tmp${/}Stackql-MCP-Server-ReadOnly.txt
+    ...                                   stderr=${CURDIR}${/}tmp${/}Stackql-MCP-Server-ReadOnly-stderr.txt
     Sleep         5s
 
 Parse MCP JSON Output
@@ -78,32 +90,17 @@ Parse MCP JSON Output
 Suite Setup     Start MCP Servers
 
 
-*** Test Cases *** 
+*** Test Cases ***
 MCP HTTP Server Run List Tools
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
     Sleep         5s
     ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
     ...                  exec
-    ...                  \-\-client\-type\=http 
+    ...                  \-\-client\-type\=http
     ...                  \-\-url\=http://127.0.0.1:9912
     ...                  stdout=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Run-List-Tools.txt
     ...                  stderr=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Run-List-Tools-stderr.txt
-    Should Contain       ${result.stdout}       Get server information
-    Should Be Equal As Integers    ${result.rc}    0
-
-
-MCP HTTP Server Verify Greeting Tool
-    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
-    Sleep         5s
-    ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
-    ...                  exec
-    ...                  \-\-client\-type\=http 
-    ...                  \-\-url\=http://127.0.0.1:9912
-    ...                  \-\-exec.action      greet 
-    ...                  \-\-exec.args        {"name": "JOE BLOW"}
-    ...                  stdout=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Verify-Greeting-Tool.txt
-    ...                  stderr=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Verify-Greeting-Tool-stderr.txt
-    Should Contain       ${result.stdout}       JOE BLOW
+    Should Contain       ${result.stdout}       Get server identity
     Should Be Equal As Integers    ${result.rc}    0
 
 
@@ -112,9 +109,9 @@ MCP HTTP Server List Providers Tool
     Sleep         5s
     ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
     ...                  exec
-    ...                  \-\-client\-type\=http 
+    ...                  \-\-client\-type\=http
     ...                  \-\-url\=http://127.0.0.1:9912
-    ...                  \-\-exec.action      list_providers 
+    ...                  \-\-exec.action      list_providers
     ...                  stdout=${CURDIR}${/}tmp${/}MCP-HTTP-Server-List-Providers.txt
     ...                  stderr=${CURDIR}${/}tmp${/}MCP-HTTP-Server-List-Providers-stderr.txt
     Should Contain       ${result.stdout}       local_openssl
@@ -126,7 +123,7 @@ MCP HTTP Server List Services Tool
     Sleep         5s
     ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
     ...                  exec
-    ...                  \-\-client\-type\=http 
+    ...                  \-\-client\-type\=http
     ...                  \-\-url\=http://127.0.0.1:9912
     ...                  \-\-exec.action      list_services
     ...                  \-\-exec.args        {"provider": "google"}
@@ -140,7 +137,7 @@ MCP HTTP Server List Resources Tool
     Sleep         5s
     ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
     ...                  exec
-    ...                  \-\-client\-type\=http 
+    ...                  \-\-client\-type\=http
     ...                  \-\-url\=http://127.0.0.1:9912
     ...                  \-\-exec.action      list_resources
     ...                  \-\-exec.args        {"provider": "google", "service": "cloudresourcemanager"}
@@ -154,28 +151,13 @@ MCP HTTP Server List Methods Tool
     Sleep         5s
     ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
     ...                  exec
-    ...                  \-\-client\-type\=http 
+    ...                  \-\-client\-type\=http
     ...                  \-\-url\=http://127.0.0.1:9912
     ...                  \-\-exec.action      list_methods
     ...                  \-\-exec.args        {"provider": "google", "service": "compute", "resource": "instances"}
     ...                  stdout=${CURDIR}${/}tmp${/}MCP-HTTP-Server-List-Methods.txt
     ...                  stderr=${CURDIR}${/}tmp${/}MCP-HTTP-Server-List-Methods-stderr.txt
     Should Contain       ${result.stdout}       getScreenshot
-    Should Be Equal As Integers    ${result.rc}    0
-
-MCP HTTP Server Show Version SQL
-    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
-    Sleep         5s
-    ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
-    ...                  exec
-    ...                  \-\-client\-type\=http
-    ...                  \-\-url\=http://127.0.0.1:9912
-    ...                  \-\-exec.action      query_v2
-    ...                  \-\-exec.args        {"sql": "SHOW VERSION;"}
-    ...                  stdout=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Show-Version.txt
-    ...                  stderr=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Show-Version-stderr.txt
-    Should Contain       ${result.stdout}       version
-    Should Match Regexp    ${result.stdout}       \\d+\\.\\d+\\.\\d+
     Should Be Equal As Integers    ${result.rc}    0
 
 MCP HTTP Server Info Includes Version
@@ -191,6 +173,8 @@ MCP HTTP Server Info Includes Version
     ...                  stderr=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Info-stderr.txt
     Should Contain       ${result.stdout}       version
     Should Contain       ${result.stdout}       transport
+    Should Contain       ${result.stdout}       sql_backend
+    Should Contain       ${result.stdout}       provider_registry
     Should Match Regexp    ${result.stdout}       \\d+\\.\\d+\\.\\d+
     Should Be Equal As Integers    ${result.rc}    0
 
@@ -238,9 +222,9 @@ MCP HTTP Server Query Tool
     Sleep         5s
     ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
     ...                  exec
-    ...                  \-\-client\-type\=http 
+    ...                  \-\-client\-type\=http
     ...                  \-\-url\=http://127.0.0.1:9912
-    ...                  \-\-exec.action      query_v2
+    ...                  \-\-exec.action      run_select_query
     ...                  \-\-exec.args        {"sql": "SELECT assetType, count(*) as asset_count FROM google.cloudasset.assets WHERE parentType \= 'projects' and parent \= 'testing-project' GROUP BY assetType order by count(*) desc, assetType desc;"}
     ...                  stdout=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Query-Tool.txt
     ...                  stderr=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Query-Tool-stderr.txt
@@ -253,9 +237,9 @@ Concurrent psql and MCP HTTP Server Query Tool
     Sleep         5s
     ${mcp_client_result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
     ...                  exec
-    ...                  \-\-client\-type\=http 
+    ...                  \-\-client\-type\=http
     ...                  \-\-url\=http://127.0.0.1:9913
-    ...                  \-\-exec.action      query_v2
+    ...                  \-\-exec.action      run_select_query
     ...                  \-\-exec.args        {"sql": "SELECT assetType, count(*) as asset_count FROM google.cloudasset.assets WHERE parentType \= 'projects' and parent \= 'testing-project' GROUP BY assetType order by count(*) desc, assetType desc;"}
     ...                  stdout=${CURDIR}${/}tmp${/}Concurrent-psql-and-MCP-HTTP-Server-Query-Tool.txt
     ...                  stderr=${CURDIR}${/}tmp${/}Concurrent-psql-and-MCP-HTTP-Server-Query-Tool-stderr.txt
@@ -280,9 +264,9 @@ Concurrent psql and Reverse Proxy MCP HTTP Server Query Tool
     Sleep         5s
     ${mcp_client_result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
     ...                  exec
-    ...                  \-\-client\-type\=http 
+    ...                  \-\-client\-type\=http
     ...                  \-\-url\=http://127.0.0.1:9914
-    ...                  \-\-exec.action      query_v2
+    ...                  \-\-exec.action      run_select_query
     ...                  \-\-exec.args        {"sql": "SELECT assetType, count(*) as asset_count FROM google.cloudasset.assets WHERE parentType \= 'projects' and parent \= 'testing-project' GROUP BY assetType order by count(*) desc, assetType desc;"}
     ...                  stdout=${CURDIR}${/}tmp${/}Concurrent-psql-and-Reverse-Proxy-MCP-HTTP-Server-Query-Tool.txt
     ...                  stderr=${CURDIR}${/}tmp${/}Concurrent-psql-and-Reverse-Proxy-MCP-HTTP-Server-Query-Tool-stderr.txt
@@ -307,10 +291,10 @@ Concurrent psql and Reverse Proxy MCP HTTPS Server Query Tool
     Sleep         5s
     ${mcp_client_result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
     ...                  exec
-    ...                  \-\-client\-type\=http 
+    ...                  \-\-client\-type\=http
     ...                  \-\-url\=https://127.0.0.1:9004
     ...                  \-\-client\-cfg      { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
-    ...                  \-\-exec.action      query_v2
+    ...                  \-\-exec.action      run_select_query
     ...                  \-\-exec.args        {"sql": "SELECT assetType, count(*) as asset_count FROM google.cloudasset.assets WHERE parentType \= 'projects' and parent \= 'testing-project' GROUP BY assetType order by count(*) desc, assetType desc;"}
     ...                  stdout=${CURDIR}${/}tmp${/}Concurrent-psql-and-Reverse-Proxy-MCP-HTTPS-Server-Query-Tool.txt
     ...                  stderr=${CURDIR}${/}tmp${/}Concurrent-psql-and-Reverse-Proxy-MCP-HTTPS-Server-Query-Tool-stderr.txt
@@ -330,24 +314,6 @@ Concurrent psql and Reverse Proxy MCP HTTPS Server Query Tool
     Should Contain       ${psql_client_result.stdout}       cloudkms.googleapis.com
     Should Be Equal As Integers    ${psql_client_result.rc}    0
 
-MCP HTTPS Server JSON DTO Greet
-    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
-    ${greet}=    Run Process
-    ...    ${STACKQL_MCP_CLIENT_EXE}
-    ...    exec
-    ...    \-\-client\-type\=http
-    ...    \-\-url\=https://127.0.0.1:9004
-    ...    \-\-client\-cfg
-    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
-    ...    \-\-exec.action
-    ...    greet
-    ...    \-\-exec.args
-    ...    {"name":"JSON TEST"}
-    ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-greet.txt
-    ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-greet-stderr.txt
-    Should Be Equal As Integers    ${greet.rc}    0
-    Should Contain    ${greet.stdout}    Hi JSON TEST
-
 MCP HTTPS Server JSON DTO Server Info
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
     ${srvinfo}=    Run Process
@@ -363,92 +329,11 @@ MCP HTTPS Server JSON DTO Server Info
     ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-server-info-stderr.txt
     Should Be Equal As Integers    ${srvinfo.rc}    0
     ${srvinfo_obj}=    Parse MCP JSON Output    ${srvinfo.stdout}
-    Dictionary Should Contain Key    ${srvinfo_obj}    name
-    Dictionary Should Contain Key    ${srvinfo_obj}    info
     Dictionary Should Contain Key    ${srvinfo_obj}    is_read_only
-
-MCP HTTPS Server JSON DTO DB Identity
-    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
-    ${dbident}=    Run Process
-    ...    ${STACKQL_MCP_CLIENT_EXE}
-    ...    exec
-    ...    \-\-client\-type\=http
-    ...    \-\-url\=https://127.0.0.1:9004
-    ...    \-\-client\-cfg
-    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
-    ...    \-\-exec.action
-    ...    db_identity
-    ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-db-identity.txt
-    ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-db-identity-stderr.txt
-    Should Be Equal As Integers    ${dbident.rc}    0
-    ${dbident_obj}=    Parse MCP JSON Output    ${dbident.stdout}
-    Dictionary Should Contain Key    ${dbident_obj}    identity
-
-MCP HTTPS Server JSON DTO Query V3 JSON
-    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
-    ${query_json}=    Run Process
-    ...    ${STACKQL_MCP_CLIENT_EXE}
-    ...    exec
-    ...    \-\-client\-type\=http
-    ...    \-\-url\=https://127.0.0.1:9004
-    ...    \-\-client\-cfg
-    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
-    ...    \-\-exec.action
-    ...    query_v3
-    ...    \-\-exec.args
-    ...    {"sql":"show providers;","format":"json"}
-    ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-query-v3-json.txt
-    ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-query-v3-json-stderr.txt
-    Should Be Equal As Integers    ${query_json.rc}    0
-    ${query_obj}=    Parse MCP JSON Output    ${query_json.stdout}
-    Should Be Equal    ${query_obj["format"]}    json
-    Dictionary Should Contain Key    ${query_obj}    rows
-    ${row_count}=    Get From Dictionary    ${query_obj}    row_count
-    Should Be True    ${row_count} > 0
-
-MCP HTTPS Server JSON DTO Meta Get Foreign Keys
-    [Documentation]     Future proofing: foreign key discovery not yet implemented; placeholder.
-    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
-    ${meta_fk}=    Run Process
-    ...    ${STACKQL_MCP_CLIENT_EXE}
-    ...    exec
-    ...    \-\-client\-type\=http
-    ...    \-\-url\=https://127.0.0.1:9004
-    ...    \-\-client\-cfg
-    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
-    ...    \-\-exec.action
-    ...    get_foreign_keys
-    ...    \-\-exec.args
-    ...    {"provider":"google","service":"cloudresourcemanager","resource":"projects"}
-    ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-meta-get-foreign-keys.txt
-    ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-meta-get-foreign-keys-stderr.txt
-    Should Be Equal As Integers    ${meta_fk.rc}    0
-    Should Contain    ${meta_fk.stdout}    not implemented
-
-MCP HTTPS Server JSON DTO Meta Find Relationships
-    [Documentation]     Future proofing: relationship graph inference pending; placeholder output.
-    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
-    ${meta_rels}=    Run Process
-    ...    ${STACKQL_MCP_CLIENT_EXE}
-    ...    exec
-    ...    \-\-client\-type\=http
-    ...    \-\-url\=https://127.0.0.1:9004
-    ...    \-\-client\-cfg
-    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
-    ...    \-\-exec.action
-    ...    find_relationships
-    ...    \-\-exec.args
-    ...    {"provider":"google","service":"cloudresourcemanager","resource":"projects"}
-    ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-meta-find-relationships.txt
-    ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-meta-find-relationships-stderr.txt
-    Should Be Equal As Integers    ${meta_rels.rc}    0
-    ${meta_rels_obj}=    Parse MCP JSON Output    ${meta_rels.stdout}
-    Dictionary Should Contain Key    ${meta_rels_obj}    text
 
 
 MCP HTTPS List Providers Canonical
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
-    # Future proofing: raw text format reserved; may gain structured hints later.
     ${meta_rels}=    Run Process
     ...    ${STACKQL_MCP_CLIENT_EXE}
     ...    exec
@@ -468,7 +353,6 @@ MCP HTTPS List Providers Canonical
 
 MCP HTTPS List Services Canonical
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
-    # Future proofing: raw text format reserved; may gain structured hints later.
     ${meta_rels}=    Run Process
     ...    ${STACKQL_MCP_CLIENT_EXE}
     ...    exec
@@ -488,7 +372,6 @@ MCP HTTPS List Services Canonical
 
 MCP HTTPS List Resources Canonical
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
-    # Future proofing: raw text format reserved; may gain structured hints later.
     ${meta_rels}=    Run Process
     ...    ${STACKQL_MCP_CLIENT_EXE}
     ...    exec
@@ -509,7 +392,6 @@ MCP HTTPS List Resources Canonical
 
 MCP HTTPS List Methods Canonical
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
-    # Future proofing: raw text format reserved; may gain structured hints later.
     ${meta_rels}=    Run Process
     ...    ${STACKQL_MCP_CLIENT_EXE}
     ...    exec
@@ -528,9 +410,8 @@ MCP HTTPS List Methods Canonical
     Should Not Be Empty        ${meta_rels_obj['rows']}
 
 
-MCP HTTPS Describe Table Canonical
+MCP HTTPS Describe Resource Canonical
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
-    # Future proofing: raw text format reserved; may gain structured hints later.
     ${meta_rels}=    Run Process
     ...    ${STACKQL_MCP_CLIENT_EXE}
     ...    exec
@@ -539,18 +420,17 @@ MCP HTTPS Describe Table Canonical
     ...    \-\-client\-cfg
     ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
     ...    \-\-exec.action
-    ...    describe_table
+    ...    describe_resource
     ...    \-\-exec.args
     ...    {"provider": "google", "service": "compute", "resource": "networks"}
-    ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-describe-table-canonical.txt
-    ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-describe-table-canonical-stderr.txt
+    ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-describe-resource-canonical.txt
+    ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-describe-resource-canonical-stderr.txt
     ${meta_rels_obj}=    Parse MCP JSON Output    ${meta_rels.stdout}
     Dictionary Should Contain Key    ${meta_rels_obj}    rows
     Should Not Be Empty        ${meta_rels_obj['rows']}
 
-MCP HTTPS Server Validate Canonical
+MCP HTTPS Describe Method Canonical
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
-    # Future proofing: raw text format reserved; may gain structured hints later.
     ${meta_rels}=    Run Process
     ...    ${STACKQL_MCP_CLIENT_EXE}
     ...    exec
@@ -559,7 +439,28 @@ MCP HTTPS Server Validate Canonical
     ...    \-\-client\-cfg
     ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
     ...    \-\-exec.action
-    ...    validate_query_json_v2
+    ...    describe_method
+    ...    \-\-exec.args
+    ...    {"provider": "google", "service": "compute", "resource": "networks", "method": "get"}
+    ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-describe-method-canonical.txt
+    ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-describe-method-canonical-stderr.txt
+    ${meta_rels_obj}=    Parse MCP JSON Output    ${meta_rels.stdout}
+    Dictionary Should Contain Key    ${meta_rels_obj}    rows
+    Should Not Be Empty        ${meta_rels_obj['rows']}
+    ${project_rows}=    Evaluate    [r for r in $meta_rels_obj['rows'] if r.get('name') == 'project']
+    Should Not Be Empty    ${project_rows}    describe_method rows should contain an entry with name='project'
+
+MCP HTTPS Server Validate Canonical
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${meta_rels}=    Run Process
+    ...    ${STACKQL_MCP_CLIENT_EXE}
+    ...    exec
+    ...    \-\-client\-type\=http
+    ...    \-\-url\=https://127.0.0.1:9004
+    ...    \-\-client\-cfg
+    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
+    ...    \-\-exec.action
+    ...    validate_select_query
     ...    \-\-exec.args
     ...    {"sql":"select * from google.storage.buckets where project \= 'stackql\-demo';"}
     ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-validate-canonical.txt
@@ -570,7 +471,6 @@ MCP HTTPS Server Validate Canonical
 
 MCP HTTPS Server Validate Canonical Negative
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
-    # Future proofing: raw text format reserved; may gain structured hints later.
     ${meta_rels}=    Run Process
     ...    ${STACKQL_MCP_CLIENT_EXE}
     ...    exec
@@ -579,7 +479,7 @@ MCP HTTPS Server Validate Canonical Negative
     ...    \-\-client\-cfg
     ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
     ...    \-\-exec.action
-    ...    validate_query_json_v2
+    ...    validate_select_query
     ...    \-\-exec.args
     ...    {"sql":"select * from google.storage.buckets2 where project \= 'stackql\-demo';"}
     ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-validate-canonical-negative.txt
@@ -590,7 +490,6 @@ MCP HTTPS Server Validate Canonical Negative
 
 MCP HTTPS Server Query Canonical
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
-    # Future proofing: raw text format reserved; may gain structured hints later.
     ${meta_rels}=    Run Process
     ...    ${STACKQL_MCP_CLIENT_EXE}
     ...    exec
@@ -599,7 +498,7 @@ MCP HTTPS Server Query Canonical
     ...    \-\-client\-cfg
     ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
     ...    \-\-exec.action
-    ...    query_json_v2
+    ...    run_select_query
     ...    \-\-exec.args
     ...    {"sql":"select name, id from google.storage.buckets where project \= 'stackql\-demo';"}
     ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-Query-canonical.txt
@@ -610,7 +509,6 @@ MCP HTTPS Server Query Canonical
 
 MCP HTTPS Server Exec Query Canonical
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
-    # Future proofing: raw text format reserved; may gain structured hints later.
     ${meta_rels}=    Run Process
     ...    ${STACKQL_MCP_CLIENT_EXE}
     ...    exec
@@ -619,7 +517,7 @@ MCP HTTPS Server Exec Query Canonical
     ...    \-\-client\-cfg
     ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
     ...    \-\-exec.action
-    ...    exec_query_json_v2
+    ...    run_mutation_query
     ...    \-\-exec.args
     ...    {"sql":"delete from google.compute.firewalls where project \= 'mutable\-project' and firewall \= 'deletable\-firewall';"}
     ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-Exec-Query-canonical.txt
@@ -629,7 +527,7 @@ MCP HTTPS Server Exec Query Canonical
 
 MCP HTTP Server Restricted Tools Allowlist
     [Documentation]    Verify enabled_tools in mcp.config restricts which tools are published.
-    ...                Server at 9915 is started with enabled_tools=["greet"]; only greet should be callable.
+    ...                Server at 9915 is started with enabled_tools=["server_info"]; only server_info should be callable.
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
     Sleep         5s
     ${list_result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
@@ -639,20 +537,20 @@ MCP HTTP Server Restricted Tools Allowlist
     ...                  stdout=${CURDIR}${/}tmp${/}MCP-Restricted-list-tools.txt
     ...                  stderr=${CURDIR}${/}tmp${/}MCP-Restricted-list-tools-stderr.txt
     Should Be Equal As Integers    ${list_result.rc}    0
-    Should Contain        ${list_result.stdout}    greet
-    Should Not Contain    ${list_result.stdout}    server_info
+    Should Contain        ${list_result.stdout}    server_info
     Should Not Contain    ${list_result.stdout}    list_providers
-    Should Not Contain    ${list_result.stdout}    query_v2
-    ${greet_result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    Should Not Contain    ${list_result.stdout}    run_select_query
+    ${info_result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
     ...                  exec
     ...                  \-\-client\-type\=http
     ...                  \-\-url\=http://127.0.0.1:9915
-    ...                  \-\-exec.action      greet
-    ...                  \-\-exec.args        {"name": "RESTRICTED USER"}
-    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Restricted-greet.txt
-    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Restricted-greet-stderr.txt
-    Should Be Equal As Integers    ${greet_result.rc}    0
-    Should Contain    ${greet_result.stdout}    RESTRICTED USER
+    ...                  \-\-exec.action      server_info
+    ...                  \-\-exec.args        {}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Restricted-server-info.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Restricted-server-info-stderr.txt
+    Should Be Equal As Integers    ${info_result.rc}    0
+    Should Contain    ${info_result.stdout}    version
+    Should Match Regexp    ${info_result.stdout}    \\d+\\.\\d+\\.\\d+
     ${denied_result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
     ...                  exec
     ...                  \-\-client\-type\=http
@@ -662,13 +560,66 @@ MCP HTTP Server Restricted Tools Allowlist
     ...                  stderr=${CURDIR}${/}tmp${/}MCP-Restricted-list-providers-stderr.txt
     Should Not Be Equal As Integers    ${denied_result.rc}    0
     Should Contain    ${denied_result.stderr}    unknown tool
-    ${denied_query}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+
+MCP HTTPS Run Lifecycle Operation Canonical
+    [Documentation]    Positive path: run_lifecycle_operation executes an EXEC successfully and returns messages + timestamp.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${lifecycle}=    Run Process
+    ...    ${STACKQL_MCP_CLIENT_EXE}
+    ...    exec
+    ...    \-\-client\-type\=http
+    ...    \-\-url\=https://127.0.0.1:9004
+    ...    \-\-client\-cfg
+    ...    { "apply_tls_globally": true, "insecure_skip_verify": true, "ca_file": "test/server/mtls/credentials/pg_server_cert.pem", "promote_leaf_to_ca": true }
+    ...    \-\-exec.action
+    ...    run_lifecycle_operation
+    ...    \-\-exec.args
+    ...    {"sql":"EXEC aws.transfer.servers.stop_server @region \= 'ap\-southeast\-2' @@json\='{ \"ServerId\": \"s\-0000000001\" }';"}
+    ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-run-lifecycle.txt
+    ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-run-lifecycle-stderr.txt
+    Should Be Equal As Integers    ${lifecycle.rc}    0
+    ${lifecycle_obj}=    Parse MCP JSON Output    ${lifecycle.stdout}
+    Dictionary Should Contain Key    ${lifecycle_obj}    messages
+    Dictionary Should Contain Key    ${lifecycle_obj}    timestamp
+
+MCP HTTP Read Only Server Info Flag
+    [Documentation]    The read-only server at 9916 must report is_read_only=true via server_info.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${srvinfo}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
     ...                  exec
     ...                  \-\-client\-type\=http
-    ...                  \-\-url\=http://127.0.0.1:9915
-    ...                  \-\-exec.action      query_v2
-    ...                  \-\-exec.args        {"sql": "select 1;"}
-    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Restricted-query.txt
-    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Restricted-query-stderr.txt
-    Should Not Be Equal As Integers    ${denied_query.rc}    0
-    Should Contain    ${denied_query.stderr}    unknown tool
+    ...                  \-\-url\=http://127.0.0.1:9916
+    ...                  \-\-exec.action      server_info
+    ...                  \-\-exec.args        {}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-ReadOnly-server-info.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-ReadOnly-server-info-stderr.txt
+    Should Be Equal As Integers    ${srvinfo.rc}    0
+    ${srvinfo_obj}=    Parse MCP JSON Output    ${srvinfo.stdout}
+    Dictionary Should Contain Key    ${srvinfo_obj}    is_read_only
+    Should Be True    ${srvinfo_obj}[is_read_only]
+
+MCP HTTPS Run Mutation Refused In Read Only
+    [Documentation]    A read-only server must refuse run_mutation_query and run_lifecycle_operation.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${mutation_result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9916
+    ...                  \-\-exec.action      run_mutation_query
+    ...                  \-\-exec.args        {"sql":"delete from google.compute.firewalls where project \= 'mutable\-project' and firewall \= 'deletable\-firewall';"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-ReadOnly-mutation.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-ReadOnly-mutation-stderr.txt
+    Should Not Be Equal As Integers    ${mutation_result.rc}    0
+    Should Contain    ${mutation_result.stderr}    read-only
+    ${lifecycle_result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9916
+    ...                  \-\-exec.action      run_lifecycle_operation
+    ...                  \-\-exec.args        {"sql":"EXEC google.compute.instances.start @project \= 'mutable\-project', @zone \= 'us\-central1\-a', @instance \= 'demo';"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-ReadOnly-lifecycle.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-ReadOnly-lifecycle-stderr.txt
+    Should Not Be Equal As Integers    ${lifecycle_result.rc}    0
+    Should Contain    ${lifecycle_result.stderr}    read-only

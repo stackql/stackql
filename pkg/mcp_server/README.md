@@ -199,16 +199,40 @@ logging:
   enable_request_logging: false
 ```
 
-### Restricting Published Tools
+### Published Tools
 
-The top-level `enabled_tools` field on `Config` controls which MCP tools the server publishes. It is an allowlist of tool names.
+The server publishes the following 11 tools. Each tool's rendered output is a markdown table (uniform multi-row results) or a markdown KV record (sparse / single-record / mixed-shape results). Every tool also returns a typed structured DTO for programmatic clients.
 
-- **Omitted, `null`, or empty list** — every built-in tool is registered. This is the default and matches the historical behaviour.
-- **Populated list** — only the named tools are registered. Any other tool is absent from `tools/list` and `tools/call` returns an `unknown tool` error.
+| Tool | Renderer | Description |
+|---|---|---|
+| `server_info` | KV | Server identity and runtime: stackql version, backing SQL engine, provider registry location, read-only flag. Call once at session start. |
+| `list_providers` | Table | Available cloud/SaaS providers (top of the hierarchy). No inputs. |
+| `list_services` | Table | Services under a provider. Requires `provider`. |
+| `list_resources` | Table | Resources under a `provider`.`service`. Requires `provider` and `service`. |
+| `list_methods` | Table | Access methods (HTTP operations) for a resource. Call before writing any query. Requires `provider`, `service`, `resource`. |
+| `describe_resource` | KV | Output fields for a resource's primary read method. Requires `provider`, `service`, `resource`. |
+| `describe_method` | KV | Full I/O contract for one method. Requires `provider`, `service`, `resource`, `method`. |
+| `validate_select_query` | KV | Parse and plan a SELECT without executing. Returns `{valid, errors}`. SELECT only. |
+| `run_select_query` | Table | Execute a SELECT. Returns `{rows}`. Reads only. |
+| `run_mutation_query` | KV | Execute INSERT/UPDATE/REPLACE/DELETE against the provider. **Real side effects.** Returns `{messages, timestamp}`. Refused in read-only mode. |
+| `run_lifecycle_operation` | KV | Execute a stackql `EXEC` lifecycle operation. Returns `{messages, timestamp}`. Refused in read-only mode. |
 
-This is enforced at registration time in `pkg/mcp_server/server.go` via the `addToolIfEnabled` helper, which consults `Config.IsToolEnabled(name)` before delegating to `mcp.AddTool`. There is no runtime cost for tools that are not enabled — they are never bound to the server.
+### Published Prompts
 
-JSON example — a single-purpose server that exposes only the liveness check:
+The server publishes one static prompt:
+
+- `write_safe_select` — guidance for writing safe SELECT queries against stackql resources. The prompt body explains how to use `SHOW METHODS IN <provider>.<service>.<resource>` to discover the best read method and the required `WHERE` parameters.
+
+### Restricting Published Tools and Prompts
+
+The top-level `enabled_tools` and `enabled_prompts` fields on `Config` are independent allowlists.
+
+- **Omitted, `null`, or empty list** — every built-in tool (or prompt) is registered. This is the default.
+- **Populated list** — only the named items are registered. Any other tool or prompt is absent from `tools/list` / `prompts/list` and the corresponding `tools/call` or `prompts/get` returns an `unknown tool`/`unknown prompt` error.
+
+Enforcement happens at registration time in `pkg/mcp_server/server.go` via the `addToolIfEnabled` and `addPromptIfEnabled` helpers, which consult `Config.IsToolEnabled(name)` / `Config.IsPromptEnabled(name)` before delegating to the SDK. There is no runtime cost for items that are not enabled — they are never bound to the server.
+
+JSON example — a single-purpose server that exposes only `server_info`:
 
 ```json
 {
@@ -216,11 +240,11 @@ JSON example — a single-purpose server that exposes only the liveness check:
     "transport": "http",
     "address": "127.0.0.1:9915"
   },
-  "enabled_tools": ["greet"]
+  "enabled_tools": ["server_info"]
 }
 ```
 
-When the server is launched via the `stackql mcp` (or `stackql srv --mcp.server.type=...`) command, this field is parsed from the same `--mcp.config` JSON blob as the rest of the configuration — no additional flag is required.  For example, `stackql mcp --mcp.config='{"server": { "transport": "http",    "address": "127.0.0.1:9915"}, "enabled_tools": ["greet"]}'`.
+When the server is launched via the `stackql mcp` (or `stackql srv --mcp.server.type=...`) command, these fields are parsed from the same `--mcp.config` JSON blob as the rest of the configuration — no additional flag is required.  For example, `stackql mcp --mcp.config='{"server": { "transport": "http",    "address": "127.0.0.1:9915"}, "enabled_tools": ["server_info"]}'`.
 
 ## MCP Protocol Support
 

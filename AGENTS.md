@@ -90,3 +90,46 @@ If you are unsure whether a given route has consecutive path parameters, encodin
 Many RESTful routing libraries (like gorilla/mux) treat slashes as path separators. PR #648 relaxes this for the single-parameter case, but the consecutive-parameter case remains ambiguous to the router, so encoding is still needed there.
 
 Refer to this section whenever you encounter issues with resource keys containing slashes or hierarchical identifiers.
+
+> as a general rule try to touch as few files as necessary for a PR, unless there is benefit in doing otherwise
+
+
+## Code-review constraints
+
+These are non-negotiable design rules surfaced in past PR reviews on this repo. Apply them up-front rather than waiting for a reviewer to flag them.
+
+### Data-carrier types: private interface + constructor-only mutation
+
+If a type is a data-transfer carrier inside a package - written once at construction, read many times, no serde, no callers outside the package mutating it - it must be:
+
+- An unexported interface (e.g. `serverBuildInfo`, not `ServerBuildInfo`).
+- Implemented by an unexported struct.
+- Constructed by an unexported constructor (`newServerBuildInfo(...)`) that is the only place fields are written.
+- Exposed through getter methods on the interface, not exported struct fields.
+
+Public exported structs with mutable fields are reserved for types that legitimately cross the package boundary as values (serialised DTOs, request/response payloads exposed to callers, etc.). When in doubt, default to private interface.
+
+### Build-time identifiers (`internal/stackql/buildinfo`)
+
+- The public surface is the `BuildInfo` interface, `NewBuildInfo` constructor, and `Init`/`Get` accessor - nothing else.
+- Do not reintroduce package-level `BuildMajorVersion` / `SemVersion` etc. globals in the `buildinfo` package. They were removed deliberately.
+- The `-ldflags -X` link-time targets live in `internal/stackql/cmd` (where the linker has always pointed). Those package-level strings in `cmd` are the *only* place build identifiers are mutable, and only the linker writes them. `cmd/root.go`'s `init()` reads them once and calls `buildinfo.Init(...)`; everything else reads via `buildinfo.Get()`.
+
+### One `init()` per file
+
+Never add a second `init()` function to a file that already has one. Fold the new logic into the existing `init()`. Multiple `init()`s per file are a lint failure and a readability hazard.
+
+### Test assets and `stackql_context.py`
+
+- Do not add new entries to `test/python/stackql_test_tooling/stackql_context.py` for small or single-use query strings.
+- Inline the SQL directly in the robot `.robot` scenario instead.
+- The `stackql_context.py` file is legacy and intended to be slimmed down over time, not grown.
+- Reserve it for queries that are genuinely shared across many scenarios and worth the centralisation cost.
+
+### When in doubt
+
+If a reviewer pushed back on something in a previous PR, the same critique will land on the next PR if you reproduce the pattern. Surface design choices about mutability, scope, and asset placement in the PR description so they get debated once, not relitigated commit by commit.
+
+### Touch as few files as possible
+
+As a general rule, aim to touch as few files as necessary for a PR, unless there is benefit in doing otherwise.

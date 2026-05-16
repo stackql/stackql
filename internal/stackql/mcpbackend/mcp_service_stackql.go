@@ -2,11 +2,9 @@ package mcpbackend
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
-	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/stackql/stackql/internal/stackql/acid/tsm_physio"
@@ -15,7 +13,6 @@ import (
 	"github.com/stackql/stackql/internal/stackql/internal_data_transfer/internaldto"
 	"github.com/stackql/stackql/pkg/mcp_server"
 	"github.com/stackql/stackql/pkg/mcp_server/dto"
-	"github.com/stackql/stackql/pkg/presentation"
 )
 
 var (
@@ -23,91 +20,68 @@ var (
 )
 
 const (
-	resultsFormatMarkdown     = "markdown"
-	resultsFormatJSON         = "json"
-	unlimitedRowLimit     int = -1
+	unlimitedRowLimit int = -1
 )
 
-// serverBuildInfo carries build-time and runtime metadata reported via the
-// MCP server_info tool. Constructed once per backend, read by ServerInfo.
+// serverBuildInfo carries the runtime + build-time metadata reported by the
+// server_info MCP tool. The interface and concrete struct are both unexported;
+// callers construct via NewServerBuildInfo and pass the value through.
 type serverBuildInfo interface {
 	version() string
 	commit() string
 	buildDate() string
 	platform() string
 	transport() string
+	sqlBackend() string
+	providerRegistry() string
 }
 
 type immutableServerBuildInfo struct {
-	versionStr   string
-	commitStr    string
-	buildDateStr string
-	platformStr  string
-	transportStr string
+	versionStr          string
+	commitStr           string
+	buildDateStr        string
+	platformStr         string
+	transportStr        string
+	sqlBackendStr       string
+	providerRegistryStr string
 }
 
-func (s *immutableServerBuildInfo) version() string   { return s.versionStr }
-func (s *immutableServerBuildInfo) commit() string    { return s.commitStr }
-func (s *immutableServerBuildInfo) buildDate() string { return s.buildDateStr }
-func (s *immutableServerBuildInfo) platform() string  { return s.platformStr }
-func (s *immutableServerBuildInfo) transport() string { return s.transportStr }
+func (s *immutableServerBuildInfo) version() string          { return s.versionStr }
+func (s *immutableServerBuildInfo) commit() string           { return s.commitStr }
+func (s *immutableServerBuildInfo) buildDate() string        { return s.buildDateStr }
+func (s *immutableServerBuildInfo) platform() string         { return s.platformStr }
+func (s *immutableServerBuildInfo) transport() string        { return s.transportStr }
+func (s *immutableServerBuildInfo) sqlBackend() string       { return s.sqlBackendStr }
+func (s *immutableServerBuildInfo) providerRegistry() string { return s.providerRegistryStr }
 
-func newServerBuildInfo(bi buildinfo.BuildInfo, transport string) serverBuildInfo {
+// NewServerBuildInfo composes build-time identifiers and runtime values into a
+// single value carried by the backend. Fields are written exactly once here.
+// The returned interface is unexported; callers pass it straight into the
+// backend constructors and never read individual fields outside this package.
+func NewServerBuildInfo(
+	bi buildinfo.BuildInfo,
+	transport, sqlBackend, providerRegistry string,
+) serverBuildInfo { //nolint:revive // intentional: unexported return for data-carrier rule
 	return &immutableServerBuildInfo{
-		versionStr:   bi.GetSemVersion(),
-		commitStr:    bi.GetShortCommitSHA(),
-		buildDateStr: bi.GetDate(),
-		platformStr:  bi.GetPlatform(),
-		transportStr: transport,
+		versionStr:          bi.GetSemVersion(),
+		commitStr:           bi.GetShortCommitSHA(),
+		buildDateStr:        bi.GetDate(),
+		platformStr:         bi.GetPlatform(),
+		transportStr:        transport,
+		sqlBackendStr:       sqlBackend,
+		providerRegistryStr: providerRegistry,
 	}
 }
 
-type resultsRenderer interface {
-	RenderAsMarkdown(results []map[string]interface{}) string
-}
-
-func NewResultsRenderer() resultsRenderer {
-	return &simpleRenderer{}
-}
-
-type simpleRenderer struct{}
-
-func (r *simpleRenderer) RenderAsMarkdown(results []map[string]interface{}) string {
-	if len(results) == 0 {
-		return "**no results**"
-	}
-	var sb strings.Builder
-	headerRow := presentation.NewMarkdownRowFromMap(results[0])
-	sb.WriteString(headerRow.HeaderString() + "\n")
-	sb.WriteString(headerRow.SeparatorString() + "\n")
-	for _, row := range results {
-		markdownRow := presentation.NewMarkdownRowFromMap(row)
-		sb.WriteString(markdownRow.RowString() + "\n")
-	}
-	return sb.String()
-}
-
+// StackqlInterrogator builds StackQL SQL strings for the metadata tools.
 type StackqlInterrogator interface {
-	// This struct is responsible for interrogating the StackQL engine.
-	// Each method provides the requisite query string.
-
 	GetShowProviders(dto.HierarchyInput, string) (string, error)
 	GetShowServices(dto.HierarchyInput, string) (string, error)
 	GetShowResources(dto.HierarchyInput, string) (string, error)
 	GetShowMethods(dto.HierarchyInput) (string, error)
-	// GetShowTables(dto.HierarchyInput) (string, error)
-	GetDescribeTable(dto.HierarchyInput) (string, error)
-	GetDescribeMethod(methodPath string, extended bool) (string, error)
-	GetForeignKeys(dto.HierarchyInput) (string, error)
-	FindRelationships(dto.HierarchyInput) (string, error)
-	GetQuery(dto.QueryInput) (string, error)
+	GetDescribeResource(dto.HierarchyInput) (string, error)
+	GetDescribeMethod(dto.HierarchyInput) (string, error)
 	GetQueryJSON(dto.QueryJSONInput) (string, error)
-	// GetListTableResources(dto.HierarchyInput) (string, error)
-	// GetReadTableResource(mcp_server.HierarchyInput) (string, error)
-	GetPromptWriteSafeSelectTool() (string, error)
-	// GetPromptExplainPlanTipsTool() (string, error)
-	// GetListTablesJSON(mcp_server.ListTablesInput) (string, error)
-	// GetListTablesJSONPage(mcp_server.ListTablesPageInput) (string, error)
 }
 
 type simpleStackqlInterrogator struct{}
@@ -128,12 +102,11 @@ func (s *simpleStackqlInterrogator) GetShowProviders(_ dto.HierarchyInput, likeS
 }
 
 func (s *simpleStackqlInterrogator) GetShowServices(hI dto.HierarchyInput, likeStr string) (string, error) {
-	sb := strings.Builder{}
-	sb.WriteString("SHOW SERVICES")
 	if hI.Provider == "" {
 		return "", fmt.Errorf("provider not specified")
 	}
-	sb.WriteString(" IN ")
+	sb := strings.Builder{}
+	sb.WriteString("SHOW SERVICES IN ")
 	sb.WriteString(hI.Provider)
 	if likeStr != "" {
 		sb.WriteString(" LIKE '")
@@ -144,17 +117,14 @@ func (s *simpleStackqlInterrogator) GetShowServices(hI dto.HierarchyInput, likeS
 }
 
 func (s *simpleStackqlInterrogator) GetShowResources(hI dto.HierarchyInput, likeString string) (string, error) {
-	sb := strings.Builder{}
-	sb.WriteString("SHOW RESOURCES")
 	if hI.Provider == "" || hI.Service == "" {
 		return "", fmt.Errorf("provider and / or service not specified")
 	}
-	sb.WriteString(" IN ")
+	sb := strings.Builder{}
+	sb.WriteString("SHOW RESOURCES IN ")
 	sb.WriteString(hI.Provider)
-	if hI.Service != "" {
-		sb.WriteString(".")
-		sb.WriteString(hI.Service)
-	}
+	sb.WriteString(".")
+	sb.WriteString(hI.Service)
 	if likeString != "" {
 		sb.WriteString(" LIKE '")
 		sb.WriteString(likeString)
@@ -164,79 +134,47 @@ func (s *simpleStackqlInterrogator) GetShowResources(hI dto.HierarchyInput, like
 }
 
 func (s *simpleStackqlInterrogator) GetShowMethods(hI dto.HierarchyInput) (string, error) {
-	sb := strings.Builder{}
-	sb.WriteString("SHOW METHODS")
 	if hI.Provider == "" || hI.Service == "" || hI.Resource == "" {
 		return "", fmt.Errorf("provider, service and / or resource not specified")
 	}
-	sb.WriteString(" IN ")
+	sb := strings.Builder{}
+	sb.WriteString("SHOW METHODS IN ")
 	sb.WriteString(hI.Provider)
-	if hI.Service != "" {
-		sb.WriteString(".")
-		sb.WriteString(hI.Service)
-	}
-	if hI.Resource != "" {
-		sb.WriteString(".")
-		sb.WriteString(hI.Resource)
-	}
+	sb.WriteString(".")
+	sb.WriteString(hI.Service)
+	sb.WriteString(".")
+	sb.WriteString(hI.Resource)
 	return sb.String(), nil
 }
 
-func (s *simpleStackqlInterrogator) GetDescribeTable(hI dto.HierarchyInput) (string, error) {
+func (s *simpleStackqlInterrogator) GetDescribeResource(hI dto.HierarchyInput) (string, error) {
+	if hI.Provider == "" || hI.Service == "" || hI.Resource == "" {
+		return "", fmt.Errorf("provider, service and / or resource not specified")
+	}
 	sb := strings.Builder{}
 	sb.WriteString("DESCRIBE ")
-	if hI.Provider == "" || hI.Service == "" || hI.Resource == "" {
-		return "", fmt.Errorf("provider, service and / or resource not specified")
-	}
-	sb.WriteString(" ")
 	sb.WriteString(hI.Provider)
-	if hI.Service != "" {
-		sb.WriteString(".")
-		sb.WriteString(hI.Service)
-	}
-	if hI.Resource != "" {
-		sb.WriteString(".")
-		sb.WriteString(hI.Resource)
-	}
+	sb.WriteString(".")
+	sb.WriteString(hI.Service)
+	sb.WriteString(".")
+	sb.WriteString(hI.Resource)
 	return sb.String(), nil
 }
 
-func (s *simpleStackqlInterrogator) GetDescribeMethod(methodPath string, extended bool) (string, error) {
-	trimmed := strings.TrimSpace(methodPath)
-	if trimmed == "" {
-		return "", fmt.Errorf("method path not specified")
-	}
-	parts := strings.Split(trimmed, ".")
-	if len(parts) != 4 {
-		return "", fmt.Errorf("method path %q must be of form <provider>.<service>.<resource>.<method>", methodPath)
-	}
-	for i, p := range parts {
-		if strings.TrimSpace(p) == "" {
-			return "", fmt.Errorf("method path %q has empty segment at position %d", methodPath, i)
-		}
+func (s *simpleStackqlInterrogator) GetDescribeMethod(hI dto.HierarchyInput) (string, error) {
+	if hI.Provider == "" || hI.Service == "" || hI.Resource == "" || hI.Method == "" {
+		return "", fmt.Errorf("provider, service, resource and / or method not specified")
 	}
 	sb := strings.Builder{}
-	sb.WriteString("DESCRIBE METHOD ")
-	if extended {
-		sb.WriteString("EXTENDED ")
-	}
-	sb.WriteString(trimmed)
+	sb.WriteString("DESCRIBE METHOD EXTENDED ")
+	sb.WriteString(hI.Provider)
+	sb.WriteString(".")
+	sb.WriteString(hI.Service)
+	sb.WriteString(".")
+	sb.WriteString(hI.Resource)
+	sb.WriteString(".")
+	sb.WriteString(hI.Method)
 	return sb.String(), nil
-}
-
-func (s *simpleStackqlInterrogator) GetForeignKeys(hI dto.HierarchyInput) (string, error) {
-	return mcp_server.ExplainerForeignKeyStackql, nil
-}
-
-func (s *simpleStackqlInterrogator) FindRelationships(hI dto.HierarchyInput) (string, error) {
-	return mcp_server.ExplainerFindRelationships, nil
-}
-
-func (s *simpleStackqlInterrogator) GetQuery(qI dto.QueryInput) (string, error) {
-	if qI.SQL == "" {
-		return "", fmt.Errorf("no SQL provided")
-	}
-	return qI.SQL, nil
 }
 
 func (s *simpleStackqlInterrogator) GetQueryJSON(qI dto.QueryJSONInput) (string, error) {
@@ -246,54 +184,12 @@ func (s *simpleStackqlInterrogator) GetQueryJSON(qI dto.QueryJSONInput) (string,
 	return qI.SQL, nil
 }
 
-func (s *simpleStackqlInterrogator) GetPromptWriteSafeSelectTool() (string, error) {
-	return mcp_server.ExplainerPromptWriteSafeSelectTool, nil
-}
-
-// func (s *simpleStackqlInterrogator) composeWhereClause(params map[string]any) (string, error) {
-// 	sb := strings.Builder{}
-// 	sb.WriteString(" WHERE ")
-// 	for key, value := range params {
-// 		sb.WriteString(fmt.Sprintf("%s = '%v' AND ", key, value))
-// 	}
-// 	// Remove the trailing " AND "
-// 	whereClause := strings.TrimSuffix(sb.String(), " AND ")
-// 	return whereClause, nil
-// }
-
-// func (s *simpleStackqlInterrogator) GetReadTableResource(hI mcp_server.HierarchyInput) (string, error) {
-// 	sb := strings.Builder{}
-// 	sb.WriteString("SELECT * FROM")
-// 	if hI.Provider == "" || hI.Service == "" || hI.Resource == "" {
-// 		return "", fmt.Errorf("provider, service and / or resource not specified")
-// 	}
-// 	sb.WriteString(" ")
-// 	sb.WriteString(hI.Provider)
-// 	if hI.Service != "" {
-// 		sb.WriteString(".")
-// 		sb.WriteString(hI.Service)
-// 	}
-// 	if hI.Resource != "" {
-// 		sb.WriteString(".")
-// 		sb.WriteString(hI.Resource)
-// 	}
-// 	if len(hI.Parameters) > 0 {
-// 		whereClause, err := s.composeWhereClause(hI.Parameters)
-// 		if err != nil {
-// 			return "", err
-// 		}
-// 		sb.WriteString(" " + whereClause)
-// 	}
-// 	return sb.String(), nil
-// }
-
 type stackqlMCPService struct {
 	isReadOnly      bool
 	txnOrchestrator tsm_physio.Orchestrator
 	interrogator    StackqlInterrogator
 	handlerCtx      handler.HandlerContext
 	logger          *logrus.Logger
-	renderer        resultsRenderer
 	serverInfo      serverBuildInfo
 }
 
@@ -302,8 +198,7 @@ func NewStackqlMCPBackendService(
 	txnOrchestrator tsm_physio.Orchestrator,
 	handlerCtx handler.HandlerContext,
 	logger *logrus.Logger,
-	bi buildinfo.BuildInfo,
-	transport string,
+	serverInfo serverBuildInfo,
 ) (mcp_server.Backend, error) {
 	if logger == nil {
 		logger = logrus.New()
@@ -321,16 +216,11 @@ func NewStackqlMCPBackendService(
 		interrogator:    NewSimpleStackqlInterrogator(),
 		logger:          logger,
 		handlerCtx:      handlerCtx,
-		renderer:        NewResultsRenderer(),
-		serverInfo:      newServerBuildInfo(bi, transport),
+		serverInfo:      serverInfo,
 	}, nil
 }
 
-func (b *stackqlMCPService) getDefaultFormat() string {
-	return resultsFormatMarkdown
-}
-
-func (b *stackqlMCPService) Ping(ctx context.Context) error {
+func (b *stackqlMCPService) Ping(_ context.Context) error {
 	return nil
 }
 
@@ -338,49 +228,28 @@ func (b *stackqlMCPService) Close() error {
 	return nil
 }
 
-// Server and environment info
-func (b *stackqlMCPService) ServerInfo(ctx context.Context, args any) (dto.ServerInfoOutput, error) {
+func (b *stackqlMCPService) ServerInfo(_ context.Context, _ any) (dto.ServerInfoOutput, error) {
 	return dto.ServerInfoOutput{
-		Name:       "Stackql MCP Service",
-		Info:       "This is the Stackql MCP Service.",
-		IsReadOnly: b.isReadOnly,
-		Version:    b.serverInfo.version(),
-		Commit:     b.serverInfo.commit(),
-		BuildDate:  b.serverInfo.buildDate(),
-		Platform:   b.serverInfo.platform(),
-		Transport:  b.serverInfo.transport(),
+		Version:          b.serverInfo.version(),
+		Commit:           b.serverInfo.commit(),
+		BuildDate:        b.serverInfo.buildDate(),
+		Platform:         b.serverInfo.platform(),
+		Transport:        b.serverInfo.transport(),
+		SQLBackend:       b.serverInfo.sqlBackend(),
+		ProviderRegistry: b.serverInfo.providerRegistry(),
+		ReadOnly:         b.isReadOnly,
 	}, nil
-}
-
-// Current DB identity details
-func (b *stackqlMCPService) DBIdentity(ctx context.Context, args any) (map[string]any, error) {
-	return map[string]any{
-		"identity": "stackql_mcp_service",
-	}, nil
-}
-
-func (b *stackqlMCPService) Greet(ctx context.Context, args dto.GreetInput) (string, error) {
-	return "Hi " + args.Name, nil
-}
-
-func (b *stackqlMCPService) RunQuery(ctx context.Context, args dto.QueryInput) (string, error) {
-	q, qErr := b.interrogator.GetQuery(args)
-	if qErr != nil {
-		return "", qErr
-	}
-	rv := b.renderQueryResults(q, args.Format, args.RowLimit)
-	return rv, nil
 }
 
 func (b *stackqlMCPService) RunQueryJSON(ctx context.Context, input dto.QueryJSONInput) ([]map[string]interface{}, error) {
-	q := input.SQL
-	if q == "" {
-		return nil, fmt.Errorf("no SQL provided")
+	q, qErr := b.interrogator.GetQueryJSON(input)
+	if qErr != nil {
+		return nil, qErr
 	}
 	return b.runPreprocessedQueryJSON(ctx, q, input.RowLimit)
 }
 
-func (b *stackqlMCPService) runPreprocessedQueryJSON(ctx context.Context, query string, rowLimit int) ([]map[string]interface{}, error) {
+func (b *stackqlMCPService) runPreprocessedQueryJSON(_ context.Context, query string, rowLimit int) ([]map[string]interface{}, error) {
 	results, ok := b.extractQueryResults(query, rowLimit)
 	if !ok {
 		return nil, fmt.Errorf("failed to extract query results")
@@ -388,20 +257,16 @@ func (b *stackqlMCPService) runPreprocessedQueryJSON(ctx context.Context, query 
 	return results, nil
 }
 
-func (b *stackqlMCPService) ExecQuery(ctx context.Context, query string) (map[string]any, error) {
-	return b.execQuery(ctx, query)
+func (b *stackqlMCPService) ExecQuery(_ context.Context, query string) (map[string]any, error) {
+	return b.execQuery(query)
 }
 
 func (b *stackqlMCPService) ValidateQuery(ctx context.Context, query string) ([]map[string]any, error) {
 	explainQuery := fmt.Sprintf("EXPLAIN %s", query)
-	rows, err := b.runPreprocessedQueryJSON(ctx, explainQuery, unlimitedRowLimit)
-	if err != nil {
-		return nil, err
-	}
-	return rows, nil
+	return b.runPreprocessedQueryJSON(ctx, explainQuery, unlimitedRowLimit)
 }
 
-func (b *stackqlMCPService) execQuery(ctx context.Context, query string) (map[string]any, error) {
+func (b *stackqlMCPService) execQuery(query string) (map[string]any, error) {
 	rv := map[string]any{}
 	r, ok := b.applyQuery(query)
 	if !ok {
@@ -412,61 +277,8 @@ func (b *stackqlMCPService) execQuery(ctx context.Context, query string) (map[st
 		messages = append(messages, resp.GetMessages()...)
 	}
 	rv["messages"] = messages
-	oneLinerOutput := time.Now().Format("2006-01-02T15:04:05-07:00 MST")
-	rv["timestamp"] = oneLinerOutput
+	rv["timestamp"] = nowTimestamp()
 	return rv, nil
-}
-
-// func (b *stackqlMCPService) ListTableResources(ctx context.Context, hI mcp_server.HierarchyInput) ([]string, error) {
-// 	return []string{}, nil
-// }
-
-// func (b *stackqlMCPService) ReadTableResource(ctx context.Context, hI mcp_server.HierarchyInput) ([]map[string]interface{}, error) {
-// 	return []map[string]interface{}{}, nil
-// }
-
-func (b *stackqlMCPService) PromptWriteSafeSelectTool(ctx context.Context, args dto.HierarchyInput) (string, error) {
-	return b.interrogator.GetPromptWriteSafeSelectTool()
-}
-
-// func (b *stackqlMCPService) PromptExplainPlanTipsTool(ctx context.Context) (string, error) {
-// 	return "stub", nil
-// }
-
-func (b *stackqlMCPService) ListTablesJSON(ctx context.Context, input dto.ListTablesInput) ([]map[string]interface{}, error) {
-	hI := dto.HierarchyInput{}
-	likeStr := ""
-	if input.Hierarchy != nil {
-		hI = *input.Hierarchy
-	}
-	if input.NameLike != nil {
-		likeStr = *input.NameLike
-	}
-	q, qErr := b.interrogator.GetShowResources(hI, likeStr)
-	if qErr != nil {
-		return nil, qErr
-	}
-	results, ok := b.extractQueryResults(q, input.RowLimit)
-	if !ok {
-		return nil, fmt.Errorf("failed to extract query results")
-	}
-	return results, nil
-}
-
-func (b *stackqlMCPService) ListTablesJSONPage(ctx context.Context, input dto.ListTablesPageInput) (map[string]interface{}, error) {
-	return map[string]interface{}{}, nil
-}
-
-func (b *stackqlMCPService) ListTables(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
-	return b.ListResources(ctx, hI)
-}
-
-func (b *stackqlMCPService) ListMethods(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
-	q, qErr := b.interrogator.GetShowMethods(hI)
-	if qErr != nil {
-		return nil, qErr
-	}
-	return b.runPreprocessedQueryJSON(ctx, q, unlimitedRowLimit)
 }
 
 func (b *stackqlMCPService) getUpdatedHandlerCtx(query string) (handler.HandlerContext, error) {
@@ -516,68 +328,20 @@ func (b *stackqlMCPService) extractQueryResults(query string, rowLimit int) ([]m
 	return rv, (ok && len(rv) > 0)
 }
 
-func (b *stackqlMCPService) renderQueryResultsAsMarkdown(results []map[string]interface{}) string {
-	return b.renderer.RenderAsMarkdown(results)
-}
-
-func (b *stackqlMCPService) renderQueryResultsAsJSON(results []map[string]interface{}) string {
-	if len(results) == 0 {
-		return `{"error": "**no results**"}`
-	}
-	jsonData, err := json.Marshal(results)
-	if err != nil {
-		return fmt.Sprintf(`{"error": "%v"}`, err)
-	}
-	return string(jsonData)
-}
-
-func (b *stackqlMCPService) renderQueryResults(query string, format string, rowLimit int) string {
-	results, ok := b.extractQueryResults(query, rowLimit)
-	if format == "" {
-		format = b.getDefaultFormat()
-	}
-	switch format {
-	case resultsFormatMarkdown:
-		if !ok || len(results) == 0 {
-			return "**no results**"
-		}
-		return b.renderQueryResultsAsMarkdown(results)
-	case resultsFormatJSON:
-		if !ok || len(results) == 0 {
-			return `{"error": "**no results**"}`
-		}
-		return b.renderQueryResultsAsJSON(results)
-	default:
-		return fmt.Sprintf("unsupported format: %s", format)
-	}
-}
-
-func (b *stackqlMCPService) DescribeTable(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
-	q, qErr := b.interrogator.GetDescribeTable(hI)
+func (b *stackqlMCPService) DescribeResource(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
+	q, qErr := b.interrogator.GetDescribeResource(hI)
 	if qErr != nil {
 		return nil, qErr
 	}
 	return b.runPreprocessedQueryJSON(ctx, q, unlimitedRowLimit)
 }
 
-func (b *stackqlMCPService) DescribeMethod(
-	ctx context.Context,
-	methodPath string,
-	extended bool,
-) ([]map[string]interface{}, error) {
-	q, qErr := b.interrogator.GetDescribeMethod(methodPath, extended)
+func (b *stackqlMCPService) DescribeMethod(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
+	q, qErr := b.interrogator.GetDescribeMethod(hI)
 	if qErr != nil {
 		return nil, qErr
 	}
 	return b.runPreprocessedQueryJSON(ctx, q, unlimitedRowLimit)
-}
-
-func (b *stackqlMCPService) GetForeignKeys(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
-	return nil, fmt.Errorf("GetForeignKeys not implemented")
-}
-
-func (b *stackqlMCPService) FindRelationships(ctx context.Context, hI dto.HierarchyInput) (string, error) {
-	return b.interrogator.FindRelationships(hI)
 }
 
 func (b *stackqlMCPService) ListProviders(ctx context.Context) ([]map[string]interface{}, error) {
@@ -598,6 +362,14 @@ func (b *stackqlMCPService) ListServices(ctx context.Context, hI dto.HierarchyIn
 
 func (b *stackqlMCPService) ListResources(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
 	q, qErr := b.interrogator.GetShowResources(hI, "")
+	if qErr != nil {
+		return nil, qErr
+	}
+	return b.runPreprocessedQueryJSON(ctx, q, unlimitedRowLimit)
+}
+
+func (b *stackqlMCPService) ListMethods(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
+	q, qErr := b.interrogator.GetShowMethods(hI)
 	if qErr != nil {
 		return nil, qErr
 	}

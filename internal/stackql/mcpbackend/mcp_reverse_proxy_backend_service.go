@@ -3,12 +3,9 @@ package mcpbackend
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/sirupsen/logrus"
-	"github.com/stackql/stackql/internal/stackql/buildinfo"
 	"github.com/stackql/stackql/internal/stackql/handler"
 	"github.com/stackql/stackql/pkg/mcp_server"
 	"github.com/stackql/stackql/pkg/mcp_server/dto"
@@ -21,7 +18,6 @@ type stackqlMCPReverseProxyService struct {
 	logger       *logrus.Logger
 	db           *sql.DB
 	interrogator StackqlInterrogator
-	renderer     resultsRenderer
 	serverInfo   serverBuildInfo
 }
 
@@ -31,8 +27,7 @@ func NewStackqlMCPReverseProxyService(
 	db *sql.DB,
 	handlerCtx handler.HandlerContext,
 	logger *logrus.Logger,
-	bi buildinfo.BuildInfo,
-	transport string,
+	serverInfo serverBuildInfo,
 ) (mcp_server.Backend, error) {
 	if logger == nil {
 		logger = logrus.New()
@@ -48,16 +43,11 @@ func NewStackqlMCPReverseProxyService(
 		logger:       logger,
 		handlerCtx:   handlerCtx,
 		db:           db,
-		renderer:     NewResultsRenderer(),
-		serverInfo:   newServerBuildInfo(bi, transport),
+		serverInfo:   serverInfo,
 	}, nil
 }
 
-func (b *stackqlMCPReverseProxyService) getDefaultFormat() string {
-	return resultsFormatMarkdown
-}
-
-func (b *stackqlMCPReverseProxyService) Ping(ctx context.Context) error {
+func (b *stackqlMCPReverseProxyService) Ping(_ context.Context) error {
 	return nil
 }
 
@@ -65,65 +55,44 @@ func (b *stackqlMCPReverseProxyService) Close() error {
 	return nil
 }
 
-// Server and environment info
-func (b *stackqlMCPReverseProxyService) ServerInfo(ctx context.Context, args any) (dto.ServerInfoOutput, error) {
+func (b *stackqlMCPReverseProxyService) ServerInfo(_ context.Context, _ any) (dto.ServerInfoOutput, error) {
 	return dto.ServerInfoOutput{
-		Name:       "Stackql MCP Reverse Proxy Service",
-		Info:       "This is the Stackql MCP Reverse Proxy Service.",
-		IsReadOnly: b.isReadOnly,
-		Version:    b.serverInfo.version(),
-		Commit:     b.serverInfo.commit(),
-		BuildDate:  b.serverInfo.buildDate(),
-		Platform:   b.serverInfo.platform(),
-		Transport:  b.serverInfo.transport(),
+		Version:          b.serverInfo.version(),
+		Commit:           b.serverInfo.commit(),
+		BuildDate:        b.serverInfo.buildDate(),
+		Platform:         b.serverInfo.platform(),
+		Transport:        b.serverInfo.transport(),
+		SQLBackend:       b.serverInfo.sqlBackend(),
+		ProviderRegistry: b.serverInfo.providerRegistry(),
+		ReadOnly:         b.isReadOnly,
 	}, nil
 }
 
-// Current DB identity details
-func (b *stackqlMCPReverseProxyService) DBIdentity(ctx context.Context, args any) (map[string]any, error) {
-	return map[string]any{
-		"identity": "stackql_mcp_reverse_proxy_service",
-	}, nil
-}
-
-func (b *stackqlMCPReverseProxyService) Greet(ctx context.Context, args dto.GreetInput) (string, error) {
-	return "Hi " + args.Name, nil
-}
-
-func (b *stackqlMCPReverseProxyService) ExecQuery(ctx context.Context, query string) (map[string]any, error) {
-	return b.execQuery(ctx, query)
-}
-
-func (b *stackqlMCPReverseProxyService) ValidateQuery(ctx context.Context, query string) ([]map[string]any, error) {
-	explainQuery := fmt.Sprintf("EXPLAIN %s", query)
-	rows, err := b.query(ctx, explainQuery, unlimitedRowLimit)
-	if err != nil {
-		return nil, err
-	}
-	return rows, nil
-}
-
-func (b *stackqlMCPReverseProxyService) execQuery(ctx context.Context, query string) (map[string]any, error) {
+func (b *stackqlMCPReverseProxyService) ExecQuery(_ context.Context, query string) (map[string]any, error) {
 	r, sqlErr := b.db.Exec(query)
 	if sqlErr != nil {
 		return nil, sqlErr
 	}
 	rowsAffected, rowsAffectedErr := r.RowsAffected()
-	lastInsertId, lastInsertIdErr := r.LastInsertId()
+	lastInsertID, lastInsertIDErr := r.LastInsertId()
 	rv := map[string]any{}
 	if rowsAffectedErr == nil {
 		rv["rows_affected"] = rowsAffected
 	}
-	if lastInsertIdErr == nil {
-		rv["last_insert_id"] = lastInsertId
+	if lastInsertIDErr == nil {
+		rv["last_insert_id"] = lastInsertID
 	}
-	oneLinerOutput := time.Now().Format("2006-01-02T15:04:05-07:00 MST")
-	rv["timestamp"] = oneLinerOutput
+	rv["timestamp"] = nowTimestamp()
 	return rv, nil
 }
 
+func (b *stackqlMCPReverseProxyService) ValidateQuery(ctx context.Context, query string) ([]map[string]any, error) {
+	explainQuery := fmt.Sprintf("EXPLAIN %s", query)
+	return b.query(ctx, explainQuery, unlimitedRowLimit)
+}
+
 //nolint:gocognit,funlen // acceptable
-func (b *stackqlMCPReverseProxyService) query(ctx context.Context, query string, rowLimit int) ([]map[string]any, error) {
+func (b *stackqlMCPReverseProxyService) query(_ context.Context, query string, rowLimit int) ([]map[string]any, error) {
 	r, sqlErr := b.db.Query(query)
 	if sqlErr != nil {
 		return nil, sqlErr
@@ -153,26 +122,21 @@ func (b *stackqlMCPReverseProxyService) query(ctx context.Context, query string,
 			switch v.DatabaseTypeName() {
 			case "VARCHAR", "TEXT", "UUID", "TIMESTAMP":
 				scanArgs[i] = new(sql.NullString)
-				break
 			case "BOOL":
 				scanArgs[i] = new(sql.NullBool)
-				break
 			case "INT4":
 				scanArgs[i] = new(sql.NullInt64)
-				break
 			default:
 				scanArgs[i] = new(sql.NullString)
 			}
 		}
 
 		scanErr := r.Scan(scanArgs...)
-
 		if scanErr != nil {
 			return nil, scanErr
 		}
 
 		masterData := map[string]any{}
-
 		for i, v := range columnTypes {
 			if z, ok := (scanArgs[i]).(*sql.NullBool); ok {
 				masterData[v.Name()] = z.Bool
@@ -201,104 +165,24 @@ func (b *stackqlMCPReverseProxyService) query(ctx context.Context, query string,
 	return finalRows, nil
 }
 
-func (b *stackqlMCPReverseProxyService) renderQueryResults(query string, format string, rowLimit int) (string, error) {
-	if format == "" {
-		format = b.getDefaultFormat()
-	}
-	ctx := context.Background()
-	rows, err := b.query(ctx, query, rowLimit)
-	if err != nil {
-		return "", err
-	}
-	switch format {
-	case resultsFormatMarkdown:
-		return b.renderer.RenderAsMarkdown(rows), nil
-	case resultsFormatJSON:
-		jsonStr, jsonErr := json.Marshal(rows)
-		if jsonErr != nil {
-			return "", jsonErr
-		}
-		return string(jsonStr), nil
-	default:
-		return "", fmt.Errorf("unknown format: %s", format)
-	}
-}
-
-func (b *stackqlMCPReverseProxyService) RunQuery(ctx context.Context, args dto.QueryInput) (string, error) {
-	if args.Format == "" {
-		args.Format = b.getDefaultFormat()
-	}
-	rows, err := b.query(ctx, args.SQL, args.RowLimit)
-	if err != nil {
-		return "", err
-	}
-	switch args.Format {
-	case resultsFormatMarkdown:
-		return b.renderer.RenderAsMarkdown(rows), nil
-	case resultsFormatJSON:
-		jsonStr, jsonErr := json.Marshal(rows)
-		if jsonErr != nil {
-			return "", jsonErr
-		}
-		return string(jsonStr), nil
-	default:
-		return "", fmt.Errorf("unknown format: %s", args.Format)
-	}
-}
-
 func (b *stackqlMCPReverseProxyService) RunQueryJSON(ctx context.Context, input dto.QueryJSONInput) ([]map[string]interface{}, error) {
 	return b.query(ctx, input.SQL, input.RowLimit)
 }
 
-// func (b *stackqlMCPReverseProxyService) ListTableResources(ctx context.Context, hI dto.HierarchyInput) ([]string, error) {
-
-// TODO: implement the remaining methods, using the db connection as sole sql data source
-
-// 	return []string{}, nil
-// }
-
-func (b *stackqlMCPReverseProxyService) ReadTableResource(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
-	if hI.Provider == "" || hI.Service == "" || hI.Resource == "" {
-		return nil, fmt.Errorf("provider, service, and resource must be specified")
-	}
-	query := fmt.Sprintf("SELECT * FROM %s.%s", hI.Service, hI.Resource)
-	return b.query(ctx, query, hI.RowLimit)
-}
-
-func (b *stackqlMCPReverseProxyService) PromptWriteSafeSelectTool(ctx context.Context, args dto.HierarchyInput) (string, error) {
-	return mcp_server.ExplainerPromptWriteSafeSelectTool, nil
-}
-
-// func (b *stackqlMCPReverseProxyService) PromptExplainPlanTipsTool(ctx context.Context) (string, error) {
-// 	return "stub", nil
-// }
-
-func (b *stackqlMCPReverseProxyService) DescribeTable(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
-	q, qErr := b.interrogator.GetDescribeTable(hI)
+func (b *stackqlMCPReverseProxyService) DescribeResource(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
+	q, qErr := b.interrogator.GetDescribeResource(hI)
 	if qErr != nil {
 		return nil, qErr
 	}
 	return b.query(ctx, q, hI.RowLimit)
 }
 
-func (b *stackqlMCPReverseProxyService) DescribeMethod(
-	ctx context.Context,
-	methodPath string,
-	extended bool,
-) ([]map[string]interface{}, error) {
-	q, qErr := b.interrogator.GetDescribeMethod(methodPath, extended)
+func (b *stackqlMCPReverseProxyService) DescribeMethod(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
+	q, qErr := b.interrogator.GetDescribeMethod(hI)
 	if qErr != nil {
 		return nil, qErr
 	}
 	return b.query(ctx, q, unlimitedRowLimit)
-}
-
-func (b *stackqlMCPReverseProxyService) GetForeignKeys(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
-	return nil, fmt.Errorf("GetForeignKeys not implemented")
-}
-
-func (b *stackqlMCPReverseProxyService) FindRelationships(ctx context.Context, hI dto.HierarchyInput) (string, error) {
-	return b.interrogator.FindRelationships(hI)
 }
 
 func (b *stackqlMCPReverseProxyService) ListProviders(ctx context.Context) ([]map[string]interface{}, error) {
@@ -323,30 +207,6 @@ func (b *stackqlMCPReverseProxyService) ListResources(ctx context.Context, hI dt
 		return nil, qErr
 	}
 	return b.query(ctx, q, hI.RowLimit)
-}
-
-func (b *stackqlMCPReverseProxyService) ListTablesJSON(ctx context.Context, input dto.ListTablesInput) ([]map[string]interface{}, error) {
-	hI := dto.HierarchyInput{}
-	likeStr := ""
-	if input.Hierarchy != nil {
-		hI = *input.Hierarchy
-	}
-	if input.NameLike != nil {
-		likeStr = *input.NameLike
-	}
-	q, qErr := b.interrogator.GetShowResources(hI, likeStr)
-	if qErr != nil {
-		return nil, qErr
-	}
-	return b.query(ctx, q, input.RowLimit)
-}
-
-func (b *stackqlMCPReverseProxyService) ListTablesJSONPage(ctx context.Context, input dto.ListTablesPageInput) (map[string]interface{}, error) {
-	return map[string]interface{}{}, nil
-}
-
-func (b *stackqlMCPReverseProxyService) ListTables(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
-	return b.ListResources(ctx, hI)
 }
 
 func (b *stackqlMCPReverseProxyService) ListMethods(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {

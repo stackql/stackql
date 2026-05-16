@@ -152,6 +152,34 @@ func TestBackendError(t *testing.T) {
 	}
 }
 
+func TestIsToolEnabled(t *testing.T) {
+	cfg := &Config{}
+	if !cfg.IsToolEnabled("anything") {
+		t.Errorf("empty EnabledTools should allow all tools")
+	}
+	cfg.EnabledTools = []string{"foo"}
+	if !cfg.IsToolEnabled("foo") {
+		t.Errorf("foo should be enabled")
+	}
+	if cfg.IsToolEnabled("bar") {
+		t.Errorf("bar should be denied")
+	}
+}
+
+func TestIsPromptEnabled(t *testing.T) {
+	cfg := &Config{}
+	if !cfg.IsPromptEnabled("anything") {
+		t.Errorf("empty EnabledPrompts should allow all prompts")
+	}
+	cfg.EnabledPrompts = []string{"write_safe_select"}
+	if !cfg.IsPromptEnabled("write_safe_select") {
+		t.Errorf("write_safe_select should be enabled")
+	}
+	if cfg.IsPromptEnabled("other") {
+		t.Errorf("other should be denied")
+	}
+}
+
 func TestNewMCPServerWithExampleBackend(t *testing.T) {
 	server, err := NewMCPServerWithExampleBackend(nil)
 	if err != nil {
