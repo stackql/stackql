@@ -6,6 +6,9 @@ import (
 	"time"
 
 	"gopkg.in/yaml.v2"
+
+	"github.com/stackql/stackql/pkg/mcp_server/audit"
+	"github.com/stackql/stackql/pkg/mcp_server/policy"
 )
 
 // Config represents the complete configuration for the MCP server.
@@ -79,6 +82,24 @@ func (c *Config) GetBackendConnectionString() string {
 	return c.Backend.ConnectionString
 }
 
+// GetMode returns the server's effective mode.  Empty string is mapped to
+// the safe default.
+func (c *Config) GetMode() string {
+	if c == nil || c.Server.Mode == "" {
+		return policy.ModeSafe
+	}
+	return c.Server.Mode
+}
+
+// IsAuditEnabled reports whether audit logging should run.  Audit is on by
+// default unless explicitly disabled.
+func (c *Config) IsAuditEnabled() bool {
+	if c == nil || c.Server.Audit.Disabled {
+		return false
+	}
+	return true
+}
+
 // ServerConfig contains configuration for the MCP server itself.
 type ServerConfig struct {
 	// Name is the server name advertised to clients.
@@ -110,7 +131,107 @@ type ServerConfig struct {
 	// RequestTimeout specifies the timeout for individual requests.
 	RequestTimeout Duration `json:"request_timeout" yaml:"request_timeout"`
 
-	IsReadOnly *bool `json:"read_only,omitempty" yaml:"read_only,omitempty"`
+	// Mode controls the safety contract for query / mutation / lifecycle tools.
+	// Legal values: "read_only", "safe", "delete_safe", "full_access".
+	// Empty string is treated as "safe".
+	//
+	// For back-compat with PR1, the JSON/YAML key `read_only: true` is also
+	// accepted and is equivalent to Mode = "read_only".  When both `mode`
+	// and `read_only` are set, `mode` wins.
+	Mode string `json:"mode,omitempty" yaml:"mode,omitempty"`
+
+	// Audit configures the audit subsystem.  Audit is enabled by default
+	// (Disabled is false) and writes to a file sink.
+	Audit AuditConfig `json:"audit,omitempty" yaml:"audit,omitempty"`
+}
+
+// serverConfigWire mirrors ServerConfig with the legacy `read_only` flag
+// included as a transient field.  Used only for unmarshalling.
+type serverConfigWire struct {
+	Name                  string         `json:"name" yaml:"name"`
+	Transport             string         `json:"transport" yaml:"transport"`
+	Address               string         `json:"address" yaml:"address"`
+	Scheme                string         `json:"scheme" yaml:"scheme"`
+	Version               string         `json:"version" yaml:"version"`
+	TLSCertFile           string         `json:"tls_cert_file,omitempty" yaml:"tls_cert_file,omitempty"`
+	TLSKeyFile            string         `json:"tls_key_file,omitempty" yaml:"tls_key_file,omitempty"`
+	TransportCfg          map[string]any `json:"transport_cfg,omitempty" yaml:"transport_cfg,omitempty"`
+	Description           string         `json:"description" yaml:"description"`
+	MaxConcurrentRequests int            `json:"max_concurrent_requests" yaml:"max_concurrent_requests"`
+	RequestTimeout        Duration       `json:"request_timeout" yaml:"request_timeout"`
+	Mode                  string         `json:"mode,omitempty" yaml:"mode,omitempty"`
+	Audit                 AuditConfig    `json:"audit,omitempty" yaml:"audit,omitempty"`
+	// LegacyReadOnly preserves the PR1 `read_only: true` wire form.
+	LegacyReadOnly *bool `json:"read_only,omitempty" yaml:"read_only,omitempty"`
+}
+
+func (s *ServerConfig) fromWire(w serverConfigWire) {
+	s.Name = w.Name
+	s.Transport = w.Transport
+	s.Address = w.Address
+	s.Scheme = w.Scheme
+	s.Version = w.Version
+	s.TLSCertFile = w.TLSCertFile
+	s.TLSKeyFile = w.TLSKeyFile
+	s.TransportCfg = w.TransportCfg
+	s.Description = w.Description
+	s.MaxConcurrentRequests = w.MaxConcurrentRequests
+	s.RequestTimeout = w.RequestTimeout
+	s.Mode = w.Mode
+	s.Audit = w.Audit
+	// Legacy: `read_only: true` with no `mode` -> Mode = "read_only".
+	// `mode` always wins.
+	if s.Mode == "" && w.LegacyReadOnly != nil && *w.LegacyReadOnly {
+		s.Mode = policy.ModeReadOnly
+	}
+}
+
+// UnmarshalJSON honours the legacy `read_only: true` shim.
+func (s *ServerConfig) UnmarshalJSON(data []byte) error {
+	var w serverConfigWire
+	if err := json.Unmarshal(data, &w); err != nil {
+		return err
+	}
+	s.fromWire(w)
+	return nil
+}
+
+// UnmarshalYAML honours the legacy `read_only: true` shim.
+func (s *ServerConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var w serverConfigWire
+	if err := unmarshal(&w); err != nil {
+		return err
+	}
+	s.fromWire(w)
+	return nil
+}
+
+// AuditConfig configures the audit subsystem.
+type AuditConfig struct {
+	// Disabled turns the audit subsystem off entirely.  Default false
+	// (audit is on by default).
+	Disabled bool `json:"disabled,omitempty" yaml:"disabled,omitempty"`
+
+	// FailureMode controls what happens when the sink returns an error.
+	// Legal values: "strict" (default), "strict_mutations", "best_effort".
+	FailureMode string `json:"failure_mode,omitempty" yaml:"failure_mode,omitempty"`
+
+	// Sink selects the destination kind.  Currently only "file" is
+	// implemented; other values are reserved.  Empty defaults to "file".
+	Sink string `json:"sink,omitempty" yaml:"sink,omitempty"`
+
+	// File holds file-sink-specific options.  Only consulted when Sink is
+	// "file" (the default).
+	File audit.FileConfig `json:"file,omitempty" yaml:"file,omitempty"`
+}
+
+// GetFailureMode returns the effective failure-mode string with the default
+// substituted for empty input.
+func (a AuditConfig) GetFailureMode() string {
+	if a.FailureMode == "" {
+		return audit.FailureModeStrict
+	}
+	return a.FailureMode
 }
 
 // BackendConfig contains configuration for the backend connection.
@@ -189,6 +310,7 @@ func defaultConfig() *Config {
 			Transport:             serverTransportStdIO,
 			Address:               DefaultHTTPServerAddress,
 			RequestTimeout:        Duration(30 * time.Second),
+			Mode:                  policy.ModeSafe,
 		},
 		Backend: BackendConfig{
 			Type:              "stackql",
@@ -220,6 +342,15 @@ func DefaultSSEConfig() *Config {
 
 // Validate validates the configuration and returns an error if invalid.
 func (c *Config) Validate() error {
+	if !policy.IsLegalMode(c.Server.Mode) {
+		return fmt.Errorf("invalid server.mode %q (legal: read_only, safe, delete_safe, full_access)", c.Server.Mode)
+	}
+	switch c.Server.Audit.GetFailureMode() {
+	case audit.FailureModeStrict, audit.FailureModeStrictMutations, audit.FailureModeBestEffort:
+	default:
+		return fmt.Errorf("invalid server.audit.failure_mode %q (legal: strict, strict_mutations, best_effort)",
+			c.Server.Audit.FailureMode)
+	}
 	return nil
 }
 

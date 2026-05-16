@@ -12,7 +12,6 @@ import (
 )
 
 type stackqlMCPReverseProxyService struct {
-	isReadOnly   bool
 	dsn          string
 	handlerCtx   handler.HandlerContext
 	logger       *logrus.Logger
@@ -22,7 +21,6 @@ type stackqlMCPReverseProxyService struct {
 }
 
 func NewStackqlMCPReverseProxyService(
-	isReadOnly bool,
 	dsn string,
 	db *sql.DB,
 	handlerCtx handler.HandlerContext,
@@ -38,7 +36,6 @@ func NewStackqlMCPReverseProxyService(
 	}
 	return &stackqlMCPReverseProxyService{
 		dsn:          dsn,
-		isReadOnly:   isReadOnly,
 		interrogator: NewSimpleStackqlInterrogator(),
 		logger:       logger,
 		handlerCtx:   handlerCtx,
@@ -56,6 +53,7 @@ func (b *stackqlMCPReverseProxyService) Close() error {
 }
 
 func (b *stackqlMCPReverseProxyService) ServerInfo(_ context.Context, _ any) (dto.ServerInfoOutput, error) {
+	mode := b.serverInfo.mode()
 	return dto.ServerInfoOutput{
 		Version:          b.serverInfo.version(),
 		Commit:           b.serverInfo.commit(),
@@ -64,7 +62,8 @@ func (b *stackqlMCPReverseProxyService) ServerInfo(_ context.Context, _ any) (dt
 		Transport:        b.serverInfo.transport(),
 		SQLBackend:       b.serverInfo.sqlBackend(),
 		ProviderRegistry: b.serverInfo.providerRegistry(),
-		ReadOnly:         b.isReadOnly,
+		Mode:             mode,
+		ReadOnly:         mode == modeReadOnly,
 	}, nil
 }
 
