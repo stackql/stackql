@@ -700,7 +700,7 @@ MCP HTTP Mode Read Only Refuses Mutations And Lifecycle
     ...                  \-\-client\-type\=http
     ...                  \-\-url\=http://127.0.0.1:9920
     ...                  \-\-exec.action      run_select_query
-    ...                  \-\-exec.args        {"sql":"select name from google.compute.networks where project \= 'stackql\-demo';"}
+    ...                  \-\-exec.args        {"sql":"select name, id from google.storage.buckets where project \= 'stackql\-demo';"}
     ...                  stdout=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-select.txt
     ...                  stderr=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-select-stderr.txt
     Should Be Equal As Integers    ${select_result.rc}    0
@@ -709,7 +709,7 @@ MCP HTTP Mode Read Only Refuses Mutations And Lifecycle
     ...                  \-\-client\-type\=http
     ...                  \-\-url\=http://127.0.0.1:9920
     ...                  \-\-exec.action      run_mutation_query
-    ...                  \-\-exec.args        {"sql":"delete from google.compute.firewalls where project \= 'p' and firewall \= 'f';"}
+    ...                  \-\-exec.args        {"sql":"delete from google.compute.firewalls where project \= 'mutable\-project' and firewall \= 'deletable\-firewall';"}
     ...                  stdout=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-mutation.txt
     ...                  stderr=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-mutation-stderr.txt
     Should Not Be Equal As Integers    ${mut.rc}    0
@@ -743,7 +743,7 @@ MCP HTTP Mode Safe Refuses Mutations Without Elicitation
     ...                  \-\-client\-type\=http
     ...                  \-\-url\=http://127.0.0.1:9921
     ...                  \-\-exec.action      run_mutation_query
-    ...                  \-\-exec.args        {"sql":"delete from google.compute.firewalls where project \= 'p' and firewall \= 'f';"}
+    ...                  \-\-exec.args        {"sql":"delete from google.compute.firewalls where project \= 'mutable\-project' and firewall \= 'deletable\-firewall';"}
     ...                  stdout=${CURDIR}${/}tmp${/}MCP-Mode-DeleteSafe-delete.txt
     ...                  stderr=${CURDIR}${/}tmp${/}MCP-Mode-DeleteSafe-delete-stderr.txt
     Should Not Be Equal As Integers    ${del.rc}    0
@@ -759,7 +759,7 @@ MCP HTTP Mode Delete Safe Allows Create Refuses Delete And Lifecycle
     ...                  \-\-client\-type\=http
     ...                  \-\-url\=http://127.0.0.1:9921
     ...                  \-\-exec.action      run_select_query
-    ...                  \-\-exec.args        {"sql":"select name from google.compute.networks where project \= 'stackql\-demo';"}
+    ...                  \-\-exec.args        {"sql":"select name, id from google.storage.buckets where project \= 'stackql\-demo';"}
     ...                  stdout=${CURDIR}${/}tmp${/}MCP-Mode-DeleteSafe-select.txt
     ...                  stderr=${CURDIR}${/}tmp${/}MCP-Mode-DeleteSafe-select-stderr.txt
     Should Be Equal As Integers    ${sel.rc}    0
@@ -769,7 +769,7 @@ MCP HTTP Mode Delete Safe Allows Create Refuses Delete And Lifecycle
     ...                  \-\-client\-type\=http
     ...                  \-\-url\=http://127.0.0.1:9921
     ...                  \-\-exec.action      run_mutation_query
-    ...                  \-\-exec.args        {"sql":"delete from google.compute.firewalls where project \= 'p' and firewall \= 'f';"}
+    ...                  \-\-exec.args        {"sql":"delete from google.compute.firewalls where project \= 'mutable\-project' and firewall \= 'deletable\-firewall';"}
     ...                  stdout=${CURDIR}${/}tmp${/}MCP-Mode-DeleteSafe-delete2.txt
     ...                  stderr=${CURDIR}${/}tmp${/}MCP-Mode-DeleteSafe-delete2-stderr.txt
     Should Not Be Equal As Integers    ${del.rc}    0
@@ -795,7 +795,7 @@ MCP HTTP Mode Full Access Allows Everything
     ...                  \-\-client\-type\=http
     ...                  \-\-url\=http://127.0.0.1:9922
     ...                  \-\-exec.action      run_select_query
-    ...                  \-\-exec.args        {"sql":"select name from google.compute.networks where project \= 'stackql\-demo';"}
+    ...                  \-\-exec.args        {"sql":"select name, id from google.storage.buckets where project \= 'stackql\-demo';"}
     ...                  stdout=${CURDIR}${/}tmp${/}MCP-Mode-FullAccess-select.txt
     ...                  stderr=${CURDIR}${/}tmp${/}MCP-Mode-FullAccess-select-stderr.txt
     Should Be Equal As Integers    ${sel.rc}    0
@@ -826,7 +826,7 @@ MCP HTTP Audit Basic Records Tool Calls
     ...                  \-\-client\-type\=http
     ...                  \-\-url\=http://127.0.0.1:9923
     ...                  \-\-exec.action      run_select_query
-    ...                  \-\-exec.args        {"sql":"select name from google.compute.networks where project \= 'stackql\-demo';"}
+    ...                  \-\-exec.args        {"sql":"select name, id from google.storage.buckets where project \= 'stackql\-demo';"}
     ...                  stdout=${CURDIR}${/}tmp${/}MCP-Audit-select.txt
     ...                  stderr=${CURDIR}${/}tmp${/}MCP-Audit-select-stderr.txt
     Should Be Equal As Integers    ${sel.rc}    0
@@ -858,7 +858,7 @@ MCP HTTP Audit Disabled Writes No File
     ...                  \-\-client\-type\=http
     ...                  \-\-url\=http://127.0.0.1:9912
     ...                  \-\-exec.action      run_select_query
-    ...                  \-\-exec.args        {"sql":"select name from google.compute.networks where project \= 'stackql\-demo';"}
+    ...                  \-\-exec.args        {"sql":"select name, id from google.storage.buckets where project \= 'stackql\-demo';"}
     ...                  stdout=${CURDIR}${/}tmp${/}MCP-AuditDisabled-select.txt
     ...                  stderr=${CURDIR}${/}tmp${/}MCP-AuditDisabled-select-stderr.txt
     Should Be Equal As Integers    ${sel.rc}    0
