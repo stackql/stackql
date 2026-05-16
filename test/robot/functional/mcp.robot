@@ -122,7 +122,7 @@ Start MCP Servers
     ...                                   mcp
     ...                                   \-\-mcp.server.type\=http
     ...                                   \-\-mcp.config
-    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9923", "mode": "full_access", "audit": {"file": {"path": "${CURDIR}/tmp/mcp-audit-9923.log"}}} }
+    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9923", "mode": "full_access", "audit": {"file": {"path": "mcp-audit-9923.log"}}} }
     ...                                   \-\-registry
     ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
     ...                                   \-\-auth
@@ -825,6 +825,15 @@ MCP HTTP Audit Basic Records Tool Calls
     ...                  exec
     ...                  \-\-client\-type\=http
     ...                  \-\-url\=http://127.0.0.1:9923
+    ...                  \-\-exec.action      server_info
+    ...                  \-\-exec.args        {}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Audit-preflight.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Audit-preflight-stderr.txt
+    Should Be Equal As Integers    ${sel.rc}    0    9923 server must be reachable; if this fails the audit log path probably failed to parse
+    ${sel}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9923
     ...                  \-\-exec.action      run_select_query
     ...                  \-\-exec.args        {"sql":"select name, id from google.storage.buckets where project \= 'stackql\-demo';"}
     ...                  stdout=${CURDIR}${/}tmp${/}MCP-Audit-select.txt
@@ -840,7 +849,10 @@ MCP HTTP Audit Basic Records Tool Calls
     ...                  stderr=${CURDIR}${/}tmp${/}MCP-Audit-lifecycle-stderr.txt
     Should Be Equal As Integers    ${life.rc}    0
     Sleep         1s
-    ${log_contents}=    Get File    ${CURDIR}${/}tmp${/}mcp-audit-9923.log
+    # The audit log path in mcp.config was specified as the relative name
+    # `mcp-audit-9923.log`; the stackql process resolves that against its
+    # cwd (the directory robot was invoked from, ie EXECDIR).
+    ${log_contents}=    Get File    ${EXECDIR}${/}mcp-audit-9923.log
     Should Contain    ${log_contents}    "tool":"run_select_query"
     Should Contain    ${log_contents}    "tool":"run_lifecycle_operation"
     Should Contain    ${log_contents}    "decision":"allow"
