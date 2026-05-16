@@ -574,7 +574,7 @@ MCP HTTPS Run Lifecycle Operation Canonical
     ...    \-\-exec.action
     ...    run_lifecycle_operation
     ...    \-\-exec.args
-    ...    {"sql":"EXEC aws.transfer.servers.stop_server @region \= 'ap\-southeast\-2' @@json\='{ \"ServerId\": \"s\-0000000001\" }';"}
+    ...    {"sql":"exec aws.ec2.instances.instances_Start @region \= 'ap\-southeast\-2', @InstanceId \= 'id\-001';"}
     ...    stdout=${CURDIR}${/}tmp${/}MCP-HTTPS-run-lifecycle.txt
     ...    stderr=${CURDIR}${/}tmp${/}MCP-HTTPS-run-lifecycle-stderr.txt
     Should Be Equal As Integers    ${lifecycle.rc}    0

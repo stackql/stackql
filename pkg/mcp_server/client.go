@@ -8,6 +8,7 @@ import (
 	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"net/http"
@@ -342,18 +343,52 @@ func (c *httpMCPClient) callTool(toolName string, args map[string]any) (*mcp.Cal
 	return result, nil
 }
 
+// CallToolText returns the tool's output formatted for a scripting client.
+// See formatToolResult for the contract.
 func (c *httpMCPClient) CallToolText(toolName string, args map[string]any) (string, error) {
 	toolCall, toolCallErr := c.callTool(toolName, args)
 	if toolCallErr != nil {
 		return "", toolCallErr
 	}
-	var result string
-	for _, content := range toolCall.Content {
+	return formatToolResult(toolName, toolCall)
+}
+
+// formatToolResult shapes a CallToolResult for a scripting client.
+// Order of preference:
+//  1. StructuredContent re-marshalled as compact JSON (the typed DTO).
+//  2. The concatenated TextContent blocks, if no structured payload is present.
+//
+// Tool-level errors (IsError == true) are returned as a Go error containing the
+// text payload, so a CLI caller exits non-zero and the message ends up on
+// stderr - matching the existing transport-error convention.
+func formatToolResult(toolName string, toolCall *mcp.CallToolResult) (string, error) {
+	if toolCall == nil {
+		return "", fmt.Errorf("tool %s returned no result", toolName)
+	}
+	if toolCall.IsError {
+		return "", fmt.Errorf("tool %s: %s", toolName, extractText(toolCall))
+	}
+	if toolCall.StructuredContent != nil {
+		raw, err := json.Marshal(toolCall.StructuredContent)
+		if err != nil {
+			return "", fmt.Errorf("marshal structured content for %s: %w", toolName, err)
+		}
+		return string(raw), nil
+	}
+	return extractText(toolCall), nil
+}
+
+func extractText(toolCall *mcp.CallToolResult) string {
+	var sb bytes.Buffer
+	for i, content := range toolCall.Content {
 		if textContent, ok := content.(*mcp.TextContent); ok {
-			result += textContent.Text + "\n"
+			if i > 0 {
+				sb.WriteString("\n")
+			}
+			sb.WriteString(textContent.Text)
 		}
 	}
-	return result, nil
+	return sb.String()
 }
 
 type stdioMCPClient struct {
