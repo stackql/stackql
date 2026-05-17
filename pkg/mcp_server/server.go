@@ -7,13 +7,17 @@ import (
 	"io"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/semaphore"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
 	"github.com/stackql/stackql/pkg/mcp_server/dto"
+	"github.com/stackql/stackql/pkg/mcp_server/policy"
 	"github.com/stackql/stackql/pkg/mcp_server/render"
+	"github.com/stackql/stackql/pkg/sink"
 )
 
 const (
@@ -30,9 +34,10 @@ type MCPServer interface {
 
 // simpleMCPServer implements the Model Context Protocol server for StackQL.
 type simpleMCPServer struct {
-	config  *Config
-	backend Backend
-	logger  *logrus.Logger
+	config    *Config
+	backend   Backend
+	logger    *logrus.Logger
+	auditSink sink.Sink
 
 	server *mcp.Server
 
@@ -72,17 +77,6 @@ func (s *simpleMCPServer) runHTTPServer(server *mcp.Server, config *Config) erro
 	return nil
 }
 
-// addToolIfEnabled registers a tool only when cfg.IsToolEnabled allows it.
-// This is the single chokepoint by which the EnabledTools allowlist is enforced.
-func addToolIfEnabled[In, Out any](
-	s *mcp.Server, cfg *Config, t *mcp.Tool, h mcp.ToolHandlerFor[In, Out],
-) {
-	if !cfg.IsToolEnabled(t.Name) {
-		return
-	}
-	mcp.AddTool(s, t, h)
-}
-
 // addPromptIfEnabled registers a prompt only when cfg.IsPromptEnabled allows it.
 func addPromptIfEnabled(s *mcp.Server, cfg *Config, p *mcp.Prompt, h mcp.PromptHandler) {
 	if !cfg.IsPromptEnabled(p.Name) {
@@ -100,19 +94,51 @@ func NewAgnosticBackendServer(backend Backend, config *Config, logger *logrus.Lo
 	return newMCPServer(config, backend, logger)
 }
 
-func isReadOnlyConfig(cfg *Config) bool {
-	if cfg == nil || cfg.Server.IsReadOnly == nil {
-		return false
-	}
-	return *cfg.Server.IsReadOnly
-}
-
 func mustMarshal(v any) string {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return fmt.Sprintf(`{"error":"failed to marshal: %v"}`, err)
 	}
 	return string(b)
+}
+
+// mcpDefaultAuditFilename returns the default audit log filename the MCP
+// server uses when the operator did not configure an explicit path.  The
+// naming convention is the one shipped with PR2: stackql_mcp_server_<UTC>.log
+// in cwd.  The generic sink package picks this up via FileConfig.DefaultFilename.
+func mcpDefaultAuditFilename(t time.Time) string {
+	return fmt.Sprintf("stackql_mcp_server_%s.log", t.UTC().Format("20060102T150405Z"))
+}
+
+// initAuditSink constructs the audit sink dictated by cfg.  When audit is
+// disabled it returns a nop sink so the rest of the code can be uniform.
+//
+// The MCP server takes responsibility for the "where do logs land?" default:
+// when neither Path nor Dir is supplied in mcp.config, we default Dir to cwd
+// (".") so existing operators see the same behaviour as PR2.  The generic
+// pkg/sink package itself refuses to silently pick a directory.
+func initAuditSink(cfg *Config, logger *logrus.Logger) (sink.Sink, error) {
+	if !cfg.IsAuditEnabled() {
+		return sink.NewNopSink(), nil
+	}
+	fileCfg := cfg.Server.Audit.File
+	if fileCfg.Path == "" && fileCfg.Dir == "" {
+		fileCfg.Dir = "."
+	}
+	if fileCfg.DefaultFilename == nil {
+		fileCfg.DefaultFilename = mcpDefaultAuditFilename
+	}
+	switch cfg.Server.Audit.Sink {
+	case "", "file":
+		s, err := sink.NewFileSink(fileCfg)
+		if err != nil {
+			return nil, fmt.Errorf("audit file sink: %w", err)
+		}
+		return s, nil
+	default:
+		logger.Warnf("unknown audit sink %q; falling back to file", cfg.Server.Audit.Sink)
+		return sink.NewFileSink(fileCfg)
+	}
 }
 
 // NewMCPServer creates a new MCP server with the provided configuration and backend.
@@ -133,32 +159,59 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		logger.SetLevel(logrus.InfoLevel)
 	}
 
+	sink, err := initAuditSink(config, logger)
+	if err != nil {
+		return nil, err
+	}
+
 	server := mcp.NewServer(
 		&mcp.Implementation{Name: "stackql", Version: "v0.1.1"},
 		nil,
 	)
 
-	registerTools(server, config, backend, logger)
+	registerTools(server, config, backend, logger, sink)
 	registerPrompts(server, config)
 
 	return &simpleMCPServer{
 		config:           config,
 		backend:          backend,
 		logger:           logger,
+		auditSink:        sink,
 		server:           server,
 		requestSemaphore: semaphore.NewWeighted(int64(config.Server.MaxConcurrentRequests)),
 		servers:          make([]io.Closer, 0),
 	}, nil
 }
 
+// selectGate is the toolGate shape for SELECT/metadata tools that take no SQL.
+// Decision is Allow under every mode, so the gate is effectively pass-through;
+// the audit record still gets written.
+func selectGate(name string) toolGate {
+	return toolGate{
+		toolName:     name,
+		defaultClass: policy.QueryClassSelect,
+		extractArgs:  extractArgsFromHierarchy,
+	}
+}
+
+// queryGate is the toolGate shape for tools that take a SQL string as input.
+// The classifier inspects args.SQL.
+func queryGate(name string) toolGate {
+	return toolGate{
+		toolName:     name,
+		defaultClass: policy.QueryClassUnknown,
+		extractSQL:   extractSQLFromQueryInput,
+		extractArgs:  extractArgsFromQueryInput,
+	}
+}
+
 //nolint:funlen,gocognit // tool registrations are inherently long and branchy
-func registerTools(server *mcp.Server, config *Config, backend Backend, logger *logrus.Logger) {
-	addToolIfEnabled(
-		server,
-		config,
+func registerTools(server *mcp.Server, cfg *Config, backend Backend, logger *logrus.Logger, auditSink sink.Sink) {
+	addToolWithGate(
+		server, cfg, auditSink, selectGate("server_info"),
 		&mcp.Tool{
 			Name:        "server_info",
-			Description: "Get server identity and runtime: stackql version, backing SQL engine, provider registry location, read-only flag. Call once at session start.",
+			Description: "Get server identity and runtime: stackql version, backing SQL engine, provider registry location, mode, read-only flag. Call once at session start.",
 		},
 		func(ctx context.Context, _ *mcp.CallToolRequest, args any) (*mcp.CallToolResult, dto.ServerInfoDTO, error) {
 			rv, err := backend.ServerInfo(ctx, args)
@@ -173,6 +226,7 @@ func registerTools(server *mcp.Server, config *Config, backend Backend, logger *
 				Transport:        rv.Transport,
 				SQLBackend:       rv.SQLBackend,
 				ProviderRegistry: rv.ProviderRegistry,
+				Mode:             rv.Mode,
 				ReadOnly:         rv.ReadOnly,
 			}
 			rec := []map[string]any{{
@@ -183,6 +237,7 @@ func registerTools(server *mcp.Server, config *Config, backend Backend, logger *
 				"transport":         out.Transport,
 				"sql_backend":       out.SQLBackend,
 				"provider_registry": out.ProviderRegistry,
+				"mode":              out.Mode,
 				"is_read_only":      out.ReadOnly,
 			}}
 			text := render.RenderKV("Server Info", rec)
@@ -190,9 +245,8 @@ func registerTools(server *mcp.Server, config *Config, backend Backend, logger *
 		},
 	)
 
-	addToolIfEnabled(
-		server,
-		config,
+	addToolWithGate(
+		server, cfg, auditSink, selectGate("list_providers"),
 		&mcp.Tool{
 			Name:        "list_providers",
 			Description: "Available cloud/SaaS providers (top of the hierarchy). No inputs.",
@@ -207,9 +261,8 @@ func registerTools(server *mcp.Server, config *Config, backend Backend, logger *
 		},
 	)
 
-	addToolIfEnabled(
-		server,
-		config,
+	addToolWithGate(
+		server, cfg, auditSink, selectGate("list_services"),
 		&mcp.Tool{
 			Name:        "list_services",
 			Description: "Services under a provider. Requires provider.",
@@ -224,9 +277,8 @@ func registerTools(server *mcp.Server, config *Config, backend Backend, logger *
 		},
 	)
 
-	addToolIfEnabled(
-		server,
-		config,
+	addToolWithGate(
+		server, cfg, auditSink, selectGate("list_resources"),
 		&mcp.Tool{
 			Name:        "list_resources",
 			Description: "Resources under a provider.service. Requires provider and service.",
@@ -241,9 +293,8 @@ func registerTools(server *mcp.Server, config *Config, backend Backend, logger *
 		},
 	)
 
-	addToolIfEnabled(
-		server,
-		config,
+	addToolWithGate(
+		server, cfg, auditSink, selectGate("list_methods"),
 		&mcp.Tool{
 			Name:        "list_methods",
 			Description: "Access methods (HTTP operations) for a resource. Call before writing any query. Requires provider, service, resource.",
@@ -258,9 +309,8 @@ func registerTools(server *mcp.Server, config *Config, backend Backend, logger *
 		},
 	)
 
-	addToolIfEnabled(
-		server,
-		config,
+	addToolWithGate(
+		server, cfg, auditSink, selectGate("describe_resource"),
 		&mcp.Tool{
 			Name:        "describe_resource",
 			Description: "Output fields for a resource's primary read method. Requires provider, service, resource.",
@@ -275,9 +325,8 @@ func registerTools(server *mcp.Server, config *Config, backend Backend, logger *
 		},
 	)
 
-	addToolIfEnabled(
-		server,
-		config,
+	addToolWithGate(
+		server, cfg, auditSink, selectGate("describe_method"),
 		&mcp.Tool{
 			Name:        "describe_method",
 			Description: "Full I/O contract for one method. Requires provider, service, resource, method.",
@@ -292,9 +341,13 @@ func registerTools(server *mcp.Server, config *Config, backend Backend, logger *
 		},
 	)
 
-	addToolIfEnabled(
-		server,
-		config,
+	addToolWithGate(
+		server, cfg, auditSink,
+		toolGate{
+			toolName:     "validate_select_query",
+			defaultClass: policy.QueryClassSelect, // validation is read-only by definition.
+			extractArgs:  extractArgsFromQueryInput,
+		},
 		&mcp.Tool{
 			Name:        "validate_select_query",
 			Description: "Parse and plan a SELECT without executing. Returns {valid, errors}. SELECT only.",
@@ -319,9 +372,8 @@ func registerTools(server *mcp.Server, config *Config, backend Backend, logger *
 		},
 	)
 
-	addToolIfEnabled(
-		server,
-		config,
+	addToolWithGate(
+		server, cfg, auditSink, queryGate("run_select_query"),
 		&mcp.Tool{
 			Name:        "run_select_query",
 			Description: "Execute a SELECT. Returns {rows}. Reads only.",
@@ -337,17 +389,13 @@ func registerTools(server *mcp.Server, config *Config, backend Backend, logger *
 		},
 	)
 
-	addToolIfEnabled(
-		server,
-		config,
+	addToolWithGate(
+		server, cfg, auditSink, queryGate("run_mutation_query"),
 		&mcp.Tool{
 			Name:        "run_mutation_query",
-			Description: "Execute INSERT/UPDATE/REPLACE/DELETE against the provider. Real side effects. Returns {messages, timestamp}. Refused in read-only mode.",
+			Description: "Execute INSERT/UPDATE/REPLACE/DELETE against the provider. Real side effects. Returns {messages, timestamp}. Gated by server mode.",
 		},
 		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.QueryJSONInput) (*mcp.CallToolResult, map[string]any, error) {
-			if isReadOnlyConfig(config) {
-				return nil, nil, fmt.Errorf("tool 'run_mutation_query' refused: server is read-only")
-			}
 			res, err := backend.ExecQuery(ctx, args.SQL)
 			if err != nil {
 				return nil, nil, err
@@ -357,17 +405,13 @@ func registerTools(server *mcp.Server, config *Config, backend Backend, logger *
 		},
 	)
 
-	addToolIfEnabled(
-		server,
-		config,
+	addToolWithGate(
+		server, cfg, auditSink, queryGate("run_lifecycle_operation"),
 		&mcp.Tool{
 			Name:        "run_lifecycle_operation",
-			Description: "Execute a stackql EXEC lifecycle operation. Returns {messages, timestamp}. Refused in read-only mode.",
+			Description: "Execute a stackql EXEC lifecycle operation. Returns {messages, timestamp}. Gated by server mode.",
 		},
 		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.QueryJSONInput) (*mcp.CallToolResult, map[string]any, error) {
-			if isReadOnlyConfig(config) {
-				return nil, nil, fmt.Errorf("tool 'run_lifecycle_operation' refused: server is read-only")
-			}
 			res, err := backend.ExecQuery(ctx, args.SQL)
 			if err != nil {
 				return nil, nil, err
@@ -445,6 +489,11 @@ func (s *simpleMCPServer) Stop() error {
 
 	if err := s.backend.Close(); err != nil {
 		errs = append(errs, err)
+	}
+	if s.auditSink != nil {
+		if err := s.auditSink.Close(); err != nil {
+			errs = append(errs, err)
+		}
 	}
 
 	s.running = false

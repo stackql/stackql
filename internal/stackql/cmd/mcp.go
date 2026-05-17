@@ -110,18 +110,16 @@ func runMCPServer(handlerCtx handler.HandlerContext) {
 	if config.Server.Transport == "" {
 		config.Server.Transport = mcpServerType
 	}
-	var isReadOnly bool
-	if config.Server.IsReadOnly != nil {
-		isReadOnly = *config.Server.IsReadOnly
-	}
 	bi := buildinfo.Get()
 	transport := config.Server.Transport
 	runtimeContext := handlerCtx.GetRuntimeContext()
+	mode := config.GetMode()
 	serverInfo := mcpbackend.NewServerBuildInfo(
 		bi,
 		transport,
 		sqlBackendIdentifier(runtimeContext),
 		providerRegistryIdentifier(runtimeContext),
+		mode,
 	)
 	var backend mcp_server.Backend
 	var backendErr error
@@ -135,7 +133,6 @@ func runMCPServer(handlerCtx handler.HandlerContext) {
 		db, err := db_util.GetDB("pgx", "postgres", cfg)
 		iqlerror.PrintErrorAndExitOneIfError(err)
 		backend, backendErr = mcpbackend.NewStackqlMCPReverseProxyService(
-			isReadOnly,
 			dsn,
 			db,
 			handlerCtx,
@@ -148,7 +145,6 @@ func runMCPServer(handlerCtx handler.HandlerContext) {
 		iqlerror.PrintErrorAndExitOneIfError(orchestratorErr)
 		iqlerror.PrintErrorAndExitOneIfNil(orchestrator, "orchestrator is unexpectedly nil")
 		backend, backendErr = mcpbackend.NewStackqlMCPBackendService(
-			isReadOnly,
 			orchestrator,
 			handlerCtx,
 			logging.GetLogger(),

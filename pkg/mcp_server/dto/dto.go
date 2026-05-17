@@ -9,8 +9,9 @@ type HierarchyInput struct {
 	RowLimit int    `json:"row_limit,omitempty" yaml:"row_limit,omitempty"`
 }
 
-// ServerInfoOutput is the backend-facing server info payload. The JSON tag
-// for ReadOnly stays `is_read_only` so existing robot tests keep passing.
+// ServerInfoOutput is the backend-facing server info payload.
+// ReadOnly (JSON tag `is_read_only`) is kept for back-compat with PR1
+// consumers; new consumers should prefer the Mode field.
 type ServerInfoOutput struct {
 	Version          string `json:"version,omitempty" jsonschema:"stackql semver"`
 	Commit           string `json:"commit,omitempty" jsonschema:"git short commit SHA"`
@@ -19,7 +20,8 @@ type ServerInfoOutput struct {
 	Transport        string `json:"transport,omitempty" jsonschema:"MCP transport (http, stdio, reverse_proxy)"`
 	SQLBackend       string `json:"sql_backend,omitempty" jsonschema:"backing SQL engine identifier"`
 	ProviderRegistry string `json:"provider_registry,omitempty" jsonschema:"provider registry URL or path"`
-	ReadOnly         bool   `json:"is_read_only" jsonschema:"is the server read-only"`
+	Mode             string `json:"mode,omitempty" jsonschema:"server mode (read_only, safe, delete_safe, full_access)"`
+	ReadOnly         bool   `json:"is_read_only" jsonschema:"true when mode is read_only (back-compat with PR1)"`
 }
 
 // ServerInfoDTO is the client-facing server info payload, mirrors ServerInfoOutput.
@@ -31,6 +33,7 @@ type ServerInfoDTO struct {
 	Transport        string `json:"transport,omitempty"`
 	SQLBackend       string `json:"sql_backend,omitempty"`
 	ProviderRegistry string `json:"provider_registry,omitempty"`
+	Mode             string `json:"mode,omitempty"`
 	ReadOnly         bool   `json:"is_read_only"`
 }
 

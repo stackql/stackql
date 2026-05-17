@@ -34,6 +34,7 @@ type serverBuildInfo interface {
 	transport() string
 	sqlBackend() string
 	providerRegistry() string
+	mode() string
 }
 
 type immutableServerBuildInfo struct {
@@ -44,6 +45,7 @@ type immutableServerBuildInfo struct {
 	transportStr        string
 	sqlBackendStr       string
 	providerRegistryStr string
+	modeStr             string
 }
 
 func (s *immutableServerBuildInfo) version() string          { return s.versionStr }
@@ -53,14 +55,19 @@ func (s *immutableServerBuildInfo) platform() string         { return s.platform
 func (s *immutableServerBuildInfo) transport() string        { return s.transportStr }
 func (s *immutableServerBuildInfo) sqlBackend() string       { return s.sqlBackendStr }
 func (s *immutableServerBuildInfo) providerRegistry() string { return s.providerRegistryStr }
+func (s *immutableServerBuildInfo) mode() string             { return s.modeStr }
 
 // NewServerBuildInfo composes build-time identifiers and runtime values into a
 // single value carried by the backend. Fields are written exactly once here.
 // The returned interface is unexported; callers pass it straight into the
 // backend constructors and never read individual fields outside this package.
+//
+// `mode` is the server's mode string (read_only, safe, delete_safe, full_access).
+// The back-compat `is_read_only` flag on server_info is derived by ServerInfo()
+// from this value.
 func NewServerBuildInfo(
 	bi buildinfo.BuildInfo,
-	transport, sqlBackend, providerRegistry string,
+	transport, sqlBackend, providerRegistry, mode string,
 ) serverBuildInfo { //nolint:revive // intentional: unexported return for data-carrier rule
 	return &immutableServerBuildInfo{
 		versionStr:          bi.GetSemVersion(),
@@ -70,6 +77,7 @@ func NewServerBuildInfo(
 		transportStr:        transport,
 		sqlBackendStr:       sqlBackend,
 		providerRegistryStr: providerRegistry,
+		modeStr:             mode,
 	}
 }
 
@@ -185,7 +193,6 @@ func (s *simpleStackqlInterrogator) GetQueryJSON(qI dto.QueryJSONInput) (string,
 }
 
 type stackqlMCPService struct {
-	isReadOnly      bool
 	txnOrchestrator tsm_physio.Orchestrator
 	interrogator    StackqlInterrogator
 	handlerCtx      handler.HandlerContext
@@ -194,7 +201,6 @@ type stackqlMCPService struct {
 }
 
 func NewStackqlMCPBackendService(
-	isReadOnly bool,
 	txnOrchestrator tsm_physio.Orchestrator,
 	handlerCtx handler.HandlerContext,
 	logger *logrus.Logger,
@@ -211,7 +217,6 @@ func NewStackqlMCPBackendService(
 		return nil, fmt.Errorf("transaction orchestrator is nil")
 	}
 	return &stackqlMCPService{
-		isReadOnly:      isReadOnly,
 		txnOrchestrator: txnOrchestrator,
 		interrogator:    NewSimpleStackqlInterrogator(),
 		logger:          logger,
@@ -219,6 +224,12 @@ func NewStackqlMCPBackendService(
 		serverInfo:      serverInfo,
 	}, nil
 }
+
+// modeReadOnly is the on-wire mode string equivalent to the historical
+// `read_only: true` flag.  Duplicated here (rather than importing
+// pkg/mcp_server/policy) to keep this internal package free of cross-package
+// dependencies on the public MCP surface.
+const modeReadOnly = "read_only"
 
 func (b *stackqlMCPService) Ping(_ context.Context) error {
 	return nil
@@ -229,6 +240,7 @@ func (b *stackqlMCPService) Close() error {
 }
 
 func (b *stackqlMCPService) ServerInfo(_ context.Context, _ any) (dto.ServerInfoOutput, error) {
+	mode := b.serverInfo.mode()
 	return dto.ServerInfoOutput{
 		Version:          b.serverInfo.version(),
 		Commit:           b.serverInfo.commit(),
@@ -237,7 +249,8 @@ func (b *stackqlMCPService) ServerInfo(_ context.Context, _ any) (dto.ServerInfo
 		Transport:        b.serverInfo.transport(),
 		SQLBackend:       b.serverInfo.sqlBackend(),
 		ProviderRegistry: b.serverInfo.providerRegistry(),
-		ReadOnly:         b.isReadOnly,
+		Mode:             mode,
+		ReadOnly:         mode == modeReadOnly,
 	}, nil
 }
 

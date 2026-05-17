@@ -3,6 +3,7 @@ package mcp_server //nolint:testpackage,revive // exercise internal wiring
 import (
 	"context"
 	"encoding/json"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -48,35 +49,68 @@ func (b *testBackend) ValidateQuery(_ context.Context, q string) ([]map[string]a
 }
 func (b *testBackend) RunQueryJSON(_ context.Context, in dto.QueryJSONInput) ([]map[string]any, error) {
 	b.lastQueryJSON = in
+	if b.runJSONOut == nil {
+		// SDK validates QueryResultDTO.Rows as a JSON array; nil is rejected.
+		return []map[string]any{}, nil
+	}
 	return b.runJSONOut, nil
 }
 func (b *testBackend) ListProviders(_ context.Context) ([]map[string]any, error) {
-	return b.listProvidersOut, nil
+	return nilOrEmpty(b.listProvidersOut), nil
 }
 func (b *testBackend) ListServices(_ context.Context, h dto.HierarchyInput) ([]map[string]any, error) {
 	b.lastHierarchy = h
-	return b.listServicesOut, nil
+	return nilOrEmpty(b.listServicesOut), nil
 }
 func (b *testBackend) ListResources(_ context.Context, h dto.HierarchyInput) ([]map[string]any, error) {
 	b.lastHierarchy = h
-	return b.listResourcesOut, nil
+	return nilOrEmpty(b.listResourcesOut), nil
 }
 func (b *testBackend) ListMethods(_ context.Context, h dto.HierarchyInput) ([]map[string]any, error) {
 	b.lastHierarchy = h
-	return b.listMethodsOut, nil
+	return nilOrEmpty(b.listMethodsOut), nil
 }
 func (b *testBackend) DescribeResource(_ context.Context, h dto.HierarchyInput) ([]map[string]any, error) {
 	b.lastHierarchy = h
-	return b.describeRsrcOut, nil
+	return nilOrEmpty(b.describeRsrcOut), nil
 }
 func (b *testBackend) DescribeMethod(_ context.Context, h dto.HierarchyInput) ([]map[string]any, error) {
 	b.lastHierarchy = h
-	return b.describeMethOut, nil
+	return nilOrEmpty(b.describeMethOut), nil
+}
+
+// nilOrEmpty ensures we return a non-nil slice so the SDK's schema validation
+// accepts it as "array" rather than "null".
+func nilOrEmpty(v []map[string]any) []map[string]any {
+	if v == nil {
+		return []map[string]any{}
+	}
+	return v
 }
 
 // connectInProcess wires a freshly-built server to an in-memory client and returns the client session.
+// The client does NOT advertise elicitation, which mirrors the robot test harness.
 func connectInProcess(t *testing.T, cfg *Config, backend Backend) *mcp.ClientSession {
+	return connectInProcessWith(t, cfg, backend, nil)
+}
+
+// connectInProcessWith is the workhorse helper: callers may pass an elicitation
+// handler to opt the client into elicitation-capable behaviour.  The audit
+// sink is forced to a nop so tests don't pollute cwd with log files.
+func connectInProcessWith(
+	t *testing.T,
+	cfg *Config,
+	backend Backend,
+	elicit func(context.Context, *mcp.ElicitRequest) (*mcp.ElicitResult, error),
+) *mcp.ClientSession {
 	t.Helper()
+	if cfg == nil {
+		cfg = DefaultConfig()
+	}
+	// Disable audit in unit tests by default so we don't drop log files
+	// next to the test binary.  Tests that exercise audit set this back.
+	cfg.Server.Audit.Disabled = true
+
 	mcpSrv, err := newMCPServer(cfg, backend, nil)
 	if err != nil {
 		t.Fatalf("newMCPServer: %v", err)
@@ -90,13 +124,40 @@ func connectInProcess(t *testing.T, cfg *Config, backend Backend) *mcp.ClientSes
 	if _, err := rawServer.Connect(ctx, t1, nil); err != nil {
 		t.Fatalf("server connect: %v", err)
 	}
-	client := mcp.NewClient(&mcp.Implementation{Name: "test-client", Version: "v0"}, nil)
+	var clientOpts *mcp.ClientOptions
+	if elicit != nil {
+		clientOpts = &mcp.ClientOptions{ElicitationHandler: elicit}
+	}
+	client := mcp.NewClient(&mcp.Implementation{Name: "test-client", Version: "v0"}, clientOpts)
 	cs, err := client.Connect(ctx, t2, nil)
 	if err != nil {
 		t.Fatalf("client connect: %v", err)
 	}
 	t.Cleanup(func() { _ = cs.Close() })
 	return cs
+}
+
+// fullAccessConfig returns a DefaultConfig with mode=full_access, used by
+// positive-path tests for mutation/lifecycle tools that would otherwise be
+// gated by the new default mode (safe).
+func fullAccessConfig() *Config {
+	cfg := DefaultConfig()
+	cfg.Server.Mode = "full_access"
+	return cfg
+}
+
+// readOnlyConfig returns a DefaultConfig with mode=read_only.
+func readOnlyConfig() *Config {
+	cfg := DefaultConfig()
+	cfg.Server.Mode = "read_only"
+	return cfg
+}
+
+// deleteSafeConfig returns a DefaultConfig with mode=delete_safe.
+func deleteSafeConfig() *Config {
+	cfg := DefaultConfig()
+	cfg.Server.Mode = "delete_safe"
+	return cfg
 }
 
 func callTool(t *testing.T, cs *mcp.ClientSession, name string, args any) *mcp.CallToolResult {
@@ -254,11 +315,8 @@ func TestTool_RunSelectQuery_ForwardsRowLimit(t *testing.T) {
 }
 
 func TestTool_RunMutation_RefusedInReadOnly(t *testing.T) {
-	readOnly := true
-	cfg := DefaultConfig()
-	cfg.Server.IsReadOnly = &readOnly
 	be := &testBackend{}
-	cs := connectInProcess(t, cfg, be)
+	cs := connectInProcess(t, readOnlyConfig(), be)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -274,26 +332,23 @@ func TestTool_RunMutation_RefusedInReadOnly(t *testing.T) {
 	if be.lastExecQuery != "" {
 		t.Errorf("backend.ExecQuery should not have been called, got %q", be.lastExecQuery)
 	}
-	if got := firstText(t, res); !strings.Contains(got, "read-only") {
-		t.Errorf("expected refusal message to mention read-only, got %q", got)
+	if got := firstText(t, res); !strings.Contains(got, "read_only") {
+		t.Errorf("expected refusal message to mention read_only mode, got %q", got)
 	}
 }
 
 func TestTool_RunLifecycleOperation_PositiveAndReadOnly(t *testing.T) {
-	// Positive path on a writable server.
+	// Positive path under full_access (no elicitation needed).
 	be := &testBackend{execOut: map[string]any{"messages": []string{"ok"}, "timestamp": "now"}}
-	cs := connectInProcess(t, DefaultConfig(), be)
+	cs := connectInProcess(t, fullAccessConfig(), be)
 	callTool(t, cs, "run_lifecycle_operation", map[string]any{"sql": "EXEC x.y.z @a='1'"})
 	if be.lastExecQuery != "EXEC x.y.z @a='1'" {
 		t.Errorf("exec query not forwarded: %q", be.lastExecQuery)
 	}
 
-	// Refusal path on a read-only server.
-	readOnly := true
-	cfg := DefaultConfig()
-	cfg.Server.IsReadOnly = &readOnly
+	// Refusal path under read_only.
 	be2 := &testBackend{}
-	cs2 := connectInProcess(t, cfg, be2)
+	cs2 := connectInProcess(t, readOnlyConfig(), be2)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	res, err := cs2.CallTool(ctx, &mcp.CallToolParams{
@@ -380,3 +435,271 @@ type mcpTestError string
 func (e mcpTestError) Error() string { return string(e) }
 
 func mcpTestErr(s string) error { return mcpTestError(s) }
+
+// --- Mode contract: client without elicitation support ---
+
+// callExpectingError invokes a tool and asserts the result carries IsError=true
+// with a refusal message containing the given substring.  Used for the no-
+// elicitation fallback paths (safe / delete_safe with a non-elicitation client).
+func callExpectingError(t *testing.T, cs *mcp.ClientSession, name string, args map[string]any, msgFragment string) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	res, err := cs.CallTool(ctx, &mcp.CallToolParams{Name: name, Arguments: args})
+	if err != nil {
+		t.Fatalf("CallTool(%s): transport-level err %v", name, err)
+	}
+	if !res.IsError {
+		t.Errorf("CallTool(%s): expected IsError=true, got %+v", name, res)
+		return
+	}
+	if got := firstText(t, res); !strings.Contains(got, msgFragment) {
+		t.Errorf("CallTool(%s): refusal message %q does not contain %q", name, got, msgFragment)
+	}
+}
+
+func TestMode_ReadOnly_RefusesAllMutationsAndLifecycle(t *testing.T) {
+	be := &testBackend{}
+	cs := connectInProcess(t, readOnlyConfig(), be)
+
+	// SELECT proceeds.
+	callTool(t, cs, "run_select_query", map[string]any{"sql": "select 1"})
+
+	// Each non-select tool is refused with the read_only message.
+	callExpectingError(t, cs, "run_mutation_query",
+		map[string]any{"sql": "insert into t values (1)"}, "read_only")
+	callExpectingError(t, cs, "run_mutation_query",
+		map[string]any{"sql": "delete from t"}, "read_only")
+	callExpectingError(t, cs, "run_lifecycle_operation",
+		map[string]any{"sql": "EXEC a.b.c"}, "read_only")
+	if be.lastExecQuery != "" {
+		t.Errorf("backend should not have been called: %q", be.lastExecQuery)
+	}
+}
+
+func TestMode_Safe_RefusesMutationsWithoutElicitation(t *testing.T) {
+	be := &testBackend{}
+	cs := connectInProcess(t, DefaultConfig(), be) // default is safe
+
+	callTool(t, cs, "run_select_query", map[string]any{"sql": "select 1"})
+
+	callExpectingError(t, cs, "run_mutation_query",
+		map[string]any{"sql": "insert into t values (1)"}, "does not support elicitation")
+	callExpectingError(t, cs, "run_mutation_query",
+		map[string]any{"sql": "delete from t"}, "does not support elicitation")
+	callExpectingError(t, cs, "run_lifecycle_operation",
+		map[string]any{"sql": "EXEC a.b.c"}, "does not support elicitation")
+	if be.lastExecQuery != "" {
+		t.Errorf("backend should not have been called: %q", be.lastExecQuery)
+	}
+}
+
+func TestMode_DeleteSafe_AllowsCreateRefusesDeleteAndLifecycle(t *testing.T) {
+	be := &testBackend{execOut: map[string]any{"timestamp": "now"}}
+	cs := connectInProcess(t, deleteSafeConfig(), be)
+
+	// SELECT and INSERT/UPDATE proceed.
+	callTool(t, cs, "run_select_query", map[string]any{"sql": "select 1"})
+	callTool(t, cs, "run_mutation_query", map[string]any{"sql": "insert into t values (1)"})
+	if be.lastExecQuery != "insert into t values (1)" {
+		t.Errorf("insert should reach the backend, got %q", be.lastExecQuery)
+	}
+
+	// DELETE and EXEC refused (no elicitation).
+	be.lastExecQuery = ""
+	callExpectingError(t, cs, "run_mutation_query",
+		map[string]any{"sql": "delete from t"}, "delete_safe")
+	callExpectingError(t, cs, "run_lifecycle_operation",
+		map[string]any{"sql": "EXEC a.b.c"}, "delete_safe")
+	if be.lastExecQuery != "" {
+		t.Errorf("delete/lifecycle should not have reached the backend, got %q", be.lastExecQuery)
+	}
+}
+
+func TestMode_FullAccess_AllowsEverything(t *testing.T) {
+	be := &testBackend{execOut: map[string]any{"timestamp": "now"}}
+	cs := connectInProcess(t, fullAccessConfig(), be)
+
+	callTool(t, cs, "run_select_query", map[string]any{"sql": "select 1"})
+	callTool(t, cs, "run_mutation_query", map[string]any{"sql": "insert into t values (1)"})
+	callTool(t, cs, "run_mutation_query", map[string]any{"sql": "delete from t"})
+	callTool(t, cs, "run_lifecycle_operation", map[string]any{"sql": "EXEC a.b.c"})
+	if be.lastExecQuery != "EXEC a.b.c" {
+		t.Errorf("lifecycle should have reached backend last; got %q", be.lastExecQuery)
+	}
+}
+
+// --- Mode contract: client WITH elicitation support ---
+
+func acceptingElicit(_ context.Context, _ *mcp.ElicitRequest) (*mcp.ElicitResult, error) {
+	return &mcp.ElicitResult{Action: "accept"}, nil
+}
+
+func decliningElicit(_ context.Context, _ *mcp.ElicitRequest) (*mcp.ElicitResult, error) {
+	return &mcp.ElicitResult{Action: "decline"}, nil
+}
+
+func cancellingElicit(_ context.Context, _ *mcp.ElicitRequest) (*mcp.ElicitResult, error) {
+	return &mcp.ElicitResult{Action: "cancel"}, nil
+}
+
+func TestMode_Safe_ElicitationAcceptProceeds(t *testing.T) {
+	be := &testBackend{execOut: map[string]any{"timestamp": "now"}}
+	cs := connectInProcessWith(t, DefaultConfig(), be, acceptingElicit)
+	callTool(t, cs, "run_mutation_query", map[string]any{"sql": "delete from t"})
+	if be.lastExecQuery != "delete from t" {
+		t.Errorf("after accept, backend should run mutation; got %q", be.lastExecQuery)
+	}
+}
+
+func TestMode_Safe_ElicitationDeclineRefuses(t *testing.T) {
+	be := &testBackend{}
+	cs := connectInProcessWith(t, DefaultConfig(), be, decliningElicit)
+	callExpectingError(t, cs, "run_mutation_query",
+		map[string]any{"sql": "delete from t"}, "declined approval")
+	if be.lastExecQuery != "" {
+		t.Errorf("after decline, backend should not run: %q", be.lastExecQuery)
+	}
+}
+
+func TestMode_Safe_ElicitationCancelRefuses(t *testing.T) {
+	be := &testBackend{}
+	cs := connectInProcessWith(t, DefaultConfig(), be, cancellingElicit)
+	callExpectingError(t, cs, "run_mutation_query",
+		map[string]any{"sql": "delete from t"}, "dismissed")
+	if be.lastExecQuery != "" {
+		t.Errorf("after cancel, backend should not run: %q", be.lastExecQuery)
+	}
+}
+
+func TestMode_DeleteSafe_ElicitationAcceptAllowsDelete(t *testing.T) {
+	be := &testBackend{execOut: map[string]any{"timestamp": "now"}}
+	cs := connectInProcessWith(t, deleteSafeConfig(), be, acceptingElicit)
+	callTool(t, cs, "run_mutation_query", map[string]any{"sql": "delete from t"})
+	if be.lastExecQuery != "delete from t" {
+		t.Errorf("after accept, delete should reach backend: %q", be.lastExecQuery)
+	}
+}
+
+// --- ServerInfo surfaces mode + is_read_only ---
+
+func TestServerInfo_SurfacesMode(t *testing.T) {
+	be := &testBackend{
+		serverInfoOut: dto.ServerInfoOutput{
+			Mode:     "delete_safe",
+			ReadOnly: false,
+		},
+	}
+	cs := connectInProcess(t, deleteSafeConfig(), be)
+	res := callTool(t, cs, "server_info", map[string]any{})
+	out := structuredAs[dto.ServerInfoDTO](t, res)
+	if out.Mode != "delete_safe" {
+		t.Errorf("expected mode=delete_safe, got %q", out.Mode)
+	}
+	if out.ReadOnly {
+		t.Errorf("expected is_read_only=false")
+	}
+}
+
+// --- Audit ---
+
+//nolint:gocognit // end-to-end audit test threads many setup steps
+func TestAudit_RecordsAllToolCalls(t *testing.T) {
+	// Swap the sink-init by constructing the server directly and replacing
+	// the gate's sink via the unexported `auditSink` field.  Simpler: build
+	// the server with audit disabled, then re-register tools by hand.  Even
+	// simpler: route the in-process tests through a config that points at a
+	// temp directory and read back the file.
+	dir := t.TempDir()
+	logPath := dir + "/audit.log"
+
+	cfg := fullAccessConfig()
+	cfg.Server.Audit.Disabled = false
+	cfg.Server.Audit.File.Path = logPath
+
+	be := &testBackend{execOut: map[string]any{"timestamp": "now"}}
+
+	// Build the server manually so we can override the audit-disabled flag
+	// that connectInProcess sets.  We replicate connectInProcessWith's body
+	// but skip the audit-Disabled mutation.
+	mcpSrv, err := newMCPServer(cfg, be, nil)
+	if err != nil {
+		t.Fatalf("newMCPServer: %v", err)
+	}
+	t.Cleanup(func() {
+		if closer, ok := mcpSrv.(*simpleMCPServer); ok {
+			_ = closer.auditSink.Close()
+		}
+	})
+	rawServer := mcpSrv.(*simpleMCPServer).server
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	t.Cleanup(cancel)
+	t1, t2 := mcp.NewInMemoryTransports()
+	if _, err := rawServer.Connect(ctx, t1, nil); err != nil {
+		t.Fatalf("server connect: %v", err)
+	}
+	client := mcp.NewClient(&mcp.Implementation{Name: "test-client", Version: "v0"}, nil)
+	cs, err := client.Connect(ctx, t2, nil)
+	if err != nil {
+		t.Fatalf("client connect: %v", err)
+	}
+	t.Cleanup(func() { _ = cs.Close() })
+
+	callTool(t, cs, "run_select_query", map[string]any{"sql": "select 1"})
+	callTool(t, cs, "run_mutation_query", map[string]any{"sql": "insert into t values (1)"})
+
+	// Close the sink to flush.
+	if closer, ok := mcpSrv.(*simpleMCPServer); ok {
+		if err := closer.auditSink.Close(); err != nil {
+			t.Fatalf("close sink: %v", err)
+		}
+	}
+
+	data, err := readAllJSONLines(t, logPath)
+	if err != nil {
+		t.Fatalf("read audit log: %v", err)
+	}
+	if len(data) < 2 {
+		t.Fatalf("expected at least 2 audit lines, got %d", len(data))
+	}
+	hasSelect, hasMutation := false, false
+	for _, line := range data {
+		var ev map[string]any
+		if err := json.Unmarshal([]byte(line), &ev); err != nil {
+			t.Fatalf("unmarshal audit line: %v", err)
+		}
+		switch ev["tool"] {
+		case "run_select_query":
+			hasSelect = true
+			if ev["decision"] != "allow" {
+				t.Errorf("select should be allow, got %v", ev["decision"])
+			}
+		case "run_mutation_query":
+			hasMutation = true
+			if ev["decision"] != "allow" {
+				t.Errorf("full_access mutation should be allow, got %v", ev["decision"])
+			}
+		}
+	}
+	if !hasSelect || !hasMutation {
+		t.Errorf("missing expected events: select=%v mutation=%v", hasSelect, hasMutation)
+	}
+}
+
+// readAllJSONLines is a small helper used only by TestAudit_RecordsAllToolCalls.
+func readAllJSONLines(t *testing.T, path string) ([]string, error) {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var out []string
+	for _, line := range strings.Split(string(data), "\n") {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		out = append(out, line)
+	}
+	return out, nil
+}

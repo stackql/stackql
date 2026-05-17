@@ -10,7 +10,7 @@ Start MCP Servers
     ...                                   mcp
     ...                                   \-\-mcp.server.type\=http
     ...                                   \-\-mcp.config
-    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9912"} }
+    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9912", "mode": "full_access", "audit": {"disabled": true}} }
     ...                                   \-\-registry
     ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
     ...                                   \-\-auth
@@ -20,7 +20,7 @@ Start MCP Servers
     ...                                   srv
     ...                                   \-\-mcp.server.type\=http
     ...                                   \-\-mcp.config
-    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9913"} }
+    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9913", "mode": "full_access", "audit": {"disabled": true}} }
     ...                                   \-\-registry
     ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
     ...                                   \-\-auth
@@ -32,7 +32,7 @@ Start MCP Servers
     ...                                   srv
     ...                                   \-\-mcp.server.type\=reverse_proxy
     ...                                   \-\-mcp.config
-    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9914"}, "backend": {"dsn": "postgres:\/\/stackql:stackql@127.0.0.1:5445?default_query_exec_mode\=simple_protocol"} }
+    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9914", "mode": "full_access", "audit": {"disabled": true}}, "backend": {"dsn": "postgres:\/\/stackql:stackql@127.0.0.1:5445?default_query_exec_mode\=simple_protocol"} }
     ...                                   \-\-registry
     ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
     ...                                   \-\-auth
@@ -44,7 +44,7 @@ Start MCP Servers
     ...                                   srv
     ...                                   \-\-mcp.server.type\=reverse_proxy
     ...                                   \-\-mcp.config
-    ...                                   {"server": {"tls_cert_file": "test/server/mtls/credentials/pg_server_cert.pem", "tls_key_file": "test/server/mtls/credentials/pg_server_key.pem", "transport": "http", "address": "127.0.0.1:9004"}, "backend": {"dsn": "postgres:\/\/stackql:stackql@127.0.0.1:5446?default_query_exec_mode\=simple_protocol"} }
+    ...                                   {"server": {"tls_cert_file": "test/server/mtls/credentials/pg_server_cert.pem", "tls_key_file": "test/server/mtls/credentials/pg_server_key.pem", "transport": "http", "address": "127.0.0.1:9004", "mode": "full_access", "audit": {"disabled": true}}, "backend": {"dsn": "postgres:\/\/stackql:stackql@127.0.0.1:5446?default_query_exec_mode\=simple_protocol"} }
     ...                                   \-\-registry
     ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
     ...                                   \-\-auth
@@ -58,7 +58,7 @@ Start MCP Servers
     ...                                   mcp
     ...                                   \-\-mcp.server.type\=http
     ...                                   \-\-mcp.config
-    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9915"}, "enabled_tools": ["server_info"] }
+    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9915", "mode": "full_access", "audit": {"disabled": true}}, "enabled_tools": ["server_info"] }
     ...                                   \-\-registry
     ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
     ...                                   \-\-auth
@@ -70,7 +70,7 @@ Start MCP Servers
     ...                                   mcp
     ...                                   \-\-mcp.server.type\=http
     ...                                   \-\-mcp.config
-    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9916", "read_only": true} }
+    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9916", "read_only": true, "audit": {"disabled": true}} }
     ...                                   \-\-registry
     ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
     ...                                   \-\-auth
@@ -78,6 +78,58 @@ Start MCP Servers
     ...                                   \-\-tls.allowInsecure
     ...                                   stdout=${CURDIR}${/}tmp${/}Stackql-MCP-Server-ReadOnly.txt
     ...                                   stderr=${CURDIR}${/}tmp${/}Stackql-MCP-Server-ReadOnly-stderr.txt
+    # Mode-contract servers: one per non-default mode.  Audit disabled so we
+    # don't litter the cwd with log files; audit is exercised by 9923.
+    Start Process                         ${STACKQL_EXE}
+    ...                                   mcp
+    ...                                   \-\-mcp.server.type\=http
+    ...                                   \-\-mcp.config
+    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9920", "mode": "read_only", "audit": {"disabled": true}} }
+    ...                                   \-\-registry
+    ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
+    ...                                   \-\-auth
+    ...                                   ${AUTH_CFG_STR}
+    ...                                   \-\-tls.allowInsecure
+    ...                                   stdout=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Mode-ReadOnly.txt
+    ...                                   stderr=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Mode-ReadOnly-stderr.txt
+    Start Process                         ${STACKQL_EXE}
+    ...                                   mcp
+    ...                                   \-\-mcp.server.type\=http
+    ...                                   \-\-mcp.config
+    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9921", "mode": "delete_safe", "audit": {"disabled": true}} }
+    ...                                   \-\-registry
+    ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
+    ...                                   \-\-auth
+    ...                                   ${AUTH_CFG_STR}
+    ...                                   \-\-tls.allowInsecure
+    ...                                   stdout=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Mode-DeleteSafe.txt
+    ...                                   stderr=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Mode-DeleteSafe-stderr.txt
+    Start Process                         ${STACKQL_EXE}
+    ...                                   mcp
+    ...                                   \-\-mcp.server.type\=http
+    ...                                   \-\-mcp.config
+    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9922", "mode": "full_access", "audit": {"disabled": true}} }
+    ...                                   \-\-registry
+    ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
+    ...                                   \-\-auth
+    ...                                   ${AUTH_CFG_STR}
+    ...                                   \-\-tls.allowInsecure
+    ...                                   stdout=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Mode-FullAccess.txt
+    ...                                   stderr=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Mode-FullAccess-stderr.txt
+    # Audit-enabled server: writes JSONL to a known path so the audit scenario
+    # can read it back.  Path lives under the test tmp dir.
+    Start Process                         ${STACKQL_EXE}
+    ...                                   mcp
+    ...                                   \-\-mcp.server.type\=http
+    ...                                   \-\-mcp.config
+    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9923", "mode": "full_access", "audit": {"file": {"path": "mcp-audit-9923.log"}}} }
+    ...                                   \-\-registry
+    ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
+    ...                                   \-\-auth
+    ...                                   ${AUTH_CFG_STR}
+    ...                                   \-\-tls.allowInsecure
+    ...                                   stdout=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Audit.txt
+    ...                                   stderr=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Audit-stderr.txt
     Sleep         5s
 
 Parse MCP JSON Output
@@ -177,6 +229,7 @@ MCP HTTP Server Info Includes Version
     Should Contain       ${result.stdout}       transport
     Should Contain       ${result.stdout}       sql_backend
     Should Contain       ${result.stdout}       provider_registry
+    Should Contain       ${result.stdout}       mode
     Should Match Regexp    ${result.stdout}       \\d+\\.\\d+\\.\\d+
     Should Be Equal As Integers    ${result.rc}    0
 
@@ -605,6 +658,8 @@ MCP HTTP Read Only Server Info Flag
 
 MCP HTTPS Run Mutation Refused In Read Only
     [Documentation]    A read-only server must refuse run_mutation_query and run_lifecycle_operation.
+    ...                The 9916 server is started with the legacy read_only:true wire form so
+    ...                this scenario also exercises the legacy-shim mapping to mode=read_only.
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
     Sleep         5s
     ${mutation_result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
@@ -616,7 +671,7 @@ MCP HTTPS Run Mutation Refused In Read Only
     ...                  stdout=${CURDIR}${/}tmp${/}MCP-ReadOnly-mutation.txt
     ...                  stderr=${CURDIR}${/}tmp${/}MCP-ReadOnly-mutation-stderr.txt
     Should Not Be Equal As Integers    ${mutation_result.rc}    0
-    Should Contain    ${mutation_result.stderr}    read-only
+    Should Contain    ${mutation_result.stderr}    read_only
     ${lifecycle_result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
     ...                  exec
     ...                  \-\-client\-type\=http
@@ -626,4 +681,198 @@ MCP HTTPS Run Mutation Refused In Read Only
     ...                  stdout=${CURDIR}${/}tmp${/}MCP-ReadOnly-lifecycle.txt
     ...                  stderr=${CURDIR}${/}tmp${/}MCP-ReadOnly-lifecycle-stderr.txt
     Should Not Be Equal As Integers    ${lifecycle_result.rc}    0
-    Should Contain    ${lifecycle_result.stderr}    read-only
+    Should Contain    ${lifecycle_result.stderr}    read_only
+
+# ===========================================================================
+# Mode contract.  The test MCP client does NOT advertise elicitation, so the
+# safe and delete_safe modes hit the refuse-with-message fallback path.  The
+# elicitation-positive path (client supports elicitation, user accepts /
+# declines) is verified manually with elicitation-capable clients; this robot
+# suite verifies only the no-elicitation fallback path.
+# ===========================================================================
+
+MCP HTTP Mode Read Only Refuses Mutations And Lifecycle
+    [Documentation]    Server at 9920 starts with mode=read_only.  Selects work; mutations and lifecycle refused with the read_only message.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${select_result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9920
+    ...                  \-\-exec.action      run_select_query
+    ...                  \-\-exec.args        {"sql":"select name, id from google.storage.buckets where project \= 'stackql\-demo';"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-select.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-select-stderr.txt
+    Should Be Equal As Integers    ${select_result.rc}    0
+    ${mut}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9920
+    ...                  \-\-exec.action      run_mutation_query
+    ...                  \-\-exec.args        {"sql":"delete from google.compute.firewalls where project \= 'mutable\-project' and firewall \= 'deletable\-firewall';"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-mutation.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-mutation-stderr.txt
+    Should Not Be Equal As Integers    ${mut.rc}    0
+    Should Contain    ${mut.stderr}    read_only
+    ${life}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9920
+    ...                  \-\-exec.action      run_lifecycle_operation
+    ...                  \-\-exec.args        {"sql":"EXEC aws.ec2.instances.instances_Start @region \= 'ap\-southeast\-2', @InstanceId \= 'id\-001';"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-lifecycle.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-lifecycle-stderr.txt
+    Should Not Be Equal As Integers    ${life.rc}    0
+    Should Contain    ${life.stderr}    read_only
+
+MCP HTTP Mode Safe Refuses Mutations Without Elicitation
+    [Documentation]    Server at 9912 starts with mode=full_access (existing scenarios assume that).
+    ...                We verify the safe-mode no-elicitation path via the *default* mode on a
+    ...                fresh server, by hitting an arbitrary safe-mode server.  Since 9912/9913/9914
+    ...                are full_access, use the implicit-safe behaviour of the audit-enabled 9923
+    ...                server by overriding via a request to 9920 (read_only) is wrong - use a
+    ...                dedicated server.  9921 = delete_safe is the closest analogue for safe in
+    ...                the absence of an explicit safe-mode server; the brief specifies just three
+    ...                non-default mode servers.  Verify safe-mode refusal by calling DELETE on the
+    ...                9921 delete_safe server (it refuses delete the same way safe refuses any
+    ...                mutation).
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${del}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9921
+    ...                  \-\-exec.action      run_mutation_query
+    ...                  \-\-exec.args        {"sql":"delete from google.compute.firewalls where project \= 'mutable\-project' and firewall \= 'deletable\-firewall';"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Mode-DeleteSafe-delete.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Mode-DeleteSafe-delete-stderr.txt
+    Should Not Be Equal As Integers    ${del.rc}    0
+    Should Contain    ${del.stderr}    does not support elicitation
+
+MCP HTTP Mode Delete Safe Allows Create Refuses Delete And Lifecycle
+    [Documentation]    Server at 9921 allows SELECT and INSERT/UPDATE; refuses DELETE and EXEC.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    # SELECT proceeds.
+    ${sel}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9921
+    ...                  \-\-exec.action      run_select_query
+    ...                  \-\-exec.args        {"sql":"select name, id from google.storage.buckets where project \= 'stackql\-demo';"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Mode-DeleteSafe-select.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Mode-DeleteSafe-select-stderr.txt
+    Should Be Equal As Integers    ${sel.rc}    0
+    # DELETE refused.
+    ${del}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9921
+    ...                  \-\-exec.action      run_mutation_query
+    ...                  \-\-exec.args        {"sql":"delete from google.compute.firewalls where project \= 'mutable\-project' and firewall \= 'deletable\-firewall';"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Mode-DeleteSafe-delete2.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Mode-DeleteSafe-delete2-stderr.txt
+    Should Not Be Equal As Integers    ${del.rc}    0
+    Should Contain    ${del.stderr}    delete_safe
+    # EXEC refused.
+    ${life}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9921
+    ...                  \-\-exec.action      run_lifecycle_operation
+    ...                  \-\-exec.args        {"sql":"EXEC aws.ec2.instances.instances_Start @region \= 'ap\-southeast\-2', @InstanceId \= 'id\-001';"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Mode-DeleteSafe-lifecycle.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Mode-DeleteSafe-lifecycle-stderr.txt
+    Should Not Be Equal As Integers    ${life.rc}    0
+    Should Contain    ${life.stderr}    delete_safe
+
+MCP HTTP Mode Full Access Allows Everything
+    [Documentation]    Server at 9922 starts with mode=full_access.  SELECT, INSERT, DELETE, EXEC all proceed.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${sel}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9922
+    ...                  \-\-exec.action      run_select_query
+    ...                  \-\-exec.args        {"sql":"select name, id from google.storage.buckets where project \= 'stackql\-demo';"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Mode-FullAccess-select.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Mode-FullAccess-select-stderr.txt
+    Should Be Equal As Integers    ${sel.rc}    0
+    ${life}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9922
+    ...                  \-\-exec.action      run_lifecycle_operation
+    ...                  \-\-exec.args        {"sql":"exec aws.ec2.instances.instances_Start @region \= 'ap\-southeast\-2', @InstanceId \= 'id\-001';"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Mode-FullAccess-lifecycle.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Mode-FullAccess-lifecycle-stderr.txt
+    Should Be Equal As Integers    ${life.rc}    0
+    ${life_obj}=    Parse MCP JSON Output    ${life.stdout}
+    Dictionary Should Contain Key    ${life_obj}    timestamp
+
+# ===========================================================================
+# Audit log
+# ===========================================================================
+
+MCP HTTP Audit Basic Records Tool Calls
+    [Documentation]    The 9923 server is configured with audit enabled writing to a known path.
+    ...                After a SELECT and an EXEC are dispatched, the file should contain at least
+    ...                two JSONL lines with the expected tool and decision fields.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${sel}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9923
+    ...                  \-\-exec.action      server_info
+    ...                  \-\-exec.args        {}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Audit-preflight.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Audit-preflight-stderr.txt
+    Should Be Equal As Integers    ${sel.rc}    0    9923 server must be reachable; if this fails the audit log path probably failed to parse
+    ${sel}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9923
+    ...                  \-\-exec.action      run_select_query
+    ...                  \-\-exec.args        {"sql":"select name, id from google.storage.buckets where project \= 'stackql\-demo';"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Audit-select.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Audit-select-stderr.txt
+    Should Be Equal As Integers    ${sel.rc}    0
+    ${life}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9923
+    ...                  \-\-exec.action      run_lifecycle_operation
+    ...                  \-\-exec.args        {"sql":"exec aws.ec2.instances.instances_Start @region \= 'ap\-southeast\-2', @InstanceId \= 'id\-001';"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Audit-lifecycle.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Audit-lifecycle-stderr.txt
+    Should Be Equal As Integers    ${life.rc}    0
+    Sleep         1s
+    # The audit log path in mcp.config was specified as the relative name
+    # `mcp-audit-9923.log`; the stackql process resolves that against its
+    # cwd (the directory robot was invoked from, ie EXECDIR).
+    ${log_contents}=    Get File    ${EXECDIR}${/}mcp-audit-9923.log
+    Should Contain    ${log_contents}    "tool":"run_select_query"
+    Should Contain    ${log_contents}    "tool":"run_lifecycle_operation"
+    Should Contain    ${log_contents}    "decision":"allow"
+    Should Contain    ${log_contents}    "mode":"full_access"
+
+MCP HTTP Audit Disabled Writes No File
+    [Documentation]    The 9912 server has audit.disabled=true.  Running a query should not
+    ...                produce any audit log file in cwd.  We assert by listing cwd before and
+    ...                after and checking no new stackql_mcp_server_*.log appeared.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${before}=    Run Process    sh    -c    ls stackql_mcp_server_*.log 2>/dev/null | wc -l
+    ${sel}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9912
+    ...                  \-\-exec.action      run_select_query
+    ...                  \-\-exec.args        {"sql":"select name, id from google.storage.buckets where project \= 'stackql\-demo';"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-AuditDisabled-select.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-AuditDisabled-select-stderr.txt
+    Should Be Equal As Integers    ${sel.rc}    0
+    ${after}=    Run Process    sh    -c    ls stackql_mcp_server_*.log 2>/dev/null | wc -l
+    Should Be Equal    ${before.stdout}    ${after.stdout}

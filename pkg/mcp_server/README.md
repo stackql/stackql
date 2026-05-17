@@ -214,8 +214,8 @@ The server publishes the following 11 tools. Each tool's rendered output is a ma
 | `describe_method` | KV | Full I/O contract for one method. Requires `provider`, `service`, `resource`, `method`. |
 | `validate_select_query` | KV | Parse and plan a SELECT without executing. Returns `{valid, errors}`. SELECT only. |
 | `run_select_query` | Table | Execute a SELECT. Returns `{rows}`. Reads only. |
-| `run_mutation_query` | KV | Execute INSERT/UPDATE/REPLACE/DELETE against the provider. **Real side effects.** Returns `{messages, timestamp}`. Refused in read-only mode. |
-| `run_lifecycle_operation` | KV | Execute a stackql `EXEC` lifecycle operation. Returns `{messages, timestamp}`. Refused in read-only mode. |
+| `run_mutation_query` | KV | Execute INSERT/UPDATE/REPLACE/DELETE against the provider. **Real side effects.** Returns `{messages, timestamp}`. Gated by the server [mode](#server-modes). |
+| `run_lifecycle_operation` | KV | Execute a stackql `EXEC` lifecycle operation. Returns `{messages, timestamp}`. Gated by the server [mode](#server-modes). |
 
 ### Published Prompts
 
@@ -245,6 +245,82 @@ JSON example — a single-purpose server that exposes only `server_info`:
 ```
 
 When the server is launched via the `stackql mcp` (or `stackql srv --mcp.server.type=...`) command, these fields are parsed from the same `--mcp.config` JSON blob as the rest of the configuration — no additional flag is required.  For example, `stackql mcp --mcp.config='{"server": { "transport": "http",    "address": "127.0.0.1:9915"}, "enabled_tools": ["server_info"]}'`.
+
+## Server Modes
+
+`Config.Server.Mode` chooses one of four safety contracts.  All four allow SELECT and metadata reads; they differ in how they handle mutations and lifecycle operations.
+
+| Mode | SELECT / metadata | INSERT / UPDATE / REPLACE | DELETE | EXEC (lifecycle) |
+|---|---|---|---|---|
+| `read_only` | allow | refuse | refuse | refuse |
+| `safe` (default) | allow | needs approval | needs approval | needs approval |
+| `delete_safe` | allow | allow | needs approval | needs approval |
+| `full_access` | allow | allow | allow | allow |
+
+`refuse` means the tool returns an error immediately.  `needs approval` means the server tries to elicit user consent via the MCP elicitation flow:
+
+- If the client advertised the elicitation capability at initialise, the server sends an `elicitation/create` request with a short message describing the action and the SQL.  The user accepts, declines, or cancels.
+- If the client did NOT advertise elicitation, the tool is refused with a message that explains the gap and points the operator at `full_access` mode.
+
+The mode is global per server.  There is no per-tool override in this release.
+
+### Default-mode change (breaking)
+
+PR1 had a single `read_only: true / false` flag; the default behaviour was "no enforcement, mutations proceed."  PR2 replaces that flag with `mode: safe` as the default, which means **mutations now require user approval out of the box.**  Operators running an elicitation-capable client should see one approval prompt per mutation.  Operators running a non-elicitation client (or an automated pipeline) must explicitly opt into `full_access`.
+
+For back-compat, the legacy `read_only: true` JSON / YAML key still parses and is treated as equivalent to `mode: read_only`.  When both are set, `mode` wins.
+
+## Audit Log
+
+Audit recording is **on by default** in PR2.  Every tool call produces one JSONL record with the tool name, mode, decision, query class, SQL (for query tools), input args (for hierarchy tools), duration, and error.  Result rows from SELECTs are intentionally not recorded - the audit answers "what did the agent do," not "what did the agent see."
+
+### File sink
+
+The only sink kind shipped in this release is `file`, which writes one JSON object per line and fsyncs after each record.  Lumberjack-style rotation by size, age, and backup count.
+
+The sink implementation lives in [`pkg/sink`](/pkg/sink) so it can be reused outside MCP (future activity / telemetry channels, etc).  The MCP audit subsystem feeds `audit.Event` values into a generic `sink.Sink`; the sink JSON-marshals whatever payload it is given.  Adding alternative sinks (rotation policies, Kafka, S3) only requires implementing `sink.Sink` once; it benefits every subsystem that records through this path.
+
+The generic `sink.FileConfig` requires the caller to specify *where* the file lives via either `Path` (a complete file path) or `Dir` (a directory in which the sink picks a filename via `DefaultFilename`).  The sink package never silently picks a directory; the MCP server defaults `Dir` to `.` (cwd) on the operator's behalf when neither field is set in `mcp.config`.
+
+```yaml
+server:
+  mode: safe
+  audit:
+    disabled: false       # default false (audit is on)
+    failure_mode: strict  # strict | strict_mutations | best_effort
+    sink: file            # currently the only kind
+    file:
+      # Specify either `path` (a complete file path) or `dir` (the directory
+      # in which the sink chooses a stackql_mcp_server_<UTC>.log basename).
+      # When both are empty the MCP server defaults `dir` to cwd (".") for
+      # back-compat; the underlying pkg/sink itself refuses to silently
+      # pick a directory.
+      path: ""
+      dir: ""
+      max_size_mb: 100
+      max_backups: 5
+      max_age_days: 30
+```
+
+The resolved absolute path is logged to stderr at startup as `sink file: /path/to/file.log` so operators can find the file later.
+
+### Failure modes
+
+When the sink returns an error, the response depends on `failure_mode`:
+
+| failure_mode | Effect on tool call |
+|---|---|
+| `strict` (default) | The tool call returns the audit error to the client, even if the underlying tool succeeded.  This is intentional: better an ambiguous client response than an undetected DELETE. |
+| `strict_mutations` | SELECT and metadata reads log the audit error to stderr and proceed.  Mutations and lifecycle ops surface the error. |
+| `best_effort` | Always log to stderr and proceed. |
+
+### Sequencing
+
+The audit write happens AFTER the tool has executed (or been gated out) but BEFORE the response returns to the client.  In strict mode, an audit-write failure on a successful DELETE means the row is gone but the client receives an error - by design, so no mutation slips through unaudited.
+
+### Audit-on change (breaking)
+
+PR1 had no audit subsystem; nothing was logged.  PR2 enables audit by default.  To preserve PR1 behaviour, set `server.audit.disabled: true`.
 
 ## MCP Protocol Support
 
