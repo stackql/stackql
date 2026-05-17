@@ -112,11 +112,19 @@ func mcpDefaultAuditFilename(t time.Time) string {
 
 // initAuditSink constructs the audit sink dictated by cfg.  When audit is
 // disabled it returns a nop sink so the rest of the code can be uniform.
+//
+// The MCP server takes responsibility for the "where do logs land?" default:
+// when neither Path nor Dir is supplied in mcp.config, we default Dir to cwd
+// (".") so existing operators see the same behaviour as PR2.  The generic
+// pkg/sink package itself refuses to silently pick a directory.
 func initAuditSink(cfg *Config, logger *logrus.Logger) (sink.Sink, error) {
 	if !cfg.IsAuditEnabled() {
 		return sink.NewNopSink(), nil
 	}
 	fileCfg := cfg.Server.Audit.File
+	if fileCfg.Path == "" && fileCfg.Dir == "" {
+		fileCfg.Dir = "."
+	}
 	if fileCfg.DefaultFilename == nil {
 		fileCfg.DefaultFilename = mcpDefaultAuditFilename
 	}

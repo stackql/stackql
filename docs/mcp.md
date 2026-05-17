@@ -201,7 +201,14 @@ The only sink shipped in this release is `file`.  One JSON object per line, fsyn
   --mcp.config '{"server": {"transport": "http", "address": "127.0.0.1:9992", "audit": {"file": {"path": "/var/log/stackql-mcp.log", "max_size_mb": 100, "max_backups": 5, "max_age_days": 30}}} }'
 ```
 
-If `path` is empty the sink picks `stackql_mcp_server_<RFC3339-utc-second>.log` in cwd.  The resolved absolute path is logged to stderr at startup as `sink file: /path/to/file.log`.
+Two ways to specify the location:
+
+- `audit.file.path` -- a complete file path (absolute, or relative to cwd).
+- `audit.file.dir` -- a directory; the sink chooses the basename (`stackql_mcp_server_<RFC3339-utc-second>.log`) inside it.
+
+When neither is set in `mcp.config`, the MCP server defaults `dir` to cwd so existing operators see PR2 behaviour.  The underlying [generic `pkg/sink`](/pkg/sink) package itself refuses to silently pick a directory -- the "where do logs land" decision is always made by the caller (here, the MCP server's `initAuditSink`).
+
+The resolved absolute path is logged to stderr at startup as `sink file: /path/to/file.log`.
 
 ### Failure modes
 

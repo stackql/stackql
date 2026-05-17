@@ -74,23 +74,21 @@ func TestFileSink_OpenFailsOnNonDirParent(t *testing.T) {
 	}
 }
 
-func TestFileSink_EmptyPathUsesDefaultFilename(t *testing.T) {
-	// chdir to a temp dir so the default-named file lands in a clean place.
-	originalCwd, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("getwd: %v", err)
+func TestFileSink_EmptyPathAndEmptyDirIsError(t *testing.T) {
+	// The sink refuses to silently pick a directory.  Callers must say where
+	// the file lives, even when they want the default filename.
+	_, err := sink.NewFileSink(sink.FileConfig{})
+	if err == nil {
+		t.Fatal("expected NewFileSink to reject empty Path + empty Dir")
 	}
-	tmp := t.TempDir()
-	if err := os.Chdir(tmp); err != nil {
-		t.Fatalf("chdir tmp: %v", err)
+	if !strings.Contains(err.Error(), "Path or Dir") {
+		t.Errorf("error should mention Path or Dir, got %v", err)
 	}
-	t.Cleanup(func() {
-		if err := os.Chdir(originalCwd); err != nil {
-			t.Fatalf("restore cwd: %v", err)
-		}
-	})
+}
 
-	s, err := sink.NewFileSink(sink.FileConfig{})
+func TestFileSink_DirWithDefaultFilename(t *testing.T) {
+	tmp := t.TempDir()
+	s, err := sink.NewFileSink(sink.FileConfig{Dir: tmp})
 	if err != nil {
 		t.Fatalf("NewFileSink: %v", err)
 	}
@@ -113,21 +111,9 @@ func TestFileSink_EmptyPathUsesDefaultFilename(t *testing.T) {
 }
 
 func TestFileSink_CallerSuppliedDefaultFilename(t *testing.T) {
-	originalCwd, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("getwd: %v", err)
-	}
 	tmp := t.TempDir()
-	if err := os.Chdir(tmp); err != nil {
-		t.Fatalf("chdir tmp: %v", err)
-	}
-	t.Cleanup(func() {
-		if err := os.Chdir(originalCwd); err != nil {
-			t.Fatalf("restore cwd: %v", err)
-		}
-	})
-
 	cfg := sink.FileConfig{
+		Dir:             tmp,
 		DefaultFilename: func(time.Time) string { return "my-prefix.log" },
 	}
 	s, err := sink.NewFileSink(cfg)
@@ -138,6 +124,29 @@ func TestFileSink_CallerSuppliedDefaultFilename(t *testing.T) {
 
 	if _, err := os.Stat(filepath.Join(tmp, "my-prefix.log")); err != nil {
 		t.Fatalf("expected my-prefix.log in tmp, got: %v", err)
+	}
+}
+
+func TestFileSink_PathTakesPrecedenceOverDir(t *testing.T) {
+	// When Path is supplied, Dir + DefaultFilename are ignored.
+	tmp := t.TempDir()
+	explicitPath := filepath.Join(tmp, "explicit.log")
+	cfg := sink.FileConfig{
+		Path:            explicitPath,
+		Dir:             filepath.Join(tmp, "should", "not", "be", "used"),
+		DefaultFilename: func(time.Time) string { return "should-not-appear.log" },
+	}
+	s, err := sink.NewFileSink(cfg)
+	if err != nil {
+		t.Fatalf("NewFileSink: %v", err)
+	}
+	t.Cleanup(func() { _ = s.Close() })
+
+	if _, err := os.Stat(explicitPath); err != nil {
+		t.Fatalf("expected explicit.log to exist, got: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(tmp, "should-not-appear.log")); err == nil {
+		t.Fatalf("DefaultFilename should not have been consulted when Path is set")
 	}
 }
 

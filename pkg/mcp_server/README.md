@@ -280,6 +280,8 @@ The only sink kind shipped in this release is `file`, which writes one JSON obje
 
 The sink implementation lives in [`pkg/sink`](/pkg/sink) so it can be reused outside MCP (future activity / telemetry channels, etc).  The MCP audit subsystem feeds `audit.Event` values into a generic `sink.Sink`; the sink JSON-marshals whatever payload it is given.  Adding alternative sinks (rotation policies, Kafka, S3) only requires implementing `sink.Sink` once; it benefits every subsystem that records through this path.
 
+The generic `sink.FileConfig` requires the caller to specify *where* the file lives via either `Path` (a complete file path) or `Dir` (a directory in which the sink picks a filename via `DefaultFilename`).  The sink package never silently picks a directory; the MCP server defaults `Dir` to `.` (cwd) on the operator's behalf when neither field is set in `mcp.config`.
+
 ```yaml
 server:
   mode: safe
@@ -288,7 +290,13 @@ server:
     failure_mode: strict  # strict | strict_mutations | best_effort
     sink: file            # currently the only kind
     file:
-      path: ""            # empty -> stackql_mcp_server_<RFC3339-utc-second>.log in cwd
+      # Specify either `path` (a complete file path) or `dir` (the directory
+      # in which the sink chooses a stackql_mcp_server_<UTC>.log basename).
+      # When both are empty the MCP server defaults `dir` to cwd (".") for
+      # back-compat; the underlying pkg/sink itself refuses to silently
+      # pick a directory.
+      path: ""
+      dir: ""
       max_size_mb: 100
       max_backups: 5
       max_age_days: 30
