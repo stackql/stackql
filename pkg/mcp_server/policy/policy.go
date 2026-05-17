@@ -143,3 +143,39 @@ func IsLegalMode(mode string) bool {
 		return false
 	}
 }
+
+// Policy is the composite output of classifying a SQL statement and applying
+// the gate decision for the configured server mode.  Callers use NewPolicy at
+// the boundary, then read Class / Decision / Reason in whichever combination
+// they need.  The interface is unexported in spirit (it carries inherent
+// types only and never crosses out of the policy package as a typed value
+// beyond what mcp_server consumes internally), but is exposed for explicit
+// type assertions in tests.
+type Policy interface {
+	Class() QueryClass
+	Decision() Decision
+	Reason() string
+}
+
+type policy struct {
+	class    QueryClass
+	decision Decision
+	reason   string
+}
+
+func (p policy) Class() QueryClass  { return p.class }
+func (p policy) Decision() Decision { return p.decision }
+func (p policy) Reason() string     { return p.reason }
+
+// NewPolicy is the factory.  When sql is empty (no SQL input on a metadata
+// tool, for example), defaultClass becomes the effective class; otherwise the
+// classifier inspects the SQL's first token.  Mode is normalised internally
+// so an empty / unknown value behaves like ModeSafe.
+func NewPolicy(mode, sql string, defaultClass QueryClass) Policy {
+	class := defaultClass
+	if strings.TrimSpace(sql) != "" {
+		class = ClassifyQuery(sql)
+	}
+	decision, reason := GateDecision(mode, class)
+	return policy{class: class, decision: decision, reason: reason}
+}

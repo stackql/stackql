@@ -134,6 +134,57 @@ func TestIsLegalMode(t *testing.T) {
 	}
 }
 
+func TestNewPolicy_UsesDefaultClassWhenSQLEmpty(t *testing.T) {
+	p := policy.NewPolicy(policy.ModeSafe, "", policy.QueryClassSelect)
+	if p.Class() != policy.QueryClassSelect {
+		t.Errorf("class = %v, want select", p.Class())
+	}
+	if p.Decision() != policy.DecisionAllow {
+		t.Errorf("decision = %v, want allow", p.Decision())
+	}
+	if p.Reason() != "" {
+		t.Errorf("reason = %q, want empty", p.Reason())
+	}
+}
+
+func TestNewPolicy_ClassifiesSQLWhenPresent(t *testing.T) {
+	p := policy.NewPolicy(policy.ModeReadOnly, "delete from t", policy.QueryClassUnknown)
+	if p.Class() != policy.QueryClassMutationDelete {
+		t.Errorf("class = %v, want mutation_delete", p.Class())
+	}
+	if p.Decision() != policy.DecisionRefuseImmediate {
+		t.Errorf("decision = %v, want refuse_immediate", p.Decision())
+	}
+	if !contains(p.Reason(), "read_only") {
+		t.Errorf("reason should mention read_only, got %q", p.Reason())
+	}
+}
+
+func TestNewPolicy_DeleteSafeFlowsThrough(t *testing.T) {
+	pCreate := policy.NewPolicy(policy.ModeDeleteSafe, "insert into t values (1)", policy.QueryClassUnknown)
+	if pCreate.Decision() != policy.DecisionAllow {
+		t.Errorf("insert under delete_safe should allow, got %v", pCreate.Decision())
+	}
+	pDelete := policy.NewPolicy(policy.ModeDeleteSafe, "delete from t", policy.QueryClassUnknown)
+	if pDelete.Decision() != policy.DecisionNeedsApproval {
+		t.Errorf("delete under delete_safe should need approval, got %v", pDelete.Decision())
+	}
+	if !contains(pDelete.Reason(), "delete_safe") {
+		t.Errorf("reason should mention delete_safe, got %q", pDelete.Reason())
+	}
+}
+
+func TestNewPolicy_SQLOverridesDefaultClass(t *testing.T) {
+	// defaultClass=Select but SQL says EXEC -> Lifecycle wins.
+	p := policy.NewPolicy(policy.ModeReadOnly, "EXEC a.b.c", policy.QueryClassSelect)
+	if p.Class() != policy.QueryClassLifecycle {
+		t.Errorf("class = %v, want lifecycle (SQL should override default)", p.Class())
+	}
+	if p.Decision() != policy.DecisionRefuseImmediate {
+		t.Errorf("decision = %v, want refuse_immediate", p.Decision())
+	}
+}
+
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) && (s == substr || indexOf(s, substr) >= 0)
 }

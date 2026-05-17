@@ -276,7 +276,9 @@ Audit recording is **on by default** in PR2.  Every tool call produces one JSONL
 
 ### File sink
 
-The only sink shipped in this release is `file`, which writes one JSON object per line and fsyncs after each record.  Lumberjack-style rotation by size, age, and backup count.
+The only sink kind shipped in this release is `file`, which writes one JSON object per line and fsyncs after each record.  Lumberjack-style rotation by size, age, and backup count.
+
+The sink implementation lives in [`pkg/sink`](/pkg/sink) so it can be reused outside MCP (future activity / telemetry channels, etc).  The MCP audit subsystem feeds `audit.Event` values into a generic `sink.Sink`; the sink JSON-marshals whatever payload it is given.  Adding alternative sinks (rotation policies, Kafka, S3) only requires implementing `sink.Sink` once; it benefits every subsystem that records through this path.
 
 ```yaml
 server:
@@ -292,7 +294,7 @@ server:
       max_age_days: 30
 ```
 
-The resolved absolute path is logged to stderr at startup as `audit log: /path/to/file.log` so operators can find the file later.
+The resolved absolute path is logged to stderr at startup as `sink file: /path/to/file.log` so operators can find the file later.
 
 ### Failure modes
 

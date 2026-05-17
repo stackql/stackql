@@ -9,6 +9,7 @@ import (
 
 	"github.com/stackql/stackql/pkg/mcp_server/audit"
 	"github.com/stackql/stackql/pkg/mcp_server/policy"
+	"github.com/stackql/stackql/pkg/sink"
 )
 
 // Config represents the complete configuration for the MCP server.
@@ -222,7 +223,7 @@ type AuditConfig struct {
 
 	// File holds file-sink-specific options.  Only consulted when Sink is
 	// "file" (the default).
-	File audit.FileConfig `json:"file,omitempty" yaml:"file,omitempty"`
+	File sink.FileConfig `json:"file,omitempty" yaml:"file,omitempty"`
 }
 
 // GetFailureMode returns the effective failure-mode string with the default

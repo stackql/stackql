@@ -201,7 +201,7 @@ The only sink shipped in this release is `file`.  One JSON object per line, fsyn
   --mcp.config '{"server": {"transport": "http", "address": "127.0.0.1:9992", "audit": {"file": {"path": "/var/log/stackql-mcp.log", "max_size_mb": 100, "max_backups": 5, "max_age_days": 30}}} }'
 ```
 
-If `path` is empty the sink picks `stackql_mcp_server_<RFC3339-utc-second>.log` in cwd.  The resolved absolute path is logged to stderr at startup as `audit log: /path/to/file.log`.
+If `path` is empty the sink picks `stackql_mcp_server_<RFC3339-utc-second>.log` in cwd.  The resolved absolute path is logged to stderr at startup as `sink file: /path/to/file.log`.
 
 ### Failure modes
 

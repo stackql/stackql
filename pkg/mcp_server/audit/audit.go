@@ -1,15 +1,17 @@
-// Package audit records what the MCP server agreed to do on behalf of an LLM
-// client.  The audit answers "what did the agent do," not "what did the agent
-// see" - result rows from SELECTs are intentionally not recorded.
+// Package audit holds the MCP-specific audit event shape and the string
+// constants for decisions and failure modes recorded in that shape.
+//
+// This package intentionally does NOT define the sink interface or any sink
+// implementation -- those live under pkg/sink and are generic across
+// subsystems (audit, future activity/telemetry channels, etc).  When new
+// kinds of sinks (file rotation policies, alternative transports, GC) land,
+// they benefit every consumer, not just audit.
 package audit
 
-import (
-	"context"
-	"time"
-)
+import "time"
 
-// Decision strings recorded in Event.Decision.  These constants are the
-// audit contract; downstream tools may parse the log against these values.
+// Decision strings recorded in Event.Decision.  These constants are the audit
+// contract; downstream tools may parse the log against these values.
 const (
 	DecisionAllow                    = "allow"
 	DecisionRefuseImmediate          = "refuse_immediate"
@@ -19,15 +21,20 @@ const (
 	DecisionNeedsApprovalUnavailable = "needs_approval_unavailable"
 )
 
-// FailureMode strings.  These are the legal values for AuditConfig.FailureMode.
+// FailureMode strings.  Legal values for the MCP server's audit.failure_mode.
 const (
 	FailureModeStrict          = "strict"
 	FailureModeStrictMutations = "strict_mutations"
 	FailureModeBestEffort      = "best_effort"
 )
 
-// Event is one record in the audit log.  All fields are primitive types so the
-// struct never leaks internal/SDK types across the package boundary.
+// Event is one record in the MCP audit log.  All fields are primitive types so
+// the struct never leaks internal/SDK types across the package boundary.
+//
+// Event is what flows through a pkg/sink.Sink: the gate middleware constructs
+// it, the sink JSON-marshals it.  The sink itself is unaware of the audit
+// semantics; rotating the file, adding a new transport, etc are all done in
+// pkg/sink without touching this file.
 type Event struct {
 	Timestamp  time.Time      `json:"timestamp"`
 	Tool       string         `json:"tool"`
@@ -39,19 +46,3 @@ type Event struct {
 	DurationMs int64          `json:"duration_ms"`
 	Error      string         `json:"error,omitempty"`
 }
-
-// Sink is the audit destination.  Implementations must be safe for concurrent
-// calls from multiple goroutines.
-type Sink interface {
-	Record(ctx context.Context, event Event) error
-	Close() error
-}
-
-// nopSink discards every event.  Used when audit is disabled.
-type nopSink struct{}
-
-// NewNopSink returns a Sink that ignores every Record call.
-func NewNopSink() Sink { return &nopSink{} }
-
-func (*nopSink) Record(_ context.Context, _ Event) error { return nil }
-func (*nopSink) Close() error                            { return nil }

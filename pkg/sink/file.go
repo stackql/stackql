@@ -1,4 +1,4 @@
-package audit
+package sink
 
 import (
 	"context"
@@ -13,10 +13,10 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-// FileConfig is the on-disk audit sink configuration.  All fields are optional.
+// FileConfig is the on-disk file sink configuration.  All fields are optional.
 type FileConfig struct {
 	// Path is the absolute or relative path to the log file.  Empty means
-	// the sink picks `stackql_mcp_server_<RFC3339-utc-second>.log` in cwd.
+	// the sink picks a timestamped name in cwd using DefaultFilename.
 	Path string `json:"path,omitempty" yaml:"path,omitempty"`
 
 	// MaxSizeMB triggers rotation when the file grows past this size.
@@ -30,6 +30,13 @@ type FileConfig struct {
 	// MaxAgeDays is the maximum age in days for rotated files.
 	// Zero means no age-based deletion (lumberjack default).
 	MaxAgeDays int `json:"max_age_days,omitempty" yaml:"max_age_days,omitempty"`
+
+	// DefaultFilename is used when Path is empty.  It is a function so
+	// callers can encode their own naming convention (eg
+	// "stackql_mcp_server_<timestamp>.log") without bringing the format
+	// string into the sink package.  When nil, a generic
+	// "sink_<RFC3339-utc-second>.log" filename is used.
+	DefaultFilename func(time.Time) string `json:"-" yaml:"-"`
 }
 
 // fileSink writes one JSON object per line and fsyncs after each record.
@@ -39,29 +46,34 @@ type fileSink struct {
 	path string
 }
 
-// NewFileSink constructs a file-backed audit sink.  If cfg.Path is empty a
-// timestamped name is generated in cwd.  The resolved path is logged to
-// stderr at startup so operators can find the file later.
+// NewFileSink constructs a file-backed sink.  When cfg.Path is empty a
+// timestamped name is generated in cwd via cfg.DefaultFilename (or the
+// package-default fallback).  The resolved path is logged to stderr at
+// startup so operators can find the file later.
 func NewFileSink(cfg FileConfig) (Sink, error) {
 	path := cfg.Path
 	if path == "" {
-		path = defaultLogPath(time.Now().UTC())
+		gen := cfg.DefaultFilename
+		if gen == nil {
+			gen = defaultFilename
+		}
+		path = gen(time.Now().UTC())
 	}
 	abs, absErr := filepath.Abs(path)
 	if absErr != nil {
-		return nil, fmt.Errorf("resolve audit log path %q: %w", path, absErr)
+		return nil, fmt.Errorf("resolve sink file path %q: %w", path, absErr)
 	}
 	// Fail fast if the directory isn't writable, instead of waiting for the
 	// first record to surface the error.
 	if mkdirErr := os.MkdirAll(filepath.Dir(abs), 0o700); mkdirErr != nil {
-		return nil, fmt.Errorf("create audit log dir %q: %w", filepath.Dir(abs), mkdirErr)
+		return nil, fmt.Errorf("create sink file dir %q: %w", filepath.Dir(abs), mkdirErr)
 	}
 	probe, openErr := os.OpenFile(abs, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
 	if openErr != nil {
-		return nil, fmt.Errorf("open audit log %q: %w", abs, openErr)
+		return nil, fmt.Errorf("open sink file %q: %w", abs, openErr)
 	}
 	if closeErr := probe.Close(); closeErr != nil {
-		return nil, fmt.Errorf("close audit log probe %q: %w", abs, closeErr)
+		return nil, fmt.Errorf("close sink file probe %q: %w", abs, closeErr)
 	}
 
 	lj := &lumberjack.Logger{
@@ -70,23 +82,24 @@ func NewFileSink(cfg FileConfig) (Sink, error) {
 		MaxBackups: cfg.MaxBackups,
 		MaxAge:     cfg.MaxAgeDays,
 	}
-	fmt.Fprintf(os.Stderr, "audit log: %s\n", abs)
+	fmt.Fprintf(os.Stderr, "sink file: %s\n", abs)
 	return &fileSink{w: lj, path: abs}, nil
 }
 
 // Path reports the absolute path of the file currently being written.
+// Exposed for tests and operator diagnostics.
 func (s *fileSink) Path() string { return s.path }
 
-func (s *fileSink) Record(_ context.Context, event Event) error {
-	line, marshalErr := json.Marshal(event)
+func (s *fileSink) Record(_ context.Context, payload any) error {
+	line, marshalErr := json.Marshal(payload)
 	if marshalErr != nil {
-		return fmt.Errorf("marshal audit event: %w", marshalErr)
+		return fmt.Errorf("marshal sink payload: %w", marshalErr)
 	}
 	line = append(line, '\n')
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if _, writeErr := s.w.Write(line); writeErr != nil {
-		return fmt.Errorf("write audit event: %w", writeErr)
+		return fmt.Errorf("write sink payload: %w", writeErr)
 	}
 	return nil
 }
@@ -97,9 +110,9 @@ func (s *fileSink) Close() error {
 	return s.w.Close()
 }
 
-// defaultLogPath returns stackql_mcp_server_<RFC3339-utc-second>.log in cwd,
-// stripped of colons so the filename is portable across Windows + Unix.
-func defaultLogPath(t time.Time) string {
+// defaultFilename returns sink_<RFC3339-utc-second>.log in cwd.  Stripped of
+// colons so the filename is portable across Windows + Unix.
+func defaultFilename(t time.Time) string {
 	stamp := t.UTC().Format("20060102T150405Z")
-	return fmt.Sprintf("stackql_mcp_server_%s.log", stamp)
+	return fmt.Sprintf("sink_%s.log", stamp)
 }

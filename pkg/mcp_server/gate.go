@@ -12,6 +12,7 @@ import (
 	"github.com/stackql/stackql/pkg/mcp_server/audit"
 	"github.com/stackql/stackql/pkg/mcp_server/dto"
 	"github.com/stackql/stackql/pkg/mcp_server/policy"
+	"github.com/stackql/stackql/pkg/sink"
 )
 
 // stderrSink returns the diagnostic writer used by the gate middleware.
@@ -88,7 +89,7 @@ func hierarchyToMap(v dto.HierarchyInput) map[string]any {
 func addToolWithGate[In, Out any](
 	s *mcp.Server,
 	cfg *Config,
-	sink audit.Sink,
+	auditSink sink.Sink,
 	gate toolGate,
 	t *mcp.Tool,
 	h mcp.ToolHandlerFor[In, Out],
@@ -101,45 +102,39 @@ func addToolWithGate[In, Out any](
 		started := time.Now()
 		mode := cfg.GetMode()
 
-		// Classify.
-		class := gate.defaultClass
+		// One call computes class + decision + reason.
 		var sql string
 		if gate.extractSQL != nil {
 			sql = gate.extractSQL(args)
-			if sql != "" {
-				class = policy.ClassifyQuery(sql)
-			}
 		}
-
-		// Decide.
-		decision, reason := policy.GateDecision(mode, class)
+		p := policy.NewPolicy(mode, sql, gate.defaultClass)
 		auditDecision := audit.DecisionAllow
 
-		switch decision {
+		switch p.Decision() {
 		case policy.DecisionAllow:
 			// proceed to tool execution below
 		case policy.DecisionRefuseImmediate:
-			err := fmt.Errorf("tool %q refused: %s", t.Name, reason)
-			recordAudit(ctx, sink, cfg, gate, args, sql, class, mode,
+			err := fmt.Errorf("tool %q refused: %s", t.Name, p.Reason())
+			recordAudit(ctx, auditSink, cfg, gate, args, sql, p.Class(), mode,
 				audit.DecisionRefuseImmediate, started, err)
 			return nil, zero, err
 		case policy.DecisionNeedsApproval:
-			outcome, err := elicitApproval(ctx, req, t.Name, reason, sql, class)
+			outcome, err := elicitApproval(ctx, req, t.Name, p.Reason(), sql, p.Class())
 			auditDecision = outcome
 			if err != nil {
-				recordAudit(ctx, sink, cfg, gate, args, sql, class, mode,
+				recordAudit(ctx, auditSink, cfg, gate, args, sql, p.Class(), mode,
 					outcome, started, err)
 				return nil, zero, err
 			}
 		}
 
 		result, out, err := h(ctx, req, args)
-		recordAudit(ctx, sink, cfg, gate, args, sql, class, mode,
+		recordAudit(ctx, auditSink, cfg, gate, args, sql, p.Class(), mode,
 			auditDecision, started, err)
 		if err != nil {
 			return result, out, err
 		}
-		if auditErr := finalizeAudit(cfg, class); auditErr != nil {
+		if auditErr := finalizeAudit(cfg, p.Class()); auditErr != nil {
 			// Reserved: future strict-mode-on-audit-failure surfacing.
 			_ = auditErr
 		}
@@ -206,7 +201,7 @@ func elicitApproval(
 // no mutation slips through unaudited.
 func recordAudit(
 	ctx context.Context,
-	sink audit.Sink,
+	auditSink sink.Sink,
 	cfg *Config,
 	gate toolGate,
 	args any,
@@ -217,7 +212,7 @@ func recordAudit(
 	started time.Time,
 	toolErr error,
 ) {
-	if sink == nil {
+	if auditSink == nil {
 		return
 	}
 	event := audit.Event{
@@ -239,7 +234,7 @@ func recordAudit(
 	if toolErr != nil {
 		event.Error = toolErr.Error()
 	}
-	if err := sink.Record(ctx, event); err != nil {
+	if err := auditSink.Record(ctx, event); err != nil {
 		handleAuditFailure(cfg, class, err)
 	}
 }
