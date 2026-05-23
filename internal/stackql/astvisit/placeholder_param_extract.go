@@ -742,6 +742,16 @@ func (v *standardParserPlaceholderParamAstVisitor) Visit(node sqlparser.SQLNode)
 					rt,
 					0,
 				))
+			case sqlparser.BoolVal:
+				k, err := parserutil.NewUnknownTypeColumnarReference(lt)
+				if err != nil {
+					return err
+				}
+				v.params.SetIntolerant(k, parserutil.NewComparisonParameterMetadata(
+					node,
+					rt,
+					0,
+				))
 			default:
 			}
 		default:

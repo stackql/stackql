@@ -26,13 +26,6 @@ _BUILD_MAJOR_VERSION = os.environ.get('BUILDMAJORVERSION', '1')
 _BUILD_MINOR_VERSION = os.environ.get('BUILDMINORVERSION', '1')
 _BUILD_PATCH_VERSION = os.environ.get('BUILDPATCHVERSION', '1')
 
-_SHELL_WELCOME_MSG = """
-""" + f"stackql Command Shell {_BUILD_MAJOR_VERSION}.{_BUILD_MINOR_VERSION}.{_BUILD_PATCH_VERSION}" + """
-Copyright (c) 2021, stackql studios. All rights reserved.
-Welcome to the interactive shell for running stackql commands.
----
-"""
-
 def get_shell_welcome_stdout(env: str) -> str:
   return ''
 

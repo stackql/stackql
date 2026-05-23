@@ -179,6 +179,27 @@ AWS EC2 Volumes Select Simple
     ...    ${SELECT_AWS_VOLUMES}
     ...    ${SELECT_AWS_VOLUMES_ASC_EXPECTED}
 
+AWS EC2 Volumes Boolean Predicate Literal and String Equivalence
+    ${inputStr} =    Catenate
+    ...    select volumeId, encrypted, size from aws.ec2.volumes where region = 'ap-southeast-1' and encrypted = false order by volumeId asc;
+    ...    select volumeId, encrypted, size from aws.ec2.volumes where region = 'ap-southeast-1' and encrypted = 'false' order by volumeId asc;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    ${SELECT_AWS_VOLUMES_ASC_EXPECTED}
+    ...    ${SELECT_AWS_VOLUMES_ASC_EXPECTED}
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/AWS-EC2-Volumes-Boolean-Predicate-Literal-and-String-Equivalence-stdout.tmp
+    ...    stderr=${CURDIR}/tmp/AWS-EC2-Volumes-Boolean-Predicate-Literal-and-String-Equivalence-stderr.tmp
+
 AWS IAM Users Select Simple
     Should Horrid Query StackQL Inline Equal
     ...    ${STACKQL_EXE}
