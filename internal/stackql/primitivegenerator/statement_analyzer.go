@@ -446,7 +446,7 @@ func (pb *standardPrimitiveGenerator) whereComparisonExprCopyAndReWrite(
 	if symTabErr == nil && symTabEntry.In != "server" {
 		if !(requiredParamPresent || optionalParamPresent) {
 			rightExpr := expr.Right
-			if boolVal, ok := expr.Right.(sqlparser.BoolVal); ok {
+			if boolVal, boolOk := expr.Right.(sqlparser.BoolVal); boolOk {
 				// Provider-backed rows are often materialized as text, so normalize bool literals.
 				rightExpr = &sqlparser.SQLVal{Type: sqlparser.StrVal, Val: []byte(strconv.FormatBool(bool(boolVal)))}
 			}
