@@ -151,6 +151,8 @@ func ExtractSQLNodeParams(
 					case *sqlparser.SQLVal:
 						val := string(r.Val)
 						paramMap[key] = val
+					case sqlparser.BoolVal:
+						paramMap[key] = strconv.FormatBool(bool(r))
 					case *sqlparser.ColName:
 						kr := r.Name.GetRawVal()
 						paramMap[key] = kr
@@ -198,6 +200,8 @@ func TransformSQLRawParameters(input map[string]interface{}, ignoreTuples bool) 
 
 func extractRaw(raw interface{}, ignoreTuples bool) (interface{}, error) {
 	switch r := raw.(type) {
+	case sqlparser.BoolVal:
+		return strconv.FormatBool(bool(r)), nil
 	case *sqlparser.SQLVal:
 		switch r.Type { //nolint:exhaustive // TODO: review
 		case sqlparser.StrVal:
