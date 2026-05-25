@@ -18,7 +18,7 @@ require (
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.1
-	github.com/stackql/any-sdk v0.5.2-beta05
+	github.com/stackql/any-sdk v0.5.3-alpha01
 	github.com/stackql/go-suffix-map v0.0.1-alpha01
 	github.com/stackql/psql-wire v0.1.2-beta01
 	github.com/stackql/stackql-parser v0.0.16-alpha02
@@ -26,6 +26,7 @@ require (
 	golang.org/x/mod v0.25.0
 	golang.org/x/sync v0.15.0
 	gonum.org/v1/gonum v0.15.1
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v2 v2.4.0
 	gotest.tools v2.2.0+incompatible
 )
@@ -136,7 +137,6 @@ require (
 	google.golang.org/grpc v1.67.1 // indirect
 	google.golang.org/protobuf v1.35.1 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
-	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
