@@ -30,3 +30,22 @@ k8s supports an adaptable auth flow [client-go credential plugins](https://kuber
 
 - Google have chosen to funnel their k8s auth offering through a `gcloud` plugin, which is opaque. Here is [a community golang implementation](https://pkg.go.dev/github.com/traviswt/gke-auth-plugin).
 4
+
+
+## Foreign auth patterns
+
+
+### aws STS for foreign role
+
+
+The `--auth` `json` string can be configured for assuming a foriegn role.  Tis, of course, relies on assume role being configured in the target tenancy.
+
+```json
+{"aws": {"type": "aws_assume_role", "keyIDenvvar": "AWS_ACCESS_KEY_ID", "credentialsenvvar": "AWS_SECRET_ACCESS_KEY", "aws_role_arn": "arn:aws:iam::123456789012:role/MyRole"}}
+```
+
+Eg:
+
+```bash
+stackql --auth '{"aws":{"type":"aws_assume_role","keyIDenvvar":"AWS_ACCESS_KEY_ID","credentialsenvvar":"AWS_SECRET_ACCESS_KEY", "aws_role_arn": "arn:aws:iam::123456789012:role/MyRole"}}' shell
+```
