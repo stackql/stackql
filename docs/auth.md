@@ -44,8 +44,11 @@ The `--auth` `json` string can be configured for assuming a foriegn role.  Tis, 
 {"aws": {"type": "aws_assume_role", "keyIDenvvar": "AWS_ACCESS_KEY_ID", "credentialsenvvar": "AWS_SECRET_ACCESS_KEY", "aws_role_arn": "arn:aws:iam::123456789012:role/MyRole"}}
 ```
 
-Eg:
+Eg, presuming the source scripts constains the cited env vars:
 
 ```bash
-stackql --auth '{"aws":{"type":"aws_assume_role","keyIDenvvar":"AWS_ACCESS_KEY_ID","credentialsenvvar":"AWS_SECRET_ACCESS_KEY", "aws_role_arn": "arn:aws:iam::123456789012:role/MyRole"}}' shell
+
+source cicd/vol/vendor-secrets/ryuk_to_stackql_user.sh
+
+stackql --auth '{"aws":{"type":"aws_assume_role","keyIDenvvar":"AWS_ACCESS_KEY_ID","credentialsenvvar":"AWS_SECRET_ACCESS_KEY", "aws_role_arn": "'${STACKQL_AUDIT_ROLE_ARN}'"}}' shell
 ```
