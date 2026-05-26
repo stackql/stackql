@@ -34,21 +34,35 @@ k8s supports an adaptable auth flow [client-go credential plugins](https://kuber
 
 ## Foreign auth patterns
 
+### AWS Cross-Account Access
 
-### aws STS for foreign role
+We implemented standard AWS cross-account access using `sts:AssumeRole`. The client account/user/runner is granted permission to assume a read-only audit role in the target account, while the target role trusts the client principal via a trust policy, optionally guarded by `ExternalId`. The target role was granted `SecurityAudit`, S3 read permissions, and Cloud Control (`cloudformation:ListResources`, `cloudformation:GetResource`, etc.) permissions so StackQL can perform live control-plane audits using temporary STS credentials rather than long-lived target-account keys. Docs: https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html
 
-
-The `--auth` `json` string can be configured for assuming a foriegn role.  Tis, of course, relies on assume role being configured in the target tenancy.
+The `--auth` JSON string can be configured to assume a foreign role. This relies on assume-role access being configured in the target tenancy/account.
 
 ```json
-{"aws": {"type": "aws_assume_role", "keyIDenvvar": "AWS_ACCESS_KEY_ID", "credentialsenvvar": "AWS_SECRET_ACCESS_KEY", "aws_role_arn": "arn:aws:iam::123456789012:role/MyRole"}}
-```
+{"aws":{"type":"aws_assume_role","keyIDenvvar":"AWS_ACCESS_KEY_ID","credentialsenvvar":"AWS_SECRET_ACCESS_KEY","aws_role_arn":"arn:aws:iam::123456789012:role/MyRole"}}
+````
 
-Eg, presuming the source scripts constains the cited env vars:
+### Azure Cross-Tenant Access
+
+We implemented Azure cross-tenant access using a multitenant App Registration in the client tenant. The target tenant admin granted consent to the application, which created an Enterprise Application/service principal inside the target tenant. The target tenant then assigned the built-in `Reader` role to that enterprise application at the subscription or management-group scope. StackQL authenticates using the client application's `client_id` and `client_secret`, but requests tokens from the target tenant authority to audit target Azure resources. Docs: https://learn.microsoft.com/en-us/entra/identity-platform/howto-convert-app-to-be-multi-tenant
+
+No change to canonical Azure configuration is needed; use the client app ID/secret, the target tenant ID, and the target subscription ID.
+
+### GCP Cross-Organization Access
+
+We implemented GCP cross-organization access by creating a service account in the client project and granting that foreign service account IAM roles directly in the target organization/project. The target org/project granted roles such as `Viewer`, `Security Reviewer`, and `Folder Viewer` to the client-owned service account principal, allowing StackQL to audit the target environment while authenticating only with the client-side service account key. Docs: https://cloud.google.com/iam/docs/granting-changing-revoking-access
+
+There is no change to existing Google auth for this.
+
+### Overall
+
+Example, presuming the sourced script contains the cited env vars:
 
 ```bash
+source cicd/vol/vendor-secrets/foreign_to_stackql_user.sh
 
-source cicd/vol/vendor-secrets/ryuk_to_stackql_user.sh
-
-stackql --auth '{"aws":{"type":"aws_assume_role","keyIDenvvar":"AWS_ACCESS_KEY_ID","credentialsenvvar":"AWS_SECRET_ACCESS_KEY", "aws_role_arn": "'${STACKQL_AUDIT_ROLE_ARN}'"}}' shell
+stackql --auth '{"aws":{"type":"aws_assume_role","keyIDenvvar":"AWS_ACCESS_KEY_ID","credentialsenvvar":"AWS_SECRET_ACCESS_KEY","aws_role_arn":"'"${STACKQL_AUDIT_ROLE_ARN}"'"}}' shell
 ```
+
