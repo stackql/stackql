@@ -20,12 +20,6 @@ From the repository root:
 env PYTHONPATH="$PYTHONPATH:$(pwd)/test/python" robot -d test/robot/reports test/robot/functional
 ```
 
-In particular, some integration tests may be unstable in some cloud and CI environments, so you may want to check locally, eg (after sourcing requisite env vars):
-
-```bash
-env PYTHONPATH="$PYTHONPATH:$(pwd)/test/python" robot --outputdir results test/robot/foreign-integration-traffic-lights
-```
-
 ### Running actual integration tests
 
 From the repository root:
@@ -48,6 +42,14 @@ env PYTHONPATH="$PYTHONPATH:$(pwd)/test/python" robot -d test/robot/integration 
   -v AWS_CREDENTIALS:"$(cat ${HOME}/stack/stackql-devel/cicd/keys/integration/aws-auth-val.txt)" \
   -v AZURE_CREDENTIALS:"$(cat /path/to/azure/credentials)" \
   test/robot/integration
+```
+
+In particular, for the foreign auth integration tests, some tests may be unstable in some cloud and CI environments, so you may want to check locally, eg (after sourcing requisite env vars):
+
+```bash
+# source cicd/vol/vendor-secrets/foreign_to_stackql_user.sh
+
+env PYTHONPATH="$PYTHONPATH:$(pwd)/test/python" robot --outputdir test/robot/reports-integration-traffic-lights test/robot/foreign-integration-traffic-lights
 ```
 
 

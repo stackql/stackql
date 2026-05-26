@@ -749,13 +749,14 @@ jobs:
       if: ((startsWith(github.ref_name, 'build-traffic-lights') && github.ref_type == 'tag') || (github.repository == 'stackql/stackql' && github.event_name == 'push' && github.ref == 'refs/heads/main')) && matrix.registry == 'test/registry'
       env:
         PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
-        AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        AZURE_CLIENT_ID: ${{ secrets.AZURE_FOREIGN_CLIENT_ID }}
+        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_FOREIGN_CLIENT_SECRET }}
         AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
-        AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        AZURE_TENANT_ID: ${{ secrets.AZURE_FOREIGN_TENANT_ID }}
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_FOREIGN_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_FOREIGN_SECRET_ACCESS_KEY }}
         STACKQL_AUDIT_ROLE_ARN: ${{ secrets.STACKQL_AUDIT_ROLE_ARN }}
+        GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_FOREIGN_SERVICE_ACCOUNT_KEY }}
         GODEBUG: netdns=go
       run: |
         echo "## Stray flask apps to be killed before robot tests ##"
