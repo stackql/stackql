@@ -661,29 +661,6 @@ jobs:
           echo "BUILDMINORVERSION=${BUILDMINORVERSION}"
           echo "BUILDPATCHVERSION=${BUILDPATCHVERSION}"
         } >> "${GITHUB_ENV}"
-        
-        if [ "${{ matrix.registry }}" = "test/registry" ]; then
-          python3 test/python/stackql_test_tooling/tcp_lb.py --generate-hosts-entries | sudo tee -a /etc/hosts
-          python3 test/python/stackql_test_tooling/tcp_lb.py --generate-nginx-lb > test/tcp/reverse-proxy/nginx/dynamic-sni-proxy.conf
-        fi
-
-
-    - name: Install testing dependencies
-      run: |
-          sudo apt-get update
-          sudo apt-get install --yes --no-install-recommends postgresql-client
-          if [ "${{ matrix.registry }}" = "test/registry" ]; then
-            sudo apt-get install -y curl gnupg2 ca-certificates lsb-release ubuntu-keyring
-            curl https://nginx.org/keys/nginx_signing.key | gpg --dearmor \
-              | sudo tee /usr/share/keyrings/nginx-archive-keyring.gpg >/dev/null
-            gpg --dry-run --quiet --no-keyring --import --import-options import-show /usr/share/keyrings/nginx-archive-keyring.gpg
-            echo "deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] \
-              http://nginx.org/packages/ubuntu $(lsb_release -cs) nginx" \
-                  | sudo tee /etc/apt/sources.list.d/nginx.list
-            sudo apt-get update
-            sudo apt-get install nginx
-            sudo nginx -c "$(pwd)/test/tcp/reverse-proxy/nginx/dynamic-sni-proxy.conf"
-          fi
 
     - name: Install Python dependencies
       run: |
@@ -751,7 +728,7 @@ jobs:
         PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
         AZURE_CLIENT_ID: ${{ secrets.AZURE_FOREIGN_CLIENT_ID }}
         AZURE_CLIENT_SECRET: ${{ secrets.AZURE_FOREIGN_CLIENT_SECRET }}
-        AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
+        AZURE_TARGET_SUBSCRIPTION_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
         AZURE_TENANT_ID: ${{ secrets.AZURE_FOREIGN_TENANT_ID }}
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_FOREIGN_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_FOREIGN_SECRET_ACCESS_KEY }}
@@ -781,6 +758,37 @@ jobs:
       if: env.FOREIGN_TRAFFIC_LIGHTS_COMPLETED == 'true'
       run: |
         cat ./test/robot/foreign-integration-traffic-lights/tmp/* || true
+    
+    - name: Generate hosts file and nginx materials
+      env:
+        BUILDCOMMITSHA: ${{github.sha}}
+        BUILDBRANCH: ${{github.ref}}
+        BUILDPLATFORM: ${{runner.os}}
+        BUILDPATCHVERSION: ${{github.run_number}}
+        CGO_ENABLED: 1
+        CGO_LDFLAGS: '-static'
+      run: |
+        if [ "${{ matrix.registry }}" = "test/registry" ]; then
+          python3 test/python/stackql_test_tooling/tcp_lb.py --generate-hosts-entries | sudo tee -a /etc/hosts
+          python3 test/python/stackql_test_tooling/tcp_lb.py --generate-nginx-lb > test/tcp/reverse-proxy/nginx/dynamic-sni-proxy.conf
+        fi
+
+    - name: Install testing dependencies
+      run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends postgresql-client
+          if [ "${{ matrix.registry }}" = "test/registry" ]; then
+            sudo apt-get install -y curl gnupg2 ca-certificates lsb-release ubuntu-keyring
+            curl https://nginx.org/keys/nginx_signing.key | gpg --dearmor \
+              | sudo tee /usr/share/keyrings/nginx-archive-keyring.gpg >/dev/null
+            gpg --dry-run --quiet --no-keyring --import --import-options import-show /usr/share/keyrings/nginx-archive-keyring.gpg
+            echo "deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] \
+              http://nginx.org/packages/ubuntu $(lsb_release -cs) nginx" \
+                  | sudo tee /etc/apt/sources.list.d/nginx.list
+            sudo apt-get update
+            sudo apt-get install nginx
+            sudo nginx -c "$(pwd)/test/tcp/reverse-proxy/nginx/dynamic-sni-proxy.conf"
+          fi
     
     - name: Generate rewritten registry for simulations
       if: ${{ matrix.registry  != 'test/registry' }}

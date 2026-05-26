@@ -44,12 +44,20 @@ env PYTHONPATH="$PYTHONPATH:$(pwd)/test/python" robot -d test/robot/integration 
   test/robot/integration
 ```
 
+For the vanilla traffic lights, eg (after sourcing requisite env vars):
+
+```bash
+# source cicd/vol/vendor-secrets/secrets.sh
+
+env PYTHONPATH="$PYTHONPATH:$(pwd)/test/python" robot --outputdir test/robot/reports-integration-traffic-lights test/robot/integration-traffic-lights
+```
+
 In particular, for the foreign auth integration tests, some tests may be unstable in some cloud and CI environments, so you may want to check locally, eg (after sourcing requisite env vars):
 
 ```bash
 # source cicd/vol/vendor-secrets/foreign_to_stackql_user.sh
 
-env PYTHONPATH="$PYTHONPATH:$(pwd)/test/python" robot --outputdir test/robot/reports-integration-traffic-lights test/robot/foreign-integration-traffic-lights
+env PYTHONPATH="$PYTHONPATH:$(pwd)/test/python" robot --outputdir test/robot/reports-foreign-integration-traffic-lights test/robot/foreign-integration-traffic-lights
 ```
 
 
