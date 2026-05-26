@@ -745,6 +745,42 @@ jobs:
       run: |
         cat ./test/robot/integration-traffic-lights/tmp/* || true
     
+    - name: Run foreign traffic light robot integration tests
+      if: ((startsWith(github.ref_name, 'build-traffic-lights') && github.ref_type == 'tag') || (github.repository == 'stackql/stackql' && github.event_name == 'push' && github.ref == 'refs/heads/main')) && matrix.registry == 'test/registry'
+      env:
+        PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
+        AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        AZURE_INTEGRATION_TESTING_SUB_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
+        AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_FOREIGN_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_FOREIGN_SECRET_ACCESS_KEY }}
+        STACKQL_AUDIT_ROLE_ARN: ${{ secrets.STACKQL_AUDIT_ROLE_ARN }}
+        GODEBUG: netdns=go
+      run: |
+        echo "## Stray flask apps to be killed before robot tests ##"
+        pgrep -f flask | xargs kill -9 || true
+        echo "## End ##"
+        if python cicd/python/build.py --robot-test-foreign-traffic-lights-integration; then
+          echo "✅ Foreign traffic light robot integration tests **all** passed"
+        else
+          rv="$?"
+          echo "🟡 **some** foreign traffic light robot integration tests failed code = $rv"
+        fi
+        {
+          echo "FOREIGN_TRAFFIC_LIGHTS_COMPLETED=true"
+        } >> "$GITHUB_ENV"
+
+    - name: Output from foreign traffic lights integration tests
+      if: env.FOREIGN_TRAFFIC_LIGHTS_COMPLETED == 'true'
+      run: |
+        cat ./test/robot/reports-foreign-integration-traffic-lights/output.xml || true
+
+    - name: Output from foreign traffic lights tmp dir
+      if: env.FOREIGN_TRAFFIC_LIGHTS_COMPLETED == 'true'
+      run: |
+        cat ./test/robot/foreign-integration-traffic-lights/tmp/* || true
+    
     - name: Generate rewritten registry for simulations
       if: ${{ matrix.registry  != 'test/registry' }}
       run: |

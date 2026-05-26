@@ -455,6 +455,37 @@ components:
           type: string
       type: object
   x-stackQL-resources:
+    buckets_list_only:
+      name: buckets_list_only
+      id: aws.pseudo_s3.buckets_list_only
+      x-cfn-schema-name: Bucket
+      x-cfn-type-name: AWS::S3::Bucket
+      x-identifiers:
+        - BucketName
+      x-type: cloud_control_view
+      methods: {}
+      sqlVerbs:
+        insert: []
+        delete: []
+        update: []
+      config:
+        views:
+          select:
+            predicate: sqlDialect == "sqlite3"
+            ddl: |-
+              SELECT
+              region,
+              JSON_EXTRACT(Properties, '$.BucketName') as bucket_name
+              FROM aws.cloud_control.resources WHERE data__TypeName = 'AWS::S3::Bucket'
+              AND region = 'us-east-1'
+            fallback:
+              predicate: sqlDialect == "postgres"
+              ddl: |-
+                SELECT
+                region,
+                json_extract_path_text(Properties, 'BucketName') as bucket_name
+                FROM aws.cloud_control.resources WHERE data__TypeName = 'AWS::S3::Bucket'
+                AND region = 'us-east-1'
     s3_bucket_listing:
       name: s3_bucket_listing
       id: aws.pseudo_s3.s3_bucket_listing

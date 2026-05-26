@@ -20,6 +20,12 @@ From the repository root:
 env PYTHONPATH="$PYTHONPATH:$(pwd)/test/python" robot -d test/robot/reports test/robot/functional
 ```
 
+In particular, some integration tests may be unstable in some cloud and CI environments, so you may want to check locally, eg (after sourcing requisite env vars):
+
+```bash
+env PYTHONPATH="$PYTHONPATH:$(pwd)/test/python" robot --outputdir results test/robot/foreign-integration-traffic-lights
+```
+
 ### Running actual integration tests
 
 From the repository root:
