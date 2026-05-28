@@ -154,7 +154,9 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 				ss.drmCfg.ExtractObjectFromSQLRows(r, nonControlColumns, ss.stream)
 				return internaldto.NewEmptyExecutorOutput()
 			}
-			graphQLReader, err := graphql.NewStandardGQLReader(
+			transformType, transformBody := extractGraphQLResponseTransform(ss.tableMeta)
+			cursorCfg := buildGraphQLCursorConfig(gql, cursorJsonPath)
+			graphQLReader, err := graphql.NewStandardGQLReaderFull(
 				client,
 				req,
 				ss.handlerCtx.GetRuntimeContext().HTTPPageLimit,
@@ -162,7 +164,9 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 				paramMap,
 				"",
 				responseJsonPath,
-				cursorJsonPath,
+				cursorCfg,
+				transformType,
+				transformBody,
 			)
 			if err != nil {
 				return internaldto.NewErroneousExecutorOutput(err)
@@ -217,4 +221,37 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 	ss.root = insertNode
 
 	return nil
+}
+
+func extractGraphQLResponseTransform(tableMeta tablemetadata.ExtendedTableMetadata) (string, string) {
+	op, err := tableMeta.GetMethod()
+	if err != nil || op == nil {
+		return "", ""
+	}
+	er, ok := op.GetResponse()
+	if !ok || er == nil {
+		return "", ""
+	}
+	t, ok := er.GetTransform()
+	if !ok || t == nil {
+		return "", ""
+	}
+	return t.GetType(), t.GetBody()
+}
+
+func buildGraphQLCursorConfig(gql formulation.GraphQL, cursorJSONPath string) graphql.CursorConfig {
+	cfg := graphql.CursorConfig{JSONPath: cursorJSONPath}
+	if strategy, ok := gql.GetCursorStrategy(); ok && strategy != "" {
+		cfg.Strategy = graphql.CursorStrategy(strategy)
+	}
+	if format, ok := gql.GetCursorFormat(); ok && format != "" {
+		cfg.FormatTemplate = format
+	}
+	if terminator, ok := gql.GetCursorTerminateOnJSONPath(); ok && terminator != "" {
+		cfg.TerminateOnJSONPath = terminator
+	}
+	if pageSize, ok := gql.GetCursorPageSize(); ok && pageSize > 0 {
+		cfg.PageSize = pageSize
+	}
+	return cfg
 }
