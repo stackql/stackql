@@ -1,0 +1,89 @@
+openapi: 3.0.3
+info:
+  title: Countries GraphQL
+  version: v0.1.0
+  description: |
+    Live public GraphQL endpoint at https://countries.trevorblades.com.
+    Used in stackql's integration-traffic-lights suite to prove the any-sdk
+    GraphQL response.transform path works end-to-end. The transform flattens
+    each continent's nested countries array into a top-level country_count
+    column so the SELECT can return scalar columns without JSON_EXTRACT.
+servers:
+  - url: https://countries.trevorblades.com
+paths:
+  /graphql:
+    post:
+      x-stackQL-graphQL:
+        url: https://countries.trevorblades.com/graphql
+        httpVerb: POST
+        responseSelection:
+          jsonPath: '$.data.continents[*]'
+        cursor:
+          jsonPath: '$.data.continents[*].__no_cursor'
+        query: >
+          query {
+            continents {
+              code
+              name
+              countries {
+                code
+              }
+            }
+          }
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      continents:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            code:
+                              type: string
+                            name:
+                              type: string
+                            country_count:
+                              type: integer
+components:
+  x-stackQL-resources:
+    continents:
+      id: trevorblades.geo.continents
+      name: continents
+      title: Continents
+      methods:
+        list:
+          operation:
+            $ref: '#/paths/~1graphql/post'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: '$.data.continents[*]'
+            transform:
+              type: golang_template_json_v0.3.0
+              body: |
+                {
+                  "data": {
+                    "continents": [
+                      {{- $first := true -}}
+                      {{- range $i, $continent := (index . "data" "continents") }}
+                      {{- if not $first }},{{ end }}{{- $first = false }}
+                      {
+                        "code":          {{ toJson (index $continent "code") }},
+                        "name":          {{ toJson (index $continent "name") }},
+                        "country_count": {{ len (index $continent "countries") }}
+                      }
+                      {{- end }}
+                    ]
+                  }
+                }
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/continents/methods/list'
