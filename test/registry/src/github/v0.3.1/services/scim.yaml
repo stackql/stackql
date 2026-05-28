@@ -96,10 +96,6 @@ paths:
                                                     properties:
                                                       username:
                                                         type: string
-                                                  saml_id:
-                                                    type: string
-                                                  github_login:
-                                                    type: string
   /scim/v2/organizations/{org}/Users:
     get:
       summary: List SCIM provisioned identities
@@ -952,51 +948,6 @@ components:
       sqlVerbs:
         select:
           - $ref: '#/components/x-stackQL-resources/saml_ids/methods/list_saml_identities'
-    saml_ids_transformed:
-      id: github.scim.samlIDsTransformed
-      name: samlIDsTransformed
-      title: SAML IDs (flattened via response.transform)
-      methods:
-        list_saml_identities_transformed:
-          operation:
-            $ref: '#/paths/~1graphql/post'
-          response:
-            mediaType: application/json
-            openAPIDocKey: '200'
-            objectKey: '$.data.viewer.organization.samlIdentityProvider.externalIdentities.edges[*].node'
-            transform:
-              type: golang_template_json_v0.3.0
-              body: |
-                {
-                  "data": {
-                    "viewer": {
-                      "organization": {
-                        "samlIdentityProvider": {
-                          "externalIdentities": {
-                            "edges": [
-                              {{- $first := true -}}
-                              {{- range $i, $edge := (index . "data" "viewer" "organization" "samlIdentityProvider" "externalIdentities" "edges") }}
-                              {{- if not $first }},{{ end }}{{- $first = false }}
-                              {
-                                "node": {
-                                  "guid":         {{ toJson (index $edge "node" "guid") }},
-                                  "saml_id":      {{ toJson (index $edge "node" "samlIdentity" "nameId") }},
-                                  "github_login": {{ toJson (index $edge "node" "user" "login") }}
-                                },
-                                "cursor": {{ toJson (index $edge "cursor") }}
-                              }
-                              {{- end }}
-                            ],
-                            "pageInfo": {{ toJson (index . "data" "viewer" "organization" "samlIdentityProvider" "externalIdentities" "pageInfo") }}
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-      sqlVerbs:
-        select:
-          - $ref: '#/components/x-stackQL-resources/saml_ids_transformed/methods/list_saml_identities_transformed'
     users:
       id: github.scim.users
       name: users

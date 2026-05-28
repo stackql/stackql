@@ -172,35 +172,18 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 				return internaldto.NewErroneousExecutorOutput(err)
 			}
 			for {
-				response, err := graphQLReader.Read()
+				response, readErr := graphQLReader.Read()
 				ss.handlerCtx.LogHTTPResponseMap(response)
 				if len(response) > 0 {
-					if !housekeepingDone && ss.insertPreparedStatementCtx != nil {
-						_, err = ss.handlerCtx.GetSQLEngine().Exec(ss.insertPreparedStatementCtx.GetGCHousekeepingQueries())
-						ss.insertionContainer.SetTableTxnCounters(tableName, ss.insertPreparedStatementCtx.GetGCCtrlCtrs())
-						housekeepingDone = true
-					}
-					if err != nil {
-						return internaldto.NewErroneousExecutorOutput(err)
-					}
-					err = ss.stream.Write(response)
-					if err != nil {
-						return internaldto.NewErroneousExecutorOutput(err)
-					}
-					for _, item := range response {
-						// TODO: handle request encoding
-						r, err := ss.drmCfg.ExecuteInsertDML(ss.handlerCtx.GetSQLEngine(), ss.insertPreparedStatementCtx, item, "")
-						logging.GetLogger().Infoln(fmt.Sprintf("insert result = %v, error = %v", r, err))
-						if err != nil {
-							return internaldto.NewErroneousExecutorOutput(err)
-						}
+					if processErr := ss.processGraphQLPage(response, tableName, &housekeepingDone); processErr != nil {
+						return internaldto.NewErroneousExecutorOutput(processErr)
 					}
 				}
-				if errors.Is(err, io.EOF) {
+				if errors.Is(readErr, io.EOF) {
 					break
 				}
-				if err != nil {
-					return internaldto.NewErroneousExecutorOutput(err)
+				if readErr != nil {
+					return internaldto.NewErroneousExecutorOutput(readErr)
 				}
 			}
 		}
@@ -220,6 +203,34 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 	insertNode := graph.CreatePrimitiveNode(insertPrim)
 	ss.root = insertNode
 
+	return nil
+}
+
+func (ss *GraphQLSingleSelectAcquire) processGraphQLPage(
+	response []map[string]interface{},
+	tableName string,
+	housekeepingDone *bool,
+) error {
+	if !*housekeepingDone && ss.insertPreparedStatementCtx != nil {
+		_, hkErr := ss.handlerCtx.GetSQLEngine().Exec(ss.insertPreparedStatementCtx.GetGCHousekeepingQueries())
+		//nolint:errcheck // pre-existing behaviour: housekeeping counter set is best-effort
+		ss.insertionContainer.SetTableTxnCounters(tableName, ss.insertPreparedStatementCtx.GetGCCtrlCtrs())
+		*housekeepingDone = true
+		if hkErr != nil {
+			return hkErr
+		}
+	}
+	if writeErr := ss.stream.Write(response); writeErr != nil {
+		return writeErr
+	}
+	for _, item := range response {
+		// TODO: handle request encoding
+		r, insertErr := ss.drmCfg.ExecuteInsertDML(ss.handlerCtx.GetSQLEngine(), ss.insertPreparedStatementCtx, item, "")
+		logging.GetLogger().Infoln(fmt.Sprintf("insert result = %v, error = %v", r, insertErr))
+		if insertErr != nil {
+			return insertErr
+		}
+	}
 	return nil
 }
 

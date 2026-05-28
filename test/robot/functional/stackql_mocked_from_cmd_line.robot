@@ -1067,24 +1067,6 @@ GitHub SAML Identities Select GraphQL
     ...    ${SELECT_GITHUB_SAML_IDENTITIES_EXPECTED}
     ...    ${CURDIR}/tmp/GitHub-SAML-Identities-Select-GraphQL.tmp
 
-GitHub SAML Identities Select GraphQL With Response Transform
-    [Documentation]    Exercises the any-sdk GraphQL response.transform path.
-    ...                Uses the same /graphql mock as the existing SAML test
-    ...                but the saml_ids_transformed resource flattens each
-    ...                node so the SELECT picks saml_id / github_login as
-    ...                top-level columns without any JSON_EXTRACT.
-    Should Horrid Query StackQL Inline Equal
-    ...    ${STACKQL_EXE}
-    ...    ${OKTA_SECRET_STR}
-    ...    ${GITHUB_SECRET_STR}
-    ...    ${K8S_SECRET_STR}
-    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
-    ...    ${AUTH_CFG_STR}
-    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
-    ...    select guid, saml_id, github_login from github.scim.samlIDsTransformed where org = 'dummyorg' order by github_login asc;
-    ...    ${SELECT_GITHUB_SAML_IDENTITIES_EXPECTED}
-    ...    ${CURDIR}/tmp/GitHub-SAML-Identities-Select-GraphQL-Response-Transform.tmp
-
 GitHub Branch Names Paginated Select
     Should Horrid Query StackQL Inline Equal
     ...    ${STACKQL_EXE}

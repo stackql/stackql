@@ -1,0 +1,17 @@
+id: trevorblades
+name: trevorblades
+version: v0.1.0
+providerServices:
+  geo:
+    description: Public Countries GraphQL API at countries.trevorblades.com. Used to exercise the any-sdk GraphQL response.transform path end-to-end against a live endpoint.
+    id: geo:v0.1.0
+    name: geo
+    preferred: true
+    service:
+      $ref: trevorblades/v0.1.0/services/geo.yaml
+    title: Countries GraphQL
+    version: v0.1.0
+openapi: 3.0.3
+config:
+  auth:
+    type: "null_auth"

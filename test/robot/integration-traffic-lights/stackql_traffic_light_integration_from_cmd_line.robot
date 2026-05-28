@@ -73,3 +73,27 @@ AWS S3 Bucket ABAC Works
     ...    stderr=${CURDIR}/tmp/AWS-S3-Bucket-Objects-List-stderr.tmp
     Should Be Equal As Integers    ${result.rc}           0
     Should Contain                 ${result.stdout}       stackql\-trial\-bucket\-02
+
+Trevorblades Continents GraphQL Response Transform
+    [Documentation]    Live end-to-end test for the any-sdk GraphQL
+    ...                response.transform path. Queries the public countries
+    ...                GraphQL endpoint and asserts the transform flattens
+    ...                each continent's nested countries[] array into a
+    ...                top-level country_count column. Africa has 58
+    ...                countries; the assertion pins that row's projection.
+    Sleep    2s
+    ${continentsQuery} =    Catenate
+    ...    select code, name, country_count from trevorblades.geo.continents order by code asc;
+    ${result} =    Run Process
+    ...    ${STACKQL_EXE}
+    ...    \-\-registry
+    ...    { "url": "file://${REPOSITORY_ROOT}/test/registry", "localDocRoot": "${REPOSITORY_ROOT}/test/registry", "verifyConfig": { "nopVerify": true } }
+    ...    exec
+    ...    ${continentsQuery}
+    ...    cwd=${REPOSITORY_ROOT}
+    ...    stdout=${CURDIR}/tmp/Trevorblades-Continents-GraphQL-Response-Transform.tmp
+    ...    stderr=${CURDIR}/tmp/Trevorblades-Continents-GraphQL-Response-Transform-stderr.tmp
+    Should Be Equal As Integers    ${result.rc}           0
+    Should Contain                 ${result.stdout}       AF
+    Should Contain                 ${result.stdout}       Africa
+    Should Contain                 ${result.stdout}       58
