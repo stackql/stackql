@@ -61,6 +61,14 @@ func (b *ExampleBackend) ListResources(ctx context.Context, hI dto.HierarchyInpu
 	return []map[string]any{}, nil
 }
 
+func (b *ExampleBackend) ListRegistry(ctx context.Context, input dto.RegistryInput) ([]map[string]any, error) {
+	return []map[string]any{}, nil
+}
+
+func (b *ExampleBackend) PullProvider(ctx context.Context, input dto.RegistryInput) (map[string]any, error) {
+	return map[string]any{}, nil
+}
+
 // NewExampleBackend creates a new example backend instance.
 func NewExampleBackend(connectionString string) Backend {
 	return &ExampleBackend{

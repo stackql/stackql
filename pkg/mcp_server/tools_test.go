@@ -25,12 +25,15 @@ type testBackend struct {
 	validateOut      []map[string]any
 	validateErr      error
 	execOut          map[string]any
+	listRegistryOut  []map[string]any
+	pullProviderOut  map[string]any
 
 	// Capture last inputs for assertions
 	lastHierarchy   dto.HierarchyInput
 	lastQueryJSON   dto.QueryJSONInput
 	lastExecQuery   string
 	lastValidateSQL string
+	lastRegistry    dto.RegistryInput
 }
 
 func (b *testBackend) Ping(_ context.Context) error { return nil }
@@ -77,6 +80,17 @@ func (b *testBackend) DescribeResource(_ context.Context, h dto.HierarchyInput) 
 func (b *testBackend) DescribeMethod(_ context.Context, h dto.HierarchyInput) ([]map[string]any, error) {
 	b.lastHierarchy = h
 	return nilOrEmpty(b.describeMethOut), nil
+}
+func (b *testBackend) ListRegistry(_ context.Context, in dto.RegistryInput) ([]map[string]any, error) {
+	b.lastRegistry = in
+	return nilOrEmpty(b.listRegistryOut), nil
+}
+func (b *testBackend) PullProvider(_ context.Context, in dto.RegistryInput) (map[string]any, error) {
+	b.lastRegistry = in
+	if b.pullProviderOut == nil {
+		return map[string]any{}, nil
+	}
+	return b.pullProviderOut, nil
 }
 
 // nilOrEmpty ensures we return a non-nil slice so the SDK's schema validation
@@ -384,10 +398,65 @@ func TestRegistration_EnabledToolsFilters(t *testing.T) {
 	if !names["server_info"] {
 		t.Errorf("server_info should be present")
 	}
-	for _, denied := range []string{"list_providers", "run_select_query", "run_mutation_query"} {
+	for _, denied := range []string{"list_providers", "run_select_query", "run_mutation_query", "list_registry", "pull_provider"} {
 		if names[denied] {
 			t.Errorf("%s should be filtered out, tools: %v", denied, names)
 		}
+	}
+}
+
+func TestTool_ListRegistry_RendersTableAndForwardsProvider(t *testing.T) {
+	be := &testBackend{listRegistryOut: []map[string]any{
+		{"provider": "google", "version": "v1"},
+		{"provider": "aws", "version": "v2"},
+	}}
+	cs := connectInProcess(t, DefaultConfig(), be)
+
+	res := callTool(t, cs, "list_registry", map[string]any{"provider": "google"})
+	text := firstText(t, res)
+	if !strings.Contains(text, "| provider |") || !strings.Contains(text, "| version |") {
+		t.Errorf("missing table header: %q", text)
+	}
+	if !strings.Contains(text, "| google |") {
+		t.Errorf("missing provider cell: %q", text)
+	}
+	if be.lastRegistry.Provider != "google" {
+		t.Errorf("provider not forwarded: %+v", be.lastRegistry)
+	}
+}
+
+func TestTool_ListRegistry_AllowedInReadOnly(t *testing.T) {
+	be := &testBackend{listRegistryOut: []map[string]any{{"provider": "x", "version": "v0"}}}
+	cs := connectInProcess(t, readOnlyConfig(), be)
+	callTool(t, cs, "list_registry", map[string]any{})
+	if be.lastRegistry.Provider != "" {
+		t.Errorf("read_only should still reach backend; got %+v", be.lastRegistry)
+	}
+}
+
+func TestTool_PullProvider_RendersKVAndForwardsArgs(t *testing.T) {
+	be := &testBackend{pullProviderOut: map[string]any{"timestamp": "now", "messages": []string{"ok"}}}
+	cs := connectInProcess(t, DefaultConfig(), be)
+
+	res := callTool(t, cs, "pull_provider", map[string]any{"provider": "google", "version": "v0.1.2"})
+	text := firstText(t, res)
+	if !strings.Contains(text, "# Pull Result") {
+		t.Errorf("expected KV title, got %q", text)
+	}
+	if !strings.Contains(text, "timestamp: now") {
+		t.Errorf("expected timestamp line, got %q", text)
+	}
+	if be.lastRegistry.Provider != "google" || be.lastRegistry.Version != "v0.1.2" {
+		t.Errorf("registry args not forwarded: %+v", be.lastRegistry)
+	}
+}
+
+func TestTool_PullProvider_AllowedInReadOnly(t *testing.T) {
+	be := &testBackend{pullProviderOut: map[string]any{"timestamp": "now"}}
+	cs := connectInProcess(t, readOnlyConfig(), be)
+	callTool(t, cs, "pull_provider", map[string]any{"provider": "google"})
+	if be.lastRegistry.Provider != "google" {
+		t.Errorf("read_only should still allow pull_provider; got %+v", be.lastRegistry)
 	}
 }
 

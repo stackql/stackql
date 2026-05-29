@@ -876,3 +876,91 @@ MCP HTTP Audit Disabled Writes No File
     Should Be Equal As Integers    ${sel.rc}    0
     ${after}=    Run Process    sh    -c    ls stackql_mcp_server_*.log 2>/dev/null | wc -l
     Should Be Equal    ${before.stdout}    ${after.stdout}
+
+# ===========================================================================
+# Issue #661 scenarios.  Cover fix 1 (empty result no longer reported as
+# extraction failure), fix 2 (literal/expression columns render unwrapped, not
+# as Go nullable wrapper text), and the two new tools list_registry /
+# pull_provider that close the discover -> pull -> query loop.
+# ===========================================================================
+
+MCP HTTP Empty Result Renders Cleanly
+    [Documentation]    Issue #661 fix 1: a zero-row result set must render cleanly,
+    ...                not be reported as "failed to extract query results".
+    ...                google.cloudkms.key_rings against the mock backend is
+    ...                the canonical empty-table case (the mock returns 200 OK
+    ...                with no keyRings key); the existing
+    ...                "Empty Response 200 Missing Jsonpath..." CLI scenario
+    ...                already pins that shape.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9912
+    ...                  \-\-exec.action      run_select_query
+    ...                  \-\-exec.args        {"sql":"select * from google.cloudkms.key_rings where projectsId \= 'testing\-project' and locationsId \= 'australia\-southeast1';"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Empty-Result.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Empty-Result-stderr.txt
+    Should Be Equal As Integers    ${result.rc}    0
+    Should Contain                 ${result.stdout}    no results
+    Should Not Contain             ${result.stdout}    failed to extract
+
+MCP HTTP Literal Select Renders Unwrapped Scalars
+    [Documentation]    Issue #661 fix 2: literal/expression columns must render
+    ...                unwrapped, not as Go nullable wrapper text like
+    ...                `&{ok true}`.  The backslash before `&{` keeps Robot
+    ...                Framework from parsing it as a dictionary-variable token.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9912
+    ...                  \-\-exec.action      run_select_query
+    ...                  \-\-exec.args        {"sql":"SELECT 1 as n, 'ok' as status;"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Literal-Select.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Literal-Select-stderr.txt
+    Should Be Equal As Integers    ${result.rc}    0
+    Should Contain                 ${result.stdout}    ok
+    Should Not Contain             ${result.stdout}    \&{
+
+MCP HTTP List Registry Returns Available Providers
+    [Documentation]    Issue #661 feature: list_registry surfaces providers
+    ...                available to pull from the configured registry, distinct
+    ...                from list_providers (which shows already-pulled
+    ...                providers).  We assert only that the call succeeds and
+    ...                renders something (rows or "no results") so the test
+    ...                works against both the canonical and the mocked-empty
+    ...                registry configurations CI exercises.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9912
+    ...                  \-\-exec.action      list_registry
+    ...                  \-\-exec.args        {}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-List-Registry.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-List-Registry-stderr.txt
+    Should Be Equal As Integers    ${result.rc}    0
+    Should Not Contain             ${result.stdout}    failed to extract
+
+MCP HTTP Pull Provider Installs Known Provider
+    [Documentation]    Issue #661 feature: pull_provider installs a single
+    ...                provider into the approot cache.  Allowed under every
+    ...                mode (writes only local cache state per the issue's "not
+    ...                a cloud mutation" rationale).  The full_access 9922 server
+    ...                is used so the call goes through the gate cleanly.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9922
+    ...                  \-\-exec.action      pull_provider
+    ...                  \-\-exec.args        {"provider":"google"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Pull-Provider.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Pull-Provider-stderr.txt
+    Should Be Equal As Integers    ${result.rc}    0
+    Should Contain                 ${result.stdout}    timestamp

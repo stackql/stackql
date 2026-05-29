@@ -3,11 +3,52 @@ package render
 
 import (
 	"fmt"
+	"reflect"
 	"sort"
 	"strings"
 )
 
 const noResults = "**no results**"
+
+// unwrap normalises database/sql nullable wrappers (sql.NullString, NullBool,
+// NullInt64, NullInt32, NullFloat64, NullByte, NullTime, the generic sql.Null[T])
+// down to their scalar payload before formatting.  Anything else is returned
+// unchanged.  Invalid wrappers collapse to "" so cells render empty rather than
+// as the typed zero value.
+func unwrap(v any) any {
+	if v == nil {
+		return nil
+	}
+	rv := reflect.ValueOf(v)
+	if rv.Kind() == reflect.Ptr {
+		if rv.IsNil() {
+			return nil
+		}
+		rv = rv.Elem()
+	}
+	if rv.Kind() != reflect.Struct {
+		return v
+	}
+	validField := rv.FieldByName("Valid")
+	if !validField.IsValid() || validField.Kind() != reflect.Bool {
+		return v
+	}
+	if !validField.Bool() {
+		return ""
+	}
+	return firstNonValidField(rv)
+}
+
+// firstNonValidField returns the first exported struct field whose name is not
+// "Valid".  Split out of unwrap to keep gocognit complexity low.
+func firstNonValidField(rv reflect.Value) any {
+	for i := 0; i < rv.NumField(); i++ {
+		if rv.Type().Field(i).Name != "Valid" {
+			return rv.Field(i).Interface()
+		}
+	}
+	return rv.Interface()
+}
 
 // RenderTable renders a uniform multi-row result set as a markdown table.
 // Column order is stable: the union of keys across all rows, sorted alphabetically.
@@ -44,7 +85,7 @@ func RenderKV(title string, records []map[string]any) string {
 		sb.WriteString(fmt.Sprintf("## Record %d\n\n", i+1))
 		keys := sortedKeys(rec)
 		for _, k := range keys {
-			sb.WriteString(fmt.Sprintf("%s: %v\n", k, rec[k]))
+			sb.WriteString(fmt.Sprintf("%s: %v\n", k, unwrap(rec[k])))
 		}
 		if i < len(records)-1 {
 			sb.WriteString("\n")
@@ -103,7 +144,7 @@ func dataRow(columns []string, row map[string]any) string {
 			sb.WriteString("|  ")
 			continue
 		}
-		sb.WriteString(fmt.Sprintf("| %v ", v))
+		sb.WriteString(fmt.Sprintf("| %v ", unwrap(v)))
 	}
 	sb.WriteString("|")
 	return sb.String()
