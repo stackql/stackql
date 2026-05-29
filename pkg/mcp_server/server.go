@@ -205,6 +205,18 @@ func queryGate(name string) toolGate {
 	}
 }
 
+// registryGate is the toolGate shape for the registry tools (list_registry,
+// pull_provider).  Decision is Allow under every mode: list is read-only, and
+// pull only fetches remote content into the local approot cache - it does not
+// touch any cloud control or data plane.  The audit record still gets written.
+func registryGate(name string) toolGate {
+	return toolGate{
+		toolName:     name,
+		defaultClass: policy.QueryClassSelect,
+		extractArgs:  extractArgsFromRegistryInput,
+	}
+}
+
 //nolint:funlen,gocognit // tool registrations are inherently long and branchy
 func registerTools(server *mcp.Server, cfg *Config, backend Backend, logger *logrus.Logger, auditSink sink.Sink) {
 	addToolWithGate(
@@ -306,6 +318,38 @@ func registerTools(server *mcp.Server, cfg *Config, backend Backend, logger *log
 			}
 			out := dto.QueryResultDTO{Rows: rows}
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: render.RenderTable(rows)}}}, out, nil
+		},
+	)
+
+	addToolWithGate(
+		server, cfg, auditSink, registryGate("list_registry"),
+		&mcp.Tool{
+			Name:        "list_registry",
+			Description: "Providers (and optional versions) available in the registry to pull. Distinct from list_providers which lists only locally installed providers. Optional provider lists its versions; omitted lists all available providers.",
+		},
+		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.RegistryInput) (*mcp.CallToolResult, dto.QueryResultDTO, error) {
+			rows, err := backend.ListRegistry(ctx, args)
+			if err != nil {
+				return nil, dto.QueryResultDTO{}, err
+			}
+			out := dto.QueryResultDTO{Rows: rows}
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: render.RenderTable(rows)}}}, out, nil
+		},
+	)
+
+	addToolWithGate(
+		server, cfg, auditSink, registryGate("pull_provider"),
+		&mcp.Tool{
+			Name:        "pull_provider",
+			Description: "Install a single provider into the local approot cache so subsequent queries resolve. Requires provider; version optional. Allowed in all modes (writes only local state, not a cloud mutation).",
+		},
+		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.RegistryInput) (*mcp.CallToolResult, map[string]any, error) {
+			res, err := backend.PullProvider(ctx, args)
+			if err != nil {
+				return nil, nil, err
+			}
+			text := render.RenderKV("Pull Result", []map[string]any{res})
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, res, nil
 		},
 	)
 

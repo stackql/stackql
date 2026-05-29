@@ -53,3 +53,12 @@ type ValidationResultDTO struct {
 	Valid  bool     `json:"valid"`
 	Errors []string `json:"errors,omitempty"`
 }
+
+// RegistryInput is the input shape for list_registry and pull_provider.
+// Provider is optional for list_registry (omit to list all available providers).
+// Provider is required for pull_provider; Version is optional (omit to pull
+// the latest version).
+type RegistryInput struct {
+	Provider string `json:"provider,omitempty" yaml:"provider,omitempty"`
+	Version  string `json:"version,omitempty" yaml:"version,omitempty"`
+}

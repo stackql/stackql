@@ -876,3 +876,79 @@ MCP HTTP Audit Disabled Writes No File
     Should Be Equal As Integers    ${sel.rc}    0
     ${after}=    Run Process    sh    -c    ls stackql_mcp_server_*.log 2>/dev/null | wc -l
     Should Be Equal    ${before.stdout}    ${after.stdout}
+
+# ===========================================================================
+# Render fixes: empty result, literal-column unwrap (#661)
+# ===========================================================================
+
+MCP HTTP Empty Result Renders Cleanly
+    [Documentation]    A SELECT that yields zero rows must render the empty-result marker
+    ...                rather than failing with "failed to extract query results" (#661 fix 1).
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9912
+    ...                  \-\-exec.action      run_select_query
+    ...                  \-\-exec.args        {"sql":"SELECT name FROM google.storage.buckets WHERE project \= 'stackql\-demo' AND name \= '__definitely_missing__';"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-EmptyResult-select.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-EmptyResult-select-stderr.txt
+    Should Be Equal As Integers    ${result.rc}    0
+    Should Not Contain    ${result.stdout}    failed to extract query results
+    Should Not Contain    ${result.stderr}    failed to extract query results
+
+MCP HTTP Literal Select Renders Unwrapped Scalars
+    [Documentation]    SELECT of literal/expression columns must render scalars in cells,
+    ...                not the Go nullable-wrapper struct form (eg `&{ok true}`) (#661 fix 2).
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9914
+    ...                  \-\-exec.action      run_select_query
+    ...                  \-\-exec.args        {"sql":"SELECT 1 as n, 'ok' as status"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-LiteralSelect.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-LiteralSelect-stderr.txt
+    Should Be Equal As Integers    ${result.rc}    0
+    Should Not Contain    ${result.stdout}    &{
+
+# ===========================================================================
+# Registry tools: list_registry, pull_provider (#661 features 1 & 2)
+# ===========================================================================
+
+MCP HTTP List Registry Returns Available Providers
+    [Documentation]    list_registry returns a non-empty set of providers available in the
+    ...                test registry, distinct from list_providers' installed-only view.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9912
+    ...                  \-\-exec.action      list_registry
+    ...                  \-\-exec.args        {}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-ListRegistry.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-ListRegistry-stderr.txt
+    Should Be Equal As Integers    ${result.rc}    0
+    ${result_obj}=    Parse MCP JSON Output    ${result.stdout}
+    Dictionary Should Contain Key    ${result_obj}    rows
+    Should Not Be Empty        ${result_obj['rows']}
+
+MCP HTTP Pull Provider Installs Known Provider
+    [Documentation]    pull_provider for a known provider returns a payload that carries
+    ...                a timestamp, matching the shape of run_lifecycle_operation.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9912
+    ...                  \-\-exec.action      pull_provider
+    ...                  \-\-exec.args        {"provider": "google"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-PullProvider.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-PullProvider-stderr.txt
+    Should Be Equal As Integers    ${result.rc}    0
+    ${result_obj}=    Parse MCP JSON Output    ${result.stdout}
+    Dictionary Should Contain Key    ${result_obj}    timestamp
