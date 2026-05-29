@@ -935,10 +935,12 @@ MCP HTTP List Registry Returns Available Providers
     ...                providers).  The MCP servers in this suite use a
     ...                file:// registry config, against which any-sdk's
     ...                ListAllAvailableProviders deliberately refuses with
-    ...                "meaningless in local mode".  That refusal is the
-    ...                contract we pin here: the tool surface is registered
-    ...                and the failure is the known any-sdk one, not a
-    ...                stackql-side extraction failure.
+    ...                "'registry list' is meaningless in local mode".
+    ...                extractQueryResults now passes ExecutorOutput.GetError()
+    ...                through verbatim (instead of swallowing it as the
+    ...                generic "failed to extract query results"), so we can
+    ...                pin the real cause here.  The pull_provider scenario
+    ...                below covers the happy path against the same registry.
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
     Sleep         5s
     ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
@@ -949,7 +951,6 @@ MCP HTTP List Registry Returns Available Providers
     ...                  \-\-exec.args        {}
     ...                  stdout=${CURDIR}${/}tmp${/}MCP-List-Registry.txt
     ...                  stderr=${CURDIR}${/}tmp${/}MCP-List-Registry-stderr.txt
-    Should Not Contain             ${result.stdout}    failed to extract
     Should Contain                 ${result.stderr}    meaningless in local mode
 
 MCP HTTP Pull Provider Installs Known Provider
