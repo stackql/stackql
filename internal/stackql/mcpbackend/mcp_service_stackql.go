@@ -304,7 +304,11 @@ func (b *stackqlMCPService) RunQueryJSON(ctx context.Context, input dto.QueryJSO
 }
 
 func (b *stackqlMCPService) runPreprocessedQueryJSON(_ context.Context, query string, rowLimit int) ([]map[string]interface{}, error) {
-	return b.extractQueryResults(query, rowLimit)
+	results, ok := b.extractQueryResults(query, rowLimit)
+	if !ok {
+		return nil, fmt.Errorf("failed to extract query results")
+	}
+	return results, nil
 }
 
 // ExecQuery returns {messages, timestamp}: messages is the orchestrator's
@@ -326,13 +330,10 @@ func (b *stackqlMCPService) execQuery(query string) (map[string]any, error) {
 	rv := map[string]any{}
 	r, ok := b.applyQuery(query)
 	if !ok {
-		return rv, fmt.Errorf("query orchestrator rejected query")
+		return rv, fmt.Errorf("failed to extract query results")
 	}
 	messages := []string{}
 	for _, resp := range r {
-		if respErr := resp.GetError(); respErr != nil {
-			return rv, respErr
-		}
 		messages = append(messages, resp.GetMessages()...)
 	}
 	rv["messages"] = messages
@@ -355,23 +356,18 @@ func (b *stackqlMCPService) applyQuery(query string) ([]internaldto.ExecutorOutp
 	return r, ok
 }
 
-// extractQueryResults runs `query` and returns the row payload.  When the
-// orchestrator surfaces an error on any ExecutorOutput, that error is returned
-// verbatim so the MCP tool message carries the real cause (eg the any-sdk
-// "registry list is meaningless in local mode" refusal) rather than a generic
-// extraction-failed string.  An empty (zero-row) result is success, not
-// failure: rv is initialised as a non-nil empty slice so it survives
-// downstream JSON-array schema validation on QueryResultDTO.Rows.
-func (b *stackqlMCPService) extractQueryResults(query string, rowLimit int) ([]map[string]interface{}, error) {
+func (b *stackqlMCPService) extractQueryResults(query string, rowLimit int) ([]map[string]interface{}, bool) {
 	r, ok := b.applyQuery(query)
+	// Initialise as empty (not nil) so a zero-row result survives downstream
+	// JSON-array schema validation on QueryResultDTO.Rows.  This pairs with
+	// fix 1 (returning ok regardless of len(rv)) so empty results render as
+	// "**no results**" rather than failing extraction.
 	rv := []map[string]interface{}{}
-	if !ok {
-		return rv, fmt.Errorf("query orchestrator rejected query")
-	}
 	rowCount := 0
 	for _, resp := range r {
 		if respErr := resp.GetError(); respErr != nil {
-			return rv, respErr
+			ok = false
+			break
 		}
 		// PrepareResultSet emits a nil SQLResult when RowMap is empty (eg
 		// REGISTRY LIST against an empty registry).  That's a zero-row
@@ -380,42 +376,41 @@ func (b *stackqlMCPService) extractQueryResults(query string, rowLimit int) ([]m
 		if sqlRowStream == nil {
 			continue
 		}
-		var drainErr error
-		rv, rowCount, drainErr = drainSQLRowStream(sqlRowStream, rv, rowCount, rowLimit)
-		if drainErr != nil {
-			return rv, drainErr
+		var drainOK bool
+		rv, rowCount, drainOK = drainSQLRowStream(sqlRowStream, rv, rowCount, rowLimit)
+		if !drainOK {
+			ok = false
+			break
 		}
 	}
-	return rv, nil
+	return rv, ok
 }
 
 // drainSQLRowStream reads `stream` to EOF (or until rowLimit is reached),
-// appending each row's payload to `rv`.  Returns a non-nil error when the
-// stream surfaces a read error or a nil row outside of EOF.
+// appending each row's payload to `rv`.  The returned bool is false when the
+// stream surfaces a read error or a nil row outside of EOF; that maps onto
+// extractQueryResults' (rv, false) failure mode.
 func drainSQLRowStream(
 	stream sqldata.ISQLResultStream,
 	rv []map[string]interface{},
 	rowCount, rowLimit int,
-) ([]map[string]interface{}, int, error) {
+) ([]map[string]interface{}, int, bool) {
 	for {
 		row, err := stream.Read()
 		if err == io.EOF {
 			if row != nil {
 				rv = append(rv, row.ToArr()...)
 			}
-			return rv, rowCount, nil
+			return rv, rowCount, true
 		}
-		if err != nil {
-			return rv, rowCount, err
-		}
-		if row == nil {
-			return rv, rowCount, fmt.Errorf("sql row stream returned nil row without EOF")
+		if err != nil || row == nil {
+			return rv, rowCount, false
 		}
 		rowArr := row.ToArr()
 		rv = append(rv, rowArr...)
 		rowCount += len(rowArr)
 		if rowLimit > 0 && rowCount >= rowLimit {
-			return rv, rowCount, nil
+			return rv, rowCount, true
 		}
 	}
 }

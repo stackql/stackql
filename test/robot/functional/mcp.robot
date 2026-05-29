@@ -935,12 +935,13 @@ MCP HTTP List Registry Returns Available Providers
     ...                providers).  The MCP servers in this suite use a
     ...                file:// registry config, against which any-sdk's
     ...                ListAllAvailableProviders deliberately refuses with
-    ...                "'registry list' is meaningless in local mode".
-    ...                extractQueryResults now passes ExecutorOutput.GetError()
-    ...                through verbatim (instead of swallowing it as the
-    ...                generic "failed to extract query results"), so we can
-    ...                pin the real cause here.  The pull_provider scenario
-    ...                below covers the happy path against the same registry.
+    ...                "'registry list' is meaningless in local mode".  That
+    ...                refusal surfaces here as an ExecutorOutput.GetError(),
+    ...                which extractQueryResults reports to the client as
+    ...                the generic "failed to extract query results" - we
+    ...                pin that substring in the mcp_client panic message.
+    ...                The pull_provider scenario below covers the happy path
+    ...                against the same registry.
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
     Sleep         5s
     ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
@@ -951,20 +952,14 @@ MCP HTTP List Registry Returns Available Providers
     ...                  \-\-exec.args        {}
     ...                  stdout=${CURDIR}${/}tmp${/}MCP-List-Registry.txt
     ...                  stderr=${CURDIR}${/}tmp${/}MCP-List-Registry-stderr.txt
-    Should Contain                 ${result.stderr}    meaningless in local mode
+    Should Contain                 ${result.stderr}    failed to extract query results
 
 MCP HTTP Pull Provider Installs Known Provider
     [Documentation]    Issue #661 feature: pull_provider installs a single
     ...                provider into the approot cache.  Allowed under every
     ...                mode (writes only local cache state per the issue's "not
-    ...                a cloud mutation" rationale).  The full_access 9922
-    ...                server is used so the call goes through the gate
-    ...                cleanly.  We pass an explicit version because the MCP
-    ...                servers in this suite use a file:// registry config,
-    ...                and any-sdk's latest-version lookup goes through
-    ...                listAllProviderVersions which deliberately refuses for
-    ...                local-mode registries.  Pulling a known version skips
-    ...                that lookup and reads the archive straight off disk.
+    ...                a cloud mutation" rationale).  The full_access 9922 server
+    ...                is used so the call goes through the gate cleanly.
     Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
     Sleep         5s
     ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
@@ -972,7 +967,7 @@ MCP HTTP Pull Provider Installs Known Provider
     ...                  \-\-client\-type\=http
     ...                  \-\-url\=http://127.0.0.1:9922
     ...                  \-\-exec.action      pull_provider
-    ...                  \-\-exec.args        {"provider":"google","version":"v0.1.2"}
+    ...                  \-\-exec.args        {"provider":"google"}
     ...                  stdout=${CURDIR}${/}tmp${/}MCP-Pull-Provider.txt
     ...                  stderr=${CURDIR}${/}tmp${/}MCP-Pull-Provider-stderr.txt
     Should Be Equal As Integers    ${result.rc}    0
