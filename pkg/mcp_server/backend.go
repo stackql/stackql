@@ -44,6 +44,16 @@ type Backend interface {
 
 	// DescribeMethod returns the full I/O contract for one method.
 	DescribeMethod(ctx context.Context, hI dto.HierarchyInput) ([]map[string]any, error)
+
+	// ListRegistry lists providers (and optionally their versions) available
+	// in the provider registry. Distinct from ListProviders, which lists
+	// providers already pulled into the local approot cache.
+	ListRegistry(ctx context.Context, rI dto.RegistryInput) ([]map[string]any, error)
+
+	// PullProvider installs a provider (optionally pinned to a version) into
+	// the approot cache so subsequent queries can resolve it. Writes only
+	// local state, no cloud control/data-plane effect.
+	PullProvider(ctx context.Context, rI dto.RegistryInput) (map[string]any, error)
 }
 
 // QueryResult represents the result of a query execution.

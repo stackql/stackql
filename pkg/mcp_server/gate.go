@@ -63,6 +63,23 @@ func extractArgsFromHierarchy(args any) map[string]any {
 	return hierarchyToMap(v)
 }
 
+// extractArgsFromRegistryInput returns {provider, version} for audit recording
+// of list_registry / pull_provider calls.
+func extractArgsFromRegistryInput(args any) map[string]any {
+	v, ok := args.(dto.RegistryInput)
+	if !ok {
+		return nil
+	}
+	out := map[string]any{}
+	if v.Provider != "" {
+		out["provider"] = v.Provider
+	}
+	if v.Version != "" {
+		out["version"] = v.Version
+	}
+	return out
+}
+
 func hierarchyToMap(v dto.HierarchyInput) map[string]any {
 	out := map[string]any{}
 	if v.Provider != "" {

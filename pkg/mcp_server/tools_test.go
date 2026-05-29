@@ -25,12 +25,15 @@ type testBackend struct {
 	validateOut      []map[string]any
 	validateErr      error
 	execOut          map[string]any
+	listRegistryOut  []map[string]any
+	pullProviderOut  map[string]any
 
 	// Capture last inputs for assertions
 	lastHierarchy   dto.HierarchyInput
 	lastQueryJSON   dto.QueryJSONInput
 	lastExecQuery   string
 	lastValidateSQL string
+	lastRegistry    dto.RegistryInput
 }
 
 func (b *testBackend) Ping(_ context.Context) error { return nil }
@@ -77,6 +80,17 @@ func (b *testBackend) DescribeResource(_ context.Context, h dto.HierarchyInput) 
 func (b *testBackend) DescribeMethod(_ context.Context, h dto.HierarchyInput) ([]map[string]any, error) {
 	b.lastHierarchy = h
 	return nilOrEmpty(b.describeMethOut), nil
+}
+func (b *testBackend) ListRegistry(_ context.Context, r dto.RegistryInput) ([]map[string]any, error) {
+	b.lastRegistry = r
+	return nilOrEmpty(b.listRegistryOut), nil
+}
+func (b *testBackend) PullProvider(_ context.Context, r dto.RegistryInput) (map[string]any, error) {
+	b.lastRegistry = r
+	if b.pullProviderOut == nil {
+		return map[string]any{}, nil
+	}
+	return b.pullProviderOut, nil
 }
 
 // nilOrEmpty ensures we return a non-nil slice so the SDK's schema validation
@@ -384,10 +398,76 @@ func TestRegistration_EnabledToolsFilters(t *testing.T) {
 	if !names["server_info"] {
 		t.Errorf("server_info should be present")
 	}
-	for _, denied := range []string{"list_providers", "run_select_query", "run_mutation_query"} {
+	for _, denied := range []string{"list_providers", "run_select_query", "run_mutation_query", "list_registry", "pull_provider"} {
 		if names[denied] {
 			t.Errorf("%s should be filtered out, tools: %v", denied, names)
 		}
+	}
+}
+
+func TestTool_ListRegistry_RendersTableAndForwardsProvider(t *testing.T) {
+	be := &testBackend{listRegistryOut: []map[string]any{
+		{"provider": "google", "version": "v1"},
+		{"provider": "aws", "version": "v2"},
+	}}
+	cs := connectInProcess(t, DefaultConfig(), be)
+
+	res := callTool(t, cs, "list_registry", map[string]any{"provider": "google"})
+	if be.lastRegistry.Provider != "google" {
+		t.Errorf("provider not forwarded: %+v", be.lastRegistry)
+	}
+	text := firstText(t, res)
+	if !strings.Contains(text, "| provider |") || !strings.Contains(text, "| version |") {
+		t.Errorf("missing table header: %q", text)
+	}
+	if !strings.Contains(text, "| google |") || !strings.Contains(text, "| aws |") {
+		t.Errorf("missing data rows: %q", text)
+	}
+	out := structuredAs[dto.QueryResultDTO](t, res)
+	if len(out.Rows) != 2 {
+		t.Errorf("expected 2 rows, got %d", len(out.Rows))
+	}
+}
+
+func TestTool_ListRegistry_AllowedInReadOnly(t *testing.T) {
+	be := &testBackend{listRegistryOut: []map[string]any{{"provider": "google"}}}
+	cs := connectInProcess(t, readOnlyConfig(), be)
+	// Should succeed under read_only mode (registry list is a read op).
+	callTool(t, cs, "list_registry", map[string]any{})
+	if be.lastRegistry.Provider != "" {
+		t.Errorf("registry input should be empty for unfiltered call: %+v", be.lastRegistry)
+	}
+}
+
+func TestTool_PullProvider_RendersKVAndForwardsArgs(t *testing.T) {
+	be := &testBackend{pullProviderOut: map[string]any{
+		"messages":  []string{"pulled google v1"},
+		"timestamp": "now",
+	}}
+	cs := connectInProcess(t, DefaultConfig(), be)
+	res := callTool(t, cs, "pull_provider", map[string]any{
+		"provider": "google", "version": "v1",
+	})
+	if be.lastRegistry.Provider != "google" || be.lastRegistry.Version != "v1" {
+		t.Errorf("args not forwarded: %+v", be.lastRegistry)
+	}
+	text := firstText(t, res)
+	if !strings.Contains(text, "# Pull Result") {
+		t.Errorf("expected KV title 'Pull Result'; got %q", text)
+	}
+	if !strings.Contains(text, "timestamp: now") {
+		t.Errorf("expected timestamp in rendered output; got %q", text)
+	}
+}
+
+func TestTool_PullProvider_AllowedInReadOnly(t *testing.T) {
+	be := &testBackend{pullProviderOut: map[string]any{"timestamp": "now"}}
+	cs := connectInProcess(t, readOnlyConfig(), be)
+	// pull_provider writes only local approot state, never a cloud op, so it
+	// must succeed under every mode.
+	callTool(t, cs, "pull_provider", map[string]any{"provider": "google"})
+	if be.lastRegistry.Provider != "google" {
+		t.Errorf("pull_provider should have reached the backend under read_only: %+v", be.lastRegistry)
 	}
 }
 

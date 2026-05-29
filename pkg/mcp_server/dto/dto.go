@@ -9,6 +9,14 @@ type HierarchyInput struct {
 	RowLimit int    `json:"row_limit,omitempty" yaml:"row_limit,omitempty"`
 }
 
+// RegistryInput identifies a provider (and optionally a version) within the
+// provider registry.  Used by both list_registry (provider optional) and
+// pull_provider (provider required).
+type RegistryInput struct {
+	Provider string `json:"provider,omitempty" yaml:"provider,omitempty"`
+	Version  string `json:"version,omitempty" yaml:"version,omitempty"`
+}
+
 // ServerInfoOutput is the backend-facing server info payload.
 // ReadOnly (JSON tag `is_read_only`) is kept for back-compat with PR1
 // consumers; new consumers should prefer the Mode field.

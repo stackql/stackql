@@ -858,6 +858,78 @@ MCP HTTP Audit Basic Records Tool Calls
     Should Contain    ${log_contents}    "decision":"allow"
     Should Contain    ${log_contents}    "mode":"full_access"
 
+MCP HTTP Empty Result Renders Cleanly
+    [Documentation]    Issue #661 fix 1: empty result sets used to be reported as
+    ...                "failed to extract query results".  A SELECT that legitimately
+    ...                returns zero rows must succeed and render the empty marker.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9912
+    ...                  \-\-exec.action      run_select_query
+    ...                  \-\-exec.args        {"sql":"SELECT name FROM google.storage.buckets WHERE project \= 'no-such-project-xyz-stackql-test';"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-EmptyResult.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-EmptyResult-stderr.txt
+    Should Be Equal As Integers    ${result.rc}    0
+    Should Not Contain    ${result.stderr}    failed to extract query results
+
+MCP HTTP Literal Select Renders Unwrapped Scalars
+    [Documentation]    Issue #661 fix 2: literal/expression columns used to render as
+    ...                Go nullable wrappers (eg `&{ok true}`).  Cells must contain the
+    ...                unwrapped scalar.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9914
+    ...                  \-\-exec.action      run_select_query
+    ...                  \-\-exec.args        {"sql":"SELECT 1 as n, 'ok' as status;"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-LiteralSelect.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-LiteralSelect-stderr.txt
+    Should Be Equal As Integers    ${result.rc}    0
+    Should Not Contain    ${result.stdout}    &{
+    Should Contain        ${result.stdout}    ok
+
+MCP HTTP List Registry Returns Available Providers
+    [Documentation]    Issue #661 feature 1: list_registry must return the providers
+    ...                published in the registry (distinct from list_providers, which
+    ...                only lists pulled providers).
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9912
+    ...                  \-\-exec.action      list_registry
+    ...                  \-\-exec.args        {}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-ListRegistry.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-ListRegistry-stderr.txt
+    Should Be Equal As Integers    ${result.rc}    0
+    ${obj}=    Parse MCP JSON Output    ${result.stdout}
+    Dictionary Should Contain Key    ${obj}    rows
+    Should Not Be Empty    ${obj['rows']}
+
+MCP HTTP Pull Provider Installs Known Provider
+    [Documentation]    Issue #661 feature 2: pull_provider must successfully install a
+    ...                known provider and return a timestamp.  Allowed under every mode
+    ...                (writes only local approot state).
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9912
+    ...                  \-\-exec.action      pull_provider
+    ...                  \-\-exec.args        {"provider":"local_openssl"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-PullProvider.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-PullProvider-stderr.txt
+    Should Be Equal As Integers    ${result.rc}    0
+    ${obj}=    Parse MCP JSON Output    ${result.stdout}
+    Dictionary Should Contain Key    ${obj}    timestamp
+
 MCP HTTP Audit Disabled Writes No File
     [Documentation]    The 9912 server has audit.disabled=true.  Running a query should not
     ...                produce any audit log file in cwd.  We assert by listing cwd before and

@@ -3,11 +3,50 @@ package render
 
 import (
 	"fmt"
+	"reflect"
 	"sort"
 	"strings"
 )
 
 const noResults = "**no results**"
+
+// unwrap returns the underlying scalar for sql.Null* wrappers (and pointers
+// to them).  Genuinely nil inputs are preserved.  An invalid (Valid==false)
+// wrapper collapses to the empty string, matching the substitution the
+// reverse-proxy backend applies during column-type scanning.
+//
+// Reflection-based to remain agnostic to which Null* shape arrives (string,
+// bool, int64, int32, float64, time, byte, or the Go 1.22+ generic
+// sql.Null[T]): any struct with a `Valid bool` field plus exactly one other
+// exported field is treated as a nullable wrapper.
+func unwrap(v any) any {
+	if v == nil {
+		return nil
+	}
+	rv := reflect.ValueOf(v)
+	if rv.Kind() == reflect.Ptr {
+		if rv.IsNil() {
+			return nil
+		}
+		rv = rv.Elem()
+	}
+	if rv.Kind() != reflect.Struct {
+		return v
+	}
+	validField := rv.FieldByName("Valid")
+	if !validField.IsValid() || validField.Kind() != reflect.Bool {
+		return v
+	}
+	if !validField.Bool() {
+		return ""
+	}
+	for i := 0; i < rv.NumField(); i++ {
+		if rv.Type().Field(i).Name != "Valid" {
+			return rv.Field(i).Interface()
+		}
+	}
+	return v
+}
 
 // RenderTable renders a uniform multi-row result set as a markdown table.
 // Column order is stable: the union of keys across all rows, sorted alphabetically.
@@ -44,7 +83,7 @@ func RenderKV(title string, records []map[string]any) string {
 		sb.WriteString(fmt.Sprintf("## Record %d\n\n", i+1))
 		keys := sortedKeys(rec)
 		for _, k := range keys {
-			sb.WriteString(fmt.Sprintf("%s: %v\n", k, rec[k]))
+			sb.WriteString(fmt.Sprintf("%s: %v\n", k, unwrap(rec[k])))
 		}
 		if i < len(records)-1 {
 			sb.WriteString("\n")
@@ -103,7 +142,7 @@ func dataRow(columns []string, row map[string]any) string {
 			sb.WriteString("|  ")
 			continue
 		}
-		sb.WriteString(fmt.Sprintf("| %v ", v))
+		sb.WriteString(fmt.Sprintf("| %v ", unwrap(v)))
 	}
 	sb.WriteString("|")
 	return sb.String()

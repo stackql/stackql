@@ -21,6 +21,10 @@ var (
 
 const (
 	unlimitedRowLimit int = -1
+	// forbiddenRegistryCharacters rejects shell/SQL metacharacters in
+	// REGISTRY LIST/PULL arguments; these flow into raw SQL strings so
+	// validation belongs at the interrogator boundary.
+	forbiddenRegistryCharacters = " \t\n\r;'\"`\\"
 )
 
 // serverBuildInfo carries the runtime + build-time metadata reported by the
@@ -90,6 +94,8 @@ type StackqlInterrogator interface {
 	GetDescribeResource(dto.HierarchyInput) (string, error)
 	GetDescribeMethod(dto.HierarchyInput) (string, error)
 	GetQueryJSON(dto.QueryJSONInput) (string, error)
+	GetRegistryList(provider string) (string, error)
+	GetRegistryPull(provider, version string) (string, error)
 }
 
 type simpleStackqlInterrogator struct{}
@@ -190,6 +196,39 @@ func (s *simpleStackqlInterrogator) GetQueryJSON(qI dto.QueryJSONInput) (string,
 		return "", fmt.Errorf("no SQL provided")
 	}
 	return qI.SQL, nil
+}
+
+func (s *simpleStackqlInterrogator) GetRegistryList(provider string) (string, error) {
+	if strings.ContainsAny(provider, forbiddenRegistryCharacters) {
+		return "", fmt.Errorf("invalid character in provider name")
+	}
+	sb := strings.Builder{}
+	sb.WriteString("REGISTRY LIST")
+	if provider != "" {
+		sb.WriteString(" ")
+		sb.WriteString(provider)
+	}
+	return sb.String(), nil
+}
+
+func (s *simpleStackqlInterrogator) GetRegistryPull(provider, version string) (string, error) {
+	if provider == "" {
+		return "", fmt.Errorf("provider not specified")
+	}
+	if strings.ContainsAny(provider, forbiddenRegistryCharacters) {
+		return "", fmt.Errorf("invalid character in provider name")
+	}
+	if strings.ContainsAny(version, forbiddenRegistryCharacters) {
+		return "", fmt.Errorf("invalid character in version")
+	}
+	sb := strings.Builder{}
+	sb.WriteString("REGISTRY PULL ")
+	sb.WriteString(provider)
+	if version != "" {
+		sb.WriteString(" ")
+		sb.WriteString(version)
+	}
+	return sb.String(), nil
 }
 
 type stackqlMCPService struct {
@@ -344,7 +383,7 @@ func (b *stackqlMCPService) extractQueryResults(query string, rowLimit int) ([]m
 			}
 		}
 	}
-	return rv, (ok && len(rv) > 0)
+	return rv, ok
 }
 
 func (b *stackqlMCPService) DescribeResource(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
@@ -393,4 +432,20 @@ func (b *stackqlMCPService) ListMethods(ctx context.Context, hI dto.HierarchyInp
 		return nil, qErr
 	}
 	return b.runPreprocessedQueryJSON(ctx, q, unlimitedRowLimit)
+}
+
+func (b *stackqlMCPService) ListRegistry(ctx context.Context, rI dto.RegistryInput) ([]map[string]interface{}, error) {
+	q, qErr := b.interrogator.GetRegistryList(rI.Provider)
+	if qErr != nil {
+		return nil, qErr
+	}
+	return b.runPreprocessedQueryJSON(ctx, q, unlimitedRowLimit)
+}
+
+func (b *stackqlMCPService) PullProvider(_ context.Context, rI dto.RegistryInput) (map[string]any, error) {
+	q, qErr := b.interrogator.GetRegistryPull(rI.Provider, rI.Version)
+	if qErr != nil {
+		return nil, qErr
+	}
+	return b.execQuery(q)
 }
