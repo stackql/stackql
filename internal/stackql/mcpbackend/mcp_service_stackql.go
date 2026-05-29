@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"github.com/stackql/psql-wire/pkg/sqldata"
 	"github.com/stackql/stackql/internal/stackql/acid/tsm_physio"
 	"github.com/stackql/stackql/internal/stackql/buildinfo"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -368,35 +369,50 @@ func (b *stackqlMCPService) extractQueryResults(query string, rowLimit int) ([]m
 			ok = false
 			break
 		}
+		// PrepareResultSet emits a nil SQLResult when RowMap is empty (eg
+		// REGISTRY LIST against an empty registry).  That's a zero-row
+		// result, not an extraction failure: skip the stream and continue.
 		sqlRowStream := resp.GetSQLResult()
 		if sqlRowStream == nil {
-			// PrepareResultSet emits a nil SQLResult when RowMap is empty
-			// (eg REGISTRY LIST against an empty registry).  That's a
-			// zero-row result, not an extraction failure: just skip the
-			// stream and continue.
 			continue
 		}
-		for {
-			row, err := sqlRowStream.Read()
-			if err == io.EOF {
-				if row != nil {
-					rv = append(rv, row.ToArr()...)
-				}
-				break
-			}
-			if err != nil || row == nil {
-				ok = false
-				break
-			}
-			rowArr := row.ToArr()
-			rv = append(rv, rowArr...)
-			rowCount += len(rowArr)
-			if rowLimit > 0 && rowCount >= rowLimit {
-				break
-			}
+		var drainOK bool
+		rv, rowCount, drainOK = drainSQLRowStream(sqlRowStream, rv, rowCount, rowLimit)
+		if !drainOK {
+			ok = false
+			break
 		}
 	}
 	return rv, ok
+}
+
+// drainSQLRowStream reads `stream` to EOF (or until rowLimit is reached),
+// appending each row's payload to `rv`.  The returned bool is false when the
+// stream surfaces a read error or a nil row outside of EOF; that maps onto
+// extractQueryResults' (rv, false) failure mode.
+func drainSQLRowStream(
+	stream sqldata.ISQLResultStream,
+	rv []map[string]interface{},
+	rowCount, rowLimit int,
+) ([]map[string]interface{}, int, bool) {
+	for {
+		row, err := stream.Read()
+		if err == io.EOF {
+			if row != nil {
+				rv = append(rv, row.ToArr()...)
+			}
+			return rv, rowCount, true
+		}
+		if err != nil || row == nil {
+			return rv, rowCount, false
+		}
+		rowArr := row.ToArr()
+		rv = append(rv, rowArr...)
+		rowCount += len(rowArr)
+		if rowLimit > 0 && rowCount >= rowLimit {
+			return rv, rowCount, true
+		}
+	}
 }
 
 func (b *stackqlMCPService) DescribeResource(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
