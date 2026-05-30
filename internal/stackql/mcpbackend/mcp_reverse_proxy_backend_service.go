@@ -220,3 +220,19 @@ func (b *stackqlMCPReverseProxyService) ListMethods(ctx context.Context, hI dto.
 	}
 	return b.query(ctx, q, hI.RowLimit)
 }
+
+func (b *stackqlMCPReverseProxyService) ListRegistry(ctx context.Context, input dto.RegistryInput) ([]map[string]interface{}, error) {
+	q, qErr := b.interrogator.GetRegistryList(input.Provider)
+	if qErr != nil {
+		return nil, qErr
+	}
+	return b.query(ctx, q, unlimitedRowLimit)
+}
+
+func (b *stackqlMCPReverseProxyService) PullProvider(ctx context.Context, input dto.RegistryInput) (map[string]any, error) {
+	q, qErr := b.interrogator.GetRegistryPull(input.Provider, input.Version)
+	if qErr != nil {
+		return nil, qErr
+	}
+	return b.ExecQuery(ctx, q)
+}

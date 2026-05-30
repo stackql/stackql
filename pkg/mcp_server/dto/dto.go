@@ -43,6 +43,15 @@ type QueryJSONInput struct {
 	RowLimit int    `json:"row_limit,omitempty" yaml:"row_limit,omitempty"`
 }
 
+// RegistryInput is the shared input shape for list_registry and pull_provider.
+// list_registry treats Provider as optional (when empty, lists all available
+// providers); pull_provider requires Provider and treats Version as optional
+// (when empty, the latest published version is pulled).
+type RegistryInput struct {
+	Provider string `json:"provider,omitempty" yaml:"provider,omitempty"`
+	Version  string `json:"version,omitempty" yaml:"version,omitempty"`
+}
+
 // QueryResultDTO is the typed structured payload returned alongside the rendered text.
 type QueryResultDTO struct {
 	Rows []map[string]any `json:"rows"`

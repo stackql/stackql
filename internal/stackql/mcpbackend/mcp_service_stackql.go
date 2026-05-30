@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"github.com/stackql/psql-wire/pkg/sqldata"
 	"github.com/stackql/stackql/internal/stackql/acid/tsm_physio"
 	"github.com/stackql/stackql/internal/stackql/buildinfo"
 	"github.com/stackql/stackql/internal/stackql/handler"
@@ -21,6 +22,11 @@ var (
 
 const (
 	unlimitedRowLimit int = -1
+	// forbiddenRegistryCharacters mirrors the CLI registry command's guard
+	// (see internal/stackql/cmd/registry.go).  Interrogator methods that
+	// interpolate user-supplied registry identifiers reject these characters
+	// rather than substituting / escaping them, matching CLI semantics.
+	forbiddenRegistryCharacters string = ` ;\`
 )
 
 // serverBuildInfo carries the runtime + build-time metadata reported by the
@@ -90,6 +96,8 @@ type StackqlInterrogator interface {
 	GetDescribeResource(dto.HierarchyInput) (string, error)
 	GetDescribeMethod(dto.HierarchyInput) (string, error)
 	GetQueryJSON(dto.QueryJSONInput) (string, error)
+	GetRegistryList(provider string) (string, error)
+	GetRegistryPull(provider, version string) (string, error)
 }
 
 type simpleStackqlInterrogator struct{}
@@ -190,6 +198,39 @@ func (s *simpleStackqlInterrogator) GetQueryJSON(qI dto.QueryJSONInput) (string,
 		return "", fmt.Errorf("no SQL provided")
 	}
 	return qI.SQL, nil
+}
+
+func (s *simpleStackqlInterrogator) GetRegistryList(provider string) (string, error) {
+	if provider != "" && strings.ContainsAny(provider, forbiddenRegistryCharacters) {
+		return "", fmt.Errorf("forbidden characters in provider")
+	}
+	sb := strings.Builder{}
+	sb.WriteString("REGISTRY LIST")
+	if provider != "" {
+		sb.WriteString(" ")
+		sb.WriteString(provider)
+	}
+	sb.WriteString(";")
+	return sb.String(), nil
+}
+
+func (s *simpleStackqlInterrogator) GetRegistryPull(provider, version string) (string, error) {
+	if provider == "" {
+		return "", fmt.Errorf("provider not specified")
+	}
+	if strings.ContainsAny(provider, forbiddenRegistryCharacters) ||
+		strings.ContainsAny(version, forbiddenRegistryCharacters) {
+		return "", fmt.Errorf("forbidden characters in provider or version")
+	}
+	sb := strings.Builder{}
+	sb.WriteString("REGISTRY PULL ")
+	sb.WriteString(provider)
+	if version != "" {
+		sb.WriteString(" ")
+		sb.WriteString(version)
+	}
+	sb.WriteString(";")
+	return sb.String(), nil
 }
 
 type stackqlMCPService struct {
@@ -317,34 +358,61 @@ func (b *stackqlMCPService) applyQuery(query string) ([]internaldto.ExecutorOutp
 
 func (b *stackqlMCPService) extractQueryResults(query string, rowLimit int) ([]map[string]interface{}, bool) {
 	r, ok := b.applyQuery(query)
-	var rv []map[string]interface{}
+	// Initialise as empty (not nil) so a zero-row result survives downstream
+	// JSON-array schema validation on QueryResultDTO.Rows.  This pairs with
+	// fix 1 (returning ok regardless of len(rv)) so empty results render as
+	// "**no results**" rather than failing extraction.
+	rv := []map[string]interface{}{}
 	rowCount := 0
 	for _, resp := range r {
-		sqlRowStream := resp.GetSQLResult()
-		if sqlRowStream == nil {
+		if respErr := resp.GetError(); respErr != nil {
 			ok = false
 			break
 		}
-		for {
-			row, err := sqlRowStream.Read()
-			if err == io.EOF {
-				rowArr := row.ToArr()
-				rv = append(rv, rowArr...)
-				break
-			}
-			if err != nil || row == nil {
-				ok = false
-				break
-			}
-			rowArr := row.ToArr()
-			rv = append(rv, rowArr...)
-			rowCount += len(rowArr)
-			if rowLimit > 0 && rowCount >= rowLimit {
-				break
-			}
+		// PrepareResultSet emits a nil SQLResult when RowMap is empty (eg
+		// REGISTRY LIST against an empty registry).  That's a zero-row
+		// result, not an extraction failure: skip the stream and continue.
+		sqlRowStream := resp.GetSQLResult()
+		if sqlRowStream == nil {
+			continue
+		}
+		var drainOK bool
+		rv, rowCount, drainOK = drainSQLRowStream(sqlRowStream, rv, rowCount, rowLimit)
+		if !drainOK {
+			ok = false
+			break
 		}
 	}
-	return rv, (ok && len(rv) > 0)
+	return rv, ok
+}
+
+// drainSQLRowStream reads `stream` to EOF (or until rowLimit is reached),
+// appending each row's payload to `rv`.  The returned bool is false when the
+// stream surfaces a read error or a nil row outside of EOF; that maps onto
+// extractQueryResults' (rv, false) failure mode.
+func drainSQLRowStream(
+	stream sqldata.ISQLResultStream,
+	rv []map[string]interface{},
+	rowCount, rowLimit int,
+) ([]map[string]interface{}, int, bool) {
+	for {
+		row, err := stream.Read()
+		if err == io.EOF {
+			if row != nil {
+				rv = append(rv, row.ToArr()...)
+			}
+			return rv, rowCount, true
+		}
+		if err != nil || row == nil {
+			return rv, rowCount, false
+		}
+		rowArr := row.ToArr()
+		rv = append(rv, rowArr...)
+		rowCount += len(rowArr)
+		if rowLimit > 0 && rowCount >= rowLimit {
+			return rv, rowCount, true
+		}
+	}
 }
 
 func (b *stackqlMCPService) DescribeResource(ctx context.Context, hI dto.HierarchyInput) ([]map[string]interface{}, error) {
@@ -393,4 +461,20 @@ func (b *stackqlMCPService) ListMethods(ctx context.Context, hI dto.HierarchyInp
 		return nil, qErr
 	}
 	return b.runPreprocessedQueryJSON(ctx, q, unlimitedRowLimit)
+}
+
+func (b *stackqlMCPService) ListRegistry(ctx context.Context, input dto.RegistryInput) ([]map[string]interface{}, error) {
+	q, qErr := b.interrogator.GetRegistryList(input.Provider)
+	if qErr != nil {
+		return nil, qErr
+	}
+	return b.runPreprocessedQueryJSON(ctx, q, unlimitedRowLimit)
+}
+
+func (b *stackqlMCPService) PullProvider(ctx context.Context, input dto.RegistryInput) (map[string]any, error) {
+	q, qErr := b.interrogator.GetRegistryPull(input.Provider, input.Version)
+	if qErr != nil {
+		return nil, qErr
+	}
+	return b.ExecQuery(ctx, q)
 }
