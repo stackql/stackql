@@ -66,3 +66,28 @@ source cicd/vol/vendor-secrets/foreign_to_stackql_user.sh
 stackql --auth '{"aws":{"type":"aws_assume_role","keyIDenvvar":"AWS_ACCESS_KEY_ID","credentialsenvvar":"AWS_SECRET_ACCESS_KEY","aws_role_arn":"'"${STACKQL_AUDIT_ROLE_ARN}"'"}}' shell
 ```
 
+## OIDC from github
+
+GHA → cloud federation via each provider's official action; stackql then uses its standard auth types — **no federation-specific `--auth` string needed**.
+
+Workflow needs `permissions: id-token: write`, then per cloud:
+
+**AWS** — [GitHub docs](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services). IAM OIDC provider + role; `aws-actions/configure-aws-credentials@v4` with `role-to-assume`. Session token (`AWS_SESSION_TOKEN`) is picked up from env automatically — no extra field needed.
+```
+--auth '{"aws":{"type":"aws_signing_v4","keyIDenvvar":"AWS_ACCESS_KEY_ID","credentialsenvvar":"AWS_SECRET_ACCESS_KEY"}}'
+```
+
+**GCP** — [GitHub docs](https://github.com/google-github-actions/auth#setup). Workload Identity **Pool** + Provider, SA bound via **both** `roles/iam.workloadIdentityUser` **and** `roles/iam.serviceAccountTokenCreator` (the access-token mint path needs Token Creator on top of WIU); `google-github-actions/auth@v2` with `workload_identity_provider` + `service_account` + `token_format: 'access_token'`. Capture the action's `access_token` output into an env var (e.g. `GCP_ACCESS_TOKEN`) for the stackql step. The action's default `external_account` credentials file isn't consumable by stackql's `service_account` type.
+```
+--auth '{"google":{"type":"bearer","credentialsenvvar":"GCP_ACCESS_TOKEN"}}'
+```
+
+**Azure** — [action docs](https://github.com/Azure/login#login-with-openid-connect-oidc-recommended). Entra app + federated credential (one per org — Azure won't accept `repository_owner` matching); `azure/login@v2` with client/tenant/subscription IDs.
+```
+--auth '{"azure":{"type":"azure_default"}}'
+```
+
+### Gotchas
+- GCP: use **Workload** Identity Federation (project-scoped), not Workforce. Impersonation via `token_format: access_token` needs **both** `roles/iam.workloadIdentityUser` and `roles/iam.serviceAccountTokenCreator` on the SA. GH secret = full provider resource name (`projects/.../providers/...`).
+- Azure: federated credentials for GHA disallow `repository_owner` matching → create one credential per org, or regex on `claims['sub']`.
+

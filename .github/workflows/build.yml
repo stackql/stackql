@@ -546,6 +546,9 @@ jobs:
     needs:
       - linuxbuild
       - test_python_package_build
+    permissions:
+      id-token: write
+      contents: read
     runs-on: ubuntu-22-04-m
     strategy:
       matrix:
@@ -759,6 +762,71 @@ jobs:
       run: |
         cat ./test/robot/foreign-integration-traffic-lights/tmp/* || true
     
+    - name: ID Fed - configure AWS credentials (OIDC)
+      if: ((startsWith(github.ref_name, 'build-traffic-lights') && github.ref_type == 'tag') || (github.repository == 'stackql/stackql' && github.event_name == 'push' && github.ref == 'refs/heads/main')) && matrix.registry == 'test/registry'
+      continue-on-error: true
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.STACKQL_ID_FED_AWS_ROLE_ARN }}
+        aws-region: us-east-1
+
+    - name: ID Fed - authenticate to Google Cloud (OIDC)
+      id: gcp_auth
+      if: ((startsWith(github.ref_name, 'build-traffic-lights') && github.ref_type == 'tag') || (github.repository == 'stackql/stackql' && github.event_name == 'push' && github.ref == 'refs/heads/main')) && matrix.registry == 'test/registry'
+      continue-on-error: true
+      uses: google-github-actions/auth@v2
+      with:
+        workload_identity_provider: ${{ secrets.STACKQL_ID_FED_GCP_WORKLOAD_IDENTITY_PROVIDER }}
+        service_account: ${{ secrets.STACKQL_ID_FED_GCP_SERVICE_ACCOUNT }}
+        token_format: 'access_token'
+
+    - name: ID Fed - login to Azure (OIDC)
+      if: ((startsWith(github.ref_name, 'build-traffic-lights') && github.ref_type == 'tag') || (github.repository == 'stackql/stackql' && github.event_name == 'push' && github.ref == 'refs/heads/main')) && matrix.registry == 'test/registry'
+      continue-on-error: true
+      uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.STACKQL_ID_FED_AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.STACKQL_ID_FED_AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
+
+    - name: Run id-fed traffic light robot integration tests
+      if: ((startsWith(github.ref_name, 'build-traffic-lights') && github.ref_type == 'tag') || (github.repository == 'stackql/stackql' && github.event_name == 'push' && github.ref == 'refs/heads/main')) && matrix.registry == 'test/registry'
+      env:
+        PYTHONPATH: '${{ env.PYTHONPATH }}:${{ github.workspace }}/test/python'
+        AZURE_TARGET_SUBSCRIPTION_ID: ${{ secrets.AZURE_INTEGRATION_TESTING_SUB_ID }}
+        GCP_ACCESS_TOKEN: ${{ steps.gcp_auth.outputs.access_token }}
+        GODEBUG: netdns=go
+      run: |
+        echo "## Stray flask apps to be killed before robot tests ##"
+        pgrep -f flask | xargs kill -9 || true
+        echo "## End ##"
+        if python cicd/python/build.py --robot-test-id-fed-traffic-lights-integration; then
+          echo "✅ ID-FED traffic light robot integration tests **all** passed"
+        else
+          rv="$?"
+          echo "🟡 **some** ID-FED traffic light robot integration tests failed code = $rv"
+        fi
+        {
+          echo "ID_FED_TRAFFIC_LIGHTS_COMPLETED=true"
+        } >> "$GITHUB_ENV"
+
+    - name: Output from id-fed traffic lights integration tests
+      if: env.ID_FED_TRAFFIC_LIGHTS_COMPLETED == 'true'
+      run: |
+        cat ./test/robot/reports-id-fed-traffic-lights/output.xml || true
+
+    - name: Output from id-fed traffic lights tmp dir
+      if: env.ID_FED_TRAFFIC_LIGHTS_COMPLETED == 'true'
+      run: |
+        cat ./test/robot/id-fed-traffic-lights/tmp/* || true
+
+    - name: ID Fed - clear cloud env vars before downstream tests
+      if: always()
+      run: |
+        for v in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_REGION AWS_DEFAULT_REGION AWS_ROLE_ARN AWS_WEB_IDENTITY_TOKEN_FILE GOOGLE_APPLICATION_CREDENTIALS GOOGLE_GHA_CREDS_PATH CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE CLOUDSDK_CORE_PROJECT CLOUDSDK_PROJECT GCLOUD_PROJECT GCP_PROJECT GCP_ACCESS_TOKEN AZURE_HTTP_USER_AGENT AZUREPS_HOST_ENVIRONMENT; do
+          echo "${v}=" >> "$GITHUB_ENV"
+        done
+
     - name: Generate hosts file and nginx materials
       env:
         BUILDCOMMITSHA: ${{github.sha}}
