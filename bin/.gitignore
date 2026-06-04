@@ -1,0 +1,5 @@
+# Source binaries are dropped here per release and must not be committed.
+# Track this directory and its README only.
+*
+!.gitignore
+!README.md
