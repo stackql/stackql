@@ -129,6 +129,59 @@ extract_pkg_binary() {
   rm -rf "$tmp"
 }
 
+extract_zip_binary() {
+  # args: zip-path  binary-name  dest-path
+  # Pulls the named binary out of a release zip. The binary's embedded
+  # signature (e.g. Authenticode on stackql.exe) is preserved by extraction.
+  local zip="$1" binname="$2" dest="$3"
+  if ! command -v unzip >/dev/null 2>&1; then
+    echo "  error: unzip not found - install it to extract release zips" >&2
+    return 1
+  fi
+  local tmp
+  tmp="$(mktemp -d)"
+  if ! unzip -q -o "$zip" "$binname" -d "$tmp" 2>/dev/null; then
+    echo "  error: '$binname' not found inside $(basename "$zip")" >&2
+    rm -rf "$tmp"; return 1
+  fi
+  cp "$tmp/$binname" "$dest"
+  rm -rf "$tmp"
+}
+
+# Find the first existing path from the args; echo it, or empty if none.
+first_existing() {
+  local p
+  for p in "$@"; do
+    [ -e "$p" ] && { echo "$p"; return 0; }
+  done
+  return 1
+}
+
+# Find the first glob match across the args; echo it, or empty if none.
+first_glob() {
+  local pat match
+  for pat in "$@"; do
+    match="$(ls $pat 2>/dev/null | head -n1 || true)"
+    [ -n "$match" ] && { echo "$match"; return 0; }
+  done
+  return 1
+}
+
+pack_from_zip() {
+  # args: label  zip-path  binary-name
+  local label="$1" zip="$2" binname="$3"
+  local tmpdir tmpbin
+  tmpdir="$(mktemp -d)"; tmpbin="$tmpdir/$binname"
+  if extract_zip_binary "$zip" "$binname" "$tmpbin"; then
+    echo "==> $label (extracted $binname from $(basename "$zip"))"
+    pack_bundle "$label" "$tmpbin" "$binname"
+    rm -rf "$tmpdir"
+    return 0
+  fi
+  rm -rf "$tmpdir"
+  return 1
+}
+
 have() { [ -e "$1" ]; }
 
 # --- run -------------------------------------------------------------------
@@ -139,25 +192,43 @@ echo
 
 built=0
 
-if have "$BIN_DIR/linux-amd64/stackql"; then
+# Each target accepts the release artefact (zip or pkg) at the bin/ root, or
+# a pre-extracted binary at the legacy bin/<arch>/ path. The release zip is
+# the normal source; pre-extracted paths are a fallback for hand-built drops.
+
+# linux x86_64
+linux_amd64_zip="$(first_glob "$BIN_DIR/stackql_linux_amd64.zip" "$BIN_DIR/stackql_linux_x86_64.zip" || true)"
+if [ -n "$linux_amd64_zip" ]; then
+  pack_from_zip "linux-x64" "$linux_amd64_zip" "stackql" && built=$((built+1))
+elif have "$BIN_DIR/linux-amd64/stackql"; then
   pack_bundle "linux-x64" "$BIN_DIR/linux-amd64/stackql" "stackql"; built=$((built+1))
 else
-  echo "skip linux-x64       (missing bin/linux-amd64/stackql)"
+  echo "skip linux-x64       (no stackql_linux_amd64.zip or bin/linux-amd64/stackql)"
 fi
 
-if have "$BIN_DIR/linux-arm64/stackql"; then
+# linux arm64
+linux_arm64_zip="$(first_glob "$BIN_DIR/stackql_linux_arm64.zip" "$BIN_DIR/stackql_linux_aarch64.zip" || true)"
+if [ -n "$linux_arm64_zip" ]; then
+  pack_from_zip "linux-arm64" "$linux_arm64_zip" "stackql" && built=$((built+1))
+elif have "$BIN_DIR/linux-arm64/stackql"; then
   pack_bundle "linux-arm64" "$BIN_DIR/linux-arm64/stackql" "stackql"; built=$((built+1))
 else
-  echo "skip linux-arm64     (missing bin/linux-arm64/stackql)"
+  echo "skip linux-arm64     (no stackql_linux_arm64.zip or bin/linux-arm64/stackql)"
 fi
 
-if have "$BIN_DIR/windows-amd64/stackql.exe"; then
+# windows x86_64
+windows_amd64_zip="$(first_glob "$BIN_DIR/stackql_windows_amd64.zip" "$BIN_DIR/stackql_windows_x86_64.zip" || true)"
+if [ -n "$windows_amd64_zip" ]; then
+  pack_from_zip "windows-x64" "$windows_amd64_zip" "stackql.exe" && built=$((built+1))
+elif have "$BIN_DIR/windows-amd64/stackql.exe"; then
   pack_bundle "windows-x64" "$BIN_DIR/windows-amd64/stackql.exe" "stackql.exe"; built=$((built+1))
 else
-  echo "skip windows-x64     (missing bin/windows-amd64/stackql.exe)"
+  echo "skip windows-x64     (no stackql_windows_amd64.zip or bin/windows-amd64/stackql.exe)"
 fi
 
-darwin_pkg="$(ls "$BIN_DIR"/darwin/*.pkg 2>/dev/null | head -n1 || true)"
+# darwin universal (.pkg only - bare binaries are not accepted because they
+# carry no stapled ticket and we want the same artefact upstream signed).
+darwin_pkg="$(first_glob "$BIN_DIR"/stackql_darwin*.pkg "$BIN_DIR"/darwin/*.pkg || true)"
 if [ -n "$darwin_pkg" ]; then
   echo "==> darwin-universal (extracting from $(basename "$darwin_pkg"))"
   tmpdir="$(mktemp -d)"; tmpbin="$tmpdir/stackql"
@@ -166,7 +237,7 @@ if [ -n "$darwin_pkg" ]; then
   fi
   rm -rf "$tmpdir"
 else
-  echo "skip darwin-universal (no .pkg in bin/darwin/)"
+  echo "skip darwin-universal (no stackql_darwin*.pkg at bin/ root or bin/darwin/)"
 fi
 
 echo
