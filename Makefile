@@ -32,7 +32,10 @@
 SHELL := bash
 .SHELLFLAGS := -eu -o pipefail -c
 
-VERSION ?=
+# VERSION defaults to the stackql_release pinned in release.yaml (leading v
+# stripped), so plain 'make all' builds the pinned release. Override with
+# make <target> VERSION=X.Y.Z as before.
+VERSION ?= $(shell sed -n 's/^stackql_release:[[:space:]]*v\{0,1\}//p' release.yaml 2>/dev/null | tr -d ' \r')
 BIN_DIR ?= bin
 DIST_DIR ?= dist
 PACKAGE := scripts/package.sh
@@ -74,7 +77,8 @@ help:
 
 check-version:
 	@if [ -z "$(VERSION)" ]; then \
-	  echo "error: VERSION is required (e.g. make VERSION=0.10.500)" >&2; exit 2; \
+	  echo "error: VERSION is required (e.g. make VERSION=0.10.500)," >&2; \
+	  echo "       or set stackql_release in release.yaml" >&2; exit 2; \
 	fi
 
 download: check-version

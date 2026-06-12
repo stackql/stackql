@@ -14,11 +14,14 @@ The server packed into each bundle is the `stackql` binary itself, launched as `
 
 A [Makefile](Makefile) wraps `scripts/package.sh` for the common flows. The script is still the source of truth; `make` is convenience.
 
+`VERSION` defaults to the `stackql_release` value pinned in [release.yaml](release.yaml) (leading `v` stripped), so plain `make all` builds the pinned release. Passing `VERSION=X.Y.Z` overrides it. `release.yaml` is also what CI builds on PRs and what a pushed tag must match to publish (see "Release flow" below).
+
 One-shot from a clean checkout - downloads the release artefacts from `https://github.com/stackql/stackql/releases/download/v<VERSION>/...` into `bin/`, then builds every available bundle:
 
 ```bash
 make all VERSION=X.Y.Z
 # 'make VERSION=X.Y.Z' is equivalent ('all' is the default target)
+# 'make' alone uses the version pinned in release.yaml
 ```
 
 Just download (skip packaging):
@@ -76,11 +79,21 @@ Show what is currently in the drop-zone:
 make list
 ```
 
-## Release flow (fully local, no CI)
+## Release flow
 
-There is no GitHub Actions workflow. Releases are produced by running `make` on two machines, because the darwin target needs `pkgutil` which only exists on macOS.
+The primary flow is GitHub Actions; the two-machine local flow below remains a supported fallback. The darwin target needs `pkgutil`, so CI builds it on a `macos-latest` runner.
 
-### The two-machine flow
+### CI flow (GitHub Actions)
+
+Three workflows in [.github/workflows/](.github/workflows/):
+
+- **[build.yml](.github/workflows/build.yml)** - reusable. Builds each bundle with `make one TARGET=<t> VERSION=<v>` on a runner that can execute the embedded binary (`ubuntu-latest`, `ubuntu-24.04-arm`, `macos-latest`), runs `scripts/smoke-test.py` against it, and uploads `dist/` artefacts. The windows-x64 bundle builds on ubuntu (packaging has no Windows dependency) and is smoke-tested on `windows-latest` from the artifact. The Gemini agent check runs on linux-x64 only and soft-skips without `GEMINI_API_KEY`.
+- **[ci.yml](.github/workflows/ci.yml)** - on PRs to main and pushes to main. Reads `stackql_release` from [release.yaml](release.yaml) and calls build.yml. Nothing is published.
+- **[publish.yml](.github/workflows/publish.yml)** - on pushing a `v*` tag. Fails fast if the tag does not exactly match `stackql_release` in release.yaml, rebuilds and smoke-tests everything, then runs `make publish` to upload all bundles + `.sha256` files to the matching `stackql/stackql` release. Requires the `STACKQL_RELEASE_TOKEN` repo secret (fine-grained PAT with `contents:write` on `stackql/stackql` - the default `GITHUB_TOKEN` cannot upload cross-repo).
+
+The release sequence: upstream `stackql/stackql` release publishes the core assets -> raise a PR here bumping `stackql_release` in release.yaml (CI proves the bundles build and pass smoke tests against the real release assets) -> merge -> push the matching tag (e.g. `v0.10.500`) -> publish.yml attaches the `.mcpb` assets to the upstream release.
+
+### Fallback: the two-machine local flow
 
 **Machine A (your workstation, any OS with bash + node + unzip):**
 
