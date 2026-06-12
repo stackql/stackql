@@ -2,7 +2,12 @@
 
 This is the editorial review path that puts StackQL in Claude Desktop's "Browse extensions" UI. It is **not** a cryptographic signature - it is Anthropic vetting the listing, and it is the highest-trust user-visible signal we can earn for the bundle.
 
-Submission lives at the form linked from the Anthropic connectors docs (current URL: search "Claude Desktop Extensions submission" on docs.claude.com; the URL has changed once and may change again - confirm before submitting).
+Submission forms (found June 2026, buried in the Anthropic partner hub; the old "Interest Form: MCP Directory" is deprecated and redirects here):
+
+- **Local servers (.mcpb - this is us): https://forms.gle/d8hAM5GJvxehnG4M6**
+- Remote servers (hosted MCP, not applicable): https://forms.gle/fDhN3FQmnLpoY5zm6
+
+These URLs have changed at least twice - if the local-servers form 404s or shows a deprecation notice, follow its redirect and update this doc.
 
 ## Hard requirements - get these ready before opening the form
 
