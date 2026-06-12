@@ -91,6 +91,23 @@ The sequence:
 
 To re-publish the pinned release without moving the tag (e.g. after enabling signing secrets), run the publish workflow from the Actions tab (`workflow_dispatch`); the `confirm_release` input must be typed exactly as pinned in `release.yaml` (e.g. `v0.10.500`). It runs from current main and clobbers the existing release assets.
 
+**If the MCP Registry entry was already published, a re-publish breaks its SHA pins.** Rebuilt bundles have new SHA-256s, and registry versions are immutable (`cannot publish duplicate version`). Recovery, after the new assets land:
+
+```bash
+# refresh the canonical sha files from the release, re-render
+for t in linux-x64 linux-arm64 windows-x64 darwin-universal; do
+  curl -fsSL -o dist/stackql-mcp-$t.mcpb.sha256 \
+    https://github.com/stackql/stackql/releases/download/v0.10.500/stackql-mcp-$t.mcpb.sha256
+done
+make server-json VERSION=0.10.500
+# bump ONLY the registry version fields (URLs keep v0.10.500), e.g. 0.10.500.1,
+# then publish and tombstone the stale version:
+mcp-publisher publish   # from registry/, after editing version fields
+mcp-publisher status --status deleted \
+  --message "Release assets rebuilt in place; sha pins stale. Superseded by 0.10.500.1." \
+  io.github.stackql/stackql-mcp 0.10.500
+```
+
 One-time setup: add a repo secret `STACKQL_RELEASE_TOKEN` - a fine-grained PAT (or GitHub App token) with `contents:write` on `stackql/stackql`. The default `GITHUB_TOKEN` cannot upload assets to another repo. Optionally add `GEMINI_API_KEY` to enable the agent smoke test on the linux-x64 job; without it that step soft-skips.
 
 Optional envelope signing: if the repo secrets `MCPB_SIGNING_CERT` and `MCPB_SIGNING_KEY` (PEM contents, plus optional `MCPB_SIGNING_INTERMEDIATES`) are set, the publish job runs `make sign` to `mcpb sign` every bundle and regenerate its `.sha256` before upload. Without the secrets the step prints a notice and skips, and unsigned bundles ship as before. Note `mcpb verify` in the current CLI is broken upstream (node-forge cannot verify PKCS#7, so every signed bundle reports as unsigned); `make sign` treats it as advisory and asserts the appended signature block instead.
