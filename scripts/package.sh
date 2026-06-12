@@ -112,6 +112,7 @@ pack_bundle() {
   mkdir -p "$stage/server"
   cp "$src" "$stage/server/$binname"
   chmod +x "$stage/server/$binname" 2>/dev/null || true
+  cp "$ROOT_DIR/assets/icon.png" "$stage/icon.png"
   sed -e "s/__BINARY_NAME__/${binname}/g" -e "s/__VERSION__/${VERSION}/g" \
       "$TEMPLATE" > "$stage/manifest.json"
   out="$DIST_DIR/stackql-mcp-${label}.mcpb"
