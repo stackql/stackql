@@ -48,6 +48,8 @@ stackql-mcpb-packaging/
   scripts/package.sh                # build bundles from bin/ -> dist/
   scripts/clean.sh                  # wipe dist/
   scripts/render-server-json.sh     # pin SHAs into registry/server.json
+  scripts/sign.sh                   # envelope-sign dist/*.mcpb + regen .sha256
+  scripts/append-signature.py       # frame an externally-produced CMS signature
   scripts/smoke-test.py             # deterministic MCP smoke test (stdlib only)
   scripts/gemini-smoke.py           # optional Gemini Flash agent smoke test
   docs/install.md                   # end-user install guide
@@ -264,6 +266,28 @@ Dormant, intentionally:
 5. **MCPB envelope signing (`mcpb sign`).** The hooks are in `scripts/package.sh` (`MCPB_SELF_SIGN`, `MCPB_SIGN_CERT`/`MCPB_SIGN_KEY`/`MCPB_SIGN_INTERMEDIATES`) but no envelope signature is applied. Reason: the production EV code-signing cert lives on a YubiKey and the current `@anthropic-ai/mcpb` CLI requires PEM-on-disk for `--cert`/`--key`. There is no PKCS#11 / KSP / engine option, so the YubiKey cannot drive `mcpb sign` directly. The published SHA-256 is what marketplaces verify against today; that is in line with what other third-party MCPB publishers ship. If/when `@anthropic-ai/mcpb` gains HSM support, the hooks are ready and `make signed` will swap from `MCPB_SELF_SIGN=true` to the production cert path with no script changes.
 
 For end users, this means: the binary that actually runs is fully signed by the platform's trust authority; the bundle wrapping it is hash-pinned and registry-verified; the editorial vetting is layered on top via the Anthropic directory. Self-signed envelopes (`make signed`) are for local testing only and not suitable for release.
+
+### Envelope signing with the hardware token
+
+`mcpb sign` requires a PEM key on disk, which the token cannot export. The workaround is to produce the detached CMS signature externally and frame it with [scripts/append-signature.py](scripts/append-signature.py), which emits the same byte layout as `mcpb sign` (`MCPB_SIG_V1` + 4-byte LE length + DER PKCS#7 + `MCPB_SIG_END`) and regenerates the `.sha256`:
+
+```bash
+# 1. Sign the unsigned bundle bytes with the token via the PKCS#11 engine
+#    (prompts for the token PIN; cert.pem/chain.pem are the public materials
+#    exported from the token).
+openssl cms -sign -binary -in dist/stackql-mcp-linux-x64.mcpb \
+  -signer cert.pem -certfile chain.pem \
+  -keyform engine -engine pkcs11 -inkey "pkcs11:type=private" \
+  -outform DER -out sig.der
+
+# 2. Frame and append it, regenerating the .sha256.
+python scripts/append-signature.py dist/stackql-mcp-linux-x64.mcpb sig.der
+
+# 3. Re-upload (idempotent).
+make publish VERSION=X.Y.Z
+```
+
+This is interactive (PIN prompt), so it is a local flow, not a CI step. Requires an OpenSSL build with the PKCS#11 engine (libp11) pointed at the token vendor's PKCS#11 module. `--strip-only` removes an existing signature block if you need the unsigned bytes back.
 
 ## Makefile reference
 
