@@ -89,6 +89,8 @@ The sequence:
 3. **Merge to main** - nothing is published yet.
 4. **Push the matching tag** - `git tag vX.Y.Z && git push origin vX.Y.Z`. [publish.yml](.github/workflows/publish.yml) fails fast if the tag does not exactly match `release.yaml`, rebuilds and re-tests everything, then uploads all `.mcpb` + `.sha256` files to the `stackql/stackql` `vX.Y.Z` release via `make publish` (idempotent `--clobber`).
 
+To re-publish the pinned release without moving the tag (e.g. after enabling signing secrets), run the publish workflow from the Actions tab (`workflow_dispatch`); the `confirm_release` input must be typed exactly as pinned in `release.yaml` (e.g. `v0.10.500`). It runs from current main and clobbers the existing release assets.
+
 One-time setup: add a repo secret `STACKQL_RELEASE_TOKEN` - a fine-grained PAT (or GitHub App token) with `contents:write` on `stackql/stackql`. The default `GITHUB_TOKEN` cannot upload assets to another repo. Optionally add `GEMINI_API_KEY` to enable the agent smoke test on the linux-x64 job; without it that step soft-skips.
 
 Optional envelope signing: if the repo secrets `MCPB_SIGNING_CERT` and `MCPB_SIGNING_KEY` (PEM contents, plus optional `MCPB_SIGNING_INTERMEDIATES`) are set, the publish job runs `make sign` to `mcpb sign` every bundle and regenerate its `.sha256` before upload. Without the secrets the step prints a notice and skips, and unsigned bundles ship as before. Note `mcpb verify` in the current CLI is broken upstream (node-forge cannot verify PKCS#7, so every signed bundle reports as unsigned); `make sign` treats it as advisory and asserts the appended signature block instead.
