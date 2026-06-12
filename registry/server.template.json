@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.stackql/stackql-mcp",
   "title": "StackQL MCP Server",
-  "description": "SQL-native query and provisioning engine for cloud infrastructure, served over MCP via 'stackql mcp'.",
+  "description": "SQL-native query and provisioning engine for cloud infrastructure, served over MCP.",
   "websiteUrl": "https://stackql.io",
   "repository": {
     "url": "https://github.com/stackql/stackql",
@@ -12,7 +12,6 @@
   "packages": [
     {
       "registryType": "mcpb",
-      "registryBaseUrl": "https://github.com",
       "identifier": "https://github.com/stackql/stackql/releases/download/v__VERSION__/stackql-mcp-linux-x64.mcpb",
       "version": "__VERSION__",
       "fileSha256": "__SHA_LINUX_X64__",
@@ -20,7 +19,6 @@
     },
     {
       "registryType": "mcpb",
-      "registryBaseUrl": "https://github.com",
       "identifier": "https://github.com/stackql/stackql/releases/download/v__VERSION__/stackql-mcp-linux-arm64.mcpb",
       "version": "__VERSION__",
       "fileSha256": "__SHA_LINUX_ARM64__",
@@ -28,7 +26,6 @@
     },
     {
       "registryType": "mcpb",
-      "registryBaseUrl": "https://github.com",
       "identifier": "https://github.com/stackql/stackql/releases/download/v__VERSION__/stackql-mcp-windows-x64.mcpb",
       "version": "__VERSION__",
       "fileSha256": "__SHA_WINDOWS_X64__",
@@ -36,7 +33,6 @@
     },
     {
       "registryType": "mcpb",
-      "registryBaseUrl": "https://github.com",
       "identifier": "https://github.com/stackql/stackql/releases/download/v__VERSION__/stackql-mcp-darwin-universal.mcpb",
       "version": "__VERSION__",
       "fileSha256": "__SHA_DARWIN_UNIVERSAL__",
