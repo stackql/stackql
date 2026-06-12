@@ -66,8 +66,8 @@ class JsonRpcClient:
 
     def _read_loop(self) -> None:
         assert self.proc.stdout is not None
-        for line in self.proc.stdout:
-            line = line.strip()
+        for raw in self.proc.stdout:
+            line = raw.decode("utf-8", errors="replace").strip()
             if not line:
                 continue
             try:
@@ -86,7 +86,7 @@ class JsonRpcClient:
             msg["id"] = id_
         line = json.dumps(msg) + "\n"
         assert self.proc.stdin is not None
-        self.proc.stdin.write(line)
+        self.proc.stdin.write(line.encode("utf-8"))
         self.proc.stdin.flush()
 
     def wait(self, id_: int, timeout: float) -> dict:
@@ -111,13 +111,13 @@ def run(bundle_path: Path) -> None:
 
         cmd = [str(binary), "mcp", "--mcp.server.type=stdio", f"--auth={GITHUB_AUTH}"]
         log(f"spawning: {' '.join(cmd)}")
+        # Binary pipes on purpose: text=True would translate \n to \r\n on
+        # Windows stdin, and the server exits silently on the stray \r.
         proc = subprocess.Popen(
             cmd,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            text=True,
-            bufsize=1,
         )
         try:
             client = JsonRpcClient(proc)

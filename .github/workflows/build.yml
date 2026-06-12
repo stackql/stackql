@@ -1,0 +1,99 @@
+# Reusable build + smoke-test workflow. Called by ci.yml (PRs and main) and
+# publish.yml (tag push). Each job uses the same Makefile targets used in the
+# local flow ('make one TARGET=... VERSION=...') and runs the deterministic
+# MCP smoke test on a runner that can execute the embedded binary.
+
+name: build
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: stackql release version without the leading v (e.g. 0.10.500)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  bundle:
+    name: ${{ matrix.target }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: linux-x64
+            runner: ubuntu-latest
+          # arm64 runners are free for public repos. If this repo ever goes
+          # private, swap to a paid arm runner or build this target on
+          # ubuntu-latest and drop the smoke test (packaging itself has no
+          # arch dependency - only executing the binary does).
+          - target: linux-arm64
+            runner: ubuntu-24.04-arm
+          # macos runners have pkgutil, node, and shasum preinstalled, which
+          # is everything the darwin slice needs.
+          - target: darwin-universal
+            runner: macos-latest
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build bundle
+        run: make one TARGET=${{ matrix.target }} VERSION=${{ inputs.version }}
+
+      - name: Smoke test (deterministic MCP handshake)
+        run: python3 scripts/smoke-test.py dist/stackql-mcp-${{ matrix.target }}.mcpb
+
+      # Soft agent check; exits 0 with a notice when GEMINI_API_KEY is unset.
+      - name: Agent smoke test (optional)
+        if: matrix.target == 'linux-x64'
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python3 scripts/gemini-smoke.py dist/stackql-mcp-linux-x64.mcpb
+
+      - name: Upload bundle artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: stackql-mcp-${{ matrix.target }}
+          path: |
+            dist/stackql-mcp-${{ matrix.target }}.mcpb
+            dist/stackql-mcp-${{ matrix.target }}.mcpb.sha256
+          if-no-files-found: error
+
+  # The windows bundle has no build-time Windows dependency (bash + unzip
+  # extract stackql.exe from the release zip, node packs it), so it builds on
+  # ubuntu. Only the smoke test needs a Windows runner to execute the binary.
+  bundle-windows:
+    name: windows-x64 (build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build bundle
+        run: make one TARGET=windows-x64 VERSION=${{ inputs.version }}
+
+      - name: Upload bundle artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: stackql-mcp-windows-x64
+          path: |
+            dist/stackql-mcp-windows-x64.mcpb
+            dist/stackql-mcp-windows-x64.mcpb.sha256
+          if-no-files-found: error
+
+  smoke-windows:
+    name: windows-x64 (smoke)
+    needs: bundle-windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download bundle artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: stackql-mcp-windows-x64
+          path: dist
+
+      - name: Smoke test (deterministic MCP handshake)
+        run: python scripts/smoke-test.py dist/stackql-mcp-windows-x64.mcpb

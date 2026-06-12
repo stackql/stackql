@@ -11,7 +11,8 @@ The end-user install story is in [docs/install.md](docs/install.md). The marketp
 - [What gets packaged](#what-gets-packaged)
 - [Layout](#layout)
 - [Prerequisites](#prerequisites)
-- [Release runbook (the whole thing)](#release-runbook-the-whole-thing)
+- [CI release flow (GitHub Actions)](#ci-release-flow-github-actions)
+- [Release runbook (local fallback)](#release-runbook-local-fallback)
   - [Step 0 - one-time setup, per machine](#step-0---one-time-setup-per-machine)
   - [Step 1 - build and publish bundles (Machine A: workstation)](#step-1---build-and-publish-bundles-machine-a-workstation)
   - [Step 2 - build and publish darwin (Machine B: Mac)](#step-2---build-and-publish-darwin-machine-b-mac)
@@ -38,6 +39,10 @@ One bundle is produced per target:
 
 ```
 stackql-mcpb-packaging/
+  release.yaml                      # pins the stackql release this repo packages
+  .github/workflows/build.yml       # reusable: build + smoke-test all bundles
+  .github/workflows/ci.yml          # PRs / main: build + test, no publish
+  .github/workflows/publish.yml     # v* tag: verify, build, test, publish
   manifest/manifest.template.json   # MCPB manifest, tokenised (__VERSION__, __BINARY_NAME__)
   registry/server.template.json     # Official MCP Registry server.json, tokenised SHAs + VERSION
   scripts/package.sh                # build bundles from bin/ -> dist/
@@ -71,11 +76,26 @@ For Step 3:
 
 - **`mcp-publisher`** CLI - https://github.com/modelcontextprotocol/registry/releases/latest
 
-## Release runbook (the whole thing)
+## CI release flow (GitHub Actions)
 
-There is **no CI**. Releases are produced locally on two machines because the darwin target needs `pkgutil` (macOS-only). Each machine independently uploads what it built; `--clobber` makes order irrelevant and re-runs safe.
+The primary release path. The stackql release being packaged is pinned in [release.yaml](release.yaml) as `stackql_release: vX.Y.Z`, which is the single source of truth for local `make` defaults, PR CI, and tag publishing.
 
-Throughout, `VERSION` is the stackql release minus the leading `v`. For example, tag `v0.10.500` -> `VERSION=0.10.500`.
+The sequence:
+
+1. **Upstream release happens** - `stackql/stackql` publishes `vX.Y.Z` with the core assets (per-arch zips and the notarised `.pkg`).
+2. **PR bumps the pin** - raise a PR to main changing `stackql_release` in `release.yaml`. [ci.yml](.github/workflows/ci.yml) builds all four bundles against the real release assets and runs the deterministic smoke test on a native runner per platform (`ubuntu-latest`, `ubuntu-24.04-arm`, `windows-latest`, `macos-latest` - the darwin slice runs `pkgutil` on the macos runner). A green PR means the bundles build and the embedded binaries speak MCP.
+3. **Merge to main** - nothing is published yet.
+4. **Push the matching tag** - `git tag vX.Y.Z && git push origin vX.Y.Z`. [publish.yml](.github/workflows/publish.yml) fails fast if the tag does not exactly match `release.yaml`, rebuilds and re-tests everything, then uploads all `.mcpb` + `.sha256` files to the `stackql/stackql` `vX.Y.Z` release via `make publish` (idempotent `--clobber`).
+
+One-time setup: add a repo secret `STACKQL_RELEASE_TOKEN` - a fine-grained PAT (or GitHub App token) with `contents:write` on `stackql/stackql`. The default `GITHUB_TOKEN` cannot upload assets to another repo. Optionally add `GEMINI_API_KEY` to enable the agent smoke test on the linux-x64 job; without it that step soft-skips.
+
+Steps 3 and 4 of the local runbook below (MCP Registry publish and aggregator listings) are still manual after a CI publish.
+
+## Release runbook (local fallback)
+
+The pre-CI flow, kept as a supported fallback (and for the registry/listings steps CI does not cover). Releases are produced locally on two machines because the darwin target needs `pkgutil` (macOS-only). Each machine independently uploads what it built; `--clobber` makes order irrelevant and re-runs safe.
+
+Throughout, `VERSION` is the stackql release minus the leading `v`. For example, tag `v0.10.500` -> `VERSION=0.10.500`. If `VERSION` is omitted, `make` defaults it from `release.yaml`.
 
 ### Step 0 - one-time setup, per machine
 
@@ -223,6 +243,7 @@ gh release download v0.10.500 --repo stackql/stackql \
 | `make publish`                                  | GitHub token with `contents:write` on `stackql/stackql`        | `gh auth login` (token in gh) | Same login on both Machine A and Machine B.            |
 | `make server-json`                              | all four `dist/*.sha256` files                                 | files on disk                 | Step 3.1 fetches the darwin one from the release page. |
 | `make registry-publish`                         | `mcp-publisher login github` for an account on the stackql org | token in `mcp-publisher` config | Browser-flow OAuth; refresh annually.                  |
+| CI publish (`publish.yml`)                      | `STACKQL_RELEASE_TOKEN` repo secret                            | fine-grained PAT              | `contents:write` on `stackql/stackql`. Default `GITHUB_TOKEN` cannot upload cross-repo. |
 | Anthropic Desktop Extensions submission        | privacy policy, logo, screenshots, contacts                    | filled into web form          | See [docs/anthropic-submission.md](docs/anthropic-submission.md). |
 
 No secrets are passed via env vars in the build/publish commands themselves - tokens live in the per-tool config of `gh` and `mcp-publisher`. The one exception is `GEMINI_API_KEY` for the optional Gemini soft check.

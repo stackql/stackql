@@ -1,0 +1,69 @@
+# Tag-push release: verify the tag matches release.yaml, rebuild and
+# smoke-test all four bundles, then upload them (plus .sha256 companions) to
+# the matching stackql/stackql GitHub release.
+#
+# Requires one repo secret:
+#   STACKQL_RELEASE_TOKEN - fine-grained PAT (or GitHub App token) with
+#   contents:write on stackql/stackql. The default GITHUB_TOKEN is scoped to
+#   this repo and cannot upload assets cross-repo.
+
+name: publish
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  verify-tag:
+    name: tag matches release.yaml
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.cfg.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Compare tag against pinned release
+        id: cfg
+        run: |
+          cfg="$(sed -n 's/^stackql_release:[[:space:]]*//p' release.yaml | tr -d ' \r')"
+          tag="$GITHUB_REF_NAME"
+          if [ "$tag" != "$cfg" ]; then
+            echo "::error::tag '$tag' does not match stackql_release '$cfg' in release.yaml"
+            exit 1
+          fi
+          echo "publishing for $tag"
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: verify-tag
+    uses: ./.github/workflows/build.yml
+    with:
+      version: ${{ needs.verify-tag.outputs.version }}
+    secrets: inherit
+
+  publish:
+    name: upload to stackql/stackql release
+    needs: [verify-tag, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Gather bundle artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: stackql-mcp-*
+          path: dist
+          merge-multiple: true
+
+      - name: List artefacts
+        run: ls -l dist/
+
+      # 'make publish' uses gh release upload --clobber, so re-running this
+      # workflow (or overlapping with a manual local publish) is safe.
+      - name: Upload to release
+        env:
+          GH_TOKEN: ${{ secrets.STACKQL_RELEASE_TOKEN }}
+        run: make publish VERSION=${{ needs.verify-tag.outputs.version }}

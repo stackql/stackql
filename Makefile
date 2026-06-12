@@ -32,10 +32,15 @@
 SHELL := bash
 .SHELLFLAGS := -eu -o pipefail -c
 
-VERSION ?=
+# VERSION defaults to the stackql_release pinned in release.yaml (leading v
+# stripped), so plain 'make all' builds the pinned release. Override with
+# make <target> VERSION=X.Y.Z as before.
+VERSION ?= $(shell sed -n 's/^stackql_release:[[:space:]]*v\{0,1\}//p' release.yaml 2>/dev/null | tr -d ' \r')
 BIN_DIR ?= bin
 DIST_DIR ?= dist
-PACKAGE := scripts/package.sh
+# Invoked via 'bash' so a lost executable bit (easy when committing from
+# Windows) cannot break the build.
+PACKAGE := bash scripts/package.sh
 
 RELEASE_BASE := https://github.com/stackql/stackql/releases/download
 ASSETS := stackql_linux_amd64.zip \
@@ -74,7 +79,8 @@ help:
 
 check-version:
 	@if [ -z "$(VERSION)" ]; then \
-	  echo "error: VERSION is required (e.g. make VERSION=0.10.500)" >&2; exit 2; \
+	  echo "error: VERSION is required (e.g. make VERSION=0.10.500)," >&2; \
+	  echo "       or set stackql_release in release.yaml" >&2; exit 2; \
 	fi
 
 download: check-version
@@ -136,7 +142,7 @@ signed: check-version
 # workstation, after the Mac slice has been published and downloaded back, or
 # after copying the darwin sha file across).
 server-json: check-version
-	scripts/render-server-json.sh --version $(VERSION)
+	bash scripts/render-server-json.sh --version $(VERSION)
 
 # Publish the rendered server.json to the Official MCP Registry.
 # Requires:
@@ -194,7 +200,7 @@ list:
 	@ls -1 $(BIN_DIR) 2>/dev/null | grep -v -E '^(\.gitignore|README\.md)$$' || echo "(empty)"
 
 clean:
-	scripts/clean.sh
+	bash scripts/clean.sh
 
 clean-bin:
 	@rm -f $(addprefix $(BIN_DIR)/,$(ASSETS))
