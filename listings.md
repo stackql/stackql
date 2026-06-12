@@ -22,15 +22,15 @@ are not listed here.
 
 | Venue | Type | StackQL fit | How to list | Directory only? | Submitted |
 |---|---|---|---|---|---|
-| [Official MCP Registry](https://registry.modelcontextprotocol.io) | Canonical metadata registry | Direct (mcpb) | `mcp-publisher` CLI + server.json |  | ☑ `io.github.stackql/stackql-mcp` 0.10.500, 2026-06-12 |
-| [Anthropic Connectors / Desktop Extensions directory](https://forms.gle/d8hAM5GJvxehnG4M6) | Vendor directory (Claude) | Direct (local .mcpb form; remote form: [fDhN3FQmnLpoY5zm6](https://forms.gle/fDhN3FQmnLpoY5zm6)) | Review form, Anthropic-vetted |  | ☐ |
-| [mcp.so](https://mcp.so) | Largest aggregator | Direct | Self-submit on site |  | ☐ |
+| [Official MCP Registry](https://registry.modelcontextprotocol.io) | Canonical metadata registry | Direct (mcpb) | `mcp-publisher` CLI + server.json |  | ✅ `io.github.stackql/stackql-mcp` 0.10.500, 2026-06-12 |
+| [GitHub MCP Registry](https://github.com/mcp) | GitHub discovery surface | Direct | Ingests official registry |  | ☐ __TODO__: May need OCI package |
+| [Anthropic Connectors / Desktop Extensions directory](https://forms.gle/d8hAM5GJvxehnG4M6) | Vendor directory (Claude) | Direct (local .mcpb form; remote form: [fDhN3FQmnLpoY5zm6](https://forms.gle/fDhN3FQmnLpoY5zm6)) | Review form, Anthropic-vetted |  | ✅ Submitted 13-06-26 __TODO__: Follow up |
+| [Glama.ai/mcp](https://glama.ai/mcp/servers) | Searchable marketplace | Direct | Auto-indexes GitHub; claim/submit |  | ✅ Submitted 13-06-26 __TODO__: Follow up |
+| [PulseMCP](https://www.pulsemcp.com) | Discovery, registry backer | Direct | Ingests official registry |  | ✅ via official registry 13-06-26 __TODO__: Follow up |
+| [mcp.so](https://mcp.so) | Largest aggregator | Direct | Self-submit on site |  | ✅ Submitted 13-06-26 [mcp.so/server/stackql/stackql](https://mcp.so/server/stackql/stackql) __TODO__: Check public visibility |
 | [Smithery.ai](https://smithery.ai) | Registry + hosting + analytics | Direct (CLI); URL method needs HTTP | `smithery mcp publish` |  | ☐ |
-| [Glama.ai/mcp](https://glama.ai/mcp/servers) | Searchable marketplace | Direct | Auto-indexes GitHub; claim/submit |  | ☐ |
-| [PulseMCP](https://www.pulsemcp.com) | Discovery, registry backer | Direct | Ingests official registry |  | ☐ |
 | [Docker MCP Catalog](https://hub.docker.com/mcp) | Curated infra catalogue | Needs OCI image | Submit container image |  | ☐ |
 | [mpak (mpak.dev)](https://mpak.dev) | Binary-native registry, trust scoring | Strong (signed binary) | mcpb-pack action / publish |  | ☐ |
-| [GitHub MCP Registry](https://github.com/mcp) | GitHub discovery surface | Direct | Ingests official registry |  | ☐ |
 | [Cursor directory](https://cursor.directory/mcp) | IDE client directory | Direct | Submit to Cursor directory | ✅ | ☑ [stackql-mcp-server](https://cursor.directory/plugins/stackql-mcp-server) - TODO: submit for verification |
 | [VS Code MCP gallery](https://code.visualstudio.com/mcp) | IDE client gallery | Direct | Ingests registry / curated list |  | ☐ |
 | [Cline MCP Marketplace](https://github.com/cline/mcp-marketplace) | In-client marketplace | Direct | GitHub PR to marketplace repo | ✅ | ☐ |
