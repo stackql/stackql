@@ -20,25 +20,30 @@ are not listed here.
 
 ## Summary
 
-| Venue | Type | StackQL fit | How to list | Directory only? | Submitted |
-|---|---|---|---|---|---|
-| [Official MCP Registry](https://registry.modelcontextprotocol.io) | Canonical metadata registry | Direct (mcpb) | `mcp-publisher` CLI + server.json |  | ✅ `io.github.stackql/stackql-mcp` 0.10.500, 2026-06-12 |
-| [GitHub MCP Registry](https://github.com/mcp) | GitHub discovery surface | Direct | Ingests official registry |  | ☐ __TODO__: May need OCI package |
-| [Anthropic Connectors / Desktop Extensions directory](https://forms.gle/d8hAM5GJvxehnG4M6) | Vendor directory (Claude) | Direct (local .mcpb form; remote form: [fDhN3FQmnLpoY5zm6](https://forms.gle/fDhN3FQmnLpoY5zm6)) | Review form, Anthropic-vetted |  | ✅ Submitted 13-06-26 __TODO__: Follow up |
-| [Glama.ai/mcp](https://glama.ai/mcp/servers) | Searchable marketplace | Direct | Auto-indexes GitHub; claim/submit |  | ✅ Submitted 13-06-26 __TODO__: Follow up |
-| [PulseMCP](https://www.pulsemcp.com) | Discovery, registry backer | Direct | Ingests official registry |  | ✅ via official registry 13-06-26 __TODO__: Follow up |
-| [mcp.so](https://mcp.so) | Largest aggregator | Direct | Self-submit on site |  | ✅ Submitted 13-06-26 [mcp.so/server/stackql/stackql](https://mcp.so/server/stackql/stackql) __TODO__: Check public visibility |
-| [Smithery.ai](https://smithery.ai) | Registry + hosting + analytics | Direct (CLI); URL method needs HTTP | `smithery mcp publish` |  | ☐ |
-| [Docker MCP Catalog](https://hub.docker.com/mcp) | Curated infra catalogue | Needs OCI image | Submit container image |  | ☐ |
-| [mpak (mpak.dev)](https://mpak.dev) | Binary-native registry, trust scoring | Strong (signed binary) | mcpb-pack action / publish |  | ☐ |
-| [Cursor directory](https://cursor.directory/mcp) | IDE client directory | Direct | Submit to Cursor directory | ✅ | ☑ [stackql-mcp-server](https://cursor.directory/plugins/stackql-mcp-server) - TODO: submit for verification |
-| [VS Code MCP gallery](https://code.visualstudio.com/mcp) | IDE client gallery | Direct | Ingests registry / curated list |  | ☐ |
-| [Cline MCP Marketplace](https://github.com/cline/mcp-marketplace) | In-client marketplace | Direct | GitHub PR to marketplace repo | ✅ | ☐ |
-| [mcp.directory](https://mcp.directory) | Aggregator | Direct | Auto-pulls; claim listing |  | ☐ |
-| [awesome-mcp-servers](https://github.com/punkpeye/awesome-mcp-servers) | Curated GitHub list | Direct | GitHub PR/issue | ✅ | ☑ TODO Submit to glama, update [PR](https://github.com/punkpeye/awesome-mcp-servers/pull/7417)* |
-| [mcpservers.org](https://mcpservers.org) | Awesome-list site | Direct | Ingests the awesome list | ✅ | ☑ Submitted Premium Listing TODO ensure |
-| [MCP Index (mcpindex.net)](https://mcpindex.net) | Aggregator | Direct | Submit on site | ✅ | ☐ |
-| [mcpmarket.com](https://mcpmarket.com/server/stackql) | Aggregator | Direct | Submit on site | ✅ | ✅ |
+| Venue | Type | How to list | Status | Date | Listing URL | Follow up | Last Updated |
+|---|---|---|---|---|---|---|---|
+| Official MCP Registry | Canonical metadata registry | `mcp-publisher` CLI + `server.json` | ✅ Published | 2026-06-12 | [modelcontextprotocol.io/search](https://registry.modelcontextprotocol.io/v0/servers?search=stackql)<br/>[modelcontextprotocol.io/direct](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.stackql/stackql-mcp) |  | 2026-06-13 |
+| mcpmarket.com | Aggregator | Submit on site | ✅ Published | 2026-06-13 | [mcpmarket](https://mcpmarket.com/server/stackql) |  | 2026-06-13 |
+| mcpservers.org | Awesome-list site | Ingests the awesome list | ✅ Published | 2026-06-13 | [mcpservers.org](https://mcpservers.org/servers/stackql-mcp-server) |  | 2026-06-13 |
+| GitHub MCP Registry | GitHub discovery surface | Ingests official registry | 🟡 Auto Indexed (Pending) | 2026-06-12 | [github-mcp](https://github.com/mcp?search=stackql) | May need OCI package | 2026-06-13 |
+| Anthropic Connectors / Desktop Extensions Directory | Vendor directory (Claude) | Review form, Anthropic-vetted | 🟡 Pending Review | 2026-06-13 |  | Follow up on submission review ([Google Form](https://docs.google.com/forms/u/0/d/e/1FAIpQLScHtjkiCNjpqnWtFLIQStChXlvVcvX8NPXkMfjtYPDPymgang/viewform?usp=form_confirm)) | 2026-06-13 |
+| mcp.so | Largest aggregator | Self-submit on site | 🟡 Submitted | 2026-06-13 | [mcp.so](https://mcp.so/server/stackql/stackql) | Update post `npx` enablement | 2026-06-13 |
+| Cursor Directory | IDE client directory | Submit to Cursor directory | 🟡 Pending Verification | 2026-06-13 | https://cursor.directory/plugins/stackql-mcp-server | Submit for verification | 2026-06-13 |
+| Glama.ai MCP | Searchable marketplace | Auto-indexes GitHub; claim/submit | 🟡 Pending Review | 2026-06-13 |  | Follow up on submission review | 2026-06-13 |
+| PulseMCP | Discovery, registry backer | Ingests official registry | 🟡 Pending Verification | 2026-06-13 |  | Confirm registry ingestion | 2026-06-13 |
+| Smithery.ai | Registry + hosting + analytics | `smithery mcp publish` | ☐ Not Submitted |  |  | Publish via Smithery CLI | 2026-06-13 |
+| Docker MCP Catalog | Curated infra catalogue | Submit container image | 🚧 Blocked |  |  | Needs OCI image | 2026-06-13 |
+| mpak | Binary-native registry, trust scoring | `mcpb-pack` action / publish | ☐ Not Submitted |  |  | Publish signed package | 2026-06-13 |
+| VS Code MCP Gallery | IDE client gallery | Ingests registry / curated list | ☐ Not Submitted |  |  | Monitor for registry ingestion | 2026-06-13 |
+| Cline MCP Marketplace | In-client marketplace | GitHub PR to marketplace repo | ☐ Not Submitted |  |  | Submit marketplace PR | 2026-06-13 |
+| mcp.directory | Aggregator | Auto-pulls; claim listing | ☐ Not Submitted |  |  | Claim listing once discovered | 2026-06-13 |
+| awesome-mcp-servers | Curated GitHub list | GitHub PR/issue | 🟡 Pending Review | 2026-06-13 | https://github.com/punkpeye/awesome-mcp-servers/pull/7417 | Submit to Glama and update PR #7417 | 2026-06-13 |
+| MCP Index | Aggregator | Submit on site | ☐ Not Submitted |  |  | Submit listing | 2026-06-13 |
+| Goose Extensions (Block) | In-client extension directory | PR/submit to goose extensions site | ☐ Not Submitted |  |  | Verify current submission path; CLI-command extension fits the binary/npx vectors | 2026-06-13 |
+| Zed Extensions | IDE extension registry (context servers) | PR to zed-industries/extensions | ☐ Not Submitted |  |  | Wrap as a Zed context-server extension (npx wrapper) | 2026-06-13 |
+| Warp MCP Catalog | Terminal client MCP directory | Submit to Warp's MCP catalog | ☐ Not Submitted |  |  | Verify current submission path | 2026-06-13 |
+| Roo Code MCP Marketplace | In-client marketplace | Submit to Roo marketplace repo | ☐ Not Submitted |  |  | Verify current submission path | 2026-06-13 |
+| GitHub Actions Marketplace | CI marketplace (setup-stackql-mcp action) | Public repo + release + marketplace listing | 🚧 Blocked |  |  | Action built in this repo under action/; needs extraction to a public repo to list | 2026-06-13 |
 
 ---
 
