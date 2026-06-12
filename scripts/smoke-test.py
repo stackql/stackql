@@ -38,8 +38,8 @@ def fail(msg: str) -> "Never":  # type: ignore[name-defined]
     sys.exit(1)
 
 
-def extract_bundle(bundle: Path, dest: Path) -> Path:
-    """Unzip the .mcpb and return the path to the server binary."""
+def extract_bundle(bundle: Path, dest: Path) -> tuple[Path, dict]:
+    """Unzip the .mcpb and return the server binary path and the manifest."""
     log(f"extracting {bundle.name}")
     with zipfile.ZipFile(bundle) as zf:
         zf.extractall(dest)
@@ -51,7 +51,22 @@ def extract_bundle(bundle: Path, dest: Path) -> Path:
     if os.name != "nt":
         binary.chmod(0o755)
     log(f"entry_point: {entry} (version {manifest.get('version')})")
-    return binary
+    return binary, manifest
+
+
+def manifest_args(manifest: dict, extract_dir: Path, home_dir: Path) -> list[str]:
+    """Resolve the manifest's mcp_config args the way an MCPB client would.
+
+    Substituting ${HOME} with a temp dir keeps the test hermetic and proves
+    the server runs without writing to its cwd (Claude Desktop launches
+    extensions with cwd '/', which is read-only on macOS).
+    """
+    args = manifest["server"]["mcp_config"].get("args", [])
+    resolved = [
+        a.replace("${__dirname}", str(extract_dir)).replace("${HOME}", str(home_dir))
+        for a in args
+    ]
+    return resolved
 
 
 class JsonRpcClient:
@@ -107,9 +122,12 @@ def run(bundle_path: Path) -> None:
 
     with tempfile.TemporaryDirectory(prefix="mcpb-smoke-") as tmp:
         tmp_path = Path(tmp)
-        binary = extract_bundle(bundle_path, tmp_path)
+        binary, manifest = extract_bundle(bundle_path, tmp_path)
 
-        cmd = [str(binary), "mcp", "--mcp.server.type=stdio", f"--auth={GITHUB_AUTH}"]
+        home_dir = tmp_path / "home"
+        home_dir.mkdir()
+        args = manifest_args(manifest, tmp_path, home_dir)
+        cmd = [str(binary), *args, f"--auth={GITHUB_AUTH}"]
         log(f"spawning: {' '.join(cmd)}")
         # Binary pipes on purpose: text=True would translate \n to \r\n on
         # Windows stdin, and the server exits silently on the stray \r.

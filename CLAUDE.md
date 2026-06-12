@@ -206,7 +206,13 @@ The darwin target reads a notarised `.pkg`, not a bare binary, because:
 
 ### Manifest template
 
-[manifest/manifest.template.json](manifest/manifest.template.json) is tokenised with `__VERSION__` and `__BINARY_NAME__`. The runtime invocation is `${__dirname}/server/<binary>` with `args: ["mcp", "--mcp.server.type=stdio"]`. The `--mcp.server.type=stdio` flag is required: without it the MCP server starts but does not emit JSON-RPC on stdout (the default transport differs). If you ever need to pass more flags (registry path, auth context, etc.), update `args` here - clients launch the bundled binary with precisely those arguments.
+[manifest/manifest.template.json](manifest/manifest.template.json) is tokenised with `__VERSION__` and `__BINARY_NAME__`. The runtime invocation is `${__dirname}/server/<binary>` with args `mcp --mcp.server.type=stdio --approot ${HOME}/.stackql --mcp.config {"server": {"audit": {"disabled": true}}}`. Every arg is load-bearing:
+
+- `--mcp.server.type=stdio` is required: without it the MCP server starts but does not emit JSON-RPC on stdout.
+- `--approot ${HOME}/.stackql`: Claude Desktop launches extensions with cwd `/` (read-only on macOS) and stackql's default approot is `<cwd>/.stackql`, so provider pulls die without it. `${HOME}` is an MCPB substitution variable; it is passed as a plain arg (not inside JSON) because on Windows it expands with backslashes, which are invalid JSON string escapes.
+- `--mcp.config` with `audit.disabled`: the audit sink defaults to a file in the cwd and kills the server when unwritable (`failure_mode` defaults to `strict`). The JSON is static - no substitution inside it, for the same backslash reason. The `--mcp.config` parser is JSON-only in practice; YAML flow style silently falls back to defaults.
+
+`scripts/smoke-test.py` launches the server with the manifest's own `mcp_config.args` (substituting `${__dirname}` and `${HOME}` against temp dirs), so manifest arg regressions fail the smoke test rather than surfacing in Claude Desktop. If you need to pass more flags, update `args` in the template - clients launch the bundled binary with precisely those arguments.
 
 ## Releasing
 
