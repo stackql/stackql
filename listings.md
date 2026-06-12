@@ -22,8 +22,8 @@ are not listed here.
 
 | Venue | Type | StackQL fit | How to list | Directory only? | Submitted |
 |---|---|---|---|---|---|
-| [Official MCP Registry](https://registry.modelcontextprotocol.io) | Canonical metadata registry | Direct (mcpb) | `mcp-publisher` CLI + server.json |  | ☐ |
-| [Anthropic Connectors / Desktop Extensions directory](https://claude.com/docs/connectors/building/submission) | Vendor directory (Claude) | Direct (local .mcpb); remote optional | Review form, Anthropic-vetted |  | ☐ |
+| [Official MCP Registry](https://registry.modelcontextprotocol.io) | Canonical metadata registry | Direct (mcpb) | `mcp-publisher` CLI + server.json |  | ☑ `io.github.stackql/stackql-mcp` 0.10.500, 2026-06-12 |
+| [Anthropic Connectors / Desktop Extensions directory](https://forms.gle/d8hAM5GJvxehnG4M6) | Vendor directory (Claude) | Direct (local .mcpb form; remote form: [fDhN3FQmnLpoY5zm6](https://forms.gle/fDhN3FQmnLpoY5zm6)) | Review form, Anthropic-vetted |  | ☐ |
 | [mcp.so](https://mcp.so) | Largest aggregator | Direct | Self-submit on site |  | ☐ |
 | [Smithery.ai](https://smithery.ai) | Registry + hosting + analytics | Direct (CLI); URL method needs HTTP | `smithery mcp publish` |  | ☐ |
 | [Glama.ai/mcp](https://glama.ai/mcp/servers) | Searchable marketplace | Direct | Auto-indexes GitHub; claim/submit |  | ☐ |
