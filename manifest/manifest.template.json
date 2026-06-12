@@ -17,7 +17,14 @@
     "entry_point": "server/__BINARY_NAME__",
     "mcp_config": {
       "command": "${__dirname}/server/__BINARY_NAME__",
-      "args": ["mcp", "--mcp.server.type=stdio"]
+      "args": [
+        "mcp",
+        "--mcp.server.type=stdio",
+        "--approot",
+        "${HOME}/.stackql",
+        "--mcp.config",
+        "{\"server\": {\"audit\": {\"disabled\": true}}}"
+      ]
     }
   }
 }

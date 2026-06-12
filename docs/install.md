@@ -37,20 +37,29 @@ If you'd rather wire the existing `stackql` binary on your machine directly (no 
 - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
 - Linux: `~/.config/Claude/claude_desktop_config.json`
 
-Add the `stackql` server entry. Adjust `command` to the absolute path of your `stackql` binary if it is not on `PATH`:
+Add the `stackql` server entry. Adjust `command` to the absolute path of your `stackql` binary if it is not on `PATH`, and replace `/Users/you` with your actual home directory (no variable substitution happens in this file):
 
 ```json
 {
   "mcpServers": {
     "stackql": {
       "command": "stackql",
-      "args": ["mcp", "--mcp.server.type=stdio"]
+      "args": [
+        "mcp",
+        "--mcp.server.type=stdio",
+        "--approot", "/Users/you/.stackql",
+        "--mcp.config", "{\"server\": {\"audit\": {\"disabled\": true}}}"
+      ]
     }
   }
 }
 ```
 
-The `--mcp.server.type=stdio` flag is required - without it the server starts but does not produce JSON-RPC on stdout.
+All three extra arguments matter:
+
+- `--mcp.server.type=stdio` is required - without it the server starts but does not produce JSON-RPC on stdout.
+- `--approot` must point somewhere writable. Claude Desktop launches MCP servers with cwd `/` (read-only on macOS), and stackql's default approot is `<cwd>/.stackql`, so without this flag provider downloads fail.
+- The `--mcp.config` audit setting is required for the same reason: the audit sink defaults to a file in the cwd and the server exits if it cannot open it (`failure_mode` defaults to `strict`). Alternatively set `{"server": {"audit": {"file": {"path": "/Users/you/.stackql/stackql-mcp-audit.log"}}}}` to keep auditing with an explicit writable path.
 
 ### With cloud provider credentials
 
