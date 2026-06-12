@@ -2,6 +2,10 @@
 # smoke-test all four bundles, then upload them (plus .sha256 companions) to
 # the matching stackql/stackql GitHub release.
 #
+# Can also be re-run from the Actions tab (workflow_dispatch) to re-publish
+# the pinned release from current main - e.g. after enabling signing secrets -
+# without moving the tag. The confirm_release input must match release.yaml.
+#
 # Requires one repo secret:
 #   STACKQL_RELEASE_TOKEN - fine-grained PAT (or GitHub App token) with
 #   contents:write on stackql/stackql. The default GITHUB_TOKEN is scoped to
@@ -12,6 +16,12 @@ name: publish
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      confirm_release:
+        description: Re-publish guard - type the release exactly as pinned in release.yaml (e.g. v0.10.500)
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -27,11 +37,17 @@ jobs:
 
       - name: Compare tag against pinned release
         id: cfg
+        env:
+          CONFIRM_RELEASE: ${{ inputs.confirm_release }}
         run: |
           cfg="$(sed -n 's/^stackql_release:[[:space:]]*//p' release.yaml | tr -d ' \r')"
-          tag="$GITHUB_REF_NAME"
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            tag="$CONFIRM_RELEASE"; ctx="confirm_release input"
+          else
+            tag="$GITHUB_REF_NAME"; ctx="tag"
+          fi
           if [ "$tag" != "$cfg" ]; then
-            echo "::error::tag '$tag' does not match stackql_release '$cfg' in release.yaml"
+            echo "::error::$ctx '$tag' does not match stackql_release '$cfg' in release.yaml"
             exit 1
           fi
           echo "publishing for $tag"
