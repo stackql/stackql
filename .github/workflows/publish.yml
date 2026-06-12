@@ -61,6 +61,29 @@ jobs:
       - name: List artefacts
         run: ls -l dist/
 
+      # Envelope-sign the bundles before upload when signing material is
+      # configured as repo secrets (PEM contents, not paths):
+      #   MCPB_SIGNING_CERT, MCPB_SIGNING_KEY, MCPB_SIGNING_INTERMEDIATES
+      # 'make sign' regenerates each .sha256 to match the signed bytes, and
+      # soft-skips with a notice when the secrets are not set.
+      - name: Sign bundles (optional)
+        env:
+          MCPB_SIGNING_CERT: ${{ secrets.MCPB_SIGNING_CERT }}
+          MCPB_SIGNING_KEY: ${{ secrets.MCPB_SIGNING_KEY }}
+          MCPB_SIGNING_INTERMEDIATES: ${{ secrets.MCPB_SIGNING_INTERMEDIATES }}
+        run: |
+          if [ -n "$MCPB_SIGNING_CERT" ] && [ -n "$MCPB_SIGNING_KEY" ]; then
+            dir="$(mktemp -d)"
+            printf '%s\n' "$MCPB_SIGNING_CERT" > "$dir/cert.pem"
+            printf '%s\n' "$MCPB_SIGNING_KEY"  > "$dir/key.pem"
+            export MCPB_SIGN_CERT="$dir/cert.pem" MCPB_SIGN_KEY="$dir/key.pem"
+            if [ -n "$MCPB_SIGNING_INTERMEDIATES" ]; then
+              printf '%s\n' "$MCPB_SIGNING_INTERMEDIATES" > "$dir/intermediates.pem"
+              export MCPB_SIGN_INTERMEDIATES="$dir/intermediates.pem"
+            fi
+          fi
+          make sign
+
       # 'make publish' uses gh release upload --clobber, so re-running this
       # workflow (or overlapping with a manual local publish) is safe.
       - name: Upload to release

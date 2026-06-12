@@ -48,7 +48,7 @@ ASSETS := stackql_linux_amd64.zip \
           stackql_windows_amd64.zip \
           stackql_darwin_multiarch.pkg
 
-.PHONY: all check-version check-target download package one signed publish \
+.PHONY: all check-version check-target download package one signed sign publish \
         server-json registry-publish clean clean-bin \
         linux-x64 linux-arm64 windows-x64 darwin-universal \
         list help
@@ -66,6 +66,9 @@ help:
 	@echo "                                  fail hard if the bundle is not produced"
 	@echo "                                  (use on a Mac for darwin-universal)"
 	@echo "  make signed VERSION=X.Y.Z       build with MCPB_SELF_SIGN=true"
+	@echo "  make sign                       envelope-sign dist/*.mcpb in place and"
+	@echo "                                  regenerate .sha256 (MCPB_SELF_SIGN=true"
+	@echo "                                  or MCPB_SIGN_CERT + MCPB_SIGN_KEY)"
 	@echo "  make publish VERSION=X.Y.Z      upload dist/* to the stackql/stackql"
 	@echo "                                  release matching v<VERSION>"
 	@echo "  make server-json VERSION=X.Y.Z  render registry/server.json (pins"
@@ -135,6 +138,15 @@ package: check-version
 
 signed: check-version
 	MCPB_SELF_SIGN=true $(PACKAGE) --version $(VERSION)
+
+# Envelope-sign whatever is already in dist/ and regenerate the .sha256
+# files (the signature is appended to the bundle, so checksums must be
+# recomputed). Same env contract as package.sh: MCPB_SELF_SIGN=true, or
+# MCPB_SIGN_CERT + MCPB_SIGN_KEY (+ optional MCPB_SIGN_INTERMEDIATES).
+# No-ops with a notice when no signing material is configured, so CI can
+# call it unconditionally before 'make publish'.
+sign:
+	bash scripts/sign.sh
 
 # Render registry/server.json from the template, pinning the four per-platform
 # SHA-256s read from dist/*.sha256. Fails hard if any sha file is missing -
