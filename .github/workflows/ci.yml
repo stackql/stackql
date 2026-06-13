@@ -1,0 +1,63 @@
+name: CI
+
+# Trigger on PR raise (and updates) and on merge/push to main.
+# - pull_request: runs when a PR is opened, synchronized, or reopened.
+# - push to main: runs after a PR is merged (merge is a push to main).
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# Cancel superseded runs on the same ref to save CI minutes.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # The whole family conformance bet rides on the BEAM behaving the same
+        # across platforms. Windows ports/erlexec have sharp edges - test it
+        # explicitly and early.
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Erlang/OTP and Gleam
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: "27"
+          gleam-version: "1.17.0"
+
+      - name: Cache build and deps
+        uses: actions/cache@v4
+        with:
+          path: |
+            build
+            ~/.cache/gleam
+          key: ${{ runner.os }}-gleam-${{ hashFiles('manifest.toml', 'gleam.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gleam-
+
+      - name: Resolve dependencies
+        run: gleam deps download
+
+      - name: Check formatting
+        run: gleam format --check src test
+
+      - name: Type check
+        run: gleam check
+
+      - name: Test
+        # The conformance test self-gates: with no STACKQL_MCP_BIN it logs and
+        # passes. The pure unit tests (launch args, cache path, platform keys,
+        # resolve_command precedence, auth) run on every platform.
+        run: gleam test
