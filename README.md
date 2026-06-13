@@ -11,6 +11,13 @@ the canonical launch args; this library is the polish layer on top - a native
 builder, single-file vendoring, and a one-call bridge into Agent Framework's
 tool abstraction.
 
+## Requirements
+
+.NET 8 or later. Both packages ship `net8.0` and `net9.0` build targets; the .NET
+8 floor is set by the official C# MCP SDK (`ModelContextProtocol.Core`). The
+`driftwatch` sample and the test project target `net9.0` only - that is a
+sample/dev choice and does not raise the floor for consumers of the library.
+
 ## Packages
 
 | Package | What it is |
