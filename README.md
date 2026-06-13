@@ -138,6 +138,8 @@ go build ./cmd/sandboxctl
 ## Testing
 
 ```sh
+go generate ./cmd/sandboxctl   # once per clone: fetches the demo's
+                               #   embedded binary (gitignored)
 go test -short ./...   # unit tests
 go test ./embed/       # + conformance tests (downloads the release bundle,
                        #   spawns it, exercises the github provider with no

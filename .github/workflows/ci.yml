@@ -24,6 +24,11 @@ jobs:
         with:
           go-version: '1.25'
 
+      # The sandboxctl go:embed glue and server binary are generated, not
+      # committed; without them ./... does not compile.
+      - name: go generate (fetch pin-verified server binary)
+        run: go generate ./cmd/sandboxctl
+
       - name: gofmt
         if: runner.os == 'Linux'
         shell: bash
@@ -48,8 +53,4 @@ jobs:
         run: go test -v -timeout 10m ./embed/
 
       - name: build sandboxctl (embeds the server binary)
-        shell: bash
-        run: |
-          cd cmd/sandboxctl
-          go generate .
-          go build .
+        run: go build ./cmd/sandboxctl
