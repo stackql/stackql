@@ -1,0 +1,38 @@
+{
+  "provider": "aws",
+  "note": "Illustrative on-demand list rates (USD), snapshot for the costgate offline demo. Not authoritative; the live stackql pricing source supersedes this when credentials are present. compute prices are per instance-month (730 h); storage is per GB-month.",
+  "regionFactors": {
+    "us-east-1": 1.0,
+    "us-west-2": 1.0,
+    "eu-west-1": 1.08,
+    "ap-southeast-2": 1.15
+  },
+  "compute": {
+    "t3.micro": 7.59,
+    "t3.small": 15.18,
+    "t3.medium": 30.37,
+    "m5.large": 70.08,
+    "m5.xlarge": 140.16,
+    "m5.2xlarge": 280.32,
+    "c5.large": 62.05,
+    "c5.xlarge": 124.10,
+    "r5.large": 91.98
+  },
+  "storage": {
+    "gp3": 0.08,
+    "gp2": 0.10,
+    "io2": 0.125,
+    "st1": 0.045,
+    "sc1": 0.015
+  },
+  "database": {
+    "db.t3.medium": 49.64,
+    "db.m5.large": 124.46,
+    "db.m5.xlarge": 248.93,
+    "db.r5.large": 175.20
+  },
+  "loadbalancer": {
+    "alb": 16.43,
+    "nlb": 16.43
+  }
+}
