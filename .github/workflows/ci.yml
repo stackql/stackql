@@ -1,11 +1,12 @@
 name: ci
 
+# Work happens on long-lived feature branches (feature/embedded-go-mcp);
+# CI runs on PRs to main and on release tags.
 on:
-  push:
-    branches: [main]
-    tags: ['v*']
   pull_request:
     branches: [main]
+  push:
+    tags: ['v*']
 
 permissions:
   contents: read
