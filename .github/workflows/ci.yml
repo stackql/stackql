@@ -32,7 +32,8 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Erlang/OTP and Gleam
-        uses: erlef/setup-beam@v1
+        # Pinned to a version that maps the current win25-vs2026 runner image.
+        uses: erlef/setup-beam@v1.24.0
         with:
           otp-version: "27"
           gleam-version: "1.17.0"

@@ -22,7 +22,8 @@ gleam = ">= 1.14.0"
 gleam_stdlib = ">= 0.67.0 and < 2.0.0"
 gleam_erlang = ">= 1.3.0 and < 2.0.0"
 gleam_otp = ">= 1.2.0 and < 2.0.0"
-gleam_json = ">= 2.3.0 and < 3.0.0"
+# mcp_client 0.1.x requires gleam_json >= 3.0.0; track the same major.
+gleam_json = ">= 3.0.0 and < 4.0.0"
 # The load-bearing dep: MCP over JSON-RPC 2.0 / STDIO. Pre-1.0; pinned tight.
 # It spawns and owns the subprocess and performs the initialize handshake.
 mcp_client = ">= 0.1.0 and < 0.2.0"
