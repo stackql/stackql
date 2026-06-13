@@ -1,0 +1,20 @@
+[
+  {
+    "id": "github-public-repos-inventory",
+    "title": "Public repos in the org (inventory baseline)",
+    "severity": "info",
+    "sql": "SELECT name, visibility, default_branch FROM github.repos.repos WHERE org = 'stackql' AND visibility = 'public'"
+  },
+  {
+    "id": "github-repos-without-license",
+    "title": "Repos missing a license",
+    "severity": "warning",
+    "sql": "SELECT name FROM github.repos.repos WHERE org = 'stackql' AND JSON_EXTRACT(license, '$.key') IS NULL"
+  },
+  {
+    "id": "github-org-members-without-2fa-disabled-view",
+    "title": "Org members (review 2FA posture out-of-band)",
+    "severity": "info",
+    "sql": "SELECT login FROM github.orgs.members WHERE org = 'stackql'"
+  }
+]

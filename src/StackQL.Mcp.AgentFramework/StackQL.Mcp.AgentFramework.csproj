@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <IsPackable>true</IsPackable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageId>StackQL.Mcp.AgentFramework</PackageId>
+    <Title>StackQL MCP connector for Microsoft Agent Framework</Title>
+    <Description>Bridges the embedded StackQL MCP server into Microsoft Agent Framework: one call turns StackQL's tools into Agent Framework / Microsoft.Extensions.AI tools you can hand to an AIAgent. Kept as a separate package so the core StackQL.Mcp library carries no Agent Framework dependency.</Description>
+    <PackageTags>stackql;mcp;agent-framework;microsoft-agents-ai;ai;tools;cloud</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\StackQL.Mcp\StackQL.Mcp.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- AITool / AIFunction abstractions that McpClientTool derives from. -->
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" Version="10.7.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>
