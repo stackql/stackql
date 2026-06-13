@@ -52,10 +52,9 @@ pub fn conformance_test() {
 
 fn run_live() {
   let config =
-    stackql_mcp.Config(
-      ..stackql_mcp.default_config(),
-      auth: [stackql_mcp.auth_for("github", "null_auth")],
-    )
+    stackql_mcp.Config(..stackql_mcp.default_config(), auth: [
+      stackql_mcp.auth_for("github", "null_auth"),
+    ])
 
   let assert Ok(server) =
     stackql_mcp.start(
@@ -74,11 +73,7 @@ fn run_live() {
 
   // pull github with null_auth (no credentials).
   let assert Ok(_) =
-    stackql_mcp.call_tool(
-      server,
-      "pull_provider",
-      "{\"provider\":\"github\"}",
-    )
+    stackql_mcp.call_tool(server, "pull_provider", "{\"provider\":\"github\"}")
 
   // list_services should return real github services.
   let assert Ok(services) =

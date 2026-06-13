@@ -151,9 +151,7 @@ fn resolve_binary(
     Error(Nil), Ok(path) -> Ok(path)
     Error(Nil), Error(Nil) ->
       platform.resolve(os, arch)
-      |> result.map(fn(key) {
-        platform.binary_path(home, config.version, key)
-      })
+      |> result.map(fn(key) { platform.binary_path(home, config.version, key) })
       |> result.map_error(UnsupportedPlatform)
   }
 }
@@ -177,10 +175,7 @@ pub fn start(
   }
 }
 
-fn register(
-  command: String,
-  args: List(String),
-) -> Result(Server, StartError) {
+fn register(command: String, args: List(String)) -> Result(Server, StartError) {
   use client <- result.try(
     mcp_client.new()
     |> result.map_error(fn(_) { ClientError("could not create mcp_client") }),
@@ -283,7 +278,10 @@ pub fn child_spec(
   })
 }
 
-fn handle_message(server: Server, message: Message) -> actor.Next(Server, Message) {
+fn handle_message(
+  server: Server,
+  message: Message,
+) -> actor.Next(Server, Message) {
   case message {
     ListTools(reply) -> {
       process.send(reply, list_tools(server))

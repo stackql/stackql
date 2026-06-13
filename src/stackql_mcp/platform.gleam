@@ -33,7 +33,10 @@ pub fn platform_key_to_string(key: PlatformKey) -> String {
 ///
 ///   os: "linux" | "darwin" | "windows"  (lowercased)
 ///   arch: "x86_64" | "amd64" | "aarch64" | "arm64" | ...
-pub fn resolve(os os: String, arch arch: String) -> Result(PlatformKey, String) {
+pub fn resolve(
+  os os: String,
+  arch arch: String,
+) -> Result(PlatformKey, String) {
   let os = string.lowercase(os)
   let arch = string.lowercase(arch)
   case os {
@@ -103,5 +106,7 @@ pub fn home_from_env(
 ) -> Result(String, String) {
   getenv("HOME")
   |> result.lazy_or(fn() { getenv("USERPROFILE") })
-  |> result.replace_error("could not determine home directory (HOME/USERPROFILE unset)")
+  |> result.replace_error(
+    "could not determine home directory (HOME/USERPROFILE unset)",
+  )
 }

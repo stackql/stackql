@@ -27,7 +27,11 @@ jobs:
         # The whole family conformance bet rides on the BEAM behaving the same
         # across platforms. Windows ports/erlexec have sharp edges - test it
         # explicitly and early.
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        #
+        # Windows is pinned to windows-2022 (ImageOS win22): the newer
+        # windows-latest image reports ImageOS=win25-vs2026, which setup-beam
+        # does not yet map. Revisit once the action supports it.
+        os: [ubuntu-latest, macos-latest, windows-2022]
     steps:
       - uses: actions/checkout@v4
 

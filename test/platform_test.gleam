@@ -50,11 +50,7 @@ pub fn platform_keys_are_the_contract_test() {
 
 pub fn cache_dir_is_shared_layout_test() {
   // The SAME path every other family wrapper uses.
-  platform.cache_dir(
-    home: "/home/u",
-    version: "v0.7.0",
-    key: platform.LinuxX64,
-  )
+  platform.cache_dir(home: "/home/u", version: "v0.7.0", key: platform.LinuxX64)
   |> should.equal("/home/u/.stackql/mcp-server-bin/v0.7.0/linux-x64")
 }
 
