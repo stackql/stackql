@@ -24,6 +24,7 @@ import gleam/otp/actor
 import gleam/otp/supervision
 import gleam/result
 import mcp_client
+import mcp_client/manager
 import stackql_mcp/auth
 import stackql_mcp/launch
 import stackql_mcp/mode
@@ -180,13 +181,15 @@ fn register(command: String, args: List(String)) -> Result(Server, StartError) {
     mcp_client.new()
     |> result.map_error(fn(_) { ClientError("could not create mcp_client") }),
   )
+  // The value constructor lives in mcp_client/manager; mcp_client only
+  // re-exports ServerConfig as a type alias, not as a value.
   let server_config =
-    mcp_client.ServerConfig(
+    manager.ServerConfig(
       name: server_name,
       command: command,
       args: args,
       env: [],
-      retry: mcp_client.no_retry,
+      retry: manager.NoRetry,
     )
   use _ <- result.try(
     mcp_client.register(client, server_config)
