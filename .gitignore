@@ -30,3 +30,13 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+tmp/
+
+# Fetched server binaries (go generate ./cmd/sandboxctl re-creates them;
+# the *_gen.go glue next to them is also regenerated, keep it out too)
+stackql-mcp-linux-x64
+stackql-mcp-linux-arm64
+stackql-mcp-windows-x64
+stackql-mcp-darwin-universal
+stackql_mcp_*_gen.go

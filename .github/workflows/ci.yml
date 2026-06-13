@@ -1,0 +1,55 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+
+      - name: gofmt
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          out=$(gofmt -l .)
+          if [ -n "$out" ]; then
+            echo "gofmt needed on:"; echo "$out"; exit 1
+          fi
+
+      - name: vet
+        run: go vet ./...
+
+      - name: unit tests
+        run: go test -short ./...
+
+      # Integration: downloads the release bundle for this platform,
+      # verifies the published sha256 pin, then runs the conformance
+      # sequence the packaging repo's smoke-test.py defines
+      # (initialize -> tools/list -> pull_provider github (null_auth)
+      # -> list_services).
+      - name: conformance tests
+        run: go test -v -timeout 10m ./embed/
+
+      - name: build sandboxctl (embeds the server binary)
+        shell: bash
+        run: |
+          cd cmd/sandboxctl
+          go generate .
+          go build .
