@@ -48,9 +48,13 @@ ASSETS := stackql_linux_amd64.zip \
           stackql_windows_amd64.zip \
           stackql_darwin_multiarch.pkg
 
+OCI_IMAGE ?= stackql/stackql-mcp
+OCI_STAGE := .oci-stage
+
 .PHONY: all check-version check-target download package one signed sign publish \
         server-json registry-publish clean clean-bin \
         linux-x64 linux-arm64 windows-x64 darwin-universal \
+        oci-stage oci oci-push npm-manifest npm-pack pypi-manifest pypi-build \
         list help
 
 all: download package
@@ -168,6 +172,66 @@ registry-publish: check-version server-json
 	  exit 2; \
 	}
 	cd registry && mcp-publisher publish
+
+# --- OCI image ---------------------------------------------------------------
+# Extract the linux binaries from the release zips into the docker build
+# context. Downloads the zips first if they are not already in bin/.
+oci-stage: check-version
+	@command -v unzip >/dev/null 2>&1 || { echo "error: unzip required" >&2; exit 2; }
+	@mkdir -p $(BIN_DIR)
+	@for asset in stackql_linux_amd64.zip stackql_linux_arm64.zip; do \
+	  if [ ! -f "$(BIN_DIR)/$$asset" ]; then \
+	    echo "downloading $$asset"; \
+	    curl -fsSL --retry 3 -o "$(BIN_DIR)/$$asset" "$(RELEASE_BASE)/v$(VERSION)/$$asset" || { \
+	      rm -f "$(BIN_DIR)/$$asset"; exit 1; }; \
+	  fi; \
+	done
+	@rm -rf $(OCI_STAGE)
+	@mkdir -p $(OCI_STAGE)/linux/amd64 $(OCI_STAGE)/linux/arm64
+	@unzip -o -q $(BIN_DIR)/stackql_linux_amd64.zip stackql -d $(OCI_STAGE)/linux/amd64
+	@unzip -o -q $(BIN_DIR)/stackql_linux_arm64.zip stackql -d $(OCI_STAGE)/linux/arm64
+	@echo "staged linux binaries under $(OCI_STAGE)/"
+
+# Local single-arch (amd64) build for testing. Smoke test with:
+#   python scripts/smoke-test.py --docker $(OCI_IMAGE):$(VERSION)
+oci: oci-stage
+	docker buildx build --platform linux/amd64 --load \
+	  --build-arg VERSION=$(VERSION) \
+	  -f oci/Dockerfile -t $(OCI_IMAGE):$(VERSION) .
+
+# Multi-arch build + push. Requires 'docker login' with push rights on
+# docker.io/$(OCI_IMAGE).
+oci-push: oci-stage
+	docker buildx build --platform linux/amd64,linux/arm64 --push \
+	  --build-arg VERSION=$(VERSION) \
+	  -f oci/Dockerfile \
+	  -t docker.io/$(OCI_IMAGE):$(VERSION) \
+	  -t docker.io/$(OCI_IMAGE):latest .
+
+# --- npm wrapper ---------------------------------------------------------------
+# Render npm/platforms.json (bundle URLs + sha256 pins) and stamp the package
+# version. Run AFTER the .mcpb assets are published - it fetches the canonical
+# .sha256 files from the GitHub release, same rule as 'make server-json'.
+npm-manifest: check-version
+	bash scripts/render-npm-manifest.sh --version $(VERSION)
+
+# Build the publishable tarball. Publishing stays manual (npm 2FA):
+#   cd npm && npm publish --access public
+npm-pack: npm-manifest
+	cd npm && npm pack
+	@echo "tarball ready under npm/ - publish manually with: cd npm && npm publish --access public"
+
+# --- PyPI wrapper --------------------------------------------------------------
+# Same ordering rule as npm-manifest: run AFTER the .mcpb assets are published.
+pypi-manifest: check-version
+	bash scripts/render-pypi-manifest.sh --version $(VERSION)
+
+# Build sdist + wheel (needs 'pip install build'). Publishing stays manual
+# (PyPI 2FA / token):
+#   python -m twine upload pypi/dist/*
+pypi-build: pypi-manifest
+	cd pypi && python -m build
+	@echo "dist ready under pypi/dist/ - publish manually with: python -m twine upload pypi/dist/*"
 
 # Upload everything that landed in dist/ to the matching tag on stackql/stackql.
 # Idempotent via --clobber, so running this from two machines (one with the

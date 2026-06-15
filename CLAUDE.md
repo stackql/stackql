@@ -60,6 +60,35 @@ Self-signed bundles (testing only - production envelope signing is not currently
 make signed VERSION=X.Y.Z
 ```
 
+Build the OCI image (linux amd64 locally for testing; multi-arch push needs `docker login` with push rights on `docker.io/stackql/stackql-mcp`):
+
+```bash
+make oci VERSION=X.Y.Z          # local amd64 build from the release zips
+python scripts/smoke-test.py --docker stackql/stackql-mcp:X.Y.Z
+make oci-push VERSION=X.Y.Z     # multi-arch (amd64+arm64) build + push
+```
+
+Build the npm wrapper package (`@stackql/mcp-server`, an npx-able launcher that downloads the platform's published `.mcpb`, verifies the sha256 pins baked into the package, caches the binary under `~/.stackql/mcp-server-bin/`, and spawns it). ORDERING RULE: `make npm-manifest` fetches the canonical `.sha256` files from the published release - it must run AFTER the `.mcpb` assets for the version are published, same as `make server-json`. Publishing to npmjs is manual (2FA):
+
+```bash
+make npm-manifest VERSION=X.Y.Z   # render npm/platforms.json + stamp version
+python scripts/smoke-test.py --cmd "node npm/bin/stackql-mcp.js"
+make npm-pack VERSION=X.Y.Z       # build the tarball
+cd npm && npm publish --access public
+```
+
+Build the PyPI wrapper (`stackql-mcp-server`, the same launcher in stdlib-only Python for uvx/pip; shares the npm wrapper's binary cache at `~/.stackql/mcp-server-bin/`). Same ordering rule; publish is manual (2FA):
+
+```bash
+make pypi-manifest VERSION=X.Y.Z
+make pypi-build VERSION=X.Y.Z     # sdist + wheel (needs 'pip install build')
+python -m twine upload pypi/dist/*
+```
+
+The registry validates pypi packages via the `mcp-name: io.github.stackql/stackql-mcp` marker line in the package README (npm uses the `mcpName` package.json field; oci uses an image label).
+
+The smoke test gates all four vectors: `smoke-test.py <bundle>` (manifest-driven args), `--docker <image>`, and `--cmd "<command>"`. Registry namespace validation is baked in: the npm package.json carries `mcpName: io.github.stackql/stackql-mcp` and the Dockerfile carries the `io.modelcontextprotocol.server.name` label - the Official MCP Registry checks both before accepting the oci/npm package entries in server.json.
+
 Upload everything in `dist/` to the matching `stackql/stackql` release (requires `gh auth login` with `contents:write` on `stackql/stackql`; idempotent via `--clobber`):
 
 ```bash

@@ -45,9 +45,14 @@ stackql-mcpb-packaging/
   .github/workflows/publish.yml     # v* tag: verify, build, test, publish
   manifest/manifest.template.json   # MCPB manifest, tokenised (__VERSION__, __BINARY_NAME__)
   registry/server.template.json     # Official MCP Registry server.json, tokenised SHAs + VERSION
+  oci/Dockerfile                    # stackql/stackql-mcp image (multi-arch via TARGETARCH)
+  npm/                              # @stackql/mcp-server npx wrapper package
+  pypi/                             # stackql-mcp-server uvx/pip wrapper package
   scripts/package.sh                # build bundles from bin/ -> dist/
   scripts/clean.sh                  # wipe dist/
   scripts/render-server-json.sh     # pin SHAs into registry/server.json
+  scripts/render-npm-manifest.sh    # pin bundle SHAs into npm/platforms.json
+  scripts/render-pypi-manifest.sh   # pin bundle SHAs into the pypi package
   scripts/sign.sh                   # envelope-sign dist/*.mcpb + regen .sha256
   scripts/append-signature.py       # frame an externally-produced CMS signature
   scripts/smoke-test.py             # deterministic MCP smoke test (stdlib only)
@@ -112,7 +117,13 @@ One-time setup: add a repo secret `STACKQL_RELEASE_TOKEN` - a fine-grained PAT (
 
 Optional envelope signing: if the repo secrets `MCPB_SIGNING_CERT` and `MCPB_SIGNING_KEY` (PEM contents, plus optional `MCPB_SIGNING_INTERMEDIATES`) are set, the publish job runs `make sign` to `mcpb sign` every bundle and regenerate its `.sha256` before upload. Without the secrets the step prints a notice and skips, and unsigned bundles ship as before. Note `mcpb verify` in the current CLI is broken upstream (node-forge cannot verify PKCS#7, so every signed bundle reports as unsigned); `make sign` treats it as advisory and asserts the appended signature block instead.
 
-Steps 3 and 4 of the local runbook below (MCP Registry publish and aggregator listings) are still manual after a CI publish.
+Two more vectors ship from the same pipeline:
+
+- **OCI image** (`docker.io/stackql/stackql-mcp`): built and smoke-tested in PR CI; pushed multi-arch (amd64 + arm64) by the publish workflow when the `DOCKERHUB_USERNAME`/`DOCKERHUB_TOKEN` secrets are set (soft-skips otherwise). The image carries the `io.modelcontextprotocol.server.name` label the MCP Registry requires for oci package validation.
+- **PyPI wrapper** (`stackql-mcp-server`): same launcher pattern in stdlib-only Python (uvx/pip), sharing the npm wrapper's binary cache. PR CI smoke-tests it; the publish workflow builds sdist+wheel as a run artifact. Publishing is manual (2FA): `make pypi-build VERSION=X.Y.Z` then `python -m twine upload pypi/dist/*`. The registry validates pypi packages via the `mcp-name:` marker in the README.
+- **npm wrapper** (`@stackql/mcp-server`): an npx-able launcher that downloads the platform's published `.mcpb` (sha256-verified against pins baked into the package) and spawns the binary. PR CI tests the wrapper against a locally built bundle; the publish workflow renders the real pins from the published assets and uploads the tarball as a run artifact. Publishing to npmjs is deliberately manual (2FA): download the artifact or run `make npm-pack VERSION=X.Y.Z` locally, then `cd npm && npm publish --access public`. The package carries the `mcpName` field the MCP Registry requires for npm package validation.
+
+Steps 3 and 4 of the local runbook below (MCP Registry publish and aggregator listings) are still manual after a CI publish. After the OCI image and npm package exist for a version, the registry `server.json` (which now includes oci and npm package entries) can be published - the registry validates the npm `mcpName` and the image label at publish time, so those artifacts must exist first.
 
 ## Release runbook (local fallback)
 
@@ -322,6 +333,14 @@ make signed VERSION=X.Y.Z       build with MCPB_SELF_SIGN=true (testing only)
 make sign                       envelope-sign dist/*.mcpb in place and regenerate
                                 .sha256 (MCPB_SELF_SIGN=true or MCPB_SIGN_CERT +
                                 MCPB_SIGN_KEY; no-ops with a notice when unset)
+make oci VERSION=X.Y.Z          build the stackql/stackql-mcp image locally (amd64)
+make oci-push VERSION=X.Y.Z     multi-arch image build + push (needs docker login)
+make npm-manifest VERSION=X.Y.Z render npm/platforms.json from PUBLISHED .sha256s
+make npm-pack VERSION=X.Y.Z     build the @stackql/mcp-server tarball (publish is
+                                manual: cd npm && npm publish --access public)
+make pypi-manifest VERSION=X.Y.Z render pypi platforms.json from PUBLISHED .sha256s
+make pypi-build VERSION=X.Y.Z   build sdist+wheel (publish is manual:
+                                python -m twine upload pypi/dist/*)
 make publish VERSION=X.Y.Z      upload dist/* to the stackql/stackql release
 make server-json VERSION=X.Y.Z  render registry/server.json (pins 4 SHAs)
 make registry-publish VERSION=X.Y.Z   render + publish to the Official MCP Registry

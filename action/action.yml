@@ -1,0 +1,60 @@
+# Setup StackQL MCP Server - GitHub Action
+#
+# Installs the signed stackql binary (sha256-verified against the release
+# .sha256) and emits an mcpServers JSON config consumable by MCP-capable
+# actions such as anthropics/claude-code-action. Defaults to read_only server
+# mode - the safe default for agentic CI.
+#
+# NOTE: lives in this (internal) repo for development; GitHub Marketplace
+# listing requires extraction to a public repo with action.yml at the root
+# (planned: stackql/setup-stackql-mcp).
+
+name: 'Setup StackQL MCP Server'
+description: 'Install the signed StackQL binary and emit MCP server config for agentic CI workflows (cloud queries over MCP)'
+author: 'StackQL Studios'
+branding:
+  icon: 'database'
+  color: 'blue'
+
+inputs:
+  version:
+    description: stackql release version (X.Y.Z) or 'latest'
+    required: false
+    default: 'latest'
+  mode:
+    description: 'MCP server mode: read_only, safe, delete_safe, or full_access'
+    required: false
+    default: 'read_only'
+  auth:
+    description: stackql --auth JSON for provider credentials (optional)
+    required: false
+    default: ''
+  bundle-path:
+    description: path to a local .mcpb to install from instead of downloading (CI/testing)
+    required: false
+    default: ''
+
+outputs:
+  binary-path:
+    description: absolute path to the installed stackql binary
+    value: ${{ steps.install.outputs.binary-path }}
+  mcp-config:
+    description: mcpServers JSON for MCP-capable actions (claude-code-action mcp_config input)
+    value: ${{ steps.install.outputs.mcp-config }}
+
+runs:
+  using: composite
+  steps:
+    - id: install
+      shell: bash
+      env:
+        STACKQL_SETUP_VERSION: ${{ inputs.version }}
+        STACKQL_SETUP_MODE: ${{ inputs.mode }}
+        STACKQL_SETUP_AUTH: ${{ inputs.auth }}
+        STACKQL_SETUP_BUNDLE: ${{ inputs.bundle-path }}
+      run: |
+        if command -v python3 >/dev/null 2>&1; then
+          python3 "${{ github.action_path }}/install.py"
+        else
+          python "${{ github.action_path }}/install.py"
+        fi

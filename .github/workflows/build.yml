@@ -97,3 +97,127 @@ jobs:
 
       - name: Smoke test (deterministic MCP handshake)
         run: python scripts/smoke-test.py dist/stackql-mcp-windows-x64.mcpb
+
+  # OCI image: built from the release zips (which exist as soon as the
+  # upstream release does, so this runs at PR time), smoke-tested in-container.
+  # Pushing happens in publish.yml, gated on Docker Hub secrets.
+  oci:
+    name: oci (build + smoke)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build image
+        run: make oci VERSION=${{ inputs.version }}
+
+      - name: Smoke test (deterministic MCP handshake)
+        run: python3 scripts/smoke-test.py --docker stackql/stackql-mcp:${{ inputs.version }}
+
+  # npm wrapper: the real platforms.json pins the sha256 of the PUBLISHED
+  # .mcpb assets, which do not exist yet at PR time for a new version (this
+  # repo publishes them at tag time). CI therefore tests the wrapper's
+  # extract/cache/spawn logic against a locally built bundle via the
+  # STACKQL_MCP_BUNDLE override, with placeholder pins. The download+verify
+  # path is exercised by 'make npm-manifest && npm pack' after publish.
+  npm-wrapper:
+    name: npm wrapper (smoke)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build local bundle for the wrapper to consume
+        run: make one TARGET=linux-x64 VERSION=${{ inputs.version }}
+
+      - name: Render placeholder manifest
+        run: |
+          zeros="0000000000000000000000000000000000000000000000000000000000000000"
+          cat > npm/platforms.json <<EOF
+          {
+            "version": "${{ inputs.version }}",
+            "baseUrl": "https://invalid.example/not-used-in-ci",
+            "platforms": {
+              "linux-x64": { "bundle": "stackql-mcp-linux-x64.mcpb", "sha256": "$zeros" },
+              "linux-arm64": { "bundle": "stackql-mcp-linux-arm64.mcpb", "sha256": "$zeros" },
+              "windows-x64": { "bundle": "stackql-mcp-windows-x64.mcpb", "sha256": "$zeros" },
+              "darwin-universal": { "bundle": "stackql-mcp-darwin-universal.mcpb", "sha256": "$zeros" }
+            }
+          }
+          EOF
+
+      - name: Install wrapper dependencies
+        run: cd npm && npm install --no-audit --no-fund
+
+      - name: Smoke test via wrapper
+        env:
+          STACKQL_MCP_BUNDLE: dist/stackql-mcp-linux-x64.mcpb
+        run: python3 scripts/smoke-test.py --cmd "node npm/bin/stackql-mcp.js"
+
+  # PyPI wrapper: same constraints and approach as the npm wrapper - the real
+  # platforms.json pins published-asset hashes, so CI tests the wrapper logic
+  # against a locally built bundle via STACKQL_MCP_BUNDLE with placeholder pins.
+  pypi-wrapper:
+    name: pypi wrapper (smoke)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build local bundle for the wrapper to consume
+        run: make one TARGET=linux-x64 VERSION=${{ inputs.version }}
+
+      - name: Render placeholder manifest
+        run: |
+          zeros="0000000000000000000000000000000000000000000000000000000000000000"
+          cat > pypi/src/stackql_mcp_server/platforms.json <<EOF
+          {
+            "version": "${{ inputs.version }}",
+            "baseUrl": "https://invalid.example/not-used-in-ci",
+            "platforms": {
+              "linux-x64": { "bundle": "stackql-mcp-linux-x64.mcpb", "sha256": "$zeros" },
+              "linux-arm64": { "bundle": "stackql-mcp-linux-arm64.mcpb", "sha256": "$zeros" },
+              "windows-x64": { "bundle": "stackql-mcp-windows-x64.mcpb", "sha256": "$zeros" },
+              "darwin-universal": { "bundle": "stackql-mcp-darwin-universal.mcpb", "sha256": "$zeros" }
+            }
+          }
+          EOF
+
+      - name: Install wrapper into a venv
+        run: |
+          python3 -m venv .venv
+          .venv/bin/pip install --quiet ./pypi
+
+      - name: Smoke test via wrapper
+        env:
+          STACKQL_MCP_BUNDLE: dist/stackql-mcp-linux-x64.mcpb
+        run: python3 scripts/smoke-test.py --cmd "$PWD/.venv/bin/stackql-mcp"
+
+  # GitHub Action: installs from a locally built bundle (published assets may
+  # not exist yet for a new version at PR time), then smokes the server using
+  # the action's own emitted mcp-config.
+  action-test:
+    name: setup action (smoke)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build local bundle for the action to install
+        run: make one TARGET=linux-x64 VERSION=${{ inputs.version }}
+
+      - id: setup
+        uses: ./action
+        with:
+          bundle-path: dist/stackql-mcp-linux-x64.mcpb
+
+      - name: Smoke test via emitted config
+        env:
+          MCP_CONFIG: ${{ steps.setup.outputs.mcp-config }}
+        run: |
+          echo "$MCP_CONFIG" | python3 -m json.tool > /dev/null && echo "mcp-config is valid JSON"
+          python3 - <<'EOF'
+          import importlib.util, json, os
+          cfg = json.loads(os.environ["MCP_CONFIG"])
+          server = cfg["mcpServers"]["stackql"]
+          spec = importlib.util.spec_from_file_location("smoke", "scripts/smoke-test.py")
+          smoke = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(smoke)
+          smoke.run_command([server["command"], *server["args"]])
+          EOF

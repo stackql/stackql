@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 import os
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -128,83 +129,108 @@ def run(bundle_path: Path) -> None:
         home_dir.mkdir()
         args = manifest_args(manifest, tmp_path, home_dir)
         cmd = [str(binary), *args, f"--auth={GITHUB_AUTH}"]
-        log(f"spawning: {' '.join(cmd)}")
-        # Binary pipes on purpose: text=True would translate \n to \r\n on
-        # Windows stdin, and the server exits silently on the stray \r.
-        proc = subprocess.Popen(
-            cmd,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        try:
-            client = JsonRpcClient(proc)
-
-            client.send(
-                "initialize",
-                {
-                    "protocolVersion": "2024-11-05",
-                    "capabilities": {},
-                    "clientInfo": {"name": "stackql-mcpb-smoke", "version": "1"},
-                },
-                id_=1,
-            )
-            init = client.wait(1, INIT_TIMEOUT_S)
-            if "result" not in init:
-                fail(f"initialize did not return a result: {init}")
-            log(f"initialize ok: server={init['result'].get('serverInfo', {}).get('name')}")
-
-            client.send("notifications/initialized", {})
-
-            client.send("tools/list", {}, id_=2)
-            tools = client.wait(2, CALL_TIMEOUT_S).get("result", {}).get("tools", [])
-            tool_names = {t["name"] for t in tools}
-            log(f"tools/list returned {len(tool_names)} tools")
-            for required in ("pull_provider", "list_services", "list_providers"):
-                if required not in tool_names:
-                    fail(f"missing required tool: {required}")
-
-            client.send(
-                "tools/call",
-                {"name": "pull_provider", "arguments": {"provider": "github"}},
-                id_=3,
-            )
-            pull = client.wait(3, CALL_TIMEOUT_S)
-            if "error" in pull:
-                fail(f"pull_provider failed: {pull['error']}")
-            log("pull_provider github ok")
-
-            client.send(
-                "tools/call",
-                {"name": "list_services", "arguments": {"provider": "github", "row_limit": 5}},
-                id_=4,
-            )
-            services = client.wait(4, CALL_TIMEOUT_S)
-            if "error" in services:
-                fail(f"list_services failed: {services['error']}")
-            content = services.get("result", {}).get("content", [])
-            text_blocks = [c.get("text", "") for c in content if isinstance(c, dict)]
-            joined = "\n".join(text_blocks)
-            if "actions" not in joined and "apps" not in joined:
-                fail(f"list_services did not include expected github services. content={content!r}")
-            log("list_services returned github services (saw expected service names)")
-        finally:
-            try:
-                if proc.stdin and not proc.stdin.closed:
-                    proc.stdin.close()
-            except Exception:
-                pass
-            try:
-                proc.terminate()
-                proc.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                proc.kill()
+        exercise(cmd)
 
     log("smoke test passed")
 
 
+def run_command(cmd: list[str]) -> None:
+    """Smoke-test an arbitrary command that speaks MCP stdio (docker image,
+    npm wrapper, ...). The command must accept extra stackql flags appended
+    after its own arguments (used to pass --auth for the github provider)."""
+    exercise(cmd + [f"--auth={GITHUB_AUTH}"])
+    log("smoke test passed")
+
+
+def exercise(cmd: list[str]) -> None:
+    log(f"spawning: {' '.join(cmd)}")
+    # Binary pipes on purpose: text=True would translate \n to \r\n on
+    # Windows stdin, and the server exits silently on the stray \r.
+    proc = subprocess.Popen(
+        cmd,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    try:
+        client = JsonRpcClient(proc)
+
+        client.send(
+            "initialize",
+            {
+                "protocolVersion": "2024-11-05",
+                "capabilities": {},
+                "clientInfo": {"name": "stackql-mcpb-smoke", "version": "1"},
+            },
+            id_=1,
+        )
+        init = client.wait(1, INIT_TIMEOUT_S)
+        if "result" not in init:
+            fail(f"initialize did not return a result: {init}")
+        log(f"initialize ok: server={init['result'].get('serverInfo', {}).get('name')}")
+
+        client.send("notifications/initialized", {})
+
+        client.send("tools/list", {}, id_=2)
+        tools = client.wait(2, CALL_TIMEOUT_S).get("result", {}).get("tools", [])
+        tool_names = {t["name"] for t in tools}
+        log(f"tools/list returned {len(tool_names)} tools")
+        for required in ("pull_provider", "list_services", "list_providers"):
+            if required not in tool_names:
+                fail(f"missing required tool: {required}")
+
+        client.send(
+            "tools/call",
+            {"name": "pull_provider", "arguments": {"provider": "github"}},
+            id_=3,
+        )
+        pull = client.wait(3, CALL_TIMEOUT_S)
+        if "error" in pull:
+            fail(f"pull_provider failed: {pull['error']}")
+        log("pull_provider github ok")
+
+        client.send(
+            "tools/call",
+            {"name": "list_services", "arguments": {"provider": "github", "row_limit": 5}},
+            id_=4,
+        )
+        services = client.wait(4, CALL_TIMEOUT_S)
+        if "error" in services:
+            fail(f"list_services failed: {services['error']}")
+        content = services.get("result", {}).get("content", [])
+        text_blocks = [c.get("text", "") for c in content if isinstance(c, dict)]
+        joined = "\n".join(text_blocks)
+        if "actions" not in joined and "apps" not in joined:
+            fail(f"list_services did not include expected github services. content={content!r}")
+        log("list_services returned github services (saw expected service names)")
+    finally:
+        try:
+            if proc.stdin and not proc.stdin.closed:
+                proc.stdin.close()
+        except Exception:
+            pass
+        try:
+            proc.terminate()
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+
+
+USAGE = """usage:
+  smoke-test.py <path-to-bundle.mcpb>     test an MCPB bundle (manifest-driven args)
+  smoke-test.py --docker <image>          test a docker image (stdio MCP server)
+  smoke-test.py --cmd "<command ...>"     test an arbitrary stdio MCP command
+                                          (e.g. the npm wrapper)"""
+
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print(f"usage: {sys.argv[0]} <path-to-bundle.mcpb>", file=sys.stderr)
+    if len(sys.argv) == 3 and sys.argv[1] == "--docker":
+        run_command(
+            ["docker", "run", "-i", "--rm", sys.argv[2], "mcp", "--mcp.server.type=stdio"]
+        )
+    elif len(sys.argv) == 3 and sys.argv[1] == "--cmd":
+        run_command(shlex.split(sys.argv[2]))
+    elif len(sys.argv) == 2 and not sys.argv[1].startswith("-"):
+        run(Path(sys.argv[1]))
+    else:
+        print(USAGE, file=sys.stderr)
         sys.exit(2)
-    run(Path(sys.argv[1]))

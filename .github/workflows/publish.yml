@@ -106,3 +106,70 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.STACKQL_RELEASE_TOKEN }}
         run: make publish VERSION=${{ needs.verify-tag.outputs.version }}
+
+  # Multi-arch OCI image push. Soft-skips unless DOCKERHUB_USERNAME and
+  # DOCKERHUB_TOKEN secrets are set (token needs push rights on
+  # docker.io/stackql/stackql-mcp).
+  oci-publish:
+    name: push OCI image (optional)
+    needs: [verify-tag, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build and push multi-arch image
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          if [ -z "$DOCKERHUB_USERNAME" ] || [ -z "$DOCKERHUB_TOKEN" ]; then
+            echo "OCI push skipped (set DOCKERHUB_USERNAME + DOCKERHUB_TOKEN secrets)"
+            exit 0
+          fi
+          echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+          docker buildx create --use
+          make oci-push VERSION=${{ needs.verify-tag.outputs.version }}
+
+  # Render the npm manifest from the freshly published .sha256 files and build
+  # the tarball as a run artifact. Publishing to npmjs stays MANUAL (2FA):
+  # download the artifact (or run 'make npm-pack' locally), then
+  # 'cd npm && npm publish --access public'.
+  npm-tarball:
+    name: npm tarball (manual publish artifact)
+    needs: [verify-tag, publish]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Render manifest from published assets and pack
+        run: make npm-pack VERSION=${{ needs.verify-tag.outputs.version }}
+
+      - name: Upload tarball artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: npm-package
+          path: npm/*.tgz
+          if-no-files-found: error
+
+  # Render the pypi manifest from the freshly published .sha256 files and
+  # build sdist + wheel as a run artifact. Publishing to PyPI stays MANUAL
+  # (2FA / token): download the artifact (or run 'make pypi-build' locally),
+  # then 'python -m twine upload pypi/dist/*'.
+  pypi-dist:
+    name: pypi dist (manual publish artifact)
+    needs: [verify-tag, publish]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Render manifest from published assets and build
+        run: |
+          python3 -m pip install --quiet build
+          make pypi-build VERSION=${{ needs.verify-tag.outputs.version }}
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: pypi-package
+          path: pypi/dist/*
+          if-no-files-found: error

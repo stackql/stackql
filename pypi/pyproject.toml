@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "stackql-mcp-server"
+version = "0.10.500"
+description = "StackQL MCP server - SQL-native query and provisioning engine for cloud infrastructure, served over MCP. Downloads the signed stackql binary on first run."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.9"
+authors = [{ name = "StackQL Studios", email = "info@stackql.io" }]
+keywords = [
+  "mcp",
+  "model-context-protocol",
+  "stackql",
+  "sql",
+  "cloud",
+  "infrastructure",
+  "devops",
+  "multicloud",
+]
+classifiers = [
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Topic :: Database",
+  "Topic :: System :: Systems Administration",
+]
+
+[project.urls]
+Homepage = "https://stackql.io"
+Documentation = "https://stackql.io/docs"
+Source = "https://github.com/stackql/stackql"
+
+[project.scripts]
+stackql-mcp = "stackql_mcp_server:main"
+stackql-mcp-server = "stackql_mcp_server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/stackql_mcp_server"]

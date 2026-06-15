@@ -1,6 +1,6 @@
 # Installing the StackQL MCP server
 
-There are three ways to get the StackQL MCP server into a client (Claude Desktop, Cursor, VS Code, Cline, etc.), in order of how much trust and how little effort each takes.
+There are six ways to get the StackQL MCP server into a client (Claude Desktop, Cursor, VS Code, Cline, etc.). The first three are ordered by how much trust and how little effort each takes; npx, uvx, and Docker suit npx-shaped client directories and containerised environments respectively.
 
 ## 1. From a marketplace / directory (recommended once listings are live)
 
@@ -81,6 +81,69 @@ The server picks up provider credentials through stackql's normal `--auth` flag.
 ```
 
 See https://stackql.io/docs for the full provider auth catalogue.
+
+## 4. npx (any stdio MCP client, no install)
+
+The `@stackql/mcp-server` package downloads the signed binary on first run
+(sha256-verified against pins baked into the package) and caches it under
+`~/.stackql/mcp-server-bin/`:
+
+```json
+{
+  "mcpServers": {
+    "stackql": {
+      "command": "npx",
+      "args": ["-y", "@stackql/mcp-server"]
+    }
+  }
+}
+```
+
+The launcher sets `--approot` and disables the audit sink automatically (the
+cwd-safety flags from section 3), so no extra arguments are needed. Pass
+`--auth=...` and other stackql flags as additional args.
+
+## 5. uvx / pip (Python)
+
+The `stackql-mcp-server` PyPI package works the same way as the npm wrapper
+(pure stdlib, no dependencies); the two share the binary cache at
+`~/.stackql/mcp-server-bin/`:
+
+```json
+{
+  "mcpServers": {
+    "stackql": {
+      "command": "uvx",
+      "args": ["stackql-mcp-server"]
+    }
+  }
+}
+```
+
+Or `pip install stackql-mcp-server` and use `stackql-mcp` as the command.
+
+## 6. Docker
+
+```bash
+docker run -i --rm stackql/stackql-mcp
+```
+
+Runs the MCP server on stdio as a non-root user; amd64 and arm64. As an MCP
+client entry:
+
+```json
+{
+  "mcpServers": {
+    "stackql": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "stackql/stackql-mcp"]
+    }
+  }
+}
+```
+
+Add `-e` flags before the image name to pass credential environment variables
+referenced by your `--auth` config.
 
 ## Trust model
 

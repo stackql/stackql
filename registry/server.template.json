@@ -37,6 +37,27 @@
       "version": "__VERSION__",
       "fileSha256": "__SHA_DARWIN_UNIVERSAL__",
       "transport": { "type": "stdio" }
+    },
+    {
+      "registryType": "oci",
+      "registryBaseUrl": "https://docker.io",
+      "identifier": "stackql/stackql-mcp",
+      "version": "__VERSION__",
+      "transport": { "type": "stdio" }
+    },
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "@stackql/mcp-server",
+      "version": "__VERSION__",
+      "transport": { "type": "stdio" }
+    },
+    {
+      "registryType": "pypi",
+      "registryBaseUrl": "https://pypi.org",
+      "identifier": "stackql-mcp-server",
+      "version": "__VERSION__",
+      "transport": { "type": "stdio" }
     }
   ],
   "_meta": {
