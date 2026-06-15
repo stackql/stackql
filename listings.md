@@ -30,7 +30,7 @@ are not listed here.
 | mcpmarket.com | Aggregator | Submit on site | ✅ Published | 2026-06-13 | [mcpmarket](https://mcpmarket.com/server/stackql) |  | 2026-06-13 |
 | mcpservers.org | Awesome-list site | Ingests the awesome list | ✅ Published | 2026-06-13 | [mcpservers.org](https://mcpservers.org/servers/stackql-mcp-server) |  | 2026-06-13 |
 | PulseMCP | Discovery, registry backer | Ingests official registry | ✅ Published | 2026-06-15 | [pulsemcp](https://www.pulsemcp.com/servers?q=stackql) | Confirmed live (Official badge) | 2026-06-15 |
-| GitHub MCP Registry | GitHub discovery surface | Ingests official registry | 🟡 Auto Indexed (Pending) | 2026-06-12 | [github-mcp](https://github.com/mcp?search=stackql) | Recheck: registry now carries npm/oci/pypi types (was empty when mcpb-only) | 2026-06-15 |
+| GitHub MCP Registry | GitHub discovery surface | Auto-ingest from official registry (not yet shipped) | 🟡 Blocked upstream | 2026-06-16 | [github-mcp](https://github.com/mcp?search=stackql) | Prerequisite DONE (we're in the official registry). github.com/mcp is currently a CURATED directory; the auto-ingest from the official registry is announced but NOT built yet (GitHub blog, future tense). Not a package-type or config issue on our end - confirmed still empty 06-16 after adding npm/oci/pypi. Waiting on GitHub to ship the bridge; meanwhile maximise curation signals on stackql/stackql (MCP topics + README section) and check for a direct inclusion path | 2026-06-16 |
 | Anthropic Connectors / Desktop Extensions Directory | Vendor directory (Claude) | Review form, Anthropic-vetted | 🟡 Pending Review | 2026-06-13 |  | Follow up on submission review ([Google Form](https://docs.google.com/forms/u/0/d/e/1FAIpQLScHtjkiCNjpqnWtFLIQStChXlvVcvX8NPXkMfjtYPDPymgang/viewform?usp=form_confirm)) | 2026-06-13 |
 | mcp.so | Largest aggregator | Self-submit on site | 🟡 Published (config update propagating) | 2026-06-13 | [mcp.so](https://mcp.so/server/stackql/stackql) | Server Config edited to npx form 06-15; verify public page reflects + List Tools/Playground work | 2026-06-15 |
 | Cursor Directory | IDE client directory | Submit to Cursor directory | 🟡 Pending Verification | 2026-06-13 | https://cursor.directory/plugins/stackql-mcp-server | Submit for verification | 2026-06-13 |
@@ -38,7 +38,7 @@ are not listed here.
 | Smithery.ai | Registry + hosting + analytics | `smithery mcp publish` | ⊘ N/A | 2026-06-15 |  | Doesn't fit our shape: `mcp publish` caps bundles at 25 MB (ours ~37 MB, embeds the binary) and the only other path is a hosted HTTP URL we don't have. Revisit only with a hosted endpoint or a thin npx-wrapper bundle | 2026-06-15 |
 | Docker MCP Catalog | Curated infra catalogue | PR to docker/mcp-registry | 🟡 In Progress (upstream PR pending) | 2026-06-15 |  | server.yaml prepared in the stackql/mcp-registry fork (community-image, points at public stackql/stackql-mcp); pending PR to docker/mcp-registry upstream + their review | 2026-06-15 |
 | mpak | Binary-native registry, trust scoring | `mcpb-pack` action / publish | ☐ Not Submitted |  |  | Publish signed package | 2026-06-13 |
-| VS Code MCP Gallery | IDE client gallery | Ingests registry / curated list | ☐ Not Submitted |  |  | Monitor for registry ingestion | 2026-06-13 |
+| VS Code MCP Gallery | IDE client gallery (@mcp in Extensions view) | Ingests from GitHub MCP Registry | 🟡 Blocked upstream | 2026-06-16 | [docs](https://code.visualstudio.com/docs/agent-customization/mcp-servers) | Downstream of GitHub MCP Registry - the `@mcp` gallery pulls from it, so this follows automatically once that row lands. No separate submission. Manual `.vscode/mcp.json` with npx works today regardless of gallery listing | 2026-06-16 |
 | Cline MCP Marketplace | In-client marketplace | GitHub PR to marketplace repo | ☐ Not Submitted |  |  | Submit marketplace PR | 2026-06-13 |
 | mcp.directory | Aggregator | Submit on site (auto-pull npm/PyPI) | 🟡 Submitted | 2026-06-15 |  | Submitted 06-15, 24h review + email on publish; confirm live ~06-16 | 2026-06-15 |
 | awesome-mcp-servers | Curated GitHub list | GitHub PR/issue | 🟡 Pending Review | 2026-06-13 | https://github.com/punkpeye/awesome-mcp-servers/pull/7417 | Submit to Glama and update PR #7417 | 2026-06-13 |
@@ -133,8 +133,14 @@ The places where users of specific clients discover servers. Several ingest from
 the official registry; the in-client marketplaces usually want a direct
 submission.
 
-- GitHub MCP Registry: GitHub's own discovery surface. It ingests from the
-  official registry and supports npm, Docker, and MCPB packages.
+- GitHub MCP Registry: GitHub's own discovery surface. As of 2026-06 it is a
+  CURATED directory (partners + selected community); the advertised auto-ingest
+  from the official registry is announced but NOT yet shipped (GitHub blog uses
+  future tense). Being in the official registry is the documented prerequisite
+  and is done; appearing on github.com/mcp is then a waiting game on GitHub
+  building the bridge. It sorts/surfaces by GitHub stars + community activity, so
+  the lever on our side is making the source repo (stackql/stackql) legibly an
+  MCP server. Supports npm, Docker, and MCPB packages once ingested.
 - Cursor: maintains an MCP directory and an "Add to Cursor" install flow. Submit
   to the Cursor directory (verify the current submission path on their site).
 - VS Code (GitHub Copilot agent mode): exposes an MCP servers gallery that draws
