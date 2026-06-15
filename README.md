@@ -123,6 +123,8 @@ Two more vectors ship from the same pipeline:
 - **PyPI wrapper** (`stackql-mcp-server`): same launcher pattern in stdlib-only Python (uvx/pip), sharing the npm wrapper's binary cache. PR CI smoke-tests it; the publish workflow builds sdist+wheel as a run artifact. Publishing is manual (2FA): `make pypi-build VERSION=X.Y.Z` then `python -m twine upload pypi/dist/*`. The registry validates pypi packages via the `mcp-name:` marker in the README.
 - **npm wrapper** (`@stackql/mcp-server`): an npx-able launcher that downloads the platform's published `.mcpb` (sha256-verified against pins baked into the package) and spawns the binary. PR CI tests the wrapper against a locally built bundle; the publish workflow renders the real pins from the published assets and uploads the tarball as a run artifact. Publishing to npmjs is deliberately manual (2FA): download the artifact or run `make npm-pack VERSION=X.Y.Z` locally, then `cd npm && npm publish --access public`. The package carries the `mcpName` field the MCP Registry requires for npm package validation.
 
+A GitHub Action consumes these published bundles for CI: **[stackql/setup-stackql-mcp](https://github.com/stackql/setup-stackql-mcp)** installs the signed binary (sha256-verified at runtime against the release checksums) and emits an `mcpServers` config for agentic workflows (e.g. `anthropics/claude-code-action`). It lives in its own repo and tracks no version - `version: latest` by default, pin with `version: X.Y.Z` - so this packaging repo no longer carries the action source.
+
 Steps 3 and 4 of the local runbook below (MCP Registry publish and aggregator listings) are still manual after a CI publish. After the OCI image and npm package exist for a version, the registry `server.json` (which now includes oci and npm package entries) can be published - the registry validates the npm `mcpName` and the image label at publish time, so those artifacts must exist first.
 
 ## Release runbook (local fallback)
@@ -318,6 +320,95 @@ make publish VERSION=X.Y.Z
 ```
 
 This is interactive (PIN prompt), so it is a local flow, not a CI step. Requires an OpenSSL build with the PKCS#11 engine (libp11) pointed at the token vendor's PKCS#11 module. `--strip-only` removes an existing signature block if you need the unsigned bytes back.
+
+## Publishing the wrapper packages (npm, PyPI, OCI)
+
+Explicit command sequences for the three downstream package vectors. All are
+manual publishes (2FA / tokens). The `make` targets are convenience wrappers;
+the raw commands below are what they run, useful on machines without `make`
+(e.g. Git Bash / WSL on Windows). Run every command FROM THE REPO ROOT unless
+a `cd` says otherwise.
+
+Ordering rule for all three: the manifest/pin render steps fetch the canonical
+`.sha256` files from the PUBLISHED GitHub release, so they must run AFTER the
+`.mcpb` assets for the version are published. Never pin locally built hashes.
+
+### npm (`@stackql/mcp-server`)
+
+```bash
+# auth: browser-based login; account must have publish rights on @stackql
+npm login
+
+# render pins from the published release, install the one dep, dry-run to inspect
+bash scripts/render-npm-manifest.sh --version X.Y.Z
+cd npm && npm install --no-audit --no-fund
+npm publish --dry-run --access public      # confirm: 4 files, name, version, mcpName
+npm publish --access public                # the real publish (prompts for 2FA)
+cd ..
+
+# verify from a clean cache (forces download + sha256 verify of the bundle)
+rm -rf ~/.stackql/mcp-server-bin
+python3 scripts/smoke-test.py --cmd "npx -y @stackql/mcp-server"
+```
+
+Note: the npm registry CDN can lag a few minutes after first publish - if
+`npx` returns 404 immediately after publishing, confirm with
+`npm view @stackql/mcp-server version` and retry once it reports the version.
+
+### PyPI (`stackql-mcp-server`)
+
+PyPI build/publish tooling is not stdlib, and modern Debian/Ubuntu (incl. WSL)
+block `pip install` into the system Python (PEP 668), so use a venv:
+
+```bash
+# one-time per machine: a venv holding build + twine + uv
+python3 -m venv ~/.venvs/stackql-publish
+source ~/.venvs/stackql-publish/bin/activate
+pip install --upgrade build twine uv
+
+# render pins, build sdist+wheel, validate (run from repo root)
+bash scripts/render-pypi-manifest.sh --version X.Y.Z
+cd pypi && python3 -m build && python3 -m twine check dist/*
+
+# upload. Auth is a PyPI API token (username __token__, password pypi-...).
+# pypi/.pypirc holds it (gitignored); twine needs to be pointed at it since it
+# only auto-reads ~/.pypirc. From the pypi/ dir:
+python3 -m twine upload --config-file .pypirc dist/*
+# (interactive fallback if no .pypirc: python3 -m twine upload dist/* )
+cd ..
+
+# verify from a clean cache (uvx; keep the venv active so uv is on PATH)
+rm -rf ~/.stackql/mcp-server-bin
+python3 scripts/smoke-test.py --cmd "uvx stackql-mcp-server"
+```
+
+### OCI image (`docker.io/stackql/stackql-mcp`)
+
+Push locally - do NOT use the dispatch publish workflow for an existing release
+(it re-clobbers the `.mcpb` bundles and invalidates every pin). Requires
+`docker login` with push rights on `stackql/stackql-mcp`.
+
+```bash
+docker login
+
+# stage the linux binaries into the build context (downloads zips if absent)
+make oci-stage VERSION=X.Y.Z       # or run the unzip steps the target wraps
+
+# multi-arch build + push
+docker buildx create --use --name mcp-builder 2>/dev/null || docker buildx use mcp-builder
+docker buildx build --platform linux/amd64,linux/arm64 --push \
+  --build-arg VERSION=X.Y.Z \
+  -f oci/Dockerfile \
+  -t docker.io/stackql/stackql-mcp:X.Y.Z \
+  -t docker.io/stackql/stackql-mcp:latest .
+
+# verify from the registry (not the local build cache)
+docker pull stackql/stackql-mcp:X.Y.Z
+python3 scripts/smoke-test.py --docker stackql/stackql-mcp:X.Y.Z
+```
+
+For future tagged releases, set the `DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN`
+repo secrets and the publish workflow pushes the image automatically.
 
 ## Makefile reference
 

@@ -189,35 +189,3 @@ jobs:
         env:
           STACKQL_MCP_BUNDLE: dist/stackql-mcp-linux-x64.mcpb
         run: python3 scripts/smoke-test.py --cmd "$PWD/.venv/bin/stackql-mcp"
-
-  # GitHub Action: installs from a locally built bundle (published assets may
-  # not exist yet for a new version at PR time), then smokes the server using
-  # the action's own emitted mcp-config.
-  action-test:
-    name: setup action (smoke)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Build local bundle for the action to install
-        run: make one TARGET=linux-x64 VERSION=${{ inputs.version }}
-
-      - id: setup
-        uses: ./action
-        with:
-          bundle-path: dist/stackql-mcp-linux-x64.mcpb
-
-      - name: Smoke test via emitted config
-        env:
-          MCP_CONFIG: ${{ steps.setup.outputs.mcp-config }}
-        run: |
-          echo "$MCP_CONFIG" | python3 -m json.tool > /dev/null && echo "mcp-config is valid JSON"
-          python3 - <<'EOF'
-          import importlib.util, json, os
-          cfg = json.loads(os.environ["MCP_CONFIG"])
-          server = cfg["mcpServers"]["stackql"]
-          spec = importlib.util.spec_from_file_location("smoke", "scripts/smoke-test.py")
-          smoke = importlib.util.module_from_spec(spec)
-          spec.loader.exec_module(smoke)
-          smoke.run_command([server["command"], *server["args"]])
-          EOF

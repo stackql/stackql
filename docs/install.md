@@ -145,6 +145,28 @@ client entry:
 Add `-e` flags before the image name to pass credential environment variables
 referenced by your `--auth` config.
 
+## 7. CI / agentic workflows (GitHub Actions)
+
+For agents running inside CI, the [stackql/setup-stackql-mcp](https://github.com/stackql/setup-stackql-mcp)
+action installs the signed binary and emits an MCP server config that plugs into
+`anthropics/claude-code-action` and other MCP-capable actions. It defaults to
+`read_only` server mode - the safe default for agentic CI.
+
+```yaml
+      - id: stackql
+        uses: stackql/setup-stackql-mcp@v1
+        with:
+          mode: read_only
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          mcp_config: ${{ steps.stackql.outputs.mcp-config }}
+          allowed_tools: "mcp__stackql__*"
+          prompt: "Using stackql, audit our cloud accounts and summarise findings."
+```
+
+See the action's README for provider-auth examples and more agentic recipes.
+
 ## Trust model
 
 What you get with a fresh StackQL `.mcpb` install:
