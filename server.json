@@ -1,0 +1,68 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.stackql/stackql-mcp",
+  "title": "StackQL MCP Server",
+  "description": "SQL-native query and provisioning engine for cloud infrastructure, served over MCP.",
+  "websiteUrl": "https://stackql.io",
+  "repository": {
+    "url": "https://github.com/stackql/stackql",
+    "source": "github"
+  },
+  "version": "0.10.500.2",
+  "packages": [
+    {
+      "registryType": "mcpb",
+      "identifier": "https://github.com/stackql/stackql/releases/download/v0.10.500/stackql-mcp-linux-x64.mcpb",
+      "version": "0.10.500",
+      "fileSha256": "6615737747156b1a8413a976afb23af2e7eec29ebc98a6f0a0f65d1b153c44be",
+      "transport": { "type": "stdio" }
+    },
+    {
+      "registryType": "mcpb",
+      "identifier": "https://github.com/stackql/stackql/releases/download/v0.10.500/stackql-mcp-linux-arm64.mcpb",
+      "version": "0.10.500",
+      "fileSha256": "594bedbabc3096dc3563c907724e845ce0b61a67de4b3fed4158b40c0363786c",
+      "transport": { "type": "stdio" }
+    },
+    {
+      "registryType": "mcpb",
+      "identifier": "https://github.com/stackql/stackql/releases/download/v0.10.500/stackql-mcp-windows-x64.mcpb",
+      "version": "0.10.500",
+      "fileSha256": "d2ce895e88f9c6b557df07073158629808f56d75598f3a701164d65506b791b0",
+      "transport": { "type": "stdio" }
+    },
+    {
+      "registryType": "mcpb",
+      "identifier": "https://github.com/stackql/stackql/releases/download/v0.10.500/stackql-mcp-darwin-universal.mcpb",
+      "version": "0.10.500",
+      "fileSha256": "4eed70af5cfa67295ae0b42fa3a6dca71ac9acabd0d67914fd96ad1247a9b4cc",
+      "transport": { "type": "stdio" }
+    },
+    {
+      "registryType": "oci",
+      "identifier": "docker.io/stackql/stackql-mcp:0.10.500",
+      "transport": { "type": "stdio" }
+    },
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "@stackql/mcp-server",
+      "version": "0.10.500",
+      "transport": { "type": "stdio" }
+    },
+    {
+      "registryType": "pypi",
+      "registryBaseUrl": "https://pypi.org",
+      "identifier": "stackql-mcp-server",
+      "version": "0.10.500",
+      "transport": { "type": "stdio" }
+    }
+  ],
+  "_meta": {
+    "io.modelcontextprotocol.registry/publisher-provided": {
+      "tool": "stackql-mcpb-packaging",
+      "homepage": "https://stackql.io",
+      "documentation": "https://stackql.io/docs"
+    }
+  }
+}
