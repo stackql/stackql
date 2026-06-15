@@ -9,24 +9,32 @@ on:
     tags:
       - build*
     paths-ignore:
-      - "**/*.md"
-      - "docs/**"
-      - "licenses/**"
-      - "test/python/markdown_testing/**"
-      - ".github/workflows/scenario.yaml"
+      - '**/*.md'
+      - 'docs/**'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+      - 'LICENSE'
+      - 'CODE_OF_CONDUCT.md'
+      - 'CONTRIBUTING.md'
+      - 'SECURITY.md'
+      - 'AGENTS.md'
+      - 'CLAUDE.md'
   pull_request:
     branches:
       - main
       - develop
       - version*
     paths-ignore:
-      - "**/*.md"
-      - "docs/**"
-      - "examples/**"
-      - "licenses/**"
-      - "test/python/markdown_testing/**"
-      - ".github/workflows/scenario.yaml"
-
+      - '**/*.md'
+      - 'docs/**'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+      - 'LICENSE'
+      - 'CODE_OF_CONDUCT.md'
+      - 'CONTRIBUTING.md'
+      - 'SECURITY.md'
+      - 'AGENTS.md'
+      - 'CLAUDE.md'
 env:
   GOTESTCMD: "go test -timeout 1200s --tags \"sqlite_stackql\" -v ./..."
   TESTSCRIPT: "test/deprecated/python/main.py"
