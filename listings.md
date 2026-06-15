@@ -22,21 +22,25 @@ are not listed here.
 
 | Venue | Type | How to list | Status | Date | Listing URL | Follow up | Last Updated |
 |---|---|---|---|---|---|---|---|
-| Official MCP Registry | Canonical metadata registry | `mcp-publisher` CLI + `server.json` | ✅ Published | 2026-06-12 | [modelcontextprotocol.io/search](https://registry.modelcontextprotocol.io/v0/servers?search=stackql)<br/>[modelcontextprotocol.io/direct](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.stackql/stackql-mcp) |  | 2026-06-13 |
+| Official MCP Registry | Canonical metadata registry | `mcp-publisher` CLI + `server.json` | ✅ Published | 2026-06-12 | [modelcontextprotocol.io/search](https://registry.modelcontextprotocol.io/v0/servers?search=stackql)<br/>[modelcontextprotocol.io/direct](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.stackql/stackql-mcp) | v0.10.500.2 now advertises all 7 package types (mcpb x4, oci, npm, pypi) | 2026-06-15 |
+| npm | Package registry | `npm publish` | ✅ Published | 2026-06-15 | [@stackql/mcp-server](https://www.npmjs.com/package/@stackql/mcp-server) | npx launcher | 2026-06-15 |
+| PyPI | Package registry | `twine upload` | ✅ Published | 2026-06-15 | [stackql-mcp-server](https://pypi.org/project/stackql-mcp-server/) | uvx/pip launcher | 2026-06-15 |
+| Docker Hub | Container registry | `docker buildx --push` | ✅ Published | 2026-06-15 | [stackql/stackql-mcp](https://hub.docker.com/r/stackql/stackql-mcp) | multi-arch amd64+arm64 | 2026-06-15 |
+| GitHub Actions Marketplace | CI marketplace (setup-stackql-mcp action) | Public repo + release + marketplace listing | ✅ Published | 2026-06-15 | [setup-stackql-mcp-server](https://github.com/marketplace/actions/setup-stackql-mcp-server) | Verified publisher; own repo stackql/setup-stackql-mcp | 2026-06-15 |
 | mcpmarket.com | Aggregator | Submit on site | ✅ Published | 2026-06-13 | [mcpmarket](https://mcpmarket.com/server/stackql) |  | 2026-06-13 |
 | mcpservers.org | Awesome-list site | Ingests the awesome list | ✅ Published | 2026-06-13 | [mcpservers.org](https://mcpservers.org/servers/stackql-mcp-server) |  | 2026-06-13 |
-| GitHub MCP Registry | GitHub discovery surface | Ingests official registry | 🟡 Auto Indexed (Pending) | 2026-06-12 | [github-mcp](https://github.com/mcp?search=stackql) | May need OCI package | 2026-06-13 |
+| PulseMCP | Discovery, registry backer | Ingests official registry | ✅ Published | 2026-06-15 | [pulsemcp](https://www.pulsemcp.com/servers?q=stackql) | Confirmed live (Official badge) | 2026-06-15 |
+| GitHub MCP Registry | GitHub discovery surface | Ingests official registry | 🟡 Auto Indexed (Pending) | 2026-06-12 | [github-mcp](https://github.com/mcp?search=stackql) | Recheck: registry now carries npm/oci/pypi types (was empty when mcpb-only) | 2026-06-15 |
 | Anthropic Connectors / Desktop Extensions Directory | Vendor directory (Claude) | Review form, Anthropic-vetted | 🟡 Pending Review | 2026-06-13 |  | Follow up on submission review ([Google Form](https://docs.google.com/forms/u/0/d/e/1FAIpQLScHtjkiCNjpqnWtFLIQStChXlvVcvX8NPXkMfjtYPDPymgang/viewform?usp=form_confirm)) | 2026-06-13 |
-| mcp.so | Largest aggregator | Self-submit on site | 🟡 Submitted | 2026-06-13 | [mcp.so](https://mcp.so/server/stackql/stackql) | Update post `npx` enablement | 2026-06-13 |
+| mcp.so | Largest aggregator | Self-submit on site | 🟡 Published (config update propagating) | 2026-06-13 | [mcp.so](https://mcp.so/server/stackql/stackql) | Server Config edited to npx form 06-15; verify public page reflects + List Tools/Playground work | 2026-06-15 |
 | Cursor Directory | IDE client directory | Submit to Cursor directory | 🟡 Pending Verification | 2026-06-13 | https://cursor.directory/plugins/stackql-mcp-server | Submit for verification | 2026-06-13 |
 | Glama.ai MCP | Searchable marketplace | Auto-indexes GitHub; claim/submit | 🟡 Pending Review | 2026-06-13 |  | Follow up on submission review | 2026-06-13 |
-| PulseMCP | Discovery, registry backer | Ingests official registry | 🟡 Pending Verification | 2026-06-13 |  | Confirm registry ingestion | 2026-06-13 |
-| Smithery.ai | Registry + hosting + analytics | `smithery mcp publish` | ☐ Not Submitted |  |  | Publish via Smithery CLI | 2026-06-13 |
-| Docker MCP Catalog | Curated infra catalogue | Submit container image | 🚧 Blocked |  |  | Needs OCI image | 2026-06-13 |
+| Smithery.ai | Registry + hosting + analytics | `smithery mcp publish` | 🟡 In Progress | 2026-06-15 |  | Unblocked (npx pkg + .mcpb exist); `smithery mcp publish` needs API key + smithery.yaml | 2026-06-15 |
+| Docker MCP Catalog | Curated infra catalogue | PR to docker/mcp-registry | 🟡 In Progress | 2026-06-15 |  | Unblocked (image public); PR to docker/mcp-registry - community-built (point at image) or Docker-built (signatures/SBOM) | 2026-06-15 |
 | mpak | Binary-native registry, trust scoring | `mcpb-pack` action / publish | ☐ Not Submitted |  |  | Publish signed package | 2026-06-13 |
 | VS Code MCP Gallery | IDE client gallery | Ingests registry / curated list | ☐ Not Submitted |  |  | Monitor for registry ingestion | 2026-06-13 |
 | Cline MCP Marketplace | In-client marketplace | GitHub PR to marketplace repo | ☐ Not Submitted |  |  | Submit marketplace PR | 2026-06-13 |
-| mcp.directory | Aggregator | Auto-pulls; claim listing | ☐ Not Submitted |  |  | Claim listing once discovered | 2026-06-13 |
+| mcp.directory | Aggregator | Submit on site (auto-pull npm/PyPI) | 🟡 Submitted | 2026-06-15 |  | Submitted 06-15, 24h review + email on publish; confirm live ~06-16 | 2026-06-15 |
 | awesome-mcp-servers | Curated GitHub list | GitHub PR/issue | 🟡 Pending Review | 2026-06-13 | https://github.com/punkpeye/awesome-mcp-servers/pull/7417 | Submit to Glama and update PR #7417 | 2026-06-13 |
 | MCP Index | Aggregator | Submit on site | ☐ Not Submitted |  |  | Submit listing | 2026-06-13 |
 | Goose Extensions (Block) | In-client extension directory | PR/submit to goose extensions site | ☐ Not Submitted |  |  | Verify current submission path; CLI-command extension fits the binary/npx vectors | 2026-06-13 |
