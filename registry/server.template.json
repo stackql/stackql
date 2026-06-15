@@ -40,9 +40,7 @@
     },
     {
       "registryType": "oci",
-      "registryBaseUrl": "https://docker.io",
-      "identifier": "stackql/stackql-mcp",
-      "version": "__VERSION__",
+      "identifier": "docker.io/stackql/stackql-mcp:__VERSION__",
       "transport": { "type": "stdio" }
     },
     {

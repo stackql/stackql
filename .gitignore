@@ -12,3 +12,5 @@ pypi/dist/
 pypi/src/stackql_mcp_server/platforms.json
 pypi/src/*.egg-info/
 /.venv*
+.pypirc
+__pycache__/
