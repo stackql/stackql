@@ -23,6 +23,7 @@
 [stars]: https://img.shields.io/github/stars/stackql/stackql?style=flat-square "GitHub Stars"
 [forks]: https://img.shields.io/github/forks/stackql/stackql?style=flat-square "GitHub Forks"
 [contributors]: https://img.shields.io/github/contributors/stackql/stackql?style=flat-square "Contributors"
+[mcpregistrybadge]: https://img.shields.io/badge/MCP%20Registry-io.github.stackql%2Fstackql--mcp-blue?style=flat-square "MCP Registry"
 <!-- github links -->
 [issues]: https://github.com/stackql/stackql/issues/new?assignees=&labels=bug&template=bug_report.md&title=%5BBUG%5D
 [features]: https://github.com/stackql/stackql/issues/new?assignees=&labels=enhancement&template=feature_request.md&title=%5BFEATURE%5D
@@ -36,6 +37,8 @@
 [lightmodeterm]: /docs/images/stackql-dark-term.gif#gh-light-mode-only
 <!-- misc links -->
 [twitter]: https://twitter.com/stackql
+[mcpregistry]: https://registry.modelcontextprotocol.io/?search=stackql
+[mcpdocs]: https://stackql.io/docs
 
 <!-- language: lang-none -->
 <div align="center">
@@ -44,6 +47,7 @@
 ![platforms]
 ![license]
 ![build]
+[![MCP Registry][mcpregistrybadge]][mcpregistry]
 ![stars]
 ![forks]
 ![contributors]
@@ -83,6 +87,7 @@
 <summary>Contents</summary>
 <ol>
 <li><a href="#about-the-project">About The Project</a></li>
+<li><a href="#mcp-server">MCP Server</a></li>
 <li><a href="#installation">Installation</a></li>
 <li><a href="#usage">Usage</a></li>
 <!-- <li><a href="#roadmap">Roadmap</a></li> -->
@@ -138,6 +143,93 @@ flowchart LR
 More detailed design documentation can be found in the [here][designdocs].
 
 </details>
+
+## MCP Server
+
+StackQL is an [MCP](https://modelcontextprotocol.io) server - SQL over 40+ cloud and SaaS providers for AI agents.  Point any MCP-capable client (Claude, VS Code, Cursor, etc.) at StackQL and it can query and provision cloud resources using SQL.
+
+Run it over stdio:
+
+```sh
+stackql mcp --mcp.server.type=stdio
+```
+
+StackQL MCP is published to the [Official MCP Registry][mcpregistry] as `io.github.stackql/stackql-mcp` and distributed via npm, PyPI, Docker, a GitHub Action and `.mcpb` bundles.  Pick an install vector and add the matching block to your MCP client config:
+
+<details>
+<summary><b>npm (npx)</b></summary>
+
+```json
+{
+  "mcpServers": {
+    "stackql": {
+      "command": "npx",
+      "args": ["-y", "@stackql/mcp-server"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>PyPI (uvx)</b></summary>
+
+```json
+{
+  "mcpServers": {
+    "stackql": {
+      "command": "uvx",
+      "args": ["stackql-mcp-server"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Docker</b></summary>
+
+```json
+{
+  "mcpServers": {
+    "stackql": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "stackql/stackql-mcp"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>.mcpb bundle</b></summary>
+
+> Download the bundle for your platform from the [latest release](https://github.com/stackql/stackql/releases/latest) and install it in your MCP client (one-click in clients that support `.mcpb`).
+
+- `stackql-mcp-linux-x64.mcpb`
+- `stackql-mcp-linux-arm64.mcpb`
+- `stackql-mcp-windows-x64.mcpb`
+- `stackql-mcp-darwin-universal.mcpb`
+
+</details>
+
+<details>
+<summary><b>GitHub Actions</b></summary>
+
+> Wire StackQL MCP into agentic CI workflows.  Defaults to `read_only` mode, the safe default for CI.
+
+```yaml
+- uses: stackql/setup-stackql-mcp@v1
+  with:
+    mode: read_only
+```
+
+</details>
+
+For client-specific setup, authentication and server modes, see the [full MCP install and usage docs][mcpdocs].
 
 ## Installation
 
