@@ -17,10 +17,12 @@
 [setupaction]: https://github.com/marketplace/actions/stackql-studios-setup-stackql
 [execaction]: https://github.com/marketplace/actions/stackql-studios-stackql-exec
 <!-- badges -->
-[badge1]: https://img.shields.io/badge/platform-windows%20macos%20linux-brightgreen "Platforms"
-[badge2]: https://github.com/stackql/stackql/workflows/Go/badge.svg "Go"
-[badge3]: https://img.shields.io/github/license/stackql/stackql "License"
-[badge4]: https://img.shields.io/tokei/lines/github/stackql/stackql "Lines"    
+[platforms]: https://img.shields.io/badge/platform-windows%20macos%20linux-brightgreen?style=flat-square "Platforms"
+[license]: https://img.shields.io/badge/license-MIT-blue?style=flat-square "License"
+[build]: https://github.com/stackql/stackql/actions/workflows/build.yml/badge.svg "Build"
+[stars]: https://img.shields.io/github/stars/stackql/stackql?style=flat-square "GitHub Stars"
+[forks]: https://img.shields.io/github/forks/stackql/stackql?style=flat-square "GitHub Forks"
+[contributors]: https://img.shields.io/github/contributors/stackql/stackql?style=flat-square "Contributors"
 <!-- github links -->
 [issues]: https://github.com/stackql/stackql/issues/new?assignees=&labels=bug&template=bug_report.md&title=%5BBUG%5D
 [features]: https://github.com/stackql/stackql/issues/new?assignees=&labels=enhancement&template=feature_request.md&title=%5BFEATURE%5D
@@ -39,24 +41,26 @@
 <div align="center">
 
 [![logo]][homepage]  
-![badge1]
-![badge2]
-![badge3]
-![badge4]
+![platforms]
+![license]
+![build]
+![stars]
+![forks]
+![contributors]
 
 </div>
 
 <div align="center">
 
-![homebrew downloads](https://img.shields.io/homebrew/installs/dy/stackql?label=homebrew%20downloads)
-![homebrew version](https://img.shields.io/homebrew/v/stackql?label=homebrew%20version)
-![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/stackql/stackql/total?label=github%20release%20downloads)
+<!-- ![homebrew downloads](https://img.shields.io/homebrew/installs/dy/stackql?label=homebrew%20downloads) -->
 ![GitHub Release](https://img.shields.io/github/v/release/stackql/stackql?label=github%20release)
-![Docker Pulls](https://img.shields.io/docker/pulls/stackql/stackql)
+![GitHub Downloads](https://img.shields.io/github/downloads/stackql/stackql/total?label=github%20downloads)
 ![Docker Image Version](https://img.shields.io/docker/v/stackql/stackql?label=docker%20version)
+![Docker Pulls](https://img.shields.io/docker/pulls/stackql/stackql)
 ![Chocolatey Downloads](https://img.shields.io/chocolatey/dt/stackql?label=chocolatey%20downloads)
 ![Chocolatey Version](https://img.shields.io/chocolatey/v/stackql)
-![PyPI - Downloads](https://img.shields.io/pypi/dm/stackql-deploy?label=pypi%20downloads)
+![homebrew version](https://img.shields.io/homebrew/v/stackql?label=homebrew%20version)
+<!-- ![PyPI - Downloads](https://img.shields.io/pypi/dm/stackql-deploy?label=pypi%20downloads) -->
 
 </div>
 <div align="center">
