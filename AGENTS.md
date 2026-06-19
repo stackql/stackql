@@ -28,6 +28,7 @@ Common commands (run from repo root):
 - Unit tests: `python cicd/python/build.py --test` (CI uses `go test -timeout 1200s --tags "sqlite_stackql" -v ./...`).
 - Robot tests: `python cicd/python/build.py --robot-test` (requires the binary from the build step).
 - Lint: `golangci-lint run` (CI pins the version in [`.github/workflows/lint.yml`](/.github/workflows/lint.yml); config in [`.golangci.yml`](/.golangci.yml)).
+- MCP fuzz (local): `bash scripts/fuzz-mcp-surface.sh` (see [docs/mcp-fuzz.md](/docs/mcp-fuzz.md)).
 
 ## Coding Style & Naming Conventions
 
