@@ -113,6 +113,10 @@ pack_bundle() {
   cp "$src" "$stage/server/$binname"
   chmod +x "$stage/server/$binname" 2>/dev/null || true
   cp "$ROOT_DIR/assets/icon.png" "$stage/icon.png"
+  # LICENSE text (matches the manifest's declared MIT license) and a bundle
+  # README - both required for the Anthropic MCP Directory listing.
+  cp "$ROOT_DIR/LICENSE" "$stage/LICENSE"
+  cp "$ROOT_DIR/manifest/BUNDLE_README.md" "$stage/README.md"
   sed -e "s/__BINARY_NAME__/${binname}/g" -e "s/__VERSION__/${VERSION}/g" \
       "$TEMPLATE" > "$stage/manifest.json"
   out="$DIST_DIR/stackql-mcp-${label}.mcpb"
