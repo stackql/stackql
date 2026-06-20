@@ -11,6 +11,7 @@
   "homepage": "https://stackql.io",
   "documentation": "https://stackql.io/docs",
   "license": "MIT",
+  "privacy_policies": ["https://stackql.io/privacy"],
   "icon": "icon.png",
   "server": {
     "type": "binary",
