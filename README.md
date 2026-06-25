@@ -24,6 +24,7 @@
 [forks]: https://img.shields.io/github/forks/stackql/stackql?style=flat-square "GitHub Forks"
 [contributors]: https://img.shields.io/github/contributors/stackql/stackql?style=flat-square "Contributors"
 [mcpregistrybadge]: https://img.shields.io/badge/MCP%20Registry-io.github.stackql%2Fstackql--mcp-blue?style=flat-square "MCP Registry"
+[mcpserver]: https://img.shields.io/npm/v/@stackql/mcp-server?style=flat-square&label=mcp%20server "MCP Server"
 <!-- github links -->
 [issues]: https://github.com/stackql/stackql/issues/new?assignees=&labels=bug&template=bug_report.md&title=%5BBUG%5D
 [features]: https://github.com/stackql/stackql/issues/new?assignees=&labels=enhancement&template=feature_request.md&title=%5BFEATURE%5D
@@ -38,39 +39,46 @@
 <!-- misc links -->
 [twitter]: https://twitter.com/stackql
 [mcpregistry]: https://registry.modelcontextprotocol.io/?search=stackql
+[npmjsmcpregistry]: https://www.npmjs.com/package/@stackql/mcp-server
 [mcpdocs]: https://stackql.io/docs
 
 <!-- language: lang-none -->
 <div align="center">
 
 [![logo]][homepage]  
+
 ![platforms]
 ![license]
 ![build]
 [![MCP Registry][mcpregistrybadge]][mcpregistry]
-![stars]
-![forks]
-![contributors]
-
-</div>
-
-<div align="center">
-
-<!-- ![homebrew downloads](https://img.shields.io/homebrew/installs/dy/stackql?label=homebrew%20downloads) -->
+[![MCP Server][mcpserver]][npmjsmcpregistry]
 ![GitHub Release](https://img.shields.io/github/v/release/stackql/stackql?label=github%20release)
 ![GitHub Downloads](https://img.shields.io/github/downloads/stackql/stackql/total?label=github%20downloads)
-![Docker Image Version](https://img.shields.io/docker/v/stackql/stackql?label=docker%20version)
 ![Docker Pulls](https://img.shields.io/docker/pulls/stackql/stackql)
-![Chocolatey Downloads](https://img.shields.io/chocolatey/dt/stackql?label=chocolatey%20downloads)
-![Chocolatey Version](https://img.shields.io/chocolatey/v/stackql)
-![homebrew version](https://img.shields.io/homebrew/v/stackql?label=homebrew%20version)
-<!-- ![PyPI - Downloads](https://img.shields.io/pypi/dm/stackql-deploy?label=pypi%20downloads) -->
+![stars]
 
 </div>
+
+<!-- <div align="center"> -->
+
+<!-- ![GitHub Release](https://img.shields.io/github/v/release/stackql/stackql?label=github%20release) -->
+<!-- ![GitHub Downloads](https://img.shields.io/github/downloads/stackql/stackql/total?label=github%20downloads) -->
+<!-- ![Docker Pulls](https://img.shields.io/docker/pulls/stackql/stackql) -->
+<!-- ![Chocolatey Downloads](https://img.shields.io/chocolatey/dt/stackql?label=chocolatey%20downloads) -->
+
+<!-- ![Docker Image Version](https://img.shields.io/docker/v/stackql/stackql?label=docker%20version) -->
+<!-- ![Chocolatey Version](https://img.shields.io/chocolatey/v/stackql) -->
+<!-- ![homebrew version](https://img.shields.io/homebrew/v/stackql?label=homebrew%20version) -->
+<!-- ![homebrew downloads](https://img.shields.io/homebrew/installs/dy/stackql?label=homebrew%20downloads) -->
+<!-- ![PyPI - Downloads](https://img.shields.io/pypi/dm/stackql-deploy?label=pypi%20downloads) -->
+
+<!-- </div> -->
 <div align="center">
 
 ### Deploy, manage and query cloud resources and interact with APIs using SQL
+_The Universal Interface for the Agentic Era. Configuration-as-Data. Infrastructure-as-Context._
 <!-- <h3 align="center">SQL based XOps, observability and middleware framework</h3> -->
+
 
 <p align="center">
 

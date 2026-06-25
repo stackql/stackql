@@ -20,6 +20,10 @@ on:
       - 'AGENTS.md'
       - 'CLAUDE.md'
       - 'server.json'
+      - 'glama.json'
+      - 'get-app/**'
+      - 'test-get-app.ps1'
+      - 'test-get-app.sh'
   pull_request:
     branches:
       - main
@@ -37,6 +41,10 @@ on:
       - 'AGENTS.md'
       - 'CLAUDE.md'
       - 'server.json'
+      - 'glama.json'
+      - 'get-app/**'
+      - 'test-get-app.ps1'
+      - 'test-get-app.sh'
 env:
   GOTESTCMD: "go test -timeout 1200s --tags \"sqlite_stackql\" -v ./..."
   TESTSCRIPT: "test/deprecated/python/main.py"
@@ -328,6 +336,57 @@ jobs:
       with:
         name: stackql_windows_amd64
         path: build/stackql.exe
+
+  winarmsmoke:
+    name: Windows arm64 Smoke (x64 emulation)
+    needs: winbuild
+    runs-on: windows-11-arm
+    timeout-minutes: ${{ vars.DEFAULT_SHORT_JOB_TIMEOUT_MIN == '' && 15 || vars.DEFAULT_SHORT_JOB_TIMEOUT_MIN }}
+    steps:
+
+    # We deliberately do NOT build here: there is no native windows/arm64 build
+    # (goreleaser only targets windows/amd64). This job downloads the amd64 .exe
+    # produced by winbuild and runs it on a native arm64 host, validating that it
+    # works under Windows 11's built-in x64 emulation - the basis for the
+    # "runs on Windows-on-ARM via emulation" claim in the install docs.
+    - name: Download Windows amd64 artifact
+      uses: actions/download-artifact@v4.1.2
+      with:
+        name: stackql_windows_amd64
+        path: build
+
+    - name: Confirm host is arm64 (binary under test is x64)
+      shell: pwsh
+      run: |
+        Write-Host "PROCESSOR_ARCHITECTURE = $env:PROCESSOR_ARCHITECTURE"
+        if ($env:PROCESSOR_ARCHITECTURE -notmatch 'ARM64') {
+          throw "expected an arm64 host so the x64 binary is emulated, got '$env:PROCESSOR_ARCHITECTURE'"
+        }
+
+    - name: Smoke test - version and exec under emulation
+      shell: pwsh
+      run: |
+        $ErrorActionPreference = 'Stop'
+        $bin = ".\build\stackql.exe"
+
+        Write-Host "== stackql --version =="
+        & $bin --version
+        if ($LASTEXITCODE -ne 0) { throw "stackql --version failed (exit $LASTEXITCODE)" }
+
+        # 'exec' runs a query in batch mode (no TTY needed) and exercises the same
+        # cgo/sqlite engine the interactive shell uses, so it fully covers the
+        # "x64 binary runs under emulation" claim. The interactive shell is not
+        # smoke-tested here: it's a REPL that requires a TTY, so piping a query to
+        # it yields EOF + "goodbye" without ever executing the query.
+        # Native command output is an array of lines; Out-String collapses it so
+        # -match returns a scalar boolean.
+        Write-Host "== stackql exec ""select 'StackQL'"" =="
+        $execOut = (& $bin exec "select 'StackQL' as smoke" | Out-String)
+        if ($LASTEXITCODE -ne 0) { throw "stackql exec failed (exit $LASTEXITCODE)" }
+        Write-Host $execOut
+        if ($execOut -notmatch 'StackQL') { throw "exec did not return 'StackQL'" }
+
+        Write-Host "Windows arm64 (x64 emulation) smoke PASSED"
 
   linuxbuild:
     name: Linux Build

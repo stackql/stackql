@@ -1,0 +1,11 @@
+name = "get-stackql"
+main = "src/index.ts"
+compatibility_date = "2025-06-01"
+workers_dev = false
+
+# Serve the worker on the zone apex. `custom_domain = true` makes Wrangler create
+# and manage the proxied DNS record for get-stackql.io automatically, so no
+# manual DNS entry is needed. The zone must already exist in the Cloudflare account.
+routes = [
+  { pattern = "get-stackql.io", custom_domain = true }
+]
