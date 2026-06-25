@@ -373,17 +373,19 @@ jobs:
         & $bin --version
         if ($LASTEXITCODE -ne 0) { throw "stackql --version failed (exit $LASTEXITCODE)" }
 
+        # Native command output comes back as an array of lines; Out-String
+        # collapses it to a single string so -match returns a scalar boolean.
         # A distinctive literal (42) avoids matching version numbers in any banner.
         Write-Host "== stackql exec 'select 42' =="
-        $execOut = & $bin exec "select 42 as smoke"
-        Write-Host $execOut
+        $execOut = (& $bin exec "select 42 as smoke" | Out-String)
         if ($LASTEXITCODE -ne 0) { throw "stackql exec failed (exit $LASTEXITCODE)" }
+        Write-Host $execOut
         if ($execOut -notmatch '42') { throw "exec 'select 42' did not return 42" }
 
         Write-Host "== stackql shell 'select 42' (query on stdin) =="
-        $shellOut = "select 42 as smoke;" | & $bin shell
-        Write-Host $shellOut
+        $shellOut = ("select 42 as smoke;" | & $bin shell | Out-String)
         if ($LASTEXITCODE -ne 0) { throw "stackql shell failed (exit $LASTEXITCODE)" }
+        Write-Host $shellOut
         if ($shellOut -notmatch '42') { throw "shell 'select 42' did not return 42" }
 
         Write-Host "Windows arm64 (x64 emulation) smoke PASSED"
