@@ -2,3 +2,7 @@ node_modules/
 .wrangler/
 .dev.vars
 stackql
+stackql.exe
+stackql.zip
+stackql.pkg
+stackql-*-shell.sh

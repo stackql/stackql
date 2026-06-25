@@ -1,3 +1,5 @@
+import { CLOUD_SHELL_SCRIPTS, type CloudShellScript } from "./cloud-shell-scripts";
+
 const GITHUB_REPO = "stackql/stackql";
 const RELEASE_BASE = `https://github.com/${GITHUB_REPO}/releases/latest/download`;
 const RELEASES_URL = `https://github.com/${GITHUB_REPO}/releases/latest`;
@@ -13,6 +15,17 @@ const DOCS_URL = "https://stackql.io/docs";
 //                   for irm/iwr). This is the universal one-liner.
 //   /install.sh   - always the POSIX sh installer (verbose / explicit).
 //   /install.ps1  - always the PowerShell installer (verbose / explicit).
+//
+// Cloud shell / web terminal helpers add a provider segment:
+//
+//   /install/<provider>   - installs ./stackql plus the matching cloud shell
+//   /install.sh/<provider>  helper (e.g. stackql-aws-cloud-shell.sh), both made
+//                           executable. Providers: aws, google, azure, databricks.
+//                           These web terminals are all Linux, so the helpers are
+//                           only served to Linux callers; a macOS / Windows
+//                           User-Agent gets a short "Linux downloads only" message
+//                           instead. The generated installer also re-checks
+//                           `uname` at runtime as a backstop.
 //
 // The explicit endpoints also guard against being run in the wrong shell: if the
 // sh installer is fetched by PowerShell (or the PowerShell installer by
@@ -188,6 +201,118 @@ echo ""
 exit 1
 `;
 
+// Cloud shell helpers target Linux web terminals only. Browsers and CLI tools on
+// Windows or macOS carry that OS in their User-Agent; bare curl/wget (the cloud
+// shell case) carry no OS, so we default-allow them just like getAssetName()
+// treats "/" requests as Linux.
+function isLinuxShellTarget(ua: string): boolean {
+  return !/windows|darwin|macintosh|mac os/i.test(ua);
+}
+
+// Served to non-Linux callers that ask for a cloud shell helper, in the language
+// of the shell that's about to run it.
+const LINUX_ONLY_SH = `#!/bin/sh
+# stackql cloud shell helpers are Linux-only.
+echo "stackql: cloud shell helper scripts are supported for Linux downloads only." >&2
+echo "Install just the stackql binary with:" >&2
+echo "" >&2
+echo "    curl -fsSL https://get-stackql.io/install | sh" >&2
+echo "" >&2
+exit 1
+`;
+
+const LINUX_ONLY_PS1 = `# stackql cloud shell helpers are Linux-only.
+Write-Host "stackql: cloud shell helper scripts are supported for Linux downloads only."
+Write-Host "Install just the stackql binary with:"
+Write-Host ""
+Write-Host "    irm https://get-stackql.io/install | iex"
+Write-Host ""
+`;
+
+// Builds an sh installer that drops ./stackql and the given cloud shell helper
+// into the current directory, both executable. The helper body is embedded via a
+// quoted heredoc so its contents are written verbatim.
+function providerInstallSh(script: CloudShellScript): string {
+  return `#!/bin/sh
+# stackql cloud shell installer - https://get-stackql.io/install/<provider>
+# Downloads the stackql binary and the ${script.file} helper into the current
+# directory, both executable. For Linux web terminals / cloud shells.
+set -eu
+
+os=$(uname -s)
+if [ "$os" != "Linux" ]; then
+  echo "stackql: cloud shell helper scripts are supported for Linux downloads only." >&2
+  echo "Detected $os. Install just the binary with: curl -fsSL https://get-stackql.io/install | sh" >&2
+  exit 1
+fi
+
+base="${RELEASE_BASE}"
+arch=$(uname -m)
+case "$arch" in
+  x86_64 | amd64)        asset="stackql_linux_amd64.zip" ;;
+  aarch64 | arm64)       asset="stackql_linux_arm64.zip" ;;
+  *)
+    echo "stackql: there's no prebuilt Linux binary for your CPU ($arch)." >&2
+    echo "Browse all downloads: ${RELEASES_URL}" >&2
+    exit 1
+    ;;
+esac
+
+if ! command -v unzip >/dev/null 2>&1; then
+  echo "stackql: 'unzip' is required to extract $asset but was not found." >&2
+  echo "Install it (e.g. apt-get install unzip) and re-run." >&2
+  exit 1
+fi
+
+echo "Downloading $asset ..."
+tmp=$(mktemp -d)
+curl -fsSL "$base/$asset" -o "$tmp/stackql.zip"
+unzip -oq "$tmp/stackql.zip" stackql -d "$tmp" 2>/dev/null || unzip -oq "$tmp/stackql.zip" -d "$tmp"
+bin=$(find "$tmp" -type f -name stackql 2>/dev/null | head -n1)
+if [ -z "$bin" ]; then
+  echo "stackql: couldn't find the stackql binary inside $asset." >&2
+  rm -rf "$tmp"
+  exit 1
+fi
+cp "$bin" ./stackql
+chmod +x ./stackql
+rm -rf "$tmp"
+
+# Write the cloud shell helper alongside the binary.
+cat > ./${script.file} <<'STACKQL_CLOUD_SHELL_EOF'
+${script.body.replace(/\n+$/, "")}
+STACKQL_CLOUD_SHELL_EOF
+chmod +x ./${script.file}
+
+echo "Installed ./stackql and ./${script.file} (Linux/$arch)."
+echo "Launch the cloud shell helper with: ./${script.file}"
+`;
+}
+
+// Routes /install[.sh|.ps1]/<provider>. Unknown providers get a short message
+// listing the supported ones; non-Linux callers get the Linux-only message.
+function cloudShellResponse(provider: string, ua: string): Response {
+  const script = CLOUD_SHELL_SCRIPTS[provider];
+  if (!script) {
+    const supported = Object.keys(CLOUD_SHELL_SCRIPTS).join(", ");
+    // Don't reflect arbitrary path content back into the served script.
+    const safe = provider.replace(/[^a-z0-9_-]/gi, "").slice(0, 40);
+    if (isPowerShell(ua)) {
+      return ps1Response(`# stackql - unknown cloud shell helper.
+Write-Host "stackql: no cloud shell helper named '${safe}'. Supported: ${supported}."
+`);
+    }
+    return shResponse(`#!/bin/sh
+echo "stackql: no cloud shell helper named '${safe}'. Supported: ${supported}." >&2
+exit 1
+`);
+  }
+  if (!isLinuxShellTarget(ua)) {
+    return isPowerShell(ua) ? ps1Response(LINUX_ONLY_PS1) : shResponse(LINUX_ONLY_SH);
+  }
+  return shResponse(providerInstallSh(script));
+}
+
 function shResponse(body: string): Response {
   return new Response(body, {
     headers: { "content-type": "text/x-shellscript; charset=utf-8" },
@@ -204,6 +329,17 @@ export default {
   fetch(req: Request): Response {
     const url = new URL(req.url);
     const ua = req.headers.get("user-agent") ?? "";
+
+    // Cloud shell helpers: /install/<provider>, /install.sh/<provider>, and
+    // /install.ps1/<provider> (the last only to give Windows callers the
+    // Linux-only message rather than a 301 to stackql.io).
+    const segments = url.pathname.split("/").filter(Boolean);
+    if (
+      segments.length === 2 &&
+      (segments[0] === "install" || segments[0] === "install.sh" || segments[0] === "install.ps1")
+    ) {
+      return cloudShellResponse(segments[1].toLowerCase(), ua);
+    }
 
     // Universal installer: pick the script that matches the calling shell.
     if (url.pathname === "/install") {

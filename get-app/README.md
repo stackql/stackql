@@ -17,7 +17,28 @@ Behaviour:
   to pick the right OS + arch asset and drops `./stackql` in the current dir.
 - `GET /install.ps1` - always the PowerShell installer. Downloads and expands the
   Windows zip (`stackql.exe`) into the current directory.
+- `GET /install/<provider>` (also `GET /install.sh/<provider>`) - cloud shell /
+  web terminal helper installer. Serves an `sh` installer that drops `./stackql`
+  **and** the matching helper script (e.g. `stackql-aws-cloud-shell.sh`) into the
+  current directory, both executable. Providers: `aws`, `google`, `azure`,
+  `databricks`. Use it as `curl -fsSL https://get-stackql.io/install/aws | sh`.
 - Any other path - `301`-redirects to `https://stackql.io`.
+
+### Cloud shell helpers
+
+The helper scripts (`stackql-aws-cloud-shell.sh` etc.) used to be packaged into
+the Linux release zip. They are now embedded in the worker
+([`src/cloud-shell-scripts.ts`](src/cloud-shell-scripts.ts)) and delivered on
+demand via `/install/<provider>`. Each provider installer downloads the Linux
+binary, writes the helper alongside it, and makes both executable.
+
+These web terminals (AWS CloudShell, Google Cloud Shell, Azure Cloud Shell, the
+Databricks web terminal) are all Linux, so the helpers are served to Linux
+callers only. A macOS or Windows `User-Agent` is answered with a short
+`cloud shell helper scripts are supported for Linux downloads only` message
+instead of a script, and the generated installer re-checks `uname` at runtime as
+a backstop. Bare `curl`/`wget` (no OS in the UA, as in a cloud shell) are treated
+as Linux. Unknown providers get a message listing the supported ones.
 
 ### Asset shapes
 
@@ -63,6 +84,8 @@ curl -A "curl/8.4.0" http://localhost:8787/install            # -> sh installer
 curl -A "WindowsPowerShell/5.1" http://localhost:8787/install  # -> PowerShell installer
 curl -A "WindowsPowerShell/5.1" http://localhost:8787/install.sh   # -> "use install.ps1" guide
 curl -A "curl/8.4.0" http://localhost:8787/install.ps1            # -> "use install.sh" guide
+curl -A "curl/8.4.0" http://localhost:8787/install/aws            # -> aws cloud shell installer
+curl -A "Mozilla/5.0 (Macintosh)" http://localhost:8787/install/aws  # -> "Linux downloads only"
 curl -sI -A "Mozilla/5.0 (Macintosh)" http://localhost:8787/   # -> 302 to macos pkg
 curl -sI -A "curl/8.4.0" http://localhost:8787/                # -> 302 to linux zip
 ```

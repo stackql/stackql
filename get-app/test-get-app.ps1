@@ -22,6 +22,7 @@ function Fail { param([string]$Name) Write-Host "  FAIL " -ForegroundColor Red -
 foreach ($f in @('stackql', 'stackql.exe', 'stackql.zip', 'stackql.pkg')) {
   if (Test-Path $f) { Remove-Item $f -Force }
 }
+Get-ChildItem -Filter 'stackql-*-shell.sh' -ErrorAction SilentlyContinue | Remove-Item -Force
 
 Add-Type -AssemblyName System.Net.Http
 
@@ -106,6 +107,19 @@ Assert-Body "/install.sh (curl)     -> sh installer"      "$Base/install.sh"  $U
 # Wrong-shell guards point at the correct command instead of erroring.
 Assert-Body "/install.ps1 (curl)    -> 'use install.sh'"  "$Base/install.ps1" $UaCurl 'install.sh | sh'
 Assert-Body "/install.sh (ps)       -> 'use install.ps1'" "$Base/install.sh"  $UaPs   'install.ps1 | iex'
+Write-Host ""
+
+Write-Host "Cloud shell helper routing:"
+# Provider routes serve the sh installer bundling ./stackql + the helper (curl UA).
+Assert-Body "/install/aws (curl)        -> aws helper"        "$Base/install/aws"        $UaCurl 'stackql-aws-cloud-shell.sh'
+Assert-Body "/install.sh/google (curl)  -> google helper"     "$Base/install.sh/google"  $UaCurl 'stackql-google-cloud-shell.sh'
+Assert-Body "/install/azure (curl)      -> azure helper"      "$Base/install/azure"      $UaCurl 'stackql-azure-cloud-shell.sh'
+Assert-Body "/install/databricks (curl) -> databricks helper" "$Base/install/databricks" $UaCurl 'stackql-databricks-shell.sh'
+# Helpers are Linux-only: a PowerShell (Windows) User-Agent gets a friendly message.
+Assert-Body "/install/aws (powershell)  -> Linux-only msg"    "$Base/install/aws"        $UaPs   'Linux downloads only'
+Assert-Body "/install.ps1/aws (ps)      -> Linux-only msg"    "$Base/install.ps1/aws"    $UaPs   'Linux downloads only'
+# Unknown providers are rejected, listing the supported ones.
+Assert-Body "/install/bogus (curl)      -> unknown provider"  "$Base/install/bogus"      $UaCurl 'no cloud shell helper'
 Write-Host ""
 
 Write-Host "Root + fallback redirects:"

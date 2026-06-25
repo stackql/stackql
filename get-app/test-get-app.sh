@@ -87,6 +87,19 @@ check_body "/install.sh (ps)       -> 'use install.ps1'"   "$BASE/install.sh"  "
 check_body "/install.ps1 (curl)    -> 'use install.sh'"    "$BASE/install.ps1" "$UA_CURL" "install.sh | sh"
 echo
 
+echo "Cloud shell helper routing:"
+# Provider routes serve an sh installer that bundles ./stackql + the helper.
+check_body "/install/aws (curl)        -> aws helper"        "$BASE/install/aws"        "$UA_CURL" "stackql-aws-cloud-shell.sh"
+check_body "/install.sh/google (curl)  -> google helper"     "$BASE/install.sh/google"  "$UA_CURL" "stackql-google-cloud-shell.sh"
+check_body "/install/azure (curl)      -> azure helper"      "$BASE/install/azure"      "$UA_CURL" "stackql-azure-cloud-shell.sh"
+check_body "/install/databricks (curl) -> databricks helper" "$BASE/install/databricks" "$UA_CURL" "stackql-databricks-shell.sh"
+# Helpers are Linux-only: macOS / Windows User-Agents get a friendly message, not a script.
+check_body "/install/aws (macOS UA)    -> Linux-only msg"    "$BASE/install/aws" "Mozilla/5.0 (Macintosh; Intel Mac OS X)" "Linux downloads only"
+check_body "/install/aws (windows UA)  -> Linux-only msg"    "$BASE/install/aws" "$UA_PS"   "Linux downloads only"
+# Unknown providers are rejected, listing the supported ones.
+check_body "/install/bogus (curl)      -> unknown provider"  "$BASE/install/bogus" "$UA_CURL" "no cloud shell helper"
+echo
+
 echo "Root + fallback redirects:"
 check_redirect "/ (linux UA)" "$BASE/" "$UA_CURL"                                 "stackql_linux_amd64.zip"
 check_redirect "/ (macOS UA)" "$BASE/" "Mozilla/5.0 (Macintosh; Intel Mac OS X)"  "stackql_darwin_multiarch.pkg"
@@ -129,6 +142,23 @@ if [ -e "$BIN" ]; then
   fi
   echo
 fi
+
+# Cloud shell helper install is Linux-only (the web terminals are all Linux), so
+# only run the end-to-end unpack where the installer will actually proceed.
+echo "Running cloud shell installer:"
+if [ "$(uname -s)" = "Linux" ]; then
+  rm -f stackql-aws-cloud-shell.sh
+  curl -fsSL "$BASE/install/aws" | sh
+  helper=stackql-aws-cloud-shell.sh
+  if [ -e "$helper" ] && [ -x "$helper" ]; then
+    pass "aws installer dropped an executable $helper alongside $BIN"
+  else
+    fail "aws installer did not produce an executable $helper"
+  fi
+else
+  echo "  (skipped: cloud shell helpers are Linux-only; this host is $(uname -s))"
+fi
+echo
 
 # Final summary.
 if [ "$FAILURES" -eq 0 ]; then
