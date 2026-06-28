@@ -646,6 +646,9 @@ func (dp *standardDependencyPlanner) orchestrate(
 			annotationCtx.GetTableMeta(),
 		)
 		bldrInput.SetIsAwait(false) // returning hardcoded to false for now
+		// Carry the SELECT statement so the REST acquire path can translate query
+		// options (WHERE/ORDER BY/LIMIT/projection) into OData push-down params.
+		bldrInput.SetParserNode(dp.sqlStatement)
 		builder = primitivebuilder.NewSingleSelectAcquire(
 			dp.primitiveComposer.GetGraphHolder(),
 			dp.handlerCtx,

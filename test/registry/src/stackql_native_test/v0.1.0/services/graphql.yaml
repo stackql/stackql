@@ -1,0 +1,83 @@
+openapi: 3.0.3
+info:
+  title: GraphQL cursor pagination
+  version: v0.1.0
+  description: |-
+    Mocked GraphQL provider exercising the any-sdk cursor_after pagination strategy
+    and the stackql GraphQL LIMIT push-down. The query template references
+    {{ .limit }} (fed from the SQL LIMIT) and {{ .cursor }} (the Relay-style
+    ", after: <cursor>" appended automatically between pages). The native_test flask
+    mock returns two things per page until exhausted.
+servers:
+  - url: http://localhost:1070
+paths:
+  /graphql:
+    post:
+      x-stackQL-graphQL:
+        url: http://localhost:1070/graphql
+        httpVerb: POST
+        responseSelection:
+          jsonPath: '$.data.things.edges[*].node'
+        cursor:
+          jsonPath: '$.data.things.edges[-1:].cursor'
+        query: >
+          query {
+            things(first: {{ .limit }}{{ .cursor }}) {
+              edges {
+                node {
+                  name
+                  rank
+                }
+                cursor
+              }
+              pageInfo {
+                hasNextPage
+                endCursor
+              }
+            }
+          }
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      things:
+                        type: object
+                        properties:
+                          edges:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                cursor:
+                                  type: string
+                                node:
+                                  type: object
+                                  properties:
+                                    name:
+                                      type: string
+                                    rank:
+                                      type: integer
+components:
+  x-stackQL-resources:
+    things:
+      id: stackql_native_test.graph.things
+      name: things
+      title: Things (GraphQL cursor pagination)
+      methods:
+        list:
+          operation:
+            $ref: '#/paths/~1graphql/post'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: '$.data.things.edges[*].node'
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/things/methods/list'

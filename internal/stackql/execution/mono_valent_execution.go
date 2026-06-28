@@ -1393,6 +1393,12 @@ func (mv *monoValentExecution) GetExecutor() (func(pc primitive.IPrimitiveCtx) i
 			mv.tableMeta,
 			lateBindingData,
 		)
+		// Optionally translate SELECT query options (WHERE/ORDER BY/LIMIT/OFFSET/
+		// projection/COUNT) into OData-style push-down query params. No-op unless the
+		// method carries a queryParamPushdown config; client-side filtering is unchanged.
+		if parserNode, nodeOk := mv.bldrInput.GetParserNode(); nodeOk {
+			armouryGenerator = maybeDecorateWithODataPushdown(armouryGenerator, parserNode, m)
+		}
 		currentTcc := mv.insertPreparedStatementCtx.GetGCCtrlCtrs().Clone()
 		mv.graphHolder.AddTxnControlCounters(currentTcc)
 		mr := prov.InferMaxResultsElement(m)

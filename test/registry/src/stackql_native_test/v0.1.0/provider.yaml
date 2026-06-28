@@ -42,5 +42,23 @@ providerServices:
       $ref: stackql_native_test/v0.1.0/services/xml_restxml.yaml
     title: schema_driven_xml rest-xml archetype
     version: v0.1.0
+  odata:
+    description: OData query-option push-down via any-sdk ApplyPushdown.
+    id: odata:v0.1.0
+    name: odata
+    preferred: true
+    service:
+      $ref: stackql_native_test/v0.1.0/services/odata.yaml
+    title: OData predicate push-down
+    version: v0.1.0
+  graph:
+    description: GraphQL cursor pagination + LIMIT push-down.
+    id: graph:v0.1.0
+    name: graph
+    preferred: true
+    service:
+      $ref: stackql_native_test/v0.1.0/services/graphql.yaml
+    title: GraphQL cursor pagination
+    version: v0.1.0
 servers: []
 version: v0.1.0

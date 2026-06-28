@@ -4,6 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strconv"
+
+	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 
 	"github.com/stackql/any-sdk/public/formulation"
 
@@ -106,6 +109,12 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 
 		for _, reqCtx := range httpArmoury.GetRequestParams() {
 			req := reqCtx.GetRequest()
+			// Emit the GraphQL wire request + raw response when --http.log.enabled is set
+			// (alpha08 ContextWithHTTPLogger), mirroring the REST acquire path.
+			if ss.handlerCtx.GetRuntimeContext().HTTPLogEnabled {
+				req = req.WithContext(
+					graphql.ContextWithHTTPLogger(req.Context(), ss.handlerCtx.GetOutErrFile()))
+			}
 			housekeepingDone := false
 			cc := formulation.NewAnySdkClientConfigurator(
 				ss.handlerCtx.GetRuntimeContext(), prov.GetProviderString(),
@@ -117,6 +126,13 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 			paramMap, err := reqCtx.GetParameters().ToFlatMap()
 			if err != nil {
 				return internaldto.NewErroneousExecutorOutput(err)
+			}
+			// Push a SQL LIMIT N into the GraphQL query variables as `limit`, so a
+			// provider query template referencing {{ .limit }} can bound the page size.
+			if node, nodeOk := ss.bldrInput.GetParserNode(); nodeOk {
+				if limit, hasLimit := graphQLSelectLimit(node); hasLimit {
+					paramMap["limit"] = limit
+				}
 			}
 			cursorJsonPath, ok := gql.GetCursorJSONPath()
 			if !ok {
@@ -248,6 +264,23 @@ func extractGraphQLResponseTransform(tableMeta tablemetadata.ExtendedTableMetada
 		return "", ""
 	}
 	return t.GetType(), t.GetBody()
+}
+
+// graphQLSelectLimit returns the integer LIMIT of a SELECT statement, if present.
+func graphQLSelectLimit(node sqlparser.SQLNode) (int, bool) {
+	sel, ok := node.(*sqlparser.Select)
+	if !ok || sel.Limit == nil {
+		return 0, false
+	}
+	v, ok := sel.Limit.Rowcount.(*sqlparser.SQLVal)
+	if !ok || v.Type != sqlparser.IntVal {
+		return 0, false
+	}
+	n, err := strconv.Atoi(string(v.Val))
+	if err != nil {
+		return 0, false
+	}
+	return n, true
 }
 
 func buildGraphQLCursorConfig(gql formulation.GraphQL, cursorJSONPath string) graphql.CursorConfig {

@@ -13,6 +13,8 @@ Run with:
     flask --app=test/python/stackql_test_tooling/flask/native_test/app run --host 0.0.0.0 --port 1070
 """
 
+import re
+
 from flask import Flask, Response, jsonify, request
 
 
@@ -37,6 +39,56 @@ def create_app() -> Flask:
             {
                 "echoed_body": request.get_data(as_text=True),
                 "ok": True,
+            }
+        )
+
+    # ---- OData push-down target --------------------------------------------
+
+    @app.get("/odata/people")
+    def odata_people():
+        # Echo the DECODED request query (Flask url-decodes args) so tests can assert
+        # which OData options stackql pushed down via any-sdk ApplyPushdown.
+        echoed = " ".join(f"{k}={v}" for k, v in request.args.items())
+        people = [
+            {"name": "Alice", "city": "NYC", "age": 30, "echoed": echoed},
+            {"name": "Acme", "city": "SF", "age": 40, "echoed": echoed},
+            {"name": "Bob", "city": "LA", "age": 25, "echoed": echoed},
+        ]
+        return jsonify({"value": people, "@odata.count": len(people)})
+
+    # ---- GraphQL cursor pagination -----------------------------------------
+
+    _things = [
+        {"name": "red", "rank": 1},
+        {"name": "green", "rank": 2},
+        {"name": "blue", "rank": 3},
+        {"name": "yellow", "rank": 4},
+        {"name": "purple", "rank": 5},
+    ]
+
+    @app.post("/graphql")
+    def graphql():
+        body = request.get_json(silent=True) or {}
+        query = body.get("query", "")
+        # Relay cursor: the edge cursor is its absolute index; "after: N" resumes at N+1.
+        after = re.search(r'after:\s*"(\d+)"', query)
+        start = int(after.group(1)) + 1 if after else 0
+        page = 2
+        window = _things[start:start + page]
+        edges = [
+            {"node": _things[start + i], "cursor": str(start + i)}
+            for i in range(len(window))
+        ]
+        has_next = (start + page) < len(_things)
+        end_cursor = edges[-1]["cursor"] if edges else None
+        return jsonify(
+            {
+                "data": {
+                    "things": {
+                        "edges": edges,
+                        "pageInfo": {"hasNextPage": has_next, "endCursor": end_cursor},
+                    }
+                }
             }
         )
 
