@@ -94,3 +94,32 @@ func TestBuildPushdownIntent_OrIsResidual(t *testing.T) {
 		t.Errorf("expected OR to be residual, got %v", intent.Predicates)
 	}
 }
+
+func TestBuildPushdownIntent_GrainChangeIsNotPushable(t *testing.T) {
+	// GROUP BY / DISTINCT / HAVING change grain: LIMIT/projection must stay client-side.
+	cases := []string{
+		"select city, count(*) as c from t group by city limit 5",
+		"select distinct city from t limit 5",
+		"select city from t group by city having count(*) > 1",
+	}
+	for _, sql := range cases {
+		if _, ok := buildPushdownIntent(mustSelect(t, sql)); ok {
+			t.Errorf("expected non-pushable for %q", sql)
+		}
+	}
+}
+
+func TestBuildPushdownIntent_CountSuppressesLimitAndProjection(t *testing.T) {
+	// A bare COUNT(*) pushes WHERE + count, but never top/skip/select/orderby.
+	intent, ok := buildPushdownIntent(mustSelect(t,
+		"select count(*) as cnt from t where x = 'v' order by y limit 5 offset 2"))
+	if !ok || !intent.Count {
+		t.Fatalf("expected Count intent, got ok=%v intent=%+v", ok, intent)
+	}
+	if len(intent.Predicates) != 1 {
+		t.Errorf("expected the WHERE to still push, got %v", intent.Predicates)
+	}
+	if intent.LimitSet || intent.OffsetSet || len(intent.Projection) != 0 || len(intent.OrderBy) != 0 {
+		t.Errorf("expected top/skip/select/orderby suppressed for COUNT, got %+v", intent)
+	}
+}

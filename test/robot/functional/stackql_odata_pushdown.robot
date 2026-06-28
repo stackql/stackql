@@ -107,3 +107,18 @@ OData Client Side Filter Remains Authoritative
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select name from stackql_native_test.odata.people where name like 'A%';
     ...    Alice
+
+OData Pushdown Suppressed For Grain Changing Query
+    [Documentation]    GROUP BY changes grain, so LIMIT must NOT push $top (which the mock honours).
+    ...                With the guard the full set is fetched and the client-side aggregate counts all
+    ...                3 rows; a wrongly-pushed $top=1 would under-count to 1.
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select count(*) as c from stackql_native_test.odata.people group by echoed limit 1;
+    ...    3

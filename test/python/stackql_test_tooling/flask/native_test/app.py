@@ -54,6 +54,11 @@ def create_app() -> Flask:
             {"name": "Acme", "city": "SF", "age": 40, "echoed": echoed},
             {"name": "Bob", "city": "LA", "age": 25, "echoed": echoed},
         ]
+        # Honour $top server-side so a wrongly-pushed $top is observable as an
+        # under-count (the grain-change guard test relies on this).
+        top = request.args.get("$top")
+        if top is not None and top.isdigit():
+            people = people[: int(top)]
         return jsonify({"value": people, "@odata.count": len(people)})
 
     # ---- GraphQL cursor pagination -----------------------------------------

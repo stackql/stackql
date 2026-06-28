@@ -76,21 +76,28 @@ func buildPushdownIntent(node sqlparser.SQLNode) (formulation.PushdownIntent, bo
 	if !ok {
 		return intent, false
 	}
-	// Only push down for a single, simple provider table. With a join the LIMIT/OFFSET
-	// would apply to the joined result, so pushing $top/$skip to one leg could
-	// under-fetch and change results.
-	if len(sel.From) != 1 {
+	// Only push down for a simple, resource-scoped scan: one table, no join, and no
+	// grain change (GROUP BY / DISTINCT / HAVING). Otherwise LIMIT/OFFSET and the
+	// projection apply to the post-aggregation / post-join result, so pushing them to
+	// the upstream fetch could under-fetch or mis-shape rows; they must stay as
+	// client-side (DB engine) primitives.
+	if !isSimpleResourceScopedSelect(sel) {
 		return intent, false
 	}
-	if _, isSimple := sel.From[0].(*sqlparser.AliasedTableExpr); !isSimple {
-		return intent, false
-	}
-
-	intent.Projection, intent.Count = extractProjectionAndCount(sel.SelectExprs)
 
 	if sel.Where != nil {
 		intent.Predicates = collectPushdownPredicates(sel.Where.Expr)
 	}
+
+	_, intent.Count = extractProjectionAndCount(sel.SelectExprs)
+	if intent.Count {
+		// COUNT(*) collapses grain: push the WHERE (applied before counting) and the
+		// count itself, but never $top/$skip/$select/$orderby - they would change or
+		// misreport the count. SQL LIMIT here reverts to a client-side primitive.
+		return intent, len(intent.Predicates) > 0 || intent.Count
+	}
+
+	intent.Projection, _ = extractProjectionAndCount(sel.SelectExprs)
 
 	for _, o := range sel.OrderBy {
 		if cn, isCol := o.Expr.(*sqlparser.ColName); isCol {
@@ -113,8 +120,20 @@ func buildPushdownIntent(node sqlparser.SQLNode) (formulation.PushdownIntent, bo
 	}
 
 	hasContent := len(intent.Projection) > 0 || len(intent.Predicates) > 0 ||
-		len(intent.OrderBy) > 0 || intent.LimitSet || intent.OffsetSet || intent.Count
+		len(intent.OrderBy) > 0 || intent.LimitSet || intent.OffsetSet
 	return intent, hasContent
+}
+
+// isSimpleResourceScopedSelect reports whether a SELECT is a single-resource scan with
+// no grain change, i.e. safe to translate LIMIT/OFFSET/projection into server predicates.
+func isSimpleResourceScopedSelect(sel *sqlparser.Select) bool {
+	if len(sel.From) != 1 {
+		return false
+	}
+	if _, isSimple := sel.From[0].(*sqlparser.AliasedTableExpr); !isSimple {
+		return false
+	}
+	return !sel.Distinct && len(sel.GroupBy) == 0 && sel.Having == nil
 }
 
 // extractProjectionAndCount reads the SELECT list, returning the projected column
