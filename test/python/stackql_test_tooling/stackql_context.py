@@ -580,6 +580,8 @@ def get_variables(
   MOCKSERVER_PORT_RETRY = 1199
   RETRY_MOCK_BASE_URL = f"http://127.0.0.1:{MOCKSERVER_PORT_RETRY}"
 
+  MOCKSERVER_PORT_NATIVE_TEST = 1070
+
   JSON_INIT_FILE_PATH_REGISTRY = os.path.join(repository_root, 'test', 'mockserver', 'expectations', 'static-registry-expectations.json')
 
   PG_SRV_PORT_MTLS = 5476
@@ -918,6 +920,7 @@ def get_variables(
     'MOCKSERVER_PORT_STACKQL_AUTH_TESTING':           MOCKSERVER_PORT_STACKQL_AUTH_TESTING,
     'MOCKSERVER_PORT_OAUTH_CLIENT_CREDENTIALS_TOKEN': MOCKSERVER_PORT_OAUTH_CLIENT_CREDENTIALS_TOKEN,
     'MOCKSERVER_PORT_RETRY':                          MOCKSERVER_PORT_RETRY,
+    'MOCKSERVER_PORT_NATIVE_TEST':                    MOCKSERVER_PORT_NATIVE_TEST,
     'RETRY_MOCK_BASE_URL':                            RETRY_MOCK_BASE_URL,
     'MOCKSERVER_PORT_K8S':                            MOCKSERVER_PORT_K8S,
     'MOCKSERVER_PORT_OKTA':                           MOCKSERVER_PORT_OKTA,

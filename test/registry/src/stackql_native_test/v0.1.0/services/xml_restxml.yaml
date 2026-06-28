@@ -1,0 +1,64 @@
+openapi: 3.0.1
+servers:
+  - url: http://localhost:1070
+info:
+  version: v0.1.0
+  title: schema_driven_xml rest-xml archetype
+  description: REST-XML singleton response (no list envelope) projected to a single row by the schema_driven_xml walker.
+  x-protocol: rest-xml
+components:
+  schemas:
+    hosted_zone:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        callerReference:
+          type: string
+    hosted_zone_response:
+      type: object
+      properties:
+        hostedZone:
+          type: array
+          items:
+            $ref: '#/components/schemas/hosted_zone'
+  x-stackQL-resources:
+    hostedzone:
+      id: stackql_native_test.xml_restxml.hostedzone
+      name: hostedzone
+      title: Hosted zone (schema_driven_xml, rest-xml singleton)
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1xml~1restxml~1hostedzone/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            overrideMediaType: application/json
+            objectKey: hostedZone
+            schema_override:
+              $ref: '#/components/schemas/hosted_zone_response'
+            transform:
+              type: schema_driven_xml_v0.1.0
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/hostedzone/methods/select'
+        delete: []
+        insert: []
+        update: []
+paths:
+  /xml/restxml/hostedzone:
+    get:
+      operationId: xml/restxml/hostedzone/get
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/hosted_zone_response'
+      servers:
+        - url: http://localhost:1070
+      summary: Get a hosted zone as REST-XML

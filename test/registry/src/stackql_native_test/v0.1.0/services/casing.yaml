@@ -1,0 +1,115 @@
+openapi: 3.0.3
+servers:
+  - url: http://localhost:1070
+info:
+  version: v0.1.0
+  title: Native casing testing
+  description: |-
+    Exercises any-sdk request.nativeCasing reverse-resolution. The method declares
+    PascalCase wire parameters/body fields; stackql resolves the snake_case SQL keys
+    back to the wire form via the public GetParameter path. The flask echo mock
+    returns the raw query string and received body so tests can assert the wire casing.
+components:
+  parameters:
+    VpcId:
+      in: query
+      name: VpcId
+      required: false
+      schema:
+        type: string
+    SubnetId:
+      in: query
+      name: SubnetId
+      required: false
+      schema:
+        type: string
+  schemas:
+    echo_response:
+      type: object
+      properties:
+        VpcId:
+          type: string
+        SubnetId:
+          type: string
+        echoed_query:
+          type: string
+    create_body:
+      type: object
+      properties:
+        DisplayName:
+          type: string
+        OwnerId:
+          type: string
+    create_response:
+      type: object
+      properties:
+        echoed_body:
+          type: string
+        ok:
+          type: boolean
+  x-stackQL-resources:
+    echo:
+      id: stackql_native_test.casing.echo
+      name: echo
+      title: Echo of the wire request, for casing assertions
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1casing~1echo/get'
+          request:
+            mediaType: application/json
+            nativeCasing: pascal
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: $
+        insert:
+          operation:
+            $ref: '#/paths/~1casing~1echo/post'
+          request:
+            nativeCasing: pascal
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: $
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/echo/methods/select'
+        insert:
+          - $ref: '#/components/x-stackQL-resources/echo/methods/insert'
+        delete: []
+        update: []
+paths:
+  /casing/echo:
+    get:
+      operationId: casing/echo/get
+      parameters:
+        - $ref: '#/components/parameters/VpcId'
+        - $ref: '#/components/parameters/SubnetId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/echo_response'
+      servers:
+        - url: http://localhost:1070
+      summary: Echo received query parameters
+    post:
+      operationId: casing/echo/post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/create_body'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/create_response'
+      servers:
+        - url: http://localhost:1070
+      summary: Echo received request body

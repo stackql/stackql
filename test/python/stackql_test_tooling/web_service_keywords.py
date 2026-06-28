@@ -35,6 +35,7 @@ class web_service_keywords(Process):
     _DEFAULT_MOCKSERVER_PORT_OAUTH_CLIENT_CREDENTIALS_TOKEN = 2091
     _DEFAULT_MOCKSERVER_PORT_REGISTRY                       = 1094
     _DEFAULT_MOCKSERVER_PORT_RETRY                          = 1199
+    _DEFAULT_MOCKSERVER_PORT_NATIVE_TEST                    = 1070
 
     def _get_dsn(self) -> str:
         return self._sqlite_db_path
@@ -76,6 +77,7 @@ class web_service_keywords(Process):
         self._k8s_app: str = f'{_app_root}/k8s/app'
         self._registry_app: str = f'{_app_root}/registry/app'
         self._retry_app: str = f'{_app_root}/retry/app'
+        self._native_test_app: str = f'{_app_root}/native_test/app'
         self._sumologic_app: str = f'{_app_root}/sumologic/app'
 
         self._tls_key_path: str = tls_key_path if tls_key_path else self._DEFAULT_TLS_KEY_PATH
@@ -301,6 +303,27 @@ class web_service_keywords(Process):
         )
 
     @keyword
+    def create_native_test_web_service(
+        self,
+        port: int,
+        host: str = '0.0.0.0'
+    ) -> None:
+        """
+        Start the native_test mock backing the stackql_native_test provider
+        (casing echo + schema_driven_xml archetypes). Plain http, no TLS.
+        """
+        return self.start_process(
+            'flask',
+            f'--app={self._native_test_app}',
+            'run',
+            f'--host={host}',
+            f'--port={port}',
+            stdout=os.path.abspath(os.path.join(self._log_root, f'native-test-server-{port}-stdout.txt')),
+            stderr=os.path.abspath(os.path.join(self._log_root, f'native-test-server-{port}-stderr.txt')),
+            cwd=self._cwd,
+        )
+
+    @keyword
     def create_azure_web_service(
         self,
         port: int,
@@ -386,6 +409,7 @@ class web_service_keywords(Process):
         self.create_sumologic_web_service(_port_dict.get('sumologic', self._DEFAULT_MOCKSERVER_PORT_SUMOLOGIC))
         self.create_registry_web_service(_port_dict.get('registry', self._DEFAULT_MOCKSERVER_PORT_REGISTRY))
         self.create_retry_web_service(_port_dict.get('retry', self._DEFAULT_MOCKSERVER_PORT_RETRY))
+        self.create_native_test_web_service(_port_dict.get('native_test', self._DEFAULT_MOCKSERVER_PORT_NATIVE_TEST))
         self.create_k8s_web_service(_port_dict.get('k8s', self._DEFAULT_MOCKSERVER_PORT_K8S))
         self.create_google_admin_web_service(_port_dict.get('googleadmin', self._DEFAULT_MOCKSERVER_PORT_GOOGLEADMIN))
         self.create_azure_web_service(_port_dict.get('azure', self._DEFAULT_MOCKSERVER_PORT_AZURE))

@@ -1,7 +1,8 @@
 import { CLOUD_SHELL_SCRIPTS, type CloudShellScript } from "./cloud-shell-scripts";
 
 const GITHUB_REPO = "stackql/stackql";
-const RELEASE_BASE = `https://github.com/${GITHUB_REPO}/releases/latest/download`;
+// const RELEASE_BASE = `https://github.com/${GITHUB_REPO}/releases/latest/download`;
+const RELEASE_BASE = "https://releases.stackql.io/stackql/latest";
 const RELEASES_URL = `https://github.com/${GITHUB_REPO}/releases/latest`;
 const DOCS_URL = "https://stackql.io/docs";
 
