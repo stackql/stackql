@@ -21,6 +21,7 @@ GraphQL Cursor Pagination Returns All Pages
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select name, rank from stackql_native_test.graph.things order by rank limit 100;
     ...    purple
+    ...    stackql_debug_http=${True}
 
 GraphQL Limit Pushed Into Query And Wire Logged
     [Documentation]    SQL LIMIT 3 renders as `first: 3` in the wire query, emitted to stderr under --http.log.enabled.

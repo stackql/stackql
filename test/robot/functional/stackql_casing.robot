@@ -27,6 +27,7 @@ Snake Case Aliases Rename Multi Word Response Columns
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select vpc_id, subnet_id, echoed_query from stackql_native_test.casing.echo where VpcId \= 'abc123';
     ...    vpc_id
+    ...    stackql_debug_http=${True}
 
 Snake Case Aliases Single Word Column Projects Value
     [Documentation]    echoed_query (snake alias == wire name) projects its value normally.
@@ -40,6 +41,7 @@ Snake Case Aliases Single Word Column Projects Value
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select echoed_query from stackql_native_test.casing.echo where VpcId \= 'abc123';
     ...    abc123
+    ...    stackql_debug_http=${True}
 
 Pascal Case Wire Parameter Transmitted As Declared
     [Documentation]    The VpcId query parameter reaches the wire with its declared PascalCase name.
@@ -53,6 +55,7 @@ Pascal Case Wire Parameter Transmitted As Declared
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select echoed_query from stackql_native_test.casing.echo where VpcId \= 'abc123';
     ...    VpcId\=abc123
+    ...    stackql_debug_http=${True}
 
 Multiple Pascal Case Wire Parameters Transmitted
     [Documentation]    Two PascalCase wire parameters in one WHERE both reach the wire.
@@ -66,3 +69,4 @@ Multiple Pascal Case Wire Parameters Transmitted
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select echoed_query from stackql_native_test.casing.echo where VpcId \= 'abc123' and SubnetId \= 'sub-9';
     ...    SubnetId\=sub-9
+    ...    stackql_debug_http=${True}
