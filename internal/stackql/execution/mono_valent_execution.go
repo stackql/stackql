@@ -1394,10 +1394,11 @@ func (mv *monoValentExecution) GetExecutor() (func(pc primitive.IPrimitiveCtx) i
 			lateBindingData,
 		)
 		// Optionally translate SELECT query options (WHERE/ORDER BY/LIMIT/OFFSET/
-		// projection/COUNT) into OData-style push-down query params. No-op unless the
-		// method carries a queryParamPushdown config; client-side filtering is unchanged.
+		// projection/COUNT) into push-down query params (any-sdk owns any dialect
+		// specifics). No-op unless the method carries a queryParamPushdown config;
+		// client-side filtering is unchanged.
 		if parserNode, nodeOk := mv.bldrInput.GetParserNode(); nodeOk {
-			armouryGenerator = maybeDecorateWithODataPushdown(armouryGenerator, parserNode, m)
+			armouryGenerator = maybeDecorateWithQueryParamPushdown(armouryGenerator, parserNode, m)
 		}
 		currentTcc := mv.insertPreparedStatementCtx.GetGCCtrlCtrs().Clone()
 		mv.graphHolder.AddTxnControlCounters(currentTcc)

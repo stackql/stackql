@@ -79,7 +79,7 @@ func TestBuildPushdownIntent_StarHasNoProjection(t *testing.T) {
 }
 
 func TestBuildPushdownIntent_JoinIsNotPushable(t *testing.T) {
-	// A join could under-fetch if $top/$skip were pushed to one leg.
+	// A join could under-fetch if a limit/offset were pushed to one leg.
 	_, ok := buildPushdownIntent(mustSelect(t,
 		"select a from t1 join t2 on t1.id = t2.id where t1.x = 'v' limit 5"))
 	if ok {

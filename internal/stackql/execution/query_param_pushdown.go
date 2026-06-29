@@ -8,13 +8,14 @@ import (
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
 
-// odata_pushdown wires the any-sdk query-option push-down (ApplyPushdown) into the
-// REST acquire path. It is purely an optimisation: the translated query options
-// ($filter/$select/$orderby/$top/$skip/$count) are added to the outgoing request so
-// the upstream API can pre-filter, but stackql's existing client-side WHERE /
-// projection / LIMIT remain authoritative, so a partial or absent push-down can
-// never change results. It is a no-op unless the method carries a queryParamPushdown
-// config, so non-pushdown providers are unaffected.
+// query_param_pushdown wires the any-sdk query-option push-down (ApplyPushdown) into
+// the REST acquire path in a protocol-agnostic way: stackql extracts a neutral,
+// dialect-free intent (projection / predicates / order-by / limit / offset / count)
+// from the SELECT and hands it to any-sdk, which performs any dialect-specific
+// translation and returns the request query params to set. It is purely an
+// optimisation - stackql's existing client-side WHERE / projection / LIMIT remain
+// authoritative, so a partial or absent push-down can never change results - and a
+// no-op unless the method carries a queryParamPushdown config.
 
 // pushdownArmouryGenerator decorates a BaseArmouryGenerator, merging the push-down
 // query parameters into every request param's query string.
@@ -42,10 +43,10 @@ func (g *pushdownArmouryGenerator) GetHTTPArmoury() (formulation.HTTPArmoury, er
 	return armoury, nil
 }
 
-// maybeDecorateWithODataPushdown returns a generator that injects push-down query
+// maybeDecorateWithQueryParamPushdown returns a generator that injects push-down query
 // params when the method opts in and the statement yields a non-empty translation;
 // otherwise it returns the prior generator unchanged.
-func maybeDecorateWithODataPushdown(
+func maybeDecorateWithQueryParamPushdown(
 	prior formulation.BaseArmouryGenerator,
 	node sqlparser.SQLNode,
 	method formulation.OperationStore,
@@ -92,8 +93,8 @@ func buildPushdownIntent(node sqlparser.SQLNode) (formulation.PushdownIntent, bo
 	_, intent.Count = extractProjectionAndCount(sel.SelectExprs)
 	if intent.Count {
 		// COUNT(*) collapses grain: push the WHERE (applied before counting) and the
-		// count itself, but never $top/$skip/$select/$orderby - they would change or
-		// misreport the count. SQL LIMIT here reverts to a client-side primitive.
+		// count itself, but never limit/offset/projection/order-by - they would change
+		// or misreport the count. SQL LIMIT here reverts to a client-side primitive.
 		return intent, len(intent.Predicates) > 0 || intent.Count
 	}
 
