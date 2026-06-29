@@ -84,6 +84,7 @@ OData Select Projection Pushed
     ...    $select\=name,echoed
 
 OData Count Pushed From Count Star
+    Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    SELECT count(*), <non-grouped col> is sqlite-only syntax (postgres requires GROUP BY); $count push-down is asserted on the sqlite backend.
     Should StackQL Exec Inline Contain
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
