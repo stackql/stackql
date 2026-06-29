@@ -1,4 +1,4 @@
-package execution //nolint:testpackage // tests unexported buildPushdownIntent
+package pushdown //nolint:testpackage // tests unexported buildPushdownIntent
 
 import (
 	"testing"

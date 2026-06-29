@@ -1393,12 +1393,10 @@ func (mv *monoValentExecution) GetExecutor() (func(pc primitive.IPrimitiveCtx) i
 			mv.tableMeta,
 			lateBindingData,
 		)
-		// Optionally translate SELECT query options (WHERE/ORDER BY/LIMIT/OFFSET/
-		// projection/COUNT) into push-down query params (any-sdk owns any dialect
-		// specifics). No-op unless the method carries a queryParamPushdown config;
-		// client-side filtering is unchanged.
-		if parserNode, nodeOk := mv.bldrInput.GetParserNode(); nodeOk {
-			armouryGenerator = maybeDecorateWithQueryParamPushdown(armouryGenerator, parserNode, m)
+		// Carry out the query-option push-down plan computed during analysis: merge the
+		// resolved query params onto the request. No-op when the plan has none.
+		if queryParams, ppOk := mv.bldrInput.GetPushdownQueryParams(); ppOk {
+			armouryGenerator = newPushdownArmouryGenerator(armouryGenerator, queryParams)
 		}
 		currentTcc := mv.insertPreparedStatementCtx.GetGCCtrlCtrs().Clone()
 		mv.graphHolder.AddTxnControlCounters(currentTcc)

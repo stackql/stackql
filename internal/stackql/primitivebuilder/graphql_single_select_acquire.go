@@ -4,9 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"strconv"
-
-	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 
 	"github.com/stackql/any-sdk/public/formulation"
 
@@ -127,12 +124,11 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 			if err != nil {
 				return internaldto.NewErroneousExecutorOutput(err)
 			}
-			// Push a SQL LIMIT N into the GraphQL query variables as `limit`, so a
-			// provider query template referencing {{ .limit }} can bound the page size.
-			if node, nodeOk := ss.bldrInput.GetParserNode(); nodeOk {
-				if limit, hasLimit := graphQLSelectLimit(node); hasLimit {
-					paramMap["limit"] = limit
-				}
+			// Carry out the push-down plan: a SQL LIMIT N resolved during the analysis phase
+			// becomes the GraphQL `limit` query variable, so a provider query template
+			// referencing {{ .limit }} can bound the page size.
+			if limit, hasLimit := ss.bldrInput.GetPushdownLimit(); hasLimit {
+				paramMap["limit"] = limit
 			}
 			cursorJsonPath, ok := gql.GetCursorJSONPath()
 			if !ok {
@@ -264,35 +260,6 @@ func extractGraphQLResponseTransform(tableMeta tablemetadata.ExtendedTableMetada
 		return "", ""
 	}
 	return t.GetType(), t.GetBody()
-}
-
-// graphQLSelectLimit returns the integer LIMIT of a SELECT statement when it can be
-// translated to a server-side page bound: only for a simple, resource-scoped scan
-// (one table, no join / GROUP BY / DISTINCT / HAVING). For a grain-changing or
-// multi-set query the LIMIT stays a client-side (DB engine) primitive.
-func graphQLSelectLimit(node sqlparser.SQLNode) (int, bool) {
-	sel, ok := node.(*sqlparser.Select)
-	if !ok || sel.Limit == nil {
-		return 0, false
-	}
-	if len(sel.From) != 1 {
-		return 0, false
-	}
-	if _, isSimple := sel.From[0].(*sqlparser.AliasedTableExpr); !isSimple {
-		return 0, false
-	}
-	if sel.Distinct || len(sel.GroupBy) != 0 || sel.Having != nil {
-		return 0, false
-	}
-	v, ok := sel.Limit.Rowcount.(*sqlparser.SQLVal)
-	if !ok || v.Type != sqlparser.IntVal {
-		return 0, false
-	}
-	n, err := strconv.Atoi(string(v.Val))
-	if err != nil {
-		return 0, false
-	}
-	return n, true
 }
 
 func buildGraphQLCursorConfig(gql formulation.GraphQL, cursorJSONPath string) graphql.CursorConfig {

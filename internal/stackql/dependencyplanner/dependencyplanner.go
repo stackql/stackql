@@ -22,6 +22,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/primitivebuilder"
 	"github.com/stackql/stackql/internal/stackql/primitivecomposer"
+	"github.com/stackql/stackql/internal/stackql/pushdown"
 	"github.com/stackql/stackql/internal/stackql/sqlrewrite"
 	"github.com/stackql/stackql/internal/stackql/sqlstream"
 	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
@@ -646,9 +647,12 @@ func (dp *standardDependencyPlanner) orchestrate(
 			annotationCtx.GetTableMeta(),
 		)
 		bldrInput.SetIsAwait(false) // returning hardcoded to false for now
-		// Carry the SELECT statement so the REST acquire path can translate query
-		// options (WHERE/ORDER BY/LIMIT/projection) into OData push-down params.
-		bldrInput.SetParserNode(dp.sqlStatement)
+		// Analysis-phase query-option push-down: translate the SELECT's WHERE / ORDER BY /
+		// LIMIT / OFFSET / projection / COUNT into the request query params (and page-size
+		// limit) the acquire should push upstream, and attach them to the plan; the
+		// executor / acquire merely carries it out.
+		acquireMethod, _ := annotationCtx.GetTableMeta().GetMethod()
+		setAcquirePushdownPlan(bldrInput, acquireMethod, dp.sqlStatement)
 		builder = primitivebuilder.NewSingleSelectAcquire(
 			dp.primitiveComposer.GetGraphHolder(),
 			dp.handlerCtx,
@@ -665,6 +669,24 @@ func (dp *standardDependencyPlanner) orchestrate(
 	dp.tableSlice = append(dp.tableSlice, rc)
 	err = annotationCtx.Prepare(dp.handlerCtx, inStream)
 	return idx, err
+}
+
+// setAcquirePushdownPlan computes, during the analysis phase, the request query params and
+// page-size limit the acquire should push to the upstream API, and attaches them to the
+// builder input (the plan) for the executor / acquire to carry out.
+func setAcquirePushdownPlan(
+	bldrInput builder_input.BuilderInput,
+	method formulation.PushdownConfigSource,
+	stmt sqlparser.SQLNode,
+) {
+	if method != nil {
+		if queryParams := pushdown.ComputeQueryParams(stmt, method); len(queryParams) > 0 {
+			bldrInput.SetPushdownQueryParams(queryParams)
+		}
+	}
+	if limit, ok := pushdown.SelectLimit(stmt); ok {
+		bldrInput.SetPushdownLimit(limit)
+	}
 }
 
 //nolint:gocognit,funlen // live with it
