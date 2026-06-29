@@ -64,6 +64,10 @@ paths:
                                       type: string
                                     rank:
                                       type: integer
+                                    wire_first:
+                                      type: integer
+                                    wire_after:
+                                      type: string
 components:
   x-stackQL-resources:
     things:

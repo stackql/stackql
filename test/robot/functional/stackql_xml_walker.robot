@@ -23,7 +23,6 @@ Schema Driven Xml Ec2 Archetype Projects Typed Rows
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select size, state, encrypted from stackql_native_test.xml_ec2.volumes order by size;
     ...    available
-    ...    stackql_debug_http=${True}
 
 Schema Driven Xml Ec2 Projects Boolean And Integer Types
     Should StackQL Exec Inline Contain
@@ -36,7 +35,6 @@ Schema Driven Xml Ec2 Projects Boolean And Integer Types
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select size, encrypted from stackql_native_test.xml_ec2.volumes where state \= 'in-use';
     ...    false
-    ...    stackql_debug_http=${True}
 
 Schema Driven Xml Snake Aliases Multi Word Column Name
     [Documentation]    snake_case_aliases renames the wire field cidrBlock to the column cidr_block.
@@ -50,7 +48,6 @@ Schema Driven Xml Snake Aliases Multi Word Column Name
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select cidr_block from stackql_native_test.xml_ec2.volumes;
     ...    cidr_block
-    ...    stackql_debug_http=${True}
 
 Schema Driven Xml Query Archetype Skips Result Wrapper
     [Documentation]    query archetype skips the extra <DescribeStacksResult> wrapper and projects <member> rows.
@@ -64,7 +61,6 @@ Schema Driven Xml Query Archetype Skips Result Wrapper
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select id, region from stackql_native_test.xml_query.stacks order by id;
     ...    us-east-1
-    ...    stackql_debug_http=${True}
 
 Schema Driven Xml Empty Self Closing List Yields Zero Rows
     [Documentation]    a self-closing <Stacks/> element projects zero rows rather than erroring.
@@ -78,7 +74,6 @@ Schema Driven Xml Empty Self Closing List Yields Zero Rows
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select count(*) as cnt from stackql_native_test.xml_query.stacks_empty;
     ...    0
-    ...    stackql_debug_http=${True}
 
 Schema Driven Xml Rest Xml Singleton Yields One Row
     [Documentation]    rest-xml singleton (no list envelope) is unwrapped to exactly one row.
@@ -92,4 +87,3 @@ Schema Driven Xml Rest Xml Singleton Yields One Row
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select id, name from stackql_native_test.xml_restxml.hostedzone;
     ...    example.com
-    ...    stackql_debug_http=${True}

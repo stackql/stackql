@@ -75,15 +75,24 @@ def create_app() -> Flask:
     def graphql():
         body = request.get_json(silent=True) or {}
         query = body.get("query", "")
-        # Relay cursor: the edge cursor is its absolute index; "after: N" resumes at N+1.
-        after = re.search(r'after:\s*"(\d+)"', query)
-        start = int(after.group(1)) + 1 if after else 0
+        # Reflect the wire-query page args into each node so tests can assert the
+        # pushed LIMIT (first:) and the followed cursor (after:) from STDOUT - the
+        # http.log stderr is not portably captured under docker.
+        fm = re.search(r"first:\s*(\d+)", query)
+        wire_first = int(fm.group(1)) if fm else 0
+        am = re.search(r'after:\s*"c(\d+)"', query)
+        wire_after = ("c" + am.group(1)) if am else ""
+        # Relay cursor: edge cursor is "c<absolute index>"; "after: cN" resumes at N+1.
+        start = (int(am.group(1)) + 1) if am else 0
         page = 2
         window = _things[start:start + page]
-        edges = [
-            {"node": _things[start + i], "cursor": str(start + i)}
-            for i in range(len(window))
-        ]
+        edges = []
+        for i in range(len(window)):
+            idx = start + i
+            node = dict(_things[idx])
+            node["wire_first"] = wire_first
+            node["wire_after"] = wire_after
+            edges.append({"node": node, "cursor": "c" + str(idx)})
         has_next = (start + page) < len(_things)
         end_cursor = edges[-1]["cursor"] if edges else None
         return jsonify(
