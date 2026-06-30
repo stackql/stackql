@@ -5,10 +5,10 @@ Documentation     Functional coverage for the any-sdk schema_driven_xml_v0.1.0 r
 ...               transform (PR 107), exercised through the no-auth stackql_native_test
 ...               provider against the local native_test flask mock. Each archetype
 ...               (ec2 / query / rest-xml) is projected per-row with schema-driven typing.
-...               NOTE: multi-word columns whose snake alias differs from the wire name
-...               (e.g. cidr_block <- cidrBlock) currently project a null VALUE - a known
-...               any-sdk gap tracked separately; the column NAME still resolves, which is
-...               what the snake-alias assertions below check.
+...               Multi-word columns whose snake alias differs from the wire name
+...               (e.g. cidr_block <- cidrBlock, volume_id <- volumeId) now project their
+...               VALUE via any-sdk GetWireName (issue 108); the assertions below check the
+...               extracted value, not just the column name.
 
 *** Test Cases ***
 Schema Driven Xml Ec2 Archetype Projects Typed Rows
@@ -36,8 +36,9 @@ Schema Driven Xml Ec2 Projects Boolean And Integer Types
     ...    select size, encrypted from stackql_native_test.xml_ec2.volumes where state \= 'in-use';
     ...    false
 
-Schema Driven Xml Snake Aliases Multi Word Column Name
-    [Documentation]    snake_case_aliases renames the wire field cidrBlock to the column cidr_block.
+Schema Driven Xml Snake Aliases Multi Word Column Value
+    [Documentation]    snake_case_aliases renames wire cidrBlock -> cidr_block; the VALUE now
+    ...    projects via GetWireName (issue 108) instead of NULL.
     Should StackQL Exec Inline Contain
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -46,8 +47,21 @@ Schema Driven Xml Snake Aliases Multi Word Column Name
     ...    ${REGISTRY_NO_VERIFY_CFG_STR}
     ...    ${AUTH_CFG_STR}
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
-    ...    select cidr_block from stackql_native_test.xml_ec2.volumes;
-    ...    cidr_block
+    ...    select volume_id, cidr_block from stackql_native_test.xml_ec2.volumes order by volume_id;
+    ...    10.0.0.0/24
+
+Schema Driven Xml Snake Aliases Multi Word Column Value Second Column
+    [Documentation]    a second multi-word column (volume_id <- volumeId) also projects its value.
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select volume_id, cidr_block from stackql_native_test.xml_ec2.volumes order by volume_id;
+    ...    vol-1
 
 Schema Driven Xml Query Archetype Skips Result Wrapper
     [Documentation]    query archetype skips the extra <DescribeStacksResult> wrapper and projects <member> rows.

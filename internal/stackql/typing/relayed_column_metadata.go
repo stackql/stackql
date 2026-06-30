@@ -27,6 +27,12 @@ func (cd *relayedColumnMetadata) GetName() string {
 	return cd.column.GetName()
 }
 
+// GetWireName mirrors GetName: a relayed (SQL-backed) column carries no foreign-API wire
+// casing, so the response key equals the column name.
+func (cd *relayedColumnMetadata) GetWireName() string {
+	return cd.column.GetName()
+}
+
 func (cd *relayedColumnMetadata) GetDecorated() string {
 	return cd.column.GetDecorated()
 }

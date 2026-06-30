@@ -213,6 +213,12 @@ func (ac *standardAnnotationCtx) Prepare(
 				nil,
 				logging.GetLogger(),
 			)
+			// Apply the analysis-phase query-option push-down: hand the neutral intent to the
+			// preparator, which (inside any-sdk) translates it to the method's dialect and sets
+			// the request query params. The HTTPArmoury stays opaque to stackql.
+			if intent, intentOk := ac.tableMeta.GetPushdownIntent(); intentOk {
+				httpPreparator = httpPreparator.WithPushdownIntent(intent)
+			}
 			httpArmoury, armouryErr := httpPreparator.BuildHTTPRequestCtx(
 				formulation.NewHTTPPreparatorConfig(true),
 			)

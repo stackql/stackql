@@ -1393,11 +1393,6 @@ func (mv *monoValentExecution) GetExecutor() (func(pc primitive.IPrimitiveCtx) i
 			mv.tableMeta,
 			lateBindingData,
 		)
-		// Carry out the query-option push-down plan computed during analysis: merge the
-		// resolved query params onto the request. No-op when the plan has none.
-		if queryParams, ppOk := mv.bldrInput.GetPushdownQueryParams(); ppOk {
-			armouryGenerator = newPushdownArmouryGenerator(armouryGenerator, queryParams)
-		}
 		currentTcc := mv.insertPreparedStatementCtx.GetGCCtrlCtrs().Clone()
 		mv.graphHolder.AddTxnControlCounters(currentTcc)
 		mr := prov.InferMaxResultsElement(m)

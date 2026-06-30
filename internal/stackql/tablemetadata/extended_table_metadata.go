@@ -29,6 +29,7 @@ type ExtendedTableMetadata interface {
 	GetRequestSchema() (formulation.Schema, error)
 	GetOptionalParameters() map[string]formulation.Addressable
 	GetRequiredParameters() map[string]formulation.Addressable
+	GetParametersIncludingNativeCasing() map[string]formulation.Addressable
 	GetResource() (formulation.Resource, error)
 	GetResourceStr() (string, error)
 	GetResponseSchemaStr() (string, error)
@@ -52,6 +53,8 @@ type ExtendedTableMetadata interface {
 	SetSelectItemsKey(string)
 	SetSQLDataSource(sql_datasource.SQLDataSource)
 	SetTableFilter(f func(formulation.ITable) (formulation.ITable, error))
+	SetPushdownIntent(intent formulation.PushdownIntent)
+	GetPushdownIntent() (formulation.PushdownIntent, bool)
 	WithGetHTTPArmoury(f func() (formulation.HTTPArmoury, error)) ExtendedTableMetadata
 	WithIndirect(astindirect.Indirect) ExtendedTableMetadata
 	WithResponseSchemaStr(rss string) (ExtendedTableMetadata, error)
@@ -76,6 +79,7 @@ type standardExtendedTableMetadata struct {
 	indirect            astindirect.Indirect
 	sqlDataSource       sql_datasource.SQLDataSource
 	isOnClauseHoistable bool
+	pushdownIntent      formulation.PushdownIntent
 }
 
 func (ex *standardExtendedTableMetadata) Clone() ExtendedTableMetadata {
@@ -91,6 +95,7 @@ func (ex *standardExtendedTableMetadata) Clone() ExtendedTableMetadata {
 		indirect:            ex.indirect,
 		sqlDataSource:       ex.sqlDataSource,
 		isOnClauseHoistable: ex.isOnClauseHoistable,
+		pushdownIntent:      ex.pushdownIntent,
 	}
 }
 
@@ -138,6 +143,18 @@ func (ex *standardExtendedTableMetadata) IsMaterializedView() bool {
 		return false
 	}
 	return ex.heirarchyObjects.GetHeirarchyIDs().IsMaterializedView()
+}
+
+// SetPushdownIntent records the neutral query-option push-down intent the analysis phase
+// resolved for this acquire. It is handed to the HTTP preparator (HTTPPreparator.
+// WithPushdownIntent) when the request is prepared, so any-sdk owns the dialect translation
+// and request application and the executor stays protocol-agnostic.
+func (ex *standardExtendedTableMetadata) SetPushdownIntent(intent formulation.PushdownIntent) {
+	ex.pushdownIntent = intent
+}
+
+func (ex *standardExtendedTableMetadata) GetPushdownIntent() (formulation.PushdownIntent, bool) {
+	return ex.pushdownIntent, ex.pushdownIntent != nil
 }
 
 func (ex *standardExtendedTableMetadata) SetIsOnClauseHoistable(isOnClauseHoistable bool) {
@@ -218,6 +235,21 @@ func (ex *standardExtendedTableMetadata) GetOptionalParameters() map[string]form
 	}
 	rv := map[string]formulation.Addressable{}
 	for k, v := range ex.heirarchyObjects.GetMethod().GetOptionalParameters() {
+		rv[k] = v
+	}
+	return rv
+}
+
+// GetParametersIncludingNativeCasing returns the method parameters keyed by their wire name
+// and, when the method declares request native casing, also by their snake_case alias (the
+// same Addressable; its GetName is the wire name). any-sdk owns the casing translation;
+// stackql uses this to resolve snake_case WHERE / INSERT keys to their wire parameter.
+func (ex *standardExtendedTableMetadata) GetParametersIncludingNativeCasing() map[string]formulation.Addressable {
+	if ex.heirarchyObjects == nil || ex.heirarchyObjects.GetMethod() == nil {
+		return nil
+	}
+	rv := map[string]formulation.Addressable{}
+	for k, v := range ex.heirarchyObjects.GetMethod().GetParametersIncludingNativeCasing() {
 		rv[k] = v
 	}
 	return rv

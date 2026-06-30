@@ -647,12 +647,7 @@ func (dp *standardDependencyPlanner) orchestrate(
 			annotationCtx.GetTableMeta(),
 		)
 		bldrInput.SetIsAwait(false) // returning hardcoded to false for now
-		// Analysis-phase query-option push-down: translate the SELECT's WHERE / ORDER BY /
-		// LIMIT / OFFSET / projection / COUNT into the request query params (and page-size
-		// limit) the acquire should push upstream, and attach them to the plan; the
-		// executor / acquire merely carries it out.
-		acquireMethod, _ := annotationCtx.GetTableMeta().GetMethod()
-		setAcquirePushdownPlan(bldrInput, acquireMethod, dp.sqlStatement)
+		setAcquirePushdownPlan(bldrInput, annotationCtx, dp.sqlStatement)
 		builder = primitivebuilder.NewSingleSelectAcquire(
 			dp.primitiveComposer.GetGraphHolder(),
 			dp.handlerCtx,
@@ -671,18 +666,23 @@ func (dp *standardDependencyPlanner) orchestrate(
 	return idx, err
 }
 
-// setAcquirePushdownPlan computes, during the analysis phase, the request query params and
-// page-size limit the acquire should push to the upstream API, and attaches them to the
-// builder input (the plan) for the executor / acquire to carry out.
+// setAcquirePushdownPlan records the analysis-phase query-option push-down decision for a
+// SELECT acquire. The SELECT's WHERE / ORDER BY / LIMIT / OFFSET / projection / COUNT become
+// a neutral PushdownIntent stored on the table metadata; the HTTP request-prepare phase hands
+// it to the preparator, which (inside any-sdk) translates it to the method's dialect and sets
+// the request query. A pushable LIMIT is also carried on the plan as the GraphQL page-size
+// bound. Both are carried out downstream - the executor stays protocol-agnostic - and the
+// client-side WHERE / projection / LIMIT are unchanged, so push-down is only ever an
+// optimisation.
 func setAcquirePushdownPlan(
 	bldrInput builder_input.BuilderInput,
-	method formulation.PushdownConfigSource,
-	stmt sqlparser.SQLNode,
+	annotationCtx taxonomy.AnnotationCtx,
+	stmt *sqlparser.Select,
 ) {
-	if method != nil {
-		if queryParams := pushdown.ComputeQueryParams(stmt, method); len(queryParams) > 0 {
-			bldrInput.SetPushdownQueryParams(queryParams)
-		}
+	tableMeta := annotationCtx.GetTableMeta()
+	method, _ := tableMeta.GetMethod()
+	if intent, ok := pushdown.ComputeIntent(stmt, method); ok {
+		tableMeta.SetPushdownIntent(intent)
 	}
 	if limit, ok := pushdown.SelectLimit(stmt); ok {
 		bldrInput.SetPushdownLimit(limit)

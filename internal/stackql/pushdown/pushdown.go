@@ -1,12 +1,11 @@
-// Package pushdown computes, during the analysis/planning phase, the request query
-// parameters that an acquire should push to the upstream API. It is protocol-agnostic:
-// stackql extracts a neutral, dialect-free intent (projection / predicates / order-by /
-// limit / offset / count) from the SELECT and hands it to any-sdk's ApplyPushdown, which
-// owns any dialect-specific translation and returns the params to set. The result is
-// attached to the plan; the executor merely carries it out. Push-down is purely an
-// optimisation - stackql's client-side WHERE / projection / LIMIT remain authoritative,
-// so a partial or absent translation can never change results - and a no-op unless the
-// method carries a queryParamPushdown config.
+// Package pushdown computes, during the analysis/planning phase, the neutral query-option
+// intent (projection / predicates / order-by / limit / offset / count) that an acquire can
+// push to the upstream API. It is protocol-agnostic: stackql extracts the intent from the
+// SELECT and any-sdk owns the dialect-specific translation and request application (via
+// HTTPPreparator.WithPushdownIntent). Push-down is purely an optimisation - stackql's
+// client-side WHERE / projection / LIMIT remain authoritative, so a partial or absent
+// translation can never change results - and a no-op unless the method carries a
+// queryParamPushdown config.
 package pushdown
 
 import (
@@ -17,26 +16,70 @@ import (
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 )
 
-// ComputeQueryParams translates a SELECT statement into the request query params to push
-// down for the supplied config source (typically the acquire's OperationStore). It returns
-// nil when there is no pushdown config or nothing translatable.
-func ComputeQueryParams(node sqlparser.SQLNode, src formulation.PushdownConfigSource) map[string]string {
-	if src == nil || node == nil {
-		return nil
+// ComputeIntent extracts the neutral PushdownIntent from a SELECT for the supplied method.
+// It returns (nil, false) when the method carries no queryParamPushdown config, the node is
+// not a simple resource-scoped scan, or nothing translatable is present. The caller hands
+// the intent to the HTTP preparator, which performs the dialect translation and applies the
+// resulting query params to the request inside any-sdk.
+func ComputeIntent(node sqlparser.SQLNode, op formulation.OperationStore) (formulation.PushdownIntent, bool) {
+	if op == nil {
+		return nil, false
 	}
-	if _, ok := src.GetQueryParamPushdown(); !ok {
-		return nil
+	if _, ok := op.GetQueryParamPushdown(); !ok {
+		return nil, false
 	}
-	intent, ok := buildPushdownIntent(node)
-	if !ok {
-		return nil
+	return buildPushdownIntent(node)
+}
+
+// buildPushdownIntent extracts the neutral PushdownIntent from a SELECT statement. The
+// second return reports whether anything pushable was found. It is the pure AST-to-intent
+// translation, independent of any method config (that gate lives in ComputeIntent).
+func buildPushdownIntent(node sqlparser.SQLNode) (formulation.PushdownIntent, bool) {
+	sel, ok := node.(*sqlparser.Select)
+	if !ok || !isSimpleResourceScopedSelect(sel) {
+		return nil, false
 	}
-	result := formulation.ApplyPushdown(src, intent)
-	queryParams := result.QueryParams()
-	if len(queryParams) == 0 {
-		return nil
+
+	var predicates []formulation.PushdownPredicate
+	if sel.Where != nil {
+		predicates = collectPushdownPredicates(sel.Where.Expr)
 	}
-	return queryParams
+
+	projection, count := extractProjectionAndCount(sel.SelectExprs)
+	if count {
+		// COUNT(*) collapses grain: push the WHERE (applied before counting) and the count
+		// itself, but never limit/offset/projection/order-by - they would change or misreport
+		// the count. SQL LIMIT here reverts to a client-side primitive.
+		return formulation.NewPushdownIntent(nil, predicates, nil, 0, false, 0, false, true), true
+	}
+
+	var orderBy []formulation.PushdownOrder
+	for _, o := range sel.OrderBy {
+		if cn, isCol := o.Expr.(*sqlparser.ColName); isCol {
+			orderBy = append(orderBy, formulation.NewPushdownOrder(
+				cn.Name.GetRawVal(),
+				strings.Contains(strings.ToLower(o.Direction), "desc"),
+			))
+		}
+	}
+
+	limit, limitSet := 0, false
+	offset, offsetSet := 0, false
+	if sel.Limit != nil {
+		if v, limOk := sqlValAsInt(sel.Limit.Rowcount); limOk {
+			limit, limitSet = v, true
+		}
+		if v, offOk := sqlValAsInt(sel.Limit.Offset); offOk {
+			offset, offsetSet = v, true
+		}
+	}
+
+	hasContent := len(projection) > 0 || len(predicates) > 0 || len(orderBy) > 0 || limitSet || offsetSet
+	if !hasContent {
+		return nil, false
+	}
+	return formulation.NewPushdownIntent(
+		projection, predicates, orderBy, limit, limitSet, offset, offsetSet, false), true
 }
 
 // SelectLimit returns the integer LIMIT of a SELECT when it can be pushed to the upstream
@@ -49,62 +92,6 @@ func SelectLimit(node sqlparser.SQLNode) (int, bool) {
 		return 0, false
 	}
 	return sqlValAsInt(sel.Limit.Rowcount)
-}
-
-// buildPushdownIntent extracts a neutral PushdownIntent from a SELECT statement.
-// The second return reports whether anything pushable was found.
-func buildPushdownIntent(node sqlparser.SQLNode) (formulation.PushdownIntent, bool) {
-	var intent formulation.PushdownIntent
-	sel, ok := node.(*sqlparser.Select)
-	if !ok {
-		return intent, false
-	}
-	// Only push down for a simple, resource-scoped scan: one table, no join, and no
-	// grain change (GROUP BY / DISTINCT / HAVING). Otherwise LIMIT/OFFSET and the
-	// projection apply to the post-aggregation / post-join result, so pushing them to
-	// the upstream fetch could under-fetch or mis-shape rows; they must stay as
-	// client-side (DB engine) primitives.
-	if !isSimpleResourceScopedSelect(sel) {
-		return intent, false
-	}
-
-	if sel.Where != nil {
-		intent.Predicates = collectPushdownPredicates(sel.Where.Expr)
-	}
-
-	_, intent.Count = extractProjectionAndCount(sel.SelectExprs)
-	if intent.Count {
-		// COUNT(*) collapses grain: push the WHERE (applied before counting) and the
-		// count itself, but never limit/offset/projection/order-by - they would change
-		// or misreport the count. SQL LIMIT here reverts to a client-side primitive.
-		return intent, len(intent.Predicates) > 0 || intent.Count
-	}
-
-	intent.Projection, _ = extractProjectionAndCount(sel.SelectExprs)
-
-	for _, o := range sel.OrderBy {
-		if cn, isCol := o.Expr.(*sqlparser.ColName); isCol {
-			intent.OrderBy = append(intent.OrderBy, formulation.PushdownOrder{
-				Column:     cn.Name.GetRawVal(),
-				Descending: strings.Contains(strings.ToLower(o.Direction), "desc"),
-			})
-		}
-	}
-
-	if sel.Limit != nil {
-		if v, limOk := sqlValAsInt(sel.Limit.Rowcount); limOk {
-			intent.Limit = v
-			intent.LimitSet = true
-		}
-		if v, offOk := sqlValAsInt(sel.Limit.Offset); offOk {
-			intent.Offset = v
-			intent.OffsetSet = true
-		}
-	}
-
-	hasContent := len(intent.Projection) > 0 || len(intent.Predicates) > 0 ||
-		len(intent.OrderBy) > 0 || intent.LimitSet || intent.OffsetSet
-	return intent, hasContent
 }
 
 // isSimpleResourceScopedSelect reports whether a SELECT is a single-resource scan with
@@ -157,35 +144,34 @@ func collectPushdownPredicates(expr sqlparser.Expr) []formulation.PushdownPredic
 }
 
 func comparisonToPredicate(expr *sqlparser.ComparisonExpr) (formulation.PushdownPredicate, bool) {
-	var pred formulation.PushdownPredicate
 	col, ok := expr.Left.(*sqlparser.ColName)
 	if !ok {
-		return pred, false
+		return nil, false
 	}
 	val, ok := expr.Right.(*sqlparser.SQLVal)
 	if !ok {
-		return pred, false
+		return nil, false
 	}
 	column := col.Name.GetRawVal()
 	rawVal, valOk := sqlValAsComparable(val)
 	if !valOk {
-		return pred, false
+		return nil, false
 	}
 	switch expr.Operator {
 	case sqlparser.EqualStr, sqlparser.NotEqualStr, sqlparser.GreaterThanStr,
 		sqlparser.GreaterEqualStr, sqlparser.LessThanStr, sqlparser.LessEqualStr:
-		return formulation.PushdownPredicate{Column: column, Operator: expr.Operator, Value: rawVal}, true
+		return formulation.NewPushdownPredicate(column, expr.Operator, rawVal), true
 	case sqlparser.LikeStr:
 		// Only a prefix pattern ('A%' with no other wildcard) maps to a startswith predicate.
 		s, isStr := rawVal.(string)
 		if isStr && strings.HasSuffix(s, "%") {
 			prefix := strings.TrimSuffix(s, "%")
 			if !strings.ContainsAny(prefix, "%_") {
-				return formulation.PushdownPredicate{Column: column, Operator: "startswith", Value: prefix}, true
+				return formulation.NewPushdownPredicate(column, "startswith", prefix), true
 			}
 		}
 	}
-	return pred, false
+	return nil, false
 }
 
 // sqlValAsComparable renders a SQLVal as a Go value ApplyPushdown can format:

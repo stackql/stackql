@@ -1,12 +1,16 @@
 *** Settings ***
 Resource          ${CURDIR}/stackql.resource
 Test Teardown     Stackql Per Test Teardown
-Documentation     Functional coverage for OData query-option push-down, wiring the any-sdk
-...               formulation.ApplyPushdown helper into the stackql REST acquire path.
+Documentation     Functional coverage for OData query-option push-down (issue 659) via the
+...               any-sdk HTTPPreparator.WithPushdownIntent apply-path: stackql computes a
+...               neutral PushdownIntent from the SELECT during analysis and hands it to the
+...               preparator, which (inside any-sdk) translates it to the OData dialect and
+...               sets the request query - stackql never mutates the HTTP request itself.
 ...               The no-auth stackql_native_test.odata.people resource carries a
 ...               queryParamPushdown config; the native_test flask mock echoes the decoded
-...               request query into an `echoed` column so each test can assert which
-...               OData option ($filter/$select/$orderby/$top/$skip/$count) was pushed.
+...               request query into an `echoed` column, so each test asserts that the wire
+...               shape matches the SQL intent for every OData option
+...               ($filter/$select/$orderby/$top/$skip/$count).
 ...               Push-down is an optimisation only: stackql's client-side WHERE/projection
 ...               remain authoritative (asserted by the last case).
 

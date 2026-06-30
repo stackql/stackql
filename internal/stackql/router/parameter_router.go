@@ -5,6 +5,7 @@ import (
 
 	"github.com/stackql/any-sdk/pkg/dto"
 	"github.com/stackql/any-sdk/pkg/logging"
+	"github.com/stackql/any-sdk/public/formulation"
 	"github.com/stackql/stackql-parser/go/vt/sqlparser"
 	"github.com/stackql/stackql/internal/stackql/astanalysis/annotatedast"
 	"github.com/stackql/stackql/internal/stackql/astindirect"
@@ -438,6 +439,26 @@ func (pr *standardParameterRouter) GetOnConditionDataFlows() (dataflow.Collectio
 	return rv.WithSplitAnnotationContextMap(splitAnnotationContextMap), nil
 }
 
+// recoverNativeCasingParams re-keys snake_case parameters that the wire-name method matching
+// dropped, back to their wire name via any-sdk's native-casing parameter set, so the request
+// carries the value. consumed already holds the wire-matched params and is mutated in place;
+// available is the pre-consumption set. It is a no-op for methods without request native
+// casing (where nativeCasing equals the wire param set, so no supplied key is an alias).
+func recoverNativeCasingParams(
+	consumed, available map[string]interface{},
+	nativeCasing map[string]formulation.Addressable,
+) {
+	for k, v := range available {
+		addr, isAlias := nativeCasing[k]
+		if !isAlias || addr.GetName() == k {
+			continue
+		}
+		if _, present := consumed[addr.GetName()]; !present {
+			consumed[addr.GetName()] = v
+		}
+	}
+}
+
 //nolint:gocognit // who cares
 func (pr *standardParameterRouter) getAvailableParameters(
 	tb sqlparser.TableExpr,
@@ -621,6 +642,18 @@ func (pr *standardParameterRouter) route(
 	abbreviatedConsumedMap, err := reconstitutedConsumedParams.AbbreviateMap()
 	if err != nil {
 		return nil, err
+	}
+	// Recover snake_case WHERE/INSERT keys that the wire-name method matching dropped: re-key
+	// them to their wire name via any-sdk's native-casing parameter set so the request carries
+	// the value. priorParameters holds the pre-consumption set; consumed (already wire-matched)
+	// params are untouched. No-op for methods without request native casing.
+	if hr != nil {
+		if method := hr.GetMethod(); method != nil {
+			if availableAbbrev, abbrevErr := priorParameters.AbbreviateMap(); abbrevErr == nil {
+				recoverNativeCasingParams(
+					abbreviatedConsumedMap, availableAbbrev, method.GetParametersIncludingNativeCasing())
+			}
+		}
 	}
 	// if err != nil {
 	// 	return nil, err

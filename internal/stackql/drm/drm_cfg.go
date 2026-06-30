@@ -827,7 +827,11 @@ func (dc *staticDRMConfig) generateVarArgs(
 	psArgs := cp.GetArgs()
 	if len(psArgs) > 0 && cp.GetCtx().GetCtrlColumnRepeats() > 0 {
 		for _, col := range cp.GetCtx().GetNonControlColumns() {
-			va, ok := psArgs[col.GetName()]
+			// Extract response values by the foreign-API wire name (GetWireName), which equals
+			// the column name except for casing aliases (e.g. a snake_case display name over a
+			// PascalCase wire field), so multi-word native-casing columns resolve their value
+			// instead of projecting NULL.
+			va, ok := psArgs[col.GetWireName()]
 			if !ok {
 				varArgs = append(varArgs, nil)
 				continue

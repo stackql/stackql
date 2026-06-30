@@ -43,8 +43,6 @@ type BuilderInput interface {
 	SetIsUndo(isUndo bool)
 	SetRequiredDataRequestKey(key string)
 	GetRequiredDataRequestKey() (string, bool)
-	SetPushdownQueryParams(queryParams map[string]string)
-	GetPushdownQueryParams() (map[string]string, bool)
 	SetPushdownLimit(limit int)
 	GetPushdownLimit() (int, bool)
 	SetDependencyNode(dependencyNode primitivegraph.PrimitiveNode)
@@ -90,7 +88,6 @@ type builderInput struct {
 	tableInsertionContainer tableinsertioncontainer.TableInsertionContainer
 	insertCtx               drm.PreparedStatementCtx
 	requiredDataRequestKey  string
-	pushdownQueryParams     map[string]string
 	pushdownLimit           int
 	pushdownLimitSet        bool
 }
@@ -111,16 +108,6 @@ func NewBuilderInput(
 
 func (bi *builderInput) GetRequiredDataRequestKey() (string, bool) {
 	return bi.requiredDataRequestKey, bi.requiredDataRequestKey != ""
-}
-
-// SetPushdownQueryParams records the request query params computed by the analysis phase
-// for the acquire to push to the upstream API; the executor applies them verbatim.
-func (bi *builderInput) SetPushdownQueryParams(queryParams map[string]string) {
-	bi.pushdownQueryParams = queryParams
-}
-
-func (bi *builderInput) GetPushdownQueryParams() (map[string]string, bool) {
-	return bi.pushdownQueryParams, len(bi.pushdownQueryParams) > 0
 }
 
 // SetPushdownLimit records the LIMIT the analysis phase resolved as pushable (used by the
@@ -328,7 +315,6 @@ func (bi *builderInput) Clone() BuilderInput {
 		isReturning:            bi.isReturning,
 		insertCtx:              bi.insertCtx,
 		requiredDataRequestKey: bi.requiredDataRequestKey,
-		pushdownQueryParams:    bi.pushdownQueryParams,
 		pushdownLimit:          bi.pushdownLimit,
 		pushdownLimitSet:       bi.pushdownLimitSet,
 	}

@@ -258,6 +258,30 @@ func (pb *standardPrimitiveComposer) GetChildren() []PrimitiveComposer {
 	return pb.children
 }
 
+// withNativeCasingAliases adds each native-casing (snake_case) parameter alias to the same
+// required/optional map as its wire parameter, so snake_case SQL keys resolve to the wire
+// parameter. The alias and its wire key share an Addressable whose GetName is the wire name.
+// any-sdk owns the casing translation; for methods without request native casing the
+// supplied allWithCasing map equals the wire param set and this is a no-op.
+func withNativeCasingAliases(
+	reqParams, optParams, allWithCasing map[string]formulation.Addressable,
+) (map[string]formulation.Addressable, map[string]formulation.Addressable) {
+	for aliasKey, addr := range allWithCasing {
+		if _, isWire := reqParams[aliasKey]; isWire {
+			continue
+		}
+		if _, isWire := optParams[aliasKey]; isWire {
+			continue
+		}
+		if _, req := reqParams[addr.GetName()]; req {
+			reqParams[aliasKey] = addr
+		} else if _, opt := optParams[addr.GetName()]; opt {
+			optParams[aliasKey] = addr
+		}
+	}
+	return reqParams, optParams
+}
+
 //nolint:gocognit // acceptable for now
 func (pb *standardPrimitiveComposer) AssignParameters() (internaldto.TableParameterCollection, error) {
 	requiredParameters := suffix.NewParameterSuffixMap()
@@ -281,9 +305,14 @@ func (pb *standardPrimitiveComposer) AssignParameters() (internaldto.TableParame
 			tblOptParams = assignedParams.GetOptionalParams().GetAll()
 			remainingReqParams = assignedParams.GetRemainingRequiredParams().GetAll()
 		} else {
-			// These methods need to incorporate request body parameters
-			reqParams = tb.GetRequiredParameters()
-			tblOptParams = tb.GetOptionalParameters()
+			// These methods need to incorporate request body parameters.
+			// Register native-casing (snake_case) aliases so snake_case WHERE / INSERT keys
+			// resolve to their wire parameter (any-sdk owns the casing translation).
+			reqParams, tblOptParams = withNativeCasingAliases(
+				tb.GetRequiredParameters(),
+				tb.GetOptionalParameters(),
+				tb.GetParametersIncludingNativeCasing(),
+			)
 		}
 		// This method needs to incorporate request body parameters
 
