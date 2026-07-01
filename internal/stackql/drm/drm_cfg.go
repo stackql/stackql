@@ -1,6 +1,7 @@
 package drm
 
 import (
+	"os"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -839,6 +840,14 @@ func (dc *staticDRMConfig) generateVarArgs(
 				va, ok = psArgs[col.GetName()]
 			}
 			if !ok {
+				// TEMP DEBUG (revert): reveal the actual response-payload keys on a miss so we
+				// can see what key the walker used for e.g. aws.ec2.volumes AvailabilityZone.
+				dbgKeys := make([]string, 0, len(psArgs))
+				for dk := range psArgs {
+					dbgKeys = append(dbgKeys, dk)
+				}
+				fmt.Fprintf(os.Stderr, "DRMDBG miss name=%q wire=%q payloadKeys=%v\n",
+					col.GetName(), col.GetWireName(), dbgKeys)
 				varArgs = append(varArgs, nil)
 				continue
 			}
