@@ -307,18 +307,7 @@ jobs:
       if: always()
       run: |
         cat ./test/robot/reports/output.xml || echo "no functional test output present"
-
-    - name: Upload robot functional reports
-      if: always()
-      uses: actions/upload-artifact@v4.3.1
-      with:
-        name: robot-functional-reports-winbuild
-        path: |
-          test/robot/reports/output.xml
-          test/robot/reports/log.html
-          test/robot/reports/report.html
-        if-no-files-found: warn
-
+    
     - name: Run robot integration tests
       if: env.AZURE_CLIENT_SECRET != '' && startsWith(env.STATE_SOURCE_TAG, 'build-release')
       env:
@@ -2102,20 +2091,9 @@ jobs:
         python cicd/python/build.py --robot-test --config='{ "variables":  { "EXECUTION_PLATFORM": "docker", "SHOULD_RUN_DOCKER_EXTERNAL_TESTS": true, "SQL_BACKEND": "postgres_tcp" } }'
 
     - name: Output from mocked functional tests
-      if: always() && env.CI_IS_EXPRESS != 'true' && matrix.platform == 'linux/amd64' && env.BUILD_IMAGE_REQUIRED == 'true'
+      if: always() && env.CI_IS_EXPRESS != 'true' && matrix.platform == 'linux/amd64' && env.BUILD_IMAGE_REQUIRED == 'true' 
       run: |
         cat ./test/robot/reports/output.xml
-
-    - name: Upload robot functional reports (docker)
-      if: always() && env.CI_IS_EXPRESS != 'true' && matrix.platform == 'linux/amd64' && env.BUILD_IMAGE_REQUIRED == 'true'
-      uses: actions/upload-artifact@v4.3.1
-      with:
-        name: robot-functional-reports-docker-${{ matrix.db_backend }}
-        path: |
-          test/robot/reports/output.xml
-          test/robot/reports/log.html
-          test/robot/reports/report.html
-        if-no-files-found: warn
 
     - name: Run robot integration tests
       if: env.AZURE_CLIENT_SECRET != '' && startsWith(env.STATE_SOURCE_TAG, 'build-release') && matrix.platform == 'linux/amd64' && env.BUILD_IMAGE_REQUIRED == 'true'
