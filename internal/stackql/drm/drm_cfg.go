@@ -1,10 +1,10 @@
 package drm
 
 import (
-	"os"
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -826,6 +826,7 @@ func (dc *staticDRMConfig) generateVarArgs(
 		varArgs = []interface{}{}
 	}
 	psArgs := cp.GetArgs()
+	//nolint:nestif // TEMP DEBUG block; reverted with the fix
 	if len(psArgs) > 0 && cp.GetCtx().GetCtrlColumnRepeats() > 0 {
 		for _, col := range cp.GetCtx().GetNonControlColumns() {
 			// Extract response values by the key any-sdk used for the row payload, which is the
@@ -840,14 +841,19 @@ func (dc *staticDRMConfig) generateVarArgs(
 				va, ok = psArgs[col.GetName()]
 			}
 			if !ok {
-				// TEMP DEBUG (revert): reveal the actual response-payload keys on a miss so we
-				// can see what key the walker used for e.g. aws.ec2.volumes AvailabilityZone.
-				dbgKeys := make([]string, 0, len(psArgs))
-				for dk := range psArgs {
-					dbgKeys = append(dbgKeys, dk)
+				// TEMP DEBUG (revert): only for a decorated column (display name differs from
+				// wire name, e.g. snake_case_aliases or an xml:name override) that still misses -
+				// reveal the actual response-payload keys so we can see what key the walker used
+				// (e.g. aws.ec2.volumes AvailabilityZone). Undecorated columns (GetName ==
+				// GetWireName, e.g. all JSON providers) never log, so go tests are unaffected.
+				if col.GetName() != col.GetWireName() {
+					dbgKeys := make([]string, 0, len(psArgs))
+					for dk := range psArgs {
+						dbgKeys = append(dbgKeys, dk)
+					}
+					fmt.Fprintf(os.Stderr, "DRMDBG miss name=%q wire=%q payloadKeys=%v\n",
+						col.GetName(), col.GetWireName(), dbgKeys)
 				}
-				fmt.Fprintf(os.Stderr, "DRMDBG miss name=%q wire=%q payloadKeys=%v\n",
-					col.GetName(), col.GetWireName(), dbgKeys)
 				varArgs = append(varArgs, nil)
 				continue
 			}
