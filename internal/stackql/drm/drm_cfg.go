@@ -827,11 +827,17 @@ func (dc *staticDRMConfig) generateVarArgs(
 	psArgs := cp.GetArgs()
 	if len(psArgs) > 0 && cp.GetCtx().GetCtrlColumnRepeats() > 0 {
 		for _, col := range cp.GetCtx().GetNonControlColumns() {
-			// Extract response values by the foreign-API wire name (GetWireName), which equals
-			// the column name except for casing aliases (e.g. a snake_case display name over a
-			// PascalCase wire field), so multi-word native-casing columns resolve their value
-			// instead of projecting NULL.
+			// Extract response values by the key any-sdk used for the row payload, which is the
+			// schema property key. That equals GetWireName when the wire name carries the case
+			// difference (e.g. snake_case_aliases: display cidr_block over wire cidrBlock) and
+			// GetName when the display name does (e.g. an xml:name override: display
+			// AvailabilityZone over wire availabilityZone). Try the wire name first, then fall
+			// back to the display name, so both cases resolve their value instead of NULL. For an
+			// undecorated column GetWireName == GetName, so this is unchanged.
 			va, ok := psArgs[col.GetWireName()]
+			if !ok {
+				va, ok = psArgs[col.GetName()]
+			}
 			if !ok {
 				varArgs = append(varArgs, nil)
 				continue
