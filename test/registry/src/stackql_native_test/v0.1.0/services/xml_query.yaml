@@ -1,0 +1,100 @@
+openapi: 3.0.1
+servers:
+  - url: http://localhost:1070
+info:
+  version: v0.1.0
+  title: schema_driven_xml query archetype
+  description: AWS Query XML response (with the extra Result wrapper) projected by the schema_driven_xml walker.
+  x-protocol: query
+components:
+  schemas:
+    stack:
+      type: object
+      properties:
+        id:
+          type: string
+        region:
+          type: string
+        stackName:
+          type: string
+    stacks_response:
+      type: object
+      properties:
+        Stacks:
+          type: array
+          items:
+            $ref: '#/components/schemas/stack'
+  x-stackQL-resources:
+    stacks:
+      id: stackql_native_test.xml_query.stacks
+      name: stacks
+      title: Stacks (schema_driven_xml, query protocol)
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1xml~1query~1stacks/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            overrideMediaType: application/json
+            objectKey: Stacks
+            schema_override:
+              $ref: '#/components/schemas/stacks_response'
+            transform:
+              type: schema_driven_xml_v0.1.0
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/stacks/methods/select'
+        delete: []
+        insert: []
+        update: []
+    stacks_empty:
+      id: stackql_native_test.xml_query.stacks_empty
+      name: stacks_empty
+      title: Empty stacks (self-closing list element -> zero rows)
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1xml~1query~1stacks_empty/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            overrideMediaType: application/json
+            objectKey: Stacks
+            schema_override:
+              $ref: '#/components/schemas/stacks_response'
+            transform:
+              type: schema_driven_xml_v0.1.0
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/stacks_empty/methods/select'
+        delete: []
+        insert: []
+        update: []
+paths:
+  /xml/query/stacks:
+    get:
+      operationId: xml/query/stacks/get
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/stacks_response'
+      servers:
+        - url: http://localhost:1070
+      summary: List stacks as Query-protocol XML
+  /xml/query/stacks_empty:
+    get:
+      operationId: xml/query/stacks_empty/get
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/stacks_response'
+      servers:
+        - url: http://localhost:1070
+      summary: Empty stacks list as Query-protocol XML

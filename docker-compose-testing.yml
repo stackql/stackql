@@ -409,6 +409,29 @@ services:
         --host 0.0.0.0 \
         --port  \
         1199
+  native_test_mockserver:
+    networks:
+      testing-network:
+        aliases:
+          - native-test.test
+    image: stackql/testlib
+    build:
+      context: .
+      dockerfile: testLib.Dockerfile
+    ports:
+      - "1070:1070/tcp"
+    environment:
+      IS_DOCKER: "${IS_DOCKER:-false}"
+    command:
+      - bash
+      - -c
+      - |
+        flask \
+        --app=/opt/testlib/test/python/stackql_test_tooling/flask/native_test/app \
+        run \
+        --host 0.0.0.0 \
+        --port  \
+        1070
 
 networks:
   testing-network:

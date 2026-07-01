@@ -42,6 +42,7 @@ Start All Mock Servers
     ...    sumologic=${MOCKSERVER_PORT_SUMOLOGIC}
     ...    digitalocean=${MOCKSERVER_PORT_DIGITALOCEAN}
     ...    retry=${MOCKSERVER_PORT_RETRY}
+    ...    native_test=${MOCKSERVER_PORT_NATIVE_TEST}
     Start All Webservers    port_dict=${port_dict}
 
 Reset Retry Mock Counters

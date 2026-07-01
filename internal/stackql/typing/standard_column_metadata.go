@@ -26,6 +26,10 @@ func (cd *standardColumnMetadata) GetName() string {
 	return cd.column.GetName()
 }
 
+func (cd *standardColumnMetadata) GetWireName() string {
+	return cd.column.GetWireName()
+}
+
 func (cd *standardColumnMetadata) GetDecorated() string {
 	return cd.column.GetDecoratedCol()
 }

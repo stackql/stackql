@@ -22,6 +22,7 @@ import (
 	"github.com/stackql/stackql/internal/stackql/parserutil"
 	"github.com/stackql/stackql/internal/stackql/primitivebuilder"
 	"github.com/stackql/stackql/internal/stackql/primitivecomposer"
+	"github.com/stackql/stackql/internal/stackql/pushdown"
 	"github.com/stackql/stackql/internal/stackql/sqlrewrite"
 	"github.com/stackql/stackql/internal/stackql/sqlstream"
 	"github.com/stackql/stackql/internal/stackql/tableinsertioncontainer"
@@ -646,6 +647,7 @@ func (dp *standardDependencyPlanner) orchestrate(
 			annotationCtx.GetTableMeta(),
 		)
 		bldrInput.SetIsAwait(false) // returning hardcoded to false for now
+		setAcquirePushdownPlan(bldrInput, annotationCtx, dp.sqlStatement)
 		builder = primitivebuilder.NewSingleSelectAcquire(
 			dp.primitiveComposer.GetGraphHolder(),
 			dp.handlerCtx,
@@ -662,6 +664,29 @@ func (dp *standardDependencyPlanner) orchestrate(
 	dp.tableSlice = append(dp.tableSlice, rc)
 	err = annotationCtx.Prepare(dp.handlerCtx, inStream)
 	return idx, err
+}
+
+// setAcquirePushdownPlan records the analysis-phase query-option push-down decision for a
+// SELECT acquire. The SELECT's WHERE / ORDER BY / LIMIT / OFFSET / projection / COUNT become
+// a neutral PushdownIntent stored on the table metadata; the HTTP request-prepare phase hands
+// it to the preparator, which (inside any-sdk) translates it to the method's dialect and sets
+// the request query. A pushable LIMIT is also carried on the plan as the GraphQL page-size
+// bound. Both are carried out downstream - the executor stays protocol-agnostic - and the
+// client-side WHERE / projection / LIMIT are unchanged, so push-down is only ever an
+// optimisation.
+func setAcquirePushdownPlan(
+	bldrInput builder_input.BuilderInput,
+	annotationCtx taxonomy.AnnotationCtx,
+	stmt *sqlparser.Select,
+) {
+	tableMeta := annotationCtx.GetTableMeta()
+	method, _ := tableMeta.GetMethod()
+	if intent, ok := pushdown.ComputeIntent(stmt, method); ok {
+		tableMeta.SetPushdownIntent(intent)
+	}
+	if limit, ok := pushdown.SelectLimit(stmt); ok {
+		bldrInput.SetPushdownLimit(limit)
+	}
 }
 
 //nolint:gocognit,funlen // live with it

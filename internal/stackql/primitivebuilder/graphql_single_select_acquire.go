@@ -106,6 +106,12 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 
 		for _, reqCtx := range httpArmoury.GetRequestParams() {
 			req := reqCtx.GetRequest()
+			// Emit the GraphQL wire request + raw response when --http.log.enabled is set
+			// (alpha08 ContextWithHTTPLogger), mirroring the REST acquire path.
+			if ss.handlerCtx.GetRuntimeContext().HTTPLogEnabled {
+				req = req.WithContext(
+					graphql.ContextWithHTTPLogger(req.Context(), ss.handlerCtx.GetOutErrFile()))
+			}
 			housekeepingDone := false
 			cc := formulation.NewAnySdkClientConfigurator(
 				ss.handlerCtx.GetRuntimeContext(), prov.GetProviderString(),
@@ -117,6 +123,12 @@ func (ss *GraphQLSingleSelectAcquire) Build() error {
 			paramMap, err := reqCtx.GetParameters().ToFlatMap()
 			if err != nil {
 				return internaldto.NewErroneousExecutorOutput(err)
+			}
+			// Carry out the push-down plan: a SQL LIMIT N resolved during the analysis phase
+			// becomes the GraphQL `limit` query variable, so a provider query template
+			// referencing {{ .limit }} can bound the page size.
+			if limit, hasLimit := ss.bldrInput.GetPushdownLimit(); hasLimit {
+				paramMap["limit"] = limit
 			}
 			cursorJsonPath, ok := gql.GetCursorJSONPath()
 			if !ok {
