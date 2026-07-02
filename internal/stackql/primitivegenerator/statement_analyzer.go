@@ -1022,6 +1022,26 @@ func (pb *standardPrimitiveGenerator) expandTable(
 		uid := fmt.Sprintf("%s.%s", tbl.GetUniqueID(), colName)
 		pb.PrimitiveComposer.SetSymbol(uid, colEntry) //nolint:errcheck // TODO: review
 	}
+	// Register the display column names alongside the raw property keys.
+	// Under config.snake_case_aliases the tabulation's display names are the
+	// snake aliases (any-sdk owns that translation), so WHERE / projection
+	// symbols resolve for either form; without aliasing this re-registers
+	// the same names and is a no-op.
+	if tabulation := responseSchema.Tabulate(false, ""); tabulation != nil {
+		for _, col := range tabulation.GetColumns() {
+			colSchema := col.GetSchema()
+			if colSchema == nil {
+				continue
+			}
+			colEntry := symtab.NewSymTabEntry(
+				pb.PrimitiveComposer.GetDRMConfig().GetRelationalType(colSchema.GetType()),
+				colSchema,
+				"",
+			)
+			uid := fmt.Sprintf("%s.%s", tbl.GetUniqueID(), col.GetName())
+			pb.PrimitiveComposer.SetSymbol(uid, colEntry) //nolint:errcheck // duplicate registration is benign
+		}
+	}
 	return nil
 }
 

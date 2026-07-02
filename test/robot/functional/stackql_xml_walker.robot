@@ -101,3 +101,78 @@ Schema Driven Xml Rest Xml Singleton Yields One Row
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select id, name from stackql_native_test.xml_restxml.hostedzone;
     ...    example.com
+
+Xml Name Override Projects Row Values
+    [Documentation]    Schema properties carry botocore member names (VolumeId) with
+    ...    xml: name overrides for the wire elements (volumeId) - the AWS provider
+    ...    shape. The walker extracts by the override and the value projects under
+    ...    the snake alias of the member name.
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select volume_id, size from stackql_native_test.xml_ec2.volumes_alias order by volume_id;
+    ...    vol-a1
+
+Xml Name Override Complex Value Is Json
+    [Documentation]    A nested wire element (<attachmentSet>) landing under a
+    ...    string-typed column serialises as JSON (never Go map notation), so users
+    ...    can JSON_EXTRACT it.
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select attachments from stackql_native_test.xml_ec2.volumes_alias where volume_id \= 'vol-a1';
+    ...    "instanceId"
+
+Xml Where On Snake Column Post Filters
+    [Documentation]    A WHERE key that is a response column (not a request parameter)
+    ...    post-filters the materialised rows; the snake alias must resolve in the
+    ...    symbol table (stackql symtab display-name registration fix).
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select state from stackql_native_test.xml_ec2.volumes where cidr_block \= '10.0.1.0/24';
+    ...    in-use
+
+Xml Singleton Unwrap Projects Row
+    [Documentation]    CreateVpc-style response nests the row under a named wrapper
+    ...    ({vpc: {...}}); the walker unwraps one level when the payload root does not
+    ...    carry the row fields (this is what makes INSERT ... RETURNING project).
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select vpc_id, cidr_block from stackql_native_test.xml_ec2.vpc_singleton;
+    ...    vpc-fixture-1
+
+Xml Empty Response Body Yields Zero Rows
+    [Documentation]    A 200 with an empty body (S3 CreateBucket-style) yields zero
+    ...    rows, not an mxj EOF transform error.
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select count(*) as num from stackql_native_test.xml_ec2.volumes_empty_body;
+    ...    0
