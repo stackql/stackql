@@ -1,0 +1,68 @@
+openapi: 3.0.1
+servers:
+  - url: http://localhost:1070
+info:
+  version: v0.1.0
+  title: schema_driven_xml ec2 archetype
+  description: EC2-query XML response projected by the any-sdk schema_driven_xml walker.
+  x-protocol: ec2
+components:
+  schemas:
+    volume:
+      type: object
+      properties:
+        volumeId:
+          type: string
+        size:
+          type: integer
+        encrypted:
+          type: boolean
+        state:
+          type: string
+        cidrBlock:
+          type: string
+    volumes_response:
+      type: object
+      properties:
+        volumeSet:
+          type: array
+          items:
+            $ref: '#/components/schemas/volume'
+  x-stackQL-resources:
+    volumes:
+      id: stackql_native_test.xml_ec2.volumes
+      name: volumes
+      title: EC2 volumes (schema_driven_xml, ec2 protocol)
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1xml~1ec2~1volumes/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            overrideMediaType: application/json
+            objectKey: volumeSet
+            schema_override:
+              $ref: '#/components/schemas/volumes_response'
+            transform:
+              type: schema_driven_xml_v0.1.0
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/volumes/methods/select'
+        delete: []
+        insert: []
+        update: []
+paths:
+  /xml/ec2/volumes:
+    get:
+      operationId: xml/ec2/volumes/get
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/volumes_response'
+      servers:
+        - url: http://localhost:1070
+      summary: List EC2 volumes as XML

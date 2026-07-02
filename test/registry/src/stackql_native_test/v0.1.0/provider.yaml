@@ -1,0 +1,64 @@
+id: stackql_native_test
+name: stackql_native_test
+openapi: 3.0.3
+config:
+  auth:
+    type: null_auth
+  snake_case_aliases: true
+providerServices:
+  casing:
+    description: Native request casing reverse-resolution, backed by the local flask echo mock.
+    id: casing:v0.1.0
+    name: casing
+    preferred: true
+    service:
+      $ref: stackql_native_test/v0.1.0/services/casing.yaml
+    title: Native casing testing
+    version: v0.1.0
+  xml_ec2:
+    description: schema_driven_xml transform, ec2 protocol archetype.
+    id: xml_ec2:v0.1.0
+    name: xml_ec2
+    preferred: true
+    service:
+      $ref: stackql_native_test/v0.1.0/services/xml_ec2.yaml
+    title: schema_driven_xml ec2 archetype
+    version: v0.1.0
+  xml_query:
+    description: schema_driven_xml transform, query protocol archetype.
+    id: xml_query:v0.1.0
+    name: xml_query
+    preferred: true
+    service:
+      $ref: stackql_native_test/v0.1.0/services/xml_query.yaml
+    title: schema_driven_xml query archetype
+    version: v0.1.0
+  xml_restxml:
+    description: schema_driven_xml transform, rest-xml singleton archetype.
+    id: xml_restxml:v0.1.0
+    name: xml_restxml
+    preferred: true
+    service:
+      $ref: stackql_native_test/v0.1.0/services/xml_restxml.yaml
+    title: schema_driven_xml rest-xml archetype
+    version: v0.1.0
+  odata:
+    description: OData query-option push-down via any-sdk ApplyPushdown.
+    id: odata:v0.1.0
+    name: odata
+    preferred: true
+    service:
+      $ref: stackql_native_test/v0.1.0/services/odata.yaml
+    title: OData predicate push-down
+    version: v0.1.0
+  graph:
+    description: GraphQL cursor pagination + LIMIT push-down.
+    id: graph:v0.1.0
+    name: graph
+    preferred: true
+    service:
+      $ref: stackql_native_test/v0.1.0/services/graphql.yaml
+    title: GraphQL cursor pagination
+    version: v0.1.0
+servers: []
+version: v0.1.0

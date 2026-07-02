@@ -1,0 +1,78 @@
+openapi: 3.0.1
+servers:
+  - url: http://localhost:1070
+info:
+  version: v0.1.0
+  title: OData predicate push-down
+  description: |-
+    Exercises the any-sdk ApplyPushdown helper wired into the stackql REST acquire
+    path. The flask mock echoes the (decoded) request query string into an `echoed`
+    column so tests can assert which OData options ($filter/$select/$orderby/$top/
+    $skip) were pushed. Single-word field names keep snake aliases == wire names.
+components:
+  schemas:
+    person:
+      type: object
+      properties:
+        name:
+          type: string
+        city:
+          type: string
+        age:
+          type: integer
+        echoed:
+          type: string
+    people_response:
+      type: object
+      properties:
+        value:
+          type: array
+          items:
+            $ref: '#/components/schemas/person'
+  x-stackQL-resources:
+    people:
+      id: stackql_native_test.odata.people
+      name: people
+      title: People (OData push-down target)
+      config:
+        queryParamPushdown:
+          select:
+            dialect: odata
+          filter:
+            dialect: odata
+          orderBy:
+            dialect: odata
+          top:
+            dialect: odata
+          skip:
+            dialect: odata
+          count:
+            dialect: odata
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1odata~1people/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: value
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/people/methods/select'
+        delete: []
+        insert: []
+        update: []
+paths:
+  /odata/people:
+    get:
+      operationId: odata/people/get
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/people_response'
+      servers:
+        - url: http://localhost:1070
+      summary: List people (OData push-down target)

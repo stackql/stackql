@@ -43,6 +43,8 @@ type BuilderInput interface {
 	SetIsUndo(isUndo bool)
 	SetRequiredDataRequestKey(key string)
 	GetRequiredDataRequestKey() (string, bool)
+	SetPushdownLimit(limit int)
+	GetPushdownLimit() (int, bool)
 	SetDependencyNode(dependencyNode primitivegraph.PrimitiveNode)
 	SetParserNode(node sqlparser.SQLNode)
 	SetParamMap(paramMap map[int]map[string]interface{})
@@ -86,6 +88,8 @@ type builderInput struct {
 	tableInsertionContainer tableinsertioncontainer.TableInsertionContainer
 	insertCtx               drm.PreparedStatementCtx
 	requiredDataRequestKey  string
+	pushdownLimit           int
+	pushdownLimitSet        bool
 }
 
 func NewBuilderInput(
@@ -104,6 +108,17 @@ func NewBuilderInput(
 
 func (bi *builderInput) GetRequiredDataRequestKey() (string, bool) {
 	return bi.requiredDataRequestKey, bi.requiredDataRequestKey != ""
+}
+
+// SetPushdownLimit records the LIMIT the analysis phase resolved as pushable (used by the
+// GraphQL acquire path to bound the page size); the acquire only carries it out.
+func (bi *builderInput) SetPushdownLimit(limit int) {
+	bi.pushdownLimit = limit
+	bi.pushdownLimitSet = true
+}
+
+func (bi *builderInput) GetPushdownLimit() (int, bool) {
+	return bi.pushdownLimit, bi.pushdownLimitSet
 }
 
 func (bi *builderInput) SetRequiredDataRequestKey(key string) {
@@ -300,5 +315,7 @@ func (bi *builderInput) Clone() BuilderInput {
 		isReturning:            bi.isReturning,
 		insertCtx:              bi.insertCtx,
 		requiredDataRequestKey: bi.requiredDataRequestKey,
+		pushdownLimit:          bi.pushdownLimit,
+		pushdownLimitSet:       bi.pushdownLimitSet,
 	}
 }

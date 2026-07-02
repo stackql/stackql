@@ -1045,11 +1045,13 @@ func (v *standardFragmentRewriteAstVisitor) Visit(node sqlparser.SQLNode) error 
 		if node == nil {
 			return nil
 		}
-		buf.AstPrintf(node, " limit ")
+		// Emit standard `LIMIT <count> OFFSET <offset>` (ANSI / postgres / sqlite) rather
+		// than the MySQL-only `LIMIT <offset>, <count>` form, so the rewritten backend
+		// query is valid on the postgres SQL backend as well as sqlite.
+		buf.AstPrintf(node, " limit %v", node.Rowcount)
 		if node.Offset != nil {
-			buf.AstPrintf(node, "%v, ", node.Offset)
+			buf.AstPrintf(node, " offset %v", node.Offset)
 		}
-		buf.AstPrintf(node, "%v", node.Rowcount)
 		v.rewrittenQuery = buf.String()
 
 	case sqlparser.Values:
