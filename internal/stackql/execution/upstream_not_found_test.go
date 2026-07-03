@@ -32,13 +32,43 @@ func TestIsUpstreamNotFound(t *testing.T) {
 			want: false,
 		},
 		{
-			name:     "no status code fragment",
+			name:     "no status code fragment and no not-found phrasing",
 			messages: []string{"something else entirely"},
 			want:     false,
 		},
 		{
 			name:     "empty messages",
 			messages: nil,
+			want:     false,
+		},
+		{
+			name:     "unstructured go default body",
+			messages: []string{"404 page not found"},
+			want:     true,
+		},
+		{
+			name:     "unstructured html body",
+			messages: []string{"<html><head><title>404 Not Found</title></head><body><h1>NOT FOUND</h1></body></html>"},
+			want:     true,
+		},
+		{
+			name:     "unstructured xml fault",
+			messages: []string{"<?xml version=\"1.0\"?><Error><Code>404</Code><Message>The specified key does not exist.</Message></Error>"},
+			want:     true,
+		},
+		{
+			name:     "unstructured mixed case phrase only",
+			messages: []string{"the requested thing was Not FOUND on this server"},
+			want:     true,
+		},
+		{
+			name:     "structured 403 with not-found wording in body is still an error",
+			messages: []string{`Response error.  Status code 403.  Body: {"message":"secret not found for caller"}`},
+			want:     false,
+		},
+		{
+			name:     "digits embedded in larger number are not a 404",
+			messages: []string{"upstream failure, trace id 14042"},
 			want:     false,
 		},
 	}

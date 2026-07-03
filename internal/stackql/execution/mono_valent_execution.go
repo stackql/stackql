@@ -41,25 +41,50 @@ var (
 	MonitorPollIntervalSeconds int = 10 //nolint:revive,gochecknoglobals // TODO: global vars refactor
 )
 
-// upstreamStatusCodeRegex matches the status code fragments any-sdk embeds in
-// upstream response error strings, eg "HTTP response error.  Status code 404."
-// and "Response error.  Status code 404.  Body: ...".  A sibling of the
+// The naked HTTP status code is not carried through the any-sdk invoker
+// boundary (providerinvoker.Result is just {Body, Messages}), so not-found
+// detection has to work from upstream error text.  That text is NOT uniform:
+// any-sdk may publish its own "Status code NNN" prose, a parsed JSON error
+// envelope, or a verbatim HTML / XML / plain-text body.  Interim measure
+// pending naked status code propagation from any-sdk (companion issues:
+// any-sdk to expose the status code on the invoker result, stackql to
+// consume it and delete this text matching).
+//
+// upstreamStatusCodeRegex matches any-sdk's structured fragments, eg
+// "HTTP response error.  Status code 404." and
+// "Response error.  Status code 404.  Body: ...".  A sibling of the
 // mcpbackend classifier regex; duplicated to keep this package free of
 // dependencies on the MCP surface.
 var upstreamStatusCodeRegex = regexp.MustCompile(`(?i)status code:?\s*(\d{3})`) //nolint:gochecknoglobals // compiled once
 
-// isUpstreamNotFound reports whether every upstream error message carries
+// upstreamNotFoundLooseRegex matches not-found semantics however an
+// unstructured upstream body phrases them: a standalone 404, or the phrase
+// "not found", anywhere, any case (eg Go's "404 page not found", nginx's
+// "<title>404 Not Found</title>", XML fault strings).  A false positive
+// here just restores the historical empty-result behaviour, which is the
+// safe direction.
+var upstreamNotFoundLooseRegex = regexp.MustCompile(`(?i)\b404\b|not\s+found`) //nolint:gochecknoglobals // compiled once
+
+// isUpstreamNotFound reports whether every upstream error message indicates
 // HTTP 404.  Querying an absent resource legitimately yields 404 from
 // providers and maps onto an empty result set under stackql's database
 // semantics, so it is exempt from strict upstream error handling
-// (issue #670).
+// (issue #670).  When a message carries any-sdk's structured "Status code
+// NNN" fragment that number is authoritative (a 403 whose body mentions
+// "not found" is still an error); only unstructured text falls back to the
+// loose match.
 func isUpstreamNotFound(messages []string) bool {
 	if len(messages) == 0 {
 		return false
 	}
 	for _, message := range messages {
-		match := upstreamStatusCodeRegex.FindStringSubmatch(message)
-		if match == nil || match[1] != "404" {
+		if match := upstreamStatusCodeRegex.FindStringSubmatch(message); match != nil {
+			if match[1] != "404" {
+				return false
+			}
+			continue
+		}
+		if !upstreamNotFoundLooseRegex.MatchString(message) {
 			return false
 		}
 	}
