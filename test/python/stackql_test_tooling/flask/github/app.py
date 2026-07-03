@@ -435,6 +435,22 @@ def get_rate_limited_org_repos():
     }), 403
 
 
+@app.route('/orgs/nonexistentorg/repos', methods=['GET'])
+def get_nonexistent_org_repos():
+    """Mimics GitHub's absence response: a 404 with a JSON object body.
+
+    Exercised by the MCP robot scenarios for issue #670: querying an absent
+    resource is database-semantics "zero rows", so a 404 must keep returning
+    an empty result set (not a tool error), over MCP included.
+    """
+    logger.warning("Not-found GET request for nonexistentorg repos")
+    return jsonify({
+        "message": "Not Found",
+        "documentation_url": "https://docs.github.com/rest/repos/repos#list-organization-repositories",
+        "status": "404",
+    }), 404
+
+
 @app.route('/orgs/throttledorg/repos', methods=['GET'])
 def get_throttled_org_repos():
     """A 429 with a JSON object body.

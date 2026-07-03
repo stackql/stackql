@@ -1097,8 +1097,11 @@ MCP HTTP Invalid Format Argument Is Rejected
 # ===========================================================================
 # Issue #670 scenarios.  Upstream HTTP errors on SELECTs must surface as tool
 # errors with an http_status / retryable classification, not as a successful
-# empty result set.  The github mock serves 403 for org `ratelimitedorg` and
-# 429 for org `throttledorg`, both with JSON object bodies as GitHub sends.
+# empty result set.  HTTP 404 is the deliberate exception: under stackql's
+# database semantics, querying an absent resource is "zero rows", so a 404
+# keeps returning an empty result set.  The github mock serves 403 for org
+# `ratelimitedorg`, 429 for org `throttledorg` and 404 for org
+# `nonexistentorg`, all with JSON object bodies as GitHub sends.
 # ===========================================================================
 
 MCP HTTP Upstream 403 Surfaces As Non Retryable Tool Error
@@ -1137,3 +1140,21 @@ MCP HTTP Upstream 429 Surfaces As Retryable Tool Error
     Should Contain        ${result.stderr}    upstream http error
     Should Contain        ${result.stderr}    "http_status": 429
     Should Contain        ${result.stderr}    "retryable": true
+
+MCP HTTP Upstream 404 Returns Empty Result Set
+    [Documentation]    Issue #670 scope guard: querying an absent resource (404)
+    ...                is database-semantics "zero rows", so it keeps returning
+    ...                a successful empty result set over MCP, not a tool error.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9912
+    ...                  \-\-exec.action      run_select_query
+    ...                  \-\-exec.args        {"sql": "SELECT id, name FROM github.repos.repos WHERE org \= 'nonexistentorg';"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Upstream-404.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Upstream-404-stderr.txt
+    Should Be Equal As Integers    ${result.rc}    0
+    Should Contain        ${result.stdout}    "rows":[]
+    Should Not Contain    ${result.stderr}    upstream http error

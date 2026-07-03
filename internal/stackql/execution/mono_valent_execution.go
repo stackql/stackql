@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -39,6 +40,31 @@ import (
 var (
 	MonitorPollIntervalSeconds int = 10 //nolint:revive,gochecknoglobals // TODO: global vars refactor
 )
+
+// upstreamStatusCodeRegex matches the status code fragments any-sdk embeds in
+// upstream response error strings, eg "HTTP response error.  Status code 404."
+// and "Response error.  Status code 404.  Body: ...".  A sibling of the
+// mcpbackend classifier regex; duplicated to keep this package free of
+// dependencies on the MCP surface.
+var upstreamStatusCodeRegex = regexp.MustCompile(`(?i)status code:?\s*(\d{3})`) //nolint:gochecknoglobals // compiled once
+
+// isUpstreamNotFound reports whether every upstream error message carries
+// HTTP 404.  Querying an absent resource legitimately yields 404 from
+// providers and maps onto an empty result set under stackql's database
+// semantics, so it is exempt from strict upstream error handling
+// (issue #670).
+func isUpstreamNotFound(messages []string) bool {
+	if len(messages) == 0 {
+		return false
+	}
+	for _, message := range messages {
+		match := upstreamStatusCodeRegex.FindStringSubmatch(message)
+		if match == nil || match[1] != "404" {
+			return false
+		}
+	}
+	return true
+}
 
 //nolint:gochecknoglobals // TODO: global vars refactor
 var (
@@ -1555,9 +1581,13 @@ func (mv *monoValentExecution) GetExecutor() (func(pc primitive.IPrimitiveCtx) i
 			// and skip-response flows.  Under strict upstream error
 			// semantics (the MCP server, issue #670) that must surface as a
 			// statement error so callers can distinguish "zero rows" from
-			// "query failed".
+			// "query failed".  HTTP 404 is exempt: stackql presents provider
+			// resources as tables, so "not found" is the database-semantics
+			// equivalent of zero rows and keeps the historical empty-result
+			// behaviour everywhere, MCP included.
 			if mv.handlerCtx.IsStrictUpstreamErrors() &&
-				!mv.isMutation && !mv.isSkipResponse && len(invRes.Messages) > 0 {
+				!mv.isMutation && !mv.isSkipResponse && len(invRes.Messages) > 0 &&
+				!isUpstreamNotFound(invRes.Messages) {
 				return internaldto.NewExecutorOutput(
 					nil, nil, nil, castMessages,
 					fmt.Errorf("upstream provider error: %s", strings.Join(invRes.Messages, "; ")),
