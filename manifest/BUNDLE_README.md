@@ -1,8 +1,8 @@
 # StackQL MCP Server
 
 SQL-native query and provisioning engine for cloud and SaaS infrastructure,
-served over the Model Context Protocol. StackQL exposes 40+ cloud and SaaS
-providers (AWS, Azure, Google, GitHub, Databricks, and more) as SQL, so an MCP
+served over the Model Context Protocol. StackQL exposes cloud and SaaS
+providers (AWS, Azure, Google, GitHub, Databricks, ...) as SQL, so an MCP
 client can discover providers, explore schemas, and run live queries and
 provisioning operations.
 

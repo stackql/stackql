@@ -6,4 +6,4 @@
 # - CI (tag push): pushing a tag that exactly matches this value publishes the
 #   bundles to the matching stackql/stackql release. A tag that does not match
 #   fails fast in the verify-tag job.
-stackql_release: v0.10.500
+stackql_release: v0.10.542

@@ -14,7 +14,13 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PYPI_DIR="${PYPI_DIR:-$ROOT_DIR/pypi}"
-RELEASE_BASE="https://github.com/stackql/stackql/releases/download"
+# Canonical source for the .sha256 pins - always the GitHub release, the source
+# of truth. Overridable for testing but normally left alone.
+RELEASE_BASE="${RELEASE_BASE:-https://github.com/stackql/stackql/releases/download}"
+# Front door the wrapper downloads the .mcpb bytes from at runtime. Proxies to
+# the same release assets, so the sha256 pins (fetched from RELEASE_BASE) still
+# hold. This is the baseUrl written into platforms.json.
+DOWNLOAD_BASE="${DOWNLOAD_BASE:-https://releases.stackql.io/stackql}"
 
 VERSION="${VERSION:-}"
 while [ $# -gt 0 ]; do
@@ -27,11 +33,12 @@ while [ $# -gt 0 ]; do
 done
 [ -n "$VERSION" ] || { echo "error: --version required (or VERSION=X.Y.Z)" >&2; exit 2; }
 
-base_url="$RELEASE_BASE/v$VERSION"
+sha_base="$RELEASE_BASE/v$VERSION"   # canonical GitHub release - for the pins
+base_url="$DOWNLOAD_BASE/v$VERSION"  # proxy front door - written to platforms.json
 
 fetch_sha() {
   local target="$1" line
-  line="$(curl -fsSL "$base_url/stackql-mcp-$target.mcpb.sha256")" || {
+  line="$(curl -fsSL "$sha_base/stackql-mcp-$target.mcpb.sha256")" || {
     echo "error: could not fetch sha256 for $target - are the v$VERSION .mcpb assets published?" >&2
     exit 1
   }

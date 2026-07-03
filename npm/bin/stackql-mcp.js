@@ -36,8 +36,15 @@ function platformKey() {
   return null;
 }
 
+// Distinct per-vector UA so the download proxy can attribute traffic to the
+// npm wrapper (vs the PyPI one) and the version that fetched.
+const USER_AGENT = `stackql-mcp-server-npm/${manifest.version}`;
+
 async function download(url) {
-  const res = await fetch(url, { redirect: "follow" });
+  const res = await fetch(url, {
+    redirect: "follow",
+    headers: { "User-Agent": USER_AGENT },
+  });
   if (!res.ok) {
     throw new Error(`download failed: HTTP ${res.status} for ${url}`);
   }

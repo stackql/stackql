@@ -2,7 +2,7 @@
 
 npx-able launcher for the [StackQL](https://stackql.io) MCP server - a
 SQL-native query and provisioning engine for cloud and SaaS infrastructure
-(AWS, Azure, Google, GitHub, Databricks, and 40+ other providers), served over
+(AWS, Azure, Google, GitHub, Databricks, and other providers), served over
 the Model Context Protocol.
 
 On first run, the launcher downloads the signed `stackql` binary for your

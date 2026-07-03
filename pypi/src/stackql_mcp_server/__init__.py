@@ -56,8 +56,11 @@ def _load_manifest() -> dict:
     return json.loads(files(__package__).joinpath("platforms.json").read_text())
 
 
-def _download(url: str) -> bytes:
-    req = urllib.request.Request(url, headers={"User-Agent": "stackql-mcp-server"})
+def _download(url: str, version: str) -> bytes:
+    # Distinct per-vector UA so the download proxy can attribute traffic to the
+    # PyPI wrapper (vs the npm one) and the version that fetched.
+    user_agent = f"stackql-mcp-server-py/{version}"
+    req = urllib.request.Request(url, headers={"User-Agent": user_agent})
     with urllib.request.urlopen(req) as resp:  # follows redirects
         return resp.read()
 
@@ -98,7 +101,7 @@ def _ensure_binary() -> str:
     else:
         url = f"{manifest['baseUrl']}/{info['bundle']}"
         _log(f"downloading {info['bundle']} (first run only) ...")
-        bundle = _download(url)
+        bundle = _download(url, manifest["version"])
         digest = hashlib.sha256(bundle).hexdigest()
         if digest != info["sha256"]:
             _log(f"sha256 mismatch for {info['bundle']}")
