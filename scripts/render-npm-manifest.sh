@@ -34,8 +34,8 @@ while [ $# -gt 0 ]; do
 done
 [ -n "$VERSION" ] || { echo "error: --version required (or VERSION=X.Y.Z)" >&2; exit 2; }
 
-sha_base="$RELEASE_BASE/v$VERSION"   # canonical GitHub release - for the pins
-base_url="$DOWNLOAD_BASE/v$VERSION"  # proxy front door - written to platforms.json
+sha_base="$RELEASE_BASE/v$VERSION"   # canonical GitHub release (v-prefixed) - for the pins
+base_url="$DOWNLOAD_BASE/$VERSION"   # proxy front door (no v prefix) - written to platforms.json
 
 fetch_sha() {
   # args: target-label -> prints the hex digest from the published .sha256
