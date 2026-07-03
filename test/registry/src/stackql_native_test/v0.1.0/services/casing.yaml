@@ -79,6 +79,48 @@ components:
           - $ref: '#/components/x-stackQL-resources/echo/methods/insert'
         delete: []
         update: []
+    echo_strict:
+      id: stackql_native_test.casing.echo_strict
+      name: echo_strict
+      title: Echo with a REQUIRED PascalCase wire parameter (routing reverse-casing)
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1casing~1echo_strict/get'
+          request:
+            nativeCasing: pascal
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: $
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/echo_strict/methods/select'
+        insert: []
+        delete: []
+        update: []
+    echo_post:
+      id: stackql_native_test.casing.echo_post
+      name: echo_post
+      title: POST echo exercising the request.base fallback body (aws-json '{}' pattern)
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1casing~1echo/post'
+          request:
+            mediaType: application/json
+            base: '{}'
+            nativeCasing: pascal
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: $
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/echo_post/methods/select'
+        insert: []
+        delete: []
+        update: []
 paths:
   /casing/echo:
     get:
@@ -113,3 +155,23 @@ paths:
       servers:
         - url: http://localhost:1070
       summary: Echo received request body
+  /casing/echo_strict:
+    get:
+      operationId: casing/echo_strict/get
+      parameters:
+        - in: query
+          name: VpcId
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/SubnetId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/echo_response'
+      servers:
+        - url: http://localhost:1070
+      summary: Echo received query parameters, VpcId required

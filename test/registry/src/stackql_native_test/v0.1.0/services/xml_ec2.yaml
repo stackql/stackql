@@ -28,6 +28,50 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/volume'
+    volume_alias:
+      type: object
+      properties:
+        VolumeId:
+          type: string
+          xml:
+            name: volumeId
+        Size:
+          type: integer
+          xml:
+            name: size
+        Attachments:
+          type: string
+          xml:
+            name: attachmentSet
+        state:
+          type: string
+    volumes_alias_response:
+      type: object
+      properties:
+        volumeSet:
+          type: array
+          items:
+            $ref: '#/components/schemas/volume_alias'
+    vpc_row:
+      type: object
+      properties:
+        VpcId:
+          type: string
+          xml:
+            name: vpcId
+        CidrBlock:
+          type: string
+          xml:
+            name: cidrBlock
+        state:
+          type: string
+    vpc_response:
+      type: object
+      properties:
+        vpcRows:
+          type: array
+          items:
+            $ref: '#/components/schemas/vpc_row'
   x-stackQL-resources:
     volumes:
       id: stackql_native_test.xml_ec2.volumes
@@ -52,6 +96,75 @@ components:
         delete: []
         insert: []
         update: []
+    volumes_alias:
+      id: stackql_native_test.xml_ec2.volumes_alias
+      name: volumes_alias
+      title: EC2 volumes whose schema uses member-name properties with xml name overrides (the AWS provider shape)
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1xml~1ec2~1volumes_alias/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            overrideMediaType: application/json
+            objectKey: volumeSet
+            schema_override:
+              $ref: '#/components/schemas/volumes_alias_response'
+            transform:
+              type: schema_driven_xml_v0.1.0
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/volumes_alias/methods/select'
+        delete: []
+        insert: []
+        update: []
+    vpc_singleton:
+      id: stackql_native_test.xml_ec2.vpc_singleton
+      name: vpc_singleton
+      title: Singleton-unwrap regime (CreateVpc-style {vpc:{...}} wrapper)
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1xml~1ec2~1vpc/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            overrideMediaType: application/json
+            objectKey: vpcRows
+            schema_override:
+              $ref: '#/components/schemas/vpc_response'
+            transform:
+              type: schema_driven_xml_v0.1.0
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/vpc_singleton/methods/select'
+        delete: []
+        insert: []
+        update: []
+    volumes_empty_body:
+      id: stackql_native_test.xml_ec2.volumes_empty_body
+      name: volumes_empty_body
+      title: Empty 200 response body (S3 CreateBucket-style) yields zero rows
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1xml~1ec2~1volumes_empty_body/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            overrideMediaType: application/json
+            objectKey: volumeSet
+            schema_override:
+              $ref: '#/components/schemas/volumes_response'
+            transform:
+              type: schema_driven_xml_v0.1.0
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/volumes_empty_body/methods/select'
+        delete: []
+        insert: []
+        update: []
 paths:
   /xml/ec2/volumes:
     get:
@@ -66,3 +179,42 @@ paths:
       servers:
         - url: http://localhost:1070
       summary: List EC2 volumes as XML
+  /xml/ec2/volumes_alias:
+    get:
+      operationId: xml/ec2/volumes_alias/get
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/volumes_alias_response'
+      servers:
+        - url: http://localhost:1070
+      summary: List EC2 volumes as XML with locationName-style wire elements
+  /xml/ec2/vpc:
+    get:
+      operationId: xml/ec2/vpc/get
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/vpc_response'
+      servers:
+        - url: http://localhost:1070
+      summary: Singleton vpc wrapped one level below the response root
+  /xml/ec2/volumes_empty_body:
+    get:
+      operationId: xml/ec2/volumes_empty_body/get
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/volumes_response'
+      servers:
+        - url: http://localhost:1070
+      summary: Returns 200 with an empty body

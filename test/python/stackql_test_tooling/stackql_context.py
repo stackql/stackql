@@ -10,6 +10,7 @@ from typing import Optional
 ## cannot use relative imports due to robot usage pattern
 from typed_python_responses import SELECT_AWS_CLOUD_CONTROL_EVENTS_MINIMAL_EXPECTED
 from registry_cfg import RegistryCfg
+from sqlite_exe_locate import resolve_sqlite_exe
 
 _exe_name = 'stackql'
 _mcp_client_exe_name = 'stackql_mcp_client'
@@ -597,7 +598,7 @@ def get_variables(
   PG_SRV_PORT_DOCKER_UNENCRYPTED = 5577
 
   PSQL_EXE :str = os.environ.get('PSQL_EXE', 'psql')
-  SQLITE_EXE :str = os.environ.get('SQLITE_EXE', 'sqlite3')
+  SQLITE_EXE :str = resolve_sqlite_exe(os.environ.get('SQLITE_EXE', 'sqlite3'))
 
   PSQL_CLIENT_HOST :str = "127.0.0.1"
 

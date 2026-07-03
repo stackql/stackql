@@ -90,3 +90,64 @@ Multiple Pascal Case Wire Parameters Transmitted
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select echoed_query from stackql_native_test.casing.echo where VpcId \= 'abc123' and SubnetId \= 'sub-9';
     ...    SubnetId\=sub-9
+
+Describe Extended Shows Snake Case Aliases
+    [Documentation]    DESCRIBE surfaces the same snake aliases as SELECT: wire VpcId
+    ...    renders as vpc_id (any-sdk ToDescriptionMap parity fix).
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    describe extended stackql_native_test.casing.echo;
+    ...    vpc_id
+
+Select Star Projects Snake Aliased Values
+    [Documentation]    SELECT * expands to snake-aliased columns (any-sdk GetAllColumns
+    ...    parity fix). Before the fix the wire-cased identifiers resolved as string
+    ...    literals on a case-sensitive backend and every value projected as its own
+    ...    column name; the assertion checks the echoed VALUE, not the header.
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select * from stackql_native_test.casing.echo where VpcId \= 'star-val-1';
+    ...    star-val-1
+
+Snake Case Where Key Satisfies Required Wire Parameter
+    [Documentation]    Method routing accepts a snake key for a REQUIRED wire param
+    ...    (any-sdk parameterMatch reverse-casing fix): echo_strict requires VpcId and
+    ...    the SQL supplies vpc_id; the echoed wire query proves both routing and
+    ...    request construction re-keyed it.
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select echoed_query from stackql_native_test.casing.echo_strict where vpc_id \= 'req-9';
+    ...    VpcId\=req-9
+
+Base Fallback Body Sent When No Body Params
+    [Documentation]    A method with request.base '{}' and no SQL-supplied body fields
+    ...    sends the base bytes verbatim (the aws-json no-input pattern); the mock
+    ...    echoes the received body.
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select echoed_body, ok from stackql_native_test.casing.echo_post;
+    ...    {}

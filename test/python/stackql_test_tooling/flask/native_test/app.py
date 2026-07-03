@@ -42,6 +42,20 @@ def create_app() -> Flask:
             }
         )
 
+    @app.get("/casing/echo_strict")
+    def casing_echo_strict_get():
+        # Same echo semantics as /casing/echo; the spec-side difference is that
+        # VpcId is a REQUIRED wire parameter, so reaching this endpoint at all
+        # proves the router satisfied the requirement (via the snake alias when
+        # the SQL used vpc_id).
+        return jsonify(
+            {
+                "VpcId": request.args.get("VpcId"),
+                "SubnetId": request.args.get("SubnetId"),
+                "echoed_query": request.query_string.decode("utf-8"),
+            }
+        )
+
     # ---- OData push-down target --------------------------------------------
 
     @app.get("/odata/people")
@@ -126,6 +140,46 @@ def create_app() -> Flask:
             "</DescribeVolumesResponse>"
         )
         return Response(body, mimetype="text/xml")
+
+    @app.get("/xml/ec2/volumes_alias")
+    def xml_ec2_volumes_alias():
+        # Wire elements use EC2 locationName casing (volumeId, attachmentSet);
+        # the spec's schema keys are the botocore member names (VolumeId,
+        # Attachments) with xml: name overrides - the AWS provider shape. The
+        # nested <attachmentSet> content exercises JSON stringification of a
+        # complex value under a string-typed column.
+        body = (
+            "<DescribeVolumesResponse>"
+            "<requestId>req-ec2-alias-1</requestId>"
+            "<volumeSet>"
+            "<item><volumeId>vol-a1</volumeId><size>8</size><state>available</state>"
+            "<attachmentSet><item><instanceId>i-1</instanceId>"
+            "<device>/dev/sda1</device></item></attachmentSet></item>"
+            "<item><volumeId>vol-a2</volumeId><size>16</size><state>in-use</state>"
+            "<attachmentSet/></item>"
+            "</volumeSet>"
+            "</DescribeVolumesResponse>"
+        )
+        return Response(body, mimetype="text/xml")
+
+    @app.get("/xml/ec2/vpc")
+    def xml_ec2_vpc():
+        # CreateVpc-style singleton: the row lives under a named wrapper member
+        # one level below the response root (walker singleton-unwrap regime).
+        body = (
+            "<CreateVpcResponse>"
+            "<requestId>req-ec2-vpc-1</requestId>"
+            "<vpc><vpcId>vpc-fixture-1</vpcId>"
+            "<cidrBlock>10.99.0.0/16</cidrBlock><state>pending</state></vpc>"
+            "</CreateVpcResponse>"
+        )
+        return Response(body, mimetype="text/xml")
+
+    @app.get("/xml/ec2/volumes_empty_body")
+    def xml_ec2_volumes_empty_body():
+        # S3 CreateBucket-style: 200 with an empty body. The walker must yield
+        # zero rows rather than an mxj EOF error.
+        return Response("", mimetype="text/xml")
 
     @app.get("/xml/query/stacks")
     def xml_query_stacks():
