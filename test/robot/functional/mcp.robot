@@ -130,6 +130,20 @@ Start MCP Servers
     ...                                   \-\-tls.allowInsecure
     ...                                   stdout=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Audit.txt
     ...                                   stderr=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Audit-stderr.txt
+    # Issue #669: server-level render default.  Tool result text content is
+    # rendered as compact JSON rather than markdown.
+    Start Process                         ${STACKQL_EXE}
+    ...                                   mcp
+    ...                                   \-\-mcp.server.type\=http
+    ...                                   \-\-mcp.config
+    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9924", "mode": "full_access", "render": "json", "audit": {"disabled": true}} }
+    ...                                   \-\-registry
+    ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
+    ...                                   \-\-auth
+    ...                                   ${AUTH_CFG_STR}
+    ...                                   \-\-tls.allowInsecure
+    ...                                   stdout=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Render-JSON.txt
+    ...                                   stderr=${CURDIR}${/}tmp${/}Stackql-MCP-Server-Render-JSON-stderr.txt
     Sleep         5s
 
 Parse MCP JSON Output
@@ -972,3 +986,175 @@ MCP HTTP Pull Provider Installs Known Provider
     ...                  stderr=${CURDIR}${/}tmp${/}MCP-Pull-Provider-stderr.txt
     Should Be Equal As Integers    ${result.rc}    0
     Should Contain                 ${result.stdout}    timestamp
+
+# ===========================================================================
+# Issue #668 scenarios.  The stdio transport must tolerate CRLF-terminated
+# JSON-RPC frames (Windows text-mode pipes produce these); before the fix the
+# server exited silently (code 0, no output) on the first CRLF line.  The
+# python harness drives the binary over raw byte pipes so the terminator
+# reaches the server verbatim on every platform.
+# ===========================================================================
+
+MCP Stdio Server Handles LF Terminated JSON RPC
+    [Documentation]    Control scenario: LF framing worked before and after the fix.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_stdio_initialize_roundtrip($STACKQL_EXE, $REGISTRY_NO_VERIFY_CFG_JSON_STR, $AUTH_CFG_STR, line_ending='lf')    modules=stackql_test_tooling.mcp_stdio_client
+    Should Contain    ${result['stdout']}    serverInfo
+    Should Contain    ${result['stdout']}    "tools"
+    Should Be Equal As Integers    ${result['returncode']}    0
+
+MCP Stdio Server Tolerates CRLF Terminated JSON RPC
+    [Documentation]    Issue #668: CRLF-terminated JSON-RPC frames must be served,
+    ...                not answered with a silent exit code 0.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_stdio_initialize_roundtrip($STACKQL_EXE, $REGISTRY_NO_VERIFY_CFG_JSON_STR, $AUTH_CFG_STR, line_ending='crlf')    modules=stackql_test_tooling.mcp_stdio_client
+    Should Contain    ${result['stdout']}    serverInfo
+    Should Contain    ${result['stdout']}    "tools"
+    Should Be Equal As Integers    ${result['returncode']}    0
+
+# ===========================================================================
+# Issue #669 scenarios.  Tool result text content is markdown by default; a
+# per-call `format` argument or a server-level `render` config switches it to
+# compact JSON.  The client's `prefer_text` config surfaces the text blocks
+# (rather than structuredContent) so the rendering itself is asserted.
+# ===========================================================================
+
+MCP HTTP Text Content Defaults To Markdown
+    [Documentation]    Control scenario: without a format argument the 9912 server
+    ...                (no render config) renders a markdown table.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9912
+    ...                  \-\-client\-cfg      {"prefer_text": true}
+    ...                  \-\-exec.action      run_select_query
+    ...                  \-\-exec.args        {"sql": "SELECT 1 as n, 'ok' as status;"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Text-Default-Markdown.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Text-Default-Markdown-stderr.txt
+    Should Be Equal As Integers    ${result.rc}    0
+    Should Contain                 ${result.stdout}    | n | status |
+    Should Contain                 ${result.stdout}    | 1 | ok |
+
+MCP HTTP Per Call JSON Format Renders JSON Text
+    [Documentation]    Issue #669: format=json on the call renders the DTO as
+    ...                compact JSON in the text content, overriding the server's
+    ...                markdown default.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9912
+    ...                  \-\-client\-cfg      {"prefer_text": true}
+    ...                  \-\-exec.action      run_select_query
+    ...                  \-\-exec.args        {"sql": "SELECT 1 as n, 'ok' as status;", "format": "json"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Text-PerCall-JSON.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Text-PerCall-JSON-stderr.txt
+    Should Be Equal As Integers    ${result.rc}    0
+    ${parsed}=    Parse MCP JSON Output    ${result.stdout}
+    Dictionary Should Contain Key    ${parsed}    rows
+    Should Be Equal As Strings    ${parsed['rows'][0]['status']}    ok
+    Should Not Contain    ${result.stdout}    | n | status |
+
+MCP HTTP Server Level JSON Render Default
+    [Documentation]    Issue #669: the 9924 server is started with
+    ...                {"server": {"render": "json"}}; text content is JSON with
+    ...                no per-call argument.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9924
+    ...                  \-\-client\-cfg      {"prefer_text": true}
+    ...                  \-\-exec.action      run_select_query
+    ...                  \-\-exec.args        {"sql": "SELECT 1 as n, 'ok' as status;"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Text-ServerLevel-JSON.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Text-ServerLevel-JSON-stderr.txt
+    Should Be Equal As Integers    ${result.rc}    0
+    ${parsed}=    Parse MCP JSON Output    ${result.stdout}
+    Dictionary Should Contain Key    ${parsed}    rows
+    Should Be Equal As Strings    ${parsed['rows'][0]['status']}    ok
+
+MCP HTTP Invalid Format Argument Is Rejected
+    [Documentation]    Issue #669: an unknown format value fails fast rather than
+    ...                silently falling back to markdown.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9912
+    ...                  \-\-exec.action      run_select_query
+    ...                  \-\-exec.args        {"sql": "SELECT 1 as n;", "format": "yaml"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Text-Invalid-Format.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Text-Invalid-Format-stderr.txt
+    Should Not Be Equal As Integers    ${result.rc}    0
+    Should Contain    ${result.stderr}    invalid format
+
+# ===========================================================================
+# Issue #670 scenarios.  Upstream HTTP errors on SELECTs must surface as tool
+# errors with an http_status / retryable classification, not as a successful
+# empty result set.  HTTP 404 is the deliberate exception: under stackql's
+# database semantics, querying an absent resource is "zero rows", so a 404
+# keeps returning an empty result set.  The github mock serves 403 for org
+# `ratelimitedorg`, 429 for org `throttledorg` and 404 for org
+# `nonexistentorg`, all with JSON object bodies as GitHub sends.
+# ===========================================================================
+
+MCP HTTP Upstream 403 Surfaces As Non Retryable Tool Error
+    [Documentation]    Issue #670: a 403 from the provider becomes an MCP tool
+    ...                error classified as non-retryable, not {"rows": []}.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9912
+    ...                  \-\-exec.action      run_select_query
+    ...                  \-\-exec.args        {"sql": "SELECT id, name FROM github.repos.repos WHERE org \= 'ratelimitedorg';"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Upstream-403.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Upstream-403-stderr.txt
+    Should Not Be Equal As Integers    ${result.rc}    0
+    Should Contain        ${result.stderr}    upstream http error
+    Should Contain        ${result.stderr}    "http_status": 403
+    Should Contain        ${result.stderr}    "retryable": false
+    Should Not Contain    ${result.stdout}    "rows":[]
+
+MCP HTTP Upstream 429 Surfaces As Retryable Tool Error
+    [Documentation]    Issue #670: a 429 from the provider becomes an MCP tool
+    ...                error classified as retryable.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9912
+    ...                  \-\-exec.action      run_select_query
+    ...                  \-\-exec.args        {"sql": "SELECT id, name FROM github.repos.repos WHERE org \= 'throttledorg';"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Upstream-429.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Upstream-429-stderr.txt
+    Should Not Be Equal As Integers    ${result.rc}    0
+    Should Contain        ${result.stderr}    upstream http error
+    Should Contain        ${result.stderr}    "http_status": 429
+    Should Contain        ${result.stderr}    "retryable": true
+
+MCP HTTP Upstream 404 Returns Empty Result Set
+    [Documentation]    Issue #670 scope guard: querying an absent resource (404)
+    ...                is database-semantics "zero rows", so it keeps returning
+    ...                a successful empty result set over MCP, not a tool error.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9912
+    ...                  \-\-exec.action      run_select_query
+    ...                  \-\-exec.args        {"sql": "SELECT id, name FROM github.repos.repos WHERE org \= 'nonexistentorg';"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Upstream-404.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Upstream-404-stderr.txt
+    Should Be Equal As Integers    ${result.rc}    0
+    Should Contain        ${result.stdout}    "rows":[]
+    Should Not Contain    ${result.stderr}    upstream http error

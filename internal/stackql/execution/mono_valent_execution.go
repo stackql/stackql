@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/stackql/any-sdk/pkg/client"
@@ -38,6 +40,56 @@ import (
 var (
 	MonitorPollIntervalSeconds int = 10 //nolint:revive,gochecknoglobals // TODO: global vars refactor
 )
+
+// The naked HTTP status code is not carried through the any-sdk invoker
+// boundary (providerinvoker.Result is just {Body, Messages}), so not-found
+// detection has to work from upstream error text.  That text is NOT uniform:
+// any-sdk may publish its own "Status code NNN" prose, a parsed JSON error
+// envelope, or a verbatim HTML / XML / plain-text body.  Interim measure
+// pending naked status code propagation from any-sdk (companion issues:
+// any-sdk to expose the status code on the invoker result, stackql to
+// consume it and delete this text matching).
+//
+// upstreamStatusCodeRegex matches any-sdk's structured fragments, eg
+// "HTTP response error.  Status code 404." and
+// "Response error.  Status code 404.  Body: ...".  A sibling of the
+// mcpbackend classifier regex; duplicated to keep this package free of
+// dependencies on the MCP surface.
+var upstreamStatusCodeRegex = regexp.MustCompile(`(?i)status code:?\s*(\d{3})`) //nolint:gochecknoglobals // compiled once
+
+// upstreamNotFoundLooseRegex matches not-found semantics however an
+// unstructured upstream body phrases them: a standalone 404, or the phrase
+// "not found", anywhere, any case (eg Go's "404 page not found", nginx's
+// "<title>404 Not Found</title>", XML fault strings).  A false positive
+// here just restores the historical empty-result behaviour, which is the
+// safe direction.
+var upstreamNotFoundLooseRegex = regexp.MustCompile(`(?i)\b404\b|not\s+found`) //nolint:gochecknoglobals // compiled once
+
+// isUpstreamNotFound reports whether every upstream error message indicates
+// HTTP 404.  Querying an absent resource legitimately yields 404 from
+// providers and maps onto an empty result set under stackql's database
+// semantics, so it is exempt from strict upstream error handling
+// (issue #670).  When a message carries any-sdk's structured "Status code
+// NNN" fragment that number is authoritative (a 403 whose body mentions
+// "not found" is still an error); only unstructured text falls back to the
+// loose match.
+func isUpstreamNotFound(messages []string) bool {
+	if len(messages) == 0 {
+		return false
+	}
+	for _, message := range messages {
+		if match := upstreamStatusCodeRegex.FindStringSubmatch(message); match != nil {
+			if match[1] != "404" {
+				return false
+			}
+			continue
+		}
+		if !upstreamNotFoundLooseRegex.MatchString(message) {
+			return false
+		}
+	}
+	return true
+}
 
 //nolint:gochecknoglobals // TODO: global vars refactor
 var (
@@ -1545,6 +1597,26 @@ func (mv *monoValentExecution) GetExecutor() (func(pc primitive.IPrimitiveCtx) i
 			var castMessages internaldto.BackendMessages
 			if len(invRes.Messages) > 0 {
 				castMessages = internaldto.NewBackendMessages(invRes.Messages)
+			}
+			// On the data acquisition (SELECT-shaped) path the any-sdk
+			// invoker only attaches messages when the upstream response was
+			// erroneous (eg HTTP 4xx / 5xx with a parseable error body, in
+			// which case the parsed error body may also be returned as a
+			// singleton Body); success messages are exclusive to mutation
+			// and skip-response flows.  Under strict upstream error
+			// semantics (the MCP server, issue #670) that must surface as a
+			// statement error so callers can distinguish "zero rows" from
+			// "query failed".  HTTP 404 is exempt: stackql presents provider
+			// resources as tables, so "not found" is the database-semantics
+			// equivalent of zero rows and keeps the historical empty-result
+			// behaviour everywhere, MCP included.
+			if mv.handlerCtx.IsStrictUpstreamErrors() &&
+				!mv.isMutation && !mv.isSkipResponse && len(invRes.Messages) > 0 &&
+				!isUpstreamNotFound(invRes.Messages) {
+				return internaldto.NewExecutorOutput(
+					nil, nil, nil, castMessages,
+					fmt.Errorf("upstream provider error: %s", strings.Join(invRes.Messages, "; ")),
+				)
 			}
 			if invRes.Body == nil {
 				return internaldto.NewExecutorOutput(nil, nil, nil, castMessages, nil)

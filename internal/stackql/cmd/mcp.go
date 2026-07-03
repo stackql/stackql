@@ -110,6 +110,12 @@ func runMCPServer(handlerCtx handler.HandlerContext) {
 	if config.Server.Transport == "" {
 		config.Server.Transport = mcpServerType
 	}
+	// MCP clients must be able to distinguish "query ran, zero rows" from
+	// "query failed upstream" (issue #670), so data acquisition failures
+	// surface as statement errors rather than empty result sets.  This is
+	// deliberately scoped to the MCP server; CLI and pgsrv sessions keep
+	// the historical empty-result-plus-stderr-notice semantics.
+	handlerCtx.SetStrictUpstreamErrors(true)
 	bi := buildinfo.Get()
 	transport := config.Server.Transport
 	runtimeContext := handlerCtx.GetRuntimeContext()
@@ -159,5 +165,8 @@ func runMCPServer(handlerCtx handler.HandlerContext) {
 		logging.GetLogger(),
 	)
 	iqlerror.PrintErrorAndExitOneIfError(serverErr)
-	server.Start(context.Background()) //nolint:errcheck // TODO: investigate
+	// A transport/session failure must be loud: log it and exit non-zero
+	// rather than silently returning success (issue #668).
+	startErr := server.Start(context.Background())
+	iqlerror.PrintErrorAndExitOneIfError(startErr)
 }

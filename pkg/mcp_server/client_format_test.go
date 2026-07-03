@@ -16,7 +16,7 @@ func TestFormatToolResult_PrefersStructuredContent(t *testing.T) {
 			"is_read_only": false,
 		},
 	}
-	out, err := formatToolResult("server_info", res)
+	out, err := formatToolResult("server_info", res, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -28,11 +28,29 @@ func TestFormatToolResult_PrefersStructuredContent(t *testing.T) {
 	}
 }
 
+func TestFormatToolResult_PreferTextReturnsTextContent(t *testing.T) {
+	// `"prefer_text": true` in the client config must surface the rendered
+	// text content even when a structured payload is present (issue #669).
+	res := &mcp.CallToolResult{
+		Content: []mcp.Content{&mcp.TextContent{Text: `{"rows":[{"name":"google"}]}`}},
+		StructuredContent: map[string]any{
+			"rows": []any{map[string]any{"name": "google", "extra": "structured-only"}},
+		},
+	}
+	out, err := formatToolResult("list_providers", res, true)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if out != `{"rows":[{"name":"google"}]}` {
+		t.Errorf("expected text content verbatim, got %q", out)
+	}
+}
+
 func TestFormatToolResult_FallsBackToTextWhenNoStructured(t *testing.T) {
 	res := &mcp.CallToolResult{
 		Content: []mcp.Content{&mcp.TextContent{Text: "plain output"}},
 	}
-	out, err := formatToolResult("anything", res)
+	out, err := formatToolResult("anything", res, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -46,7 +64,7 @@ func TestFormatToolResult_IsErrorReturnsErrorWithTextPayload(t *testing.T) {
 		IsError: true,
 		Content: []mcp.Content{&mcp.TextContent{Text: "tool 'run_mutation_query' refused: server is read-only"}},
 	}
-	_, err := formatToolResult("run_mutation_query", res)
+	_, err := formatToolResult("run_mutation_query", res, false)
 	if err == nil {
 		t.Fatal("expected error for IsError result")
 	}
@@ -56,7 +74,7 @@ func TestFormatToolResult_IsErrorReturnsErrorWithTextPayload(t *testing.T) {
 }
 
 func TestFormatToolResult_NilResult(t *testing.T) {
-	_, err := formatToolResult("anything", nil)
+	_, err := formatToolResult("anything", nil, false)
 	if err == nil {
 		t.Fatal("expected error for nil result")
 	}
@@ -80,7 +98,7 @@ func TestFormatToolResult_EmbeddedJSONStringInValueRoundtripsCleanly(t *testing.
 			},
 		},
 	}
-	out, err := formatToolResult("describe_method", res)
+	out, err := formatToolResult("describe_method", res, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -114,7 +132,7 @@ func TestFormatToolResult_StructuredContentAsArray(t *testing.T) {
 			},
 		},
 	}
-	out, err := formatToolResult("list_providers", res)
+	out, err := formatToolResult("list_providers", res, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

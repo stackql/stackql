@@ -98,3 +98,35 @@ func TestRender_InvalidNullableRendersAsEmpty(t *testing.T) {
 		t.Errorf("expected empty cell for invalid Nullable, got %q", got)
 	}
 }
+
+func TestIsLegalFormat(t *testing.T) {
+	for _, legal := range []string{"", render.FormatMarkdown, render.FormatJSON} {
+		if !render.IsLegalFormat(legal) {
+			t.Errorf("expected %q to be legal", legal)
+		}
+	}
+	if render.IsLegalFormat("yaml") {
+		t.Error("expected \"yaml\" to be illegal")
+	}
+}
+
+func TestJSONValue_CompactJSON(t *testing.T) {
+	got := render.JSONValue(map[string]any{"rows": []map[string]any{{"name": "google"}}})
+	if got != `{"rows":[{"name":"google"}]}` {
+		t.Errorf("expected compact JSON, got %q", got)
+	}
+}
+
+func TestUnwrapRows_CollapsesNullableWrappers(t *testing.T) {
+	rows := []map[string]any{{
+		"n":       sql.NullInt64{Int64: 1, Valid: true},
+		"status":  sql.NullString{String: "ok", Valid: true},
+		"invalid": sql.NullString{String: "ignored", Valid: false},
+	}}
+	got := render.JSONValue(render.UnwrapRows(rows))
+	for _, want := range []string{`"n":1`, `"status":"ok"`, `"invalid":""`} {
+		if !strings.Contains(got, want) {
+			t.Errorf("expected %q in unwrapped JSON, got %q", want, got)
+		}
+	}
+}

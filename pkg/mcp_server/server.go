@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
@@ -100,6 +101,34 @@ func mustMarshal(v any) string {
 		return fmt.Sprintf(`{"error":"failed to marshal: %v"}`, err)
 	}
 	return string(b)
+}
+
+// resolveRenderFormat returns the effective text render format for a tool
+// call: a legal per-call `format` argument wins, otherwise the server-level
+// default applies (issue #669).  An unrecognised per-call value is an error
+// so machine callers fail fast rather than silently getting markdown.
+func resolveRenderFormat(cfg *Config, requested string) (string, error) {
+	if !render.IsLegalFormat(requested) {
+		return "", fmt.Errorf("invalid format %q (legal: markdown, json)", requested)
+	}
+	if requested != "" {
+		return requested, nil
+	}
+	return cfg.GetRender(), nil
+}
+
+// textForFormat renders the text content for a tool result.  In JSON mode the
+// value mirrored into structuredContent is rendered as compact JSON (row sets
+// have their database/sql nullable wrappers unwrapped first); otherwise the
+// supplied markdown renderer runs.
+func textForFormat(format string, v any, markdown func() string) string {
+	if format == render.FormatJSON {
+		if q, isQueryResult := v.(dto.QueryResultDTO); isQueryResult {
+			v = dto.QueryResultDTO{Rows: render.UnwrapRows(q.Rows)}
+		}
+		return render.JSONValue(v)
+	}
+	return markdown()
 }
 
 // mcpDefaultAuditFilename returns the default audit log filename the MCP
@@ -253,7 +282,7 @@ func registerTools(server *mcp.Server, cfg *Config, backend Backend, logger *log
 				"mode":              out.Mode,
 				"is_read_only":      out.ReadOnly,
 			}}
-			text := render.RenderKV("Server Info", rec)
+			text := textForFormat(cfg.GetRender(), out, func() string { return render.RenderKV("Server Info", rec) })
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, out, nil
 		},
 	)
@@ -270,7 +299,8 @@ func registerTools(server *mcp.Server, cfg *Config, backend Backend, logger *log
 				return nil, dto.QueryResultDTO{}, err
 			}
 			out := dto.QueryResultDTO{Rows: rows}
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: render.RenderTable(rows)}}}, out, nil
+			text := textForFormat(cfg.GetRender(), out, func() string { return render.RenderTable(rows) })
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, out, nil
 		},
 	)
 
@@ -281,12 +311,17 @@ func registerTools(server *mcp.Server, cfg *Config, backend Backend, logger *log
 			Description: "Services under a provider. Requires provider.",
 		},
 		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, dto.QueryResultDTO, error) {
+			format, formatErr := resolveRenderFormat(cfg, args.Format)
+			if formatErr != nil {
+				return nil, dto.QueryResultDTO{}, formatErr
+			}
 			rows, err := backend.ListServices(ctx, args)
 			if err != nil {
 				return nil, dto.QueryResultDTO{}, err
 			}
 			out := dto.QueryResultDTO{Rows: rows}
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: render.RenderTable(rows)}}}, out, nil
+			text := textForFormat(format, out, func() string { return render.RenderTable(rows) })
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, out, nil
 		},
 	)
 
@@ -297,12 +332,17 @@ func registerTools(server *mcp.Server, cfg *Config, backend Backend, logger *log
 			Description: "Resources under a provider.service. Requires provider and service.",
 		},
 		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, dto.QueryResultDTO, error) {
+			format, formatErr := resolveRenderFormat(cfg, args.Format)
+			if formatErr != nil {
+				return nil, dto.QueryResultDTO{}, formatErr
+			}
 			rows, err := backend.ListResources(ctx, args)
 			if err != nil {
 				return nil, dto.QueryResultDTO{}, err
 			}
 			out := dto.QueryResultDTO{Rows: rows}
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: render.RenderTable(rows)}}}, out, nil
+			text := textForFormat(format, out, func() string { return render.RenderTable(rows) })
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, out, nil
 		},
 	)
 
@@ -313,12 +353,17 @@ func registerTools(server *mcp.Server, cfg *Config, backend Backend, logger *log
 			Description: "Access methods (HTTP operations) for a resource. Call before writing any query. Requires provider, service, resource.",
 		},
 		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, dto.QueryResultDTO, error) {
+			format, formatErr := resolveRenderFormat(cfg, args.Format)
+			if formatErr != nil {
+				return nil, dto.QueryResultDTO{}, formatErr
+			}
 			rows, err := backend.ListMethods(ctx, args)
 			if err != nil {
 				return nil, dto.QueryResultDTO{}, err
 			}
 			out := dto.QueryResultDTO{Rows: rows}
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: render.RenderTable(rows)}}}, out, nil
+			text := textForFormat(format, out, func() string { return render.RenderTable(rows) })
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, out, nil
 		},
 	)
 
@@ -329,12 +374,17 @@ func registerTools(server *mcp.Server, cfg *Config, backend Backend, logger *log
 			Description: "Output fields for a resource's primary read method. Requires provider, service, resource.",
 		},
 		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, dto.QueryResultDTO, error) {
+			format, formatErr := resolveRenderFormat(cfg, args.Format)
+			if formatErr != nil {
+				return nil, dto.QueryResultDTO{}, formatErr
+			}
 			rows, err := backend.DescribeResource(ctx, args)
 			if err != nil {
 				return nil, dto.QueryResultDTO{}, err
 			}
 			out := dto.QueryResultDTO{Rows: rows}
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: render.RenderKV("Resource", rows)}}}, out, nil
+			text := textForFormat(format, out, func() string { return render.RenderKV("Resource", rows) })
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, out, nil
 		},
 	)
 
@@ -345,12 +395,17 @@ func registerTools(server *mcp.Server, cfg *Config, backend Backend, logger *log
 			Description: "Full I/O contract for one method. Requires provider, service, resource, method.",
 		},
 		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.HierarchyInput) (*mcp.CallToolResult, dto.QueryResultDTO, error) {
+			format, formatErr := resolveRenderFormat(cfg, args.Format)
+			if formatErr != nil {
+				return nil, dto.QueryResultDTO{}, formatErr
+			}
 			rows, err := backend.DescribeMethod(ctx, args)
 			if err != nil {
 				return nil, dto.QueryResultDTO{}, err
 			}
 			out := dto.QueryResultDTO{Rows: rows}
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: render.RenderKV("Method", rows)}}}, out, nil
+			text := textForFormat(format, out, func() string { return render.RenderKV("Method", rows) })
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, out, nil
 		},
 	)
 
@@ -366,6 +421,10 @@ func registerTools(server *mcp.Server, cfg *Config, backend Backend, logger *log
 			Description: "Parse and plan a SELECT without executing. Returns {valid, errors}. SELECT only.",
 		},
 		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.QueryJSONInput) (*mcp.CallToolResult, dto.ValidationResultDTO, error) {
+			format, formatErr := resolveRenderFormat(cfg, args.Format)
+			if formatErr != nil {
+				return nil, dto.ValidationResultDTO{}, formatErr
+			}
 			rowsBack, err := backend.ValidateQuery(ctx, args.SQL)
 			isValid := err == nil
 			var errs []string
@@ -380,7 +439,7 @@ func registerTools(server *mcp.Server, cfg *Config, backend Backend, logger *log
 			if !isValid {
 				rec[0]["explain_output"] = mustMarshal(rowsBack)
 			}
-			text := render.RenderKV("Validation Result", rec)
+			text := textForFormat(format, out, func() string { return render.RenderKV("Validation Result", rec) })
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, out, nil
 		},
 	)
@@ -393,12 +452,17 @@ func registerTools(server *mcp.Server, cfg *Config, backend Backend, logger *log
 		},
 		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.QueryJSONInput) (*mcp.CallToolResult, dto.QueryResultDTO, error) {
 			logger.Debugf("run_select_query: %s", args.SQL)
+			format, formatErr := resolveRenderFormat(cfg, args.Format)
+			if formatErr != nil {
+				return nil, dto.QueryResultDTO{}, formatErr
+			}
 			rows, err := backend.RunQueryJSON(ctx, args)
 			if err != nil {
 				return nil, dto.QueryResultDTO{}, err
 			}
 			out := dto.QueryResultDTO{Rows: rows}
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: render.RenderTable(rows)}}}, out, nil
+			text := textForFormat(format, out, func() string { return render.RenderTable(rows) })
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, out, nil
 		},
 	)
 
@@ -409,11 +473,15 @@ func registerTools(server *mcp.Server, cfg *Config, backend Backend, logger *log
 			Description: "Execute INSERT/UPDATE/REPLACE/DELETE against the provider. Real side effects. Returns {messages, timestamp}. Gated by server mode.",
 		},
 		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.QueryJSONInput) (*mcp.CallToolResult, map[string]any, error) {
+			format, formatErr := resolveRenderFormat(cfg, args.Format)
+			if formatErr != nil {
+				return nil, nil, formatErr
+			}
 			res, err := backend.ExecQuery(ctx, args.SQL)
 			if err != nil {
 				return nil, nil, err
 			}
-			text := render.RenderKV("Mutation Result", []map[string]any{res})
+			text := textForFormat(format, res, func() string { return render.RenderKV("Mutation Result", []map[string]any{res}) })
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, res, nil
 		},
 	)
@@ -425,11 +493,15 @@ func registerTools(server *mcp.Server, cfg *Config, backend Backend, logger *log
 			Description: "Execute a stackql EXEC lifecycle operation. Returns {messages, timestamp}. Gated by server mode.",
 		},
 		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.QueryJSONInput) (*mcp.CallToolResult, map[string]any, error) {
+			format, formatErr := resolveRenderFormat(cfg, args.Format)
+			if formatErr != nil {
+				return nil, nil, formatErr
+			}
 			res, err := backend.ExecQuery(ctx, args.SQL)
 			if err != nil {
 				return nil, nil, err
 			}
-			text := render.RenderKV("Lifecycle Result", []map[string]any{res})
+			text := textForFormat(format, res, func() string { return render.RenderKV("Lifecycle Result", []map[string]any{res}) })
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, res, nil
 		},
 	)
@@ -441,12 +513,17 @@ func registerTools(server *mcp.Server, cfg *Config, backend Backend, logger *log
 			Description: "Providers (and their versions) available in the configured registry. Distinct from list_providers, which lists only providers already pulled. Optional provider arg lists versions for that provider.",
 		},
 		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.RegistryInput) (*mcp.CallToolResult, dto.QueryResultDTO, error) {
+			format, formatErr := resolveRenderFormat(cfg, args.Format)
+			if formatErr != nil {
+				return nil, dto.QueryResultDTO{}, formatErr
+			}
 			rows, err := backend.ListRegistry(ctx, args)
 			if err != nil {
 				return nil, dto.QueryResultDTO{}, err
 			}
 			out := dto.QueryResultDTO{Rows: rows}
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: render.RenderTable(rows)}}}, out, nil
+			text := textForFormat(format, out, func() string { return render.RenderTable(rows) })
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, out, nil
 		},
 	)
 
@@ -457,11 +534,15 @@ func registerTools(server *mcp.Server, cfg *Config, backend Backend, logger *log
 			Description: "Install a single provider from the registry into the local approot cache. Requires provider; version is optional (latest published is pulled when empty). Writes only local cache state; no cloud control/data plane effect.",
 		},
 		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.RegistryInput) (*mcp.CallToolResult, map[string]any, error) {
+			format, formatErr := resolveRenderFormat(cfg, args.Format)
+			if formatErr != nil {
+				return nil, nil, formatErr
+			}
 			res, err := backend.PullProvider(ctx, args)
 			if err != nil {
 				return nil, nil, err
 			}
-			text := render.RenderKV("Pull Result", []map[string]any{res})
+			text := textForFormat(format, res, func() string { return render.RenderKV("Pull Result", []map[string]any{res}) })
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, res, nil
 		},
 	)
@@ -510,10 +591,61 @@ func (s *simpleMCPServer) run(ctx context.Context) error {
 	case serverTransportSSE:
 		return fmt.Errorf("SSE transport obsoleted; use streamable HTTP transport instead")
 	case serverTransportStdIO:
+		// Windows text-mode pipes CRLF-terminate JSON-RPC lines; the SDK's
+		// ndjson decoder treats the bare carriage return before the newline
+		// as trailing garbage and kills the session (issue #668).  A raw CR
+		// is illegal inside a JSON string (control characters must be
+		// escaped), so stripping every CR from the inbound stream is
+		// lossless for spec-compliant traffic.
+		if filtered, filterErr := newCRStrippedStdin(); filterErr == nil {
+			os.Stdin = filtered
+		} else {
+			s.logger.Warnf("could not install CRLF-tolerant stdin filter: %v", filterErr)
+		}
 		return s.server.Run(ctx, &mcp.StdioTransport{})
 	default:
 		return fmt.Errorf("unsupported transport: %s", s.config.Server.Transport)
 	}
+}
+
+// crFilterReader removes carriage-return bytes from the wrapped stream.
+type crFilterReader struct {
+	r io.Reader
+}
+
+func (c *crFilterReader) Read(p []byte) (int, error) {
+	for {
+		n, err := c.r.Read(p)
+		kept := 0
+		for i := 0; i < n; i++ {
+			if p[i] == '\r' {
+				continue
+			}
+			p[kept] = p[i]
+			kept++
+		}
+		if kept > 0 || err != nil || len(p) == 0 {
+			return kept, err
+		}
+		// Every byte read was a CR; retry rather than returning (0, nil).
+	}
+}
+
+// newCRStrippedStdin returns the read end of a pipe fed by a goroutine that
+// copies the process's real stdin with all carriage returns removed.  The
+// pump goroutine lives for the remainder of the process, which matches the
+// lifetime of a stdio MCP session.
+func newCRStrippedStdin() (*os.File, error) {
+	pr, pw, err := os.Pipe()
+	if err != nil {
+		return nil, err
+	}
+	stdin := os.Stdin
+	go func() {
+		defer pw.Close()
+		io.Copy(pw, &crFilterReader{r: stdin}) //nolint:errcheck // EOF/close terminates the session anyway
+	}()
+	return pr, nil
 }
 
 // Stop gracefully stops the MCP server and all transports.

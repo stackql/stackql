@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -304,11 +307,47 @@ func (b *stackqlMCPService) RunQueryJSON(ctx context.Context, input dto.QueryJSO
 }
 
 func (b *stackqlMCPService) runPreprocessedQueryJSON(_ context.Context, query string, rowLimit int) ([]map[string]interface{}, error) {
-	results, ok := b.extractQueryResults(query, rowLimit)
-	if !ok {
-		return nil, fmt.Errorf("failed to extract query results")
+	results, extractErr := b.extractQueryResults(query, rowLimit)
+	if extractErr != nil {
+		return nil, extractErr
 	}
 	return results, nil
+}
+
+// upstreamStatusCodeRegex matches the status code fragments any-sdk embeds in
+// upstream response error strings, eg "HTTP response error.  Status code 403.",
+// "Response error.  Status code 429." and "http response status code: 503".
+var upstreamStatusCodeRegex = regexp.MustCompile(`(?i)status code:?\s*(\d{3})`) //nolint:gochecknoglobals // compiled once
+
+// isRetryableHTTPStatus classifies upstream statuses for MCP clients:
+// 408 / 429 / 5xx are worth retrying, other 4xx are not (issue #670).
+func isRetryableHTTPStatus(status int) bool {
+	return status == http.StatusRequestTimeout ||
+		status == http.StatusTooManyRequests ||
+		status >= http.StatusInternalServerError
+}
+
+// classifyBackendError decorates a statement error for the MCP surface.
+// When the error carries an upstream HTTP status, the returned error text is
+// prefixed with a machine-readable classification ({"http_status": ...,
+// "retryable": ...}); anything else keeps the historical
+// "failed to extract query results" prefix with the underlying detail
+// appended (issue #670).
+func classifyBackendError(err error) error {
+	match := upstreamStatusCodeRegex.FindStringSubmatch(err.Error())
+	if match == nil {
+		return fmt.Errorf("failed to extract query results: %w", err)
+	}
+	status, convErr := strconv.Atoi(match[1])
+	if convErr != nil {
+		return fmt.Errorf("failed to extract query results: %w", err)
+	}
+	return fmt.Errorf(
+		`upstream http error: {"http_status": %d, "retryable": %t}: %w`,
+		status,
+		isRetryableHTTPStatus(status),
+		err,
+	)
 }
 
 // ExecQuery returns {messages, timestamp}: messages is the orchestrator's
@@ -356,8 +395,11 @@ func (b *stackqlMCPService) applyQuery(query string) ([]internaldto.ExecutorOutp
 	return r, ok
 }
 
-func (b *stackqlMCPService) extractQueryResults(query string, rowLimit int) ([]map[string]interface{}, bool) {
+func (b *stackqlMCPService) extractQueryResults(query string, rowLimit int) ([]map[string]interface{}, error) {
 	r, ok := b.applyQuery(query)
+	if !ok {
+		return nil, fmt.Errorf("failed to extract query results")
+	}
 	// Initialise as empty (not nil) so a zero-row result survives downstream
 	// JSON-array schema validation on QueryResultDTO.Rows.  This pairs with
 	// fix 1 (returning ok regardless of len(rv)) so empty results render as
@@ -366,8 +408,10 @@ func (b *stackqlMCPService) extractQueryResults(query string, rowLimit int) ([]m
 	rowCount := 0
 	for _, resp := range r {
 		if respErr := resp.GetError(); respErr != nil {
-			ok = false
-			break
+			// Propagate the statement error (with upstream HTTP status
+			// classification where available) rather than collapsing it
+			// into an indistinct empty result (issue #670).
+			return nil, classifyBackendError(respErr)
 		}
 		// PrepareResultSet emits a nil SQLResult when RowMap is empty (eg
 		// REGISTRY LIST against an empty registry).  That's a zero-row
@@ -379,17 +423,16 @@ func (b *stackqlMCPService) extractQueryResults(query string, rowLimit int) ([]m
 		var drainOK bool
 		rv, rowCount, drainOK = drainSQLRowStream(sqlRowStream, rv, rowCount, rowLimit)
 		if !drainOK {
-			ok = false
-			break
+			return nil, fmt.Errorf("failed to extract query results")
 		}
 	}
-	return rv, ok
+	return rv, nil
 }
 
 // drainSQLRowStream reads `stream` to EOF (or until rowLimit is reached),
 // appending each row's payload to `rv`.  The returned bool is false when the
 // stream surfaces a read error or a nil row outside of EOF; that maps onto
-// extractQueryResults' (rv, false) failure mode.
+// extractQueryResults' error failure mode.
 func drainSQLRowStream(
 	stream sqldata.ISQLResultStream,
 	rv []map[string]interface{},

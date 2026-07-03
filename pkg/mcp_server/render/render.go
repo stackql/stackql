@@ -2,6 +2,7 @@
 package render
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"sort"
@@ -9,6 +10,50 @@ import (
 )
 
 const noResults = "**no results**"
+
+// Text content render formats (issue #669).  Markdown is the historical
+// default; JSON renders the same DTO carried in structuredContent as compact
+// JSON so text-only MCP consumers get a machine-readable payload.
+const (
+	FormatMarkdown = "markdown"
+	FormatJSON     = "json"
+)
+
+// IsLegalFormat reports whether the supplied format name is supported.
+// The empty string is legal and means "use the default".
+func IsLegalFormat(format string) bool {
+	switch format {
+	case "", FormatMarkdown, FormatJSON:
+		return true
+	default:
+		return false
+	}
+}
+
+// JSONValue renders any value as compact JSON for text content.  Row sets
+// pass through UnwrapRows first so database/sql nullable wrappers serialise
+// as their scalar payloads rather than {Valid, ...} envelopes.
+func JSONValue(v any) string {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return fmt.Sprintf(`{"error":%q}`, fmt.Sprintf("failed to marshal: %v", err))
+	}
+	return string(b)
+}
+
+// UnwrapRows returns a copy of `rows` with database/sql nullable wrappers
+// collapsed to their scalar payloads (see unwrap).
+func UnwrapRows(rows []map[string]any) []map[string]any {
+	clean := make([]map[string]any, 0, len(rows))
+	for _, row := range rows {
+		cleanRow := make(map[string]any, len(row))
+		for k, v := range row {
+			cleanRow[k] = unwrap(v)
+		}
+		clean = append(clean, cleanRow)
+	}
+	return clean
+}
 
 // unwrap normalises database/sql nullable wrappers (sql.NullString, NullBool,
 // NullInt64, NullInt32, NullFloat64, NullByte, NullTime, the generic sql.Null[T])

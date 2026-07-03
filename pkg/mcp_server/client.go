@@ -350,23 +350,39 @@ func (c *httpMCPClient) CallToolText(toolName string, args map[string]any) (stri
 	if toolCallErr != nil {
 		return "", toolCallErr
 	}
-	return formatToolResult(toolName, toolCall)
+	return formatToolResult(toolName, toolCall, c.prefersText())
+}
+
+// prefersText reports whether the client config requests the rendered text
+// content blocks instead of the structured payload (`"prefer_text": true`).
+// Useful for exercising / consuming the server's text renderings, eg the
+// JSON render option of issue #669.
+func (c *httpMCPClient) prefersText() bool {
+	if c.clientCfg == nil {
+		return false
+	}
+	preferText, isBool := c.clientCfg["prefer_text"].(bool)
+	return isBool && preferText
 }
 
 // formatToolResult shapes a CallToolResult for a scripting client.
 // Order of preference:
-//  1. StructuredContent re-marshalled as compact JSON (the typed DTO).
-//  2. The concatenated TextContent blocks, if no structured payload is present.
+//  1. The concatenated TextContent blocks, when preferText is set.
+//  2. StructuredContent re-marshalled as compact JSON (the typed DTO).
+//  3. The concatenated TextContent blocks, if no structured payload is present.
 //
 // Tool-level errors (IsError == true) are returned as a Go error containing the
 // text payload, so a CLI caller exits non-zero and the message ends up on
 // stderr - matching the existing transport-error convention.
-func formatToolResult(toolName string, toolCall *mcp.CallToolResult) (string, error) {
+func formatToolResult(toolName string, toolCall *mcp.CallToolResult, preferText bool) (string, error) {
 	if toolCall == nil {
 		return "", fmt.Errorf("tool %s returned no result", toolName)
 	}
 	if toolCall.IsError {
 		return "", fmt.Errorf("tool %s: %s", toolName, extractText(toolCall))
+	}
+	if preferText {
+		return extractText(toolCall), nil
 	}
 	if toolCall.StructuredContent != nil {
 		raw, err := json.Marshal(toolCall.StructuredContent)

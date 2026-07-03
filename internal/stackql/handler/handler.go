@@ -105,6 +105,14 @@ type HandlerContext interface { //nolint:revive // don't mind stuttering this on
 	//
 	SetConfigAtPath(path string, rhs interface{}, scope string) error
 
+	// Upstream (provider HTTP) error strictness.  When true, data
+	// acquisition failures (eg HTTP 4xx / 5xx on a SELECT) surface as
+	// statement errors rather than empty result sets.  Off by default to
+	// preserve historical CLI / pgsrv semantics; the MCP server turns it
+	// on (issue #670).
+	IsStrictUpstreamErrors() bool
+	SetStrictUpstreamErrors(bool)
+
 	// for testing only
 	SetDefaultHTTPClient(client *http.Client)
 }
@@ -145,11 +153,21 @@ type standardHandlerContext struct {
 	exportNamespace     string
 	stackqlSemver       string
 	defaultHTTPClient   *http.Client
+	// strictUpstreamErrors is documented on the HandlerContext interface.
+	strictUpstreamErrors bool
 }
 
 // for testing only.
 func (hc *standardHandlerContext) SetDefaultHTTPClient(client *http.Client) {
 	hc.defaultHTTPClient = client
+}
+
+func (hc *standardHandlerContext) IsStrictUpstreamErrors() bool {
+	return hc.strictUpstreamErrors
+}
+
+func (hc *standardHandlerContext) SetStrictUpstreamErrors(isStrict bool) {
+	hc.strictUpstreamErrors = isStrict
 }
 
 func (hc *standardHandlerContext) GetDataFlowCfg() dto.DataFlowCfg {
@@ -528,37 +546,38 @@ func (hc *standardHandlerContext) Clone() HandlerContext {
 	hc.sessionCtxMutex.Lock()
 	defer hc.sessionCtxMutex.Unlock()
 	rv := standardHandlerContext{
-		authMapMutex:        hc.authMapMutex,
-		sessionCtxMutex:     hc.sessionCtxMutex,
-		providersMapMutex:   hc.providersMapMutex,
-		drmConfig:           hc.drmConfig,
-		rawQuery:            hc.rawQuery,
-		runtimeContext:      hc.runtimeContext,
-		currentProvider:     hc.currentProvider,
-		providers:           hc.providers,
-		authContexts:        hc.authContexts,
-		registry:            hc.registry,
-		controlAttributes:   hc.controlAttributes,
-		errorPresentation:   hc.errorPresentation,
-		lRUCache:            hc.lRUCache,
-		sqlEngine:           hc.sqlEngine,
-		sqlDataSources:      hc.sqlDataSources,
-		sqlSystem:           hc.sqlSystem,
-		persistenceSystem:   hc.persistenceSystem,
-		garbageCollector:    hc.garbageCollector,
-		outErrFile:          hc.outErrFile,
-		outfile:             hc.outfile,
-		txnCounterMgr:       hc.txnCounterMgr,
-		txnStore:            hc.txnStore,
-		namespaceCollection: hc.namespaceCollection,
-		formatter:           hc.formatter,
-		pgInternalRouter:    hc.pgInternalRouter,
-		txnCoordinatorCtx:   hc.txnCoordinatorCtx,
-		typCfg:              hc.typCfg,
-		sessionContext:      hc.sessionContext,
-		exportNamespace:     hc.exportNamespace,
-		stackqlSemver:       hc.stackqlSemver,
-		defaultHTTPClient:   hc.defaultHTTPClient,
+		authMapMutex:         hc.authMapMutex,
+		sessionCtxMutex:      hc.sessionCtxMutex,
+		providersMapMutex:    hc.providersMapMutex,
+		drmConfig:            hc.drmConfig,
+		rawQuery:             hc.rawQuery,
+		runtimeContext:       hc.runtimeContext,
+		currentProvider:      hc.currentProvider,
+		providers:            hc.providers,
+		authContexts:         hc.authContexts,
+		registry:             hc.registry,
+		controlAttributes:    hc.controlAttributes,
+		errorPresentation:    hc.errorPresentation,
+		lRUCache:             hc.lRUCache,
+		sqlEngine:            hc.sqlEngine,
+		sqlDataSources:       hc.sqlDataSources,
+		sqlSystem:            hc.sqlSystem,
+		persistenceSystem:    hc.persistenceSystem,
+		garbageCollector:     hc.garbageCollector,
+		outErrFile:           hc.outErrFile,
+		outfile:              hc.outfile,
+		txnCounterMgr:        hc.txnCounterMgr,
+		txnStore:             hc.txnStore,
+		namespaceCollection:  hc.namespaceCollection,
+		formatter:            hc.formatter,
+		pgInternalRouter:     hc.pgInternalRouter,
+		txnCoordinatorCtx:    hc.txnCoordinatorCtx,
+		typCfg:               hc.typCfg,
+		sessionContext:       hc.sessionContext,
+		exportNamespace:      hc.exportNamespace,
+		stackqlSemver:        hc.stackqlSemver,
+		defaultHTTPClient:    hc.defaultHTTPClient,
+		strictUpstreamErrors: hc.strictUpstreamErrors,
 	}
 	return &rv
 }

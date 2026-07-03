@@ -7,6 +7,7 @@ type HierarchyInput struct {
 	Resource string `json:"resource,omitempty" yaml:"resource,omitempty"`
 	Method   string `json:"method,omitempty" yaml:"method,omitempty"`
 	RowLimit int    `json:"row_limit,omitempty" yaml:"row_limit,omitempty"`
+	Format   string `json:"format,omitempty" yaml:"format,omitempty" jsonschema:"text content render format: markdown (default) or json"` //nolint:lll // schema doc
 }
 
 // ServerInfoOutput is the backend-facing server info payload.
@@ -41,6 +42,7 @@ type ServerInfoDTO struct {
 type QueryJSONInput struct {
 	SQL      string `json:"sql" yaml:"sql"`
 	RowLimit int    `json:"row_limit,omitempty" yaml:"row_limit,omitempty"`
+	Format   string `json:"format,omitempty" yaml:"format,omitempty" jsonschema:"text content render format: markdown (default) or json"` //nolint:lll // schema doc
 }
 
 // RegistryInput is the shared input shape for list_registry and pull_provider.
@@ -50,6 +52,7 @@ type QueryJSONInput struct {
 type RegistryInput struct {
 	Provider string `json:"provider,omitempty" yaml:"provider,omitempty"`
 	Version  string `json:"version,omitempty" yaml:"version,omitempty"`
+	Format   string `json:"format,omitempty" yaml:"format,omitempty" jsonschema:"text content render format: markdown (default) or json"` //nolint:lll // schema doc
 }
 
 // QueryResultDTO is the typed structured payload returned alongside the rendered text.
