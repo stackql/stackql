@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/stackql/any-sdk/pkg/client"
@@ -1545,6 +1546,22 @@ func (mv *monoValentExecution) GetExecutor() (func(pc primitive.IPrimitiveCtx) i
 			var castMessages internaldto.BackendMessages
 			if len(invRes.Messages) > 0 {
 				castMessages = internaldto.NewBackendMessages(invRes.Messages)
+			}
+			// On the data acquisition (SELECT-shaped) path the any-sdk
+			// invoker only attaches messages when the upstream response was
+			// erroneous (eg HTTP 4xx / 5xx with a parseable error body, in
+			// which case the parsed error body may also be returned as a
+			// singleton Body); success messages are exclusive to mutation
+			// and skip-response flows.  Under strict upstream error
+			// semantics (the MCP server, issue #670) that must surface as a
+			// statement error so callers can distinguish "zero rows" from
+			// "query failed".
+			if mv.handlerCtx.IsStrictUpstreamErrors() &&
+				!mv.isMutation && !mv.isSkipResponse && len(invRes.Messages) > 0 {
+				return internaldto.NewExecutorOutput(
+					nil, nil, nil, castMessages,
+					fmt.Errorf("upstream provider error: %s", strings.Join(invRes.Messages, "; ")),
+				)
 			}
 			if invRes.Body == nil {
 				return internaldto.NewExecutorOutput(nil, nil, nil, castMessages, nil)

@@ -9,6 +9,7 @@ import (
 
 	"github.com/stackql/stackql/pkg/mcp_server/audit"
 	"github.com/stackql/stackql/pkg/mcp_server/policy"
+	"github.com/stackql/stackql/pkg/mcp_server/render"
 	"github.com/stackql/stackql/pkg/sink"
 )
 
@@ -92,6 +93,15 @@ func (c *Config) GetMode() string {
 	return c.Server.Mode
 }
 
+// GetRender returns the server-level default render format for tool result
+// text content.  Empty string is mapped to the markdown default.
+func (c *Config) GetRender() string {
+	if c == nil || c.Server.Render == "" {
+		return render.FormatMarkdown
+	}
+	return c.Server.Render
+}
+
 // IsAuditEnabled reports whether audit logging should run.  Audit is on by
 // default unless explicitly disabled.
 func (c *Config) IsAuditEnabled() bool {
@@ -141,6 +151,11 @@ type ServerConfig struct {
 	// and `read_only` are set, `mode` wins.
 	Mode string `json:"mode,omitempty" yaml:"mode,omitempty"`
 
+	// Render sets the server-level default for tool result text content.
+	// Legal values: "markdown" (default), "json".  A per-call `format`
+	// argument on a tool overrides this default (issue #669).
+	Render string `json:"render,omitempty" yaml:"render,omitempty"`
+
 	// Audit configures the audit subsystem.  Audit is enabled by default
 	// (Disabled is false) and writes to a file sink.
 	Audit AuditConfig `json:"audit,omitempty" yaml:"audit,omitempty"`
@@ -161,6 +176,7 @@ type serverConfigWire struct {
 	MaxConcurrentRequests int            `json:"max_concurrent_requests" yaml:"max_concurrent_requests"`
 	RequestTimeout        Duration       `json:"request_timeout" yaml:"request_timeout"`
 	Mode                  string         `json:"mode,omitempty" yaml:"mode,omitempty"`
+	Render                string         `json:"render,omitempty" yaml:"render,omitempty"`
 	Audit                 AuditConfig    `json:"audit,omitempty" yaml:"audit,omitempty"`
 	// LegacyReadOnly preserves the PR1 `read_only: true` wire form.
 	LegacyReadOnly *bool `json:"read_only,omitempty" yaml:"read_only,omitempty"`
@@ -179,6 +195,7 @@ func (s *ServerConfig) fromWire(w serverConfigWire) {
 	s.MaxConcurrentRequests = w.MaxConcurrentRequests
 	s.RequestTimeout = w.RequestTimeout
 	s.Mode = w.Mode
+	s.Render = w.Render
 	s.Audit = w.Audit
 	// Legacy: `read_only: true` with no `mode` -> Mode = "read_only".
 	// `mode` always wins.
@@ -345,6 +362,9 @@ func DefaultSSEConfig() *Config {
 func (c *Config) Validate() error {
 	if !policy.IsLegalMode(c.Server.Mode) {
 		return fmt.Errorf("invalid server.mode %q (legal: read_only, safe, delete_safe, full_access)", c.Server.Mode)
+	}
+	if !render.IsLegalFormat(c.Server.Render) {
+		return fmt.Errorf("invalid server.render %q (legal: markdown, json)", c.Server.Render)
 	}
 	switch c.Server.Audit.GetFailureMode() {
 	case audit.FailureModeStrict, audit.FailureModeStrictMutations, audit.FailureModeBestEffort:

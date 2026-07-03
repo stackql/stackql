@@ -420,6 +420,36 @@ def get_special_org_repos():
     return jsonify(response), 200
 
 
+@app.route('/orgs/ratelimitedorg/repos', methods=['GET'])
+def get_rate_limited_org_repos():
+    """Mimics GitHub's rate-limit refusal: a 403 with a JSON object body.
+
+    Exercised by the MCP robot scenarios for issue #670 (upstream HTTP errors
+    must surface as tool errors, classified as non-retryable for 403).
+    """
+    logger.warning("Rate limited GET request for ratelimitedorg repos")
+    return jsonify({
+        "message": "API rate limit exceeded for 111.1111.111.11.",
+        "documentation_url": "https://docs.github.com/rest/overview/rate-limits-for-the-rest-api",
+        "status": "403",
+    }), 403
+
+
+@app.route('/orgs/throttledorg/repos', methods=['GET'])
+def get_throttled_org_repos():
+    """A 429 with a JSON object body.
+
+    Exercised by the MCP robot scenarios for issue #670 (429 must be
+    classified as retryable).
+    """
+    logger.warning("Throttled GET request for throttledorg repos")
+    return jsonify({
+        "message": "You have exceeded a secondary rate limit. Please wait a few minutes before you try again.",
+        "documentation_url": "https://docs.github.com/rest/overview/rate-limits-for-the-rest-api",
+        "status": "429",
+    }), 429
+
+
 @app.route('/orgs/<org_name>/repos', methods=['GET'])
 def get_combined_org_repos(org_name):
     if org_name not in ["dummyorg", "stackql"]:
