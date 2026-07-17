@@ -9244,6 +9244,27 @@ Delete Returning Simple Projection
     ...    stdout=${CURDIR}/tmp/Delete-Returning-Simple-Projection.tmp
     ...    stderr=${CURDIR}/tmp/Delete-Returning-Simple-Projection-stderr.tmp
 
+Batch Delete With In List Dispatches Per Element
+    [Documentation]    Issue #683: DELETE with an IN list fans out into one request per
+    ...                element, mirroring SELECT semantics. The mock permits deletion of
+    ...                both deletable-firewall and deletable-firewall-2; before the fix
+    ...                the IN-list parameter was silently dropped and the statement
+    ...                failed with "missing required path parameter 'firewall'".
+    ${inputStr} =    Catenate
+    ...    delete from google.compute.firewalls where project = 'mutable-project' and firewall in ('deletable-firewall', 'deletable-firewall-2');
+    Should Stackql Exec Inline Contain Stderr
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    The operation was despatched successfully
+    ...    stdout=${CURDIR}/tmp/Batch-Delete-With-In-List.tmp
+    ...    stderr=${CURDIR}/tmp/Batch-Delete-With-In-List-stderr.tmp
+
 Delete Returning Star
     [Documentation]    Delete an object and return all system returned object values. For deletion ops that synchronously return some object.
     ${inputStr} =    Catenate

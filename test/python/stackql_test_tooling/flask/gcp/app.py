@@ -357,7 +357,12 @@ def projects_testing_project_global_firewalls_update(project_name: str, firewall
 
 @app.route('/compute/v1/projects/<project_name>/global/firewalls/<firewall_name>', methods=['DELETE'])
 def projects_testing_project_global_firewalls_delete(project_name: str, firewall_name: str):
-    _permitted_combinations = (('mutable-project', 'deletable-firewall'),)
+    # deletable-firewall-2 exists so batch DELETE ... IN (...) fan-out
+    # (issue 683) can delete two distinct resources in one statement.
+    _permitted_combinations = (
+        ('mutable-project', 'deletable-firewall'),
+        ('mutable-project', 'deletable-firewall-2'),
+    )
     if (project_name, firewall_name) not in _permitted_combinations:
         return '{"msg": "Disallowed"}', 500, {'Content-Type': 'application/json'}
     operation_id = '1000000000004'
