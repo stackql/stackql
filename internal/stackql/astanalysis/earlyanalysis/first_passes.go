@@ -262,6 +262,14 @@ func (sp *standardInitialPasses) initialPasses(
 		return nil
 	}
 
+	// Constant-fold pure-literal function expressions in WHERE comparisons
+	// (issue #686) BEFORE parameter extraction, so a required provider
+	// parameter constrained by eg `strftime('%s', date('now', '-30 days'))`
+	// is supplied with the evaluated literal rather than silently dropped.
+	// Internally routable statements returned above: the backend evaluates
+	// those natively, preserving non-deterministic function semantics.
+	foldWhereConstantFuncExprs(ast, handlerCtx.GetSQLEngine())
+
 	var whereParams parserutil.ParameterMap
 
 	// Where clause paramter extract from top down does not require a deep pass

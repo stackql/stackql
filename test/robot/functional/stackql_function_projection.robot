@@ -71,3 +71,35 @@ Aggregate Over Bare Column Unaffected
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select sum(size) as total from stackql_native_test.xml_ec2.volumes;
     ...    24
+
+Function Expression Supplies Required Parameter
+    [Documentation]    Issue #686: a required provider parameter constrained by a
+    ...                pure-literal function expression is constant-folded during early
+    ...                analysis and supplied to the request. Previously the parameter was
+    ...                silently dropped and the request failed with "AWS region is nil".
+    ...                lower() is portable across the sqlite and postgres backends.
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select volumeId, size from aws.ec2.volumes where region \= lower('AP-SOUTHEAST-2') order by volumeId asc;
+    ...    vol-00100000000000000
+
+Function Expression Containing Column Reference Stays Client Side
+    [Documentation]    Issue #686 scope guard: an expression referencing a column is NOT
+    ...                folded; it remains an authoritative client-side filter and the
+    ...                query still returns rows.
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select volumeId from aws.ec2.volumes where region \= lower('AP-SOUTHEAST-2') and size \= abs(size) order by volumeId asc;
+    ...    vol-00200000000000000
