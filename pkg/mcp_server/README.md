@@ -201,7 +201,7 @@ logging:
 
 ### Published Tools
 
-The server publishes the following 11 tools. Each tool's rendered output is a markdown table (uniform multi-row results) or a markdown KV record (sparse / single-record / mixed-shape results). Every tool also returns a typed structured DTO for programmatic clients.
+The server publishes the following 14 tools. Each tool's rendered output is a markdown table (uniform multi-row results) or a markdown KV record (sparse / single-record / mixed-shape results). Every tool also returns a typed structured DTO for programmatic clients.
 
 | Tool | Renderer | Description |
 |---|---|---|
@@ -216,6 +216,9 @@ The server publishes the following 11 tools. Each tool's rendered output is a ma
 | `run_select_query` | Table | Execute a SELECT. Returns `{rows}`. Reads only. |
 | `run_mutation_query` | KV | Execute INSERT/UPDATE/REPLACE/DELETE against the provider. **Real side effects.** Returns `{messages, timestamp}`. Gated by the server [mode](#server-modes). |
 | `run_lifecycle_operation` | KV | Execute a stackql `EXEC` lifecycle operation. Returns `{messages, timestamp}`. Gated by the server [mode](#server-modes). |
+| `list_registry` | Table | Providers (and their versions) available in the configured registry. Optional `provider` lists versions for that provider. |
+| `pull_provider` | KV | Install a provider from the registry into the local approot cache. Requires `provider`; `version` optional. Local cache write only. |
+| `reload_credentials` | Table | Re-source credentials from the configured `server.env_file` into the process environment and report per-provider resolution status (issue #688). Never returns secret values. Optional `provider` scopes the report. Allowed in every mode. |
 
 ### Published Prompts
 

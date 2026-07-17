@@ -58,6 +58,29 @@ Audit is on by default.  To opt out:
 
 ```
 
+### Credential (re)sourcing (`env_file` + `reload_credentials`)
+
+A process environment block is fixed at spawn.  When an MCP host (eg Claude Desktop over stdio) launches the server without the credential env vars - or when short-lived credentials rotate mid-session - no amount of re-reading the process environment can help, because nothing external can change it.  `server.env_file` nominates a dotenv-style file as a mutable credential store that bridges this gap, with identical behaviour on Linux, macOS and Windows:
+
+```bash
+
+./build/stackql mcp --mcp.server.type=stdio --mcp.config '{"server": {"env_file": "/path/to/stackql-credentials.env"} }'
+
+```
+
+Semantics:
+
+- The file is sourced into the process environment once at startup (if it exists) and again on every `reload_credentials` tool call, where stackql's per-request credential resolution picks the values up.
+- Only keys with non-empty values are set; nothing is ever unset, so a failed or partial reload preserves previously working credentials.
+- The file may be created, updated or rotated at any time while the server is running - by hand, by a rotation script, or by tooling such as AWS SSO helpers.
+- `reload_credentials` reports variable names and per-provider resolution status (`ok`, `unresolved`, `not_checked`) only; secret values are never returned, logged or audited.
+- When a query fails on credential resolution, the error carries a hint directing the agent to call `reload_credentials` and retry, so agentic clients self-heal without operator intervention.
+- Without `env_file` configured, `reload_credentials` degrades to a pure per-provider credential status probe.
+
+File format: one `KEY=VALUE` per line; `#` comments, blank lines, an optional `export ` prefix, optional single or double quotes around the value, and CRLF line endings are all tolerated.
+
+Note for Claude Desktop on Windows: `setx` writes the registry, not running processes, and Claude Desktop passes its own (stale) environment to MCP subprocesses.  Either set vars in the `env` block of `claude_desktop_config.json` (requires a full Claude Desktop restart, including the tray icon), or use `env_file` as above to avoid restarts entirely.
+
 
 ## Using the MCP Client
 
@@ -121,7 +144,7 @@ Then, assuming you have a `stackql` MCP server serving streamable HTTP on port `
 
 ## Canonical agent tools
 
-The server publishes 11 tools.  Each returns both rendered text (for the LLM) and a typed structured payload (for programmatic clients).  Rendering is fixed per tool: a markdown table for uniform multi-row results, a markdown KV block for sparse / single-record / mixed-shape results.
+The server publishes 14 tools.  Each returns both rendered text (for the LLM) and a typed structured payload (for programmatic clients).  Rendering is fixed per tool: a markdown table for uniform multi-row results, a markdown KV block for sparse / single-record / mixed-shape results.
 
 | Tool | Renderer | Description |
 |---|---|---|
@@ -136,6 +159,9 @@ The server publishes 11 tools.  Each returns both rendered text (for the LLM) an
 | `run_select_query` | Table | Execute a SELECT.  Returns `{rows}`.  Reads only. |
 | `run_mutation_query` | KV | Execute INSERT/UPDATE/REPLACE/DELETE.  **Real side effects.** Returns `{messages, timestamp}`.  Gated by the server [mode](#server-modes). |
 | `run_lifecycle_operation` | KV | Execute a stackql `EXEC` lifecycle operation.  Returns `{messages, timestamp}`.  Gated by the server [mode](#server-modes). |
+| `list_registry` | Table | Providers (and their versions) available in the configured registry.  Optional `provider` lists versions for that provider. |
+| `pull_provider` | KV | Install a provider from the registry into the local approot cache.  Requires `provider`; `version` optional.  Local cache write only. |
+| `reload_credentials` | Table | Re-source credentials from the configured [`env_file`](#credential-resourcing-env_file--reload_credentials) into the process environment and report per-provider resolution status.  Never returns secret values.  Optional `provider` scopes the report.  Allowed in every mode. |
 
 ## Canonical agent prompts
 

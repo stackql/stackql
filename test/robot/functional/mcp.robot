@@ -1158,3 +1158,37 @@ MCP HTTP Upstream 404 Returns Empty Result Set
     Should Be Equal As Integers    ${result.rc}    0
     Should Contain        ${result.stdout}    "rows":[]
     Should Not Contain    ${result.stderr}    upstream http error
+
+# ===========================================================================
+# Issue #688 scenarios.  A stdio MCP server spawned without credential env
+# vars (the Claude Desktop failure mode: a process env block is fixed at
+# spawn) must be able to (re)source credentials mid-session from the mutable
+# store nominated in mcp.config as server.env_file, via the
+# reload_credentials tool.  The python harness spawns the server with the
+# okta credential var deliberately stripped from its environment, observes
+# the credential resolution failure (with the reload_credentials hint),
+# writes the env file, reloads, and re-runs the query - uniformly on every
+# platform.
+# ===========================================================================
+
+MCP Stdio Reload Credentials Sources Env File Mid Session
+    [Documentation]    Issue #688: credential (re)sourcing at any point in the
+    ...                MCP server lifecycle, stdio transport, cross-platform.
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    ${env_file}=    Set Variable    ${CURDIR}${/}tmp${/}mcp-reload-credentials.env
+    ${select_sql}=    Set Variable    select name, status from okta.application.apps apps where apps.subdomain = 'example-subdomain' order by name asc;
+    ${result}=    Evaluate    stackql_test_tooling.mcp_stdio_client.run_stdio_credential_reload_roundtrip($STACKQL_EXE, $REGISTRY_NO_VERIFY_CFG_JSON_STR, $AUTH_CFG_STR, $env_file, 'OKTA_SECRET_KEY', $OKTA_SECRET_STR, $select_sql)    modules=stackql_test_tooling.mcp_stdio_client
+    Log    ${result['stderr']}
+    # Before the env file exists, credential resolution fails with the
+    # agent-actionable hint pointing at the reload_credentials tool.
+    Should Contain        ${result['select_before']}    references empty string
+    Should Contain        ${result['select_before']}    reload_credentials
+    Should Not Contain    ${result['select_before']}    okta_browser_plugin
+    # The reload sources the var (names only, never values) and reports the
+    # okta provider as resolvable.
+    Should Contain        ${result['reload']}    OKTA_SECRET_KEY
+    Should Contain        ${result['reload']}    "ok"
+    Should Not Contain    ${result['reload']}    ${OKTA_SECRET_STR}
+    # The same query now succeeds against the mocked okta provider.
+    Should Contain        ${result['select_after']}    okta_browser_plugin
+    Should Be Equal As Integers    ${result['returncode']}    0

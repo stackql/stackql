@@ -55,6 +55,32 @@ type RegistryInput struct {
 	Format   string `json:"format,omitempty" yaml:"format,omitempty" jsonschema:"text content render format: markdown (default) or json"` //nolint:lll // schema doc
 }
 
+// CredentialsReloadInput is the input shape for reload_credentials.
+// Provider optionally scopes the status report to one provider; the env file
+// sourcing itself is always process-wide.
+type CredentialsReloadInput struct {
+	Provider string `json:"provider,omitempty" yaml:"provider,omitempty"`
+	Format   string `json:"format,omitempty" yaml:"format,omitempty" jsonschema:"text content render format: markdown (default) or json"` //nolint:lll // schema doc
+}
+
+// ProviderCredentialStatusDTO reports one provider's credential resolution
+// outcome.  Variable names and file paths only; never secret values.
+type ProviderCredentialStatusDTO struct {
+	Provider    string `json:"provider"`
+	AuthType    string `json:"auth_type,omitempty"`
+	SourcedFrom string `json:"sourced_from,omitempty" jsonschema:"where credentials are read from, eg env:VAR_NAME or file:/path"`
+	Status      string `json:"status" jsonschema:"ok, unresolved or not_checked"`
+	Detail      string `json:"detail,omitempty" jsonschema:"resolution error detail when status is unresolved"`
+}
+
+// CredentialsReloadDTO is the result of reload_credentials (issue #688).
+type CredentialsReloadDTO struct {
+	EnvFile        string                        `json:"env_file,omitempty" jsonschema:"configured dotenv file path, empty when none configured"`
+	EnvFileSourced bool                          `json:"env_file_sourced" jsonschema:"true when the env file was found and sourced on this call"`
+	SourcedVars    []string                      `json:"sourced_vars,omitempty" jsonschema:"names of environment variables set from the env file (values are never returned)"` //nolint:lll // schema doc
+	Providers      []ProviderCredentialStatusDTO `json:"providers"`
+}
+
 // QueryResultDTO is the typed structured payload returned alongside the rendered text.
 type QueryResultDTO struct {
 	Rows []map[string]any `json:"rows"`

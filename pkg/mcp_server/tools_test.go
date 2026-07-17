@@ -27,6 +27,7 @@ type testBackend struct {
 	execOut          map[string]any
 	listRegistryOut  []map[string]any
 	pullProviderOut  map[string]any
+	reloadCredsOut   dto.CredentialsReloadDTO
 
 	// Capture last inputs for assertions
 	lastHierarchy   dto.HierarchyInput
@@ -34,6 +35,7 @@ type testBackend struct {
 	lastExecQuery   string
 	lastValidateSQL string
 	lastRegistry    dto.RegistryInput
+	lastReloadCreds dto.CredentialsReloadInput
 }
 
 func (b *testBackend) Ping(_ context.Context) error { return nil }
@@ -91,6 +93,17 @@ func (b *testBackend) PullProvider(_ context.Context, in dto.RegistryInput) (map
 		return map[string]any{}, nil
 	}
 	return b.pullProviderOut, nil
+}
+func (b *testBackend) ReloadCredentials(
+	_ context.Context,
+	in dto.CredentialsReloadInput,
+) (dto.CredentialsReloadDTO, error) {
+	b.lastReloadCreds = in
+	out := b.reloadCredsOut
+	if out.Providers == nil {
+		out.Providers = []dto.ProviderCredentialStatusDTO{}
+	}
+	return out, nil
 }
 
 // nilOrEmpty ensures we return a non-nil slice so the SDK's schema validation

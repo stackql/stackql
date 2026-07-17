@@ -242,6 +242,10 @@ type stackqlMCPService struct {
 	handlerCtx      handler.HandlerContext
 	logger          *logrus.Logger
 	serverInfo      serverBuildInfo
+	// envFile is the dotenv-style file (mcp.config server.env_file) that the
+	// reload_credentials tool (re)sources into the process environment
+	// (issue #688).  Empty means no mutable credential source is configured.
+	envFile string
 }
 
 func NewStackqlMCPBackendService(
@@ -249,6 +253,7 @@ func NewStackqlMCPBackendService(
 	handlerCtx handler.HandlerContext,
 	logger *logrus.Logger,
 	serverInfo serverBuildInfo,
+	envFile string,
 ) (mcp_server.Backend, error) {
 	if logger == nil {
 		logger = logrus.New()
@@ -260,12 +265,19 @@ func NewStackqlMCPBackendService(
 	if txnOrchestrator == nil {
 		return nil, fmt.Errorf("transaction orchestrator is nil")
 	}
+	// Source the env file once at startup so credentials already present on
+	// disk work without a reload_credentials call.  A missing file is fine
+	// (it may be written mid-session); a malformed path is surfaced loudly.
+	if _, _, sourceErr := sourceEnvFile(envFile); sourceErr != nil {
+		return nil, fmt.Errorf("failed to source env file '%s': %w", envFile, sourceErr)
+	}
 	return &stackqlMCPService{
 		txnOrchestrator: txnOrchestrator,
 		interrogator:    NewSimpleStackqlInterrogator(),
 		logger:          logger,
 		handlerCtx:      handlerCtx,
 		serverInfo:      serverInfo,
+		envFile:         envFile,
 	}, nil
 }
 
@@ -327,15 +339,34 @@ func isRetryableHTTPStatus(status int) bool {
 		status >= http.StatusInternalServerError
 }
 
+// isCredentialResolutionError matches the error shapes any-sdk emits when
+// credential material cannot be resolved from the process environment or a
+// key file (eg "credentials error: credentialsenvvar references empty
+// string").  These fail before any HTTP request is made, so they carry no
+// upstream status code.
+func isCredentialResolutionError(err error) bool {
+	msg := err.Error()
+	return strings.Contains(msg, "credentials error") ||
+		strings.Contains(msg, "references empty string")
+}
+
 // classifyBackendError decorates a statement error for the MCP surface.
 // When the error carries an upstream HTTP status, the returned error text is
 // prefixed with a machine-readable classification ({"http_status": ...,
-// "retryable": ...}); anything else keeps the historical
-// "failed to extract query results" prefix with the underlying detail
-// appended (issue #670).
+// "retryable": ...}); credential resolution failures get an agent-actionable
+// hint pointing at the reload_credentials tool (issue #688); anything else
+// keeps the historical "failed to extract query results" prefix with the
+// underlying detail appended (issue #670).
 func classifyBackendError(err error) error {
 	match := upstreamStatusCodeRegex.FindStringSubmatch(err.Error())
 	if match == nil {
+		if isCredentialResolutionError(err) {
+			return fmt.Errorf(
+				"credential resolution failed (hint: update credentials at their source, "+
+					"then call the reload_credentials tool and retry): %w",
+				err,
+			)
+		}
 		return fmt.Errorf("failed to extract query results: %w", err)
 	}
 	status, convErr := strconv.Atoi(match[1])

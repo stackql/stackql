@@ -155,6 +155,7 @@ func runMCPServer(handlerCtx handler.HandlerContext) {
 			handlerCtx,
 			logging.GetLogger(),
 			serverInfo,
+			config.Server.EnvFile,
 		)
 		iqlerror.PrintErrorAndExitOneIfError(backendErr)
 		iqlerror.PrintErrorAndExitOneIfNil(backend, "mcp backend is unexpectedly nil")

@@ -156,6 +156,15 @@ type ServerConfig struct {
 	// argument on a tool overrides this default (issue #669).
 	Render string `json:"render,omitempty" yaml:"render,omitempty"`
 
+	// EnvFile is a dotenv-style file the reload_credentials tool (re)sources
+	// into the process environment (issue #688).  A process env block is
+	// fixed at spawn, so a stdio MCP server launched without credential
+	// variables can never see later external changes; this file is the
+	// mutable store that bridges that gap, uniformly on every platform.
+	// Empty (the default) disables sourcing; reload_credentials then only
+	// reports per-provider credential resolution status.
+	EnvFile string `json:"env_file,omitempty" yaml:"env_file,omitempty"`
+
 	// Audit configures the audit subsystem.  Audit is enabled by default
 	// (Disabled is false) and writes to a file sink.
 	Audit AuditConfig `json:"audit,omitempty" yaml:"audit,omitempty"`
@@ -177,6 +186,7 @@ type serverConfigWire struct {
 	RequestTimeout        Duration       `json:"request_timeout" yaml:"request_timeout"`
 	Mode                  string         `json:"mode,omitempty" yaml:"mode,omitempty"`
 	Render                string         `json:"render,omitempty" yaml:"render,omitempty"`
+	EnvFile               string         `json:"env_file,omitempty" yaml:"env_file,omitempty"`
 	Audit                 AuditConfig    `json:"audit,omitempty" yaml:"audit,omitempty"`
 	// LegacyReadOnly preserves the PR1 `read_only: true` wire form.
 	LegacyReadOnly *bool `json:"read_only,omitempty" yaml:"read_only,omitempty"`
@@ -196,6 +206,7 @@ func (s *ServerConfig) fromWire(w serverConfigWire) {
 	s.RequestTimeout = w.RequestTimeout
 	s.Mode = w.Mode
 	s.Render = w.Render
+	s.EnvFile = w.EnvFile
 	s.Audit = w.Audit
 	// Legacy: `read_only: true` with no `mode` -> Mode = "read_only".
 	// `mode` always wins.
