@@ -73,6 +73,17 @@ def create_app() -> Flask:
         top = request.args.get("$top")
         if top is not None and top.isdigit():
             people = people[: int(top)]
+        # Honour $select server-side, as real OData services do: fields absent
+        # from $select are stripped from the response. This makes issue #682
+        # observable - if the pushed $select omits a WHERE/ORDER BY column, the
+        # client-side re-filter sees an absent column and drops every row.
+        select = request.args.get("$select")
+        if select:
+            requested = {f.strip() for f in select.split(",") if f.strip()}
+            people = [
+                {k: v for k, v in person.items() if k in requested}
+                for person in people
+            ]
         return jsonify({"value": people, "@odata.count": len(people)})
 
     # ---- GraphQL cursor pagination -----------------------------------------

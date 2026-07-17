@@ -63,6 +63,14 @@ func buildPushdownIntent(node sqlparser.SQLNode) (formulation.PushdownIntent, bo
 		}
 	}
 
+	// A pushed projection must also fetch every column the client-side WHERE /
+	// ORDER BY consult, or the authoritative re-filter sees absent columns and
+	// silently drops all rows (issue #682). The union covers the FULL predicate
+	// tree - including OR branches and non-translatable comparisons, which stay
+	// client-side filters. Output shaping is unchanged: only the SELECT-list
+	// columns are projected to the user.
+	projection = unionReferencedColumns(projection, sel)
+
 	limit, limitSet := 0, false
 	offset, offsetSet := 0, false
 	if sel.Limit != nil {
@@ -92,6 +100,39 @@ func SelectLimit(node sqlparser.SQLNode) (int, bool) {
 		return 0, false
 	}
 	return sqlValAsInt(sel.Limit.Rowcount)
+}
+
+// unionReferencedColumns extends a non-empty projection with any columns referenced
+// by the WHERE and ORDER BY clauses that are not already projected, preserving order
+// and deduplicating (issue #682). An empty projection (SELECT * or no plain columns)
+// is returned unchanged: with no $select restriction there is nothing to widen.
+func unionReferencedColumns(projection []string, sel *sqlparser.Select) []string {
+	if len(projection) == 0 {
+		return projection
+	}
+	seen := make(map[string]struct{}, len(projection))
+	for _, c := range projection {
+		seen[c] = struct{}{}
+	}
+	var walkTargets []sqlparser.SQLNode
+	if sel.Where != nil && sel.Where.Expr != nil {
+		walkTargets = append(walkTargets, sel.Where.Expr)
+	}
+	if sel.OrderBy != nil {
+		walkTargets = append(walkTargets, sel.OrderBy)
+	}
+	//nolint:errcheck // the visitor never errs
+	sqlparser.Walk(func(node sqlparser.SQLNode) (bool, error) {
+		if cn, isCol := node.(*sqlparser.ColName); isCol {
+			name := cn.Name.GetRawVal()
+			if _, present := seen[name]; !present {
+				seen[name] = struct{}{}
+				projection = append(projection, name)
+			}
+		}
+		return true, nil
+	}, walkTargets...)
+	return projection
 }
 
 // isSimpleResourceScopedSelect reports whether a SELECT is a single-resource scan with

@@ -127,3 +127,35 @@ OData Pushdown Suppressed For Grain Changing Query
     ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
     ...    select count(*) as c from stackql_native_test.odata.people group by echoed limit 1;
     ...    3
+
+OData Select Union Includes Where And Order By Columns
+    [Documentation]    Issue #682: a pushed $select must include columns referenced only in
+    ...                WHERE / ORDER BY, or the server (which honours $select) strips them and
+    ...                the authoritative client-side filter drops every row. The echoed wire
+    ...                query proves the union shape reached the server.
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select name, echoed from stackql_native_test.odata.people where city \= 'NYC' order by age asc;
+    ...    $select\=name,echoed,city,age
+
+OData Where Only Column Still Filters Rows
+    [Documentation]    Issue #682 end-to-end: the WHERE column is absent from the SELECT list,
+    ...                the mock strips fields not in $select, and the row must still be
+    ...                returned. Before the fix the pushed $select omitted `city`, the
+    ...                client-side filter saw an absent column and returned zero rows.
+    Should StackQL Exec Inline Contain
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    select name from stackql_native_test.odata.people where city \= 'NYC';
+    ...    Alice
