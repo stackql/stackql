@@ -9265,6 +9265,35 @@ Batch Delete With In List Dispatches Per Element
     ...    stdout=${CURDIR}/tmp/Batch-Delete-With-In-List.tmp
     ...    stderr=${CURDIR}/tmp/Batch-Delete-With-In-List-stderr.tmp
 
+Batch Delete With In List Returns One Row Per Element
+    [Documentation]    Issue #683 per-element proof: DELETE ... IN (two elements) with
+    ...                RETURNING yields exactly two response rows - one per despatched
+    ...                request. A regression to single-element despatch would return
+    ...                one row and fail the exact-match assertion.
+    ${inputStr} =    Catenate
+    ...    delete from google.compute.firewalls where project = 'mutable-project' and firewall in ('deletable-firewall', 'deletable-firewall-2') returning kind, user;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-------------------|----------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}kind${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}user${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------------------|----------------------|
+    ...    |${SPACE}compute#operation${SPACE}|${SPACE}somejimbo@stackql.io${SPACE}|
+    ...    |-------------------|----------------------|
+    ...    |${SPACE}compute#operation${SPACE}|${SPACE}somejimbo@stackql.io${SPACE}|
+    ...    |-------------------|----------------------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Batch-Delete-In-List-Returning.tmp
+    ...    stderr=${CURDIR}/tmp/Batch-Delete-In-List-Returning-stderr.tmp
+
 Delete Returning Star
     [Documentation]    Delete an object and return all system returned object values. For deletion ops that synchronously return some object.
     ${inputStr} =    Catenate
