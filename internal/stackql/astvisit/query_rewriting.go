@@ -751,10 +751,31 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			return err
 		}
 		v.columnNames = append(v.columnNames, col)
-		ss, _ := schema.GetProperty(col.Name)
+		// The provider schema types the projection ONLY when the expression is
+		// the bare column itself. A function or compound expression inherits the
+		// column NAME from its argument (see parserutil.inferColNameFromExpr),
+		// but its RESULT is not the column: binding the argument's schema made
+		// type-changing functions (typeof, date, datetime, ...) scan their text
+		// results through the argument's declared type, yielding 0/null and
+		// corrupting same-named sibling projections (issue #687). Non-bare
+		// expressions instead default to the backend's text type, which scans
+		// dynamically and preserves DESCRIBE output for expression-defined
+		// (eg provider view) columns.
+		var ss formulation.Schema
+		_, isBareCol := node.Expr.(*sqlparser.ColName)
+		if isBareCol {
+			ss, _ = schema.GetProperty(col.Name)
+		}
 		cd := formulation.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, node, ss, col.Val)
 		v.columnDescriptors = append(v.columnDescriptors, cd)
-		v.relationalColumns = append(v.relationalColumns, v.dc.OpenapiColumnsToRelationalColumn(cd))
+		relationalColumn := v.dc.OpenapiColumnsToRelationalColumn(cd)
+		if !isBareCol && relationalColumn.GetType() == "" {
+			relationalColumn = typing.NewRelationalColumn(
+				col.Name,
+				v.dc.GetRelationalType("string"),
+			).WithQualifier(col.Qualifier).WithAlias(col.Alias).WithDecorated(col.DecoratedColumn).WithParserNode(node)
+		}
+		v.relationalColumns = append(v.relationalColumns, relationalColumn)
 		if !node.As.IsEmpty() {
 		}
 
