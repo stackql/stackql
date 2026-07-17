@@ -131,6 +131,90 @@ def create_app() -> Flask:
             }
         )
 
+    # ---- REST page_number pagination (issue 684) ---------------------------
+
+    _paged_items = [{"name": f"paged-item-{i}", "idx": i} for i in range(1, 7)]
+
+    @app.get("/paged/items")
+    def paged_items():
+        # page_number strategy: the response reports the current page and the
+        # total page count; the reader requests page N+1 until page == total.
+        page_raw = request.args.get("page", "1")
+        page = int(page_raw) if page_raw.isdigit() else 1
+        size = 2
+        window = _paged_items[(page - 1) * size:(page - 1) * size + size]
+        rows = [dict(item, wire_page=page) for item in window]
+        return jsonify({
+            "items": rows,
+            "result_info": {"page": page, "total_pages": 3},
+        })
+
+    @app.get("/paged/items_unterminated")
+    def paged_items_unterminated():
+        # Negative case: no total_pages terminator in the response. The reader
+        # must stop after the first page (missing terminator == terminate),
+        # never loop forever.
+        page_raw = request.args.get("page", "1")
+        page = int(page_raw) if page_raw.isdigit() else 1
+        window = _paged_items[(page - 1) * 2:(page - 1) * 2 + 2]
+        rows = [dict(item, wire_page=page) for item in window]
+        return jsonify({"items": rows, "result_info": {"page": page}})
+
+    # ---- GraphQL pluggable cursor strategies (issue 684) --------------------
+
+    @app.post("/graphql/keyset")
+    def graphql_keyset():
+        # keyset: the client injects a filter comparator on the last row's
+        # sort key (rankGt: N); termination is an empty row array.
+        body = request.get_json(silent=True) or {}
+        query = body.get("query", "")
+        m = re.search(r"rankGt:\s*(\d+)", query)
+        after_rank = int(m.group(1)) if m else 0
+        window = [t for t in _things if t["rank"] > after_rank][:2]
+        nodes = [dict(t, wire_rank_gt=after_rank) for t in window]
+        return jsonify({"data": {"kthings": {"nodes": nodes}}})
+
+    @app.post("/graphql/offset")
+    def graphql_offset():
+        # offset: the client synthesises a running row count (offset: N);
+        # termination is an empty row array.
+        body = request.get_json(silent=True) or {}
+        query = body.get("query", "")
+        m = re.search(r"offset:\s*(\d+)", query)
+        offset = int(m.group(1)) if m else 0
+        window = _things[offset:offset + 2]
+        nodes = [dict(t, wire_offset=offset) for t in window]
+        return jsonify({"data": {"othings": {"nodes": nodes}}})
+
+    @app.post("/graphql/pageinfo")
+    def graphql_pageinfo():
+        # page_info: Relay-strict - endCursor stays NON-EMPTY on the final
+        # page, so only pageInfo.hasNextPage may terminate the loop. A
+        # cursor-emptiness reader would loop forever here.
+        body = request.get_json(silent=True) or {}
+        query = body.get("query", "")
+        m = re.search(r'after:\s*"c(\d+)"', query)
+        start = (int(m.group(1)) + 1) if m else 0
+        window = _things[start:start + 2]
+        edges = []
+        for i in range(len(window)):
+            idx = start + i
+            node = dict(_things[idx])
+            node["wire_after"] = ("c" + m.group(1)) if m else ""
+            edges.append({"node": node, "cursor": "c" + str(idx)})
+        has_next = (start + 2) < len(_things)
+        end_cursor = edges[-1]["cursor"] if edges else "c-terminal"
+        return jsonify(
+            {
+                "data": {
+                    "pthings": {
+                        "edges": edges,
+                        "pageInfo": {"hasNextPage": has_next, "endCursor": end_cursor},
+                    }
+                }
+            }
+        )
+
     # ---- schema_driven_xml archetypes --------------------------------------
 
     @app.get("/xml/ec2/volumes")
