@@ -1160,15 +1160,9 @@ MCP HTTP Upstream 404 Returns Empty Result Set
     Should Not Contain    ${result.stderr}    upstream http error
 
 # ===========================================================================
-# Issue #688 scenarios.  A stdio MCP server spawned without credential env
-# vars (the Claude Desktop failure mode: a process env block is fixed at
-# spawn) must be able to (re)source credentials mid-session from the mutable
-# store nominated in mcp.config as server.env_file, via the
-# reload_credentials tool.  The python harness spawns the server with the
-# okta credential var deliberately stripped from its environment, observes
-# the credential resolution failure (with the reload_credentials hint),
-# writes the env file, reloads, and re-runs the query - uniformly on every
-# platform.
+# Issue #688: a stdio MCP server spawned without credential env vars (the
+# Claude Desktop failure mode) re-sources them mid-session from the
+# --env.file dotenv file via the reload_credentials tool.
 # ===========================================================================
 
 MCP Stdio Reload Credentials Sources Env File Mid Session

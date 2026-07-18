@@ -242,9 +242,8 @@ type stackqlMCPService struct {
 	handlerCtx      handler.HandlerContext
 	logger          *logrus.Logger
 	serverInfo      serverBuildInfo
-	// envFile is the dotenv-style file (mcp.config server.env_file) that the
-	// reload_credentials tool (re)sources into the process environment
-	// (issue #688).  Empty means no mutable credential source is configured.
+	// envFile is the --env.file dotenv path re-sourced by reload_credentials
+	// (issue #688); empty means none configured.
 	envFile string
 }
 
@@ -264,12 +263,6 @@ func NewStackqlMCPBackendService(
 	}
 	if txnOrchestrator == nil {
 		return nil, fmt.Errorf("transaction orchestrator is nil")
-	}
-	// Source the env file once at startup so credentials already present on
-	// disk work without a reload_credentials call.  A missing file is fine
-	// (it may be written mid-session); a malformed path is surfaced loudly.
-	if _, _, sourceErr := sourceEnvFile(envFile); sourceErr != nil {
-		return nil, fmt.Errorf("failed to source env file '%s': %w", envFile, sourceErr)
 	}
 	return &stackqlMCPService{
 		txnOrchestrator: txnOrchestrator,

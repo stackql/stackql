@@ -7,7 +7,7 @@ requested terminator reaches the server byte-for-byte on every platform.
 
 Also hosts the issue #688 roundtrip: a stdio server spawned WITHOUT a
 credential env var self-heals mid-session once the credential lands in the
-configured `server.env_file` and the `reload_credentials` tool is called.
+`--env.file` dotenv file and the `reload_credentials` tool is called.
 """
 
 import json
@@ -177,8 +177,8 @@ def run_stdio_credential_reload_roundtrip(
     """Issue #688 end-to-end: credential (re)sourcing over a stdio session.
 
     1. Spawns a stdio MCP server whose environment deliberately LACKS
-       `secret_env_var`, with `server.env_file` pointing at a file that does
-       not exist yet - modelling a Claude-Desktop-spawned child that never
+       `secret_env_var`, with `--env.file` pointing at a file that does not
+       exist yet - modelling a Claude-Desktop-spawned child that never
        received the credential.
     2. Runs `select_sql`; expects a credential resolution error.
     3. Writes `secret_env_var=secret_value` to the env file (the mutable
@@ -199,12 +199,8 @@ def run_stdio_credential_reload_roundtrip(
         "mcp",
         "--mcp.server.type=stdio",
         "--mcp.config",
-        json.dumps({
-            "server": {
-                "env_file": env_file_path,
-                "audit": {"disabled": True},
-            },
-        }),
+        '{"server": {"audit": {"disabled": true}} }',
+        f"--env.file={env_file_path}",
         "--registry",
         registry_cfg,
         "--auth",

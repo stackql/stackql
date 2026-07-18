@@ -10233,3 +10233,24 @@ Tight Retry Budget Surfaces Final 503
     ...    stdout=${CURDIR}/tmp/Tight-Retry-Budget-Surfaces-Final-503-stdout.tmp
     ...    stderr=${CURDIR}/tmp/Tight-Retry-Budget-Surfaces-Final-503-stderr.tmp
     Assert Retry Mock Attempts    tight-budget    2
+
+Env File Flag Sources Credentials For Exec Entrypoint
+    [Documentation]    Issue #688: --env.file is a root flag sourced at startup for
+    ...                every entrypoint, not just the MCP server.  The auth config
+    ...                references a var absent from the process env and present
+    ...                only in the dotenv file.
+    Pass Execution If    "${EXECUTION_PLATFORM}" == "docker"    host env file path is not visible inside the container
+    ${envFile} =    Set Variable    ${CURDIR}${/}tmp${/}exec-entrypoint-dotenv.env
+    Create File    ${envFile}    OKTA_SECRET_KEY_DOTENV=${OKTA_SECRET_STR}\n
+    ${authCfg} =    Set Variable    { "okta": { "credentialsenvvar": "OKTA_SECRET_KEY_DOTENV", "type": "api_key" } }
+    Should Stackql Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${authCfg}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${SELECT_OKTA_APPS}
+    ...    ${SELECT_OKTA_APPS_ASC_EXPECTED}
+    ...    \-\-env.file\=${envFile}
