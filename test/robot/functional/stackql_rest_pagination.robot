@@ -1,14 +1,10 @@
 *** Settings ***
 Resource          ${CURDIR}/stackql.resource
 Test Teardown     Stackql Per Test Teardown
-Documentation     Functional coverage for the any-sdk page_number REST pagination
-...               strategy (issue 684), exercised through the no-auth
-...               stackql_native_test.paged service against the native_test flask
-...               mock. The mock serves three pages of two items and reports
-...               result_info.page / result_info.total_pages; each row carries
-...               wire_page (the page it was served on) so traversal is asserted
-...               from STDOUT. The unterminated resource omits total_pages: the
-...               reader must stop after one page rather than loop.
+Documentation     any-sdk page_number REST pagination (issue 684) via the no-auth
+...               stackql_native_test.paged service. The mock serves three pages of
+...               two items; each row carries wire_page so traversal is asserted
+...               from STDOUT. The unterminated resource omits total_pages.
 
 *** Test Cases ***
 Page Number Pagination Traverses All Pages
@@ -40,9 +36,8 @@ Page Number Pagination Requests Successive Pages On The Wire
     ...    paged-item-5
 
 Page Number Pagination Missing Terminator Stops After One Page
-    [Documentation]    Negative case: the response carries no total_pages terminator,
-    ...                so exactly one page (2 rows) is fetched - never an infinite loop
-    ...                and never a second page.
+    [Documentation]    Negative case: no total_pages terminator, so exactly one page
+    ...                (2 rows) is fetched - never an infinite loop.
     Should StackQL Exec Inline Contain
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}

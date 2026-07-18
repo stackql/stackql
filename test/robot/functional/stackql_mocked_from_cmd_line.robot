@@ -9245,11 +9245,8 @@ Delete Returning Simple Projection
     ...    stderr=${CURDIR}/tmp/Delete-Returning-Simple-Projection-stderr.tmp
 
 Batch Delete With In List Dispatches Per Element
-    [Documentation]    Issue #683: DELETE with an IN list fans out into one request per
-    ...                element, mirroring SELECT semantics. The mock permits deletion of
-    ...                both deletable-firewall and deletable-firewall-2; before the fix
-    ...                the IN-list parameter was silently dropped and the statement
-    ...                failed with "missing required path parameter 'firewall'".
+    [Documentation]    Issue #683: DELETE with an IN list fans out one request per
+    ...                element; previously it failed with a missing-parameter error.
     ${inputStr} =    Catenate
     ...    delete from google.compute.firewalls where project = 'mutable-project' and firewall in ('deletable-firewall', 'deletable-firewall-2');
     Should Stackql Exec Inline Contain Stderr
@@ -9267,9 +9264,7 @@ Batch Delete With In List Dispatches Per Element
 
 Batch Delete With In List Returns One Row Per Element
     [Documentation]    Issue #683 per-element proof: DELETE ... IN (two elements) with
-    ...                RETURNING yields exactly two response rows - one per despatched
-    ...                request. A regression to single-element despatch would return
-    ...                one row and fail the exact-match assertion.
+    ...                RETURNING yields exactly one response row per element.
     ${inputStr} =    Catenate
     ...    delete from google.compute.firewalls where project = 'mutable-project' and firewall in ('deletable-firewall', 'deletable-firewall-2') returning kind, user;
     ${outputStr} =    Catenate    SEPARATOR=\n
@@ -10236,9 +10231,7 @@ Tight Retry Budget Surfaces Final 503
 
 Env File Flag Sources Credentials For Exec Entrypoint
     [Documentation]    Issue #688: --env.file is a root flag sourced at startup for
-    ...                every entrypoint, not just the MCP server.  The auth config
-    ...                references a var absent from the process env and present
-    ...                only in the dotenv file.
+    ...                every entrypoint; the credential var exists only in the dotenv file.
     Pass Execution If    "${EXECUTION_PLATFORM}" == "docker"    host env file path is not visible inside the container
     ${envFile} =    Set Variable    ${CURDIR}${/}tmp${/}exec-entrypoint-dotenv.env
     Create File    ${envFile}    OKTA_SECRET_KEY_DOTENV=${OKTA_SECRET_STR}\n

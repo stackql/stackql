@@ -357,8 +357,7 @@ def projects_testing_project_global_firewalls_update(project_name: str, firewall
 
 @app.route('/compute/v1/projects/<project_name>/global/firewalls/<firewall_name>', methods=['DELETE'])
 def projects_testing_project_global_firewalls_delete(project_name: str, firewall_name: str):
-    # deletable-firewall-2 exists so batch DELETE ... IN (...) fan-out
-    # (issue 683) can delete two distinct resources in one statement.
+    # deletable-firewall-2 lets batch DELETE ... IN (issue 683) hit two resources.
     _permitted_combinations = (
         ('mutable-project', 'deletable-firewall'),
         ('mutable-project', 'deletable-firewall-2'),

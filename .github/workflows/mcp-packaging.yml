@@ -1,15 +1,9 @@
-# MCP bundle packaging: builds + smoke-tests the .mcpb bundles, the OCI image
-# and the npm/pypi wrapper artifacts from packaging/mcpb (imported from the
-# stackql-mcpb-packaging repo).
-#
-# Validation runs automatically on packaging/** PRs against the latest
-# published release. Publishing is MANUAL by design (workflow_dispatch with
-# the target version): the release assets this workflow consumes include the
-# Authenticode-signed Windows exe and the Apple-notarised darwin .pkg, both
-# signed OUTSIDE CI (hardware token / notarisation), so a release event fires
-# before those assets exist. The flow is: push tag -> create release ->
-# attach the signed assets -> dispatch this workflow. Bundle upload is
-# same-repo via GITHUB_TOKEN - no cross-repo PAT.
+# MCP bundle packaging: builds + smoke-tests the .mcpb bundles, OCI image and
+# npm/pypi wrapper artifacts from packaging/mcpb.  Validation runs on
+# packaging/** PRs; publishing is MANUAL (workflow_dispatch) because the
+# consumed release assets (Authenticode-signed exe, notarised .pkg) are
+# signed outside CI, so a release event fires before they exist.  Flow:
+# push tag -> create release -> attach signed assets -> dispatch.
 
 name: mcp-packaging
 
@@ -125,12 +119,9 @@ jobs:
       - name: Smoke test (deterministic MCP handshake)
         run: python3 scripts/smoke-test.py --docker stackql/stackql-mcp:${{ needs.version.outputs.version }}
 
-  # The multiplatform bundle exists for single-artefact venues (the Anthropic
-  # MCP Directory serves one bundle per listing). Built from the four
-  # per-platform bundle artifacts - never from the release archives - so its
-  # binaries are byte-identical to the per-platform assets; verify-combined.py
-  # asserts every binary's machine type (the check that catches a
-  # wrong-artefact incident in seconds).
+  # Multiplatform bundle for single-artefact venues, built from the four
+  # per-platform bundle artifacts (byte-identical binaries); verify-combined.py
+  # asserts every binary's machine type.
   combined:
     name: multiplatform (combined build + byte verification)
     needs: [version, bundle, bundle-windows]
@@ -154,11 +145,9 @@ jobs:
             packaging/mcpb/dist/stackql-mcp-multiplatform.mcpb.sha256
           if-no-files-found: error
 
-  # Install-and-handshake the COMBINED bundle on every host OS (plus an arm64
-  # linux leg for the arch dispatch shim). The per-platform smoke tests cannot
-  # detect a wrong bundle being distributed - this matrix closes exactly that
-  # gap: each host must select its own binary via platform_overrides and
-  # complete the MCP handshake.
+  # Install-and-handshake the combined bundle on every host OS (arm64 linux
+  # leg covers the arch shim): each host must select its own binary via
+  # platform_overrides and complete the MCP handshake.
   combined-smoke:
     name: multiplatform smoke (${{ matrix.runner }})
     needs: combined
@@ -232,9 +221,8 @@ jobs:
           docker buildx create --use
           make oci-push VERSION=${{ needs.version.outputs.version }}
 
-  # npm / pypi manifests render from the freshly published .sha256 files and
-  # are exposed as run artifacts. Publishing to npmjs / PyPI stays MANUAL
-  # (2FA), exactly as in the standalone packaging repo.
+  # npm / pypi manifests render from the published .sha256 files as run
+  # artifacts; publishing to npmjs / PyPI stays manual (2FA).
   npm-tarball:
     name: npm tarball (manual publish artifact)
     if: needs.version.outputs.is_publish == 'true'

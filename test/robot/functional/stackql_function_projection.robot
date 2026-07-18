@@ -1,15 +1,10 @@
 *** Settings ***
 Resource          ${CURDIR}/stackql.resource
 Test Teardown     Stackql Per Test Teardown
-Documentation     Functional coverage for scalar-function projections over provider table
-...               columns (issue 687). A function projection must NOT inherit its argument
-...               column's provider schema type: binding it made type-changing functions
-...               (typeof / date / datetime) scan their text results through the argument's
-...               declared type, yielding 0/null, and corrupted same-named sibling
-...               projections in the same SELECT (the "contagion"). Exercised through the
-...               no-auth stackql_native_test provider whose xml_ec2.volumes fixture
-...               declares `size` as integer. The sqlite-native date/time/typeof functions
-...               are asserted on the sqlite backend only.
+Documentation     Scalar-function projections over provider table columns (issue 687):
+...               a function projection must not inherit its argument column's schema
+...               type (typeof/date/datetime yielded 0/null and corrupted same-named
+...               siblings). Uses the no-auth stackql_native_test provider.
 
 *** Test Cases ***
 Typeof Over Bare Integer Column Returns Underlying Type
@@ -43,9 +38,8 @@ Datetime Over Bare Integer Column Projects Timestamp
     ...    1970-01-01 00:00:08
 
 Function Projection Does Not Corrupt Sibling Column
-    [Documentation]    Issue #687 contagion guard: co-projecting typeof(size) with the bare
-    ...                size column previously nulled the sibling; the size value 16 must
-    ...                still appear in the result set.
+    [Documentation]    Issue #687 contagion guard: co-projecting typeof(size) with the
+    ...                bare size column must not null the sibling.
     Pass Execution If    "${SQL_BACKEND}" == "postgres_tcp"    typeof is a sqlite-native function; asserted on the sqlite backend.
     Should StackQL Exec Inline Contain
     ...    ${STACKQL_EXE}
@@ -73,11 +67,8 @@ Aggregate Over Bare Column Unaffected
     ...    24
 
 Function Expression Supplies Required Parameter
-    [Documentation]    Issue #686: a required provider parameter constrained by a
-    ...                pure-literal function expression is constant-folded during early
-    ...                analysis and supplied to the request. Previously the parameter was
-    ...                silently dropped and the request failed with "AWS region is nil".
-    ...                lower() is portable across the sqlite and postgres backends.
+    [Documentation]    Issue #686: a pure-literal function expression constraining a
+    ...                required parameter is constant-folded and supplied to the request.
     Should StackQL Exec Inline Contain
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -90,9 +81,8 @@ Function Expression Supplies Required Parameter
     ...    vol-00100000000000000
 
 Function Expression Containing Column Reference Stays Client Side
-    [Documentation]    Issue #686 scope guard: an expression referencing a column is NOT
-    ...                folded; it remains an authoritative client-side filter and the
-    ...                query still returns rows.
+    [Documentation]    Issue #686 scope guard: an expression referencing a column is not
+    ...                folded; it remains an authoritative client-side filter.
     Should StackQL Exec Inline Contain
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}

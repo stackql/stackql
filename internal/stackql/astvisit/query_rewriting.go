@@ -752,15 +752,11 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 		}
 		v.columnNames = append(v.columnNames, col)
 		// The provider schema types the projection ONLY when the expression is
-		// the bare column itself. A function or compound expression inherits the
-		// column NAME from its argument (see parserutil.inferColNameFromExpr),
-		// but its RESULT is not the column: binding the argument's schema made
-		// type-changing functions (typeof, date, datetime, ...) scan their text
-		// results through the argument's declared type, yielding 0/null and
-		// corrupting same-named sibling projections (issue #687). Non-bare
-		// expressions instead default to the backend's text type, which scans
-		// dynamically and preserves DESCRIBE output for expression-defined
-		// (eg provider view) columns.
+		// the bare column itself: a function's RESULT is not its argument's
+		// column, and binding the argument's schema made type-changing
+		// functions (typeof, date, ...) yield 0/null (issue #687).  Non-bare
+		// expressions default to the backend's text type, which scans
+		// dynamically.
 		var ss formulation.Schema
 		_, isBareCol := node.Expr.(*sqlparser.ColName)
 		if isBareCol {

@@ -1,13 +1,9 @@
 """Minimal stdio MCP harness used by robot scenarios.
 
-Drives a `stackql mcp --mcp.server.type=stdio` child process over raw byte
-pipes with a configurable line terminator, so CRLF framing (issue #668) can
-be exercised end to end.  Deliberately binary-mode (no `text=True`) so the
-requested terminator reaches the server byte-for-byte on every platform.
-
-Also hosts the issue #688 roundtrip: a stdio server spawned WITHOUT a
-credential env var self-heals mid-session once the credential lands in the
-`--env.file` dotenv file and the `reload_credentials` tool is called.
+Drives a `stackql mcp --mcp.server.type=stdio` child over raw byte pipes in
+binary mode with a configurable line terminator (issue #668 CRLF framing).
+Also hosts the issue #688 credential reload roundtrip against the
+`--env.file` dotenv file.
 """
 
 import json
@@ -37,10 +33,8 @@ def run_stdio_initialize_roundtrip(
 ):
     """Runs initialize -> initialized -> tools/list over stdio.
 
-    Returns a dict with `stdout`, `stderr` and `returncode`.  Responses for
-    request ids 1 (initialize) and 2 (tools/list) are awaited on stdout
-    before stdin is closed, so slow request handling cannot race the
-    EOF-triggered session shutdown.
+    Returns {stdout, stderr, returncode}; responses for ids 1 and 2 are
+    awaited before stdin closes, so slow handling cannot race shutdown.
     """
     terminator = _LINE_ENDINGS[line_ending]
     messages = [
@@ -121,11 +115,8 @@ def run_stdio_initialize_roundtrip(
 
 
 def _await_response(proc, request_id, collected_lines):
-    """Reads stdout lines until the response for `request_id` arrives.
-
-    Returns the decoded response dict (or None if the server exited first).
-    Every raw line is appended to `collected_lines` for post-mortem output.
-    """
+    """Reads stdout until the response for `request_id` arrives (None if the
+    server exited first); raw lines are appended to `collected_lines`."""
     while True:
         line = proc.stdout.readline()
         if not line:
@@ -140,12 +131,8 @@ def _await_response(proc, request_id, collected_lines):
 
 
 def _tool_result_text(response):
-    """Flattens a tools/call response to a single string for assertions.
-
-    Concatenates text content blocks, the structured content and any
-    JSON-RPC error object, so callers can assert on whichever surface the
-    server used to report the outcome.
-    """
+    """Flattens a tools/call response (text blocks, structured content, any
+    error object) to a single string for assertions."""
     if response is None:
         return ""
     parts = []
@@ -176,17 +163,10 @@ def run_stdio_credential_reload_roundtrip(
 ):
     """Issue #688 end-to-end: credential (re)sourcing over a stdio session.
 
-    1. Spawns a stdio MCP server whose environment deliberately LACKS
-       `secret_env_var`, with `--env.file` pointing at a file that does not
-       exist yet - modelling a Claude-Desktop-spawned child that never
-       received the credential.
-    2. Runs `select_sql`; expects a credential resolution error.
-    3. Writes `secret_env_var=secret_value` to the env file (the mutable
-       store), calls the `reload_credentials` tool.
-    4. Re-runs `select_sql`; expects rows.
-
-    Returns a dict with the flattened text of each of the three tool calls
-    plus stderr and the exit code.
+    Spawns the server WITHOUT `secret_env_var`, `--env.file` pointing at a
+    not-yet-existing file; runs `select_sql` (expects a credential error),
+    writes the env file, calls `reload_credentials`, re-runs the query
+    (expects rows).  Returns the three flattened tool results plus streams.
     """
     if os.path.exists(env_file_path):
         os.remove(env_file_path)

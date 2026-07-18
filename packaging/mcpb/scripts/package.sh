@@ -108,9 +108,8 @@ sign_bundle() {
 }
 
 platform_for_label() {
-  # Maps a bundle label onto the MCPB compatibility.platforms value, so a
-  # wrong-platform install is refused by the client rather than dying at
-  # first spawn.
+  # Maps a bundle label onto the MCPB compatibility.platforms value so a
+  # wrong-platform install is refused by the client.
   case "$1" in
     darwin-*)  echo '"darwin"' ;;
     windows-*) echo '"win32"' ;;
@@ -147,9 +146,8 @@ pack_bundle() {
 
 extract_bundle_binary() {
   # args: bundle-path  path-in-bundle  dest-path
-  # A .mcpb is a plain zip; -p streams the member so the bytes (and therefore
-  # the embedded Authenticode / Mach-O signatures) are byte-identical to the
-  # per-platform bundle contents.
+  # A .mcpb is a plain zip; -p streams the member byte-identically,
+  # preserving embedded signatures.
   local bundle="$1" member="$2" dest="$3"
   if ! unzip -p "$bundle" "$member" > "$dest" 2>/dev/null || [ ! -s "$dest" ]; then
     echo "  error: '$member' not found inside $(basename "$bundle")" >&2
@@ -158,13 +156,9 @@ extract_bundle_binary() {
 }
 
 build_combined() {
-  # Multiplatform bundle for single-artefact venues (the Anthropic MCP
-  # Directory serves ONE bundle per listing, with no per-platform artefact
-  # selection). Binaries are sourced from the already-built per-platform
-  # bundles in DIST_DIR - never rebuilt - so they are byte-identical to the
-  # per-platform assets. The linux platform_overrides key dispatches through
-  # an arch shim because platform_overrides keys on OS only (no arch
-  # dimension); the shim execs the aarch64 or x64 ELF per uname -m.
+  # Multiplatform bundle for single-artefact venues; binaries come from the
+  # per-platform bundles in DIST_DIR, never rebuilt.  linux dispatches via an
+  # arch shim (platform_overrides keys on OS only) execing per uname -m.
   local required="linux-x64 linux-arm64 windows-x64 darwin-universal"
   local missing="" label
   for label in $required; do

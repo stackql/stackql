@@ -115,8 +115,7 @@ paths:
           jsonPath: '$.data.othings.nodes[*]'
         cursor:
           strategy: offset
-          # jsonPath is ignored by the offset strategy but required by the
-          # acquire-layer validation; any resolvable path suffices.
+          # jsonPath is unused by the offset strategy but required by validation.
           jsonPath: '$.data.othings.nodes[-1:].rank'
           format: ', offset: {{ .value }}'
           pageSize: 2

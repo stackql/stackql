@@ -64,11 +64,8 @@ func buildPushdownIntent(node sqlparser.SQLNode) (formulation.PushdownIntent, bo
 	}
 
 	// A pushed projection must also fetch every column the client-side WHERE /
-	// ORDER BY consult, or the authoritative re-filter sees absent columns and
-	// silently drops all rows (issue #682). The union covers the FULL predicate
-	// tree - including OR branches and non-translatable comparisons, which stay
-	// client-side filters. Output shaping is unchanged: only the SELECT-list
-	// columns are projected to the user.
+	// ORDER BY consult, else the authoritative re-filter drops all rows
+	// (issue #682).  Output shaping is unchanged.
 	projection = unionReferencedColumns(projection, sel)
 
 	limit, limitSet := 0, false
@@ -102,10 +99,8 @@ func SelectLimit(node sqlparser.SQLNode) (int, bool) {
 	return sqlValAsInt(sel.Limit.Rowcount)
 }
 
-// unionReferencedColumns extends a non-empty projection with any columns referenced
-// by the WHERE and ORDER BY clauses that are not already projected, preserving order
-// and deduplicating (issue #682). An empty projection (SELECT * or no plain columns)
-// is returned unchanged: with no $select restriction there is nothing to widen.
+// unionReferencedColumns extends a non-empty projection with WHERE / ORDER BY
+// columns not already projected (issue #682); an empty projection is unchanged.
 func unionReferencedColumns(projection []string, sel *sqlparser.Select) []string {
 	if len(projection) == 0 {
 		return projection

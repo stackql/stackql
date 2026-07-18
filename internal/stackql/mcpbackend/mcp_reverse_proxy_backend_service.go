@@ -95,9 +95,8 @@ func (b *stackqlMCPReverseProxyService) ValidateQuery(ctx context.Context, query
 	return b.query(ctx, explainQuery, unlimitedRowLimit)
 }
 
-// ReloadCredentials is not supported for the reverse proxy backend: queries
-// execute in the remote stackql server process, so re-sourcing this proxy
-// process's environment would have no effect on credential resolution there.
+// ReloadCredentials is unsupported here: queries execute in the remote
+// stackql server, whose environment this proxy process cannot mutate.
 func (b *stackqlMCPReverseProxyService) ReloadCredentials(
 	_ context.Context,
 	_ dto.CredentialsReloadInput,

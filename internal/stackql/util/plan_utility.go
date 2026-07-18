@@ -140,8 +140,7 @@ func ExtractSQLNodeParams(
 	}
 	paramMap := make(map[string]interface{})
 	// listParamMap collects IN-list constrained parameters; each list fans out
-	// into one parameter set per element (issue #683), mirroring the SELECT
-	// behaviour where an IN list despatches one request per member.
+	// into one parameter set per element (issue #683), as SELECT already does.
 	listParamMap := make(map[string][]interface{})
 	var err error
 	sqlparser.Walk(func(node sqlparser.SQLNode) (bool, error) { //nolint:errcheck // TODO: review
@@ -165,8 +164,7 @@ func ExtractSQLNodeParams(
 	return expandListParams(paramMap, listParamMap), nil
 }
 
-// harvestEqualityParam records a `col = literal` comparison into paramMap,
-// preserving the historical extraction semantics.
+// harvestEqualityParam records a `col = literal` comparison into paramMap.
 func harvestEqualityParam(node *sqlparser.ComparisonExpr, paramMap map[string]interface{}) error {
 	switch l := node.Left.(type) {
 	case *sqlparser.ColName:
@@ -189,8 +187,7 @@ func harvestEqualityParam(node *sqlparser.ComparisonExpr, paramMap map[string]in
 	}
 }
 
-// harvestInListParam records a `col IN (literal, ...)` comparison's elements
-// into listParamMap for subsequent fan-out (issue #683).
+// harvestInListParam records `col IN (literal, ...)` elements for fan-out (issue #683).
 func harvestInListParam(node *sqlparser.ComparisonExpr, listParamMap map[string][]interface{}) {
 	l, isCol := node.Left.(*sqlparser.ColName)
 	if !isCol {
@@ -208,10 +205,8 @@ func harvestInListParam(node *sqlparser.ComparisonExpr, listParamMap map[string]
 	}
 }
 
-// expandListParams computes the cartesian product of the scalar parameter map
-// with any IN-list constrained parameters, yielding one parameter set per
-// combination. With no list parameters the single scalar set is returned,
-// preserving pre-existing behaviour.
+// expandListParams returns the cartesian product of the scalar parameter map
+// with any IN-list parameters; with no lists the single scalar set is returned.
 func expandListParams(
 	paramMap map[string]interface{},
 	listParamMap map[string][]interface{},

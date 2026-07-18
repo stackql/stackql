@@ -332,24 +332,18 @@ func isRetryableHTTPStatus(status int) bool {
 		status >= http.StatusInternalServerError
 }
 
-// isCredentialResolutionError matches the error shapes any-sdk emits when
-// credential material cannot be resolved from the process environment or a
-// key file (eg "credentials error: credentialsenvvar references empty
-// string").  These fail before any HTTP request is made, so they carry no
-// upstream status code.
+// isCredentialResolutionError matches any-sdk's credential-resolution error
+// shapes; these fail before any HTTP request so carry no upstream status.
 func isCredentialResolutionError(err error) bool {
 	msg := err.Error()
 	return strings.Contains(msg, "credentials error") ||
 		strings.Contains(msg, "references empty string")
 }
 
-// classifyBackendError decorates a statement error for the MCP surface.
-// When the error carries an upstream HTTP status, the returned error text is
-// prefixed with a machine-readable classification ({"http_status": ...,
-// "retryable": ...}); credential resolution failures get an agent-actionable
-// hint pointing at the reload_credentials tool (issue #688); anything else
-// keeps the historical "failed to extract query results" prefix with the
-// underlying detail appended (issue #670).
+// classifyBackendError decorates a statement error for the MCP surface:
+// upstream HTTP statuses get a {"http_status", "retryable"} prefix (issue
+// #670), credential resolution failures get a reload_credentials hint
+// (issue #688), anything else keeps the historical prefix.
 func classifyBackendError(err error) error {
 	match := upstreamStatusCodeRegex.FindStringSubmatch(err.Error())
 	if match == nil {

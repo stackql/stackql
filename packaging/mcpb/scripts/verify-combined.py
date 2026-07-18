@@ -12,8 +12,7 @@ Usage:
 import sys
 import zipfile
 
-# Mach-O magics: fat (universal) big/little endian, plus thin 64-bit for
-# safety - the shipped darwin binary is universal, so FAT_MAGIC is expected.
+# Mach-O magics: fat (universal) both endians, plus thin 64-bit for safety.
 MACHO_MAGICS = (
     b"\xca\xfe\xba\xbe",  # FAT_MAGIC
     b"\xbe\xba\xfe\xca",  # FAT_CIGAM

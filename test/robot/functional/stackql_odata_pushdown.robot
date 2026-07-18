@@ -1,15 +1,10 @@
 *** Settings ***
 Resource          ${CURDIR}/stackql.resource
 Test Teardown     Stackql Per Test Teardown
-Documentation     Functional coverage for OData query-option push-down (issue 659) via the
-...               any-sdk HTTPPreparator.WithPushdownIntent apply-path: stackql computes a
-...               neutral PushdownIntent from the SELECT during analysis and hands it to the
-...               preparator, which (inside any-sdk) translates it to the OData dialect and
-...               sets the request query - stackql never mutates the HTTP request itself.
-...               The no-auth stackql_native_test.odata.people resource carries a
-...               queryParamPushdown config; the native_test flask mock echoes the decoded
-...               request query into an `echoed` column, so each test asserts that the wire
-...               shape matches the SQL intent for every OData option
+Documentation     OData query-option push-down (issue 659) via any-sdk
+...               WithPushdownIntent: stackql computes a neutral PushdownIntent,
+...               any-sdk renders the OData dialect. The native_test mock echoes the
+...               decoded request query so each test asserts the wire shape.
 ...               ($filter/$select/$orderby/$top/$skip/$count).
 ...               Push-down is an optimisation only: stackql's client-side WHERE/projection
 ...               remain authoritative (asserted by the last case).
@@ -129,10 +124,8 @@ OData Pushdown Suppressed For Grain Changing Query
     ...    3
 
 OData Select Union Includes Where And Order By Columns
-    [Documentation]    Issue #682: a pushed $select must include columns referenced only in
-    ...                WHERE / ORDER BY, or the server (which honours $select) strips them and
-    ...                the authoritative client-side filter drops every row. The echoed wire
-    ...                query proves the union shape reached the server.
+    [Documentation]    Issue #682: a pushed $select must include WHERE / ORDER BY-only
+    ...                columns; the echoed wire query proves the union reached the server.
     Should StackQL Exec Inline Contain
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}
@@ -145,10 +138,8 @@ OData Select Union Includes Where And Order By Columns
     ...    $select\=name,echoed,city,age
 
 OData Where Only Column Still Filters Rows
-    [Documentation]    Issue #682 end-to-end: the WHERE column is absent from the SELECT list,
-    ...                the mock strips fields not in $select, and the row must still be
-    ...                returned. Before the fix the pushed $select omitted `city`, the
-    ...                client-side filter saw an absent column and returned zero rows.
+    [Documentation]    Issue #682 end-to-end: the WHERE column is absent from the SELECT
+    ...                list, the mock strips unselected fields, the row must still return.
     Should StackQL Exec Inline Contain
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}

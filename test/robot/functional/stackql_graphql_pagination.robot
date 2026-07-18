@@ -1,14 +1,10 @@
 *** Settings ***
 Resource          ${CURDIR}/stackql.resource
 Test Teardown     Stackql Per Test Teardown
-Documentation     Functional coverage for the GraphQL acquire path against a mocked,
-...               no-auth provider (stackql_native_test.graph.things, backed by the
-...               native_test flask mock). Covers the any-sdk cursor_after pagination
-...               strategy and the stackql GraphQL LIMIT push-down (SQL LIMIT -> the
-...               query's {{ .limit }} / first: N). The mock reflects the wire page
-...               args back into each node (wire_first / wire_after) so the push-down
-...               and cursor-follow are asserted from STDOUT (the --http.log.enabled
-...               wire log is not portably captured under the docker execution platform).
+Documentation     GraphQL acquire path against the no-auth stackql_native_test mock:
+...               any-sdk cursor_after pagination and LIMIT push-down (first: N).
+...               The mock reflects wire page args into each node (wire_first /
+...               wire_after) so wire shape is asserted from STDOUT.
 
 *** Test Cases ***
 GraphQL Cursor Pagination Returns All Pages
@@ -51,11 +47,8 @@ GraphQL Pagination Follows Cursor In Wire Request
     ...    c1
 
 # ===========================================================================
-# Issue #684: pluggable cursor strategies (keyset / offset / page_info).
-# Each strategy resource is backed by its own mock endpoint that reflects the
-# strategy-specific wire argument into the rows, so both the traversal (the
-# rank-5 `purple` row is only served on the third page) and the wire shape
-# are asserted from STDOUT.
+# Issue #684: pluggable cursor strategies (keyset / offset / page_info); each
+# mock endpoint reflects the strategy-specific wire argument into the rows.
 # ===========================================================================
 
 GraphQL Keyset Strategy Traverses All Pages
@@ -113,10 +106,8 @@ GraphQL Offset Strategy Advances Offset On The Wire
     ...    purple
 
 GraphQL PageInfo Strategy Terminates On HasNextPage Flag
-    [Documentation]    Relay-strict: the mock's endCursor stays NON-EMPTY on the final
-    ...                page, so completing the traversal (reaching rank-5 purple) proves
-    ...                termination came from pageInfo.hasNextPage, not cursor emptiness -
-    ...                a cursor-emptiness reader would loop forever here.
+    [Documentation]    Relay-strict: endCursor stays non-empty on the final page, so
+    ...                completing the traversal proves pageInfo.hasNextPage terminated.
     Should StackQL Exec Inline Contain
     ...    ${STACKQL_EXE}
     ...    ${OKTA_SECRET_STR}

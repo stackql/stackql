@@ -8,20 +8,12 @@ import (
 )
 
 // Constant folding for WHERE-clause function expressions (issue #686).
-//
 // Parameter routing consumes only literal comparison values, so a required
-// provider parameter constrained by a pure-literal function expression (eg
-// `WHERE start_time = strftime('%s', date('now', '-30 days'))`) was silently
-// not supplied and the query failed with "missing required parameters".
-// Folding evaluates such expressions against the session's SQL backend during
-// early analysis and substitutes the typed literal result into the AST, so
-// every downstream concern (parameter routing, push-down intent, client-side
-// re-filtering) sees the same literal the request will use.
-//
-// Only side-effect-free scalar candidates fold: an expression tree containing
-// a column reference, subquery or value tuple is left untouched, as is any
-// expression the backend cannot evaluate (the comparison then behaves exactly
-// as before the fold pass existed).
+// parameter constrained by a pure-literal function expression (eg
+// `strftime('%s', date('now'))`) was dropped and the query failed.  Foldable
+// operands are evaluated against the session's SQL backend during early
+// analysis and the typed literal is substituted into the AST.  Column refs,
+// subqueries, tuples and backend-unevaluable expressions are left untouched.
 
 // foldWhereConstantFuncExprs walks every WHERE clause in the statement and
 // folds foldable comparison operands in place.

@@ -32,10 +32,8 @@
 SHELL := bash
 .SHELLFLAGS := -eu -o pipefail -c
 
-# The release.yaml version pin was retired when this directory moved into the
-# stackql repo (CI resolves the version from the release event / latest
-# release). Local invocations pass VERSION=X.Y.Z explicitly; check-version
-# fails fast with guidance when it is absent.
+# No release.yaml version pin: CI resolves the version from the release;
+# local invocations pass VERSION=X.Y.Z (check-version fails fast otherwise).
 VERSION ?=
 BIN_DIR ?= bin
 DIST_DIR ?= dist
@@ -141,10 +139,8 @@ one: check-version check-target
 package: check-version
 	$(PACKAGE) --version $(VERSION)
 
-# Build the multiplatform bundle for single-artefact venues (the Anthropic
-# MCP Directory serves one bundle per listing). Sources binaries from the
-# already-built per-platform bundles in dist/ (never rebuilds), fails hard
-# unless all four are present, and byte-verifies the packed result.
+# Multiplatform bundle for single-artefact venues: sources binaries from the
+# per-platform bundles in dist/ (never rebuilds) and byte-verifies the result.
 combined: check-version
 	$(PACKAGE) --version $(VERSION) --combined
 	python3 scripts/verify-combined.py $(DIST_DIR)/stackql-mcp-multiplatform.mcpb

@@ -73,10 +73,8 @@ def create_app() -> Flask:
         top = request.args.get("$top")
         if top is not None and top.isdigit():
             people = people[: int(top)]
-        # Honour $select server-side, as real OData services do: fields absent
-        # from $select are stripped from the response. This makes issue #682
-        # observable - if the pushed $select omits a WHERE/ORDER BY column, the
-        # client-side re-filter sees an absent column and drops every row.
+        # Honour $select server-side as real OData services do; makes issue
+        # #682 observable (an omitted WHERE/ORDER BY column drops every row).
         select = request.args.get("$select")
         if select:
             requested = {f.strip() for f in select.split(",") if f.strip()}
@@ -137,8 +135,7 @@ def create_app() -> Flask:
 
     @app.get("/paged/items")
     def paged_items():
-        # page_number strategy: the response reports the current page and the
-        # total page count; the reader requests page N+1 until page == total.
+        # page_number strategy: reader requests page N+1 until page == total.
         page_raw = request.args.get("page", "1")
         page = int(page_raw) if page_raw.isdigit() else 1
         size = 2
@@ -151,9 +148,8 @@ def create_app() -> Flask:
 
     @app.get("/paged/items_unterminated")
     def paged_items_unterminated():
-        # Negative case: no total_pages terminator in the response. The reader
-        # must stop after the first page (missing terminator == terminate),
-        # never loop forever.
+        # Negative case: no total_pages terminator; the reader must stop
+        # after the first page, never loop forever.
         page_raw = request.args.get("page", "1")
         page = int(page_raw) if page_raw.isdigit() else 1
         window = _paged_items[(page - 1) * 2:(page - 1) * 2 + 2]
@@ -164,8 +160,7 @@ def create_app() -> Flask:
 
     @app.post("/graphql/keyset")
     def graphql_keyset():
-        # keyset: the client injects a filter comparator on the last row's
-        # sort key (rankGt: N); termination is an empty row array.
+        # keyset: filter comparator on the last row's sort key; empty rows terminate.
         body = request.get_json(silent=True) or {}
         query = body.get("query", "")
         m = re.search(r"rankGt:\s*(\d+)", query)
@@ -176,8 +171,7 @@ def create_app() -> Flask:
 
     @app.post("/graphql/offset")
     def graphql_offset():
-        # offset: the client synthesises a running row count (offset: N);
-        # termination is an empty row array.
+        # offset: synthesised running row count; empty rows terminate.
         body = request.get_json(silent=True) or {}
         query = body.get("query", "")
         m = re.search(r"offset:\s*(\d+)", query)
@@ -188,9 +182,8 @@ def create_app() -> Flask:
 
     @app.post("/graphql/pageinfo")
     def graphql_pageinfo():
-        # page_info: Relay-strict - endCursor stays NON-EMPTY on the final
-        # page, so only pageInfo.hasNextPage may terminate the loop. A
-        # cursor-emptiness reader would loop forever here.
+        # page_info: Relay-strict - endCursor stays non-empty on the final
+        # page, so only pageInfo.hasNextPage may terminate.
         body = request.get_json(silent=True) or {}
         query = body.get("query", "")
         m = re.search(r'after:\s*"c(\d+)"', query)

@@ -52,8 +52,7 @@ def extract_bundle(bundle: Path, dest: Path) -> tuple[Path, dict]:
         zf.extractall(dest)
     manifest = json.loads((dest / "manifest.json").read_text())
     if os.name != "nt":
-        # Zip extraction does not preserve the exec bit; restore it for every
-        # server payload member (binaries plus the linux arch dispatch shim).
+        # Zip extraction drops the exec bit; restore it for server payload members.
         server_dir = dest / "server"
         if server_dir.exists():
             for member in server_dir.rglob("*"):

@@ -550,10 +550,8 @@ func registerTools(server *mcp.Server, cfg *Config, backend Backend, logger *log
 	)
 }
 
-// registerReloadCredentialsTool publishes the reload_credentials tool (issue
-// #688).  It is classified as a select: it mutates nothing beyond this
-// process's own environment and is needed to make reads work, so it is
-// allowed in every mode including read_only.
+// registerReloadCredentialsTool publishes reload_credentials (issue #688);
+// classified as a select so it is allowed in every mode, read_only included.
 func registerReloadCredentialsTool(server *mcp.Server, cfg *Config, backend Backend, auditSink sink.Sink) {
 	addToolWithGate(
 		server, cfg, auditSink,

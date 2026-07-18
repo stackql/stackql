@@ -55,9 +55,8 @@ type RegistryInput struct {
 	Format   string `json:"format,omitempty" yaml:"format,omitempty" jsonschema:"text content render format: markdown (default) or json"` //nolint:lll // schema doc
 }
 
-// CredentialsReloadInput is the input shape for reload_credentials.
-// Provider optionally scopes the status report to one provider; the env file
-// sourcing itself is always process-wide.
+// CredentialsReloadInput is the input shape for reload_credentials; Provider
+// optionally scopes the status report (sourcing is always process-wide).
 type CredentialsReloadInput struct {
 	Provider string `json:"provider,omitempty" yaml:"provider,omitempty"`
 	Format   string `json:"format,omitempty" yaml:"format,omitempty" jsonschema:"text content render format: markdown (default) or json"` //nolint:lll // schema doc
