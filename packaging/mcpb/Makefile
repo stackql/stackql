@@ -32,10 +32,11 @@
 SHELL := bash
 .SHELLFLAGS := -eu -o pipefail -c
 
-# VERSION defaults to the stackql_release pinned in release.yaml (leading v
-# stripped), so plain 'make all' builds the pinned release. Override with
-# make <target> VERSION=X.Y.Z as before.
-VERSION ?= $(shell sed -n 's/^stackql_release:[[:space:]]*v\{0,1\}//p' release.yaml 2>/dev/null | tr -d ' \r')
+# The release.yaml version pin was retired when this directory moved into the
+# stackql repo (CI resolves the version from the release event / latest
+# release). Local invocations pass VERSION=X.Y.Z explicitly; check-version
+# fails fast with guidance when it is absent.
+VERSION ?=
 BIN_DIR ?= bin
 DIST_DIR ?= dist
 # Invoked via 'bash' so a lost executable bit (easy when committing from

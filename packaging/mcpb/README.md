@@ -1,8 +1,10 @@
-# stackql-mcpb-packaging
+# MCPB packaging (packaging/mcpb)
 
 Packages the StackQL MCP server into per-platform [MCPB](https://github.com/anthropics/mcpb) bundles (`.mcpb`), publishes them to the matching `stackql/stackql` GitHub release, and pushes the metadata to the Official MCP Registry. Listings on aggregators and the Anthropic Desktop Extensions directory flow from there.
 
-This is a standalone, scripted post-release step. It does not build or sign the stackql binaries - that happens upstream in the normal stackql build, code-signing, and notarisation process. Here you pull the already-signed release artefacts from `stackql/stackql`, run `make`, and ship.
+This directory was imported (with full history) from the standalone `stackql/stackql-mcpb-packaging` repo. In-repo, the version pin (`release.yaml`) and the cross-repo release token are gone: the packaging workflow at [.github/workflows/mcp-packaging.yml](/.github/workflows/mcp-packaging.yml) validates `packaging/**` PRs against the latest published release, and publishing is a MANUAL `workflow_dispatch` with the target version. Manual by design: the consumed release assets include the Authenticode-signed Windows exe and the Apple-notarised darwin `.pkg`, both signed outside CI, so the flow is push tag -> create release -> attach the signed assets -> dispatch the workflow. Bundle upload is same-repo via the default `GITHUB_TOKEN`. Local `make` targets are unchanged but now require an explicit `VERSION=X.Y.Z`.
+
+This is a scripted post-release step. It does not build or sign the stackql binaries - that happens upstream in the normal stackql build, code-signing, and notarisation process. Here the already-signed release artefacts are pulled, packaged, and shipped.
 
 The end-user install story is in [docs/install.md](docs/install.md). The marketplace submission checklist is in [docs/anthropic-submission.md](docs/anthropic-submission.md). The broader list of registries and aggregators is in [listings.md](listings.md).
 

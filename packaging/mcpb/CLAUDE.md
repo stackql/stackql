@@ -2,9 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## What this repo is
+## What this directory is
 
-A standalone, scripted post-release step that packages the StackQL MCP server into per-platform [MCPB](https://github.com/anthropics/mcpb) bundles (`.mcpb`) for distribution and listing on the official MCP Registry.
+A scripted post-release step (formerly the standalone `stackql-mcpb-packaging` repo, imported here with history) that packages the StackQL MCP server into per-platform [MCPB](https://github.com/anthropics/mcpb) bundles (`.mcpb`) for distribution and listing on the official MCP Registry. CI is the root workflow [.github/workflows/mcp-packaging.yml](/.github/workflows/mcp-packaging.yml): PR validation on `packaging/**` paths builds + smoke-tests against the latest published release; publishing is a MANUAL `workflow_dispatch` with the target version, because the consumed release assets (Authenticode-signed Windows exe, Apple-notarised darwin `.pkg`) are signed outside CI and attached to the release before dispatch. Upload is same-repo via the default `GITHUB_TOKEN`. The `release.yaml` version pin and the old in-directory workflows are retired; local `make` targets require an explicit `VERSION=X.Y.Z`.
 
 This repo does NOT build or sign the stackql binaries - that happens upstream in the normal stackql build/signing process. Here you drop the already-signed release artefacts (per-arch zips and the notarised macOS `.pkg`) into `bin/`, run one script, and get signed `.mcpb` bundles plus checksums in `dist/` to attach to the matching GitHub release.
 

@@ -1,9 +1,0 @@
-# Single source of truth for which stackql release this repo packages.
-#
-# - Local: make targets default VERSION from this value (leading v stripped),
-#   so 'make all' with no VERSION builds the pinned release.
-# - CI (PR to main): builds and smoke-tests all four bundles for this release.
-# - CI (tag push): pushing a tag that exactly matches this value publishes the
-#   bundles to the matching stackql/stackql release. A tag that does not match
-#   fails fast in the verify-tag job.
-stackql_release: v0.10.542
