@@ -1,0 +1,39 @@
+{
+  "manifest_version": "0.4",
+  "name": "io.github.stackql/stackql-mcp",
+  "display_name": "StackQL MCP Server",
+  "version": "__VERSION__",
+  "description": "SQL-native query and provisioning engine for cloud infrastructure, served over MCP via 'stackql mcp'. Multiplatform bundle: contains the darwin, linux and windows binaries; the host selects via platform_overrides.",
+  "author": {
+    "name": "StackQL Studios",
+    "url": "https://stackql.io"
+  },
+  "homepage": "https://stackql.io",
+  "documentation": "https://stackql.io/docs",
+  "license": "MIT",
+  "privacy_policies": ["https://stackql.io/privacy"],
+  "icon": "icon.png",
+  "compatibility": {
+    "platforms": ["darwin", "linux", "win32"]
+  },
+  "server": {
+    "type": "binary",
+    "entry_point": "server/linux-x64/stackql",
+    "mcp_config": {
+      "command": "${__dirname}/server/linux-x64/stackql",
+      "args": [
+        "mcp",
+        "--mcp.server.type=stdio",
+        "--approot",
+        "${HOME}/.stackql",
+        "--mcp.config",
+        "{\"server\": {\"audit\": {\"disabled\": true}}}"
+      ],
+      "platform_overrides": {
+        "darwin": { "command": "${__dirname}/server/darwin/stackql" },
+        "win32": { "command": "${__dirname}/server/win32/stackql.exe" },
+        "linux": { "command": "${__dirname}/server/linux/stackql" }
+      }
+    }
+  }
+}

@@ -262,6 +262,11 @@ func (sp *standardInitialPasses) initialPasses(
 		return nil
 	}
 
+	// Constant-fold pure-literal function expressions in WHERE comparisons
+	// (issue #686) before parameter extraction; internally routable statements
+	// returned above are evaluated natively by the backend.
+	foldWhereConstantFuncExprs(ast, handlerCtx.GetSQLEngine())
+
 	var whereParams parserutil.ParameterMap
 
 	// Where clause paramter extract from top down does not require a deep pass

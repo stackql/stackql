@@ -751,10 +751,27 @@ func (v *standardQueryRewriteAstVisitor) Visit(node sqlparser.SQLNode) error {
 			return err
 		}
 		v.columnNames = append(v.columnNames, col)
-		ss, _ := schema.GetProperty(col.Name)
+		// The provider schema types the projection ONLY when the expression is
+		// the bare column itself: a function's RESULT is not its argument's
+		// column, and binding the argument's schema made type-changing
+		// functions (typeof, date, ...) yield 0/null (issue #687).  Non-bare
+		// expressions default to the backend's text type, which scans
+		// dynamically.
+		var ss formulation.Schema
+		_, isBareCol := node.Expr.(*sqlparser.ColName)
+		if isBareCol {
+			ss, _ = schema.GetProperty(col.Name)
+		}
 		cd := formulation.NewColumnDescriptor(col.Alias, col.Name, col.Qualifier, col.DecoratedColumn, node, ss, col.Val)
 		v.columnDescriptors = append(v.columnDescriptors, cd)
-		v.relationalColumns = append(v.relationalColumns, v.dc.OpenapiColumnsToRelationalColumn(cd))
+		relationalColumn := v.dc.OpenapiColumnsToRelationalColumn(cd)
+		if !isBareCol && relationalColumn.GetType() == "" {
+			relationalColumn = typing.NewRelationalColumn(
+				col.Name,
+				v.dc.GetRelationalType("string"),
+			).WithQualifier(col.Qualifier).WithAlias(col.Alias).WithDecorated(col.DecoratedColumn).WithParserNode(node)
+		}
+		v.relationalColumns = append(v.relationalColumns, relationalColumn)
 		if !node.As.IsEmpty() {
 		}
 

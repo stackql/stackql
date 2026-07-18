@@ -68,7 +68,156 @@ paths:
                                       type: integer
                                     wire_after:
                                       type: string
+  /graphql/keyset:
+    post:
+      x-stackQL-graphQL:
+        url: http://localhost:1070/graphql/keyset
+        httpVerb: POST
+        responseSelection:
+          jsonPath: '$.data.kthings.nodes[*]'
+        cursor:
+          strategy: keyset
+          jsonPath: '$.data.kthings.nodes[-1:].rank'
+          format: ', rankGt: {{ .value }}'
+        query: >
+          query {
+            kthings(first: {{ .limit }}{{ .cursor }}) {
+              nodes {
+                name
+                rank
+              }
+            }
+          }
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      kthings:
+                        type: object
+                        properties:
+                          nodes:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/strategy_thing'
+  /graphql/offset:
+    post:
+      x-stackQL-graphQL:
+        url: http://localhost:1070/graphql/offset
+        httpVerb: POST
+        responseSelection:
+          jsonPath: '$.data.othings.nodes[*]'
+        cursor:
+          strategy: offset
+          # jsonPath is unused by the offset strategy but required by validation.
+          jsonPath: '$.data.othings.nodes[-1:].rank'
+          format: ', offset: {{ .value }}'
+          pageSize: 2
+        query: >
+          query {
+            othings(first: {{ .limit }}{{ .cursor }}) {
+              nodes {
+                name
+                rank
+              }
+            }
+          }
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      othings:
+                        type: object
+                        properties:
+                          nodes:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/strategy_thing'
+  /graphql/pageinfo:
+    post:
+      x-stackQL-graphQL:
+        url: http://localhost:1070/graphql/pageinfo
+        httpVerb: POST
+        responseSelection:
+          jsonPath: '$.data.pthings.edges[*].node'
+        cursor:
+          strategy: page_info
+          jsonPath: '$.data.pthings.pageInfo.endCursor'
+          terminateOnJsonPath: '$.data.pthings.pageInfo.hasNextPage'
+        query: >
+          query {
+            pthings(first: {{ .limit }}{{ .cursor }}) {
+              edges {
+                node {
+                  name
+                  rank
+                }
+                cursor
+              }
+              pageInfo {
+                hasNextPage
+                endCursor
+              }
+            }
+          }
+      responses:
+        '200':
+          description: Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      pthings:
+                        type: object
+                        properties:
+                          edges:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                cursor:
+                                  type: string
+                                node:
+                                  $ref: '#/components/schemas/strategy_thing'
+                          pageInfo:
+                            type: object
+                            properties:
+                              hasNextPage:
+                                type: boolean
+                              endCursor:
+                                type: string
 components:
+  schemas:
+    strategy_thing:
+      type: object
+      properties:
+        name:
+          type: string
+        rank:
+          type: integer
+        wire_rank_gt:
+          type: integer
+        wire_offset:
+          type: integer
+        wire_after:
+          type: string
   x-stackQL-resources:
     things:
       id: stackql_native_test.graph.things
@@ -85,3 +234,48 @@ components:
       sqlVerbs:
         select:
           - $ref: '#/components/x-stackQL-resources/things/methods/list'
+    keyset_things:
+      id: stackql_native_test.graph.keyset_things
+      name: keyset_things
+      title: Things (GraphQL keyset cursor strategy)
+      methods:
+        list:
+          operation:
+            $ref: '#/paths/~1graphql~1keyset/post'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: '$.data.kthings.nodes[*]'
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/keyset_things/methods/list'
+    offset_things:
+      id: stackql_native_test.graph.offset_things
+      name: offset_things
+      title: Things (GraphQL offset cursor strategy)
+      methods:
+        list:
+          operation:
+            $ref: '#/paths/~1graphql~1offset/post'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: '$.data.othings.nodes[*]'
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/offset_things/methods/list'
+    pageinfo_things:
+      id: stackql_native_test.graph.pageinfo_things
+      name: pageinfo_things
+      title: Things (GraphQL page_info cursor strategy)
+      methods:
+        list:
+          operation:
+            $ref: '#/paths/~1graphql~1pageinfo/post'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: '$.data.pthings.edges[*].node'
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/pageinfo_things/methods/list'

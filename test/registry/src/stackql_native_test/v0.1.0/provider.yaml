@@ -60,5 +60,14 @@ providerServices:
       $ref: stackql_native_test/v0.1.0/services/graphql.yaml
     title: GraphQL cursor pagination
     version: v0.1.0
+  paged:
+    description: REST page_number pagination.
+    id: paged:v0.1.0
+    name: paged
+    preferred: true
+    service:
+      $ref: stackql_native_test/v0.1.0/services/paged.yaml
+    title: REST page_number pagination
+    version: v0.1.0
 servers: []
 version: v0.1.0

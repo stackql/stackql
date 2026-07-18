@@ -1,0 +1,34 @@
+{
+  "manifest_version": "0.4",
+  "name": "io.github.stackql/stackql-mcp",
+  "display_name": "StackQL MCP Server",
+  "version": "__VERSION__",
+  "description": "SQL-native query and provisioning engine for cloud infrastructure, served over MCP via 'stackql mcp'.",
+  "author": {
+    "name": "StackQL Studios",
+    "url": "https://stackql.io"
+  },
+  "homepage": "https://stackql.io",
+  "documentation": "https://stackql.io/docs",
+  "license": "MIT",
+  "privacy_policies": ["https://stackql.io/privacy"],
+  "icon": "icon.png",
+  "compatibility": {
+    "platforms": [__PLATFORMS__]
+  },
+  "server": {
+    "type": "binary",
+    "entry_point": "server/__BINARY_NAME__",
+    "mcp_config": {
+      "command": "${__dirname}/server/__BINARY_NAME__",
+      "args": [
+        "mcp",
+        "--mcp.server.type=stdio",
+        "--approot",
+        "${HOME}/.stackql",
+        "--mcp.config",
+        "{\"server\": {\"audit\": {\"disabled\": true}}}"
+      ]
+    }
+  }
+}

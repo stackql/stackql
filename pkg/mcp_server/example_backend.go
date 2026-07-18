@@ -69,6 +69,13 @@ func (b *ExampleBackend) PullProvider(ctx context.Context, input dto.RegistryInp
 	return map[string]any{}, nil
 }
 
+func (b *ExampleBackend) ReloadCredentials(
+	ctx context.Context,
+	input dto.CredentialsReloadInput,
+) (dto.CredentialsReloadDTO, error) {
+	return dto.CredentialsReloadDTO{}, nil
+}
+
 // NewExampleBackend creates a new example backend instance.
 func NewExampleBackend(connectionString string) Backend {
 	return &ExampleBackend{

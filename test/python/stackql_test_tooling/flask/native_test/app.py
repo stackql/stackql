@@ -73,6 +73,15 @@ def create_app() -> Flask:
         top = request.args.get("$top")
         if top is not None and top.isdigit():
             people = people[: int(top)]
+        # Honour $select server-side as real OData services do; makes issue
+        # #682 observable (an omitted WHERE/ORDER BY column drops every row).
+        select = request.args.get("$select")
+        if select:
+            requested = {f.strip() for f in select.split(",") if f.strip()}
+            people = [
+                {k: v for k, v in person.items() if k in requested}
+                for person in people
+            ]
         return jsonify({"value": people, "@odata.count": len(people)})
 
     # ---- GraphQL cursor pagination -----------------------------------------
@@ -113,6 +122,85 @@ def create_app() -> Flask:
             {
                 "data": {
                     "things": {
+                        "edges": edges,
+                        "pageInfo": {"hasNextPage": has_next, "endCursor": end_cursor},
+                    }
+                }
+            }
+        )
+
+    # ---- REST page_number pagination (issue 684) ---------------------------
+
+    _paged_items = [{"name": f"paged-item-{i}", "idx": i} for i in range(1, 7)]
+
+    @app.get("/paged/items")
+    def paged_items():
+        # page_number strategy: reader requests page N+1 until page == total.
+        page_raw = request.args.get("page", "1")
+        page = int(page_raw) if page_raw.isdigit() else 1
+        size = 2
+        window = _paged_items[(page - 1) * size:(page - 1) * size + size]
+        rows = [dict(item, wire_page=page) for item in window]
+        return jsonify({
+            "items": rows,
+            "result_info": {"page": page, "total_pages": 3},
+        })
+
+    @app.get("/paged/items_unterminated")
+    def paged_items_unterminated():
+        # Negative case: no total_pages terminator; the reader must stop
+        # after the first page, never loop forever.
+        page_raw = request.args.get("page", "1")
+        page = int(page_raw) if page_raw.isdigit() else 1
+        window = _paged_items[(page - 1) * 2:(page - 1) * 2 + 2]
+        rows = [dict(item, wire_page=page) for item in window]
+        return jsonify({"items": rows, "result_info": {"page": page}})
+
+    # ---- GraphQL pluggable cursor strategies (issue 684) --------------------
+
+    @app.post("/graphql/keyset")
+    def graphql_keyset():
+        # keyset: filter comparator on the last row's sort key; empty rows terminate.
+        body = request.get_json(silent=True) or {}
+        query = body.get("query", "")
+        m = re.search(r"rankGt:\s*(\d+)", query)
+        after_rank = int(m.group(1)) if m else 0
+        window = [t for t in _things if t["rank"] > after_rank][:2]
+        nodes = [dict(t, wire_rank_gt=after_rank) for t in window]
+        return jsonify({"data": {"kthings": {"nodes": nodes}}})
+
+    @app.post("/graphql/offset")
+    def graphql_offset():
+        # offset: synthesised running row count; empty rows terminate.
+        body = request.get_json(silent=True) or {}
+        query = body.get("query", "")
+        m = re.search(r"offset:\s*(\d+)", query)
+        offset = int(m.group(1)) if m else 0
+        window = _things[offset:offset + 2]
+        nodes = [dict(t, wire_offset=offset) for t in window]
+        return jsonify({"data": {"othings": {"nodes": nodes}}})
+
+    @app.post("/graphql/pageinfo")
+    def graphql_pageinfo():
+        # page_info: Relay-strict - endCursor stays non-empty on the final
+        # page, so only pageInfo.hasNextPage may terminate.
+        body = request.get_json(silent=True) or {}
+        query = body.get("query", "")
+        m = re.search(r'after:\s*"c(\d+)"', query)
+        start = (int(m.group(1)) + 1) if m else 0
+        window = _things[start:start + 2]
+        edges = []
+        for i in range(len(window)):
+            idx = start + i
+            node = dict(_things[idx])
+            node["wire_after"] = ("c" + m.group(1)) if m else ""
+            edges.append({"node": node, "cursor": "c" + str(idx)})
+        has_next = (start + 2) < len(_things)
+        end_cursor = edges[-1]["cursor"] if edges else "c-terminal"
+        return jsonify(
+            {
+                "data": {
+                    "pthings": {
                         "edges": edges,
                         "pageInfo": {"hasNextPage": has_next, "endCursor": end_cursor},
                     }

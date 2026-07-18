@@ -242,6 +242,9 @@ type stackqlMCPService struct {
 	handlerCtx      handler.HandlerContext
 	logger          *logrus.Logger
 	serverInfo      serverBuildInfo
+	// envFile is the --env.file dotenv path re-sourced by reload_credentials
+	// (issue #688); empty means none configured.
+	envFile string
 }
 
 func NewStackqlMCPBackendService(
@@ -249,6 +252,7 @@ func NewStackqlMCPBackendService(
 	handlerCtx handler.HandlerContext,
 	logger *logrus.Logger,
 	serverInfo serverBuildInfo,
+	envFile string,
 ) (mcp_server.Backend, error) {
 	if logger == nil {
 		logger = logrus.New()
@@ -266,6 +270,7 @@ func NewStackqlMCPBackendService(
 		logger:          logger,
 		handlerCtx:      handlerCtx,
 		serverInfo:      serverInfo,
+		envFile:         envFile,
 	}, nil
 }
 
@@ -327,15 +332,28 @@ func isRetryableHTTPStatus(status int) bool {
 		status >= http.StatusInternalServerError
 }
 
-// classifyBackendError decorates a statement error for the MCP surface.
-// When the error carries an upstream HTTP status, the returned error text is
-// prefixed with a machine-readable classification ({"http_status": ...,
-// "retryable": ...}); anything else keeps the historical
-// "failed to extract query results" prefix with the underlying detail
-// appended (issue #670).
+// isCredentialResolutionError matches any-sdk's credential-resolution error
+// shapes; these fail before any HTTP request so carry no upstream status.
+func isCredentialResolutionError(err error) bool {
+	msg := err.Error()
+	return strings.Contains(msg, "credentials error") ||
+		strings.Contains(msg, "references empty string")
+}
+
+// classifyBackendError decorates a statement error for the MCP surface:
+// upstream HTTP statuses get a {"http_status", "retryable"} prefix (issue
+// #670), credential resolution failures get a reload_credentials hint
+// (issue #688), anything else keeps the historical prefix.
 func classifyBackendError(err error) error {
 	match := upstreamStatusCodeRegex.FindStringSubmatch(err.Error())
 	if match == nil {
+		if isCredentialResolutionError(err) {
+			return fmt.Errorf(
+				"credential resolution failed (hint: update credentials at their source, "+
+					"then call the reload_credentials tool and retry): %w",
+				err,
+			)
+		}
 		return fmt.Errorf("failed to extract query results: %w", err)
 	}
 	status, convErr := strconv.Atoi(match[1])

@@ -139,37 +139,98 @@ func ExtractSQLNodeParams(
 		return extractUpdateParams(stmt, insertValOnlyRows)
 	}
 	paramMap := make(map[string]interface{})
+	// listParamMap collects IN-list constrained parameters; each list fans out
+	// into one parameter set per element (issue #683), as SELECT already does.
+	listParamMap := make(map[string][]interface{})
 	var err error
 	sqlparser.Walk(func(node sqlparser.SQLNode) (bool, error) { //nolint:errcheck // TODO: review
 		switch node := node.(type) { //nolint:gocritic // understandable
 		case *sqlparser.ComparisonExpr:
 			if node.Operator == sqlparser.EqualStr {
-				switch l := node.Left.(type) {
-				case *sqlparser.ColName:
-					key := l.Name.GetRawVal()
-					switch r := node.Right.(type) {
-					case *sqlparser.SQLVal:
-						val := string(r.Val)
-						paramMap[key] = val
-					case sqlparser.BoolVal:
-						paramMap[key] = strconv.FormatBool(bool(r))
-					case *sqlparser.ColName:
-						kr := r.Name.GetRawVal()
-						paramMap[key] = kr
-					default:
-						err = fmt.Errorf("unsupported type on RHS of comparison '%T', FYI LHS type is '%T'", node.Right, l)
-						return true, err
-					}
-				case *sqlparser.FuncExpr:
-				default:
-					err = fmt.Errorf("failed to analyse left node of comparison")
+				err = harvestEqualityParam(node, paramMap)
+				if err != nil {
 					return true, err
 				}
+			}
+			if node.Operator == sqlparser.InStr {
+				harvestInListParam(node, listParamMap)
 			}
 		}
 		return true, err
 	}, statement)
-	return map[int]map[string]interface{}{0: paramMap}, err
+	if err != nil {
+		return map[int]map[string]interface{}{0: paramMap}, err
+	}
+	return expandListParams(paramMap, listParamMap), nil
+}
+
+// harvestEqualityParam records a `col = literal` comparison into paramMap.
+func harvestEqualityParam(node *sqlparser.ComparisonExpr, paramMap map[string]interface{}) error {
+	switch l := node.Left.(type) {
+	case *sqlparser.ColName:
+		key := l.Name.GetRawVal()
+		switch r := node.Right.(type) {
+		case *sqlparser.SQLVal:
+			paramMap[key] = string(r.Val)
+		case sqlparser.BoolVal:
+			paramMap[key] = strconv.FormatBool(bool(r))
+		case *sqlparser.ColName:
+			paramMap[key] = r.Name.GetRawVal()
+		default:
+			return fmt.Errorf("unsupported type on RHS of comparison '%T', FYI LHS type is '%T'", node.Right, l)
+		}
+		return nil
+	case *sqlparser.FuncExpr:
+		return nil
+	default:
+		return fmt.Errorf("failed to analyse left node of comparison")
+	}
+}
+
+// harvestInListParam records `col IN (literal, ...)` elements for fan-out (issue #683).
+func harvestInListParam(node *sqlparser.ComparisonExpr, listParamMap map[string][]interface{}) {
+	l, isCol := node.Left.(*sqlparser.ColName)
+	if !isCol {
+		return
+	}
+	tuple, isTuple := node.Right.(sqlparser.ValTuple)
+	if !isTuple {
+		return
+	}
+	key := l.Name.GetRawVal()
+	for _, element := range tuple {
+		if v, isVal := element.(*sqlparser.SQLVal); isVal {
+			listParamMap[key] = append(listParamMap[key], string(v.Val))
+		}
+	}
+}
+
+// expandListParams returns the cartesian product of the scalar parameter map
+// with any IN-list parameters; with no lists the single scalar set is returned.
+func expandListParams(
+	paramMap map[string]interface{},
+	listParamMap map[string][]interface{},
+) map[int]map[string]interface{} {
+	rows := []map[string]interface{}{paramMap}
+	for key, alternatives := range listParamMap {
+		next := make([]map[string]interface{}, 0, len(rows)*len(alternatives))
+		for _, row := range rows {
+			for _, alternative := range alternatives {
+				expanded := make(map[string]interface{}, len(row)+1)
+				for rk, rv := range row {
+					expanded[rk] = rv
+				}
+				expanded[key] = alternative
+				next = append(next, expanded)
+			}
+		}
+		rows = next
+	}
+	retVal := make(map[int]map[string]interface{}, len(rows))
+	for i, row := range rows {
+		retVal[i] = row
+	}
+	return retVal
 }
 
 func TransformSQLRawParameters(input map[string]interface{}, ignoreTuples bool) (map[string]interface{}, error) {

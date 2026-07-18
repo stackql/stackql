@@ -1,0 +1,259 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## What this directory is
+
+A scripted post-release step (formerly the standalone `stackql-mcpb-packaging` repo, imported here with history) that packages the StackQL MCP server into per-platform [MCPB](https://github.com/anthropics/mcpb) bundles (`.mcpb`) for distribution and listing on the official MCP Registry. CI is the root workflow [.github/workflows/mcp-packaging.yml](/.github/workflows/mcp-packaging.yml): PR validation on `packaging/**` paths builds + smoke-tests against the latest published release; publishing is a MANUAL `workflow_dispatch` with the target version, because the consumed release assets (Authenticode-signed Windows exe, Apple-notarised darwin `.pkg`) are signed outside CI and attached to the release before dispatch. Upload is same-repo via the default `GITHUB_TOKEN`. The `release.yaml` version pin and the old in-directory workflows are retired; local `make` targets require an explicit `VERSION=X.Y.Z`.
+
+This repo does NOT build or sign the stackql binaries - that happens upstream in the normal stackql build/signing process. Here you drop the already-signed release artefacts (per-arch zips and the notarised macOS `.pkg`) into `bin/`, run one script, and get signed `.mcpb` bundles plus checksums in `dist/` to attach to the matching GitHub release.
+
+The server packed into each bundle is the `stackql` binary itself, launched as `stackql mcp --mcp.server.type=stdio` (see [manifest/manifest.template.json](manifest/manifest.template.json)). The `--mcp.server.type=stdio` flag is required - without it the MCP server does not produce JSON-RPC on stdout. The separate `stackql_mcp_client` binary is a test client and is NOT packaged.
+
+## Common commands
+
+A [Makefile](Makefile) wraps `scripts/package.sh` for the common flows. The script is still the source of truth; `make` is convenience.
+
+`VERSION` defaults to the `stackql_release` value pinned in [release.yaml](release.yaml) (leading `v` stripped), so plain `make all` builds the pinned release. Passing `VERSION=X.Y.Z` overrides it. `release.yaml` is also what CI builds on PRs and what a pushed tag must match to publish (see "Release flow" below).
+
+One-shot from a clean checkout - downloads the release artefacts from `https://github.com/stackql/stackql/releases/download/v<VERSION>/...` into `bin/`, then builds every available bundle:
+
+```bash
+make all VERSION=X.Y.Z
+# 'make VERSION=X.Y.Z' is equivalent ('all' is the default target)
+# 'make' alone uses the version pinned in release.yaml
+```
+
+Just download (skip packaging):
+
+```bash
+make download VERSION=X.Y.Z
+```
+
+Just package whatever is already in `bin/` (skip downloading):
+
+```bash
+make package VERSION=X.Y.Z
+# or call the script directly:
+./scripts/package.sh --version X.Y.Z
+```
+
+Build a single target. Two variants:
+
+```bash
+# Download just that target's source artefact and build only that bundle.
+# Use this on a Mac to do the darwin slice in the two-machine release flow.
+make one TARGET=darwin-universal VERSION=X.Y.Z
+make one TARGET=linux-x64        VERSION=X.Y.Z
+
+# Build from already-present artefacts in bin/ (temporarily hides the
+# others under bin/.hidden/ and restores them after).
+make linux-x64        VERSION=X.Y.Z
+make linux-arm64      VERSION=X.Y.Z
+make windows-x64      VERSION=X.Y.Z
+make darwin-universal VERSION=X.Y.Z
+```
+
+Self-signed bundles (testing only - production envelope signing is not currently wired up; see "Trust model" below):
+
+```bash
+make signed VERSION=X.Y.Z
+```
+
+Build the OCI image (linux amd64 locally for testing; multi-arch push needs `docker login` with push rights on `docker.io/stackql/stackql-mcp`):
+
+```bash
+make oci VERSION=X.Y.Z          # local amd64 build from the release zips
+python scripts/smoke-test.py --docker stackql/stackql-mcp:X.Y.Z
+make oci-push VERSION=X.Y.Z     # multi-arch (amd64+arm64) build + push
+```
+
+Build the npm wrapper package (`@stackql/mcp-server`, an npx-able launcher that downloads the platform's published `.mcpb`, verifies the sha256 pins baked into the package, caches the binary under `~/.stackql/mcp-server-bin/`, and spawns it). ORDERING RULE: `make npm-manifest` fetches the canonical `.sha256` files from the published release - it must run AFTER the `.mcpb` assets for the version are published, same as `make server-json`. Publishing to npmjs is manual (2FA):
+
+```bash
+make npm-manifest VERSION=X.Y.Z   # render npm/platforms.json + stamp version
+python scripts/smoke-test.py --cmd "node npm/bin/stackql-mcp.js"
+make npm-pack VERSION=X.Y.Z       # build the tarball
+cd npm && npm publish --access public
+```
+
+Build the PyPI wrapper (`stackql-mcp-server`, the same launcher in stdlib-only Python for uvx/pip; shares the npm wrapper's binary cache at `~/.stackql/mcp-server-bin/`). Same ordering rule; publish is manual (2FA):
+
+```bash
+make pypi-manifest VERSION=X.Y.Z
+make pypi-build VERSION=X.Y.Z     # sdist + wheel (needs 'pip install build')
+python -m twine upload pypi/dist/*
+```
+
+The registry validates pypi packages via the `mcp-name: io.github.stackql/stackql-mcp` marker line in the package README (npm uses the `mcpName` package.json field; oci uses an image label).
+
+The smoke test gates all four vectors: `smoke-test.py <bundle>` (manifest-driven args), `--docker <image>`, and `--cmd "<command>"`. Registry namespace validation is baked in: the npm package.json carries `mcpName: io.github.stackql/stackql-mcp` and the Dockerfile carries the `io.modelcontextprotocol.server.name` label - the Official MCP Registry checks both before accepting the oci/npm package entries in server.json.
+
+Upload everything in `dist/` to the matching `stackql/stackql` release (requires `gh auth login` with `contents:write` on `stackql/stackql`; idempotent via `--clobber`):
+
+```bash
+make publish VERSION=X.Y.Z
+```
+
+Wipe outputs / inputs:
+
+```bash
+make clean        # remove dist/*.mcpb and *.sha256
+make clean-bin    # remove downloaded artefacts from bin/
+```
+
+Show what is currently in the drop-zone:
+
+```bash
+make list
+```
+
+## Release flow
+
+The primary flow is GitHub Actions; the two-machine local flow below remains a supported fallback. The darwin target needs `pkgutil`, so CI builds it on a `macos-latest` runner.
+
+### CI flow (GitHub Actions)
+
+Three workflows in [.github/workflows/](.github/workflows/):
+
+- **[build.yml](.github/workflows/build.yml)** - reusable. Builds each bundle with `make one TARGET=<t> VERSION=<v>` on a runner that can execute the embedded binary (`ubuntu-latest`, `ubuntu-24.04-arm`, `macos-latest`), runs `scripts/smoke-test.py` against it, and uploads `dist/` artefacts. The windows-x64 bundle builds on ubuntu (packaging has no Windows dependency) and is smoke-tested on `windows-latest` from the artifact. The Gemini agent check runs on linux-x64 only and soft-skips without `GEMINI_API_KEY`.
+- **[ci.yml](.github/workflows/ci.yml)** - on PRs to main and pushes to main. Reads `stackql_release` from [release.yaml](release.yaml) and calls build.yml. Nothing is published.
+- **[publish.yml](.github/workflows/publish.yml)** - on pushing a `v*` tag. Fails fast if the tag does not exactly match `stackql_release` in release.yaml, rebuilds and smoke-tests everything, optionally envelope-signs the bundles (runs `make sign` when the `MCPB_SIGNING_CERT`/`MCPB_SIGNING_KEY` PEM-content secrets are set; soft-skips otherwise), then runs `make publish` to upload all bundles + `.sha256` files to the matching `stackql/stackql` release. Requires the `STACKQL_RELEASE_TOKEN` repo secret (fine-grained PAT with `contents:write` on `stackql/stackql` - the default `GITHUB_TOKEN` cannot upload cross-repo). Signing happens before checksumming: the signature is appended to the bundle bytes, so `make sign` regenerates each `.sha256`. `mcpb verify` is broken in the current upstream CLI (node-forge cannot verify PKCS#7); the scripts treat it as advisory and assert the appended `MCPB_SIG_END` block instead.
+
+The release sequence: upstream `stackql/stackql` release publishes the core assets -> raise a PR here bumping `stackql_release` in release.yaml (CI proves the bundles build and pass smoke tests against the real release assets) -> merge -> push the matching tag (e.g. `v0.10.500`) -> publish.yml attaches the `.mcpb` assets to the upstream release.
+
+### Fallback: the two-machine local flow
+
+**Machine A (your workstation, any OS with bash + node + unzip):**
+
+```bash
+make all VERSION=X.Y.Z      # downloads release artefacts, builds linux-x64,
+                            # linux-arm64, windows-x64. Darwin skips with a
+                            # 'pkgutil not found' notice.
+python scripts/smoke-test.py dist/stackql-mcp-linux-x64.mcpb   # gate
+make publish VERSION=X.Y.Z  # uploads the 3 bundles + .sha256s to the
+                            # stackql/stackql release matching v<VERSION>
+```
+
+**Machine B (a Mac - MacInCloud is the typical case):**
+
+```bash
+git clone https://github.com/stackql/stackql-mcpb-packaging
+cd stackql-mcpb-packaging
+make one TARGET=darwin-universal VERSION=X.Y.Z   # downloads only the .pkg,
+                                                 # extracts the universal
+                                                 # binary, builds 1 bundle
+python scripts/smoke-test.py dist/stackql-mcp-darwin-universal.mcpb
+make publish VERSION=X.Y.Z   # uploads just that one bundle + sha
+```
+
+Each machine runs `gh auth login` once with a token that has `contents:write` on `stackql/stackql`. `make publish` uses `gh release upload --clobber`, so it is idempotent and the order between the two machines does not matter. Re-running either step is safe.
+
+The Mac machine only needs Node.js (for `mcpb` via `npx`) on top of the default macOS toolchain - `make`, `curl`, `unzip`, `pkgutil`, `shasum`, `find` are all preinstalled.
+
+### Smoke tests
+
+Two layers, both in [scripts/](scripts/):
+
+- **[scripts/smoke-test.py](scripts/smoke-test.py)** - deterministic gate. Extracts the `.mcpb`, spawns `stackql mcp --mcp.server.type=stdio --auth='{"github":{"type":"null_auth"}}'`, runs the JSON-RPC handshake, asserts `tools/list` contains `pull_provider`/`list_services`/`list_providers`, calls `pull_provider` for `github`, then `list_services` and confirms real github services come back. Stdlib only. Run before `make publish`:
+
+  ```bash
+  python scripts/smoke-test.py dist/stackql-mcp-linux-x64.mcpb
+  ```
+
+- **[scripts/gemini-smoke.py](scripts/gemini-smoke.py)** - optional agent check using Gemini Flash. Exposes the MCP tools to Gemini via function calling and asks it to pull github and list services. Skips with exit 0 if `GEMINI_API_KEY` is not set; on failure prints `WARN:` and exits 0. Stdlib only - calls `generativelanguage.googleapis.com` directly via `urllib`. `GEMINI_MODEL` defaults to `gemini-2.0-flash`.
+
+Both scripts use the `github` provider in `null_auth` mode so no credentials are needed - they hit the public github registry endpoints.
+
+## Trust model
+
+The end goal is signed, verifiable, functional MCP binary assets distributed through trusted marketplaces. Today the layers are:
+
+1. **Mach-O / Authenticode signatures on the embedded binary** - applied upstream during the stackql release build. Windows: Authenticode-signed `stackql.exe`. macOS: Developer ID Application signature embedded in the universal `stackql` binary inside the `.pkg`, plus Apple notarisation keyed to the binary's cdhash. Linux: no platform-level signing, by convention.
+2. **SHA-256 on the bundle envelope** - written by `package.sh` next to every `.mcpb`. Published with the bundle and pinned in the official MCP Registry `server.json`. Anyone installing the bundle can verify the bytes.
+3. **MCPB envelope signature (`mcpb sign`)** - wired but inactive until signing material is configured. `make sign` (scripts/sign.sh) signs `dist/*.mcpb` in place and regenerates checksums; the publish workflow calls it and soft-skips unless the `MCPB_SIGNING_CERT`/`MCPB_SIGNING_KEY` secrets are set. The same `MCPB_SELF_SIGN`/`MCPB_SIGN_CERT`/`MCPB_SIGN_KEY`/`MCPB_SIGN_INTERMEDIATES` hooks remain in `package.sh` for sign-at-build.
+4. **Anthropic Desktop Extensions directory listing** - the editorial "vetted by Claude" signal that users see in Claude Desktop's Browse Extensions UI. Submission is via the review form at `claude.com/docs/connectors/building/submission`; requirements (privacy policy, logo, screenshots) are in [listings.md](listings.md).
+5. **Official MCP Registry entry** - canonical metadata pointing at the GitHub release assets and pinning their SHA-256.
+
+The notarised `.pkg` does the load-bearing trust work for macOS users: Gatekeeper validates the cdhash online when the bundled binary launches, so the binary inside the `.mcpb` is the same trusted binary users get from the `.pkg` installer. The unsigned `.mcpb` envelope is a Claude Desktop UI signal, not a Gatekeeper signal - addressing it requires either a self-signed cert (low value) or a real code-signing cert held in an HSM (the production answer). Until then, the registry SHA-256 plus the embedded platform signatures are what marketplaces verify against.
+
+Self-signed bundle (testing only):
+
+```bash
+MCPB_SELF_SIGN=true ./scripts/package.sh --version X.Y.Z
+```
+
+Production-signed bundle:
+
+```bash
+MCPB_SIGN_CERT=cert.pem \
+MCPB_SIGN_KEY=key.pem \
+MCPB_SIGN_INTERMEDIATES="intermediate-ca.pem root-ca.pem" \
+./scripts/package.sh --version X.Y.Z
+```
+
+`MCPB_SIGN_INTERMEDIATES` is optional and space-separated. Bundle signing is OFF by default. When unset, the script prints a notice and skips.
+
+The script invokes `mcpb` if on PATH, otherwise falls back to `npx --yes @anthropic-ai/mcpb`.
+
+## Bin drop-zone layout (required before running package.sh)
+
+`bin/` is gitignored except for its `README.md` and `.gitignore`. `package.sh` reads the release artefacts directly - no manual extraction. Expected files at the root of `bin/`:
+
+```
+bin/
+  stackql_linux_amd64.zip        # contains stackql
+  stackql_linux_arm64.zip        # contains stackql
+  stackql_windows_amd64.zip      # contains stackql.exe (Authenticode-signed upstream)
+  stackql_darwin_multiarch.pkg   # notarised .pkg, universal binary inside
+```
+
+The darwin glob is `stackql_darwin*.pkg`, so any suffix works. Any target whose source artefact is absent is skipped with a notice - partial drops produce partial bundle sets.
+
+A legacy fallback layout (pre-extracted binaries at `bin/<arch>/stackql[.exe]` and `bin/darwin/*.pkg`) is also accepted. The release-artefact layout takes precedence when both are present.
+
+## Architecture and flow
+
+Single bash script ([scripts/package.sh](scripts/package.sh)) drives everything. For each target:
+
+1. Stage a temp dir with `server/<binary-name>` and a per-target `manifest.json` rendered from [manifest/manifest.template.json](manifest/manifest.template.json) by `sed`-substituting `__VERSION__` and `__BINARY_NAME__`.
+2. `mcpb validate` the manifest, then `mcpb pack` the staging dir into `dist/stackql-mcp-<label>.mcpb`.
+3. Optionally `mcpb sign` (self-signed or with cert/key), then `mcpb verify`.
+4. Write `<bundle>.sha256` next to the bundle, with the basename matching the released filename so the checksum line matches the GitHub release asset name.
+
+Per-target labels: `linux-x64`, `linux-arm64`, `windows-x64`, `darwin-universal`.
+
+### macOS extraction (`extract_pkg_binary`)
+
+The darwin target reads a notarised `.pkg`, not a bare binary, because:
+
+- The Mach-O has the code signature embedded, so extraction preserves it.
+- Notarisation is keyed to the binary's cdhash (registered with Apple when notarising the `.pkg`); the identical extracted binary is recognised by Gatekeeper online.
+- The stapled notarisation ticket lives on the `.pkg` (you cannot staple a bare binary). The `.pkg` remains the offline-validating installer; the `.mcpb` relies on online validation of the same binary.
+
+`extract_pkg_binary` runs `pkgutil --expand-full` and locates `stackql` inside the payload. The darwin target requires `pkgutil`, so it only runs on macOS. The other three targets have no macOS dependency.
+
+### Manifest template
+
+[manifest/manifest.template.json](manifest/manifest.template.json) is tokenised with `__VERSION__` and `__BINARY_NAME__`. The runtime invocation is `${__dirname}/server/<binary>` with args `mcp --mcp.server.type=stdio --approot ${HOME}/.stackql --mcp.config {"server": {"audit": {"disabled": true}}}`. Every arg is load-bearing:
+
+- `--mcp.server.type=stdio` is required: without it the MCP server starts but does not emit JSON-RPC on stdout.
+- `--approot ${HOME}/.stackql`: Claude Desktop launches extensions with cwd `/` (read-only on macOS) and stackql's default approot is `<cwd>/.stackql`, so provider pulls die without it. `${HOME}` is an MCPB substitution variable; it is passed as a plain arg (not inside JSON) because on Windows it expands with backslashes, which are invalid JSON string escapes.
+- `--mcp.config` with `audit.disabled`: the audit sink defaults to a file in the cwd and kills the server when unwritable (`failure_mode` defaults to `strict`). The JSON is static - no substitution inside it, for the same backslash reason. The `--mcp.config` parser is JSON-only in practice; YAML flow style silently falls back to defaults.
+
+`scripts/smoke-test.py` launches the server with the manifest's own `mcp_config.args` (substituting `${__dirname}` and `${HOME}` against temp dirs), so manifest arg regressions fail the smoke test rather than surfacing in Claude Desktop. If you need to pass more flags, update `args` in the template - clients launch the bundled binary with precisely those arguments.
+
+## Releasing
+
+After packaging, attach all of `dist/*.mcpb` and `dist/*.sha256` to the same GitHub release as the matching stackql build.
+
+For the official MCP Registry, the `.mcpb` URL must contain the string `mcp` (the filenames already do). Each platform gets one `server.json` package entry: `registryType: mcpb`, `identifier` = release download URL, `fileSha256` = the matching `.sha256`, `transport.type: stdio`. Publish with the `mcp-publisher` CLI.
+
+[listings.md](listings.md) is the working register of every venue worth listing on (registries, aggregators, IDE/client directories, awesome lists) with submission status. Treat the official MCP Registry as the hub - many other venues auto-ingest from it.
+
+## Writing style (from global instructions)
+
+- Plain hyphens only: `-`, never `--`. ASCII arrows `->`, never `->` or `=>` or `<-`.
+- Stick to QWERTY characters. No em dashes, smart quotes, or other punctuation that is not on a standard keyboard.
+- Matter-of-fact tone. No hyperbole, no sycophancy.
+- No stacked headings (an H1 immediately followed by an H2 with no content between).

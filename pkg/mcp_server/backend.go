@@ -55,6 +55,11 @@ type Backend interface {
 	// cache.  input.Provider is required; input.Version is optional (empty pulls
 	// the latest published version).  Returns the same shape as ExecQuery.
 	PullProvider(ctx context.Context, input dto.RegistryInput) (map[string]any, error)
+
+	// ReloadCredentials (re)sources credentials from the backend's configured
+	// env file into the process environment and reports per-provider
+	// resolution status; secret values are never returned (issue #688).
+	ReloadCredentials(ctx context.Context, input dto.CredentialsReloadInput) (dto.CredentialsReloadDTO, error)
 }
 
 // QueryResult represents the result of a query execution.

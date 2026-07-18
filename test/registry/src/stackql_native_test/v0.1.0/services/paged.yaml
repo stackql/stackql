@@ -1,0 +1,114 @@
+openapi: 3.0.1
+servers:
+  - url: http://localhost:1070
+info:
+  version: v0.1.0
+  title: REST page_number pagination
+  description: |-
+    Exercises the any-sdk page_number pagination strategy (issue 684): the mock
+    reports the current page and total page count in result_info; the reader
+    requests page N+1 until the current page reaches the terminator. Each row
+    carries wire_page (the page the mock served it on) so scenarios can assert
+    the traversal from STDOUT. The unterminated resource omits total_pages: the
+    reader must stop after one page rather than loop.
+x-stackQL-config:
+  pagination:
+    algorithm: page_number
+    requestToken:
+      key: page
+      location: query
+    responseToken:
+      key: result_info.page
+      location: body
+    responseTerminator:
+      key: result_info.total_pages
+      location: body
+components:
+  schemas:
+    paged_item:
+      type: object
+      properties:
+        name:
+          type: string
+        idx:
+          type: integer
+        wire_page:
+          type: integer
+    paged_items_response:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/paged_item'
+        result_info:
+          type: object
+          properties:
+            page:
+              type: integer
+            total_pages:
+              type: integer
+  x-stackQL-resources:
+    items:
+      id: stackql_native_test.paged.items
+      name: items
+      title: Items (page_number pagination)
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1paged~1items/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: items
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/items/methods/select'
+        delete: []
+        insert: []
+        update: []
+    items_unterminated:
+      id: stackql_native_test.paged.items_unterminated
+      name: items_unterminated
+      title: Items (page_number pagination, missing terminator negative case)
+      methods:
+        select:
+          operation:
+            $ref: '#/paths/~1paged~1items_unterminated/get'
+          response:
+            mediaType: application/json
+            openAPIDocKey: '200'
+            objectKey: items
+      sqlVerbs:
+        select:
+          - $ref: '#/components/x-stackQL-resources/items_unterminated/methods/select'
+        delete: []
+        insert: []
+        update: []
+paths:
+  /paged/items:
+    get:
+      operationId: paged/items/get
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/paged_items_response'
+      servers:
+        - url: http://localhost:1070
+      summary: List items across three pages
+  /paged/items_unterminated:
+    get:
+      operationId: paged/items_unterminated/get
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/paged_items_response'
+      servers:
+        - url: http://localhost:1070
+      summary: List items with no page-count terminator

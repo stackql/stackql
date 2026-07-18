@@ -527,6 +527,8 @@ func registerTools(server *mcp.Server, cfg *Config, backend Backend, logger *log
 		},
 	)
 
+	registerReloadCredentialsTool(server, cfg, backend, auditSink)
+
 	addToolWithGate(
 		server, cfg, auditSink, registryGate("pull_provider"),
 		&mcp.Tool{
@@ -544,6 +546,54 @@ func registerTools(server *mcp.Server, cfg *Config, backend Backend, logger *log
 			}
 			text := textForFormat(format, res, func() string { return render.RenderKV("Pull Result", []map[string]any{res}) })
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, res, nil
+		},
+	)
+}
+
+// registerReloadCredentialsTool publishes reload_credentials (issue #688);
+// classified as a select so it is allowed in every mode, read_only included.
+func registerReloadCredentialsTool(server *mcp.Server, cfg *Config, backend Backend, auditSink sink.Sink) {
+	addToolWithGate(
+		server, cfg, auditSink,
+		toolGate{
+			toolName:     "reload_credentials",
+			defaultClass: policy.QueryClassSelect,
+			extractArgs: func(args any) map[string]any {
+				v, ok := args.(dto.CredentialsReloadInput)
+				if !ok || v.Provider == "" {
+					return nil
+				}
+				return map[string]any{"provider": v.Provider}
+			},
+		},
+		&mcp.Tool{
+			Name: "reload_credentials",
+			Description: "Re-source provider credentials from the server's configured env file into the process " +
+				"environment, then report per-provider credential resolution status. Call after fixing or rotating " +
+				"credentials (eg a query failed with a credential resolution error), then retry the query. " +
+				"Never returns secret values. Optional provider arg scopes the report.",
+		},
+		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.CredentialsReloadInput) (*mcp.CallToolResult, dto.CredentialsReloadDTO, error) {
+			format, formatErr := resolveRenderFormat(cfg, args.Format)
+			if formatErr != nil {
+				return nil, dto.CredentialsReloadDTO{}, formatErr
+			}
+			out, err := backend.ReloadCredentials(ctx, args)
+			if err != nil {
+				return nil, dto.CredentialsReloadDTO{}, err
+			}
+			rec := make([]map[string]any, 0, len(out.Providers))
+			for _, p := range out.Providers {
+				rec = append(rec, map[string]any{
+					"provider":     p.Provider,
+					"auth_type":    p.AuthType,
+					"sourced_from": p.SourcedFrom,
+					"status":       p.Status,
+					"detail":       p.Detail,
+				})
+			}
+			text := textForFormat(format, out, func() string { return render.RenderTable(rec) })
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, out, nil
 		},
 	)
 }

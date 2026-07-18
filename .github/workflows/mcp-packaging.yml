@@ -1,0 +1,272 @@
+# MCP bundle packaging: builds + smoke-tests the .mcpb bundles, OCI image and
+# npm/pypi wrapper artifacts from packaging/mcpb.  Validation runs on
+# packaging/** PRs; publishing is MANUAL (workflow_dispatch) because the
+# consumed release assets (Authenticode-signed exe, notarised .pkg) are
+# signed outside CI, so a release event fires before they exist.  Flow:
+# push tag -> create release -> attach signed assets -> dispatch.
+
+name: mcp-packaging
+
+on:
+  pull_request:
+    paths: ['packaging/**']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: stackql release version without the leading v (e.g. 0.10.550); the release's signed assets must already be attached
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: packaging/mcpb
+
+jobs:
+  version:
+    name: resolve version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+      is_publish: ${{ steps.resolve.outputs.is_publish }}
+    steps:
+      - name: Resolve target release version
+        id: resolve
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            tag="v${{ inputs.version }}"
+            echo "is_publish=true" >> "$GITHUB_OUTPUT"
+          else
+            tag="$(gh release view -R "$GITHUB_REPOSITORY" --json tagName -q .tagName)"
+            echo "is_publish=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "resolved: $tag"
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+
+  bundle:
+    needs: version
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: linux-x64
+            runner: ubuntu-latest
+          - target: linux-arm64
+            runner: ubuntu-24.04-arm
+          - target: darwin-universal
+            runner: macos-latest
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build bundle
+        run: make one TARGET=${{ matrix.target }} VERSION=${{ needs.version.outputs.version }}
+      - name: Smoke test (deterministic MCP handshake)
+        run: python3 scripts/smoke-test.py dist/stackql-mcp-${{ matrix.target }}.mcpb
+      - name: Upload bundle artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: stackql-mcp-${{ matrix.target }}
+          path: |
+            packaging/mcpb/dist/stackql-mcp-${{ matrix.target }}.mcpb
+            packaging/mcpb/dist/stackql-mcp-${{ matrix.target }}.mcpb.sha256
+          if-no-files-found: error
+
+  bundle-windows:
+    name: windows-x64 (build)
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build bundle
+        run: make one TARGET=windows-x64 VERSION=${{ needs.version.outputs.version }}
+      - name: Upload bundle artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: stackql-mcp-windows-x64
+          path: |
+            packaging/mcpb/dist/stackql-mcp-windows-x64.mcpb
+            packaging/mcpb/dist/stackql-mcp-windows-x64.mcpb.sha256
+          if-no-files-found: error
+
+  smoke-windows:
+    name: windows-x64 (smoke)
+    needs: bundle-windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Download bundle artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: stackql-mcp-windows-x64
+          path: packaging/mcpb/dist
+      - name: Smoke test (deterministic MCP handshake)
+        run: python scripts/smoke-test.py dist/stackql-mcp-windows-x64.mcpb
+
+  oci:
+    name: oci (build + smoke)
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build image
+        run: make oci VERSION=${{ needs.version.outputs.version }}
+      - name: Smoke test (deterministic MCP handshake)
+        run: python3 scripts/smoke-test.py --docker stackql/stackql-mcp:${{ needs.version.outputs.version }}
+
+  # Multiplatform bundle for single-artefact venues, built from the four
+  # per-platform bundle artifacts (byte-identical binaries); verify-combined.py
+  # asserts every binary's machine type.
+  combined:
+    name: multiplatform (combined build + byte verification)
+    needs: [version, bundle, bundle-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Gather per-platform bundle artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: stackql-mcp-*
+          path: packaging/mcpb/dist
+          merge-multiple: true
+      - name: Build combined bundle (hard-fails unless all four bundles present)
+        run: make combined VERSION=${{ needs.version.outputs.version }}
+      - name: Upload combined bundle artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: stackql-mcp-multiplatform
+          path: |
+            packaging/mcpb/dist/stackql-mcp-multiplatform.mcpb
+            packaging/mcpb/dist/stackql-mcp-multiplatform.mcpb.sha256
+          if-no-files-found: error
+
+  # Install-and-handshake the combined bundle on every host OS (arm64 linux
+  # leg covers the arch shim): each host must select its own binary via
+  # platform_overrides and complete the MCP handshake.
+  combined-smoke:
+    name: multiplatform smoke (${{ matrix.runner }})
+    needs: combined
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            py: python3
+          - runner: ubuntu-24.04-arm
+            py: python3
+          - runner: macos-latest
+            py: python3
+          - runner: windows-latest
+            py: python
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Download combined bundle
+        uses: actions/download-artifact@v8
+        with:
+          name: stackql-mcp-multiplatform
+          path: packaging/mcpb/dist
+      - name: Smoke test (platform_overrides selection + MCP handshake)
+        run: ${{ matrix.py }} scripts/smoke-test.py dist/stackql-mcp-multiplatform.mcpb
+
+  publish:
+    name: upload bundles to release
+    if: needs.version.outputs.is_publish == 'true'
+    needs: [version, bundle, bundle-windows, smoke-windows, oci, combined, combined-smoke]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Gather bundle artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: stackql-mcp-*
+          path: packaging/mcpb/dist
+          merge-multiple: true
+      - name: Envelope-sign bundles (when signing material configured)
+        env:
+          MCPB_SIGNING_CERT: ${{ secrets.MCPB_SIGNING_CERT }}
+          MCPB_SIGNING_KEY: ${{ secrets.MCPB_SIGNING_KEY }}
+          MCPB_SIGNING_INTERMEDIATES: ${{ secrets.MCPB_SIGNING_INTERMEDIATES }}
+        run: |
+          if [ -n "$MCPB_SIGNING_CERT" ] && [ -n "$MCPB_SIGNING_KEY" ]; then
+            make sign
+          else
+            echo "signing material not configured; publishing unsigned bundles"
+          fi
+      - name: Upload to release (same repo - GITHUB_TOKEN suffices)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: make publish VERSION=${{ needs.version.outputs.version }}
+
+  oci-publish:
+    name: push OCI image
+    if: needs.version.outputs.is_publish == 'true'
+    needs: [version, oci]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Push multi-arch image
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+          docker buildx create --use
+          make oci-push VERSION=${{ needs.version.outputs.version }}
+
+  # npm / pypi manifests render from the published .sha256 files as run
+  # artifacts; publishing to npmjs / PyPI stays manual (2FA).
+  npm-tarball:
+    name: npm tarball (manual publish artifact)
+    if: needs.version.outputs.is_publish == 'true'
+    needs: [version, publish]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Render manifest + pack
+        run: make npm-pack VERSION=${{ needs.version.outputs.version }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: npm-package
+          path: packaging/mcpb/npm/*.tgz
+
+  pypi-dist:
+    name: pypi dist (manual publish artifact)
+    if: needs.version.outputs.is_publish == 'true'
+    needs: [version, publish]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Render manifest + build
+        run: make pypi-build VERSION=${{ needs.version.outputs.version }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: pypi-dist
+          path: packaging/mcpb/pypi/dist/*
+
+  server-json:
+    name: render registry server.json
+    if: needs.version.outputs.is_publish == 'true'
+    needs: [version, publish]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Gather bundle artifacts (for sha pins)
+        uses: actions/download-artifact@v8
+        with:
+          pattern: stackql-mcp-*
+          path: packaging/mcpb/dist
+          merge-multiple: true
+      - name: Render server.json
+        run: make server-json VERSION=${{ needs.version.outputs.version }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: server-json
+          path: packaging/mcpb/registry/server.json

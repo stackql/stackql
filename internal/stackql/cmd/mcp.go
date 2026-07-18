@@ -78,6 +78,7 @@ func providerRegistryIdentifier(runtimeCtx dto.RuntimeCtx) string {
 var (
 	mcpServerType string // overwritten by flag
 	mcpConfig     string // overwritten by flag
+	envFilePath   string // overwritten by flag; sourced for every entrypoint in initConfig
 )
 
 //nolint:gochecknoglobals // cobra pattern
@@ -155,6 +156,7 @@ func runMCPServer(handlerCtx handler.HandlerContext) {
 			handlerCtx,
 			logging.GetLogger(),
 			serverInfo,
+			envFilePath,
 		)
 		iqlerror.PrintErrorAndExitOneIfError(backendErr)
 		iqlerror.PrintErrorAndExitOneIfNil(backend, "mcp backend is unexpectedly nil")

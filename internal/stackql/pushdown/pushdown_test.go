@@ -22,9 +22,17 @@ func TestBuildPushdownIntent_FullSelect(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected pushable intent")
 	}
+	// The projection is the union of SELECT-list columns and the WHERE / ORDER BY
+	// referenced columns, in that order (issue #682).
 	proj := intent.GetProjection()
-	if len(proj) != 2 || proj[0] != "a" || proj[1] != "b" {
-		t.Errorf("projection = %v", proj)
+	want := []string{"a", "b", "x", "y", "z"}
+	if len(proj) != len(want) {
+		t.Fatalf("projection = %v, want %v", proj, want)
+	}
+	for i := range want {
+		if proj[i] != want[i] {
+			t.Errorf("projection[%d] = %s, want %s", i, proj[i], want[i])
+		}
 	}
 	preds := intent.GetPredicates()
 	if len(preds) != 2 {
@@ -124,6 +132,61 @@ func TestBuildPushdownIntent_GrainChangeIsNotPushable(t *testing.T) {
 		if _, ok := buildPushdownIntent(mustSelect(t, sql)); ok {
 			t.Errorf("expected non-pushable for %q", sql)
 		}
+	}
+}
+
+func TestBuildPushdownIntent_ProjectionUnionsWhereAndOrderColumns(t *testing.T) {
+	// Issue #682: a WHERE-only column must reach the pushed projection or the
+	// authoritative client-side filter sees an absent column and drops all rows.
+	intent, ok := buildPushdownIntent(mustSelect(t,
+		"select id, displayName from users where userType = 'Member'"))
+	if !ok {
+		t.Fatalf("expected pushable intent")
+	}
+	proj := intent.GetProjection()
+	want := []string{"id", "displayName", "userType"}
+	if len(proj) != len(want) {
+		t.Fatalf("projection = %v, want %v", proj, want)
+	}
+	for i := range want {
+		if proj[i] != want[i] {
+			t.Errorf("projection[%d] = %s, want %s", i, proj[i], want[i])
+		}
+	}
+}
+
+func TestBuildPushdownIntent_ProjectionUnionIncludesResidualPredicateColumns(t *testing.T) {
+	// OR branches are not pushable predicates, but their columns are still needed
+	// client-side, so they must be fetched.
+	intent, ok := buildPushdownIntent(mustSelect(t,
+		"select a from t where x = 'v' or y = 'w'"))
+	if !ok {
+		t.Fatalf("expected an intent (projection present)")
+	}
+	if len(intent.GetPredicates()) != 0 {
+		t.Errorf("expected OR to remain residual, got %v", intent.GetPredicates())
+	}
+	proj := intent.GetProjection()
+	want := []string{"a", "x", "y"}
+	if len(proj) != len(want) {
+		t.Fatalf("projection = %v, want %v", proj, want)
+	}
+	for i := range want {
+		if proj[i] != want[i] {
+			t.Errorf("projection[%d] = %s, want %s", i, proj[i], want[i])
+		}
+	}
+}
+
+func TestBuildPushdownIntent_ProjectionUnionDeduplicates(t *testing.T) {
+	intent, ok := buildPushdownIntent(mustSelect(t,
+		"select a, b from t where a = 'v' and b > 1 order by a asc"))
+	if !ok {
+		t.Fatalf("expected pushable intent")
+	}
+	proj := intent.GetProjection()
+	if len(proj) != 2 || proj[0] != "a" || proj[1] != "b" {
+		t.Errorf("expected deduplicated projection [a b], got %v", proj)
 	}
 }
 

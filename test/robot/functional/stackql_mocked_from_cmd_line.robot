@@ -9244,6 +9244,51 @@ Delete Returning Simple Projection
     ...    stdout=${CURDIR}/tmp/Delete-Returning-Simple-Projection.tmp
     ...    stderr=${CURDIR}/tmp/Delete-Returning-Simple-Projection-stderr.tmp
 
+Batch Delete With In List Dispatches Per Element
+    [Documentation]    Issue #683: DELETE with an IN list fans out one request per
+    ...                element; previously it failed with a missing-parameter error.
+    ${inputStr} =    Catenate
+    ...    delete from google.compute.firewalls where project = 'mutable-project' and firewall in ('deletable-firewall', 'deletable-firewall-2');
+    Should Stackql Exec Inline Contain Stderr
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    The operation was despatched successfully
+    ...    stdout=${CURDIR}/tmp/Batch-Delete-With-In-List.tmp
+    ...    stderr=${CURDIR}/tmp/Batch-Delete-With-In-List-stderr.tmp
+
+Batch Delete With In List Returns One Row Per Element
+    [Documentation]    Issue #683 per-element proof: DELETE ... IN (two elements) with
+    ...                RETURNING yields exactly one response row per element.
+    ${inputStr} =    Catenate
+    ...    delete from google.compute.firewalls where project = 'mutable-project' and firewall in ('deletable-firewall', 'deletable-firewall-2') returning kind, user;
+    ${outputStr} =    Catenate    SEPARATOR=\n
+    ...    |-------------------|----------------------|
+    ...    |${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}kind${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}user${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}${SPACE}|
+    ...    |-------------------|----------------------|
+    ...    |${SPACE}compute#operation${SPACE}|${SPACE}somejimbo@stackql.io${SPACE}|
+    ...    |-------------------|----------------------|
+    ...    |${SPACE}compute#operation${SPACE}|${SPACE}somejimbo@stackql.io${SPACE}|
+    ...    |-------------------|----------------------|
+    Should Stackql Exec Inline Equal Both Streams
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${inputStr}
+    ...    ${outputStr}
+    ...    ${EMPTY}
+    ...    stdout=${CURDIR}/tmp/Batch-Delete-In-List-Returning.tmp
+    ...    stderr=${CURDIR}/tmp/Batch-Delete-In-List-Returning-stderr.tmp
+
 Delete Returning Star
     [Documentation]    Delete an object and return all system returned object values. For deletion ops that synchronously return some object.
     ${inputStr} =    Catenate
@@ -10183,3 +10228,22 @@ Tight Retry Budget Surfaces Final 503
     ...    stdout=${CURDIR}/tmp/Tight-Retry-Budget-Surfaces-Final-503-stdout.tmp
     ...    stderr=${CURDIR}/tmp/Tight-Retry-Budget-Surfaces-Final-503-stderr.tmp
     Assert Retry Mock Attempts    tight-budget    2
+
+Env File Flag Sources Credentials For Exec Entrypoint
+    [Documentation]    Issue #688: --env.file is a root flag sourced at startup for
+    ...                every entrypoint; the credential var exists only in the dotenv file.
+    Pass Execution If    "${EXECUTION_PLATFORM}" == "docker"    host env file path is not visible inside the container
+    ${envFile} =    Set Variable    ${CURDIR}${/}tmp${/}exec-entrypoint-dotenv.env
+    Create File    ${envFile}    OKTA_SECRET_KEY_DOTENV=${OKTA_SECRET_STR}\n
+    ${authCfg} =    Set Variable    { "okta": { "credentialsenvvar": "OKTA_SECRET_KEY_DOTENV", "type": "api_key" } }
+    Should Stackql Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${authCfg}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${SELECT_OKTA_APPS}
+    ...    ${SELECT_OKTA_APPS_ASC_EXPECTED}
+    ...    \-\-env.file\=${envFile}

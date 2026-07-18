@@ -26,6 +26,7 @@ import (
 	"github.com/stackql/any-sdk/pkg/logging"
 	"github.com/stackql/stackql/internal/stackql/buildinfo"
 	"github.com/stackql/stackql/internal/stackql/config"
+	"github.com/stackql/stackql/internal/stackql/envfile"
 
 	"github.com/magiconair/properties"
 	"github.com/spf13/cobra"
@@ -222,6 +223,7 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVar(&mcpConfig, "mcp.config", "{}", "MCP server config file path (YAML or JSON)")
 	rootCmd.PersistentFlags().StringVar(&mcpServerType, "mcp.server.type", "", "MCP server type (http or stdio for now)")
+	rootCmd.PersistentFlags().StringVar(&envFilePath, "env.file", "", "optional dotenv-style file sourced into the process environment at startup; the MCP reload_credentials tool re-sources it on demand")
 }
 
 func mergeConfigFromFile(runtimeCtx *dto.RuntimeCtx, flagSet pflag.FlagSet) {
@@ -239,6 +241,13 @@ func mergeConfigFromFile(runtimeCtx *dto.RuntimeCtx, flagSet pflag.FlagSet) {
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	mergeConfigFromFile(&runtimeCtx, *rootCmd.PersistentFlags())
+
+	// Source --env.file before anything credential-bearing runs; a missing
+	// file is fine (it may be written later), a malformed one is fatal.
+	if _, _, err := envfile.Source(envFilePath); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to source env file '%s': %v\n", envFilePath, err)
+		os.Exit(1)
+	}
 
 	logging.SetLogger(runtimeCtx.LogLevelStr)
 	config.CreateDirIfNotExists(runtimeCtx.ApplicationFilesRootPath, os.FileMode(runtimeCtx.ApplicationFilesRootPathMode))                                    //nolint:errcheck,lll // TODO: investigate

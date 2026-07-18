@@ -9,3 +9,4 @@ self-hosted-runner:
     - macos-15 # should not be necessary
     - macos-15-intel # should not be necessary
     - windows-11-arm # GitHub-hosted arm64 Windows runner, newer than actionlint's built-in label list
+    - ubuntu-24.04-arm # GitHub-hosted arm64 Linux runner, newer than actionlint's built-in label list

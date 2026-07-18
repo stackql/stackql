@@ -63,6 +63,11 @@ func buildPushdownIntent(node sqlparser.SQLNode) (formulation.PushdownIntent, bo
 		}
 	}
 
+	// A pushed projection must also fetch every column the client-side WHERE /
+	// ORDER BY consult, else the authoritative re-filter drops all rows
+	// (issue #682).  Output shaping is unchanged.
+	projection = unionReferencedColumns(projection, sel)
+
 	limit, limitSet := 0, false
 	offset, offsetSet := 0, false
 	if sel.Limit != nil {
@@ -92,6 +97,37 @@ func SelectLimit(node sqlparser.SQLNode) (int, bool) {
 		return 0, false
 	}
 	return sqlValAsInt(sel.Limit.Rowcount)
+}
+
+// unionReferencedColumns extends a non-empty projection with WHERE / ORDER BY
+// columns not already projected (issue #682); an empty projection is unchanged.
+func unionReferencedColumns(projection []string, sel *sqlparser.Select) []string {
+	if len(projection) == 0 {
+		return projection
+	}
+	seen := make(map[string]struct{}, len(projection))
+	for _, c := range projection {
+		seen[c] = struct{}{}
+	}
+	var walkTargets []sqlparser.SQLNode
+	if sel.Where != nil && sel.Where.Expr != nil {
+		walkTargets = append(walkTargets, sel.Where.Expr)
+	}
+	if sel.OrderBy != nil {
+		walkTargets = append(walkTargets, sel.OrderBy)
+	}
+	//nolint:errcheck // the visitor never errs
+	sqlparser.Walk(func(node sqlparser.SQLNode) (bool, error) {
+		if cn, isCol := node.(*sqlparser.ColName); isCol {
+			name := cn.Name.GetRawVal()
+			if _, present := seen[name]; !present {
+				seen[name] = struct{}{}
+				projection = append(projection, name)
+			}
+		}
+		return true, nil
+	}, walkTargets...)
+	return projection
 }
 
 // isSimpleResourceScopedSelect reports whether a SELECT is a single-resource scan with
