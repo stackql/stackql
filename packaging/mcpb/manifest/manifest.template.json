@@ -16,6 +16,15 @@
   "compatibility": {
     "platforms": [__PLATFORMS__]
   },
+  "user_config": {
+    "credentials_env_file": {
+      "type": "string",
+      "title": "Credentials env file",
+      "description": "Optional dotenv file sourced for provider credentials at startup and on each reload_credentials tool call; may be created or rotated while the server runs. Leave blank if credentials come from the environment.",
+      "required": false,
+      "default": "${HOME}/.stackql/credentials.env"
+    }
+  },
   "server": {
     "type": "binary",
     "entry_point": "server/__BINARY_NAME__",
@@ -27,7 +36,8 @@
         "--approot",
         "${HOME}/.stackql",
         "--mcp.config",
-        "{\"server\": {\"audit\": {\"disabled\": true}}}"
+        "{\"server\": {\"audit\": {\"disabled\": true}}}",
+        "--env.file=${user_config.credentials_env_file}"
       ]
     }
   }

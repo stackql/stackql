@@ -85,12 +85,18 @@ def manifest_args(manifest: dict, extract_dir: Path, home_dir: Path) -> list[str
     Substituting ${HOME} with a temp dir keeps the test hermetic and proves
     the server runs without writing to its cwd (Claude Desktop launches
     extensions with cwd '/', which is read-only on macOS).
+    ${user_config.KEY} resolves to the entry's default (empty when none),
+    matching an install where the user accepted the configure screen as-is.
     """
     args = manifest["server"]["mcp_config"].get("args", [])
-    resolved = [
-        a.replace("${__dirname}", str(extract_dir)).replace("${HOME}", str(home_dir))
-        for a in args
-    ]
+    user_cfg = manifest.get("user_config", {})
+    resolved = []
+    for a in args:
+        for key, spec in user_cfg.items():
+            a = a.replace("${user_config.%s}" % key, str(spec.get("default", "")))
+        resolved.append(
+            a.replace("${__dirname}", str(extract_dir)).replace("${HOME}", str(home_dir))
+        )
     return resolved
 
 
