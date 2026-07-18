@@ -1,0 +1,4 @@
+# Only the staged binaries are needed in the build context - without this the
+# context drags in bin/ and dist/ (hundreds of MB of zips and bundles).
+*
+!.oci-stage
