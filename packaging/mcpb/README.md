@@ -6,6 +6,8 @@ This directory was imported (with full history) from the standalone `stackql/sta
 
 This is a scripted post-release step. It does not build or sign the stackql binaries - that happens upstream in the normal stackql build, code-signing, and notarisation process. Here the already-signed release artefacts are pulled, packaged, and shipped.
 
+In addition to the four per-platform bundles, `make combined VERSION=X.Y.Z` builds `stackql-mcp-multiplatform.mcpb` - a single artefact carrying all platform binaries (selected at install via `mcp_config.platform_overrides`, with a `uname -m` shim dispatching the two Linux architectures). It exists for single-artefact venues, principally the Anthropic MCP Directory listing (see [docs/anthropic-submission.md](docs/anthropic-submission.md)); per-platform bundles remain the recommended path everywhere else (direct download, npm/PyPI wrappers, OCI, registry). It sources binaries from the already-built per-platform bundles - byte-identical, signatures preserved - and hard-fails unless all four are present.
+
 The end-user install story is in [docs/install.md](docs/install.md). The marketplace submission checklist is in [docs/anthropic-submission.md](docs/anthropic-submission.md). The broader list of registries and aggregators is in [listings.md](listings.md).
 
 ## Table of contents

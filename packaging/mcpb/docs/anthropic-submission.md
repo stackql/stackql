@@ -35,19 +35,50 @@ Roughly, in order of how often each catches submissions:
 4. No unexpected network egress. Our server only talks to the public stackql provider registry and whichever cloud APIs the user explicitly queries. Document this.
 5. Logo / favicon / screenshots are present and not lorem-ipsum.
 
-## After acceptance
+## The bundle URL: one artefact, stated literally
 
-Anthropic will ask for a tag/URL pattern they can pin so updates flow through. The cleanest pattern is "always reference the latest release `.mcpb` at `https://github.com/stackql/stackql/releases/latest/download/stackql-mcp-<arch>.mcpb`". This means each new stackql release that goes through `make publish` is automatically reflected in the directory without re-submission.
+The directory serves a SINGLE bundle per listing - there is no per-platform artefact
+selection. The listing must point at the multiplatform bundle, stated literally with no
+substitution slot:
 
-If they ask for a webhook on new releases, point them at the `stackql/stackql` GitHub release events.
+```
+https://github.com/stackql/stackql/releases/latest/download/stackql-mcp-multiplatform.mcpb
+```
+
+Never submit a per-platform bundle URL. This doc previously gave the pattern
+`.../stackql-mcp-<arch>.mcpb` with `<arch>` unresolved; the form takes one literal URL,
+the placeholder was collapsed to `darwin-universal`, and Windows/Linux users installing
+from the directory received a Mach-O binary that died before the MCP handshake
+(confirmed by hash against the v0.10.500 release asset). The multiplatform bundle
+carries all platform binaries and selects via `mcp_config.platform_overrides`.
+
+## After acceptance: the listing does NOT track releases
+
+Two prior claims in this doc were wrong and are retracted:
+
+- Referencing the latest-release URL does NOT mean new releases are automatically
+  reflected in the directory. The listing does not track the release; it was stale at
+  0.10.500 for roughly a fortnight while 0.10.542 was current. Updating the listing
+  requires an email on the existing Anthropic review thread, per release.
+- There is no self-service path: no public repository where directory listings are
+  defined, and no PR path. Email to the review thread is the only channel. Do not go
+  looking for one.
+
+## Release checklist addition
+
+As part of every release's `make publish` / packaging dispatch:
+
+- [ ] Build and attach `stackql-mcp-multiplatform.mcpb` (+ `.sha256`) alongside the
+      four per-platform bundles (`make combined`).
+- [ ] Email the Anthropic review thread with the new version and the literal
+      multiplatform bundle URL, asking for the listing to be refreshed from that asset.
 
 ## Re-submission triggers
 
-You only need to re-open the review form for material changes to the **listing**, not for every release:
+You only need to re-open the review form for material changes to the **listing**;
+routine version bumps go via the review-thread email above:
 
 - Changing tool names, behaviour, or descriptions in a way that contradicts the public docs.
 - Changing the privacy policy.
 - Changing the maintainer / security contact.
 - Pivoting from no-auth to requiring credentials by default.
-
-Routine version bumps that don't change the above are out of scope - the latest-release URL pattern handles them.

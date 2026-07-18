@@ -40,18 +40,43 @@ def fail(msg: str) -> "Never":  # type: ignore[name-defined]
 
 
 def extract_bundle(bundle: Path, dest: Path) -> tuple[Path, dict]:
-    """Unzip the .mcpb and return the server binary path and the manifest."""
+    """Unzip the .mcpb and return the server binary path and the manifest.
+
+    The launch command honours mcp_config.platform_overrides the way an MCPB
+    client does (keyed darwin / win32 / linux on the host platform), falling
+    back to the top-level command / entry_point - this is how the
+    multiplatform bundle selects its per-OS binary.
+    """
     log(f"extracting {bundle.name}")
     with zipfile.ZipFile(bundle) as zf:
         zf.extractall(dest)
     manifest = json.loads((dest / "manifest.json").read_text())
-    entry = manifest["server"]["entry_point"]
-    binary = dest / entry
-    if not binary.exists():
-        fail(f"entry_point {entry} not found in bundle")
     if os.name != "nt":
-        binary.chmod(0o755)
-    log(f"entry_point: {entry} (version {manifest.get('version')})")
+        # Zip extraction does not preserve the exec bit; restore it for every
+        # server payload member (binaries plus the linux arch dispatch shim).
+        server_dir = dest / "server"
+        if server_dir.exists():
+            for member in server_dir.rglob("*"):
+                if member.is_file():
+                    member.chmod(0o755)
+    mcp_config = manifest["server"].get("mcp_config", {})
+    command = mcp_config.get("command", "")
+    platform_key = (
+        "darwin" if sys.platform == "darwin"
+        else "win32" if sys.platform == "win32"
+        else "linux"
+    )
+    override = mcp_config.get("platform_overrides", {}).get(platform_key, {})
+    if override.get("command"):
+        command = override["command"]
+        log(f"platform_overrides[{platform_key}] selects: {command}")
+    if command:
+        binary = Path(command.replace("${__dirname}", str(dest)))
+    else:
+        binary = dest / manifest["server"]["entry_point"]
+    if not binary.exists():
+        fail(f"server command {binary} not found in bundle")
+    log(f"launch target: {binary.relative_to(dest)} (version {manifest.get('version')})")
     return binary, manifest
 
 

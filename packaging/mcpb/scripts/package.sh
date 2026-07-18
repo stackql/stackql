@@ -30,13 +30,16 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BIN_DIR="${BIN_DIR:-$ROOT_DIR/bin}"
 DIST_DIR="${DIST_DIR:-$ROOT_DIR/dist}"
 TEMPLATE="${TEMPLATE:-$ROOT_DIR/manifest/manifest.template.json}"
+COMBINED_TEMPLATE="${COMBINED_TEMPLATE:-$ROOT_DIR/manifest/manifest.combined.template.json}"
 
 # --- args ------------------------------------------------------------------
 VERSION="${VERSION:-}"
+COMBINED=false
 while [ $# -gt 0 ]; do
   case "$1" in
     --version)   VERSION="$2"; shift 2 ;;
     --version=*) VERSION="${1#*=}"; shift ;;
+    --combined)  COMBINED=true; shift ;;
     -h|--help)   sed -n '2,30p' "$0"; exit 0 ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
@@ -104,10 +107,23 @@ sign_bundle() {
   fi
 }
 
+platform_for_label() {
+  # Maps a bundle label onto the MCPB compatibility.platforms value, so a
+  # wrong-platform install is refused by the client rather than dying at
+  # first spawn.
+  case "$1" in
+    darwin-*)  echo '"darwin"' ;;
+    windows-*) echo '"win32"' ;;
+    linux-*)   echo '"linux"' ;;
+    *)         echo '"darwin", "linux", "win32"' ;;
+  esac
+}
+
 pack_bundle() {
   # args: label  binary-source-path  binary-name-in-bundle
   local label="$1" src="$2" binname="$3"
-  local stage out
+  local stage out platforms
+  platforms="$(platform_for_label "$label")"
   stage="$(mktemp -d)"
   mkdir -p "$stage/server"
   cp "$src" "$stage/server/$binname"
@@ -118,9 +134,72 @@ pack_bundle() {
   cp "$ROOT_DIR/LICENSE" "$stage/LICENSE"
   cp "$ROOT_DIR/manifest/BUNDLE_README.md" "$stage/README.md"
   sed -e "s/__BINARY_NAME__/${binname}/g" -e "s/__VERSION__/${VERSION}/g" \
+      -e "s/__PLATFORMS__/${platforms}/g" \
       "$TEMPLATE" > "$stage/manifest.json"
   out="$DIST_DIR/stackql-mcp-${label}.mcpb"
   echo "==> $label"
+  mcpb validate "$stage/manifest.json"
+  mcpb pack "$stage" "$out"
+  sign_bundle "$out"
+  sha_file "$out"
+  rm -rf "$stage"
+}
+
+extract_bundle_binary() {
+  # args: bundle-path  path-in-bundle  dest-path
+  # A .mcpb is a plain zip; -p streams the member so the bytes (and therefore
+  # the embedded Authenticode / Mach-O signatures) are byte-identical to the
+  # per-platform bundle contents.
+  local bundle="$1" member="$2" dest="$3"
+  if ! unzip -p "$bundle" "$member" > "$dest" 2>/dev/null || [ ! -s "$dest" ]; then
+    echo "  error: '$member' not found inside $(basename "$bundle")" >&2
+    return 1
+  fi
+}
+
+build_combined() {
+  # Multiplatform bundle for single-artefact venues (the Anthropic MCP
+  # Directory serves ONE bundle per listing, with no per-platform artefact
+  # selection). Binaries are sourced from the already-built per-platform
+  # bundles in DIST_DIR - never rebuilt - so they are byte-identical to the
+  # per-platform assets. The linux platform_overrides key dispatches through
+  # an arch shim because platform_overrides keys on OS only (no arch
+  # dimension); the shim execs the aarch64 or x64 ELF per uname -m.
+  local required="linux-x64 linux-arm64 windows-x64 darwin-universal"
+  local missing="" label
+  for label in $required; do
+    [ -e "$DIST_DIR/stackql-mcp-${label}.mcpb" ] || missing="$missing $label"
+  done
+  if [ -n "$missing" ]; then
+    echo "error: the combined bundle requires ALL per-platform bundles in $DIST_DIR; missing:$missing" >&2
+    echo "error: refusing to build a partial multiplatform bundle - that is the incident this target exists to prevent" >&2
+    exit 1
+  fi
+  local stage out
+  stage="$(mktemp -d)"
+  mkdir -p "$stage/server/darwin" "$stage/server/linux" "$stage/server/linux-x64" "$stage/server/linux-arm64" "$stage/server/win32"
+  extract_bundle_binary "$DIST_DIR/stackql-mcp-darwin-universal.mcpb" "server/stackql"     "$stage/server/darwin/stackql"
+  extract_bundle_binary "$DIST_DIR/stackql-mcp-linux-x64.mcpb"        "server/stackql"     "$stage/server/linux-x64/stackql"
+  extract_bundle_binary "$DIST_DIR/stackql-mcp-linux-arm64.mcpb"      "server/stackql"     "$stage/server/linux-arm64/stackql"
+  extract_bundle_binary "$DIST_DIR/stackql-mcp-windows-x64.mcpb"      "server/stackql.exe" "$stage/server/win32/stackql.exe"
+  # Linux arch dispatch shim (see note above).
+  cat > "$stage/server/linux/stackql" <<'SHIM'
+#!/bin/sh
+d="$(dirname "$0")"
+case "$(uname -m)" in
+  aarch64|arm64) exec "$d/../linux-arm64/stackql" "$@" ;;
+  *)             exec "$d/../linux-x64/stackql" "$@" ;;
+esac
+SHIM
+  chmod +x "$stage/server/darwin/stackql" "$stage/server/linux/stackql" \
+           "$stage/server/linux-x64/stackql" "$stage/server/linux-arm64/stackql" \
+           "$stage/server/win32/stackql.exe" 2>/dev/null || true
+  cp "$ROOT_DIR/assets/icon.png" "$stage/icon.png"
+  cp "$ROOT_DIR/LICENSE" "$stage/LICENSE"
+  cp "$ROOT_DIR/manifest/BUNDLE_README.md" "$stage/README.md"
+  sed -e "s/__VERSION__/${VERSION}/g" "$COMBINED_TEMPLATE" > "$stage/manifest.json"
+  out="$DIST_DIR/stackql-mcp-multiplatform.mcpb"
+  echo "==> multiplatform (combined; binaries sourced from the per-platform bundles)"
   mcpb validate "$stage/manifest.json"
   mcpb pack "$stage" "$out"
   sign_bundle "$out"
@@ -207,6 +286,18 @@ pack_from_zip() {
 have() { [ -e "$1" ]; }
 
 # --- run -------------------------------------------------------------------
+if [ "$COMBINED" = "true" ]; then
+  echo "StackQL MCPB packaging - version $VERSION (combined multiplatform bundle)"
+  echo "source: $DIST_DIR (per-platform bundles)"
+  echo "output: $DIST_DIR"
+  echo
+  build_combined
+  echo
+  echo "done: combined bundle"
+  ls -1 "$DIST_DIR"/stackql-mcp-multiplatform.mcpb* 2>/dev/null || true
+  exit 0
+fi
+
 echo "StackQL MCPB packaging - version $VERSION"
 echo "source: $BIN_DIR"
 echo "output: $DIST_DIR"

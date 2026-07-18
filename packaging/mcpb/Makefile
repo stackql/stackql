@@ -52,7 +52,7 @@ ASSETS := stackql_linux_amd64.zip \
 OCI_IMAGE ?= stackql/stackql-mcp
 OCI_STAGE := .oci-stage
 
-.PHONY: all check-version check-target download package one signed sign publish \
+.PHONY: all check-version check-target download package combined one signed sign publish \
         server-json registry-publish clean clean-bin \
         linux-x64 linux-arm64 windows-x64 darwin-universal \
         oci-stage oci oci-push npm-manifest npm-pack pypi-manifest pypi-build \
@@ -140,6 +140,14 @@ one: check-version check-target
 
 package: check-version
 	$(PACKAGE) --version $(VERSION)
+
+# Build the multiplatform bundle for single-artefact venues (the Anthropic
+# MCP Directory serves one bundle per listing). Sources binaries from the
+# already-built per-platform bundles in dist/ (never rebuilds), fails hard
+# unless all four are present, and byte-verifies the packed result.
+combined: check-version
+	$(PACKAGE) --version $(VERSION) --combined
+	python3 scripts/verify-combined.py $(DIST_DIR)/stackql-mcp-multiplatform.mcpb
 
 signed: check-version
 	MCPB_SELF_SIGN=true $(PACKAGE) --version $(VERSION)

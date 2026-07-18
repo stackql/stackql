@@ -125,10 +125,70 @@ jobs:
       - name: Smoke test (deterministic MCP handshake)
         run: python3 scripts/smoke-test.py --docker stackql/stackql-mcp:${{ needs.version.outputs.version }}
 
+  # The multiplatform bundle exists for single-artefact venues (the Anthropic
+  # MCP Directory serves one bundle per listing). Built from the four
+  # per-platform bundle artifacts - never from the release archives - so its
+  # binaries are byte-identical to the per-platform assets; verify-combined.py
+  # asserts every binary's machine type (the check that catches a
+  # wrong-artefact incident in seconds).
+  combined:
+    name: multiplatform (combined build + byte verification)
+    needs: [version, bundle, bundle-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Gather per-platform bundle artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: stackql-mcp-*
+          path: packaging/mcpb/dist
+          merge-multiple: true
+      - name: Build combined bundle (hard-fails unless all four bundles present)
+        run: make combined VERSION=${{ needs.version.outputs.version }}
+      - name: Upload combined bundle artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: stackql-mcp-multiplatform
+          path: |
+            packaging/mcpb/dist/stackql-mcp-multiplatform.mcpb
+            packaging/mcpb/dist/stackql-mcp-multiplatform.mcpb.sha256
+          if-no-files-found: error
+
+  # Install-and-handshake the COMBINED bundle on every host OS (plus an arm64
+  # linux leg for the arch dispatch shim). The per-platform smoke tests cannot
+  # detect a wrong bundle being distributed - this matrix closes exactly that
+  # gap: each host must select its own binary via platform_overrides and
+  # complete the MCP handshake.
+  combined-smoke:
+    name: multiplatform smoke (${{ matrix.runner }})
+    needs: combined
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            py: python3
+          - runner: ubuntu-24.04-arm
+            py: python3
+          - runner: macos-latest
+            py: python3
+          - runner: windows-latest
+            py: python
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Download combined bundle
+        uses: actions/download-artifact@v8
+        with:
+          name: stackql-mcp-multiplatform
+          path: packaging/mcpb/dist
+      - name: Smoke test (platform_overrides selection + MCP handshake)
+        run: ${{ matrix.py }} scripts/smoke-test.py dist/stackql-mcp-multiplatform.mcpb
+
   publish:
     name: upload bundles to release
     if: needs.version.outputs.is_publish == 'true'
-    needs: [version, bundle, bundle-windows, smoke-windows, oci]
+    needs: [version, bundle, bundle-windows, smoke-windows, oci, combined, combined-smoke]
     runs-on: ubuntu-latest
     permissions:
       contents: write
