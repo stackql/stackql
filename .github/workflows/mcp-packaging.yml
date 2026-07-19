@@ -245,7 +245,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Render manifest + build
-        run: make pypi-build VERSION=${{ needs.version.outputs.version }}
+        run: |
+          python3 -m pip install --upgrade build
+          make pypi-build VERSION=${{ needs.version.outputs.version }}
       - uses: actions/upload-artifact@v7
         with:
           name: pypi-dist
