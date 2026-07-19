@@ -73,10 +73,14 @@ The `mcp-packaging` workflow attaches the `.mcpb` bundles (and `.sha256` files) 
   npm publish stackql-mcp-server-X.Y.Z.tgz --access public
   ```
 
-- Official MCP Registry (`io.github.stackql/stackql-mcp`): the workflow renders the `server-json` artifact for reference, but publication uses the `mcp-publisher` CLI from a workstation (one-time `mcp-publisher login github` with a GitHub user authorised on the `stackql` org):
+- Official MCP Registry (`io.github.stackql/stackql-mcp`): the workflow renders the `server-json` artifact for reference, but publication uses the `mcp-publisher` CLI from a workstation (one-time `mcp-publisher login github` with a GitHub user authorised on the `stackql` org). Unlike the pypi/npm renderers, the server.json renderer reads the four `.sha256` files from the local `dist/` directory, so when the bundles were built in CI, download the published checksum files from the release first:
 
   ```
   cd packaging/mcpb
+  for t in linux-x64 linux-arm64 windows-x64 darwin-universal; do
+    curl -fsSL -o dist/stackql-mcp-$t.mcpb.sha256 \
+      "https://github.com/stackql/stackql/releases/download/vX.Y.Z/stackql-mcp-$t.mcpb.sha256"
+  done
   make registry-publish VERSION=X.Y.Z
   ```
 
