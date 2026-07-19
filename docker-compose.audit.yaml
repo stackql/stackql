@@ -1,0 +1,32 @@
+# Docker audit quickstart — cross-cloud StackQL security/FinOps audit.
+#   cp cicd/audit/.env.audit.example cicd/audit/.env.audit   # add read-only creds
+#   docker compose -f compose.audit.yaml run --rm audit
+#
+# stackql/stackql runs as the query server; a stock python image downloads the
+# pinned audit engine and drives it over the Postgres wire. Empty clouds are
+# skipped. Findings -> cicd/audit/output/.
+services:
+  stackql:
+    image: ${STACKQL_IMAGE:-stackql/stackql:latest}
+    env_file: [cicd/audit/.env.audit]
+    command:
+      - bash
+      - -c
+      - |
+        for pv in aws:$${AWS_PROVIDER_VERSION:-v26.07.00414} google:$${GOOGLE_PROVIDER_VERSION:-v25.12.00357} azure:$${AZURE_PROVIDER_VERSION:-v26.07.00420} entra_id:$${ENTRA_PROVIDER_VERSION:-v26.06.00405}; do
+          stackql exec "registry pull $${pv%%:*} $${pv##*:};"
+        done
+        exec stackql srv --pgsrv.address=0.0.0.0 --pgsrv.port=5444 \
+          --auth='{"aws":{"type":"aws_signing_v4","keyIDenvvar":"AWS_ACCESS_KEY_ID","credentialsenvvar":"AWS_SECRET_ACCESS_KEY"},"google":{"type":"service_account","credentialsenvvar":"GCP_SA_JSON"},"azure":{"type":"azure_default"}}'
+
+  audit:
+    image: python:3.11-slim
+    depends_on: [stackql]
+    env_file: [cicd/audit/.env.audit]
+    environment:
+      - STACKQL_DSN=postgresql://stackql:stackql@stackql:5444/stackql?sslmode=disable
+    volumes:
+      - ./cicd/audit/run.sh:/audit/run.sh:ro
+      - ./cicd/audit/fetch.py:/audit/fetch.py:ro
+      - ./cicd/audit/output:/audit/output:rw
+    command: ["bash", "/audit/run.sh"]

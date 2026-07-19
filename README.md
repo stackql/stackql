@@ -290,6 +290,10 @@ StackQL is available for Windows, MacOS, Linux, Docker, GitHub Actions and more.
 docker pull stackql/stackql
 ```
 
+> Want findings, not infrastructure?  Run a read-only cross-cloud security &
+> FinOps audit with the standard image in one command — see the
+> [__Docker audit quickstart__](/docs/audit.md).
+
 </details>
 
 <details>
