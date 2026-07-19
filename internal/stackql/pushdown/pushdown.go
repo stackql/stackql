@@ -240,3 +240,23 @@ func sqlValAsInt(expr sqlparser.Expr) (int, bool) {
 	}
 	return i, true
 }
+
+// RedactHeaderValue masks a header value for logging: alphanumerics become 'x' and the
+// result is truncated to at most 5 characters. Keys present in allowedInnocuous
+// (lower case) pass through unredacted.
+func RedactHeaderValue(key string, val string, allowedInnocuous map[string]bool) string {
+	if allowedInnocuous != nil && allowedInnocuous[strings.ToLower(key)] {
+		return val
+	}
+	const maxRedactedLen = 5
+	runes := []rune(val)
+	if len(runes) > maxRedactedLen {
+		runes = runes[:maxRedactedLen]
+	}
+	for i, r := range runes {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') {
+			runes[i] = 'x'
+		}
+	}
+	return string(runes)
+}
