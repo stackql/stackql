@@ -54,45 +54,63 @@ Invoke the `mcp-packaging` workflow in [stackql/stackql](https://github.com/stac
 
 7. Publish the MCP wrapper packages (manual last mile)
 
-The `mcp-packaging` workflow attaches the `.mcpb` bundles (and `.sha256` files) to the release and pushes the multi-arch OCI image to Docker Hub automatically. The remaining venues need interactive (2FA) credentials, so the workflow only builds the artifacts; publishing them is manual:
+The `mcp-packaging` workflow attaches the `.mcpb` bundles (and `.sha256` files) to the release and pushes the multi-arch OCI image to Docker Hub automatically. The npm, PyPI and MCP Registry wrappers need interactive (2FA) credentials, so they cannot be automated end to end and are published from a local clone using the steps below (a Linux/WSL/macOS shell, from the repo root).
 
-- PyPI (`stackql-mcp-server`): download the `pypi-dist` artifact from the workflow run, or build locally. Upload with twine using username `__token__` and a PyPI API token as the password. On Debian/Ubuntu (including WSL) `pip install` is blocked by PEP 668, so use a venv:
+All of the render targets (`make npm-pack` / `make pypi-build` / `make server-json`) consume the published `.sha256` release assets, so run them only after step 6 completes. The renderers also stamp the version into `packaging/mcpb/npm/package.json` and `packaging/mcpb/pypi/pyproject.toml` in place - commit or revert the stamps afterwards.
 
-  ```
-  python3 -m venv ~/.venvs/pypi-pub && source ~/.venvs/pypi-pub/bin/activate
-  pip install --upgrade build twine
-  cd packaging/mcpb
-  make pypi-build VERSION=X.Y.Z
-  python -m twine check pypi/dist/*
-  python -m twine upload pypi/dist/*
-  ```
+7a. npm (`@stackql/mcp-server`)
 
-- npm (`@stackql/mcp-server`): download the `npm-package` artifact from the workflow run (or build locally with `make npm-pack VERSION=X.Y.Z`), then publish with an `npm login` session (OTP prompted):
+Requires an `npm login` session as a user with publish rights on the `@stackql` scope; the publish prompts for an OTP.
 
-  ```
-  npm publish stackql-mcp-server-X.Y.Z.tgz --access public
-  ```
+```
+cd packaging/mcpb
+make npm-pack VERSION=X.Y.Z
+cd npm
+npm publish stackql-mcp-server-X.Y.Z.tgz --access public
+```
 
-- Official MCP Registry (`io.github.stackql/stackql-mcp`): the workflow renders the `server-json` artifact for reference, but publication uses the `mcp-publisher` CLI from a workstation. Unlike the pypi/npm renderers, the server.json renderer reads the four `.sha256` files from the local `dist/` directory, so when the bundles were built in CI, download the published checksum files from the release first:
+7b. PyPI (`stackql-mcp-server`)
 
-  ```
-  cd packaging/mcpb
-  for t in linux-x64 linux-arm64 windows-x64 darwin-universal; do
-    curl -fsSL -o dist/stackql-mcp-$t.mcpb.sha256 \
-      "https://github.com/stackql/stackql/releases/download/vX.Y.Z/stackql-mcp-$t.mcpb.sha256"
-  done
-  export MCP_GITHUB_TOKEN=<classic PAT with read:org scope>
-  mcp-publisher login github
-  make registry-publish VERSION=X.Y.Z
-  ```
+Requires a PyPI API token with upload rights on the project; twine username is `__token__`, password is the token. On Debian/Ubuntu (including WSL) `pip install` outside a venv is blocked by PEP 668, hence the venv.
 
-  Gotchas (all hit during the v0.10.557 release):
+```
+cd packaging/mcpb
+python3 -m venv ~/.venvs/pypi-pub && source ~/.venvs/pypi-pub/bin/activate
+pip install --upgrade build twine
+make pypi-build VERSION=X.Y.Z
+python -m twine check pypi/dist/*
+python -m twine upload pypi/dist/*
+```
 
-  - Use the latest `mcp-publisher` from https://github.com/modelcontextprotocol/registry/releases. The current schema version is baked into the binary, so a stale CLI fails with a misleading "deprecated schema detected" error even when `server.template.json` pins the correct schema.
-  - Log in with a classic PAT (scope `read:org` only, no repo scopes) via `MCP_GITHUB_TOKEN` as above, not the interactive device flow. The registry grants the `io.github.stackql/*` namespace only to `stackql` org Owners, and it checks the role via `GET /user/memberships/orgs`. The device-flow login is a GitHub App user token ("MCP Registry Login") that cannot see the org membership unless that app is installed on the org, so it 403s with a misleading hint about public org membership - the PAT path avoids all of that.
-  - The registry JWT minted at login is short-lived - run `make registry-publish` immediately after `mcp-publisher login github`.
-  - Old `mcp-publisher` versions (pre-1.2) drop `.mcpregistry_*` token files in the working directory (gitignored); current versions store the token in `~/.config/mcp-publisher/token.json`.
+7c. Official MCP Registry (`io.github.stackql/stackql-mcp`)
 
-The local `make pypi-build` / `make npm-pack` / `make server-json` targets fetch the published `.sha256` files from the release, so they must run after step 6 completes. The render step stamps the version into `packaging/mcpb/pypi/pyproject.toml` in place - commit or revert the stamp afterwards.
+Requires the latest `mcp-publisher` CLI and a classic GitHub PAT (scope `read:org` only, no repo scopes) created by a `stackql` org Owner at https://github.com/settings/tokens/new. The server.json renderer reads the four `.sha256` files from the local `dist/` directory, so download the published checksum files from the release first.
+
+Install/upgrade the CLI (linux amd64 shown; assets exist per platform):
+
+```
+curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" | tar xz mcp-publisher
+sudo install -m 0755 mcp-publisher /usr/local/bin/mcp-publisher
+```
+
+Publish:
+
+```
+cd packaging/mcpb
+for t in linux-x64 linux-arm64 windows-x64 darwin-universal; do
+  curl -fsSL -o dist/stackql-mcp-$t.mcpb.sha256 \
+    "https://github.com/stackql/stackql/releases/download/vX.Y.Z/stackql-mcp-$t.mcpb.sha256"
+done
+export MCP_GITHUB_TOKEN=<classic PAT with read:org scope>
+mcp-publisher login github
+make registry-publish VERSION=X.Y.Z
+```
+
+Gotchas (all hit during the v0.10.557 release):
+
+- Use the latest `mcp-publisher` from https://github.com/modelcontextprotocol/registry/releases. The current schema version is baked into the binary, so a stale CLI fails with a misleading "deprecated schema detected" error even when `server.template.json` pins the correct schema.
+- Log in with a classic PAT via `MCP_GITHUB_TOKEN` as above, not the interactive device flow. The registry grants the `io.github.stackql/*` namespace only to `stackql` org Owners, and it checks the role via `GET /user/memberships/orgs`. The device-flow login is a GitHub App user token ("MCP Registry Login") that cannot see the org membership unless that app is installed on the org, so it 403s with a misleading hint about public org membership - the PAT path avoids all of that.
+- The registry JWT minted at login is short-lived - run `make registry-publish` immediately after `mcp-publisher login github`.
+- Old `mcp-publisher` versions (pre-1.2) drop `.mcpregistry_*` token files in the working directory (gitignored); current versions store the token in `~/.config/mcp-publisher/token.json`.
 
 8. Push the same release version tag to [stackql/releases.stackql.io](https://github.com/stackql/releases.stackql.io)

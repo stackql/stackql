@@ -1,9 +1,12 @@
-# MCP bundle packaging: builds + smoke-tests the .mcpb bundles, OCI image and
-# npm/pypi wrapper artifacts from packaging/mcpb.  Validation runs on
-# packaging/** PRs; publishing is MANUAL (workflow_dispatch) because the
-# consumed release assets (Authenticode-signed exe, notarised .pkg) are
-# signed outside CI, so a release event fires before they exist.  Flow:
+# MCP bundle packaging: builds + smoke-tests the .mcpb bundles and OCI image
+# from packaging/mcpb.  Validation runs on packaging/** PRs; publishing is
+# MANUAL (workflow_dispatch) because the consumed release assets
+# (Authenticode-signed exe, notarised .pkg) are signed outside CI, so a
+# release event fires before they exist.  Flow:
 # push tag -> create release -> attach signed assets -> dispatch.
+# The npm / PyPI / MCP Registry wrappers need interactive (2FA) credentials
+# and are published from a local clone - see step 7 of
+# docs/stackql release process.md.
 
 name: mcp-packaging
 
@@ -220,55 +223,3 @@ jobs:
           echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
           docker buildx create --use
           make oci-push VERSION=${{ needs.version.outputs.version }}
-
-  # npm / pypi manifests render from the published .sha256 files as run
-  # artifacts; publishing to npmjs / PyPI stays manual (2FA).
-  npm-tarball:
-    name: npm tarball (manual publish artifact)
-    if: needs.version.outputs.is_publish == 'true'
-    needs: [version, publish]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - name: Render manifest + pack
-        run: make npm-pack VERSION=${{ needs.version.outputs.version }}
-      - uses: actions/upload-artifact@v7
-        with:
-          name: npm-package
-          path: packaging/mcpb/npm/*.tgz
-
-  pypi-dist:
-    name: pypi dist (manual publish artifact)
-    if: needs.version.outputs.is_publish == 'true'
-    needs: [version, publish]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - name: Render manifest + build
-        run: |
-          python3 -m pip install --upgrade build
-          make pypi-build VERSION=${{ needs.version.outputs.version }}
-      - uses: actions/upload-artifact@v7
-        with:
-          name: pypi-dist
-          path: packaging/mcpb/pypi/dist/*
-
-  server-json:
-    name: render registry server.json
-    if: needs.version.outputs.is_publish == 'true'
-    needs: [version, publish]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - name: Gather bundle artifacts (for sha pins)
-        uses: actions/download-artifact@v8
-        with:
-          pattern: stackql-mcp-*
-          path: packaging/mcpb/dist
-          merge-multiple: true
-      - name: Render server.json
-        run: make server-json VERSION=${{ needs.version.outputs.version }}
-      - uses: actions/upload-artifact@v7
-        with:
-          name: server-json
-          path: packaging/mcpb/registry/server.json
