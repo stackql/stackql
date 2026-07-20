@@ -73,7 +73,7 @@ The `mcp-packaging` workflow attaches the `.mcpb` bundles (and `.sha256` files) 
   npm publish stackql-mcp-server-X.Y.Z.tgz --access public
   ```
 
-- Official MCP Registry (`io.github.stackql/stackql-mcp`): the workflow renders the `server-json` artifact for reference, but publication uses the `mcp-publisher` CLI from a workstation (one-time `mcp-publisher login github` with a GitHub user authorised on the `stackql` org). Unlike the pypi/npm renderers, the server.json renderer reads the four `.sha256` files from the local `dist/` directory, so when the bundles were built in CI, download the published checksum files from the release first:
+- Official MCP Registry (`io.github.stackql/stackql-mcp`): the workflow renders the `server-json` artifact for reference, but publication uses the `mcp-publisher` CLI from a workstation. Unlike the pypi/npm renderers, the server.json renderer reads the four `.sha256` files from the local `dist/` directory, so when the bundles were built in CI, download the published checksum files from the release first:
 
   ```
   cd packaging/mcpb
@@ -81,8 +81,17 @@ The `mcp-packaging` workflow attaches the `.mcpb` bundles (and `.sha256` files) 
     curl -fsSL -o dist/stackql-mcp-$t.mcpb.sha256 \
       "https://github.com/stackql/stackql/releases/download/vX.Y.Z/stackql-mcp-$t.mcpb.sha256"
   done
+  export MCP_GITHUB_TOKEN=<classic PAT with read:org scope>
+  mcp-publisher login github
   make registry-publish VERSION=X.Y.Z
   ```
+
+  Gotchas (all hit during the v0.10.557 release):
+
+  - Use the latest `mcp-publisher` from https://github.com/modelcontextprotocol/registry/releases. The current schema version is baked into the binary, so a stale CLI fails with a misleading "deprecated schema detected" error even when `server.template.json` pins the correct schema.
+  - Log in with a classic PAT (scope `read:org` only, no repo scopes) via `MCP_GITHUB_TOKEN` as above, not the interactive device flow. The registry grants the `io.github.stackql/*` namespace only to `stackql` org Owners, and it checks the role via `GET /user/memberships/orgs`. The device-flow login is a GitHub App user token ("MCP Registry Login") that cannot see the org membership unless that app is installed on the org, so it 403s with a misleading hint about public org membership - the PAT path avoids all of that.
+  - The registry JWT minted at login is short-lived - run `make registry-publish` immediately after `mcp-publisher login github`.
+  - Old `mcp-publisher` versions (pre-1.2) drop `.mcpregistry_*` token files in the working directory (gitignored); current versions store the token in `~/.config/mcp-publisher/token.json`.
 
 The local `make pypi-build` / `make npm-pack` / `make server-json` targets fetch the published `.sha256` files from the release, so they must run after step 6 completes. The render step stamps the version into `packaging/mcpb/pypi/pyproject.toml` in place - commit or revert the stamp afterwards.
 
