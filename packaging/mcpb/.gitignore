@@ -14,3 +14,5 @@ pypi/src/*.egg-info/
 /.venv*
 .pypirc
 __pycache__/
+/.env
+.mcpregistry_*
