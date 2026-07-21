@@ -223,7 +223,7 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVar(&mcpConfig, "mcp.config", "{}", "MCP server config file path (YAML or JSON)")
 	rootCmd.PersistentFlags().StringVar(&mcpServerType, "mcp.server.type", "", "MCP server type (http or stdio for now)")
-	rootCmd.PersistentFlags().StringVar(&envFilePath, "env.file", "", "optional dotenv-style file sourced into the process environment at startup; the MCP reload_credentials tool re-sources it on demand")
+	rootCmd.PersistentFlags().StringVar(&envFilePath, "env.file", "", "optional dotenv-style file sourced into the process environment at startup, created empty if absent; the MCP reload_credentials tool re-sources it on demand")
 }
 
 func mergeConfigFromFile(runtimeCtx *dto.RuntimeCtx, flagSet pflag.FlagSet) {
@@ -242,6 +242,14 @@ func mergeConfigFromFile(runtimeCtx *dto.RuntimeCtx, flagSet pflag.FlagSet) {
 func initConfig() {
 	mergeConfigFromFile(&runtimeCtx, *rootCmd.PersistentFlags())
 
+	// An absent --env.file is created empty (issue #691) so packaged installs
+	// have a credential store to populate; creation failure is non-fatal
+	// because a missing file is already tolerated by Source.
+	if created, err := envfile.EnsureExists(envFilePath); err != nil {
+		fmt.Fprintf(os.Stderr, "could not create default env file '%s': %v\n", envFilePath, err)
+	} else if created {
+		fmt.Fprintf(os.Stderr, "created default env file '%s'\n", envFilePath)
+	}
 	// Source --env.file before anything credential-bearing runs; a missing
 	// file is fine (it may be written later), a malformed one is fatal.
 	if _, _, err := envfile.Source(envFilePath); err != nil {

@@ -10247,3 +10247,39 @@ Env File Flag Sources Credentials For Exec Entrypoint
     ...    ${SELECT_OKTA_APPS}
     ...    ${SELECT_OKTA_APPS_ASC_EXPECTED}
     ...    \-\-env.file\=${envFile}
+
+Env File Flag Creates Default Empty File When Absent And Never Touches Existing
+    [Documentation]    Issue #691: an absent --env.file path is created at startup as an
+    ...                empty commented dotenv file; an existing file is never touched.
+    Pass Execution If    "${EXECUTION_PLATFORM}" == "docker"    host env file path is not visible inside the container
+    ${envFile} =    Set Variable    ${CURDIR}${/}tmp${/}created-if-absent-dotenv.env
+    Remove File    ${envFile}
+    Should Stackql Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${AUTH_CFG_STR}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${SELECT_OKTA_APPS}
+    ...    ${SELECT_OKTA_APPS_ASC_EXPECTED}
+    ...    \-\-env.file\=${envFile}
+    ${created} =    Get File    ${envFile}
+    Should Start With    ${created}    \# StackQL credential store
+    ${populated} =    Set Variable    OKTA_SECRET_KEY_DOTENV=${OKTA_SECRET_STR}\n
+    Create File    ${envFile}    ${populated}
+    ${authCfg} =    Set Variable    { "okta": { "credentialsenvvar": "OKTA_SECRET_KEY_DOTENV", "type": "api_key" } }
+    Should Stackql Exec Inline Equal
+    ...    ${STACKQL_EXE}
+    ...    ${OKTA_SECRET_STR}
+    ...    ${GITHUB_SECRET_STR}
+    ...    ${K8S_SECRET_STR}
+    ...    ${REGISTRY_NO_VERIFY_CFG_STR}
+    ...    ${authCfg}
+    ...    ${SQL_BACKEND_CFG_STR_CANONICAL}
+    ...    ${SELECT_OKTA_APPS}
+    ...    ${SELECT_OKTA_APPS_ASC_EXPECTED}
+    ...    \-\-env.file\=${envFile}
+    ${after} =    Get File    ${envFile}
+    Should Be Equal    ${after}    ${populated}

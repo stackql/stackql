@@ -2,9 +2,54 @@ package envfile
 
 import (
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 )
+
+const defaultContent = `# StackQL credential store, sourced at startup and on each reload_credentials call
+# One KEY=VALUE per line, eg:
+# AWS_ACCESS_KEY_ID=AKIA...
+# AWS_SECRET_ACCESS_KEY=...
+`
+
+const (
+	dirPermissions  os.FileMode = 0o700
+	filePermissions os.FileMode = 0o600
+)
+
+// EnsureExists creates path (parent directories included) as an empty
+// commented dotenv file when absent, so packaged installs (eg MCP bundles)
+// get a working credential store on first launch; an existing file is never
+// touched, since bundle updates must not wipe populated credentials.  Returns
+// whether this call created the file.  An empty path is a no-op.
+func EnsureExists(path string) (bool, error) {
+	if path == "" {
+		return false, nil
+	}
+	if _, err := os.Stat(path); err == nil {
+		return false, nil
+	} else if !os.IsNotExist(err) {
+		return false, err
+	}
+	if dir := filepath.Dir(path); dir != "" {
+		if err := os.MkdirAll(dir, dirPermissions); err != nil {
+			return false, err
+		}
+	}
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, filePermissions)
+	if err != nil {
+		if os.IsExist(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	defer f.Close() //nolint:errcheck // write error is surfaced below
+	if _, writeErr := f.WriteString(defaultContent); writeErr != nil {
+		return false, writeErr
+	}
+	return true, nil
+}
 
 // parse reads a dotenv-style file: KEY=VALUE lines; `#` comments, blanks,
 // `export ` prefixes, surrounding quotes and CRLF tolerated.  Keys with

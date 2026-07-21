@@ -71,6 +71,7 @@ Audit is on by default.  To opt out:
 Semantics:
 
 - Sourced at startup (if the file exists) and again on every `reload_credentials` call; only keys with non-empty values are set, nothing is ever unset.
+- An absent file is created at startup as an empty commented dotenv file (`0600` on unix, parent directories included), so packaged installs (eg MCPB bundles in Claude Desktop) can pass the flag unconditionally; an existing file is never touched, so bundle updates cannot wipe populated credentials.
 - The file may be created, updated or rotated at any time while the server runs.
 - `reload_credentials` reports variable names and per-provider status (`ok`, `unresolved`, `not_checked`) only; secret values are never returned, logged or audited.  Without `--env.file` it degrades to a pure status probe.
 - Credential resolution failures carry a hint directing the agent to call `reload_credentials` and retry.
