@@ -18,6 +18,12 @@ package cmd
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"os"
+	"os/signal"
+	"runtime/debug"
+	"syscall"
+	"time"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
@@ -105,7 +111,38 @@ var mcpSrvCmd = &cobra.Command{
 	},
 }
 
+// mcpDiagf writes lifecycle diagnostics straight to stderr, bypassing the
+// configured log level: stdio MCP hosts (eg Claude Desktop) capture stderr,
+// and these lines are the forensic trail for unexpected termination (issue
+// #691).  Never log secret values through this.
+func mcpDiagf(format string, args ...any) {
+	timestamp := time.Now().UTC().Format(time.RFC3339Nano)
+	fmt.Fprintf(os.Stderr, "[stackql mcp] %s %s\n", timestamp, fmt.Sprintf(format, args...))
+}
+
+// logTerminationOnSignal distinguishes external termination from a crash in
+// the host's captured stderr, then exits with the conventional signal status.
+func logTerminationOnSignal() {
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		sig := <-sigCh
+		mcpDiagf("received signal %q; terminating", sig)
+		if sigNum, ok := sig.(syscall.Signal); ok {
+			os.Exit(128 + int(sigNum)) //nolint:mnd // conventional signal exit status
+		}
+		os.Exit(1)
+	}()
+}
+
 func runMCPServer(handlerCtx handler.HandlerContext) {
+	defer func() {
+		if r := recover(); r != nil {
+			mcpDiagf("panic: %v\n%s", r, debug.Stack())
+			os.Exit(1)
+		}
+	}()
+	logTerminationOnSignal()
 	var config mcp_server.Config
 	json.Unmarshal([]byte(mcpConfig), &config) //nolint:errcheck // TODO: investigate
 	if config.Server.Transport == "" {
@@ -169,6 +206,15 @@ func runMCPServer(handlerCtx handler.HandlerContext) {
 	iqlerror.PrintErrorAndExitOneIfError(serverErr)
 	// A transport/session failure must be loud: log it and exit non-zero
 	// rather than silently returning success (issue #668).
+	mcpDiagf(
+		"starting: version=%s platform=%s pid=%d transport=%s args=%q",
+		bi.GetSemVersion(), bi.GetPlatform(), os.Getpid(), transport, os.Args,
+	)
 	startErr := server.Start(context.Background())
+	if startErr != nil {
+		mcpDiagf("server terminated with error: %v", startErr)
+	} else {
+		mcpDiagf("server run ended cleanly (transport closed)")
+	}
 	iqlerror.PrintErrorAndExitOneIfError(startErr)
 }
