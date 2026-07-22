@@ -1,6 +1,6 @@
 {
   "name": "@stackql/mcp-server",
-  "version": "0.10.500",
+  "version": "0.10.559",
   "description": "StackQL MCP server - SQL-native query and provisioning engine for cloud infrastructure, served over MCP. Downloads the signed stackql binary on first run.",
   "bin": {
     "stackql-mcp": "bin/stackql-mcp.js"
