@@ -1,0 +1,66 @@
+# Publishes the Official MCP Registry entry (io.github.stackql/stackql-mcp)
+# for a released version.  This is the FINAL publish step of a release: the
+# registry validates every package entry in server.json against its upstream
+# registry at the exact version, so the .mcpb release assets, the OCI image
+# (mcp-packaging), and the npm + PyPI wrappers (manual, 2FA) must ALL be live
+# before this runs.  Dispatch it after steps 7a/7b of
+# docs/stackql release process.md.
+#
+# Auth is GitHub Actions OIDC: the registry grants io.github.<owner>/* to
+# OIDC tokens from this repo's workflows, so no secret is required.
+
+name: mcp-registry-publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: stackql release version without the leading v (e.g. 0.10.559); the .mcpb assets, OCI image, npm and PyPI wrappers must already be published
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: packaging/mcpb
+
+jobs:
+  registry-publish:
+    name: publish to MCP registry
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - name: Preflight - verify all upstream vectors are live
+        working-directory: .
+        run: |
+          v="${{ inputs.version }}"
+          fail=0
+          curl -fsSL "https://registry.npmjs.org/@stackql/mcp-server/$v" >/dev/null \
+            || { echo "::error::npm @stackql/mcp-server@$v not published (release doc step 7a)"; fail=1; }
+          curl -fsSL "https://pypi.org/pypi/stackql-mcp-server/$v/json" >/dev/null \
+            || { echo "::error::PyPI stackql-mcp-server $v not published (release doc step 7b)"; fail=1; }
+          docker manifest inspect "docker.io/stackql/stackql-mcp:$v" >/dev/null \
+            || { echo "::error::OCI image stackql/stackql-mcp:$v not on Docker Hub (mcp-packaging oci-publish job)"; fail=1; }
+          exit $fail
+      - name: Fetch published bundle checksums from the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p dist
+          gh release download "v${{ inputs.version }}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --pattern 'stackql-mcp-*.mcpb.sha256' \
+            --dir dist
+      - name: Install mcp-publisher
+        run: |
+          curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" | tar xz mcp-publisher
+          sudo install -m 0755 mcp-publisher /usr/local/bin/mcp-publisher
+      - name: Login (GitHub Actions OIDC)
+        run: mcp-publisher login github-oidc
+      - name: Publish
+        run: make registry-publish VERSION=${{ inputs.version }}

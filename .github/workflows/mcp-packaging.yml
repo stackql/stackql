@@ -6,7 +6,9 @@
 # push tag -> create release -> attach signed assets -> dispatch.
 # The npm / PyPI wrappers need interactive (2FA) credentials and are
 # published from a local clone - see step 7 of docs/stackql release process.md.
-# The MCP Registry entry is published here via GitHub Actions OIDC (no secret).
+# The MCP Registry entry is published LAST, via the separate
+# mcp-registry-publish workflow: the registry validates that the npm/PyPI/OCI
+# packages already exist at the exact version, so it cannot run from here.
 
 name: mcp-packaging
 
@@ -223,36 +225,3 @@ jobs:
           echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
           docker buildx create --use
           make oci-push VERSION=${{ needs.version.outputs.version }}
-
-  # Publish server.json to the Official MCP Registry.  Auth is GitHub Actions
-  # OIDC: the registry grants io.github.<repository_owner>/* to OIDC tokens,
-  # so no secret is needed - just id-token: write.  Runs after 'publish' and
-  # renders from the RELEASE .sha256 assets (not run artifacts) because the
-  # sign step regenerates checksums before upload.
-  registry-publish:
-    name: publish to MCP registry
-    if: needs.version.outputs.is_publish == 'true'
-    needs: [version, publish]
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-      - uses: actions/checkout@v6
-      - name: Fetch published bundle checksums from the release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          mkdir -p dist
-          gh release download "v${{ needs.version.outputs.version }}" \
-            --repo "$GITHUB_REPOSITORY" \
-            --pattern 'stackql-mcp-*.mcpb.sha256' \
-            --dir dist
-      - name: Install mcp-publisher
-        run: |
-          curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" | tar xz mcp-publisher
-          sudo install -m 0755 mcp-publisher /usr/local/bin/mcp-publisher
-      - name: Login (GitHub Actions OIDC)
-        run: mcp-publisher login github-oidc
-      - name: Publish
-        run: make registry-publish VERSION=${{ needs.version.outputs.version }}

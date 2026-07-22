@@ -54,7 +54,9 @@ Invoke the `mcp-packaging` workflow in [stackql/stackql](https://github.com/stac
 
 7. Publish the MCP wrapper packages (manual last mile)
 
-The `mcp-packaging` workflow attaches the `.mcpb` bundles (and `.sha256` files) to the release, pushes the multi-arch OCI image to Docker Hub, and publishes the Official MCP Registry entry (via GitHub Actions OIDC - see 7c) automatically. Only the npm and PyPI wrappers need interactive (2FA) credentials, so they cannot be automated end to end and are published from a local clone using the steps below (a Linux/WSL/macOS shell, from the repo root).
+The `mcp-packaging` workflow attaches the `.mcpb` bundles (and `.sha256` files) to the release and pushes the multi-arch OCI image to Docker Hub automatically. The npm and PyPI wrappers need interactive (2FA) credentials, so they are published from a local clone using the steps below (a Linux/WSL/macOS shell, from the repo root). The MCP Registry entry is then published by dispatching the `mcp-registry-publish` workflow (7c).
+
+Order matters and is strictly one-way: 7a and 7b (either order) only after step 6 completes, and 7c strictly last. The registry validates every package entry in server.json against its upstream registry at the exact version when publishing - if the npm or PyPI wrapper (or the OCI image) for the version is not live yet, the registry publish is rejected. There is no cycle: nothing references the registry entry, it references everything else.
 
 The render targets (`make npm-pack` / `make pypi-build`) consume the published `.sha256` release assets, so run them only after step 6 completes. The renderers also stamp the version into `packaging/mcpb/npm/package.json` and `packaging/mcpb/pypi/pyproject.toml` in place - commit or revert the stamps afterwards.
 
@@ -82,9 +84,11 @@ python -m twine check pypi/dist/*
 python -m twine upload pypi/dist/*
 ```
 
-7c. Official MCP Registry (`io.github.stackql/stackql-mcp`) - automated, manual fallback below
+7c. Official MCP Registry (`io.github.stackql/stackql-mcp`) - dispatch last
 
-The `registry-publish` job in `mcp-packaging.yml` publishes this automatically: it authenticates with `mcp-publisher login github-oidc` (the registry grants `io.github.<repository_owner>/*` to GitHub Actions OIDC tokens, so no secret is needed) and renders server.json from the release `.sha256` assets. Nothing to do unless the job fails or an out-of-band publish is needed - in that case, the manual procedure:
+After 7a and 7b are live, dispatch the `mcp-registry-publish` workflow in [stackql/stackql](https://github.com/stackql/stackql) with the version. It needs no credentials: it authenticates with `mcp-publisher login github-oidc` (the registry grants `io.github.<repository_owner>/*` to GitHub Actions OIDC tokens, so no secret is stored) and renders server.json from the release `.sha256` assets. A preflight step fails fast with a pointer to the missing step if the npm, PyPI or OCI package for the version is not yet live.
+
+Manual fallback (if the workflow fails or an out-of-band publish is needed):
 
 Requires the latest `mcp-publisher` CLI and a classic GitHub PAT (scope `read:org` only, no repo scopes) created by a `stackql` org Owner at https://github.com/settings/tokens/new. The server.json renderer reads the four `.sha256` files from the local `dist/` directory, so download the published checksum files from the release first.
 
