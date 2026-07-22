@@ -26,6 +26,8 @@
         "--mcp.server.type=stdio",
         "--approot",
         "${HOME}/.stackql",
+        "--env.file",
+        "${HOME}/.stackql/.env",
         "--mcp.config",
         "{\"server\": {\"audit\": {\"disabled\": true}}}"
       ]
