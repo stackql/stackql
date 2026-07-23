@@ -169,7 +169,7 @@ Tools also carry MCP behavioural annotations (`readOnlyHint`, `destructiveHint`,
 Instructions, prompts and resources are authored as markdown under `pkg/mcp_server/content/` and embedded into the binary at build time; adding or changing published content is a markdown-only edit.
 
 - **Instructions**: dialect and session guidance surfaced in the `initialize` result.  Suppress with `disable_instructions: true` in the config.
-- **Prompts**: one static prompt is published - `write_safe_select` -> guidance for writing safe SELECT queries against stackql resources.  Explains how to use `SHOW METHODS IN <provider>.<service>.<resource>` to discover the best read method and the required `WHERE` parameters.
+- **Prompts**: two static prompts are published - `write_safe_select` -> guidance for writing safe SELECT queries against stackql resources (explains how to use `SHOW METHODS IN <provider>.<service>.<resource>` to discover the best read method and the required `WHERE` parameters); `cloud_audit_quickstart` -> quickstart for running the read-only cross-cloud security and FinOps audit via docker compose (see [docs/audit.md](/docs/audit.md)).
 - **Resources**: reference documents served via `resources/list` / `resources/read` - currently `stackql_sql_dialect` (`stackql://docs/sql_dialect`), notes on the StackQL SQL dialect.
 
 `EnabledTools`, `EnabledPrompts` and `EnabledResources` on `Config` are independent allowlists.  When omitted or empty everything is published; when populated they restrict the published surface to the named items.  See [the `pkg/mcp_server` README](/pkg/mcp_server/README.md) for details.
