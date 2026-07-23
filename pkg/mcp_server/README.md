@@ -220,20 +220,32 @@ The server publishes the following 14 tools. Each tool's rendered output is a ma
 | `pull_provider` | KV | Install a provider from the registry into the local approot cache. Requires `provider`; `version` optional. Local cache write only. |
 | `reload_credentials` | Table | Re-source credentials from the backend's configured dotenv file into the process environment and report per-provider resolution status (issue #688). Never returns secret values. Optional `provider` scopes the report. Allowed in every mode. |
 
-### Published Prompts
+### Embedded Content: Instructions, Prompts and Resources
 
-The server publishes one static prompt:
+Server instructions, prompts and resources are authored as markdown files under `pkg/mcp_server/content/` and compiled into the binary with `go:embed` (issue #696). Adding or changing published content is a markdown-only edit; no Go changes are required.
 
-- `write_safe_select` — guidance for writing safe SELECT queries against stackql resources. The prompt body explains how to use `SHOW METHODS IN <provider>.<service>.<resource>` to discover the best read method and the required `WHERE` parameters.
+- `content/instructions/*.md` - concatenated in lexical filename order (blank line separated) into the `instructions` string of the `initialize` result. No frontmatter. Suppress with the top-level `disable_instructions: true` config flag.
+- `content/prompts/*.md` - one prompt per file. YAML frontmatter carries `name`, `description` and optional `arguments` (each with `name`, `description`, `required`); the body is the prompt text. `{{argument}}` placeholders in the body are substituted with caller-supplied argument values on `prompts/get`; a placeholder that is not a declared argument fails validation.
+- `content/resources/*.md` - one resource per file. Frontmatter carries `name`, `description`, optional `uri` (default `stackql://docs/<filename-sans-extension>`) and optional `mime_type` (default `text/markdown`); the body is served by `resources/read`. The resources capability is declared only when at least one resource is published.
 
-### Restricting Published Tools and Prompts
+Malformed frontmatter, duplicate names and unresolved placeholders are caught at build time by the unit tests in `embedded_content_test.go`.
 
-The top-level `enabled_tools` and `enabled_prompts` fields on `Config` are independent allowlists.
+Currently published prompts:
 
-- **Omitted, `null`, or empty list** — every built-in tool (or prompt) is registered. This is the default.
-- **Populated list** — only the named items are registered. Any other tool or prompt is absent from `tools/list` / `prompts/list` and the corresponding `tools/call` or `prompts/get` returns an `unknown tool`/`unknown prompt` error.
+- `write_safe_select` - guidance for writing safe SELECT queries against stackql resources. The prompt body explains how to use `SHOW METHODS IN <provider>.<service>.<resource>` to discover the best read method and the required `WHERE` parameters.
 
-Enforcement happens at registration time in `pkg/mcp_server/server.go` via the `addToolIfEnabled` and `addPromptIfEnabled` helpers, which consult `Config.IsToolEnabled(name)` / `Config.IsPromptEnabled(name)` before delegating to the SDK. There is no runtime cost for items that are not enabled — they are never bound to the server.
+Currently published resources:
+
+- `stackql_sql_dialect` (`stackql://docs/sql_dialect`) - notes on the StackQL SQL dialect for provider-backed queries.
+
+### Restricting Published Tools, Prompts and Resources
+
+The top-level `enabled_tools`, `enabled_prompts` and `enabled_resources` fields on `Config` are independent allowlists.
+
+- **Omitted, `null`, or empty list** — every built-in tool (or prompt, or resource) is registered. This is the default.
+- **Populated list** — only the named items are registered. Any other tool or prompt is absent from `tools/list` / `prompts/list` and the corresponding `tools/call` or `prompts/get` returns an `unknown tool`/`unknown prompt` error. Likewise for `resources/list` / `resources/read`; when every resource is filtered out the resources capability is not declared at all.
+
+Enforcement happens at registration time in `pkg/mcp_server/server.go` via the `addToolIfEnabled` and `addPromptIfEnabled` helpers, which consult `Config.IsToolEnabled(name)` / `Config.IsPromptEnabled(name)` before delegating to the SDK (resources analogously via `Config.IsResourceEnabled(name)` in `registerEmbeddedResources`). There is no runtime cost for items that are not enabled — they are never bound to the server.
 
 JSON example — a single-purpose server that exposes only `server_info`:
 

@@ -193,13 +193,26 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		return nil, err
 	}
 
+	serverOpts := &mcp.ServerOptions{}
+	if !config.DisableInstructions {
+		instructions, instrErr := loadEmbeddedInstructions()
+		if instrErr != nil {
+			return nil, fmt.Errorf("embedded instructions: %w", instrErr)
+		}
+		serverOpts.Instructions = instructions
+	}
 	server := mcp.NewServer(
 		&mcp.Implementation{Name: "stackql", Version: "v0.1.1"},
-		nil,
+		serverOpts,
 	)
 
 	registerTools(server, config, backend, logger, sink)
-	registerPrompts(server, config)
+	if promptsErr := registerEmbeddedPrompts(server, config); promptsErr != nil {
+		return nil, promptsErr
+	}
+	if resourcesErr := registerEmbeddedResources(server, config); resourcesErr != nil {
+		return nil, resourcesErr
+	}
 
 	return &simpleMCPServer{
 		config:           config,
@@ -594,25 +607,6 @@ func registerReloadCredentialsTool(server *mcp.Server, cfg *Config, backend Back
 			}
 			text := textForFormat(format, out, func() string { return render.RenderTable(rec) })
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, out, nil
-		},
-	)
-}
-
-func registerPrompts(server *mcp.Server, config *Config) {
-	addPromptIfEnabled(
-		server,
-		config,
-		&mcp.Prompt{
-			Name:        "write_safe_select",
-			Description: "Guidance for writing safe SELECT queries against stackql resources.",
-		},
-		func(_ context.Context, _ *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
-			return &mcp.GetPromptResult{
-				Messages: []*mcp.PromptMessage{{
-					Role:    "user",
-					Content: &mcp.TextContent{Text: ExplainerPromptWriteSafeSelectTool},
-				}},
-			}, nil
 		},
 	)
 }

@@ -162,13 +162,15 @@ The server publishes 14 tools.  Each returns both rendered text (for the LLM) an
 | `pull_provider` | KV | Install a provider from the registry into the local approot cache.  Requires `provider`; `version` optional.  Local cache write only. |
 | `reload_credentials` | Table | Re-source credentials from the [`--env.file`](#credential-resourcing---envfile--reload_credentials) dotenv file into the process environment and report per-provider resolution status.  Never returns secret values.  Optional `provider` scopes the report.  Allowed in every mode. |
 
-## Canonical agent prompts
+## Canonical agent prompts, resources and instructions
 
-One static prompt is published:
+Instructions, prompts and resources are authored as markdown under `pkg/mcp_server/content/` and embedded into the binary at build time; adding or changing published content is a markdown-only edit.
 
-- `write_safe_select` -> guidance for writing safe SELECT queries against stackql resources.  Explains how to use `SHOW METHODS IN <provider>.<service>.<resource>` to discover the best read method and the required `WHERE` parameters.
+- **Instructions**: dialect and session guidance surfaced in the `initialize` result.  Suppress with `disable_instructions: true` in the config.
+- **Prompts**: one static prompt is published - `write_safe_select` -> guidance for writing safe SELECT queries against stackql resources.  Explains how to use `SHOW METHODS IN <provider>.<service>.<resource>` to discover the best read method and the required `WHERE` parameters.
+- **Resources**: reference documents served via `resources/list` / `resources/read` - currently `stackql_sql_dialect` (`stackql://docs/sql_dialect`), notes on the StackQL SQL dialect.
 
-`EnabledTools` and `EnabledPrompts` on `Config` are independent allowlists.  When omitted or empty everything is published; when populated they restrict the published surface to the named items.  See [the `pkg/mcp_server` README](/pkg/mcp_server/README.md) for details.
+`EnabledTools`, `EnabledPrompts` and `EnabledResources` on `Config` are independent allowlists.  When omitted or empty everything is published; when populated they restrict the published surface to the named items.  See [the `pkg/mcp_server` README](/pkg/mcp_server/README.md) for details.
 
 
 ## Server modes
