@@ -99,6 +99,22 @@ func hierarchyToMap(v dto.HierarchyInput) map[string]any {
 	return out
 }
 
+// boolPtr returns a pointer for the *bool hint fields on mcp.ToolAnnotations.
+func boolPtr(v bool) *bool { return &v }
+
+// deriveToolAnnotations defaults behavioural hints from the gate
+// classification so hint and enforcement share one source of truth.  Only
+// tools statically classified as selects (no SQL input) claim read-only;
+// SQL-carrying tools make no claim because their effect depends on the
+// submitted statement and enforcement stays with the policy gate.  An
+// explicit Annotations value on the tool always wins.
+func deriveToolAnnotations(gate toolGate) *mcp.ToolAnnotations {
+	if gate.defaultClass == policy.QueryClassSelect && gate.extractSQL == nil {
+		return &mcp.ToolAnnotations{ReadOnlyHint: true}
+	}
+	return nil
+}
+
 // addToolWithGate wraps mcp.AddTool with the policy gate + audit middleware.
 // It is the single chokepoint at which mode enforcement and audit recording
 // are applied.  The tool handler itself stays oblivious to both concerns.
@@ -112,6 +128,9 @@ func addToolWithGate[In, Out any](
 ) {
 	if !cfg.IsToolEnabled(t.Name) {
 		return
+	}
+	if t.Annotations == nil {
+		t.Annotations = deriveToolAnnotations(gate)
 	}
 	wrapped := func(ctx context.Context, req *mcp.CallToolRequest, args In) (*mcp.CallToolResult, Out, error) {
 		var zero Out

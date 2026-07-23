@@ -145,6 +145,8 @@ Then, assuming you have a `stackql` MCP server serving streamable HTTP on port `
 
 The server publishes 14 tools.  Each returns both rendered text (for the LLM) and a typed structured payload (for programmatic clients).  Rendering is fixed per tool: a markdown table for uniform multi-row results, a markdown KV block for sparse / single-record / mixed-shape results.
 
+Tools also carry MCP behavioural annotations (`readOnlyHint`, `destructiveHint`, `idempotentHint`), derived from the same policy-gate classification that enforces the server [mode](#server-modes): statically read-only tools claim `readOnlyHint`, mutation/lifecycle tools claim `destructiveHint`, and SQL-carrying tools make no read-only claim because their effect depends on the submitted statement.  Annotations are advisory hints for client UX; enforcement always remains with the policy gate.
+
 | Tool | Renderer | Description |
 |---|---|---|
 | `server_info` | KV | Server identity and runtime: stackql version, backing SQL engine, provider registry location, mode, read-only flag.  Call once at session start. |
