@@ -235,7 +235,7 @@ Malformed frontmatter, duplicate names and unresolved placeholders are caught at
 Currently published prompts:
 
 - `write_safe_select` - guidance for writing safe SELECT queries against stackql resources. The prompt body explains how to use `SHOW METHODS IN <provider>.<service>.<resource>` to discover the best read method and the required `WHERE` parameters.
-- `cloud_audit_quickstart` - quickstart for running the read-only cross-cloud (AWS/GCP/Azure + Entra) security and FinOps audit via docker compose; prompt-form counterpart of [docs/audit.md](/docs/audit.md).
+- `cloud_audit` - agent-driven read-only cross-cloud (AWS/GCP/Azure + Entra) security and FinOps audit. The invoking user needs only least-privilege read-only credentials configured; the agent discovers scope (regions, projects, subscriptions), runs the checks through the MCP tools and returns an executive summary, findings table and coverage appendix. Optional `clouds` and `focus` arguments scope the run. Agent-driven counterpart of the dockerised audit in [docs/audit.md](/docs/audit.md).
 
 Currently published resources:
 
