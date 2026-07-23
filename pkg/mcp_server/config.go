@@ -29,34 +29,46 @@ type Config struct {
 	// EnabledPrompts restricts which MCP prompts the server publishes.
 	// Same semantics as EnabledTools: nil or empty means all registered prompts are published.
 	EnabledPrompts []string `json:"enabled_prompts,omitempty" yaml:"enabled_prompts,omitempty"`
+
+	// EnabledResources restricts which MCP resources the server publishes.
+	// Same semantics as EnabledTools: nil or empty means all embedded resources are published.
+	EnabledResources []string `json:"enabled_resources,omitempty" yaml:"enabled_resources,omitempty"`
+
+	// DisableInstructions suppresses the embedded server instructions
+	// otherwise surfaced in the initialize result.
+	DisableInstructions bool `json:"disable_instructions,omitempty" yaml:"disable_instructions,omitempty"`
+}
+
+// nameEnabled reports whether name is allowed by an allowlist where nil or
+// empty means everything is enabled.
+func nameEnabled(allow []string, name string) bool {
+	if len(allow) == 0 {
+		return true
+	}
+	for _, n := range allow {
+		if n == name {
+			return true
+		}
+	}
+	return false
 }
 
 // IsToolEnabled reports whether the named tool should be published.
 // Empty/nil EnabledTools means all tools are enabled.
 func (c *Config) IsToolEnabled(name string) bool {
-	if len(c.EnabledTools) == 0 {
-		return true
-	}
-	for _, n := range c.EnabledTools {
-		if n == name {
-			return true
-		}
-	}
-	return false
+	return nameEnabled(c.EnabledTools, name)
 }
 
 // IsPromptEnabled reports whether the named prompt should be published.
 // Empty/nil EnabledPrompts means all prompts are enabled.
 func (c *Config) IsPromptEnabled(name string) bool {
-	if len(c.EnabledPrompts) == 0 {
-		return true
-	}
-	for _, n := range c.EnabledPrompts {
-		if n == name {
-			return true
-		}
-	}
-	return false
+	return nameEnabled(c.EnabledPrompts, name)
+}
+
+// IsResourceEnabled reports whether the named resource should be published.
+// Empty/nil EnabledResources means all resources are enabled.
+func (c *Config) IsResourceEnabled(name string) bool {
+	return nameEnabled(c.EnabledResources, name)
 }
 
 func (c *Config) GetServerTransport() string {

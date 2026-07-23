@@ -418,6 +418,56 @@ func TestRegistration_EnabledToolsFilters(t *testing.T) {
 	}
 }
 
+func TestTools_AnnotationsDerivedFromGate(t *testing.T) {
+	cs := connectInProcess(t, DefaultConfig(), &testBackend{})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	tools, err := cs.ListTools(ctx, nil)
+	if err != nil {
+		t.Fatalf("ListTools: %v", err)
+	}
+	byName := map[string]*mcp.Tool{}
+	for _, tool := range tools.Tools {
+		byName[tool.Name] = tool
+	}
+	annotationsFor := func(name string) *mcp.ToolAnnotations {
+		tool, ok := byName[name]
+		if !ok {
+			t.Fatalf("tool %s not published", name)
+		}
+		return tool.Annotations
+	}
+	// Statically select-classified tools claim read-only.
+	for _, name := range []string{
+		"server_info", "list_providers", "list_services", "list_resources",
+		"list_methods", "describe_resource", "describe_method",
+		"validate_select_query", "list_registry",
+	} {
+		if a := annotationsFor(name); a == nil || !a.ReadOnlyHint {
+			t.Errorf("%s should carry ReadOnlyHint, got %+v", name, a)
+		}
+	}
+	// SQL-carrying tools make no read-only claim; effect depends on the SQL.
+	if a := annotationsFor("run_select_query"); a != nil && a.ReadOnlyHint {
+		t.Errorf("run_select_query must not claim read-only, got %+v", a)
+	}
+	// Mutation/lifecycle tools are explicitly destructive.
+	for _, name := range []string{"run_mutation_query", "run_lifecycle_operation"} {
+		a := annotationsFor(name)
+		if a == nil || a.DestructiveHint == nil || !*a.DestructiveHint {
+			t.Errorf("%s should carry an explicit true DestructiveHint, got %+v", name, a)
+		}
+	}
+	// Local-state writers: not read-only, idempotent, non-destructive.
+	for _, name := range []string{"pull_provider", "reload_credentials"} {
+		a := annotationsFor(name)
+		if a == nil || a.ReadOnlyHint || !a.IdempotentHint || a.DestructiveHint == nil || *a.DestructiveHint {
+			t.Errorf("%s should be non-read-only, idempotent, non-destructive; got %+v", name, a)
+		}
+	}
+}
+
 func TestTool_ListRegistry_RendersTableAndForwardsProvider(t *testing.T) {
 	be := &testBackend{listRegistryOut: []map[string]any{
 		{"provider": "google", "version": "v1"},

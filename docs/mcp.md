@@ -145,6 +145,8 @@ Then, assuming you have a `stackql` MCP server serving streamable HTTP on port `
 
 The server publishes 14 tools.  Each returns both rendered text (for the LLM) and a typed structured payload (for programmatic clients).  Rendering is fixed per tool: a markdown table for uniform multi-row results, a markdown KV block for sparse / single-record / mixed-shape results.
 
+Tools also carry MCP behavioural annotations (`readOnlyHint`, `destructiveHint`, `idempotentHint`), derived from the same policy-gate classification that enforces the server [mode](#server-modes): statically read-only tools claim `readOnlyHint`, mutation/lifecycle tools claim `destructiveHint`, and SQL-carrying tools make no read-only claim because their effect depends on the submitted statement.  Annotations are advisory hints for client UX; enforcement always remains with the policy gate.
+
 | Tool | Renderer | Description |
 |---|---|---|
 | `server_info` | KV | Server identity and runtime: stackql version, backing SQL engine, provider registry location, mode, read-only flag.  Call once at session start. |
@@ -162,13 +164,15 @@ The server publishes 14 tools.  Each returns both rendered text (for the LLM) an
 | `pull_provider` | KV | Install a provider from the registry into the local approot cache.  Requires `provider`; `version` optional.  Local cache write only. |
 | `reload_credentials` | Table | Re-source credentials from the [`--env.file`](#credential-resourcing---envfile--reload_credentials) dotenv file into the process environment and report per-provider resolution status.  Never returns secret values.  Optional `provider` scopes the report.  Allowed in every mode. |
 
-## Canonical agent prompts
+## Canonical agent prompts, resources and instructions
 
-One static prompt is published:
+Instructions, prompts and resources are authored as markdown under `pkg/mcp_server/content/` and embedded into the binary at build time; adding or changing published content is a markdown-only edit.
 
-- `write_safe_select` -> guidance for writing safe SELECT queries against stackql resources.  Explains how to use `SHOW METHODS IN <provider>.<service>.<resource>` to discover the best read method and the required `WHERE` parameters.
+- **Instructions**: dialect and session guidance surfaced in the `initialize` result.  Suppress with `disable_instructions: true` in the config.
+- **Prompts**: two static prompts are published - `write_safe_select` -> guidance for writing safe SELECT queries against stackql resources (explains how to use `SHOW METHODS IN <provider>.<service>.<resource>` to discover the best read method and the required `WHERE` parameters); `cloud_audit_quickstart` -> quickstart for running the read-only cross-cloud security and FinOps audit via docker compose (see [docs/audit.md](/docs/audit.md)).
+- **Resources**: reference documents served via `resources/list` / `resources/read` - currently `stackql_sql_dialect` (`stackql://docs/sql_dialect`), notes on the StackQL SQL dialect.
 
-`EnabledTools` and `EnabledPrompts` on `Config` are independent allowlists.  When omitted or empty everything is published; when populated they restrict the published surface to the named items.  See [the `pkg/mcp_server` README](/pkg/mcp_server/README.md) for details.
+`EnabledTools`, `EnabledPrompts` and `EnabledResources` on `Config` are independent allowlists.  When omitted or empty everything is published; when populated they restrict the published surface to the named items.  See [the `pkg/mcp_server` README](/pkg/mcp_server/README.md) for details.
 
 
 ## Server modes

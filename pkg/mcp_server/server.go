@@ -193,13 +193,26 @@ func newMCPServer(config *Config, backend Backend, logger *logrus.Logger) (MCPSe
 		return nil, err
 	}
 
+	serverOpts := &mcp.ServerOptions{}
+	if !config.DisableInstructions {
+		instructions, instrErr := loadEmbeddedInstructions()
+		if instrErr != nil {
+			return nil, fmt.Errorf("embedded instructions: %w", instrErr)
+		}
+		serverOpts.Instructions = instructions
+	}
 	server := mcp.NewServer(
 		&mcp.Implementation{Name: "stackql", Version: "v0.1.1"},
-		nil,
+		serverOpts,
 	)
 
 	registerTools(server, config, backend, logger, sink)
-	registerPrompts(server, config)
+	if promptsErr := registerEmbeddedPrompts(server, config); promptsErr != nil {
+		return nil, promptsErr
+	}
+	if resourcesErr := registerEmbeddedResources(server, config); resourcesErr != nil {
+		return nil, resourcesErr
+	}
 
 	return &simpleMCPServer{
 		config:           config,
@@ -466,45 +479,13 @@ func registerTools(server *mcp.Server, cfg *Config, backend Backend, logger *log
 		},
 	)
 
-	addToolWithGate(
-		server, cfg, auditSink, queryGate("run_mutation_query"),
-		&mcp.Tool{
-			Name:        "run_mutation_query",
-			Description: "Execute INSERT/UPDATE/REPLACE/DELETE against the provider. Real side effects. Returns {messages, timestamp}. Gated by server mode.",
-		},
-		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.QueryJSONInput) (*mcp.CallToolResult, map[string]any, error) {
-			format, formatErr := resolveRenderFormat(cfg, args.Format)
-			if formatErr != nil {
-				return nil, nil, formatErr
-			}
-			res, err := backend.ExecQuery(ctx, args.SQL)
-			if err != nil {
-				return nil, nil, err
-			}
-			text := textForFormat(format, res, func() string { return render.RenderKV("Mutation Result", []map[string]any{res}) })
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, res, nil
-		},
-	)
+	registerExecQueryTool(server, cfg, backend, auditSink, "run_mutation_query",
+		"Execute INSERT/UPDATE/REPLACE/DELETE against the provider. Real side effects. Returns {messages, timestamp}. Gated by server mode.",
+		"Mutation Result")
 
-	addToolWithGate(
-		server, cfg, auditSink, queryGate("run_lifecycle_operation"),
-		&mcp.Tool{
-			Name:        "run_lifecycle_operation",
-			Description: "Execute a stackql EXEC lifecycle operation. Returns {messages, timestamp}. Gated by server mode.",
-		},
-		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.QueryJSONInput) (*mcp.CallToolResult, map[string]any, error) {
-			format, formatErr := resolveRenderFormat(cfg, args.Format)
-			if formatErr != nil {
-				return nil, nil, formatErr
-			}
-			res, err := backend.ExecQuery(ctx, args.SQL)
-			if err != nil {
-				return nil, nil, err
-			}
-			text := textForFormat(format, res, func() string { return render.RenderKV("Lifecycle Result", []map[string]any{res}) })
-			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, res, nil
-		},
-	)
+	registerExecQueryTool(server, cfg, backend, auditSink, "run_lifecycle_operation",
+		"Execute a stackql EXEC lifecycle operation. Returns {messages, timestamp}. Gated by server mode.",
+		"Lifecycle Result")
 
 	addToolWithGate(
 		server, cfg, auditSink, registryGate("list_registry"),
@@ -534,6 +515,8 @@ func registerTools(server *mcp.Server, cfg *Config, backend Backend, logger *log
 		&mcp.Tool{
 			Name:        "pull_provider",
 			Description: "Install a single provider from the registry into the local approot cache. Requires provider; version is optional (latest published is pulled when empty). Writes only local cache state; no cloud control/data plane effect.",
+			// Writes local cache state, so not read-only despite the select-class gate.
+			Annotations: &mcp.ToolAnnotations{IdempotentHint: true, DestructiveHint: boolPtr(false)},
 		},
 		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.RegistryInput) (*mcp.CallToolResult, map[string]any, error) {
 			format, formatErr := resolveRenderFormat(cfg, args.Format)
@@ -545,6 +528,34 @@ func registerTools(server *mcp.Server, cfg *Config, backend Backend, logger *log
 				return nil, nil, err
 			}
 			text := textForFormat(format, res, func() string { return render.RenderKV("Pull Result", []map[string]any{res}) })
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, res, nil
+		},
+	)
+}
+
+// registerExecQueryTool registers a mutation-shaped tool (mutation or
+// lifecycle): SQL in, {messages, timestamp} out, explicitly destructive.
+func registerExecQueryTool(
+	server *mcp.Server, cfg *Config, backend Backend, auditSink sink.Sink,
+	name, description, kvTitle string,
+) {
+	addToolWithGate(
+		server, cfg, auditSink, queryGate(name),
+		&mcp.Tool{
+			Name:        name,
+			Description: description,
+			Annotations: &mcp.ToolAnnotations{DestructiveHint: boolPtr(true)},
+		},
+		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.QueryJSONInput) (*mcp.CallToolResult, map[string]any, error) {
+			format, formatErr := resolveRenderFormat(cfg, args.Format)
+			if formatErr != nil {
+				return nil, nil, formatErr
+			}
+			res, err := backend.ExecQuery(ctx, args.SQL)
+			if err != nil {
+				return nil, nil, err
+			}
+			text := textForFormat(format, res, func() string { return render.RenderKV(kvTitle, []map[string]any{res}) })
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, res, nil
 		},
 	)
@@ -572,6 +583,8 @@ func registerReloadCredentialsTool(server *mcp.Server, cfg *Config, backend Back
 				"environment, then report per-provider credential resolution status. Call after fixing or rotating " +
 				"credentials (eg a query failed with a credential resolution error), then retry the query. " +
 				"Never returns secret values. Optional provider arg scopes the report.",
+			// Mutates process env, so not read-only despite the select-class gate.
+			Annotations: &mcp.ToolAnnotations{IdempotentHint: true, DestructiveHint: boolPtr(false)},
 		},
 		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.CredentialsReloadInput) (*mcp.CallToolResult, dto.CredentialsReloadDTO, error) {
 			format, formatErr := resolveRenderFormat(cfg, args.Format)
@@ -594,25 +607,6 @@ func registerReloadCredentialsTool(server *mcp.Server, cfg *Config, backend Back
 			}
 			text := textForFormat(format, out, func() string { return render.RenderTable(rec) })
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, out, nil
-		},
-	)
-}
-
-func registerPrompts(server *mcp.Server, config *Config) {
-	addPromptIfEnabled(
-		server,
-		config,
-		&mcp.Prompt{
-			Name:        "write_safe_select",
-			Description: "Guidance for writing safe SELECT queries against stackql resources.",
-		},
-		func(_ context.Context, _ *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
-			return &mcp.GetPromptResult{
-				Messages: []*mcp.PromptMessage{{
-					Role:    "user",
-					Content: &mcp.TextContent{Text: ExplainerPromptWriteSafeSelectTool},
-				}},
-			}, nil
 		},
 	)
 }
