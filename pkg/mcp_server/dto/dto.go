@@ -82,6 +82,7 @@ type QueryLibrarySearchDTO struct {
 	Miss         bool                 `json:"miss" jsonschema:"true when no hit cleared the score threshold"`
 	DialectGuide string               `json:"dialect_guide,omitempty" jsonschema:"compact dialect guide returned on the miss path"`
 	SourceTier   string               `json:"source_tier,omitempty" jsonschema:"primary, fallback or snapshot"`
+	SourceURL    string               `json:"source_url,omitempty" jsonschema:"citation: URL or embedded path the catalogue was loaded from"`
 	Stale        bool                 `json:"stale,omitempty" jsonschema:"true when served from cache or snapshot after fetch failure"`
 }
 
@@ -138,6 +139,7 @@ type QueryLibraryGetDTO struct {
 	UnknownParams []string                `json:"unknown_params,omitempty"`
 	Errors        []string                `json:"errors,omitempty"`
 	SourceTier    string                  `json:"source_tier,omitempty"`
+	SourceURL     string                  `json:"source_url,omitempty" jsonschema:"citation: URL or embedded path the document was loaded from"`
 	Stale         bool                    `json:"stale,omitempty"`
 }
 

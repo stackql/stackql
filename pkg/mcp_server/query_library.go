@@ -33,7 +33,7 @@ import (
 
 const (
 	queryLibraryDefaultBaseURL     = "https://stackql.io/docs/query-library"
-	queryLibraryDefaultFallbackURL = "https://raw.githubusercontent.com/stackql/stackql-query-library/main"
+	queryLibraryDefaultFallbackURL = "https://raw.githubusercontent.com/stackql/stackql.io/main/static/docs/query-library"
 	queryLibraryDefaultTTL         = 300 * time.Second
 	queryLibraryHTTPTimeout        = 10 * time.Second
 
@@ -148,7 +148,9 @@ type queryLibraryClient struct {
 	buildID   string
 	fetchedAt time.Time
 	index     *libIndex
+	indexURL  string
 	docs      map[string]*libDoc
+	docURLs   map[string]string
 	tier      string
 	stale     bool
 }
@@ -203,6 +205,7 @@ func newQueryLibraryClient(cfg QueryLibraryConfig) *queryLibraryClient {
 		ttl:      s.ttl,
 		httpc:    &http.Client{Timeout: queryLibraryHTTPTimeout},
 		docs:     map[string]*libDoc{},
+		docURLs:  map[string]string{},
 	}
 }
 
@@ -246,7 +249,9 @@ func (c *queryLibraryClient) loadSnapshotIndex() error {
 	}
 	c.buildID = m.BuildID
 	c.index = &idx
+	c.indexURL = "embedded://" + queryLibrarySnapshotDir + "/index.json"
 	c.docs = map[string]*libDoc{}
+	c.docURLs = map[string]string{}
 	c.fetchedAt = time.Now()
 	c.tier = querySourceTierSnapshot
 	return nil
@@ -262,6 +267,7 @@ func (c *queryLibraryClient) refreshFromTier(ctx context.Context, base, tier str
 	if m.BuildID != "" && m.BuildID == c.buildID && c.index != nil {
 		c.fetchedAt = time.Now()
 		c.tier = tier
+		c.indexURL = base + "/index.json"
 		return nil
 	}
 	var idx libIndex
@@ -270,7 +276,9 @@ func (c *queryLibraryClient) refreshFromTier(ctx context.Context, base, tier str
 	}
 	c.buildID = m.BuildID
 	c.index = &idx
+	c.indexURL = base + "/index.json"
 	c.docs = map[string]*libDoc{}
+	c.docURLs = map[string]string{}
 	c.fetchedAt = time.Now()
 	c.tier = tier
 	return nil
@@ -310,17 +318,17 @@ func (c *queryLibraryClient) ensureIndex(ctx context.Context) error {
 }
 
 // getDoc returns one query document, fetched just in time and cached by build.
-func (c *queryLibraryClient) getDoc(ctx context.Context, id string) (*libDoc, string, bool, error) {
+func (c *queryLibraryClient) getDoc(ctx context.Context, id string) (*libDoc, string, string, bool, error) {
 	if !queryLibraryIDRegexp.MatchString(id) {
-		return nil, "", false, fmt.Errorf("invalid query id %q", id)
+		return nil, "", "", false, fmt.Errorf("invalid query id %q", id)
 	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if err := c.ensureIndex(ctx); err != nil {
-		return nil, "", false, err
+		return nil, "", "", false, err
 	}
 	if doc, ok := c.docs[id]; ok {
-		return doc, c.tier, c.stale, nil
+		return doc, c.docURLs[id], c.tier, c.stale, nil
 	}
 	known := false
 	for i := range c.index.Entries {
@@ -330,38 +338,42 @@ func (c *queryLibraryClient) getDoc(ctx context.Context, id string) (*libDoc, st
 		}
 	}
 	if !known {
-		return nil, "", false, fmt.Errorf("unknown query id %q; use query_library_search to find valid ids", id)
+		return nil, "", "", false, fmt.Errorf("unknown query id %q; use query_library_search to find valid ids", id)
 	}
-	doc, err := c.fetchDoc(ctx, id)
+	doc, srcURL, err := c.fetchDoc(ctx, id)
 	if err != nil {
-		return nil, "", false, err
+		return nil, "", "", false, err
 	}
 	c.docs[id] = doc
-	return doc, c.tier, c.stale, nil
+	c.docURLs[id] = srcURL
+	return doc, srcURL, c.tier, c.stale, nil
 }
 
 // fetchDoc retrieves one document from the current tier, degrading to the
 // snapshot (marked stale) when both remote tiers fail.
-func (c *queryLibraryClient) fetchDoc(ctx context.Context, id string) (*libDoc, error) {
+func (c *queryLibraryClient) fetchDoc(ctx context.Context, id string) (*libDoc, string, error) {
 	var doc libDoc
 	snapPath := queryLibrarySnapshotDir + "/queries/" + id + ".json"
 	if c.tier == querySourceTierSnapshot {
 		if err := loadSnapshotJSON(snapPath, &doc); err != nil {
-			return nil, err
+			return nil, "", err
 		}
-		return &doc, nil
+		return &doc, "embedded://" + snapPath, nil
 	}
-	err := c.fetchJSON(ctx, c.baseURL+"/queries/"+id+".json", &doc)
+	srcURL := c.baseURL + "/queries/" + id + ".json"
+	err := c.fetchJSON(ctx, srcURL, &doc)
 	if err != nil {
-		err = c.fetchJSON(ctx, c.fallback+"/queries/"+id+".json", &doc)
+		srcURL = c.fallback + "/queries/" + id + ".json"
+		err = c.fetchJSON(ctx, srcURL, &doc)
 	}
 	if err != nil {
 		if snapErr := loadSnapshotJSON(snapPath, &doc); snapErr != nil {
-			return nil, err
+			return nil, "", err
 		}
+		srcURL = "embedded://" + snapPath
 		c.stale = true
 	}
-	return &doc, nil
+	return &doc, srcURL, nil
 }
 
 // --- search ---
@@ -510,7 +522,7 @@ func (c *queryLibraryClient) search(
 		candidates = append(candidates, scoredEntry{entry: e, score: scoreEntry(e, tokens, intentLower)})
 	}
 	sort.SliceStable(candidates, func(i, j int) bool { return candidates[i].score > candidates[j].score })
-	out := dto.QueryLibrarySearchDTO{SourceTier: c.tier, Stale: c.stale, Hits: []dto.QueryLibraryHitDTO{}}
+	out := dto.QueryLibrarySearchDTO{SourceTier: c.tier, SourceURL: c.indexURL, Stale: c.stale, Hits: []dto.QueryLibraryHitDTO{}}
 	for i, cand := range candidates {
 		if i >= limit {
 			break
@@ -704,7 +716,7 @@ func renderTemplate(doc *libDoc, vals map[string]any, out *dto.QueryLibraryGetDT
 
 // get returns the teaching surface (no params) or validated rendered SQL.
 func (c *queryLibraryClient) get(ctx context.Context, in dto.QueryLibraryGetInput) (dto.QueryLibraryGetDTO, error) {
-	doc, tier, stale, err := c.getDoc(ctx, in.ID)
+	doc, srcURL, tier, stale, err := c.getDoc(ctx, in.ID)
 	if err != nil {
 		return dto.QueryLibraryGetDTO{}, err
 	}
@@ -719,6 +731,7 @@ func (c *queryLibraryClient) get(ctx context.Context, in dto.QueryLibraryGetInpu
 		Related:     doc.Related,
 		DocURL:      doc.DocURL,
 		SourceTier:  tier,
+		SourceURL:   srcURL,
 		Stale:       stale,
 	}
 	if doc.Cost != nil {
@@ -825,6 +838,7 @@ func registerQueryLibrarySearchTool(
 			}
 			text := textForFormat(format, out, func() string {
 				body := render.RenderTable(searchHitsToRows(out.Hits))
+				body += "\n\nSource: " + out.SourceURL
 				if out.Miss {
 					body += "\n\nNo hit cleared the relevance threshold. Author the query using the dialect " +
 						"guide below and the discovery tools.\n\n" + out.DialectGuide
@@ -861,7 +875,7 @@ func registerQueryLibraryGetTool(
 			text := textForFormat(format, out, func() string {
 				rec := map[string]any{
 					"id": out.ID, "mutation": out.Mutation, "next_tool": out.NextTool,
-					"valid": out.Valid, "doc_url": out.DocURL,
+					"valid": out.Valid, "doc_url": out.DocURL, "source": out.SourceURL,
 				}
 				if out.SQL != "" {
 					rec["sql"] = out.SQL
