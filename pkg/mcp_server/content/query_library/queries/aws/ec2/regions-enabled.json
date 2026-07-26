@@ -3,9 +3,16 @@
   "title": "Enabled AWS regions",
   "description": "Lists AWS regions with their opt-in status; exclude not-opted-in regions from sweeps.",
   "mutation": false,
+  "verb": "select",
   "status": "stable",
   "providers": ["aws"],
   "services": ["ec2"],
+  "auth": ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"],
+  "cost": {"fan_out": "none", "expensive": false},
+  "outputs": [
+    {"name": "regionName", "type": "string", "description": "Region identifier"},
+    {"name": "optInStatus", "type": "string", "description": "opt-in-not-required, opted-in or not-opted-in"}
+  ],
   "params": [
     {
       "name": "seed_region",

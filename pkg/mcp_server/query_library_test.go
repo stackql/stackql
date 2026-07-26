@@ -398,6 +398,41 @@ func TestQueryLibrary_OfflineSnapshotEndToEnd(t *testing.T) {
 	}
 }
 
+func TestQueryLibrary_MetadataFieldsAndVerbRouting(t *testing.T) {
+	// The embedded snapshot carries the enriched shape: verb, cost, outputs,
+	// auth, related.
+	client := newQueryLibraryClient(QueryLibraryConfig{Offline: true})
+	ctx := context.Background()
+	out, err := client.get(ctx, dto.QueryLibraryGetInput{ID: "aws/ec2/regions-enabled"})
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if out.Verb != "select" || out.Cost == nil || out.Cost.FanOut != "none" || len(out.Outputs) != 2 {
+		t.Errorf("expected enriched metadata, got %+v", out)
+	}
+	if len(out.Auth) == 0 {
+		t.Errorf("expected auth env vars on the entry")
+	}
+	related, err := client.get(ctx, dto.QueryLibraryGetInput{ID: "aws/s3/buckets-list"})
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if len(related.Related) != 1 || related.Related[0] != "aws/s3/bucket-detail" {
+		t.Errorf("expected related pivot id, got %+v", related.Related)
+	}
+
+	// verb wins over the mutation bool, and lifecycle routes to the third tool.
+	if got := nextToolFor(&libDoc{Verb: "lifecycle"}); got != nextToolLifecycle {
+		t.Errorf("lifecycle verb must route to run_lifecycle_operation, got %q", got)
+	}
+	if got := nextToolFor(&libDoc{Mutation: true}); got != nextToolMutation {
+		t.Errorf("mutation fallback broken, got %q", got)
+	}
+	if got := nextToolFor(&libDoc{Verb: "select", Mutation: true}); got != nextToolSelect {
+		t.Errorf("explicit verb must win over mutation bool, got %q", got)
+	}
+}
+
 func TestQueryLibrary_GetUnknownAndInvalidIDs(t *testing.T) {
 	client := newClientForFixture(t, newTestFixture())
 	ctx := context.Background()

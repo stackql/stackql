@@ -3,7 +3,13 @@
   "title": "Set CloudWatch log group retention",
   "description": "Updates RetentionInDays on a log group via Cloud Control JSON Patch semantics.",
   "mutation": true,
+  "verb": "mutation",
   "status": "stable",
+  "cost": {"fan_out": "none", "expensive": false},
+  "outputs": [
+    {"name": "OperationStatus", "type": "string", "description": "Async progress event status"},
+    {"name": "RequestToken", "type": "string", "description": "Token to poll aws.cloud_control.resource_requests"}
+  ],
   "providers": ["aws"],
   "services": ["cloud_control", "logs"],
   "params": [

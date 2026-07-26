@@ -49,8 +49,9 @@ const (
 
 	queryLibrarySnapshotDir = "content/query_library"
 
-	nextToolSelect   = "run_select_query"
-	nextToolMutation = "run_mutation_query"
+	nextToolSelect    = "run_select_query"
+	nextToolMutation  = "run_mutation_query"
+	nextToolLifecycle = "run_lifecycle_operation"
 )
 
 var (
@@ -99,19 +100,39 @@ type libParam struct {
 	Pattern     string   `json:"pattern,omitempty"`
 }
 
+// libCost carries the pre-execution cost hints (fan_out lets an agent warn
+// the user before running something that iterates every region or project).
+type libCost struct {
+	FanOut    string `json:"fan_out,omitempty"`
+	Expensive bool   `json:"expensive,omitempty"`
+	Notes     string `json:"notes,omitempty"`
+}
+
+// libOutput describes one column the template returns.
+type libOutput struct {
+	Name        string `json:"name"`
+	Type        string `json:"type,omitempty"`
+	Description string `json:"description,omitempty"`
+}
+
 // libDoc mirrors queries/<id>.json: parsed front matter plus extracted template.
 type libDoc struct {
-	ID          string     `json:"id"`
-	Title       string     `json:"title,omitempty"`
-	Description string     `json:"description,omitempty"`
-	Mutation    bool       `json:"mutation"`
-	Status      string     `json:"status,omitempty"`
-	Providers   []string   `json:"providers,omitempty"`
-	Services    []string   `json:"services,omitempty"`
-	Params      []libParam `json:"params,omitempty"`
-	Template    string     `json:"template"`
-	Notes       string     `json:"notes,omitempty"`
-	DocURL      string     `json:"doc_url,omitempty"`
+	ID          string      `json:"id"`
+	Title       string      `json:"title,omitempty"`
+	Description string      `json:"description,omitempty"`
+	Mutation    bool        `json:"mutation"`
+	Verb        string      `json:"verb,omitempty"` // select | mutation | lifecycle; wins over Mutation
+	Status      string      `json:"status,omitempty"`
+	Providers   []string    `json:"providers,omitempty"`
+	Services    []string    `json:"services,omitempty"`
+	Auth        []string    `json:"auth,omitempty"`
+	Params      []libParam  `json:"params,omitempty"`
+	Outputs     []libOutput `json:"outputs,omitempty"`
+	Cost        *libCost    `json:"cost,omitempty"`
+	Related     []string    `json:"related,omitempty"`
+	Template    string      `json:"template"`
+	Notes       string      `json:"notes,omitempty"`
+	DocURL      string      `json:"doc_url,omitempty"`
 }
 
 // queryLibraryClient fetches and caches library content.  The manifest
@@ -535,8 +556,16 @@ func paramToDTO(p libParam) dto.QueryLibraryParamDTO {
 	return out
 }
 
-func nextToolFor(mutation bool) string {
-	if mutation {
+func nextToolFor(doc *libDoc) string {
+	switch strings.ToLower(doc.Verb) {
+	case "lifecycle":
+		return nextToolLifecycle
+	case "mutation":
+		return nextToolMutation
+	case "select":
+		return nextToolSelect
+	}
+	if doc.Mutation {
 		return nextToolMutation
 	}
 	return nextToolSelect
@@ -684,10 +713,23 @@ func (c *queryLibraryClient) get(ctx context.Context, in dto.QueryLibraryGetInpu
 		Title:       doc.Title,
 		Description: doc.Description,
 		Mutation:    doc.Mutation,
-		NextTool:    nextToolFor(doc.Mutation),
+		Verb:        doc.Verb,
+		NextTool:    nextToolFor(doc),
+		Auth:        doc.Auth,
+		Related:     doc.Related,
 		DocURL:      doc.DocURL,
 		SourceTier:  tier,
 		Stale:       stale,
+	}
+	if doc.Cost != nil {
+		out.Cost = &dto.QueryLibraryCostDTO{
+			FanOut: doc.Cost.FanOut, Expensive: doc.Cost.Expensive, Notes: doc.Cost.Notes,
+		}
+	}
+	for _, o := range doc.Outputs {
+		out.Outputs = append(out.Outputs, dto.QueryLibraryOutputDTO{
+			Name: o.Name, Type: o.Type, Description: o.Description,
+		})
 	}
 	for _, p := range doc.Params {
 		out.Params = append(out.Params, paramToDTO(p))

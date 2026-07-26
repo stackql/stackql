@@ -97,27 +97,48 @@ type QueryLibraryParamDTO struct {
 	Pattern     string   `json:"pattern,omitempty"`
 }
 
+// QueryLibraryCostDTO carries pre-execution cost hints: fan_out (none |
+// region | project | account | subscription) lets an agent warn the user
+// before running something that iterates a whole scope.
+type QueryLibraryCostDTO struct {
+	FanOut    string `json:"fan_out,omitempty"`
+	Expensive bool   `json:"expensive,omitempty"`
+	Notes     string `json:"notes,omitempty"`
+}
+
+// QueryLibraryOutputDTO describes one column the template returns.
+type QueryLibraryOutputDTO struct {
+	Name        string `json:"name"`
+	Type        string `json:"type,omitempty"`
+	Description string `json:"description,omitempty"`
+}
+
 // QueryLibraryGetDTO is the result of query_library_get.  Without params it is
 // the teaching surface (template with placeholders intact); with params the
 // Rendered/SQL/Valid fields carry the outcome.
 type QueryLibraryGetDTO struct {
-	ID            string                 `json:"id"`
-	Title         string                 `json:"title,omitempty"`
-	Description   string                 `json:"description,omitempty"`
-	Mutation      bool                   `json:"mutation"`
-	NextTool      string                 `json:"next_tool" jsonschema:"run_select_query or run_mutation_query"`
-	Template      string                 `json:"template,omitempty" jsonschema:"raw template with {{param}} placeholders"`
-	Notes         string                 `json:"notes,omitempty"`
-	DocURL        string                 `json:"doc_url,omitempty"`
-	Params        []QueryLibraryParamDTO `json:"params,omitempty"`
-	Rendered      bool                   `json:"rendered"`
-	Valid         bool                   `json:"valid"`
-	SQL           string                 `json:"sql,omitempty" jsonschema:"rendered SQL, present when rendered and valid"`
-	MissingParams []QueryLibraryParamDTO `json:"missing_params,omitempty"`
-	UnknownParams []string               `json:"unknown_params,omitempty"`
-	Errors        []string               `json:"errors,omitempty"`
-	SourceTier    string                 `json:"source_tier,omitempty"`
-	Stale         bool                   `json:"stale,omitempty"`
+	ID            string                  `json:"id"`
+	Title         string                  `json:"title,omitempty"`
+	Description   string                  `json:"description,omitempty"`
+	Mutation      bool                    `json:"mutation"`
+	Verb          string                  `json:"verb,omitempty" jsonschema:"select, mutation or lifecycle"`
+	Cost          *QueryLibraryCostDTO    `json:"cost,omitempty"`
+	Outputs       []QueryLibraryOutputDTO `json:"outputs,omitempty"`
+	Auth          []string                `json:"auth,omitempty" jsonschema:"env vars the template's providers need resolved"`
+	Related       []string                `json:"related,omitempty" jsonschema:"related library entry ids"`
+	NextTool      string                  `json:"next_tool" jsonschema:"run_select_query, run_mutation_query or run_lifecycle_operation"` //nolint:lll // schema doc
+	Template      string                  `json:"template,omitempty" jsonschema:"raw template with {{param}} placeholders"`
+	Notes         string                  `json:"notes,omitempty"`
+	DocURL        string                  `json:"doc_url,omitempty"`
+	Params        []QueryLibraryParamDTO  `json:"params,omitempty"`
+	Rendered      bool                    `json:"rendered"`
+	Valid         bool                    `json:"valid"`
+	SQL           string                  `json:"sql,omitempty" jsonschema:"rendered SQL, present when rendered and valid"`
+	MissingParams []QueryLibraryParamDTO  `json:"missing_params,omitempty"`
+	UnknownParams []string                `json:"unknown_params,omitempty"`
+	Errors        []string                `json:"errors,omitempty"`
+	SourceTier    string                  `json:"source_tier,omitempty"`
+	Stale         bool                    `json:"stale,omitempty"`
 }
 
 // RegistryInput is the shared input shape for list_registry and pull_provider.

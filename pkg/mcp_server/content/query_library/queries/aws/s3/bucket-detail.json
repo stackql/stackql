@@ -3,9 +3,12 @@
   "title": "S3 bucket security detail",
   "description": "Full security attributes for one bucket: public access block, encryption, versioning, ownership.",
   "mutation": false,
+  "verb": "select",
   "status": "stable",
   "providers": ["aws"],
   "services": ["s3"],
+  "cost": {"fan_out": "none", "expensive": true, "notes": "One request per bucket when iterated over an inventory"},
+  "related": ["aws/s3/buckets-list"],
   "params": [
     {
       "name": "region",
