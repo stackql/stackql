@@ -78,6 +78,19 @@ Start MCP Servers
     ...                                   \-\-tls.allowInsecure
     ...                                   stdout=${CURDIR}${/}tmp${/}Stackql-MCP-Server-ReadOnly.txt
     ...                                   stderr=${CURDIR}${/}tmp${/}Stackql-MCP-Server-ReadOnly-stderr.txt
+    Start Process                         ${STACKQL_EXE}
+    ...                                   mcp
+    ...                                   \-\-mcp.server.type\=http
+    ...                                   \-\-mcp.config
+    ...                                   {"server": {"transport": "http", "address": "127.0.0.1:9917", "mode": "full_access", "audit": {"disabled": true}} }
+    ...                                   \-\-registry
+    ...                                   ${REGISTRY_NO_VERIFY_CFG_JSON_STR}
+    ...                                   \-\-auth
+    ...                                   ${AUTH_CFG_STR}
+    ...                                   \-\-tls.allowInsecure
+    ...                                   env:STACKQL_QUERY_LIBRARY_OFFLINE=true
+    ...                                   stdout=${CURDIR}${/}tmp${/}Stackql-MCP-Server-QueryLibrary.txt
+    ...                                   stderr=${CURDIR}${/}tmp${/}Stackql-MCP-Server-QueryLibrary-stderr.txt
     # Mode-contract servers: one per non-default mode.  Audit disabled so we
     # don't litter the cwd with log files; audit is exercised by 9923.
     Start Process                         ${STACKQL_EXE}
@@ -1186,3 +1199,34 @@ MCP Stdio Reload Credentials Sources Env File Mid Session
     # The same query now succeeds against the mocked okta provider.
     Should Contain        ${result['select_after']}    okta_browser_plugin
     Should Be Equal As Integers    ${result['returncode']}    0
+
+
+MCP HTTP Server Query Library Search Tool
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9917
+    ...                  \-\-exec.action      query_library_search
+    ...                  \-\-exec.args        {"intent": "list enabled aws regions"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Query-Library-Search.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Query-Library-Search-stderr.txt
+    Should Contain       ${result.stdout}       aws/ec2/regions-enabled
+    Should Be Equal As Integers    ${result.rc}    0
+
+
+MCP HTTP Server Query Library Get Rendered Tool
+    Pass Execution If    "%{IS_SKIP_MCP_TEST=false}" == "true"    Some platforms do not have the MCP client available
+    Sleep         5s
+    ${result}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9917
+    ...                  \-\-exec.action      query_library_get
+    ...                  \-\-exec.args        {"id": "aws/ec2/regions-enabled", "params": {"seed_region": "us-west-2"}}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Query-Library-Get.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-HTTP-Server-Query-Library-Get-stderr.txt
+    Should Contain       ${result.stdout}       region = 'us-west-2'
+    Should Contain       ${result.stdout}       run_select_query
+    Should Be Equal As Integers    ${result.rc}    0

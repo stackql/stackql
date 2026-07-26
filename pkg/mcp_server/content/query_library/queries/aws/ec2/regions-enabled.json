@@ -1,0 +1,22 @@
+{
+  "id": "aws/ec2/regions-enabled",
+  "title": "Enabled AWS regions",
+  "description": "Lists AWS regions with their opt-in status; exclude not-opted-in regions from sweeps.",
+  "mutation": false,
+  "status": "stable",
+  "providers": ["aws"],
+  "services": ["ec2"],
+  "params": [
+    {
+      "name": "seed_region",
+      "type": "identifier",
+      "required": false,
+      "default": "us-east-1",
+      "description": "Routing region for the describe-regions call; any enabled region works",
+      "example": "us-east-1"
+    }
+  ],
+  "template": "SELECT regionName, optInStatus FROM aws.ec2_native.regions WHERE region = '{{seed_region}}';",
+  "notes": "region is a routing parameter, not a filter. Exclude rows with optInStatus = 'not-opted-in' before fanning out with WHERE region IN (...).",
+  "doc_url": "https://stackql.io/docs/query-library/queries/aws/ec2/regions-enabled"
+}

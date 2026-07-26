@@ -7,13 +7,6 @@ import (
 	"github.com/stackql/stackql/pkg/mcp_server/dto"
 )
 
-const (
-	// ExplainerPromptWriteSafeSelectTool is the static body of the write_safe_select prompt.
-	ExplainerPromptWriteSafeSelectTool = `In order to ascertain the best safe select query, the correct query form is:
-	>   SHOW methods IN <provider>.<service>.<resource>;
-	From the output, one can infer the best access method for the SQL "select" verb and the **required** WHERE clause attributes.`
-)
-
 // ExampleBackend is a simple implementation of the Backend interface for demonstration purposes.
 // This shows how to implement the Backend interface without depending on StackQL internals.
 type ExampleBackend struct {

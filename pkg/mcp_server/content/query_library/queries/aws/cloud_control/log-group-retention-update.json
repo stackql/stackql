@@ -1,0 +1,35 @@
+{
+  "id": "aws/cloud_control/log-group-retention-update",
+  "title": "Set CloudWatch log group retention",
+  "description": "Updates RetentionInDays on a log group via Cloud Control JSON Patch semantics.",
+  "mutation": true,
+  "status": "stable",
+  "providers": ["aws"],
+  "services": ["cloud_control", "logs"],
+  "params": [
+    {
+      "name": "region",
+      "type": "identifier",
+      "required": true,
+      "description": "Routing region",
+      "example": "ap-southeast-1"
+    },
+    {
+      "name": "log_group_name",
+      "type": "string",
+      "required": true,
+      "description": "Log group name (the data__Identifier key)",
+      "example": "my-log-group"
+    },
+    {
+      "name": "retention_days",
+      "type": "number",
+      "required": true,
+      "description": "Retention period in days",
+      "example": "180"
+    }
+  ],
+  "template": "UPDATE aws.cloud_control.resources SET data__PatchDocument = string('[{\"op\":\"replace\",\"path\":\"/RetentionInDays\",\"value\":{{retention_days}}}]') WHERE region = '{{region}}' AND data__TypeName = 'AWS::Logs::LogGroup' AND data__Identifier = '{{log_group_name}}';",
+  "notes": "Cloud Control mutations are asynchronous: the response is a progress event. Check completion via aws.cloud_control.resource_requests or by re-reading the resource. The PatchDocument is an RFC 6902 JSON Patch array against current state, wrapped in string(...).",
+  "doc_url": "https://stackql.io/docs/query-library/queries/aws/cloud_control/log-group-retention-update"
+}

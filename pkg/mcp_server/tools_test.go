@@ -523,12 +523,29 @@ func TestTool_PullProvider_AllowedInReadOnly(t *testing.T) {
 	}
 }
 
-func TestPrompt_WriteSafeSelect_RegisteredAndReturnsCanonicalText(t *testing.T) {
+func TestPrompt_CloudAudit_RegisteredAndReturnsRenderedText(t *testing.T) {
 	cs := connectInProcess(t, DefaultConfig(), &testBackend{})
+
+	prompts, err := loadEmbeddedPrompts()
+	if err != nil {
+		t.Fatalf("loadEmbeddedPrompts: %v", err)
+	}
+	var want string
+	for _, p := range prompts {
+		if p.Name() == "cloud_audit" {
+			want, err = p.Render(map[string]string{})
+			if err != nil {
+				t.Fatalf("Render: %v", err)
+			}
+		}
+	}
+	if want == "" {
+		t.Fatalf("cloud_audit not found among embedded prompts")
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	res, err := cs.GetPrompt(ctx, &mcp.GetPromptParams{Name: "write_safe_select"})
+	res, err := cs.GetPrompt(ctx, &mcp.GetPromptParams{Name: "cloud_audit"})
 	if err != nil {
 		t.Fatalf("GetPrompt: %v", err)
 	}
@@ -539,8 +556,8 @@ func TestPrompt_WriteSafeSelect_RegisteredAndReturnsCanonicalText(t *testing.T) 
 	if !ok {
 		t.Fatalf("content not TextContent: %T", res.Messages[0].Content)
 	}
-	if tc.Text != ExplainerPromptWriteSafeSelectTool {
-		t.Errorf("prompt text mismatch.\nwant: %q\ngot:  %q", ExplainerPromptWriteSafeSelectTool, tc.Text)
+	if tc.Text != want {
+		t.Errorf("prompt text mismatch.\nwant: %q\ngot:  %q", want, tc.Text)
 	}
 }
 
@@ -556,8 +573,8 @@ func TestPrompt_EnabledPromptsFilters(t *testing.T) {
 		t.Fatalf("ListPrompts: %v", err)
 	}
 	for _, p := range prompts.Prompts {
-		if p.Name == "write_safe_select" {
-			t.Errorf("write_safe_select should be filtered out")
+		if p.Name == "cloud_audit" {
+			t.Errorf("cloud_audit should be filtered out")
 		}
 	}
 }

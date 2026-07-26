@@ -119,9 +119,9 @@ func TestIsPromptEnabled(t *testing.T) {
 	if !cfg.IsPromptEnabled("anything") {
 		t.Errorf("empty EnabledPrompts should allow all prompts")
 	}
-	cfg.EnabledPrompts = []string{"write_safe_select"}
-	if !cfg.IsPromptEnabled("write_safe_select") {
-		t.Errorf("write_safe_select should be enabled")
+	cfg.EnabledPrompts = []string{"cloud_audit"}
+	if !cfg.IsPromptEnabled("cloud_audit") {
+		t.Errorf("cloud_audit should be enabled")
 	}
 	if cfg.IsPromptEnabled("other") {
 		t.Errorf("other should be denied")

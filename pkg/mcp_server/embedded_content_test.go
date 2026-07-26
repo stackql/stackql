@@ -37,22 +37,29 @@ func TestEmbeddedContent_LoadsAndValidates(t *testing.T) {
 	}
 }
 
-// TestEmbeddedPrompt_WriteSafeSelect_ByteIdentical pins the acceptance
-// criterion that the migrated prompt body matches the legacy Go constant.
-func TestEmbeddedPrompt_WriteSafeSelect_ByteIdentical(t *testing.T) {
+// TestEmbeddedPrompt_CloudAudit_Loaded pins the flagship prompt: it must load
+// with a non-empty body and declare its documented optional arguments.
+func TestEmbeddedPrompt_CloudAudit_Loaded(t *testing.T) {
 	prompts, err := loadEmbeddedPrompts()
 	if err != nil {
 		t.Fatalf("prompts: %v", err)
 	}
 	for _, p := range prompts {
-		if p.Name() == "write_safe_select" {
-			if p.Body() != ExplainerPromptWriteSafeSelectTool {
-				t.Errorf("body mismatch.\nwant: %q\ngot:  %q", ExplainerPromptWriteSafeSelectTool, p.Body())
+		if p.Name() == "cloud_audit" {
+			if p.Body() == "" {
+				t.Errorf("cloud_audit body should not be empty")
+			}
+			argNames := map[string]bool{}
+			for _, a := range p.Arguments() {
+				argNames[a.Name] = true
+			}
+			if !argNames["clouds"] || !argNames["focus"] {
+				t.Errorf("cloud_audit should declare clouds and focus arguments, got %v", argNames)
 			}
 			return
 		}
 	}
-	t.Fatalf("write_safe_select not found among embedded prompts")
+	t.Fatalf("cloud_audit not found among embedded prompts")
 }
 
 func TestSplitFrontmatter_Errors(t *testing.T) {
@@ -166,12 +173,12 @@ func TestResources_ListAndRead(t *testing.T) {
 	}
 	var uri string
 	for _, r := range list.Resources {
-		if r.Name == "stackql_sql_dialect" {
+		if r.Name == "stackql_scope_discovery" {
 			uri = r.URI
 		}
 	}
 	if uri == "" {
-		t.Fatalf("stackql_sql_dialect not listed: %+v", list.Resources)
+		t.Fatalf("stackql_scope_discovery not listed: %+v", list.Resources)
 	}
 	res, err := cs.ReadResource(ctx, &mcp.ReadResourceParams{URI: uri})
 	if err != nil {
@@ -181,7 +188,7 @@ func TestResources_ListAndRead(t *testing.T) {
 		t.Fatalf("expected 1 content item, got %d", len(res.Contents))
 	}
 	c := res.Contents[0]
-	if c.URI != uri || c.MIMEType != "text/markdown" || !strings.Contains(c.Text, "dialect") {
+	if c.URI != uri || c.MIMEType != "text/markdown" || !strings.Contains(c.Text, "enumeration") {
 		t.Errorf("unexpected contents: uri=%q mime=%q text=%q", c.URI, c.MIMEType, c.Text)
 	}
 }

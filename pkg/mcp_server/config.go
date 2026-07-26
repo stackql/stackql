@@ -37,6 +37,21 @@ type Config struct {
 	// DisableInstructions suppresses the embedded server instructions
 	// otherwise surfaced in the initialize result.
 	DisableInstructions bool `json:"disable_instructions,omitempty" yaml:"disable_instructions,omitempty"`
+
+	// QueryLibrary configures the query library tools (query_library_search,
+	// query_library_get).  Zero value means defaults + env var resolution.
+	QueryLibrary QueryLibraryConfig `json:"query_library,omitempty" yaml:"query_library,omitempty"`
+}
+
+// QueryLibraryConfig configures retrieval of the published query library.
+// Explicit config wins over env vars, which win over defaults.  Env vars:
+// STACKQL_QUERY_LIBRARY_BASE_URL, STACKQL_QUERY_LIBRARY_OFFLINE,
+// STACKQL_QUERY_LIBRARY_TTL (seconds).
+type QueryLibraryConfig struct {
+	BaseURL     string `json:"base_url,omitempty" yaml:"base_url,omitempty"`
+	FallbackURL string `json:"fallback_url,omitempty" yaml:"fallback_url,omitempty"`
+	Offline     bool   `json:"offline,omitempty" yaml:"offline,omitempty"`
+	TTLSeconds  int    `json:"ttl_seconds,omitempty" yaml:"ttl_seconds,omitempty"`
 }
 
 // nameEnabled reports whether name is allowed by an allowlist where nil or

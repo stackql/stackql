@@ -460,8 +460,10 @@ func registerTools(server *mcp.Server, cfg *Config, backend Backend, logger *log
 	addToolWithGate(
 		server, cfg, auditSink, queryGate("run_select_query"),
 		&mcp.Tool{
-			Name:        "run_select_query",
-			Description: "Execute a SELECT. Returns {rows}. Reads only.",
+			Name: "run_select_query",
+			Description: "Execute a SELECT. Returns {rows}. Reads only. Consult query_library_search for a " +
+				"vetted template before composing SQL from scratch; when the SQL came from a library entry, " +
+				"pass its id as source.",
 		},
 		func(ctx context.Context, _ *mcp.CallToolRequest, args dto.QueryJSONInput) (*mcp.CallToolResult, dto.QueryResultDTO, error) {
 			logger.Debugf("run_select_query: %s", args.SQL)
@@ -480,7 +482,9 @@ func registerTools(server *mcp.Server, cfg *Config, backend Backend, logger *log
 	)
 
 	registerExecQueryTool(server, cfg, backend, auditSink, "run_mutation_query",
-		"Execute INSERT/UPDATE/REPLACE/DELETE against the provider. Real side effects. Returns {messages, timestamp}. Gated by server mode.",
+		"Execute INSERT/UPDATE/REPLACE/DELETE against the provider. Real side effects. Returns {messages, timestamp}. "+
+			"Gated by server mode. Consult query_library_search for a vetted template before composing SQL from "+
+			"scratch; when the SQL came from a library entry, pass its id as source.",
 		"Mutation Result")
 
 	registerExecQueryTool(server, cfg, backend, auditSink, "run_lifecycle_operation",
@@ -531,6 +535,8 @@ func registerTools(server *mcp.Server, cfg *Config, backend Backend, logger *log
 			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: text}}}, res, nil
 		},
 	)
+
+	registerQueryLibraryTools(server, cfg, auditSink)
 }
 
 // registerExecQueryTool registers a mutation-shaped tool (mutation or

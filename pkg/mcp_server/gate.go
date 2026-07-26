@@ -46,10 +46,15 @@ func extractSQLFromQueryInput(args any) string {
 	return ""
 }
 
-// extractArgsFromQueryInput returns {sql, row_limit} for audit recording.
+// extractArgsFromQueryInput returns {sql, row_limit} plus the optional query
+// library source attribution for audit recording.
 func extractArgsFromQueryInput(args any) map[string]any {
 	if v, ok := args.(dto.QueryJSONInput); ok {
-		return map[string]any{"sql": v.SQL, "row_limit": v.RowLimit}
+		out := map[string]any{"sql": v.SQL, "row_limit": v.RowLimit}
+		if v.Source != "" {
+			out["source"] = v.Source
+		}
+		return out
 	}
 	return nil
 }

@@ -1,0 +1,83 @@
+{
+  "build_id": "embedded-snapshot-001",
+  "entries": [
+    {
+      "id": "aws/ec2/regions-enabled",
+      "title": "Enabled AWS regions",
+      "description": "Lists AWS regions with their opt-in status; exclude not-opted-in regions from sweeps.",
+      "providers": ["aws"],
+      "services": ["ec2"],
+      "tags": ["aws", "ec2", "regions", "inventory"],
+      "keywords": ["enabled regions", "region sweep", "opt-in status"],
+      "intent_keywords": ["list enabled aws regions", "which regions are enabled", "enumerate aws regions"],
+      "mutation": false,
+      "status": "stable",
+      "required_params": []
+    },
+    {
+      "id": "aws/s3/buckets-list",
+      "title": "S3 buckets cheap enumeration",
+      "description": "Enumerates S3 bucket names and regions via the list-only resource; identifiers only, no detail.",
+      "providers": ["aws"],
+      "services": ["s3"],
+      "tags": ["aws", "s3", "storage", "inventory"],
+      "keywords": ["bucket list", "s3 inventory", "list buckets"],
+      "intent_keywords": ["list all s3 buckets", "bucket inventory", "enumerate buckets"],
+      "mutation": false,
+      "status": "stable",
+      "required_params": ["region"]
+    },
+    {
+      "id": "aws/s3/bucket-detail",
+      "title": "S3 bucket security detail",
+      "description": "Full security attributes for one bucket: public access block, encryption, versioning, ownership.",
+      "providers": ["aws"],
+      "services": ["s3"],
+      "tags": ["aws", "s3", "storage", "security"],
+      "keywords": ["bucket encryption", "public access block", "bucket versioning"],
+      "intent_keywords": ["is my bucket public", "bucket security settings", "s3 bucket detail"],
+      "mutation": false,
+      "status": "stable",
+      "required_params": ["region", "bucket_name"]
+    },
+    {
+      "id": "google/cloudresourcemanager/projects-by-parent",
+      "title": "GCP projects under an org or folder",
+      "description": "Lists projects under a parent organization or folder; audit only ACTIVE projects.",
+      "providers": ["google"],
+      "services": ["cloudresourcemanager"],
+      "tags": ["google", "gcp", "projects", "inventory"],
+      "keywords": ["project list", "org descent", "gcp projects"],
+      "intent_keywords": ["list gcp projects", "projects in my organization", "enumerate google projects"],
+      "mutation": false,
+      "status": "stable",
+      "required_params": ["parent"]
+    },
+    {
+      "id": "azure/subscription/subscriptions-list",
+      "title": "Azure subscriptions",
+      "description": "Lists subscriptions visible to the credential, tenant-wide; audit only Enabled subscriptions.",
+      "providers": ["azure"],
+      "services": ["subscription"],
+      "tags": ["azure", "subscriptions", "inventory"],
+      "keywords": ["subscription list", "tenant subscriptions"],
+      "intent_keywords": ["list azure subscriptions", "enumerate subscriptions"],
+      "mutation": false,
+      "status": "stable",
+      "required_params": []
+    },
+    {
+      "id": "aws/cloud_control/log-group-retention-update",
+      "title": "Set CloudWatch log group retention",
+      "description": "Updates RetentionInDays on a log group via Cloud Control JSON Patch semantics.",
+      "providers": ["aws"],
+      "services": ["cloud_control", "logs"],
+      "tags": ["aws", "logs", "cloud_control", "mutation"],
+      "keywords": ["log retention", "patch document", "cloud control update"],
+      "intent_keywords": ["set log group retention", "change cloudwatch retention days"],
+      "mutation": true,
+      "status": "stable",
+      "required_params": ["region", "log_group_name", "retention_days"]
+    }
+  ]
+}

@@ -201,7 +201,7 @@ logging:
 
 ### Published Tools
 
-The server publishes the following 14 tools. Each tool's rendered output is a markdown table (uniform multi-row results) or a markdown KV record (sparse / single-record / mixed-shape results). Every tool also returns a typed structured DTO for programmatic clients.
+The server publishes the following 16 tools. Each tool's rendered output is a markdown table (uniform multi-row results) or a markdown KV record (sparse / single-record / mixed-shape results). Every tool also returns a typed structured DTO for programmatic clients.
 
 Tools carry MCP behavioural annotations derived from the policy-gate classification in `addToolWithGate` (`gate.go`), so the advertised hints and the enforced behaviour share one source of truth: statically select-classified tools get `readOnlyHint: true`, mutation/lifecycle tools an explicit `destructiveHint: true`, and `pull_provider` / `reload_credentials` are marked idempotent and non-destructive (they write only local cache / process env). SQL-carrying tools (`run_select_query` included) make no read-only claim because their effect depends on the submitted statement. Annotations are advisory per the MCP spec; the policy gate remains the enforcement point.
 
@@ -221,6 +221,37 @@ Tools carry MCP behavioural annotations derived from the policy-gate classificat
 | `list_registry` | Table | Providers (and their versions) available in the configured registry. Optional `provider` lists versions for that provider. |
 | `pull_provider` | KV | Install a provider from the registry into the local approot cache. Requires `provider`; `version` optional. Local cache write only. |
 | `reload_credentials` | Table | Re-source credentials from the backend's configured dotenv file into the process environment and report per-provider resolution status (issue #688). Never returns secret values. Optional `provider` scopes the report. Allowed in every mode. |
+| `query_library_search` | Table | Search the curated query library by natural-language `intent` (optional `provider`/`service`/`tags` filters, `include_mutations`, `limit`). Lexical ranking over the cached catalogue; no network call in steady state. On a miss (no hit clears the relevance threshold) the result carries a compact dialect guide so the model authors with the right rules instead of guessing. Mutation entries are excluded in `read_only` mode regardless of `include_mutations`. Read-only, no credentials. |
+| `query_library_get` | KV | Retrieve one library entry by `id`. Without `params`: the teaching surface - raw template with `{{placeholder}}`s intact, param declarations, notes, doc URL. With `params`: server-side validation (unknown params rejected, missing required params reported structurally with type/description/example, `identifier` params strictly validated, `string` values escaped for their literal position) and rendered SQL plus which execution tool to call (`run_select_query` or `run_mutation_query`). Rendering happens in the server; the model never performs substitution. |
+
+### Query Library
+
+The query library tools retrieve curated, versioned StackQL query templates published at
+`https://stackql.io/docs/query-library` (URL contract: `manifest.json`, `index.json`,
+`queries/<id>.json`). Retrieval of a known-good template replaces the model guessing dialect
+nuances; execution still runs only through the gated query tools, and the library adds no
+execution or credential path. `run_select_query` and `run_mutation_query` accept an optional
+`source` parameter carrying the library id for attribution (recorded in the audit log).
+
+Fetch and cache behaviour: the manifest `build_id` is the cache key; a changed build discards
+cached documents. Fallback ordering is the primary site, then the raw GitHub mirror, then a
+snapshot embedded in the binary (`content/query_library/`). Stale content beats no content:
+on total fetch failure the server serves from cache or snapshot and flags the response
+`stale` rather than erroring.
+
+Configuration (config wins over env, env over defaults):
+
+| Config field (`query_library`) | Env var | Default |
+|---|---|---|
+| `base_url` | `STACKQL_QUERY_LIBRARY_BASE_URL` | `https://stackql.io/docs/query-library` |
+| `fallback_url` | - | `https://raw.githubusercontent.com/stackql/stackql-query-library/main` |
+| `offline` (forces the bundled snapshot) | `STACKQL_QUERY_LIBRARY_OFFLINE` | `false` |
+| `ttl_seconds` (manifest TTL) | `STACKQL_QUERY_LIBRARY_TTL` | `300` |
+
+A mock server implementing the URL contract for testing lives at
+[`test/python/stackql_test_tooling/flask/query_library/app.py`](/test/python/stackql_test_tooling/flask/query_library/app.py)
+(see its docstring for standalone usage); the Go unit tests exercise the same contract via
+`httptest`, and the robot scenarios in `mcp.robot` cover the offline snapshot path end to end.
 
 ### Embedded Content: Instructions, Prompts and Resources
 
@@ -234,12 +265,16 @@ Malformed frontmatter, duplicate names and unresolved placeholders are caught at
 
 Currently published prompts:
 
-- `write_safe_select` - guidance for writing safe SELECT queries against stackql resources. The prompt body explains how to use `SHOW METHODS IN <provider>.<service>.<resource>` to discover the best read method and the required `WHERE` parameters.
 - `cloud_audit` - agent-driven read-only cross-cloud (AWS/GCP/Azure + Entra) security and FinOps audit. The invoking user needs only least-privilege read-only credentials configured; the agent discovers scope (regions, projects, subscriptions), runs the checks through the MCP tools and returns an executive summary, findings table and coverage appendix. Optional `clouds` and `focus` arguments scope the run. Agent-driven counterpart of the dockerised audit in [docs/audit.md](/docs/audit.md).
+- `drift_report` - compares declared IaC intent (Terraform state/plan or a pasted inventory, supplied via the required `intent` argument) against live cloud state and classifies drift as missing, unmanaged or divergent. Optional `clouds` argument scopes the run. Read-only; remediation is left to the operator.
+- `iam_access_review` - identity and access review across AWS IAM, Entra ID, Okta and GitHub: over-privileged principals, stale keys and inactive accounts, MFA gaps, guests and outside collaborators, plus a privileged-access register of admin-equivalent principals (the SOC2/ISO access-review artifact). Optional `providers` and `stale_days` arguments scope the run.
+- `public_exposure_scan` - fast, narrow sweep for internet-reachable resources: public storage, 0.0.0.0/0 network rules, public IP attachments, public database endpoints, exposed Kubernetes endpoints, public snapshots/images. Returns an exposure table sorted most severe first. Optional `clouds` argument scopes the run.
+- `cost_cleanup` - FinOps cleanup pass that finds idle and orphaned resources (unattached volumes, unassociated IPs, stopped-but-billing compute, aged snapshots, idle load balancers), estimates monthly savings from list prices, and returns a prioritised safe-to-delete list with a dollar figure. Optional `clouds` and `min_monthly_savings` arguments scope the run. Read-only; it never deletes anything.
 
 Currently published resources:
 
-- `stackql_sql_dialect` (`stackql://docs/sql_dialect`) - notes on the StackQL SQL dialect for provider-backed queries.
+- `stackql_scope_discovery` (`stackql://docs/scope_discovery`) - tested enumeration queries for establishing audit scope: AWS enabled regions and the S3 list/detail pairing, GCP org/folder/project descent, Azure subscriptions and management-group descent. Referenced by the audit-family prompts with a discovery-tools fallback.
+- `stackql_audit_rubric` (`stackql://docs/audit_rubric`) - shared severity, drift-class and deletion-confidence definitions plus reporting conventions, so reports from the audit-family prompts stay comparable across runs.
 
 ### Restricting Published Tools, Prompts and Resources
 

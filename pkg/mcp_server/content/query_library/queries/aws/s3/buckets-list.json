@@ -1,0 +1,21 @@
+{
+  "id": "aws/s3/buckets-list",
+  "title": "S3 buckets cheap enumeration",
+  "description": "Enumerates S3 bucket names and regions via the list-only resource; identifiers only, no detail.",
+  "mutation": false,
+  "status": "stable",
+  "providers": ["aws"],
+  "services": ["s3"],
+  "params": [
+    {
+      "name": "region",
+      "type": "identifier",
+      "required": true,
+      "description": "Routing region",
+      "example": "us-east-1"
+    }
+  ],
+  "template": "SELECT bucket_name, region FROM aws.s3.buckets_list_only WHERE region = '{{region}}';",
+  "notes": "S3 bucket listing is account-global; the region routes the request. Pair with aws/s3/bucket-detail for per-bucket attributes, one request per bucket.",
+  "doc_url": "https://stackql.io/docs/query-library/queries/aws/s3/buckets-list"
+}
