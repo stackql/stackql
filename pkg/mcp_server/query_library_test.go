@@ -169,7 +169,7 @@ func TestQueryLibrary_SearchExcludesMutationsByDefault(t *testing.T) {
 	}
 }
 
-func TestQueryLibrary_SearchMissPathCarriesDialectGuide(t *testing.T) {
+func TestQueryLibrary_SearchMissPathCarriesGuidance(t *testing.T) {
 	client := newClientForFixture(t, newTestFixture())
 	out, err := client.search(context.Background(), dto.QueryLibrarySearchInput{
 		Intent: "quantum flux capacitor telemetry",
@@ -180,8 +180,11 @@ func TestQueryLibrary_SearchMissPathCarriesDialectGuide(t *testing.T) {
 	if !out.Miss {
 		t.Fatalf("expected miss path")
 	}
-	if !strings.Contains(out.DialectGuide, "Dialect rules") {
-		t.Errorf("miss path should carry the dialect guide, got %q", out.DialectGuide[:min(80, len(out.DialectGuide))])
+	if !strings.Contains(out.Guidance, "server instructions") {
+		t.Errorf("miss path should point at the server instructions, got %q", out.Guidance)
+	}
+	if len(out.Guidance) > 400 {
+		t.Errorf("miss guidance must stay a compact pointer, got %d chars", len(out.Guidance))
 	}
 }
 

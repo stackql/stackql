@@ -78,12 +78,12 @@ type QueryLibraryHitDTO struct {
 
 // QueryLibrarySearchDTO is the result of query_library_search.
 type QueryLibrarySearchDTO struct {
-	Hits         []QueryLibraryHitDTO `json:"hits"`
-	Miss         bool                 `json:"miss" jsonschema:"true when no hit cleared the score threshold"`
-	DialectGuide string               `json:"dialect_guide,omitempty" jsonschema:"compact dialect guide returned on the miss path"`
-	SourceTier   string               `json:"source_tier,omitempty" jsonschema:"primary, fallback or snapshot"`
-	SourceURL    string               `json:"source_url,omitempty" jsonschema:"citation: URL or embedded path the catalogue was loaded from"`
-	Stale        bool                 `json:"stale,omitempty" jsonschema:"true when served from cache or snapshot after fetch failure"`
+	Hits       []QueryLibraryHitDTO `json:"hits"`
+	Miss       bool                 `json:"miss" jsonschema:"true when no hit cleared the score threshold"`
+	Guidance   string               `json:"guidance,omitempty" jsonschema:"authoring guidance returned on the miss path"`
+	SourceTier string               `json:"source_tier,omitempty" jsonschema:"primary, fallback or snapshot"`
+	SourceURL  string               `json:"source_url,omitempty" jsonschema:"citation: URL or embedded path the catalogue was loaded from"`
+	Stale      bool                 `json:"stale,omitempty" jsonschema:"true when served from cache or snapshot after fetch failure"`
 }
 
 // QueryLibraryParamDTO describes one declared template parameter.

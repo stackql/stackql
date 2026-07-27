@@ -40,8 +40,15 @@ const (
 	queryLibraryDefaultLimit = 5
 	queryLibraryMaxLimit     = 20
 	// queryLibraryMissThreshold is the top score below which the miss path
-	// fires and the compact dialect guide is attached.
+	// fires and authoring guidance is attached.
 	queryLibraryMissThreshold = 2.5
+
+	// queryLibraryMissGuidance is the miss-path message.  Deliberately a
+	// pointer, not a payload: the dialect rules and discovery workflow are
+	// already in the server instructions delivered at initialize.
+	queryLibraryMissGuidance = "No library entry matched. Author the query using the server instructions: " +
+		"follow the discovery workflow (list_methods / describe_method) and the dialect rules, then " +
+		"validate with validate_select_query before executing."
 
 	querySourceTierPrimary  = "primary"
 	querySourceTierFallback = "fallback"
@@ -530,22 +537,14 @@ func (c *queryLibraryClient) search(
 		out.Hits = append(out.Hits, entryToHit(cand.entry, cand.score))
 	}
 	if len(out.Hits) == 0 || out.Hits[0].Score < queryLibraryMissThreshold {
-		// Miss path: nearest neighbours plus the compact dialect guide, so
-		// the model degrades to authoring with the right rules, not guessing.
+		// Miss path: nearest neighbours plus a pointer to the server
+		// instructions, so the model degrades to authoring with the right
+		// rules, not guessing.  The dialect rules themselves already ship in
+		// the initialize instructions; repeating them here would waste tokens.
 		out.Miss = true
-		out.DialectGuide = queryLibraryDialectGuide()
+		out.Guidance = queryLibraryMissGuidance
 	}
 	return out, nil
-}
-
-// queryLibraryDialectGuide returns the embedded dialect instruction file,
-// which doubles as the compact non-ANSI nuance guide on the miss path.
-func queryLibraryDialectGuide() string {
-	raw, err := fs.ReadFile(embeddedContentFS, "content/instructions/02-dialect.md")
-	if err != nil {
-		return ""
-	}
-	return normalizeContent(raw)
 }
 
 // --- get / render ---
@@ -840,8 +839,7 @@ func registerQueryLibrarySearchTool(
 				body := render.RenderTable(searchHitsToRows(out.Hits))
 				body += "\n\nSource: " + out.SourceURL
 				if out.Miss {
-					body += "\n\nNo hit cleared the relevance threshold. Author the query using the dialect " +
-						"guide below and the discovery tools.\n\n" + out.DialectGuide
+					body += "\n\n" + queryLibraryMissGuidance
 				}
 				return body
 			})
