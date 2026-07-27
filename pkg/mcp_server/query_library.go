@@ -46,9 +46,10 @@ const (
 	// queryLibraryMissGuidance is the miss-path message.  Deliberately a
 	// pointer, not a payload: the dialect rules and discovery workflow are
 	// already in the server instructions delivered at initialize.
-	queryLibraryMissGuidance = "No library entry matched. Author the query using the server instructions: " +
-		"follow the discovery workflow (list_methods / describe_method) and the dialect rules, then " +
-		"validate with validate_select_query before executing."
+	queryLibraryMissGuidance = "No library entry matched. Author the query using the server instructions " +
+		"(also readable as the stackql://docs/instructions resource): follow the discovery workflow " +
+		"(list_methods / describe_method) and the dialect rules, then validate with " +
+		"validate_select_query before executing."
 
 	querySourceTierPrimary  = "primary"
 	querySourceTierFallback = "fallback"

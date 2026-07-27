@@ -193,6 +193,36 @@ func TestResources_ListAndRead(t *testing.T) {
 	}
 }
 
+func TestResources_SyntheticInstructionsResource(t *testing.T) {
+	cs := connectInProcess(t, DefaultConfig(), &testBackend{})
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	list, err := cs.ListResources(ctx, nil)
+	if err != nil {
+		t.Fatalf("ListResources: %v", err)
+	}
+	var uri string
+	for _, r := range list.Resources {
+		if r.Name == "stackql_server_instructions" {
+			uri = r.URI
+		}
+	}
+	if uri != "stackql://docs/instructions" {
+		t.Fatalf("stackql_server_instructions not listed with expected uri: %+v", list.Resources)
+	}
+	res, err := cs.ReadResource(ctx, &mcp.ReadResourceParams{URI: uri})
+	if err != nil {
+		t.Fatalf("ReadResource: %v", err)
+	}
+	want, err := loadEmbeddedInstructions()
+	if err != nil {
+		t.Fatalf("loadEmbeddedInstructions: %v", err)
+	}
+	if len(res.Contents) != 1 || res.Contents[0].Text != want {
+		t.Errorf("instructions resource must be byte-identical to the initialize instructions")
+	}
+}
+
 func TestResources_EnabledResourcesFilters(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.EnabledResources = []string{"some_other_resource"}

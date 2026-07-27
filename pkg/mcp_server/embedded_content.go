@@ -355,10 +355,36 @@ func registerEmbeddedPrompts(server *mcp.Server, cfg *Config) error {
 // registerEmbeddedResources publishes every embedded resource, subject to the
 // EnabledResources allowlist.  The SDK declares the resources capability only
 // when at least one resource is registered.
+//
+// In addition to the file-based resources, the composed server instructions
+// are published as a synthetic resource.  This is deliberately duplicative of
+// the initialize instructions - same bytes, second delivery channel - so
+// clients that do not surface initialize instructions to the model can still
+// pull the discovery workflow and dialect rules on demand (eg when the query
+// library miss path points at them).  Authored once, exposed twice.
 func registerEmbeddedResources(server *mcp.Server, cfg *Config) error {
 	resources, err := loadEmbeddedResources()
 	if err != nil {
 		return fmt.Errorf("embedded resources: %w", err)
+	}
+	instructions, err := loadEmbeddedInstructions()
+	if err != nil {
+		return fmt.Errorf("embedded instructions resource: %w", err)
+	}
+	if instructions != "" {
+		syntheticInstructions, synthErr := newEmbeddedResource(
+			"stackql_server_instructions",
+			"The composed server instructions (discovery workflow, dialect rules, routing, errors, modes); "+
+				"identical to the initialize instructions, published as a resource for clients that do not "+
+				"surface them.",
+			defaultResourceURIStem+"instructions",
+			defaultResourceMIMEType,
+			instructions,
+		)
+		if synthErr != nil {
+			return fmt.Errorf("embedded instructions resource: %w", synthErr)
+		}
+		resources = append(resources, syntheticInstructions)
 	}
 	for _, r := range resources {
 		if !cfg.IsResourceEnabled(r.Name()) {

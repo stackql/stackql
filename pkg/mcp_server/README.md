@@ -274,6 +274,7 @@ Currently published prompts:
 Currently published resources:
 
 - `stackql_scope_discovery` (`stackql://docs/scope_discovery`) - tested enumeration queries for establishing audit scope: AWS enabled regions and the S3 list/detail pairing, GCP org/folder/project descent, Azure subscriptions and management-group descent. Referenced by the audit-family prompts with a discovery-tools fallback.
+- `stackql_server_instructions` (`stackql://docs/instructions`) - synthetic resource carrying the composed server instructions, byte-identical to the `initialize` payload. Exists for clients that do not surface initialize instructions to the model; the query library miss path points at it. Suppressed only when every instruction file is absent.
 - `stackql_audit_rubric` (`stackql://docs/audit_rubric`) - shared severity, drift-class and deletion-confidence definitions plus reporting conventions, so reports from the audit-family prompts stay comparable across runs.
 
 ### Restricting Published Tools, Prompts and Resources
