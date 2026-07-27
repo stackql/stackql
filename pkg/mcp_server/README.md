@@ -235,7 +235,7 @@ execution or credential path. `run_select_query` and `run_mutation_query` accept
 
 Fetch and cache behaviour: the manifest `build_id` is the cache key; a changed build discards
 cached documents. Fallback ordering is the primary site, then the raw GitHub mirror, then a
-snapshot embedded in the binary (`content/query_library/`). Stale content beats no content:
+snapshot embedded in the binary (`content/query_library_snapshot/`, a vendored copy - the library is mastered in the stackql.io repo). Stale content beats no content:
 on total fetch failure the server serves from cache or snapshot and flags the response
 `stale` rather than erroring.
 

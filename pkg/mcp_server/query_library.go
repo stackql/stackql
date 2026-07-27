@@ -55,7 +55,7 @@ const (
 	querySourceTierFallback = "fallback"
 	querySourceTierSnapshot = "snapshot"
 
-	queryLibrarySnapshotDir = "content/query_library"
+	queryLibrarySnapshotDir = "content/query_library_snapshot"
 
 	nextToolSelect    = "run_select_query"
 	nextToolMutation  = "run_mutation_query"
