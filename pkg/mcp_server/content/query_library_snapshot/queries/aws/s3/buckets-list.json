@@ -5,10 +5,20 @@
   "mutation": false,
   "verb": "select",
   "status": "stable",
-  "providers": ["aws"],
-  "services": ["s3"],
-  "cost": {"fan_out": "none", "expensive": false, "notes": "Single account-global list call"},
-  "related": ["aws/s3/bucket-detail"],
+  "providers": [
+    "aws"
+  ],
+  "services": [
+    "s3"
+  ],
+  "cost": {
+    "fan_out": "none",
+    "expensive": false,
+    "notes": "Single account-global list call"
+  },
+  "related": [
+    "aws/s3/bucket-detail"
+  ],
   "params": [
     {
       "name": "region",
@@ -20,5 +30,8 @@
   ],
   "template": "SELECT bucket_name, region FROM aws.s3.buckets_list_only WHERE region = '{{region}}';",
   "notes": "S3 bucket listing is account-global; the region routes the request. Pair with aws/s3/bucket-detail for per-bucket attributes, one request per bucket.",
-  "doc_url": "https://stackql.io/docs/query-library/queries/aws/s3/buckets-list"
+  "doc_url": "https://stackql.io/docs/query-library/queries/aws/s3/buckets-list",
+  "permissions": [
+    "s3:ListAllMyBuckets"
+  ]
 }

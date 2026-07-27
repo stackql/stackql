@@ -134,6 +134,7 @@ type libDoc struct {
 	Providers   []string    `json:"providers,omitempty"`
 	Services    []string    `json:"services,omitempty"`
 	Auth        []string    `json:"auth,omitempty"`
+	Permissions []string    `json:"permissions,omitempty"`
 	Params      []libParam  `json:"params,omitempty"`
 	Outputs     []libOutput `json:"outputs,omitempty"`
 	Cost        *libCost    `json:"cost,omitempty"`
@@ -728,6 +729,7 @@ func (c *queryLibraryClient) get(ctx context.Context, in dto.QueryLibraryGetInpu
 		Verb:        doc.Verb,
 		NextTool:    nextToolFor(doc),
 		Auth:        doc.Auth,
+		Permissions: doc.Permissions,
 		Related:     doc.Related,
 		DocURL:      doc.DocURL,
 		SourceTier:  tier,

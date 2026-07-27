@@ -5,13 +5,31 @@
   "mutation": false,
   "verb": "select",
   "status": "stable",
-  "providers": ["aws"],
-  "services": ["ec2"],
-  "auth": ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"],
-  "cost": {"fan_out": "none", "expensive": false},
+  "providers": [
+    "aws"
+  ],
+  "services": [
+    "ec2"
+  ],
+  "auth": [
+    "AWS_ACCESS_KEY_ID",
+    "AWS_SECRET_ACCESS_KEY"
+  ],
+  "cost": {
+    "fan_out": "none",
+    "expensive": false
+  },
   "outputs": [
-    {"name": "regionName", "type": "string", "description": "Region identifier"},
-    {"name": "optInStatus", "type": "string", "description": "opt-in-not-required, opted-in or not-opted-in"}
+    {
+      "name": "regionName",
+      "type": "string",
+      "description": "Region identifier"
+    },
+    {
+      "name": "optInStatus",
+      "type": "string",
+      "description": "opt-in-not-required, opted-in or not-opted-in"
+    }
   ],
   "params": [
     {
@@ -25,5 +43,8 @@
   ],
   "template": "SELECT regionName, optInStatus FROM aws.ec2_native.regions WHERE region = '{{seed_region}}';",
   "notes": "region is a routing parameter, not a filter. Exclude rows with optInStatus = 'not-opted-in' before fanning out with WHERE region IN (...).",
-  "doc_url": "https://stackql.io/docs/query-library/queries/aws/ec2/regions-enabled"
+  "doc_url": "https://stackql.io/docs/query-library/queries/aws/ec2/regions-enabled",
+  "permissions": [
+    "ec2:DescribeRegions"
+  ]
 }

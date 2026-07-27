@@ -126,6 +126,7 @@ type QueryLibraryGetDTO struct {
 	Cost          *QueryLibraryCostDTO    `json:"cost,omitempty"`
 	Outputs       []QueryLibraryOutputDTO `json:"outputs,omitempty"`
 	Auth          []string                `json:"auth,omitempty" jsonschema:"env vars the template's providers need resolved"`
+	Permissions   []string                `json:"permissions,omitempty" jsonschema:"provider-native permissions or actions required to execute the template (eg iam:ListUsers)"` //nolint:lll // schema doc
 	Related       []string                `json:"related,omitempty" jsonschema:"related library entry ids"`
 	NextTool      string                  `json:"next_tool" jsonschema:"run_select_query, run_mutation_query or run_lifecycle_operation"` //nolint:lll // schema doc
 	Template      string                  `json:"template,omitempty" jsonschema:"raw template with {{param}} placeholders"`
