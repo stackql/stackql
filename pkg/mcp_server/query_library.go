@@ -33,7 +33,7 @@ import (
 
 const (
 	queryLibraryDefaultBaseURL     = "https://stackql.io/docs/query-library"
-	queryLibraryDefaultFallbackURL = "https://raw.githubusercontent.com/stackql/stackql.io/main/static/docs/query-library"
+	queryLibraryDefaultFallbackURL = "https://raw.githubusercontent.com/stackql/query-library.stackql.io/main/static/docs/query-library"
 	queryLibraryDefaultTTL         = 300 * time.Second
 	queryLibraryHTTPTimeout        = 10 * time.Second
 
