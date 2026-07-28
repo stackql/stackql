@@ -1,55 +1,32 @@
 ---
 name: stackql_scope_discovery
-description: Tested StackQL queries for enumerating audit scope - AWS regions and buckets, GCP org/folder/project descent, Azure management groups and subscriptions.
+description: Scope discovery strategy for audit-style sweeps - what to enumerate per cloud and which query library entries carry the tested queries.
 ---
-# Scope discovery queries
+# Scope discovery strategy
 
-Tested enumeration queries for establishing cloud scope before an audit-style sweep. Substitute placeholder values; every `WHERE` predicate shown maps to a request input and is exact-match. If a query fails against your provider version, fall back to the discovery tools (`list_methods` / `describe_method`) rather than guessing variants.
+How to establish cloud scope before an audit-style sweep. Query shapes are deliberately
+not inlined here: fetch them from the query library (`query_library_search` /
+`query_library_get`), which is the single maintained home for tested enumeration queries.
 
-## AWS
+## Per cloud
 
-Enabled regions (needs one seed region for routing; exclude regions with `optInStatus = 'not-opted-in'` from subsequent sweeps):
+- **AWS** - enumerate enabled regions first and exclude `not-opted-in` regions from every
+  subsequent sweep. Library entry: `aws/ec2/regions-enabled`. For storage scope, pair the
+  cheap bucket enumeration (`aws/s3/buckets-list`) with per-bucket detail
+  (`aws/s3/bucket-detail`) only for the buckets you need.
+- **GCP** - descend the organization: list folders and projects per parent
+  (`organizations/<org_id>` or `folders/<folder_id>`), recursing into `ACTIVE` folders;
+  audit only `ACTIVE` projects. Library entry:
+  `google/cloudresourcemanager/projects-by-parent`.
+- **Azure** - enumerate subscriptions tenant-wide and audit only `Enabled` ones; when a
+  management-group scope is configured, descend it instead. Library entry:
+  `azure/subscription/subscriptions-list`.
 
-```sql
-SELECT regionName, optInStatus FROM aws.ec2_native.regions WHERE region = 'us-east-1';
-```
+## Rules
 
-S3 buckets, cheap enumeration then per-bucket detail (the list_only/keyed pairing):
-
-```sql
-SELECT bucket_name, region FROM aws.s3.buckets_list_only WHERE region = 'us-east-1';
-
-SELECT bucket_name, region, public_access_block_configuration, bucket_encryption,
-       versioning_configuration, ownership_controls
-FROM aws.s3.buckets WHERE region = 'us-east-1' AND data__Identifier = 'my-bucket';
-```
-
-## GCP
-
-Organization descent - list folders and projects under a parent, recursing into each `ACTIVE` folder. `parent` takes the form `organizations/<org_id>` or `folders/<folder_id>`:
-
-```sql
-SELECT name, parent, state FROM google.cloudresourcemanager.folders WHERE parent = 'organizations/123456789012';
-
-SELECT projectId, parent, state FROM google.cloudresourcemanager.projects WHERE parent = 'organizations/123456789012';
-```
-
-Audit only projects with `state = 'ACTIVE'`.
-
-## Azure
-
-Tenant-wide subscriptions (audit only `state = 'Enabled'`):
-
-```sql
-SELECT subscriptionId, state FROM azure.subscription.subscriptions;
-```
-
-Management-group descent, when scoping to a management group:
-
-```sql
-SELECT id, name, type FROM azure.management_groups.descendants WHERE groupId = 'my-mgmt-group';
-```
-
-## Other providers
-
-No canned queries are maintained for GitHub, Okta or Entra scope discovery; use the discovery workflow (`list_services` / `list_resources` / `list_methods`) to find the membership or tenant enumeration resource for the provider version in use.
+- Fetch templates by id with `query_library_get` and render with params server-side; do
+  not hand-author enumeration queries while a library entry exists.
+- If an entry is missing for a provider in scope, fall back to the discovery workflow
+  (`list_methods` / `describe_method`) per the server instructions.
+- Record every scope element skipped (region, project, subscription) and the reason;
+  never assert completeness over unswept scope.

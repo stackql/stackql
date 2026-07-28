@@ -21,11 +21,11 @@
       "name": "bucket_name",
       "type": "string",
       "required": true,
-      "description": "Bucket name (the data__Identifier key)",
+      "description": "Bucket name (the Identifier key)",
       "example": "my-bucket"
     }
   ],
-  "template": "SELECT bucket_name, region, public_access_block_configuration, bucket_encryption, versioning_configuration, ownership_controls FROM aws.s3.buckets WHERE region = '{{region}}' AND data__Identifier = '{{bucket_name}}';",
+  "template": "SELECT bucket_name, region, public_access_block_configuration, bucket_encryption, versioning_configuration, ownership_controls FROM aws.s3.buckets WHERE region = '{{region}}' AND Identifier = '{{bucket_name}}';",
   "notes": "Keyed read: one request per bucket. A 404 with an empty result means the bucket does not exist - a valid answer, not a failure.",
   "doc_url": "https://stackql.io/docs/query-library/queries/aws/s3/bucket-detail"
 }

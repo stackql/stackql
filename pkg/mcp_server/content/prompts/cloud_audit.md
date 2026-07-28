@@ -17,7 +17,7 @@ Procedure:
 
 1. **Session setup.** Call `server_info`, then `reload_credentials` to learn which providers resolve credentials (relevant providers: `aws`, `google`, `azure`, `entra_id`). Audit only in-scope clouds whose credentials resolve; record every skipped cloud and the reason.
 2. **Provider availability.** Call `list_providers`; `pull_provider` any in-scope provider not yet installed.
-3. **Scope discovery, per cloud.** If the client exposes MCP resources, read `stackql://docs/scope_discovery` for tested enumeration queries; otherwise use the discovery tools.
+3. **Scope discovery, per cloud.** Fetch enumeration queries from the query library (`query_library_search`, then `query_library_get` with params); the `stackql://docs/scope_discovery` resource carries the per-cloud strategy and entry ids where the client exposes resources.
    - AWS: enumerate enabled regions and sweep per region; scan all S3 buckets.
    - GCP: enumerate accessible projects (descend from the organization when one is reachable) and audit per project.
    - Azure: enumerate subscriptions (descend management groups when configured) and audit per subscription; identity checks via `entra_id`.

@@ -33,14 +33,14 @@ Rewrites for the gaps: `WHERE x IN (SELECT ...)` -> inner join on a derived tabl
 
 ## Mutation shapes
 
-Always run `describe_method` before a mutation or lifecycle op. It returns the full I/O contract: every input field with its exact column name, `param_type` (`input_required` / `input_optional` / `output`), and a `shape` carrying the nested JSON schema for object and array inputs. Use the reported names verbatim: body fields normally carry a `data__` prefix, but methods configured with `requestBodyTranslate: algorithm: naive` use raw unprefixed body field names - the `describe_method` output already reflects whichever applies, so never add or strip the prefix yourself. Whether an input travels in the path, query, header or body is deliberately not exposed; every input is just a column.
+Always run `describe_method` before a mutation or lifecycle op. It returns the full I/O contract: every input field with its exact column name, `param_type` (`input_required` / `input_optional` / `output`), and a `shape` carrying the nested JSON schema for object and array inputs. Use the reported names verbatim: body field names are normally the provider's raw field names; a minority of methods (eg the generic `aws.cloud_control` surface) prefix body fields with `data__` - the `describe_method` output already reflects whichever applies, so never add or strip a prefix yourself. Whether an input travels in the path, query, header or body is deliberately not exposed; every input is just a column.
 
-- `INSERT INTO <provider>.<service>.<resource> (param, data__Field) SELECT 'p', 'v'` (or `VALUES (...)`). `INSERT ... SELECT` from a scalar row or another query is supported, as is `RETURNING` (functions allowed in the returning list) where the provider response carries the resource.
-- `UPDATE <provider>.<service>.<resource> SET data__Field = 'v', param = 'p' WHERE <required params>` - `SET` carries body fields and routing params; `WHERE` carries the identifying params.
+- `INSERT INTO <provider>.<service>.<resource> (param, Field) SELECT 'p', 'v'` (or `VALUES (...)`). `INSERT ... SELECT` from a scalar row or another query is supported, as is `RETURNING` (functions allowed in the returning list) where the provider response carries the resource.
+- `UPDATE <provider>.<service>.<resource> SET Field = 'v', param = 'p' WHERE <required params>` - `SET` carries body fields and routing params; `WHERE` carries the identifying params.
 - `REPLACE` (maps to HTTP PUT) has the same statement shape as `UPDATE` (which typically maps to PATCH).
 - `DELETE FROM <provider>.<service>.<resource> WHERE <required params>`.
-- JSON-valued inputs are passed as single-quoted JSON strings: `data__Protocols = '[ "SFTP" ]'`.
-- The `data__Field` names in the examples above assume the default prefix scheme; substitute the names `describe_method` reports.
+- JSON-valued inputs are passed as single-quoted JSON strings: `Protocols = '[ "SFTP" ]'`.
+- The `Field` names in the examples above are placeholders; substitute the names `describe_method` reports.
 - `RETURNING` projects fields of the method's response: exactly the rows `describe_method` reports with `param_type` = `output`. A method with an empty response (eg HTTP 204) has no output rows and nothing to return.
 
 ## Functions

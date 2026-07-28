@@ -24,7 +24,7 @@
       "name": "log_group_name",
       "type": "string",
       "required": true,
-      "description": "Log group name (the data__Identifier key)",
+      "description": "Log group name (the Identifier key)",
       "example": "my-log-group"
     },
     {
@@ -35,7 +35,7 @@
       "example": "180"
     }
   ],
-  "template": "UPDATE aws.cloud_control.resources SET data__PatchDocument = string('[{\"op\":\"replace\",\"path\":\"/RetentionInDays\",\"value\":{{retention_days}}}]') WHERE region = '{{region}}' AND data__TypeName = 'AWS::Logs::LogGroup' AND data__Identifier = '{{log_group_name}}';",
+  "template": "UPDATE aws.cloud_control.resources SET PatchDocument = string('[{\"op\":\"replace\",\"path\":\"/RetentionInDays\",\"value\":{{retention_days}}}]') WHERE region = '{{region}}' AND TypeName = 'AWS::Logs::LogGroup' AND Identifier = '{{log_group_name}}';",
   "notes": "Cloud Control mutations are asynchronous: the response is a progress event. Check completion via aws.cloud_control.resource_requests or by re-reading the resource. The PatchDocument is an RFC 6902 JSON Patch array against current state, wrapped in string(...).",
   "doc_url": "https://stackql.io/docs/query-library/queries/aws/cloud_control/log-group-retention-update"
 }

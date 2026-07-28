@@ -17,7 +17,7 @@ Procedure:
 
 1. **Session setup.** Call `server_info`, then `reload_credentials` to learn which providers resolve credentials. Review only in-scope clouds whose credentials resolve; record every skipped cloud and the reason.
 2. **Provider availability.** Call `list_providers`; `pull_provider` any in-scope provider not yet installed.
-3. **Scope discovery, per cloud.** AWS: enabled regions, swept per region. GCP: accessible projects. Azure: subscriptions. If the client exposes MCP resources, read `stackql://docs/scope_discovery` for tested enumeration queries.
+3. **Scope discovery, per cloud.** AWS: enabled regions, swept per region. GCP: accessible projects. Azure: subscriptions. Fetch enumeration queries from the query library (`query_library_search` / `query_library_get`); the `stackql://docs/scope_discovery` resource carries the per-cloud strategy where the client exposes resources.
 4. **Discover before querying.** For each new resource type, use `list_methods` / `describe_method` to learn the select method and its **required** WHERE attributes; use `validate_select_query` on untested SQL. WHERE clauses that map to provider parameters are exact-match only; URL-encode embedded slashes as `%2F` where routes have consecutive path parameters.
 5. **Waste checks.** For each in-scope cloud:
    - **Unattached block storage**: EBS volumes, persistent disks and managed disks with no attachment - capture size and type for pricing.
