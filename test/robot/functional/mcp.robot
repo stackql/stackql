@@ -751,6 +751,27 @@ MCP HTTP Mode Read Only Refuses Mutations And Lifecycle
     ...                  stderr=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-lifecycle-stderr.txt
     Should Not Be Equal As Integers    ${life.rc}    0
     Should Contain    ${life.stderr}    read_only
+    # A common table expression heading a query body is read-only and must be
+    # allowed; one heading a mutation must still be refused.
+    ${cte_select}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9920
+    ...                  \-\-exec.action      run_select_query
+    ...                  \-\-exec.args        {"sql":"WITH b AS (select name, id from google.storage.buckets where project \= 'stackql\-demo') select name, id from b;"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-cte-select.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-cte-select-stderr.txt
+    Should Be Equal As Integers    ${cte_select.rc}    0
+    ${cte_mut}=    Run Process          ${STACKQL_MCP_CLIENT_EXE}
+    ...                  exec
+    ...                  \-\-client\-type\=http
+    ...                  \-\-url\=http://127.0.0.1:9920
+    ...                  \-\-exec.action      run_mutation_query
+    ...                  \-\-exec.args        {"sql":"WITH f AS (select 1) delete from google.compute.firewalls where project \= 'mutable\-project' and firewall \= 'deletable\-firewall';"}
+    ...                  stdout=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-cte-mutation.txt
+    ...                  stderr=${CURDIR}${/}tmp${/}MCP-Mode-ReadOnly-cte-mutation-stderr.txt
+    Should Not Be Equal As Integers    ${cte_mut.rc}    0
+    Should Contain    ${cte_mut.stderr}    read_only
 
 MCP HTTP Mode Safe Refuses Mutations Without Elicitation
     [Documentation]    Server at 9912 starts with mode=full_access (existing scenarios assume that).

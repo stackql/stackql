@@ -3,7 +3,10 @@
 // server mode.  Pure functions only - no I/O, no SDK types, no logging.
 package policy
 
-import "strings"
+import (
+	"regexp"
+	"strings"
+)
 
 // Server modes.  These are the legal values for Config.Server.Mode.
 const (
@@ -14,7 +17,9 @@ const (
 )
 
 // QueryClass identifies the kind of statement a query tool is being asked to run.
-// The classifier is intentionally shallow: it looks at the first token only.
+// The classifier is intentionally shallow: it looks at the first token only,
+// except for a leading WITH, which is resolved by scanning for a
+// data-modifying keyword (see ClassifyQuery).
 type QueryClass int
 
 const (
@@ -42,9 +47,19 @@ func (c QueryClass) String() string {
 	return "unknown"
 }
 
+// withMutationRegexp matches a data-modifying keyword appearing as a whole
+// word.  It is applied only to statements that begin with WITH, to decide
+// whether the common table expression heads a read-only statement.
+var withMutationRegexp = regexp.MustCompile(`(?i)\b(INSERT|UPDATE|DELETE|REPLACE|MERGE|UPSERT|EXEC)\b`)
+
 // ClassifyQuery returns the class of the SQL by inspecting only the first
 // whitespace-separated token.  It does not parse the statement.  Empty or
 // unrecognised inputs return QueryClassUnknown.
+//
+// A leading WITH is the one case that needs more than the first token: SQL
+// allows a common table expression to head a read-only SELECT but also an
+// INSERT, UPDATE or DELETE, so classifying every WITH as read-only would let
+// a mutation through the gate.  Such statements are resolved by classifyWith.
 func ClassifyQuery(sql string) QueryClass {
 	trimmed := strings.TrimSpace(sql)
 	if trimmed == "" {
@@ -60,6 +75,8 @@ func ClassifyQuery(sql string) QueryClass {
 	switch strings.ToUpper(verb) {
 	case "SELECT", "SHOW", "DESCRIBE", "EXPLAIN":
 		return QueryClassSelect
+	case "WITH":
+		return classifyWith(trimmed)
 	case "INSERT", "UPDATE", "REPLACE", "MERGE", "UPSERT":
 		return QueryClassMutationCreate
 	case "DELETE":
@@ -69,6 +86,21 @@ func ClassifyQuery(sql string) QueryClass {
 	default:
 		return QueryClassUnknown
 	}
+}
+
+// classifyWith resolves a statement that begins with a common table
+// expression.  A WITH followed only by a query body is read-only; anything
+// containing a data-modifying keyword is deliberately demoted to
+// QueryClassUnknown rather than to its specific mutation class, so the gate
+// still applies in every mode while the shallow scan stays honest about what
+// it cannot determine.  The scan cannot exclude keywords inside string
+// literals or identifiers, which biases it towards demotion - the safe
+// direction.
+func classifyWith(sql string) QueryClass {
+	if withMutationRegexp.MatchString(sql) {
+		return QueryClassUnknown
+	}
+	return QueryClassSelect
 }
 
 // Decision is what GateDecision returns: what the server wants to do
